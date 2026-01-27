@@ -53,6 +53,7 @@ input int    InpRegimeLockBarsH1 = 4;
 
 input int    InpPivotLen = 3;
 input int    InpPivotConfirmBars = 2;
+input int    InpMaxBarsAfterBOS = 6;
 
 input bool   InpUseBreakRetest = true;
 input double InpRetestTolATR = 0.15;
@@ -167,9 +168,46 @@ const int TOTAL_MIN = 68;
 
 string g_symbol = "";
 int g_digits = 2;
+double g_point = 0.01;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
+
+enum SkipMask
+{
+   SKIP_NONE = 0,
+   SKIP_SESSION = 1 << 0,
+   SKIP_ROLLOVER = 1 << 1,
+   SKIP_SPREAD = 1 << 2,
+   SKIP_SPREAD_MULT = 1 << 3,
+   SKIP_SPREAD_INSTAB = 1 << 4,
+   SKIP_LOWVOL = 1 << 5,
+   SKIP_DAILY_LOCK = 1 << 6,
+   SKIP_COOLDOWN = 1 << 7,
+   SKIP_LOSS_BLOCK = 1 << 8,
+   SKIP_DAILY_MAX = 1 << 9,
+   SKIP_DAILY_SCORE = 1 << 10,
+   SKIP_STOPS = 1 << 11
+};
+
+enum EntryMask
+{
+   ENTRY_NONE = 0,
+   ENTRY_BIAS = 1 << 0,
+   ENTRY_PIVOT = 1 << 1,
+   ENTRY_HL_LH = 1 << 2,
+   ENTRY_BOS_CLOSE = 1 << 3,
+   ENTRY_BOS_RETEST = 1 << 4,
+   ENTRY_KEYLEVEL = 1 << 5,
+   ENTRY_ANTICHASE = 1 << 6,
+   ENTRY_FVG = 1 << 7,
+   ENTRY_FIB = 1 << 8,
+   ENTRY_FOOTPRINT = 1 << 9,
+   ENTRY_SPIKE = 1 << 10,
+   ENTRY_RSI_LOSS = 1 << 11,
+   ENTRY_MMSL = 1 << 12,
+   ENTRY_RR = 1 << 13
+};
 
 string GVName(const string key)
 {
@@ -224,40 +262,37 @@ double PipPrice()
 {
    if(InpPipPrice > 0.0)
       return InpPipPrice;
-   return _Point * 10.0;
+   return g_point * 10.0;
 }
 
 double SpreadPoints()
 {
    double ask = SymbolInfoDouble(g_symbol, SYMBOL_ASK);
    double bid = SymbolInfoDouble(g_symbol, SYMBOL_BID);
-   return (ask - bid) / _Point;
+   return (ask - bid) / g_point;
+}
+
+int MinutesOfDay(datetime t)
+{
+   MqlDateTime dt;
+   TimeToStruct(t, dt);
+   return dt.hour * 60 + dt.min;
 }
 
 bool TimeInRange(const string start, const string end)
 {
-   datetime now = TimeCurrent();
    int sh = StringToInteger(StringSubstr(start, 0, 2));
    int sm = StringToInteger(StringSubstr(start, 3, 2));
    int eh = StringToInteger(StringSubstr(end, 0, 2));
    int em = StringToInteger(StringSubstr(end, 3, 2));
 
-   datetime s = StructToTime(BuildTimeStruct(now, sh, sm));
-   datetime e = StructToTime(BuildTimeStruct(now, eh, em));
+   int startMin = sh * 60 + sm;
+   int endMin = eh * 60 + em;
+   int nowMin = MinutesOfDay(TimeCurrent());
 
-   if(e < s)
-      return (now >= s || now <= e);
-   return (now >= s && now <= e);
-}
-
-MqlDateTime BuildTimeStruct(datetime t, int hour, int min)
-{
-   MqlDateTime dt;
-   TimeToStruct(t, dt);
-   dt.hour = hour;
-   dt.min = min;
-   dt.sec = 0;
-   return dt;
+   if(startMin <= endMin)
+      return (nowMin >= startMin && nowMin < endMin);
+   return (nowMin >= startMin || nowMin < endMin);
 }
 
 void UpdateSpreadEMA()
@@ -425,6 +460,52 @@ RegimeState UpdateRegime()
    return current;
 }
 
+bool IsPivotHigh(int index)
+{
+   double high = iHigh(g_symbol, PERIOD_M15, index);
+   for(int j = 1; j <= InpPivotLen; j++)
+   {
+      if(high <= iHigh(g_symbol, PERIOD_M15, index - j) || high <= iHigh(g_symbol, PERIOD_M15, index + j))
+         return false;
+   }
+   return true;
+}
+
+bool IsPivotLow(int index)
+{
+   double low = iLow(g_symbol, PERIOD_M15, index);
+   for(int j = 1; j <= InpPivotLen; j++)
+   {
+      if(low >= iLow(g_symbol, PERIOD_M15, index - j) || low >= iLow(g_symbol, PERIOD_M15, index + j))
+         return false;
+   }
+   return true;
+}
+
+bool IsConfirmedPivotHigh(int index)
+{
+   if(!IsPivotHigh(index))
+      return false;
+   for(int j = 1; j <= InpPivotConfirmBars; j++)
+   {
+      if(iHigh(g_symbol, PERIOD_M15, index - j) >= iHigh(g_symbol, PERIOD_M15, index))
+         return false;
+   }
+   return true;
+}
+
+bool IsConfirmedPivotLow(int index)
+{
+   if(!IsPivotLow(index))
+      return false;
+   for(int j = 1; j <= InpPivotConfirmBars; j++)
+   {
+      if(iLow(g_symbol, PERIOD_M15, index - j) <= iLow(g_symbol, PERIOD_M15, index))
+         return false;
+   }
+   return true;
+}
+
 bool FindRecentPivots(double &lastHigh, double &prevHigh, double &lastLow, double &prevLow)
 {
    int foundHigh = 0;
@@ -432,35 +513,28 @@ bool FindRecentPivots(double &lastHigh, double &prevHigh, double &lastLow, doubl
    lastHigh = prevHigh = 0.0;
    lastLow = prevLow = 0.0;
 
-   int start = InpPivotConfirmBars;
-   int end = 100;
+   int bars = iBars(g_symbol, PERIOD_M15);
+   int start = InpPivotLen + InpPivotConfirmBars;
+   int end = MathMin(bars - InpPivotLen - 1, 200);
    for(int i = start; i < end; i++)
    {
-      bool isHigh = true;
-      bool isLow = true;
-      double high = iHigh(g_symbol, PERIOD_M15, i);
-      double low = iLow(g_symbol, PERIOD_M15, i);
-      for(int j = 1; j <= InpPivotLen; j++)
-      {
-         if(high <= iHigh(g_symbol, PERIOD_M15, i - j) || high <= iHigh(g_symbol, PERIOD_M15, i + j))
-            isHigh = false;
-         if(low >= iLow(g_symbol, PERIOD_M15, i - j) || low >= iLow(g_symbol, PERIOD_M15, i + j))
-            isLow = false;
-      }
-      if(isHigh)
+      if(i - InpPivotConfirmBars < 0)
+         continue;
+
+      if(IsConfirmedPivotHigh(i))
       {
          if(foundHigh == 0)
-            lastHigh = high;
+            lastHigh = iHigh(g_symbol, PERIOD_M15, i);
          else if(foundHigh == 1)
-            prevHigh = high;
+            prevHigh = iHigh(g_symbol, PERIOD_M15, i);
          foundHigh++;
       }
-      if(isLow)
+      if(IsConfirmedPivotLow(i))
       {
          if(foundLow == 0)
-            lastLow = low;
+            lastLow = iLow(g_symbol, PERIOD_M15, i);
          else if(foundLow == 1)
-            prevLow = low;
+            prevLow = iLow(g_symbol, PERIOD_M15, i);
          foundLow++;
       }
       if(foundHigh >= 2 && foundLow >= 2)
@@ -469,20 +543,48 @@ bool FindRecentPivots(double &lastHigh, double &prevHigh, double &lastLow, doubl
    return false;
 }
 
-bool BreakRetestOk(TradeDir dir, double bosLevel, double atrM15)
+void StoreBOS(TradeDir dir, double bosLevel, datetime bosTime)
+{
+   GVSetDouble("bosLevel", bosLevel);
+   GVSetDouble("bosTime", (double)bosTime);
+   GVSetInt("bosDir", (int)dir);
+}
+
+bool BOSStateValid(TradeDir dir, double &bosLevel)
+{
+   int bosDir = GVGetInt("bosDir", 0);
+   if(bosDir != (int)dir)
+      return false;
+
+   bosLevel = GVGetDouble("bosLevel", 0.0);
+   datetime bosTime = (datetime)GVGetDouble("bosTime", 0.0);
+   if(bosTime == 0 || bosLevel <= 0.0)
+      return false;
+
+   int shift = iBarShift(g_symbol, PERIOD_M15, bosTime, true);
+   if(shift < 0)
+      return false;
+   return shift <= InpMaxBarsAfterBOS;
+}
+
+bool BreakRetestOk(TradeDir dir, double atrM15)
 {
    if(!InpUseBreakRetest)
       return true;
 
-   double tol = MathMax(atrM15 * InpRetestTolATR, 5 * _Point);
+   double storedBosLevel = 0.0;
+   if(!BOSStateValid(dir, storedBosLevel))
+      return false;
+
+   double tol = MathMax(atrM15 * InpRetestTolATR, 5 * g_point);
    double close1 = iClose(g_symbol, PERIOD_M15, 1);
    double low1 = iLow(g_symbol, PERIOD_M15, 1);
    double high1 = iHigh(g_symbol, PERIOD_M15, 1);
 
    if(dir == DIR_LONG)
-      return (low1 <= bosLevel + tol && close1 > bosLevel);
+      return (low1 <= storedBosLevel + tol && close1 > storedBosLevel);
    if(dir == DIR_SHORT)
-      return (high1 >= bosLevel - tol && close1 < bosLevel);
+      return (high1 >= storedBosLevel - tol && close1 < storedBosLevel);
    return false;
 }
 
@@ -506,26 +608,44 @@ double KeyAbove(double price)
    return MathCeil(price / step) * step;
 }
 
-bool KeyLevelOk(TradeDir dir, double mid)
+bool KeyLevelNearOk(double mid, double &nearest)
 {
-   double nearest = NearestKeyLevel(mid);
-   if(MathAbs(mid - nearest) > InpKeyNearPrice)
-      return false;
+   nearest = NearestKeyLevel(mid);
+   return MathAbs(mid - nearest) <= InpKeyNearPrice;
+}
+
+bool AntiChaseOk(TradeDir dir, double mid, double nearest)
+{
+   double step = InpKeyLevelStepPrice;
+   if(step <= 0.0)
+      return true;
+   double chaseKey = nearest;
+   if(dir == DIR_LONG && nearest > mid)
+      chaseKey = nearest - step;
+   else if(dir == DIR_SHORT && nearest < mid)
+      chaseKey = nearest + step;
 
    if(dir == DIR_LONG)
-      return (mid - KeyBelow(mid) <= InpKeyChaseMaxDistPrice);
+      return (mid - chaseKey <= InpKeyChaseMaxDistPrice);
    if(dir == DIR_SHORT)
-      return (KeyAbove(mid) - mid <= InpKeyChaseMaxDistPrice);
+      return (chaseKey - mid <= InpKeyChaseMaxDistPrice);
    return false;
 }
 
-int FVGDirection(double &zoneMid, double atrM15)
+int FVGDirection(double &zoneMid, double priceMid)
 {
    if(!InpUseFVGFeature)
       return 0;
 
+   int bars = iBars(g_symbol, PERIOD_M15);
+   double bestDist = DBL_MAX;
+   int bestDir = 0;
+   double bestMid = 0.0;
+
    for(int i = 1; i <= InpFVGScanBars; i++)
    {
+      if(i + 2 >= bars)
+         break;
       double low = iLow(g_symbol, PERIOD_M15, i);
       double high = iHigh(g_symbol, PERIOD_M15, i);
       double low2 = iLow(g_symbol, PERIOD_M15, i + 2);
@@ -533,16 +653,29 @@ int FVGDirection(double &zoneMid, double atrM15)
 
       if(low > high2)
       {
-         zoneMid = (low + high2) / 2.0;
-         return DIR_LONG;
+         double mid = (low + high2) / 2.0;
+         double dist = MathAbs(priceMid - mid);
+         if(dist < bestDist)
+         {
+            bestDist = dist;
+            bestDir = DIR_LONG;
+            bestMid = mid;
+         }
       }
       if(high < low2)
       {
-         zoneMid = (high + low2) / 2.0;
-         return DIR_SHORT;
+         double mid = (high + low2) / 2.0;
+         double dist = MathAbs(priceMid - mid);
+         if(dist < bestDist)
+         {
+            bestDist = dist;
+            bestDir = DIR_SHORT;
+            bestMid = mid;
+         }
       }
    }
-   return 0;
+   zoneMid = bestMid;
+   return bestDir;
 }
 
 bool FVGOk(TradeDir dir, double mid, double atrM15)
@@ -551,7 +684,7 @@ bool FVGOk(TradeDir dir, double mid, double atrM15)
       return true;
 
    double zoneMid = 0.0;
-   int fvgDir = FVGDirection(zoneMid, atrM15);
+   int fvgDir = FVGDirection(zoneMid, mid);
    if(fvgDir == 0 || fvgDir != dir)
       return false;
 
@@ -780,9 +913,13 @@ bool DailyTradeAllowed(int dailyScore, int &maxTrades, double &riskMult, bool &p
 
 bool CooldownActive()
 {
-   int lastEntryBar = GVGetInt("lastEntryBar", 0);
-   int currentBar = (int)iBars(g_symbol, PERIOD_M15);
-   return (currentBar - lastEntryBar) <= InpCooldownBarsAfterEntry;
+   datetime lastEntryTime = (datetime)GVGetDouble("lastEntryTime", 0.0);
+   if(lastEntryTime == 0)
+      return false;
+   int shift = iBarShift(g_symbol, PERIOD_M15, lastEntryTime, true);
+   if(shift < 0)
+      return false;
+   return shift <= InpCooldownBarsAfterEntry;
 }
 
 void UpdateDailyReset()
@@ -800,26 +937,54 @@ void UpdateDailyReset()
    }
 }
 
-bool HardGuardsOk()
+bool HardGuardsOk(int &skipMask)
 {
+   skipMask = SKIP_NONE;
    if(!SessionAllowed())
+   {
+      skipMask |= SKIP_SESSION;
       return false;
+   }
    if(RolloverBlocked())
+   {
+      skipMask |= SKIP_ROLLOVER;
       return false;
+   }
    if(SpreadPoints() > InpMaxSpreadPoints)
+   {
+      skipMask |= SKIP_SPREAD;
       return false;
+   }
    if(SpreadMultipleBlocked())
+   {
+      skipMask |= SKIP_SPREAD_MULT;
       return false;
+   }
    if(SpreadInstabilityBlocked())
+   {
+      skipMask |= SKIP_SPREAD_INSTAB;
       return false;
+   }
    if(LowVolumeBlocked())
+   {
+      skipMask |= SKIP_LOWVOL;
       return false;
+   }
    if(DailyLossLocked() || SoftEquityLocked())
+   {
+      skipMask |= SKIP_DAILY_LOCK;
       return false;
+   }
    if(GVGetInt("dayLocked", 0) == 1)
+   {
+      skipMask |= SKIP_DAILY_LOCK;
       return false;
+   }
    if(CooldownActive())
+   {
+      skipMask |= SKIP_COOLDOWN;
       return false;
+   }
    return true;
 }
 
@@ -857,12 +1022,22 @@ double CurrentRiskMultiplier(double dailyRiskMult)
    return mult;
 }
 
+double TickValue()
+{
+   double tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE_PROFIT);
+   if(tickValue <= 0.0)
+      tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE_LOSS);
+   if(tickValue <= 0.0)
+      tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE);
+   return tickValue;
+}
+
 double CalcLots(double slDist, double riskPct)
 {
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
    double riskMoney = equity * (riskPct / 100.0);
    double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
-   double tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE);
+   double tickValue = TickValue();
    if(tickSize <= 0.0 || tickValue <= 0.0 || slDist <= 0.0)
       return 0.0;
 
@@ -881,6 +1056,30 @@ double CalcLots(double slDist, double riskPct)
    lot = MathMin(lot, maxLot);
    lot = MathFloor(lot / step) * step;
    return NormalizeDouble(lot, 2);
+}
+
+bool StopsOk(double entry, double sl, double tp)
+{
+   int stopsLevel = (int)SymbolInfoInteger(g_symbol, SYMBOL_TRADE_STOPS_LEVEL);
+   if(stopsLevel <= 0)
+      return true;
+
+   double minDist = stopsLevel * g_point;
+   if(sl > 0.0 && MathAbs(entry - sl) < minDist)
+      return false;
+   if(tp > 0.0 && MathAbs(entry - tp) < minDist)
+      return false;
+   return true;
+}
+
+bool CanModifyStops(double newSl)
+{
+   int freezeLevel = (int)SymbolInfoInteger(g_symbol, SYMBOL_TRADE_FREEZE_LEVEL);
+   if(freezeLevel <= 0)
+      return true;
+
+   double price = (SymbolInfoDouble(g_symbol, SYMBOL_ASK) + SymbolInfoDouble(g_symbol, SYMBOL_BID)) / 2.0;
+   return MathAbs(price - newSl) > freezeLevel * g_point;
 }
 
 void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
@@ -953,39 +1152,58 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
       return false;
    dir = bias;
    setupScore += 20;
+   entryMask |= ENTRY_BIAS;
 
    double lastHigh = 0.0, prevHigh = 0.0, lastLow = 0.0, prevLow = 0.0;
    if(!FindRecentPivots(lastHigh, prevHigh, lastLow, prevLow))
       return false;
+   entryMask |= ENTRY_PIVOT;
 
    if(dir == DIR_LONG && !(lastLow > prevLow))
       return false;
    if(dir == DIR_SHORT && !(lastHigh < prevHigh))
       return false;
    setupScore += 10;
+   entryMask |= ENTRY_HL_LH;
 
    double bosLevel = (dir == DIR_LONG) ? lastHigh : lastLow;
    double close1 = iClose(g_symbol, PERIOD_M15, 1);
    bool closeConfirm = (dir == DIR_LONG) ? (close1 > bosLevel) : (close1 < bosLevel);
    double atrM15 = ATR(PERIOD_M15, 1);
 
-   bool brOk = BreakRetestOk(dir, bosLevel, atrM15);
+   if(closeConfirm)
+   {
+      entryMask |= ENTRY_BOS_CLOSE;
+      StoreBOS(dir, bosLevel, iTime(g_symbol, PERIOD_M15, 1));
+   }
+
+   bool brOk = BreakRetestOk(dir, atrM15);
+   if(brOk)
+      entryMask |= ENTRY_BOS_RETEST;
    if(!closeConfirm && !brOk)
       return false;
    timingScore += 10;
 
    double mid = (SymbolInfoDouble(g_symbol, SYMBOL_ASK) + SymbolInfoDouble(g_symbol, SYMBOL_BID)) / 2.0;
-   if(!KeyLevelOk(dir, mid))
+   double nearest = 0.0;
+   if(!KeyLevelNearOk(mid, nearest))
       return false;
+   entryMask |= ENTRY_KEYLEVEL;
+
+   if(!AntiChaseOk(dir, mid, nearest))
+      return false;
+   entryMask |= ENTRY_ANTICHASE;
    setupScore += 10;
 
    if(!FVGOk(dir, mid, atrM15))
       return false;
+   entryMask |= ENTRY_FVG;
    setupScore += 5;
 
    bool oteBonus = false;
    if(!FibFilterOk(dir, mid, lastLow, lastHigh, oteBonus))
       return false;
+   entryMask |= ENTRY_FIB;
    setupScore += 15;
    if(oteBonus)
       setupScore += InpOTEBonusPoints;
@@ -994,18 +1212,21 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    bool acceptance = true;
    if(!FootprintOk(dir, atrM15, absorption, acceptance))
       return false;
+   entryMask |= ENTRY_FOOTPRINT;
    if(acceptance)
       timingScore += InpFP_ScoreBonus;
 
    if(!SpikeGuardOk(atrM15))
       return false;
+   entryMask |= ENTRY_SPIKE;
 
    if(!RSIAfterLossOk(dir))
       return false;
+   entryMask |= ENTRY_RSI_LOSS;
 
    entry = (dir == DIR_LONG) ? SymbolInfoDouble(g_symbol, SYMBOL_ASK) : SymbolInfoDouble(g_symbol, SYMBOL_BID);
    double atrBuf = atrM15 * InpSL_ATR_Mult;
-   double spreadBuf = SpreadPoints() * _Point * 0.5;
+   double spreadBuf = SpreadPoints() * g_point * 0.5;
    double buffer = MathMax(InpSL_MinBufferPrice, MathMax(atrBuf, spreadBuf));
 
    sl = (dir == DIR_LONG) ? (lastLow - buffer) : (lastHigh + buffer);
@@ -1018,20 +1239,30 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
       double mmsl = InpMMSL_Pips * PipPrice() + InpMMSL_ExtraBufferPrice;
       if(riskR < mmsl)
          return false;
+      entryMask |= ENTRY_MMSL;
    }
 
    tp = (dir == DIR_LONG) ? (entry + riskR * InpTP_RR_Main) : (entry - riskR * InpTP_RR_Main);
    double rr = MathAbs(tp - entry) / riskR;
    if(rr < InpMinRRAllowed)
       return false;
+   entryMask |= ENTRY_RR;
 
    tp1 = (dir == DIR_LONG) ? (entry + riskR) : (entry - riskR);
    if(InpUseTP1Partial && InpTP1_UseKeyLevelFirst)
    {
-      double key = NearestKeyLevel(entry);
-      double dist = MathAbs(key - entry);
-      if(dist > PipPrice() && dist < MathAbs(tp1 - entry))
-         tp1 = (dir == DIR_LONG) ? MathMax(entry + dist, tp1) : MathMin(entry - dist, tp1);
+      if(dir == DIR_LONG)
+      {
+         double key = KeyAbove(entry);
+         if(key < tp1 && (key - entry) > PipPrice())
+            tp1 = key;
+      }
+      else
+      {
+         double key = KeyBelow(entry);
+         if(key > tp1 && (entry - key) > PipPrice())
+            tp1 = key;
+      }
    }
 
    totalScore = setupScore + timingScore;
@@ -1069,6 +1300,8 @@ void ManagePosition(double riskR)
    double volume = PositionGetDouble(POSITION_VOLUME);
    double price = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_symbol, SYMBOL_BID) : SymbolInfoDouble(g_symbol, SYMBOL_ASK);
 
+   if(riskR <= 0.0)
+      return;
    double profitR = (type == POSITION_TYPE_BUY) ? (price - entry) / riskR : (entry - price) / riskR;
 
    bool tp1done = GVGetInt("tp1done", 0) == 1;
@@ -1076,9 +1309,11 @@ void ManagePosition(double riskR)
 
    if(InpUseTP1Partial && !tp1done && profitR >= 1.0)
    {
-      double closeVol = volume * InpTP1_CloseFrac;
+      double step = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_STEP);
+      double minLot = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_MIN);
+      double closeVol = MathFloor((volume * InpTP1_CloseFrac) / step) * step;
       closeVol = NormalizeDouble(closeVol, 2);
-      if(closeVol >= SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_MIN))
+      if(closeVol >= minLot && (volume - closeVol) >= minLot)
       {
          trade.PositionClosePartial(ticket, closeVol);
          GVSetInt("tp1done", 1);
@@ -1090,7 +1325,8 @@ void ManagePosition(double riskR)
    if(InpUseSmartBE && profitR >= InpBE_MinProfitR)
    {
       double newSL = (type == POSITION_TYPE_BUY) ? (entry + InpBE_OffsetPrice) : (entry - InpBE_OffsetPrice);
-      if((type == POSITION_TYPE_BUY && newSL > sl) || (type == POSITION_TYPE_SELL && newSL < sl))
+      if(CanModifyStops(newSL) && StopsOk(entry, newSL, tp) &&
+         ((type == POSITION_TYPE_BUY && newSL > sl) || (type == POSITION_TYPE_SELL && newSL < sl)))
          trade.PositionModify(ticket, newSL, tp);
    }
 
@@ -1100,9 +1336,9 @@ void ManagePosition(double riskR)
       {
          double atr = ATR(PERIOD_M15, 1);
          double newSL = (type == POSITION_TYPE_BUY) ? (price - atr * InpTrailATR_Mult) : (price + atr * InpTrailATR_Mult);
-         if(type == POSITION_TYPE_BUY && newSL > sl + InpTrailMinImprovePrice)
+         if(type == POSITION_TYPE_BUY && newSL > sl + InpTrailMinImprovePrice && CanModifyStops(newSL) && StopsOk(entry, newSL, tp))
             trade.PositionModify(ticket, newSL, tp);
-         else if(type == POSITION_TYPE_SELL && newSL < sl - InpTrailMinImprovePrice)
+         else if(type == POSITION_TYPE_SELL && newSL < sl - InpTrailMinImprovePrice && CanModifyStops(newSL) && StopsOk(entry, newSL, tp))
             trade.PositionModify(ticket, newSL, tp);
       }
    }
@@ -1158,11 +1394,15 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
    if(addLots <= 0.0)
       return;
 
+   double addTp = (type == POSITION_TYPE_BUY) ? (price + riskR * InpTP_RR_Main) : (price - riskR * InpTP_RR_Main);
+   if(!StopsOk(price, sl, addTp))
+      return;
+
    bool result = false;
    if(type == POSITION_TYPE_BUY)
-      result = trade.Buy(addLots, g_symbol, price, sl, price + riskR * InpTP_RR_Main, "PYR");
+      result = trade.Buy(addLots, g_symbol, 0.0, sl, addTp, "PYR");
    else
-      result = trade.Sell(addLots, g_symbol, price, sl, price - riskR * InpTP_RR_Main, "PYR");
+      result = trade.Sell(addLots, g_symbol, 0.0, sl, addTp, "PYR");
 
    if(result)
    {
@@ -1176,6 +1416,7 @@ int OnInit()
 {
    g_symbol = ResolveSymbol();
    g_digits = (int)SymbolInfoInteger(g_symbol, SYMBOL_DIGITS);
+   g_point = SymbolInfoDouble(g_symbol, SYMBOL_POINT);
 
    trade.SetExpertMagicNumber((uint)InpMagic);
    trade.SetDeviationInPoints(InpMaxSlippagePoints);
@@ -1199,7 +1440,11 @@ void OnTick()
 
    if(HasPosition())
    {
-      double riskR = GVGetDouble("origRisk", 0.0);
+      double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+      double slPrice = PositionGetDouble(POSITION_SL);
+      double riskR = MathAbs(entryPrice - slPrice);
+      if(riskR <= 0.0)
+         riskR = GVGetDouble("origRisk", 0.0);
       ManagePosition(riskR);
       int dailyScore = DailyScore(regime);
       bool pyramidAllowed = false;
@@ -1210,21 +1455,40 @@ void OnTick()
       return;
    }
 
+   int skipMask = SKIP_NONE;
    if(LossBlocksActive())
+   {
+      skipMask |= SKIP_LOSS_BLOCK;
+      LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0);
       return;
-   if(!HardGuardsOk())
+   }
+   if(!HardGuardsOk(skipMask))
+   {
+      LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0);
       return;
+   }
 
    int dayTrades = GVGetInt("dayTrades", 0);
-   if(InpUseDailyTradeControl && dayTrades >= InpHardMaxTradesPerDay)
-      return;
-
    int dailyScore = DailyScore(regime);
    int maxTrades = 0;
    double dailyRiskMult = 0.0;
    bool pyramidAllowed = false;
    if(InpUseDailyTradeControl && !DailyTradeAllowed(dailyScore, maxTrades, dailyRiskMult, pyramidAllowed))
+   {
+      skipMask |= SKIP_DAILY_SCORE;
+      LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, dailyScore, 0, 0, 0, skipMask, 0);
       return;
+   }
+
+   int allowedTrades = InpHardMaxTradesPerDay;
+   if(InpUseDailyTradeControl)
+      allowedTrades = MathMin(allowedTrades, maxTrades);
+   if(dayTrades >= allowedTrades)
+   {
+      skipMask |= SKIP_DAILY_MAX;
+      LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, dailyScore, 0, 0, 0, skipMask, 0);
+      return;
+   }
 
    TradeDir dir;
    double entry = 0.0, sl = 0.0, tp = 0.0, tp1 = 0.0, riskR = 0.0;
@@ -1241,16 +1505,23 @@ void OnTick()
    if(lots <= 0.0)
       return;
 
+   if(!StopsOk(entry, sl, tp))
+   {
+      skipMask |= SKIP_STOPS;
+      LogCSV("SKIP", DIR_NONE, entry, sl, tp, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask);
+      return;
+   }
+
    bool sent = false;
    if(dir == DIR_LONG)
-      sent = trade.Buy(lots, g_symbol, entry, sl, tp, "ENTRY");
+      sent = trade.Buy(lots, g_symbol, 0.0, sl, tp, "ENTRY");
    else if(dir == DIR_SHORT)
-      sent = trade.Sell(lots, g_symbol, entry, sl, tp, "ENTRY");
+      sent = trade.Sell(lots, g_symbol, 0.0, sl, tp, "ENTRY");
 
    if(sent)
    {
       GVSetInt("dayTrades", dayTrades + 1);
-      GVSetInt("lastEntryBar", (int)iBars(g_symbol, PERIOD_M15));
+      GVSetDouble("lastEntryTime", (double)iTime(g_symbol, PERIOD_M15, 0));
       GVSetDouble("origRisk", riskR);
       GVSetInt("tp1done", 0);
       GVSetDouble("tp1price", tp1);
