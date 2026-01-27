@@ -29,6 +29,15 @@ enum TradeDir
    DIR_SHORT = -1
 };
 
+enum PresetMode
+{
+   PRESET_CUSTOM = 0,
+   PRESET_BALANCED = 1,
+   PRESET_CONSERVATIVE = 2
+};
+
+input PresetMode InpPresetMode = PRESET_CUSTOM;
+
 input string InpSymbolOverride = "";
 input long   InpMagic = 3011;
 input double InpPipPrice = 0.10; // if 0 -> auto Point*10
@@ -52,6 +61,8 @@ input int  InpEndHour = 23;
 input bool InpUseICTTime = true;
 input bool InpUseManualNYOffset = true;
 input int  InpNYOffsetHours = -5;
+input bool InpAutoNYDST = false;
+input int  InpNYOffsetSummerHours = -4;
 input bool InpUseKillzoneAsia = true;
 input bool InpUseKillzoneLondon = true;
 input bool InpUseKillzoneNY = true;
@@ -75,6 +86,7 @@ input int    InpEqClusterMin = 2;
 input int    InpEqScanBars = 40;
 input double InpDisplacementATR = 1.1;
 input double InpDisplacementBodyRatio = 0.55;
+input int    InpDisplacementSearchBars = 4;
 input int    InpOBLookback = 10;
 input int    InpOBMaxAgeBars = 12;
 
@@ -83,6 +95,8 @@ input int    InpOTE_SwingLookback = 48;
 input double InpOTE_Min = 0.62;
 input double InpOTE_Max = 0.79;
 input double InpMinPDArrayDistance = 0.80;
+input double InpMinPDArrayATR = 1.0;
+input int    InpMinPDArrayMinPoints = 80;
 
 input bool   InpUseBreakRetest = true;
 input double InpRetestTolATR = 0.15;
@@ -203,6 +217,267 @@ datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
 
+// Runtime config (preset-applied)
+bool cfg_InpUseSessionFilter;
+int cfg_InpStartHour;
+int cfg_InpEndHour;
+int cfg_InpMaxSpreadPoints;
+int cfg_InpMaxSlippagePoints;
+int cfg_InpMaxRetries;
+int cfg_InpRetryDelayMs;
+bool cfg_InpUseICTTime;
+bool cfg_InpUseManualNYOffset;
+int cfg_InpNYOffsetHours;
+bool cfg_InpAutoNYDST;
+int cfg_InpNYOffsetSummerHours;
+bool cfg_InpUseKillzoneAsia;
+bool cfg_InpUseKillzoneLondon;
+bool cfg_InpUseKillzoneNY;
+int cfg_InpATRPeriod;
+int cfg_InpADXPeriod;
+int cfg_InpRSIPeriod;
+int cfg_InpEMA_Fast;
+int cfg_InpEMA_Slow;
+int cfg_InpRegimeConfirmBarsH1;
+int cfg_InpRegimeLockBarsH1;
+int cfg_InpPivotLen;
+int cfg_InpPivotConfirmBars;
+int cfg_InpMaxBarsAfterBOS;
+double cfg_InpEqToleranceATR;
+double cfg_InpEqToleranceMinPoints;
+int cfg_InpEqClusterMin;
+int cfg_InpEqScanBars;
+double cfg_InpDisplacementATR;
+double cfg_InpDisplacementBodyRatio;
+int cfg_InpDisplacementSearchBars;
+int cfg_InpOBLookback;
+int cfg_InpOBMaxAgeBars;
+ENUM_TIMEFRAMES cfg_InpOTE_HTF;
+int cfg_InpOTE_SwingLookback;
+double cfg_InpOTE_Min;
+double cfg_InpOTE_Max;
+double cfg_InpMinPDArrayDistance;
+double cfg_InpMinPDArrayATR;
+int cfg_InpMinPDArrayMinPoints;
+bool cfg_InpUseBreakRetest;
+double cfg_InpRetestTolATR;
+double cfg_InpKeyLevelStepPrice;
+double cfg_InpKeyNearPrice;
+double cfg_InpKeyChaseMaxDistPrice;
+bool cfg_InpUseFVGFeature;
+int cfg_InpFVGScanBars;
+double cfg_InpFVGMaxDistATR;
+bool cfg_InpUseFibFilter;
+double cfg_InpFibBaseMin;
+double cfg_InpFibBaseMax;
+double cfg_InpFibTolPrice;
+bool cfg_InpUseOTEBonus;
+double cfg_InpOTEMin;
+double cfg_InpOTEMax;
+int cfg_InpOTEBonusPoints;
+bool cfg_InpUseFootprintProxy;
+int cfg_InpFP_VolMAPeriod;
+double cfg_InpFP_VolSpikeRatio;
+double cfg_InpFP_BodyMinRatio;
+double cfg_InpFP_CloseSideMin;
+double cfg_InpFP_AbsorpVolRatio;
+double cfg_InpFP_AbsorpRangeATR;
+bool cfg_InpFP_RequireAcceptance;
+int cfg_InpFP_ScoreBonus;
+bool cfg_InpUseSpikeGuard;
+double cfg_InpSpikeMultATR;
+double cfg_InpSL_ATR_Mult;
+double cfg_InpSL_MinBufferPrice;
+bool cfg_InpUseMMSL;
+int cfg_InpMMSL_Pips;
+double cfg_InpMMSL_ExtraBufferPrice;
+double cfg_InpTP_RR_Main;
+double cfg_InpMinRRAllowed;
+bool cfg_InpUseTP1Partial;
+double cfg_InpTP1_CloseFrac;
+bool cfg_InpTP1_UseKeyLevelFirst;
+bool cfg_InpUseSmartBE;
+double cfg_InpBE_MinProfitR;
+double cfg_InpBE_OffsetPrice;
+bool cfg_InpUseATRTrailAfterTP1;
+double cfg_InpTrailATR_Mult;
+double cfg_InpTrailMinImprovePrice;
+bool cfg_InpTrailOnNewBarOnly;
+double cfg_InpBaseRiskPct;
+double cfg_InpMaxLotCap;
+bool cfg_InpUseLowVolFilter;
+ENUM_TIMEFRAMES cfg_InpVolTF;
+int cfg_InpVolMAPeriod;
+double cfg_InpLowVolFactor;
+bool cfg_InpUseSpreadMultiple;
+double cfg_InpSpreadMultiple;
+int cfg_InpSpreadMultipleBlockMin;
+bool cfg_InpUseSpreadInstability;
+int cfg_InpSpreadAvgBarsH1;
+double cfg_InpSpreadSpikeFactor;
+int cfg_InpSpreadSpikeBlockMin;
+bool cfg_InpUseRolloverBlock;
+string cfg_InpRolloverStart;
+string cfg_InpRolloverEnd;
+bool cfg_InpUseDailyTradeControl;
+int cfg_InpHardMaxTradesPerDay;
+bool cfg_InpUseMaxDailyLossLock;
+double cfg_InpMaxDailyLossPct;
+bool cfg_InpUseSoftEquityLock;
+double cfg_InpSoftEqTrigger1;
+double cfg_InpSoftEqFloor1;
+double cfg_InpSoftEqTrigger2;
+double cfg_InpSoftEqFloor2;
+int cfg_InpCooldownBarsAfterEntry;
+bool cfg_InpUseAntiChop;
+int cfg_InpLossBlock2_Hours;
+int cfg_InpLossBlock3_Hours;
+double cfg_InpRiskMultAfter3Loss;
+int cfg_InpRiskCutAfter3Loss_H;
+bool cfg_InpUseRSIAfterLoss;
+int cfg_InpLossStreakForRSI;
+bool cfg_InpUsePyramiding;
+int cfg_InpMaxAdds;
+double cfg_InpPyramidMinProfitR;
+bool cfg_InpPyramidRequireMainBE;
+double cfg_InpPyramidSpacingATR;
+bool cfg_InpPyramidOnlyInTrend;
+bool cfg_InpPyramidRequireAdxRising;
+bool cfg_InpPyramidUsePeakDDCap;
+double cfg_InpPyramidMaxPeakDDPct;
+double cfg_InpAddRiskMult1;
+double cfg_InpAddRiskMult2;
+
+#define InpUseSessionFilter cfg_InpUseSessionFilter
+#define InpStartHour cfg_InpStartHour
+#define InpEndHour cfg_InpEndHour
+#define InpMaxSpreadPoints cfg_InpMaxSpreadPoints
+#define InpMaxSlippagePoints cfg_InpMaxSlippagePoints
+#define InpMaxRetries cfg_InpMaxRetries
+#define InpRetryDelayMs cfg_InpRetryDelayMs
+#define InpUseICTTime cfg_InpUseICTTime
+#define InpUseManualNYOffset cfg_InpUseManualNYOffset
+#define InpNYOffsetHours cfg_InpNYOffsetHours
+#define InpAutoNYDST cfg_InpAutoNYDST
+#define InpNYOffsetSummerHours cfg_InpNYOffsetSummerHours
+#define InpUseKillzoneAsia cfg_InpUseKillzoneAsia
+#define InpUseKillzoneLondon cfg_InpUseKillzoneLondon
+#define InpUseKillzoneNY cfg_InpUseKillzoneNY
+#define InpATRPeriod cfg_InpATRPeriod
+#define InpADXPeriod cfg_InpADXPeriod
+#define InpRSIPeriod cfg_InpRSIPeriod
+#define InpEMA_Fast cfg_InpEMA_Fast
+#define InpEMA_Slow cfg_InpEMA_Slow
+#define InpRegimeConfirmBarsH1 cfg_InpRegimeConfirmBarsH1
+#define InpRegimeLockBarsH1 cfg_InpRegimeLockBarsH1
+#define InpPivotLen cfg_InpPivotLen
+#define InpPivotConfirmBars cfg_InpPivotConfirmBars
+#define InpMaxBarsAfterBOS cfg_InpMaxBarsAfterBOS
+#define InpEqToleranceATR cfg_InpEqToleranceATR
+#define InpEqToleranceMinPoints cfg_InpEqToleranceMinPoints
+#define InpEqClusterMin cfg_InpEqClusterMin
+#define InpEqScanBars cfg_InpEqScanBars
+#define InpDisplacementATR cfg_InpDisplacementATR
+#define InpDisplacementBodyRatio cfg_InpDisplacementBodyRatio
+#define InpDisplacementSearchBars cfg_InpDisplacementSearchBars
+#define InpOBLookback cfg_InpOBLookback
+#define InpOBMaxAgeBars cfg_InpOBMaxAgeBars
+#define InpOTE_HTF cfg_InpOTE_HTF
+#define InpOTE_SwingLookback cfg_InpOTE_SwingLookback
+#define InpOTE_Min cfg_InpOTE_Min
+#define InpOTE_Max cfg_InpOTE_Max
+#define InpMinPDArrayDistance cfg_InpMinPDArrayDistance
+#define InpMinPDArrayATR cfg_InpMinPDArrayATR
+#define InpMinPDArrayMinPoints cfg_InpMinPDArrayMinPoints
+#define InpUseBreakRetest cfg_InpUseBreakRetest
+#define InpRetestTolATR cfg_InpRetestTolATR
+#define InpKeyLevelStepPrice cfg_InpKeyLevelStepPrice
+#define InpKeyNearPrice cfg_InpKeyNearPrice
+#define InpKeyChaseMaxDistPrice cfg_InpKeyChaseMaxDistPrice
+#define InpUseFVGFeature cfg_InpUseFVGFeature
+#define InpFVGScanBars cfg_InpFVGScanBars
+#define InpFVGMaxDistATR cfg_InpFVGMaxDistATR
+#define InpUseFibFilter cfg_InpUseFibFilter
+#define InpFibBaseMin cfg_InpFibBaseMin
+#define InpFibBaseMax cfg_InpFibBaseMax
+#define InpFibTolPrice cfg_InpFibTolPrice
+#define InpUseOTEBonus cfg_InpUseOTEBonus
+#define InpOTEMin cfg_InpOTEMin
+#define InpOTEMax cfg_InpOTEMax
+#define InpOTEBonusPoints cfg_InpOTEBonusPoints
+#define InpUseFootprintProxy cfg_InpUseFootprintProxy
+#define InpFP_VolMAPeriod cfg_InpFP_VolMAPeriod
+#define InpFP_VolSpikeRatio cfg_InpFP_VolSpikeRatio
+#define InpFP_BodyMinRatio cfg_InpFP_BodyMinRatio
+#define InpFP_CloseSideMin cfg_InpFP_CloseSideMin
+#define InpFP_AbsorpVolRatio cfg_InpFP_AbsorpVolRatio
+#define InpFP_AbsorpRangeATR cfg_InpFP_AbsorpRangeATR
+#define InpFP_RequireAcceptance cfg_InpFP_RequireAcceptance
+#define InpFP_ScoreBonus cfg_InpFP_ScoreBonus
+#define InpUseSpikeGuard cfg_InpUseSpikeGuard
+#define InpSpikeMultATR cfg_InpSpikeMultATR
+#define InpSL_ATR_Mult cfg_InpSL_ATR_Mult
+#define InpSL_MinBufferPrice cfg_InpSL_MinBufferPrice
+#define InpUseMMSL cfg_InpUseMMSL
+#define InpMMSL_Pips cfg_InpMMSL_Pips
+#define InpMMSL_ExtraBufferPrice cfg_InpMMSL_ExtraBufferPrice
+#define InpTP_RR_Main cfg_InpTP_RR_Main
+#define InpMinRRAllowed cfg_InpMinRRAllowed
+#define InpUseTP1Partial cfg_InpUseTP1Partial
+#define InpTP1_CloseFrac cfg_InpTP1_CloseFrac
+#define InpTP1_UseKeyLevelFirst cfg_InpTP1_UseKeyLevelFirst
+#define InpUseSmartBE cfg_InpUseSmartBE
+#define InpBE_MinProfitR cfg_InpBE_MinProfitR
+#define InpBE_OffsetPrice cfg_InpBE_OffsetPrice
+#define InpUseATRTrailAfterTP1 cfg_InpUseATRTrailAfterTP1
+#define InpTrailATR_Mult cfg_InpTrailATR_Mult
+#define InpTrailMinImprovePrice cfg_InpTrailMinImprovePrice
+#define InpTrailOnNewBarOnly cfg_InpTrailOnNewBarOnly
+#define InpBaseRiskPct cfg_InpBaseRiskPct
+#define InpMaxLotCap cfg_InpMaxLotCap
+#define InpUseLowVolFilter cfg_InpUseLowVolFilter
+#define InpVolTF cfg_InpVolTF
+#define InpVolMAPeriod cfg_InpVolMAPeriod
+#define InpLowVolFactor cfg_InpLowVolFactor
+#define InpUseSpreadMultiple cfg_InpUseSpreadMultiple
+#define InpSpreadMultiple cfg_InpSpreadMultiple
+#define InpSpreadMultipleBlockMin cfg_InpSpreadMultipleBlockMin
+#define InpUseSpreadInstability cfg_InpUseSpreadInstability
+#define InpSpreadAvgBarsH1 cfg_InpSpreadAvgBarsH1
+#define InpSpreadSpikeFactor cfg_InpSpreadSpikeFactor
+#define InpSpreadSpikeBlockMin cfg_InpSpreadSpikeBlockMin
+#define InpUseRolloverBlock cfg_InpUseRolloverBlock
+#define InpRolloverStart cfg_InpRolloverStart
+#define InpRolloverEnd cfg_InpRolloverEnd
+#define InpUseDailyTradeControl cfg_InpUseDailyTradeControl
+#define InpHardMaxTradesPerDay cfg_InpHardMaxTradesPerDay
+#define InpUseMaxDailyLossLock cfg_InpUseMaxDailyLossLock
+#define InpMaxDailyLossPct cfg_InpMaxDailyLossPct
+#define InpUseSoftEquityLock cfg_InpUseSoftEquityLock
+#define InpSoftEqTrigger1 cfg_InpSoftEqTrigger1
+#define InpSoftEqFloor1 cfg_InpSoftEqFloor1
+#define InpSoftEqTrigger2 cfg_InpSoftEqTrigger2
+#define InpSoftEqFloor2 cfg_InpSoftEqFloor2
+#define InpCooldownBarsAfterEntry cfg_InpCooldownBarsAfterEntry
+#define InpUseAntiChop cfg_InpUseAntiChop
+#define InpLossBlock2_Hours cfg_InpLossBlock2_Hours
+#define InpLossBlock3_Hours cfg_InpLossBlock3_Hours
+#define InpRiskMultAfter3Loss cfg_InpRiskMultAfter3Loss
+#define InpRiskCutAfter3Loss_H cfg_InpRiskCutAfter3Loss_H
+#define InpUseRSIAfterLoss cfg_InpUseRSIAfterLoss
+#define InpLossStreakForRSI cfg_InpLossStreakForRSI
+#define InpUsePyramiding cfg_InpUsePyramiding
+#define InpMaxAdds cfg_InpMaxAdds
+#define InpPyramidMinProfitR cfg_InpPyramidMinProfitR
+#define InpPyramidRequireMainBE cfg_InpPyramidRequireMainBE
+#define InpPyramidSpacingATR cfg_InpPyramidSpacingATR
+#define InpPyramidOnlyInTrend cfg_InpPyramidOnlyInTrend
+#define InpPyramidRequireAdxRising cfg_InpPyramidRequireAdxRising
+#define InpPyramidUsePeakDDCap cfg_InpPyramidUsePeakDDCap
+#define InpPyramidMaxPeakDDPct cfg_InpPyramidMaxPeakDDPct
+#define InpAddRiskMult1 cfg_InpAddRiskMult1
+#define InpAddRiskMult2 cfg_InpAddRiskMult2
+
 enum SkipMask
 {
    SKIP_NONE = 0,
@@ -319,6 +594,17 @@ int MinutesOfDay(datetime t)
    return dt.hour * 60 + dt.min;
 }
 
+int EffectiveNYOffsetHours()
+{
+   if(!InpAutoNYDST)
+      return InpNYOffsetHours;
+   MqlDateTime dt;
+   TimeToStruct(TimeGMT(), dt);
+   if(dt.mon >= 3 && dt.mon <= 11)
+      return InpNYOffsetSummerHours;
+   return InpNYOffsetHours;
+}
+
 int GetServerUtcOffsetSeconds()
 {
    return (int)(TimeTradeServer() - TimeGMT());
@@ -327,7 +613,7 @@ int GetServerUtcOffsetSeconds()
 datetime ToNYTime(datetime serverTime)
 {
    int serverOffset = GetServerUtcOffsetSeconds();
-   int nyOffset = InpUseManualNYOffset ? (InpNYOffsetHours * 3600) : (-5 * 3600);
+   int nyOffset = InpUseManualNYOffset ? (EffectiveNYOffsetHours() * 3600) : (-5 * 3600);
    return serverTime - serverOffset + nyOffset;
 }
 
@@ -1478,6 +1764,589 @@ bool SendOrderWithRetry(TradeDir dir, double lots, double sl, double tp, const s
    return false;
 }
 
+#undef InpUseSessionFilter
+#undef InpStartHour
+#undef InpEndHour
+#undef InpMaxSpreadPoints
+#undef InpMaxSlippagePoints
+#undef InpMaxRetries
+#undef InpRetryDelayMs
+#undef InpUseICTTime
+#undef InpUseManualNYOffset
+#undef InpNYOffsetHours
+#undef InpAutoNYDST
+#undef InpNYOffsetSummerHours
+#undef InpUseKillzoneAsia
+#undef InpUseKillzoneLondon
+#undef InpUseKillzoneNY
+#undef InpATRPeriod
+#undef InpADXPeriod
+#undef InpRSIPeriod
+#undef InpEMA_Fast
+#undef InpEMA_Slow
+#undef InpRegimeConfirmBarsH1
+#undef InpRegimeLockBarsH1
+#undef InpPivotLen
+#undef InpPivotConfirmBars
+#undef InpMaxBarsAfterBOS
+#undef InpEqToleranceATR
+#undef InpEqToleranceMinPoints
+#undef InpEqClusterMin
+#undef InpEqScanBars
+#undef InpDisplacementATR
+#undef InpDisplacementBodyRatio
+#undef InpDisplacementSearchBars
+#undef InpOBLookback
+#undef InpOBMaxAgeBars
+#undef InpOTE_HTF
+#undef InpOTE_SwingLookback
+#undef InpOTE_Min
+#undef InpOTE_Max
+#undef InpMinPDArrayDistance
+#undef InpMinPDArrayATR
+#undef InpMinPDArrayMinPoints
+#undef InpUseBreakRetest
+#undef InpRetestTolATR
+#undef InpKeyLevelStepPrice
+#undef InpKeyNearPrice
+#undef InpKeyChaseMaxDistPrice
+#undef InpUseFVGFeature
+#undef InpFVGScanBars
+#undef InpFVGMaxDistATR
+#undef InpUseFibFilter
+#undef InpFibBaseMin
+#undef InpFibBaseMax
+#undef InpFibTolPrice
+#undef InpUseOTEBonus
+#undef InpOTEMin
+#undef InpOTEMax
+#undef InpOTEBonusPoints
+#undef InpUseFootprintProxy
+#undef InpFP_VolMAPeriod
+#undef InpFP_VolSpikeRatio
+#undef InpFP_BodyMinRatio
+#undef InpFP_CloseSideMin
+#undef InpFP_AbsorpVolRatio
+#undef InpFP_AbsorpRangeATR
+#undef InpFP_RequireAcceptance
+#undef InpFP_ScoreBonus
+#undef InpUseSpikeGuard
+#undef InpSpikeMultATR
+#undef InpSL_ATR_Mult
+#undef InpSL_MinBufferPrice
+#undef InpUseMMSL
+#undef InpMMSL_Pips
+#undef InpMMSL_ExtraBufferPrice
+#undef InpTP_RR_Main
+#undef InpMinRRAllowed
+#undef InpUseTP1Partial
+#undef InpTP1_CloseFrac
+#undef InpTP1_UseKeyLevelFirst
+#undef InpUseSmartBE
+#undef InpBE_MinProfitR
+#undef InpBE_OffsetPrice
+#undef InpUseATRTrailAfterTP1
+#undef InpTrailATR_Mult
+#undef InpTrailMinImprovePrice
+#undef InpTrailOnNewBarOnly
+#undef InpBaseRiskPct
+#undef InpMaxLotCap
+#undef InpUseLowVolFilter
+#undef InpVolTF
+#undef InpVolMAPeriod
+#undef InpLowVolFactor
+#undef InpUseSpreadMultiple
+#undef InpSpreadMultiple
+#undef InpSpreadMultipleBlockMin
+#undef InpUseSpreadInstability
+#undef InpSpreadAvgBarsH1
+#undef InpSpreadSpikeFactor
+#undef InpSpreadSpikeBlockMin
+#undef InpUseRolloverBlock
+#undef InpRolloverStart
+#undef InpRolloverEnd
+#undef InpUseDailyTradeControl
+#undef InpHardMaxTradesPerDay
+#undef InpUseMaxDailyLossLock
+#undef InpMaxDailyLossPct
+#undef InpUseSoftEquityLock
+#undef InpSoftEqTrigger1
+#undef InpSoftEqFloor1
+#undef InpSoftEqTrigger2
+#undef InpSoftEqFloor2
+#undef InpCooldownBarsAfterEntry
+#undef InpUseAntiChop
+#undef InpLossBlock2_Hours
+#undef InpLossBlock3_Hours
+#undef InpRiskMultAfter3Loss
+#undef InpRiskCutAfter3Loss_H
+#undef InpUseRSIAfterLoss
+#undef InpLossStreakForRSI
+#undef InpUsePyramiding
+#undef InpMaxAdds
+#undef InpPyramidMinProfitR
+#undef InpPyramidRequireMainBE
+#undef InpPyramidSpacingATR
+#undef InpPyramidOnlyInTrend
+#undef InpPyramidRequireAdxRising
+#undef InpPyramidUsePeakDDCap
+#undef InpPyramidMaxPeakDDPct
+#undef InpAddRiskMult1
+#undef InpAddRiskMult2
+
+string PresetModeLabel(PresetMode mode);
+void LogPresetConfig();
+void LogSymbolCheck();
+
+void ApplyPreset()
+{
+   cfg_InpUseSessionFilter = InpUseSessionFilter;
+   cfg_InpStartHour = InpStartHour;
+   cfg_InpEndHour = InpEndHour;
+   cfg_InpMaxSpreadPoints = InpMaxSpreadPoints;
+   cfg_InpMaxSlippagePoints = InpMaxSlippagePoints;
+   cfg_InpMaxRetries = InpMaxRetries;
+   cfg_InpRetryDelayMs = InpRetryDelayMs;
+   cfg_InpUseICTTime = InpUseICTTime;
+   cfg_InpUseManualNYOffset = InpUseManualNYOffset;
+   cfg_InpNYOffsetHours = InpNYOffsetHours;
+   cfg_InpAutoNYDST = InpAutoNYDST;
+   cfg_InpNYOffsetSummerHours = InpNYOffsetSummerHours;
+   cfg_InpUseKillzoneAsia = InpUseKillzoneAsia;
+   cfg_InpUseKillzoneLondon = InpUseKillzoneLondon;
+   cfg_InpUseKillzoneNY = InpUseKillzoneNY;
+   cfg_InpATRPeriod = InpATRPeriod;
+   cfg_InpADXPeriod = InpADXPeriod;
+   cfg_InpRSIPeriod = InpRSIPeriod;
+   cfg_InpEMA_Fast = InpEMA_Fast;
+   cfg_InpEMA_Slow = InpEMA_Slow;
+   cfg_InpRegimeConfirmBarsH1 = InpRegimeConfirmBarsH1;
+   cfg_InpRegimeLockBarsH1 = InpRegimeLockBarsH1;
+   cfg_InpPivotLen = InpPivotLen;
+   cfg_InpPivotConfirmBars = InpPivotConfirmBars;
+   cfg_InpMaxBarsAfterBOS = InpMaxBarsAfterBOS;
+   cfg_InpEqToleranceATR = InpEqToleranceATR;
+   cfg_InpEqToleranceMinPoints = InpEqToleranceMinPoints;
+   cfg_InpEqClusterMin = InpEqClusterMin;
+   cfg_InpEqScanBars = InpEqScanBars;
+   cfg_InpDisplacementATR = InpDisplacementATR;
+   cfg_InpDisplacementBodyRatio = InpDisplacementBodyRatio;
+   cfg_InpDisplacementSearchBars = InpDisplacementSearchBars;
+   cfg_InpOBLookback = InpOBLookback;
+   cfg_InpOBMaxAgeBars = InpOBMaxAgeBars;
+   cfg_InpOTE_HTF = InpOTE_HTF;
+   cfg_InpOTE_SwingLookback = InpOTE_SwingLookback;
+   cfg_InpOTE_Min = InpOTE_Min;
+   cfg_InpOTE_Max = InpOTE_Max;
+   cfg_InpMinPDArrayDistance = InpMinPDArrayDistance;
+   cfg_InpMinPDArrayATR = InpMinPDArrayATR;
+   cfg_InpMinPDArrayMinPoints = InpMinPDArrayMinPoints;
+   cfg_InpUseBreakRetest = InpUseBreakRetest;
+   cfg_InpRetestTolATR = InpRetestTolATR;
+   cfg_InpKeyLevelStepPrice = InpKeyLevelStepPrice;
+   cfg_InpKeyNearPrice = InpKeyNearPrice;
+   cfg_InpKeyChaseMaxDistPrice = InpKeyChaseMaxDistPrice;
+   cfg_InpUseFVGFeature = InpUseFVGFeature;
+   cfg_InpFVGScanBars = InpFVGScanBars;
+   cfg_InpFVGMaxDistATR = InpFVGMaxDistATR;
+   cfg_InpUseFibFilter = InpUseFibFilter;
+   cfg_InpFibBaseMin = InpFibBaseMin;
+   cfg_InpFibBaseMax = InpFibBaseMax;
+   cfg_InpFibTolPrice = InpFibTolPrice;
+   cfg_InpUseOTEBonus = InpUseOTEBonus;
+   cfg_InpOTEMin = InpOTEMin;
+   cfg_InpOTEMax = InpOTEMax;
+   cfg_InpOTEBonusPoints = InpOTEBonusPoints;
+   cfg_InpUseFootprintProxy = InpUseFootprintProxy;
+   cfg_InpFP_VolMAPeriod = InpFP_VolMAPeriod;
+   cfg_InpFP_VolSpikeRatio = InpFP_VolSpikeRatio;
+   cfg_InpFP_BodyMinRatio = InpFP_BodyMinRatio;
+   cfg_InpFP_CloseSideMin = InpFP_CloseSideMin;
+   cfg_InpFP_AbsorpVolRatio = InpFP_AbsorpVolRatio;
+   cfg_InpFP_AbsorpRangeATR = InpFP_AbsorpRangeATR;
+   cfg_InpFP_RequireAcceptance = InpFP_RequireAcceptance;
+   cfg_InpFP_ScoreBonus = InpFP_ScoreBonus;
+   cfg_InpUseSpikeGuard = InpUseSpikeGuard;
+   cfg_InpSpikeMultATR = InpSpikeMultATR;
+   cfg_InpSL_ATR_Mult = InpSL_ATR_Mult;
+   cfg_InpSL_MinBufferPrice = InpSL_MinBufferPrice;
+   cfg_InpUseMMSL = InpUseMMSL;
+   cfg_InpMMSL_Pips = InpMMSL_Pips;
+   cfg_InpMMSL_ExtraBufferPrice = InpMMSL_ExtraBufferPrice;
+   cfg_InpTP_RR_Main = InpTP_RR_Main;
+   cfg_InpMinRRAllowed = InpMinRRAllowed;
+   cfg_InpUseTP1Partial = InpUseTP1Partial;
+   cfg_InpTP1_CloseFrac = InpTP1_CloseFrac;
+   cfg_InpTP1_UseKeyLevelFirst = InpTP1_UseKeyLevelFirst;
+   cfg_InpUseSmartBE = InpUseSmartBE;
+   cfg_InpBE_MinProfitR = InpBE_MinProfitR;
+   cfg_InpBE_OffsetPrice = InpBE_OffsetPrice;
+   cfg_InpUseATRTrailAfterTP1 = InpUseATRTrailAfterTP1;
+   cfg_InpTrailATR_Mult = InpTrailATR_Mult;
+   cfg_InpTrailMinImprovePrice = InpTrailMinImprovePrice;
+   cfg_InpTrailOnNewBarOnly = InpTrailOnNewBarOnly;
+   cfg_InpBaseRiskPct = InpBaseRiskPct;
+   cfg_InpMaxLotCap = InpMaxLotCap;
+   cfg_InpUseLowVolFilter = InpUseLowVolFilter;
+   cfg_InpVolTF = InpVolTF;
+   cfg_InpVolMAPeriod = InpVolMAPeriod;
+   cfg_InpLowVolFactor = InpLowVolFactor;
+   cfg_InpUseSpreadMultiple = InpUseSpreadMultiple;
+   cfg_InpSpreadMultiple = InpSpreadMultiple;
+   cfg_InpSpreadMultipleBlockMin = InpSpreadMultipleBlockMin;
+   cfg_InpUseSpreadInstability = InpUseSpreadInstability;
+   cfg_InpSpreadAvgBarsH1 = InpSpreadAvgBarsH1;
+   cfg_InpSpreadSpikeFactor = InpSpreadSpikeFactor;
+   cfg_InpSpreadSpikeBlockMin = InpSpreadSpikeBlockMin;
+   cfg_InpUseRolloverBlock = InpUseRolloverBlock;
+   cfg_InpRolloverStart = InpRolloverStart;
+   cfg_InpRolloverEnd = InpRolloverEnd;
+   cfg_InpUseDailyTradeControl = InpUseDailyTradeControl;
+   cfg_InpHardMaxTradesPerDay = InpHardMaxTradesPerDay;
+   cfg_InpUseMaxDailyLossLock = InpUseMaxDailyLossLock;
+   cfg_InpMaxDailyLossPct = InpMaxDailyLossPct;
+   cfg_InpUseSoftEquityLock = InpUseSoftEquityLock;
+   cfg_InpSoftEqTrigger1 = InpSoftEqTrigger1;
+   cfg_InpSoftEqFloor1 = InpSoftEqFloor1;
+   cfg_InpSoftEqTrigger2 = InpSoftEqTrigger2;
+   cfg_InpSoftEqFloor2 = InpSoftEqFloor2;
+   cfg_InpCooldownBarsAfterEntry = InpCooldownBarsAfterEntry;
+   cfg_InpUseAntiChop = InpUseAntiChop;
+   cfg_InpLossBlock2_Hours = InpLossBlock2_Hours;
+   cfg_InpLossBlock3_Hours = InpLossBlock3_Hours;
+   cfg_InpRiskMultAfter3Loss = InpRiskMultAfter3Loss;
+   cfg_InpRiskCutAfter3Loss_H = InpRiskCutAfter3Loss_H;
+   cfg_InpUseRSIAfterLoss = InpUseRSIAfterLoss;
+   cfg_InpLossStreakForRSI = InpLossStreakForRSI;
+   cfg_InpUsePyramiding = InpUsePyramiding;
+   cfg_InpMaxAdds = InpMaxAdds;
+   cfg_InpPyramidMinProfitR = InpPyramidMinProfitR;
+   cfg_InpPyramidRequireMainBE = InpPyramidRequireMainBE;
+   cfg_InpPyramidSpacingATR = InpPyramidSpacingATR;
+   cfg_InpPyramidOnlyInTrend = InpPyramidOnlyInTrend;
+   cfg_InpPyramidRequireAdxRising = InpPyramidRequireAdxRising;
+   cfg_InpPyramidUsePeakDDCap = InpPyramidUsePeakDDCap;
+   cfg_InpPyramidMaxPeakDDPct = InpPyramidMaxPeakDDPct;
+   cfg_InpAddRiskMult1 = InpAddRiskMult1;
+   cfg_InpAddRiskMult2 = InpAddRiskMult2;
+
+   if(InpPresetMode == PRESET_BALANCED || InpPresetMode == PRESET_CONSERVATIVE)
+   {
+      cfg_InpUseICTTime = true;
+      cfg_InpUseManualNYOffset = true;
+      cfg_InpNYOffsetHours = -5;
+      cfg_InpUseKillzoneAsia = false;
+      cfg_InpUseKillzoneLondon = true;
+      cfg_InpUseKillzoneNY = true;
+      cfg_InpUseSessionFilter = true;
+      cfg_InpStartHour = 6;
+      cfg_InpEndHour = 23;
+      cfg_InpMaxSpreadPoints = 35;
+      cfg_InpUseSpreadMultiple = true;
+      cfg_InpSpreadMultiple = 2.7;
+      cfg_InpSpreadMultipleBlockMin = 45;
+      cfg_InpUseSpreadInstability = true;
+      cfg_InpSpreadSpikeFactor = 1.6;
+      cfg_InpSpreadSpikeBlockMin = 60;
+      cfg_InpUseRolloverBlock = true;
+      cfg_InpRolloverStart = "23:55";
+      cfg_InpRolloverEnd = "00:15";
+      cfg_InpEqScanBars = 60;
+      cfg_InpEqClusterMin = 2;
+      cfg_InpEqToleranceATR = 0.20;
+      cfg_InpEqToleranceMinPoints = 12;
+      cfg_InpDisplacementATR = 1.25;
+      cfg_InpDisplacementBodyRatio = 0.60;
+      cfg_InpOBLookback = 14;
+      cfg_InpOBMaxAgeBars = 10;
+      cfg_InpOTE_HTF = PERIOD_H1;
+      cfg_InpOTE_SwingLookback = 72;
+      cfg_InpOTE_Min = 0.62;
+      cfg_InpOTE_Max = 0.79;
+      cfg_InpMinPDArrayDistance = 1.20;
+      cfg_InpKeyLevelStepPrice = 5.0;
+      cfg_InpKeyNearPrice = 0.45;
+      cfg_InpKeyChaseMaxDistPrice = 1.20;
+      cfg_InpUseFVGFeature = true;
+      cfg_InpFVGScanBars = 24;
+      cfg_InpFVGMaxDistATR = 1.0;
+      cfg_InpSL_ATR_Mult = 0.30;
+      cfg_InpSL_MinBufferPrice = 0.20;
+      cfg_InpUseMMSL = true;
+      cfg_InpMMSL_Pips = 35;
+      cfg_InpTP_RR_Main = 2.0;
+      cfg_InpMinRRAllowed = 1.6;
+      cfg_InpUseTP1Partial = true;
+      cfg_InpTP1_CloseFrac = 0.50;
+      cfg_InpUseSmartBE = true;
+      cfg_InpBE_MinProfitR = 1.0;
+      cfg_InpBE_OffsetPrice = 0.06;
+      cfg_InpUseATRTrailAfterTP1 = true;
+      cfg_InpTrailATR_Mult = 1.15;
+      cfg_InpTrailMinImprovePrice = 0.12;
+      cfg_InpTrailOnNewBarOnly = true;
+      cfg_InpBaseRiskPct = 1.0;
+      cfg_InpHardMaxTradesPerDay = 2;
+      cfg_InpUseMaxDailyLossLock = true;
+      cfg_InpMaxDailyLossPct = 3.0;
+      cfg_InpUseSoftEquityLock = true;
+      cfg_InpSoftEqTrigger1 = 2.0;
+      cfg_InpSoftEqFloor1 = 0.8;
+      cfg_InpSoftEqTrigger2 = 4.0;
+      cfg_InpSoftEqFloor2 = 2.0;
+      cfg_InpCooldownBarsAfterEntry = 3;
+      cfg_InpUseAntiChop = true;
+      cfg_InpLossBlock2_Hours = 6;
+      cfg_InpLossBlock3_Hours = 18;
+      cfg_InpRiskMultAfter3Loss = 0.60;
+      cfg_InpRiskCutAfter3Loss_H = 24;
+      cfg_InpUsePyramiding = false;
+
+      if(InpPresetMode == PRESET_CONSERVATIVE)
+      {
+         cfg_InpUseKillzoneAsia = false;
+         cfg_InpUseKillzoneLondon = false;
+         cfg_InpUseKillzoneNY = true;
+         cfg_InpDisplacementATR = 1.35;
+         cfg_InpEqToleranceATR = 0.18;
+         cfg_InpHardMaxTradesPerDay = 1;
+         cfg_InpBaseRiskPct = 0.7;
+      }
+   }
+
+   LogPresetConfig();
+}
+
+string PresetModeLabel(PresetMode mode)
+{
+   switch(mode)
+   {
+      case PRESET_CUSTOM:
+         return "CUSTOM";
+      case PRESET_BALANCED:
+         return "BALANCED";
+      case PRESET_CONSERVATIVE:
+         return "CONSERVATIVE";
+   }
+   return "UNKNOWN";
+}
+
+void LogPresetConfig()
+{
+   Print("Preset applied: ", PresetModeLabel(InpPresetMode));
+   if(cfg_InpUseManualNYOffset)
+   {
+      string dstNote = cfg_InpAutoNYDST ? "auto DST" : "manual DST";
+      Print("NY offset: ", cfg_InpNYOffsetHours, " (", dstNote, ", summer=", cfg_InpNYOffsetSummerHours, ")");
+   }
+
+   PrintFormat("Session: use=%s hours=%02d-%02d ICT=%s KZ(Asia/London/NY)=%s/%s/%s",
+               (cfg_InpUseSessionFilter ? "true" : "false"), cfg_InpStartHour, cfg_InpEndHour,
+               (cfg_InpUseICTTime ? "true" : "false"),
+               (cfg_InpUseKillzoneAsia ? "true" : "false"),
+               (cfg_InpUseKillzoneLondon ? "true" : "false"),
+               (cfg_InpUseKillzoneNY ? "true" : "false"));
+   PrintFormat("Execution: spreadMaxPts=%d spreadMult=%s x%.2f blockMin=%d spreadInstab=%s spikeFactor=%.2f spikeBlockMin=%d slippagePts=%d retries=%d retryDelayMs=%d",
+               cfg_InpMaxSpreadPoints, (cfg_InpUseSpreadMultiple ? "true" : "false"), cfg_InpSpreadMultiple,
+               cfg_InpSpreadMultipleBlockMin, (cfg_InpUseSpreadInstability ? "true" : "false"),
+               cfg_InpSpreadSpikeFactor, cfg_InpSpreadSpikeBlockMin, cfg_InpMaxSlippagePoints,
+               cfg_InpMaxRetries, cfg_InpRetryDelayMs);
+   PrintFormat("Indicators: ATR=%d ADX=%d RSI=%d EMA=%d/%d RegimeConfirmH1=%d RegimeLockH1=%d",
+               cfg_InpATRPeriod, cfg_InpADXPeriod, cfg_InpRSIPeriod, cfg_InpEMA_Fast, cfg_InpEMA_Slow,
+               cfg_InpRegimeConfirmBarsH1, cfg_InpRegimeLockBarsH1);
+   PrintFormat("SMC: PivotLen=%d PivotConfirm=%d MaxBarsAfterBOS=%d EqScanBars=%d EqClusterMin=%d EqTolATR=%.2f EqTolMinPts=%.2f",
+               cfg_InpPivotLen, cfg_InpPivotConfirmBars, cfg_InpMaxBarsAfterBOS,
+               cfg_InpEqScanBars, cfg_InpEqClusterMin, cfg_InpEqToleranceATR, cfg_InpEqToleranceMinPoints);
+   PrintFormat("SMC: DisplacementATR=%.2f BodyRatio=%.2f SearchBars=%d OBLookback=%d OBMaxAgeBars=%d",
+               cfg_InpDisplacementATR, cfg_InpDisplacementBodyRatio, cfg_InpDisplacementSearchBars,
+               cfg_InpOBLookback, cfg_InpOBMaxAgeBars);
+   PrintFormat("SMC: OTE_HTF=%d SwingLookback=%d OTE_Min=%.2f OTE_Max=%.2f PDArrayDist=%.2f PDArrayATR=%.2f PDArrayMinPts=%d",
+               cfg_InpOTE_HTF, cfg_InpOTE_SwingLookback, cfg_InpOTE_Min, cfg_InpOTE_Max,
+               cfg_InpMinPDArrayDistance, cfg_InpMinPDArrayATR, cfg_InpMinPDArrayMinPoints);
+   PrintFormat("Filters: BreakRetest=%s RetestTolATR=%.2f KeyStep=%.2f KeyNear=%.2f KeyChaseMax=%.2f",
+               (cfg_InpUseBreakRetest ? "true" : "false"), cfg_InpRetestTolATR,
+               cfg_InpKeyLevelStepPrice, cfg_InpKeyNearPrice, cfg_InpKeyChaseMaxDistPrice);
+   PrintFormat("FVG/Fib: FVG=%s ScanBars=%d MaxDistATR=%.2f Fib=%s BaseMin=%.2f BaseMax=%.3f FibTol=%.2f OTEBonus=%s OTE_Min=%.2f OTE_Max=%.2f BonusPts=%d",
+               (cfg_InpUseFVGFeature ? "true" : "false"), cfg_InpFVGScanBars, cfg_InpFVGMaxDistATR,
+               (cfg_InpUseFibFilter ? "true" : "false"), cfg_InpFibBaseMin, cfg_InpFibBaseMax,
+               cfg_InpFibTolPrice, (cfg_InpUseOTEBonus ? "true" : "false"),
+               cfg_InpOTEMin, cfg_InpOTEMax, cfg_InpOTEBonusPoints);
+   PrintFormat("Footprint/Spike: FP=%s VolMAPeriod=%d VolSpike=%.2f BodyMin=%.2f CloseSideMin=%.2f AbsorpVol=%.2f AbsorpRangeATR=%.2f RequireAccept=%s ScoreBonus=%d SpikeGuard=%s SpikeATR=%.2f",
+               (cfg_InpUseFootprintProxy ? "true" : "false"), cfg_InpFP_VolMAPeriod, cfg_InpFP_VolSpikeRatio,
+               cfg_InpFP_BodyMinRatio, cfg_InpFP_CloseSideMin, cfg_InpFP_AbsorpVolRatio, cfg_InpFP_AbsorpRangeATR,
+               (cfg_InpFP_RequireAcceptance ? "true" : "false"), cfg_InpFP_ScoreBonus,
+               (cfg_InpUseSpikeGuard ? "true" : "false"), cfg_InpSpikeMultATR);
+   PrintFormat("Stops/Targets: SL_ATR=%.2f SL_MinBuffer=%.2f MMSL=%s MMSL_Pips=%d MMSL_Extra=%.2f RR=%.2f MinRR=%.2f TP1=%s TP1_Close=%.2f KeyFirst=%s",
+               cfg_InpSL_ATR_Mult, cfg_InpSL_MinBufferPrice, (cfg_InpUseMMSL ? "true" : "false"),
+               cfg_InpMMSL_Pips, cfg_InpMMSL_ExtraBufferPrice, cfg_InpTP_RR_Main, cfg_InpMinRRAllowed,
+               (cfg_InpUseTP1Partial ? "true" : "false"), cfg_InpTP1_CloseFrac,
+               (cfg_InpTP1_UseKeyLevelFirst ? "true" : "false"));
+   PrintFormat("BE/Trail: SmartBE=%s MinProfitR=%.2f BE_Offset=%.2f TrailAfterTP1=%s ATR_Mult=%.2f MinImprove=%.2f NewBarOnly=%s",
+               (cfg_InpUseSmartBE ? "true" : "false"), cfg_InpBE_MinProfitR, cfg_InpBE_OffsetPrice,
+               (cfg_InpUseATRTrailAfterTP1 ? "true" : "false"), cfg_InpTrailATR_Mult,
+               cfg_InpTrailMinImprovePrice, (cfg_InpTrailOnNewBarOnly ? "true" : "false"));
+   PrintFormat("Risk/Daily: BaseRiskPct=%.2f MaxLot=%.2f DailyControl=%s MaxTrades=%d MaxDailyLoss=%s %.2f%% SoftEqLock=%s Triggers=%.2f/%.2f Floors=%.2f/%.2f CooldownBars=%d",
+               cfg_InpBaseRiskPct, cfg_InpMaxLotCap, (cfg_InpUseDailyTradeControl ? "true" : "false"),
+               cfg_InpHardMaxTradesPerDay, (cfg_InpUseMaxDailyLossLock ? "true" : "false"),
+               cfg_InpMaxDailyLossPct, (cfg_InpUseSoftEquityLock ? "true" : "false"),
+               cfg_InpSoftEqTrigger1, cfg_InpSoftEqTrigger2, cfg_InpSoftEqFloor1, cfg_InpSoftEqFloor2,
+               cfg_InpCooldownBarsAfterEntry);
+   PrintFormat("AntiChop/RSI: AntiChop=%s LossBlock2H=%d LossBlock3H=%d RiskMultAfter3=%.2f RiskCutAfter3H=%d RSIAfterLoss=%s LossStreakRSI=%d",
+               (cfg_InpUseAntiChop ? "true" : "false"), cfg_InpLossBlock2_Hours, cfg_InpLossBlock3_Hours,
+               cfg_InpRiskMultAfter3Loss, cfg_InpRiskCutAfter3Loss_H,
+               (cfg_InpUseRSIAfterLoss ? "true" : "false"), cfg_InpLossStreakForRSI);
+   PrintFormat("Pyramiding: Enable=%s MaxAdds=%d MinProfitR=%.2f RequireMainBE=%s SpacingATR=%.2f OnlyTrend=%s RequireAdxRising=%s PeakDDCap=%s MaxPeakDD=%.2f AddRiskMult=%.2f/%.2f",
+               (cfg_InpUsePyramiding ? "true" : "false"), cfg_InpMaxAdds, cfg_InpPyramidMinProfitR,
+               (cfg_InpPyramidRequireMainBE ? "true" : "false"), cfg_InpPyramidSpacingATR,
+               (cfg_InpPyramidOnlyInTrend ? "true" : "false"), (cfg_InpPyramidRequireAdxRising ? "true" : "false"),
+               (cfg_InpPyramidUsePeakDDCap ? "true" : "false"), cfg_InpPyramidMaxPeakDDPct,
+               cfg_InpAddRiskMult1, cfg_InpAddRiskMult2);
+}
+
+void LogSymbolCheck()
+{
+   string symUpper = StringUpper(g_symbol);
+   bool symbolMatch = (StringFind(symUpper, "GOLD") >= 0 || StringFind(symUpper, "XAUUSD") >= 0);
+   bool digitsOk = (g_digits == 2 && MathAbs(g_point - 0.01) <= 0.000001);
+
+   Print("Symbol check: symbol=", g_symbol, " match=", (symbolMatch ? "true" : "false"),
+         " digits=", g_digits, " point=", DoubleToString(g_point, 5));
+
+   if(!symbolMatch)
+      Print("Warning: Symbol is not GOLD/XAUUSD. Verify XM GOLD settings.");
+   if(!digitsOk)
+      Print("Warning: Unexpected digits/point. Expected digits=2 and point=0.01. Verify InpPipPrice/g_pip for XM GOLD.");
+}
+
+#define InpUseSessionFilter cfg_InpUseSessionFilter
+#define InpStartHour cfg_InpStartHour
+#define InpEndHour cfg_InpEndHour
+#define InpMaxSpreadPoints cfg_InpMaxSpreadPoints
+#define InpMaxSlippagePoints cfg_InpMaxSlippagePoints
+#define InpMaxRetries cfg_InpMaxRetries
+#define InpRetryDelayMs cfg_InpRetryDelayMs
+#define InpUseICTTime cfg_InpUseICTTime
+#define InpUseManualNYOffset cfg_InpUseManualNYOffset
+#define InpNYOffsetHours cfg_InpNYOffsetHours
+#define InpAutoNYDST cfg_InpAutoNYDST
+#define InpNYOffsetSummerHours cfg_InpNYOffsetSummerHours
+#define InpUseKillzoneAsia cfg_InpUseKillzoneAsia
+#define InpUseKillzoneLondon cfg_InpUseKillzoneLondon
+#define InpUseKillzoneNY cfg_InpUseKillzoneNY
+#define InpATRPeriod cfg_InpATRPeriod
+#define InpADXPeriod cfg_InpADXPeriod
+#define InpRSIPeriod cfg_InpRSIPeriod
+#define InpEMA_Fast cfg_InpEMA_Fast
+#define InpEMA_Slow cfg_InpEMA_Slow
+#define InpRegimeConfirmBarsH1 cfg_InpRegimeConfirmBarsH1
+#define InpRegimeLockBarsH1 cfg_InpRegimeLockBarsH1
+#define InpPivotLen cfg_InpPivotLen
+#define InpPivotConfirmBars cfg_InpPivotConfirmBars
+#define InpMaxBarsAfterBOS cfg_InpMaxBarsAfterBOS
+#define InpEqToleranceATR cfg_InpEqToleranceATR
+#define InpEqToleranceMinPoints cfg_InpEqToleranceMinPoints
+#define InpEqClusterMin cfg_InpEqClusterMin
+#define InpEqScanBars cfg_InpEqScanBars
+#define InpDisplacementATR cfg_InpDisplacementATR
+#define InpDisplacementBodyRatio cfg_InpDisplacementBodyRatio
+#define InpDisplacementSearchBars cfg_InpDisplacementSearchBars
+#define InpOBLookback cfg_InpOBLookback
+#define InpOBMaxAgeBars cfg_InpOBMaxAgeBars
+#define InpOTE_HTF cfg_InpOTE_HTF
+#define InpOTE_SwingLookback cfg_InpOTE_SwingLookback
+#define InpOTE_Min cfg_InpOTE_Min
+#define InpOTE_Max cfg_InpOTE_Max
+#define InpMinPDArrayDistance cfg_InpMinPDArrayDistance
+#define InpMinPDArrayATR cfg_InpMinPDArrayATR
+#define InpMinPDArrayMinPoints cfg_InpMinPDArrayMinPoints
+#define InpUseBreakRetest cfg_InpUseBreakRetest
+#define InpRetestTolATR cfg_InpRetestTolATR
+#define InpKeyLevelStepPrice cfg_InpKeyLevelStepPrice
+#define InpKeyNearPrice cfg_InpKeyNearPrice
+#define InpKeyChaseMaxDistPrice cfg_InpKeyChaseMaxDistPrice
+#define InpUseFVGFeature cfg_InpUseFVGFeature
+#define InpFVGScanBars cfg_InpFVGScanBars
+#define InpFVGMaxDistATR cfg_InpFVGMaxDistATR
+#define InpUseFibFilter cfg_InpUseFibFilter
+#define InpFibBaseMin cfg_InpFibBaseMin
+#define InpFibBaseMax cfg_InpFibBaseMax
+#define InpFibTolPrice cfg_InpFibTolPrice
+#define InpUseOTEBonus cfg_InpUseOTEBonus
+#define InpOTEMin cfg_InpOTEMin
+#define InpOTEMax cfg_InpOTEMax
+#define InpOTEBonusPoints cfg_InpOTEBonusPoints
+#define InpUseFootprintProxy cfg_InpUseFootprintProxy
+#define InpFP_VolMAPeriod cfg_InpFP_VolMAPeriod
+#define InpFP_VolSpikeRatio cfg_InpFP_VolSpikeRatio
+#define InpFP_BodyMinRatio cfg_InpFP_BodyMinRatio
+#define InpFP_CloseSideMin cfg_InpFP_CloseSideMin
+#define InpFP_AbsorpVolRatio cfg_InpFP_AbsorpVolRatio
+#define InpFP_AbsorpRangeATR cfg_InpFP_AbsorpRangeATR
+#define InpFP_RequireAcceptance cfg_InpFP_RequireAcceptance
+#define InpFP_ScoreBonus cfg_InpFP_ScoreBonus
+#define InpUseSpikeGuard cfg_InpUseSpikeGuard
+#define InpSpikeMultATR cfg_InpSpikeMultATR
+#define InpSL_ATR_Mult cfg_InpSL_ATR_Mult
+#define InpSL_MinBufferPrice cfg_InpSL_MinBufferPrice
+#define InpUseMMSL cfg_InpUseMMSL
+#define InpMMSL_Pips cfg_InpMMSL_Pips
+#define InpMMSL_ExtraBufferPrice cfg_InpMMSL_ExtraBufferPrice
+#define InpTP_RR_Main cfg_InpTP_RR_Main
+#define InpMinRRAllowed cfg_InpMinRRAllowed
+#define InpUseTP1Partial cfg_InpUseTP1Partial
+#define InpTP1_CloseFrac cfg_InpTP1_CloseFrac
+#define InpTP1_UseKeyLevelFirst cfg_InpTP1_UseKeyLevelFirst
+#define InpUseSmartBE cfg_InpUseSmartBE
+#define InpBE_MinProfitR cfg_InpBE_MinProfitR
+#define InpBE_OffsetPrice cfg_InpBE_OffsetPrice
+#define InpUseATRTrailAfterTP1 cfg_InpUseATRTrailAfterTP1
+#define InpTrailATR_Mult cfg_InpTrailATR_Mult
+#define InpTrailMinImprovePrice cfg_InpTrailMinImprovePrice
+#define InpTrailOnNewBarOnly cfg_InpTrailOnNewBarOnly
+#define InpBaseRiskPct cfg_InpBaseRiskPct
+#define InpMaxLotCap cfg_InpMaxLotCap
+#define InpUseLowVolFilter cfg_InpUseLowVolFilter
+#define InpVolTF cfg_InpVolTF
+#define InpVolMAPeriod cfg_InpVolMAPeriod
+#define InpLowVolFactor cfg_InpLowVolFactor
+#define InpUseSpreadMultiple cfg_InpUseSpreadMultiple
+#define InpSpreadMultiple cfg_InpSpreadMultiple
+#define InpSpreadMultipleBlockMin cfg_InpSpreadMultipleBlockMin
+#define InpUseSpreadInstability cfg_InpUseSpreadInstability
+#define InpSpreadAvgBarsH1 cfg_InpSpreadAvgBarsH1
+#define InpSpreadSpikeFactor cfg_InpSpreadSpikeFactor
+#define InpSpreadSpikeBlockMin cfg_InpSpreadSpikeBlockMin
+#define InpUseRolloverBlock cfg_InpUseRolloverBlock
+#define InpRolloverStart cfg_InpRolloverStart
+#define InpRolloverEnd cfg_InpRolloverEnd
+#define InpUseDailyTradeControl cfg_InpUseDailyTradeControl
+#define InpHardMaxTradesPerDay cfg_InpHardMaxTradesPerDay
+#define InpUseMaxDailyLossLock cfg_InpUseMaxDailyLossLock
+#define InpMaxDailyLossPct cfg_InpMaxDailyLossPct
+#define InpUseSoftEquityLock cfg_InpUseSoftEquityLock
+#define InpSoftEqTrigger1 cfg_InpSoftEqTrigger1
+#define InpSoftEqFloor1 cfg_InpSoftEqFloor1
+#define InpSoftEqTrigger2 cfg_InpSoftEqTrigger2
+#define InpSoftEqFloor2 cfg_InpSoftEqFloor2
+#define InpCooldownBarsAfterEntry cfg_InpCooldownBarsAfterEntry
+#define InpUseAntiChop cfg_InpUseAntiChop
+#define InpLossBlock2_Hours cfg_InpLossBlock2_Hours
+#define InpLossBlock3_Hours cfg_InpLossBlock3_Hours
+#define InpRiskMultAfter3Loss cfg_InpRiskMultAfter3Loss
+#define InpRiskCutAfter3Loss_H cfg_InpRiskCutAfter3Loss_H
+#define InpUseRSIAfterLoss cfg_InpUseRSIAfterLoss
+#define InpLossStreakForRSI cfg_InpLossStreakForRSI
+#define InpUsePyramiding cfg_InpUsePyramiding
+#define InpMaxAdds cfg_InpMaxAdds
+#define InpPyramidMinProfitR cfg_InpPyramidMinProfitR
+#define InpPyramidRequireMainBE cfg_InpPyramidRequireMainBE
+#define InpPyramidSpacingATR cfg_InpPyramidSpacingATR
+#define InpPyramidOnlyInTrend cfg_InpPyramidOnlyInTrend
+#define InpPyramidRequireAdxRising cfg_InpPyramidRequireAdxRising
+#define InpPyramidUsePeakDDCap cfg_InpPyramidUsePeakDDCap
+#define InpPyramidMaxPeakDDPct cfg_InpPyramidMaxPeakDDPct
+#define InpAddRiskMult1 cfg_InpAddRiskMult1
+#define InpAddRiskMult2 cfg_InpAddRiskMult2
 void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
             int dailyScore, int setup, int timing, int total, int skipMask, int entryMask,
             int retcode, int lasterr, double bosLevel, int bosAgeBars, double nearestKey,
@@ -1878,6 +2747,7 @@ void ManagePosition(double riskR)
             trade.PositionModify(ticket, newSL, tp);
       }
    }
+
 }
 
 void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
@@ -1967,8 +2837,16 @@ int OnInit()
    g_point = SymbolInfoDouble(g_symbol, SYMBOL_POINT);
    g_pip = g_point * 10.0;
 
+   ApplyPreset();
+
    trade.SetExpertMagicNumber((uint)InpMagic);
    trade.SetDeviationInPoints(InpMaxSlippagePoints);
+
+   double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
+   double tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE);
+   Print("Symbol=", g_symbol, " Digits=", g_digits, " Point=", DoubleToString(g_point, 2),
+         " TickSize=", DoubleToString(tickSize, 2), " TickValue=", DoubleToString(tickValue, 2));
+   LogSymbolCheck();
 
    UpdateDailyReset();
 
