@@ -1,0 +1,450 @@
+//@version=5
+indicator("XAUUSD Killer XM - Indicator", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// === Inputs (core logic only) ===
+entryTf = input.timeframe("15", "Entry Timeframe")
+htfTf = input.timeframe("60", "HTF (Bias/Regime)")
+
+useSessionFilter = input.bool(true, "Use Session Filter")
+startHour = input.int(6, "Session Start Hour", minval=0, maxval=23)
+endHour = input.int(23, "Session End Hour", minval=0, maxval=23)
+
+useICTTime = input.bool(true, "Use ICT Time / Killzones")
+useManualNYOffset = input.bool(true, "Manual NY Offset")
+nyOffsetHours = input.int(-5, "NY Offset Hours", minval=-12, maxval=12)
+useKillzoneAsia = input.bool(false, "Killzone Asia (20-22 NY)")
+useKillzoneLondon = input.bool(true, "Killzone London (02-05 NY)")
+useKillzoneNY = input.bool(true, "Killzone NY (07-09 NY)")
+
+atrPeriod = input.int(14, "ATR Period")
+adxPeriod = input.int(14, "ADX Period")
+rsiPeriod = input.int(14, "RSI Period")
+emaFast = input.int(50, "EMA Fast")
+emaSlow = input.int(200, "EMA Slow")
+
+regimeConfirmBarsH1 = input.int(2, "Regime Confirm Bars (H1)")
+regimeLockBarsH1 = input.int(4, "Regime Lock Bars (H1)")
+
+pivotLen = input.int(3, "Pivot Length")
+pivotConfirmBars = input.int(2, "Pivot Confirm Bars")
+maxBarsAfterBOS = input.int(6, "Max Bars After BOS")
+
+// Sweep / Displacement
+EqToleranceATR = input.float(0.25, "EQ Tolerance ATR", step=0.01)
+EqToleranceMinPoints = input.float(8, "EQ Tolerance Min Points", step=0.1)
+EqClusterMin = input.int(2, "EQ Cluster Min")
+EqScanBars = input.int(40, "EQ Scan Bars")
+DisplacementATR = input.float(1.1, "Displacement ATR", step=0.05)
+DisplacementBodyRatio = input.float(0.55, "Displacement Body Ratio", step=0.05)
+
+obLookback = input.int(10, "Order Block Lookback")
+obMaxAgeBars = input.int(12, "Order Block Max Age Bars")
+
+oteSwingLookback = input.int(48, "OTE Swing Lookback")
+oteMin = input.float(0.62, "OTE Min", step=0.01)
+oteMax = input.float(0.79, "OTE Max", step=0.01)
+
+useBreakRetest = input.bool(true, "Use Break + Retest")
+retestTolATR = input.float(0.15, "Retest Tolerance ATR", step=0.01)
+
+keyLevelStepPrice = input.float(3.0, "Key Level Step (Price)", step=0.01)
+keyNearPrice = input.float(0.35, "Key Level Near (Price)", step=0.01)
+keyChaseMaxDistPrice = input.float(0.90, "Key Chase Max Dist (Price)", step=0.01)
+
+useFVGFeature = input.bool(true, "Use FVG")
+fvgScanBars = input.int(30, "FVG Scan Bars")
+fvgMaxDistATR = input.float(1.2, "FVG Max Dist ATR", step=0.05)
+
+useFibFilter = input.bool(true, "Use Fib Filter")
+fibBaseMin = input.float(0.50, "Fib Base Min", step=0.001)
+fibBaseMax = input.float(0.618, "Fib Base Max", step=0.001)
+fibTolPrice = input.float(0.20, "Fib Tol (Price)", step=0.01)
+useOTEBonus = input.bool(true, "Use OTE Bonus")
+oteBonusMin = input.float(0.62, "OTE Bonus Min", step=0.01)
+oteBonusMax = input.float(0.79, "OTE Bonus Max", step=0.01)
+oteBonusPoints = input.int(6, "OTE Bonus Points")
+
+useFootprintProxy = input.bool(true, "Use Footprint Proxy")
+fpVolMAPeriod = input.int(48, "FP Volume MA Period")
+fpVolSpikeRatio = input.float(1.35, "FP Vol Spike Ratio", step=0.05)
+fpBodyMinRatio = input.float(0.55, "FP Body Min Ratio", step=0.05)
+fpCloseSideMin = input.float(0.65, "FP Close Side Min", step=0.05)
+fpAbsorpVolRatio = input.float(1.50, "FP Absorption Vol Ratio", step=0.05)
+fpAbsorpRangeATR = input.float(0.45, "FP Absorp Range ATR", step=0.05)
+fpRequireAcceptance = input.bool(true, "FP Require Acceptance")
+fpScoreBonus = input.int(10, "FP Score Bonus")
+
+useSpikeGuard = input.bool(true, "Use Spike Guard")
+spikeMultATR = input.float(2.5, "Spike ATR Mult", step=0.1)
+
+slAtrMult = input.float(0.25, "SL ATR Mult", step=0.01)
+slMinBufferPrice = input.float(0.15, "SL Min Buffer Price", step=0.01)
+
+useMMSL = input.bool(true, "Use MMSL")
+MMSL_Pips = input.int(35, "MMSL Pips")
+MMSL_ExtraBufferPrice = input.float(0.0, "MMSL Extra Buffer Price", step=0.01)
+
+TP_RR_Main = input.float(2.0, "TP RR Main", step=0.1)
+minRRAllowed = input.float(1.5, "Min RR Allowed", step=0.1)
+
+useRSIAfterLoss = input.bool(true, "Use RSI After Loss")
+lossStreakForRSI = input.int(1, "Loss Streak for RSI")
+
+// === Helpers ===
+point = syminfo.mintick
+pip = point * 10.0
+
+f_minutesOfDay(_time, _tz) =>
+    hour(_time, _tz) * 60 + minute(_time, _tz)
+
+f_sessionAllowed() =>
+    if not useSessionFilter
+        true
+    else
+        h = hour(time)
+        startHour <= endHour ? (h >= startHour and h <= endHour) : (h >= startHour or h <= endHour)
+
+f_killzoneActive() =>
+    if not useICTTime
+        false
+    else
+        tz = useManualNYOffset ? str.format("GMT{0}", nyOffsetHours) : "America/New_York"
+        nyMin = f_minutesOfDay(time, tz)
+        inAsia = useKillzoneAsia and nyMin >= 20 * 60 and nyMin < 22 * 60
+        inLondon = useKillzoneLondon and nyMin >= 2 * 60 and nyMin < 5 * 60
+        inNY = useKillzoneNY and nyMin >= 7 * 60 and nyMin < 9 * 60
+        inAsia or inLondon or inNY
+
+// === Multi-timeframe series ===
+entryOpen = request.security(syminfo.tickerid, entryTf, open)
+entryHigh = request.security(syminfo.tickerid, entryTf, high)
+entryLow = request.security(syminfo.tickerid, entryTf, low)
+entryClose = request.security(syminfo.tickerid, entryTf, close)
+entryVolume = request.security(syminfo.tickerid, entryTf, volume)
+
+entryOpen1 = request.security(syminfo.tickerid, entryTf, open[1])
+entryHigh1 = request.security(syminfo.tickerid, entryTf, high[1])
+entryLow1 = request.security(syminfo.tickerid, entryTf, low[1])
+entryClose1 = request.security(syminfo.tickerid, entryTf, close[1])
+
+atrEntry = request.security(syminfo.tickerid, entryTf, ta.atr(atrPeriod))
+adxHtf = request.security(syminfo.tickerid, htfTf, ta.adx(adxPeriod))
+emaFastHtf = request.security(syminfo.tickerid, htfTf, ta.ema(close, emaFast))
+emaSlowHtf = request.security(syminfo.tickerid, htfTf, ta.ema(close, emaSlow))
+closeHtf = request.security(syminfo.tickerid, htfTf, close)
+
+// === Regime (based on MQL logic) ===
+atrHtf = request.security(syminfo.tickerid, htfTf, ta.atr(atrPeriod))
+atrRel = closeHtf > 0 ? (atrHtf / closeHtf) * 100.0 : 0.0
+isExpansion = atrRel > 0.18
+bias = emaFastHtf > emaSlowHtf and closeHtf > emaFastHtf ? 1 : emaFastHtf < emaSlowHtf and closeHtf < emaFastHtf ? -1 : 0
+
+var int regime = 0
+var int regimeLock = 0
+var int regimeConfirm = 0
+
+nextRegime = isExpansion and adxHtf < 18 ? 3 : adxHtf >= 25 and bias != 0 ? 2 : adxHtf >= 18 ? 1 : 0
+isNewHtfBar = ta.change(time(htfTf))
+if isNewHtfBar
+    if regimeLock > 0
+        regimeLock -= 1
+    else if nextRegime != regime
+        regimeConfirm += 1
+        if regimeConfirm >= regimeConfirmBarsH1
+            regime := nextRegime
+            regimeConfirm := 0
+            regimeLock := regimeLockBarsH1
+    else
+        regimeConfirm := 0
+
+// === Pivot tracking (confirmed) ===
+ph = request.security(syminfo.tickerid, entryTf, ta.pivothigh(high, pivotLen, pivotLen + pivotConfirmBars))
+pl = request.security(syminfo.tickerid, entryTf, ta.pivotlow(low, pivotLen, pivotLen + pivotConfirmBars))
+
+var float lastHigh = na
+var float prevHigh = na
+var float lastLow = na
+var float prevLow = na
+
+if not na(ph)
+    prevHigh := lastHigh
+    lastHigh := ph
+
+if not na(pl)
+    prevLow := lastLow
+    lastLow := pl
+
+hasPivots = not na(lastHigh) and not na(prevHigh) and not na(lastLow) and not na(prevLow)
+
+// === Sweep detection ===
+f_findEqualCluster(isHigh) =>
+    tol = math.max(atrEntry * EqToleranceATR, EqToleranceMinPoints * point)
+    level = na
+    count = 0
+    for i = 2 to EqScanBars
+        h = request.security(syminfo.tickerid, entryTf, high[i])
+        l = request.security(syminfo.tickerid, entryTf, low[i])
+        piv = isHigh ? h : l
+        if isHigh
+            pivOk = request.security(syminfo.tickerid, entryTf, ta.pivothigh(high, pivotLen, pivotLen + pivotConfirmBars))[i] != na
+        else
+            pivOk = request.security(syminfo.tickerid, entryTf, ta.pivotlow(low, pivotLen, pivotLen + pivotConfirmBars))[i] != na
+        if pivOk
+            if count == 0
+                level := piv
+                count := 1
+            else if math.abs(piv - level) <= tol
+                count += 1
+        if count >= EqClusterMin
+            break
+    [count >= EqClusterMin, level]
+
+[sweepHighOk, eqHigh] = f_findEqualCluster(true)
+[sweepLowOk, eqLow] = f_findEqualCluster(false)
+
+sweepDir = 0
+sweepLevel = na
+if sweepHighOk and entryHigh1 > eqHigh + math.max(atrEntry * EqToleranceATR, EqToleranceMinPoints * point) and entryClose1 < eqHigh
+    sweepDir := -1
+    sweepLevel := eqHigh
+else if sweepLowOk and entryLow1 < eqLow - math.max(atrEntry * EqToleranceATR, EqToleranceMinPoints * point) and entryClose1 > eqLow
+    sweepDir := 1
+    sweepLevel := eqLow
+
+// === Displacement ===
+range1 = entryHigh1 - entryLow1
+body1 = math.abs(entryClose1 - entryOpen1)
+bodyRatio = range1 > 0 ? body1 / range1 : 0.0
+
+displacementOk = (sweepDir == 1 and entryClose1 > entryOpen1 or sweepDir == -1 and entryClose1 < entryOpen1) and
+  range1 >= atrEntry * DisplacementATR and bodyRatio >= DisplacementBodyRatio
+
+// === BOS state ===
+var float bosLevel = na
+var int bosDir = 0
+var int bosBarIndex = na
+
+if bias != 0 and hasPivots
+    curBosLevel = bias == 1 ? lastHigh : lastLow
+    closeConfirm = bias == 1 ? entryClose1 > curBosLevel : entryClose1 < curBosLevel
+    if closeConfirm
+        bosLevel := curBosLevel
+        bosDir := bias
+        bosBarIndex := bar_index
+
+bosAgeBars = na(bosBarIndex) ? na : bar_index - bosBarIndex
+bosValid = bosDir == bias and not na(bosLevel) and bosAgeBars <= maxBarsAfterBOS
+
+retestTol = math.max(atrEntry * retestTolATR, 5 * point)
+retestOk = not useBreakRetest or (bosValid and ((bias == 1 and entryLow1 <= bosLevel + retestTol and entryClose1 > bosLevel) or
+    (bias == -1 and entryHigh1 >= bosLevel - retestTol and entryClose1 < bosLevel)))
+
+// === Key level filters ===
+step = keyLevelStepPrice
+nearestKey = step > 0 ? math.round(entryClose1 / step) * step : entryClose1
+keyNearOk = math.abs(entryClose1 - nearestKey) <= keyNearPrice
+
+chaseKey = bias == 1 and nearestKey > entryClose1 ? nearestKey - step : bias == -1 and nearestKey < entryClose1 ? nearestKey + step : nearestKey
+antiChaseOk = bias == 1 ? (entryClose1 - chaseKey <= keyChaseMaxDistPrice) : bias == -1 ? (chaseKey - entryClose1 <= keyChaseMaxDistPrice) : false
+
+// === FVG ===
+fvgDir = 0
+zoneMid = na
+if useFVGFeature
+    bestDist = 10e10
+    for i = 1 to fvgScanBars
+        low_i = request.security(syminfo.tickerid, entryTf, low[i])
+        high_i = request.security(syminfo.tickerid, entryTf, high[i])
+        low_i2 = request.security(syminfo.tickerid, entryTf, low[i + 2])
+        high_i2 = request.security(syminfo.tickerid, entryTf, high[i + 2])
+        if low_i > high_i2
+            mid = (low_i + high_i2) / 2.0
+            dist = math.abs(entryClose1 - mid)
+            if dist < bestDist
+                bestDist := dist
+                fvgDir := 1
+                zoneMid := mid
+        if high_i < low_i2
+            mid = (high_i + low_i2) / 2.0
+            dist = math.abs(entryClose1 - mid)
+            if dist < bestDist
+                bestDist := dist
+                fvgDir := -1
+                zoneMid := mid
+
+fvgOk = not useFVGFeature or (fvgDir == bias and math.abs(entryClose1 - zoneMid) <= atrEntry * fvgMaxDistATR)
+
+// === Fib / OTE ===
+oteBonus = false
+fibOk = true
+if useFibFilter and hasPivots
+    range = math.abs(lastHigh - lastLow)
+    if range > 0
+        lvl50 = bias == 1 ? lastHigh - range * fibBaseMin : lastLow + range * fibBaseMin
+        lvl618 = bias == 1 ? lastHigh - range * fibBaseMax : lastLow + range * fibBaseMax
+        minLvl = math.min(lvl50, lvl618) - fibTolPrice
+        maxLvl = math.max(lvl50, lvl618) + fibTolPrice
+        fibOk := entryClose1 >= minLvl and entryClose1 <= maxLvl
+        if useOTEBonus
+            otemin = bias == 1 ? lastHigh - range * oteBonusMax : lastLow + range * oteBonusMin
+            otemax = bias == 1 ? lastHigh - range * oteBonusMin : lastLow + range * oteBonusMax
+            omin = math.min(otemin, otemax)
+            omax = math.max(otemin, otemax)
+            oteBonus := entryClose1 >= omin and entryClose1 <= omax
+    else
+        fibOk := false
+
+// === OTE (HTF) ===
+htfHigh = request.security(syminfo.tickerid, htfTf, ta.highest(high, oteSwingLookback))
+htfLow = request.security(syminfo.tickerid, htfTf, ta.lowest(low, oteSwingLookback))
+
+oteOk = false
+if htfHigh > htfLow
+    rangeHtf = htfHigh - htfLow
+    if bias == 1
+        oMin = htfHigh - rangeHtf * oteMax
+        oMax = htfHigh - rangeHtf * oteMin
+        oteOk := entryClose1 >= oMin and entryClose1 <= oMax and entryClose1 <= (htfHigh - rangeHtf * 0.5)
+    else if bias == -1
+        oMin = htfLow + rangeHtf * oteMin
+        oMax = htfLow + rangeHtf * oteMax
+        oteOk := entryClose1 >= oMin and entryClose1 <= oMax and entryClose1 >= (htfLow + rangeHtf * 0.5)
+
+// === Footprint proxy ===
+volMA = request.security(syminfo.tickerid, entryTf, ta.sma(volume, fpVolMAPeriod))
+volRatio = volMA > 0 ? entryVolume / volMA : 0.0
+closeSide = range1 > 0 ? (bias == 1 ? (entryClose1 - entryLow1) / range1 : 1.0 - (entryClose1 - entryLow1) / range1) : 0.5
+acceptance = volRatio >= fpVolSpikeRatio and bodyRatio >= fpBodyMinRatio and closeSide >= fpCloseSideMin
+absorption = volRatio >= fpAbsorpVolRatio and range1 <= atrEntry * fpAbsorpRangeATR and closeSide < 0.55
+footprintOk = not useFootprintProxy or (fpRequireAcceptance ? (acceptance and not absorption) : not absorption)
+
+// === Spike guard ===
+spikeOk = not useSpikeGuard or (range1 <= atrEntry * spikeMultATR)
+
+// === RSI after loss ===
+var int lossStreak = 0
+rsi1 = request.security(syminfo.tickerid, entryTf, ta.rsi(close, rsiPeriod))[1]
+rsi2 = request.security(syminfo.tickerid, entryTf, ta.rsi(close, rsiPeriod))[2]
+
+rsiAfterLossOk = true
+if useRSIAfterLoss and lossStreak >= lossStreakForRSI
+    rsiAfterLossOk := bias == 1 ? (rsi1 >= 52 and rsi1 > rsi2) : bias == -1 ? (rsi1 <= 48 and rsi1 < rsi2) : false
+
+// === Order block ===
+obHigh = na
+obLow = na
+obAge = na
+if hasPivots
+    for i = 2 to obLookback
+        o = request.security(syminfo.tickerid, entryTf, open[i])
+        c = request.security(syminfo.tickerid, entryTf, close[i])
+        opp = bias == 1 ? c < o : c > o
+        if opp
+            obHigh := request.security(syminfo.tickerid, entryTf, high[i])
+            obLow := request.security(syminfo.tickerid, entryTf, low[i])
+            obAge := i
+            break
+
+obOk = not na(obHigh) and not na(obLow) and obAge <= obMaxAgeBars and entryClose1 >= obLow and entryClose1 <= obHigh
+
+// === Entry scoring ===
+setupScore = 0
+if bias != 0
+    setupScore += 20
+if useICTTime and f_killzoneActive()
+    setupScore += 5
+if sweepDir == bias
+    setupScore += 10
+if displacementOk
+    setupScore += 10
+if hasPivots and ((bias == 1 and lastLow > prevLow) or (bias == -1 and lastHigh < prevHigh))
+    setupScore += 10
+if fvgOk
+    setupScore += 5
+if fibOk
+    setupScore += 10
+if oteBonus
+    setupScore += oteBonusPoints
+if oteOk
+    setupScore += 10
+if obOk
+    setupScore += 10
+
+// === Timing score ===
+timingScore = 0
+if useICTTime and f_killzoneActive()
+    timingScore += 5
+if (bias == 1 and entryClose1 > (hasPivots ? lastHigh : entryClose1)) or (bias == -1 and entryClose1 < (hasPivots ? lastLow : entryClose1))
+    timingScore += 10
+if acceptance
+    timingScore += fpScoreBonus
+
+// Total score gates
+setupMin = 50
+timingMin = 15
+totalMinBase = 68
+
+regimeAdj = regime == 1 ? 3 : regime == 3 ? 8 : 0
+lossAdj = lossStreak == 1 ? 5 : lossStreak >= 2 ? 10 : 0
+
+shouldEnter = setupScore >= setupMin and timingScore >= timingMin and (setupScore + timingScore) >= (totalMinBase + regimeAdj + lossAdj)
+
+// === Entry conditions (same gate order) ===
+entryOk = bias != 0 and f_sessionAllowed() and (not useICTTime or f_killzoneActive()) and
+  sweepDir == bias and displacementOk and hasPivots and
+  ((bias == 1 and lastLow > prevLow) or (bias == -1 and lastHigh < prevHigh)) and
+  ((bias == 1 and entryClose1 > lastHigh) or (bias == -1 and entryClose1 < lastLow)) and
+  (retestOk or (bias == 1 and entryClose1 > bosLevel) or (bias == -1 and entryClose1 < bosLevel)) and
+  keyNearOk and antiChaseOk and fvgOk and fibOk and oteOk and footprintOk and spikeOk and rsiAfterLossOk and obOk and
+  shouldEnter
+
+// === Trade simulation for exit labels ===
+var bool inTrade = false
+var int tradeDir = 0
+var float entryPrice = na
+var float slPrice = na
+var float tpPrice = na
+
+longEntry = entryOk and bias == 1 and not inTrade
+shortEntry = entryOk and bias == -1 and not inTrade
+
+if longEntry
+    entryPrice := entryClose1
+    buffer = math.max(slMinBufferPrice, atrEntry * slAtrMult)
+    slPrice := lastLow - buffer
+    riskR = math.abs(entryPrice - slPrice)
+    tpPrice := entryPrice + riskR * TP_RR_Main
+    mmsl = MMSL_Pips * pip + MMSL_ExtraBufferPrice
+    mmslOk = not useMMSL or riskR >= mmsl
+    rrOk = (math.abs(tpPrice - entryPrice) / riskR) >= minRRAllowed
+    if mmslOk and rrOk
+        inTrade := true
+        tradeDir := 1
+
+if shortEntry
+    entryPrice := entryClose1
+    buffer = math.max(slMinBufferPrice, atrEntry * slAtrMult)
+    slPrice := lastHigh + buffer
+    riskR = math.abs(entryPrice - slPrice)
+    tpPrice := entryPrice - riskR * TP_RR_Main
+    mmsl = MMSL_Pips * pip + MMSL_ExtraBufferPrice
+    mmslOk = not useMMSL or riskR >= mmsl
+    rrOk = (math.abs(tpPrice - entryPrice) / riskR) >= minRRAllowed
+    if mmslOk and rrOk
+        inTrade := true
+        tradeDir := -1
+
+exitLong = inTrade and tradeDir == 1 and (entryLow <= slPrice or entryHigh >= tpPrice)
+exitShort = inTrade and tradeDir == -1 and (entryHigh >= slPrice or entryLow <= tpPrice)
+
+exitIsLoss = (exitLong and entryLow <= slPrice) or (exitShort and entryHigh >= slPrice)
+
+if exitLong or exitShort
+    inTrade := false
+    tradeDir := 0
+    lossStreak := exitIsLoss ? lossStreak + 1 : 0
+
+// === Plots ===
+plotshape(longEntry, title="Buy Entry", style=shape.labelup, text="BUY", color=color.new(color.green, 0), textcolor=color.white, size=size.tiny)
+plotshape(shortEntry, title="Sell Entry", style=shape.labeldown, text="SELL", color=color.new(color.red, 0), textcolor=color.white, size=size.tiny)
+plotshape(exitLong or exitShort, title="Exit", style=shape.labeldown, text=exitIsLoss ? "SL" : "TP", color=exitIsLoss ? color.new(color.red, 0) : color.new(color.green, 0), textcolor=color.white, size=size.tiny)
