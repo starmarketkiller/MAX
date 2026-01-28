@@ -2,6 +2,13 @@
 //|                                     XAUUSD Killer XM (MT5)       |
 //|   Trend-follow + SMC light - production-safe single file EA      |
 //|                                                                  |
+//| FIXES                                                           |
+//| - Normalize pip/point/tick handling across FX/JPY/indices.       |
+//| - Harden symbol profile detection for XM index variants.         |
+//| - Convert GOLD-tuned distances to profile-aware points.          |
+//| - Fix index key-step units and volume step rounding.             |
+//| - Add tickSize/pipSize to logs and sanity warnings.              |
+//|                                                                  |
 //| CHANGELOG                                                       |
 //| - Added ICT/SMC modules: NY killzones, PD arrays, liquidity      |
 //|   sweeps, displacement, MSS/BOS, order blocks + RTO/MT, and OTE  |
@@ -47,7 +54,7 @@ input PresetMode InpPresetMode = PRESET_CUSTOM;
 
 input string InpSymbolOverride = "";
 input long   InpMagic = 3011;
-input double InpPipPrice = 0.10; // if 0 -> auto Point*10
+input double InpPipPrice = 0.10; // if 0 -> auto pip size (FX/JPY/indices)
 input int    InpMaxSpreadPoints = 35;
 input int    InpMaxSlippagePoints = 35;
 input int    InpMaxRetries = 2;
@@ -215,6 +222,12 @@ input string InpCSVName = "xauusd_killer_v314_xm_gold.csv";
 const int SETUP_MIN = 50;
 const int TIMING_MIN = 15;
 const int TOTAL_MIN = 68;
+
+// XM suggested starting inputs (not optimized; adjust per broker/spread):
+// Profile   | MaxSpreadPts | MaxSlippagePts | SpreadMultiple | SpreadSpikeFactor | Rollover  | Session
+// FX majors | 25-35        | 30-40          | 2.5-3.0        | 1.5-1.8           | 23:55-00:15 | 06-23
+// FX JPY    | 25-40        | 30-50          | 2.5-3.0        | 1.5-1.8           | 23:55-00:15 | 06-23
+// Indices   | 80-150       | 80-150         | 2.0-2.5        | 1.4-1.7           | 23:55-00:15 | 06-23
 
 string g_symbol = "";
 int g_digits = 2;
@@ -485,8 +498,12 @@ SymbolProfile DetectSymbolProfile(const string symbol)
    string symUpper = StringUpper(symbol);
    if(StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0)
       return PROFILE_FX_MAJORS_5DIG;
-   string indexTokens[] = {"US30", "DJ30", "US30CASH", "NAS100", "US100", "NAS", "SPX500", "US500", "SP500",
-                           "GER40", "DE40", "DAX", "DAX40", "FTSEMIB", "ITA40", "FTSE", "UK100"};
+   string indexTokens[] = {"US30", "DJ30", "WS30", "US30CASH",
+                           "NAS100", "USTEC", "US100", "NAS",
+                           "SPX500", "US500", "SP500",
+                           "GER40", "DE40", "DAX", "DAX40",
+                           "FTSEMIB", "FTSE_MIB", "ITA40",
+                           "UK100", "FTSE"};
    if(ContainsAny(symUpper, indexTokens))
       return PROFILE_INDICES;
    if(StringFind(symUpper, "JPY") >= 0)
@@ -551,6 +568,23 @@ double PipPrice()
    if(cfg_InpPipPrice > 0.0)
       return cfg_InpPipPrice;
    return g_pip;
+}
+
+double AutoPipSize(bool useOverride)
+{
+   if(useOverride && cfg_InpPipPrice > 0.0)
+      return cfg_InpPipPrice;
+
+   if(g_profile == PROFILE_INDICES)
+   {
+      double tickSize = TickSize();
+      return (tickSize > 0.0) ? tickSize : 1.0;
+   }
+
+   if(g_digits == 3 || g_digits == 5)
+      return g_point * 10.0;
+
+   return g_point;
 }
 
 double SpreadPoints()
@@ -1717,11 +1751,19 @@ double TickValue()
    return tickValue;
 }
 
+double TickSize()
+{
+   double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
+   if(tickSize <= 0.0)
+      tickSize = g_point;
+   return tickSize;
+}
+
 double CalcLots(double slDist, double riskPct)
 {
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
    double riskMoney = equity * (riskPct / 100.0);
-   double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
+   double tickSize = TickSize();
    double tickValue = TickValue();
    if(tickSize <= 0.0 || tickValue <= 0.0 || slDist <= 0.0)
       return 0.0;
@@ -1749,7 +1791,14 @@ double NormalizeVolumeByStep(double volume)
    double step = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_STEP);
    double vol = MathMin(maxLot, MathMax(minLot, volume));
    vol = MathFloor(vol / step) * step;
-   return NormalizeDouble(vol, 2);
+   int decimals = 0;
+   double scaled = step;
+   while(decimals < 8 && MathAbs(scaled - MathRound(scaled)) > 1e-8)
+   {
+      scaled *= 10.0;
+      decimals++;
+   }
+   return NormalizeDouble(vol, decimals);
 }
 
 bool StopsOk(TradeDir dir, double entry, double sl, double tp)
@@ -1834,20 +1883,10 @@ string PresetModeLabel(PresetMode mode);
 void LogPresetConfig();
 void LogSymbolCheck();
 
-double GoldPriceToPips(double price)
-{
-   return price / 0.10;
-}
-
-double GoldPointsToPips(double points)
-{
-   return points / 10.0;
-}
-
 double IndexKeyStepPoints()
 {
    string symUpper = StringUpper(g_symbol);
-   if(StringFind(symUpper, "US30") >= 0 || StringFind(symUpper, "DJ30") >= 0)
+   if(StringFind(symUpper, "US30") >= 0 || StringFind(symUpper, "DJ30") >= 0 || StringFind(symUpper, "WS30") >= 0)
       return 100.0;
    return 50.0;
 }
@@ -1872,7 +1911,7 @@ void ApplyProfileDefaults()
 
    if(g_profile == PROFILE_INDICES)
    {
-      cfg_KeyLevelStepPoints = PointsFromPrice(IndexKeyStepPoints());
+      cfg_KeyLevelStepPoints = IndexKeyStepPoints();
       cfg_KeyNearPoints = PointsFromPrice(5.0);
    }
    else
@@ -1882,36 +1921,36 @@ void ApplyProfileDefaults()
    }
    cfg_KeyChaseMaxDistPoints = cfg_KeyLevelStepPoints * 0.30;
 
-   double slPips = GoldPriceToPips(cfg_InpSL_MinBufferPrice);
-   double bePips = GoldPriceToPips(cfg_InpBE_OffsetPrice);
-   double trailPips = GoldPriceToPips(cfg_InpTrailMinImprovePrice);
-   double fibPips = GoldPriceToPips(cfg_InpFibTolPrice);
-   double pdPips = GoldPriceToPips(cfg_InpMinPDArrayDistance);
-   double mmslExtraPips = GoldPriceToPips(cfg_InpMMSL_ExtraBufferPrice);
-   double eqTolPips = GoldPointsToPips(cfg_InpEqToleranceMinPoints);
-   double pdMinPips = GoldPointsToPips(cfg_InpMinPDArrayMinPoints);
+   double slEquiv = cfg_InpSL_MinBufferPrice / 0.10;
+   double beEquiv = cfg_InpBE_OffsetPrice / 0.10;
+   double trailEquiv = cfg_InpTrailMinImprovePrice / 0.10;
+   double fibEquiv = cfg_InpFibTolPrice / 0.10;
+   double pdEquiv = cfg_InpMinPDArrayDistance / 0.10;
+   double mmslExtraEquiv = cfg_InpMMSL_ExtraBufferPrice / 0.10;
+   double eqTolEquiv = cfg_InpEqToleranceMinPoints / 10.0;
+   double pdMinEquiv = cfg_InpMinPDArrayMinPoints / 10.0;
 
    if(g_profile == PROFILE_INDICES)
    {
-      cfg_SL_MinBufferPoints = PointsFromPrice(slPips);
-      cfg_MMSL_ExtraBufferPoints = PointsFromPrice(mmslExtraPips);
-      cfg_BE_OffsetPoints = PointsFromPrice(bePips);
-      cfg_TrailMinImprovePoints = PointsFromPrice(trailPips);
-      cfg_FibTolPoints = PointsFromPrice(fibPips);
-      cfg_EqToleranceMinPoints = PointsFromPrice(eqTolPips);
-      cfg_MinPDArrayDistancePoints = PointsFromPrice(pdPips);
-      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPrice(pdMinPips));
+      cfg_SL_MinBufferPoints = PointsFromPrice(slEquiv);
+      cfg_MMSL_ExtraBufferPoints = PointsFromPrice(mmslExtraEquiv);
+      cfg_BE_OffsetPoints = PointsFromPrice(beEquiv);
+      cfg_TrailMinImprovePoints = PointsFromPrice(trailEquiv);
+      cfg_FibTolPoints = PointsFromPrice(fibEquiv);
+      cfg_EqToleranceMinPoints = MathRound(PointsFromPrice(eqTolEquiv));
+      cfg_MinPDArrayDistancePoints = PointsFromPrice(pdEquiv);
+      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPrice(pdMinEquiv));
    }
    else
    {
-      cfg_SL_MinBufferPoints = PointsFromPips(slPips);
-      cfg_MMSL_ExtraBufferPoints = PointsFromPips(mmslExtraPips);
-      cfg_BE_OffsetPoints = PointsFromPips(bePips);
-      cfg_TrailMinImprovePoints = PointsFromPips(trailPips);
-      cfg_FibTolPoints = PointsFromPips(fibPips);
-      cfg_EqToleranceMinPoints = PointsFromPips(eqTolPips);
-      cfg_MinPDArrayDistancePoints = PointsFromPips(pdPips);
-      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPips(pdMinPips));
+      cfg_SL_MinBufferPoints = PointsFromPips(slEquiv);
+      cfg_MMSL_ExtraBufferPoints = PointsFromPips(mmslExtraEquiv);
+      cfg_BE_OffsetPoints = PointsFromPips(beEquiv);
+      cfg_TrailMinImprovePoints = PointsFromPips(trailEquiv);
+      cfg_FibTolPoints = PointsFromPips(fibEquiv);
+      cfg_EqToleranceMinPoints = MathRound(PointsFromPips(eqTolEquiv));
+      cfg_MinPDArrayDistancePoints = PointsFromPips(pdEquiv);
+      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPips(pdMinEquiv));
    }
 }
 
@@ -2137,10 +2176,7 @@ void ApplyPreset()
       }
    }
 
-   if(cfg_InpPipPrice > 0.0)
-      g_pip = cfg_InpPipPrice;
-   else
-      g_pip = (g_profile == PROFILE_INDICES) ? 1.0 : g_point * 10.0;
+   g_pip = AutoPipSize(true);
 
    ApplyProfileDefaults();
    LogPresetConfig();
@@ -2163,8 +2199,8 @@ string PresetModeLabel(PresetMode mode)
 void LogPresetConfig()
 {
    Print("Preset applied: ", PresetModeLabel(cfg_InpPresetMode));
-   PrintFormat("Profile: %s Symbol=%s Point=%.5f Pip=%.5f",
-               ProfileName(g_profile), g_symbol, g_point, g_pip);
+   PrintFormat("Profile: %s Symbol=%s Point=%.5f Pip=%.5f TickSize=%.5f",
+               ProfileName(g_profile), g_symbol, g_point, g_pip, TickSize());
    if(cfg_InpUseManualNYOffset)
    {
       string dstNote = cfg_InpAutoNYDST ? "auto DST" : "manual DST";
@@ -2239,9 +2275,12 @@ void LogSymbolCheck()
    string symUpper = StringUpper(g_symbol);
    bool symbolMatch = (StringFind(symUpper, "GOLD") >= 0 || StringFind(symUpper, "XAU") >= 0);
    bool digitsOk = (g_digits == 2 && MathAbs(g_point - 0.01) <= 0.000001);
+   double tickSize = TickSize();
+   double expectedPip = AutoPipSize(false);
 
    Print("Symbol check: symbol=", g_symbol, " profile=", ProfileName(g_profile),
-         " digits=", g_digits, " point=", DoubleToString(g_point, 5), " pip=", DoubleToString(g_pip, 5));
+         " digits=", g_digits, " point=", DoubleToString(g_point, 5),
+         " pip=", DoubleToString(g_pip, 5), " tickSize=", DoubleToString(tickSize, 5));
 
    if(g_isGoldSymbol)
    {
@@ -2250,6 +2289,11 @@ void LogSymbolCheck()
       if(!digitsOk)
          Print("Warning: Unexpected digits/point for GOLD. Expected digits=2 and point=0.01. Verify cfg_InpPipPrice/g_pip.");
    }
+
+   if(tickSize > 0.0 && MathAbs(tickSize - g_point) > 1e-7)
+      Print("Warning: TickSize differs from Point. Using tickSize for risk math where applicable.");
+   if(cfg_InpPipPrice <= 0.0 && MathAbs(g_pip - expectedPip) > 1e-7)
+      Print("Warning: Auto pip size differs from expected calculation. Check symbol digits/override.");
 }
 
 void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
@@ -2271,7 +2315,7 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
 
    if(FileSize(handle) == 0)
    {
-      FileWrite(handle, "time", "sym", "profile", "point", "pip", "magic", "event", "dir", "entry", "sl", "tp", "tp1", "lot", "spreadPts",
+      FileWrite(handle, "time", "sym", "profile", "point", "pipSize", "tickSize", "magic", "event", "dir", "entry", "sl", "tp", "tp1", "lot", "spreadPts",
                 "reg", "bias", "adx", "atrM15", "atrH1", "dailyScore", "lossStreak", "skipMask", "entryMask",
                 "setup", "timing", "total", "retcode", "lasterr", "spreadEma", "spreadNow",
                 "stopsLevelPts", "freezeLevelPts", "bosLevel", "bosAgeBars", "nearestKey", "tp1Price",
@@ -2296,6 +2340,7 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
              ProfileName(g_profile),
              DoubleToString(g_point, 5),
              DoubleToString(g_pip, 5),
+             DoubleToString(TickSize(), 5),
              (string)cfg_InpMagic,
              event,
              (int)dir,
@@ -2749,17 +2794,17 @@ int OnInit()
    g_point = SymbolInfoDouble(g_symbol, SYMBOL_POINT);
    g_isGoldSymbol = IsGoldSymbol(g_symbol);
    g_profile = DetectSymbolProfile(g_symbol);
-   g_pip = g_point * 10.0;
 
    ApplyPreset();
 
    trade.SetExpertMagicNumber((uint)cfg_InpMagic);
    trade.SetDeviationInPoints(cfg_InpMaxSlippagePoints);
 
-   double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
+   double tickSize = TickSize();
    double tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE);
-   Print("Symbol=", g_symbol, " Digits=", g_digits, " Point=", DoubleToString(g_point, 2),
-         " TickSize=", DoubleToString(tickSize, 2), " TickValue=", DoubleToString(tickValue, 2));
+   Print("Symbol=", g_symbol, " Digits=", g_digits, " Point=", DoubleToString(g_point, 5),
+         " Pip=", DoubleToString(g_pip, 5), " TickSize=", DoubleToString(tickSize, 5),
+         " TickValue=", DoubleToString(tickValue, 2));
    LogSymbolCheck();
 
    UpdateDailyReset();
