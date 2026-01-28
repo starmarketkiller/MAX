@@ -36,6 +36,13 @@ enum PresetMode
    PRESET_CONSERVATIVE = 2
 };
 
+enum SymbolProfile
+{
+   PROFILE_FX_MAJORS_5DIG = 0,
+   PROFILE_FX_JPY_3DIG = 1,
+   PROFILE_INDICES = 2
+};
+
 input PresetMode InpPresetMode = PRESET_CUSTOM;
 
 input string InpSymbolOverride = "";
@@ -213,11 +220,17 @@ string g_symbol = "";
 int g_digits = 2;
 double g_point = 0.01;
 double g_pip = 0.10;
+SymbolProfile g_profile = PROFILE_FX_MAJORS_5DIG;
+bool g_isGoldSymbol = false;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
 
 // Runtime config (preset-applied)
+PresetMode cfg_InpPresetMode;
+string cfg_InpSymbolOverride;
+long cfg_InpMagic;
+double cfg_InpPipPrice;
 bool cfg_InpUseSessionFilter;
 int cfg_InpStartHour;
 int cfg_InpEndHour;
@@ -347,136 +360,20 @@ bool cfg_InpPyramidUsePeakDDCap;
 double cfg_InpPyramidMaxPeakDDPct;
 double cfg_InpAddRiskMult1;
 double cfg_InpAddRiskMult2;
+bool cfg_InpEnableCSV;
+string cfg_InpCSVName;
 
-#define InpUseSessionFilter cfg_InpUseSessionFilter
-#define InpStartHour cfg_InpStartHour
-#define InpEndHour cfg_InpEndHour
-#define InpMaxSpreadPoints cfg_InpMaxSpreadPoints
-#define InpMaxSlippagePoints cfg_InpMaxSlippagePoints
-#define InpMaxRetries cfg_InpMaxRetries
-#define InpRetryDelayMs cfg_InpRetryDelayMs
-#define InpUseICTTime cfg_InpUseICTTime
-#define InpUseManualNYOffset cfg_InpUseManualNYOffset
-#define InpNYOffsetHours cfg_InpNYOffsetHours
-#define InpAutoNYDST cfg_InpAutoNYDST
-#define InpNYOffsetSummerHours cfg_InpNYOffsetSummerHours
-#define InpUseKillzoneAsia cfg_InpUseKillzoneAsia
-#define InpUseKillzoneLondon cfg_InpUseKillzoneLondon
-#define InpUseKillzoneNY cfg_InpUseKillzoneNY
-#define InpATRPeriod cfg_InpATRPeriod
-#define InpADXPeriod cfg_InpADXPeriod
-#define InpRSIPeriod cfg_InpRSIPeriod
-#define InpEMA_Fast cfg_InpEMA_Fast
-#define InpEMA_Slow cfg_InpEMA_Slow
-#define InpRegimeConfirmBarsH1 cfg_InpRegimeConfirmBarsH1
-#define InpRegimeLockBarsH1 cfg_InpRegimeLockBarsH1
-#define InpPivotLen cfg_InpPivotLen
-#define InpPivotConfirmBars cfg_InpPivotConfirmBars
-#define InpMaxBarsAfterBOS cfg_InpMaxBarsAfterBOS
-#define InpEqToleranceATR cfg_InpEqToleranceATR
-#define InpEqToleranceMinPoints cfg_InpEqToleranceMinPoints
-#define InpEqClusterMin cfg_InpEqClusterMin
-#define InpEqScanBars cfg_InpEqScanBars
-#define InpDisplacementATR cfg_InpDisplacementATR
-#define InpDisplacementBodyRatio cfg_InpDisplacementBodyRatio
-#define InpDisplacementSearchBars cfg_InpDisplacementSearchBars
-#define InpOBLookback cfg_InpOBLookback
-#define InpOBMaxAgeBars cfg_InpOBMaxAgeBars
-#define InpOTE_HTF cfg_InpOTE_HTF
-#define InpOTE_SwingLookback cfg_InpOTE_SwingLookback
-#define InpOTE_Min cfg_InpOTE_Min
-#define InpOTE_Max cfg_InpOTE_Max
-#define InpMinPDArrayDistance cfg_InpMinPDArrayDistance
-#define InpMinPDArrayATR cfg_InpMinPDArrayATR
-#define InpMinPDArrayMinPoints cfg_InpMinPDArrayMinPoints
-#define InpUseBreakRetest cfg_InpUseBreakRetest
-#define InpRetestTolATR cfg_InpRetestTolATR
-#define InpKeyLevelStepPrice cfg_InpKeyLevelStepPrice
-#define InpKeyNearPrice cfg_InpKeyNearPrice
-#define InpKeyChaseMaxDistPrice cfg_InpKeyChaseMaxDistPrice
-#define InpUseFVGFeature cfg_InpUseFVGFeature
-#define InpFVGScanBars cfg_InpFVGScanBars
-#define InpFVGMaxDistATR cfg_InpFVGMaxDistATR
-#define InpUseFibFilter cfg_InpUseFibFilter
-#define InpFibBaseMin cfg_InpFibBaseMin
-#define InpFibBaseMax cfg_InpFibBaseMax
-#define InpFibTolPrice cfg_InpFibTolPrice
-#define InpUseOTEBonus cfg_InpUseOTEBonus
-#define InpOTEMin cfg_InpOTEMin
-#define InpOTEMax cfg_InpOTEMax
-#define InpOTEBonusPoints cfg_InpOTEBonusPoints
-#define InpUseFootprintProxy cfg_InpUseFootprintProxy
-#define InpFP_VolMAPeriod cfg_InpFP_VolMAPeriod
-#define InpFP_VolSpikeRatio cfg_InpFP_VolSpikeRatio
-#define InpFP_BodyMinRatio cfg_InpFP_BodyMinRatio
-#define InpFP_CloseSideMin cfg_InpFP_CloseSideMin
-#define InpFP_AbsorpVolRatio cfg_InpFP_AbsorpVolRatio
-#define InpFP_AbsorpRangeATR cfg_InpFP_AbsorpRangeATR
-#define InpFP_RequireAcceptance cfg_InpFP_RequireAcceptance
-#define InpFP_ScoreBonus cfg_InpFP_ScoreBonus
-#define InpUseSpikeGuard cfg_InpUseSpikeGuard
-#define InpSpikeMultATR cfg_InpSpikeMultATR
-#define InpSL_ATR_Mult cfg_InpSL_ATR_Mult
-#define InpSL_MinBufferPrice cfg_InpSL_MinBufferPrice
-#define InpUseMMSL cfg_InpUseMMSL
-#define InpMMSL_Pips cfg_InpMMSL_Pips
-#define InpMMSL_ExtraBufferPrice cfg_InpMMSL_ExtraBufferPrice
-#define InpTP_RR_Main cfg_InpTP_RR_Main
-#define InpMinRRAllowed cfg_InpMinRRAllowed
-#define InpUseTP1Partial cfg_InpUseTP1Partial
-#define InpTP1_CloseFrac cfg_InpTP1_CloseFrac
-#define InpTP1_UseKeyLevelFirst cfg_InpTP1_UseKeyLevelFirst
-#define InpUseSmartBE cfg_InpUseSmartBE
-#define InpBE_MinProfitR cfg_InpBE_MinProfitR
-#define InpBE_OffsetPrice cfg_InpBE_OffsetPrice
-#define InpUseATRTrailAfterTP1 cfg_InpUseATRTrailAfterTP1
-#define InpTrailATR_Mult cfg_InpTrailATR_Mult
-#define InpTrailMinImprovePrice cfg_InpTrailMinImprovePrice
-#define InpTrailOnNewBarOnly cfg_InpTrailOnNewBarOnly
-#define InpBaseRiskPct cfg_InpBaseRiskPct
-#define InpMaxLotCap cfg_InpMaxLotCap
-#define InpUseLowVolFilter cfg_InpUseLowVolFilter
-#define InpVolTF cfg_InpVolTF
-#define InpVolMAPeriod cfg_InpVolMAPeriod
-#define InpLowVolFactor cfg_InpLowVolFactor
-#define InpUseSpreadMultiple cfg_InpUseSpreadMultiple
-#define InpSpreadMultiple cfg_InpSpreadMultiple
-#define InpSpreadMultipleBlockMin cfg_InpSpreadMultipleBlockMin
-#define InpUseSpreadInstability cfg_InpUseSpreadInstability
-#define InpSpreadAvgBarsH1 cfg_InpSpreadAvgBarsH1
-#define InpSpreadSpikeFactor cfg_InpSpreadSpikeFactor
-#define InpSpreadSpikeBlockMin cfg_InpSpreadSpikeBlockMin
-#define InpUseRolloverBlock cfg_InpUseRolloverBlock
-#define InpRolloverStart cfg_InpRolloverStart
-#define InpRolloverEnd cfg_InpRolloverEnd
-#define InpUseDailyTradeControl cfg_InpUseDailyTradeControl
-#define InpHardMaxTradesPerDay cfg_InpHardMaxTradesPerDay
-#define InpUseMaxDailyLossLock cfg_InpUseMaxDailyLossLock
-#define InpMaxDailyLossPct cfg_InpMaxDailyLossPct
-#define InpUseSoftEquityLock cfg_InpUseSoftEquityLock
-#define InpSoftEqTrigger1 cfg_InpSoftEqTrigger1
-#define InpSoftEqFloor1 cfg_InpSoftEqFloor1
-#define InpSoftEqTrigger2 cfg_InpSoftEqTrigger2
-#define InpSoftEqFloor2 cfg_InpSoftEqFloor2
-#define InpCooldownBarsAfterEntry cfg_InpCooldownBarsAfterEntry
-#define InpUseAntiChop cfg_InpUseAntiChop
-#define InpLossBlock2_Hours cfg_InpLossBlock2_Hours
-#define InpLossBlock3_Hours cfg_InpLossBlock3_Hours
-#define InpRiskMultAfter3Loss cfg_InpRiskMultAfter3Loss
-#define InpRiskCutAfter3Loss_H cfg_InpRiskCutAfter3Loss_H
-#define InpUseRSIAfterLoss cfg_InpUseRSIAfterLoss
-#define InpLossStreakForRSI cfg_InpLossStreakForRSI
-#define InpUsePyramiding cfg_InpUsePyramiding
-#define InpMaxAdds cfg_InpMaxAdds
-#define InpPyramidMinProfitR cfg_InpPyramidMinProfitR
-#define InpPyramidRequireMainBE cfg_InpPyramidRequireMainBE
-#define InpPyramidSpacingATR cfg_InpPyramidSpacingATR
-#define InpPyramidOnlyInTrend cfg_InpPyramidOnlyInTrend
-#define InpPyramidRequireAdxRising cfg_InpPyramidRequireAdxRising
-#define InpPyramidUsePeakDDCap cfg_InpPyramidUsePeakDDCap
-#define InpPyramidMaxPeakDDPct cfg_InpPyramidMaxPeakDDPct
-#define InpAddRiskMult1 cfg_InpAddRiskMult1
-#define InpAddRiskMult2 cfg_InpAddRiskMult2
+double cfg_KeyLevelStepPoints;
+double cfg_KeyNearPoints;
+double cfg_KeyChaseMaxDistPoints;
+double cfg_EqToleranceMinPoints;
+double cfg_SL_MinBufferPoints;
+double cfg_MMSL_ExtraBufferPoints;
+double cfg_BE_OffsetPoints;
+double cfg_TrailMinImprovePoints;
+double cfg_FibTolPoints;
+double cfg_MinPDArrayDistancePoints;
+int cfg_MinPDArrayMinPoints;
 
 enum SkipMask
 {
@@ -526,7 +423,7 @@ enum EntryMask
 
 string GVName(const string key)
 {
-   return "XK_" + key + "_" + g_symbol + "_" + (string)InpMagic;
+   return "XK_" + key + "_" + g_symbol + "_" + (string)cfg_InpMagic;
 }
 
 double GVGetDouble(const string key, double defval)
@@ -568,15 +465,91 @@ bool IsNewBar(ENUM_TIMEFRAMES tf, datetime &lastBarTime)
 
 string ResolveSymbol()
 {
-   if(StringLen(InpSymbolOverride) > 0)
-      return InpSymbolOverride;
+   if(StringLen(cfg_InpSymbolOverride) > 0)
+      return cfg_InpSymbolOverride;
    return _Symbol;
+}
+
+bool ContainsAny(const string text, const string &tokens[])
+{
+   for(int i = 0; i < ArraySize(tokens); i++)
+   {
+      if(StringFind(text, tokens[i]) >= 0)
+         return true;
+   }
+   return false;
+}
+
+SymbolProfile DetectSymbolProfile(const string symbol)
+{
+   string symUpper = StringUpper(symbol);
+   if(StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0)
+      return PROFILE_FX_MAJORS_5DIG;
+   string indexTokens[] = {"US30", "DJ30", "US30CASH", "NAS100", "US100", "NAS", "SPX500", "US500", "SP500",
+                           "GER40", "DE40", "DAX", "DAX40", "FTSEMIB", "ITA40", "FTSE", "UK100"};
+   if(ContainsAny(symUpper, indexTokens))
+      return PROFILE_INDICES;
+   if(StringFind(symUpper, "JPY") >= 0)
+      return PROFILE_FX_JPY_3DIG;
+   return PROFILE_FX_MAJORS_5DIG;
+}
+
+bool IsGoldSymbol(const string symbol)
+{
+   string symUpper = StringUpper(symbol);
+   return (StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0);
+}
+
+string ProfileName(SymbolProfile profile)
+{
+   switch(profile)
+   {
+      case PROFILE_FX_MAJORS_5DIG:
+         return "FX_MAJORS_5DIG";
+      case PROFILE_FX_JPY_3DIG:
+         return "FX_JPY_3DIG";
+      case PROFILE_INDICES:
+         return "INDICES";
+   }
+   return "UNKNOWN";
+}
+
+double PriceFromPoints(double points)
+{
+   return points * g_point;
+}
+
+double PointsFromPrice(double price)
+{
+   return (g_point > 0.0) ? price / g_point : 0.0;
+}
+
+double PriceFromPips(double pips)
+{
+   return pips * g_pip;
+}
+
+double PipsFromPrice(double price)
+{
+   return (g_pip > 0.0) ? price / g_pip : 0.0;
+}
+
+double PointsFromPips(double pips)
+{
+   double price = PriceFromPips(pips);
+   return PointsFromPrice(price);
+}
+
+double PipsFromPoints(double points)
+{
+   double price = PriceFromPoints(points);
+   return PipsFromPrice(price);
 }
 
 double PipPrice()
 {
-   if(InpPipPrice > 0.0)
-      return InpPipPrice;
+   if(cfg_InpPipPrice > 0.0)
+      return cfg_InpPipPrice;
    return g_pip;
 }
 
@@ -594,15 +567,50 @@ int MinutesOfDay(datetime t)
    return dt.hour * 60 + dt.min;
 }
 
+datetime MakeDateTime(int year, int mon, int day, int hour, int min, int sec)
+{
+   MqlDateTime dt;
+   dt.year = year;
+   dt.mon = mon;
+   dt.day = day;
+   dt.hour = hour;
+   dt.min = min;
+   dt.sec = sec;
+   return StructToTime(dt);
+}
+
+datetime FirstSundayUTC(int year, int mon, int hour, int min)
+{
+   MqlDateTime dt;
+   TimeToStruct(MakeDateTime(year, mon, 1, 0, 0, 0), dt);
+   int firstSunday = 1 + ((7 - dt.day_of_week) % 7);
+   return MakeDateTime(year, mon, firstSunday, hour, min, 0);
+}
+
+datetime SecondSundayUTC(int year, int mon, int hour, int min)
+{
+   datetime firstSunday = FirstSundayUTC(year, mon, 0, 0);
+   MqlDateTime dt;
+   TimeToStruct(firstSunday, dt);
+   int secondSunday = dt.day + 7;
+   return MakeDateTime(year, mon, secondSunday, hour, min, 0);
+}
+
+bool IsUSDST(datetime utcTime)
+{
+   MqlDateTime dt;
+   TimeToStruct(utcTime, dt);
+   datetime dstStart = SecondSundayUTC(dt.year, 3, 7, 0);
+   datetime dstEnd = FirstSundayUTC(dt.year, 11, 6, 0);
+   return (utcTime >= dstStart && utcTime < dstEnd);
+}
+
 int EffectiveNYOffsetHours()
 {
-   if(!InpAutoNYDST)
-      return InpNYOffsetHours;
-   MqlDateTime dt;
-   TimeToStruct(TimeGMT(), dt);
-   if(dt.mon >= 3 && dt.mon <= 11)
-      return InpNYOffsetSummerHours;
-   return InpNYOffsetHours;
+   if(!cfg_InpAutoNYDST)
+      return cfg_InpNYOffsetHours;
+   datetime nowUtc = TimeGMT();
+   return IsUSDST(nowUtc) ? cfg_InpNYOffsetSummerHours : cfg_InpNYOffsetHours;
 }
 
 int GetServerUtcOffsetSeconds()
@@ -613,7 +621,7 @@ int GetServerUtcOffsetSeconds()
 datetime ToNYTime(datetime serverTime)
 {
    int serverOffset = GetServerUtcOffsetSeconds();
-   int nyOffset = InpUseManualNYOffset ? (EffectiveNYOffsetHours() * 3600) : (-5 * 3600);
+   int nyOffset = cfg_InpUseManualNYOffset ? (EffectiveNYOffsetHours() * 3600) : (-5 * 3600);
    return serverTime - serverOffset + nyOffset;
 }
 
@@ -628,14 +636,14 @@ bool KillzoneActive(bool &isAsia, bool &isLondon, bool &isNY)
    isAsia = false;
    isLondon = false;
    isNY = false;
-   if(!InpUseICTTime)
+   if(!cfg_InpUseICTTime)
       return false;
    int minNY = MinutesOfDayNY(TimeCurrent());
-   if(InpUseKillzoneAsia && minNY >= 20 * 60 && minNY < 22 * 60)
+   if(cfg_InpUseKillzoneAsia && minNY >= 20 * 60 && minNY < 22 * 60)
       isAsia = true;
-   if(InpUseKillzoneLondon && minNY >= 2 * 60 && minNY < 5 * 60)
+   if(cfg_InpUseKillzoneLondon && minNY >= 2 * 60 && minNY < 5 * 60)
       isLondon = true;
-   if(InpUseKillzoneNY && minNY >= 7 * 60 && minNY < 9 * 60)
+   if(cfg_InpUseKillzoneNY && minNY >= 7 * 60 && minNY < 9 * 60)
       isNY = true;
    return (isAsia || isLondon || isNY);
 }
@@ -659,7 +667,7 @@ bool TimeInRange(const string start, const string end)
 void UpdateSpreadEMA()
 {
    double spread = SpreadPoints();
-   double alpha = 2.0 / (InpSpreadAvgBarsH1 + 1.0);
+   double alpha = 2.0 / (cfg_InpSpreadAvgBarsH1 + 1.0);
    if(g_spreadEma <= 0.0)
       g_spreadEma = spread;
    else
@@ -668,16 +676,16 @@ void UpdateSpreadEMA()
 
 bool SpreadMultipleBlocked()
 {
-   if(!InpUseSpreadMultiple)
+   if(!cfg_InpUseSpreadMultiple)
       return false;
 
    double spread = SpreadPoints();
    if(g_spreadEma <= 0.0)
       return false;
 
-   if(spread > g_spreadEma * InpSpreadMultiple)
+   if(spread > g_spreadEma * cfg_InpSpreadMultiple)
    {
-      datetime until = TimeCurrent() + InpSpreadMultipleBlockMin * 60;
+      datetime until = TimeCurrent() + cfg_InpSpreadMultipleBlockMin * 60;
       GVSetDouble("spreadBlockUntil", (double)until);
    }
 
@@ -687,13 +695,13 @@ bool SpreadMultipleBlocked()
 
 bool SpreadInstabilityBlocked()
 {
-   if(!InpUseSpreadInstability || g_spreadEma <= 0.0)
+   if(!cfg_InpUseSpreadInstability || g_spreadEma <= 0.0)
       return false;
 
    double spread = SpreadPoints();
-   if(spread > g_spreadEma * InpSpreadSpikeFactor)
+   if(spread > g_spreadEma * cfg_InpSpreadSpikeFactor)
    {
-      datetime until = TimeCurrent() + InpSpreadSpikeBlockMin * 60;
+      datetime until = TimeCurrent() + cfg_InpSpreadSpikeBlockMin * 60;
       GVSetDouble("spreadSpikeUntil", (double)until);
    }
 
@@ -703,34 +711,34 @@ bool SpreadInstabilityBlocked()
 
 bool SessionAllowed()
 {
-   if(!InpUseSessionFilter)
+   if(!cfg_InpUseSessionFilter)
       return true;
    int hour = TimeHour(TimeCurrent());
-   if(InpStartHour <= InpEndHour)
-      return (hour >= InpStartHour && hour <= InpEndHour);
-   return (hour >= InpStartHour || hour <= InpEndHour);
+   if(cfg_InpStartHour <= cfg_InpEndHour)
+      return (hour >= cfg_InpStartHour && hour <= cfg_InpEndHour);
+   return (hour >= cfg_InpStartHour || hour <= cfg_InpEndHour);
 }
 
 bool RolloverBlocked()
 {
-   if(!InpUseRolloverBlock)
+   if(!cfg_InpUseRolloverBlock)
       return false;
-   return TimeInRange(InpRolloverStart, InpRolloverEnd);
+   return TimeInRange(cfg_InpRolloverStart, cfg_InpRolloverEnd);
 }
 
 double ATR(ENUM_TIMEFRAMES tf, int shift)
 {
-   return iATR(g_symbol, tf, InpATRPeriod, shift);
+   return iATR(g_symbol, tf, cfg_InpATRPeriod, shift);
 }
 
 double ADX(ENUM_TIMEFRAMES tf, int shift)
 {
-   return iADX(g_symbol, tf, InpADXPeriod, PRICE_CLOSE, MODE_MAIN, shift);
+   return iADX(g_symbol, tf, cfg_InpADXPeriod, PRICE_CLOSE, MODE_MAIN, shift);
 }
 
 double RSI(ENUM_TIMEFRAMES tf, int shift)
 {
-   return iRSI(g_symbol, tf, InpRSIPeriod, PRICE_CLOSE, shift);
+   return iRSI(g_symbol, tf, cfg_InpRSIPeriod, PRICE_CLOSE, shift);
 }
 
 double EMA(ENUM_TIMEFRAMES tf, int period, int shift)
@@ -748,20 +756,20 @@ double VolumeMA(ENUM_TIMEFRAMES tf, int period, int shift)
 
 bool LowVolumeBlocked()
 {
-   if(!InpUseLowVolFilter)
+   if(!cfg_InpUseLowVolFilter)
       return false;
 
-   double vol = (double)iVolume(g_symbol, InpVolTF, 0);
-   double avg = VolumeMA(InpVolTF, InpVolMAPeriod, 1);
+   double vol = (double)iVolume(g_symbol, cfg_InpVolTF, 0);
+   double avg = VolumeMA(cfg_InpVolTF, cfg_InpVolMAPeriod, 1);
    if(avg <= 0.0)
       return false;
-   return vol < avg * InpLowVolFactor;
+   return vol < avg * cfg_InpLowVolFactor;
 }
 
 TradeDir BiasH1()
 {
-   double emaFast = EMA(PERIOD_H1, InpEMA_Fast, 1);
-   double emaSlow = EMA(PERIOD_H1, InpEMA_Slow, 1);
+   double emaFast = EMA(PERIOD_H1, cfg_InpEMA_Fast, 1);
+   double emaSlow = EMA(PERIOD_H1, cfg_InpEMA_Slow, 1);
    double close = iClose(g_symbol, PERIOD_H1, 1);
    if(emaFast > emaSlow && close > emaFast)
       return DIR_LONG;
@@ -805,12 +813,12 @@ RegimeState UpdateRegime()
    if(next != current)
    {
       confirmBars++;
-      if(confirmBars >= InpRegimeConfirmBarsH1)
+      if(confirmBars >= cfg_InpRegimeConfirmBarsH1)
       {
          current = next;
          GVSetInt("regime", (int)current);
          GVSetInt("regimeConfirm", 0);
-         GVSetInt("regimeLock", InpRegimeLockBarsH1);
+         GVSetInt("regimeLock", cfg_InpRegimeLockBarsH1);
          return current;
       }
       GVSetInt("regimeConfirm", confirmBars);
@@ -823,8 +831,13 @@ RegimeState UpdateRegime()
 
 bool IsPivotHigh(int index)
 {
+   int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0 || index <= 0 || index >= bars)
+      return false;
+   if(index - cfg_InpPivotLen < 0 || index + cfg_InpPivotLen >= bars)
+      return false;
    double high = iHigh(g_symbol, PERIOD_M15, index);
-   for(int j = 1; j <= InpPivotLen; j++)
+   for(int j = 1; j <= cfg_InpPivotLen; j++)
    {
       if(high <= iHigh(g_symbol, PERIOD_M15, index - j) || high <= iHigh(g_symbol, PERIOD_M15, index + j))
          return false;
@@ -834,8 +847,13 @@ bool IsPivotHigh(int index)
 
 bool IsPivotLow(int index)
 {
+   int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0 || index <= 0 || index >= bars)
+      return false;
+   if(index - cfg_InpPivotLen < 0 || index + cfg_InpPivotLen >= bars)
+      return false;
    double low = iLow(g_symbol, PERIOD_M15, index);
-   for(int j = 1; j <= InpPivotLen; j++)
+   for(int j = 1; j <= cfg_InpPivotLen; j++)
    {
       if(low >= iLow(g_symbol, PERIOD_M15, index - j) || low >= iLow(g_symbol, PERIOD_M15, index + j))
          return false;
@@ -845,9 +863,14 @@ bool IsPivotLow(int index)
 
 bool IsConfirmedPivotHigh(int index)
 {
+   int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0 || index <= 0 || index >= bars)
+      return false;
+   if(index - cfg_InpPivotConfirmBars < 0)
+      return false;
    if(!IsPivotHigh(index))
       return false;
-   for(int j = 1; j <= InpPivotConfirmBars; j++)
+   for(int j = 1; j <= cfg_InpPivotConfirmBars; j++)
    {
       if(iHigh(g_symbol, PERIOD_M15, index - j) >= iHigh(g_symbol, PERIOD_M15, index))
          return false;
@@ -857,9 +880,14 @@ bool IsConfirmedPivotHigh(int index)
 
 bool IsConfirmedPivotLow(int index)
 {
+   int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0 || index <= 0 || index >= bars)
+      return false;
+   if(index - cfg_InpPivotConfirmBars < 0)
+      return false;
    if(!IsPivotLow(index))
       return false;
-   for(int j = 1; j <= InpPivotConfirmBars; j++)
+   for(int j = 1; j <= cfg_InpPivotConfirmBars; j++)
    {
       if(iLow(g_symbol, PERIOD_M15, index - j) <= iLow(g_symbol, PERIOD_M15, index))
          return false;
@@ -894,6 +922,12 @@ void GetHODLOD(double &hod, double &lod)
    hod = -DBL_MAX;
    lod = DBL_MAX;
    int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0)
+   {
+      hod = iHigh(g_symbol, PERIOD_D1, 0);
+      lod = iLow(g_symbol, PERIOD_D1, 0);
+      return;
+   }
    int todayId = NYDayId(TimeCurrent());
    for(int i = 0; i < bars; i++)
    {
@@ -916,6 +950,8 @@ bool GetSessionHighLowNY(int startMin, int endMin, int dayOffset, double &high, 
    high = -DBL_MAX;
    low = DBL_MAX;
    int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 0)
+      return false;
    int targetDay = NYDayId(TimeCurrent() + dayOffset * 86400);
    for(int i = 0; i < bars; i++)
    {
@@ -967,10 +1003,14 @@ void GetPSHPSL(double &psh, double &psl)
 bool FindEqualHighCluster(double &level)
 {
    double atr = ATR(PERIOD_M15, 1);
-   double tol = MathMax(atr * InpEqToleranceATR, InpEqToleranceMinPoints * g_point);
+   double tol = MathMax(atr * cfg_InpEqToleranceATR, cfg_EqToleranceMinPoints * g_point);
    int count = 0;
    level = 0.0;
-   for(int i = 2; i < InpEqScanBars; i++)
+   int bars = iBars(g_symbol, PERIOD_M15);
+   int scanBars = MathMin(cfg_InpEqScanBars, bars - 1);
+   if(scanBars <= 2)
+      return false;
+   for(int i = 2; i < scanBars; i++)
    {
       if(!IsConfirmedPivotHigh(i))
          continue;
@@ -984,7 +1024,7 @@ bool FindEqualHighCluster(double &level)
       {
          count++;
       }
-      if(count >= InpEqClusterMin)
+      if(count >= cfg_InpEqClusterMin)
          return true;
    }
    return false;
@@ -993,10 +1033,14 @@ bool FindEqualHighCluster(double &level)
 bool FindEqualLowCluster(double &level)
 {
    double atr = ATR(PERIOD_M15, 1);
-   double tol = MathMax(atr * InpEqToleranceATR, InpEqToleranceMinPoints * g_point);
+   double tol = MathMax(atr * cfg_InpEqToleranceATR, cfg_EqToleranceMinPoints * g_point);
    int count = 0;
    level = 0.0;
-   for(int i = 2; i < InpEqScanBars; i++)
+   int bars = iBars(g_symbol, PERIOD_M15);
+   int scanBars = MathMin(cfg_InpEqScanBars, bars - 1);
+   if(scanBars <= 2)
+      return false;
+   for(int i = 2; i < scanBars; i++)
    {
       if(!IsConfirmedPivotLow(i))
          continue;
@@ -1010,7 +1054,7 @@ bool FindEqualLowCluster(double &level)
       {
          count++;
       }
-      if(count >= InpEqClusterMin)
+      if(count >= cfg_InpEqClusterMin)
          return true;
    }
    return false;
@@ -1020,6 +1064,8 @@ bool DetectLiquiditySweep(TradeDir &sweepDir, double &sweepLevel)
 {
    sweepDir = DIR_NONE;
    sweepLevel = 0.0;
+   if(iBars(g_symbol, PERIOD_M15) <= 1)
+      return false;
    double eqHigh = 0.0;
    double eqLow = 0.0;
    bool hasHigh = FindEqualHighCluster(eqHigh);
@@ -1028,7 +1074,7 @@ bool DetectLiquiditySweep(TradeDir &sweepDir, double &sweepLevel)
    double low1 = iLow(g_symbol, PERIOD_M15, 1);
    double close1 = iClose(g_symbol, PERIOD_M15, 1);
    double atr = ATR(PERIOD_M15, 1);
-   double tol = MathMax(atr * InpEqToleranceATR, InpEqToleranceMinPoints * g_point);
+   double tol = MathMax(atr * cfg_InpEqToleranceATR, cfg_EqToleranceMinPoints * g_point);
    if(hasHigh && high1 > eqHigh + tol && close1 < eqHigh)
    {
       sweepDir = DIR_SHORT;
@@ -1047,6 +1093,8 @@ bool DetectLiquiditySweep(TradeDir &sweepDir, double &sweepLevel)
 bool DisplacementOk(TradeDir dir, double &score)
 {
    score = 0.0;
+   if(iBars(g_symbol, PERIOD_M15) <= 1)
+      return false;
    double high1 = iHigh(g_symbol, PERIOD_M15, 1);
    double low1 = iLow(g_symbol, PERIOD_M15, 1);
    double open1 = iOpen(g_symbol, PERIOD_M15, 1);
@@ -1056,7 +1104,7 @@ bool DisplacementOk(TradeDir dir, double &score)
    double atr = ATR(PERIOD_M15, 1);
    double bodyRatio = (range > 0.0) ? body / range : 0.0;
    bool dirOk = (dir == DIR_LONG) ? (close1 > open1) : (close1 < open1);
-   bool sizeOk = range >= atr * InpDisplacementATR && bodyRatio >= InpDisplacementBodyRatio;
+   bool sizeOk = range >= atr * cfg_InpDisplacementATR && bodyRatio >= cfg_InpDisplacementBodyRatio;
    if(dirOk && sizeOk)
       score = range / (atr > 0.0 ? atr : 1.0);
    return dirOk && sizeOk;
@@ -1068,7 +1116,11 @@ bool FindOrderBlock(TradeDir dir, double &obHigh, double &obLow, double &obMT, i
    obLow = 0.0;
    obMT = 0.0;
    obAgeBars = -1;
-   for(int i = 2; i <= InpOBLookback; i++)
+   int bars = iBars(g_symbol, PERIOD_M15);
+   int lookback = MathMin(cfg_InpOBLookback, bars - 1);
+   if(lookback < 2)
+      return false;
+   for(int i = 2; i <= lookback; i++)
    {
       double open = iOpen(g_symbol, PERIOD_M15, i);
       double close = iClose(g_symbol, PERIOD_M15, i);
@@ -1089,24 +1141,28 @@ bool OTEOk(TradeDir dir, double price, double &oteMin, double &oteMax, double &s
 {
    swingHigh = -DBL_MAX;
    swingLow = DBL_MAX;
-   int bars = iBars(g_symbol, InpOTE_HTF);
-   int lookback = MathMin(InpOTE_SwingLookback, bars - 1);
+   int bars = iBars(g_symbol, cfg_InpOTE_HTF);
+   if(bars <= 1)
+      return false;
+   int lookback = MathMin(cfg_InpOTE_SwingLookback, bars - 1);
+   if(lookback < 1)
+      return false;
    for(int i = 1; i <= lookback; i++)
    {
-      swingHigh = MathMax(swingHigh, iHigh(g_symbol, InpOTE_HTF, i));
-      swingLow = MathMin(swingLow, iLow(g_symbol, InpOTE_HTF, i));
+      swingHigh = MathMax(swingHigh, iHigh(g_symbol, cfg_InpOTE_HTF, i));
+      swingLow = MathMin(swingLow, iLow(g_symbol, cfg_InpOTE_HTF, i));
    }
    if(swingHigh <= swingLow)
       return false;
    double range = swingHigh - swingLow;
    if(dir == DIR_LONG)
    {
-      oteMin = swingHigh - range * InpOTE_Max;
-      oteMax = swingHigh - range * InpOTE_Min;
+      oteMin = swingHigh - range * cfg_InpOTE_Max;
+      oteMax = swingHigh - range * cfg_InpOTE_Min;
       return (price >= oteMin && price <= oteMax && price <= (swingHigh - range * 0.5));
    }
-   oteMin = swingLow + range * InpOTE_Min;
-   oteMax = swingLow + range * InpOTE_Max;
+   oteMin = swingLow + range * cfg_InpOTE_Min;
+   oteMax = swingLow + range * cfg_InpOTE_Max;
    return (price >= oteMin && price <= oteMax && price >= (swingLow + range * 0.5));
 }
 
@@ -1118,11 +1174,15 @@ bool FindRecentPivots(double &lastHigh, double &prevHigh, double &lastLow, doubl
    lastLow = prevLow = 0.0;
 
    int bars = iBars(g_symbol, PERIOD_M15);
-   int start = InpPivotLen + InpPivotConfirmBars;
-   int end = MathMin(bars - InpPivotLen - 1, 200);
+   if(bars <= 0)
+      return false;
+   int start = cfg_InpPivotLen + cfg_InpPivotConfirmBars;
+   int end = MathMin(bars - cfg_InpPivotLen - 1, 200);
+   if(end <= start)
+      return false;
    for(int i = start; i < end; i++)
    {
-      if(i - InpPivotConfirmBars < 0)
+      if(i - cfg_InpPivotConfirmBars < 0)
          continue;
 
       if(IsConfirmedPivotHigh(i))
@@ -1168,19 +1228,19 @@ bool BOSStateValid(TradeDir dir, double &bosLevel)
    int shift = iBarShift(g_symbol, PERIOD_M15, bosTime, true);
    if(shift < 0)
       return false;
-   return shift <= InpMaxBarsAfterBOS;
+   return shift <= cfg_InpMaxBarsAfterBOS;
 }
 
 bool BreakRetestOk(TradeDir dir, double atrM15)
 {
-   if(!InpUseBreakRetest)
+   if(!cfg_InpUseBreakRetest)
       return true;
 
    double storedBosLevel = 0.0;
    if(!BOSStateValid(dir, storedBosLevel))
       return false;
 
-   double tol = MathMax(atrM15 * InpRetestTolATR, 5 * g_point);
+   double tol = MathMax(atrM15 * cfg_InpRetestTolATR, 5 * g_point);
    double close1 = iClose(g_symbol, PERIOD_M15, 1);
    double low1 = iLow(g_symbol, PERIOD_M15, 1);
    double high1 = iHigh(g_symbol, PERIOD_M15, 1);
@@ -1194,7 +1254,7 @@ bool BreakRetestOk(TradeDir dir, double atrM15)
 
 double NearestKeyLevel(double price)
 {
-   double step = InpKeyLevelStepPrice;
+   double step = PriceFromPoints(cfg_KeyLevelStepPoints);
    if(step <= 0.0)
       return price;
    return MathRound(price / step) * step;
@@ -1202,25 +1262,25 @@ double NearestKeyLevel(double price)
 
 double KeyBelow(double price)
 {
-   double step = InpKeyLevelStepPrice;
+   double step = PriceFromPoints(cfg_KeyLevelStepPoints);
    return MathFloor(price / step) * step;
 }
 
 double KeyAbove(double price)
 {
-   double step = InpKeyLevelStepPrice;
+   double step = PriceFromPoints(cfg_KeyLevelStepPoints);
    return MathCeil(price / step) * step;
 }
 
 bool KeyLevelNearOk(double mid, double &nearest)
 {
    nearest = NearestKeyLevel(mid);
-   return MathAbs(mid - nearest) <= InpKeyNearPrice;
+   return MathAbs(mid - nearest) <= PriceFromPoints(cfg_KeyNearPoints);
 }
 
 bool AntiChaseOk(TradeDir dir, double mid, double nearest)
 {
-   double step = InpKeyLevelStepPrice;
+   double step = PriceFromPoints(cfg_KeyLevelStepPoints);
    if(step <= 0.0)
       return true;
    double chaseKey = nearest;
@@ -1229,24 +1289,28 @@ bool AntiChaseOk(TradeDir dir, double mid, double nearest)
    else if(dir == DIR_SHORT && nearest < mid)
       chaseKey = nearest + step;
 
+   double chaseMax = PriceFromPoints(cfg_KeyChaseMaxDistPoints);
    if(dir == DIR_LONG)
-      return (mid - chaseKey <= InpKeyChaseMaxDistPrice);
+      return (mid - chaseKey <= chaseMax);
    if(dir == DIR_SHORT)
-      return (chaseKey - mid <= InpKeyChaseMaxDistPrice);
+      return (chaseKey - mid <= chaseMax);
    return false;
 }
 
 int FVGDirection(double &zoneMid, double priceMid)
 {
-   if(!InpUseFVGFeature)
+   if(!cfg_InpUseFVGFeature)
       return 0;
 
    int bars = iBars(g_symbol, PERIOD_M15);
+   if(bars <= 3)
+      return 0;
    double bestDist = DBL_MAX;
    int bestDir = 0;
    double bestMid = 0.0;
 
-   for(int i = 1; i <= InpFVGScanBars; i++)
+   int scanBars = MathMin(cfg_InpFVGScanBars, bars - 3);
+   for(int i = 1; i <= scanBars; i++)
    {
       if(i + 2 >= bars)
          break;
@@ -1284,7 +1348,7 @@ int FVGDirection(double &zoneMid, double priceMid)
 
 bool FVGOk(TradeDir dir, double mid, double atrM15)
 {
-   if(!InpUseFVGFeature)
+   if(!cfg_InpUseFVGFeature)
       return true;
 
    double zoneMid = 0.0;
@@ -1292,13 +1356,13 @@ bool FVGOk(TradeDir dir, double mid, double atrM15)
    if(fvgDir == 0 || fvgDir != dir)
       return false;
 
-   return MathAbs(mid - zoneMid) <= atrM15 * InpFVGMaxDistATR;
+   return MathAbs(mid - zoneMid) <= atrM15 * cfg_InpFVGMaxDistATR;
 }
 
 bool FibFilterOk(TradeDir dir, double mid, double lastLow, double lastHigh, bool &oteBonus)
 {
    oteBonus = false;
-   if(!InpUseFibFilter)
+   if(!cfg_InpUseFibFilter)
       return true;
 
    double range = MathAbs(lastHigh - lastLow);
@@ -1309,32 +1373,33 @@ bool FibFilterOk(TradeDir dir, double mid, double lastLow, double lastHigh, bool
    double lvl618 = 0.0;
    if(dir == DIR_LONG)
    {
-      lvl50 = lastHigh - range * InpFibBaseMin;
-      lvl618 = lastHigh - range * InpFibBaseMax;
+      lvl50 = lastHigh - range * cfg_InpFibBaseMin;
+      lvl618 = lastHigh - range * cfg_InpFibBaseMax;
    }
    else
    {
-      lvl50 = lastLow + range * InpFibBaseMin;
-      lvl618 = lastLow + range * InpFibBaseMax;
+      lvl50 = lastLow + range * cfg_InpFibBaseMin;
+      lvl618 = lastLow + range * cfg_InpFibBaseMax;
    }
 
-   double minLvl = MathMin(lvl50, lvl618) - InpFibTolPrice;
-   double maxLvl = MathMax(lvl50, lvl618) + InpFibTolPrice;
+   double tol = PriceFromPoints(cfg_FibTolPoints);
+   double minLvl = MathMin(lvl50, lvl618) - tol;
+   double maxLvl = MathMax(lvl50, lvl618) + tol;
    bool inBase = (mid >= minLvl && mid <= maxLvl);
 
-   if(InpUseOTEBonus)
+   if(cfg_InpUseOTEBonus)
    {
       double otemin = 0.0;
       double otemax = 0.0;
       if(dir == DIR_LONG)
       {
-         otemin = lastHigh - range * InpOTEMax;
-         otemax = lastHigh - range * InpOTEMin;
+         otemin = lastHigh - range * cfg_InpOTEMax;
+         otemax = lastHigh - range * cfg_InpOTEMin;
       }
       else
       {
-         otemin = lastLow + range * InpOTEMin;
-         otemax = lastLow + range * InpOTEMax;
+         otemin = lastLow + range * cfg_InpOTEMin;
+         otemax = lastLow + range * cfg_InpOTEMax;
       }
       double omin = MathMin(otemin, otemax);
       double omax = MathMax(otemin, otemax);
@@ -1349,11 +1414,11 @@ bool FootprintOk(TradeDir dir, double atrM15, bool &absorption, bool &accepted)
 {
    absorption = false;
    accepted = true;
-   if(!InpUseFootprintProxy)
+   if(!cfg_InpUseFootprintProxy)
       return true;
 
    double vol = (double)iVolume(g_symbol, PERIOD_M15, 1);
-   double volMA = VolumeMA(PERIOD_M15, InpFP_VolMAPeriod, 2);
+   double volMA = VolumeMA(PERIOD_M15, cfg_InpFP_VolMAPeriod, 2);
    double volRatio = (volMA > 0.0) ? vol / volMA : 0.0;
    double high = iHigh(g_symbol, PERIOD_M15, 1);
    double low = iLow(g_symbol, PERIOD_M15, 1);
@@ -1371,33 +1436,33 @@ bool FootprintOk(TradeDir dir, double atrM15, bool &absorption, bool &accepted)
          closeSide = 1.0 - (close - low) / range;
    }
 
-   accepted = (volRatio >= InpFP_VolSpikeRatio && bodyRatio >= InpFP_BodyMinRatio && closeSide >= InpFP_CloseSideMin);
+   accepted = (volRatio >= cfg_InpFP_VolSpikeRatio && bodyRatio >= cfg_InpFP_BodyMinRatio && closeSide >= cfg_InpFP_CloseSideMin);
 
-   if(volRatio >= InpFP_AbsorpVolRatio && range <= atrM15 * InpFP_AbsorpRangeATR && closeSide < 0.55)
+   if(volRatio >= cfg_InpFP_AbsorpVolRatio && range <= atrM15 * cfg_InpFP_AbsorpRangeATR && closeSide < 0.55)
       absorption = true;
 
-   if(InpFP_RequireAcceptance)
+   if(cfg_InpFP_RequireAcceptance)
       return accepted && !absorption;
    return !absorption;
 }
 
 bool SpikeGuardOk(double atrM15)
 {
-   if(!InpUseSpikeGuard)
+   if(!cfg_InpUseSpikeGuard)
       return true;
 
    double high = iHigh(g_symbol, PERIOD_M15, 1);
    double low = iLow(g_symbol, PERIOD_M15, 1);
-   return (high - low) <= atrM15 * InpSpikeMultATR;
+   return (high - low) <= atrM15 * cfg_InpSpikeMultATR;
 }
 
 bool RSIAfterLossOk(TradeDir dir)
 {
-   if(!InpUseRSIAfterLoss)
+   if(!cfg_InpUseRSIAfterLoss)
       return true;
 
    int lossStreak = GVGetInt("lossStreak", 0);
-   if(lossStreak < InpLossStreakForRSI)
+   if(lossStreak < cfg_InpLossStreakForRSI)
       return true;
 
    double rsi1 = RSI(PERIOD_M15, 1);
@@ -1418,7 +1483,7 @@ bool SelectOurPosition()
       {
          string symbol = PositionGetString(POSITION_SYMBOL);
          long magic = PositionGetInteger(POSITION_MAGIC);
-         if(symbol == g_symbol && magic == InpMagic)
+         if(symbol == g_symbol && magic == cfg_InpMagic)
             return true;
       }
    }
@@ -1432,13 +1497,13 @@ bool HasPosition()
 
 bool DailyLossLocked()
 {
-   if(!InpUseMaxDailyLossLock)
+   if(!cfg_InpUseMaxDailyLossLock)
       return false;
 
    double startEquity = GVGetDouble("dayEquityStart", AccountInfoDouble(ACCOUNT_EQUITY));
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
    double pct = (startEquity > 0.0) ? (equity - startEquity) / startEquity * 100.0 : 0.0;
-   if(pct <= -InpMaxDailyLossPct)
+   if(pct <= -cfg_InpMaxDailyLossPct)
    {
       GVSetInt("dayLocked", 1);
       return true;
@@ -1448,7 +1513,7 @@ bool DailyLossLocked()
 
 bool SoftEquityLocked()
 {
-   if(!InpUseSoftEquityLock)
+   if(!cfg_InpUseSoftEquityLock)
       return false;
 
    double peak = GVGetDouble("dayEquityPeak", AccountInfoDouble(ACCOUNT_EQUITY));
@@ -1462,8 +1527,8 @@ bool SoftEquityLocked()
    double start = GVGetDouble("dayEquityStart", equity);
    double gainPct = (peak - start) / start * 100.0;
    double curPct = (equity - start) / start * 100.0;
-   if((gainPct >= InpSoftEqTrigger2 && curPct <= InpSoftEqFloor2) ||
-      (gainPct >= InpSoftEqTrigger1 && curPct <= InpSoftEqFloor1))
+   if((gainPct >= cfg_InpSoftEqTrigger2 && curPct <= cfg_InpSoftEqFloor2) ||
+      (gainPct >= cfg_InpSoftEqTrigger1 && curPct <= cfg_InpSoftEqFloor1))
    {
       GVSetInt("dayLocked", 1);
       return true;
@@ -1475,7 +1540,7 @@ int DailyScore(RegimeState regime)
 {
    double adx = ADX(PERIOD_H1, 1);
    double vol = (double)iVolume(g_symbol, PERIOD_H1, 1);
-   double volAvg = VolumeMA(PERIOD_H1, InpVolMAPeriod, 2);
+   double volAvg = VolumeMA(PERIOD_H1, cfg_InpVolMAPeriod, 2);
    double volScore = (volAvg > 0.0) ? MathMin(30.0, (vol / volAvg) * 15.0) : 0.0;
    double adxScore = MathMin(30.0, adx);
 
@@ -1483,7 +1548,7 @@ int DailyScore(RegimeState regime)
    if(g_spreadEma > 0.0)
    {
       double spread = SpreadPoints();
-      spreadScore = 20.0 * MathMax(0.0, 1.0 - (spread / (g_spreadEma * InpSpreadSpikeFactor)));
+      spreadScore = 20.0 * MathMax(0.0, 1.0 - (spread / (g_spreadEma * cfg_InpSpreadSpikeFactor)));
    }
 
    double regimeScore = 0.0;
@@ -1539,7 +1604,7 @@ bool CooldownActive()
    int shift = iBarShift(g_symbol, PERIOD_M15, lastEntryTime, true);
    if(shift < 0)
       return false;
-   return shift <= InpCooldownBarsAfterEntry;
+   return shift <= cfg_InpCooldownBarsAfterEntry;
 }
 
 void UpdateDailyReset()
@@ -1570,7 +1635,7 @@ bool HardGuardsOk(int &skipMask)
       skipMask |= SKIP_ROLLOVER;
       return false;
    }
-   if(SpreadPoints() > InpMaxSpreadPoints)
+   if(SpreadPoints() > cfg_InpMaxSpreadPoints)
    {
       skipMask |= SKIP_SPREAD;
       return false;
@@ -1610,7 +1675,7 @@ bool HardGuardsOk(int &skipMask)
 
 bool LossBlocksActive()
 {
-   if(!InpUseAntiChop)
+   if(!cfg_InpUseAntiChop)
       return false;
 
    datetime blockUntil = (datetime)GVGetDouble("blockUntil", 0.0);
@@ -1619,17 +1684,17 @@ bool LossBlocksActive()
 
 void UpdateLossBlock(int lossStreak)
 {
-   if(!InpUseAntiChop)
+   if(!cfg_InpUseAntiChop)
       return;
 
    if(lossStreak >= 3)
    {
-      GVSetDouble("blockUntil", TimeCurrent() + InpLossBlock3_Hours * 3600.0);
-      GVSetDouble("riskCutUntil", TimeCurrent() + InpRiskCutAfter3Loss_H * 3600.0);
+      GVSetDouble("blockUntil", TimeCurrent() + cfg_InpLossBlock3_Hours * 3600.0);
+      GVSetDouble("riskCutUntil", TimeCurrent() + cfg_InpRiskCutAfter3Loss_H * 3600.0);
    }
    else if(lossStreak == 2)
    {
-      GVSetDouble("blockUntil", TimeCurrent() + InpLossBlock2_Hours * 3600.0);
+      GVSetDouble("blockUntil", TimeCurrent() + cfg_InpLossBlock2_Hours * 3600.0);
    }
 }
 
@@ -1638,7 +1703,7 @@ double CurrentRiskMultiplier(double dailyRiskMult)
    double mult = dailyRiskMult;
    datetime riskCutUntil = (datetime)GVGetDouble("riskCutUntil", 0.0);
    if(riskCutUntil > TimeCurrent())
-      mult *= InpRiskMultAfter3Loss;
+      mult *= cfg_InpRiskMultAfter3Loss;
    return mult;
 }
 
@@ -1671,8 +1736,8 @@ double CalcLots(double slDist, double riskPct)
    double step = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_STEP);
 
    lot = MathMax(minLot, lot);
-   if(InpMaxLotCap > 0.0)
-      maxLot = MathMin(maxLot, InpMaxLotCap);
+   if(cfg_InpMaxLotCap > 0.0)
+      maxLot = MathMin(maxLot, cfg_InpMaxLotCap);
    lot = MathMin(lot, maxLot);
    return NormalizeVolumeByStep(lot);
 }
@@ -1735,7 +1800,7 @@ bool SendOrderWithRetry(TradeDir dir, double lots, double sl, double tp, const s
 {
    retcode = 0;
    lasterr = 0;
-   for(int attempt = 0; attempt <= InpMaxRetries; attempt++)
+   for(int attempt = 0; attempt <= cfg_InpMaxRetries; attempt++)
    {
       bool ok = false;
       ResetLastError();
@@ -1756,7 +1821,7 @@ bool SendOrderWithRetry(TradeDir dir, double lots, double sl, double tp, const s
          retcode == TRADE_RETCODE_TRADE_CONTEXT_BUSY ||
          retcode == TRADE_RETCODE_SERVER_BUSY)
       {
-         Sleep(InpRetryDelayMs);
+         Sleep(cfg_InpRetryDelayMs);
          continue;
       }
       break;
@@ -1764,142 +1829,98 @@ bool SendOrderWithRetry(TradeDir dir, double lots, double sl, double tp, const s
    return false;
 }
 
-#undef InpUseSessionFilter
-#undef InpStartHour
-#undef InpEndHour
-#undef InpMaxSpreadPoints
-#undef InpMaxSlippagePoints
-#undef InpMaxRetries
-#undef InpRetryDelayMs
-#undef InpUseICTTime
-#undef InpUseManualNYOffset
-#undef InpNYOffsetHours
-#undef InpAutoNYDST
-#undef InpNYOffsetSummerHours
-#undef InpUseKillzoneAsia
-#undef InpUseKillzoneLondon
-#undef InpUseKillzoneNY
-#undef InpATRPeriod
-#undef InpADXPeriod
-#undef InpRSIPeriod
-#undef InpEMA_Fast
-#undef InpEMA_Slow
-#undef InpRegimeConfirmBarsH1
-#undef InpRegimeLockBarsH1
-#undef InpPivotLen
-#undef InpPivotConfirmBars
-#undef InpMaxBarsAfterBOS
-#undef InpEqToleranceATR
-#undef InpEqToleranceMinPoints
-#undef InpEqClusterMin
-#undef InpEqScanBars
-#undef InpDisplacementATR
-#undef InpDisplacementBodyRatio
-#undef InpDisplacementSearchBars
-#undef InpOBLookback
-#undef InpOBMaxAgeBars
-#undef InpOTE_HTF
-#undef InpOTE_SwingLookback
-#undef InpOTE_Min
-#undef InpOTE_Max
-#undef InpMinPDArrayDistance
-#undef InpMinPDArrayATR
-#undef InpMinPDArrayMinPoints
-#undef InpUseBreakRetest
-#undef InpRetestTolATR
-#undef InpKeyLevelStepPrice
-#undef InpKeyNearPrice
-#undef InpKeyChaseMaxDistPrice
-#undef InpUseFVGFeature
-#undef InpFVGScanBars
-#undef InpFVGMaxDistATR
-#undef InpUseFibFilter
-#undef InpFibBaseMin
-#undef InpFibBaseMax
-#undef InpFibTolPrice
-#undef InpUseOTEBonus
-#undef InpOTEMin
-#undef InpOTEMax
-#undef InpOTEBonusPoints
-#undef InpUseFootprintProxy
-#undef InpFP_VolMAPeriod
-#undef InpFP_VolSpikeRatio
-#undef InpFP_BodyMinRatio
-#undef InpFP_CloseSideMin
-#undef InpFP_AbsorpVolRatio
-#undef InpFP_AbsorpRangeATR
-#undef InpFP_RequireAcceptance
-#undef InpFP_ScoreBonus
-#undef InpUseSpikeGuard
-#undef InpSpikeMultATR
-#undef InpSL_ATR_Mult
-#undef InpSL_MinBufferPrice
-#undef InpUseMMSL
-#undef InpMMSL_Pips
-#undef InpMMSL_ExtraBufferPrice
-#undef InpTP_RR_Main
-#undef InpMinRRAllowed
-#undef InpUseTP1Partial
-#undef InpTP1_CloseFrac
-#undef InpTP1_UseKeyLevelFirst
-#undef InpUseSmartBE
-#undef InpBE_MinProfitR
-#undef InpBE_OffsetPrice
-#undef InpUseATRTrailAfterTP1
-#undef InpTrailATR_Mult
-#undef InpTrailMinImprovePrice
-#undef InpTrailOnNewBarOnly
-#undef InpBaseRiskPct
-#undef InpMaxLotCap
-#undef InpUseLowVolFilter
-#undef InpVolTF
-#undef InpVolMAPeriod
-#undef InpLowVolFactor
-#undef InpUseSpreadMultiple
-#undef InpSpreadMultiple
-#undef InpSpreadMultipleBlockMin
-#undef InpUseSpreadInstability
-#undef InpSpreadAvgBarsH1
-#undef InpSpreadSpikeFactor
-#undef InpSpreadSpikeBlockMin
-#undef InpUseRolloverBlock
-#undef InpRolloverStart
-#undef InpRolloverEnd
-#undef InpUseDailyTradeControl
-#undef InpHardMaxTradesPerDay
-#undef InpUseMaxDailyLossLock
-#undef InpMaxDailyLossPct
-#undef InpUseSoftEquityLock
-#undef InpSoftEqTrigger1
-#undef InpSoftEqFloor1
-#undef InpSoftEqTrigger2
-#undef InpSoftEqFloor2
-#undef InpCooldownBarsAfterEntry
-#undef InpUseAntiChop
-#undef InpLossBlock2_Hours
-#undef InpLossBlock3_Hours
-#undef InpRiskMultAfter3Loss
-#undef InpRiskCutAfter3Loss_H
-#undef InpUseRSIAfterLoss
-#undef InpLossStreakForRSI
-#undef InpUsePyramiding
-#undef InpMaxAdds
-#undef InpPyramidMinProfitR
-#undef InpPyramidRequireMainBE
-#undef InpPyramidSpacingATR
-#undef InpPyramidOnlyInTrend
-#undef InpPyramidRequireAdxRising
-#undef InpPyramidUsePeakDDCap
-#undef InpPyramidMaxPeakDDPct
-#undef InpAddRiskMult1
-#undef InpAddRiskMult2
 
 string PresetModeLabel(PresetMode mode);
 void LogPresetConfig();
 void LogSymbolCheck();
 
+double GoldPriceToPips(double price)
+{
+   return price / 0.10;
+}
+
+double GoldPointsToPips(double points)
+{
+   return points / 10.0;
+}
+
+double IndexKeyStepPoints()
+{
+   string symUpper = StringUpper(g_symbol);
+   if(StringFind(symUpper, "US30") >= 0 || StringFind(symUpper, "DJ30") >= 0)
+      return 100.0;
+   return 50.0;
+}
+
+void ApplyProfileDefaults()
+{
+   if(g_isGoldSymbol)
+   {
+      cfg_KeyLevelStepPoints = PointsFromPrice(cfg_InpKeyLevelStepPrice);
+      cfg_KeyNearPoints = PointsFromPrice(cfg_InpKeyNearPrice);
+      cfg_KeyChaseMaxDistPoints = PointsFromPrice(cfg_InpKeyChaseMaxDistPrice);
+      cfg_EqToleranceMinPoints = cfg_InpEqToleranceMinPoints;
+      cfg_SL_MinBufferPoints = PointsFromPrice(cfg_InpSL_MinBufferPrice);
+      cfg_MMSL_ExtraBufferPoints = PointsFromPrice(cfg_InpMMSL_ExtraBufferPrice);
+      cfg_BE_OffsetPoints = PointsFromPrice(cfg_InpBE_OffsetPrice);
+      cfg_TrailMinImprovePoints = PointsFromPrice(cfg_InpTrailMinImprovePrice);
+      cfg_FibTolPoints = PointsFromPrice(cfg_InpFibTolPrice);
+      cfg_MinPDArrayDistancePoints = PointsFromPrice(cfg_InpMinPDArrayDistance);
+      cfg_MinPDArrayMinPoints = cfg_InpMinPDArrayMinPoints;
+      return;
+   }
+
+   if(g_profile == PROFILE_INDICES)
+   {
+      cfg_KeyLevelStepPoints = PointsFromPrice(IndexKeyStepPoints());
+      cfg_KeyNearPoints = PointsFromPrice(5.0);
+   }
+   else
+   {
+      cfg_KeyLevelStepPoints = PointsFromPips(50.0);
+      cfg_KeyNearPoints = PointsFromPips(5.0);
+   }
+   cfg_KeyChaseMaxDistPoints = cfg_KeyLevelStepPoints * 0.30;
+
+   double slPips = GoldPriceToPips(cfg_InpSL_MinBufferPrice);
+   double bePips = GoldPriceToPips(cfg_InpBE_OffsetPrice);
+   double trailPips = GoldPriceToPips(cfg_InpTrailMinImprovePrice);
+   double fibPips = GoldPriceToPips(cfg_InpFibTolPrice);
+   double pdPips = GoldPriceToPips(cfg_InpMinPDArrayDistance);
+   double mmslExtraPips = GoldPriceToPips(cfg_InpMMSL_ExtraBufferPrice);
+   double eqTolPips = GoldPointsToPips(cfg_InpEqToleranceMinPoints);
+   double pdMinPips = GoldPointsToPips(cfg_InpMinPDArrayMinPoints);
+
+   if(g_profile == PROFILE_INDICES)
+   {
+      cfg_SL_MinBufferPoints = PointsFromPrice(slPips);
+      cfg_MMSL_ExtraBufferPoints = PointsFromPrice(mmslExtraPips);
+      cfg_BE_OffsetPoints = PointsFromPrice(bePips);
+      cfg_TrailMinImprovePoints = PointsFromPrice(trailPips);
+      cfg_FibTolPoints = PointsFromPrice(fibPips);
+      cfg_EqToleranceMinPoints = PointsFromPrice(eqTolPips);
+      cfg_MinPDArrayDistancePoints = PointsFromPrice(pdPips);
+      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPrice(pdMinPips));
+   }
+   else
+   {
+      cfg_SL_MinBufferPoints = PointsFromPips(slPips);
+      cfg_MMSL_ExtraBufferPoints = PointsFromPips(mmslExtraPips);
+      cfg_BE_OffsetPoints = PointsFromPips(bePips);
+      cfg_TrailMinImprovePoints = PointsFromPips(trailPips);
+      cfg_FibTolPoints = PointsFromPips(fibPips);
+      cfg_EqToleranceMinPoints = PointsFromPips(eqTolPips);
+      cfg_MinPDArrayDistancePoints = PointsFromPips(pdPips);
+      cfg_MinPDArrayMinPoints = (int)MathRound(PointsFromPips(pdMinPips));
+   }
+}
+
 void ApplyPreset()
 {
+   cfg_InpPresetMode = InpPresetMode;
+   cfg_InpSymbolOverride = InpSymbolOverride;
+   cfg_InpMagic = InpMagic;
+   cfg_InpPipPrice = InpPipPrice;
    cfg_InpUseSessionFilter = InpUseSessionFilter;
    cfg_InpStartHour = InpStartHour;
    cfg_InpEndHour = InpEndHour;
@@ -2029,8 +2050,10 @@ void ApplyPreset()
    cfg_InpPyramidMaxPeakDDPct = InpPyramidMaxPeakDDPct;
    cfg_InpAddRiskMult1 = InpAddRiskMult1;
    cfg_InpAddRiskMult2 = InpAddRiskMult2;
+   cfg_InpEnableCSV = InpEnableCSV;
+   cfg_InpCSVName = InpCSVName;
 
-   if(InpPresetMode == PRESET_BALANCED || InpPresetMode == PRESET_CONSERVATIVE)
+   if(cfg_InpPresetMode == PRESET_BALANCED || cfg_InpPresetMode == PRESET_CONSERVATIVE)
    {
       cfg_InpUseICTTime = true;
       cfg_InpUseManualNYOffset = true;
@@ -2102,7 +2125,7 @@ void ApplyPreset()
       cfg_InpRiskCutAfter3Loss_H = 24;
       cfg_InpUsePyramiding = false;
 
-      if(InpPresetMode == PRESET_CONSERVATIVE)
+      if(cfg_InpPresetMode == PRESET_CONSERVATIVE)
       {
          cfg_InpUseKillzoneAsia = false;
          cfg_InpUseKillzoneLondon = false;
@@ -2114,6 +2137,12 @@ void ApplyPreset()
       }
    }
 
+   if(cfg_InpPipPrice > 0.0)
+      g_pip = cfg_InpPipPrice;
+   else
+      g_pip = (g_profile == PROFILE_INDICES) ? 1.0 : g_point * 10.0;
+
+   ApplyProfileDefaults();
    LogPresetConfig();
 }
 
@@ -2133,7 +2162,9 @@ string PresetModeLabel(PresetMode mode)
 
 void LogPresetConfig()
 {
-   Print("Preset applied: ", PresetModeLabel(InpPresetMode));
+   Print("Preset applied: ", PresetModeLabel(cfg_InpPresetMode));
+   PrintFormat("Profile: %s Symbol=%s Point=%.5f Pip=%.5f",
+               ProfileName(g_profile), g_symbol, g_point, g_pip);
    if(cfg_InpUseManualNYOffset)
    {
       string dstNote = cfg_InpAutoNYDST ? "auto DST" : "manual DST";
@@ -2156,35 +2187,35 @@ void LogPresetConfig()
                cfg_InpRegimeConfirmBarsH1, cfg_InpRegimeLockBarsH1);
    PrintFormat("SMC: PivotLen=%d PivotConfirm=%d MaxBarsAfterBOS=%d EqScanBars=%d EqClusterMin=%d EqTolATR=%.2f EqTolMinPts=%.2f",
                cfg_InpPivotLen, cfg_InpPivotConfirmBars, cfg_InpMaxBarsAfterBOS,
-               cfg_InpEqScanBars, cfg_InpEqClusterMin, cfg_InpEqToleranceATR, cfg_InpEqToleranceMinPoints);
+               cfg_InpEqScanBars, cfg_InpEqClusterMin, cfg_InpEqToleranceATR, cfg_EqToleranceMinPoints);
    PrintFormat("SMC: DisplacementATR=%.2f BodyRatio=%.2f SearchBars=%d OBLookback=%d OBMaxAgeBars=%d",
                cfg_InpDisplacementATR, cfg_InpDisplacementBodyRatio, cfg_InpDisplacementSearchBars,
                cfg_InpOBLookback, cfg_InpOBMaxAgeBars);
-   PrintFormat("SMC: OTE_HTF=%d SwingLookback=%d OTE_Min=%.2f OTE_Max=%.2f PDArrayDist=%.2f PDArrayATR=%.2f PDArrayMinPts=%d",
+   PrintFormat("SMC: OTE_HTF=%d SwingLookback=%d OTE_Min=%.2f OTE_Max=%.2f PDArrayDistPts=%.1f PDArrayATR=%.2f PDArrayMinPts=%d",
                cfg_InpOTE_HTF, cfg_InpOTE_SwingLookback, cfg_InpOTE_Min, cfg_InpOTE_Max,
-               cfg_InpMinPDArrayDistance, cfg_InpMinPDArrayATR, cfg_InpMinPDArrayMinPoints);
-   PrintFormat("Filters: BreakRetest=%s RetestTolATR=%.2f KeyStep=%.2f KeyNear=%.2f KeyChaseMax=%.2f",
+               cfg_MinPDArrayDistancePoints, cfg_InpMinPDArrayATR, cfg_MinPDArrayMinPoints);
+   PrintFormat("Filters: BreakRetest=%s RetestTolATR=%.2f KeyStepPts=%.1f KeyNearPts=%.1f KeyChaseMaxPts=%.1f",
                (cfg_InpUseBreakRetest ? "true" : "false"), cfg_InpRetestTolATR,
-               cfg_InpKeyLevelStepPrice, cfg_InpKeyNearPrice, cfg_InpKeyChaseMaxDistPrice);
-   PrintFormat("FVG/Fib: FVG=%s ScanBars=%d MaxDistATR=%.2f Fib=%s BaseMin=%.2f BaseMax=%.3f FibTol=%.2f OTEBonus=%s OTE_Min=%.2f OTE_Max=%.2f BonusPts=%d",
+               cfg_KeyLevelStepPoints, cfg_KeyNearPoints, cfg_KeyChaseMaxDistPoints);
+   PrintFormat("FVG/Fib: FVG=%s ScanBars=%d MaxDistATR=%.2f Fib=%s BaseMin=%.2f BaseMax=%.3f FibTolPts=%.1f OTEBonus=%s OTE_Min=%.2f OTE_Max=%.2f BonusPts=%d",
                (cfg_InpUseFVGFeature ? "true" : "false"), cfg_InpFVGScanBars, cfg_InpFVGMaxDistATR,
                (cfg_InpUseFibFilter ? "true" : "false"), cfg_InpFibBaseMin, cfg_InpFibBaseMax,
-               cfg_InpFibTolPrice, (cfg_InpUseOTEBonus ? "true" : "false"),
+               cfg_FibTolPoints, (cfg_InpUseOTEBonus ? "true" : "false"),
                cfg_InpOTEMin, cfg_InpOTEMax, cfg_InpOTEBonusPoints);
    PrintFormat("Footprint/Spike: FP=%s VolMAPeriod=%d VolSpike=%.2f BodyMin=%.2f CloseSideMin=%.2f AbsorpVol=%.2f AbsorpRangeATR=%.2f RequireAccept=%s ScoreBonus=%d SpikeGuard=%s SpikeATR=%.2f",
                (cfg_InpUseFootprintProxy ? "true" : "false"), cfg_InpFP_VolMAPeriod, cfg_InpFP_VolSpikeRatio,
                cfg_InpFP_BodyMinRatio, cfg_InpFP_CloseSideMin, cfg_InpFP_AbsorpVolRatio, cfg_InpFP_AbsorpRangeATR,
                (cfg_InpFP_RequireAcceptance ? "true" : "false"), cfg_InpFP_ScoreBonus,
                (cfg_InpUseSpikeGuard ? "true" : "false"), cfg_InpSpikeMultATR);
-   PrintFormat("Stops/Targets: SL_ATR=%.2f SL_MinBuffer=%.2f MMSL=%s MMSL_Pips=%d MMSL_Extra=%.2f RR=%.2f MinRR=%.2f TP1=%s TP1_Close=%.2f KeyFirst=%s",
-               cfg_InpSL_ATR_Mult, cfg_InpSL_MinBufferPrice, (cfg_InpUseMMSL ? "true" : "false"),
-               cfg_InpMMSL_Pips, cfg_InpMMSL_ExtraBufferPrice, cfg_InpTP_RR_Main, cfg_InpMinRRAllowed,
+   PrintFormat("Stops/Targets: SL_ATR=%.2f SL_MinBufferPts=%.1f MMSL=%s MMSL_Pips=%d MMSL_ExtraPts=%.1f RR=%.2f MinRR=%.2f TP1=%s TP1_Close=%.2f KeyFirst=%s",
+               cfg_InpSL_ATR_Mult, cfg_SL_MinBufferPoints, (cfg_InpUseMMSL ? "true" : "false"),
+               cfg_InpMMSL_Pips, cfg_MMSL_ExtraBufferPoints, cfg_InpTP_RR_Main, cfg_InpMinRRAllowed,
                (cfg_InpUseTP1Partial ? "true" : "false"), cfg_InpTP1_CloseFrac,
                (cfg_InpTP1_UseKeyLevelFirst ? "true" : "false"));
-   PrintFormat("BE/Trail: SmartBE=%s MinProfitR=%.2f BE_Offset=%.2f TrailAfterTP1=%s ATR_Mult=%.2f MinImprove=%.2f NewBarOnly=%s",
-               (cfg_InpUseSmartBE ? "true" : "false"), cfg_InpBE_MinProfitR, cfg_InpBE_OffsetPrice,
+   PrintFormat("BE/Trail: SmartBE=%s MinProfitR=%.2f BE_OffsetPts=%.1f TrailAfterTP1=%s ATR_Mult=%.2f MinImprovePts=%.1f NewBarOnly=%s",
+               (cfg_InpUseSmartBE ? "true" : "false"), cfg_InpBE_MinProfitR, cfg_BE_OffsetPoints,
                (cfg_InpUseATRTrailAfterTP1 ? "true" : "false"), cfg_InpTrailATR_Mult,
-               cfg_InpTrailMinImprovePrice, (cfg_InpTrailOnNewBarOnly ? "true" : "false"));
+               cfg_TrailMinImprovePoints, (cfg_InpTrailOnNewBarOnly ? "true" : "false"));
    PrintFormat("Risk/Daily: BaseRiskPct=%.2f MaxLot=%.2f DailyControl=%s MaxTrades=%d MaxDailyLoss=%s %.2f%% SoftEqLock=%s Triggers=%.2f/%.2f Floors=%.2f/%.2f CooldownBars=%d",
                cfg_InpBaseRiskPct, cfg_InpMaxLotCap, (cfg_InpUseDailyTradeControl ? "true" : "false"),
                cfg_InpHardMaxTradesPerDay, (cfg_InpUseMaxDailyLossLock ? "true" : "false"),
@@ -2206,147 +2237,21 @@ void LogPresetConfig()
 void LogSymbolCheck()
 {
    string symUpper = StringUpper(g_symbol);
-   bool symbolMatch = (StringFind(symUpper, "GOLD") >= 0 || StringFind(symUpper, "XAUUSD") >= 0);
+   bool symbolMatch = (StringFind(symUpper, "GOLD") >= 0 || StringFind(symUpper, "XAU") >= 0);
    bool digitsOk = (g_digits == 2 && MathAbs(g_point - 0.01) <= 0.000001);
 
-   Print("Symbol check: symbol=", g_symbol, " match=", (symbolMatch ? "true" : "false"),
-         " digits=", g_digits, " point=", DoubleToString(g_point, 5));
+   Print("Symbol check: symbol=", g_symbol, " profile=", ProfileName(g_profile),
+         " digits=", g_digits, " point=", DoubleToString(g_point, 5), " pip=", DoubleToString(g_pip, 5));
 
-   if(!symbolMatch)
-      Print("Warning: Symbol is not GOLD/XAUUSD. Verify XM GOLD settings.");
-   if(!digitsOk)
-      Print("Warning: Unexpected digits/point. Expected digits=2 and point=0.01. Verify InpPipPrice/g_pip for XM GOLD.");
+   if(g_isGoldSymbol)
+   {
+      if(!symbolMatch)
+         Print("Warning: Symbol is not GOLD/XAUUSD. Verify XM GOLD settings.");
+      if(!digitsOk)
+         Print("Warning: Unexpected digits/point for GOLD. Expected digits=2 and point=0.01. Verify cfg_InpPipPrice/g_pip.");
+   }
 }
 
-#define InpUseSessionFilter cfg_InpUseSessionFilter
-#define InpStartHour cfg_InpStartHour
-#define InpEndHour cfg_InpEndHour
-#define InpMaxSpreadPoints cfg_InpMaxSpreadPoints
-#define InpMaxSlippagePoints cfg_InpMaxSlippagePoints
-#define InpMaxRetries cfg_InpMaxRetries
-#define InpRetryDelayMs cfg_InpRetryDelayMs
-#define InpUseICTTime cfg_InpUseICTTime
-#define InpUseManualNYOffset cfg_InpUseManualNYOffset
-#define InpNYOffsetHours cfg_InpNYOffsetHours
-#define InpAutoNYDST cfg_InpAutoNYDST
-#define InpNYOffsetSummerHours cfg_InpNYOffsetSummerHours
-#define InpUseKillzoneAsia cfg_InpUseKillzoneAsia
-#define InpUseKillzoneLondon cfg_InpUseKillzoneLondon
-#define InpUseKillzoneNY cfg_InpUseKillzoneNY
-#define InpATRPeriod cfg_InpATRPeriod
-#define InpADXPeriod cfg_InpADXPeriod
-#define InpRSIPeriod cfg_InpRSIPeriod
-#define InpEMA_Fast cfg_InpEMA_Fast
-#define InpEMA_Slow cfg_InpEMA_Slow
-#define InpRegimeConfirmBarsH1 cfg_InpRegimeConfirmBarsH1
-#define InpRegimeLockBarsH1 cfg_InpRegimeLockBarsH1
-#define InpPivotLen cfg_InpPivotLen
-#define InpPivotConfirmBars cfg_InpPivotConfirmBars
-#define InpMaxBarsAfterBOS cfg_InpMaxBarsAfterBOS
-#define InpEqToleranceATR cfg_InpEqToleranceATR
-#define InpEqToleranceMinPoints cfg_InpEqToleranceMinPoints
-#define InpEqClusterMin cfg_InpEqClusterMin
-#define InpEqScanBars cfg_InpEqScanBars
-#define InpDisplacementATR cfg_InpDisplacementATR
-#define InpDisplacementBodyRatio cfg_InpDisplacementBodyRatio
-#define InpDisplacementSearchBars cfg_InpDisplacementSearchBars
-#define InpOBLookback cfg_InpOBLookback
-#define InpOBMaxAgeBars cfg_InpOBMaxAgeBars
-#define InpOTE_HTF cfg_InpOTE_HTF
-#define InpOTE_SwingLookback cfg_InpOTE_SwingLookback
-#define InpOTE_Min cfg_InpOTE_Min
-#define InpOTE_Max cfg_InpOTE_Max
-#define InpMinPDArrayDistance cfg_InpMinPDArrayDistance
-#define InpMinPDArrayATR cfg_InpMinPDArrayATR
-#define InpMinPDArrayMinPoints cfg_InpMinPDArrayMinPoints
-#define InpUseBreakRetest cfg_InpUseBreakRetest
-#define InpRetestTolATR cfg_InpRetestTolATR
-#define InpKeyLevelStepPrice cfg_InpKeyLevelStepPrice
-#define InpKeyNearPrice cfg_InpKeyNearPrice
-#define InpKeyChaseMaxDistPrice cfg_InpKeyChaseMaxDistPrice
-#define InpUseFVGFeature cfg_InpUseFVGFeature
-#define InpFVGScanBars cfg_InpFVGScanBars
-#define InpFVGMaxDistATR cfg_InpFVGMaxDistATR
-#define InpUseFibFilter cfg_InpUseFibFilter
-#define InpFibBaseMin cfg_InpFibBaseMin
-#define InpFibBaseMax cfg_InpFibBaseMax
-#define InpFibTolPrice cfg_InpFibTolPrice
-#define InpUseOTEBonus cfg_InpUseOTEBonus
-#define InpOTEMin cfg_InpOTEMin
-#define InpOTEMax cfg_InpOTEMax
-#define InpOTEBonusPoints cfg_InpOTEBonusPoints
-#define InpUseFootprintProxy cfg_InpUseFootprintProxy
-#define InpFP_VolMAPeriod cfg_InpFP_VolMAPeriod
-#define InpFP_VolSpikeRatio cfg_InpFP_VolSpikeRatio
-#define InpFP_BodyMinRatio cfg_InpFP_BodyMinRatio
-#define InpFP_CloseSideMin cfg_InpFP_CloseSideMin
-#define InpFP_AbsorpVolRatio cfg_InpFP_AbsorpVolRatio
-#define InpFP_AbsorpRangeATR cfg_InpFP_AbsorpRangeATR
-#define InpFP_RequireAcceptance cfg_InpFP_RequireAcceptance
-#define InpFP_ScoreBonus cfg_InpFP_ScoreBonus
-#define InpUseSpikeGuard cfg_InpUseSpikeGuard
-#define InpSpikeMultATR cfg_InpSpikeMultATR
-#define InpSL_ATR_Mult cfg_InpSL_ATR_Mult
-#define InpSL_MinBufferPrice cfg_InpSL_MinBufferPrice
-#define InpUseMMSL cfg_InpUseMMSL
-#define InpMMSL_Pips cfg_InpMMSL_Pips
-#define InpMMSL_ExtraBufferPrice cfg_InpMMSL_ExtraBufferPrice
-#define InpTP_RR_Main cfg_InpTP_RR_Main
-#define InpMinRRAllowed cfg_InpMinRRAllowed
-#define InpUseTP1Partial cfg_InpUseTP1Partial
-#define InpTP1_CloseFrac cfg_InpTP1_CloseFrac
-#define InpTP1_UseKeyLevelFirst cfg_InpTP1_UseKeyLevelFirst
-#define InpUseSmartBE cfg_InpUseSmartBE
-#define InpBE_MinProfitR cfg_InpBE_MinProfitR
-#define InpBE_OffsetPrice cfg_InpBE_OffsetPrice
-#define InpUseATRTrailAfterTP1 cfg_InpUseATRTrailAfterTP1
-#define InpTrailATR_Mult cfg_InpTrailATR_Mult
-#define InpTrailMinImprovePrice cfg_InpTrailMinImprovePrice
-#define InpTrailOnNewBarOnly cfg_InpTrailOnNewBarOnly
-#define InpBaseRiskPct cfg_InpBaseRiskPct
-#define InpMaxLotCap cfg_InpMaxLotCap
-#define InpUseLowVolFilter cfg_InpUseLowVolFilter
-#define InpVolTF cfg_InpVolTF
-#define InpVolMAPeriod cfg_InpVolMAPeriod
-#define InpLowVolFactor cfg_InpLowVolFactor
-#define InpUseSpreadMultiple cfg_InpUseSpreadMultiple
-#define InpSpreadMultiple cfg_InpSpreadMultiple
-#define InpSpreadMultipleBlockMin cfg_InpSpreadMultipleBlockMin
-#define InpUseSpreadInstability cfg_InpUseSpreadInstability
-#define InpSpreadAvgBarsH1 cfg_InpSpreadAvgBarsH1
-#define InpSpreadSpikeFactor cfg_InpSpreadSpikeFactor
-#define InpSpreadSpikeBlockMin cfg_InpSpreadSpikeBlockMin
-#define InpUseRolloverBlock cfg_InpUseRolloverBlock
-#define InpRolloverStart cfg_InpRolloverStart
-#define InpRolloverEnd cfg_InpRolloverEnd
-#define InpUseDailyTradeControl cfg_InpUseDailyTradeControl
-#define InpHardMaxTradesPerDay cfg_InpHardMaxTradesPerDay
-#define InpUseMaxDailyLossLock cfg_InpUseMaxDailyLossLock
-#define InpMaxDailyLossPct cfg_InpMaxDailyLossPct
-#define InpUseSoftEquityLock cfg_InpUseSoftEquityLock
-#define InpSoftEqTrigger1 cfg_InpSoftEqTrigger1
-#define InpSoftEqFloor1 cfg_InpSoftEqFloor1
-#define InpSoftEqTrigger2 cfg_InpSoftEqTrigger2
-#define InpSoftEqFloor2 cfg_InpSoftEqFloor2
-#define InpCooldownBarsAfterEntry cfg_InpCooldownBarsAfterEntry
-#define InpUseAntiChop cfg_InpUseAntiChop
-#define InpLossBlock2_Hours cfg_InpLossBlock2_Hours
-#define InpLossBlock3_Hours cfg_InpLossBlock3_Hours
-#define InpRiskMultAfter3Loss cfg_InpRiskMultAfter3Loss
-#define InpRiskCutAfter3Loss_H cfg_InpRiskCutAfter3Loss_H
-#define InpUseRSIAfterLoss cfg_InpUseRSIAfterLoss
-#define InpLossStreakForRSI cfg_InpLossStreakForRSI
-#define InpUsePyramiding cfg_InpUsePyramiding
-#define InpMaxAdds cfg_InpMaxAdds
-#define InpPyramidMinProfitR cfg_InpPyramidMinProfitR
-#define InpPyramidRequireMainBE cfg_InpPyramidRequireMainBE
-#define InpPyramidSpacingATR cfg_InpPyramidSpacingATR
-#define InpPyramidOnlyInTrend cfg_InpPyramidOnlyInTrend
-#define InpPyramidRequireAdxRising cfg_InpPyramidRequireAdxRising
-#define InpPyramidUsePeakDDCap cfg_InpPyramidUsePeakDDCap
-#define InpPyramidMaxPeakDDPct cfg_InpPyramidMaxPeakDDPct
-#define InpAddRiskMult1 cfg_InpAddRiskMult1
-#define InpAddRiskMult2 cfg_InpAddRiskMult2
 void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
             int dailyScore, int setup, int timing, int total, int skipMask, int entryMask,
             int retcode, int lasterr, double bosLevel, int bosAgeBars, double nearestKey,
@@ -2354,19 +2259,19 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
             int sweepDir, double sweepLevel, double displacementScore, double obHigh, double obLow, double obMT,
             int oteOk)
 {
-   if(!InpEnableCSV)
+   if(!cfg_InpEnableCSV)
       return;
 
-   int handle = FileOpen(InpCSVName, FILE_READ | FILE_WRITE | FILE_CSV | FILE_ANSI);
+   int handle = FileOpen(cfg_InpCSVName, FILE_READ | FILE_WRITE | FILE_CSV | FILE_ANSI);
    if(handle == INVALID_HANDLE)
-      handle = FileOpen(InpCSVName, FILE_WRITE | FILE_CSV | FILE_ANSI);
+      handle = FileOpen(cfg_InpCSVName, FILE_WRITE | FILE_CSV | FILE_ANSI);
 
    if(handle == INVALID_HANDLE)
       return;
 
    if(FileSize(handle) == 0)
    {
-      FileWrite(handle, "time", "sym", "magic", "event", "dir", "entry", "sl", "tp", "tp1", "lot", "spreadPts",
+      FileWrite(handle, "time", "sym", "profile", "point", "pip", "magic", "event", "dir", "entry", "sl", "tp", "tp1", "lot", "spreadPts",
                 "reg", "bias", "adx", "atrM15", "atrH1", "dailyScore", "lossStreak", "skipMask", "entryMask",
                 "setup", "timing", "total", "retcode", "lasterr", "spreadEma", "spreadNow",
                 "stopsLevelPts", "freezeLevelPts", "bosLevel", "bosAgeBars", "nearestKey", "tp1Price",
@@ -2388,7 +2293,10 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
    FileWrite(handle,
              TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES),
              g_symbol,
-             (string)InpMagic,
+             ProfileName(g_profile),
+             DoubleToString(g_point, 5),
+             DoubleToString(g_pip, 5),
+             (string)cfg_InpMagic,
              event,
              (int)dir,
              DoubleToString(entry, g_digits),
@@ -2471,7 +2379,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    bool kzAsia = false;
    bool kzLondon = false;
    bool kzNY = false;
-   if(InpUseICTTime)
+   if(cfg_InpUseICTTime)
    {
       bool kzActive = KillzoneActive(kzAsia, kzLondon, kzNY);
       killzoneActive = kzActive ? 1 : 0;
@@ -2552,7 +2460,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    entryMask |= ENTRY_ANTICHASE;
    setupScore += 5;
 
-   if(InpUseFVGFeature)
+   if(cfg_InpUseFVGFeature)
    {
       if(!FVGOk(dir, mid, atrM15))
          return false;
@@ -2566,7 +2474,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    entryMask |= ENTRY_FIB;
    setupScore += 10;
    if(oteBonus)
-      setupScore += InpOTEBonusPoints;
+      setupScore += cfg_InpOTEBonusPoints;
 
    double oteMin = 0.0;
    double oteMax = 0.0;
@@ -2577,7 +2485,8 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    oteOk = 1;
    entryMask |= ENTRY_OTE;
    setupScore += 10;
-   if(MathAbs(mid - swingHigh) <= InpKeyNearPrice || MathAbs(mid - swingLow) <= InpKeyNearPrice)
+   if(MathAbs(mid - swingHigh) <= PriceFromPoints(cfg_KeyNearPoints) ||
+      MathAbs(mid - swingLow) <= PriceFromPoints(cfg_KeyNearPoints))
       entryMask |= ENTRY_SR;
 
    bool absorption = false;
@@ -2586,7 +2495,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
       return false;
    entryMask |= ENTRY_FOOTPRINT;
    if(acceptance)
-      timingScore += InpFP_ScoreBonus;
+      timingScore += cfg_InpFP_ScoreBonus;
 
    if(!SpikeGuardOk(atrM15))
       return false;
@@ -2599,7 +2508,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    int obAgeBars = -1;
    if(!FindOrderBlock(dir, obHigh, obLow, obMT, obAgeBars))
       return false;
-   if(obAgeBars > InpOBMaxAgeBars)
+   if(obAgeBars > cfg_InpOBMaxAgeBars)
       return false;
    if(!(mid >= obLow && mid <= obHigh))
       return false;
@@ -2607,31 +2516,31 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    setupScore += 10;
 
    entry = (dir == DIR_LONG) ? SymbolInfoDouble(g_symbol, SYMBOL_ASK) : SymbolInfoDouble(g_symbol, SYMBOL_BID);
-   double atrBuf = atrM15 * InpSL_ATR_Mult;
+   double atrBuf = atrM15 * cfg_InpSL_ATR_Mult;
    double spreadBuf = SpreadPoints() * g_point * 0.5;
-   double buffer = MathMax(InpSL_MinBufferPrice, MathMax(atrBuf, spreadBuf));
+   double buffer = MathMax(PriceFromPoints(cfg_SL_MinBufferPoints), MathMax(atrBuf, spreadBuf));
 
    sl = (dir == DIR_LONG) ? (lastLow - buffer) : (lastHigh + buffer);
    riskR = MathAbs(entry - sl);
    if(riskR <= 0.0)
       return false;
 
-   if(InpUseMMSL)
+   if(cfg_InpUseMMSL)
    {
-      double mmsl = InpMMSL_Pips * PipPrice() + InpMMSL_ExtraBufferPrice;
+      double mmsl = cfg_InpMMSL_Pips * PipPrice() + PriceFromPoints(cfg_MMSL_ExtraBufferPoints);
       if(riskR < mmsl)
          return false;
       entryMask |= ENTRY_MMSL;
    }
 
-   tp = (dir == DIR_LONG) ? (entry + riskR * InpTP_RR_Main) : (entry - riskR * InpTP_RR_Main);
+   tp = (dir == DIR_LONG) ? (entry + riskR * cfg_InpTP_RR_Main) : (entry - riskR * cfg_InpTP_RR_Main);
    double rr = MathAbs(tp - entry) / riskR;
-   if(rr < InpMinRRAllowed)
+   if(rr < cfg_InpMinRRAllowed)
       return false;
    entryMask |= ENTRY_RR;
 
    tp1 = (dir == DIR_LONG) ? (entry + riskR) : (entry - riskR);
-   if(InpUseTP1Partial && InpTP1_UseKeyLevelFirst)
+   if(cfg_InpUseTP1Partial && cfg_InpTP1_UseKeyLevelFirst)
    {
       if(dir == DIR_LONG)
       {
@@ -2650,7 +2559,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    double target = (dir == DIR_LONG) ? MathMin(MathMin(pdh, psh > 0.0 ? psh : pdh), hod)
                                      : MathMax(MathMax(pdl, psl > 0.0 ? psl : pdl), lod);
    double space = (dir == DIR_LONG) ? (target - entry) : (entry - target);
-   if(space < InpMinPDArrayDistance)
+   if(space < PriceFromPoints(cfg_MinPDArrayDistancePoints))
    {
       skipMask |= SKIP_PDARRAY;
       return false;
@@ -2706,11 +2615,11 @@ void ManagePosition(double riskR)
    else
       tp1Hit = (tp1price > 0.0 && SymbolInfoDouble(g_symbol, SYMBOL_ASK) <= tp1price);
 
-   if(InpUseTP1Partial && !tp1done && tp1Hit)
+   if(cfg_InpUseTP1Partial && !tp1done && tp1Hit)
    {
       double step = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_STEP);
       double minLot = SymbolInfoDouble(g_symbol, SYMBOL_VOLUME_MIN);
-      double closeVol = MathFloor((volume * InpTP1_CloseFrac) / step) * step;
+      double closeVol = MathFloor((volume * cfg_InpTP1_CloseFrac) / step) * step;
       closeVol = NormalizeVolumeByStep(closeVol);
       if(closeVol >= minLot && (volume - closeVol) >= minLot && FreezeOkForClose())
       {
@@ -2725,25 +2634,28 @@ void ManagePosition(double riskR)
       }
    }
 
-   if(InpUseSmartBE && profitR >= InpBE_MinProfitR)
+   if(cfg_InpUseSmartBE && profitR >= cfg_InpBE_MinProfitR)
    {
-      double newSL = (type == POSITION_TYPE_BUY) ? (entry + InpBE_OffsetPrice) : (entry - InpBE_OffsetPrice);
+      double newSL = (type == POSITION_TYPE_BUY) ? (entry + PriceFromPoints(cfg_BE_OffsetPoints))
+                                                 : (entry - PriceFromPoints(cfg_BE_OffsetPoints));
       TradeDir dir = (type == POSITION_TYPE_BUY) ? DIR_LONG : DIR_SHORT;
       if(CanModifyStops(newSL) && StopsOk(dir, entry, newSL, tp) &&
          ((type == POSITION_TYPE_BUY && newSL > sl) || (type == POSITION_TYPE_SELL && newSL < sl)))
          trade.PositionModify(ticket, newSL, tp);
    }
 
-   if(InpUseATRTrailAfterTP1 && tp1done)
+   if(cfg_InpUseATRTrailAfterTP1 && tp1done)
    {
-      if(!InpTrailOnNewBarOnly || IsNewBar(PERIOD_M15, g_lastM15Bar))
+      if(!cfg_InpTrailOnNewBarOnly || IsNewBar(PERIOD_M15, g_lastM15Bar))
       {
          double atr = ATR(PERIOD_M15, 1);
-         double newSL = (type == POSITION_TYPE_BUY) ? (price - atr * InpTrailATR_Mult) : (price + atr * InpTrailATR_Mult);
+         double newSL = (type == POSITION_TYPE_BUY) ? (price - atr * cfg_InpTrailATR_Mult) : (price + atr * cfg_InpTrailATR_Mult);
          TradeDir dir = (type == POSITION_TYPE_BUY) ? DIR_LONG : DIR_SHORT;
-         if(type == POSITION_TYPE_BUY && newSL > sl + InpTrailMinImprovePrice && CanModifyStops(newSL) && StopsOk(dir, entry, newSL, tp))
+         if(type == POSITION_TYPE_BUY && newSL > sl + PriceFromPoints(cfg_TrailMinImprovePoints) && CanModifyStops(newSL) &&
+            StopsOk(dir, entry, newSL, tp))
             trade.PositionModify(ticket, newSL, tp);
-         else if(type == POSITION_TYPE_SELL && newSL < sl - InpTrailMinImprovePrice && CanModifyStops(newSL) && StopsOk(dir, entry, newSL, tp))
+         else if(type == POSITION_TYPE_SELL && newSL < sl - PriceFromPoints(cfg_TrailMinImprovePoints) && CanModifyStops(newSL) &&
+                 StopsOk(dir, entry, newSL, tp))
             trade.PositionModify(ticket, newSL, tp);
       }
    }
@@ -2752,13 +2664,13 @@ void ManagePosition(double riskR)
 
 void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
 {
-   if(!InpUsePyramiding || !pyramidAllowed)
+   if(!cfg_InpUsePyramiding || !pyramidAllowed)
       return;
    if(!SelectOurPosition())
       return;
 
    int addCount = GVGetInt("addCount", 0);
-   if(addCount >= InpMaxAdds)
+   if(addCount >= cfg_InpMaxAdds)
       return;
 
    int type = (int)PositionGetInteger(POSITION_TYPE);
@@ -2767,15 +2679,15 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
    double price = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_symbol, SYMBOL_BID) : SymbolInfoDouble(g_symbol, SYMBOL_ASK);
    double profitR = (type == POSITION_TYPE_BUY) ? (price - entry) / riskR : (entry - price) / riskR;
 
-   if(profitR < InpPyramidMinProfitR)
+   if(profitR < cfg_InpPyramidMinProfitR)
       return;
 
    double lastAddPrice = GVGetDouble("lastAddPrice", entry);
    double atr = ATR(PERIOD_M15, 1);
-   if(MathAbs(price - lastAddPrice) < atr * InpPyramidSpacingATR)
+   if(MathAbs(price - lastAddPrice) < atr * cfg_InpPyramidSpacingATR)
       return;
 
-   if(InpPyramidRequireMainBE)
+   if(cfg_InpPyramidRequireMainBE)
    {
       if(type == POSITION_TYPE_BUY && sl < entry + g_point)
          return;
@@ -2783,10 +2695,10 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
          return;
    }
 
-   if(InpPyramidOnlyInTrend && regime != REGIME_TREND)
+   if(cfg_InpPyramidOnlyInTrend && regime != REGIME_TREND)
       return;
 
-   if(InpPyramidRequireAdxRising)
+   if(cfg_InpPyramidRequireAdxRising)
    {
       double adx1 = ADX(PERIOD_H1, 1);
       double adx2 = ADX(PERIOD_H1, 2);
@@ -2794,21 +2706,21 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
          return;
    }
 
-   if(InpPyramidUsePeakDDCap)
+   if(cfg_InpPyramidUsePeakDDCap)
    {
       double peak = GVGetDouble("dayEquityPeak", AccountInfoDouble(ACCOUNT_EQUITY));
       double equity = AccountInfoDouble(ACCOUNT_EQUITY);
       double dd = (peak - equity) / peak * 100.0;
-      if(dd > InpPyramidMaxPeakDDPct)
+      if(dd > cfg_InpPyramidMaxPeakDDPct)
          return;
    }
 
-   double riskMult = (addCount == 0) ? InpAddRiskMult1 : InpAddRiskMult2;
-   double addLots = CalcLots(riskR, InpBaseRiskPct * riskMult);
+   double riskMult = (addCount == 0) ? cfg_InpAddRiskMult1 : cfg_InpAddRiskMult2;
+   double addLots = CalcLots(riskR, cfg_InpBaseRiskPct * riskMult);
    if(addLots <= 0.0)
       return;
 
-   double addTp = (type == POSITION_TYPE_BUY) ? (price + riskR * InpTP_RR_Main) : (price - riskR * InpTP_RR_Main);
+   double addTp = (type == POSITION_TYPE_BUY) ? (price + riskR * cfg_InpTP_RR_Main) : (price - riskR * cfg_InpTP_RR_Main);
    TradeDir dir = (type == POSITION_TYPE_BUY) ? DIR_LONG : DIR_SHORT;
    if(!StopsOk(dir, price, sl, addTp))
       return;
@@ -2835,12 +2747,14 @@ int OnInit()
    g_symbol = ResolveSymbol();
    g_digits = (int)SymbolInfoInteger(g_symbol, SYMBOL_DIGITS);
    g_point = SymbolInfoDouble(g_symbol, SYMBOL_POINT);
+   g_isGoldSymbol = IsGoldSymbol(g_symbol);
+   g_profile = DetectSymbolProfile(g_symbol);
    g_pip = g_point * 10.0;
 
    ApplyPreset();
 
-   trade.SetExpertMagicNumber((uint)InpMagic);
-   trade.SetDeviationInPoints(InpMaxSlippagePoints);
+   trade.SetExpertMagicNumber((uint)cfg_InpMagic);
+   trade.SetDeviationInPoints(cfg_InpMaxSlippagePoints);
 
    double tickSize = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_SIZE);
    double tickValue = SymbolInfoDouble(g_symbol, SYMBOL_TRADE_TICK_VALUE);
@@ -2908,7 +2822,7 @@ void OnTick()
    int maxTrades = 0;
    double dailyRiskMult = 0.0;
    bool pyramidAllowed = false;
-   if(InpUseDailyTradeControl && !DailyTradeAllowed(dailyScore, maxTrades, dailyRiskMult, pyramidAllowed))
+   if(cfg_InpUseDailyTradeControl && !DailyTradeAllowed(dailyScore, maxTrades, dailyRiskMult, pyramidAllowed))
    {
       skipMask |= SKIP_DAILY_SCORE;
       double bosLevel = 0.0;
@@ -2919,8 +2833,8 @@ void OnTick()
       return;
    }
 
-   int allowedTrades = InpHardMaxTradesPerDay;
-   if(InpUseDailyTradeControl)
+   int allowedTrades = cfg_InpHardMaxTradesPerDay;
+   if(cfg_InpUseDailyTradeControl)
       allowedTrades = MathMin(allowedTrades, maxTrades);
    if(dayTrades >= allowedTrades)
    {
@@ -2962,7 +2876,7 @@ void OnTick()
       return;
 
    double riskMult = CurrentRiskMultiplier(dailyRiskMult);
-   double lots = CalcLots(riskR, InpBaseRiskPct * riskMult);
+   double lots = CalcLots(riskR, cfg_InpBaseRiskPct * riskMult);
    if(lots <= 0.0)
       return;
 
@@ -3007,7 +2921,7 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
       return;
    if(trans.symbol != g_symbol)
       return;
-   if(trans.magic != InpMagic)
+   if(trans.magic != cfg_InpMagic)
       return;
 
    double profit = trans.profit + trans.commission + trans.swap;
