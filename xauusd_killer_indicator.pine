@@ -236,8 +236,7 @@ bosAgeBars = na(bosBarIndex) ? na : bar_index - bosBarIndex
 bosValid = bosDir == bias and not na(bosLevel) and bosAgeBars <= maxBarsAfterBOS
 
 retestTol = math.max(atrEntry * retestTolATR, 5 * point)
-retestOk = not useBreakRetest or (bosValid and ((bias == 1 and entryLow1 <= bosLevel + retestTol and entryClose1 > bosLevel) or
-    (bias == -1 and entryHigh1 >= bosLevel - retestTol and entryClose1 < bosLevel)))
+retestOk = not useBreakRetest or (bosValid and ((bias == 1 and entryLow1 <= bosLevel + retestTol and entryClose1 > bosLevel) or (bias == -1 and entryHigh1 >= bosLevel - retestTol and entryClose1 < bosLevel)))
 
 // === Key level filters ===
 step = keyLevelStepPrice
@@ -278,16 +277,16 @@ fvgOk = not useFVGFeature or (fvgDir == bias and math.abs(entryClose1 - zoneMid)
 oteBonus = false
 fibOk = true
 if useFibFilter and hasPivots
-    range = math.abs(lastHigh - lastLow)
-    if range > 0
-        lvl50 = bias == 1 ? lastHigh - range * fibBaseMin : lastLow + range * fibBaseMin
-        lvl618 = bias == 1 ? lastHigh - range * fibBaseMax : lastLow + range * fibBaseMax
+    swingRange = math.abs(lastHigh - lastLow)
+    if swingRange > 0
+        lvl50 = bias == 1 ? lastHigh - swingRange * fibBaseMin : lastLow + swingRange * fibBaseMin
+        lvl618 = bias == 1 ? lastHigh - swingRange * fibBaseMax : lastLow + swingRange * fibBaseMax
         minLvl = math.min(lvl50, lvl618) - fibTolPrice
         maxLvl = math.max(lvl50, lvl618) + fibTolPrice
         fibOk := entryClose1 >= minLvl and entryClose1 <= maxLvl
         if useOTEBonus
-            otemin = bias == 1 ? lastHigh - range * oteBonusMax : lastLow + range * oteBonusMin
-            otemax = bias == 1 ? lastHigh - range * oteBonusMin : lastLow + range * oteBonusMax
+            otemin = bias == 1 ? lastHigh - swingRange * oteBonusMax : lastLow + swingRange * oteBonusMin
+            otemax = bias == 1 ? lastHigh - swingRange * oteBonusMin : lastLow + swingRange * oteBonusMax
             omin = math.min(otemin, otemax)
             omax = math.max(otemin, otemax)
             oteBonus := entryClose1 >= omin and entryClose1 <= omax
