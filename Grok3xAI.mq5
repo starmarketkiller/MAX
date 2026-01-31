@@ -19,6 +19,11 @@
 //+------------------------------------------------------------------+
 #property strict
 #include <Trade/Trade.mqh>
+#include <Controls/Dialog.mqh>
+#include <Controls/Label.mqh>
+#include <Controls/Button.mqh>
+#include <Controls/ComboBox.mqh>
+#include <Controls/Edit.mqh>
 
 CTrade trade;
 
@@ -49,6 +54,13 @@ enum SymbolProfile
    PROFILE_FX_MAJORS_5DIG = 0,
    PROFILE_FX_JPY_3DIG = 1,
    PROFILE_INDICES = 2
+};
+
+enum RuntimeMode
+{
+   MODE_SOFT = 0,
+   MODE_NORMAL = 1,
+   MODE_AGGRESSIVE = 2
 };
 
 input PresetMode InpPresetMode = PRESET_CUSTOM;
@@ -255,6 +267,105 @@ bool g_isGoldSymbol = false;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
+bool g_eaEnabled = true;
+bool g_csvEnabledUI = true;
+bool g_panelReady = false;
+RuntimeMode g_runtimeMode = MODE_NORMAL;
+int g_minTotalScoreUI = TOTAL_MIN;
+int g_minDailyScoreUI = 0;
+int g_lastSkipMask = 0;
+int g_lastEntryMask = 0;
+int g_lastSetupScore = 0;
+int g_lastTimingScore = 0;
+int g_lastTotalScore = 0;
+int g_lastDailyScore = 0;
+string g_lastUiEvent = "";
+
+struct RuntimeCfgSnapshot
+{
+   bool initialized;
+   double baseRiskPct;
+   bool usePyramiding;
+   int cooldownBars;
+   double minRRAllowed;
+   double spreadMultiple;
+   double spreadSpikeFactor;
+};
+
+RuntimeCfgSnapshot g_cfgSnapshot;
+
+class CEAPanel : public CAppDialog
+{
+public:
+   CLabel lblTitle, lblStatus, lblScores, lblMarket, lblFilters, lblLast;
+   CButton btnToggleEA, btnToggleCSV;
+   CComboBox cmbMode;
+   CEdit edtMinTotal, edtMinDaily;
+
+   bool CreatePanel(long chart_id)
+   {
+      int x = 10, y = 20, w = 360, h = 185;
+      if(!Create(chart_id, "XK_PANEL", 0, x, y, x + w, y + h))
+         return false;
+
+      lblTitle.Create(m_chart_id, "lblTitle", m_subwin, 10, 5, 340, 20);
+      lblTitle.Text("XAUUSD Killer – Control Panel");
+
+      btnToggleEA.Create(m_chart_id, "btnEA", m_subwin, 10, 28, 110, 22);
+      btnToggleEA.Text("EA: ON");
+
+      btnToggleCSV.Create(m_chart_id, "btnCSV", m_subwin, 125, 28, 110, 22);
+      btnToggleCSV.Text("CSV: ON");
+
+      cmbMode.Create(m_chart_id, "cmbMode", m_subwin, 240, 28, 110, 200);
+      cmbMode.AddItem("Soft", MODE_SOFT);
+      cmbMode.AddItem("Normal", MODE_NORMAL);
+      cmbMode.AddItem("Aggressive", MODE_AGGRESSIVE);
+      cmbMode.SelectByValue(MODE_NORMAL);
+
+      edtMinTotal.Create(m_chart_id, "edtMinTotal", m_subwin, 10, 55, 90, 20);
+      edtMinTotal.Text(IntegerToString(TOTAL_MIN));
+      edtMinDaily.Create(m_chart_id, "edtMinDaily", m_subwin, 125, 55, 90, 20);
+      edtMinDaily.Text("0");
+
+      lblStatus.Create(m_chart_id, "lblStatus", m_subwin, 10, 80, 340, 18);
+      lblScores.Create(m_chart_id, "lblScores", m_subwin, 10, 100, 340, 18);
+      lblMarket.Create(m_chart_id, "lblMarket", m_subwin, 10, 120, 340, 18);
+      lblFilters.Create(m_chart_id, "lblFilters", m_subwin, 10, 140, 340, 18);
+      lblLast.Create(m_chart_id, "lblLast", m_subwin, 10, 160, 340, 18);
+
+      lblStatus.Text("Status: INIT");
+      lblScores.Text("Scores: -");
+      lblMarket.Text("Market: -");
+      lblFilters.Text("Filters: -");
+      lblLast.Text("Last: -");
+
+      Add(lblTitle);
+      Add(btnToggleEA);
+      Add(btnToggleCSV);
+      Add(cmbMode);
+      Add(edtMinTotal);
+      Add(edtMinDaily);
+      Add(lblStatus);
+      Add(lblScores);
+      Add(lblMarket);
+      Add(lblFilters);
+      Add(lblLast);
+
+      return true;
+   }
+
+   void UpdateText(const string status, const string scores, const string market, const string filters, const string last)
+   {
+      lblStatus.Text(status);
+      lblScores.Text(scores);
+      lblMarket.Text(market);
+      lblFilters.Text(filters);
+      lblLast.Text(last);
+   }
+};
+
+CEAPanel g_panel;
 
 // Runtime config (preset-applied)
 PresetMode cfg_InpPresetMode;
@@ -470,6 +581,168 @@ enum EntryMask
 string GVName(const string key)
 {
    return "XK_" + key + "_" + g_symbol + "_" + (string)cfg_InpMagic;
+}
+
+string SkipMaskToText(int mask)
+{
+   if(mask == 0)
+      return "OK";
+   string s = "";
+   if(mask & SKIP_SESSION) s += "SESSION ";
+   if(mask & SKIP_ROLLOVER) s += "ROLLOVER ";
+   if(mask & SKIP_SPREAD) s += "SPREAD ";
+   if(mask & SKIP_SPREAD_MULT) s += "SPREADx ";
+   if(mask & SKIP_SPREAD_INSTAB) s += "SPREAD_SPIKE ";
+   if(mask & SKIP_LOWVOL) s += "LOWVOL ";
+   if(mask & SKIP_DAILY_LOCK) s += "DAILY_LOCK ";
+   if(mask & SKIP_COOLDOWN) s += "COOLDOWN ";
+   if(mask & SKIP_LOSS_BLOCK) s += "LOSS_BLOCK ";
+   if(mask & SKIP_DAILY_MAX) s += "MAX_TRADES ";
+   if(mask & SKIP_DAILY_SCORE) s += "DAILY_SCORE ";
+   if(mask & SKIP_STOPS) s += "STOPS ";
+   if(mask & SKIP_KILLZONE) s += "NO_KZ ";
+   if(mask & SKIP_PDARRAY) s += "PDARRAY ";
+   return s;
+}
+
+string EntryMaskToText(int mask)
+{
+   if(mask == 0)
+      return "NONE";
+   string s = "";
+   if(mask & ENTRY_BIAS) s += "BIAS ";
+   if(mask & ENTRY_PIVOT) s += "PIVOT ";
+   if(mask & ENTRY_HL_LH) s += "HL ";
+   if(mask & ENTRY_BOS_CLOSE) s += "BOS ";
+   if(mask & ENTRY_BOS_RETEST) s += "RETEST ";
+   if(mask & ENTRY_KEYLEVEL) s += "KEY ";
+   if(mask & ENTRY_ANTICHASE) s += "ANTICHASE ";
+   if(mask & ENTRY_FVG) s += "FVG ";
+   if(mask & ENTRY_FIB) s += "FIB ";
+   if(mask & ENTRY_FOOTPRINT) s += "FP ";
+   if(mask & ENTRY_SPIKE) s += "SPIKE ";
+   if(mask & ENTRY_RSI_LOSS) s += "RSI ";
+   if(mask & ENTRY_MMSL) s += "MMSL ";
+   if(mask & ENTRY_RR) s += "RR ";
+   if(mask & ENTRY_KILLZONE) s += "KZ ";
+   if(mask & ENTRY_SWEEP) s += "SWEEP ";
+   if(mask & ENTRY_DISPLACEMENT) s += "DISP ";
+   if(mask & ENTRY_MSS) s += "MSS ";
+   if(mask & ENTRY_OB_RTO) s += "OB ";
+   if(mask & ENTRY_OTE) s += "OTE ";
+   if(mask & ENTRY_PDARRAY) s += "PD ";
+   if(mask & ENTRY_SR) s += "SR ";
+   if(mask & ENTRY_SD) s += "SD ";
+   if(mask & ENTRY_CANDLE) s += "CANDLE ";
+   if(mask & ENTRY_MOM) s += "MOM ";
+   return s;
+}
+
+void CaptureCfgSnapshot()
+{
+   g_cfgSnapshot.initialized = true;
+   g_cfgSnapshot.baseRiskPct = cfg_InpBaseRiskPct;
+   g_cfgSnapshot.usePyramiding = cfg_InpUsePyramiding;
+   g_cfgSnapshot.cooldownBars = cfg_InpCooldownBarsAfterEntry;
+   g_cfgSnapshot.minRRAllowed = cfg_InpMinRRAllowed;
+   g_cfgSnapshot.spreadMultiple = cfg_InpSpreadMultiple;
+   g_cfgSnapshot.spreadSpikeFactor = cfg_InpSpreadSpikeFactor;
+}
+
+void RestoreCfgSnapshot()
+{
+   if(!g_cfgSnapshot.initialized)
+      return;
+   cfg_InpBaseRiskPct = g_cfgSnapshot.baseRiskPct;
+   cfg_InpUsePyramiding = g_cfgSnapshot.usePyramiding;
+   cfg_InpCooldownBarsAfterEntry = g_cfgSnapshot.cooldownBars;
+   cfg_InpMinRRAllowed = g_cfgSnapshot.minRRAllowed;
+   cfg_InpSpreadMultiple = g_cfgSnapshot.spreadMultiple;
+   cfg_InpSpreadSpikeFactor = g_cfgSnapshot.spreadSpikeFactor;
+}
+
+void ApplyRuntimeMode()
+{
+   if(g_panelReady)
+   {
+      g_minTotalScoreUI = MathMax(0, (int)StringToInteger(g_panel.edtMinTotal.Text()));
+      g_minDailyScoreUI = MathMax(0, (int)StringToInteger(g_panel.edtMinDaily.Text()));
+      g_runtimeMode = (RuntimeMode)g_panel.cmbMode.Value();
+   }
+
+   if(g_runtimeMode == MODE_SOFT)
+   {
+      cfg_InpBaseRiskPct = MathMin(cfg_InpBaseRiskPct, 0.7);
+      cfg_InpUsePyramiding = false;
+      cfg_InpCooldownBarsAfterEntry = MathMax(cfg_InpCooldownBarsAfterEntry, 4);
+      cfg_InpMinRRAllowed = MathMax(cfg_InpMinRRAllowed, 1.7);
+   }
+   else if(g_runtimeMode == MODE_AGGRESSIVE)
+   {
+      cfg_InpBaseRiskPct = MathMin(cfg_InpBaseRiskPct, 1.2);
+      cfg_InpUsePyramiding = true;
+      cfg_InpCooldownBarsAfterEntry = MathMin(cfg_InpCooldownBarsAfterEntry, 2);
+      cfg_InpMinRRAllowed = MathMax(cfg_InpMinRRAllowed, 1.5);
+      cfg_InpSpreadMultiple = MathMin(cfg_InpSpreadMultiple, 2.4);
+      cfg_InpSpreadSpikeFactor = MathMin(cfg_InpSpreadSpikeFactor, 1.5);
+   }
+   else
+   {
+      RestoreCfgSnapshot();
+   }
+
+   cfg_InpEnableCSV = g_csvEnabledUI;
+}
+
+void UpdatePanelUI(RegimeState regime, int dailyScore, int setup, int timing, int total)
+{
+   if(!g_panelReady)
+      return;
+
+   TradeDir bias = BiasH1();
+   bool locked = (GVGetInt("dayLocked", 0) == 1);
+   bool lossBlock = LossBlocksActive();
+   string status = "Status: ";
+   if(!g_eaEnabled)
+      status += "PAUSED";
+   else if(locked)
+      status += "LOCKED";
+   else if(lossBlock || g_lastSkipMask != 0)
+      status += "BLOCKED";
+   else
+      status += "RUN";
+
+   string reason = SkipMaskToText(g_lastSkipMask);
+   status += " | " + reason;
+
+   int maxTrades = 0;
+   double riskMult = 0.0;
+   bool pyramidAllowed = false;
+   DailyTradeAllowed(dailyScore, maxTrades, riskMult, pyramidAllowed);
+
+   string scores = StringFormat("Scores: Daily=%d Setup=%d Timing=%d Total=%d | MinTotal=%d MinDaily=%d | MaxTrades=%d RiskMult=%.2f Pyr=%s",
+                                dailyScore, setup, timing, total,
+                                g_minTotalScoreUI, g_minDailyScoreUI,
+                                maxTrades, riskMult, (pyramidAllowed ? "Y" : "N"));
+
+   double adx = ADX(PERIOD_H1, 1);
+   double atr15 = ATR(PERIOD_M15, 1);
+   double spread = SpreadPoints();
+   string market = StringFormat("Market: Regime=%d Bias=%d | ADX=%.1f ATR15=%.2f Spread=%.1f EMA=%.1f",
+                                (int)regime, (int)bias, adx, atr15, spread, g_spreadEma);
+
+   bool kzA = false, kzL = false, kzN = false;
+   bool kzActive = KillzoneActive(kzA, kzL, kzN);
+   datetime nyTime = ToNYTime(TimeCurrent());
+   string filters = StringFormat("Filters: KZ=%s (A:%d L:%d N:%d) NY=%s | CSV=%s | Mode=%d | EntryMask=%s",
+                                 (kzActive ? "ON" : "OFF"), (kzA ? 1 : 0), (kzL ? 1 : 0), (kzN ? 1 : 0),
+                                 TimeToString(nyTime, TIME_MINUTES),
+                                 (cfg_InpEnableCSV ? "ON" : "OFF"), (int)g_runtimeMode,
+                                 EntryMaskToText(g_lastEntryMask));
+
+   string last = "Last: " + g_lastUiEvent;
+
+   g_panel.UpdateText(status, scores, market, filters, last);
 }
 
 double GVGetDouble(const string key, double defval)
@@ -2437,6 +2710,7 @@ void ApplyPreset()
    g_pip = pipSize;
 
    ApplyProfileDefaults();
+   CaptureCfgSnapshot();
    LogPresetConfig();
 }
 
@@ -2575,6 +2849,7 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
               int oteOk, int sdHit, int sdType, double sdDistATR, int sdFresh,
               int candleHit, int candleType, int momHit, double rsi1, double rsi2)
 {
+   g_lastUiEvent = event;
    if(!cfg_InpEnableCSV)
       return;
 
@@ -2936,7 +3211,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
 
 bool ShouldEnterTrade(int setupScore, int timingScore, int totalScore, RegimeState regime)
 {
-   int totalMin = TOTAL_MIN;
+   int totalMin = (g_minTotalScoreUI > 0 ? g_minTotalScoreUI : TOTAL_MIN);
    int lossStreak = GVGetInt("lossStreak", 0);
 
    if(regime == REGIME_TRANSITION)
@@ -3114,6 +3389,7 @@ int OnInit()
    g_profile = DetectSymbolProfile(g_symbol);
 
    ApplyPreset();
+   g_csvEnabledUI = cfg_InpEnableCSV;
 
    trade.SetExpertMagicNumber((uint)cfg_InpMagic);
    trade.SetDeviationInPoints(cfg_InpMaxSlippagePoints);
@@ -3125,9 +3401,23 @@ int OnInit()
          " TickValue=", DoubleToString(tickValue, 2));
    LogSymbolCheck();
 
+   g_panelReady = g_panel.CreatePanel(ChartID());
+   if(!g_panelReady)
+      Print("Panel create failed");
+   else
+      g_panel.Run();
+   ApplyRuntimeMode();
+   ChartRedraw();
+
    UpdateDailyReset();
 
    return INIT_SUCCEEDED;
+}
+
+void OnDeinit(const int reason)
+{
+   if(g_panelReady)
+      g_panel.Destroy(reason);
 }
 
 void OnTick()
@@ -3156,6 +3446,13 @@ void OnTick()
       double dailyRiskMult = 0.0;
       DailyTradeAllowed(dailyScore, maxTrades, dailyRiskMult, pyramidAllowed);
       TryPyramiding(riskR, pyramidAllowed, regime);
+      g_lastSkipMask = SKIP_NONE;
+      g_lastEntryMask = 0;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
+      UpdatePanelUI(regime, dailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
       return;
    }
 
@@ -3163,20 +3460,34 @@ void OnTick()
    if(LossBlocksActive())
    {
       skipMask |= SKIP_LOSS_BLOCK;
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = 0;
+      g_lastDailyScore = DailyScore(regime);
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+      UpdatePanelUI(regime, g_lastDailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
       return;
    }
    if(!HardGuardsOk(skipMask))
    {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = 0;
+      g_lastDailyScore = DailyScore(regime);
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+      UpdatePanelUI(regime, g_lastDailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
       return;
    }
 
@@ -3185,14 +3496,34 @@ void OnTick()
    int maxTrades = 0;
    double dailyRiskMult = 0.0;
    bool pyramidAllowed = false;
+   if(g_minDailyScoreUI > 0 && dailyScore < g_minDailyScoreUI)
+   {
+      skipMask |= SKIP_DAILY_SCORE;
+      g_lastSkipMask = skipMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
+      LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, dailyScore, 0, 0, 0, skipMask, 0,
+             0, 0, 0.0, -1, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+             0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+      UpdatePanelUI(regime, dailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
+      return;
+   }
    if(cfg_InpUseDailyTradeControl && !DailyTradeAllowed(dailyScore, maxTrades, dailyRiskMult, pyramidAllowed))
    {
       skipMask |= SKIP_DAILY_SCORE;
+      g_lastSkipMask = skipMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, dailyScore, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+      UpdatePanelUI(regime, dailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
       return;
    }
 
@@ -3202,11 +3533,17 @@ void OnTick()
    if(dayTrades >= allowedTrades)
    {
       skipMask |= SKIP_DAILY_MAX;
+      g_lastSkipMask = skipMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = 0;
+      g_lastTimingScore = 0;
+      g_lastTotalScore = 0;
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, dailyScore, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
+      UpdatePanelUI(regime, dailyScore, g_lastSetupScore, g_lastTimingScore, g_lastTotalScore);
       return;
    }
 
@@ -3239,28 +3576,72 @@ void OnTick()
                       sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
                       sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2))
    {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
       LogCSVEx("NOENTRY", DIR_NONE, 0.0, 0.0, 0.0, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
                0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
                sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
                sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
+      UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
       return;
    }
 
    if(!ShouldEnterTrade(setupScore, timingScore, totalScore, regime))
+   {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
+      UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
       return;
+   }
 
    double riskMult = CurrentRiskMultiplier(dailyRiskMult);
    double lots = CalcLots(riskR, cfg_InpBaseRiskPct * riskMult);
    if(lots <= 0.0)
+   {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
+      UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
       return;
+   }
 
    if(!StopsOk(dir, entry, sl, tp))
    {
       skipMask |= SKIP_STOPS;
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
       LogCSVEx("SKIP", DIR_NONE, entry, sl, tp, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
                0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
                sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
                sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
+      UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
+      return;
+   }
+
+   if(!g_eaEnabled)
+   {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
+      UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
       return;
    }
 
@@ -3270,6 +3651,12 @@ void OnTick()
 
    if(sent)
    {
+      g_lastSkipMask = SKIP_NONE;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
       GVSetInt("dayTrades", dayTrades + 1);
       GVSetDouble("lastEntryTime", (double)iTime(g_symbol, PERIOD_M15, 0));
       GVSetDouble("origRisk", riskR);
@@ -3285,11 +3672,18 @@ void OnTick()
    }
    else
    {
+      g_lastSkipMask = skipMask;
+      g_lastEntryMask = entryMask;
+      g_lastDailyScore = dailyScore;
+      g_lastSetupScore = setupScore;
+      g_lastTimingScore = timingScore;
+      g_lastTotalScore = totalScore;
       LogCSVEx("ENTRY_FAIL", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
                retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
                sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
                sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
    }
+   UpdatePanelUI(regime, dailyScore, setupScore, timingScore, totalScore);
 }
 
 void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &request, const MqlTradeResult &result)
@@ -3319,4 +3713,28 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
    }
+}
+
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
+{
+   if(g_panelReady)
+      g_panel.ChartEvent(id, lparam, dparam, sparam);
+
+   if(id == CHARTEVENT_OBJECT_CLICK)
+   {
+      if(sparam == "btnEA")
+      {
+         g_eaEnabled = !g_eaEnabled;
+         g_panel.btnToggleEA.Text(g_eaEnabled ? "EA: ON" : "EA: OFF");
+      }
+      else if(sparam == "btnCSV")
+      {
+         g_csvEnabledUI = !g_csvEnabledUI;
+         g_panel.btnToggleCSV.Text(g_csvEnabledUI ? "CSV: ON" : "CSV: OFF");
+      }
+      ApplyRuntimeMode();
+   }
+
+   if(id == CHARTEVENT_OBJECT_ENDEDIT || id == CHARTEVENT_OBJECT_CHANGE)
+      ApplyRuntimeMode();
 }
