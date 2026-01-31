@@ -8,6 +8,7 @@
 //| - Convert GOLD-tuned distances to profile-aware points.          |
 //| - Fix index key-step units and volume step rounding.             |
 //| - Add tickSize/pipSize to logs and sanity warnings.              |
+//| - Add optional SD/candle/momentum bonus scoring + CSV fields.    |
 //|                                                                  |
 //| CHANGELOG                                                       |
 //| - Added ICT/SMC modules: NY killzones, PD arrays, liquidity      |
@@ -141,6 +142,22 @@ input double InpFP_AbsorpVolRatio = 1.50;
 input double InpFP_AbsorpRangeATR = 0.45;
 input bool   InpFP_RequireAcceptance = true;
 input int    InpFP_ScoreBonus = 10;
+
+input bool   InpUseSupplyDemandBonus = true;
+input ENUM_TIMEFRAMES InpSD_TF = PERIOD_H1;
+input int    InpSD_LookbackBars = 200;
+input double InpSD_MinImpulseATR = 1.2;
+input int    InpSD_MaxBaseBars = 3;
+input double InpSD_ZonePadATR = 0.15;
+input double InpSD_MaxDistATR = 0.8;
+input int    InpSD_BonusPoints = 6;
+input int    InpSD_FreshnessBonus = 3;
+
+input bool   InpUseCandleBonus = true;
+input int    InpCandleBonusPoints = 4;
+
+input bool   InpUseMomentumBonus = true;
+input int    InpMomentumBonusPoints = 4;
 
 input bool   InpUseSpikeGuard = true;
 input double InpSpikeMultATR = 2.5;
@@ -310,6 +327,19 @@ double cfg_InpFP_AbsorpVolRatio;
 double cfg_InpFP_AbsorpRangeATR;
 bool cfg_InpFP_RequireAcceptance;
 int cfg_InpFP_ScoreBonus;
+bool cfg_InpUseSupplyDemandBonus;
+ENUM_TIMEFRAMES cfg_InpSD_TF;
+int cfg_InpSD_LookbackBars;
+double cfg_InpSD_MinImpulseATR;
+int cfg_InpSD_MaxBaseBars;
+double cfg_InpSD_ZonePadATR;
+double cfg_InpSD_MaxDistATR;
+int cfg_InpSD_BonusPoints;
+int cfg_InpSD_FreshnessBonus;
+bool cfg_InpUseCandleBonus;
+int cfg_InpCandleBonusPoints;
+bool cfg_InpUseMomentumBonus;
+int cfg_InpMomentumBonusPoints;
 bool cfg_InpUseSpikeGuard;
 double cfg_InpSpikeMultATR;
 double cfg_InpSL_ATR_Mult;
@@ -431,7 +461,10 @@ enum EntryMask
    ENTRY_OB_RTO = 1 << 18,
    ENTRY_OTE = 1 << 19,
    ENTRY_PDARRAY = 1 << 20,
-   ENTRY_SR = 1 << 21
+   ENTRY_SR = 1 << 21,
+   ENTRY_SD = 1 << 22,
+   ENTRY_CANDLE = 1 << 23,
+   ENTRY_MOM = 1 << 24
 };
 
 string GVName(const string key)
@@ -500,7 +533,7 @@ SymbolProfile DetectSymbolProfile(const string symbol)
       return PROFILE_FX_MAJORS_5DIG;
    string indexTokens[] = {"US30", "DJ30", "WS30", "US30CASH",
                            "NAS100", "USTEC", "US100", "NAS",
-                           "SPX500", "US500", "SP500",
+                           "SPX500", "SPX", "US500", "US_500", "SP500",
                            "GER40", "DE40", "DAX", "DAX40",
                            "FTSEMIB", "FTSE_MIB", "ITA40",
                            "UK100", "FTSE"};
@@ -576,10 +609,7 @@ double AutoPipSize(bool useOverride)
       return cfg_InpPipPrice;
 
    if(g_profile == PROFILE_INDICES)
-   {
-      double tickSize = TickSize();
-      return (tickSize > 0.0) ? tickSize : 1.0;
-   }
+      return 1.0;
 
    if(g_digits == 3 || g_digits == 5)
       return g_point * 10.0;
@@ -1480,6 +1510,212 @@ bool FootprintOk(TradeDir dir, double atrM15, bool &absorption, bool &accepted)
    return !absorption;
 }
 
+bool DetectSupplyDemandBonus(TradeDir dir, int &sdType, double &sdDistATR, int &sdFresh)
+{
+   sdType = 0;
+   sdDistATR = 0.0;
+   sdFresh = 0;
+   if(!cfg_InpUseSupplyDemandBonus)
+      return false;
+
+   int bars = iBars(g_symbol, cfg_InpSD_TF);
+   if(bars <= cfg_InpSD_MaxBaseBars + 2)
+      return false;
+
+   int lookback = MathMin(cfg_InpSD_LookbackBars, bars - cfg_InpSD_MaxBaseBars - 2);
+   if(lookback < cfg_InpSD_MaxBaseBars + 2)
+      return false;
+
+   double atrM15 = ATR(PERIOD_M15, 1);
+   if(atrM15 <= 0.0)
+      return false;
+
+   double bestDist = DBL_MAX;
+   bool zoneFresh = false;
+   int zoneType = 0;
+
+   for(int i = 1; i <= lookback; i++)
+   {
+      double atr = iATR(g_symbol, cfg_InpSD_TF, cfg_InpATRPeriod, i);
+      if(atr <= 0.0)
+         continue;
+      double impOpen = iOpen(g_symbol, cfg_InpSD_TF, i);
+      double impClose = iClose(g_symbol, cfg_InpSD_TF, i);
+      double impHigh = iHigh(g_symbol, cfg_InpSD_TF, i);
+      double impLow = iLow(g_symbol, cfg_InpSD_TF, i);
+      double impRange = impHigh - impLow;
+      double impBody = MathAbs(impClose - impOpen);
+      double bodyRatio = (impRange > 0.0) ? (impBody / impRange) : 0.0;
+      if(impRange < atr * cfg_InpSD_MinImpulseATR || bodyRatio < 0.55)
+         continue;
+
+      int baseBars = 0;
+      double baseMinLow = DBL_MAX;
+      double baseMaxHigh = -DBL_MAX;
+      double baseMinBody = DBL_MAX;
+      double baseMaxBody = -DBL_MAX;
+      for(int b = 1; b <= cfg_InpSD_MaxBaseBars; b++)
+      {
+         int shift = i + b;
+         if(shift >= bars)
+            break;
+         double bHigh = iHigh(g_symbol, cfg_InpSD_TF, shift);
+         double bLow = iLow(g_symbol, cfg_InpSD_TF, shift);
+         double bOpen = iOpen(g_symbol, cfg_InpSD_TF, shift);
+         double bClose = iClose(g_symbol, cfg_InpSD_TF, shift);
+         double bRange = bHigh - bLow;
+         if(bRange >= atr * 0.8)
+            break;
+         baseBars++;
+         baseMinLow = MathMin(baseMinLow, bLow);
+         baseMaxHigh = MathMax(baseMaxHigh, bHigh);
+         baseMinBody = MathMin(baseMinBody, MathMin(bOpen, bClose));
+         baseMaxBody = MathMax(baseMaxBody, MathMax(bOpen, bClose));
+      }
+      if(baseBars <= 0)
+         continue;
+
+      bool impulseUp = impClose > impOpen;
+      int candidateType = impulseUp ? 1 : -1;
+      if(dir == DIR_LONG && candidateType != 1)
+         continue;
+      if(dir == DIR_SHORT && candidateType != -1)
+         continue;
+
+      double pad = atr * cfg_InpSD_ZonePadATR;
+      double candLow = (candidateType == 1) ? baseMinLow : baseMinBody;
+      double candHigh = (candidateType == 1) ? baseMaxBody : baseMaxHigh;
+      candLow -= pad;
+      candHigh += pad;
+
+      bool mitigated = false;
+      for(int j = i - 1; j >= 1; j--)
+      {
+         double jHigh = iHigh(g_symbol, cfg_InpSD_TF, j);
+         double jLow = iLow(g_symbol, cfg_InpSD_TF, j);
+         if(jLow <= candHigh && jHigh >= candLow)
+         {
+            mitigated = true;
+            break;
+         }
+      }
+
+      double price = iClose(g_symbol, PERIOD_M15, 1);
+      double dist = 0.0;
+      if(price < candLow)
+         dist = candLow - price;
+      else if(price > candHigh)
+         dist = price - candHigh;
+      else
+         dist = 0.0;
+
+      double distAtr = dist / atrM15;
+      if(distAtr > cfg_InpSD_MaxDistATR)
+         continue;
+
+      if(distAtr < bestDist)
+      {
+         bestDist = distAtr;
+         zoneFresh = !mitigated;
+         zoneType = candidateType;
+      }
+   }
+
+   if(bestDist == DBL_MAX)
+      return false;
+
+   sdType = zoneType;
+   sdDistATR = bestDist;
+   sdFresh = zoneFresh ? 1 : 0;
+   return true;
+}
+
+bool CandleBonus(TradeDir dir, int &candleType)
+{
+   candleType = 0;
+   if(!cfg_InpUseCandleBonus)
+      return false;
+
+   double o1 = iOpen(g_symbol, PERIOD_M15, 1);
+   double c1 = iClose(g_symbol, PERIOD_M15, 1);
+   double h1 = iHigh(g_symbol, PERIOD_M15, 1);
+   double l1 = iLow(g_symbol, PERIOD_M15, 1);
+   double o2 = iOpen(g_symbol, PERIOD_M15, 2);
+   double c2 = iClose(g_symbol, PERIOD_M15, 2);
+   double range = h1 - l1;
+   if(range <= 0.0)
+      return false;
+
+   double body = MathAbs(c1 - o1);
+   double upperWick = h1 - MathMax(o1, c1);
+   double lowerWick = MathMin(o1, c1) - l1;
+
+   bool bullish = c1 > o1;
+   bool bearish = c1 < o1;
+
+   bool bullEngulf = bullish && c1 >= o2 && o1 <= c2;
+   bool bearEngulf = bearish && c1 <= o2 && o1 >= c2;
+
+   bool bullPin = lowerWick > body * 2.0 && lowerWick > upperWick;
+   bool bearPin = upperWick > body * 2.0 && upperWick > lowerWick;
+
+   bool doji = body <= range * 0.25;
+   bool dojiBull = doji && lowerWick > upperWick * 1.5;
+   bool dojiBear = doji && upperWick > lowerWick * 1.5;
+
+   if(dir == DIR_LONG)
+   {
+      if(bullEngulf)
+      {
+         candleType = 1;
+         return true;
+      }
+      if(bullPin)
+      {
+         candleType = 3;
+         return true;
+      }
+      if(dojiBull)
+      {
+         candleType = 5;
+         return true;
+      }
+   }
+   else if(dir == DIR_SHORT)
+   {
+      if(bearEngulf)
+      {
+         candleType = 2;
+         return true;
+      }
+      if(bearPin)
+      {
+         candleType = 4;
+         return true;
+      }
+      if(dojiBear)
+      {
+         candleType = 6;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool MomentumBonus(TradeDir dir, double &rsi1, double &rsi2)
+{
+   rsi1 = RSI(PERIOD_M15, 1);
+   rsi2 = RSI(PERIOD_M15, 2);
+   if(!cfg_InpUseMomentumBonus)
+      return false;
+   if(dir == DIR_LONG)
+      return (rsi1 > rsi2 && rsi1 > 50.0);
+   if(dir == DIR_SHORT)
+      return (rsi1 < rsi2 && rsi1 < 50.0);
+   return false;
+}
+
 bool SpikeGuardOk(double atrM15)
 {
    if(!cfg_InpUseSpikeGuard)
@@ -2026,6 +2262,19 @@ void ApplyPreset()
    cfg_InpFP_AbsorpRangeATR = InpFP_AbsorpRangeATR;
    cfg_InpFP_RequireAcceptance = InpFP_RequireAcceptance;
    cfg_InpFP_ScoreBonus = InpFP_ScoreBonus;
+   cfg_InpUseSupplyDemandBonus = InpUseSupplyDemandBonus;
+   cfg_InpSD_TF = InpSD_TF;
+   cfg_InpSD_LookbackBars = InpSD_LookbackBars;
+   cfg_InpSD_MinImpulseATR = InpSD_MinImpulseATR;
+   cfg_InpSD_MaxBaseBars = InpSD_MaxBaseBars;
+   cfg_InpSD_ZonePadATR = InpSD_ZonePadATR;
+   cfg_InpSD_MaxDistATR = InpSD_MaxDistATR;
+   cfg_InpSD_BonusPoints = InpSD_BonusPoints;
+   cfg_InpSD_FreshnessBonus = InpSD_FreshnessBonus;
+   cfg_InpUseCandleBonus = InpUseCandleBonus;
+   cfg_InpCandleBonusPoints = InpCandleBonusPoints;
+   cfg_InpUseMomentumBonus = InpUseMomentumBonus;
+   cfg_InpMomentumBonusPoints = InpMomentumBonusPoints;
    cfg_InpUseSpikeGuard = InpUseSpikeGuard;
    cfg_InpSpikeMultATR = InpSpikeMultATR;
    cfg_InpSL_ATR_Mult = InpSL_ATR_Mult;
@@ -2176,7 +2425,16 @@ void ApplyPreset()
       }
    }
 
-   g_pip = AutoPipSize(true);
+   double pipSize = AutoPipSize(true);
+   if(cfg_InpPresetMode == PRESET_BALANCED || cfg_InpPresetMode == PRESET_CONSERVATIVE)
+   {
+      if(g_profile == PROFILE_INDICES)
+         cfg_InpMaxSpreadPoints = (int)MathRound(PointsFromPrice(2.5));
+      else
+         cfg_InpMaxSpreadPoints = (int)MathRound((2.0 * pipSize) / g_point);
+   }
+
+   g_pip = pipSize;
 
    ApplyProfileDefaults();
    LogPresetConfig();
@@ -2303,6 +2561,20 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
             int sweepDir, double sweepLevel, double displacementScore, double obHigh, double obLow, double obMT,
             int oteOk)
 {
+   LogCSVEx(event, dir, entry, sl, tp, tp1, lot, dailyScore, setup, timing, total, skipMask, entryMask,
+            retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
+            sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+            0, 0, 0.0, 0, 0, 0, 0, 0.0, 0.0);
+}
+
+void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
+              int dailyScore, int setup, int timing, int total, int skipMask, int entryMask,
+              int retcode, int lasterr, double bosLevel, int bosAgeBars, double nearestKey,
+              int killzoneActive, double pdh, double pdl, double psh, double psl, double hod, double lod,
+              int sweepDir, double sweepLevel, double displacementScore, double obHigh, double obLow, double obMT,
+              int oteOk, int sdHit, int sdType, double sdDistATR, int sdFresh,
+              int candleHit, int candleType, int momHit, double rsi1, double rsi2)
+{
    if(!cfg_InpEnableCSV)
       return;
 
@@ -2320,7 +2592,9 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
                 "setup", "timing", "total", "retcode", "lasterr", "spreadEma", "spreadNow",
                 "stopsLevelPts", "freezeLevelPts", "bosLevel", "bosAgeBars", "nearestKey", "tp1Price",
                 "killzoneActive", "pdh", "pdl", "psh", "psl", "hod", "lod",
-                "sweepDir", "sweepLevel", "displacementScore", "obHigh", "obLow", "obMT", "oteOk");
+                "sweepDir", "sweepLevel", "displacementScore", "obHigh", "obLow", "obMT", "oteOk",
+                "sdHit", "sdType", "sdDistATR", "sdFresh", "candleHit", "candleType",
+                "momHit", "rsi1", "rsi2");
    }
 
    int lossStreak = GVGetInt("lossStreak", 0);
@@ -2385,7 +2659,16 @@ void LogCSV(const string event, TradeDir dir, double entry, double sl, double tp
              DoubleToString(obHigh, g_digits),
              DoubleToString(obLow, g_digits),
              DoubleToString(obMT, g_digits),
-             oteOk);
+             oteOk,
+             sdHit,
+             sdType,
+             DoubleToString(sdDistATR, 2),
+             sdFresh,
+             candleHit,
+             candleType,
+             momHit,
+             DoubleToString(rsi1, 2),
+             DoubleToString(rsi2, 2));
 
    FileClose(handle);
 }
@@ -2395,7 +2678,10 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
                     double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
                     double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
                     int &sweepDir, double &sweepLevel, double &displacementScore,
-                    double &obHigh, double &obLow, double &obMT, int &oteOk)
+                    double &obHigh, double &obLow, double &obMT, int &oteOk,
+                    int &sdHit, int &sdType, double &sdDistATR, int &sdFresh,
+                    int &candleHit, int &candleType,
+                    int &momHit, double &rsi1, double &rsi2)
 {
    setupScore = 0;
    timingScore = 0;
@@ -2413,6 +2699,15 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    displacementScore = 0.0;
    obHigh = obLow = obMT = 0.0;
    oteOk = 0;
+   sdHit = 0;
+   sdType = 0;
+   sdDistATR = 0.0;
+   sdFresh = 0;
+   candleHit = 0;
+   candleType = 0;
+   momHit = 0;
+   rsi1 = 0.0;
+   rsi2 = 0.0;
 
    TradeDir bias = BiasH1();
    if(bias == DIR_NONE)
@@ -2549,6 +2844,29 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    if(!RSIAfterLossOk(dir))
       return false;
    entryMask |= ENTRY_RSI_LOSS;
+
+   if(DetectSupplyDemandBonus(dir, sdType, sdDistATR, sdFresh))
+   {
+      sdHit = 1;
+      entryMask |= ENTRY_SD;
+      setupScore += cfg_InpSD_BonusPoints;
+      if(sdFresh == 1)
+         setupScore += cfg_InpSD_FreshnessBonus;
+   }
+
+   if(CandleBonus(dir, candleType))
+   {
+      candleHit = 1;
+      entryMask |= ENTRY_CANDLE;
+      setupScore += cfg_InpCandleBonusPoints;
+   }
+
+   if(MomentumBonus(dir, rsi1, rsi2))
+   {
+      momHit = 1;
+      entryMask |= ENTRY_MOM;
+      timingScore += cfg_InpMomentumBonusPoints;
+   }
 
    int obAgeBars = -1;
    if(!FindOrderBlock(dir, obHigh, obLow, obMT, obAgeBars))
@@ -2906,14 +3224,25 @@ void OnTick()
    double displacementScore = 0.0;
    double obHigh = 0.0, obLow = 0.0, obMT = 0.0;
    int oteOk = 0;
+   int sdHit = 0;
+   int sdType = 0;
+   double sdDistATR = 0.0;
+   int sdFresh = 0;
+   int candleHit = 0;
+   int candleType = 0;
+   int momHit = 0;
+   double rsi1 = 0.0;
+   double rsi2 = 0.0;
 
    if(!CalculateEntry(dir, entry, sl, tp, tp1, riskR, setupScore, timingScore, totalScore, skipMask, entryMask,
                       nearestKey, bosLevel, bosAgeBars, killzoneActive, pdh, pdl, psh, psl, hod, lod,
-                      sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk))
+                      sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+                      sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2))
    {
-      LogCSV("NOENTRY", DIR_NONE, 0.0, 0.0, 0.0, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
-             0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
-             sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk);
+      LogCSVEx("NOENTRY", DIR_NONE, 0.0, 0.0, 0.0, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
+               0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
+               sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+               sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
       return;
    }
 
@@ -2928,9 +3257,10 @@ void OnTick()
    if(!StopsOk(dir, entry, sl, tp))
    {
       skipMask |= SKIP_STOPS;
-      LogCSV("SKIP", DIR_NONE, entry, sl, tp, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
-             0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
-             sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk);
+      LogCSVEx("SKIP", DIR_NONE, entry, sl, tp, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
+               0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
+               sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+               sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
       return;
    }
 
@@ -2948,15 +3278,17 @@ void OnTick()
       GVSetInt("addCount", 0);
       GVSetDouble("lastAddPrice", entry);
 
-      LogCSV("ENTRY", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
-             retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
-             sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk);
+      LogCSVEx("ENTRY", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
+               retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
+               sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+               sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
    }
    else
    {
-      LogCSV("ENTRY_FAIL", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
-             retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
-             sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk);
+      LogCSVEx("ENTRY_FAIL", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
+               retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
+               sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
+               sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2);
    }
 }
 
