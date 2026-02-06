@@ -35,6 +35,45 @@ input int    stopLossPips   = 30; // SL iniziale in pips
 datetime lastTradeTime = 0;
 double initialBalance, maxEquity;
 
+
+double GetIndicatorValue(const int handle, const int shift)
+{
+   if(handle == INVALID_HANDLE)
+      return 0.0;
+
+   double buffer[];
+   ArraySetAsSeries(buffer, true);
+   if(CopyBuffer(handle, 0, shift, 1, buffer) <= 0)
+   {
+      IndicatorRelease(handle);
+      return 0.0;
+   }
+
+   double value = buffer[0];
+   IndicatorRelease(handle);
+   return value;
+}
+
+double GetATR(ENUM_TIMEFRAMES timeframe, int period, int shift)
+{
+   return GetIndicatorValue(iATR(_Symbol, timeframe, period), shift);
+}
+
+double GetMA(ENUM_TIMEFRAMES timeframe, int period, int ma_shift, ENUM_MA_METHOD ma_method, ENUM_APPLIED_PRICE applied_price, int shift)
+{
+   return GetIndicatorValue(iMA(_Symbol, timeframe, period, ma_shift, ma_method, applied_price), shift);
+}
+
+double GetRSI(ENUM_TIMEFRAMES timeframe, int period, ENUM_APPLIED_PRICE applied_price, int shift)
+{
+   return GetIndicatorValue(iRSI(_Symbol, timeframe, period, applied_price), shift);
+}
+
+double GetADX(ENUM_TIMEFRAMES timeframe, int period, int shift)
+{
+   return GetIndicatorValue(iADX(_Symbol, timeframe, period), shift);
+}
+
 int OnInit() {
     initialBalance = AccountInfoDouble(ACCOUNT_BALANCE);
     maxEquity = initialBalance;
@@ -140,7 +179,7 @@ void OnTick() {
     if(score < 50 || confirmations < 3)
         return;
 
-    double stoploss = (stopLossPips * _Point) + ATRMultiplier * iATR(_Symbol, PERIOD_M5, 14, 0);
+    double stoploss = (stopLossPips * _Point) + ATRMultiplier * GetATR(PERIOD_M5, 14, 0);
     double rr = 2.0;
     if(score >= 90)
         rr = 4.0;
@@ -185,8 +224,8 @@ bool SpreadTooHigh() {
 }
 
 bool ATRCheck() {
-    double atr_now = iATR(_Symbol, PERIOD_M5, 14, 0);
-    double atr_avg = iATR(_Symbol, PERIOD_M5, 50, 0);
+    double atr_now = GetATR(PERIOD_M5, 14, 0);
+    double atr_avg = GetATR(PERIOD_M5, 50, 0);
     return atr_now < (2.3 * atr_avg);
 }
 
@@ -221,8 +260,8 @@ bool DailyDrawdownExceeded()
 
 bool TrendConfirmed()
 {
-    double ema50 = iMA(_Symbol, PERIOD_H4, 50, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema200 = iMA(_Symbol, PERIOD_H4, 200, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema50 = GetMA(PERIOD_H4, 50, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema200 = GetMA(PERIOD_H4, 200, 0, MODE_EMA, PRICE_CLOSE, 0);
     double price = iClose(_Symbol, PERIOD_H4, 0);
     if(ema50 > ema200 && price > ema50) return true;
     if(ema50 < ema200 && price < ema50) return true;
@@ -271,11 +310,11 @@ int CheckConfirmations() {
     int conf = 0;
 
     // RSI
-    double rsi = iRSI(_Symbol, PERIOD_M5, 14, PRICE_CLOSE, 0);
+    double rsi = GetRSI(PERIOD_M5, 14, PRICE_CLOSE, 0);
     if(rsi < 30 || rsi > 70) conf++;
 
     // EMA trend
-    double ema20 = iMA(_Symbol, PERIOD_M5, 20, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema20 = GetMA(PERIOD_M5, 20, 0, MODE_EMA, PRICE_CLOSE, 0);
     double prev_close = iClose(_Symbol, PERIOD_M5, 1);
     double close_now = iClose(_Symbol, PERIOD_M5, 0);
     if((prev_close <= ema20 && close_now > ema20) ||
@@ -283,17 +322,17 @@ int CheckConfirmations() {
         conf++;
 
     // ADX trend
-    double adx = iADX(_Symbol, PERIOD_M5, 14, PRICE_CLOSE, MODE_MAIN, 0);
+    double adx = GetADX(PERIOD_M5, 14, 0);
     if(adx > 25) conf++;
 
     // Volume spike
     if(iVolume(_Symbol, PERIOD_M5, 0) > 1.8 * iVolume(_Symbol, PERIOD_M5, 1)) conf++;
 
     // 4 EMA alignment
-    double ema57 = iMA(_Symbol, PERIOD_M5, 57, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema114 = iMA(_Symbol, PERIOD_M5, 114, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema150 = iMA(_Symbol, PERIOD_M5, 150, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema214 = iMA(_Symbol, PERIOD_M5, 214, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema57 = GetMA(PERIOD_M5, 57, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema114 = GetMA(PERIOD_M5, 114, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema150 = GetMA(PERIOD_M5, 150, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema214 = GetMA(PERIOD_M5, 214, 0, MODE_EMA, PRICE_CLOSE, 0);
     if(ema57 < ema114 && ema114 < ema150 && ema150 < ema214) conf++;
 
     // Pivot breakout
@@ -319,7 +358,7 @@ int CheckConfirmations() {
 }
 
 int EntryDirection() {
-    double rsi = iRSI(_Symbol, PERIOD_M5, 14, PRICE_CLOSE, 0);
+    double rsi = GetRSI(PERIOD_M5, 14, PRICE_CLOSE, 0);
     if(rsi < 30) return 1;
     if(rsi > 70) return -1;
     return 0;
@@ -381,8 +420,8 @@ void ManageRunnerTrade()
                 }
 
                 // Uscita in caso di inversione forte (ADX < 20 e RSI opposto)
-                double rsi = iRSI(_Symbol, tf, 14, PRICE_CLOSE, 0);
-                double adx = iADX(_Symbol, tf, 14, PRICE_CLOSE, MODE_MAIN, 0);
+                double rsi = GetRSI(tf, 14, PRICE_CLOSE, 0);
+                double adx = GetADX(tf, 14, 0);
                 if(adx < 20 && ((type == POSITION_TYPE_BUY && rsi < 40) || (type == POSITION_TYPE_SELL && rsi > 60)))
                 {
                     trade.PositionClose(ticket);
@@ -397,20 +436,20 @@ double CalculateConfidenceScore()
     double score = 0;
 
     // RSI estremo
-    double rsi = iRSI(_Symbol, PERIOD_M5, 14, PRICE_CLOSE, 0);
+    double rsi = GetRSI(PERIOD_M5, 14, PRICE_CLOSE, 0);
     if(rsi < 18 || rsi > 82)
         score += 15;
 
     // ADX alto
-    double adx = iADX(_Symbol, PERIOD_H1, 14, PRICE_CLOSE, MODE_MAIN, 0);
+    double adx = GetADX(PERIOD_H1, 14, 0);
     if(adx > 28)
         score += 15;
 
     // EMA ben allineate
-    double ema57 = iMA(_Symbol, PERIOD_M5, 57, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema114 = iMA(_Symbol, PERIOD_M5, 114, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema150 = iMA(_Symbol, PERIOD_M5, 150, 0, MODE_EMA, PRICE_CLOSE, 0);
-    double ema214 = iMA(_Symbol, PERIOD_M5, 214, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema57 = GetMA(PERIOD_M5, 57, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema114 = GetMA(PERIOD_M5, 114, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema150 = GetMA(PERIOD_M5, 150, 0, MODE_EMA, PRICE_CLOSE, 0);
+    double ema214 = GetMA(PERIOD_M5, 214, 0, MODE_EMA, PRICE_CLOSE, 0);
     if(ema57 > ema114 && ema114 > ema150 && ema150 > ema214)
         score += 15;
 
@@ -437,7 +476,7 @@ double CalculateConfidenceScore()
         score += 10;
 
     // Pitchfork key level (simulato)
-    if(MathAbs(price - iMA(_Symbol, PERIOD_H1, 100, 0, MODE_EMA, PRICE_CLOSE, 0)) < 25 * _Point)
+    if(MathAbs(price - GetMA(PERIOD_H1, 100, 0, MODE_EMA, PRICE_CLOSE, 0)) < 25 * _Point)
         score += 5;
 
     // Onde di Elliott (simulato se 3 candele a zigzag)
@@ -489,7 +528,7 @@ void CheckAndTrade()
     }
 
     // Calcolo direzione trade (semplificato su RSI)
-    double rsi = iRSI(_Symbol, PERIOD_M5, 14, PRICE_CLOSE, 0);
+    double rsi = GetRSI(PERIOD_M5, 14, PRICE_CLOSE, 0);
     int trade_type = -1;
 
     if(rsi < 18)
@@ -503,7 +542,7 @@ void CheckAndTrade()
     double price = (trade_type == OP_BUY) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
     // StopLoss e TakeProfit dinamici
-    double atr = iATR(_Symbol, PERIOD_M5, 14, 0);
+    double atr = GetATR(PERIOD_M5, 14, 0);
     double sl_pips = atr * 1.5;
     double tp_pips = sl_pips * rr_ratio;
 
