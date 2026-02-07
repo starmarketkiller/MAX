@@ -838,9 +838,9 @@ double GetATR(const string sym, ENUM_TIMEFRAMES tf, int period, int shift = 0)
    return buf[0];
 }
 
-double GetADX(const string sym, ENUM_TIMEFRAMES tf, int period, int applied_price, int shift = 0)
+double GetADX(const string sym, ENUM_TIMEFRAMES tf, int period, int shift = 0)
 {
-   int handle = iADX(sym, tf, period, applied_price);
+   int handle = iADX(sym, tf, period);
    if(handle == INVALID_HANDLE)
       return EMPTY_VALUE;
    double buf[];
@@ -861,7 +861,7 @@ double ATR(ENUM_TIMEFRAMES tf, int shift)
 
 double ADX(ENUM_TIMEFRAMES tf, int shift)
 {
-   return GetADX(g_symbol, tf, cfg_InpADXPeriod, PRICE_CLOSE, shift);
+   return GetADX(g_symbol, tf, cfg_InpADXPeriod, shift);
 }
 
 double RSI(ENUM_TIMEFRAMES tf, int shift)
@@ -1943,16 +1943,23 @@ bool CooldownActive()
 
 void UpdateDailyReset()
 {
-   datetime dayStart = (datetime)GVGetDouble("dayStart", 0.0);
    datetime now = TimeCurrent();
-   if(TimeDay(dayStart) != TimeDay(now) || dayStart == 0)
+   datetime todayStart = (datetime)StringToTime(TimeToString(now, TIME_DATE));
+
+   datetime stored = (datetime)GVGetDouble("dayStart", 0.0);
+   datetime storedStart = (stored == 0) ? 0 : (datetime)StringToTime(TimeToString(stored, TIME_DATE));
+
+   if(stored == 0 || storedStart != todayStart)
    {
-      GVSetDouble("dayStart", (double)now);
+      GVSetDouble("dayStart", (double)todayStart);
+
       double equity = AccountInfoDouble(ACCOUNT_EQUITY);
       GVSetDouble("dayEquityStart", equity);
       GVSetDouble("dayEquityPeak", equity);
       GVSetInt("dayLocked", 0);
       GVSetInt("dayTrades", 0);
+      GVSetInt("tp1done", 0);
+      GVSetInt("addCount", 0);
    }
 }
 
