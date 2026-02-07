@@ -158,6 +158,7 @@ input int    InpCandleBonusPoints = 4;
 
 input bool   InpUseMomentumBonus = true;
 input int    InpMomentumBonusPoints = 4;
+input bool   InpRequireBiasAlignWithSweep = true;
 
 input bool   InpUseSpikeGuard = true;
 input double InpSpikeMultATR = 2.5;
@@ -273,6 +274,10 @@ struct IndicatorsCache
 };
 
 IndicatorsCache g_indicators;
+int g_hodlodDayId = 0;
+datetime g_hodlodBarTime = 0;
+double g_cachedHod = 0.0;
+double g_cachedLod = 0.0;
 
 // Runtime config (preset-applied)
 PresetMode cfg_InpPresetMode;
@@ -358,6 +363,7 @@ bool cfg_InpUseCandleBonus;
 int cfg_InpCandleBonusPoints;
 bool cfg_InpUseMomentumBonus;
 int cfg_InpMomentumBonusPoints;
+bool cfg_InpRequireBiasAlignWithSweep;
 bool cfg_InpUseSpikeGuard;
 double cfg_InpSpikeMultATR;
 double cfg_InpSL_ATR_Mult;
@@ -664,6 +670,11 @@ double PipsFromPoints(double points)
    return PipsFromPrice(price);
 }
 
+double NormalizePrice(double p)
+{
+   return NormalizeDouble(p, g_digits);
+}
+
 double PipPrice()
 {
    if(cfg_InpPipPrice > 0.0)
@@ -804,6 +815,20 @@ void UpdateSpreadEMA()
       g_spreadEma = spread;
    else
       g_spreadEma = alpha * spread + (1.0 - alpha) * g_spreadEma;
+}
+
+bool SpreadMultipleWouldBlock(double spread, double spreadEma)
+{
+   if(!cfg_InpUseSpreadMultiple || spreadEma <= 0.0)
+      return false;
+   return (spread > spreadEma * cfg_InpSpreadMultiple);
+}
+
+bool SpreadInstabilityWouldBlock(double spread, double spreadEma)
+{
+   if(!cfg_InpUseSpreadInstability || spreadEma <= 0.0)
+      return false;
+   return (spread > spreadEma * cfg_InpSpreadSpikeFactor);
 }
 
 bool SpreadMultipleBlocked()
@@ -1159,6 +1184,21 @@ void GetHODLOD(double &hod, double &lod)
       hod = iHigh(g_symbol, PERIOD_D1, 0);
    if(lod == DBL_MAX)
       lod = iLow(g_symbol, PERIOD_D1, 0);
+}
+
+
+void GetHODLOD_Cached(double &hod, double &lod)
+{
+   int dayId = NYDayId(TimeCurrent());
+   datetime barT = iTime(g_symbol, PERIOD_M15, 0);
+   if(g_hodlodDayId != dayId || g_hodlodBarTime != barT)
+   {
+      GetHODLOD(g_cachedHod, g_cachedLod);
+      g_hodlodDayId = dayId;
+      g_hodlodBarTime = barT;
+   }
+   hod = g_cachedHod;
+   lod = g_cachedLod;
 }
 
 bool GetSessionHighLowNY(int startMin, int endMin, int dayOffset, double &high, double &low)
@@ -1981,7 +2021,8 @@ int DailyScore(RegimeState regime)
 
    int lossStreak = GVGetInt("lossStreak", 0);
    double lossPenalty = lossStreak * 5.0;
-   if(SpreadMultipleBlocked() || SpreadInstabilityBlocked() || RolloverBlocked())
+   double spreadNow = SpreadPoints();
+   if(SpreadMultipleWouldBlock(spreadNow, g_spreadEma) || SpreadInstabilityWouldBlock(spreadNow, g_spreadEma) || RolloverBlocked())
       lossPenalty += 10.0;
 
    double score = volScore + adxScore + spreadScore + regimeScore - lossPenalty;
@@ -2067,7 +2108,7 @@ void BuildContext(MarketContext &ctx)
    bool kzA = false, kzL = false, kzN = false;
    ctx.killzoneActive = KillzoneActive(kzA, kzL, kzN) ? 1 : 0;
    GetPDLevels(ctx.pdh, ctx.pdl);
-   GetHODLOD(ctx.hod, ctx.lod);
+   GetHODLOD_Cached(ctx.hod, ctx.lod);
    ctx.lossStreak = GVGetInt("lossStreak", 0);
    ctx.dayTrades = GVGetInt("dayTrades", 0);
    ctx.spreadEma = g_spreadEma;
@@ -2228,10 +2269,10 @@ double NormalizeVolumeByStep(double volume)
 bool StopsOk(TradeDir dir, double entry, double sl, double tp)
 {
    int stopsLevel = (int)SymbolInfoInteger(g_symbol, SYMBOL_TRADE_STOPS_LEVEL);
-   if(stopsLevel <= 0)
-      return true;
-
+   int freezeLevel = (int)SymbolInfoInteger(g_symbol, SYMBOL_TRADE_FREEZE_LEVEL);
    double minDist = stopsLevel * g_point;
+   double freezeDist = freezeLevel * g_point;
+   double curMid = (SymbolInfoDouble(g_symbol, SYMBOL_ASK) + SymbolInfoDouble(g_symbol, SYMBOL_BID)) * 0.5;
    if(dir == DIR_LONG)
    {
       if(sl > 0.0 && (sl >= entry || MathAbs(entry - sl) < minDist))
@@ -2244,6 +2285,13 @@ bool StopsOk(TradeDir dir, double entry, double sl, double tp)
       if(sl > 0.0 && (sl <= entry || MathAbs(entry - sl) < minDist))
          return false;
       if(tp > 0.0 && (tp >= entry || MathAbs(tp - entry) < minDist))
+         return false;
+   }
+   if(freezeLevel > 0)
+   {
+      if(sl > 0.0 && MathAbs(curMid - sl) < freezeDist)
+         return false;
+      if(tp > 0.0 && MathAbs(curMid - tp) < freezeDist)
          return false;
    }
    return true;
@@ -2463,6 +2511,7 @@ void ApplyPreset()
    cfg_InpCandleBonusPoints = InpCandleBonusPoints;
    cfg_InpUseMomentumBonus = InpUseMomentumBonus;
    cfg_InpMomentumBonusPoints = InpMomentumBonusPoints;
+   cfg_InpRequireBiasAlignWithSweep = InpRequireBiasAlignWithSweep;
    cfg_InpUseSpikeGuard = InpUseSpikeGuard;
    cfg_InpSpikeMultATR = InpSpikeMultATR;
    cfg_InpSL_ATR_Mult = InpSL_ATR_Mult;
@@ -2806,10 +2855,10 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              (string)cfg_InpMagic,
              event,
              (int)dir,
-             DoubleToString(entry, g_digits),
-             DoubleToString(sl, g_digits),
-             DoubleToString(tp, g_digits),
-             DoubleToString(tp1, g_digits),
+             DoubleToString(NormalizePrice(entry), g_digits),
+             DoubleToString(NormalizePrice(sl), g_digits),
+             DoubleToString(NormalizePrice(tp), g_digits),
+             DoubleToString(NormalizePrice(tp1), g_digits),
              DoubleToString(lot, 2),
              DoubleToString(spreadNow, 1),
              (int)reg,
@@ -2922,14 +2971,19 @@ bool CalculateEntryCore(TradeDir &dir, double &entry, double &sl, double &tp, do
 
    GetPDLevels(pdh, pdl);
    GetPSHPSL(psh, psl);
-   GetHODLOD(hod, lod);
+   GetHODLOD_Cached(hod, lod);
 
    TradeDir sweepDirFound = DIR_NONE;
    double sweepLevelFound = 0.0;
    if(!DetectLiquiditySweep(sweepDirFound, sweepLevelFound))
       return false;
    if(sweepDirFound != dir)
-      return false;
+   {
+      if(cfg_InpRequireBiasAlignWithSweep)
+         return false;
+      dir = sweepDirFound;
+      setupScore -= 5;
+   }
    sweepDir = (int)sweepDirFound;
    sweepLevel = sweepLevelFound;
    entryMask |= ENTRY_SWEEP;
@@ -3117,6 +3171,11 @@ bool CalculateEntryCore(TradeDir &dir, double &entry, double &sl, double &tp, do
    }
    entryMask |= ENTRY_PDARRAY;
 
+   entry = NormalizePrice(entry);
+   sl = NormalizePrice(sl);
+   tp = NormalizePrice(tp);
+   tp1 = NormalizePrice(tp1);
+
    bosAgeBars = BOSAgeBars(bosLevel);
    totalScore = setupScore + timingScore;
    return true;
@@ -3182,7 +3241,7 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
                     int &candleHit, int &candleType,
                     int &momHit, double &rsi1, double &rsi2)
 {
-   StrategyManager manager;
+   static StrategyManager manager;
    IStrategy *strategy = manager.Select();
    return strategy->Evaluate(dir, entry, sl, tp, tp1, riskR,
                             setupScore, timingScore, totalScore, skipMask, entryMask,
