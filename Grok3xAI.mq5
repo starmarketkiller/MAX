@@ -602,7 +602,8 @@ bool ContainsAny(const string text, const string &tokens[])
 
 SymbolProfile DetectSymbolProfile(const string symbol)
 {
-   string symUpper = StringUpper(symbol);
+   string symUpper = symbol;
+   StringToUpper(symUpper);
    if(StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0)
       return PROFILE_FX_MAJORS_5DIG;
    string indexTokens[] = {"US30", "DJ30", "WS30", "US30CASH",
@@ -620,7 +621,8 @@ SymbolProfile DetectSymbolProfile(const string symbol)
 
 bool IsGoldSymbol(const string symbol)
 {
-   string symUpper = StringUpper(symbol);
+   string symUpper = symbol;
+   StringToUpper(symUpper);
    return (StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0);
 }
 
@@ -2357,7 +2359,8 @@ void LogSymbolCheck();
 
 double IndexKeyStepPoints()
 {
-   string symUpper = StringUpper(g_symbol);
+   string symUpper = g_symbol;
+   StringToUpper(symUpper);
    if(StringFind(symUpper, "US30") >= 0 || StringFind(symUpper, "DJ30") >= 0 || StringFind(symUpper, "WS30") >= 0)
       return 100.0;
    return 50.0;
@@ -2767,7 +2770,8 @@ void LogPresetConfig()
 
 void LogSymbolCheck()
 {
-   string symUpper = StringUpper(g_symbol);
+   string symUpper = g_symbol;
+   StringToUpper(symUpper);
    bool symbolMatch = (StringFind(symUpper, "GOLD") >= 0 || StringFind(symUpper, "XAU") >= 0);
    bool digitsOk = (g_digits == 2 && MathAbs(g_point - 0.01) <= 0.000001);
    double tickSize = TickSize();
