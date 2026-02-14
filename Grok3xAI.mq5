@@ -19,6 +19,7 @@
 //+------------------------------------------------------------------+
 #property strict
 #include <Trade/Trade.mqh>
+#include "Strategy_RSIEngulfTouch.mqh"
 
 CTrade trade;
 
@@ -60,6 +61,21 @@ input int    InpMaxSpreadPoints = 35;
 input int    InpMaxSlippagePoints = 35;
 input int    InpMaxRetries = 2;
 input int    InpRetryDelayMs = 350;
+
+// RSI Engulf Touch strategy (modulo separato, attivabile)
+input bool   Enable_RSIEngulfTouch = true;
+input int    RSI_Length = 7;
+input double RSI_OB = 70;
+input double RSI_OS = 30;
+input double Lots = 0.01;
+input double PipSize = 0.01;
+input double SL_Pips = 70;
+input double TP1_Pips = 50;
+input double TP2_Pips = 100;
+input double MaxSpreadPips = 25;
+input bool   OneSetPerBar = true;
+input int    CooldownSeconds = 90;
+input long   MagicBase = 91001;
 
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
@@ -253,6 +269,8 @@ double g_point = 0.01;
 double g_pip = 0.10;
 SymbolProfile g_profile = PROFILE_FX_MAJORS_5DIG;
 bool g_isGoldSymbol = false;
+RSIEngulfTouchStrategy g_rsiEngulfTouch;
+bool g_rsiEngulfTouchReady = false;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
@@ -3451,11 +3469,24 @@ int OnInit()
 
    UpdateDailyReset();
 
+   if(Enable_RSIEngulfTouch)
+   {
+      g_rsiEngulfTouchReady = g_rsiEngulfTouch.Init(g_symbol, PERIOD_CURRENT);
+      if(!g_rsiEngulfTouchReady)
+         Print("[RSIEngulfTouch] disabled: init failed.");
+   }
+   else
+   {
+      g_rsiEngulfTouchReady = false;
+   }
+
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason)
 {
+   g_rsiEngulfTouch.Deinit();
+   g_rsiEngulfTouchReady = false;
    ReleaseIndicatorsCache();
 }
 
@@ -3463,6 +3494,9 @@ void OnTick()
 {
    if(g_symbol == "")
       return;
+
+   if(Enable_RSIEngulfTouch && g_rsiEngulfTouchReady)
+      g_rsiEngulfTouch.OnTick();
 
    UpdateDailyReset();
 
