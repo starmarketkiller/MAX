@@ -52,6 +52,11 @@ public:
          Print("[RSIEngulfTouch] Init failed: iRSI handle invalid. err=", GetLastError());
          return false;
       }
+
+      long marginMode = AccountInfoInteger(ACCOUNT_MARGIN_MODE);
+      if(marginMode != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
+         Print("[RSIEngulfTouch] Warning: account is not hedging mode; dual-position behavior may be limited.");
+
       return true;
    }
 
@@ -228,14 +233,58 @@ private:
       return count;
    }
 
-   bool OpenOne(bool isBuy, long magic, double sl, double tp)
+
+
+   double NormalizeLots(double lots) const
+   {
+      double step = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_STEP);
+      double minLot = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MIN);
+      double maxLot = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MAX);
+      if(step <= 0.0 || minLot <= 0.0 || maxLot <= 0.0)
+         return 0.0;
+
+      double v = MathMax(minLot, MathMin(maxLot, lots));
+      v = MathFloor(v / step) * step;
+
+      int decimals = 0;
+      double scaled = step;
+      while(decimals < 8 && MathAbs(scaled - MathRound(scaled)) > 1e-8)
+      {
+         scaled *= 10.0;
+         decimals++;
+      }
+      return NormalizeDouble(v, decimals);
+   }
+
+   bool IsTradeAllowedOnSymbol() const
+   {
+      long mode = SymbolInfoInteger(m_symbol, SYMBOL_TRADE_MODE);
+      return (mode != SYMBOL_TRADE_MODE_DISABLED && mode != SYMBOL_TRADE_MODE_CLOSEONLY);
+   }
+
+   void ClosePositionByMagic(long magic)
+   {
+      int total = PositionsTotal();
+      for(int i = total - 1; i >= 0; i--)
+      {
+         if(!PositionSelectByIndex(i))
+            continue;
+         string sym = PositionGetString(POSITION_SYMBOL);
+         long mg = PositionGetInteger(POSITION_MAGIC);
+         if(sym != m_symbol || mg != magic)
+            continue;
+         ulong ticket = (ulong)PositionGetInteger(POSITION_TICKET);
+         m_trade.PositionClose(ticket);
+      }
+   }
+   bool OpenOne(bool isBuy, long magic, double lots, double sl, double tp)
    {
       m_trade.SetExpertMagicNumber((ulong)magic);
       bool ok = false;
       if(isBuy)
-         ok = m_trade.Buy(Lots, m_symbol, 0.0, sl, tp, "RSIEngulfTouch");
+         ok = m_trade.Buy(lots, m_symbol, 0.0, sl, tp, "RSIEngulfTouch");
       else
-         ok = m_trade.Sell(Lots, m_symbol, 0.0, sl, tp, "RSIEngulfTouch");
+         ok = m_trade.Sell(lots, m_symbol, 0.0, sl, tp, "RSIEngulfTouch");
 
       if(!ok)
       {
@@ -248,7 +297,11 @@ private:
 
    bool OpenTwoPositions(bool isBuy, double ask, double bid)
    {
-      if(Lots <= 0.0 || PipSize <= 0.0)
+      if(Lots <= 0.0 || PipSize <= 0.0 || !IsTradeAllowedOnSymbol())
+         return false;
+
+      double lots = NormalizeLots(Lots);
+      if(lots <= 0.0)
          return false;
 
       double ref = isBuy ? ask : bid;
@@ -266,8 +319,14 @@ private:
       tp1 = NormalizeDouble(tp1, digits);
       tp2 = NormalizeDouble(tp2, digits);
 
-      bool ok1 = OpenOne(isBuy, MagicBase, sl, tp1);
-      bool ok2 = OpenOne(isBuy, MagicBase + 1, sl, tp2);
+      bool ok1 = OpenOne(isBuy, MagicBase, lots, sl, tp1);
+      bool ok2 = OpenOne(isBuy, MagicBase + 1, lots, sl, tp2);
+
+      if(ok1 && !ok2)
+         ClosePositionByMagic(MagicBase);
+      else if(!ok1 && ok2)
+         ClosePositionByMagic(MagicBase + 1);
+
       return (ok1 && ok2);
    }
 };
