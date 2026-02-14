@@ -76,6 +76,9 @@ input double MaxSpreadPips = 25;
 input bool   OneSetPerBar = true;
 input int    CooldownSeconds = 90;
 input long   MagicBase = 91001;
+input ENUM_TIMEFRAMES SignalTF = PERIOD_CURRENT;
+input double TrendThresholdMultiplier = 1.0;
+input RSITrendMode TrendMode = TRENDMODE_DISABLED;
 
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
@@ -3471,7 +3474,8 @@ int OnInit()
 
    if(Enable_RSIEngulfTouch)
    {
-      g_rsiEngulfTouchReady = g_rsiEngulfTouch.Init(g_symbol, PERIOD_CURRENT);
+      ENUM_TIMEFRAMES tfUsed = (SignalTF == PERIOD_CURRENT) ? (ENUM_TIMEFRAMES)_Period : SignalTF;
+      g_rsiEngulfTouchReady = g_rsiEngulfTouch.Init(g_symbol, tfUsed);
       if(!g_rsiEngulfTouchReady)
          Print("[RSIEngulfTouch] disabled: init failed.");
    }
