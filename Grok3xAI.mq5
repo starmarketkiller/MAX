@@ -79,6 +79,20 @@ input long   MagicBase = 91001;
 input ENUM_TIMEFRAMES SignalTF = PERIOD_CURRENT;
 input double TrendThresholdMultiplier = 1.0;
 input RSITrendMode TrendMode = TRENDMODE_DISABLED;
+input bool   InpUseSMCZ3C = false;
+input bool   InpDrawZones = true;
+input string InpSMCTFs = "PERIOD_M5,PERIOD_M15,PERIOD_M30,PERIOD_H1,PERIOD_H4";
+input int    InpScanBars = 300;
+input double InpBodyEngulfEpsPoints = 2.0;
+input double InpDispATRMult = 0.8;
+input int    InpSwingLookbackBars = 80;
+input int    InpPivotLR = 2;
+input double InpMitigatePct = 50.0;
+input int    InpMaxTouches = 3;
+input double InpInvalidationBufferPoints = 5.0;
+input double InpMergeTolPoints = 5.0;
+input double InpMinScoreToKeep = 50.0;
+input double InpTimeFactor = 1.0;
 
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
@@ -277,6 +291,9 @@ bool g_rsiEngulfTouchReady = false;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
+
+
+void SMCZ3C_Update();
 
 struct IndicatorEntry
 {
@@ -3499,6 +3516,8 @@ void OnTick()
    if(g_symbol == "")
       return;
 
+   if(InpUseSMCZ3C) SMCZ3C_Update();
+
    if(Enable_RSIEngulfTouch && g_rsiEngulfTouchReady)
       g_rsiEngulfTouch.OnTick();
 
@@ -3690,3 +3709,525 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
    }
 }
+
+
+/// SMC_Zones_3C BEGIN
+struct SMCZone
+{
+   datetime t0;
+   ENUM_TIMEFRAMES tf;
+   bool bullish;
+   double top;
+   double bottom;
+   int touches;
+   bool mitigated;
+   bool active;
+   double score;
+   double created_at_price;
+   double expectedMitigationHours;
+};
+
+SMCZone g_smcz3cZones[];
+ENUM_TIMEFRAMES g_smcz3cTFs[];
+datetime g_smcz3cLastBarTimes[];
+bool g_smcz3cInited = false;
+
+string SMCZ3C_TFToString(ENUM_TIMEFRAMES tf)
+{
+   switch(tf)
+   {
+      case PERIOD_M1: return "PERIOD_M1";
+      case PERIOD_M2: return "PERIOD_M2";
+      case PERIOD_M3: return "PERIOD_M3";
+      case PERIOD_M4: return "PERIOD_M4";
+      case PERIOD_M5: return "PERIOD_M5";
+      case PERIOD_M6: return "PERIOD_M6";
+      case PERIOD_M10: return "PERIOD_M10";
+      case PERIOD_M12: return "PERIOD_M12";
+      case PERIOD_M15: return "PERIOD_M15";
+      case PERIOD_M20: return "PERIOD_M20";
+      case PERIOD_M30: return "PERIOD_M30";
+      case PERIOD_H1: return "PERIOD_H1";
+      case PERIOD_H2: return "PERIOD_H2";
+      case PERIOD_H3: return "PERIOD_H3";
+      case PERIOD_H4: return "PERIOD_H4";
+      case PERIOD_H6: return "PERIOD_H6";
+      case PERIOD_H8: return "PERIOD_H8";
+      case PERIOD_H12: return "PERIOD_H12";
+      case PERIOD_D1: return "PERIOD_D1";
+      case PERIOD_W1: return "PERIOD_W1";
+      case PERIOD_MN1: return "PERIOD_MN1";
+   }
+   return "PERIOD_M15";
+}
+
+ENUM_TIMEFRAMES SMCZ3C_ParseTFToken(string token)
+{
+   StringTrimLeft(token);
+   StringTrimRight(token);
+   StringToUpper(token);
+   if(token == "PERIOD_CURRENT") return (ENUM_TIMEFRAMES)_Period;
+   if(token == "PERIOD_M1") return PERIOD_M1;
+   if(token == "PERIOD_M2") return PERIOD_M2;
+   if(token == "PERIOD_M3") return PERIOD_M3;
+   if(token == "PERIOD_M4") return PERIOD_M4;
+   if(token == "PERIOD_M5") return PERIOD_M5;
+   if(token == "PERIOD_M6") return PERIOD_M6;
+   if(token == "PERIOD_M10") return PERIOD_M10;
+   if(token == "PERIOD_M12") return PERIOD_M12;
+   if(token == "PERIOD_M15") return PERIOD_M15;
+   if(token == "PERIOD_M20") return PERIOD_M20;
+   if(token == "PERIOD_M30") return PERIOD_M30;
+   if(token == "PERIOD_H1") return PERIOD_H1;
+   if(token == "PERIOD_H2") return PERIOD_H2;
+   if(token == "PERIOD_H3") return PERIOD_H3;
+   if(token == "PERIOD_H4") return PERIOD_H4;
+   if(token == "PERIOD_H6") return PERIOD_H6;
+   if(token == "PERIOD_H8") return PERIOD_H8;
+   if(token == "PERIOD_H12") return PERIOD_H12;
+   if(token == "PERIOD_D1") return PERIOD_D1;
+   if(token == "PERIOD_W1") return PERIOD_W1;
+   if(token == "PERIOD_MN1") return PERIOD_MN1;
+   return PERIOD_CURRENT;
+}
+
+void SMCZ3C_ParseTFs()
+{
+   ArrayResize(g_smcz3cTFs, 0);
+   ArrayResize(g_smcz3cLastBarTimes, 0);
+
+   string parts[];
+   int n = StringSplit(InpSMCTFs, ',', parts);
+   for(int i = 0; i < n; i++)
+   {
+      ENUM_TIMEFRAMES tf = SMCZ3C_ParseTFToken(parts[i]);
+      if(tf == PERIOD_CURRENT)
+         tf = (ENUM_TIMEFRAMES)_Period;
+      bool exists = false;
+      for(int j = 0; j < ArraySize(g_smcz3cTFs); j++)
+      {
+         if(g_smcz3cTFs[j] == tf)
+         {
+            exists = true;
+            break;
+         }
+      }
+      if(!exists)
+      {
+         int k = ArraySize(g_smcz3cTFs);
+         ArrayResize(g_smcz3cTFs, k + 1);
+         ArrayResize(g_smcz3cLastBarTimes, k + 1);
+         g_smcz3cTFs[k] = tf;
+         g_smcz3cLastBarTimes[k] = 0;
+      }
+   }
+   if(ArraySize(g_smcz3cTFs) == 0)
+   {
+      ArrayResize(g_smcz3cTFs, 1);
+      ArrayResize(g_smcz3cLastBarTimes, 1);
+      g_smcz3cTFs[0] = PERIOD_M15;
+      g_smcz3cLastBarTimes[0] = 0;
+   }
+   g_smcz3cInited = true;
+}
+
+double SMCZ3C_BodyHigh(double o, double c) { return MathMax(o, c); }
+double SMCZ3C_BodyLow(double o, double c) { return MathMin(o, c); }
+
+double SMCZ3C_ComputeScore(bool bos, double dispBody, double atr, double bodyC2, int touches, bool mitigated)
+{
+   double score = 0.0;
+   if(bos)
+      score += 30.0;
+   if(atr > 0.0 && dispBody >= 1.0 * atr)
+      score += 20.0;
+   if(atr > 0.0 && bodyC2 <= 0.5 * atr)
+      score += 10.0;
+   score -= (10.0 * touches);
+   if(mitigated)
+      score -= 20.0;
+   if(score < 0.0) score = 0.0;
+   if(score > 100.0) score = 100.0;
+   return score;
+}
+
+bool SMCZ3C_IsPivotHigh(ENUM_TIMEFRAMES tf, int shift, int lr)
+{
+   int bars = iBars(g_symbol, tf);
+   if(shift - lr < 1 || shift + lr >= bars)
+      return false;
+   double h = iHigh(g_symbol, tf, shift);
+   for(int j = 1; j <= lr; j++)
+   {
+      if(h <= iHigh(g_symbol, tf, shift - j) || h <= iHigh(g_symbol, tf, shift + j))
+         return false;
+   }
+   return true;
+}
+
+bool SMCZ3C_IsPivotLow(ENUM_TIMEFRAMES tf, int shift, int lr)
+{
+   int bars = iBars(g_symbol, tf);
+   if(shift - lr < 1 || shift + lr >= bars)
+      return false;
+   double l = iLow(g_symbol, tf, shift);
+   for(int j = 1; j <= lr; j++)
+   {
+      if(l >= iLow(g_symbol, tf, shift - j) || l >= iLow(g_symbol, tf, shift + j))
+         return false;
+   }
+   return true;
+}
+
+bool FindSwingHigh(int startShift, int lookback, int leftRight, ENUM_TIMEFRAMES tf, double &outHigh)
+{
+   int bars = iBars(g_symbol, tf);
+   int endShift = MathMin(startShift + lookback, bars - leftRight - 1);
+   for(int s = startShift; s <= endShift; s++)
+   {
+      if(SMCZ3C_IsPivotHigh(tf, s, leftRight))
+      {
+         outHigh = iHigh(g_symbol, tf, s);
+         return true;
+      }
+   }
+   return false;
+}
+
+bool FindSwingLow(int startShift, int lookback, int leftRight, ENUM_TIMEFRAMES tf, double &outLow)
+{
+   int bars = iBars(g_symbol, tf);
+   int endShift = MathMin(startShift + lookback, bars - leftRight - 1);
+   for(int s = startShift; s <= endShift; s++)
+   {
+      if(SMCZ3C_IsPivotLow(tf, s, leftRight))
+      {
+         outLow = iLow(g_symbol, tf, s);
+         return true;
+      }
+   }
+   return false;
+}
+
+double SMCZ3C_DistanceToNearestEdge(const SMCZone &z, double px)
+{
+   if(px > z.top)
+      return px - z.top;
+   if(px < z.bottom)
+      return z.bottom - px;
+   double d1 = z.top - px;
+   double d2 = px - z.bottom;
+   return MathMin(d1, d2);
+}
+
+void SMCZ3C_UpdateExpectedHours(SMCZone &z)
+{
+   double atr = ATR(z.tf, 1);
+   double tfHours = (double)PeriodSeconds(z.tf) / 3600.0;
+   if(atr <= 0.0 || tfHours <= 0.0)
+   {
+      z.expectedMitigationHours = 0.0;
+      return;
+   }
+   double atrPerHour = atr / tfHours;
+   if(atrPerHour <= 0.0)
+   {
+      z.expectedMitigationHours = 0.0;
+      return;
+   }
+   double px = SymbolInfoDouble(g_symbol, SYMBOL_BID);
+   double dist = SMCZ3C_DistanceToNearestEdge(z, px);
+   z.expectedMitigationHours = (dist / atrPerHour) * InpTimeFactor;
+}
+
+int SMCZ3C_FindExisting(datetime t0, ENUM_TIMEFRAMES tf, bool bullish)
+{
+   for(int i = 0; i < ArraySize(g_smcz3cZones); i++)
+   {
+      if(g_smcz3cZones[i].t0 == t0 && g_smcz3cZones[i].tf == tf && g_smcz3cZones[i].bullish == bullish)
+         return i;
+   }
+   return -1;
+}
+
+void SMCZ3C_AddOrMergeZone(const SMCZone &zone)
+{
+   if(zone.score < InpMinScoreToKeep)
+      return;
+
+   double tol = InpMergeTolPoints * _Point;
+   for(int i = 0; i < ArraySize(g_smcz3cZones); i++)
+   {
+      SMCZone &z = g_smcz3cZones[i];
+      if(z.bullish != zone.bullish)
+         continue;
+      if(MathAbs(z.top - zone.top) < tol && MathAbs(z.bottom - zone.bottom) < tol)
+      {
+         bool replace = (zone.score > z.score) || (zone.t0 > z.t0);
+         if(replace)
+         {
+            int touches = z.touches;
+            bool mitigated = z.mitigated;
+            bool active = z.active;
+            z = zone;
+            z.touches = MathMax(touches, zone.touches);
+            z.mitigated = mitigated || zone.mitigated;
+            z.active = active && zone.active;
+         }
+         return;
+      }
+   }
+
+   int n = ArraySize(g_smcz3cZones);
+   ArrayResize(g_smcz3cZones, n + 1);
+   g_smcz3cZones[n] = zone;
+}
+
+void SMCZ3C_ScanTF(ENUM_TIMEFRAMES tf)
+{
+   int bars = iBars(g_symbol, tf);
+   if(bars < 20)
+      return;
+
+   int maxI = MathMin(InpScanBars, bars - 3);
+   double eps = InpBodyEngulfEpsPoints * _Point;
+
+   for(int i = 1; i <= maxI; i++)
+   {
+      int c3 = i;
+      int c2 = i + 1;
+      int c1 = i + 2;
+
+      double o1 = iOpen(g_symbol, tf, c1), c1c = iClose(g_symbol, tf, c1);
+      double o2 = iOpen(g_symbol, tf, c2), c2c = iClose(g_symbol, tf, c2);
+      double o3 = iOpen(g_symbol, tf, c3), c3c = iClose(g_symbol, tf, c3);
+      if(o1 == 0.0 || o2 == 0.0 || o3 == 0.0)
+         continue;
+
+      double b1h = SMCZ3C_BodyHigh(o1, c1c), b1l = SMCZ3C_BodyLow(o1, c1c);
+      double b2h = SMCZ3C_BodyHigh(o2, c2c), b2l = SMCZ3C_BodyLow(o2, c2c);
+      double b3h = SMCZ3C_BodyHigh(o3, c3c), b3l = SMCZ3C_BodyLow(o3, c3c);
+
+      bool engulf12 = (b1l <= b2l + eps && b1h >= b2h - eps);
+      bool engulf32 = (b3l <= b2l + eps && b3h >= b2h - eps);
+      if(!engulf12 || !engulf32)
+         continue;
+
+      double atr = ATR(tf, c3);
+      double dispBody = MathAbs(c3c - o3);
+      if(atr <= 0.0 || dispBody < InpDispATRMult * atr)
+         continue;
+
+      bool c3Bull = (c3c > o3);
+      bool c3Bear = (c3c < o3);
+      if(!c3Bull && !c3Bear)
+         continue;
+
+      bool bos = false;
+      double swingHigh = 0.0, swingLow = 0.0;
+      if(c3Bull)
+      {
+         if(FindSwingHigh(c3 + 1, InpSwingLookbackBars, InpPivotLR, tf, swingHigh))
+            bos = (c3c > swingHigh);
+      }
+      else
+      {
+         if(FindSwingLow(c3 + 1, InpSwingLookbackBars, InpPivotLR, tf, swingLow))
+            bos = (c3c < swingLow);
+      }
+      if(!bos)
+         continue;
+
+      SMCZone z;
+      z.t0 = iTime(g_symbol, tf, c3);
+      z.tf = tf;
+      z.bullish = c3Bull;
+      z.touches = 0;
+      z.mitigated = false;
+      z.active = true;
+      z.created_at_price = c3c;
+
+      if(c3Bull)
+      {
+         z.bottom = MathMin(iLow(g_symbol, tf, c2), iLow(g_symbol, tf, c1));
+         bool c2Bear = (c2c < o2);
+         bool c1Bear = (c1c < o1);
+         if(c2Bear)
+            z.top = SMCZ3C_BodyHigh(o2, c2c);
+         else if(c1Bear)
+            z.top = SMCZ3C_BodyHigh(o1, c1c);
+         else
+            z.top = iHigh(g_symbol, tf, c2);
+      }
+      else
+      {
+         bool c2Bull = (c2c > o2);
+         bool c1Bull = (c1c > o1);
+         if(c2Bull)
+            z.bottom = SMCZ3C_BodyLow(o2, c2c);
+         else if(c1Bull)
+            z.bottom = SMCZ3C_BodyLow(o1, c1c);
+         else
+            z.bottom = iLow(g_symbol, tf, c2);
+         z.top = MathMax(iHigh(g_symbol, tf, c2), iHigh(g_symbol, tf, c1));
+      }
+
+      if(z.top < z.bottom)
+      {
+         double tmp = z.top;
+         z.top = z.bottom;
+         z.bottom = tmp;
+      }
+
+      z.score = SMCZ3C_ComputeScore(bos, dispBody, atr, MathAbs(c2c - o2), z.touches, z.mitigated);
+      SMCZ3C_UpdateExpectedHours(z);
+
+      if(SMCZ3C_FindExisting(z.t0, z.tf, z.bullish) < 0)
+         SMCZ3C_AddOrMergeZone(z);
+   }
+}
+
+bool SMCZ3C_BoxOverlap(double low, double high, double bottom, double top)
+{
+   return (high >= bottom && low <= top);
+}
+
+void SMCZ3C_UpdateTouchesAndState(SMCZone &z)
+{
+   if(!z.active)
+      return;
+
+   double high1 = iHigh(g_symbol, z.tf, 1);
+   double low1 = iLow(g_symbol, z.tf, 1);
+   double high2 = iHigh(g_symbol, z.tf, 2);
+   double low2 = iLow(g_symbol, z.tf, 2);
+   double close1 = iClose(g_symbol, z.tf, 1);
+
+   bool in1 = SMCZ3C_BoxOverlap(low1, high1, z.bottom, z.top);
+   bool in2 = SMCZ3C_BoxOverlap(low2, high2, z.bottom, z.top);
+
+   if(in1 && !in2)
+      z.touches++;
+
+   double h = z.top - z.bottom;
+   if(h > 0.0)
+   {
+      double overlap = MathMax(0.0, MathMin(high1, z.top) - MathMax(low1, z.bottom));
+      double overlapPct = (overlap / h) * 100.0;
+      if(overlapPct >= InpMitigatePct)
+         z.mitigated = true;
+   }
+
+   double invBuf = InpInvalidationBufferPoints * _Point;
+   if(z.bullish && close1 < (z.bottom - invBuf))
+      z.active = false;
+   if(!z.bullish && close1 > (z.top + invBuf))
+      z.active = false;
+   if(z.touches >= InpMaxTouches)
+      z.active = false;
+
+   z.score = SMCZ3C_ComputeScore(true, ATR(z.tf, 1), ATR(z.tf, 1), 0.0, z.touches, z.mitigated);
+   SMCZ3C_UpdateExpectedHours(z);
+}
+
+void SMCZ3C_DrawZone(const SMCZone &z)
+{
+   string name = "SMCZ3C_" + SMCZ3C_TFToString(z.tf) + "_" + (z.bullish ? "bull_" : "bear_") + (string)z.t0;
+   color clr = z.bullish ? clrLime : clrRed;
+   datetime t1 = z.t0;
+   datetime t2 = TimeCurrent() + PeriodSeconds(z.tf) * 20;
+
+   if(ObjectFind(0, name) < 0)
+      ObjectCreate(0, name, OBJ_RECTANGLE, 0, t1, z.top, t2, z.bottom);
+
+   ObjectSetInteger(0, name, OBJPROP_TIME, 0, t1);
+   ObjectSetDouble(0, name, OBJPROP_PRICE, 0, z.top);
+   ObjectSetInteger(0, name, OBJPROP_TIME, 1, t2);
+   ObjectSetDouble(0, name, OBJPROP_PRICE, 1, z.bottom);
+   ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
+   ObjectSetInteger(0, name, OBJPROP_FILL, true);
+   ObjectSetInteger(0, name, OBJPROP_STYLE, STYLE_SOLID);
+   ObjectSetInteger(0, name, OBJPROP_BACK, false);
+   ObjectSetInteger(0, name, OBJPROP_WIDTH, 1);
+
+   string txt = name + "_TXT";
+   if(ObjectFind(0, txt) < 0)
+      ObjectCreate(0, txt, OBJ_TEXT, 0, t2, z.top);
+   string cap = SMCZ3C_TFToString(z.tf) + " score=" + DoubleToString(z.score, 1) +
+                " t=" + (string)z.touches + " eh=" + DoubleToString(z.expectedMitigationHours, 1);
+   ObjectSetString(0, txt, OBJPROP_TEXT, cap);
+   ObjectSetInteger(0, txt, OBJPROP_COLOR, clr);
+   ObjectSetInteger(0, txt, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+   ObjectMove(0, txt, 0, t2, z.top);
+}
+
+void SMCZ3C_Update()
+{
+   if(!g_smcz3cInited)
+      SMCZ3C_ParseTFs();
+
+   for(int i = 0; i < ArraySize(g_smcz3cTFs); i++)
+   {
+      ENUM_TIMEFRAMES tf = g_smcz3cTFs[i];
+      datetime barT = iTime(g_symbol, tf, 0);
+      if(barT <= 0)
+         continue;
+
+      if(g_smcz3cLastBarTimes[i] != barT)
+      {
+         g_smcz3cLastBarTimes[i] = barT;
+         SMCZ3C_ScanTF(tf);
+      }
+   }
+
+   for(int z = 0; z < ArraySize(g_smcz3cZones); z++)
+   {
+      SMCZ3C_UpdateTouchesAndState(g_smcz3cZones[z]);
+      if(g_smcz3cZones[z].active && InpDrawZones && g_smcz3cZones[z].score >= InpMinScoreToKeep)
+         SMCZ3C_DrawZone(g_smcz3cZones[z]);
+   }
+}
+
+bool SMCZ3C_GetBestZone(bool wantBullish, double &outTop, double &outBottom, ENUM_TIMEFRAMES &outTf, double &outScore, double &outExpHours)
+{
+   int best = -1;
+   double bestScore = -DBL_MAX;
+   for(int i = 0; i < ArraySize(g_smcz3cZones); i++)
+   {
+      SMCZone &z = g_smcz3cZones[i];
+      if(!z.active || z.mitigated || z.touches != 0)
+         continue;
+      if(z.bullish != wantBullish)
+         continue;
+      if(z.score < InpMinScoreToKeep)
+         continue;
+      if(z.score > bestScore)
+      {
+         bestScore = z.score;
+         best = i;
+      }
+   }
+   if(best < 0)
+      return false;
+
+   outTop = g_smcz3cZones[best].top;
+   outBottom = g_smcz3cZones[best].bottom;
+   outTf = g_smcz3cZones[best].tf;
+   outScore = g_smcz3cZones[best].score;
+   outExpHours = g_smcz3cZones[best].expectedMitigationHours;
+   return true;
+}
+
+int SMCZ3C_GetZonesCount()
+{
+   return ArraySize(g_smcz3cZones);
+}
+
+bool SMCZ3C_GetZoneByIndex(int idx, SMCZone &outZone)
+{
+   if(idx < 0 || idx >= ArraySize(g_smcz3cZones))
+      return false;
+   outZone = g_smcz3cZones[idx];
+   return true;
+}
+/// SMC_Zones_3C END
