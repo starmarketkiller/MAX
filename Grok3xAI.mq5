@@ -467,6 +467,17 @@ enum EntryMask
    ENTRY_MOM = 1 << 24
 };
 
+// --- forward declarations (needed for MQL5 compiler order)
+double NormalizeVolumeByStep(double volume);
+
+void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
+              int dailyScore, int setup, int timing, int total, int skipMask, int entryMask,
+              int retcode, int lasterr, double bosLevel, int bosAgeBars, double nearestKey,
+              int killzoneActive, double pdh, double pdl, double psh, double psl, double hod, double lod,
+              int sweepDir, double sweepLevel, double displacementScore, double obHigh, double obLow, double obMT,
+              int oteOk, int sdHit, int sdType, double sdDistATR, int sdFresh,
+              int candleHit, int candleType, int momHit, double rsi1, double rsi2);
+
 string GVName(const string key)
 {
    return "XK_" + key + "_" + g_symbol + "_" + (string)cfg_InpMagic;
