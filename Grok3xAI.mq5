@@ -94,6 +94,19 @@ input double InpMergeTolPoints = 5.0;
 input double InpMinScoreToKeep = 50.0;
 input double InpTimeFactor = 1.0;
 
+input bool   InpUseReactionProbabilityModel = true;
+input int    InpMaxTradesPerDay = 3;
+input int    InpCooldownMinutes = 30;
+input int    InpMaxLossStreak = 3;
+input bool   InpOneTradePerZone = true;
+input bool   InpNoTradeAgainstHTF = true;
+input int    InpZoneOldAgeBars = 120;
+input double InpReactionNearATRMult = 0.25;
+input double InpReactionDispATRMult = 1.2;
+input int    InpSweepReclaimBars = 3;
+input double InpSweepPoints = 15.0;
+input double InpRiskATRBufferMult = 0.5;
+
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
 input int    InpSpreadMultipleBlockMin = 45; // minutes
@@ -294,6 +307,8 @@ double g_spreadEma = 0.0;
 
 
 void SMCZ3C_Update();
+bool RP_ModelGate(TradeDir dir, double entry, double &sl, double &tp, int &scoreOut, string &reasonOut, string &zoneKeyOut);
+void RP_RegisterTrade(const string zoneKey);
 
 struct IndicatorEntry
 {
@@ -3638,6 +3653,15 @@ void OnTick()
    if(!ShouldEnterTrade(setupScore, timingScore, totalScore, regime))
       return;
 
+   int rpScore = 0;
+   string rpReason = "";
+   string rpZoneKey = "";
+   if(!RP_ModelGate(dir, entry, sl, tp, rpScore, rpReason, rpZoneKey))
+   {
+      Print("[RPModel] SKIP dir=", (int)dir, " score=", rpScore, " reason=", rpReason);
+      return;
+   }
+
    double riskMult = CurrentRiskMultiplier(dailyRiskMult);
    double lots = CalcLots(riskR, cfg_InpBaseRiskPct * riskMult);
    if(lots <= 0.0)
@@ -3666,6 +3690,8 @@ void OnTick()
       GVSetDouble("tp1price", tp1);
       GVSetInt("addCount", 0);
       GVSetDouble("lastAddPrice", entry);
+      if(InpUseReactionProbabilityModel)
+         RP_RegisterTrade(rpZoneKey);
 
       LogCSVEx("ENTRY", dir, entry, sl, tp, tp1, lots, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
                retcode, lasterr, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
@@ -4231,3 +4257,401 @@ bool SMCZ3C_GetZoneByIndex(int idx, SMCZone &outZone)
    return true;
 }
 /// SMC_Zones_3C END
+
+
+/// REACTION_PROBABILITY BEGIN
+enum RPMarketBias
+{
+   RP_BIAS_NEUTRAL = 0,
+   RP_BIAS_LONG = 1,
+   RP_BIAS_SHORT = -1
+};
+
+enum ZoneType
+{
+   ZONE_SUPPORT = 0,
+   ZONE_RESISTANCE = 1,
+   ZONE_ORDERBLOCK = 2,
+   ZONE_SUPPLYDEMAND = 3,
+   ZONE_TRENDLINE = 4
+};
+
+enum ZoneLifeState
+{
+   ZONE_FRESH = 0,
+   ZONE_SEMI = 1,
+   ZONE_OLD = 2
+};
+
+struct Zone
+{
+   int type;
+   double upper;
+   double lower;
+   datetime createdTime;
+   int touchCount;
+   datetime lastTouchTime;
+   bool mitigated;
+   bool broken;
+   int ageBars;
+   int state;
+   ENUM_TIMEFRAMES tf;
+   bool bullish;
+   double score;
+   string key;
+};
+
+Zone g_rpZones[];
+string g_rpTradedZones[];
+int g_rpTradesToday = 0;
+int g_rpDayId = 0;
+datetime g_rpLastTradeTs = 0;
+datetime g_rpLastM15Bar = 0;
+
+void RP_RegisterTrade(const string zoneKey)
+{
+   int dayId = NYDayId(TimeCurrent());
+   if(g_rpDayId != dayId)
+   {
+      g_rpDayId = dayId;
+      g_rpTradesToday = 0;
+      ArrayResize(g_rpTradedZones, 0);
+   }
+   g_rpTradesToday++;
+   g_rpLastTradeTs = TimeCurrent();
+   if(InpOneTradePerZone && StringLen(zoneKey) > 0)
+   {
+      int n = ArraySize(g_rpTradedZones);
+      ArrayResize(g_rpTradedZones, n + 1);
+      g_rpTradedZones[n] = zoneKey;
+   }
+}
+
+bool RP_ZoneAlreadyTraded(const string zoneKey)
+{
+   if(!InpOneTradePerZone || StringLen(zoneKey) == 0)
+      return false;
+   for(int i = 0; i < ArraySize(g_rpTradedZones); i++)
+      if(g_rpTradedZones[i] == zoneKey)
+         return true;
+   return false;
+}
+
+RPMarketBias RP_GetHTFBias()
+{
+   double cH4 = iClose(g_symbol, PERIOD_H4, 1);
+   double cD1 = iClose(g_symbol, PERIOD_D1, 1);
+   double eH4 = EMA(PERIOD_H4, 50, 1);
+   double eD1 = EMA(PERIOD_D1, 50, 1);
+   if(cH4 > eH4 && cD1 > eD1)
+      return RP_BIAS_LONG;
+   if(cH4 < eH4 && cD1 < eD1)
+      return RP_BIAS_SHORT;
+   return RP_BIAS_NEUTRAL;
+}
+
+void RP_AddZone(const Zone &z)
+{
+   int n = ArraySize(g_rpZones);
+   ArrayResize(g_rpZones, n + 1);
+   g_rpZones[n] = z;
+}
+
+void RP_BuildZonesFromSMC()
+{
+   ArrayResize(g_rpZones, 0);
+   int n = SMCZ3C_GetZonesCount();
+   for(int i = 0; i < n; i++)
+   {
+      SMCZone sz;
+      if(!SMCZ3C_GetZoneByIndex(i, sz))
+         continue;
+      Zone z;
+      z.type = sz.bullish ? ZONE_SUPPLYDEMAND : ZONE_ORDERBLOCK;
+      z.upper = sz.top;
+      z.lower = sz.bottom;
+      z.createdTime = sz.t0;
+      z.touchCount = sz.touches;
+      z.lastTouchTime = 0;
+      z.mitigated = sz.mitigated;
+      z.broken = !sz.active;
+      z.tf = sz.tf;
+      z.ageBars = (int)(iBarShift(g_symbol, sz.tf, sz.t0, false));
+      z.state = (z.touchCount == 0 ? ZONE_FRESH : (z.touchCount == 1 ? ZONE_SEMI : ZONE_OLD));
+      if(z.ageBars > InpZoneOldAgeBars)
+         z.state = ZONE_OLD;
+      z.bullish = sz.bullish;
+      z.score = sz.score;
+      z.key = "RPZ_" + (string)sz.tf + "_" + (sz.bullish ? "B_" : "S_") + (string)sz.t0;
+      RP_AddZone(z);
+   }
+
+   ENUM_TIMEFRAMES tfs[2] = {PERIOD_H1, PERIOD_M15};
+   for(int t=0;t<2;t++)
+   {
+      ENUM_TIMEFRAMES tf=tfs[t];
+      int hiIdx=iHighest(g_symbol, tf, MODE_HIGH, 80, 1);
+      int loIdx=iLowest(g_symbol, tf, MODE_LOW, 80, 1);
+      if(hiIdx>0)
+      {
+         Zone r; r.type=ZONE_RESISTANCE; r.upper=iHigh(g_symbol,tf,hiIdx)+5*g_point; r.lower=iHigh(g_symbol,tf,hiIdx)-5*g_point;
+         r.createdTime=iTime(g_symbol,tf,hiIdx); r.touchCount=0; r.lastTouchTime=0; r.mitigated=false; r.broken=false; r.ageBars=hiIdx;
+         r.state=(hiIdx>InpZoneOldAgeBars?ZONE_OLD:ZONE_FRESH); r.tf=tf; r.bullish=false; r.score=60.0; r.key="RPZ_SR_H_"+(string)tf+"_"+(string)r.createdTime; RP_AddZone(r);
+      }
+      if(loIdx>0)
+      {
+         Zone s; s.type=ZONE_SUPPORT; s.upper=iLow(g_symbol,tf,loIdx)+5*g_point; s.lower=iLow(g_symbol,tf,loIdx)-5*g_point;
+         s.createdTime=iTime(g_symbol,tf,loIdx); s.touchCount=0; s.lastTouchTime=0; s.mitigated=false; s.broken=false; s.ageBars=loIdx;
+         s.state=(loIdx>InpZoneOldAgeBars?ZONE_OLD:ZONE_FRESH); s.tf=tf; s.bullish=true; s.score=60.0; s.key="RPZ_SR_L_"+(string)tf+"_"+(string)s.createdTime; RP_AddZone(s);
+      }
+   }
+}
+
+bool RP_IsNearZone(const Zone &z, double px, double atrLtf)
+{
+   double m = MathMax(g_point, atrLtf * InpReactionNearATRMult);
+   return (px >= z.lower - m && px <= z.upper + m);
+}
+
+bool RP_RejectWick(const Zone &z, bool wantLong)
+{
+   double o=iOpen(g_symbol, PERIOD_M5, 1), c=iClose(g_symbol, PERIOD_M5,1), h=iHigh(g_symbol,PERIOD_M5,1), l=iLow(g_symbol,PERIOD_M5,1);
+   double body=MathAbs(c-o); if(body<=0) return false;
+   double upW=h-MathMax(o,c), dnW=MathMin(o,c)-l;
+   if(wantLong)
+      return (l <= z.upper && c > z.upper && dnW > body*1.2);
+   return (h >= z.lower && c < z.lower && upW > body*1.2);
+}
+
+bool RP_EngulfOrPin(bool wantLong)
+{
+   double o1=iOpen(g_symbol,PERIOD_M5,1), c1=iClose(g_symbol,PERIOD_M5,1);
+   double o2=iOpen(g_symbol,PERIOD_M5,2), c2=iClose(g_symbol,PERIOD_M5,2);
+   double h1=iHigh(g_symbol,PERIOD_M5,1), l1=iLow(g_symbol,PERIOD_M5,1);
+   bool engulf = wantLong ? (c1>o1 && c1>=o2 && o1<=c2) : (c1<o1 && c1<=o2 && o1>=c2);
+   double body=MathAbs(c1-o1); if(body<=0) body=g_point;
+   bool pin = wantLong ? ((MathMin(o1,c1)-l1) > body*1.5) : ((h1-MathMax(o1,c1)) > body*1.5);
+   return engulf || pin;
+}
+
+bool RP_Displacement(bool wantLong)
+{
+   double o=iOpen(g_symbol,PERIOD_M5,1), c=iClose(g_symbol,PERIOD_M5,1);
+   double atr=ATR(PERIOD_M5,1);
+   if(atr<=0) return false;
+   double b=MathAbs(c-o);
+   if(b < InpReactionDispATRMult*atr) return false;
+   return wantLong ? (c>o) : (c<o);
+}
+
+bool RP_SweepReclaim(const Zone &z, bool wantLong)
+{
+   int n=MathMax(1, InpSweepReclaimBars);
+   double sw=InpSweepPoints*g_point;
+   for(int k=1;k<=n;k++)
+   {
+      double h=iHigh(g_symbol,PERIOD_M5,k), l=iLow(g_symbol,PERIOD_M5,k), c=iClose(g_symbol,PERIOD_M5,k);
+      if(wantLong)
+      {
+         if(l < z.lower - sw && c > z.lower)
+            return true;
+      }
+      else
+      {
+         if(h > z.upper + sw && c < z.upper)
+            return true;
+      }
+   }
+   return false;
+}
+
+bool RP_BreakConfirmed(const Zone &z, bool wantLong)
+{
+   int n=MathMax(1, InpSweepReclaimBars);
+   for(int k=1;k<=n;k++)
+   {
+      double c=iClose(g_symbol,PERIOD_M5,k);
+      if(wantLong && c < z.lower)
+      {
+         bool reclaimed=false;
+         for(int j=1;j<=n;j++) if(iClose(g_symbol,PERIOD_M5,j) > z.lower) reclaimed=true;
+         if(!reclaimed) return true;
+      }
+      if(!wantLong && c > z.upper)
+      {
+         bool reclaimed=false;
+         for(int j=1;j<=n;j++) if(iClose(g_symbol,PERIOD_M5,j) < z.upper) reclaimed=true;
+         if(!reclaimed) return true;
+      }
+   }
+   return false;
+}
+
+bool RP_PickBestZone(bool wantLong, Zone &outZ)
+{
+   double px=SymbolInfoDouble(g_symbol, SYMBOL_BID);
+   double atr=ATR(PERIOD_M5,1);
+   int best=-1; double bestScore=-DBL_MAX;
+   for(int i=0;i<ArraySize(g_rpZones);i++)
+   {
+      Zone &z=g_rpZones[i];
+      if(z.broken) continue;
+      if(wantLong && !z.bullish) continue;
+      if(!wantLong && z.bullish) continue;
+      if(!RP_IsNearZone(z, px, atr)) continue;
+      double freshness = (z.state==ZONE_FRESH?30:(z.state==ZONE_SEMI?20:10));
+      double sc = z.score + freshness - z.touchCount*5.0;
+      if(sc>bestScore){bestScore=sc;best=i;}
+   }
+   if(best<0) return false;
+   outZ=g_rpZones[best];
+   return true;
+}
+
+bool RP_ModelGate(TradeDir dir, double entry, double &sl, double &tp, int &scoreOut, string &reasonOut, string &zoneKeyOut)
+{
+   scoreOut = 0;
+   reasonOut = "";
+   zoneKeyOut = "";
+   if(!InpUseReactionProbabilityModel)
+   {
+      scoreOut = 100;
+      return true;
+   }
+
+   int dayId = NYDayId(TimeCurrent());
+   if(g_rpDayId != dayId)
+   {
+      g_rpDayId = dayId;
+      g_rpTradesToday = 0;
+      ArrayResize(g_rpTradedZones, 0);
+   }
+
+   bool wantLong = (dir == DIR_LONG);
+   RPMarketBias bias = RP_GetHTFBias();
+   int context = 0;
+   if((wantLong && bias==RP_BIAS_LONG) || (!wantLong && bias==RP_BIAS_SHORT)) context = 30;
+   else if(bias == RP_BIAS_NEUTRAL) context = 15;
+   else context = 0;
+
+   if(InpNoTradeAgainstHTF && context == 0)
+   {
+      reasonOut = "against_htf";
+      return false;
+   }
+
+   if(g_rpTradesToday >= InpMaxTradesPerDay)
+   {
+      reasonOut = "max_trades_day";
+      return false;
+   }
+
+   if((TimeCurrent() - g_rpLastTradeTs) < InpCooldownMinutes * 60)
+   {
+      reasonOut = "cooldown";
+      return false;
+   }
+
+   int lossStreak = GVGetInt("lossStreak", 0);
+   if(lossStreak >= InpMaxLossStreak)
+   {
+      reasonOut = "loss_streak";
+      return false;
+   }
+
+   if(g_rpLastM15Bar != iTime(g_symbol, PERIOD_M15, 0))
+   {
+      g_rpLastM15Bar = iTime(g_symbol, PERIOD_M15, 0);
+      RP_BuildZonesFromSMC();
+   }
+
+   Zone z;
+   if(!RP_PickBestZone(wantLong, z))
+   {
+      reasonOut = "no_zone";
+      return false;
+   }
+
+   zoneKeyOut = z.key;
+   if(RP_ZoneAlreadyTraded(zoneKeyOut))
+   {
+      reasonOut = "zone_already_traded";
+      return false;
+   }
+
+   int zoneQuality = (int)MathRound(MathMax(0.0, MathMin(30.0, z.score * 0.3)));
+
+   bool tWick = RP_RejectWick(z, wantLong);
+   bool tEngulf = RP_EngulfOrPin(wantLong);
+   bool tDisp = RP_Displacement(wantLong);
+   bool tSweep = RP_SweepReclaim(z, wantLong);
+   bool breakConfirmed = RP_BreakConfirmed(z, wantLong);
+
+   if(breakConfirmed)
+   {
+      reasonOut = "zone_break_confirmed";
+      return false;
+   }
+
+   int trigCount = (tWick?1:0) + (tEngulf?1:0) + (tDisp?1:0) + (tSweep?1:0);
+   if(trigCount <= 0)
+   {
+      reasonOut = "no_reaction_trigger";
+      return false;
+   }
+
+   int trigger = MathMin(30, trigCount * 8 + (tSweep ? 6 : 0));
+   int riskFilters = 10;
+   if(lossStreak > 0)
+      riskFilters = MathMax(0, riskFilters - lossStreak * 2);
+
+   int score = context + zoneQuality + trigger + riskFilters;
+   if(score > 100) score = 100;
+   if(score < 0) score = 0;
+   scoreOut = score;
+
+   bool gate = false;
+   if(score >= 70)
+      gate = true;
+   else if(score >= 60)
+      gate = (g_rpTradesToday < InpMaxTradesPerDay && (TimeCurrent() - g_rpLastTradeTs) >= InpCooldownMinutes * 60);
+
+   if(sl <= 0.0)
+   {
+      double atr = ATR(PERIOD_M15, 1);
+      if(atr > 0.0)
+      {
+         double buf = atr * InpRiskATRBufferMult;
+         if(wantLong)
+            sl = MathMin(sl <= 0.0 ? DBL_MAX : sl, z.lower - buf);
+         else
+            sl = MathMax(sl <= 0.0 ? -DBL_MAX : sl, z.upper + buf);
+         sl = NormalizePrice(sl);
+      }
+   }
+
+   if(sl <= 0.0)
+   {
+      reasonOut = "risk_safety_no_sl";
+      return false;
+   }
+
+   Print("[RPModel] bias=", (int)bias,
+         " zoneState=", z.state,
+         " trigW=", (int)tWick,
+         " trigE=", (int)tEngulf,
+         " trigD=", (int)tDisp,
+         " trigS=", (int)tSweep,
+         " score=", score,
+         " gate=", (gate ? "ALLOW" : "SKIP"),
+         " zone=", z.key);
+
+   if(!gate)
+   {
+      reasonOut = "score_gate";
+      return false;
+   }
+
+   return true;
+}
+/// REACTION_PROBABILITY END
