@@ -256,6 +256,24 @@ datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
 
+struct IndicatorEntry
+{
+   int type;
+   string sym;
+   ENUM_TIMEFRAMES tf;
+   int p1;
+   int p2;
+   int p3;
+   int handle;
+};
+
+struct IndicatorsCache
+{
+   IndicatorEntry entries[];
+};
+
+IndicatorsCache g_indicators;
+
 // Runtime config (preset-applied)
 PresetMode cfg_InpPresetMode;
 string cfg_InpSymbolOverride;
@@ -469,6 +487,45 @@ enum EntryMask
 
 // --- forward declarations (needed for MQL5 compiler order)
 double NormalizeVolumeByStep(double volume);
+
+int EnsureIndicatorHandle(const int type, const string sym, ENUM_TIMEFRAMES tf, int p1, int p2, int p3);
+double ReadIndicatorValue(const int handle, const int bufferIndex, const int shift);
+void ReleaseIndicatorsCache();
+
+struct MarketContext
+{
+   double bid;
+   double ask;
+   double mid;
+   double spreadPts;
+   double atrM15;
+   double atrH1;
+   double adxH1;
+   double rsi1;
+   double rsi2;
+   double emaFast;
+   double emaSlow;
+   int killzoneActive;
+   double pdh;
+   double pdl;
+   double hod;
+   double lod;
+   int lossStreak;
+   int dayTrades;
+   double spreadEma;
+};
+
+void BuildContext(MarketContext &ctx);
+
+bool CalculateEntryCore(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
+                        int &setupScore, int &timingScore, int &totalScore, int &skipMask, int &entryMask,
+                        double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
+                        double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
+                        int &sweepDir, double &sweepLevel, double &displacementScore,
+                        double &obHigh, double &obLow, double &obMT, int &oteOk,
+                        int &sdHit, int &sdType, double &sdDistATR, int &sdFresh,
+                        int &candleHit, int &candleType,
+                        int &momHit, double &rsi1, double &rsi2);
 
 void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double tp, double tp1, double lot,
               int dailyScore, int setup, int timing, int total, int skipMask, int entryMask,
@@ -801,68 +858,88 @@ bool RolloverBlocked()
    return TimeInRange(cfg_InpRolloverStart, cfg_InpRolloverEnd);
 }
 
-double GetRSI(const string sym, ENUM_TIMEFRAMES tf, int period, int applied_price, int shift = 0)
+int EnsureIndicatorHandle(const int type, const string sym, ENUM_TIMEFRAMES tf, int p1, int p2, int p3)
 {
-   int handle = iRSI(sym, tf, period, applied_price);
+   for(int i = 0; i < ArraySize(g_indicators.entries); i++)
+   {
+      IndicatorEntry e = g_indicators.entries[i];
+      if(e.type == type && e.sym == sym && e.tf == tf && e.p1 == p1 && e.p2 == p2 && e.p3 == p3)
+         return e.handle;
+   }
+
+   int handle = INVALID_HANDLE;
+   if(type == 1)
+      handle = iATR(sym, tf, p1);
+   else if(type == 2)
+      handle = iADX(sym, tf, p1);
+   else if(type == 3)
+      handle = iRSI(sym, tf, p1, p2);
+   else if(type == 4)
+      handle = iMA(sym, tf, p1, p2, (ENUM_MA_METHOD)p3, PRICE_CLOSE);
+
+   if(handle == INVALID_HANDLE)
+      return INVALID_HANDLE;
+
+   IndicatorEntry ne;
+   ne.type = type;
+   ne.sym = sym;
+   ne.tf = tf;
+   ne.p1 = p1;
+   ne.p2 = p2;
+   ne.p3 = p3;
+   ne.handle = handle;
+   int n = ArraySize(g_indicators.entries);
+   ArrayResize(g_indicators.entries, n + 1);
+   g_indicators.entries[n] = ne;
+   return handle;
+}
+
+double ReadIndicatorValue(const int handle, const int bufferIndex, const int shift)
+{
    if(handle == INVALID_HANDLE)
       return EMPTY_VALUE;
    double buf[];
    ArraySetAsSeries(buf, true);
-   if(CopyBuffer(handle, 0, shift, 1, buf) <= 0)
-   {
-      IndicatorRelease(handle);
+   if(CopyBuffer(handle, bufferIndex, shift, 1, buf) <= 0)
       return EMPTY_VALUE;
-   }
-   IndicatorRelease(handle);
    return buf[0];
+}
+
+void ReleaseIndicatorsCache()
+{
+   for(int i = 0; i < ArraySize(g_indicators.entries); i++)
+   {
+      if(g_indicators.entries[i].handle != INVALID_HANDLE)
+      {
+         IndicatorRelease(g_indicators.entries[i].handle);
+         g_indicators.entries[i].handle = INVALID_HANDLE;
+      }
+   }
+   ArrayResize(g_indicators.entries, 0);
+}
+
+double GetRSI(const string sym, ENUM_TIMEFRAMES tf, int period, int applied_price, int shift = 0)
+{
+   int handle = EnsureIndicatorHandle(3, sym, tf, period, applied_price, 0);
+   return ReadIndicatorValue(handle, 0, shift);
 }
 
 double GetMA(const string sym, ENUM_TIMEFRAMES tf, int period, int ma_shift, ENUM_MA_METHOD method, int applied_price, int shift = 0)
 {
-   int handle = iMA(sym, tf, period, ma_shift, method, applied_price);
-   if(handle == INVALID_HANDLE)
-      return EMPTY_VALUE;
-   double buf[];
-   ArraySetAsSeries(buf, true);
-   if(CopyBuffer(handle, 0, shift, 1, buf) <= 0)
-   {
-      IndicatorRelease(handle);
-      return EMPTY_VALUE;
-   }
-   IndicatorRelease(handle);
-   return buf[0];
+   int handle = EnsureIndicatorHandle(4, sym, tf, period, ma_shift, (int)method);
+   return ReadIndicatorValue(handle, 0, shift);
 }
 
 double GetATR(const string sym, ENUM_TIMEFRAMES tf, int period, int shift = 0)
 {
-   int handle = iATR(sym, tf, period);
-   if(handle == INVALID_HANDLE)
-      return EMPTY_VALUE;
-   double buf[];
-   ArraySetAsSeries(buf, true);
-   if(CopyBuffer(handle, 0, shift, 1, buf) <= 0)
-   {
-      IndicatorRelease(handle);
-      return EMPTY_VALUE;
-   }
-   IndicatorRelease(handle);
-   return buf[0];
+   int handle = EnsureIndicatorHandle(1, sym, tf, period, 0, 0);
+   return ReadIndicatorValue(handle, 0, shift);
 }
 
 double GetADX(const string sym, ENUM_TIMEFRAMES tf, int period, int shift = 0)
 {
-   int handle = iADX(sym, tf, period);
-   if(handle == INVALID_HANDLE)
-      return EMPTY_VALUE;
-   double buf[];
-   ArraySetAsSeries(buf, true);
-   if(CopyBuffer(handle, 0, shift, 1, buf) <= 0)
-   {
-      IndicatorRelease(handle);
-      return EMPTY_VALUE;
-   }
-   IndicatorRelease(handle);
-   return buf[0];
+   int handle = EnsureIndicatorHandle(2, sym, tf, period, 0, 0);
+   return ReadIndicatorValue(handle, 0, shift);
 }
 
 double ATR(ENUM_TIMEFRAMES tf, int shift)
@@ -1974,7 +2051,29 @@ void UpdateDailyReset()
    }
 }
 
-bool HardGuardsOk(int &skipMask)
+void BuildContext(MarketContext &ctx)
+{
+   ctx.bid = SymbolInfoDouble(g_symbol, SYMBOL_BID);
+   ctx.ask = SymbolInfoDouble(g_symbol, SYMBOL_ASK);
+   ctx.mid = (ctx.bid + ctx.ask) * 0.5;
+   ctx.spreadPts = (g_point > 0.0) ? ((ctx.ask - ctx.bid) / g_point) : 0.0;
+   ctx.atrM15 = ATR(PERIOD_M15, 1);
+   ctx.atrH1 = ATR(PERIOD_H1, 1);
+   ctx.adxH1 = ADX(PERIOD_H1, 1);
+   ctx.rsi1 = RSI(PERIOD_M15, 1);
+   ctx.rsi2 = RSI(PERIOD_M15, 2);
+   ctx.emaFast = EMA(PERIOD_H1, cfg_InpEMA_Fast, 1);
+   ctx.emaSlow = EMA(PERIOD_H1, cfg_InpEMA_Slow, 1);
+   bool kzA = false, kzL = false, kzN = false;
+   ctx.killzoneActive = KillzoneActive(kzA, kzL, kzN) ? 1 : 0;
+   GetPDLevels(ctx.pdh, ctx.pdl);
+   GetHODLOD(ctx.hod, ctx.lod);
+   ctx.lossStreak = GVGetInt("lossStreak", 0);
+   ctx.dayTrades = GVGetInt("dayTrades", 0);
+   ctx.spreadEma = g_spreadEma;
+}
+
+bool HardGuardsOk(int &skipMask, const MarketContext &ctx)
 {
    skipMask = SKIP_NONE;
    if(!SessionAllowed())
@@ -1987,7 +2086,7 @@ bool HardGuardsOk(int &skipMask)
       skipMask |= SKIP_ROLLOVER;
       return false;
    }
-   if(SpreadPoints() > cfg_InpMaxSpreadPoints)
+   if(ctx.spreadPts > cfg_InpMaxSpreadPoints)
    {
       skipMask |= SKIP_SPREAD;
       return false;
@@ -2023,6 +2122,13 @@ bool HardGuardsOk(int &skipMask)
       return false;
    }
    return true;
+}
+
+bool HardGuardsOk(int &skipMask)
+{
+   MarketContext ctx;
+   BuildContext(ctx);
+   return HardGuardsOk(skipMask, ctx);
 }
 
 bool LossBlocksActive()
@@ -2755,7 +2861,7 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
    FileClose(handle);
 }
 
-bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
+bool CalculateEntryCore(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
                     int &setupScore, int &timingScore, int &totalScore, int &skipMask, int &entryMask,
                     double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
                     double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
@@ -3016,6 +3122,79 @@ bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double
    return true;
 }
 
+class IStrategy
+{
+public:
+   virtual bool Evaluate(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
+                         int &setupScore, int &timingScore, int &totalScore, int &skipMask, int &entryMask,
+                         double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
+                         double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
+                         int &sweepDir, double &sweepLevel, double &displacementScore,
+                         double &obHigh, double &obLow, double &obMT, int &oteOk,
+                         int &sdHit, int &sdType, double &sdDistATR, int &sdFresh,
+                         int &candleHit, int &candleType,
+                         int &momHit, double &rsi1, double &rsi2) = 0;
+};
+
+class TrendSMCStrategy : public IStrategy
+{
+public:
+   virtual bool Evaluate(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
+                         int &setupScore, int &timingScore, int &totalScore, int &skipMask, int &entryMask,
+                         double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
+                         double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
+                         int &sweepDir, double &sweepLevel, double &displacementScore,
+                         double &obHigh, double &obLow, double &obMT, int &oteOk,
+                         int &sdHit, int &sdType, double &sdDistATR, int &sdFresh,
+                         int &candleHit, int &candleType,
+                         int &momHit, double &rsi1, double &rsi2)
+   {
+      return CalculateEntryCore(dir, entry, sl, tp, tp1, riskR,
+                                setupScore, timingScore, totalScore, skipMask, entryMask,
+                                nearestKey, bosLevel, bosAgeBars, killzoneActive,
+                                pdh, pdl, psh, psl, hod, lod,
+                                sweepDir, sweepLevel, displacementScore,
+                                obHigh, obLow, obMT, oteOk,
+                                sdHit, sdType, sdDistATR, sdFresh,
+                                candleHit, candleType,
+                                momHit, rsi1, rsi2);
+   }
+};
+
+class StrategyManager
+{
+private:
+   TrendSMCStrategy m_trend;
+public:
+   IStrategy* Select()
+   {
+      return &m_trend;
+   }
+};
+
+bool CalculateEntry(TradeDir &dir, double &entry, double &sl, double &tp, double &tp1, double &riskR,
+                    int &setupScore, int &timingScore, int &totalScore, int &skipMask, int &entryMask,
+                    double &nearestKey, double &bosLevel, int &bosAgeBars, int &killzoneActive,
+                    double &pdh, double &pdl, double &psh, double &psl, double &hod, double &lod,
+                    int &sweepDir, double &sweepLevel, double &displacementScore,
+                    double &obHigh, double &obLow, double &obMT, int &oteOk,
+                    int &sdHit, int &sdType, double &sdDistATR, int &sdFresh,
+                    int &candleHit, int &candleType,
+                    int &momHit, double &rsi1, double &rsi2)
+{
+   StrategyManager manager;
+   IStrategy *strategy = manager.Select();
+   return strategy->Evaluate(dir, entry, sl, tp, tp1, riskR,
+                            setupScore, timingScore, totalScore, skipMask, entryMask,
+                            nearestKey, bosLevel, bosAgeBars, killzoneActive,
+                            pdh, pdl, psh, psl, hod, lod,
+                            sweepDir, sweepLevel, displacementScore,
+                            obHigh, obLow, obMT, oteOk,
+                            sdHit, sdType, sdDistATR, sdFresh,
+                            candleHit, candleType,
+                            momHit, rsi1, rsi2);
+}
+
 bool ShouldEnterTrade(int setupScore, int timingScore, int totalScore, RegimeState regime)
 {
    int totalMin = TOTAL_MIN;
@@ -3212,6 +3391,11 @@ int OnInit()
    return INIT_SUCCEEDED;
 }
 
+void OnDeinit(const int reason)
+{
+   ReleaseIndicatorsCache();
+}
+
 void OnTick()
 {
    if(g_symbol == "")
@@ -3223,6 +3407,9 @@ void OnTick()
       UpdateSpreadEMA();
 
    RegimeState regime = UpdateRegime();
+
+   MarketContext ctx;
+   BuildContext(ctx);
 
    if(HasPosition())
    {
@@ -3252,7 +3439,7 @@ void OnTick()
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
       return;
    }
-   if(!HardGuardsOk(skipMask))
+   if(!HardGuardsOk(skipMask, ctx))
    {
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
@@ -3262,7 +3449,7 @@ void OnTick()
       return;
    }
 
-   int dayTrades = GVGetInt("dayTrades", 0);
+   int dayTrades = ctx.dayTrades;
    int dailyScore = DailyScore(regime);
    int maxTrades = 0;
    double dailyRiskMult = 0.0;
