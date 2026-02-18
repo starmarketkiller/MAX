@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LicenseStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELED
+  EXPIRED
+}
+
+model License {
+  id                  String        @id @default(uuid())
+  licenseKey          String        @unique
+  plan                String
+  status              LicenseStatus
+  stripeCustomerId    String?
+  stripeSubscriptionId String?
+  currentPeriodEnd    DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  seats               LicenseSeat[]
+  events              LicenseEvent[]
+}
+
+model LicenseSeat {
+  id            String   @id @default(uuid())
+  licenseId     String
+  seatIndex     Int
+  accountLogin  BigInt?
+  accountServer String?
+  boundAt       DateTime?
+  lastSeenAt    DateTime?
+
+  license       License  @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  @@unique([licenseId, seatIndex])
+  @@index([accountLogin, accountServer])
+}
+
+model LicenseEvent {
+  id        String   @id @default(uuid())
+  licenseId String?
+  eventType String
+  payload   Json
+  createdAt DateTime @default(now())
+
+  license   License? @relation(fields: [licenseId], references: [id], onDelete: SetNull)
+
+  @@index([licenseId])
+  @@index([createdAt])
+}
