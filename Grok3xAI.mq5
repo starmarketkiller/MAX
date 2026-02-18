@@ -21,6 +21,7 @@
 #include <Trade/Trade.mqh>
 #include <GROK/PatternScores.mqh>
 #include "Strategy_RSIEngulfTouch.mqh"
+#include "mql5/LicenseClient.mqh"
 
 CTrade trade;
 
@@ -3589,20 +3590,31 @@ int OnInit()
       g_rsiEngulfTouchReady = false;
    }
 
+   EventSetTimer(60);
+   License_Refresh();
+
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason)
 {
+   EventKillTimer();
    g_rsiEngulfTouch.Deinit();
    g_rsiEngulfTouchReady = false;
    ReleaseIndicatorsCache();
+}
+
+void OnTimer()
+{
+   License_Refresh();
 }
 
 void OnTick()
 {
    if(g_symbol == "")
       return;
+
+   License_Refresh();
 
    if(InpUseSMCZ3C) SMCZ3C_Update();
 
@@ -3621,6 +3633,9 @@ void OnTick()
 
    if(HasPosition())
    {
+      if(!License_CanManageOpenTrades())
+         return;
+
       double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
       double slPrice = PositionGetDouble(POSITION_SL);
       double riskR = MathAbs(entryPrice - slPrice);
@@ -3686,6 +3701,9 @@ void OnTick()
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
       return;
    }
+
+   if(!License_CanOpenNewTrades())
+      return;
 
    TradeDir dir;
    double entry = 0.0, sl = 0.0, tp = 0.0, tp1 = 0.0, riskR = 0.0;
