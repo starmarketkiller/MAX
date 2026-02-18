@@ -19,6 +19,7 @@
 //+------------------------------------------------------------------+
 #property strict
 #include <Trade/Trade.mqh>
+#include <GROK/PatternScores.mqh>
 #include "Strategy_RSIEngulfTouch.mqh"
 
 CTrade trade;
@@ -119,6 +120,11 @@ input double InpSessionRiskMultiplier = 0.75;
 input double InpDailyDDSoft = 2.0;
 input double InpDailyDDHard = 4.0;
 input int    InpCatastrophicSL_Points = 150;
+
+input int MaxSpreadPoints = 30;
+input bool UseInstitutionalScore = true;
+input int InstitutionalMinScore = 60;
+input bool LogInstitutional = true;
 
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
@@ -333,6 +339,11 @@ double g_irAtrRatio = 0.0;
 int g_irLossStreak = 0;
 double g_irDailyDD = 0.0;
 
+int g_instTotalScore = 0;
+double g_instRiskMult = 1.0;
+int g_instPatternScore = 0;
+EPattern50 g_instPattern = PAT_DOJI;
+
 
 void SMCZ3C_Update();
 bool RP_ModelGate(TradeDir dir, double entry, double &sl, double &tp, int &scoreOut, string &reasonOut, string &zoneKeyOut);
@@ -347,6 +358,9 @@ double IR_ClampRiskPct(double riskPct);
 double IR_CalcLotsFromRiskPct(double entryPrice, double stopPrice, double riskPct, double &riskMoneyOut, double &stopDistancePointsOut);
 bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entryScore, double &lotsOut, string &tierOut, string &reasonOut);
 void IR_ResetTelemetry();
+
+EPattern50 MapDetectorToEPattern50(int detectorIdOrEnum, bool isBullish);
+void ComputeInstitutionalAdapter(int detectorIdOrEnum, bool isBullish, int entryMask, int killzoneActive, int &outTotalScore, double &outRiskMult, int &outPatternScore, EPattern50 &outPattern);
 
 struct IndicatorEntry
 {
@@ -2928,7 +2942,8 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
                 "sdHit", "sdType", "sdDistATR", "sdFresh", "candleHit", "candleType",
                 "momHit", "rsi1", "rsi2",
                 "irEntryScore", "irTier", "irRiskBasePct", "irScoreMult", "irRegimeMult", "irFearMult", "irFinalRiskPct",
-                "irRiskMoney", "irStopDistancePoints", "irLots", "irSpreadPoints", "irAtrRatio", "irLossStreak", "irDailyDD");
+                "irRiskMoney", "irStopDistancePoints", "irLots", "irSpreadPoints", "irAtrRatio", "irLossStreak", "irDailyDD",
+                "instPattern", "instPatternScore", "instTotalScore", "instRiskMult");
    }
 
    int lossStreak = GVGetInt("lossStreak", 0);
@@ -3016,7 +3031,11 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              DoubleToString(g_irSpreadPoints, 1),
              DoubleToString(g_irAtrRatio, 2),
              g_irLossStreak,
-             DoubleToString(g_irDailyDD, 2));
+             DoubleToString(g_irDailyDD, 2),
+             GetPatternName(g_instPattern),
+             g_instPatternScore,
+             g_instTotalScore,
+             DoubleToString(g_instRiskMult, 2));
 
    FileClose(handle);
 }
@@ -3715,6 +3734,23 @@ void OnTick()
    {
       Print("[RPModel] SKIP dir=", (int)dir, " score=", rpScore, " reason=", rpReason);
       return;
+   }
+
+   g_instTotalScore = 0;
+   g_instRiskMult = 1.0;
+   g_instPatternScore = 0;
+   g_instPattern = PAT_DOJI;
+   if(UseInstitutionalScore)
+   {
+      ComputeInstitutionalAdapter(candleType, (dir == DIR_LONG), entryMask, killzoneActive,
+                                  g_instTotalScore, g_instRiskMult, g_instPatternScore, g_instPattern);
+      if(g_instTotalScore < InstitutionalMinScore || g_instRiskMult <= 0.0)
+      {
+         if(LogInstitutional)
+            Print("[INST] SKIP score=", g_instTotalScore, " riskMult=", DoubleToString(g_instRiskMult, 2),
+                  " pattern=", GetPatternName(g_instPattern), " pScore=", g_instPatternScore);
+         return;
+      }
    }
 
    string irTier = "NA";
@@ -4917,6 +4953,8 @@ bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entr
    }
 
    double riskPctRaw = InpRiskBasePct * g_irScoreMult * g_irRegimeMult * g_irFearMult;
+   if(UseInstitutionalScore)
+      riskPctRaw *= MathMax(0.0, g_instRiskMult);
    g_irRiskBasePct = InpRiskBasePct;
    g_irFinalRiskPct = IR_ClampRiskPct(riskPctRaw);
 
@@ -4947,3 +4985,66 @@ bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entr
    return true;
 }
 /// INSTITUTIONAL_RISK_ENGINE END
+
+
+/// INSTITUTIONAL_PATTERN_ADAPTER BEGIN
+EPattern50 MapDetectorToEPattern50(int detectorIdOrEnum, bool isBullish)
+{
+   // Default adapter for common detector IDs. Keep existing detector untouched.
+   switch(detectorIdOrEnum)
+   {
+      case 1: return isBullish ? PAT_BULLISH_ENGULFING : PAT_BEARISH_ENGULFING; // Engulfing
+      case 2: return PAT_HAMMER; // Hammer
+      case 3: return PAT_SHOOTING_STAR; // ShootingStar
+      case 4: return PAT_DOJI; // Doji
+      case 5: return PAT_MORNING_STAR; // MorningStar
+      case 6: return PAT_EVENING_STAR; // EveningStar
+      case 7: return PAT_THREE_WHITE_SOLDIERS; // ThreeSoldiers
+      case 8: return PAT_THREE_BLACK_CROWS; // ThreeCrows
+   }
+   return PAT_DOJI;
+}
+
+void ComputeInstitutionalAdapter(int detectorIdOrEnum, bool isBullish, int entryMask, int killzoneActive,
+                                 int &outTotalScore, double &outRiskMult, int &outPatternScore, EPattern50 &outPattern)
+{
+   outPattern = MapDetectorToEPattern50(detectorIdOrEnum, isBullish);
+   outPatternScore = GetPatternScore(outPattern);
+
+   InstFeatures f;
+   ZeroMemory(f);
+
+   double spreadPts = SpreadPoints();
+   f.spreadOK = (spreadPts <= MaxSpreadPoints) || (spreadPts <= cfg_InpMaxSpreadPoints);
+   f.atrOK = !LowVolBlocked();
+   f.breakoutRetest = ((entryMask & ENTRY_BOS_RETEST) != 0);
+
+   TradeDir bias = BiasH1();
+   f.htfTrendAligned = (isBullish && bias == DIR_LONG) || (!isBullish && bias == DIR_SHORT);
+   f.bosOrMss = ((entryMask & ENTRY_MSS) != 0) || ((entryMask & ENTRY_BOS_CLOSE) != 0) || ((entryMask & ENTRY_BOS_RETEST) != 0);
+   f.liquiditySweep = ((entryMask & ENTRY_SWEEP) != 0);
+   f.displacement = ((entryMask & ENTRY_DISPLACEMENT) != 0);
+   f.poiTouched = ((entryMask & ENTRY_OB_RTO) != 0) || ((entryMask & ENTRY_SD) != 0) || ((entryMask & ENTRY_SR) != 0);
+   f.sessionNY = (killzoneActive == 1); // TODO: connect NY-specific session module if available.
+   f.volumeSpike = false; // TODO: connect volume spike module.
+   f.premiumDiscountOK = ((entryMask & ENTRY_PDARRAY) != 0); // TODO: connect explicit PD premium/discount gate.
+   f.avoidHighLow = false; // TODO: connect avoid day high/low sweep module.
+
+   InstWeights w = GetXauScalpPresetWeights();
+   outTotalScore = ComputeInstitutionalScore(outPatternScore, f, w);
+   outRiskMult = ScoreToRiskMultiplier(outTotalScore);
+
+   if(LogInstitutional && outRiskMult > 0.0)
+   {
+      Print("[INST] pat=", GetPatternName(outPattern),
+            " pScore=", outPatternScore,
+            " flags=", (int)f.htfTrendAligned, "|", (int)f.bosOrMss, "|", (int)f.liquiditySweep, "|", (int)f.displacement,
+            "|", (int)f.poiTouched, "|", (int)f.breakoutRetest, "|", (int)f.sessionNY, "|", (int)f.volumeSpike,
+            "|", (int)f.premiumDiscountOK, "|", (int)f.avoidHighLow, "|", (int)f.spreadOK, "|", (int)f.atrOK,
+            " total=", outTotalScore,
+            " riskMult=", DoubleToString(outRiskMult, 2),
+            " spread=", DoubleToString(spreadPts, 1),
+            " atrOK=", (int)f.atrOK);
+   }
+}
+/// INSTITUTIONAL_PATTERN_ADAPTER END
