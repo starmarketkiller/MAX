@@ -1,29 +1,21 @@
 # MT5 License Client Integration
 
-## 1) Copy file
-Place LicenseClient.mqh into:
-MQL5/Include/LicenseClient.mqh
-(or keep folder structure you prefer)
+## Install
+Copy `mql5/LicenseClient.mqh` into your include path and include from EA.
 
-## 2) Allow WebRequest domain
-MT5 -> Tools -> Options -> Expert Advisors
-✅ Allow WebRequest for listed URL
-Add:
-https://YOUR_DOMAIN_HERE
+## MT5 WebRequest whitelist
+Tools -> Options -> Expert Advisors -> Allow WebRequest
+Add your tunnel URL, e.g.:
+`https://xxxx.ngrok-free.app`
 
-## 3) Include and call
-In EA .mq5:
-#include <LicenseClient.mqh>
+## EA hooks
+- OnInit: `EventSetTimer(60); License_Refresh();`
+- OnTimer: `License_Refresh();`
+- OnDeinit: `EventKillTimer();`
+- Before new entries: `if(!License_CanOpenNewTrades()) return;`
+- For management path: `if(!License_CanManageOpenTrades()) return;`
 
-In OnInit():
-EventSetTimer(60);
-License_Refresh(); // immediate verify at startup
-
-In OnTimer():
-License_Refresh();
-
-In your entry logic:
-if(!License_CanOpenNewTrades()) return; // block only new entries
-
-In your trade management logic:
-if(!License_CanManageOpenTrades()) return; // optional
+## Behavior
+- Verify only on startup + periodic interval (`InpVerifyHours`, default 6h)
+- Grace period default 48h if API unreachable
+- When grace expires, block only new openings
