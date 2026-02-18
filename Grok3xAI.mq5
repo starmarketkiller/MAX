@@ -107,6 +107,19 @@ input int    InpSweepReclaimBars = 3;
 input double InpSweepPoints = 15.0;
 input double InpRiskATRBufferMult = 0.5;
 
+input int    InpEntryThreshold = 70;
+input double InpRiskBasePct = 0.005;
+input double InpRiskMinPct = 0.001;
+input double InpRiskMaxPct = 0.0125;
+input double InpMaxRiskMultiplier = 1.25;
+input double InpAtrSpikeRatio = 1.8;
+input int    InpAtrMaPeriod = 20;
+input bool   InpUseSessionRiskMultiplier = true;
+input double InpSessionRiskMultiplier = 0.75;
+input double InpDailyDDSoft = 2.0;
+input double InpDailyDDHard = 4.0;
+input int    InpCatastrophicSL_Points = 150;
+
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
 input int    InpSpreadMultipleBlockMin = 45; // minutes
@@ -305,10 +318,35 @@ datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
 
+int g_irEntryScore = 0;
+string g_irTier = "NA";
+double g_irRiskBasePct = 0.0;
+double g_irScoreMult = 0.0;
+double g_irRegimeMult = 0.0;
+double g_irFearMult = 0.0;
+double g_irFinalRiskPct = 0.0;
+double g_irRiskMoney = 0.0;
+double g_irStopDistancePoints = 0.0;
+double g_irLots = 0.0;
+double g_irSpreadPoints = 0.0;
+double g_irAtrRatio = 0.0;
+int g_irLossStreak = 0;
+double g_irDailyDD = 0.0;
+
 
 void SMCZ3C_Update();
 bool RP_ModelGate(TradeDir dir, double entry, double &sl, double &tp, int &scoreOut, string &reasonOut, string &zoneKeyOut);
 void RP_RegisterTrade(const string zoneKey);
+
+double IR_GetScoreMultiplier(int entryScore, string &tierOut);
+double IR_GetAtrRatio();
+double IR_GetRegimeMultiplier(double spreadPoints, double atrRatio, bool &blockOut);
+double IR_GetDailyDDPct();
+double IR_GetFearMultiplier(int lossStreak, double dailyDrawdownPct, bool &blockOut);
+double IR_ClampRiskPct(double riskPct);
+double IR_CalcLotsFromRiskPct(double entryPrice, double stopPrice, double riskPct, double &riskMoneyOut, double &stopDistancePointsOut);
+bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entryScore, double &lotsOut, string &tierOut, string &reasonOut);
+void IR_ResetTelemetry();
 
 struct IndicatorEntry
 {
@@ -2888,7 +2926,9 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
                 "killzoneActive", "pdh", "pdl", "psh", "psl", "hod", "lod",
                 "sweepDir", "sweepLevel", "displacementScore", "obHigh", "obLow", "obMT", "oteOk",
                 "sdHit", "sdType", "sdDistATR", "sdFresh", "candleHit", "candleType",
-                "momHit", "rsi1", "rsi2");
+                "momHit", "rsi1", "rsi2",
+                "irEntryScore", "irTier", "irRiskBasePct", "irScoreMult", "irRegimeMult", "irFearMult", "irFinalRiskPct",
+                "irRiskMoney", "irStopDistancePoints", "irLots", "irSpreadPoints", "irAtrRatio", "irLossStreak", "irDailyDD");
    }
 
    int lossStreak = GVGetInt("lossStreak", 0);
@@ -2962,7 +3002,21 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              candleType,
              momHit,
              DoubleToString(rsi1, 2),
-             DoubleToString(rsi2, 2));
+             DoubleToString(rsi2, 2),
+             g_irEntryScore,
+             g_irTier,
+             DoubleToString(g_irRiskBasePct, 5),
+             DoubleToString(g_irScoreMult, 3),
+             DoubleToString(g_irRegimeMult, 3),
+             DoubleToString(g_irFearMult, 3),
+             DoubleToString(g_irFinalRiskPct, 5),
+             DoubleToString(g_irRiskMoney, 2),
+             DoubleToString(g_irStopDistancePoints, 1),
+             DoubleToString(g_irLots, 2),
+             DoubleToString(g_irSpreadPoints, 1),
+             DoubleToString(g_irAtrRatio, 2),
+             g_irLossStreak,
+             DoubleToString(g_irDailyDD, 2));
 
    FileClose(handle);
 }
@@ -3650,7 +3704,8 @@ void OnTick()
       return;
    }
 
-   if(!ShouldEnterTrade(setupScore, timingScore, totalScore, regime))
+   int entryScore = totalScore;
+   if(entryScore < InpEntryThreshold)
       return;
 
    int rpScore = 0;
@@ -3662,10 +3717,14 @@ void OnTick()
       return;
    }
 
-   double riskMult = CurrentRiskMultiplier(dailyRiskMult);
-   double lots = CalcLots(riskR, cfg_InpBaseRiskPct * riskMult);
-   if(lots <= 0.0)
+   string irTier = "NA";
+   string irReason = "";
+   double lots = 0.0;
+   if(!IR_ComputeLots(dir, entry, sl, entryScore, lots, irTier, irReason))
+   {
+      Print("[IREngine] SKIP reason=", irReason, " entryScore=", entryScore);
       return;
+   }
 
    if(!StopsOk(dir, entry, sl, tp))
    {
@@ -4655,3 +4714,236 @@ bool RP_ModelGate(TradeDir dir, double entry, double &sl, double &tp, int &score
    return true;
 }
 /// REACTION_PROBABILITY END
+
+
+/// INSTITUTIONAL_RISK_ENGINE BEGIN
+void IR_ResetTelemetry()
+{
+   g_irEntryScore = 0;
+   g_irTier = "NA";
+   g_irRiskBasePct = InpRiskBasePct;
+   g_irScoreMult = 0.0;
+   g_irRegimeMult = 0.0;
+   g_irFearMult = 0.0;
+   g_irFinalRiskPct = 0.0;
+   g_irRiskMoney = 0.0;
+   g_irStopDistancePoints = 0.0;
+   g_irLots = 0.0;
+   g_irSpreadPoints = 0.0;
+   g_irAtrRatio = 0.0;
+   g_irLossStreak = GVGetInt("lossStreak", 0);
+   g_irDailyDD = 0.0;
+}
+
+double IR_GetScoreMultiplier(int entryScore, string &tierOut)
+{
+   tierOut = "<70";
+   if(entryScore >= 90)
+   {
+      tierOut = ">=90";
+      return MathMin(1.25, InpMaxRiskMultiplier);
+   }
+   if(entryScore >= 85)
+   {
+      tierOut = "85-89";
+      return MathMin(1.00, InpMaxRiskMultiplier);
+   }
+   if(entryScore >= 80)
+   {
+      tierOut = "80-84";
+      return MathMin(0.75, InpMaxRiskMultiplier);
+   }
+   if(entryScore >= 75)
+   {
+      tierOut = "75-79";
+      return MathMin(0.50, InpMaxRiskMultiplier);
+   }
+   if(entryScore >= 70)
+   {
+      tierOut = "70-74";
+      return MathMin(0.25, InpMaxRiskMultiplier);
+   }
+   return 0.0;
+}
+
+double IR_GetAtrRatio()
+{
+   double atrNow = ATR(PERIOD_M15, 1);
+   if(atrNow <= 0.0)
+      return 1.0;
+   double sum = 0.0;
+   int n = MathMax(1, InpAtrMaPeriod);
+   int used = 0;
+   for(int i = 1; i <= n; i++)
+   {
+      double a = ATR(PERIOD_M15, i);
+      if(a > 0.0)
+      {
+         sum += a;
+         used++;
+      }
+   }
+   if(used <= 0)
+      return 1.0;
+   double atrMa = sum / used;
+   if(atrMa <= 0.0)
+      return 1.0;
+   return atrNow / atrMa;
+}
+
+double IR_GetRegimeMultiplier(double spreadPoints, double atrRatio, bool &blockOut)
+{
+   blockOut = false;
+   if(spreadPoints > cfg_InpMaxSpreadPoints)
+   {
+      blockOut = true;
+      return 0.0;
+   }
+   double mult = 1.0;
+   if(atrRatio > InpAtrSpikeRatio)
+      mult *= 0.5;
+   if(InpUseSessionRiskMultiplier && !SessionOk())
+      mult *= InpSessionRiskMultiplier;
+   return mult;
+}
+
+double IR_GetDailyDDPct()
+{
+   double startEquity = GVGetDouble("dayEquityStart", AccountInfoDouble(ACCOUNT_EQUITY));
+   double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+   if(startEquity <= 0.0)
+      return 0.0;
+   double dd = (startEquity - equity) / startEquity * 100.0;
+   if(dd < 0.0)
+      dd = 0.0;
+   return dd;
+}
+
+double IR_GetFearMultiplier(int lossStreak, double dailyDrawdownPct, bool &blockOut)
+{
+   blockOut = false;
+   if(dailyDrawdownPct >= InpDailyDDHard)
+   {
+      blockOut = true;
+      return 0.0;
+   }
+   double mult = 1.0;
+   if(lossStreak >= 3)
+      mult *= 0.25;
+   else if(lossStreak >= 2)
+      mult *= 0.5;
+   if(dailyDrawdownPct >= InpDailyDDSoft)
+      mult *= 0.5;
+   return mult;
+}
+
+double IR_ClampRiskPct(double riskPct)
+{
+   double lo = MathMin(InpRiskMinPct, InpRiskMaxPct);
+   double hi = MathMax(InpRiskMinPct, InpRiskMaxPct);
+   return MathMax(lo, MathMin(hi, riskPct));
+}
+
+double IR_CalcLotsFromRiskPct(double entryPrice, double stopPrice, double riskPct, double &riskMoneyOut, double &stopDistancePointsOut)
+{
+   riskMoneyOut = 0.0;
+   stopDistancePointsOut = 0.0;
+   if(entryPrice <= 0.0 || stopPrice <= 0.0 || riskPct <= 0.0)
+      return 0.0;
+
+   double stopDistPrice = MathAbs(entryPrice - stopPrice);
+   if(stopDistPrice <= 0.0 || g_point <= 0.0)
+      return 0.0;
+
+   stopDistancePointsOut = stopDistPrice / g_point;
+   double tickValue = TickValue();
+   double tickSize = TickSize();
+   if(tickValue <= 0.0 || tickSize <= 0.0)
+      return 0.0;
+
+   double moneyPerPointPerLot = (tickValue / tickSize) * g_point;
+   if(moneyPerPointPerLot <= 0.0)
+      return 0.0;
+
+   double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+   riskMoneyOut = equity * riskPct;
+   if(riskMoneyOut <= 0.0)
+      return 0.0;
+
+   double lots = riskMoneyOut / (stopDistancePointsOut * moneyPerPointPerLot);
+   return NormalizeVolumeByStep(lots);
+}
+
+bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entryScore, double &lotsOut, string &tierOut, string &reasonOut)
+{
+   lotsOut = 0.0;
+   reasonOut = "";
+   IR_ResetTelemetry();
+   g_irEntryScore = entryScore;
+   g_irSpreadPoints = SpreadPoints();
+   g_irAtrRatio = IR_GetAtrRatio();
+   g_irLossStreak = GVGetInt("lossStreak", 0);
+   g_irDailyDD = IR_GetDailyDDPct();
+
+   if(stopPrice <= 0.0)
+   {
+      double cat = InpCatastrophicSL_Points * g_point;
+      stopPrice = (dir == DIR_LONG) ? (entryPrice - cat) : (entryPrice + cat);
+      stopPrice = NormalizePrice(stopPrice);
+   }
+
+   g_irScoreMult = IR_GetScoreMultiplier(entryScore, tierOut);
+   g_irTier = tierOut;
+   if(g_irScoreMult <= 0.0)
+   {
+      reasonOut = "score_tier_zero";
+      return false;
+   }
+
+   bool regimeBlock = false;
+   g_irRegimeMult = IR_GetRegimeMultiplier(g_irSpreadPoints, g_irAtrRatio, regimeBlock);
+   if(regimeBlock || g_irRegimeMult <= 0.0)
+   {
+      reasonOut = "regime_block";
+      return false;
+   }
+
+   bool fearBlock = false;
+   g_irFearMult = IR_GetFearMultiplier(g_irLossStreak, g_irDailyDD, fearBlock);
+   if(fearBlock || g_irFearMult <= 0.0)
+   {
+      reasonOut = "fear_block";
+      return false;
+   }
+
+   double riskPctRaw = InpRiskBasePct * g_irScoreMult * g_irRegimeMult * g_irFearMult;
+   g_irRiskBasePct = InpRiskBasePct;
+   g_irFinalRiskPct = IR_ClampRiskPct(riskPctRaw);
+
+   lotsOut = IR_CalcLotsFromRiskPct(entryPrice, stopPrice, g_irFinalRiskPct, g_irRiskMoney, g_irStopDistancePoints);
+   g_irLots = lotsOut;
+
+   Print("[IREngine] EntryScore=", entryScore,
+         " tier=", g_irTier,
+         " riskBasePct=", DoubleToString(g_irRiskBasePct, 5),
+         " scoreMult=", DoubleToString(g_irScoreMult, 3),
+         " regimeMult=", DoubleToString(g_irRegimeMult, 3),
+         " fearMult=", DoubleToString(g_irFearMult, 3),
+         " finalRiskPct=", DoubleToString(g_irFinalRiskPct, 5),
+         " riskMoney=", DoubleToString(g_irRiskMoney, 2),
+         " stopDistancePoints=", DoubleToString(g_irStopDistancePoints, 1),
+         " lots=", DoubleToString(g_irLots, 2),
+         " spreadPoints=", DoubleToString(g_irSpreadPoints, 1),
+         " atrRatio=", DoubleToString(g_irAtrRatio, 2),
+         " lossStreak=", g_irLossStreak,
+         " dailyDD=", DoubleToString(g_irDailyDD, 2));
+
+   if(lotsOut <= 0.0)
+   {
+      reasonOut = "lots_zero";
+      return false;
+   }
+
+   return true;
+}
+/// INSTITUTIONAL_RISK_ENGINE END
