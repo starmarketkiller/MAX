@@ -21,7 +21,7 @@
 #include <Trade/Trade.mqh>
 #include <GROK/PatternScores.mqh>
 #include "Strategy_RSIEngulfTouch.mqh"
-#include "mql5/LicenseClient.mqh"
+#include <GROK/LicenseClient.mqh>
 
 CTrade trade;
 
@@ -39,6 +39,8 @@ enum TradeDir
    DIR_LONG = 1,
    DIR_SHORT = -1
 };
+
+#include <GROK/OrderGate.mqh>
 
 enum PresetMode
 {
@@ -126,6 +128,18 @@ input int MaxSpreadPoints = 30;
 input bool UseInstitutionalScore = true;
 input int InstitutionalMinScore = 60;
 input bool LogInstitutional = true;
+
+input string InpLicenseKey="";
+input string InpLicenseApiBase="https://api.example.com";
+input string InpEaId="Grok3xAI";
+input string InpEaVersion="3.13";
+input int    InpVerifyHours=6;
+input int    InpGraceHours=48;
+input bool   InpAllowManageOpenPositionsWhenInvalid=true;
+input bool   InpBypassLicensingInStrategyTester=true;
+input bool   InpHardFailIfNoValidEver=true;
+input bool   InpShowLicensePanel=true;
+input bool   InpLogLicenseToFile=true;
 
 input bool   InpUseSpreadMultiple = true;
 input double InpSpreadMultiple = 3.0;
@@ -2425,7 +2439,7 @@ bool FreezeOkForClose()
    return MathAbs(price - entry) > freezeLevel * g_point;
 }
 
-bool SendOrderWithRetry(TradeDir dir, double lots, double sl, double tp, const string comment, int &retcode, int &lasterr)
+bool SendOrderCore(TradeDir dir, double lots, double sl, double tp, const string comment, int &retcode, int &lasterr)
 {
    retcode = 0;
    lasterr = 0;
@@ -3542,7 +3556,7 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
    bool result = false;
    int retcode = 0;
    int lasterr = 0;
-   result = SendOrderWithRetry(dir, addLots, sl, addTp, "PYR", retcode, lasterr);
+   result = TryOpenByDir(dir, addLots, sl, addTp, "PYR", retcode, lasterr);
 
    if(result)
    {
@@ -3590,8 +3604,9 @@ int OnInit()
       g_rsiEngulfTouchReady = false;
    }
 
+   License_Init();
+   License_Refresh(true);
    EventSetTimer(60);
-   License_Refresh();
 
    return INIT_SUCCEEDED;
 }
@@ -3599,6 +3614,7 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    EventKillTimer();
+   License_Deinit();
    g_rsiEngulfTouch.Deinit();
    g_rsiEngulfTouchReady = false;
    ReleaseIndicatorsCache();
@@ -3606,15 +3622,13 @@ void OnDeinit(const int reason)
 
 void OnTimer()
 {
-   License_Refresh();
+   License_OnTimer();
 }
 
 void OnTick()
 {
    if(g_symbol == "")
       return;
-
-   License_Refresh();
 
    if(InpUseSMCZ3C) SMCZ3C_Update();
 
@@ -3633,7 +3647,7 @@ void OnTick()
 
    if(HasPosition())
    {
-      if(!License_CanManageOpenTrades())
+      if(!CanManageOpenTrades())
          return;
 
       double entryPrice = PositionGetDouble(POSITION_PRICE_OPEN);
@@ -3702,7 +3716,7 @@ void OnTick()
       return;
    }
 
-   if(!License_CanOpenNewTrades())
+   if(!CanOpenNewTrades())
       return;
 
    TradeDir dir;
@@ -3792,7 +3806,7 @@ void OnTick()
 
    int retcode = 0;
    int lasterr = 0;
-   bool sent = SendOrderWithRetry(dir, lots, sl, tp, "ENTRY", retcode, lasterr);
+   bool sent = TryOpenByDir(dir, lots, sl, tp, "ENTRY", retcode, lasterr);
 
    if(sent)
    {
