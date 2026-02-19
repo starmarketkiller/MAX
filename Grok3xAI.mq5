@@ -60,7 +60,7 @@ input PresetMode InpPresetMode = PRESET_CUSTOM;
 
 input string InpSymbolOverride = "";
 input long   InpMagic = 3011;
-input double InpPipPrice = 0.10; // if 0 -> auto pip size (FX/JPY/indices)
+input double InpPipPrice = 0.10; // DEPRECATED name: acts as pip size override (if 0 -> auto)
 input int    InpMaxSpreadPoints = 35;
 input int    InpMaxSlippagePoints = 35;
 input int    InpMaxRetries = 2;
@@ -124,7 +124,7 @@ input double InpDailyDDSoft = 2.0;
 input double InpDailyDDHard = 4.0;
 input int    InpCatastrophicSL_Points = 150;
 
-input int MaxSpreadPoints = 30;
+input int MaxSpreadPoints = 30; // DEPRECATED: use InpMaxSpreadPoints
 input bool UseInstitutionalScore = true;
 input int InstitutionalMinScore = 60;
 input bool LogInstitutional = true;
@@ -338,6 +338,7 @@ bool g_rsiEngulfTouchReady = false;
 datetime g_lastM15Bar = 0;
 datetime g_lastH1Bar = 0;
 double g_spreadEma = 0.0;
+bool g_csvOpenWarned = false;
 
 int g_irEntryScore = 0;
 string g_irTier = "NA";
@@ -370,12 +371,17 @@ double IR_GetRegimeMultiplier(double spreadPoints, double atrRatio, bool &blockO
 double IR_GetDailyDDPct();
 double IR_GetFearMultiplier(int lossStreak, double dailyDrawdownPct, bool &blockOut);
 double IR_ClampRiskPct(double riskPct);
+double RiskInputToPercent(double v);
 double IR_CalcLotsFromRiskPct(double entryPrice, double stopPrice, double riskPct, double &riskMoneyOut, double &stopDistancePointsOut);
 bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entryScore, double &lotsOut, string &tierOut, string &reasonOut);
 void IR_ResetTelemetry();
 
 EPattern50 MapDetectorToEPattern50(int detectorIdOrEnum, bool isBullish);
 void ComputeInstitutionalAdapter(int detectorIdOrEnum, bool isBullish, int entryMask, int killzoneActive, int &outTotalScore, double &outRiskMult, int &outPatternScore, EPattern50 &outPattern);
+string ExplainSkipMask(int mask);
+string ExplainEntryMask(int mask);
+datetime GetTradingDayStart(datetime t);
+int GetTradingDayId(datetime t);
 
 struct IndicatorEntry
 {
@@ -791,6 +797,14 @@ double PipsFromPoints(double points)
    double price = PriceFromPoints(points);
    return PipsFromPrice(price);
 }
+
+// Canonical helpers to avoid pip/point ambiguity in risk and stops.
+double GetPipSize() { return g_pip; }
+double GetPointSize() { return g_point; }
+double PriceToPoints(double priceDistance) { return PointsFromPrice(priceDistance); }
+double PointsToPrice(double points) { return PriceFromPoints(points); }
+double PipsToPoints(double pips) { return PointsFromPips(pips); }
+double PointsToPips(double points) { return PipsFromPoints(points); }
 
 double NormalizePrice(double p)
 {
@@ -1267,11 +1281,30 @@ int BOSAgeBars(double &bosLevel)
    return iBarShift(g_symbol, PERIOD_M15, bosTime, true);
 }
 
-int NYDayId(datetime serverTime)
+
+datetime GetTradingDayStart(datetime t)
+{
+   datetime ny = ToNYTime(t);
+   MqlDateTime dt;
+   TimeToStruct(ny, dt);
+   dt.hour = 0;
+   dt.min = 0;
+   dt.sec = 0;
+   datetime nyStart = StructToTime(dt);
+   int nyOffset = cfg_InpUseManualNYOffset ? (EffectiveNYOffsetHours() * 3600) : (-5 * 3600);
+   return nyStart - nyOffset;
+}
+
+int GetTradingDayId(datetime t)
 {
    MqlDateTime dt;
-   TimeToStruct(ToNYTime(serverTime), dt);
+   TimeToStruct(ToNYTime(t), dt);
    return dt.year * 10000 + dt.mon * 100 + dt.day;
+}
+
+int NYDayId(datetime serverTime)
+{
+   return GetTradingDayId(serverTime);
 }
 
 void GetPDLevels(double &pdh, double &pdl)
@@ -2195,12 +2228,11 @@ bool CooldownActive()
 void UpdateDailyReset()
 {
    datetime now = TimeCurrent();
-   datetime todayStart = (datetime)StringToTime(TimeToString(now, TIME_DATE));
+   datetime todayStart = GetTradingDayStart(now);
 
-   datetime stored = (datetime)GVGetDouble("dayStart", 0.0);
-   datetime storedStart = (stored == 0) ? 0 : (datetime)StringToTime(TimeToString(stored, TIME_DATE));
+   datetime storedStart = (datetime)GVGetDouble("dayStart", 0.0);
 
-   if(stored == 0 || storedStart != todayStart)
+   if(storedStart == 0 || storedStart != todayStart)
    {
       GVSetDouble("dayStart", (double)todayStart);
 
@@ -2212,6 +2244,57 @@ void UpdateDailyReset()
       GVSetInt("tp1done", 0);
       GVSetInt("addCount", 0);
    }
+}
+
+
+string AppendReason(string base, string add)
+{
+   if(StringLen(add) == 0)
+      return base;
+   if(StringLen(base) == 0)
+      return add;
+   return base + "|" + add;
+}
+
+string ExplainSkipMask(int mask)
+{
+   if(mask == SKIP_NONE)
+      return "NONE";
+   string out = "";
+   if((mask & SKIP_SESSION) != 0) out = AppendReason(out, "SESSION");
+   if((mask & SKIP_ROLLOVER) != 0) out = AppendReason(out, "ROLLOVER");
+   if((mask & SKIP_SPREAD) != 0) out = AppendReason(out, "SPREAD");
+   if((mask & SKIP_SPREAD_MULT) != 0) out = AppendReason(out, "SPREAD_MULT");
+   if((mask & SKIP_SPREAD_INSTAB) != 0) out = AppendReason(out, "SPREAD_INSTAB");
+   if((mask & SKIP_LOWVOL) != 0) out = AppendReason(out, "LOWVOL");
+   if((mask & SKIP_DAILY_LOCK) != 0) out = AppendReason(out, "DAILY_LOCK");
+   if((mask & SKIP_COOLDOWN) != 0) out = AppendReason(out, "COOLDOWN");
+   if((mask & SKIP_LOSS_BLOCK) != 0) out = AppendReason(out, "LOSS_BLOCK");
+   if((mask & SKIP_DAILY_MAX) != 0) out = AppendReason(out, "DAILY_MAX");
+   if((mask & SKIP_DAILY_SCORE) != 0) out = AppendReason(out, "DAILY_SCORE");
+   if((mask & SKIP_STOPS) != 0) out = AppendReason(out, "STOPS");
+   if((mask & SKIP_KILLZONE) != 0) out = AppendReason(out, "KILLZONE");
+   if((mask & SKIP_PDARRAY) != 0) out = AppendReason(out, "PDARRAY");
+   return out;
+}
+
+string ExplainEntryMask(int mask)
+{
+   if(mask == ENTRY_NONE)
+      return "NONE";
+   string out = "";
+   if((mask & ENTRY_BIAS) != 0) out = AppendReason(out, "BIAS");
+   if((mask & ENTRY_PIVOT) != 0) out = AppendReason(out, "PIVOT");
+   if((mask & ENTRY_HL_LH) != 0) out = AppendReason(out, "HL_LH");
+   if((mask & ENTRY_BOS_CLOSE) != 0) out = AppendReason(out, "BOS_CLOSE");
+   if((mask & ENTRY_BOS_RETEST) != 0) out = AppendReason(out, "BOS_RETEST");
+   if((mask & ENTRY_KILLZONE) != 0) out = AppendReason(out, "KILLZONE");
+   if((mask & ENTRY_SWEEP) != 0) out = AppendReason(out, "SWEEP");
+   if((mask & ENTRY_DISPLACEMENT) != 0) out = AppendReason(out, "DISPLACEMENT");
+   if((mask & ENTRY_MSS) != 0) out = AppendReason(out, "MSS");
+   if((mask & ENTRY_PDARRAY) != 0) out = AppendReason(out, "PDARRAY");
+   if((mask & ENTRY_RR) != 0) out = AppendReason(out, "RR");
+   return out;
 }
 
 void BuildContext(MarketContext &ctx)
@@ -2558,7 +2641,7 @@ void ApplyPreset()
    cfg_InpUseSessionFilter = InpUseSessionFilter;
    cfg_InpStartHour = InpStartHour;
    cfg_InpEndHour = InpEndHour;
-   cfg_InpMaxSpreadPoints = InpMaxSpreadPoints;
+   cfg_InpMaxSpreadPoints = (InpMaxSpreadPoints > 0 ? InpMaxSpreadPoints : MaxSpreadPoints);
    cfg_InpMaxSlippagePoints = InpMaxSlippagePoints;
    cfg_InpMaxRetries = InpMaxRetries;
    cfg_InpRetryDelayMs = InpRetryDelayMs;
@@ -2886,6 +2969,10 @@ void LogPresetConfig()
                (cfg_InpPyramidOnlyInTrend ? "true" : "false"), (cfg_InpPyramidRequireAdxRising ? "true" : "false"),
                (cfg_InpPyramidUsePeakDDCap ? "true" : "false"), cfg_InpPyramidMaxPeakDDPct,
                cfg_InpAddRiskMult1, cfg_InpAddRiskMult2);
+
+   double irBasePct = RiskInputToPercent(InpRiskBasePct);
+   if(irBasePct > 50.0 || irBasePct < 0.01)
+      PrintFormat("Warning: Institutional base risk out of sane range (%.4f%%).", irBasePct);
 }
 
 void LogSymbolCheck()
@@ -2944,14 +3031,23 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
       handle = FileOpen(cfg_InpCSVName, FILE_WRITE | FILE_CSV | FILE_ANSI);
 
    if(handle == INVALID_HANDLE)
+   {
+      if(!g_csvOpenWarned)
+      {
+         Print("Warning: CSV log file open failed; continuing without CSV logging.");
+         g_csvOpenWarned = true;
+      }
       return;
+   }
+
+   g_csvOpenWarned = false;
 
    if(FileSize(handle) == 0)
    {
       FileWrite(handle, "time", "sym", "profile", "point", "pipSize", "tickSize", "magic", "event", "dir", "entry", "sl", "tp", "tp1", "lot", "spreadPts",
                 "reg", "bias", "adx", "atrM15", "atrH1", "dailyScore", "lossStreak", "skipMask", "entryMask",
                 "setup", "timing", "total", "retcode", "lasterr", "spreadEma", "spreadNow",
-                "stopsLevelPts", "freezeLevelPts", "bosLevel", "bosAgeBars", "nearestKey", "tp1Price",
+                "stopsLevelPts", "freezeLevelPts", "bosLevel", "bosAgeBars", "nearestKey", "tp1Target", "tp1FillPrice",
                 "killzoneActive", "pdh", "pdl", "psh", "psl", "hod", "lod",
                 "sweepDir", "sweepLevel", "displacementScore", "obHigh", "obLow", "obMT", "oteOk",
                 "sdHit", "sdType", "sdDistATR", "sdFresh", "candleHit", "candleType",
@@ -3010,6 +3106,7 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              bosAgeBars,
              DoubleToString(nearestKey, g_digits),
              DoubleToString(tp1, g_digits),
+             DoubleToString(GVGetDouble("tp1FillPrice", 0.0), g_digits),
              killzoneActive,
              DoubleToString(pdh, g_digits),
              DoubleToString(pdl, g_digits),
@@ -3453,7 +3550,7 @@ void ManagePosition(double riskR)
       {
          trade.PositionClosePartial(ticket, closeVol);
          GVSetInt("tp1done", 1);
-         GVSetDouble("tp1price", price);
+         GVSetDouble("tp1FillPrice", price);
          double bosLevel = 0.0;
          int bosAgeBars = BOSAgeBars(bosLevel);
          LogCSV("TP1", (type == POSITION_TYPE_BUY ? DIR_LONG : DIR_SHORT), entry, sl, tp, tp1price, volume, 0, 0, 0, 0, 0, 0,
@@ -3671,6 +3768,7 @@ void OnTick()
       skipMask |= SKIP_LOSS_BLOCK;
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
+      PrintFormat("[SKIP] %s", ExplainSkipMask(skipMask));
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
@@ -3680,6 +3778,7 @@ void OnTick()
    {
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
+      PrintFormat("[SKIP] %s", ExplainSkipMask(skipMask));
       LogCSV("SKIP", DIR_NONE, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, skipMask, 0,
              0, 0, bosLevel, bosAgeBars, 0.0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
              0, 0.0, 0.0, 0.0, 0.0, 0.0, 0);
@@ -3748,6 +3847,7 @@ void OnTick()
                       sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
                       sdHit, sdType, sdDistATR, sdFresh, candleHit, candleType, momHit, rsi1, rsi2))
    {
+      PrintFormat("[NOENTRY] skip=%s entry=%s", ExplainSkipMask(skipMask), ExplainEntryMask(entryMask));
       LogCSVEx("NOENTRY", DIR_NONE, 0.0, 0.0, 0.0, tp1, 0.0, dailyScore, setupScore, timingScore, totalScore, skipMask, entryMask,
                0, 0, bosLevel, bosAgeBars, nearestKey, killzoneActive, pdh, pdl, psh, psl, hod, lod,
                sweepDir, sweepLevel, displacementScore, obHigh, obLow, obMT, oteOk,
@@ -3815,6 +3915,7 @@ void OnTick()
       GVSetDouble("origRisk", riskR);
       GVSetInt("tp1done", 0);
       GVSetDouble("tp1price", tp1);
+      GVSetDouble("tp1FillPrice", 0.0);
       GVSetInt("addCount", 0);
       GVSetDouble("lastAddPrice", entry);
       if(InpUseReactionProbabilityModel)
@@ -4789,7 +4890,7 @@ void IR_ResetTelemetry()
 {
    g_irEntryScore = 0;
    g_irTier = "NA";
-   g_irRiskBasePct = InpRiskBasePct;
+   g_irRiskBasePct = RiskInputToPercent(InpRiskBasePct);
    g_irScoreMult = 0.0;
    g_irRegimeMult = 0.0;
    g_irFearMult = 0.0;
@@ -4905,10 +5006,22 @@ double IR_GetFearMultiplier(int lossStreak, double dailyDrawdownPct, bool &block
    return mult;
 }
 
+double RiskInputToPercent(double v)
+{
+   // Backward compatible: values <= 1.0 are treated as fraction (0.005 => 0.5%).
+   if(v <= 0.0)
+      return 0.0;
+   if(v <= 1.0)
+      return v * 100.0;
+   return v;
+}
+
 double IR_ClampRiskPct(double riskPct)
 {
-   double lo = MathMin(InpRiskMinPct, InpRiskMaxPct);
-   double hi = MathMax(InpRiskMinPct, InpRiskMaxPct);
+   double minPct = RiskInputToPercent(InpRiskMinPct);
+   double maxPct = RiskInputToPercent(InpRiskMaxPct);
+   double lo = MathMin(minPct, maxPct);
+   double hi = MathMax(minPct, maxPct);
    return MathMax(lo, MathMin(hi, riskPct));
 }
 
@@ -4934,7 +5047,7 @@ double IR_CalcLotsFromRiskPct(double entryPrice, double stopPrice, double riskPc
       return 0.0;
 
    double equity = AccountInfoDouble(ACCOUNT_EQUITY);
-   riskMoneyOut = equity * riskPct;
+   riskMoneyOut = equity * (riskPct / 100.0);
    if(riskMoneyOut <= 0.0)
       return 0.0;
 
@@ -4984,10 +5097,10 @@ bool IR_ComputeLots(TradeDir dir, double entryPrice, double &stopPrice, int entr
       return false;
    }
 
-   double riskPctRaw = InpRiskBasePct * g_irScoreMult * g_irRegimeMult * g_irFearMult;
+   double riskPctRaw = RiskInputToPercent(InpRiskBasePct) * g_irScoreMult * g_irRegimeMult * g_irFearMult;
    if(UseInstitutionalScore)
       riskPctRaw *= MathMax(0.0, g_instRiskMult);
-   g_irRiskBasePct = InpRiskBasePct;
+   g_irRiskBasePct = RiskInputToPercent(InpRiskBasePct);
    g_irFinalRiskPct = IR_ClampRiskPct(riskPctRaw);
 
    lotsOut = IR_CalcLotsFromRiskPct(entryPrice, stopPrice, g_irFinalRiskPct, g_irRiskMoney, g_irStopDistancePoints);
