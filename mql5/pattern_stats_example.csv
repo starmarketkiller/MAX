@@ -1,0 +1,15 @@
+pattern_id;family;direction;rank;failure_rate;target_hit_pct;avg_move;sample_size;notes
+RECT_BOTTOM;CHART;1;23;0.28;0.64;1.70;420;bulkowski_like
+RECT_TOP;CHART;-1;27;0.31;0.61;1.55;390;bulkowski_like
+INSIDE_DAY;CANDLE;0;48;0.46;0.53;0.80;980;neutral
+OUTSIDE_DAY;CANDLE;0;45;0.43;0.56;0.95;760;neutral
+BULL_ENGULF;CANDLE;1;38;0.37;0.59;1.10;1150;bull engulf
+BEAR_ENGULF;CANDLE;-1;40;0.39;0.57;1.05;1090;bear engulf
+HAMMER;CANDLE;1;42;0.41;0.56;1.00;840;pinbar bull
+SHOOTING_STAR;CANDLE;-1;41;0.40;0.56;1.00;800;pinbar bear
+DOUBLE_BOTTOM;CHART;1;21;0.27;0.65;1.85;610;classic reversal
+DOUBLE_TOP;CHART;-1;22;0.29;0.63;1.78;600;classic reversal
+ASC_TRIANGLE;CHART;1;26;0.32;0.60;1.45;510;continuation
+DESC_TRIANGLE;CHART;-1;28;0.34;0.58;1.42;500;continuation
+FLAG;CHART;0;19;0.24;0.68;2.10;720;strong continuation
+PENNANT;CHART;0;24;0.30;0.62;1.65;530;continuation

@@ -22,6 +22,7 @@
 #include <GROK/PatternScores.mqh>
 #include "Strategy_RSIEngulfTouch.mqh"
 #include <GROK/LicenseClient.mqh>
+#include <GROK/PatternEngine.mqh>
 
 CTrade trade;
 
@@ -128,6 +129,23 @@ input int MaxSpreadPoints = 30; // DEPRECATED: use InpMaxSpreadPoints
 input bool UseInstitutionalScore = true;
 input int InstitutionalMinScore = 60;
 input bool LogInstitutional = true;
+
+input bool   UsePatternEngine = true;
+input bool   UsePatternPriors = true;
+input bool   UseBustedLogic = true;
+input string PatternCSVFileName = "pattern_stats.csv";
+input ENUM_TIMEFRAMES InpPatternTF = PERIOD_M15;
+input int    InpPatternLookback = 120;
+input int    InpPatternPivotLR = 2;
+input double InpPatternWeight = 1.20;
+input double InpPatternQualityWeight = 8.0;
+input double InpPattern_kRank = 0.20;
+input double InpPattern_kFail = 18.0;
+input double InpPattern_kTarget = 18.0;
+input double InpPattern_kMove = 14.0;
+input double InpPatternSL_ATR_Buffer = 0.15;
+input int    InpBustedBars = 6;
+input double InpBustedMinATR = 0.30;
 
 input string InpLicenseKey="";
 input string InpLicenseApiBase="https://api.example.com";
@@ -359,6 +377,22 @@ int g_instTotalScore = 0;
 double g_instRiskMult = 1.0;
 int g_instPatternScore = 0;
 EPattern50 g_instPattern = PAT_DOJI;
+
+PatternStats g_patternStats[];
+bool g_patternStatsLoaded = false;
+datetime g_patternCacheBar = 0;
+PatternSignal g_patternSignal;
+double g_patternPriorScore = 50.0;
+double g_patternFinalScore = 0.0;
+double g_patternScoreDelta = 0.0;
+double g_patternOutcomePips = 0.0;
+double g_patternMaxFavorPips = 0.0;
+double g_patternMaxAdversePips = 0.0;
+
+void PatternEngine_Init();
+void PatternEngine_Update();
+double PatternEngine_ComputePrior(const PatternSignal &sig);
+void PatternEngine_UpdateMfeMae();
 
 
 void SMCZ3C_Update();
@@ -3054,7 +3088,9 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
                 "momHit", "rsi1", "rsi2",
                 "irEntryScore", "irTier", "irRiskBasePct", "irScoreMult", "irRegimeMult", "irFearMult", "irFinalRiskPct",
                 "irRiskMoney", "irStopDistancePoints", "irLots", "irSpreadPoints", "irAtrRatio", "irLossStreak", "irDailyDD",
-                "instPattern", "instPatternScore", "instTotalScore", "instRiskMult");
+                "instPattern", "instPatternScore", "instTotalScore", "instRiskMult",
+                "pePatternId", "peDir", "peEntry", "peSL", "peTP1", "pePrior", "peFinalScore", "peDelta",
+                "peOutcomePips", "peMaxFavor", "peMaxAdverse");
    }
 
    int lossStreak = GVGetInt("lossStreak", 0);
@@ -3147,7 +3183,18 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              GetPatternName(g_instPattern),
              g_instPatternScore,
              g_instTotalScore,
-             DoubleToString(g_instRiskMult, 2));
+             DoubleToString(g_instRiskMult, 2),
+             (g_patternSignal.detected ? g_patternSignal.pattern_id : "NONE"),
+             (g_patternSignal.detected ? g_patternSignal.direction : 0),
+             DoubleToString(g_patternSignal.entry_level, g_digits),
+             DoubleToString(g_patternSignal.invalidation_level, g_digits),
+             DoubleToString(g_patternSignal.target_level, g_digits),
+             DoubleToString(g_patternPriorScore, 2),
+             DoubleToString(g_patternFinalScore, 2),
+             DoubleToString(g_patternScoreDelta, 2),
+             DoubleToString(g_patternOutcomePips, 2),
+             DoubleToString(g_patternMaxFavorPips, 2),
+             DoubleToString(g_patternMaxAdversePips, 2));
 
    FileClose(handle);
 }
@@ -3531,6 +3578,26 @@ void ManagePosition(double riskR)
       return;
    double profitR = (type == POSITION_TYPE_BUY) ? (price - entry) / riskR : (entry - price) / riskR;
 
+   PatternEngine_UpdateMfeMae();
+
+   if(UseBustedLogic)
+   {
+      datetime et = (datetime)GVGetDouble("lastEntryTime", 0.0);
+      int barsFromEntry = (et > 0 ? iBarShift(g_symbol, PERIOD_M15, et, true) : 9999);
+      double breakoutLevel = GVGetDouble("pattern_breakout_level", 0.0);
+      double atrNow = ATR(PERIOD_M15, 1);
+      bool weakMove = (MathAbs(price - entry) < atrNow * InpBustedMinATR);
+      bool busted = false;
+      if(type == POSITION_TYPE_BUY && breakoutLevel > 0.0) busted = (price < breakoutLevel);
+      if(type == POSITION_TYPE_SELL && breakoutLevel > 0.0) busted = (price > breakoutLevel);
+      if(busted && weakMove && barsFromEntry <= InpBustedBars)
+      {
+         trade.PositionClose(ticket);
+         Print("[PatternEngine] BUSTED close executed.");
+         return;
+      }
+   }
+
    bool tp1done = GVGetInt("tp1done", 0) == 1;
    double tp1price = GVGetDouble("tp1price", 0.0);
 
@@ -3667,6 +3734,73 @@ void TryPyramiding(double riskR, bool pyramidAllowed, RegimeState regime)
    }
 }
 
+
+void PatternEngine_Init()
+{
+   ArrayResize(g_patternStats, 0);
+   g_patternStatsLoaded = PE_LoadPatternStatsCSV(PatternCSVFileName, g_patternStats);
+   if(!g_patternStatsLoaded)
+      Print("[PatternEngine] stats CSV not found, using neutral priors: ", PatternCSVFileName);
+   g_patternSignal.detected = false;
+   g_patternCacheBar = 0;
+   g_patternPriorScore = 50.0;
+   g_patternFinalScore = 0.0;
+   g_patternScoreDelta = 0.0;
+}
+
+double PatternEngine_ComputePrior(const PatternSignal &sig)
+{
+   if(!sig.detected || !UsePatternPriors)
+      return 50.0;
+   PatternStats st;
+   if(g_patternStatsLoaded)
+      st = PE_GetStatsById(g_patternStats, sig.pattern_id, sig.direction);
+   else
+      PE_DefaultStats(st, sig.pattern_id, sig.family, sig.direction);
+
+   return PE_PatternPriorScore(st, InpPattern_kRank, InpPattern_kFail, InpPattern_kTarget, InpPattern_kMove);
+}
+
+void PatternEngine_Update()
+{
+   if(!UsePatternEngine)
+   {
+      g_patternSignal.detected = false;
+      g_patternPriorScore = 50.0;
+      return;
+   }
+   datetime barTime = iTime(g_symbol, InpPatternTF, 1);
+   if(barTime == 0 || barTime == g_patternCacheBar)
+      return;
+
+   g_patternCacheBar = barTime;
+   double atr = ATR(InpPatternTF, 1);
+   if(atr <= 0.0)
+      atr = ATR(PERIOD_M15, 1);
+   g_patternSignal = PE_DetectBestPattern(g_symbol, InpPatternTF, InpPatternLookback, InpPatternPivotLR, g_point, atr);
+   g_patternPriorScore = PatternEngine_ComputePrior(g_patternSignal);
+   if(g_patternSignal.detected)
+   {
+      PrintFormat("[PatternEngine] id=%s dir=%d prior=%.1f q=%.2f entry=%.3f inv=%.3f tp=%.3f",
+                  g_patternSignal.pattern_id, g_patternSignal.direction, g_patternPriorScore, g_patternSignal.quality,
+                  g_patternSignal.entry_level, g_patternSignal.invalidation_level, g_patternSignal.target_level);
+   }
+}
+
+void PatternEngine_UpdateMfeMae()
+{
+   if(!SelectOurPosition())
+      return;
+   int type = (int)PositionGetInteger(POSITION_TYPE);
+   double entry = PositionGetDouble(POSITION_PRICE_OPEN);
+   double px = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_symbol, SYMBOL_BID) : SymbolInfoDouble(g_symbol, SYMBOL_ASK);
+   double pipsNow = (type == POSITION_TYPE_BUY ? (px - entry) : (entry - px)) / MathMax(g_pip, g_point);
+   double mfe = GVGetDouble("pattern_mfe", 0.0);
+   double mae = GVGetDouble("pattern_mae", 0.0);
+   if(pipsNow > mfe) GVSetDouble("pattern_mfe", pipsNow);
+   if(pipsNow < mae) GVSetDouble("pattern_mae", pipsNow);
+}
+
 int OnInit()
 {
    g_symbol = ResolveSymbol();
@@ -3676,6 +3810,7 @@ int OnInit()
    g_profile = DetectSymbolProfile(g_symbol);
 
    ApplyPreset();
+   PatternEngine_Init();
 
    trade.SetExpertMagicNumber((uint)cfg_InpMagic);
    trade.SetDeviationInPoints(cfg_InpMaxSlippagePoints);
@@ -3733,6 +3868,7 @@ void OnTick()
       g_rsiEngulfTouch.OnTick();
 
    UpdateDailyReset();
+   PatternEngine_Update();
 
    if(IsNewBar(PERIOD_H1, g_lastH1Bar))
       UpdateSpreadEMA();
@@ -3856,6 +3992,19 @@ void OnTick()
    }
 
    int entryScore = totalScore;
+   g_patternScoreDelta = 0.0;
+   g_patternFinalScore = entryScore;
+   if(UsePatternEngine && g_patternSignal.detected)
+   {
+      double prior = (UsePatternPriors ? g_patternPriorScore : 50.0);
+      double qualityPts = InpPatternQualityWeight * g_patternSignal.quality;
+      g_patternScoreDelta = InpPatternWeight * (prior - 50.0) / 10.0 + qualityPts;
+      if(g_patternSignal.direction != 0 && g_patternSignal.direction != (int)dir)
+         g_patternScoreDelta -= 6.0;
+      g_patternFinalScore = entryScore + g_patternScoreDelta;
+      entryScore = (int)MathRound(g_patternFinalScore);
+   }
+
    if(entryScore < InpEntryThreshold)
       return;
 
@@ -3866,6 +4015,24 @@ void OnTick()
    {
       Print("[RPModel] SKIP dir=", (int)dir, " score=", rpScore, " reason=", rpReason);
       return;
+   }
+
+   if(UsePatternEngine && g_patternSignal.detected && g_patternSignal.direction == (int)dir)
+   {
+      double atrPat = ATR(PERIOD_M15, 1);
+      double slBuf = atrPat * InpPatternSL_ATR_Buffer + PriceFromPoints(InpInvalidationBufferPoints);
+      if(dir == DIR_LONG)
+      {
+         double patSL = NormalizePrice(g_patternSignal.invalidation_level - slBuf);
+         if(patSL > 0.0) sl = (sl > 0.0 ? MathMax(sl, patSL) : patSL);
+         if(g_patternSignal.target_level > entry) tp1 = NormalizePrice(g_patternSignal.target_level);
+      }
+      else if(dir == DIR_SHORT)
+      {
+         double patSL = NormalizePrice(g_patternSignal.invalidation_level + slBuf);
+         if(patSL > 0.0) sl = (sl > 0.0 ? MathMin(sl, patSL) : patSL);
+         if(g_patternSignal.target_level < entry) tp1 = NormalizePrice(g_patternSignal.target_level);
+      }
    }
 
    g_instTotalScore = 0;
@@ -3912,10 +4079,15 @@ void OnTick()
    {
       GVSetInt("dayTrades", dayTrades + 1);
       GVSetDouble("lastEntryTime", (double)iTime(g_symbol, PERIOD_M15, 0));
+      GVSetDouble("lastEntryPrice", entry);
+      GVSetInt("lastDir", (int)dir);
       GVSetDouble("origRisk", riskR);
       GVSetInt("tp1done", 0);
       GVSetDouble("tp1price", tp1);
       GVSetDouble("tp1FillPrice", 0.0);
+      GVSetDouble("pattern_breakout_level", (UsePatternEngine && g_patternSignal.detected ? g_patternSignal.entry_level : entry));
+      GVSetDouble("pattern_mfe", 0.0);
+      GVSetDouble("pattern_mae", 0.0);
       GVSetInt("addCount", 0);
       GVSetDouble("lastAddPrice", entry);
       if(InpUseReactionProbabilityModel)
@@ -3954,6 +4126,15 @@ void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest 
          lossStreak = 0;
       GVSetInt("lossStreak", lossStreak);
       UpdateLossBlock(lossStreak);
+
+      double entryPx = GVGetDouble("lastEntryPrice", 0.0);
+      int lastDir = GVGetInt("lastDir", 0);
+      if(entryPx > 0.0 && lastDir != 0)
+         g_patternOutcomePips = ((lastDir > 0 ? (trans.price - entryPx) : (entryPx - trans.price)) / MathMax(g_pip, g_point));
+      else
+         g_patternOutcomePips = 0.0;
+      g_patternMaxFavorPips = GVGetDouble("pattern_mfe", 0.0);
+      g_patternMaxAdversePips = GVGetDouble("pattern_mae", 0.0);
 
       double bosLevel = 0.0;
       int bosAgeBars = BOSAgeBars(bosLevel);
