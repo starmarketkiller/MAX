@@ -23,6 +23,9 @@
 #include "Strategy_RSIEngulfTouch.mqh"
 #include <GROK/LicenseClient.mqh>
 #include <GROK/PatternEngine.mqh>
+#include <GROK/Core/Config.mqh>
+#include <GROK/Core/Utils.mqh>
+#include <GROK/Stats/ProbabilityEngine.mqh>
 
 CTrade trade;
 
@@ -146,6 +149,8 @@ input double InpPattern_kMove = 14.0;
 input double InpPatternSL_ATR_Buffer = 0.15;
 input int    InpBustedBars = 6;
 input double InpBustedMinATR = 0.30;
+
+input bool   InpRunSelfTestOnInit = true;
 
 input string InpLicenseKey="";
 input string InpLicenseApiBase="https://api.example.com";
@@ -388,6 +393,11 @@ double g_patternScoreDelta = 0.0;
 double g_patternOutcomePips = 0.0;
 double g_patternMaxFavorPips = 0.0;
 double g_patternMaxAdversePips = 0.0;
+
+PatternContextFeatures g_patternCtx;
+string g_patternBreakdown = "";
+
+bool SelfTest();
 
 void PatternEngine_Init();
 void PatternEngine_Update();
@@ -3090,7 +3100,7 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
                 "irRiskMoney", "irStopDistancePoints", "irLots", "irSpreadPoints", "irAtrRatio", "irLossStreak", "irDailyDD",
                 "instPattern", "instPatternScore", "instTotalScore", "instRiskMult",
                 "pePatternId", "peDir", "peEntry", "peSL", "peTP1", "pePrior", "peFinalScore", "peDelta",
-                "peOutcomePips", "peMaxFavor", "peMaxAdverse");
+                "peOutcomePips", "peMaxFavor", "peMaxAdverse", "peBreakdown");
    }
 
    int lossStreak = GVGetInt("lossStreak", 0);
@@ -3194,7 +3204,8 @@ void LogCSVEx(const string event, TradeDir dir, double entry, double sl, double 
              DoubleToString(g_patternScoreDelta, 2),
              DoubleToString(g_patternOutcomePips, 2),
              DoubleToString(g_patternMaxFavorPips, 2),
-             DoubleToString(g_patternMaxAdversePips, 2));
+             DoubleToString(g_patternMaxAdversePips, 2),
+             g_patternBreakdown);
 
    FileClose(handle);
 }
@@ -3779,11 +3790,32 @@ void PatternEngine_Update()
       atr = ATR(PERIOD_M15, 1);
    g_patternSignal = PE_DetectBestPattern(g_symbol, InpPatternTF, InpPatternLookback, InpPatternPivotLR, g_point, atr);
    g_patternPriorScore = PatternEngine_ComputePrior(g_patternSignal);
+
+   ZeroMemory(g_patternCtx);
+   double dayOpen = iOpen(g_symbol, PERIOD_D1, 0);
+   double prevClose = iClose(g_symbol, PERIOD_D1, 1);
+   g_patternCtx.breakoutGap = (MathAbs(dayOpen - prevClose) > atr * 0.10);
+   long v1 = iVolume(g_symbol, InpPatternTF, 1);
+   double vma = 0.0; int vn = 0;
+   for(int i=2;i<=31;i++){ long vi=iVolume(g_symbol, InpPatternTF, i); if(vi>0){ vma += (double)vi; vn++; } }
+   if(vn>0) vma /= vn;
+   g_patternCtx.breakoutVolHigh = (vma > 0.0 && (double)v1 > vma * 1.2);
+   double span = (g_patternSignal.detected ? MathAbs(g_patternSignal.entry_level - g_patternSignal.invalidation_level) : 0.0);
+   g_patternCtx.patternTall = (span > atr * 1.2);
+   g_patternCtx.patternWide = (InpPatternLookback >= 80);
+   double c1 = iClose(g_symbol, InpPatternTF, 1);
+   g_patternCtx.throwbackRisk = (g_patternSignal.detected && g_patternSignal.direction > 0 && c1 < g_patternSignal.entry_level);
+   g_patternCtx.pullbackRisk = (g_patternSignal.detected && g_patternSignal.direction < 0 && c1 > g_patternSignal.entry_level);
+
+   double ctxAdj = PE_ContextAdjustment(g_patternCtx);
+   g_patternPriorScore = MathMax(0.0, MathMin(100.0, g_patternPriorScore + ctxAdj));
+   g_patternBreakdown = StringFormat("gap=%d vol=%d tall=%d wide=%d throwback=%d pullback=%d adj=%.1f", (int)g_patternCtx.breakoutGap, (int)g_patternCtx.breakoutVolHigh, (int)g_patternCtx.patternTall, (int)g_patternCtx.patternWide, (int)g_patternCtx.throwbackRisk, (int)g_patternCtx.pullbackRisk, ctxAdj);
+
    if(g_patternSignal.detected)
    {
-      PrintFormat("[PatternEngine] id=%s dir=%d prior=%.1f q=%.2f entry=%.3f inv=%.3f tp=%.3f",
+      PrintFormat("[PatternEngine] id=%s dir=%d prior=%.1f q=%.2f entry=%.3f inv=%.3f tp=%.3f %s",
                   g_patternSignal.pattern_id, g_patternSignal.direction, g_patternPriorScore, g_patternSignal.quality,
-                  g_patternSignal.entry_level, g_patternSignal.invalidation_level, g_patternSignal.target_level);
+                  g_patternSignal.entry_level, g_patternSignal.invalidation_level, g_patternSignal.target_level, g_patternBreakdown);
    }
 }
 
@@ -3811,6 +3843,7 @@ int OnInit()
 
    ApplyPreset();
    PatternEngine_Init();
+   if(InpRunSelfTestOnInit) SelfTest();
 
    trade.SetExpertMagicNumber((uint)cfg_InpMagic);
    trade.SetDeviationInPoints(cfg_InpMaxSlippagePoints);
@@ -4055,11 +4088,14 @@ void OnTick()
    string irTier = "NA";
    string irReason = "";
    double lots = 0.0;
+   double scoreRiskScale = Prob_ToRiskScale(entryScore);
    if(!IR_ComputeLots(dir, entry, sl, entryScore, lots, irTier, irReason))
    {
       Print("[IREngine] SKIP reason=", irReason, " entryScore=", entryScore);
       return;
    }
+
+   lots = NormalizeVolumeByStep(lots * scoreRiskScale);
 
    if(!StopsOk(dir, entry, sl, tp))
    {

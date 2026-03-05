@@ -14,6 +14,29 @@ struct PatternStats
    string notes;
 };
 
+
+struct PatternContextFeatures
+{
+   bool breakoutGap;
+   bool breakoutVolHigh;
+   bool throwbackRisk;
+   bool pullbackRisk;
+   bool patternTall;
+   bool patternWide;
+};
+
+inline double PE_ContextAdjustment(const PatternContextFeatures &f)
+{
+   double adj = 0.0;
+   if(f.breakoutGap) adj += 5.0;
+   if(f.breakoutVolHigh) adj += 4.0;
+   if(f.patternTall) adj += 4.0;
+   if(f.patternWide) adj += 3.0;
+   if(f.throwbackRisk) adj -= 7.0;
+   if(f.pullbackRisk) adj -= 5.0;
+   return adj;
+}
+
 struct PatternSignal
 {
    bool detected;
