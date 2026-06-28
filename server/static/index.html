@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- LOGIN -->
+  <div id="login" class="login-wrap">
+    <form id="loginForm" class="login-card">
+      <div class="logo">NEXUS</div>
+      <div class="logo-sub">Trading Control Center</div>
+      <input id="user" type="text" placeholder="Utente" autocomplete="username" />
+      <input id="pass" type="password" placeholder="Password" autocomplete="current-password" />
+      <button type="submit">Accedi</button>
+      <div id="loginErr" class="err"></div>
+    </form>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <header>
+      <div class="brand">NEXUS <span class="ver">v2.0.13</span></div>
+      <nav id="tabs">
+        <button data-tab="overview" class="active">Panoramica</button>
+        <button data-tab="journal">Journal</button>
+        <button data-tab="strategies">Strategie</button>
+        <button data-tab="chain">Strategy Chain</button>
+        <button data-tab="settings">Settings</button>
+        <button data-tab="bridge">Local Bridge</button>
+      </nav>
+      <div class="head-right">
+        <span id="liveDot" class="dot"></span>
+        <span id="whoami" class="muted"></span>
+        <button id="logout" class="ghost">Esci</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- OVERVIEW -->
+      <section id="tab-overview" class="tab">
+        <div id="eaCards" class="grid"></div>
+        <h3>Posizioni aperte</h3>
+        <div class="table-wrap">
+          <table id="posTable">
+            <thead><tr>
+              <th>Ticket</th><th>Symbol</th><th>Lato</th><th>Lotti</th>
+              <th>Apertura</th><th>Corrente</th><th>SL</th><th>TP</th>
+              <th>P&L</th><th>Strategia</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- JOURNAL -->
+      <section id="tab-journal" class="tab hidden">
+        <div id="journalSummary" class="grid"></div>
+        <div class="table-wrap">
+          <table id="journalTable">
+            <thead><tr>
+              <th>Ticket</th><th>Symbol</th><th>Strategia</th><th>Lato</th>
+              <th>Lotti</th><th>Apertura</th><th>Chiusura</th><th>P&L</th><th>Motivo</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- STRATEGIES -->
+      <section id="tab-strategies" class="tab hidden">
+        <div id="stratWrap"></div>
+      </section>
+
+      <!-- STRATEGY CHAIN -->
+      <section id="tab-chain" class="tab hidden">
+        <h3>Strategy Chain &amp; Smart Continuation</h3>
+        <div class="card">
+          <textarea id="chainJson" spellcheck="false" rows="22"></textarea>
+          <div class="row">
+            <button id="chainSave">Salva configurazione</button>
+            <span id="chainMsg" class="muted"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="tab-settings" class="tab hidden">
+        <h3>Runtime Settings (override live, senza ricompilare)</h3>
+        <div class="card">
+          <div id="settingsForm" class="settings-grid"></div>
+          <div class="row">
+            <button id="settingsSave">Salva settings</button>
+            <span id="settingsMsg" class="muted"></span>
+          </div>
+        </div>
+        <h3>Locked Profiles (per symbol)</h3>
+        <div class="card">
+          <textarea id="lockedJson" spellcheck="false" rows="14"></textarea>
+          <div class="row">
+            <button id="lockedSave">Salva locked profiles</button>
+            <span id="lockedMsg" class="muted"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOCAL BRIDGE -->
+      <section id="tab-bridge" class="tab hidden">
+        <h3>Worker collegati</h3>
+        <div id="bridgeHosts" class="grid"></div>
+        <h3>Invia comando al worker</h3>
+        <div class="card row">
+          <select id="bridgeAction">
+            <option value="ping">ping</option>
+            <option value="compile_ea">compile_ea</option>
+            <option value="restart_mt5">restart_mt5</option>
+            <option value="open_chart">open_chart</option>
+          </select>
+          <input id="bridgeHost" type="text" placeholder="host_id (default)" />
+          <button id="bridgeSend">Invia</button>
+          <span id="bridgeMsg" class="muted"></span>
+        </div>
+        <h3>Storico comandi</h3>
+        <div class="table-wrap">
+          <table id="bridgeCmds">
+            <thead><tr><th>Quando</th><th>Host</th><th>Azione</th><th>Stato</th><th>Errore</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

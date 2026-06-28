@@ -1,0 +1,18 @@
+# secrets / local config
+server/.env
+LocalBridge/nexus_worker.config.json
+
+# database
+*.db
+*.db-wal
+*.db-shm
+server/nexus.db*
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# os
+.DS_Store
