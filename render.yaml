@@ -1,0 +1,32 @@
+# Blueprint Render.com — deploy con un click del backend+dashboard NEXUS.
+# Su https://dashboard.render.com  ->  New  ->  Blueprint  ->  scegli il repo MAX.
+services:
+  - type: web
+    name: nexus-backend
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: starter            # "starter" = sempre acceso. "free" si spegne dopo inattivita'.
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NEXUS_BRIDGE_TOKEN      # token condiviso con EA e worker — impostalo tu
+        sync: false
+      - key: NEXUS_ADMIN_USER
+        value: admin
+      - key: NEXUS_ADMIN_PASSWORD    # password della dashboard — impostala tu
+        sync: false
+      - key: NEXUS_JWT_SECRET        # generato automaticamente da Render
+        generateValue: true
+      - key: NEXUS_DB_PATH
+        value: /data/nexus.db
+      - key: NEXUS_LICENSE_MODE
+        value: open
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+    disk:
+      name: nexus-data             # disco persistente per il database SQLite
+      mountPath: /data
+      sizeGB: 1

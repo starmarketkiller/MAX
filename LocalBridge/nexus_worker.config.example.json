@@ -1,0 +1,10 @@
+{
+  "backend_url":   "http://IL-TUO-PC-O-VPS:8001",
+  "bridge_token":  "NEXUS_BRIDGE_TOKEN_2026",
+  "host_id":       "default",
+  "mt5_path":      "C:/Program Files/MetaTrader 5/terminal64.exe",
+  "metaeditor":    "C:/Program Files/MetaTrader 5/metaeditor64.exe",
+  "mql5_experts":  "C:/Users/TUONOME/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Experts",
+  "mql5_include":  "C:/Users/TUONOME/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Include/NEXUS_v1",
+  "poll_sec":      3
+}

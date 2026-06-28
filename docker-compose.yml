@@ -1,0 +1,14 @@
+services:
+  nexus-backend:
+    build: ./server
+    container_name: nexus-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./server/.env
+    volumes:
+      - nexus-data:/data
+
+volumes:
+  nexus-data:
