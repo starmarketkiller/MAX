@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import jwt
-from fastapi import FastAPI, Request, Header, HTTPException, Depends
+from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -43,6 +43,8 @@ ADMIN_USER     = os.environ.get("NEXUS_ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.environ.get("NEXUS_ADMIN_PASSWORD", "admin")
 JWT_SECRET     = os.environ.get("NEXUS_JWT_SECRET", "change-me-" + secrets.token_hex(8))
 JWT_HOURS      = int(os.environ.get("NEXUS_JWT_HOURS", "720"))
+COOKIE_SECURE  = os.environ.get("NEXUS_COOKIE_SECURE", "true").lower() == "true"
+SESSION_COOKIE = "nexus_session"
 DB_PATH        = os.environ.get("NEXUS_DB_PATH", str(Path(__file__).resolve().parent / "nexus.db"))
 TG_BOT_TOKEN   = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TG_CHAT_ID     = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -269,11 +271,16 @@ def make_jwt(user: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
 
-def require_user(authorization: Optional[str] = Header(None)) -> str:
-    """Auth per la dashboard (JWT Bearer)."""
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="missing bearer token")
-    token = authorization.split(" ", 1)[1].strip()
+def require_user(authorization: Optional[str] = Header(None),
+                 nexus_session: Optional[str] = Cookie(None)) -> str:
+    """Auth dashboard: accetta cookie httpOnly (React) OPPURE Bearer (sito statico)."""
+    token = None
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+    elif nexus_session:
+        token = nexus_session
+    if not token:
+        raise HTTPException(status_code=401, detail="not authenticated")
     try:
         data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         return data["sub"]
@@ -300,20 +307,36 @@ def health():
 
 
 # ======================= DASHBOARD AUTH ==================================== #
+def _user_obj():
+    return {"email": ADMIN_USER, "name": ADMIN_USER, "role": "admin"}
+
+
 @app.post("/api/auth/login")
-async def login(request: Request):
+async def login(request: Request, response: Response):
     body = await request.json()
-    user = (body.get("username") or "").strip()
+    ident = (body.get("email") or body.get("username") or "").strip()
     pw = body.get("password") or ""
-    ok = secrets.compare_digest(user, ADMIN_USER) and secrets.compare_digest(pw, ADMIN_PASSWORD)
+    ok = secrets.compare_digest(ident, ADMIN_USER) and secrets.compare_digest(pw, ADMIN_PASSWORD)
     if not ok:
         raise HTTPException(status_code=401, detail="credenziali non valide")
-    return {"token": make_jwt(user), "user": user}
+    token = make_jwt(ADMIN_USER)
+    # Cookie httpOnly per il frontend React (withCredentials).
+    response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax",
+                        secure=COOKIE_SECURE, max_age=JWT_HOURS * 3600, path="/")
+    # token nel body per retrocompatibilità col sito statico (Bearer).
+    return {"ok": True, "user": _user_obj(), "token": token}
+
+
+@app.post("/api/auth/logout")
+def logout(response: Response):
+    response.delete_cookie(SESSION_COOKIE, path="/")
+    return {"ok": True}
 
 
 @app.get("/api/auth/me")
 def me(user: str = Depends(require_user)):
-    return {"user": user}
+    # auth.jsx fa setUser(data): ritorniamo direttamente l'oggetto utente.
+    return _user_obj()
 
 
 # ======================= EA: PUSH / COMMAND =============================== #
@@ -993,6 +1016,8 @@ async def trade_tag(ticket: int, request: Request, user: str = Depends(require_u
 def license_list(user: str = Depends(require_user)):
     with _conn() as c:
         rows = [dict(r) for r in c.execute("SELECT * FROM licenses ORDER BY key")]
+    for r in rows:
+        r["id"] = r["key"]   # il frontend usa lic.id per PATCH/DELETE
     return {"licenses": rows, "mode": LICENSE_MODE}
 
 
@@ -1266,6 +1291,287 @@ def coach_notifications_read(user: str = Depends(require_user)):
     with _conn() as c:
         c.execute("UPDATE coach_notifications SET read=1 WHERE read=0")
     return {"ok": True}
+
+
+# ============ EXTRA ENDPOINTS richiesti dal frontend React =============== #
+COMMON_SYMBOLS = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
+                  "USDCAD", "NZDUSD", "US30", "NAS100", "SPX500", "GER40",
+                  "BTCUSD", "ETHUSD"]
+STRAT_META = {
+    "ADX_RSI": "Trend+momentum (ADX/RSI)", "BOLLINGER": "Mean reversion bande",
+    "MACD": "Momentum MACD", "SAR": "Parabolic SAR trend", "TSI": "True Strength Index",
+    "BJORGUM": "Bjorgum key zones", "LIQ_SWEEP": "Liquidity sweep", "FVG_CONT": "FVG continuation",
+    "BREAKOUT_ACC": "Breakout acceleration", "LONDON_BO": "London breakout",
+    "EMA_PULLBACK": "EMA pullback", "BB_SQUEEZE": "Bollinger squeeze", "ICHIMOKU": "Ichimoku",
+    "RSI_DIV": "RSI divergence", "ORDER_BLOCK": "Order block", "STRUCT_REACT": "Structure reaction",
+}
+
+
+# ---- EA history ----
+@app.get("/api/ea/history")
+def ea_history(limit: int = 120, user: str = Depends(require_user)):
+    trades = _trades_with_meta(limit)
+    return {"trades": trades, "count": len(trades), "demo": len(trades) == 0}
+
+
+# ---- generic command (React POSTs /command) ----
+@app.post("/api/command")
+async def command_post(request: Request, user: str = Depends(require_user)):
+    data = await request.json()
+    action = data.get("action") or data.get("command")
+    allowed = {"pause", "resume", "close_all", "close_position",
+               "partial_close", "reset_anti_revenge", "reset_daily"}
+    if action not in allowed:
+        raise HTTPException(status_code=400, detail=f"action non valida: {action}")
+    payload = {k: v for k, v in data.items() if k not in ("action", "command")}
+    return {"ok": True, "id": _enqueue_ea_command(action, payload), "action": action}
+
+
+# ---- settings history ----
+@app.get("/api/settings/history")
+def settings_history(limit: int = 50, user: str = Depends(require_user)):
+    return {"history": kv_get("settings_history", []), "demo": not kv_get("settings_history", [])}
+
+
+# ---- analytics extra ----
+@app.get("/api/analytics/calendar")
+def analytics_calendar(days: int = 365, user: str = Depends(require_user)):
+    trades = _trades_with_meta(100000)
+    by_day = {}
+    for t in trades:
+        d = (t.get("closeTime") or "")[:10]
+        if not d:
+            continue
+        g = by_day.setdefault(d, {"date": d, "pnl": 0.0, "trades": 0})
+        g["pnl"] += (t["pnl"] or 0)
+        g["trades"] += 1
+    for g in by_day.values():
+        g["pnl"] = round(g["pnl"], 2)
+    return {"days": sorted(by_day.values(), key=lambda x: x["date"]), "demo": len(trades) == 0}
+
+
+@app.get("/api/analytics/correlation")
+def analytics_correlation(user: str = Depends(require_user)):
+    return {"matrix": [], "symbols": [], "demo": True,
+            "note": "Correlazione non ancora calcolata."}
+
+
+@app.get("/api/analytics/heatmap")
+def analytics_heatmap(user: str = Depends(require_user)):
+    trades = _trades_with_meta(100000)
+    cells = {}
+    for t in trades:
+        ct = t.get("closeTime") or ""
+        hour = ct[11:13] if len(ct) >= 13 else "?"
+        c = cells.setdefault(hour, {"hour": hour, "pnl": 0.0, "trades": 0})
+        c["pnl"] += (t["pnl"] or 0)
+        c["trades"] += 1
+    for c in cells.values():
+        c["pnl"] = round(c["pnl"], 2)
+    return {"by_hour": sorted(cells.values(), key=lambda x: x["hour"]), "demo": len(trades) == 0}
+
+
+@app.get("/api/analytics/shadow")
+def analytics_shadow(limit: int = 200, user: str = Depends(require_user)):
+    with _conn() as c:
+        rows = [json.loads(r["payload"]) for r in c.execute(
+            "SELECT payload FROM shadow_trades ORDER BY created_at DESC LIMIT ?", (limit,))]
+    return {"shadow_trades": rows, "demo": len(rows) == 0}
+
+
+@app.get("/api/analytics/strategy_meta")
+def analytics_strategy_meta(user: str = Depends(require_user)):
+    return {"strategies": [{"name": n, "description": STRAT_META.get(n, "")} for n in STRAT_LIST]}
+
+
+def _all_strategy_stats():
+    with _conn() as c:
+        return [{"symbol": r["symbol"], "updated_at": r["updated_at"], "data": json.loads(r["payload"])}
+                for r in c.execute("SELECT * FROM strategy_stats")]
+
+
+@app.get("/api/analytics/strategy_stats/latest")
+def strat_stats_latest(symbol: str = "", user: str = Depends(require_user)):
+    stats = _all_strategy_stats()
+    if symbol:
+        stats = [s for s in stats if s["symbol"] == symbol]
+    latest = max(stats, key=lambda s: s["updated_at"]) if stats else None
+    return {"latest": latest, "demo": latest is None}
+
+
+@app.get("/api/analytics/strategy_stats/symbols")
+def strat_stats_symbols(user: str = Depends(require_user)):
+    return {"symbols": [s["symbol"] for s in _all_strategy_stats()]}
+
+
+@app.get("/api/analytics/strategy_stats/markdown")
+def strat_stats_markdown(symbol: str = "", user: str = Depends(require_user)):
+    stats = _all_strategy_stats()
+    if symbol:
+        stats = [s for s in stats if s["symbol"] == symbol]
+    lines = ["# Strategy stats", ""]
+    for blk in stats:
+        lines.append(f"## {blk['symbol']}")
+        lines.append("| strategia | called | exec | win | loss | health |")
+        lines.append("|---|---|---|---|---|---|")
+        for r in (blk["data"].get("strategies") or []):
+            lines.append(f"| {r.get('name')} | {r.get('called',0)} | {r.get('executed',0)} | "
+                         f"{r.get('wins',0)} | {r.get('losses',0)} | {r.get('health','')} |")
+        lines.append("")
+    return {"markdown": "\n".join(lines), "demo": not stats}
+
+
+@app.post("/api/analytics/strategy_stats/upload")
+async def strat_stats_upload(request: Request, user: str = Depends(require_user)):
+    data = await request.json()
+    symbol = data.get("symbol", "manual")
+    with _conn() as c:
+        c.execute("INSERT INTO strategy_stats(symbol,payload,updated_at) VALUES(?,?,?) "
+                  "ON CONFLICT(symbol) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at",
+                  (symbol, json.dumps(data), now()))
+    return {"ok": True, "symbol": symbol}
+
+
+# ---- license summary ----
+@app.get("/api/license/summary")
+def license_summary(user: str = Depends(require_user)):
+    with _conn() as c:
+        total = c.execute("SELECT COUNT(*) n FROM licenses").fetchone()["n"]
+        trial = c.execute("SELECT COUNT(*) n FROM licenses WHERE trial=1").fetchone()["n"]
+    return {"total": total, "trial": trial, "active": total - trial, "mode": LICENSE_MODE}
+
+
+# ---- calendar upcoming (alias del calendario) ----
+@app.get("/api/calendar/upcoming")
+def calendar_upcoming(user: str = Depends(require_user)):
+    return calendar(user)
+
+
+# ---- chart OHLC + markers (demo sintetico) ----
+@app.get("/api/chart/ohlc")
+def chart_ohlc(symbol: str = "XAUUSD", tf: str = "M15", limit: int = 300,
+               user: str = Depends(require_user)):
+    import math
+    base = 2350.0 if symbol.startswith("XAU") else 1.10
+    step = base * 0.001
+    candles, price = [], base
+    t0 = int(now()) - limit * 900
+    for i in range(limit):
+        drift = math.sin(i / 9.0) * step * 3 + ((i * 53) % 7 - 3) * step
+        o = price
+        c = price + drift
+        h = max(o, c) + abs(drift) * 0.5
+        low = min(o, c) - abs(drift) * 0.5
+        candles.append({"time": t0 + i * 900, "open": round(o, 3), "high": round(h, 3),
+                        "low": round(low, 3), "close": round(c, 3)})
+        price = c
+    return {"symbol": symbol, "tf": tf, "candles": candles, "demo": True}
+
+
+@app.get("/api/chart/markers")
+def chart_markers(symbol: str = "XAUUSD", user: str = Depends(require_user)):
+    trades = [t for t in _trades_with_meta(200) if t.get("symbol") == symbol]
+    markers = [{"time": t.get("closeTime"), "price": t.get("closePrice"),
+                "side": t.get("side"), "pnl": t.get("pnl"), "ticket": t.get("ticket")}
+               for t in trades if t.get("closePrice")]
+    return {"markers": markers, "demo": len(markers) == 0}
+
+
+# ---- backtest extra ----
+@app.get("/api/backtest/presets")
+def backtest_presets(user: str = Depends(require_user)):
+    return {"presets": ["Conservative", "Balanced", "Aggressive", "Discovery"]}
+
+
+@app.get("/api/backtest/strategies")
+def backtest_strategies(user: str = Depends(require_user)):
+    return {"strategies": STRAT_LIST}
+
+
+@app.get("/api/backtest/symbols")
+def backtest_symbols(user: str = Depends(require_user)):
+    return {"symbols": COMMON_SYMBOLS}
+
+
+@app.post("/api/backtest/locked_profile")
+async def backtest_locked_save(request: Request, user: str = Depends(require_user)):
+    data = await request.json()
+    profiles = kv_get("locked_profiles", {})
+    sym = data.get("symbol", "*")
+    profiles[sym] = data
+    kv_set("locked_profiles", profiles)
+    return {"ok": True, "symbol": sym}
+
+
+@app.get("/api/backtest/optimize/{job_id}")
+def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
+    return {"demo": True, "job_id": job_id, "status": "completed",
+            "best": {"MinScore": 70, "AtrSLMult": 1.2, "pf": 1.83, "net_pnl": 1640}}
+
+
+@app.get("/api/backtest/strategy_library")
+def backtest_library(symbol: str = "", user: str = Depends(require_user)):
+    return {"demo": True, "symbol": symbol,
+            "library": [{"name": n, "pf": round(1.2 + (i % 6) * 0.1, 2), "trades": 40 + i * 3}
+                        for i, n in enumerate(STRAT_LIST)]}
+
+
+@app.get("/api/backtest/strategy_library/{job_id}")
+def backtest_library_job(job_id: str, user: str = Depends(require_user)):
+    return {"demo": True, "job_id": job_id, "status": "completed",
+            "library": [{"name": n, "pf": round(1.2 + (i % 6) * 0.1, 2)} for i, n in enumerate(STRAT_LIST)]}
+
+
+@app.post("/api/backtest/strategy_library/build")
+async def backtest_library_build(request: Request, user: str = Depends(require_user)):
+    return {"ok": True, "demo": True, "job_id": secrets.token_hex(6), "status": "queued"}
+
+
+# ---- coach extra ----
+@app.post("/api/coach/notifications/{nid}/read")
+def coach_notif_read_one(nid: int, user: str = Depends(require_user)):
+    with _conn() as c:
+        c.execute("UPDATE coach_notifications SET read=1 WHERE id=?", (nid,))
+    return {"ok": True, "id": nid}
+
+
+@app.get("/api/coach/daily_brief")
+def coach_daily_brief(user: str = Depends(require_user)):
+    primary, _ = _primary_ea()
+    summ = analytics_summary(user)
+    if primary:
+        brief = (f"EA su {primary.get('symbol')} {'online' if primary.get('_online') else 'offline'}. "
+                 f"Equity {primary.get('equity')}, P&L giorno {primary.get('dailyPnL')}, "
+                 f"drawdown {primary.get('drawdownPct')}%.")
+    else:
+        brief = "Nessun EA collegato. Avvia l'EA per ricevere il brief giornaliero."
+    if not summ.get("demo"):
+        brief += f" Storico: {summ['trades']} trade, win rate {summ['win_rate']}%, PF {summ.get('profit_factor')}."
+    return {"id": None, "brief": brief, "demo": primary is None}
+
+
+@app.get("/api/coach/history")
+def coach_history(user: str = Depends(require_user)):
+    return {"messages": kv_get("coach_history", []), "demo": not kv_get("coach_history", [])}
+
+
+@app.get("/api/coach/quick_insights")
+def coach_quick_insights(user: str = Depends(require_user)):
+    insights = []
+    summ = analytics_summary(user)
+    if not summ.get("demo"):
+        insights.append(f"Profit factor attuale: {summ.get('profit_factor')}.")
+        insights.append(f"Win rate: {summ['win_rate']}% su {summ['trades']} trade.")
+    br = analytics_by_reason(user)
+    worst = min(br["by_reason"], key=lambda r: r["pnl"], default=None)
+    if worst and worst["pnl"] < 0:
+        insights.append(f"Il motivo più costoso è '{worst['reason']}' ({worst['pnl']}).")
+    return {"insights": insights, "demo": not insights}
+
+
+@app.delete("/api/coach/session/{session_id}")
+def coach_session_delete(session_id: str, user: str = Depends(require_user)):
+    return {"ok": True, "deleted": session_id}
 
 
 # ======================= STATIC SITE ===================================== #
