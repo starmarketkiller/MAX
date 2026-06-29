@@ -4,6 +4,13 @@
 #ifndef __NXS_ENTRYSCORE_MQH__
 #define __NXS_ENTRYSCORE_MQH__
 
+// v2.0.14 — pavimento score per-strategia (anti over-trading).
+// Definita qui (incluso prima di NXS_Execution) per garantire l'ordine di compilazione.
+double NXS_StrategyMinScoreFloor(string stratName){
+   if(stratName == "MALAYSIAN_SNR") return InpMalaysianMinScore;
+   return 0.0;
+}
+
 double NXS_FinalScore(SNXSSignal &sig, SNXSAMD &amd, SNXSSweep &sw){
    if(sig.dir == DIR_NONE) return 0;
    double score = sig.score;

@@ -235,6 +235,7 @@ ENUM_NXS_EXEC_RC NXS_TryExecuteRC(SNXSSignal &sig, SNXSAMD &amd, SNXSSweep &sw,
    double finalScore = NXS_FinalScore(sig, amd, sw);
    sig.score = finalScore; finalScoreOut = finalScore;
    double thresh = NXS_DynamicScoreThreshold(NXS_ResolvedEntryThreshold());
+   thresh = MathMax(thresh, NXS_StrategyMinScoreFloor(sig.stratName));  // v2.0.14
    threshOut = thresh;
    if(finalScore < thresh) return EXEC_FAIL_SCORE_BELOW;
 
