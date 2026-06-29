@@ -59,12 +59,8 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 WORKER_FILE = Path(__file__).resolve().parent / "nexus_local_worker.py"
 
 # Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
-STRAT_LIST = [
-    "ADX_RSI", "BOLLINGER", "MACD", "SAR", "TSI", "BJORGUM", "LIQ_SWEEP",
-    "FVG_CONT", "BREAKOUT_ACC", "LONDON_BO", "EMA_PULLBACK", "BB_SQUEEZE",
-    "ICHIMOKU", "RSI_DIV", "ORDER_BLOCK", "STRUCT_REACT", "MALAYSIAN_SNR",
-    "CISD", "SMC_OB", "SMC_FVG", "SMC_BOS", "SMC_CHOCH",
-]
+# Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
+STRAT_LIST = backtest.STRAT_NAMES_36
 
 # Strategy chain default config (replica del CHANGELOG v2.0.13)
 DEFAULT_CHAIN_CONFIG = {
@@ -1343,12 +1339,24 @@ COMMON_SYMBOLS = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
                   "USDCAD", "NZDUSD", "US30", "NAS100", "SPX500", "GER40",
                   "BTCUSD", "ETHUSD"]
 STRAT_META = {
-    "ADX_RSI": "Trend+momentum (ADX/RSI)", "BOLLINGER": "Mean reversion bande",
-    "MACD": "Momentum MACD", "SAR": "Parabolic SAR trend", "TSI": "True Strength Index",
-    "BJORGUM": "Bjorgum key zones", "LIQ_SWEEP": "Liquidity sweep", "FVG_CONT": "FVG continuation",
-    "BREAKOUT_ACC": "Breakout acceleration", "LONDON_BO": "London breakout",
-    "EMA_PULLBACK": "EMA pullback", "BB_SQUEEZE": "Bollinger squeeze", "ICHIMOKU": "Ichimoku",
-    "RSI_DIV": "RSI divergence", "ORDER_BLOCK": "Order block", "STRUCT_REACT": "Structure reaction",
+    "ADX_RSI": "Trend+momentum (ADX/RSI)", "AMD_CONT": "AMD continuation",
+    "AMD_REVERSAL": "AMD reversal (manipulation)", "BB_SQUEEZE": "Bollinger squeeze breakout",
+    "BJORGUM": "Bjorgum key zones", "BOLLINGER": "Mean reversion bande",
+    "BREAKOUT_ACC": "Breakout acceleration", "CISD": "Change in state of delivery (ICT)",
+    "DISP_REBAL": "Displacement + rebalance", "EMA_PULLBACK": "EMA pullback",
+    "FVG_CONT": "Fair Value Gap continuation", "FVG_MIT": "FVG mitigation",
+    "ICHIMOKU": "Ichimoku Kumo break", "IFVG": "Inverted FVG",
+    "JUDAS_SWING": "Judas swing (ICT false move)", "LDN_REVERSAL": "London reversal",
+    "LIQ_SWEEP": "Liquidity sweep", "LIQ_VOID": "Liquidity void",
+    "LONDON_BO": "London breakout", "MACD": "Momentum MACD",
+    "MALAYSIAN_SNR": "Malaysian Support/Resistance", "NY_REVERSAL": "New York reversal",
+    "OB_MIT": "Order block mitigation", "ORDER_BLOCK": "Order block",
+    "OTE_CONT": "Optimal Trade Entry continuation", "PO3": "Power of Three (AMD)",
+    "RANGE_FADE": "Range fade (mean reversion)", "RSI_DIV": "RSI divergence",
+    "SAR": "Parabolic SAR trend", "SH_BMS_RTO": "Stop hunt + BMS + RTO",
+    "SILVER_BULLET": "Silver Bullet (ICT killzone)", "SMS_BMS_RTO": "SMS + BMS + RTO",
+    "STRUCT_REACT": "Structure reaction", "TSI": "True Strength Index",
+    "TURTLE_SOUP": "Turtle soup (false breakout)", "WEEKLY_EXP": "Weekly expansion",
 }
 
 
@@ -1558,9 +1566,89 @@ def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
 
 @app.get("/api/backtest/strategy_library")
 def backtest_library(symbol: str = "", user: str = Depends(require_user)):
+    # Se l'utente ha importato i suoi risultati reali, serviamo quelli.
+    imported = kv_get("strategy_results", [])
+    if imported:
+        lib = imported if not symbol else [r for r in imported if r.get("symbol") in ("", None, symbol)]
+        return {"demo": False, "source": "imported", "symbol": symbol,
+                "library": sorted(lib, key=lambda r: (r.get("sharpe") or 0), reverse=True)}
     return {"demo": True, "symbol": symbol,
             "library": [{"name": n, "pf": round(1.2 + (i % 6) * 0.1, 2), "trades": 40 + i * 3}
                         for i, n in enumerate(STRAT_LIST)]}
+
+
+@app.post("/api/backtest/import_results")
+async def backtest_import_results(request: Request, user: str = Depends(require_user)):
+    """Importa i risultati reali del backtest (36 strategie) come strategy library
+    e, opzionalmente, come locked profiles pronti all'uso per l'EA.
+
+    Body: {
+      "results": [ {"strategy","symbol"?,"sharpe","profit_factor","win_rate",
+                    "max_dd","management","params":{RiskPct,AtrSLMult,AtrTPMult,
+                    MinScore,BreakevenR,TrailingAtrMult,...}}, ... ],
+      "make_locked_profiles": true,
+      "locked_by": "symbol" | "best_overall"
+    }
+    """
+    body = await request.json()
+    results = body.get("results") or (body if isinstance(body, list) else [])
+    if not isinstance(results, list) or not results:
+        raise HTTPException(status_code=400, detail="campo 'results' (lista) mancante")
+
+    # normalizza e salva la library
+    norm = []
+    for r in results:
+        if not isinstance(r, dict) or not r.get("strategy"):
+            continue
+        norm.append({
+            "name": r["strategy"], "strategy": r["strategy"], "symbol": r.get("symbol", ""),
+            "sharpe": r.get("sharpe"), "profit_factor": r.get("profit_factor") or r.get("pf"),
+            "win_rate": r.get("win_rate"), "max_dd": r.get("max_dd") or r.get("max_dd_pct"),
+            "management": r.get("management") or r.get("variant"),
+            "params": r.get("params") or {},
+        })
+    kv_set("strategy_results", norm)
+
+    locked_written = 0
+    if body.get("make_locked_profiles", True):
+        profiles = kv_get("locked_profiles", {})
+        mode = body.get("locked_by", "symbol")
+        # raggruppa: per ogni symbol prendi la strategia col Sharpe migliore
+        best_by_sym = {}
+        for r in norm:
+            sym = r["symbol"] or "*"
+            cur = best_by_sym.get(sym)
+            if not cur or (r.get("sharpe") or -9) > (cur.get("sharpe") or -9):
+                best_by_sym[sym] = r
+        keep = best_by_sym
+        if mode == "best_overall":
+            best = max(norm, key=lambda r: (r.get("sharpe") or -9))
+            keep = {"*": best}
+        for sym, r in keep.items():
+            p = r.get("params") or {}
+            profiles[sym] = {
+                "locked": True,
+                "label": f"{r['strategy']} · {r.get('management') or 'default'}",
+                "saved_at": iso(),
+                "metrics": {"sharpe": r.get("sharpe"), "profit_factor": r.get("profit_factor"),
+                            "win_rate": r.get("win_rate"), "max_dd": r.get("max_dd")},
+                "strategy": r["strategy"], "management": r.get("management"),
+                "params": {
+                    "RiskPct": p.get("RiskPct", p.get("risk_pct")),
+                    "AtrSLMult": p.get("AtrSLMult", p.get("atr_sl")),
+                    "AtrTPMult": p.get("AtrTPMult", p.get("atr_tp")),
+                    "MinScore": p.get("MinScore"), "AdxMin": p.get("AdxMin"),
+                    "HtfBiasRequired": p.get("HtfBiasRequired"),
+                    "SessionLondon": p.get("SessionLondon"), "SessionNY": p.get("SessionNY"),
+                    "SessionAsian": p.get("SessionAsian"), "CooldownBars": p.get("CooldownBars"),
+                    "DailyDDCap": p.get("DailyDDCap"), "BreakevenR": p.get("BreakevenR"),
+                    "TrailingAtrMult": p.get("TrailingAtrMult"), "MaxConcurrent": p.get("MaxConcurrent"),
+                },
+            }
+            locked_written += 1
+        kv_set("locked_profiles", profiles)
+
+    return {"ok": True, "imported": len(norm), "locked_profiles_written": locked_written}
 
 
 @app.get("/api/backtest/strategy_library/{job_id}")
