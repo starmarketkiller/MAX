@@ -1167,7 +1167,9 @@ async def backtest_mtf(request: Request, user: str = Depends(require_user)):
 @app.get("/api/backtest/locked_profile/all")
 def backtest_locked_all(user: str = Depends(require_user)):
     profiles = kv_get("locked_profiles", {})
-    return {"locked_profiles": profiles, "demo": not bool(profiles)}
+    # il frontend si aspetta una lista `profiles` con il campo symbol
+    as_list = [{**v, "symbol": sym} for sym, v in profiles.items()]
+    return {"profiles": as_list, "locked_profiles": profiles, "demo": not bool(profiles)}
 
 
 # ======================= CALENDAR (JWT, demo) ========================== #
@@ -1591,12 +1593,33 @@ def backtest_symbols(user: str = Depends(require_user)):
 
 @app.post("/api/backtest/locked_profile")
 async def backtest_locked_save(request: Request, user: str = Depends(require_user)):
+    """Salva un locked profile (dal pulsante LOCK della Strategy Library).
+    Mappa il base_cfg del frontend nei params che l'EA legge."""
     data = await request.json()
+    sym = data.get("symbol") or "*"
+    cfg = data.get("base_cfg") or {}
+    ovr = data.get("overrides") or {}
+    strat = (cfg.get("strategies") or [None])[0]
     profiles = kv_get("locked_profiles", {})
-    sym = data.get("symbol", "*")
-    profiles[sym] = data
+    profiles[sym] = {
+        "locked": True,
+        "label": data.get("label") or (f"{strat} · {sym}"),
+        "saved_at": iso(),
+        "strategy": strat,
+        "management": ovr.get("GridMode") or data.get("management"),
+        "metrics": data.get("metrics") or {},
+        "params": {
+            "RiskPct": cfg.get("risk_pct"), "AtrSLMult": cfg.get("atr_sl_mult"),
+            "AtrTPMult": cfg.get("atr_tp_mult"), "MinScore": cfg.get("min_score"),
+            "AdxMin": cfg.get("adx_min"), "HtfBiasRequired": cfg.get("htf_bias"),
+            "SessionLondon": cfg.get("session_london"), "SessionNY": cfg.get("session_ny"),
+            "SessionAsian": cfg.get("session_asian"), "CooldownBars": cfg.get("cooldown_bars"),
+            "DailyDDCap": cfg.get("daily_dd_cap"), "MaxConcurrent": cfg.get("max_concurrent"),
+            "BreakevenR": ovr.get("BreakevenR"), "TrailingAtrMult": ovr.get("TrailingAtrMult"),
+        },
+    }
     kv_set("locked_profiles", profiles)
-    return {"ok": True, "symbol": sym}
+    return {"ok": True, "symbol": sym, "strategy": strat}
 
 
 @app.get("/api/backtest/optimize/{job_id}")
@@ -1607,17 +1630,39 @@ def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
     return {"job_id": job_id, "status": "pending", "results": [], "best": None}
 
 
+def _library_rows(symbol=""):
+    """Converte i risultati importati nella forma 'rows' attesa dalla Strategy Library."""
+    imported = kv_get("strategy_results", [])
+    rows = []
+    for r in imported:
+        p = r.get("params") or {}
+        tf = r.get("timeframe") or "D1"
+        rows.append({
+            "strategy": r.get("strategy") or r.get("name"),
+            "symbol": symbol or r.get("symbol") or "",
+            "timeframe": "1d" if tf in ("D1", "1d", "") else str(tf).lower(),
+            "variant": r.get("management") or "baseline",
+            "atr_sl_mult": p.get("AtrSLMult", p.get("atr_sl")),
+            "atr_tp_mult": p.get("AtrTPMult", p.get("atr_tp")),
+            "overrides": p,
+            "metrics": {
+                "n_trades": r.get("trades"),
+                "win_rate_pct": r.get("win_rate"),
+                "profit_factor": r.get("profit_factor"),
+                "sharpe": r.get("sharpe"),
+                "max_dd_pct": r.get("max_dd"),
+                "total_return_pct": r.get("net"),
+            },
+        })
+    rows.sort(key=lambda x: (x["metrics"]["sharpe"] if x["metrics"]["sharpe"] is not None else -9),
+              reverse=True)
+    return rows
+
+
 @app.get("/api/backtest/strategy_library")
 def backtest_library(symbol: str = "", user: str = Depends(require_user)):
-    # Se l'utente ha importato i suoi risultati reali, serviamo quelli.
-    imported = kv_get("strategy_results", [])
-    if imported:
-        lib = imported if not symbol else [r for r in imported if r.get("symbol") in ("", None, symbol)]
-        return {"demo": False, "source": "imported", "symbol": symbol,
-                "library": sorted(lib, key=lambda r: (r.get("sharpe") or 0), reverse=True)}
-    return {"demo": True, "symbol": symbol,
-            "library": [{"name": n, "pf": round(1.2 + (i % 6) * 0.1, 2), "trades": 40 + i * 3}
-                        for i, n in enumerate(STRAT_LIST)]}
+    rows = _library_rows(symbol)
+    return {"rows": rows, "count": len(rows), "symbol": symbol, "demo": len(rows) == 0}
 
 
 @app.post("/api/backtest/import_results")
@@ -1696,13 +1741,18 @@ async def backtest_import_results(request: Request, user: str = Depends(require_
 
 @app.get("/api/backtest/strategy_library/{job_id}")
 def backtest_library_job(job_id: str, user: str = Depends(require_user)):
-    return {"demo": True, "job_id": job_id, "status": "completed",
-            "library": [{"name": n, "pf": round(1.2 + (i % 6) * 0.1, 2)} for i, n in enumerate(STRAT_LIST)]}
+    symbol = kv_get(f"btjob:{job_id}", "")
+    rows = _library_rows(symbol)
+    return {"job_id": job_id, "status": "done", "progress": len(rows),
+            "total": len(rows) or 36, "rows": rows}
 
 
 @app.post("/api/backtest/strategy_library/build")
 async def backtest_library_build(request: Request, user: str = Depends(require_user)):
-    return {"ok": True, "demo": True, "job_id": secrets.token_hex(6), "status": "queued"}
+    body = await request.json()
+    job_id = "lib-" + secrets.token_hex(5)
+    kv_set(f"btjob:{job_id}", body.get("symbol", ""))
+    return {"ok": True, "job_id": job_id, "status": "queued", "total": 36}
 
 
 # ---- coach extra ----
