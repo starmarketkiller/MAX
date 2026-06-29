@@ -61,6 +61,8 @@ Apri `server/.env` e imposta **almeno** questi valori:
 | `NEXUS_JWT_SECRET` | Stringa lunga e casuale per firmare le sessioni. |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | (Opzionale) per ricevere le notifiche su Telegram. |
 | `NEXUS_LICENSE_MODE` | `open` = ogni chiave è valida (consigliato self-hosted). |
+| `ANTHROPIC_API_KEY` | (Opzionale) chiave API Claude per l'**AI Coach** (`/api/coach/chat`). Senza, il Coach risponde "non disponibile". |
+| `NEXUS_COACH_MODEL` | Modello del Coach (default `claude-opus-4-8`). |
 
 ---
 
