@@ -1209,23 +1209,52 @@ def _coach_system(primary, context, memory):
     return "\n".join(lines)
 
 
+def _coach_sess_key(sid):
+    return f"coach_sess:{sid or 'default'}"
+
+
 @app.post("/api/coach/chat")
 async def coach_chat(request: Request, user: str = Depends(require_user)):
+    """Contratto frontend: {session_id, message, chart_context?}.
+    Lo storico della sessione è mantenuto lato server (kv)."""
     body = await request.json()
-    msgs = body.get("messages") or []
+    sid = body.get("session_id") or "default"
     context = body.get("context") or {}
-    norm = [{"role": ("assistant" if m.get("role") == "assistant" else "user"),
-             "content": str(m.get("content", ""))} for m in msgs if m.get("content")]
-    if not norm:
-        raise HTTPException(status_code=400, detail="messages vuoto")
+    if body.get("chart_context"):
+        context = {**context, "chart": body["chart_context"]}
+
+    # storico per sessione
+    skey = _coach_sess_key(sid)
+    history = kv_get(skey, [])
+
+    # messaggio nuovo: 'message' singolare (frontend) o 'messages' array (compat)
+    new_user = (body.get("message") or "").strip()
+    if not new_user and body.get("messages"):
+        for m in body["messages"]:
+            if m.get("role") != "assistant" and m.get("content"):
+                new_user = str(m["content"]).strip()
+    if not new_user:
+        raise HTTPException(status_code=400, detail="message vuoto")
+
+    # costruisci la conversazione per Anthropic
+    convo = [{"role": ("assistant" if m.get("role") == "assistant" else "user"),
+              "content": str(m.get("content", ""))} for m in history if m.get("content")]
+    convo.append({"role": "user", "content": new_user})
+
     primary, _ = _primary_ea()
     with _conn() as c:
-        memory = [r["text"] for r in c.execute("SELECT text FROM coach_memory ORDER BY created_at DESC LIMIT 20")]
+        memory = [r["text"] for r in c.execute(
+            "SELECT text FROM coach_memory ORDER BY created_at DESC LIMIT 20")]
     system = _coach_system(primary, context, memory)
-    text, err = _anthropic_chat(system, norm)
+    text, err = _anthropic_chat(system, convo)
     if err:
         return {"reply": f"⚠️ Coach non disponibile: {err}", "demo": True, "error": err}
-    return {"reply": text, "demo": False, "model": COACH_MODEL}
+
+    # persisti storico (cap a 40 messaggi)
+    history.append({"role": "user", "content": new_user, "ts": iso()})
+    history.append({"role": "assistant", "content": text, "ts": iso()})
+    kv_set(skey, history[-40:])
+    return {"reply": text, "demo": False, "model": COACH_MODEL, "session_id": sid}
 
 
 @app.get("/api/coach/proactive_alerts")
@@ -1569,8 +1598,9 @@ def coach_daily_brief(user: str = Depends(require_user)):
 
 
 @app.get("/api/coach/history")
-def coach_history(user: str = Depends(require_user)):
-    return {"messages": kv_get("coach_history", []), "demo": not kv_get("coach_history", [])}
+def coach_history(session_id: str = "default", user: str = Depends(require_user)):
+    msgs = kv_get(_coach_sess_key(session_id), [])
+    return {"messages": msgs, "session_id": session_id, "demo": not msgs}
 
 
 @app.get("/api/coach/quick_insights")
@@ -1589,6 +1619,7 @@ def coach_quick_insights(user: str = Depends(require_user)):
 
 @app.delete("/api/coach/session/{session_id}")
 def coach_session_delete(session_id: str, user: str = Depends(require_user)):
+    kv_set(_coach_sess_key(session_id), [])
     return {"ok": True, "deleted": session_id}
 
 
