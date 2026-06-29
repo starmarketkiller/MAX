@@ -921,11 +921,110 @@ def ea_status_dash(user: str = Depends(require_user)):
     return {"online": bool(primary.get("_online")), "connected": True, "eas": rows, **primary}
 
 
+def _profit_factor(limit=200):
+    """Profit factor sugli ultimi trade sincronizzati. None se non ci sono dati."""
+    with _conn() as c:
+        rows = [r["pnl"] for r in c.execute(
+            "SELECT pnl FROM trades ORDER BY synced_at DESC LIMIT ?", (limit,))
+            if r["pnl"] is not None]
+    if not rows:
+        return None, 0
+    gain = sum(p for p in rows if p > 0)
+    loss = abs(sum(p for p in rows if p < 0))
+    if loss <= 0:
+        return (None if gain <= 0 else 99.0), len(rows)
+    return round(gain / loss, 2), len(rows)
+
+
+def _compute_ea_health(primary):
+    """Health composito dell'EA da bridge, protezioni, drawdown, attività,
+    revenge, news, volatilità e profit factor. Ritorna score/level/checks/anomaly."""
+    online = bool(primary.get("_online"))
+    ago = primary.get("_updated_ago")
+    dd = float(primary.get("drawdownPct") or 0)
+    paused = bool(primary.get("eaPaused"))
+    losses = int(primary.get("consecLosses") or 0)
+    news = bool(primary.get("newsBlock"))
+    vol = (primary.get("volRegime") or "").lower()
+    esl = bool(primary.get("eslHit"))
+    dpt = bool(primary.get("dptHit"))
+    pun = bool(primary.get("pausedUntilNextOpen"))
+    pf, pf_n = _profit_factor()
+
+    checks = []
+    anomaly = []
+
+    def add(key, label, weight, ok, detail):
+        checks.append({"key": key, "label": label, "weight": weight, "ok": ok, "detail": detail})
+
+    # 1. Bridge — freschezza dati
+    add("bridge", "Bridge / connessione", 20, (True if online else False),
+        (f"aggiornato {ago}s fa" if online else "EA offline (nessun push <30s)"))
+    if not online:
+        anomaly.append({"code": "bridge_offline", "msg": "EA offline: nessun aggiornamento ricevuto negli ultimi 30s."})
+
+    # 2. Drawdown giornaliero
+    dd_ok = dd < 5.0
+    add("drawdown", "Drawdown giornaliero", 15, (dd_ok if online else None),
+        f"DD oggi {dd:.2f}%")
+    if online and dd >= 5.0:
+        anomaly.append({"code": "high_drawdown", "msg": f"Drawdown giornaliero elevato: {dd:.2f}%."})
+
+    # 3. Protezioni di rischio
+    prot_ok = not (esl or dpt or pun)
+    prot_det = "nessuna protezione attiva" if prot_ok else ", ".join(
+        [n for n, v in (("ESL", esl), ("DPT", dpt), ("pausa fino a open", pun)) if v])
+    add("protections", "Protezioni di rischio", 15, (prot_ok if online else None), prot_det)
+    if online and not prot_ok:
+        anomaly.append({"code": "protection_hit", "msg": f"Protezione attiva: {prot_det}."})
+
+    # 4. Attività (EA non in pausa)
+    act_ok = not paused
+    add("activity", "Attività EA", 10, (act_ok if online else None),
+        ("operativo, " + str(primary.get("tradesToday") or 0) + " trade oggi") if act_ok else "EA in pausa")
+
+    # 5. Revenge / loss streak
+    rev_ok = losses < 3
+    add("revenge", "Anti-revenge", 10, (rev_ok if online else None),
+        f"{losses} perdite consecutive")
+    if online and losses >= 4:
+        anomaly.append({"code": "loss_streak", "msg": f"Serie di {losses} perdite consecutive."})
+
+    # 6. News
+    add("news", "Filtro news", 10, (True if online else None),
+        "blocco news attivo" if news else "nessun evento bloccante")
+
+    # 7. Volatilità
+    vol_ok = vol not in ("extreme", "high")
+    add("vol", "Regime volatilità", 10, (vol_ok if (online and vol) else None),
+        f"regime {vol or 'n/d'}")
+
+    # 8. Profit factor
+    pf_ok = (pf is not None and pf >= 1.0)
+    add("pf", "Profit factor", 10, (pf_ok if pf is not None else None),
+        (f"PF {pf} su {pf_n} trade" if pf is not None else "dati insufficienti"))
+    if pf is not None and pf < 0.8 and pf_n >= 10:
+        anomaly.append({"code": "low_pf", "msg": f"Profit factor basso: {pf} su {pf_n} trade."})
+
+    scored = [c for c in checks if c["ok"] is not None]
+    wsum = sum(c["weight"] for c in scored) or 1
+    wok = sum(c["weight"] for c in scored if c["ok"])
+    score = round(wok / wsum * 100)
+    if not online:
+        score = min(score, 20)
+    level = ("excellent" if score >= 85 else "good" if score >= 70
+             else "warning" if score >= 50 else "critical")
+    return score, level, checks, anomaly
+
+
 @app.get("/api/ea/health")
 def ea_health_dash(user: str = Depends(require_user)):
     primary, rows = _primary_ea()
     if not primary:
-        return {"online": False, "ea_count": 0, "demo": False}
+        return {"online": False, "ea_count": 0, "demo": True, "score": 0,
+                "level": "critical", "checks": [], "anomaly": [
+                    {"code": "no_ea", "msg": "Nessun EA collegato: avvia l'EA con WebSync attivo."}]}
+    score, level, checks, anomaly = _compute_ea_health(primary)
     return {
         "online": bool(primary.get("_online")),
         "ea_count": len(rows),
@@ -935,6 +1034,10 @@ def ea_health_dash(user: str = Depends(require_user)):
         "account": primary.get("magic"),
         "balance": primary.get("balance"),
         "equity": primary.get("equity"),
+        "score": score,
+        "level": level,
+        "checks": checks,
+        "anomaly": anomaly,
     }
 
 
