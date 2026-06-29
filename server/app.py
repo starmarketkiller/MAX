@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import jwt
+import backtest
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -303,7 +304,9 @@ def _startup() -> None:
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "service": "nexus-backend", "version": app.version, "ts": iso()}
+    # coach_configured è non-segreto: dice solo SE la chiave è presente, non il valore.
+    return {"ok": True, "service": "nexus-backend", "version": app.version, "ts": iso(),
+            "coach_configured": bool(ANTHROPIC_API_KEY), "coach_model": COACH_MODEL}
 
 
 # ======================= DASHBOARD AUTH ==================================== #
@@ -1071,42 +1074,55 @@ def _demo_equity(points=60, start=10000, drift=35):
 @app.post("/api/backtest/run")
 async def backtest_run(request: Request, user: str = Depends(require_user)):
     body = await request.json()
-    eq = _demo_equity()
-    return {"demo": True, "params": body, "equity_curve": eq,
-            "net_pnl": round(eq[-1] - eq[0], 2), "trades": 142,
-            "win_rate": 64.1, "profit_factor": 1.78, "max_dd_pct": 8.4,
-            "note": "Motore di backtest non ancora implementato — dati dimostrativi."}
+    try:
+        return backtest.run_backtest(
+            symbol=body.get("symbol", "XAUUSD"),
+            timeframe=body.get("timeframe", "D1"),
+            strategy=body.get("strategy") or (body.get("strategies") or [None])[0],
+            strategies=body.get("strategies"),
+            risk_pct=float(body.get("risk_pct", body.get("RiskPercent", 1.0))),
+            atr_sl=float(body.get("atr_sl", body.get("AtrSLMult", 1.5))),
+            atr_tp=float(body.get("atr_tp", body.get("AtrTPMult", 3.0))),
+            start_equity=float(body.get("start_equity", 10000.0)),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"backtest error: {e}")
 
 
 @app.post("/api/backtest/optimize")
 async def backtest_optimize(request: Request, user: str = Depends(require_user)):
     body = await request.json()
-    grid = [{"MinScore": ms, "AtrSLMult": round(sl, 1),
-             "pf": round(1.2 + (ms % 7) * 0.07 + sl * 0.05, 2),
-             "net_pnl": 800 + (ms * 13) % 1400}
-            for ms in range(60, 81, 5) for sl in (1.0, 1.2, 1.5)]
-    grid.sort(key=lambda r: r["pf"], reverse=True)
-    return {"demo": True, "params": body, "results": grid, "best": grid[0]}
+    res = backtest.optimize(symbol=body.get("symbol", "XAUUSD"),
+                            strategy=body.get("strategy", "ADX_RSI"))
+    res["job_id"] = secrets.token_hex(6)
+    kv_set("backtest_last_optimize", res)
+    return res
 
 
+@app.post("/api/backtest/management_report")
 @app.get("/api/backtest/management_report")
-def backtest_mgmt(user: str = Depends(require_user)):
-    return {"demo": True, "rows": [
-        {"metric": "Profit Factor", "value": 1.78},
-        {"metric": "Sharpe", "value": 1.42},
-        {"metric": "Max Drawdown %", "value": 8.4},
-        {"metric": "Recovery Factor", "value": 3.1},
-        {"metric": "Expectancy (R)", "value": 0.34},
-    ]}
+async def backtest_mgmt(request: Request, user: str = Depends(require_user)):
+    body = {}
+    if request.method == "POST":
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+    return backtest.management_report(symbol=body.get("symbol", "XAUUSD"),
+                                      strategy=body.get("strategy", "ADX_RSI"))
 
 
+@app.post("/api/backtest/multi_tf_report")
 @app.get("/api/backtest/multi_tf_report")
-def backtest_mtf(user: str = Depends(require_user)):
-    return {"demo": True, "timeframes": [
-        {"tf": "M5", "pf": 1.41, "trades": 380, "win_rate": 58.2},
-        {"tf": "M15", "pf": 1.78, "trades": 142, "win_rate": 64.1},
-        {"tf": "H1", "pf": 2.05, "trades": 61, "win_rate": 67.0},
-    ]}
+async def backtest_mtf(request: Request, user: str = Depends(require_user)):
+    body = {}
+    if request.method == "POST":
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+    return backtest.multi_tf_report(symbol=body.get("symbol", "XAUUSD"),
+                                    strategy=body.get("strategy", "ADX_RSI"))
 
 
 @app.get("/api/backtest/locked_profile/all")
@@ -1505,8 +1521,10 @@ async def backtest_locked_save(request: Request, user: str = Depends(require_use
 
 @app.get("/api/backtest/optimize/{job_id}")
 def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
-    return {"demo": True, "job_id": job_id, "status": "completed",
-            "best": {"MinScore": 70, "AtrSLMult": 1.2, "pf": 1.83, "net_pnl": 1640}}
+    last = kv_get("backtest_last_optimize")
+    if last:
+        return {**last, "status": "completed"}
+    return {"job_id": job_id, "status": "pending", "results": [], "best": None}
 
 
 @app.get("/api/backtest/strategy_library")
