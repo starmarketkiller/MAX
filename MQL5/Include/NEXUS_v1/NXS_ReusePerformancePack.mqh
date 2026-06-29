@@ -1737,6 +1737,14 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    g_nxsLastOpenFailure = "";
    g_nxrLastPreflight = "";
 
+   // Disattivazione strategia da remoto (dashboard): blocca l'apertura in runtime.
+   if(NXS_Runtime_StrategyBlocked(sig.stratName)){
+      g_nxsLastOpenFailure = "strategy_disabled_dashboard";
+      PrintFormat("[NEXUS] OPEN BLOCCATO: strategia '%s' disattivata dalla dashboard",
+                  sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
+
    MqlTick tick;
    if(!SymbolInfoTick(g_sym, tick))
    {

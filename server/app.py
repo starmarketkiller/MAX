@@ -452,7 +452,23 @@ def ea_command(x_nexus_token: Optional[str] = Header(None)):
 @app.get("/api/ea/settings")
 def ea_settings(x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    return kv_get("settings", DEFAULT_SETTINGS)
+    out = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+    # Strategie disattivate dalla pagina "Strategie" della dashboard: l'EA le
+    # legge in runtime (poll ogni 15s) e blocca l'apertura di nuovi trade per
+    # queste strategie senza bisogno di riavvio/ricompilazione del profilo.
+    # Sorgente primaria: settings.strategies ({NOME: bool}); fallback legacy:
+    # strategies_override. Un nome è "disabilitato" se il valore è esplicito False.
+    disabled = []
+    strat_map = out.get("strategies") or {}
+    for name, en in strat_map.items():
+        if en is not None and not en:
+            disabled.append(name)
+    override = kv_get("strategies_override", {}) or {}
+    for name, en in override.items():
+        if en is not None and not en and name not in disabled:
+            disabled.append(name)
+    out["strategies_disabled"] = disabled
+    return out
 
 
 @app.get("/api/ea/locked_profile")
@@ -946,8 +962,16 @@ def settings_get(user: str = Depends(require_user)):
 @app.post("/api/settings")
 async def settings_save(request: Request, user: str = Depends(require_user)):
     data = await request.json()
-    kv_set("settings", data)
-    return {"ok": True, "settings": data}
+    # I componenti della dashboard inviano patch parziali (es. solo "strategies"
+    # dalla pagina Strategie, o solo i parametri di rischio): facciamo merge sul
+    # blob esistente per non azzerare le altre impostazioni lette dall'EA.
+    merged = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+    if isinstance(data, dict):
+        merged.update(data)
+    else:
+        merged = data
+    kv_set("settings", merged)
+    return {"ok": True, "settings": merged}
 
 
 @app.get("/api/strategies")

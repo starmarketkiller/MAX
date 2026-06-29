@@ -80,6 +80,13 @@ void NXS_ApplyCounterHTFProfile(SNXSSignal &sig){
 
 ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    g_nxsLastOpenFailure = "";
+   // Disattivazione strategia da remoto (dashboard): blocca l'apertura in runtime.
+   if(NXS_Runtime_StrategyBlocked(sig.stratName)){
+      g_nxsLastOpenFailure = "strategy_disabled_dashboard";
+      PrintFormat("[NEXUS] OPEN BLOCCATO: strategia '%s' disattivata dalla dashboard",
+                  sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }
