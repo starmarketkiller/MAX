@@ -9,6 +9,7 @@ void NXS_DefaultSLTP(SNXSSignal &sig){
    if(InpUseAdaptiveSL && g_atrAvg > 0){
       slMult = (g_atr > g_atrAvg) ? InpSL_HighVol_Mult : InpSL_LowVol_Mult;
    }
+   slMult = MathMax(slMult, InpMinSLMult);   // v2.0.14 — floor SL (rumore M5 gold)
    double sl = g_atr * slMult;
    double tp = g_atr * InpATR_TP_Mult;
    if(sig.dir == DIR_BUY){

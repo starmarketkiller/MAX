@@ -53,6 +53,7 @@ input int      InpMaxTradesPerDay  = 12;
 input int      InpMaxConcurrent    = 4;
 input double   InpMaxDailyDDPct    = 5.0;
 input double   InpMinEntryScore    = 70.0;
+input double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 input int      InpMinMarginLevel   = 200;
 
 input group "=== ANTI-REVENGE ==="
@@ -138,8 +139,9 @@ input int      InpEMA9_Period      = 9;
 input int      InpEMA21_Period     = 21;
 
 input group "=== SL / TP ==="
-input double   InpATR_SL_Mult      = 1.8;
+input double   InpATR_SL_Mult      = 2.0;    // v2.0.14: 1.8→2.0 (SL piu' largo su M5 gold)
 input double   InpATR_TP_Mult      = 2.6;
+input double   InpMinSLMult        = 1.5;    // v2.0.14: pavimento minimo moltiplicatore SL
 
 input group "=== CLOSE & REVERSE ==="
 input bool     InpEnableCloseReverse = true;
@@ -160,7 +162,7 @@ input double   InpTrailDistancePostBE = 0.7;   // tighter trail once BE reached
 input int      InpMaxHoldHours     = 4;        // force-close trade older than this
 input bool     InpUseAdaptiveSL    = true;     // dynamic SL by ATR regime
 input double   InpSL_HighVol_Mult  = 2.0;      // SL multiplier when ATR > avg
-input double   InpSL_LowVol_Mult   = 1.5;      // SL multiplier when ATR < avg
+input double   InpSL_LowVol_Mult   = 1.8;      // v2.0.14: 1.5→1.8 (SL piu' largo bassa vol)
 input int      InpATR_AvgPeriod    = 20;       // ATR moving-avg window
 input double   InpTP1_ATR          = 1.5;      // P1 partial-close at +1.5 ATR (was 1.0)
 input double   InpTP2_ATR          = 3.0;      // P2 partial-close at +3.0 ATR (was 2.0)
@@ -210,6 +212,7 @@ input bool     InpUseMaxHold       = true;   // Max hold time per position
 input int      InpProt_MaxHoldHours= 12;
 input bool     InpUseMaxLossPos    = true;   // Max loss per position
 input double   InpMaxLossPosPct    = 2.0;    // % of balance
+input int      InpProt_MinLifeMin  = 15;     // v2.0.14: min minuti vita prima che NXS:RISK chiuda
 input bool     InpUseAutoClose     = true;   // Flatten before market close
 input int      InpAutoCloseMin     = 15;
 input int      InpMarketCloseGMT   = 21;
@@ -274,7 +277,7 @@ input bool     InpEnableCounterHTFSoft   = false;    // OPTIONAL: counter-trend 
 input double   InpCounterHTF_MinReactQ   = 75.0;     // min reaction quality
 input double   InpCounterHTF_LotMult     = 0.40;     // lot reducer (40% of base)
 input double   InpCounterHTF_TP1Pct      = 70.0;     // % closed at 1R
-input double   InpCounterHTF_SLATR       = 1.2;      // tighter SL (1.2 ATR)
+input double   InpCounterHTF_SLATR       = 1.5;      // v2.0.14: 1.2→1.5 (no SL sotto 1.5)
 input double   InpCounterHTF_MinRR       = 1.2;      // minimum reward/risk
 input int      InpCounterHTF_MaxPerSession = 1;      // anti-spam
 

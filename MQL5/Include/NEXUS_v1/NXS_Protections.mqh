@@ -166,15 +166,22 @@ void NXS_Prot_CheckMaxLossPerPos(){
    if(!InpUseMaxLossPos) return;
    double bal = AccountInfoDouble(ACCOUNT_BALANCE);
    double lim = -(bal * InpMaxLossPosPct / 100.0);
+   datetime now = TimeCurrent();
+   long minLife = (long)InpProt_MinLifeMin * 60;   // v2.0.14
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      // v2.0.14 — non chiudere prima del tempo minimo di vita (anti stop-out su rumore M5).
+      // Nei primi minuti la posizione resta protetta dallo SL hard (>=1.5 ATR).
+      datetime opened = (datetime)PositionGetInteger(POSITION_TIME);
+      if(now - opened < minLife) continue;
       double pl = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
       if(pl <= lim){
          NXS_Prot_ClosePositionWithReason(t, NXS_R_RISK);
-         PrintFormat("[NEXUS PROT] MaxLossPos: closed ticket=%d pl=%.2f <= lim=%.2f", t, pl, lim);
+         PrintFormat("[NEXUS PROT] MaxLossPos: closed ticket=%d pl=%.2f <= lim=%.2f age=%ds",
+                     t, pl, lim, (int)(now - opened));
       }
    }
 }
