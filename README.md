@@ -57,7 +57,7 @@ Apri `server/.env` e imposta **almeno** questi valori:
 | Variabile | A cosa serve |
 |-----------|--------------|
 | `NEXUS_BRIDGE_TOKEN` | Token condiviso EA ↔ Backend ↔ Worker. **Deve essere identico** ovunque. |
-| `NEXUS_ADMIN_USER` / `NEXUS_ADMIN_PASSWORD` | Credenziali per entrare nella dashboard. |
+| `NEXUS_ADMIN_USER` / `NEXUS_ADMIN_PASSWORD` | Credenziali dashboard. ⚠️ La dashboard React (`/app`) usa un campo **email**: imposta `NEXUS_ADMIN_USER` come email (es. `admin@nexus.local`). |
 | `NEXUS_JWT_SECRET` | Stringa lunga e casuale per firmare le sessioni. |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | (Opzionale) per ricevere le notifiche su Telegram. |
 | `NEXUS_LICENSE_MODE` | `open` = ogni chiave è valida (consigliato self-hosted). |
@@ -101,7 +101,16 @@ Il worker comparirà nella dashboard sotto **Local Bridge**.
 
 ---
 
-## 🌐 Dashboard — cosa puoi fare
+## 🖥️ Due dashboard
+
+- **`/app`** — la **dashboard React "cockpit"** completa (Overview, Live Chart, Strategie, Analytics, Journal, **AI Coach**, Backtest, Risk, MT5 Bridge, Calendar, Licenze, Settings). È il frontend principale. Login con email/password (cookie httpOnly).
+- **`/login.html`** — una dashboard statica leggera di fallback (stesso backend).
+
+Il sorgente React è in `frontend/`; la build è servita da FastAPI sotto `/app`.
+Per ricostruirla: `cd frontend && npm install --legacy-peer-deps && npm run build`,
+poi copia `frontend/build/` in `server/static/app/`.
+
+## 🌐 Dashboard statica — cosa puoi fare
 
 - **Panoramica** — stato live di ogni EA (balance, equity, P&L, drawdown, HTF/velocity, sessione) + posizioni aperte, con pulsanti **Pausa / Riprendi / Chiudi tutto / Chiudi posizione**.
 - **Journal** — storico trade sincronizzato dall'EA con riepilogo P&L e win rate.

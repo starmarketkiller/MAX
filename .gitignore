@@ -16,3 +16,7 @@ venv/
 
 # os
 .DS_Store
+
+# frontend build tooling
+frontend/node_modules/
+frontend/build/

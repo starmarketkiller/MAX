@@ -24,7 +24,7 @@ export default function App() {
   return (
     <div className="App">
       <ThemeProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/app">
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />

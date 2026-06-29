@@ -48,7 +48,7 @@ function initNav(active) {
           <button onclick="setLang('it')" style="border:none;cursor:pointer;padding:6px 12px;background:${it?'rgba(61,220,151,.18)':'transparent'};color:${it?'#3DDC97':'#94a1b5'};">IT</button>
           <button onclick="setLang('en')" style="border:none;cursor:pointer;padding:6px 12px;background:${!it?'rgba(61,220,151,.18)':'transparent'};color:${!it?'#3DDC97':'#94a1b5'};">EN</button>
         </div>
-        <a href="login.html" style="text-decoration:none;font-size:14px;color:#94a1b5;">${L.login}</a>
+        <a href="/app" style="text-decoration:none;font-size:14px;color:#94a1b5;">${L.login}</a>
         <a href="prezzi.html" style="text-decoration:none;padding:10px 22px;background:linear-gradient(135deg,#4F8CFF,#3DDC97);color:#06101f;font-weight:600;font-size:14px;border-radius:30px;">${L.cta}</a>
       </div>
     </div>`;
