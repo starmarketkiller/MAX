@@ -1107,6 +1107,32 @@ def calendar(user: str = Depends(require_user)):
 
 
 # ======================= DOWNLOADS ===================================== #
+DOWNLOADS_DIR = STATIC_DIR / "downloads"
+_DOWNLOAD_LABELS = {
+    ".set": "Preset EA (.set)",
+    ".tpl": "Template grafico (.tpl)",
+    ".ex5": "Indicatore compilato (.ex5)",
+    ".mq5": "Sorgente MQL5 (.mq5)",
+    ".zip": "Pacchetto (.zip)",
+}
+
+
+@app.get("/api/downloads/list")
+def downloads_list(user: str = Depends(require_user)):
+    """Elenco file scaricabili da server/static/downloads (preset, template…)."""
+    items = []
+    if DOWNLOADS_DIR.exists():
+        for f in sorted(DOWNLOADS_DIR.iterdir()):
+            if f.is_file():
+                items.append({
+                    "name": f.name,
+                    "size": f.stat().st_size,
+                    "kind": _DOWNLOAD_LABELS.get(f.suffix.lower(), f.suffix),
+                    "url": f"/downloads/{f.name}",
+                })
+    return {"files": items, "count": len(items)}
+
+
 @app.get("/api/downloads/local_worker")
 def download_worker(user: str = Depends(require_user)):
     if WORKER_FILE.exists():

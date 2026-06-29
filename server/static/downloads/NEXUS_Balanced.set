@@ -1,0 +1,14 @@
+; ============================================================
+;  NEXUS EA v2.0 - BALANCED preset (default)
+;  Recommended for accounts $5k-$25k.
+; ============================================================
+InpRiskProfile=2
+InpAutoScaleByAccount=true
+InpUseSymbolWhitelist=true
+InpAllowedSymbols=XAUUSD,EURUSD,GBPUSD,USDJPY,USDCHF,AUDUSD,USDCAD,US30,NAS100
+InpHardMaxSpreadPts=0
+InpOrderRetries=3
+InpUseStatePersist=true
+InpUseAtrTrail=true
+InpAtrTrailMult=1.5
+InpShowDashboard=true
