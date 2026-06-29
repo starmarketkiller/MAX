@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus EA — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;} html,body{margin:0;background:#070A0F;}
+  ::selection{background:rgba(61,220,151,.3);}
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:8px;} ::-webkit-scrollbar-track{background:transparent;}
+  input:focus,select:focus{outline:none;border-color:rgba(61,220,151,.5)!important;}
+  .nav-btn{width:100%;display:flex;align-items:center;gap:11px;border:none;cursor:pointer;text-align:left;padding:9px 12px;margin-bottom:2px;border-radius:9px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;font-weight:500;transition:background .15s;}
+  .nav-btn:hover{background:rgba(255,255,255,.06)!important;}
+  .kpi-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px;}
+  .panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px;}
+  .badge-live{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.3);border-radius:20px;padding:4px 10px;color:#3DDC97;}
+  .dot-live{width:6px;height:6px;border-radius:50%;background:#3DDC97;box-shadow:0 0 6px #3DDC97;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+</style>
+</head>
+<body style="display:flex;min-height:100vh;background:#070A0F;font-family:'IBM Plex Sans',sans-serif;color:#EAF0F8;">
+
+<!-- SIDEBAR -->
+<aside style="width:248px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;height:100vh;display:flex;flex-direction:column;background:#0A0E14;border-right:1px solid rgba(255,255,255,.07);">
+  <a href="index.html" style="display:flex;align-items:center;gap:11px;text-decoration:none;padding:22px 22px 18px;border-bottom:1px solid rgba(255,255,255,.06);">
+    <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#4F8CFF,#3DDC97);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;color:#06101f;font-size:17px;">N</div>
+    <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:#EAF0F8;">Nexus<span style="font-family:'JetBrains Mono',monospace;color:#3DDC97;font-weight:500;font-size:13px;margin-left:2px;">_EA</span></span>
+  </a>
+  <nav style="flex:1;overflow-y:auto;padding:14px 12px;" id="sidebar-nav"></nav>
+  <div style="padding:14px 12px;border-top:1px solid rgba(255,255,255,.06);">
+    <div style="display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);">
+      <div id="user-avatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4F8CFF,#3DDC97);display:flex;align-items:center;justify-content:center;color:#06101f;font-weight:700;font-family:'Sora',sans-serif;font-size:14px;">N</div>
+      <div style="flex:1;min-width:0;">
+        <div id="user-name" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nexus</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#3DDC97;">PRO</div>
+      </div>
+      <button onclick="doLogout()" title="Logout" style="background:none;border:none;cursor:pointer;color:#7c8aa3;font-size:16px;padding:4px;">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+  <!-- TOPBAR -->
+  <div style="position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 28px;background:rgba(8,11,17,.8);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.07);">
+    <div>
+      <div id="sec-title" style="font-family:'Sora',sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;"></div>
+      <div id="sec-sub" style="font-size:12.5px;color:#7c8aa3;margin-top:1px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 13px;">
+        <span id="acct-label" style="color:#7c8aa3;"></span>
+        <span id="acct-num" style="color:#EAF0F8;">—</span>
+      </div>
+      <div id="ea-status" class="badge-live" style="display:none;">
+        <span class="dot-live"></span><span id="ea-status-text"></span>
+      </div>
+      <div style="display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid rgba(255,255,255,.12);border-radius:30px;overflow:hidden;">
+        <button id="lang-it" onclick="setLang('it')" style="border:none;cursor:pointer;padding:7px 11px;">IT</button>
+        <button id="lang-en" onclick="setLang('en')" style="border:none;cursor:pointer;padding:7px 11px;">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div style="flex:1;padding:26px 28px 60px;background:radial-gradient(120% 50% at 85% -5%,rgba(20,34,63,.5) 0%,#070A0F 50%);">
+    <div id="content"></div>
+  </div>
+</main>
+
+<script src="shared.js"></script>
+<script>
+requireAuth();
+const it = getLang() === 'it';
+let currentSection = 'overview';
+let liveData = null;
+
+// Lang buttons
+document.getElementById('lang-it').style.cssText = `border:none;cursor:pointer;padding:7px 11px;background:${it?'rgba(61,220,151,.18)':'transparent'};color:${it?'#3DDC97':'#94a1b5'};`;
+document.getElementById('lang-en').style.cssText = `border:none;cursor:pointer;padding:7px 11px;background:${!it?'rgba(61,220,151,.18)':'transparent'};color:${!it?'#3DDC97':'#94a1b5'};`;
+document.getElementById('acct-label').textContent = it ? 'CONTO' : 'ACCOUNT';
+
+const NAV_GROUPS = it ? [
+  { label:'MONITORAGGIO', items:[
+    {id:'overview',glyph:'◈',label:'Panoramica'},
+    {id:'positions',glyph:'◆',label:'Posizioni Live'},
+    {id:'journal',glyph:'▤',label:'Journal'},
+  ]},
+  { label:'CONTROLLO', items:[
+    {id:'strategies',glyph:'◇',label:'Strategie'},
+    {id:'risk',glyph:'⛉',label:'Risk Control'},
+    {id:'commands',glyph:'⏵',label:'Comandi EA'},
+  ]},
+  { label:'ACCOUNT', items:[
+    {id:'license',glyph:'✦',label:'Licenza'},
+    {id:'settings',glyph:'⚙',label:'Impostazioni'},
+  ]},
+] : [
+  { label:'MONITORING', items:[
+    {id:'overview',glyph:'◈',label:'Overview'},
+    {id:'positions',glyph:'◆',label:'Live Positions'},
+    {id:'journal',glyph:'▤',label:'Journal'},
+  ]},
+  { label:'CONTROL', items:[
+    {id:'strategies',glyph:'◇',label:'Strategies'},
+    {id:'risk',glyph:'⛉',label:'Risk Control'},
+    {id:'commands',glyph:'⏵',label:'EA Commands'},
+  ]},
+  { label:'ACCOUNT', items:[
+    {id:'license',glyph:'✦',label:'License'},
+    {id:'settings',glyph:'⚙',label:'Settings'},
+  ]},
+];
+
+function buildNav() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = NAV_GROUPS.map(g=>`
+    <div style="margin-bottom:14px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:#4a5365;padding:6px 12px 8px;">${g.label}</div>
+      ${g.items.map(item=>`
+        <button class="nav-btn" id="nav-${item.id}" onclick="showSection('${item.id}')"
+          style="background:${currentSection===item.id?'rgba(61,220,151,.1)':'transparent'};color:${currentSection===item.id?'#EAF0F8':'#94a1b5'};border-left:2px solid ${currentSection===item.id?'#3DDC97':'transparent'};">
+          <span style="font-size:14px;width:18px;text-align:center;color:${currentSection===item.id?'#3DDC97':'#5b6472'};">${item.glyph}</span>
+          <span style="flex:1;">${item.label}</span>
+        </button>`).join('')}
+    </div>`).join('');
+}
+
+function showSection(id) {
+  currentSection = id;
+  buildNav();
+  renderSection(id);
+}
+
+// Mappa la risposta reale di /api/dashboard/overview nella forma usata dalla UI.
+function mapPosition(p) {
+  return { ticket:p.ticket, symbol:p.symbol, type:p.side, lots:p.lots,
+    open_price:p.openPrice, current_price:p.currentPrice,
+    profit:(p.pnl==null?undefined:p.pnl), sl:p.sl, tp:p.tp };
+}
+
+async function loadLiveData() {
+  const data = await api('/api/dashboard/overview');
+  if (data) {
+    const eas = data.eas || [];
+    const primary = eas.find(e => e._online) || eas[0] || null;
+    const positions = [];
+    eas.forEach(e => (e.positions || []).forEach(p => positions.push(mapPosition(p))));
+    liveData = {
+      ea_status: primary && primary._online ? 'online' : 'offline',
+      account_number: primary ? primary.magic : null,
+      equity:  primary ? primary.equity   : undefined,
+      balance: primary ? primary.balance  : undefined,
+      open_profit: primary ? primary.floatPnL : undefined,
+      open_trades: positions.length,
+      last_update: primary ? (Math.round(primary._updated_ago) + (it?'s fa':'s ago')) : '—',
+      ea_version:  primary ? primary.version : undefined,
+      symbol:      primary ? primary.symbol  : undefined,
+      ea_paused:   primary ? primary.eaPaused : false,
+      _positions:  positions,
+    };
+    // Update EA status badge
+    const statusEl = document.getElementById('ea-status');
+    const statusText = document.getElementById('ea-status-text');
+    statusEl.style.display = 'inline-flex';
+    statusText.textContent = liveData.ea_status === 'online' ? 'EA Online' : 'EA Offline';
+    if (liveData.ea_status !== 'online') {
+      statusEl.style.background = 'rgba(217,154,78,.1)';
+      statusEl.style.borderColor = 'rgba(217,154,78,.3)';
+      statusEl.style.color = '#d99a4e';
+    }
+    if (liveData.account_number) document.getElementById('acct-num').textContent = liveData.account_number;
+    if (currentSection === 'overview') renderSection('overview');
+  }
+}
+
+async function loadPositions() {
+  if (!liveData) await loadLiveData();
+  return (liveData && liveData._positions) || [];
+}
+async function loadHistory() {
+  const d = await api('/api/dashboard/journal');
+  if (!d || !d.trades) return [];
+  return d.trades.map(t => ({ ticket:t.ticket, symbol:t.symbol, type:t.side, lots:t.lots,
+    open_price:t.open_price, close_price:t.close_price,
+    profit:(t.pnl==null?undefined:t.pnl) }));
+}
+
+function kpiCard(label, value, color, delta) {
+  return `<div class="kpi-card">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8aa3;letter-spacing:.04em;">${label}</div>
+    <div style="font-family:'Sora',sans-serif;font-size:25px;font-weight:700;margin-top:8px;color:${color||'#EAF0F8'};">${value}</div>
+    ${delta?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${delta.startsWith('+')?'#3DDC97':'#d99a4e'};margin-top:5px;">${delta}</div>`:''}
+  </div>`;
+}
+
+async function renderSection(id) {
+  const c = document.getElementById('content');
+  const sections = it ? {
+    overview:{title:'Panoramica',sub:'Stato live del conto e performance'},
+    positions:{title:'Posizioni Live',sub:'Operazioni aperte in questo momento'},
+    journal:{title:'Journal',sub:'Storico di tutte le operazioni chiuse'},
+    strategies:{title:'Strategie',sub:'Abilita o disabilita le strategie attive'},
+    risk:{title:'Risk Control Center',sub:'Parametri di rischio e protezioni'},
+    commands:{title:'Comandi EA',sub:'Pausa, riprendi, chiudi posizioni'},
+    license:{title:'Licenza',sub:'Stato e dettagli della tua licenza'},
+    settings:{title:'Impostazioni',sub:'Profilo e preferenze account'},
+  } : {
+    overview:{title:'Overview',sub:'Live account status and performance'},
+    positions:{title:'Live Positions',sub:'Currently open trades'},
+    journal:{title:'Journal',sub:'History of all closed trades'},
+    strategies:{title:'Strategies',sub:'Enable or disable active strategies'},
+    risk:{title:'Risk Control Center',sub:'Risk parameters and protections'},
+    commands:{title:'EA Commands',sub:'Pause, resume, close positions'},
+    license:{title:'License',sub:'Your licence status and details'},
+    settings:{title:'Settings',sub:'Profile and account preferences'},
+  };
+
+  const s = sections[id] || sections.overview;
+  document.getElementById('sec-title').textContent = s.title;
+  document.getElementById('sec-sub').textContent = s.sub;
+
+  if (id === 'overview') {
+    const d = liveData || {};
+    const equity = d.equity ? '€'+d.equity.toFixed(2) : '—';
+    const balance = d.balance ? '€'+d.balance.toFixed(2) : '—';
+    const profit = d.open_profit !== undefined ? (d.open_profit>=0?'+':'')+d.open_profit.toFixed(2)+'€' : '—';
+    const trades = d.open_trades !== undefined ? String(d.open_trades) : '—';
+    c.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;">
+        ${kpiCard('EQUITY', equity, '#3DDC97', profit!=='—'?profit:'')}
+        ${kpiCard('BALANCE', balance, '#EAF0F8', '')}
+        ${kpiCard(it?'OPERAZIONI APERTE':'OPEN TRADES', trades, '#4F8CFF', '')}
+        ${kpiCard(it?'P/L APERTO':'OPEN P/L', profit, profit.startsWith('+')?'#3DDC97':'#d99a4e', '')}
+      </div>
+      <div class="panel" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px;">${it?'Curva Equity Live':'Live Equity Curve'}</span>
+          <span class="badge-live"><span class="dot-live"></span> LIVE</span>
+        </div>
+        <svg viewBox="0 0 720 200" style="width:100%;height:180px;display:block;">
+          <defs>
+            <linearGradient id="ov" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3DDC97" stop-opacity="0.3"/><stop offset="1" stop-color="#3DDC97" stop-opacity="0"/></linearGradient>
+            <linearGradient id="ovl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4F8CFF"/><stop offset="1" stop-color="#3DDC97"/></linearGradient>
+          </defs>
+          <line x1="0" y1="50" x2="720" y2="50" stroke="rgba(255,255,255,.05)"/>
+          <line x1="0" y1="100" x2="720" y2="100" stroke="rgba(255,255,255,.05)"/>
+          <line x1="0" y1="150" x2="720" y2="150" stroke="rgba(255,255,255,.05)"/>
+          <path d="M0,180 L60,165 L120,170 L180,148 L240,155 L300,128 L360,136 L420,105 L480,115 L540,82 L600,60 L660,45 L720,30 L720,200 L0,200 Z" fill="url(#ov)"/>
+          <path d="M0,180 L60,165 L120,170 L180,148 L240,155 L300,128 L360,136 L420,105 L480,115 L540,82 L600,60 L660,45 L720,30" fill="none" stroke="url(#ovl)" stroke-width="2.5"/>
+        </svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5b6472;margin-top:8px;text-align:center;">${it?'Dati illustrativi · i dati live arrivano dal tuo EA via backend':'Illustrative data · live data flows from your EA via backend'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="panel">
+          <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:15px;margin-bottom:14px;">${it?'Stato EA':'EA Status'}</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'Connessione':'Connection'}</span><span style="color:${d.ea_status==='online'?'#3DDC97':'#d99a4e'};">${d.ea_status==='online'?'● Online':'● Offline'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'Ultimo aggiornamento':'Last update'}</span><span style="color:#EAF0F8;">${d.last_update||'—'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'Versione EA':'EA version'}</span><span style="color:#EAF0F8;">${d.ea_version||'—'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">Symbol</span><span style="color:#EAF0F8;">${d.symbol||'XAUUSD'}</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:15px;margin-bottom:14px;">${it?'Controllo rapido':'Quick control'}</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <button onclick="sendCommand('pause')" style="padding:12px;border:1px solid rgba(217,154,78,.3);background:rgba(217,154,78,.08);color:#d99a4e;border-radius:10px;cursor:pointer;font-size:14px;font-family:'IBM Plex Sans',sans-serif;">${it?'⏸ Pausa trading':'⏸ Pause trading'}</button>
+            <button onclick="sendCommand('resume')" style="padding:12px;border:1px solid rgba(61,220,151,.3);background:rgba(61,220,151,.08);color:#3DDC97;border-radius:10px;cursor:pointer;font-size:14px;font-family:'IBM Plex Sans',sans-serif;">${it?'▶ Riprendi trading':'▶ Resume trading'}</button>
+            <button onclick="sendCommand('close_all')" style="padding:12px;border:1px solid rgba(217,78,78,.3);background:rgba(217,78,78,.06);color:#e88;border-radius:10px;cursor:pointer;font-size:14px;font-family:'IBM Plex Sans',sans-serif;">${it?'✕ Chiudi tutto':'✕ Close all'}</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  else if (id === 'positions') {
+    c.innerHTML = `<div id="pos-loading" style="padding:40px;text-align:center;color:#5b6472;">${it?'Caricamento posizioni...':'Loading positions...'}</div>`;
+    const positions = await loadPositions();
+    if (!positions.length) {
+      c.innerHTML = `<div class="panel" style="padding:48px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:12px;">◈</div>
+        <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:600;">${it?'Nessuna posizione aperta':'No open positions'}</div>
+        <div style="font-size:14px;color:#7c8aa3;margin-top:6px;">${it?"L'EA non ha operazioni in corso.":'The EA has no running trades.'}</div>
+      </div>`; return;
+    }
+    c.innerHTML = `<div class="panel">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.08);">
+              ${['TICKET','SYMBOL','TYPE','LOTS','OPEN','CURRENT','P/L','SL','TP'].map(h=>`<th style="padding:10px 12px;text-align:left;color:#5b6472;font-weight:500;">${h}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${positions.map(p=>`
+              <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <td style="padding:12px;">${p.ticket||'—'}</td>
+                <td style="padding:12px;color:#EAF0F8;">${p.symbol||'—'}</td>
+                <td style="padding:12px;color:${p.type==='BUY'?'#3DDC97':'#d99a4e'};">${p.type||'—'}</td>
+                <td style="padding:12px;">${p.lots||'—'}</td>
+                <td style="padding:12px;">${p.open_price||'—'}</td>
+                <td style="padding:12px;">${p.current_price||'—'}</td>
+                <td style="padding:12px;color:${(p.profit||0)>=0?'#3DDC97':'#d99a4e'};">${p.profit!==undefined?(p.profit>=0?'+':'')+p.profit.toFixed(2):'—'}</td>
+                <td style="padding:12px;">${p.sl||'—'}</td>
+                <td style="padding:12px;">${p.tp||'—'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  else if (id === 'commands') {
+    c.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        ${[
+          {cmd:'pause',label:it?'⏸ Pausa Trading':'⏸ Pause Trading',desc:it?"Ferma l'apertura di nuove posizioni":'Stop opening new positions',color:'rgba(217,154,78,.08)',border:'rgba(217,154,78,.3)',tc:'#d99a4e'},
+          {cmd:'resume',label:it?'▶ Riprendi Trading':'▶ Resume Trading',desc:it?'Riabilita apertura nuove posizioni':'Re-enable opening new positions',color:'rgba(61,220,151,.08)',border:'rgba(61,220,151,.3)',tc:'#3DDC97'},
+          {cmd:'close_all',label:it?'✕ Chiudi Tutto':'✕ Close All',desc:it?'Chiude tutte le posizioni aperte':'Closes all open positions',color:'rgba(217,78,78,.06)',border:'rgba(217,78,78,.3)',tc:'#e88'},
+          {cmd:'reset_anti_revenge',label:it?'Reset Anti-Revenge':'Reset Anti-Revenge',desc:it?'Azzera perdite consecutive e blocco':'Reset consecutive losses and lock',color:'rgba(79,140,255,.08)',border:'rgba(79,140,255,.25)',tc:'#4F8CFF'},
+          {cmd:'reset_daily',label:it?'Reset Giornaliero':'Reset Daily',desc:it?'Azzera i contatori del giorno':'Reset daily counters',color:'rgba(79,140,255,.08)',border:'rgba(79,140,255,.25)',tc:'#4F8CFF'},
+        ].map(btn=>`
+          <div style="background:${btn.color};border:1px solid ${btn.border};border-radius:16px;padding:24px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:18px;margin-bottom:8px;color:${btn.tc};">${btn.label}</div>
+            <div style="font-size:13px;color:#9aa6b8;margin-bottom:18px;">${btn.desc}</div>
+            <button onclick="sendCommand('${btn.cmd}')" style="width:100%;padding:12px;border:1px solid ${btn.border};background:transparent;color:${btn.tc};border-radius:30px;cursor:pointer;font-size:14px;font-family:'IBM Plex Sans',sans-serif;font-weight:500;">${it?'Esegui':'Execute'}</button>
+          </div>`).join('')}
+      </div>
+      <div id="cmd-feedback" style="display:none;margin-top:16px;padding:14px 18px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:13px;"></div>`;
+  }
+
+  else if (id === 'journal') {
+    c.innerHTML = `<div id="journal-loading" style="padding:40px;text-align:center;color:#5b6472;">${it?'Caricamento...':'Loading...'}</div>`;
+    const hist = await loadHistory();
+    if (!hist.length) {
+      c.innerHTML = `<div class="panel" style="padding:48px;text-align:center;"><div style="font-size:14px;color:#7c8aa3;">${it?'Nessuna operazione nel journal.':'No trades in the journal.'}</div></div>`; return;
+    }
+    c.innerHTML = `<div class="panel">
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;">
+          <thead><tr style="border-bottom:1px solid rgba(255,255,255,.08);">
+            ${['#','SYMBOL','TYPE','LOTS','OPEN','CLOSE','P/L'].map(h=>`<th style="padding:10px 12px;text-align:left;color:#5b6472;">${h}</th>`).join('')}
+          </tr></thead>
+          <tbody>${hist.map(t=>`
+            <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+              <td style="padding:12px;">${t.ticket||'—'}</td>
+              <td style="padding:12px;color:#EAF0F8;">${t.symbol||'—'}</td>
+              <td style="padding:12px;color:${t.type==='BUY'?'#3DDC97':'#d99a4e'};">${t.type||'—'}</td>
+              <td style="padding:12px;">${t.lots||'—'}</td>
+              <td style="padding:12px;">${t.open_price||'—'}</td>
+              <td style="padding:12px;">${t.close_price||'—'}</td>
+              <td style="padding:12px;color:${(t.profit||0)>=0?'#3DDC97':'#d99a4e'};">${t.profit!==undefined?(t.profit>=0?'+':'')+t.profit.toFixed(2):'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  else if (id === 'license') {
+    // Non esiste un endpoint licenza dashboard: derivo dai dati live.
+    const lic = { ea_version:(liveData&&liveData.ea_version)||'—',
+                  last_validation:(liveData&&liveData.last_update)||'—' };
+    c.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:20px;">${it?'Licenza Pro':'Pro Licence'}</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(61,220,151,.15);border:1px solid rgba(61,220,151,.3);color:#3DDC97;padding:4px 10px;border-radius:20px;">● ${it?'Attiva':'Active'}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'PIANO':'PLAN'}</span><span>Pro</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'SCADENZA':'EXPIRES'}</span><span style="color:#3DDC97;">${it?'Mai (a vita)':'Never (lifetime)'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'VERSIONE EA':'EA VERSION'}</span><span>${lic.ea_version||'—'}</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#7c8aa3;">${it?'ULTIMA VALIDAZIONE':'LAST VALIDATION'}</span><span>${lic.last_validation||'—'}</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:15px;margin-bottom:14px;">${it?'Integrazione WebRequest':'WebRequest Integration'}</div>
+          <p style="font-size:13px;color:#9aa6b8;line-height:1.6;margin:0 0 14px;">${it?"L'EA valida la licenza chiamando il backend ogni 6 ore. Autorizza l'URL in MetaTrader.":'The EA validates the licence by calling the backend every 6 hours. Whitelist the URL in MetaTrader.'}</p>
+          <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4F8CFF;word-break:break-all;">${getBackend()||'https://nexus-backend-xxxx.onrender.com'}</div>
+          <button onclick="navigator.clipboard.writeText('${getBackend()}').then(()=>this.textContent='✓ ${it?'Copiato':'Copied'}!')" style="margin-top:10px;width:100%;padding:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#EAF0F8;border-radius:8px;cursor:pointer;font-size:13px;">${it?'Copia URL':'Copy URL'}</button>
+        </div>
+      </div>`;
+  }
+
+  else if (id === 'settings') {
+    c.innerHTML = `
+      <div class="panel" style="max-width:540px;">
+        <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px;margin-bottom:16px;">${it?'Backend URL':'Backend URL'}</div>
+        <p style="font-size:14px;color:#9aa6b8;margin:0 0 12px;">${it?'Indirizzo del backend Render collegato al tuo EA.':'Your Render backend URL connected to the EA.'}</p>
+        <input id="settings-backend" type="text" value="${getBackend()}"
+          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#EAF0F8;font-size:14px;font-family:'JetBrains Mono',monospace;margin-bottom:10px;">
+        <button onclick="document.getElementById('settings-backend').value&&(localStorage.setItem('nexus_backend_url',document.getElementById('settings-backend').value.trim()),this.textContent='✓ ${it?'Salvato':'Saved'}!')"
+          style="padding:12px 24px;border:none;background:linear-gradient(135deg,#4F8CFF,#3DDC97);color:#06101f;font-weight:600;font-size:14px;border-radius:30px;cursor:pointer;">${it?'Salva':'Save'}</button>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.07);margin:24px 0;">
+        <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px;margin-bottom:12px;">${it?'Lingua':'Language'}</div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="setLang('it')" style="padding:10px 20px;border:1px solid ${it?'rgba(61,220,151,.4)':'rgba(255,255,255,.12)'};background:${it?'rgba(61,220,151,.1)':'transparent'};color:${it?'#3DDC97':'#94a1b5'};border-radius:30px;cursor:pointer;font-size:14px;">🇮🇹 Italiano</button>
+          <button onclick="setLang('en')" style="padding:10px 20px;border:1px solid ${!it?'rgba(61,220,151,.4)':'rgba(255,255,255,.12)'};background:${!it?'rgba(61,220,151,.1)':'transparent'};color:${!it?'#3DDC97':'#94a1b5'};border-radius:30px;cursor:pointer;font-size:14px;">🇬🇧 English</button>
+        </div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,.07);margin:24px 0;">
+        <button onclick="doLogout()" style="padding:12px 24px;border:1px solid rgba(217,78,78,.3);background:rgba(217,78,78,.06);color:#e88;border-radius:30px;cursor:pointer;font-size:14px;">${it?'⏻ Esci dal dashboard':'⏻ Sign out'}</button>
+      </div>`;
+  }
+
+  else if (id === 'risk') {
+    // I parametri di rischio vivono nei runtime settings.
+    const st = await api('/api/dashboard/settings') || {};
+    const risk = { equity_sl: st.MaxDailyDDPct, daily_target: undefined, max_trades: st.MaxTradesPerDay };
+    c.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;">
+        ${kpiCard(it?'EQUITY STOP LOSS':'EQUITY STOP LOSS', risk.equity_sl ? risk.equity_sl+'%' : '—', '#d99a4e', '')}
+        ${kpiCard(it?'DAILY PROFIT TARGET':'DAILY PROFIT TARGET', risk.daily_target ? '+'+risk.daily_target+'%' : '—', '#3DDC97', '')}
+        ${kpiCard(it?'MAX OPERAZIONI':'MAX TRADES', risk.max_trades || '3', '#4F8CFF', '')}
+      </div>
+      <div class="panel">
+        <div style="font-size:14px;color:#9aa6b8;text-align:center;padding:20px 0;">${it?'Dati risk control dal tuo EA via backend Render.':'Risk control data from your EA via Render backend.'}</div>
+      </div>`;
+  }
+
+  else if (id === 'strategies') {
+    // Appiattisco /api/dashboard/strategy_stats in elenco strategie.
+    const resp = await api('/api/dashboard/strategy_stats');
+    const strats = [];
+    if (resp && resp.stats) resp.stats.forEach(blk =>
+      ((blk.data && blk.data.strategies) || []).forEach(s =>
+        strats.push({ name:s.name, enabled:s.enabled,
+          id:(blk.symbol||'') + ' · ' + (s.executed||0) + ' exec' })));
+    if (!strats.length) {
+      c.innerHTML = `<div class="panel" style="padding:40px;text-align:center;"><div style="font-size:14px;color:#7c8aa3;">${it?'Nessuna strategia ricevuta dal backend.':'No strategies received from backend.'}</div></div>`; return;
+    }
+    c.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+      ${strats.map(s=>`
+        <div class="panel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:600;font-size:16px;">${s.name||'Strategy'}</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:${s.enabled?'#3DDC97':'#7c8aa3'};background:${s.enabled?'rgba(61,220,151,.1)':'rgba(255,255,255,.05)'};border:1px solid ${s.enabled?'rgba(61,220,151,.3)':'rgba(255,255,255,.1)'};padding:3px 10px;border-radius:20px;">${s.enabled?(it?'Attiva':'Active'):(it?'Disabilitata':'Disabled')}</span>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5b6472;">ID: ${s.id||'—'}</div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  else {
+    c.innerHTML = `<div class="panel" style="padding:48px;text-align:center;"><div style="font-size:14px;color:#7c8aa3;">${it?'Sezione in arrivo.':'Section coming soon.'}</div></div>`;
+  }
+}
+
+async function sendCommand(cmd) {
+  const res = await api('/api/dashboard/command', {
+    method: 'POST',
+    body: JSON.stringify({action: cmd})
+  });
+  const fb = document.getElementById('cmd-feedback');
+  if (fb) {
+    fb.style.display = 'block';
+    if (res && res.ok) {
+      fb.style.background = 'rgba(61,220,151,.1)';
+      fb.style.border = '1px solid rgba(61,220,151,.3)';
+      fb.style.color = '#3DDC97';
+      fb.textContent = `✓ ${it?'Comando inviato:':'Command sent:'} ${cmd}`;
+    } else {
+      fb.style.background = 'rgba(217,78,78,.08)';
+      fb.style.border = '1px solid rgba(217,78,78,.3)';
+      fb.style.color = '#e88';
+      fb.textContent = it ? 'Errore invio comando. Verifica la connessione al backend.' : 'Error sending command. Check backend connection.';
+    }
+    setTimeout(() => fb.style.display = 'none', 4000);
+  }
+}
+
+function doLogout() {
+  clearToken();
+  location.href = 'login.html';
+}
+
+// Init
+buildNav();
+renderSection('overview');
+loadLiveData();
+// Auto-refresh ogni 30s
+setInterval(loadLiveData, 30000);
+</script>
+</body>
+</html>

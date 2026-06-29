@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus EA — Accedi</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;} html,body{margin:0;}
+  ::selection{background:rgba(61,220,151,.3);}
+  input::placeholder{color:#5b6472;}
+  input:focus{outline:none;border-color:rgba(61,220,151,.5)!important;}
+</style>
+</head>
+<body style="min-height:100vh;display:flex;background:#080B11;font-family:'IBM Plex Sans',sans-serif;color:#EAF0F8;">
+
+<!-- LEFT brand panel -->
+<div style="flex:1.1;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 20% 10%,#14223f 0%,#080B11 55%);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;justify-content:space-between;padding:48px;">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:46px 46px;"></div>
+  <a href="index.html" style="position:relative;display:flex;align-items:center;gap:11px;text-decoration:none;">
+    <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#4F8CFF,#3DDC97);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;color:#06101f;font-size:18px;">N</div>
+    <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:#EAF0F8;">Nexus<span style="font-family:'JetBrains Mono',monospace;color:#3DDC97;font-weight:500;font-size:15px;margin-left:2px;">_EA</span></span>
+  </a>
+  <div style="position:relative;max-width:460px;">
+    <div id="brand-kicker" style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.14em;color:#3DDC97;margin-bottom:18px;"></div>
+    <h1 id="brand-h1" style="font-family:'Sora',sans-serif;font-size:40px;line-height:1.1;font-weight:800;letter-spacing:-0.025em;margin:0 0 18px;"></h1>
+    <p id="brand-sub" style="font-size:16px;line-height:1.6;color:#9aa6b8;margin:0 0 34px;"></p>
+    <div id="brand-perks" style="display:flex;flex-direction:column;gap:14px;"></div>
+  </div>
+  <div style="position:relative;display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#5b6472;">
+    <span style="width:7px;height:7px;border-radius:50%;background:#3DDC97;box-shadow:0 0 8px #3DDC97;"></span>
+    <span id="status-line"></span>
+  </div>
+</div>
+
+<!-- RIGHT form -->
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;">
+  <div style="width:100%;max-width:380px;">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:28px;">
+      <div style="display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid rgba(255,255,255,.12);border-radius:30px;overflow:hidden;">
+        <button id="btn-it" onclick="setLang('it')" style="border:none;cursor:pointer;padding:6px 12px;">IT</button>
+        <button id="btn-en" onclick="setLang('en')" style="border:none;cursor:pointer;padding:6px 12px;">EN</button>
+      </div>
+    </div>
+
+    <!-- Backend URL setup (prima volta) -->
+    <div id="setup-box" style="display:none;margin-bottom:20px;padding:16px;background:rgba(79,140,255,.08);border:1px solid rgba(79,140,255,.25);border-radius:12px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#4F8CFF;margin-bottom:8px;">⚙ BACKEND URL</div>
+      <input id="backend-url-input" type="text" placeholder="https://nexus-backend-xxxx.onrender.com"
+        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px 12px;color:#EAF0F8;font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">
+      <button onclick="saveBackend()" style="width:100%;padding:10px;border:none;cursor:pointer;border-radius:8px;background:rgba(79,140,255,.3);color:#EAF0F8;font-size:13px;">Salva URL</button>
+    </div>
+
+    <h2 id="form-title" style="font-family:'Sora',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.02em;margin:0 0 6px;"></h2>
+    <p id="form-sub" style="font-size:15px;color:#9aa6b8;margin:0 0 28px;"></p>
+
+    <div id="error-box" style="display:none;padding:12px 15px;background:rgba(217,78,78,.1);border:1px solid rgba(217,78,78,.3);border-radius:10px;font-size:13px;color:#e88;margin-bottom:16px;"></div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <label id="lbl-email" style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8aa3;letter-spacing:.06em;margin-bottom:8px;"></label>
+        <input id="inp-email" type="email" value="admin"
+          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 15px;color:#EAF0F8;font-size:15px;">
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label id="lbl-pass" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8aa3;letter-spacing:.06em;"></label>
+          <a href="#" id="lnk-forgot" style="font-size:12px;color:#3DDC97;text-decoration:none;"></a>
+        </div>
+        <input id="inp-pass" type="password" placeholder="••••••••"
+          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 15px;color:#EAF0F8;font-size:15px;">
+      </div>
+      <button id="btn-login" onclick="doLogin()"
+        style="margin-top:4px;padding:15px;border:none;cursor:pointer;border-radius:30px;background:linear-gradient(135deg,#4F8CFF,#3DDC97);color:#06101f;font-weight:600;font-size:15px;font-family:'IBM Plex Sans',sans-serif;"></button>
+    </div>
+
+    <div style="margin-top:26px;display:flex;align-items:center;gap:14px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+      <span id="or-label" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5b6472;"></span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,.08);"></div>
+    </div>
+
+    <div style="text-align:center;font-size:14px;color:#9aa6b8;margin-top:16px;">
+      <span id="no-acct"></span> <a href="prezzi.html" id="buy-link" style="color:#3DDC97;text-decoration:none;font-weight:500;"></a>
+    </div>
+
+    <div id="demo-hint" style="margin-top:26px;padding:13px 15px;background:rgba(79,140,255,.06);border:1px solid rgba(79,140,255,.2);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8fb3f0;text-align:center;"></div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const it = getLang() === 'it';
+
+// Lang buttons
+document.getElementById('btn-it').style.cssText = `border:none;cursor:pointer;padding:6px 12px;background:${it?'rgba(61,220,151,.18)':'transparent'};color:${it?'#3DDC97':'#94a1b5'};`;
+document.getElementById('btn-en').style.cssText = `border:none;cursor:pointer;padding:6px 12px;background:${!it?'rgba(61,220,151,.18)':'transparent'};color:${!it?'#3DDC97':'#94a1b5'};`;
+
+const D = it ? {
+  kicker:'// AREA RISERVATA',
+  brandH1:'La tua plancia di comando per Nexus EA.',
+  brandSub:'Monitora i conti, gestisci le strategie e le licenze, analizza la performance — tutto da un\'unica dashboard collegata in tempo reale al tuo Expert Advisor.',
+  perks:['Validazione licenza in tempo reale via WebRequest','Performance e rischio sempre aggiornati','Controllo totale su strategie e parametri'],
+  statusLine:'Tutti i sistemi operativi · API online',
+  formTitle:'Accedi al tuo account', formSub:'Inserisci le credenziali per entrare nella dashboard.',
+  lblEmail:'EMAIL', lblPass:'PASSWORD', forgot:'Password dimenticata?',
+  loginBtn:'Accedi →', orLabel:'OPPURE',
+  noAcct:"Non hai ancora una licenza?", buyLink:'Acquista Nexus EA',
+  demoHint:'DEMO · inserisci le credenziali del tuo backend Render',
+} : {
+  kicker:'// MEMBER AREA',
+  brandH1:'Your command deck for Nexus EA.',
+  brandSub:"Monitor accounts, manage strategies and licences, analyse performance — all from a single dashboard connected to your Expert Advisor in real time.",
+  perks:['Real-time licence validation via WebRequest','Performance and risk always up to date','Full control over strategies and parameters'],
+  statusLine:'All systems operational · API online',
+  formTitle:'Sign in to your account', formSub:'Enter your credentials to access the dashboard.',
+  lblEmail:'EMAIL', lblPass:'PASSWORD', forgot:'Forgot password?',
+  loginBtn:'Sign in →', orLabel:'OR',
+  noAcct:"Don't have a licence yet?", buyLink:'Buy Nexus EA',
+  demoHint:'DEMO · enter your Render backend credentials',
+};
+
+document.getElementById('brand-kicker').textContent = D.kicker;
+document.getElementById('brand-h1').textContent = D.brandH1;
+document.getElementById('brand-sub').textContent = D.brandSub;
+document.getElementById('brand-perks').innerHTML = D.perks.map(p=>`
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="width:24px;height:24px;border-radius:7px;background:rgba(61,220,151,.14);color:#3DDC97;display:flex;align-items:center;justify-content:center;font-size:12px;">✓</span>
+    <span style="font-size:14.5px;color:#cdd6e4;">${p}</span>
+  </div>`).join('');
+document.getElementById('status-line').textContent = D.statusLine;
+document.getElementById('form-title').textContent = D.formTitle;
+document.getElementById('form-sub').textContent = D.formSub;
+document.getElementById('lbl-email').textContent = D.lblEmail;
+document.getElementById('lbl-pass').textContent = D.lblPass;
+document.getElementById('lnk-forgot').textContent = D.forgot;
+document.getElementById('btn-login').textContent = D.loginBtn;
+document.getElementById('or-label').textContent = D.orLabel;
+document.getElementById('no-acct').textContent = D.noAcct;
+document.getElementById('buy-link').textContent = D.buyLink;
+document.getElementById('demo-hint').textContent = D.demoHint;
+
+// Mostra setup box se backend non configurato
+if (!getBackend()) {
+  document.getElementById('setup-box').style.display = 'block';
+  const saved = localStorage.getItem('nexus_backend_url_draft') || '';
+  if (saved) document.getElementById('backend-url-input').value = saved;
+}
+
+function saveBackend() {
+  const url = document.getElementById('backend-url-input').value.trim().replace(/\/$/, '');
+  if (!url) return;
+  localStorage.setItem('nexus_backend_url', url);
+  document.getElementById('setup-box').style.display = 'none';
+}
+
+async function doLogin() {
+  const btn = document.getElementById('btn-login');
+  const errBox = document.getElementById('error-box');
+  errBox.style.display = 'none';
+  btn.textContent = it ? 'Accesso...' : 'Signing in...';
+  btn.disabled = true;
+
+  const username = document.getElementById('inp-email').value.trim();
+  const password = document.getElementById('inp-pass').value;
+
+  if (!getBackend()) {
+    errBox.textContent = it ? 'Configura prima il Backend URL sopra.' : 'Please configure the Backend URL above first.';
+    errBox.style.display = 'block';
+    btn.textContent = D.loginBtn; btn.disabled = false; return;
+  }
+
+  try {
+    const r = await fetch(getBackend() + '/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await r.json();
+    if (r.ok && data.token) {
+      setToken(data.token);
+      location.href = 'dashboard.html';
+    } else {
+      errBox.textContent = data.detail || (it ? 'Credenziali non valide.' : 'Invalid credentials.');
+      errBox.style.display = 'block';
+      btn.textContent = D.loginBtn; btn.disabled = false;
+    }
+  } catch(e) {
+    errBox.textContent = it ? 'Impossibile connettersi al backend. Verifica l\'URL.' : 'Cannot connect to backend. Check the URL.';
+    errBox.style.display = 'block';
+    btn.textContent = D.loginBtn; btn.disabled = false;
+  }
+}
+
+// Enter key
+document.getElementById('inp-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// Se già loggato vai alla dashboard
+if (isLoggedIn()) location.href = 'dashboard.html';
+</script>
+</body>
+</html>

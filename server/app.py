@@ -698,17 +698,16 @@ async def dash_locked_put(request: Request, user: str = Depends(require_user)):
     return {"ok": True, "locked_profiles": data}
 
 
-# ======================= STATIC DASHBOARD ================================ #
+# ======================= STATIC SITE ===================================== #
+# Sito multi-pagina (index/login/dashboard/performance/prezzi/faq/strategia).
+# Montato su "/" DOPO le route /api: html=True serve index.html sulla root e
+# i singoli .html sui rispettivi path. Le route API sopra hanno la precedenza.
 if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-
-@app.get("/")
-def root():
-    index = STATIC_DIR / "index.html"
-    if index.exists():
-        return FileResponse(str(index))
-    return JSONResponse({"service": "nexus-backend", "dashboard": "static/ mancante"})
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="site")
+else:
+    @app.get("/")
+    def _no_site():
+        return JSONResponse({"service": "nexus-backend", "site": "static/ mancante"})
 
 
 if __name__ == "__main__":
