@@ -26,6 +26,10 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      - key: ANTHROPIC_API_KEY    # chiave API Claude per l'AI Coach
+        sync: false
+      - key: NEXUS_COACH_MODEL
+        value: claude-opus-4-8
     disk:
       name: nexus-data             # disco persistente per il database SQLite
       mountPath: /data
