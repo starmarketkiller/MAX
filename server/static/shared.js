@@ -1,5 +1,38 @@
 // NEXUS EA — Shared utilities
 
+// --- Responsive mobile: override degli stili inline su schermi piccoli ---
+(function injectResponsive() {
+  if (document.getElementById('nexus-responsive')) return;
+  var css = `
+  html, body { overflow-x: hidden; }
+  img, svg, table, video { max-width: 100%; height: auto; }
+  @media (max-width: 860px) {
+    [style*="grid-template-columns"] { grid-template-columns: 1fr !important; gap: 16px !important; }
+    [style*="max-width:1200px"] { padding-left: 18px !important; padding-right: 18px !important; }
+    [style*="padding:70px 40px 60px"], [style*="padding:80px 40px 30px"],
+    [style*="padding:64px 40px 24px"], [style*="padding:60px 40px"],
+    [style*="padding:56px 48px"] { padding: 40px 18px !important; }
+    [style*="font-size:56px"] { font-size: 32px !important; }
+    [style*="font-size:50px"], [style*="font-size:48px"] { font-size: 30px !important; }
+    [style*="font-size:42px"], [style*="font-size:40px"], [style*="font-size:38px"] { font-size: 27px !important; }
+    [style*="font-size:34px"], [style*="font-size:32px"] { font-size: 23px !important; }
+    /* nav compatto e a capo */
+    #main-nav > div { padding: 12px 16px !important; flex-wrap: wrap !important; gap: 12px !important; }
+    #main-nav [style*="gap:42px"], #main-nav [style*="gap:28px"] { gap: 14px !important; flex-wrap: wrap !important; }
+    #main-nav [style*="gap:18px"] { gap: 10px !important; }
+    /* righe flex che diventano colonna */
+    [style*="display:flex"][style*="gap:36px"], [style*="display:flex"][style*="gap:54px"] { flex-wrap: wrap !important; }
+  }
+  @media (max-width: 480px) {
+    [style*="font-size:56px"] { font-size: 27px !important; }
+    [style*="font-size:50px"], [style*="font-size:48px"], [style*="font-size:42px"] { font-size: 25px !important; }
+  }`;
+  var el = document.createElement('style');
+  el.id = 'nexus-responsive';
+  el.textContent = css;
+  (document.head || document.documentElement).appendChild(el);
+})();
+
 function getLang() { return localStorage.getItem('nexus_lang') || 'it'; }
 function setLang(l) { localStorage.setItem('nexus_lang', l); location.reload(); }
 function getToken() { return localStorage.getItem('nexus_token'); }

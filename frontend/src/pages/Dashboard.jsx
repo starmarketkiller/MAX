@@ -5,9 +5,11 @@ import {
   ShieldAlert, Clock, Target,
   Menu, FileDown, HelpCircle,
   Gauge, Command as CommandIcon,
+  Sun, Moon,
 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useTheme } from "@/lib/theme";
 import LicensesPage from "@/pages/Licenses";
 import CoachPage from "@/pages/Coach";
 import JournalPage from "@/pages/Journal";
@@ -40,6 +42,7 @@ import {
 // PAGE HEADER
 // ========================================================================
 function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
+  const { theme, toggle } = useTheme();
   const paused = !!status?.eaPaused;
   const online = !!status?.online;
   const equity = status?.equity ?? 0;
@@ -124,6 +127,13 @@ function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
               <kbd className="ml-1 px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono group-hover:border-primary/40">⌘K</kbd>
             </button>
           )}
+          <button onClick={toggle}
+                  title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
+                  aria-label="Cambia tema"
+                  data-testid="header-theme-toggle"
+                  className="h-9 w-9 rounded-lg border border-border hover:bg-secondary flex items-center justify-center">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           <NotificationBell />
           {onExportPdf && (
             <button onClick={onExportPdf} title="Esporta PDF tear-sheet"
