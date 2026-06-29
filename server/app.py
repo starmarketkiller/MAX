@@ -57,6 +57,7 @@ COACH_MODEL       = os.environ.get("NEXUS_COACH_MODEL", "claude-opus-4-8")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 WORKER_FILE = Path(__file__).resolve().parent / "nexus_local_worker.py"
+SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 
 # Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
 # Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
@@ -291,9 +292,51 @@ def require_user(authorization: Optional[str] = Header(None),
 app = FastAPI(title="NEXUS self-hosted backend", version="2.0.13")
 
 
+def _seed_strategy_results() -> None:
+    """Importa i risultati reali del backtest (server/seed_results.json) come
+    strategy library + locked profile di default. Idempotente (hash del file)."""
+    if not SEED_FILE.exists():
+        return
+    try:
+        raw = SEED_FILE.read_bytes()
+        data = json.loads(raw)
+    except Exception as e:
+        print(f"[NEXUS] seed parse failed: {e}")
+        return
+    marker = hashlib.sha256(raw).hexdigest()[:16]
+    if kv_get("seed_version") == marker:
+        return  # già importato questa versione
+    results = data.get("results", [])
+    lib = [{
+        "name": r["strategy"], "strategy": r["strategy"], "symbol": "",
+        "timeframe": r.get("timeframe", "D1"), "management": r.get("management"),
+        "trades": r.get("trades"), "win_rate": r.get("win_rate"),
+        "profit_factor": r.get("profit_factor"), "sharpe": r.get("sharpe"),
+        "max_dd": r.get("max_dd"), "net": r.get("net"),
+        "evaluated": r.get("evaluated", True), "params": r.get("params", {}),
+    } for r in results if r.get("strategy")]
+    kv_set("strategy_results", lib)
+    # locked profile di default "*" = miglior Sharpe tra le strategie valutate
+    evaluated = [r for r in lib if r.get("evaluated")]
+    best = max(evaluated, key=lambda r: (r.get("sharpe") or -9)) if evaluated else None
+    if best:
+        profiles = kv_get("locked_profiles", {})
+        profiles.setdefault("*", {
+            "locked": True, "label": f"{best['strategy']} · {best.get('management')}",
+            "saved_at": iso(), "strategy": best["strategy"], "management": best.get("management"),
+            "metrics": {"sharpe": best.get("sharpe"), "profit_factor": best.get("profit_factor"),
+                        "win_rate": best.get("win_rate"), "max_dd": best.get("max_dd")},
+            "params": best.get("params", {}),
+        })
+        kv_set("locked_profiles", profiles)
+    kv_set("seed_version", marker)
+    print(f"[NEXUS] seeded {len(lib)} strategy results — default lock = {best and best['strategy']}")
+
+
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    _seed_strategy_results()
     print(f"[NEXUS] backend up — db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
 

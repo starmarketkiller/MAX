@@ -1,0 +1,572 @@
+{
+  "source": "emergent-backtest",
+  "timeframe": "D1",
+  "generated": "imported",
+  "count": 36,
+  "results": [
+    {
+      "rank": 1,
+      "strategy": "CISD",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 62,
+      "win_rate": 33.87,
+      "profit_factor": 4.34,
+      "sharpe": 2.29,
+      "max_dd": -5.68,
+      "net": 77.15,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 2,
+      "strategy": "MALAYSIAN_SNR",
+      "timeframe": "D1",
+      "management": "grid_aggressive",
+      "trades": 29,
+      "win_rate": 65.52,
+      "profit_factor": 7.09,
+      "sharpe": 2.17,
+      "max_dd": -16.49,
+      "net": 739.68,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_aggressive"
+      }
+    },
+    {
+      "rank": 3,
+      "strategy": "WEEKLY_EXP",
+      "timeframe": "D1",
+      "management": "grid_balanced",
+      "trades": 24,
+      "win_rate": 62.5,
+      "profit_factor": 4.39,
+      "sharpe": 1.92,
+      "max_dd": -7.66,
+      "net": 67.89,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_balanced"
+      }
+    },
+    {
+      "rank": 4,
+      "strategy": "OTE_CONT",
+      "timeframe": "D1",
+      "management": "grid_safe",
+      "trades": 13,
+      "win_rate": 61.54,
+      "profit_factor": 4.44,
+      "sharpe": 1.39,
+      "max_dd": -4.05,
+      "net": 27.73,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_safe"
+      }
+    },
+    {
+      "rank": 5,
+      "strategy": "FVG_CONT",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 55,
+      "win_rate": 27.27,
+      "profit_factor": 2.5,
+      "sharpe": 1.36,
+      "max_dd": -6.84,
+      "net": 36.0,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 6,
+      "strategy": "IFVG",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 55,
+      "win_rate": 27.27,
+      "profit_factor": 2.5,
+      "sharpe": 1.36,
+      "max_dd": -6.84,
+      "net": 36.0,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 7,
+      "strategy": "SMS_BMS_RTO",
+      "timeframe": "D1",
+      "management": "grid_safe",
+      "trades": 28,
+      "win_rate": 42.86,
+      "profit_factor": 2.17,
+      "sharpe": 1.27,
+      "max_dd": -9.3,
+      "net": 29.78,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_safe"
+      }
+    },
+    {
+      "rank": 8,
+      "strategy": "BREAKOUT_ACC",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 41,
+      "win_rate": 51.22,
+      "profit_factor": 2.25,
+      "sharpe": 1.12,
+      "max_dd": -3.17,
+      "net": 21.51,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 9,
+      "strategy": "ADX_RSI",
+      "timeframe": "D1",
+      "management": "grid+be",
+      "trades": 19,
+      "win_rate": 36.84,
+      "profit_factor": 4.98,
+      "sharpe": 0.96,
+      "max_dd": -10.77,
+      "net": 26.74,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0,
+        "GridEnabled": true,
+        "GridMode": "grid+be"
+      }
+    },
+    {
+      "rank": 10,
+      "strategy": "SH_BMS_RTO",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 45,
+      "win_rate": 22.22,
+      "profit_factor": 1.76,
+      "sharpe": 0.91,
+      "max_dd": -7.9,
+      "net": 17.01,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 11,
+      "strategy": "PO3",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 31,
+      "win_rate": 41.94,
+      "profit_factor": 2.0,
+      "sharpe": 0.88,
+      "max_dd": -4.67,
+      "net": 13.4,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 12,
+      "strategy": "FVG_MIT",
+      "timeframe": "D1",
+      "management": "grid_safe",
+      "trades": 51,
+      "win_rate": 35.29,
+      "profit_factor": 1.51,
+      "sharpe": 0.86,
+      "max_dd": -13.99,
+      "net": 27.71,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_safe"
+      }
+    },
+    {
+      "rank": 13,
+      "strategy": "DISP_REBAL",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 18,
+      "win_rate": 22.22,
+      "profit_factor": 2.13,
+      "sharpe": 0.74,
+      "max_dd": -5.0,
+      "net": 7.99,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 14,
+      "strategy": "LIQ_VOID",
+      "timeframe": "D1",
+      "management": "grid+be",
+      "trades": 34,
+      "win_rate": 29.41,
+      "profit_factor": 2.22,
+      "sharpe": 0.71,
+      "max_dd": -14.52,
+      "net": 29.87,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0,
+        "GridEnabled": true,
+        "GridMode": "grid+be"
+      }
+    },
+    {
+      "rank": 15,
+      "strategy": "MACD",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 26,
+      "win_rate": 19.23,
+      "profit_factor": 1.64,
+      "sharpe": 0.49,
+      "max_dd": -6.98,
+      "net": 6.18,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 16,
+      "strategy": "STRUCT_REACT",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 8,
+      "win_rate": 25.0,
+      "profit_factor": 1.47,
+      "sharpe": 0.3,
+      "max_dd": -4.2,
+      "net": 2.37,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 17,
+      "strategy": "ORDER_BLOCK",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 39,
+      "win_rate": 15.38,
+      "profit_factor": 1.16,
+      "sharpe": 0.23,
+      "max_dd": -6.7,
+      "net": 3.04,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 18,
+      "strategy": "EMA_PULLBACK",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 24,
+      "win_rate": 16.67,
+      "profit_factor": 1.13,
+      "sharpe": 0.15,
+      "max_dd": -9.92,
+      "net": 1.67,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 19,
+      "strategy": "LONDON_BO",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 20,
+      "strategy": "TSI",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 21,
+      "strategy": "RANGE_FADE",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 22,
+      "strategy": "SILVER_BULLET",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 23,
+      "strategy": "AMD_REVERSAL",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 24,
+      "strategy": "AMD_CONT",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 25,
+      "strategy": "JUDAS_SWING",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 26,
+      "strategy": "LDN_REVERSAL",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 27,
+      "strategy": "NY_REVERSAL",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 0,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": 0.0,
+      "max_dd": 0.0,
+      "net": 0.0,
+      "evaluated": false,
+      "params": {}
+    },
+    {
+      "rank": 28,
+      "strategy": "ICHIMOKU",
+      "timeframe": "D1",
+      "management": "grid_safe",
+      "trades": 6,
+      "win_rate": 16.67,
+      "profit_factor": 0.9,
+      "sharpe": -0.04,
+      "max_dd": -7.69,
+      "net": -0.84,
+      "evaluated": true,
+      "params": {
+        "GridEnabled": true,
+        "GridMode": "grid_safe"
+      }
+    },
+    {
+      "rank": 29,
+      "strategy": "BB_SQUEEZE",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 5,
+      "win_rate": 40.0,
+      "profit_factor": 0.78,
+      "sharpe": -0.09,
+      "max_dd": -3.28,
+      "net": -0.53,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 30,
+      "strategy": "LIQ_SWEEP",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 31,
+      "win_rate": 35.48,
+      "profit_factor": 0.9,
+      "sharpe": -0.1,
+      "max_dd": -10.81,
+      "net": -1.69,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 31,
+      "strategy": "OB_MIT",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 90,
+      "win_rate": 30.0,
+      "profit_factor": 0.93,
+      "sharpe": -0.12,
+      "max_dd": -19.79,
+      "net": -3.35,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 32,
+      "strategy": "TURTLE_SOUP",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 15,
+      "win_rate": 13.33,
+      "profit_factor": 0.82,
+      "sharpe": -0.14,
+      "max_dd": -9.32,
+      "net": -1.67,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 33,
+      "strategy": "SAR",
+      "timeframe": "D1",
+      "management": "be_1R",
+      "trades": 42,
+      "win_rate": 11.9,
+      "profit_factor": 0.84,
+      "sharpe": -0.21,
+      "max_dd": -14.28,
+      "net": -3.64,
+      "evaluated": true,
+      "params": {
+        "BreakevenR": 1.0
+      }
+    },
+    {
+      "rank": 34,
+      "strategy": "BJORGUM",
+      "timeframe": "D1",
+      "management": "trail_1.5atr",
+      "trades": 85,
+      "win_rate": 32.94,
+      "profit_factor": 0.77,
+      "sharpe": -0.55,
+      "max_dd": -22.43,
+      "net": -11.83,
+      "evaluated": true,
+      "params": {
+        "TrailingAtrMult": 1.5
+      }
+    },
+    {
+      "rank": 35,
+      "strategy": "RSI_DIV",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 32,
+      "win_rate": 12.5,
+      "profit_factor": 0.53,
+      "sharpe": -0.66,
+      "max_dd": -14.46,
+      "net": -11.98,
+      "evaluated": true,
+      "params": {}
+    },
+    {
+      "rank": 36,
+      "strategy": "BOLLINGER",
+      "timeframe": "D1",
+      "management": "baseline",
+      "trades": 3,
+      "win_rate": 0.0,
+      "profit_factor": 0.0,
+      "sharpe": -1.41,
+      "max_dd": -2.97,
+      "net": -2.97,
+      "evaluated": true,
+      "params": {}
+    }
+  ]
+}
