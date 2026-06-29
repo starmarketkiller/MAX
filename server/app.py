@@ -396,6 +396,14 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
             "magic=excluded.magic, symbol=excluded.symbol",
             (key, magic, symbol, json.dumps(data), now()),
         )
+    # serie equity per il grafico live (/ea/history) — cap a 300 punti
+    try:
+        hist = kv_get("equity_history", [])
+        hist.append({"ts": iso(), "equity": data.get("equity"),
+                     "balance": data.get("balance"), "floatPnL": data.get("floatPnL")})
+        kv_set("equity_history", hist[-300:])
+    except Exception:
+        pass
     return {"ok": True}
 
 
@@ -960,8 +968,8 @@ async def strategies_save(request: Request, user: str = Depends(require_user)):
 # ======================= ANALYTICS (JWT) =============================== #
 @app.get("/api/analytics/trades")
 def analytics_trades(limit: int = 500, user: str = Depends(require_user)):
-    trades = _trades_with_meta(limit)
-    return {"trades": trades, "count": len(trades), "demo": len(trades) == 0}
+    # Il frontend usa la risposta come array diretto (.slice/.filter).
+    return _trades_with_meta(limit)
 
 
 @app.get("/api/analytics/summary")
@@ -1024,14 +1032,17 @@ PRESET_TAGS = ["good-entry", "fomo", "news-spike", "revenge", "perfect-exit",
 
 @app.get("/api/journal/tags")
 def journal_tags(user: str = Depends(require_user)):
-    used = set()
+    counts = {}
     with _conn() as c:
         for r in c.execute("SELECT tags FROM journal_meta WHERE tags IS NOT NULL"):
             try:
-                used.update(json.loads(r["tags"]))
+                for t in json.loads(r["tags"]):
+                    counts[t] = counts.get(t, 0) + 1
             except Exception:
                 pass
-    return {"preset": PRESET_TAGS, "used": sorted(used)}
+    tags = [{"tag": t, "count": n} for t, n in sorted(counts.items())]
+    # 'tags' = stats per il frontend; 'preset'/'used' restano per compat
+    return {"tags": tags, "preset": PRESET_TAGS, "used": sorted(counts.keys())}
 
 
 @app.post("/api/trades/{ticket}/tag")
@@ -1175,15 +1186,18 @@ def backtest_locked_all(user: str = Depends(require_user)):
 # ======================= CALENDAR (JWT, demo) ========================== #
 @app.get("/api/calendar")
 def calendar(user: str = Depends(require_user)):
+    # Campi attesi dal frontend: ts, country, impact, title, note.
     base = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    events = [
-        {"time": (base + timedelta(hours=2)).isoformat(), "currency": "USD",
-         "impact": "high", "event": "Core CPI m/m"},
-        {"time": (base + timedelta(hours=5)).isoformat(), "currency": "EUR",
-         "impact": "medium", "event": "ECB President Speech"},
-        {"time": (base + timedelta(hours=26)).isoformat(), "currency": "USD",
-         "impact": "high", "event": "Non-Farm Payrolls"},
+    raw = [
+        (2, "US", "high", "Core CPI m/m"),
+        (5, "EU", "medium", "ECB President Speech"),
+        (26, "US", "high", "Non-Farm Payrolls"),
+        (30, "UK", "medium", "BoE Rate Decision"),
+        (50, "US", "high", "FOMC Statement"),
     ]
+    events = [{"ts": (base + timedelta(hours=h)).isoformat(), "country": ctry,
+               "impact": imp, "title": title, "note": ""}
+              for (h, ctry, imp, title) in raw]
     return {"events": events, "demo": True,
             "note": "Calendario dimostrativo — collegare un feed news reale in seguito."}
 
@@ -1405,11 +1419,11 @@ STRAT_META = {
 }
 
 
-# ---- EA history ----
+# ---- EA history (serie equity per il grafico live) ----
 @app.get("/api/ea/history")
 def ea_history(limit: int = 120, user: str = Depends(require_user)):
-    trades = _trades_with_meta(limit)
-    return {"trades": trades, "count": len(trades), "demo": len(trades) == 0}
+    # Array diretto di punti {ts, equity, balance, floatPnL} (lo usa HomePage).
+    return kv_get("equity_history", [])[-limit:]
 
 
 # ---- generic command (React POSTs /command) ----
@@ -1425,10 +1439,10 @@ async def command_post(request: Request, user: str = Depends(require_user)):
     return {"ok": True, "id": _enqueue_ea_command(action, payload), "action": action}
 
 
-# ---- settings history ----
+# ---- settings history (array diretto: SettingsPage usa .flatMap/.length) ----
 @app.get("/api/settings/history")
 def settings_history(limit: int = 50, user: str = Depends(require_user)):
-    return {"history": kv_get("settings_history", []), "demo": not kv_get("settings_history", [])}
+    return kv_get("settings_history", [])[-limit:]
 
 
 # ---- analytics extra ----
