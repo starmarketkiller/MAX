@@ -1574,6 +1574,24 @@ def coach_session_delete(session_id: str, user: str = Depends(require_user)):
     return {"ok": True, "deleted": session_id}
 
 
+# ======================= REACT APP (SPA su /app) ======================== #
+APP_DIR = STATIC_DIR / "app"
+
+
+@app.get("/app")
+@app.get("/app/{full_path:path}")
+def serve_react_app(full_path: str = ""):
+    """Serve la dashboard React buildata con fallback SPA per il client routing."""
+    index = APP_DIR / "index.html"
+    if not index.exists():
+        raise HTTPException(status_code=404, detail="frontend React non buildato")
+    if full_path:
+        candidate = (APP_DIR / full_path).resolve()
+        if str(candidate).startswith(str(APP_DIR.resolve())) and candidate.is_file():
+            return FileResponse(str(candidate))
+    return FileResponse(str(index))
+
+
 # ======================= STATIC SITE ===================================== #
 # Sito multi-pagina (index/login/dashboard/performance/prezzi/faq/strategia).
 # Montato su "/" DOPO le route /api: html=True serve index.html sulla root e

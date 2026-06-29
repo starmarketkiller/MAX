@@ -1,0 +1,87 @@
+{
+  "name": "nexus-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "homepage": "/app",
+  "dependencies": {
+    "@radix-ui/react-accordion": "latest",
+    "@radix-ui/react-alert-dialog": "latest",
+    "@radix-ui/react-aspect-ratio": "latest",
+    "@radix-ui/react-avatar": "latest",
+    "@radix-ui/react-checkbox": "latest",
+    "@radix-ui/react-collapsible": "latest",
+    "@radix-ui/react-context-menu": "latest",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-dropdown-menu": "latest",
+    "@radix-ui/react-hover-card": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-menubar": "latest",
+    "@radix-ui/react-navigation-menu": "latest",
+    "@radix-ui/react-popover": "latest",
+    "@radix-ui/react-progress": "latest",
+    "@radix-ui/react-radio-group": "latest",
+    "@radix-ui/react-scroll-area": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-separator": "latest",
+    "@radix-ui/react-slider": "latest",
+    "@radix-ui/react-slot": "latest",
+    "@radix-ui/react-switch": "latest",
+    "@radix-ui/react-tabs": "latest",
+    "@radix-ui/react-toast": "latest",
+    "@radix-ui/react-toggle": "latest",
+    "@radix-ui/react-toggle-group": "latest",
+    "@radix-ui/react-tooltip": "latest",
+    "@tanstack/react-query": "^5.56.2",
+    "ajv": "^8.20.0",
+    "axios": "^1.7.7",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
+    "date-fns": "^3.6.0",
+    "embla-carousel-react": "^8.3.0",
+    "input-otp": "^1.2.4",
+    "lightweight-charts": "^5.2.0",
+    "lucide-react": "^0.441.0",
+    "next-themes": "^0.3.0",
+    "react": "^18.3.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "react-resizable-panels": "^2.1.2",
+    "react-router-dom": "^6.26.2",
+    "recharts": "^2.12.7",
+    "sonner": "^1.5.0",
+    "tailwind-merge": "^2.5.2",
+    "vaul": "^0.9.4"
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "react-scripts": "5.0.1",
+    "tailwindcss": "^3.4.10",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
