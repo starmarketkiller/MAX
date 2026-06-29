@@ -162,14 +162,31 @@ def rsi_series(vals, n=14):
 # ----------------------------------------------------------------------------- #
 # Strategie (signal: +1 long, -1 short, 0 nessun segnale al bar i)
 # ----------------------------------------------------------------------------- #
+def _std(vals, n, i):
+    if i + 1 < n:
+        return None
+    m = sum(vals[i - n + 1:i + 1]) / n
+    return math.sqrt(sum((x - m) ** 2 for x in vals[i - n + 1:i + 1]) / n)
+
+
+def _hh(candles, n, i):
+    return max(x["high"] for x in candles[i - n + 1:i + 1]) if i + 1 >= n else None
+
+
+def _ll(candles, n, i):
+    return min(x["low"] for x in candles[i - n + 1:i + 1]) if i + 1 >= n else None
+
+
 def _prep(candles):
     closes = [c["close"] for c in candles]
     return {
+        "candles": candles,
         "close": closes,
         "ema20": ema_series(closes, 20),
         "ema50": ema_series(closes, 50),
         "ema12": ema_series(closes, 12),
         "ema26": ema_series(closes, 26),
+        "ema200": ema_series(closes, 200),
         "rsi": rsi_series(closes, 14),
         "atr": atr_series(candles, 14),
     }
@@ -236,13 +253,94 @@ def sig_adx_rsi(c, ind, i):
     return 0
 
 
+def sig_bollinger(c, ind, i):
+    closes = ind["close"]
+    sd = _std(closes, 20, i)
+    mid = sma(closes, 20, i)
+    if None in (sd, mid) or sd == 0:
+        return 0
+    upper, lower = mid + 2 * sd, mid - 2 * sd
+    px, ppx = closes[i], closes[i - 1]
+    if ppx <= lower < px:          # rientro dalla banda inferiore
+        return 1
+    if ppx >= upper > px:          # rientro dalla banda superiore
+        return -1
+    return 0
+
+
+def sig_bb_squeeze(c, ind, i, look=40):
+    closes = ind["close"]
+    sd = _std(closes, 20, i)
+    mid = sma(closes, 20, i)
+    if None in (sd, mid) or i < look:
+        return 0
+    width = 4 * sd
+    widths = [(_std(closes, 20, j) or 0) * 4 for j in range(i - look, i)]
+    if not widths:
+        return 0
+    if width <= min(widths) * 1.05:   # squeeze: banda strettissima
+        hi, lo = _hh(c, 20, i - 1), _ll(c, 20, i - 1)
+        if hi and closes[i] > hi:
+            return 1
+        if lo and closes[i] < lo:
+            return -1
+    return 0
+
+
+def sig_tsi(c, ind, i):
+    # proxy momentum (come nel MQL5: RSI/EMA): RSI>52 e prezzo>ema20 in salita
+    r = ind["rsi"][i]
+    e = ind["ema20"][i]
+    if None in (r, e, ind["ema20"][i - 1]):
+        return 0
+    if r > 52 and ind["close"][i] > e and e > ind["ema20"][i - 1]:
+        return 1
+    if r < 48 and ind["close"][i] < e and e < ind["ema20"][i - 1]:
+        return -1
+    return 0
+
+
+def sig_ichimoku(c, ind, i):
+    # Kumo break semplificato: tenkan/kijun + prezzo vs nuvola
+    if i < 52:
+        return 0
+    tenkan = (_hh(c, 9, i) + _ll(c, 9, i)) / 2
+    kijun = (_hh(c, 26, i) + _ll(c, 26, i)) / 2
+    spanA = (tenkan + kijun) / 2
+    spanB = (_hh(c, 52, i) + _ll(c, 52, i)) / 2
+    top, bot = max(spanA, spanB), min(spanA, spanB)
+    px, ppx = ind["close"][i], ind["close"][i - 1]
+    if ppx <= top < px and tenkan > kijun:
+        return 1
+    if ppx >= bot > px and tenkan < kijun:
+        return -1
+    return 0
+
+
+# Strategie con logica Python reale (le altre 36 usano i risultati reali importati)
 STRATEGIES = {
     "EMA_PULLBACK": sig_ema_pullback,
     "MACD": sig_macd,
     "RSI_DIV": sig_rsi_div,
     "BREAKOUT_ACC": sig_breakout,
     "ADX_RSI": sig_adx_rsi,
+    "BOLLINGER": sig_bollinger,
+    "BB_SQUEEZE": sig_bb_squeeze,
+    "TSI": sig_tsi,
+    "ICHIMOKU": sig_ichimoku,
+    "LONDON_BO": sig_breakout,        # breakout-based proxy
+    "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
 }
+
+# Tutte le 36 strategie dell'EA (dai sorgenti MQL5).
+STRAT_NAMES_36 = [
+    "ADX_RSI", "AMD_CONT", "AMD_REVERSAL", "BB_SQUEEZE", "BJORGUM", "BOLLINGER",
+    "BREAKOUT_ACC", "CISD", "DISP_REBAL", "EMA_PULLBACK", "FVG_CONT", "FVG_MIT",
+    "ICHIMOKU", "IFVG", "JUDAS_SWING", "LDN_REVERSAL", "LIQ_SWEEP", "LIQ_VOID",
+    "LONDON_BO", "MACD", "MALAYSIAN_SNR", "NY_REVERSAL", "OB_MIT", "ORDER_BLOCK",
+    "OTE_CONT", "PO3", "RANGE_FADE", "RSI_DIV", "SAR", "SH_BMS_RTO",
+    "SILVER_BULLET", "SMS_BMS_RTO", "STRUCT_REACT", "TSI", "TURTLE_SOUP", "WEEKLY_EXP",
+]
 
 
 # ----------------------------------------------------------------------------- #
