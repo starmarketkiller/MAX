@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   NEXUS COCKPIT — palette tokens
+   Dark is the default (forced via <html class="dark"> in theme.jsx).
+   ========================================================================= */
+@layer base {
+  :root {
+    /* Light fallback (kept for optional toggle) */
+    --background: 210 30% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 189 94% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 30% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 30% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 84% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 96% 48%;
+    --warning-foreground: 222 47% 11%;
+    --border: 214 25% 89%;
+    --input: 214 25% 89%;
+    --ring: 189 94% 38%;
+    --radius: 0.875rem;
+
+    /* Cockpit accent */
+    --cyan: 189 94% 50%;
+    --lime: 152 76% 50%;
+    --amber: 38 96% 56%;
+    --crimson: 0 84% 62%;
+  }
+
+  .dark {
+    /* Deep night-blue — escapes pure black, prevents OLED smear */
+    --background: 220 43% 5%;        /* #080c14 */
+    --foreground: 215 16% 92%;
+    --card: 222 40% 8%;              /* #0d1320 — slight blue lift over bg */
+    --card-foreground: 215 16% 92%;
+    --popover: 222 40% 8%;
+    --popover-foreground: 215 16% 92%;
+    --primary: 189 94% 55%;          /* electric cyan #22d3ee-ish */
+    --primary-foreground: 220 43% 5%;
+    --secondary: 218 32% 13%;
+    --secondary-foreground: 215 16% 92%;
+    --muted: 218 32% 13%;
+    --muted-foreground: 215 16% 60%;
+    --accent: 218 32% 13%;
+    --accent-foreground: 215 16% 92%;
+    --destructive: 0 84% 62%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 76% 50%;          /* lime-emerald for profit */
+    --success-foreground: 220 43% 5%;
+    --warning: 38 96% 56%;           /* amber */
+    --warning-foreground: 220 43% 5%;
+    --border: 217 30% 16%;
+    --input: 217 30% 16%;
+    --ring: 189 94% 55%;
+
+    --cyan: 189 94% 55%;
+    --lime: 152 76% 50%;
+    --amber: 38 96% 56%;
+    --crimson: 0 84% 62%;
+  }
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html, body, #root {
+  min-height: 100%;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.005em;
+}
+
+/* Cockpit background ambience — soft radial cyan/violet glow + grid + noise */
+.dark body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 1200px 700px at 12% -10%, hsl(189 94% 55% / 0.07), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 95% 110%, hsl(220 90% 55% / 0.06), transparent 60%);
+}
+.dark body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+}
+#root { position: relative; z-index: 1; }
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum', 'ss01';
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Small caps eyebrow labels */
+.eyebrow {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+}
+
+/* Custom scrollbar — slim, cockpit-like */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.5); background-clip: padding-box; }
+
+::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
+
+button { cursor: pointer; }
+
+/* Focus ring — cyan */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring) / 0.6);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* =========================================================================
+   ANIMATIONS
+   ========================================================================= */
+@keyframes nx-pulse-ring {
+  0%   { transform: scale(0.85); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.5;
+  animation: nx-pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes nx-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: nx-fade-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes nx-fade-up-stagger {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: nx-fade-up-stagger 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.fade-up-0 { animation-delay: 0ms; }
+.fade-up-1 { animation-delay: 60ms; }
+.fade-up-2 { animation-delay: 120ms; }
+.fade-up-3 { animation-delay: 180ms; }
+.fade-up-4 { animation-delay: 240ms; }
+.fade-up-5 { animation-delay: 300ms; }
+
+@keyframes nx-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.4) 0%,
+    hsl(var(--muted) / 0.7) 50%,
+    hsl(var(--muted) / 0.4) 100%
+  );
+  background-size: 200% 100%;
+  animation: nx-shimmer 1.6s linear infinite;
+}
+
+@keyframes nx-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.blink { animation: nx-blink 1.4s ease-in-out infinite; }
+
+/* Cockpit hover-lift — generic interactive surface */
+.hover-lift {
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 30px -12px hsl(var(--primary) / 0.18),
+    0 0 0 1px hsl(var(--primary) / 0.18);
+}
+
+/* Glow utilities for status dots */
+.glow-success { box-shadow: 0 0 12px hsl(var(--success) / 0.7), 0 0 4px hsl(var(--success) / 0.9); }
+.glow-warning { box-shadow: 0 0 12px hsl(var(--warning) / 0.7), 0 0 4px hsl(var(--warning) / 0.9); }
+.glow-danger  { box-shadow: 0 0 12px hsl(var(--destructive) / 0.7), 0 0 4px hsl(var(--destructive) / 0.9); }
+.glow-primary { box-shadow: 0 0 12px hsl(var(--primary) / 0.7), 0 0 4px hsl(var(--primary) / 0.9); }
+
+/* Card glass surface — used by Card */
+.cockpit-card {
+  background:
+    linear-gradient(180deg, hsl(var(--card) / 0.92), hsl(var(--card) / 0.78));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.cockpit-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, hsl(var(--primary) / 0.04), transparent 35%);
+  opacity: 0.8;
+}
+.cockpit-card > * { position: relative; z-index: 1; }
+
+/* Scanline overlay — for empty/loading states */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 2px,
+    hsl(var(--foreground) / 0.025) 2px,
+    hsl(var(--foreground) / 0.025) 3px
+  );
+}
+
+/* Login page — animated ticker tape */
+@keyframes nx-ticker {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+.ticker-vertical {
+  animation: nx-ticker 22s linear infinite;
+}
