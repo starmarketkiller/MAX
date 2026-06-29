@@ -23,6 +23,12 @@ bool    g_run_UseVelocityGate = true;
 datetime g_lastSettingsPull   = 0;
 int     g_settingsPullSec     = 15;   // poll cadence
 
+// Strategie disattivate da remoto (pagina "Strategie" della dashboard).
+// Aggiornate ad ogni poll; se una strategia è qui, l'EA non apre nuovi trade
+// per essa finché non viene riattivata dal sito. Nessun riavvio richiesto.
+string  g_run_StratDisabled[];
+int     g_run_StratDisabledCount = 0;
+
 void NXS_Runtime_Init(){
    g_run_RiskPercent     = InpRiskPercent;
    g_run_MaxLot          = InpMaxLot;
@@ -74,6 +80,45 @@ bool _NXS_JsonBool(const string &json, const string key, bool fallback){
    return fallback;
 }
 
+// Parsa un array JSON di stringhe quotate, es. "strategies_disabled":["MACD","CISD"].
+// Riempie out[] e ritorna il numero di elementi (0 se assente/vuoto).
+int _NXS_JsonStrArray(const string &json, const string key, string &out[]){
+   string needle = "\"" + key + "\":";
+   int pos = StringFind(json, needle);
+   if(pos < 0){ ArrayResize(out, 0); return 0; }
+   pos += StringLen(needle);
+   int len = StringLen(json);
+   while(pos < len && (StringGetCharacter(json, pos) == ' '
+                       || StringGetCharacter(json, pos) == '\t')) pos++;
+   if(pos >= len || StringGetCharacter(json, pos) != '['){ ArrayResize(out, 0); return 0; }
+   pos++;
+   int n = 0;
+   ArrayResize(out, 64);
+   while(pos < len){
+      while(pos < len && (StringGetCharacter(json, pos) == ' '
+                          || StringGetCharacter(json, pos) == ','
+                          || StringGetCharacter(json, pos) == '\n'
+                          || StringGetCharacter(json, pos) == '\r')) pos++;
+      if(pos >= len) break;
+      if(StringGetCharacter(json, pos) == ']') break;
+      if(StringGetCharacter(json, pos) != '\"') break;
+      int end = StringFind(json, "\"", pos + 1);
+      if(end < 0) break;
+      if(n >= ArraySize(out)) ArrayResize(out, n + 32);
+      out[n++] = StringSubstr(json, pos + 1, end - pos - 1);
+      pos = end + 1;
+   }
+   ArrayResize(out, n);
+   return n;
+}
+
+// True se la strategia è stata disattivata da remoto dalla dashboard.
+bool NXS_Runtime_StrategyBlocked(const string name){
+   for(int i = 0; i < g_run_StratDisabledCount; ++i)
+      if(g_run_StratDisabled[i] == name) return true;
+   return false;
+}
+
 #define _RT_APPLY_NUM(NAME, key, type) \
    { double _v = _NXS_JsonNum(json, key); \
      if(_v != EMPTY_VALUE && (type)_v != NAME){ \
@@ -116,6 +161,17 @@ void NXS_PullSettings(){
    _RT_APPLY_BOOL(g_run_UseNewsFilter,   "UseNewsFilter");
    _RT_APPLY_BOOL(g_run_UseHTFBias,      "UseHTFBias");
    _RT_APPLY_BOOL(g_run_UseVelocityGate, "UseVelocityGate");
+
+   // Strategie disattivate da remoto — applicazione live.
+   string disabled[];
+   int dn = _NXS_JsonStrArray(json, "strategies_disabled", disabled);
+   if(dn != g_run_StratDisabledCount){
+      PrintFormat("[NEXUS RUNTIME] strategie disattivate dalla dashboard: %d -> %d",
+                  g_run_StratDisabledCount, dn);
+   }
+   ArrayResize(g_run_StratDisabled, dn);
+   for(int i = 0; i < dn; ++i) g_run_StratDisabled[i] = disabled[i];
+   g_run_StratDisabledCount = dn;
 }
 
 #endif
