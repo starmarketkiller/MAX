@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus EA — FAQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;} html,body{margin:0;} ::selection{background:rgba(61,220,151,.3);} .faq-item{cursor:pointer;}</style>
+</head>
+<body style="min-height:100vh;background:#080B11;font-family:'IBM Plex Sans',sans-serif;color:#EAF0F8;">
+<div style="background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:48px 48px;">
+<div id="main-nav"></div>
+<div style="max-width:820px;margin:0 auto;padding:66px 40px 36px;text-align:center;">
+  <h1 id="h1" style="font-family:'Sora',sans-serif;font-size:48px;line-height:1.07;font-weight:800;letter-spacing:-0.025em;margin:0 0 16px;"></h1>
+  <p id="sub" style="font-size:18px;line-height:1.6;color:#9aa6b8;max-width:520px;margin:0 auto;"></p>
+</div>
+<div style="max-width:820px;margin:0 auto;padding:10px 40px 80px;">
+  <div id="faq-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+</div>
+<div id="main-footer"></div>
+</div>
+<script src="shared.js"></script>
+<script>
+const it = getLang() === 'it';
+initNav('faq'); renderFooter();
+document.getElementById('h1').textContent = it?'Domande frequenti':'Frequently asked questions';
+document.getElementById('sub').textContent = it?'Tutto quello che c\'è da sapere su Nexus EA, le licenze e l\'installazione.':'Everything you need to know about Nexus EA, licences and installation.';
+const qa = it ? [
+  {q:'Cos\'è un Expert Advisor?',a:'Un Expert Advisor (EA) è un programma che gira dentro MetaTrader e apre, gestisce e chiude le operazioni automaticamente secondo regole predefinite. Nexus EA esegue la sua strategia 24 ore su 24, 5 giorni su 5, senza intervento manuale.'},
+  {q:'Mi serve esperienza di trading?',a:'No. L\'installazione è guidata passo-passo e i preset di rischio sono già pronti. È comunque consigliato capire le basi del trading e i rischi prima di usare capitale reale.'},
+  {q:'Funziona con il mio broker?',a:'Nexus EA è compatibile con qualsiasi broker che offra MetaTrader 4 o 5. Per risultati migliori consigliamo un broker ECN con spread bassi e bassa latenza.'},
+  {q:'Mi serve un VPS?',a:'Un VPS (server virtuale) è fortemente consigliato: mantiene l\'EA attivo 24/5 anche a computer spento, garantendo esecuzione continua. Nella guida trovi la configurazione passo-passo.'},
+  {q:'Quanti conti posso usare?',a:'Dipende dal piano: Starter e Pro coprono 1 conto reale, Elite copre 3 conti reali. Le demo sono sempre illimitate su tutti i piani.'},
+  {q:'Come funziona il rimborso?',a:'Offriamo una garanzia soddisfatti o rimborsati di 30 giorni. Se l\'EA non fa per te, scrivici entro 30 giorni dall\'acquisto e ricevi il rimborso completo.'},
+] : [
+  {q:'What is an Expert Advisor?',a:'An Expert Advisor (EA) is a program that runs inside MetaTrader and opens, manages and closes trades automatically according to predefined rules. Nexus EA runs its strategy 24 hours a day, 5 days a week, with no manual intervention.'},
+  {q:'Do I need trading experience?',a:'No. Installation is guided step by step and the risk presets are ready to use. We still recommend understanding the basics of trading and the risks before using real capital.'},
+  {q:'Does it work with my broker?',a:'Nexus EA is compatible with any broker offering MetaTrader 4 or 5. For best results we recommend an ECN broker with low spreads and low latency.'},
+  {q:'Do I need a VPS?',a:'A VPS (virtual server) is strongly recommended: it keeps the EA running 24/5 even when your computer is off, ensuring continuous execution.'},
+  {q:'How many accounts can I use?',a:'It depends on the plan: Starter and Pro cover 1 live account, Elite covers 3 live accounts. Demos are always unlimited on every plan.'},
+  {q:'How does the refund work?',a:'We offer a 30-day money-back guarantee. If the EA is not for you, contact us within 30 days of purchase and get a full refund.'},
+];
+let openIdx = -1;
+function renderFaq() {
+  document.getElementById('faq-list').innerHTML = qa.map((item,i)=>`
+    <div style="background:${openIdx===i?'rgba(61,220,151,.05)':'rgba(255,255,255,.03)'};border:1px solid ${openIdx===i?'rgba(61,220,151,.25)':'rgba(255,255,255,.08)'};border-radius:14px;overflow:hidden;">
+      <div class="faq-item" onclick="toggle(${i})" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 24px;">
+        <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:17px;color:#EAF0F8;">${item.q}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:20px;color:#3DDC97;flex-shrink:0;transform:${openIdx===i?'rotate(45deg)':'rotate(0deg)'};transition:transform .2s;">+</span>
+      </div>
+      ${openIdx===i?`<div style="padding:0 24px 24px;font-size:15px;line-height:1.65;color:#9aa6b8;">${item.a}</div>`:''}
+    </div>`).join('');
+}
+function toggle(i) { openIdx = openIdx===i?-1:i; renderFaq(); }
+renderFaq();
+</script>
+</body>
+</html>
