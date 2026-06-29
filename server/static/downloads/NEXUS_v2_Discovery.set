@@ -1,0 +1,29 @@
+; NEXUS_EA_v2 - DISCOVERY profile (v2.0.2)
+; Use this ONLY for backtest / debug. Very permissive gates, full decision logging.
+; Goal: see if the EA generates and tries signals. Not for live capital.
+InpRiskProfile=2
+InpRiskPercent=0.5
+InpMinEntryScore=58.0
+InpGateMode=2
+InpMTFMixedMode=1
+InpVelocityNeutralMode=2
+InpAllowReversalAgainstMTFOnSweep=true
+InpTryNextSignalIfBlocked=true
+InpDebugDecisionLog=true
+InpDebugLog=true
+InpUseNews=false
+InpAsianScoreMin=65.0
+InpLondonScoreMin=60.0
+InpOverlapScoreMin=58.0
+InpNYScoreMin=60.0
+InpAfterNYScoreMin=70.0
+InpStrat_TurtleSoup=true
+InpStrat_IFVG=true
+InpStrat_FVG_Mit=true
+InpStrat_OB_Mit=true
+InpStrat_SH_BMS_RTO=true
+InpStrat_SMS_BMS_RTO=true
+InpStrat_SilverBullet=true
+InpStrat_AMD_Reversal=true
+InpStrat_OTE_Cont=true
+InpStrat_MalaysianSNR=true

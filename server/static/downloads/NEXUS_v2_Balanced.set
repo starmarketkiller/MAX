@@ -1,0 +1,28 @@
+; NEXUS_EA_v2 - BALANCED profile (v2.0.2)
+; Recommended starting point for live with default risk.
+InpRiskProfile=2
+InpRiskPercent=1.0
+InpMinEntryScore=70.0
+InpGateMode=1
+InpMTFMixedMode=1
+InpVelocityNeutralMode=1
+InpAllowReversalAgainstMTFOnSweep=true
+InpTryNextSignalIfBlocked=true
+InpDebugDecisionLog=false
+InpDebugLog=false
+InpUseNews=true
+InpAsianScoreMin=65.0
+InpLondonScoreMin=60.0
+InpOverlapScoreMin=58.0
+InpNYScoreMin=60.0
+InpAfterNYScoreMin=70.0
+InpStrat_TurtleSoup=true
+InpStrat_IFVG=true
+InpStrat_FVG_Mit=true
+InpStrat_OB_Mit=true
+InpStrat_SH_BMS_RTO=true
+InpStrat_SMS_BMS_RTO=false
+InpStrat_SilverBullet=true
+InpStrat_AMD_Reversal=true
+InpStrat_OTE_Cont=true
+InpStrat_MalaysianSNR=false
