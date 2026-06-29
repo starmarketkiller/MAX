@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 COPY backtest.py .
+COPY seed_results.json .
 COPY nexus_local_worker.py .
 COPY static ./static
 
