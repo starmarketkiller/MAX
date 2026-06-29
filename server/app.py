@@ -58,6 +58,7 @@ COACH_MODEL       = os.environ.get("NEXUS_COACH_MODEL", "claude-opus-4-8")
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 WORKER_FILE = Path(__file__).resolve().parent / "nexus_local_worker.py"
 SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
+SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
 
 # Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
 # Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
@@ -333,10 +334,30 @@ def _seed_strategy_results() -> None:
     print(f"[NEXUS] seeded {len(lib)} strategy results — default lock = {best and best['strategy']}")
 
 
+def _seed_backtest_library() -> None:
+    """Carica la libreria sweep (seed_library.json) — 36 strat × coppia × gestione."""
+    if not SEED_LIBRARY_FILE.exists():
+        return
+    try:
+        raw = SEED_LIBRARY_FILE.read_bytes()
+        data = json.loads(raw)
+    except Exception as e:
+        print(f"[NEXUS] seed_library parse failed: {e}")
+        return
+    marker = hashlib.sha256(raw).hexdigest()[:16]
+    if kv_get("library_version") == marker:
+        return
+    rows = data.get("rows", [])
+    kv_set("backtest_library", rows)
+    kv_set("library_version", marker)
+    print(f"[NEXUS] seeded backtest library — {len(rows)} rows (sweep)")
+
+
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
     _seed_strategy_results()
+    _seed_backtest_library()
     print(f"[NEXUS] backend up — db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
 
@@ -1602,6 +1623,14 @@ def backtest_strategies(user: str = Depends(require_user)):
 
 @app.get("/api/backtest/symbols")
 def backtest_symbols(user: str = Depends(require_user)):
+    # se c'è la libreria sweep, esponi le coppie effettivamente testate
+    sweep = kv_get("backtest_library", [])
+    if sweep:
+        syms = []
+        for r in sweep:
+            if r.get("symbol") and r["symbol"] not in syms:
+                syms.append(r["symbol"])
+        return {"symbols": syms}
     return {"symbols": COMMON_SYMBOLS}
 
 
@@ -1645,7 +1674,32 @@ def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
 
 
 def _library_rows(symbol=""):
-    """Converte i risultati importati nella forma 'rows' attesa dalla Strategy Library."""
+    """Righe per la Strategy Library. Priorità: sweep computato (36×coppia×gestione),
+    poi i risultati importati da Emergent, infine demo."""
+    # 1) sweep computato (sweep.py) — strategia × coppia × gestione
+    sweep = kv_get("backtest_library", [])
+    if sweep:
+        rows = []
+        for r in sweep:
+            if symbol and r.get("symbol") != symbol:
+                continue
+            m = r.get("metrics") or {}
+            tf = r.get("timeframe") or "1h"
+            rows.append({
+                "strategy": r.get("strategy"), "symbol": r.get("symbol", ""),
+                "timeframe": str(tf).lower(), "variant": r.get("variant") or "baseline",
+                "atr_sl_mult": None, "atr_tp_mult": None,
+                "overrides": {"GridMode": r.get("variant"), "lot_mult": r.get("lot_mult")},
+                "metrics": {
+                    "n_trades": m.get("n_trades"), "win_rate_pct": m.get("win_rate"),
+                    "profit_factor": m.get("profit_factor"), "sharpe": m.get("sharpe"),
+                    "max_dd_pct": m.get("max_dd"), "total_return_pct": m.get("return_pct"),
+                },
+            })
+        rows.sort(key=lambda x: (x["metrics"]["sharpe"] if x["metrics"]["sharpe"] is not None else -9),
+                  reverse=True)
+        return rows
+    # 2) risultati importati da Emergent
     imported = kv_get("strategy_results", [])
     rows = []
     for r in imported:
@@ -1763,9 +1817,22 @@ def backtest_library_job(job_id: str, user: str = Depends(require_user)):
 
 @app.post("/api/backtest/strategy_library/build")
 async def backtest_library_build(request: Request, user: str = Depends(require_user)):
+    """Rigenera la libreria per la coppia: ri-esegue lo sweep reale (36×7) su dati
+    Yahoo (fallback sintetico). ~4s per coppia."""
     body = await request.json()
+    sym = body.get("symbol", "")
     job_id = "lib-" + secrets.token_hex(5)
-    kv_set(f"btjob:{job_id}", body.get("symbol", ""))
+    kv_set(f"btjob:{job_id}", sym)
+    if sym:
+        try:
+            import sweep
+            res = sweep.run_sweep(symbols=[sym], interval="1h", rng="6mo",
+                                  optimize=True, progress=False)
+            lib = [r for r in kv_get("backtest_library", []) if r.get("symbol") != sym]
+            lib.extend(res["rows"])
+            kv_set("backtest_library", lib)
+        except Exception as e:
+            print(f"[NEXUS] library rebuild failed for {sym}: {e}")
     return {"ok": True, "job_id": job_id, "status": "queued", "total": 36}
 
 
