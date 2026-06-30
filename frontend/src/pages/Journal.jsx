@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { Tag, Star, Save, RefreshCcw, Search } from "lucide-react";
+import { Tag, Star, Save, RefreshCcw, Search, Activity } from "lucide-react";
+import { useStrategyHub } from "@/lib/strategyHub";
+import { useTradeHub } from "@/lib/tradeHub";
 
 function classNames(...c) { return c.filter(Boolean).join(" "); }
 const TAG_PRESETS = ["A+ setup", "FOMO", "news", "scalp", "swing", "rivincita",
@@ -21,6 +23,8 @@ function StarRating({ value, onChange, testid }) {
 }
 
 function TradeRow({ trade, onSaved }) {
+  const { open: openStrategy } = useStrategyHub();
+  const { openTrade } = useTradeHub();
   const [editing, setEditing] = useState(false);
   const [tags, setTags] = useState(trade.journal_tags || []);
   const [note, setNote] = useState(trade.journal_note || "");
@@ -72,7 +76,13 @@ function TradeRow({ trade, onSaved }) {
           </div>
         </div>
         <div className="col-span-3 sm:col-span-2">
-          <div className="text-xs text-muted-foreground">{trade.strategy || "—"}</div>
+          {trade.strategy ? (
+            <button onClick={(e) => { e.stopPropagation(); openStrategy(trade.strategy); }}
+              data-testid={`journal-open-strat-${trade.ticket}`}
+              className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors">
+              {trade.strategy}
+            </button>
+          ) : <div className="text-xs text-muted-foreground">—</div>}
           <div className="text-xs">{dt}</div>
         </div>
         <div className="col-span-2">
@@ -86,8 +96,16 @@ function TradeRow({ trade, onSaved }) {
           ))}
           {tags.length > 3 && <span className="text-[10px] text-muted-foreground">+{tags.length-3}</span>}
         </div>
-        <div className="col-span-2 hidden sm:flex justify-end pointer-events-none">
-          <StarRating value={rating} onChange={() => {}} testid={`journal-stars-${trade.ticket}`}/>
+        <div className="col-span-2 hidden sm:flex justify-end items-center gap-2">
+          <div className="pointer-events-none">
+            <StarRating value={rating} onChange={() => {}} testid={`journal-stars-${trade.ticket}`}/>
+          </div>
+          <button onClick={(e) => { e.stopPropagation(); openTrade(trade); }}
+            title="Ciclo di vita del trade"
+            data-testid={`journal-lifecycle-${trade.ticket}`}
+            className="h-7 w-7 rounded-lg border border-border hover:bg-secondary flex items-center justify-center">
+            <Activity className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 

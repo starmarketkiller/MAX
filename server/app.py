@@ -1264,6 +1264,55 @@ async def strategies_risk_manual(request: Request, user: str = Depends(require_u
     return {"ok": True, "manual": manual}
 
 
+@app.get("/api/strategies/{name}/overview")
+def strategy_overview(name: str, user: str = Depends(require_user)):
+    """Vista unica per strategia: stato live, metriche reali + rischio,
+    miglior config da backtest, diagnostica e ultimi trade. Unisce in un
+    solo endpoint i dati di Strategies, Optimizer, Backtest e Strat Diag."""
+    # 1. stato abilitazione
+    settings = kv_get("settings", DEFAULT_SETTINGS) or {}
+    primary, _ = _primary_ea()
+    enabled_map = (primary or {}).get("strategies", {}) or {}
+    strat_map = settings.get("strategies") or {}
+    override = kv_get("strategies_override", {}) or {}
+    en = strat_map.get(name, override.get(name, enabled_map.get(name)))
+    enabled = (bool(en) if en is not None else True)
+
+    # 2. metriche live + rischio dal leaderboard
+    board, cfg, _balance = _strategy_leaderboard()
+    live = next((r for r in board if r["name"] == name), None)
+
+    # 3. miglior config da backtest (per simbolo, ordinata per sharpe)
+    lib = kv_get("backtest_library", []) or []
+    bt_rows = sorted([r for r in lib if r.get("strategy") == name],
+                     key=lambda r: (r.get("metrics", {}).get("sharpe") or -9), reverse=True)
+    bt_by_symbol = {}
+    for r in bt_rows:
+        bt_by_symbol.setdefault(r.get("symbol"), r)
+
+    # 4. diagnostica + 5. ultimi trade
+    diag = None
+    with _conn() as c:
+        for r in c.execute("SELECT payload FROM strategy_stats"):
+            for s in (json.loads(r["payload"]).get("strategies") or []):
+                if s.get("name") == name:
+                    diag = s
+        trades = [dict(t) for t in c.execute(
+            "SELECT ticket,symbol,side,lots,open_price,close_price,pnl,open_time,close_time,reason "
+            "FROM trades WHERE strategy=? ORDER BY COALESCE(close_time,open_time) DESC LIMIT 20", (name,))]
+
+    return {
+        "name": name, "enabled": enabled,
+        "live": live,
+        "risk_mult": (live or {}).get("effective_mult", 1.0),
+        "auto_scaling": bool(cfg.get("enabled")),
+        "backtest_best": bt_rows[0] if bt_rows else None,
+        "backtest_by_symbol": list(bt_by_symbol.values()),
+        "diagnostics": diag,
+        "recent_trades": trades,
+    }
+
+
 # ======================= ANALYTICS (JWT) =============================== #
 @app.get("/api/analytics/trades")
 def analytics_trades(limit: int = 500, user: str = Depends(require_user)):
@@ -1638,15 +1687,67 @@ def coach_alerts(user: str = Depends(require_user)):
 @app.post("/api/coach/apply_action")
 async def coach_apply(request: Request, user: str = Depends(require_user)):
     body = await request.json()
-    action = body.get("action")
-    allowed = {"pause", "resume", "close_all", "reset_anti_revenge", "reset_daily"}
-    if action not in allowed:
-        raise HTTPException(status_code=400, detail=f"azione non applicabile: {action}")
-    cmd_id = _enqueue_ea_command(action, body.get("payload"))
+    # Il Coach invia {type, name, pct, duration_min, ...}; retro-compat con {action}.
+    atype = body.get("type") or body.get("action")
+    name = body.get("name")
+    cmd_id = None
+
+    # 1. Comandi runtime EA
+    cmd_map = {
+        "pause_ea": "pause", "pause": "pause",
+        "resume_ea": "resume", "resume": "resume",
+        "close_all": "close_all",
+        "reset_anti_revenge": "reset_anti_revenge",
+        "reset_daily": "reset_daily",
+    }
+    if atype in cmd_map:
+        payload = {}
+        if body.get("duration_min"):
+            payload["duration_min"] = body["duration_min"]
+        cmd_id = _enqueue_ea_command(cmd_map[atype], payload or None)
+        note = f"Comando EA dal Coach: {cmd_map[atype]}"
+
+    # 2. Abilita/disabilita strategia (live, via /api/ea/settings)
+    elif atype in ("disable_strategy", "enable_strategy"):
+        if not name:
+            raise HTTPException(status_code=400, detail="nome strategia mancante")
+        enable = (atype == "enable_strategy")
+        settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+        strat = dict(settings.get("strategies") or {})
+        strat[name] = enable
+        settings["strategies"] = strat
+        kv_set("settings", settings)
+        ov = kv_get("strategies_override", {}) or {}
+        ov[name] = enable
+        kv_set("strategies_override", ov)
+        note = f"{'Riattivata' if enable else 'Disattivata'} strategia {name} dal Coach"
+
+    # 3. Imposta rischio globale (RiskPercent, live)
+    elif atype == "set_risk":
+        pct = body.get("pct")
+        if pct is None:
+            raise HTTPException(status_code=400, detail="pct mancante")
+        settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+        settings["RiskPercent"] = max(0.0, min(10.0, float(pct)))
+        kv_set("settings", settings)
+        note = f"Risk impostato a {settings['RiskPercent']}% dal Coach"
+
+    # 4. Imposta moltiplicatore rischio per-strategia (live)
+    elif atype == "set_strategy_risk":
+        if not name or body.get("mult") is None:
+            raise HTTPException(status_code=400, detail="name/mult mancante")
+        manual = kv_get("strategy_risk_manual", {}) or {}
+        manual[name] = max(0.0, min(10.0, float(body["mult"])))
+        kv_set("strategy_risk_manual", manual)
+        note = f"Rischio {name} → x{manual[name]} dal Coach"
+
+    else:
+        raise HTTPException(status_code=400, detail=f"azione non applicabile: {atype}")
+
     with _conn() as c:
         c.execute("INSERT INTO coach_notifications(text,read,created_at) VALUES(?,0,?)",
-                  (f"Azione applicata dal Coach: {action}", now()))
-    return {"ok": True, "id": cmd_id, "action": action}
+                  (note, now()))
+    return {"ok": True, "id": cmd_id, "action": atype, "note": note}
 
 
 @app.get("/api/coach/memory")
@@ -2134,6 +2235,26 @@ def coach_daily_brief(user: str = Depends(require_user)):
         brief = "Nessun EA collegato. Avvia l'EA per ricevere il brief giornaliero."
     if not summ.get("demo"):
         brief += f" Storico: {summ['trades']} trade, win rate {summ['win_rate']}%, PF {summ.get('profit_factor')}."
+    # Health: segnala le anomalie attive
+    if primary:
+        try:
+            score, level, _checks, anomaly = _compute_ea_health(primary)
+            brief += f" Health {score}/100 ({level})."
+            if anomaly:
+                brief += " ⚠ " + "; ".join(a["msg"] for a in anomaly[:3])
+        except Exception:
+            pass
+    # Optimizer: migliore e peggiore strategia per profit factor
+    try:
+        board, _cfg, _bal = _strategy_leaderboard()
+        ranked = [r for r in board if r["trades"] >= 5]
+        if ranked:
+            best = ranked[0]
+            worst = ranked[-1]
+            brief += (f" Migliore: {best['name']} (PF {best['profit_factor']}); "
+                      f"peggiore: {worst['name']} (PF {worst['profit_factor']}).")
+    except Exception:
+        pass
     return {"id": None, "brief": brief, "demo": primary is None}
 
 
@@ -2154,6 +2275,16 @@ def coach_quick_insights(user: str = Depends(require_user)):
     worst = min(br["by_reason"], key=lambda r: r["pnl"], default=None)
     if worst and worst["pnl"] < 0:
         insights.append(f"Il motivo più costoso è '{worst['reason']}' ({worst['pnl']}).")
+    # Strategie deboli dal leaderboard Optimizer (azionabili dal Coach)
+    try:
+        board, _cfg, _bal = _strategy_leaderboard()
+        for r in board:
+            if r["trades"] >= 10 and r["profit_factor"] < 0.9:
+                insights.append(
+                    f"{r['name']} è in perdita (PF {r['profit_factor']} su {r['trades']} trade): "
+                    f"valuta di disattivarla. <action type=\"disable_strategy\" name=\"{r['name']}\" />")
+    except Exception:
+        pass
     return {"insights": insights, "demo": not insights}
 
 

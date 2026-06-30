@@ -3,6 +3,7 @@ import { Activity, Upload, FileDown, RefreshCw, AlertTriangle, CheckCircle2,
   Zap, ShieldAlert, Cpu, Eye, Filter, Sparkles } from "lucide-react";
 import api, { API, formatApiError } from "@/lib/api";
 import { Card, cls } from "@/pages/dashboard/shared";
+import { useStrategyHub } from "@/lib/strategyHub";
 
 // =====================================================================
 // HEATMAP HELPERS — value-driven row/cell tinting (Bloomberg-style)
@@ -363,6 +364,7 @@ function GlobalBlockersCard({ blockers }) {
 }
 
 function HealthTable({ rows }) {
+  const { open: openStrategy } = useStrategyHub();
   return (
     <Card className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -387,7 +389,11 @@ function HealthTable({ rows }) {
                   className="border-t border-border/60 hover:bg-primary/[0.04] transition-colors group"
                   data-testid={`health-row-strat-${r.name}`}>
                 <td className="px-3 py-2.5 font-mono font-semibold">
-                  {r.name}
+                  <button onClick={() => openStrategy(r.name)}
+                    data-testid={`strat-diag-open-${r.name}`}
+                    className="text-left hover:text-primary hover:underline transition-colors">
+                    {r.name}
+                  </button>
                   {r.status_meta === "READY_FOR_BACKTEST" && (
                     <span className="ml-1.5 inline-flex items-center gap-0.5 text-[9px] text-primary">
                       <Sparkles className="h-2.5 w-2.5" /> RFB

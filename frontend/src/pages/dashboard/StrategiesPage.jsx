@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Layers, Cpu, Lock, Filter, Sparkles } from "lucide-react";
 import { Card, cls, STRAT_LIST, STRAT_FAMILIES, STRAT_FAMILY_COLOR } from "@/pages/dashboard/shared";
+import { useStrategyHub } from "@/lib/strategyHub";
 
 const READY_FOR_BACKTEST = new Set([
   "CISD", "AMD_CONT", "JUDAS_SWING", "LDN_REVERSAL", "NY_REVERSAL",
@@ -8,6 +9,7 @@ const READY_FOR_BACKTEST = new Set([
 ]);
 
 export default function StrategiesPage({ settings, onSave, status }) {
+  const { open: openStrategy } = useStrategyHub();
   const enabled = settings?.strategies || Object.fromEntries(STRAT_LIST.map(([k]) => [k, true]));
   const [local, setLocal] = useState(enabled);
   const [familyFilter, setFamilyFilter] = useState("ALL");
@@ -141,7 +143,11 @@ export default function StrategiesPage({ settings, onSave, status }) {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <div className="font-semibold text-sm leading-tight truncate">{label}</div>
+                    <button onClick={() => openStrategy(key)}
+                      data-testid={`strategy-open-${key.toLowerCase()}`}
+                      className="font-semibold text-sm leading-tight truncate text-left hover:text-primary hover:underline transition-colors">
+                      {label}
+                    </button>
                     {isRFB && (
                       <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-sky-600" title="Ready for backtest">
                         <Sparkles className="h-2.5 w-2.5" /> RFB
