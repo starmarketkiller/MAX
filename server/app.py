@@ -468,6 +468,12 @@ def ea_settings(x_nexus_token: Optional[str] = Header(None)):
         if en is not None and not en and name not in disabled:
             disabled.append(name)
     out["strategies_disabled"] = disabled
+    # Moltiplicatori di rischio per-strategia (loop di ottimizzazione live):
+    # l'EA li applica al lotto in fase di apertura, per strategia.
+    try:
+        out["strategy_risk"] = _strategy_risk_map()
+    except Exception:
+        out["strategy_risk"] = {}
     return out
 
 
@@ -1111,6 +1117,151 @@ async def strategies_save(request: Request, user: str = Depends(require_user)):
         override = {s["name"]: s.get("enabled") for s in override if "name" in s}
     kv_set("strategies_override", override or {})
     return {"ok": True, "strategies_override": override}
+
+
+# ============== OTTIMIZZAZIONE LIVE PER-STRATEGIA (loop demo) ============ #
+# Aggrega i risultati reali per nome strategia (l'EA li sincronizza via
+# /api/ea/trade_history_sync) e calcola un moltiplicatore di rischio
+# per-strategia: DD basso + redditizia -> lotto maggiore; in perdita -> ridotto.
+DEFAULT_STRAT_RISK_CFG = {
+    "enabled": False,       # auto-scaling OFF di default (sicurezza: agisce sul lotto reale)
+    "min_trades": 15,       # trade minimi prima di scalare
+    "target_dd_pct": 10.0,  # budget di drawdown per strategia
+    "max_mult": 3.0,        # cap massimo moltiplicatore lotto
+    "min_mult": 0.3,        # minimo per strategie deboli (riduce, non azzera)
+    "min_pf": 1.1,          # profit factor minimo per scalare in su
+}
+
+
+def _strat_risk_cfg():
+    cfg = dict(DEFAULT_STRAT_RISK_CFG)
+    cfg.update(kv_get("strategy_risk_config", {}) or {})
+    return cfg
+
+
+def _account_balance():
+    primary, _ = _primary_ea()
+    try:
+        b = float((primary or {}).get("balance") or 0)
+    except Exception:
+        b = 0
+    return b if b > 0 else 10000.0
+
+
+def _strategy_leaderboard():
+    """Metriche realizzate per strategia + moltiplicatore di rischio effettivo."""
+    cfg = _strat_risk_cfg()
+    manual = kv_get("strategy_risk_manual", {}) or {}
+    balance = _account_balance()
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT strategy, pnl, close_time, open_time FROM trades "
+            "WHERE strategy IS NOT NULL AND pnl IS NOT NULL "
+            "ORDER BY COALESCE(close_time, open_time) ASC")]
+    by = {}
+    for r in rows:
+        by.setdefault(r["strategy"], []).append(float(r["pnl"]))
+
+    out = []
+    for name, pnls in by.items():
+        n = len(pnls)
+        wins = [p for p in pnls if p > 0]
+        losses = [p for p in pnls if p < 0]
+        gw, gl = sum(wins), abs(sum(losses))
+        net = sum(pnls)
+        pf = (round(gw / gl, 2) if gl > 0 else (99.0 if gw > 0 else 0.0))
+        wr = round(len(wins) / n * 100, 1) if n else 0.0
+        # drawdown realizzato sulla curva cumulata, in % del saldo conto
+        cum, peak, maxdd = 0.0, 0.0, 0.0
+        for p in pnls:
+            cum += p
+            peak = max(peak, cum)
+            maxdd = max(maxdd, peak - cum)
+        dd_pct = round(maxdd / balance * 100, 2) if balance > 0 else 0.0
+
+        # moltiplicatore suggerito dall'auto-scaler
+        if n < cfg["min_trades"]:
+            suggested = 1.0
+            reason = f"dati insufficienti ({n}/{cfg['min_trades']})"
+        elif pf < 1.0 or net <= 0:
+            suggested = round(cfg["min_mult"], 2)
+            reason = "strategia in perdita: rischio ridotto"
+        elif pf < cfg["min_pf"]:
+            suggested = 1.0
+            reason = f"PF {pf} sotto soglia: lotto invariato"
+        else:
+            raw = cfg["target_dd_pct"] / max(dd_pct, 0.5)
+            suggested = round(min(cfg["max_mult"], max(1.0, raw)), 2)
+            reason = f"DD {dd_pct}% basso: lotto verso target {cfg['target_dd_pct']}%"
+
+        man = manual.get(name)
+        if man is not None:
+            try:
+                effective = round(float(man), 2)
+                source = "manuale"
+            except Exception:
+                effective, source = suggested, "auto"
+        elif cfg["enabled"]:
+            effective = suggested
+            source = "auto"
+        else:
+            effective = 1.0
+            source = "off"
+        effective = max(0.0, min(cfg["max_mult"], effective))
+
+        out.append({
+            "name": name, "trades": n, "win_rate": wr, "profit_factor": pf,
+            "net": round(net, 2), "max_dd_pct": dd_pct,
+            "avg_trade": round(net / n, 2) if n else 0.0,
+            "suggested_mult": suggested, "effective_mult": effective,
+            "risk_source": source, "reason": reason,
+        })
+    out.sort(key=lambda r: (r["profit_factor"], r["net"]), reverse=True)
+    return out, cfg, balance
+
+
+def _strategy_risk_map():
+    """Mappa NOME->moltiplicatore da inviare all'EA (solo valori != 1.0)."""
+    board, cfg, _ = _strategy_leaderboard()
+    return {r["name"]: r["effective_mult"] for r in board
+            if abs(r["effective_mult"] - 1.0) > 1e-6}
+
+
+@app.get("/api/strategies/leaderboard")
+def strategies_leaderboard(user: str = Depends(require_user)):
+    board, cfg, balance = _strategy_leaderboard()
+    return {"strategies": board, "config": cfg, "balance": balance,
+            "demo": len(board) == 0}
+
+
+@app.post("/api/strategies/risk_config")
+async def strategies_risk_config(request: Request, user: str = Depends(require_user)):
+    data = await request.json()
+    cfg = _strat_risk_cfg()
+    for k in ("enabled", "min_trades", "target_dd_pct", "max_mult", "min_mult", "min_pf"):
+        if k in data:
+            cfg[k] = data[k]
+    # clamp di sicurezza
+    cfg["max_mult"] = max(1.0, min(10.0, float(cfg["max_mult"])))
+    cfg["min_mult"] = max(0.0, min(1.0, float(cfg["min_mult"])))
+    cfg["min_trades"] = max(1, int(cfg["min_trades"]))
+    kv_set("strategy_risk_config", cfg)
+    return {"ok": True, "config": cfg}
+
+
+@app.post("/api/strategies/risk_manual")
+async def strategies_risk_manual(request: Request, user: str = Depends(require_user)):
+    """Override manuale del moltiplicatore. Valore null per rimuovere l'override."""
+    data = await request.json()
+    manual = kv_get("strategy_risk_manual", {}) or {}
+    overrides = data.get("overrides", data) if isinstance(data, dict) else {}
+    for name, mult in (overrides or {}).items():
+        if mult is None:
+            manual.pop(name, None)
+        else:
+            manual[name] = max(0.0, min(10.0, float(mult)))
+    kv_set("strategy_risk_manual", manual)
+    return {"ok": True, "manual": manual}
 
 
 # ======================= ANALYTICS (JWT) =============================== #
