@@ -27,6 +27,7 @@ import BottomNav from "@/components/BottomNav";
 import CommandPalette from "@/components/CommandPalette";
 import HomePage from "@/pages/dashboard/HomePage";
 import StrategiesPage from "@/pages/dashboard/StrategiesPage";
+import OptimizerPage from "@/pages/dashboard/OptimizerPage";
 import StrategyAnalyticsPage from "@/pages/dashboard/StrategyAnalyticsPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import WhatIfPage from "@/pages/dashboard/WhatIfPage";
@@ -718,6 +719,7 @@ export default function Dashboard({ section = "home" }) {
               onSave={saveSettings}
             />
           )}
+          {section === "optimizer" && <OptimizerPage />}
           {section === "analytics" && (
             <AnalyticsPage
               summary={summary} trades={trades}
