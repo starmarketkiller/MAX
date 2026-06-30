@@ -28,6 +28,8 @@ import CommandPalette from "@/components/CommandPalette";
 import HomePage from "@/pages/dashboard/HomePage";
 import StrategiesPage from "@/pages/dashboard/StrategiesPage";
 import OptimizerPage from "@/pages/dashboard/OptimizerPage";
+import { StrategyHubProvider } from "@/lib/strategyHub";
+import { TradeHubProvider } from "@/lib/tradeHub";
 import StrategyAnalyticsPage from "@/pages/dashboard/StrategyAnalyticsPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import WhatIfPage from "@/pages/dashboard/WhatIfPage";
@@ -684,6 +686,8 @@ export default function Dashboard({ section = "home" }) {
   };
 
   return (
+    <StrategyHubProvider>
+    <TradeHubProvider>
     <div className="min-h-screen flex bg-background text-foreground">
       <Sidebar status={status} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <main className="flex-1 min-w-0 flex flex-col">
@@ -788,5 +792,7 @@ export default function Dashboard({ section = "home" }) {
 
       <CoachLiveWidget />
     </div>
+    </TradeHubProvider>
+    </StrategyHubProvider>
   );
 }

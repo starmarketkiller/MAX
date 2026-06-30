@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Gauge, RefreshCw, Save, TrendingUp, AlertTriangle, Power } from "lucide-react";
 import api, { formatApiError } from "@/lib/api";
+import { useStrategyHub } from "@/lib/strategyHub";
 import {
   Card, cls, SectionHeader, KpiCard, fmtMoney, fmtPct, POS_TEXT, NEG_TEXT,
 } from "@/pages/dashboard/shared";
@@ -27,6 +28,7 @@ const CFG_FIELDS = [
 ];
 
 export default function OptimizerPage() {
+  const { open: openStrategy } = useStrategyHub();
   const [board, setBoard] = useState([]);
   const [cfg, setCfg] = useState(null);
   const [balance, setBalance] = useState(0);
@@ -197,7 +199,11 @@ export default function OptimizerPage() {
                     <tr key={r.name} className="border-b border-border/60 hover:bg-secondary/40"
                         data-testid={`optimizer-row-${r.name}`}>
                       <td className="px-4 py-2.5 font-medium">
-                        {r.name}
+                        <button onClick={() => openStrategy(r.name)}
+                          data-testid={`optimizer-open-${r.name}`}
+                          className="text-left hover:text-primary hover:underline transition-colors">
+                          {r.name}
+                        </button>
                         <div className="text-[10px] text-muted-foreground font-normal">{r.reason}</div>
                       </td>
                       <td className="px-3 py-2.5 text-right tabular">{r.trades}</td>

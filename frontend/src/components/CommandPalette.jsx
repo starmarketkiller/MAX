@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Search, ArrowRight, LayoutDashboard, SlidersHorizontal, LineChart,
   Microscope, BookOpen, MessageSquare, Sparkles, FlaskConical,
-  CalendarDays, ShieldAlert, Calculator, Settings, KeyRound,
+  CalendarDays, ShieldAlert, Calculator, Settings, KeyRound, Gauge,
   Play, Pause, AlertOctagon, RotateCcw, Calendar,
   Command as CommandIcon,
 } from "lucide-react";
@@ -40,6 +40,7 @@ export default function CommandPalette({ open, onClose, onEaCmd }) {
     // Navigation
     { id: "nav-home", group: "Navigate", label: "Overview", hint: "Home dashboard", icon: LayoutDashboard, action: () => nav("/") },
     { id: "nav-strategies", group: "Navigate", label: "Strategies", hint: "Manage the 35 strategies", icon: SlidersHorizontal, action: () => nav("/strategies") },
+    { id: "nav-optimizer", group: "Navigate", label: "Optimizer", hint: "Live per-strategy risk & leaderboard", icon: Gauge, action: () => nav("/optimizer") },
     { id: "nav-analytics", group: "Navigate", label: "Analytics", hint: "Trade analytics & heatmaps", icon: LineChart, action: () => nav("/analytics") },
     { id: "nav-strat-diag", group: "Navigate", label: "Strategy Diagnostics", hint: "Full lifecycle (Det · Gate · Exec · Perf · Health)", icon: Microscope, action: () => nav("/strategy-analytics") },
     { id: "nav-journal", group: "Navigate", label: "Journal", hint: "Trade journal", icon: BookOpen, action: () => nav("/journal") },

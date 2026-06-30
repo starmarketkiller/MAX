@@ -266,7 +266,13 @@ function WhatIfResults({ result }) {
 
 function useWhatIfState() {
   const [excludeReasons,    setExcludeReasons]    = useState([]);
-  const [excludeStrategies, setExcludeStrategies] = useState([]);
+  // Seed da deep-link: /whatif?exclude=NOME (aperto dallo Strategy Hub)
+  const [excludeStrategies, setExcludeStrategies] = useState(() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get("exclude");
+      return p ? [p] : [];
+    } catch { return []; }
+  });
   const [excludeSessions,   setExcludeSessions]   = useState([]);
   const [excludeDows,       setExcludeDows]       = useState([]);
   const [daysWindow,        setDaysWindow]        = useState(90);

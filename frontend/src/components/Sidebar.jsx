@@ -12,24 +12,49 @@ import { useTheme } from "@/lib/theme";
 
 function cls(...c) { return c.filter(Boolean).join(" "); }
 
-const SIDEBAR_ITEMS = [
-  { to: "/", label: "Overview", icon: LayoutDashboard },
-  { to: "/chart", label: "Live Chart", icon: CandlestickChart },
-  { to: "/strategies", label: "Strategies", icon: SlidersHorizontal },
-  { to: "/optimizer", label: "Optimizer", icon: Gauge },
-  { to: "/analytics", label: "Analytics", icon: LineChartIcon },
-  { to: "/strategy-analytics", label: "Strat Diag", icon: Microscope },
-  { to: "/journal", label: "Journal", icon: BookOpen },
-  { to: "/coach", label: "AI Coach", icon: MessageSquare },
-  { to: "/whatif", label: "What-if", icon: Sparkles },
-  { to: "/backtest", label: "Backtest", icon: FlaskConical },
-  { to: "/chain", label: "Chain", icon: Link2 },
-  { to: "/local-bridge", label: "MT5 Bridge", icon: Cpu },
-  { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/risk", label: "Risk", icon: ShieldAlert },
-  { to: "/risk-calc", label: "Calculator", icon: Calculator },
-  { to: "/settings", label: "Settings", icon: SettingsIcon },
-  { to: "/licenses", label: "Licenses", icon: KeyRound },
+const SIDEBAR_GROUPS = [
+  {
+    label: "Live Ops",
+    items: [
+      { to: "/", label: "Overview", icon: LayoutDashboard },
+      { to: "/chart", label: "Live Chart", icon: CandlestickChart },
+      { to: "/risk", label: "Risk", icon: ShieldAlert },
+      { to: "/local-bridge", label: "MT5 Bridge", icon: Cpu },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "Strategy Hub",
+    items: [
+      { to: "/strategies", label: "Strategies", icon: SlidersHorizontal },
+      { to: "/optimizer", label: "Optimizer", icon: Gauge },
+      { to: "/strategy-analytics", label: "Strat Diag", icon: Microscope },
+      { to: "/backtest", label: "Backtest", icon: FlaskConical },
+      { to: "/chain", label: "Chain", icon: Link2 },
+    ],
+  },
+  {
+    label: "Performance",
+    items: [
+      { to: "/analytics", label: "Analytics", icon: LineChartIcon },
+      { to: "/journal", label: "Journal", icon: BookOpen },
+      { to: "/whatif", label: "What-if", icon: Sparkles },
+    ],
+  },
+  {
+    label: "Assistant",
+    items: [
+      { to: "/coach", label: "AI Coach", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Admin",
+    items: [
+      { to: "/risk-calc", label: "Calculator", icon: Calculator },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+      { to: "/licenses", label: "Licenses", icon: KeyRound },
+    ],
+  },
 ];
 
 function deriveBridgeState({ bridgeState, online, lastSec }) {
@@ -96,38 +121,45 @@ function ThemeToggle({ theme, onToggle }) {
   );
 }
 
-function NavList({ items, pathname, onItemClick }) {
+function NavList({ groups, pathname, onItemClick }) {
   return (
-    <nav className="flex-1 min-h-0 overflow-y-auto px-3 space-y-1 pb-2">
-      {items.map(({ to, label, icon: Icon }) => {
-        const active = pathname === to;
-        return (
-          <Link
-            key={to}
-            to={to}
-            onClick={onItemClick}
-            data-testid={`nav-${label.toLowerCase()}`}
-            className={cls(
-              "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
-              active
-                ? "bg-primary/10 text-foreground font-semibold"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-            )}
-          >
-            {active && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.6)]" />
-            )}
-            <Icon
-              className={cls(
-                "h-4 w-4 transition-colors",
-                active ? "text-primary" : "group-hover:text-primary/80"
-              )}
-              strokeWidth={1.75}
-            />
-            <span>{label}</span>
-          </Link>
-        );
-      })}
+    <nav className="flex-1 min-h-0 overflow-y-auto px-3 pb-2 space-y-4">
+      {groups.map((group) => (
+        <div key={group.label} className="space-y-1">
+          <div className="px-3 pt-1 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/70">
+            {group.label}
+          </div>
+          {group.items.map(({ to, label, icon: Icon }) => {
+            const active = pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                onClick={onItemClick}
+                data-testid={`nav-${label.toLowerCase()}`}
+                className={cls(
+                  "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200",
+                  active
+                    ? "bg-primary/10 text-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                )}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.6)]" />
+                )}
+                <Icon
+                  className={cls(
+                    "h-4 w-4 transition-colors",
+                    active ? "text-primary" : "group-hover:text-primary/80"
+                  )}
+                  strokeWidth={1.75}
+                />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -195,7 +227,7 @@ export default function Sidebar({ status, mobileOpen, setMobileOpen }) {
           </div>
         </div>
 
-        <NavList items={SIDEBAR_ITEMS} pathname={loc.pathname} onItemClick={closeMobile} />
+        <NavList groups={SIDEBAR_GROUPS} pathname={loc.pathname} onItemClick={closeMobile} />
 
         <div className="px-4 pb-4 space-y-3">
           <BridgeStatusCard online={online} lastSec={lastSec} stale={stale} bridgeState={status?.bridgeState} />
