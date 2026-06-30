@@ -5,7 +5,7 @@ import {
   LayoutDashboard, SlidersHorizontal, LineChart as LineChartIcon,
   Settings as SettingsIcon, ShieldAlert, Sparkles, BookOpen, MessageSquare,
   FlaskConical, CalendarDays, Calculator, KeyRound, Microscope, CandlestickChart,
-  Link2, Cpu,
+  Link2, Cpu, Gauge,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -16,6 +16,7 @@ const SIDEBAR_ITEMS = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/chart", label: "Live Chart", icon: CandlestickChart },
   { to: "/strategies", label: "Strategies", icon: SlidersHorizontal },
+  { to: "/optimizer", label: "Optimizer", icon: Gauge },
   { to: "/analytics", label: "Analytics", icon: LineChartIcon },
   { to: "/strategy-analytics", label: "Strat Diag", icon: Microscope },
   { to: "/journal", label: "Journal", icon: BookOpen },

@@ -29,6 +29,11 @@ int     g_settingsPullSec     = 15;   // poll cadence
 string  g_run_StratDisabled[];
 int     g_run_StratDisabledCount = 0;
 
+// Moltiplicatori di rischio per-strategia dal loop di ottimizzazione live.
+// Cache del sotto-oggetto JSON "strategy_risk":{...}; il lotto viene scalato
+// per strategia in apertura. Default 1.0 (nessuna variazione).
+string  g_run_StrategyRiskJson = "";
+
 void NXS_Runtime_Init(){
    g_run_RiskPercent     = InpRiskPercent;
    g_run_MaxLot          = InpMaxLot;
@@ -119,6 +124,32 @@ bool NXS_Runtime_StrategyBlocked(const string name){
    return false;
 }
 
+// Estrae il sotto-oggetto JSON "key":{ ... } (valori flat, niente nesting).
+// Ritorna il contenuto tra graffe (escluse) o "" se assente.
+string _NXS_JsonObject(const string &json, const string key){
+   string needle = "\"" + key + "\":";
+   int p = StringFind(json, needle);
+   if(p < 0) return "";
+   p += StringLen(needle);
+   int len = StringLen(json);
+   while(p < len && (StringGetCharacter(json, p) == ' '
+                     || StringGetCharacter(json, p) == '\t')) p++;
+   if(p >= len || StringGetCharacter(json, p) != '{') return "";
+   int start = p + 1;
+   int e = start;
+   while(e < len && StringGetCharacter(json, e) != '}') e++;
+   if(e >= len) return "";
+   return StringSubstr(json, start, e - start);
+}
+
+// Moltiplicatore di rischio per la strategia (1.0 se non specificato).
+double NXS_Runtime_StrategyLotMult(const string name){
+   if(StringLen(g_run_StrategyRiskJson) == 0) return 1.0;
+   double v = _NXS_JsonNum(g_run_StrategyRiskJson, name);
+   if(v == EMPTY_VALUE || v <= 0.0) return 1.0;
+   return v;
+}
+
 #define _RT_APPLY_NUM(NAME, key, type) \
    { double _v = _NXS_JsonNum(json, key); \
      if(_v != EMPTY_VALUE && (type)_v != NAME){ \
@@ -172,6 +203,9 @@ void NXS_PullSettings(){
    ArrayResize(g_run_StratDisabled, dn);
    for(int i = 0; i < dn; ++i) g_run_StratDisabled[i] = disabled[i];
    g_run_StratDisabledCount = dn;
+
+   // Moltiplicatori di rischio per-strategia — cache del sotto-oggetto JSON.
+   g_run_StrategyRiskJson = _NXS_JsonObject(json, "strategy_risk");
 }
 
 #endif

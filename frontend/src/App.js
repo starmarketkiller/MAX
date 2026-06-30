@@ -30,6 +30,7 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Protected><Dashboard section="home" /></Protected>} />
               <Route path="/strategies" element={<Protected><Dashboard section="strategies" /></Protected>} />
+              <Route path="/optimizer" element={<Protected><Dashboard section="optimizer" /></Protected>} />
               <Route path="/analytics" element={<Protected><Dashboard section="analytics" /></Protected>} />
               <Route path="/whatif" element={<Protected><Dashboard section="whatif" /></Protected>} />
               <Route path="/risk" element={<Protected><Dashboard section="risk" /></Protected>} />

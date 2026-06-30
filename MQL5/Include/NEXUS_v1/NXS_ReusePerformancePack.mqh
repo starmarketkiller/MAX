@@ -1744,6 +1744,12 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
                   sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // Auto-scaling rischio per-strategia (loop ottimizzazione live dalla dashboard).
+   double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
+   if(stratRisk != 1.0){
+      lotMultiplier *= stratRisk;
+      PrintFormat("[NEXUS RISK] %s lotMult per-strategia x%.2f", sig.stratName, stratRisk);
+   }
 
    MqlTick tick;
    if(!SymbolInfoTick(g_sym, tick))

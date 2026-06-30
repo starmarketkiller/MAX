@@ -94,6 +94,12 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    double lots = NXS_CalcLot(slDist);
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
    lots *= MathMax(0.01, lotMult);
+   // Auto-scaling rischio per-strategia (loop ottimizzazione live dalla dashboard).
+   double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
+   if(stratRisk != 1.0){
+      lots *= stratRisk;
+      PrintFormat("[NEXUS RISK] %s lotMult per-strategia x%.2f", sig.stratName, stratRisk);
+   }
 
    // Re-align volume after a Counter-HTF risk multiplier.
    double step = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
