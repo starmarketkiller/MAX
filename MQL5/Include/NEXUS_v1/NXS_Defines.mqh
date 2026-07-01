@@ -6,7 +6,7 @@
 #ifndef __NXS_DEFINES_MQH__
 #define __NXS_DEFINES_MQH__
 
-#define NEXUS_VERSION       "2.0.20"
+#define NEXUS_VERSION       "2.0.21"
 #define MAX_GRID_LAYERS     3
 #define MAX_PYRAMID         3
 #define MAX_STRATEGIES      15
@@ -53,6 +53,7 @@ struct SNXSSignal {
    double          slPrice;
    double          tpPrice;
    double          entryRef;
+   ENUM_TIMEFRAMES sourceTF;   // v2.0.21: TF di origine del segnale (0=usa TF di esecuzione)
 };
 
 #endif

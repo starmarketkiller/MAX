@@ -146,13 +146,15 @@ void NXS_Prot_CheckDPT(){
 void NXS_Prot_CheckMaxHold(){
    if(!InpUseMaxHold) return;
    datetime now = TimeCurrent();
-   long limit = (long)InpProt_MaxHoldHours * 3600;
+   long baseLimit = (long)InpProt_MaxHoldHours * 3600;
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
       datetime opened = (datetime)PositionGetInteger(POSITION_TIME);
+      // v2.0.21 — MaxHold proporzionato al TF di origine del segnale.
+      long limit = (long)(baseLimit * NXS_TF_LifeFactor(NXS_PosSourceTF(PositionGetString(POSITION_COMMENT))));
       if(now - opened >= limit){
          NXS_Prot_ClosePositionWithReason(t, NXS_R_TIME);
          PrintFormat("[NEXUS PROT] MaxHold: closed ticket=%d (held %d s)", t, (int)(now - opened));
@@ -168,15 +170,17 @@ void NXS_Prot_CheckMaxLossPerPos(){
    double bal = AccountInfoDouble(ACCOUNT_BALANCE);
    double lim = -(bal * InpMaxLossPosPct / 100.0);
    datetime now = TimeCurrent();
-   long minLife = (long)InpProt_MinLifeMin * 60;   // v2.0.14
+   long baseMinLife = (long)InpProt_MinLifeMin * 60;   // v2.0.14
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
       // v2.0.14 — non chiudere prima del tempo minimo di vita (anti stop-out su rumore M5).
-      // Nei primi minuti la posizione resta protetta dallo SL hard (>=1.5 ATR).
+      // v2.0.21 — il minimo scala col TF di origine: un trade H4/D1 vive di più
+      // prima che NXS:RISK possa chiuderlo.
       datetime opened = (datetime)PositionGetInteger(POSITION_TIME);
+      long minLife = (long)(baseMinLife * NXS_TF_LifeFactor(NXS_PosSourceTF(PositionGetString(POSITION_COMMENT))));
       if(now - opened < minLife) continue;
       double pl = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
       if(pl <= lim){

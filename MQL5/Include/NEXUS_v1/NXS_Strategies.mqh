@@ -4,14 +4,63 @@
 #ifndef __NXS_STRATEGIES_MQH__
 #define __NXS_STRATEGIES_MQH__
 
+// ------ v2.0.21: timeframe di origine del segnale -> SL/TP e vita posizione ------
+// Mappa le strategie HTF/session-based al loro TF di origine. Le altre usano il
+// TF di esecuzione (ritorna 0 = PERIOD_CURRENT -> gestito come TF di esecuzione).
+ENUM_TIMEFRAMES NXS_StrategySourceTF(const string name){
+   if(name == "WEEKLY_EXP") return PERIOD_D1;
+   if(name == "PO3")        return PERIOD_H4;
+   if(name == "JUDAS_SWING" || name == "LDN_REVERSAL" || name == "NY_REVERSAL" ||
+      name == "AMD_CONT"    || name == "CISD"         || name == "LIQ_VOID"    ||
+      name == "SILVER_BULLET" || name == "OTE_CONT"   || name == "ICHIMOKU")
+      return PERIOD_H1;
+   return InpTFEntry;
+}
+
+// Moltiplicatore SL/TP in base al TF di origine (usa l'ATR del TF di esecuzione
+// con un fattore -> nessun doppio conteggio con l'ATR del TF alto).
+double NXS_TF_SLTPMult(ENUM_TIMEFRAMES stf){
+   if(stf == PERIOD_CURRENT) stf = InpTFEntry;
+   int sec  = PeriodSeconds(stf);
+   int base = PeriodSeconds(InpTFEntry);
+   if(sec <= base)  return 1.0;
+   if(sec <= 3600)  return g_run_TF_SLTP_H1;   // fino a H1
+   if(sec <= 14400) return g_run_TF_SLTP_H4;   // fino a H4
+   return g_run_TF_SLTP_D1;                     // H4+/D1
+}
+
+// Fattore di scala per MinLife/MaxHold in base al TF di origine.
+double NXS_TF_LifeFactor(ENUM_TIMEFRAMES stf){
+   if(stf == PERIOD_CURRENT) stf = InpTFEntry;
+   int sec  = PeriodSeconds(stf);
+   int base = PeriodSeconds(InpTFEntry);
+   if(sec <= base)  return 1.0;
+   if(sec <= 3600)  return InpTF_Life_H1;
+   if(sec <= 14400) return InpTF_Life_H4;
+   return InpTF_Life_D1;
+}
+
+// Ricava il TF di origine di una posizione dal commento "InpComment|STRAT|score".
+ENUM_TIMEFRAMES NXS_PosSourceTF(const string comment){
+   int p1 = StringFind(comment, "|");
+   if(p1 < 0) return InpTFEntry;
+   int p2 = StringFind(comment, "|", p1 + 1);
+   string strat = (p2 > p1) ? StringSubstr(comment, p1 + 1, p2 - p1 - 1)
+                            : StringSubstr(comment, p1 + 1);
+   return NXS_StrategySourceTF(strat);
+}
+
 void NXS_DefaultSLTP(SNXSSignal &sig){
    double slMult = g_run_AtrSLMult;          // tunabile dal sito (default = InpATR_SL_Mult)
    if(InpUseAdaptiveSL && g_atrAvg > 0){
       slMult = (g_atr > g_atrAvg) ? InpSL_HighVol_Mult : InpSL_LowVol_Mult;
    }
    slMult = MathMax(slMult, InpMinSLMult);   // v2.0.14 — floor SL (rumore M5 gold)
-   double sl = g_atr * slMult;
-   double tp = g_atr * g_run_AtrTPMult;       // tunabile dal sito (default = InpATR_TP_Mult)
+   // v2.0.21 — SL/TP proporzionati al TF di origine del segnale.
+   if(sig.sourceTF == PERIOD_CURRENT) sig.sourceTF = NXS_StrategySourceTF(sig.stratName);
+   double tfMult = NXS_TF_SLTPMult(sig.sourceTF);
+   double sl = g_atr * slMult * tfMult;
+   double tp = g_atr * g_run_AtrTPMult * tfMult; // tunabile dal sito (default = InpATR_TP_Mult)
    if(sig.dir == DIR_BUY){
       sig.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       sig.slPrice  = NormPrice(sig.entryRef - sl);

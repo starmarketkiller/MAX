@@ -122,6 +122,9 @@ input double   InpFVGMinBody         = 0.5;
 input group "=== REACTION ENGINE ==="
 input bool     InpUseReaction        = true;
 input double   InpReactionTol        = 0.3;
+input bool     InpUseReactionEMA     = true;    // EMA200 come livello dinamico di reazione (confluenza)
+input double   InpReactEMABonus      = 12.0;    // bonus qualità reazione se coincide con la EMA200
+input double   InpReactEMATolATR     = 0.4;     // tolleranza distanza dalla EMA (× ATR)
 
 input group "=== INDICATORS ==="
 input int      InpADX_Period       = 14;
@@ -285,6 +288,14 @@ input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
 input bool     InpUseStrat_LiqVoid       = true;
 input bool     InpUseStrat_DispRebal     = true;
+
+input group "=== TIMEFRAME-AWARE SL/TP + LIFE (v2.0.21) ==="
+input double   InpTF_SLTP_H1   = 2.0;    // moltiplicatore SL/TP per segnali origine H1 (× ATR chart)
+input double   InpTF_SLTP_H4   = 3.5;    // idem H4
+input double   InpTF_SLTP_D1   = 5.0;    // idem D1
+input double   InpTF_Life_H1   = 8.0;    // moltiplicatore MinLife/MaxHold per origine H1
+input double   InpTF_Life_H4   = 20.0;   // idem H4
+input double   InpTF_Life_D1   = 60.0;   // idem D1
 
 input group "=== ELLIOTT WAVE (v2.0.20) ==="
 input bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima

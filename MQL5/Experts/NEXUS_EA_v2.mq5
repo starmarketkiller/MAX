@@ -237,6 +237,10 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 
    // v2.0.5 stats: record called/setup for every invoked strategy
    for(int k = 0; k < n; k++){
+      // v2.0.21 — assicura il TF di origine su ogni segnale (anche quelli che
+      // impostano SL/TP propri senza passare da NXS_DefaultSLTP).
+      if(out[k].sourceTF == PERIOD_CURRENT)
+         out[k].sourceTF = NXS_StrategySourceTF(out[k].stratName);
       if(StringLen(out[k].stratName) > 0) NXS_Stats_RecordCalled(out[k].stratName);
       if(out[k].dir != DIR_NONE)          NXS_Stats_RecordSetup(out[k].stratName);
    }
