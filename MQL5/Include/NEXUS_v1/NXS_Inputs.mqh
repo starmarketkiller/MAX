@@ -286,6 +286,13 @@ input bool     InpUseStrat_PO3           = true;
 input bool     InpUseStrat_LiqVoid       = true;
 input bool     InpUseStrat_DispRebal     = true;
 
+input group "=== ELLIOTT WAVE (v2.0.20) ==="
+input bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima
+input int      InpEllSwingWing           = 3;        // ampiezza fractal per i pivot di swing
+input double   InpEllRetraceMin          = 0.382;    // retracement min onda 2 (Fib)
+input double   InpEllRetraceMax          = 0.786;    // retracement max onda 2 (Fib)
+input double   InpEllMinScore            = 70.0;     // score base dei setup Elliott
+
 input group "=== RANGE / COUNTER-HTF (v2.0.8) ==="
 input bool     InpUseStrat_RangeFade     = true;     // mean-revert sui range stretti
 input bool     InpEnableCounterHTFSoft   = false;    // OPTIONAL: counter-trend HTF micro-trade

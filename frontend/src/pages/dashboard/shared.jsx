@@ -60,6 +60,8 @@ export const STRAT_LIST = [
   ["DISP_REBAL",    "Displacement Rebalance",  "INSTITUTIONAL"],
   // RANGE / COUNTER-HTF v2.0.8
   ["RANGE_FADE",    "Range Fade (low ADX)",    "REVERSAL"],
+  // ELLIOTT WAVE v2.0.20
+  ["ELLIOTT",       "Elliott Wave (W2/W4/W5)", "INSTITUTIONAL"],
 ];
 
 export const STRAT_FAMILIES = [

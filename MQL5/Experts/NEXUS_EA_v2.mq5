@@ -44,6 +44,7 @@
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
+#include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
 #include <NEXUS_v1\NXS_ShadowTrading.mqh>
 #include <NEXUS_v1\NXS_EntryScore.mqh>
 #include <NEXUS_v1\NXS_Execution.mqh>
@@ -230,6 +231,9 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 
    // v2.0.8 — Range Fade
    if(InpUseStrat_RangeFade)   out[n++] = NXS_Strat_RangeFade();
+
+   // v2.0.20 — Elliott Wave (#37)
+   if(InpUseStrat_Elliott)     out[n++] = NXS_Strat_Elliott();
 
    // v2.0.5 stats: record called/setup for every invoked strategy
    for(int k = 0; k < n; k++){
