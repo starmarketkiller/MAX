@@ -1543,13 +1543,14 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
     try:
         return backtest.run_backtest(
             symbol=body.get("symbol", "XAUUSD"),
-            timeframe=body.get("timeframe", "D1"),
+            timeframe=body.get("timeframe") or body.get("interval") or "D1",
             strategy=body.get("strategy") or (body.get("strategies") or [None])[0],
             strategies=body.get("strategies"),
+            # Alias sui nomi campo usati dal form React (atr_sl_mult/interval/…)
             risk_pct=float(body.get("risk_pct", body.get("RiskPercent", 1.0))),
-            atr_sl=float(body.get("atr_sl", body.get("AtrSLMult", 1.5))),
-            atr_tp=float(body.get("atr_tp", body.get("AtrTPMult", 3.0))),
-            start_equity=float(body.get("start_equity", 10000.0)),
+            atr_sl=float(body.get("atr_sl", body.get("atr_sl_mult", body.get("AtrSLMult", 1.5)))),
+            atr_tp=float(body.get("atr_tp", body.get("atr_tp_mult", body.get("AtrTPMult", 3.0)))),
+            start_equity=float(body.get("start_equity", body.get("initial_balance", 10000.0))),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"backtest error: {e}")

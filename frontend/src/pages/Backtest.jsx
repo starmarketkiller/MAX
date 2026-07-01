@@ -138,6 +138,20 @@ export default function BacktestPage() {
     return () => { cancelled = true; };
   }, [cfg.strategies, cfg.symbol]);
 
+  const loadLiveSettings = async () => {
+    try {
+      const { data } = await api.get("/settings");
+      setCfg((c) => ({
+        ...c,
+        risk_pct: data.RiskPercent ?? c.risk_pct,
+        atr_sl_mult: data.ATR_SL_Mult ?? c.atr_sl_mult,
+        atr_tp_mult: data.ATR_TP_Mult ?? c.atr_tp_mult,
+        min_score: data.MinEntryScore ?? c.min_score,
+        max_concurrent: data.MaxConcurrent ?? c.max_concurrent,
+      }));
+    } catch (e) { /* noop */ }
+  };
+
   const run = async () => {
     if (cfg.strategies && cfg.strategies.length === 0) {
       setError("Seleziona almeno una strategia."); return;
@@ -166,6 +180,10 @@ export default function BacktestPage() {
             Replay completo delle <strong>36 strategie NEXUS</strong> con tutti i gate dell&apos;EA
             (HTF bias, ADX, sessioni, cooldown, partial TP, breakeven, trailing).
           </p>
+          <button onClick={loadLiveSettings} data-testid="bt-load-live"
+            className="mt-2 text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-secondary inline-flex items-center gap-1.5">
+            <TrendingUp className="h-3.5 w-3.5" /> Carica settaggi live (rischio, ATR SL/TP, score)
+          </button>
         </div>
         <div className="flex items-center gap-1 p-1 bg-secondary/40 rounded-lg" data-testid="bt-tabs">
           <button
