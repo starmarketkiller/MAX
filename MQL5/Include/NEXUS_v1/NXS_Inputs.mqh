@@ -191,8 +191,8 @@ input bool     InpEnablePyramid    = false;
 input bool     InpEnableSplit      = true;
 
 input group "=== WEB BRIDGE ==="
-input bool     InpEnableWebSync    = true;
-input string   InpWebURL           = "http://127.0.0.1:8001";
+input bool     InpEnableWebSync    = true;                                   // WebSync ON di default
+input string   InpWebURL           = "https://nexus-backend-8o4y.onrender.com"; // backend Render di default
 input string   InpWebToken         = "NEXUS_BRIDGE_TOKEN_2026";
 input int      InpPushIntervalSec  = 5;
 input int      InpPollIntervalSec  = 3;
