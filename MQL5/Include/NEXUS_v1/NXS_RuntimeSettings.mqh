@@ -26,6 +26,10 @@ double  g_run_AtrTPMult       = 0;
 double  g_run_BE_TriggerATR   = 0;
 double  g_run_TrailActivateATR= 0;
 double  g_run_TrailDistanceATR= 0;
+// Moltiplicatori SL/TP per timeframe di origine del segnale (tunabili dal sito).
+double  g_run_TF_SLTP_H1      = 0;
+double  g_run_TF_SLTP_H4      = 0;
+double  g_run_TF_SLTP_D1      = 0;
 datetime g_lastSettingsPull   = 0;
 int     g_settingsPullSec     = 15;   // poll cadence
 
@@ -60,6 +64,9 @@ void NXS_Runtime_Init(){
    g_run_BE_TriggerATR    = InpBE_TriggerATR;
    g_run_TrailActivateATR = InpTrailActivateATR;
    g_run_TrailDistanceATR = InpTrailDistanceATR;
+   g_run_TF_SLTP_H1       = InpTF_SLTP_H1;
+   g_run_TF_SLTP_H4       = InpTF_SLTP_H4;
+   g_run_TF_SLTP_D1       = InpTF_SLTP_D1;
    Print("[NEXUS RUNTIME] Initialised shadow globals from inputs");
 }
 
@@ -204,6 +211,9 @@ void NXS_PullSettings(){
    _RT_APPLY_NUM(g_run_BE_TriggerATR,    "BE_TriggerATR",    double);
    _RT_APPLY_NUM(g_run_TrailActivateATR, "TrailActivateATR", double);
    _RT_APPLY_NUM(g_run_TrailDistanceATR, "TrailDistanceATR", double);
+   _RT_APPLY_NUM(g_run_TF_SLTP_H1,       "TF_SLTP_H1",       double);
+   _RT_APPLY_NUM(g_run_TF_SLTP_H4,       "TF_SLTP_H4",       double);
+   _RT_APPLY_NUM(g_run_TF_SLTP_D1,       "TF_SLTP_D1",       double);
 
    // Booleans
    _RT_APPLY_BOOL(g_run_UseNewsFilter,   "UseNewsFilter");

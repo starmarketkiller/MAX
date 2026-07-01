@@ -111,6 +111,35 @@ SNXSReaction NXS_DetectReaction(string sym, ENUM_TIMEFRAMES tf){
       }
    }
 
+   // 3. Livello dinamico: EMA200 (mean-reversion sulle medie lente).
+   // Confluenza NON sostitutiva: se una reazione esiste già ed è vicina alla
+   // EMA200 nella stessa direzione, ne alza la qualità; altrimenti può
+   // generarla da sola (qualità base più bassa delle zone OB/FVG).
+   if(InpUseReactionEMA && g_ema200 > 0){
+      double emaTol = g_atr * InpReactEMATolATR;
+      bool nearEMA = (MathAbs(price - g_ema200) <= emaTol);
+      if(nearEMA){
+         if(r.detected && MathAbs(r.levelPrice - g_ema200) <= emaTol * 2.0){
+            // confluenza col livello già rilevato
+            r.quality = MathMin(100.0, r.quality + InpReactEMABonus);
+            r.levelType = r.levelType + "+EMA";
+         } else if(!r.detected){
+            // reazione dinamica autonoma sulla EMA200
+            int emaDir = 0;
+            if(NXS_HasPriceReaction(sym, tf, 1))      emaDir = 1;   // rimbalzo rialzista (supporto)
+            else if(NXS_HasPriceReaction(sym, tf, -1)) emaDir = -1;  // rigetto ribassista (resistenza)
+            if(emaDir != 0){
+               double q = 58.0 + (emaDir == g_struct.trend ? 15.0 : 0.0);
+               r.detected   = true;
+               r.direction  = emaDir;
+               r.levelPrice = g_ema200;
+               r.levelType  = "EMA200";
+               r.quality    = q;
+            }
+         }
+      }
+   }
+
    if(r.detected){
       r.summary = StringFormat("Reaction %s @ %.2f type=%s Q=%.0f",
                                (r.direction == 1 ? "BULL" : "BEAR"),

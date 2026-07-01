@@ -94,6 +94,10 @@ DEFAULT_SETTINGS = {
     "BE_TriggerATR": 1.0,
     "TrailActivateATR": 1.5,
     "TrailDistanceATR": 1.0,
+    # SL/TP proporzionati al timeframe di origine del segnale (v2.0.21)
+    "TF_SLTP_H1": 2.0,
+    "TF_SLTP_H4": 3.5,
+    "TF_SLTP_D1": 5.0,
     # Sessioni
     "AsianScoreMin": 72.0,
     "LondonScoreMin": 68.0,
