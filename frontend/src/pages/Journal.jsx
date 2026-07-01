@@ -168,6 +168,18 @@ export default function JournalPage() {
   const [filter, setFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resyncMsg, setResyncMsg] = useState("");
+
+  const resync = useCallback(async () => {
+    setResyncMsg("Comando inviato all'EA… i trade degli ultimi 7 giorni arriveranno tra pochi secondi.");
+    try {
+      await api.post("/command", { action: "resync_trades" });
+      // ricarica dopo qualche secondo per mostrare i trade sincronizzati
+      setTimeout(() => { load(); setResyncMsg(""); }, 6000);
+    } catch (e) {
+      setResyncMsg("Errore nell'invio del comando resync. L'EA è online?");
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -204,12 +216,24 @@ export default function JournalPage() {
             Aggiungi tag, voti e note ai tuoi trade per costruire un playbook personale.
           </p>
         </div>
-        <button onClick={load} disabled={loading}
-                className="flex items-center gap-2 px-3 py-2 rounded-md border border-border text-sm hover:bg-secondary">
-          <RefreshCcw className={classNames("h-3.5 w-3.5", loading && "animate-spin")}/>
-          Aggiorna
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={resync}
+                  data-testid="journal-resync"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md border border-border text-sm hover:bg-secondary">
+            <Activity className="h-3.5 w-3.5"/>
+            Resync dall'EA
+          </button>
+          <button onClick={load} disabled={loading}
+                  className="flex items-center gap-2 px-3 py-2 rounded-md border border-border text-sm hover:bg-secondary">
+            <RefreshCcw className={classNames("h-3.5 w-3.5", loading && "animate-spin")}/>
+            Aggiorna
+          </button>
+        </div>
       </div>
+      {resyncMsg && (
+        <div className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm text-sky-700 dark:text-sky-300"
+             data-testid="journal-resync-msg">{resyncMsg}</div>
+      )}
 
       {tagStats.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-4">
@@ -254,13 +278,14 @@ export default function JournalPage() {
               <div className="space-y-3 text-left max-w-2xl mx-auto" data-testid="journal-empty-help">
                 <div className="text-base font-semibold text-foreground">Nessun trade nel database</div>
                 <div className="text-sm">
-                  Il backend non ha ricevuto trade chiusi dall'EA. Le cause più comuni:
+                  Il backend non ha ancora ricevuto trade chiusi dall'EA. Controlla in ordine:
                 </div>
                 <ul className="text-sm space-y-1.5 list-disc pl-5">
-                  <li>L'URL del backend non è whitelistato in MT5 → <b>Strumenti → Opzioni → Expert Advisors → Consenti WebRequest</b> e aggiungi <code className="text-xs bg-secondary px-1 rounded">{import.meta.env?.VITE_BACKEND_HOST || window.location.origin}</code></li>
-                  <li>Stai usando una versione vecchia dell'EA (richiesto v2.0.13+). <a href="/setup" className="text-sky-500 underline">Scarica l'ultima versione</a></li>
-                  <li>L'EA è offline o staccato dal grafico</li>
-                  <li>Trade chiusi prima dell'avvio EA: usa il pulsante <b>"Resync Last 7d"</b> nel Setup Wizard, oppure restart EA (chiama auto-sync su OnInit)</li>
+                  <li><b>Token</b>: <code className="text-xs bg-secondary px-1 rounded">InpWebToken</code> nell'EA deve combaciare con <code className="text-xs bg-secondary px-1 rounded">NEXUS_BRIDGE_TOKEN</code> su Render. Se non combacia l'EA riceve 401 e nessun trade arriva.</li>
+                  <li><b>URL</b>: <code className="text-xs bg-secondary px-1 rounded">InpWebURL</code> deve puntare al backend (dalla v2.0.22 è già il default), non a localhost.</li>
+                  <li><b>Whitelist MT5</b>: <b>Strumenti → Opzioni → Expert Advisor → Consenti WebRequest</b> e aggiungi <code className="text-xs bg-secondary px-1 rounded">{window.location.origin}</code></li>
+                  <li><b>Versione EA</b>: serve v2.0.17+ per il backfill automatico. Ricompila all'ultima.</li>
+                  <li>Poi premi <b>"Resync dall'EA"</b> qui sopra: l'EA rimanda i trade degli ultimi 7 giorni.</li>
                 </ul>
               </div>
             ) : (
