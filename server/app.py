@@ -1541,7 +1541,8 @@ def _demo_equity(points=60, start=10000, drift=35):
 async def backtest_run(request: Request, user: str = Depends(require_user)):
     body = await request.json()
     try:
-        return backtest.run_backtest(
+        start_equity = float(body.get("start_equity", body.get("initial_balance", 10000.0)))
+        raw = backtest.run_backtest(
             symbol=body.get("symbol", "XAUUSD"),
             timeframe=body.get("timeframe") or body.get("interval") or "D1",
             strategy=body.get("strategy") or (body.get("strategies") or [None])[0],
@@ -1550,10 +1551,73 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
             risk_pct=float(body.get("risk_pct", body.get("RiskPercent", 1.0))),
             atr_sl=float(body.get("atr_sl", body.get("atr_sl_mult", body.get("AtrSLMult", 1.5)))),
             atr_tp=float(body.get("atr_tp", body.get("atr_tp_mult", body.get("AtrTPMult", 3.0)))),
-            start_equity=float(body.get("start_equity", body.get("initial_balance", 10000.0))),
+            start_equity=start_equity,
         )
+        return _adapt_backtest_result(raw, start_equity)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"backtest error: {e}")
+
+
+def _adapt_backtest_result(raw, start_equity):
+    """Adatta il risultato piatto del motore allo shape atteso dal frontend
+    (metrics annidate con suffissi _pct, trades list, by_strategy, first/last ts)."""
+    trade_list = raw.get("trade_list") or []
+    # aggregazione P&L per strategia
+    agg = {}
+    for t in trade_list:
+        s = t.get("strategy") or "?"
+        agg[s] = agg.get(s, 0.0) + (t.get("pnl") or 0.0)
+    by_strategy = sorted(
+        [{"strategy": s, "pnl": round(p, 2)} for s, p in agg.items()],
+        key=lambda r: r["pnl"], reverse=True)
+    final_eq = raw.get("final_equity", start_equity)
+    ret = raw.get("return_pct", 0.0)
+    curve = raw.get("equity_curve") or []
+    first_ts = curve[0]["ts"] if curve else None
+    last_ts = curve[-1]["ts"] if curve else None
+    buy_hold = None
+    if curve and curve[0].get("close") and curve[-1].get("close"):
+        buy_hold = round((curve[-1]["close"] / curve[0]["close"] - 1) * 100, 2)
+    # Sortino sui P&L per trade (downside deviation), coerente con lo Sharpe del motore.
+    sortino = raw.get("sortino")
+    pnls = [t.get("pnl") or 0.0 for t in trade_list]
+    if sortino is None and len(pnls) > 1:
+        mean = sum(pnls) / len(pnls)
+        downside = [p for p in pnls if p < 0]
+        dd = (sum(p * p for p in downside) / len(pnls)) ** 0.5 if downside else 0.0
+        sortino = round(mean / dd, 2) if dd > 0 else None
+    return {
+        "demo": raw.get("demo", False),
+        "data_source": raw.get("data_source"),
+        "symbol": raw.get("symbol"),
+        "timeframe": raw.get("timeframe"),
+        "strategies": raw.get("strategies"),
+        "trades_count": raw.get("trades"),
+        "bars": raw.get("bars"),
+        "first_ts": first_ts,
+        "last_ts": last_ts,
+        "equity_curve": curve,
+        "trades": trade_list,
+        "by_strategy": by_strategy,
+        "metrics": {
+            "win_rate_pct": raw.get("win_rate"),
+            "profit_factor": raw.get("profit_factor"),
+            "total_return_pct": ret,
+            "max_dd_pct": raw.get("max_dd_pct"),
+            "sharpe": raw.get("sharpe"),
+            "sortino": sortino,
+            "wins": raw.get("wins"),
+            "losses": raw.get("losses"),
+            "n_trades": raw.get("trades"),
+            "initial_balance": round(start_equity, 2),
+            "final_balance": round(final_eq, 2),
+            "net_pnl": raw.get("net_pnl"),
+            "avg_win": raw.get("avg_win"),
+            "avg_loss": raw.get("avg_loss"),
+            "expectancy_r": raw.get("expectancy_r"),
+            "buy_hold_return_pct": buy_hold,
+        },
+    }
 
 
 @app.post("/api/backtest/optimize")
