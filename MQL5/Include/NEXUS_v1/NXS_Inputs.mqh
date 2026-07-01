@@ -223,6 +223,21 @@ input int      InpConfluenceBonus2 = 10;
 input int      InpConfluenceBonus3 = 20;
 input int      InpConfluenceBonus4 = 30;
 input int      InpADXRsiScoreCap   = 70;   // cap anti-dominance
+
+input group "=== MARKET CONTEXT LAYER (v2.0.19) ==="
+input bool     InpUseMarketContext   = false;  // OFF di default: pesa la confluenza di contesto sullo score
+input double   InpCtxW_HTF           = 8.0;    // peso HTF bias allineato
+input double   InpCtxCounterFactor    = 1.0;    // moltiplicatore penalità quando contro-HTF
+input double   InpCtxW_Struct         = 5.0;    // peso trend di struttura (HH/HL)
+input double   InpCtxW_BOS            = 4.0;    // peso Break of Structure in direzione
+input double   InpCtxW_CHoCH          = 4.0;    // peso Change of Character in direzione
+input double   InpCtxW_React          = 10.0;   // peso reazione (× qualità/100)
+input double   InpCtxW_Sweep          = 6.0;    // peso liquidity sweep confermato
+input double   InpCtxW_Zone           = 5.0;    // peso zona FVG/OB attiva vicina in direzione
+input double   InpCtxW_AMD            = 3.0;    // bonus fase AMD attiva (manip/distrib)
+input double   InpCtxZoneATR          = 1.5;    // distanza max zona dal prezzo (× ATR)
+input double   InpCtxMaxBonus         = 20.0;   // tetto bonus totale di contesto
+input double   InpCtxMaxPenalty       = 15.0;   // tetto penalità totale di contesto
 input bool     InpUseStrategyCD    = true;
 input int      InpMaxConsecPerStrat= 3;
 input int      InpStratCooldownMin = 30;

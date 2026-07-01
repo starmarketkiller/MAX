@@ -38,6 +38,7 @@
 #include <NEXUS_v1\NXS_Structure.mqh>
 #include <NEXUS_v1\NXS_StructureMultiLayer.mqh>
 #include <NEXUS_v1\NXS_Reaction.mqh>
+#include <NEXUS_v1\NXS_MarketContext.mqh>
 #include <NEXUS_v1\NXS_FibonacciContext.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
@@ -400,6 +401,8 @@ void OnTick(){
 
    NXS_UpdateStructure(g_sym, InpTFEntry);
    g_reaction = NXS_DetectReaction(g_sym, InpTFEntry);
+   // Market Context Layer: snapshot direzionale (OFF di default via flag).
+   if(InpUseMarketContext) NXS_Context_Update(htf, sweep, amd);
 
    // AUDITPATCH: count/report every closed-bar decision, including upstream vetoes.
    NXS_Blk_DecisionTick();
@@ -430,6 +433,8 @@ void OnTick(){
       if(all[i].dir == DIR_NONE) continue;
       int wd = (all[i].dir == DIR_BUY) ? +1 : -1;
       all[i].score = MathMin(100.0, all[i].score + (double)NXS_ConfluenceBonus(wd));
+      // Market Context Layer: pesa la confluenza di contesto (bonus/penalità).
+      all[i].score = NXS_Context_ApplyBonus(wd, all[i].score);
    }
    NXS_SignalSort(all, n);
 
