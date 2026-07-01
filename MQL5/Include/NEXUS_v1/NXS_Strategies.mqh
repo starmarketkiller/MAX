@@ -5,13 +5,13 @@
 #define __NXS_STRATEGIES_MQH__
 
 void NXS_DefaultSLTP(SNXSSignal &sig){
-   double slMult = InpATR_SL_Mult;
+   double slMult = g_run_AtrSLMult;          // tunabile dal sito (default = InpATR_SL_Mult)
    if(InpUseAdaptiveSL && g_atrAvg > 0){
       slMult = (g_atr > g_atrAvg) ? InpSL_HighVol_Mult : InpSL_LowVol_Mult;
    }
    slMult = MathMax(slMult, InpMinSLMult);   // v2.0.14 — floor SL (rumore M5 gold)
    double sl = g_atr * slMult;
-   double tp = g_atr * InpATR_TP_Mult;
+   double tp = g_atr * g_run_AtrTPMult;       // tunabile dal sito (default = InpATR_TP_Mult)
    if(sig.dir == DIR_BUY){
       sig.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       sig.slPrice  = NormPrice(sig.entryRef - sl);

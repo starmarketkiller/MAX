@@ -20,6 +20,12 @@ double  g_run_AfterNYScoreMin = 0;
 bool    g_run_UseNewsFilter   = true;
 bool    g_run_UseHTFBias      = true;
 bool    g_run_UseVelocityGate = true;
+// Stop/target/trailing tunabili dal sito (default = valori Inp in OnInit).
+double  g_run_AtrSLMult       = 0;
+double  g_run_AtrTPMult       = 0;
+double  g_run_BE_TriggerATR   = 0;
+double  g_run_TrailActivateATR= 0;
+double  g_run_TrailDistanceATR= 0;
 datetime g_lastSettingsPull   = 0;
 int     g_settingsPullSec     = 15;   // poll cadence
 
@@ -49,6 +55,11 @@ void NXS_Runtime_Init(){
    g_run_UseNewsFilter   = InpUseNews;
    g_run_UseHTFBias      = InpUseHTFBias;
    g_run_UseVelocityGate = InpUseVelocity;
+   g_run_AtrSLMult        = InpATR_SL_Mult;
+   g_run_AtrTPMult        = InpATR_TP_Mult;
+   g_run_BE_TriggerATR    = InpBE_TriggerATR;
+   g_run_TrailActivateATR = InpTrailActivateATR;
+   g_run_TrailDistanceATR = InpTrailDistanceATR;
    Print("[NEXUS RUNTIME] Initialised shadow globals from inputs");
 }
 
@@ -187,6 +198,12 @@ void NXS_PullSettings(){
    _RT_APPLY_NUM(g_run_OverlapScoreMin, "OverlapScoreMin", double);
    _RT_APPLY_NUM(g_run_NYScoreMin,      "NYScoreMin",      double);
    _RT_APPLY_NUM(g_run_AfterNYScoreMin, "AfterNYScoreMin", double);
+   // Stop/target/trailing (tunabili dal sito)
+   _RT_APPLY_NUM(g_run_AtrSLMult,        "ATR_SL_Mult",      double);
+   _RT_APPLY_NUM(g_run_AtrTPMult,        "ATR_TP_Mult",      double);
+   _RT_APPLY_NUM(g_run_BE_TriggerATR,    "BE_TriggerATR",    double);
+   _RT_APPLY_NUM(g_run_TrailActivateATR, "TrailActivateATR", double);
+   _RT_APPLY_NUM(g_run_TrailDistanceATR, "TrailDistanceATR", double);
 
    // Booleans
    _RT_APPLY_BOOL(g_run_UseNewsFilter,   "UseNewsFilter");

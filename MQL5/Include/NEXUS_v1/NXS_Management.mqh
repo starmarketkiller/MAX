@@ -34,7 +34,7 @@ void NXS_ManageBreakevenAndTrail(){
       // Break-even check
       bool beReached = (type == POSITION_TYPE_BUY) ? (sl >= open - g_point * 2)
                                                     : (sl <= open + g_point * 2 && sl > 0);
-      double beTrigger = g_atr * InpBE_TriggerATR;
+      double beTrigger = g_atr * g_run_BE_TriggerATR;   // tunabile dal sito
       if(!beReached && prof >= beTrigger){
          double newSL = (type == POSITION_TYPE_BUY) ? MathMax(sl, open) : MathMin(sl == 0 ? open : sl, open);
          if(MathAbs(newSL - sl) > g_point * 2){
@@ -43,8 +43,8 @@ void NXS_ManageBreakevenAndTrail(){
          }
       }
       // Trailing — tighter once BE has been reached
-      double trailAct = g_atr * InpTrailActivateATR;
-      double trailDist= g_atr * (beReached ? InpTrailDistancePostBE : InpTrailDistanceATR);
+      double trailAct = g_atr * g_run_TrailActivateATR;   // tunabile dal sito
+      double trailDist= g_atr * (beReached ? InpTrailDistancePostBE : g_run_TrailDistanceATR);
       if(prof >= trailAct){
          double newSL = (type == POSITION_TYPE_BUY) ? now - trailDist : now + trailDist;
          if(type == POSITION_TYPE_BUY  && newSL > sl + g_point * 2)
