@@ -704,10 +704,13 @@ function WhyNoTrade({ status, settings }) {
   if (wantBuy) dirLabel = "BUY";
   else if (wantSell) dirLabel = "SELL";
 
+  // Mostra solo i gate effettivamente applicati dall'EA: HTF bias, velocity e
+  // news sono opzionali (di default HTF/velocity sono OFF nell'EA). Includerli
+  // sempre faceva apparire "blocchi" che l'EA non stava applicando davvero.
   const checks = [
-    checkHtfBias(status, reactDir, wantBuy, wantSell, dirLabel),
+    ...(settings?.UseHTFBias ? [checkHtfBias(status, reactDir, wantBuy, wantSell, dirLabel)] : []),
     ...(settings?.UseVelocityGate ? [checkVelocity(status, reactDir, wantBuy, wantSell)] : []),
-    checkNews(status),
+    ...(settings?.UseNewsFilter ? [checkNews(status)] : []),
     checkPaused(status),
     checkConcurrent(status, settings),
     checkDailyTrades(status, settings),

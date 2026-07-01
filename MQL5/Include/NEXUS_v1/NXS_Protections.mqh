@@ -30,6 +30,7 @@ void NXS_Prot_PushTradeReason(ulong ticket, long magic, string strategy,
    string body = "{";
    body += "\"ticket\":"     + IntegerToString((long)ticket) + ",";
    body += "\"magic\":"      + IntegerToString(magic) + ",";
+   body += "\"symbol\":\""   + g_sym + "\",";
    body += "\"strategy\":\""  + strategy + "\",";
    body += "\"side\":\""     + side + "\",";
    body += "\"lots\":"       + DoubleToString(lots, 2) + ",";
