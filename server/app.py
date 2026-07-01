@@ -88,11 +88,47 @@ DEFAULT_SETTINGS = {
     "MaxConcurrent": 3,
     "MaxDailyDDPct": 5.0,
     "MinEntryScore": 70,
+    # Stop/target/trailing (default reali dell'EA, NXS_Inputs.mqh)
+    "ATR_SL_Mult": 2.0,
+    "ATR_TP_Mult": 2.6,
+    "BE_TriggerATR": 1.0,
+    "TrailActivateATR": 1.5,
+    "TrailDistanceATR": 1.0,
+    # Sessioni
     "AsianScoreMin": 72.0,
     "LondonScoreMin": 68.0,
     "OverlapScoreMin": 66.0,
     "NYScoreMin": 68.0,
     "AfterNYScoreMin": 74.0,
+    # Anti-revenge / struttura
+    "AntiRevengeLosses": 3,
+    "AntiRevengeMin": 60,
+    "SwingWing": 3,
+    "OBDisplacement": 1.5,
+    "FVGMinBody": 0.5,
+    "ReactionTol": 0.3,
+    # Protezioni equity/tempo
+    "ESL_IsPercent": True,
+    "ESL_Value": 5.0,
+    "DPT_IsPercent": True,
+    "DPT_Value": 3.0,
+    "MaxHoldHours": 4,
+    "MaxLossPosPct": 2.0,
+    "AutoCloseMin": 15,
+    "MarketCloseGMT": 21,
+    # Confluenza / cap / cooldown
+    "ConfluenceBonus2": 10,
+    "ConfluenceBonus3": 20,
+    "ConfluenceBonus4": 30,
+    "ADXRsiScoreCap": 70,
+    "MaxConsecPerStrategy": 3,
+    "StrategyCooldownMin": 30,
+    # Spread / volatilità
+    "MaxSpreadAtrPct": 8.0,
+    "MaxSpreadPoints": 0,
+    "LowVolAtrPct": 0.15,
+    "HighVolAtrPct": 0.6,
+    # Gate booleani
     "UseNewsFilter": True,
     "UseHTFBias": True,
     "UseVelocityGate": True,
@@ -452,7 +488,7 @@ def ea_command(x_nexus_token: Optional[str] = Header(None)):
 @app.get("/api/ea/settings")
 def ea_settings(x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    out = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+    out = {**DEFAULT_SETTINGS, **(kv_get("settings", {}) or {})}
     # Strategie disattivate dalla pagina "Strategie" della dashboard: l'EA le
     # legge in runtime (poll ogni 15s) e blocca l'apertura di nuovi trade per
     # queste strategie senza bisogno di riavvio/ricompilazione del profilo.
@@ -502,6 +538,40 @@ async def ea_strategy_stats(request: Request, x_nexus_token: Optional[str] = Hea
     return {"ok": True}
 
 
+def _upsert_trade(c, t, symbol_fallback=None):
+    """Upsert di un trade nella tabella `trades` (letta da Journal/Analytics).
+    COALESCE protegge i campi ricchi (symbol/strategy/open_*) quando arriva un
+    aggiornamento parziale (es. il push di chiusura live senza open price/symbol)."""
+    ticket = t.get("ticket") or t.get("deal") or t.get("id")
+    if ticket is None:
+        return False
+    symbol = t.get("symbol")
+    if not symbol or symbol == "?":
+        symbol = symbol_fallback
+    open_price = t.get("open_price") or t.get("openPrice")
+    c.execute(
+        "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
+        "pnl,open_time,close_time,reason,raw,synced_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(ticket) DO UPDATE SET "
+        "symbol=COALESCE(excluded.symbol, trades.symbol), "
+        "strategy=COALESCE(excluded.strategy, trades.strategy), "
+        "side=excluded.side, lots=excluded.lots, "
+        "open_price=CASE WHEN COALESCE(excluded.open_price,0)>0 THEN excluded.open_price ELSE trades.open_price END, "
+        "close_price=excluded.close_price, pnl=excluded.pnl, "
+        "open_time=COALESCE(excluded.open_time, trades.open_time), "
+        "close_time=excluded.close_time, reason=excluded.reason, raw=excluded.raw, "
+        "synced_at=excluded.synced_at",
+        (
+            int(ticket), symbol, t.get("strategy"), t.get("side") or t.get("type"),
+            t.get("lots") or t.get("volume"), open_price,
+            t.get("close_price") or t.get("closePrice"), t.get("pnl") or t.get("profit"),
+            t.get("open_time") or t.get("openTime"), t.get("close_time") or t.get("closeTime"),
+            t.get("reason"), json.dumps(t), now(),
+        ),
+    )
+    return True
+
+
 @app.post("/api/ea/trade_history_sync")
 async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
@@ -512,28 +582,8 @@ async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] =
     n = 0
     with _conn() as c:
         for t in trades:
-            if not isinstance(t, dict):
-                continue
-            ticket = t.get("ticket") or t.get("deal") or t.get("id")
-            if ticket is None:
-                continue
-            c.execute(
-                "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
-                "pnl,open_time,close_time,reason,raw,synced_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
-                "ON CONFLICT(ticket) DO UPDATE SET symbol=excluded.symbol, strategy=excluded.strategy, "
-                "side=excluded.side, lots=excluded.lots, open_price=excluded.open_price, "
-                "close_price=excluded.close_price, pnl=excluded.pnl, open_time=excluded.open_time, "
-                "close_time=excluded.close_time, reason=excluded.reason, raw=excluded.raw, "
-                "synced_at=excluded.synced_at",
-                (
-                    int(ticket), t.get("symbol"), t.get("strategy"), t.get("side") or t.get("type"),
-                    t.get("lots") or t.get("volume"), t.get("open_price") or t.get("openPrice"),
-                    t.get("close_price") or t.get("closePrice"), t.get("pnl") or t.get("profit"),
-                    t.get("open_time") or t.get("openTime"), t.get("close_time") or t.get("closeTime"),
-                    t.get("reason"), json.dumps(t), now(),
-                ),
-            )
-            n += 1
+            if isinstance(t, dict) and _upsert_trade(c, t):
+                n += 1
     return {"ok": True, "stored": n}
 
 
@@ -541,13 +591,29 @@ async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] =
 async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
     data = await request.json()
-    symbol = data.get("symbol", "?")
+    symbol = data.get("symbol") or "?"
     with _conn() as c:
+        # Se il simbolo non è nel payload (il push di chiusura live non lo manda),
+        # ricavalo dall'ultimo stato EA con lo stesso magic.
+        if symbol == "?" and data.get("magic") is not None:
+            row = c.execute(
+                "SELECT symbol FROM ea_status WHERE magic=? ORDER BY updated_at DESC LIMIT 1",
+                (data.get("magic"),)).fetchone()
+            if row and row["symbol"]:
+                symbol = row["symbol"]
         c.execute(
             "INSERT INTO trade_reasons(symbol,payload,updated_at) VALUES(?,?,?) "
             "ON CONFLICT(symbol) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at",
             (symbol, json.dumps(data), now()),
         )
+        # FIX catena dati: popola anche la tabella `trades` (letta da Journal/
+        # Analytics) così i trade chiusi live compaiono subito, senza attendere
+        # il sync allo startup dell'EA.
+        if data.get("ticket") is not None:
+            try:
+                _upsert_trade(c, data, symbol_fallback=(None if symbol == "?" else symbol))
+            except Exception as e:
+                print(f"[NEXUS] trade_reason->trades upsert failed: {e}")
     return {"ok": True}
 
 
@@ -1064,7 +1130,9 @@ async def ea_command_post(request: Request, user: str = Depends(require_user)):
 # ======================= SETTINGS / STRATEGIES (JWT) ==================== #
 @app.get("/api/settings")
 def settings_get(user: str = Depends(require_user)):
-    return kv_get("settings", DEFAULT_SETTINGS)
+    # Merge sui default: le installazioni esistenti hanno un blob parziale;
+    # così ogni campo della pagina Settings mostra sempre un valore reale.
+    return {**DEFAULT_SETTINGS, **(kv_get("settings", {}) or {})}
 
 
 @app.put("/api/settings")

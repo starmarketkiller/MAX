@@ -308,6 +308,9 @@ int OnInit(){
    if(InpEnableWebSync && !MQLInfoInteger(MQL_TESTER)){
       g_lastPushTime = 0;
       NXS_WebPushSafe();
+      // Backfill: invia i trade chiusi negli ultimi 7 giorni alla dashboard
+      // (recupera quelli chiusi mentre MT5/EA era offline).
+      NXS_SyncRecentClosedTrades();
    }
 
    // Initial dashboard render
