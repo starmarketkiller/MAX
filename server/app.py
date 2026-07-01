@@ -829,7 +829,7 @@ async def dash_command(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
     payload = {k: v for k, v in data.items() if k != "action"}
@@ -1123,7 +1123,7 @@ async def ea_command_post(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action") or data.get("command")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
     payload = {k: v for k, v in data.items() if k not in ("action", "command")}
@@ -1969,7 +1969,7 @@ async def command_post(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action") or data.get("command")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida: {action}")
     payload = {k: v for k, v in data.items() if k not in ("action", "command")}

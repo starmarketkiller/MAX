@@ -322,6 +322,12 @@ void NXS_WebPoll(){
       g_balanceDayStart = AccountInfoDouble(ACCOUNT_BALANCE);
       Print("[NEXUS] daily counters reset");
    }
+   else if(action == "resync_trades"){
+      // Resync storico su richiesta dal sito: rimanda i trade chiusi degli
+      // ultimi 7 giorni al backend (recupera quelli persi/non sincronizzati).
+      Print("[NEXUS] resync_trades: invio storico trade al backend...");
+      NXS_SyncRecentClosedTrades();
+   }
 }
 
 #endif
