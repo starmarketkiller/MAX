@@ -103,6 +103,50 @@ def get_ohlc(symbol: str, bars: int = 800):
     return candles, src
 
 
+# Mappa timeframe UI -> (intervallo Yahoo, range). 4h non è nativo: prendo 1h
+# e ricampiono ×4. Gli intraday Yahoo hanno limiti di range (60g per <1h).
+_YF_INTERVAL = {
+    "1d": ("1d", "10y"), "1wk": ("1wk", "10y"),
+    "4h": ("1h", "2y"),  "1h": ("1h", "2y"),
+    "30m": ("30m", "60d"), "15m": ("15m", "60d"), "5m": ("5m", "60d"),
+}
+_REAL_BARS_CAP = 2500  # tieni le ultime N barre (equilibrio realismo/velocità)
+
+
+def _resample_4h(candles):
+    out = []
+    n = len(candles) - (len(candles) % 4)
+    for i in range(0, n, 4):
+        g = candles[i:i + 4]
+        out.append({
+            "time": g[0]["time"], "open": g[0]["open"],
+            "high": max(x["high"] for x in g), "low": min(x["low"] for x in g),
+            "close": g[-1]["close"],
+        })
+    return out
+
+
+def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
+    """Dati OHLC reali via Yahoo (riusa sweep.fetch_yahoo, che passa dal proxy).
+    Converte {t,o,h,l,c} -> {time,open,high,low,close}. Fallback su get_ohlc."""
+    try:
+        import sweep
+        yf_int, yf_rng = _YF_INTERVAL.get(interval, ("1d", "10y"))
+        raw, src = sweep.fetch_yahoo(symbol, yf_int, yf_rng)
+        candles = [{
+            "time": time.strftime("%Y-%m-%d %H:%M", time.gmtime(c["t"])),
+            "open": c["o"], "high": c["h"], "low": c["l"], "close": c["c"],
+        } for c in raw]
+        if interval == "4h":
+            candles = _resample_4h(candles)
+        if len(candles) < 60:
+            raise ValueError("troppe poche barre reali")
+        return candles[-_REAL_BARS_CAP:], src
+    except Exception as e:
+        print(f"[backtest] real fetch fallita {symbol}/{interval}: {str(e)[:80]}")
+        return get_ohlc(symbol, bars)
+
+
 # ----------------------------------------------------------------------------- #
 # Indicatori (pure Python)
 # ----------------------------------------------------------------------------- #
@@ -349,13 +393,15 @@ STRAT_NAMES_36 = [
 def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  risk_pct=1.0, atr_sl=1.5, atr_tp=3.0, start_equity=10000.0,
                  max_hold=40, bars=800, strategies=None):
-    candles, src = get_ohlc(symbol, bars)
+    # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
+    candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = [s for s in strat_list if s in STRATEGIES] or ["ADX_RSI"]
 
     equity = start_equity
-    curve = [{"i": 0, "equity": round(equity, 2)}]
+    curve = [{"i": 0, "equity": round(equity, 2),
+              "ts": str(candles[0]["time"]), "close": candles[0]["close"]}]
     trades = []
     pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat}
 
@@ -390,7 +436,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     "pnl": pnl, "r": round(r_mult, 2), "reason": reason,
                     "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
                 })
-                curve.append({"i": i, "equity": round(equity, 2)})
+                curve.append({"i": i, "equity": round(equity, 2),
+                              "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
                 pos = None
             continue
         # nuovo segnale
@@ -410,7 +457,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
                    "risk_money": risk_money, "strat": who}
 
-    return _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
+    res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
+    res["bars"] = len(candles)
+    return res
 
 
 def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
