@@ -571,6 +571,135 @@ const PERF_COLS = [
     render: (v) => Math.round(v || 0).toLocaleString() },
 ];
 
+const VERDICT_STYLE = {
+  forte:    { label: "Forte",   cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" },
+  ok:       { label: "OK",      cls: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30" },
+  debole:   { label: "Debole",  cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" },
+  critica:  { label: "Critica", cls: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30" },
+  poco_dato:{ label: "Poco dato", cls: "bg-secondary text-muted-foreground border-border" },
+};
+
+// Performance per-strategia dai TRADE REALI dell'EA (non dal backtest/CSV).
+function RealTradePerformance() {
+  const { open: openStrategy } = useStrategyHub();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: d } = await api.get("/analytics/strategy_performance");
+      setData(d);
+    } catch (e) { setData({ strategies: [], demo: true }); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const disable = async (name) => {
+    setBusy(name);
+    try {
+      await api.post("/coach/apply_action", { type: "disable_strategy", name });
+    } catch (e) { /* noop */ }
+    finally { setBusy(""); }
+  };
+
+  const rows = data?.strategies || [];
+  return (
+    <Card className="p-5 lg:p-6" testId="strat-real-perf">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div>
+          <div className="eyebrow flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Trade reali (dall'EA)</div>
+          <h3 className="font-semibold text-lg tracking-tight mt-0.5">Performance per strategia · live</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Calcolata dai trade che l'EA ha realmente eseguito (tabella Journal), non da backtest.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-muted-foreground">Net totale</div>
+          <div className={cls("font-mono font-bold text-xl tabular",
+            (data?.total_net ?? 0) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+            {(data?.total_net ?? 0) >= 0 ? "+" : ""}{data?.total_net ?? 0}€
+          </div>
+          <div className="text-[10px] text-muted-foreground">{data?.total_trades ?? 0} trade</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-sm text-muted-foreground">Caricamento…</div>
+      ) : rows.length === 0 ? (
+        <div className="text-sm text-muted-foreground" data-testid="strat-real-perf-empty">
+          Nessun trade reale ancora sincronizzato. Avvia l'EA con WebSync ON: qui comparirà la performance reale per strategia.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                <th className="px-3 py-2.5">Strategia</th>
+                <th className="px-2 py-2.5 text-right">Trade</th>
+                <th className="px-2 py-2.5 text-right">Win%</th>
+                <th className="px-2 py-2.5 text-right">PF</th>
+                <th className="px-2 py-2.5 text-right">Net €</th>
+                <th className="px-2 py-2.5 text-right">Expectancy</th>
+                <th className="px-2 py-2.5 text-right">Buy/Sell</th>
+                <th className="px-2 py-2.5">Verdetto</th>
+                <th className="px-2 py-2.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const vs = VERDICT_STYLE[r.verdict] || VERDICT_STYLE.poco_dato;
+                const bad = r.verdict === "critica" || r.verdict === "debole";
+                return (
+                  <tr key={r.name} className="border-b border-border/60 hover:bg-secondary/40"
+                      data-testid={`strat-real-row-${r.name}`}>
+                    <td className="px-3 py-2.5 font-medium">
+                      <button onClick={() => openStrategy(r.name)}
+                        className="hover:text-primary hover:underline transition-colors">{r.name}</button>
+                    </td>
+                    <td className="px-2 py-2.5 text-right tabular">{r.trades}</td>
+                    <td className="px-2 py-2.5 text-right tabular">{r.win_rate}%</td>
+                    <td className={cls("px-2 py-2.5 text-right tabular font-semibold",
+                      r.profit_factor >= 1.3 ? "text-emerald-600 dark:text-emerald-400"
+                        : r.profit_factor < 1 ? "text-rose-600 dark:text-rose-400" : "text-muted-foreground")}>
+                      {r.profit_factor}
+                    </td>
+                    <td className={cls("px-2 py-2.5 text-right tabular font-semibold",
+                      r.net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+                      {r.net >= 0 ? "+" : ""}{r.net}
+                    </td>
+                    <td className={cls("px-2 py-2.5 text-right tabular",
+                      r.expectancy >= 0 ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-rose-600/80 dark:text-rose-400/80")}>
+                      {r.expectancy}
+                    </td>
+                    <td className="px-2 py-2.5 text-right tabular text-[11px] text-muted-foreground">{r.buys}/{r.sells}</td>
+                    <td className="px-2 py-2.5">
+                      <span className={cls("px-2 py-0.5 rounded-full text-[10px] font-bold border", vs.cls)}>{vs.label}</span>
+                    </td>
+                    <td className="px-2 py-2.5 text-right">
+                      {bad && (
+                        <button onClick={() => disable(r.name)} disabled={busy === r.name}
+                          data-testid={`strat-real-disable-${r.name}`}
+                          className="text-[11px] px-2 py-1 rounded border border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10">
+                          {busy === r.name ? "…" : "Disattiva live"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <p className="text-[11px] text-muted-foreground mt-3">
+            "Disattiva live" spegne la strategia sull'EA in tempo reale (richiede EA v2.0.16+ ricompilato).
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function StrategyAnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -712,6 +841,9 @@ export default function StrategyAnalyticsPage() {
           </button>
         </div>
       </Card>
+
+      {/* Performance reale per strategia dai trade dell'EA (prima del backtest/CSV) */}
+      <RealTradePerformance />
 
       {data && !data.empty && (
         <div className="rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">

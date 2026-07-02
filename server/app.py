@@ -1306,6 +1306,60 @@ def strategies_leaderboard(user: str = Depends(require_user)):
             "demo": len(board) == 0}
 
 
+@app.get("/api/analytics/strategy_performance")
+def analytics_strategy_performance(user: str = Depends(require_user)):
+    """Diagnostica per-strategia dai TRADE REALI dell'EA (tabella trades),
+    non da CSV di backtest. Usato da Strat Diag. Include split BUY/SELL,
+    miglior/peggior trade, expectancy e verdetto."""
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT strategy, side, pnl, close_time, open_time FROM trades "
+            "WHERE strategy IS NOT NULL AND pnl IS NOT NULL")]
+    by = {}
+    for r in rows:
+        by.setdefault(r["strategy"], []).append(r)
+    out = []
+    for name, trs in by.items():
+        pnls = [float(t["pnl"]) for t in trs]
+        n = len(pnls)
+        wins = [p for p in pnls if p > 0]
+        losses = [p for p in pnls if p < 0]
+        gw, gl = sum(wins), abs(sum(losses))
+        net = sum(pnls)
+        pf = round(gw / gl, 2) if gl > 0 else (99.0 if gw > 0 else 0.0)
+        wr = round(len(wins) / n * 100, 1) if n else 0.0
+        avg_win = round(gw / len(wins), 2) if wins else 0.0
+        avg_loss = round(-gl / len(losses), 2) if losses else 0.0
+        expectancy = round(net / n, 2) if n else 0.0
+        buys = [t for t in trs if (t["side"] or "").upper() == "BUY"]
+        sells = [t for t in trs if (t["side"] or "").upper() == "SELL"]
+        # verdetto sintetico per la diagnostica
+        if n < 5:
+            verdict = "poco_dato"
+        elif pf < 0.8:
+            verdict = "critica"      # perde soldi
+        elif pf < 1.1:
+            verdict = "debole"       # marginale
+        elif pf < 1.5:
+            verdict = "ok"
+        else:
+            verdict = "forte"
+        out.append({
+            "name": name, "trades": n, "win_rate": wr, "profit_factor": pf,
+            "net": round(net, 2), "avg_win": avg_win, "avg_loss": avg_loss,
+            "expectancy": expectancy, "best": round(max(pnls), 2),
+            "worst": round(min(pnls), 2),
+            "buys": len(buys), "sells": len(sells),
+            "buy_net": round(sum(float(t["pnl"]) for t in buys), 2),
+            "sell_net": round(sum(float(t["pnl"]) for t in sells), 2),
+            "verdict": verdict,
+        })
+    out.sort(key=lambda r: r["net"], reverse=True)
+    total = round(sum(r["net"] for r in out), 2)
+    return {"strategies": out, "total_net": total, "total_trades": len(rows),
+            "demo": len(out) == 0}
+
+
 @app.post("/api/strategies/risk_config")
 async def strategies_risk_config(request: Request, user: str = Depends(require_user)):
     data = await request.json()
