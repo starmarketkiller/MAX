@@ -577,7 +577,7 @@ def _upsert_trade(c, t, symbol_fallback=None):
         "pnl,open_time,close_time,reason,raw,synced_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(ticket) DO UPDATE SET "
         "symbol=COALESCE(excluded.symbol, trades.symbol), "
-        "strategy=COALESCE(excluded.strategy, trades.strategy), "
+        "strategy=COALESCE(NULLIF(NULLIF(excluded.strategy, ''), 'UNKNOWN'), trades.strategy), "
         "side=excluded.side, lots=excluded.lots, "
         "open_price=CASE WHEN COALESCE(excluded.open_price,0)>0 THEN excluded.open_price ELSE trades.open_price END, "
         "close_price=excluded.close_price, pnl=excluded.pnl, "
