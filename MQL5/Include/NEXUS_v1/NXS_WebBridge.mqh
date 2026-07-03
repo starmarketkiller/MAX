@@ -4,12 +4,7 @@
 #ifndef __NXS_WEB_MQH__
 #define __NXS_WEB_MQH__
 
-string _JsonEsc(string s){
-   string r = s;
-   StringReplace(r, "\\", "\\\\");
-   StringReplace(r, "\"", "\\\"");
-   return r;
-}
+// _JsonEsc now lives in NXS_Globals.mqh (shared with NXS_Protections.mqh).
 
 string _PositionsJSON(){
    string out = "[";
@@ -181,7 +176,7 @@ void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
    ArrayResize(post, ArraySize(post) - 1);
    char result[]; string headersOut;
    string headers = "Content-Type: application/json\r\nX-Nexus-Token: " + InpWebToken + "\r\n";
-   int code = WebRequest("POST", url, headers, 3000, post, result, headersOut);
+   int code = WebRequest("POST", url, headers, 20000, post, result, headersOut);
    if(code < 0){
       // Print first 5 failures always (helps debug WebRequest whitelist), then only with DebugLog
       static int failCount = 0;
@@ -322,11 +317,15 @@ void NXS_WebPoll(){
       g_balanceDayStart = AccountInfoDouble(ACCOUNT_BALANCE);
       Print("[NEXUS] daily counters reset");
    }
-   else if(action == "resync_trades"){
-      // Resync storico su richiesta dal sito: rimanda i trade chiusi degli
-      // ultimi 7 giorni al backend (recupera quelli persi/non sincronizzati).
-      Print("[NEXUS] resync_trades: invio storico trade al backend...");
-      NXS_SyncRecentClosedTrades();
+   // v2.0.24 — remote unlock for ESL/DPT/AutoClose pause. Previously only a
+   // state-file delete + EA restart could clear g_pausedUntilNextOpen; this
+   // lets the dashboard do it without touching files or restarting.
+   else if(action == "reset_protections"){
+      g_eslHit = false;
+      g_dptHit = false;
+      g_pausedUntilNextOpen = false;
+      g_autoClosePending = false;
+      Print("[NEXUS] protections reset (ESL/DPT/AutoClose pause cleared) via dashboard");
    }
 }
 

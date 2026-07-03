@@ -22,32 +22,47 @@ datetime g_dptResetDay         = 0;
 #define NXS_R_BE      "NXS:BE"
 #define NXS_R_RISK    "NXS:RISK"
 
-// ----- Push Trade Reason to backend -----
+// ----- Push Trade Reason to backend (retries w/ backoff — cold-start safe) --
 void NXS_Prot_PushTradeReason(ulong ticket, long magic, string strategy,
                               string side, double lots, double openPrice,
-                              double closePrice, double pnl, string reason){
+                              double closePrice, double pnl, string reason,
+                              datetime openTime, datetime closeTime){
    if(!InpEnableWebSync) return;
    string body = "{";
    body += "\"ticket\":"     + IntegerToString((long)ticket) + ",";
    body += "\"magic\":"      + IntegerToString(magic) + ",";
    body += "\"symbol\":\""   + g_sym + "\",";
-   body += "\"strategy\":\""  + strategy + "\",";
+   body += "\"strategy\":\""  + _JsonEsc(strategy) + "\",";
    body += "\"side\":\""     + side + "\",";
    body += "\"lots\":"       + DoubleToString(lots, 2) + ",";
    body += "\"openPrice\":"  + DoubleToString(openPrice, g_digits) + ",";
    body += "\"closePrice\":" + DoubleToString(closePrice, g_digits) + ",";
    body += "\"pnl\":"        + DoubleToString(pnl, 2) + ",";
-   body += "\"reason\":\""   + reason + "\"";
+   body += "\"openTime\":\"" + NXS_IsoTime(openTime) + "\",";
+   body += "\"closeTime\":\""+ NXS_IsoTime(closeTime) + "\",";
+   body += "\"reason\":\""   + _JsonEsc(reason) + "\"";
    body += "}";
 
    string url = InpWebURL + "/api/ea/trade_reason";
    char post[]; StringToCharArray(body, post, 0, -1, CP_UTF8);
    ArrayResize(post, ArraySize(post) - 1);
-   char result[]; string headersOut;
    string headers = "Content-Type: application/json\r\nX-Nexus-Token: " + InpWebToken + "\r\n";
-   int code = WebRequest("POST", url, headers, 3000, post, result, headersOut);
-   if(code != 200 && InpDebugLog){
-      PrintFormat("[NEXUS PROT] PushTradeReason FAILED code=%d ticket=%d reason=%s", code, ticket, reason);
+
+   int maxAttempts = 3;
+   int backoffMs    = 1000;
+   for(int attempt = 1; attempt <= maxAttempts; attempt++){
+      char result[]; string headersOut;
+      int code = WebRequest("POST", url, headers, 20000, post, result, headersOut);
+      if(code == 200) return;
+      bool lastAttempt = (attempt == maxAttempts);
+      if(InpDebugLog || lastAttempt){
+         PrintFormat("[NEXUS PROT] PushTradeReason FAILED attempt=%d/%d code=%d ticket=%d reason=%s",
+                     attempt, maxAttempts, code, ticket, reason);
+      }
+      if(!lastAttempt){
+         Sleep(backoffMs);
+         backoffMs *= 2;
+      }
    }
 }
 
@@ -63,6 +78,7 @@ bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
    double pnl   = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
    string side  = (ptype == POSITION_TYPE_BUY) ? "BUY" : "SELL";
    string strat = PositionGetString(POSITION_COMMENT);
+   datetime openTm = (datetime)PositionGetInteger(POSITION_TIME);
 
    // Build close request w/ reason in comment so audit is readable in MT5 History
    MqlTradeRequest req;  ZeroMemory(req);
@@ -87,7 +103,8 @@ bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
    bool success = ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
    if(success){
       double closeP = req.price;
-      NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, openP, closeP, pnl, reason);
+      NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, openP, closeP, pnl, reason,
+                               openTm, TimeCurrent());
    }
    return success;
 }

@@ -65,7 +65,11 @@ void NXS_SyncRecentClosedTrades(){
          int p1 = StringFind(oc, "|");
          if(p1 >= 0){
             int p2 = StringFind(oc, "|", p1 + 1);
-            if(p2 > p1) strat = StringSubstr(oc, p1 + 1, p2 - p1 - 1);
+            // v2.0.25 fix: broker comment-length truncation can cut off the
+            // trailing "|score" — fall back to "rest of string" so the
+            // strategy name still comes through instead of "UNKNOWN".
+            strat = (p2 > p1) ? StringSubstr(oc, p1 + 1, p2 - p1 - 1)
+                              : StringSubstr(oc, p1 + 1);
          }
          break;
       }
@@ -78,8 +82,8 @@ void NXS_SyncRecentClosedTrades(){
          "\"openPrice\":%.5f,\"closePrice\":%.5f,\"pnl\":%.2f,\"magic\":%I64d,"
          "\"strategy\":\"%s\",\"openTime\":\"%s\",\"closeTime\":\"%s\",\"reason\":\"%s\"}",
          posId, sym, side, lots, openPrice, closePrice, pnl, magic, strat,
-         TimeToString(openTm, TIME_DATE|TIME_SECONDS),
-         TimeToString(closeTm, TIME_DATE|TIME_SECONDS),
+         NXS_IsoTime(openTm),
+         NXS_IsoTime(closeTm),
          reason);
       count++;
       if(count >= 50) break;   // cap batch size
@@ -93,7 +97,7 @@ void NXS_SyncRecentClosedTrades(){
    ArrayResize(post, ArraySize(post) - 1);
    char result[]; string headersOut;
    string headers = "Content-Type: application/json\r\nX-Nexus-Token: " + InpWebToken + "\r\n";
-   int code = WebRequest("POST", url, headers, 8000, post, result, headersOut);
+   int code = WebRequest("POST", url, headers, 20000, post, result, headersOut);
    if(code == 200){
       string resp = CharArrayToString(result, 0, -1, CP_UTF8);
       PrintFormat("[NEXUS SYNC] pushed %d trade(s) | resp=%s", count, StringSubstr(resp, 0, 120));
