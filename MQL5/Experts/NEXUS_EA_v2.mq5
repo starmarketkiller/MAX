@@ -320,6 +320,7 @@ int OnInit(){
       // Backfill: invia i trade chiusi negli ultimi 7 giorni alla dashboard
       // (recupera quelli chiusi mentre MT5/EA era offline).
       NXS_SyncRecentClosedTrades();
+      g_lastHistSyncTime = TimeCurrent();
    }
 
    // Initial dashboard render
@@ -344,6 +345,14 @@ void OnTimer(){
       NXS_WebPushSafe();
       NXS_WebPoll();
       NXS_VisualBridge_PushHTTP();   // v2.0.9 — push OB/FVG/SNR to web Live Chart
+      // Safety net: re-run the closed-trade backfill periodically (not just at
+      // OnInit) so trades lost to a transient push failure (e.g. backend cold
+      // start) still land in the backend even if the EA runs for days without
+      // restarting.
+      if(InpEnableWebSync && TimeCurrent() - g_lastHistSyncTime >= InpHistSyncIntervalSec){
+         g_lastHistSyncTime = TimeCurrent();
+         NXS_SyncRecentClosedTrades();
+      }
    }
    NXS_License_Verify();     // tester-safe; live hourly re-validation
    NXS_State_Save();
@@ -607,22 +616,35 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    NXS_OnTradeClosed(pnl);
    NXS_LogTradeCSV("CLOSE", trans.deal, "", 0, 0, 0, 0, pnl, "");
 
-   string reason = HistoryDealGetString(trans.deal, DEAL_COMMENT);
-   if(StringLen(reason) == 0) reason = (pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
+   // v2.0.14 fix: map the numeric DEAL_REASON the same way NXS_HistorySync.mqh
+   // does, instead of trusting DEAL_COMMENT — brokers frequently overwrite or
+   // blank the closing deal's comment on SL/TP/stop-out fills, which used to
+   // send a garbage/blank "reason" to the backend for auto-closed trades.
+   string reason = _NXS_HistTrigger(HistoryDealGetInteger(trans.deal, DEAL_REASON));
+   if(reason == "unknown") reason = (pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
    ulong  ticket = (ulong)HistoryDealGetInteger(trans.deal, DEAL_POSITION_ID);
    double lots   = HistoryDealGetDouble(trans.deal, DEAL_VOLUME);
    double price  = HistoryDealGetDouble(trans.deal, DEAL_PRICE);
+   datetime closeTime = (datetime)HistoryDealGetInteger(trans.deal, DEAL_TIME);
+   datetime openTime  = NXS_FindPositionOpenTime(ticket, closeTime);
    ENUM_DEAL_TYPE dtype = (ENUM_DEAL_TYPE)HistoryDealGetInteger(trans.deal, DEAL_TYPE);
    string side = (dtype == DEAL_TYPE_SELL) ? "BUY" : "SELL";
-   // Estrai strategia dal comment originale del deal (format "NEXUS_v2|STRAT|score")
-   string dcomment = HistoryDealGetString(trans.deal, DEAL_COMMENT);
+   // v2.0.25 fix: read the OPENING deal's comment, not the closing deal's —
+   // brokers frequently blank/overwrite the close deal's comment on SL/TP/
+   // stop-out fills, which was producing "UNKNOWN"/empty strategy names.
+   // Format stamped by NXS_OpenTrade: "<comment>|<strat>|<score>".
+   string dcomment = NXS_FindPositionOpenComment(ticket, HistoryDealGetString(trans.deal, DEAL_COMMENT));
    string strat = "";
    int p1 = StringFind(dcomment, "|");
    if(p1 >= 0){
       int p2 = StringFind(dcomment, "|", p1+1);
-      if(p2 > p1) strat = StringSubstr(dcomment, p1+1, p2-p1-1);
+      // Fall back to "rest of string" if the trailing "|score" got truncated
+      // by the broker's comment length cap, instead of losing the name too.
+      strat = (p2 > p1) ? StringSubstr(dcomment, p1+1, p2-p1-1)
+                        : StringSubstr(dcomment, p1+1);
    }
-   NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, 0.0, price, pnl, reason);
+   NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, 0.0, price, pnl, reason,
+                            openTime, closeTime);
 
    // v2.0.13 — hook chain
    int closeDir = (side == "BUY") ? +1 : -1;

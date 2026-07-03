@@ -1744,11 +1744,30 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
                   sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
-   // Auto-scaling rischio per-strategia (loop ottimizzazione live dalla dashboard).
+   // v2.0.26 — one fresh entry per direction per bar (see NXS_OpenTrade for
+   // the full rationale — this is the path InpNXR_Enable actually routes
+   // live signals through, plus the independent NXR_ProcessPendingM5Trigger
+   // tick hook, so the cap has to live here too, not just in NXS_OpenTrade).
+   if(!NXS_BarDirCapAllows(sig.dir)){
+      g_nxsLastOpenFailure = "bar_dir_cap";
+      PrintFormat("[NXR RISK] OPEN BLOCCATO: gia' aperta %d posizione/i %s su questa barra (cap=%d) strat=%s",
+                  (sig.dir == DIR_BUY ? g_newTradesThisBarBuy : g_newTradesThisBarSell),
+                  NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
+   // v2.0.26 — combine the caller's multiplier with the per-strategy
+   // auto-scaler BEFORE using it, and hard-cap the total so chain/counter-HTF
+   // multipliers can't compound past InpMaxTotalLotMult.
    double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
-   if(stratRisk != 1.0){
-      lotMultiplier *= stratRisk;
-      PrintFormat("[NEXUS RISK] %s lotMult per-strategia x%.2f", sig.stratName, stratRisk);
+   if(stratRisk <= 0) stratRisk = 1.0;
+   double rawMult = lotMultiplier * stratRisk;
+   lotMultiplier = MathMin(rawMult, InpMaxTotalLotMult);
+   if(lotMultiplier < rawMult - 1e-9){
+      PrintFormat("[NXR RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",
+                  sig.stratName, rawMult, lotMultiplier, InpMaxTotalLotMult);
+   }
+   if(MathAbs(lotMultiplier - 1.0) > 1e-6){
+      PrintFormat("[NXR RISK] %s lot multiplier effettivo applicato: x%.2f", sig.stratName, lotMultiplier);
    }
 
    MqlTick tick;
@@ -1823,6 +1842,19 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    if(StringLen(volReason) > 0)
       sig.reason = NXR_AppendReason(sig.reason, volReason);
 
+   // v2.0.26 — total exposure cap per direction: reject (don't resize) if
+   // adding this order would push the direction's total open lots past
+   // InpMaxDirExposureLots.
+   double existingExposure = NXS_DirExposureLots(sig.dir);
+   if(existingExposure + lots > InpMaxDirExposureLots + 1e-9)
+   {
+      g_nxsLastOpenFailure = StringFormat("dir_exposure_cap existing=%.2f+new=%.2f>cap=%.2f",
+                                          existingExposure, lots, InpMaxDirExposureLots);
+      PrintFormat("[NXR RISK] OPEN BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f strat=%s",
+                  NXS_DirName(sig.dir), existingExposure, lots, InpMaxDirExposureLots, sig.stratName);
+      return OPEN_FAIL_INVALID_VOLUME;
+   }
+
    if(!NXR_Preflight(otype, lots, refPrice, sl, tp, pfReason))
    {
       g_nxsLastOpenFailure = pfReason;
@@ -1843,6 +1875,7 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    {
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
+      NXS_BarDirCapRegisterOpen(sig.dir);
       PrintFormat("[NXR OPEN] %s %s lots=%.4f sl=%.5f tp=%.5f score=%.1f reason=%s",
                   NXS_DirName(sig.dir), sig.stratName, lots, sl, tp,
                   sig.score, sig.reason);

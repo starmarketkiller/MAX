@@ -87,19 +87,40 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.0.26 — one fresh entry per direction per bar. Other agreeing signals
+   // on the same bar still contribute to confluence scoring upstream; they
+   // just can't each open an independent position (was tripling risk on a
+   // single market event read by 2-3 overlapping strategies).
+   if(!NXS_BarDirCapAllows(sig.dir)){
+      g_nxsLastOpenFailure = "bar_dir_cap";
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: gia' aperta %d posizione/i %s su questa barra (cap=%d) strat=%s",
+                  (sig.dir == DIR_BUY ? g_newTradesThisBarBuy : g_newTradesThisBarSell),
+                  NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }
 
    double lots = NXS_CalcLot(slDist);
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
-   lots *= MathMax(0.01, lotMult);
-   // Auto-scaling rischio per-strategia (loop ottimizzazione live dalla dashboard).
+
+   // v2.0.26 — combine every multiplier (counter-HTF/chain via lotMult, plus
+   // the per-strategy auto-scaler) BEFORE applying it, and hard-cap the
+   // total so they can't compound past InpMaxTotalLotMult.
    double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
-   if(stratRisk != 1.0){
-      lots *= stratRisk;
-      PrintFormat("[NEXUS RISK] %s lotMult per-strategia x%.2f", sig.stratName, stratRisk);
+   if(stratRisk <= 0) stratRisk = 1.0;
+   double rawMult = MathMax(0.01, lotMult) * stratRisk;
+   double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
+   if(cappedMult < rawMult - 1e-9){
+      PrintFormat("[NEXUS RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",
+                  sig.stratName, rawMult, cappedMult, InpMaxTotalLotMult);
    }
+   if(MathAbs(cappedMult - 1.0) > 1e-6){
+      PrintFormat("[NEXUS RISK] %s lot multiplier effettivo applicato: x%.2f (lots base %.4f -> %.4f)",
+                  sig.stratName, cappedMult, lots, lots * cappedMult);
+   }
+   lots *= cappedMult;
 
    // Re-align volume after a Counter-HTF risk multiplier.
    double step = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
@@ -107,6 +128,19 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    lots = MathFloor(lots / step) * step;
    lots = NormalizeDouble(lots, 8);
    lots = NXS_License_CapLot(lots);
+
+   // v2.0.26 — total exposure cap per direction (sum of open lots + this
+   // new order must not exceed InpMaxDirExposureLots). Rejects rather than
+   // resizing, per spec: a chain of same-direction adds that would otherwise
+   // balloon total risk just doesn't get the next leg.
+   double existingExposure = NXS_DirExposureLots(sig.dir);
+   if(existingExposure + lots > InpMaxDirExposureLots + 1e-9){
+      g_nxsLastOpenFailure = StringFormat("dir_exposure_cap existing=%.2f+new=%.2f>cap=%.2f",
+                                          existingExposure, lots, InpMaxDirExposureLots);
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f strat=%s",
+                  NXS_DirName(sig.dir), existingExposure, lots, InpMaxDirExposureLots, sig.stratName);
+      return OPEN_FAIL_INVALID_VOLUME;
+   }
 
    ENUM_ORDER_TYPE otype = (sig.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double refPrice = (sig.dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
@@ -131,6 +165,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    if(ok){
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
+      NXS_BarDirCapRegisterOpen(sig.dir);
       PrintFormat("[NEXUS] OPEN %s %s lots=%.4f sl=%.5f tp=%.5f score=%.1f reason=%s",
                   NXS_DirName(sig.dir), sig.stratName, lots, sl, tp, sig.score, sig.reason);
       NXS_Notify_TradeOpen(sig.stratName, NXS_DirName(sig.dir), lots, refPrice, sig.score);

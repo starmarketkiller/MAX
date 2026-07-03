@@ -54,6 +54,7 @@ datetime g_antiRevengeUntil = 0;
 datetime g_lastPushTime   = 0;
 datetime g_lastPollTime   = 0;
 datetime g_lastBarTime    = 0;
+datetime g_lastHistSyncTime = 0;
 // Anti-bleed state
 int      g_skipNextSignals  = 0;
 
@@ -78,6 +79,24 @@ bool IsNexusMagic(long m){
 bool IsCoreMagic(long m){ return m == InpMagic + MAGIC_CORE; }
 bool IsGridMagic(long m){ return m >= InpMagic + MAGIC_GRID    && m < InpMagic + MAGIC_PYRAMID; }
 bool IsPyrMagic(long m) { return m >= InpMagic + MAGIC_PYRAMID && m < InpMagic + MAGIC_SPLIT;   }
+
+// ----- JSON string escaping (shared by NXS_WebBridge.mqh + NXS_Protections.mqh) -----
+string _JsonEsc(string s){
+   string r = s;
+   StringReplace(r, "\\", "\\\\");
+   StringReplace(r, "\"", "\\\"");
+   return r;
+}
+
+// ----- ISO-8601 time formatting (shared by WebBridge + Protections + HistorySync) -----
+// MT5's TimeToString() emits "YYYY.MM.DD HH:MM:SS", which JS's Date() parser
+// does not reliably accept and renders as "Invalid Date" in the dashboard.
+string NXS_IsoTime(datetime t){
+   if(t <= 0) return "";
+   MqlDateTime mt; TimeToStruct(t, mt);
+   return StringFormat("%04d-%02d-%02dT%02d:%02d:%02d",
+                       mt.year, mt.mon, mt.day, mt.hour, mt.min, mt.sec);
+}
 
 double NormPrice(double p){ return NormalizeDouble(p, g_digits); }
 
@@ -196,6 +215,38 @@ bool NXS_DoModify(ulong ticket, double sl, double tp){
 
 uint NXS_TradeRetcode(){ return g_tradeRetcode; }
 
+// Looks up a closed position's opening-deal time via its position id. Needed by
+// OnTradeTransaction, which fires after the position is already gone from
+// PositionSelect*, so POSITION_TIME can no longer be read directly there.
+datetime NXS_FindPositionOpenTime(ulong positionId, datetime fallback){
+   if(!HistorySelectByPosition(positionId)) return fallback;
+   int total = HistoryDealsTotal();
+   for(int i = 0; i < total; i++){
+      ulong dt = HistoryDealGetTicket(i);
+      if(dt == 0) continue;
+      if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_IN)
+         return (datetime)HistoryDealGetInteger(dt, DEAL_TIME);
+   }
+   return fallback;
+}
+
+// Looks up a closed position's OPENING-deal comment via its position id, so
+// the strategy tag ("prefix|STRAT|score", stamped by NXS_OpenTrade) can be
+// recovered even when the broker blanks/overwrites the CLOSING deal's own
+// comment on SL/TP/stop-out fills (the same reason NXS_FindPositionOpenTime
+// exists — see OnTradeTransaction).
+string NXS_FindPositionOpenComment(ulong positionId, string fallback){
+   if(!HistorySelectByPosition(positionId)) return fallback;
+   int total = HistoryDealsTotal();
+   for(int i = 0; i < total; i++){
+      ulong dt = HistoryDealGetTicket(i);
+      if(dt == 0) continue;
+      if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_IN)
+         return HistoryDealGetString(dt, DEAL_COMMENT);
+   }
+   return fallback;
+}
+
 // ----- Position helpers -----
 int NXS_CountPositions(){
    int n = 0;
@@ -219,6 +270,56 @@ double NXS_FloatingPnL(){
       s += PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
    }
    return s;
+}
+
+// Sum of lots currently open in one direction (core + grid/pyramid/split, any
+// NEXUS magic) — used by the v2.0.26 total-exposure cap.
+double NXS_DirExposureLots(ENUM_NXS_DIR dir){
+   double sum = 0;
+   for(int i = PositionsTotal()-1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      long ptype = PositionGetInteger(POSITION_TYPE);
+      bool sameDir = (dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
+                     (dir == DIR_SELL && ptype == POSITION_TYPE_SELL);
+      if(sameDir) sum += PositionGetDouble(POSITION_VOLUME);
+   }
+   return sum;
+}
+
+// ----- v2.0.26 — new-entry-per-bar/direction cap -----
+// Shared by NXS_OpenTrade (classic path) and NXR_OpenTrade (NXR path, which
+// InpNXR_Enable routes almost all live signals through) so a confluence of
+// several strategies/triggers on the same bar can only open ONE fresh
+// position per direction — extra agreeing signals still count toward
+// confluence scoring, they just can't each open their own position.
+// Grid/Pyramid/Split add-ons bypass this entirely: they call NXS_DoBuy/
+// NXS_DoSell directly, never NXS_OpenTrade/NXR_OpenTrade.
+datetime g_barDirCapBarTime     = 0;
+int      g_newTradesThisBarBuy  = 0;
+int      g_newTradesThisBarSell = 0;
+
+void NXS_BarDirCapRollover(){
+   datetime bt = iTime(g_sym, InpTFEntry, 0);
+   if(bt != g_barDirCapBarTime){
+      g_barDirCapBarTime     = bt;
+      g_newTradesThisBarBuy  = 0;
+      g_newTradesThisBarSell = 0;
+   }
+}
+
+bool NXS_BarDirCapAllows(ENUM_NXS_DIR dir){
+   NXS_BarDirCapRollover();
+   int count = (dir == DIR_BUY) ? g_newTradesThisBarBuy : g_newTradesThisBarSell;
+   return count < InpMaxNewTradesPerBarDir;
+}
+
+void NXS_BarDirCapRegisterOpen(ENUM_NXS_DIR dir){
+   NXS_BarDirCapRollover();
+   if(dir == DIR_BUY) g_newTradesThisBarBuy++;
+   else if(dir == DIR_SELL) g_newTradesThisBarSell++;
 }
 
 #endif
