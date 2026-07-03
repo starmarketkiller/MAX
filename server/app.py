@@ -869,13 +869,19 @@ def dash_journal(limit: int = 200, user: str = Depends(require_user)):
         rows = [dict(r) for r in c.execute(
             "SELECT ticket,symbol,strategy,side,lots,open_price,close_price,pnl,"
             "open_time,close_time,reason FROM trades ORDER BY "
-            "COALESCE(NULLIF(close_time,''), NULLIF(open_time,''), '0000-00-00') DESC, "
+            "COALESCE(NULLIF(REPLACE(REPLACE(close_time,'.','-'),' ','T'),''), "
+            "NULLIF(REPLACE(REPLACE(open_time,'.','-'),' ','T'),''), '0000-00-00') DESC, "
             "synced_at DESC LIMIT ?",
             (limit,))]
         agg = c.execute(
             "SELECT COUNT(*) n, COALESCE(SUM(pnl),0) total, "
             "SUM(CASE WHEN pnl>0 THEN 1 ELSE 0 END) wins, "
             "SUM(CASE WHEN pnl<0 THEN 1 ELSE 0 END) losses FROM trades").fetchone()
+    # Sana i timestamp legacy (formato punto MT5) ad ogni lettura, cosi' le
+    # date compaiono corrette nel Journal anche senza aspettare un resync.
+    for r in rows:
+        r["open_time"] = _normalize_time(r["open_time"])
+        r["close_time"] = _normalize_time(r["close_time"])
     return {"trades": rows, "summary": dict(agg)}
 
 
@@ -962,7 +968,8 @@ def _trades_with_meta(limit=1000):
     with _conn() as c:
         rows = [dict(r) for r in c.execute(
             "SELECT * FROM trades ORDER BY "
-            "COALESCE(NULLIF(close_time,''), NULLIF(open_time,''), '0000-00-00') DESC, "
+            "COALESCE(NULLIF(REPLACE(REPLACE(close_time,'.','-'),' ','T'),''), "
+            "NULLIF(REPLACE(REPLACE(open_time,'.','-'),' ','T'),''), '0000-00-00') DESC, "
             "synced_at DESC LIMIT ?", (limit,))]
         meta = {m["ticket"]: dict(m) for m in c.execute("SELECT * FROM journal_meta")}
     out = []
@@ -971,8 +978,9 @@ def _trades_with_meta(limit=1000):
         out.append({
             "ticket": r["ticket"], "symbol": r["symbol"], "strategy": r["strategy"],
             "side": r["side"], "lots": r["lots"], "openPrice": r["open_price"],
-            "closePrice": r["close_price"], "pnl": r["pnl"], "openTime": r["open_time"],
-            "closeTime": r["close_time"], "reason": r["reason"],
+            "closePrice": r["close_price"], "pnl": r["pnl"],
+            "openTime": _normalize_time(r["open_time"]),
+            "closeTime": _normalize_time(r["close_time"]), "reason": r["reason"],
             "journal_tags": (json.loads(m["tags"]) if m.get("tags") else []),
             "journal_rating": m.get("rating"),
             "journal_note": m.get("note"),
