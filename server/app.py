@@ -542,10 +542,27 @@ async def ea_strategy_stats(request: Request, x_nexus_token: Optional[str] = Hea
     return {"ok": True}
 
 
+def _normalize_time(s):
+    """Normalize EA-supplied timestamps to ISO-8601 so the frontend's
+    `new Date(...)` always parses them. Older EA builds sent MT5's native
+    "YYYY.MM.DD HH:MM:SS" format, which JS does not reliably parse and
+    renders as "Invalid Date" — this heals both old and new rows on next
+    write. Leaves the value untouched if it doesn't match a known format."""
+    if not s:
+        return s
+    s = str(s).strip()
+    for fmt in ("%Y.%m.%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(s, fmt).isoformat()
+        except ValueError:
+            continue
+    return s
+
+
 def _upsert_trade(c, t, symbol_fallback=None):
     """Upsert di un trade nella tabella `trades` (letta da Journal/Analytics).
-    COALESCE protegge i campi ricchi (symbol/strategy/open_*) quando arriva un
-    aggiornamento parziale (es. il push di chiusura live senza open price/symbol)."""
+    COALESCE protegge i campi ricchi (symbol/strategy/open_*/close_time) quando
+    arriva un aggiornamento parziale (es. un push senza timestamp)."""
     ticket = t.get("ticket") or t.get("deal") or t.get("id")
     if ticket is None:
         return False
@@ -553,6 +570,8 @@ def _upsert_trade(c, t, symbol_fallback=None):
     if not symbol or symbol == "?":
         symbol = symbol_fallback
     open_price = t.get("open_price") or t.get("openPrice")
+    open_time = _normalize_time(t.get("open_time") or t.get("openTime"))
+    close_time = _normalize_time(t.get("close_time") or t.get("closeTime"))
     c.execute(
         "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
         "pnl,open_time,close_time,reason,raw,synced_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
@@ -563,13 +582,14 @@ def _upsert_trade(c, t, symbol_fallback=None):
         "open_price=CASE WHEN COALESCE(excluded.open_price,0)>0 THEN excluded.open_price ELSE trades.open_price END, "
         "close_price=excluded.close_price, pnl=excluded.pnl, "
         "open_time=COALESCE(excluded.open_time, trades.open_time), "
-        "close_time=excluded.close_time, reason=excluded.reason, raw=excluded.raw, "
+        "close_time=COALESCE(excluded.close_time, trades.close_time), "
+        "reason=excluded.reason, raw=excluded.raw, "
         "synced_at=excluded.synced_at",
         (
             int(ticket), symbol, t.get("strategy"), t.get("side") or t.get("type"),
             t.get("lots") or t.get("volume"), open_price,
             t.get("close_price") or t.get("closePrice"), t.get("pnl") or t.get("profit"),
-            t.get("open_time") or t.get("openTime"), t.get("close_time") or t.get("closeTime"),
+            open_time, close_time,
             t.get("reason"), json.dumps(t), now(),
         ),
     )
@@ -829,7 +849,8 @@ async def dash_command(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
+               "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
     payload = {k: v for k, v in data.items() if k != "action"}
@@ -847,7 +868,9 @@ def dash_journal(limit: int = 200, user: str = Depends(require_user)):
     with _conn() as c:
         rows = [dict(r) for r in c.execute(
             "SELECT ticket,symbol,strategy,side,lots,open_price,close_price,pnl,"
-            "open_time,close_time,reason FROM trades ORDER BY synced_at DESC LIMIT ?",
+            "open_time,close_time,reason FROM trades ORDER BY "
+            "COALESCE(NULLIF(close_time,''), NULLIF(open_time,''), '0000-00-00') DESC, "
+            "synced_at DESC LIMIT ?",
             (limit,))]
         agg = c.execute(
             "SELECT COUNT(*) n, COALESCE(SUM(pnl),0) total, "
@@ -938,7 +961,9 @@ def _primary_ea():
 def _trades_with_meta(limit=1000):
     with _conn() as c:
         rows = [dict(r) for r in c.execute(
-            "SELECT * FROM trades ORDER BY synced_at DESC LIMIT ?", (limit,))]
+            "SELECT * FROM trades ORDER BY "
+            "COALESCE(NULLIF(close_time,''), NULLIF(open_time,''), '0000-00-00') DESC, "
+            "synced_at DESC LIMIT ?", (limit,))]
         meta = {m["ticket"]: dict(m) for m in c.execute("SELECT * FROM journal_meta")}
     out = []
     for r in rows:
@@ -1123,7 +1148,8 @@ async def ea_command_post(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action") or data.get("command")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
+               "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
     payload = {k: v for k, v in data.items() if k not in ("action", "command")}
@@ -1799,7 +1825,9 @@ def _coach_system(primary, context, memory):
     if memory:
         lines.append("MEMORIA PERSISTENTE (note utente):\n- " + "\n- ".join(memory[:20]))
     lines.append("Se suggerisci un'azione applicabile dall'EA (pause, resume, close_all, "
-                 "reset_anti_revenge, reset_daily), indicala chiaramente così l'utente può confermarla.")
+                 "reset_anti_revenge, reset_daily, reset_protections), indicala chiaramente "
+                 "così l'utente può confermarla. reset_protections sblocca una pausa ESL/DPT/"
+                 "AutoClose bloccata (usalo solo se l'utente conferma che il rischio è sotto controllo).")
     return "\n".join(lines)
 
 
@@ -1890,6 +1918,7 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
         "close_all": "close_all",
         "reset_anti_revenge": "reset_anti_revenge",
         "reset_daily": "reset_daily",
+        "reset_protections": "reset_protections",
     }
     if atype in cmd_map:
         payload = {}
@@ -2023,7 +2052,8 @@ async def command_post(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     action = data.get("action") or data.get("command")
     allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades"}
+               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
+               "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida: {action}")
     payload = {k: v for k, v in data.items() if k not in ("action", "command")}
