@@ -1001,18 +1001,23 @@ double NXR_ReactionQuality(ENUM_TIMEFRAMES tf, int shift, int direction,
    return NXR_Clamp(q, 0.0, 100.0);
 }
 
+// v2.0.27 — "_NXR" suffix (Phase 2 attribution fix, audit point 5): the direct
+// M5-trigger execution path (NXR_ProcessPendingM5Trigger) uses this name
+// as-is, so it must carry the suffix here at the source. No logic change —
+// NXS_StratFamily() has matching entries for the suffixed names so routing/
+// gating behavior is identical to the legacy variant.
 string NXR_StrategyNameForZone(ENUM_NXR_ZONE_TYPE type)
 {
    if(type == NXR_ZONE_IFVG_BULL || type == NXR_ZONE_IFVG_BEAR)
-      return "IFVG";
+      return "IFVG_NXR";
    if(type == NXR_ZONE_FVG_BULL || type == NXR_ZONE_FVG_BEAR)
-      return "FVG_MIT";
+      return "FVG_MIT_NXR";
    if(type == NXR_ZONE_OB_BULL || type == NXR_ZONE_OB_BEAR ||
       type == NXR_ZONE_BREAKER_BULL || type == NXR_ZONE_BREAKER_BEAR)
-      return "OB_MIT";
+      return "OB_MIT_NXR";
    if(type == NXR_ZONE_SNR_SUPPORT || type == NXR_ZONE_SNR_RESISTANCE)
-      return "MALAYSIAN_SNR";
-   return "STRUCT_REACT";
+      return "MALAYSIAN_SNR_NXR";
+   return "STRUCT_REACT_NXR";
 }
 
 ENUM_NXS_STRAT NXR_StratEnumForZone(ENUM_NXR_ZONE_TYPE type)
@@ -2196,7 +2201,9 @@ SNXSSignal NXR_TriggerSignalFor(ENUM_NXR_ZONE_TYPE t1,
       return NXR_EmptySignal(name, strat);
 
    SNXSSignal s = g_nxrTrigger.signal;
-   s.stratName = name;
+   // v2.0.27 — attribution fix (audit point 5): tag NXR-sourced signals so
+   // analytics can tell them apart from the legacy variant of the same name.
+   s.stratName = name + "_NXR";
    s.strat = strat;
    return s;
 }
@@ -2234,7 +2241,7 @@ SNXSSignal NXR_Strat_OB_Mitigation()
        g_nxrTrigger.zoneType == NXR_ZONE_BREAKER_BEAR))
    {
       nxr = g_nxrTrigger.signal;
-      nxr.stratName = "OB_MIT";
+      nxr.stratName = "OB_MIT_NXR";   // v2.0.27 attribution fix
       nxr.strat = STRAT_ORDER_BLOCK;
    }
    SNXSSignal base = NXS_Strat_OB_Mitigation_Structural();
@@ -2272,7 +2279,7 @@ SNXSSignal NXR_Strat_StructureReaction()
    if(sourceSpecific) return base;
 
    SNXSSignal nxr = g_nxrTrigger.signal;
-   nxr.stratName = "STRUCT_REACT";
+   nxr.stratName = "STRUCT_REACT_NXR";   // v2.0.27 attribution fix
    nxr.strat = STRAT_STRUCT_REACT;
    if(base.dir == DIR_NONE || nxr.score >= base.score) return nxr;
    return base;
