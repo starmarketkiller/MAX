@@ -59,7 +59,7 @@ input int      InpMinMarginLevel   = 200;
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)
 input double   InpMaxTotalLotMult  = 1.5;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
-input double   InpMaxDirExposureLots = 0.20;     // max sum of open lots in one direction (core positions) before new entries are rejected
+input double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one direction (core positions) before new entries are rejected
 
 input group "=== ANTI-REVENGE ==="
 input bool     InpAntiRevenge      = true;
