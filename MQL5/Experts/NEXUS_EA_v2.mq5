@@ -339,6 +339,45 @@ void OnDeinit(const int reason){
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
+//+------------------------------------------------------------------+
+//| OnTester - v2.0.29: logs one row per optimization pass to a plain |
+//| CSV. MT5 has no command-line way to export the .opt binary       |
+//| optimization results, so we write our own log here, mirroring    |
+//| the NXS_StratStats CSV export pattern already used elsewhere.    |
+//| Each parallel tester "agent" writes to its own sandboxed          |
+//| MQL5\Files, so a batch run must collect+merge across all agents.  |
+//+------------------------------------------------------------------+
+double OnTester(){
+   string fname = "NEXUS\\nexus_optimization_log.csv";
+   bool isNew = !FileIsExist(fname);
+   int h = FileOpen(fname, FILE_READ|FILE_WRITE|FILE_CSV|FILE_ANSI|FILE_SHARE_READ, ';');
+   if(h == INVALID_HANDLE) return 0.0;
+   FileSeek(h, 0, SEEK_END);
+   if(isNew){
+      FileWrite(h, "atr_sl_mult","atr_tp_mult","min_entry_score",
+                "trades","net_profit","profit_factor","expected_payoff",
+                "max_equity_dd_pct","recovery_factor","sharpe_ratio","win_rate_pct");
+   }
+   double trades  = TesterStatistics(STAT_TRADES);
+   double wins    = TesterStatistics(STAT_PROFIT_TRADES);
+   double winRate = (trades > 0) ? (wins / trades * 100.0) : 0.0;
+   FileWrite(h,
+      DoubleToString(InpATR_SL_Mult, 2),
+      DoubleToString(InpATR_TP_Mult, 2),
+      DoubleToString(InpMinEntryScore, 1),
+      (int)trades,
+      DoubleToString(TesterStatistics(STAT_PROFIT), 2),
+      DoubleToString(TesterStatistics(STAT_PROFIT_FACTOR), 3),
+      DoubleToString(TesterStatistics(STAT_EXPECTED_PAYOFF), 3),
+      DoubleToString(TesterStatistics(STAT_EQUITY_DDREL_PERCENT), 2),
+      DoubleToString(TesterStatistics(STAT_RECOVERY_FACTOR), 3),
+      DoubleToString(TesterStatistics(STAT_SHARPE_RATIO), 3),
+      DoubleToString(winRate, 2)
+   );
+   FileClose(h);
+   return TesterStatistics(STAT_PROFIT_FACTOR);
+}
+
 void OnTimer(){
    // AUDITPATCH: no WebRequest side effects during deterministic backtests.
    if(!MQLInfoInteger(MQL_TESTER)){
