@@ -98,6 +98,15 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.0.33 — post-stop-loss directional cooldown: don't chase the reversal
+   // right after getting stopped out the other way (whipsaw pattern found
+   // in live trade review, mostly on MALAYSIAN_SNR_NXR in choppy conditions).
+   if(NXS_PostSLCooldownBlocks(sig.dir)){
+      g_nxsLastOpenFailure = "post_sl_cooldown";
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: cooldown post-SL attivo per direzione opposta a %s (cap=%d min) strat=%s",
+                  NXS_DirName(sig.dir), InpPostSLCooldownMin, sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }

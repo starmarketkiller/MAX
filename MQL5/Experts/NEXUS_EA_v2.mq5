@@ -681,6 +681,11 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    datetime openTime  = NXS_FindPositionOpenTime(ticket, closeTime);
    ENUM_DEAL_TYPE dtype = (ENUM_DEAL_TYPE)HistoryDealGetInteger(trans.deal, DEAL_TYPE);
    string side = (dtype == DEAL_TYPE_SELL) ? "BUY" : "SELL";
+   // v2.0.33 — post-SL directional cooldown: record which direction just
+   // got stopped out, so NXS_PostSLCooldownBlocks() can veto an immediate
+   // opposite-direction re-entry (the whipsaw pattern found in live review).
+   if(reason == "sl")
+      NXS_RegisterSLClose((side == "BUY") ? DIR_BUY : DIR_SELL);
    // v2.0.25 fix: read the OPENING deal's comment, not the closing deal's —
    // brokers frequently blank/overwrite the close deal's comment on SL/TP/
    // stop-out fills, which was producing "UNKNOWN"/empty strategy names.

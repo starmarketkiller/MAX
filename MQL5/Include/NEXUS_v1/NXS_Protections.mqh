@@ -13,6 +13,30 @@ bool     g_pausedUntilNextOpen = false;
 bool     g_autoClosePending    = false;
 datetime g_dptResetDay         = 0;
 
+// v2.0.33 — post-stop-loss directional cooldown. Found via live trade
+// review: a position gets stopped out, and within seconds a NEW position
+// opens in the OPPOSITE direction at nearly the same price (chasing the
+// reversal), which itself then gets stopped out too - a whipsaw pattern
+// most visible on MALAYSIAN_SNR_NXR in choppy/ranging BTC conditions.
+// Recording the close time per direction here; NXS_PostSLCooldownBlocks()
+// below is the check called from NXS_OpenTrade/NXR_OpenTrade.
+datetime g_lastSLCloseTime_BUY  = 0;   // last time a BUY position was stopped out
+datetime g_lastSLCloseTime_SELL = 0;   // last time a SELL position was stopped out
+
+void NXS_RegisterSLClose(ENUM_NXS_DIR closedDir){
+   if(closedDir == DIR_BUY)  g_lastSLCloseTime_BUY  = TimeCurrent();
+   if(closedDir == DIR_SELL) g_lastSLCloseTime_SELL = TimeCurrent();
+}
+
+// Blocks a NEW entry in `dir` if a position in the OPPOSITE direction was
+// stopped out less than InpPostSLCooldownMin minutes ago.
+bool NXS_PostSLCooldownBlocks(ENUM_NXS_DIR dir){
+   if(!InpUsePostSLCooldown) return false;
+   datetime oppositeCloseTime = (dir == DIR_BUY) ? g_lastSLCloseTime_SELL : g_lastSLCloseTime_BUY;
+   if(oppositeCloseTime <= 0) return false;
+   return (TimeCurrent() - oppositeCloseTime) < InpPostSLCooldownMin * 60;
+}
+
 // ----- Reason codes -----
 #define NXS_R_TREND   "NXS:TREND"
 #define NXS_R_PROFIT  "NXS:PROFIT"

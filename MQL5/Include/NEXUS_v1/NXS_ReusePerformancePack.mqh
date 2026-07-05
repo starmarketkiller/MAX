@@ -1760,6 +1760,14 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
                   NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.0.33 — post-stop-loss directional cooldown (see NXS_OpenTrade for the
+   // full rationale) - this is the path that actually executes live signals.
+   if(NXS_PostSLCooldownBlocks(sig.dir)){
+      g_nxsLastOpenFailure = "post_sl_cooldown";
+      PrintFormat("[NXR RISK] OPEN BLOCCATO: cooldown post-SL attivo per direzione opposta a %s (cap=%d min) strat=%s",
+                  NXS_DirName(sig.dir), InpPostSLCooldownMin, sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.0.26 — combine the caller's multiplier with the per-strategy
    // auto-scaler BEFORE using it, and hard-cap the total so chain/counter-HTF
    // multipliers can't compound past InpMaxTotalLotMult.

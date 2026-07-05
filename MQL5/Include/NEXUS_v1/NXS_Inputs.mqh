@@ -68,6 +68,14 @@ input double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one 
 input double   InpMaxDirExposureLots_GOLD = 0.0;
 input double   InpMaxDirExposureLots_BTC  = 0.05;
 
+// v2.0.33: found via live trade review - a stopped-out position was often
+// immediately followed by a new position in the OPPOSITE direction at
+// nearly the same price (chasing the reversal), which then also got
+// stopped out. Blocks that specific whipsaw without touching the
+// strategy's core logic.
+input bool     InpUsePostSLCooldown   = true;
+input int      InpPostSLCooldownMin  = 20;      // minutes to block opposite-direction entries after a stop-out
+
 input group "=== ANTI-REVENGE ==="
 input bool     InpAntiRevenge      = true;
 input int      InpAntiRevengeLosses= 3;
