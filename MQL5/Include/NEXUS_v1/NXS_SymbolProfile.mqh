@@ -122,7 +122,13 @@ void NXS_BuildSymbolProfile(){
          g_profile.pipDigits  = (digits >= 2) ? 2 : 0;
          g_profile.atrSLMult  = 2.2;
          g_profile.atrTPMult  = 3.5;
-         g_profile.maxSpreadPts = 500;
+         // v2.0.28: 500 pts was tuned for a different point/price convention.
+         // Live BTCUSD on this broker normally quotes ~5000 pts spread (BTC's
+         // price is ~100k+, so this is a small % spread) - the old 500 cap
+         // meant NXR_SpreadOK()'s ABS_EMERGENCY gate (cap x 1.6 = 800) blocked
+         // every single signal on BTC, all the time. 6000 gives headroom above
+         // the observed normal spread while still catching genuine blowouts.
+         g_profile.maxSpreadPts = 6000;
          g_profile.className  = "CRYPTO";
          break;
       case ASSET_OIL:
