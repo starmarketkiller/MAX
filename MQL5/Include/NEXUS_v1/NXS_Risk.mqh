@@ -83,6 +83,63 @@ bool NXS_CheckProtections(string &reason){
    return true;
 }
 
+// v2.0.34 (audit point 8): universal exhaustion/extension gate. Blocks a
+// NEW entry chasing a move that has already run too far, checked 3 ways:
+//   1) N consecutive higher-highs (buy) / lower-lows (sell) with no pullback
+//   2) price too far from EMA200 relative to ATR
+//   3) RSI diverging against the entry direction (price extending, momentum not)
+bool NXS_ExhaustionConsecutive(ENUM_NXS_DIR dir){
+   int streak = 0;
+   if(dir == DIR_BUY){
+      for(int i = 1; i <= InpExhaustionMaxConsecutive; i++){
+         if(iHigh(g_sym, InpTFEntry, i) > iHigh(g_sym, InpTFEntry, i+1)) streak++;
+         else break;
+      }
+   } else if(dir == DIR_SELL){
+      for(int i = 1; i <= InpExhaustionMaxConsecutive; i++){
+         if(iLow(g_sym, InpTFEntry, i) < iLow(g_sym, InpTFEntry, i+1)) streak++;
+         else break;
+      }
+   }
+   return streak >= InpExhaustionMaxConsecutive;
+}
+
+bool NXS_ExhaustionEMADistance(){
+   if(g_atr <= 0 || g_ema200 <= 0) return false;
+   double price = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   return MathAbs(price - g_ema200) > InpExhaustionEMADistATR * g_atr;
+}
+
+bool NXS_ExhaustionRsiDivergence(ENUM_NXS_DIR dir){
+   int n = InpExhaustionRsiDivLookback;
+   if(n < 2) return false;
+   double rsiArr[];
+   if(CopyBuffer(g_hRSI, 0, 1, n, rsiArr) <= 0) return false;
+   if(ArraySize(rsiArr) < n) return false;
+   double rsiRecent = rsiArr[0];
+   double rsiPast   = rsiArr[n-1];
+   if(dir == DIR_BUY){
+      // bearish divergence: price made a higher high but RSI made a lower high
+      double priceRecent = iHigh(g_sym, InpTFEntry, 1);
+      double pricePast   = iHigh(g_sym, InpTFEntry, n);
+      if(priceRecent > pricePast && rsiRecent < rsiPast) return true;
+   } else if(dir == DIR_SELL){
+      // bullish divergence: price made a lower low but RSI made a higher low
+      double priceRecent = iLow(g_sym, InpTFEntry, 1);
+      double pricePast   = iLow(g_sym, InpTFEntry, n);
+      if(priceRecent < pricePast && rsiRecent > rsiPast) return true;
+   }
+   return false;
+}
+
+bool NXS_ExhaustionBlocks(ENUM_NXS_DIR dir, string &reason){
+   if(!InpUseExhaustionGate) return false;
+   if(NXS_ExhaustionConsecutive(dir)){ reason = "exhaustion_consecutive"; return true; }
+   if(NXS_ExhaustionEMADistance())   { reason = "exhaustion_ema_distance"; return true; }
+   if(NXS_ExhaustionRsiDivergence(dir)){ reason = "exhaustion_rsi_divergence"; return true; }
+   return false;
+}
+
 void NXS_OnTradeClosed(double pnl){
    if(pnl < 0){
       g_consecLosses++;

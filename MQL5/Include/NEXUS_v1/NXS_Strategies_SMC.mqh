@@ -255,7 +255,10 @@ SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
 SNXSSignal NXS_Strat_AMD_Reversal(SNXSSweepExt &sw, SNXSAMD &amd){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "AMD_REVERSAL";
-   if(amd.phase != AMD_MANIPULATION && amd.phase != AMD_DISTRIBUTION) return s;
+   // v2.0.34 (audit point 4): only the confirmed reversal phase now - was
+   // also firing on AMD_MANIPULATION/AMD_DISTRIBUTION, the same condition
+   // AMD_CONT gated on, so both were eligible on the same bars.
+   if(amd.phase != AMD_REVERSAL_DISTRIBUTION) return s;
    double atr = _smc_atr();
    if(sw.sweptAsiaHigh && g_struct.chochDown){
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);

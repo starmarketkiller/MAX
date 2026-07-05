@@ -107,6 +107,13 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   NXS_DirName(sig.dir), InpPostSLCooldownMin, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.0.34 (audit point 8): exhaustion/extension gate.
+   string exhReason = "";
+   if(NXS_ExhaustionBlocks(sig.dir, exhReason)){
+      g_nxsLastOpenFailure = exhReason;
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReason, NXS_DirName(sig.dir), sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }

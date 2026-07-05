@@ -115,7 +115,10 @@ SNXSSignal NXS_Strat_AMD_Continuation(SNXSAMD &amd, SNXSHTF &htf){
    s.strat = STRAT_STRUCT_REACT; s.stratName = "AMD_CONT";
    if(!InpUseStrat_AMD_Cont) return s;
    if(amd.asianHigh <= 0 || amd.asianLow <= 0) return s;
-   if(amd.phase != AMD_DISTRIBUTION) return s;
+   // v2.0.34 (audit point 4): only the confirmed continuation/acceptance
+   // phase now - was AMD_DISTRIBUTION, the same condition AMD_REVERSAL
+   // gated on, so both were eligible on the same bars.
+   if(amd.phase != AMD_CONTINUATION_DISTRIBUTION) return s;
    if(!(g_session == SESS_LONDON || g_session == SESS_OVERLAP || g_session == SESS_NY)) return s;
 
    double atr = _inst_atr();

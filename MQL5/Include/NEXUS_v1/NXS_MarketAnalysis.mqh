@@ -68,6 +68,65 @@ string NXS_DirName(ENUM_NXS_DIR d){
    return "NONE";
 }
 
+// v2.0.34 (audit point 3): standalone swing checks, duplicated in miniature
+// from NXS_Structure.mqh's NXS_IsSwingHigh/Low rather than called directly -
+// this file is #included BEFORE NXS_Structure.mqh, so those functions
+// aren't visible here yet.
+bool _NXS_MA_IsSwingHigh(string sym, ENUM_TIMEFRAMES tf, int shift, int wing){
+   double h = iHigh(sym, tf, shift);
+   if(h <= 0) return false;
+   for(int k = 1; k <= wing; k++){
+      if(iHigh(sym, tf, shift + k) >= h) return false;
+      if(iHigh(sym, tf, shift - k) >= h) return false;
+   }
+   return true;
+}
+bool _NXS_MA_IsSwingLow(string sym, ENUM_TIMEFRAMES tf, int shift, int wing){
+   double l = iLow(sym, tf, shift);
+   if(l <= 0) return false;
+   for(int k = 1; k <= wing; k++){
+      if(iLow(sym, tf, shift + k) <= l) return false;
+      if(iLow(sym, tf, shift - k) <= l) return false;
+   }
+   return true;
+}
+
+// Real equal-highs/equal-lows: the most recent PAIR of confirmed swing
+// points within `tol` of each other - not just "the highest high in the
+// lookback" (which is what iHighest/iLowest over 30 bars gave before, and
+// isn't "equal" anything - a single extreme point has nothing to be equal
+// to). Returns 0 if no genuine cluster of 2+ swings is found.
+double NXS_FindEqualHigh(string sym, ENUM_TIMEFRAMES tf, int wing, double tol){
+   double swings[]; int n = 0;
+   for(int i = wing + 1; i < 60 && n < 8; i++){
+      if(_NXS_MA_IsSwingHigh(sym, tf, i, wing)){
+         ArrayResize(swings, n + 1);
+         swings[n] = iHigh(sym, tf, i);
+         n++;
+      }
+   }
+   for(int i = 0; i < n; i++)
+      for(int j = i + 1; j < n; j++)
+         if(MathAbs(swings[i] - swings[j]) <= tol)
+            return MathMax(swings[i], swings[j]);
+   return 0;
+}
+double NXS_FindEqualLow(string sym, ENUM_TIMEFRAMES tf, int wing, double tol){
+   double swings[]; int n = 0;
+   for(int i = wing + 1; i < 60 && n < 8; i++){
+      if(_NXS_MA_IsSwingLow(sym, tf, i, wing)){
+         ArrayResize(swings, n + 1);
+         swings[n] = iLow(sym, tf, i);
+         n++;
+      }
+   }
+   for(int i = 0; i < n; i++)
+      for(int j = i + 1; j < n; j++)
+         if(MathAbs(swings[i] - swings[j]) <= tol)
+            return MathMin(swings[i], swings[j]);
+   return 0;
+}
+
 // ---- Phase 3 extended sweep detector -------------------------------
 // Returns liquidity sweeps against PDH/PDL, Asia H/L and equal highs/lows.
 SNXSSweepExt NXS_DetectSweepExt(){
@@ -91,21 +150,23 @@ SNXSSweepExt NXS_DetectSweepExt(){
    }
    if(asiaLo == DBL_MAX) asiaLo = pdl;
    if(asiaHi == 0)       asiaHi = pdh;
-   // Equal highs/lows on entry TF (recent cluster within 0.2*ATR)
-   double eqH = iHigh(g_sym, InpTFEntry, iHighest(g_sym, InpTFEntry, MODE_HIGH, 30, 2));
-   double eqL = iLow (g_sym, InpTFEntry, iLowest (g_sym, InpTFEntry, MODE_LOW,  30, 2));
    double h1 = iHigh(g_sym, InpTFEntry, 1);
    double l1 = iLow (g_sym, InpTFEntry, 1);
    double c1 = iClose(g_sym, InpTFEntry, 1);
    double atr = g_atr > 0 ? g_atr : SymbolInfoDouble(g_sym, SYMBOL_POINT) * 100;
    double tol = atr * 0.2;
+   // v2.0.34 (audit point 3): genuine equal-highs/lows - a cluster of 2+
+   // confirmed swing points within `tol`, not the single highest/lowest
+   // point over the lookback (that was never "equal" to anything).
+   double eqH = NXS_FindEqualHigh(g_sym, InpTFEntry, InpSwingWing, tol);
+   double eqL = NXS_FindEqualLow (g_sym, InpTFEntry, InpSwingWing, tol);
    // Sweep evaluation: wick beyond level + close back inside
    if(h1 > pdh    && c1 < pdh    ){ s.sweptPDH = true;       s.dir = DIR_SELL; s.level = pdh;    s.confirmed = true; }
    if(l1 < pdl    && c1 > pdl    ){ s.sweptPDL = true;       s.dir = DIR_BUY;  s.level = pdl;    s.confirmed = true; }
    if(h1 > asiaHi && c1 < asiaHi ){ s.sweptAsiaHigh = true;  s.dir = DIR_SELL; s.level = asiaHi; s.confirmed = true; }
    if(l1 < asiaLo && c1 > asiaLo ){ s.sweptAsiaLow  = true;  s.dir = DIR_BUY;  s.level = asiaLo; s.confirmed = true; }
-   if(h1 > eqH - tol && h1 > eqH && c1 < eqH){ s.sweptEQH = true; if(s.dir == DIR_NONE){ s.dir = DIR_SELL; s.level = eqH; s.confirmed = true; } }
-   if(l1 < eqL + tol && l1 < eqL && c1 > eqL){ s.sweptEQL = true; if(s.dir == DIR_NONE){ s.dir = DIR_BUY;  s.level = eqL; s.confirmed = true; } }
+   if(eqH > 0 && h1 > eqH && c1 < eqH){ s.sweptEQH = true; if(s.dir == DIR_NONE){ s.dir = DIR_SELL; s.level = eqH; s.confirmed = true; } }
+   if(eqL > 0 && l1 < eqL && c1 > eqL){ s.sweptEQL = true; if(s.dir == DIR_NONE){ s.dir = DIR_BUY;  s.level = eqL; s.confirmed = true; } }
    s.refHigh = (s.sweptPDH ? pdh : (s.sweptAsiaHigh ? asiaHi : (s.sweptEQH ? eqH : MathMax(pdh, asiaHi))));
    s.refLow  = (s.sweptPDL ? pdl : (s.sweptAsiaLow  ? asiaLo : (s.sweptEQL ? eqL : MathMin(pdl, asiaLo))));
    return s;

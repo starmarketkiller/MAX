@@ -76,6 +76,15 @@ input double   InpMaxDirExposureLots_BTC  = 0.05;
 input bool     InpUsePostSLCooldown   = true;
 input int      InpPostSLCooldownMin  = 20;      // minutes to block opposite-direction entries after a stop-out
 
+// v2.0.34 (audit point 8): universal exhaustion/extension gate - blocks a
+// NEW entry that's chasing a move that's already gone too far (consecutive
+// HH/LL with no pullback, price too far from EMA200, or RSI diverging
+// against the entry direction). Applied in both execution paths.
+input bool     InpUseExhaustionGate      = true;
+input int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
+input double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
+input int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
+
 input group "=== ANTI-REVENGE ==="
 input bool     InpAntiRevenge      = true;
 input int      InpAntiRevengeLosses= 3;

@@ -469,6 +469,13 @@ void OnTick(){
    g_lastBarTime = bt;
 
    NXS_UpdateStructure(g_sym, InpTFEntry);
+   // v2.0.34: independent H1 structure context, recomputed only on H1 bar
+   // close (not every entry-TF bar) since it tracks a slower timeframe.
+   datetime h1Bar = iTime(g_sym, PERIOD_H1, 0);
+   if(h1Bar != g_lastH1BarTime){
+      g_lastH1BarTime = h1Bar;
+      NXS_UpdateStructureH1(g_sym);
+   }
    g_reaction = NXS_DetectReaction(g_sym, InpTFEntry);
    // Market Context Layer: snapshot direzionale (OFF di default via flag).
    if(InpUseMarketContext) NXS_Context_Update(htf, sweep, amd);

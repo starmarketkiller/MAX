@@ -1768,6 +1768,13 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
                   NXS_DirName(sig.dir), InpPostSLCooldownMin, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.0.34 (audit point 8): exhaustion/extension gate (see NXS_OpenTrade).
+   string exhReasonNxr = "";
+   if(NXS_ExhaustionBlocks(sig.dir, exhReasonNxr)){
+      g_nxsLastOpenFailure = exhReasonNxr;
+      PrintFormat("[NXR RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReasonNxr, NXS_DirName(sig.dir), sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.0.26 — combine the caller's multiplier with the per-strategy
    // auto-scaler BEFORE using it, and hard-cap the total so chain/counter-HTF
    // multipliers can't compound past InpMaxTotalLotMult.
@@ -1950,16 +1957,31 @@ ENUM_NXS_EXEC_RC NXR_TryExecuteRC(SNXSSignal &sig, SNXSAMD &amd,
 
    if(!route.allowed) return route.blockRc;
    sig.score = route.score;
-   if(route.score < route.threshold) return EXEC_FAIL_SCORE_BELOW;
+   // v2.0.34 (audit point 7): apply the same per-strategy minimum-score
+   // floor as the standard path - was checking only route.threshold, so
+   // NXS_StrategyMinScoreFloor (e.g. MALAYSIAN_SNR requiring >=80) was
+   // silently bypassed for the path that actually executes live signals.
+   double effThreshold = MathMax(route.threshold, NXS_StrategyMinScoreFloor(sig.stratName));
+   thresholdOut = effThreshold;
+   if(route.score < effThreshold) return EXEC_FAIL_SCORE_BELOW;
 
    // Keep structural SL/TP for NXR POI entries. Legacy counter-HTF signals
    // receive the AUDITPATCH tighter ATR profile before monetary risk sizing.
    if(route.counterHTF && StringFind(sig.reason, "NXR_M5:") < 0)
       NXS_ApplyCounterHTFProfile(sig);
 
-   NXS_CloseOppositeIfBetter(sig.dir, route.score);
-   ENUM_NXS_OPEN_RC openRc = NXR_OpenTrade(sig, InpMagic + MAGIC_CORE,
-                                           route.lotMultiplier);
+   // v2.0.34 (audit point 7): use the HTF/reaction-aware smart close, same
+   // as the standard path - was calling the plain NXS_CloseOppositeIfBetter.
+   NXS_SmartCloseOppositeIfBetter(sig.dir, route.score, htf);
+   // v2.0.34 (audit point 7): apply + reset the chain-continuation lot
+   // multiplier, same as the standard path - was never consumed here, so
+   // it silently never affected the path that actually executes live
+   // signals, and never got reset either.
+   double lotMult = route.lotMultiplier;
+   if(g_chainPendingLotMult > 0.0 && g_chainPendingLotMult < 1.0)
+      lotMult *= g_chainPendingLotMult;
+   g_chainPendingLotMult = 1.0;
+   ENUM_NXS_OPEN_RC openRc = NXR_OpenTrade(sig, InpMagic + MAGIC_CORE, lotMult);
    if(openRc == OPEN_OK)
    {
       if(route.counterHTF)

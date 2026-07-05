@@ -54,6 +54,7 @@ datetime g_antiRevengeUntil = 0;
 datetime g_lastPushTime   = 0;
 datetime g_lastPollTime   = 0;
 datetime g_lastBarTime    = 0;
+datetime g_lastH1BarTime  = 0;
 datetime g_lastHistSyncTime = 0;
 // Anti-bleed state
 int      g_skipNextSignals  = 0;

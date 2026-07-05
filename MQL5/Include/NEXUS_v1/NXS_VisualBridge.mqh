@@ -34,9 +34,11 @@ int _nxs_htfCode(ENUM_NXS_HTF h){
 }
 
 int _nxs_amdCode(ENUM_NXS_AMD a){
-   if(a == AMD_ACCUMULATION) return 1;
-   if(a == AMD_MANIPULATION) return 2;
-   if(a == AMD_DISTRIBUTION) return 3;
+   if(a == AMD_ACCUMULATION)             return 1;
+   if(a == AMD_MANIPULATION)             return 2;
+   if(a == AMD_DISTRIBUTION)             return 3;
+   if(a == AMD_REVERSAL_DISTRIBUTION)    return 4;
+   if(a == AMD_CONTINUATION_DISTRIBUTION)return 5;
    return 0;
 }
 

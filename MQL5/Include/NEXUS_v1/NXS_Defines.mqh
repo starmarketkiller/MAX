@@ -6,7 +6,7 @@
 #ifndef __NXS_DEFINES_MQH__
 #define __NXS_DEFINES_MQH__
 
-#define NEXUS_VERSION       "2.0.33"
+#define NEXUS_VERSION       "2.0.34"
 #define MAX_GRID_LAYERS     3
 #define MAX_PYRAMID         3
 #define MAX_STRATEGIES      15
@@ -23,7 +23,13 @@ enum ENUM_NXS_REGIME { REGIME_UNKNOWN, REGIME_STRONG_TREND, REGIME_WEAK_TREND,
 enum ENUM_NXS_SESSION{ SESS_NONE, SESS_ASIAN, SESS_LONDON, SESS_OVERLAP, SESS_NY, SESS_AFTERNY };
 enum ENUM_NXS_HTF    { HTF_NEUTRAL, HTF_BULL, HTF_BEAR };
 enum ENUM_NXS_VEL    { VEL_NEUTRAL, VEL_BULL, VEL_BEAR, VEL_BULL_PB, VEL_BEAR_PB };
-enum ENUM_NXS_AMD    { AMD_NONE, AMD_ACCUMULATION, AMD_MANIPULATION, AMD_DISTRIBUTION };
+// v2.0.34 (audit point 4): AMD_DISTRIBUTION split into REVERSAL vs
+// CONTINUATION - previously every post-manipulation bar was just
+// AMD_DISTRIBUTION regardless of whether price reversed back into the
+// range or kept extending, so AMD_REVERSAL and AMD_CONT strategies both
+// gated on the same phase and were eligible simultaneously.
+enum ENUM_NXS_AMD    { AMD_NONE, AMD_ACCUMULATION, AMD_MANIPULATION,
+                       AMD_DISTRIBUTION, AMD_REVERSAL_DISTRIBUTION, AMD_CONTINUATION_DISTRIBUTION };
 
 enum ENUM_NXS_STRAT {
    STRAT_ADX_RSI = 0,

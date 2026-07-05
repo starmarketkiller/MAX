@@ -38,7 +38,10 @@ struct SNXSStructure {
    string   summary;
 };
 
-SNXSStructure g_struct;
+SNXSStructure g_struct;     // entry TF (e.g. M15) - read by ~30 call sites across strategies
+SNXSStructure g_structH1;   // v2.0.34: independent H1 structure context, computed separately so
+                            // strategies wanting higher-TF confirmation don't read entry-TF state
+                            // mislabeled as H1 (audit point 2 - "one global mixes contexts").
 SNXSLevel     g_levels[];
 int           g_levelCount = 0;
 
@@ -177,11 +180,24 @@ void NXS_MitigateLevels(string sym){
    }
 }
 
-void NXS_UpdateStructure(string sym, ENUM_TIMEFRAMES tf){
-   if(!InpUseStructure) return;
-   int wing = InpSwingWing;
-   int scan = 60;
-
+// v2.0.34 (audit point 2): core swing/trend/BOS/CHOCH computation, factored
+// out so it can be run independently per timeframe (into any SNXSStructure
+// instance) instead of one global that different callers/timeframes clobber.
+//
+// Trend hysteresis: previously `trend` was fully recomputed from scratch
+// every call and reset to 0 (RANGE) whenever the last-2-swings read was
+// ambiguous, causing it to flip UP/DOWN/RANGE on nearly every bar even in a
+// clean trend (audit finding). Now an ambiguous read simply KEEPS the prior
+// trend instead of collapsing it - trend only changes on a clear opposite
+// HH+HL / LH+LL confirmation.
+//
+// BOS vs CHOCH: previously a single close-beyond-swing break set `bosUp`
+// unconditionally, AND ALSO set `chochUp` as an add-on if trend was already
+// down - so the exact same break was reported as both a "continuation" and
+// a "reversal" simultaneously. Now they're mutually exclusive: a break is
+// BOS only when it agrees with (or extends) the trend in place BEFORE the
+// break, and CHOCH only when it contradicts it.
+void NXS_ComputeStructureCore(string sym, ENUM_TIMEFRAMES tf, int wing, int scan, SNXSStructure &st, bool addLevels){
    // 1. find last 2 swing highs and lows
    double sH[2] = {0,0}; double sL[2] = {0,0};
    datetime sHt[2] = {0,0}; datetime sLt[2] = {0,0};
@@ -191,57 +207,79 @@ void NXS_UpdateStructure(string sym, ENUM_TIMEFRAMES tf){
          sH[hCount]  = iHigh(sym, tf, i);
          sHt[hCount] = iTime(sym, tf, i);
          hCount++;
-         // also add as level
-         NXS_AddLevel(NXS_LVL_SWING_HIGH, sH[hCount-1], sH[hCount-1], sH[hCount-1], sHt[hCount-1]);
+         if(addLevels) NXS_AddLevel(NXS_LVL_SWING_HIGH, sH[hCount-1], sH[hCount-1], sH[hCount-1], sHt[hCount-1]);
       }
       if(lCount < 2 && NXS_IsSwingLow(sym, tf, i, wing)){
          sL[lCount]  = iLow(sym, tf, i);
          sLt[lCount] = iTime(sym, tf, i);
          lCount++;
-         NXS_AddLevel(NXS_LVL_SWING_LOW, sL[lCount-1], sL[lCount-1], sL[lCount-1], sLt[lCount-1]);
+         if(addLevels) NXS_AddLevel(NXS_LVL_SWING_LOW, sL[lCount-1], sL[lCount-1], sL[lCount-1], sLt[lCount-1]);
       }
       if(hCount >= 2 && lCount >= 2) break;
    }
-   if(hCount >= 2){ g_struct.lastSwingHigh = sH[0]; g_struct.prevSwingHigh = sH[1]; }
-   if(lCount >= 2){ g_struct.lastSwingLow  = sL[0]; g_struct.prevSwingLow  = sL[1]; }
+   if(hCount >= 2){ st.lastSwingHigh = sH[0]; st.prevSwingHigh = sH[1]; }
+   if(lCount >= 2){ st.lastSwingLow  = sL[0]; st.prevSwingLow  = sL[1]; }
 
-   // 2. determine trend
-   int trend = 0;
+   // 2. determine trend candidate from the confirmed swing sequence
+   int trendCandidate = 0;
+   bool clearSignal = false;
    if(hCount >= 2 && lCount >= 2){
       bool hh = (sH[0] > sH[1]);
       bool hl = (sL[0] > sL[1]);
       bool lh = (sH[0] < sH[1]);
       bool ll = (sL[0] < sL[1]);
-      if(hh && hl)      trend = 1;
-      else if(lh && ll) trend = -1;
-      else              trend = 0;
+      if(hh && hl)      { trendCandidate = 1;  clearSignal = true; }
+      else if(lh && ll) { trendCandidate = -1; clearSignal = true; }
    }
+   // Hysteresis: only adopt the candidate when it's an unambiguous HH+HL or
+   // LH+LL read; otherwise keep whatever trend was already stored.
+   int trendBefore = st.trend;
+   if(clearSignal) st.trend = trendCandidate;
 
-   // 3. BOS detection (close beyond last swing)
+   // 3/4. BOS (continuation, agrees with trendBefore) vs CHOCH (reversal,
+   // contradicts trendBefore) - mutually exclusive per break direction.
    double c1 = iClose(sym, tf, 1);
-   g_struct.bosUp = false; g_struct.bosDown = false;
-   if(g_struct.lastSwingHigh > 0 && c1 > g_struct.lastSwingHigh) g_struct.bosUp   = true;
-   if(g_struct.lastSwingLow  > 0 && c1 < g_struct.lastSwingLow)  g_struct.bosDown = true;
+   st.bosUp = false; st.bosDown = false; st.chochUp = false; st.chochDown = false;
+   if(st.lastSwingHigh > 0 && c1 > st.lastSwingHigh){
+      if(trendBefore == -1) st.chochUp = true;
+      else                  st.bosUp   = true;
+   }
+   if(st.lastSwingLow > 0 && c1 < st.lastSwingLow){
+      if(trendBefore == 1) st.chochDown = true;
+      else                 st.bosDown   = true;
+   }
+}
 
-   // 4. CHOCH detection (opposite direction break)
-   g_struct.chochUp = false; g_struct.chochDown = false;
-   if(g_struct.trend == -1 && g_struct.bosUp)   g_struct.chochUp   = true;
-   if(g_struct.trend ==  1 && g_struct.bosDown) g_struct.chochDown = true;
+void NXS_UpdateStructure(string sym, ENUM_TIMEFRAMES tf){
+   if(!InpUseStructure) return;
+   NXS_ComputeStructureCore(sym, tf, InpSwingWing, 60, g_struct, true);
 
-   g_struct.trend = trend;
-
-   // 5. order blocks, FVG, trendlines, mitigation
+   // order blocks, FVG, trendlines, mitigation (entry-TF only, unchanged)
    NXS_DetectOrderBlocks(sym, tf);
    NXS_DetectFVG(sym, tf);
    NXS_UpdateTrendline(sym, tf);
    NXS_MitigateLevels(sym);
 
-   // 6. summary
    string trendStr = (g_struct.trend == 1 ? "UP" : (g_struct.trend == -1 ? "DN" : "RANGE"));
    g_struct.summary = StringFormat("trend=%s BOSup=%d CHOCHup=%d sHi=%.2f sLo=%.2f lvls=%d",
                                     trendStr, (int)g_struct.bosUp, (int)g_struct.chochUp,
                                     g_struct.lastSwingHigh, g_struct.lastSwingLow, g_levelCount);
    if(InpDebugLog) Print("[STRUCT] ", g_struct.summary);
+}
+
+// v2.0.34: independent H1 structure context (audit point 2) - no level/OB/
+// FVG side effects (those stay entry-TF-only), just its own trend/BOS/CHOCH
+// so strategies wanting higher-TF confirmation read genuine H1 state
+// instead of the entry-TF struct mislabeled as H1.
+void NXS_UpdateStructureH1(string sym){
+   if(!InpUseStructure) return;
+   NXS_ComputeStructureCore(sym, PERIOD_H1, InpSwingWing, 60, g_structH1, false);
+   if(InpDebugLog){
+      string trendStr = (g_structH1.trend == 1 ? "UP" : (g_structH1.trend == -1 ? "DN" : "RANGE"));
+      PrintFormat("[STRUCT H1] trend=%s CHOCHup=%d CHOCHdn=%d sHi=%.2f sLo=%.2f",
+                  trendStr, (int)g_structH1.chochUp, (int)g_structH1.chochDown,
+                  g_structH1.lastSwingHigh, g_structH1.lastSwingLow);
+   }
 }
 
 int NXS_ActiveLevelCount(){

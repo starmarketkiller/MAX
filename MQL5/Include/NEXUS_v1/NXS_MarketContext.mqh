@@ -39,7 +39,8 @@ void NXS_Context_Update(SNXSHTF &htf, SNXSSweep &sweep, SNXSAMD &amd){
    g_ctx.reactionDir = g_reaction.detected ? g_reaction.direction : 0;
    g_ctx.reactionQ   = g_reaction.detected ? g_reaction.quality : 0.0;
    g_ctx.sweepDir    = (sweep.confirmed ? (int)sweep.dir : 0);
-   g_ctx.amdActive   = (amd.phase == AMD_MANIPULATION || amd.phase == AMD_DISTRIBUTION);
+   g_ctx.amdActive   = (amd.phase == AMD_MANIPULATION || amd.phase == AMD_REVERSAL_DISTRIBUTION ||
+                        amd.phase == AMD_CONTINUATION_DISTRIBUTION || amd.phase == AMD_DISTRIBUTION);
 
    // Zona FVG/OB attiva dominante entro InpCtxZoneATR*ATR dal prezzo corrente.
    double price = iClose(g_sym, InpTFEntry, 0);
