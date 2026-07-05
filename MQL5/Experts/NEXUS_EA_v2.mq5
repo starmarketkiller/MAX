@@ -354,7 +354,13 @@ double OnTester(){
    if(h == INVALID_HANDLE) return 0.0;
    FileSeek(h, 0, SEEK_END);
    if(isNew){
+      // v2.0.31: also log the per-strategy-specific knobs (FVG/OB size
+      // thresholds, ADX_RSI score cap, Elliott params) - always, regardless
+      // of which strategy is under test, so a run's grid dimension is never
+      // silently missing from the CSV again (lost for the FVG_Mit pilot).
       FileWrite(h, "atr_sl_mult","atr_tp_mult","min_entry_score",
+                "nxr_min_fvg_size_atr","nxr_displacement_atr","adxrsi_score_cap",
+                "ell_swing_wing","ell_retrace_min","ell_retrace_max","ell_min_score",
                 "trades","net_profit","profit_factor","expected_payoff",
                 "max_equity_dd_pct","recovery_factor","sharpe_ratio","win_rate_pct");
    }
@@ -365,6 +371,13 @@ double OnTester(){
       DoubleToString(InpATR_SL_Mult, 2),
       DoubleToString(InpATR_TP_Mult, 2),
       DoubleToString(InpMinEntryScore, 1),
+      DoubleToString(InpNXR_MinFVGSizeATR, 3),
+      DoubleToString(InpNXR_DisplacementATR, 3),
+      DoubleToString(InpADXRsiScoreCap, 1),
+      InpEllSwingWing,
+      DoubleToString(InpEllRetraceMin, 3),
+      DoubleToString(InpEllRetraceMax, 3),
+      DoubleToString(InpEllMinScore, 1),
       (int)trades,
       DoubleToString(TesterStatistics(STAT_PROFIT), 2),
       DoubleToString(TesterStatistics(STAT_PROFIT_FACTOR), 3),
