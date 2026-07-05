@@ -243,6 +243,12 @@ void NXS_Prot_OnNewDay(){
 //   Master gate
 // ===================================================================
 bool NXS_Prot_EntryBlocked(){
+   // v2.0.31: in Strategy Tester, don't let daily-pause/ESL/DPT/AutoClose
+   // gates silence most of the 37 strategies for a big chunk of every test
+   // window (this is what the Phase 2c per-strategy diagnostic found as the
+   // dominant blocker for nearly all of them). Live behavior is completely
+   // untouched - MQL_TESTER is only true while backtesting/optimizing.
+   if(MQLInfoInteger(MQL_TESTER)) return false;
    return g_pausedUntilNextOpen || g_eslHit || g_dptHit || g_autoClosePending;
 }
 

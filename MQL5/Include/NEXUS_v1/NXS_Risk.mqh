@@ -52,6 +52,11 @@ double NXS_CalcLot(double slPriceDist){
 }
 
 bool NXS_CheckProtections(string &reason){
+   // v2.0.31: same tester-only bypass as NXS_Prot_EntryBlocked - these
+   // account-level gates (daily DD, max trades/day, max concurrent, margin,
+   // anti-revenge/anti-bleed) exist to protect live capital, which doesn't
+   // apply when backtesting/optimizing. Live behavior is unaffected.
+   if(MQLInfoInteger(MQL_TESTER)) return true;
    // P2: skip queue from anti-bleed
    if(g_skipNextSignals > 0){
       g_skipNextSignals--;
