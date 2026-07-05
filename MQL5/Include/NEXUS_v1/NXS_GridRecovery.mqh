@@ -38,6 +38,21 @@ void NXS_ManageGrid(){
       double dist = (type == POSITION_TYPE_BUY) ? (open - now) : (now - open);
       if(dist < step) continue;
       double lots = PositionGetDouble(POSITION_VOLUME);
+
+      // v2.0.30 SAFETY FIX: grid adds used to call NXS_DoBuy/DoSell directly,
+      // completely bypassing the v2.0.26 total-exposure cap (which only the
+      // signal-driven NXS_OpenTrade/NXR_OpenTrade paths checked). This let a
+      // losing core position balloon to 4x its size (core + 3 grid layers)
+      // with no cap - the exact pattern that caused the 2026-07 BTC incident.
+      ENUM_NXS_DIR gridDir = (type == POSITION_TYPE_BUY) ? DIR_BUY : DIR_SELL;
+      double existingExposure = NXS_DirExposureLots(gridDir);
+      double effCap = NXS_EffectiveMaxDirExposureLots();
+      if(existingExposure + lots > effCap + 1e-9){
+         PrintFormat("[NEXUS RISK] GRID BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f",
+                     NXS_DirName(gridDir), existingExposure, lots, effCap);
+         break;
+      }
+
       NXS_TradeSetMagic(InpMagic + MAGIC_GRID + NXS_CountGrid() + 1);
       if(type == POSITION_TYPE_BUY)
          NXS_DoBuy(lots, g_sym, 0, 0, "NEXUS_GRID");

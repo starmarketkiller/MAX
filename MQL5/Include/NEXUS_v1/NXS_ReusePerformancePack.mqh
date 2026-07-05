@@ -1851,12 +1851,13 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    // adding this order would push the direction's total open lots past
    // InpMaxDirExposureLots.
    double existingExposure = NXS_DirExposureLots(sig.dir);
-   if(existingExposure + lots > InpMaxDirExposureLots + 1e-9)
+   double effCap = NXS_EffectiveMaxDirExposureLots();
+   if(existingExposure + lots > effCap + 1e-9)
    {
       g_nxsLastOpenFailure = StringFormat("dir_exposure_cap existing=%.2f+new=%.2f>cap=%.2f",
-                                          existingExposure, lots, InpMaxDirExposureLots);
+                                          existingExposure, lots, effCap);
       PrintFormat("[NXR RISK] OPEN BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f strat=%s",
-                  NXS_DirName(sig.dir), existingExposure, lots, InpMaxDirExposureLots, sig.stratName);
+                  NXS_DirName(sig.dir), existingExposure, lots, effCap, sig.stratName);
       return OPEN_FAIL_INVALID_VOLUME;
    }
 

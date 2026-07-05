@@ -134,11 +134,12 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // resizing, per spec: a chain of same-direction adds that would otherwise
    // balloon total risk just doesn't get the next leg.
    double existingExposure = NXS_DirExposureLots(sig.dir);
-   if(existingExposure + lots > InpMaxDirExposureLots + 1e-9){
+   double effCap = NXS_EffectiveMaxDirExposureLots();
+   if(existingExposure + lots > effCap + 1e-9){
       g_nxsLastOpenFailure = StringFormat("dir_exposure_cap existing=%.2f+new=%.2f>cap=%.2f",
-                                          existingExposure, lots, InpMaxDirExposureLots);
+                                          existingExposure, lots, effCap);
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f strat=%s",
-                  NXS_DirName(sig.dir), existingExposure, lots, InpMaxDirExposureLots, sig.stratName);
+                  NXS_DirName(sig.dir), existingExposure, lots, effCap, sig.stratName);
       return OPEN_FAIL_INVALID_VOLUME;
    }
 

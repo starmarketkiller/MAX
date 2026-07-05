@@ -272,6 +272,19 @@ double NXS_FloatingPnL(){
    return s;
 }
 
+// v2.0.30: symbol-aware exposure cap. A flat lot count means very different
+// notional risk on BTCUSD vs GOLD given their contract sizes, so this picks
+// a per-symbol override (InpMaxDirExposureLots_BTC/_GOLD) when one is set
+// (>0) and the chart symbol matches by substring, else falls back to the
+// generic InpMaxDirExposureLots.
+double NXS_EffectiveMaxDirExposureLots(){
+   if(StringFind(g_sym, "BTC") >= 0 && InpMaxDirExposureLots_BTC > 0)
+      return InpMaxDirExposureLots_BTC;
+   if((StringFind(g_sym, "XAU") >= 0 || StringFind(g_sym, "GOLD") >= 0) && InpMaxDirExposureLots_GOLD > 0)
+      return InpMaxDirExposureLots_GOLD;
+   return InpMaxDirExposureLots;
+}
+
 // Sum of lots currently open in one direction (core + grid/pyramid/split, any
 // NEXUS magic) — used by the v2.0.26 total-exposure cap.
 double NXS_DirExposureLots(ENUM_NXS_DIR dir){

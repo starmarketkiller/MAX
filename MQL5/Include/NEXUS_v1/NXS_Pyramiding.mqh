@@ -37,6 +37,18 @@ void NXS_ManagePyramid(SNXSVel &vel){
       double lots = PositionGetDouble(POSITION_VOLUME) * 0.5;
       double minLot = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
       lots = MathMax(minLot, lots);
+
+      // v2.0.30 SAFETY FIX: same bypass as grid - pyramid adds went straight
+      // to NXS_DoBuy/DoSell, skipping the total-exposure cap entirely.
+      ENUM_NXS_DIR pyrDir = (type == POSITION_TYPE_BUY) ? DIR_BUY : DIR_SELL;
+      double existingExposure = NXS_DirExposureLots(pyrDir);
+      double effCap = NXS_EffectiveMaxDirExposureLots();
+      if(existingExposure + lots > effCap + 1e-9){
+         PrintFormat("[NEXUS RISK] PYRAMID BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f",
+                     NXS_DirName(pyrDir), existingExposure, lots, effCap);
+         break;
+      }
+
       NXS_TradeSetMagic(InpMagic + MAGIC_PYRAMID + NXS_CountPyr() + 1);
       if(type == POSITION_TYPE_BUY)
          NXS_DoBuy(lots, g_sym, 0, 0, "NEXUS_PYR");
