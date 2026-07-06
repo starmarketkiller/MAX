@@ -30,6 +30,21 @@ struct SNXSDecision {
    bool            valid;
 };
 
+// Conta le posizioni core aperte nella direzione data (per il modello
+// "1 posizione per direzione": gli add di grid/recovery arrivano in Fase 3).
+int NXS_Inst_OpenPositionsInDir(ENUM_NXS_DIR dir){
+   int cnt = 0;
+   long want = (dir == DIR_BUY) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
+   for(int i = PositionsTotal() - 1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      if(PositionGetInteger(POSITION_TYPE) == want) cnt++;
+   }
+   return cnt;
+}
+
 // TF associato a ciascun tier (0=local usa il TF di esecuzione).
 ENUM_TIMEFRAMES _nxs_inst_tierTF(int tier){
    if(tier >= 3) return PERIOD_D1;

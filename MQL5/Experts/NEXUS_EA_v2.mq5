@@ -518,6 +518,41 @@ void OnTick(){
    // v2.0.4: cache best signal for Visual Bridge HUD
    if(n > 0 && all[0].dir != DIR_NONE){ s_visualBest = all[0]; }
 
+   // === MODELLO ISTITUZIONALE (v2.1.0) ==============================
+   // Sostituisce il best-per-bar: raggruppa i segnali per direzione in
+   // un'unica decisione e apre 1 posizione con SL/TP scalati sul tier.
+   // Gestione (BE/trail/grid/pyramid) gira già a inizio OnTick.
+   if(InpUseInstitutionalCore){
+      NXS_Context_Update(htf, sweep, amd);            // serve per il tier
+      SNXSDecision dec = NXS_Institutional_Decide(all, n);
+      // 1 posizione per direzione: se esiste già, non riaprire (gli add di
+      // grid/recovery su variazione di prezzo arrivano in Fase 3).
+      if(dec.valid && NXS_Inst_OpenPositionsInDir(dec.dir) == 0
+         && !NXS_Prot_EntryBlocked() && NXS_SpreadOK()){
+         SNXSSignal isig; ZeroMemory(isig);
+         isig.dir      = dec.dir;
+         isig.score    = MathMin(100.0, dec.confidence);
+         isig.strat    = STRAT_STRUCT_REACT;
+         isig.stratName= dec.topStrat;
+         isig.entryRef = dec.entryRef;
+         isig.slPrice  = dec.slPrice;
+         isig.tpPrice  = dec.tpPrice;
+         isig.sourceTF = dec.tierTF;
+         isig.reason   = dec.reason;
+         ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(isig, InpMagic + MAGIC_CORE, 1.0);
+         if(orc == OPEN_OK){
+            // g_tradesToday/g_lastTradeTime già aggiornati dentro NXS_OpenTrade
+            NXS_StrategyRegisterTrade(dec.topStrat);
+            NXS_LogTradeCSV("OPEN", 0, dec.topStrat, dec.entryRef,
+                            0, dec.slPrice, dec.tpPrice, isig.score, dec.reason);
+            PrintFormat("[NEXUS INST] OPEN %s", dec.reason);
+         } else {
+            PrintFormat("[NEXUS INST] open rc=%d (%s)", (int)orc, dec.reason);
+         }
+      }
+      return;   // il modello istituzionale sostituisce il best-per-bar
+   }
+
       bool opened = false;
       ENUM_NXS_EXEC_RC lastRc = EXEC_FAIL_NO_DIR;
       for(int i = 0; i < n; i++){
