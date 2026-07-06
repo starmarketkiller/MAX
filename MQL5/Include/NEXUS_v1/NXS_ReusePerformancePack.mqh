@@ -1984,6 +1984,14 @@ ENUM_NXS_EXEC_RC NXR_TryExecuteRC(SNXSSignal &sig, SNXSAMD &amd,
    if(g_chainPendingLotMult > 0.0 && g_chainPendingLotMult < 1.0)
       lotMult *= g_chainPendingLotMult;
    g_chainPendingLotMult = 1.0;
+   // v2.0.37 — TURTLE_SOUP-only lot increase (see NXS_Execution.mqh for the
+   // full rationale) - this is the path that actually executes live signals
+   // regardless of which function generated them, so it must apply here too.
+   if(sig.stratName == "TURTLE_SOUP" && InpTurtleSoup_LotMult != 1.0){
+      lotMult *= InpTurtleSoup_LotMult;
+      PrintFormat("[NXR LOT] TURTLE_SOUP lot mult applied: x%.2f -> effective mult=%.3f (caps still apply)",
+                  InpTurtleSoup_LotMult, lotMult);
+   }
    ENUM_NXS_OPEN_RC openRc = NXR_OpenTrade(sig, InpMagic + MAGIC_CORE, lotMult);
    if(openRc == OPEN_OK)
    {

@@ -86,6 +86,16 @@ input double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one 
 input double   InpMaxDirExposureLots_GOLD = 0.0;
 input double   InpMaxDirExposureLots_BTC  = 0.05;
 
+// v2.0.37: TURTLE_SOUP is the only strategy with a double-confirmed edge so
+// far (PF 1.92 in both the Step 3 engine-fix screening and the selector
+// validation, on the same 3-week window) - a deliberate, isolated lot
+// increase for THIS strategy only. Multiplies its lot size on top of the
+// normal risk-based sizing; InpMaxTotalLotMult and InpMaxDirExposureLots(*)
+// still apply afterward as absolute ceilings, unchanged. Logged separately
+// (see NXS_Execution.mqh / NXS_ReusePerformancePack.mqh) so this is
+// distinguishable from any other cap/multiplier if something looks off.
+input double   InpTurtleSoup_LotMult = 1.5;
+
 // v2.0.33: found via live trade review - a stopped-out position was often
 // immediately followed by a new position in the OPPOSITE direction at
 // nearly the same price (chasing the reversal), which then also got
