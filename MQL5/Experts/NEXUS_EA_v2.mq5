@@ -524,6 +524,7 @@ void OnTick(){
    // spread/margine/stops). Serve a far girare TUTTE le strategie e vedere nel
    // Journal quali hanno edge, senza escluderne nessuna a priori. Solo demo.
    if(InpDataCollectionMode){
+      NXS_Context_Update(htf, sweep, amd);   // per taggare il contesto (tier HTF/LTF)
       double dstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP); if(dstep <= 0) dstep = 0.01;
       double dminL = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);  if(dminL <= 0) dminL = 0.01;
       double dlots = MathMax(dminL, MathFloor(InpDataCollectionLot / dstep) * dstep);
@@ -534,21 +535,29 @@ void OnTick(){
          if(baseOpen + openedNow >= InpDataCollectionMaxOpen) break;   // tetto sicurezza
          SNXSSignal s = all[i];
          if(s.slPrice <= 0 || s.tpPrice <= 0) continue;                 // serve SL/TP valido
+         // Contesto del segnale: tier (0=local..3=D1) e tipo (Cont/Rev) -> visibile nel trade
+         int ddir  = (s.dir == DIR_BUY) ? +1 : -1;
+         int dtier = _nxs_inst_tier(ddir);
+         int dsetup= _nxs_inst_setupType(ddir);
+         string dctx = StringFormat("T%d%s", dtier, (dsetup == NXS_SETUP_REVERSAL ? "R" : "C"));
          double refP = (s.dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
                                           : SymbolInfoDouble(g_sym, SYMBOL_BID);
          double dsl = s.slPrice, dtp = s.tpPrice; string dpf = "";
          ENUM_ORDER_TYPE dot = (s.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
          if(!NXS_PreFlight(dot, dlots, refP, dsl, dtp, dpf)) continue;   // sicurezza dura
          NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
-         string dcm = StringFormat("%s|%s|%.1f", InpComment, s.stratName, s.score);
+         // Comment: strategia resta il campo [1] (parsing sito invariato); il
+         // contesto e' il campo [3] -> visibile in MT5 e sincronizzabile.
+         string dcm = StringFormat("%s|%s|%.1f|%s", InpComment, s.stratName, s.score, dctx);
          bool dok = (s.dir == DIR_BUY) ? NXS_SafeBuy(dlots, g_sym, dsl, dtp, dcm)
                                        : NXS_SafeSell(dlots, g_sym, dsl, dtp, dcm);
          if(dok){
             openedNow++;
             NXS_StrategyRegisterTrade(s.stratName);
-            NXS_LogTradeCSV("OPEN", 0, s.stratName, refP, 0, dsl, dtp, s.score, s.reason);
-            PrintFormat("[NEXUS DATA] OPEN %s %s lots=%.2f score=%.1f",
-                        NXS_DirName(s.dir), s.stratName, dlots, s.score);
+            NXS_LogTradeCSV("OPEN", 0, s.stratName, refP, 0, dsl, dtp, s.score,
+                            s.reason + "|" + dctx);
+            PrintFormat("[NEXUS DATA] OPEN %s %s %s lots=%.2f score=%.1f",
+                        NXS_DirName(s.dir), s.stratName, dctx, dlots, s.score);
          }
       }
       if(openedNow > 0) g_lastTradeTime = TimeCurrent();
