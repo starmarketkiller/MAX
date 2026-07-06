@@ -45,6 +45,7 @@
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
+#include <NEXUS_v1\NXS_InstitutionalCore.mqh>
 #include <NEXUS_v1\NXS_ShadowTrading.mqh>
 #include <NEXUS_v1\NXS_EntryScore.mqh>
 #include <NEXUS_v1\NXS_Execution.mqh>

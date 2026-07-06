@@ -74,6 +74,23 @@ input double   InpMinEntryScore    = 70.0;
 input double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 input int      InpMinMarginLevel   = 200;
 
+input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
+// Master switch del modello istituzionale: lettura unica del mercato ->
+// raggruppamento dei segnali per direzione -> 1 posizione per direzione con
+// SL/TP scalati sul tier (TF di conferma) -> gestione uniforme grid/recovery.
+// OFF di default: l'EA usa il modello attuale (best-per-bar) finché non lo
+// attivi in Strategy Tester.
+input bool     InpUseInstitutionalCore = false;
+input double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
+input double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
+input double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
+input int      InpInstMinContributors  = 1;      // min strategie concordi per aprire
+// Rete di sicurezza sulla recovery (martingala): tetto configurabile, largo.
+input int      InpInstMaxRecoveryDepth  = 4;     // max livelli di recovery per sequenza (0=illimitato SCONSIGLIATO)
+input double   InpInstMaxExposureLots   = 1.00;  // max lotti totali per direzione (core+grid+recovery)
+input double   InpInstGridStepATR       = 1.0;   // passo griglia/recovery in ATR del tier
+input double   InpInstRecoveryMult      = 1.5;   // moltiplicatore lotto per livello di recovery
+
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)
 input double   InpMaxTotalLotMult  = 1.5;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
