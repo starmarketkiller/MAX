@@ -82,7 +82,7 @@ input group "=== DATA COLLECTION / SCREENING LIVE (v2.1.1) ==="
 // quali hanno edge, senza bocciarne nessuna a priori. USARE SU DEMO.
 // NB: per vederle tutte, in .set metti tutti gli InpStrat_*/InpUseStrat_* = true
 // e InpStrategySelector = 0.
-input bool     InpDataCollectionMode   = false;
+input bool     InpDataCollectionMode   = true;
 input double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
 input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
 
@@ -92,7 +92,7 @@ input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // SL/TP scalati sul tier (TF di conferma) -> gestione uniforme grid/recovery.
 // OFF di default: l'EA usa il modello attuale (best-per-bar) finché non lo
 // attivi in Strategy Tester.
-input bool     InpUseInstitutionalCore = false;
+input bool     InpUseInstitutionalCore = true;
 input double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
 input double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 input double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
