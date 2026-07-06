@@ -26,6 +26,7 @@ struct SNXSDecision {
    double          slPrice;
    double          tpPrice;
    string          topStrat;     // strategia col punteggio piu' alto nel gruppo
+   string          group;        // firma della collaborazione: "TSI+ADX_RSI+..."
    string          reason;
    bool            valid;
 };
@@ -111,6 +112,21 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    int setup  = _nxs_inst_setupType(dir);
    ENUM_TIMEFRAMES tf = _nxs_inst_tierTF(tier);
 
+   // Firma della collaborazione: nomi delle strategie concordi (ordine di score,
+   // all[] e' gia' ordinato), troncata per stare nel comment MT5.
+   ENUM_NXS_DIR wantDir = (dir > 0) ? DIR_BUY : DIR_SELL;
+   string group = "";
+   int gAdded = 0;
+   for(int i = 0; i < n; i++){
+      if(all[i].dir != wantDir) continue;
+      string nm = all[i].stratName;
+      if(StringLen(group) + StringLen(nm) + 1 > 30){ group += "+"; break; }  // cap lunghezza
+      if(gAdded > 0) group += "+";
+      group += nm;
+      gAdded++;
+   }
+   if(StringLen(group) == 0) group = ((dir > 0) ? topBuyName : topSellName);
+
    // SL/TP larghi, scalati sul tier (usa l'ATR del TF di esecuzione x fattore
    // del tier -> nessun doppio conteggio; piu' alto e' il tier, piu' respiro).
    double atr = (g_atr > 0 ? g_atr : g_point * 100.0);
@@ -129,10 +145,11 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    d.slPrice      = (dir > 0) ? d.entryRef - slDist : d.entryRef + slDist;
    d.tpPrice      = (dir > 0) ? d.entryRef + tpDist : d.entryRef - tpDist;
    d.topStrat     = (dir > 0) ? topBuyName : topSellName;
-   d.reason = StringFormat("INST %s tier%d %s conv=%.0f (%d strat, top=%s)",
+   d.group        = group;
+   d.reason = StringFormat("INST %s tier%d %s conv=%.0f [%s]",
                            (dir > 0 ? "BUY" : "SELL"), tier,
                            (setup == NXS_SETUP_REVERSAL ? "REV" : "CONT"),
-                           net, contributors, d.topStrat);
+                           net, group);
    d.valid = true;
    return d;
 }

@@ -82,7 +82,7 @@ input group "=== DATA COLLECTION / SCREENING LIVE (v2.1.1) ==="
 // quali hanno edge, senza bocciarne nessuna a priori. USARE SU DEMO.
 // NB: per vederle tutte, in .set metti tutti gli InpStrat_*/InpUseStrat_* = true
 // e InpStrategySelector = 0.
-input bool     InpDataCollectionMode   = true;
+input bool     InpDataCollectionMode   = false;  // OFF: si usa il grouping istituzionale (raccolta dati solo su demo)
 input double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
 input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
 

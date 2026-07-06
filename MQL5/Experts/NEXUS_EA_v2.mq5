@@ -579,7 +579,9 @@ void OnTick(){
          isig.dir      = dec.dir;
          isig.score    = MathMin(100.0, dec.confidence);
          isig.strat    = STRAT_STRUCT_REACT;
-         isig.stratName= dec.topStrat;
+         // Il nome del trade = la firma della collaborazione (quali strategie
+         // erano concordi in quel momento) -> visibile nel comment e nel Journal.
+         isig.stratName= dec.group;
          isig.entryRef = dec.entryRef;
          isig.slPrice  = dec.slPrice;
          isig.tpPrice  = dec.tpPrice;
@@ -589,7 +591,7 @@ void OnTick(){
          if(orc == OPEN_OK){
             // g_tradesToday/g_lastTradeTime già aggiornati dentro NXS_OpenTrade
             NXS_StrategyRegisterTrade(dec.topStrat);
-            NXS_LogTradeCSV("OPEN", 0, dec.topStrat, dec.entryRef,
+            NXS_LogTradeCSV("OPEN", 0, dec.group, dec.entryRef,
                             0, dec.slPrice, dec.tpPrice, isig.score, dec.reason);
             PrintFormat("[NEXUS INST] OPEN %s", dec.reason);
          } else {
