@@ -75,7 +75,7 @@ void NXS_DefaultSLTP(SNXSSignal &sig){
 //------------------------------------ K1 ADX + RSI
 SNXSSignal NXS_Strat_ADXRSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ADX_RSI; s.stratName = "ADX_RSI";
-   if(!InpStrat_ADX_RSI) return s;
+   if(!InpStrat_ADX_RSI || !NXS_SelectorAllows(1)) return s;
    if(g_adx < 22) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    if(g_adxPlus > g_adxMinus && g_rsi > 50 && price > g_ema200){
@@ -90,7 +90,7 @@ SNXSSignal NXS_Strat_ADXRSI(){
 //------------------------------------ K2 Bollinger Mean Reversion
 SNXSSignal NXS_Strat_Bollinger(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BOLLINGER; s.stratName = "BOLLINGER";
-   if(!InpStrat_BOLLINGER) return s;
+   if(!InpStrat_BOLLINGER || !NXS_SelectorAllows(2)) return s;
    double close = iClose(g_sym, InpTFEntry, 1);
    double low   = iLow  (g_sym, InpTFEntry, 1);
    double high  = iHigh (g_sym, InpTFEntry, 1);
@@ -106,7 +106,7 @@ SNXSSignal NXS_Strat_Bollinger(){
 //------------------------------------ K3 MACD Trend
 SNXSSignal NXS_Strat_MACD(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_MACD; s.stratName = "MACD";
-   if(!InpStrat_MACD) return s;
+   if(!InpStrat_MACD || !NXS_SelectorAllows(3)) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    if(g_macd > g_macdSig && g_macd > 0 && price > g_ema200){
       s.dir = DIR_BUY;  s.score = 65; s.reason = "MACD_bull_above_ema200";
@@ -120,7 +120,7 @@ SNXSSignal NXS_Strat_MACD(){
 //------------------------------------ K4 Parabolic SAR
 SNXSSignal NXS_Strat_SAR(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_SAR; s.stratName = "SAR";
-   if(!InpStrat_SAR) return s;
+   if(!InpStrat_SAR || !NXS_SelectorAllows(4)) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    if(g_sar < price && g_ema9 > g_ema21){
       s.dir = DIR_BUY;  s.score = 60; s.reason = "SAR_below_price";
@@ -134,7 +134,7 @@ SNXSSignal NXS_Strat_SAR(){
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 SNXSSignal NXS_Strat_TSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
-   if(!InpStrat_TSI) return s;
+   if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    if(g_rsi > 55 && g_ema9 > g_ema21 && price > g_ema21){
       s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI_bull";   // v2.0.9 +8
@@ -148,7 +148,7 @@ SNXSSignal NXS_Strat_TSI(){
 //------------------------------------ K6 Bjorgum Key Levels
 SNXSSignal NXS_Strat_Bjorgum(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BJORGUM; s.stratName = "BJORGUM";
-   if(!InpStrat_BJORGUM) return s;
+   if(!InpStrat_BJORGUM || !NXS_SelectorAllows(6)) return s;
    int hh = iHighest(g_sym, InpTFEntry, MODE_HIGH, 30, 2);
    int ll = iLowest (g_sym, InpTFEntry, MODE_LOW,  30, 2);
    double pivHi = iHigh(g_sym, InpTFEntry, hh);
@@ -167,7 +167,7 @@ SNXSSignal NXS_Strat_Bjorgum(){
 //------------------------------------ H1 Liquidity Sweep / Manipulation Reversal
 SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LIQ_SWEEP; s.stratName = "LIQ_SWEEP";
-   if(!InpStrat_LIQ_SWEEP) return s;
+   if(!InpStrat_LIQ_SWEEP || !NXS_SelectorAllows(7)) return s;
    if(!sw.confirmed) return s;
    double c1 = iClose(g_sym, InpTFEntry, 1);
    double o1 = iOpen (g_sym, InpTFEntry, 1);
@@ -183,7 +183,7 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
 //------------------------------------ H2 Displacement FVG Continuation
 SNXSSignal NXS_Strat_FVG(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_FVG_CONT; s.stratName = "FVG_CONT";
-   if(!InpStrat_FVG_CONT) return s;
+   if(!InpStrat_FVG_CONT || !NXS_SelectorAllows(8)) return s;
    double h3 = iHigh(g_sym, InpTFEntry, 3);
    double l3 = iLow (g_sym, InpTFEntry, 3);
    double h1 = iHigh(g_sym, InpTFEntry, 1);
@@ -204,7 +204,7 @@ SNXSSignal NXS_Strat_FVG(){
 //------------------------------------ H3 Breakout Acceptance
 SNXSSignal NXS_Strat_BreakoutAcc(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BREAKOUT_ACC; s.stratName = "BREAKOUT_ACC";
-   if(!InpStrat_BREAKOUT_ACC) return s;
+   if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;
    int n = 20;
    double range_hi = iHigh(g_sym, InpTFEntry, iHighest(g_sym, InpTFEntry, MODE_HIGH, n, 3));
    double range_lo = iLow (g_sym, InpTFEntry, iLowest (g_sym, InpTFEntry, MODE_LOW,  n, 3));
@@ -222,7 +222,7 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
 //------------------------------------ H4 London Breakout
 SNXSSignal NXS_Strat_LondonBO(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LONDON_BO; s.stratName = "LONDON_BO";
-   if(!InpStrat_LONDON_BO) return s;
+   if(!InpStrat_LONDON_BO || !NXS_SelectorAllows(10)) return s;
    if(g_session != SESS_LONDON) return s;
    // use Asian range
    SNXSAMD amd = NXS_GetAMD();
@@ -240,7 +240,7 @@ SNXSSignal NXS_Strat_LondonBO(){
 //------------------------------------ H5 EMA Pullback
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
-   if(!InpStrat_EMA_PULLBACK) return s;
+   if(!InpStrat_EMA_PULLBACK || !NXS_SelectorAllows(11)) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    double low   = iLow  (g_sym, InpTFEntry, 1);
    double high  = iHigh (g_sym, InpTFEntry, 1);
@@ -256,7 +256,7 @@ SNXSSignal NXS_Strat_EMAPullback(){
 //------------------------------------ H6 BB Squeeze Breakout
 SNXSSignal NXS_Strat_BBSqueeze(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BB_SQUEEZE; s.stratName = "BB_SQUEEZE";
-   if(!InpStrat_BB_SQUEEZE) return s;
+   if(!InpStrat_BB_SQUEEZE || !NXS_SelectorAllows(12)) return s;
    double width = g_bbUpper - g_bbLower;
    if(width <= 0 || g_atr <= 0) return s;
    if(width > g_atr * 2.5) return s; // not a squeeze
@@ -273,7 +273,7 @@ SNXSSignal NXS_Strat_BBSqueeze(){
 //------------------------------------ H7 Ichimoku Kumo Break
 SNXSSignal NXS_Strat_Ichimoku(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ICHIMOKU; s.stratName = "ICHIMOKU";
-   if(!InpStrat_ICHIMOKU) return s;
+   if(!InpStrat_ICHIMOKU || !NXS_SelectorAllows(13)) return s;
    double price = iClose(g_sym, InpTFEntry, 1);
    double kumoTop = MathMax(g_ichiSpanA, g_ichiSpanB);
    double kumoBot = MathMin(g_ichiSpanA, g_ichiSpanB);
@@ -291,7 +291,7 @@ SNXSSignal NXS_Strat_Ichimoku(){
 //------------------------------------ H8 RSI Divergence
 SNXSSignal NXS_Strat_RSIDiv(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_RSI_DIV; s.stratName = "RSI_DIV";
-   if(!InpStrat_RSI_DIV) return s;
+   if(!InpStrat_RSI_DIV || !NXS_SelectorAllows(14)) return s;
    double rsiArr[]; ArraySetAsSeries(rsiArr, true);
    if(CopyBuffer(g_hRSI, 0, 1, 15, rsiArr) <= 0) return s;
    double l1 = iLow(g_sym, InpTFEntry, 1);
@@ -311,7 +311,7 @@ SNXSSignal NXS_Strat_RSIDiv(){
 //------------------------------------ S1 Order Block Retest
 SNXSSignal NXS_Strat_OrderBlock(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
-   if(!InpStrat_ORDER_BLOCK) return s;
+   if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
    // Look for last bullish/bearish impulse 5–10 bars ago and a retest
    for(int i = 5; i <= 12; i++){
       double o = iOpen (g_sym, InpTFEntry, i);
@@ -338,7 +338,7 @@ SNXSSignal NXS_Strat_OrderBlock(){
 //------------------------------------ S2 Structure Reaction (addendum)
 SNXSSignal NXS_Strat_StructureReaction(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "STRUCT_REACT";
-   if(!InpUseStructReact) return s;
+   if(!InpUseStructReact || !NXS_SelectorAllows(16)) return s;
    if(!g_reaction.detected) return s;
 
    double base = 55;

@@ -4,6 +4,24 @@
 #ifndef __NXS_INPUTS_MQH__
 #define __NXS_INPUTS_MQH__
 
+input group "=== SCREENING SELECTOR (v2.0.36) ==="
+// 0 = disabled (normal behavior, each InpStrat_*/InpUseStrat_* toggle applies
+// as usual). 1-37 = isolate EXACTLY that one strategy for this run,
+// overriding all individual toggles - lets a single genetic/full Optimization
+// job (Optimization=1, this one input swept 1..37) screen all 37 strategies
+// as separate "passes" that MT5 (and MQL5 Cloud Network) can distribute
+// across agents, instead of 37 separate sequential terminal64.exe launches.
+// Index order matches scripts/generate_sets.ps1's $AllStrategyToggles list
+// exactly, so results are directly comparable to the prior single-.set
+// screenings: 1=ADX_RSI 2=BOLLINGER 3=MACD 4=SAR 5=TSI 6=BJORGUM
+// 7=LIQ_SWEEP 8=FVG_CONT 9=BREAKOUT_ACC 10=LONDON_BO 11=EMA_PULLBACK
+// 12=BB_SQUEEZE 13=ICHIMOKU 14=RSI_DIV 15=ORDER_BLOCK 16=STRUCT_REACT
+// 17=TurtleSoup 18=IFVG 19=FVG_Mit 20=OB_Mit 21=SH_BMS_RTO 22=SMS_BMS_RTO
+// 23=SilverBullet 24=AMD_Reversal 25=OTE_Cont 26=MalaysianSNR 27=CISD
+// 28=AMD_Cont 29=Judas 30=LdnReversal 31=NYReversal 32=WeeklyExp 33=PO3
+// 34=LiqVoid 35=DispRebal 36=Elliott 37=RangeFade
+input int InpStrategySelector = 0;
+
 input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
 input string   InpComment          = "NEXUS_v2";

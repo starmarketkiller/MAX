@@ -1033,16 +1033,19 @@ ENUM_NXS_STRAT NXR_StratEnumForZone(ENUM_NXR_ZONE_TYPE type)
 
 bool NXR_ZoneStrategyEnabled(ENUM_NXR_ZONE_TYPE type)
 {
-   if(!InpNXR_RespectNexusSwitches) return true;
+   // v2.0.36: this is the gate for the path that ACTUALLY executes live for
+   // these 4 (the NXR shadow engine, not the legacy functions in
+   // NXS_Strategies_SMC.mqh) - the selector must apply here too, not just
+   // at the legacy call sites in NXS_CollectAllSignals.
    if(type == NXR_ZONE_IFVG_BULL || type == NXR_ZONE_IFVG_BEAR)
-      return InpStrat_IFVG;
+      return (InpNXR_RespectNexusSwitches ? InpStrat_IFVG : true) && NXS_SelectorAllows(18);
    if(type == NXR_ZONE_FVG_BULL || type == NXR_ZONE_FVG_BEAR)
-      return InpStrat_FVG_Mit;
+      return (InpNXR_RespectNexusSwitches ? InpStrat_FVG_Mit : true) && NXS_SelectorAllows(19);
    if(type == NXR_ZONE_OB_BULL || type == NXR_ZONE_OB_BEAR ||
       type == NXR_ZONE_BREAKER_BULL || type == NXR_ZONE_BREAKER_BEAR)
-      return InpStrat_OB_Mit;
+      return (InpNXR_RespectNexusSwitches ? InpStrat_OB_Mit : true) && NXS_SelectorAllows(20);
    if(type == NXR_ZONE_SNR_SUPPORT || type == NXR_ZONE_SNR_RESISTANCE)
-      return InpStrat_MalaysianSNR;
+      return (InpNXR_RespectNexusSwitches ? InpStrat_MalaysianSNR : true) && NXS_SelectorAllows(26);
    return true;
 }
 

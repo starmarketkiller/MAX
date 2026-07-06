@@ -205,35 +205,35 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    out[n++] = NXS_Strat_RSIDiv();
    out[n++] = NXS_Strat_OrderBlock();
    out[n++] = NXS_Strat_StructureReaction();
-   // SMC/ICT 10
-   if(InpStrat_TurtleSoup)    out[n++] = NXS_Strat_TurtleSoup(swExt);
-   if(InpStrat_IFVG)          out[n++] = NXS_Strat_IFVG_Reversal();
-   if(InpStrat_FVG_Mit)       out[n++] = NXS_Strat_FVG_Mitigation();
-   if(InpStrat_OB_Mit)        out[n++] = NXS_Strat_OB_Mitigation_Structural();
-   if(InpStrat_SH_BMS_RTO)    out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
-   if(InpStrat_SMS_BMS_RTO)   out[n++] = NXS_Strat_SMS_BMS_RTO();
-   if(InpStrat_SilverBullet)  out[n++] = NXS_Strat_SilverBullet(swExt);
-   if(InpStrat_AMD_Reversal)  out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
-   if(InpStrat_OTE_Cont)      out[n++] = NXS_Strat_OTE_Continuation();
-   if(InpStrat_MalaysianSNR)  out[n++] = NXS_Strat_MalaysianSNR_Rejection();
+   // SMC/ICT 10 (v2.0.36: && NXS_SelectorAllows(N) - see InpStrategySelector)
+   if(InpStrat_TurtleSoup    && NXS_SelectorAllows(17)) out[n++] = NXS_Strat_TurtleSoup(swExt);
+   if(InpStrat_IFVG          && NXS_SelectorAllows(18)) out[n++] = NXS_Strat_IFVG_Reversal();
+   if(InpStrat_FVG_Mit       && NXS_SelectorAllows(19)) out[n++] = NXS_Strat_FVG_Mitigation();
+   if(InpStrat_OB_Mit        && NXS_SelectorAllows(20)) out[n++] = NXS_Strat_OB_Mitigation_Structural();
+   if(InpStrat_SH_BMS_RTO    && NXS_SelectorAllows(21)) out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
+   if(InpStrat_SMS_BMS_RTO   && NXS_SelectorAllows(22)) out[n++] = NXS_Strat_SMS_BMS_RTO();
+   if(InpStrat_SilverBullet  && NXS_SelectorAllows(23)) out[n++] = NXS_Strat_SilverBullet(swExt);
+   if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24)) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
+   if(InpStrat_OTE_Cont      && NXS_SelectorAllows(25)) out[n++] = NXS_Strat_OTE_Continuation();
+   if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26)) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
 
    // v2.0.7 INSTITUTIONAL MODELS (9)
    SNXSHTF htfInst = NXS_GetHTFBias();
-   if(InpUseStrat_CISD)        out[n++] = NXS_Strat_CISD(swExt);
-   if(InpUseStrat_AMD_Cont)    out[n++] = NXS_Strat_AMD_Continuation(amd, htfInst);
-   if(InpUseStrat_Judas)       out[n++] = NXS_Strat_JudasSwing(swExt, amd);
-   if(InpUseStrat_LdnReversal) out[n++] = NXS_Strat_LondonReversal(swExt, amd);
-   if(InpUseStrat_NYReversal)  out[n++] = NXS_Strat_NYReversal(swExt);
-   if(InpUseStrat_WeeklyExp)   out[n++] = NXS_Strat_WeeklyRangeExp();
-   if(InpUseStrat_PO3)         out[n++] = NXS_Strat_PO3(swExt, amd);
-   if(InpUseStrat_LiqVoid)     out[n++] = NXS_Strat_LiquidityVoid(htfInst);
-   if(InpUseStrat_DispRebal)   out[n++] = NXS_Strat_DisplacementRebalance();
+   if(InpUseStrat_CISD        && NXS_SelectorAllows(27)) out[n++] = NXS_Strat_CISD(swExt);
+   if(InpUseStrat_AMD_Cont    && NXS_SelectorAllows(28)) out[n++] = NXS_Strat_AMD_Continuation(amd, htfInst);
+   if(InpUseStrat_Judas       && NXS_SelectorAllows(29)) out[n++] = NXS_Strat_JudasSwing(swExt, amd);
+   if(InpUseStrat_LdnReversal && NXS_SelectorAllows(30)) out[n++] = NXS_Strat_LondonReversal(swExt, amd);
+   if(InpUseStrat_NYReversal  && NXS_SelectorAllows(31)) out[n++] = NXS_Strat_NYReversal(swExt);
+   if(InpUseStrat_WeeklyExp   && NXS_SelectorAllows(32)) out[n++] = NXS_Strat_WeeklyRangeExp();
+   if(InpUseStrat_PO3         && NXS_SelectorAllows(33)) out[n++] = NXS_Strat_PO3(swExt, amd);
+   if(InpUseStrat_LiqVoid     && NXS_SelectorAllows(34)) out[n++] = NXS_Strat_LiquidityVoid(htfInst);
+   if(InpUseStrat_DispRebal   && NXS_SelectorAllows(35)) out[n++] = NXS_Strat_DisplacementRebalance();
 
    // v2.0.8 — Range Fade
-   if(InpUseStrat_RangeFade)   out[n++] = NXS_Strat_RangeFade();
+   if(InpUseStrat_RangeFade   && NXS_SelectorAllows(37)) out[n++] = NXS_Strat_RangeFade();
 
    // v2.0.20 — Elliott Wave (#37)
-   if(InpUseStrat_Elliott)     out[n++] = NXS_Strat_Elliott();
+   if(InpUseStrat_Elliott     && NXS_SelectorAllows(36)) out[n++] = NXS_Strat_Elliott();
 
    // v2.0.5 stats: record called/setup for every invoked strategy
    for(int k = 0; k < n; k++){

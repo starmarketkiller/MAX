@@ -5,6 +5,13 @@
 #ifndef __NXS_GLOBALS_MQH__
 #define __NXS_GLOBALS_MQH__
 
+// v2.0.36: single-strategy screening selector (see InpStrategySelector in
+// NXS_Inputs.mqh for the index mapping). 0 = no override, everyone respects
+// their own InpStrat_*/InpUseStrat_* toggle as before.
+bool NXS_SelectorAllows(int idx){
+   return (InpStrategySelector == 0 || InpStrategySelector == idx);
+}
+
 // ----- Trade state (replaces CTrade) -----
 long                       g_tradeMagic   = 0;
 ENUM_ORDER_TYPE_FILLING    g_tradeFilling = ORDER_FILLING_FOK;
