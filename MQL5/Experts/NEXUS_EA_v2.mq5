@@ -518,6 +518,43 @@ void OnTick(){
    // v2.0.4: cache best signal for Visual Bridge HUD
    if(n > 0 && all[0].dir != DIR_NONE){ s_visualBest = all[0]; }
 
+   // === MODALITÀ RACCOLTA DATI / SCREENING (v2.1.1) =================
+   // Apre OGNI segnale valido a lotto fisso piccolo, taggato per strategia,
+   // saltando i gate soft e la soglia di score. Solo sicurezza dura (preflight:
+   // spread/margine/stops). Serve a far girare TUTTE le strategie e vedere nel
+   // Journal quali hanno edge, senza escluderne nessuna a priori. Solo demo.
+   if(InpDataCollectionMode){
+      double dstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP); if(dstep <= 0) dstep = 0.01;
+      double dminL = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);  if(dminL <= 0) dminL = 0.01;
+      double dlots = MathMax(dminL, MathFloor(InpDataCollectionLot / dstep) * dstep);
+      int baseOpen = PositionsTotal();
+      int openedNow = 0;
+      for(int i = 0; i < n; i++){
+         if(all[i].dir == DIR_NONE) continue;
+         if(baseOpen + openedNow >= InpDataCollectionMaxOpen) break;   // tetto sicurezza
+         SNXSSignal s = all[i];
+         if(s.slPrice <= 0 || s.tpPrice <= 0) continue;                 // serve SL/TP valido
+         double refP = (s.dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
+                                          : SymbolInfoDouble(g_sym, SYMBOL_BID);
+         double dsl = s.slPrice, dtp = s.tpPrice; string dpf = "";
+         ENUM_ORDER_TYPE dot = (s.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+         if(!NXS_PreFlight(dot, dlots, refP, dsl, dtp, dpf)) continue;   // sicurezza dura
+         NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
+         string dcm = StringFormat("%s|%s|%.1f", InpComment, s.stratName, s.score);
+         bool dok = (s.dir == DIR_BUY) ? NXS_SafeBuy(dlots, g_sym, dsl, dtp, dcm)
+                                       : NXS_SafeSell(dlots, g_sym, dsl, dtp, dcm);
+         if(dok){
+            openedNow++;
+            NXS_StrategyRegisterTrade(s.stratName);
+            NXS_LogTradeCSV("OPEN", 0, s.stratName, refP, 0, dsl, dtp, s.score, s.reason);
+            PrintFormat("[NEXUS DATA] OPEN %s %s lots=%.2f score=%.1f",
+                        NXS_DirName(s.dir), s.stratName, dlots, s.score);
+         }
+      }
+      if(openedNow > 0) g_lastTradeTime = TimeCurrent();
+      return;   // in raccolta dati non si usa né best-per-bar né istituzionale
+   }
+
    // === MODELLO ISTITUZIONALE (v2.1.0) ==============================
    // Sostituisce il best-per-bar: raggruppa i segnali per direzione in
    // un'unica decisione e apre 1 posizione con SL/TP scalati sul tier.

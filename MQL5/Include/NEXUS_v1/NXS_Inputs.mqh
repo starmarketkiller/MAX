@@ -74,6 +74,18 @@ input double   InpMinEntryScore    = 70.0;
 input double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 input int      InpMinMarginLevel   = 200;
 
+input group "=== DATA COLLECTION / SCREENING LIVE (v2.1.1) ==="
+// Apre OGNI segnale valido di OGNI strategia a lotto fisso piccolo, saltando i
+// gate soft (cooldown/MTF/velocity/exhaustion/exposure/best-per-bar) e la soglia
+// di score. Tiene solo la sicurezza dura (spread/margine/stops via preflight).
+// Serve a raccogliere dati REALI su TUTTE le strategie nel Journal per capire
+// quali hanno edge, senza bocciarne nessuna a priori. USARE SU DEMO.
+// NB: per vederle tutte, in .set metti tutti gli InpStrat_*/InpUseStrat_* = true
+// e InpStrategySelector = 0.
+input bool     InpDataCollectionMode   = false;
+input double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
+input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
+
 input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // Master switch del modello istituzionale: lettura unica del mercato ->
 // raggruppamento dei segnali per direzione -> 1 posizione per direzione con
