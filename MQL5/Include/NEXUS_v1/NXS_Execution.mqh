@@ -109,7 +109,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    }
    // v2.0.34 (audit point 8): exhaustion/extension gate.
    string exhReason = "";
-   if(NXS_ExhaustionBlocks(sig.dir, exhReason)){
+   if(NXS_ExhaustionBlocks(sig.dir, sig.stratName, exhReason)){
       g_nxsLastOpenFailure = exhReason;
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReason, NXS_DirName(sig.dir), sig.stratName);
       return OPEN_FAIL_PREFLIGHT;

@@ -132,8 +132,21 @@ bool NXS_ExhaustionRsiDivergence(ENUM_NXS_DIR dir){
    return false;
 }
 
-bool NXS_ExhaustionBlocks(ENUM_NXS_DIR dir, string &reason){
+// v2.0.35: A/B test (MACD, FVG_MIT, TURTLE_SOUP; same 3-week window) showed
+// the exhaustion gate is NOT uniformly helpful - it wrecked MACD (11->1
+// trades) and FVG_MIT (103->27 trades, PF 0.99->0.46), but genuinely
+// improved TURTLE_SOUP (PF 0.64->1.92). This isn't a clean trend-vs-reversal
+// split (TURTLE_SOUP is itself a reversal strategy) - only 3 data points
+// exist, so rather than guess a broader family rule, this exempts
+// specifically the two strategies MEASURED to be hurt and leaves the gate
+// unchanged for everyone else pending more A/B data.
+bool NXS_ExhaustionGateExempt(string stratName){
+   return (stratName == "MACD" || stratName == "FVG_MIT_NXR" || stratName == "FVG_MIT");
+}
+
+bool NXS_ExhaustionBlocks(ENUM_NXS_DIR dir, string stratName, string &reason){
    if(!InpUseExhaustionGate) return false;
+   if(NXS_ExhaustionGateExempt(stratName)) return false;
    if(NXS_ExhaustionConsecutive(dir)){ reason = "exhaustion_consecutive"; return true; }
    if(NXS_ExhaustionEMADistance())   { reason = "exhaustion_ema_distance"; return true; }
    if(NXS_ExhaustionRsiDivergence(dir)){ reason = "exhaustion_rsi_divergence"; return true; }

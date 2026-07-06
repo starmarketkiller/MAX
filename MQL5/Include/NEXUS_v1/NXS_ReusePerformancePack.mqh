@@ -1770,7 +1770,7 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    }
    // v2.0.34 (audit point 8): exhaustion/extension gate (see NXS_OpenTrade).
    string exhReasonNxr = "";
-   if(NXS_ExhaustionBlocks(sig.dir, exhReasonNxr)){
+   if(NXS_ExhaustionBlocks(sig.dir, sig.stratName, exhReasonNxr)){
       g_nxsLastOpenFailure = exhReasonNxr;
       PrintFormat("[NXR RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReasonNxr, NXS_DirName(sig.dir), sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
