@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 import jwt
 import backtest
+import bt_verdict
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -2413,6 +2414,35 @@ async def backtest_import_results(request: Request, user: str = Depends(require_
         kv_set("locked_profiles", profiles)
 
     return {"ok": True, "imported": len(norm), "locked_profiles_written": locked_written}
+
+
+@app.post("/api/backtest/analyze_csv")
+async def backtest_analyze_csv(request: Request, user: str = Depends(require_user)):
+    """Analizza il CSV per-strategia REALE di un test MT5 (OnTester logger) e
+    ritorna la tabella dei verdetti (FORTE/OK/DEBOLE/CRITICA/BLOCCATA/NO_SETUP/
+    POCHI_DATI) + raccomandazioni concrete. Body: {csv:"...", min_trades?:int}.
+    L'ultimo risultato viene salvato per riaprirlo senza ricaricare il file."""
+    body = await request.json()
+    text = body.get("csv") or body.get("text") or ""
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="campo 'csv' mancante")
+    try:
+        min_trades = int(body.get("min_trades", 10))
+    except (ValueError, TypeError):
+        min_trades = 10
+    out = bt_verdict.analyze_stats_csv(text, min_trades=min_trades)
+    if out.get("error"):
+        raise HTTPException(status_code=400, detail=out["error"])
+    out["analyzed_at"] = iso()
+    out["name"] = (body.get("name") or "").strip()[:120]
+    kv_set("backtest_last_analysis", out)
+    return out
+
+
+@app.get("/api/backtest/analyze_csv/last")
+def backtest_analyze_last(user: str = Depends(require_user)):
+    """Ritorna l'ultima analisi CSV salvata (per riaprire la vista senza reupload)."""
+    return kv_get("backtest_last_analysis", {}) or {}
 
 
 @app.get("/api/backtest/strategy_library/{job_id}")

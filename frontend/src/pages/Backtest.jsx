@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "@/lib/api";
-import { Loader2, TrendingUp, Sparkles, Wand2, Brain, Library } from "lucide-react";
+import { Loader2, TrendingUp, Sparkles, Wand2, Brain, Library, FileText } from "lucide-react";
 import BacktestForm from "@/pages/backtest/BacktestForm";
 import BacktestMetrics from "@/pages/backtest/BacktestMetrics";
 import BacktestCharts from "@/pages/backtest/BacktestCharts";
 import BacktestOptimizer from "@/pages/backtest/BacktestOptimizer";
 import BacktestManagementReport from "@/pages/backtest/BacktestManagementReport";
 import BacktestStrategyLibrary from "@/pages/backtest/BacktestStrategyLibrary";
+import BacktestRealAnalysis from "@/pages/backtest/BacktestRealAnalysis";
 
 const DEFAULT_CFG = {
   symbol: "XAUUSD",
@@ -218,6 +219,14 @@ export default function BacktestPage() {
             }`}>
             <Library className="h-3.5 w-3.5 inline mr-1.5"/>Library
           </button>
+          <button
+            onClick={() => setTab("real")}
+            data-testid="bt-tab-real"
+            className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider transition-all ${
+              tab === "real" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}>
+            <FileText className="h-3.5 w-3.5 inline mr-1.5"/>Analisi Reale
+          </button>
         </div>
       </div>
 
@@ -292,6 +301,8 @@ export default function BacktestPage() {
         <BacktestOptimizer baseCfg={cfg} symbols={symbols} catalog={catalog}/>
       ) : tab === "mgmt" ? (
         <BacktestManagementReport baseCfg={cfg}/>
+      ) : tab === "real" ? (
+        <BacktestRealAnalysis/>
       ) : (
         <BacktestStrategyLibrary symbols={symbols} baseCfg={cfg} onApplyRow={applyLibraryRow}/>
       )}
