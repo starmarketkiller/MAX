@@ -53,7 +53,14 @@
 // -------------------------------------------------------------------
 input group "=== NXR REUSE / PERFORMANCE PACK ==="
 input bool             InpNXR_Enable                 = true;
-input bool             InpNXR_DirectM5Execution      = true;
+// v2.1.6 — Con il modello istituzionale, NXR e' SORGENTE di segnali, non un
+// secondo esecutore. Le funzioni NXR_Strat_* (redirette via #define) portano
+// gia' i segnali di qualita' NXR nel pool di voti del grouping, con logica
+// anti-doppio-conteggio interna. Qui spegniamo la SUA esecuzione diretta su M5
+// (NXR_ProcessPendingM5Trigger) cosi' l'unico esecutore e' il modello
+// istituzionale (grid/recovery/trailing/runner) -> "l'esecuzione la fai solo tu".
+// La detection zone/contesto resta attiva (dietro InpNXR_Enable).
+input bool             InpNXR_DirectM5Execution      = false;
 input bool             InpNXR_RespectNexusSwitches  = true;
 input ENUM_TIMEFRAMES  InpNXR_TriggerTF              = PERIOD_M5;
 input int              InpNXR_ContextLookbackM15     = 96;
