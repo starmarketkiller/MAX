@@ -132,6 +132,14 @@ input double   InpInstTimeStopATR       = 0.20;  // "fermo" = |profitto| < quest
 // #9 Veto di regime: scarta i voti nell'ambiente sbagliato (mean-reversion in
 //    forte trend, trend/breakout in range) -> ogni strategia al suo contesto.
 input bool     InpInstRegimeVeto        = true;
+// Premium/Discount (SMC): niente "compra il massimo / vendi il minimo". Veta gli
+// acquisti in premium profondo e le vendite in sconto profondo sul range H1.
+input bool     InpInstPremDiscVeto      = true;
+input int      InpPDLookbackH1          = 20;    // barre H1 per il range operativo
+input double   InpPDExtreme             = 0.75;  // buy vetato se pos>questo; sell se pos<1-questo
+// Soglia di volatilita' minima: se l'ATR corrente e' sotto una frazione della sua
+// media -> mercato flat, niente segnali (evita il chop che genera stop a raffica).
+input double   InpInstMinATRfactor      = 0.55;  // ATR corrente >= questo x media, altrimenti flat (0=off)
 
 input group "=== SIZING AGGRESSIVO / ADATTIVO (v2.2.1) ==="
 // Moltiplicatore lotto a livello di ACCOUNT (oltre il risk% e i cap per-trade).

@@ -35,6 +35,26 @@ void NXS_ApplyContextQuality(SNXSSignal &all[], int n){
    if(!InpInstUseContextQuality) return;
    double atr = (g_atr > 0 ? g_atr : g_point * 100.0);
 
+   // --- Soglia di volatilita' minima: mercato flat -> nessun voto ---
+   // (l'ATR corrente sotto una frazione della sua media = chop che brucia stop).
+   if(InpInstMinATRfactor > 0 && g_atrAvg > 0 && g_atr < InpInstMinATRfactor * g_atrAvg){
+      for(int k = 0; k < n; k++) all[k].dir = DIR_NONE;
+      return;
+   }
+
+   // --- Range Premium/Discount su H1 (calcolato una volta) ---
+   double pdHi = 0, pdLo = 0; bool pdOk = false;
+   if(InpInstPremDiscVeto){
+      int hh = iHighest(g_sym, PERIOD_H1, MODE_HIGH, InpPDLookbackH1, 1);
+      int ll = iLowest (g_sym, PERIOD_H1, MODE_LOW,  InpPDLookbackH1, 1);
+      if(hh >= 0 && ll >= 0){
+         pdHi = iHigh(g_sym, PERIOD_H1, hh);
+         pdLo = iLow (g_sym, PERIOD_H1, ll);
+         pdOk = (pdHi > pdLo);
+      }
+   }
+   double pxNow = SymbolInfoDouble(g_sym, SYMBOL_BID);
+
    for(int i = 0; i < n; i++){
       if(all[i].dir == DIR_NONE) continue;
       int d = (int)all[i].dir;
@@ -44,6 +64,17 @@ void NXS_ApplyContextQuality(SNXSSignal &all[], int n){
          all[i].dir = DIR_NONE;
          all[i].reason = "drop:regime";
          continue;
+      }
+
+      // --- 0b) Premium/Discount: niente compra-il-massimo / vendi-il-minimo ---
+      if(pdOk){
+         double pos = (pxNow - pdLo) / (pdHi - pdLo);   // 0=minimo range, 1=massimo
+         if((d > 0 && pos > InpPDExtreme) ||            // buy in premium profondo
+            (d < 0 && pos < 1.0 - InpPDExtreme)){       // sell in sconto profondo
+            all[i].dir = DIR_NONE;
+            all[i].reason = "drop:prem/disc";
+            continue;
+         }
       }
 
       // --- 1) RR sanity (solo sui voti che portano SL/entry propri) ---
