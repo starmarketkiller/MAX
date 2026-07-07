@@ -62,7 +62,7 @@ input bool             InpNXR_Enable                 = true;
 // La detection zone/contesto resta attiva (dietro InpNXR_Enable).
 input bool             InpNXR_DirectM5Execution      = false;
 input bool             InpNXR_RespectNexusSwitches  = true;
-input ENUM_TIMEFRAMES  InpNXR_TriggerTF              = PERIOD_M5;
+input ENUM_TIMEFRAMES  InpNXR_TriggerTF              = PERIOD_M15;  // v2.2.4: M15 (era M5) per togliere il rumore dei trigger troppo bassi
 input int              InpNXR_ContextLookbackM15     = 96;
 input int              InpNXR_ContextLookbackH1      = 48;
 input int              InpNXR_MaxActiveZones         = 48;

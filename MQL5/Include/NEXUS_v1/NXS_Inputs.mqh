@@ -163,6 +163,11 @@ input bool     InpInstUseContextQuality = true;  // pesa/scarta i voti in base a
 input bool     InpInstCtxDropCounter    = true;  // scarta i voti contro HTF+struttura senza conferma di reversal
 input double   InpInstMinRR             = 1.20;  // RR minimo (TP/SL) del voto; sotto -> scartato (0=off)
 input double   InpInstMinSLATR          = 0.50;  // SL minimo (x ATR) del voto; sotto -> scartato (troppo stretto, si fa wickare)
+// --- MTF: i due tempi devono essere d'accordo (anti-rumore) ---
+// Il bias H4 (InpTFHigh) decide la direzione; su M15 (InpTFEntry) si entra in
+// continuazione. Un voto sopravvive solo se concorda col bias H4, salvo reversal
+// confermato (CHoCH/reazione). E' IL filtro che toglie il rumore dei trade a caso.
+input bool     InpMTFRequireHTF         = true;
 
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)

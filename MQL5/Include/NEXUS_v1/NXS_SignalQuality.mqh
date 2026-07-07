@@ -66,6 +66,19 @@ void NXS_ApplyContextQuality(SNXSSignal &all[], int n){
          continue;
       }
 
+      // --- 0a) MTF: i due tempi devono essere d'accordo ---
+      // La direzione deve concordare col bias H4 (continuazione), salvo reversal
+      // confermato (CHoCH/reazione a favore). Toglie il rumore dei trade a caso.
+      if(InpMTFRequireHTF && g_ctx.valid && g_ctx.htfBias != 0){
+         bool agreesHTF = (g_ctx.htfBias == d);
+         bool revExc    = (g_ctx.chochDir == d || g_ctx.reactionDir == d);
+         if(!agreesHTF && !revExc){
+            all[i].dir = DIR_NONE;
+            all[i].reason = "drop:vs H4 bias";
+            continue;
+         }
+      }
+
       // --- 0b) Premium/Discount: niente compra-il-massimo / vendi-il-minimo ---
       if(pdOk){
          double pos = (pxNow - pdLo) / (pdHi - pdLo);   // 0=minimo range, 1=massimo
