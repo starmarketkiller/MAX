@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.13"
+#property version   "2.14"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -600,7 +600,11 @@ void OnTick(){
          isig.tpPrice  = dec.tpPrice;
          isig.sourceTF = dec.tierTF;
          isig.reason   = dec.reason;
+         // v2.1.7: su un setup REVERSAL bypassa il gate exhaustion (un reversal
+         // parte da un estremo; l'exhaustion serve a non inseguire le continuazioni).
+         g_nxsBypassExhaustion = (dec.setupType == NXS_SETUP_REVERSAL);
          ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(isig, InpMagic + MAGIC_CORE, 1.0);
+         g_nxsBypassExhaustion = false;
          if(orc == OPEN_OK){
             // g_tradesToday/g_lastTradeTime già aggiornati dentro NXS_OpenTrade
             NXS_StrategyRegisterTrade(dec.topStrat);
@@ -608,7 +612,13 @@ void OnTick(){
                             0, dec.slPrice, dec.tpPrice, isig.score, dec.reason);
             PrintFormat("[NEXUS INST] OPEN %s", dec.reason);
          } else {
-            PrintFormat("[NEXUS INST] open rc=%d (%s)", (int)orc, dec.reason);
+            // v2.1.7: registra il blocco del gruppo sul bucket giusto (non piu'
+            // "PREFLIGHT ambiguous") cosi' il prossimo test dice PERCHE' non apre.
+            ENUM_NXS_BLOCK blk = NXS_BlkFromFailure(g_nxsLastOpenFailure);
+            NXS_Blk_Bump(blk);
+            NXS_Stats_RecordBlock(dec.topStrat, (int)blk);
+            PrintFormat("[NEXUS INST] open rc=%d blocco=%s (%s)",
+                        (int)orc, g_nxsLastOpenFailure, dec.reason);
          }
       }
       return;   // il modello istituzionale sostituisce il best-per-bar

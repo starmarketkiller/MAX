@@ -15,6 +15,11 @@ enum ENUM_NXS_OPEN_RC {
 
 string g_nxsLastOpenFailure = "";
 int g_nxsCounterSessionKey = -1;
+// v2.1.7 — il modello istituzionale lo alza SOLO per l'apertura di gruppo di un
+// setup REVERSAL: il gate exhaustion (prezzo lontano da EMA200) ha senso per una
+// continuazione che insegue, ma un reversal parte per definizione da un estremo.
+// Alzato/riabbassato attorno alla singola NXS_OpenTrade nel branch istituzionale.
+bool g_nxsBypassExhaustion = false;
 datetime g_nxsCounterDay = 0;
 int g_nxsCounterCount = 0;
 
@@ -108,8 +113,9 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.0.34 (audit point 8): exhaustion/extension gate.
+   // v2.1.7: bypass sui reversal di gruppo (vedi g_nxsBypassExhaustion).
    string exhReason = "";
-   if(NXS_ExhaustionBlocks(sig.dir, sig.stratName, exhReason)){
+   if(!g_nxsBypassExhaustion && NXS_ExhaustionBlocks(sig.dir, sig.stratName, exhReason)){
       g_nxsLastOpenFailure = exhReason;
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReason, NXS_DirName(sig.dir), sig.stratName);
       return OPEN_FAIL_PREFLIGHT;

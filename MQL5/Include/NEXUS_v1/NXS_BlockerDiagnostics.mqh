@@ -32,6 +32,24 @@ long g_blockCount[14];
 long g_decisionTicks = 0;
 datetime g_lastDecisionReport = 0;
 
+// v2.1.7 — mappa la causa PRECISA di un fallimento apertura (g_nxsLastOpenFailure)
+// sul bucket giusto, invece di buttare tutto in PREFLIGHT ("ambiguous" nei test).
+// Cosi' il prossimo test dice davvero PERCHE' non ha aperto.
+ENUM_NXS_BLOCK NXS_BlkFromFailure(const string r){
+   if(StringLen(r) == 0)                        return BLK_PREFLIGHT;
+   if(StringFind(r, "cooldown")           >= 0) return BLK_COOLDOWN;
+   if(StringFind(r, "spread")             >= 0) return BLK_SPREAD;
+   if(StringFind(r, "exhaustion")         >= 0 ||
+      StringFind(r, "exposure")           >= 0 ||
+      StringFind(r, "bar_dir_cap")        >= 0) return BLK_PROTECTIONS;
+   if(StringFind(r, "license")            >= 0) return BLK_LICENSE;
+   if(StringFind(r, "disabled_dashboard") >= 0) return BLK_PAUSED;
+   if(StringFind(r, "retcode")            >= 0 ||
+      StringFind(r, "order_send")         >= 0 ||
+      StringFind(r, "send_failed")        >= 0) return BLK_SEND_FAILED;
+   return BLK_PREFLIGHT;   // margin, invalid stops, sl distance, volume
+}
+
 void NXS_Blk_Reset(){
    for(int i = 0; i < BLK_MAX; i++) g_blockCount[i] = 0;
    g_decisionTicks = 0;
