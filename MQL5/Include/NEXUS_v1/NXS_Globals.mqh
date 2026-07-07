@@ -54,6 +54,12 @@ ENUM_NXS_SESSION g_session= SESS_NONE;
 bool   g_eaPaused         = false;
 int    g_tradesToday      = 0;
 int    g_consecLosses     = 0;
+// v2.2.1 — sizing account-level adattivo: streak dedicati (non toccati da
+// anti-revenge) e moltiplicatore lotto che sale sulle vincite / scende sulle
+// perdite, dentro [floor, cap].
+int    g_streakWins       = 0;
+int    g_streakLosses     = 0;
+double g_streakLotMult    = 1.0;
 datetime g_dayStart       = 0;
 double g_balanceDayStart  = 0;
 datetime g_lastTradeTime  = 0;

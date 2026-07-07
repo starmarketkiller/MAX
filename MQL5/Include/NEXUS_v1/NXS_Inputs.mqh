@@ -132,6 +132,21 @@ input double   InpInstTimeStopATR       = 0.20;  // "fermo" = |profitto| < quest
 // #9 Veto di regime: scarta i voti nell'ambiente sbagliato (mean-reversion in
 //    forte trend, trend/breakout in range) -> ogni strategia al suo contesto.
 input bool     InpInstRegimeVeto        = true;
+
+input group "=== SIZING AGGRESSIVO / ADATTIVO (v2.2.1) ==="
+// Moltiplicatore lotto a livello di ACCOUNT (oltre il risk% e i cap per-trade).
+// 1.0 = neutro; 1.5-2.0 = piu' aggressivo (lotti piu' alti). ATTENZIONE: amplifica
+// SIA i profitti SIA le perdite -> alzarlo solo quando l'edge e' confermato.
+input double   InpLotAggressiveness     = 1.0;
+// Scala il lotto sull'andamento: sale dopo N vittorie di fila, scende dopo N
+// perdite di fila, dentro [floor, cap]. "Alza sui vincita, abbassa sulle perdite".
+input bool     InpUseStreakSizing       = true;
+input int      InpStreakWinsToScale     = 2;      // vittorie di fila per salire di uno step
+input double   InpStreakScaleUp         = 1.25;   // x per step in vincita
+input double   InpStreakMaxMult         = 2.00;   // tetto del moltiplicatore
+input int      InpStreakLossesToScale   = 2;      // perdite di fila per scendere di uno step
+input double   InpStreakScaleDown       = 0.60;   // x per step in perdita
+input double   InpStreakMinMult         = 0.40;   // pavimento del moltiplicatore
 // --- Qualita' dei voti (prima del raggruppamento) ---
 // Allinea la conviction al contesto: i voti concordi col mercato pesano di piu',
 // quelli chiaramente controtrend (contro HTF+struttura senza conferma di

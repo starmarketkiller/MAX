@@ -4,6 +4,14 @@
 #ifndef __NXS_RISK_MQH__
 #define __NXS_RISK_MQH__
 
+// v2.2.1 — moltiplicatore lotto a livello di account: aggressivita' base x
+// scala da streak (vincite/perdite). Applicato UNA volta in NXS_CalcLot.
+double NXS_AccountLotMult(){
+   double m = (InpLotAggressiveness > 0 ? InpLotAggressiveness : 1.0);
+   if(InpUseStreakSizing) m *= g_streakLotMult;
+   return MathMax(0.05, m);
+}
+
 double NXS_AntiBleedMultiplier(){
    if(!InpUseAntiBleed) return 1.0;
    double m = 1.0;
@@ -34,6 +42,7 @@ double NXS_DynamicScoreThreshold(double base){
 double NXS_CalcLot(double slPriceDist){
    double risk = AccountInfoDouble(ACCOUNT_BALANCE) * g_run_RiskPercent / 100.0;
    risk *= NXS_AntiBleedMultiplier();   // P2 anti-bleed scaling
+   risk *= NXS_AccountLotMult();        // v2.2.1 aggressivita' + scala da streak
    double tickVal  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);
    double tickSize = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_SIZE);
    if(tickVal <= 0 || tickSize <= 0 || slPriceDist <= 0) return 0.01;
@@ -153,7 +162,29 @@ bool NXS_ExhaustionBlocks(ENUM_NXS_DIR dir, string stratName, string &reason){
    return false;
 }
 
+// v2.2.1 — aggiorna il moltiplicatore di sizing sull'andamento: sale dopo N
+// vittorie di fila, scende dopo N perdite di fila, dentro [floor, cap].
+void _nxs_streak_update(double pnl){
+   if(!InpUseStreakSizing) return;
+   if(pnl > 0){
+      g_streakWins++; g_streakLosses = 0;
+      if(g_streakWins >= InpStreakWinsToScale){
+         g_streakLotMult = MathMin(InpStreakMaxMult, g_streakLotMult * InpStreakScaleUp);
+         g_streakWins = 0;   // uno step per soglia raggiunta
+         PrintFormat("[NEXUS SIZE] +vincite -> lotMult=%.2f", g_streakLotMult);
+      }
+   } else if(pnl < 0){
+      g_streakLosses++; g_streakWins = 0;
+      if(g_streakLosses >= InpStreakLossesToScale){
+         g_streakLotMult = MathMax(InpStreakMinMult, g_streakLotMult * InpStreakScaleDown);
+         g_streakLosses = 0;
+         PrintFormat("[NEXUS SIZE] -perdite -> lotMult=%.2f", g_streakLotMult);
+      }
+   }
+}
+
 void NXS_OnTradeClosed(double pnl){
+   _nxs_streak_update(pnl);
    if(pnl < 0){
       g_consecLosses++;
       if(InpAntiRevenge && g_consecLosses >= InpAntiRevengeLosses){
