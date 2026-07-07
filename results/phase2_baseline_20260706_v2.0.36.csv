@@ -1,0 +1,6 @@
+﻿"strategy","trades","net_profit","profit_factor","win_rate","max_drawdown_pct","avg_win","avg_loss","largest_loss","history_quality"
+"ALL_ON","87","-84.61","0.68","32.18","9.54","6.48","-4.51","-7.46","100% ticks reali"
+"InpStrat_ADX_RSI","5","63.01","1576.25","80.00","0.00","15.76","-0.04","-0.04","100% ticks reali"
+"InpStrat_AMD_Reversal","0","0.00","0.00","","0.00","0.00","0.00","0.00","100% ticks reali"
+"InpStrat_BB_SQUEEZE","0","0.00","0.00","","0.00","0.00","0.00","0.00","100% ticks reali"
+"InpStrat_BJORGUM","0","0.00","0.00","","0.00","0.00","0.00","0.00","100% ticks reali"
