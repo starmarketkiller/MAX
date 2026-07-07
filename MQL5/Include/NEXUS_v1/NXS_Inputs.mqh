@@ -117,6 +117,21 @@ input double   InpInstMaxSLwiden        = 1.75;  // max allargamento SL struttur
 // B) Permanenza minima: finche' non passa, il trailing protegge ma NON stringe
 //    fino a chiudere -> l'operazione ha spazio per svilupparsi (anche i TF minori).
 input int      InpInstMinHoldMin        = 20;    // minuti minimi prima che il trailing possa stringere
+// --- Robustezza gestione soldi (v2.1.9) ---
+// #6 Recovery intelligente: aggiunge in recovery SOLO se il contesto e' ancora a
+//    favore. Non media contro un trend che si e' girato (anti-martingala-suicida).
+input bool     InpInstRecoveryNeedsContext = true;
+// #5 Breakeven+ dopo il primo add di grid: dato che abbiamo messo size extra sul
+//    vincente, blocchiamo il cluster a BE+ -> non puo' piu' tornare in perdita.
+input bool     InpInstBEAfterGrid       = true;
+input double   InpInstBEbufferATR       = 0.10;  // cuscinetto sopra il BE (x ATR)
+// #7 Time-stop: chiude un trade fermo ~0 da troppo tempo (libera margine). OFF di
+//    default (0) per non tagliare i trend lenti finche' non lo tariamo sui dati.
+input int      InpInstTimeStopMin       = 0;     // minuti; 0=off
+input double   InpInstTimeStopATR       = 0.20;  // "fermo" = |profitto| < questo (x ATR)
+// #9 Veto di regime: scarta i voti nell'ambiente sbagliato (mean-reversion in
+//    forte trend, trend/breakout in range) -> ogni strategia al suo contesto.
+input bool     InpInstRegimeVeto        = true;
 // --- Qualita' dei voti (prima del raggruppamento) ---
 // Allinea la conviction al contesto: i voti concordi col mercato pesano di piu',
 // quelli chiaramente controtrend (contro HTF+struttura senza conferma di

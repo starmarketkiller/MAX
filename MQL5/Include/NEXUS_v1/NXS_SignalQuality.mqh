@@ -16,6 +16,21 @@
 #ifndef __NXS_SIGNAL_QUALITY_MQH__
 #define __NXS_SIGNAL_QUALITY_MQH__
 
+// #9 Veto di regime: la strategia va scartata se opera nell'ambiente sbagliato.
+// Conservativo: veta solo i mismatch piu' netti (mean-reversion in forte trend,
+// trend/breakout in range/choppy). Tutto il resto (SMC/struttura/reversal) passa.
+bool _nxs_regime_veto(const string nm){
+   if(!InpInstRegimeVeto) return false;
+   bool meanRev = (nm == "BOLLINGER" || nm == "BB_SQUEEZE" || nm == "RANGE_FADE" ||
+                   nm == "RSI_DIV"   || StringFind(nm, "MALAYSIAN_SNR") >= 0);
+   if(meanRev && g_regime == REGIME_STRONG_TREND) return true;
+   bool trendFollow = (nm == "ADX_RSI" || nm == "MACD" || nm == "SAR" || nm == "TSI" ||
+                       nm == "EMA_PULLBACK" || nm == "ICHIMOKU" || nm == "BJORGUM" ||
+                       nm == "BREAKOUT_ACC" || nm == "LONDON_BO");
+   if(trendFollow && (g_regime == REGIME_RANGING || g_regime == REGIME_CHOPPY)) return true;
+   return false;
+}
+
 void NXS_ApplyContextQuality(SNXSSignal &all[], int n){
    if(!InpInstUseContextQuality) return;
    double atr = (g_atr > 0 ? g_atr : g_point * 100.0);
@@ -23,6 +38,13 @@ void NXS_ApplyContextQuality(SNXSSignal &all[], int n){
    for(int i = 0; i < n; i++){
       if(all[i].dir == DIR_NONE) continue;
       int d = (int)all[i].dir;
+
+      // --- 0) Veto di regime: fuori dal suo ambiente, il voto non conta ---
+      if(_nxs_regime_veto(all[i].stratName)){
+         all[i].dir = DIR_NONE;
+         all[i].reason = "drop:regime";
+         continue;
+      }
 
       // --- 1) RR sanity (solo sui voti che portano SL/entry propri) ---
       if(all[i].slPrice > 0 && all[i].entryRef > 0){

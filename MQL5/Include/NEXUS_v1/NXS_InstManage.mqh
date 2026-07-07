@@ -109,6 +109,17 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       double sl    = PositionGetDouble(POSITION_SL);
       double tp    = PositionGetDouble(POSITION_TP);
       double newSL = sl, newTP = tp;
+      double profP = (dir == DIR_BUY) ? (px - entry) : (entry - px);
+      long   ageS  = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
+
+      // #7 TIME-STOP: trade fermo ~0 da troppo tempo -> chiudi, libera margine.
+      if(InpInstTimeStopMin > 0 && ageS >= (long)InpInstTimeStopMin * 60 &&
+         MathAbs(profP) < atr * InpInstTimeStopATR){
+         PrintFormat("[NEXUS INST] TIME-STOP %s ticket=%I64u eta=%dmin prof=%.5f -> chiudo",
+                     NXS_DirName(dir), t, (int)(ageS / 60), profP);
+         NXS_DoClose(t);
+         continue;
+      }
 
       // RUNNER: l'ultima op della sequenza (se c'e' piu' di una) tiene un TP
       // esteso cosi' segue il trend; il trailing sotto la protegge.
@@ -129,14 +140,22 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       //    tier, largo, resta) -> l'operazione ha spazio per svilupparsi.
       long   posAge   = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
       bool   heldLong = (InpInstMinHoldMin <= 0) || (posAge >= (long)InpInstMinHoldMin * 60);
-      double prof = (dir == DIR_BUY) ? (px - entry) : (entry - px);
-      if(heldLong && prof >= lockDist){
+      if(heldLong && profP >= lockDist){
          double tSL = (dir == DIR_BUY) ? px - trailDist : px + trailDist;
          if(dir == DIR_BUY){
             if(tSL > entry && (sl <= 0 || tSL > sl)) newSL = tSL;
          } else {
             if(tSL < entry && (sl <= 0 || tSL < sl)) newSL = tSL;
          }
+      }
+
+      // #5 BE+ dopo il primo add di grid: con size extra sul vincente e gruppo
+      //    in profitto, nessuna op del cluster puo' piu' chiudere in perdita.
+      if(InpInstBEAfterGrid && g.count > 1 && g.aggPL > 0){
+         double beSL = (dir == DIR_BUY) ? entry + atr * InpInstBEbufferATR
+                                        : entry - atr * InpInstBEbufferATR;
+         if(dir == DIR_BUY){ if(beSL > newSL) newSL = beSL; }
+         else             { if(beSL < newSL) newSL = beSL; }
       }
 
       if(MathAbs(newSL - sl) > g_point || MathAbs(newTP - tp) > g_point)
@@ -171,10 +190,17 @@ void _nxs_inst_manageDir(ENUM_NXS_DIR dir){
          }
       } else if(g.aggPL < 0){
          // RECOVERY: prezzo andato contro -> add a prezzo migliore (martingala).
+         // #6 ma SOLO se il contesto non si e' girato contro: non mediare dentro
+         //    un trend confermato opposto (anti-martingala-suicida).
+         bool ctxAgainst = (InpInstRecoveryNeedsContext && g_ctx.valid &&
+                            g_ctx.htfBias == -(int)dir && g_ctx.structTrend == -(int)dir);
          double adv = (dir == DIR_BUY) ? (g.lastEntry - px) : (px - g.lastEntry);
-         if(adv >= step){
+         if(adv >= step && !ctxAgainst){
             lots  = baseLot * MathPow(MathMax(0.01, InpInstRecoveryMult), depth + 1);
             doAdd = true;
+         } else if(adv >= step && ctxAgainst){
+            PrintFormat("[NEXUS INST] RECOVERY STOP %s: contesto girato contro (htf+struct) aggPL=%.2f",
+                        NXS_DirName(dir), g.aggPL);
          }
       }
       if(doAdd){
