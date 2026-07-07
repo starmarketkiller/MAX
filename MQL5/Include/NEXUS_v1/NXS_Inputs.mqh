@@ -111,6 +111,12 @@ input double   InpInstLockATR           = 0.6;   // profitto (x ATR tier) oltre 
 input double   InpInstTrailATR          = 1.2;   // distanza del trailing dal prezzo (x ATR tier)
 input bool     InpInstRunner            = true;  // ultima op di grid/recovery = runner (segue il profitto oltre il TP)
 input double   InpInstRunnerTPmult      = 3.0;   // TP del runner (x TP di gruppo) prima che il trailing lo gestisca
+// A) SL del gruppo oltre l'invalidazione strutturale del voto dominante, senza
+//    far esplodere l'RR: lo SL puo' allargarsi fino a InpInstMaxSLwiden x lo SL di tier.
+input double   InpInstMaxSLwiden        = 1.75;  // max allargamento SL strutturale (x SL di tier); 0=solo tier
+// B) Permanenza minima: finche' non passa, il trailing protegge ma NON stringe
+//    fino a chiudere -> l'operazione ha spazio per svilupparsi (anche i TF minori).
+input int      InpInstMinHoldMin        = 20;    // minuti minimi prima che il trailing possa stringere
 // --- Qualita' dei voti (prima del raggruppamento) ---
 // Allinea la conviction al contesto: i voti concordi col mercato pesano di piu',
 // quelli chiaramente controtrend (contro HTF+struttura senza conferma di

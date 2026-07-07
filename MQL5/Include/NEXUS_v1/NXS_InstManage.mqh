@@ -125,8 +125,12 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       // TRAILING: appena il profitto supera lockDist, blocca inseguendo a
       // trailDist. Sposta lo SL solo verso il profitto e solo oltre l'entry
       // (cosi' non chiude mai in perdita una volta protetto).
+      // B) Permanenza minima: finche' non e' passata, NON stringe (lo SL di
+      //    tier, largo, resta) -> l'operazione ha spazio per svilupparsi.
+      long   posAge   = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
+      bool   heldLong = (InpInstMinHoldMin <= 0) || (posAge >= (long)InpInstMinHoldMin * 60);
       double prof = (dir == DIR_BUY) ? (px - entry) : (entry - px);
-      if(prof >= lockDist){
+      if(heldLong && prof >= lockDist){
          double tSL = (dir == DIR_BUY) ? px - trailDist : px + trailDist;
          if(dir == DIR_BUY){
             if(tSL > entry && (sl <= 0 || tSL > sl)) newSL = tSL;

@@ -91,13 +91,14 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    int    buyN = 0, sellN = 0;
    double topBuy = -1, topSell = -1;
    string topBuyName = "", topSellName = "";
+   double topBuySL = 0, topSellSL = 0;   // SL strutturale del voto dominante
    for(int i = 0; i < n; i++){
       if(all[i].dir == DIR_BUY){
          buySum += all[i].score; buyN++;
-         if(all[i].score > topBuy){ topBuy = all[i].score; topBuyName = all[i].stratName; }
+         if(all[i].score > topBuy){ topBuy = all[i].score; topBuyName = all[i].stratName; topBuySL = all[i].slPrice; }
       } else if(all[i].dir == DIR_SELL){
          sellSum += all[i].score; sellN++;
-         if(all[i].score > topSell){ topSell = all[i].score; topSellName = all[i].stratName; }
+         if(all[i].score > topSell){ topSell = all[i].score; topSellName = all[i].stratName; topSellSL = all[i].slPrice; }
       }
    }
    if(buyN == 0 && sellN == 0) return d;
@@ -144,6 +145,19 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
                               : SymbolInfoDouble(g_sym, SYMBOL_BID);
    d.slPrice      = (dir > 0) ? d.entryRef - slDist : d.entryRef + slDist;
    d.tpPrice      = (dir > 0) ? d.entryRef + tpDist : d.entryRef - tpDist;
+
+   // A) Allarga lo SL del gruppo oltre l'invalidazione strutturale del voto
+   //    dominante (es. sotto l'OB / oltre lo sweep), ma non oltre InpInstMaxSLwiden
+   //    volte lo SL di tier -> lo stop sta oltre l'invalidazione senza rovinare l'RR.
+   double structSL = (dir > 0) ? topBuySL : topSellSL;
+   if(InpInstMaxSLwiden > 0 && structSL > 0){
+      double cap = slDist * InpInstMaxSLwiden;
+      if(dir > 0 && structSL < d.slPrice){          // struttura piu' in basso
+         d.slPrice = MathMax(structSL, d.entryRef - cap);
+      } else if(dir < 0 && structSL > d.slPrice){   // struttura piu' in alto
+         d.slPrice = MathMin(structSL, d.entryRef + cap);
+      }
+   }
    d.topStrat     = (dir > 0) ? topBuyName : topSellName;
    d.group        = group;
    d.reason = StringFormat("INST %s tier%d %s conv=%.0f [%s]",
