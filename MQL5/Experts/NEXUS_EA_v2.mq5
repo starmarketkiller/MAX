@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.16"
+#property version   "2.17"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -603,8 +603,11 @@ void OnTick(){
          // v2.1.7: su un setup REVERSAL bypassa il gate exhaustion (un reversal
          // parte da un estremo; l'exhaustion serve a non inseguire le continuazioni).
          g_nxsBypassExhaustion = (dec.setupType == NXS_SETUP_REVERSAL);
+         // Tag contesto nel comment: TF del tier + C/R -> es. "H4-R" visibile in MT5.
+         g_nxsOpenCtxTag = NXS_Inst_CtxTag(dec);
          ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(isig, InpMagic + MAGIC_CORE, 1.0);
          g_nxsBypassExhaustion = false;
+         g_nxsOpenCtxTag = "";
          if(orc == OPEN_OK){
             // g_tradesToday/g_lastTradeTime già aggiornati dentro NXS_OpenTrade
             NXS_StrategyRegisterTrade(dec.topStrat);

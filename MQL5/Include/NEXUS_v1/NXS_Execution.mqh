@@ -20,6 +20,12 @@ int g_nxsCounterSessionKey = -1;
 // continuazione che insegue, ma un reversal parte per definizione da un estremo.
 // Alzato/riabbassato attorno alla singola NXS_OpenTrade nel branch istituzionale.
 bool g_nxsBypassExhaustion = false;
+// v2.2.0 — tag di contesto per il comment del trade (4o campo): il branch
+// istituzionale lo riempie con "TF-C/R" (es. "H4-R" = timeframe H4, Reversal).
+// Se vuoto, NXS_OpenTrade ripiega sul TF di origine del segnale -> ogni trade
+// mostra almeno il timeframe. Cosi' guardando la posizione in MT5 si vede
+// SUBITO su che TF e con che tipo di setup e' stata aperta.
+string g_nxsOpenCtxTag = "";
 datetime g_nxsCounterDay = 0;
 int g_nxsCounterCount = 0;
 
@@ -180,7 +186,13 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    sig.tpPrice = tp;
 
    NXS_TradeSetMagic(magic);
+   // 4o campo = contesto: tag ricco dal branch istituzionale ("TF-C/R"), oppure
+   // fallback sul TF di origine del segnale. Il backend tollera il campo [3].
+   string ctxTag = g_nxsOpenCtxTag;
+   if(StringLen(ctxTag) == 0 && sig.sourceTF != PERIOD_CURRENT)
+      ctxTag = StringSubstr(EnumToString(sig.sourceTF), 7);   // "M15","H1","H4","D1"
    string cm = StringFormat("%s|%s|%.1f", InpComment, sig.stratName, sig.score);
+   if(StringLen(ctxTag) > 0) cm = cm + "|" + ctxTag;
    bool ok = false;
    if(sig.dir == DIR_BUY)       ok = NXS_SafeBuy(lots, g_sym, sl, tp, cm);
    else if(sig.dir == DIR_SELL) ok = NXS_SafeSell(lots, g_sym, sl, tp, cm);

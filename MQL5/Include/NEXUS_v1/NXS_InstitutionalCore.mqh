@@ -46,6 +46,15 @@ int NXS_Inst_OpenPositionsInDir(ENUM_NXS_DIR dir){
    return cnt;
 }
 
+// Tag di contesto per il comment: "TF-C/R" (es. "H4-R" = timeframe H4,
+// Reversal / "M15-C" = M15, Continuazione). Cosi' in MT5 si vede a colpo
+// d'occhio su che timeframe e con che tipo di setup e' aperta la posizione.
+string NXS_Inst_CtxTag(SNXSDecision &d){
+   string tf = StringSubstr(EnumToString(d.tierTF), 7);   // "M15","H1","H4","D1"
+   string cr = (d.setupType == NXS_SETUP_REVERSAL) ? "R" : "C";
+   return tf + "-" + cr;
+}
+
 // TF associato a ciascun tier (0=local usa il TF di esecuzione).
 ENUM_TIMEFRAMES _nxs_inst_tierTF(int tier){
    if(tier >= 3) return PERIOD_D1;
@@ -121,7 +130,7 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    for(int i = 0; i < n; i++){
       if(all[i].dir != wantDir) continue;
       string nm = all[i].stratName;
-      if(StringLen(group) + StringLen(nm) + 1 > 30){ group += "+"; break; }  // cap lunghezza
+      if(StringLen(group) + StringLen(nm) + 1 > 20){ group += "+"; break; }  // cap: lascia spazio a score+ctx nel comment MT5
       if(gAdded > 0) group += "+";
       group += nm;
       gAdded++;
