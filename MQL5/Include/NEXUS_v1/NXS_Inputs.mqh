@@ -129,17 +129,17 @@ input double   InpInstBEbufferATR       = 0.10;  // cuscinetto sopra il BE (x AT
 //    default (0) per non tagliare i trend lenti finche' non lo tariamo sui dati.
 input int      InpInstTimeStopMin       = 0;     // minuti; 0=off
 input double   InpInstTimeStopATR       = 0.20;  // "fermo" = |profitto| < questo (x ATR)
-// #9 Veto di regime: scarta i voti nell'ambiente sbagliato (mean-reversion in
-//    forte trend, trend/breakout in range) -> ogni strategia al suo contesto.
-input bool     InpInstRegimeVeto        = true;
-// Premium/Discount (SMC): niente "compra il massimo / vendi il minimo". Veta gli
-// acquisti in premium profondo e le vendite in sconto profondo sul range H1.
-input bool     InpInstPremDiscVeto      = true;
+// --- Filtri NON indispensabili: OFF di default (v2.2.3) ---
+// Spenti per non strozzare il numero di trade: il counter-trend drop + la RR
+// sanity (sotto) bastano. Riaccendibili singolarmente se i dati veri lo chiedono.
+// #9 Veto di regime: ridondante col counter-trend, classifica per nome (fragile).
+input bool     InpInstRegimeVeto        = false;
+// Premium/Discount (SMC): raffinatezza, non indispensabile.
+input bool     InpInstPremDiscVeto      = false;
 input int      InpPDLookbackH1          = 20;    // barre H1 per il range operativo
 input double   InpPDExtreme             = 0.75;  // buy vetato se pos>questo; sell se pos<1-questo
-// Soglia di volatilita' minima: se l'ATR corrente e' sotto una frazione della sua
-// media -> mercato flat, niente segnali (evita il chop che genera stop a raffica).
-input double   InpInstMinATRfactor      = 0.55;  // ATR corrente >= questo x media, altrimenti flat (0=off)
+// Soglia di volatilita' minima: strumento grezzo, rischia di sopprimere tutto.
+input double   InpInstMinATRfactor      = 0.0;   // 0=off; >0 = ATR corrente >= questo x media
 
 input group "=== SIZING AGGRESSIVO / ADATTIVO (v2.2.1) ==="
 // Moltiplicatore lotto a livello di ACCOUNT (oltre il risk% e i cap per-trade).
