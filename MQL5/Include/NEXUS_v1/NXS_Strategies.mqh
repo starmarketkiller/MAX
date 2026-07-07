@@ -321,13 +321,17 @@ SNXSSignal NXS_Strat_OrderBlock(){
       double obTop = MathMax(o, c);
       double obBot = MathMin(o, c);
       double c1 = iClose(g_sym, InpTFEntry, 1);
+      double o1 = iOpen (g_sym, InpTFEntry, 1);
       double l1 = iLow  (g_sym, InpTFEntry, 1);
       double h1 = iHigh (g_sym, InpTFEntry, 1);
-      // bullish OB: impulse up, retest down to OB body
-      if(c > o && l1 <= obTop && c1 > obBot){
+      double obMid = (obTop + obBot) * 0.5;
+      // bullish OB: impulso su, il ritest TAGGA la zona (l1<=obTop) e la candela
+      // la RESPINGE - chiude rialzista sopra il midpoint (rejection), non mentre
+      // il prezzo sta ancora cadendo dentro il blocco.
+      if(c > o && l1 <= obTop && c1 > o1 && c1 > obMid){
          s.dir = DIR_BUY;  s.score = 70; s.reason = "OB_retest_bull"; break;
       }
-      if(c < o && h1 >= obBot && c1 < obTop){
+      if(c < o && h1 >= obBot && c1 < o1 && c1 < obMid){
          s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear"; break;
       }
    }

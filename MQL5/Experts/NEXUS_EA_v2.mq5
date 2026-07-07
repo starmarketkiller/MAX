@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.11"
+#property version   "2.12"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -46,6 +46,7 @@
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
 #include <NEXUS_v1\NXS_InstitutionalCore.mqh>
+#include <NEXUS_v1\NXS_SignalQuality.mqh>
 #include <NEXUS_v1\NXS_ShadowTrading.mqh>
 #include <NEXUS_v1\NXS_EntryScore.mqh>
 #include <NEXUS_v1\NXS_Execution.mqh>
@@ -578,6 +579,10 @@ void OnTick(){
    // Gestione (BE/trail/grid/pyramid) gira già a inizio OnTick.
    if(InpUseInstitutionalCore){
       NXS_Context_Update(htf, sweep, amd);            // serve per il tier
+      // Qualita' dei voti PRIMA del raggruppamento: pesa/scarta i segnali
+      // in base al contesto (controtrend scartati, RR degeneri scartati) ->
+      // la conviction sommata riflette la qualita', non solo il numero.
+      NXS_ApplyContextQuality(all, n);
       SNXSDecision dec = NXS_Institutional_Decide(all, n);
       // 1 posizione per direzione: se esiste già, non riaprire (gli add di
       // grid/recovery su variazione di prezzo arrivano in Fase 3).

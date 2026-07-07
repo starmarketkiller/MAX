@@ -111,6 +111,14 @@ input double   InpInstLockATR           = 0.6;   // profitto (x ATR tier) oltre 
 input double   InpInstTrailATR          = 1.2;   // distanza del trailing dal prezzo (x ATR tier)
 input bool     InpInstRunner            = true;  // ultima op di grid/recovery = runner (segue il profitto oltre il TP)
 input double   InpInstRunnerTPmult      = 3.0;   // TP del runner (x TP di gruppo) prima che il trailing lo gestisca
+// --- Qualita' dei voti (prima del raggruppamento) ---
+// Allinea la conviction al contesto: i voti concordi col mercato pesano di piu',
+// quelli chiaramente controtrend (contro HTF+struttura senza conferma di
+// reversal) vengono scartati -> niente short su supporto HTF e simili.
+input bool     InpInstUseContextQuality = true;  // pesa/scarta i voti in base al contesto prima di raggruppare
+input bool     InpInstCtxDropCounter    = true;  // scarta i voti contro HTF+struttura senza conferma di reversal
+input double   InpInstMinRR             = 1.20;  // RR minimo (TP/SL) del voto; sotto -> scartato (0=off)
+input double   InpInstMinSLATR          = 0.50;  // SL minimo (x ATR) del voto; sotto -> scartato (troppo stretto, si fa wickare)
 
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)
