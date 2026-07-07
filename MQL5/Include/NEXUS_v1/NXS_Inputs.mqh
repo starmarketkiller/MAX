@@ -101,7 +101,16 @@ input int      InpInstMinContributors  = 1;      // min strategie concordi per a
 input int      InpInstMaxRecoveryDepth  = 4;     // max livelli di recovery per sequenza (0=illimitato SCONSIGLIATO)
 input double   InpInstMaxExposureLots   = 1.00;  // max lotti totali per direzione (core+grid+recovery)
 input double   InpInstGridStepATR       = 1.0;   // passo griglia/recovery in ATR del tier
-input double   InpInstRecoveryMult      = 1.5;   // moltiplicatore lotto per livello di recovery
+input double   InpInstRecoveryMult      = 1.5;   // moltiplicatore lotto per livello di recovery (loss -> add per recuperare)
+input double   InpInstGridMult          = 1.0;   // moltiplicatore lotto per livello di grid (profit -> add sul vincente)
+input double   InpInstAddLot            = 0.0;   // lotto base degli add (0 = usa lotto della posizione core)
+// --- Protezione profitto: trailing (training stop) + runner ---
+// Il trailing scatta prima del TP (a InpInstLockATR di profitto) e insegue a
+// InpInstTrailATR di distanza, cosi da bloccare sempre un po' di profitto.
+input double   InpInstLockATR           = 0.6;   // profitto (x ATR tier) oltre il quale attiva il trailing
+input double   InpInstTrailATR          = 1.2;   // distanza del trailing dal prezzo (x ATR tier)
+input bool     InpInstRunner            = true;  // ultima op di grid/recovery = runner (segue il profitto oltre il TP)
+input double   InpInstRunnerTPmult      = 3.0;   // TP del runner (x TP di gruppo) prima che il trailing lo gestisca
 
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)

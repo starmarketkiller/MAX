@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.10"
+#property version   "2.11"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -58,6 +58,7 @@
 #include <NEXUS_v1\NXS_GridRecovery.mqh>
 #include <NEXUS_v1\NXS_Pyramiding.mqh>
 #include <NEXUS_v1\NXS_SplitTrade.mqh>
+#include <NEXUS_v1\NXS_InstManage.mqh>
 #include <NEXUS_v1\NXS_Confluence.mqh>
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
 #include <NEXUS_v1\NXS_Protections.mqh>
@@ -439,8 +440,15 @@ void OnTick(){
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
    NXS_ManageSplit();
-   NXS_ManageGrid();
-   NXS_ManagePyramid(vel);
+   if(InpUseInstitutionalCore){
+      // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
+      // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
+      // per non aggiungere due volte sulla stessa posizione.
+      NXS_InstManage_OnTick();
+   } else {
+      NXS_ManageGrid();
+      NXS_ManagePyramid(vel);
+   }
 
    // Risk Protections (NEXUS v2.0)
    NXS_Prot_OnTick();
