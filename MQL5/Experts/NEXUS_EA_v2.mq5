@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.25"
+#property version   "2.26"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -238,6 +238,23 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 
    // v2.0.20 — Elliott Wave (#37)
    if(InpUseStrat_Elliott     && NXS_SelectorAllows(36)) out[n++] = NXS_Strat_Elliott();
+
+   // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
+   // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
+   // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
+   if(InpUseStrategyProfiles){
+      double px200 = iClose(g_sym, InpTFEntry, 0);
+      for(int k = 0; k < n; k++){
+         if(out[k].dir == DIR_NONE) continue;
+         bool needHtf;
+         if(NXS_Profile_HTF(out[k].stratName, needHtf) && needHtf && g_ema200 > 0){
+            if((out[k].dir == DIR_BUY  && px200 < g_ema200) ||
+               (out[k].dir == DIR_SELL && px200 > g_ema200)){
+               out[k].dir = DIR_NONE;   // controtrend -> scartato per questa strategia
+            }
+         }
+      }
+   }
 
    // v2.0.5 stats: record called/setup for every invoked strategy
    for(int k = 0; k < n; k++){

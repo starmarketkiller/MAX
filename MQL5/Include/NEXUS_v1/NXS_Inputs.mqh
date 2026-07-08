@@ -70,7 +70,7 @@ input double   InpMaxLot           = 5.0;
 input int      InpMaxTradesPerDay  = 12;
 input int      InpMaxConcurrent    = 4;
 input double   InpMaxDailyDDPct    = 5.0;
-input double   InpMinEntryScore    = 70.0;
+input double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 input double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 input int      InpMinMarginLevel   = 200;
 
@@ -92,7 +92,7 @@ input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // SL/TP scalati sul tier (TF di conferma) -> gestione uniforme grid/recovery.
 // OFF di default: l'EA usa il modello attuale (best-per-bar) finché non lo
 // attivi in Strategy Tester.
-input bool     InpUseInstitutionalCore = true;
+input bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 posizione per strategia (come nel backtest)
 // v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
 // (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
 input bool     InpUseStrategyProfiles  = true;
@@ -185,7 +185,7 @@ input double   InpInstMinSLATR          = 0.50;  // SL minimo (x ATR) del voto; 
 // Il bias H4 (InpTFHigh) decide la direzione; su M15 (InpTFEntry) si entra in
 // continuazione. Un voto sopravvive solo se concorda col bias H4, salvo reversal
 // confermato (CHoCH/reazione). E' IL filtro che toglie il rumore dei trade a caso.
-input bool     InpMTFRequireHTF         = true;
+input bool     InpMTFRequireHTF         = false;  // v2.2.8: sostituito dal gate HTF PER-STRATEGIA (profili)
 
 input group "=== SAFETY CAPS (v2.0.26) ==="
 input int      InpMaxNewTradesPerBarDir = 1;    // max NEW independent entries per direction per bar (confluence != multiple opens)
@@ -215,13 +215,13 @@ input double   InpTurtleSoup_LotMult = 1.5;
 // stopped out. Blocks that specific whipsaw without touching the
 // strategy's core logic.
 input bool     InpUsePostSLCooldown   = true;
-input int      InpPostSLCooldownMin  = 20;      // minutes to block opposite-direction entries after a stop-out
+input int      InpPostSLCooldownMin  = 0;       // v2.2.8: il backtest non ha cooldown post-SL      // minutes to block opposite-direction entries after a stop-out
 
 // v2.0.34 (audit point 8): universal exhaustion/extension gate - blocks a
 // NEW entry that's chasing a move that's already gone too far (consecutive
 // HH/LL with no pullback, price too far from EMA200, or RSI diverging
 // against the entry direction). Applied in both execution paths.
-input bool     InpUseExhaustionGate      = true;
+input bool     InpUseExhaustionGate      = false;  // v2.2.8: il backtest non ha exhaustion gate
 input int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
 input double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
 input int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
@@ -243,7 +243,7 @@ input int      InpVel_ZLEMA        = 35;
 input double   InpVel_ATRMult      = 0.5;
 
 input group "=== NEWS FILTER ==="
-input bool     InpUseNews          = true;
+input bool     InpUseNews          = false;   // v2.2.8: il backtest non ha news filter
 input int      InpNewsMinBefore    = 5;     // was 30 — user wants tight buffer 5/5
 input int      InpNewsMinAfter     = 5;     // was 30 — user wants tight buffer 5/5
 input string   InpNewsCurrencies   = "USD,EUR,XAU";
@@ -417,7 +417,7 @@ input int      InpMaxConsecPerStrat= 3;
 input int      InpStratCooldownMin = 30;
 
 input group "=== MTF / SPREAD / VOL REGIME (Audit PDF) ==="
-input bool     InpUseMTFValidation = true;
+input bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation
 input ENUM_TIMEFRAMES InpMTF_TF1   = PERIOD_H1;
 input ENUM_TIMEFRAMES InpMTF_TF2   = PERIOD_H4;
 input bool     InpUseDynamicSpread = true;

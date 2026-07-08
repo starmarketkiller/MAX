@@ -52,7 +52,7 @@
 // User controls kept inside this single include
 // -------------------------------------------------------------------
 input group "=== NXR REUSE / PERFORMANCE PACK ==="
-input bool             InpNXR_Enable                 = true;
+input bool             InpNXR_Enable                 = false;  // v2.2.8: base strategy logic come nel backtest (no NXR)
 // v2.1.6 — Con il modello istituzionale, NXR e' SORGENTE di segnali, non un
 // secondo esecutore. Le funzioni NXR_Strat_* (redirette via #define) portano
 // gia' i segnali di qualita' NXR nel pool di voti del grouping, con logica

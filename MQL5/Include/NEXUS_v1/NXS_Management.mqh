@@ -31,9 +31,38 @@ void NXS_ManageBreakevenAndTrail(){
          }
       }
 
-      // Break-even check
       bool beReached = (type == POSITION_TYPE_BUY) ? (sl >= open - g_point * 2)
                                                     : (sl <= open + g_point * 2 && sl > 0);
+
+      // v2.2.8 — BE/trail PER-STRATEGIA (come nel backtest). Se la posizione ha un
+      // profilo: BE a beR x RISCHIO (0=off), trailing a trailATR x ATR (0=off).
+      double pBeR = -1, pTrail = -1;
+      if(InpUseStrategyProfiles){
+         string cmt = PositionGetString(POSITION_COMMENT);
+         string pp[]; int npp = StringSplit(cmt, '|', pp);
+         if(npp >= 2 && StringLen(pp[1]) > 0){
+            double a, b; bool h; double be, tr;
+            if(NXS_Profile_Get(pp[1], a, b, h, be, tr)){ pBeR = be; pTrail = tr; }
+         }
+      }
+      if(pBeR >= 0 || pTrail >= 0){
+         double risk = MathAbs(open - sl);
+         if(pBeR > 0 && !beReached && risk > 0 && prof >= pBeR * risk){
+            NXS_DoModify(t, NormPrice(open), tp);   // SL a entry
+            beReached = true;
+         }
+         if(pTrail > 0){
+            double td = g_atr * pTrail;
+            double nSL = (type == POSITION_TYPE_BUY) ? now - td : now + td;
+            if(type == POSITION_TYPE_BUY  && nSL > sl + g_point * 2)
+               NXS_DoModify(t, NormPrice(nSL), tp);
+            if(type == POSITION_TYPE_SELL && (sl == 0 || nSL < sl - g_point * 2))
+               NXS_DoModify(t, NormPrice(nSL), tp);
+         }
+         continue;   // gestita per-strategia, salta il globale
+      }
+
+      // --- Fallback GLOBALE (strategie senza profilo) ---
       double beTrigger = g_atr * g_run_BE_TriggerATR;   // tunabile dal sito
       if(!beReached && prof >= beTrigger){
          double newSL = (type == POSITION_TYPE_BUY) ? MathMax(sl, open) : MathMin(sl == 0 ? open : sl, open);
@@ -42,7 +71,6 @@ void NXS_ManageBreakevenAndTrail(){
             beReached = true;
          }
       }
-      // Trailing — tighter once BE has been reached
       double trailAct = g_atr * g_run_TrailActivateATR;   // tunabile dal sito
       double trailDist= g_atr * (beReached ? InpTrailDistancePostBE : g_run_TrailDistanceATR);
       if(prof >= trailAct){
