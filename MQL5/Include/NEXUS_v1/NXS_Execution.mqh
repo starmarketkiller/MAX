@@ -91,6 +91,11 @@ void NXS_ApplyCounterHTFProfile(SNXSSignal &sig){
 
 ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    g_nxsLastOpenFailure = "";
+   // v2.2.6 - scudo risk-of-ruin: se congelato per la perdita del giorno, stop.
+   if(NXS_RuinFrozen()){
+      g_nxsLastOpenFailure = "ruin_frozen";
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // Disattivazione strategia da remoto (dashboard): blocca l'apertura in runtime.
    if(NXS_Runtime_StrategyBlocked(sig.stratName)){
       g_nxsLastOpenFailure = "strategy_disabled_dashboard";

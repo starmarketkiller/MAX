@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.22"
+#property version   "2.23"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -450,6 +450,10 @@ void OnTick(){
       NXS_ManageGrid();
       NXS_ManagePyramid(vel);
    }
+
+   // Scudo risk-of-ruin (v2.2.6): congela il trading se la perdita del giorno
+   // supera la soglia; vale anche in backtest. Prima delle altre protezioni.
+   NXS_Ruin_OnTick();
 
    // Risk Protections (NEXUS v2.0)
    NXS_Prot_OnTick();

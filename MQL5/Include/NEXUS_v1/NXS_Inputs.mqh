@@ -162,6 +162,14 @@ input double   InpStreakMaxMult         = 2.00;   // tetto del moltiplicatore
 input int      InpStreakLossesToScale   = 2;      // perdite di fila per scendere di uno step
 input double   InpStreakScaleDown       = 0.60;   // x per step in perdita
 input double   InpStreakMinMult         = 0.40;   // pavimento del moltiplicatore
+
+input group "=== SCUDO RISK-OF-RUIN (v2.2.6) ==="
+// Se la perdita del GIORNO supera la soglia, congela il trading fino al giorno
+// dopo (e opzionalmente chiude tutto). Vale ANCHE in backtest -> i test mostrano
+// la vera preservazione del capitale invece del blowup.
+input bool     InpRuinEnable            = true;
+input double   InpRuinDailyLossPct      = 15.0;  // perdita giornaliera % che congela il trading
+input bool     InpRuinFlatten           = true;  // alla soglia, chiude tutte le posizioni NEXUS
 // --- Qualita' dei voti (prima del raggruppamento) ---
 // Allinea la conviction al contesto: i voti concordi col mercato pesano di piu',
 // quelli chiaramente controtrend (contro HTF+struttura senza conferma di

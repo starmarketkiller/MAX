@@ -60,6 +60,8 @@ int    g_consecLosses     = 0;
 int    g_streakWins       = 0;
 int    g_streakLosses     = 0;
 double g_streakLotMult    = 1.0;
+// v2.2.6 - scudo risk-of-ruin: giorno per cui il trading e' congelato.
+datetime g_ruinFrozenDay  = 0;
 datetime g_dayStart       = 0;
 double g_balanceDayStart  = 0;
 datetime g_lastTradeTime  = 0;

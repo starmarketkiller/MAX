@@ -215,4 +215,39 @@ void NXS_DailyRollover(){
    }
 }
 
+// ============================================================
+// SCUDO RISK-OF-RUIN (v2.2.6) - vale anche in Strategy Tester.
+// ============================================================
+// Congelato per oggi? (si sblocca da solo al cambio giorno via g_dayStart)
+bool NXS_RuinFrozen(){
+   return (InpRuinEnable && g_ruinFrozenDay != 0 && g_ruinFrozenDay == g_dayStart);
+}
+
+// Chiude tutte le posizioni NEXUS sul simbolo corrente.
+void _nxs_ruin_flatten(){
+   for(int i = PositionsTotal() - 1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      NXS_DoClose(t);
+   }
+}
+
+// Da chiamare a ogni tick: se la perdita del giorno supera la soglia, congela.
+void NXS_Ruin_OnTick(){
+   if(!InpRuinEnable || InpRuinDailyLossPct <= 0) return;
+   NXS_DailyRollover();                       // assicura g_dayStart/g_balanceDayStart correnti
+   if(g_balanceDayStart <= 0) return;
+   if(NXS_RuinFrozen()) return;               // gia' congelato oggi
+   double eq = AccountInfoDouble(ACCOUNT_EQUITY);
+   double lossPct = (g_balanceDayStart - eq) / g_balanceDayStart * 100.0;
+   if(lossPct >= InpRuinDailyLossPct){
+      g_ruinFrozenDay = g_dayStart;
+      PrintFormat("[NEXUS RUIN] STOP giornaliero: perdita %.1f%% >= %.1f%% -> congelo fino a domani",
+                  lossPct, InpRuinDailyLossPct);
+      if(InpRuinFlatten) _nxs_ruin_flatten();
+   }
+}
+
 #endif

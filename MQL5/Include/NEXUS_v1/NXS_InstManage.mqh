@@ -150,8 +150,13 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       // (cosi' non chiude mai in perdita una volta protetto).
       // B) Permanenza minima: finche' non e' passata, NON stringe (lo SL di
       //    tier, largo, resta) -> l'operazione ha spazio per svilupparsi.
-      long   posAge   = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
-      bool   heldLong = (InpInstMinHoldMin <= 0) || (posAge >= (long)InpInstMinHoldMin * 60);
+      // B) Permanenza minima proporzionale ad ATR/volatilita': quando c'e' piu'
+      //    volatilita' (ATR sopra la media) il prezzo ha piu' spazio -> tieni piu'
+      //    a lungo; quando e' calmo, meno. Fattore limitato a [0.7x, 2.0x].
+      double holdFactor = 1.0;
+      if(g_atrAvg > 0) holdFactor = MathMax(0.7, MathMin(2.0, g_atr / g_atrAvg));
+      long   minHoldSec = (long)(InpInstMinHoldMin * 60 * holdFactor);
+      bool   heldLong   = (InpInstMinHoldMin <= 0) || (posAge >= minHoldSec);
       if(heldLong && profP >= lockDist){
          double tSL = (dir == DIR_BUY) ? px - trailDist : px + trailDist;
          if(dir == DIR_BUY){
