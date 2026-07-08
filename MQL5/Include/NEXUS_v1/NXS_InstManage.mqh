@@ -33,6 +33,18 @@ struct SNXSInstGroup {
    string   tag;          // firma della collaborazione (dal comment della core)
 };
 
+// Tetto di esposizione EFFETTIVO, scalato sul saldo: cresce col conto, resta
+// minuscolo quando il conto e' piccolo (anti-blowup su conti tipo €200).
+double _nxs_inst_maxExposure(){
+   double cap = InpInstMaxExposureLots;
+   if(InpInstExposureRefBalance > 0){
+      double bal = AccountInfoDouble(ACCOUNT_BALANCE);
+      if(bal > 0) cap = InpInstMaxExposureLots * (bal / InpInstExposureRefBalance);
+   }
+   double minLot = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+   return MathMax(minLot, cap);   // almeno il lotto minimo del broker
+}
+
 // Scansiona tutte le posizioni NEXUS in una direzione e le aggrega.
 void _nxs_inst_scanDir(ENUM_NXS_DIR dir, SNXSInstGroup &g){
    ZeroMemory(g);
@@ -205,9 +217,10 @@ void _nxs_inst_manageDir(ENUM_NXS_DIR dir){
       }
       if(doAdd){
          // TETTO DI ESPOSIZIONE: hard cap, l'add che sforerebbe non parte.
-         if(InpInstMaxExposureLots > 0 && g.totalLots + lots > InpInstMaxExposureLots + 1e-9){
+         double maxExp = _nxs_inst_maxExposure();
+         if(maxExp > 0 && g.totalLots + lots > maxExp + 1e-9){
             PrintFormat("[NEXUS INST] ADD BLOCCATO cap esposizione %s: %.2f+%.2f>%.2f",
-                        NXS_DirName(dir), g.totalLots, lots, InpInstMaxExposureLots);
+                        NXS_DirName(dir), g.totalLots, lots, maxExp);
          } else if(_nxs_inst_add(dir, lots, g.coreSL, g.coreTP, g.tag, depth + 1)){
             PrintFormat("[NEXUS INST] %s ADD lvl=%d lots=%.2f (%s) aggPL=%.2f tot=%.2f",
                         (isGrid ? "GRID" : "RECOVERY"), depth + 1, lots, g.tag,

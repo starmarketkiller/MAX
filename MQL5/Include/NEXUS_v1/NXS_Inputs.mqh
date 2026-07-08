@@ -97,11 +97,18 @@ input double   InpInstMinConviction    = 60.0;   // conviction netta minima (som
 input double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 input double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
 input int      InpInstMinContributors  = 1;      // min strategie concordi per aprire
-// Rete di sicurezza sulla recovery (martingala): tetto configurabile, largo.
-input int      InpInstMaxRecoveryDepth  = 4;     // max livelli di recovery per sequenza (0=illimitato SCONSIGLIATO)
-input double   InpInstMaxExposureLots   = 1.00;  // max lotti totali per direzione (core+grid+recovery)
+// Rete di sicurezza sulla recovery (martingala): tarata per un conto PICCOLO.
+// v2.2.5 - FIX BLOWUP: su GOLD 1 lotto = ~$100/pip; su €200 il vecchio tetto di
+// 1.00 lotti azzerava il conto in ~2 pip. Il tetto ora e' minuscolo e la recovery
+// NON escala piu' la size (mult=1.0). Alzali SOLO man mano che il conto cresce.
+input int      InpInstMaxRecoveryDepth  = 2;     // max livelli di recovery (era 4)
+input double   InpInstMaxExposureLots   = 0.03;  // max lotti TOTALI per direzione (era 1.00) - adatto a ~200-500€
 input double   InpInstGridStepATR       = 1.0;   // passo griglia/recovery in ATR del tier
-input double   InpInstRecoveryMult      = 1.5;   // moltiplicatore lotto per livello di recovery (loss -> add per recuperare)
+input double   InpInstRecoveryMult      = 1.0;   // NIENTE martingala di default (era 1.5): add stessa size, non crescente
+// Il tetto di esposizione SCALA col saldo (crescita geometrica sicura): a
+// InpInstExposureRefBalance vale InpInstMaxExposureLots, e cresce/cala in
+// proporzione al balance -> piccolo su €200, piu' largo man mano che cresce.
+input double   InpInstExposureRefBalance = 200.0; // saldo di riferimento per il tetto esposizione
 input double   InpInstGridMult          = 1.0;   // moltiplicatore lotto per livello di grid (profit -> add sul vincente)
 input double   InpInstAddLot            = 0.0;   // lotto base degli add (0 = usa lotto della posizione core)
 // --- Protezione profitto: trailing (training stop) + runner ---
