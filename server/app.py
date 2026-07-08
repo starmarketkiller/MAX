@@ -2464,6 +2464,33 @@ def analytics_journal_verdict(min_trades: int = 10, limit: int = 2000,
     return out
 
 
+@app.get("/api/analytics/strategy_diagnostic_live")
+def analytics_strategy_diagnostic_live(symbol: str = "", min_trades: int = 10,
+                                       user: str = Depends(require_user)):
+    """Verdetti + BLOCCHI per-strategia dalle stat live che l'EA gia' pusha
+    (/api/ea/strategy_stats): dice quali strategie funzionano E quali formano il
+    setup ma non aprono, con quale blocco. Stessa forma/tabella del CSV."""
+    try:
+        mt = max(1, int(min_trades))
+    except (ValueError, TypeError):
+        mt = 10
+    stats = _all_strategy_stats()
+    if symbol:
+        stats = [s for s in stats if s["symbol"] == symbol]
+    if not stats:
+        return {"rows": [], "summary": {"total": 0}, "recommendations": {},
+                "note": "nessuna stat live: l'EA non ha ancora pushato (web sync attiva?)"}
+    latest = max(stats, key=lambda s: s.get("updated_at") or 0)
+    srows = (latest.get("data") or {}).get("strategies") or []
+    out = bt_verdict.analyze_stats_rows(srows, min_trades=mt)
+    if out.get("error"):
+        return {"rows": [], "summary": {"total": 0}, "recommendations": {}, "note": out["error"]}
+    out["source"] = "diagnostic_live"
+    out["symbol"] = latest.get("symbol")
+    out["updated_at"] = latest.get("updated_at")
+    return out
+
+
 @app.get("/api/backtest/strategy_library/{job_id}")
 def backtest_library_job(job_id: str, user: str = Depends(require_user)):
     symbol = kv_get(f"btjob:{job_id}", "")

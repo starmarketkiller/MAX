@@ -161,9 +161,14 @@ def analyze_stats_csv(text: str, min_trades: int = MIN_TRADES_DEFAULT) -> dict:
     sample = text[:2048]
     delim = ";" if sample.count(";") >= sample.count(",") else ","
     reader = csv.DictReader(io.StringIO(text), delimiter=delim)
+    return analyze_stats_rows(list(reader), min_trades)
 
+
+def analyze_stats_rows(dict_rows: list, min_trades: int = MIN_TRADES_DEFAULT) -> dict:
+    """Come analyze_stats_csv ma su righe gia' in forma di dict (es. il payload
+    JSON di strategy_stats pushato dall'EA). Stessa logica di verdetto."""
     rows = []
-    for r in reader:
+    for r in dict_rows or []:
         name = (r.get("name") or r.get("strategy") or "").strip()
         if not name:
             continue
@@ -182,7 +187,7 @@ def analyze_stats_csv(text: str, min_trades: int = MIN_TRADES_DEFAULT) -> dict:
         })
 
     if not rows:
-        return {"error": "nessuna riga strategia riconosciuta nel CSV"}
+        return {"error": "nessuna riga strategia riconosciuta"}
 
     rows.sort(key=lambda x: (VERDICT_RANK.get(x["verdict"], 9), -x["pf"]))
 

@@ -76,6 +76,22 @@ export default function BacktestRealAnalysis() {
     } finally { setBusy(false); }
   }, [minTrades]);
 
+  // Diagnostica LIVE: verdetti + BLOCCHI dalle stat che l'EA pusha (perche' non apre).
+  const loadDiagnostic = useCallback(async () => {
+    setBusy(true); setError(""); setData(null);
+    try {
+      const { data: out } = await api.get(
+        `/analytics/strategy_diagnostic_live?min_trades=${Number(minTrades) || 10}`);
+      if (!out.rows || out.rows.length === 0) {
+        setError(out.note || "Nessuna stat live: l'EA non ha ancora pushato.");
+      } else {
+        setData(out); setSrcName("Diagnostica live (blocchi)");
+      }
+    } catch (e) {
+      setError(e?.response?.data?.detail || e.message || "Errore diagnostica");
+    } finally { setBusy(false); }
+  }, [minTrades]);
+
   const counts = data?.summary?.counts || {};
   const rec = data?.recommendations || {};
 
@@ -108,6 +124,11 @@ export default function BacktestRealAnalysis() {
             data-testid="bt-ra-journal"
             className="px-3 py-1.5 rounded-lg border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-sm inline-flex items-center gap-1.5 disabled:opacity-50">
             <Activity className="h-4 w-4" /> Journal live (demo)
+          </button>
+          <button onClick={loadDiagnostic} disabled={busy}
+            data-testid="bt-ra-diagnostic"
+            className="px-3 py-1.5 rounded-lg border border-violet-500/40 text-violet-300 hover:bg-violet-500/10 text-sm inline-flex items-center gap-1.5 disabled:opacity-50">
+            <Ban className="h-4 w-4" /> Diagnostica live (blocchi)
           </button>
           <label className="text-xs text-muted-foreground inline-flex items-center gap-1.5 ml-auto">
             min trade
