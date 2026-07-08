@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { Loader2, Wand2, Save, FlaskConical, Trophy, Target, Download, Copy } from "lucide-react";
+import { Loader2, Wand2, Save, FlaskConical, Trophy, Target, Download, Copy, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 const VCLS = {
   FORTE: "text-emerald-400", OK: "text-sky-400", DEBOLE: "text-amber-400",
@@ -81,6 +82,33 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
     } catch (e) {
       setError(e?.response?.data?.detail || e.message || "Errore ottimizzazione");
     } finally { setBusy(false); }
+  };
+
+  // Manda una strategia trovata direttamente nella sezione Strategie (Locked Profile):
+  // l'EA la applica al prossimo OnInit. Questo è il flusso Creator -> Strategie manuale.
+  const lockRow = async (r) => {
+    try {
+      await api.post("/backtest/locked_profile", {
+        symbol, timeframe: (perStrat?.timeframe || "D1").toUpperCase() === "1D" ? "D1"
+          : (perStrat?.timeframe || "D1").toUpperCase(),
+        label: `Creator · ${r.strategy} · SL${r.atr_sl}/TP${r.atr_tp} (${r.verdict})`,
+        base_cfg: {
+          symbol, period: "3y", interval: "1d", strategies: [r.strategy],
+          atr_sl_mult: r.atr_sl, atr_tp_mult: r.atr_tp,
+          min_score: 50, max_concurrent: 1, risk_pct: baseCfg?.risk_pct ?? 1.0,
+          htf_bias: !!r.htf_filter, cooldown_bars: 0, initial_balance: baseCfg?.initial_balance ?? 10000,
+        },
+        overrides: {
+          htf_filter: r.htf_filter, breakeven_r: r.breakeven_r,
+          trailing_atr: r.trailing_atr, verdict: r.verdict,
+        },
+        metrics: { profit_factor: r.pf, win_rate: r.wr, max_dd: r.dd, sharpe: r.robust,
+                   total_return: r.net, n_trades: r.trades },
+      });
+      toast.success(`${r.strategy} inviata a Strategie (Locked Profile) — l'EA la applica al prossimo avvio`);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || e.message || "Errore lock");
+    }
   };
 
   const exportTable = () => {
@@ -215,6 +243,7 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                       <th className="text-right px-2 py-2">Net</th>
                       <th className="text-right px-2 py-2">DD%</th>
                       <th className="text-left px-2 py-2">Verdetto</th>
+                      <th className="px-2 py-2"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -231,13 +260,20 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                         <td className={`px-2 py-1.5 text-right font-mono ${r.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{r.net}</td>
                         <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{r.dd}</td>
                         <td className={`px-2 py-1.5 font-mono text-[11px] ${VCLS[r.verdict] || ""}`}>{r.verdict}</td>
+                        <td className="px-2 py-1.5 text-right">
+                          <button onClick={() => lockRow(r)} title="Invia a Strategie (Locked Profile)"
+                            className="text-violet-400 hover:text-violet-300 inline-flex items-center gap-1 text-[10px]">
+                            <Lock className="h-3 w-3" /> Strategie
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="px-3 py-2 text-[10px] text-muted-foreground border-t border-border">
-                Ogni riga ha i parametri MIGLIORI per quella strategia (non globali). Esporta e mandami il file:
+                Ogni riga ha i parametri MIGLIORI per quella strategia (non globali). <b>Lock → Strategie</b> la
+                manda subito all&apos;EA. Oppure esporta e mandami il file:
                 rendo l&apos;EA coerente con questi valori per-strategia.
               </div>
             </div>

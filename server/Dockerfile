@@ -11,6 +11,7 @@ COPY bt_verdict.py .
 COPY sweep.py .
 COPY seed_results.json .
 COPY seed_library.json .
+COPY seed_recipe.json .
 COPY nexus_local_worker.py .
 COPY static ./static
 

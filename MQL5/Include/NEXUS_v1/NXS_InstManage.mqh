@@ -136,7 +136,10 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       // RUNNER: l'ultima op della sequenza (se c'e' piu' di una) tiene un TP
       // esteso cosi' segue il trend; il trailing sotto la protegge.
       if(InpInstRunner && g.count > 1 && t == g.lastTicket){
-         double tpDist = MathAbs(g.coreTP - entry);
+         // v2.2.9 FIX: se la core NON ha TP (coreTP=0) NON usare |0-entry| (=~prezzo,
+         // ~4000 su oro) come distanza: darebbe un rTP negativo sui SELL
+         // ("Invalid stops tp:-9233"). Fallback su ATR*BaseTP.
+         double tpDist = (g.coreTP > 0) ? MathAbs(g.coreTP - entry) : atr * InpInstBaseTP;
          if(tpDist <= 0) tpDist = atr * InpInstBaseTP;
          double rTP = (dir == DIR_BUY) ? entry + tpDist * InpInstRunnerTPmult
                                        : entry - tpDist * InpInstRunnerTPmult;

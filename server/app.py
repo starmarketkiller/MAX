@@ -60,6 +60,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 WORKER_FILE = Path(__file__).resolve().parent / "nexus_local_worker.py"
 SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
+SEED_RECIPE_FILE = Path(__file__).resolve().parent / "seed_recipe.json"
 
 # Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
 # Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
@@ -394,11 +395,66 @@ def _seed_backtest_library() -> None:
     print(f"[NEXUS] seeded backtest library — {len(rows)} rows (sweep)")
 
 
+def _seed_recipe() -> None:
+    """Carica la ricetta per-strategia (seed_recipe.json = best_per_strategy dal
+    motore): 29 strategie ognuna coi SUOI parametri/gate/verdetto migliori.
+    Serve alla Strategy Library per mostrare TUTTE le strategie con i dati reali."""
+    if not SEED_RECIPE_FILE.exists():
+        return
+    try:
+        raw = SEED_RECIPE_FILE.read_bytes()
+        data = json.loads(raw)
+    except Exception as e:
+        print(f"[NEXUS] seed_recipe parse failed: {e}")
+        return
+    marker = hashlib.sha256(raw).hexdigest()[:16]
+    if kv_get("recipe_version") == marker:
+        return
+    kv_set("strategy_recipe", data)
+    kv_set("recipe_version", marker)
+    print(f"[NEXUS] seeded strategy recipe — {len(data.get('table', []))} strategie")
+
+
+def _recipe_library_rows(symbol=""):
+    """Converte la ricetta per-strategia (strategy_recipe) in righe Library."""
+    rec = kv_get("strategy_recipe", {}) or {}
+    table = rec.get("table") or []
+    rsym = rec.get("symbol", "XAUUSD")
+    tf = str(rec.get("timeframe", "D1")).lower()
+    tf = "1d" if tf in ("d1", "1d", "") else tf
+    if symbol and symbol != rsym:
+        return []
+    rows = []
+    for r in table:
+        variant = "baseline"
+        if r.get("trailing_atr"):
+            variant = f"trail_{r.get('trailing_atr')}atr"
+        elif r.get("breakeven_r"):
+            variant = f"be_{r.get('breakeven_r')}R"
+        rows.append({
+            "strategy": r.get("strategy"), "symbol": rsym, "timeframe": tf,
+            "variant": variant,
+            "atr_sl_mult": r.get("atr_sl"), "atr_tp_mult": r.get("atr_tp"),
+            "overrides": {
+                "htf_filter": r.get("htf_filter"), "breakeven_r": r.get("breakeven_r"),
+                "trailing_atr": r.get("trailing_atr"), "verdict": r.get("verdict"),
+                "expectancy_r": r.get("exp"), "robust": r.get("robust"),
+            },
+            "metrics": {
+                "n_trades": r.get("trades"), "win_rate_pct": r.get("wr"),
+                "profit_factor": r.get("pf"), "sharpe": r.get("robust"),
+                "max_dd_pct": r.get("dd"), "total_return_pct": r.get("net"),
+            },
+        })
+    return rows
+
+
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
     _seed_strategy_results()
     _seed_backtest_library()
+    _seed_recipe()
     print(f"[NEXUS] backend up — db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
 
@@ -2423,7 +2479,11 @@ def backtest_presets(user: str = Depends(require_user)):
 
 @app.get("/api/backtest/strategies")
 def backtest_strategies(user: str = Depends(require_user)):
-    return {"strategies": STRAT_LIST}
+    # 'all' = strategie che il motore Python sa DAVVERO testare (dict STRATEGIES);
+    # il frontend (Creator/Run) usa questa chiave per popolare il pool.
+    engine = sorted(backtest.STRATEGIES.keys())
+    return {"strategies": STRAT_LIST, "all": engine, "engine": engine,
+            "total_ea": len(STRAT_LIST)}
 
 
 @app.get("/api/backtest/symbols")
@@ -2479,8 +2539,16 @@ def backtest_optimize_job(job_id: str, user: str = Depends(require_user)):
 
 
 def _library_rows(symbol=""):
-    """Righe per la Strategy Library. Priorità: sweep computato (36×coppia×gestione),
-    poi i risultati importati da Emergent, infine demo."""
+    """Righe per la Strategy Library. Priorità: ricetta per-strategia (motore,
+    29 strat coi loro parametri/gate/verdetto migliori), poi sweep computato,
+    poi i risultati importati, infine demo."""
+    # 0) ricetta per-strategia (best_per_strategy dal motore Python) — sorgente
+    #    primaria: mostra TUTTE le strategie coi dati reali del backtest.
+    recipe = _recipe_library_rows(symbol)
+    if recipe:
+        recipe.sort(key=lambda x: (x["metrics"]["profit_factor"]
+                    if x["metrics"]["profit_factor"] is not None else -9), reverse=True)
+        return recipe
     # 1) sweep computato (sweep.py) — strategia × coppia × gestione
     sweep = kv_get("backtest_library", [])
     if sweep:
