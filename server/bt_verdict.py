@@ -64,6 +64,95 @@ def _verdict(row, min_trades):
     return "CRITICA", f"PF {pf:.2f}, expectancy {exp:+.2f}R: perde soldi, spegnere live"
 
 
+def _hold_min(open_iso, close_iso):
+    """Minuti di durata da due timestamp ISO; None se non calcolabile."""
+    from datetime import datetime
+    try:
+        a = datetime.fromisoformat(str(open_iso).replace("Z", ""))
+        b = datetime.fromisoformat(str(close_iso).replace("Z", ""))
+        d = (b - a).total_seconds() / 60.0
+        return d if d >= 0 else None
+    except (ValueError, TypeError):
+        return None
+
+
+def _verdict_live(n, pf, net, wr, min_trades):
+    if n < min_trades:
+        return "POCHI_DATI", f"solo {n} trade: campione troppo piccolo per giudicare"
+    if pf >= 1.5 and net > 0:
+        return "FORTE", f"PF {pf:.2f}, net {net:+.2f}, WR {wr:.0f}%"
+    if pf >= 1.15 and net > 0:
+        return "OK", f"PF {pf:.2f}, net {net:+.2f}"
+    if pf >= 0.95:
+        return "DEBOLE", f"PF {pf:.2f}: intorno al break-even"
+    return "CRITICA", f"PF {pf:.2f}, net {net:+.2f}: perde soldi, spegnere live"
+
+
+def analyze_live_trades(trades: list, min_trades: int = MIN_TRADES_DEFAULT) -> dict:
+    """Verdetti per-strategia dai trade REALI sincronizzati (tabella trades):
+    stessa forma di analyze_stats_csv, cosi' il frontend riusa la stessa tabella.
+    Raggruppa per strategia, calcola PF/win-rate/net/hold e assegna il verdetto."""
+    from collections import defaultdict
+    g = defaultdict(lambda: {"n": 0, "wins": 0, "losses": 0,
+                             "gw": 0.0, "gl": 0.0, "net": 0.0, "hold": []})
+    for t in trades or []:
+        strat = (t.get("strategy") or "").strip() or "?"
+        pnl = t.get("pnl")
+        if pnl is None:
+            continue
+        try:
+            pnl = float(pnl)
+        except (ValueError, TypeError):
+            continue
+        d = g[strat]
+        d["n"] += 1
+        d["net"] += pnl
+        if pnl > 0:
+            d["wins"] += 1
+            d["gw"] += pnl
+        elif pnl < 0:
+            d["losses"] += 1
+            d["gl"] += abs(pnl)
+        h = _hold_min(t.get("openTime"), t.get("closeTime"))
+        if h is not None:
+            d["hold"].append(h)
+
+    rows = []
+    for strat, d in g.items():
+        n = d["n"]
+        pf = (d["gw"] / d["gl"]) if d["gl"] > 0 else (99.0 if d["gw"] > 0 else 0.0)
+        wr = (100.0 * d["wins"] / n) if n else 0.0
+        avg = (d["net"] / n) if n else 0.0
+        hold = (sum(d["hold"]) / len(d["hold"])) if d["hold"] else 0.0
+        v, why = _verdict_live(n, pf, d["net"], wr, min_trades)
+        rows.append({
+            "name": strat, "verdict": v, "why": why,
+            "executed": n, "pf": round(pf, 2), "exp": round(avg, 2),
+            "wr": round(wr, 1), "net": round(d["net"], 2),
+            "hold_min": round(hold, 1), "blocker": "",
+        })
+
+    if not rows:
+        return {"error": "nessun trade sincronizzato da analizzare"}
+
+    rows.sort(key=lambda x: (VERDICT_RANK.get(x["verdict"], 9), -x["pf"]))
+    counts = {}
+    for x in rows:
+        counts[x["verdict"]] = counts.get(x["verdict"], 0) + 1
+    return {
+        "rows": rows,
+        "summary": {"total": len(rows), "counts": counts, "min_trades": min_trades,
+                    "trades": sum(x["executed"] for x in rows)},
+        "recommendations": {
+            "keep": [x["name"] for x in rows if x["verdict"] in ("FORTE", "OK")],
+            "disable": [x["name"] for x in rows if x["verdict"] == "CRITICA"],
+            "too_fast": [x["name"] for x in rows
+                         if x["executed"] >= min_trades and 0 < x["hold_min"] < 5],
+            "blocked": [],
+        },
+    }
+
+
 def analyze_stats_csv(text: str, min_trades: int = MIN_TRADES_DEFAULT) -> dict:
     """Ritorna {rows:[...], summary:{...}, recommendations:{...}} dal CSV."""
     if not text or not text.strip():

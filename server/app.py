@@ -2445,6 +2445,25 @@ def backtest_analyze_last(user: str = Depends(require_user)):
     return kv_get("backtest_last_analysis", {}) or {}
 
 
+@app.get("/api/analytics/journal_verdict")
+def analytics_journal_verdict(min_trades: int = 10, limit: int = 2000,
+                              user: str = Depends(require_user)):
+    """Verdetti per-strategia sui trade REALI gia' sincronizzati dalla demo
+    (tabella trades) - stessa forma di /backtest/analyze_csv, cosi' il frontend
+    riusa la stessa tabella. Dice quali strategie tenere/spegnere sui soldi veri."""
+    try:
+        mt = max(1, int(min_trades))
+    except (ValueError, TypeError):
+        mt = 10
+    trades = _trades_with_meta(limit=limit)
+    out = bt_verdict.analyze_live_trades(trades, min_trades=mt)
+    if out.get("error"):
+        return {"rows": [], "summary": {"total": 0, "trades": 0}, "recommendations": {},
+                "note": out["error"]}
+    out["source"] = "journal_live"
+    return out
+
+
 @app.get("/api/backtest/strategy_library/{job_id}")
 def backtest_library_job(job_id: str, user: str = Depends(require_user)):
     symbol = kv_get(f"btjob:{job_id}", "")

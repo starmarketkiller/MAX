@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import api from "@/lib/api";
-import { Upload, Loader2, ClipboardPaste, FileText, CheckCircle2, XCircle, Ban, Clock } from "lucide-react";
+import { Upload, Loader2, ClipboardPaste, FileText, CheckCircle2, XCircle, Ban, Clock, Activity } from "lucide-react";
 
 const VERDICT = {
   FORTE:      { cls: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30", label: "FORTE" },
@@ -60,6 +60,22 @@ export default function BacktestRealAnalysis() {
     reader.readAsText(f);
   };
 
+  // Journal LIVE: verdetti sui trade reali gia' sincronizzati dalla demo.
+  const loadJournal = useCallback(async () => {
+    setBusy(true); setError(""); setData(null);
+    try {
+      const { data: out } = await api.get(
+        `/analytics/journal_verdict?min_trades=${Number(minTrades) || 10}`);
+      if (!out.rows || out.rows.length === 0) {
+        setError(out.note || "Nessun trade sincronizzato dalla demo da analizzare.");
+      } else {
+        setData(out); setSrcName("Journal live (demo)");
+      }
+    } catch (e) {
+      setError(e?.response?.data?.detail || e.message || "Errore journal");
+    } finally { setBusy(false); }
+  }, [minTrades]);
+
   const counts = data?.summary?.counts || {};
   const rec = data?.recommendations || {};
 
@@ -72,8 +88,9 @@ export default function BacktestRealAnalysis() {
         </div>
         <p className="text-sm text-muted-foreground">
           Carica il CSV per-strategia di un test reale (il file <code>*_stats.csv</code> emesso
-          dall&apos;EA) e ottieni il verdetto per strategia + le raccomandazioni: cosa tenere,
-          cosa spegnere, quali chiudono troppo veloce, quali non aprono e perché.
+          dall&apos;EA) <b>oppure</b> premi <b>Journal live</b> per analizzare i trade reali già
+          sincronizzati dalla demo. Ottieni il verdetto per strategia + le raccomandazioni:
+          cosa tenere, cosa spegnere, quali chiudono troppo veloce, quali non aprono e perché.
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -86,6 +103,11 @@ export default function BacktestRealAnalysis() {
           <button onClick={() => setShowPaste((s) => !s)}
             className="px-3 py-1.5 rounded-lg border border-border hover:bg-secondary text-sm inline-flex items-center gap-1.5">
             <ClipboardPaste className="h-4 w-4" /> Incolla
+          </button>
+          <button onClick={loadJournal} disabled={busy}
+            data-testid="bt-ra-journal"
+            className="px-3 py-1.5 rounded-lg border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-sm inline-flex items-center gap-1.5 disabled:opacity-50">
+            <Activity className="h-4 w-4" /> Journal live (demo)
           </button>
           <label className="text-xs text-muted-foreground inline-flex items-center gap-1.5 ml-auto">
             min trade
