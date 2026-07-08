@@ -8,6 +8,7 @@ import BacktestOptimizer from "@/pages/backtest/BacktestOptimizer";
 import BacktestManagementReport from "@/pages/backtest/BacktestManagementReport";
 import BacktestStrategyLibrary from "@/pages/backtest/BacktestStrategyLibrary";
 import BacktestRealAnalysis from "@/pages/backtest/BacktestRealAnalysis";
+import BacktestCreator from "@/pages/backtest/BacktestCreator";
 
 const DEFAULT_CFG = {
   symbol: "XAUUSD",
@@ -227,6 +228,14 @@ export default function BacktestPage() {
             }`}>
             <FileText className="h-3.5 w-3.5 inline mr-1.5"/>Analisi Reale
           </button>
+          <button
+            onClick={() => setTab("creator")}
+            data-testid="bt-tab-creator"
+            className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider transition-all ${
+              tab === "creator" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}>
+            <Wand2 className="h-3.5 w-3.5 inline mr-1.5"/>Creator
+          </button>
         </div>
       </div>
 
@@ -303,6 +312,8 @@ export default function BacktestPage() {
         <BacktestManagementReport baseCfg={cfg}/>
       ) : tab === "real" ? (
         <BacktestRealAnalysis/>
+      ) : tab === "creator" ? (
+        <BacktestCreator symbols={symbols} catalog={catalog} baseCfg={cfg}/>
       ) : (
         <BacktestStrategyLibrary symbols={symbols} baseCfg={cfg} onApplyRow={applyLibraryRow}/>
       )}

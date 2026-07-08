@@ -1651,6 +1651,108 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
         raise HTTPException(status_code=500, detail=f"backtest error: {e}")
 
 
+@app.post("/api/backtest/creator")
+async def backtest_creator(request: Request, user: str = Depends(require_user)):
+    """Strategy Creator v1: genera COMBINAZIONI di strategie x griglia di
+    parametri, le testa sul motore e le classifica coi verdetti. Ritorna i
+    migliori setup (con robustezza), pronti da salvare.
+
+    Body: {symbol, timeframe, pool:[strat...], combo_sizes:[1,2],
+           param_grid:{atr_sl:[...], atr_tp:[...]}, risk_pct, initial_balance,
+           min_trades, max_combos}"""
+    import itertools
+    body = await request.json()
+    symbol = body.get("symbol", "XAUUSD")
+    timeframe = body.get("timeframe") or body.get("interval") or "D1"
+    pool = [s for s in (body.get("pool") or []) if s]
+    if not pool:
+        raise HTTPException(status_code=400, detail="campo 'pool' (strategie) mancante")
+    combo_sizes = body.get("combo_sizes") or [1, 2]
+    grid = body.get("param_grid") or {}
+    atr_sls = grid.get("atr_sl") or [float(body.get("atr_sl_mult", 1.8))]
+    atr_tps = grid.get("atr_tp") or [float(body.get("atr_tp_mult", 2.8))]
+    risk = float(body.get("risk_pct", 1.0))
+    start_eq = float(body.get("initial_balance", 10000.0))
+    try:
+        min_trades = max(1, int(body.get("min_trades", 8)))
+        max_combos = max(1, min(400, int(body.get("max_combos", 80))))
+    except (ValueError, TypeError):
+        min_trades, max_combos = 8, 80
+
+    # genera le combinazioni di strategie
+    combos = []
+    for k in combo_sizes:
+        try:
+            k = int(k)
+        except (ValueError, TypeError):
+            continue
+        if 1 <= k <= len(pool):
+            combos.extend(itertools.combinations(pool, k))
+
+    results, runs = [], 0
+    for combo in combos:
+        for sl in atr_sls:
+            for tp in atr_tps:
+                if runs >= max_combos:
+                    break
+                runs += 1
+                try:
+                    r = backtest.run_backtest(
+                        symbol=symbol, timeframe=timeframe,
+                        strategy=list(combo)[0], strategies=list(combo),
+                        risk_pct=risk, atr_sl=float(sl), atr_tp=float(tp),
+                        start_equity=start_eq)
+                except Exception:
+                    continue
+                n = r.get("trades", 0)
+                pf = r.get("profit_factor") or 0.0
+                exp = r.get("expectancy_r", 0.0)
+                dd = r.get("max_dd_pct", 0.0)
+                net = r.get("net_pnl", 0.0)
+                row = {"executed": n, "profit_factor": pf,
+                       "expectancy_R": exp, "winrate_pct": r.get("win_rate", 0),
+                       "setup": n, "name": "+".join(combo)}
+                v, why = bt_verdict._verdict(row, min_trades)
+                # robustezza: expectancy x sqrt(trade) penalizzato dal drawdown
+                robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
+                results.append({
+                    "combo": list(combo), "name": "+".join(combo),
+                    "atr_sl": float(sl), "atr_tp": float(tp),
+                    "trades": n, "net": round(net, 2), "pf": round(pf, 2),
+                    "exp": round(exp, 3), "dd": round(dd, 2),
+                    "wr": r.get("win_rate", 0), "verdict": v, "why": why,
+                    "robust": robust,
+                })
+
+    # ordina: prima i verdetti migliori, poi robustezza
+    rank = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
+    results.sort(key=lambda x: (rank.get(x["verdict"], 9), -x["robust"]))
+    top = results[:40]
+    kv_set("creator_last", {"symbol": symbol, "timeframe": timeframe,
+                            "ran": runs, "results": top, "at": iso()})
+    return {"symbol": symbol, "timeframe": timeframe, "combos_tested": runs,
+            "results": top}
+
+
+@app.post("/api/backtest/creator/save")
+async def backtest_creator_save(request: Request, user: str = Depends(require_user)):
+    """Salva un setup creato (combo+parametri) nella lista dei setup del Creator."""
+    body = await request.json()
+    setup = body.get("setup") or {}
+    if not setup.get("combo"):
+        raise HTTPException(status_code=400, detail="setup.combo mancante")
+    saved = kv_get("creator_setups", [])
+    setup["saved_at"] = iso()
+    saved.insert(0, setup)
+    kv_set("creator_setups", saved[:50])
+    return {"ok": True, "count": len(saved[:50])}
+
+
+@app.get("/api/backtest/creator/saved")
+def backtest_creator_saved(user: str = Depends(require_user)):
+    return {"setups": kv_get("creator_setups", [])}
+
+
 def _adapt_backtest_result(raw, start_equity):
     """Adatta il risultato piatto del motore allo shape atteso dal frontend
     (metrics annidate con suffissi _pct, trades list, by_strategy, first/last ts)."""
