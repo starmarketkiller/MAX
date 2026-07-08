@@ -1,0 +1,20 @@
+﻿Manual backtests run by user on 2026-07-08, live terminal Strategy Tester (v2.2.4-inst, InpUseInstitutionalCore=true), GOLD, 2026.03.01-2026.06.15 (~3.5 months):
+
+Test 1 - GOLD, M15:
+  final balance: -14.05 USD (initial deposit 1000 USD)
+  OnTester result: 0.7416959600590967
+  stop out occurred on 2% of testing interval
+
+Test 2 - GOLD, M30:
+  final balance: -183.87 USD (initial deposit 1000 USD)
+  OnTester result: 0.9278877752093103
+  stop out occurred on 58% of testing interval  <-- SEVERE
+  Multiple "failed modify ... tp: -9233.44 [Invalid stops]" errors seen in the
+  raw agent log - a take-profit computed at a NEGATIVE price, suggesting a bug
+  in the institutional core's SL/TP recompute (trailing/runner or recovery
+  widening) under GOLD M30 conditions specifically.
+
+NOTE: the full raw agent log (600+ MB range historically for these runs) is
+saved alongside this file as live_manual_backtest_20260708_agentlog.log for
+deeper inspection if needed - NOT pushed to GitHub (same size-limit reason as
+the previous agentlog.log exclusion), kept locally only.
