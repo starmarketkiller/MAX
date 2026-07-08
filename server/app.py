@@ -1645,6 +1645,12 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
             atr_sl=float(body.get("atr_sl", body.get("atr_sl_mult", body.get("AtrSLMult", 1.5)))),
             atr_tp=float(body.get("atr_tp", body.get("atr_tp_mult", body.get("AtrTPMult", 3.0)))),
             start_equity=start_equity,
+            # GATE ora applicati davvero dal motore -> il backtest e' la fonte di
+            # verita', e l'EA verra' adattato al setup vincente qui trovato.
+            htf_filter=bool(body.get("htf_bias", body.get("htf_filter", False))),
+            breakeven_r=float(body.get("breakeven_R", body.get("breakeven_r", 0.0)) or 0.0),
+            trailing_atr=float(body.get("trailing_atr_mult", body.get("trailing_atr", 0.0)) or 0.0),
+            cooldown_bars=int(body.get("cooldown_bars", 0) or 0),
         )
         return _adapt_backtest_result(raw, start_equity)
     except Exception as e:
@@ -1759,34 +1765,38 @@ async def backtest_optimize_per_strategy(request: Request, user: str = Depends(r
     except (ValueError, TypeError):
         min_trades = 8
 
+    htf_opts = grid.get("htf_filter", [False, True])   # testa anche il gate HTF
     rank = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
     table = []
     for strat in pool:
         best = None
         for sl in atr_sls:
             for tp in atr_tps:
-                try:
-                    r = backtest.run_backtest(
-                        symbol=symbol, timeframe=timeframe, strategy=strat,
-                        strategies=[strat], risk_pct=risk,
-                        atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq)
-                except Exception:
-                    continue
-                n = r.get("trades", 0)
-                pf = r.get("profit_factor") or 0.0
-                exp = r.get("expectancy_r", 0.0)
-                dd = r.get("max_dd_pct", 0.0)
-                row = {"executed": n, "profit_factor": pf, "expectancy_R": exp,
-                       "winrate_pct": r.get("win_rate", 0), "setup": n}
-                v, why = bt_verdict._verdict(row, min_trades)
-                robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
-                cand = {"strategy": strat, "atr_sl": float(sl), "atr_tp": float(tp),
-                        "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
-                        "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
-                        "verdict": v, "why": why, "robust": robust}
-                key = (rank.get(v, 9), -robust)
-                if best is None or key < (rank.get(best["verdict"], 9), -best["robust"]):
-                    best = cand
+                for htf in htf_opts:
+                    try:
+                        r = backtest.run_backtest(
+                            symbol=symbol, timeframe=timeframe, strategy=strat,
+                            strategies=[strat], risk_pct=risk,
+                            atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq,
+                            htf_filter=bool(htf))
+                    except Exception:
+                        continue
+                    n = r.get("trades", 0)
+                    pf = r.get("profit_factor") or 0.0
+                    exp = r.get("expectancy_r", 0.0)
+                    dd = r.get("max_dd_pct", 0.0)
+                    row = {"executed": n, "profit_factor": pf, "expectancy_R": exp,
+                           "winrate_pct": r.get("win_rate", 0), "setup": n}
+                    v, why = bt_verdict._verdict(row, min_trades)
+                    robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
+                    cand = {"strategy": strat, "atr_sl": float(sl), "atr_tp": float(tp),
+                            "htf_filter": bool(htf),
+                            "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
+                            "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
+                            "verdict": v, "why": why, "robust": robust}
+                    key = (rank.get(v, 9), -robust)
+                    if best is None or key < (rank.get(best["verdict"], 9), -best["robust"]):
+                        best = cand
         if best:
             table.append(best)
 

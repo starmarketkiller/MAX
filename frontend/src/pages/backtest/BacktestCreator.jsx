@@ -207,6 +207,7 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                       <th className="text-left px-3 py-2">Strategia</th>
                       <th className="text-right px-2 py-2">ATR SL</th>
                       <th className="text-right px-2 py-2">ATR TP</th>
+                      <th className="text-center px-2 py-2">HTF</th>
                       <th className="text-right px-2 py-2">N</th>
                       <th className="text-right px-2 py-2">PF</th>
                       <th className="text-right px-2 py-2">Net</th>
@@ -220,6 +221,7 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                         <td className="px-3 py-1.5 font-mono font-semibold">{r.strategy}</td>
                         <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_sl}</td>
                         <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_tp}</td>
+                        <td className="px-2 py-1.5 text-center font-mono text-[11px]">{r.htf_filter ? "✓" : "—"}</td>
                         <td className="px-2 py-1.5 text-right font-mono">{r.trades}</td>
                         <td className="px-2 py-1.5 text-right font-mono">{r.pf}</td>
                         <td className={`px-2 py-1.5 text-right font-mono ${r.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{r.net}</td>

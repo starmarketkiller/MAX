@@ -392,25 +392,55 @@ STRAT_NAMES_36 = [
 # ----------------------------------------------------------------------------- #
 def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  risk_pct=1.0, atr_sl=1.5, atr_tp=3.0, start_equity=10000.0,
-                 max_hold=40, bars=800, strategies=None):
+                 max_hold=40, bars=800, strategies=None,
+                 htf_filter=False, trend_period=50,
+                 breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
+    # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
+    # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
+    # (trailing a N x ATR), cooldown_bars (barre minime tra un trade e il successivo).
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = [s for s in strat_list if s in STRATEGIES] or ["ADX_RSI"]
 
+    closes = [c["close"] for c in candles]
+
+    def _sma(idx, p):
+        if idx < p - 1:
+            return None
+        return sum(closes[idx - p + 1: idx + 1]) / p
+
     equity = start_equity
     curve = [{"i": 0, "equity": round(equity, 2),
               "ts": str(candles[0]["time"]), "close": candles[0]["close"]}]
     trades = []
-    pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat}
+    pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat, risk_dist}
+    last_close_i = -10 ** 9   # per il cooldown
 
     for i in range(2, len(candles)):
         px = candles[i]["close"]
         # gestione posizione aperta
         if pos:
-            hit = None
             hi, lo = candles[i]["high"], candles[i]["low"]
+            risk_dist = pos["risk_dist"]
+            # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
+            if breakeven_r > 0 and risk_dist > 0:
+                prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                if prog >= breakeven_r * risk_dist:
+                    if pos["dir"] == 1:
+                        pos["sl"] = max(pos["sl"], pos["entry"])
+                    else:
+                        pos["sl"] = min(pos["sl"], pos["entry"])
+            # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
+            if trailing_atr > 0:
+                a = ind["atr"][i] or 0
+                if a > 0:
+                    if pos["dir"] == 1:
+                        pos["sl"] = max(pos["sl"], px - trailing_atr * a)
+                    else:
+                        pos["sl"] = min(pos["sl"], px + trailing_atr * a)
+            hit = None
             if pos["dir"] == 1:
                 if lo <= pos["sl"]:
                     hit = ("SL", pos["sl"])
@@ -425,8 +455,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 hit = ("TIME", px)
             if hit:
                 reason, exitpx = hit
-                r_mult = ((exitpx - pos["entry"]) / (pos["entry"] - pos["sl"])) if pos["dir"] == 1 \
-                    else ((pos["entry"] - exitpx) / (pos["sl"] - pos["entry"]))
+                # R sul RISCHIO ORIGINALE (lo SL puo' essere stato spostato a BE/trail).
+                rd = pos["risk_dist"] if pos["risk_dist"] > 0 else 1e-9
+                r_mult = ((exitpx - pos["entry"]) / rd) if pos["dir"] == 1 \
+                    else ((pos["entry"] - exitpx) / rd)
                 pnl = round(r_mult * pos["risk_money"], 2)
                 equity += pnl
                 trades.append({
@@ -439,6 +471,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 curve.append({"i": i, "equity": round(equity, 2),
                               "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
                 pos = None
+                last_close_i = i
+            continue
+        # --- COOLDOWN: barre minime tra un trade e il successivo ---
+        if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
             continue
         # nuovo segnale
         atr = ind["atr"][i]
@@ -450,12 +486,19 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             if v != 0:
                 sig, who = v, s
                 break
+        # --- HTF FILTER: prendi solo nel senso del trend (close vs SMA) ---
+        if sig != 0 and htf_filter:
+            sma = _sma(i, int(trend_period))
+            if sma is not None:
+                if (sig == 1 and px < sma) or (sig == -1 and px > sma):
+                    sig = 0
         if sig != 0:
             risk_money = equity * (risk_pct / 100.0)
             sl = px - sig * atr * atr_sl
             tp = px + sig * atr * atr_tp
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
-                   "risk_money": risk_money, "strat": who}
+                   "risk_money": risk_money, "strat": who,
+                   "risk_dist": abs(px - sl)}
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
