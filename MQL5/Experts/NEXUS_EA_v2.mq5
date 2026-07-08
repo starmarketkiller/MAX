@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.24"
+#property version   "2.25"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -19,6 +19,7 @@
 
 #include <NEXUS_v1\NXS_Defines.mqh>
 #include <NEXUS_v1\NXS_Inputs.mqh>
+#include <NEXUS_v1\NXS_StrategyProfiles.mqh>
 #include <NEXUS_v1\NXS_Globals.mqh>
 #include <NEXUS_v1\NXS_RuntimeSettings.mqh>
 #include <NEXUS_v1\NXS_Presets.mqh>

@@ -93,6 +93,9 @@ input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // OFF di default: l'EA usa il modello attuale (best-per-bar) finché non lo
 // attivi in Strategy Tester.
 input bool     InpUseInstitutionalCore = true;
+// v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
+// (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
+input bool     InpUseStrategyProfiles  = true;
 input double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
 input double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 input double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier

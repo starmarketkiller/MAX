@@ -56,11 +56,20 @@ void NXS_DefaultSLTP(SNXSSignal &sig){
       slMult = (g_atr > g_atrAvg) ? InpSL_HighVol_Mult : InpSL_LowVol_Mult;
    }
    slMult = MathMax(slMult, InpMinSLMult);   // v2.0.14 — floor SL (rumore M5 gold)
+   double tpMult = g_run_AtrTPMult;          // tunabile dal sito (default = InpATR_TP_Mult)
+   // v2.2.8 — profilo PER-STRATEGIA dal backtest: se la strategia ha una ricetta
+   // ottimale, i SUOI SL/TP sostituiscono i globali ("operare come nel backtest").
+   if(InpUseStrategyProfiles){
+      double pSl, pTp;
+      if(NXS_Profile_SLTP(sig.stratName, pSl, pTp) && pSl > 0 && pTp > 0){
+         slMult = pSl; tpMult = pTp;
+      }
+   }
    // v2.0.21 — SL/TP proporzionati al TF di origine del segnale.
    if(sig.sourceTF == PERIOD_CURRENT) sig.sourceTF = NXS_StrategySourceTF(sig.stratName);
    double tfMult = NXS_TF_SLTPMult(sig.sourceTF);
    double sl = g_atr * slMult * tfMult;
-   double tp = g_atr * g_run_AtrTPMult * tfMult; // tunabile dal sito (default = InpATR_TP_Mult)
+   double tp = g_atr * tpMult * tfMult;
    if(sig.dir == DIR_BUY){
       sig.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       sig.slPrice  = NormPrice(sig.entryRef - sl);

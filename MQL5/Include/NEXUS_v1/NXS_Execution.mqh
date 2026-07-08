@@ -96,6 +96,12 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "ruin_frozen";
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.2.8 - "come nel backtest": le strategie che nel backtest PERDONO o hanno
+   // dati insufficienti non aprono (STRUCT_REACT/DISP_REBAL/BB_SQUEEZE).
+   if(InpUseStrategyProfiles && !NXS_Profile_Enabled(sig.stratName)){
+      g_nxsLastOpenFailure = "profile_disabled";
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // Disattivazione strategia da remoto (dashboard): blocca l'apertura in runtime.
    if(NXS_Runtime_StrategyBlocked(sig.stratName)){
       g_nxsLastOpenFailure = "strategy_disabled_dashboard";
