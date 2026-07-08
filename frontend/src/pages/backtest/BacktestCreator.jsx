@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import { Loader2, Wand2, Save, FlaskConical, Trophy } from "lucide-react";
+import { Loader2, Wand2, Save, FlaskConical, Trophy, Target, Download, Copy } from "lucide-react";
 
 const VCLS = {
   FORTE: "text-emerald-400", OK: "text-sky-400", DEBOLE: "text-amber-400",
@@ -24,6 +24,8 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [res, setRes] = useState(null);
+  const [perStrat, setPerStrat] = useState(null);   // tabella best-per-strategia
+  const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState([]);
 
   useEffect(() => {
@@ -61,6 +63,43 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
   const saveSetup = async (row) => {
     try { await api.post("/backtest/creator/save", { setup: row }); await loadSaved(); }
     catch { /* noop */ }
+  };
+
+  // Best per strategia: per OGNI strategia trova i SUOI parametri migliori.
+  const runPerStrategy = async () => {
+    if (pool.length === 0) { setError("Seleziona almeno una strategia nel pool."); return; }
+    setBusy(true); setError(""); setPerStrat(null); setRes(null);
+    try {
+      const { data } = await api.post("/backtest/optimize_per_strategy", {
+        symbol, timeframe: "D1", pool,
+        param_grid: { atr_sl: parseNums(slGrid, [1.2, 1.5, 1.8, 2.2, 2.6]),
+                      atr_tp: parseNums(tpGrid, [2.0, 2.8, 3.5, 4.5]) },
+        risk_pct: baseCfg?.risk_pct ?? 1.0, initial_balance: baseCfg?.initial_balance ?? 10000,
+        min_trades: Number(minTrades) || 8,
+      });
+      setPerStrat(data);
+    } catch (e) {
+      setError(e?.response?.data?.detail || e.message || "Errore ottimizzazione");
+    } finally { setBusy(false); }
+  };
+
+  const exportTable = () => {
+    if (!perStrat?.table) return;
+    const payload = { symbol: perStrat.symbol, timeframe: perStrat.timeframe,
+                      generated: new Date().toISOString(), table: perStrat.table };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `nexus_best_per_strategy_${perStrat.symbol}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const copyTable = async () => {
+    if (!perStrat?.table) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(perStrat.table, null, 2));
+      setCopied(true); setTimeout(() => setCopied(false), 1500);
+    } catch { /* noop */ }
   };
 
   return (
@@ -112,7 +151,13 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
               data-testid="bt-creator-run"
               className="w-full mt-1 px-3 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FlaskConical className="h-4 w-4" />}
-              Genera &amp; Testa
+              Genera &amp; Testa (combo)
+            </button>
+            <button onClick={runPerStrategy} disabled={busy}
+              data-testid="bt-creator-perstrat"
+              className="w-full px-3 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+              Best per strategia
             </button>
             {error && <div className="text-xs text-rose-400">{error}</div>}
           </div>
@@ -139,6 +184,59 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
 
         {/* Risultati */}
         <div className="lg:col-span-2 space-y-3">
+          {/* Tabella BEST PER STRATEGIA (parametri ottimali per ognuna) */}
+          {perStrat?.table && (
+            <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-sky-500/20">
+                <div className="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+                  <Target className="h-4 w-4" /> Parametri ottimali per strategia ({perStrat.table.length})
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={copyTable} className="text-[11px] px-2 py-1 rounded border border-border hover:bg-secondary inline-flex items-center gap-1">
+                    <Copy className="h-3 w-3" />{copied ? "copiato!" : "copia"}
+                  </button>
+                  <button onClick={exportTable} className="text-[11px] px-2 py-1 rounded border border-sky-500/40 text-sky-300 hover:bg-sky-500/10 inline-flex items-center gap-1">
+                    <Download className="h-3 w-3" /> esporta JSON
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                      <th className="text-left px-3 py-2">Strategia</th>
+                      <th className="text-right px-2 py-2">ATR SL</th>
+                      <th className="text-right px-2 py-2">ATR TP</th>
+                      <th className="text-right px-2 py-2">N</th>
+                      <th className="text-right px-2 py-2">PF</th>
+                      <th className="text-right px-2 py-2">Net</th>
+                      <th className="text-right px-2 py-2">DD%</th>
+                      <th className="text-left px-2 py-2">Verdetto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {perStrat.table.map((r) => (
+                      <tr key={r.strategy} className="border-b border-border/50 hover:bg-secondary/30">
+                        <td className="px-3 py-1.5 font-mono font-semibold">{r.strategy}</td>
+                        <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_sl}</td>
+                        <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_tp}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{r.trades}</td>
+                        <td className="px-2 py-1.5 text-right font-mono">{r.pf}</td>
+                        <td className={`px-2 py-1.5 text-right font-mono ${r.net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{r.net}</td>
+                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{r.dd}</td>
+                        <td className={`px-2 py-1.5 font-mono text-[11px] ${VCLS[r.verdict] || ""}`}>{r.verdict}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-3 py-2 text-[10px] text-muted-foreground border-t border-border">
+                Ogni riga ha i parametri MIGLIORI per quella strategia (non globali). Esporta e mandami il file:
+                rendo l&apos;EA coerente con questi valori per-strategia.
+              </div>
+            </div>
+          )}
+
           {res?.results && (
             <div className="text-xs text-muted-foreground">
               {res.combos_tested} combinazioni testate su {res.symbol} · migliori {res.results.length}

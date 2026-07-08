@@ -1734,6 +1734,69 @@ async def backtest_creator(request: Request, user: str = Depends(require_user)):
             "results": top}
 
 
+@app.post("/api/backtest/optimize_per_strategy")
+async def backtest_optimize_per_strategy(request: Request, user: str = Depends(require_user)):
+    """Per OGNI strategia del pool trova i SUOI parametri migliori (sweep della
+    griglia ATR SL/TP), non parametri globali. Ritorna la tabella
+    strategia -> parametri ottimali + metriche + verdetto, da salvare/esportare
+    e usare per rendere l'EA coerente col backtest.
+
+    Body: {symbol, timeframe, pool:[...], param_grid:{atr_sl:[...],atr_tp:[...]},
+           risk_pct, initial_balance, min_trades}"""
+    body = await request.json()
+    symbol = body.get("symbol", "XAUUSD")
+    timeframe = body.get("timeframe") or body.get("interval") or "D1"
+    pool = [s for s in (body.get("pool") or []) if s]
+    if not pool:
+        raise HTTPException(status_code=400, detail="campo 'pool' (strategie) mancante")
+    grid = body.get("param_grid") or {}
+    atr_sls = grid.get("atr_sl") or [1.2, 1.5, 1.8, 2.2, 2.6]
+    atr_tps = grid.get("atr_tp") or [2.0, 2.8, 3.5, 4.5]
+    risk = float(body.get("risk_pct", 1.0))
+    start_eq = float(body.get("initial_balance", 10000.0))
+    try:
+        min_trades = max(1, int(body.get("min_trades", 8)))
+    except (ValueError, TypeError):
+        min_trades = 8
+
+    rank = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
+    table = []
+    for strat in pool:
+        best = None
+        for sl in atr_sls:
+            for tp in atr_tps:
+                try:
+                    r = backtest.run_backtest(
+                        symbol=symbol, timeframe=timeframe, strategy=strat,
+                        strategies=[strat], risk_pct=risk,
+                        atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq)
+                except Exception:
+                    continue
+                n = r.get("trades", 0)
+                pf = r.get("profit_factor") or 0.0
+                exp = r.get("expectancy_r", 0.0)
+                dd = r.get("max_dd_pct", 0.0)
+                row = {"executed": n, "profit_factor": pf, "expectancy_R": exp,
+                       "winrate_pct": r.get("win_rate", 0), "setup": n}
+                v, why = bt_verdict._verdict(row, min_trades)
+                robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
+                cand = {"strategy": strat, "atr_sl": float(sl), "atr_tp": float(tp),
+                        "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
+                        "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
+                        "verdict": v, "why": why, "robust": robust}
+                key = (rank.get(v, 9), -robust)
+                if best is None or key < (rank.get(best["verdict"], 9), -best["robust"]):
+                    best = cand
+        if best:
+            table.append(best)
+
+    table.sort(key=lambda x: (rank.get(x["verdict"], 9), -x["robust"]))
+    kv_set("creator_per_strategy_last",
+           {"symbol": symbol, "timeframe": timeframe, "table": table, "at": iso()})
+    return {"symbol": symbol, "timeframe": timeframe,
+            "grid": {"atr_sl": atr_sls, "atr_tp": atr_tps}, "table": table}
+
+
 @app.post("/api/backtest/creator/save")
 async def backtest_creator_save(request: Request, user: str = Depends(require_user)):
     """Salva un setup creato (combo+parametri) nella lista dei setup del Creator."""
