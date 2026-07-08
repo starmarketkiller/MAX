@@ -1765,46 +1765,67 @@ async def backtest_optimize_per_strategy(request: Request, user: str = Depends(r
     except (ValueError, TypeError):
         min_trades = 8
 
-    htf_opts = grid.get("htf_filter", [False, True])   # testa anche il gate HTF
+    # GATE testati PER STRATEGIA (mai globali): ognuno tiene solo quelli che lo
+    # migliorano. Griglie modeste per non esplodere il numero di run.
+    htf_opts   = grid.get("htf_filter", [False, True])
+    be_opts    = grid.get("breakeven_r", [0.0, 1.0])
+    trail_opts = grid.get("trailing_atr", [0.0, 2.0])
     rank = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
+
+    def _eval(strat, sl, tp, htf, be, tr):
+        try:
+            r = backtest.run_backtest(
+                symbol=symbol, timeframe=timeframe, strategy=strat, strategies=[strat],
+                risk_pct=risk, atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq,
+                htf_filter=bool(htf), breakeven_r=float(be), trailing_atr=float(tr))
+        except Exception:
+            return None
+        n = r.get("trades", 0); pf = r.get("profit_factor") or 0.0
+        exp = r.get("expectancy_r", 0.0); dd = r.get("max_dd_pct", 0.0)
+        v, why = bt_verdict._verdict(
+            {"executed": n, "profit_factor": pf, "expectancy_R": exp,
+             "winrate_pct": r.get("win_rate", 0), "setup": n}, min_trades)
+        robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
+        return {"strategy": strat, "atr_sl": float(sl), "atr_tp": float(tp),
+                "htf_filter": bool(htf), "breakeven_r": float(be), "trailing_atr": float(tr),
+                "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
+                "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
+                "verdict": v, "why": why, "robust": robust}
+
+    def _key(c):
+        return (rank.get(c["verdict"], 9), -c["robust"])
+
     table = []
+    combos_per_strat = (len(atr_sls) * len(atr_tps) * len(htf_opts)
+                        + max(0, len(be_opts) * len(trail_opts) - 1))
     for strat in pool:
+        # Stadio 1: parametri + HTF (gate d'uscita spenti)
         best = None
         for sl in atr_sls:
             for tp in atr_tps:
                 for htf in htf_opts:
-                    try:
-                        r = backtest.run_backtest(
-                            symbol=symbol, timeframe=timeframe, strategy=strat,
-                            strategies=[strat], risk_pct=risk,
-                            atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq,
-                            htf_filter=bool(htf))
-                    except Exception:
-                        continue
-                    n = r.get("trades", 0)
-                    pf = r.get("profit_factor") or 0.0
-                    exp = r.get("expectancy_r", 0.0)
-                    dd = r.get("max_dd_pct", 0.0)
-                    row = {"executed": n, "profit_factor": pf, "expectancy_R": exp,
-                           "winrate_pct": r.get("win_rate", 0), "setup": n}
-                    v, why = bt_verdict._verdict(row, min_trades)
-                    robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
-                    cand = {"strategy": strat, "atr_sl": float(sl), "atr_tp": float(tp),
-                            "htf_filter": bool(htf),
-                            "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
-                            "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
-                            "verdict": v, "why": why, "robust": robust}
-                    key = (rank.get(v, 9), -robust)
-                    if best is None or key < (rank.get(best["verdict"], 9), -best["robust"]):
-                        best = cand
-        if best:
-            table.append(best)
+                    c = _eval(strat, sl, tp, htf, 0.0, 0.0)
+                    if c and (best is None or _key(c) < _key(best)):
+                        best = c
+        if not best:
+            continue
+        # Stadio 2: gate d'uscita (breakeven/trailing) SUI parametri migliori
+        for be in be_opts:
+            for tr in trail_opts:
+                if be == 0.0 and tr == 0.0:
+                    continue   # gia' valutato nello stadio 1
+                c = _eval(strat, best["atr_sl"], best["atr_tp"], best["htf_filter"], be, tr)
+                if c and _key(c) < _key(best):
+                    best = c
+        table.append(best)
 
     table.sort(key=lambda x: (rank.get(x["verdict"], 9), -x["robust"]))
     kv_set("creator_per_strategy_last",
            {"symbol": symbol, "timeframe": timeframe, "table": table, "at": iso()})
     return {"symbol": symbol, "timeframe": timeframe,
-            "grid": {"atr_sl": atr_sls, "atr_tp": atr_tps}, "table": table}
+            "grid": {"atr_sl": atr_sls, "atr_tp": atr_tps, "htf_filter": htf_opts,
+                     "breakeven_r": be_opts, "trailing_atr": trail_opts},
+            "combos_per_strategy": combos_per_strat, "table": table}
 
 
 @app.post("/api/backtest/creator/save")
