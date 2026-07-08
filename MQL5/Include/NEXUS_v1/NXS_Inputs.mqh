@@ -24,7 +24,7 @@ input int InpStrategySelector = 0;
 
 input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2";
+input string   InpComment          = "NEXUS_v2.2";  // prefisso commento trade: cambia col nuovo aggiornamento -> distingui i trade del nuovo build
 input ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 input ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 input ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
