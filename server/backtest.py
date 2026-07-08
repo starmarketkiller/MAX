@@ -361,7 +361,232 @@ def sig_ichimoku(c, ind, i):
     return 0
 
 
-# Strategie con logica Python reale (le altre 36 usano i risultati reali importati)
+# ---------------------------------------------------------------------------- #
+# Strategie strutturali / SMC (implementazioni su OHLC daily). Le session/AMD/
+# Elliott vere (JUDAS, SILVER_BULLET, PO3, ...) servono dati intraday -> MT5.
+# ---------------------------------------------------------------------------- #
+def _body(cd): return abs(cd["close"] - cd["open"])
+def _bull(cd): return cd["close"] > cd["open"]
+def _bear(cd): return cd["close"] < cd["open"]
+
+
+def sig_sar(c, ind, i):
+    # trend-follow (proxy SAR): flip su ema20 con allineamento ema50
+    e20, e50, e20p = ind["ema20"][i], ind["ema50"][i], ind["ema20"][i - 1]
+    if None in (e20, e50, e20p):
+        return 0
+    px, ppx = ind["close"][i], ind["close"][i - 1]
+    if e20 > e20p and ppx <= e20p and px > e20 and e20 > e50:
+        return 1
+    if e20 < e20p and ppx >= e20p and px < e20 and e20 < e50:
+        return -1
+    return 0
+
+
+def sig_bjorgum(c, ind, i):
+    # EMA ribbon: allineamento fresco 12>26>50 (o inverso)
+    e12, e26, e50 = ind["ema12"][i], ind["ema26"][i], ind["ema50"][i]
+    e12p, e26p = ind["ema12"][i - 1], ind["ema26"][i - 1]
+    if None in (e12, e26, e50, e12p, e26p):
+        return 0
+    if e12 > e26 > e50 and not (e12p > e26p) and c[i]["close"] > e12:
+        return 1
+    if e12 < e26 < e50 and not (e12p < e26p) and c[i]["close"] < e12:
+        return -1
+    return 0
+
+
+def sig_order_block(c, ind, i):
+    # impulso (body>1.2 ATR) 3-10 barre fa, poi retest del body con rifiuto
+    atr = ind["atr"][i]
+    if not atr or i < 12:
+        return 0
+    for k in range(3, 11):
+        cd = c[i - k]
+        if _body(cd) < 1.2 * atr:
+            continue
+        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
+        mid = (top + bot) / 2
+        cur = c[i]
+        if _bull(cd) and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
+            return 1
+        if _bear(cd) and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
+            return -1
+    return 0
+
+
+def sig_ob_mit(c, ind, i):
+    # order block CON displacement/BOS: l'impulso rompe lo swing a 5 barre
+    atr = ind["atr"][i]
+    if not atr or i < 14:
+        return 0
+    for k in range(3, 11):
+        cd = c[i - k]
+        if _body(cd) < 1.2 * atr:
+            continue
+        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
+        mid = (top + bot) / 2
+        cur = c[i]
+        phi, plo = _hh(c, 5, i - k - 1), _ll(c, 5, i - k - 1)
+        if _bull(cd) and phi and cd["close"] > phi and cur["low"] <= top \
+                and _bull(cur) and cur["close"] > mid:
+            return 1
+        if _bear(cd) and plo and cd["close"] < plo and cur["high"] >= bot \
+                and _bear(cur) and cur["close"] < mid:
+            return -1
+    return 0
+
+
+def sig_fvg_cont(c, ind, i):
+    # FVG (gap a 3 candele) continuazione nel senso del trend
+    e50 = ind["ema50"][i]
+    if i < 3 or e50 is None:
+        return 0
+    if c[i]["low"] > c[i - 2]["high"] and c[i]["close"] > e50:
+        return 1
+    if c[i]["high"] < c[i - 2]["low"] and c[i]["close"] < e50:
+        return -1
+    return 0
+
+
+def sig_fvg_mit(c, ind, i):
+    # ritorno in un FVG vecchio (~5 barre fa) + rifiuto
+    atr = ind["atr"][i]
+    if not atr or i < 8:
+        return 0
+    lo_e, hi_e = c[i - 6]["high"], c[i - 4]["low"]          # FVG bull
+    cur = c[i]
+    if hi_e > lo_e and lo_e - 0.3 * atr <= cur["low"] <= hi_e \
+            and _bull(cur) and cur["close"] > (lo_e + hi_e) / 2:
+        return 1
+    lo_b, hi_b = c[i - 4]["high"], c[i - 6]["low"]          # FVG bear
+    if hi_b > lo_b and lo_b <= cur["high"] <= hi_b + 0.3 * atr \
+            and _bear(cur) and cur["close"] < (lo_b + hi_b) / 2:
+        return -1
+    return 0
+
+
+def sig_ifvg(c, ind, i):
+    # inverse FVG: un FVG che viene violato -> flip nella direzione della rottura
+    if i < 4:
+        return 0
+    if c[i - 1]["low"] > c[i - 3]["high"] and c[i]["close"] < c[i - 3]["high"]:
+        return -1
+    if c[i - 1]["high"] < c[i - 3]["low"] and c[i]["close"] > c[i - 3]["low"]:
+        return 1
+    return 0
+
+
+def sig_liq_sweep(c, ind, i):
+    # sweep del max/min a 20 barre + chiusura di rientro (reversal)
+    if i < 21:
+        return 0
+    ph, pl = _hh(c, 20, i - 1), _ll(c, 20, i - 1)
+    cur = c[i]
+    if ph and cur["high"] > ph and cur["close"] < ph:
+        return -1
+    if pl and cur["low"] < pl and cur["close"] > pl:
+        return 1
+    return 0
+
+
+def sig_turtle_soup(c, ind, i):
+    # falso breakout: sweep del min/max a 20 + candela di reversal forte
+    atr = ind["atr"][i]
+    if not atr or i < 21:
+        return 0
+    pl, ph = _ll(c, 20, i - 1), _hh(c, 20, i - 1)
+    cur = c[i]
+    if pl and cur["low"] < pl and cur["close"] > pl and _bull(cur) and _body(cur) > 0.4 * atr:
+        return 1
+    if ph and cur["high"] > ph and cur["close"] < ph and _bear(cur) and _body(cur) > 0.4 * atr:
+        return -1
+    return 0
+
+
+def sig_struct_react(c, ind, i):
+    # reazione (rifiuto con ombra) su un livello di swing a 20 barre
+    atr = ind["atr"][i]
+    if not atr or i < 22:
+        return 0
+    ph, pl = _hh(c, 20, i - 1), _ll(c, 20, i - 1)
+    cur = c[i]
+    tol = 0.4 * atr
+    lw = min(cur["open"], cur["close"]) - cur["low"]
+    uw = cur["high"] - max(cur["open"], cur["close"])
+    if pl and abs(cur["low"] - pl) < tol and _bull(cur) and lw > _body(cur):
+        return 1
+    if ph and abs(cur["high"] - ph) < tol and _bear(cur) and uw > _body(cur):
+        return -1
+    return 0
+
+
+def sig_malaysian_snr(c, ind, i):
+    # rifiuto su S/R basati su chiusura (swing close a 20)
+    atr = ind["atr"][i]
+    if not atr or i < 22:
+        return 0
+    closes = ind["close"]
+    hi, lo = max(closes[i - 20:i]), min(closes[i - 20:i])
+    cur = c[i]
+    tol = 0.5 * atr
+    if abs(cur["low"] - lo) < tol and _bull(cur):
+        return 1
+    if abs(cur["high"] - hi) < tol and _bear(cur):
+        return -1
+    return 0
+
+
+def sig_ote_cont(c, ind, i):
+    # optimal trade entry: ritracciamento 62-79% dell'ultimo swing, nel trend
+    if i < 30:
+        return 0
+    e50, e50p = ind["ema50"][i], ind["ema50"][i - 1]
+    if None in (e50, e50p):
+        return 0
+    shi, slo = _hh(c, 20, i - 1), _ll(c, 20, i - 1)
+    if None in (shi, slo) or shi <= slo:
+        return 0
+    rng, px = shi - slo, c[i]["close"]
+    if e50 > e50p and 0.62 <= (shi - px) / rng <= 0.79 and _bull(c[i]):
+        return 1
+    if e50 < e50p and 0.62 <= (px - slo) / rng <= 0.79 and _bear(c[i]):
+        return -1
+    return 0
+
+
+def sig_disp_rebal(c, ind, i):
+    # displacement (>2 ATR) poi pullback che la ribilancia -> continuazione
+    atr = ind["atr"][i]
+    if not atr or i < 6:
+        return 0
+    for k in range(1, 5):
+        cd = c[i - k]
+        if _body(cd) <= 2 * atr:
+            continue
+        mid = (cd["open"] + cd["close"]) / 2
+        cur = c[i]
+        if _bull(cd) and cur["low"] <= mid and cur["close"] > mid and _bull(cur):
+            return 1
+        if _bear(cd) and cur["high"] >= mid and cur["close"] < mid and _bear(cur):
+            return -1
+    return 0
+
+
+def sig_cisd(c, ind, i):
+    # change in state of delivery: rottura dell'estremo dell'ultima serie di 3
+    if i < 5:
+        return 0
+    recent = c[i - 3:i]
+    cur = c[i]
+    if all(_bear(x) for x in recent) and cur["close"] > max(x["high"] for x in recent):
+        return 1
+    if all(_bull(x) for x in recent) and cur["close"] < min(x["low"] for x in recent):
+        return -1
+    return 0
+
+
+# Strategie con logica Python reale (le altre usano i risultati reali importati)
 STRATEGIES = {
     "EMA_PULLBACK": sig_ema_pullback,
     "MACD": sig_macd,
@@ -374,6 +599,25 @@ STRATEGIES = {
     "ICHIMOKU": sig_ichimoku,
     "LONDON_BO": sig_breakout,        # breakout-based proxy
     "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
+    # --- strutturali / SMC (nuove, v2.2.8) ---
+    "SAR": sig_sar,
+    "BJORGUM": sig_bjorgum,
+    "ORDER_BLOCK": sig_order_block,
+    "OB_MIT": sig_ob_mit,
+    "FVG_CONT": sig_fvg_cont,
+    "FVG_MIT": sig_fvg_mit,
+    "IFVG": sig_ifvg,
+    "LIQ_SWEEP": sig_liq_sweep,
+    "TURTLE_SOUP": sig_turtle_soup,
+    "STRUCT_REACT": sig_struct_react,
+    "MALAYSIAN_SNR": sig_malaysian_snr,
+    "OTE_CONT": sig_ote_cont,
+    "DISP_REBAL": sig_disp_rebal,
+    "CISD": sig_cisd,
+    "WEEKLY_EXP": sig_breakout,       # range expansion proxy
+    "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
+    "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
+    "SMS_BMS_RTO": sig_ob_mit,        # proxy
 }
 
 # Tutte le 36 strategie dell'EA (dai sorgenti MQL5).
