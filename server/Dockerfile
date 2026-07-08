@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 COPY backtest.py .
+COPY bt_verdict.py .
 COPY sweep.py .
 COPY seed_results.json .
 COPY seed_library.json .
