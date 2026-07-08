@@ -153,6 +153,7 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       // B) Permanenza minima proporzionale ad ATR/volatilita': quando c'e' piu'
       //    volatilita' (ATR sopra la media) il prezzo ha piu' spazio -> tieni piu'
       //    a lungo; quando e' calmo, meno. Fattore limitato a [0.7x, 2.0x].
+      long   posAge     = (long)(TimeCurrent() - (datetime)PositionGetInteger(POSITION_TIME));
       double holdFactor = 1.0;
       if(g_atrAvg > 0) holdFactor = MathMax(0.7, MathMin(2.0, g_atr / g_atrAvg));
       long   minHoldSec = (long)(InpInstMinHoldMin * 60 * holdFactor);
