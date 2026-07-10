@@ -25,8 +25,8 @@
 #ifndef __NXS_LOCKED_PROFILE_MQH__
 #define __NXS_LOCKED_PROFILE_MQH__
 
-input bool   InpLockedProfile_Enable = true;   // pull locked profile on OnInit
-input string InpLockedProfile_TF     = "D1";   // timeframe key used by backend
+bool   InpLockedProfile_Enable = false;   // pull locked profile on OnInit
+string InpLockedProfile_TF     = "D1";   // timeframe key used by backend
 
 // Effective values, populated after _NXS_LockedProfile_Fetch().
 // They default to whatever the user already configured in EA Properties.

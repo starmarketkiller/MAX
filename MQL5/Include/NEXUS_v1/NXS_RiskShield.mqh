@@ -12,10 +12,10 @@
 // Tracks a rolling window of spreads and freezes entries when current
 // spread exceeds the P95 of the window. Eliminates fill-in-news-spike.
 // =====================================================================
-input bool   InpSpreadBurst_Enable    = true;
-input int    InpSpreadBurst_Samples   = 1000;   // rolling window size
-input double InpSpreadBurst_P95Cap    = 1.30;   // multiplier of P95 (e.g. 1.3× P95)
-input int    InpSpreadBurst_FreezeSec = 30;     // freeze duration on burst
+bool   InpSpreadBurst_Enable    = true;
+int    InpSpreadBurst_Samples   = 1000;   // rolling window size
+double InpSpreadBurst_P95Cap    = 1.30;   // multiplier of P95 (e.g. 1.3× P95)
+int    InpSpreadBurst_FreezeSec = 30;     // freeze duration on burst
 
 double g_NXSrsSpreadBuf[];          // ring buffer
 int    g_NXSrsSpreadIdx  = 0;
@@ -69,10 +69,10 @@ bool NXS_RS_SpreadBurst_Block(string &reason){
 // Computes Sharpe over the last N closed trades. If Sharpe < threshold,
 // the EA self-pauses for `InpBreaker_PauseHours` and pushes a Coach alert.
 // =====================================================================
-input bool   InpBreaker_Enable      = true;
-input int    InpBreaker_LookbackN   = 50;
-input double InpBreaker_SharpeMin   = 0.30;
-input int    InpBreaker_PauseHours  = 24;
+bool   InpBreaker_Enable      = true;
+int    InpBreaker_LookbackN   = 50;
+double InpBreaker_SharpeMin   = 0.30;
+int    InpBreaker_PauseHours  = 24;
 
 datetime g_NXSrsBreakerUntil = 0;
 double   g_NXSrsLastSharpe   = 0;
@@ -114,7 +114,7 @@ double NXS_RS_Breaker_LastSharpe(){ return g_NXSrsLastSharpe; }
 // Two perfectly correlated trades = 2× the intended risk. Group symbols
 // into clusters and cap concurrent exposure per cluster, not per ticket.
 // =====================================================================
-input int InpCluster_MaxPerCluster = 2;   // max concurrent positions per cluster
+int InpCluster_MaxPerCluster = 2;   // max concurrent positions per cluster
 
 // Static cluster table. Each symbol belongs to ONE cluster.
 //   USD_STRONG: positions that benefit from a strong USD
@@ -172,10 +172,10 @@ bool NXS_RS_Cluster_Block(string sym, string &reason){
 // Tier-3 (NEW): 5min before red news, tighten SL on open positions
 //               to break-even + 1× ATR. Or 50% partial close.
 // =====================================================================
-input bool   InpNewsTier3_Enable     = true;
-input int    InpNewsTier3_LeadMin    = 5;      // minutes before red news
-input int    InpNewsTier3_Mode       = 1;      // 0=close50% 1=tightenSL
-input double InpNewsTier3_SLBufferATR = 1.0;   // tighten to BE + N*ATR
+bool   InpNewsTier3_Enable     = true;
+int    InpNewsTier3_LeadMin    = 5;      // minutes before red news
+int    InpNewsTier3_Mode       = 1;      // 0=close50% 1=tightenSL
+double InpNewsTier3_SLBufferATR = 1.0;   // tighten to BE + N*ATR
 
 // Caller provides: minutes until next red news, and the SYMBOL ATR.
 // Returns the SL price that should be SET on existing positions (0 if no action).

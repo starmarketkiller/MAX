@@ -130,7 +130,7 @@ bool NXS_IsNewBar(ENUM_TIMEFRAMES tf, const string sym = NULL){
 // Drops signals when the local tick is stale (network lag, weekend gap).
 // Threshold default 200ms; configurable via InpMaxTickAgeMs input.
 // =====================================================================
-input int InpMaxTickAgeMs = 200;   // hard cap: ignore tick if older than this
+int InpMaxTickAgeMs = 200;   // hard cap: ignore tick if older than this
 
 bool NXS_IsFreshTick(){
    if(InpMaxTickAgeMs <= 0) return true;            // disabled

@@ -51,8 +51,8 @@
 // -------------------------------------------------------------------
 // User controls kept inside this single include
 // -------------------------------------------------------------------
-input group "=== NXR REUSE / PERFORMANCE PACK ==="
-input bool             InpNXR_Enable                 = false;  // v2.2.8: base strategy logic come nel backtest (no NXR)
+// input group "=== NXR REUSE / PERFORMANCE PACK ==="
+bool             InpNXR_Enable                 = false;  // v2.2.8: base strategy logic come nel backtest (no NXR)
 // v2.1.6 — Con il modello istituzionale, NXR e' SORGENTE di segnali, non un
 // secondo esecutore. Le funzioni NXR_Strat_* (redirette via #define) portano
 // gia' i segnali di qualita' NXR nel pool di voti del grouping, con logica
@@ -60,29 +60,29 @@ input bool             InpNXR_Enable                 = false;  // v2.2.8: base s
 // (NXR_ProcessPendingM5Trigger) cosi' l'unico esecutore e' il modello
 // istituzionale (grid/recovery/trailing/runner) -> "l'esecuzione la fai solo tu".
 // La detection zone/contesto resta attiva (dietro InpNXR_Enable).
-input bool             InpNXR_DirectM5Execution      = false;
-input bool             InpNXR_RespectNexusSwitches  = true;
-input ENUM_TIMEFRAMES  InpNXR_TriggerTF              = PERIOD_M15;  // v2.2.4: M15 (era M5) per togliere il rumore dei trigger troppo bassi
-input int              InpNXR_ContextLookbackM15     = 96;
-input int              InpNXR_ContextLookbackH1      = 48;
-input int              InpNXR_MaxActiveZones         = 48;
-input int              InpNXR_MaxZoneTouches         = 2;
-input int              InpNXR_TriggerExpiryMinutes   = 12;
-input int              InpNXR_MinSecondsBetweenTrade = 120;
-input double           InpNXR_MinFVGSizeATR          = 0.05;
-input double           InpNXR_DisplacementATR        = 0.75;
-input double           InpNXR_MinReactionQuality     = 62.0;
-input double           InpNXR_MinM5Score             = 58.0;
-input double           InpNXR_MinRR                   = 1.60;
-input double           InpNXR_MaxEntryDriftR          = 0.35;
-input bool             InpNXR_EnableCounterHTFSoft = true;
-input double           InpNXR_CounterMinReactionQ   = 72.0;
-input double           InpNXR_CounterLotMultiplier   = 0.40;
-input bool             InpNXR_AdaptiveSpread         = true;
-input double           InpNXR_SpreadSpikeRatio       = 2.40;
-input double           InpNXR_HardSpreadMultiplier   = 1.60;
-input double           InpNXR_HardSpreadATRMultiplier= 1.50;
-input bool             InpNXR_Debug                  = false;
+bool             InpNXR_DirectM5Execution      = false;
+bool             InpNXR_RespectNexusSwitches  = true;
+ENUM_TIMEFRAMES  InpNXR_TriggerTF              = PERIOD_M15;  // v2.2.4: M15 (era M5) per togliere il rumore dei trigger troppo bassi
+int              InpNXR_ContextLookbackM15     = 96;
+int              InpNXR_ContextLookbackH1      = 48;
+int              InpNXR_MaxActiveZones         = 48;
+int              InpNXR_MaxZoneTouches         = 2;
+int              InpNXR_TriggerExpiryMinutes   = 12;
+int              InpNXR_MinSecondsBetweenTrade = 120;
+double           InpNXR_MinFVGSizeATR          = 0.05;
+double           InpNXR_DisplacementATR        = 0.75;
+double           InpNXR_MinReactionQuality     = 62.0;
+double           InpNXR_MinM5Score             = 58.0;
+double           InpNXR_MinRR                   = 1.60;
+double           InpNXR_MaxEntryDriftR          = 0.35;
+bool             InpNXR_EnableCounterHTFSoft = true;
+double           InpNXR_CounterMinReactionQ   = 72.0;
+double           InpNXR_CounterLotMultiplier   = 0.40;
+bool             InpNXR_AdaptiveSpread         = true;
+double           InpNXR_SpreadSpikeRatio       = 2.40;
+double           InpNXR_HardSpreadMultiplier   = 1.60;
+double           InpNXR_HardSpreadATRMultiplier= 1.50;
+bool             InpNXR_Debug                  = false;
 
 #define NXR_PACK_VERSION  "1.2.0"
 #define NXR_ZONE_CAPACITY 64

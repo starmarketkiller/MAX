@@ -15,9 +15,9 @@
 #ifndef __NXS_VISUAL_BRIDGE_HTTP_MQH__
 #define __NXS_VISUAL_BRIDGE_HTTP_MQH__
 
-input bool   InpVisualPush_Enable = true;   // push OB/FVG/SNR to web chart
-input int    InpVisualPushSec     = 30;     // min seconds between pushes
-input int    InpVisualMaxObjects  = 30;     // max objects per push
+bool   InpVisualPush_Enable = true;   // push OB/FVG/SNR to web chart
+int    InpVisualPushSec     = 30;     // min seconds between pushes
+int    InpVisualMaxObjects  = 30;     // max objects per push
 
 datetime g_NXSvbLastPush = 0;
 

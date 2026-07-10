@@ -32,8 +32,8 @@ bool NXS_EA_ReactionShouldRecompute(){
 // =====================================================================
 // #7 — VIRTUALIZED STOP LOSS  (broker SL wide, real SL internal)
 // =====================================================================
-input bool   InpVirtSL_Enable         = true;
-input double InpVirtSL_HardSL_ATRMult = 4.0;
+bool   InpVirtSL_Enable         = true;
+double InpVirtSL_HardSL_ATRMult = 4.0;
 
 struct SNXSVirtSL {
    ulong  ticket; int direction;
@@ -94,11 +94,11 @@ uint  NXS_EA_GetFillMs (){ return g_NXSeaLastFillMs;     }
 // =====================================================================
 // #9 — SESSION-AWARE SLIPPAGE CAP
 // =====================================================================
-input int InpSlip_Asian   = 8;
-input int InpSlip_London  = 15;
-input int InpSlip_NewYork = 22;
-input int InpSlip_Overlap = 30;
-input int InpSlip_Off     = 12;
+int InpSlip_Asian   = 8;
+int InpSlip_London  = 15;
+int InpSlip_NewYork = 22;
+int InpSlip_Overlap = 30;
+int InpSlip_Off     = 12;
 
 int NXS_EA_SlippageCap(int sessionCode){
    switch(sessionCode){
@@ -113,8 +113,8 @@ int NXS_EA_SlippageCap(int sessionCode){
 // =====================================================================
 // #12 — VOLATILITY REGIME ADAPTER  (ATR percentile rolling 100 bars)
 // =====================================================================
-input bool InpVolAdapt_Enable    = true;
-input int  InpVolAdapt_LookbackN = 100;
+bool InpVolAdapt_Enable    = true;
+int  InpVolAdapt_LookbackN = 100;
 
 double g_NXSeaVolWin[];
 int    g_NXSeaVolN = 0;
@@ -148,7 +148,7 @@ void NXS_EA_VolAdapt_Multipliers(double atr, double &slMult, double &tpMult){
 // =====================================================================
 // #13 — SESSION×STRATEGY AUTO-LEARNER  (CSV: NEXUS\auto_disable.csv)
 // =====================================================================
-input bool InpLearner_Enable = true;
+bool InpLearner_Enable = true;
 
 struct SNXSAutoDisable { string strat; int session; string reason; };
 SNXSAutoDisable g_NXSeaAD[];
