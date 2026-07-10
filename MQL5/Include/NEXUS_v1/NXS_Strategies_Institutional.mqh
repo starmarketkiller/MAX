@@ -72,38 +72,22 @@ SNXSSignal NXS_Strat_CISD(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "CISD";
    if(!InpUseStrat_CISD) return s;
-   double atr = _inst_atr();
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
-   double bodyAbs = MathAbs(c1 - o1);
-   if(bodyAbs < atr * 0.7) return s;     // require displacement candle
-
-   // BUY: previously bearish delivery + sweep low + reclaim last bearish delivery high
-   double bearHi=0, bearLo=0;
-   if(c1 > o1 && _inst_lastDelivery(-1, 15, bearHi, bearLo)){
-      bool sweptLow  = (sw.sweptPDL || sw.sweptEQL || sw.sweptAsiaLow || sw.dir == DIR_BUY);
-      if(sweptLow && c1 > bearHi){
-         s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-         s.slPrice = (sw.confirmed ? sw.level : bearLo) - 0.4 * atr;
-         s.tpPrice = s.entryRef + 2.5 * (s.entryRef - s.slPrice);
-         s.score   = 74.0;
-         s.reason  = "CISD bull:sweep+reclaim";
-         return s;
-      }
-   }
-   // SELL: previously bullish delivery + sweep high + reclaim last bullish delivery low
-   double bullHi=0, bullLo=0;
-   if(c1 < o1 && _inst_lastDelivery(+1, 15, bullHi, bullLo)){
-      bool sweptHigh = (sw.sweptPDH || sw.sweptEQH || sw.sweptAsiaHigh || sw.dir == DIR_SELL);
-      if(sweptHigh && c1 < bullLo){
-         s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
-         s.slPrice = (sw.confirmed ? sw.level : bullHi) + 0.4 * atr;
-         s.tpPrice = s.entryRef - 2.5 * (s.slPrice - s.entryRef);
-         s.score   = 74.0;
-         s.reason  = "CISD bear:sweep+reclaim";
-         return s;
-      }
-   }
+   // v2.3.3 — riportata la logica SEMPLICE del sito (change in state of delivery):
+   // 3 barre chiuse dello stesso segno, poi rottura del loro estremo. La vecchia
+   // versione (displacement+delivery+sweep+reclaim) non scattava MAI (0 setup su
+   // 1067) e hardcodava SL/TP ignorando il profilo. Ora usa NXS_DefaultSLTP.
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double c1 = iClose(g_sym, tf, 1);
+   double o2=iOpen(g_sym,tf,2), c2=iClose(g_sym,tf,2), h2=iHigh(g_sym,tf,2), l2=iLow(g_sym,tf,2);
+   double o3=iOpen(g_sym,tf,3), c3=iClose(g_sym,tf,3), h3=iHigh(g_sym,tf,3), l3=iLow(g_sym,tf,3);
+   double o4=iOpen(g_sym,tf,4), c4=iClose(g_sym,tf,4), h4=iHigh(g_sym,tf,4), l4=iLow(g_sym,tf,4);
+   bool bear3 = (c2<o2) && (c3<o3) && (c4<o4);
+   bool bull3 = (c2>o2) && (c3>o3) && (c4>o4);
+   double hh = MathMax(h2, MathMax(h3, h4));
+   double ll = MathMin(l2, MathMin(l3, l4));
+   if(bear3 && c1 > hh){ s.dir = DIR_BUY;  s.score = 74.0; s.reason = "CISD bull (3bear+break)"; }
+   else if(bull3 && c1 < ll){ s.dir = DIR_SELL; s.score = 74.0; s.reason = "CISD bear (3bull+break)"; }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);   // SL/TP dal profilo (come il sito)
    return s;
 }
 

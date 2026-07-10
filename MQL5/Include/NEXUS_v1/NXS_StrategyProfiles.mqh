@@ -119,7 +119,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "SH_BMS_RTO")        return 1.29;
    if(name == "SMS_BMS_RTO")       return 1.29;
    if(name == "STRUCT_REACT")      return 2.0;
-   if(name == "TSI")               return 1.04;
+   if(name == "TSI")               return 1.6;    // v2.3.3: top earner reale (PF 2.30) -> piu' size
    if(name == "TURTLE_SOUP")       return 2.0;
    if(name == "WEEKLY_EXP")        return 0.63;
    return 0.0;
