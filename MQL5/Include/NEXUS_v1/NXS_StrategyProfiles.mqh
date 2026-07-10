@@ -138,11 +138,16 @@ bool NXS_Profile_HTF(const string name, bool &htf){
    htf = false; return false;
 }
 
-// Va tradata? false per le strategie che nel backtest PERDONO o hanno dati
-// insufficienti -> "operare come nel backtest" = non aprire quelle inutili.
-// (multi-TF: STRUCT_REACT e DISP_REBAL ora sono FORTE sul loro TF -> abilitate).
+// Va tradata? false per le strategie che PERDONO in modo sistematico su MT5
+// (dati broker), indipendentemente dal verdetto del sito (dati Yahoo).
+// Disabilitate dal test reale v2.3.1 (3 settimane): la loro logica MQL5 non
+// regge sui dati del broker -> perdite confermate, si spengono finche' non le
+// riallineiamo al motore del sito.
 bool NXS_Profile_Enabled(const string name){
-   if(name == "BB_SQUEEZE")   return false;   // POCHI_DATI (troppi pochi trade)
+   if(name == "BB_SQUEEZE")    return false;   // POCHI_DATI (troppi pochi trade)
+   if(name == "STRUCT_REACT")  return false;   // v2.3.1 test reale: 85 trade, -102$ (peggiore)
+   if(name == "DISP_REBAL")    return false;   // v2.3.1 test reale: 10 trade, -53$ (WR 30%)
+   if(name == "OTE_CONT")      return false;   // v2.3.1 test reale: 6 trade, -30$
    return true;
 }
 

@@ -21,12 +21,26 @@ void NXS_ManageBreakevenAndTrail(){
                   : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
 
-      // P1 — Time-based forced exit
-      if(InpMaxHoldHours > 0){
+      // P1 — Time-based forced exit.
+      // v2.3.1 FIX: con i profili, il max-hold SCALA sul TF della strategia
+      // (~40 barre di quel TF, come il motore del sito). Il vecchio cap fisso
+      // di InpMaxHoldHours (4h) ammazzava le strategie D1/H4 prima del TP ->
+      // 0 TP colpiti. Fallback su InpMaxHoldHours per chi non ha profilo.
+      long maxHoldSec = (long)InpMaxHoldHours * 3600;
+      if(InpUseStrategyProfiles){
+         string cm = PositionGetString(POSITION_COMMENT);
+         string cp[]; int ncp = StringSplit(cm, '|', cp);
+         if(ncp >= 2 && StringLen(cp[1]) > 0){
+            ENUM_TIMEFRAMES ptf = NXS_Profile_TF(cp[1]);
+            if(ptf != PERIOD_CURRENT)
+               maxHoldSec = (long)PeriodSeconds(ptf) * 40;   // ~40 barre del TF
+         }
+      }
+      if(maxHoldSec > 0){
          datetime openT = (datetime)PositionGetInteger(POSITION_TIME);
-         if(openT > 0 && (TimeCurrent() - openT) > InpMaxHoldHours * 3600){
+         if(openT > 0 && (TimeCurrent() - openT) > maxHoldSec){
             NXS_DoClose(t);
-            PrintFormat("[NEXUS] Time-exit (%dh) ticket %I64u", InpMaxHoldHours, t);
+            PrintFormat("[NEXUS] Time-exit (%.1fh) ticket %I64u", maxHoldSec/3600.0, t);
             continue;
          }
       }
