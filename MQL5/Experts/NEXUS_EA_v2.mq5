@@ -216,6 +216,22 @@ bool NXS_StrategyHasOpenPos(const string name){
    return false;
 }
 
+// v2.3.1 — "UNA decisione per barra del TF della strategia" (come il sito, che
+// valuta ogni strategia una volta per barra). Senza, una strategia D1 viene
+// rivalutata a OGNI barra M15 e produce lo stesso segnale ~96 volte/giorno,
+// inondando gli slot (caso TSI: 555 "setup" in 2 settimane).
+string   g_tfbarName[48];
+datetime g_tfbarTime[48];
+int      g_tfbarN = 0;
+datetime NXS_GetLastTfBar(const string name){
+   for(int i = 0; i < g_tfbarN; i++) if(g_tfbarName[i] == name) return g_tfbarTime[i];
+   return 0;
+}
+void NXS_SetLastTfBar(const string name, datetime t){
+   for(int i = 0; i < g_tfbarN; i++){ if(g_tfbarName[i] == name){ g_tfbarTime[i] = t; return; } }
+   if(g_tfbarN < 48){ g_tfbarName[g_tfbarN] = name; g_tfbarTime[g_tfbarN] = t; g_tfbarN++; }
+}
+
 bool NXS_UpdateIndicators(){
    double a[]; ArraySetAsSeries(a, true);
    if(CopyBuffer(g_hADX, 0, 1, 1, a) <= 0) return false; g_adx = a[0];
@@ -811,13 +827,20 @@ void OnTick(){
          // una posizione per strategia alla volta (come il backtest del sito):
          // niente nuova entrata se la strategia ha gia' un trade aperto.
          if(NXS_StrategyHasOpenPos(s.stratName)) continue;
+         // una decisione per barra del TF della strategia: niente segnali D1
+         // duplicati a ogni barra M15.
+         ENUM_TIMEFRAMES sTF = NXS_Profile_TF(s.stratName);
+         if(sTF == PERIOD_CURRENT) sTF = (ENUM_TIMEFRAMES)InpTFEntry;
+         datetime sBar = iTime(g_sym, sTF, 0);
+         if(sBar > 0 && NXS_GetLastTfBar(s.stratName) == sBar) continue;
          if(s.slPrice <= 0 || s.tpPrice <= 0) NXS_DefaultSLTP(s);   // assicura SL/TP del profilo
          if(s.slPrice <= 0 || s.tpPrice <= 0) continue;
-         g_nxsOpenCtxTag = EnumToString(NXS_Profile_TF(s.stratName));  // TF della strategia nel comment
+         g_nxsOpenCtxTag = EnumToString(sTF);  // TF della strategia nel comment
          ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(s, InpMagic + MAGIC_CORE, 1.0);
          g_nxsOpenCtxTag = "";
          if(orc == OPEN_OK){
             anyOpened = true;
+            NXS_SetLastTfBar(s.stratName, sBar);   // marca la barra TF come gia' agita
             NXS_StrategyRegisterTrade(s.stratName);
             NXS_LogTradeCSV("OPEN", 0, s.stratName, s.entryRef, 0,
                             s.slPrice, s.tpPrice, s.score, s.reason);
