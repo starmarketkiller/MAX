@@ -779,6 +779,39 @@ void OnTick(){
       return;   // il modello istituzionale sostituisce il best-per-bar
    }
 
+   // === PROFILI PER-STRATEGIA (v2.3.0) — "COME NEL BACKTEST DEL SITO" ========
+   // Ogni strategia apre in INDIPENDENZA col SUO profilo (SL/TP/HTF/rischio/TF),
+   // senza i gate soft (MTF/velocity/exhaustion/score/confluence) e senza il
+   // best-per-bar che apriva 1 sola op per barra. Restano solo: profilo
+   // abilitato, gate TF (bypass in multi-TF), Setup Matrix (max per direzione),
+   // scudo risk-of-ruin e sicurezza dura (preflight in NXS_OpenTrade).
+   // NB: NIENTE grid/recovery — il backtest del sito non li usa (era la
+   // martingala del core istituzionale, spenta apposta).
+   if(InpUseStrategyProfiles){
+      bool anyOpened = false;
+      for(int i = 0; i < n; i++){
+         SNXSSignal s = all[i];
+         if(s.dir == DIR_NONE) continue;
+         if(s.slPrice <= 0 || s.tpPrice <= 0) NXS_DefaultSLTP(s);   // assicura SL/TP del profilo
+         if(s.slPrice <= 0 || s.tpPrice <= 0) continue;
+         g_nxsOpenCtxTag = EnumToString(NXS_Profile_TF(s.stratName));  // TF della strategia nel comment
+         ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(s, InpMagic + MAGIC_CORE, 1.0);
+         g_nxsOpenCtxTag = "";
+         if(orc == OPEN_OK){
+            anyOpened = true;
+            NXS_StrategyRegisterTrade(s.stratName);
+            NXS_LogTradeCSV("OPEN", 0, s.stratName, s.entryRef, 0,
+                            s.slPrice, s.tpPrice, s.score, s.reason);
+         } else {
+            ENUM_NXS_BLOCK blk = NXS_BlkFromFailure(g_nxsLastOpenFailure);
+            NXS_Blk_Bump(blk);
+            NXS_Stats_RecordBlock(s.stratName, (int)blk);
+         }
+      }
+      if(anyOpened) g_lastTradeTime = TimeCurrent();
+      return;   // percorso profili: sostituisce best-per-bar e istituzionale
+   }
+
       bool opened = false;
       ENUM_NXS_EXEC_RC lastRc = EXEC_FAIL_NO_DIR;
       for(int i = 0; i < n; i++){
