@@ -102,6 +102,17 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "profile_disabled";
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.3.0 — "ogni strategia sul suo TF": la strategia apre solo se il TF del
+   // grafico coincide col suo timeframe ottimale (dal backtest multi-TF). Cosi'
+   // basta far girare un'istanza per TF (D1/H4/H1) e ognuna tradera' solo le SUE
+   // strategie. PERIOD_CURRENT nel profilo = nessun vincolo (usa il TF globale).
+   if(InpUseStrategyProfiles && InpProfileTFGate){
+      ENUM_TIMEFRAMES pTF = NXS_Profile_TF(sig.stratName);
+      if(pTF != PERIOD_CURRENT && (int)pTF != (int)InpTFEntry){
+         g_nxsLastOpenFailure = "wrong_tf";
+         return OPEN_FAIL_PREFLIGHT;
+      }
+   }
    // Disattivazione strategia da remoto (dashboard): blocca l'apertura in runtime.
    if(NXS_Runtime_StrategyBlocked(sig.stratName)){
       g_nxsLastOpenFailure = "strategy_disabled_dashboard";

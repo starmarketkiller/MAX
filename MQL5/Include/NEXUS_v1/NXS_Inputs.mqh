@@ -97,6 +97,7 @@ input bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar,
 // v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
 // (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
 input bool     InpUseStrategyProfiles  = true;
+input bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
 input double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 input double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
