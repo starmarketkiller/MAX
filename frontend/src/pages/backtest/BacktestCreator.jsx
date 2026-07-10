@@ -113,18 +113,20 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
     }
   };
 
-  // Multi-TF: per OGNI strategia trova il TIMEFRAME migliore (D1/H4/H1) + params
-  // + gate + rischio. Alcune rendono in daily, altre H4/H1: le tiene sul loro TF.
-  const runMultiTF = async () => {
+  // Multi-TF: per OGNI strategia trova il TIMEFRAME migliore + params + gate +
+  // rischio. `scalp`=true usa i TF bassi (M30/M15/M5) con TP stretto (profit-taker).
+  const runMultiTF = async (scalp = false) => {
     if (pool.length === 0) { setError("Seleziona almeno una strategia nel pool."); return; }
     setBusy(true); setError(""); setPerStrat(null); setRes(null);
     try {
       const { data } = await api.post("/backtest/optimize_multi_tf", {
-        symbol, pool, timeframes: ["1d", "4h", "1h"],
-        param_grid: { atr_sl: parseNums(slGrid, [1.0, 1.5, 2.0]),
-                      atr_tp: parseNums(tpGrid, [2.0, 3.0, 4.5]) },
+        symbol, pool,
+        timeframes: scalp ? ["30m", "15m", "5m"] : ["1d", "4h", "1h"],
+        param_grid: scalp
+          ? { atr_sl: parseNums(slGrid, [0.5, 0.8, 1.2]), atr_tp: parseNums(tpGrid, [0.8, 1.0, 1.5, 2.0]) }
+          : { atr_sl: parseNums(slGrid, [1.0, 1.5, 2.0]), atr_tp: parseNums(tpGrid, [2.0, 3.0, 4.5]) },
         initial_balance: baseCfg?.initial_balance ?? 10000,
-        min_trades: Number(minTrades) || 8, target_dd: 10.0,
+        min_trades: Number(minTrades) || (scalp ? 20 : 8), target_dd: 10.0,
       });
       setPerStrat(data);
     } catch (e) {
@@ -208,11 +210,17 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
               Best per strategia
             </button>
-            <button onClick={runMultiTF} disabled={busy}
+            <button onClick={() => runMultiTF(false)} disabled={busy}
               data-testid="bt-creator-multitf"
               className="w-full px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-              Multi-TF (best TF + rischio)
+              Multi-TF swing (D1/H4/H1)
+            </button>
+            <button onClick={() => runMultiTF(true)} disabled={busy}
+              data-testid="bt-creator-scalp"
+              className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+              Scalp (M30/M15/M5)
             </button>
             {error && <div className="text-xs text-rose-400">{error}</div>}
           </div>
