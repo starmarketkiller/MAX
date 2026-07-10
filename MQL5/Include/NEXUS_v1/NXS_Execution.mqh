@@ -172,7 +172,15 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // total so they can't compound past InpMaxTotalLotMult.
    double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
    if(stratRisk <= 0) stratRisk = 1.0;
-   double rawMult = MathMax(0.01, lotMult) * stratRisk;
+   // v2.3.0 — rischio PER-STRATEGIA dal backtest (dimensionato a budget DD).
+   // lots scala linearmente col rischio%, quindi applico il rapporto
+   // rischioProfilo/rischioGlobale come moltiplicatore (poi ci pensa il cap).
+   double profRiskMult = 1.0;
+   if(InpUseStrategyProfiles && InpRiskPercent > 0){
+      double pr = NXS_Profile_Risk(sig.stratName);
+      if(pr > 0) profRiskMult = pr / InpRiskPercent;
+   }
+   double rawMult = MathMax(0.01, lotMult) * stratRisk * profRiskMult;
    double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
    if(cappedMult < rawMult - 1e-9){
       PrintFormat("[NEXUS RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",

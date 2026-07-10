@@ -126,9 +126,18 @@ def _resample_4h(candles):
     return out
 
 
+_REAL_CACHE: dict = {}   # (symbol, interval) -> (ts, candles, src)
+
+
 def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
     """Dati OHLC reali via Yahoo (riusa sweep.fetch_yahoo, che passa dal proxy).
-    Converte {t,o,h,l,c} -> {time,open,high,low,close}. Fallback su get_ohlc."""
+    Converte {t,o,h,l,c} -> {time,open,high,low,close}. Fallback su get_ohlc.
+    Cache per (symbol, interval): l'ottimizzazione multi-TF fa migliaia di run
+    sullo stesso feed -> senza cache ri-scaricherebbe ogni volta."""
+    ckey = (symbol, interval)
+    hit = _REAL_CACHE.get(ckey)
+    if hit and time.time() - hit[0] < _CACHE_TTL:
+        return hit[1], hit[2]
     try:
         import sweep
         yf_int, yf_rng = _YF_INTERVAL.get(interval, ("1d", "10y"))
@@ -141,7 +150,9 @@ def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
             candles = _resample_4h(candles)
         if len(candles) < 60:
             raise ValueError("troppe poche barre reali")
-        return candles[-_REAL_BARS_CAP:], src
+        out = candles[-_REAL_BARS_CAP:]
+        _REAL_CACHE[ckey] = (time.time(), out, src)
+        return out, src
     except Exception as e:
         print(f"[backtest] real fetch fallita {symbol}/{interval}: {str(e)[:80]}")
         return get_ohlc(symbol, bars)

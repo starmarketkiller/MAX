@@ -87,15 +87,17 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
   // Manda una strategia trovata direttamente nella sezione Strategie (Locked Profile):
   // l'EA la applica al prossimo OnInit. Questo è il flusso Creator -> Strategie manuale.
   const lockRow = async (r) => {
+    const rawTf = (r.tf || perStrat?.timeframe || "1d").toLowerCase();
+    const tfLabel = rawTf === "1d" ? "D1" : rawTf.toUpperCase();
     try {
       await api.post("/backtest/locked_profile", {
-        symbol, timeframe: (perStrat?.timeframe || "D1").toUpperCase() === "1D" ? "D1"
-          : (perStrat?.timeframe || "D1").toUpperCase(),
-        label: `Creator · ${r.strategy} · SL${r.atr_sl}/TP${r.atr_tp} (${r.verdict})`,
+        symbol, timeframe: tfLabel,
+        label: `Creator · ${r.strategy} · ${tfLabel} · SL${r.atr_sl}/TP${r.atr_tp} (${r.verdict})`,
         base_cfg: {
-          symbol, period: "3y", interval: "1d", strategies: [r.strategy],
+          symbol, period: "3y", interval: rawTf, strategies: [r.strategy],
           atr_sl_mult: r.atr_sl, atr_tp_mult: r.atr_tp,
-          min_score: 50, max_concurrent: 1, risk_pct: baseCfg?.risk_pct ?? 1.0,
+          min_score: 50, max_concurrent: 1,
+          risk_pct: r.risk_pct != null ? r.risk_pct : (baseCfg?.risk_pct ?? 1.0),
           htf_bias: !!r.htf_filter, cooldown_bars: 0, initial_balance: baseCfg?.initial_balance ?? 10000,
         },
         overrides: {
@@ -109,6 +111,25 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
     } catch (e) {
       toast.error(e?.response?.data?.detail || e.message || "Errore lock");
     }
+  };
+
+  // Multi-TF: per OGNI strategia trova il TIMEFRAME migliore (D1/H4/H1) + params
+  // + gate + rischio. Alcune rendono in daily, altre H4/H1: le tiene sul loro TF.
+  const runMultiTF = async () => {
+    if (pool.length === 0) { setError("Seleziona almeno una strategia nel pool."); return; }
+    setBusy(true); setError(""); setPerStrat(null); setRes(null);
+    try {
+      const { data } = await api.post("/backtest/optimize_multi_tf", {
+        symbol, pool, timeframes: ["1d", "4h", "1h"],
+        param_grid: { atr_sl: parseNums(slGrid, [1.0, 1.5, 2.0]),
+                      atr_tp: parseNums(tpGrid, [2.0, 3.0, 4.5]) },
+        initial_balance: baseCfg?.initial_balance ?? 10000,
+        min_trades: Number(minTrades) || 8, target_dd: 10.0,
+      });
+      setPerStrat(data);
+    } catch (e) {
+      setError(e?.response?.data?.detail || e.message || "Errore multi-TF");
+    } finally { setBusy(false); }
   };
 
   const exportTable = () => {
@@ -187,6 +208,12 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
               Best per strategia
             </button>
+            <button onClick={runMultiTF} disabled={busy}
+              data-testid="bt-creator-multitf"
+              className="w-full px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
+              Multi-TF (best TF + rischio)
+            </button>
             {error && <div className="text-xs text-rose-400">{error}</div>}
           </div>
           {/* Pool */}
@@ -233,6 +260,8 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wide text-muted-foreground border-b border-border">
                       <th className="text-left px-3 py-2">Strategia</th>
+                      <th className="text-center px-2 py-2">TF</th>
+                      <th className="text-right px-2 py-2">R%</th>
                       <th className="text-right px-2 py-2">ATR SL</th>
                       <th className="text-right px-2 py-2">ATR TP</th>
                       <th className="text-center px-2 py-2">HTF</th>
@@ -250,6 +279,8 @@ export default function BacktestCreator({ symbols = [], catalog, baseCfg }) {
                     {perStrat.table.map((r) => (
                       <tr key={r.strategy} className="border-b border-border/50 hover:bg-secondary/30">
                         <td className="px-3 py-1.5 font-mono font-semibold">{r.strategy}</td>
+                        <td className="px-2 py-1.5 text-center font-mono text-[11px] text-emerald-300">{r.tf ? r.tf.toUpperCase() : "—"}</td>
+                        <td className="px-2 py-1.5 text-right font-mono text-[11px] text-amber-300">{r.risk_pct != null ? r.risk_pct : "—"}</td>
                         <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_sl}</td>
                         <td className="px-2 py-1.5 text-right font-mono text-sky-300">{r.atr_tp}</td>
                         <td className="px-2 py-1.5 text-center font-mono text-[11px]">{r.htf_filter ? "✓" : "—"}</td>

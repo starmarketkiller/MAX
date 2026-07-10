@@ -420,12 +420,15 @@ def _recipe_library_rows(symbol=""):
     rec = kv_get("strategy_recipe", {}) or {}
     table = rec.get("table") or []
     rsym = rec.get("symbol", "XAUUSD")
-    tf = str(rec.get("timeframe", "D1")).lower()
-    tf = "1d" if tf in ("d1", "1d", "") else tf
+    gtf = str(rec.get("timeframe", "D1")).lower()
+    gtf = "1d" if gtf in ("d1", "1d", "") else gtf
     if symbol and symbol != rsym:
         return []
     rows = []
     for r in table:
+        # multi-TF: ogni strategia porta il SUO timeframe migliore (campo 'tf').
+        tf = str(r.get("tf", gtf)).lower()
+        tf = "1d" if tf in ("d1", "1d", "") else tf
         variant = "baseline"
         if r.get("trailing_atr"):
             variant = f"trail_{r.get('trailing_atr')}atr"
@@ -439,6 +442,7 @@ def _recipe_library_rows(symbol=""):
                 "htf_filter": r.get("htf_filter"), "breakeven_r": r.get("breakeven_r"),
                 "trailing_atr": r.get("trailing_atr"), "verdict": r.get("verdict"),
                 "expectancy_r": r.get("exp"), "robust": r.get("robust"),
+                "risk_pct": r.get("risk_pct"), "best_tf": r.get("tf"),
             },
             "metrics": {
                 "n_trades": r.get("trades"), "win_rate_pct": r.get("wr"),
@@ -1882,6 +1886,103 @@ async def backtest_optimize_per_strategy(request: Request, user: str = Depends(r
             "grid": {"atr_sl": atr_sls, "atr_tp": atr_tps, "htf_filter": htf_opts,
                      "breakeven_r": be_opts, "trailing_atr": trail_opts},
             "combos_per_strategy": combos_per_strat, "table": table}
+
+
+@app.post("/api/backtest/optimize_multi_tf")
+async def backtest_optimize_multi_tf(request: Request, user: str = Depends(require_user)):
+    """Per OGNI strategia trova il TIMEFRAME migliore + parametri + gate + RISCHIO.
+    Alcune strategie rendono in daily, altre H4/H1: qui le proviamo su tutti i TF
+    e teniamo il TF vincente per ciascuna. Il rischio per-strategia e' dimensionato
+    a un budget di drawdown (target_dd), dando piu' size alle piu' robuste.
+
+    Body: {symbol, pool:[...], timeframes:[...], param_grid:{atr_sl,atr_tp,...},
+           initial_balance, min_trades, target_dd, max_risk, min_risk}"""
+    body = await request.json()
+    symbol = body.get("symbol", "XAUUSD")
+    pool = [s for s in (body.get("pool") or []) if s]
+    if not pool:
+        raise HTTPException(status_code=400, detail="campo 'pool' (strategie) mancante")
+    tf_list = body.get("timeframes") or ["1d", "4h", "1h"]
+    grid = body.get("param_grid") or {}
+    atr_sls = grid.get("atr_sl") or [1.0, 1.5, 2.0]
+    atr_tps = grid.get("atr_tp") or [2.0, 3.0, 4.5]
+    htf_opts   = grid.get("htf_filter", [False, True])
+    be_opts    = grid.get("breakeven_r", [0.0, 1.0])
+    trail_opts = grid.get("trailing_atr", [0.0, 2.0])
+    start_eq = float(body.get("initial_balance", 10000.0))
+    target_dd = float(body.get("target_dd", 10.0))   # budget DD% per strategia
+    max_risk = float(body.get("max_risk", 2.0))
+    min_risk = float(body.get("min_risk", 0.25))
+    try:
+        min_trades = max(1, int(body.get("min_trades", 8)))
+    except (ValueError, TypeError):
+        min_trades = 8
+    rank = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
+
+    def _eval(strat, tf, sl, tp, htf, be, tr):
+        try:
+            r = backtest.run_backtest(
+                symbol=symbol, timeframe=tf, strategy=strat, strategies=[strat],
+                risk_pct=1.0, atr_sl=float(sl), atr_tp=float(tp), start_equity=start_eq,
+                htf_filter=bool(htf), breakeven_r=float(be), trailing_atr=float(tr))
+        except Exception:
+            return None
+        n = r.get("trades", 0); pf = r.get("profit_factor") or 0.0
+        exp = r.get("expectancy_r", 0.0); dd = r.get("max_dd_pct", 0.0)
+        v, why = bt_verdict._verdict(
+            {"executed": n, "profit_factor": pf, "expectancy_R": exp,
+             "winrate_pct": r.get("win_rate", 0), "setup": n}, min_trades)
+        robust = round(exp * (n ** 0.5) / (1.0 + max(0.0, dd) / 10.0), 3)
+        return {"strategy": strat, "tf": tf, "atr_sl": float(sl), "atr_tp": float(tp),
+                "htf_filter": bool(htf), "breakeven_r": float(be), "trailing_atr": float(tr),
+                "trades": n, "pf": round(pf, 2), "net": round(r.get("net_pnl", 0.0), 2),
+                "exp": round(exp, 3), "dd": round(dd, 2), "wr": r.get("win_rate", 0),
+                "verdict": v, "why": why, "robust": robust}
+
+    def _key(c):
+        return (rank.get(c["verdict"], 9), -c["robust"])
+
+    def _best_for_tf(strat, tf):
+        best = None
+        for sl in atr_sls:
+            for tp in atr_tps:
+                for htf in htf_opts:
+                    c = _eval(strat, tf, sl, tp, htf, 0.0, 0.0)
+                    if c and (best is None or _key(c) < _key(best)):
+                        best = c
+        if not best:
+            return None
+        for be in be_opts:
+            for tr in trail_opts:
+                if be == 0.0 and tr == 0.0:
+                    continue
+                c = _eval(strat, tf, best["atr_sl"], best["atr_tp"], best["htf_filter"], be, tr)
+                if c and _key(c) < _key(best):
+                    best = c
+        return best
+
+    table = []
+    for strat in pool:
+        best = None
+        for tf in tf_list:
+            c = _best_for_tf(strat, tf)
+            if c and (best is None or _key(c) < _key(best)):
+                best = c
+        if not best:
+            continue
+        # rischio per-strategia: scala a budget DD (dd% scala ~lineare col rischio).
+        dd = max(0.5, best["dd"])
+        sug = target_dd / dd
+        if rank.get(best["verdict"], 9) >= 2:   # DEBOLE o peggio -> prudenza
+            sug *= 0.5
+        best["risk_pct"] = round(min(max_risk, max(min_risk, sug)), 2)
+        table.append(best)
+
+    table.sort(key=lambda x: (rank.get(x["verdict"], 9), -x["robust"]))
+    payload = {"symbol": symbol, "timeframes": tf_list, "target_dd": target_dd,
+               "table": table, "at": iso()}
+    kv_set("creator_multi_tf_last", payload)
+    return payload
 
 
 @app.post("/api/backtest/creator/save")
