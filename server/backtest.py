@@ -237,12 +237,15 @@ def _prep(candles):
     return {
         "candles": candles,
         "close": closes,
+        "ema5": ema_series(closes, 5),
+        "ema9": ema_series(closes, 9),
         "ema20": ema_series(closes, 20),
         "ema50": ema_series(closes, 50),
         "ema12": ema_series(closes, 12),
         "ema26": ema_series(closes, 26),
         "ema200": ema_series(closes, 200),
         "rsi": rsi_series(closes, 14),
+        "rsi7": rsi_series(closes, 7),
         "atr": atr_series(candles, 14),
     }
 
@@ -597,8 +600,82 @@ def sig_cisd(c, ind, i):
     return 0
 
 
+# --------------------------------------------------------------------------- #
+# SCALP / profit-taker (v2.3.0) - pensate per M15/M30: ingressi veloci, TP
+# stretto. Registrate nel motore per l'ottimizzazione multi-TF sui TF bassi.
+# --------------------------------------------------------------------------- #
+def sig_scalp_ema(c, ind, i):
+    # Momentum pop: EMA5 incrocia EMA9 nel senso del micro-trend (EMA20),
+    # con RSI7 non estremo. Cavalca lo scatto, esce presto (TP basso).
+    e5, e9, e20 = ind["ema5"][i], ind["ema9"][i], ind["ema20"][i]
+    e5p, e9p = ind["ema5"][i - 1], ind["ema9"][i - 1]
+    r = ind["rsi7"][i]
+    if None in (e5, e9, e20, e5p, e9p, r):
+        return 0
+    if e5p <= e9p and e5 > e9 and ind["close"][i] > e20 and r < 75:
+        return 1
+    if e5p >= e9p and e5 < e9 and ind["close"][i] < e20 and r > 25:
+        return -1
+    return 0
+
+
+def sig_scalp_bb_fade(c, ind, i):
+    # Mean-reversion profit-taker: chiusura oltre la banda 2sigma e RIENTRO ->
+    # snap-back veloce verso la media. Classico scalp di ritorno.
+    closes = ind["close"]
+    if i < 21 or closes[i] is None:
+        return 0
+    m = sma(closes, 20, i)
+    sd = _std(closes, 20, i)
+    if m is None or sd is None or sd == 0:
+        return 0
+    up, lo = m + 2.0 * sd, m - 2.0 * sd
+    px, ppx = closes[i], closes[i - 1]
+    if ppx < lo and px > lo:      # rientro dal basso
+        return 1
+    if ppx > up and px < up:      # rientro dall'alto
+        return -1
+    return 0
+
+
+def sig_scalp_rsi_snap(c, ind, i):
+    # RSI7 estremo + candela di reversal: rimbalzo veloce. TP stretto.
+    r, rp = ind["rsi7"][i], ind["rsi7"][i - 1]
+    if None in (r, rp) or i < 2:
+        return 0
+    cur = c[i]
+    if rp < 20 and r >= rp and _bull(cur):
+        return 1
+    if rp > 80 and r <= rp and _bear(cur):
+        return -1
+    return 0
+
+
+def sig_scalp_range_brk(c, ind, i, n=12):
+    # Micro-breakout momentum: rompe il massimo/minimo delle ultime n barre con
+    # corpo pieno (momentum). Profit-taker: entra sullo scatto, TP corto.
+    if i < n + 1:
+        return 0
+    atr = ind["atr"][i]
+    if atr is None or atr == 0:
+        return 0
+    cur = c[i]
+    hh = max(x["high"] for x in c[i - n:i])
+    ll = min(x["low"] for x in c[i - n:i])
+    body = abs(cur["close"] - cur["open"])
+    if cur["close"] > hh and body > 0.4 * atr and _bull(cur):
+        return 1
+    if cur["close"] < ll and body > 0.4 * atr and _bear(cur):
+        return -1
+    return 0
+
+
 # Strategie con logica Python reale (le altre usano i risultati reali importati)
 STRATEGIES = {
+    "SCALP_EMA": sig_scalp_ema,
+    "SCALP_BB_FADE": sig_scalp_bb_fade,
+    "SCALP_RSI_SNAP": sig_scalp_rsi_snap,
+    "SCALP_RANGE_BRK": sig_scalp_range_brk,
     "EMA_PULLBACK": sig_ema_pullback,
     "MACD": sig_macd,
     "RSI_DIV": sig_rsi_div,
