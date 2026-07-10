@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.30"
+#property version   "2.31"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -198,6 +198,22 @@ void NXS_MTF_Release(){
          if(hs[j] != INVALID_HANDLE) IndicatorRelease(hs[j]);
    }
    g_mtfCount = 0;
+}
+
+// v2.3.1 — "UNA posizione per strategia alla volta" (come il motore del sito,
+// che tiene pos=None finche' non chiude). Evita lo stacking di entrate correlate
+// che gonfia i trade e il drawdown. Legge il nome strategia dal comment (campo [1]).
+bool NXS_StrategyHasOpenPos(const string name){
+   for(int i = PositionsTotal()-1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      string cmt = PositionGetString(POSITION_COMMENT);
+      string pp[]; int npp = StringSplit(cmt, '|', pp);
+      if(npp >= 2 && pp[1] == name) return true;
+   }
+   return false;
 }
 
 bool NXS_UpdateIndicators(){
@@ -792,6 +808,9 @@ void OnTick(){
       for(int i = 0; i < n; i++){
          SNXSSignal s = all[i];
          if(s.dir == DIR_NONE) continue;
+         // una posizione per strategia alla volta (come il backtest del sito):
+         // niente nuova entrata se la strategia ha gia' un trade aperto.
+         if(NXS_StrategyHasOpenPos(s.stratName)) continue;
          if(s.slPrice <= 0 || s.tpPrice <= 0) NXS_DefaultSLTP(s);   // assicura SL/TP del profilo
          if(s.slPrice <= 0 || s.tpPrice <= 0) continue;
          g_nxsOpenCtxTag = EnumToString(NXS_Profile_TF(s.stratName));  // TF della strategia nel comment
