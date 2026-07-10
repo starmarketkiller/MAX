@@ -106,7 +106,8 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // grafico coincide col suo timeframe ottimale (dal backtest multi-TF). Cosi'
    // basta far girare un'istanza per TF (D1/H4/H1) e ognuna tradera' solo le SUE
    // strategie. PERIOD_CURRENT nel profilo = nessun vincolo (usa il TF globale).
-   if(InpUseStrategyProfiles && InpProfileTFGate){
+   // In modalita' InpProfileMultiTF il TF e' gia' garantito dal collector -> no gate.
+   if(InpUseStrategyProfiles && InpProfileTFGate && !InpProfileMultiTF){
       ENUM_TIMEFRAMES pTF = NXS_Profile_TF(sig.stratName);
       if(pTF != PERIOD_CURRENT && (int)pTF != (int)InpTFEntry){
          g_nxsLastOpenFailure = "wrong_tf";

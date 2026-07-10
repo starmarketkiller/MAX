@@ -104,11 +104,101 @@ bool NXS_CreateHandles(){
    return true;
 }
 
+// v2.3.0 — handle "originali" del TF di ingresso, catturati per poterli
+// RIPRISTINARE dopo un passaggio multi-TF (evita leak/double-release).
+int g_orig_hADX, g_orig_hRSI, g_orig_hBB, g_orig_hMACD, g_orig_hSAR, g_orig_hATR,
+    g_orig_hEMA200, g_orig_hEMA9, g_orig_hEMA21, g_orig_hICHI;
+bool g_origCaptured = false;
+
+void NXS_CaptureOriginalHandles(){
+   g_orig_hADX=g_hADX; g_orig_hRSI=g_hRSI; g_orig_hBB=g_hBB; g_orig_hMACD=g_hMACD;
+   g_orig_hSAR=g_hSAR; g_orig_hATR=g_hATR; g_orig_hEMA200=g_hEMA200;
+   g_orig_hEMA9=g_hEMA9; g_orig_hEMA21=g_hEMA21; g_orig_hICHI=g_hICHI;
+   g_origCaptured = true;
+}
+
 void NXS_ReleaseHandles(){
-   int hs[] = { g_hADX,g_hRSI,g_hBB,g_hMACD,g_hSAR,g_hATR,
-                g_hEMA200,g_hEMA9,g_hEMA21,g_hEMA_HTF,g_hEMA_MTF,g_hICHI };
+   // Rilascia SEMPRE gli originali (non i puntatori correnti, che in multi-TF
+   // possono puntare alla cache -> li rilascia NXS_MTF_Release).
+   int hs[] = { g_origCaptured?g_orig_hADX:g_hADX, g_origCaptured?g_orig_hRSI:g_hRSI,
+                g_origCaptured?g_orig_hBB:g_hBB, g_origCaptured?g_orig_hMACD:g_hMACD,
+                g_origCaptured?g_orig_hSAR:g_hSAR, g_origCaptured?g_orig_hATR:g_hATR,
+                g_origCaptured?g_orig_hEMA200:g_hEMA200, g_origCaptured?g_orig_hEMA9:g_hEMA9,
+                g_origCaptured?g_orig_hEMA21:g_hEMA21, g_hEMA_HTF, g_hEMA_MTF,
+                g_origCaptured?g_orig_hICHI:g_hICHI };
    for(int i = 0; i < ArraySize(hs); i++)
       if(hs[i] != INVALID_HANDLE) IndicatorRelease(hs[i]);
+}
+
+// ---------------------------------------------------------------------------
+// v2.3.0 — SINGLE-CHART MULTI-TIMEFRAME
+// Cache di handle per TF (D1/H4/H1...): una sola istanza puo' calcolare ogni
+// strategia sul SUO timeframe ripuntando i g_h* alla cache e rifacendo
+// NXS_UpdateIndicators(). Le funzioni-strategia (che leggono i VALORI globali
+// g_adx/g_atr/g_ema200...) non vengono toccate.
+// ---------------------------------------------------------------------------
+#define NXS_MTF_MAX 4
+ENUM_TIMEFRAMES g_mtfTF[NXS_MTF_MAX];
+int g_mtf_hADX[NXS_MTF_MAX], g_mtf_hRSI[NXS_MTF_MAX], g_mtf_hBB[NXS_MTF_MAX],
+    g_mtf_hMACD[NXS_MTF_MAX], g_mtf_hSAR[NXS_MTF_MAX], g_mtf_hATR[NXS_MTF_MAX],
+    g_mtf_hEMA200[NXS_MTF_MAX], g_mtf_hEMA9[NXS_MTF_MAX], g_mtf_hEMA21[NXS_MTF_MAX],
+    g_mtf_hICHI[NXS_MTF_MAX];
+int g_mtfCount = 0;
+ENUM_TIMEFRAMES g_activeTF = PERIOD_CURRENT;   // TF su cui girano ora le strategie
+
+int NXS_MTF_Index(ENUM_TIMEFRAMES tf){
+   for(int i = 0; i < g_mtfCount; i++) if(g_mtfTF[i] == tf) return i;
+   if(g_mtfCount >= NXS_MTF_MAX) return -1;
+   int i = g_mtfCount;
+   g_mtf_hADX[i]   = iADX(g_sym, tf, InpADX_Period);
+   g_mtf_hRSI[i]   = iRSI(g_sym, tf, InpRSI_Period, PRICE_CLOSE);
+   g_mtf_hBB[i]    = iBands(g_sym, tf, InpBB_Period, 0, InpBB_Dev, PRICE_CLOSE);
+   g_mtf_hMACD[i]  = iMACD(g_sym, tf, InpMACD_Fast, InpMACD_Slow, InpMACD_Signal, PRICE_CLOSE);
+   g_mtf_hSAR[i]   = iSAR(g_sym, tf, InpSAR_Step, InpSAR_Max);
+   g_mtf_hATR[i]   = iATR(g_sym, tf, InpATR_Period);
+   g_mtf_hEMA200[i]= iMA(g_sym, tf, InpEMA200_Period, 0, MODE_EMA, PRICE_CLOSE);
+   g_mtf_hEMA9[i]  = iMA(g_sym, tf, InpEMA9_Period, 0, MODE_EMA, PRICE_CLOSE);
+   g_mtf_hEMA21[i] = iMA(g_sym, tf, InpEMA21_Period, 0, MODE_EMA, PRICE_CLOSE);
+   g_mtf_hICHI[i]  = iIchimoku(g_sym, tf, 9, 26, 52);
+   if(g_mtf_hADX[i]==INVALID_HANDLE || g_mtf_hRSI[i]==INVALID_HANDLE ||
+      g_mtf_hBB[i]==INVALID_HANDLE  || g_mtf_hMACD[i]==INVALID_HANDLE ||
+      g_mtf_hSAR[i]==INVALID_HANDLE || g_mtf_hATR[i]==INVALID_HANDLE ||
+      g_mtf_hEMA200[i]==INVALID_HANDLE || g_mtf_hEMA9[i]==INVALID_HANDLE ||
+      g_mtf_hEMA21[i]==INVALID_HANDLE || g_mtf_hICHI[i]==INVALID_HANDLE)
+      return -1;
+   g_mtfTF[i] = tf; g_mtfCount++;
+   return i;
+}
+
+// Punta i g_h* alla cache del TF e ricalcola i valori. false se non pronto.
+bool NXS_ActivateTF(ENUM_TIMEFRAMES tf){
+   int i = NXS_MTF_Index(tf);
+   if(i < 0) return false;
+   g_hADX=g_mtf_hADX[i]; g_hRSI=g_mtf_hRSI[i]; g_hBB=g_mtf_hBB[i]; g_hMACD=g_mtf_hMACD[i];
+   g_hSAR=g_mtf_hSAR[i]; g_hATR=g_mtf_hATR[i]; g_hEMA200=g_mtf_hEMA200[i];
+   g_hEMA9=g_mtf_hEMA9[i]; g_hEMA21=g_mtf_hEMA21[i]; g_hICHI=g_mtf_hICHI[i];
+   g_activeTF = tf;
+   return NXS_UpdateIndicators();
+}
+
+// Ripristina gli handle del TF di ingresso e ricalcola i valori.
+void NXS_ActivateOriginal(){
+   if(!g_origCaptured) return;
+   g_hADX=g_orig_hADX; g_hRSI=g_orig_hRSI; g_hBB=g_orig_hBB; g_hMACD=g_orig_hMACD;
+   g_hSAR=g_orig_hSAR; g_hATR=g_orig_hATR; g_hEMA200=g_orig_hEMA200;
+   g_hEMA9=g_orig_hEMA9; g_hEMA21=g_orig_hEMA21; g_hICHI=g_orig_hICHI;
+   g_activeTF = InpTFEntry;
+   NXS_UpdateIndicators();
+}
+
+void NXS_MTF_Release(){
+   for(int i = 0; i < g_mtfCount; i++){
+      int hs[] = { g_mtf_hADX[i],g_mtf_hRSI[i],g_mtf_hBB[i],g_mtf_hMACD[i],g_mtf_hSAR[i],
+                   g_mtf_hATR[i],g_mtf_hEMA200[i],g_mtf_hEMA9[i],g_mtf_hEMA21[i],g_mtf_hICHI[i] };
+      for(int j = 0; j < ArraySize(hs); j++)
+         if(hs[j] != INVALID_HANDLE) IndicatorRelease(hs[j]);
+   }
+   g_mtfCount = 0;
 }
 
 bool NXS_UpdateIndicators(){
@@ -189,8 +279,11 @@ SNXSSignal NXS_PickBestSignal(SNXSSweep &sw){
 // signal first; if a non-critical gate blocks it, falls back to
 // the next-best until one passes or the list is exhausted.
 // ============================================================
-int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
-                          SNXSSignal &out[]){
+// v2.3.0 — raccolta "grezza": chiama tutte le strategie e applica il gate HTF
+// per-strategia sul TF ATTIVO (g_activeTF). Estratta da NXS_CollectAllSignals
+// per poter essere richiamata una volta per TF nel multi-timeframe.
+int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
+                   SNXSSignal &out[]){
    int n = 0;
    // Classic 16
    out[n++] = NXS_Strat_ADXRSI();
@@ -243,7 +336,10 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
    if(InpUseStrategyProfiles){
-      double px200 = iClose(g_sym, InpTFEntry, 0);
+      // px200 sul TF ATTIVO: in multi-TF ogni passaggio confronta col trend del
+      // suo timeframe; in single-TF g_activeTF resta InpTFEntry (comportamento invariato).
+      ENUM_TIMEFRAMES atf = (g_activeTF == PERIOD_CURRENT) ? (ENUM_TIMEFRAMES)InpTFEntry : g_activeTF;
+      double px200 = iClose(g_sym, atf, 0);
       for(int k = 0; k < n; k++){
          if(out[k].dir == DIR_NONE) continue;
          bool needHtf;
@@ -255,11 +351,37 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
          }
       }
    }
+   return n;
+}
 
-   // v2.0.5 stats: record called/setup for every invoked strategy
+//+------------------------------------------------------------------+
+//| Raccolta segnali: single-TF (default) oppure MULTI-TF su un solo  |
+//| grafico (InpProfileMultiTF) -> ogni strategia sul suo timeframe.  |
+//+------------------------------------------------------------------+
+int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
+                          SNXSSignal &out[]){
+   int n = 0;
+   if(InpUseStrategyProfiles && InpProfileMultiTF){
+      // Un passaggio per TF: attiva gli handle del TF, raccogli, e tieni solo
+      // le strategie il cui TF ottimale (dal backtest) coincide col passaggio.
+      ENUM_TIMEFRAMES passes[3];
+      passes[0] = PERIOD_D1; passes[1] = PERIOD_H4; passes[2] = PERIOD_H1;
+      for(int p = 0; p < 3; p++){
+         if(!NXS_ActivateTF(passes[p])) continue;   // handle non pronti: salta il TF
+         SNXSSignal tmp[64];
+         int m = NXS_CollectRaw(sw, swExt, amd, tmp);
+         for(int k = 0; k < m && n < ArraySize(out); k++){
+            if(NXS_Profile_TF(tmp[k].stratName) != passes[p]) continue;
+            out[n++] = tmp[k];
+         }
+      }
+      NXS_ActivateOriginal();   // ripristina il TF di ingresso per il resto del tick
+   } else {
+      n = NXS_CollectRaw(sw, swExt, amd, out);
+   }
+
+   // v2.0.5 stats + sourceTF (una volta sola, sui segnali tenuti)
    for(int k = 0; k < n; k++){
-      // v2.0.21 — assicura il TF di origine su ogni segnale (anche quelli che
-      // impostano SL/TP propri senza passare da NXS_DefaultSLTP).
       if(out[k].sourceTF == PERIOD_CURRENT)
          out[k].sourceTF = NXS_StrategySourceTF(out[k].stratName);
       if(StringLen(out[k].stratName) > 0) NXS_Stats_RecordCalled(out[k].stratName);
@@ -294,6 +416,8 @@ int OnInit(){
    }
 
    if(!NXS_CreateHandles()) return INIT_FAILED;
+   NXS_CaptureOriginalHandles();   // v2.3.0: per il ripristino dopo i passaggi multi-TF
+   g_activeTF = InpTFEntry;
    NXS_MTF_CreateHandles();
 
    NXS_Runtime_Init();
@@ -353,7 +477,9 @@ void OnDeinit(const int reason){
    EventKillTimer();
    NXS_Stats_Deinit();   // v2.0.5 final export
    NXS_State_Save();
+   NXS_ActivateOriginal();     // v2.3.0: assicura g_h* = originali prima di rilasciarli
    NXS_ReleaseHandles();
+   NXS_MTF_Release();          // v2.3.0: cache handle multi-TF per-strategia
    NXS_MTF_ReleaseHandles();
    NXS_HandlePool_Release();   // v2.0.9 Sprint 1
    if(InpShowDashboard) NXS_Dashboard_Cleanup();
