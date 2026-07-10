@@ -24,8 +24,8 @@ double _smc_tp(double entry, ENUM_NXS_DIR dir, double atrMult){
 SNXSSignal NXS_Strat_TurtleSoup(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "TURTLE_SOUP";
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double atr = _smc_atr();
    double bodyAbs = MathAbs(c1 - o1);
    if(bodyAbs < atr * 0.4) return s;        // v2.0.6: rejection candle must have strong body
@@ -58,10 +58,10 @@ SNXSSignal NXS_Strat_IFVG_Reversal(){
    s.strat = STRAT_FVG_CONT; s.stratName = "IFVG";
    // AUDITPATCH: an FVG is a 3-candle imbalance. Use candle 4 and candle 2
    // around candle 3; candle 1 is then free to invalidate/reject the zone.
-   double h2 = iHigh(g_sym, InpTFEntry, 2), l2 = iLow(g_sym, InpTFEntry, 2);
-   double h4 = iHigh(g_sym, InpTFEntry, 4), l4 = iLow(g_sym, InpTFEntry, 4);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double h2 = iHigh(g_sym, NXS_EffTF(), 2), l2 = iLow(g_sym, NXS_EffTF(), 2);
+   double h4 = iHigh(g_sym, NXS_EffTF(), 4), l4 = iLow(g_sym, NXS_EffTF(), 4);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double atr = _smc_atr();
    bool reactionBear = (c1 < o1) && (MathAbs(c1-o1) > atr * 0.3);
    bool reactionBull = (c1 > o1) && (MathAbs(c1-o1) > atr * 0.3);
@@ -91,12 +91,12 @@ SNXSSignal NXS_Strat_IFVG_Reversal(){
 SNXSSignal NXS_Strat_FVG_Mitigation(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_FVG_CONT; s.stratName = "FVG_MIT";
-   double h2 = iHigh(g_sym, InpTFEntry, 5), l2 = iLow(g_sym, InpTFEntry, 5);
-   double h0 = iHigh(g_sym, InpTFEntry, 7), l0 = iLow(g_sym, InpTFEntry, 7);
+   double h2 = iHigh(g_sym, NXS_EffTF(), 5), l2 = iLow(g_sym, NXS_EffTF(), 5);
+   double h0 = iHigh(g_sym, NXS_EffTF(), 7), l0 = iLow(g_sym, NXS_EffTF(), 7);
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    double atr = _smc_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double bodyAbs = MathAbs(c1 - o1);
    bool rejectionBull = (c1 > o1) && bodyAbs > atr * 0.35;
    bool rejectionBear = (c1 < o1) && bodyAbs > atr * 0.35;
@@ -147,8 +147,8 @@ SNXSSignal NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw){
    if(!sw.confirmed) return s;
    // AUDITPATCH: 3-candle FVG (bars 4 and 2), plus the BMS that the
    // strategy name promises. The prior adjacent-candle gap was exceptionally rare.
-   double h2 = iHigh(g_sym, InpTFEntry, 2), l2 = iLow(g_sym, InpTFEntry, 2);
-   double h4 = iHigh(g_sym, InpTFEntry, 4), l4 = iLow(g_sym, InpTFEntry, 4);
+   double h2 = iHigh(g_sym, NXS_EffTF(), 2), l2 = iLow(g_sym, NXS_EffTF(), 2);
+   double h4 = iHigh(g_sym, NXS_EffTF(), 4), l4 = iLow(g_sym, NXS_EffTF(), 4);
    double atr = _smc_atr();
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    bool bullFVG = (l2 > h4 + atr * 0.1);
@@ -182,20 +182,20 @@ SNXSSignal NXS_Strat_SMS_BMS_RTO(){
    s.strat = STRAT_STRUCT_REACT; s.stratName = "SMS_BMS_RTO";
    double atr = _smc_atr();
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double bodyAbs = MathAbs(c1 - o1);
    bool rejectionBull = (c1 > o1) && bodyAbs > atr * 0.3;
    bool rejectionBear = (c1 < o1) && bodyAbs > atr * 0.3;
    // Quick HH/LH/LL/HL via iHighest/iLowest in two windows
-   int    hiIdxA = iHighest(g_sym, InpTFEntry, MODE_HIGH, 10, 1);
-   int    hiIdxB = iHighest(g_sym, InpTFEntry, MODE_HIGH, 20, 11);
-   int    loIdxA = iLowest (g_sym, InpTFEntry, MODE_LOW,  10, 1);
-   int    loIdxB = iLowest (g_sym, InpTFEntry, MODE_LOW,  20, 11);
-   double hi_recent = iHigh(g_sym, InpTFEntry, hiIdxA);
-   double hi_older  = iHigh(g_sym, InpTFEntry, hiIdxB);
-   double lo_recent = iLow (g_sym, InpTFEntry, loIdxA);
-   double lo_older  = iLow (g_sym, InpTFEntry, loIdxB);
+   int    hiIdxA = iHighest(g_sym, NXS_EffTF(), MODE_HIGH, 10, 1);
+   int    hiIdxB = iHighest(g_sym, NXS_EffTF(), MODE_HIGH, 20, 11);
+   int    loIdxA = iLowest (g_sym, NXS_EffTF(), MODE_LOW,  10, 1);
+   int    loIdxB = iLowest (g_sym, NXS_EffTF(), MODE_LOW,  20, 11);
+   double hi_recent = iHigh(g_sym, NXS_EffTF(), hiIdxA);
+   double hi_older  = iHigh(g_sym, NXS_EffTF(), hiIdxB);
+   double lo_recent = iLow (g_sym, NXS_EffTF(), loIdxA);
+   double lo_older  = iLow (g_sym, NXS_EffTF(), loIdxB);
    bool failureLow  = (lo_recent > lo_older);   // HL = failure to make LL
    bool failureHigh = (hi_recent < hi_older);   // LH = failure to make HH
    double midUp   = (hi_recent + lo_recent) * 0.5;
@@ -325,8 +325,8 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    double w1Hi = iClose(g_sym, PERIOD_W1, idxW1Hi);
    double w1Lo = iClose(g_sym, PERIOD_W1, idxW1Lo);
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double bodyAbs = MathAbs(c1 - o1);
    if(bodyAbs <= atr * 0.5) return s;          // require strong body
    // Fresh check: did price already touch this level in last 20 H4 bars?

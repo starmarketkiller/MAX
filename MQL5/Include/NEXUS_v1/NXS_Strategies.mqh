@@ -68,6 +68,9 @@ void NXS_DefaultSLTP(SNXSSignal &sig){
    // v2.0.21 — SL/TP proporzionati al TF di origine del segnale.
    if(sig.sourceTF == PERIOD_CURRENT) sig.sourceTF = NXS_StrategySourceTF(sig.stratName);
    double tfMult = NXS_TF_SLTPMult(sig.sourceTF);
+   // v2.3.0 — in multi-TF g_atr e' GIA' l'ATR del TF della strategia: niente
+   // doppio conteggio, tfMult=1 (altrimenti scalerebbe due volte).
+   if(InpUseStrategyProfiles && InpProfileMultiTF) tfMult = 1.0;
    double sl = g_atr * slMult * tfMult;
    double tp = g_atr * tpMult * tfMult;
    if(sig.dir == DIR_BUY){
@@ -86,7 +89,7 @@ SNXSSignal NXS_Strat_ADXRSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ADX_RSI; s.stratName = "ADX_RSI";
    if(!InpStrat_ADX_RSI || !NXS_SelectorAllows(1)) return s;
    if(g_adx < 22) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
    if(g_adxPlus > g_adxMinus && g_rsi > 50 && price > g_ema200){
       s.dir = DIR_BUY; s.score = 60 + MathMin(g_adx, 50) * 0.4; s.reason = "ADX_bull";
    } else if(g_adxMinus > g_adxPlus && g_rsi < 50 && price < g_ema200){
@@ -100,9 +103,9 @@ SNXSSignal NXS_Strat_ADXRSI(){
 SNXSSignal NXS_Strat_Bollinger(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BOLLINGER; s.stratName = "BOLLINGER";
    if(!InpStrat_BOLLINGER || !NXS_SelectorAllows(2)) return s;
-   double close = iClose(g_sym, InpTFEntry, 1);
-   double low   = iLow  (g_sym, InpTFEntry, 1);
-   double high  = iHigh (g_sym, InpTFEntry, 1);
+   double close = iClose(g_sym, NXS_EffTF(), 1);
+   double low   = iLow  (g_sym, NXS_EffTF(), 1);
+   double high  = iHigh (g_sym, NXS_EffTF(), 1);
    if(low <= g_bbLower && close > g_bbLower && g_rsi < 35){
       s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_rejection";
    } else if(high >= g_bbUpper && close < g_bbUpper && g_rsi > 65){
@@ -116,7 +119,7 @@ SNXSSignal NXS_Strat_Bollinger(){
 SNXSSignal NXS_Strat_MACD(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_MACD; s.stratName = "MACD";
    if(!InpStrat_MACD || !NXS_SelectorAllows(3)) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
    if(g_macd > g_macdSig && g_macd > 0 && price > g_ema200){
       s.dir = DIR_BUY;  s.score = 65; s.reason = "MACD_bull_above_ema200";
    } else if(g_macd < g_macdSig && g_macd < 0 && price < g_ema200){
@@ -130,7 +133,7 @@ SNXSSignal NXS_Strat_MACD(){
 SNXSSignal NXS_Strat_SAR(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_SAR; s.stratName = "SAR";
    if(!InpStrat_SAR || !NXS_SelectorAllows(4)) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
    if(g_sar < price && g_ema9 > g_ema21){
       s.dir = DIR_BUY;  s.score = 60; s.reason = "SAR_below_price";
    } else if(g_sar > price && g_ema9 < g_ema21){
@@ -144,7 +147,7 @@ SNXSSignal NXS_Strat_SAR(){
 SNXSSignal NXS_Strat_TSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
    if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
    if(g_rsi > 55 && g_ema9 > g_ema21 && price > g_ema21){
       s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI_bull";   // v2.0.9 +8
    } else if(g_rsi < 45 && g_ema9 < g_ema21 && price < g_ema21){
@@ -158,11 +161,11 @@ SNXSSignal NXS_Strat_TSI(){
 SNXSSignal NXS_Strat_Bjorgum(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BJORGUM; s.stratName = "BJORGUM";
    if(!InpStrat_BJORGUM || !NXS_SelectorAllows(6)) return s;
-   int hh = iHighest(g_sym, InpTFEntry, MODE_HIGH, 30, 2);
-   int ll = iLowest (g_sym, InpTFEntry, MODE_LOW,  30, 2);
-   double pivHi = iHigh(g_sym, InpTFEntry, hh);
-   double pivLo = iLow (g_sym, InpTFEntry, ll);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   int hh = iHighest(g_sym, NXS_EffTF(), MODE_HIGH, 30, 2);
+   int ll = iLowest (g_sym, NXS_EffTF(), MODE_LOW,  30, 2);
+   double pivHi = iHigh(g_sym, NXS_EffTF(), hh);
+   double pivLo = iLow (g_sym, NXS_EffTF(), ll);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double dist = g_atr * 0.5;
    if(MathAbs(c1 - pivLo) <= dist && c1 > pivLo){
       s.dir = DIR_BUY;  s.score = 68; s.reason = "Bjorgum_bounce_low";    // v2.0.9 +4
@@ -178,8 +181,8 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LIQ_SWEEP; s.stratName = "LIQ_SWEEP";
    if(!InpStrat_LIQ_SWEEP || !NXS_SelectorAllows(7)) return s;
    if(!sw.confirmed) return s;
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    if(sw.dir == DIR_BUY && c1 > o1){
       s.dir = DIR_BUY;  s.score = 72; s.reason = "Sweep_low_reversal";
    } else if(sw.dir == DIR_SELL && c1 < o1){
@@ -193,12 +196,12 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
 SNXSSignal NXS_Strat_FVG(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_FVG_CONT; s.stratName = "FVG_CONT";
    if(!InpStrat_FVG_CONT || !NXS_SelectorAllows(8)) return s;
-   double h3 = iHigh(g_sym, InpTFEntry, 3);
-   double l3 = iLow (g_sym, InpTFEntry, 3);
-   double h1 = iHigh(g_sym, InpTFEntry, 1);
-   double l1 = iLow (g_sym, InpTFEntry, 1);
-   double c2 = iClose(g_sym, InpTFEntry, 2);
-   double o2 = iOpen (g_sym, InpTFEntry, 2);
+   double h3 = iHigh(g_sym, NXS_EffTF(), 3);
+   double l3 = iLow (g_sym, NXS_EffTF(), 3);
+   double h1 = iHigh(g_sym, NXS_EffTF(), 1);
+   double l1 = iLow (g_sym, NXS_EffTF(), 1);
+   double c2 = iClose(g_sym, NXS_EffTF(), 2);
+   double o2 = iOpen (g_sym, NXS_EffTF(), 2);
    double body2 = MathAbs(c2 - o2);
    if(body2 < g_atr) return s;
    if(l1 > h3 && c2 > o2){
@@ -215,10 +218,10 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BREAKOUT_ACC; s.stratName = "BREAKOUT_ACC";
    if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;
    int n = 20;
-   double range_hi = iHigh(g_sym, InpTFEntry, iHighest(g_sym, InpTFEntry, MODE_HIGH, n, 3));
-   double range_lo = iLow (g_sym, InpTFEntry, iLowest (g_sym, InpTFEntry, MODE_LOW,  n, 3));
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double c2 = iClose(g_sym, InpTFEntry, 2);
+   double range_hi = iHigh(g_sym, NXS_EffTF(), iHighest(g_sym, NXS_EffTF(), MODE_HIGH, n, 3));
+   double range_lo = iLow (g_sym, NXS_EffTF(), iLowest (g_sym, NXS_EffTF(), MODE_LOW,  n, 3));
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double c2 = iClose(g_sym, NXS_EffTF(), 2);
    if(c1 > range_hi && c2 > range_hi){
       s.dir = DIR_BUY;  s.score = 68; s.reason = "Acceptance_above_range";
    } else if(c1 < range_lo && c2 < range_lo){
@@ -236,7 +239,7 @@ SNXSSignal NXS_Strat_LondonBO(){
    // use Asian range
    SNXSAMD amd = NXS_GetAMD();
    if(amd.asianHigh <= 0) return s;
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
    if(c1 > amd.asianHigh){
       s.dir = DIR_BUY;  s.score = 70; s.reason = "London_BO_above_asia";
    } else if(c1 < amd.asianLow){
@@ -250,9 +253,9 @@ SNXSSignal NXS_Strat_LondonBO(){
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
    if(!InpStrat_EMA_PULLBACK || !NXS_SelectorAllows(11)) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
-   double low   = iLow  (g_sym, InpTFEntry, 1);
-   double high  = iHigh (g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
+   double low   = iLow  (g_sym, NXS_EffTF(), 1);
+   double high  = iHigh (g_sym, NXS_EffTF(), 1);
    if(g_ema9 > g_ema21 && low <= g_ema21 && price > g_ema21 && g_rsi > 45){
       s.dir = DIR_BUY;  s.score = 66; s.reason = "EMA_PB_bull";
    } else if(g_ema9 < g_ema21 && high >= g_ema21 && price < g_ema21 && g_rsi < 55){
@@ -269,7 +272,7 @@ SNXSSignal NXS_Strat_BBSqueeze(){
    double width = g_bbUpper - g_bbLower;
    if(width <= 0 || g_atr <= 0) return s;
    if(width > g_atr * 2.5) return s; // not a squeeze
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
    if(c1 > g_bbUpper){
       s.dir = DIR_BUY;  s.score = 70; s.reason = "Squeeze_breakout_up";
    } else if(c1 < g_bbLower){
@@ -283,11 +286,11 @@ SNXSSignal NXS_Strat_BBSqueeze(){
 SNXSSignal NXS_Strat_Ichimoku(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ICHIMOKU; s.stratName = "ICHIMOKU";
    if(!InpStrat_ICHIMOKU || !NXS_SelectorAllows(13)) return s;
-   double price = iClose(g_sym, InpTFEntry, 1);
+   double price = iClose(g_sym, NXS_EffTF(), 1);
    double kumoTop = MathMax(g_ichiSpanA, g_ichiSpanB);
    double kumoBot = MathMin(g_ichiSpanA, g_ichiSpanB);
    if(kumoTop <= 0 || kumoBot <= 0) return s;
-   double prev = iClose(g_sym, InpTFEntry, 2);
+   double prev = iClose(g_sym, NXS_EffTF(), 2);
    if(prev <= kumoTop && price > kumoTop && g_ichiTenkan > g_ichiKijun){
       s.dir = DIR_BUY;  s.score = 65; s.reason = "Kumo_break_up";
    } else if(prev >= kumoBot && price < kumoBot && g_ichiTenkan < g_ichiKijun){
@@ -303,10 +306,10 @@ SNXSSignal NXS_Strat_RSIDiv(){
    if(!InpStrat_RSI_DIV || !NXS_SelectorAllows(14)) return s;
    double rsiArr[]; ArraySetAsSeries(rsiArr, true);
    if(CopyBuffer(g_hRSI, 0, 1, 15, rsiArr) <= 0) return s;
-   double l1 = iLow(g_sym, InpTFEntry, 1);
-   double l8 = iLow(g_sym, InpTFEntry, 8);
-   double h1 = iHigh(g_sym, InpTFEntry, 1);
-   double h8 = iHigh(g_sym, InpTFEntry, 8);
+   double l1 = iLow(g_sym, NXS_EffTF(), 1);
+   double l8 = iLow(g_sym, NXS_EffTF(), 8);
+   double h1 = iHigh(g_sym, NXS_EffTF(), 1);
+   double h8 = iHigh(g_sym, NXS_EffTF(), 8);
    // bullish divergence: lower low in price, higher low in RSI
    if(l1 < l8 && rsiArr[0] > rsiArr[7] && rsiArr[0] < 40){
       s.dir = DIR_BUY;  s.score = 68; s.reason = "RSI_bull_div";
@@ -323,16 +326,16 @@ SNXSSignal NXS_Strat_OrderBlock(){
    if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
    // Look for last bullish/bearish impulse 5–10 bars ago and a retest
    for(int i = 5; i <= 12; i++){
-      double o = iOpen (g_sym, InpTFEntry, i);
-      double c = iClose(g_sym, InpTFEntry, i);
+      double o = iOpen (g_sym, NXS_EffTF(), i);
+      double c = iClose(g_sym, NXS_EffTF(), i);
       double body = MathAbs(c - o);
       if(body < g_atr) continue;
       double obTop = MathMax(o, c);
       double obBot = MathMin(o, c);
-      double c1 = iClose(g_sym, InpTFEntry, 1);
-      double o1 = iOpen (g_sym, InpTFEntry, 1);
-      double l1 = iLow  (g_sym, InpTFEntry, 1);
-      double h1 = iHigh (g_sym, InpTFEntry, 1);
+      double c1 = iClose(g_sym, NXS_EffTF(), 1);
+      double o1 = iOpen (g_sym, NXS_EffTF(), 1);
+      double l1 = iLow  (g_sym, NXS_EffTF(), 1);
+      double h1 = iHigh (g_sym, NXS_EffTF(), 1);
       double obMid = (obTop + obBot) * 0.5;
       // bullish OB: impulso su, il ritest TAGGA la zona (l1<=obTop) e la candela
       // la RESPINGE - chiude rialzista sopra il midpoint (rejection), non mentre

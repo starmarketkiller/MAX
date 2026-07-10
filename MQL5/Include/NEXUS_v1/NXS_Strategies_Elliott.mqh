@@ -16,11 +16,11 @@ int _nxs_ell_pivots(int wing, int maxScan, double &price[], int &type[]){
    // Parti da wing+1 così lo swing è confermato da barre reali su entrambi i lati
    // (evita pivot "prematuri" letti su barre future inesistenti).
    for(int i = wing + 1; i <= maxScan && cnt < 8; i++){
-      bool sh = NXS_IsSwingHigh(g_sym, InpTFEntry, i, wing);
-      bool sl = NXS_IsSwingLow (g_sym, InpTFEntry, i, wing);
+      bool sh = NXS_IsSwingHigh(g_sym, NXS_EffTF(), i, wing);
+      bool sl = NXS_IsSwingLow (g_sym, NXS_EffTF(), i, wing);
       int t = sh ? +1 : (sl ? -1 : 0);
       if(t == 0 || t == lastType) continue;   // salta pivot dello stesso tipo consecutivi
-      price[cnt] = (t == +1) ? iHigh(g_sym, InpTFEntry, i) : iLow(g_sym, InpTFEntry, i);
+      price[cnt] = (t == +1) ? iHigh(g_sym, NXS_EffTF(), i) : iLow(g_sym, NXS_EffTF(), i);
       type[cnt]  = t;
       lastType   = t;
       cnt++;
@@ -47,8 +47,8 @@ SNXSSignal NXS_Strat_Elliott(){
 
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-   double c1  = iClose(g_sym, InpTFEntry, 1);
-   double o1  = iOpen (g_sym, InpTFEntry, 1);
+   double c1  = iClose(g_sym, NXS_EffTF(), 1);
+   double o1  = iOpen (g_sym, NXS_EffTF(), 1);
    bool bull1 = c1 > o1;   // conferma barra rialzista
    bool bear1 = c1 < o1;
 

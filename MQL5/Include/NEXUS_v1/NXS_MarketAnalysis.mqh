@@ -38,11 +38,12 @@ ENUM_NXS_REGIME NXS_DetectRegime(){
 SNXSSweep NXS_DetectSweep(){
    SNXSSweep s; s.dir = DIR_NONE; s.level = 0; s.confirmed = false;
    int lookback = 20;
-   double hi = iHigh(g_sym, InpTFEntry, iHighest(g_sym, InpTFEntry, MODE_HIGH, lookback, 2));
-   double lo = iLow (g_sym, InpTFEntry, iLowest (g_sym, InpTFEntry, MODE_LOW,  lookback, 2));
-   double h1 = iHigh(g_sym, InpTFEntry, 1);
-   double l1 = iLow (g_sym, InpTFEntry, 1);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   ENUM_TIMEFRAMES tf = NXS_EffTF();   // v2.3.0: TF attivo (multi-TF) o InpTFEntry
+   double hi = iHigh(g_sym, tf, iHighest(g_sym, tf, MODE_HIGH, lookback, 2));
+   double lo = iLow (g_sym, tf, iLowest (g_sym, tf, MODE_LOW,  lookback, 2));
+   double h1 = iHigh(g_sym, tf, 1);
+   double l1 = iLow (g_sym, tf, 1);
+   double c1 = iClose(g_sym, tf, 1);
    if(h1 > hi && c1 < hi){
       s.dir = DIR_SELL; s.level = hi; s.confirmed = true;
    } else if(l1 < lo && c1 > lo){
@@ -150,16 +151,17 @@ SNXSSweepExt NXS_DetectSweepExt(){
    }
    if(asiaLo == DBL_MAX) asiaLo = pdl;
    if(asiaHi == 0)       asiaHi = pdh;
-   double h1 = iHigh(g_sym, InpTFEntry, 1);
-   double l1 = iLow (g_sym, InpTFEntry, 1);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   ENUM_TIMEFRAMES tf = NXS_EffTF();   // v2.3.0: TF attivo (multi-TF) o InpTFEntry
+   double h1 = iHigh(g_sym, tf, 1);
+   double l1 = iLow (g_sym, tf, 1);
+   double c1 = iClose(g_sym, tf, 1);
    double atr = g_atr > 0 ? g_atr : SymbolInfoDouble(g_sym, SYMBOL_POINT) * 100;
    double tol = atr * 0.2;
    // v2.0.34 (audit point 3): genuine equal-highs/lows - a cluster of 2+
    // confirmed swing points within `tol`, not the single highest/lowest
    // point over the lookback (that was never "equal" to anything).
-   double eqH = NXS_FindEqualHigh(g_sym, InpTFEntry, InpSwingWing, tol);
-   double eqL = NXS_FindEqualLow (g_sym, InpTFEntry, InpSwingWing, tol);
+   double eqH = NXS_FindEqualHigh(g_sym, tf, InpSwingWing, tol);
+   double eqL = NXS_FindEqualLow (g_sym, tf, InpSwingWing, tol);
    // Sweep evaluation: wick beyond level + close back inside
    if(h1 > pdh    && c1 < pdh    ){ s.sweptPDH = true;       s.dir = DIR_SELL; s.level = pdh;    s.confirmed = true; }
    if(l1 < pdl    && c1 > pdl    ){ s.sweptPDL = true;       s.dir = DIR_BUY;  s.level = pdl;    s.confirmed = true; }

@@ -22,10 +22,10 @@ double _inst_atr(){ return g_atr > 0 ? g_atr : 1.0 * g_point; }
 // dir=-1 = last bearish delivery
 bool _inst_lastDelivery(int dir, int lookback, double &outHigh, double &outLow){
    for(int i = 1; i <= lookback; i++){
-      double o = iOpen (g_sym, InpTFEntry, i);
-      double c = iClose(g_sym, InpTFEntry, i);
-      double h = iHigh (g_sym, InpTFEntry, i);
-      double l = iLow  (g_sym, InpTFEntry, i);
+      double o = iOpen (g_sym, NXS_EffTF(), i);
+      double c = iClose(g_sym, NXS_EffTF(), i);
+      double h = iHigh (g_sym, NXS_EffTF(), i);
+      double l = iLow  (g_sym, NXS_EffTF(), i);
       double body = MathAbs(c - o);
       if(body < _inst_atr() * 0.5) continue;
       if(dir > 0 && c > o){ outHigh = h; outLow = l; return true; }
@@ -39,8 +39,8 @@ bool _inst_lastDelivery(int dir, int lookback, double &outHigh, double &outLow){
 int _inst_displacementBar(int dir, int lookback, double bodyMult){
    double atr = _inst_atr();
    for(int i = 1; i <= lookback; i++){
-      double o = iOpen (g_sym, InpTFEntry, i);
-      double c = iClose(g_sym, InpTFEntry, i);
+      double o = iOpen (g_sym, NXS_EffTF(), i);
+      double c = iClose(g_sym, NXS_EffTF(), i);
       double body = MathAbs(c - o);
       if(body < atr * bodyMult) continue;
       if(dir > 0 && c > o) return i;
@@ -73,8 +73,8 @@ SNXSSignal NXS_Strat_CISD(SNXSSweepExt &sw){
    s.strat = STRAT_STRUCT_REACT; s.stratName = "CISD";
    if(!InpUseStrat_CISD) return s;
    double atr = _inst_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double bodyAbs = MathAbs(c1 - o1);
    if(bodyAbs < atr * 0.7) return s;     // require displacement candle
 
@@ -123,7 +123,7 @@ SNXSSignal NXS_Strat_AMD_Continuation(SNXSAMD &amd, SNXSHTF &htf){
 
    double atr = _inst_atr();
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double mid = (amd.asianHigh + amd.asianLow) * 0.5;
 
    // BUY: distribution above Asian range + retest near asianHigh + htf bull/neutral
@@ -160,9 +160,9 @@ SNXSSignal NXS_Strat_JudasSwing(SNXSSweepExt &sw, SNXSAMD &amd){
    if(amd.asianHigh <= 0 || amd.asianLow <= 0) return s;
 
    double atr = _inst_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double l1 = iLow  (g_sym, InpTFEntry, 1);
-   double h1 = iHigh (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double l1 = iLow  (g_sym, NXS_EffTF(), 1);
+   double h1 = iHigh (g_sym, NXS_EffTF(), 1);
 
    // BUY: wick below asianLow / PDL / EQL then close back inside + chochUp
    bool wickedDown = (sw.sweptAsiaLow || sw.sweptPDL || sw.sweptEQL || l1 < amd.asianLow);
@@ -196,7 +196,7 @@ SNXSSignal NXS_Strat_LondonReversal(SNXSSweepExt &sw, SNXSAMD &amd){
    if(!InpUseStrat_LdnReversal) return s;
    if(g_session != SESS_LONDON && g_session != SESS_OVERLAP) return s;
    double atr = _inst_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
 
    // SELL: London sweep above AsiaHigh/PDH/EQH + close below + chochDown
    if((sw.sweptAsiaHigh || sw.sweptPDH || sw.sweptEQH) && c1 < sw.refHigh && g_struct.chochDown){
@@ -230,24 +230,24 @@ SNXSSignal NXS_Strat_NYReversal(SNXSSweepExt &sw){
    if(!InpUseStrat_NYReversal) return s;
    if(g_session != SESS_NY && g_session != SESS_OVERLAP) return s;
    double atr = _inst_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
 
    // London HoD/LoD proxy: highest/lowest of last 24 entry-TF bars during London (06-12 GMT)
    double londonHi = -DBL_MAX, londonLo = DBL_MAX;
    for(int i = 1; i <= 48; i++){
-      datetime t = iTime(g_sym, InpTFEntry, i);
+      datetime t = iTime(g_sym, NXS_EffTF(), i);
       datetime tGmt = (datetime)((long)t - (long)InpServerGMTOffset * 3600);
       MqlDateTime mt; TimeToStruct(tGmt, mt);
       if(mt.hour >= 6 && mt.hour < 12){
-         londonHi = MathMax(londonHi, iHigh(g_sym, InpTFEntry, i));
-         londonLo = MathMin(londonLo, iLow (g_sym, InpTFEntry, i));
+         londonHi = MathMax(londonHi, iHigh(g_sym, NXS_EffTF(), i));
+         londonLo = MathMin(londonLo, iLow (g_sym, NXS_EffTF(), i));
       }
    }
    if(londonHi == -DBL_MAX || londonLo == DBL_MAX) return s;
 
    // SELL: NY sweep > londonHi + close back + chochDown
-   double h1 = iHigh(g_sym, InpTFEntry, 1);
-   double l1 = iLow (g_sym, InpTFEntry, 1);
+   double h1 = iHigh(g_sym, NXS_EffTF(), 1);
+   double l1 = iLow (g_sym, NXS_EffTF(), 1);
    if(h1 > londonHi && c1 < londonHi && g_struct.chochDown){
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = h1 + 0.5 * atr;
@@ -328,8 +328,8 @@ SNXSSignal NXS_Strat_PO3(SNXSSweepExt &sw, SNXSAMD &amd){
    if(amd.asianHigh <= 0 || amd.asianLow <= 0) return s;
    // ACC = Asia range, MAN = sweep beyond range, DIST = displacement + continuation
    double atr = _inst_atr();
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    double body = MathAbs(c1 - o1);
    if(body < atr * 0.6) return s;        // require distribution candle
 
@@ -366,15 +366,15 @@ SNXSSignal NXS_Strat_LiquidityVoid(SNXSHTF &htf){
    int dispIdx = _inst_displacementBar(+1, 12, 1.2);
    if(dispIdx > 0 && htf.bias == HTF_BULL){
       // FVG from (dispIdx) range
-      double h_disp = iHigh(g_sym, InpTFEntry, dispIdx);
-      double l_disp = iLow (g_sym, InpTFEntry, dispIdx);
+      double h_disp = iHigh(g_sym, NXS_EffTF(), dispIdx);
+      double l_disp = iLow (g_sym, NXS_EffTF(), dispIdx);
       double voidHi = h_disp;
-      double voidLo = iHigh(g_sym, InpTFEntry, dispIdx + 2);
+      double voidLo = iHigh(g_sym, NXS_EffTF(), dispIdx + 2);
       if(voidHi > voidLo + atr * 0.3){
          double ce = (voidHi + voidLo) * 0.5;     // consequent encroachment 50%
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-         double c1 = iClose(g_sym, InpTFEntry, 1);
-         double o1 = iOpen (g_sym, InpTFEntry, 1);
+         double c1 = iClose(g_sym, NXS_EffTF(), 1);
+         double o1 = iOpen (g_sym, NXS_EffTF(), 1);
          if(bid <= ce && bid >= voidLo && c1 > o1){
             s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
             s.slPrice = voidLo - 0.4 * atr;
@@ -387,14 +387,14 @@ SNXSSignal NXS_Strat_LiquidityVoid(SNXSHTF &htf){
    }
    int dispIdxB = _inst_displacementBar(-1, 12, 1.2);
    if(dispIdxB > 0 && htf.bias == HTF_BEAR){
-      double l_disp = iLow (g_sym, InpTFEntry, dispIdxB);
+      double l_disp = iLow (g_sym, NXS_EffTF(), dispIdxB);
       double voidLo = l_disp;
-      double voidHi = iLow(g_sym, InpTFEntry, dispIdxB + 2);
+      double voidHi = iLow(g_sym, NXS_EffTF(), dispIdxB + 2);
       if(voidHi > voidLo + atr * 0.3){
          double ce = (voidHi + voidLo) * 0.5;
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-         double c1 = iClose(g_sym, InpTFEntry, 1);
-         double o1 = iOpen (g_sym, InpTFEntry, 1);
+         double c1 = iClose(g_sym, NXS_EffTF(), 1);
+         double o1 = iOpen (g_sym, NXS_EffTF(), 1);
          if(bid >= ce && bid <= voidHi && c1 < o1){
             s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
             s.slPrice = voidHi + 0.4 * atr;
@@ -417,14 +417,14 @@ SNXSSignal NXS_Strat_DisplacementRebalance(){
    if(!InpUseStrat_DispRebal) return s;
    double atr = _inst_atr();
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
 
    // BUY: strong bullish displacement (body > 1.3 ATR) + retracement to 50% + reaction
    int dispIdx = _inst_displacementBar(+1, 8, 1.3);
    if(dispIdx > 0){
-      double dh = iHigh(g_sym, InpTFEntry, dispIdx);
-      double dl = iLow (g_sym, InpTFEntry, dispIdx);
+      double dh = iHigh(g_sym, NXS_EffTF(), dispIdx);
+      double dl = iLow (g_sym, NXS_EffTF(), dispIdx);
       double mid = (dh + dl) * 0.5;
       if(bid >= dl && bid <= mid + atr * 0.2 && c1 > o1){
          s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
@@ -437,8 +437,8 @@ SNXSSignal NXS_Strat_DisplacementRebalance(){
    }
    int dispIdxB = _inst_displacementBar(-1, 8, 1.3);
    if(dispIdxB > 0){
-      double dh = iHigh(g_sym, InpTFEntry, dispIdxB);
-      double dl = iLow (g_sym, InpTFEntry, dispIdxB);
+      double dh = iHigh(g_sym, NXS_EffTF(), dispIdxB);
+      double dl = iLow (g_sym, NXS_EffTF(), dispIdxB);
       double mid = (dh + dl) * 0.5;
       if(bid <= dh && bid >= mid - atr * 0.2 && c1 < o1){
          s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
@@ -463,19 +463,19 @@ SNXSSignal NXS_Strat_RangeFade(){
    // require compressed market: ADX<20 + velocity neutral
    if(g_adx >= 20.0) return s;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, InpTFEntry, 1);
-   double o1 = iOpen (g_sym, InpTFEntry, 1);
-   double h1 = iHigh (g_sym, InpTFEntry, 1);
-   double l1 = iLow  (g_sym, InpTFEntry, 1);
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
+   double h1 = iHigh (g_sym, NXS_EffTF(), 1);
+   double l1 = iLow  (g_sym, NXS_EffTF(), 1);
    double body = MathAbs(c1 - o1);
    if(body < atr * 0.25) return s;          // require some rejection candle
 
    // Range extremes — use last 40 bars
-   int hiIdx = iHighest(g_sym, InpTFEntry, MODE_HIGH, 40, 2);
-   int loIdx = iLowest (g_sym, InpTFEntry, MODE_LOW,  40, 2);
+   int hiIdx = iHighest(g_sym, NXS_EffTF(), MODE_HIGH, 40, 2);
+   int loIdx = iLowest (g_sym, NXS_EffTF(), MODE_LOW,  40, 2);
    if(hiIdx < 0 || loIdx < 0) return s;
-   double rngHi = iHigh(g_sym, InpTFEntry, hiIdx);
-   double rngLo = iLow (g_sym, InpTFEntry, loIdx);
+   double rngHi = iHigh(g_sym, NXS_EffTF(), hiIdx);
+   double rngLo = iLow (g_sym, NXS_EffTF(), loIdx);
    double rngMid = (rngHi + rngLo) * 0.5;
    double rngSize = rngHi - rngLo;
    if(rngSize < atr * 1.5) return s;        // range too tight (no edge)

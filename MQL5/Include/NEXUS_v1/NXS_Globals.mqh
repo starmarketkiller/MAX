@@ -36,6 +36,14 @@ int g_hEMA_HTF= INVALID_HANDLE;
 int g_hEMA_MTF= INVALID_HANDLE;
 int g_hICHI   = INVALID_HANDLE;
 
+// v2.3.0 — TF su cui girano ORA le strategie (single-chart multi-TF). Resta
+// InpTFEntry in modalita' normale; nei passaggi multi-TF vale il TF del passaggio.
+ENUM_TIMEFRAMES g_activeTF = PERIOD_CURRENT;
+// TF effettivo per detector/struttura: g_activeTF oppure InpTFEntry di default.
+ENUM_TIMEFRAMES NXS_EffTF(){
+   return (g_activeTF == PERIOD_CURRENT) ? (ENUM_TIMEFRAMES)InpTFEntry : g_activeTF;
+}
+
 // Cached values (closed bar = 1)
 double g_adx, g_adxPlus, g_adxMinus;
 double g_rsi;

@@ -143,8 +143,7 @@ int g_mtf_hADX[NXS_MTF_MAX], g_mtf_hRSI[NXS_MTF_MAX], g_mtf_hBB[NXS_MTF_MAX],
     g_mtf_hMACD[NXS_MTF_MAX], g_mtf_hSAR[NXS_MTF_MAX], g_mtf_hATR[NXS_MTF_MAX],
     g_mtf_hEMA200[NXS_MTF_MAX], g_mtf_hEMA9[NXS_MTF_MAX], g_mtf_hEMA21[NXS_MTF_MAX],
     g_mtf_hICHI[NXS_MTF_MAX];
-int g_mtfCount = 0;
-ENUM_TIMEFRAMES g_activeTF = PERIOD_CURRENT;   // TF su cui girano ora le strategie
+int g_mtfCount = 0;   // g_activeTF e NXS_EffTF() ora in NXS_Globals.mqh
 
 int NXS_MTF_Index(ENUM_TIMEFRAMES tf){
    for(int i = 0; i < g_mtfCount; i++) if(g_mtfTF[i] == tf) return i;
@@ -337,9 +336,8 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
    if(InpUseStrategyProfiles){
       // px200 sul TF ATTIVO: in multi-TF ogni passaggio confronta col trend del
-      // suo timeframe; in single-TF g_activeTF resta InpTFEntry (comportamento invariato).
-      ENUM_TIMEFRAMES atf = (g_activeTF == PERIOD_CURRENT) ? (ENUM_TIMEFRAMES)InpTFEntry : g_activeTF;
-      double px200 = iClose(g_sym, atf, 0);
+      // suo timeframe; in single-TF NXS_EffTF() resta InpTFEntry (invariato).
+      double px200 = iClose(g_sym, NXS_EffTF(), 0);
       for(int k = 0; k < n; k++){
          if(out[k].dir == DIR_NONE) continue;
          bool needHtf;
@@ -368,14 +366,20 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
       passes[0] = PERIOD_D1; passes[1] = PERIOD_H4; passes[2] = PERIOD_H1;
       for(int p = 0; p < 3; p++){
          if(!NXS_ActivateTF(passes[p])) continue;   // handle non pronti: salta il TF
+         // Phase 2: struttura + sweep ricalcolati sul TF del passaggio, cosi'
+         // anche le strategie SMC (LIQ_SWEEP, OB, FVG...) girano sul loro TF.
+         NXS_UpdateStructure(g_sym, passes[p]);
+         SNXSSweep    swP  = NXS_DetectSweep();
+         SNXSSweepExt swxP = NXS_DetectSweepExt();
          SNXSSignal tmp[64];
-         int m = NXS_CollectRaw(sw, swExt, amd, tmp);
+         int m = NXS_CollectRaw(swP, swxP, amd, tmp);
          for(int k = 0; k < m && n < ArraySize(out); k++){
             if(NXS_Profile_TF(tmp[k].stratName) != passes[p]) continue;
             out[n++] = tmp[k];
          }
       }
-      NXS_ActivateOriginal();   // ripristina il TF di ingresso per il resto del tick
+      NXS_ActivateOriginal();               // ripristina il TF di ingresso
+      NXS_UpdateStructure(g_sym, InpTFEntry); // ripristina la struttura al TF di ingresso
    } else {
       n = NXS_CollectRaw(sw, swExt, amd, out);
    }
