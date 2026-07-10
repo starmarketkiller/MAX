@@ -120,6 +120,29 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // v2.3.0 — SETUP MATRIX: cap di setup APERTI per direzione (per-TF: l'EA
+   // esegue su un solo TF di ingresso, quindi per-direzione == per-direzione/TF).
+   // Risolve il sovra-trading: piu' strategie che concordano non moltiplicano
+   // le posizioni oltre InpMaxPerDirTF nella stessa direzione.
+   if(InpMaxPerDirTF > 0){
+      int sameDir = 0;
+      for(int pi = PositionsTotal()-1; pi >= 0; pi--){
+         ulong pt = PositionGetTicket(pi);
+         if(pt == 0) continue;
+         if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+         if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+         long ptype = PositionGetInteger(POSITION_TYPE);
+         if((sig.dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
+            (sig.dir == DIR_SELL && ptype == POSITION_TYPE_SELL))
+            sameDir++;
+      }
+      if(sameDir >= InpMaxPerDirTF){
+         g_nxsLastOpenFailure = "setup_matrix_cap";
+         PrintFormat("[NEXUS MATRIX] OPEN BLOCCATO: gia' %d setup %s aperti (cap/dir=%d) strat=%s",
+                     sameDir, NXS_DirName(sig.dir), InpMaxPerDirTF, sig.stratName);
+         return OPEN_FAIL_PREFLIGHT;
+      }
+   }
    // v2.0.33 — post-stop-loss directional cooldown: don't chase the reversal
    // right after getting stopped out the other way (whipsaw pattern found
    // in live trade review, mostly on MALAYSIAN_SNR_NXR in choppy conditions).

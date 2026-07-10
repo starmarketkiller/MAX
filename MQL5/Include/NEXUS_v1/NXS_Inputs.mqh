@@ -69,6 +69,7 @@ input double   InpRiskPercent      = 1.0;
 input double   InpMaxLot           = 5.0;
 input int      InpMaxTradesPerDay  = 12;
 input int      InpMaxConcurrent    = 4;
+input int      InpMaxPerDirTF      = 2;      // v2.3.0 SETUP MATRIX: max setup per direzione/TF (0=off)
 input double   InpMaxDailyDDPct    = 5.0;
 input double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 input double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
