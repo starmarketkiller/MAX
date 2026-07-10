@@ -17,7 +17,7 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 189 94% 38%;
+    --primary: 38 68% 46%;           /* gold (light toggle) */
     --primary-foreground: 0 0% 100%;
     --secondary: 210 30% 96%;
     --secondary-foreground: 222 47% 11%;
@@ -51,28 +51,28 @@
     --card-foreground: 215 16% 92%;
     --popover: 222 40% 8%;
     --popover-foreground: 215 16% 92%;
-    --primary: 189 94% 55%;          /* electric cyan #22d3ee-ish */
-    --primary-foreground: 220 43% 5%;
+    --primary: 41 76% 58%;           /* burnished gold — XAUUSD identity #E7B24C */
+    --primary-foreground: 40 55% 8%; /* dark ink on gold */
     --secondary: 218 32% 13%;
     --secondary-foreground: 215 16% 92%;
     --muted: 218 32% 13%;
     --muted-foreground: 215 16% 60%;
     --accent: 218 32% 13%;
     --accent-foreground: 215 16% 92%;
-    --destructive: 0 84% 62%;
+    --destructive: 353 82% 63%;      /* loss red #F0616F */
     --destructive-foreground: 0 0% 100%;
-    --success: 152 76% 50%;          /* lime-emerald for profit */
+    --success: 157 66% 54%;          /* mint — profit / FORTE #3FD9A0 */
     --success-foreground: 220 43% 5%;
-    --warning: 38 96% 56%;           /* amber */
+    --warning: 28 96% 56%;           /* orange — distinct from gold */
     --warning-foreground: 220 43% 5%;
     --border: 217 30% 16%;
     --input: 217 30% 16%;
-    --ring: 189 94% 55%;
+    --ring: 41 76% 58%;
 
-    --cyan: 189 94% 55%;
-    --lime: 152 76% 50%;
-    --amber: 38 96% 56%;
-    --crimson: 0 84% 62%;
+    --cyan: 210 90% 66%;             /* sky — secondary data accent */
+    --lime: 157 66% 54%;
+    --amber: 41 76% 58%;
+    --crimson: 353 82% 63%;
   }
 }
 
@@ -99,8 +99,9 @@ html, body, #root {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 1200px 700px at 12% -10%, hsl(189 94% 55% / 0.07), transparent 60%),
-    radial-gradient(ellipse 900px 600px at 95% 110%, hsl(220 90% 55% / 0.06), transparent 60%);
+    radial-gradient(ellipse 1200px 700px at 82% -10%, hsl(41 76% 58% / 0.09), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 8% 12%, hsl(210 90% 60% / 0.05), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 50% 115%, hsl(157 66% 54% / 0.04), transparent 60%);
 }
 .dark body::after {
   content: '';
