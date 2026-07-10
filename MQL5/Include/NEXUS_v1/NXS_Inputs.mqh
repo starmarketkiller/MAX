@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.33";  // prefisso commento trade: distingue i trade del build v2.3.0 (multi-TF)
+input string   InpComment          = "NEXUS_v2.34";  // prefisso commento trade: distingue i trade del build v2.3.0 (multi-TF)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
@@ -193,7 +193,7 @@ double   InpInstMinSLATR          = 0.50;  // SL minimo (x ATR) del voto; sotto 
 bool     InpMTFRequireHTF         = false;  // v2.2.8: sostituito dal gate HTF PER-STRATEGIA (profili)
 
 // input group "=== SAFETY CAPS (v2.0.26) ==="
-int      InpMaxNewTradesPerBarDir = 4;    // v2.3.0: profili -> la Setup Matrix (InpMaxPerDirTF) e' il vero cap; qui solo headroom per-barra
+int      InpMaxNewTradesPerBarDir = 8;    // v2.3.4: non-binding; il vero cap e' la Setup Matrix per-TF
 double   InpMaxTotalLotMult  = 1.5;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
 double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one direction (core positions) before new entries are rejected - generic/fallback value
 // v2.0.30: a flat lot cap doesn't mean the same thing across symbols with very

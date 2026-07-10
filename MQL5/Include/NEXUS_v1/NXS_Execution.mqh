@@ -132,26 +132,34 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
-   // v2.3.0 — SETUP MATRIX: cap di setup APERTI per direzione (per-TF: l'EA
-   // esegue su un solo TF di ingresso, quindi per-direzione == per-direzione/TF).
-   // Risolve il sovra-trading: piu' strategie che concordano non moltiplicano
-   // le posizioni oltre InpMaxPerDirTF nella stessa direzione.
+   // v2.3.4 — SETUP MATRIX: cap di setup APERTI per direzione E PER TIMEFRAME
+   // (come richiesto: "max 2 per direzione e per timeframe"). Il vecchio cap era
+   // per-direzione GLOBALE -> TSI(D1)+MACD(H4) riempivano i 2 posti buy e le SMC
+   // (CISD su H4) restavano bloccate (54/57 setup persi). Ora ogni TF ha il suo
+   // budget: D1, H4, H1 contano separatamente.
    if(InpMaxPerDirTF > 0){
-      int sameDir = 0;
+      ENUM_TIMEFRAMES sigTF = NXS_Profile_TF(sig.stratName);
+      int sameDirTF = 0;
       for(int pi = PositionsTotal()-1; pi >= 0; pi--){
          ulong pt = PositionGetTicket(pi);
          if(pt == 0) continue;
          if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
          if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
          long ptype = PositionGetInteger(POSITION_TYPE);
-         if((sig.dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
-            (sig.dir == DIR_SELL && ptype == POSITION_TYPE_SELL))
-            sameDir++;
+         bool sameDir = (sig.dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
+                        (sig.dir == DIR_SELL && ptype == POSITION_TYPE_SELL);
+         if(!sameDir) continue;
+         // stesso TF? leggo la strategia dal comment -> il suo TF profilo
+         string pcm = PositionGetString(POSITION_COMMENT);
+         string pp[]; int npp = StringSplit(pcm, '|', pp);
+         ENUM_TIMEFRAMES posTF = (npp >= 2 && StringLen(pp[1]) > 0)
+                                 ? NXS_Profile_TF(pp[1]) : PERIOD_CURRENT;
+         if(posTF == sigTF) sameDirTF++;
       }
-      if(sameDir >= InpMaxPerDirTF){
+      if(sameDirTF >= InpMaxPerDirTF){
          g_nxsLastOpenFailure = "setup_matrix_cap";
-         PrintFormat("[NEXUS MATRIX] OPEN BLOCCATO: gia' %d setup %s aperti (cap/dir=%d) strat=%s",
-                     sameDir, NXS_DirName(sig.dir), InpMaxPerDirTF, sig.stratName);
+         PrintFormat("[NEXUS MATRIX] OPEN BLOCCATO: gia' %d setup %s su %s (cap/dir/TF=%d) strat=%s",
+                     sameDirTF, NXS_DirName(sig.dir), EnumToString(sigTF), InpMaxPerDirTF, sig.stratName);
          return OPEN_FAIL_PREFLIGHT;
       }
    }
