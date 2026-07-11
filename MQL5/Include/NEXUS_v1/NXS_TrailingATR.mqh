@@ -26,27 +26,30 @@ void NXS_TrailATR(){
       // v2.4.5 — larghezza trail PER-STRATEGIA (dal commento: prefix|strat|score).
       // Le trend/continuazione corrono (2.5), le mean-reversion prendono profitto
       // presto (1.5). Fallback al globale se la strategia non ha un valore.
-      double k = kGlobal;
+      double k    = kGlobal;
+      double actK = act;   // soglia d'attivazione (globale o per-strategia)
       if(InpUseStrategyProfiles){
          string cm = PositionGetString(POSITION_COMMENT);
          string pp[]; int npp = StringSplit(cm, '|', pp);
          if(npp >= 2 && StringLen(pp[1]) > 0){
             double pk = NXS_Profile_TrailK(pp[1]);
             if(pk > 0) k = pk;
+            double pa = NXS_Profile_TrailActivate(pp[1]);   // v2.4.6
+            if(pa > 0) actK = pa;
          }
       }
 
       if(ptype == POSITION_TYPE_BUY){
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
          // only trail once in profit by at least `act` ATR (v2.4.4: era 0.5 fisso)
-         if(bid - open < act * g_atr) continue;
+         if(bid - open < actK * g_atr) continue;
          double newSL = NormPrice(bid - k * g_atr);
          if(newSL > curSL + 0.1 * g_point && newSL < bid){
             NXS_DoModify(t, newSL, curTP);
          }
       } else if(ptype == POSITION_TYPE_SELL){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-         if(open - ask < act * g_atr) continue;
+         if(open - ask < actK * g_atr) continue;
          double newSL = NormPrice(ask + k * g_atr);
          if((curSL == 0 || newSL < curSL - 0.1 * g_point) && newSL > ask){
             NXS_DoModify(t, newSL, curTP);

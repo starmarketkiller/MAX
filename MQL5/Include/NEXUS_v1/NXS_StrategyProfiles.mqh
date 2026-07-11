@@ -175,6 +175,46 @@ double NXS_Profile_TrailK(const string name){
    return 0.0;   // fallback -> globale
 }
 
+// v2.4.6 — Soglia di ATTIVAZIONE del trailing per-strategia (x ATR di profitto
+// prima che il trail inizi a stringere). Le vincite PICCOLE vanno protette SUBITO
+// (0.5), altrimenti il trail non scatta mai e restituiscono tutto (era il bug di
+// ICHIMOKU: a +1.0 ATR non arrivava -> 0 protezione -> tutte perse). Le vincite
+// GRANDI (trend) hanno spazio per svilupparsi (1.0). <=0 -> usa il globale.
+double NXS_Profile_TrailActivate(const string name){
+   // --- PRESTO 0.5 (vincita piccola/mean-reversion: proteggi subito) ---
+   if(name == "ICHIMOKU")      return 0.5;   // il fix: a +1.0 non arrivava mai
+   if(name == "ADX_RSI")       return 0.5;   // vincite ~0.2R
+   if(name == "BJORGUM")       return 0.5;
+   if(name == "ORDER_BLOCK")   return 0.5;
+   if(name == "OB_MIT")        return 0.5;
+   if(name == "RSI_DIV")       return 0.5;
+   if(name == "EMA_PULLBACK")  return 0.5;
+   if(name == "MACD")          return 0.5;
+   if(name == "TSI")           return 0.5;
+   if(name == "BOLLINGER")     return 0.5;
+   if(name == "BB_SQUEEZE")    return 0.5;
+   if(name == "RANGE_FADE")    return 0.5;
+   if(name == "STRUCT_REACT")  return 0.5;
+   if(name == "MALAYSIAN_SNR") return 0.5;
+   if(name == "CISD")          return 0.5;
+   if(name == "LONDON_BO")     return 0.5;
+   if(name == "LIQ_SWEEP")     return 0.5;
+   // --- TARDI 1.0 (vincita grande/trend: lascia sviluppare) ---
+   if(name == "TURTLE_SOUP")   return 1.0;
+   if(name == "FVG_CONT")      return 1.0;
+   if(name == "SAR")           return 1.0;
+   if(name == "FVG_MIT")       return 1.0;
+   if(name == "IFVG")          return 1.0;
+   if(name == "LIQ_VOID")      return 1.0;
+   if(name == "SH_BMS_RTO")    return 1.0;
+   if(name == "SMS_BMS_RTO")   return 1.0;
+   if(name == "BREAKOUT_ACC")  return 1.0;
+   if(name == "WEEKLY_EXP")    return 1.0;
+   if(name == "OTE_CONT")      return 1.0;
+   if(name == "DISP_REBAL")    return 1.0;
+   return 0.0;   // fallback -> globale
+}
+
 // Solo SL/TP (per NXS_DefaultSLTP). Ritorna true se c'e' il profilo.
 bool NXS_Profile_SLTP(const string name, double &slMult, double &tpMult){
    bool htf; double beR, trailATR;
