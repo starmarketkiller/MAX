@@ -39,8 +39,9 @@ double NXS_DynamicScoreThreshold(double base){
    return base;
 }
 
-double NXS_CalcLot(double slPriceDist){
-   double risk = AccountInfoDouble(ACCOUNT_BALANCE) * g_run_RiskPercent / 100.0;
+// v2.3.6 — sizing con rischio% ESPLICITO (usato dal rischio per-strategia diretto).
+double NXS_CalcLotRisk(double slPriceDist, double riskPct){
+   double risk = AccountInfoDouble(ACCOUNT_BALANCE) * riskPct / 100.0;
    risk *= NXS_AntiBleedMultiplier();   // P2 anti-bleed scaling
    risk *= NXS_AccountLotMult();        // v2.2.1 aggressivita' + scala da streak
    double tickVal  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);
@@ -58,6 +59,11 @@ double NXS_CalcLot(double slPriceDist){
    lots = MathMax(minLot, MathMin(maxLot, lots));
    lots = MathFloor(lots / step) * step;
    return NormalizeDouble(lots, 2);
+}
+
+// Rischio globale (default, per strategie senza profilo).
+double NXS_CalcLot(double slPriceDist){
+   return NXS_CalcLotRisk(slPriceDist, g_run_RiskPercent);
 }
 
 bool NXS_CheckProtections(string &reason){

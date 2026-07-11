@@ -184,23 +184,20 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }
 
-   double lots = NXS_CalcLot(slDist);
+   // v2.3.6 — rischio PER-STRATEGIA DIRETTO: il lotto e' dimensionato al rischio%
+   // del profilo (non piu' un moltiplicatore sul globale, che il cap
+   // InpMaxTotalLotMult schiacciava -> tutti i lotti finivano a 0.01). Il rischio
+   // di default (InpRiskPercent) resta solo per le strategie SENZA profilo.
+   double prPct = (InpUseStrategyProfiles) ? NXS_Profile_Risk(sig.stratName) : 0.0;
+   double lots = (prPct > 0) ? NXS_CalcLotRisk(slDist, prPct) : NXS_CalcLot(slDist);
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
 
-   // v2.0.26 — combine every multiplier (counter-HTF/chain via lotMult, plus
-   // the per-strategy auto-scaler) BEFORE applying it, and hard-cap the
-   // total so they can't compound past InpMaxTotalLotMult.
+   // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),
+   // capati da InpMaxTotalLotMult. Il rischio per-strategia NON e' piu' qui:
+   // e' gia' nel sizing base -> il cap non lo tocca.
    double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
    if(stratRisk <= 0) stratRisk = 1.0;
-   // v2.3.0 — rischio PER-STRATEGIA dal backtest (dimensionato a budget DD).
-   // lots scala linearmente col rischio%, quindi applico il rapporto
-   // rischioProfilo/rischioGlobale come moltiplicatore (poi ci pensa il cap).
-   double profRiskMult = 1.0;
-   if(InpUseStrategyProfiles && InpRiskPercent > 0){
-      double pr = NXS_Profile_Risk(sig.stratName);
-      if(pr > 0) profRiskMult = pr / InpRiskPercent;
-   }
-   double rawMult = MathMax(0.01, lotMult) * stratRisk * profRiskMult;
+   double rawMult = MathMax(0.01, lotMult) * stratRisk;
    double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
    if(cappedMult < rawMult - 1e-9){
       PrintFormat("[NEXUS RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",
