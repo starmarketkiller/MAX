@@ -148,6 +148,12 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "STRUCT_REACT")  return false;   // v2.3.1 test reale: 85 trade, -102$ (peggiore)
    if(name == "DISP_REBAL")    return false;   // v2.3.1 test reale: 10 trade, -53$ (WR 30%)
    if(name == "OTE_CONT")      return false;   // v2.3.1 test reale: 6 trade, -30$
+   // v2.3.7 — perdenti confermati sul test 3-mesi completo (per-TF sbloccato):
+   if(name == "FVG_CONT")      return false;   // 21 trade, -108$ (WR 29%) - peggiore
+   if(name == "ADX_RSI")       return false;   // 26 trade, -97$ (WR 31%)
+   if(name == "EMA_PULLBACK")  return false;   // 62 trade, -71$ (WR 39%)
+   if(name == "BREAKOUT_ACC")  return false;   // -28$ (campione basso ma negativo)
+   if(name == "ORDER_BLOCK")   return false;   // -17$ (negativo su piu' test)
    return true;
 }
 
