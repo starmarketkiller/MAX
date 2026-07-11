@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.40";  // prefisso commento trade: distingue i trade del build v2.4.0 (risk realloc)
+input string   InpComment          = "NEXUS_v2.41";  // build v2.4.1 (margin gate + corsie indipendenti)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
@@ -71,8 +71,15 @@ input double   InpRiskPercent      = 1.0;
 double   InpMaxLot           = 5.0;
 int      InpMaxTradesPerDay  = 12;
 input int      InpMaxConcurrent    = 4;
-input int      InpMaxPerDirTF      = 2;      // v2.3.0 SETUP MATRIX: max setup per direzione/TF (0=off)
+input int      InpMaxPerDirTF      = 4;      // v2.4.1: allargato 2->4, ogni strategia ha la sua corsia (era slot condiviso stretto)
 input double   InpMaxDailyDDPct    = 5.0;
+// v2.4.1 — GATE SUL MARGINE: il conto stesso regola quante strategie possono
+// stare aperte insieme. Apri un nuovo trade solo se il margin level PROIETTATO
+// (equity / margine usato dopo il trade) resta sopra la soglia. Cosi' un trade
+// in profitto alza l'equity -> alza il livello -> APRE spazio ad altre; un
+// drawdown lo abbassa -> frena da solo. "profitto = margine = spazio".
+input bool     InpUseMarginGate    = true;
+input double   InpMinMarginLevelPct = 500.0; // livello margine minimo proiettato per aprire (0=off)
 double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;

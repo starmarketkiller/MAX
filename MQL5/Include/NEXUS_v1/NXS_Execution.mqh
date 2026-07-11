@@ -233,6 +233,27 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    ENUM_ORDER_TYPE otype = (sig.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double refPrice = (sig.dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
                                           : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   // v2.4.1 — GATE SUL MARGINE: apri solo se il margin level PROIETTATO (equity
+   // / margine usato dopo questo trade) resta sopra la soglia. E' il conto stesso
+   // a regolare la concorrenza: un trade aperto in profitto alza l'equity ->
+   // alza il livello -> apre spazio ad altre strategie; un drawdown lo abbassa
+   // -> frena. Sostituisce la contesa arbitraria per slot con "profitto=margine".
+   if(InpUseMarginGate && InpMinMarginLevelPct > 0){
+      double marginReq = 0;
+      if(OrderCalcMargin(otype, g_sym, lots, refPrice, marginReq) && marginReq > 0){
+         double equity     = AccountInfoDouble(ACCOUNT_EQUITY);
+         double usedMargin = AccountInfoDouble(ACCOUNT_MARGIN);
+         double projLevel  = (usedMargin + marginReq > 0)
+                             ? equity / (usedMargin + marginReq) * 100.0 : 1e9;
+         if(projLevel < InpMinMarginLevelPct){
+            g_nxsLastOpenFailure = StringFormat("margin_gate proj=%.0f<%.0f",
+                                                projLevel, InpMinMarginLevelPct);
+            PrintFormat("[NEXUS MARGIN] OPEN BLOCCATO: margin level proiettato %.0f%% < %.0f%% (equity=%.2f usato=%.2f +req=%.2f) strat=%s",
+                        projLevel, InpMinMarginLevelPct, equity, usedMargin, marginReq, sig.stratName);
+            return OPEN_FAIL_PREFLIGHT;
+         }
+      }
+   }
    string pfReason = "";
    if(!NXS_PreFlight(otype, lots, refPrice, sl, tp, pfReason)){
       g_nxsLastOpenFailure = pfReason;
