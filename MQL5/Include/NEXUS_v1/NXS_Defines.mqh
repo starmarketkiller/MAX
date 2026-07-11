@@ -6,7 +6,7 @@
 #ifndef __NXS_DEFINES_MQH__
 #define __NXS_DEFINES_MQH__
 
-#define NEXUS_VERSION       "2.3.4-mtf"
+#define NEXUS_VERSION       "2.3.5-mtf"
 #define MAX_GRID_LAYERS     3
 #define MAX_PYRAMID         3
 #define MAX_STRATEGIES      15

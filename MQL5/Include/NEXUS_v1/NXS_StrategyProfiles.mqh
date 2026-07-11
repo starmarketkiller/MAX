@@ -95,7 +95,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
 double NXS_Profile_Risk(const string name){
    if(name == "ADX_RSI")           return 0.91;
    if(name == "BB_SQUEEZE")        return 2.0;
-   if(name == "BJORGUM")           return 2.0;
+   if(name == "BJORGUM")           return 2.5;    // v2.3.5: vincente reale (3M +30$, WR 58%)
    if(name == "BOLLINGER")         return 0.94;
    if(name == "BREAKOUT_ACC")      return 0.63;
    if(name == "CISD")              return 2.0;
@@ -120,7 +120,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "SMS_BMS_RTO")       return 1.29;
    if(name == "STRUCT_REACT")      return 2.0;
    if(name == "TSI")               return 1.6;    // v2.3.3: top earner reale (PF 2.30) -> piu' size
-   if(name == "TURTLE_SOUP")       return 2.0;
+   if(name == "TURTLE_SOUP")       return 3.0;    // v2.3.5: la stella reale (3M +139$, WR 55%) -> piu' size
    if(name == "WEEKLY_EXP")        return 0.63;
    return 0.0;
 }
