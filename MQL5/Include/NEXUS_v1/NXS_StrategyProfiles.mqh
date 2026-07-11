@@ -240,8 +240,11 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "OTE_CONT")      return false;   // v2.3.1 test reale: 6 trade, -30$
    // v2.3.7 — perdente non ancora riportato (logica SMC da rivedere):
    if(name == "BREAKOUT_ACC")  return false;   // -28$ (prossimo lotto)
+   // v2.4.8 — RITIRATE: tentativi di miglioramento esauriti, niente edge su gold.
+   if(name == "TSI")           return false;   // 25 trade PF 0.57 anche dopo il porting -> no edge
+   if(name == "ICHIMOKU")      return false;   // rumore a 4 trade, non fixabile via codice (non e' un bug)
    // v2.3.8/2.3.9 — RIPORTATE alla logica del sito e riabilitate:
-   //   ADX_RSI, EMA_PULLBACK (2.3.8) · TSI, FVG_CONT, ORDER_BLOCK (2.3.9)
+   //   ADX_RSI, EMA_PULLBACK (2.3.8) · FVG_CONT, ORDER_BLOCK (2.3.9)
    return true;
 }
 
