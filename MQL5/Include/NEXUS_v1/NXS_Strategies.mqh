@@ -84,16 +84,45 @@ void NXS_DefaultSLTP(SNXSSignal &sig){
    }
 }
 
-//------------------------------------ K1 ADX + RSI
+// v2.3.8 — mini-cache di handle EMA(period) per TF, usata dalle strategie
+// riportate dal sito che vogliono medie non presenti negli handle base
+// (es. EMA20/EMA50). Auto-contenuta: non tocca il sistema handle principale.
+int             g_emaCacheP[32];
+ENUM_TIMEFRAMES g_emaCacheTF[32];
+int             g_emaCacheH[32];
+int             g_emaCacheN = 0;
+double NXS_EMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_emaCacheN; i++)
+      if(g_emaCacheP[i] == period && g_emaCacheTF[i] == tf){ h = g_emaCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iMA(g_sym, tf, period, 0, MODE_EMA, PRICE_CLOSE);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_emaCacheN < 32){
+         g_emaCacheP[g_emaCacheN] = period; g_emaCacheTF[g_emaCacheN] = tf;
+         g_emaCacheH[g_emaCacheN] = h; g_emaCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
+//------------------------------------ K1 ADX_RSI (riportata alla logica del sito:
+// trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.)
 SNXSSignal NXS_Strat_ADXRSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ADX_RSI; s.stratName = "ADX_RSI";
    if(!InpStrat_ADX_RSI || !NXS_SelectorAllows(1)) return s;
-   if(g_adx < 22) return s;
-   double price = iClose(g_sym, NXS_EffTF(), 1);
-   if(g_adxPlus > g_adxMinus && g_rsi > 50 && price > g_ema200){
-      s.dir = DIR_BUY; s.score = 60 + MathMin(g_adx, 50) * 0.4; s.reason = "ADX_bull";
-   } else if(g_adxMinus > g_adxPlus && g_rsi < 50 && price < g_ema200){
-      s.dir = DIR_SELL; s.score = 60 + MathMin(g_adx, 50) * 0.4; s.reason = "ADX_bear";
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double e50 = NXS_EMAv(50, tf, 1), e50p = NXS_EMAv(50, tf, 2);
+   if(e50 <= 0 || e50p <= 0) return s;
+   double r  = g_rsi;                       // RSI(14) sul TF attivo
+   double px = iClose(g_sym, tf, 1);
+   bool trendUp = e50 > e50p;
+   if(trendUp && r > 45 && r < 65 && px > e50){
+      s.dir = DIR_BUY;  s.score = 62; s.reason = "ADXRSI bull (site)";
+   } else if(!trendUp && r > 35 && r < 55 && px < e50){
+      s.dir = DIR_SELL; s.score = 62; s.reason = "ADXRSI bear (site)";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -250,16 +279,20 @@ SNXSSignal NXS_Strat_LondonBO(){
 }
 
 //------------------------------------ H5 EMA Pullback
+// Riportata alla logica del sito: trend EMA20>EMA50, pullback = il prezzo era
+// sotto EMA20 e ci richiude sopra (o viceversa). La vecchia usava EMA9/21+RSI.
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
    if(!InpStrat_EMA_PULLBACK || !NXS_SelectorAllows(11)) return s;
-   double price = iClose(g_sym, NXS_EffTF(), 1);
-   double low   = iLow  (g_sym, NXS_EffTF(), 1);
-   double high  = iHigh (g_sym, NXS_EffTF(), 1);
-   if(g_ema9 > g_ema21 && low <= g_ema21 && price > g_ema21 && g_rsi > 45){
-      s.dir = DIR_BUY;  s.score = 66; s.reason = "EMA_PB_bull";
-   } else if(g_ema9 < g_ema21 && high >= g_ema21 && price < g_ema21 && g_rsi < 55){
-      s.dir = DIR_SELL; s.score = 66; s.reason = "EMA_PB_bear";
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double e20 = NXS_EMAv(20, tf, 1), e50 = NXS_EMAv(50, tf, 1), e20p = NXS_EMAv(20, tf, 2);
+   if(e20 <= 0 || e50 <= 0 || e20p <= 0) return s;
+   bool up = e20 > e50;
+   double px = iClose(g_sym, tf, 1), ppx = iClose(g_sym, tf, 2);
+   if(up && ppx < e20p && px > e20){
+      s.dir = DIR_BUY;  s.score = 64; s.reason = "EMA_PB bull (site)";
+   } else if(!up && ppx > e20p && px < e20){
+      s.dir = DIR_SELL; s.score = 64; s.reason = "EMA_PB bear (site)";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
