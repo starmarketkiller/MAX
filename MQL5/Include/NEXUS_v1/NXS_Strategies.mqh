@@ -173,14 +173,21 @@ SNXSSignal NXS_Strat_SAR(){
 }
 
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
+// Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
+// salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva
+// (PF 0.40 sul broker mentre sul sito era forte).
 SNXSSignal NXS_Strat_TSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
    if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
-   double price = iClose(g_sym, NXS_EffTF(), 1);
-   if(g_rsi > 55 && g_ema9 > g_ema21 && price > g_ema21){
-      s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI_bull";   // v2.0.9 +8
-   } else if(g_rsi < 45 && g_ema9 < g_ema21 && price < g_ema21){
-      s.dir = DIR_SELL; s.score = 66; s.reason = "TSI_bear";   // v2.0.9 +8
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double e20 = NXS_EMAv(20, tf, 1), e20p = NXS_EMAv(20, tf, 2);
+   if(e20 <= 0 || e20p <= 0) return s;
+   double r  = g_rsi;
+   double px = iClose(g_sym, tf, 1);
+   if(r > 52 && px > e20 && e20 > e20p){
+      s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI bull (site)";
+   } else if(r < 48 && px < e20 && e20 < e20p){
+      s.dir = DIR_SELL; s.score = 66; s.reason = "TSI bear (site)";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -225,18 +232,20 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
 SNXSSignal NXS_Strat_FVG(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_FVG_CONT; s.stratName = "FVG_CONT";
    if(!InpStrat_FVG_CONT || !NXS_SelectorAllows(8)) return s;
-   double h3 = iHigh(g_sym, NXS_EffTF(), 3);
-   double l3 = iLow (g_sym, NXS_EffTF(), 3);
-   double h1 = iHigh(g_sym, NXS_EffTF(), 1);
-   double l1 = iLow (g_sym, NXS_EffTF(), 1);
-   double c2 = iClose(g_sym, NXS_EffTF(), 2);
-   double o2 = iOpen (g_sym, NXS_EffTF(), 2);
-   double body2 = MathAbs(c2 - o2);
-   if(body2 < g_atr) return s;
-   if(l1 > h3 && c2 > o2){
-      s.dir = DIR_BUY;  s.score = 70; s.reason = "FVG_bull_continuation";
-   } else if(h1 < l3 && c2 < o2){
-      s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_bear_continuation";
+   // Logica del sito: gap a 3 candele (low[1]>high[3]) + continuazione nel trend
+   // (close[1] vs EMA50). La vecchia chiedeva un body-displacement -> divergeva.
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double e50 = NXS_EMAv(50, tf, 1);
+   if(e50 <= 0) return s;
+   double h3 = iHigh(g_sym, tf, 3);
+   double l3 = iLow (g_sym, tf, 3);
+   double h1 = iHigh(g_sym, tf, 1);
+   double l1 = iLow (g_sym, tf, 1);
+   double c1 = iClose(g_sym, tf, 1);
+   if(l1 > h3 && c1 > e50){
+      s.dir = DIR_BUY;  s.score = 70; s.reason = "FVG_cont bull (site)";
+   } else if(h1 < l3 && c1 < e50){
+      s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_cont bear (site)";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -357,12 +366,12 @@ SNXSSignal NXS_Strat_RSIDiv(){
 SNXSSignal NXS_Strat_OrderBlock(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
    if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
-   // Look for last bullish/bearish impulse 5–10 bars ago and a retest
-   for(int i = 5; i <= 12; i++){
+   // Sito: impulso (body>1.2 ATR) 3-10 barre fa, poi retest del body con rifiuto.
+   for(int i = 3; i <= 10; i++){
       double o = iOpen (g_sym, NXS_EffTF(), i);
       double c = iClose(g_sym, NXS_EffTF(), i);
       double body = MathAbs(c - o);
-      if(body < g_atr) continue;
+      if(body < 1.2 * g_atr) continue;
       double obTop = MathMax(o, c);
       double obBot = MathMin(o, c);
       double c1 = iClose(g_sym, NXS_EffTF(), 1);
