@@ -156,4 +156,21 @@ double NXS_ReactionScoreMod(int dir){
    return 0;
 }
 
+// v2.4.2 — CONFERMA REAZIONE per le strategie SMC (FVG/OB). Il motivo per cui
+// perdono e' che entrano nel gap/blocco mentre il prezzo lo ATTRAVERSA, senza
+// che li' avvenga una reazione. Qui pretendiamo due cose (structure + react
+// engine, gli strumenti che gia' abbiamo):
+//   1) la candela d'ingresso mostra una reazione reale nella direzione del trade
+//      (pin/rigetto o chiusura direzionale) -> NXS_HasPriceReaction;
+//   2) se la reaction engine ha rilevato una reazione a un livello di struttura
+//      (OB/FVG/swing registrato), NON deve contraddire la direzione del trade.
+// dir: +1 buy, -1 sell. Ritorna true se l'ingresso e' confermato.
+bool NXS_SMCReactionOK(ENUM_TIMEFRAMES tf, int dir){
+   if(dir == 0) return false;
+   if(!NXS_HasPriceReaction(g_sym, tf, dir)) return false;         // 1) reaction engine
+   if(g_reaction.detected && g_reaction.direction != 0 &&
+      g_reaction.direction != dir) return false;                    // 2) structure non contraddice
+   return true;
+}
+
 #endif

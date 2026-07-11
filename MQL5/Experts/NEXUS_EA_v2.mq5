@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.41"
+#property version   "2.42"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -401,6 +401,7 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
          // Phase 2: struttura + sweep ricalcolati sul TF del passaggio, cosi'
          // anche le strategie SMC (LIQ_SWEEP, OB, FVG...) girano sul loro TF.
          NXS_UpdateStructure(g_sym, passes[p]);
+         g_reaction = NXS_DetectReaction(g_sym, passes[p]); // v2.4.2: reazione sul TF del passaggio (per le SMC)
          SNXSSweep    swP  = NXS_DetectSweep();
          SNXSSweepExt swxP = NXS_DetectSweepExt();
          SNXSSignal tmp[64];
@@ -412,6 +413,7 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
       }
       NXS_ActivateOriginal();               // ripristina il TF di ingresso
       NXS_UpdateStructure(g_sym, InpTFEntry); // ripristina la struttura al TF di ingresso
+      g_reaction = NXS_DetectReaction(g_sym, InpTFEntry); // ripristina la reazione al TF di ingresso
    } else {
       n = NXS_CollectRaw(sw, swExt, amd, out);
    }

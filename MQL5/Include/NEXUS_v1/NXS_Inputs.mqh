@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.41";  // build v2.4.1 (margin gate + corsie indipendenti)
+input string   InpComment          = "NEXUS_v2.42";  // build v2.4.2 (reaction gate su FVG/OB)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
@@ -307,6 +307,7 @@ double   InpReactionTol        = 0.3;
 bool     InpUseReactionEMA     = true;    // EMA200 come livello dinamico di reazione (confluenza)
 double   InpReactEMABonus      = 12.0;    // bonus qualità reazione se coincide con la EMA200
 double   InpReactEMATolATR     = 0.4;     // tolleranza distanza dalla EMA (× ATR)
+bool     InpUseSMCReactionGate = true;    // v2.4.2: FVG/OB entrano solo con conferma reazione (structure+react engine)
 
 // input group "=== INDICATORS ==="
 int      InpADX_Period       = 14;

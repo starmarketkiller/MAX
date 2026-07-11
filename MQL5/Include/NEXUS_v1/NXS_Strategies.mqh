@@ -250,6 +250,12 @@ SNXSSignal NXS_Strat_FVG(){
    } else if(h1 < l3 && c1 < e50){
       s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_cont bear (site)";
    }
+   // v2.4.2: conferma reazione (structure+react engine) -> filtra i gap in cui
+   // il prezzo passa senza reagire (causa delle perdite SMC).
+   if(s.dir != DIR_NONE && InpUseSMCReactionGate &&
+      !NXS_SMCReactionOK(tf, (s.dir == DIR_BUY ? 1 : -1))){
+      s.dir = DIR_NONE; s.reason = "";
+   }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
 }
@@ -391,6 +397,13 @@ SNXSSignal NXS_Strat_OrderBlock(){
       if(c < o && h1 >= obBot && c1 < o1 && c1 < obMid){
          s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear"; break;
       }
+   }
+   // v2.4.2: conferma reazione (structure+react engine) sul retest -> entra solo
+   // se il prezzo RESPINGE il blocco, non se lo attraversa. Vale anche per OB_MIT
+   // (usa questa funzione). Filtra la causa delle perdite (PF 0.67 / 0.38).
+   if(s.dir != DIR_NONE && InpUseSMCReactionGate &&
+      !NXS_SMCReactionOK(NXS_EffTF(), (s.dir == DIR_BUY ? 1 : -1))){
+      s.dir = DIR_NONE; s.reason = "";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
