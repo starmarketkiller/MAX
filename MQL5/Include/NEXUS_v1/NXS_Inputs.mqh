@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.39";  // prefisso commento trade: distingue i trade del build v2.3.0 (multi-TF)
+input string   InpComment          = "NEXUS_v2.40";  // prefisso commento trade: distingue i trade del build v2.4.0 (risk realloc)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
@@ -163,7 +163,7 @@ double   InpInstMinATRfactor      = 0.0;   // 0=off; >0 = ATR corrente >= questo
 double   InpLotAggressiveness     = 1.0;
 // Scala il lotto sull'andamento: sale dopo N vittorie di fila, scende dopo N
 // perdite di fila, dentro [floor, cap]. "Alza sui vincita, abbassa sulle perdite".
-bool     InpUseStreakSizing       = true;
+bool     InpUseStreakSizing       = false;  // v2.4.0: OFF -> sizing prevedibile come nel backtest
 int      InpStreakWinsToScale     = 2;      // vittorie di fila per salire di uno step
 double   InpStreakScaleUp         = 1.25;   // x per step in vincita
 double   InpStreakMaxMult         = 2.00;   // tetto del moltiplicatore
@@ -348,7 +348,7 @@ double   InpTP1_Pct          = 0.30;     // partial close 30% at TP1 (was 33%)
 double   InpTP2_Pct          = 0.50;     // partial close 50% of remainder at TP2
 
 // input group "=== ANTI-BLEED (P2) ==="
-bool     InpUseAntiBleed     = true;
+bool     InpUseAntiBleed     = false;    // v2.4.0: OFF -> niente taglio lotto in DD, size = rischio profilo
 double   InpAB_RiskMult_1L   = 0.7;      // lot mult after 1 consecutive loss
 double   InpAB_RiskMult_2L   = 0.7;      // after 2
 double   InpAB_RiskMult_3L   = 0.4;      // after 3

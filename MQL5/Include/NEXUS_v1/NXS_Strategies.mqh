@@ -132,13 +132,16 @@ SNXSSignal NXS_Strat_ADXRSI(){
 SNXSSignal NXS_Strat_Bollinger(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BOLLINGER; s.stratName = "BOLLINGER";
    if(!InpStrat_BOLLINGER || !NXS_SelectorAllows(2)) return s;
-   double close = iClose(g_sym, NXS_EffTF(), 1);
-   double low   = iLow  (g_sym, NXS_EffTF(), 1);
-   double high  = iHigh (g_sym, NXS_EffTF(), 1);
-   if(low <= g_bbLower && close > g_bbLower && g_rsi < 35){
-      s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_rejection";
-   } else if(high >= g_bbUpper && close < g_bbUpper && g_rsi > 65){
-      s.dir = DIR_SELL; s.score = 62; s.reason = "BB_upper_rejection";
+   // Riportata alla logica del sito (sig_bollinger): rientro dalla banda con
+   // il CLOSE (non low/high) e NESSUN filtro RSI. La vecchia usava low/high +
+   // RSI<35/>65 -> troppo restrittiva e disallineata (158 setup, 0 vinti).
+   //   ppx <= lower < px  -> long  ;  ppx >= upper > px -> short
+   double px  = iClose(g_sym, NXS_EffTF(), 1);   // close[i]
+   double ppx = iClose(g_sym, NXS_EffTF(), 2);   // close[i-1]
+   if(ppx <= g_bbLower && g_bbLower < px){
+      s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_reentry";
+   } else if(ppx >= g_bbUpper && g_bbUpper > px){
+      s.dir = DIR_SELL; s.score = 62; s.reason = "BB_upper_reentry";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

@@ -93,35 +93,44 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
 // Rischio % per-strategia (dimensionato a budget di drawdown ~10% nel backtest).
 // Ritorna <=0 se non c'e' profilo -> usa il rischio globale InpRiskPercent.
 double NXS_Profile_Risk(const string name){
-   if(name == "ADX_RSI")           return 0.91;
-   if(name == "BB_SQUEEZE")        return 2.0;
-   if(name == "BJORGUM")           return 2.5;    // v2.3.5: vincente reale (3M +30$, WR 58%)
-   if(name == "BOLLINGER")         return 0.94;
-   if(name == "BREAKOUT_ACC")      return 0.63;
-   if(name == "CISD")              return 2.0;
-   if(name == "DISP_REBAL")        return 2.0;
-   if(name == "EMA_PULLBACK")      return 0.75;
-   if(name == "FVG_CONT")          return 0.65;
-   if(name == "FVG_MIT")           return 2.0;
-   if(name == "ICHIMOKU")          return 1.13;
-   if(name == "IFVG")              return 2.0;
-   if(name == "LIQ_SWEEP")         return 2.0;
-   if(name == "LIQ_VOID")          return 0.65;
-   if(name == "LONDON_BO")         return 0.63;
-   if(name == "MACD")              return 1.08;
-   if(name == "MALAYSIAN_SNR")     return 2.0;
-   if(name == "OB_MIT")            return 1.29;
-   if(name == "ORDER_BLOCK")       return 1.71;
-   if(name == "OTE_CONT")          return 2.0;
-   if(name == "RANGE_FADE")        return 0.94;
-   if(name == "RSI_DIV")           return 0.94;
-   if(name == "SAR")               return 0.75;
-   if(name == "SH_BMS_RTO")        return 1.29;
-   if(name == "SMS_BMS_RTO")       return 1.29;
-   if(name == "STRUCT_REACT")      return 2.0;
-   if(name == "TSI")               return 1.6;    // v2.3.3: top earner reale (PF 2.30) -> piu' size
-   if(name == "TURTLE_SOUP")       return 3.0;    // v2.3.5: la stella reale (3M +139$, WR 55%) -> piu' size
-   if(name == "WEEKLY_EXP")        return 0.63;
+   // v2.4.0: rischio RIALLOCATO sui dati REALI del broker (backtest 3M v2.3.9),
+   // non piu' sull'ottimizzazione del sito (Yahoo). Con anti-bleed e streak
+   // sizing spenti, questi valori sono il rischio EFFETTIVO per trade.
+   //   - VINCENTI reali (PF>1.1) -> size alzata (creano margine)
+   //   - PERDENTI reali (PF<1.0) -> size tagliata al minimo (smettono di
+   //     dissanguare, restano vive finche' non le riportiamo/rivediamo)
+   // --- Core vincente (PF reale >1.1) ---
+   if(name == "TURTLE_SOUP")       return 3.0;    // PF 2.04 reale, la stella
+   if(name == "BJORGUM")           return 2.5;    // PF 1.90 reale
+   if(name == "ICHIMOKU")          return 1.8;    // PF 1.91 reale (campione piccolo)
+   if(name == "EMA_PULLBACK")      return 1.5;    // PF 1.63 reale (riportata 2.3.8)
+   if(name == "SAR")               return 1.5;    // PF 1.31 reale, 196 trade (workhorse)
+   if(name == "RSI_DIV")           return 1.5;    // PF 1.21 reale, 98 trade
+   if(name == "MACD")              return 1.5;    // PF 1.10 reale, 131 trade
+   if(name == "ADX_RSI")           return 1.3;    // PF 1.14 reale (riportata 2.3.8)
+   // --- Perdenti reali (PF<1.0): size al minimo, non spente ---
+   if(name == "TSI")               return 0.5;    // PF 0.86 (riportata, in ripresa 0.40->0.86)
+   if(name == "FVG_CONT")          return 0.4;    // PF 0.79 (SMC non porta pulito)
+   if(name == "ORDER_BLOCK")       return 0.5;    // PF 0.67
+   if(name == "OB_MIT")            return 0.5;    // PF 0.38 (crollata per interazione)
+   if(name == "CISD")              return 0.5;    // PF 0.66
+   if(name == "MALAYSIAN_SNR")     return 0.4;    // PF 0.00
+   if(name == "BOLLINGER")         return 0.6;    // riportata 2.4.0, in osservazione
+   // --- Ancora da validare sul broker: size prudente ---
+   if(name == "BB_SQUEEZE")        return 0.6;
+   if(name == "BREAKOUT_ACC")      return 0.5;
+   if(name == "DISP_REBAL")        return 0.5;
+   if(name == "FVG_MIT")           return 0.5;
+   if(name == "IFVG")              return 0.5;
+   if(name == "LIQ_SWEEP")         return 0.6;
+   if(name == "LIQ_VOID")          return 0.5;
+   if(name == "LONDON_BO")         return 0.5;
+   if(name == "OTE_CONT")          return 0.5;
+   if(name == "RANGE_FADE")        return 0.6;
+   if(name == "SH_BMS_RTO")        return 0.5;
+   if(name == "SMS_BMS_RTO")       return 0.5;
+   if(name == "STRUCT_REACT")      return 0.5;
+   if(name == "WEEKLY_EXP")        return 0.5;
    return 0.0;
 }
 
