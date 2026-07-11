@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.48";  // build v2.4.8 (hedge ON: corsie 4 + gate margine, TSI/ICHIMOKU ritirate)
+input string   InpComment          = "NEXUS_v2.50";  // build v2.5.0 (HTF filter universale dallo sweep sito 10y)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;

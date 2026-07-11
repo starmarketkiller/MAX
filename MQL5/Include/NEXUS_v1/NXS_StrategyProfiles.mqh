@@ -20,14 +20,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
                      bool &htf, double &beR, double &trailATR){
    slMult = 0; tpMult = 0; htf = false; beR = 0; trailATR = 0;
    // --- Ricetta multi-TF ottimale per-strategia (XAUUSD, dati reali) ---
-   if(name == "ADX_RSI")           { slMult=1.0; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.39 R0.91
+   if(name == "ADX_RSI")           { slMult=1.0; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + TP4.0 -> PF1.48 (253 trade)
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    if(name == "BJORGUM")           { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF3.46 R2.0
    if(name == "BOLLINGER")         { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "BREAKOUT_ACC")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
    if(name == "CISD")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)
    if(name == "DISP_REBAL")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.68 R2.0
-   if(name == "EMA_PULLBACK")      { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.65 R0.75
+   if(name == "EMA_PULLBACK")      { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
    if(name == "FVG_CONT")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
    if(name == "FVG_MIT")           { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.04 R2.0
    if(name == "ICHIMOKU")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.75 R1.13
@@ -35,14 +35,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "LIQ_SWEEP")         { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.48 R2.0
    if(name == "LIQ_VOID")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
    if(name == "LONDON_BO")         { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
-   if(name == "MACD")              { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.72 R1.08
+   if(name == "MACD")              { slMult=2.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL2.0/TP3.0 -> PF1.63 (robusta su sito E MT5)
    if(name == "MALAYSIAN_SNR")     { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.96 R2.0
-   if(name == "OB_MIT")            { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
+   if(name == "OB_MIT")            { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: SL1.5/TP4.0 + trail -> PF1.80
    if(name == "ORDER_BLOCK")       { slMult=1.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.55 R1.71
    if(name == "OTE_CONT")          { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.78 R2.0
    if(name == "RANGE_FADE")        { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1h OK PF1.29 R0.94
-   if(name == "SAR")               { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.65 R0.75
+   if(name == "SAR")               { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "SMS_BMS_RTO")       { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "STRUCT_REACT")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.87 R2.0
@@ -239,10 +239,10 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "DISP_REBAL")    return false;   // v2.3.1 test reale: 10 trade, -53$ (WR 30%)
    if(name == "OTE_CONT")      return false;   // v2.3.1 test reale: 6 trade, -30$
    // v2.3.7 — perdente non ancora riportato (logica SMC da rivedere):
-   if(name == "BREAKOUT_ACC")  return false;   // -28$ (prossimo lotto)
-   // v2.4.8 — RITIRATE: tentativi di miglioramento esauriti, niente edge su gold.
-   if(name == "TSI")           return false;   // 25 trade PF 0.57 anche dopo il porting -> no edge
-   if(name == "ICHIMOKU")      return false;   // rumore a 4 trade, non fixabile via codice (non e' un bug)
+   // v2.5.0 — RIABILITATE: lo sweep sul sito (10 anni) mostra edge statistico solido
+   // con HTF ON + TP largo: BREAKOUT_ACC PF1.86 (128 trade), TSI PF1.62 (174 trade).
+   // Da validare su MT5 3M+3Y: se l'HTF filter generalizza, l'edge si trasferisce.
+   if(name == "ICHIMOKU")      return false;   // sweep HTF0 anomalo + rumore su MT5 -> resta ferma per ora
    // v2.3.8/2.3.9 — RIPORTATE alla logica del sito e riabilitate:
    //   ADX_RSI, EMA_PULLBACK (2.3.8) · FVG_CONT, ORDER_BLOCK (2.3.9)
    return true;
