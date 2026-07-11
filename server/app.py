@@ -2986,10 +2986,16 @@ def serve_react_app(full_path: str = ""):
 # Sito multi-pagina (index/login/dashboard/performance/prezzi/faq/strategia).
 # Montato su "/" DOPO le route /api: html=True serve index.html sulla root e
 # i singoli .html sui rispettivi path. Le route API sopra hanno la precedenza.
+# Homepage -> landing 3D immersiva (React su /app). Le altre pagine statiche
+# (prezzi/faq/…) restano raggiungibili ai loro path; solo "/" reindirizza.
+@app.get("/")
+def _root_redirect():
+    return RedirectResponse(url="/app/landing")
+
 if STATIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="site")
 else:
-    @app.get("/")
+    @app.get("/site-missing")
     def _no_site():
         return JSONResponse({"service": "nexus-backend", "site": "static/ mancante"})
 
