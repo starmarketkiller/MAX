@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.43";  // build v2.4.3 (campione + gate reazione isolato)
+input string   InpComment          = "NEXUS_v2.44";  // build v2.4.4 (lascia correre: trail 2.5xATR att.1.0)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
@@ -49,7 +49,8 @@ int      InpHardMaxSpreadPts = 0;     // 0 = use profile default
 int      InpOrderRetries     = 3;     // retries on requote/off-quotes
 bool     InpUseStatePersist  = true;  // resume state after MT5 restart
 bool     InpUseAtrTrail      = true;  // ATR-based trailing stop
-double   InpAtrTrailMult     = 1.5;
+double   InpAtrTrailMult     = 2.5;   // v2.4.4: 1.5->2.5 "lascia correre" - trail piu' largo, le vincenti cavalcano il movimento
+double   InpAtrTrailActivateATR = 1.0; // v2.4.4: attiva il trail solo dopo +1.0 ATR (era 0.5) - da' spazio al trade per svilupparsi
 
 // input group "=== ON-CHART DASHBOARD ==="
 input bool     InpShowDashboard    = true;

@@ -10,6 +10,7 @@ void NXS_TrailATR(){
    if(g_atr <= 0) return;
    double k = InpAtrTrailMult;
    if(k <= 0) k = 1.5;
+   double act = (InpAtrTrailActivateATR > 0) ? InpAtrTrailActivateATR : 0.5; // v2.4.4: soglia d'attivazione tunabile
 
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
@@ -24,15 +25,15 @@ void NXS_TrailATR(){
 
       if(ptype == POSITION_TYPE_BUY){
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-         // only trail once in profit by at least 0.5 ATR
-         if(bid - open < 0.5 * g_atr) continue;
+         // only trail once in profit by at least `act` ATR (v2.4.4: era 0.5 fisso)
+         if(bid - open < act * g_atr) continue;
          double newSL = NormPrice(bid - k * g_atr);
          if(newSL > curSL + 0.1 * g_point && newSL < bid){
             NXS_DoModify(t, newSL, curTP);
          }
       } else if(ptype == POSITION_TYPE_SELL){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-         if(open - ask < 0.5 * g_atr) continue;
+         if(open - ask < act * g_atr) continue;
          double newSL = NormPrice(ask + k * g_atr);
          if((curSL == 0 || newSL < curSL - 0.1 * g_point) && newSL > ask){
             NXS_DoModify(t, newSL, curTP);
