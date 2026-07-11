@@ -27,15 +27,14 @@ void NXS_TrailATR(){
       // Le trend/continuazione corrono (2.5), le mean-reversion prendono profitto
       // presto (1.5). Fallback al globale se la strategia non ha un valore.
       double k    = kGlobal;
-      double actK = act;   // soglia d'attivazione (globale o per-strategia)
+      double actK = act;   // soglia d'attivazione globale (v2.4.7: attivazione
+                           // per-strategia rimossa - in v2.4.6 dava netto piu' basso)
       if(InpUseStrategyProfiles){
          string cm = PositionGetString(POSITION_COMMENT);
          string pp[]; int npp = StringSplit(cm, '|', pp);
          if(npp >= 2 && StringLen(pp[1]) > 0){
             double pk = NXS_Profile_TrailK(pp[1]);
-            if(pk > 0) k = pk;
-            double pa = NXS_Profile_TrailActivate(pp[1]);   // v2.4.6
-            if(pa > 0) actK = pa;
+            if(pk > 0) k = pk;   // solo la LARGHEZZA e' per-strategia (v2.4.5, vincente)
          }
       }
 

@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.46";  // build v2.4.6 (attivazione trail per-strategia, fix ICHIMOKU)
+input string   InpComment          = "NEXUS_v2.47";  // build v2.4.7 (config campione v2.4.5 ripristinata)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
