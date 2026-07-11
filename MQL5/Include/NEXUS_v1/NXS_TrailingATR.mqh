@@ -8,8 +8,8 @@
 void NXS_TrailATR(){
    if(!InpUseAtrTrail) return;
    if(g_atr <= 0) return;
-   double k = InpAtrTrailMult;
-   if(k <= 0) k = 1.5;
+   double kGlobal = InpAtrTrailMult;
+   if(kGlobal <= 0) kGlobal = 1.5;
    double act = (InpAtrTrailActivateATR > 0) ? InpAtrTrailActivateATR : 0.5; // v2.4.4: soglia d'attivazione tunabile
 
    for(int i = PositionsTotal()-1; i >= 0; i--){
@@ -22,6 +22,19 @@ void NXS_TrailATR(){
       double open  = PositionGetDouble(POSITION_PRICE_OPEN);
       double curSL = PositionGetDouble(POSITION_SL);
       double curTP = PositionGetDouble(POSITION_TP);
+
+      // v2.4.5 — larghezza trail PER-STRATEGIA (dal commento: prefix|strat|score).
+      // Le trend/continuazione corrono (2.5), le mean-reversion prendono profitto
+      // presto (1.5). Fallback al globale se la strategia non ha un valore.
+      double k = kGlobal;
+      if(InpUseStrategyProfiles){
+         string cm = PositionGetString(POSITION_COMMENT);
+         string pp[]; int npp = StringSplit(cm, '|', pp);
+         if(npp >= 2 && StringLen(pp[1]) > 0){
+            double pk = NXS_Profile_TrailK(pp[1]);
+            if(pk > 0) k = pk;
+         }
+      }
 
       if(ptype == POSITION_TYPE_BUY){
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);

@@ -25,7 +25,7 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "BJORGUM")           { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF3.46 R2.0
    if(name == "BOLLINGER")         { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "BREAKOUT_ACC")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
-   if(name == "CISD")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=2.0; return true; }  // 4h FORTE PF5.95 R2.0
+   if(name == "CISD")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)
    if(name == "DISP_REBAL")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.68 R2.0
    if(name == "EMA_PULLBACK")      { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.65 R0.75
    if(name == "FVG_CONT")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
@@ -132,6 +132,47 @@ double NXS_Profile_Risk(const string name){
    if(name == "STRUCT_REACT")      return 0.5;
    if(name == "WEEKLY_EXP")        return 0.5;
    return 0.0;
+}
+
+// v2.4.5 — Larghezza del TRAILING per-strategia (x ATR), dai dati reali del test
+// v2.4.4: il trail largo (2.5) fa VOLARE le trend/continuazione ma DISTRUGGE le
+// mean-reversion (restituiscono i profitti). Quindi:
+//   - trend/continuazione -> trail LARGO (2.5): "lascia correre"
+//   - mean-reversion/alto-WR -> trail STRETTO (1.5): prendi profitto presto
+// Ritorna <=0 se non specificato -> l'overlay usa il globale InpAtrTrailMult.
+double NXS_Profile_TrailK(const string name){
+   // --- LARGO 2.5 (trend/continuazione: corrono) ---
+   if(name == "TURTLE_SOUP")   return 2.5;   // 2.04->2.72 col largo
+   if(name == "FVG_CONT")      return 2.5;   // 0.88->1.99
+   if(name == "ORDER_BLOCK")   return 2.5;   // 0.94->2.03
+   if(name == "OB_MIT")        return 2.5;   // 0.46->1.52
+   if(name == "SAR")           return 2.5;   // 1.14->1.21
+   if(name == "ADX_RSI")       return 2.5;   // 1.03->1.15
+   if(name == "LIQ_SWEEP")     return 2.5;   // stessa famiglia SMC
+   if(name == "LIQ_VOID")      return 2.5;
+   if(name == "SH_BMS_RTO")    return 2.5;
+   if(name == "SMS_BMS_RTO")   return 2.5;
+   if(name == "IFVG")          return 2.5;
+   if(name == "FVG_MIT")       return 2.5;
+   if(name == "LONDON_BO")     return 2.5;   // breakout continuation
+   if(name == "BREAKOUT_ACC")  return 2.5;
+   if(name == "WEEKLY_EXP")    return 2.5;
+   if(name == "OTE_CONT")      return 2.5;
+   if(name == "DISP_REBAL")    return 2.5;
+   // --- STRETTO 1.5 (mean-reversion/alto-WR: prendono profitto) ---
+   if(name == "RSI_DIV")       return 1.5;   // 1.21->0.81 col largo -> stringi
+   if(name == "BJORGUM")       return 1.5;   // 1.89->0.89
+   if(name == "ICHIMOKU")      return 1.5;   // 2.34->0
+   if(name == "EMA_PULLBACK")  return 1.5;   // 1.37->1.00
+   if(name == "MACD")          return 1.5;   // 1.27 vs 1.23 ~neutro -> stretto
+   if(name == "TSI")           return 1.5;
+   if(name == "BOLLINGER")     return 1.5;   // mean-reversion
+   if(name == "BB_SQUEEZE")    return 1.5;
+   if(name == "RANGE_FADE")    return 1.5;
+   if(name == "STRUCT_REACT")  return 1.5;
+   if(name == "MALAYSIAN_SNR") return 1.5;
+   if(name == "CISD")          return 1.5;
+   return 0.0;   // fallback -> globale
 }
 
 // Solo SL/TP (per NXS_DefaultSLTP). Ritorna true se c'e' il profilo.

@@ -26,7 +26,7 @@ int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
-input string   InpComment          = "NEXUS_v2.44";  // build v2.4.4 (lascia correre: trail 2.5xATR att.1.0)
+input string   InpComment          = "NEXUS_v2.45";  // build v2.4.5 (trailing per-strategia: trend larghi, mean-rev stretti)
 ENUM_TIMEFRAMES InpTFEntry   = PERIOD_M15;
 ENUM_TIMEFRAMES InpTFMedium  = PERIOD_H1;
 ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
