@@ -27,10 +27,10 @@ profitto reale, non solo curve di backtest.
   configurazione (SL/TP/HTF) massimizza l'edge di ciascuna strategia sul motore del sito.
 - **[[Sito Backtest Lab - Note Tecniche]]** — come funziona il backend Python/React,
   incluso il problema di deploy Render risolto il 12/07.
-- **`Strategie/`** — una scheda per ciascuna delle 36 strategie (tipo, trigger
-  meccanico, config attuale, risultati 3M/3Y, stato di validazione). Aggiornarle è il
-  modo in cui questo vault resta vivo: quando finisce un lavoro su una strategia, la
-  sua scheda va aggiornata con i nuovi numeri e il nuovo stato.
+- **[[MOC - Strategie]]** — indice delle 36 schede per-strategia (`Strategie/`),
+  raggruppate per stato di validazione (validate/pending/fallite/campione piccolo/
+  disabilitate/non connesse). Punto di partenza per lavorare strategia-per-strategia:
+  aggiornare la scheda e spostarla di gruppo è il modo in cui questo vault resta vivo.
 
 ## Stato corrente (12 luglio 2026)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

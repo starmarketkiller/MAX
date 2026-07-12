@@ -35,4 +35,4 @@ Divergenza RSI-prezzo: minimo di prezzo più basso ma RSI più alto (o viceversa
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]

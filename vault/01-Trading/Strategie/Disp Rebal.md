@@ -35,4 +35,4 @@ Displacement + ribilanciamento. Disabilitata: test reale v2.3.1, 10 trade, -53$ 
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]

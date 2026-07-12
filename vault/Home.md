@@ -29,6 +29,8 @@ updated: 2026-07-12
 - **[[MOC - Trading]]** — NEXUS EA, backtest, MT5. Live.
 - **[[MOC - Business]]** — Chantilly. Da compilare.
 - **[[MOC - Social]]** — Instagram / contenuti. Da compilare.
+- `00-Inbox/` — cattura rapida, non ha una MOC apposta perché è zona di passaggio
+  (vedi la sua `README.md`), non memoria definitiva.
 
 ## Il sistema stesso
 - **[[MOC - Sistema JARVIS]]** — come i pezzi si parlano, cosa è già vivo e cosa è ancora

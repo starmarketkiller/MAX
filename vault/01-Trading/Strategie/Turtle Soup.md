@@ -35,4 +35,4 @@ Sweep di un estremo recente + rientro nel range (Turtle Soup classico), body[1]>
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]

@@ -35,4 +35,4 @@ Stessa logica di ORDER_BLOCK (mitigazione strutturale), floor di score 68.
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]

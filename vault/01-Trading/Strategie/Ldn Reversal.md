@@ -35,4 +35,4 @@ NOT_CONNECTED — nessun profilo, richiede validazione diretta su MT5 isolata (I
 Non raggiunta dal collector segnali in questo build — 0 chiamate registrate.
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
