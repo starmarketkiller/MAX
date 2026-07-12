@@ -13,6 +13,47 @@
 .nx3d-fallback.show{display:grid}
 
 .nx3d-scroll{position:relative;z-index:2}
+
+/* ---- HUD del canopy: cornici fisse, sweep del sensore, telemetria ai bordi ---- */
+.nx3d-hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+.nx3d-hud-corner{position:absolute;width:34px;height:34px;border:2px solid rgba(56,189,248,.5);opacity:.7}
+.nx3d-hud-corner.tl{top:22px;left:22px;border-right:none;border-bottom:none}
+.nx3d-hud-corner.tr{top:22px;right:22px;border-left:none;border-bottom:none}
+.nx3d-hud-corner.bl{bottom:22px;left:22px;border-right:none;border-top:none}
+.nx3d-hud-corner.br{bottom:22px;right:22px;border-left:none;border-top:none}
+.nx3d-hud-sweep{position:absolute;left:0;right:0;height:1px;top:-2%;
+  background:linear-gradient(90deg,transparent,rgba(56,189,248,.45),transparent);
+  animation:nx3d-sweep 7s linear infinite;opacity:.55}
+@keyframes nx3d-sweep{0%{top:-2%}100%{top:102%}}
+.nx3d-hud-label{position:absolute;font-family:var(--nx-mono);font-size:10.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--nx-dim);opacity:.62}
+.nx3d-hud-label.tl{top:26px;left:66px}
+.nx3d-hud-label.tr{top:26px;right:66px;text-align:right}
+.nx3d-hud-label.bl{bottom:26px;left:66px}
+.nx3d-hud-label.br{bottom:26px;right:66px;text-align:right}
+
+/* ---- pannelli olografici in vetro: telemetria operativa, non promesse ---- */
+.nx3d-glasspanel{position:fixed;top:50%;transform:translateY(-50%);z-index:4;width:172px;padding:16px 18px;
+  background:linear-gradient(160deg,rgba(20,32,58,.38),rgba(8,14,28,.26));border:1px solid rgba(56,189,248,.22);
+  border-radius:4px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.65);pointer-events:none;will-change:transform;
+  opacity:0;animation:nx3d-panelin 1.3s .5s cubic-bezier(.2,.8,.2,1) forwards}
+.nx3d-glasspanel.left{left:26px}
+.nx3d-glasspanel.right{right:26px}
+/* solo opacity qui: il transform (translateY di centratura + parallasse) resta
+   esclusivo del JS nel render loop, altrimenti l'animation con fill:forwards
+   vincerebbe sempre la cascata e il parallasse non si vedrebbe mai. */
+@keyframes nx3d-panelin{from{opacity:0}to{opacity:1}}
+.nx3d-gp-title{font-family:var(--nx-mono);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--nx-cyan);opacity:.85;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(56,189,248,.18)}
+.nx3d-gp-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;font-family:var(--nx-mono)}
+.nx3d-gp-row span{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--nx-dim)}
+.nx3d-gp-row b{font-size:12px;color:var(--nx-white);font-weight:600;text-align:right}
+
+@media(max-width:1100px){.nx3d-glasspanel{display:none}}
+@media(max-width:720px){.nx3d-hud-label{display:none}.nx3d-hud-corner{width:22px;height:22px}}
+@media(prefers-reduced-motion:reduce){.nx3d-hud-sweep{animation:none;display:none}
+  .nx3d-glasspanel{animation:none;opacity:1;transform:translateY(-50%)}}
 .nx3d-panel{min-height:100vh;display:flex;align-items:center;padding:0 8vw}
 .nx3d-panel.right{justify-content:flex-end;text-align:right}
 .nx3d-panel.center{justify-content:center;text-align:center}
@@ -57,3 +98,7 @@
   .nx3d-panel.right .nx3d-cta,.nx3d-panel.right .nx3d-eyebrow{justify-content:flex-start;flex-direction:row}
   .nx3d-figs{grid-template-columns:1fr;gap:26px}
 }
+/* sopra i 1100px i pannelli olografici sono fissi ai bordi: il testo deve
+   restare libero, altrimenti ci finisce sotto. Va DOPO le regole base di
+   .nx3d-panel per vincere la cascata (stessa specificita', ordine decide). */
+@media(min-width:1101px){.nx3d-panel{padding-left:240px;padding-right:240px}}

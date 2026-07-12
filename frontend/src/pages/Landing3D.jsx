@@ -68,6 +68,10 @@ export default function Landing3D() {
     const dir = new THREE.DirectionalLight(0x9fd8ff, 1.4);
     dir.position.set(5, 10, 6);
     scene.add(dir);
+    // rim/fill indigo — non illumina, contorna: da' volume dove la key light lascia il buio.
+    const rim = new THREE.DirectionalLight(0x6d5ef0, 0.55);
+    rim.position.set(-8, 2, -4);
+    scene.add(rim);
     const pt = new THREE.PointLight(0x38bdf8, 60, 60);
     pt.position.set(0, 1, 2);
     scene.add(pt);
@@ -86,6 +90,14 @@ export default function Landing3D() {
     const coreWire = new THREE.LineSegments(wireGeo, wireMat);
     coreWire.position.copy(core.position);
     scene.add(coreWire);
+
+    // ---- riflesso: pavimento vetro/metallo che restituisce un'eco capovolta ----
+    const floorGeo = track(new THREE.PlaneGeometry(240, 240));
+    const floorMat = track(new THREE.MeshStandardMaterial({ color: 0x060a16, metalness: 0.9, roughness: 0.18, envMapIntensity: 1.2 }));
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -7;
+    scene.add(floor);
 
     // ---- market corridor of candlesticks ----
     const NC = 70;
@@ -213,8 +225,14 @@ export default function Landing3D() {
     });
     const blurH = track(mkBlur()), blurV = track(mkBlur());
     const compMat = track(new THREE.ShaderMaterial({
-      uniforms: { tScene: { value: null }, tBloom: { value: null }, inten: { value: 1.25 } }, vertexShader: VS,
-      fragmentShader: "precision highp float;varying vec2 vUv;uniform sampler2D tScene;uniform sampler2D tBloom;uniform float inten;void main(){vec3 c=texture2D(tScene,vUv).rgb;vec3 b=texture2D(tBloom,vUv).rgb;vec3 col=c+b*inten;col=col/(col+vec3(0.6))*1.6;gl_FragColor=vec4(col,1.0);}",
+      uniforms: { tScene: { value: null }, tBloom: { value: null }, inten: { value: 1.25 }, uT: { value: 0 } }, vertexShader: VS,
+      fragmentShader: "precision highp float;varying vec2 vUv;uniform sampler2D tScene;uniform sampler2D tBloom;uniform float inten;uniform float uT;"
+        + "void main(){vec3 c=texture2D(tScene,vUv).rgb;vec3 b=texture2D(tBloom,vUv).rgb;vec3 col=c+b*inten;col=col/(col+vec3(0.6))*1.6;"
+        // vignette del canopy: i bordi si scuriscono appena, l'occhio resta al centro
+        + "vec2 uv=vUv-0.5;float vig=1.0-dot(uv,uv)*0.55;col*=vig;"
+        // scanline sottilissima del sensore HUD, quasi impercettibile
+        + "float sl=sin((vUv.y*820.0)-uT*2.0)*0.015;col+=sl;"
+        + "gl_FragColor=vec4(col,1.0);}",
     }));
     const pass = (mat, target) => { quad.material = mat; renderer.setRenderTarget(target); renderer.render(postScene, ortho); };
 
@@ -271,7 +289,7 @@ export default function Landing3D() {
       const tx = 1 / (window.innerWidth * dpr / 2), ty = 1 / (window.innerHeight * dpr / 2);
       blurH.uniforms.tD.value = rtA.texture; blurH.uniforms.dir.value.set(1, 0); blurH.uniforms.texel.value.set(tx, ty); pass(blurH, rtB);
       blurV.uniforms.tD.value = rtB.texture; blurV.uniforms.dir.value.set(0, 1); blurV.uniforms.texel.value.set(tx, ty); pass(blurV, rtA);
-      compMat.uniforms.tScene.value = rtScene.texture; compMat.uniforms.tBloom.value = rtA.texture;
+      compMat.uniforms.tScene.value = rtScene.texture; compMat.uniforms.tBloom.value = rtA.texture; compMat.uniforms.uT.value = t;
       renderer.setRenderTarget(null); quad.material = compMat; renderer.render(postScene, ortho);
 
       root.querySelectorAll(".nx3d-card").forEach((c) => {
@@ -281,6 +299,12 @@ export default function Landing3D() {
       const active = Math.round(p * 2);
       railBtns.forEach((b, i) => b.classList.toggle("on", i === active));
       if (hint) hint.style.opacity = p > 0.02 ? "0" : "0.85";
+      const sectionLabel = root.querySelector("#nx3d-hud-section");
+      if (sectionLabel) sectionLabel.textContent = `SEZIONE 0${active + 1} / 03`;
+      root.querySelectorAll(".nx3d-glasspanel").forEach((el, i) => {
+        const side = i === 0 ? -1 : 1;
+        el.style.transform = `translateY(calc(-50% + ${cmy * -14}px)) translateX(${side * cmx * 10}px)`;
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -304,6 +328,31 @@ export default function Landing3D() {
     <div className="nx3d" ref={rootRef}>
       <canvas className="nx3d-gl" ref={canvasRef} />
       <div className="nx3d-fallback">Il tuo browser non supporta WebGL.<br />Prova un browser aggiornato su desktop.</div>
+
+      <div className="nx3d-hud" aria-hidden="true">
+        <span className="nx3d-hud-corner tl" />
+        <span className="nx3d-hud-corner tr" />
+        <span className="nx3d-hud-corner bl" />
+        <span className="nx3d-hud-corner br" />
+        <div className="nx3d-hud-sweep" />
+        <div className="nx3d-hud-label tl">NEXUS · XAU/USD</div>
+        <div className="nx3d-hud-label tr">MOTORE MULTI-TIMEFRAME</div>
+        <div className="nx3d-hud-label bl">VALIDAZIONE · 3M + 3Y</div>
+        <div className="nx3d-hud-label br" id="nx3d-hud-section">SEZIONE 01 / 03</div>
+      </div>
+
+      <aside className="nx3d-glasspanel left" aria-hidden="true">
+        <div className="nx3d-gp-title">Motore</div>
+        <div className="nx3d-gp-row"><span>Strategie</span><b>36</b></div>
+        <div className="nx3d-gp-row"><span>Simbolo</span><b>XAU/USD</b></div>
+        <div className="nx3d-gp-row"><span>Modalità</span><b>Hedge</b></div>
+      </aside>
+      <aside className="nx3d-glasspanel right" aria-hidden="true">
+        <div className="nx3d-gp-title">Validazione</div>
+        <div className="nx3d-gp-row"><span>Finestre</span><b>2</b></div>
+        <div className="nx3d-gp-row"><span>Storico</span><b>10 anni</b></div>
+        <div className="nx3d-gp-row"><span>Metodo</span><b>Doppio test</b></div>
+      </aside>
 
       <nav className="nx3d-rail" aria-label="Sezioni">
         <button className="on" aria-label="Sezione 1" onClick={() => goTo(0)} />
