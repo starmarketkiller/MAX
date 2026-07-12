@@ -39,7 +39,7 @@
 .nx3d-btn.primary{background:linear-gradient(180deg,var(--nx-electric),var(--nx-azure));color:#04121f;border-color:transparent;font-weight:700}
 .nx3d-btn:focus-visible{outline:2px solid var(--nx-cyan);outline-offset:3px}
 
-.nx3d-figs{display:grid;grid-template-columns:repeat(2,1fr);gap:34px 54px;margin-top:44px}
+.nx3d-figs{display:grid;grid-template-columns:repeat(3,1fr);gap:34px 44px;margin-top:44px;text-align:center}
 .nx3d-fig .nx3d-v{font-family:var(--nx-mono);font-size:clamp(44px,6vw,76px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;filter:drop-shadow(0 0 24px rgba(56,189,248,.4))}
 .nx3d-fig .nx3d-v.up{color:var(--nx-up)}
 .nx3d-fig .nx3d-v.c{color:var(--nx-electric)}
@@ -55,5 +55,5 @@
 @media(max-width:720px){
   .nx3d-panel,.nx3d-panel.right{justify-content:flex-start;text-align:left}
   .nx3d-panel.right .nx3d-cta,.nx3d-panel.right .nx3d-eyebrow{justify-content:flex-start;flex-direction:row}
-  .nx3d-figs{grid-template-columns:1fr 1fr;gap:26px}
+  .nx3d-figs{grid-template-columns:1fr;gap:26px}
 }

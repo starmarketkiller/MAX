@@ -12,10 +12,33 @@ import LiveChartPage from "@/pages/LiveChartPage";
 // authenticated users who go straight to the dashboard.
 const Landing3D = lazy(() => import("@/pages/Landing3D"));
 
+// Dark/branded fallback: the only lazy route today is the 3D landing, so this
+// is what shows while its chunk (three.js) downloads. A plain "Loading…" on a
+// white flash before a dark cinematic scene reads as broken; this doesn't.
 function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-      Loading…
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#04060f",
+        color: "#8ea6cf",
+        fontFamily: "ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,monospace",
+        fontSize: 13,
+        letterSpacing: "0.3em",
+        textTransform: "uppercase",
+        gap: 14,
+        flexDirection: "column",
+      }}
+    >
+      <span
+        className="nx-loading-dot"
+        style={{ width: 8, height: 8, borderRadius: "50%", background: "#38bdf8", boxShadow: "0 0 16px #38bdf8" }}
+      />
+      NEXUS
+      <style>{"@keyframes nx-pulse{0%,100%{opacity:.35}50%{opacity:1}}@media (prefers-reduced-motion: no-preference){.nx-loading-dot{animation:nx-pulse 1.2s ease-in-out infinite}}"}</style>
     </div>
   );
 }

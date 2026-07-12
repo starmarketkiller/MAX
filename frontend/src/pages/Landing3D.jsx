@@ -21,6 +21,25 @@ export default function Landing3D() {
     window.scrollTo({ top: m * (i / 2), behavior: reduce ? "auto" : "smooth" });
   };
 
+  // Page title/description for this route only — restored on unmount so the
+  // rest of the app keeps its own (index.html default: "NEXUS — Cockpit").
+  useEffect(() => {
+    const prevTitle = document.title;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const prevDesc = metaDesc ? metaDesc.getAttribute("content") : null;
+    document.title = "NEXUS — Viaggio nel motore di trading algoritmico";
+    if (metaDesc) {
+      metaDesc.setAttribute(
+        "content",
+        "NEXUS opera l'oro validando ogni strategia su due finestre temporali indipendenti prima di fidarsene. Entra nel motore."
+      );
+    }
+    return () => {
+      document.title = prevTitle;
+      if (metaDesc && prevDesc !== null) metaDesc.setAttribute("content", prevDesc);
+    };
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const root = rootRef.current;
@@ -143,7 +162,7 @@ export default function Landing3D() {
       x.fillText(text, 128, 50);
       return new THREE.CanvasTexture(c);
     };
-    const tokens = [["BUY", "#34d399"], ["SELL", "#fb7185"], ["+0.8R", "#38e6ff"], ["XAU", "#eaf2ff"], ["1.24", "#38e6ff"], ["D1", "#8ea6cf"], ["H4", "#8ea6cf"], ["+1050", "#34d399"], ["SL", "#fb7185"], ["TP", "#34d399"], ["{ }", "#60a5fa"], ["0x3A", "#8ea6cf"]];
+    const tokens = [["BUY", "#34d399"], ["SELL", "#fb7185"], ["+0.8R", "#38e6ff"], ["XAU", "#eaf2ff"], ["ATR", "#38e6ff"], ["D1", "#8ea6cf"], ["H4", "#8ea6cf"], ["R:R", "#34d399"], ["SL", "#fb7185"], ["TP", "#34d399"], ["{ }", "#60a5fa"], ["0x3A", "#8ea6cf"]];
     const glyphs = [];
     for (let i = 0; i < 46; i++) {
       const tk = tokens[i % tokens.length];
@@ -318,13 +337,14 @@ export default function Landing3D() {
 
         <section className="nx3d-panel center">
           <div className="nx3d-card" data-par="1.0">
-            <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>La prova · Campione v2.4.8</span>
-            <h2>Dove arriva la curva.</h2>
+            <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>Il metodo</span>
+            <h2>Non ci fidiamo di un solo backtest.</h2>
+            <p className="nx3d-lede">Ogni strategia viene validata su <b>almeno due finestre indipendenti</b> — pochi mesi e diversi anni — prima di essere considerata affidabile.</p>
+            <p className="nx3d-sub">Se regge solo su una, resta a rischio minimo o si spegne. Un risultato che sembra ottimo su un periodo corto e crolla su uno lungo non è un edge: è rumore travestito da fortuna. Non lo pubblichiamo come prova finché non regge su entrambi.</p>
             <div className="nx3d-figs">
-              <div className="nx3d-fig"><div className="nx3d-v up" data-to="1050" data-pre="+">+0</div><div className="nx3d-k">Netto · backtest 3M</div></div>
-              <div className="nx3d-fig"><div className="nx3d-v c" data-to="3.19" data-dec="2">0</div><div className="nx3d-k">Sharpe ratio</div></div>
-              <div className="nx3d-fig"><div className="nx3d-v" data-to="29.6" data-dec="1" data-suf="%">0</div><div className="nx3d-k">Max drawdown</div></div>
-              <div className="nx3d-fig"><div className="nx3d-v" data-to="1.24" data-dec="2">0</div><div className="nx3d-k">Profit factor</div></div>
+              <div className="nx3d-fig"><div className="nx3d-v c" data-to="36" data-dec="0">0</div><div className="nx3d-k">Strategie testate indipendentemente</div></div>
+              <div className="nx3d-fig"><div className="nx3d-v c" data-to="2" data-dec="0">0</div><div className="nx3d-k">Finestre temporali per ogni verdetto</div></div>
+              <div className="nx3d-fig"><div className="nx3d-v c" data-to="10" data-suf=" anni" data-dec="0">0</div><div className="nx3d-k">Storico usato per lo screening</div></div>
             </div>
             <div className="nx3d-cta">
               <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Apri il Backtest Lab</button>
