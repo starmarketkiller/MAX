@@ -27,9 +27,12 @@ riabilitazioni) su una finestra specifica, e quella finestra non generalizza.
 
 **Robuste su entrambi gli orizzonti** (le uniche a non essere mai state ritoccate
 nel tuning fine):
-- TURTLE_SOUP — PF 2.12 (3Y) / 3.15 (3M)
-- BJORGUM — PF 2.14 (3Y) / 1.31 (3M)
-- MACD — PF 1.11 (3Y) / 1.35 (3M)
+- TURTLE_SOUP — PF 2.12 (3Y, 17 trade) / 3.15 (3M) — **validata**, campione sufficiente.
+- MACD — PF 1.11 (3Y, 94 trade) / 1.35 (3M) — **validata**, ma la sua config è già
+  cambiata in v2.5.0 (screening sito), quindi va riconfermata sul nuovo build.
+- BJORGUM — PF 2.14 (3Y) / 1.31 (3M) — attenzione: solo **5 trade eseguiti** sui 3
+  anni. Numero attraente ma statisticamente insufficiente per dichiararla validata
+  (vedi [[NEXUS EA - Principi]] #4). Da tenere d'occhio, non da festeggiare ancora.
 
 **Crollate fuori-campione** (tutte "riabilitate" o ritarate nel ciclo v2.3.7→v2.4.8):
 - EMA_PULLBACK: 1.49 (3M) → **0.14** (3Y)
