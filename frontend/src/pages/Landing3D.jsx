@@ -9,6 +9,8 @@ import "./Landing3D.css";
  * candlesticks along a glowing equity tube, in a galaxy of points, with floating
  * code/profit glyphs and a custom multi-pass bloom. Mouse tilts the camera (parallax).
  */
+const N_SECTIONS = 7;
+
 export default function Landing3D() {
   const navigate = useNavigate();
   const rootRef = useRef(null);
@@ -18,7 +20,7 @@ export default function Landing3D() {
   const goTo = (i) => {
     const m = document.body.scrollHeight - window.innerHeight;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: m * (i / 2), behavior: reduce ? "auto" : "smooth" });
+    window.scrollTo({ top: m * (i / (N_SECTIONS - 1)), behavior: reduce ? "auto" : "smooth" });
   };
 
   // Page title/description for this route only — restored on unmount so the
@@ -151,7 +153,7 @@ export default function Landing3D() {
     for (let i = 0; i < NP; i++) {
       gp[i * 3] = (Math.random() - 0.5) * 120;
       gp[i * 3 + 1] = (Math.random() - 0.5) * 70;
-      gp[i * 3 + 2] = Math.random() * -220 + 10;
+      gp[i * 3 + 2] = Math.random() * -260 + 10;
       const col = palette[(Math.random() * palette.length) | 0];
       gc[i * 3] = col[0]; gc[i * 3 + 1] = col[1]; gc[i * 3 + 2] = col[2];
     }
@@ -181,21 +183,90 @@ export default function Landing3D() {
       const tex = track(glyphTex(tk[0], tk[1]));
       const mat = track(new THREE.SpriteMaterial({ map: tex, transparent: true, blending: THREE.AdditiveBlending, opacity: 0.85, depthWrite: false }));
       const sp = new THREE.Sprite(mat);
-      sp.position.set((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 26, -Math.random() * 190 + 6);
+      sp.position.set((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 26, -Math.random() * 230 + 6);
       const s = 1.6 + Math.random() * 1.4;
       sp.scale.set(s * 2.2, s, 1);
       scene.add(sp);
       glyphs.push(sp);
     }
 
-    // ---- camera flight path ----
+    // ---- zona 2 "il problema": disordine, nessuna struttura — il contrario
+    // del motore. Piccoli frammenti rossi che tremano senza una traiettoria,
+    // a differenza delle candele ordinate che verranno dopo. ----
+    const chaosGeo = track(new THREE.TetrahedronGeometry(0.4, 0));
+    const chaosMat = track(new THREE.MeshBasicMaterial({ color: 0xfb7185, transparent: true, opacity: 0.55 }));
+    const chaosBits = [];
+    for (let i = 0; i < 34; i++) {
+      const m = new THREE.Mesh(chaosGeo, chaosMat);
+      m.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 9, -14 - Math.random() * 30);
+      m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+      scene.add(m);
+      chaosBits.push(m);
+    }
+
+    // ---- zona 4 "il motore": corsie parallele indipendenti (hedge) accanto
+    // al tubo principale — ognuna la propria strategia, nessuna aspetta le altre.
+    const laneSlice = curvePts.slice(24, 47);
+    const laneCurveA = new THREE.CatmullRomCurve3(laneSlice.map((v) => new THREE.Vector3(v.x - 2.1, v.y - 0.6, v.z)));
+    const laneCurveB = new THREE.CatmullRomCurve3(laneSlice.map((v) => new THREE.Vector3(v.x + 2.1, v.y + 0.7, v.z)));
+    const laneGeoA = track(new THREE.TubeGeometry(laneCurveA, 80, 0.07, 8, false));
+    const laneGeoB = track(new THREE.TubeGeometry(laneCurveB, 80, 0.07, 8, false));
+    const laneMatA = track(new THREE.MeshBasicMaterial({ color: 0x2ee88f, transparent: true, opacity: 0.85 }));
+    const laneMatB = track(new THREE.MeshBasicMaterial({ color: 0x8b6ff0, transparent: true, opacity: 0.85 }));
+    scene.add(new THREE.Mesh(laneGeoA, laneMatA));
+    scene.add(new THREE.Mesh(laneGeoB, laneMatB));
+
+    // ---- zona 5 "l'assistente": una console olografica — lo schermo del
+    // copilota — con qualche riga fluttuante di ciò che direbbe.
+    const consoleGeo = track(new THREE.PlaneGeometry(7, 3.6));
+    const consoleMat = track(new THREE.MeshBasicMaterial({ color: 0x0d1c33, transparent: true, opacity: 0.28, side: THREE.DoubleSide }));
+    const consolePanel = new THREE.Mesh(consoleGeo, consoleMat);
+    consolePanel.position.set(0, 8.4, -140);
+    scene.add(consolePanel);
+    const consoleEdge = track(new THREE.EdgesGeometry(consoleGeo));
+    const consoleEdgeMat = track(new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.6 }));
+    const consoleFrame = new THREE.LineSegments(consoleEdge, consoleEdgeMat);
+    consoleFrame.position.copy(consolePanel.position);
+    scene.add(consoleFrame);
+    const coachWords = [["RISCHIO: OK", "#34d399"], ["PIANO SETTIMANA", "#38e6ff"], ["ANALISI TRADE", "#eaf2ff"], ["DRAWDOWN -4%", "#fb7185"]];
+    coachWords.forEach((w, i) => {
+      const tex = track(glyphTex(w[0], w[1]));
+      const mat = track(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.9, depthWrite: false }));
+      const sp = new THREE.Sprite(mat);
+      sp.position.set(0, 9.3 - i * 0.62, -139.4);
+      sp.scale.set(3.2, 1.15, 1);
+      scene.add(sp);
+    });
+
+    // ---- zona 7 "arrivo": un portale di luce da attraversare, la soglia finale.
+    const gateGeoA = track(new THREE.TorusGeometry(4.2, 0.09, 12, 64));
+    const gateGeoB = track(new THREE.TorusGeometry(3.4, 0.06, 12, 64));
+    const gateMat = track(new THREE.MeshBasicMaterial({ color: 0xeaf2ff, transparent: true, opacity: 0.8 }));
+    const gateMat2 = track(new THREE.MeshBasicMaterial({ color: 0x38e6ff, transparent: true, opacity: 0.55 }));
+    const gateA = new THREE.Mesh(gateGeoA, gateMat);
+    const gateB = new THREE.Mesh(gateGeoB, gateMat2);
+    gateA.position.set(0, 11, -222);
+    gateB.position.set(0, 11, -226);
+    scene.add(gateA, gateB);
+
+    // ---- camera flight path: 7 stazioni, una per sezione narrativa ----
     const camPath = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 3, 15), new THREE.Vector3(5, 4.5, -24), new THREE.Vector3(-4, 7, -64),
-      new THREE.Vector3(3, 10, -118), new THREE.Vector3(0, 15, -176),
+      new THREE.Vector3(0, 3, 15),     // 1 hero
+      new THREE.Vector3(4, 4, -22),    // 2 il problema
+      new THREE.Vector3(-3, 5.5, -60), // 3 la svolta AI
+      new THREE.Vector3(4, 7, -98),    // 4 il motore
+      new THREE.Vector3(-3, 9, -136),  // 5 l'assistente
+      new THREE.Vector3(3, 11, -174),  // 6 il metodo
+      new THREE.Vector3(0, 13, -214),  // 7 arrivo
     ]);
     const lookPath = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 3, -40), new THREE.Vector3(0, 6, -80),
-      new THREE.Vector3(0, 10, -130), new THREE.Vector3(0, 15, -190),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 2.2, -38),
+      new THREE.Vector3(0, 3.6, -76),
+      new THREE.Vector3(0, 5, -114),
+      new THREE.Vector3(0, 6.4, -152),
+      new THREE.Vector3(0, 7.8, -190),
+      new THREE.Vector3(0, 10, -228),
     ]);
 
     // ---- bloom (custom multi-pass) ----
@@ -283,6 +354,17 @@ export default function Landing3D() {
       tube.material.color.setHSL(0.52, 1, 0.6 + Math.sin(t * 2) * 0.06);
       galaxy.rotation.y = t * 0.01;
       for (let i = 0; i < glyphs.length; i++) { glyphs[i].position.y += Math.sin(t * 0.5 + i) * 0.002; glyphs[i].material.rotation = Math.sin(t * 0.2 + i) * 0.05; }
+      // il disordine del "problema" trema senza una traiettoria — a differenza
+      // di tutto il resto della scena, che si muove con intenzione.
+      for (let i = 0; i < chaosBits.length; i++) {
+        const b = chaosBits[i];
+        b.rotation.x += 0.01 + (i % 5) * 0.002; b.rotation.y += 0.014;
+        b.position.x += Math.sin(t * 1.4 + i) * 0.006;
+        b.position.y += Math.cos(t * 1.7 + i * 2) * 0.006;
+      }
+      gateA.rotation.z = t * 0.08; gateB.rotation.z = -t * 0.11;
+      const gatePulse = 0.7 + Math.sin(t * 1.6) * 0.15;
+      gateMat.opacity = gatePulse; gateMat2.opacity = gatePulse * 0.7;
 
       renderer.setRenderTarget(rtScene); renderer.render(scene, camera);
       brightMat.uniforms.tD.value = rtScene.texture; pass(brightMat, rtA);
@@ -296,11 +378,11 @@ export default function Landing3D() {
         const d = parseFloat(c.dataset.par) || 1;
         c.style.transform = `translate3d(${cmx * -30 * d}px,${cmy * -20 * d}px,0)`;
       });
-      const active = Math.round(p * 2);
+      const active = Math.round(p * (N_SECTIONS - 1));
       railBtns.forEach((b, i) => b.classList.toggle("on", i === active));
       if (hint) hint.style.opacity = p > 0.02 ? "0" : "0.85";
       const sectionLabel = root.querySelector("#nx3d-hud-section");
-      if (sectionLabel) sectionLabel.textContent = `SEZIONE 0${active + 1} / 03`;
+      if (sectionLabel) sectionLabel.textContent = `SEZIONE 0${active + 1} / 0${N_SECTIONS}`;
       root.querySelectorAll(".nx3d-glasspanel").forEach((el, i) => {
         const side = i === 0 ? -1 : 1;
         el.style.transform = `translateY(calc(-50% + ${cmy * -14}px)) translateX(${side * cmx * 10}px)`;
@@ -355,46 +437,87 @@ export default function Landing3D() {
       </aside>
 
       <nav className="nx3d-rail" aria-label="Sezioni">
-        <button className="on" aria-label="Sezione 1" onClick={() => goTo(0)} />
-        <button aria-label="Sezione 2" onClick={() => goTo(1)} />
-        <button aria-label="Sezione 3" onClick={() => goTo(2)} />
+        {Array.from({ length: N_SECTIONS }).map((_, i) => (
+          <button key={i} className={i === 0 ? "on" : undefined} aria-label={`Sezione ${i + 1}`} onClick={() => goTo(i)} />
+        ))}
       </nav>
       <div className="nx3d-hint">Scrolla per viaggiare nel motore</div>
 
       <main className="nx3d-scroll">
-        <section className="nx3d-panel">
-          <div className="nx3d-card" data-par="1.3">
-            <span className="nx3d-eyebrow">Viaggio nel trading algoritmico</span>
+        <section className="nx3d-panel center">
+          <div className="nx3d-card" data-par="1.2">
+            <div className="nx3d-scrim" aria-hidden="true" />
+            <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>Trading algoritmico · costruito con l'AI</span>
             <h1>NEXUS</h1>
-            <p className="nx3d-lede">Vola <b>dentro il mercato dell'oro</b>. Tra le candele, lungo la curva del profitto.</p>
-            <p className="nx3d-sub">Non guardi un grafico: lo attraversi. Muovi il mouse per virare, scrolla per accelerare.</p>
+            <p className="nx3d-lede">Il motore che pensa per te, <b>mentre tu vivi la tua vita</b>.</p>
+            <p className="nx3d-sub">Non un altro EA scritto a mano e abbandonato al suo destino. Un sistema progettato, testato e corretto da un'intelligenza artificiale che non dorme mai.</p>
             <div className="nx3d-cta">
               <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Entra nel motore</button>
-              <button className="nx3d-btn" onClick={() => goTo(1)}>Come funziona</button>
+              <button className="nx3d-btn" onClick={() => goTo(1)}>Perché ti serve</button>
             </div>
           </div>
         </section>
 
         <section className="nx3d-panel right">
-          <div className="nx3d-card" data-par="1.7">
+          <div className="nx3d-card" data-par="1.5">
+            <div className="nx3d-scrim" aria-hidden="true" />
+            <span className="nx3d-eyebrow">Se fai trading da solo, lo conosci già</span>
+            <h2>Il grafico<br />non dorme.<br />Tu sì.</h2>
+            <p className="nx3d-lede">Entri per rabbia dopo una perdita. Esci troppo presto per paura. Il backtest ti aveva convinto — il mercato reale ti ha smentito.</p>
+            <p className="nx3d-sub">Non è colpa tua: è la disciplina che manca, non la strategia. Nessun essere umano può sorvegliare 36 mercati alla volta, 24 ore su 24, senza un momento di stanchezza o di panico.</p>
+          </div>
+        </section>
+
+        <section className="nx3d-panel">
+          <div className="nx3d-card" data-par="1.5">
+            <div className="nx3d-scrim" aria-hidden="true" />
+            <span className="nx3d-eyebrow">La svolta</span>
+            <h2>Non l'ha scritto<br />un programmatore.</h2>
+            <p className="nx3d-lede">L'ha costruito, testato e corretto <b>un'intelligenza artificiale</b> — in un ciclo che non si ferma mai.</p>
+            <p className="nx3d-sub">Lo stesso rigore che prima solo un fondo poteva permettersi, ora accessibile a un trader solo. Quando una strategia fallisce, il sistema lo dice: non lo nasconde.</p>
+          </div>
+        </section>
+
+        <section className="nx3d-panel right">
+          <div className="nx3d-card" data-par="1.5">
+            <div className="nx3d-scrim" aria-hidden="true" />
             <span className="nx3d-eyebrow">Il motore</span>
-            <h2>Ogni candela<br />è una decisione.</h2>
-            <p className="nx3d-lede">Dieci strategie, ognuna nella sua corsia. Multi-timeframe. Uscite su misura.</p>
-            <p className="nx3d-sub">Trend che corrono, mean-reversion che incassano. E la curva sale.</p>
+            <h2>36 strategie.<br />Ognuna nella<br />sua corsia.</h2>
+            <p className="nx3d-lede">Trend che corrono, mean-reversion che incassano. Ognuna opera indipendente — nessuna aspetta il turno delle altre.</p>
+            <p className="nx3d-sub">Multi-timeframe su un solo grafico. Ogni strategia sul suo orizzonte, con le sue uscite, il suo rischio, la sua corsia hedge.</p>
+          </div>
+        </section>
+
+        <section className="nx3d-panel">
+          <div className="nx3d-card" data-par="1.5">
+            <div className="nx3d-scrim" aria-hidden="true" />
+            <span className="nx3d-eyebrow">Il tuo copilota</span>
+            <h2>Non sei solo<br />davanti ai numeri.</h2>
+            <p className="nx3d-lede">Un assistente AI personale che legge i tuoi trade, ti avvisa se stai rischiando troppo, e ti spiega perché una strategia non sta rendendo — in linguaggio umano, non in tabelle.</p>
+            <p className="nx3d-sub">Chiedigli un piano per la settimana. Chiedigli quale strategia sta perdendo e perché. Risponde: non ti lascia da solo a decifrare una dashboard.</p>
           </div>
         </section>
 
         <section className="nx3d-panel center">
           <div className="nx3d-card" data-par="1.0">
+            <div className="nx3d-scrim" aria-hidden="true" />
             <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>Il metodo</span>
             <h2>Non ci fidiamo di un solo backtest.</h2>
-            <p className="nx3d-lede">Ogni strategia viene validata su <b>almeno due finestre indipendenti</b> — pochi mesi e diversi anni — prima di essere considerata affidabile.</p>
-            <p className="nx3d-sub">Se regge solo su una, resta a rischio minimo o si spegne. Un risultato che sembra ottimo su un periodo corto e crolla su uno lungo non è un edge: è rumore travestito da fortuna. Non lo pubblichiamo come prova finché non regge su entrambi.</p>
+            <p className="nx3d-lede">Ogni strategia viene validata su <b>almeno due finestre indipendenti</b> — pochi mesi e diversi anni. Se regge solo su una, non la pubblichiamo come prova: è rumore travestito da fortuna.</p>
             <div className="nx3d-figs">
               <div className="nx3d-fig"><div className="nx3d-v c" data-to="36" data-dec="0">0</div><div className="nx3d-k">Strategie testate indipendentemente</div></div>
               <div className="nx3d-fig"><div className="nx3d-v c" data-to="2" data-dec="0">0</div><div className="nx3d-k">Finestre temporali per ogni verdetto</div></div>
               <div className="nx3d-fig"><div className="nx3d-v c" data-to="10" data-suf=" anni" data-dec="0">0</div><div className="nx3d-k">Storico usato per lo screening</div></div>
             </div>
+          </div>
+        </section>
+
+        <section className="nx3d-panel center">
+          <div className="nx3d-card" data-par="1.0">
+            <div className="nx3d-scrim" aria-hidden="true" />
+            <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>Entra</span>
+            <h2>Il tuo trading,<br />ripensato.</h2>
+            <p className="nx3d-lede">Apri il motore. Guarda cosa può fare per te.</p>
             <div className="nx3d-cta">
               <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Apri il Backtest Lab</button>
               <button className="nx3d-btn" onClick={() => goTo(0)}>Torna alla partenza</button>

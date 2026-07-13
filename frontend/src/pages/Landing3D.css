@@ -57,8 +57,14 @@
 .nx3d-panel{min-height:100vh;display:flex;align-items:center;padding:0 8vw}
 .nx3d-panel.right{justify-content:flex-end;text-align:right}
 .nx3d-panel.center{justify-content:center;text-align:center}
-.nx3d-card{max-width:780px;will-change:transform}
+.nx3d-card{max-width:780px;will-change:transform;position:relative}
 .nx3d-panel.center .nx3d-card{max-width:880px}
+/* velo dietro al testo: la leggibilita' non dipende mai da cosa passa nel 3D
+   dietro. Il testo resta una scelta di composizione deliberata, non un
+   compromesso per "fare spazio" all'animazione. */
+.nx3d-scrim{position:absolute;inset:-56px -80px;z-index:0;pointer-events:none;
+  background:radial-gradient(62% 68% at 50% 42%, rgba(4,6,15,.62) 0%, rgba(4,6,15,.28) 55%, rgba(4,6,15,0) 78%)}
+.nx3d-card > *:not(.nx3d-scrim){position:relative;z-index:1}
 
 .nx3d-eyebrow{font-family:var(--nx-mono);font-size:14px;letter-spacing:.36em;text-transform:uppercase;color:var(--nx-cyan);display:inline-flex;gap:12px;align-items:center}
 .nx3d-eyebrow::before{content:"";width:34px;height:2px;background:var(--nx-cyan);box-shadow:0 0 12px var(--nx-cyan)}
