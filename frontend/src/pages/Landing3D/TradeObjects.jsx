@@ -21,10 +21,10 @@ export default function TradeObjects({ lights = true }) {
         const side = i % 2 === 0 ? 1 : -1;
         return (
           <group key={z}>
-            <Bull position={[7 * side, 1.4 + (i % 3) * 0.5, z]} scale={0.9} />
-            {lights && <pointLight color="#eaf2ff" intensity={12} distance={8} position={[7 * side, 2, z]} />}
-            <Bear position={[-7 * side, 2.6 + (i % 2) * 0.9, z - 14]} scale={0.9} />
-            {lights && <pointLight color="#eaf2ff" intensity={12} distance={8} position={[-7 * side, 3, z - 14]} />}
+            <Bull position={[5.5 * side, 1.4 + (i % 3) * 0.5, z]} scale={2.1} />
+            {lights && <pointLight color="#eaf2ff" intensity={20} distance={13} position={[5.5 * side, 2.4, z]} />}
+            <Bear position={[-5.5 * side, 2.8 + (i % 2) * 0.9, z - 14]} scale={2.1} />
+            {lights && <pointLight color="#eaf2ff" intensity={20} distance={13} position={[-5.5 * side, 3.4, z - 14]} />}
             <VolumeHistogram position={[1.6 * side, -2.6, z]} seed={i + 2} />
           </group>
         );
