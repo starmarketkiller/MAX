@@ -26,6 +26,11 @@ export const HUD_NODES = [
   { pos: [-5, 10.8, -182], colorA: "#eaf2ff", colorB: "#38e6ff", labels: ["3M", "3Y"] },
 ];
 
+// Profondità (z) di ogni tappa: il toro, l'orso e i volumi si affiancano in
+// coppia al nodo HUD della stessa sezione — stesso ritmo, un elemento in più
+// del mondo trading per ogni slide, non solo per la prima.
+export const TRADE_OBJECT_ZS = [-30, -68, -106, -144, -182];
+
 export const STEPS = [
   {
     badge: "Sempre attivo",

@@ -175,7 +175,7 @@ export default function Landing3D() {
             <span className="nx3d-eyebrow justify-center">Trading algoritmico · costruito con l'AI</span>
             <h1>NEXUS</h1>
             <p className="nx3d-lede">Il motore che pensa per te, <b>mentre tu vivi la tua vita</b>.</p>
-            <p className="mt-4 max-w-[46ch] mx-auto text-[clamp(16px,1.5vw,19px)] leading-relaxed text-[var(--nx-dim)]">
+            <p className="mt-4 max-w-[46ch] mx-auto text-[clamp(16px,1.5vw,19px)] font-medium leading-relaxed text-white/85">
               Non un altro EA scritto a mano e abbandonato al suo destino. Un sistema progettato, testato e corretto da
               un'intelligenza artificiale che non dorme mai.
             </p>
@@ -192,7 +192,7 @@ export default function Landing3D() {
             <section className="nx3d-panel step" key={s.badge}>
               <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
               <GlassCard badge={s.badge} title={s.title}>
-                <p className="mt-3.5 text-[15.5px] font-normal text-[var(--nx-dim)] leading-relaxed">{s.desc}</p>
+                <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
               </GlassCard>
             </section>
           );

@@ -81,7 +81,7 @@
 }
 @media (max-width: 860px) { .nx3d-step-icon { width: 60px; height: 60px; } .nx3d-step-icon svg { width: 26px; height: 26px; } }
 
-.nx3d-eyebrow { font-family: var(--nx-mono); font-size: 14px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--nx-cyan); display: inline-flex; gap: 12px; align-items: center; }
+.nx3d-eyebrow { font-family: var(--nx-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--nx-cyan); display: inline-flex; gap: 12px; align-items: center; }
 .nx3d-eyebrow::before { content: ""; width: 34px; height: 2px; background: var(--nx-cyan); box-shadow: 0 0 12px var(--nx-cyan); }
 
 .nx3d h1 {
@@ -90,14 +90,14 @@
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.35));
 }
-.nx3d-lede { font-size: clamp(20px, 2.6vw, 32px); margin: 26px 0 0; line-height: 1.4; text-wrap: balance; font-weight: 500; }
+.nx3d-lede { font-size: clamp(20px, 2.6vw, 32px); margin: 26px 0 0; line-height: 1.32; text-wrap: balance; font-weight: 700; letter-spacing: -0.01em; }
 .nx3d-lede b { color: var(--nx-electric); }
 
 .nx3d-cta { display: flex; gap: 14px; margin-top: 40px; flex-wrap: wrap; }
 .nx3d-panel.center .nx3d-cta { justify-content: center; }
 .nx3d-btn {
-  font-family: var(--nx-mono); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; padding: 17px 30px;
-  border: 1px solid rgba(56, 189, 248, 0.35); color: var(--nx-white); cursor: pointer; background: rgba(10, 20, 40, 0.4);
+  font-family: var(--nx-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; padding: 17px 30px;
+  border: 1px solid rgba(56, 189, 248, 0.45); color: var(--nx-white); cursor: pointer; background: rgba(10, 20, 40, 0.45);
   backdrop-filter: blur(8px); transition: 0.28s; border-radius: 8px;
 }
 .nx3d-btn:hover { border-color: var(--nx-cyan); box-shadow: 0 12px 50px -14px rgba(56, 189, 248, 0.8); transform: translateY(-3px); }

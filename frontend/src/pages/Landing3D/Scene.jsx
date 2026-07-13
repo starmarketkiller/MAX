@@ -7,6 +7,8 @@ import LightTrail from "./LightTrail";
 import HoloHUD from "./HoloHUD";
 import HeroBurst from "./HeroBurst";
 import QuantumCore from "./QuantumCore";
+import Candlesticks from "./Candlesticks";
+import TradeObjects from "./TradeObjects";
 import Effects from "./Effects";
 
 function CoreCrystal() {
@@ -64,6 +66,8 @@ export default function Scene({ progressRef, mouseRef }) {
       <CoreCrystal />
       <HeroBurst progressRef={progressRef} />
       <LightTrail />
+      <Candlesticks />
+      <TradeObjects />
       <HoloHUD />
       <QuantumCore />
 
