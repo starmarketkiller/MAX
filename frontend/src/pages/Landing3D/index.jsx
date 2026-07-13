@@ -7,6 +7,7 @@ import { Moon, Cog, GitBranch, MessageCircle, Scale } from "lucide-react";
 import Scene from "./Scene";
 import GlassCard from "./GlassCard";
 import { STEPS, N_SECTIONS } from "./content";
+import { detectQuality, QUALITY_PRESETS } from "./quality";
 import "./Landing3D.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -36,6 +37,7 @@ export default function Landing3D() {
   const progressRef = useRef(0);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [webglOk] = useState(supportsWebGL);
+  const [quality] = useState(detectQuality);
 
   const goTo = (i) => {
     const m = document.body.scrollHeight - window.innerHeight;
@@ -123,10 +125,10 @@ export default function Landing3D() {
         <div className="nx3d-gl-wrap">
           <Canvas
             camera={{ fov: 62, near: 0.1, far: 600, position: [0, 3, 15] }}
-            gl={{ antialias: true, powerPreference: "high-performance" }}
-            dpr={[1, 2]}
+            gl={{ antialias: quality === "high", powerPreference: "high-performance" }}
+            dpr={QUALITY_PRESETS[quality].dpr}
           >
-            <Scene progressRef={progressRef} mouseRef={mouseRef} />
+            <Scene progressRef={progressRef} mouseRef={mouseRef} quality={quality} />
           </Canvas>
         </div>
       ) : (

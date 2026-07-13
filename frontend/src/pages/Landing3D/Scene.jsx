@@ -10,6 +10,7 @@ import QuantumCore from "./QuantumCore";
 import Candlesticks from "./Candlesticks";
 import TradeObjects from "./TradeObjects";
 import Effects from "./Effects";
+import { QUALITY_PRESETS } from "./quality";
 
 function CoreCrystal() {
   const core = useRef();
@@ -50,7 +51,8 @@ function ReflectiveFloor() {
  * index.jsx). Spazio profondo #050510, luci ciano/violetto, nessun asset
  * .glb/.gltf — solo geometrie e shader procedurali.
  */
-export default function Scene({ progressRef, mouseRef }) {
+export default function Scene({ progressRef, mouseRef, quality = "high" }) {
+  const q = QUALITY_PRESETS[quality] || QUALITY_PRESETS.high;
   return (
     <>
       <color attach="background" args={["#050510"]} />
@@ -61,18 +63,18 @@ export default function Scene({ progressRef, mouseRef }) {
       <directionalLight color="#8b6ff0" intensity={0.6} position={[-8, 2, -4]} />
       <pointLight color="#38bdf8" intensity={60} distance={60} position={[0, 1, 2]} />
 
-      <Starfield mouseRef={mouseRef} />
+      <Starfield mouseRef={mouseRef} starsFar={q.starsFar} starsNear={q.starsNear} />
       <ReflectiveFloor />
       <CoreCrystal />
-      <HeroBurst progressRef={progressRef} />
+      <HeroBurst progressRef={progressRef} count={q.heroParticles} />
       <LightTrail />
-      <Candlesticks />
-      <TradeObjects />
+      <Candlesticks count={q.candles} />
+      <TradeObjects lights={quality !== "low"} />
       <HoloHUD />
       <QuantumCore />
 
       <CameraRig progressRef={progressRef} mouseRef={mouseRef} />
-      <Effects />
+      <Effects bloom={q.bloom} bloomScale={q.bloomScale || 0.5} />
     </>
   );
 }

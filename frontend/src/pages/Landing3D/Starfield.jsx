@@ -3,12 +3,25 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { softDiscTexture } from "./textures";
 
-function makeLayer(count, spanZ, spreadXY, palette) {
+// La camera viaggia con x tra circa -3 e 4: una stella generata per caso
+// proprio lì, vicinissima al percorso, si ingrandisce a dismisura per via
+// del sizeAttenuation (più vicina = sprite più grande) e appare come un
+// unico blob bianco enorme invece che come un punto. minRadius tiene le
+// stelle fuori da quel corridoio.
+function makeLayer(count, spanZ, spreadXY, palette, minRadius = 9) {
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * spreadXY;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * spreadXY * 0.6;
+    let x = (Math.random() - 0.5) * spreadXY;
+    let y = (Math.random() - 0.5) * spreadXY * 0.6;
+    const r = Math.hypot(x, y);
+    if (r < minRadius) {
+      const k = minRadius / Math.max(r, 0.001);
+      x *= k;
+      y *= k;
+    }
+    positions[i * 3] = x;
+    positions[i * 3 + 1] = y;
     positions[i * 3 + 2] = Math.random() * -spanZ + 20;
     const col = palette[(Math.random() * palette.length) | 0];
     colors[i * 3] = col[0];
@@ -31,12 +44,12 @@ const PALETTE = [
  * (~260 unità) così le stelle non finiscono mai a ridosso della telecamera.
  * Lo strato vicino aggiunge una lieve parallasse guidata dal mouse.
  */
-export default function Starfield({ mouseRef }) {
+export default function Starfield({ mouseRef, starsFar = 2600, starsNear = 900 }) {
   const near = useRef();
   const far = useRef();
   const disc = useMemo(() => softDiscTexture(), []);
-  const farData = useMemo(() => makeLayer(2600, 300, 140, PALETTE), []);
-  const nearData = useMemo(() => makeLayer(900, 300, 70, PALETTE), []);
+  const farData = useMemo(() => makeLayer(starsFar, 300, 140, PALETTE), [starsFar]);
+  const nearData = useMemo(() => makeLayer(starsNear, 300, 70, PALETTE), [starsNear]);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.1);
@@ -54,15 +67,15 @@ export default function Starfield({ mouseRef }) {
     <>
       <points ref={far}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={2600} array={farData.positions} itemSize={3} />
-          <bufferAttribute attach="attributes-color" count={2600} array={farData.colors} itemSize={3} />
+          <bufferAttribute attach="attributes-position" count={starsFar} array={farData.positions} itemSize={3} />
+          <bufferAttribute attach="attributes-color" count={starsFar} array={farData.colors} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial size={0.65} map={disc} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
       </points>
       <points ref={near}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={900} array={nearData.positions} itemSize={3} />
-          <bufferAttribute attach="attributes-color" count={900} array={nearData.colors} itemSize={3} />
+          <bufferAttribute attach="attributes-position" count={starsNear} array={nearData.positions} itemSize={3} />
+          <bufferAttribute attach="attributes-color" count={starsNear} array={nearData.colors} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial size={1.1} map={disc} vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
       </points>

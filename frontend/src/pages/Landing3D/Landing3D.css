@@ -107,8 +107,21 @@
 .nx3d-rail { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 16px; }
 .nx3d-rail button { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--nx-cyan); background: transparent; cursor: pointer; padding: 0; transition: 0.3s; }
 .nx3d-rail button.on { background: var(--nx-cyan); box-shadow: 0 0 16px var(--nx-cyan); }
-.nx3d-hint { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 4; font-family: var(--nx-mono); font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--nx-dim); opacity: 0.85; transition: opacity 0.4s; }
+.nx3d-hint { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 4; font-family: var(--nx-mono); font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--nx-dim); opacity: 0.85; transition: opacity 0.4s; text-align: center; }
+/* su schermi bassi (telefono in verticale) il contenuto della hero card puo'
+   arrivare fino in fondo: l'hint fisso in basso ci finirebbe sopra,
+   sovrapposto al bottone. Non e' essenziale quanto un CTA leggibile. */
+@media (max-height: 780px) { .nx3d-hint { display: none; } }
 .nx3d-disc { font-family: var(--nx-mono); font-size: 12px; color: #5b6d92; margin-top: 30px; line-height: 1.6; max-width: 54ch; }
 .nx3d-panel.center .nx3d-disc { margin: 30px auto 0; }
 
 @media (min-width: 1101px) { .nx3d-panel { padding-left: 240px; padding-right: 240px; } }
+
+/* ritmo verticale piu' compatto su telefono in verticale — meno margine tra
+   i blocchi, cosi' la card della hero (badge+H1+lede+sub+2 bottoni) ha piu'
+   probabilita' di stare nell'altezza disponibile senza sconfinare. */
+@media (max-width: 480px) {
+  .nx3d h1 { margin-top: 16px; }
+  .nx3d-lede { margin-top: 16px; }
+  .nx3d-cta { margin-top: 26px; }
+}

@@ -21,11 +21,15 @@ const COMP_FS =
 /**
  * Bloom multi-pass (bright-pass + blur gaussiano separabile H/V + composite
  * con vignette/scanline) implementato in R3F puro — nessuna dipendenza
- * aggiuntiva, stessa pipeline testata della versione precedente. Registrare
- * un useFrame con priorità disattiva il render automatico di R3F: qui
- * prendiamo il controllo del render loop.
+ * aggiuntiva. Registrare un useFrame con priorità disattiva il render
+ * automatico di R3F: qui prendiamo il controllo del render loop.
+ *
+ * `bloom=false` (dispositivi di fascia bassa) salta l'intera pipeline di
+ * post-processing — è il costo GPU più alto della scena — e fa un render
+ * diretto. `bloomScale` riduce la risoluzione dei passaggi di blur, che
+ * restano comunque morbidi perché già sfocati.
  */
-export default function Effects() {
+export default function Effects({ bloom = true, bloomScale = 0.5 }) {
   const { gl, scene, camera, size } = useThree();
   const dpr = useMemo(() => Math.min(window.devicePixelRatio, 2), []);
 
@@ -58,14 +62,15 @@ export default function Effects() {
   const makeRT = (w, h) => new THREE.WebGLRenderTarget(Math.max(1, w | 0), Math.max(1, h | 0), { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
 
   useEffect(() => {
+    if (!bloom) return;
     const w = size.width * dpr;
     const h = size.height * dpr;
     const prev = rts.current;
     if (prev.scene) prev.scene.dispose();
     if (prev.a) prev.a.dispose();
     if (prev.b) prev.b.dispose();
-    rts.current = { scene: makeRT(w, h), a: makeRT(w / 2, h / 2), b: makeRT(w / 2, h / 2) };
-  }, [size, dpr]);
+    rts.current = { scene: makeRT(w, h), a: makeRT(w * bloomScale, h * bloomScale), b: makeRT(w * bloomScale, h * bloomScale) };
+  }, [size, dpr, bloom, bloomScale]);
 
   useEffect(() => {
     return () => {
@@ -85,6 +90,11 @@ export default function Effects() {
   };
 
   useFrame((state) => {
+    if (!bloom) {
+      gl.setRenderTarget(null);
+      gl.render(scene, camera);
+      return;
+    }
     const { scene: rtScene, a: rtA, b: rtB } = rts.current;
     if (!rtScene) return;
     gl.setRenderTarget(rtScene);
@@ -93,8 +103,8 @@ export default function Effects() {
     brightMat.uniforms.tD.value = rtScene.texture;
     pass(brightMat, rtA);
 
-    const tx = 1 / (size.width * dpr / 2);
-    const ty = 1 / (size.height * dpr / 2);
+    const tx = 1 / (size.width * dpr * bloomScale);
+    const ty = 1 / (size.height * dpr * bloomScale);
     blurH.uniforms.tD.value = rtA.texture;
     blurH.uniforms.texel.value.set(tx, ty);
     pass(blurH, rtB);

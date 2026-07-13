@@ -3,7 +3,6 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { softDiscTexture } from "./textures";
 
-const N = 700;
 const PALETTE = [
   [0.22, 0.9, 1],
   [0.55, 0.65, 1],
@@ -16,11 +15,12 @@ const PALETTE = [
  * sferico irregolare in ~1.8s, poi restano a fluttuare/ruotare piano.
  * Sfuma quando lo scroll si allontana dalla sezione hero.
  */
-export default function HeroBurst({ progressRef }) {
+export default function HeroBurst({ progressRef, count = 700 }) {
   const pointsRef = useRef();
   const matRef = useRef();
   const startT = useRef(null);
   const disc = useMemo(() => softDiscTexture(), []);
+  const N = count;
 
   const { positions, targets, colors } = useMemo(() => {
     const positions = new Float32Array(N * 3);
@@ -38,7 +38,7 @@ export default function HeroBurst({ progressRef }) {
       colors[i * 3 + 2] = c[2];
     }
     return { positions, targets, colors };
-  }, []);
+  }, [N]);
 
   useFrame((state) => {
     if (startT.current === null) startT.current = state.clock.elapsedTime;

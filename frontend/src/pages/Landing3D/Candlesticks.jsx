@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-const NC = 90;
 const UP = new THREE.Color("#2ee88f");
 const DOWN = new THREE.Color("#fb7185");
+// Il corridoio copre sempre la stessa lunghezza di percorso: con meno
+// candele (livelli di qualità più bassi) sono più diradate, non più corte.
+const TOTAL_SPAN = 243;
 
 /**
  * Corridoio di candele giapponesi con volume reale: corpo con spessore
@@ -12,9 +14,11 @@ const DOWN = new THREE.Color("#fb7185");
  * segmenti piatti. Affianca il nastro olografico (che resta la guida
  * dell'equity), come il vero prezzo intorno alla curva aggregata.
  */
-export default function Candlesticks() {
+export default function Candlesticks({ count = 90 }) {
   const bodyRef = useRef();
   const wickRef = useRef();
+  const NC = count;
+  const zStep = TOTAL_SPAN / NC;
 
   const { bodyMatrices, wickMatrices, colors } = useMemo(() => {
     let price = 6;
@@ -29,7 +33,7 @@ export default function Candlesticks() {
     const dummy = new THREE.Object3D();
 
     for (let i = 0; i < NC; i++) {
-      const z = 3 - i * 2.7;
+      const z = 3 - i * zStep;
       const open = price;
       // discesa marcata a metà corridoio, recupero verso il finale — più
       // drammatico di un semplice rumore simmetrico, si vede da lontano.
@@ -60,7 +64,7 @@ export default function Candlesticks() {
       cols.push(up ? UP : DOWN);
     }
     return { bodyMatrices: bodies, wickMatrices: wicks, colors: cols };
-  }, []);
+  }, [NC, zStep]);
 
   useEffect(() => {
     if (bodyRef.current) {
