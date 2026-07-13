@@ -1,7 +1,41 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Moon, Cog, GitBranch, MessageCircle, Scale } from "lucide-react";
 import * as THREE from "three";
 import "./Landing3D.css";
+
+// Un'icona simbolica per ogni tappa dello scorrimento (colonna sinistra dello step).
+const STEP_ICONS = [Moon, Cog, GitBranch, MessageCircle, Scale];
+
+// Le 5 tappe centrali: badge + titolo breve + una descrizione, come le card
+// "riquadro" — niente numeri di strategie, niente claim non verificabili.
+const STEPS = [
+  {
+    badge: "Sempre attivo",
+    title: "L'intelligenza artificiale non dorme mai.",
+    desc: "Mentre tu vivi la tua vita, il motore resta sveglio: sorveglia il mercato senza pause, senza distrazioni, senza un momento di stanchezza.",
+  },
+  {
+    badge: "Si corregge da sé",
+    title: "Un motore che si rimette sempre alla prova.",
+    desc: "Ogni ciclo lo testa di nuovo. Quando una parte non funziona più, il sistema la rivede — senza aspettare che sia tu ad accorgertene.",
+  },
+  {
+    badge: "Mai tutto su un solo binario",
+    title: "Le posizioni corrono su corsie separate.",
+    desc: "Se una parte del motore rallenta, le altre continuano per conto loro. Il rischio non si concentra mai in un unico punto.",
+  },
+  {
+    badge: "Sempre con te",
+    title: "Non sei solo davanti ai numeri.",
+    desc: "Un assistente personale che legge i tuoi trade, ti avvisa se stai rischiando troppo e ti spiega cosa sta succedendo — in linguaggio umano, non in tabelle.",
+  },
+  {
+    badge: "Validazione doppia",
+    title: "Non ci fidiamo di un solo test.",
+    desc: "Ogni risultato viene messo alla prova su periodi diversi prima di essere considerato affidabile. Se non regge ovunque, non lo chiamiamo un vantaggio.",
+  },
+];
 
 /**
  * NEXUS — immersive 3D landing.
@@ -190,19 +224,29 @@ export default function Landing3D() {
       glyphs.push(sp);
     }
 
-    // ---- zona 2 "il problema": disordine, nessuna struttura — il contrario
-    // del motore. Piccoli frammenti rossi che tremano senza una traiettoria,
-    // a differenza delle candele ordinate che verranno dopo. ----
-    const chaosGeo = track(new THREE.TetrahedronGeometry(0.4, 0));
-    const chaosMat = track(new THREE.MeshBasicMaterial({ color: 0xfb7185, transparent: true, opacity: 0.55 }));
-    const chaosBits = [];
-    for (let i = 0; i < 34; i++) {
-      const m = new THREE.Mesh(chaosGeo, chaosMat);
-      m.position.set((Math.random() - 0.5) * 16, (Math.random() - 0.5) * 9, -14 - Math.random() * 30);
-      m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+    // ---- zona 2 "l'AI non dorme mai": lingotti sorvegliati, immobili e ordinati
+    // (mai caos) — quello che l'AI veglia mentre tu vivi la tua vita.
+    const ingotGeo = track(new THREE.BoxGeometry(1.7, 0.55, 0.85));
+    const ingotMat = track(new THREE.MeshStandardMaterial({ color: 0x9fb4d8, metalness: 0.85, roughness: 0.22, emissive: 0x142238, emissiveIntensity: 0.4 }));
+    const ingots = [];
+    for (let i = 0; i < 7; i++) {
+      const m = new THREE.Mesh(ingotGeo, ingotMat);
+      m.position.set((i - 3) * 1.85, -1.3 + (i % 3) * 0.6, -20 - i * 1.15);
+      m.rotation.y = i * 0.25;
       scene.add(m);
-      chaosBits.push(m);
+      ingots.push(m);
     }
+
+    // ---- zona 3 "un motore che si corregge da sé": due ingranaggi che girano
+    // insieme, mai fermi — il ciclo continuo di test e revisione.
+    const gearGeoA = track(new THREE.CylinderGeometry(1.5, 1.5, 0.32, 10));
+    const gearGeoB = track(new THREE.CylinderGeometry(1.05, 1.05, 0.32, 8));
+    const gearMat = track(new THREE.MeshStandardMaterial({ color: 0x3a5f9e, metalness: 0.8, roughness: 0.26, emissive: 0x0d2242, emissiveIntensity: 0.5 }));
+    const gearA = new THREE.Mesh(gearGeoA, gearMat);
+    gearA.position.set(-1.1, 6, -60);
+    const gearB = new THREE.Mesh(gearGeoB, gearMat);
+    gearB.position.set(1.55, 6.35, -59.3);
+    scene.add(gearA, gearB);
 
     // ---- zona 4 "il motore": corsie parallele indipendenti (hedge) accanto
     // al tubo principale — ognuna la propria strategia, nessuna aspetta le altre.
@@ -228,7 +272,7 @@ export default function Landing3D() {
     const consoleFrame = new THREE.LineSegments(consoleEdge, consoleEdgeMat);
     consoleFrame.position.copy(consolePanel.position);
     scene.add(consoleFrame);
-    const coachWords = [["RISCHIO: OK", "#34d399"], ["PIANO SETTIMANA", "#38e6ff"], ["ANALISI TRADE", "#eaf2ff"], ["DRAWDOWN -4%", "#fb7185"]];
+    const coachWords = [["RISCHIO: OK", "#34d399"], ["PIANO SETTIMANA", "#38e6ff"], ["ANALISI TRADE", "#eaf2ff"], ["ALERT ATTIVO", "#fb7185"]];
     coachWords.forEach((w, i) => {
       const tex = track(glyphTex(w[0], w[1]));
       const mat = track(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.9, depthWrite: false }));
@@ -237,6 +281,21 @@ export default function Landing3D() {
       sp.scale.set(3.2, 1.15, 1);
       scene.add(sp);
     });
+
+    // ---- zona 6 "il metodo": una bilancia — il rigore che pesa ogni risultato
+    // prima di fidarsene, non un solo numero preso al volo.
+    const beamGeo = track(new THREE.BoxGeometry(3.6, 0.09, 0.09));
+    const standGeo = track(new THREE.CylinderGeometry(0.05, 0.05, 2.2, 8));
+    const panGeo = track(new THREE.CylinderGeometry(0.5, 0.5, 0.06, 16));
+    const scaleMat = track(new THREE.MeshStandardMaterial({ color: 0xbccbe8, metalness: 0.75, roughness: 0.25, emissive: 0x142235, emissiveIntensity: 0.35 }));
+    const scaleGroup = new THREE.Group();
+    const beam = new THREE.Mesh(beamGeo, scaleMat);
+    const stand = new THREE.Mesh(standGeo, scaleMat); stand.position.y = -1.1;
+    const panL = new THREE.Mesh(panGeo, scaleMat); panL.position.set(-1.7, -0.9, 0);
+    const panR = new THREE.Mesh(panGeo, scaleMat); panR.position.set(1.7, -0.9, 0);
+    scaleGroup.add(beam, stand, panL, panR);
+    scaleGroup.position.set(0, 8, -174);
+    scene.add(scaleGroup);
 
     // ---- zona 7 "arrivo": un portale di luce da attraversare, la soglia finale.
     const gateGeoA = track(new THREE.TorusGeometry(4.2, 0.09, 12, 64));
@@ -354,14 +413,13 @@ export default function Landing3D() {
       tube.material.color.setHSL(0.52, 1, 0.6 + Math.sin(t * 2) * 0.06);
       galaxy.rotation.y = t * 0.01;
       for (let i = 0; i < glyphs.length; i++) { glyphs[i].position.y += Math.sin(t * 0.5 + i) * 0.002; glyphs[i].material.rotation = Math.sin(t * 0.2 + i) * 0.05; }
-      // il disordine del "problema" trema senza una traiettoria — a differenza
-      // di tutto il resto della scena, che si muove con intenzione.
-      for (let i = 0; i < chaosBits.length; i++) {
-        const b = chaosBits[i];
-        b.rotation.x += 0.01 + (i % 5) * 0.002; b.rotation.y += 0.014;
-        b.position.x += Math.sin(t * 1.4 + i) * 0.006;
-        b.position.y += Math.cos(t * 1.7 + i * 2) * 0.006;
-      }
+      // i lingotti restano fermi e ordinati — sorvegliati, non caotici.
+      for (let i = 0; i < ingots.length; i++) { ingots[i].rotation.y += 0.003; ingots[i].position.y += Math.sin(t * 0.5 + i) * 0.0012; }
+      // i due ingranaggi girano insieme, mai fermi.
+      gearA.rotation.set(Math.PI / 2, 0, t * 0.55);
+      gearB.rotation.set(Math.PI / 2, 0, -t * 0.8);
+      // la bilancia oscilla piano — il rigore che pesa, non un verdetto istantaneo.
+      scaleGroup.rotation.z = Math.sin(t * 0.5) * 0.05;
       gateA.rotation.z = t * 0.08; gateB.rotation.z = -t * 0.11;
       const gatePulse = 0.7 + Math.sin(t * 1.6) * 0.15;
       gateMat.opacity = gatePulse; gateMat2.opacity = gatePulse * 0.7;
@@ -425,9 +483,9 @@ export default function Landing3D() {
 
       <aside className="nx3d-glasspanel left" aria-hidden="true">
         <div className="nx3d-gp-title">Motore</div>
-        <div className="nx3d-gp-row"><span>Strategie</span><b>36</b></div>
         <div className="nx3d-gp-row"><span>Simbolo</span><b>XAU/USD</b></div>
         <div className="nx3d-gp-row"><span>Modalità</span><b>Hedge</b></div>
+        <div className="nx3d-gp-row"><span>Stato</span><b>Sempre attivo</b></div>
       </aside>
       <aside className="nx3d-glasspanel right" aria-hidden="true">
         <div className="nx3d-gp-title">Validazione</div>
@@ -458,59 +516,20 @@ export default function Landing3D() {
           </div>
         </section>
 
-        <section className="nx3d-panel right">
-          <div className="nx3d-card" data-par="1.5">
-            <div className="nx3d-scrim" aria-hidden="true" />
-            <span className="nx3d-eyebrow">Se fai trading da solo, lo conosci già</span>
-            <h2>Il grafico<br />non dorme.<br />Tu sì.</h2>
-            <p className="nx3d-lede">Entri per rabbia dopo una perdita. Esci troppo presto per paura. Il backtest ti aveva convinto — il mercato reale ti ha smentito.</p>
-            <p className="nx3d-sub">Non è colpa tua: è la disciplina che manca, non la strategia. Nessun essere umano può sorvegliare 36 mercati alla volta, 24 ore su 24, senza un momento di stanchezza o di panico.</p>
-          </div>
-        </section>
-
-        <section className="nx3d-panel">
-          <div className="nx3d-card" data-par="1.5">
-            <div className="nx3d-scrim" aria-hidden="true" />
-            <span className="nx3d-eyebrow">La svolta</span>
-            <h2>Non l'ha scritto<br />un programmatore.</h2>
-            <p className="nx3d-lede">L'ha costruito, testato e corretto <b>un'intelligenza artificiale</b> — in un ciclo che non si ferma mai.</p>
-            <p className="nx3d-sub">Lo stesso rigore che prima solo un fondo poteva permettersi, ora accessibile a un trader solo. Quando una strategia fallisce, il sistema lo dice: non lo nasconde.</p>
-          </div>
-        </section>
-
-        <section className="nx3d-panel right">
-          <div className="nx3d-card" data-par="1.5">
-            <div className="nx3d-scrim" aria-hidden="true" />
-            <span className="nx3d-eyebrow">Il motore</span>
-            <h2>36 strategie.<br />Ognuna nella<br />sua corsia.</h2>
-            <p className="nx3d-lede">Trend che corrono, mean-reversion che incassano. Ognuna opera indipendente — nessuna aspetta il turno delle altre.</p>
-            <p className="nx3d-sub">Multi-timeframe su un solo grafico. Ogni strategia sul suo orizzonte, con le sue uscite, il suo rischio, la sua corsia hedge.</p>
-          </div>
-        </section>
-
-        <section className="nx3d-panel">
-          <div className="nx3d-card" data-par="1.5">
-            <div className="nx3d-scrim" aria-hidden="true" />
-            <span className="nx3d-eyebrow">Il tuo copilota</span>
-            <h2>Non sei solo<br />davanti ai numeri.</h2>
-            <p className="nx3d-lede">Un assistente AI personale che legge i tuoi trade, ti avvisa se stai rischiando troppo, e ti spiega perché una strategia non sta rendendo — in linguaggio umano, non in tabelle.</p>
-            <p className="nx3d-sub">Chiedigli un piano per la settimana. Chiedigli quale strategia sta perdendo e perché. Risponde: non ti lascia da solo a decifrare una dashboard.</p>
-          </div>
-        </section>
-
-        <section className="nx3d-panel center">
-          <div className="nx3d-card" data-par="1.0">
-            <div className="nx3d-scrim" aria-hidden="true" />
-            <span className="nx3d-eyebrow" style={{ justifyContent: "center" }}>Il metodo</span>
-            <h2>Non ci fidiamo di un solo backtest.</h2>
-            <p className="nx3d-lede">Ogni strategia viene validata su <b>almeno due finestre indipendenti</b> — pochi mesi e diversi anni. Se regge solo su una, non la pubblichiamo come prova: è rumore travestito da fortuna.</p>
-            <div className="nx3d-figs">
-              <div className="nx3d-fig"><div className="nx3d-v c" data-to="36" data-dec="0">0</div><div className="nx3d-k">Strategie testate indipendentemente</div></div>
-              <div className="nx3d-fig"><div className="nx3d-v c" data-to="2" data-dec="0">0</div><div className="nx3d-k">Finestre temporali per ogni verdetto</div></div>
-              <div className="nx3d-fig"><div className="nx3d-v c" data-to="10" data-suf=" anni" data-dec="0">0</div><div className="nx3d-k">Storico usato per lo screening</div></div>
-            </div>
-          </div>
-        </section>
+        {STEPS.map((s, i) => {
+          const Icon = STEP_ICONS[i];
+          return (
+            <section className="nx3d-panel step" key={s.badge}>
+              <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
+              <div className="nx3d-card step" data-par="1.4">
+                <div className="nx3d-scrim" aria-hidden="true" />
+                <span className="nx3d-step-badge">{s.badge}</span>
+                <h2>{s.title}</h2>
+                <p className="nx3d-lede">{s.desc}</p>
+              </div>
+            </section>
+          );
+        })}
 
         <section className="nx3d-panel center">
           <div className="nx3d-card" data-par="1.0">

@@ -66,6 +66,28 @@
   background:radial-gradient(62% 68% at 50% 42%, rgba(4,6,15,.62) 0%, rgba(4,6,15,.28) 55%, rgba(4,6,15,0) 78%)}
 .nx3d-card > *:not(.nx3d-scrim){position:relative;z-index:1}
 
+/* ---- layout a "step": icona simbolica a sinistra, il grafico resta visibile
+   al centro (nessun elemento lo copre), il testo in un riquadro a destra. ---- */
+.nx3d-panel.step{justify-content:space-between;gap:32px}
+.nx3d-step-icon{flex:0 0 auto;width:84px;height:84px;border-radius:20px;display:grid;place-items:center;
+  border:1px solid rgba(56,189,248,.32);background:linear-gradient(160deg,rgba(20,32,58,.5),rgba(8,14,28,.32));
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--nx-cyan);
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
+.nx3d-card.step{flex:0 0 auto;width:100%;max-width:440px;border:1px solid rgba(56,189,248,.28);border-radius:18px;
+  background:linear-gradient(160deg,rgba(10,18,34,.6),rgba(6,10,22,.46));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  padding:32px 34px;box-shadow:0 30px 70px -30px rgba(0,0,0,.75)}
+.nx3d-card.step .nx3d-scrim{display:none} /* il riquadro stesso fa gia' da sfondo leggibile */
+.nx3d-card.step h2{font-size:clamp(24px,2.4vw,32px);line-height:1.18;margin:0;letter-spacing:-.01em}
+.nx3d-card.step .nx3d-lede{font-size:15.5px;font-weight:400;color:var(--nx-dim);line-height:1.6;margin:14px 0 0}
+.nx3d-step-badge{display:inline-block;padding:6px 14px;border-radius:999px;border:1px solid rgba(56,189,248,.42);
+  font-family:var(--nx-mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--nx-cyan);margin-bottom:14px}
+@media(max-width:860px){
+  .nx3d-panel.step{flex-direction:column;justify-content:center;padding:0 7vw}
+  .nx3d-step-icon{width:60px;height:60px}
+  .nx3d-step-icon svg{width:26px;height:26px}
+  .nx3d-card.step{max-width:100%}
+}
+
 .nx3d-eyebrow{font-family:var(--nx-mono);font-size:14px;letter-spacing:.36em;text-transform:uppercase;color:var(--nx-cyan);display:inline-flex;gap:12px;align-items:center}
 .nx3d-eyebrow::before{content:"";width:34px;height:2px;background:var(--nx-cyan);box-shadow:0 0 12px var(--nx-cyan)}
 .nx3d-panel.right .nx3d-eyebrow{flex-direction:row-reverse}
