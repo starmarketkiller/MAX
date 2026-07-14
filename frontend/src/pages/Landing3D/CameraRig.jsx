@@ -1,45 +1,41 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { sampleCameraPath } from "./cameraPath";
 
 /**
- * Navigazione libera e profonda: la camera vola in linea (quasi) retta
- * dentro la scena, da fuori (toro e orso di fronte, l'arena dietro) fino
- * a dentro (attraverso lo scontro di energia, in mezzo a loro, fino a
- * fermarsi davanti al re dorato). Non un punto fermo che guarda uno
- * schermo — uno spostamento vero nello spazio 3D, con toro/orso/scontro/
- * re/pilastri che scorrono tutti a velocità diverse (parallasse) perché
- * sono oggetti reali a profondità diverse, non un'unica immagine piatta.
+ * Navigazione libera e profonda, a tappe: una posizione macchina dedicata
+ * per ognuna delle 6 sezioni (cameraPath.js) — ad ogni scroll ci si
+ * avvicina davvero al prossimo elemento (il toro, poi l'orso, poi lo
+ * scontro, poi il re), non un'unica dolly generica sull'asse Z. Lo
+ * smoothing è sul progresso stesso (non sulla posizione), così il
+ * movimento resta continuo e fluido anche quando lo scroll è a scatti,
+ * ma ogni piccolo scroll produce comunque uno spostamento visibile.
  *
- * Scroll giù = si entra (z decresce), scroll su = si esce (z torna su) —
- * bidirezionale, con un leggero dondolio laterale e un parallasse sul
- * mouse per non sembrare mai un binario rigido.
+ * Aggiunge un lieve parallasse sul mouse e un piccolo dondolio organico
+ * indipendente dal tempo, per non sembrare mai un binario rigido.
  */
 export default function CameraRig({ progressRef }) {
   const { camera, pointer } = useThree();
   const smooth = useRef(0);
-  const tmp = useRef(new THREE.Vector3());
+  const tmpPos = useRef(new THREE.Vector3());
+  const tmpLook = useRef(new THREE.Vector3());
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
-    const k = 1 - Math.exp(-dt * 3.5);
+    const k = 1 - Math.exp(-dt * 4.2);
     smooth.current += (Math.min(Math.max(progressRef.current, 0), 1) - smooth.current) * k;
-    const p = smooth.current;
+    const { pos, look } = sampleCameraPath(smooth.current);
     const t = state.clock.elapsedTime;
 
-    const camZ = 15 - p * 30; // da +15 (fuori, vista d'insieme) a -15 (oltre il re)
-    const camY = 2.4 - p * 0.7 + Math.sin(p * Math.PI) * 0.3;
-    const sway = Math.sin(p * Math.PI * 1.4) * 1.6; // dondolio laterale, non un binario dritto
-    const lookZ = camZ - 10.5;
-    const lookY = 1.7 - p * 0.35;
-
-    tmp.current.set(
-      sway + pointer.x * 0.6 + Math.sin(t * 0.08) * 0.15,
-      camY - pointer.y * 0.3,
-      camZ
+    tmpPos.current.set(
+      pos[0] + pointer.x * 0.5 + Math.sin(t * 0.1) * 0.1,
+      pos[1] - pointer.y * 0.28,
+      pos[2]
     );
-    camera.position.lerp(tmp.current, 1); // gia' smussato da `smooth`, applica diretto
-    camera.lookAt(sway * 0.4, lookY, lookZ);
+    camera.position.lerp(tmpPos.current, 1);
+    tmpLook.current.set(look[0], look[1], look[2]);
+    camera.lookAt(tmpLook.current);
   });
 
   return null;

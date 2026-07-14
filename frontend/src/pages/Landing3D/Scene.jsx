@@ -33,8 +33,8 @@ export default function Scene({ progressRef }) {
         shadow-camera-bottom={-16}
       />
       <directionalLight color="#8b6ff0" intensity={0.35} position={[-8, 3, -4]} />
-      <pointLight color="#4ade80" intensity={12} distance={14} position={[-6.6, 2, -7]} />
-      <pointLight color="#f87171" intensity={12} distance={14} position={[6.6, 2, -7]} />
+      <pointLight color="#4ade80" intensity={12} distance={14} position={[-5.6, 2, -9]} />
+      <pointLight color="#f87171" intensity={12} distance={14} position={[5.6, 2, -9]} />
       <pointLight color="#fbbf24" intensity={16} distance={16} position={[0, 3, -18]} />
 
       <Suspense fallback={null}>

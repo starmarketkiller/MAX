@@ -17,11 +17,12 @@ import * as THREE from "three";
  *
  * `progressRef` + `convergeTo`/`convergeScale` (opzionali): se passati,
  * l'elemento non resta fermo nel mondo mentre la camera lo scavalca — si
- * sposta lui stesso verso `convergeTo` e si rimpicciolisce fino a
- * `convergeScale`, seguendo lo scroll. Serve a tenere toro/orso sempre
- * dentro l'inquadratura anche su schermi stretti (telefono: il campo
- * visivo orizzontale è molto più stretto di quello verticale), invece di
- * lasciarli fissi ai lati dove un FOV stretto li taglia fuori.
+ * sposta lui stesso verso `convergeTo` e scala fino a `convergeScale`,
+ * seguendo lo scroll. `mapProgress` trasforma il progresso grezzo (0..1
+ * sull'intera pagina) prima di applicarlo: usato per far coincidere il
+ * culmine (toro e orso che si scontrano) con una sezione precisa invece
+ * che con la fine della pagina, o per far "respirare" lo scontro con un
+ * impulso invece di una semplice interpolazione lineare.
  */
 export default function Cutout({
   url,
@@ -29,6 +30,7 @@ export default function Cutout({
   height,
   position,
   progressRef,
+  mapProgress,
   convergeTo,
   convergeScale = 1,
   flipX = false,
@@ -60,7 +62,9 @@ export default function Cutout({
     if (groupRef.current && progressRef && endVec) {
       const dt = Math.min(delta, 0.1);
       const k = 1 - Math.exp(-dt * 3.5);
-      smooth.current += (Math.min(Math.max(progressRef.current, 0), 1) - smooth.current) * k;
+      const raw = Math.min(Math.max(progressRef.current, 0), 1);
+      const mapped = mapProgress ? mapProgress(raw) : raw;
+      smooth.current += (mapped - smooth.current) * k;
       const p = smooth.current;
       tmp.current.lerpVectors(startVec, endVec, p);
       groupRef.current.position.copy(tmp.current);

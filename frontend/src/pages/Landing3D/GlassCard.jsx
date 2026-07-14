@@ -1,20 +1,39 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 /**
- * Testo che galleggia direttamente sulla scena — niente più riquadro
- * scuro dietro: per restare leggibile sopra un'immagine impegnativa il
- * contrasto arriva da un'ombra portata forte su ogni elemento (due
- * livelli: una vicina e netta, una larga e morbida), non da un pannello
- * che nasconde la scena. L'ingresso (fade + slight rise + blur-out) è
- * affidato a Framer Motion.
+ * Testo che galleggia direttamente sulla scena — niente riquadro scuro
+ * dietro: il contrasto arriva da un'ombra portata forte su due livelli
+ * (una vicina e netta, una larga e morbida), non da un pannello che
+ * nasconde la scena.
+ *
+ * L'ingresso/uscita è agganciato allo scroll stesso (useScroll+
+ * useTransform, non whileInView): mentre la sezione sale nel viewport il
+ * blocco ruota leggermente in avanti (rotateX) e scivola su, si assesta
+ * piatto al centro, poi ruota all'indietro e scivola via mentre esce in
+ * alto — un vero movimento di "slide" 3D legato al gesto di scroll, non
+ * un fade-in innescato una volta sola.
  */
 export default function GlassCard({ badge, title, children, center = false, wide = false, className = "" }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+
+  const opacity = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [64, 0, 0, -56]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [16, 0, 0, -12]);
+  const scale = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [0.94, 1, 1, 0.96]);
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
-      whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={{ once: true, amount: 0.5 }}
-      transition={{ duration: 0.75, ease: [0.2, 0.8, 0.2, 1] }}
+      ref={ref}
+      style={{
+        opacity,
+        y,
+        rotateX,
+        scale,
+        transformPerspective: 900,
+        willChange: "transform, opacity",
+      }}
       className={[
         "relative px-6 py-6 sm:px-8 sm:py-8",
         "[filter:drop-shadow(0_2px_10px_rgba(0,0,0,0.92))_drop-shadow(0_18px_46px_rgba(0,0,0,0.75))]",
