@@ -1,9 +1,12 @@
 import { motion } from "framer-motion";
 
 /**
- * Componente UI in Glassmorphism: pannello scuro semitrasparente,
- * sfocatura forte dello sfondo, bordo sottile con bagliore ciano.
- * L'ingresso (fade + slight rise + blur-out) è affidato a Framer Motion.
+ * Testo che galleggia direttamente sulla scena — niente più riquadro
+ * scuro dietro: per restare leggibile sopra un'immagine impegnativa il
+ * contrasto arriva da un'ombra portata forte su ogni elemento (due
+ * livelli: una vicina e netta, una larga e morbida), non da un pannello
+ * che nasconde la scena. L'ingresso (fade + slight rise + blur-out) è
+ * affidato a Framer Motion.
  */
 export default function GlassCard({ badge, title, children, center = false, wide = false, className = "" }) {
   return (
@@ -13,17 +16,15 @@ export default function GlassCard({ badge, title, children, center = false, wide
       viewport={{ once: true, amount: 0.5 }}
       transition={{ duration: 0.75, ease: [0.2, 0.8, 0.2, 1] }}
       className={[
-        "relative rounded-2xl border border-cyan-400/40 bg-black/45 backdrop-blur-md",
-        "shadow-[0_30px_70px_-30px_rgba(0,0,0,0.85)] px-8 py-9 sm:px-10 sm:py-10",
-        "before:absolute before:inset-0 before:rounded-2xl before:pointer-events-none",
-        "before:shadow-[inset_0_0_44px_rgba(56,230,255,0.08)]",
+        "relative px-6 py-6 sm:px-8 sm:py-8",
+        "[filter:drop-shadow(0_2px_10px_rgba(0,0,0,0.92))_drop-shadow(0_18px_46px_rgba(0,0,0,0.75))]",
         wide ? "max-w-3xl" : "max-w-[440px]",
         center ? "mx-auto text-center" : "",
         className,
       ].join(" ")}
     >
       {badge && (
-        <span className="inline-block mb-4 rounded-full border border-cyan-400/60 px-3.5 py-1.5 font-quantum font-bold text-[11px] tracking-[0.16em] uppercase text-cyan-300">
+        <span className="inline-block mb-4 rounded-full border border-cyan-400/60 bg-black/50 backdrop-blur-sm px-3.5 py-1.5 font-quantum font-bold text-[11px] tracking-[0.16em] uppercase text-cyan-300">
           {badge}
         </span>
       )}

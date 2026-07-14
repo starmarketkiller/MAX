@@ -38,7 +38,7 @@ export default function Scene({ progressRef }) {
       <pointLight color="#fbbf24" intensity={16} distance={16} position={[0, 3, -18]} />
 
       <Suspense fallback={null}>
-        <Diorama />
+        <Diorama progressRef={progressRef} />
       </Suspense>
       <Atmosphere />
       <CameraRig progressRef={progressRef} />
