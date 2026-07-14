@@ -1,22 +1,38 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Canvas } from "@react-three/fiber";
 import { Moon, Cog, GitBranch, MessageCircle, Scale } from "lucide-react";
 import GlassCard from "./GlassCard";
+import Scene from "./Scene";
 import { STEPS, N_SECTIONS } from "./content";
 import "./Landing3D.css";
 
 const STEP_ICONS = [Moon, Cog, GitBranch, MessageCircle, Scale];
 
+function supportsWebGL() {
+  try {
+    const c = document.createElement("canvas");
+    return !!(window.WebGLRenderingContext && (c.getContext("webgl") || c.getContext("experimental-webgl")));
+  } catch {
+    return false;
+  }
+}
+
 /**
- * NEXUS — landing cinematica. Un solo sfondo per tutta la pagina: il video
- * dell'arena (toro vs orso, generato via AI) in loop, fisso dietro ogni
- * sezione — non più una scena 3D separata per tappa. Le card di testo
- * (glassmorphism) restano sopra, sempre leggibili grazie allo scrim scuro.
+ * NEXUS — landing cinematica. Il video dell'arena vive dentro una scena 3D
+ * vera (React Three Fiber): proiettato su uno schermo inclinato con luci,
+ * ombre sul pavimento e una camera che si muove piano lungo tutta la pagina
+ * — non un <video> piatto in overlay. Lo scroll pilota sia la camera sia il
+ * punto esatto del video mostrato (avanti/indietro, playback bidirezionale).
+ * Se il browser non supporta WebGL, il video resta comunque visibile come
+ * sfondo piatto in loop — non sparisce mai del tutto.
  */
 export default function Landing3D() {
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const sectionRefs = useRef([]);
+  const progressRef = useRef(0);
+  const [webglOk] = useState(supportsWebGL);
 
   const goTo = (i) => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -40,9 +56,24 @@ export default function Landing3D() {
     };
   }, []);
 
-  // Quale sezione è attiva: un IntersectionObserver per sezione, niente
-  // scroll-trigger — non c'è più nessuna camera da guidare, solo la rail
-  // dei puntini e l'etichetta da tenere sincronizzate.
+  // Progresso di scroll sull'intera pagina (0..1) — pilota sia la camera 3D
+  // sia il punto del video mostrato (VideoScreen legge lo stesso ref).
+  useEffect(() => {
+    const onScroll = () => {
+      const m = document.documentElement.scrollHeight - window.innerHeight;
+      progressRef.current = m > 0 ? window.scrollY / m : 0;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // Quale sezione è attiva: un IntersectionObserver per sezione, solo per
+  // la rail dei puntini e l'etichetta — indipendente dalla camera 3D.
   useEffect(() => {
     const railBtns = [...rootRef.current.querySelectorAll(".nx3d-rail button")];
     const sectionLabel = rootRef.current.querySelector("#nx3d-hud-section");
@@ -64,18 +95,31 @@ export default function Landing3D() {
 
   return (
     <div className="nx3d" ref={rootRef}>
-      <video
-        className="nx3d-video-bg"
-        poster={`${process.env.PUBLIC_URL}/video/arena-poster.jpg`}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-      >
-        <source src={`${process.env.PUBLIC_URL}/video/arena.mp4`} type="video/mp4" />
-        <source src={`${process.env.PUBLIC_URL}/video/arena.webm`} type="video/webm" />
-      </video>
+      {webglOk ? (
+        <div className="nx3d-gl-wrap">
+          <Canvas
+            shadows
+            camera={{ fov: 45, near: 0.1, far: 80, position: [0, 1.5, 11] }}
+            gl={{ antialias: true, powerPreference: "high-performance" }}
+            dpr={[1, 2]}
+          >
+            <Scene progressRef={progressRef} />
+          </Canvas>
+        </div>
+      ) : (
+        <video
+          className="nx3d-video-bg"
+          poster={`${process.env.PUBLIC_URL}/video/arena-poster.jpg`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        >
+          <source src={`${process.env.PUBLIC_URL}/video/arena.mp4`} type="video/mp4" />
+          <source src={`${process.env.PUBLIC_URL}/video/arena.webm`} type="video/webm" />
+        </video>
+      )}
       <div className="nx3d-video-scrim" aria-hidden="true" />
 
       <div className="nx3d-hud" aria-hidden="true">
