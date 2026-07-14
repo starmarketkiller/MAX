@@ -37,7 +37,7 @@ function ParallaxSync({ tilt, parallaxRef }) {
  * index.jsx) — comunicano solo via progressRef, letto ad ogni frame
  * senza mai forzare un re-render React.
  */
-export default function Scene({ progressRef }) {
+export default function Scene({ progressRef, velocityRef }) {
   const tilt = useDeviceTilt();
   const parallaxRef = useRef({ x: 0, y: 0 });
 
@@ -68,7 +68,7 @@ export default function Scene({ progressRef }) {
       <ParallaxSync tilt={tilt} parallaxRef={parallaxRef} />
 
       <Suspense fallback={null}>
-        <Diorama progressRef={progressRef} parallaxRef={parallaxRef} />
+        <Diorama progressRef={progressRef} parallaxRef={parallaxRef} velocityRef={velocityRef} />
       </Suspense>
       <Atmosphere />
       <ImpactSparks progressRef={progressRef} />

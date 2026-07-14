@@ -26,6 +26,11 @@ import * as THREE from "three";
  * posizione, indipendente dallo scroll, che segue mouse/giroscopio
  * (useDeviceTilt) — ogni livello ha una propria intensità, così lo
  * spazio risponde come vivo anche senza scrollare.
+ *
+ * `skewRef` + `skewStrength` (opzionali): una leggerissima torsione
+ * (rotation.z) proporzionale alla velocità di scroll — dà peso/inerzia
+ * all'energia dello scontro quando si scrolla veloce, si assesta da sola
+ * quando lo scroll si ferma.
  */
 export default function Cutout({
   url,
@@ -38,6 +43,8 @@ export default function Cutout({
   convergeScale = 1,
   parallaxRef,
   parallaxStrength = 0,
+  skewRef,
+  skewStrength = 1,
   flipX = false,
   glowColor,
   glowOpacity = 0.4,
@@ -52,6 +59,7 @@ export default function Cutout({
   const smooth = useRef(0);
   const basePos = useRef(new THREE.Vector3(...position));
   const finalPos = useRef(new THREE.Vector3(...position));
+  const rotZ = useRef(0);
   const startVec = useMemo(() => new THREE.Vector3(...position), [position]);
   const endVec = useMemo(() => (convergeTo ? new THREE.Vector3(...convergeTo) : null), [convergeTo]);
 
@@ -70,7 +78,7 @@ export default function Cutout({
 
     if (progressRef && endVec) {
       const dt = Math.min(delta, 0.1);
-      const k = 1 - Math.exp(-dt * 3.5);
+      const k = 1 - Math.exp(-dt * 2.0); // più lento = convergenza più sostenuta
       const raw = Math.min(Math.max(progressRef.current, 0), 1);
       const mapped = mapProgress ? mapProgress(raw) : raw;
       smooth.current += (mapped - smooth.current) * k;
@@ -85,6 +93,14 @@ export default function Cutout({
       finalPos.current.y += -parallaxRef.current.y * parallaxStrength * 0.6;
     }
     groupRef.current.position.copy(finalPos.current);
+
+    if (skewRef) {
+      const dt2 = Math.min(delta, 0.1);
+      const k2 = 1 - Math.exp(-dt2 * 6);
+      const target = THREE.MathUtils.clamp(-skewRef.current * 0.0015 * skewStrength, -0.12, 0.12);
+      rotZ.current += (target - rotZ.current) * k2;
+      groupRef.current.rotation.z = rotZ.current;
+    }
   });
 
   const content = (

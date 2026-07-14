@@ -29,7 +29,7 @@ export default function CameraRig({ progressRef, parallaxRef }) {
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
-    const k = 1 - Math.exp(-dt * 4.2);
+    const k = 1 - Math.exp(-dt * 2.2); // più lento = movimento più sostenuto, meno "scatto"
     smooth.current += (Math.min(Math.max(progressRef.current, 0), 1) - smooth.current) * k;
     const { pos, look } = sampleCameraPath(smooth.current);
     const t = state.clock.elapsedTime;

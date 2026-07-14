@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
-import { Moon, Cog, GitBranch, MessageCircle, Scale } from "lucide-react";
+import { Moon, Cog, GitBranch, MessageCircle, Scale, Volume2, VolumeX } from "lucide-react";
 import GlassCard from "./GlassCard";
 import Scene from "./Scene";
+import HUDForeground from "./HUDForeground";
+import useAmbientAudio from "./useAmbientAudio";
 import { STEPS, N_SECTIONS } from "./content";
 import "./Landing3D.css";
 
@@ -31,7 +33,17 @@ export default function Landing3D() {
   const rootRef = useRef(null);
   const sectionRefs = useRef([]);
   const progressRef = useRef(0);
+  const velocityRef = useRef(0);
+  const enabledRef = useRef(true);
   const [webglOk] = useState(supportsWebGL);
+  const [audioOn, setAudioOn] = useState(true);
+
+  useAmbientAudio(progressRef, enabledRef);
+
+  const toggleAudio = () => {
+    enabledRef.current = !enabledRef.current;
+    setAudioOn(enabledRef.current);
+  };
 
   const goTo = (i) => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -71,6 +83,46 @@ export default function Landing3D() {
     };
   }, []);
 
+  // Velocità di scroll → peso/inerzia percepiti: uno skewY leggerissimo su
+  // testi ed energia, un filo di motion blur, mentre si scrolla veloce.
+  // Non è agganciato a un singolo evento scroll (che smette di sparare
+  // quando l'utente si ferma): un loop continuo smussa verso la velocità
+  // istantanea e, appena lo scroll si ferma, quella stessa smussatura la
+  // riporta a zero da sola — l'equivalente di una molla senza libreria di
+  // fisica dedicata. Il segnale grezzo (velocityRef) passa anche dentro il
+  // Canvas (Scene→Diorama) per dare un accenno di torsione all'energia.
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return undefined;
+    let raf;
+    let lastY = window.scrollY;
+    let lastT = performance.now();
+    let vel = 0;
+
+    const tick = (t) => {
+      const dt = Math.max(t - lastT, 1);
+      const y = window.scrollY;
+      const instant = y - lastY;
+      lastY = y;
+      lastT = t;
+      const k = Math.min(dt / 140, 1);
+      vel += (instant - vel) * k;
+      velocityRef.current = vel;
+
+      if (rootRef.current) {
+        const skewDeg = Math.max(-7, Math.min(7, -vel * 0.35));
+        const blurPx = Math.min(Math.abs(vel) * 0.22, 3.5);
+        const velNorm = Math.min(Math.abs(vel) / 18, 1);
+        rootRef.current.style.setProperty("--nx3d-skew", `${skewDeg.toFixed(3)}deg`);
+        rootRef.current.style.setProperty("--nx3d-blur", `${blurPx.toFixed(3)}px`);
+        rootRef.current.style.setProperty("--nx3d-vel", velNorm.toFixed(3));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   // Quale sezione è attiva: un IntersectionObserver per sezione, solo per
   // la rail dei puntini e l'etichetta — indipendente dalla camera 3D.
   useEffect(() => {
@@ -102,7 +154,7 @@ export default function Landing3D() {
             gl={{ antialias: true, powerPreference: "high-performance" }}
             dpr={[1, 2]}
           >
-            <Scene progressRef={progressRef} />
+            <Scene progressRef={progressRef} velocityRef={velocityRef} />
           </Canvas>
         </div>
       ) : (
@@ -114,6 +166,18 @@ export default function Landing3D() {
         />
       )}
       <div className="nx3d-video-scrim" aria-hidden="true" />
+
+      <HUDForeground />
+
+      <button
+        type="button"
+        className="nx3d-audio-btn"
+        onClick={toggleAudio}
+        aria-label={audioOn ? "Disattiva audio" : "Attiva audio"}
+        aria-pressed={audioOn}
+      >
+        {audioOn ? <Volume2 size={17} strokeWidth={1.8} /> : <VolumeX size={17} strokeWidth={1.8} />}
+      </button>
 
       <div className="nx3d-hud" aria-hidden="true">
         <span className="nx3d-hud-corner tl" />

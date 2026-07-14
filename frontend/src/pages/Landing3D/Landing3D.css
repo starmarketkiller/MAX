@@ -16,12 +16,22 @@
   font-family: var(--nx-sans);
   overflow-x: hidden;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 .nx3d ::selection { background: rgba(56, 189, 248, 0.35); }
 
 /* ---- sfondo: la scena 3D (elementi in spazio nero), fissa dietro tutta
-   la pagina. .nx3d-video-bg resta come fermo immagine se WebGL non c'e'. ---- */
-.nx3d-gl-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; background: #000; }
+   la pagina. .nx3d-video-bg resta come fermo immagine se WebGL non c'e'.
+   100dvh (non solo 100vh) perché su Safari mobile, specie appena dopo una
+   rotazione, 100vh si misura sulla viewport "grande" (come se la barra del
+   browser fosse nascosta) mentre l'area davvero visibile è più piccola —
+   il risultato è la scena rimpicciolita con bande nere ai lati, esattamente
+   il problema segnalato. Il fallback a 100vh resta per i browser che non
+   supportano dvh. ---- */
+.nx3d-gl-wrap {
+  position: fixed; inset: 0; z-index: 0; background: #000;
+  width: 100vw; height: 100vh; height: 100dvh;
+}
 .nx3d-video-bg {
   position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
   background: #000; object-fit: contain; object-position: center 55%;
@@ -79,7 +89,7 @@
 }
 
 /* ---- layout sezioni ---- */
-.nx3d-panel { min-height: 100vh; display: flex; align-items: center; padding: 0 8vw; }
+.nx3d-panel { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; padding: 0 8vw; }
 .nx3d-panel.center { justify-content: center; text-align: center; }
 .nx3d-panel.step { justify-content: space-between; gap: 32px; }
 @media (max-width: 860px) { .nx3d-panel.step { flex-direction: column; justify-content: center; padding: 0 7vw; } }
@@ -122,6 +132,58 @@
 .nx3d-panel.center .nx3d-disc { margin: 30px auto 0; }
 
 @media (min-width: 1101px) { .nx3d-panel { padding-left: 240px; padding-right: 240px; } }
+
+/* ---- distorsione da velocità di scroll: --nx3d-skew/--nx3d-blur/--nx3d-vel
+   sono impostate ad ogni frame da un loop in index.jsx (non da un singolo
+   evento scroll, che smette appena l'utente si ferma) — quando la
+   scrollbar corre veloce il testo si inclina appena e si sfoca, poi torna
+   da solo a riposo con lo stesso smussamento che l'ha generato. ---- */
+.nx3d-skew-target {
+  transform: skewY(var(--nx3d-skew, 0deg));
+  filter: blur(var(--nx3d-blur, 0px));
+  will-change: transform, filter;
+}
+
+/* ---- livello HUD "glassmorphism" in primissimo piano ---- */
+.nx3d-hudfg { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+.nx3d-hudfg-chip {
+  position: absolute; display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, calc(0.2 + var(--nx3d-vel, 0) * 0.4));
+  background: rgba(6, 12, 26, 0.28);
+  backdrop-filter: blur(6px) saturate(1.15);
+  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  color: var(--nx-cyan);
+  font-family: var(--nx-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: calc(0.32 + var(--nx3d-vel, 0) * 0.4);
+  text-shadow:
+    calc(var(--nx3d-vel, 0) * -1.8px) 0 rgba(248, 113, 113, 0.55),
+    calc(var(--nx3d-vel, 0) * 1.8px) 0 rgba(74, 222, 128, 0.55);
+  animation: nx3d-hudfg-drift 13s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.nx3d-hudfg-chip.code { color: var(--nx-dim); }
+.nx3d-hudfg-icon { display: flex; flex: 0 0 auto; }
+.nx3d-hudfg-label { white-space: nowrap; }
+@keyframes nx3d-hudfg-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(7px, -11px); }
+}
+@media (max-width: 860px) { .nx3d-hudfg-chip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .nx3d-hudfg-chip { animation: none; } }
+
+/* ---- pulsante audio (drone ambientale, Web Audio API) ---- */
+.nx3d-audio-btn {
+  position: fixed; right: 30px; bottom: 30px; z-index: 7;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(6, 12, 26, 0.45);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: var(--nx-cyan); display: grid; place-items: center; cursor: pointer;
+  transition: 0.25s;
+}
+.nx3d-audio-btn:hover { border-color: var(--nx-cyan); box-shadow: 0 8px 30px -10px rgba(56, 189, 248, 0.75); transform: translateY(-2px); }
+.nx3d-audio-btn:focus-visible { outline: 2px solid var(--nx-cyan); outline-offset: 3px; }
+@media (max-width: 720px) { .nx3d-audio-btn { right: 16px; bottom: 16px; width: 36px; height: 36px; } }
 
 /* ritmo verticale piu' compatto su telefono in verticale — meno margine tra
    i blocchi, cosi' la card della hero (badge+H1+lede+sub+2 bottoni) ha piu'

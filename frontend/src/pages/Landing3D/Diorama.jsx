@@ -22,7 +22,7 @@ const arenaMap = (p) => p;
  * sposta appena, il primo piano molto di più: è questo scarto, non lo
  * scroll, a far sembrare lo spazio vivo anche da fermi.
  */
-export default function Diorama({ progressRef, parallaxRef }) {
+export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
   return (
     <group>
       {/* sfondo — lentissimo, con un leggero zoom "verso gli spalti" */}
@@ -60,9 +60,9 @@ export default function Diorama({ progressRef, parallaxRef }) {
       {/* l'orso, a destra, rosso — converge verso il re caricando */}
       <Cutout
         url={IMG("bear")}
-        width={4.45}
-        height={5.7}
-        position={[5.6, 1.5, -9]}
+        width={6.78}
+        height={7.4}
+        position={[5.6, 1.9, -9]}
         progressRef={progressRef}
         mapProgress={convergeMap}
         convergeTo={[1.5, 1.9, -17.5]}
@@ -86,6 +86,8 @@ export default function Diorama({ progressRef, parallaxRef }) {
         convergeScale={1.45}
         parallaxRef={parallaxRef}
         parallaxStrength={1.3}
+        skewRef={velocityRef}
+        skewStrength={1.4}
         additive
         pulse={false}
       />

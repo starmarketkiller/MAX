@@ -21,13 +21,13 @@ export default function GlassCard({ badge, title, children, center = false, wide
   const [titleTrigger, setTitleTrigger] = useState(false);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    if (v > 0.24 && !titleTrigger) setTitleTrigger(true);
+    if (v > 0.32 && !titleTrigger) setTitleTrigger(true);
   });
 
-  const opacity = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [64, 0, 0, -56]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [16, 0, 0, -12]);
-  const scale = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [0.94, 1, 1, 0.96]);
+  const opacity = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [84, 0, 0, -72]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [20, 0, 0, -15]);
+  const scale = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0.92, 1, 1, 0.95]);
 
   return (
     <motion.div
@@ -48,17 +48,19 @@ export default function GlassCard({ badge, title, children, center = false, wide
         className,
       ].join(" ")}
     >
-      {badge && (
-        <span className="inline-block mb-4 rounded-full border border-cyan-400/60 bg-black/50 backdrop-blur-sm px-3.5 py-1.5 font-quantum font-bold text-[11px] tracking-[0.16em] uppercase text-cyan-300">
-          {badge}
-        </span>
-      )}
-      {title && (
-        <h2 className="m-0 font-grotesk font-bold leading-[1.12] tracking-tight text-white text-[clamp(25px,2.6vw,34px)]">
-          <ScrambleText text={title} trigger={titleTrigger} />
-        </h2>
-      )}
-      {children}
+      <div className="nx3d-skew-target">
+        {badge && (
+          <span className="inline-block mb-4 rounded-full border border-cyan-400/60 bg-black/50 backdrop-blur-sm px-3.5 py-1.5 font-quantum font-bold text-[11px] tracking-[0.16em] uppercase text-cyan-300">
+            {badge}
+          </span>
+        )}
+        {title && (
+          <h2 className="m-0 font-grotesk font-bold leading-[1.12] tracking-tight text-white text-[clamp(25px,2.6vw,34px)]">
+            <ScrambleText text={title} trigger={titleTrigger} />
+          </h2>
+        )}
+        {children}
+      </div>
     </motion.div>
   );
 }
