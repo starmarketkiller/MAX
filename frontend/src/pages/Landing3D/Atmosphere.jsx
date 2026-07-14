@@ -18,10 +18,14 @@ function softDiscTexture() {
   return new THREE.CanvasTexture(c);
 }
 
+const PYLON_COLORS = ["#38bdf8", "#8b6ff0", "#38bdf8", "#22d3ee", "#8b6ff0", "#38bdf8", "#22d3ee", "#8b6ff0"];
+
 /**
- * Il pavimento che riceve l'ombra dello schermo (profondità vera, non
- * finta) + un pulviscolo di particelle lente — l'atmosfera che rende lo
- * spazio 3D leggibile come spazio, non solo lo schermo sospeso nel vuoto.
+ * Il pavimento che riceve ombre vere (profondità reale, non finta) + un
+ * pulviscolo di particelle lente + un anello di pilastri luminosi intorno
+ * all'arena — sono loro, scorrendo ai lati mentre la camera avanza, a dare
+ * la parallasse più forte: elementi vicini che si muovono più in fretta di
+ * quelli lontani è l'indizio di profondità che il cervello legge per primo.
  */
 export default function Atmosphere() {
   const dustRef = useRef();
@@ -37,12 +41,35 @@ export default function Atmosphere() {
     return positions;
   }, []);
 
+  const pylons = useMemo(() => {
+    // Il raggio della camera va da 5.5 (dentro) a 18 (fuori): i pilastri
+    // stanno ben oltre 18 così la camera non ci passa mai vicino — altrimenti
+    // a certi angoli di scroll uno di loro riempie tutto lo schermo.
+    const N = 12;
+    return Array.from({ length: N }, (_, i) => {
+      const angle = (i / N) * Math.PI * 2;
+      const radius = 25 + (i % 3) * 3.5;
+      const height = 4.5 + (i % 3) * 1.6;
+      return {
+        pos: [Math.sin(angle) * radius, height / 2 - 2.4, Math.cos(angle) * radius],
+        height,
+        color: PYLON_COLORS[i % PYLON_COLORS.length],
+      };
+    });
+  }, []);
+
   useFrame((state) => {
     if (dustRef.current) dustRef.current.rotation.y = state.clock.elapsedTime * 0.01;
   });
 
   return (
     <>
+      {pylons.map((p, i) => (
+        <mesh key={i} position={p.pos} castShadow>
+          <boxGeometry args={[0.32, p.height, 0.32]} />
+          <meshStandardMaterial color="#0a1830" emissive={p.color} emissiveIntensity={0.9} metalness={0.6} roughness={0.35} />
+        </mesh>
+      ))}
       {/* pavimento riflettente: le luci e lo schermo si specchiano — il
           singolo indizio piu' forte che lo spazio e' davvero tridimensionale,
           non un fondale piatto dietro il video. Risoluzione ridotta su
