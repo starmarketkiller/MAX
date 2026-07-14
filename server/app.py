@@ -332,7 +332,7 @@ def require_user(authorization: Optional[str] = Header(None),
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
-app = FastAPI(title="NEXUS self-hosted backend", version="3.0.0-arena-video-scrub-hero")
+app = FastAPI(title="NEXUS self-hosted backend", version="3.1.0-video-bg-all-sections")
 
 
 def _seed_strategy_results() -> None:
