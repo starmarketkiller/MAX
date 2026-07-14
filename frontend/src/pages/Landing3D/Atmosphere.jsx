@@ -2,8 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
-
-const isLowEnd = typeof window !== "undefined" && window.innerWidth < 820;
+import { isLowEnd } from "./deviceTier";
 
 function softDiscTexture() {
   const c = document.createElement("canvas");

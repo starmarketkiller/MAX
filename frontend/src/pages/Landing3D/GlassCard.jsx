@@ -1,5 +1,6 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import ScrambleText from "./ScrambleText";
 
 /**
  * Testo che galleggia direttamente sulla scena — niente riquadro scuro
@@ -11,12 +12,17 @@ import { motion, useScroll, useTransform } from "framer-motion";
  * useTransform, non whileInView): mentre la sezione sale nel viewport il
  * blocco ruota leggermente in avanti (rotateX) e scivola su, si assesta
  * piatto al centro, poi ruota all'indietro e scivola via mentre esce in
- * alto — un vero movimento di "slide" 3D legato al gesto di scroll, non
- * un fade-in innescato una volta sola.
+ * alto. Il titolo si "decodifica" (ScrambleText) non appena la sezione
+ * si blocca in posizione, invece di un fade-in classico.
  */
 export default function GlassCard({ badge, title, children, center = false, wide = false, className = "" }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const [titleTrigger, setTitleTrigger] = useState(false);
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (v > 0.24 && !titleTrigger) setTitleTrigger(true);
+  });
 
   const opacity = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [0, 1, 1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.22, 0.8, 1], [64, 0, 0, -56]);
@@ -49,7 +55,7 @@ export default function GlassCard({ badge, title, children, center = false, wide
       )}
       {title && (
         <h2 className="m-0 font-grotesk font-bold leading-[1.12] tracking-tight text-white text-[clamp(25px,2.6vw,34px)]">
-          {title}
+          <ScrambleText text={title} trigger={titleTrigger} />
         </h2>
       )}
       {children}
