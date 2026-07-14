@@ -24,7 +24,7 @@ export function detectQuality() {
 // (è ciò che rende leggibile la scia e i pannelli olografici) ma con meno
 // oggetti; "low" lo spegne del tutto — è il costo GPU più alto della scena.
 export const QUALITY_PRESETS = {
-  high: { dpr: [1, 2], bloom: true, starsFar: 2600, starsNear: 900, heroParticles: 700, candles: 90, bloomScale: 0.5 },
-  medium: { dpr: [1, 1.5], bloom: true, starsFar: 1600, starsNear: 550, heroParticles: 420, candles: 55, bloomScale: 0.4 },
-  low: { dpr: [1, 1], bloom: false, starsFar: 900, starsNear: 300, heroParticles: 220, candles: 32, bloomScale: 0 },
+  high: { dpr: [1, 2], bloom: true, starsFar: 2600, starsNear: 900, candles: 90, bloomScale: 0.5, arenaDpr: 2 },
+  medium: { dpr: [1, 1.5], bloom: true, starsFar: 1600, starsNear: 550, candles: 55, bloomScale: 0.4, arenaDpr: 1.5 },
+  low: { dpr: [1, 1], bloom: false, starsFar: 900, starsNear: 300, candles: 32, bloomScale: 0, arenaDpr: 1 },
 };

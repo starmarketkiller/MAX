@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Moon, Cog, GitBranch, MessageCircle, Scale } from "lucide-react";
 import Scene from "./Scene";
 import GlassCard from "./GlassCard";
+import ArenaScrub from "./ArenaScrub";
 import { STEPS, N_SECTIONS } from "./content";
 import { detectQuality, QUALITY_PRESETS } from "./quality";
 import "./Landing3D.css";
@@ -24,25 +25,32 @@ function supportsWebGL() {
 }
 
 /**
- * NEXUS — landing 3D cinematica (React Three Fiber + GSAP ScrollTrigger).
- * La scena 3D (<Canvas>) e la UI HTML (overlay assoluto) sono due alberi
- * React separati: la scena non conosce i testi, la UI non conosce Three.js —
- * comunicano solo via `progressRef`/`mouseRef`, letti a ogni frame in useFrame
- * senza mai forzare un re-render React.
+ * NEXUS — landing 3D cinematica. Due motori di rendering distinti in
+ * sequenza sulla stessa pagina: l'arena (canvas 2D, 97 frame scrubbati con
+ * lo scroll) come apertura, poi il viaggio R3F (Three.js via React Three
+ * Fiber + GSAP ScrollTrigger) per le tappe successive. La UI HTML (overlay
+ * assoluto) comunica con entrambi solo via ref, letti ad ogni frame senza
+ * mai forzare un re-render React.
  */
 export default function Landing3D() {
   const navigate = useNavigate();
   const rootRef = useRef(null);
-  const scrollRef = useRef(null);
+  const journeyRef = useRef(null);
+  const sectionRefs = useRef([]);
   const progressRef = useRef(0);
+  const arenaProgressRef = useRef(0);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [webglOk] = useState(supportsWebGL);
   const [quality] = useState(detectQuality);
+  const [arenaReady, setArenaReady] = useState(false);
 
   const goTo = (i) => {
-    const m = document.body.scrollHeight - window.innerHeight;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: m * (i / (N_SECTIONS - 1)), behavior: reduce ? "auto" : "smooth" });
+    if (i === 0) {
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+      return;
+    }
+    sectionRefs.current[i]?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   };
 
   useEffect(() => {
@@ -62,30 +70,36 @@ export default function Landing3D() {
     };
   }, []);
 
-  // Camera <-> scroll: un solo ScrollTrigger scrub-linked mappa lo scroll
-  // dell'intera pagina a un progresso 0..1, letto da CameraRig via progressRef.
+  // Camera del viaggio R3F <-> scroll: un solo ScrollTrigger scrub-linked,
+  // agganciato al wrapper del "journey" (dopo l'arena) cosi' il progresso
+  // 0..1 copre solo le tappe R3F. Creato SOLO dopo che ArenaScrub segnala
+  // (via onReady) che il proprio pin esiste gia' nel DOM — altrimenti questo
+  // trigger misurerebbe "top top"/"bottom bottom" contro un documento ancora
+  // corto (l'arena non ancora pinnata) e resterebbe con confini sbagliati
+  // per tutta la sessione: il progresso del viaggio "correrebbe" troppo in
+  // fretta rispetto allo scroll reale. Non basta un refresh() successivo per
+  // rimediare — la sequenza giusta e' non crearlo troppo presto.
   useEffect(() => {
-    if (!scrollRef.current) return;
-    // scrub:true = nessun ritardo lato GSAP; l'unica inerzia della camera è il
-    // lerp in CameraRig. Uno scrub numerico qui sopra sommerebbe una seconda
-    // sorgente di smoothing e la camera impiegherebbe secondi a "arrivare".
-    //
-    // end come funzione (non "bottom bottom" su un trigger) perché l'altezza
-    // reale del documento cambia quando i web font (Space Grotesk/JetBrains
-    // Mono) finiscono di caricare — un end fissato al primo calcolo lascerebbe
-    // la camera senza mai raggiungere il finale.
+    if (!arenaReady || !journeyRef.current) return;
     const st = ScrollTrigger.create({
-      start: 0,
-      end: () => document.documentElement.scrollHeight - window.innerHeight,
+      trigger: journeyRef.current,
+      start: "top top",
+      end: "bottom bottom",
       scrub: true,
       onUpdate: (self) => {
         progressRef.current = self.progress;
       },
     });
-    const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("load", refresh);
-    document.fonts?.ready?.then(refresh);
-    const fontTimer = setTimeout(refresh, 1200);
+    // i webfont possono ancora arrivare dopo e cambiare di poco le altezze
+    // del testo (non i ~4000px dell'arena, quello e' gia' risolto sopra) —
+    // un refresh qui corregge quel margine residuo, il trigger esiste gia'.
+    document.fonts?.ready?.then(() => ScrollTrigger.refresh());
+    return () => st.kill();
+  }, [arenaReady]);
+
+  // UI chrome indipendente dallo scroll-trigger del viaggio: mouse parallax,
+  // rail dei puntini, etichetta sezione — attiva da subito, non aspetta l'arena.
+  useEffect(() => {
     const onMouse = (e) => {
       mouseRef.current.x = e.clientX / window.innerWidth - 0.5;
       mouseRef.current.y = e.clientY / window.innerHeight - 0.5;
@@ -93,14 +107,13 @@ export default function Landing3D() {
     window.addEventListener("mousemove", onMouse, { passive: true });
 
     const railBtns = [...rootRef.current.querySelectorAll(".nx3d-rail button")];
-    const hint = rootRef.current.querySelector(".nx3d-hint");
     const sectionLabel = rootRef.current.querySelector("#nx3d-hud-section");
     let raf = 0;
     const uiTick = () => {
-      const p = Math.min(Math.max(progressRef.current, 0), 1);
-      const active = Math.round(p * (N_SECTIONS - 1));
+      const arenaDone = arenaProgressRef.current > 0.999;
+      const journeyP = Math.min(Math.max(progressRef.current, 0), 1);
+      const active = arenaDone ? 1 + Math.round(journeyP * (N_SECTIONS - 2)) : 0;
       railBtns.forEach((b, i) => b.classList.toggle("on", i === active));
-      if (hint) hint.style.opacity = p > 0.02 ? "0" : "0.85";
       if (sectionLabel) sectionLabel.textContent = `SEZIONE 0${active + 1} / 0${N_SECTIONS}`;
       rootRef.current.querySelectorAll(".nx3d-glasspanel").forEach((el, i) => {
         const side = i === 0 ? -1 : 1;
@@ -113,9 +126,6 @@ export default function Landing3D() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("mousemove", onMouse);
-      window.removeEventListener("load", refresh);
-      clearTimeout(fontTimer);
-      st.kill();
     };
   }, []);
 
@@ -124,7 +134,7 @@ export default function Landing3D() {
       {webglOk ? (
         <div className="nx3d-gl-wrap">
           <Canvas
-            camera={{ fov: 62, near: 0.1, far: 600, position: [0, 3, 15] }}
+            camera={{ fov: 62, near: 0.1, far: 600, position: [4, 4, -14] }}
             gl={{ antialias: quality === "high", powerPreference: "high-performance" }}
             dpr={QUALITY_PRESETS[quality].dpr}
           >
@@ -169,10 +179,13 @@ export default function Landing3D() {
           <button key={i} className={i === 0 ? "on" : undefined} aria-label={`Sezione ${i + 1}`} onClick={() => goTo(i)} />
         ))}
       </nav>
-      <div className="nx3d-hint">Scrolla per viaggiare nel motore</div>
 
-      <main className="nx3d-scroll" ref={scrollRef}>
-        <section className="nx3d-panel center">
+      <main className="nx3d-scroll">
+        <ArenaScrub
+          progressRef={arenaProgressRef}
+          arenaDpr={QUALITY_PRESETS[quality].arenaDpr}
+          onReady={() => setArenaReady(true)}
+        >
           <GlassCard center wide className="max-w-[880px]">
             <span className="nx3d-eyebrow justify-center">Trading algoritmico · costruito con l'AI</span>
             <h1>NEXUS</h1>
@@ -186,34 +199,40 @@ export default function Landing3D() {
               <button className="nx3d-btn" onClick={() => goTo(1)}>Perché ti serve</button>
             </div>
           </GlassCard>
-        </section>
+        </ArenaScrub>
 
-        {STEPS.map((s, i) => {
-          const Icon = STEP_ICONS[i];
-          return (
-            <section className="nx3d-panel step" key={s.badge}>
-              <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
-              <GlassCard badge={s.badge} title={s.title}>
-                <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
-              </GlassCard>
-            </section>
-          );
-        })}
+        <div ref={journeyRef}>
+          {STEPS.map((s, i) => {
+            const Icon = STEP_ICONS[i];
+            return (
+              <section
+                className="nx3d-panel step"
+                key={s.badge}
+                ref={(el) => { sectionRefs.current[i + 1] = el; }}
+              >
+                <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
+                <GlassCard badge={s.badge} title={s.title}>
+                  <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
+                </GlassCard>
+              </section>
+            );
+          })}
 
-        <section className="nx3d-panel center">
-          <GlassCard center>
-            <span className="nx3d-eyebrow justify-center">Entra</span>
-            <h2 className="m-0 mt-4 font-grotesk font-bold text-[clamp(38px,6vw,72px)] leading-[1.02] tracking-tight text-white drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]">
-              Il tuo trading,<br />ripensato.
-            </h2>
-            <p className="nx3d-lede">Apri il motore. Guarda cosa può fare per te.</p>
-            <div className="nx3d-cta">
-              <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Apri il Backtest Lab</button>
-              <button className="nx3d-btn" onClick={() => goTo(0)}>Torna alla partenza</button>
-            </div>
-            <p className="nx3d-disc">Risultati da backtest su dati storici: non sono garanzia di rendimenti futuri. Il trading a leva comporta rischio di perdita del capitale.</p>
-          </GlassCard>
-        </section>
+          <section className="nx3d-panel center" ref={(el) => { sectionRefs.current[N_SECTIONS - 1] = el; }}>
+            <GlassCard center>
+              <span className="nx3d-eyebrow justify-center">Entra</span>
+              <h2 className="m-0 mt-4 font-grotesk font-bold text-[clamp(38px,6vw,72px)] leading-[1.02] tracking-tight text-white drop-shadow-[0_0_30px_rgba(56,189,248,0.25)]">
+                Il tuo trading,<br />ripensato.
+              </h2>
+              <p className="nx3d-lede">Apri il motore. Guarda cosa può fare per te.</p>
+              <div className="nx3d-cta">
+                <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Apri il Backtest Lab</button>
+                <button className="nx3d-btn" onClick={() => goTo(0)}>Torna alla partenza</button>
+              </div>
+              <p className="nx3d-disc">Risultati da backtest su dati storici: non sono garanzia di rendimenti futuri. Il trading a leva comporta rischio di perdita del capitale.</p>
+            </GlassCard>
+          </section>
+        </div>
       </main>
     </div>
   );

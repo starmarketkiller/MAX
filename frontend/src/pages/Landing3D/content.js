@@ -1,17 +1,20 @@
 // Contenuto e geometria narrativa condivisi tra la scena 3D e la UI HTML —
 // un'unica fonte per il percorso camera, i nodi HUD e le tappe testuali.
 
+// 7 sezioni per la UI (rail/etichetta): l'arena video + 5 tappe + finale.
+// Solo le ultime 6 corrispondono a un vero spostamento della camera R3F —
+// l'arena è un canvas 2D a sé, non fa parte di questo percorso.
 export const N_SECTIONS = 7;
 
-// 7 stazioni: hero, 5 tappe, finale. Camera e HUD leggono lo stesso indice.
+// 6 stazioni R3F: 5 tappe + finale. La camera parte già dentro il corridoio
+// (l'ex "hero" con il cristallo non esiste più, sostituito dall'arena video).
 export const CAMERA_WAYPOINTS = [
-  { pos: [0, 3, 15], look: [0, 1, 0] }, // 0 hero
-  { pos: [4, 4, -20], look: [0, 2.4, -38] }, // 1 l'AI non dorme
-  { pos: [-3, 5.5, -58], look: [0, 3.8, -76] }, // 2 si corregge da sé
-  { pos: [4, 7, -96], look: [0, 5.2, -114] }, // 3 corsie separate
-  { pos: [-3, 9, -134], look: [0, 6.6, -152] }, // 4 l'assistente
-  { pos: [3, 11, -172], look: [0, 8, -190] }, // 5 validazione doppia
-  { pos: [0, 9, -206], look: [0, 9, -234] }, // 6 finale — il core quantico
+  { pos: [4, 4, -20], look: [0, 2.4, -38] }, // 0 l'AI non dorme
+  { pos: [-3, 5.5, -58], look: [0, 3.8, -76] }, // 1 si corregge da sé
+  { pos: [4, 7, -96], look: [0, 5.2, -114] }, // 2 corsie separate
+  { pos: [-3, 9, -134], look: [0, 6.6, -152] }, // 3 l'assistente
+  { pos: [3, 11, -172], look: [0, 8, -190] }, // 4 validazione doppia
+  { pos: [0, 9, -206], look: [0, 9, -234] }, // 5 finale — il core quantico
 ];
 
 export const QUANTUM_CORE_POSITION = [0, 9, -238];
@@ -25,11 +28,6 @@ export const HUD_NODES = [
   { pos: [5, 8.8, -144], colorA: "#38e6ff", colorB: "#eaf2ff", labels: ["COACH", "ALERT"] },
   { pos: [-5, 10.8, -182], colorA: "#eaf2ff", colorB: "#38e6ff", labels: ["3M", "3Y"] },
 ];
-
-// Profondità (z) di ogni tappa: il toro, l'orso e i volumi si affiancano in
-// coppia al nodo HUD della stessa sezione — stesso ritmo, un elemento in più
-// del mondo trading per ogni slide, non solo per la prima.
-export const TRADE_OBJECT_ZS = [-30, -68, -106, -144, -182];
 
 export const STEPS = [
   {
