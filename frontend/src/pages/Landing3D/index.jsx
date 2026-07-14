@@ -19,13 +19,12 @@ function supportsWebGL() {
 }
 
 /**
- * NEXUS — landing cinematica. Il video dell'arena vive dentro una scena 3D
- * vera (React Three Fiber): proiettato su uno schermo inclinato con luci,
- * ombre sul pavimento e una camera che si muove piano lungo tutta la pagina
- * — non un <video> piatto in overlay. Lo scroll pilota sia la camera sia il
- * punto esatto del video mostrato (avanti/indietro, playback bidirezionale).
- * Se il browser non supporta WebGL, il video resta comunque visibile come
- * sfondo piatto in loop — non sparisce mai del tutto.
+ * NEXUS — landing cinematica. Nessun video: toro, orso, il loro scontro e
+ * il re vivono come elementi 3D veri (ritagli con alpha reale, non uno
+ * schermo che riproduce qualcosa) dentro uno spazio nero, con luci, ombre
+ * sul pavimento e una camera che vola dentro la scena scrollando — libera
+ * e profonda, non un punto fermo. Se il browser non supporta WebGL, resta
+ * visibile un fermo immagine statico — non sparisce mai del tutto.
  */
 export default function Landing3D() {
   const navigate = useNavigate();
@@ -99,7 +98,7 @@ export default function Landing3D() {
         <div className="nx3d-gl-wrap">
           <Canvas
             shadows
-            camera={{ fov: 45, near: 0.1, far: 80, position: [0, 1.5, 11] }}
+            camera={{ fov: 45, near: 0.1, far: 80, position: [0, 2.4, 15] }}
             gl={{ antialias: true, powerPreference: "high-performance" }}
             dpr={[1, 2]}
           >
@@ -107,18 +106,12 @@ export default function Landing3D() {
           </Canvas>
         </div>
       ) : (
-        <video
+        <img
           className="nx3d-video-bg"
-          poster={`${process.env.PUBLIC_URL}/video/arena-poster.jpg`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-        >
-          <source src={`${process.env.PUBLIC_URL}/video/arena.mp4`} type="video/mp4" />
-          <source src={`${process.env.PUBLIC_URL}/video/arena.webm`} type="video/webm" />
-        </video>
+          src={`${process.env.PUBLIC_URL}/images/cutouts/king.webp`}
+          alt=""
+          aria-hidden="true"
+        />
       )}
       <div className="nx3d-video-scrim" aria-hidden="true" />
 

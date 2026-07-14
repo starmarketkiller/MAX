@@ -19,12 +19,12 @@
 }
 .nx3d ::selection { background: rgba(56, 189, 248, 0.35); }
 
-/* ---- sfondo: la scena 3D (schermo video + ambiente), fissa dietro tutta
-   la pagina. .nx3d-video-bg resta come fallback piatto se WebGL non c'e'. ---- */
-.nx3d-gl-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
+/* ---- sfondo: la scena 3D (elementi in spazio nero), fissa dietro tutta
+   la pagina. .nx3d-video-bg resta come fermo immagine se WebGL non c'e'. ---- */
+.nx3d-gl-wrap { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; background: #000; }
 .nx3d-video-bg {
   position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
-  object-fit: cover; object-position: center 30%;
+  background: #000; object-fit: contain; object-position: center 55%;
 }
 .nx3d-video-scrim {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;

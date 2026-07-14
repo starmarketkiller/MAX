@@ -3,18 +3,17 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
- * Il volo dentro l'arena: si scrolla giù e si entra, si torna su e si esce.
- * Non un percorso a tappe, un unico arco continuo — si parte larghi e alti
- * (vista d'insieme, fuori dall'arena), si scende dentro stringendo molto
- * l'inquadratura verso il basso, quasi tra il pubblico. Il raggio cambia
- * tanto apposta: più la camera si muove, più i pilastri ai lati e il
- * pavimento scorrono veloci in primo piano — quella parallasse è l'indizio
- * di profondità più diretto che esista.
+ * Navigazione libera e profonda: la camera vola in linea (quasi) retta
+ * dentro la scena, da fuori (toro e orso di fronte, l'arena dietro) fino
+ * a dentro (attraverso lo scontro di energia, in mezzo a loro, fino a
+ * fermarsi davanti al re dorato). Non un punto fermo che guarda uno
+ * schermo — uno spostamento vero nello spazio 3D, con toro/orso/scontro/
+ * re/pilastri che scorrono tutti a velocità diverse (parallasse) perché
+ * sono oggetti reali a profondità diverse, non un'unica immagine piatta.
  *
- * Aggiunge anche un lieve parallasse sul mouse: la scena reagisce al
- * puntatore, un altro indizio di profondità che uno sfondo piatto non da'.
- * Smoothing in tempo reale (non per-frame) cosi' resta fluido a qualunque
- * framerate.
+ * Scroll giù = si entra (z decresce), scroll su = si esce (z torna su) —
+ * bidirezionale, con un leggero dondolio laterale e un parallasse sul
+ * mouse per non sembrare mai un binario rigido.
  */
 export default function CameraRig({ progressRef }) {
   const { camera, pointer } = useThree();
@@ -26,19 +25,21 @@ export default function CameraRig({ progressRef }) {
     const k = 1 - Math.exp(-dt * 3.5);
     smooth.current += (Math.min(Math.max(progressRef.current, 0), 1) - smooth.current) * k;
     const p = smooth.current;
+    const t = state.clock.elapsedTime;
 
-    const angle = (p - 0.5) * 1.3; // orbita ampia, +-0.65 rad (~75 gradi totali)
-    const radius = 18 - p * 12.5; // si entra davvero: da 18 (fuori) a 5.5 (dentro)
-    const height = 3.1 - p * 2.0 + Math.sin(p * Math.PI) * 0.35;
-    const lookY = 1.7 - p * 0.5;
+    const camZ = 15 - p * 30; // da +15 (fuori, vista d'insieme) a -15 (oltre il re)
+    const camY = 2.4 - p * 0.7 + Math.sin(p * Math.PI) * 0.3;
+    const sway = Math.sin(p * Math.PI * 1.4) * 1.6; // dondolio laterale, non un binario dritto
+    const lookZ = camZ - 10.5;
+    const lookY = 1.7 - p * 0.35;
 
     tmp.current.set(
-      Math.sin(angle) * radius + pointer.x * 0.5,
-      height - pointer.y * 0.3,
-      Math.cos(angle) * radius
+      sway + pointer.x * 0.6 + Math.sin(t * 0.08) * 0.15,
+      camY - pointer.y * 0.3,
+      camZ
     );
     camera.position.lerp(tmp.current, 1); // gia' smussato da `smooth`, applica diretto
-    camera.lookAt(0, lookY, 0);
+    camera.lookAt(sway * 0.4, lookY, lookZ);
   });
 
   return null;
