@@ -47,8 +47,10 @@ profitto reale, non solo curve di backtest.
   #9** prima di proporre di disattivare una direzione.
 - **`01-Trading/Fonti/`** — materiale esterno (libri/PDF/chat) mano a mano
   fornito dall'utente e sintetizzato in regole azionabili: al 15/07,
-  [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]] e
-  [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]].
+  [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]],
+  [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]] e
+  [[NEXUS EA - Fonte Chat WhatsApp (Said)]] (conferma un bug reale ancora
+  presente in v2.5.0: due sistemi di durata massima non coordinati).
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

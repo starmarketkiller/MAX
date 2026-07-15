@@ -58,12 +58,13 @@ come "cervello" di trading (cartella `01-Trading/Fonti/`):
   [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]].
 - [x] **Secret of 4.11 (Ali Yusoff)** — letto e sintetizzato, vedi
   [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]].
-- [x] **Chat WhatsApp con un collega** — controllata: lo zip contiene **solo
-  media** (24 foto, 5 video, 21 vocali), **manca il file di testo
-  `_chat.txt`**. Le foto campionate non sono di trading (macchinari
-  industriali, disegni tecnici). Non trascrivibile audio/video. **Se
-  l'utente ha altro materiale di trading in quella chat, serve l'export
-  testuale completo** ("Esporta chat" → con o senza media, ma serve il .txt).
+- [x] **Chat WhatsApp con Said** — testo completo ricevuto e letto (1370
+  righe). Non è un manuale di trading ma cronologia di progetto + esempi di
+  ragionamento discrezionale dal vivo. Vedi
+  [[NEXUS EA - Fonte Chat WhatsApp (Said)]]. Contiene un riassunto tecnico
+  completo dell'EA v2.0.12 scritto dall'utente stesso, il piano mai
+  completato per formalizzare il metodo di Said, e la conferma di un bug
+  ancora presente in v2.5.0 (vedi sotto).
 - [ ] Altre chat/documenti annunciati dall'utente — da leggere e sintetizzare
   con lo stesso metodo (estrarre solo regole azionabili, non trascrivere
   tutto, confrontare con le fonti già presenti e segnalare conflitti come
@@ -152,6 +153,15 @@ di lavoro consigliato, per gruppo:
   il sito per validare in futuro il nucleo hedge o altre interazioni
   multi-strategia, va esteso a più posizioni concorrenti — oggi è
   strutturalmente impossibile, non solo un limite di dati.
+- [ ] **Due sistemi di chiusura per durata massima, indipendenti e non
+  coordinati** — bug notato dall'utente il 24/06, **verificato ancora
+  presente il 15/07**: `NXS_ManageBreakevenAndTrail()`
+  (`NXS_Management.mqh:29`, fallback 4h o ~40 barre del TF via profilo) e
+  `NXS_Prot_CheckMaxHold()` (`NXS_Protections.mqh:190`, gate separato
+  `InpUseMaxHold`, base 12h scalata con `NXS_TF_LifeFactor`) possono
+  chiudere la stessa posizione con logiche di scaling diverse — vince chi
+  scatta prima. Da unificare in un solo controllo. Vedi
+  [[NEXUS EA - Fonte Chat WhatsApp (Said)]].
 
 ## Strategie da correggere/spegnere (priorità in ordine)
 
