@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, architettura]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # NEXUS EA — panoramica
@@ -47,6 +47,27 @@ far pesare quel % oltre il minimo broker. Le uniche leve reali su un conto picco
 
 Questo è il motore della visione a scaglioni: piccolo conto → poche strategie robuste
 a lotto minimo → profitto → conto cresce → si sbloccano size e strategie via via.
+
+## Obiettivo dichiarato dall'utente (15/07)
+Scalare un conto da **€200 a idealmente €1.000.000**, con interesse
+composto, **su un orizzonte di tempo indefinito** — non un target a
+scadenza fissa. Implicazioni esplicite:
+- Il volume/opportunità di mercato non è costante: alcune operazioni tenute
+  aperte più a lungo (con runner o gestione posizione adatta, non chiusura
+  rapida a TP fisso) possono valere più dell'intero contributo di
+  un'altra strategia chiusa velocemente. Da tenere in mente quando si
+  valutano trailing/exit management per-strategia (vedi già
+  [[NEXUS EA - Log Versioni]] v2.4.5, trailing per-strategia).
+- **Fase iniziale su conto piccolo (€200-1000)**: ipotesi dell'utente da
+  valutare — usare inizialmente **solo i segnali HTF** (timeframe più alti),
+  per massimizzare la probabilità di esecuzione reale su un conto che parte
+  già al lotto minimo (vedi sezione sotto, "Il vincolo del conto piccolo").
+  Meno strategie attive ma più affidabili, non tutte e 37 da subito.
+- Ogni strategia deve restare **indipendente** dalle altre — non deve
+  dipendere dal fatto che altre strategie occupino o liberino uno slot
+  condiviso (vedi architettura "hedge per strategia" sotto, e
+  [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] per il caso opposto/di
+  cui diffidare: il motore sito che invece compete per un unico slot).
 
 ## Cosa NON è portabile dal sito
 Le strategie di sessione/Elliott (SILVER_BULLET, AMD_*, JUDAS_SWING, LDN/NY_REVERSAL,

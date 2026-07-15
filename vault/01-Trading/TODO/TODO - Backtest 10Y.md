@@ -16,30 +16,58 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
 
-## ⚡ Azione più veloce trovata (15/07): taglio long-only
+## ⚡ Metodologia corretta (15/07): setup buy/sell indipendenti, non taglio di direzione
 
-Analisi trade-level (score interno + direzione, dai commenti nei deals dei
-report `.htm`) su SAR/MACD/RSI_DIV — vedi
-[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]:
-- Lo **score interno non ha alcun potere predittivo** per queste 3 (WR piatto
-  40-50% da score 60 a 99) — non sprecare tempo ad alzare la soglia minima.
-- **Le tre vincono sistematicamente di più long che short** (SAR +7.7 punti
-  WR, MACD +8.4, RSI_DIV +5.5) — TURTLE_SOUP nello stesso periodo non ha
-  questo bias, quindi non è "il mercato è salito e basta", è un difetto del
-  trigger di queste tre.
-- **MACD diventa chiaramente positivo tagliando gli short** (+522$ vs +468$
-  attuali) — il test più veloce e a più basso rischio da fare per primo,
-  letteralmente una riga di codice (`InpAllowShort=false` per MACD o
-  equivalente).
-- RSI_DIV migliora molto (perdita quasi azzerata) ma non basta da sola.
-- SAR migliora ma resta negativa anche long-only — conferma che qui serve
-  la riscrittura più profonda, non solo il taglio direzionale.
+Prima versione di questa sezione proponeva di "tagliare gli short" per
+SAR/MACD/RSI_DIV — **sbagliato, corretto su feedback diretto dell'utente**.
+Rimuovere una direzione è un camuffamento statistico, non una correzione
+della strategia. Metodologia corretta, ora in vigore per tutto il lavoro
+successivo: [[NEXUS EA - Principi]] #9 e
+[[NEXUS EA - Setup Buy-Sell — Framework]] — ogni strategia resta tradabile
+sia buy che sell, ma con trigger/TF/parametri **indipendenti per direzione**,
+ricostruiti da fonti esterne quando disponibili (vedi `01-Trading/Fonti/`) o
+dall'analisi trade-level quando no.
 
-- [ ] **Testare MACD long-only** su un segmento isolato — priorità assoluta,
-  modifica minima, beneficio atteso alto.
-- [ ] **Testare RSI_DIV long-only** come secondo passo.
-- [ ] Ripetere l'analisi trade-level (score + direzione) su ADX_RSI, BJORGUM,
-  OB_MIT — non ancora fatta, potrebbe rivelare lo stesso pattern.
+L'analisi trade-level su SAR/MACD/RSI_DIV resta utile come **diagnosi**
+(dove il trigger è più debole), non come soluzione:
+[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
+
+- [x] Framework "Setup Buy-Sell" definito, primo esempio completo
+  (MALAYSIAN_SNR) ricostruito da fonte esterna — vedi
+  [[NEXUS EA - Setup Buy-Sell — Framework]].
+- [ ] **MALAYSIAN_SNR**: implementare il setup buy/sell ricostruito dalla
+  fonte MSNR (vedi framework) — priorità Tier 1, la fonte è già completa.
+- [ ] **TURTLE_SOUP / LIQ_SWEEP / SH_BMS_RTO / SMS_BMS_RTO**: ricostruire
+  setup buy/sell dal ciclo ZIKIR (Secret of 4.11) e dal pattern
+  stop-hunt+BOS (MSNR) — Tier 1.
+- [ ] **ORDER_BLOCK / OB_MIT / FVG_CONT / FVG_MIT / IFVG**: ricostruire dalle
+  "5 tipologie di Engulfing" (ISL/HSL, Secret of 4.11) — Tier 1.
+- [ ] **SAR/MACD/RSI_DIV/ADX_RSI**: nessuna fonte esterna diretta ancora
+  raccolta (indicatori classici, non concetti SMC/ICT) — costruire i setup
+  buy/sell dall'analisi trade-level esistente + attendere altre fonti
+  dall'utente. Tier 2, priorità alta per impatto economico.
+- [ ] **SILVER_BULLET/JUDAS_SWING/LDN_REVERSAL/NY_REVERSAL/AMD_*/PO3/OTE_CONT**:
+  modelli ICT legati a sessioni specifiche, serve materiale non ancora
+  fornito. Tier 3, in attesa.
+
+## Fonti esterne in arrivo (15/07)
+
+L'utente ha iniziato a fornire materiale esterno da incorporare nel vault
+come "cervello" di trading (cartella `01-Trading/Fonti/`):
+- [x] **MSNR x SMC x ICT (Yanu Emmanuel)** — letto e sintetizzato, vedi
+  [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]].
+- [x] **Secret of 4.11 (Ali Yusoff)** — letto e sintetizzato, vedi
+  [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]].
+- [x] **Chat WhatsApp con un collega** — controllata: lo zip contiene **solo
+  media** (24 foto, 5 video, 21 vocali), **manca il file di testo
+  `_chat.txt`**. Le foto campionate non sono di trading (macchinari
+  industriali, disegni tecnici). Non trascrivibile audio/video. **Se
+  l'utente ha altro materiale di trading in quella chat, serve l'export
+  testuale completo** ("Esporta chat" → con o senza media, ma serve il .txt).
+- [ ] Altre chat/documenti annunciati dall'utente — da leggere e sintetizzare
+  con lo stesso metodo (estrarre solo regole azionabili, non trascrivere
+  tutto, confrontare con le fonti già presenti e segnalare conflitti come
+  fatto per fresh/unfresh MSNR vs Secret of 4.11).
 
 ## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
 

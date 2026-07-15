@@ -34,12 +34,23 @@ anno: 2019 +0.3 · 2020 +0.4 · 2021 -0.4 · 2022 +0.1 · 2023 0.0. **Somma +0.4
 1 anno su 5 negativo**. Ancora troppo pochi trade per giudicare, ma il segnale
 è leggermente positivo.
 
+## ⚠️ Trigger attuale molto più semplice della fonte reale (15/07)
+Questa strategia prende il nome dal manuale "MSNR x SMC x ICT" (Yanu
+Emmanuel), fornito dall'utente — vedi
+[[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]]. Il trigger attuale
+("Support/resistance con storyline (fresh/flipped)") cattura solo una
+frazione minima della metodologia reale: manca l'identificazione SNR
+close-to-open (non high/low), la regola di conferma a 2 timeframe, il
+"marriage concept" trendline+SNR, il filtro sessione Londra/NY. Primo setup
+buy/sell ricostruito dalla fonte: [[NEXUS EA - Setup Buy-Sell — Framework]].
+
 ## Stato
 🔬 Campione troppo piccolo (dato insufficiente) — ma non più "nessun trade":
-ora esegue, va solo lasciata accumulare più campione.
+ora esegue, va solo lasciata accumulare più campione. **Candidata prioritaria
+per il refactor guidato dalla fonte** (Tier 1), non solo per attesa dati.
 
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]] · [[NEXUS EA - Setup Buy-Sell — Framework]]

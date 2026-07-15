@@ -35,11 +35,13 @@ DUE anni catastrofici (2022 e 2024, entrambi peggiori di -9R) invece di uno
 solo — il 2024 smentisce l'ipotesi "evento isolato nel 2022". Dettaglio:
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
-## Analisi trade-level (15/07)
+## Analisi trade-level (15/07, corretta)
 Score interno senza potere predittivo. Bias direzionale: LONG 42.7% WR vs
-SHORT 37.2% WR. Tagliando gli short la perdita quasi si azzera (-108.7$ vs
--591.4$ totali) ma non basta da sola a renderla positiva. Dettaglio:
-[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
+SHORT 37.2% WR — il lato short è il più debole, ma il long da solo non è
+comunque chiaramente vincente. **Serve un setup SELL ricostruito da zero**,
+non una disattivazione degli short (vedi [[NEXUS EA - Principi]] #9) — e
+probabilmente anche il setup BUY va rivisto, dato il 2024 catastrofico anche
+lì. Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
 
 ## Stato
 🔴 FALLITA — sale nel gruppo delle priorità con il segmento 9: con due anni

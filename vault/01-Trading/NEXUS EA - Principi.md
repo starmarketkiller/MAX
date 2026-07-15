@@ -103,5 +103,25 @@ toccato la logica reale.
 > funzione segnale corrisponda davvero al nome che porta — non fidarti
 > dell'etichetta, leggi il codice della funzione.
 
+## 9. Non disattivare mai una direzione — costruisci un setup indipendente per essa
+Errore fatto e corretto il 15/07: trovato che SAR/MACD/RSI_DIV vincono più al
+rialzo che al ribasso, la prima conclusione proposta era "taglia gli short".
+**È sbagliato.** Rimuovere una direzione non è una correzione della
+strategia, è un camuffamento statistico — si eliminano le operazioni negative
+invece di capire perché il trigger in quella direzione è debole. Ogni
+strategia deve restare tradabile **sia in buy che in sell**, ma con trigger
+d'ingresso, timeframe ed eventualmente combinazione di parametri
+**indipendenti per ciascuna direzione** — il buy e il sell della stessa
+strategia sono due setup separati da costruire e validare separatamente, non
+uno specchiato meccanicamente dell'altro. Vedi
+[[NEXUS EA - Setup Buy-Sell — Framework]] per la metodologia completa, e
+[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]] per l'errore originale
+lasciato visibile per tracciabilità.
+
+> **Regola**: se un'asimmetria buy/sell emerge dai dati, è un indizio di
+> *dove* costruire un trigger migliore, non un permesso per spegnere metà
+> della strategia. "Ha perso soldi in una direzione" è un sintomo, non una
+> diagnosi.
+
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Log Versioni]]

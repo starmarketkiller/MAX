@@ -52,12 +52,14 @@ la logica di trigger MQL5 da zero (Parabolic SAR reale, non un incrocio EMA);
 (2) fixare il proxy del sito così da poter testare la strategia vera prima di
 rimetterla in produzione.
 
-## Analisi trade-level (15/07)
+## Analisi trade-level (15/07, corretta)
 Score interno senza potere predittivo (WR piatto ~40-44% da score 60 a 99).
-Bias direzionale forte: LONG 45.7% WR vs SHORT 38.0% WR. Tagliando gli short
-la perdita si dimezza ma **resta negativa** (-380.7$ vs -1.054.7$ totali) —
-a differenza di MACD/RSI_DIV, qui il problema non è solo direzionale.
-Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
+Bias direzionale forte: LONG 45.7% WR vs SHORT 38.0% WR — ma qui anche il
+lato long resta negativo da solo, quindi il problema non è solo un trigger
+short debole (a differenza di MACD): **serve riscrivere sia il setup buy che
+il setup sell da zero**, con logica Parabolic SAR reale (vedi sopra), non
+solo ribilanciare le direzioni esistenti. Dettaglio:
+[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
 
 ## Note
 

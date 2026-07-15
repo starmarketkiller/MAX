@@ -34,15 +34,16 @@ MACD > signal e sopra 0, prezzo sopra EMA200 (long, speculare per short).
 due anni catastrofici (2019 e 2020). Il 2024 resta negativo ma meno grave dei
 peggiori. Dettaglio completo: [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
-## Analisi trade-level (15/07)
+## Analisi trade-level (15/07, corretta)
 Score interno senza potere predittivo. Bias direzionale forte: LONG 52.0% WR
-vs SHORT 43.6% WR. **Tagliando gli short il risultato in $ diventa
-chiaramente positivo** (+522.4$ solo long, vs +468.6$ col portafoglio
-completo — lo short toglie valore, non ne aggiunge). Nota: qui l'R-sum a 6
-anni resta negativo (-21.1R) mentre il $ sum è positivo — le due metriche
-divergono, merita uno sguardo più attento su cosa lo spiega prima di
-concludere. Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
-**Candidato più veloce da testare long-only tra le tre priorità.**
+vs SHORT 43.6% WR — il trigger short è strutturalmente più debole del
+trigger long. **Non significa "disattivare gli short"** (correzione esplicita
+dell'utente, vedi [[NEXUS EA - Principi]] #9): significa che MACD ha bisogno
+di un **setup SELL indipendente**, con trigger/TF/parametri propri, non lo
+stesso trigger del buy applicato al ribasso. Nota: l'R-sum a 6 anni è
+negativo (-21.1R) mentre il $ sum grezzo è positivo (+468.6$) — le due
+metriche divergono, merita uno sguardo più attento su cosa lo spiega.
+Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
 
 ## Stato
 🔴 REGREDITA — questa è la scoperta più importante su MACD: sotto v2.4.8 era

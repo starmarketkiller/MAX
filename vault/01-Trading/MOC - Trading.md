@@ -41,6 +41,14 @@ profitto reale, non solo curve di backtest.
   identico a EMA_PULLBACK (non testa mai la vera strategia).
 - **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — piano d'azione
   strategia-per-strategia e aggiornamenti da fare appena arriva il segmento 10.
+- **[[NEXUS EA - Setup Buy-Sell — Framework]]** — metodologia per ricostruire
+  ogni strategia come due setup indipendenti (buy e sell), con il primo
+  esempio completo (MALAYSIAN_SNR). **Leggi anche [[NEXUS EA - Principi]]
+  #9** prima di proporre di disattivare una direzione.
+- **`01-Trading/Fonti/`** — materiale esterno (libri/PDF/chat) mano a mano
+  fornito dall'utente e sintetizzato in regole azionabili: al 15/07,
+  [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]] e
+  [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]].
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

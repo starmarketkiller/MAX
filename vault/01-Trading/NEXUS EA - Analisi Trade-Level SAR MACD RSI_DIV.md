@@ -99,25 +99,44 @@ MACD è meno netto di quanto sembri dal solo R-sum**, e merita uno sguardo più
 attento (es. quante delle operazioni long vincenti sono poche outlier molto
 grandi) prima di decidere se rollback o refactor.
 
-## Raccomandazione concreta (azionabile subito, senza aspettare altri segmenti)
+Questa tabella **non è una proposta di disattivare gli short** (vedi
+correzione sotto) — è la prova diagnostica che il lato short di queste tre
+strategie ha un trigger di qualità inferiore, da ricostruire con la sua
+logica propria, non da spegnere.
 
-Non alzare la soglia di score (Scoperta 1 dice che non aiuterebbe). Invece:
-1. **Rafforzare il filtro di tendenza specificamente sugli short** per
-   SAR/MACD/RSI_DIV — non un filtro simmetrico uguale per entrambe le
-   direzioni, ma una soglia più severa (es. richiedere un trend ribassista
-   più netto, o un RR più alto) solo quando il segnale è short.
-2. **MACD**: il taglio long-only lo rende chiaramente positivo su entrambe le
-   metriche ($ e, presumibilmente, R) — il candidato più veloce e a basso
-   rischio da testare per primo tra le tre.
-3. **RSI_DIV**: il taglio long-only quasi azzera la perdita ma non la rende
-   positiva — utile ma non risolutivo da solo, serve anche altro lavoro sul
-   trigger.
-4. **SAR**: anche solo long resta negativa — conferma che qui il problema è
-   più profondo del solo bias direzionale, e la riscrittura da zero
-   ipotizzata in [[TODO - Backtest 10Y]] resta necessaria.
-5. In tutti i casi, **testare il taglio long-only è una modifica di una riga
-   di codice**, il modo più veloce per verificare quanto delle raccomandazioni
-   sopra regge nella pratica, prima di investire in refactor più ampi.
+## ⚠️ Correzione 15/07 (feedback diretto): "taglia gli short" era la conclusione sbagliata
+
+La raccomandazione originale scritta qui sotto (punti 1-5, lasciati per
+tracciabilità) proponeva di tagliare/ridurre gli short per SAR/MACD/RSI_DIV.
+**Non è la strada giusta.** Rimuovere una direzione non è una correzione
+della strategia, è un camuffamento statistico: si eliminano le operazioni
+negative invece di capire perché il trigger short è debole e costruirne uno
+corretto. Ogni strategia deve restare tradabile **in entrambe le direzioni**
+— ma con trigger, timeframe e combinazione di parametri **indipendenti per
+buy e per sell**, non con una direzione disattivata. Vedi
+[[NEXUS EA - Principi]] #9 e [[NEXUS EA - Setup Buy-Sell — Framework]] per la
+metodologia corretta.
+
+Quello che questa analisi ha comunque dimostrato, e resta valido: (a) lo
+score interno non predice l'esito (Scoperta 1, sotto), e (b) c'è un'asimmetria
+reale di qualità tra il trigger long e quello short di queste tre strategie
+(Scoperta 2) — che è **il punto di partenza corretto per andare a costruire
+un trigger short specifico e migliore**, non per eliminare il lato short.
+
+## Raccomandazione corretta (da fare, non ancora fatta)
+
+1. Per SAR/MACD/RSI_DIV, **progettare un setup SELL indipendente** (trigger
+   d'ingresso, timeframe, SL/TP/HTF propri) invece di riusare lo stesso
+   trigger del BUY con segno invertito — l'asimmetria di WR trovata sopra
+   suggerisce che il trigger attuale, applicato al ribasso, non cattura le
+   stesse condizioni di qualità che cattura al rialzo.
+2. Non alzare la soglia di score (Scoperta 1 dice che non aiuterebbe da sola)
+   — ma uno score **calcolato separatamente per buy e per sell**, con pesi
+   diversi, potrebbe avere più senso di uno score unico applicato a entrambe
+   le direzioni.
+3. Portare questa stessa analisi (score + direzione) su tutte le altre
+   strategie prima di disegnare i rispettivi setup buy/sell — vedi il piano
+   completo in [[TODO - Backtest 10Y]].
 
 ## Limiti del metodo
 - Matching FIFO per simbolo/direzione, non Position ID reale — margine di
