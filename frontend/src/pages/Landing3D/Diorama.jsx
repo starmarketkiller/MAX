@@ -25,11 +25,16 @@ const arenaMap = (p) => p;
 export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
   return (
     <group>
-      {/* sfondo — lentissimo, con un leggero zoom "verso gli spalti" */}
+      {/* sfondo — lentissimo, con un leggero zoom "verso gli spalti".
+          Largo e alto a sufficienza da coprire il frustum della camera anche
+          ai bordi (aspect ratio larghi da telefono in orizzontale, o
+          desktop): a fov=45 e questa distanza, sotto ~65 unità di larghezza
+          si vedeva il nero oltre i bordi del piano, come una foto piccola
+          incorniciata invece di un fondale a schermo intero. */}
       <Cutout
         url={IMG("arena")}
-        width={30}
-        height={25.7}
+        width={92}
+        height={78.9}
         position={[0, 9, -34]}
         progressRef={progressRef}
         mapProgress={arenaMap}

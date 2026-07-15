@@ -1,4 +1,4 @@
-import { Suspense, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import CameraRig from "./CameraRig";
 import Diorama from "./Diorama";
@@ -15,6 +15,41 @@ import useDeviceTilt from "./useDeviceTilt";
  * Un solo smoothing condiviso invece di uno per consumatore, per non
  * avere jitter relativo tra camera e livelli.
  */
+const BASE_FOV = 45;
+const REF_ASPECT = 1.85;
+const HALF_BASE_FOV_TAN = Math.tan((BASE_FOV * Math.PI) / 360);
+// tan(metà del fov orizzontale) alla aspect di riferimento — resta fisso,
+// è il "tetto" di larghezza inquadrata che non vogliamo mai superare.
+const HALF_REF_HFOV_TAN = HALF_BASE_FOV_TAN * REF_ASPECT;
+
+/**
+ * three.js fissa il fov VERTICALE e lascia che quello orizzontale cresca con
+ * l'aspect ratio — su un telefono ruotato in orizzontale (aspect > 2) questo
+ * apre un campo visivo orizzontale enorme, molto più largo di quanto i
+ * fondali/elementi della scena siano stati pensati per coprire: il risultato
+ * è il nero visibile ai lati anche se il canvas stesso è a schermo intero.
+ * Oltre REF_ASPECT (più largo di un 16:9 desktop) si riduce il fov verticale
+ * quel poco che serve a tenere il fov orizzontale sotto lo stesso tetto che
+ * già vale su desktop — sotto quella soglia il comportamento resta
+ * identico a prima (fov=45 fisso, nessuna delle inquadrature già tarate
+ * cambia).
+ */
+function ResponsiveFov() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    if (!size.height) return;
+    const aspect = size.width / size.height;
+    let fov = BASE_FOV;
+    if (aspect > REF_ASPECT) {
+      fov = (2 * Math.atan(HALF_REF_HFOV_TAN / aspect) * 180) / Math.PI;
+    }
+    camera.fov = fov;
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+  }, [size, camera]);
+  return null;
+}
+
 function ParallaxSync({ tilt, parallaxRef }) {
   const { pointer } = useThree();
   useFrame((state, delta) => {
@@ -65,6 +100,7 @@ export default function Scene({ progressRef, velocityRef }) {
       <pointLight color="#f87171" intensity={12} distance={14} position={[5.6, 2, -9]} />
       <pointLight color="#fbbf24" intensity={16} distance={16} position={[0, 3, -18]} />
 
+      <ResponsiveFov />
       <ParallaxSync tilt={tilt} parallaxRef={parallaxRef} />
 
       <Suspense fallback={null}>
