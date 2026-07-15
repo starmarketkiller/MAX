@@ -90,13 +90,24 @@ export default function Landing3D() {
   // istantanea e, appena lo scroll si ferma, quella stessa smussatura la
   // riporta a zero da sola — l'equivalente di una molla senza libreria di
   // fisica dedicata.
+  //
+  // Il loop però NON gira per sempre: un requestAnimationFrame perenne che
+  // scrive 3 custom property ad ogni frame, 60 volte al secondo, anche a
+  // scroll fermo da minuti, è lavoro sprecato che compete con il thread
+  // che gestisce lo scroll stesso — probabile causa di uno scroll
+  // "impastato" su schermi non velocissimi. Si ferma da solo appena la
+  // velocità è tornata a zero (valori arrotondati abbastanza da produrre
+  // la stessa stringa, cosicché il motore CSS non re-invalidi lo stile a
+  // ogni frame anche negli ultimi istanti prima di fermarsi) e riparte al
+  // scroll successivo.
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return undefined;
-    let raf;
+    let raf = null;
     let lastY = window.scrollY;
     let lastT = performance.now();
     let vel = 0;
+    let idleFrames = 0;
 
     const tick = (t) => {
       const dt = Math.max(t - lastT, 1);
@@ -112,14 +123,37 @@ export default function Landing3D() {
         const skewDeg = Math.max(-7, Math.min(7, -vel * 0.35));
         const blurPx = Math.min(Math.abs(vel) * 0.22, 3.5);
         const velNorm = Math.min(Math.abs(vel) / 18, 1);
-        rootRef.current.style.setProperty("--nx3d-skew", `${skewDeg.toFixed(3)}deg`);
-        rootRef.current.style.setProperty("--nx3d-blur", `${blurPx.toFixed(3)}px`);
-        rootRef.current.style.setProperty("--nx3d-vel", velNorm.toFixed(3));
+        rootRef.current.style.setProperty("--nx3d-skew", `${skewDeg.toFixed(2)}deg`);
+        rootRef.current.style.setProperty("--nx3d-blur", `${blurPx.toFixed(2)}px`);
+        rootRef.current.style.setProperty("--nx3d-vel", velNorm.toFixed(2));
+      }
+
+      if (Math.abs(vel) < 0.05) {
+        idleFrames += 1;
+        if (idleFrames > 20) {
+          raf = null;
+          return; // ferma il loop: si riattiva al prossimo scroll
+        }
+      } else {
+        idleFrames = 0;
       }
       raf = requestAnimationFrame(tick);
     };
+
+    const ensureRunning = () => {
+      if (raf === null) {
+        lastY = window.scrollY;
+        lastT = performance.now();
+        idleFrames = 0;
+        raf = requestAnimationFrame(tick);
+      }
+    };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    window.addEventListener("scroll", ensureRunning, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", ensureRunning);
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
   }, []);
 
   // Quale sezione è attiva: un IntersectionObserver per sezione, solo per

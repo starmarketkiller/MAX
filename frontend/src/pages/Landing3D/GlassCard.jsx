@@ -9,14 +9,15 @@ import ScrambleText from "./ScrambleText";
  * nasconde la scena.
  *
  * L'ingresso/uscita è agganciato allo scroll stesso (useScroll+
- * useTransform, non whileInView): mentre la sezione sale nel viewport il
- * blocco ruota leggermente in avanti (rotateX) e di lato (rotateY, verso
- * sinistra o destra alternando per sezione via `index`) mentre scivola su
- * e dissolve, si assesta piatto al centro, poi ruota e dissolve
- * all'indietro mentre esce in alto — una vera "rotazione + dissolvenza"
- * da spazio 3D, non uno slide piatto. Il titolo si "decodifica"
- * (ScrambleText) non appena la sezione si blocca in posizione, invece di
- * un fade-in classico.
+ * useTransform, non whileInView): la card entra ruotando largo su un
+ * asse verticale (rotateY, fino a 70°) e scorrendo di lato (x) come se
+ * arrivasse "dall'orbita" intorno alla N invece che da uno slide piatto
+ * — alterna il lato (sinistra/destra) per sezione via `index`, come la
+ * camera che gira intorno alla N alternando i lati (cameraPath.js). Si
+ * assesta piatta al centro, poi rotea e scivola via dal lato opposto
+ * mentre esce, sparendo prima di raggiungere l'angolo massimo. Il titolo
+ * si "decodifica" (ScrambleText) non appena la sezione si blocca in
+ * posizione, invece di un fade-in classico.
  */
 export default function GlassCard({ badge, title, children, center = false, wide = false, className = "", index = 0 }) {
   const ref = useRef(null);
@@ -28,17 +29,19 @@ export default function GlassCard({ badge, title, children, center = false, wide
     if (v > 0.32 && !titleTrigger) setTitleTrigger(true);
   });
 
-  const opacity = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [84, 0, 0, -72]);
-  const rotateX = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [20, 0, 0, -15]);
-  const rotateY = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [26 * dir, 0, 0, -20 * dir]);
-  const scale = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0.9, 1, 1, 0.94]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  const x = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [90 * dir, 0, 0, -76 * dir]);
+  const y = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [56, 0, 0, -48]);
+  const rotateX = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [12, 0, 0, -10]);
+  const rotateY = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [68 * dir, 0, 0, -58 * dir]);
+  const scale = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0.82, 1, 1, 0.86]);
 
   return (
     <motion.div
       ref={ref}
       style={{
         opacity,
+        x,
         y,
         rotateX,
         rotateY,

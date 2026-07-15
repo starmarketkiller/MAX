@@ -152,12 +152,16 @@
 /* ---- livello HUD "glassmorphism" in primissimo piano ---- */
 .nx3d-hudfg { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
 .nx3d-hudfg-chip {
+  /* niente backdrop-filter qui: opacity/bordo/text-shadow sono già
+     guidati da --nx3d-vel aggiornata via JS a ogni frame durante lo
+     scroll (index.jsx) — un backdrop-filter su 5 elementi ricalcolato ad
+     ogni frame è il tipo di costo che fa percepire lo scroll "impastato"
+     su schermi non velocissimi; uno sfondo pieno un filo più opaco dà
+     quasi lo stesso effetto vetro senza il ricalcolo continuo. */
   position: absolute; display: flex; align-items: center; gap: 8px;
   padding: 7px 10px; border-radius: 8px;
   border: 1px solid rgba(56, 189, 248, calc(0.2 + var(--nx3d-vel, 0) * 0.4));
-  background: rgba(6, 12, 26, 0.28);
-  backdrop-filter: blur(6px) saturate(1.15);
-  -webkit-backdrop-filter: blur(6px) saturate(1.15);
+  background: rgba(6, 12, 26, 0.52);
   color: var(--nx-cyan);
   font-family: var(--nx-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
   opacity: calc(0.32 + var(--nx3d-vel, 0) * 0.4);

@@ -7,7 +7,7 @@ const BAR_W = 1.0;
 const BAR_H = 5.4;
 const DEPTH = 1.35;
 const HALF_GAP = 1.55; // distanza dal centro delle due barre verticali
-const BEVEL = 0.06;
+const BEVEL = 0.07;
 
 function barGeometry(w, h, d) {
   const shape = new THREE.Shape();
@@ -23,9 +23,45 @@ function barGeometry(w, h, d) {
     bevelEnabled: true,
     bevelThickness: BEVEL,
     bevelSize: BEVEL,
-    bevelSegments: 3,
+    bevelSegments: 6,
     curveSegments: 1,
   });
+}
+
+// Texture procedurale (un canvas disegnato una volta sola, non ogni frame):
+// linee da circuito stampato incise nel metallo — dettaglio vero sulla
+// superficie invece di un colore piatto, senza il costo di una vera mappa
+// scaricata o di uno shader dedicato.
+function circuitTexture() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#0a1830";
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.strokeStyle = "rgba(120, 200, 255, 0.55)";
+  ctx.lineWidth = 2;
+  const lines = [
+    [20, 0, 20, 90], [20, 90, 60, 130], [60, 130, 60, 256],
+    [236, 0, 236, 70], [236, 70, 190, 116], [190, 116, 190, 256],
+    [0, 40, 100, 40], [156, 40, 256, 40],
+    [0, 210, 90, 210], [90, 210, 130, 175], [130, 175, 256, 175],
+  ];
+  lines.forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  });
+  ctx.fillStyle = "rgba(140, 210, 255, 0.8)";
+  [[20, 90], [60, 130], [236, 70], [190, 116], [90, 210], [130, 175]].forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1, 2.4);
+  return tex;
 }
 
 /**
@@ -33,16 +69,20 @@ function barGeometry(w, h, d) {
  * disegno, tre barre 3D vere (due verticali, una diagonale che le
  * collega, ruotata via trigonometria non stimata a occhio) in un
  * materiale che si illumina davvero (emissive + Bloom), non un'immagine
- * piatta con un trucco di luce finta sopra.
+ * piatta con un trucco di luce finta sopra. Una texture da circuito
+ * stampato (generata una sola volta, non un file scaricato) incisa nella
+ * superficie dà dettaglio reale da vicino invece di restare un blocco
+ * piatto; due anelli sottili che le orbitano intorno lentamente
+ * rinforzano visivamente il tema "la camera le gira intorno".
  *
  * Si inclina con il mouse/giroscopio (parallaxRef) — "il logo che si
  * muove con il mouse" richiesto esplicitamente — più una minima
  * oscillazione residua per restare viva anche da ferma. Niente rotazione
- * costante e indipendente dallo scroll: la camera segue un percorso
- * scelto apposta per tenere la N sempre leggibile (cameraPath.js), e una
- * N che gira per conto suo con velocità legata al tempo trascorso — non
- * alla posizione di scroll — la porterebbe a un angolo imprevedibile a
- * ogni ricarica, vanificando quella scelta.
+ * costante e indipendente dallo scroll sulla N stessa: la camera segue un
+ * percorso scelto apposta per tenerla sempre leggibile (cameraPath.js), e
+ * una N che gira per conto suo con velocità legata al tempo trascorso —
+ * non alla posizione di scroll — la porterebbe a un angolo imprevedibile
+ * a ogni ricarica, vanificando quella scelta.
  *
  * L'emissive lampeggia (via `impactBump`, letto da progressRef) nel
  * momento di massimo avvicinamento della camera (cameraPath.js, tappa 4)
@@ -52,10 +92,14 @@ function barGeometry(w, h, d) {
 export default function NexusLogo({ progressRef, parallaxRef }) {
   const groupRef = useRef();
   const matRefs = useRef([]);
+  const ring1Ref = useRef();
+  const ring2Ref = useRef();
   const flash = useRef(0);
   const setMatRef = (i) => (el) => {
     matRefs.current[i] = el;
   };
+
+  const texture = useMemo(() => circuitTexture(), []);
 
   const diagGeom = useMemo(() => {
     const dx = HALF_GAP * 2;
@@ -66,6 +110,8 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
 
   const leftGeom = useMemo(() => barGeometry(BAR_W, BAR_H, DEPTH), []);
   const rightGeom = useMemo(() => barGeometry(BAR_W, BAR_H, DEPTH), []);
+  const ringGeom = useMemo(() => new THREE.TorusGeometry(4.6, 0.03, 8, 64), []);
+  const ringGeom2 = useMemo(() => new THREE.TorusGeometry(5.6, 0.025, 8, 64), []);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -76,13 +122,21 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       groupRef.current.rotation.x = Math.sin(t * 0.17) * 0.035 - py * 0.28;
       groupRef.current.rotation.z = Math.sin(t * 0.11) * 0.015;
     }
+    if (ring1Ref.current) {
+      ring1Ref.current.rotation.z = t * 0.05;
+      ring1Ref.current.rotation.x = 1.2 + Math.sin(t * 0.08) * 0.06;
+    }
+    if (ring2Ref.current) {
+      ring2Ref.current.rotation.z = -t * 0.035;
+      ring2Ref.current.rotation.x = -1.05 + Math.sin(t * 0.06) * 0.05;
+    }
     const dt = Math.min(delta, 0.1);
     const k = 1 - Math.exp(-dt * 6);
     const raw = Math.min(Math.max(progressRef ? progressRef.current : 0, 0), 1);
     const target = impactBump(raw);
     flash.current += (target - flash.current) * k;
     matRefs.current.forEach((m, i) => {
-      if (m) m.emissiveIntensity = (i === 2 ? 2.1 : 1.9) + flash.current * 3.2;
+      if (m) m.emissiveIntensity = (i === 2 ? 1.7 : 1.5) + flash.current * 3.2;
     });
   });
 
@@ -91,46 +145,59 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       <mesh geometry={leftGeom} position={[-HALF_GAP, 0, -DEPTH / 2]} castShadow>
         <meshPhysicalMaterial
           ref={setMatRef(0)}
-          color="#061020"
+          color="#0a1830"
+          emissiveMap={texture}
           emissive="#38bdf8"
-          emissiveIntensity={1.9}
-          metalness={0.35}
-          roughness={0.22}
-          clearcoat={0.6}
-          clearcoatRoughness={0.2}
+          emissiveIntensity={1.5}
+          metalness={0.4}
+          roughness={0.24}
+          clearcoat={0.65}
+          clearcoatRoughness={0.18}
           toneMapped={false}
         />
       </mesh>
       <mesh geometry={rightGeom} position={[HALF_GAP, 0, -DEPTH / 2]} castShadow>
         <meshPhysicalMaterial
           ref={setMatRef(1)}
-          color="#061020"
+          color="#0a1830"
+          emissiveMap={texture}
           emissive="#38bdf8"
-          emissiveIntensity={1.9}
-          metalness={0.35}
-          roughness={0.22}
-          clearcoat={0.6}
-          clearcoatRoughness={0.2}
+          emissiveIntensity={1.5}
+          metalness={0.4}
+          roughness={0.24}
+          clearcoat={0.65}
+          clearcoatRoughness={0.18}
           toneMapped={false}
         />
       </mesh>
       <mesh
         geometry={diagGeom.geom}
         position={[0, 0, -DEPTH / 2]}
-        rotation={[0, 0, -diagGeom.angle]}
+        rotation={[0, 0, diagGeom.angle]}
         castShadow
       >
         <meshPhysicalMaterial
           ref={setMatRef(2)}
-          color="#061020"
+          color="#0a1830"
+          emissiveMap={texture}
           emissive="#22d3ee"
-          emissiveIntensity={2.1}
-          metalness={0.35}
+          emissiveIntensity={1.7}
+          metalness={0.4}
           roughness={0.2}
-          clearcoat={0.6}
-          clearcoatRoughness={0.2}
+          clearcoat={0.65}
+          clearcoatRoughness={0.18}
           toneMapped={false}
         />
+      </mesh>
+
+      {/* due anelli sottili che orbitano a velocità e assi diversi — un
+          accento "tech", non decorativo a caso, che richiama visivamente
+          l'orbita della camera intorno alla N */}
+      <mesh ref={ring1Ref} geometry={ringGeom} rotation={[1.2, 0, 0]}>
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.28} toneMapped={false} />
+      </mesh>
+      <mesh ref={ring2Ref} geometry={ringGeom2} rotation={[-1.05, 0, 0]}>
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.18} toneMapped={false} />
       </mesh>
     </group>
   );
