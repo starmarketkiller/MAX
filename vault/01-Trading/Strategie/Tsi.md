@@ -16,6 +16,14 @@ Momentum
 ## Trigger meccanico
 RSI>52 + prezzo sopra EMA20 con EMA20 in salita (short speculare) — riportata alla logica del sito.
 
+⚠️ **Scoperta 15/07**: non è il vero True Strength Index (William Blau,
+doppio smoothing EMA del momentum) — il commento nel codice lo dichiara
+esplicitamente ("simplified RSI/EMA proxy"). Test A/B col vero TSI: PF
+1.35→1.42, drawdown quasi azzerato (10.57%→4.99%), ma **-73% di trade**. Non
+ancora corretto — è un trade-off frequenza/qualità che va deciso
+esplicitamente, non un fix "gratis" come SAR/ADX_RSI. Dettaglio:
+[[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]].
+
 ## Configurazione attuale (v2.5.0)
 - **Timeframe**: D1
 - **SL**: 1.5× ATR · **TP**: 4.5× ATR
@@ -43,4 +51,4 @@ con un miglioramento solo nell'ultimo anno da monitorare.
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]]

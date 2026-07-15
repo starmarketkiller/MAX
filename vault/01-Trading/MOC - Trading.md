@@ -55,6 +55,10 @@ profitto reale, non solo curve di backtest.
   + test A/B reali su SAR/ADX_RSI/MACD/RSI_DIV, con **fix già applicati nel
   codice** (sito e MQL5): vero Parabolic SAR, vero filtro ADX su ADX_RSI, fix
   del bug che rompeva lo strumento "Strat Diag" del sito.
+- **[[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]]** — lettura
+  completa di tutte le 37 strategie per verificare che ognuna usi davvero la
+  logica del suo nome. 34/37 a posto, 3 casi trovati (SAR/ADX_RSI corretti,
+  TSI in attesa di una decisione tua sul trade-off frequenza/qualità).
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

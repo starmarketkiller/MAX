@@ -435,7 +435,15 @@ def sig_bb_squeeze(c, ind, i, look=40):
 
 
 def sig_tsi(c, ind, i):
-    # proxy momentum (come nel MQL5: RSI/EMA): RSI>52 e prezzo>ema20 in salita
+    # proxy momentum (come nel MQL5: RSI/EMA): RSI>52 e prezzo>ema20 in salita.
+    # NOTA (15/07): non e' il vero True Strength Index (doppio smoothing EMA
+    # del momentum) - ne' qui ne' in MQL5 (NXS_Strat_TSI, commento esplicito
+    # "simplified RSI/EMA proxy"). Test A/B col vero TSI (vedi tsi_series() e
+    # NEXUS EA - Ricerca Esterna e Test A-B per Strategia): PF migliora
+    # (1.35->1.42) e DD si dimezza (10.57%->4.99%), ma i trade crollano
+    # (245->67 su 10y sito, verosimilmente -90% anche su MT5 dove oggi fa 721
+    # trade/6y) - non sostituito qui senza una decisione esplicita
+    # sull'accettare molta meno frequenza per una qualita' migliore.
     r = ind["rsi"][i]
     e = ind["ema20"][i]
     if None in (r, e, ind["ema20"][i - 1]):
@@ -445,6 +453,36 @@ def sig_tsi(c, ind, i):
     if r < 48 and ind["close"][i] < e and e < ind["ema20"][i - 1]:
         return -1
     return 0
+
+
+def tsi_series(closes, r=25, s=13):
+    """Vero True Strength Index (doppio smoothing EMA del momentum, William
+    Blau). Disponibile per confronto A/B - non ancora usato da sig_tsi(),
+    vedi nota sopra sul trade-off frequenza/qualita'."""
+    n = len(closes)
+    mom = [0.0] * n
+    for i in range(1, n):
+        mom[i] = closes[i] - closes[i - 1]
+
+    def _ema(vals, period):
+        out = [None] * len(vals)
+        k = 2.0 / (period + 1)
+        seed_i = next((idx for idx, v in enumerate(vals) if v is not None), None)
+        if seed_i is None:
+            return out
+        out[seed_i] = vals[seed_i]
+        for i in range(seed_i + 1, len(vals)):
+            prev = out[i - 1] if out[i - 1] is not None else vals[i]
+            out[i] = vals[i] * k + prev * (1 - k)
+        return out
+
+    ema2_mom = _ema(_ema(mom, r), s)
+    ema2_abs = _ema(_ema([abs(x) for x in mom], r), s)
+    tsi = [None] * n
+    for i in range(n):
+        if ema2_mom[i] is not None and ema2_abs[i] not in (None, 0):
+            tsi[i] = 100.0 * ema2_mom[i] / ema2_abs[i]
+    return tsi
 
 
 def sig_ichimoku(c, ind, i):

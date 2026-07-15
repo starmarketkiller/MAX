@@ -16,6 +16,32 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
 
+## 🔍 Audit di fedeltà completo (15/07) — tutte le 37 strategie controllate
+
+Su richiesta esplicita dell'utente dopo la scoperta SAR/ADX_RSI: letto per
+intero il codice di tutte le 37 strategie (MQL5) + le `sig_*` del sito.
+Risultato completo: [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]].
+
+- [x] Confermato: **34 delle 37 hanno trigger coerenti col nome** (verificato
+  leggendo il codice riga per riga, non solo i risultati).
+- [x] **Terzo caso trovato**: TSI, dichiarato nel commento come "simplified
+  RSI/EMA proxy", non vero True Strength Index.
+- [ ] **Decisione da prendere sul fix TSI** (non applicato, a differenza di
+  SAR/ADX_RSI): il vero TSI migliora PF/DD ma taglia i trade del 73% nel
+  test A/B (245→67 su 10y sito). Codice pronto (`tsi_series()` in
+  `backtest.py`), manca solo la decisione se accettare meno frequenza per
+  più qualità.
+- [x] **ELLIOTT (37ª strategia) trovata mai tracciata** — creata la scheda,
+  aggiunta a [[MOC - Strategie]]. Nessun dato ancora raccolto, non è sul
+  motore sito.
+- [x] Corretta un'affermazione mia troppo negativa su MALAYSIAN_SNR nella
+  nota fonte — il trigger attuale è più sofisticato di quanto avevo scritto
+  inizialmente (ha già fresh/unfresh, storyline, corpo forte).
+- [ ] I 6 proxy dichiarati sul sito (LONDON_BO/RANGE_FADE/WEEKLY_EXP/
+  LIQ_VOID/SH_BMS_RTO/SMS_BMS_RTO → riusano un'altra funzione) non sono un
+  bug ma vanno ricordati: lo screening sito per queste 6 non dice nulla
+  sulla loro vera logica. Su MT5 hanno tutte la loro implementazione reale.
+
 ## ✅ Fix applicati oggi (15/07) — codice modificato, non solo vault
 
 Su richiesta esplicita dell'utente di "lavorare all'EA" con ricerca esterna

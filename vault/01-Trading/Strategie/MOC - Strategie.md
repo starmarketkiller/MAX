@@ -97,5 +97,11 @@ Richiedono modellazione intraday che il motore del sito non ha. Da validare isol
 - [[Po3]]
 - [[Silver Bullet]]
 
+## ❓ Mai tracciata (1)
+Scoperta il 15/07 durante l'audit di fedeltà — la 37ª strategia dell'EA,
+mancava da questo indice. Vedi [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]].
+
+- [[Elliott]] — nessun dato ancora raccolto, non è nel motore sito
+
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]
+[[MOC - Trading]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]]
