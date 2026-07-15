@@ -34,6 +34,16 @@ MACD > signal e sopra 0, prezzo sopra EMA200 (long, speculare per short).
 due anni catastrofici (2019 e 2020). Il 2024 resta negativo ma meno grave dei
 peggiori. Dettaglio completo: [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
+## Analisi trade-level (15/07)
+Score interno senza potere predittivo. Bias direzionale forte: LONG 52.0% WR
+vs SHORT 43.6% WR. **Tagliando gli short il risultato in $ diventa
+chiaramente positivo** (+522.4$ solo long, vs +468.6$ col portafoglio
+completo — lo short toglie valore, non ne aggiunge). Nota: qui l'R-sum a 6
+anni resta negativo (-21.1R) mentre il $ sum è positivo — le due metriche
+divergono, merita uno sguardo più attento su cosa lo spiega prima di
+concludere. Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
+**Candidato più veloce da testare long-only tra le tre priorità.**
+
 ## Stato
 🔴 REGREDITA — questa è la scoperta più importante su MACD: sotto v2.4.8 era
 **già validata** (PF 1.11 sui 3 anni, 94 trade). Il "raffinamento" v2.5.0
@@ -47,4 +57,4 @@ tornare alla config v2.4.8 (SL/TP diversi, vedi log commit) e ri-testare.
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]

@@ -35,6 +35,12 @@ DUE anni catastrofici (2022 e 2024, entrambi peggiori di -9R) invece di uno
 solo — il 2024 smentisce l'ipotesi "evento isolato nel 2022". Dettaglio:
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
+## Analisi trade-level (15/07)
+Score interno senza potere predittivo. Bias direzionale: LONG 42.7% WR vs
+SHORT 37.2% WR. Tagliando gli short la perdita quasi si azzera (-108.7$ vs
+-591.4$ totali) ma non basta da sola a renderla positiva. Dettaglio:
+[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
+
 ## Stato
 🔴 FALLITA — sale nel gruppo delle priorità con il segmento 9: con due anni
 catastrofici su sei, non è più difendibile come "evento isolato del 2022".
@@ -44,4 +50,4 @@ Da rivedere con la stessa urgenza di SAR/MACD/ADX_RSI.
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]

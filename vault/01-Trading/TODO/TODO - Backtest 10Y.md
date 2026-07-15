@@ -16,6 +16,31 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
 
+## ⚡ Azione più veloce trovata (15/07): taglio long-only
+
+Analisi trade-level (score interno + direzione, dai commenti nei deals dei
+report `.htm`) su SAR/MACD/RSI_DIV — vedi
+[[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]:
+- Lo **score interno non ha alcun potere predittivo** per queste 3 (WR piatto
+  40-50% da score 60 a 99) — non sprecare tempo ad alzare la soglia minima.
+- **Le tre vincono sistematicamente di più long che short** (SAR +7.7 punti
+  WR, MACD +8.4, RSI_DIV +5.5) — TURTLE_SOUP nello stesso periodo non ha
+  questo bias, quindi non è "il mercato è salito e basta", è un difetto del
+  trigger di queste tre.
+- **MACD diventa chiaramente positivo tagliando gli short** (+522$ vs +468$
+  attuali) — il test più veloce e a più basso rischio da fare per primo,
+  letteralmente una riga di codice (`InpAllowShort=false` per MACD o
+  equivalente).
+- RSI_DIV migliora molto (perdita quasi azzerata) ma non basta da sola.
+- SAR migliora ma resta negativa anche long-only — conferma che qui serve
+  la riscrittura più profonda, non solo il taglio direzionale.
+
+- [ ] **Testare MACD long-only** su un segmento isolato — priorità assoluta,
+  modifica minima, beneficio atteso alto.
+- [ ] **Testare RSI_DIV long-only** come secondo passo.
+- [ ] Ripetere l'analisi trade-level (score + direzione) su ADX_RSI, BJORGUM,
+  OB_MIT — non ancora fatta, potrebbe rivelare lo stesso pattern.
+
 ## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
 
 Obiettivo dichiarato: tutte le strategie attive contribuiscono positivamente
