@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, strategie, moc]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Strategie — indice per stato di validazione
@@ -14,48 +14,65 @@ ciascuna **oggi**. Aggiorna questa pagina (spostando i link tra i gruppi) ogni
 volta che una scheda cambia stato — è la vista rapida che sostituisce lo
 scorrere 36 file per capire a che punto siamo.
 
+**Aggiornamento 15/07**: arrivati 5 anni reali (2019-2023) dal backtest 10y
+segmentato v2.5.0 — vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] e
+[[NEXUS EA - Hedge nel Tempo]]. I gruppi sotto riflettono questo, non più solo
+il singolo test 3 mesi/3 anni di v2.4.8.
+
 ## ✅ Validate (1)
-Profittevoli confermate su almeno 15 trade sui 3 anni. Le uniche su cui ci si può appoggiare oggi.
+Profittevoli confermate su più finestre indipendenti con campione sufficiente.
 
-- [[Turtle Soup]]
+- [[Turtle Soup]] — confermata anche sui 5 anni (+7.3R, 3/5 anni positivi)
 
-## ⏳ In attesa di validazione (config cambiata in v2.5.0) (7)
-La config è stata appena cambiata sulla base dello screening sito. Aggiornare qui appena arriva il risultato della validazione 3M+3Y in corso.
+## 🟢 Promettenti — nucleo hedge candidato (2)
+Mai un anno negativo o quasi, insieme a Turtle Soup formano un combinato che fa
++14.7R su 5 anni con un solo anno debolmente negativo — vedi
+[[NEXUS EA - Hedge nel Tempo]]. Campione ancora sotto i 15 trade/anno, da
+confermare ma prioritari per un test isolato.
 
-- [[Adx Rsi]]
-- [[Breakout Acc]]
-- [[Ema Pullback]]
-- [[Macd]]
-- [[Ob Mit]]
-- [[Sar]]
-- [[Tsi]]
+- [[Breakout Acc]] — +3.9R, 4/5 anni positivi
+- [[Cisd]] — +3.5R, 0/5 anni negativi (ma solo 15 trade in 5 anni)
 
-## ❌ Non validate (fallite sui 3 anni) (2)
-PF sotto 1.0 sui 3 anni con campione sufficiente. Da rivedere o lasciare a rischio minimo.
+## 🔴 Fallite — confermato su 5 anni, priorità di intervento (3)
+Non più "in attesa di validazione": campione ampio (452-838 trade in 5 anni),
+il fix HTF di v2.5.0 non ha funzionato. Spiegano ~80% della perdita totale del
+portafoglio. Vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] per il
+dettaglio codice/screening.
 
-- [[Fvg Cont]]
-- [[Rsi Div]]
+- [[Sar]] — -29.2R, **0/5 anni positivi**, la peggiore in assoluto
+- [[Macd]] — -18.5R, era validata su v2.4.8 (PF 1.11) e il "raffinamento" v2.5.0 l'ha peggiorata
+- [[Adx Rsi]] — -14.2R, 1/5 anni positivi
 
-## 🔬 Campione troppo piccolo (dato insufficiente) (7)
+## ⏳ In attesa (config v2.5.0, dato ancora ambiguo o negativo minore) (4)
+- [[Ema Pullback]] — -1.4R, 3/5 anni positivi ma volatile
+- [[Ob Mit]] — -4.5R, 1/5 anni positivi
+- [[Tsi]] — -5.8R, 1/5 anni positivi (solo 2023)
+- [[Bjorgum]] — -6.6R su 5 anni, 4/5 negativi — **smentisce l'ottimismo precedente** (PF 2.14 su soli 5 trade, vedi [[NEXUS EA - Principi]] #4): il campione più ampio ribalta il segnale
+
+## ❌ Non validate (fallite sui 3 anni / 5 anni) (2)
+PF sotto 1.0 con campione sufficiente. Da rivedere o lasciare a rischio minimo.
+
+- [[Fvg Cont]] — -2.3R sui 5 anni, ma 3/5 anni positivi (trascinata da un 2019 pessimo, -5.7)
+- [[Rsi Div]] — -7.4R, trascinata da un solo anno pessimo (2022: -9.4)
+
+## 🔬 Campione troppo piccolo (dato insufficiente) (8)
 <15 trade sui 3 anni — il PF può sembrare buono ma non è statisticamente affidabile (vedi [[NEXUS EA - Principi]] #4).
 
-- [[Bjorgum]]
 - [[Bollinger]]
-- [[Cisd]]
 - [[Liq Sweep]]
 - [[London Bo]]
 - [[Order Block]]
 - [[Sh Bms Rto]]
+- [[Malaysian Snr]] — **spostata da "nessun trade"**: nel backtest 10y ha eseguito 10 trade in 5 anni (+0.4R)
+- [[Fvg Mit]] — **spostata da "nessun trade"**: 3 trade in 5 anni
+- [[Sms Bms Rto]] — **spostata da "nessun trade"**: 3 trade in 5 anni
 
-## 📭 Nessun trade eseguito (7)
-O 0 setup rilevati o segnali sempre bloccati. Da investigare se dovrebbero generare trade.
+## 📭 Nessun trade eseguito (4)
+0 setup rilevati o segnali sempre bloccati nei 5 anni 2019-2023. Da investigare se dovrebbero generare trade — priorità più bassa di SAR/MACD/ADX_RSI perché qui non c'è nemmeno un segnale da correggere, va capito perché lo strumento non lo trova mai.
 
-- [[Fvg Mit]]
 - [[Ifvg]]
 - [[Liq Void]]
-- [[Malaysian Snr]]
 - [[Range Fade]]
-- [[Sms Bms Rto]]
 - [[Weekly Exp]]
 
 ## 🔴 Disabilitate (5)

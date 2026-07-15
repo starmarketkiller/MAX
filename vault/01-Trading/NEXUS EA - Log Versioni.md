@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, changelog]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # NEXUS EA — log versioni
@@ -28,6 +28,7 @@ Fonte: messaggi di commit git + risultati backtest in `results/reports/`.
 | v2.4.8 | Hedge ON (corsie 4 + gate margine) + ritira TSI/ICHIMOKU (0 trade confermati) | **net +1050, Sharpe 3.19, DD 29.6% — record assoluto sui 3 mesi** |
 | ⚠️ | **Test di 3 ANNI su v2.4.8** | **net −863, DD 87% — overfitting confermato.** Vedi [[NEXUS EA - Lezione Overfitting 3Y]] |
 | v2.5.0 | Screening 10y sul motore sito → filtro HTF universale applicato a ADX_RSI/EMA_PULLBACK/MACD/SAR/OB_MIT, riabilita TSI+BREAKOUT_ACC | **in attesa di validazione 3M+3Y** |
+| ⚠️ | **Backtest 10 anni segmentato (10 segmenti da 1Y, arrivati 8/10 al 15/07)** | Segmenti 1-3 falliti per bug di esecuzione del tester (ri-eseguire). **Segmenti 4-8 (5 anni reali, 2019-2023): tutti e 5 in perdita** (PF 0.63-0.98, DD fino a 87.22%). SAR/MACD/ADX_RSI (il "fix" v2.5.0) sono l'80% della perdita totale (-62R su -78.4R). TURTLE_SOUP+BREAKOUT_ACC+CISD insieme fanno +14.7R con un solo anno debolmente negativo. Vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] e [[NEXUS EA - Hedge nel Tempo]]. |
 
 ## Pattern ricorrente osservato
 1. Ogni volta che si isola UNA modifica alla volta, si legge il segnale pulito.
@@ -38,6 +39,10 @@ Fonte: messaggi di commit git + risultati backtest in `results/reports/`.
    incassare presto).
 3. Il salto di v2.4.5 (+1005, da +483) è arrivato da UNA idea semplice (trailing
    su misura), non da un accumulo di piccoli tweak.
+4. Un edge trovato sul motore del sito può **peggiorare** una strategia che sui
+   dati MT5 reali era già validata (MACD: PF 1.11 validata su v2.4.8 →
+   -18.5R su 5 anni dopo il "raffinamento" v2.5.0 basato sul sito). Vedi
+   [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Screening Strategie (sito 10y)]]
+[[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Hedge nel Tempo]]

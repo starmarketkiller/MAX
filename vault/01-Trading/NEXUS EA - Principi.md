@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, principi, lezioni]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Principi — le lezioni dure
@@ -61,6 +61,32 @@ validare**, mai una certezza diretta. Vedi [[Sito Backtest Lab - Note Tecniche]]
 
 > **Regola**: quando riporti un numero, specifica sempre la fonte (sito o MT5) e
 > l'orizzonte (3M o 3Y). "PF 1.5" da solo non vuol dire niente.
+
+## 6. Un edge del sito non sostituisce una config MT5 già validata
+Scoperta dal backtest 10y segmentato ([[NEXUS EA - Backtest 10Y Segmentato - Analisi]]):
+MACD era **già validata** su MT5 (PF 1.11, v2.4.8, 3 anni). Il "raffinamento"
+v2.5.0, basato sullo screening del motore sito, l'ha resa la seconda peggiore
+strategia del portafoglio (-18.5R su 5 anni). Il principio #5 diceva "un edge
+del sito è un'ipotesi da validare" — qui il caso è più grave: si è **sostituita**
+una config MT5 già confermata con un'ipotesi non ancora testata su MT5.
+
+> **Regola**: se una strategia è già validata su MT5, un miglioramento proposto
+> dal sito va testato in **isolamento** (A/B, non sostituzione diretta) prima
+> di rimpiazzare la config esistente. Non rischiare un edge confermato per
+> inseguire un edge ancora ipotetico.
+
+## 7. Un gate "giornaliero" non protegge dal drawdown cumulato
+`InpMaxDailyDDPct=5.0` limita solo la perdita di **un singolo giorno** (si
+resetta ogni giorno) — non esiste nel codice nessun limite sul drawdown
+cumulato dal picco equity. Risultato: nel segmento 2020 del backtest 10y il
+conto ha comunque perso l'87.22% di equity, identico al DD di v2.4.8 sui 3
+anni ([[NEXUS EA - Lezione Overfitting 3Y]]) — lo stesso identico numero, due
+build diverse, stessa causa strutturale mai chiusa.
+
+> **Regola**: "protetto dal drawdown giornaliero" non vuol dire "protetto dal
+> drawdown". Prima di fidarsi di un sistema di risk management, verifica se il
+> gate è per-giorno, per-settimana o cumulato-dal-picco: sono tre cose diverse
+> e solo l'ultima previene un conto azzerato in mesi di erosione lenta.
 
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Log Versioni]]

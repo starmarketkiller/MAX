@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: TSI
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Strategia: TSI
@@ -28,11 +28,19 @@ RSI>52 + prezzo sopra EMA20 con EMA20 in salita (short speculare) — riportata 
 - **3 mesi**: 0 trade eseguiti in questo build. (1780 setup rilevati ma nessuno eseguito — strategia disabilitata/bloccata)
 - **3 anni**: 0 trade eseguiti in questo build. (1355 setup rilevati ma nessuno eseguito — strategia disabilitata/bloccata)
 
+## Risultati (backtest 10y segmentato v2.5.0, 5 anni affidabili 2019-2023)
+539 trade totali — ora esegue davvero (era 0 trade in v2.4.8). R per anno:
+2019 -2.3 · 2020 -2.1 · 2021 -1.3 · 2022 -1.2 · 2023 +1.1. **Somma -5.8R — 1
+anno su 5 positivo (solo 2023)**. Dettaglio:
+[[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
+
 ## Stato
-⏳ PENDING v2.5.0 — era disabilitata/non raggiunta in v2.4.8, riabilitata in v2.5.0 sulla base dello screening sito. In attesa della validazione 3M+3Y sul nuovo build.
+⏳ PENDING — la riabilitazione ha funzionato dal punto di vista dell'esecuzione
+(539 trade, campione ampio) ma il segnale resta negativo in 4 anni su 5,
+con un miglioramento solo nell'ultimo anno da monitorare.
 
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
