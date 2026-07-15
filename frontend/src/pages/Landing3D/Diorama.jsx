@@ -59,8 +59,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
         position={[-1.6, 1.4, -8]}
         progressRef={progressRef}
         mapProgress={convergeMap}
-        convergeTo={[-9.5, 0.8, -3]}
-        convergeScale={1.6}
+        convergeTo={[-11.5, 0.6, -2]}
+        convergeScale={1.7}
         parallaxRef={parallaxRef}
         parallaxStrength={0.9}
         glowColor="#4ade80"
@@ -75,8 +75,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
         position={[1.6, 1.7, -8]}
         progressRef={progressRef}
         mapProgress={convergeMap}
-        convergeTo={[9.5, 1.1, -3]}
-        convergeScale={1.6}
+        convergeTo={[11.5, 0.9, -2]}
+        convergeScale={1.7}
         parallaxRef={parallaxRef}
         parallaxStrength={0.9}
         glowColor="#f87171"
@@ -102,12 +102,14 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
         pulse={false}
       />
 
-      {/* il re dorato, in fondo — si rivela man mano che si vola dentro */}
+      {/* il re dorato, in fondo — molto più grande di prima: deve imporsi
+          nella scena e leggersi come una presenza enorme fin da lontano,
+          non solo quando la camera gli arriva vicino nel finale */}
       <Cutout
         url={IMG("king")}
-        width={6.5}
-        height={7.8}
-        position={[0, 2.0, -19.5]}
+        width={9.8}
+        height={11.75}
+        position={[0, 2.6, -19.5]}
         parallaxRef={parallaxRef}
         parallaxStrength={0.55}
         glowColor="#fbbf24"
