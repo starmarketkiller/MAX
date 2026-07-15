@@ -8,6 +8,7 @@ const BAR_H = 5.4;
 const DEPTH = 1.35;
 const HALF_GAP = 1.55; // distanza dal centro delle due barre verticali
 const BEVEL = 0.07;
+const GLOW_SCALE = 1.16;
 
 function barGeometry(w, h, d) {
   const shape = new THREE.Shape();
@@ -31,14 +32,16 @@ function barGeometry(w, h, d) {
 // Texture procedurale (un canvas disegnato una volta sola, non ogni frame):
 // linee da circuito stampato incise nel metallo — dettaglio vero sulla
 // superficie invece di un colore piatto, senza il costo di una vera mappa
-// scaricata o di uno shader dedicato.
+// scaricata o di uno shader dedicato. Sfondo chiaro (non nero) perché è
+// usata come emissiveMap: un fondo scuro spegneva quasi tutta la
+// superficie tranne le linee, facendo leggere l'insieme come troppo buio.
 function circuitTexture() {
   const c = document.createElement("canvas");
   c.width = c.height = 256;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#0a1830";
+  ctx.fillStyle = "#2c5f95";
   ctx.fillRect(0, 0, 256, 256);
-  ctx.strokeStyle = "rgba(120, 200, 255, 0.55)";
+  ctx.strokeStyle = "rgba(200, 235, 255, 0.75)";
   ctx.lineWidth = 2;
   const lines = [
     [20, 0, 20, 90], [20, 90, 60, 130], [60, 130, 60, 256],
@@ -52,7 +55,7 @@ function circuitTexture() {
     ctx.lineTo(x2, y2);
     ctx.stroke();
   });
-  ctx.fillStyle = "rgba(140, 210, 255, 0.8)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
   [[20, 90], [60, 130], [236, 70], [190, 116], [90, 210], [130, 175]].forEach(([x, y]) => {
     ctx.beginPath();
     ctx.arc(x, y, 3.5, 0, Math.PI * 2);
@@ -67,36 +70,42 @@ function circuitTexture() {
 /**
  * La "N" di NEXUS come unico vero protagonista visivo della scena — non un
  * disegno, tre barre 3D vere (due verticali, una diagonale che le
- * collega, ruotata via trigonometria non stimata a occhio) in un
- * materiale che si illumina davvero (emissive + Bloom), non un'immagine
- * piatta con un trucco di luce finta sopra. Una texture da circuito
- * stampato (generata una sola volta, non un file scaricato) incisa nella
- * superficie dà dettaglio reale da vicino invece di restare un blocco
- * piatto; due anelli sottili che le orbitano intorno lentamente
- * rinforzano visivamente il tema "la camera le gira intorno".
+ * collega, ruotata via trigonometria) in un materiale che si illumina
+ * davvero (emissive + Bloom), non un'immagine piatta con un trucco di
+ * luce finta sopra. Una texture da circuito stampato (generata una sola
+ * volta, non un file scaricato) incisa nella superficie dà dettaglio
+ * reale da vicino invece di restare un blocco piatto; due anelli sottili
+ * che le orbitano intorno lentamente rinforzano visivamente il tema "la
+ * camera le gira intorno".
+ *
+ * Ogni barra ha anche un doppio leggermente più grande dietro di sé,
+ * additivo e pulsante — lo stesso trucco usato per il "glow" dei vecchi
+ * ritagli PNG (bull/bear/king, ora rimossi): dà alla N una luce propria
+ * percepita, non solo riflessi dalle luci della scena, e la pulsazione
+ * aggiunge sensazione di movimento anche da ferma.
  *
  * Si inclina con il mouse/giroscopio (parallaxRef) — "il logo che si
- * muove con il mouse" richiesto esplicitamente — più una minima
- * oscillazione residua per restare viva anche da ferma. Niente rotazione
- * costante e indipendente dallo scroll sulla N stessa: la camera segue un
- * percorso scelto apposta per tenerla sempre leggibile (cameraPath.js), e
- * una N che gira per conto suo con velocità legata al tempo trascorso —
- * non alla posizione di scroll — la porterebbe a un angolo imprevedibile
- * a ogni ricarica, vanificando quella scelta.
+ * muove con il mouse" — più una minima oscillazione residua. Niente
+ * rotazione costante e indipendente dallo scroll sulla N stessa: la
+ * camera segue un percorso scelto apposta per tenerla sempre leggibile
+ * (cameraPath.js), e una N che gira per conto suo la porterebbe a un
+ * angolo imprevedibile a ogni ricarica, vanificando quella scelta.
  *
  * L'emissive lampeggia (via `impactBump`, letto da progressRef) nel
- * momento di massimo avvicinamento della camera (cameraPath.js, tappa 4)
- * — "energia che si accende quando ci si avvicina", sincronizzata con la
- * stessa vibrazione del telefono in CameraRig.
+ * momento di massimo avvicinamento della camera (cameraPath.js, tappa 4).
  */
 export default function NexusLogo({ progressRef, parallaxRef }) {
   const groupRef = useRef();
   const matRefs = useRef([]);
+  const glowRefs = useRef([]);
   const ring1Ref = useRef();
   const ring2Ref = useRef();
   const flash = useRef(0);
   const setMatRef = (i) => (el) => {
     matRefs.current[i] = el;
+  };
+  const setGlowRef = (i) => (el) => {
+    glowRefs.current[i] = el;
   };
 
   const texture = useMemo(() => circuitTexture(), []);
@@ -112,6 +121,8 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
   const rightGeom = useMemo(() => barGeometry(BAR_W, BAR_H, DEPTH), []);
   const ringGeom = useMemo(() => new THREE.TorusGeometry(4.6, 0.03, 8, 64), []);
   const ringGeom2 = useMemo(() => new THREE.TorusGeometry(5.6, 0.025, 8, 64), []);
+
+  const BASE = [2.3, 2.3, 2.6];
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -130,13 +141,20 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       ring2Ref.current.rotation.z = -t * 0.035;
       ring2Ref.current.rotation.x = -1.05 + Math.sin(t * 0.06) * 0.05;
     }
+
     const dt = Math.min(delta, 0.1);
     const k = 1 - Math.exp(-dt * 6);
     const raw = Math.min(Math.max(progressRef ? progressRef.current : 0, 0), 1);
     const target = impactBump(raw);
     flash.current += (target - flash.current) * k;
+
     matRefs.current.forEach((m, i) => {
-      if (m) m.emissiveIntensity = (i === 2 ? 1.7 : 1.5) + flash.current * 3.2;
+      if (m) m.emissiveIntensity = BASE[i] + flash.current * 3.4;
+    });
+
+    const pulse = 0.85 + Math.sin(t * 1.4) * 0.15;
+    glowRefs.current.forEach((g) => {
+      if (g) g.opacity = (0.22 + flash.current * 0.35) * pulse;
     });
   });
 
@@ -145,31 +163,55 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       <mesh geometry={leftGeom} position={[-HALF_GAP, 0, -DEPTH / 2]} castShadow>
         <meshPhysicalMaterial
           ref={setMatRef(0)}
-          color="#0a1830"
+          color="#123055"
           emissiveMap={texture}
           emissive="#38bdf8"
-          emissiveIntensity={1.5}
-          metalness={0.4}
-          roughness={0.24}
-          clearcoat={0.65}
-          clearcoatRoughness={0.18}
+          emissiveIntensity={BASE[0]}
+          metalness={0.22}
+          roughness={0.3}
+          clearcoat={0.6}
+          clearcoatRoughness={0.2}
           toneMapped={false}
         />
       </mesh>
+      <mesh scale={[GLOW_SCALE, GLOW_SCALE, 1]} geometry={leftGeom} position={[-HALF_GAP, 0, -DEPTH / 2]} renderOrder={0}>
+        <meshBasicMaterial
+          ref={setGlowRef(0)}
+          color="#38bdf8"
+          transparent
+          opacity={0.22}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
       <mesh geometry={rightGeom} position={[HALF_GAP, 0, -DEPTH / 2]} castShadow>
         <meshPhysicalMaterial
           ref={setMatRef(1)}
-          color="#0a1830"
+          color="#123055"
           emissiveMap={texture}
           emissive="#38bdf8"
-          emissiveIntensity={1.5}
-          metalness={0.4}
-          roughness={0.24}
-          clearcoat={0.65}
-          clearcoatRoughness={0.18}
+          emissiveIntensity={BASE[1]}
+          metalness={0.22}
+          roughness={0.3}
+          clearcoat={0.6}
+          clearcoatRoughness={0.2}
           toneMapped={false}
         />
       </mesh>
+      <mesh scale={[GLOW_SCALE, GLOW_SCALE, 1]} geometry={rightGeom} position={[HALF_GAP, 0, -DEPTH / 2]} renderOrder={0}>
+        <meshBasicMaterial
+          ref={setGlowRef(1)}
+          color="#38bdf8"
+          transparent
+          opacity={0.22}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
       <mesh
         geometry={diagGeom.geom}
         position={[0, 0, -DEPTH / 2]}
@@ -178,14 +220,31 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       >
         <meshPhysicalMaterial
           ref={setMatRef(2)}
-          color="#0a1830"
+          color="#123055"
           emissiveMap={texture}
           emissive="#22d3ee"
-          emissiveIntensity={1.7}
-          metalness={0.4}
-          roughness={0.2}
-          clearcoat={0.65}
-          clearcoatRoughness={0.18}
+          emissiveIntensity={BASE[2]}
+          metalness={0.22}
+          roughness={0.26}
+          clearcoat={0.6}
+          clearcoatRoughness={0.2}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh
+        scale={[GLOW_SCALE, GLOW_SCALE, 1]}
+        geometry={diagGeom.geom}
+        position={[0, 0, -DEPTH / 2]}
+        rotation={[0, 0, diagGeom.angle]}
+        renderOrder={0}
+      >
+        <meshBasicMaterial
+          ref={setGlowRef(2)}
+          color="#22d3ee"
+          transparent
+          opacity={0.24}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
           toneMapped={false}
         />
       </mesh>

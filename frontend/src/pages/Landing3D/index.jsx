@@ -239,23 +239,7 @@ export default function Landing3D() {
       </nav>
 
       <main className="nx3d-scroll">
-        {STEPS.map((s, i) => {
-          const Icon = STEP_ICONS[i];
-          return (
-            <section
-              className="nx3d-panel step"
-              key={s.badge}
-              ref={(el) => { sectionRefs.current[i] = el; }}
-            >
-              <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
-              <GlassCard badge={s.badge} title={s.title} index={i}>
-                <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
-              </GlassCard>
-            </section>
-          );
-        })}
-
-        <section className="nx3d-panel center" ref={(el) => { sectionRefs.current[N_SECTIONS - 1] = el; }}>
+        <section className="nx3d-panel center" ref={(el) => { sectionRefs.current[0] = el; }}>
           <GlassCard center wide className="max-w-[880px]">
             <span className="nx3d-eyebrow justify-center">Trading algoritmico · costruito con l'AI</span>
             <h1>NEXUS</h1>
@@ -266,11 +250,27 @@ export default function Landing3D() {
             </p>
             <div className="nx3d-cta">
               <button className="nx3d-btn primary" onClick={() => navigate("/login")}>Entra nel motore</button>
-              <button className="nx3d-btn" onClick={() => goTo(0)}>Perché ti serve</button>
+              <button className="nx3d-btn" onClick={() => goTo(1)}>Perché ti serve</button>
             </div>
             <p className="nx3d-disc">Risultati da backtest su dati storici: non sono garanzia di rendimenti futuri. Il trading a leva comporta rischio di perdita del capitale.</p>
           </GlassCard>
         </section>
+
+        {STEPS.map((s, i) => {
+          const Icon = STEP_ICONS[i];
+          return (
+            <section
+              className="nx3d-panel step"
+              key={s.badge}
+              ref={(el) => { sectionRefs.current[i + 1] = el; }}
+            >
+              <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
+              <GlassCard badge={s.badge} title={s.title} index={i}>
+                <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
+              </GlassCard>
+            </section>
+          );
+        })}
       </main>
     </div>
   );
