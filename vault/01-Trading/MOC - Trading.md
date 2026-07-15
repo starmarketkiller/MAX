@@ -34,9 +34,15 @@ profitto reale, non solo curve di backtest.
 - **[[NEXUS EA - Backtest 10Y Segmentato - Analisi]]** — la validazione più ampia
   fatta finora (6 anni reali di dati, 2019-2024): bug trovati, ranking per strategia,
   perché il fix HTF v2.5.0 non ha funzionato per SAR/MACD/RSI_DIV/ADX_RSI.
+- **[[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]]** — nota scritta in
+  parallelo (sessione diversa, stesso dataset): dati grezzi trade-count per
+  segmento, il bug di pipeline che duplicava i report, e l'anomalia
+  2016-2019 (17/3/59 trade contro 500-1500+ degli anni successivi). Vedi la
+  sezione "Nota di riconciliazione" per la discrepanza nei conteggi non
+  ancora isolata tra le due note.
 - **[[NEXUS EA - Hedge nel Tempo]]** — quali strategie si coprono a vicenda nel
   tempo: il nucleo TURTLE_SOUP+BREAKOUT_ACC+CISD (ridimensionato col segmento 9).
-- **[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]** — audit del codice del
+- **[[NEXUS EA - Motore Sito - Audit e Confronto 10Y]]** — audit del codice del
   motore sito: nessun hedge/multi-posizione per design, e il proxy SAR è
   identico a EMA_PULLBACK (non testa mai la vera strategia).
 - **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — piano d'azione

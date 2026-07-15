@@ -66,7 +66,7 @@ scadenza fissa. Implicazioni esplicite:
 - Ogni strategia deve restare **indipendente** dalle altre — non deve
   dipendere dal fatto che altre strategie occupino o liberino uno slot
   condiviso (vedi architettura "hedge per strategia" sotto, e
-  [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] per il caso opposto/di
+  [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]] per il caso opposto/di
   cui diffidare: il motore sito che invece compete per un unico slot).
 
 ## Cosa NON è portabile dal sito

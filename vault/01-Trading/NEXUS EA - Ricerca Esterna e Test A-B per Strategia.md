@@ -79,7 +79,7 @@ mettere in produzione.
 
 ## Test A/B #2: SAR — implementato il vero Parabolic SAR (corregge anche il bug del proxy sito)
 
-Come già documentato in [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]],
+Come già documentato in [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]],
 il proxy sito era identico a EMA_PULLBACK. Ho implementato un vero
 Parabolic SAR (algoritmo standard: AF 0.02→0.2, extreme point, flip) +
 allineamento con EMA20 (proxy di EMA9/21 vista la disponibilità di
@@ -172,4 +172,4 @@ le operazioni, in entrambe le direzioni.
 - [ADX+RSI su Gold — FXNX](https://fxnx.com/en/blog/adx-rsi-strategy-master-trend-entries)
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Setup Buy-Sell — Framework]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] · [[Sar]] · [[Adx Rsi]] · [[Macd]] · [[Rsi Div]] · [[TODO - Backtest 10Y]]
+[[MOC - Trading]] · [[NEXUS EA - Setup Buy-Sell — Framework]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]] · [[Sar]] · [[Adx Rsi]] · [[Macd]] · [[Rsi Div]] · [[TODO - Backtest 10Y]]

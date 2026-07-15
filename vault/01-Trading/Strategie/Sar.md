@@ -41,7 +41,7 @@ verificato eseguendolo che produce la sequenza di trade **identica,
 operazione per operazione**, a `sig_ema_pullback()` sugli stessi dati.
 Il sito non ha mai testato Parabolic SAR. Il numero "PF1.52" citato per
 giustificare il fix HTF v2.5.0 non dice nulla sulla vera strategia. Dettaglio:
-[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
+[[NEXUS EA - Motore Sito - Audit e Confronto 10Y]].
 
 ## Test A/B 15/07: vero Parabolic SAR batte nettamente il proxy bacato
 Implementato un vero Parabolic SAR (AF 0.02→0.2, extreme point, flip) +
@@ -79,4 +79,4 @@ solo ribilanciare le direzioni esistenti. Dettaglio:
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]

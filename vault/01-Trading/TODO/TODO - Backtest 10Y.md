@@ -14,7 +14,7 @@ Non aspettare che tutti i 10 segmenti siano pronti per agire — molte di queste
 sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]],
 [[NEXUS EA - Hedge nel Tempo]] e
-[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
+[[NEXUS EA - Motore Sito - Audit e Confronto 10Y]]).
 
 ## 🔀 Sincronizzazione tra agenti (15/07) — risolto in parte
 
@@ -243,7 +243,7 @@ di lavoro consigliato, per gruppo:
   oggi è un incrocio EMA20/EMA50 identico a `sig_ema_pullback()`, non
   Parabolic SAR. Serve implementare la vera logica (indicatore Parabolic SAR
   + EMA9/EMA21) prima che qualsiasi screening sito su SAR abbia senso. Vedi
-  [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
+  [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]].
 - [ ] **(Bassa priorità, strutturale) Il motore sito non supporta posizioni
   multiple/hedge** (`pos` è singolare in `run_backtest()`). Se si vuole usare
   il sito per validare in futuro il nucleo hedge o altre interazioni
@@ -303,4 +303,4 @@ di lavoro consigliato, per gruppo:
   che perdono soldi attivamente.
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]
+[[MOC - Trading]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]]

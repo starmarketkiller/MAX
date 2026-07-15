@@ -37,7 +37,7 @@ Secondo pattern: **TP largo (4.0-4.5× ATR)** batte quasi sempre TP corto.
 | RSI_DIV | 0.85 → **1.09** | +673 | 79 | SL1.0 · TP4.5 · HTF off — aggiunta 15/07, debole |
 | CISD | mai >1.0 | -18 (best) | 18 | mai profittevole sul sito in nessuna config — aggiunta 15/07 |
 | TURTLE_SOUP | mai >1.0 | -716 (best) | 63 | mai profittevole sul sito in nessuna config — aggiunta 15/07, conferma [[NEXUS EA - Principi]] #5 |
-| ~~SAR~~ | ~~1.17 → 1.50~~ | — | — | ⚠️ **DATO INVALIDO** — il proxy `sig_sar()` del sito è identico a `sig_ema_pullback()` (verificato trade-per-trade), non testa Parabolic SAR. Vedi [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] |
+| ~~SAR~~ | ~~1.17 → 1.50~~ | — | — | ⚠️ **DATO INVALIDO** — il proxy `sig_sar()` del sito è identico a `sig_ema_pullback()` (verificato trade-per-trade), non testa Parabolic SAR. Vedi [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]] |
 
 Campioni più affidabili per numerosità: **ADX_RSI (253 trade)**, **FVG_CONT (208)**,
 **TSI (174)**, **BREAKOUT_ACC (128)**.
@@ -53,7 +53,7 @@ Il fix su MACD, ADX_RSI, EMA_PULLBACK resta valido come test (segnali reali),
 ma solo MACD ha un edge raw confermato anche in esecuzione diretta 10y
 (PF 1.38) — eppure fallisce su MT5 (-21.1R), quindi il problema lì è
 probabilmente nell'esecuzione, non nel segnale. Dettaglio completo:
-[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
+[[NEXUS EA - Motore Sito - Audit e Confronto 10Y]].
 
 ## Limite di questo screening (da tenere a mente)
 Il motore del sito usa dati Yahoo daily e una logica semplificata rispetto

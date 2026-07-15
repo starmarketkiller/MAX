@@ -89,7 +89,7 @@ build diverse, stessa causa strutturale mai chiusa.
 > e solo l'ultima previene un conto azzerato in mesi di erosione lenta.
 
 ## 8. Il motore del sito non ha hedge, e un proxy col nome giusto può testare la cosa sbagliata
-Due scoperte dall'audit del 15/07 ([[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]):
+Due scoperte dall'audit del 15/07 ([[NEXUS EA - Motore Sito - Audit e Confronto 10Y]]):
 il motore Python tiene una **sola posizione alla volta** (`pos = None`,
 variabile singola) — non può mai simulare l'hedge tra strategie, per design,
 indipendentemente dai dati. E il proxy `sig_sar()` non implementa Parabolic
