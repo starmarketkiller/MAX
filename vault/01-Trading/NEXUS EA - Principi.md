@@ -88,5 +88,20 @@ build diverse, stessa causa strutturale mai chiusa.
 > gate è per-giorno, per-settimana o cumulato-dal-picco: sono tre cose diverse
 > e solo l'ultima previene un conto azzerato in mesi di erosione lenta.
 
+## 8. Il motore del sito non ha hedge, e un proxy col nome giusto può testare la cosa sbagliata
+Due scoperte dall'audit del 15/07 ([[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]):
+il motore Python tiene una **sola posizione alla volta** (`pos = None`,
+variabile singola) — non può mai simulare l'hedge tra strategie, per design,
+indipendentemente dai dati. E il proxy `sig_sar()` non implementa Parabolic
+SAR: è identico, trade per trade, a `sig_ema_pullback()`. Un numero con
+l'etichetta giusta ("SAR → PF1.52") può derivare da un test che non ha mai
+toccato la logica reale.
+
+> **Regola**: prima di usare un numero dello screening sito per giustificare
+> un cambio, verifica che (a) il motore possa strutturalmente rispondere alla
+> domanda che gli stai facendo (l'hedge non è testabile lì, punto), e (b) la
+> funzione segnale corrisponda davvero al nome che porta — non fidarti
+> dell'etichetta, leggi il codice della funzione.
+
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Log Versioni]]

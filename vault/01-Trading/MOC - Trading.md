@@ -36,8 +36,11 @@ profitto reale, non solo curve di backtest.
   perché il fix HTF v2.5.0 non ha funzionato per SAR/MACD/RSI_DIV/ADX_RSI.
 - **[[NEXUS EA - Hedge nel Tempo]]** — quali strategie si coprono a vicenda nel
   tempo: il nucleo TURTLE_SOUP+BREAKOUT_ACC+CISD (ridimensionato col segmento 9).
-- **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — aggiornamenti da fare
-  appena arriva il segmento 10 e le eventuali ri-esecuzioni di 1-3.
+- **[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]** — audit del codice del
+  motore sito: nessun hedge/multi-posizione per design, e il proxy SAR è
+  identico a EMA_PULLBACK (non testa mai la vera strategia).
+- **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — piano d'azione
+  strategia-per-strategia e aggiornamenti da fare appena arriva il segmento 10.
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

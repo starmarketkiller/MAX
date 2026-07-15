@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, screening, riferimento]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # Screening strategie — motore sito, ~10 anni XAUUSD
@@ -34,6 +34,10 @@ Secondo pattern: **TP largo (4.0-4.5× ATR)** batte quasi sempre TP corto.
 | EMA_PULLBACK | 1.17 → **1.52** | +2.233 | 86 | SL1.5 · TP4.0 · **HTF✓** · Trail2.5 |
 | ADX_RSI | 1.26 → **1.48** | +10.555 | 253 | SL1.0 · TP4.0 · **HTF✓** · Trail2.5 |
 | BJORGUM | 2.47 (baseline) | — | <50 | campione troppo piccolo per sweep affidabile |
+| RSI_DIV | 0.85 → **1.09** | +673 | 79 | SL1.0 · TP4.5 · HTF off — aggiunta 15/07, debole |
+| CISD | mai >1.0 | -18 (best) | 18 | mai profittevole sul sito in nessuna config — aggiunta 15/07 |
+| TURTLE_SOUP | mai >1.0 | -716 (best) | 63 | mai profittevole sul sito in nessuna config — aggiunta 15/07, conferma [[NEXUS EA - Principi]] #5 |
+| ~~SAR~~ | ~~1.17 → 1.50~~ | — | — | ⚠️ **DATO INVALIDO** — il proxy `sig_sar()` del sito è identico a `sig_ema_pullback()` (verificato trade-per-trade), non testa Parabolic SAR. Vedi [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]] |
 
 Campioni più affidabili per numerosità: **ADX_RSI (253 trade)**, **FVG_CONT (208)**,
 **TSI (174)**, **BREAKOUT_ACC (128)**.
@@ -42,6 +46,14 @@ Campioni più affidabili per numerosità: **ADX_RSI (253 trade)**, **FVG_CONT (2
 Divario trovato: ADX_RSI, EMA_PULLBACK, MACD, SAR avevano l'HTF filter **spento**
 sull'EA mentre il sito lo vuole acceso. Corretto in v2.5.0 — vedi
 [[NEXUS EA - Log Versioni]] per il dettaglio dei cambi e lo stato della validazione.
+
+⚠️ **Aggiornamento 15/07**: il fix su SAR era basato su un test che, di fatto,
+non testava mai la vera logica Parabolic SAR (bug del proxy sito, vedi sopra).
+Il fix su MACD, ADX_RSI, EMA_PULLBACK resta valido come test (segnali reali),
+ma solo MACD ha un edge raw confermato anche in esecuzione diretta 10y
+(PF 1.38) — eppure fallisce su MT5 (-21.1R), quindi il problema lì è
+probabilmente nell'esecuzione, non nel segnale. Dettaglio completo:
+[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
 
 ## Limite di questo screening (da tenere a mente)
 Il motore del sito usa dati Yahoo daily e una logica semplificata rispetto

@@ -35,16 +35,25 @@ peggiore di tutte le 38 strategie, di gran lunga, e il segmento 9 conferma
 ulteriormente il pattern (nessun segno di ripresa). Dettaglio completo:
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
+## ⚠️ Scoperta 15/07: il proxy sito non testa SAR
+`sig_sar()` in `server/backtest.py` è, di fatto, un incrocio EMA20/EMA50 —
+verificato eseguendolo che produce la sequenza di trade **identica,
+operazione per operazione**, a `sig_ema_pullback()` sugli stessi dati.
+Il sito non ha mai testato Parabolic SAR. Il numero "PF1.52" citato per
+giustificare il fix HTF v2.5.0 non dice nulla sulla vera strategia. Dettaglio:
+[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
+
 ## Stato
 🔴 FALLITA — confermato su campione ampio (1.129 trade, 6 anni consecutivi
 tutti negativi). Il filtro HTF di v2.5.0 è correttamente attivo nel codice
-(`NXS_StrategyProfiles.mqh:45`) ma SAR non compare nemmeno tra le config
-vincenti dello screening sito — il fix le è stato applicato per
-generalizzazione, non perché il suo screening individuale lo confermasse.
-**Priorità #1**: spegnere o riscrivere la logica di trigger da zero.
+(`NXS_StrategyProfiles.mqh:45`) ma la sua giustificazione (screening sito) è
+**invalida** — vedi sopra. **Priorità #1, doppia**: (1) spegnere o riscrivere
+la logica di trigger MQL5 da zero (Parabolic SAR reale, non un incrocio EMA);
+(2) fixare il proxy del sito così da poter testare la strategia vera prima di
+rimetterla in produzione.
 
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]

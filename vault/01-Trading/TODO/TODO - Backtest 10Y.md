@@ -11,9 +11,51 @@ updated: 2026-07-15
 
 Lista viva di cose da fare, aggiornata mano a mano che arrivano nuovi dati.
 Non aspettare che tutti i 10 segmenti siano pronti per agire — molte di queste
-sono già azionabili oggi con i 5 anni che abbiamo (vedi
-[[NEXUS EA - Backtest 10Y Segmentato - Analisi]] e
-[[NEXUS EA - Hedge nel Tempo]]).
+sono già azionabili oggi con i 6 anni che abbiamo (vedi
+[[NEXUS EA - Backtest 10Y Segmentato - Analisi]],
+[[NEXUS EA - Hedge nel Tempo]] e
+[[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
+
+## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
+
+Obiettivo dichiarato: tutte le strategie attive contribuiscono positivamente
+(o restano a rischio minimo/spente) e il portafoglio mantiene la
+diversificazione nel tempo scoperta in [[NEXUS EA - Hedge nel Tempo]]. Ordine
+di lavoro consigliato, per gruppo:
+
+1. **Consolidare il nucleo che già funziona** (BREAKOUT_ACC, CISD,
+   TURTLE_SOUP) prima di toccare il resto — è l'unica parte del portafoglio
+   con un track record reale su MT5. Prossimo passo concreto: il test isolato
+   delle tre insieme (vedi sotto), non altro tuning. Nota: il sito **non può
+   validare questo gruppo** (mai profittevoli lì, motore senza hedge) — la
+   fonte di verità è solo MT5.
+2. **SAR — ripartire da zero, letteralmente**: nessun test valido esiste
+   oggi, né su MT5 (0/6 anni positivi) né sul sito (proxy bacato, identico a
+   EMA_PULLBACK). Prima di ritoccare parametri, va (a) riscritta la vera
+   logica Parabolic SAR nel proxy sito per poter fare uno screening reale, e
+   (b) isolata su MT5 (`InpStrategySelector`) per vedere il comportamento
+   grezzo senza interazioni con altre strategie.
+3. **MACD — capire se è un problema di segnale o di esecuzione**: il sito
+   conferma un edge raw positivo (PF 1.38, 10 anni, dati diversi da MT5) ma
+   MT5 reale è pesantemente negativo (-21.1R). Quando segnale e esecuzione
+   divergono così tanto, il sospetto principale è l'esecuzione (spread reali
+   su M15, sizing, interazione con gate/margine), non il trigger. Test
+   isolato MT5 con logging su spread/sizing per ogni trade MACD.
+4. **RSI_DIV e ADX_RSI — stessa diagnosi di base**: campione ampio, segnale
+   debole anche sul sito (RSI_DIV: PF max 1.09; ADX_RSI: PF 1.26, nella media).
+   Probabilmente il segnale stesso ha poco edge reale su XAUUSD daily/M15 —
+   non sono casi di "esecuzione rotta" come MACD. Da rivedere la logica di
+   ingresso, non solo i parametri SL/TP/HTF.
+5. **BJORGUM, TSI, altre "in attesa"**: interessante che BJORGUM abbia PF
+   2.47 sul sito (10 anni, 27 trade) ma sia negativa su MT5 (-8.6R, 5/6
+   anni) — divergenza simile a TURTLE_SOUP/CISD, probabilmente un altro caso
+   "il sito non cattura la timeframe reale H4 e l'esecuzione MT5". Bassa
+   priorità rispetto a SAR/MACD/RSI_DIV che pesano di più sul totale.
+6. **Una volta sistemate 2-4**: ri-eseguire un backtest 10y segmentato
+   completo con le correzioni applicate, per vedere se il portafoglio nel suo
+   insieme torna positivo — non giudicare le singole correzioni isolatamente,
+   il pattern storico del progetto (vedi [[NEXUS EA - Log Versioni]]) mostra
+   che le interazioni tra modifiche contano.
 
 ## Quando arrivano dati nuovi
 
@@ -43,10 +85,20 @@ sono già azionabili oggi con i 5 anni che abbiamo (vedi
   log dal vivo per isolarla.
 - [ ] **Nessun gate sul drawdown cumulato dal picco equity** — solo
   `InpMaxDailyDDPct` (giornaliero, si resetta ogni giorno). Il DD 87.22% nel
-  segmento 2020 è la conferma pratica del buco. Aggiungere un gate tipo
-  `InpMaxTotalDDPct` che blocchi nuovi trade (o riduca il rischio) quando
-  l'equity scende oltre una soglia dal massimo storico — non solo dall'inizio
-  giornata.
+  segmento 2020 (88.69% nel 2024) è la conferma pratica del buco. Aggiungere
+  un gate tipo `InpMaxTotalDDPct` che blocchi nuovi trade (o riduca il
+  rischio) quando l'equity scende oltre una soglia dal massimo storico — non
+  solo dall'inizio giornata.
+- [ ] **Fixare il proxy `sig_sar()` sul sito** (`server/backtest.py:387`) —
+  oggi è un incrocio EMA20/EMA50 identico a `sig_ema_pullback()`, non
+  Parabolic SAR. Serve implementare la vera logica (indicatore Parabolic SAR
+  + EMA9/EMA21) prima che qualsiasi screening sito su SAR abbia senso. Vedi
+  [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
+- [ ] **(Bassa priorità, strutturale) Il motore sito non supporta posizioni
+  multiple/hedge** (`pos` è singolare in `run_backtest()`). Se si vuole usare
+  il sito per validare in futuro il nucleo hedge o altre interazioni
+  multi-strategia, va esteso a più posizioni concorrenti — oggi è
+  strutturalmente impossibile, non solo un limite di dati.
 
 ## Strategie da correggere/spegnere (priorità in ordine)
 
@@ -92,4 +144,4 @@ sono già azionabili oggi con i 5 anni che abbiamo (vedi
   che perdono soldi attivamente.
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]] · [[NEXUS EA - Principi]]
+[[MOC - Trading]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]
