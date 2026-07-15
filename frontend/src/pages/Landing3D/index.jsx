@@ -21,12 +21,12 @@ function supportsWebGL() {
 }
 
 /**
- * NEXUS — landing cinematica. Nessun video: toro, orso, il loro scontro e
- * il re vivono come elementi 3D veri (ritagli con alpha reale, non uno
- * schermo che riproduce qualcosa) dentro uno spazio nero, con luci, ombre
- * sul pavimento e una camera che vola dentro la scena scrollando — libera
- * e profonda, non un punto fermo. Se il browser non supporta WebGL, resta
- * visibile un fermo immagine statico — non sparisce mai del tutto.
+ * NEXUS — landing cinematica. Niente illustrazioni: un unico oggetto 3D
+ * vero, la N di NEXUS (geometria reale, non un'immagine), dentro uno
+ * spazio nero con luci, un pavimento che riflette e una camera che le
+ * gira intorno e ci vola dentro scrollando — libera e profonda, non un
+ * punto fermo. Se il browser non supporta WebGL, resta visibile un
+ * fondale a gradiente statico — non sparisce mai del tutto.
  */
 export default function Landing3D() {
   const navigate = useNavigate();
@@ -89,8 +89,7 @@ export default function Landing3D() {
   // quando l'utente si ferma): un loop continuo smussa verso la velocità
   // istantanea e, appena lo scroll si ferma, quella stessa smussatura la
   // riporta a zero da sola — l'equivalente di una molla senza libreria di
-  // fisica dedicata. Il segnale grezzo (velocityRef) passa anche dentro il
-  // Canvas (Scene→Diorama) per dare un accenno di torsione all'energia.
+  // fisica dedicata.
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return undefined;
@@ -154,16 +153,11 @@ export default function Landing3D() {
             gl={{ antialias: true, powerPreference: "high-performance" }}
             dpr={[1, 2]}
           >
-            <Scene progressRef={progressRef} velocityRef={velocityRef} />
+            <Scene progressRef={progressRef} />
           </Canvas>
         </div>
       ) : (
-        <img
-          className="nx3d-video-bg"
-          src={`${process.env.PUBLIC_URL}/images/cutouts/king.webp`}
-          alt=""
-          aria-hidden="true"
-        />
+        <div className="nx3d-video-bg nx3d-fallback-bg" aria-hidden="true" />
       )}
       <div className="nx3d-video-scrim" aria-hidden="true" />
 
@@ -220,7 +214,7 @@ export default function Landing3D() {
               ref={(el) => { sectionRefs.current[i] = el; }}
             >
               <div className="nx3d-step-icon" aria-hidden="true"><Icon size={32} strokeWidth={1.6} /></div>
-              <GlassCard badge={s.badge} title={s.title}>
+              <GlassCard badge={s.badge} title={s.title} index={i}>
                 <p className="mt-3.5 text-[16px] font-medium text-white/85 leading-relaxed">{s.desc}</p>
               </GlassCard>
             </section>

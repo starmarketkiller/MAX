@@ -1,17 +1,23 @@
-// Un punto macchina per ognuna delle 6 sezioni (le 5 tappe + il finale):
-// non un'unica dolly continua e generica, ma una tappa dedicata per
-// elemento — si passa dalla vista d'insieme, al toro, all'orso, al punto
-// dello scontro, all'impatto, fino a fermarsi davanti al re. Interpolato
-// con uno smoothstep tra la tappa corrente e la successiva così ogni
-// scroll, anche piccolo, produce un movimento reale verso il prossimo
-// punto — mai un tratto "morto" dove la camera resta ferma.
+// Un punto macchina per ognuna delle 6 sezioni (le 5 tappe + il finale): la
+// camera gira intorno alla N (NexusLogo.jsx, ferma a [0, 2.1, -12]) restando
+// sempre entro un angolo che la mantiene leggibile come lettera — la N è
+// estrusa poco in profondità (1.35 unità contro 5.4 di altezza), un'orbita
+// troppo larga o dall'alto la riduce a un pannello piatto irriconoscibile.
+// Distanza e altezza variano invece parecchio: da lontano (tappa 0) fino a
+// un avvicinamento ravvicinato al culmine (tappa 4, dove l'energia
+// "lampeggia", impactTiming), poi un ritiro pulito per il finale — non un
+// attraversamento vero, per non ritrovarsi a leggere una N specchiata
+// proprio nel momento più importante (la call to action). Interpolato con
+// uno smoothstep tra la tappa corrente e la successiva così ogni scroll,
+// anche piccolo, produce un movimento reale — mai un tratto "morto".
+const N_POS = [0, 2.1, -12];
 export const CAMERA_WAYPOINTS = [
-  { pos: [0, 2.6, 15], look: [0, 1.8, -9] }, // 0 · Sempre attivo — vista d'insieme
-  { pos: [-3.6, 2.0, 7.2], look: [-4.4, 1.35, -8] }, // 1 · Si corregge da sé — verso il toro
-  { pos: [3.6, 2.0, 4.4], look: [4.4, 1.55, -8.5] }, // 2 · Corsie separate — verso l'orso
-  { pos: [0, 1.9, 0.2], look: [0, 1.95, -10.5] }, // 3 · Sempre con te — verso lo scontro
-  { pos: [0, 1.85, -3.8], look: [0, 1.95, -16] }, // 4 · Validazione doppia — l'impatto/il re che emerge
-  { pos: [0, 1.6, -13.6], look: [0, 1.85, -19.5] }, // 5 · finale — davanti al re
+  { pos: [0, 3.4, 12], look: N_POS }, // 0 · Sempre attivo — vista d'insieme, da lontano
+  { pos: [-6.5, 3.0, -3], look: [-0.3, 2.2, -11.3] }, // 1 · Si corregge da sé — orbita 3/4 a sinistra
+  { pos: [6.5, 2.4, -3], look: [0.3, 2.1, -11.5] }, // 2 · Corsie separate — orbita 3/4 a destra
+  { pos: [0, 4.0, -2.5], look: [0, 2.3, -11.5] }, // 3 · Sempre con te — leggero sopraelevo frontale
+  { pos: [0, 1.1, -8.3], look: [0, 2.1, -12.5] }, // 4 · Validazione doppia — avvicinamento, culmine energia
+  { pos: [0, 3.2, 8], look: [0, 2.05, -12] }, // 5 · finale — ritiro pulito, la N intera per la call to action
 ];
 
 function smoothstep(t) {

@@ -6,19 +6,20 @@ import { impactBump } from "./impactTiming";
 
 /**
  * Navigazione libera e profonda, a tappe: una posizione macchina dedicata
- * per ognuna delle 6 sezioni (cameraPath.js) — ad ogni scroll ci si
- * avvicina davvero al prossimo elemento (il toro, poi l'orso, poi lo
- * scontro, poi il re), non un'unica dolly generica sull'asse Z. Lo
- * smoothing è sul progresso stesso (non sulla posizione), così il
- * movimento resta continuo e fluido anche quando lo scroll è a scatti,
- * ma ogni piccolo scroll produce comunque uno spostamento visibile.
+ * per ognuna delle 6 sezioni (cameraPath.js) — la camera gira intorno alla
+ * N di NEXUS (NexusLogo) da angoli diversi e ci vola attraverso verso il
+ * finale, non un'unica dolly generica sull'asse Z. Lo smoothing è sul
+ * progresso stesso (non sulla posizione), così il movimento resta
+ * continuo e fluido anche quando lo scroll è a scatti, ma ogni piccolo
+ * scroll produce comunque uno spostamento visibile.
  *
- * `parallaxRef` (mouse+giroscopio, condiviso con Diorama tramite Scene)
+ * `parallaxRef` (mouse+giroscopio, condiviso con NexusLogo tramite Scene)
  * aggiunge un micro-look-around indipendente dallo scroll — muovere il
  * mouse o inclinare il telefono sposta leggermente il punto di vista.
  *
- * Al culmine dello scontro (impactBump) fa vibrare il telefono una sola
- * volta (Navigator.vibrate) — un piccolo riscontro fisico dell'impatto.
+ * Al culmine dell'attraversamento della N (impactBump) fa vibrare il
+ * telefono una sola volta (Navigator.vibrate) — un piccolo riscontro
+ * fisico del passaggio.
  */
 export default function CameraRig({ progressRef, parallaxRef }) {
   const { camera } = useThree();

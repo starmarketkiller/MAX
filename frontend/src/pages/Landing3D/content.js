@@ -1,5 +1,6 @@
-// Contenuto narrativo della landing — le 5 tappe. Niente più coordinate 3D:
-// lo sfondo è il video dell'arena, uguale per tutte le sezioni.
+// Contenuto narrativo della landing — le 5 tappe. Niente coordinate 3D qui:
+// la scena (la N di NEXUS) è la stessa per tutte le sezioni, cambia solo
+// l'angolo da cui la camera la guarda (cameraPath.js).
 
 // 6 sezioni nella rail: le 5 tappe + il finale (NEXUS).
 export const N_SECTIONS = 6;

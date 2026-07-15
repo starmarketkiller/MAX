@@ -1,7 +1,7 @@
 const CHIPS = [
-  { top: "18%", left: "9%", w: 108, delay: "0s", label: "SCAN::BULL", kind: "reticle" },
+  { top: "18%", left: "9%", w: 108, delay: "0s", label: "NEXUS::CORE", kind: "reticle" },
   { top: "64%", left: "6%", w: 92, delay: "-4.5s", label: "Δ +0.42%", kind: "spark" },
-  { top: "24%", right: "8%", w: 108, delay: "-1.8s", label: "SCAN::BEAR", kind: "reticle" },
+  { top: "24%", right: "8%", w: 108, delay: "-1.8s", label: "XAU::USD", kind: "reticle" },
   { top: "58%", right: "7%", w: 96, delay: "-7.2s", label: "VOL 0.88σ", kind: "spark" },
   { top: "83%", left: "42%", w: 118, delay: "-3s", label: "SYNC :: OK", kind: "code" },
 ];
@@ -33,13 +33,13 @@ function Reticle() {
 
 /**
  * Livello di vetro in primissimo piano — più vicino di tutto il resto in
- * scena, l'AI che "scansiona" il mercato: mirini sopra toro/orso, micro
- * sparkline, etichette di stato, alla deriva lentissima e indipendente
- * dallo scroll. L'aberrazione cromatica (text-shadow rosso/verde sfalsato)
- * e il bordo si intensificano con --nx3d-vel (impostata in index.jsx dalla
- * velocità di scroll) — più veloce scorri, più l'AI sembra "agganciarsi"
- * nervosamente ai dati. Nascosto su schermi stretti per non affollare un
- * layout mobile già compresso.
+ * scena, l'AI che "scansiona" il mercato: mirini, micro sparkline,
+ * etichette di stato, alla deriva lentissima e indipendente dallo scroll.
+ * L'aberrazione cromatica (text-shadow rosso/verde sfalsato) e il bordo si
+ * intensificano con --nx3d-vel (impostata in index.jsx dalla velocità di
+ * scroll) — più veloce scorri, più l'AI sembra "agganciarsi" nervosamente
+ * ai dati. Nascosto su schermi stretti per non affollare un layout mobile
+ * già compresso.
  */
 export default function HUDForeground() {
   return (

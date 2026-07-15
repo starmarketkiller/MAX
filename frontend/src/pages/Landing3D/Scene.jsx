@@ -2,19 +2,17 @@ import { Suspense, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import CameraRig from "./CameraRig";
-import Diorama from "./Diorama";
+import NexusLogo from "./NexusLogo";
 import Atmosphere from "./Atmosphere";
-import ImpactSparks from "./ImpactSparks";
-import Shockwave from "./Shockwave";
 import CinematicEffects from "./CinematicEffects";
 import useDeviceTilt from "./useDeviceTilt";
 
 /**
  * Mouse (desktop) + giroscopio (mobile, useDeviceTilt) uniti in un unico
- * segnale smussato — la "vita" dello spazio 4D: ogni livello (Diorama)
- * applica la propria intensità, la camera il proprio micro-look-around.
- * Un solo smoothing condiviso invece di uno per consumatore, per non
- * avere jitter relativo tra camera e livelli.
+ * segnale smussato — la "vita" dello spazio 4D: la N (NexusLogo) si
+ * inclina, la camera fa il proprio micro-look-around. Un solo smoothing
+ * condiviso invece di uno per consumatore, per non avere jitter relativo
+ * tra camera e logo.
  */
 const BASE_FOV = 45;
 const REF_ASPECT = 1.85;
@@ -52,13 +50,12 @@ function ResponsiveFov() {
 }
 
 /**
- * La "fonte di luce virtuale legata al mouse" per le normal map (Cutout con
- * `normalMapUrl`): non è ferma nel mondo — sta sempre a distanza fissa
- * davanti alla camera, spostata a sinistra/destra/su/giù dal mouse, come
- * una torcia tenuta leggermente scostata dall'occhio. Così muscoli e
- * armatura reagiscono con ombre e riflessi reali indipendentemente da dove
- * si trova la camera lungo il percorso — non serve una luce diversa per
- * ogni tappa.
+ * La "torcia legata al mouse" che fa vivere il metallo della N: non è
+ * ferma nel mondo — sta sempre a distanza fissa davanti alla camera,
+ * spostata a sinistra/destra/su/giù dal mouse, come una torcia tenuta
+ * leggermente scostata dall'occhio. Così i riflessi sulla N cambiano
+ * davvero muovendo il mouse, indipendentemente da dove si trova la
+ * camera lungo il percorso — non serve una luce diversa per ogni tappa.
  */
 function MouseLight({ parallaxRef }) {
   const ref = useRef();
@@ -91,27 +88,26 @@ function ParallaxSync({ tilt, parallaxRef }) {
 
 /**
  * Contenuto del Canvas R3F: spazio nero vero (non un fondale colorato),
- * dentro cui vivono elementi 3D reali — il toro, l'orso, il loro scontro,
- * il re, l'arena lontana (Diorama) — più pavimento riflettente, pulviscolo
- * e pilastri (Atmosphere), scintille d'impatto e onda d'urto per
- * l'impatto. Niente più video: solo luce, ombre e oggetti veri a
- * distanze diverse. Separato dalla UI HTML (overlay assoluto in
- * index.jsx) — comunicano solo via progressRef, letto ad ogni frame
- * senza mai forzare un re-render React.
+ * dentro cui vive un solo vero protagonista — la N di NEXUS (NexusLogo),
+ * geometria 3D reale che si illumina davvero — più pavimento riflettente,
+ * pulviscolo e pilastri (Atmosphere) a dare profondità. Niente disegni:
+ * solo luce, ombre e forma pura a distanze diverse. Separato dalla UI HTML
+ * (overlay assoluto in index.jsx) — comunicano solo via progressRef, letto
+ * ad ogni frame senza mai forzare un re-render React.
  */
-export default function Scene({ progressRef, velocityRef }) {
+export default function Scene({ progressRef }) {
   const tilt = useDeviceTilt();
   const parallaxRef = useRef({ x: 0, y: 0 });
 
   return (
     <>
       <color attach="background" args={["#000000"]} />
-      <fogExp2 attach="fog" args={["#010103", 0.016]} />
+      <fogExp2 attach="fog" args={["#010103", 0.014]} />
 
-      <ambientLight color="#0c1830" intensity={0.55} />
+      <ambientLight color="#0c1830" intensity={0.5} />
       <directionalLight
         color="#9fd8ff"
-        intensity={0.9}
+        intensity={0.85}
         position={[6, 9, 4]}
         castShadow
         shadow-mapSize={[1024, 1024]}
@@ -123,20 +119,18 @@ export default function Scene({ progressRef, velocityRef }) {
         shadow-camera-bottom={-16}
       />
       <directionalLight color="#8b6ff0" intensity={0.35} position={[-8, 3, -4]} />
-      <pointLight color="#4ade80" intensity={12} distance={14} position={[-5.6, 2, -9]} />
-      <pointLight color="#f87171" intensity={12} distance={14} position={[5.6, 2, -9]} />
-      <pointLight color="#fbbf24" intensity={16} distance={16} position={[0, 3, -18]} />
+      <pointLight color="#38bdf8" intensity={18} distance={20} position={[-4, 3.5, -9]} />
+      <pointLight color="#22d3ee" intensity={18} distance={20} position={[4, 3.5, -15]} />
+      <pointLight color="#8b6ff0" intensity={10} distance={18} position={[0, 1, -20]} />
 
       <ResponsiveFov />
       <ParallaxSync tilt={tilt} parallaxRef={parallaxRef} />
       <MouseLight parallaxRef={parallaxRef} />
 
       <Suspense fallback={null}>
-        <Diorama progressRef={progressRef} parallaxRef={parallaxRef} velocityRef={velocityRef} />
+        <NexusLogo progressRef={progressRef} parallaxRef={parallaxRef} />
       </Suspense>
       <Atmosphere />
-      <ImpactSparks progressRef={progressRef} />
-      <Shockwave progressRef={progressRef} />
       <CameraRig progressRef={progressRef} parallaxRef={parallaxRef} />
       <CinematicEffects />
     </>

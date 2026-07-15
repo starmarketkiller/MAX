@@ -10,15 +10,19 @@ import ScrambleText from "./ScrambleText";
  *
  * L'ingresso/uscita è agganciato allo scroll stesso (useScroll+
  * useTransform, non whileInView): mentre la sezione sale nel viewport il
- * blocco ruota leggermente in avanti (rotateX) e scivola su, si assesta
- * piatto al centro, poi ruota all'indietro e scivola via mentre esce in
- * alto. Il titolo si "decodifica" (ScrambleText) non appena la sezione
- * si blocca in posizione, invece di un fade-in classico.
+ * blocco ruota leggermente in avanti (rotateX) e di lato (rotateY, verso
+ * sinistra o destra alternando per sezione via `index`) mentre scivola su
+ * e dissolve, si assesta piatto al centro, poi ruota e dissolve
+ * all'indietro mentre esce in alto — una vera "rotazione + dissolvenza"
+ * da spazio 3D, non uno slide piatto. Il titolo si "decodifica"
+ * (ScrambleText) non appena la sezione si blocca in posizione, invece di
+ * un fade-in classico.
  */
-export default function GlassCard({ badge, title, children, center = false, wide = false, className = "" }) {
+export default function GlassCard({ badge, title, children, center = false, wide = false, className = "", index = 0 }) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const [titleTrigger, setTitleTrigger] = useState(false);
+  const dir = index % 2 === 0 ? 1 : -1;
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     if (v > 0.32 && !titleTrigger) setTitleTrigger(true);
@@ -27,7 +31,8 @@ export default function GlassCard({ badge, title, children, center = false, wide
   const opacity = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0, 1, 1, 0]);
   const y = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [84, 0, 0, -72]);
   const rotateX = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [20, 0, 0, -15]);
-  const scale = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0.92, 1, 1, 0.95]);
+  const rotateY = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [26 * dir, 0, 0, -20 * dir]);
+  const scale = useTransform(scrollYProgress, [0, 0.32, 0.68, 1], [0.9, 1, 1, 0.94]);
 
   return (
     <motion.div
@@ -36,8 +41,9 @@ export default function GlassCard({ badge, title, children, center = false, wide
         opacity,
         y,
         rotateX,
+        rotateY,
         scale,
-        transformPerspective: 900,
+        transformPerspective: 1100,
         willChange: "transform, opacity",
       }}
       className={[

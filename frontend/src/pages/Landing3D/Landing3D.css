@@ -36,6 +36,11 @@
   position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
   background: #000; object-fit: contain; object-position: center 55%;
 }
+.nx3d-fallback-bg {
+  background:
+    radial-gradient(60% 50% at 50% 42%, rgba(56, 189, 248, 0.16), transparent 70%),
+    linear-gradient(180deg, #050510 0%, #030308 60%, #000 100%);
+}
 .nx3d-video-scrim {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background:
