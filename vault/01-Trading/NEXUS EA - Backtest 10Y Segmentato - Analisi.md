@@ -148,5 +148,21 @@ sito va sempre confermato su MT5 PRIMA di sostituire una config che sui dati
 MT5 reali era già validata — altrimenti si rischia di rompere qualcosa che
 funzionava per inseguire un segnale di un motore meno fedele.
 
+## Segmento 10 arrivato (15/07) — non ancora integrato in questa analisi
+
+Il segmento 10 (2025-26, 1.559 trade totali — il volume più alto di tutti)
+è stato pushato da un'altra sessione insieme a
+[[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]], che documenta anche un bug
+di pipeline (report duplicati per race condition, stesso bug del segmento 2)
+e un'anomalia non ancora spiegata: **i segmenti 2016-2019 hanno solo
+17/3/59 trade** contro le 500-1500+ degli anni successivi — non spiegata
+dai contatori BLOCKED_BY_GATE, ipotesi principale è qualità dei dati
+storici ricostruiti. Questo va incrociato con la scoperta di questa nota
+(segmenti 1-3 falliti per bug del tester) — potrebbero essere la stessa
+causa vista da due angolazioni diverse, o due problemi distinti. **TODO**:
+estendere il ranking R-per-strategia (6 anni → 7 anni) includendo il
+segmento 10, e chiarire se l'anomalia 2016-2019 è lo stesso bug o un'altra
+causa. Vedi [[TODO - Backtest 10Y]].
+
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Log Versioni]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]]
+[[MOC - Trading]] · [[NEXUS EA - Log Versioni]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Hedge nel Tempo]] · [[MOC - Strategie]] · [[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]]

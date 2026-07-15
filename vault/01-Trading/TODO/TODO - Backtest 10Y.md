@@ -16,6 +16,38 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
 
+## 🔀 Sincronizzazione tra agenti (15/07) — risolto in parte
+
+Scoperto che un'altra sessione lavora direttamente su `main` (agente
+"NEXUS Bot") mentre questa lavora su un branch feature — nessuno dei due
+vedeva i commit dell'altro senza un `git fetch` esplicito. Il segmento 10 e
+una nota vault parallela sullo stesso argomento
+([[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]]) sono arrivati su `main`
+senza che questa sessione lo sapesse.
+
+- [x] **Creato un hook SessionStart** (`.claude/hooks/session-start.sh` +
+  `.claude/settings.json`) che ad ogni avvio sessione fa `git fetch` e
+  segnala commit remoti mancanti, evidenziando i file toccati sia qui che
+  altrove. Funziona per qualunque sessione Claude Code che apre questo
+  repo — se l'altro agente non è Claude Code, serve un meccanismo
+  equivalente lato suo.
+- [x] **Fatto merge di `origin/main` in questo branch** — recuperati
+  segmenti 9/10, la nota vault parallela, risolto un conflitto su
+  [[NEXUS EA - Log Versioni]] (unite le due voci invece di sceglierne una).
+- [ ] **Ancora da fare**: questo branch non è ancora unito in `main` — il
+  lavoro di oggi (audit fedeltà, fix SAR/ADX_RSI, fonti esterne, framework
+  setup buy/sell) non è visibile a chi lavora su `main`. Da decidere con
+  l'utente se/quando fare il merge verso `main`.
+- [ ] **Riconciliazione numerica in sospeso**: i conteggi trade per segmento
+  non coincidono esattamente tra le due analisi parallele (vedi nota di
+  riconciliazione in [[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]]) — da
+  isolare la causa (metodo di conteggio diverso) prima di fidarsi
+  ciecamente di uno dei due totali.
+- [ ] **Segmento 10** arrivato (1.559 trade, il volume più alto) ma non
+  ancora integrato nel ranking R-per-strategia di
+  [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] (fermo a 6 anni/segmenti
+  4-9). Prossimo passo naturale quando si riprende quel lavoro.
+
 ## 🔍 Audit di fedeltà completo (15/07) — tutte le 37 strategie controllate
 
 Su richiesta esplicita dell'utente dopo la scoperta SAR/ADX_RSI: letto per

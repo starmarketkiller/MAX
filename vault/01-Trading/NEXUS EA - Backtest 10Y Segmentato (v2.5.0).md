@@ -54,5 +54,22 @@ fanno scattare i gate su margine/spread prima ancora del segnale).
 **Non confermato.** Segmenti 1/2/3 rilanciati per verificare se il problema è
 riproducibile o era anomalia del singolo run.
 
+## Nota di riconciliazione (15/07, sessione parallela)
+Questa nota e [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] sono state
+scritte in parallelo da due sessioni diverse sullo stesso dataset, senza
+vedersi a vicenda (vedi [[TODO - Backtest 10Y]] per il problema di
+sincronizzazione tra agenti, ora mitigato con un hook automatico). Due cose
+da chiarire quando si uniranno le analisi:
+1. **I numeri di trade non coincidono esattamente** — qui 2019-20 = 534,
+   nell'altra nota il segmento 4 (2019) risulta 631 trade totali. Probabile
+   differenza di metodo di conteggio (wins+losses vs wins+losses+breakeven,
+   o fonte dati diversa: qui dai CSV, là anche dagli `.htm`) — va isolata la
+   causa prima di fidarsi ciecamente di uno dei due totali.
+2. **Il fallimento dei segmenti 1-3** qui è attribuito principalmente al
+   bug di pipeline (report duplicati); nell'altra nota è attribuito a un
+   bug del tester + race condition tra lanci consecutivi. Potrebbero essere
+   la stessa causa vista da due angolazioni, o due problemi distinti — da
+   verificare quando arriveranno i segmenti 1-3 rilanciati.
+
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Log Versioni]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[NEXUS EA - Log Versioni]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[TODO - Backtest 10Y]]
