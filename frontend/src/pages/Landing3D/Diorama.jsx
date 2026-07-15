@@ -11,7 +11,9 @@ const arenaMap = (p) => p;
  * La scena vera: elementi 3D reali (ritagli con alpha) a profondità
  * diverse in uno spazio nero. Tre livelli di parallasse rigorosi:
  * l'arena (sfondo, lentissima, con uno zoom continuo), toro e orso
- * (secondo piano, convergono l'uno verso l'altro caricandosi), lo
+ * (secondo piano, esplodono verso l'esterno mentre lo scontro cresce —
+ * partono vicini al centro/allo scontro e vengono scaraventati verso i
+ * bordi, crescendo, come scagliati dalla forza dell'impatto), lo
  * scontro/il re (primo piano, cresce nel momento dell'impatto). Lo
  * scroll pilota sia la camera (CameraRig, a tappe — una per sezione) sia
  * questi elementi stessi: toro e orso si muovono loro, non restano fermi
@@ -46,32 +48,35 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
         pulse={false}
       />
 
-      {/* il toro, a sinistra, verde — converge verso il re caricando */}
+      {/* il toro, verde — parte vicino al centro/allo scontro e viene
+          scaraventato verso il bordo esterno sinistro dalla forza
+          dell'impatto, crescendo mentre esce verso camera (non il
+          contrario: prima convergeva verso il re, restringendosi) */}
       <Cutout
         url={IMG("bull")}
-        width={9.27}
-        height={5.2}
-        position={[-5.6, 1.1, -9]}
+        width={11.8}
+        height={6.45}
+        position={[-1.6, 1.4, -8]}
         progressRef={progressRef}
         mapProgress={convergeMap}
-        convergeTo={[-1.5, 1.7, -17.5]}
-        convergeScale={0.3}
+        convergeTo={[-9.5, 0.8, -3]}
+        convergeScale={1.6}
         parallaxRef={parallaxRef}
         parallaxStrength={0.9}
         glowColor="#4ade80"
         glowOpacity={0.5}
       />
 
-      {/* l'orso, a destra, rosso — converge verso il re caricando */}
+      {/* l'orso, rosso — stesso esplodere verso l'esterno, sul lato destro */}
       <Cutout
         url={IMG("bear")}
-        width={6.78}
-        height={7.4}
-        position={[5.6, 1.9, -9]}
+        width={8.4}
+        height={9.15}
+        position={[1.6, 1.7, -8]}
         progressRef={progressRef}
         mapProgress={convergeMap}
-        convergeTo={[1.5, 1.9, -17.5]}
-        convergeScale={0.3}
+        convergeTo={[9.5, 1.1, -3]}
+        convergeScale={1.6}
         parallaxRef={parallaxRef}
         parallaxStrength={0.9}
         glowColor="#f87171"
@@ -100,8 +105,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
       {/* il re dorato, in fondo — si rivela man mano che si vola dentro */}
       <Cutout
         url={IMG("king")}
-        width={5.9}
-        height={7.1}
+        width={6.5}
+        height={7.8}
         position={[0, 2.0, -19.5]}
         parallaxRef={parallaxRef}
         parallaxStrength={0.55}
