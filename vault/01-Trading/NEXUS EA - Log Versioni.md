@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, changelog]
 created: 2026-07-12
-updated: 2026-07-12
+updated: 2026-07-15
 ---
 
 # NEXUS EA — log versioni
@@ -27,7 +27,7 @@ Fonte: messaggi di commit git + risultati backtest in `results/reports/`.
 | v2.4.7 | Ripristina config campione v2.4.5 | torna a +1005 |
 | v2.4.8 | Hedge ON (corsie 4 + gate margine) + ritira TSI/ICHIMOKU (0 trade confermati) | **net +1050, Sharpe 3.19, DD 29.6% — record assoluto sui 3 mesi** |
 | ⚠️ | **Test di 3 ANNI su v2.4.8** | **net −863, DD 87% — overfitting confermato.** Vedi [[NEXUS EA - Lezione Overfitting 3Y]] |
-| v2.5.0 | Screening 10y sul motore sito → filtro HTF universale applicato a ADX_RSI/EMA_PULLBACK/MACD/SAR/OB_MIT, riabilita TSI+BREAKOUT_ACC | **in attesa di validazione 3M+3Y** |
+| v2.5.0 | Screening 10y sul motore sito → filtro HTF universale applicato a ADX_RSI/EMA_PULLBACK/MACD/SAR/OB_MIT, riabilita TSI+BREAKOUT_ACC | Backtest 10Y segmentato (2016-2026): trade sani da 2019 in poi (500-1500/anno), ma **2016-2019 quasi senza trade** (17/3/59) — causa non confermata, in verifica. Vedi [[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]] |
 
 ## Pattern ricorrente osservato
 1. Ogni volta che si isola UNA modifica alla volta, si legge il segnale pulito.
@@ -40,4 +40,4 @@ Fonte: messaggi di commit git + risultati backtest in `results/reports/`.
    su misura), non da un accumulo di piccoli tweak.
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Screening Strategie (sito 10y)]]
+[[MOC - Trading]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Backtest 10Y Segmentato (v2.5.0)]]
