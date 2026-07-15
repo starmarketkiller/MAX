@@ -54,6 +54,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
           contrario: prima convergeva verso il re, restringendosi) */}
       <Cutout
         url={IMG("bull")}
+        normalMapUrl={IMG("bull_normal")}
+        normalScale={0.6}
         width={11.8}
         height={6.45}
         position={[-1.6, 1.4, -8]}
@@ -70,6 +72,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
       {/* l'orso, rosso — stesso esplodere verso l'esterno, sul lato destro */}
       <Cutout
         url={IMG("bear")}
+        normalMapUrl={IMG("bear_normal")}
+        normalScale={0.6}
         width={8.4}
         height={9.15}
         position={[1.6, 1.7, -8]}
@@ -107,6 +111,8 @@ export default function Diorama({ progressRef, parallaxRef, velocityRef }) {
           non solo quando la camera gli arriva vicino nel finale */}
       <Cutout
         url={IMG("king")}
+        normalMapUrl={IMG("king_normal")}
+        normalScale={0.75}
         width={9.8}
         height={11.75}
         position={[0, 2.6, -19.5]}

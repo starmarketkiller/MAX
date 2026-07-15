@@ -31,9 +31,23 @@ import * as THREE from "three";
  * (rotation.z) proporzionale alla velocità di scroll — dà peso/inerzia
  * all'energia dello scontro quando si scrolla veloce, si assesta da sola
  * quando lo scroll si ferma.
+ *
+ * `normalMapUrl` (opzionale): niente modelli 3D veri, ma la pittura di luci
+ * e ombre già presente nel ritaglio (muscoli, pieghe dell'armatura) diventa
+ * un vero rilievo — normal map generata offline dalla luminanza
+ * dell'immagine stessa (Sobel su un'immagine "riempita" oltre il bordo
+ * alpha, per non avere un dislivello finto proprio sul contorno). Con
+ * MeshStandardMaterial al posto di MeshBasicMaterial, le luci della scena
+ * — compresa MouseLight, che segue il mouse — creano riflessi e ombre
+ * dinamiche reali sopra il ritaglio piatto. `emissiveMap` mantiene la
+ * stessa resa "sempre visibile" di prima come base, la luce vera si
+ * aggiunge sopra invece di sostituirla — zero rischio di un'immagine che
+ * si spegne se la luce è debole o mal posizionata.
  */
 export default function Cutout({
   url,
+  normalMapUrl,
+  normalScale = 0.65,
   width,
   height,
   position,
@@ -54,6 +68,7 @@ export default function Cutout({
   billboard = true,
 }) {
   const texture = useLoader(THREE.TextureLoader, url);
+  const normalMap = useLoader(THREE.TextureLoader, normalMapUrl || url);
   const glowRef = useRef();
   const groupRef = useRef();
   const smooth = useRef(0);
@@ -121,14 +136,32 @@ export default function Cutout({
       )}
       <mesh renderOrder={2} castShadow>
         <planeGeometry args={[width, height]} />
-        <meshBasicMaterial
-          map={texture}
-          transparent
-          alphaTest={0.12}
-          depthWrite={!additive}
-          blending={additive ? THREE.AdditiveBlending : THREE.NormalBlending}
-          toneMapped={false}
-        />
+        {normalMapUrl ? (
+          <meshStandardMaterial
+            map={texture}
+            normalMap={normalMap}
+            normalScale={new THREE.Vector2(normalScale, normalScale)}
+            emissiveMap={texture}
+            emissive="#ffffff"
+            emissiveIntensity={0.82}
+            roughness={0.5}
+            metalness={0.08}
+            transparent
+            alphaTest={0.12}
+            depthWrite={!additive}
+            blending={additive ? THREE.AdditiveBlending : THREE.NormalBlending}
+            toneMapped={false}
+          />
+        ) : (
+          <meshBasicMaterial
+            map={texture}
+            transparent
+            alphaTest={0.12}
+            depthWrite={!additive}
+            blending={additive ? THREE.AdditiveBlending : THREE.NormalBlending}
+            toneMapped={false}
+          />
+        )}
       </mesh>
     </group>
   );

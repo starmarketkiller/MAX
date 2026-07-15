@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import CameraRig from "./CameraRig";
 import Diorama from "./Diorama";
 import Atmosphere from "./Atmosphere";
@@ -48,6 +49,32 @@ function ResponsiveFov() {
     camera.updateProjectionMatrix();
   }, [size, camera]);
   return null;
+}
+
+/**
+ * La "fonte di luce virtuale legata al mouse" per le normal map (Cutout con
+ * `normalMapUrl`): non è ferma nel mondo — sta sempre a distanza fissa
+ * davanti alla camera, spostata a sinistra/destra/su/giù dal mouse, come
+ * una torcia tenuta leggermente scostata dall'occhio. Così muscoli e
+ * armatura reagiscono con ombre e riflessi reali indipendentemente da dove
+ * si trova la camera lungo il percorso — non serve una luce diversa per
+ * ogni tappa.
+ */
+function MouseLight({ parallaxRef }) {
+  const ref = useRef();
+  const { camera } = useThree();
+  const tmp = useRef(new THREE.Vector3());
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const px = parallaxRef.current.x;
+    const py = parallaxRef.current.y;
+    tmp.current.set(px * 5.5, -py * 3.5 + 1.4, -3.2);
+    tmp.current.applyMatrix4(camera.matrixWorld);
+    ref.current.position.copy(tmp.current);
+  });
+
+  return <pointLight ref={ref} color="#dbe8ff" intensity={26} distance={24} decay={2} />;
 }
 
 function ParallaxSync({ tilt, parallaxRef }) {
@@ -102,6 +129,7 @@ export default function Scene({ progressRef, velocityRef }) {
 
       <ResponsiveFov />
       <ParallaxSync tilt={tilt} parallaxRef={parallaxRef} />
+      <MouseLight parallaxRef={parallaxRef} />
 
       <Suspense fallback={null}>
         <Diorama progressRef={progressRef} parallaxRef={parallaxRef} velocityRef={velocityRef} />
