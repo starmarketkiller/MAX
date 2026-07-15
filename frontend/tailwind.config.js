@@ -33,6 +33,10 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontFamily: {
+        grotesk: ["'Space Grotesk'", "ui-sans-serif", "system-ui", "sans-serif"],
+        quantum: ["'JetBrains Mono'", "ui-monospace", "'SF Mono'", "monospace"],
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

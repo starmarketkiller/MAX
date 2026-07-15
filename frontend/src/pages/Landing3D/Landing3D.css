@@ -1,0 +1,226 @@
+/* NEXUS — landing 3D cinematica. Scoped .nx3d. Il layout dei riquadri di
+   testo (glassmorphism) vive in Tailwind dentro i componenti JSX; qui resta
+   solo la "chrome" del canopy (HUD, rail, hint) e la tipografia hero che
+   Tailwind arbitrary values renderebbe illeggibile. */
+.nx3d {
+  --nx-cyan: #38bdf8;
+  --nx-azure: #60a5fa;
+  --nx-electric: #22d3ee;
+  --nx-white: #eaf2ff;
+  --nx-dim: #8ea6cf;
+  --nx-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --nx-sans: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  position: relative;
+  background: #050510;
+  color: var(--nx-white);
+  font-family: var(--nx-sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.nx3d ::selection { background: rgba(56, 189, 248, 0.35); }
+
+/* ---- sfondo: la scena 3D (elementi in spazio nero), fissa dietro tutta
+   la pagina. .nx3d-video-bg resta come fermo immagine se WebGL non c'e'.
+   100dvh (non solo 100vh) perché su Safari mobile, specie appena dopo una
+   rotazione, 100vh si misura sulla viewport "grande" (come se la barra del
+   browser fosse nascosta) mentre l'area davvero visibile è più piccola —
+   il risultato è la scena rimpicciolita con bande nere ai lati, esattamente
+   il problema segnalato. Il fallback a 100vh resta per i browser che non
+   supportano dvh. ---- */
+.nx3d-gl-wrap {
+  position: fixed; inset: 0; z-index: 0; background: #000;
+  width: 100vw; height: 100vh; height: 100dvh;
+}
+.nx3d-video-bg {
+  position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
+  background: #000; object-fit: contain; object-position: center 55%;
+}
+.nx3d-fallback-bg {
+  background:
+    radial-gradient(60% 50% at 50% 42%, rgba(56, 189, 248, 0.16), transparent 70%),
+    linear-gradient(180deg, #050510 0%, #030308 60%, #000 100%);
+}
+.nx3d-video-scrim {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 6, 15, 0.3) 0%, rgba(4, 6, 15, 0.42) 45%, rgba(4, 6, 15, 0.62) 100%),
+    radial-gradient(120% 90% at 50% 50%, transparent 35%, rgba(4, 6, 15, 0.45) 100%);
+}
+
+/* ---- barra di avanzamento scroll — aggiornata solo sull'evento scroll
+   (index.jsx), non ad ogni frame: qui non serve un ritorno morbido a
+   riposo come per lo skew, quindi non c'è motivo di pagarne il costo. ---- */
+.nx3d-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 8; background: rgba(56, 189, 248, 0.1); pointer-events: none; }
+.nx3d-progress-fill {
+  height: 100%; width: calc(var(--nx3d-progress, 0) * 100%);
+  background: linear-gradient(90deg, var(--nx-cyan), var(--nx-electric));
+  box-shadow: 0 0 10px var(--nx-cyan), 0 0 2px var(--nx-electric);
+}
+@media (prefers-reduced-motion: no-preference) { .nx3d-progress-fill { transition: width 0.15s linear; } }
+
+.nx3d-scroll { position: relative; z-index: 2; }
+
+/* ---- HUD del canopy ---- */
+.nx3d-hud { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+.nx3d-hud-corner { position: absolute; width: 34px; height: 34px; border: 2px solid rgba(56, 189, 248, 0.5); opacity: 0.7; }
+.nx3d-hud-corner.tl { top: 22px; left: 22px; border-right: none; border-bottom: none; }
+.nx3d-hud-corner.tr { top: 22px; right: 22px; border-left: none; border-bottom: none; }
+.nx3d-hud-corner.bl { bottom: 22px; left: 22px; border-right: none; border-top: none; }
+.nx3d-hud-corner.br { bottom: 22px; right: 22px; border-left: none; border-top: none; }
+.nx3d-hud-sweep {
+  position: absolute; left: 0; right: 0; height: 1px; top: -2%;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45), transparent);
+  animation: nx3d-sweep 7s linear infinite; opacity: 0.55;
+}
+@keyframes nx3d-sweep { 0% { top: -2%; } 100% { top: 102%; } }
+.nx3d-hud-label { position: absolute; font-family: var(--nx-mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--nx-dim); opacity: 0.62; }
+.nx3d-hud-label.tl { top: 26px; left: 66px; }
+.nx3d-hud-label.tr { top: 26px; right: 66px; text-align: right; }
+.nx3d-hud-label.bl { bottom: 26px; left: 66px; }
+.nx3d-hud-label.br { bottom: 26px; right: 66px; text-align: right; }
+
+/* ---- pannelli laterali di telemetria ---- */
+.nx3d-glasspanel {
+  position: fixed; top: 50%; transform: translateY(-50%); z-index: 4; width: 172px; padding: 16px 18px;
+  background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 14px;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.65), inset 0 0 30px rgba(56, 230, 255, 0.05);
+  pointer-events: none; will-change: transform;
+  opacity: 0; animation: nx3d-panelin 1.3s 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.nx3d-glasspanel.left { left: 26px; }
+.nx3d-glasspanel.right { right: 26px; }
+@keyframes nx3d-panelin { from { opacity: 0; } to { opacity: 1; } }
+.nx3d-gp-title { font-family: var(--nx-mono); font-size: 9.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--nx-cyan); opacity: 0.85; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(56, 189, 248, 0.18); }
+.nx3d-gp-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; font-family: var(--nx-mono); }
+.nx3d-gp-row span { font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--nx-dim); }
+.nx3d-gp-row b { font-size: 12px; color: var(--nx-white); font-weight: 600; text-align: right; }
+
+@media (max-width: 1100px) { .nx3d-glasspanel { display: none; } }
+@media (max-width: 720px) { .nx3d-hud-label { display: none; } .nx3d-hud-corner { width: 22px; height: 22px; } }
+@media (prefers-reduced-motion: reduce) {
+  .nx3d-hud-sweep { animation: none; display: none; }
+  .nx3d-glasspanel { animation: none; opacity: 1; transform: translateY(-50%); }
+}
+
+/* ---- layout sezioni ---- */
+.nx3d-panel { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; padding: 0 8vw; }
+.nx3d-panel.center { justify-content: center; text-align: center; }
+.nx3d-panel.step { justify-content: space-between; gap: 32px; }
+@media (max-width: 860px) { .nx3d-panel.step { flex-direction: column; justify-content: center; padding: 0 7vw; } }
+
+.nx3d-step-icon {
+  flex: 0 0 auto; width: 84px; height: 84px; border-radius: 20px; display: grid; place-items: center;
+  border: 1px solid rgba(56, 189, 248, 0.32); background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--nx-cyan);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+@media (max-width: 860px) { .nx3d-step-icon { width: 60px; height: 60px; } .nx3d-step-icon svg { width: 26px; height: 26px; } }
+
+.nx3d-eyebrow { font-family: var(--nx-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.36em; text-transform: uppercase; color: var(--nx-cyan); display: inline-flex; gap: 12px; align-items: center; }
+.nx3d-eyebrow::before { content: ""; width: 34px; height: 2px; background: var(--nx-cyan); box-shadow: 0 0 12px var(--nx-cyan); }
+
+.nx3d h1 {
+  font-family: var(--nx-mono); font-weight: 700; line-height: 0.86; margin: 26px 0 0; font-size: clamp(84px, 19vw, 260px); letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #fff, var(--nx-cyan) 55%, var(--nx-azure));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.35));
+}
+.nx3d-lede { font-size: clamp(20px, 2.6vw, 32px); margin: 26px 0 0; line-height: 1.32; text-wrap: balance; font-weight: 700; letter-spacing: -0.01em; }
+.nx3d-lede b { color: var(--nx-electric); }
+
+.nx3d-cta { display: flex; gap: 14px; margin-top: 40px; flex-wrap: wrap; }
+.nx3d-panel.center .nx3d-cta { justify-content: center; }
+.nx3d-btn {
+  position: relative; overflow: hidden;
+  font-family: var(--nx-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; padding: 17px 30px;
+  border: 1px solid rgba(56, 189, 248, 0.45); color: var(--nx-white); cursor: pointer; background: rgba(10, 20, 40, 0.45);
+  backdrop-filter: blur(8px); transition: 0.28s; border-radius: 8px;
+}
+.nx3d-btn::before {
+  content: ""; position: absolute; inset: -50%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4), transparent 70%);
+  opacity: 0; transform: scale(0.4);
+  transition: opacity 0.45s ease, transform 0.55s ease;
+}
+.nx3d-btn:hover::before { opacity: 1; transform: scale(1); }
+.nx3d-btn:hover { border-color: var(--nx-cyan); box-shadow: 0 12px 50px -14px rgba(56, 189, 248, 0.8); transform: translateY(-3px); }
+.nx3d-btn.primary { background: linear-gradient(180deg, var(--nx-electric), var(--nx-azure)); color: #04121f; border-color: transparent; font-weight: 700; }
+.nx3d-btn.primary::before { background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 70%); }
+.nx3d-btn:focus-visible { outline: 2px solid var(--nx-cyan); outline-offset: 3px; }
+.nx3d-btn > * { position: relative; }
+@media (prefers-reduced-motion: reduce) { .nx3d-btn::before { transition: none; } }
+
+.nx3d-rail { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 16px; }
+.nx3d-rail button { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--nx-cyan); background: transparent; cursor: pointer; padding: 0; transition: 0.3s; }
+.nx3d-rail button.on { background: var(--nx-cyan); box-shadow: 0 0 16px var(--nx-cyan); }
+.nx3d-disc { font-family: var(--nx-mono); font-size: 12px; color: #5b6d92; margin-top: 30px; line-height: 1.6; max-width: 54ch; }
+.nx3d-panel.center .nx3d-disc { margin: 30px auto 0; }
+
+@media (min-width: 1101px) { .nx3d-panel { padding-left: 240px; padding-right: 240px; } }
+
+/* ---- distorsione da velocità di scroll: --nx3d-skew/--nx3d-blur/--nx3d-vel
+   sono impostate ad ogni frame da un loop in index.jsx (non da un singolo
+   evento scroll, che smette appena l'utente si ferma) — quando la
+   scrollbar corre veloce il testo si inclina appena e si sfoca, poi torna
+   da solo a riposo con lo stesso smussamento che l'ha generato. ---- */
+.nx3d-skew-target {
+  transform: skewY(var(--nx3d-skew, 0deg));
+  filter: blur(var(--nx3d-blur, 0px));
+  will-change: transform, filter;
+}
+
+/* ---- livello HUD "glassmorphism" in primissimo piano ---- */
+.nx3d-hudfg { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+.nx3d-hudfg-chip {
+  /* niente backdrop-filter qui: opacity/bordo/text-shadow sono già
+     guidati da --nx3d-vel aggiornata via JS a ogni frame durante lo
+     scroll (index.jsx) — un backdrop-filter su 5 elementi ricalcolato ad
+     ogni frame è il tipo di costo che fa percepire lo scroll "impastato"
+     su schermi non velocissimi; uno sfondo pieno un filo più opaco dà
+     quasi lo stesso effetto vetro senza il ricalcolo continuo. */
+  position: absolute; display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, calc(0.2 + var(--nx3d-vel, 0) * 0.4));
+  background: rgba(6, 12, 26, 0.52);
+  color: var(--nx-cyan);
+  font-family: var(--nx-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  opacity: calc(0.32 + var(--nx3d-vel, 0) * 0.4);
+  text-shadow:
+    calc(var(--nx3d-vel, 0) * -1.8px) 0 rgba(248, 113, 113, 0.55),
+    calc(var(--nx3d-vel, 0) * 1.8px) 0 rgba(74, 222, 128, 0.55);
+  animation: nx3d-hudfg-drift 13s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.nx3d-hudfg-chip.code { color: var(--nx-dim); }
+.nx3d-hudfg-icon { display: flex; flex: 0 0 auto; }
+.nx3d-hudfg-label { white-space: nowrap; }
+@keyframes nx3d-hudfg-drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(7px, -11px); }
+}
+@media (max-width: 860px) { .nx3d-hudfg-chip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .nx3d-hudfg-chip { animation: none; } }
+
+/* ---- pulsante audio (drone ambientale, Web Audio API) ---- */
+.nx3d-audio-btn {
+  position: fixed; right: 30px; bottom: 30px; z-index: 7;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(6, 12, 26, 0.45);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: var(--nx-cyan); display: grid; place-items: center; cursor: pointer;
+  transition: 0.25s;
+}
+.nx3d-audio-btn:hover { border-color: var(--nx-cyan); box-shadow: 0 8px 30px -10px rgba(56, 189, 248, 0.75); transform: translateY(-2px); }
+.nx3d-audio-btn:focus-visible { outline: 2px solid var(--nx-cyan); outline-offset: 3px; }
+@media (max-width: 720px) { .nx3d-audio-btn { right: 16px; bottom: 16px; width: 36px; height: 36px; } }
+
+/* ritmo verticale piu' compatto su telefono in verticale — meno margine tra
+   i blocchi, cosi' la card della hero (badge+H1+lede+sub+2 bottoni) ha piu'
+   probabilita' di stare nell'altezza disponibile senza sconfinare. */
+@media (max-width: 480px) {
+  .nx3d h1 { margin-top: 16px; }
+  .nx3d-lede { margin-top: 16px; }
+  .nx3d-cta { margin-top: 26px; }
+}

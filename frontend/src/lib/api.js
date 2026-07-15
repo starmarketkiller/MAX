@@ -14,7 +14,13 @@ const api = axios.create({
 api.interceptors.response.use(
   (r) => r,
   (err) => {
-    if (err?.response?.status === 401 && !window.location.pathname.endsWith("/login")) {
+    // /auth/me e' la chiamata con cui AuthProvider controlla "sono loggato?"
+    // ad ogni avvio: per un visitatore anonimo risponde 401 SEMPRE, per
+    // design — non e' una sessione scaduta, e' la risposta normale "no".
+    // Reindirizzarla forzava chiunque atterrasse sulla landing dritto sulla
+    // pagina di login, senza mai vedere la landing.
+    const isAuthCheck = err?.config?.url?.endsWith("/auth/me");
+    if (err?.response?.status === 401 && !isAuthCheck && !window.location.pathname.endsWith("/login")) {
       window.location.href = "/app/login";
     }
     return Promise.reject(err);

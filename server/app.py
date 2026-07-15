@@ -332,7 +332,7 @@ def require_user(authorization: Optional[str] = Header(None),
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
-app = FastAPI(title="NEXUS self-hosted backend", version="2.0.14-landing3d")
+app = FastAPI(title="NEXUS self-hosted backend", version="5.3.0-polish-batch-dof-spring-constellation")
 
 
 def _seed_strategy_results() -> None:
@@ -2971,15 +2971,31 @@ APP_DIR = STATIC_DIR / "app"
 @app.get("/app")
 @app.get("/app/{full_path:path}")
 def serve_react_app(full_path: str = ""):
-    """Serve la dashboard React buildata con fallback SPA per il client routing."""
+    """Serve la dashboard React buildata con fallback SPA per il client routing.
+
+    Cache-Control esplicito, altrimenti il browser sceglie da solo (caching
+    euristico) quanto tenere in cache index.html — e ogni deploy SOSTITUISCE
+    interamente questa cartella, quindi i file con l'hash della build
+    precedente spariscono. Un browser con un index.html vecchio in cache
+    proverebbe a caricare un bundle che non esiste piu' (404) e la pagina
+    resterebbe bianca. index.html sempre rivalidato; gli asset con hash nel
+    nome sono invece sicuri da cachare per sempre (l'hash cambia col
+    contenuto).
+    """
     index = APP_DIR / "index.html"
     if not index.exists():
         raise HTTPException(status_code=404, detail="frontend React non buildato")
     if full_path:
         candidate = (APP_DIR / full_path).resolve()
         if str(candidate).startswith(str(APP_DIR.resolve())) and candidate.is_file():
-            return FileResponse(str(candidate))
-    return FileResponse(str(index))
+            is_hashed_asset = candidate.parent.name in ("js", "css", "media") and candidate != index
+            headers = (
+                {"Cache-Control": "public, max-age=31536000, immutable"}
+                if is_hashed_asset
+                else {"Cache-Control": "no-cache"}
+            )
+            return FileResponse(str(candidate), headers=headers)
+    return FileResponse(str(index), headers={"Cache-Control": "no-cache"})
 
 
 # ======================= STATIC SITE ===================================== #
