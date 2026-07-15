@@ -22,16 +22,18 @@ const FLIGHT_CENTER_Z = -10;
 
 /**
  * Il pavimento che riceve ombre vere (profondità reale, non finta) + un
- * pulviscolo di particelle lente + un anello di pilastri luminosi intorno
- * al percorso di volo — sono loro, scorrendo ai lati mentre la camera
- * avanza, a dare la parallasse più forte: elementi vicini che si muovono
- * più in fretta di quelli lontani è l'indizio di profondità che il
- * cervello legge per primo.
+ * pulviscolo di particelle lente (con linee sottili tra i punti vicini,
+ * un effetto "costellazione/rete" calcolato una sola volta al mount, non
+ * ad ogni frame) + un anello di pilastri luminosi intorno al percorso di
+ * volo — sono loro, scorrendo ai lati mentre la camera avanza, a dare la
+ * parallasse più forte: elementi vicini che si muovono più in fretta di
+ * quelli lontani è l'indizio di profondità che il cervello legge per
+ * primo.
  */
 export default function Atmosphere() {
   const dustRef = useRef();
   const disc = useMemo(() => softDiscTexture(), []);
-  const dust = useMemo(() => {
+  const { dust, constellation } = useMemo(() => {
     const N = 280;
     const positions = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
@@ -39,7 +41,30 @@ export default function Atmosphere() {
       positions[i * 3 + 1] = Math.random() * 10 - 2;
       positions[i * 3 + 2] = FLIGHT_CENTER_Z + (Math.random() - 0.5) * 40;
     }
-    return positions;
+    // linee tra punti vicini — "costellazione", non una rete neurale
+    // ricalcolata ogni frame: le posizioni sono fisse (il gruppo ruota
+    // tutto insieme, i punti non si muovono l'uno rispetto all'altro), il
+    // confronto tra le coppie si fa una sola volta qui al mount, non nel
+    // render loop.
+    const maxDist = 3.4;
+    const maxDist2 = maxDist * maxDist;
+    const lineVerts = [];
+    for (let i = 0; i < N; i++) {
+      let linked = 0;
+      for (let j = i + 1; j < N && linked < 2; j++) {
+        const dx = positions[i * 3] - positions[j * 3];
+        const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
+        const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
+        if (dx * dx + dy * dy + dz * dz < maxDist2) {
+          lineVerts.push(
+            positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2],
+            positions[j * 3], positions[j * 3 + 1], positions[j * 3 + 2]
+          );
+          linked++;
+        }
+      }
+    }
+    return { dust: positions, constellation: new Float32Array(lineVerts) };
   }, []);
 
   const pylons = useMemo(() => {
@@ -96,12 +121,20 @@ export default function Atmosphere() {
           />
         )}
       </mesh>
-      <points ref={dustRef} position={[0, 0, 0]}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={280} array={dust} itemSize={3} />
-        </bufferGeometry>
-        <pointsMaterial size={0.06} map={disc} color="#8ea6cf" transparent opacity={0.45} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </points>
+      <group ref={dustRef}>
+        <points>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={280} array={dust} itemSize={3} />
+          </bufferGeometry>
+          <pointsMaterial size={0.06} map={disc} color="#8ea6cf" transparent opacity={0.45} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </points>
+        <lineSegments>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" count={constellation.length / 3} array={constellation} itemSize={3} />
+          </bufferGeometry>
+          <lineBasicMaterial color="#4a6f9e" transparent opacity={0.14} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </lineSegments>
+      </group>
     </>
   );
 }

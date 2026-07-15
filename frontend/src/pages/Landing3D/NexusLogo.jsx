@@ -93,6 +93,11 @@ function circuitTexture() {
  *
  * L'emissive lampeggia (via `impactBump`, letto da progressRef) nel
  * momento di massimo avvicinamento della camera (cameraPath.js, tappa 4).
+ *
+ * Due dettagli in più: l'offset della texture del circuito scorre da
+ * sola nel tempo — "corrente" che scorre lungo le linee, non un disegno
+ * statico — e un piccolo nucleo (icosaedro) nel punto in cui le barre si
+ * incrociano batte a un ritmo proprio, più acceso al culmine.
  */
 export default function NexusLogo({ progressRef, parallaxRef }) {
   const groupRef = useRef();
@@ -109,6 +114,9 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
   };
 
   const texture = useMemo(() => circuitTexture(), []);
+  const coreRef = useRef();
+  const coreMatRef = useRef();
+  const introT0 = useRef(null);
 
   const diagGeom = useMemo(() => {
     const dx = HALF_GAP * 2;
@@ -121,17 +129,34 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
   const rightGeom = useMemo(() => barGeometry(BAR_W, BAR_H, DEPTH), []);
   const ringGeom = useMemo(() => new THREE.TorusGeometry(4.6, 0.03, 8, 64), []);
   const ringGeom2 = useMemo(() => new THREE.TorusGeometry(5.6, 0.025, 8, 64), []);
+  const coreGeom = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
 
   const BASE = [2.3, 2.3, 2.6];
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
+    if (introT0.current === null) introT0.current = t;
+
     if (groupRef.current) {
       const px = parallaxRef ? parallaxRef.current.x : 0;
       const py = parallaxRef ? parallaxRef.current.y : 0;
       groupRef.current.rotation.y = px * 0.5;
       groupRef.current.rotation.x = Math.sin(t * 0.17) * 0.035 - py * 0.28;
       groupRef.current.rotation.z = Math.sin(t * 0.11) * 0.015;
+
+      // la N non compare già intera: un piccolo "pop" elastico al primo
+      // caricamento (ease-out-back), non un semplice fade — si costruisce
+      // nello spazio invece di apparire e basta.
+      const introP = Math.min((t - introT0.current) / 1.05, 1);
+      if (introP < 1) {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        const x = introP - 1;
+        const eased = 1 + c3 * x * x * x + c1 * x * x;
+        groupRef.current.scale.setScalar(Math.max(eased, 0.001));
+      } else {
+        groupRef.current.scale.setScalar(1);
+      }
     }
     if (ring1Ref.current) {
       ring1Ref.current.rotation.z = t * 0.05;
@@ -156,6 +181,21 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
     glowRefs.current.forEach((g) => {
       if (g) g.opacity = (0.22 + flash.current * 0.35) * pulse;
     });
+
+    // corrente che scorre lungo il circuito: un solo scroll dell'offset
+    // della texture (condivisa dalle 3 barre, un solo aggiornamento le
+    // muove tutte insieme) invece di uno shader dedicato.
+    texture.offset.y = -t * 0.12;
+
+    // il "cuore" al centro, dove le barre si incrociano — batte a un
+    // ritmo proprio, più acceso quando la N è vicina al culmine.
+    if (coreRef.current) {
+      const beat = 1 + Math.sin(t * 2.2) * 0.12;
+      coreRef.current.scale.setScalar(0.42 * beat * (1 + flash.current * 0.6));
+    }
+    if (coreMatRef.current) {
+      coreMatRef.current.emissiveIntensity = 2.6 + Math.sin(t * 2.2) * 0.6 + flash.current * 4;
+    }
   });
 
   return (
@@ -257,6 +297,13 @@ export default function NexusLogo({ progressRef, parallaxRef }) {
       </mesh>
       <mesh ref={ring2Ref} geometry={ringGeom2} rotation={[-1.05, 0, 0]}>
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.18} toneMapped={false} />
+      </mesh>
+
+      {/* il "cuore" al centro, dove le barre si incrociano — batte a un
+          ritmo proprio, si accende di più nel momento di massimo
+          avvicinamento della camera */}
+      <mesh ref={coreRef} geometry={coreGeom} position={[0, 0, -DEPTH / 2 + 0.5]}>
+        <meshStandardMaterial ref={coreMatRef} color="#eafcff" emissive="#8ff4ff" emissiveIntensity={2.6} toneMapped={false} />
       </mesh>
     </group>
   );

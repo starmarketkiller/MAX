@@ -8,8 +8,13 @@ import { impactBump } from "./impactTiming";
  * il basso — un crescendo vero, non un loop statico. I browser bloccano
  * l'audio senza un gesto dell'utente: parte al primo scroll/tocco/click,
  * in silenzio se non arriva mai (niente errori, nessun blocco visibile).
+ *
+ * `mouseRef` (opzionale, -1..1 su x/y): un piccolo scarto sul cutoff del
+ * filtro legato alla posizione del mouse, non solo allo scroll — muovere
+ * il mouse verso i bordi schiarisce leggermente il suono, come la luce
+ * che segue il puntatore nella scena 3D (MouseLight in Scene.jsx).
  */
-export default function useAmbientAudio(progressRef, enabledRef) {
+export default function useAmbientAudio(progressRef, enabledRef, mouseRef) {
   useEffect(() => {
     let ctx = null;
     let nodes = null;
@@ -59,7 +64,8 @@ export default function useAmbientAudio(progressRef, enabledRef) {
           const p = Math.min(Math.max(progressRef.current || 0, 0), 1);
           const bump = impactBump(p);
           const t = ctx.currentTime;
-          const targetFreq = 220 + p * 900 + bump * 2200;
+          const mouseMag = mouseRef ? Math.min(Math.abs(mouseRef.current.x) + Math.abs(mouseRef.current.y), 1.4) : 0;
+          const targetFreq = 220 + p * 900 + bump * 2200 + mouseMag * 140;
           const targetGain = enabledRef.current ? 0.035 + p * 0.05 + bump * 0.09 : 0;
           nodes.filter.frequency.setTargetAtTime(targetFreq, t, 0.4);
           nodes.gain.gain.setTargetAtTime(targetGain, t, 0.5);
@@ -89,5 +95,5 @@ export default function useAmbientAudio(progressRef, enabledRef) {
         }
       }
     };
-  }, [progressRef, enabledRef]);
+  }, [progressRef, enabledRef, mouseRef]);
 }

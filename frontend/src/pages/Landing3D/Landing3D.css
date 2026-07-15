@@ -48,6 +48,17 @@
     radial-gradient(120% 90% at 50% 50%, transparent 35%, rgba(4, 6, 15, 0.45) 100%);
 }
 
+/* ---- barra di avanzamento scroll — aggiornata solo sull'evento scroll
+   (index.jsx), non ad ogni frame: qui non serve un ritorno morbido a
+   riposo come per lo skew, quindi non c'è motivo di pagarne il costo. ---- */
+.nx3d-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 8; background: rgba(56, 189, 248, 0.1); pointer-events: none; }
+.nx3d-progress-fill {
+  height: 100%; width: calc(var(--nx3d-progress, 0) * 100%);
+  background: linear-gradient(90deg, var(--nx-cyan), var(--nx-electric));
+  box-shadow: 0 0 10px var(--nx-cyan), 0 0 2px var(--nx-electric);
+}
+@media (prefers-reduced-motion: no-preference) { .nx3d-progress-fill { transition: width 0.15s linear; } }
+
 .nx3d-scroll { position: relative; z-index: 2; }
 
 /* ---- HUD del canopy ---- */
@@ -122,13 +133,24 @@
 .nx3d-cta { display: flex; gap: 14px; margin-top: 40px; flex-wrap: wrap; }
 .nx3d-panel.center .nx3d-cta { justify-content: center; }
 .nx3d-btn {
+  position: relative; overflow: hidden;
   font-family: var(--nx-mono); font-weight: 700; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; padding: 17px 30px;
   border: 1px solid rgba(56, 189, 248, 0.45); color: var(--nx-white); cursor: pointer; background: rgba(10, 20, 40, 0.45);
   backdrop-filter: blur(8px); transition: 0.28s; border-radius: 8px;
 }
+.nx3d-btn::before {
+  content: ""; position: absolute; inset: -50%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.4), transparent 70%);
+  opacity: 0; transform: scale(0.4);
+  transition: opacity 0.45s ease, transform 0.55s ease;
+}
+.nx3d-btn:hover::before { opacity: 1; transform: scale(1); }
 .nx3d-btn:hover { border-color: var(--nx-cyan); box-shadow: 0 12px 50px -14px rgba(56, 189, 248, 0.8); transform: translateY(-3px); }
 .nx3d-btn.primary { background: linear-gradient(180deg, var(--nx-electric), var(--nx-azure)); color: #04121f; border-color: transparent; font-weight: 700; }
+.nx3d-btn.primary::before { background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 70%); }
 .nx3d-btn:focus-visible { outline: 2px solid var(--nx-cyan); outline-offset: 3px; }
+.nx3d-btn > * { position: relative; }
+@media (prefers-reduced-motion: reduce) { .nx3d-btn::before { transition: none; } }
 
 .nx3d-rail { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); z-index: 4; display: flex; flex-direction: column; gap: 16px; }
 .nx3d-rail button { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--nx-cyan); background: transparent; cursor: pointer; padding: 0; transition: 0.3s; }

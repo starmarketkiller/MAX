@@ -17,6 +17,13 @@ import { impactBump } from "./impactTiming";
  * aggiunge un micro-look-around indipendente dallo scroll — muovere il
  * mouse o inclinare il telefono sposta leggermente il punto di vista.
  *
+ * Lo smoothing è una vera molla (posizione + velocità), non un semplice
+ * decadimento esponenziale: appena la camera arriva a una tappa la
+ * supera di un pelo e torna indietro da sola, un piccolo rimbalzo
+ * elastico invece di fermarsi di colpo — sottosmorzata quel poco che
+ * basta per sentirsi "fisica", non abbastanza da oscillare a lungo o
+ * risultare fastidiosa.
+ *
  * Al culmine dell'attraversamento della N (impactBump) fa vibrare il
  * telefono una sola volta (Navigator.vibrate) — un piccolo riscontro
  * fisico del passaggio.
@@ -24,14 +31,19 @@ import { impactBump } from "./impactTiming";
 export default function CameraRig({ progressRef, parallaxRef }) {
   const { camera } = useThree();
   const smooth = useRef(0);
+  const smoothVel = useRef(0);
   const tmpPos = useRef(new THREE.Vector3());
   const tmpLook = useRef(new THREE.Vector3());
   const vibrated = useRef(false);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.1);
-    const k = 1 - Math.exp(-dt * 2.2); // più lento = movimento più sostenuto, meno "scatto"
-    smooth.current += (Math.min(Math.max(progressRef.current, 0), 1) - smooth.current) * k;
+    const target = Math.min(Math.max(progressRef.current, 0), 1);
+    const stiffness = 34;
+    const damping = 9.6;
+    const accel = (target - smooth.current) * stiffness - smoothVel.current * damping;
+    smoothVel.current += accel * dt;
+    smooth.current += smoothVel.current * dt;
     const { pos, look } = sampleCameraPath(smooth.current);
     const t = state.clock.elapsedTime;
     const px = parallaxRef ? parallaxRef.current.x : 0;

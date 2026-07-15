@@ -35,10 +35,23 @@ export default function Landing3D() {
   const progressRef = useRef(0);
   const velocityRef = useRef(0);
   const enabledRef = useRef(true);
+  const mouseRef = useRef({ x: 0, y: 0 });
   const [webglOk] = useState(supportsWebGL);
   const [audioOn, setAudioOn] = useState(true);
 
-  useAmbientAudio(progressRef, enabledRef);
+  useAmbientAudio(progressRef, enabledRef, mouseRef);
+
+  // Posizione del mouse normalizzata (-1..1), leggera e indipendente dal
+  // parallaxRef dentro il Canvas — serve solo all'audio per un piccolo
+  // scarto sul filtro, non ha bisogno dello smoothing usato in Scene.jsx.
+  useEffect(() => {
+    const onMove = (e) => {
+      mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseRef.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
 
   const toggleAudio = () => {
     enabledRef.current = !enabledRef.current;
@@ -69,10 +82,15 @@ export default function Landing3D() {
 
   // Progresso di scroll sull'intera pagina (0..1) — pilota sia la camera 3D
   // sia il punto del video mostrato (VideoScreen legge lo stesso ref).
+  // Aggiorna anche la barra di progresso in alto (--nx3d-progress) — solo
+  // sull'evento scroll stesso, non ad ogni frame, perché a differenza
+  // dello skew qui non serve un ritorno morbido a riposo.
   useEffect(() => {
     const onScroll = () => {
       const m = document.documentElement.scrollHeight - window.innerHeight;
-      progressRef.current = m > 0 ? window.scrollY / m : 0;
+      const p = m > 0 ? window.scrollY / m : 0;
+      progressRef.current = p;
+      if (rootRef.current) rootRef.current.style.setProperty("--nx3d-progress", p.toFixed(4));
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -194,6 +212,8 @@ export default function Landing3D() {
         <div className="nx3d-video-bg nx3d-fallback-bg" aria-hidden="true" />
       )}
       <div className="nx3d-video-scrim" aria-hidden="true" />
+
+      <div className="nx3d-progress" aria-hidden="true"><div className="nx3d-progress-fill" /></div>
 
       <HUDForeground />
 
