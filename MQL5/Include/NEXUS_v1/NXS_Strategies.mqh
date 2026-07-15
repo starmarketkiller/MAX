@@ -109,10 +109,21 @@ double NXS_EMAv(int period, ENUM_TIMEFRAMES tf, int shift){
 }
 
 //------------------------------------ K1 ADX_RSI (riportata alla logica del sito:
-// trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.)
+// trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.
+// v2.5.1 - il "backtest" a cui si divergeva era il motore sito, che pero' non
+// ha mai calcolato un vero ADX (verificato 15/07, vedi vault NEXUS EA -
+// Ricerca Esterna e Test A-B per Strategia): la rimozione dell'ADX inseguiva
+// un riferimento difettoso. Test A/B sul motore sito (10y XAUUSD D1, ADX(14)
+// Wilder reale) mostra che la soglia da manuale (25) rovina il trigger, ma
+// ADX>20 (stessa soglia gia' usata altrove in questo EA, vedi g_adx in
+// NXS_Strategies_Institutional.mqh) dimezza circa il drawdown mantenendo PF
+// e campione. g_adx e' gia' calcolato da iADX() per ogni tick (NEXUS_EA_v2.mq5),
+// non serve nuovo wiring. Non ancora validato su MT5 - da confermare con un
+// backtest isolato prima di considerarlo definitivo.)
 SNXSSignal NXS_Strat_ADXRSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ADX_RSI; s.stratName = "ADX_RSI";
    if(!InpStrat_ADX_RSI || !NXS_SelectorAllows(1)) return s;
+   if(g_adx < 20.0) return s;                // v2.5.1: filtro forza trend, vedi nota sopra
    ENUM_TIMEFRAMES tf = NXS_EffTF();
    double e50 = NXS_EMAv(50, tf, 1), e50p = NXS_EMAv(50, tf, 2);
    if(e50 <= 0 || e50p <= 0) return s;

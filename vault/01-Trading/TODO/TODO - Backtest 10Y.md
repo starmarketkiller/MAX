@@ -16,6 +16,44 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]]).
 
+## ✅ Fix applicati oggi (15/07) — codice modificato, non solo vault
+
+Su richiesta esplicita dell'utente di "lavorare all'EA" con ricerca esterna
++ test reali, questi cambi sono stati **implementati nel codice**, non solo
+proposti. Vedi [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] per
+i test A/B completi che li giustificano.
+
+- [x] **`server/bt_verdict.py`** — fix del bug per cui il verdetto per
+  strategia usava il campo `executed` (rotto) come gate principale,
+  classificando quasi tutto come BLOCCATA/NO_SETUP anche con centinaia di
+  trade reali. Ora usa `wins+losses+breakeven` come fallback affidabile.
+- [x] **`server/backtest.py` — `sig_sar()`**: sostituito il proxy bacato
+  (identico a EMA_PULLBACK) con vero Parabolic SAR (nuova funzione
+  `psar_series()`) + allineamento EMA20. Test A/B: PF 1.17→1.28, drawdown
+  quasi dimezzato (12.38%→7.81%).
+- [x] **`server/backtest.py` — `sig_adx_rsi()`**: aggiunto vero ADX(14)
+  Wilder (nuova funzione `adx_series()`), che prima non veniva mai calcolato
+  nonostante il nome. Soglia 20 (non 25 "da manuale", testato: peggiora).
+  Test A/B: PF 1.26→1.23 (~stabile), drawdown 11.44%→9.72%.
+- [x] **`MQL5/Include/NEXUS_v1/NXS_Strategies.mqh` — `NXS_Strat_ADXRSI()`**:
+  aggiunta la riga `if(g_adx < 20.0) return s;`. L'ADX reale era già
+  completamente disponibile nell'EA (`g_adx`, popolato da `iADX()` in
+  `NEXUS_EA_v2.mq5:84`, già usato altrove per il regime di mercato) — non
+  serviva nuovo wiring, solo leggerlo dentro il trigger. **Non ancora
+  validato su MT5** — serve un backtest isolato (`InpStrategySelector`)
+  prima di considerarlo definitivo.
+- [ ] **Verificare su MT5** che il fix ADX_RSI migliori davvero (il test A/B
+  è sul motore sito, dati Yahoo daily — motore diverso da MT5, vedi
+  [[NEXUS EA - Principi]] #5/#8: un miglioramento lì non garantisce lo
+  stesso risultato su MT5, va confermato).
+- [ ] **SAR MQL5**: verificato che l'implementazione nativa usa già vero
+  `iSAR()` (`NEXUS_EA_v2.mq5:88`, `g_hSAR`) — il problema era solo nel
+  proxy del sito, non nel codice MQL5. Nessun cambio fatto lato MQL5 per
+  SAR. Se il fix ADX_RSI regge su MT5, capire perché SAR nativo (già
+  corretto) continua comunque a fallire — probabilmente il problema è
+  altrove (bias direzionale trovato in
+  [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]], o parametri SL/TP).
+
 ## ⚡ Metodologia corretta (15/07): setup buy/sell indipendenti, non taglio di direzione
 
 Prima versione di questa sezione proponeva di "tagliare gli short" per

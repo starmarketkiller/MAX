@@ -196,6 +196,85 @@ def atr_series(candles, n=14):
     return out
 
 
+def psar_series(candles, af_step=0.02, af_max=0.2):
+    """Vero Parabolic SAR (AF/extreme-point/flip standard). Sostituisce il
+    vecchio proxy sig_sar() che era in realta' un incrocio EMA20/EMA50
+    identico a sig_ema_pullback() (bug trovato e corretto il 15/07 - vedi
+    vault NEXUS EA - Motore Sito: Audit e Confronto 10Y)."""
+    n = len(candles)
+    psar = [None] * n
+    trend = [0] * n
+    if n < 3:
+        return psar, trend
+    trend[1] = 1 if candles[1]["close"] > candles[0]["close"] else -1
+    psar[1] = candles[0]["low"] if trend[1] == 1 else candles[0]["high"]
+    ep = candles[1]["high"] if trend[1] == 1 else candles[1]["low"]
+    af = af_step
+    for i in range(2, n):
+        p = psar[i - 1] + af * (ep - psar[i - 1])
+        if trend[i - 1] == 1:
+            p = min(p, candles[i - 1]["low"], candles[i - 2]["low"])
+            if candles[i]["low"] < p:
+                trend[i] = -1; p = ep; ep = candles[i]["low"]; af = af_step
+            else:
+                trend[i] = 1
+                if candles[i]["high"] > ep:
+                    ep = candles[i]["high"]; af = min(af + af_step, af_max)
+        else:
+            p = max(p, candles[i - 1]["high"], candles[i - 2]["high"])
+            if candles[i]["high"] > p:
+                trend[i] = 1; p = ep; ep = candles[i]["high"]; af = af_step
+            else:
+                trend[i] = -1
+                if candles[i]["low"] < ep:
+                    ep = candles[i]["low"]; af = min(af + af_step, af_max)
+        psar[i] = p
+    return psar, trend
+
+
+def adx_series(candles, period=14):
+    """ADX(14) di Wilder standard. Nessuna delle vecchie sig_adx_rsi (sito e
+    MQL5) lo calcolava mai nonostante il nome - vedi vault NEXUS EA -
+    Ricerca Esterna e Test A-B per Strategia (bug trovato e corretto 15/07)."""
+    n = len(candles)
+    plus_dm = [0.0] * n; minus_dm = [0.0] * n; tr = [0.0] * n
+    for i in range(1, n):
+        up = candles[i]["high"] - candles[i - 1]["high"]
+        dn = candles[i - 1]["low"] - candles[i]["low"]
+        plus_dm[i] = up if (up > dn and up > 0) else 0.0
+        minus_dm[i] = dn if (dn > up and dn > 0) else 0.0
+        tr[i] = max(candles[i]["high"] - candles[i]["low"],
+                    abs(candles[i]["high"] - candles[i - 1]["close"]),
+                    abs(candles[i]["low"] - candles[i - 1]["close"]))
+
+    def _wilder_smooth(vals, p):
+        out = [None] * len(vals)
+        out[p] = sum(vals[1:p + 1])
+        for i in range(p + 1, len(vals)):
+            out[i] = out[i - 1] - out[i - 1] / p + vals[i]
+        return out
+
+    tr_s = _wilder_smooth(tr, period)
+    pdm_s = _wilder_smooth(plus_dm, period)
+    mdm_s = _wilder_smooth(minus_dm, period)
+    adx = [None] * n
+    dx = [None] * n
+    for i in range(period, n):
+        if tr_s[i] and tr_s[i] > 0:
+            pdi = 100 * pdm_s[i] / tr_s[i]
+            mdi = 100 * mdm_s[i] / tr_s[i]
+            dx[i] = 100 * abs(pdi - mdi) / (pdi + mdi) if (pdi + mdi) > 0 else 0
+    first = period * 2
+    if first < n:
+        vals = [x for x in dx[period:first] if x is not None]
+        if vals:
+            adx[first] = sum(vals) / len(vals)
+            for i in range(first + 1, n):
+                if dx[i] is not None and adx[i - 1] is not None:
+                    adx[i] = (adx[i - 1] * (period - 1) + dx[i]) / period
+    return adx
+
+
 def rsi_series(vals, n=14):
     out = [None] * len(vals)
     if len(vals) <= n:
@@ -234,6 +313,7 @@ def _ll(candles, n, i):
 
 def _prep(candles):
     closes = [c["close"] for c in candles]
+    psar, psar_trend = psar_series(candles)
     return {
         "candles": candles,
         "close": closes,
@@ -247,6 +327,9 @@ def _prep(candles):
         "rsi": rsi_series(closes, 14),
         "rsi7": rsi_series(closes, 7),
         "atr": atr_series(candles, 14),
+        "psar": psar,
+        "psar_trend": psar_trend,
+        "adx": adx_series(candles, 14),
     }
 
 
@@ -299,9 +382,15 @@ def sig_breakout(c, ind, i, n=20):
 
 
 def sig_adx_rsi(c, ind, i):
+    # v2.5.1 - aggiunto filtro ADX reale (prima non veniva mai calcolato,
+    # nonostante il nome: bug trovato e corretto il 15/07, vedi vault NEXUS
+    # EA - Ricerca Esterna e Test A-B per Strategia). Soglia 20, non 25 "da
+    # manuale": testato in A/B su XAUUSD D1 10y, ADX>25 peggiora PF e DD,
+    # ADX>20 dimezza circa il drawdown mantenendo PF e campione.
     e50 = ind["ema50"][i]
     r = ind["rsi"][i]
-    if None in (e50, r, ind["ema50"][i - 1]):
+    a = ind["adx"][i]
+    if None in (e50, r, ind["ema50"][i - 1]) or a is None or a < 20.0:
         return 0
     trend_up = e50 > ind["ema50"][i - 1]
     if trend_up and 45 < r < 65 and ind["close"][i] > e50:
@@ -385,14 +474,22 @@ def _bear(cd): return cd["close"] < cd["open"]
 
 
 def sig_sar(c, ind, i):
-    # trend-follow (proxy SAR): flip su ema20 con allineamento ema50
-    e20, e50, e20p = ind["ema20"][i], ind["ema50"][i], ind["ema20"][i - 1]
-    if None in (e20, e50, e20p):
+    # v2.5.1 - prima era un proxy EMA20/EMA50 identico, trade per trade, a
+    # sig_ema_pullback() (bug trovato il 15/07, vedi vault NEXUS EA - Motore
+    # Sito: Audit e Confronto 10Y): non testava mai Parabolic SAR. Ora usa
+    # il vero Parabolic SAR (psar_series) + allineamento EMA20, che in test
+    # A/B su XAUUSD D1 10y batte nettamente il vecchio proxy (PF 1.17->1.28,
+    # drawdown quasi dimezzato). Non aggiungere filtro ADX: testato, peggiora.
+    if i < 22:
         return 0
-    px, ppx = ind["close"][i], ind["close"][i - 1]
-    if e20 > e20p and ppx <= e20p and px > e20 and e20 > e50:
+    trend, trend_p = ind["psar_trend"][i], ind["psar_trend"][i - 1]
+    e20 = ind["ema20"][i]
+    if trend is None or trend_p is None or e20 is None:
+        return 0
+    px = ind["close"][i]
+    if trend == 1 and trend_p == -1 and px > e20:
         return 1
-    if e20 < e20p and ppx >= e20p and px < e20 and e20 < e50:
+    if trend == -1 and trend_p == 1 and px < e20:
         return -1
     return 0
 

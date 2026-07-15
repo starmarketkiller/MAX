@@ -43,14 +43,28 @@ Il sito non ha mai testato Parabolic SAR. Il numero "PF1.52" citato per
 giustificare il fix HTF v2.5.0 non dice nulla sulla vera strategia. Dettaglio:
 [[NEXUS EA - Motore Sito: Audit e Confronto 10Y]].
 
+## Test A/B 15/07: vero Parabolic SAR batte nettamente il proxy bacato
+Implementato un vero Parabolic SAR (AF 0.02→0.2, extreme point, flip) +
+allineamento EMA sul motore sito. Risultato vs il vecchio proxy (identico a
+EMA_PULLBACK): **PF 1.17→1.28, drawdown quasi dimezzato (12.38%→7.81%)**,
+profitto più che raddoppiato. A differenza di ADX_RSI, **qui il filtro ADX
+NON aiuta** (peggiora PF, taglia campione senza guadagno in DD) — conferma
+diretta che ogni strategia ha bisogno del proprio filtro, non di una
+ricetta unica ([[NEXUS EA - Principi]] #2). Dettaglio completo:
+[[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]].
+
 ## Stato
-🔴 FALLITA — confermato su campione ampio (1.129 trade, 6 anni consecutivi
-tutti negativi). Il filtro HTF di v2.5.0 è correttamente attivo nel codice
-(`NXS_StrategyProfiles.mqh:45`) ma la sua giustificazione (screening sito) è
-**invalida** — vedi sopra. **Priorità #1, doppia**: (1) spegnere o riscrivere
-la logica di trigger MQL5 da zero (Parabolic SAR reale, non un incrocio EMA);
-(2) fixare il proxy del sito così da poter testare la strategia vera prima di
-rimetterla in produzione.
+🔴 FALLITA su MT5 — confermato su campione ampio (1.129 trade, 6 anni
+consecutivi tutti negativi). Il filtro HTF di v2.5.0 è correttamente attivo
+nel codice (`NXS_StrategyProfiles.mqh:45`) ma la sua giustificazione
+(screening sito) era invalida — vedi sopra. **Prossimo passo concreto**: (1)
+il proxy sito ora ha una versione reale testata con risultati promettenti,
+da portare in produzione lì; (2) verificare che l'implementazione MQL5
+nativa (`iSAR`) sia effettivamente wired come da documentazione — dato che
+il miglioramento nel test viene dal fix del proxy (che era completamente
+sbagliato), non è detto che il codice MQL5 reale abbia lo stesso problema,
+va controllato separatamente prima di dedurre che serva riscriverlo da zero.
+Non aggiungere filtro ADX.
 
 ## Analisi trade-level (15/07, corretta)
 Score interno senza potere predittivo (WR piatto ~40-44% da score 60 a 99).

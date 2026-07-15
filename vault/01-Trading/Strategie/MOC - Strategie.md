@@ -33,20 +33,23 @@ tre a non aver mai avuto un anno chiaramente negativo.
   (-7.2R) ha quasi azzerato tutto il guadagno accumulato. Non più "validata"
   senza riserve.
 
-## 🔴 Fallite — confermato su campione ampio, priorità di intervento (4)
+## 🔴 Fallite — confermato su campione ampio, priorità di intervento (5)
 Campione ampio (400-1.150 trade su 6 anni), il fix HTF di v2.5.0 non ha
-funzionato. Spiegano ~75% della perdita totale del portafoglio. Vedi
+funzionato. Spiegano gran parte della perdita totale del portafoglio. Vedi
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] per il dettaglio codice/screening.
+15/07: fix sperimentali applicati a SAR e ADX_RSI (vedi
+[[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]), non ancora
+validati su MT5.
 
-- [[Sar]] — -34.3R, **0/6 anni positivi**, la peggiore in assoluto
+- [[Sar]] — -34.3R, **0/6 anni positivi**, la peggiore in assoluto. Fix testato: vero Parabolic SAR nel proxy sito, PF 1.17→1.28.
 - [[Macd]] — -21.1R, era validata su v2.4.8 (PF 1.11) e il "raffinamento" v2.5.0 l'ha peggiorata
 - [[Rsi Div]] — -17.5R — **sale in questo gruppo col segmento 9**: il 2024 (-10.1) è il suo anno peggiore in assoluto
-- [[Adx Rsi]] — -15.3R, 1/6 anni positivi
+- [[Adx Rsi]] — -15.3R, 1/6 anni positivi. Fix applicato: aggiunto vero filtro ADX>20 (mai calcolato prima nonostante il nome).
+- [[Tsi]] — -7.9R su 6 anni ma **721 trade** (campione enorme) — riclassificata da "Strat Diag" corretto come CRITICA, non più "in attesa": PF 0.82 è troppo stabilmente negativo per essere ambiguo.
 
-## ⏳ In attesa (config v2.5.0, dato ancora ambiguo o negativo minore) (4)
+## ⏳ In attesa (config v2.5.0, dato ancora ambiguo o negativo minore) (3)
 - [[Fvg Cont]] — -9.3R su 6 anni, 2024 pessimo (-7.0) dopo 3 anni di ripresa
 - [[Bjorgum]] — -8.6R su 6 anni, 5/6 negativi — **smentisce l'ottimismo precedente** (PF 2.14 su soli 5 trade, vedi [[NEXUS EA - Principi]] #4): il campione più ampio ribalta il segnale
-- [[Tsi]] — -7.9R, 1/6 anni positivi (solo 2023)
 - [[Ema Pullback]] — -5.5R, volatile, nessun trend chiaro
 
 ## ❌ Non validate — negativa ma marginale (1)
@@ -95,4 +98,4 @@ Richiedono modellazione intraday che il motore del sito non ha. Da validare isol
 - [[Silver Bullet]]
 
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Screening Strategie (sito 10y)]]
+[[MOC - Trading]] · [[NEXUS EA - Principi]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]

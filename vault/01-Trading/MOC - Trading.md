@@ -51,6 +51,10 @@ profitto reale, non solo curve di backtest.
   [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]] e
   [[NEXUS EA - Fonte Chat WhatsApp (Said)]] (conferma un bug reale ancora
   presente in v2.5.0: due sistemi di durata massima non coordinati).
+- **[[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]** — ricerca web
+  + test A/B reali su SAR/ADX_RSI/MACD/RSI_DIV, con **fix già applicati nel
+  codice** (sito e MQL5): vero Parabolic SAR, vero filtro ADX su ADX_RSI, fix
+  del bug che rompeva lo strumento "Strat Diag" del sito.
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

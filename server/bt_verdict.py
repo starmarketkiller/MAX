@@ -42,7 +42,17 @@ def _blocker_name(v):
 
 
 def _verdict(row, min_trades):
+    # NOTA (15/07): il campo 'executed' dell'EA (NXS_Stats_RecordExec) e'
+    # noto essere rotto - resta 0 anche con centinaia di trade reali (vedi
+    # vault NEXUS EA - Backtest 10Y Segmentato - Analisi). wins/losses/
+    # breakeven vengono invece letti direttamente dallo storico deal chiusi
+    # (NXS_Stats_ProcessClosedTrades) e sono affidabili indipendentemente da
+    # 'executed' - li usiamo come fallback per non classificare falsamente
+    # come BLOCCATA/NO_SETUP una strategia che in realta' ha tradato.
     executed = _i(row, "executed") or _i(row, "trades")
+    closed = _i(row, "wins") + _i(row, "losses") + _i(row, "breakeven")
+    if executed == 0 and closed > 0:
+        executed = closed
     setup = _i(row, "setup")
     pf = _f(row, "profit_factor")
     exp = _f(row, "expectancy_R")
@@ -173,11 +183,15 @@ def analyze_stats_rows(dict_rows: list, min_trades: int = MIN_TRADES_DEFAULT) ->
         if not name:
             continue
         v, why = _verdict(r, min_trades)
+        _exec_disp = _i(r, "executed") or _i(r, "trades")
+        _closed_disp = _i(r, "wins") + _i(r, "losses") + _i(r, "breakeven")
+        if _exec_disp == 0 and _closed_disp > 0:
+            _exec_disp = _closed_disp
         rows.append({
             "name": name,
             "verdict": v,
             "why": why,
-            "executed": _i(r, "executed") or _i(r, "trades"),
+            "executed": _exec_disp,
             "pf": round(_f(r, "profit_factor"), 2),
             "exp": round(_f(r, "expectancy_R"), 2),
             "wr": round(_f(r, "winrate_pct") or _f(r, "win_rate"), 1),
