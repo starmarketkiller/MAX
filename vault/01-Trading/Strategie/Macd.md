@@ -28,11 +28,11 @@ MACD > signal e sopra 0, prezzo sopra EMA200 (long, speculare per short).
 - **3 mesi**: 2134 setup, 72W/48L/24BE, WR 60.0%, expR +0.062, **PF 1.35**
 - **3 anni**: 742 setup, 52W/42L/13BE, WR 55.3%, expR +0.023, **PF 1.11**
 
-## Risultati (backtest 10y segmentato v2.5.0, 5 anni affidabili 2019-2023)
-713 trade totali. R per anno: 2019 -6.2 · 2020 -11.9 · 2021 +2.5 · 2022 -4.4 ·
-2023 +1.5. **Somma -18.5R — 2 anni su 5 positivi, ma dominata da due anni
-catastrofici** (2019 e 2020). Dettaglio completo:
-[[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
+## Risultati (backtest 10y segmentato v2.5.0, 6 anni affidabili 2019-2024)
+994 trade totali. R per anno: 2019 -6.2 · 2020 -11.9 · 2021 +2.5 · 2022 -4.4 ·
+2023 +1.5 · 2024 -2.6. **Somma -21.1R — 2 anni su 6 positivi**, dominata da
+due anni catastrofici (2019 e 2020). Il 2024 resta negativo ma meno grave dei
+peggiori. Dettaglio completo: [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
 ## Stato
 🔴 REGREDITA — questa è la scoperta più importante su MACD: sotto v2.4.8 era

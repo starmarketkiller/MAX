@@ -28,19 +28,20 @@ Parabolic SAR sotto il prezzo + EMA9>EMA21 (long, speculare per short).
 - **3 mesi**: 3163 setup, 81W/109L/22BE, WR 42.6%, expR +0.041, **PF 1.21**
 - **3 anni**: 1169 setup, 72W/80L/17BE, WR 47.4%, expR -0.035, **PF 0.88**
 
-## Risultati (backtest 10y segmentato v2.5.0, 5 anni affidabili 2019-2023)
-838 trade totali. R per anno: 2019 -10.9 · 2020 -14.3 · 2021 -1.9 · 2022 -1.4 ·
-2023 -0.7. **Somma -29.2R — 0 anni su 5 positivi.** La peggiore di tutte le 38
-strategie, di gran lunga. Dettaglio completo:
+## Risultati (backtest 10y segmentato v2.5.0, 6 anni affidabili 2019-2024)
+1.129 trade totali. R per anno: 2019 -10.9 · 2020 -14.3 · 2021 -1.9 · 2022
+-1.4 · 2023 -0.7 · 2024 -5.1. **Somma -34.3R — 0 anni su 6 positivi.** La
+peggiore di tutte le 38 strategie, di gran lunga, e il segmento 9 conferma
+ulteriormente il pattern (nessun segno di ripresa). Dettaglio completo:
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
 ## Stato
-🔴 FALLITA — confermato su campione ampio (838 trade). Il filtro HTF di
-v2.5.0 è correttamente attivo nel codice (`NXS_StrategyProfiles.mqh:45`) ma
-SAR non compare nemmeno tra le config vincenti dello screening sito — il fix
-le è stato applicato per generalizzazione, non perché il suo screening
-individuale lo confermasse. **Priorità #1**: spegnere o riscrivere la logica
-di trigger da zero, non ha mai avuto un anno positivo in 5 anni di dati reali.
+🔴 FALLITA — confermato su campione ampio (1.129 trade, 6 anni consecutivi
+tutti negativi). Il filtro HTF di v2.5.0 è correttamente attivo nel codice
+(`NXS_StrategyProfiles.mqh:45`) ma SAR non compare nemmeno tra le config
+vincenti dello screening sito — il fix le è stato applicato per
+generalizzazione, non perché il suo screening individuale lo confermasse.
+**Priorità #1**: spegnere o riscrivere la logica di trigger da zero.
 
 ## Note
 

@@ -32,29 +32,35 @@ profitto reale, non solo curve di backtest.
   disabilitate/non connesse). Punto di partenza per lavorare strategia-per-strategia:
   aggiornare la scheda e spostarla di gruppo è il modo in cui questo vault resta vivo.
 - **[[NEXUS EA - Backtest 10Y Segmentato - Analisi]]** — la validazione più ampia
-  fatta finora (5 anni reali di dati, 2019-2023): bug trovati, ranking per strategia,
-  perché il fix HTF v2.5.0 non ha funzionato per SAR/MACD/ADX_RSI.
+  fatta finora (6 anni reali di dati, 2019-2024): bug trovati, ranking per strategia,
+  perché il fix HTF v2.5.0 non ha funzionato per SAR/MACD/RSI_DIV/ADX_RSI.
 - **[[NEXUS EA - Hedge nel Tempo]]** — quali strategie si coprono a vicenda nel
-  tempo: il nucleo TURTLE_SOUP+BREAKOUT_ACC+CISD.
+  tempo: il nucleo TURTLE_SOUP+BREAKOUT_ACC+CISD (ridimensionato col segmento 9).
 - **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — aggiornamenti da fare
-  appena arrivano i segmenti 9-10 e le eventuali ri-esecuzioni di 1-3.
+  appena arriva il segmento 10 e le eventuali ri-esecuzioni di 1-3.
 
-## Stato corrente (15 luglio 2026)
+## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a
   10 anni) a ADX_RSI/EMA_PULLBACK/MACD/SAR/OB_MIT, riabilita TSI e BREAKOUT_ACC.
-- **Backtest 10 anni segmentato in corso** (10 segmenti da 1 anno): 8/10 arrivati.
-  Segmenti 1-3 falliti per bug del tester (da ri-eseguire), segmenti 4-8 (5 anni
-  reali 2019-2023) affidabili e **tutti in perdita** — PF 0.63-0.98, DD fino
-  all'87.22% (stesso numero del DD fuori-campione di v2.4.8, causa mai chiusa:
-  nessun gate protegge il drawdown cumulato dal picco, solo quello giornaliero).
-  Segmenti 9-10 ancora in esecuzione.
-- Il fix HTF v2.5.0 **non ha funzionato** per le 3 strategie che dovevano
-  beneficiarne di più: SAR (-29.2R, 0/5 anni positivi), MACD (-18.5R — era già
-  validata su v2.4.8, ora la 2ª peggiore), ADX_RSI (-14.2R). Insieme sono
-  l'80% della perdita totale del portafoglio (-78.4R su 5 anni).
-- Uniche strategie **validate/promettenti** oggi: **TURTLE_SOUP** (✅ +7.3R su 5
-  anni, confermata su più finestre), **BREAKOUT_ACC** (+3.9R, 4/5 anni positivi) e
-  **CISD** (+3.5R, mai un anno negativo) — insieme formano un nucleo che fa
-  +14.7R con un solo anno debolmente negativo su 5. **BJORGUM** si è ribaltata:
-  da PF 2.14 (5 trade, 3 anni) a -6.6R (46 trade, 5 anni, 4/5 anni negativi) —
-  la conferma pratica di [[NEXUS EA - Principi]] #4.
+- **Backtest 10 anni segmentato in corso** (10 segmenti da 1 anno): 9/10 arrivati.
+  Segmenti 1-3 falliti per bug del tester (da ri-eseguire), segmenti 4-9 (6 anni
+  reali 2019-2024) affidabili e **tutti in perdita** — PF 0.63-0.98, DD fino
+  all'88.69% nel 2024 (il peggiore di tutto il dataset, con qualità storico 100%
+  — non un artefatto). Causa mai chiusa: nessun gate protegge il drawdown
+  cumulato dal picco, solo quello giornaliero, e il problema non si è attenuato
+  col tempo. Segmento 10 ancora in esecuzione.
+- Il fix HTF v2.5.0 **non ha funzionato** per le strategie che dovevano
+  beneficiarne di più: SAR (-34.3R, 0/6 anni positivi), MACD (-21.1R — era già
+  validata su v2.4.8, ora la 2ª peggiore), RSI_DIV (-17.5R, salita in classifica
+  col 2024), ADX_RSI (-15.3R). Insieme sono ~75% della perdita totale del
+  portafoglio (-118.1R su 6 anni).
+- **Aggiornamento importante dal segmento 9**: TURTLE_SOUP, che era la
+  strategia migliore in assoluto (+7.3R su 5 anni), è quasi tornata a
+  breakeven (+0.1R su 6 anni) dopo un 2024 pessimo (-7.2R) — non più
+  "validata senza riserve". **BREAKOUT_ACC** (+4.3R, 5/6 anni positivi) è ora
+  la componente più stabile del nucleo hedge, seguita da **CISD** (+3.2R, un
+  solo anno lievemente negativo). Il nucleo dei tre insieme fa +7.6R su 6
+  anni (era +14.7R su 5) — ridimensionato ma ancora nettamente il miglior
+  angolo del portafoglio. **BJORGUM** si è ribaltata: da PF 2.14 (5 trade, 3
+  anni) a -8.6R (5/6 anni negativi) — la conferma pratica di
+  [[NEXUS EA - Principi]] #4.

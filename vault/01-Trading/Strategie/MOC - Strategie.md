@@ -14,46 +14,45 @@ ciascuna **oggi**. Aggiorna questa pagina (spostando i link tra i gruppi) ogni
 volta che una scheda cambia stato — è la vista rapida che sostituisce lo
 scorrere 36 file per capire a che punto siamo.
 
-**Aggiornamento 15/07**: arrivati 5 anni reali (2019-2023) dal backtest 10y
-segmentato v2.5.0 — vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] e
-[[NEXUS EA - Hedge nel Tempo]]. I gruppi sotto riflettono questo, non più solo
-il singolo test 3 mesi/3 anni di v2.4.8.
+**Aggiornamento 15/07 (segmento 9)**: arrivati 6 anni reali (2019-2024) dal
+backtest 10y segmentato v2.5.0 — vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+e [[NEXUS EA - Hedge nel Tempo]]. Il segmento 9 ha ridimensionato TURTLE_SOUP
+(da migliore strategia a quasi-breakeven) e peggiorato RSI_DIV (ora tra le
+fallite) — i gruppi sotto riflettono questo aggiornamento, non solo il primo
+giro di 5 anni.
 
-## ✅ Validate (1)
-Profittevoli confermate su più finestre indipendenti con campione sufficiente.
+## 🟢 Promettenti — nucleo hedge candidato (3)
+Il combinato dei tre fa +7.6R su 6 anni (era +14.7R su 5, il 2024 ha tolto
+quasi metà del guadagno) — resta comunque nettamente il miglior angolo del
+portafoglio, vedi [[NEXUS EA - Hedge nel Tempo]]. BREAKOUT_ACC è l'unica delle
+tre a non aver mai avuto un anno chiaramente negativo.
 
-- [[Turtle Soup]] — confermata anche sui 5 anni (+7.3R, 3/5 anni positivi)
+- [[Breakout Acc]] — +4.3R su 6 anni, 5/6 anni positivi — la più stabile del nucleo
+- [[Cisd]] — +3.2R su 6 anni, primo anno negativo nel 2024 (-0.3, comunque marginale)
+- [[Turtle Soup]] — **ridimensionata**: +0.1R su 6 anni (era +7.3R su 5). Il 2024
+  (-7.2R) ha quasi azzerato tutto il guadagno accumulato. Non più "validata"
+  senza riserve.
 
-## 🟢 Promettenti — nucleo hedge candidato (2)
-Mai un anno negativo o quasi, insieme a Turtle Soup formano un combinato che fa
-+14.7R su 5 anni con un solo anno debolmente negativo — vedi
-[[NEXUS EA - Hedge nel Tempo]]. Campione ancora sotto i 15 trade/anno, da
-confermare ma prioritari per un test isolato.
+## 🔴 Fallite — confermato su campione ampio, priorità di intervento (4)
+Campione ampio (400-1.150 trade su 6 anni), il fix HTF di v2.5.0 non ha
+funzionato. Spiegano ~75% della perdita totale del portafoglio. Vedi
+[[NEXUS EA - Backtest 10Y Segmentato - Analisi]] per il dettaglio codice/screening.
 
-- [[Breakout Acc]] — +3.9R, 4/5 anni positivi
-- [[Cisd]] — +3.5R, 0/5 anni negativi (ma solo 15 trade in 5 anni)
-
-## 🔴 Fallite — confermato su 5 anni, priorità di intervento (3)
-Non più "in attesa di validazione": campione ampio (452-838 trade in 5 anni),
-il fix HTF di v2.5.0 non ha funzionato. Spiegano ~80% della perdita totale del
-portafoglio. Vedi [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] per il
-dettaglio codice/screening.
-
-- [[Sar]] — -29.2R, **0/5 anni positivi**, la peggiore in assoluto
-- [[Macd]] — -18.5R, era validata su v2.4.8 (PF 1.11) e il "raffinamento" v2.5.0 l'ha peggiorata
-- [[Adx Rsi]] — -14.2R, 1/5 anni positivi
+- [[Sar]] — -34.3R, **0/6 anni positivi**, la peggiore in assoluto
+- [[Macd]] — -21.1R, era validata su v2.4.8 (PF 1.11) e il "raffinamento" v2.5.0 l'ha peggiorata
+- [[Rsi Div]] — -17.5R — **sale in questo gruppo col segmento 9**: il 2024 (-10.1) è il suo anno peggiore in assoluto
+- [[Adx Rsi]] — -15.3R, 1/6 anni positivi
 
 ## ⏳ In attesa (config v2.5.0, dato ancora ambiguo o negativo minore) (4)
-- [[Ema Pullback]] — -1.4R, 3/5 anni positivi ma volatile
-- [[Ob Mit]] — -4.5R, 1/5 anni positivi
-- [[Tsi]] — -5.8R, 1/5 anni positivi (solo 2023)
-- [[Bjorgum]] — -6.6R su 5 anni, 4/5 negativi — **smentisce l'ottimismo precedente** (PF 2.14 su soli 5 trade, vedi [[NEXUS EA - Principi]] #4): il campione più ampio ribalta il segnale
+- [[Fvg Cont]] — -9.3R su 6 anni, 2024 pessimo (-7.0) dopo 3 anni di ripresa
+- [[Bjorgum]] — -8.6R su 6 anni, 5/6 negativi — **smentisce l'ottimismo precedente** (PF 2.14 su soli 5 trade, vedi [[NEXUS EA - Principi]] #4): il campione più ampio ribalta il segnale
+- [[Tsi]] — -7.9R, 1/6 anni positivi (solo 2023)
+- [[Ema Pullback]] — -5.5R, volatile, nessun trend chiaro
 
-## ❌ Non validate (fallite sui 3 anni / 5 anni) (2)
-PF sotto 1.0 con campione sufficiente. Da rivedere o lasciare a rischio minimo.
+## ❌ Non validate — negativa ma marginale (1)
+PF sotto 1.0, negativa ma non tra le priorità peggiori.
 
-- [[Fvg Cont]] — -2.3R sui 5 anni, ma 3/5 anni positivi (trascinata da un 2019 pessimo, -5.7)
-- [[Rsi Div]] — -7.4R, trascinata da un solo anno pessimo (2022: -9.4)
+- [[Ob Mit]] — -4.1R su 6 anni, ma 2024 positivo (+0.4) — potrebbe essere in ripresa
 
 ## 🔬 Campione troppo piccolo (dato insufficiente) (8)
 <15 trade sui 3 anni — il PF può sembrare buono ma non è statisticamente affidabile (vedi [[NEXUS EA - Principi]] #4).

@@ -28,17 +28,19 @@ Chiusura sopra/sotto un range di 20 barre per 2 candele consecutive (accettazion
 - **3 mesi**: 0 trade eseguiti in questo build. (250 setup rilevati ma nessuno eseguito — strategia disabilitata/bloccata)
 - **3 anni**: 0 trade eseguiti in questo build. (268 setup rilevati ma nessuno eseguito — strategia disabilitata/bloccata)
 
-## Risultati (backtest 10y segmentato v2.5.0, 5 anni affidabili 2019-2023)
-73 trade totali. R per anno: 2019 +1.2 · 2020 +0.7 · 2021 -0.5 · 2022 +2.0 ·
-2023 +0.5. **Somma +3.9R — 4 anni su 5 positivi**. In controfase con
-TURTLE_SOUP in 3 dei 5 anni (quando una perde l'altra guadagna) — le due non
-sono mai negative nello stesso anno. Vedi [[NEXUS EA - Hedge nel Tempo]].
+## Risultati (backtest 10y segmentato v2.5.0, 6 anni affidabili 2019-2024)
+101 trade totali. R per anno: 2019 +1.2 · 2020 +0.7 · 2021 -0.5 · 2022 +2.0 ·
+2023 +0.5 · 2024 +0.4. **Somma +4.3R — 5 anni su 6 positivi**, l'unica delle
+tre del nucleo hedge a restare solidamente positiva anche nel 2024 (quando
+TURTLE_SOUP e CISD sono girate negative). La componente più stabile del
+nucleo. Vedi [[NEXUS EA - Hedge nel Tempo]].
 
 ## Stato
-🟢 PROMETTENTE — riabilitata con successo in v2.5.0 (era a 0 trade in v2.4.8).
-Campione ancora sotto la soglia dei 15 trade/anno per essere pienamente
-affidabile, ma il segnale su 5 anni è coerente. Candidata prioritaria per un
-test isolato del nucleo hedge insieme a TURTLE_SOUP e CISD.
+🟢 PROMETTENTE — la migliore del portafoglio dopo l'aggiornamento del
+segmento 9 (TURTLE_SOUP si è ridimensionata). Campione ancora sotto la soglia
+dei 15 trade/anno per essere pienamente affidabile, ma il segnale su 6 anni è
+il più coerente di tutti. Candidata prioritaria per un test isolato del
+nucleo hedge, ora come componente centrale più che paritaria.
 
 ## Note
 

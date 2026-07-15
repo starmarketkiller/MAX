@@ -28,15 +28,21 @@ Sweep di un estremo recente + rientro nel range (Turtle Soup classico), body[1]>
 - **3 mesi**: 120 setup, 17W/12L/4BE, WR 58.6%, expR +0.298, **PF 3.15**
 - **3 anni**: 54 setup, 11W/6L/2BE, WR 64.7%, expR +0.120, **PF 2.12**
 
-## Risultati (backtest 10y segmentato v2.5.0, 5 anni affidabili 2019-2023)
-181 trade totali. R per anno: 2019 +2.1 · 2020 -1.8 · 2021 +4.2 · 2022 -0.5 ·
-2023 +3.3. **Somma +7.3R — 3 anni su 5 positivi**, migliore performer del
-portafoglio. Insieme a BREAKOUT_ACC e CISD forma un nucleo che non è mai
-negativo nello stesso anno — vedi [[NEXUS EA - Hedge nel Tempo]].
+## Risultati (backtest 10y segmentato v2.5.0, 6 anni affidabili 2019-2024)
+247 trade totali. R per anno: 2019 +2.1 · 2020 -1.8 · 2021 +4.2 · 2022 -0.5 ·
+2023 +3.3 · **2024 -7.2**. **Somma +0.1R — 3 anni su 6 positivi.** Il segmento
+9 (2024, 66 trade) ha quasi azzerato tutto il guadagno accumulato nei 5 anni
+precedenti (+7.3R → +0.1R). Resta comunque parte del miglior angolo del
+portafoglio insieme a BREAKOUT_ACC e CISD (+7.6R combinato su 6 anni, contro
+-118.1R del portafoglio intero) — vedi [[NEXUS EA - Hedge nel Tempo]].
 
 ## Stato
-✅ VALIDATA — profittevole sui 3 anni (v2.4.8) e riconfermata sui 5 anni
-2019-2023 (v2.5.0, config invariata). La strategia più solida del portafoglio.
+🟢 PROMETTENTE, non più "validata senza riserve" — era profittevole sui 3 anni
+(v2.4.8) e sui primi 5 anni segmentati, ma il 2024 ha riportato il totale a
+sostanzialmente breakeven. Lezione diretta: anche 5 anni di dati possono
+nascondere un singolo anno che ribalta la conclusione ([[NEXUS EA - Principi]]
+#1 vale anche oltre i 3 mesi). Da tenere nel nucleo hedge, non più da trattare
+come "la strategia sicura".
 
 ## Note
 
