@@ -91,7 +91,7 @@ double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende 
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;
 
-// input group "=== DATA COLLECTION / SCREENING LIVE (v2.1.1) ==="
+input group "=== DATA COLLECTION / SCREENING LIVE (v2.1.1) ==="
 // Apre OGNI segnale valido di OGNI strategia a lotto fisso piccolo, saltando i
 // gate soft (cooldown/MTF/velocity/exhaustion/exposure/best-per-bar) e la soglia
 // di score. Tiene solo la sicurezza dura (spread/margine/stops via preflight).
@@ -99,9 +99,16 @@ int      InpMinMarginLevel   = 200;
 // quali hanno edge, senza bocciarne nessuna a priori. USARE SU DEMO.
 // NB: per vederle tutte, in .set metti tutti gli InpStrat_*/InpUseStrat_* = true
 // e InpStrategySelector = 0.
-bool     InpDataCollectionMode   = false;  // OFF: si usa il grouping istituzionale (raccolta dati solo su demo)
-double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
-int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
+// 16/07: erano "bool"/"double"/"int" semplici (mai esposti al Tester nonostante
+// il commento sopra lo descrivesse gia' da v2.1.1) - resi "input" su richiesta
+// esplicita di non far contendere alle strategie gli slot/il margine: questo
+// percorso (NXS_SafeBuy/NXS_SafeSell diretti) salta InpMaxConcurrent,
+// InpMaxPerDirTF, InpUseMarginGate/InpMinMarginLevelPct, InpMaxDirExposureLots
+// e InpMaxTotalLotMult - resta solo NXS_PreFlight (spread/margine/stop) e il
+// tetto di sicurezza InpDataCollectionMaxOpen sotto. Default invariati (OFF).
+input bool     InpDataCollectionMode   = false;  // OFF: si usa il grouping istituzionale (raccolta dati solo su demo)
+input double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
+input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
 
 // input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // Master switch del modello istituzionale: lettura unica del mercato ->
