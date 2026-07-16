@@ -311,9 +311,33 @@ def _ll(candles, n, i):
     return min(x["low"] for x in candles[i - n + 1:i + 1]) if i + 1 >= n else None
 
 
+def _macd_signal_series(ema12, ema26, period=9):
+    """9-EMA della linea MACD (ema12-ema26), come il segnale MQL5 (g_macdSig)."""
+    n = len(ema12)
+    macd_line = [None] * n
+    for i in range(n):
+        if ema12[i] is not None and ema26[i] is not None:
+            macd_line[i] = ema12[i] - ema26[i]
+    sig = [None] * n
+    k = 2.0 / (period + 1)
+    seed_i = next((idx for idx, v in enumerate(macd_line) if v is not None), None)
+    if seed_i is None:
+        return macd_line, sig
+    e = macd_line[seed_i]
+    for i in range(seed_i, n):
+        if macd_line[i] is None:
+            continue
+        e = macd_line[i] * k + e * (1 - k)
+        sig[i] = e
+    return macd_line, sig
+
+
 def _prep(candles):
     closes = [c["close"] for c in candles]
     psar, psar_trend = psar_series(candles)
+    ema12 = ema_series(closes, 12)
+    ema26 = ema_series(closes, 26)
+    macd_line, macd_sig = _macd_signal_series(ema12, ema26)
     return {
         "candles": candles,
         "close": closes,
@@ -321,9 +345,11 @@ def _prep(candles):
         "ema9": ema_series(closes, 9),
         "ema20": ema_series(closes, 20),
         "ema50": ema_series(closes, 50),
-        "ema12": ema_series(closes, 12),
-        "ema26": ema_series(closes, 26),
+        "ema12": ema12,
+        "ema26": ema26,
         "ema200": ema_series(closes, 200),
+        "macd_line": macd_line,
+        "macd_signal": macd_sig,
         "rsi": rsi_series(closes, 14),
         "rsi7": rsi_series(closes, 7),
         "atr": atr_series(candles, 14),
@@ -347,23 +373,37 @@ def sig_ema_pullback(c, ind, i):
 
 
 def sig_macd(c, ind, i):
-    if None in (ind["ema12"][i], ind["ema26"][i], ind["ema12"][i - 1], ind["ema26"][i - 1]):
+    # v2.5.1 - era un incrocio MACD-line/zero (bug trovato il 16/07): la vera
+    # NXS_Strat_MACD() MQL5 e' MACD-line vs SIGNAL-line (9-EMA della MACD-
+    # line) + MACD dallo stesso lato dello zero + prezzo vs EMA200 - tre
+    # condizioni, non una. Il proxy vecchio non testava mai la vera
+    # strategia (stesso tipo di bug di SAR/BJORGUM). Vedi vault NEXUS EA -
+    # Ricerca Esterna e Test A-B per Strategia.
+    macd, sig = ind["macd_line"][i], ind["macd_signal"][i]
+    e200, px = ind["ema200"][i], ind["close"][i]
+    if None in (macd, sig, e200):
         return 0
-    m, mp = ind["ema12"][i] - ind["ema26"][i], ind["ema12"][i - 1] - ind["ema26"][i - 1]
-    if mp <= 0 < m:
+    if macd > sig and macd > 0 and px > e200:
         return 1
-    if mp >= 0 > m:
+    if macd < sig and macd < 0 and px < e200:
         return -1
     return 0
 
 
 def sig_rsi_div(c, ind, i):
-    r, rp = ind["rsi"][i], ind["rsi"][i - 1]
-    if None in (r, rp):
+    # v2.5.1 - era un semplice rientro RSI da ipercomprato/ipervenduto (bug
+    # trovato il 16/07): la vera NXS_Strat_RSIDiv() MQL5 e' una divergenza
+    # reale prezzo/RSI su una finestra di 8 barre (minimo di prezzo piu'
+    # basso ma RSI piu' alto = divergenza rialzista, e viceversa) - non
+    # testava mai la vera divergenza. Stesso tipo di bug di SAR/BJORGUM/MACD.
+    rsi = ind["rsi"]
+    if i < 8 or rsi[i] is None or rsi[i - 7] is None:
         return 0
-    if rp < 30 <= r:
+    l1, l8 = c[i]["low"], c[i - 7]["low"]
+    h1, h8 = c[i]["high"], c[i - 7]["high"]
+    if l1 < l8 and rsi[i] > rsi[i - 7] and rsi[i] < 40:
         return 1
-    if rp > 70 >= r:
+    if h1 > h8 and rsi[i] < rsi[i - 7] and rsi[i] > 60:
         return -1
     return 0
 

@@ -48,8 +48,28 @@ lì. Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
 catastrofici su sei, non è più difendibile come "evento isolato del 2022".
 Da rivedere con la stessa urgenza di SAR/MACD/ADX_RSI.
 
+## Fix Blocco 4 (16/07): bug di proxy sul sito, il più netto dei 4 trovati finora
+`sig_rsi_div()` sul motore sito **non testava una divergenza** — era solo
+un rientro RSI da ipercomprato/ipervenduto (`rp<30<=r`), un concetto
+completamente diverso dalla vera divergenza prezzo/RSI a 8 barre della
+funzione MQL5 sopra. Corretto per implementare la vera divergenza.
+
+Con la logica vera, config H1/no-HTF (= profilo attuale): **PF1.34, 84
+trade** — meglio di quanto il vecchio proxy avesse mai mostrato (PF max
+1.09 nello screening originale). Col filtro HTF il campione crolla a 0-4
+trade su ogni TF, inutilizzabile. La config attuale era già la migliore
+trovata, nessun cambio numerico al profilo, solo verificato/documentato.
+
+**678 trade reali su MT5 restano per lo più CRITICA** nonostante il
+segnale ora confermato solido sul sito con la logica corretta — terzo
+caso (dopo FVG_CONT e MACD) dello stesso pattern "segnale sito confermato,
+MT5 reale smentisce": vedi
+[[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] per la
+raccomandazione di indagare l'esecuzione MT5 invece di continuare a
+cercare bug nei trigger.
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[Macd]] · [[Fvg Cont]]

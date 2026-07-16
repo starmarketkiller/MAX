@@ -54,8 +54,24 @@ Principi]] #5 su scala molto più ampia: un edge del sito non va sostituito a
 una config MT5 già validata senza prima confermarlo su MT5. Da valutare se
 tornare alla config v2.4.8 (SL/TP diversi, vedi log commit) e ri-testare.
 
+## Fix Blocco 4 (16/07): bug di proxy sul sito, stesso tipo di SAR/BJORGUM
+`sig_macd()` sul motore sito era un semplice incrocio della MACD-line con
+lo zero — non testava mai MACD-line vs signal-line + filtro EMA200 come la
+vera funzione qui sopra. Corretto (aggiunta la signal-line mancante). Con
+la logica vera, il sito è **ancora più positivo** di prima su ogni
+timeframe/HTF provato (PF1.15-1.52, 108-141 trade) — non un artefatto del
+bug. La config attuale (H4/HTF ON) resta la migliore trovata, nessun
+cambio numerico applicato al profilo, solo corretto il commento che
+citava "robusta su sito E MT5" (era basato sul proxy sbagliato).
+
+**Implicazione**: con segnale confermato solido **due volte** (proxy
+vecchio e nuovo) ma **1.496 trade reali su MT5 in maggioranza negativi**,
+il sospetto di un problema di esecuzione MT5 (non di trigger) si rafforza
+molto — vedi [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] per
+il quadro complessivo con FVG_CONT e RSI_DIV (stesso pattern, 3 casi ora).
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[Fvg Cont]]

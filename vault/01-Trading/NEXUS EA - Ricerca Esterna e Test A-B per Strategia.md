@@ -196,25 +196,57 @@ nel profilo" — non una scoperta, ma una non-smentita. Il test che conta
 resta **isolato su MT5 H1** (`InpStrategySelector`), con 6-10 anni di dati
 veri, non i 2 anni di Yahoo.
 
-## Ricerca (non ancora testata): MACD, RSI_DIV — cosa dicono le fonti esterne
+## Test A/B #4 e #5 (16/07, Blocco 4): MACD e RSI_DIV — altri 2 bug di proxy trovati, stesso schema di SAR/BJORGUM
 
-**MACD**: il lag è strutturale (media mobile = elabora dati storici, i
-segnali arrivano quando lo slancio è già iniziato). Le fonti raccomandano
-un **MACD "zero-lag"** (doppio smoothing delle EMA veloce/lenta) o
-richiedere **almeno 2 conferme indipendenti** prima di entrare (vicinanza a
-supporto/resistenza, breakout di pattern, volume). Il nostro trigger attuale
-ha già 1 filtro (prezzo sopra EMA200) — da testare se un secondo filtro
-(es. ADX o pattern di breakout) aiuta, senza però ripetere ciecamente la
-formula "più filtri = meglio" (vedi test SAR sopra, dove ADX non ha aiutato).
+Controllando il codice a fondo (richiesta esplicita dell'utente di "non
+tralasciare niente"): **né MACD né RSI_DIV sul sito testavano la vera
+logica MQL5** — la terza e quarta occorrenza dello stesso tipo di bug
+(dopo SAR e BJORGUM).
 
-**RSI_DIV**: la fonte più diretta e utile — *"la divergenza è un avviso, non
-un trigger. La maggior parte dei trader perde entrando sulla divergenza
-stessa."* Serve conferma: pattern di reversal candlestick, rottura di una
-mini-trendline, o **RSI che rientra sopra/sotto 50** dopo la divergenza. Il
-nostro trigger (`rp<30<=r` nel sito) già cattura un parziale ri-attraversamento,
-ma non ha conferma di prezzo. Timeframe: le fonti raccomandano **1H e
-superiori** — il nostro RSI_DIV è già su H1, coerente. Da testare: aggiungere
-un secondo filtro di conferma prezzo (rottura trendline o pattern reversal).
+- **MACD**: `sig_macd()` faceva un incrocio della MACD-line con lo zero.
+  La vera `NXS_Strat_MACD()` richiede MACD-line **vs signal-line** (9-EMA
+  della MACD-line) **+** MACD dallo stesso lato dello zero **+** prezzo
+  vs EMA200 — tre condizioni, non una.
+- **RSI_DIV**: `sig_rsi_div()` era solo un rientro RSI da ipercomprato/
+  ipervenduto (`rp<30<=r`). La vera `NXS_Strat_RSIDiv()` è una **divergenza
+  reale** prezzo/RSI su una finestra di 8 barre (minimo di prezzo più
+  basso ma RSI più alto = divergenza rialzista, e viceversa) — concetto
+  completamente diverso, non solo una variante più permissiva.
+
+**Corretti entrambi** in `server/backtest.py` (aggiunta anche
+`macd_signal_series()`, la linea segnale che mancava del tutto). Ri-testati
+con la config reale del profilo:
+
+| Strategia | Config | Trade | PF | DD% | Net |
+|---|---|---|---|---|---|
+| MACD | H4/HTF ON (=profilo) | 108 | 1.42 | 7.75 | +2.425 |
+| MACD | ogni altro TF/HTF provato | 108-141 | 1.15-1.52 | 5.85-9.19 | sempre positivo |
+| RSI_DIV | H1/no-HTF (=profilo) | 84 | **1.34** | 11.91 | +2.275 |
+| RSI_DIV | HTF ON (qualsiasi TF) | 0-4 | — | — | campione troppo piccolo |
+
+**Scoperta importante**: con la logica VERA (non più il proxy bacato), sia
+MACD che RSI_DIV mostrano un **edge ancora più solido di prima** sul sito,
+consistente su quasi ogni timeframe/config provato — non un caso limite.
+Eppure **MT5 reale li smentisce entrambi** su campione enorme (MACD: 1.496
+trade/10y, per lo più CRITICA; RSI_DIV: 678 trade/10y, per lo più CRITICA).
+
+Le config attuali dei profili MQL5 (MACD: SL2.0/TP3.0/HTF ON su H4;
+RSI_DIV: SL1.0/TP4.5/no-HTF su H1) **erano già le migliori trovate** anche
+col proxy corretto — non serviva cambiarle. **Non toccato nessun parametro
+MQL5**, solo aggiornato il commento nel profilo per correggere la
+giustificazione invalida ("robusta su sito E MT5" per MACD era basata sul
+proxy sbagliato).
+
+**Conclusione che cambia priorità**: questo è ora il **terzo caso**
+(dopo FVG_CONT nel Blocco 2) di segnale confermato solido sul sito ma
+smentito su MT5 con campione enorme. Con 3 casi indipendenti che puntano
+nella stessa direzione, il sospetto di un problema di **esecuzione MT5**
+(spread reali, sizing, interazione con gate come `InpMaxPerDirTF`/margine)
+diventa la pista più probabile per una fetta importante della perdita
+totale del portafoglio — più probabile di continuare a cercare bug nei
+trigger. Prossimo passo consigliato: un test isolato MT5 con logging
+spread/sizing per-trade su MACD, RSI_DIV e FVG_CONT insieme, non altri fix
+al sito.
 
 ## ICT/sessione: colmato il gap Tier 3 (Silver Bullet, Judas Swing, AMD/PO3)
 

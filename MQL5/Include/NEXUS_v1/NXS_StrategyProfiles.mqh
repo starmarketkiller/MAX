@@ -44,13 +44,30 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "LIQ_SWEEP")         { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.48 R2.0
    if(name == "LIQ_VOID")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
    if(name == "LONDON_BO")         { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
-   if(name == "MACD")              { slMult=2.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL2.0/TP3.0 -> PF1.63 (robusta su sito E MT5)
+   // 16/07: "robusta su sito E MT5" sopra era basato su un proxy sito
+   // sbagliato (incrocio MACD-line/zero, non MACD/signal+EMA200 come la
+   // vera funzione qui sotto - stesso tipo di bug di SAR/BJORGUM). Proxy
+   // corretto e ri-testato: con la logica VERA, il sito resta positivo su
+   // OGNI timeframe/HTF provato (PF1.15-1.52, 108-141 trade) - ancora piu'
+   // forte di prima. Eppure MT5 reale (1496 trade su 10 anni) e' negativo
+   // in 5 anni su 10. Segnale confermato robusto due volte, esecuzione MT5
+   // no: rinforza il sospetto di un problema di esecuzione (spread/sizing/
+   // interazione gate), non di trigger - vedi vault NEXUS EA - Ricerca
+   // Esterna e Test A-B per Strategia.
+   if(name == "MACD")              { slMult=2.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
    if(name == "MALAYSIAN_SNR")     { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.96 R2.0
    if(name == "OB_MIT")            { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: SL1.5/TP4.0 + trail -> PF1.80
    if(name == "ORDER_BLOCK")       { slMult=1.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.55 R1.71
    if(name == "OTE_CONT")          { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.78 R2.0
    if(name == "RANGE_FADE")        { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
-   if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1h OK PF1.29 R0.94
+   // 16/07: il proxy sito era un semplice rientro RSI da ipercomprato/
+   // ipervenduto, non una vera divergenza prezzo/RSI come questa funzione
+   // (stesso tipo di bug di SAR/BJORGUM/MACD). Corretto e ri-testato: con
+   // la divergenza vera, H1 senza HTF (= config attuale) resta la migliore
+   // (PF1.34, 84 trade) - config gia' giusta. Ma MT5 reale (678 trade)
+   // resta CRITICA la maggior parte degli anni: stesso sospetto di
+   // esecuzione trovato su MACD/FVG_CONT, non di trigger/config.
+   if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
    if(name == "SAR")               { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "SMS_BMS_RTO")       { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
