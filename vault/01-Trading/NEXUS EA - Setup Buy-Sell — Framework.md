@@ -105,12 +105,14 @@ consigliato, per rapporto sforzo/beneficio:
   (vedi [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]]) più eventuali
   nuove fonti che l'utente fornirà.
 
-**Tier 3 — sessione/ICT specifiche, serve materiale non ancora fornito**
-- `SILVER_BULLET`, `JUDAS_SWING`, `LDN_REVERSAL`, `NY_REVERSAL`, `AMD_CONT`,
-  `AMD_REVERSAL`, `PO3`, `OTE_CONT` — modelli ICT legati a orari/sessioni
-  specifiche, solo accennati nel materiale letto finora (kill zone
-  Londra/NY). Servirà altro materiale per ricostruirle correttamente — in
-  attesa delle prossime chat/fonti che l'utente fornirà.
+**Tier 3 — sessione/ICT specifiche**
+- 16/07: `SILVER_BULLET`, `JUDAS_SWING`, `LDN_REVERSAL`, `NY_REVERSAL`,
+  `AMD_CONT`, `AMD_REVERSAL`, `PO3` **collegate per la prima volta al
+  motore sito** (si pensava richiedessero dati non disponibili — falso, il
+  sito scarica già intraday reale). Primi dati preliminari raccolti, vedi
+  [[MOC - Strategie]] e le singole schede — AMD_CONT e PO3 i più
+  promettenti. Ancora nessuna validazione MT5. `OTE_CONT` resta separata
+  (già connessa, disabilitata per test reali negativi).
 
 **Tier 4 — resto del portafoglio**
 Tutte le altre, da affrontare mano a mano che arrivano fonti o mentre si
