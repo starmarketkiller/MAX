@@ -6,7 +6,7 @@
 
 input group "=== NEXUS v2.3.0 — PARAMETRI ATTIVI ==="
 
-// input group "=== SCREENING SELECTOR (v2.0.36) ==="
+input group "=== SCREENING SELECTOR (v2.0.36) ==="
 // 0 = disabled (normal behavior, each InpStrat_*/InpUseStrat_* toggle applies
 // as usual). 1-37 = isolate EXACTLY that one strategy for this run,
 // overriding all individual toggles - lets a single genetic/full Optimization
@@ -22,7 +22,13 @@ input group "=== NEXUS v2.3.0 — PARAMETRI ATTIVI ==="
 // 23=SilverBullet 24=AMD_Reversal 25=OTE_Cont 26=MalaysianSNR 27=CISD
 // 28=AMD_Cont 29=Judas 30=LdnReversal 31=NYReversal 32=WeeklyExp 33=PO3
 // 34=LiqVoid 35=DispRebal 36=Elliott 37=RangeFade
-int InpStrategySelector = 0;
+// 15/07: era un semplice "int" (mai esposto al Tester/Optimization nonostante
+// il commento sopra lo descrivesse gia' da v2.0.36) - reso "input" cosi'
+// l'Optimization 1..37 descritta sopra e' davvero lanciabile, invece di dover
+// ricompilare 37 EA separati. Default 0 invariato: comportamento normale
+// (tutte le strategie secondo i loro toggle) resta identico finche' non lo si
+// tocca esplicitamente nella scheda Input del Tester.
+input int InpStrategySelector = 0;
 
 // input group "=== GENERAL ==="
 input long     InpMagic            = 991000;
