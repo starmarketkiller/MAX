@@ -68,6 +68,19 @@ corto per validarlo, a differenza dei 6-10 anni di MT5. **Nessun cambio
 di codice**: è una non-smentita del TF attuale (H1), non una scoperta.
 Dettaglio: [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]].
 
+## Seguito (16/07 sera): CHoCH fedele (fractal) — ancora peggio, conferma il "no"
+Ripetuto il test con un CHoCH vero a fractal swing (fedele a
+`NXS_ComputeStructureCore`, non il proxy rolling-extreme di prima) su H1 e
+4h: **0 trade su entrambi**, sia con struttura interna sola sia
+interna+esterna insieme. Ancora più netto del primo test (che dava 4-9
+trade). Rinforza la conclusione: richiedere CHoCH **sullo stesso bar**
+della candela di rigetto è strutturalmente troppo restrittivo per questo
+tipo di pattern — il pivot fractal richiede barre di conferma dopo di sé,
+quindi è sempre "vecchio" di qualche barra, e raramente si allinea
+esattamente col bar del sweep. Stessa storia per [[Ifvg]]. Non un
+argomento per riprovare con soglie diverse — il problema è l'idea di
+richiedere l'allineamento sullo stesso bar, non i parametri.
+
 ## Note
 
 

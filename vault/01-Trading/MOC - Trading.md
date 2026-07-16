@@ -63,8 +63,14 @@ profitto reale, non solo curve di backtest.
   del bug che rompeva lo strumento "Strat Diag" del sito.
 - **[[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]]** — lettura
   completa di tutte le 37 strategie per verificare che ognuna usi davvero la
-  logica del suo nome. 34/37 a posto, 3 casi trovati (SAR/ADX_RSI corretti,
-  TSI in attesa di una decisione tua sul trade-off frequenza/qualità).
+  logica del suo nome. 6 bug di proxy trovati e corretti al 16/07 (SAR,
+  BJORGUM, MACD, RSI_DIV, BREAKOUT_ACC, LIQ_SWEEP), TSI in attesa di una
+  decisione tua sul trade-off frequenza/qualità.
+- **[[NEXUS EA - Struttura Interna vs Esterna — Framework]]** — teoria
+  (tua, confermata) su swing minori/maggiori come due prospettive
+  separate per ogni pattern SMC, non una gerarchia di filtri. Primi test:
+  funziona come "due varianti" (LIQ_SWEEP), non come gate extra sullo
+  stesso bar (IFVG/TURTLE_SOUP, entrambi peggiorati).
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a

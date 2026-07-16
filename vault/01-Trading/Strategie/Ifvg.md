@@ -42,6 +42,28 @@ che la sincronizzazione multi-TF è corretta (`NXS_UpdateStructure` viene
 richiamato sul TF giusto — H4 — prima che IFVG venga valutata, vedi
 `NEXUS_EA_v2.mq5:403`) — non è un bug di timeframe sbagliato.
 
+## Seguito (16/07 sera): riconfermato con CHoCH fedele — 0 quasi ovunque, mistero chiuso
+Il primo test usava un proxy CHoCH grezzo (rolling-extreme). Implementato
+un vero rilevamento a **fractal swing** (fedele a
+`NXS_ComputeStructureCore`: pivot simmetrico a `wing` barre, trend da
+HH+HL/LH+LL con isteresi — non solo un massimo/minimo su finestra
+scorrevole) più una versione **esterna** (stesso algoritmo su un
+timeframe superiore reale, ricampionato). Risultato: con la CHoCH interna
+fedele, i segnali grezzi scendono da 41 (proxy vecchio, D1) a **6** — con
+interna+esterna insieme, **0 su ogni timeframe testato (D1/4h/1h)**.
+Conferma con molta più sicurezza la conclusione precedente: non è un bug,
+è un allineamento a 4-5 condizioni sullo stesso bar strutturalmente quasi
+impossibile — coerente al 100% con lo zero reale su MT5 in 10 anni. Non
+serve più cercare un bug qui.
+
+## Nota metodologica dal test (rilevante anche per altre strategie)
+Aggiungere una conferma CHoCH **sullo stesso bar** di un altro trigger
+specifico è quasi sempre troppo restrittivo — vero anche per TURTLE_SOUP
+(vedi scheda), non solo qui. Il valore del framework interna/esterna
+sembra stare nell'avere **varianti separate** di un pattern (vedi
+[[Liq Sweep]]), non nel gate-are un pattern esistente con una CHoCH
+aggiuntiva sullo stesso bar.
+
 Testato sul motore sito (dove IFVG è codice reale, non proxy) con un CHoCH
 proxy equivalente (failure-swing, meno severo del vero `g_struct`): la
 versione "loose" (solo gap+invalidazione) produce **168 segnali/10y su D1,

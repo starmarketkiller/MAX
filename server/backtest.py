@@ -357,6 +357,8 @@ def _prep(candles):
         "psar_trend": psar_trend,
         "adx": adx_series(candles, 14),
         "sess": _session_amd_series(candles),
+        "choch_int": _fractal_choch_series(candles, wing=3),
+        "choch_ext": _external_choch_series(candles, factor=4, wing=3),
     }
 
 
@@ -954,6 +956,9 @@ def _sweep_ext_at(candles, sess, i):
 
 
 def _choch_at(c, i, look=10):
+    # Proxy "grezzo" (rolling-extreme) - lasciato per compatibilita' dov'era
+    # gia' usato (TURTLE_SOUP/IFVG test A/B del 16/07 mattina). Superato da
+    # _fractal_choch_series()/choch_int-choch_ext per i test successivi.
     if i < 2 * look:
         return (False, False)
     hi_recent = max(x["high"] for x in c[i - look:i])
@@ -961,6 +966,75 @@ def _choch_at(c, i, look=10):
     lo_recent = min(x["low"] for x in c[i - look:i])
     lo_older = min(x["low"] for x in c[i - 2 * look:i - look])
     return (lo_recent > lo_older, hi_recent < hi_older)  # (chochUp, chochDown)
+
+
+# ---------------------------------------------------------------------------- #
+# Struttura interna/esterna (16/07) - su richiesta dell'utente: "interna" =
+# swing minori sul timeframe di ingresso, "esterna" = swing maggiori su un
+# timeframe superiore reale (non solo una finestra piu' larga sullo stesso
+# TF). Fedele a NXS_ComputeStructureCore (fractal swing simmetrico, HH+HL/
+# LH+LL con isteresi) invece del proxy a rolling-extreme usato finora -
+# g_struct/g_structH1 in MQL5 fanno esattamente questo, ma g_structH1 non
+# viene mai letta da nessuna strategia (infrastruttura pronta, mai
+# collegata - vedi vault NEXUS EA - Audit Fedelta Trigger).
+def _fractal_choch_series(candles, wing=3):
+    n = len(candles)
+    trend = [0] * n
+    choch_up = [False] * n
+    choch_down = [False] * n
+    last_hi = prev_hi = last_lo = prev_lo = None
+    cur_trend = 0
+    for i in range(n):
+        idx = i - wing
+        if idx - wing >= 0:
+            h, l = candles[idx]["high"], candles[idx]["low"]
+            is_hi = all(candles[idx - k]["high"] < h for k in range(1, wing + 1)) and \
+                    all(candles[idx + k]["high"] < h for k in range(1, wing + 1))
+            is_lo = all(candles[idx - k]["low"] > l for k in range(1, wing + 1)) and \
+                    all(candles[idx + k]["low"] > l for k in range(1, wing + 1))
+            if is_hi:
+                prev_hi, last_hi = last_hi, h
+            if is_lo:
+                prev_lo, last_lo = last_lo, l
+        trend_before = cur_trend
+        if None not in (last_hi, prev_hi, last_lo, prev_lo):
+            if last_hi > prev_hi and last_lo > prev_lo:
+                cur_trend = 1
+            elif last_hi < prev_hi and last_lo < prev_lo:
+                cur_trend = -1
+        c1 = candles[i]["close"]
+        cu = last_hi is not None and c1 > last_hi and trend_before == -1
+        cd = last_lo is not None and c1 < last_lo and trend_before == 1
+        trend[i], choch_up[i], choch_down[i] = cur_trend, cu, cd
+    return trend, choch_up, choch_down
+
+
+def _resample_ohlc(candles, factor):
+    out = []
+    n = len(candles) - (len(candles) % factor)
+    for i in range(0, n, factor):
+        g = candles[i:i + factor]
+        out.append({"time": g[0]["time"], "open": g[0]["open"],
+                     "high": max(x["high"] for x in g), "low": min(x["low"] for x in g),
+                     "close": g[-1]["close"]})
+    return out
+
+
+def _external_choch_series(candles, factor=4, wing=3):
+    """CHoCH su timeframe superiore reale (resample di `factor` candele),
+    mappato indietro su ogni barra originale con forward-fill (solo l'ultima
+    barra esterna GIA' completata, niente look-ahead)."""
+    n = len(candles)
+    resampled = _resample_ohlc(candles, factor)
+    _, r_up, r_down = _fractal_choch_series(resampled, wing=wing)
+    ext_up = [False] * n
+    ext_down = [False] * n
+    for i in range(n):
+        r_idx = i // factor - 1   # ultima barra esterna completata prima di i
+        if 0 <= r_idx < len(r_up):
+            ext_up[i] = r_up[r_idx]
+            ext_down[i] = r_down[r_idx]
+    return ext_up, ext_down
 
 
 def sig_amd_cont(c, ind, i):
