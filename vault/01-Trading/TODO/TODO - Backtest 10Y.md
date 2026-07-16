@@ -297,11 +297,26 @@ di lavoro consigliato, per gruppo:
 
 ## Bug/gap da fixare nel codice (priorità alta, non serve aspettare altri segmenti)
 
-- [ ] **Contatore `executed` rotto** (`NXS_StratStats.mqh`): sempre 0 anche
-  quando ci sono centinaia di trade reali. Rende inutilizzabili `exec_rate_pct`,
-  `dominant_blocker`, `health` nei CSV diagnostici. Causa non trovata (il
-  codice sembra corretto lato scrittura) — serve strumentazione aggiuntiva o
-  log dal vivo per isolarla.
+- [x] **Contatore `executed` rotto** (`NXS_StratStats.mqh`) — **1 causa
+  reale trovata e corretta il 16/07**, l'altra resta aperta:
+  - **Trovata**: il path `InpDataCollectionMode` (usato dallo sweep 1-37 in
+    corso) apriva trade reali ma **non chiamava mai** `NXS_Stats_RecordExec`
+    — solo `NXS_StrategyRegisterTrade`/`NXS_LogTradeCSV`. Corretto
+    (`NEXUS_EA_v2.mq5:759`). Da qui in avanti, in questa modalità,
+    `executed`/`exec_rate_pct` saranno corretti senza bisogno del fallback
+    `wins+losses+breakeven` (che comunque resta valido e continua a
+    funzionare come rete di sicurezza in `bt_verdict.py`).
+  - **Ancora aperta**: nel path standard (best-per-bar, quello usato dai
+    10 segmenti V250 già raccolti) il codice sembra corretto — `EXEC_OK`
+    da `NXS_TryExecuteRC` scatta solo quando `NXS_OpenTrade` riesce
+    davvero, e la chiamata a `RecordExec` è subito dopo
+    (`NEXUS_EA_v2.mq5:941`). Non trovato un bug statico qui; serve
+    strumentazione live (Print/contatore temporaneo) per isolarla,
+    lettura del codice da sola non basta più.
+  - **Perché conta**: risponde alla domanda "un rilevamento sbagliato può
+    dare risultati diversi?" con un caso concreto e confermato — non solo
+    i proxy delle strategie (SAR/BJORGUM/MACD/RSI_DIV/BREAKOUT_ACC), anche
+    il livello di raccolta dati sotto di esse può avere gap silenziosi.
 - [ ] **Nessun gate sul drawdown cumulato dal picco equity** — solo
   `InpMaxDailyDDPct` (giornaliero, si resetta ogni giorno). Il DD 87.22% nel
   segmento 2020 (88.69% nel 2024) è la conferma pratica del buco. Aggiungere

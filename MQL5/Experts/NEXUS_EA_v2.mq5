@@ -749,6 +749,14 @@ void OnTick(){
          if(dok){
             openedNow++;
             NXS_StrategyRegisterTrade(s.stratName);
+            // 16/07: mancava la chiamata a NXS_Stats_RecordExec in questo path -
+            // "executed" restava a 0 anche qui (bug diverso ma imparentato a
+            // quello gia' noto del path standard). wins/losses restano comunque
+            // affidabili (letti dallo storico deal chiuso), ma ora anche
+            // "executed"/exec_rate_pct sono corretti quando si usa questa
+            // modalita' (es. lo sweep 1-37 in corso).
+            double dSpread = (double)SymbolInfoInteger(g_sym, SYMBOL_SPREAD);
+            NXS_Stats_RecordExec(s.stratName, s.score, dSpread);
             NXS_LogTradeCSV("OPEN", 0, s.stratName, refP, 0, dsl, dtp, s.score,
                             s.reason + "|" + dctx);
             PrintFormat("[NEXUS DATA] OPEN %s %s %s lots=%.2f score=%.1f",
