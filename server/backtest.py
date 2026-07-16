@@ -421,6 +421,26 @@ def sig_breakout(c, ind, i, n=20):
     return 0
 
 
+def sig_breakout_acc(c, ind, i, n=20):
+    # v2.5.1 - bug trovato il 16/07 (stesso tipo di SAR/BJORGUM/MACD/RSI_DIV):
+    # BREAKOUT_ACC usava sig_breakout() generico (1 sola chiusura oltre il
+    # range) mentre la vera NXS_Strat_BreakoutAcc() richiede ACCEPTANCE -
+    # DUE chiusure consecutive oltre il range, non una - e' il concetto
+    # stesso nel nome ("Acc" = Acceptance), non solo un dettaglio. Trovato
+    # controllando sistematicamente le altre strategie su richiesta
+    # dell'utente dopo i 4 bug gia' trovati su SAR/BJORGUM/MACD/RSI_DIV.
+    if i < n + 2:
+        return 0
+    hh = max(x["high"] for x in c[i - n - 1:i - 1])
+    ll = min(x["low"] for x in c[i - n - 1:i - 1])
+    c1, c2 = c[i]["close"], c[i - 1]["close"]
+    if c1 > hh and c2 > hh:
+        return 1
+    if c1 < ll and c2 < ll:
+        return -1
+    return 0
+
+
 def sig_adx_rsi(c, ind, i):
     # v2.5.1 - aggiunto filtro ADX reale (prima non veniva mai calcolato,
     # nonostante il nome: bug trovato e corretto il 15/07, vedi vault NEXUS
@@ -865,7 +885,7 @@ STRATEGIES = {
     "EMA_PULLBACK": sig_ema_pullback,
     "MACD": sig_macd,
     "RSI_DIV": sig_rsi_div,
-    "BREAKOUT_ACC": sig_breakout,
+    "BREAKOUT_ACC": sig_breakout_acc,
     "ADX_RSI": sig_adx_rsi,
     "BOLLINGER": sig_bollinger,
     "BB_SQUEEZE": sig_bb_squeeze,

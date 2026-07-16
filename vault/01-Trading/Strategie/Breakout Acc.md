@@ -42,8 +42,24 @@ dei 15 trade/anno per essere pienamente affidabile, ma il segnale su 6 anni è
 il più coerente di tutti. Candidata prioritaria per un test isolato del
 nucleo hedge, ora come componente centrale più che paritaria.
 
+## Fix Blocco 5 (16/07): 5° bug di proxy trovato, ma qui il segnale regge (e migliora)
+Controllo sistematico di tutte le strategie "reali" sul sito (non tra i 6
+proxy già dichiarati) su richiesta dell'utente dopo i 4 bug trovati su
+SAR/BJORGUM/MACD/RSI_DIV. Trovato: `sig_breakout` (riusato per
+BREAKOUT_ACC) chiedeva **una sola chiusura** oltre il range — la vera
+`NXS_Strat_BreakoutAcc()` richiede **due chiusure consecutive** (vera
+"Acceptance", il concetto stesso nel nome). Creata `sig_breakout_acc()`
+dedicata con la logica corretta.
+
+A differenza degli altri 4 bug, qui **la correzione non smentisce il
+segnale**: sulla config reale (D1) il PF **migliora** (1.88→2.15) e il DD
+**scende** (15.91%→12.25%) — BREAKOUT_ACC, già la componente più stabile
+del nucleo hedge su MT5 reale, si conferma solida anche col test corretto.
+Nessun cambio al profilo MQL5 (D1 resta la scelta giusta), solo il proxy
+sito sistemato per accuratezza futura.
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]
