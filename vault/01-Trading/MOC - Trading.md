@@ -25,6 +25,12 @@ profitto reale, non solo curve di backtest.
   qualsiasi tuning futuro.
 - **[[NEXUS EA - Screening Strategie (sito 10y)]]** — tabella di riferimento: quale
   configurazione (SL/TP/HTF) massimizza l'edge di ciascuna strategia sul motore del sito.
+- **[[NEXUS EA - Test Generale Post-Fix (16-07 notte)]]** — riscreening di tutte
+  le 36 strategie DOPO i fix del 16/07 (proxy fedeli, struttura esterna, TP
+  dinamico, 7 sessione connesse): 31/36 ora positive sul sito, ma
+  SAR/MACD/RSI_DIV/ADX_RSI (i 4 responsabili del 75% della perdita MT5)
+  restano positive anche col proxy corretto — rafforza il sospetto di
+  esecuzione, non di trigger.
 - **[[Sito Backtest Lab - Note Tecniche]]** — come funziona il backend Python/React,
   incluso il problema di deploy Render risolto il 12/07.
 - **[[MOC - Strategie]]** — indice delle 36 schede per-strategia (`Strategie/`),
