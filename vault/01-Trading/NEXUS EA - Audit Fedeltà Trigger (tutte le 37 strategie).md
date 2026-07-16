@@ -27,6 +27,49 @@ MQL5, più tutte le `sig_*` in `server/backtest.py`.
 | **TSI** | ⚠️ **dichiarato nel commento "simplified RSI/EMA proxy"**, non vero TSI (William Blau, doppio smoothing EMA del momentum) | ⚠️ stesso proxy | **Non ancora corretto — vedi decisione da prendere sotto** |
 | Tutte le altre 34 | ✅ trigger coerente col nome (verificato leggendo il codice) | Vedi nota sui proxy dichiarati sotto | OK |
 
+## Round 2 (16/07): la domanda che doveva essere fatta subito — "ne mancano altre?"
+
+Dopo aver trovato BJORGUM (proxy EMA ribbon invece di pivot-bounce), MACD
+(incrocio zero invece di MACD/signal+EMA200) e RSI_DIV (rientro RSI invece
+di vera divergenza) — **tre bug in più dello stesso tipo di SAR**, non
+trovati nel primo giro — l'utente ha chiesto direttamente se altre
+strategie avessero lo stesso problema. Ripassato sistematicamente ogni
+`sig_*` "reale" (non tra i 6 proxy già dichiarati sotto) contro la sua
+`NXS_Strat_*` MQL5:
+
+| Strategia | Esito |
+|---|---|
+| BOLLINGER | ✅ fedele (rientro banda su close, nessun filtro extra — combacia esattamente) |
+| EMA_PULLBACK | ✅ fedele (trend EMA20/50 + pullback — combacia) |
+| CISD | ✅ fedele (già verificato nel Blocco 3) |
+| **BREAKOUT_ACC** | 🔴 **bug trovato**: sito chiedeva 1 sola chiusura oltre il range, la vera "Acceptance" ne richiede 2 consecutive. **Corretto** — a differenza degli altri, qui il fix **migliora** il risultato (PF1.88→2.15), non lo smentisce: la strategia era già solida. |
+| BB_SQUEEZE | ⚠️ gap minore trovato: definizione di "squeeze" diversa (MQL5: width vs ATR fisso; sito: percentile sulle ultime 40 barre) e breakout misurato su riferimenti diversi. **Non corretto** — strategia disabilitata (`NXS_Profile_Enabled`), priorità bassa. |
+| ICHIMOKU | ⚠️ gap minore trovato: il sito calcola Tenkan/Kijun/Span senza lo sfasamento in avanti (displacement) standard della nuvola Ichimoku. **Non corretto** — strategia disabilitata, priorità bassa. |
+| OB_MIT / ORDER_BLOCK | ⚠️ gap minore: manca sul sito il filtro opzionale `InpUseSMCReactionGate` (conferma reazione aggiuntiva su MT5). Logica di base comunque fedele. Non corretto — filtro secondario, non il trigger centrale. |
+| MALAYSIAN_SNR | Nessun bug nuovo — la semplificazione multi-TF era già nota (vedi sotto), non un bug nascosto. |
+
+**In totale: 5 bug reali trovati finora** (SAR, BJORGUM, MACD, RSI_DIV,
+BREAKOUT_ACC), tutti corretti sul sito. Le strategie disabilitate
+(BB_SQUEEZE, ICHIMOKU, DISP_REBAL, OTE_CONT, STRUCT_REACT) non sono state
+riverificate a fondo — priorità bassa finché restano spente in produzione.
+
+## E le strategie "non connesse" (AMD_*, JUDAS_SWING, LDN/NY_REVERSAL, PO3, SILVER_BULLET)?
+
+Risposta diretta alla seconda domanda dell'utente: **non manca qualcosa di
+strutturalmente impossibile da ottenere**. Il motore sito PUÒ scaricare
+dati intraday reali con timestamp veri via Yahoo (`_fetch_real`, già usato
+per lo sweep multi-TF di TURTLE_SOUP: H1/H4 fino a 2 anni di storico, M15
+fino a 60 giorni) — le candele hanno un campo `time` con ora reale
+(`HH:MM`), sufficiente per calcolare le sessioni Londra/NY/Asia che queste
+7 strategie richiedono. **Il pezzo mancante non è il dato, è che nessuna
+di queste 7 è mai stata collegata nel dizionario `STRATEGIES` del sito** —
+zero righe di codice scritte per loro finora, non un limite dei dati.
+Con gli orari già trovati in ricerca (Silver Bullet 3-4/10-11/14-15 ET,
+Judas Swing 2-5 EST) sarebbe possibile implementarle e testarle davvero,
+anche se con uno storico più corto (2 anni, non 10) di quello disponibile
+su D1. Non ancora fatto — proposta per un prossimo blocco, da confermare
+con l'utente prima di investirci tempo.
+
 ## TSI: il terzo caso, con un trade-off da decidere (non ancora corretto)
 
 Implementato il vero TSI (doppio smoothing EMA(25)/EMA(13) del momentum,
