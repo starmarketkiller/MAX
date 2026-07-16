@@ -291,23 +291,28 @@ double   InpOverlapScoreMin  = 58.0;
 double   InpNYScoreMin       = 60.0;
 double   InpAfterNYScoreMin  = 70.0;
 
-// input group "=== STRATEGIES TOGGLE ==="
-bool     InpStrat_ADX_RSI      = true;
-bool     InpStrat_BOLLINGER    = true;
-bool     InpStrat_MACD         = true;
-bool     InpStrat_SAR          = true;
-bool     InpStrat_TSI          = true;
-bool     InpStrat_BJORGUM      = true;
-bool     InpStrat_LIQ_SWEEP    = true;
-bool     InpStrat_FVG_CONT     = true;
-bool     InpStrat_BREAKOUT_ACC = true;
-bool     InpStrat_LONDON_BO    = true;
-bool     InpStrat_EMA_PULLBACK = true;
-bool     InpStrat_BB_SQUEEZE   = true;
-bool     InpStrat_ICHIMOKU     = true;
-bool     InpStrat_RSI_DIV      = true;
-bool     InpStrat_ORDER_BLOCK  = true;
-bool     InpUseStructReact     = true;
+input group "=== STRATEGIES TOGGLE ==="
+// 16/07: erano "bool" semplici - mai esposti al Tester nonostante fossero
+// l'unico modo (oltre a InpStrategySelector, che isola UNA sola strategia)
+// per testare COMBINAZIONI scelte a mano (es. nucleo hedge BREAKOUT_ACC+
+// CISD+TURTLE_SOUP) senza ricompilare. Resi "input", default invariati
+// (tutte true = comportamento normale identico finche' non le tocchi).
+input bool     InpStrat_ADX_RSI      = true;
+input bool     InpStrat_BOLLINGER    = true;
+input bool     InpStrat_MACD         = true;
+input bool     InpStrat_SAR          = true;
+input bool     InpStrat_TSI          = true;
+input bool     InpStrat_BJORGUM      = true;
+input bool     InpStrat_LIQ_SWEEP    = true;
+input bool     InpStrat_FVG_CONT     = true;
+input bool     InpStrat_BREAKOUT_ACC = true;
+input bool     InpStrat_LONDON_BO    = true;
+input bool     InpStrat_EMA_PULLBACK = true;
+input bool     InpStrat_BB_SQUEEZE   = true;
+input bool     InpStrat_ICHIMOKU     = true;
+input bool     InpStrat_RSI_DIV      = true;
+input bool     InpStrat_ORDER_BLOCK  = true;
+input bool     InpUseStructReact     = true;
 
 // input group "=== STRUCTURE ENGINE ==="
 bool     InpUseStructure       = true;
@@ -465,27 +470,27 @@ bool     InpTryNextSignalIfBlocked         = true;
 bool     InpDebugDecisionLog               = true;
 
 // input group "=== SMC/ICT STRATEGIES (v2.0.2) ==="
-bool     InpStrat_TurtleSoup     = true;
-bool     InpStrat_IFVG           = true;
-bool     InpStrat_FVG_Mit        = true;
-bool     InpStrat_OB_Mit         = true;
-bool     InpStrat_SH_BMS_RTO     = true;
-bool     InpStrat_SMS_BMS_RTO    = true;
-bool     InpStrat_SilverBullet   = true;
-bool     InpStrat_AMD_Reversal   = true;
-bool     InpStrat_OTE_Cont       = true;
-bool     InpStrat_MalaysianSNR   = true;
+input bool     InpStrat_TurtleSoup     = true;
+input bool     InpStrat_IFVG           = true;
+input bool     InpStrat_FVG_Mit        = true;
+input bool     InpStrat_OB_Mit         = true;
+input bool     InpStrat_SH_BMS_RTO     = true;
+input bool     InpStrat_SMS_BMS_RTO    = true;
+input bool     InpStrat_SilverBullet   = true;
+input bool     InpStrat_AMD_Reversal   = true;
+input bool     InpStrat_OTE_Cont       = true;
+input bool     InpStrat_MalaysianSNR   = true;
 
 // input group "=== INSTITUTIONAL MODELS (v2.0.7) ==="
-bool     InpUseStrat_CISD          = true;
-bool     InpUseStrat_AMD_Cont      = true;
-bool     InpUseStrat_Judas         = true;
-bool     InpUseStrat_LdnReversal   = true;
-bool     InpUseStrat_NYReversal    = true;
-bool     InpUseStrat_WeeklyExp     = true;
-bool     InpUseStrat_PO3           = true;
-bool     InpUseStrat_LiqVoid       = true;
-bool     InpUseStrat_DispRebal     = true;
+input bool     InpUseStrat_CISD          = true;
+input bool     InpUseStrat_AMD_Cont      = true;
+input bool     InpUseStrat_Judas         = true;
+input bool     InpUseStrat_LdnReversal   = true;
+input bool     InpUseStrat_NYReversal    = true;
+input bool     InpUseStrat_WeeklyExp     = true;
+input bool     InpUseStrat_PO3           = true;
+input bool     InpUseStrat_LiqVoid       = true;
+input bool     InpUseStrat_DispRebal     = true;
 
 // input group "=== TIMEFRAME-AWARE SL/TP + LIFE (v2.0.21) ==="
 double   InpTF_SLTP_H1   = 2.0;    // moltiplicatore SL/TP per segnali origine H1 (× ATR chart)
@@ -496,14 +501,14 @@ double   InpTF_Life_H4   = 20.0;   // idem H4
 double   InpTF_Life_D1   = 60.0;   // idem D1
 
 // input group "=== ELLIOTT WAVE (v2.0.20) ==="
-bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima
+input bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima
 int      InpEllSwingWing           = 3;        // ampiezza fractal per i pivot di swing
 double   InpEllRetraceMin          = 0.382;    // retracement min onda 2 (Fib)
 double   InpEllRetraceMax          = 0.786;    // retracement max onda 2 (Fib)
 double   InpEllMinScore            = 70.0;     // score base dei setup Elliott
 
 // input group "=== RANGE / COUNTER-HTF (v2.0.8) ==="
-bool     InpUseStrat_RangeFade     = true;     // mean-revert sui range stretti
+input bool     InpUseStrat_RangeFade     = true;     // mean-revert sui range stretti
 bool     InpEnableCounterHTFSoft   = false;    // OPTIONAL: counter-trend HTF micro-trade
 double   InpCounterHTF_MinReactQ   = 75.0;     // min reaction quality
 double   InpCounterHTF_LotMult     = 0.40;     // lot reducer (40% of base)
