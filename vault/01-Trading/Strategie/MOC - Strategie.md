@@ -90,16 +90,20 @@ Spente esplicitamente in NXS_Profile_Enabled dopo test reali negativi.
 - [[Ote Cont]]
 - [[Struct React]]
 
-## 🔌 Non connesse (sessione/ICT) (7)
-Richiedono modellazione intraday che il motore del sito non ha. Da validare isolate direttamente su MT5 (InpStrategySelector).
+## 🔌 Prima connessione al sito, mai validate su MT5 (sessione/ICT) (7)
+16/07: non erano "non testabili per limite di dati" come si pensava — il
+sito scarica già intraday reale, mancava solo il codice. Implementate e
+testate per la prima volta (SL1.5/TP3.0 generico, nessun profilo MT5 mai
+esistito, ~2 anni di dati Yahoo intraday, non 10). Dati preliminari, da
+validare su MT5 isolato prima di qualunque conclusione.
 
-- [[Amd Cont]]
-- [[Amd Reversal]]
-- [[Judas Swing]]
-- [[Ldn Reversal]]
-- [[Ny Reversal]]
-- [[Po3]]
-- [[Silver Bullet]]
+- [[Amd Cont]] — 🟢 il più promettente: PF2.07 su 4h (62 trade, DD5.85%)
+- [[Po3]] — 🟢 PF1.29 su 4h (48 trade, DD4.0% — il più basso del gruppo)
+- [[Silver Bullet]] — 🟢 PF1.52 su 4h (68 trade) ma negativo su 1h
+- [[Amd Reversal]] — ⏳ quasi breakeven su 4h (PF1.10, 57 trade)
+- [[Ldn Reversal]] — ⏳ quasi breakeven su 4h (PF1.01, 99 trade — campione più ampio) ma DD alto
+- [[Ny Reversal]] — 🔬 PF1.42 su 1h ma solo 20 trade, troppo pochi per giudicare
+- [[Judas Swing]] — 🔴 negativo su entrambi i TF testati (PF0.74-0.77)
 
 ## ❓ Mai tracciata (1)
 Scoperta il 15/07 durante l'audit di fedeltà — la 37ª strategia dell'EA,

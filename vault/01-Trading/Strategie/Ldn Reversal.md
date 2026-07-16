@@ -29,10 +29,27 @@ Reversal di sessione Londra.
 - **3 anni**: 0 trade eseguiti in questo build.
 
 ## Stato
-NOT_CONNECTED — nessun profilo, richiede validazione diretta su MT5 isolata (InpStrategySelector)
+⏳ Prima serie di dati mai raccolta (16/07) — non più NOT_CONNECTED.
+Sostanzialmente breakeven su 4h (PF1.01, 99 trade — il campione più ampio
+delle 7), negativa su 1h (PF0.65). Nessun profilo MT5 esiste ancora.
+
+## Prima connessione al sito (16/07)
+Implementata la vera logica MQL5 (`NXS_Strat_LondonReversal`): sessione
+Londra/Overlap + sweep (Asia High/Low o PDH/PDL) confermato + chiusura di
+rientro oltre il livello + CHoCH (proxy). Vedi [[Amd Cont]] per il metodo.
+
+Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
+
+| TF | Trade | PF | DD% | Net |
+|---|---|---|---|---|
+| 4h | 99 | 1.01 | 17.28 | +89 |
+| 1h | 52 | 0.65 | 17.02 | -1.202 |
+
+Campione più ampio del gruppo (99 trade su 4h) ma il segnale è debole
+(quasi breakeven) e il DD alto su entrambi i TF — non promettente nel
+primo giro. Non ancora validata su MT5 (`InpStrategySelector=30`).
 
 ## Note
-Non raggiunta dal collector segnali in questo build — 0 chiamate registrate.
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[Amd Cont]]

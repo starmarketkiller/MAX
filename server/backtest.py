@@ -356,6 +356,7 @@ def _prep(candles):
         "psar": psar,
         "psar_trend": psar_trend,
         "adx": adx_series(candles, 14),
+        "sess": _session_amd_series(candles),
     }
 
 
@@ -806,6 +807,280 @@ def sig_cisd(c, ind, i):
     return 0
 
 
+# ---------------------------------------------------------------------------- #
+# Strategie a sessione (16/07) - AMD_CONT, AMD_REVERSAL, JUDAS_SWING,
+# LDN_REVERSAL, NY_REVERSAL, PO3, SILVER_BULLET. Prima assenti dal motore
+# sito ("non testabile", si pensava per limite strutturale dei dati). In
+# realta' _fetch_real() scarica gia' candele intraday con timestamp GMT
+# reali (vedi sweep multi-TF di TURTLE_SOUP) - il pezzo mancante erano
+# queste funzioni, non il dato. Richiedono candele intraday (1h/4h/15m);
+# su D1 le sessioni non si distinguono e semplicemente non generano segnali
+# (comportamento corretto, non un bug).
+#
+# Sessioni GMT fedeli a NXS_Sessions.mqh: ASIAN 00-07, LONDON 07-12,
+# OVERLAP 12-15, NY 15-20, AFTERNY 20-24.
+# AMD fedele a NXS_AMDModel.mqh: state machine per-giorno accumulation ->
+# manipulation -> continuation_distribution (2+ close oltre lo stesso lato)
+# / reversal_distribution (chiusura di rientro dopo la manipolazione).
+# CHoCH: stesso proxy failure-swing gia' usato per TURTLE_SOUP/IFVG (non è
+# il vero g_struct fractal-based di MQL5 - approssimazione dichiarata).
+def _session_amd_series(candles):
+    n = len(candles)
+    hour = [None] * n
+    date = [None] * n
+    for i, cd in enumerate(candles):
+        d, hm = cd["time"].split(" ")
+        date[i] = d
+        hour[i] = int(hm.split(":")[0])
+
+    def _sess(h):
+        if h is None:
+            return None
+        if 0 <= h < 7:
+            return "ASIAN"
+        if 7 <= h < 12:
+            return "LONDON"
+        if 12 <= h < 15:
+            return "OVERLAP"
+        if 15 <= h < 20:
+            return "NY"
+        return "AFTERNY"
+
+    session = [_sess(h) for h in hour]
+
+    asian_hi_by_date, asian_lo_by_date = {}, {}
+    day_hi, day_lo = {}, {}
+    for i in range(n):
+        d = date[i]
+        day_hi[d] = max(day_hi.get(d, -1e18), candles[i]["high"])
+        day_lo[d] = min(day_lo.get(d, 1e18), candles[i]["low"])
+        if session[i] == "ASIAN":
+            asian_hi_by_date[d] = max(asian_hi_by_date.get(d, -1e18), candles[i]["high"])
+            asian_lo_by_date[d] = min(asian_lo_by_date.get(d, 1e18), candles[i]["low"])
+
+    dates_sorted = sorted(day_hi.keys())
+    pdh_by_date, pdl_by_date = {}, {}
+    for idx in range(1, len(dates_sorted)):
+        prev = dates_sorted[idx - 1]
+        pdh_by_date[dates_sorted[idx]] = day_hi[prev]
+        pdl_by_date[dates_sorted[idx]] = day_lo[prev]
+
+    asian_hi = [asian_hi_by_date.get(date[i]) for i in range(n)]
+    asian_lo = [asian_lo_by_date.get(date[i]) for i in range(n)]
+    pdh = [pdh_by_date.get(date[i]) for i in range(n)]
+    pdl = [pdl_by_date.get(date[i]) for i in range(n)]
+
+    amd_phase = [None] * n
+    phase, manip_dir, beyond_count, cur_day = None, 0, 0, None
+    for i in range(n):
+        ah, al = asian_hi[i], asian_lo[i]
+        if ah is None or al is None:
+            continue
+        if date[i] != cur_day:
+            cur_day = date[i]
+            phase, manip_dir, beyond_count = "ACCUMULATION", 0, 0
+        c1 = candles[i]["close"]
+        beyond_high, beyond_low = c1 > ah, c1 < al
+        if phase == "ACCUMULATION":
+            if beyond_high:
+                phase, manip_dir, beyond_count = "MANIPULATION", 1, 1
+            elif beyond_low:
+                phase, manip_dir, beyond_count = "MANIPULATION", -1, 1
+        elif phase in ("MANIPULATION", "CONTINUATION_DISTRIBUTION"):
+            still_beyond = beyond_high if manip_dir == 1 else beyond_low
+            if still_beyond:
+                beyond_count += 1
+                phase = "CONTINUATION_DISTRIBUTION" if beyond_count >= 2 else "MANIPULATION"
+            else:
+                phase = "REVERSAL_DISTRIBUTION"
+        elif phase == "REVERSAL_DISTRIBUTION":
+            opp_beyond = beyond_low if manip_dir == 1 else beyond_high
+            if opp_beyond:
+                manip_dir, phase, beyond_count = -manip_dir, "MANIPULATION", 1
+        amd_phase[i] = (phase, manip_dir)
+
+    return {"hour": hour, "date": date, "session": session,
+            "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
+            "amd_phase": amd_phase}
+
+
+def _sweep_ext_at(candles, sess, i):
+    if i < 1:
+        return None
+    h1, l1, c1 = candles[i]["high"], candles[i]["low"], candles[i]["close"]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    pdh, pdl = sess["pdh"][i], sess["pdl"][i]
+    d, level, ref_hi, ref_lo, confirmed = 0, 0, None, None, False
+    swept_asia_hi = swept_asia_lo = swept_pdh = swept_pdl = False
+    if ah is not None and h1 > ah and c1 < ah:
+        swept_asia_hi, d, level, ref_hi, confirmed = True, -1, ah, ah, True
+    if pdh is not None and h1 > pdh and c1 < pdh:
+        swept_pdh = True
+        if not confirmed or pdh > (ref_hi if ref_hi is not None else -1e18):
+            d, level, ref_hi, confirmed = -1, pdh, pdh, True
+    if al is not None and l1 < al and c1 > al:
+        swept_asia_lo, d, level, ref_lo, confirmed = True, 1, al, al, True
+    if pdl is not None and l1 < pdl and c1 > pdl:
+        swept_pdl = True
+        if not confirmed or pdl < (ref_lo if ref_lo is not None else 1e18):
+            d, level, ref_lo, confirmed = 1, pdl, pdl, True
+    return {"dir": d, "level": level, "refHigh": ref_hi, "refLow": ref_lo,
+            "confirmed": confirmed, "sweptAsiaHigh": swept_asia_hi,
+            "sweptAsiaLow": swept_asia_lo, "sweptPDH": swept_pdh, "sweptPDL": swept_pdl}
+
+
+def _choch_at(c, i, look=10):
+    if i < 2 * look:
+        return (False, False)
+    hi_recent = max(x["high"] for x in c[i - look:i])
+    hi_older = max(x["high"] for x in c[i - 2 * look:i - look])
+    lo_recent = min(x["low"] for x in c[i - look:i])
+    lo_older = min(x["low"] for x in c[i - 2 * look:i - look])
+    return (lo_recent > lo_older, hi_recent < hi_older)  # (chochUp, chochDown)
+
+
+def sig_amd_cont(c, ind, i):
+    sess = ind["sess"]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None or i < 1:
+        return 0
+    ph = sess["amd_phase"][i]
+    if ph is None or ph[0] != "CONTINUATION_DISTRIBUTION":
+        return 0
+    if sess["session"][i] not in ("LONDON", "OVERLAP", "NY"):
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    e200, e200p = ind["ema200"][i], ind["ema200"][i - 1] if i > 0 else None
+    htf_bull_or_neutral = e200 is None or e200p is None or c[i]["close"] >= e200 or e200 >= e200p
+    htf_bear_or_neutral = e200 is None or e200p is None or c[i]["close"] <= e200 or e200 <= e200p
+    c1, bid = c[i]["close"], c[i]["close"]
+    if c1 > ah and bid <= ah + atr * 0.6 and htf_bull_or_neutral:
+        return 1
+    if c1 < al and bid >= al - atr * 0.6 and htf_bear_or_neutral:
+        return -1
+    return 0
+
+
+def sig_amd_reversal(c, ind, i):
+    sess = ind["sess"]
+    ph = sess["amd_phase"][i] if i < len(sess["amd_phase"]) else None
+    if ph is None or ph[0] != "REVERSAL_DISTRIBUTION":
+        return 0
+    sw = _sweep_ext_at(c, sess, i)
+    if not sw:
+        return 0
+    choch_up, choch_down = _choch_at(c, i)
+    if sw["sweptAsiaHigh"] and choch_down:
+        return -1
+    if sw["sweptAsiaLow"] and choch_up:
+        return 1
+    return 0
+
+
+def sig_judas_swing(c, ind, i):
+    sess = ind["sess"]
+    if sess["session"][i] not in ("LONDON", "NY"):
+        return 0
+    h = sess["hour"][i]
+    # v2.0: London open 7-10 GMT, NY open 12-15 GMT (kill zone di apertura)
+    if not ((7 <= h < 10) or (12 <= h < 15)):
+        return 0
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    sw = _sweep_ext_at(c, sess, i)
+    choch_up, choch_down = _choch_at(c, i)
+    c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
+    wicked_down = (sw and (sw["sweptAsiaLow"])) or l1 < al
+    if wicked_down and c1 > al and choch_up:
+        return 1
+    wicked_up = (sw and (sw["sweptAsiaHigh"])) or h1 > ah
+    if wicked_up and c1 < ah and choch_down:
+        return -1
+    return 0
+
+
+def sig_ldn_reversal(c, ind, i):
+    sess = ind["sess"]
+    if sess["session"][i] not in ("LONDON", "OVERLAP"):
+        return 0
+    sw = _sweep_ext_at(c, sess, i)
+    if not sw or not sw["confirmed"]:
+        return 0
+    choch_up, choch_down = _choch_at(c, i)
+    c1 = c[i]["close"]
+    if (sw["sweptAsiaHigh"] or sw["sweptPDH"]) and c1 < sw["refHigh"] and choch_down:
+        return -1
+    if (sw["sweptAsiaLow"] or sw["sweptPDL"]) and c1 > sw["refLow"] and choch_up:
+        return 1
+    return 0
+
+
+def sig_ny_reversal(c, ind, i, look=48):
+    sess = ind["sess"]
+    if sess["session"][i] not in ("NY", "OVERLAP"):
+        return 0
+    if i < look:
+        return 0
+    london_hi, london_lo = None, None
+    for k in range(1, look + 1):
+        j = i - k
+        if j < 0:
+            break
+        if sess["hour"][j] is not None and 6 <= sess["hour"][j] < 12:
+            hh, ll = c[j]["high"], c[j]["low"]
+            london_hi = hh if london_hi is None else max(london_hi, hh)
+            london_lo = ll if london_lo is None else min(london_lo, ll)
+    if london_hi is None or london_lo is None:
+        return 0
+    choch_up, choch_down = _choch_at(c, i)
+    c1, h1, l1 = c[i]["close"], c[i]["high"], c[i]["low"]
+    if h1 > london_hi and c1 < london_hi and choch_down:
+        return -1
+    if l1 < london_lo and c1 > london_lo and choch_up:
+        return 1
+    return 0
+
+
+def sig_po3(c, ind, i):
+    sess = ind["sess"]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    if abs(c1 - o1) < atr * 0.6:
+        return 0
+    sw = _sweep_ext_at(c, sess, i)
+    choch_up, choch_down = _choch_at(c, i)
+    if sw and sw["sweptAsiaLow"] and c1 > al and c1 > o1 and choch_up:
+        return 1
+    if sw and sw["sweptAsiaHigh"] and c1 < ah and c1 < o1 and choch_down:
+        return -1
+    return 0
+
+
+def sig_silver_bullet(c, ind, i):
+    sess = ind["sess"]
+    h = sess["hour"][i]
+    if h is None:
+        return 0
+    killzone = (10 <= h < 11) or (14 <= h < 15)  # London KZ / NY KZ, GMT
+    if not killzone:
+        return 0
+    sw = _sweep_ext_at(c, sess, i)
+    if not sw or not sw["confirmed"]:
+        return 0
+    return sw["dir"]
+
+
 # --------------------------------------------------------------------------- #
 # SCALP / profit-taker (v2.3.0) - pensate per M15/M30: ingressi veloci, TP
 # stretto. Registrate nel motore per l'ottimizzazione multi-TF sui TF bassi.
@@ -912,6 +1187,14 @@ STRATEGIES = {
     "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
     "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
     "SMS_BMS_RTO": sig_ob_mit,        # proxy
+    # --- strategie a sessione (16/07) - richiedono candele intraday reali ---
+    "AMD_CONT": sig_amd_cont,
+    "AMD_REVERSAL": sig_amd_reversal,
+    "JUDAS_SWING": sig_judas_swing,
+    "LDN_REVERSAL": sig_ldn_reversal,
+    "NY_REVERSAL": sig_ny_reversal,
+    "PO3": sig_po3,
+    "SILVER_BULLET": sig_silver_bullet,
 }
 
 # Tutte le 36 strategie dell'EA (dai sorgenti MQL5).

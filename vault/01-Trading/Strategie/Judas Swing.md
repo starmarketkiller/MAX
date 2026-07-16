@@ -29,10 +29,28 @@ Falso movimento di apertura sessione (ICT Judas Swing).
 - **3 anni**: 0 trade eseguiti in questo build.
 
 ## Stato
-NOT_CONNECTED — nessun profilo, richiede validazione diretta su MT5 isolata (InpStrategySelector)
+🔴 Prima serie di dati mai raccolta (16/07) — non più NOT_CONNECTED, ma il
+primo test è negativo su entrambi i timeframe (PF0.74-0.77). Nessun
+profilo MT5 esiste ancora, dato preliminare.
+
+## Prima connessione al sito (16/07)
+Implementata la vera logica MQL5 (`NXS_Strat_JudasSwing`): finestra di
+apertura Londra (7-10 GMT) o NY (12-15 GMT) + sweep del range asiatico
+(wick sotto/sopra + chiusura di rientro) + CHoCH (proxy). Vedi [[Amd Cont]]
+per il metodo generale.
+
+Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
+
+| TF | Trade | PF | DD% | Net |
+|---|---|---|---|---|
+| 4h | 63 | 0.77 | 13.78 | -927 |
+| 1h | 29 | 0.74 | 13.15 | -513 |
+
+Negativa su entrambi i TF testati nel primo giro — non ancora validata su
+MT5 (`InpStrategySelector=29`). Da rivedere se i parametri SL/TP generici
+(mai tarati) sono la causa, prima di scartarla.
 
 ## Note
-Non raggiunta dal collector segnali in questo build — 0 chiamate registrate.
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[Amd Cont]]
