@@ -988,7 +988,6 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
               + HistoryDealGetDouble(trans.deal, DEAL_SWAP)
               + HistoryDealGetDouble(trans.deal, DEAL_COMMISSION);
    NXS_OnTradeClosed(pnl);
-   NXS_LogTradeCSV("CLOSE", trans.deal, "", 0, 0, 0, 0, pnl, "");
 
    // v2.0.14 fix: map the numeric DEAL_REASON the same way NXS_HistorySync.mqh
    // does, instead of trusting DEAL_COMMENT — brokers frequently overwrite or
@@ -1022,6 +1021,14 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
       strat = (p2 > p1) ? StringSubstr(dcomment, p1+1, p2-p1-1)
                         : StringSubstr(dcomment, p1+1);
    }
+   // 17/07 fix: la riga CLOSE veniva scritta PRIMA che strat/reason fossero
+   // calcolati (passava "" per entrambi) - il CSV non poteva mai dire quale
+   // strategia aveva chiuso ne' se via SL/TP/expert (time-exit forzato).
+   // Spostata qui sotto, ora con i valori veri: "reason" e' sl/tp/stop_out/
+   // expert (DEAL_REASON_EXPERT = chiusura forzata dall'EA, es. time-exit in
+   // NXS_ManageBreakevenAndTrail) - permette di distinguere finalmente un
+   // vero SL/TP da una chiusura forzata guardando il CSV.
+   NXS_LogTradeCSV("CLOSE", ticket, strat, price, lots, 0, 0, pnl, reason);
    NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, 0.0, price, pnl, reason,
                             openTime, closeTime);
 

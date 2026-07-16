@@ -235,6 +235,25 @@ cooldown). Prossimo passo concreto: un test isolato MT5 con logging
 spread/sizing per-trade su queste 3 strategie insieme, prima di continuare
 a cercare altri bug di trigger nel sito.
 
+## 🚨 Aggiornamento 17/07: primi dati MT5 isolati arrivati, trovata un'anomalia forte
+
+Arrivati i primi 4 risultati reali dello sweep 1-37 (pre-fix,
+`results/reports/sweep37/pre-fix-16-07/`) — ADX_RSI/BOLLINGER/MACD/SAR.
+Tutte e 4, con TF e SL/TP completamente diversi, chiudono a una frazione
+minuscola di R (0.16-0.29R invece del TP pieno, -0.18/-0.43R invece
+dello SL pieno) e restano in posizione solo 3.5-6 ore in media,
+**anche le due strategie D1** (che dovrebbero durare giorni). Sospetto
+principale: il time-exit da 4 ore (`InpMaxHoldHours=4` in
+`NXS_Management.mqh`) che dovrebbe essere scavalcato dallo scaling
+per-profilo (40 barre del TF della strategia) ma il pattern nei dati
+reali non torna con quello scaling funzionante. Non confermato al 100%
+da codice statico — **verificare sul prossimo sweep** (ora che il bug
+del log CSV vuoto è corretto, `NEXUS_trades.csv` mostrerà finalmente
+`reason=expert` per le chiusure forzate dall'EA vs `sl`/`tp` per quelle
+vere). Se confermato, è il candidato più forte finora per spiegare la
+sotto-performance MT5 di QUALSIASI strategia con profilo D1/H4, non solo
+queste 4. Dettaglio completo: [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
+
 ## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
 
 Obiettivo dichiarato: tutte le strategie attive contribuiscono positivamente
