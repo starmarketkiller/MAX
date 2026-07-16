@@ -17,7 +17,55 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
-## Scoperta 1 (la più importante): un'anomalia nei dati reali che nessun fix di oggi spiega
+## 🚨 AGGIORNAMENTO 17/07 (sera): trovata la VERA causa dominante — mancava il gate "1 posizione per strategia" in DataCollectionMode
+
+Il fix del cap a 12h (sotto) era reale e corretto — verificato che `resolved_tf`
+nel CSV risolve giusto (es. `PERIOD_H4` per BJORGUM) — ma **il primo sweep
+post-fix (S01-S06) ha mostrato holding time identici a prima**. Recuperato
+`NEXUS_trades.csv` reale (24.8MB, `results/reports/sweep37/trades_snapshots/`)
+per capire perché, invece di continuare a ipotizzare da codice statico.
+
+**Trovato**: il path `NXS_CheckProtections`/best-per-bar standard ha un gate
+`NXS_StrategyHasOpenPos()` — "1 posizione per strategia alla volta"
+(`NEXUS_EA_v2.mq5:821`). **`InpDataCollectionMode` non ce l'aveva per
+niente.** Le funzioni segnale sono quasi tutte a STATO persistente (es.
+`macd>signal>0`), non a evento singolo — restano vere per molte barre di
+fila. Senza il gate, DataCollectionMode riapriva una NUOVA posizione a
+OGNI tick finché il segnale restava valido: **MALAYSIAN_SNR_NXR risultava
+aperta 17.218 volte** nel file controllato, contro le poche centinaia
+attese in anni di dati.
+
+Con centinaia/migliaia di posizioni della stessa strategia accumulate,
+correlate sullo stesso simbolo, la loro **equity flottante combinata**
+faceva scattare ripetutamente `NXS_Prot_CheckESL()` (Equity Stop Loss,
+`InpESL_Value=5%` del saldo) — che chiude TUTTE le posizioni aperte in un
+colpo solo. Confermato sui dati: **97.8% di tutte le chiusure** (68.242 su
+69.788) avvengono in "cluster" di più posizioni chiuse entro 15 secondi
+l'una dall'altra — non chiusure indipendenti per singola posizione.
+Guardando il campo `reason` sulle righe già nel formato nuovo (con
+strategia/motivo compilati): **`expert` (chiusura forzata) 2163, `sl`
+1812, `tp` = 1 su quasi 4000** — praticamente nessuna posizione arriva mai
+al take-profit, non perché il trigger sia sbagliato, ma perché viene
+travolta da un flatten di massa prima di poterlo raggiungere.
+
+**Perché il fix del cap 12h non bastava**: risolveva un problema reale
+(scaling del timeout per-strategia) ma completamente in ombra rispetto a
+questo — un flatten di massa ogni poche ore/minuti rende irrilevante
+qualsiasi cap di durata più generoso, la posizione non arriva mai a
+vedere quel limite.
+
+**Fix applicato** (`NEXUS_EA_v2.mq5`, blocco `InpDataCollectionMode`):
+aggiunto `if(NXS_StrategyHasOpenPos(s.stratName)) continue;` prima di
+aprire ogni segnale — stesso gate già presente nel path standard, mai
+esteso qui. Non tocca `InpESL_Value` o altri parametri delle protezioni
+(sarebbe un cerotto sul sintomo) — cura la causa: impedisce l'accumulo
+di posizioni della stessa strategia che faceva scattare il flatten.
+
+**Non ancora validato su MT5** — prossimo sweep dirà se questo,
+combinato col fix del cap 12h, normalizza finalmente `avg_holding_sec` e
+la quota di trade che arrivano al vero TP.
+
+## Scoperta 1 (mattina): un'anomalia nei dati reali che nessun fix di oggi spiega
 
 Le 4 passate isolate (ADX_RSI, BOLLINGER, MACD, SAR — GOLD M15,
 2019-2025, `InpDataCollectionMode`) mostrano tutte lo stesso pattern

@@ -235,7 +235,24 @@ cooldown). Prossimo passo concreto: un test isolato MT5 con logging
 spread/sizing per-trade su queste 3 strategie insieme, prima di continuare
 a cercare altri bug di trigger nel sito.
 
-## 🚨✅ Aggiornamento 17/07: bug CONFERMATO — cap di durata massima piatto a 12h su ~25 strategie
+## 🚨🚨 Aggiornamento 17/07 (sera): trovata la VERA causa dominante — mancava "1 posizione per strategia" in DataCollectionMode
+
+Il fix del cap 12h sotto era reale (verificato `resolved_tf` corretto nel
+CSV) ma non ha cambiato i risultati del primo sweep post-fix — recuperato
+`NEXUS_trades.csv` reale (24.8MB) per capire perché. Trovato: a differenza
+del path standard, `InpDataCollectionMode` non aveva il gate "1 posizione
+per strategia alla volta" — un segnale a stato persistente riapriva una
+posizione a OGNI tick (una strategia arrivava a 17.218 aperture). Le
+posizioni accumulate facevano scattare ripetutamente l'Equity Stop Loss
+(-5% saldo, chiude TUTTO): **97.8% delle chiusure avvengono in cluster**
+di posizioni multiple chiuse entro 15s l'una dall'altra, e **solo 1 su
+quasi 4000 chiusure raggiunge il vero TP**. Il cap 12h era invisibile
+perché nessuna posizione sopravviveva abbastanza da vederlo. **Corretto**:
+aggiunto lo stesso gate del path standard (`NXS_StrategyHasOpenPos`) al
+blocco DataCollectionMode. Non ancora validato su MT5. Dettaglio:
+[[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
+
+## 🚨✅ Aggiornamento 17/07 (mattina): bug CONFERMATO — cap di durata massima piatto a 12h su ~25 strategie
 
 Arrivati i primi 4 risultati reali dello sweep 1-37 (pre-fix,
 `results/reports/sweep37/pre-fix-16-07/`) — ADX_RSI/BOLLINGER/MACD/SAR.

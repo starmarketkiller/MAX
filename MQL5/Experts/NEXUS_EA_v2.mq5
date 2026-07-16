@@ -697,6 +697,19 @@ void OnTick(){
          if(all[i].dir == DIR_NONE) continue;
          if(baseOpen + openedNow >= InpDataCollectionMaxOpen) break;   // tetto sicurezza
          SNXSSignal s = all[i];
+         // 17/07 fix - trovato analizzando NEXUS_trades.csv di uno sweep reale:
+         // a differenza del path standard (riga ~821, NXS_StrategyHasOpenPos),
+         // qui mancava del tutto il gate "1 posizione per strategia alla volta".
+         // Un segnale a stato persistente (la maggior parte lo sono, non solo
+         // un evento singolo) riapriva una NUOVA posizione a ogni tick finche'
+         // restava valido - una sola strategia (MALAYSIAN_SNR_NXR) arrivava a
+         // 17.218 aperture nel file osservato. Le posizioni accumulate,
+         // correlate sullo stesso simbolo, facevano scattare in continuazione
+         // NXS_Prot_CheckESL() (equity flottante <= -5% saldo, chiude TUTTE le
+         // posizioni) - il vero motivo per cui quasi nessun trade arrivava mai
+         // a vedere il proprio TP (1 "tp" su quasi 4000 chiusure nel file
+         // controllato), non il cap di durata gia' corretto in precedenza.
+         if(NXS_StrategyHasOpenPos(s.stratName)) continue;
          if(s.slPrice <= 0 || s.tpPrice <= 0) continue;                 // serve SL/TP valido
          // Contesto del segnale: tier (0=local..3=D1) e tipo (Cont/Rev) -> visibile nel trade
          int ddir  = (s.dir == DIR_BUY) ? +1 : -1;
