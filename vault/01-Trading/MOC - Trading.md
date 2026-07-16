@@ -27,10 +27,12 @@ profitto reale, non solo curve di backtest.
   configurazione (SL/TP/HTF) massimizza l'edge di ciascuna strategia sul motore del sito.
 - **[[NEXUS EA - Test Generale Post-Fix (16-07 notte)]]** — riscreening di tutte
   le 36 strategie DOPO i fix del 16/07 (proxy fedeli, struttura esterna, TP
-  dinamico, 7 sessione connesse): 31/36 ora positive sul sito, ma
-  SAR/MACD/RSI_DIV/ADX_RSI (i 4 responsabili del 75% della perdita MT5)
-  restano positive anche col proxy corretto — rafforza il sospetto di
-  esecuzione, non di trigger.
+  dinamico, 7 sessione connesse): 31/36 ora positive sul sito. Per
+  SAR/MACD/RSI_DIV/ADX_RSI (i 4 responsabili del 75% della perdita MT5 sui
+  6 anni) — nota corretta il 17/07: ADX_RSI ha un trigger MQL5 genuinamente
+  nuovo mai testato su MT5 (fix dopo la raccolta dati), SAR/MACD/RSI_DIV no
+  (trigger MQL5 invariato, solo il proxy sito era sbagliato) — nessuna
+  conclusione sull'esito MT5 prima del test isolato.
 - **[[Sito Backtest Lab - Note Tecniche]]** — come funziona il backend Python/React,
   incluso il problema di deploy Render risolto il 12/07.
 - **[[MOC - Strategie]]** — indice delle 36 schede per-strategia (`Strategie/`),

@@ -91,24 +91,45 @@ confrontato a distanza di ore.
 
 Queste 4 strategie da sole spiegavano **-88.2R (~75%) della perdita totale**
 sui 6 anni MT5 reali ([[NEXUS EA - Backtest 10Y Segmentato - Analisi]]).
-Oggi, con TUTTI i proxy corretti (SAR e ADX_RSI erano già a posto,
-MACD e RSI_DIV corretti oggi da proxy sbagliati a logica vera), sono
-**tutte e 4 chiaramente positive sul sito**: SAR PF2.41, MACD PF1.48,
-RSI_DIV PF1.34, ADX_RSI PF1.48.
+Oggi, con tutti i proxy sito corretti, sono **tutte e 4 chiaramente
+positive sul sito**: SAR PF2.41, MACD PF1.48, RSI_DIV PF1.34, ADX_RSI
+PF1.48.
 
-Questo è un dato importante ma **nella direzione opposta a quella
-sperata**: se il problema fosse stato "il sito testava la cosa
-sbagliata", correggere il proxy avrebbe dovuto O confermare O
-smentire il segnale. Invece MACD e RSI_DIV restano positive **anche con
-la logica vera** — lo stesso verdetto di prima del fix. Questo
-**rafforza, non indebolisce**, il sospetto già scritto in
-[[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]: il segnale è
-probabilmente sano, il problema sta nell'esecuzione MT5 reale (spread,
-sizing, interazione con gli altri gate/filtri dell'EA), non nel trigger.
-**Aggiornare le aspettative**: i fix di oggi (proxy, struttura, TP
-dinamico) sono improbabili a risolvere da soli la perdita di
-SAR/MACD/RSI_DIV/ADX_RSI su MT5 — per queste 4 serve un test isolato con
-logging su spread/sizing per trade, non un ulteriore fix del segnale.
+**Correzione importante (17/07): nessun test MT5 con il codice di oggi è
+ancora stato fatto — non si può ancora dire se "risolve" o no.** La prima
+versione di questa nota affermava che il fix "probabilmente non sblocca"
+queste 4 su MT5, un'inferenza scorretta prima di qualsiasi test reale.
+Controllato con precisione **quando ogni trigger MQL5 è stato modificato
+rispetto a quando i 6 anni di dati MT5 sono stati raccolti** (commit
+`dc26907`, push dati segmento 9, 2026-07-15 11:53 UTC — il segmento più
+affidabile, qualità storico 100%):
+
+- **ADX_RSI**: il fix vero è in MQL5 (`NXS_Strat_ADXRSI()`, filtro
+  `g_adx<20`, commit `cf73130`, 2026-07-15 **13:44 UTC — quasi 2 ore
+  DOPO** il push dei dati del segmento 9). Il -15.3R che compare
+  nell'analisi 6 anni è calcolato sulla versione VECCHIA del trigger
+  (senza filtro ADX) — **non è mai stato testato su MT5**. Il PF1.48 di
+  oggi sul sito è un'ipotesi ancora aperta, non la ripetizione di un
+  test già fallito.
+- **SAR**: il trigger MQL5 non è mai cambiato — aveva già `iSAR()` vero
+  da prima del bug, il proxy sbagliato esisteva solo sul sito Python
+  (mai nell'EA). Il -34.3R di SAR sui 6 anni riflette già il codice
+  attuale dell'EA.
+- **MACD e RSI_DIV**: stessa situazione di SAR, verificato nel commit di
+  oggi (`3978de0`) — tocca solo `server/backtest.py`, zero righe di
+  `NXS_Strategies.mqh`. Il trigger vero in MQL5 non è mai stato quello
+  sbagliato, solo lo specchio Python lo era. -21.1R e -17.5R riflettono
+  già la logica vera.
+
+**Conclusione corretta**: per ADX_RSI c'è una base concreta per aspettarsi
+un risultato diverso al prossimo test MT5 (trigger genuinamente nuovo,
+mai provato). Per SAR/MACD/RSI_DIV non c'è una modifica di trigger che
+giustifichi un cambiamento — se miglioreranno sarà per altre ragioni
+(interazione con gli altri fix di oggi: contatore executed, filtri di
+struttura su altre strategie che cambiano quali trade collidono/quale
+margine resta, ecc.), non perché il loro segnale specifico sia diverso.
+Ma questa resta un'ipotesi da verificare, non una previsione negativa —
+l'unico modo per saperlo è il test isolato MT5, non ancora fatto.
 
 ## Cosa risponde e cosa NON risponde alla domanda sull'hedge/10 anni
 
