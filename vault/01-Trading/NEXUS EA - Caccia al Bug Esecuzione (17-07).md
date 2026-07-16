@@ -232,5 +232,72 @@ sopra) che con un problema di qualità del segnale.
    `avg_holding_sec`/`reason=expert`/PF prima-dopo su tutte le 4
    strategie di questo primo lotto, poi le altre 33.
 
+## Conferma round 2 (dati arrivati mentre si scriveva questa nota)
+
+Arrivato un secondo lotto di dati pre-fix (`pre-fix-16-07-round2/`, S01-S05
+ADX_RSI/BOLLINGER/MACD/SAR/TSI) — compilati DOPO il fix TP largo+breakeven
+di MACD/ADX_RSI ma PRIMA del fix del cap 12h sopra. Conferma diretta e
+indipendente della diagnosi: MACD e SAR sono **identici al centesimo** ai
+numeri pre-TP/BE-fix (PF0.13/0.18, stesso holding al secondo), ADX_RSI
+leggermente peggio. Il fix TP/BE, da solo, non ha spostato nulla su MT5
+reale — esattamente perché il cap a 12h tagliava i trade prima che
+potessero vedere il TP largo o il breakeven attivarsi. Rafforza molto la
+fiducia che il fix del cap fosse la priorità giusta.
+
+## Trovato anche (17/07, durante l'audit "come migliorare l'ecosistema"): le protezioni account-level sono spente in ogni test
+
+`NXS_CheckProtections()` (`NXS_Risk.mqh:69` — DD giornaliero
+`InpMaxDailyDDPct`, margine, trade/giorno, posizioni concorrenti,
+anti-revenge/anti-bleed) inizia con `if(MQLInfoInteger(MQL_TESTER)) return
+true;` — si disattiva da sola in OGNI test nello Strategy Tester, scelta
+deliberata v2.0.31 (altrimenti questi gate bloccavano quasi tutte le 37
+strategie). Spiega da solo l'87-88% di drawdown già documentato in
+[[NEXUS EA - Backtest 10Y Segmentato - Analisi]] — il gate giornaliero
+esiste già, semplicemente non gira mai nei test raccolti finora.
+
+**Non trasformato in fix**: proposto di riattivarlo o aggiungere un gate
+cumulato, l'utente ha corretto — un gate che taglia le perdite prima
+maschera il sintomo (DD alto) senza curare la causa (la strategia perde
+comunque). Tenuto solo come contesto per interpretare i DD estremi già
+visti, non come priorità. Dettaglio: [[TODO - Backtest 10Y]].
+
+## Audit "altri bug dello stesso tipo?" (17/07)
+
+Cercate altre tabelle strategia→qualcosa duplicate/disallineate come
+`NXS_StrategySourceTF()`. Trovate e controllate:
+- `NXS_StratFamily()` (`NXS_SignalRouter.mqh`) — copre tutte le 36
+  strategie connesse (+ fallback sicuro FAM_OTHER per ELLIOTT), usata per
+  i gate MTF/velocity. **Completa, nessun bug trovato.**
+- `_nxs_regime_veto()` (`NXS_SignalQuality.mqh`) — lista incompleta
+  (~14/36) ma con fallback sicuro (nessun veto se non in lista, non un
+  veto sbagliato) e gated dietro `InpInstRegimeVeto` (Institutional Core,
+  OFF di default) — non attiva nel percorso standard.
+- `NXS_ApplyScoreCap`/`NXS_StrategyMinScoreFloor`/`NXS_StrategyOnCooldown`
+  — casi singoli o dinamici, non tabelle duplicate.
+
+Nessun secondo bug critico dello stesso tipo trovato nel percorso
+standard attivo di default.
+
+## Fix reale: unificati i due sistemi di durata massima indipendenti
+
+Bug architetturale distinto (non lo stesso della tabella disallineata,
+ma imparentato — entrambi nell'area "quanto vive una posizione"):
+`NXS_ManageBreakevenAndTrail()` (gestione completa, BE+trailing+time-exit
+integrati) e `NXS_Prot_CheckMaxHold()` (gate separato, solo time-exit)
+potevano chiudere la STESSA posizione con limiti diversi — es. una D1
+calcolava 40 giorni nel primo, 30 giorni nel secondo, vinceva chi
+scattava prima, in modo imprevedibile e mai realmente prevedibile da chi
+tuning i due `input` separatamente. Segnalato dall'utente il 24/06,
+verificato ancora presente il 15/07.
+
+**Corretto** (non un nuovo limite, una correzione di un'incoerenza
+reale): `NXS_Prot_CheckMaxHold()` ora salta ogni posizione che ha un
+profilo reale (`NXS_Profile_TF(strat) != PERIOD_CURRENT`) — quelle
+restano gestite esclusivamente da `NXS_Management.mqh`, che è già
+integrato con breakeven/trailing nello stesso loop e quindi l'autorità
+più coerente. Il gate delle Protezioni resta attivo solo per le
+session/Elliott senza profilo — la sua funzione di rete di sicurezza
+originale, non duplicata altrove. Non ancora validato su MT5.
+
 ## Collegamenti
 [[MOC - Trading]] · [[Sar]] · [[Macd]] · [[Rsi Div]] · [[Adx Rsi]] · [[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[TODO - Backtest 10Y]]

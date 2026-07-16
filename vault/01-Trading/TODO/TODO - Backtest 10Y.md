@@ -338,31 +338,42 @@ di lavoro consigliato, per gruppo:
     dare risultati diversi?" con un caso concreto e confermato — non solo
     i proxy delle strategie (SAR/BJORGUM/MACD/RSI_DIV/BREAKOUT_ACC), anche
     il livello di raccolta dati sotto di esse può avere gap silenziosi.
-- [ ] **Nessun gate sul drawdown cumulato dal picco equity** — solo
-  `InpMaxDailyDDPct` (giornaliero, si resetta ogni giorno). Il DD 87.22% nel
-  segmento 2020 (88.69% nel 2024) è la conferma pratica del buco. Aggiungere
-  un gate tipo `InpMaxTotalDDPct` che blocchi nuovi trade (o riduca il
-  rischio) quando l'equity scende oltre una soglia dal massimo storico — non
-  solo dall'inizio giornata.
-- [ ] **Fixare il proxy `sig_sar()` sul sito** (`server/backtest.py:387`) —
-  oggi è un incrocio EMA20/EMA50 identico a `sig_ema_pullback()`, non
-  Parabolic SAR. Serve implementare la vera logica (indicatore Parabolic SAR
-  + EMA9/EMA21) prima che qualsiasi screening sito su SAR abbia senso. Vedi
-  [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]].
+- [x] **Fixare il proxy `sig_sar()` sul sito** — fatto il 15/07 (vero
+  Parabolic SAR + EMA20, vedi [[Sar]]).
+- [~] **"Nessun gate sul drawdown cumulato" — capovolto da una scoperta più
+  grande (17/07)**: non è che manchi un gate cumulato, è che **l'intero
+  `NXS_CheckProtections()`** (`NXS_Risk.mqh:69` — DD giornaliero, margine,
+  trade/giorno, concorrenza, anti-revenge/anti-bleed) si disattiva da solo
+  in ogni test (`if(MQLInfoInteger(MQL_TESTER)) return true;`, scelta
+  deliberata v2.0.31 — altrimenti questi gate bloccavano quasi tutte le 37
+  strategie). Spiega l'87-88% di DD senza bisogno di un gate nuovo: quello
+  giornaliero già c'è, semplicemente non gira mai nei test. **Non
+  trasformato in azione**: l'utente ha corretto giustamente — un gate che
+  taglia le perdite prima maschera il sintomo (DD alto) senza curare la
+  causa (strategia che perde). Riattivarlo cambierebbe anche la
+  comparabilità con tutti i numeri già raccolti. Tenuto solo come contesto
+  per interpretare i DD estremi già visti — non prioritario finché le
+  strategie stesse non rendono meglio. Dettaglio:
+  [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
 - [ ] **(Bassa priorità, strutturale) Il motore sito non supporta posizioni
   multiple/hedge** (`pos` è singolare in `run_backtest()`). Se si vuole usare
   il sito per validare in futuro il nucleo hedge o altre interazioni
   multi-strategia, va esteso a più posizioni concorrenti — oggi è
   strutturalmente impossibile, non solo un limite di dati.
-- [ ] **Due sistemi di chiusura per durata massima, indipendenti e non
-  coordinati** — bug notato dall'utente il 24/06, **verificato ancora
-  presente il 15/07**: `NXS_ManageBreakevenAndTrail()`
-  (`NXS_Management.mqh:29`, fallback 4h o ~40 barre del TF via profilo) e
-  `NXS_Prot_CheckMaxHold()` (`NXS_Protections.mqh:190`, gate separato
-  `InpUseMaxHold`, base 12h scalata con `NXS_TF_LifeFactor`) possono
-  chiudere la stessa posizione con logiche di scaling diverse — vince chi
-  scatta prima. Da unificare in un solo controllo. Vedi
-  [[NEXUS EA - Fonte Chat WhatsApp (Said)]].
+- [x] **Due sistemi di chiusura per durata massima, indipendenti e non
+  coordinati** — bug notato dall'utente il 24/06, verificato ancora
+  presente il 15/07, **corretto il 17/07**: `NXS_ManageBreakevenAndTrail()`
+  (`NXS_Management.mqh`, integrato con BE/trailing, ~40 barre del TF via
+  profilo) e `NXS_Prot_CheckMaxHold()` (`NXS_Protections.mqh`, gate
+  separato `InpUseMaxHold`, base 12h scalata con `NXS_TF_LifeFactor`)
+  potevano chiudere la stessa posizione con limiti diversi (es. D1: 40
+  giorni vs 30 giorni) — vince chi scatta prima, in modo imprevedibile.
+  Corretto: `NXS_Prot_CheckMaxHold()` ora salta le posizioni con un
+  profilo reale (le lascia SOLO a `NXS_Management.mqh`, già integrato con
+  BE/trailing), resta attivo come rete di sicurezza solo per le
+  session/Elliott senza profilo — la sua funzione originale. Non ancora
+  validato su MT5. Vedi [[NEXUS EA - Fonte Chat WhatsApp (Said)]] e
+  [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
 
 ## Strategie da correggere/spegnere (priorità in ordine)
 
