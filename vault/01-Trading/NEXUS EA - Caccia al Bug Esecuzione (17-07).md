@@ -299,5 +299,46 @@ più coerente. Il gate delle Protezioni resta attivo solo per le
 session/Elliott senza profilo — la sua funzione di rete di sicurezza
 originale, non duplicata altrove. Non ancora validato su MT5.
 
+## ⚠️ Scoperta più grande di tutte quelle di oggi: quasi tutto `NXS_Inputs.mqh` non è realmente configurabile
+
+Controllando ogni "input group" del file (la sintassi MQL5 che raggruppa
+gli input nel pannello Proprietà) contro le variabili dichiarate davvero
+`input` al loro interno: **su ~40 gruppi, la stragrande maggioranza ha
+zero o quasi zero variabili realmente `input`** — sono tutte plain
+(assegnabili solo nel codice sorgente, MAI da un file `.set`). Contate
+circa **370 variabili** su un totale di ~400 che sono "input group" solo
+di nome.
+
+Esempi concreti tra i più rilevanti per il lavoro di oggi: l'intero
+gruppo **RISK PROTECTIONS** (`InpUseMaxHold`, `InpProt_MaxHoldHours`,
+`InpUseESL`, `InpMaxLossPosPct`, `InpAutoCloseMin`...) e l'intero gruppo
+**BREAK EVEN & TRAIL** (`InpMaxHoldHours`, `InpBE_TriggerATR`,
+`InpTrailActivateATR`, `InpSL_HighVol_Mult`...) — cioè esattamente le due
+aree al centro dell'indagine di oggi sul cap di durata massima. Anche
+volendo, **non era possibile testare un valore diverso di
+`InpProt_MaxHoldHours` o `InpMaxHoldHours` via `.set` file** prima di
+questo fix — ogni riga `.set` per queste variabili era già silenziosamente
+inerte, MT5 la ignora senza avvisare.
+
+**Corretto oggi (27 variabili, i due gruppi più rilevanti)**: RISK
+PROTECTIONS (14) e BREAK EVEN & TRAIL (13) resi `input` veri. Verificato
+prima che nessuna delle 27 venga mai riassegnata a runtime nel codice
+(sicuro renderle `input` — altrimenti la compilazione si romperebbe,
+un `input` è di sola lettura dopo `OnInit`).
+
+**Non corretto (deliberatamente, per ora)**: restano circa 340 altre
+variabili non-`input` in altri ~35 gruppi (SIZING AGGRESSIVO, SCUDO
+RISK-OF-RUIN, HTF BIAS, VELOCITY GATE, NEWS FILTER, GATE MODE,
+INDICATORS, STRUCTURE ENGINE, MARKET CONTEXT LAYER, MTF/SPREAD/VOL
+REGIME, e molti altri). Non toccate in blocco perché: (1) alcune
+potrebbero essere pensate per restare interne per design (es. tuning
+fine che non ha senso esporre), (2) 400 input tutti insieme renderebbero
+il pannello Proprietà ingestibile, (3) senza poter compilare io stesso,
+convertirne 340 in un colpo solo senza verifica è un rischio inutile
+quando i due gruppi più urgenti sono già risolti. **Prossimo passo
+naturale**: se emerge il bisogno di testare un'altra area specifica via
+`.set` (come è successo oggi con Risk Protections), convertire quel
+gruppo mirato, verificando ogni volta l'assenza di riassegnazioni prima.
+
 ## Collegamenti
 [[MOC - Trading]] · [[Sar]] · [[Macd]] · [[Rsi Div]] · [[Adx Rsi]] · [[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[TODO - Backtest 10Y]]

@@ -374,6 +374,17 @@ di lavoro consigliato, per gruppo:
   session/Elliott senza profilo — la sua funzione originale. Non ancora
   validato su MT5. Vedi [[NEXUS EA - Fonte Chat WhatsApp (Said)]] e
   [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
+- [x] **~370 variabili su ~400 in `NXS_Inputs.mqh` non sono realmente
+  `input`** (scoperta 17/07) — ogni "input group" del file esiste solo
+  di nome per la maggior parte, le variabili dentro sono plain e ogni
+  riga `.set` corrispondente è già silenziosamente inerte. **Corretti i
+  due gruppi più urgenti** (RISK PROTECTIONS 14 var + BREAK EVEN & TRAIL
+  13 var, verificate una per una: nessuna riassegnazione a runtime).
+  **Restano ~340 non corrette** in ~35 altri gruppi (SIZING, RUIN
+  SHIELD, HTF BIAS, VELOCITY, NEWS, GATE MODE, INDICATORS, MARKET
+  CONTEXT, MTF/SPREAD/VOL...) — non toccate in blocco, da convertire per
+  gruppo mirato quando serve testare quell'area via `.set`. Dettaglio:
+  [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
 
 ## Strategie da correggere/spegnere (priorità in ordine)
 
