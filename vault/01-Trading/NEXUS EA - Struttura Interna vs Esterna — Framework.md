@@ -70,19 +70,40 @@ sweep), non nel gate-are un pattern esistente con una conferma extra
 sullo stesso bar. Da tenere a mente prima di applicare l'idea ad altre
 strategie (Order Block, FVG, Turtle Soup stesso come pattern a sé).
 
-## Prossimi candidati (non ancora fatti)
-- **LIQ_SWEEP**: oggi ha solo la versione esterna attiva. Valutare se
-  tenere anche `sig_liq_sweep` (interna) come setup separato invece di
-  scartarla — la teoria dell'utente prevede entrambe, non una sola.
-- **ORDER_BLOCK / OB_MIT / FVG_CONT**: nessuna versione esterna esiste.
-  Da costruire (impulso/gap che nasce da/coincide con una rottura di
-  struttura esterna) prima di giudicare se aiuta — non testato ancora.
-- **g_structH1 su MQL5**: la proposta originale (collegarla come conferma
-  incrociata) resta in sospeso — dato il risultato negativo del test
-  "stesso bar" sul sito, andrebbe ripensata come **filtro di direzione**
-  (concorde/discorde con l'esterna) più che come richiesta di CHoCH
-  esatto sullo stesso bar, prima di portarla su MQL5 dove tocca strategie
-  già live.
+## Aggiornamento (16/07 sera): ORDER_BLOCK/OB_MIT/FVG_CONT fatti — funziona come "filtro di direzione", non come gate sullo stesso bar
+
+Confermata l'ipotesi lasciata in sospeso sopra: usare la struttura esterna
+come **filtro di direzione** (il trend H1 concorda con la direzione del
+segnale) invece che come richiesta di un evento CHoCH esatto sullo stesso
+bar **funziona bene** — risultato opposto al test IFVG/TURTLE_SOUP.
+
+| Strategia | Config reale | PF prima→dopo | DD% prima→dopo |
+|---|---|---|---|
+| ORDER_BLOCK | D1+HTF | 1.50→1.77 | 5.85→3.94 |
+| OB_MIT | D1 | 1.71→1.80 | 7.15→3.94 |
+| FVG_CONT | H4+HTF | 1.45→2.07 | 18.31→12.48 |
+
+Miglioramento consistente su quasi ogni TF/config testato (non solo sul
+profilo attuale), sempre a costo di un campione più piccolo (~40-55% in
+meno di trade). **Applicato sia al sito che a MQL5** (`g_structH1`,
+finalmente collegata dopo essere stata calcolata a vuoto). Per ORDER_BLOCK/
+OB_MIT il filtro EMA50/nessun filtro è stato **integrato** col trend
+esterno; per FVG_CONT il vecchio filtro EMA50 è stato **sostituito**
+interamente. **Nessuna delle tre è ancora validata su MT5 reale.**
+
+Nota di fedeltà importante: sul sito il trend esterno è verificato **al
+momento dell'impulso/gap** (ho lo storico completo). In MQL5,
+`g_structH1` è solo lo stato **corrente** (nessuno storico per barra) —
+il controllo reale lì è "il trend H1 conferma ORA", non "confermava
+quando si è formato il pattern". Stessa idea, punto di verifica
+leggermente diverso: da tenere presente se i risultati MT5 divergeranno
+da quelli del sito più del solito.
+
+## Prossimo candidato
+- **LIQ_SWEEP**: oggi ha solo la versione esterna attiva (sostituita alla
+  interna). Da valutare se tenere `sig_liq_sweep` (interna) come setup
+  separato invece di scartarla — la teoria dell'utente prevede entrambe,
+  non una sola. Non ancora fatto.
 
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]] · [[Liq Sweep]] · [[Ifvg]] · [[Turtle Soup]] · [[NEXUS EA - Principi]]

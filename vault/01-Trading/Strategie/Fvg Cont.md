@@ -65,6 +65,17 @@ non il trigger stesso. Nessun cambio di codice qui — servirebbe un test
 isolato MT5 con logging su spread/sizing per ogni trade, stesso approccio
 raccomandato per MACD.
 
+## Fix reale 16/07: filtro EMA50 sostituito con struttura esterna vera
+Applicata la teoria interna/esterna dell'utente: il filtro EMA50 (proxy
+locale di trend) è stato **sostituito** — non solo affiancato — dal trend
+esterno vero (H1, `g_structH1`, mai letta da nessuna strategia prima
+d'ora). Config reale del profilo (H4+HTF): **PF 1.45→2.07, DD
+18.31%→12.48%**, campione ridotto di ~40% (139→83 trade). Applicato sia
+al sito (`sig_fvg_cont_ext`) sia a MQL5 (`NXS_Strat_FVG`). **Non ancora
+validato su MT5 reale** — dato il sospetto di problema di esecuzione
+sopra, questo fix migliora la qualità del segnale ma non è detto che
+risolva la divergenza sito/MT5, che resta il test prioritario.
+
 ## Note
 
 

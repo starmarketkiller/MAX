@@ -38,12 +38,18 @@ Stessa logica di ORDER_BLOCK (mitigazione strutturale), floor di score 68.
 segmenti: **166 trade totali**, il campione più grande dopo FVG_CONT nel
 Blocco 2. Solo 2 anni buoni (2021 FORTE, 2024 OK), 4 anni CRITICA.
 
-## Nota Blocco 2 (16/07)
-Wrapper di `NXS_Strat_OrderBlock` (floor score 68) — stessa diagnosi di
-ORDER_BLOCK: pattern base senza edge stabile su campione ampio, non un
-problema di dati insufficienti. Candidato Tier 1 per il framework Setup
-Buy-Sell insieme a ORDER_BLOCK/FVG_CONT/FVG_MIT/IFVG (le "5 tipologie di
-Engulfing" di Secret of 4.11) — non ancora applicato al codice.
+## Fix reale 16/07: eredita il fix struttura esterna di ORDER_BLOCK
+Wrapper di `NXS_Strat_OrderBlock` (floor score 68) — eredita automaticamente
+il fix struttura esterna applicato lì (`g_structH1`, vedi [[Order Block]]
+e [[NEXUS EA - Struttura Interna vs Esterna — Framework]]). Testata anche
+la propria variante sito (`sig_ob_mit_ext`, con lo stesso BOS interno a 5
+barre + trend esterno): config reale D1, **PF 1.71→1.80, DD 7.15%→3.94%**;
+su 4h il salto è più netto (PF 1.22→1.98, DD quasi dimezzato). **Non
+ancora validata su MT5 reale.**
+
+Resta candidato Tier 1 per il framework Setup Buy-Sell insieme a
+ORDER_BLOCK/FVG_CONT/FVG_MIT/IFVG (le "5 tipologie di Engulfing" di
+Secret of 4.11) per un refactor più profondo in futuro.
 
 ## Note
 

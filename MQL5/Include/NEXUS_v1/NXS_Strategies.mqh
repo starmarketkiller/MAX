@@ -254,23 +254,26 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweepExt &sw){
 }
 
 //------------------------------------ H2 Displacement FVG Continuation
+// 16/07: filtro EMA50 (proxy di trend locale) sostituito col trend
+// ESTERNO vero (g_structH1, mai letta prima da nessuna strategia - vedi
+// vault NEXUS EA - Struttura Interna vs Esterna). Test A/B sul sito, config
+// reale (H4+HTF): PF 1.45->2.07, DD 18.31%->12.48%, campione ~40% piu'
+// piccolo. Non ancora validato su MT5 reale.
 SNXSSignal NXS_Strat_FVG(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_FVG_CONT; s.stratName = "FVG_CONT";
    if(!InpStrat_FVG_CONT || !NXS_SelectorAllows(8)) return s;
-   // Logica del sito: gap a 3 candele (low[1]>high[3]) + continuazione nel trend
-   // (close[1] vs EMA50). La vecchia chiedeva un body-displacement -> divergeva.
+   // Gap a 3 candele (low[1]>high[3]) + trend ESTERNO (H1) concorde, non piu'
+   // solo close vs EMA50 locale.
    ENUM_TIMEFRAMES tf = NXS_EffTF();
-   double e50 = NXS_EMAv(50, tf, 1);
-   if(e50 <= 0) return s;
    double h3 = iHigh(g_sym, tf, 3);
    double l3 = iLow (g_sym, tf, 3);
    double h1 = iHigh(g_sym, tf, 1);
    double l1 = iLow (g_sym, tf, 1);
    double c1 = iClose(g_sym, tf, 1);
-   if(l1 > h3 && c1 > e50){
-      s.dir = DIR_BUY;  s.score = 70; s.reason = "FVG_cont bull (site)";
-   } else if(h1 < l3 && c1 < e50){
-      s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_cont bear (site)";
+   if(l1 > h3 && g_structH1.trend == 1){
+      s.dir = DIR_BUY;  s.score = 70; s.reason = "FVG_cont bull (ext)";
+   } else if(h1 < l3 && g_structH1.trend == -1){
+      s.dir = DIR_SELL; s.score = 70; s.reason = "FVG_cont bear (ext)";
    }
    // v2.4.2: conferma reazione (structure+react engine) -> filtra i gap in cui
    // il prezzo passa senza reagire (causa delle perdite SMC).
@@ -394,6 +397,17 @@ SNXSSignal NXS_Strat_RSIDiv(){
 }
 
 //------------------------------------ S1 Order Block Retest
+// 16/07: aggiunta la conferma di struttura ESTERNA (g_structH1, gia'
+// calcolata ogni tick da NXS_UpdateStructureH1 ma finora letta da zero
+// strategie - vedi vault NEXUS EA - Struttura Interna vs Esterna). Test A/B
+// sul sito: PF migliora su quasi ogni TF/config (es. D1+HTF, config reale:
+// 1.50->1.77, DD 5.85%->3.94%), campione si dimezza circa. Nota di
+// fedelta': sul sito il test verificava il trend esterno AL MOMENTO
+// dell'impulso (serie storica); qui in MQL5 g_structH1 e' solo lo stato
+// CORRENTE (non uno storico per barra), quindi il controllo e' "il trend
+// H1 conferma ORA la direzione del retest" - stessa idea, punto di verifica
+// leggermente diverso per limite strutturale di MQL5. Non ancora validato
+// su MT5 reale.
 SNXSSignal NXS_Strat_OrderBlock(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
    if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
@@ -412,11 +426,12 @@ SNXSSignal NXS_Strat_OrderBlock(){
       double obMid = (obTop + obBot) * 0.5;
       // bullish OB: impulso su, il ritest TAGGA la zona (l1<=obTop) e la candela
       // la RESPINGE - chiude rialzista sopra il midpoint (rejection), non mentre
-      // il prezzo sta ancora cadendo dentro il blocco.
-      if(c > o && l1 <= obTop && c1 > o1 && c1 > obMid){
+      // il prezzo sta ancora cadendo dentro il blocco. Ora richiede anche che il
+      // trend H1 (struttura esterna) confermi la stessa direzione.
+      if(c > o && l1 <= obTop && c1 > o1 && c1 > obMid && g_structH1.trend == 1){
          s.dir = DIR_BUY;  s.score = 70; s.reason = "OB_retest_bull"; break;
       }
-      if(c < o && h1 >= obBot && c1 < o1 && c1 < obMid){
+      if(c < o && h1 >= obBot && c1 < o1 && c1 < obMid && g_structH1.trend == -1){
          s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear"; break;
       }
    }

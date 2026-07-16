@@ -358,7 +358,7 @@ def _prep(candles):
         "adx": adx_series(candles, 14),
         "sess": _session_amd_series(candles),
         "choch_int": _fractal_choch_series(candles, wing=3),
-        "choch_ext": _external_choch_series(candles, factor=4, wing=3),
+        "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
     }
 
 
@@ -638,6 +638,33 @@ def sig_order_block(c, ind, i):
     return 0
 
 
+def sig_order_block_ext(c, ind, i):
+    # 16/07 - variante "esterna" (non un gate sullo stesso bar, una lente
+    # diversa sull'origine dell'impulso): richiede che la candela impulso
+    # sia nata mentre il trend ESTERNO (timeframe superiore reale,
+    # ind["choch_ext"]) era gia' nella stessa direzione - "questo blocco
+    # e' l'origine di una gamba strutturale vera", non un impulso qualsiasi.
+    atr = ind["atr"][i]
+    if not atr or i < 12:
+        return 0
+    ext_trend = ind["choch_ext"][0]
+    for k in range(3, 11):
+        idx = i - k
+        cd = c[idx]
+        if _body(cd) < 1.2 * atr:
+            continue
+        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
+        mid = (top + bot) / 2
+        cur = c[i]
+        if _bull(cd) and ext_trend[idx] == 1 and cur["low"] <= top \
+                and _bull(cur) and cur["close"] > mid:
+            return 1
+        if _bear(cd) and ext_trend[idx] == -1 and cur["high"] >= bot \
+                and _bear(cur) and cur["close"] < mid:
+            return -1
+    return 0
+
+
 def sig_ob_mit(c, ind, i):
     # order block CON displacement/BOS: l'impulso rompe lo swing a 5 barre
     atr = ind["atr"][i]
@@ -660,6 +687,32 @@ def sig_ob_mit(c, ind, i):
     return 0
 
 
+def sig_ob_mit_ext(c, ind, i):
+    # 16/07 - variante "esterna": stessa logica di sig_ob_mit (impulso +
+    # BOS interno a 5 barre) con l'aggiunta del trend ESTERNO vero
+    # all'origine dell'impulso, stessa lente di sig_order_block_ext.
+    atr = ind["atr"][i]
+    if not atr or i < 14:
+        return 0
+    ext_trend = ind["choch_ext"][0]
+    for k in range(3, 11):
+        idx = i - k
+        cd = c[idx]
+        if _body(cd) < 1.2 * atr:
+            continue
+        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
+        mid = (top + bot) / 2
+        cur = c[i]
+        phi, plo = _hh(c, 5, idx - 1), _ll(c, 5, idx - 1)
+        if _bull(cd) and phi and cd["close"] > phi and ext_trend[idx] == 1 \
+                and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
+            return 1
+        if _bear(cd) and plo and cd["close"] < plo and ext_trend[idx] == -1 \
+                and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
+            return -1
+    return 0
+
+
 def sig_fvg_cont(c, ind, i):
     # FVG (gap a 3 candele) continuazione nel senso del trend
     e50 = ind["ema50"][i]
@@ -668,6 +721,21 @@ def sig_fvg_cont(c, ind, i):
     if c[i]["low"] > c[i - 2]["high"] and c[i]["close"] > e50:
         return 1
     if c[i]["high"] < c[i - 2]["low"] and c[i]["close"] < e50:
+        return -1
+    return 0
+
+
+def sig_fvg_cont_ext(c, ind, i):
+    # 16/07 - variante "esterna": stesso gap a 3 candele, ma il filtro
+    # EMA50 (proxy di trend locale) e' sostituito dal trend ESTERNO vero
+    # (timeframe superiore reale) - "questo gap fa parte di una gamba
+    # strutturale maggiore", non solo "il prezzo e' sopra una media".
+    if i < 3:
+        return 0
+    ext_trend = ind["choch_ext"][0][i]
+    if c[i]["low"] > c[i - 2]["high"] and ext_trend == 1:
+        return 1
+    if c[i]["high"] < c[i - 2]["low"] and ext_trend == -1:
         return -1
     return 0
 
@@ -1021,20 +1089,23 @@ def _resample_ohlc(candles, factor):
 
 
 def _external_choch_series(candles, factor=4, wing=3):
-    """CHoCH su timeframe superiore reale (resample di `factor` candele),
-    mappato indietro su ogni barra originale con forward-fill (solo l'ultima
-    barra esterna GIA' completata, niente look-ahead)."""
+    """CHoCH/trend su timeframe superiore reale (resample di `factor`
+    candele), mappato indietro su ogni barra originale con forward-fill
+    (solo l'ultima barra esterna GIA' completata, niente look-ahead).
+    Ritorna (trend, chochUp, chochDown) come _fractal_choch_series()."""
     n = len(candles)
     resampled = _resample_ohlc(candles, factor)
-    _, r_up, r_down = _fractal_choch_series(resampled, wing=wing)
+    r_trend, r_up, r_down = _fractal_choch_series(resampled, wing=wing)
+    ext_trend = [0] * n
     ext_up = [False] * n
     ext_down = [False] * n
     for i in range(n):
         r_idx = i // factor - 1   # ultima barra esterna completata prima di i
         if 0 <= r_idx < len(r_up):
+            ext_trend[i] = r_trend[r_idx]
             ext_up[i] = r_up[r_idx]
             ext_down[i] = r_down[r_idx]
-    return ext_up, ext_down
+    return ext_trend, ext_up, ext_down
 
 
 def sig_amd_cont(c, ind, i):
@@ -1269,9 +1340,9 @@ STRATEGIES = {
     # --- strutturali / SMC (nuove, v2.2.8) ---
     "SAR": sig_sar,
     "BJORGUM": sig_bjorgum,
-    "ORDER_BLOCK": sig_order_block,
-    "OB_MIT": sig_ob_mit,
-    "FVG_CONT": sig_fvg_cont,
+    "ORDER_BLOCK": sig_order_block_ext,
+    "OB_MIT": sig_ob_mit_ext,
+    "FVG_CONT": sig_fvg_cont_ext,
     "FVG_MIT": sig_fvg_mit,
     "IFVG": sig_ifvg,
     "LIQ_SWEEP": sig_liq_sweep_ext,
