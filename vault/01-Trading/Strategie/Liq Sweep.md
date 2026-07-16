@@ -129,6 +129,41 @@ trovato finora è un peggioramento netto. La sola esterna resta la scelta
 applicata. Codice della versione interna (`sig_liq_sweep`) lasciato nel
 file per riferimento/test futuri, non richiamato.
 
+## Fix reale 16/07 (sera): filtro qualità Order Block sulla candela di sweep
+
+L'utente ha mostrato 2 screenshot di setup reali da trader ICT (canale
+"THE ICT+CRT TRADING HUB") — in entrambi lo schema è identico: **sweep di
+liquidità + vera candela Order Block esattamente nello stesso punto**
+(corpo forte, "delivery candle" — non un rimbalzo qualsiasi), poi target
+sulla liquidità del lato opposto (SSL/BSL). Il nostro trigger chiedeva
+solo "chiude verde/rossa" dopo lo sweep — nessun requisito di corpo,
+quindi anche un rimbalzo debole contava quanto una vera candela OB.
+
+Aggiunto lo stesso filtro corpo≥0.7×ATR già usato con successo da
+TURTLE_SOUP (lì 0.4×, qui serve più forte data la natura del sweep
+esteso). Test A/B sulla config reale (D1+HTF):
+
+| Versione | Trade | PF | DD% |
+|---|---|---|---|
+| Senza filtro corpo (fix precedente) | 141 | 1.27 | 14.25 |
+| **+ corpo≥0.7×ATR** | **59** | **1.63** | **6.62** |
+
+Migliora nettamente su 3 config su 4 (D1+HTF, D1 no-HTF, 4h+HTF); peggiora
+solo su 4h-no-HTF (che restava comunque la combinazione col PF più alto
+già prima di questo fix). Applicato sia al sito (`sig_liq_sweep_ext`) sia
+a MQL5 (`NXS_Strat_LiqSweep`). **Non ancora validato su MT5 reale.**
+
+## Idea aperta, non ancora implementata: target sulla liquidità opposta
+Negli stessi screenshot il take-profit non è un multiplo fisso di ATR —
+è il livello dove sta la **prossima liquidità** (SSL/BSL, spesso uno swing
+low/high precedente), con multipli TP1/TP2 su livelli intermedi. Il
+motore attuale (sito e MQL5) usa sempre `NXS_DefaultSLTP`/ATR fisso per
+ogni strategia — cambiarlo per un TP dinamico basato su livelli di
+struttura è un cambio più profondo (tocca il motore di uscita, non solo
+il trigger d'ingresso) che richiede modifiche al backtest engine stesso,
+non solo alla funzione segnale. Proposto come prossimo passo, da
+confermare prima di partire dato il perimetro più ampio.
+
 ## Note
 
 

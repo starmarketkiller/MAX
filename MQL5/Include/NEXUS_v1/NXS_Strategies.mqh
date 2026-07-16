@@ -238,12 +238,20 @@ SNXSSignal NXS_Strat_Bjorgum(){
 // problema di campione troppo piccolo mai risolto in 8 anni di dati reali
 // (26 trade totali). Non uniformemente migliore su ogni TF - vedi vault
 // Liq Sweep per il dettaglio completo. Non ancora validato su MT5.
+//
+// 16/07 seguito: l'utente ha mostrato 2 screenshot di setup ICT reali - in
+// entrambi lo sweep coincide sempre con una vera candela Order Block
+// (corpo forte/"delivery candle"), non un rimbalzo qualsiasi. Aggiunto lo
+// stesso filtro corpo>=0.7xATR gia' provato con successo sul sito (PF
+// 1.27->1.63, DD quasi dimezzato sulla config D1+HTF). Non ancora
+// validato su MT5.
 SNXSSignal NXS_Strat_LiqSweep(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LIQ_SWEEP; s.stratName = "LIQ_SWEEP";
    if(!InpStrat_LIQ_SWEEP || !NXS_SelectorAllows(7)) return s;
    if(!sw.confirmed) return s;
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double o1 = iOpen (g_sym, NXS_EffTF(), 1);
+   if(MathAbs(c1 - o1) < 0.7 * g_atr) return s;   // candela "delivery"/OB, non un rimbalzo qualsiasi
    if(sw.dir == DIR_BUY && c1 > o1){
       s.dir = DIR_BUY;  s.score = 72; s.reason = "Sweep_low_reversal";
    } else if(sw.dir == DIR_SELL && c1 < o1){

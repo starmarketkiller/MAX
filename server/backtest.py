@@ -793,11 +793,25 @@ def sig_liq_sweep_ext(c, ind, i):
     # il campione cresce 14->141 trade restando positivo - risolve il
     # problema di campione troppo piccolo di LIQ_SWEEP (26 trade reali in
     # 8 anni). Non uniforme su ogni TF, vedi vault per il dettaglio.
+    #
+    # 16/07 seguito: l'utente ha mostrato 2 esempi reali di trader ICT (screenshot)
+    # - in entrambi lo sweep coincide SEMPRE con una vera candela Order Block
+    # (corpo forte, "delivery candle"), non un rimbalzo qualsiasi. Aggiunto
+    # lo stesso filtro corpo>=0.7xATR gia' usato da TURTLE_SOUP (li' 0.4x,
+    # qui serve piu' forte). Test A/B sulla config reale (D1+HTF): PF
+    # 1.27->1.63, DD quasi dimezzato (14.25%->6.62%). Migliora su 3 config
+    # su 4, peggiora solo sulla combinazione 4h-no-HTF (gia' la migliore
+    # trovata prima del fix) - vedi vault per il dettaglio completo.
     sess = ind["sess"]
     sw = _sweep_ext_at(c, sess, i)
     if not sw or not sw["confirmed"]:
         return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
     c1, o1 = c[i]["close"], c[i]["open"]
+    if abs(c1 - o1) < 0.7 * atr:
+        return 0
     if sw["dir"] == 1 and c1 > o1:
         return 1
     if sw["dir"] == -1 and c1 < o1:
