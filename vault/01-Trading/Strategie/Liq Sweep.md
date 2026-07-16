@@ -102,6 +102,33 @@ HTF; LIQ_SWEEP: D1 con HTF) — sembrano **complementari** (stesso concetto
 a scale temporali diverse) più che ridondanti, ma serve più campione per
 confermarlo.
 
+## Testato (16/07 sera): tenere anche la versione interna come setup parallelo — non conviene
+Su richiesta dell'utente di applicare la teoria interna/esterna nella sua
+forma completa (due varianti, non una che sostituisce l'altra), testata
+l'**unione** (interna OR esterna, spara se una qualsiasi delle due
+conferma) contro la sola esterna già applicata:
+
+| Config | Solo esterna | Unione (interna OR esterna) |
+|---|---|---|
+| D1+HTF (= profilo) | PF1.27, DD14.25%, 141 trade | PF1.30, DD12.51%, 142 trade — quasi identico |
+| D1, no HTF | PF1.02, DD17.44% | PF1.15, DD20.40% — trade in più, DD peggiore |
+| 4h+HTF | PF0.97, DD18.36% | PF0.95, DD17.86% — sostanzialmente invariato |
+| **4h, no HTF (il miglior risultato trovato)** | **PF1.32, DD8.71%** | **PF1.06, DD16.88% — peggiora nettamente** |
+
+**Non applicata**: sulla combinazione con il risultato migliore in
+assoluto (4h senza HTF), aggiungere i segnali "interni" **peggiora**
+sensibilmente il PF e quasi raddoppia il drawdown — i trade aggiuntivi
+sono di qualità più bassa, non un'aggiunta neutra. Sulla config del
+profilo attuale (D1+HTF) l'unione è marginalmente migliore ma il
+contributo della versione interna è quasi nullo (141→142 trade): le due
+si sovrappongono quasi del tutto lì. **Conclusione onesta**: a differenza
+di ORDER_BLOCK/OB_MIT/FVG_CONT (dove la struttura esterna come filtro di
+direzione ha aiutato ovunque), qui "tenere entrambe le versioni" non è
+sempre un vantaggio — dipende dalla combinazione, e nel caso migliore
+trovato finora è un peggioramento netto. La sola esterna resta la scelta
+applicata. Codice della versione interna (`sig_liq_sweep`) lasciato nel
+file per riferimento/test futuri, non richiamato.
+
 ## Note
 
 

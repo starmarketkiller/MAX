@@ -99,11 +99,24 @@ quando si è formato il pattern". Stessa idea, punto di verifica
 leggermente diverso: da tenere presente se i risultati MT5 divergeranno
 da quelli del sito più del solito.
 
-## Prossimo candidato
-- **LIQ_SWEEP**: oggi ha solo la versione esterna attiva (sostituita alla
-  interna). Da valutare se tenere `sig_liq_sweep` (interna) come setup
-  separato invece di scartarla — la teoria dell'utente prevede entrambe,
-  non una sola. Non ancora fatto.
+## LIQ_SWEEP: testato tenere entrambe le versioni — non conviene sempre
+
+Testata l'unione (interna OR esterna) contro la sola esterna. Risultato
+misto, non un chiaro miglioramento: sulla config del profilo (D1+HTF) è
+sostanzialmente invariata (le due si sovrappongono quasi del tutto), ma
+sulla **migliore combinazione trovata finora** (4h senza HTF, PF1.32) i
+segnali interni aggiuntivi **peggiorano nettamente** (PF1.32→1.06, DD
+quasi raddoppiato). Non applicata — la sola esterna resta la scelta
+migliore qui. Dettaglio: [[Liq Sweep]].
+
+**Lezione aggiornata**: "tenere entrambe le prospettive" (interna +
+esterna) non è automaticamente meglio di "usare solo la migliore" — va
+verificato caso per caso, non applicato come regola generale. Su
+ORDER_BLOCK/OB_MIT/FVG_CONT la struttura esterna **come filtro di
+direzione aggiunto** ha aiutato ovunque; su LIQ_SWEEP, **unire due
+definizioni di sweep diverse** (non un filtro, un OR tra due trigger) non
+ha lo stesso effetto — sono meccanismi concettualmente diversi anche se
+entrambi "interno vs esterno".
 
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]] · [[Liq Sweep]] · [[Ifvg]] · [[Turtle Soup]] · [[NEXUS EA - Principi]]
