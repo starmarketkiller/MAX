@@ -221,6 +221,20 @@ come "cervello" di trading (cartella `01-Trading/Fonti/`):
   tutto, confrontare con le fonti già presenti e segnalare conflitti come
   fatto per fresh/unfresh MSNR vs Secret of 4.11).
 
+## 🎯 Priorità aggiornata (16/07): sospetto esecuzione MT5, non solo trigger
+
+Blocco 4 (MACD/RSI_DIV) ha trovato lo stesso schema già visto su FVG_CONT
+nel Blocco 2: dopo aver corretto i bug di proxy sul sito (2 nuovi trovati,
+stesso tipo di SAR/BJORGUM), **il segnale risulta ancora più solido**, ma
+MT5 reale su campione enorme (FVG_CONT 440, MACD 1.496, RSI_DIV 678 trade)
+li smentisce tutti e tre. Con 3 casi indipendenti nella stessa direzione,
+non è più plausibile che sia sempre "il prossimo trigger da sistemare" —
+la pista più probabile ora è un problema di **esecuzione MT5** condiviso
+(spread reali, sizing, interazione tra gate come `InpMaxPerDirTF`/margine/
+cooldown). Prossimo passo concreto: un test isolato MT5 con logging
+spread/sizing per-trade su queste 3 strategie insieme, prima di continuare
+a cercare altri bug di trigger nel sito.
+
 ## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
 
 Obiettivo dichiarato: tutte le strategie attive contribuiscono positivamente
