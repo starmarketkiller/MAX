@@ -54,6 +54,20 @@ BUY/SELL della stessa strategia nello stesso momento, non tra strategie
 diverse. `InpDataCollectionMode` diventa cruciale quando si testeranno
 gruppi/tutte le 37 insieme (nucleo hedge, profilo finale).
 
+- [x] **16/07**: trovato che quasi TUTTI i 250 parametri di `NXS_Inputs.mqh`
+  erano stati resi `bool`/`int`/`double` semplici invece di `input` in
+  qualche refactor precedente — incluse **tutte le 37 `InpStrat_*`/
+  `InpUseStrat_*`** (nessun modo di testare combinazioni a mano, es. il
+  nucleo hedge, senza ricompilare). Rese `input` anche queste (commit
+  `dc480f8`), default invariati. I parametri numerici di tuning (SL/TP
+  mult, periodi indicatori, soglie score) restano volutamente non-input:
+  sono superseduti dal sistema profili per-strategia
+  (`NXS_StrategyProfiles.mqh`, attivo quando `InpUseStrategyProfiles=true`,
+  default) — cambiarli globalmente non avrebbe comunque effetto pieno.
+- [x] Creato `results/sets/SWEEP_37_DataCollectionMode.set`, pronto da
+  caricare nel Tester: selector in Optimization 1→37, DataCollectionMode
+  ON, MaxOpen=200, tutte le strategie abilitate. Manca solo la chiave
+  di licenza (lasciata vuota, da riempire se il tuo EA la richiede).
 - [ ] Non ancora eseguito nessun run reale con questa configurazione — il
   prossimo passo è lanciare l'Optimization sul lato utente (MT5 Tester).
 
