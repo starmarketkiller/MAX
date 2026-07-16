@@ -44,8 +44,21 @@ nascondere un singolo anno che ribalta la conclusione ([[NEXUS EA - Principi]]
 #1 vale anche oltre i 3 mesi). Da tenere nel nucleo hedge, non più da trattare
 come "la strategia sicura".
 
+## Test A/B 15/07 (Blocco 1 Setup Buy-Sell): conferma CHoCH testata, risultato negativo
+Verificato che la strategia **ha davvero tradato** (338 trade reali sui
+segmenti affidabili — il contatore `executed`=0 nei CSV era il bug già noto,
+non assenza di setup). Ricerca esterna sul metodo ICT Turtle Soup originale
+conferma 3 pilastri: bias HTF, sweep fallito, **conferma di Market Structure
+Shift (CHoCH) sul LTF** — quest'ultimo assente nel nostro trigger. Testato
+un proxy CHoCH (stessa logica failure-swing di `SMS_BMS_RTO`) sul motore
+sito: **peggiora tutto** (PF 0.83→0.66, trade 63→4, campione troppo piccolo
+per giudicare). Caveat: il test gira su D1 mentre TURTLE_SOUP su MT5 usa H1
+— il disallineamento di timeframe è più severo qui che per SAR/ADX_RSI, non
+è una prova che il concetto non serva su H1 reale. **Non applicato.**
+Dettaglio: [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]].
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]

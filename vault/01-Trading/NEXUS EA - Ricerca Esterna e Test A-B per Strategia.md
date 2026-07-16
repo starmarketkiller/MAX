@@ -114,6 +114,52 @@ SAR vero secondo la doc — verificare che l'implementazione MQL5 nativa
 viene dal fix del proxy, non da un nuovo algoritmo); (3) NON aggiungere
 filtro ADX a SAR, lo peggiora.
 
+## Test A/B #3: TURTLE_SOUP — conferma di struttura (CHoCH proxy) testata, risultato negativo
+
+Richiesta dell'utente (Blocco 1 del framework Setup Buy-Sell): verificare se
+TURTLE_SOUP avesse davvero mai tradato (sì — **338 trade reali** nei segmenti
+affidabili, il contatore `executed`=0 nei CSV traeva in inganno prima del fix
+di Strat Diag) e se il metodo ICT originale richiedesse qualcosa che manca
+nel nostro trigger. Ricerca web (fonti in fondo) conferma 3 pilastri del
+metodo: bias HTF, sweep fallito, **e conferma di Market Structure Shift
+(MSS/CHoCH) sul LTF** — quest'ultima assente nel nostro codice (che oggi
+verifica solo sweep + candela di rigetto con corpo forte).
+
+**Implementato un proxy di CHoCH** sul motore sito, riusando la stessa logica
+già presente in MQL5 per `SMS_BMS_RTO` (failure swing su finestre 10/20
+barre: HL = inizio struttura rialzista, LH = inizio struttura ribassista) e
+richiesto come filtro aggiuntivo dopo il segnale base:
+
+| Versione | Trade | PF | WR% | expR | DD% | Net |
+|---|---|---|---|---|---|---|
+| Baseline (sweep+rigetto, invariato) | 63 | 0.83 | 30.2 | -0.109 | 10.71 | -716 |
+| + conferma CHoCH (failure swing) | **4** | **0.66** | 25.0 | -0.25 | 1.99 | -103 |
+
+**Risultato negativo, non applicato**: il filtro non solo non migliora il
+PF (peggiora, 0.83→0.66), ma **riduce il campione a 4 trade** — sotto la
+soglia minima per qualsiasi giudizio statistico ([[NEXUS EA - Principi]] #4).
+Non è la stessa storia di ADX_RSI (dove un filtro mancante dal nome stesso
+migliorava le cose): qui il "pilastro mancante" della fonte esterna non si
+traduce in un miglioramento misurabile con questa definizione di CHoCH.
+
+⚠️ **Caveat importante, scoperto durante il test**: TURTLE_SOUP su MT5 gira
+su **H1** (`NXS_StrategyProfiles.mqh:88`), ma questo test — come tutti gli
+altri di questa nota — gira sul motore sito che usa **D1**. Per Turtle Soup
+il disallineamento di timeframe è più severo che per SAR/ADX_RSI, perché uno
+stop-hunt/reversal è per natura un pattern a breve termine — su D1 la
+finestra di "sweep + rigetto" cattura un fenomeno strutturalmente diverso da
+H1. **Questo risultato negativo non è una prova che il concetto CHoCH non
+serva su H1 reale** — è una prova che il test *su D1* non lo conferma. Il
+filtro sessione (Londra/NY, l'altro pilastro trovato in ricerca) è
+**impossibile da testare qui**: D1 non ha risoluzione intraday, quindi il
+motore sito non può nemmeno porre la domanda.
+
+**Raccomandazione**: non applicare il filtro CHoCH così com'è. Se si vuole
+verificare i pilastri mancanti (struttura + sessione) per davvero, serve un
+test isolato **su MT5 H1** (`InpStrategySelector`), non altro tuning sul
+motore sito — qui abbiamo raggiunto il limite di cosa il sito può dirci per
+questa strategia specifica.
+
 ## Ricerca (non ancora testata): MACD, RSI_DIV — cosa dicono le fonti esterne
 
 **MACD**: il lag è strutturale (media mobile = elabora dati storici, i
@@ -170,6 +216,9 @@ le operazioni, in entrambe le direzioni.
 - [RSI Divergence conferme — AlgoAlpha](https://algoalpha.io/blog/rsi-divergence-trading-strategy-how-to-spot-trade-and-avoid-false-signals)
 - [ICT Silver Bullet/Judas Swing/AMD — GrandAlgo, InnerCircleTrader, ICTKillzone](https://grandalgo.com/blog/ict-silver-bullet-strategy)
 - [ADX+RSI su Gold — FXNX](https://fxnx.com/en/blog/adx-rsi-strategy-master-trend-entries)
+- [ICT Turtle Soup — InnerCircleTrader](https://innercircletrader.net/tutorials/ict-turtle-soup-pattern/)
+- [ICT Turtle Soup Strategy — FX Replay](https://fxreplay.com/strategies/ict-turtle-soup-strategy)
+- [ICT Turtle Soup spiegato — FXOpen Market Pulse](https://fxopen.com/blog/en/what-is-ict-turtle-soup-and-how-can-you-use-it-in-trading/)
 
 ## Collegamenti
 [[MOC - Trading]] · [[NEXUS EA - Setup Buy-Sell — Framework]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]] · [[Sar]] · [[Adx Rsi]] · [[Macd]] · [[Rsi Div]] · [[TODO - Backtest 10Y]]
