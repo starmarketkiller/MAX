@@ -30,8 +30,9 @@ Power of Three (ICT: accumulo/manipolazione/espansione sul range giornaliero).
 
 ## Stato
 🟢 Prima serie di dati mai raccolta (16/07) — non più NOT_CONNECTED.
-Secondo miglior risultato del gruppo su 4h (PF1.29, 48 trade, DD4.0% — il
-più basso delle 7). Nessun profilo MT5 esiste ancora, dato preliminare.
+Secondo miglior risultato del gruppo su 4h, migliorato lo stesso giorno
+col vero TP dinamico MQL5: **PF1.51, 45 trade, DD6.8%**. Nessun profilo
+MT5 esiste ancora, dato preliminare, non validato su MT5 reale.
 
 ## Prima connessione al sito (16/07)
 Implementata la vera logica MQL5 (`NXS_Strat_PO3`): range asiatico
@@ -40,7 +41,7 @@ distribuzione con corpo forte (>0.6×ATR) nella direzione del rientro +
 CHoCH (proxy) — il ciclo ACC-MAN-DIST completo. Vedi [[Amd Cont]] per il
 metodo.
 
-Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
+Primo test SL1.5/TP3.0 generico (fisso), ~2 anni Yahoo intraday:
 
 | TF | Trade | PF | DD% | Net |
 |---|---|---|---|---|
@@ -50,6 +51,25 @@ Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
 Su 4h è il secondo risultato più incoraggiante del gruppo dopo AMD_CONT,
 con il drawdown più basso delle 7. Non ancora validata su MT5
 (`InpStrategySelector=33`).
+
+## Fix reale 16/07 (sera): TP dinamico mancante nella prima implementazione
+Stesso bug di [[Judas Swing]] e [[Ldn Reversal]]: il primo porting aveva
+usato un TP ATR fisso generico, omettendo che `NXS_Strat_PO3` calcola già
+un target dinamico (`MathMax`/`MathMin` tra multiplo R fisso e liquidità
+reale del range asiatico). Aggiunta `_po3_target()` e resa sempre attiva:
+
+| TF | TP | Trade | PF | DD% | Net |
+|---|---|---|---|---|---|---|
+| 4h | fisso (bug) | 47 | 1.39 | 8.02 | +1.094 |
+| **4h** | **dinamico (reale)** | **45** | **1.51** | **6.79** | **+1.413** |
+
+Miglioramento netto su ogni metrica (PF, DD e net) — insieme a JUDAS_SWING
+il caso più chiaro di beneficio dal target dinamico tra le 3 strategie
+interessate. Il numero "fisso" qui sopra è già diverso dal primo test
+della mattina (PF1.29→1.39) per lo stesso motivo di finestra dati Yahoo
+mobile spiegato in [[Judas Swing]] — non un cambio di codice. Applicato
+per fedeltà al vero comportamento MQL5 (`STRATEGY_TARGETS_ALWAYS`).
+**Non ancora validato su MT5 reale.**
 
 ## Note
 

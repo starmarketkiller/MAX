@@ -118,5 +118,38 @@ definizioni di sweep diverse** (non un filtro, un OR tra due trigger) non
 ha lo stesso effetto — sono meccanismi concettualmente diversi anche se
 entrambi "interno vs esterno".
 
+## Un'altra istanza dello stesso pattern: TP dinamico mancante (16/07 sera)
+
+Non solo struttura/sweep — lo stesso "manca un pezzo, non è che il
+trigger sia sbagliato" si è ripetuto sul lato uscita. Il primo porting
+delle 7 strategie a sessione ([[Judas Swing]], [[Ldn Reversal]], [[Po3]]
+e le altre 4) aveva usato per tutte un TP ATR fisso generico. Ma
+`NXS_Strat_JudasSwing`/`LondonReversal`/`PO3` in MQL5 calcolano già un
+**target dinamico** reale (`MathMax`/`MathMin` tra il multiplo R fisso e
+un livello di liquidità concreto — estremo del range asiatico) — non era
+un'ipotesi da testare, era codice MQL5 esistente semplicemente non
+riportato sul sito al primo giro.
+
+Aggiunta `_judas_swing_target()`/`_ldn_reversal_target()`/`_po3_target()`
++ meccanismo `STRATEGY_TARGETS_ALWAYS` in `run_backtest()` (si applica
+sempre per queste 3, è comportamento reale non un'opzione):
+
+| Strategia | PF fisso→dinamico | DD% fisso→dinamico |
+|---|---|---|
+| JUDAS_SWING | 1.37→1.4 | 4.93→4.9 |
+| LDN_REVERSAL | 1.08→1.08 | 9.92→9.92 (net comunque migliore) |
+| PO3 | 1.39→1.51 | 8.02→6.79 |
+
+Stesso genere di risultato: JUDAS_SWING era classificata 🔴 negativa nel
+primo giro (PF0.74-0.77) proprio perché mancava questo pezzo, non perché
+il trigger fosse sbagliato — conferma diretta dell'osservazione
+dell'utente ("magari quelle che performano male... hanno bisogno di
+qualcos'altro per eseguire bene"). Testato anche un target dinamico
+analogo per LIQ_SWEEP (`_liq_sweep_target`, liquidità PDH/PDL/Asia/swing
+esterno) ma lì il risultato è misto/non decisivo — tenuto **opt-in**
+(`STRATEGY_TARGETS_OPTIN`, va richiesto esplicitamente), a differenza
+delle 3 sopra che sono fedeltà MQL5 reale sempre attiva. Dettagli:
+[[Judas Swing]] · [[Ldn Reversal]] · [[Po3]] · [[Liq Sweep]].
+
 ## Collegamenti
-[[MOC - Trading]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]] · [[Liq Sweep]] · [[Ifvg]] · [[Turtle Soup]] · [[NEXUS EA - Principi]]
+[[MOC - Trading]] · [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]] · [[Liq Sweep]] · [[Ifvg]] · [[Turtle Soup]] · [[Judas Swing]] · [[Ldn Reversal]] · [[Po3]] · [[NEXUS EA - Principi]]

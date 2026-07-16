@@ -30,15 +30,17 @@ Reversal di sessione Londra.
 
 ## Stato
 ⏳ Prima serie di dati mai raccolta (16/07) — non più NOT_CONNECTED.
-Sostanzialmente breakeven su 4h (PF1.01, 99 trade — il campione più ampio
-delle 7), negativa su 1h (PF0.65). Nessun profilo MT5 esiste ancora.
+Sostanzialmente breakeven su 4h (PF1.08, 108 trade — il campione più ampio
+delle 7), DD alto (9.9%). Corretto lo stesso giorno con il vero TP
+dinamico MQL5 (miglioramento marginale). Nessun profilo MT5 esiste
+ancora, dato preliminare, non validato su MT5 reale.
 
 ## Prima connessione al sito (16/07)
 Implementata la vera logica MQL5 (`NXS_Strat_LondonReversal`): sessione
 Londra/Overlap + sweep (Asia High/Low o PDH/PDL) confermato + chiusura di
 rientro oltre il livello + CHoCH (proxy). Vedi [[Amd Cont]] per il metodo.
 
-Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
+Primo test SL1.5/TP3.0 generico (fisso), ~2 anni Yahoo intraday:
 
 | TF | Trade | PF | DD% | Net |
 |---|---|---|---|---|
@@ -48,6 +50,25 @@ Test SL1.5/TP3.0 generico, ~2 anni Yahoo intraday:
 Campione più ampio del gruppo (99 trade su 4h) ma il segnale è debole
 (quasi breakeven) e il DD alto su entrambi i TF — non promettente nel
 primo giro. Non ancora validata su MT5 (`InpStrategySelector=30`).
+
+## Fix reale 16/07 (sera): TP dinamico mancante nella prima implementazione
+Stesso bug di [[Judas Swing]] e [[Po3]]: il primo porting aveva usato un
+TP ATR fisso generico per tutte le 7 strategie a sessione, omettendo che
+`NXS_Strat_LondonReversal` calcola già un target dinamico
+(`MathMax`/`MathMin` tra multiplo R fisso e liquidità reale). Aggiunta
+`_ldn_reversal_target()` e resa sempre attiva:
+
+| TF | TP | Trade | PF | DD% | Net |
+|---|---|---|---|---|---|---|
+| 4h | fisso (bug) | 108 | 1.08 | 9.92 | +573 |
+| **4h** | **dinamico (reale)** | **108** | **1.08** | **9.92** | **+593** |
+
+A differenza di JUDAS_SWING e PO3, qui il target dinamico quasi non
+cambia (stesso PF/DD, net leggermente migliore) — il livello ATR fisso e
+quello dinamico coincidono quasi sempre in questa strategia sui dati
+testati. Applicato comunque per fedeltà al vero comportamento MQL5
+(`STRATEGY_TARGETS_ALWAYS`), non è un'ipotesi. **Non ancora validato su
+MT5 reale.**
 
 ## Note
 

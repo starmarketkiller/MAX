@@ -359,6 +359,7 @@ def _prep(candles):
         "sess": _session_amd_series(candles),
         "choch_int": _fractal_choch_series(candles, wing=3),
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
+        "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
     }
 
 
@@ -819,6 +820,99 @@ def sig_liq_sweep_ext(c, ind, i):
     return 0
 
 
+def _liq_sweep_target(c, ind, i, direction, entry, atr, min_rr=1.2, sl_mult=1.5, pick="nearest"):
+    """TP dinamico sulla liquidita' OPPOSTA (PDH/PDL/Asia High-Low + ultimo
+    swing esterno confermato) invece di un multiplo fisso di ATR - come
+    mostrato negli screenshot dell'utente (setup ICT reali: sweep+OB,
+    target sul pool di liquidita' del lato opposto). Ritorna None se non
+    c'e' un livello valido -> fallback al TP ATR fisso normale.
+    16/07: aggiunto swing_ext (ultimo massimo/minimo confermato su TF
+    esterno) - PDH/PDL da solo e' spesso troppo vicino su D1 (e' il giorno
+    subito prima, non un vero pool di liquidita' distante) e la condizione
+    di RR minimo lo scartava quasi sempre."""
+    sess = ind["sess"]
+    pdh, pdl = sess["pdh"][i], sess["pdl"][i]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    swing_hi, swing_lo = ind["swing_ext"][0][i], ind["swing_ext"][1][i]
+    risk = atr * sl_mult
+    if direction == 1:
+        cands = [x for x in (pdh, ah, swing_hi) if x is not None and x > entry]
+        if not cands:
+            return None
+        target = min(cands) if pick == "nearest" else max(cands)
+        if (target - entry) < min_rr * risk:
+            return None
+    else:
+        cands = [x for x in (pdl, al, swing_lo) if x is not None and x < entry]
+        if not cands:
+            return None
+        target = max(cands) if pick == "nearest" else min(cands)
+        if (entry - target) < min_rr * risk:
+            return None
+    return target
+
+
+def _judas_swing_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=None):
+    # Fedele a NXS_Strat_JudasSwing: tp = MAX(asianHigh, entry+2.5xrisk) per
+    # buy / MIN(asianLow, entry-2.5xrisk) per sell - prende il piu' ambizioso.
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    risk = atr * sl_mult
+    if direction == 1:
+        fixed = entry + 2.5 * risk
+        return max(ah, fixed) if ah is not None else fixed
+    fixed = entry - 2.5 * risk
+    return min(al, fixed) if al is not None else fixed
+
+
+def _ldn_reversal_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=None):
+    # Fedele a NXS_Strat_LondonReversal: tp = MAX(asianHigh, entry+2.0xrisk)
+    # per buy / MIN(asianLow, entry-2.0xrisk) per sell.
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    risk = atr * sl_mult
+    if direction == 1:
+        fixed = entry + 2.5 * risk
+        tgt = ah if ah is not None else fixed
+        return max(tgt, entry + 2.0 * risk)
+    fixed = entry - 2.5 * risk
+    tgt = al if al is not None else fixed
+    return min(tgt, entry - 2.0 * risk)
+
+
+def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=None):
+    # Fedele a NXS_Strat_PO3: tp = MAX(asianHigh, entry+2.6xrisk) per buy /
+    # MIN(asianLow, entry-2.6xrisk) per sell.
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    risk = atr * sl_mult
+    if direction == 1:
+        fixed = entry + 2.6 * risk
+        return max(ah, fixed) if ah is not None else fixed
+    fixed = entry - 2.6 * risk
+    return min(al, fixed) if al is not None else fixed
+
+
+# TP dinamico (livello di liquidita' opposta invece di ATR fisso), due gruppi:
+#
+# STRATEGY_TARGETS_ALWAYS - e' cosi' che la vera NXS_Strat_* MQL5 calcola
+# il TP di queste strategie (MAX/MIN tra target dinamico e multiplo fisso,
+# gia' nel codice reale) - applicato SEMPRE, per fedelta', non come test.
+# Il primo giro di test del 16/07 sulle 7 strategie a sessione usava per
+# errore lo stesso SL/TP ATR generico per tutte, omettendo questa parte
+# gia' presente in MQL5 per queste 3.
+STRATEGY_TARGETS_ALWAYS = {
+    "JUDAS_SWING": _judas_swing_target,
+    "LDN_REVERSAL": _ldn_reversal_target,
+    "PO3": _po3_target,
+}
+# STRATEGY_TARGETS_OPTIN - ipotesi TESTATA ma NON presente nel vero
+# NXS_Strat_LiqSweep() MQL5 (che usa solo NXS_DefaultSLTP, ATR fisso) -
+# testata su richiesta dell'utente (16/07), risultato misto/non decisivo
+# (vedi vault Liq Sweep), quindi resta opt-in (use_dynamic_tp=True),
+# NON applicata di default.
+STRATEGY_TARGETS_OPTIN = {
+    "LIQ_SWEEP": _liq_sweep_target,
+}
+
+
 def sig_turtle_soup(c, ind, i):
     # falso breakout: sweep del min/max a 20 + candela di reversal forte
     atr = ind["atr"][i]
@@ -1089,6 +1183,47 @@ def _fractal_choch_series(candles, wing=3):
         cd = last_lo is not None and c1 < last_lo and trend_before == 1
         trend[i], choch_up[i], choch_down[i] = cur_trend, cu, cd
     return trend, choch_up, choch_down
+
+
+def _swing_price_series(candles, wing=3):
+    """Prezzo dell'ultimo swing high/low CONFERMATO come di ogni barra
+    (stessa logica fractal di _fractal_choch_series, ma qui serve il
+    livello di prezzo, non solo il trend/CHoCH) - usato come pool di
+    liquidita' piu' significativo di PDH/PDL per il TP dinamico."""
+    n = len(candles)
+    last_hi_s = [None] * n
+    last_lo_s = [None] * n
+    last_hi = last_lo = None
+    for i in range(n):
+        idx = i - wing
+        if idx - wing >= 0:
+            h, l = candles[idx]["high"], candles[idx]["low"]
+            if all(candles[idx - k]["high"] < h for k in range(1, wing + 1)) and \
+               all(candles[idx + k]["high"] < h for k in range(1, wing + 1)):
+                last_hi = h
+            if all(candles[idx - k]["low"] > l for k in range(1, wing + 1)) and \
+               all(candles[idx + k]["low"] > l for k in range(1, wing + 1)):
+                last_lo = l
+        last_hi_s[i], last_lo_s[i] = last_hi, last_lo
+    return last_hi_s, last_lo_s
+
+
+def _external_swing_price_series(candles, factor=4, wing=3):
+    """Prezzo dell'ultimo swing high/low su timeframe superiore reale
+    (ricampionato), mappato indietro su ogni barra originale con
+    forward-fill sull'ultima barra esterna GIA' completata (stesso
+    schema di _external_choch_series, niente look-ahead)."""
+    n = len(candles)
+    resampled = _resample_ohlc(candles, factor)
+    r_hi, r_lo = _swing_price_series(resampled, wing=wing)
+    ext_hi = [None] * n
+    ext_lo = [None] * n
+    for i in range(n):
+        r_idx = i // factor - 1
+        if 0 <= r_idx < len(r_hi):
+            ext_hi[i] = r_hi[r_idx]
+            ext_lo[i] = r_lo[r_idx]
+    return ext_hi, ext_lo
 
 
 def _resample_ohlc(candles, factor):
@@ -1398,7 +1533,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  risk_pct=1.0, atr_sl=1.5, atr_tp=3.0, start_equity=10000.0,
                  max_hold=40, bars=800, strategies=None,
                  htf_filter=False, trend_period=50,
-                 breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0):
+                 breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
+                 use_dynamic_tp=False, dynamic_tp_pick="nearest"):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1500,6 +1636,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             risk_money = equity * (risk_pct / 100.0)
             sl = px - sig * atr * atr_sl
             tp = px + sig * atr * atr_tp
+            # STRATEGY_TARGETS_ALWAYS: fedelta' al vero calcolo MQL5, sempre attivo.
+            target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
+            # STRATEGY_TARGETS_OPTIN: ipotesi non presente in MQL5, solo se richiesta.
+            if not target_fn and use_dynamic_tp:
+                target_fn = STRATEGY_TARGETS_OPTIN.get(who)
+            if target_fn:
+                dyn_tp = target_fn(candles, ind, i, sig, px, atr,
+                                    sl_mult=atr_sl, pick=dynamic_tp_pick)
+                if dyn_tp is not None:
+                    tp = dyn_tp
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
                    "risk_money": risk_money, "strat": who,
                    "risk_dist": abs(px - sl)}

@@ -98,12 +98,12 @@ esistito, ~2 anni di dati Yahoo intraday, non 10). Dati preliminari, da
 validare su MT5 isolato prima di qualunque conclusione.
 
 - [[Amd Cont]] — 🟢 il più promettente: PF2.07 su 4h (62 trade, DD5.85%)
-- [[Po3]] — 🟢 PF1.29 su 4h (48 trade, DD4.0% — il più basso del gruppo)
+- [[Po3]] — 🟢 PF1.51 su 4h con TP dinamico reale (45 trade, DD6.79%)
 - [[Silver Bullet]] — 🟢 PF1.52 su 4h (68 trade) ma negativo su 1h
 - [[Amd Reversal]] — ⏳ quasi breakeven su 4h (PF1.10, 57 trade)
-- [[Ldn Reversal]] — ⏳ quasi breakeven su 4h (PF1.01, 99 trade — campione più ampio) ma DD alto
+- [[Ldn Reversal]] — ⏳ quasi breakeven su 4h (PF1.08, 108 trade — campione più ampio) ma DD alto
 - [[Ny Reversal]] — 🔬 PF1.42 su 1h ma solo 20 trade, troppo pochi per giudicare
-- [[Judas Swing]] — 🔴 negativo su entrambi i TF testati (PF0.74-0.77)
+- [[Judas Swing]] — 🟡 PF1.4 su 4h con TP dinamico reale (59 trade, DD4.9%) — il primo test (PF0.74-0.77) aveva un TP fisso per errore, corretto lo stesso 16/07
 
 ## ❓ Mai tracciata (1)
 Scoperta il 15/07 durante l'audit di fedeltà — la 37ª strategia dell'EA,
