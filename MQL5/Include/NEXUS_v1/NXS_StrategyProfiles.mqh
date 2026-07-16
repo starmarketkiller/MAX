@@ -22,7 +22,16 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // --- Ricetta multi-TF ottimale per-strategia (XAUUSD, dati reali) ---
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + TP4.0 -> PF1.48 (253 trade)
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
-   if(name == "BJORGUM")           { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF3.46 R2.0
+   // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
+   // sig_bjorgum() del sito era un EMA ribbon (bug, stesso tipo di quello
+   // gia' trovato su SAR il 15/07) - non testava mai la vera logica pivot-
+   // bounce di questa funzione. Sui 6 anni reali MT5 questa config e' -8.6R,
+   // 5/6 anni negativi. Corretto il proxy sito e rifatto lo sweep con la
+   // logica vera: senza filtro HTF (che qui schiaccia il campione a 3-6
+   // trade/10y, troppo pochi per giudicare) SL1.5/TP3.0 e' la config con
+   // miglior DD trovata (PF1.20, DD13.4%, 110 trade/10y) - ipotesi da
+   // validare su MT5 isolato (selector=6), non ancora confermata.
+   if(name == "BJORGUM")           { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h - fix 16/07, vedi commento sopra
    if(name == "BOLLINGER")         { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "BREAKOUT_ACC")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
    if(name == "CISD")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)

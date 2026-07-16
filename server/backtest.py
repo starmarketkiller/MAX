@@ -533,14 +533,25 @@ def sig_sar(c, ind, i):
 
 
 def sig_bjorgum(c, ind, i):
-    # EMA ribbon: allineamento fresco 12>26>50 (o inverso)
-    e12, e26, e50 = ind["ema12"][i], ind["ema26"][i], ind["ema50"][i]
-    e12p, e26p = ind["ema12"][i - 1], ind["ema26"][i - 1]
-    if None in (e12, e26, e50, e12p, e26p):
+    # v2.5.1 - era un proxy EMA ribbon (12/26/50), bug trovato il 16/07: la
+    # vera NXS_Strat_Bjorgum() in MQL5 e' un rimbalzo su pivot a 30 barre
+    # (mean-reversion agli estremi), non un trigger trend-following con EMA -
+    # concetti opposti. Non testava mai la vera strategia (stesso tipo di bug
+    # gia' trovato su SAR il 15/07). Vedi vault NEXUS EA - Ricerca Esterna e
+    # Test A-B per Strategia.
+    atr = ind["atr"][i]
+    if not atr or i < 32:
         return 0
-    if e12 > e26 > e50 and not (e12p > e26p) and c[i]["close"] > e12:
+    window = c[i - 32:i - 2]
+    if not window:
+        return 0
+    piv_hi = max(x["high"] for x in window)
+    piv_lo = min(x["low"] for x in window)
+    c1 = c[i - 1]["close"]
+    dist = atr * 0.5
+    if abs(c1 - piv_lo) <= dist and c1 > piv_lo:
         return 1
-    if e12 < e26 < e50 and not (e12p < e26p) and c[i]["close"] < e12:
+    if abs(c1 - piv_hi) <= dist and c1 < piv_hi:
         return -1
     return 0
 

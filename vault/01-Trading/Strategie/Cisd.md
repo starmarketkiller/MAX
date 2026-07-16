@@ -36,9 +36,20 @@ il terzo membro del nucleo hedge con TURTLE_SOUP e BREAKOUT_ACC — vedi
 [[NEXUS EA - Hedge nel Tempo]].
 
 ## Stato
-🟢 PROMETTENTE — campione ancora troppo piccolo (18 trade in 6 anni, sotto la
-soglia dei ~15/anno) per dichiararla validata. Il segnale resta coerente ma
-non più "mai negativo" come sembrava dopo i primi 5 anni.
+🟢 PROMETTENTE — aggiornato coi 10 segmenti: **24 trade totali** (appena
+sopra la soglia minima di ~15, [[NEXUS EA - Principi]] #4 — ancora borderline,
+non "validata" in senso pieno). Il segnale resta coerente su ogni anno
+disponibile.
+
+## Verifica fedeltà Blocco 3 (16/07)
+Controllato `sig_cisd()` sul motore sito contro `NXS_Strat_CISD()` MQL5:
+**logica identica** (3 candele dello stesso colore + chiusura oltre il loro
+estremo) — a differenza di BJORGUM/SAR, qui il sito testa davvero la
+strategia reale. Nessun bug trovato, nessun cambio di codice — CISD resta
+l'unica delle 5 strategie audite nei Blocchi 1-3 senza alcun problema di
+fedeltà o di campione insufficiente stroncante. Priorità: continuare a
+raccogliere campione (sweep MT5 1-37 in corso), non serve altro intervento
+ora.
 
 ## Note
 
