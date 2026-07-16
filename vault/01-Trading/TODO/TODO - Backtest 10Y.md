@@ -16,6 +16,47 @@ sono già azionabili oggi con i 6 anni che abbiamo (vedi
 [[NEXUS EA - Hedge nel Tempo]] e
 [[NEXUS EA - Motore Sito - Audit e Confronto 10Y]]).
 
+## 🛠️ Infrastruttura di test già pronta nel codice, riattivata il 16/07
+
+Su richiesta esplicita dell'utente ("ogni giorno trovi qualcosa nel codice
+che può essere sfruttato, fai un'analisi di tutto il sistema") — letto per
+intero `NXS_Inputs.mqh` (tutti i parametri). Trovati **2 meccanismi già
+progettati per esattamente i problemi che stavamo per risolvere da zero**,
+ma mai esposti al Tester perché dichiarati come variabili interne
+(`bool`/`int`/`double`) invece che `input`. Corretti entrambi, default
+invariati:
+
+- [x] **`InpStrategySelector` (0-37) reso `input`** — commit `d9ac0dc`. Era
+  già pensato (commento v2.0.36) per uno sweep 1..37 via Optimization del
+  Tester, distribuito su più agent — invece di 37 EA separati (idea scartata
+  dopo aver trovato questo). Sostituisce il piano "un test isolato alla
+  volta" con un solo Optimization job.
+- [x] **`InpDataCollectionMode`/`InpDataCollectionLot`/`InpDataCollectionMaxOpen`
+  resi `input`** — commit `8df0208`. Risponde direttamente alla richiesta
+  "le strategie non si devono contendere gli slot/il margine": questo path
+  (già scritto in v2.1.1, mai collegato al Tester) apre OGNI segnale valido
+  di OGNI strategia, saltando `InpMaxConcurrent`, `InpMaxPerDirTF`, il gate
+  margine (`InpUseMarginGate`/`InpMinMarginLevelPct`), `InpMaxDirExposureLots`
+  e `InpMaxTotalLotMult` — resta solo la sicurezza dura (spread/margine/stop
+  via `NXS_PreFlight`) e un tetto di sicurezza puro (`InpDataCollectionMaxOpen`,
+  default 40, da alzare per lo sweep sulle 37). Usa lotto fisso piccolo
+  (non risk-based) — va bene per confrontare WR/PF/R per strategia (calcolo
+  indipendente dal lotto), **non** per validare il P&L assoluto: quello resta
+  compito del profilo v2.5.0 normale con `InpDataCollectionMode=false`.
+
+**Configurazione consigliata per il prossimo test** (sweep 1-37 senza
+contesa di slot/margine):
+`InpStrategySelector` = Optimization 1→37 step 1, `InpDataCollectionMode=true`,
+`InpDataCollectionMaxOpen` alzato (es. 200), tutti gli `InpStrat_*`/`InpUseStrat_*
+= true`. Nota: con `InpStrategySelector` attivo è comunque solo 1 strategia
+alla volta per passata — la contesa di slot rilevante qui è tra segnali
+BUY/SELL della stessa strategia nello stesso momento, non tra strategie
+diverse. `InpDataCollectionMode` diventa cruciale quando si testeranno
+gruppi/tutte le 37 insieme (nucleo hedge, profilo finale).
+
+- [ ] Non ancora eseguito nessun run reale con questa configurazione — il
+  prossimo passo è lanciare l'Optimization sul lato utente (MT5 Tester).
+
 ## 🔀 Sincronizzazione tra agenti (15/07) — risolto in parte
 
 Scoperto che un'altra sessione lavora direttamente su `main` (agente
