@@ -700,6 +700,7 @@ def sig_ifvg(c, ind, i):
 
 def sig_liq_sweep(c, ind, i):
     # sweep del max/min a 20 barre + chiusura di rientro (reversal)
+    # NOTA: superata da sig_liq_sweep_ext() il 16/07 - tenuta per riferimento.
     if i < 21:
         return 0
     ph, pl = _hh(c, 20, i - 1), _ll(c, 20, i - 1)
@@ -708,6 +709,29 @@ def sig_liq_sweep(c, ind, i):
         return -1
     if pl and cur["low"] < pl and cur["close"] > pl:
         return 1
+    return 0
+
+
+def sig_liq_sweep_ext(c, ind, i):
+    # 16/07 - bug trovato: era l'unica strategia rimasta sul generico
+    # "estremo di 20 barre qualsiasi" (sig_liq_sweep sopra) mentre
+    # TURTLE_SOUP/SH_BMS_RTO/JUDAS_SWING/LDN_REVERSAL/PO3/AMD_REVERSAL/
+    # SILVER_BULLET usano gia' NXS_DetectSweepExt() (PDH/PDL/Asia High-Low),
+    # i veri riferimenti di liquidita' ICT. Riusa _sweep_ext_at() (stessa
+    # funzione scritta per le 7 strategie a sessione). Test A/B: su 4h senza
+    # HTF, PF 0.86->1.32 e DD quasi dimezzato; su D1+HTF (config profilo)
+    # il campione cresce 14->141 trade restando positivo - risolve il
+    # problema di campione troppo piccolo di LIQ_SWEEP (26 trade reali in
+    # 8 anni). Non uniforme su ogni TF, vedi vault per il dettaglio.
+    sess = ind["sess"]
+    sw = _sweep_ext_at(c, sess, i)
+    if not sw or not sw["confirmed"]:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    if sw["dir"] == 1 and c1 > o1:
+        return 1
+    if sw["dir"] == -1 and c1 < o1:
+        return -1
     return 0
 
 
@@ -1176,7 +1200,7 @@ STRATEGIES = {
     "FVG_CONT": sig_fvg_cont,
     "FVG_MIT": sig_fvg_mit,
     "IFVG": sig_ifvg,
-    "LIQ_SWEEP": sig_liq_sweep,
+    "LIQ_SWEEP": sig_liq_sweep_ext,
     "TURTLE_SOUP": sig_turtle_soup,
     "STRUCT_REACT": sig_struct_react,
     "MALAYSIAN_SNR": sig_malaysian_snr,

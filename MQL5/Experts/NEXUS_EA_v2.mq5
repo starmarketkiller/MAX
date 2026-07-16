@@ -264,44 +264,12 @@ bool NXS_UpdateIndicators(){
 // NXS_UpdateIndicators() definition and before signal/router functions.
 #include <NEXUS_v1\NXS_ReusePerformancePack.mqh>
 
-SNXSSignal NXS_PickBestSignal(SNXSSweep &sw){
-   SNXSSignal best; ZeroMemory(best);
-   SNXSSignal arr[16];
-   arr[0]  = NXS_Strat_ADXRSI();
-   arr[1]  = NXS_Strat_Bollinger();
-   arr[2]  = NXS_Strat_MACD();
-   arr[3]  = NXS_Strat_SAR();
-   arr[4]  = NXS_Strat_TSI();
-   arr[5]  = NXS_Strat_Bjorgum();
-   arr[6]  = NXS_Strat_LiqSweep(sw);
-   arr[7]  = NXS_Strat_FVG();
-   arr[8]  = NXS_Strat_BreakoutAcc();
-   arr[9]  = NXS_Strat_LondonBO();
-   arr[10] = NXS_Strat_EMAPullback();
-   arr[11] = NXS_Strat_BBSqueeze();
-   arr[12] = NXS_Strat_Ichimoku();
-   arr[13] = NXS_Strat_RSIDiv();
-   arr[14] = NXS_Strat_OrderBlock();
-   arr[15] = NXS_Strat_StructureReaction();
-
-   NXS_ConfluenceReset();
-   for(int i = 0; i < 16; i++){
-      if(arr[i].dir == DIR_NONE) continue;
-      int d = (arr[i].dir == DIR_BUY) ? +1 : -1;
-      NXS_ConfluenceRegister(d);
-      arr[i].score = NXS_ApplyScoreCap(arr[i].stratName, arr[i].score);
-   }
-   for(int i = 0; i < 16; i++){
-      if(arr[i].dir == DIR_NONE) continue;
-      if(arr[i].score > best.score){ best = arr[i]; }
-   }
-   if(best.dir != DIR_NONE){
-      int wd = (best.dir == DIR_BUY) ? +1 : -1;
-      double bonus = (double)NXS_ConfluenceBonus(wd);
-      best.score = MathMin(100.0, best.score + bonus);
-   }
-   return best;
-}
+// NXS_PickBestSignal() rimossa il 16/07: funzione legacy mai chiamata da
+// nessun punto del codice (superata da NXS_CollectRaw/NXS_CollectAllSignals,
+// il vero router in uso). Teneva una firma vecchia di NXS_Strat_LiqSweep
+// (SNXSSweep invece di SNXSSweepExt) che avrebbe rotto la compilazione dopo
+// il fix del sweep su LIQ_SWEEP - rimossa invece di tenerla in sincrono per
+// una funzione morta.
 
 // ============================================================
 // PHASE 2 — Signal Router with fallback.
@@ -323,7 +291,7 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    out[n++] = NXS_Strat_SAR();
    out[n++] = NXS_Strat_TSI();
    out[n++] = NXS_Strat_Bjorgum();
-   out[n++] = NXS_Strat_LiqSweep(sw);
+   out[n++] = NXS_Strat_LiqSweep(swExt);
    out[n++] = NXS_Strat_FVG();
    out[n++] = NXS_Strat_BreakoutAcc();
    out[n++] = NXS_Strat_LondonBO();

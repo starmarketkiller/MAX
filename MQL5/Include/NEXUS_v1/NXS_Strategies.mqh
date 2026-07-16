@@ -227,7 +227,18 @@ SNXSSignal NXS_Strat_Bjorgum(){
 }
 
 //------------------------------------ H1 Liquidity Sweep / Manipulation Reversal
-SNXSSignal NXS_Strat_LiqSweep(SNXSSweep &sw){
+// 16/07: usava NXS_DetectSweep() generico (estremo di 20 barre qualsiasi) -
+// unica strategia rimasta su quella definizione debole, mentre TURTLE_SOUP/
+// SH_BMS_RTO/JUDAS_SWING/LDN_REVERSAL/PO3/AMD_REVERSAL/SILVER_BULLET usano
+// gia' NXS_DetectSweepExt() (PDH/PDL/Asia High-Low/equal H-L, i veri
+// riferimenti di liquidita' ICT). Passata a SNXSSweepExt. Test A/B sul sito
+// (config reale SL1.5/TP3.0): su 4h senza HTF, PF 0.86->1.32 e DD quasi
+// dimezzato (20.37%->8.71%); su D1+HTF (config profilo attuale) il campione
+// cresce 14->141 trade restando positivo (PF 3.30->1.27) - risolve il
+// problema di campione troppo piccolo mai risolto in 8 anni di dati reali
+// (26 trade totali). Non uniformemente migliore su ogni TF - vedi vault
+// Liq Sweep per il dettaglio completo. Non ancora validato su MT5.
+SNXSSignal NXS_Strat_LiqSweep(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LIQ_SWEEP; s.stratName = "LIQ_SWEEP";
    if(!InpStrat_LIQ_SWEEP || !NXS_SelectorAllows(7)) return s;
    if(!sw.confirmed) return s;

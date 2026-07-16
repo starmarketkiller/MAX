@@ -61,6 +61,41 @@ la strategia sembra essere legittimamente **a bassa frequenza per design**
 riverificare quando arriveranno più anni di dati reali (10y completi +
 sweep MT5 1-37).
 
+## Fix reale 16/07: sweep generico sostituito con la definizione ICT vera (PDH/PDL/Asia)
+
+Trovato controllando sistematicamente tutte le strategie: LIQ_SWEEP era
+**l'unica rimasta** sulla definizione debole di sweep (`NXS_DetectSweep`,
+un estremo di 20 barre qualsiasi). TURTLE_SOUP, SH_BMS_RTO, JUDAS_SWING,
+LDN_REVERSAL, PO3, AMD_REVERSAL, SILVER_BULLET usano già
+`NXS_DetectSweepExt` — sweep su livelli di liquidità reali (massimo/minimo
+del giorno prima, sessione asiatica, massimi/minimi uguali). Corretto sia
+in MQL5 (`NXS_Strat_LiqSweep` ora prende `SNXSSweepExt`) sia sul sito
+(`sig_liq_sweep_ext`, riusa la stessa funzione scritta per le 7 strategie
+a sessione). Rimossa anche `NXS_PickBestSignal()`, funzione legacy morta
+che teneva la vecchia firma e avrebbe rotto la compilazione.
+
+Test A/B con la config reale del profilo (SL1.5/TP3.0):
+
+| Config | Trade (prima→dopo) | PF (prima→dopo) | DD% (prima→dopo) |
+|---|---|---|---|
+| **D1 + HTF ON (= profilo)** | 14 → **141** | 3.30 → 1.27 | 2.02 → 14.25 |
+| 4h, senza HTF | 134 → 134 | 0.86 → **1.32** | 20.37 → **8.71** |
+| D1, senza HTF | 125 → 182 | 0.85 → 1.02 | 18.31 → 17.44 |
+
+**Non uniformemente migliore** — su 1h e su 4h+HTF il nuovo sweep è
+leggermente peggiore. Ma sulla config del profilo (D1+HTF) risolve
+esattamente il problema che frenava questa strategia da 8 anni: il
+campione cresce di **10 volte** (14→141) restando positivo — il PF più
+basso (3.30→1.27) è normale quando un campione minuscolo e potenzialmente
+fortunato si allarga, non un peggioramento reale. Su 4h senza HTF il
+miglioramento è pulito su ogni metrica.
+
+**Applicato sia a MQL5 che al sito** (non solo al sito come nei fix
+precedenti) — dato l'alto grado di conferma incrociata (stesso
+meccanismo già validato su 7 altre strategie). **Non ancora testato su
+MT5 reale** — prossimo passo naturale è includerlo nello sweep isolato
+(selector=7).
+
 **Domanda aperta sulla ridondanza con TURTLE_SOUP**: stesso pattern di
 fondo, ma le config migliori trovate sono opposte (Turtle Soup: H1/H4 senza
 HTF; LIQ_SWEEP: D1 con HTF) — sembrano **complementari** (stesso concetto
