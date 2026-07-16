@@ -725,8 +725,22 @@ void OnTick(){
             // modalita' (es. lo sweep 1-37 in corso).
             double dSpread = (double)SymbolInfoInteger(g_sym, SYMBOL_SPREAD);
             NXS_Stats_RecordExec(s.stratName, s.score, dSpread);
-            NXS_LogTradeCSV("OPEN", 0, s.stratName, refP, 0, dsl, dtp, s.score,
-                            s.reason + "|" + dctx);
+            // 17/07: ticket=0/lots=0 hardcoded impedivano di collegare la riga
+            // OPEN alla sua CLOSE nel CSV - cercato il ticket appena assegnato
+            // (stesso comment, appena aperto) invece di scartarlo. resolved_tf
+            // e' il TF che NXS_Protections.mqh usera' per scalare durata/vita
+            // di QUESTA posizione - visibile subito nel CSV da oggi in poi.
+            ulong dticket = 0;
+            for(int pp = PositionsTotal() - 1; pp >= 0; pp--){
+               ulong ptk = PositionGetTicket(pp);
+               if(ptk == 0) continue;
+               if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+               if(PositionGetString(POSITION_COMMENT) != dcm) continue;
+               dticket = ptk; break;
+            }
+            string dResolvedTF = EnumToString(NXS_Profile_TF(s.stratName));
+            NXS_LogTradeCSV("OPEN", dticket, s.stratName, refP, dlots, dsl, dtp, s.score,
+                            s.reason + "|" + dctx, 0, 0, dResolvedTF);
             PrintFormat("[NEXUS DATA] OPEN %s %s %s lots=%.2f score=%.1f",
                         NXS_DirName(s.dir), s.stratName, dctx, dlots, s.score);
          }
@@ -1027,8 +1041,15 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    // Spostata qui sotto, ora con i valori veri: "reason" e' sl/tp/stop_out/
    // expert (DEAL_REASON_EXPERT = chiusura forzata dall'EA, es. time-exit in
    // NXS_ManageBreakevenAndTrail) - permette di distinguere finalmente un
-   // vero SL/TP da una chiusura forzata guardando il CSV.
-   NXS_LogTradeCSV("CLOSE", ticket, strat, price, lots, 0, 0, pnl, reason);
+   // vero SL/TP da una chiusura forzata guardando il CSV. Aggiunti anche
+   // hold_sec/r_multiple/resolved_tf: con questi tre campi in piu' un bug
+   // come quello di oggi (cap di durata piatto per TF non riconosciuto) si
+   // vede a colpo d'occhio nel CSV, senza dover rileggere il codice a mano.
+   double closeHoldSec = (double)((long)closeTime - (long)openTime);
+   double closeR = _nxs_stats_dealR(trans.deal);
+   string closeResolvedTF = EnumToString(NXS_Profile_TF(strat));
+   NXS_LogTradeCSV("CLOSE", ticket, strat, price, lots, 0, 0, pnl, reason,
+                   closeHoldSec, closeR, closeResolvedTF);
    NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, 0.0, price, pnl, reason,
                             openTime, closeTime);
 

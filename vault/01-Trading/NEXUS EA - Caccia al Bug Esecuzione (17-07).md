@@ -119,6 +119,43 @@ molto (giorni per le D1, non più ore) — la verifica finale che il fix
 alla tabella TF ha davvero risolto, non solo che sembra corretto da
 codice.
 
+## Audit "il CSV ha tutto quello che serve?" (17/07, su richiesta dell'utente)
+
+Controllati tutti i CSV/log che l'EA produce (`NEXUS_trades.csv` via
+`NXS_LogTradeCSV`, `nexus_stats_<sym>_<tf>.csv` via `NXS_Stats_ExportCSV`,
+`nexus_shadow_*.csv` per lo Shadow Trading). Il file **stats** (40
+colonne per strategia: wins/losses/PF/avg_R/avg_holding/tutti i blocker)
+è già ricco — è quello che ha permesso di trovare il bug sopra
+guardando solo gli aggregati. Ma il file **per-trade**
+(`NEXUS_trades.csv`) aveva 3 buchi concreti, tutti corretti oggi:
+
+1. **Nessuna intestazione** — colonne posizionali, bisognava indovinare
+   l'ordine leggendo il codice.
+2. **Riga OPEN sempre con `ticket=0` e `lots=0`** — impossibile
+   collegare in modo affidabile una riga OPEN alla sua CLOSE (nessuna
+   chiave di join). Corretto: cercato il ticket vero appena assegnato
+   (stesso commento, appena aperto) invece di scartarlo.
+3. **Nessun campo diceva QUALE timeframe risolto veniva usato** per
+   scalare durata massima/vita minima di quella posizione. Se questo
+   campo (`resolved_tf`, aggiunto oggi) fosse già esistito, il bug della
+   tabella disallineata si sarebbe visto in **30 secondi** guardando una
+   riga del CSV — invece di un'ora passata a rileggere il codice a
+   ritroso da un pattern sospetto negli aggregati.
+
+Aggiunte 3 colonne nuove a ogni riga CLOSE: `hold_sec` (durata reale),
+`r_multiple` (P&L in multipli del rischio originale, stessa formula
+usata per le statistiche), `resolved_tf` (il TF che l'EA ha risolto per
+questa strategia — visibile subito se è quello giusto o no). **Da
+ricompilare insieme agli altri 2 fix di oggi** prima che serva a
+qualcosa sul prossimo sweep.
+
+**Cosa resta fuori, consapevolmente**: lo Shadow Trading
+(`nexus_shadow_*.csv`) traccia anche i segnali BLOCCATI con contesto
+ricco (blocker, regime, sessione, spread) ma è un sistema parallelo
+indipendente, non ancora integrato con l'analisi di oggi — prossimo
+candidato se emergono altri misteri legati ai gate piuttosto che
+all'esecuzione.
+
 ## Ricerca esterna: come i professionisti usano questi indicatori
 
 - **Parabolic SAR + ADX come filtro**: tecnica da manuale (raccomandata
