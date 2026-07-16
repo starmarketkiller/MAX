@@ -232,5 +232,113 @@ sopra) che con un problema di qualità del segnale.
    `avg_holding_sec`/`reason=expert`/PF prima-dopo su tutte le 4
    strategie di questo primo lotto, poi le altre 33.
 
+## Conferma round 2 (dati arrivati mentre si scriveva questa nota)
+
+Arrivato un secondo lotto di dati pre-fix (`pre-fix-16-07-round2/`, S01-S05
+ADX_RSI/BOLLINGER/MACD/SAR/TSI) — compilati DOPO il fix TP largo+breakeven
+di MACD/ADX_RSI ma PRIMA del fix del cap 12h sopra. Conferma diretta e
+indipendente della diagnosi: MACD e SAR sono **identici al centesimo** ai
+numeri pre-TP/BE-fix (PF0.13/0.18, stesso holding al secondo), ADX_RSI
+leggermente peggio. Il fix TP/BE, da solo, non ha spostato nulla su MT5
+reale — esattamente perché il cap a 12h tagliava i trade prima che
+potessero vedere il TP largo o il breakeven attivarsi. Rafforza molto la
+fiducia che il fix del cap fosse la priorità giusta.
+
+## Trovato anche (17/07, durante l'audit "come migliorare l'ecosistema"): le protezioni account-level sono spente in ogni test
+
+`NXS_CheckProtections()` (`NXS_Risk.mqh:69` — DD giornaliero
+`InpMaxDailyDDPct`, margine, trade/giorno, posizioni concorrenti,
+anti-revenge/anti-bleed) inizia con `if(MQLInfoInteger(MQL_TESTER)) return
+true;` — si disattiva da sola in OGNI test nello Strategy Tester, scelta
+deliberata v2.0.31 (altrimenti questi gate bloccavano quasi tutte le 37
+strategie). Spiega da solo l'87-88% di drawdown già documentato in
+[[NEXUS EA - Backtest 10Y Segmentato - Analisi]] — il gate giornaliero
+esiste già, semplicemente non gira mai nei test raccolti finora.
+
+**Non trasformato in fix**: proposto di riattivarlo o aggiungere un gate
+cumulato, l'utente ha corretto — un gate che taglia le perdite prima
+maschera il sintomo (DD alto) senza curare la causa (la strategia perde
+comunque). Tenuto solo come contesto per interpretare i DD estremi già
+visti, non come priorità. Dettaglio: [[TODO - Backtest 10Y]].
+
+## Audit "altri bug dello stesso tipo?" (17/07)
+
+Cercate altre tabelle strategia→qualcosa duplicate/disallineate come
+`NXS_StrategySourceTF()`. Trovate e controllate:
+- `NXS_StratFamily()` (`NXS_SignalRouter.mqh`) — copre tutte le 36
+  strategie connesse (+ fallback sicuro FAM_OTHER per ELLIOTT), usata per
+  i gate MTF/velocity. **Completa, nessun bug trovato.**
+- `_nxs_regime_veto()` (`NXS_SignalQuality.mqh`) — lista incompleta
+  (~14/36) ma con fallback sicuro (nessun veto se non in lista, non un
+  veto sbagliato) e gated dietro `InpInstRegimeVeto` (Institutional Core,
+  OFF di default) — non attiva nel percorso standard.
+- `NXS_ApplyScoreCap`/`NXS_StrategyMinScoreFloor`/`NXS_StrategyOnCooldown`
+  — casi singoli o dinamici, non tabelle duplicate.
+
+Nessun secondo bug critico dello stesso tipo trovato nel percorso
+standard attivo di default.
+
+## Fix reale: unificati i due sistemi di durata massima indipendenti
+
+Bug architetturale distinto (non lo stesso della tabella disallineata,
+ma imparentato — entrambi nell'area "quanto vive una posizione"):
+`NXS_ManageBreakevenAndTrail()` (gestione completa, BE+trailing+time-exit
+integrati) e `NXS_Prot_CheckMaxHold()` (gate separato, solo time-exit)
+potevano chiudere la STESSA posizione con limiti diversi — es. una D1
+calcolava 40 giorni nel primo, 30 giorni nel secondo, vinceva chi
+scattava prima, in modo imprevedibile e mai realmente prevedibile da chi
+tuning i due `input` separatamente. Segnalato dall'utente il 24/06,
+verificato ancora presente il 15/07.
+
+**Corretto** (non un nuovo limite, una correzione di un'incoerenza
+reale): `NXS_Prot_CheckMaxHold()` ora salta ogni posizione che ha un
+profilo reale (`NXS_Profile_TF(strat) != PERIOD_CURRENT`) — quelle
+restano gestite esclusivamente da `NXS_Management.mqh`, che è già
+integrato con breakeven/trailing nello stesso loop e quindi l'autorità
+più coerente. Il gate delle Protezioni resta attivo solo per le
+session/Elliott senza profilo — la sua funzione di rete di sicurezza
+originale, non duplicata altrove. Non ancora validato su MT5.
+
+## ⚠️ Scoperta più grande di tutte quelle di oggi: quasi tutto `NXS_Inputs.mqh` non è realmente configurabile
+
+Controllando ogni "input group" del file (la sintassi MQL5 che raggruppa
+gli input nel pannello Proprietà) contro le variabili dichiarate davvero
+`input` al loro interno: **su ~40 gruppi, la stragrande maggioranza ha
+zero o quasi zero variabili realmente `input`** — sono tutte plain
+(assegnabili solo nel codice sorgente, MAI da un file `.set`). Contate
+circa **370 variabili** su un totale di ~400 che sono "input group" solo
+di nome.
+
+Esempi concreti tra i più rilevanti per il lavoro di oggi: l'intero
+gruppo **RISK PROTECTIONS** (`InpUseMaxHold`, `InpProt_MaxHoldHours`,
+`InpUseESL`, `InpMaxLossPosPct`, `InpAutoCloseMin`...) e l'intero gruppo
+**BREAK EVEN & TRAIL** (`InpMaxHoldHours`, `InpBE_TriggerATR`,
+`InpTrailActivateATR`, `InpSL_HighVol_Mult`...) — cioè esattamente le due
+aree al centro dell'indagine di oggi sul cap di durata massima. Anche
+volendo, **non era possibile testare un valore diverso di
+`InpProt_MaxHoldHours` o `InpMaxHoldHours` via `.set` file** prima di
+questo fix — ogni riga `.set` per queste variabili era già silenziosamente
+inerte, MT5 la ignora senza avvisare.
+
+**Corretto oggi (27 variabili, i due gruppi più rilevanti)**: RISK
+PROTECTIONS (14) e BREAK EVEN & TRAIL (13) resi `input` veri. Verificato
+prima che nessuna delle 27 venga mai riassegnata a runtime nel codice
+(sicuro renderle `input` — altrimenti la compilazione si romperebbe,
+un `input` è di sola lettura dopo `OnInit`).
+
+**Non corretto (deliberatamente, per ora)**: restano circa 340 altre
+variabili non-`input` in altri ~35 gruppi (SIZING AGGRESSIVO, SCUDO
+RISK-OF-RUIN, HTF BIAS, VELOCITY GATE, NEWS FILTER, GATE MODE,
+INDICATORS, STRUCTURE ENGINE, MARKET CONTEXT LAYER, MTF/SPREAD/VOL
+REGIME, e molti altri). Non toccate in blocco perché: (1) alcune
+potrebbero essere pensate per restare interne per design (es. tuning
+fine che non ha senso esporre), (2) 400 input tutti insieme renderebbero
+il pannello Proprietà ingestibile, (3) senza poter compilare io stesso,
+convertirne 340 in un colpo solo senza verifica è un rischio inutile
+quando i due gruppi più urgenti sono già risolti. **Prossimo passo
+naturale**: se emerge il bisogno di testare un'altra area specifica via
+`.set` (come è successo oggi con Risk Protections), convertire quel
+gruppo mirato, verificando ogni volta l'assenza di riassegnazioni prima.
+
 ## Collegamenti
 [[MOC - Trading]] · [[Sar]] · [[Macd]] · [[Rsi Div]] · [[Adx Rsi]] · [[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[TODO - Backtest 10Y]]

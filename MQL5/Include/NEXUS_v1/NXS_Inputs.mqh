@@ -360,19 +360,26 @@ double   InpChainContinuationLotMult    = 0.6;    // lotto continuazione (60% de
 int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo un trade vincente
 
 // input group "=== BREAK EVEN & TRAIL ==="
-double   InpBE_TriggerATR    = 1.0;
-double   InpTrailActivateATR = 1.5;
-double   InpTrailDistanceATR = 1.0;
-double   InpTrailDistancePostBE = 0.7;   // tighter trail once BE reached
-int      InpMaxHoldHours     = 4;        // force-close trade older than this
-bool     InpUseAdaptiveSL    = true;     // dynamic SL by ATR regime
-double   InpSL_HighVol_Mult  = 2.0;      // SL multiplier when ATR > avg
-double   InpSL_LowVol_Mult   = 1.8;      // v2.0.14: 1.5→1.8 (SL piu' largo bassa vol)
-int      InpATR_AvgPeriod    = 20;       // ATR moving-avg window
-double   InpTP1_ATR          = 1.5;      // P1 partial-close at +1.5 ATR (was 1.0)
-double   InpTP2_ATR          = 3.0;      // P2 partial-close at +3.0 ATR (was 2.0)
-double   InpTP1_Pct          = 0.30;     // partial close 30% at TP1 (was 33%)
-double   InpTP2_Pct          = 0.50;     // partial close 50% of remainder at TP2
+// 17/07 - erano tutti plain (non `input`) nonostante il commento "input
+// group": ogni riga di un .set file per questo gruppo era gia' inerte,
+// stesso tipo di bug trovato oggi su altrove (i 37 toggle strategia,
+// InpStrategySelector, InpDataCollectionMode). Verificato: nessuna di
+// queste viene mai riassegnata a runtime nel codice, sicuro renderle
+// input. InpMaxHoldHours in particolare e' il fallback 4h coinvolto
+// nell'indagine di oggi sul cap di durata massima.
+input double   InpBE_TriggerATR    = 1.0;
+input double   InpTrailActivateATR = 1.5;
+input double   InpTrailDistanceATR = 1.0;
+input double   InpTrailDistancePostBE = 0.7;   // tighter trail once BE reached
+input int      InpMaxHoldHours     = 4;        // force-close trade older than this
+input bool     InpUseAdaptiveSL    = true;     // dynamic SL by ATR regime
+input double   InpSL_HighVol_Mult  = 2.0;      // SL multiplier when ATR > avg
+input double   InpSL_LowVol_Mult   = 1.8;      // v2.0.14: 1.5→1.8 (SL piu' largo bassa vol)
+input int      InpATR_AvgPeriod    = 20;       // ATR moving-avg window
+input double   InpTP1_ATR          = 1.5;      // P1 partial-close at +1.5 ATR (was 1.0)
+input double   InpTP2_ATR          = 3.0;      // P2 partial-close at +3.0 ATR (was 2.0)
+input double   InpTP1_Pct          = 0.30;     // partial close 30% at TP1 (was 33%)
+input double   InpTP2_Pct          = 0.50;     // partial close 50% of remainder at TP2
 
 // input group "=== ANTI-BLEED (P2) ==="
 bool     InpUseAntiBleed     = false;    // v2.4.0: OFF -> niente taglio lotto in DD, size = rischio profilo
@@ -401,27 +408,33 @@ int      InpPollIntervalSec  = 3;
 int      InpHistSyncIntervalSec = 1800;                                  // backfill periodico trade chiusi (sec) — safety net oltre OnInit
 
 // input group "=== LOGGING ==="
-bool     InpLogTrades        = true;
-bool     InpDebugLog         = false;
+input bool     InpLogTrades        = true;
+input bool     InpDebugLog         = false;
 
 //================================================================
 //  NEXUS v2.0 / Phase 3-5 additions (additive — defaults preserve v1 behaviour)
 //================================================================
 // input group "=== RISK PROTECTIONS (v2.0) ==="
-bool     InpUseESL           = true;   // Equity Stop Loss
-bool     InpESL_IsPercent    = true;
-double   InpESL_Value        = 5.0;    // 5% of balance
-bool     InpUseDPT           = false;  // OFF by default — user wants to decide WHEN to stop
-bool     InpDPT_IsPercent    = true;
-double   InpDPT_Value        = 3.0;    // 3% of dayStart balance (only if InpUseDPT=true)
-bool     InpUseMaxHold       = true;   // Max hold time per position
-int      InpProt_MaxHoldHours= 12;
-bool     InpUseMaxLossPos    = true;   // Max loss per position
-double   InpMaxLossPosPct    = 2.0;    // % of balance
-int      InpProt_MinLifeMin  = 15;     // v2.0.14: min minuti vita prima che NXS:RISK chiuda
-bool     InpUseAutoClose     = true;   // Flatten before market close
-int      InpAutoCloseMin     = 15;
-int      InpMarketCloseGMT   = 21;
+// 17/07 - stesso bug del gruppo BREAK EVEN & TRAIL sopra: tutti plain,
+// ogni riga di un .set file per questo gruppo era gia' inerte. Questo e'
+// il gruppo che contiene InpUseMaxHold/InpProt_MaxHoldHours, al centro
+// dell'indagine di oggi sul cap di durata massima da 12h - prima di
+// questo fix, anche volendo, non era possibile testare un valore diverso
+// via .set. Verificato: nessuna riassegnazione a runtime nel codice.
+input bool     InpUseESL           = true;   // Equity Stop Loss
+input bool     InpESL_IsPercent    = true;
+input double   InpESL_Value        = 5.0;    // 5% of balance
+input bool     InpUseDPT           = false;  // OFF by default — user wants to decide WHEN to stop
+input bool     InpDPT_IsPercent    = true;
+input double   InpDPT_Value        = 3.0;    // 3% of dayStart balance (only if InpUseDPT=true)
+input bool     InpUseMaxHold       = true;   // Max hold time per position
+input int      InpProt_MaxHoldHours= 12;
+input bool     InpUseMaxLossPos    = true;   // Max loss per position
+input double   InpMaxLossPosPct    = 2.0;    // % of balance
+input int      InpProt_MinLifeMin  = 15;     // v2.0.14: min minuti vita prima che NXS:RISK chiuda
+input bool     InpUseAutoClose     = true;   // Flatten before market close
+input int      InpAutoCloseMin     = 15;
+input int      InpMarketCloseGMT   = 21;
 
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;

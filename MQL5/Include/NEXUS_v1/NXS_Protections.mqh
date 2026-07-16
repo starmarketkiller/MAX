@@ -193,9 +193,25 @@ void NXS_Prot_CheckMaxHold(){
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      // 17/07 fix - "due sistemi di chiusura per durata massima indipendenti
+      // e non coordinati" (segnalato dall'utente il 24/06, ancora presente):
+      // questo gate (base InpProt_MaxHoldHours=12h, scala x NXS_TF_LifeFactor)
+      // e NXS_ManageBreakevenAndTrail() P1 (base InpMaxHoldHours=4h, scala
+      // x40 barre del TF) potevano chiudere la STESSA posizione con limiti
+      // diversi (es. D1: qui 30 giorni, li' 40 giorni) - vince chi scatta
+      // prima, in modo imprevedibile. Per le strategie con profilo reale,
+      // NXS_Management.mqh e' gia' l'autorita' (integrato con BE/trailing
+      // nello stesso loop) - questo gate ora si limita alle strategie SENZA
+      // profilo (session/Elliott), la sua vera rete di sicurezza originale.
+      string posComment = PositionGetString(POSITION_COMMENT);
+      string cpp[]; int ncpp = StringSplit(posComment, '|', cpp);
+      string posStrat = (ncpp >= 2) ? cpp[1] : "";
+      if(InpUseStrategyProfiles && StringLen(posStrat) > 0 &&
+         NXS_Profile_TF(posStrat) != PERIOD_CURRENT)
+         continue;   // ha un profilo reale -> gestita solo da NXS_Management.mqh
       datetime opened = (datetime)PositionGetInteger(POSITION_TIME);
       // v2.0.21 — MaxHold proporzionato al TF di origine del segnale.
-      long limit = (long)(baseLimit * NXS_TF_LifeFactor(NXS_PosSourceTF(PositionGetString(POSITION_COMMENT))));
+      long limit = (long)(baseLimit * NXS_TF_LifeFactor(NXS_PosSourceTF(posComment)));
       if(now - opened >= limit){
          NXS_Prot_ClosePositionWithReason(t, NXS_R_TIME);
          PrintFormat("[NEXUS PROT] MaxHold: closed ticket=%d (held %d s)", t, (int)(now - opened));
