@@ -16,10 +16,11 @@ Trend-following
 ## Trigger meccanico
 MACD > signal e sopra 0, prezzo sopra EMA200 (long, speculare per short).
 
-## Configurazione attuale (v2.5.0)
+## Configurazione attuale (v2.5.1, 17/07)
 - **Timeframe**: H4
-- **SL**: 2.0× ATR · **TP**: 3.0× ATR
+- **SL**: 2.0× ATR · **TP**: 8.0× ATR (era 3.0, vedi fix sotto)
 - **Filtro HTF**: True
+- **Breakeven**: 1.0× rischio (nuovo)
 - **Trailing**: stretto (incassa presto)
 - **Rischio per trade**: 1.5%
 - **Abilitata nell'EA**: Sì
@@ -70,8 +71,35 @@ il sospetto di un problema di esecuzione MT5 (non di trigger) si rafforza
 molto — vedi [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] per
 il quadro complessivo con FVG_CONT e RSI_DIV (stesso pattern, 3 casi ora).
 
+## Fix reale 17/07: TP largo + breakeven, dall'analisi MFE/MAE
+Richiesta dell'utente: se il trigger azzecca la direzione la maggior parte
+delle volte, il problema può essere la gestione (SL/TP), non il segnale.
+Verificato con un'analisi diretta: seguito ogni segnale 40 barre avanti
+misurando il massimo movimento a favore (MFE) indipendentemente da dove
+sta oggi SL/TP. Risultato: **70.5% dei segnali raggiunge almeno 1R a
+favore**, MFE medio **2.40R contro un TP attuale di soli 3.0** — il TP
+stretto tagliava sistematicamente un movimento che il trigger aveva già
+previsto giusto.
+
+Sweep di gestione (SL/TP/breakeven/trailing) sulla config reale
+(H4+HTF): **SL2.0/TP8.0/breakeven a 1R** batte nettamente la config
+attuale su ogni metrica:
+
+| Config | Trade | PF | DD% | Net |
+|---|---|---|---|---|
+| Attuale (TP3.0, no BE) | 111 | 1.48 | 6.23 | +2.879 |
+| **TP8.0 + BE1.0** | **72** | **2.05** | **5.85** | **+3.643** |
+
+Il trailing NON ha aiutato (0 in ogni config migliore trovata) — la leva
+è TP molto più largo + breakeven, non un trailing stretto. Applicato in
+`NXS_StrategyProfiles.mqh`. **Non ancora validato su MT5** — anzi un TP
+più largo espone il trade più a lungo agli stessi problemi di esecuzione
+già sospettati (vedi sotto), quindi la validazione qui è ancora più
+importante del solito. Dettaglio completo (tutte e 4 le strategie
+analizzate insieme): [[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]].
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[Fvg Cont]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]] · [[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]] · [[Fvg Cont]]

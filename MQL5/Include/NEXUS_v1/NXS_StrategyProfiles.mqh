@@ -20,7 +20,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
                      bool &htf, double &beR, double &trailATR){
    slMult = 0; tpMult = 0; htf = false; beR = 0; trailATR = 0;
    // --- Ricetta multi-TF ottimale per-strategia (XAUUSD, dati reali) ---
-   if(name == "ADX_RSI")           { slMult=1.0; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + TP4.0 -> PF1.48 (253 trade)
+   // 17/07: analisi MFE/MAE sul sito (segnale ADX_RSI seguito 40 barre a
+   // prescindere da dove sta oggi SL/TP) - 85.6% dei segnali raggiunge
+   // almeno 1R a favore, MFE medio 4.52R contro un TP di 4.0 - il trigger
+   // azzecca la direzione, il TP stretto tagliava il movimento. TP10.0 +
+   // breakeven a 1.5R (lascia correre ma protegge una volta partiti):
+   // PF1.48->1.97, net +7.191->+8.991 (10y sito). DD leggermente peggiore
+   // (11.54%->12.48%, campione -23%) - non ancora validato su MT5.
+   if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
    // sig_bjorgum() del sito era un EMA ribbon (bug, stesso tipo di quello
@@ -54,7 +61,13 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // no: rinforza il sospetto di un problema di esecuzione (spread/sizing/
    // interazione gate), non di trigger - vedi vault NEXUS EA - Ricerca
    // Esterna e Test A-B per Strategia.
-   if(name == "MACD")              { slMult=2.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
+   // 17/07: analisi MFE/MAE sul sito (segnale MACD seguito 40 barre a
+   // prescindere da dove sta oggi SL/TP) - 70.5% dei segnali raggiunge
+   // almeno 1R a favore, MFE medio 2.40R contro un TP di 3.0 - il trigger
+   // azzecca la direzione piu' spesso di quanto il TP stretto la catturi.
+   // TP8.0 + breakeven a 1R: PF1.48->2.05, DD6.23%->5.85%, net
+   // +2.879->+3.643 (10y sito, campione -35%). Non ancora validato su MT5.
+   if(name == "MACD")              { slMult=2.0; tpMult=8.0; htf=true ; beR=1.0; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "MALAYSIAN_SNR")     { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.96 R2.0
    if(name == "OB_MIT")            { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: SL1.5/TP4.0 + trail -> PF1.80
    if(name == "ORDER_BLOCK")       { slMult=1.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.55 R1.71

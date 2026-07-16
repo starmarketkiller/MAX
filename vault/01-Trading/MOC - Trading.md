@@ -33,6 +33,12 @@ profitto reale, non solo curve di backtest.
   nuovo mai testato su MT5 (fix dopo la raccolta dati), SAR/MACD/RSI_DIV no
   (trigger MQL5 invariato, solo il proxy sito era sbagliato) — nessuna
   conclusione sull'esito MT5 prima del test isolato.
+- **[[NEXUS EA - Gestione Uscita MFE-MAE (17-07)]]** — questi 4 indicatori
+  azzeccano la direzione 70-88% delle volte (analisi MFE/MAE diretta) ma lo
+  SL attuale li ferma comunque nel 60-77% dei casi: TP molto più largo +
+  breakeven (non trailing) applicato a MACD/ADX_RSI, PF/DD/net migliorano
+  nettamente sul sito. SAR/RSI_DIV: nessun miglioramento chiaro trovato,
+  config invariata.
 - **[[Sito Backtest Lab - Note Tecniche]]** — come funziona il backend Python/React,
   incluso il problema di deploy Render risolto il 12/07.
 - **[[MOC - Strategie]]** — indice delle 36 schede per-strategia (`Strategie/`),
