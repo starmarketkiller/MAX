@@ -7,12 +7,33 @@
 // ------ v2.0.21: timeframe di origine del segnale -> SL/TP e vita posizione ------
 // Mappa le strategie HTF/session-based al loro TF di origine. Le altre usano il
 // TF di esecuzione (ritorna 0 = PERIOD_CURRENT -> gestito come TF di esecuzione).
+//
+// 17/07 FIX - bug grave trovato indagando perche' SAR/MACD/RSI_DIV/ADX_RSI su
+// MT5 reale chiudono a una frazione minuscola di R con holding ~4-6h anche
+// sulle strategie D1: questa tabella era una copia VECCHIA e mai sincronizzata
+// di NXS_Profile_TF() (in NXS_StrategyProfiles.mqh) - copriva solo 10 strategie
+// su ~30, e per 4 di quelle 10 (CISD/LIQ_VOID/OTE_CONT/ICHIMOKU) il valore era
+// anche SBAGLIATO (diceva H1, il profilo vero e' H4/H4/H4/D1). Tutte le altre
+// (ADX_RSI, SAR, MACD, RSI_DIV, BOLLINGER, TSI, BJORGUM, LIQ_SWEEP, FVG_CONT,
+// ORDER_BLOCK, TURTLE_SOUP, IFVG, FVG_MIT, OB_MIT, SH_BMS_RTO, SMS_BMS_RTO,
+// AMD_REVERSAL, MALAYSIAN_SNR, DISP_REBAL, RANGE_FADE, BREAKOUT_ACC,
+// LONDON_BO, EMA_PULLBACK, BB_SQUEEZE, STRUCT_REACT...) cadevano nel default
+// InpTFEntry (M15) -> NXS_TF_LifeFactor() restituiva 1.0 invece di 20x/60x ->
+// NXS_Prot_CheckMaxHold() (NXS_Protections.mqh) applicava un cap PIATTO di
+// InpProt_MaxHoldHours (12h di default) su strategie D1/H4 pensate per durare
+// giorni, chiudendole forzatamente molto prima che SL o TP potessero essere
+// toccati - stesso bug per NXS_Prot_CheckMaxLossPerPos()/InpProt_MinLifeMin.
+// Ora NXS_Profile_TF() e' l'UNICA fonte di verita' (stessa mappa usata dal
+// trigger e dal SL/TP) - niente piu' tabella duplicata che puo' disallinearsi.
 ENUM_TIMEFRAMES NXS_StrategySourceTF(const string name){
+   ENUM_TIMEFRAMES ptf = NXS_Profile_TF(name);
+   if(ptf != PERIOD_CURRENT) return ptf;
+   // Solo le session/Elliott senza profilo (vedi NXS_StrategyProfiles.mqh)
+   // restano sulla vecchia mappa manuale.
    if(name == "WEEKLY_EXP") return PERIOD_D1;
    if(name == "PO3")        return PERIOD_H4;
    if(name == "JUDAS_SWING" || name == "LDN_REVERSAL" || name == "NY_REVERSAL" ||
-      name == "AMD_CONT"    || name == "CISD"         || name == "LIQ_VOID"    ||
-      name == "SILVER_BULLET" || name == "OTE_CONT"   || name == "ICHIMOKU")
+      name == "AMD_CONT"    || name == "SILVER_BULLET")
       return PERIOD_H1;
    return InpTFEntry;
 }

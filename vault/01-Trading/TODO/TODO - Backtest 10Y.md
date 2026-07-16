@@ -235,24 +235,26 @@ cooldown). Prossimo passo concreto: un test isolato MT5 con logging
 spread/sizing per-trade su queste 3 strategie insieme, prima di continuare
 a cercare altri bug di trigger nel sito.
 
-## 🚨 Aggiornamento 17/07: primi dati MT5 isolati arrivati, trovata un'anomalia forte
+## 🚨✅ Aggiornamento 17/07: bug CONFERMATO — cap di durata massima piatto a 12h su ~25 strategie
 
 Arrivati i primi 4 risultati reali dello sweep 1-37 (pre-fix,
 `results/reports/sweep37/pre-fix-16-07/`) — ADX_RSI/BOLLINGER/MACD/SAR.
-Tutte e 4, con TF e SL/TP completamente diversi, chiudono a una frazione
-minuscola di R (0.16-0.29R invece del TP pieno, -0.18/-0.43R invece
-dello SL pieno) e restano in posizione solo 3.5-6 ore in media,
-**anche le due strategie D1** (che dovrebbero durare giorni). Sospetto
-principale: il time-exit da 4 ore (`InpMaxHoldHours=4` in
-`NXS_Management.mqh`) che dovrebbe essere scavalcato dallo scaling
-per-profilo (40 barre del TF della strategia) ma il pattern nei dati
-reali non torna con quello scaling funzionante. Non confermato al 100%
-da codice statico — **verificare sul prossimo sweep** (ora che il bug
-del log CSV vuoto è corretto, `NEXUS_trades.csv` mostrerà finalmente
-`reason=expert` per le chiusure forzate dall'EA vs `sl`/`tp` per quelle
-vere). Se confermato, è il candidato più forte finora per spiegare la
-sotto-performance MT5 di QUALSIASI strategia con profilo D1/H4, non solo
-queste 4. Dettaglio completo: [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
+Tutte e 4 chiudevano a una frazione minuscola di R e restavano in
+posizione solo 3.5-6 ore in media, anche le D1 (dovrebbero durare
+giorni). Causa trovata e confermata riga per riga (non solo sospetto):
+`NXS_Protections.mqh::NXS_Prot_CheckMaxHold()` scala il suo cap
+(`InpProt_MaxHoldHours=12`) leggendo il TF della strategia da
+`NXS_StrategySourceTF()` — una tabella VECCHIA e mai sincronizzata con
+quella vera (`NXS_Profile_TF()`), che copriva solo 10 strategie su ~30.
+Tutte le altre (ADX_RSI/SAR/MACD/RSI_DIV/BOLLINGER e ~20 altre)
+cadevano nel default M15 → nessuno scaling → cap piatto di **12 ore**
+invece dei 30+ giorni (D1) o 10 giorni (H4) previsti. Stesso bug anche
+in `NXS_Prot_CheckMaxLossPerPos()` (min-life).
+
+**Corretto**: `NXS_StrategySourceTF()` ora usa `NXS_Profile_TF()` come
+unica fonte di verità. **Da ricompilare e riverificare sul prossimo
+sweep** (holding atteso: giorni non ore, `reason=expert` in forte calo).
+Dettaglio completo: [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]].
 
 ## Piano d'azione — come arrivare a "tutte profittevoli, hedge mantenuto" (15/07)
 

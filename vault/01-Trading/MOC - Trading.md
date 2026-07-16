@@ -39,14 +39,16 @@ profitto reale, non solo curve di backtest.
   breakeven (non trailing) applicato a MACD/ADX_RSI, PF/DD/net migliorano
   nettamente sul sito. SAR/RSI_DIV: nessun miglioramento chiaro trovato,
   config invariata.
-- **[[NEXUS EA - Caccia al Bug Esecuzione (17-07)]]** — primi dati MT5
-  isolati reali arrivati: anomalia forte (holding ~4h uniforme anche su
-  strategie D1, R medio a una frazione del TP/SL pieno) che punta a un
-  time-exit da 4 ore non scavalcato come dovrebbe dal profilo — non
-  confermato al 100%, ma bug reale trovato e corretto nel frattempo (log
-  CSV di chiusura sempre vuoto). Ricerca esterna (SAR+ADX, MACD+ADX,
-  RSI_DIV+conferma) testata sul sito: nessun filtro migliora, rafforza il
-  sospetto di esecuzione più che di trigger.
+- **[[NEXUS EA - Caccia al Bug Esecuzione (17-07)]]** — bug CONFERMATO
+  (non solo sospetto): `NXS_StrategySourceTF()` era una tabella
+  strategia→timeframe vecchia e disallineata da quella vera, che copriva
+  solo 10 strategie su ~30 — tutte le altre (ADX_RSI/SAR/MACD/RSI_DIV/
+  BOLLINGER e ~20 altre) finivano con un cap di durata massima piatto di
+  12 ore invece dei giorni previsti (`NXS_Protections.mqh`). Corretto.
+  Anche un secondo bug indipendente (log CSV di chiusura sempre vuoto).
+  Ricerca esterna (SAR+ADX, MACD+ADX, RSI_DIV+conferma) testata sul
+  sito: nessun filtro migliora — coerente con un problema di esecuzione,
+  non di trigger.
 - **[[Sito Backtest Lab - Note Tecniche]]** — come funziona il backend Python/React,
   incluso il problema di deploy Render risolto il 12/07.
 - **[[MOC - Strategie]]** — indice delle 36 schede per-strategia (`Strategie/`),
