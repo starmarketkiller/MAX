@@ -49,7 +49,11 @@ validati su MT5.
 
 ## ⏳ In attesa (config v2.5.0, dato ancora ambiguo o negativo minore) (3)
 - [[Fvg Cont]] — -9.3R su 6 anni, 2024 pessimo (-7.0) dopo 3 anni di ripresa
-- [[Bjorgum]] — -8.6R su 6 anni, 5/6 negativi — **smentisce l'ottimismo precedente** (PF 2.14 su soli 5 trade, vedi [[NEXUS EA - Principi]] #4): il campione più ampio ribalta il segnale
+- [[Bjorgum]] — -8.6R su 6 anni (96 trade), 5/6 negativi. 16/07: trovato e
+  corretto un bug di proxy sul sito (EMA ribbon invece del vero rimbalzo su
+  pivot, stesso tipo di bug di SAR) e applicata una nuova config al profilo
+  MQL5 (SL1.5/TP3.0, HTF OFF) — **non ancora validata su MT5**, in attesa
+  dello sweep isolato
 - [[Ema Pullback]] — -5.5R, volatile, nessun trend chiaro
 
 ## ❌ Non validate — negativa ma marginale (1)
