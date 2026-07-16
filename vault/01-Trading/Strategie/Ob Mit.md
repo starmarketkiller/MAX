@@ -34,12 +34,19 @@ Stessa logica di ORDER_BLOCK (mitigazione strutturale), floor di score 68.
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]].
 
 ## Stato
-⏳ PENDING — continua a fallire come già sotto v2.4.8 (PF 0.20 sui 3 anni), il
-cambio v2.5.0 non ha invertito la tendenza. Non tra le 3 priorità massime ma
-va rivista.
+⏳ PENDING — continua a fallire come già sotto v2.4.8. Confermato sui 10
+segmenti: **166 trade totali**, il campione più grande dopo FVG_CONT nel
+Blocco 2. Solo 2 anni buoni (2021 FORTE, 2024 OK), 4 anni CRITICA.
+
+## Nota Blocco 2 (16/07)
+Wrapper di `NXS_Strat_OrderBlock` (floor score 68) — stessa diagnosi di
+ORDER_BLOCK: pattern base senza edge stabile su campione ampio, non un
+problema di dati insufficienti. Candidato Tier 1 per il framework Setup
+Buy-Sell insieme a ORDER_BLOCK/FVG_CONT/FVG_MIT/IFVG (le "5 tipologie di
+Engulfing" di Secret of 4.11) — non ancora applicato al codice.
 
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[Order Block]] · [[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]]

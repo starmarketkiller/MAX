@@ -33,8 +33,13 @@ Ora esegue (era a 0 trade in v2.4.8): solo 3 trade in 5 anni (1W/2L), R totale
 -0.2. Dato ancora troppo scarso per dire alcunché.
 
 ## Stato
-🔬 Campione troppo piccolo — non più "nessun trade" ma il volume resta
-bassissimo (3 trade in 5 anni), da monitorare senza aspettative.
+🔬 Campione troppo piccolo — confermato sui 10 segmenti: **8 trade totali su
+10 anni** (1W/7L), 6 anni a zero. A differenza di IFVG non è mai a zero
+strutturale (il pattern accade), ma quando accade **perde quasi sempre**
+(1/8 vincenti) — dato ancora troppo scarso per dire se è rumore o un
+problema reale, ma il segno negativo è degno di nota per quando arriverà
+più campione. Nessun cambio di codice, priorità bassa rispetto al resto
+del Blocco 2 (IFVG/FVG_CONT hanno dati più solidi da cui partire).
 
 ## Note
 
