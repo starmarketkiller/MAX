@@ -55,6 +55,17 @@ sito: **peggiora tutto** (PF 0.83→0.66, trade 63→4, campione troppo piccolo
 per giudicare). Caveat: il test gira su D1 mentre TURTLE_SOUP su MT5 usa H1
 — il disallineamento di timeframe è più severo qui che per SAR/ADX_RSI, non
 è una prova che il concetto non serva su H1 reale. **Non applicato.**
+
+**Seguito, stesso giorno**: ripetuto con la config reale del profilo
+(SL1.0/TP4.5×ATR) su tutti i timeframe che il sito può scaricare
+(1d/4h/1h/30m/15m). Pattern a "U rovesciata": **H4 e H1 sono gli unici
+positivi** (PF 1.25-1.39, DD 6-7%) — coerente col fatto che H1 è già il TF
+scelto nel profilo reale — mentre D1 e M15 sono negativi. Il filtro CHoCH
+resta negativo su ogni TF (campione crolla a 1-5 trade ovunque). Col
+filtro HTF acceso (come nel profilo reale) il campione crolla sotto soglia
+di giudizio dappertutto — lo storico intraday di Yahoo (2 anni) è troppo
+corto per validarlo, a differenza dei 6-10 anni di MT5. **Nessun cambio
+di codice**: è una non-smentita del TF attuale (H1), non una scoperta.
 Dettaglio: [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]].
 
 ## Note

@@ -143,22 +143,58 @@ migliorava le cose): qui il "pilastro mancante" della fonte esterna non si
 traduce in un miglioramento misurabile con questa definizione di CHoCH.
 
 ⚠️ **Caveat importante, scoperto durante il test**: TURTLE_SOUP su MT5 gira
-su **H1** (`NXS_StrategyProfiles.mqh:88`), ma questo test — come tutti gli
-altri di questa nota — gira sul motore sito che usa **D1**. Per Turtle Soup
+su **H1** (`NXS_StrategyProfiles.mqh:88`), ma il test sopra — come tutti gli
+altri di questa nota — girava sul motore sito **solo su D1**. Per Turtle Soup
 il disallineamento di timeframe è più severo che per SAR/ADX_RSI, perché uno
-stop-hunt/reversal è per natura un pattern a breve termine — su D1 la
-finestra di "sweep + rigetto" cattura un fenomeno strutturalmente diverso da
-H1. **Questo risultato negativo non è una prova che il concetto CHoCH non
-serva su H1 reale** — è una prova che il test *su D1* non lo conferma. Il
-filtro sessione (Londra/NY, l'altro pilastro trovato in ricerca) è
-**impossibile da testare qui**: D1 non ha risoluzione intraday, quindi il
-motore sito non può nemmeno porre la domanda.
+stop-hunt/reversal è per natura un pattern a breve termine.
 
-**Raccomandazione**: non applicare il filtro CHoCH così com'è. Se si vuole
-verificare i pilastri mancanti (struttura + sessione) per davvero, serve un
-test isolato **su MT5 H1** (`InpStrategySelector`), non altro tuning sul
-motore sito — qui abbiamo raggiunto il limite di cosa il sito può dirci per
-questa strategia specifica.
+### Seguito 15/07: sweep multi-TF sul sito (il sito supporta 1h/4h/30m/15m via Yahoo)
+
+Il motore sito **può** girare su timeframe intraday (`_fetch_real`, mappa
+`_YF_INTERVAL`: 1h/4h fino a 2 anni di storico, 30m/15m fino a 60 giorni) —
+non serve più limitarsi a D1. **Correzione**: il primo test sopra (63 trade,
+PF0.83) usava per errore i parametri SL/TP di default del motore
+(1.5×/3.0×ATR), non la config reale del profilo TURTLE_SOUP
+(`NXS_StrategyProfiles.mqh:50`: **SL1.0×/TP4.5×ATR, filtro HTF acceso**).
+Rifatto con la config corretta, su tutti i timeframe disponibili:
+
+**Senza filtro HTF (campione più utilizzabile):**
+
+| TF | Trade | PF | WR% | expR | DD% | Net |
+|---|---|---|---|---|---|---|
+| 1d | 64 | 0.68 | 14.1 | -0.258 | 21.04 | -1.613 |
+| **4h** | **36** | **1.39** | 25.0 | 0.309 | 6.85 | **+1.073** |
+| **1h** (= TF reale MT5) | **47** | **1.25** | 25.5 | 0.211 | 5.85 | **+927** |
+| 30m | 36 | 1.23 | 25.0 | 0.209 | 10.47 | +690 |
+| 15m | 52 | 0.75 | 17.3 | -0.179 | 17.62 | -969 |
+
+Pattern a "U rovesciata": i timeframe estremi (D1 troppo lento, M15 troppo
+rumoroso) sono negativi, quelli intermedi (**H4/H1/M30**) sono gli unici
+positivi — e **H1 è esattamente il timeframe che il profilo MT5 già usa**,
+un segnale di coerenza incoraggiante anche se non è una conferma diretta
+(dati/esecuzione restano diversi da MT5, [[NEXUS EA - Principi]] #5).
+
+**Con filtro HTF acceso (config esatta del profilo reale)**: il campione
+crolla ovunque a 6-13 trade su tutti i timeframe — sotto la soglia minima
+per giudicare ([[NEXUS EA - Principi]] #4). Il sito **non riesce a validare
+né smentire** la scelta "HTF filter ON" del profilo reale: non è un
+problema del filtro, è che lo storico intraday di Yahoo (2 anni per H1/H4,
+60 giorni per M30/M15) è troppo corto per accumulare abbastanza sweep+HTF
+allineati, mentre MT5 ha 6-10 anni di storico broker.
+
+**CHoCH ripetuto su ogni TF**: stesso esito del test D1 — il filtro
+struttura riduce il campione a 1-5 trade ovunque (con o senza HTF), troppo
+poco per giudicare. Non è quindi un problema specifico di D1: **con questa
+definizione di CHoCH, il filtro è troppo restrittivo su qualunque
+timeframe** testabile sul sito.
+
+**Raccomandazione aggiornata**: non applicare né il filtro CHoCH né trarre
+conclusioni definitive sul filtro HTF da questi dati — il sito ha comunque
+un limite strutturale di storico intraday che MT5 non ha. Il segnale più
+utile qui è "H4/H1 sembrano i TF giusti, coerente con la scelta già fatta
+nel profilo" — non una scoperta, ma una non-smentita. Il test che conta
+resta **isolato su MT5 H1** (`InpStrategySelector`), con 6-10 anni di dati
+veri, non i 2 anni di Yahoo.
 
 ## Ricerca (non ancora testata): MACD, RSI_DIV — cosa dicono le fonti esterne
 
