@@ -1534,11 +1534,21 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  max_hold=40, bars=800, strategies=None,
                  htf_filter=False, trend_period=50,
                  breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
-                 use_dynamic_tp=False, dynamic_tp_pick="nearest"):
+                 use_dynamic_tp=False, dynamic_tp_pick="nearest",
+                 confirm_bars=0, loss_cooldown_bars=0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
     # (trailing a N x ATR), cooldown_bars (barre minime tra un trade e il successivo).
+    # 17/07 - due leve nuove richieste dall'utente (ipotesi "serve conferma
+    # prima di entrare" / "dopo uno stop protetto da BE si puo' rientrare
+    # subito, dopo una perdita vera no"):
+    # confirm_bars: il segnale deve restare valido per N barre consecutive
+    # PRIMA di quella corrente (stessa direzione) prima di essere preso -
+    # filtra i cross/condizioni che durano un solo tick e si invertono subito.
+    # loss_cooldown_bars: cooldown applicato SOLO dopo un'uscita in perdita
+    # vera (pnl<0) - un'uscita a breakeven/trailing (pnl>=0) non blocca il
+    # rientro immediato, indipendente dal cooldown_bars generico sopra.
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
@@ -1557,6 +1567,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     trades = []
     pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat, risk_dist}
     last_close_i = -10 ** 9   # per il cooldown
+    last_loss_i = -10 ** 9    # per il loss_cooldown_bars (solo perdite vere)
 
     for i in range(2, len(candles)):
         px = candles[i]["close"]
@@ -1612,9 +1623,14 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                               "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
                 pos = None
                 last_close_i = i
+                if pnl < 0:
+                    last_loss_i = i
             continue
         # --- COOLDOWN: barre minime tra un trade e il successivo ---
         if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
+            continue
+        # --- LOSS COOLDOWN: barre minime SOLO dopo una perdita vera (pnl<0) ---
+        if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
             continue
         # nuovo segnale
         atr = ind["atr"][i]
@@ -1623,9 +1639,20 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         sig, who = 0, None
         for s in strat_list:
             v = STRATEGIES[s](candles, ind, i)
-            if v != 0:
-                sig, who = v, s
-                break
+            if v == 0:
+                continue
+            # --- CONFIRM: il segnale deve reggere per N barre precedenti
+            # consecutive nella stessa direzione prima di essere preso ---
+            if confirm_bars > 0:
+                ok = True
+                for k in range(1, confirm_bars + 1):
+                    if i - k < 0 or STRATEGIES[s](candles, ind, i - k) != v:
+                        ok = False
+                        break
+                if not ok:
+                    continue
+            sig, who = v, s
+            break
         # --- HTF FILTER: prendi solo nel senso del trend (close vs SMA) ---
         if sig != 0 and htf_filter:
             sma = _sma(i, int(trend_period))

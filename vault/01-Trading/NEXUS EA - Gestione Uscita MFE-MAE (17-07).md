@@ -72,6 +72,57 @@ RSI_DIV) — non abbastanza per giustificare un cambio di config data
 [[NEXUS EA - Principi]] #4 (campione/beneficio minimo non è una
 scoperta). Restano con la config attuale.
 
+## Test 2 (17/07 sera): "serve conferma prima di entrare" + "rientro dopo stop protetto"
+
+Due idee dell'utente, entrambe tradotte in leve nuove nel motore
+(riusabili su qualunque delle 36 strategie, non solo queste 4):
+
+- **`confirm_bars`**: il segnale deve restare valido per N barre
+  consecutive PRIMA di quella corrente (stessa direzione) prima di
+  essere preso — filtra un cross che dura un solo tick e si inverte
+  subito.
+- **`loss_cooldown_bars`**: cooldown applicato SOLO dopo un'uscita in
+  **perdita vera** (pnl<0) — un'uscita a breakeven/trailing (pnl≥0) non
+  blocca il rientro immediato. Approssima l'idea "se lo stop era solo
+  protettivo e il prezzo ritraccia di nuovo nella direzione giusta,
+  vogliamo poter rientrare subito; se era una vera perdita, aspettiamo".
+
+Sweep (confirm_bars 0-3 × loss_cooldown_bars 0/3/5/10) sopra la config
+già migliorata (TP largo+BE dove applicato):
+
+| Strategia | Baseline (TP/BE già applicato) | Migliore trovata | Nota |
+|---|---|---|---|
+| MACD | PF2.05 / DD5.85% / +3.643 (72 trade) | confirm=0, loss_cd=10 → PF2.18 / DD6.04% / **+3.797** (69 trade) | miglioramento piccolo ma pulito (+4% net) |
+| ADX_RSI | PF1.97 / DD12.48% / +8.991 (129 trade) | confirm=0, loss_cd=10 → PF2.17 / **DD10.47%** / +7.078 (94 trade) | PF/DD migliorano, **net peggiora** (-21%, 27% meno trade) — trade-off non pulito |
+| SAR | PF2.41 / DD7.15% / +5.734 | nessuna combinazione batte la baseline | confirm/loss-cooldown non aiutano qui |
+| RSI_DIV | PF1.34 / DD11.91% / +2.275 | confirm=2, loss_cd=10 → PF2.23 / DD2.97% / +1.270 | **campione crolla a 15 trade** — esattamente al limite minimo, non affidabile ([[NEXUS EA - Principi]] #4) |
+
+**Risultato onesto, non quello sperato**: `confirm_bars` (l'ipotesi
+"serve una conferma prima di eseguire") **non ha aiutato in nessun caso
+con un campione decente** — in ogni caso tranne RSI_DIV la miglior
+combo trovata ha `confirm=0`. L'unica leva con un effetto reale è
+`loss_cooldown_bars=10` (evitare rientri rapidi SOLO dopo una perdita
+vera), ma il beneficio è piccolo per MACD e ambiguo per ADX_RSI (PF/DD
+meglio, meno soldi totali). **Nessuna delle due modifiche applicata al
+profilo per ora** — nessuna supera la soglia di un miglioramento chiaro
+su tutte le metriche insieme, a differenza del fix TP/BE sopra.
+
+**Nota di fedeltà importante**: questo `confirm_bars`/`loss_cooldown_bars`
+è un'approssimazione grezza dell'idea originale dell'utente ("dopo un
+BE/trailing, se il prezzo ritraccia di nuovo nella zona del MACD,
+rientriamo a favore di quella direzione") — qui si è testato solo *se
+permettere* un rientro rapido dopo un'uscita protetta, non *se il prezzo
+è davvero tornato a ritestare la zona del segnale* (es. un pullback
+sulla EMA/signal-line) prima di rientrare. Costruire quella versione più
+precisa (un vero motore di re-entry basato su retest, non solo
+un'assenza di cooldown) è il prossimo passo naturale se si vuole
+approfondire questa pista, non ancora fatto.
+
+`confirm_bars`/`loss_cooldown_bars` restano comunque disponibili come
+leve generiche in `run_backtest()` per testare altre strategie deboli in
+futuro (mandato esplicito dell'utente: provare ogni combinazione di
+gestione possibile, non solo su queste 4).
+
 ## Cosa NON risponde ancora
 
 Questo è di nuovo il motore **sito** (dati Yahoo, nessuna simulazione di
