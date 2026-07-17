@@ -43,7 +43,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] Fix implementato: **IFVG/FVG_MIT/OB_MIT** — consolidati sul motore NXR come unica fonte (eliminata l'ambiguità fra due implementazioni concorrenti), corretto anche il conflation OB_MIT/breaker
 - [ ] **WEEKLY_EXP** — da ricostruire come macchina a stati (2 modelli alternativi proposti dall'audit, va scelto uno)
 - [ ] **NY_REVERSAL** — sessione di Londra da ricostruire con timezone/DST reali (non offset GMT fisso)
-- [ ] **SH_BMS_RTO** — da trasformare in macchina a stati sweep→MSS→origine→ritorno→entry
+- [x] **SH_BMS_RTO** — trasformata in macchina a stati sweep→MSS→origine→ritorno→entry (17/07 notte)
 - [ ] **RANGE_FADE** — qualificazione del range da rendere persistente su N barre (non solo l'ultima lettura ADX)
 - [ ] **OTE_CONT** — ancorare Fibonacci e struttura di conferma allo stesso leg/BOS
 - [ ] **ELLIOTT** — decisione presa (rinominare `FIVE_SWING_IMPULSE`, dichiarata pattern proprietario), esecuzione rimandata a sweep concluso (tocca il nome in molti file, rischio di interferire col matching identità di NEXUS Bot)

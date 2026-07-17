@@ -17,6 +17,26 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 4): SH_BMS_RTO riscritta come vera macchina a stati
+
+Primo dei 5 redesign più corposi dall'audit canonico (priorità più alta secondo l'audit fra le macchine a stati). `NXS_Strat_SH_BMS_RTO` (`NXS_Strategies_SMC.mqh`) prima richiedeva sweep + CHOCH + FVG (barre 4/2) + prezzo già dentro la zona **tutto sullo stesso tick** — collassava una sequenza che nella realtà è causale (sweep → displacement/MSS entro qualche barra → un ritorno SUCCESSIVO alla zona d'origine), senza dimostrare che gli eventi fossero davvero collegati.
+
+**Riscritta con una vera sequenza a stati**, per lato (BUY/SELL, stato separato):
+```
+IDLE → SWEPT → (entro InpSHBMS_MaxMSSBars barre, MSS confermato + origine registrata) → WAITING_RETURN → primo ritorno nella zona = entry
+```
+- `IDLE→SWEPT`: sweep confermato (`sw.confirmed && sw.dir`), registra livello sweepato e uno swing di riferimento (15 barre precedenti) che l'MSS dovrà rompere.
+- `SWEPT→WAITING_RETURN`: entro `InpSHBMS_MaxMSSBars` (20) barre, una chiusura rompe lo swing di riferimento con un corpo displacement ≥ `InpSHBMS_DispBodyATR` (0.8×ATR) → MSS confermato. Origine = ultima candela di colore opposto prima del displacement (scan fino a 6 barre indietro).
+- `WAITING_RETURN→entry`: primo tocco della zona d'origine (prezzo live, come già fa LIQ_VOID) entro `InpSHBMS_MaxWaitBars` (15) barre dall'MSS. One-shot: lo stato si resetta subito dopo l'entry.
+- Invalidazione a ogni stadio: chiusura oltre il livello sweepato nel verso sbagliato, o timeout.
+- Vincolo causale `sweepTime < mssTime < retestTime` garantito per costruzione (si avanza di stato solo su una barra chiusa successiva, mai sullo stesso tick).
+
+Nessuna modifica alla firma della funzione (`NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw)`), nessun cambiamento al chiamante in `NEXUS_EA_v2.mq5`. Non ancora validato su MT5 reale.
+
+**Prossimi redesign in coda**: WEEKLY_EXP, NY_REVERSAL, RANGE_FADE, OTE_CONT.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 3): primi 2 fix dall'audit esterno canonico (LIQ_VOID + consolidamento NXR)
 
 Arrivato l'audit esterno/canonico dell'agente logico (`NEXUS_EA_Audit_Canonico_Concetti_e_Specifiche_Fix.md`, continuazione dell'audit Livello A) — confronto fra definizione ICT/SMC reale e codice per 10 strategie, con specifiche di fix precise. Qualità alta, fonti citate, nessuna invenzione riscontrata nei punti verificati.
