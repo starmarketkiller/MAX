@@ -141,35 +141,82 @@ nascoste):
 - Nessun trailing stop: tutte e 4 le strategie hanno `trailATR=0` nel profilo
   MQL5 attuale, confermato inefficace dal test MFE/MAE del 17/07.
 
-## Risultati dei test manuali (da compilare)
+## Risultati dei test manuali
 
-Spazio per incollare i risultati dello Strategy Tester dopo i test manuali —
-un blocco per strategia × configurazione (baseline / variante), stesso range
-di date per tutte, per un confronto pulito.
+Test eseguiti con lo Strategy Tester nativo di TradingView su
+**OANDA:XAUUSD**, `calc_on_every_tick=false`, capitale iniziale 10.000 USD.
 
-### SAR
-| Config | Periodo | Trade | PF | Win Rate | Max DD % | Net |
-|---|---|---|---|---|---|---|
-| Baseline | | | | | | |
-| Variante BE | | | | | | |
+> **Sintesi**: dei 4 motori indipendenti testati, **SAR/MACD/ADX_RSI
+> confermano risultati profittevoli** e in linea con la direzione dei fix
+> MFE/MAE del 17/07 — le varianti TP-largo(+breakeven) migliorano quasi
+> sempre PF e/o drawdown rispetto alla baseline. **RSI_DIV mostra invece
+> risultati deboli/in perdita** nel periodo campione disponibile su
+> TradingView e merita ulteriore osservazione prima di trarre conclusioni
+> (vedi nota sul campione dati sotto).
 
-### MACD
-| Config | Periodo | Trade | PF | Win Rate | Max DD % | Net |
-|---|---|---|---|---|---|---|
-| Baseline | | | | | | |
-| Variante TP+BE | | | | | | |
+### SAR (H4) — range dati Jan 2, 2023 – Jul 17, 2026 (~3.5 anni)
+| Config | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|
+| Baseline (SL1.5×/TP4.0× ATR, no BE) | 406 | 1,276 | 37,44% (152/406) | 973,13 USD (7,52%) | +2.127,08 USD (+21,27%) |
+| Variante TP-largo + BE 1.5×R (SL1.5×/TP4.0× ATR) | 404 | 1,30 | 34,65% (140/404) | 1.022,80 USD (7,79%) | +2.185,53 USD (+21,86%) |
 
-### ADX_RSI
-| Config | Periodo | Trade | PF | Win Rate | Max DD % | Net |
-|---|---|---|---|---|---|---|
-| Baseline | | | | | | |
-| Variante TP+BE | | | | | | |
+Miglioramento marginale, variante non conclusivamente superiore alla
+baseline (coerente con quanto già annotato nello script: il test MFE/MAE
+del 17/07 aveva già segnalato questo caso come ambiguo).
 
-### RSI_DIV
-| Config | Periodo | Trade | PF | Win Rate | Max DD % | Net |
-|---|---|---|---|---|---|---|
-| Baseline | | | | | | |
-| Variante TP-largo | | | | | | |
+### MACD (H4) — stesso range dati
+| Config | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|
+| Baseline (SL2.0×/TP3.0× ATR, no BE) | 292 | 1,321 | 48,29% (141/292) | 909,56 USD (7,61%) | +1.895,02 USD (+18,95%) |
+| Variante TP-largo + BE 1.0×R (SL2.0×/TP8.0× ATR) | 192 | 1,459 | 28,65% (55/192) | 778,88 USD (6,44%) | +1.955,65 USD (+19,56%) |
+
+La variante riduce nettamente il numero di trade (292→192) ma migliora PF e
+riduce il drawdown — coerente con il fix reale applicato in produzione il
+17/07 lato sito.
+
+### ADX_RSI (D1) — range filtrato da `startDate` dello script (2019-01-01)
+| Config | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|
+| Baseline (SL1.0×/TP4.0× ATR, no BE) | 217 | 1,326 | 29,49% (64/217) | 534,53 USD (5,25%) | +1.529,77 USD (+15,30%) |
+| Variante TP-largo + BE 1.5×R (SL1.0×/TP10.0× ATR) | 199 | 1,672 | 24,62% (49/199) | 483,12 USD (4,65%) | +1.950,87 USD (+19,51%) |
+
+Miglioramento netto su tutti i fronti (PF, DD assoluto e %, PnL) — coerente
+col fix reale applicato in produzione il 17/07 lato sito.
+
+> Nota tecnica: il date-picker del chart D1 mostrava un valore anomalo
+> ("Jan 6 1833") durante il test, dovuto a un bug cosmetico di rendering di
+> TradingView con zoom molto ampio su D1 (probabile overlay di un secondo
+> simbolo storico) — non un problema del filtro date dello script. I trade
+> restano correttamente filtrati dagli input `startDate`/`endDate`, quindi i
+> numeri sopra sono validi.
+
+### RSI_DIV (H1) — range dati Jan 2, 2025 – Jul 17, 2026 (~1.5 anni)
+| Config | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|
+| Baseline (SL1.0×/TP4.5× ATR) | 338 | 0,931 | 20,41% (69/338) | 1.290,93 USD (12,67%) | −339,20 USD (−3,39%) |
+| Variante TP-largo (SL1.0×/TP10.0× ATR) | 341 | 0,989 | 20,82% (71/341) | 789,53 USD (7,83%) | −52,12 USD (−0,52%) |
+
+Entrambe le configurazioni sono in perdita/breakeven sul campione
+disponibile, a differenza del quadro più favorevole probabilmente osservato
+su dataset MT5 più lunghi. **Non trarre conclusioni definitive**: campione
+troppo corto e specifico per questo periodo di mercato.
+
+> **Limite del dato, non della strategia**: TradingView (piano Basic) mette
+> a disposizione solo ~1,5 anni di storico intraday H1 per OANDA:XAUUSD,
+> molto più corto dei ~3,5 anni usati per SAR/MACD (H4) — verificato che non
+> è un artefatto di zoom (tentato zoom/pan del chart per forzare più
+> storico, senza risultato: è il limite reale dei dati disponibili sul
+> piano). I risultati RSI_DIV qui sopra vanno letti in questo contesto.
 
 ### Osservazioni
-_(da compilare — es. concordanza/divergenza con MT5 e col motore sito, sorprese, anomalie)_
+- SAR, MACD e ADX_RSI confermano un edge positivo su un terzo motore/dataset
+  indipendente da MT5 e dal sito, con le varianti TP-largo(+BE) che
+  migliorano PF e/o drawdown in linea con l'analisi MFE/MAE del 17/07.
+- RSI_DIV è l'unica delle 4 in perdita/breakeven su questo campione, ma il
+  campione (~1,5 anni, limite del piano TradingView) è troppo corto per
+  giudicarla — da rivalidare quando sarà disponibile più storico o un feed
+  con maggiore profondità intraday.
+- Prossimo passo naturale: confrontare questi numeri con l'equivalente
+  finestra temporale sul motore sito e su MT5 per vedere se le divergenze
+  già note tra motori (vedi `NEXUS EA - Principi.md` #5) si ripresentano
+  anche qui.
