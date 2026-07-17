@@ -141,33 +141,121 @@ SNXSSignal NXS_Strat_OB_Mitigation_Structural(){
 
 // === 5. SH + BMS + RTO ===============================================
 // Stop hunt (sweep) → Break market structure → Return to OB/FVG
-SNXSSignal NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw){
+// 17/07 notte - riscritta come macchina a stati, da audit esterno canonico
+// (fonti ICT/SMC). La versione precedente richiedeva sweep + CHOCH + FVG +
+// prezzo gia' dentro la zona TUTTO sullo stesso tick - "collassava" una
+// sequenza che nella realta' e' causale e temporale (sweep, POI displacement/
+// MSS entro qualche barra, POI un ritorno SUCCESSIVO alla zona d'origine),
+// senza dimostrare che gli eventi fossero davvero collegati fra loro.
+// Sequenza reale: IDLE -> SWEPT -> (entro InpSHBMS_MaxMSSBars barre, MSS
+// confermato + origine registrata) -> WAITING_RETURN -> primo ritorno nella
+// zona = entry. Vincolo causale: sweepTime < mssTime < retestTime, garantito
+// per costruzione (si avanza di stato solo su una barra chiusa successiva).
+int    InpSHBMS_SwingLookback = 15;   // barre per il riferimento swing pre-sweep
+int    InpSHBMS_MaxMSSBars    = 20;   // barre max fra sweep e MSS prima di scadere
+int    InpSHBMS_MaxWaitBars   = 15;   // barre max di attesa del ritorno dopo l'MSS
+double InpSHBMS_DispBodyATR   = 0.8;  // corpo minimo del displacement (x ATR) per contare come MSS
+
+enum ENUM_NXS_SHBMS_STATE { SHBMS_IDLE = 0, SHBMS_SWEPT, SHBMS_WAITING_RETURN };
+
+struct SNXSSHBmsState {
+   int      state;
+   datetime lastBarTime;   // barra 0 (in formazione) all'ultimo avanzamento di stato - gating
+   double   sweepLevel;    // livello sweepato (sw.level al momento dello SWEPT)
+   double   swingRef;      // swing di riferimento che l'MSS deve rompere
+   int      barsWaited;    // barre trascorse nello stato corrente
+   double   originLo, originHi;   // zona d'origine (ultima candela opposta prima del displacement)
+};
+SNXSSHBmsState g_shbmsBuy, g_shbmsSell;
+
+void NXS_SHBMS_Reset(SNXSSHBmsState &st){
+   st.state = SHBMS_IDLE; st.barsWaited = 0;
+   st.sweepLevel = 0; st.swingRef = 0; st.originLo = 0; st.originHi = 0;
+}
+
+SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
+                                ENUM_TIMEFRAMES tf, double atr, datetime curBar0){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "SH_BMS_RTO";
-   if(!sw.confirmed) return s;
-   // AUDITPATCH: 3-candle FVG (bars 4 and 2), plus the BMS that the
-   // strategy name promises. The prior adjacent-candle gap was exceptionally rare.
-   double h2 = iHigh(g_sym, NXS_EffTF(), 2), l2 = iLow(g_sym, NXS_EffTF(), 2);
-   double h4 = iHigh(g_sym, NXS_EffTF(), 4), l4 = iLow(g_sym, NXS_EffTF(), 4);
-   double atr = _smc_atr();
+   bool newBar = (st.lastBarTime != curBar0);
+   ENUM_NXS_DIR wantSweep = (dir == +1) ? DIR_BUY : DIR_SELL;
+
+   if(st.state == SHBMS_IDLE){
+      if(newBar && sw.confirmed && sw.dir == wantSweep){
+         // SWEPT: registra il livello e lo swing di riferimento che l'MSS dovra' rompere.
+         st.state = SHBMS_SWEPT; st.barsWaited = 0; st.sweepLevel = sw.level; st.lastBarTime = curBar0;
+         int hiIdx = iHighest(g_sym, tf, MODE_HIGH, InpSHBMS_SwingLookback, 2);
+         int loIdx = iLowest (g_sym, tf, MODE_LOW,  InpSHBMS_SwingLookback, 2);
+         st.swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
+                                    : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
+      }
+      return s;
+   }
+
+   if(st.state == SHBMS_SWEPT){
+      // Invalidation: chiusura oltre il livello sweepato nel verso sbagliato.
+      double c1 = iClose(g_sym, tf, 1);
+      if(newBar && ((dir == +1 && c1 < st.sweepLevel) || (dir == -1 && c1 > st.sweepLevel))){
+         NXS_SHBMS_Reset(st); st.lastBarTime = curBar0; return s;
+      }
+      if(!newBar) return s;
+      st.barsWaited++;
+      if(st.barsWaited > InpSHBMS_MaxMSSBars){ NXS_SHBMS_Reset(st); st.lastBarTime = curBar0; return s; }
+      double o1 = iOpen(g_sym, tf, 1);
+      double body1 = MathAbs(c1 - o1);
+      bool mss = (dir == +1) ? (st.swingRef > 0 && c1 > st.swingRef && body1 >= atr * InpSHBMS_DispBodyATR)
+                              : (st.swingRef > 0 && c1 < st.swingRef && body1 >= atr * InpSHBMS_DispBodyATR);
+      st.lastBarTime = curBar0;
+      if(!mss) return s;
+      // MSS confermato: origine = ultima candela di colore opposto prima del displacement (barra 1).
+      double originA = o1, originB = c1;
+      for(int k = 2; k <= 6; k++){
+         double ok = iOpen(g_sym, tf, k), ck = iClose(g_sym, tf, k);
+         bool oppositeColor = (dir == +1) ? (ck < ok) : (ck > ok);
+         if(oppositeColor){ originA = ok; originB = ck; break; }
+      }
+      st.originLo = MathMin(originA, originB);
+      st.originHi = MathMax(originA, originB);
+      st.state = SHBMS_WAITING_RETURN; st.barsWaited = 0;
+      return s;
+   }
+
+   // SHBMS_WAITING_RETURN
+   if(newBar){
+      st.barsWaited++;
+      st.lastBarTime = curBar0;
+      if(st.barsWaited > InpSHBMS_MaxWaitBars){ NXS_SHBMS_Reset(st); return s; }
+      double c1 = iClose(g_sym, tf, 1);
+      if((dir == +1 && c1 < st.sweepLevel) || (dir == -1 && c1 > st.sweepLevel)){
+         NXS_SHBMS_Reset(st); return s;   // invalidazione profonda
+      }
+   }
+   if(st.originHi <= st.originLo) return s;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   bool bullFVG = (l2 > h4 + atr * 0.1);
-   bool bearFVG = (h2 < l4 - atr * 0.1);
-   if(sw.dir == DIR_BUY && g_struct.chochUp && bullFVG && bid >= h4 && bid <= l2){
+   bool touched = (bid >= st.originLo && bid <= st.originHi);
+   if(!touched) return s;
+   // Primo ritorno nella zona d'origine = entry. One-shot: reset subito dopo.
+   if(dir == +1){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-      s.slPrice = MathMin(sw.level, h4) - 0.5 * atr;
+      s.slPrice = MathMin(st.sweepLevel, st.originLo) - 0.5 * atr;
       s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.6);
-      s.score = 74.0; s.reason = "SH+BMS+RTO bull";
-      return s;
-   }
-   if(sw.dir == DIR_SELL && g_struct.chochDown && bearFVG && bid >= h2 && bid <= l4){
+   } else {
       s.dir = DIR_SELL; s.entryRef = bid;
-      s.slPrice = MathMax(sw.level, l4) + 0.5 * atr;
+      s.slPrice = MathMax(st.sweepLevel, st.originHi) + 0.5 * atr;
       s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.6);
-      s.score = 74.0; s.reason = "SH+BMS+RTO bear";
-      return s;
    }
+   s.score = 74.0; s.reason = "SH+BMS+RTO " + (string)((dir == +1) ? "bull" : "bear") + ":origin_return";
+   NXS_SHBMS_Reset(st);
    return s;
+}
+
+SNXSSignal NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw){
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double atr = _smc_atr();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   SNXSSignal s = NXS_SHBMS_UpdateSide(+1, g_shbmsBuy, sw, tf, atr, curBar0);
+   if(s.dir != DIR_NONE) return s;
+   return NXS_SHBMS_UpdateSide(-1, g_shbmsSell, sw, tf, atr, curBar0);
 }
 
 // === 6. SMS + BMS + RTO (v2.0.3 — failure swing reale con HH/LL labelling) ==
