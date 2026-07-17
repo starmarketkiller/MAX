@@ -15,10 +15,15 @@ struct SNXSSweepExt {
    bool         confirmed;
    bool         sweptPDH;
    bool         sweptPDL;
+   bool         sweptPWH;     // 17/07 notte - Previous Week High sweep
+   bool         sweptPWL;     // 17/07 notte - Previous Week Low sweep
+   bool         sweptPMH;     // 17/07 notte - Previous Month High sweep
+   bool         sweptPML;     // 17/07 notte - Previous Month Low sweep
    bool         sweptAsiaHigh;
    bool         sweptAsiaLow;
    bool         sweptEQH;
    bool         sweptEQL;
+   string       levelTag;     // 17/07 notte - quale livello ha scatenato lo sweep (diagnostica CSV)
 };
 
 ENUM_NXS_REGIME NXS_DetectRegime(){
@@ -131,10 +136,23 @@ double NXS_FindEqualLow(string sym, ENUM_TIMEFRAMES tf, int wing, double tol){
 // ---- Phase 3 extended sweep detector -------------------------------
 // Returns liquidity sweeps against PDH/PDL, Asia H/L and equal highs/lows.
 SNXSSweepExt NXS_DetectSweepExt(){
-   SNXSSweepExt s; ZeroMemory(s); s.dir = DIR_NONE;
+   // 17/07 notte - niente piu' ZeroMemory: da quando lo struct contiene un
+   // campo string (levelTag), ZeroMemory scriverebbe zeri grezzi sopra
+   // l'handle stringa senza rilasciarlo correttamente (comportamento non
+   // sicuro per struct con string/array dinamici/oggetti in MQL5). I campi
+   // di SNXSSweepExt sono gia' inizializzati puliti alla dichiarazione
+   // (numerici/bool a 0/false, string a "").
+   SNXSSweepExt s; s.dir = DIR_NONE;
    // Yesterday's daily H/L (PDH/PDL)
    double pdh = iHigh(g_sym, PERIOD_D1, 1);
    double pdl = iLow (g_sym, PERIOD_D1, 1);
+   // 17/07 notte - stesso concetto del daily, sui timeframe piu' alti: la
+   // settimana/il mese PRECEDENTE (shift 1), non quello in corso. Livelli di
+   // liquidita' piu' rari ma piu' significativi quando vengono sweepati.
+   double pwh = iHigh(g_sym, PERIOD_W1, 1);
+   double pwl = iLow (g_sym, PERIOD_W1, 1);
+   double pmh = iHigh(g_sym, PERIOD_MN1, 1);
+   double pml = iLow (g_sym, PERIOD_MN1, 1);
    // Asia session high/low: scan last 24h of M5 between InpAsianStartHour..InpAsianEndHour
    double asiaHi = 0, asiaLo = DBL_MAX;
    for(int i = 1; i <= 96; i++){
@@ -162,13 +180,25 @@ SNXSSweepExt NXS_DetectSweepExt(){
    // point over the lookback (that was never "equal" to anything).
    double eqH = NXS_FindEqualHigh(g_sym, tf, InpSwingWing, tol);
    double eqL = NXS_FindEqualLow (g_sym, tf, InpSwingWing, tol);
-   // Sweep evaluation: wick beyond level + close back inside
-   if(h1 > pdh    && c1 < pdh    ){ s.sweptPDH = true;       s.dir = DIR_SELL; s.level = pdh;    s.confirmed = true; }
-   if(l1 < pdl    && c1 > pdl    ){ s.sweptPDL = true;       s.dir = DIR_BUY;  s.level = pdl;    s.confirmed = true; }
-   if(h1 > asiaHi && c1 < asiaHi ){ s.sweptAsiaHigh = true;  s.dir = DIR_SELL; s.level = asiaHi; s.confirmed = true; }
-   if(l1 < asiaLo && c1 > asiaLo ){ s.sweptAsiaLow  = true;  s.dir = DIR_BUY;  s.level = asiaLo; s.confirmed = true; }
-   if(eqH > 0 && h1 > eqH && c1 < eqH){ s.sweptEQH = true; if(s.dir == DIR_NONE){ s.dir = DIR_SELL; s.level = eqH; s.confirmed = true; } }
-   if(eqL > 0 && l1 < eqL && c1 > eqL){ s.sweptEQL = true; if(s.dir == DIR_NONE){ s.dir = DIR_BUY;  s.level = eqL; s.confirmed = true; } }
+   // Sweep evaluation: wick beyond level + close back inside.
+   // 17/07 notte - ordine intenzionale: Asia -> daily -> weekly -> monthly.
+   // Ogni blocco sovrascrive dir/level/levelTag se scatta (stesso
+   // comportamento gia' esistente per PDH/PDL/Asia), cosi' se piu' livelli
+   // vengono sweepati sulla stessa barra vince l'ULTIMO che scatta in
+   // quest'ordine, cioe' quello di scala piu' grande/piu' raro fra quelli
+   // veri in quel momento (monthly > weekly > daily > Asia) - anche il piu'
+   // significativo come evento di liquidita'. EQH/EQL restano fallback
+   // (solo se nessun altro livello ha scattato), come prima.
+   if(h1 > asiaHi && c1 < asiaHi ){ s.sweptAsiaHigh = true;  s.dir = DIR_SELL; s.level = asiaHi; s.confirmed = true; s.levelTag = "Asia-High"; }
+   if(l1 < asiaLo && c1 > asiaLo ){ s.sweptAsiaLow  = true;  s.dir = DIR_BUY;  s.level = asiaLo; s.confirmed = true; s.levelTag = "Asia-Low"; }
+   if(h1 > pdh    && c1 < pdh    ){ s.sweptPDH = true;       s.dir = DIR_SELL; s.level = pdh;    s.confirmed = true; s.levelTag = "Daily-High"; }
+   if(l1 < pdl    && c1 > pdl    ){ s.sweptPDL = true;       s.dir = DIR_BUY;  s.level = pdl;    s.confirmed = true; s.levelTag = "Daily-Low"; }
+   if(h1 > pwh    && c1 < pwh    ){ s.sweptPWH = true;       s.dir = DIR_SELL; s.level = pwh;    s.confirmed = true; s.levelTag = "Weekly-High"; }
+   if(l1 < pwl    && c1 > pwl    ){ s.sweptPWL = true;       s.dir = DIR_BUY;  s.level = pwl;    s.confirmed = true; s.levelTag = "Weekly-Low"; }
+   if(pmh > 0 && h1 > pmh && c1 < pmh){ s.sweptPMH = true;   s.dir = DIR_SELL; s.level = pmh;    s.confirmed = true; s.levelTag = "Monthly-High"; }
+   if(pml > 0 && l1 < pml && c1 > pml){ s.sweptPML = true;   s.dir = DIR_BUY;  s.level = pml;    s.confirmed = true; s.levelTag = "Monthly-Low"; }
+   if(eqH > 0 && h1 > eqH && c1 < eqH){ s.sweptEQH = true; if(s.dir == DIR_NONE){ s.dir = DIR_SELL; s.level = eqH; s.confirmed = true; s.levelTag = "Equal-High"; } }
+   if(eqL > 0 && l1 < eqL && c1 > eqL){ s.sweptEQL = true; if(s.dir == DIR_NONE){ s.dir = DIR_BUY;  s.level = eqL; s.confirmed = true; s.levelTag = "Equal-Low"; } }
    s.refHigh = (s.sweptPDH ? pdh : (s.sweptAsiaHigh ? asiaHi : (s.sweptEQH ? eqH : MathMax(pdh, asiaHi))));
    s.refLow  = (s.sweptPDL ? pdl : (s.sweptAsiaLow  ? asiaLo : (s.sweptEQL ? eqL : MathMin(pdl, asiaLo))));
    return s;

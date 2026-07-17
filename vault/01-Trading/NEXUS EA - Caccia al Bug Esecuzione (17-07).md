@@ -17,6 +17,23 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 2): LIQ_SWEEP esteso a weekly/monthly, un solo motore invece di 3 cloni
+
+Richiesta dell'utente: i sweep importanti avvengono anche su livelli weekly e monthly, non solo daily — voleva capire se il codice riconosce quando viene "preso" il massimo/minimo del giorno, della settimana, del mese. Verificato: **daily (PDH/PDL) era già implementato** (`NXS_DetectSweepExt`, usato da `LIQ_SWEEP` e riusato da NY_REVERSAL/LDN_REVERSAL/altri), **weekly/monthly non esistevano affatto** (zero riferimenti a `PERIOD_MN1` in tutto il progetto; `WEEKLY_EXP` esiste ma è un concetto diverso — premium/discount + displacement, non un vero sweep di PWH/PWL, ed è anche il candidato "quasi bloccato" dell'audit Livello A di stanotte).
+
+**Decisione presa con l'utente**: niente 3 strategie clonate (avrebbe replicato l'antipattern OB_MIT appena segnalato dall'audit — wrapper mascherati da strategie indipendenti). Un solo motore di rilevamento, esteso a daily+weekly+monthly, con un **tag esplicito di quale livello ha scatenato lo sweep** per diagnostica — non profili SL/TP separati per livello (l'utente ha dato via libera a procedere senza differenziazione).
+
+**Fix implementato** (commit da pushare):
+- `SNXSSweepExt` (`NXS_MarketAnalysis.mqh`) esteso con `sweptPWH/sweptPWL/sweptPMH/sweptPML` + nuovo campo `string levelTag`.
+- `NXS_DetectSweepExt()` esteso: stesso pattern "stoppino oltre il livello + chiusura dentro" già usato per PDH/PDL, applicato anche a `PERIOD_W1` e `PERIOD_MN1` (shift 1, periodo precedente). Ordine di precedenza intenzionale — Asia → daily → weekly → monthly → equal H/L (fallback) — così se più livelli scattano sulla stessa barra vince quello di scala più grande/più raro, il più significativo come evento di liquidità.
+- `NXS_Strat_LiqSweep()` (`NXS_Strategies.mqh`): il `reason` del segnale ora include `sw.levelTag` (es. `Sweep_low_reversal:Weekly-Low`), visibile nel CSV — diagnostica per capire quale livello produce l'edge, senza duplicare la strategia.
+- **Effetto collaterale consapevole**: `SNXSSweepExt` è condiviso da altre strategie (TurtleSoup, SH_BMS_RTO, SilverBullet, CISD, JudasSwing, LondonReversal, NY_REVERSAL, PO3, AMD_Reversal) che leggono `sw.dir`/`sw.level`/`sw.refHigh`/`sw.refLow` o i singoli flag booleani — ora possono reagire anche a sweep weekly/monthly, non solo daily/Asia. Estensione naturale (più livelli di liquidità riconosciuti a livello di sistema), non una regressione, ma da tenere presente leggendo i risultati del prossimo sweep.
+- **Fix di sicurezza collaterale**: rimosso `ZeroMemory(s)` dalla costruzione di `SNXSSweepExt` — non è sicuro su uno struct con un campo `string` (comportamento non definito in MQL5, l'handle stringa non viene rilasciato correttamente). I campi sono già puliti di default alla dichiarazione.
+
+Non ancora validato su MT5 reale.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte): sospetto CSV infinito dietro i timeout Tester + reset opt-in
 
 Lo sweep 1-37 (arrivato a S30/37) ha iniziato a dare timeout ripetuti nello script di automazione di NEXUS Bot, con perdita di tempo significativa segnalata dall'utente. `NEXUS_trades.csv` non viene MAI svuotato (`NXS_LogTradeCSV`, `NXS_Logging.mqh` — apre sempre in `FILE_WRITE|FILE_READ` + `FileSeek(SEEK_END)`, mai un reset) — accumula da ogni sweep dall'inizio del progetto, gia' a 24.8MB+ nello snapshot analizzato ieri sera. Sospetto (non ancora confermato con timing esatti da NEXUS Bot): passate successive dello sweep rallentano perche' MT5 deve aprire/scrivere in coda a un file sempre piu' grande, fino a superare il timeout impostato nello script.

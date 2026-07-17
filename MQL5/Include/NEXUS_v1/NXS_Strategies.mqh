@@ -273,10 +273,15 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweepExt &sw){
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    if(MathAbs(c1 - o1) < 0.7 * g_atr) return s;   // candela "delivery"/OB, non un rimbalzo qualsiasi
+   // 17/07 notte - un solo motore di rilevamento sweep (NXS_DetectSweepExt,
+   // esteso a daily/weekly/monthly), ma il reason riporta ESATTAMENTE quale
+   // livello ha scatenato il segnale (sw.levelTag: Daily/Weekly/Monthly-
+   // High/Low, Asia-High/Low, Equal-High/Low) - diagnostica per capire quale
+   // livello produce l'edge, senza duplicare la strategia 3 volte.
    if(sw.dir == DIR_BUY && c1 > o1){
-      s.dir = DIR_BUY;  s.score = 72; s.reason = "Sweep_low_reversal";
+      s.dir = DIR_BUY;  s.score = 72; s.reason = "Sweep_low_reversal:" + sw.levelTag;
    } else if(sw.dir == DIR_SELL && c1 < o1){
-      s.dir = DIR_SELL; s.score = 72; s.reason = "Sweep_high_reversal";
+      s.dir = DIR_SELL; s.score = 72; s.reason = "Sweep_high_reversal:" + sw.levelTag;
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
