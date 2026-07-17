@@ -101,3 +101,15 @@ Ogni `.pine` dovrebbe implementare ENTRAMBE le config (baseline reale + variante
 I risultati Pine sono un **terzo punto di osservazione indipendente**, non un tie-breaker: TradingView ha un suo modello di fill/spread/slippage diverso sia da MT5 sia dal motore Python del sito. Se Pine conferma la stessa direzione (es. "TP largo + BE migliora PF") aumenta la fiducia; se diverge, non significa che uno dei tre sia "sbagliato" — va segnalato e discusso, non usato per sovrascrivere le conclusioni MT5.
 
 Risultati da riportare (per ciascuna delle 4 strategie, baseline vs variante): PF, win rate, drawdown massimo, numero trade, e un commento libero su eventuali differenze di comportamento rispetto a quanto osservato su MT5/sito.
+
+---
+
+## Status — 17/07 sera: agente desktop bloccato su connettore browser
+
+L'agente desktop ha gli script Pine **pronti in locale**, ma non ancora copiati/pushati nel repo. È bloccato perché il connettore Chrome/browser (necessario presumibilmente per interagire con TradingView) non funziona nel suo terminale, nonostante l'utente abbia già attivato tutti i connettori lato claude.ai.
+
+Nota tecnica riportata dall'agente desktop: l'attivazione di un connettore Chrome/browser è una configurazione lato utente (impostazioni Claude Code o claude.ai → Connettori), non qualcosa che l'agente può abilitare autonomamente dall'interno della sessione. Se il connettore viene attivato via `claude mcp add` o dai Connettori di claude.ai, l'agente deve poi vederlo comparire nella lista tool disponibili (potrebbe dover essere ricercato di nuovo lato suo).
+
+**Domanda aperta dell'agente desktop (non ancora decisa):** aspettare che il connettore funzioni prima di pushare, oppure pushare comunque il codice Pine già pronto su GitHub separatamente dall'esecuzione/verifica del test (che richiederebbe il browser/TradingView).
+
+**Nessuna azione presa qui** — su richiesta esplicita dell'utente, solo aggiornamento del vault. Da decidere insieme come procedere.
