@@ -1,0 +1,120 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia SAR (Parabolic SAR + EMA9/21 trend filter) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per la logica reale
+// implementata in MQL5 (NXS_Strat_SAR, NXS_Strategies.mqh) e nei profili
+// (NXS_StrategyProfiles.mqh). Non sostituisce MT5 né il backtest lab del sito
+// — serve a confermare/smentire il segnale su un terzo dataset/motore.
+//
+// Trigger (identico a MQL5, stesso lato long/short, nessuna asimmetria buy/sell
+// ancora costruita per questa strategia — vedi vault "Setup Buy-Sell Framework"):
+//   BUY  : SAR sotto il prezzo E EMA9 > EMA21
+//   SELL : SAR sopra il prezzo E EMA9 < EMA21
+//
+// Timing barra / anti-repaint:
+//   - calc_on_every_tick = false: la strategia valuta le condizioni sulla barra
+//     CHIUSA e l'ordine si riempie all'apertura della barra successiva — stesso
+//     modello di MQL5, che legge SAR/EMA con shift=1 (ultima barra chiusa) e
+//     apre a mercato subito dopo.
+//   - Il filtro HTF (H4 vs EMA50 H4 + EMA50 H1) usa request.security con
+//     lookahead=barmerge.lookahead_off e valore shiftato di 1 barra: pattern
+//     standard per evitare il repaint del multi-timeframe in Pine (senza questo
+//     accorgimento il valore HTF "vivo" può cambiare retroattivamente).
+// =============================================================================
+strategy("NEXUS EA - SAR (XAUUSD H4)", shorttitle="NXS-SAR", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
+     options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
+     tooltip="Baseline = SL1.5x/TP4.0x ATR, no breakeven (config v2.5.0).\nVariante = stesso SL/TP ma con breakeven a 1.5xR (test MFE/MAE 17/07, risultato ambiguo: PF sale, net scende leggermente — NON applicata in produzione, qui disponibile solo per confronto manuale).")
+useHtfFilter   = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+sarStart       = input.float(0.02, "SAR Step (start=increment)", step=0.01)
+sarMax         = input.float(0.2, "SAR Max", step=0.01)
+atrLen         = input.int(14, "ATR length")
+maxHoldBars    = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate      = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate        = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// Config numerica risolta in base alla modalità scelta
+isVariant = configMode == "Variante TP-largo + Breakeven"
+slMult = 1.5
+tpMult = 4.0
+beR    = isVariant ? 1.5 : 0.0   // 0 = breakeven disattivato
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+sarVal = ta.sar(sarStart, sarStart, sarMax)
+ema9   = ta.ema(close, 9)
+ema21  = ta.ema(close, 21)
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
+emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
+emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+
+htfBull = closeHTF > emaHTF and emaMTF > emaHTF
+htfBear = closeHTF < emaHTF and emaMTF < emaHTF
+htfBlocksBuy  = useHtfFilter and htfBear
+htfBlocksSell = useHtfFilter and htfBull
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and sarVal < close and ema9 > ema21 and not htfBlocksBuy
+shortCond = inRange and sarVal > close and ema9 < ema21 and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="SAR_below_price")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="SAR_above_price")
+
+// ----------------------------- Gestione SL/TP/BE/Time-exit ------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var bool  beDone       = false
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    beDone := false
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and beR > 0 and not beDone
+    risk = atrAtEntry * slMult
+    prof = strategy.position_size > 0 ? close - strategy.position_avg_price : strategy.position_avg_price - close
+    if risk > 0 and prof >= beR * risk
+        slLevel := strategy.position_avg_price
+        beDone := true
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema9, "EMA9", color=color.new(color.aqua, 0), linewidth=1)
+plot(ema21, "EMA21", color=color.new(color.orange, 0), linewidth=1)
+plot(sarVal, "Parabolic SAR", style=plot.style_circles, color=color.new(color.fuchsia, 0))
+bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS SAR BUY", "NEXUS SAR: segnale BUY su barra chiusa")
+alertcondition(shortCond, "NXS SAR SELL", "NEXUS SAR: segnale SELL su barra chiusa")
