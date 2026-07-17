@@ -403,6 +403,7 @@ int OnInit(){
    g_sym    = _Symbol;
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
+   NXS_ResetTradesLogIfRequested();   // 17/07 sera - vedi NXS_Logging.mqh, opt-in, mai automatico
    // v2.0.10 — pull active locked profile from backend (auto-optimizer winner)
    NXS_LockedProfile_Fetch();
    // v2.0.9 — load Sprint 3 learner CSV + reset handle pool

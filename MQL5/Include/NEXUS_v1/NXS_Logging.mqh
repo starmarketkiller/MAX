@@ -12,6 +12,27 @@
 // fosse gia' esistito, il bug della tabella NXS_StrategySourceTF disallineata
 // (vedi vault NEXUS EA - Caccia al Bug Esecuzione) si sarebbe visto in 30
 // secondi guardando il CSV, invece di un'ora di lettura di codice.
+// 17/07 sera - da chiamare una volta in OnInit, PRIMA di qualsiasi
+// NXS_LogTradeCSV. Se InpResetTradesLogOnInit e' true, archivia il file
+// corrente (rinominandolo con un timestamp) cosi' la prossima scrittura di
+// NXS_LogTradeCSV lo ricrea vuoto (isNew=true, header riscritto). Non
+// cancella mai nulla: se il rename fallisce (es. file gia' aperto altrove),
+// lascia il file esistente com'e' e continua ad accumulare, senza bloccare
+// l'EA.
+void NXS_ResetTradesLogIfRequested(){
+   if(!InpResetTradesLogOnInit) return;
+   if(!FileIsExist("NEXUS_trades.csv", FILE_COMMON)) return;
+   string archiveName = StringFormat("NEXUS_trades_archive_%s.csv",
+                        TimeToString(TimeLocal(), TIME_DATE|TIME_SECONDS));
+   StringReplace(archiveName, ".", "-");
+   StringReplace(archiveName, ":", "-");
+   StringReplace(archiveName, " ", "_");
+   if(FileMove("NEXUS_trades.csv", FILE_COMMON, archiveName, FILE_COMMON))
+      PrintFormat("[NEXUS] NEXUS_trades.csv archiviato come %s, log ripartito vuoto.", archiveName);
+   else
+      PrintFormat("[NEXUS] Reset log richiesto ma FileMove fallito (err=%d) — continuo ad accumulare sul file esistente.", GetLastError());
+}
+
 void NXS_LogTradeCSV(string action, ulong ticket, string strat, double price,
                      double lots, double sl, double tp, double score, string reason,
                      double holdSec = 0, double rMultiple = 0, string resolvedTF = ""){

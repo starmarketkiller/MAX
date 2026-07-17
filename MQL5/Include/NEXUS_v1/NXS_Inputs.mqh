@@ -410,6 +410,14 @@ int      InpHistSyncIntervalSec = 1800;                                  // back
 // input group "=== LOGGING ==="
 input bool     InpLogTrades        = true;
 input bool     InpDebugLog         = false;
+// 17/07 sera - NEXUS_trades.csv non veniva mai svuotato (append infinito da
+// ogni sweep), fino a 24.8MB+ e sospettato di rallentare i passaggi Tester
+// piu' recenti. Opt-in esplicito, non automatico: va attivato a mano per UNA
+// run quando si e' deciso che i dati fin qui raccolti sono stati letti/usati
+// e si puo' ripartire puliti. Di default false per non perdere dati per
+// errore. Il vecchio file viene archiviato (rinominato con timestamp), mai
+// cancellato silenziosamente.
+input bool     InpResetTradesLogOnInit = false;
 
 //================================================================
 //  NEXUS v2.0 / Phase 3-5 additions (additive — defaults preserve v1 behaviour)

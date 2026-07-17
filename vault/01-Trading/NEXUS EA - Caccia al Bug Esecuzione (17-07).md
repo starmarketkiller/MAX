@@ -17,6 +17,20 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte): sospetto CSV infinito dietro i timeout Tester + reset opt-in
+
+Lo sweep 1-37 (arrivato a S30/37) ha iniziato a dare timeout ripetuti nello script di automazione di NEXUS Bot, con perdita di tempo significativa segnalata dall'utente. `NEXUS_trades.csv` non viene MAI svuotato (`NXS_LogTradeCSV`, `NXS_Logging.mqh` — apre sempre in `FILE_WRITE|FILE_READ` + `FileSeek(SEEK_END)`, mai un reset) — accumula da ogni sweep dall'inizio del progetto, gia' a 24.8MB+ nello snapshot analizzato ieri sera. Sospetto (non ancora confermato con timing esatti da NEXUS Bot): passate successive dello sweep rallentano perche' MT5 deve aprire/scrivere in coda a un file sempre piu' grande, fino a superare il timeout impostato nello script.
+
+**Decisione presa con l'utente**: niente pulizia automatica ad ogni passata (romperebbe la possibilita' di confrontare passate consecutive durante un'analisi in corso). Invece, reset **esplicito e opt-in**, da attivare solo quando i dati fin li' raccolti sono stati letti e le decisioni prese — "puliamo quando abbiamo visto i dati e deciso come procedere".
+
+**Fix implementato** (`3cba036`... nuovo commit da pushare):
+- Nuovo input `InpResetTradesLogOnInit` (default `false`, `NXS_Inputs.mqh`) — se attivato per UNA run, `NXS_ResetTradesLogIfRequested()` (`NXS_Logging.mqh`, chiamata a inizio `OnInit()`) archivia il file corrente rinominandolo con timestamp (`NEXUS_trades_archive_<data>.csv`), MAI lo cancella. La scrittura successiva lo ricrea vuoto con header.
+- Se il rename fallisce (es. file occupato), l'EA non si blocca: continua ad accumulare sul file esistente e stampa un warning.
+
+**Da fare per chiudere il sospetto**: chiedere a NEXUS Bot (a) il testo esatto dell'errore di timeout e se viene dallo script PowerShell o da MT5, (b) il valore di timeout impostato, (c) la dimensione attuale del file sul disco locale — per confermare se il CSV e' davvero la causa o solo un sospetto plausibile non provato.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (sera): trovata la VERA causa dominante — mancava il gate "1 posizione per strategia" in DataCollectionMode
 
 Il fix del cap a 12h (sotto) era reale e corretto — verificato che `resolved_tf`
