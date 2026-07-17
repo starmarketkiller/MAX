@@ -1,0 +1,112 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia RSI_DIV (divergenza prezzo/RSI a 8 barre) — XAUUSD H1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_RSIDiv
+// (NXS_Strategies.mqh) e il profilo v2.5.0 (NXS_StrategyProfiles.mqh).
+//
+// Trigger (identico a MQL5, stesso lato long/short):
+//   BUY  (divergenza bullish) : low[1] < low[8] E RSI[1] > RSI[8] E RSI[1] < 40
+//   SELL (divergenza bearish) : high[1] > high[8] E RSI[1] < RSI[8] E RSI[1] > 60
+//   ([1] = ultima barra chiusa, [8] = 8 barre chiuse fa — confronto a finestra
+//   fissa, non un pivot/zigzag: fedele a NXS_Strat_RSIDiv così com'è nel codice.)
+//
+// Nessun filtro HTF per questa strategia (InpHTF=false nel profilo attuale: con
+// l'HTF attivo il campione crolla a 0-4 trade su ogni timeframe, inutilizzabile
+// — vedi vault "Fix Blocco 4").
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, quindi le condizioni
+// sono valutate sulla barra CHIUSA e l'ordine si riempie all'apertura della
+// barra successiva — stesso modello di MQL5 (shift=1/shift=8 su barre chiuse).
+// =============================================================================
+strategy("NEXUS EA - RSI_DIV (XAUUSD H1)", shorttitle="NXS-RSIDIV", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP",
+     options=["Baseline (config attuale)", "Variante TP-largo"],
+     tooltip="Baseline = SL1.0x/TP4.5x ATR (config v2.5.0).\nVariante = SL1.0x/TP10.0x ATR — testata nello sweep MFE/MAE del 17/07, miglioramento solo marginale (PF1.34→1.39) e NON applicata in produzione. Nessuna variante di breakeven per RSI_DIV: nello sweep non ha superato la baseline.")
+divLookback = input.int(8, "Divergenza: barre indietro")
+rsiLen  = input.int(14, "RSI length")
+atrLen  = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// Config numerica risolta in base alla modalità scelta
+isVariant = configMode == "Variante TP-largo"
+slMult = 1.0
+tpMult = isVariant ? 10.0 : 4.5
+beR    = 0.0   // breakeven non usato per RSI_DIV nella config attuale
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+rsiVal = ta.rsi(close, rsiLen)
+
+l1 = low[1]
+l8 = low[divLookback]
+h1 = high[1]
+h8 = high[divLookback]
+rsi1 = rsiVal[1]
+rsi8 = rsiVal[divLookback]
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+// Divergenza bullish: minimo di prezzo più basso, RSI più alto (momentum in
+// esaurimento) e RSI ancora in zona bassa.
+longCond  = inRange and l1 < l8 and rsi1 > rsi8 and rsi1 < 40
+// Divergenza bearish: massimo di prezzo più alto, RSI più basso, RSI in zona alta.
+shortCond = inRange and h1 > h8 and rsi1 < rsi8 and rsi1 > 60
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="RSI_bull_div")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="RSI_bear_div")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var bool  beDone       = false
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    beDone := false
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and beR > 0 and not beDone
+    risk = atrAtEntry * slMult
+    prof = strategy.position_size > 0 ? close - strategy.position_avg_price : strategy.position_avg_price - close
+    if risk > 0 and prof >= beR * risk
+        slLevel := strategy.position_avg_price
+        beDone := true
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plotshape(longCond, title="Bull Div", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Bear Div", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "60"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H1 — imposta il chart a H1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS RSI_DIV BUY", "NEXUS RSI_DIV: divergenza bullish su barra chiusa")
+alertcondition(shortCond, "NXS RSI_DIV SELL", "NEXUS RSI_DIV: divergenza bearish su barra chiusa")

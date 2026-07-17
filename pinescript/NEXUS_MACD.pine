@@ -1,0 +1,118 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia MACD Trend (MACD 12/26/9 + filtro EMA200) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_MACD
+// (NXS_Strategies.mqh) e il profilo v2.5.1 (NXS_StrategyProfiles.mqh).
+//
+// Trigger (identico a MQL5, stesso lato long/short):
+//   BUY  : MACD line > signal line E MACD line > 0 E close > EMA200
+//   SELL : MACD line < signal line E MACD line < 0 E close < EMA200
+//
+// NOTA FEDELTA' MACD: la signal line di MT5 (iMACD) è una SMA della MACD line,
+// NON una EMA come nel MACD "standard" di TradingView (ta.macd usa EMA per il
+// segnale). Qui la signal line è ricostruita manualmente con SMA per
+// combaciare esattamente con MT5 — non usare ta.macd() di default.
+//
+// Timing barra / anti-repaint: vedi NEXUS_SAR.pine (stesso modello:
+// calc_on_every_tick=false, filtro HTF con request.security shiftato e
+// lookahead_off).
+// =============================================================================
+strategy("NEXUS EA - MACD (XAUUSD H4)", shorttitle="NXS-MACD", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
+     options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
+     tooltip="Baseline = SL2.0x/TP3.0x ATR, no breakeven (config pre-17/07).\nVariante = SL2.0x/TP8.0x ATR + breakeven a 1.0xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→2.05, DD 6.23%→5.85%, net +2.879→+3.643 sul motore sito). Non ancora validata su MT5.")
+useHtfFilter   = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+macdFast   = input.int(12, "MACD Fast EMA")
+macdSlow   = input.int(26, "MACD Slow EMA")
+macdSignal = input.int(9, "MACD Signal SMA")
+ema200Len  = input.int(200, "EMA Trend length")
+atrLen     = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate  = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate    = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// Config numerica risolta in base alla modalità scelta
+isVariant = configMode == "Variante TP-largo + Breakeven"
+slMult = 2.0
+tpMult = isVariant ? 8.0 : 3.0
+beR    = isVariant ? 1.0 : 0.0   // 0 = breakeven disattivato
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+emaFast = ta.ema(close, macdFast)
+emaSlow = ta.ema(close, macdSlow)
+macdLine = emaFast - emaSlow
+signalLine = ta.sma(macdLine, macdSignal)   // MT5 iMACD: signal = SMA, non EMA
+ema200 = ta.ema(close, ema200Len)
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
+emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
+emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+
+htfBull = closeHTF > emaHTF and emaMTF > emaHTF
+htfBear = closeHTF < emaHTF and emaMTF < emaHTF
+htfBlocksBuy  = useHtfFilter and htfBear
+htfBlocksSell = useHtfFilter and htfBull
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and macdLine > signalLine and macdLine > 0 and close > ema200 and not htfBlocksBuy
+shortCond = inRange and macdLine < signalLine and macdLine < 0 and close < ema200 and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="MACD_bull_above_ema200")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="MACD_bear_below_ema200")
+
+// ----------------------------- Gestione SL/TP/BE/Time-exit ------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var bool  beDone       = false
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    beDone := false
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and beR > 0 and not beDone
+    risk = atrAtEntry * slMult
+    prof = strategy.position_size > 0 ? close - strategy.position_avg_price : strategy.position_avg_price - close
+    if risk > 0 and prof >= beR * risk
+        slLevel := strategy.position_avg_price
+        beDone := true
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema200, "EMA200", color=color.new(color.yellow, 0), linewidth=2)
+bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS MACD BUY", "NEXUS MACD: segnale BUY su barra chiusa")
+alertcondition(shortCond, "NXS MACD SELL", "NEXUS MACD: segnale SELL su barra chiusa")

@@ -1,0 +1,115 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia ADX_RSI (in realtà EMA50-trend + banda RSI) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_ADXRSI
+// (NXS_Strategies.mqh) e il profilo v2.5.1 (NXS_StrategyProfiles.mqh).
+//
+// ATTENZIONE AL NOME: nonostante si chiami "ADX_RSI", questa strategia NON
+// calcola mai il vero indicatore ADX — né sul sito né in MQL5 (fraintendimento
+// storico del nome, documentato nel vault). La logica reale è: trend via
+// pendenza EMA50 + prezzo vs EMA50, filtrato da una banda RSI(14). Riprodotta
+// qui fedelmente COSÌ COM'È nel codice attuale, non "corretta" con un ADX vero.
+//
+// Trigger (identico a MQL5, stesso lato long/short):
+//   BUY  : EMA50 in salita (EMA50 > EMA50[1]) E RSI(14) in (45,65) E close > EMA50
+//   SELL : EMA50 in discesa (EMA50 < EMA50[1]) E RSI(14) in (35,55) E close < EMA50
+//
+// Timing barra / anti-repaint: vedi NEXUS_SAR.pine (stesso modello:
+// calc_on_every_tick=false, filtro HTF con request.security shiftato e
+// lookahead_off).
+// =============================================================================
+strategy("NEXUS EA - ADX_RSI (XAUUSD D1)", shorttitle="NXS-ADXRSI", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
+     options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
+     tooltip="Baseline = SL1.0x/TP4.0x ATR, no breakeven (config pre-17/07).\nVariante = SL1.0x/TP10.0x ATR + breakeven a 1.5xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→1.97, DD 11.54%→12.48%, net +7.191→+8.991 sul motore sito). Non ancora validata su MT5; il trigger stesso è cambiato dopo la raccolta dei 6 anni di dati MT5 storici.")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+emaLen   = input.int(50, "EMA trend length")
+rsiLen   = input.int(14, "RSI length")
+atrLen   = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// Config numerica risolta in base alla modalità scelta
+isVariant = configMode == "Variante TP-largo + Breakeven"
+slMult = 1.0
+tpMult = isVariant ? 10.0 : 4.0
+beR    = isVariant ? 1.5 : 0.0   // 0 = breakeven disattivato
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema50  = ta.ema(close, emaLen)
+rsiVal = ta.rsi(close, rsiLen)
+trendUp = ema50 > ema50[1]
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
+emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
+emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+
+htfBull = closeHTF > emaHTF and emaMTF > emaHTF
+htfBear = closeHTF < emaHTF and emaMTF < emaHTF
+htfBlocksBuy  = useHtfFilter and htfBear
+htfBlocksSell = useHtfFilter and htfBull
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and trendUp and rsiVal > 45 and rsiVal < 65 and close > ema50 and not htfBlocksBuy
+shortCond = inRange and not trendUp and rsiVal > 35 and rsiVal < 55 and close < ema50 and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="ADXRSI_bull")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="ADXRSI_bear")
+
+// ----------------------------- Gestione SL/TP/BE/Time-exit ------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var bool  beDone       = false
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    beDone := false
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and beR > 0 and not beDone
+    risk = atrAtEntry * slMult
+    prof = strategy.position_size > 0 ? close - strategy.position_avg_price : strategy.position_avg_price - close
+    if risk > 0 and prof >= beR * risk
+        slLevel := strategy.position_avg_price
+        beDone := true
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema50, "EMA50", color=color.new(color.yellow, 0), linewidth=2)
+bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a Daily", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS ADX_RSI BUY", "NEXUS ADX_RSI: segnale BUY su barra chiusa")
+alertcondition(shortCond, "NXS ADX_RSI SELL", "NEXUS ADX_RSI: segnale SELL su barra chiusa")
