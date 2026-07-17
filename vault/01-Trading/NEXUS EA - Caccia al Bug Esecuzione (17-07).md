@@ -17,6 +17,25 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 3): primi 2 fix dall'audit esterno canonico (LIQ_VOID + consolidamento NXR)
+
+Arrivato l'audit esterno/canonico dell'agente logico (`NEXUS_EA_Audit_Canonico_Concetti_e_Specifiche_Fix.md`, continuazione dell'audit Livello A) — confronto fra definizione ICT/SMC reale e codice per 10 strategie, con specifiche di fix precise. Qualità alta, fonti citate, nessuna invenzione riscontrata nei punti verificati.
+
+**Scoperta collaterale importante durante la verifica**: per IFVG/FVG_MIT/OB_MIT (+ MALAYSIAN_SNR/STRUCT_REACT, non segnalate come problematiche) esiste già un secondo motore più sofisticato su zone persistenti (`NXS_ReusePerformancePack.mqh`, "NXR pack") — ma **non sostituiva quello vecchio, lo affiancava**: ogni tick calcolava ENTRAMBI i segnali (quello "stretto" già segnalato come non fedele da due audit indipendenti, e quello nuovo su zone persistenti) e teneva quello con score più alto. Trovato anche un bug in più nella parte NXR: OB_MIT mescolava "mitigation" e "breaker" nello stesso segnale — la stessa confusione concettuale che l'audit dice di evitare.
+
+**Fix implementati (2 dei 10, i meno rischiosi):**
+
+1. **LIQ_VOID** (`NXS_Strategies_Institutional.mqh`, `NXS_Strat_LiquidityVoid`): geometria FVG corretta — prima confrontava `high(displacement)` con `high(displacement+2)` (due high, non un vero gap). Ora usa la vera relazione a 3 candele (fonti ICT/SMC): bullish `Low(candela3) > High(candela1)`, zona fra `High[candela1]`-`Low[candela3]`; bearish speculare.
+2. **Consolidamento su NXR come unica fonte** (`NXS_ReusePerformancePack.mqh`): `NXR_Strat_IFVG_Reversal`, `NXR_Strat_FVG_Mitigation`, `NXR_Strat_OB_Mitigation` non chiamano più la funzione legacy "base" come concorrente per score — se NXR non ha un trigger valido, il segnale è vuoto (niente fallback sulla logica stretta). Corretto anche il conflation OB_MIT/breaker: OB_MIT ora prende solo il primo retest di un OB ancora valido, i trigger BREAKER non producono più un segnale OB_MIT (nessuna strategia dedicata al breaker esiste ancora — lavoro futuro separato).
+
+**Non ancora fatto (rimandato, non dimenticato)**: WEEKLY_EXP (macchina a stati, due modelli alternativi proposti dall'audit), NY_REVERSAL (aggregazione sessione Londra con timezone/DST reali), SH_BMS_RTO (macchina a stati sweep→MSS→origin→return), RANGE_FADE (qualificazione persistente del range su N barre), OTE_CONT (ancoraggio Fibonacci allo stesso leg/BOS) — tutti richiedono più lavoro di design, non semplici patch.
+
+**ELLIOTT — decisione presa ma NON eseguita ora**: l'audit raccomanda scartarla o rinominarla `FIVE_SWING_IMPULSE` (dichiarata pattern geometrico proprietario, non vero conteggio Elliott onesto). Deciso di rinominare (meno distruttivo, preserva lo storico raccolto) — ma **rimandato all'esecuzione**: un rename tocca il nome della strategia in molti file (profili, stats, router, chain, learner CSV) e lo sweep 1-37 di NEXUS Bot sta girando proprio ora con un matching per-nome appena rinforzato contro corruzioni (vedi incidente S01/LIQ_SWEEP di stanotte) — rinominare ELLIOTT a metà sweep rischierebbe di rompere proprio quel meccanismo. Da fare a sweep concluso.
+
+Non ancora validato su MT5 reale (nessuno dei due fix di stanotte).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 2): LIQ_SWEEP esteso a weekly/monthly, un solo motore invece di 3 cloni
 
 Richiesta dell'utente: i sweep importanti avvengono anche su livelli weekly e monthly, non solo daily — voleva capire se il codice riconosce quando viene "preso" il massimo/minimo del giorno, della settimana, del mese. Verificato: **daily (PDH/PDL) era già implementato** (`NXS_DetectSweepExt`, usato da `LIQ_SWEEP` e riusato da NY_REVERSAL/LDN_REVERSAL/altri), **weekly/monthly non esistevano affatto** (zero riferimenti a `PERIOD_MN1` in tutto il progetto; `WEEKLY_EXP` esiste ma è un concetto diverso — premium/discount + displacement, non un vero sweep di PWH/PWL, ed è anche il candidato "quasi bloccato" dell'audit Livello A di stanotte).

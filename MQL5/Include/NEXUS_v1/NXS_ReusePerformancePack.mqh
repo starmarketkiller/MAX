@@ -2257,46 +2257,48 @@ SNXSSignal NXR_TriggerSignalFor(ENUM_NXR_ZONE_TYPE t1,
    return s;
 }
 
+// 17/07 notte - audit esterno canonico (ICT/SMC): IFVG/FVG_MIT/OB_MIT non
+// dovrebbero avere due motori che si contendono lo stesso segnale a colpi
+// di score - "converge on NXR as sole source of truth". Prima, ogni
+// funzione chiamava ANCHE la vecchia funzione "base" (zona ricostruita con
+// indici fissi, gia' segnalata come troppo stretta/non fedele da due audit
+// indipendenti) e teneva quella con score piu' alto - ambiguita' reale, non
+// solo teorica. Ora NXR e' l'unica fonte: se non ha un trigger valido per
+// quella zona, il segnale e' vuoto (nessun fallback sulla logica legacy).
+// Le funzioni "base" restano nel file per compatibilita' (nessun altro le
+// chiama piu' su questo percorso), ma non concorrono piu'.
 SNXSSignal NXR_Strat_IFVG_Reversal()
 {
-   SNXSSignal nxr = NXR_TriggerSignalFor(NXR_ZONE_IFVG_BULL,
-                                         NXR_ZONE_IFVG_BEAR,
-                                         "IFVG", STRAT_FVG_CONT);
-   SNXSSignal base = NXS_Strat_IFVG_Reversal();
-   if(nxr.dir != DIR_NONE && (base.dir == DIR_NONE || nxr.score >= base.score))
-      return nxr;
-   return base;
+   return NXR_TriggerSignalFor(NXR_ZONE_IFVG_BULL, NXR_ZONE_IFVG_BEAR,
+                               "IFVG", STRAT_FVG_CONT);
 }
 
 SNXSSignal NXR_Strat_FVG_Mitigation()
 {
-   SNXSSignal nxr = NXR_TriggerSignalFor(NXR_ZONE_FVG_BULL,
-                                         NXR_ZONE_FVG_BEAR,
-                                         "FVG_MIT", STRAT_FVG_CONT);
-   SNXSSignal base = NXS_Strat_FVG_Mitigation();
-   if(nxr.dir != DIR_NONE && (base.dir == DIR_NONE || nxr.score >= base.score))
-      return nxr;
-   return base;
+   return NXR_TriggerSignalFor(NXR_ZONE_FVG_BULL, NXR_ZONE_FVG_BEAR,
+                               "FVG_MIT", STRAT_FVG_CONT);
 }
 
 SNXSSignal NXR_Strat_OB_Mitigation()
 {
    NXR_InvalidateExpiredTrigger();
    SNXSSignal nxr = NXR_EmptySignal("OB_MIT", STRAT_ORDER_BLOCK);
+   // 17/07 notte - audit: un breaker (OB rotto e retestato dal lato
+   // opposto) NON e' una normale mitigation, sono due concetti distinti.
+   // Prima venivano attribuiti entrambi a OB_MIT (bug di nomenclatura) -
+   // ora OB_MIT prende solo il primo retest di un OB ancora valido
+   // (OB_BULL/OB_BEAR). I trigger BREAKER non producono piu' un segnale
+   // OB_MIT (nessuna strategia dedicata al breaker esiste ancora nel
+   // portafoglio - da valutare come lavoro futuro separato, non qui).
    if(g_nxrTrigger.valid && !g_nxrTrigger.consumed &&
       (g_nxrTrigger.zoneType == NXR_ZONE_OB_BULL ||
-       g_nxrTrigger.zoneType == NXR_ZONE_OB_BEAR ||
-       g_nxrTrigger.zoneType == NXR_ZONE_BREAKER_BULL ||
-       g_nxrTrigger.zoneType == NXR_ZONE_BREAKER_BEAR))
+       g_nxrTrigger.zoneType == NXR_ZONE_OB_BEAR))
    {
       nxr = g_nxrTrigger.signal;
       nxr.stratName = "OB_MIT_NXR";   // v2.0.27 attribution fix
       nxr.strat = STRAT_ORDER_BLOCK;
    }
-   SNXSSignal base = NXS_Strat_OB_Mitigation_Structural();
-   if(nxr.dir != DIR_NONE && (base.dir == DIR_NONE || nxr.score >= base.score))
-      return nxr;
-   return base;
+   return nxr;
 }
 
 SNXSSignal NXR_Strat_MalaysianSNR()

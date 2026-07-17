@@ -346,14 +346,19 @@ SNXSSignal NXS_Strat_LiquidityVoid(SNXSHTF &htf){
    if(!InpUseStrat_LiqVoid) return s;
    double atr = _inst_atr();
 
-   // Bullish void = recent strong displacement bar that left an FVG above (l[i+1] > h[i+3])
+   // 17/07 notte - geometria FVG corretta, da audit esterno canonico
+   // (fonti ICT/SMC: bullish FVG = Low(candela3) > High(candela1), zona fra
+   // High[candela1]-Low[candela3]). La versione precedente confrontava
+   // high(displacement) con high(displacement+2) - due high, non un vero
+   // gap - poteva classificare come void un normale nuovo massimo.
+   // Candela 1 (piu' vecchia) = dispIdx+1, candela 2 (displacement) =
+   // dispIdx, candela 3 (piu' recente, gia' chiusa) = dispIdx-1.
    int dispIdx = _inst_displacementBar(+1, 12, 1.2);
-   if(dispIdx > 0 && htf.bias == HTF_BULL){
-      // FVG from (dispIdx) range
-      double h_disp = iHigh(g_sym, NXS_EffTF(), dispIdx);
-      double l_disp = iLow (g_sym, NXS_EffTF(), dispIdx);
-      double voidHi = h_disp;
-      double voidLo = iHigh(g_sym, NXS_EffTF(), dispIdx + 2);
+   if(dispIdx > 1 && htf.bias == HTF_BULL){
+      double c1High = iHigh(g_sym, NXS_EffTF(), dispIdx + 1);
+      double c3Low  = iLow (g_sym, NXS_EffTF(), dispIdx - 1);
+      double voidLo = c1High;
+      double voidHi = c3Low;
       if(voidHi > voidLo + atr * 0.3){
          double ce = (voidHi + voidLo) * 0.5;     // consequent encroachment 50%
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
@@ -369,11 +374,13 @@ SNXSSignal NXS_Strat_LiquidityVoid(SNXSHTF &htf){
          }
       }
    }
+   // Bearish: High(candela3) < Low(candela1), zona fra High[candela3]-Low[candela1].
    int dispIdxB = _inst_displacementBar(-1, 12, 1.2);
-   if(dispIdxB > 0 && htf.bias == HTF_BEAR){
-      double l_disp = iLow (g_sym, NXS_EffTF(), dispIdxB);
-      double voidLo = l_disp;
-      double voidHi = iLow(g_sym, NXS_EffTF(), dispIdxB + 2);
+   if(dispIdxB > 1 && htf.bias == HTF_BEAR){
+      double c1Low  = iLow (g_sym, NXS_EffTF(), dispIdxB + 1);
+      double c3High = iHigh(g_sym, NXS_EffTF(), dispIdxB - 1);
+      double voidLo = c3High;
+      double voidHi = c1Low;
       if(voidHi > voidLo + atr * 0.3){
          double ce = (voidHi + voidLo) * 0.5;
          double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
