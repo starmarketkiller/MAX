@@ -1,6 +1,9 @@
 # secrets / local config
 server/.env
 LocalBridge/nexus_worker.config.json
+scripts/run_sweep37.ps1
+scripts/*credentials*
+scripts/*.local.ps1
 
 # database
 *.db
