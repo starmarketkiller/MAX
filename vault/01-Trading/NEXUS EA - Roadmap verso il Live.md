@@ -8,6 +8,14 @@ Documento vivo, da aggiornare ad ogni sessione. Scopo: sapere sempre "dove siamo
 
 ---
 
+## ⚠️ Scoperta 17/07 notte (tardi): tutti i test finora girati con leva sbagliata
+
+L'utente userà **1:500** in reale, ma il Tester girava con **1:100 su €1000** — un conto sottodimensionato per XAUUSD a leva bassa. Verificato nel codice: esiste un gate reale (`InpUseMarginGate`/`InpMinMarginLevelPct`, `NXS_Execution.mqh`) che calcola il margine richiesto (`OrderCalcMargin`, dipende dalla leva) e blocca l'apertura se il margin level proiettato scende sotto soglia — a differenza delle altre protezioni, **questo NON viene bypassato nel Tester**. Con XAUUSD a leva 1:100 su €1000 il margine per lotto è enorme rispetto all'equity → il gate blocca quasi tutto. Spiega "i test non partivano". Non è un bug di codice (la leva è già letta dinamicamente dal conto, non hardcoded) — era una configurazione del Tester diversa dal conto reale target. Corretto lato NEXUS Bot.
+
+**Implicazione**: tutti i dati raccolti finora (incluso lo sweep di stanotte) vanno considerati sospetti fino a conferma col nuovo sweep a 1:500 — secondo motivo indipendente (oltre al gate posizione mancante, Fase 0) per cui la Fase 3 va rifatta da zero. Aggiunto come voce esplicita qui sotto.
+
+---
+
 ## Fase 0 — Integrità di esecuzione (Level B) — 🟡 quasi completa
 
 L'EA deve eseguire fedelmente quello che decide, prima di chiedersi se le decisioni sono buone.
@@ -17,7 +25,7 @@ L'EA deve eseguire fedelmente quello che decide, prima di chiedersi se le decisi
 - [x] Tabella cap 12h corretta e resa coerente per TF di origine
 - [x] `NEXUS_trades.csv` non più infinito — reset opt-in aggiunto (17/07 notte)
 - [x] Identity check anti-corruzione fra passate Tester consecutive (NEXUS Bot, 17/07)
-- [ ] **Uno sweep 1-37 completo, pulito, senza timeout, con tutti i fix di stanotte dentro** — in corso ora (NEXUS Bot, timeout portato a 6h dopo un bug nello script di automazione)
+- [ ] **Uno sweep 1-37 completo, pulito, senza timeout, CON LEVA 1:500 (non 1:100)** — in corso ora (NEXUS Bot, timeout portato a 6h + leva corretta dopo la scoperta del margin-choke)
 - [x] Audit "altri bug dello stesso tipo?" — famiglia `NXS_StratFamily` completa, `_nxs_regime_veto` incompleto ma disattivato di default (safe)
 
 **Prossimo passo concreto**: aspettare l'esito dello sweep in corso. Se completa senza timeout, Fase 0 è chiusa.
