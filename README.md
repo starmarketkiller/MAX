@@ -63,6 +63,25 @@ Apri `server/.env` e imposta **almeno** questi valori:
 | `NEXUS_LICENSE_MODE` | `open` = ogni chiave è valida (consigliato self-hosted). |
 | `ANTHROPIC_API_KEY` | (Opzionale) chiave API Claude per l'**AI Coach** (`/api/coach/chat`). Senza, il Coach risponde "non disponibile". |
 | `NEXUS_COACH_MODEL` | Modello del Coach (default `claude-opus-4-8`). |
+| `OPENAI_API_KEY` | (Opzionale) chiave API OpenAI per gli **agenti** in `server/agents/` (separati dal Coach). Senza, `/api/agents/*` risponde 503 controllato. |
+| `NEXUS_OPENAI_MODEL` | Modello degli agenti OpenAI (default `gpt-4o-mini`). |
+
+### 🤖 Agenti OpenAI (`server/agents/`)
+
+Moduli AI aggiuntivi basati su OpenAI, **completamente separati dall'AI Coach
+(Claude)** — chiave, modello e codice indipendenti. Primo modulo: **Backtest
+Analyst**.
+
+- `POST /api/agents/backtest-analysis` (auth dashboard richiesta) — body:
+  `{"report": <testo o JSON di statistiche MT5>, "question": "(opzionale)"}`.
+  Risposta: `{"ok": true, "analysis": {sintesi, punti_di_forza[], rischi[],
+  anomalie[], raccomandazioni[], confidenza (0-100), model}}`.
+- `GET /api/agents/diagnostics` (auth richiesta) — stato configurazione senza
+  segreti: `{openai_configured: bool, openai_model, sdk_available}`.
+- Se `OPENAI_API_KEY` manca gli endpoint rispondono **503 con messaggio
+  chiaro** e il resto del backend non è impattato. La chiave non viene mai
+  loggata né inclusa in alcuna risposta.
+- Test: `cd server && python -m pytest tests/ -q` (non richiede chiavi API).
 
 ---
 

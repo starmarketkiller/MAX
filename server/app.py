@@ -2375,6 +2375,38 @@ def coach_notifications_read(user: str = Depends(require_user)):
     return {"ok": True}
 
 
+# ======================= AGENTI OPENAI (server/agents) =================== #
+# Moduli AI separati dall'AI Coach (Claude): usano OPENAI_API_KEY /
+# NEXUS_OPENAI_MODEL. Se la chiave manca gli endpoint rispondono con un
+# errore controllato senza impattare il resto del backend.
+from agents import backtest_analyst  # noqa: E402
+
+
+@app.post("/api/agents/backtest-analysis")
+async def agents_backtest_analysis(request: Request, user: str = Depends(require_user)):
+    """Analizza un report/statistiche di backtest MT5 col Backtest Analyst
+    (OpenAI). Body: {"report": <str|dict|list>, "question": <str opzionale>}."""
+    body = await request.json()
+    result, err = backtest_analyst.analyze(body.get("report"),
+                                           question=body.get("question"))
+    if err:
+        # Errore controllato (chiave mancante, SDK assente, API failure):
+        # 503 se manca la configurazione, 502 per errori upstream, 400 per input.
+        if "non configurata" in err or "non installato" in err:
+            raise HTTPException(status_code=503, detail=err)
+        if err.startswith("Nessun report"):
+            raise HTTPException(status_code=400, detail=err)
+        raise HTTPException(status_code=502, detail=err)
+    return {"ok": True, "analysis": result}
+
+
+@app.get("/api/agents/diagnostics")
+def agents_diagnostics(user: str = Depends(require_user)):
+    """Stato configurazione agenti OpenAI, senza esporre segreti (solo
+    booleani/nomi modello — stesso pattern di coach_configured)."""
+    return {"backtest_analyst": backtest_analyst.diagnostics()}
+
+
 # ============ EXTRA ENDPOINTS richiesti dal frontend React =============== #
 COMMON_SYMBOLS = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
                   "USDCAD", "NZDUSD", "US30", "NAS100", "SPX500", "GER40",
