@@ -17,10 +17,14 @@
 //     CHIUSA e l'ordine si riempie all'apertura della barra successiva — stesso
 //     modello di MQL5, che legge SAR/EMA con shift=1 (ultima barra chiusa) e
 //     apre a mercato subito dopo.
-//   - Il filtro HTF (H4 vs EMA50 H4 + EMA50 H1) usa request.security con
-//     lookahead=barmerge.lookahead_off e valore shiftato di 1 barra: pattern
-//     standard per evitare il repaint del multi-timeframe in Pine (senza questo
-//     accorgimento il valore HTF "vivo" può cambiare retroattivamente).
+//   - Il filtro HTF è EMA200 sullo STESSO timeframe (non multi-TF): riproduce
+//     il gate reale del profilo (NEXUS_EA_v2.mq5, riga ~344, attivo quando
+//     InpUseStrategyProfiles=true, il default) — non NXS_GetHTFBias/
+//     NXS_HTFBlocks, che è un meccanismo diverso e disattivato di default
+//     (InpUseHTFBias=false). Nel codice reale il confronto è asimmetrico
+//     (prezzo shift 0 "live" vs EMA200 shift 1): qui, coerentemente col resto
+//     dello script, entrambi i lati usano la barra confermata — scelta
+//     consapevole per restare nel modello anti-repaint a barra chiusa.
 // =============================================================================
 strategy("NEXUS EA - SAR (XAUUSD H4)", shorttitle="NXS-SAR", overlay=true,
      calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
@@ -32,7 +36,7 @@ strategy("NEXUS EA - SAR (XAUUSD H4)", shorttitle="NXS-SAR", overlay=true,
 configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
      options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
      tooltip="Baseline = SL1.5x/TP4.0x ATR, no breakeven (config v2.5.0).\nVariante = stesso SL/TP ma con breakeven a 1.5xR (test MFE/MAE 17/07, risultato ambiguo: PF sale, net scende leggermente — NON applicata in produzione, qui disponibile solo per confronto manuale).")
-useHtfFilter   = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+useHtfFilter   = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — riproduce il gate reale del profilo (NEXUS_EA_v2.mq5, InpUseStrategyProfiles=true), non il meccanismo NXS_GetHTFBias multi-timeframe (disattivato di default in MT5).")
 sarStart       = input.float(0.02, "SAR Step (start=increment)", step=0.01)
 sarMax         = input.float(0.2, "SAR Max", step=0.01)
 atrLen         = input.int(14, "ATR length")
@@ -51,18 +55,13 @@ atrVal = ta.atr(atrLen)
 sarVal = ta.sar(sarStart, sarStart, sarMax)
 ema9   = ta.ema(close, 9)
 ema21  = ta.ema(close, 21)
+ema200Htf = ta.ema(close, 200)
 
 inRange = time >= startDate and time <= endDate
 
-// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
-emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
-emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-
-htfBull = closeHTF > emaHTF and emaMTF > emaHTF
-htfBear = closeHTF < emaHTF and emaMTF < emaHTF
-htfBlocksBuy  = useHtfFilter and htfBear
-htfBlocksSell = useHtfFilter and htfBull
+// ----------------------------- Filtro HTF (EMA200 stesso TF) ---------------
+htfBlocksBuy  = useHtfFilter and close < ema200Htf
+htfBlocksSell = useHtfFilter and close > ema200Htf
 
 // ----------------------------- Trigger --------------------------------------
 longCond  = inRange and sarVal < close and ema9 > ema21 and not htfBlocksBuy
@@ -111,7 +110,8 @@ if strategy.position_size < 0
 plot(ema9, "EMA9", color=color.new(color.aqua, 0), linewidth=1)
 plot(ema21, "EMA21", color=color.new(color.orange, 0), linewidth=1)
 plot(sarVal, "Parabolic SAR", style=plot.style_circles, color=color.new(color.fuchsia, 0))
-bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+plot(ema200Htf, "EMA200 (filtro HTF)", color=color.new(color.yellow, 0), linewidth=1)
+bgcolor(useHtfFilter and close > ema200Htf ? color.new(color.green, 92) : useHtfFilter and close < ema200Htf ? color.new(color.red, 92) : na, title="HTF bias")
 
 if barstate.islast and timeframe.period != "240"
     label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)

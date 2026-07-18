@@ -64,11 +64,9 @@ o `server/backtest.py`.
   della barra successiva. È lo stesso modello di MQL5, che legge
   SAR/EMA/MACD/RSI con `shift=1` (ultima barra chiusa) e apre a mercato subito
   dopo — mai sulla barra "live"/in formazione.
-- Dove serve un dato multi-timeframe (filtro HTF di SAR/MACD/ADX_RSI), la
-  chiamata usa `request.security(..., lookahead=barmerge.lookahead_off)` **più
-  un offset `[1]`** sul valore richiesto — il pattern standard per evitare che
-  il valore dell'ultima barra HTF "in corso" venga riletto retroattivamente
-  (il classico repaint del multi-timeframe in Pine).
+- Il filtro HTF di SAR/MACD/ADX_RSI è EMA200 sullo **stesso** timeframe (non
+  multi-TF, non serve `request.security`) — vedi sezione dedicata sotto per i
+  dettagli e per la correzione fatta il 18/07.
 - La divergenza RSI_DIV confronta solo barre già chiuse (`[1]` e `[8]`): nessun
   pivot ricalcolato a posteriori, quindi nessun repaint strutturale.
 
@@ -80,7 +78,7 @@ o `server/backtest.py`.
 - **SL/TP baseline**: SL 1.5×ATR, TP 4.0×ATR, no breakeven.
 - **SL/TP variante**: stesso SL/TP, breakeven a 1.5×R (test ambiguo nel piano:
   PF sale ma net scende leggermente — disponibile solo per confronto manuale).
-- **Filtro HTF**: attivo (EMA50 H4 + EMA50 H1, vedi sotto).
+- **Filtro HTF**: attivo (EMA200 stesso TF, vedi sotto).
 - **Nota**: nessun trailing stop reale (`trailATR=0` nel profilo attuale — il
   test MFE/MAE ha confermato che il trailing non aiuta su questa famiglia di
   strategie, la leva è SL/TP fisso + eventuale breakeven).
@@ -96,7 +94,8 @@ o `server/backtest.py`.
   `NXS_StrategyProfiles.mqh`.
 - **SL/TP config pre-fix (storica)**: SL 2.0×ATR, TP 3.0×ATR, no breakeven —
   la config precedente al fix del 17/07, qui solo come riferimento.
-- **Filtro HTF**: attivo.
+- **Filtro HTF**: attivo (EMA200 stesso TF) ma **ridondante** — il trigger
+  richiede già close vs EMA200, vedi sotto.
 
 ### ADX_RSI (D1)
 - **Indicatori**: EMA50 (pendenza + posizione prezzo), RSI(14), ATR(14).
@@ -109,7 +108,8 @@ o `server/backtest.py`.
   `NXS_StrategyProfiles.mqh`.
 - **SL/TP config pre-fix (storica)**: SL 1.0×ATR, TP 4.0×ATR, no breakeven —
   la config precedente al fix del 17/07, qui solo come riferimento.
-- **Filtro HTF**: attivo.
+- **Filtro HTF**: attivo (EMA200 stesso TF) — qui aggiunge un vincolo
+  indipendente dal trigger (che usa EMA50, non EMA200).
 
 ### RSI_DIV (H1)
 - **Indicatori**: RSI(14), finestra fissa di 8 barre (non un pivot/zigzag).
@@ -121,22 +121,35 @@ o `server/backtest.py`.
 - **Filtro HTF**: **disattivato** — con l'HTF attivo il campione crolla a 0-4
   trade su ogni timeframe testato (vedi vault "Fix Blocco 4").
 
-## Filtro HTF — cos'è e semplificazioni note
+## Filtro HTF — cos'è, e correzione del 18/07
 
-Riproduce `NXS_GetHTFBias`/`NXS_HTFBlocks` (MQL5): bias rialzista se
-close(H4) > EMA50(H4) **e** EMA50(H1) > EMA50(H4); bias ribassista se
-l'opposto. Con bias ribassista i BUY sono bloccati, con bias rialzista sono
-bloccati i SELL; se il bias è neutro il filtro non blocca nulla.
+**Corretto il 18/07** — la prima versione di questo filtro (SAR/MACD/ADX_RSI)
+riproduceva `NXS_GetHTFBias`/`NXS_HTFBlocks` (EMA50 multi-timeframe H4+H1).
+Verificando dove il flag `htf=true` del profilo viene davvero applicato
+(`NEXUS_EA_v2.mq5`, riga ~344, dentro `InpUseStrategyProfiles=true` — il
+default), è emerso che quel meccanismo **non è quello realmente attivo**:
+`InpUseHTFBias` (che governa `NXS_GetHTFBias`) è **`false` di default**, un
+gate opzionale mai acceso in produzione.
 
-Semplificazioni rispetto al codice MQL5 (documentate qui per trasparenza, non
-nascoste):
-- **Non riproduce l'eccezione "reversal vicino a PDH/PDL"**: in MQL5, se il
-  prezzo è vicino al massimo/minimo del giorno precedente, un trade
-  controtrend è comunque permesso. Qui quell'eccezione è omessa — il filtro
-  Pine è quindi leggermente più restrittivo (blocca qualche trade in più
-  rispetto a MT5 in quei casi specifici).
-- Non riproduce `InpGateMode`/`InpEnableCounterHTFSoft` (gate a livello di
-  portafoglio, non applicabili a una singola strategia isolata come questa).
+Il gate **davvero live** è molto più semplice: **EMA200 sullo stesso
+timeframe della strategia**, confronto prezzo vs EMA200. Blocca i BUY se il
+prezzo è sotto EMA200, i SELL se è sopra. Aggiornato in tutti e 3 gli script
+che lo usano (SAR/MACD/ADX_RSI — RSI_DIV non ha filtro HTF, invariato).
+
+Una nota di fedeltà sul codice reale: lì il confronto è **asimmetrico**
+(prezzo `shift 0`, cioè la barra ancora in formazione, vs EMA200 `shift 1`,
+l'ultima barra chiusa) — probabilmente non intenzionale, ma presente. Qui in
+Pine, coerentemente col resto dello script (modello a barra confermata,
+anti-repaint), **entrambi i lati usano la barra confermata** — scelta
+consapevole, non una replica esatta di quell'asimmetria.
+
+**Impatto sui risultati già raccolti**: le tabelle di test più sotto sono
+state generate **prima** di questa correzione, quindi con il vecchio filtro
+EMA50 multi-timeframe (di fatto quasi sempre disattivo per SAR/MACD dato che
+`InpUseHTFBias=false` non lo blocca comunque a livello EA — ma il
+comportamento del filtro *dentro lo script Pine* era diverso da quello
+descritto qui). Vale la pena rieseguire i 3 test con la versione corretta
+per un confronto pulito.
 
 ## Gestione uscita comune a tutti e 4
 
@@ -157,6 +170,11 @@ nascoste):
 
 Test eseguiti con lo Strategy Tester nativo di TradingView su
 **OANDA:XAUUSD**, `calc_on_every_tick=false`, capitale iniziale 10.000 USD.
+
+> ⚠️ I risultati di **SAR/MACD/ADX_RSI** sotto sono stati raccolti **prima**
+> della correzione del filtro HTF del 18/07 (vedi sezione "Filtro HTF —
+> cos'è, e correzione del 18/07"). Da rieseguire con la versione corretta
+> per un confronto pienamente valido.
 
 > **Sintesi**: dei 4 motori indipendenti testati, **SAR/MACD/ADX_RSI
 > confermano risultati profittevoli** e in linea con la direzione dei fix

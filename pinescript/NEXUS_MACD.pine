@@ -15,8 +15,15 @@
 // combaciare esattamente con MT5 — non usare ta.macd() di default.
 //
 // Timing barra / anti-repaint: vedi NEXUS_SAR.pine (stesso modello:
-// calc_on_every_tick=false, filtro HTF con request.security shiftato e
-// lookahead_off).
+// calc_on_every_tick=false).
+//
+// FILTRO HTF: è EMA200 sullo STESSO timeframe (gate reale del profilo,
+// NEXUS_EA_v2.mq5 riga ~344, attivo con InpUseStrategyProfiles=true), non
+// NXS_GetHTFBias multi-timeframe (disattivato di default). Per MACD questo
+// filtro è di fatto RIDONDANTE: il trigger stesso richiede già close>EMA200
+// (BUY) / close<EMA200 (SELL), quindi il toggle qui sotto non esclude altri
+// trade oltre a quelli già esclusi dal trigger — lasciato per coerenza con
+// gli altri script e per documentare fedelmente il meccanismo reale.
 // =============================================================================
 strategy("NEXUS EA - MACD (XAUUSD H4)", shorttitle="NXS-MACD", overlay=true,
      calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
@@ -28,7 +35,7 @@ strategy("NEXUS EA - MACD (XAUUSD H4)", shorttitle="NXS-MACD", overlay=true,
 configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
      options=["Baseline (config attuale)", "Config pre-fix (17/07, storica)"],
      tooltip="Baseline = SL2.0x/TP8.0x ATR + breakeven a 1.0xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→2.05, DD 6.23%→5.85%, net +2.879→+3.643 sul motore sito), oggi live in produzione in NXS_StrategyProfiles.mqh.\nConfig pre-fix = SL2.0x/TP3.0x ATR, no breakeven — la config precedente al fix del 17/07, tenuta qui solo come riferimento storico per il confronto.")
-useHtfFilter   = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+useHtfFilter   = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo. Per MACD è ridondante col trigger stesso (già richiede close vs EMA200), lasciato per fedeltà/coerenza.")
 macdFast   = input.int(12, "MACD Fast EMA")
 macdSlow   = input.int(26, "MACD Slow EMA")
 macdSignal = input.int(9, "MACD Signal SMA")
@@ -54,15 +61,9 @@ ema200 = ta.ema(close, ema200Len)
 
 inRange = time >= startDate and time <= endDate
 
-// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
-emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
-emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-
-htfBull = closeHTF > emaHTF and emaMTF > emaHTF
-htfBear = closeHTF < emaHTF and emaMTF < emaHTF
-htfBlocksBuy  = useHtfFilter and htfBear
-htfBlocksSell = useHtfFilter and htfBull
+// ----------------------------- Filtro HTF (EMA200 stesso TF) ---------------
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
 
 // ----------------------------- Trigger --------------------------------------
 longCond  = inRange and macdLine > signalLine and macdLine > 0 and close > ema200 and not htfBlocksBuy
@@ -109,7 +110,7 @@ if strategy.position_size < 0
 
 // ----------------------------- Plot / avviso TF -----------------------------
 plot(ema200, "EMA200", color=color.new(color.yellow, 0), linewidth=2)
-bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+bgcolor(useHtfFilter and close > ema200 ? color.new(color.green, 92) : useHtfFilter and close < ema200 ? color.new(color.red, 92) : na, title="HTF bias")
 
 if barstate.islast and timeframe.period != "240"
     label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)

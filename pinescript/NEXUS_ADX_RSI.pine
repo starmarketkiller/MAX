@@ -16,8 +16,12 @@
 //   SELL : EMA50 in discesa (EMA50 < EMA50[1]) E RSI(14) in (35,55) E close < EMA50
 //
 // Timing barra / anti-repaint: vedi NEXUS_SAR.pine (stesso modello:
-// calc_on_every_tick=false, filtro HTF con request.security shiftato e
-// lookahead_off).
+// calc_on_every_tick=false).
+//
+// FILTRO HTF: è EMA200 sullo STESSO timeframe (gate reale del profilo,
+// NEXUS_EA_v2.mq5 riga ~344, attivo con InpUseStrategyProfiles=true), non
+// NXS_GetHTFBias multi-timeframe (disattivato di default). Qui aggiunge un
+// vincolo genuinamente nuovo: il trigger usa EMA50, non EMA200.
 // =============================================================================
 strategy("NEXUS EA - ADX_RSI (XAUUSD D1)", shorttitle="NXS-ADXRSI", overlay=true,
      calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
@@ -29,7 +33,7 @@ strategy("NEXUS EA - ADX_RSI (XAUUSD D1)", shorttitle="NXS-ADXRSI", overlay=true
 configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
      options=["Baseline (config attuale)", "Config pre-fix (17/07, storica)"],
      tooltip="Baseline = SL1.0x/TP10.0x ATR + breakeven a 1.5xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→1.97, DD 11.54%→12.48%, net +7.191→+8.991 sul motore sito), oggi live in produzione in NXS_StrategyProfiles.mqh. Il trigger stesso è cambiato dopo la raccolta dei 6 anni di dati MT5 storici.\nConfig pre-fix = SL1.0x/TP4.0x ATR, no breakeven — la config precedente al fix del 17/07, tenuta qui solo come riferimento storico per il confronto.")
-useHtfFilter = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo (il trigger di questa strategia usa EMA50, quindi il filtro EMA200 aggiunge un vincolo indipendente).")
 emaLen   = input.int(50, "EMA trend length")
 rsiLen   = input.int(14, "RSI length")
 atrLen   = input.int(14, "ATR length")
@@ -48,18 +52,13 @@ atrVal = ta.atr(atrLen)
 ema50  = ta.ema(close, emaLen)
 rsiVal = ta.rsi(close, rsiLen)
 trendUp = ema50 > ema50[1]
+ema200Htf = ta.ema(close, 200)
 
 inRange = time >= startDate and time <= endDate
 
-// ----------------------------- Filtro HTF (H4 EMA50 + H1 EMA50) ------------
-emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
-emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
-
-htfBull = closeHTF > emaHTF and emaMTF > emaHTF
-htfBear = closeHTF < emaHTF and emaMTF < emaHTF
-htfBlocksBuy  = useHtfFilter and htfBear
-htfBlocksSell = useHtfFilter and htfBull
+// ----------------------------- Filtro HTF (EMA200 stesso TF) ---------------
+htfBlocksBuy  = useHtfFilter and close < ema200Htf
+htfBlocksSell = useHtfFilter and close > ema200Htf
 
 // ----------------------------- Trigger --------------------------------------
 longCond  = inRange and trendUp and rsiVal > 45 and rsiVal < 65 and close > ema50 and not htfBlocksBuy
@@ -106,7 +105,8 @@ if strategy.position_size < 0
 
 // ----------------------------- Plot / avviso TF -----------------------------
 plot(ema50, "EMA50", color=color.new(color.yellow, 0), linewidth=2)
-bgcolor(useHtfFilter and htfBull ? color.new(color.green, 92) : useHtfFilter and htfBear ? color.new(color.red, 92) : na, title="HTF bias")
+plot(ema200Htf, "EMA200 (filtro HTF)", color=color.new(color.silver, 0), linewidth=1)
+bgcolor(useHtfFilter and close > ema200Htf ? color.new(color.green, 92) : useHtfFilter and close < ema200Htf ? color.new(color.red, 92) : na, title="HTF bias")
 
 if barstate.islast and timeframe.period != "D"
     label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a Daily", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
