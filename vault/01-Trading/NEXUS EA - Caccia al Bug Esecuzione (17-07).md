@@ -17,6 +17,18 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 10): LONDON_BO + EMA_PULLBACK — prime 2 delle 8 "plausibili ma incomplete"
+
+Iniziato il gruppo delle 8 strategie che l'audit giudica concettualmente plausibili ma senza una vera validazione/persistenza — qui il fix è irrobustire, non riscrivere da zero.
+
+**LONDON_BO** (`NXS_Strategies.mqh`): prima qualsiasi chiusura anche marginale oltre l'Asian range contava come breakout. Aggiunta validazione vera: corpo minimo (`InpLondonBO_MinBodyATR`, 0.5×ATR), buffer oltre il livello (`InpLondonBO_BufferATR`, 0.15×ATR, non un tocco marginale), close location value minimo (`InpLondonBO_MinCLV`, 0.6 — la chiusura deve essere vicina all'estremo della barra, non nel mezzo). Timezone/DST della sessione restano un lavoro a parte, condiviso con NY_REVERSAL (non duplicato qui).
+
+**EMA_PULLBACK** (`NXS_Strategies.mqh`): prima era un cross istantaneo di EMA20 nel tick corrente — non dimostrava trend persistente né un vero impulso precedente né una rejection reale, solo un incrocio. Ora richiede: trend persistente per `InpEMAPB_TrendPersistBars` (5) barre (non solo l'istante attuale), un impulso precedente che si sia allontanato dall'EMA20 di almeno `InpEMAPB_MinDistATR` (1.0×ATR) nelle ultime 12 barre, un vero pullback con rejection (tocco EMA20 + chiusura sopra con candela direzionale, non solo un cross), e blocco dell'entry se il prezzo rompe anche l'EMA50 (trend strutturalmente rotto).
+
+Non ancora validato su MT5 reale. Restano dal gruppo "plausibili ma incomplete": TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 9): DISP_REBAL — CE corretto, chiude tutti e 5 i mismatch critici
 
 Ultimo dei 5 mismatch critici del secondo audit. `NXS_Strat_DisplacementRebalance` usava il 50% dell'**intera candela** di displacement come "CE" (Consequent Encroachment) — non è il rebalance di un'inefficienza, è solo un retracement al 50% della candela impulso.

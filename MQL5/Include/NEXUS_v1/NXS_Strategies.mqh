@@ -389,6 +389,14 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
 }
 
 //------------------------------------ H4 London Breakout
+// 17/07 notte - validazione breakout aggiunta, da audit esterno canonico:
+// prima qualsiasi close marginale oltre l'Asia contava come breakout.
+// Timezone/DST della sessione restano un lavoro a parte, condiviso e
+// centralizzato per NY_REVERSAL (non duplicato qui).
+double InpLondonBO_MinBodyATR = 0.5;   // corpo minimo della barra di breakout
+double InpLondonBO_BufferATR  = 0.15;  // margine oltre il livello, non un tocco marginale
+double InpLondonBO_MinCLV     = 0.6;   // close location value: chiusura vicina all'estremo del range di barra
+
 SNXSSignal NXS_Strat_LondonBO(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LONDON_BO; s.stratName = "LONDON_BO";
    if(!InpStrat_LONDON_BO || !NXS_SelectorAllows(10)) return s;
@@ -396,10 +404,17 @@ SNXSSignal NXS_Strat_LondonBO(){
    // use Asian range
    SNXSAMD amd = NXS_GetAMD();
    if(amd.asianHigh <= 0) return s;
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   if(c1 > amd.asianHigh){
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double c1 = iClose(g_sym, tf, 1), o1 = iOpen(g_sym, tf, 1);
+   double h1 = iHigh (g_sym, tf, 1), l1 = iLow (g_sym, tf, 1);
+   double body1 = MathAbs(c1 - o1);
+   double range1 = h1 - l1;
+   if(body1 < g_atr * InpLondonBO_MinBodyATR || range1 <= 0) return s;
+   double clvUp   = (c1 - l1) / range1;   // vicino al massimo di barra = convinzione rialzista
+   double clvDown = (h1 - c1) / range1;   // vicino al minimo di barra = convinzione ribassista
+   if(c1 > amd.asianHigh + g_atr * InpLondonBO_BufferATR && clvUp >= InpLondonBO_MinCLV){
       s.dir = DIR_BUY;  s.score = 70; s.reason = "London_BO_above_asia";
-   } else if(c1 < amd.asianLow){
+   } else if(c1 < amd.asianLow - g_atr * InpLondonBO_BufferATR && clvDown >= InpLondonBO_MinCLV){
       s.dir = DIR_SELL; s.score = 70; s.reason = "London_BO_below_asia";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
@@ -407,20 +422,57 @@ SNXSSignal NXS_Strat_LondonBO(){
 }
 
 //------------------------------------ H5 EMA Pullback
-// Riportata alla logica del sito: trend EMA20>EMA50, pullback = il prezzo era
-// sotto EMA20 e ci richiude sopra (o viceversa). La vecchia usava EMA9/21+RSI.
+// 17/07 notte - da semplice reclaim EMA20 a vero pullback, da audit esterno
+// canonico: prima bastava un cross istantaneo di EMA20 con EMA20>EMA50 nel
+// tick corrente - non dimostrava un trend persistente ne' un vero impulso
+// precedente ne' una rejection. Ora richiede: (1) trend persistente per N
+// barre (non solo l'istante attuale), (2) un impulso precedente che si sia
+// allontanato dall'EMA20 di una distanza minima, (3) pullback con vera
+// rejection (non solo un cross), (4) niente entry se EMA50 viene rotta.
+int    InpEMAPB_TrendPersistBars = 5;
+double InpEMAPB_MinDistATR       = 1.0;
+double InpEMAPB_TouchToleranceATR= 0.15;
+
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
    if(!InpStrat_EMA_PULLBACK || !NXS_SelectorAllows(11)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
-   double e20 = NXS_EMAv(20, tf, 1), e50 = NXS_EMAv(50, tf, 1), e20p = NXS_EMAv(20, tf, 2);
-   if(e20 <= 0 || e50 <= 0 || e20p <= 0) return s;
+   double e20 = NXS_EMAv(20, tf, 1), e50 = NXS_EMAv(50, tf, 1);
+   if(e20 <= 0 || e50 <= 0) return s;
    bool up = e20 > e50;
-   double px = iClose(g_sym, tf, 1), ppx = iClose(g_sym, tf, 2);
-   if(up && ppx < e20p && px > e20){
-      s.dir = DIR_BUY;  s.score = 64; s.reason = "EMA_PB bull (site)";
-   } else if(!up && ppx > e20p && px < e20){
-      s.dir = DIR_SELL; s.score = 64; s.reason = "EMA_PB bear (site)";
+
+   // (1) Trend persistente: EMA20>EMA50 (o il contrario) e EMA20 nella direzione
+   // giusta per le ultime InpEMAPB_TrendPersistBars barre, non solo ora.
+   for(int k = 1; k <= InpEMAPB_TrendPersistBars; k++){
+      double e20k = NXS_EMAv(20, tf, k), e50k = NXS_EMAv(50, tf, k), e20kp = NXS_EMAv(20, tf, k + 1);
+      if(e20k <= 0 || e50k <= 0 || e20kp <= 0) return s;
+      bool trendOkK = up ? (e20k > e50k && e20k >= e20kp) : (e20k < e50k && e20k <= e20kp);
+      if(!trendOkK) return s;
+   }
+   // (2) Impulso precedente: negli ultimi 10 barre prima del pullback il prezzo
+   // deve essersi allontanato dall'EMA20 di almeno InpEMAPB_MinDistATR x ATR.
+   bool hadImpulse = false;
+   for(int k = 2; k <= 12; k++){
+      double e20k = NXS_EMAv(20, tf, k);
+      if(e20k <= 0) continue;
+      double pxk = up ? iHigh(g_sym, tf, k) : iLow(g_sym, tf, k);
+      double dist = up ? (pxk - e20k) : (e20k - pxk);
+      if(dist >= g_atr * InpEMAPB_MinDistATR){ hadImpulse = true; break; }
+   }
+   if(!hadImpulse) return s;
+
+   // (3) Pullback con vera rejection sulla barra chiusa, non solo un cross.
+   double c1 = iClose(g_sym, tf, 1), o1 = iOpen(g_sym, tf, 1);
+   double l1 = iLow(g_sym, tf, 1),   h1 = iHigh(g_sym, tf, 1);
+   double tol = g_atr * InpEMAPB_TouchToleranceATR;
+   if(up){
+      bool touched = (l1 <= e20 + tol);
+      bool reclaim = (c1 > e20) && (c1 > o1) && (c1 > e50);   // (4) niente entry sotto EMA50
+      if(touched && reclaim){ s.dir = DIR_BUY;  s.score = 64; s.reason = "EMA_PB_bull:pullback+reject"; }
+   } else {
+      bool touched = (h1 >= e20 - tol);
+      bool reclaim = (c1 < e20) && (c1 < o1) && (c1 < e50);
+      if(touched && reclaim){ s.dir = DIR_SELL; s.score = 64; s.reason = "EMA_PB_bear:pullback+reject"; }
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

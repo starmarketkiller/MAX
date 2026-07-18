@@ -54,7 +54,9 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **SILVER_BULLET** — macchina a stati sweep→displacement/BOS→FVG→retest (17/07 notte; scadenza a barre, non timezone reale — vedi NY_REVERSAL)
 - [x] **CISD** — rinominata `THREE_BAR_DELIVERY_BREAK` (17/07 notte; non riscritta, un tentativo precedente di versione "vera" non scattava mai — 0/1067)
 - [x] **DISP_REBAL** — CE corretto sul vero FVG a 3 candele, non più il 50% dell'intera candela displacement (17/07 notte) — **chiude tutti e 5 i mismatch critici del secondo audit**
-- [ ] 8 strategie "plausibili ma incomplete" (manca la relazione causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
+- [x] **LONDON_BO** — validazione breakout aggiunta (corpo minimo, buffer, close location value) (17/07 notte)
+- [x] **EMA_PULLBACK** — trend persistente + impulso precedente + vera rejection, non più un cross istantaneo (17/07 notte)
+- [ ] 6 strategie "plausibili ma incomplete" rimanenti (manca la relazione causale sweep→displacement→MSS→retracement→entry): TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
 - [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
 
 **Prossimo passo concreto**: le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
