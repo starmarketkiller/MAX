@@ -17,6 +17,24 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 12): le 4 di allineamento indicatori — chiude il secondo audit intero
+
+Ultimo gruppo del secondo audit (20 strategie residue): problemi di allineamento temporale fra prezzo e valore dell'indicatore, non di logica concettuale.
+
+**BOLLINGER**: `g_bbLower/g_bbUpper` sono cache globali SOLO a shift1 — il confronto usava `ppx` (close a shift2) contro la banda di shift1, prezzo storico confrontato con una banda temporalmente diversa. Ora legge esplicitamente `Lower/Upper` a shift 1 **e** 2 con una `CopyBuffer` dedicata nella funzione.
+
+**BB_SQUEEZE**: soglia assoluta debole (`width <= 2.5×ATR`) sostituita con **percentile relativo alla propria storia** (150 barre) — squeeze solo se la bandwidth è nel 20° percentile o sotto, richiede che sia durato almeno 5 barre consecutive, breakout solo se la bandwidth sta già riespandendo, one-shot per squeeze (niente segnali ripetuti sullo stesso squeeze).
+
+**ICHIMOKU**: stesso bug di allineamento di BOLLINGER — `g_ichiSpanA/B/Tenkan/Kijun` cache solo a shift1, `prev` (close shift2) confrontato con la cloud di shift1. Corretto leggendo entrambi gli shift esplicitamente (i buffer Senkou di MT5 sono già pre-shiftati internamente per il rendering, il problema era solo l'indice di lettura, non lo shift dell'indicatore in sé).
+
+**MALAYSIAN_SNR**: 3 correzioni — (1) i livelli H4 ora usano tolleranze in **ATR H4** invece dell'ATR del TF strategia attivo (unità diverse, distanza non dimensionalmente stabile — handle ATR H4 statico locale, non tramite `NXS_iATR` perché questo file è incluso prima di `NXS_Performance.mqh`); (2) il tocco del livello ora usa low/high della **barra chiusa 1**, non più il bid live mescolato con la rejection su barra chiusa; (3) **W1 non è più codice morto**: era calcolato e mai usato, ora è un vero bonus di confluence (+4 score se il livello H4 coincide anche con un livello W1 entro mezzo ATR H4).
+
+**Il secondo audit (20 strategie residue) è ora interamente coperto**: 5 mismatch critici + 8 "plausibili ma incomplete" (6 con fix reali, 2 rimandate per redesign più corposo: AMD_REVERSAL, PO3) + 4 di allineamento indicatori.
+
+Non ancora validato su MT5 reale (macchina offline stanotte). Resta il primo audit canonico: WEEKLY_EXP, NY_REVERSAL, RANGE_FADE, OTE_CONT (redesign più corposi) + rename ELLIOTT (a sweep concluso) + JUDAS_SWING/AMD_REVERSAL/PO3 rimandate.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 11): refHigh/refLow completato + AMD_CONT + verifica TURTLE_SOUP/JUDAS_SWING
 
 Continuando sul gruppo "plausibili ma incomplete", ho trovato un problema collegato al mio stesso fix di LIQ_SWEEP di stanotte, prima di procedere sugli altri.

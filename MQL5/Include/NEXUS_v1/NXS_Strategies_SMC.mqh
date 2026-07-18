@@ -477,13 +477,30 @@ SNXSSignal NXS_Strat_OTE_Continuation(){
 // Storyline: Weekly + Daily + H4 supportano? H1 entry su rejection candle body forte.
 // Fresh = livello non testato negli ultimi 20 bar H4 → bonus +5
 // Flipped = livello che era resistance e ora supporta (close-above) → SBR (Support-Becomes-Resistance) o RBS.
+// 17/07 notte - da audit esterno canonico, 3 correzioni:
+// (1) i livelli H4 vengono ora confrontati con tolleranze in ATR H4 (non
+//     piu' l'ATR del TF strategia attivo - unita' diverse, distanza non
+//     dimensionalmente stabile);
+// (2) il tocco del livello ora usa low/high della barra CHIUSA 1, non il
+//     bid live mescolato con la rejection su barra chiusa;
+// (3) W1 non e' piu' calcolato e scartato: e' un vero bonus di confluence
+//     (livello W1 vicino = +score), o rimosso dal trigger come suggerito.
 SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "MALAYSIAN_SNR";
    // v2.0.6: skip Asia (bassa volatilità ⇒ falsi segnali su H4 SR body-based)
    if(g_session == SESS_ASIAN) return s;
-   double atr = _smc_atr();
-   // Body-based levels (close, not wick) on H4 and W1
+   double atr = _smc_atr();   // per il corpo della candela sul TF strategia - unita' corretta li'
+   // Handle statico locale (non NXS_iATR - questo file e' incluso PRIMA di
+   // NXS_Performance.mqh in NEXUS_EA_v2.mq5, quella funzione non sarebbe
+   // ancora dichiarata): creato una sola volta, poi riusato ad ogni chiamata.
+   static int hAtrH4 = INVALID_HANDLE;
+   if(hAtrH4 == INVALID_HANDLE) hAtrH4 = iATR(g_sym, InpTFHigh, 14);
+   double atrH4Arr[]; double atrH4 = 0;
+   if(hAtrH4 != INVALID_HANDLE) CopyBuffer(hAtrH4, 0, 1, 1, atrH4Arr);
+   if(ArraySize(atrH4Arr) > 0) atrH4 = atrH4Arr[0];
+   if(atrH4 <= 0) return s;
+   // Body-based levels (close, not wick) on H4 e W1
    int idxH4Hi = iHighest(g_sym, InpTFHigh, MODE_CLOSE, 12, 1);
    int idxH4Lo = iLowest (g_sym, InpTFHigh, MODE_CLOSE, 12, 1);
    double h4Hi = iClose(g_sym, InpTFHigh, idxH4Hi);
@@ -492,9 +509,10 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    int idxW1Lo = iLowest (g_sym, PERIOD_W1, MODE_CLOSE, 8, 1);
    double w1Hi = iClose(g_sym, PERIOD_W1, idxW1Hi);
    double w1Lo = iClose(g_sym, PERIOD_W1, idxW1Lo);
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double o1 = iOpen (g_sym, NXS_EffTF(), 1);
+   double l1 = iLow  (g_sym, NXS_EffTF(), 1);
+   double h1 = iHigh (g_sym, NXS_EffTF(), 1);
    double bodyAbs = MathAbs(c1 - o1);
    if(bodyAbs <= atr * 0.5) return s;          // require strong body
    // Fresh check: did price already touch this level in last 20 H4 bars?
@@ -502,33 +520,33 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    for(int i = 1; i <= 20; i++){
       double hh = iHigh(g_sym, InpTFHigh, i);
       double ll = iLow (g_sym, InpTFHigh, i);
-      if(hh >= h4Hi - atr * 0.3 && hh <= h4Hi + atr * 0.3 && i > 3) freshHi = false;
-      if(ll >= h4Lo - atr * 0.3 && ll <= h4Lo + atr * 0.3 && i > 3) freshLo = false;
+      if(hh >= h4Hi - atrH4 * 0.3 && hh <= h4Hi + atrH4 * 0.3 && i > 3) freshHi = false;
+      if(ll >= h4Lo - atrH4 * 0.3 && ll <= h4Lo + atrH4 * 0.3 && i > 3) freshLo = false;
    }
    // AUDITPATCH: storyline is directional context, not the current location.
-   // The previous test required a BUY to be both near the H4 range low and above
-   // the H4 midpoint (and the SELL mirror), which is usually contradictory.
    double h4C1 = iClose(g_sym, InpTFHigh, 1);
    double h4C4 = iClose(g_sym, InpTFHigh, 4);
    double d1C1 = iClose(g_sym, PERIOD_D1, 1);
    double d1C2 = iClose(g_sym, PERIOD_D1, 2);
    bool storyBull = (h4C1 > h4C4 && d1C1 >= d1C2);
    bool storyBear = (h4C1 < h4C4 && d1C1 <= d1C2);
-   // BUY at support
-   if(MathAbs(bid - h4Lo) < atr * 0.4 && c1 > o1 && storyBull){
+   // BUY at support - tocco su barra chiusa 1 (low), non bid live.
+   if(l1 <= h4Lo + atrH4 * 0.4 && l1 >= h4Lo - atrH4 * 0.4 && c1 > o1 && storyBull){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-      s.slPrice = h4Lo - 0.5 * atr;
+      s.slPrice = h4Lo - 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.3);
       s.score = 68.0 + (freshLo ? 5.0 : 0.0);
-      s.reason = freshLo ? "SNR bull fresh+story" : "SNR bull tested+story";
+      if(MathAbs(h4Lo - w1Lo) <= atrH4 * 0.5){ s.score += 4.0; s.reason = freshLo ? "SNR bull fresh+story+W1" : "SNR bull tested+story+W1"; }
+      else s.reason = freshLo ? "SNR bull fresh+story" : "SNR bull tested+story";
       return s;
    }
-   if(MathAbs(bid - h4Hi) < atr * 0.4 && c1 < o1 && storyBear){
-      s.dir = DIR_SELL; s.entryRef = bid;
-      s.slPrice = h4Hi + 0.5 * atr;
+   if(h1 >= h4Hi - atrH4 * 0.4 && h1 <= h4Hi + atrH4 * 0.4 && c1 < o1 && storyBear){
+      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+      s.slPrice = h4Hi + 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.3);
       s.score = 68.0 + (freshHi ? 5.0 : 0.0);
-      s.reason = freshHi ? "SNR bear fresh+story" : "SNR bear tested+story";
+      if(MathAbs(h4Hi - w1Hi) <= atrH4 * 0.5){ s.score += 4.0; s.reason = freshHi ? "SNR bear fresh+story+W1" : "SNR bear tested+story+W1"; }
+      else s.reason = freshHi ? "SNR bear fresh+story" : "SNR bear tested+story";
       return s;
    }
    return s;

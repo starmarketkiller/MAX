@@ -62,9 +62,12 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **LDN_REVERSAL** — beneficia automaticamente dal fix refHigh/refLow sopra (17/07 notte)
 - [ ] **JUDAS_SWING** — rischio minore rimanente: CHOCH è stato corrente senza timestamp, non garantisce causalità con lo sweep di questa barra specifica (richiede timestamp su NXS_Structure, rimandato)
 - [ ] **AMD_REVERSAL**, **PO3** — richiedono vera memoria di fase giornaliera (redesign, non patch)
-- [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
+- [x] **BOLLINGER** — allineamento shift1/shift2 corretto (17/07 notte)
+- [x] **BB_SQUEEZE** — squeeze percentile-relativo alla propria storia, non più soglia assoluta (17/07 notte)
+- [x] **ICHIMOKU** — stesso allineamento shift1/shift2 corretto (17/07 notte)
+- [x] **MALAYSIAN_SNR** — ATR H4 corretto, tocco su barra chiusa (non bid live), W1 da codice morto a vero bonus di confluence (17/07 notte)
 
-**Prossimo passo concreto**: le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
+**Secondo audit (20 strategie residue) interamente coperto.** Prossimo passo concreto: WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi, dal primo audit canonico), JUDAS_SWING/AMD_REVERSAL/PO3 (rimandate, serve memoria di fase/timestamp), infine il rename ELLIOTT a sweep concluso.
 
 ---
 

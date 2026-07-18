@@ -161,18 +161,23 @@ SNXSSignal NXS_Strat_ADXRSI(){
 }
 
 //------------------------------------ K2 Bollinger Mean Reversion
+// 17/07 notte - allineamento temporale corretto, da audit esterno canonico:
+// g_bbLower/g_bbUpper sono globali cache SOLO a shift1 (vedi NEXUS_EA_v2.mq5,
+// CopyBuffer con shift=1) - il confronto usava ppx (close[2]) contro la banda
+// di shift1, non quella di shift2. Prezzo storico confrontato con una banda
+// temporalmente diversa. Ora legge esplicitamente Lower/Upper a shift 1 E 2.
 SNXSSignal NXS_Strat_Bollinger(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BOLLINGER; s.stratName = "BOLLINGER";
    if(!InpStrat_BOLLINGER || !NXS_SelectorAllows(2)) return s;
-   // Riportata alla logica del sito (sig_bollinger): rientro dalla banda con
-   // il CLOSE (non low/high) e NESSUN filtro RSI. La vecchia usava low/high +
-   // RSI<35/>65 -> troppo restrittiva e disallineata (158 setup, 0 vinti).
-   //   ppx <= lower < px  -> long  ;  ppx >= upper > px -> short
-   double px  = iClose(g_sym, NXS_EffTF(), 1);   // close[i]
-   double ppx = iClose(g_sym, NXS_EffTF(), 2);   // close[i-1]
-   if(ppx <= g_bbLower && g_bbLower < px){
+   double bbUp[], bbLo[];
+   ArraySetAsSeries(bbUp, true); ArraySetAsSeries(bbLo, true);
+   if(CopyBuffer(g_hBB, 1, 1, 2, bbUp) < 2) return s;   // bbUp[0]=shift1, bbUp[1]=shift2
+   if(CopyBuffer(g_hBB, 2, 1, 2, bbLo) < 2) return s;
+   double px  = iClose(g_sym, NXS_EffTF(), 1);   // close[1]
+   double ppx = iClose(g_sym, NXS_EffTF(), 2);   // close[2]
+   if(ppx <= bbLo[1] && bbLo[0] < px){
       s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_reentry";
-   } else if(ppx >= g_bbUpper && g_bbUpper > px){
+   } else if(ppx >= bbUp[1] && bbUp[0] > px){
       s.dir = DIR_SELL; s.score = 62; s.reason = "BB_upper_reentry";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
@@ -479,34 +484,103 @@ SNXSSignal NXS_Strat_EMAPullback(){
 }
 
 //------------------------------------ H6 BB Squeeze Breakout
+// 17/07 notte - squeeze relativo alla propria storia, da audit esterno
+// canonico: "width <= 2.5xATR" era una soglia assoluta debole, con
+// parametri standard la bandwidth puo' spesso rientrarci senza che sia una
+// vera contrazione. Ora percentile della bandwidth su una finestra (150
+// barre), richiede che lo squeeze sia durato almeno InpBBSQ_MinSqueezeBars
+// barre consecutive, breakout solo se la bandwidth sta gia' riespandendo.
+// Calcolo bar-gated (una volta per barra chiusa), one-shot per squeeze
+// (niente segnali ripetuti sullo stesso squeeze).
+int    InpBBSQ_LookbackBars   = 150;
+double InpBBSQ_PercentileMax  = 20.0;
+int    InpBBSQ_MinSqueezeBars = 5;
+
+struct SNXSBBSqueezeState {
+   datetime lastBarTime;
+   int      squeezeBars;   // barre consecutive gia' in squeeze
+   bool     consumed;      // squeeze corrente gia' usato per un breakout
+};
+SNXSBBSqueezeState g_bbsqState;
+
 SNXSSignal NXS_Strat_BBSqueeze(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BB_SQUEEZE; s.stratName = "BB_SQUEEZE";
    if(!InpStrat_BB_SQUEEZE || !NXS_SelectorAllows(12)) return s;
-   double width = g_bbUpper - g_bbLower;
-   if(width <= 0 || g_atr <= 0) return s;
-   if(width > g_atr * 2.5) return s; // not a squeeze
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   if(c1 > g_bbUpper){
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_bbsqState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_bbsqState.lastBarTime = curBar0;
+
+   int n = InpBBSQ_LookbackBars + 2;
+   double up[], lo[], mid[];
+   ArraySetAsSeries(up, true); ArraySetAsSeries(lo, true); ArraySetAsSeries(mid, true);
+   if(CopyBuffer(g_hBB, 1, 1, n, up)  < n) return s;
+   if(CopyBuffer(g_hBB, 2, 1, n, lo)  < n) return s;
+   if(CopyBuffer(g_hBB, 0, 1, n, mid) < n) return s;
+
+   double bw1 = (mid[0] > 0) ? (up[0] - lo[0]) / mid[0] : 0;   // bandwidth shift1 (barra chiusa)
+   double bw2 = (mid[1] > 0) ? (up[1] - lo[1]) / mid[1] : 0;   // bandwidth shift2
+   if(bw1 <= 0) return s;
+
+   int below = 0;
+   for(int i = 2; i < n; i++){
+      double bwi = (mid[i] > 0) ? (up[i] - lo[i]) / mid[i] : 0;
+      if(bwi < bw1) below++;
+   }
+   double percentile = 100.0 * below / InpBBSQ_LookbackBars;
+   bool isSqueeze = (percentile <= InpBBSQ_PercentileMax);
+
+   if(isSqueeze){
+      g_bbsqState.squeezeBars++;
+   } else {
+      g_bbsqState.squeezeBars = 0;
+      g_bbsqState.consumed = false;
+      return s;   // niente breakout se non siamo (o non siamo appena usciti da) uno squeeze
+   }
+   if(g_bbsqState.squeezeBars < InpBBSQ_MinSqueezeBars || g_bbsqState.consumed) return s;
+
+   double c1 = iClose(g_sym, tf, 1);
+   bool expanding = bw1 > bw2;
+   if(!expanding) return s;
+   if(c1 > up[0]){
       s.dir = DIR_BUY;  s.score = 70; s.reason = "Squeeze_breakout_up";
-   } else if(c1 < g_bbLower){
+   } else if(c1 < lo[0]){
       s.dir = DIR_SELL; s.score = 70; s.reason = "Squeeze_breakout_down";
    }
-   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   if(s.dir != DIR_NONE){
+      g_bbsqState.consumed = true;   // one-shot: niente altri segnali su questo stesso squeeze
+      NXS_DefaultSLTP(s);
+   }
    return s;
 }
 
 //------------------------------------ H7 Ichimoku Kumo Break
+// 17/07 notte - allineamento temporale corretto, da audit esterno canonico:
+// g_ichiSpanA/B/Tenkan/Kijun sono globali cache SOLO a shift1 - "prev"
+// (close a shift2) veniva confrontato con la cloud di shift1, non quella
+// di shift2 (i buffer Senkou di MT5 sono gia' pre-shiftati internamente
+// per il rendering "26 barre avanti", ma vanno comunque letti allo shift
+// coerente con la barra che si sta valutando). Ora legge esplicitamente
+// entrambi gli shift.
 SNXSSignal NXS_Strat_Ichimoku(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ICHIMOKU; s.stratName = "ICHIMOKU";
    if(!InpStrat_ICHIMOKU || !NXS_SelectorAllows(13)) return s;
+   double spanA[], spanB[], tenkan[], kijun[];
+   ArraySetAsSeries(spanA, true); ArraySetAsSeries(spanB, true);
+   ArraySetAsSeries(tenkan, true); ArraySetAsSeries(kijun, true);
+   if(CopyBuffer(g_hICHI, 2, 1, 2, spanA)  < 2) return s;
+   if(CopyBuffer(g_hICHI, 3, 1, 2, spanB)  < 2) return s;
+   if(CopyBuffer(g_hICHI, 0, 1, 2, tenkan) < 2) return s;
+   if(CopyBuffer(g_hICHI, 1, 1, 2, kijun)  < 2) return s;
+
+   double kumoTop1 = MathMax(spanA[0], spanB[0]), kumoBot1 = MathMin(spanA[0], spanB[0]);
+   double kumoTop2 = MathMax(spanA[1], spanB[1]), kumoBot2 = MathMin(spanA[1], spanB[1]);
+   if(kumoTop1 <= 0 || kumoBot1 <= 0 || kumoTop2 <= 0 || kumoBot2 <= 0) return s;
    double price = iClose(g_sym, NXS_EffTF(), 1);
-   double kumoTop = MathMax(g_ichiSpanA, g_ichiSpanB);
-   double kumoBot = MathMin(g_ichiSpanA, g_ichiSpanB);
-   if(kumoTop <= 0 || kumoBot <= 0) return s;
-   double prev = iClose(g_sym, NXS_EffTF(), 2);
-   if(prev <= kumoTop && price > kumoTop && g_ichiTenkan > g_ichiKijun){
+   double prev  = iClose(g_sym, NXS_EffTF(), 2);
+   if(prev <= kumoTop2 && price > kumoTop1 && tenkan[0] > kijun[0]){
       s.dir = DIR_BUY;  s.score = 65; s.reason = "Kumo_break_up";
-   } else if(prev >= kumoBot && price < kumoBot && g_ichiTenkan < g_ichiKijun){
+   } else if(prev >= kumoBot2 && price < kumoBot1 && tenkan[0] < kijun[0]){
       s.dir = DIR_SELL; s.score = 65; s.reason = "Kumo_break_down";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
