@@ -17,6 +17,20 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 13): WEEKLY_EXP completata come "Modello B" (weekly continuation)
+
+Primo dei redesign più corposi rimasti dal primo audit canonico. L'audit stesso indicava che la versione attuale era già più vicina al "Modello B — Weekly Continuation Expansion" da lui proposto, quindi completata invece di ricostruita da zero scegliendo tra due modelli alternativi.
+
+**Due correzioni**, entrambe già anticipate nella caccia al bug di stanotte:
+1. **ATR sbagliato** (il bug dominante dietro gli zero-trade, verificato nel codice ore fa): il corpo H4 veniva confrontato con `g_atr`, che per questa strategia è l'ATR **D1** (il suo TF di profilo) — un ATR D1 è tipicamente 3-5× più grande di un ATR H4 sull'oro, soglia quasi irraggiungibile. Ora usa un **ATR H4 dedicato** (handle statico locale, come già fatto per MALAYSIAN_SNR — questo file non ha `NXS_iATR` disponibile per motivi di ordine di include).
+2. **BOS mancante**: il displacement H4 non doveva rompere nessuno swing precedente — bastava "una candela H4 abbastanza grande", non un vero displacement di continuazione. Aggiunto: il displacement deve rompere uno swing H4 (15 barre di lookback), stesso schema già usato per ORDER_BLOCK/SH_BMS_RTO/SILVER_BULLET/DISP_REBAL stanotte.
+
+Mantenuta invariata la logica premium/discount + weekly open reclaim + CHOCH (già presente e ragionevole come proxy del bias weekly del Modello B).
+
+Non ancora validato su MT5 reale. Restano dal primo audit canonico: NY_REVERSAL (timezone/DST reali), RANGE_FADE (qualificazione persistente del range), OTE_CONT (ancoraggio Fibonacci allo stesso leg/BOS) + rename ELLIOTT (a sweep concluso) + JUDAS_SWING/AMD_REVERSAL/PO3 dal secondo audit (rimandate, serve memoria di fase/timestamp).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 12): le 4 di allineamento indicatori — chiude il secondo audit intero
 
 Ultimo gruppo del secondo audit (20 strategie residue): problemi di allineamento temporale fra prezzo e valore dell'indicatore, non di logica concettuale.

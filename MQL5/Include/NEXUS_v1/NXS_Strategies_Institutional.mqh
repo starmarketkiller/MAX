@@ -273,6 +273,15 @@ SNXSSignal NXS_Strat_NYReversal(SNXSSweepExt &sw){
 // =================================================================
 // 6. WEEKLY RANGE EXPANSION
 // =================================================================
+// 17/07 notte - da audit esterno canonico: la versione attuale e' gia' piu'
+// vicina al "Modello B" (weekly continuation expansion) proposto dall'audit,
+// completata invece di ricostruita da zero. Due correzioni: (1) il corpo H4
+// veniva confrontato con l'ATR D1 (g_atr = ATR del TF di profilo di questa
+// strategia = D1) - unita' diverse, soglia quasi irraggiungibile, era IL
+// bug dominante dietro gli zero-trade. Ora usa un ATR H4 dedicato. (2)
+// mancava del tutto la verifica che il displacement rompa uno swing H4
+// (BOS) - senza quella non e' "displacement che produce continuation", e'
+// solo "una candela H4 abbastanza grande".
 SNXSSignal NXS_Strat_WeeklyRangeExp(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "WEEKLY_EXP";
@@ -285,17 +294,31 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
    if(pwh <= 0 || pwl <= 0 || wOpen <= 0) return s;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
 
-   // displacement candle on H4 (medium TF) — use g_atr as proxy
-   // (avoid iATR(...) which returns a handle, not a value)
-   double atrM = atr;
+   // ATR H4 dedicato (handle statico locale, non g_atr che qui e' l'ATR D1
+   // del profilo di questa strategia - unita' sbagliata per un corpo H4).
+   static int hAtrH4 = INVALID_HANDLE;
+   if(hAtrH4 == INVALID_HANDLE) hAtrH4 = iATR(g_sym, InpTFHigh, 14);
+   double atrH4Arr[]; double atrH4 = 0;
+   if(hAtrH4 != INVALID_HANDLE) CopyBuffer(hAtrH4, 0, 1, 1, atrH4Arr);
+   if(ArraySize(atrH4Arr) > 0) atrH4 = atrH4Arr[0];
+   if(atrH4 <= 0) return s;
+
    double cH4 = iClose(g_sym, InpTFHigh, 1);
    double oH4 = iOpen (g_sym, InpTFHigh, 1);
    double bH4 = MathAbs(cH4 - oH4);
-   if(bH4 < atrM * 0.8) return s;
+   if(bH4 < atrH4 * 0.8) return s;
 
-   // BUY: weekly discount (below midpoint), bullish 4H displacement, weekly open reclaim
+   // BOS: il displacement H4 deve rompere uno swing H4 precedente (mancava del tutto).
+   int hiIdxH4 = iHighest(g_sym, InpTFHigh, MODE_HIGH, 15, 2);
+   int loIdxH4 = iLowest (g_sym, InpTFHigh, MODE_LOW,  15, 2);
+   double swingHiH4 = hiIdxH4 >= 0 ? iHigh(g_sym, InpTFHigh, hiIdxH4) : 0;
+   double swingLoH4 = loIdxH4 >= 0 ? iLow (g_sym, InpTFHigh, loIdxH4) : 0;
+   bool bosUpH4   = (swingHiH4 > 0 && cH4 > swingHiH4);
+   bool bosDownH4 = (swingLoH4 > 0 && cH4 < swingLoH4);
+
+   // BUY: weekly discount (below midpoint), bullish 4H displacement con BOS, weekly open reclaim
    double wMid = (pwh + pwl) * 0.5;
-   if(bid < wMid && cH4 > oH4 && bid > wOpen && g_struct.chochUp){
+   if(bid < wMid && cH4 > oH4 && bosUpH4 && bid > wOpen && g_struct.chochUp){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = MathMin(pwl, bid - 1.5 * atr);
       // v2.0.9 P3 #25: Fibonacci 1.272 extension target if strong leg
@@ -307,7 +330,7 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
       return s;
    }
    // SELL mirror
-   if(bid > wMid && cH4 < oH4 && bid < wOpen && g_struct.chochDown){
+   if(bid > wMid && cH4 < oH4 && bosDownH4 && bid < wOpen && g_struct.chochDown){
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = MathMax(pwh, bid + 1.5 * atr);
       double leg = pwh - pwl;

@@ -41,7 +41,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] Audit esterno canonico completo (fonti ICT/SMC) per altre 10 strategie, con specifiche di fix precise
 - [x] Fix implementato: **LIQ_VOID** — geometria FVG corretta (era high-vs-high, ora vera relazione a 3 candele)
 - [x] Fix implementato: **IFVG/FVG_MIT/OB_MIT** — consolidati sul motore NXR come unica fonte (eliminata l'ambiguità fra due implementazioni concorrenti), corretto anche il conflation OB_MIT/breaker
-- [ ] **WEEKLY_EXP** — da ricostruire come macchina a stati (2 modelli alternativi proposti dall'audit, va scelto uno)
+- [x] **WEEKLY_EXP** — completata come "Modello B" (già la più vicina): ATR H4 dedicato (era D1, il bug dominante) + BOS aggiunto (17/07 notte)
 - [ ] **NY_REVERSAL** — sessione di Londra da ricostruire con timezone/DST reali (non offset GMT fisso)
 - [x] **SH_BMS_RTO** — trasformata in macchina a stati sweep→MSS→origine→ritorno→entry (17/07 notte)
 - [ ] **RANGE_FADE** — qualificazione del range da rendere persistente su N barre (non solo l'ultima lettura ADX)
