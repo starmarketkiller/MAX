@@ -2387,8 +2387,9 @@ async def agents_backtest_analysis(request: Request, user: str = Depends(require
     """Analizza un report/statistiche di backtest MT5 col Backtest Analyst
     (OpenAI). Body: {"report": <str|dict|list>, "question": <str opzionale>}."""
     body = await request.json()
-    result, err = backtest_analyst.analyze(body.get("report"),
-                                           question=body.get("question"))
+    result, err = backtest_analyst.analyze(
+        body.get("report"), question=body.get("question"),
+        max_tokens=body.get("max_tokens", backtest_analyst.MAX_TOKENS_DEFAULT))
     if err:
         # Errore controllato (chiave mancante, SDK assente, API failure):
         # 503 se manca la configurazione, 502 per errori upstream, 400 per input.
