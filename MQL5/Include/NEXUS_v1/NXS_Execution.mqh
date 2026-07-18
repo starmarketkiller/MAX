@@ -53,7 +53,7 @@ bool NXS_IsCounterHTFPriceActionStrategy(string name){
            name == "STRUCT_REACT" || name == "TURTLE_SOUP" ||
            name == "SH_BMS_RTO" || name == "SMS_BMS_RTO" ||
            name == "SILVER_BULLET" || name == "AMD_REVERSAL" ||
-           name == "MALAYSIAN_SNR" || name == "CISD" || name == "JUDAS_SWING" ||
+           name == "MALAYSIAN_SNR" || name == "THREE_BAR_DELIVERY_BREAK" || name == "JUDAS_SWING" ||
            name == "LDN_REVERSAL" || name == "NY_REVERSAL" || name == "PO3" ||
            name == "DISP_REBAL" || name == "RANGE_FADE");
 }

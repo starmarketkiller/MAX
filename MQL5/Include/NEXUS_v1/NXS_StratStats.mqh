@@ -483,7 +483,7 @@ void NXS_Stats_Init(){
       "TURTLE_SOUP","IFVG","FVG_MIT","OB_MIT","SH_BMS_RTO","SMS_BMS_RTO",
       "SILVER_BULLET","AMD_REVERSAL","OTE_CONT","MALAYSIAN_SNR",
       // v2.0.7 institutional
-      "CISD","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
+      "THREE_BAR_DELIVERY_BREAK","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
       "WEEKLY_EXP","PO3","LIQ_VOID","DISP_REBAL",
       // v2.0.8
       "RANGE_FADE"
@@ -519,7 +519,7 @@ void NXS_Stats_Init(){
    // v2.0.6: sync STRUCT_REACT toggle (was missing — used InpUseStructReact path)
    NXS_Stats_SetEnabled("STRUCT_REACT",   InpUseStructReact);
    // v2.0.7: sync institutional toggles
-   NXS_Stats_SetEnabled("CISD",          InpUseStrat_CISD);
+   NXS_Stats_SetEnabled("THREE_BAR_DELIVERY_BREAK", InpUseStrat_CISD);
    NXS_Stats_SetEnabled("AMD_CONT",      InpUseStrat_AMD_Cont);
    NXS_Stats_SetEnabled("JUDAS_SWING",   InpUseStrat_Judas);
    NXS_Stats_SetEnabled("LDN_REVERSAL",  InpUseStrat_LdnReversal);

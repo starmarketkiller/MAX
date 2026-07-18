@@ -49,7 +49,7 @@ bool NXS_Chain_IsCompatible(string lastStrat, string newStrat){
    // Reversal/mean-revert can chain to trend after exhaustion
    string reversalStrats = "BOLLINGER,RSI_DIV,BB_SQUEEZE,LIQ_SWEEP,TURTLE_SOUP,IFVG,AMD_REVERSAL,JUDAS_SWING,LDN_REVERSAL,NY_REVERSAL,RANGE_FADE,MALAYSIAN_SNR";
    // SMC structural — can chain to anything aligned
-   string smcStrats = "BJORGUM,FVG_MIT,OB_MIT,ORDER_BLOCK,SH_BMS_RTO,SMS_BMS_RTO,SILVER_BULLET,CISD,WEEKLY_EXP,LIQ_VOID,DISP_REBAL,STRUCT_REACT";
+   string smcStrats = "BJORGUM,FVG_MIT,OB_MIT,ORDER_BLOCK,SH_BMS_RTO,SMS_BMS_RTO,SILVER_BULLET,THREE_BAR_DELIVERY_BREAK,WEEKLY_EXP,LIQ_VOID,DISP_REBAL,STRUCT_REACT";
 
    bool lastTrend = (StringFind(trendStrats, lastStrat) >= 0);
    bool newTrend  = (StringFind(trendStrats, newStrat) >= 0);

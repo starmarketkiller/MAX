@@ -17,6 +17,18 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 8): CISD rinominata THREE_BAR_DELIVERY_BREAK
+
+Quarto dei 4 mismatch critici — questa volta **rinominata, non riscritta**. `NXS_Strat_CISD` implementa "3 barre chiuse dello stesso segno, poi rottura del loro estremo" — un pattern di rottura reale e funzionante, ma non è il vero Change in State of Delivery (che l'audit descrive come rottura del **livello/open** che sosteneva la sequenza di candele opposte, non dell'high/low estremo).
+
+**Perché rename e non riscrittura**, a differenza di TSI/ORDER_BLOCK/SILVER_BULLET: il commento già presente nel codice (v2.3.3) documenta che un tentativo precedente di versione "vera" (displacement+delivery+sweep+reclaim) **non scattava mai — 0 setup su 1067**. Riscriverla di nuovo verso una definizione più stretta rischiava concretamente di silenziarla un'altra volta, e senza MT5 disponibile stanotte (macchina spenta) non potevo verificare subito se una nuova versione avrebbe prodotto segnali. Scelta più sicura: tenere la logica che funziona, dichiarare onestamente cosa fa.
+
+**Rinominata ovunque nel codice** (stratName, profili SL/TP, stats, router, family list) — solo il nome `InpUseStrat_CISD` (il toggle input) resta invariato apposta, per non rompere i `.set` di NEXUS Bot già esistenti che lo referenziano.
+
+Non ancora validato su MT5 reale. **4 dei 5 mismatch critici di questo audit sono ora coperti** (TSI, ORDER_BLOCK, SILVER_BULLET, THREE_BAR_DELIVERY_BREAK/CISD) — resta **DISP_REBAL** come ultimo, prossimo in coda.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 7): SILVER_BULLET riscritta come macchina a stati
 
 Terzo dei 4 mismatch critici. `NXS_Strat_SilverBullet` (`NXS_Strategies_SMC.mqh`) era solo "sweep dentro una finestra oraria" — mancavano displacement, creazione dell'FVG e ritorno successivo nella zona, gli elementi centrali del modello Silver Bullet secondo l'audit.

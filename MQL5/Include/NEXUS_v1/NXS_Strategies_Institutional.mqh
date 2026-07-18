@@ -68,9 +68,21 @@ bool _inst_inNYOpen(){
 // =================================================================
 // 1. CISD — Change In State of Delivery
 // =================================================================
+// 17/07 notte - rinominata da "CISD" a "THREE_BAR_DELIVERY_BREAK", da audit
+// esterno canonico: il vero Change in State of Delivery e' normalmente
+// identificato dalla rottura del LIVELLO/OPEN che sosteneva la sequenza di
+// candele opposte, non da "tre candele dello stesso colore + rottura del
+// loro massimo/minimo" - questo e' un pattern di rottura reale e
+// funzionante, ma non e' un CISD canonico. Rinominata invece di riscritta:
+// un tentativo precedente di versione "vera" (displacement+delivery+sweep+
+// reclaim, v2.3.3, vedi commento sotto) non scattava MAI (0 setup su
+// 1067) - rischio concreto di silenziare di nuovo la strategia. La logica
+// resta invariata, cambia solo l'identita' dichiarata (nome, non concetto
+// preteso). Il toggle InpUseStrat_CISD resta invariato per non rompere i
+// .set esistenti.
 SNXSSignal NXS_Strat_CISD(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
-   s.strat = STRAT_STRUCT_REACT; s.stratName = "CISD";
+   s.strat = STRAT_STRUCT_REACT; s.stratName = "THREE_BAR_DELIVERY_BREAK";
    if(!InpUseStrat_CISD) return s;
    // v2.3.3 — riportata la logica SEMPLICE del sito (change in state of delivery):
    // 3 barre chiuse dello stesso segno, poi rottura del loro estremo. La vecchia

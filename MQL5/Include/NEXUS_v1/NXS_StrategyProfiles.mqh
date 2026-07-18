@@ -41,7 +41,7 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "BJORGUM")           { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h - fix 16/07, vedi commento sopra
    if(name == "BOLLINGER")         { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "BREAKOUT_ACC")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
-   if(name == "CISD")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)
+   if(name == "THREE_BAR_DELIVERY_BREAK")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)
    if(name == "DISP_REBAL")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.68 R2.0
    if(name == "EMA_PULLBACK")      { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
    if(name == "FVG_CONT")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
@@ -102,7 +102,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "BJORGUM")           return PERIOD_H4;
    if(name == "BOLLINGER")         return PERIOD_D1;
    if(name == "BREAKOUT_ACC")      return PERIOD_D1;
-   if(name == "CISD")              return PERIOD_H4;
+   if(name == "THREE_BAR_DELIVERY_BREAK")              return PERIOD_H4;
    if(name == "DISP_REBAL")        return PERIOD_H4;
    if(name == "EMA_PULLBACK")      return PERIOD_H4;
    if(name == "FVG_CONT")          return PERIOD_H4;
@@ -152,7 +152,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "FVG_CONT")          return 0.4;    // PF 0.79 (SMC non porta pulito)
    if(name == "ORDER_BLOCK")       return 0.5;    // PF 0.67
    if(name == "OB_MIT")            return 0.5;    // PF 0.38 (crollata per interazione)
-   if(name == "CISD")              return 0.5;    // PF 0.66
+   if(name == "THREE_BAR_DELIVERY_BREAK")              return 0.5;    // PF 0.66
    if(name == "MALAYSIAN_SNR")     return 0.4;    // PF 0.00
    if(name == "BOLLINGER")         return 0.6;    // riportata 2.4.0, in osservazione
    // --- Ancora da validare sul broker: size prudente ---
@@ -210,7 +210,7 @@ double NXS_Profile_TrailK(const string name){
    if(name == "RANGE_FADE")    return 1.5;
    if(name == "STRUCT_REACT")  return 1.5;
    if(name == "MALAYSIAN_SNR") return 1.5;
-   if(name == "CISD")          return 1.5;
+   if(name == "THREE_BAR_DELIVERY_BREAK")          return 1.5;
    return 0.0;   // fallback -> globale
 }
 
@@ -235,7 +235,7 @@ double NXS_Profile_TrailActivate(const string name){
    if(name == "RANGE_FADE")    return 0.5;
    if(name == "STRUCT_REACT")  return 0.5;
    if(name == "MALAYSIAN_SNR") return 0.5;
-   if(name == "CISD")          return 0.5;
+   if(name == "THREE_BAR_DELIVERY_BREAK")          return 0.5;
    if(name == "LONDON_BO")     return 0.5;
    if(name == "LIQ_SWEEP")     return 0.5;
    // --- TARDI 1.0 (vincita grande/trend: lascia sviluppare) ---

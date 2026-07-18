@@ -52,8 +52,8 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **TSI** — implementato il vero True Strength Index di Blau (era RSI+EMA20 col nome sbagliato) — 17/07 notte
 - [x] **ORDER_BLOCK** — corretto: origine = ultima candela opposta prima dell'impulso + BOS richiesto + zona persistente (17/07 notte)
 - [x] **SILVER_BULLET** — macchina a stati sweep→displacement/BOS→FVG→retest (17/07 notte; scadenza a barre, non timezone reale — vedi NY_REVERSAL)
-- [ ] **CISD** — proxy "3 candele stesso colore + rottura", non il vero Change in State of Delivery
-- [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG
+- [x] **CISD** — rinominata `THREE_BAR_DELIVERY_BREAK` (17/07 notte; non riscritta, un tentativo precedente di versione "vera" non scattava mai — 0/1067)
+- [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG (ultimo mismatch critico rimanente)
 - [ ] 8 strategie "plausibili ma incomplete" (manca la relazione causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
 - [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
 

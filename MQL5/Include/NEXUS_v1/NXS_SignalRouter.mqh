@@ -34,7 +34,7 @@ ENUM_NXS_FAMILY NXS_StratFamily(string name){
       || name == "FVG_MIT_NXR" || name == "IFVG_NXR" || name == "OB_MIT_NXR"
       || name == "STRUCT_REACT_NXR" || name == "MALAYSIAN_SNR_NXR")
       return FAM_SMC;
-   if(name == "CISD" || name == "AMD_CONT" || name == "JUDAS_SWING"
+   if(name == "THREE_BAR_DELIVERY_BREAK" || name == "AMD_CONT" || name == "JUDAS_SWING"
       || name == "LDN_REVERSAL" || name == "NY_REVERSAL" || name == "WEEKLY_EXP"
       || name == "PO3" || name == "LIQ_VOID" || name == "DISP_REBAL"
       || name == "RANGE_FADE")
