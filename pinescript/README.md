@@ -34,14 +34,20 @@ o `server/backtest.py`.
    usate nelle analisi MT5/sito nel vault, così i numeri sono confrontabili
    direttamente.
 4. Ogni script ha un input **"Configurazione SL/TP/BE"** (o "SL/TP" per
-   RSI_DIV) con due opzioni:
-   - **Baseline (config attuale)** — la config oggi in produzione su MT5.
-   - **Variante TP-largo (+ Breakeven dove applicabile)** — la gestione
-     alternativa emersa dall'analisi MFE/MAE del 17/07 (vedi
-     `vault/01-Trading/NEXUS EA - Gestione Uscita MFE-MAE (17-07).md`).
-   Esegui il test con entrambe le opzioni (stesso range di date, stesso
-   capitale) e confronta PF/Drawdown/Net — è esattamente il confronto
-   baseline-vs-variante richiesto.
+   RSI_DIV) con due opzioni, ma il significato delle due opzioni **non è lo
+   stesso per tutte le strategie** — dipende da cosa gira davvero in
+   produzione oggi:
+   - **SAR e RSI_DIV**: "Baseline (config attuale)" = config live in
+     `NXS_StrategyProfiles.mqh`; "Variante TP-largo(+BE)" = ipotesi
+     alternativa dall'analisi MFE/MAE del 17/07, **mai applicata in
+     produzione** (miglioramento marginale/ambiguo per queste due).
+   - **MACD e ADX_RSI**: "Baseline (config attuale)" = il fix TP-largo+BE
+     del 17/07, che è **già la config live in produzione** oggi in
+     `NXS_StrategyProfiles.mqh`; "Config pre-fix (17/07, storica)" = la
+     config precedente, tenuta solo come riferimento storico per il
+     confronto — **non** rappresenta un'ipotesi ancora da validare.
+   In tutti e 4 i casi, esegui il test con entrambe le opzioni (stesso
+   range di date, stesso capitale) e confronta PF/Drawdown/Net.
 5. Range di date di default: 2019-01-01 → oggi, per allinearsi alla finestra
    dei 6 anni "affidabili" usata nel backtest 10Y segmentato MT5. Modificabile
    dagli input in cima allo script.
@@ -84,9 +90,12 @@ o `server/backtest.py`.
   (MT5 `iMACD` usa SMA per il segnale, non EMA — differenza dal MACD
   "standard" di TradingView, riprodotta a mano nello script), EMA200, ATR(14).
 - **BUY**: MACD line > signal E MACD line > 0 E close > EMA200. **SELL**: speculare.
-- **SL/TP baseline**: SL 2.0×ATR, TP 3.0×ATR, no breakeven.
-- **SL/TP variante**: SL 2.0×ATR, TP 8.0×ATR, breakeven a 1.0×R — fix reale
-  applicato il 17/07 in produzione (PF 1.48→2.05 sul motore sito).
+- **SL/TP baseline (= config live oggi in produzione)**: SL 2.0×ATR,
+  TP 8.0×ATR, breakeven a 1.0×R — fix reale applicato il 17/07 dopo
+  l'analisi MFE/MAE (PF 1.48→2.05 sul motore sito), già in
+  `NXS_StrategyProfiles.mqh`.
+- **SL/TP config pre-fix (storica)**: SL 2.0×ATR, TP 3.0×ATR, no breakeven —
+  la config precedente al fix del 17/07, qui solo come riferimento.
 - **Filtro HTF**: attivo.
 
 ### ADX_RSI (D1)
@@ -94,9 +103,12 @@ o `server/backtest.py`.
   **Non calcola un vero ADX** nonostante il nome — errore storico di naming
   documentato nel vault, riprodotto fedelmente così com'è nel codice reale.
 - **BUY**: EMA50 in salita E RSI in banda (45,65) E close > EMA50. **SELL**: speculare (EMA50 in discesa, RSI in banda (35,55), close < EMA50).
-- **SL/TP baseline**: SL 1.0×ATR, TP 4.0×ATR, no breakeven.
-- **SL/TP variante**: SL 1.0×ATR, TP 10.0×ATR, breakeven a 1.5×R — fix reale
-  applicato il 17/07 in produzione (PF 1.48→1.97 sul motore sito).
+- **SL/TP baseline (= config live oggi in produzione)**: SL 1.0×ATR,
+  TP 10.0×ATR, breakeven a 1.5×R — fix reale applicato il 17/07 dopo
+  l'analisi MFE/MAE (PF 1.48→1.97 sul motore sito), già in
+  `NXS_StrategyProfiles.mqh`.
+- **SL/TP config pre-fix (storica)**: SL 1.0×ATR, TP 4.0×ATR, no breakeven —
+  la config precedente al fix del 17/07, qui solo come riferimento.
 - **Filtro HTF**: attivo.
 
 ### RSI_DIV (H1)
@@ -148,11 +160,13 @@ Test eseguiti con lo Strategy Tester nativo di TradingView su
 
 > **Sintesi**: dei 4 motori indipendenti testati, **SAR/MACD/ADX_RSI
 > confermano risultati profittevoli** e in linea con la direzione dei fix
-> MFE/MAE del 17/07 — le varianti TP-largo(+breakeven) migliorano quasi
-> sempre PF e/o drawdown rispetto alla baseline. **RSI_DIV mostra invece
-> risultati deboli/in perdita** nel periodo campione disponibile su
-> TradingView e merita ulteriore osservazione prima di trarre conclusioni
-> (vedi nota sul campione dati sotto).
+> MFE/MAE del 17/07 — per MACD e ADX_RSI la config TP-largo+breakeven (che è
+> anche quella live oggi in produzione) migliora PF e/o drawdown rispetto
+> alla vecchia config pre-fix; per SAR il miglioramento della variante
+> BE-only è marginale/ambiguo. **RSI_DIV mostra invece risultati
+> deboli/in perdita** nel periodo campione disponibile su TradingView e
+> merita ulteriore osservazione prima di trarre conclusioni (vedi nota sul
+> campione dati sotto).
 
 ### SAR (H4) — range dati Jan 2, 2023 – Jul 17, 2026 (~3.5 anni)
 | Config | Trade | PF | Win Rate | Max DD | Net PnL |
@@ -167,21 +181,22 @@ del 17/07 aveva già segnalato questo caso come ambiguo).
 ### MACD (H4) — stesso range dati
 | Config | Trade | PF | Win Rate | Max DD | Net PnL |
 |---|---|---|---|---|---|
-| Baseline (SL2.0×/TP3.0× ATR, no BE) | 292 | 1,321 | 48,29% (141/292) | 909,56 USD (7,61%) | +1.895,02 USD (+18,95%) |
-| Variante TP-largo + BE 1.0×R (SL2.0×/TP8.0× ATR) | 192 | 1,459 | 28,65% (55/192) | 778,88 USD (6,44%) | +1.955,65 USD (+19,56%) |
+| Config pre-fix, storica (SL2.0×/TP3.0× ATR, no BE) | 292 | 1,321 | 48,29% (141/292) | 909,56 USD (7,61%) | +1.895,02 USD (+18,95%) |
+| **Baseline = live oggi** (SL2.0×/TP8.0× ATR + BE 1.0×R) | 192 | 1,459 | 28,65% (55/192) | 778,88 USD (6,44%) | +1.955,65 USD (+19,56%) |
 
-La variante riduce nettamente il numero di trade (292→192) ma migliora PF e
-riduce il drawdown — coerente con il fix reale applicato in produzione il
-17/07 lato sito.
+La config live oggi riduce nettamente il numero di trade (292→192) rispetto
+alla vecchia config pre-fix, ma migliora PF e riduce il drawdown — coerente
+col fix reale applicato in produzione il 17/07 lato sito.
 
 ### ADX_RSI (D1) — range filtrato da `startDate` dello script (2019-01-01)
 | Config | Trade | PF | Win Rate | Max DD | Net PnL |
 |---|---|---|---|---|---|
-| Baseline (SL1.0×/TP4.0× ATR, no BE) | 217 | 1,326 | 29,49% (64/217) | 534,53 USD (5,25%) | +1.529,77 USD (+15,30%) |
-| Variante TP-largo + BE 1.5×R (SL1.0×/TP10.0× ATR) | 199 | 1,672 | 24,62% (49/199) | 483,12 USD (4,65%) | +1.950,87 USD (+19,51%) |
+| Config pre-fix, storica (SL1.0×/TP4.0× ATR, no BE) | 217 | 1,326 | 29,49% (64/217) | 534,53 USD (5,25%) | +1.529,77 USD (+15,30%) |
+| **Baseline = live oggi** (SL1.0×/TP10.0× ATR + BE 1.5×R) | 199 | 1,672 | 24,62% (49/199) | 483,12 USD (4,65%) | +1.950,87 USD (+19,51%) |
 
-Miglioramento netto su tutti i fronti (PF, DD assoluto e %, PnL) — coerente
-col fix reale applicato in produzione il 17/07 lato sito.
+Miglioramento netto su tutti i fronti (PF, DD assoluto e %, PnL) rispetto
+alla vecchia config pre-fix — coerente col fix reale applicato in produzione
+il 17/07 lato sito.
 
 > Nota tecnica: il date-picker del chart D1 mostrava un valore anomalo
 > ("Jan 6 1833") durante il test, dovuto a un bug cosmetico di rendering di
@@ -210,8 +225,10 @@ troppo corto e specifico per questo periodo di mercato.
 
 ### Osservazioni
 - SAR, MACD e ADX_RSI confermano un edge positivo su un terzo motore/dataset
-  indipendente da MT5 e dal sito, con le varianti TP-largo(+BE) che
-  migliorano PF e/o drawdown in linea con l'analisi MFE/MAE del 17/07.
+  indipendente da MT5 e dal sito. Per MACD e ADX_RSI la config TP-largo+BE
+  (live oggi in produzione) migliora PF e/o drawdown rispetto alla vecchia
+  config pre-fix, in linea con l'analisi MFE/MAE del 17/07; per SAR la
+  variante BE-only resta marginale/ambigua rispetto alla baseline.
 - RSI_DIV è l'unica delle 4 in perdita/breakeven su questo campione, ma il
   campione (~1,5 anni, limite del piano TradingView) è troppo corto per
   giudicarla — da rivalidare quando sarà disponibile più storico o un feed

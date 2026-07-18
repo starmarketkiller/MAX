@@ -27,8 +27,8 @@ strategy("NEXUS EA - ADX_RSI (XAUUSD D1)", shorttitle="NXS-ADXRSI", overlay=true
 
 // ----------------------------- Input --------------------------------------
 configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
-     options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
-     tooltip="Baseline = SL1.0x/TP4.0x ATR, no breakeven (config pre-17/07).\nVariante = SL1.0x/TP10.0x ATR + breakeven a 1.5xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→1.97, DD 11.54%→12.48%, net +7.191→+8.991 sul motore sito). Non ancora validata su MT5; il trigger stesso è cambiato dopo la raccolta dei 6 anni di dati MT5 storici.")
+     options=["Baseline (config attuale)", "Config pre-fix (17/07, storica)"],
+     tooltip="Baseline = SL1.0x/TP10.0x ATR + breakeven a 1.5xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→1.97, DD 11.54%→12.48%, net +7.191→+8.991 sul motore sito), oggi live in produzione in NXS_StrategyProfiles.mqh. Il trigger stesso è cambiato dopo la raccolta dei 6 anni di dati MT5 storici.\nConfig pre-fix = SL1.0x/TP4.0x ATR, no breakeven — la config precedente al fix del 17/07, tenuta qui solo come riferimento storico per il confronto.")
 useHtfFilter = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
 emaLen   = input.int(50, "EMA trend length")
 rsiLen   = input.int(14, "RSI length")
@@ -38,10 +38,10 @@ startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
 endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
 
 // Config numerica risolta in base alla modalità scelta
-isVariant = configMode == "Variante TP-largo + Breakeven"
+isPreFix = configMode == "Config pre-fix (17/07, storica)"
 slMult = 1.0
-tpMult = isVariant ? 10.0 : 4.0
-beR    = isVariant ? 1.5 : 0.0   // 0 = breakeven disattivato
+tpMult = isPreFix ? 4.0 : 10.0
+beR    = isPreFix ? 0.0 : 1.5   // 0 = breakeven disattivato
 
 // ----------------------------- Indicatori ----------------------------------
 atrVal = ta.atr(atrLen)

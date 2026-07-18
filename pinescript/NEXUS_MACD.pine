@@ -26,8 +26,8 @@ strategy("NEXUS EA - MACD (XAUUSD H4)", shorttitle="NXS-MACD", overlay=true,
 
 // ----------------------------- Input --------------------------------------
 configMode = input.string("Baseline (config attuale)", "Configurazione SL/TP/BE",
-     options=["Baseline (config attuale)", "Variante TP-largo + Breakeven"],
-     tooltip="Baseline = SL2.0x/TP3.0x ATR, no breakeven (config pre-17/07).\nVariante = SL2.0x/TP8.0x ATR + breakeven a 1.0xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→2.05, DD 6.23%→5.85%, net +2.879→+3.643 sul motore sito). Non ancora validata su MT5.")
+     options=["Baseline (config attuale)", "Config pre-fix (17/07, storica)"],
+     tooltip="Baseline = SL2.0x/TP8.0x ATR + breakeven a 1.0xR — fix reale applicato il 17/07 dopo l'analisi MFE/MAE (PF1.48→2.05, DD 6.23%→5.85%, net +2.879→+3.643 sul motore sito), oggi live in produzione in NXS_StrategyProfiles.mqh.\nConfig pre-fix = SL2.0x/TP3.0x ATR, no breakeven — la config precedente al fix del 17/07, tenuta qui solo come riferimento storico per il confronto.")
 useHtfFilter   = input.bool(true, "Filtro HTF (EMA50 H4 + EMA50 H1)", tooltip="Blocca i BUY quando il bias H4/H1 è ribassista e i SELL quando è rialzista. Riproduce NXS_GetHTFBias/NXS_HTFBlocks, SENZA l'eccezione 'reversal vicino a PDH/PDL' (semplificazione documentata nel README).")
 macdFast   = input.int(12, "MACD Fast EMA")
 macdSlow   = input.int(26, "MACD Slow EMA")
@@ -39,10 +39,10 @@ startDate  = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
 endDate    = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
 
 // Config numerica risolta in base alla modalità scelta
-isVariant = configMode == "Variante TP-largo + Breakeven"
+isPreFix = configMode == "Config pre-fix (17/07, storica)"
 slMult = 2.0
-tpMult = isVariant ? 8.0 : 3.0
-beR    = isVariant ? 1.0 : 0.0   // 0 = breakeven disattivato
+tpMult = isPreFix ? 3.0 : 8.0
+beR    = isPreFix ? 0.0 : 1.0   // 0 = breakeven disattivato
 
 // ----------------------------- Indicatori ----------------------------------
 atrVal = ta.atr(atrLen)
