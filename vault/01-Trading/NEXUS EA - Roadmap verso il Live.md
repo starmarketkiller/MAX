@@ -51,7 +51,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] Verificato che l'attribuzione condivisa `s.strat = STRAT_STRUCT_REACT` (11 strategie) NON è un bug reale — stats/profili/router usano tutti `stratName` (stringa, distinto), il campo condiviso serve solo a un valore cosmetico di dashboard
 - [x] **TSI** — implementato il vero True Strength Index di Blau (era RSI+EMA20 col nome sbagliato) — 17/07 notte
 - [x] **ORDER_BLOCK** — corretto: origine = ultima candela opposta prima dell'impulso + BOS richiesto + zona persistente (17/07 notte)
-- [ ] **SILVER_BULLET** — solo sweep in finestra oraria, manca displacement→FVG→retest (macchina a stati)
+- [x] **SILVER_BULLET** — macchina a stati sweep→displacement/BOS→FVG→retest (17/07 notte; scadenza a barre, non timezone reale — vedi NY_REVERSAL)
 - [ ] **CISD** — proxy "3 candele stesso colore + rottura", non il vero Change in State of Delivery
 - [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG
 - [ ] 8 strategie "plausibili ma incomplete" (manca la relazione causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3

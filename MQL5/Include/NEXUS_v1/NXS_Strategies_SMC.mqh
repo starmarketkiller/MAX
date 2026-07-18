@@ -312,30 +312,110 @@ SNXSSignal NXS_Strat_SMS_BMS_RTO(){
 }
 
 // === 7. SILVER BULLET (NY/London killzone) ============================
-SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
+// 17/07 notte - riscritta come macchina a stati, da audit esterno canonico:
+// prima era solo "sweep dentro una finestra oraria", mancavano displacement,
+// FVG e un ritorno successivo nella zona - gli elementi centrali del
+// modello Silver Bullet. Sequenza: finestra aperta -> sweep di liquidita'
+// -> displacement con BOS -> FVG registrato dal displacement -> ritorno
+// nel FVG (entro un numero massimo di barre, non un calcolo preciso del
+// termine sessione in timezone reale - quello resta un lavoro a parte,
+// condiviso con NY_REVERSAL, gia' in coda separatamente).
+int InpSB_SwingLookback = 12;
+int InpSB_MaxBars       = 15;   // barre max dal primo sweep dentro la finestra all'entry
+double InpSB_DispBodyATR = 0.8;
+
+enum ENUM_NXS_SB_STATE { SB_IDLE = 0, SB_SWEPT, SB_WAITING_RETURN };
+
+struct SNXSSBState {
+   int      state;
+   datetime lastBarTime;
+   double   sweepLevel;
+   double   fvgLo, fvgHi;
+   int      barsWaited;
+};
+SNXSSBState g_sbBuy, g_sbSell;
+
+SNXSSignal NXS_SB_UpdateSide(int dir, SNXSSBState &st, SNXSSweepExt &sw, bool inKillzone,
+                             string kzTag, ENUM_TIMEFRAMES tf, double atr, datetime curBar0){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "SILVER_BULLET";
+   bool newBar = (st.lastBarTime != curBar0);
+   ENUM_NXS_DIR wantSweep = (dir == +1) ? DIR_BUY : DIR_SELL;
+
+   if(st.state == SB_IDLE){
+      if(newBar && inKillzone && sw.confirmed && sw.dir == wantSweep){
+         st.state = SB_SWEPT; st.barsWaited = 0; st.sweepLevel = sw.level; st.lastBarTime = curBar0;
+      }
+      return s;
+   }
+
+   if(st.state == SB_SWEPT){
+      if(!newBar) return s;
+      st.lastBarTime = curBar0; st.barsWaited++;
+      if(st.barsWaited > InpSB_MaxBars){ st.state = SB_IDLE; return s; }
+      // Displacement a shift2 con BOS, FVG fra candela1 (shift3) e candela3 (shift1,
+      // appena chiusa) - stessa geometria FVG corretta di LIQ_VOID stanotte.
+      double o2 = iOpen(g_sym, tf, 2), c2 = iClose(g_sym, tf, 2);
+      double body2 = MathAbs(c2 - o2);
+      bool rightColor = (dir == +1) ? (c2 > o2) : (c2 < o2);
+      if(body2 < atr * InpSB_DispBodyATR || !rightColor) return s;
+      int hiIdx = iHighest(g_sym, tf, MODE_HIGH, InpSB_SwingLookback, 3);
+      int loIdx = iLowest (g_sym, tf, MODE_LOW,  InpSB_SwingLookback, 3);
+      double swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
+                                     : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
+      bool bos = (dir == +1) ? (swingRef > 0 && c2 > swingRef) : (swingRef > 0 && c2 < swingRef);
+      if(!bos) return s;
+      double c1High = iHigh(g_sym, tf, 3), c1Low = iLow(g_sym, tf, 3);
+      double c3High = iHigh(g_sym, tf, 1), c3Low = iLow(g_sym, tf, 1);
+      if(dir == +1){
+         if(c3Low > c1High){ st.fvgLo = c1High; st.fvgHi = c3Low; st.state = SB_WAITING_RETURN; st.barsWaited = 0; }
+      } else {
+         if(c3High < c1Low){ st.fvgLo = c3High; st.fvgHi = c1Low; st.state = SB_WAITING_RETURN; st.barsWaited = 0; }
+      }
+      return s;
+   }
+
+   // SB_WAITING_RETURN
+   if(newBar){
+      st.lastBarTime = curBar0; st.barsWaited++;
+      if(st.barsWaited > InpSB_MaxBars){ st.state = SB_IDLE; return s; }
+      double c1 = iClose(g_sym, tf, 1);
+      if((dir == +1 && c1 < st.sweepLevel) || (dir == -1 && c1 > st.sweepLevel)){ st.state = SB_IDLE; return s; }
+   }
+   if(st.fvgHi <= st.fvgLo) return s;
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   if(bid < st.fvgLo || bid > st.fvgHi) return s;
+   if(dir == +1){
+      s.dir = DIR_BUY;  s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      s.slPrice = st.sweepLevel - 0.6 * atr;
+      s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.8);
+      s.reason = kzTag + " bull:fvg_retest";
+   } else {
+      s.dir = DIR_SELL; s.entryRef = bid;
+      s.slPrice = st.sweepLevel + 0.6 * atr;
+      s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.8);
+      s.reason = kzTag + " bear:fvg_retest";
+   }
+   s.score = 76.0;
+   st.state = SB_IDLE;   // one-shot
+   return s;
+}
+
+SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
    // v2.0.5b: GMT-corrected killzones (server time → GMT)
    datetime gmtNow = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
    MqlDateTime mt; TimeToStruct(gmtNow, mt);
    int h = mt.hour;
    bool killzoneLO = (h >= 10 && h < 11);   // London KZ 10-11 GMT
    bool killzoneNY = (h >= 14 && h < 15);   // NY KZ 14-15 GMT
-   if(!(killzoneLO || killzoneNY)) return s;
-   if(!sw.confirmed) return s;
+   bool inKillzone = killzoneLO || killzoneNY;
+   string kzTag = killzoneLO ? "SB:LO-KZ" : "SB:NY-KZ";
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
    double atr = _smc_atr();
-   if(sw.dir == DIR_BUY){
-      s.dir = DIR_BUY;  s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-      s.slPrice = sw.level - 0.6 * atr;
-      s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.8);
-      s.score = 76.0; s.reason = killzoneLO ? "SB:LO-KZ bull" : "SB:NY-KZ bull";
-   } else if(sw.dir == DIR_SELL){
-      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
-      s.slPrice = sw.level + 0.6 * atr;
-      s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.8);
-      s.score = 76.0; s.reason = killzoneLO ? "SB:LO-KZ bear" : "SB:NY-KZ bear";
-   }
-   return s;
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   SNXSSignal s = NXS_SB_UpdateSide(+1, g_sbBuy, sw, inKillzone, kzTag, tf, atr, curBar0);
+   if(s.dir != DIR_NONE) return s;
+   return NXS_SB_UpdateSide(-1, g_sbSell, sw, inKillzone, kzTag, tf, atr, curBar0);
 }
 
 // === 8. AMD REVERSAL ==================================================

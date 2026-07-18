@@ -17,6 +17,22 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 7): SILVER_BULLET riscritta come macchina a stati
+
+Terzo dei 4 mismatch critici. `NXS_Strat_SilverBullet` (`NXS_Strategies_SMC.mqh`) era solo "sweep dentro una finestra oraria" — mancavano displacement, creazione dell'FVG e ritorno successivo nella zona, gli elementi centrali del modello Silver Bullet secondo l'audit.
+
+**Riscritta con la stessa architettura a stati di SH_BMS_RTO** (stato per lato BUY/SELL): `IDLE → SWEPT → WAITING_RETURN → entry`.
+- `IDLE→SWEPT`: sweep confermato **dentro la killzone** (10-11 o 14-15 GMT, invariate).
+- `SWEPT→WAITING_RETURN`: displacement con BOS (stesso schema swing-lookback di ORDER_BLOCK/SH_BMS_RTO) **e** FVG a 3 candele generato dal displacement, con la geometria corretta già usata per LIQ_VOID stanotte (bullish: `Low(candela3) > High(candela1)`).
+- `WAITING_RETURN→entry`: primo tocco della zona FVG (prezzo live), entro `InpSB_MaxBars` (15) barre dal sweep.
+- Invalidazione: chiusura oltre il livello sweepato nel verso sbagliato, o timeout.
+
+**Limite noto, non risolto qui**: la scadenza della sequenza è a conteggio barre (`InpSB_MaxBars`), non un calcolo preciso del termine sessione in timezone reale — quel lavoro (DST-aware) resta in coda separatamente per NY_REVERSAL, dove verrà fatto una volta sola e centralizzato invece di duplicarlo qui.
+
+Non ancora validato su MT5 reale. Restano: CISD, DISP_REBAL (ultimi 2 mismatch critici) + le 8 "plausibili ma incomplete" + le 4 di allineamento indicatori.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 6): ORDER_BLOCK — origine della zona corretta
 
 Secondo dei 4 mismatch critici dall'audit delle 20 residue. `NXS_Strat_OrderBlock` (`NXS_Strategies.mqh`) usava la candela di **displacement stessa** come order block — in ICT/SMC un OB bullish è invece l'**ultima candela bearish prima del displacement** che rompe struttura. Era più una "displacement body zone" che un vero OB.
