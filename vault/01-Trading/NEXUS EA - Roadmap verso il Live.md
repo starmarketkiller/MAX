@@ -45,7 +45,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [ ] **NY_REVERSAL** — sessione di Londra da ricostruire con timezone/DST reali (non offset GMT fisso)
 - [x] **SH_BMS_RTO** — trasformata in macchina a stati sweep→MSS→origine→ritorno→entry (17/07 notte)
 - [x] **RANGE_FADE** — range confermato solo con persistenza ADX + stabilità ampiezza + contatti minimi + occupazione bilanciata + no breakout recente, su tutta la finestra (17/07 notte)
-- [ ] **OTE_CONT** — ancorare Fibonacci e struttura di conferma allo stesso leg/BOS
+- [x] **OTE_CONT** — gate BOS dedicato (displacement reale che rompe uno swing precedente) + entry su barra chiusa, non più bid live (17/07 notte)
 - [ ] **ELLIOTT** — decisione presa (rinominare `FIVE_SWING_IMPULSE`, dichiarata pattern proprietario), esecuzione rimandata a sweep concluso (tocca il nome in molti file, rischio di interferire col matching identità di NEXUS Bot)
 - [x] Audit di coerenza completato anche per le 20 strategie residue (il conteggio reale, non 27) — agente logico, 17/07 notte
 - [x] Verificato che l'attribuzione condivisa `s.strat = STRAT_STRUCT_REACT` (11 strategie) NON è un bug reale — stats/profili/router usano tutti `stratName` (stringa, distinto), il campo condiviso serve solo a un valore cosmetico di dashboard

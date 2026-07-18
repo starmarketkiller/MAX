@@ -17,6 +17,18 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 15): OTE_CONT — ancoraggio Fibonacci a un vero BOS
+
+Ultimo dei redesign più corposi del primo audit canonico prima di NY_REVERSAL. La zona Fibonacci in sé (62-79%, 70.5% centrale) era già corretta — il problema era l'ancoraggio: lo swing veniva preso da `NXS_Fib_Build`, un rolling highest/lowest generico su 30 barre di `InpTFMedium`, mai verificato che fosse davvero il leg che ha prodotto un vero impulso strutturale (poteva essere il punto più alto/basso di una fase lenta).
+
+**Fix**: `NXS_Fib_Build` **non è stata toccata** (è condivisa anche col dashboard/visual bridge, fuori scope). Aggiunto invece un gate BOS dedicato dentro `NXS_Strat_OTE_Continuation`: nelle ultime 10 barre di `InpTFMedium` deve esserci un vero displacement (corpo ≥ 0.8×ATR) che rompe uno swing precedente al leg corrente — altrimenti niente segnale, anche se la zona OTE geometricamente esiste. Corretto anche l'entry: usava `bid` live, ora richiede una candela chiusa di conferma sul TF di ingresso.
+
+**Riepilogo dei redesign del primo audit canonico**: WEEKLY_EXP ✅, RANGE_FADE ✅, OTE_CONT ✅. Resta solo **NY_REVERSAL** (richiede timezone/DST reali, lavoro diverso dagli altri) e il **rename ELLIOTT** (rimandato a sweep concluso).
+
+Non ancora validato su MT5 reale (macchina offline stanotte).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 14): RANGE_FADE — qualificazione del range resa persistente
 
 Secondo dei redesign più corposi. Prima bastava l'ultima lettura di ADX (indicatore ritardato, può essere basso anche subito dopo un trend) su una finestra di 40 barre presa per buona senza verificare che fosse DAVVERO stata laterale — esattamente il punto dell'audit ("una singola lettura non dimostra che tutte le 40 barre abbiano formato un consolidamento").

@@ -448,26 +448,58 @@ SNXSSignal NXS_Strat_AMD_Reversal(SNXSSweepExt &sw, SNXSAMD &amd){
 // === 9. OTE CONTINUATION (v2.0.6 — strict trend, no OR vago) ==================
 // Entry on OTE retrace (0.62-0.79) of the dominant leg. Solo se trend
 // strutturale chiaramente bull/bear (rimosso fallback ambiguo discount/premium).
+// 17/07 notte - da audit esterno canonico: la zona Fibonacci in se' (62-79%,
+// 70.5% centrale) era gia' corretta, il problema era l'ancoraggio - lo swing
+// veniva preso da un rolling highest/lowest generico di 30 barre su
+// InpTFMedium, MAI verificato che fosse davvero il leg che ha prodotto un
+// BOS (poteva essere il punto piu' alto/basso di una fase lenta, non un
+// vero impulso). NXS_Fib_Build resta invariata (e' condivisa anche col
+// dashboard/visual bridge, fuori scope qui) - aggiunto invece un gate BOS
+// dedicato: il leg deve avere prodotto un vero displacement (corpo forte)
+// che rompe uno swing PRECEDENTE a quello usato come origine del leg.
+double InpOTECont_DispBodyATR = 0.8;
+
 SNXSSignal NXS_Strat_OTE_Continuation(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "OTE_CONT";
-   SNXSFib f = NXS_Fib_Build(InpTFMedium, 30);
+   ENUM_TIMEFRAMES structTF = InpTFMedium;
+   SNXSFib f = NXS_Fib_Build(structTF, 30);
    if(!f.inOTE) return s;
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    double atr = _smc_atr();
+
+   // Gate BOS: nelle ultime 10 barre di structTF deve esserci un vero
+   // displacement (corpo >= soglia) che rompe uno swing PRECEDENTE al leg
+   // corrente (finestra piu' vecchia, 15 barre prima del displacement) -
+   // altrimenti il leg e' solo il max/min di una finestra, non un impulso.
+   bool bosConfirmed = false;
+   for(int i = 1; i <= 10; i++){
+      double oi = iOpen(g_sym, structTF, i), ci = iClose(g_sym, structTF, i);
+      double bodyi = MathAbs(ci - oi);
+      if(bodyi < atr * InpOTECont_DispBodyATR) continue;
+      int hiIdx = iHighest(g_sym, structTF, MODE_HIGH, 15, i + 1);
+      int loIdx = iLowest (g_sym, structTF, MODE_LOW,  15, i + 1);
+      double swingRefHi = hiIdx >= 0 ? iHigh(g_sym, structTF, hiIdx) : 0;
+      double swingRefLo = loIdx >= 0 ? iLow (g_sym, structTF, loIdx) : 0;
+      if(ci > oi && swingRefHi > 0 && ci > swingRefHi){ bosConfirmed = true; break; }
+      if(ci < oi && swingRefLo > 0 && ci < swingRefLo){ bosConfirmed = true; break; }
+   }
+   if(!bosConfirmed) return s;
+
+   // Entry su barra chiusa di NXS_EffTF() (entryTF), non piu' bid live.
+   double c1 = iClose(g_sym, NXS_EffTF(), 1), o1 = iOpen(g_sym, NXS_EffTF(), 1);
    // v2.0.6: strict alignment con struttura. Range (trend==0) → niente trade.
-   if(g_struct.trend == 1 && f.inDiscount && bid < f.mid){
+   if(g_struct.trend == 1 && f.inDiscount && c1 < f.mid && c1 > f.swingLow && c1 > o1){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = f.swingLow - 0.3 * atr;
       s.tpPrice = MathMax(f.swingHigh, _smc_tp(s.entryRef, DIR_BUY, 2.2));
-      s.score = 69.0; s.reason = "OTE 0.62-0.79 disc+trend";
+      s.score = 69.0; s.reason = "OTE 0.62-0.79 disc+trend+BOS";
       return s;
    }
-   if(g_struct.trend == -1 && f.inPremium && bid > f.mid){
-      s.dir = DIR_SELL; s.entryRef = bid;
+   if(g_struct.trend == -1 && f.inPremium && c1 > f.mid && c1 < f.swingHigh && c1 < o1){
+      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = f.swingHigh + 0.3 * atr;
       s.tpPrice = MathMin(f.swingLow, _smc_tp(s.entryRef, DIR_SELL, 2.2));
-      s.score = 69.0; s.reason = "OTE 0.62-0.79 prem+trend";
+      s.score = 69.0; s.reason = "OTE 0.62-0.79 prem+trend+BOS";
       return s;
    }
    return s;
