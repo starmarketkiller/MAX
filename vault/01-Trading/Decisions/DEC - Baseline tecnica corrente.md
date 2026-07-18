@@ -11,7 +11,7 @@ La baseline tecnica del progetto è congelata su:
 | Campo | Valore |
 |---|---|
 | Commit codice MQL5 | `e6ce816` (ultimo commit che tocca `MQL5/` prima dello sweep 1:500) |
-| Tag git | `baseline-post-infra-audit` |
+| Ref git | branch `baseline-post-infra-audit` (il proxy git rifiuta i tag: usato il branch, opzione equivalente prevista dalla roadmap) |
 | Versione EA | `2.50` (`#property version`) |
 | Hash aggregato sorgenti MQL5 | `04fa338252b13ab2db6062e9fb84d566` (riproducibile, vedi manifest) |
 | Compilazione | 0 errori / 0 warning su entrambi i terminali (18/07, agente desktop) |

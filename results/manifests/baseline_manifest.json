@@ -7,7 +7,7 @@
   "baseline": {
     "commit_sha_codice_mql5": "e6ce816",
     "commit_descrizione": "Fix reale MQL5: NY_REVERSAL con DST reale (BST calcolato) + aggregazione M5 - ultimo commit che tocca MQL5/ prima dello sweep 1:500",
-    "git_tag": "baseline-post-infra-audit",
+    "git_ref": "branch baseline-post-infra-audit (tag rifiutato dal proxy git, 403 - branch immutabile equivalente, opzione prevista dalla roadmap)",
     "ea_version_property": "2.50",
     "ea_file": "MQL5/Experts/NEXUS_EA_v2.mq5",
     "sha256_ea_mq5_primi16": "d53219a057f97975",
