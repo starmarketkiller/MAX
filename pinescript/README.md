@@ -1,15 +1,15 @@
 # NEXUS EA — Pine Script (terzo motore di verifica, TradingView)
 
-Questa cartella contiene 4 strategie NEXUS portate su Pine Script v6, come
+Questa cartella contiene strategie NEXUS portate su Pine Script v6, come
 **terzo motore di verifica indipendente** da MT5 (l'EA reale) e dal backtest
 lab interno (`server/backtest.py`, motore Python su dati Yahoo). Scopo: capire
-se il segnale di queste 4 strategie regge anche su un terzo dataset/motore
+se il segnale di queste strategie regge anche su un terzo dataset/motore
 (dati e matching-engine di TradingView), non sostituire gli altri due.
 
-Strategie incluse — le 4 peggiori del portafoglio sui 6 anni MT5 segmentati
-(vedi `vault/01-Trading/NEXUS EA - Backtest 10Y Segmentato - Analisi.md`),
-nessuna fonte esterna diretta ancora trovata per loro (sono indicatori
-classici, non concetti SMC/ICT):
+**Batch 1** — le 4 peggiori del portafoglio sui 6 anni MT5 segmentati (vedi
+`vault/01-Trading/NEXUS EA - Backtest 10Y Segmentato - Analisi.md`), nessuna
+fonte esterna diretta trovata per loro (sono indicatori classici, non
+concetti SMC/ICT):
 
 | File | Strategia | Timeframe | Tipo |
 |---|---|---|---|
@@ -18,23 +18,34 @@ classici, non concetti SMC/ICT):
 | `NEXUS_ADX_RSI.pine` | ADX_RSI | D1 | Trend-following (EMA50 + banda RSI — **non usa un vero ADX**, vedi sotto) |
 | `NEXUS_RSI_DIV.pine` | RSI_DIV | H1 | Reversal/divergenza (RSI vs prezzo, finestra 8 barre) |
 
-Scope di questo lavoro: solo queste 4 strategie. Nessuna modifica a `MQL5/`
+**Batch 2** (18/07) — logica corretta il 17/07 notte da un'altra sessione
+(fix reali già in MQL5, verificati prima del porting):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_TSI.pine` | TSI | D1 | Momentum (vero True Strength Index di Blau, cross su signal line) |
+| `NEXUS_LIQ_VOID.pine` | LIQ_VOID | H4 | SMC/ICT (Fair Value Gap 3 candele, retest del CE) |
+| `NEXUS_DISP_REBAL.pine` | DISP_REBAL | H4 | SMC/ICT (stessa geometria FVG, entry sul CE — **disabilitata in produzione MT5**, vedi sotto) |
+| `NEXUS_ORDER_BLOCK.pine` | ORDER_BLOCK | D1 | SMC/ICT (zona origine pre-displacement + BOS, macchina a stati con retest one-shot) |
+
+Scope di questo lavoro: solo le 8 strategie sopra. Nessuna modifica a `MQL5/`
 o `server/backtest.py`.
 
 ## Come usarle nello Strategy Tester di TradingView
 
 1. Apri un chart **XAUUSD** (o il ticker gold del tuo broker/feed su
-   TradingView) sul **timeframe nativo della strategia** (vedi tabella sopra —
-   H4 per SAR/MACD, D1 per ADX_RSI, H1 per RSI_DIV). Ogni script mostra un
-   avviso a schermo se il chart è su un TF diverso da quello previsto.
+   TradingView) sul **timeframe nativo della strategia** (vedi tabelle sopra —
+   H4 per SAR/MACD/LIQ_VOID/DISP_REBAL, D1 per ADX_RSI/TSI/ORDER_BLOCK, H1 per
+   RSI_DIV). Ogni script mostra un avviso a schermo se il chart è su un TF
+   diverso da quello previsto.
 2. Apri il **Pine Editor**, incolla il contenuto del file `.pine`, premi
    "Add to chart".
 3. Apri il pannello **Strategy Tester** (in basso) per vedere Net Profit,
    Profit Factor, Win Rate, Max Drawdown e la lista trade — le stesse metriche
    usate nelle analisi MT5/sito nel vault, così i numeri sono confrontabili
    direttamente.
-4. Ogni script ha un input **"Configurazione SL/TP/BE"** (o "SL/TP" per
-   RSI_DIV) con due opzioni, ma il significato delle due opzioni **non è lo
+4. **Batch 1** (SAR/MACD/ADX_RSI/RSI_DIV): ogni script ha un input
+   **"Configurazione SL/TP/BE"** con due opzioni, ma il significato **non è lo
    stesso per tutte le strategie** — dipende da cosa gira davvero in
    produzione oggi:
    - **SAR e RSI_DIV**: "Baseline (config attuale)" = config live in
@@ -46,29 +57,40 @@ o `server/backtest.py`.
      `NXS_StrategyProfiles.mqh`; "Config pre-fix (17/07, storica)" = la
      config precedente, tenuta solo come riferimento storico per il
      confronto — **non** rappresenta un'ipotesi ancora da validare.
-   In tutti e 4 i casi, esegui il test con entrambe le opzioni (stesso
-   range di date, stesso capitale) e confronta PF/Drawdown/Net.
-5. Range di date di default: 2019-01-01 → oggi, per allinearsi alla finestra
+   Esegui il test con entrambe le opzioni (stesso range di date, stesso
+   capitale) e confronta PF/Drawdown/Net.
+5. **Batch 2** (TSI/LIQ_VOID/DISP_REBAL/ORDER_BLOCK): una sola configurazione
+   ciascuna (quella del profilo MQL5 attuale, senza distinzione baseline/
+   variante — non è emersa alcuna analisi MFE/MAE per queste 4). LIQ_VOID ha
+   due toggle HTF indipendenti (vedi sezione dedicata) e DISP_REBAL è
+   **disabilitata in produzione MT5** oggi (portata comunque per completezza).
+6. Range di date di default: 2019-01-01 → oggi, per allinearsi alla finestra
    dei 6 anni "affidabili" usata nel backtest 10Y segmentato MT5. Modificabile
    dagli input in cima allo script.
-6. Quantità fissa a 1 contratto per tutte e 4 (non è calibrata sul lot sizing
+7. Quantità fissa a 1 contratto per tutte (non è calibrata sul lot sizing
    MT5): l'obiettivo qui è confrontare PF/Win Rate/Drawdown% (metriche a
    rapporto, insensibili alla size) trade per trade, non riprodurre l'equity
    in $ dell'EA reale. Commissioni e slippage sono a 0 di default — aggiungili
    dalle proprietà della strategia se vuoi un test più realistico.
 
-## Regola anti-repaint (importante, applicata in tutti e 4 gli script)
+## Regola anti-repaint (importante, applicata in tutti gli script)
 
 - `calc_on_every_tick = false` in ogni `strategy()`: le condizioni d'ingresso
   sono valutate sulla **barra chiusa** e l'ordine si riempie all'apertura
   della barra successiva. È lo stesso modello di MQL5, che legge
   SAR/EMA/MACD/RSI con `shift=1` (ultima barra chiusa) e apre a mercato subito
   dopo — mai sulla barra "live"/in formazione.
-- Il filtro HTF di SAR/MACD/ADX_RSI è EMA200 sullo **stesso** timeframe (non
-  multi-TF, non serve `request.security`) — vedi sezione dedicata sotto per i
-  dettagli e per la correzione fatta il 18/07.
+- Il filtro HTF di SAR/MACD/ADX_RSI/TSI/ORDER_BLOCK è EMA200 sullo **stesso**
+  timeframe (non multi-TF, non serve `request.security`) — vedi sezione
+  dedicata sotto per i dettagli e per la correzione fatta il 18/07.
 - La divergenza RSI_DIV confronta solo barre già chiuse (`[1]` e `[8]`): nessun
   pivot ricalcolato a posteriori, quindi nessun repaint strutturale.
+- **LIQ_VOID/DISP_REBAL/ORDER_BLOCK**: in MQL5 il retest della zona usa il
+  prezzo BID **live** (tick-by-tick), non riproducibile senza
+  `calc_on_every_tick=true` (che reintrodurrebbe repaint altrove nello
+  script). Qui il "tocco" è approssimato col range low/high della barra
+  appena chiusa, la stessa barra usata per la candela di rigetto —
+  semplificazione documentata anche nell'intestazione di ciascuno script.
 
 ## Riepilogo logica per strategia
 
@@ -121,6 +143,69 @@ o `server/backtest.py`.
 - **Filtro HTF**: **disattivato** — con l'HTF attivo il campione crolla a 0-4
   trade su ogni timeframe testato (vedi vault "Fix Blocco 4").
 
+### TSI (D1)
+- **Indicatori**: True Strength Index di Blau — doppio EMA (long=25, short=13)
+  del price change, diviso per il doppio EMA dell'abs(price change), ×100;
+  signal line = EMA a 7 periodi del TSI. ATR(14) per SL/TP.
+- **BUY**: TSI incrocia sopra la signal line (crossover). **SELL**: speculare
+  (crossunder).
+- **SL/TP**: SL 1.5×ATR, TP 4.5×ATR, breakeven a 1.0×R. Una sola config (dal
+  profilo attuale, nessuna variante nota).
+- **Filtro HTF**: attivo (EMA200 stesso TF) — vincolo indipendente, il
+  trigger non usa EMA200.
+
+### LIQ_VOID (H4)
+- **Indicatori**: geometria Fair Value Gap a 3 candele (displacement ≥1.2×ATR
+  entro 12 barre), ATR(14).
+- **BUY**: zona bullish valida (Low candela3 > High candela1, larghezza
+  ≥0.3×ATR), prezzo rientra nella metà inferiore della zona (fino al CE) con
+  candela di rigetto rialzista. **SELL**: speculare.
+- **SL/TP**: **non** un multiplo ATR generico — SL = bordo zona ∓ 0.4×ATR,
+  TP = 2.5×R fisso, calcolati dalla geometria della zona stessa. Nessun
+  breakeven.
+- **Filtro HTF**: **due meccanismi indipendenti**, entrambi devono passare —
+  vedi sezione dedicata sotto (`requireBiasHtf` è **requisito core del
+  trigger**, non un gate opzionale; in MT5 di default è spento e la
+  strategia non genera mai segnali).
+
+### DISP_REBAL (H4) — ⚠️ disabilitata in produzione MT5
+- **Indicatori**: stessa geometria FVG a 3 candele di LIQ_VOID (displacement
+  ≥1.3×ATR entro 8 barre), ATR(14).
+- **BUY**: FVG bullish valido (gap minimo 0.1×ATR), prezzo rientra fra il
+  bordo basso del FVG e poco oltre il CE (consequent encroachment, 50% del
+  gap — non il 50% della candela displacement come nella versione
+  pre-17/07), candela di rigetto rialzista. **SELL**: speculare.
+- **SL/TP**: SL = bordo FVG ∓ 0.3×ATR; TP **dinamico** = il più lontano fra
+  un'estensione dello 0.8× oltre il bordo lontano del FVG e un fisso 2.4×R.
+  Nessun breakeven.
+- **Filtro HTF**: nessuno (il profilo ha `htf=false`, la funzione MQL5 non
+  richiede alcun bias).
+- **Stato**: `NXS_Profile_Enabled()` la marca disabilitata in MQL5 ("v2.3.1
+  test reale: 10 trade, -53$, WR 30%") — non è live sull'EA oggi, portata
+  comunque su Pine per completezza di verifica.
+
+### ORDER_BLOCK (D1)
+- **Indicatori**: macchina a stati persistente (zona buy e zona sell
+  indipendenti) — non una condizione a singola barra come le altre 7. ATR(14).
+- **Ricerca zona**: displacement (corpo ≥1.2×ATR) entro 3-10 barre fa (più
+  vicino prima) che rompe uno swing di riferimento su 15 barre precedenti
+  (BOS) → l'origine della zona è l'ultima candela di colore **opposto**
+  entro le 6 barre prima del displacement (più vicina prima).
+- **Ciclo di vita zona**: attiva fino al primo retest (one-shot), scade dopo
+  20 barre di attesa, si invalida se una barra chiude attraversandola
+  completamente nel verso sbagliato.
+- **BUY**: zona buy attiva, prezzo la tocca, ultima barra chiusa è candela
+  di rigetto rialzista. **SELL**: speculare.
+- **SL/TP**: SL 1.0×ATR, TP 3.0×ATR (standard, via formula ATR come nel
+  Batch 1). Nessun breakeven.
+- **Filtro HTF**: attivo (EMA200 stesso TF).
+- **Semplificazioni note (omesse di proposito)**: il codice reale ha due
+  filtri aggiuntivi non replicati qui — conferma struttura H1 esterna
+  (`g_structH1.trend`, calcolo fractal/CHoCH stateful) e uno "SMC reaction
+  gate" generico (`NXS_SMCReactionOK`). Entrambi attivi di default in MQL5:
+  la versione Pine è quindi **meno filtrata** (più segnali) del comportamento
+  MT5 reale.
+
 ## Filtro HTF — cos'è, e correzione del 18/07
 
 **Corretto il 18/07** — la prima versione di questo filtro (SAR/MACD/ADX_RSI)
@@ -133,8 +218,10 @@ gate opzionale mai acceso in produzione.
 
 Il gate **davvero live** è molto più semplice: **EMA200 sullo stesso
 timeframe della strategia**, confronto prezzo vs EMA200. Blocca i BUY se il
-prezzo è sotto EMA200, i SELL se è sopra. Aggiornato in tutti e 3 gli script
-che lo usano (SAR/MACD/ADX_RSI — RSI_DIV non ha filtro HTF, invariato).
+prezzo è sotto EMA200, i SELL se è sopra. Usato in SAR/MACD/ADX_RSI
+(corretto il 18/07) e in TSI/ORDER_BLOCK (Batch 2, implementato corretto fin
+dall'inizio). RSI_DIV e DISP_REBAL non hanno filtro HTF. LIQ_VOID è un caso a
+parte — vedi sotto.
 
 Una nota di fedeltà sul codice reale: lì il confronto è **asimmetrico**
 (prezzo `shift 0`, cioè la barra ancora in formazione, vs EMA200 `shift 1`,
@@ -151,22 +238,48 @@ comportamento del filtro *dentro lo script Pine* era diverso da quello
 descritto qui). Vale la pena rieseguire i 3 test con la versione corretta
 per un confronto pulito.
 
-## Gestione uscita comune a tutti e 4
+### Caso speciale: LIQ_VOID ha DUE filtri HTF indipendenti
 
+A differenza delle altre strategie, in `NXS_Strat_LiquidityVoid` il bias
+multi-timeframe (EMA50 H4 + EMA50 H1, `NXS_GetHTFBias`) non è un gate
+opzionale a valle — è un **requisito dentro il trigger stesso**: la funzione
+riceve il risultato di `NXS_GetHTFBias()` come parametro e richiede
+esplicitamente `bias==BULL` per i BUY / `bias==BEAR` per i SELL. Siccome
+`InpUseHTFBias=false` di default, quel bias è sempre `NEUTRAL` in MT5 oggi —
+**LIQ_VOID non genera mai segnali con le impostazioni di default reali**. Il
+profilo di LIQ_VOID ha *anche* `htf=true`, quindi il gate generico EMA200
+stesso-TF si applica **in aggiunta**, indipendentemente dal primo.
+
+Lo script `NEXUS_LIQ_VOID.pine` espone entrambi come toggle separati:
+`requireBiasHtf` (default ON, per rendere la strategia testabile — spegnerlo
+replica il comportamento dormiente reale di oggi) e `useHtfFilter` (il gate
+EMA200 generico, come le altre).
+
+## Gestione uscita
+
+**SAR/MACD/ADX_RSI/RSI_DIV/TSI/ORDER_BLOCK** (SL/TP via formula ATR):
 - SL/TP calcolati una sola volta all'apertura del trade, come multiplo
   dell'ATR(14) **al momento dell'ingresso** (non ricalcolato durante la vita
   del trade) — identico a `NXS_DefaultSLTP` in MQL5.
 - Breakeven (dove beR > 0): quando il profitto flottante raggiunge `beR × R`
   (R = distanza SL iniziale), lo stop si sposta esattamente al prezzo
-  d'ingresso — identico a `NXS_ManageBreakevenAndTrail`.
+  d'ingresso — identico a `NXS_ManageBreakevenAndTrail`. TSI ha breakeven
+  a 1.0×R; SAR/RSI_DIV/ORDER_BLOCK nella config attuale non lo usano.
+
+**LIQ_VOID/DISP_REBAL** (SL/TP dalla geometria della zona, non ATR generico):
+- SL/TP calcolati una sola volta al momento del segnale, come prezzi
+  assoluti derivati dai bordi della zona FVG/void (± buffer ATR) — non un
+  multiplo ATR generico applicato al prezzo d'ingresso. Nessun breakeven per
+  nessuna delle due (beR=0 nel profilo).
+
+**Tutte e 8**:
 - **Time-exit a 40 barre**: se né SL né TP vengono toccati entro 40 barre dal
   timeframe della strategia, la posizione viene chiusa a mercato — replica il
-  "time-based forced exit" reale di MQL5 (`~40 barre del TF della strategia`),
-  che è anche l'orizzonte usato nell'analisi MFE/MAE del vault.
-- Nessun trailing stop: tutte e 4 le strategie hanno `trailATR=0` nel profilo
-  MQL5 attuale, confermato inefficace dal test MFE/MAE del 17/07.
+  "time-based forced exit" reale di MQL5 (`~40 barre del TF della strategia`).
+- Nessun trailing stop: tutte hanno `trailATR=0` nel profilo MQL5 attuale
+  (confermato inefficace dal test MFE/MAE del 17/07 per il Batch 1).
 
-## Risultati dei test manuali
+## Risultati dei test manuali — Batch 1 (SAR/MACD/ADX_RSI/RSI_DIV)
 
 Test eseguiti con lo Strategy Tester nativo di TradingView su
 **OANDA:XAUUSD**, `calc_on_every_tick=false`, capitale iniziale 10.000 USD.
@@ -241,7 +354,7 @@ troppo corto e specifico per questo periodo di mercato.
 > storico, senza risultato: è il limite reale dei dati disponibili sul
 > piano). I risultati RSI_DIV qui sopra vanno letti in questo contesto.
 
-### Osservazioni
+### Osservazioni (Batch 1)
 - SAR, MACD e ADX_RSI confermano un edge positivo su un terzo motore/dataset
   indipendente da MT5 e dal sito. Per MACD e ADX_RSI la config TP-largo+BE
   (live oggi in produzione) migliora PF e/o drawdown rispetto alla vecchia
@@ -255,3 +368,34 @@ troppo corto e specifico per questo periodo di mercato.
   finestra temporale sul motore sito e su MT5 per vedere se le divergenze
   già note tra motori (vedi `NEXUS EA - Principi.md` #5) si ripresentano
   anche qui.
+- ⚠️ Vedi anche l'avviso in cima a questa sezione: SAR/MACD/ADX_RSI vanno
+  rieseguiti con la versione corretta del filtro HTF (18/07) prima di
+  considerare queste osservazioni definitive.
+
+## Risultati dei test manuali — Batch 2 (TSI/LIQ_VOID/DISP_REBAL/ORDER_BLOCK)
+
+Da compilare dopo i test manuali, stesso formato del Batch 1 sopra.
+
+### TSI (D1)
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| Config attuale (SL1.5×/TP4.5×/BE1.0R) | | | | | | |
+
+### LIQ_VOID (H4)
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| `requireBiasHtf`=ON (default, testabile) | | | | | | |
+| `requireBiasHtf`=OFF (replica comportamento reale dormiente) | | | | | | |
+
+### DISP_REBAL (H4) — disabilitata in produzione, solo verifica
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| Config attuale (geometria FVG/CE) | | | | | | |
+
+### ORDER_BLOCK (D1)
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| Config attuale (SL1.0×/TP3.0×, no BE) | | | | | | |
+
+### Osservazioni (Batch 2)
+_(da compilare)_

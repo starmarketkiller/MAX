@@ -1,0 +1,129 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia TSI (True Strength Index di Blau) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_TSI
+// (NXS_Strategies.mqh) e il profilo (NXS_StrategyProfiles.mqh). Il vero TSI
+// (Blau) ha sostituito, nel fix del 17/07, un vecchio proxy RSI+EMA20 con lo
+// stesso nome ma logica diversa — questo script implementa il TSI reale.
+//
+// Indicatore: TSI = 100 × doppioEMA(price change) / doppioEMA(abs(price
+// change)), periodi long=25/short=13 (InpTSI_LongPeriod/ShortPeriod),
+// confrontato con una signal line = EMA a 7 periodi del TSI stesso
+// (InpTSI_SignalPeriod). Entry sul cross TSI/signal:
+//   BUY  : TSI incrocia sopra la signal line (crossover)
+//   SELL : TSI incrocia sotto la signal line (crossunder)
+// In MQL5 il calcolo è iterativo con smoothing ricorsivo (stesso identico
+// algoritmo di una EMA) aggiornato una sola volta per barra chiusa — qui
+// ta.ema() applicata in cascata produce lo stesso risultato, senza bisogno
+// di una state machine manuale.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false (vedi NEXUS_SAR.pine
+// per i dettagli del modello). Filtro HTF: EMA200 sullo stesso timeframe —
+// gate reale del profilo (NEXUS_EA_v2.mq5, InpUseStrategyProfiles=true), non
+// il meccanismo NXS_GetHTFBias multi-timeframe (disattivato di default).
+// =============================================================================
+strategy("NEXUS EA - TSI (XAUUSD D1)", shorttitle="NXS-TSI", overlay=false,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo (il trigger TSI non usa EMA200, quindi aggiunge un vincolo indipendente).")
+tsiLong   = input.int(25, "TSI Long EMA")
+tsiShort  = input.int(13, "TSI Short EMA")
+tsiSignal = input.int(7, "TSI Signal EMA")
+atrLen    = input.int(14, "ATR length")
+slMult    = input.float(1.5, "SL × ATR")
+tpMult    = input.float(4.5, "TP × ATR")
+beRMult   = input.float(1.0, "Breakeven a × R (0 = disattivato)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+slMultR = slMult
+tpMultR = tpMult
+beR     = beRMult
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200Htf = ta.ema(close, 200)
+
+pc  = close - close[1]
+apc = math.abs(pc)
+sm1    = ta.ema(pc, tsiLong)
+sm1Abs = ta.ema(apc, tsiLong)
+sm2    = ta.ema(sm1, tsiShort)
+sm2Abs = ta.ema(sm1Abs, tsiShort)
+tsi    = sm2Abs != 0 ? 100.0 * sm2 / sm2Abs : 0.0
+tsiSignalLine = ta.ema(tsi, tsiSignal)
+
+// Warmup: come in MQL5 (barsSeen < LongPeriod*3), evita segnali prima che il
+// doppio smoothing converga da uno stato iniziale a zero.
+var int barsSeen = 0
+barsSeen := barsSeen + 1
+warmedUp = barsSeen >= tsiLong * 3
+
+crossUp   = warmedUp and ta.crossover(tsi, tsiSignalLine)
+crossDown = warmedUp and ta.crossunder(tsi, tsiSignalLine)
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Filtro HTF (EMA200 stesso TF) ---------------
+htfBlocksBuy  = useHtfFilter and close < ema200Htf
+htfBlocksSell = useHtfFilter and close > ema200Htf
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and crossUp and not htfBlocksBuy
+shortCond = inRange and crossDown and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="TSI_cross_up")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="TSI_cross_down")
+
+// ----------------------------- Gestione SL/TP/BE/Time-exit ------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var bool  beDone       = false
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    beDone := false
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMultR
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMultR
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMultR
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMultR
+
+if strategy.position_size != 0 and beR > 0 and not beDone
+    risk = atrAtEntry * slMultR
+    prof = strategy.position_size > 0 ? close - strategy.position_avg_price : strategy.position_avg_price - close
+    if risk > 0 and prof >= beR * risk
+        slLevel := strategy.position_avg_price
+        beDone := true
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(tsi, "TSI", color=color.new(color.aqua, 0), linewidth=2)
+plot(tsiSignalLine, "Signal", color=color.new(color.orange, 0), linewidth=1)
+hline(0, "Zero", color=color.new(color.gray, 50))
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, tsi, "⚠ Questa strategia è tarata su D1 — imposta il chart a Daily", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS TSI BUY", "NEXUS TSI: cross up su barra chiusa")
+alertcondition(shortCond, "NXS TSI SELL", "NEXUS TSI: cross down su barra chiusa")

@@ -1,0 +1,199 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia ORDER_BLOCK (zona origine + BOS + retest) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_OrderBlock
+// / NXS_OB_UpdateSide (NXS_Strategies.mqh) e il profilo (NXS_StrategyProfiles.mqh).
+//
+// Fix reale del 17/07 notte, da audit esterno canonico ICT/SMC: un order
+// block bullish è l'ULTIMA candela ribassista prima del displacement che
+// rompe struttura (BOS) — non il corpo del displacement stesso (la vecchia
+// versione trattava il displacement come fosse l'OB, una "zona corpo
+// displacement", non un vero order block).
+//
+// A differenza delle altre strategie di questo batch, ORDER_BLOCK è una
+// MACCHINA A STATI PERSISTENTE (due indipendenti, buy e sell): una zona
+// candidata viene cercata solo quando non ce n'è già una attiva, resta
+// valida fino al primo retest (one-shot) o fino a invalidazione/scadenza:
+//   1. Cerca, entro 3-10 barre fa (più vicina prima), un displacement (corpo
+//      ≥1.2×ATR, colore giusto) che rompe uno swing precedente (BOS: il
+//      close del displacement supera l'estremo di un swing calcolato su 15
+//      barre PRIMA del displacement stesso).
+//   2. Se BOS confermato, cerca — entro le 6 barre subito prima del
+//      displacement (più vicina prima) — l'ultima candela di colore
+//      OPPOSTO: quella è l'origine della zona (obLo/obHi = corpo di quella
+//      candela).
+//   3. Zona attiva: scade dopo 20 barre di attesa, o si invalida se una
+//      barra chiude attraversandola completamente nel verso sbagliato.
+//   4. Se il prezzo tocca la zona E l'ultima barra chiusa è una candela di
+//      rigetto (nella direzione giusta) → segnale, zona consumata (one-shot).
+//
+// SEMPLIFICAZIONI NOTE (omesse di proposito, per restare fedeli SOLO alla
+// logica che ci è stata descritta — non implementate, non "corrette in
+// silenzio"): nel codice reale ci sono DUE filtri aggiuntivi non replicati
+// qui — (1) conferma di struttura H1 esterna (g_structH1.trend deve
+// concordare con la direzione del retest), un calcolo fractal/CHoCH
+// complesso e stateful; (2) uno "SMC reaction gate" generico
+// (NXS_SMCReactionOK) che richiede una qualità di reazione minima. Entrambi
+// attivi di default in MQL5 — la versione Pine qui è quindi meno filtrata
+// (più segnali) del comportamento MT5 reale.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. Il retest usa il
+// prezzo BID live in MQL5 (non barra chiusa) — qui approssimato col range
+// low/high della barra appena chiusa, stessa barra della candela di
+// rigetto (come in LIQ_VOID/DISP_REBAL). Filtro HTF: EMA200 stesso TF (gate
+// generico di profilo, htf=true) — indipendente dal filtro H1 sopra omesso.
+// =============================================================================
+strategy("NEXUS EA - ORDER_BLOCK (XAUUSD D1)", shorttitle="NXS-OB", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo. NON include il filtro struttura H1 esterna né lo SMC reaction gate del codice reale (omessi, vedi commento in testa allo script).")
+displMinLookback = input.int(3, "Displacement: barre indietro (min)")
+displMaxLookback = input.int(10, "Displacement: barre indietro (max)")
+displBodyMult     = input.float(1.2, "Displacement: corpo minimo × ATR")
+swingLookback     = input.int(15, "Swing/BOS: barre di riferimento")
+originLookback    = input.int(6, "Origine zona: barre indietro dal displacement")
+maxWaitBars       = input.int(20, "Zona: scadenza dopo N barre")
+slMult = input.float(1.0, "SL × ATR")
+tpMult = input.float(3.0, "TP × ATR")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200Htf = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Ricerca zona (per direzione) -----------------
+ob_find_zone(dirSign) =>
+    float zoneLo = na
+    float zoneHi = na
+    bool found = false
+    for i = displMinLookback to displMaxLookback
+        if not found
+            bodyI = math.abs(close[i] - open[i])
+            rightColor = dirSign > 0 ? close[i] > open[i] : close[i] < open[i]
+            if bodyI >= displBodyMult * atrVal and rightColor
+                float swingRef = dirSign > 0 ? high[i + 1] : low[i + 1]
+                for j = i + 2 to i + swingLookback
+                    if dirSign > 0
+                        swingRef := math.max(swingRef, high[j])
+                    else
+                        swingRef := math.min(swingRef, low[j])
+                bos = dirSign > 0 ? close[i] > swingRef : close[i] < swingRef
+                if bos
+                    for k = i + 1 to i + originLookback
+                        if not found
+                            oppColor = dirSign > 0 ? close[k] < open[k] : close[k] > open[k]
+                            if oppColor
+                                zoneLo := math.min(open[k], close[k])
+                                zoneHi := math.max(open[k], close[k])
+                                found := true
+    [found, zoneLo, zoneHi]
+
+// ----------------------------- Stato zona BUY --------------------------------
+var bool  obBuyActive = false
+var float obBuyLo = na
+var float obBuyHi = na
+var int   obBuyWait = 0
+buySignal = false
+
+if not obBuyActive
+    [foundB, loB, hiB] = ob_find_zone(1)
+    if foundB
+        obBuyLo := loB
+        obBuyHi := hiB
+        obBuyActive := true
+        obBuyWait := 0
+else
+    obBuyWait := obBuyWait + 1
+    invalidatedBuy = close < obBuyLo
+    if obBuyWait > maxWaitBars or invalidatedBuy
+        obBuyActive := false
+    else
+        touchedBuy   = low <= obBuyHi and high >= obBuyLo
+        rejectionBuy = close > open
+        if touchedBuy and rejectionBuy
+            buySignal := true
+            obBuyActive := false
+
+// ----------------------------- Stato zona SELL -------------------------------
+var bool  obSellActive = false
+var float obSellLo = na
+var float obSellHi = na
+var int   obSellWait = 0
+sellSignal = false
+
+if not obSellActive
+    [foundS, loS, hiS] = ob_find_zone(-1)
+    if foundS
+        obSellLo := loS
+        obSellHi := hiS
+        obSellActive := true
+        obSellWait := 0
+else
+    obSellWait := obSellWait + 1
+    invalidatedSell = close > obSellHi
+    if obSellWait > maxWaitBars or invalidatedSell
+        obSellActive := false
+    else
+        touchedSell   = high >= obSellLo and low <= obSellHi
+        rejectionSell = close < open
+        if touchedSell and rejectionSell
+            sellSignal := true
+            obSellActive := false
+
+// ----------------------------- Trigger --------------------------------------
+htfBlocksBuy  = useHtfFilter and close < ema200Htf
+htfBlocksSell = useHtfFilter and close > ema200Htf
+
+longCond  = inRange and buySignal and not htfBlocksBuy
+shortCond = inRange and sellSignal and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="OB_retest_bull")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="OB_retest_bear")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel     = na
+var float tpLevel     = na
+var float atrAtEntry  = na
+var int   entryBarIdx  = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(obBuyActive ? obBuyLo : na, "OB zona bassa (buy)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(obBuyActive ? obBuyHi : na, "OB zona alta (buy)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(obSellActive ? obSellLo : na, "OB zona bassa (sell)", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(obSellActive ? obSellHi : na, "OB zona alta (sell)", color=color.new(color.red, 0), style=plot.style_linebr)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a Daily", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS ORDER_BLOCK BUY", "NEXUS ORDER_BLOCK: retest bullish su barra chiusa")
+alertcondition(shortCond, "NXS ORDER_BLOCK SELL", "NEXUS ORDER_BLOCK: retest bearish su barra chiusa")

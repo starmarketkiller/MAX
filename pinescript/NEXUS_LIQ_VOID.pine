@@ -1,0 +1,171 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia LIQ_VOID (Liquidity Void / FVG continuation) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_LiquidityVoid
+// (NXS_Strategies_Institutional.mqh) e il profilo (NXS_StrategyProfiles.mqh).
+//
+// Geometria FVG a 3 candele (fix reale del 17/07 notte, da audit esterno
+// canonico ICT/SMC — sostituisce una vecchia versione high-vs-high che NON
+// era un vero gap): candela 1 = la più vecchia delle 3, candela 2 = la
+// candela displacement (corpo ≥ 1.2×ATR), candela 3 = la più recente (già
+// chiusa). Bullish: Low(candela3) > High(candela1), zona (void) fra
+// High[candela1] e Low[candela3]. Bearish: speculare.
+//   BUY  : displacement bullish trovato entro 12 barre, zona larga ≥0.3×ATR,
+//          prezzo rientra nella metà inferiore della zona (fra il bordo
+//          basso e il CE/midpoint) con una candela di rigetto rialzista.
+//   SELL : speculare (metà superiore della zona, candela di rigetto ribassista).
+// SL/TP: NON sono un multiplo ATR generico — sono calcolati dalla geometria
+// della zona stessa (SL = bordo esterno ± 0.4×ATR, TP = 2.5×R fisso), esattamente
+// come in MQL5 — il profilo NXS_StrategyProfiles.mqh riporta slMult/tpMult per
+// LIQ_VOID ma quei numeri non sono usati: la strategia calcola slPrice/tpPrice
+// direttamente, senza passare da NXS_DefaultSLTP.
+//
+// FILTRO HTF — DUE meccanismi distinti e indipendenti, entrambi presenti nel
+// codice reale:
+//  1) Bias multi-timeframe richiesto DENTRO il trigger stesso (non un gate
+//     opzionale a valle): la funzione MQL5 prende come parametro
+//     SNXSHTF risultato di NXS_GetHTFBias() (EMA50 H4 + EMA50 H1) e richiede
+//     esplicitamente htf.bias==BULL per i BUY / ==BEAR per i SELL. In MT5
+//     questo bias è gated da InpUseHTFBias, che è FALSE di default — quindi
+//     nella config di default MT5 questo bias è sempre NEUTRAL e LIQ_VOID
+//     non genera MAI segnali. Qui il toggle sotto è ON di default per
+//     rendere la strategia testabile (equivalente a InpUseHTFBias=true in
+//     MT5) — spegnerlo replica il comportamento "dormiente" reale di oggi.
+//  2) Il gate generico di profilo (EMA200 stesso TF, vedi NEXUS_SAR.pine) si
+//     applica ANCHE qui perché il profilo di LIQ_VOID ha htf=true — è un
+//     secondo filtro indipendente dal primo, entrambi devono passare.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. In MQL5 il retest
+// della zona usa il prezzo BID live (tick-by-tick, non barra chiusa) — non
+// riproducibile senza calc_on_every_tick=true, che reintrodurrebbe repaint
+// nel resto dello script. Qui il "tocco" è approssimato con l'intervallo
+// low/high della barra appena chiusa (stessa barra usata per la candela di
+// rigetto) — semplificazione documentata, coerente col resto del batch.
+// =============================================================================
+strategy("NEXUS EA - LIQ_VOID (XAUUSD H4)", shorttitle="NXS-LIQVOID", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+requireBiasHtf = input.bool(true, "Richiedi bias multi-TF (EMA50 H4+H1)", tooltip="Requisito CORE del trigger reale (NXS_GetHTFBias). In MT5 di default è spento (InpUseHTFBias=false) e la strategia non genera mai segnali — lascialo ON per testarla, spegnilo per replicare il comportamento dormiente reale.")
+useHtfFilter   = input.bool(true, "Filtro HTF aggiuntivo (EMA200 stesso TF)", tooltip="Secondo gate indipendente, dal profilo (htf=true). Si applica IN AGGIUNTA al bias multi-TF sopra, non al suo posto.")
+displLookback = input.int(12, "Displacement: barre indietro")
+displBodyMult = input.float(1.2, "Displacement: corpo minimo × ATR")
+zoneMinWidth  = input.float(0.3, "Zona: larghezza minima × ATR")
+slBuffer      = input.float(0.4, "SL: buffer oltre la zona × ATR")
+tpRMultiple   = input.float(2.5, "TP: multiplo di R fisso")
+atrLen        = input.int(14, "ATR length")
+maxHoldBars   = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200Htf = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Bias multi-TF (EMA50 H4 + EMA50 H1) ---------
+emaHTF   = request.security(syminfo.tickerid, "240", ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+closeHTF = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
+emaMTF   = request.security(syminfo.tickerid, "60",  ta.ema(close, 50)[1], lookahead=barmerge.lookahead_off)
+biasBull = closeHTF > emaHTF and emaMTF > emaHTF
+biasBear = closeHTF < emaHTF and emaMTF < emaHTF
+
+// ----------------------------- Ricerca displacement -------------------------
+find_displacement(dirSign) =>
+    int foundIdx = -1
+    for i = 1 to displLookback
+        if foundIdx == -1
+            bodyI = math.abs(close[i] - open[i])
+            rightColor = dirSign > 0 ? close[i] > open[i] : close[i] < open[i]
+            if bodyI >= displBodyMult * atrVal and rightColor
+                foundIdx := i
+    foundIdx
+
+dispIdxBull = find_displacement(1)
+dispIdxBear = find_displacement(-1)
+
+// ----------------------------- Geometria zona (bullish) ---------------------
+bullZoneValid = false
+float bullVoidLo = na
+float bullVoidHi = na
+if dispIdxBull > 1
+    c1High = high[dispIdxBull + 1]
+    c3Low  = low[dispIdxBull - 1]
+    if c3Low > c1High
+        bullVoidLo := c1High
+        bullVoidHi := c3Low
+        bullZoneValid := (bullVoidHi > bullVoidLo + zoneMinWidth * atrVal)
+
+// ----------------------------- Geometria zona (bearish) ---------------------
+bearZoneValid = false
+float bearVoidLo = na
+float bearVoidHi = na
+if dispIdxBear > 1
+    c1Low  = low[dispIdxBear + 1]
+    c3High = high[dispIdxBear - 1]
+    if c1Low > c3High
+        bearVoidLo := c3High
+        bearVoidHi := c1Low
+        bearZoneValid := (bearVoidHi > bearVoidLo + zoneMinWidth * atrVal)
+
+// ----------------------------- Trigger --------------------------------------
+htfOkBuy  = (not requireBiasHtf or biasBull) and (not useHtfFilter or close > ema200Htf)
+htfOkSell = (not requireBiasHtf or biasBear) and (not useHtfFilter or close < ema200Htf)
+
+bullCe = bullZoneValid ? (bullVoidLo + bullVoidHi) * 0.5 : na
+bearCe = bearZoneValid ? (bearVoidLo + bearVoidHi) * 0.5 : na
+
+bullTouch = bullZoneValid and low <= bullCe and high >= bullVoidLo
+bearTouch = bearZoneValid and high >= bearCe and low <= bearVoidHi
+
+longCond  = inRange and bullTouch and close > open and htfOkBuy
+shortCond = inRange and bearTouch and close < open and htfOkSell
+
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel    = na
+var float tpLevel    = na
+var int   entryBarIdx = na
+
+// STEP 1: consuma i livelli calcolati sulla barra del segnale (fill = barra dopo)
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+// STEP 2: nuovi segnali -> calcola SL/TP dalla geometria e piazza l'ordine
+if longCond and strategy.position_size <= 0
+    slPrice = bullVoidLo - slBuffer * atrVal
+    pendingSL := slPrice
+    pendingTP := close + tpRMultiple * (close - slPrice)
+    strategy.entry("Long", strategy.long, comment="LIQVOID_bull_CE")
+if shortCond and strategy.position_size >= 0
+    slPrice = bearVoidHi + slBuffer * atrVal
+    pendingSL := slPrice
+    pendingTP := close - tpRMultiple * (slPrice - close)
+    strategy.entry("Short", strategy.short, comment="LIQVOID_bear_CE")
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(bullZoneValid ? bullVoidLo : na, "Void Lo (bull)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bullZoneValid ? bullVoidHi : na, "Void Hi (bull)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bearZoneValid ? bearVoidLo : na, "Void Lo (bear)", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(bearZoneValid ? bearVoidHi : na, "Void Hi (bear)", color=color.new(color.red, 0), style=plot.style_linebr)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS LIQ_VOID BUY", "NEXUS LIQ_VOID: retest CE bullish su barra chiusa")
+alertcondition(shortCond, "NXS LIQ_VOID SELL", "NEXUS LIQ_VOID: retest CE bearish su barra chiusa")

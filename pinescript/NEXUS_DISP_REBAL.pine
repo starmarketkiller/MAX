@@ -1,0 +1,150 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia DISP_REBAL (Displacement Rebalance / FVG CE) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_DisplacementRebalance (NXS_Strategies_Institutional.mqh).
+//
+// ⚠️ STATO IN MQL5: questa strategia è marcata DISABILITATA in produzione da
+// `NXS_Profile_Enabled()` ("v2.3.1 test reale: 10 trade, -53$, WR 30%") — il
+// codice esiste ed è stato aggiornato il 17/07, ma non è live sull'EA oggi.
+// Portata comunque su Pine come richiesto, per completezza di verifica.
+//
+// Stessa geometria FVG a 3 candele di LIQ_VOID (vedi NEXUS_LIQ_VOID.pine),
+// ma qui l'entry è sul CE (consequent encroachment, 50% del FVG) — fix del
+// 17/07 notte: la versione precedente usava il 50% dell'INTERA candela di
+// displacement, non il 50% del vero gap lasciato dal displacement (due cose
+// diverse in ICT/SMC — un retracement sull'impulso non è un rebalance).
+//   BUY  : displacement bullish (corpo ≥1.3×ATR) entro 8 barre, gap minimo
+//          0.1×ATR fra candela1/candela3, prezzo rientra fra il bordo basso
+//          del FVG e poco oltre il CE, candela di rigetto rialzista.
+//   SELL : speculare.
+// SL/TP: calcolati dalla geometria del FVG, non un multiplo ATR generico
+// (come LIQ_VOID) — TP è DINAMICO: il massimo fra un'estensione oltre il
+// bordo lontano del FVG e un multiplo R fisso (quello che è più lontano).
+// Nessun filtro HTF: il profilo ha htf=false e la funzione MQL5 non richiede
+// alcun bias.
+//
+// Timing barra / anti-repaint: vedi NEXUS_LIQ_VOID.pine per il dettaglio
+// sull'approssimazione del retest (bid live → range della barra chiusa).
+// =============================================================================
+strategy("NEXUS EA - DISP_REBAL (XAUUSD H4)", shorttitle="NXS-DISPREBAL", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+displLookback = input.int(8, "Displacement: barre indietro")
+displBodyMult = input.float(1.3, "Displacement: corpo minimo × ATR")
+gapMinWidth   = input.float(0.1, "FVG: gap minimo × ATR")
+ceBuffer      = input.float(0.15, "Zona entry: oltre il CE × ATR")
+slBuffer      = input.float(0.3, "SL: buffer oltre il FVG × ATR")
+tpExtension   = input.float(0.8, "TP: estensione oltre il FVG (× ampiezza FVG)")
+tpRMultiple   = input.float(2.4, "TP: multiplo di R fisso (usato se maggiore)")
+atrLen        = input.int(14, "ATR length")
+maxHoldBars   = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Ricerca displacement -------------------------
+find_displacement(dirSign) =>
+    int foundIdx = -1
+    for i = 1 to displLookback
+        if foundIdx == -1
+            bodyI = math.abs(close[i] - open[i])
+            rightColor = dirSign > 0 ? close[i] > open[i] : close[i] < open[i]
+            if bodyI >= displBodyMult * atrVal and rightColor
+                foundIdx := i
+    foundIdx
+
+dispIdxBull = find_displacement(1)
+dispIdxBear = find_displacement(-1)
+
+// ----------------------------- Geometria FVG (bullish) ----------------------
+bullFvgValid = false
+float bullFvgLo = na
+float bullFvgHi = na
+float bullCe = na
+if dispIdxBull > 1
+    c1High = high[dispIdxBull + 1]
+    c3Low  = low[dispIdxBull - 1]
+    if c3Low > c1High + gapMinWidth * atrVal
+        bullFvgLo := c1High
+        bullFvgHi := c3Low
+        bullCe := (bullFvgLo + bullFvgHi) * 0.5
+        bullFvgValid := true
+
+// ----------------------------- Geometria FVG (bearish) ----------------------
+bearFvgValid = false
+float bearFvgLo = na
+float bearFvgHi = na
+float bearCe = na
+if dispIdxBear > 1
+    c1Low  = low[dispIdxBear + 1]
+    c3High = high[dispIdxBear - 1]
+    if c1Low > c3High + gapMinWidth * atrVal
+        bearFvgLo := c3High
+        bearFvgHi := c1Low
+        bearCe := (bearFvgLo + bearFvgHi) * 0.5
+        bearFvgValid := true
+
+// ----------------------------- Trigger --------------------------------------
+bullTouch = bullFvgValid and low <= bullCe + ceBuffer * atrVal and high >= bullFvgLo
+bearTouch = bearFvgValid and high >= bearCe - ceBuffer * atrVal and low <= bearFvgHi
+
+longCond  = inRange and bullTouch and close > open
+shortCond = inRange and bearTouch and close < open
+
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel    = na
+var float tpLevel    = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    slPrice = bullFvgLo - slBuffer * atrVal
+    tpFixed = close + tpRMultiple * (close - slPrice)
+    tpExt   = bullFvgHi + tpExtension * (bullFvgHi - bullFvgLo)
+    pendingSL := slPrice
+    pendingTP := math.max(tpExt, tpFixed)
+    strategy.entry("Long", strategy.long, comment="DISPREBAL_bull_fvgCE")
+if shortCond and strategy.position_size >= 0
+    slPrice = bearFvgHi + slBuffer * atrVal
+    tpFixed = close - tpRMultiple * (slPrice - close)
+    tpExt   = bearFvgLo - tpExtension * (bearFvgHi - bearFvgLo)
+    pendingSL := slPrice
+    pendingTP := math.min(tpExt, tpFixed)
+    strategy.entry("Short", strategy.short, comment="DISPREBAL_bear_fvgCE")
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(bullFvgValid ? bullFvgLo : na, "FVG Lo (bull)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bullFvgValid ? bullFvgHi : na, "FVG Hi (bull)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bearFvgValid ? bearFvgLo : na, "FVG Lo (bear)", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(bearFvgValid ? bearFvgHi : na, "FVG Hi (bear)", color=color.new(color.red, 0), style=plot.style_linebr)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a H4", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+if barstate.islast
+    label.new(bar_index, low, "⚠ Disabilitata in produzione MT5 (test reale negativo) — solo verifica", style=label.style_label_up, color=color.new(color.orange, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS DISP_REBAL BUY", "NEXUS DISP_REBAL: retest CE bullish su barra chiusa")
+alertcondition(shortCond, "NXS DISP_REBAL SELL", "NEXUS DISP_REBAL: retest CE bearish su barra chiusa")
