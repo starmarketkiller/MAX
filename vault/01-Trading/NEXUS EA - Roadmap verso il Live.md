@@ -53,11 +53,11 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **ORDER_BLOCK** — corretto: origine = ultima candela opposta prima dell'impulso + BOS richiesto + zona persistente (17/07 notte)
 - [x] **SILVER_BULLET** — macchina a stati sweep→displacement/BOS→FVG→retest (17/07 notte; scadenza a barre, non timezone reale — vedi NY_REVERSAL)
 - [x] **CISD** — rinominata `THREE_BAR_DELIVERY_BREAK` (17/07 notte; non riscritta, un tentativo precedente di versione "vera" non scattava mai — 0/1067)
-- [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG (ultimo mismatch critico rimanente)
+- [x] **DISP_REBAL** — CE corretto sul vero FVG a 3 candele, non più il 50% dell'intera candela displacement (17/07 notte) — **chiude tutti e 5 i mismatch critici del secondo audit**
 - [ ] 8 strategie "plausibili ma incomplete" (manca la relazione causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
 - [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
 
-**Prossimo passo concreto**: continuare in ordine di priorità dell'audit — ORDER_BLOCK, SILVER_BULLET, CISD, DISP_REBAL (i mismatch critici rimanenti), poi le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
+**Prossimo passo concreto**: le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
 
 ---
 

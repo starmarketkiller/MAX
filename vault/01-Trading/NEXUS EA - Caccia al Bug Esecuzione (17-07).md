@@ -17,6 +17,18 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 9): DISP_REBAL — CE corretto, chiude tutti e 5 i mismatch critici
+
+Ultimo dei 5 mismatch critici del secondo audit. `NXS_Strat_DisplacementRebalance` usava il 50% dell'**intera candela** di displacement come "CE" (Consequent Encroachment) — non è il rebalance di un'inefficienza, è solo un retracement al 50% della candela impulso.
+
+**Fix**: stessa geometria FVG a 3 candele già corretta per LIQ_VOID e riusata per SILVER_BULLET stanotte (bullish: `Low(candela3) > High(candela1)`). Il CE ora è il punto medio del vero FVG lasciato dal displacement, non della candela intera. Mantenuta la struttura "ricalcolo fresco ogni tick" (come LIQ_VOID dopo il fix di stanotte, non uno state machine completo — questa categoria di bug era "geometria sbagliata", non "sequenza causale collassata" come SH_BMS_RTO/SILVER_BULLET).
+
+**Tutti e 5 i mismatch critici del secondo audit sono ora coperti**: TSI (vero calcolo Blau), ORDER_BLOCK (origine corretta + BOS), SILVER_BULLET (macchina a stati), CISD→THREE_BAR_DELIVERY_BREAK (rinominata), DISP_REBAL (CE corretto).
+
+Non ancora validato su MT5 reale (macchina spenta stanotte). Restano dal secondo audit: 8 strategie "plausibili ma incomplete" (causalità sweep→displacement→MSS→retracement→entry da imporre) e 4 di allineamento indicatori/timeframe. Restano dal primo audit canonico: WEEKLY_EXP, NY_REVERSAL, RANGE_FADE, OTE_CONT (redesign più corposi) + rename ELLIOTT (a sweep concluso).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 8): CISD rinominata THREE_BAR_DELIVERY_BREAK
 
 Quarto dei 4 mismatch critici — questa volta **rinominata, non riscritta**. `NXS_Strat_CISD` implementa "3 barre chiuse dello stesso segno, poi rottura del loro estremo" — un pattern di rottura reale e funzionante, ma non è il vero Change in State of Delivery (che l'audit descrive come rottura del **livello/open** che sosteneva la sequenza di candele opposte, non dell'high/low estremo).

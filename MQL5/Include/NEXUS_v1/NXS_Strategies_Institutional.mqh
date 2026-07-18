@@ -414,6 +414,13 @@ SNXSSignal NXS_Strat_LiquidityVoid(SNXSHTF &htf){
 // =================================================================
 // 9. DISPLACEMENT REBALANCE
 // =================================================================
+// 17/07 notte - CE (Consequent Encroachment) corretto, da audit esterno
+// canonico: la versione precedente usava il 50% dell'INTERA candela di
+// displacement come "CE" - non e' il rebalance di un'inefficienza, e' un
+// retracement al 50% della candela impulso. Un vero rebalance ICT/SMC
+// torna al 50% del FVG lasciato dal displacement, non della candela
+// stessa. Ora usa la stessa geometria FVG a 3 candele gia' corretta per
+// LIQ_VOID stanotte (bullish: Low(candela3) > High(candela1)).
 SNXSSignal NXS_Strat_DisplacementRebalance(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "DISP_REBAL";
@@ -423,33 +430,37 @@ SNXSSignal NXS_Strat_DisplacementRebalance(){
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double o1 = iOpen (g_sym, NXS_EffTF(), 1);
 
-   // BUY: strong bullish displacement (body > 1.3 ATR) + retracement to 50% + reaction
+   // BUY: displacement bullish (body > 1.3 ATR) + FVG a 3 candele + retest del CE + reazione.
    int dispIdx = _inst_displacementBar(+1, 8, 1.3);
-   if(dispIdx > 0){
-      double dh = iHigh(g_sym, NXS_EffTF(), dispIdx);
-      double dl = iLow (g_sym, NXS_EffTF(), dispIdx);
-      double mid = (dh + dl) * 0.5;
-      if(bid >= dl && bid <= mid + atr * 0.2 && c1 > o1){
-         s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-         s.slPrice = dl - 0.3 * atr;
-         s.tpPrice = MathMax(dh + 0.8 * (dh - dl), s.entryRef + 2.4 * (s.entryRef - s.slPrice));
-         s.score   = 72.0;
-         s.reason  = "DISP-REBAL bull:50% CE";
-         return s;
+   if(dispIdx > 1){
+      double c1High = iHigh(g_sym, NXS_EffTF(), dispIdx + 1);
+      double c3Low  = iLow (g_sym, NXS_EffTF(), dispIdx - 1);
+      if(c3Low > c1High + atr * 0.1){
+         double fvgLo = c1High, fvgHi = c3Low, ce = (fvgLo + fvgHi) * 0.5;
+         if(bid >= fvgLo && bid <= ce + atr * 0.15 && c1 > o1){
+            s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+            s.slPrice = fvgLo - 0.3 * atr;
+            s.tpPrice = MathMax(fvgHi + 0.8 * (fvgHi - fvgLo), s.entryRef + 2.4 * (s.entryRef - s.slPrice));
+            s.score   = 72.0;
+            s.reason  = "DISP-REBAL bull:fvg_CE";
+            return s;
+         }
       }
    }
    int dispIdxB = _inst_displacementBar(-1, 8, 1.3);
-   if(dispIdxB > 0){
-      double dh = iHigh(g_sym, NXS_EffTF(), dispIdxB);
-      double dl = iLow (g_sym, NXS_EffTF(), dispIdxB);
-      double mid = (dh + dl) * 0.5;
-      if(bid <= dh && bid >= mid - atr * 0.2 && c1 < o1){
-         s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
-         s.slPrice = dh + 0.3 * atr;
-         s.tpPrice = MathMin(dl - 0.8 * (dh - dl), s.entryRef - 2.4 * (s.slPrice - s.entryRef));
-         s.score   = 72.0;
-         s.reason  = "DISP-REBAL bear:50% CE";
-         return s;
+   if(dispIdxB > 1){
+      double c1Low  = iLow (g_sym, NXS_EffTF(), dispIdxB + 1);
+      double c3High = iHigh(g_sym, NXS_EffTF(), dispIdxB - 1);
+      if(c1Low > c3High + atr * 0.1){
+         double fvgLo = c3High, fvgHi = c1Low, ce = (fvgLo + fvgHi) * 0.5;
+         if(bid <= fvgHi && bid >= ce - atr * 0.15 && c1 < o1){
+            s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+            s.slPrice = fvgHi + 0.3 * atr;
+            s.tpPrice = MathMin(fvgLo - 0.8 * (fvgHi - fvgLo), s.entryRef - 2.4 * (s.slPrice - s.entryRef));
+            s.score   = 72.0;
+            s.reason  = "DISP-REBAL bear:fvg_CE";
+            return s;
+         }
       }
    }
    return s;
