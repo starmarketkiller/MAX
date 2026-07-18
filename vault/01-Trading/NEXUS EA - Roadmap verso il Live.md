@@ -26,7 +26,7 @@ L'EA deve eseguire fedelmente quello che decide, prima di chiedersi se le decisi
 - [x] `NEXUS_trades.csv` non più infinito — reset opt-in aggiunto (17/07 notte)
 - [x] Identity check anti-corruzione fra passate Tester consecutive (NEXUS Bot, 17/07)
 - [x] Pull + ricompilazione dei ~20 fix di stanotte su entrambi i terminali (live + test): 0 errori, 0 warning (17/07 notte→18/07 mattina, agente desktop)
-- [ ] **Uno sweep 1-37 completo, pulito, senza timeout, CON LEVA 1:500 (non 1:100)** — prossimo passo, non ancora rilanciato con tutti i fix di stanotte dentro
+- [ ] **Uno sweep 1-37 completo, pulito, senza timeout, CON LEVA 1:500 (non 1:100)** — rilanciato (agente desktop, 18/07 pomeriggio), timeout 6h/passata, tutti i fix dentro; S01 (ADX_RSI) completato e identità verificata, in corso S02+
 - [x] Audit "altri bug dello stesso tipo?" — famiglia `NXS_StratFamily` completa, `_nxs_regime_veto` incompleto ma disattivato di default (safe)
 
 **Prossimo passo concreto**: aspettare l'esito dello sweep in corso. Se completa senza timeout, Fase 0 è chiusa.
