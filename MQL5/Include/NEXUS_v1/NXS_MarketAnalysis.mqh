@@ -199,8 +199,14 @@ SNXSSweepExt NXS_DetectSweepExt(){
    if(pml > 0 && l1 < pml && c1 > pml){ s.sweptPML = true;   s.dir = DIR_BUY;  s.level = pml;    s.confirmed = true; s.levelTag = "Monthly-Low"; }
    if(eqH > 0 && h1 > eqH && c1 < eqH){ s.sweptEQH = true; if(s.dir == DIR_NONE){ s.dir = DIR_SELL; s.level = eqH; s.confirmed = true; s.levelTag = "Equal-High"; } }
    if(eqL > 0 && l1 < eqL && c1 > eqL){ s.sweptEQL = true; if(s.dir == DIR_NONE){ s.dir = DIR_BUY;  s.level = eqL; s.confirmed = true; s.levelTag = "Equal-Low"; } }
-   s.refHigh = (s.sweptPDH ? pdh : (s.sweptAsiaHigh ? asiaHi : (s.sweptEQH ? eqH : MathMax(pdh, asiaHi))));
-   s.refLow  = (s.sweptPDL ? pdl : (s.sweptAsiaLow  ? asiaLo : (s.sweptEQL ? eqL : MathMin(pdl, asiaLo))));
+   // 17/07 notte - refHigh/refLow ora includono anche weekly/monthly (mancavano
+   // dall'estensione di stanotte di LIQ_SWEEP): senza questo, un consumer come
+   // LDN_REVERSAL che condiziona sw.sweptPWH/sweptPMH ma poi legge sw.refHigh
+   // per SL/TP prendeva un livello sbagliato (il fallback generico, non quello
+   // che ha davvero scatenato lo sweep) - stesso ordine di precedenza gia'
+   // usato sopra per s.dir/s.level (monthly > weekly > daily > Asia > equal).
+   s.refHigh = (s.sweptPMH ? pmh : (s.sweptPWH ? pwh : (s.sweptPDH ? pdh : (s.sweptAsiaHigh ? asiaHi : (s.sweptEQH ? eqH : MathMax(pdh, asiaHi))))));
+   s.refLow  = (s.sweptPML ? pml : (s.sweptPWL ? pwl : (s.sweptPDL ? pdl : (s.sweptAsiaLow  ? asiaLo : (s.sweptEQL ? eqL : MathMin(pdl, asiaLo))))));
    return s;
 }
 

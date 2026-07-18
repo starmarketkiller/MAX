@@ -118,12 +118,18 @@ SNXSSignal NXS_Strat_AMD_Continuation(SNXSAMD &amd, SNXSHTF &htf){
    if(!(g_session == SESS_LONDON || g_session == SESS_OVERLAP || g_session == SESS_NY)) return s;
 
    double atr = _inst_atr();
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double mid = (amd.asianHigh + amd.asianLow) * 0.5;
+   // 17/07 notte - da audit esterno canonico: mescolava close della barra 1
+   // (breakout) con bid live (retest) - due punti temporali diversi sulla
+   // stessa condizione. Ora tutto sulla barra chiusa 1: il breakout e il
+   // retest devono appartenere alla STESSA barra (low tocca la fascia,
+   // close conferma oltre il bordo) - niente prezzo live.
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double l1 = iLow  (g_sym, NXS_EffTF(), 1);
+   double h1 = iHigh (g_sym, NXS_EffTF(), 1);
 
    // BUY: distribution above Asian range + retest near asianHigh + htf bull/neutral
-   if(c1 > amd.asianHigh && bid <= amd.asianHigh + atr * 0.6
+   if(c1 > amd.asianHigh && l1 <= amd.asianHigh + atr * 0.6
       && (htf.bias == HTF_BULL || htf.bias == HTF_NEUTRAL)){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = MathMin(amd.asianHigh - 0.3 * atr, mid);
@@ -133,7 +139,7 @@ SNXSSignal NXS_Strat_AMD_Continuation(SNXSAMD &amd, SNXSHTF &htf){
       return s;
    }
    // SELL mirror
-   if(c1 < amd.asianLow && bid >= amd.asianLow - atr * 0.6
+   if(c1 < amd.asianLow && h1 >= amd.asianLow - atr * 0.6
       && (htf.bias == HTF_BEAR || htf.bias == HTF_NEUTRAL)){
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = MathMax(amd.asianLow + 0.3 * atr, mid);

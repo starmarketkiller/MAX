@@ -17,6 +17,22 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 11): refHigh/refLow completato + AMD_CONT + verifica TURTLE_SOUP/JUDAS_SWING
+
+Continuando sul gruppo "plausibili ma incomplete", ho trovato un problema collegato al mio stesso fix di LIQ_SWEEP di stanotte, prima di procedere sugli altri.
+
+**Fix reale — `sw.refHigh/refLow` (`NXS_MarketAnalysis.mqh`, `NXS_DetectSweepExt`)**: quando ho esteso LIQ_SWEEP a weekly/monthly stanotte, ho aggiunto i flag `sweptPWH/sweptPWL/sweptPMH/sweptPML` ma **non li avevo inclusi nella formula di `refHigh/refLow`** — che restava solo daily/Asia/equal. Effetto: consumer come LDN_REVERSAL, TURTLE_SOUP, PO3, AMD_REVERSAL che condizionano l'entry su un livello weekly/monthly swept, ma poi usano `sw.refHigh/refLow` per calcolare SL, prendevano il livello sbagliato (il fallback generico, non quello che aveva davvero scatenato il segnale) — esattamente il tipo di incoerenza segnalata dall'audit per LDN_REVERSAL ("sw.refHigh/refLow deve essere il livello coerente con quello usato nella condizione"). Corretto: stessa precedenza già usata per `s.dir/s.level` (monthly > weekly > daily > Asia > equal).
+
+**Fix reale — AMD_CONT** (`NXS_Strat_AMD_Continuation`, `NXS_Strategies_Institutional.mqh`): mescolava `close` di barra 1 (breakout) con `bid` live (retest) — due punti temporali diversi nella stessa condizione, lo stesso pattern già corretto altrove stanotte (RANGE_FADE). Ora tutto sulla barra chiusa 1: `low[1]` tocca la fascia di retest, `close[1]` conferma oltre il bordo — niente prezzo live.
+
+**Verificato, nessun cambio necessario — TURTLE_SOUP**: l'audit segnalava di dimostrare che sweep e rejection appartengano alla stessa barra. Controllato: `sw` (il segnale di sweep) e la rejection candle in questa funzione leggono ENTRAMBI shift=1 dello stesso `NXS_EffTF()` — sono già strutturalmente la stessa barra, non serve nuovo codice. Il "level_id per evitare segnali multipli" è già coperto dal gate globale "1 posizione per strategia" (`NXS_StrategyHasOpenPos`) che impedisce l'apertura ripetuta finché la posizione precedente è ancora aperta.
+
+**Non ancora affrontato**: JUDAS_SWING (rischio reale ma minore — `g_struct.chochUp/Down` è uno stato corrente, non un evento con timestamp, quindi non garantisce che il CHOCH sia avvenuto DOPO lo sweep specifico di questa barra; fix richiederebbe tracciare un timestamp sul CHOCH, cambiamento più ampio a `NXS_Structure`, rimandato), AMD_REVERSAL e PO3 (richiedono vera memoria di fase giornaliera, redesign più corposo, non una patch).
+
+Non ancora validato su MT5 reale.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 10): LONDON_BO + EMA_PULLBACK — prime 2 delle 8 "plausibili ma incomplete"
 
 Iniziato il gruppo delle 8 strategie che l'audit giudica concettualmente plausibili ma senza una vera validazione/persistenza — qui il fix è irrobustire, non riscrivere da zero.

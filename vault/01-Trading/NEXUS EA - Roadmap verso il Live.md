@@ -56,7 +56,12 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **DISP_REBAL** — CE corretto sul vero FVG a 3 candele, non più il 50% dell'intera candela displacement (17/07 notte) — **chiude tutti e 5 i mismatch critici del secondo audit**
 - [x] **LONDON_BO** — validazione breakout aggiunta (corpo minimo, buffer, close location value) (17/07 notte)
 - [x] **EMA_PULLBACK** — trend persistente + impulso precedente + vera rejection, non più un cross istantaneo (17/07 notte)
-- [ ] 6 strategie "plausibili ma incomplete" rimanenti (manca la relazione causale sweep→displacement→MSS→retracement→entry): TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
+- [x] **refHigh/refLow** — completato con weekly/monthly (bug collegato al fix LIQ_SWEEP di stanotte, beneficia LDN_REVERSAL/TURTLE_SOUP/PO3/AMD_REVERSAL) (17/07 notte)
+- [x] **AMD_CONT** — non mescola più close barra1 e bid live (17/07 notte)
+- [x] **TURTLE_SOUP** — verificato: nessun bug reale, causalità sweep/rejection già garantita strutturalmente, dedup già coperto dal gate posizione-per-strategia (17/07 notte)
+- [x] **LDN_REVERSAL** — beneficia automaticamente dal fix refHigh/refLow sopra (17/07 notte)
+- [ ] **JUDAS_SWING** — rischio minore rimanente: CHOCH è stato corrente senza timestamp, non garantisce causalità con lo sweep di questa barra specifica (richiede timestamp su NXS_Structure, rimandato)
+- [ ] **AMD_REVERSAL**, **PO3** — richiedono vera memoria di fase giornaliera (redesign, non patch)
 - [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
 
 **Prossimo passo concreto**: le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
