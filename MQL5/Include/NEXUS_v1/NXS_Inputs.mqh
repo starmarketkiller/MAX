@@ -302,6 +302,12 @@ input bool     InpStrat_BOLLINGER    = true;
 input bool     InpStrat_MACD         = true;
 input bool     InpStrat_SAR          = true;
 input bool     InpStrat_TSI          = true;
+// 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
+// Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
+// Blau: long=25 (primo smoothing), short=13 (secondo smoothing), signal=7.
+int InpTSI_LongPeriod   = 25;
+int InpTSI_ShortPeriod  = 13;
+int InpTSI_SignalPeriod = 7;
 input bool     InpStrat_BJORGUM      = true;
 input bool     InpStrat_LIQ_SWEEP    = true;
 input bool     InpStrat_FVG_CONT     = true;

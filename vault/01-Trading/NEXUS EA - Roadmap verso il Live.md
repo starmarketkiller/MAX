@@ -47,9 +47,17 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [ ] **RANGE_FADE** — qualificazione del range da rendere persistente su N barre (non solo l'ultima lettura ADX)
 - [ ] **OTE_CONT** — ancorare Fibonacci e struttura di conferma allo stesso leg/BOS
 - [ ] **ELLIOTT** — decisione presa (rinominare `FIVE_SWING_IMPULSE`, dichiarata pattern proprietario), esecuzione rimandata a sweep concluso (tocca il nome in molti file, rischio di interferire col matching identità di NEXUS Bot)
-- [ ] Le restanti ~27 strategie non ancora coperte da nessun audit di coerenza — matrice preliminare già presente nel documento canonico, va completata strategia per strategia
+- [x] Audit di coerenza completato anche per le 20 strategie residue (il conteggio reale, non 27) — agente logico, 17/07 notte
+- [x] Verificato che l'attribuzione condivisa `s.strat = STRAT_STRUCT_REACT` (11 strategie) NON è un bug reale — stats/profili/router usano tutti `stratName` (stringa, distinto), il campo condiviso serve solo a un valore cosmetico di dashboard
+- [x] **TSI** — implementato il vero True Strength Index di Blau (era RSI+EMA20 col nome sbagliato) — 17/07 notte
+- [ ] **ORDER_BLOCK** — usa la candela displacement come OB, va corretto (ultima candela opposta prima dell'impulso)
+- [ ] **SILVER_BULLET** — solo sweep in finestra oraria, manca displacement→FVG→retest (macchina a stati)
+- [ ] **CISD** — proxy "3 candele stesso colore + rottura", non il vero Change in State of Delivery
+- [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG
+- [ ] 8 strategie "plausibili ma incomplete" (manca la relazione causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
+- [ ] 4 strategie con problemi di allineamento indicatori/timeframe: BOLLINGER, BB_SQUEEZE, ICHIMOKU, MALAYSIAN_SNR
 
-**Prossimo passo concreto**: dopo lo sweep (Fase 0), affrontare una alla volta le 5 macchine a stati/redesign, partendo da SH_BMS_RTO e WEEKLY_EXP (priorità più alta secondo l'audit). Poi il rename ELLIOTT. Poi coprire le ~27 non ancora auditate (l'agente logico può continuare qui).
+**Prossimo passo concreto**: continuare in ordine di priorità dell'audit — ORDER_BLOCK, SILVER_BULLET, CISD, DISP_REBAL (i mismatch critici rimanenti), poi le 8 "plausibili ma incomplete" (serve principalmente imporre l'ordine causale fra eventi, non riscritture da zero), poi le 4 di allineamento indicatori, poi WEEKLY_EXP/NY_REVERSAL/RANGE_FADE/OTE_CONT (redesign più corposi), infine il rename ELLIOTT a sweep concluso.
 
 ---
 

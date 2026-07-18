@@ -211,18 +211,69 @@ SNXSSignal NXS_Strat_SAR(){
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva
 // (PF 0.40 sul broker mentre sul sito era forte).
+// 17/07 notte - vero True Strength Index (Blau), da audit esterno canonico:
+// la versione precedente non calcolava TSI, era un filtro RSI+EMA20 col
+// nome sbagliato. TSI = 100 x doubleEMA(priceChange) / doubleEMA(abs(priceChange)),
+// confrontato con una signal line (EMA del TSI). Calcolo iterativo aggiornato
+// una sola volta per barra chiusa (bar-gated, come SH_BMS_RTO stanotte) -
+// niente ricalcolo dell'intera serie storica ad ogni tick.
+struct SNXSTSIState {
+   bool     init;
+   datetime lastBarTime;
+   double   sm1, sm2;        // doppio EMA di priceChange
+   double   sm1Abs, sm2Abs;  // doppio EMA di abs(priceChange)
+   double   signal;          // EMA(TSI, signalPeriod)
+   double   tsiPrev, signalPrev;   // valori PRIMA dell'aggiornamento di questa barra (per il cross)
+   double   prevClose;
+   int      barsSeen;
+};
+SNXSTSIState g_tsiState;
+
 SNXSSignal NXS_Strat_TSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
    if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
-   double e20 = NXS_EMAv(20, tf, 1), e20p = NXS_EMAv(20, tf, 2);
-   if(e20 <= 0 || e20p <= 0) return s;
-   double r  = g_rsi;
-   double px = iClose(g_sym, tf, 1);
-   if(r > 52 && px > e20 && e20 > e20p){
-      s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI bull (site)";
-   } else if(r < 48 && px < e20 && e20 < e20p){
-      s.dir = DIR_SELL; s.score = 66; s.reason = "TSI bear (site)";
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   double c1 = iClose(g_sym, tf, 1);
+
+   if(!g_tsiState.init){
+      g_tsiState.init = true; g_tsiState.prevClose = iClose(g_sym, tf, 2);
+      g_tsiState.lastBarTime = 0; g_tsiState.barsSeen = 0;
+   }
+   if(g_tsiState.lastBarTime != curBar0){
+      // Nuova barra chiusa: aggiorna il doppio smoothing una sola volta.
+      g_tsiState.tsiPrev = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+      g_tsiState.signalPrev = g_tsiState.signal;
+
+      double pc  = c1 - g_tsiState.prevClose;
+      double apc = MathAbs(pc);
+      double aLong  = 2.0 / (InpTSI_LongPeriod  + 1.0);
+      double aShort = 2.0 / (InpTSI_ShortPeriod + 1.0);
+      double aSig   = 2.0 / (InpTSI_SignalPeriod + 1.0);
+      g_tsiState.sm1    = pc  * aLong  + g_tsiState.sm1    * (1.0 - aLong);
+      g_tsiState.sm1Abs = apc * aLong  + g_tsiState.sm1Abs * (1.0 - aLong);
+      g_tsiState.sm2    = g_tsiState.sm1    * aShort + g_tsiState.sm2    * (1.0 - aShort);
+      g_tsiState.sm2Abs = g_tsiState.sm1Abs * aShort + g_tsiState.sm2Abs * (1.0 - aShort);
+      double tsiNow = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+      g_tsiState.signal = tsiNow * aSig + g_tsiState.signal * (1.0 - aSig);
+
+      g_tsiState.prevClose = c1;
+      g_tsiState.lastBarTime = curBar0;
+      g_tsiState.barsSeen++;
+   }
+   // Warmup: serve tempo perche' il doppio EMA converga (non e' inizializzato
+   // con la media storica reale, parte da 0) - stessa logica di cautela gia'
+   // usata altrove nel file per gli indicatori con stato iterativo.
+   if(g_tsiState.barsSeen < InpTSI_LongPeriod * 3) return s;
+
+   double tsi    = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+   double signal = g_tsiState.signal;
+   bool crossUp   = (g_tsiState.tsiPrev <= g_tsiState.signalPrev) && (tsi > signal);
+   bool crossDown = (g_tsiState.tsiPrev >= g_tsiState.signalPrev) && (tsi < signal);
+   if(crossUp){
+      s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI_cross_up";
+   } else if(crossDown){
+      s.dir = DIR_SELL; s.score = 66; s.reason = "TSI_cross_down";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

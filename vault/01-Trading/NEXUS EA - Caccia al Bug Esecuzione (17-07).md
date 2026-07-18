@@ -17,6 +17,23 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 5): audit delle 20 strategie residue + TSI reale implementato
+
+Arrivato il secondo audit esterno dell'agente logico, questa volta sulle 20 strategie non coperte da nessun audit precedente (il conteggio reale residuo era 20, non 27 come stimato prima). Qualità alta come i precedenti.
+
+**Verifica fatta prima di tutto**: l'audit segnala che molte strategie istituzionali (TURTLE_SOUP, SMS_BMS_RTO, SILVER_BULLET, AMD_REVERSAL, MALAYSIAN_SNR, CISD, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3, DISP_REBAL) condividono `s.strat = STRAT_STRUCT_REACT`, chiedendo di verificare che non condividano anche stats/profili/attribuzione. **Verificato: falso allarme sul meccanismo specifico temuto.** Tutto ciò che conta per Livello A/B/C (stats, profili SL/TP, router, gate posizione-per-strategia) usa `stratName` (stringa), confermato distinto per ognuna (es. `s.stratName = "CISD"`, `"TURTLE_SOUP"` ecc., righe diverse in file diversi). Il campo `.strat` (l'enum condiviso) viene usato in un solo punto, `NXS_VisualBridge.mqh`, solo per un valore cosmetico di dashboard (`active_strat`) — non incide su nessuna logica di trading, stats o attribuzione. Giusto controllarlo, ma non era un bug.
+
+**Risultati principali dell'audit** (20 strategie):
+- **5 mismatch critici** (il nome non corrisponde al codice): TSI (non calcolava il vero TSI), ORDER_BLOCK (usa la candela displacement stessa come OB, non l'ultima candela opposta prima dell'impulso), SILVER_BULLET (solo sweep in finestra oraria, manca displacement→FVG→retest), CISD (proxy "3 candele stesso colore + rottura", non il vero Change in State of Delivery), DISP_REBAL (50% dell'intera candela displacement, non il Consequent Encroachment di un vero FVG)
+- **8 plausibili ma incomplete** (manca la relazione temporale causale sweep→displacement→MSS→retracement→entry): LONDON_BO, EMA_PULLBACK, TURTLE_SOUP, AMD_REVERSAL, AMD_CONT, JUDAS_SWING, LDN_REVERSAL, PO3
+- **4 con problemi di allineamento indicatori/timeframe**: BOLLINGER (verificare Close[2] vs banda della barra 2, non barra 1), BB_SQUEEZE (soglia assoluta debole, dovrebbe essere percentile relativo alla storia), ICHIMOKU (rischio shift temporale Senkou Span), MALAYSIAN_SNR (W1 calcolato ma mai usato, mix ATR fra timeframe)
+
+**Fix implementato**: **TSI reale** (`NXS_Strat_TSI`, `NXS_Strategies.mqh`). La versione precedente era RSI+EMA20 col nome sbagliato — zero relazione col vero True Strength Index di Blau. Ora calcola il vero TSI: doppio EMA (long=25, short=13) del price change, diviso per il doppio EMA dell'abs(price change) x100, confrontato con una signal line (EMA a 7 periodi del TSI) — entry sul cross TSI/signal. Calcolo iterativo, aggiornato una sola volta per barra chiusa (stesso bar-gating di SH_BMS_RTO stanotte), con warmup di `LongPeriod×3` barre prima di generare segnali (il doppio smoothing parte da zero, non dalla media storica reale, serve tempo per convergere).
+
+Non ancora validato su MT5 reale. Restano da fare: ORDER_BLOCK, SILVER_BULLET, CISD, DISP_REBAL (i 4 mismatch critici rimanenti) + le 8 "plausibili ma incomplete" + le 4 di allineamento indicatori — più i 4 redesign già in coda dall'audit canonico precedente (WEEKLY_EXP, NY_REVERSAL, RANGE_FADE, OTE_CONT).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 4): SH_BMS_RTO riscritta come vera macchina a stati
 
 Primo dei 5 redesign più corposi dall'audit canonico (priorità più alta secondo l'audit fra le macchine a stati). `NXS_Strat_SH_BMS_RTO` (`NXS_Strategies_SMC.mqh`) prima richiedeva sweep + CHOCH + FVG (barre 4/2) + prezzo già dentro la zona **tutto sullo stesso tick** — collassava una sequenza che nella realtà è causale (sweep → displacement/MSS entro qualche barra → un ritorno SUCCESSIVO alla zona d'origine), senza dimostrare che gli eventi fossero davvero collegati.
