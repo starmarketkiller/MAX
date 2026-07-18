@@ -223,6 +223,29 @@ SNXSSignal NXS_Strat_LondonReversal(SNXSSweepExt &sw, SNXSAMD &amd){
    return s;
 }
 
+// 17/07 notte - da audit esterno canonico: la sessione di Londra usava un
+// offset GMT fisso (6-12) tutto l'anno, che in estate (BST, UTC+1) sbaglia
+// la finestra di un'ora, e veniva aggregata dalle barre del TF strategia
+// (su H4/D1 una singola barra non rappresenta la finestra precisa). Ora:
+// (1) calcolo reale del BST (Europe/London: dall'01:00 UTC dell'ultima
+// domenica di marzo all'01:00 UTC dell'ultima domenica di ottobre - la
+// stessa regola che UK e USA NON condividono, motivo per cui un offset
+// fisso annuale e' strutturalmente sbagliato in certe settimane); (2)
+// aggregazione da M5, indipendente dal timeframe della strategia.
+datetime NXS_LastSundayUTC(int year, int month){
+   // Chiamata solo con month=3 o month=10, entrambi hanno 31 giorni - day=31 sempre valido.
+   MqlDateTime mt; mt.year = year; mt.mon = month; mt.day = 31; mt.hour = 1; mt.min = 0; mt.sec = 0;
+   datetime t = StructToTime(mt);
+   MqlDateTime norm; TimeToStruct(t, norm);
+   return t - norm.day_of_week * 86400;   // day_of_week: 0=domenica
+}
+bool NXS_IsLondonBST(datetime utcTime){
+   MqlDateTime mt; TimeToStruct(utcTime, mt);
+   datetime bstStart = NXS_LastSundayUTC(mt.year, 3);
+   datetime bstEnd   = NXS_LastSundayUTC(mt.year, 10);
+   return (utcTime >= bstStart && utcTime < bstEnd);
+}
+
 // =================================================================
 // 5. NY REVERSAL  (mirror of LdnReversal, NY hours only, considers London HoD/LoD)
 // =================================================================
@@ -234,15 +257,24 @@ SNXSSignal NXS_Strat_NYReversal(SNXSSweepExt &sw){
    double atr = _inst_atr();
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
 
-   // London HoD/LoD proxy: highest/lowest of last 24 entry-TF bars during London (06-12 GMT)
+   // Finestra Londra 08:00-12:00 Europe/London, tradotta in ore UTC reali
+   // (07-11 UTC durante BST, 08-12 UTC durante GMT). Aggregata da M5 sulla
+   // giornata corrente, non dalle barre del TF strategia.
+   datetime nowUtc = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
+   MqlDateTime nowMt; TimeToStruct(nowUtc, nowMt);
+   bool bst = NXS_IsLondonBST(nowUtc);
+   int londonStartH = bst ? 7 : 8, londonEndH = bst ? 11 : 12;
+
    double londonHi = -DBL_MAX, londonLo = DBL_MAX;
-   for(int i = 1; i <= 48; i++){
-      datetime t = iTime(g_sym, NXS_EffTF(), i);
-      datetime tGmt = (datetime)((long)t - (long)InpServerGMTOffset * 3600);
-      MqlDateTime mt; TimeToStruct(tGmt, mt);
-      if(mt.hour >= 6 && mt.hour < 12){
-         londonHi = MathMax(londonHi, iHigh(g_sym, NXS_EffTF(), i));
-         londonLo = MathMin(londonLo, iLow (g_sym, NXS_EffTF(), i));
+   for(int i = 1; i <= 300; i++){   // M5, ~25h di lookback: copre l'intera giornata corrente
+      datetime t = iTime(g_sym, PERIOD_M5, i);
+      if(t == 0) break;
+      datetime tUtc = (datetime)((long)t - (long)InpServerGMTOffset * 3600);
+      MqlDateTime mt; TimeToStruct(tUtc, mt);
+      if(mt.year != nowMt.year || mt.mon != nowMt.mon || mt.day != nowMt.day) continue;   // solo la sessione londinese di OGGI
+      if(mt.hour >= londonStartH && mt.hour < londonEndH){
+         londonHi = MathMax(londonHi, iHigh(g_sym, PERIOD_M5, i));
+         londonLo = MathMin(londonLo, iLow (g_sym, PERIOD_M5, i));
       }
    }
    if(londonHi == -DBL_MAX || londonLo == DBL_MAX) return s;

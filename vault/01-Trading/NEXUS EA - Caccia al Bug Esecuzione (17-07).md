@@ -17,6 +17,18 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 16): NY_REVERSAL — DST reale, chiude il primo audit canonico
+
+Ultimo redesign corposo. La sessione di Londra usava un offset GMT fisso (6-12) tutto l'anno — sbagliato in estate, quando UK passa a BST (UTC+1): la finestra reale si sposta di un'ora. Aggregata inoltre dalle barre del TF strategia (su H4/D1 una singola barra non rappresenta la finestra precisa).
+
+**Fix**: calcolo reale del BST — dall'01:00 UTC dell'ultima domenica di marzo all'01:00 UTC dell'ultima domenica di ottobre (funzioni `NXS_LastSundayUTC`/`NXS_IsLondonBST`, nessuna libreria timezone esterna disponibile in MQL5, calcolo manuale della regola). Finestra Londra 08:00-12:00 Europe/London tradotta correttamente in ore UTC (07-11 durante BST, 08-12 durante GMT). Aggregazione da **M5** (non dal TF strategia), filtrata sulla sola giornata corrente.
+
+**Il primo audit canonico è ora interamente coperto**: LIQ_VOID ✅, consolidamento NXR (IFVG/FVG_MIT/OB_MIT) ✅, SH_BMS_RTO ✅, WEEKLY_EXP ✅, RANGE_FADE ✅, OTE_CONT ✅, NY_REVERSAL ✅. Resta solo il **rename ELLIOTT** (rimandato a sweep concluso, per non interferire col matching identità di NEXUS Bot mentre gira).
+
+Non ancora validato su MT5 reale (macchina offline stanotte). **Bilancio della sessione di stanotte**: circa 20 fix/redesign reali sul codice MQL5, entrambi gli audit esterni (10 + 20 strategie) interamente processati, oltre ai fix di esecuzione della prima parte della notte (gate posizione, cap durata, CSV, leva).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 15): OTE_CONT — ancoraggio Fibonacci a un vero BOS
 
 Ultimo dei redesign più corposi del primo audit canonico prima di NY_REVERSAL. La zona Fibonacci in sé (62-79%, 70.5% centrale) era già corretta — il problema era l'ancoraggio: lo swing veniva preso da `NXS_Fib_Build`, un rolling highest/lowest generico su 30 barre di `InpTFMedium`, mai verificato che fosse davvero il leg che ha prodotto un vero impulso strutturale (poteva essere il punto più alto/basso di una fase lenta).

@@ -42,7 +42,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] Fix implementato: **LIQ_VOID** — geometria FVG corretta (era high-vs-high, ora vera relazione a 3 candele)
 - [x] Fix implementato: **IFVG/FVG_MIT/OB_MIT** — consolidati sul motore NXR come unica fonte (eliminata l'ambiguità fra due implementazioni concorrenti), corretto anche il conflation OB_MIT/breaker
 - [x] **WEEKLY_EXP** — completata come "Modello B" (già la più vicina): ATR H4 dedicato (era D1, il bug dominante) + BOS aggiunto (17/07 notte)
-- [ ] **NY_REVERSAL** — sessione di Londra da ricostruire con timezone/DST reali (non offset GMT fisso)
+- [x] **NY_REVERSAL** — DST reale (BST calcolato, non offset fisso) + aggregazione da M5 sulla giornata corrente (17/07 notte) — **chiude tutti i redesign del primo audit canonico**
 - [x] **SH_BMS_RTO** — trasformata in macchina a stati sweep→MSS→origine→ritorno→entry (17/07 notte)
 - [x] **RANGE_FADE** — range confermato solo con persistenza ADX + stabilità ampiezza + contatti minimi + occupazione bilanciata + no breakout recente, su tutta la finestra (17/07 notte)
 - [x] **OTE_CONT** — gate BOS dedicato (displacement reale che rompe uno swing precedente) + entry su barra chiusa, non più bid live (17/07 notte)
