@@ -493,36 +493,105 @@ SNXSSignal NXS_Strat_RSIDiv(){
 // H1 conferma ORA la direzione del retest" - stessa idea, punto di verifica
 // leggermente diverso per limite strutturale di MQL5. Non ancora validato
 // su MT5 reale.
+// 17/07 notte - origine della zona corretta, da audit esterno canonico
+// (ICT/SMC): un order block bullish e' l'ULTIMA candela bearish prima del
+// displacement che rompe struttura (BOS), non il corpo del displacement
+// stesso. La versione precedente usava la candela impulso come se fosse
+// l'OB - "displacement body zone", non un vero order block. Ora: (1) il
+// displacement deve rompere uno swing precedente (BOS, prima mancava),
+// (2) la zona e' l'ultima candela di colore opposto prima dell'impulso,
+// (3) la zona e' persistente e "fresh" fino al primo retest o
+// invalidazione (prima si ricalcolava tutto da zero ogni tick, nessuna
+// vera nozione di zona gia' usata/consumata).
+int InpOB_SwingLookback = 15;   // barre per il riferimento swing (BOS) pre-impulso
+int InpOB_MaxWaitBars   = 20;   // barre max di attesa del retest prima che la zona scada
+
+struct SNXSOBState {
+   bool     active;
+   double   obLo, obHi;
+   datetime lastBarTime;
+   int      barsWaited;
+};
+SNXSOBState g_obBuy, g_obSell;
+
+SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, double atr, datetime curBar0){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
+   bool newBar = (st.lastBarTime != curBar0);
+
+   if(!st.active){
+      if(!newBar) return s;
+      st.lastBarTime = curBar0;
+      // Cerca un displacement valido fra 3 e 10 barre fa (come il sito), ma
+      // ora deve anche rompere uno swing precedente (BOS) per contare.
+      for(int i = 3; i <= 10; i++){
+         double o = iOpen (g_sym, tf, i), c = iClose(g_sym, tf, i);
+         double body = MathAbs(c - o);
+         if(body < 1.2 * atr) continue;
+         bool rightColor = (dir == +1) ? (c > o) : (c < o);
+         if(!rightColor) continue;
+         int hiIdx = iHighest(g_sym, tf, MODE_HIGH, InpOB_SwingLookback, i + 1);
+         int loIdx = iLowest (g_sym, tf, MODE_LOW,  InpOB_SwingLookback, i + 1);
+         double swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
+                                        : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
+         bool bos = (dir == +1) ? (swingRef > 0 && c > swingRef) : (swingRef > 0 && c < swingRef);
+         if(!bos) continue;
+         // Origine: ultima candela di colore OPPOSTO prima dell'impulso (fino a 6 barre indietro).
+         double originA = o, originB = c;
+         bool found = false;
+         for(int k = i + 1; k <= i + 6; k++){
+            double ok = iOpen(g_sym, tf, k), ck = iClose(g_sym, tf, k);
+            bool oppositeColor = (dir == +1) ? (ck < ok) : (ck > ok);
+            if(oppositeColor){ originA = ok; originB = ck; found = true; break; }
+         }
+         if(!found) continue;
+         st.obLo = MathMin(originA, originB);
+         st.obHi = MathMax(originA, originB);
+         st.active = true; st.barsWaited = 0;
+         break;
+      }
+      return s;
+   }
+
+   // Zona attiva, in attesa del retest.
+   if(newBar){
+      st.lastBarTime = curBar0;
+      st.barsWaited++;
+      if(st.barsWaited > InpOB_MaxWaitBars){ st.active = false; return s; }
+      double c1 = iClose(g_sym, tf, 1);
+      // Invalidazione: chiusura che attraversa completamente la zona nel verso sbagliato.
+      if((dir == +1 && c1 < st.obLo) || (dir == -1 && c1 > st.obHi)){ st.active = false; return s; }
+   }
+   if(st.obHi <= st.obLo) return s;
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   bool touched = (bid >= st.obLo && bid <= st.obHi);
+   if(!touched) return s;
+   double c1 = iClose(g_sym, tf, 1), o1 = iOpen(g_sym, tf, 1);
+   bool rejection = (dir == +1) ? (c1 > o1) : (c1 < o1);
+   if(!rejection) return s;   // richiede comunque una candela di rigetto, non solo il tocco
+   if(dir == +1){
+      s.dir = DIR_BUY;  s.score = 70; s.reason = "OB_retest_bull";
+   } else {
+      s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear";
+   }
+   st.active = false;   // one-shot: la zona e' consumata dopo il primo retest
+   return s;
+}
+
 SNXSSignal NXS_Strat_OrderBlock(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
    if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
-   // Sito: impulso (body>1.2 ATR) 3-10 barre fa, poi retest del body con rifiuto.
-   for(int i = 3; i <= 10; i++){
-      double o = iOpen (g_sym, NXS_EffTF(), i);
-      double c = iClose(g_sym, NXS_EffTF(), i);
-      double body = MathAbs(c - o);
-      if(body < 1.2 * g_atr) continue;
-      double obTop = MathMax(o, c);
-      double obBot = MathMin(o, c);
-      double c1 = iClose(g_sym, NXS_EffTF(), 1);
-      double o1 = iOpen (g_sym, NXS_EffTF(), 1);
-      double l1 = iLow  (g_sym, NXS_EffTF(), 1);
-      double h1 = iHigh (g_sym, NXS_EffTF(), 1);
-      double obMid = (obTop + obBot) * 0.5;
-      // bullish OB: impulso su, il ritest TAGGA la zona (l1<=obTop) e la candela
-      // la RESPINGE - chiude rialzista sopra il midpoint (rejection), non mentre
-      // il prezzo sta ancora cadendo dentro il blocco. Ora richiede anche che il
-      // trend H1 (struttura esterna) confermi la stessa direzione.
-      if(c > o && l1 <= obTop && c1 > o1 && c1 > obMid && g_structH1.trend == 1){
-         s.dir = DIR_BUY;  s.score = 70; s.reason = "OB_retest_bull"; break;
-      }
-      if(c < o && h1 >= obBot && c1 < o1 && c1 < obMid && g_structH1.trend == -1){
-         s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear"; break;
-      }
-   }
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double atr = g_atr;
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   s = NXS_OB_UpdateSide(+1, g_obBuy, tf, atr, curBar0);
+   if(s.dir == DIR_NONE) s = NXS_OB_UpdateSide(-1, g_obSell, tf, atr, curBar0);
+   // v2.4.1 - trend H1 (struttura esterna) deve confermare la stessa direzione del retest.
+   if(s.dir == DIR_BUY  && g_structH1.trend != 1)  { s.dir = DIR_NONE; s.reason = ""; }
+   if(s.dir == DIR_SELL && g_structH1.trend != -1) { s.dir = DIR_NONE; s.reason = ""; }
    // v2.4.2: conferma reazione (structure+react engine) sul retest -> entra solo
    // se il prezzo RESPINGE il blocco, non se lo attraversa. Vale anche per OB_MIT
-   // (usa questa funzione). Filtra la causa delle perdite (PF 0.67 / 0.38).
+   // (usa questa funzione).
    if(s.dir != DIR_NONE && InpUseSMCReactionGate &&
       !NXS_SMCReactionOK(NXS_EffTF(), (s.dir == DIR_BUY ? 1 : -1))){
       s.dir = DIR_NONE; s.reason = "";

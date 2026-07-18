@@ -50,7 +50,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] Audit di coerenza completato anche per le 20 strategie residue (il conteggio reale, non 27) — agente logico, 17/07 notte
 - [x] Verificato che l'attribuzione condivisa `s.strat = STRAT_STRUCT_REACT` (11 strategie) NON è un bug reale — stats/profili/router usano tutti `stratName` (stringa, distinto), il campo condiviso serve solo a un valore cosmetico di dashboard
 - [x] **TSI** — implementato il vero True Strength Index di Blau (era RSI+EMA20 col nome sbagliato) — 17/07 notte
-- [ ] **ORDER_BLOCK** — usa la candela displacement come OB, va corretto (ultima candela opposta prima dell'impulso)
+- [x] **ORDER_BLOCK** — corretto: origine = ultima candela opposta prima dell'impulso + BOS richiesto + zona persistente (17/07 notte)
 - [ ] **SILVER_BULLET** — solo sweep in finestra oraria, manca displacement→FVG→retest (macchina a stati)
 - [ ] **CISD** — proxy "3 candele stesso colore + rottura", non il vero Change in State of Delivery
 - [ ] **DISP_REBAL** — 50% della candela displacement, non il CE di un vero FVG

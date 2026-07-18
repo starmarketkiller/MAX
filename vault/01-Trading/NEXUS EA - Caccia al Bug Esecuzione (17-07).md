@@ -17,6 +17,22 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 6): ORDER_BLOCK — origine della zona corretta
+
+Secondo dei 4 mismatch critici dall'audit delle 20 residue. `NXS_Strat_OrderBlock` (`NXS_Strategies.mqh`) usava la candela di **displacement stessa** come order block — in ICT/SMC un OB bullish è invece l'**ultima candela bearish prima del displacement** che rompe struttura. Era più una "displacement body zone" che un vero OB.
+
+**Fix**: stato persistente per lato (BUY/SELL, come ORDER_BLOCK/SH_BMS_RTO stanotte):
+- Displacement cercato fra 3-10 barre fa (come prima), ma ora deve anche **rompere uno swing precedente (BOS)** — prima non veniva verificato per niente.
+- Zona OB = **ultima candela di colore opposto prima dell'impulso** (scan fino a 6 barre indietro), non più il corpo dell'impulso.
+- Zona persistente e "fresh" fino al primo retest o invalidazione (prima si ricalcolava tutto da zero ogni tick, nessuna nozione di zona già consumata) — one-shot dopo il primo retest, scade dopo `InpOB_MaxWaitBars` (20) barre di attesa.
+- Mantenuti invariati: conferma trend H1 esterno e reaction gate SMC che seguivano già la detection.
+
+Nota collaterale: `NXS_Strat_OB_Mitigation_Structural` (la vecchia OB_MIT legacy) chiamava questa funzione — ma dal consolidamento NXR di stanotte non è più raggiunta da nessun percorso attivo (NXR è l'unica fonte per OB_MIT), quindi nessun rischio di doppio conteggio.
+
+Non ancora validato su MT5 reale. Restano: SILVER_BULLET, CISD, DISP_REBAL (mismatch critici) + le 8 "plausibili ma incomplete" + le 4 di allineamento indicatori.
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 5): audit delle 20 strategie residue + TSI reale implementato
 
 Arrivato il secondo audit esterno dell'agente logico, questa volta sulle 20 strategie non coperte da nessun audit precedente (il conteggio reale residuo era 20, non 27 come stimato prima). Qualità alta come i precedenti.
