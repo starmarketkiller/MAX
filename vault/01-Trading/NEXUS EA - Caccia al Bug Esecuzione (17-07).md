@@ -17,6 +17,23 @@ lavoro sono arrivati i primi 4 risultati REALI di MT5 (sweep isolato
 prima dei fix di oggi) ma preziosissimi: la PRIMA volta che vediamo dati
 di esecuzione MT5 reali per queste strategie isolate, non aggregate.
 
+## 🚨 AGGIORNAMENTO 17/07 (notte, 14): RANGE_FADE — qualificazione del range resa persistente
+
+Secondo dei redesign più corposi. Prima bastava l'ultima lettura di ADX (indicatore ritardato, può essere basso anche subito dopo un trend) su una finestra di 40 barre presa per buona senza verificare che fosse DAVVERO stata laterale — esattamente il punto dell'audit ("una singola lettura non dimostra che tutte le 40 barre abbiano formato un consolidamento").
+
+**Fix**: un range ora è "confermato" solo se, su tutta la finestra (40 barre), valgono TUTTE queste condizioni (calcolo bar-gated, una volta per barra chiusa):
+1. **Persistenza ADX**: almeno il 70% delle barre con ADX<20 (non solo l'ultima).
+2. **Stabilità ampiezza**: la larghezza del range nella prima metà della finestra e nella seconda non devono divergere più del 35%.
+3. **Contatti minimi**: almeno 2 tocchi per lato (bordo superiore e inferiore), separati da almeno 3 barre l'uno dall'altro.
+4. **Occupazione bilanciata**: le chiusure sopra il midpoint devono essere fra il 30% e il 70% del totale (non un range sbilanciato verso un lato).
+5. **Nessun breakout accettato** nelle ultime 5 barre.
+
+**Entry**: solo su barra chiusa 1 — rimosso il bid live che decideva la vicinanza al bordo (stesso pattern di mix barra-chiusa/prezzo-live già corretto altrove stanotte).
+
+Non ancora validato su MT5 reale. Restano dal primo audit canonico: NY_REVERSAL (timezone/DST reali), OTE_CONT (ancoraggio Fibonacci) + rename ELLIOTT (a sweep concluso).
+
+---
+
 ## 🚨 AGGIORNAMENTO 17/07 (notte, 13): WEEKLY_EXP completata come "Modello B" (weekly continuation)
 
 Primo dei redesign più corposi rimasti dal primo audit canonico. L'audit stesso indicava che la versione attuale era già più vicina al "Modello B — Weekly Continuation Expansion" da lui proposto, quindi completata invece di ricostruita da zero scegliendo tra due modelli alternativi.

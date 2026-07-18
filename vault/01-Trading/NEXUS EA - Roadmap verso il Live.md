@@ -44,7 +44,7 @@ Ogni strategia deve fare davvero quello che il suo nome promette, prima di misur
 - [x] **WEEKLY_EXP** — completata come "Modello B" (già la più vicina): ATR H4 dedicato (era D1, il bug dominante) + BOS aggiunto (17/07 notte)
 - [ ] **NY_REVERSAL** — sessione di Londra da ricostruire con timezone/DST reali (non offset GMT fisso)
 - [x] **SH_BMS_RTO** — trasformata in macchina a stati sweep→MSS→origine→ritorno→entry (17/07 notte)
-- [ ] **RANGE_FADE** — qualificazione del range da rendere persistente su N barre (non solo l'ultima lettura ADX)
+- [x] **RANGE_FADE** — range confermato solo con persistenza ADX + stabilità ampiezza + contatti minimi + occupazione bilanciata + no breakout recente, su tutta la finestra (17/07 notte)
 - [ ] **OTE_CONT** — ancorare Fibonacci e struttura di conferma allo stesso leg/BOS
 - [ ] **ELLIOTT** — decisione presa (rinominare `FIVE_SWING_IMPULSE`, dichiarata pattern proprietario), esecuzione rimandata a sweep concluso (tocca il nome in molti file, rischio di interferire col matching identità di NEXUS Bot)
 - [x] Audit di coerenza completato anche per le 20 strategie residue (il conteggio reale, non 27) — agente logico, 17/07 notte

@@ -498,33 +498,114 @@ SNXSSignal NXS_Strat_DisplacementRebalance(){
 // =================================================================
 // 10. RANGE FADE (v2.0.8) — mean revert sui range stretti
 // =================================================================
+// 17/07 notte - qualificazione del range resa persistente, da audit esterno
+// canonico: prima bastava l'ultima lettura di ADX (ritardato, puo' essere
+// basso anche subito dopo un trend) su una finestra di 40 barre presa per
+// buona senza verificare che fosse DAVVERO stata laterale. Ora un range
+// "CONFIRMED" richiede, su tutta la finestra: persistenza ADX (>=70% delle
+// barre sotto soglia), ampiezza stabile fra prima e seconda meta' della
+// finestra, almeno 2 contatti per lato separati da un numero minimo di
+// barre, occupazione bilanciata del prezzo (30-70% sopra il midpoint),
+// nessun breakout accettato nelle ultime M barre. Calcolo bar-gated (una
+// volta per barra chiusa). Entry solo su barra chiusa 1, niente piu' bid
+// live per decidere la vicinanza al bordo.
+int    InpRangeFade_Lookback       = 40;
+double InpRangeFade_ADXPersistPct  = 70.0;
+double InpRangeFade_MaxWidthDrift  = 0.35;   // tolleranza fra meta' prima e seconda del range (%)
+int    InpRangeFade_MinTouches     = 2;
+int    InpRangeFade_MinBarsBetweenTouches = 3;
+int    InpRangeFade_NoBreakoutBars = 5;
+
+struct SNXSRangeFadeState {
+   datetime lastBarTime;
+   bool     confirmed;
+   double   rngHi, rngLo, rngMid;
+};
+SNXSRangeFadeState g_rangeFadeState;
+
 SNXSSignal NXS_Strat_RangeFade(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "RANGE_FADE";
    if(!InpUseStrat_RangeFade) return s;
    double atr = _inst_atr();
-   // require compressed market: ADX<20 + velocity neutral
-   if(g_adx >= 20.0) return s;
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
-   double h1 = iHigh (g_sym, NXS_EffTF(), 1);
-   double l1 = iLow  (g_sym, NXS_EffTF(), 1);
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+
+   if(g_rangeFadeState.lastBarTime != curBar0){
+      g_rangeFadeState.lastBarTime = curBar0;
+      g_rangeFadeState.confirmed = false;
+      int N = InpRangeFade_Lookback;
+
+      // (1) Persistenza ADX sulla finestra (non solo l'ultima lettura).
+      double adxArr[]; ArraySetAsSeries(adxArr, true);
+      if(CopyBuffer(g_hADX, 0, 1, N, adxArr) < N) return s;
+      int belowCount = 0; double adxSum = 0;
+      for(int i = 0; i < N; i++){ if(adxArr[i] < 20.0) belowCount++; adxSum += adxArr[i]; }
+      double adxPersistPct = 100.0 * belowCount / N;
+      if(adxPersistPct < InpRangeFade_ADXPersistPct) return s;
+
+      // Range extremes sulla finestra intera.
+      int hiIdx = iHighest(g_sym, tf, MODE_HIGH, N, 2);
+      int loIdx = iLowest (g_sym, tf, MODE_LOW,  N, 2);
+      if(hiIdx < 0 || loIdx < 0) return s;
+      double rngHi = iHigh(g_sym, tf, hiIdx);
+      double rngLo = iLow (g_sym, tf, loIdx);
+      double rngSize = rngHi - rngLo;
+      if(rngSize < atr * 1.5) return s;
+
+      // (2) Stabilita' ampiezza: prima meta' vs seconda meta' della finestra.
+      int half = N / 2;
+      int hiIdxA = iHighest(g_sym, tf, MODE_HIGH, half, 2 + half);
+      int loIdxA = iLowest (g_sym, tf, MODE_LOW,  half, 2 + half);
+      int hiIdxB = iHighest(g_sym, tf, MODE_HIGH, half, 2);
+      int loIdxB = iLowest (g_sym, tf, MODE_LOW,  half, 2);
+      if(hiIdxA < 0 || loIdxA < 0 || hiIdxB < 0 || loIdxB < 0) return s;
+      double widthA = iHigh(g_sym, tf, hiIdxA) - iLow(g_sym, tf, loIdxA);
+      double widthB = iHigh(g_sym, tf, hiIdxB) - iLow(g_sym, tf, loIdxB);
+      double maxW = MathMax(widthA, widthB);
+      if(maxW <= 0 || MathAbs(widthA - widthB) / maxW > InpRangeFade_MaxWidthDrift) return s;
+
+      // (3) Contatti minimi per lato, separati da un numero minimo di barre.
+      double edgeBand = atr * 0.4;
+      int upperTouches = 0, lowerTouches = 0, lastUpperTouch = -1000, lastLowerTouch = -1000;
+      double sumAboveMid = 0; int countAboveMid = 0;
+      double rngMid = (rngHi + rngLo) * 0.5;
+      for(int i = 1; i <= N; i++){
+         double hh = iHigh(g_sym, tf, i), ll = iLow(g_sym, tf, i), cc = iClose(g_sym, tf, i);
+         if(hh >= rngHi - edgeBand && (i - lastUpperTouch) >= InpRangeFade_MinBarsBetweenTouches){
+            upperTouches++; lastUpperTouch = i;
+         }
+         if(ll <= rngLo + edgeBand && (i - lastLowerTouch) >= InpRangeFade_MinBarsBetweenTouches){
+            lowerTouches++; lastLowerTouch = i;
+         }
+         if(cc > rngMid) countAboveMid++;
+      }
+      if(upperTouches < InpRangeFade_MinTouches || lowerTouches < InpRangeFade_MinTouches) return s;
+
+      // (4) Occupazione bilanciata: chiusure sopra il midpoint fra 30% e 70%.
+      double aboveMidPct = 100.0 * countAboveMid / N;
+      if(aboveMidPct < 30.0 || aboveMidPct > 70.0) return s;
+
+      // (5) Nessun breakout accettato nelle ultime M barre.
+      double breakBuffer = atr * 0.3;
+      for(int i = 1; i <= InpRangeFade_NoBreakoutBars; i++){
+         double cc = iClose(g_sym, tf, i);
+         if(cc > rngHi + breakBuffer || cc < rngLo - breakBuffer) return s;
+      }
+
+      g_rangeFadeState.confirmed = true;
+      g_rangeFadeState.rngHi = rngHi; g_rangeFadeState.rngLo = rngLo; g_rangeFadeState.rngMid = rngMid;
+   }
+   if(!g_rangeFadeState.confirmed) return s;
+
+   // Entry solo su barra chiusa 1 - niente bid live per la vicinanza al bordo.
+   double rngHi = g_rangeFadeState.rngHi, rngLo = g_rangeFadeState.rngLo, rngMid = g_rangeFadeState.rngMid;
+   double c1 = iClose(g_sym, tf, 1), o1 = iOpen(g_sym, tf, 1);
+   double h1 = iHigh (g_sym, tf, 1), l1 = iLow (g_sym, tf, 1);
    double body = MathAbs(c1 - o1);
-   if(body < atr * 0.25) return s;          // require some rejection candle
+   if(body < atr * 0.25) return s;
 
-   // Range extremes — use last 40 bars
-   int hiIdx = iHighest(g_sym, NXS_EffTF(), MODE_HIGH, 40, 2);
-   int loIdx = iLowest (g_sym, NXS_EffTF(), MODE_LOW,  40, 2);
-   if(hiIdx < 0 || loIdx < 0) return s;
-   double rngHi = iHigh(g_sym, NXS_EffTF(), hiIdx);
-   double rngLo = iLow (g_sym, NXS_EffTF(), loIdx);
-   double rngMid = (rngHi + rngLo) * 0.5;
-   double rngSize = rngHi - rngLo;
-   if(rngSize < atr * 1.5) return s;        // range too tight (no edge)
-
-   // BUY: bid near low + bullish rejection
-   if(bid <= rngLo + 0.4 * atr && c1 > o1 && c1 > rngLo){
+   if(l1 <= rngLo + 0.4 * atr && c1 > o1 && c1 > rngLo){
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = MathMin(l1, rngLo) - 0.4 * atr;
       s.tpPrice = MathMin(rngMid, s.entryRef + 2.0 * (s.entryRef - s.slPrice));
@@ -532,8 +613,7 @@ SNXSSignal NXS_Strat_RangeFade(){
       s.reason  = "RANGE_FADE bull:lowReject";
       return s;
    }
-   // SELL: bid near high + bearish rejection
-   if(bid >= rngHi - 0.4 * atr && c1 < o1 && c1 < rngHi){
+   if(h1 >= rngHi - 0.4 * atr && c1 < o1 && c1 < rngHi){
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = MathMax(h1, rngHi) + 0.4 * atr;
       s.tpPrice = MathMax(rngMid, s.entryRef - 2.0 * (s.slPrice - s.entryRef));
