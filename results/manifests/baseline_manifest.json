@@ -1,0 +1,54 @@
+{
+  "manifest_version": 1,
+  "ticket": "INFRA-001 / P0.1",
+  "creato": "2026-07-18",
+  "creato_da": "sessione codice (Claude), dati repo verificati; campi MT5 da completare dall'agente desktop",
+
+  "baseline": {
+    "commit_sha_codice_mql5": "e6ce816",
+    "commit_descrizione": "Fix reale MQL5: NY_REVERSAL con DST reale (BST calcolato) + aggregazione M5 - ultimo commit che tocca MQL5/ prima dello sweep 1:500",
+    "git_tag": "baseline-post-infra-audit",
+    "ea_version_property": "2.50",
+    "ea_file": "MQL5/Experts/NEXUS_EA_v2.mq5",
+    "sha256_ea_mq5_primi16": "d53219a057f97975",
+    "sha256_aggregato_sorgenti_mql5": "04fa338252b13ab2db6062e9fb84d566",
+    "note_hash": "hash aggregato = sha256 della lista ordinata degli sha256 di tutti i .mq5/.mqh (61 include + 1 expert). Riproducibile con: find MQL5 -name '*.mq5' -o -name '*.mqh' | sort | xargs sha256sum | sha256sum",
+    "compilazione": {
+      "esito": "0 errori, 0 warning su entrambi i terminali (report agente desktop, 18/07)",
+      "checksum_ex5": "DA_COMPILARE_AGENTE_DESKTOP",
+      "metaeditor_build": "DA_COMPILARE_AGENTE_DESKTOP"
+    }
+  },
+
+  "ambiente_mt5": {
+    "terminale_live_id": "D0E8209F77C8CF37AD8BF550E51FF075",
+    "terminale_test_id": "7F8EC41F011085EB9C65165AE426B5A6",
+    "mt5_build": "DA_COMPILARE_AGENTE_DESKTOP",
+    "broker": "DA_COMPILARE_AGENTE_DESKTOP",
+    "specifica_simbolo": "XAUUSD (contract size, tick value, digits: DA_COMPILARE_AGENTE_DESKTOP)",
+    "timezone_server_broker": "DA_COMPILARE_AGENTE_DESKTOP (InpServerGMTOffset usato dall'EA per le sessioni)"
+  },
+
+  "configurazione_sweep_corrente": {
+    "nome": "sweep 1-37 isolato, leva 1:500",
+    "set_file": "results/sets/SWEEP_37_DataCollectionMode.set",
+    "selector": "InpStrategySelector 1..37 (una strategia per passata)",
+    "data_collection_mode": true,
+    "deposito": "1000 EUR",
+    "leva": "1:500 (ATTENZIONE: tutti i dati precedenti al 18/07 girati a 1:100 - margin gate falsava le aperture, vedi Roadmap verso il Live)",
+    "timeout_per_passata": "6 ore (script runner agente desktop)",
+    "identity_check": "verifica nome strategia per passata + delay 20s fra lanci (post incidente S01/LIQ_SWEEP)",
+    "periodo": "DA_COMPILARE_AGENTE_DESKTOP (finestra date esatta del Tester)",
+    "modalita_tick": "DA_COMPILARE_AGENTE_DESKTOP (every tick / real ticks / OHLC)",
+    "spread_commissioni": "DA_COMPILARE_AGENTE_DESKTOP",
+    "qualita_dati": "DA_COMPILARE_AGENTE_DESKTOP (percentuale quality dal report Tester)"
+  },
+
+  "output_attesi_per_passata": [
+    "results/reports/sweep37/SWEEP37_Sxx (report htm + stats csv)",
+    "snapshot NEXUS_trades.csv ogni 5 passate",
+    "identita strategia verificata prima del push"
+  ],
+
+  "done_quando": "un secondo operatore, partendo dal tag baseline-post-infra-audit, ricompila e ottiene lo stesso checksum .ex5 registrato qui sopra (campo oggi DA_COMPILARE)"
+}
