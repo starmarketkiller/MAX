@@ -1,12 +1,13 @@
 {
-  "manifest_version": 1,
+  "manifest_version": 2,
   "ticket": "INFRA-001 / P0.1",
   "creato": "2026-07-18",
-  "creato_da": "sessione codice (Claude), dati repo verificati; campi MT5 da completare dall'agente desktop",
+  "aggiornato": "2026-07-18 (v2: campi MT5 compilati dall'agente desktop + leva EFFETTIVA corretta)",
+  "creato_da": "sessione codice (Claude) su dati repo; campi MT5 verificati dall'agente desktop sul terminale",
 
   "baseline": {
     "commit_sha_codice_mql5": "e6ce816",
-    "commit_descrizione": "Fix reale MQL5: NY_REVERSAL con DST reale (BST calcolato) + aggregazione M5 - ultimo commit che tocca MQL5/ prima dello sweep 1:500",
+    "commit_descrizione": "Fix reale MQL5: NY_REVERSAL con DST reale (BST calcolato) + aggregazione M5 - ultimo commit che tocca MQL5/ prima dello sweep",
     "git_ref": "branch baseline-post-infra-audit (tag rifiutato dal proxy git, 403 - branch immutabile equivalente, opzione prevista dalla roadmap)",
     "ea_version_property": "2.50",
     "ea_file": "MQL5/Experts/NEXUS_EA_v2.mq5",
@@ -14,34 +15,41 @@
     "sha256_aggregato_sorgenti_mql5": "04fa338252b13ab2db6062e9fb84d566",
     "note_hash": "hash aggregato = sha256 della lista ordinata degli sha256 di tutti i .mq5/.mqh (61 include + 1 expert). Riproducibile con: find MQL5 -name '*.mq5' -o -name '*.mqh' | sort | xargs sha256sum | sha256sum",
     "compilazione": {
-      "esito": "0 errori, 0 warning su entrambi i terminali (report agente desktop, 18/07)",
-      "checksum_ex5": "DA_COMPILARE_AGENTE_DESKTOP",
-      "metaeditor_build": "DA_COMPILARE_AGENTE_DESKTOP"
+      "esito": "0 errori, 0 warning su entrambi i terminali (agente desktop, 18/07)",
+      "checksum_ex5_terminale_test": "673403da5cf69c1c27d52c8b383c591f9f591297f0095c240e42b16446b9338d",
+      "nota_determinismo": "il terminale live produce un hash .ex5 DIVERSO dallo stesso sorgente: la compilazione MQL5 non e' deterministica bit-per-bit tra installazioni. Il criterio di identita' riproducibile resta l'hash aggregato dei SORGENTI + commit; il checksum .ex5 identifica la build specifica in uso sul terminale test.",
+      "metaeditor_build": "5.0.0.5833"
     }
   },
 
   "ambiente_mt5": {
     "terminale_live_id": "D0E8209F77C8CF37AD8BF550E51FF075",
     "terminale_test_id": "7F8EC41F011085EB9C65165AE426B5A6",
-    "mt5_build": "DA_COMPILARE_AGENTE_DESKTOP",
-    "broker": "DA_COMPILARE_AGENTE_DESKTOP",
-    "specifica_simbolo": "XAUUSD (contract size, tick value, digits: DA_COMPILARE_AGENTE_DESKTOP)",
-    "timezone_server_broker": "DA_COMPILARE_AGENTE_DESKTOP (InpServerGMTOffset usato dall'EA per le sessioni)"
+    "mt5_build": "5833 (client); il server riporta separatamente build 5660",
+    "broker": "XM Global Limited",
+    "server": "XMGlobal-MT5 7",
+    "simbolo": "GOLD (naming del broker per XAUUSD)",
+    "specifica_simbolo": "digits/point/tick_value/tick_size/contract_size: NON_VERIFICATO (non deducibili in sola lettura dalle fonti disponibili)",
+    "timezone_server_broker": "NON_VERIFICATO"
   },
 
   "configurazione_sweep_corrente": {
-    "nome": "sweep 1-37 isolato, leva 1:500",
-    "set_file": "results/sets/SWEEP_37_DataCollectionMode.set",
+    "nome": "sweep 1-37 isolato (round leva-1:500 richiesta)",
+    "set_files": "scripts/sweep_sets/SWEEP37_S##.set (un file PER PASSATA generato dallo script runner - il campo precedente che indicava un file unico results/sets/SWEEP_37_DataCollectionMode.set era sbagliato: quello e' il template di partenza, non cio' che gira)",
     "selector": "InpStrategySelector 1..37 (una strategia per passata)",
     "data_collection_mode": true,
+    "lotto": "fisso 0.01 (InpDataCollectionLot)",
     "deposito": "1000 EUR",
-    "leva": "1:500 (ATTENZIONE: tutti i dati precedenti al 18/07 girati a 1:100 - margin gate falsava le aperture, vedi Roadmap verso il Live)",
+    "leva_richiesta_ini": "1:500",
+    "leva_effettiva": "1:100 - VERIFICATA con due fonti indipendenti (log diagnostico EA + report nativo MT5 S01). Il runner scrive Leverage=500 nell'.ini ma il Tester applica 1:100. Sospetto principale: formato chiave (.ini potrebbe richiedere 'Leverage=1:500'). DA RISOLVERE PRIMA DEL TEST DI PORTAFOGLIO.",
+    "impatto_leva_su_questo_sweep": "NULLO in pratica: il path DataCollectionMode non passa dal margin gate (solo NXS_PreFlight), lotto fisso 0.01, max 1 posizione aperta per volta (gate 1-posizione-per-strategia + selector single-strategy) -> margine richiesto ~20-34 USD a 1:100 su ~1000 EUR equity, mai bloccante. WR/PF/R identici a quelli che darebbe 1:500. La leva diventa CRITICA solo nel futuro test di portafoglio (sizing risk-based, posizioni concorrenti, margin gate attivo).",
     "timeout_per_passata": "6 ore (script runner agente desktop)",
     "identity_check": "verifica nome strategia per passata + delay 20s fra lanci (post incidente S01/LIQ_SWEEP)",
-    "periodo": "DA_COMPILARE_AGENTE_DESKTOP (finestra date esatta del Tester)",
-    "modalita_tick": "DA_COMPILARE_AGENTE_DESKTOP (every tick / real ticks / OHLC)",
-    "spread_commissioni": "DA_COMPILARE_AGENTE_DESKTOP",
-    "qualita_dati": "DA_COMPILARE_AGENTE_DESKTOP (percentuale quality dal report Tester)"
+    "periodo": "2019.07.11 - 2025.07.11 (~6 anni)",
+    "modalita_tick": "Every tick",
+    "qualita_dati": "30% tick reali",
+    "spread_osservato_punti": 58,
+    "commissioni": "NON_VERIFICATO"
   },
 
   "output_attesi_per_passata": [
@@ -50,5 +58,5 @@
     "identita strategia verificata prima del push"
   ],
 
-  "done_quando": "un secondo operatore, partendo dal tag baseline-post-infra-audit, ricompila e ottiene lo stesso checksum .ex5 registrato qui sopra (campo oggi DA_COMPILARE)"
+  "done_quando": "un secondo operatore, partendo dal ref baseline-post-infra-audit, ricompila dagli stessi sorgenti (hash aggregato identico) e - sul terminale test - riottiene la build registrata qui. Nota: identita' bit-per-bit del .ex5 fra terminali DIVERSI non garantita (compilazione non deterministica), l'identita' vincolante e' sui sorgenti."
 }
