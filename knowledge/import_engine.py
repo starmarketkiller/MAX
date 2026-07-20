@@ -47,7 +47,71 @@ ROUND_POSTFIX12H = "sweep37-postfix12h-killed"
 BASELINE_COMMIT = "e6ce816"
 EA_VERSION = "2.50"
 
+# M1.1 - versioning della provenienza: con quale versione di schema/importer
+# e' stato registrato ogni record. Da incrementare a ogni cambio di formato.
+KNOWLEDGE_SCHEMA_VERSION = 2
+IMPORT_ENGINE_VERSION = "1.1.0"
+
+# M1.1 - identity check (secondo livello di protezione post incidente
+# S01/LIQ_SWEEP): mappa selector index -> strategia attesa, estratta dalle
+# chiamate NXS_SelectorAllows(N) nel codice EA (NEXUS_EA_v2.mq5 +
+# NXS_Strategies.mqh). Gli alias coprono l'attribution suffix _NXR e il
+# rename CISD -> THREE_BAR_DELIVERY_BREAK (i file storici usano il nome
+# vecchio, i nuovi quello nuovo: entrambi validi per l'indice 27).
+SELECTOR_MAP = {
+    1: {"ADX_RSI"}, 2: {"BOLLINGER"}, 3: {"MACD"}, 4: {"SAR"}, 5: {"TSI"},
+    6: {"BJORGUM"}, 7: {"LIQ_SWEEP"}, 8: {"FVG_CONT"}, 9: {"BREAKOUT_ACC"},
+    10: {"LONDON_BO"}, 11: {"EMA_PULLBACK"}, 12: {"BB_SQUEEZE"},
+    13: {"ICHIMOKU"}, 14: {"RSI_DIV"}, 15: {"ORDER_BLOCK"},
+    16: {"STRUCT_REACT", "STRUCT_REACT_NXR"},
+    17: {"TURTLE_SOUP"}, 18: {"IFVG", "IFVG_NXR"}, 19: {"FVG_MIT", "FVG_MIT_NXR"},
+    20: {"OB_MIT", "OB_MIT_NXR"}, 21: {"SH_BMS_RTO"}, 22: {"SMS_BMS_RTO"},
+    23: {"SILVER_BULLET"}, 24: {"AMD_REVERSAL"}, 25: {"OTE_CONT"},
+    26: {"MALAYSIAN_SNR", "MALAYSIAN_SNR_NXR"},
+    27: {"CISD", "THREE_BAR_DELIVERY_BREAK"}, 28: {"AMD_CONT"},
+    29: {"JUDAS_SWING"}, 30: {"LDN_REVERSAL"}, 31: {"NY_REVERSAL"},
+    32: {"WEEKLY_EXP"}, 33: {"PO3"}, 34: {"LIQ_VOID"}, 35: {"DISP_REBAL"},
+    36: {"ELLIOTT"}, 37: {"RANGE_FADE"},
+}
+
+# M1.1 - stati del ciclo di vita di un artefatto (enum documentato):
+#   discovered -> registrato con checksum, contenuto non ancora estratto
+#   imported   -> contenuto caricato ma non ancora interpretato (riservato)
+#   parsed     -> contenuto estratto nel database
+#   validated  -> parsed + tutti i check (completezza, identita') superati
+ARTIFACT_STATUSES = ("discovered", "imported", "parsed", "validated")
+
 STATS_RE = re.compile(r"SWEEP37_S(\d{2})_(\d{8})_(\d{6})_stats\.csv$")
+
+
+def check_identity(pass_idx: int, strategy: str | None):
+    """Ritorna (identity_ok, expected, note). Deterministico.
+    identity_ok=None se il check non e' applicabile (strategia non parsata)."""
+    expected = SELECTOR_MAP.get(pass_idx)
+    if strategy is None:
+        return None, sorted(expected) if expected else None, "strategia non parsata: check non applicabile"
+    if expected is None:
+        return None, None, f"indice {pass_idx} fuori mappa selector: check non applicabile"
+    if strategy in expected:
+        return True, sorted(expected), None
+    return False, sorted(expected), f"il file dichiara '{strategy}' ma l'indice S{pass_idx:02d} atteso e' {sorted(expected)}"
+
+
+def run_confidence(completed: bool, identity_ok, round_id: str):
+    """Classificazione interna della qualita' dell'import (non e' l'Evidence
+    Score). Ritorna (confidence, reasons)."""
+    reasons = []
+    if identity_ok is False:
+        return "low", ["identity_mismatch: il contenuto non corrisponde all'indice della passata"]
+    if not completed:
+        return "low", ["run incompleta: nessuna riga attiva parsabile"]
+    reasons.append("run completa, checksum registrato")
+    reasons.append("identity check superato" if identity_ok else "identity check non applicabile")
+    if round_id == ROUND_BASELINE:
+        reasons.append("round baseline post-fix")
+        return "high", reasons
+    reasons.append("round storico pre-baseline: dati non confrontabili con la baseline")
+    return "medium", reasons
 
 
 def now_utc() -> str:
@@ -122,18 +186,21 @@ def parse_stats_csv(path: str):
 
 
 def main() -> int:
-    ledger = load("imports_ledger.json", {"schema": 1, "imports": []})
-    runs = load("runs_database.json", {"schema": 1, "runs": []})
-    artifacts = load("artifacts_database.json", {"schema": 1, "artifacts": []})
-    issues = load("data_quality_issues.json", {"schema": 1, "issues": []})
+    hdr = {"schema": KNOWLEDGE_SCHEMA_VERSION, "import_engine_version": IMPORT_ENGINE_VERSION}
+    ledger = load("imports_ledger.json", {**hdr, "imports": []})
+    runs = load("runs_database.json", {**hdr, "runs": []})
+    artifacts = load("artifacts_database.json", {**hdr, "artifacts": []})
+    issues = load("data_quality_issues.json", {**hdr, "issues": []})
     strategy_db = load("strategy_database.json", None)
+    for db in (ledger, runs, artifacts, issues):
+        db.update(hdr)
 
     known_checksums = {a["checksum"] for a in artifacts["artifacts"]}
     known_issue_ids = {i["id"] for i in issues["issues"]}
     run_ids = {r["run_id"] for r in runs["runs"]}
     stats = {"nuovi": 0, "duplicati": 0, "anomalie_nuove": 0}
 
-    def register_artifact(path, atype, run_id=None, note=None):
+    def register_artifact(path, atype, run_id=None, note=None, status="discovered"):
         csum = sha256(path)
         rel = os.path.relpath(path, ROOT)
         if csum in known_checksums:
@@ -144,12 +211,17 @@ def main() -> int:
         artifacts["artifacts"].append({
             "artifact_id": aid, "checksum": csum, "source_path": rel,
             "type": atype, "run_id": run_id, "note": note,
-            "provenance": {"imported_at": now_utc(), "importer": "import_engine.py v1",
+            "status": status,   # M1.1: discovered | imported | parsed | validated
+            "provenance": {"imported_at": now_utc(),
+                           "import_engine_version": IMPORT_ENGINE_VERSION,
+                           "knowledge_schema_version": KNOWLEDGE_SCHEMA_VERSION,
                            "ea_version": EA_VERSION if run_id else None},
         })
         ledger["imports"].append({
             "timestamp": now_utc(), "origine": rel, "checksum": csum,
             "ea_version": EA_VERSION, "run_id": run_id, "esito": "importato", "tipo": atype,
+            "import_engine_version": IMPORT_ENGINE_VERSION,
+            "knowledge_schema_version": KNOWLEDGE_SCHEMA_VERSION,
         })
         stats["nuovi"] += 1
         return aid, csum
@@ -173,7 +245,12 @@ def main() -> int:
         if run_id in run_ids:
             stats["duplicati"] += 1
             continue
-        aid, csum = register_artifact(path, "strategy_stats_csv", run_id=run_id)
+        # M1.1 - identity check: il contenuto deve corrispondere all'indice.
+        identity_ok, expected, id_note = check_identity(pass_idx, strategy)
+        confidence, conf_reasons = run_confidence(completed, identity_ok, round_id)
+        art_status = "validated" if (completed and identity_ok) else "parsed"
+        aid, csum = register_artifact(path, "strategy_stats_csv", run_id=run_id,
+                                      status=art_status)
         if aid is None and run_id not in run_ids:
             # artefatto gia' visto ma run non registrata (non dovrebbe accadere): prosegui comunque
             csum = sha256(path)
@@ -185,10 +262,27 @@ def main() -> int:
             "leverage_effettiva": "1:100",
             "period": "2019.07.11-2025.07.11",
             "completed": completed, "parse_note": note,
+            "identity_ok": identity_ok, "identity_expected": expected,
+            "identity_note": id_note,
+            "confidence": confidence, "confidence_reason": conf_reasons,
             "metrics": metrics, "artifact_checksum": csum,
             "source_file": os.path.relpath(path, ROOT),
             "imported_at": now_utc(),
+            "import_engine_version": IMPORT_ENGINE_VERSION,
         })
+        if identity_ok is False:
+            iid = f"dqi-identity-{run_id}"
+            if iid not in known_issue_ids:
+                known_issue_ids.add(iid)
+                stats["anomalie_nuove"] += 1
+                issues["issues"].append({
+                    "id": iid, "type": "identity_mismatch", "strategy": strategy,
+                    "run": run_id, "severity": "high", "status": "open",
+                    "expected_artifact": f"stats della strategia attesa {expected} per S{pass_idx:02d}",
+                    "actual": f"il file dichiara '{strategy}'",
+                    "possible_cause": "tester partito con stato della passata precedente (vedi incidente S01/LIQ_SWEEP)",
+                    "detected_at": now_utc(),
+                })
         if not completed:
             iid = f"dqi-incomplete-{run_id}"
             if iid not in known_issue_ids:
@@ -233,7 +327,10 @@ def main() -> int:
     if strategy_db:
         best = {}
         for r in runs["runs"]:
-            if r["round"] == ROUND_BASELINE and r["strategy"] and r["completed"]:
+            # M1.1: una run con identity_mismatch NON e' mai classificata come
+            # run valida - esclusa dalla vetrina di strategy_database.
+            if (r["round"] == ROUND_BASELINE and r["strategy"] and r["completed"]
+                    and r.get("identity_ok") is not False):
                 cur = best.get(r["strategy"])
                 if cur is None or r["run_id"] > cur["run_id"]:
                     best[r["strategy"]] = r
@@ -266,5 +363,42 @@ def main() -> int:
     return 0
 
 
+def selftest() -> int:
+    """Test deterministici delle funzioni M1.1, senza toccare i dati reali."""
+    failures = []
+
+    def check(name, cond):
+        if not cond:
+            failures.append(name)
+        print(("PASS" if cond else "FAIL"), "-", name)
+
+    ok, exp, note = check_identity(8, "MACD")
+    check("identity mismatch rilevato (S08 con MACD)", ok is False and "FVG_CONT" in exp)
+    ok, _, _ = check_identity(8, "FVG_CONT")
+    check("identity valido (S08 con FVG_CONT)", ok is True)
+    ok, _, _ = check_identity(27, "CISD")
+    ok2, _, _ = check_identity(27, "THREE_BAR_DELIVERY_BREAK")
+    check("alias rename CISD accettati entrambi", ok is True and ok2 is True)
+    ok, _, _ = check_identity(99, "MACD")
+    check("indice fuori mappa -> check non applicabile (None)", ok is None)
+    ok, _, _ = check_identity(8, None)
+    check("strategia non parsata -> check non applicabile (None)", ok is None)
+
+    c, r = run_confidence(True, True, ROUND_BASELINE)
+    check("confidence high per run baseline valida", c == "high")
+    c, _ = run_confidence(True, True, "sweep37-prefix-r1")
+    check("confidence medium per round storico", c == "medium")
+    c, r = run_confidence(True, False, ROUND_BASELINE)
+    check("confidence low per identity mismatch", c == "low" and "identity_mismatch" in r[0])
+    c, _ = run_confidence(False, True, ROUND_BASELINE)
+    check("confidence low per run incompleta", c == "low")
+
+    check("mappa selector completa 1..37", set(SELECTOR_MAP) == set(range(1, 38)))
+    print(f"\nselftest: {'OK' if not failures else 'FALLITI: ' + ', '.join(failures)}")
+    return 0 if not failures else 1
+
+
 if __name__ == "__main__":
+    if "--selftest" in sys.argv:
+        sys.exit(selftest())
     sys.exit(main())

@@ -1,5 +1,6 @@
 {
- "schema": 1,
+ "schema": 2,
+ "import_engine_version": "1.1.0",
  "issues": [
   {
    "id": "dqi-missing-S04-sweep37-baseline-e6ce816",
@@ -11,7 +12,7 @@
    "expected_artifact": "strategy_stats_csv",
    "actual": "missing",
    "possible_cause": "unknown",
-   "detected_at": "2026-07-20T10:59:50Z"
+   "detected_at": "2026-07-20T11:36:29Z"
   }
  ]
 }

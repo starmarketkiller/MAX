@@ -1,5 +1,6 @@
 {
- "schema": 1,
+ "schema": 2,
+ "import_engine_version": "1.1.0",
  "artifacts": [
   {
    "artifact_id": "art-d3b535ac93ce92ea",
@@ -8,9 +9,11 @@
    "type": "manifest",
    "run_id": null,
    "note": "baseline/config di run",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   },
@@ -21,9 +24,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S01__ADX_RSI__20260717_110029",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -34,9 +39,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -47,9 +54,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S02__BOLLINGER__20260717_140406",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -60,9 +69,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -73,9 +84,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S03__MACD__20260717_171311",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -86,9 +99,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -99,9 +114,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S04__SAR__20260717_194244",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -112,9 +129,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S05__TSI__20260717_201524",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -125,9 +144,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -138,9 +159,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -151,9 +174,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-postfix12h-killed__S07__LIQ_SWEEP__20260717_005658",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -164,9 +189,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -177,9 +204,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -190,9 +219,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r2__S01__ADX_RSI__20260716_125117",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -203,9 +234,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r2__S02__BOLLINGER__20260716_131436",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -216,9 +249,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r2__S03__MACD__20260716_141813",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -229,9 +264,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r2__S04__SAR__20260716_143004",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -242,9 +279,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r2__S05__TSI__20260716_144137",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -255,9 +294,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S01__ADX_RSI__20260716_183817",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -268,9 +309,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S02__BOLLINGER__20260716_213223",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -281,9 +324,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S03__MACD__20260716_233522",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -294,9 +339,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S04__SAR__20260716_234407",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -307,9 +354,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S05__TSI__20260717_001357",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -320,9 +369,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-gate1pos-r3__S06__BJORGUM__20260717_002455",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -333,9 +384,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r1__S01__ADX_RSI__20260716_101301",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -346,9 +399,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r1__S02__BOLLINGER__20260716_104132",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -359,9 +414,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r1__S03__MACD__20260716_115221",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -372,9 +429,11 @@
    "type": "strategy_stats_csv",
    "run_id": "sweep37-prefix-r1__S04__SAR__20260716_120507",
    "note": null,
+   "status": "validated",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:38Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:20Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": "2.50"
    }
   },
@@ -385,9 +444,11 @@
    "type": "trades_csv_snapshot",
    "run_id": null,
    "note": "non ancora parsato (futuro)",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:39Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:21Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   },
@@ -398,9 +459,11 @@
    "type": "trades_csv_snapshot",
    "run_id": null,
    "note": "non ancora parsato (futuro)",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:44Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:24Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   },
@@ -411,9 +474,11 @@
    "type": "trades_csv_snapshot",
    "run_id": null,
    "note": "non ancora parsato (futuro)",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:49Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:28Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   },
@@ -424,9 +489,11 @@
    "type": "trades_csv_snapshot",
    "run_id": null,
    "note": "non ancora parsato (futuro)",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:49Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:28Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   },
@@ -437,9 +504,11 @@
    "type": "trades_csv_snapshot",
    "run_id": null,
    "note": "non ancora parsato (futuro)",
+   "status": "discovered",
    "provenance": {
-    "imported_at": "2026-07-20T10:59:50Z",
-    "importer": "import_engine.py v1",
+    "imported_at": "2026-07-20T11:36:29Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
     "ea_version": null
    }
   }
