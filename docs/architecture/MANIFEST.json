@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "file": "01_ARCHITECTURE_OVERVIEW.md",
+      "bytes": 4010,
+      "sha256": "794c2169ebd7392701d9be6c245aa5699e08f47e0192945e975369e30f27ae8d"
+    },
+    {
+      "file": "02_RUNTIME_TICK_PIPELINE.md",
+      "bytes": 3257,
+      "sha256": "d1a8cd852071f37ddb215a8e8ded36fe09d49aa92dc07de86e2199fe8f57b258"
+    },
+    {
+      "file": "03_TRADE_IDENTITY_MODEL.md",
+      "bytes": 3392,
+      "sha256": "3c2910b1f137ea2a528944e7619a40fc3f0542505accbe3d72211bc601e89f32"
+    },
+    {
+      "file": "04_EVENT_LEDGER_SPEC.md",
+      "bytes": 2773,
+      "sha256": "0b4ae81dc986160c7eea007bb0b181927f248d3fe1895152cbb442ad7a07acd4"
+    },
+    {
+      "file": "05_STRATEGY_REGISTRY_SPEC.md",
+      "bytes": 2277,
+      "sha256": "22308edcb8e5beae081d73662f6ffd64dee0accab22f76d56710e512894f471c"
+    },
+    {
+      "file": "06_SETTINGS_SCHEMA.md",
+      "bytes": 2059,
+      "sha256": "001d5fe18e2a3acf9841c268207f0e3db190e7abdc7e1c205b8fffadcf4a193c"
+    },
+    {
+      "file": "07_RISK_AND_PROTECTION_PIPELINE.md",
+      "bytes": 2891,
+      "sha256": "9333b206f7b138d2fc0110b3c90f4dda9084239183ffd772581752204bca64c7"
+    },
+    {
+      "file": "08_POSITION_MANAGEMENT_OWNERSHIP.md",
+      "bytes": 2313,
+      "sha256": "61f167c8e0a33008620aaed1ee7842dc4e3425eb8a635b75ba04e5cfa23ecdb0"
+    },
+    {
+      "file": "09_COMMAND_LIFECYCLE.md",
+      "bytes": 2018,
+      "sha256": "bb82f80310c98b1e6f1a32cb2732692ff6d6f44e583ac7cf5d78639f39338407"
+    },
+    {
+      "file": "10_LOCALBRIDGE_PROTOCOL.md",
+      "bytes": 1979,
+      "sha256": "2c1f1bcfd2aafe6379baf19d1725755aa0e679b3d833cfb1b00a11f550badedd"
+    },
+    {
+      "file": "11_BACKTEST_CAPABILITY_MATRIX.md",
+      "bytes": 2749,
+      "sha256": "ecfca8a0e494acc80455c8f15540ba0d3a8efcee61a6fd74fe4cc530631e69ae"
+    },
+    {
+      "file": "12_FRONTEND_BACKEND_CONTRACT.md",
+      "bytes": 2434,
+      "sha256": "1331351d3435d64ac2c483f01bea76ba823767ad41bcc1f7a49447893d38f47c"
+    },
+    {
+      "file": "13_STATE_PERSISTENCE_MODEL.md",
+      "bytes": 1983,
+      "sha256": "b0a83b302c75069f932b7401c306e535da7fc63c71bc9216ee956ee8812c7af8"
+    },
+    {
+      "file": "14_OBSERVABILITY_AND_AUDIT.md",
+      "bytes": 2405,
+      "sha256": "9daf5e3cc5bb59825d01d20a0480716e3ae585f2aebf5233f1e951d08ee7f440"
+    },
+    {
+      "file": "15_DEPLOYMENT_AND_SECURITY.md",
+      "bytes": 2428,
+      "sha256": "2773e80eb5bc09ff15b73094d5e30a7163baa14bc4b03b1fec1e851165256be0"
+    },
+    {
+      "file": "16_MIGRATION_ROADMAP.md",
+      "bytes": 5657,
+      "sha256": "cab9554a1b9e650a3a611bad101b541c7becd65a0949bfb1c437059b5b3a2486"
+    },
+    {
+      "file": "README.md",
+      "bytes": 1725,
+      "sha256": "f58b4dba69cd79dfbd3dbdda953ca620a48d3a386226895c9ba95d03c422ab37"
+    }
+  ]
+}
