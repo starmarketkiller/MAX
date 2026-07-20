@@ -47,11 +47,19 @@ bool NXS_PostSLCooldownBlocks(ENUM_NXS_DIR dir){
 #define NXS_R_RISK    "NXS:RISK"
 
 // ----- Push Trade Reason to backend (retries w/ backoff — cold-start safe) --
+// PR1: il payload dichiara ora il proprio "event" (close / resync /
+// close_request) e porta trade_uid + position_id, cosi' il backend puo'
+// essere idempotente per trade LOGICO invece di sovrascrivere alla cieca.
+// "close_request" = push pre-chiusura di NXS_Prot_ClosePositionWithReason
+// (PnL flottante, prezzo richiesto): non deve MAI diventare il PnL del trade.
 void NXS_Prot_PushTradeReason(ulong ticket, long magic, string strategy,
                               string side, double lots, double openPrice,
                               double closePrice, double pnl, string reason,
-                              datetime openTime, datetime closeTime){
+                              datetime openTime, datetime closeTime,
+                              string eventKind = "close",
+                              int partialCount = 0, double volumeOut = 0.0){
    if(!InpEnableWebSync) return;
+   long account = (long)AccountInfoInteger(ACCOUNT_LOGIN);
    string body = "{";
    body += "\"ticket\":"     + IntegerToString((long)ticket) + ",";
    body += "\"magic\":"      + IntegerToString(magic) + ",";
@@ -64,7 +72,12 @@ void NXS_Prot_PushTradeReason(ulong ticket, long magic, string strategy,
    body += "\"pnl\":"        + DoubleToString(pnl, 2) + ",";
    body += "\"openTime\":\"" + NXS_IsoTime(openTime) + "\",";
    body += "\"closeTime\":\""+ NXS_IsoTime(closeTime) + "\",";
-   body += "\"reason\":\""   + _JsonEsc(reason) + "\"";
+   body += "\"reason\":\""   + _JsonEsc(reason) + "\",";
+   body += "\"event\":\""    + eventKind + "\",";
+   body += "\"positionId\":" + IntegerToString((long)ticket) + ",";
+   body += "\"tradeUid\":\"" + IntegerToString(account) + ":" + IntegerToString((long)ticket) + "\",";
+   body += "\"partialCount\":" + IntegerToString(partialCount) + ",";
+   body += "\"volumeOut\":"  + DoubleToString(volumeOut, 2);
    body += "}";
 
    string url = InpWebURL + "/api/ea/trade_reason";
@@ -127,8 +140,12 @@ bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
    bool success = ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
    if(success){
       double closeP = req.price;
+      // PR1: questo e' un pre-push col PnL FLOTTANTE (commissioni escluse) e
+      // il prezzo RICHIESTO — il close vero arrivera' dal ledger via
+      // OnTradeTransaction. Marcato close_request: il backend lo archivia
+      // come evento ma non sovrascrive il trade.
       NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, openP, closeP, pnl, reason,
-                               openTm, TimeCurrent());
+                               openTm, TimeCurrent(), "close_request");
    }
    return success;
 }

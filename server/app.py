@@ -257,12 +257,104 @@ def init_db() -> None:
                 note       TEXT,
                 updated_at REAL
             );
+            -- PR1 (trade lifecycle ledger): registro eventi append-only.
+            -- Distingue i livelli del ciclo di vita lato backend:
+            -- close = chiusura del trade LOGICO (aggregata, dal ledger EA)
+            -- resync = ri-push idempotente post-restart / history sync
+            -- close_request = pre-push con PnL flottante (mai autoritativo)
+            -- partial = uscita parziale (riservato: l'EA oggi non la pusha)
+            CREATE TABLE IF NOT EXISTS trade_events (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                trade_uid    TEXT,
+                event        TEXT,
+                position_id  INTEGER,
+                magic        INTEGER,
+                symbol       TEXT,
+                pnl          REAL,
+                lots         REAL,
+                partial_count INTEGER,
+                volume_out   REAL,
+                reason       TEXT,
+                payload      TEXT,
+                created_at   REAL
+            );
+            -- exactly-once per trade logico: un solo evento close e un solo
+            -- resync per trade_uid, qualunque replay arrivi dall'EA.
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_events_once
+                ON trade_events(trade_uid, event)
+                WHERE event IN ('close', 'resync');
             """
         )
+        _migrate_trade_ledger(c)
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
         _kv_set_if_absent(c, "locked_profiles", json.dumps({}))
+
+
+def _migrate_trade_ledger(c: sqlite3.Connection) -> None:
+    """PR1 — migrazione additiva della tabella `trades` (idempotente).
+
+    Colonne nuove per distinguere il trade LOGICO dai suoi deal:
+    position_id/trade_uid (identita'), partial_count/volume_out (semantica
+    partial-close), last_event (che tipo di payload ha scritto la riga).
+    Le righe storiche restano valide con le colonne a NULL.
+    """
+    cols = {r[1] for r in c.execute("PRAGMA table_info(trades)")}
+    for name, ddl in (("position_id", "INTEGER"), ("trade_uid", "TEXT"),
+                      ("partial_count", "INTEGER"), ("volume_out", "REAL"),
+                      ("last_event", "TEXT")):
+        if name not in cols:
+            c.execute(f"ALTER TABLE trades ADD COLUMN {name} {ddl}")
+    # trade_uid = "<account>:<position_id>": unico quando presente. NB: la PK
+    # storica resta ticket(=position_id) — collisione teorica tra account
+    # diversi sullo stesso backend, documentata nel PR (fix richiede rebuild
+    # della tabella, fuori scope per una migrazione additiva).
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_trades_uid "
+              "ON trades(trade_uid) WHERE trade_uid IS NOT NULL")
+
+
+def _pick(t: dict, *keys):
+    """Primo campo PRESENTE tra gli alias, anche se vale 0/0.0 — `a or b`
+    perderebbe gli zeri (partial_count=0, pnl breakeven, volume 0)."""
+    for k in keys:
+        if k in t and t[k] is not None:
+            return t[k]
+    return None
+
+
+def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) -> bool:
+    """Registra un evento del ciclo di vita nel ledger backend.
+
+    INSERT OR IGNORE + indice parziale (trade_uid,event) ⇒ il replay di un
+    close/resync gia' registrato non crea un secondo evento: e' questo che
+    rende verificabile 'exactly one TRADE_CLOSED per logical trade'.
+    """
+    uid = t.get("tradeUid") or t.get("trade_uid")
+    ev = (t.get("event") or "close").lower()
+    if uid is None:
+        # payload legacy senza trade_uid: derivalo da magic+ticket se possibile
+        ticket = t.get("ticket") or t.get("positionId")
+        if ticket is None:
+            return False
+        uid = f"legacy:{ticket}"
+    c.execute(
+        "INSERT OR IGNORE INTO trade_events(trade_uid,event,position_id,magic,"
+        "symbol,pnl,lots,partial_count,volume_out,reason,payload,created_at) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            str(uid), ev,
+            _pick(t, "positionId", "position_id", "ticket"),
+            t.get("magic"),
+            t.get("symbol") or symbol_fallback,
+            _pick(t, "pnl", "profit"),
+            _pick(t, "lots", "volume"),
+            _pick(t, "partialCount", "partial_count"),
+            _pick(t, "volumeOut", "volume_out"),
+            t.get("reason"), json.dumps(t), now(),
+        ),
+    )
+    return True
 
 
 def _kv_set_if_absent(c: sqlite3.Connection, key: str, value: str) -> None:
@@ -635,7 +727,9 @@ def _upsert_trade(c, t, symbol_fallback=None):
     close_time = _normalize_time(t.get("close_time") or t.get("closeTime"))
     c.execute(
         "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
-        "pnl,open_time,close_time,reason,raw,synced_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "pnl,open_time,close_time,reason,raw,synced_at,"
+        "position_id,trade_uid,partial_count,volume_out,last_event) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(ticket) DO UPDATE SET "
         "symbol=COALESCE(excluded.symbol, trades.symbol), "
         "strategy=COALESCE(NULLIF(NULLIF(excluded.strategy, ''), 'UNKNOWN'), trades.strategy), "
@@ -645,13 +739,23 @@ def _upsert_trade(c, t, symbol_fallback=None):
         "open_time=COALESCE(excluded.open_time, trades.open_time), "
         "close_time=COALESCE(excluded.close_time, trades.close_time), "
         "reason=excluded.reason, raw=excluded.raw, "
-        "synced_at=excluded.synced_at",
+        "synced_at=excluded.synced_at, "
+        "position_id=COALESCE(excluded.position_id, trades.position_id), "
+        "trade_uid=COALESCE(excluded.trade_uid, trades.trade_uid), "
+        "partial_count=COALESCE(excluded.partial_count, trades.partial_count), "
+        "volume_out=COALESCE(excluded.volume_out, trades.volume_out), "
+        "last_event=COALESCE(excluded.last_event, trades.last_event)",
         (
             int(ticket), symbol, t.get("strategy"), t.get("side") or t.get("type"),
-            t.get("lots") or t.get("volume"), open_price,
-            t.get("close_price") or t.get("closePrice"), t.get("pnl") or t.get("profit"),
+            _pick(t, "lots", "volume"), open_price,
+            _pick(t, "close_price", "closePrice"), _pick(t, "pnl", "profit"),
             open_time, close_time,
             t.get("reason"), json.dumps(t), now(),
+            _pick(t, "positionId", "position_id"),
+            _pick(t, "tradeUid", "trade_uid"),
+            _pick(t, "partialCount", "partial_count"),
+            _pick(t, "volumeOut", "volume_out"),
+            t.get("event"),
         ),
     )
     return True
@@ -667,7 +771,14 @@ async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] =
     n = 0
     with _conn() as c:
         for t in trades:
-            if isinstance(t, dict) and _upsert_trade(c, t):
+            if not isinstance(t, dict):
+                continue
+            # PR1: questo endpoint E' il canale di resync — i payload nuovi lo
+            # dichiarano, per i legacy lo si assume. L'evento va nel ledger
+            # (idempotente per trade_uid), l'upsert resta idempotente per ticket.
+            t.setdefault("event", "resync")
+            _insert_trade_event(c, t)
+            if _upsert_trade(c, t):
                 n += 1
     return {"ok": True, "stored": n}
 
@@ -694,9 +805,17 @@ async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Heade
         # FIX catena dati: popola anche la tabella `trades` (letta da Journal/
         # Analytics) così i trade chiusi live compaiono subito, senza attendere
         # il sync allo startup dell'EA.
+        # PR1: il payload dichiara il proprio evento. Solo close/resync sono
+        # autoritativi per la tabella `trades`; close_request (PnL flottante,
+        # prezzo richiesto) e partial NON devono piu' sovrascrivere il trade —
+        # e' cosi' che i parziali corrompevano il PnL. Tutti finiscono nel
+        # registro trade_events (audit + dedupe replay).
+        ev = str(data.get("event") or "close").lower()
         if data.get("ticket") is not None:
             try:
-                _upsert_trade(c, data, symbol_fallback=(None if symbol == "?" else symbol))
+                _insert_trade_event(c, data, symbol_fallback=(None if symbol == "?" else symbol))
+                if ev in ("close", "resync"):
+                    _upsert_trade(c, data, symbol_fallback=(None if symbol == "?" else symbol))
             except Exception as e:
                 print(f"[NEXUS] trade_reason->trades upsert failed: {e}")
     return {"ok": True}

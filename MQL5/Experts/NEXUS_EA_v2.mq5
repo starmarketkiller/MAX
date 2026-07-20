@@ -68,6 +68,7 @@
 #include <NEXUS_v1\NXS_Notify.mqh>
 #include <NEXUS_v1\NXS_Dashboard.mqh>
 #include <NEXUS_v1\NXS_HistorySync.mqh>
+#include <NEXUS_v1\NXS_TradeLedger.mqh>   // PR1 - ciclo di vita trade (deal/order/position/logico)
 #include <NEXUS_v1\NXS_Diagnostics.mqh>
 #include <NEXUS_v1\NXS_StratStats.mqh>
 #include <NEXUS_v1\NXS_WebBridge.mqh>
@@ -449,6 +450,21 @@ int OnInit(){
    NXS_Diag_OnInit();
    NXS_Stats_Init();   // v2.0.5 strategy stats tracker
 
+   // PR1 - Trade Ledger: riconcilia lo stato con la history (emitted-set +
+   // chiusure avvenute offline). Parita' storica: le chiusure offline NON
+   // rigenerano notifiche/stats locali (non lo facevano nemmeno prima); il
+   // loro push al backend resta a NXS_SyncRecentClosedTrades (idempotente).
+   {
+      int offlineFinals = NXS_Ledger_Boot(7);
+      SNxsLedgerTrade bootTc;
+      while(NXS_Ledger_PopClosed(bootTc)){
+         PrintFormat("[NEXUS LEDGER] chiusura offline riconciliata: pos=%I64u strat=%s pnl=%.2f partials=%d",
+                     bootTc.position_id, bootTc.strategy, bootTc.pnl, bootTc.partial_count);
+      }
+      if(offlineFinals > 0)
+         PrintFormat("[NEXUS LEDGER] boot: %d trade logici chiusi offline riconciliati", offlineFinals);
+   }
+
    PrintFormat("[NEXUS v%s] Initialized on %s | Profile=%s | Magic=%I64d | WebSync=%s URL=%s",
                NEXUS_VERSION, g_sym, g_profile.className, InpMagic,
                (InpEnableWebSync ? "ON":"OFF"), InpWebURL);
@@ -482,7 +498,9 @@ int OnInit(){
 
 void OnDeinit(const int reason){
    EventKillTimer();
-   NXS_Stats_Deinit();   // v2.0.5 final export
+   NXS_EA_DrainLedger();    // PR1: non perdere chiusure logiche in coda allo shutdown
+   NXS_Stats_Deinit();      // v2.0.5 final export
+   NXS_Ledger_Persist();    // PR1: emitted-set su disco (no-op nel tester)
    NXS_State_Save();
    NXS_ActivateOriginal();     // v2.3.0: assicura g_h* = originali prima di rilasciarli
    NXS_ReleaseHandles();
@@ -560,10 +578,16 @@ void OnTimer(){
          NXS_SyncRecentClosedTrades();
       }
    }
+   // PR1 - rete di sicurezza: chiusure il cui ultimo deal e' arrivato mentre
+   // la position era ancora visibile (o evento perso) vengono riconciliate qui.
+   if(NXS_Ledger_SweepPending() > 0) NXS_EA_DrainLedger();
    NXS_License_Verify();     // tester-safe; live hourly re-validation
    NXS_State_Save();
    if(InpShowDashboard) NXS_Dashboard_Render();
-   if(InpStatsEnable)   NXS_Stats_OnTick(InpStatsExportEverySec);
+   if(InpStatsEnable){
+      NXS_Stats_OnTick(InpStatsExportEverySec);
+      NXS_EA_DrainLedger();   // PR1: chiusure trovate dallo scanner stats
+   }
 }
 
 void OnTick(){
@@ -1001,76 +1025,95 @@ void OnTick(){
       NXS_Shadow_Tick();
 }
 
+//+------------------------------------------------------------------+
+//| PR1 - pipeline di chiusura del TRADE LOGICO (exactly-once).       |
+//| Prima girava per OGNI deal OUT: un trade chiuso in N parziali     |
+//| produceva N "TRADE_CLOSED" (stats gonfiate, chain/notify/push     |
+//| duplicati, PnL parziale spacciato per PnL del trade). Ora gira    |
+//| UNA volta per position, con i valori AGGREGATI del ledger.        |
+//+------------------------------------------------------------------+
+void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
+   string reason = tc.close_reason;
+   if(reason == "unknown") reason = (tc.pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
+
+   // v2.0.33 — post-SL directional cooldown (invariato, ma ora scatta solo
+   // quando il trade e' davvero finito in SL, non su un parziale qualunque)
+   if(reason == "sl")
+      NXS_RegisterSLClose((tc.side == "BUY") ? DIR_BUY : DIR_SELL);
+
+   double holdSec = (double)((long)tc.close_time - (long)tc.open_time);
+   double rMult   = NXS_Ledger_RMultiple(tc);
+   string tf      = EnumToString(NXS_Profile_TF(tc.strategy));
+
+   // riga CLOSE unica: lots = volume totale entrato, pnl = realizzato totale,
+   // prezzo = VWAP di uscita; i parziali hanno le loro righe PARTIAL.
+   NXS_LogTradeCSV("CLOSE", tc.position_id, tc.strategy, tc.vwap_out, tc.vol_in,
+                   0, 0, tc.pnl, reason, holdSec, rMult, tf);
+
+   // v2.5.1 PR1: outcome stats registrato QUI (unico punto), non piu' un
+   // outcome per ogni deal OUT dentro NXS_Stats_ProcessClosedTrades.
+   NXS_Stats_RecordOutcome(tc.strategy, rMult, tc.score, holdSec);
+
+   NXS_Prot_PushTradeReason(tc.position_id, tc.magic, tc.strategy, tc.side,
+                            tc.vol_in, tc.vwap_in, tc.vwap_out, tc.pnl, reason,
+                            tc.open_time, tc.close_time,
+                            (tc.from_boot ? "resync" : "close"),
+                            tc.partial_count, tc.vol_out);
+
+   // v2.0.13 — hook chain
+   int closeDir = (tc.side == "BUY") ? +1 : -1;
+   NXS_Chain_OnTradeClose(tc.strategy, closeDir, tc.vwap_out, tc.pnl);
+
+   NXS_Notify_TradeClose(tc.strategy, tc.pnl, reason);
+}
+
+// Svuota la coda delle chiusure logiche (di norma 0 o 1 elemento).
+void NXS_EA_DrainLedger(){
+   SNxsLedgerTrade tc;
+   while(NXS_Ledger_PopClosed(tc)){
+      if(tc.from_boot) continue;   // riconciliazione boot: gia' loggata in OnInit
+      NXS_EA_OnLogicalClose(tc);
+   }
+}
+
 void OnTradeTransaction(const MqlTradeTransaction& trans,
                         const MqlTradeRequest& tradeReq,
                         const MqlTradeResult& tradeRes){
    // v2.0.9 Sprint 3 — event-driven fill capture (replaces polling)
    NXS_EA_OnTradeTx(trans);
    if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
-   if(!HistoryDealSelect(trans.deal)) return;
-   long entry = HistoryDealGetInteger(trans.deal, DEAL_ENTRY);
-   if(entry != DEAL_ENTRY_OUT) return;
-   long mg = HistoryDealGetInteger(trans.deal, DEAL_MAGIC);
-   if(!IsNexusMagic(mg)) return;
-   double pnl = HistoryDealGetDouble(trans.deal, DEAL_PROFIT)
-              + HistoryDealGetDouble(trans.deal, DEAL_SWAP)
-              + HistoryDealGetDouble(trans.deal, DEAL_COMMISSION);
-   NXS_OnTradeClosed(pnl);
 
-   // v2.0.14 fix: map the numeric DEAL_REASON the same way NXS_HistorySync.mqh
-   // does, instead of trusting DEAL_COMMENT — brokers frequently overwrite or
-   // blank the closing deal's comment on SL/TP/stop-out fills, which used to
-   // send a garbage/blank "reason" to the backend for auto-closed trades.
-   string reason = _NXS_HistTrigger(HistoryDealGetInteger(trans.deal, DEAL_REASON));
-   if(reason == "unknown") reason = (pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
-   ulong  ticket = (ulong)HistoryDealGetInteger(trans.deal, DEAL_POSITION_ID);
-   double lots   = HistoryDealGetDouble(trans.deal, DEAL_VOLUME);
-   double price  = HistoryDealGetDouble(trans.deal, DEAL_PRICE);
-   datetime closeTime = (datetime)HistoryDealGetInteger(trans.deal, DEAL_TIME);
-   datetime openTime  = NXS_FindPositionOpenTime(ticket, closeTime);
-   ENUM_DEAL_TYPE dtype = (ENUM_DEAL_TYPE)HistoryDealGetInteger(trans.deal, DEAL_TYPE);
-   string side = (dtype == DEAL_TYPE_SELL) ? "BUY" : "SELL";
-   // v2.0.33 — post-SL directional cooldown: record which direction just
-   // got stopped out, so NXS_PostSLCooldownBlocks() can veto an immediate
-   // opposite-direction re-entry (the whipsaw pattern found in live review).
-   if(reason == "sl")
-      NXS_RegisterSLClose((side == "BUY") ? DIR_BUY : DIR_SELL);
-   // v2.0.25 fix: read the OPENING deal's comment, not the closing deal's —
-   // brokers frequently blank/overwrite the close deal's comment on SL/TP/
-   // stop-out fills, which was producing "UNKNOWN"/empty strategy names.
-   // Format stamped by NXS_OpenTrade: "<comment>|<strat>|<score>".
-   string dcomment = NXS_FindPositionOpenComment(ticket, HistoryDealGetString(trans.deal, DEAL_COMMENT));
-   string strat = "";
-   int p1 = StringFind(dcomment, "|");
-   if(p1 >= 0){
-      int p2 = StringFind(dcomment, "|", p1+1);
-      // Fall back to "rest of string" if the trailing "|score" got truncated
-      // by the broker's comment length cap, instead of losing the name too.
-      strat = (p2 > p1) ? StringSubstr(dcomment, p1+1, p2-p1-1)
-                        : StringSubstr(dcomment, p1+1);
+   // PR1 - tutto il ciclo di vita passa dal ledger: il deal fa ri-aggregare
+   // la sua position e l'evento nasce dal DIFF di stato, quindi replay di
+   // deal duplicati e disordine di consegna non producono mai doppi eventi.
+   double realizedDelta = 0.0;
+   int ev = NXS_Ledger_OnDeal(trans.deal, realizedDelta);
+   if(ev == NXS_LEDGER_EV_NONE) return;
+
+   // Il PnL REALIZZATO (anche parziale) alimenta subito le protezioni
+   // daily-DD / anti-revenge: identico in totale al comportamento storico
+   // (che sommava i singoli deal OUT), ma replay-safe perche' e' un delta.
+   if(ev == NXS_LEDGER_EV_PARTIAL || ev == NXS_LEDGER_EV_FINAL)
+      NXS_OnTradeClosed(realizedDelta);
+
+   if(ev == NXS_LEDGER_EV_PARTIAL && HistoryDealSelect(trans.deal)){
+      // riga PARTIAL: pnl/lots del singolo deal, cosi' il CSV mostra ogni
+      // uscita parziale senza mai contarla come trade chiuso.
+      ulong  posId = (ulong)HistoryDealGetInteger(trans.deal, DEAL_POSITION_ID);
+      double dLots = HistoryDealGetDouble(trans.deal, DEAL_VOLUME);
+      double dPx   = HistoryDealGetDouble(trans.deal, DEAL_PRICE);
+      string dRsn  = _NXS_HistTrigger(HistoryDealGetInteger(trans.deal, DEAL_REASON));
+      string strat = "";
+      string cm = NXS_FindPositionOpenComment(posId, "");
+      int p1 = StringFind(cm, "|");
+      if(p1 >= 0){
+         int p2 = StringFind(cm, "|", p1+1);
+         strat = (p2 > p1) ? StringSubstr(cm, p1+1, p2-p1-1) : StringSubstr(cm, p1+1);
+      }
+      NXS_LogTradeCSV("PARTIAL", posId, strat, dPx, dLots, 0, 0, realizedDelta,
+                      dRsn, 0, 0, EnumToString(NXS_Profile_TF(strat)));
    }
-   // 17/07 fix: la riga CLOSE veniva scritta PRIMA che strat/reason fossero
-   // calcolati (passava "" per entrambi) - il CSV non poteva mai dire quale
-   // strategia aveva chiuso ne' se via SL/TP/expert (time-exit forzato).
-   // Spostata qui sotto, ora con i valori veri: "reason" e' sl/tp/stop_out/
-   // expert (DEAL_REASON_EXPERT = chiusura forzata dall'EA, es. time-exit in
-   // NXS_ManageBreakevenAndTrail) - permette di distinguere finalmente un
-   // vero SL/TP da una chiusura forzata guardando il CSV. Aggiunti anche
-   // hold_sec/r_multiple/resolved_tf: con questi tre campi in piu' un bug
-   // come quello di oggi (cap di durata piatto per TF non riconosciuto) si
-   // vede a colpo d'occhio nel CSV, senza dover rileggere il codice a mano.
-   double closeHoldSec = (double)((long)closeTime - (long)openTime);
-   double closeR = _nxs_stats_dealR(trans.deal);
-   string closeResolvedTF = EnumToString(NXS_Profile_TF(strat));
-   NXS_LogTradeCSV("CLOSE", ticket, strat, price, lots, 0, 0, pnl, reason,
-                   closeHoldSec, closeR, closeResolvedTF);
-   NXS_Prot_PushTradeReason(ticket, mg, strat, side, lots, 0.0, price, pnl, reason,
-                            openTime, closeTime);
 
-   // v2.0.13 — hook chain
-   int closeDir = (side == "BUY") ? +1 : -1;
-   NXS_Chain_OnTradeClose(strat, closeDir, price, pnl);
-
-   NXS_Notify_TradeClose(strat, pnl, reason);
+   NXS_EA_DrainLedger();
 }
 //+------------------------------------------------------------------+

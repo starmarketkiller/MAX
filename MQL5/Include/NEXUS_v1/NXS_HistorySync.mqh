@@ -23,70 +23,57 @@ void NXS_SyncRecentClosedTrades(){
    int total = HistoryDealsTotal();
    if(total <= 0){ Print("[NEXUS SYNC] no recent deals to sync"); return; }
 
-   // Aggregate deals by position_id  (each closed trade has IN + OUT deal)
-   string body = "{\"trades\":[";
-   bool first = true;
-   int count = 0, scanned = 0;
-
-   for(int i = total - 1; i >= 0 && scanned < 200; i--){
+   // PR1: si sincronizzano TRADE LOGICI, non deal OUT. Prima ogni deal OUT
+   // diventava un record col medesimo ticket(=posId): per un trade chiuso in
+   // parziali il backend riceveva N record che si sovrascrivevano a vicenda
+   // (e vinceva il piu' VECCHIO, iterando dal fondo). Ora: 1 position chiusa
+   // = 1 record aggregato (PnL totale, VWAP, partial_count), idempotente.
+   ulong posIds[];
+   int scanned = 0;
+   for(int i = total - 1; i >= 0 && scanned < 400; i--){
       ulong dealTicket = HistoryDealGetTicket(i);
       if(dealTicket == 0) continue;
       scanned++;
-      long magic = HistoryDealGetInteger(dealTicket, DEAL_MAGIC);
-      if(!IsNexusMagic(magic)) continue;
+      if(!IsNexusMagic(HistoryDealGetInteger(dealTicket, DEAL_MAGIC))) continue;
       ENUM_DEAL_ENTRY entry = (ENUM_DEAL_ENTRY)HistoryDealGetInteger(dealTicket, DEAL_ENTRY);
-      if(entry != DEAL_ENTRY_OUT) continue;
-
-      ulong posId       = HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID);
-      string sym        = HistoryDealGetString (dealTicket, DEAL_SYMBOL);
-      ENUM_DEAL_TYPE dt = (ENUM_DEAL_TYPE)HistoryDealGetInteger(dealTicket, DEAL_TYPE);
-      string side       = (dt == DEAL_TYPE_SELL) ? "BUY" : "SELL"; // OUT deal is opposite
-      double lots       = HistoryDealGetDouble (dealTicket, DEAL_VOLUME);
-      double closePrice = HistoryDealGetDouble (dealTicket, DEAL_PRICE);
-      double pnl        = HistoryDealGetDouble (dealTicket, DEAL_PROFIT)
-                        + HistoryDealGetDouble (dealTicket, DEAL_SWAP)
-                        + HistoryDealGetDouble (dealTicket, DEAL_COMMISSION);
-      datetime closeTm  = (datetime)HistoryDealGetInteger(dealTicket, DEAL_TIME);
-      long reasonCode   = HistoryDealGetInteger(dealTicket, DEAL_REASON);
-      string reason     = _NXS_HistTrigger(reasonCode);
-      string comment    = HistoryDealGetString(dealTicket, DEAL_COMMENT);
-
-      // Find the OPEN deal for this position
-      double openPrice = 0; datetime openTm = 0; string strat = "UNKNOWN";
-      for(int j = 0; j < total; j++){
-         ulong dt2 = HistoryDealGetTicket(j);
-         if(dt2 == 0) continue;
-         if((ulong)HistoryDealGetInteger(dt2, DEAL_POSITION_ID) != posId) continue;
-         if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(dt2, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
-         openPrice = HistoryDealGetDouble(dt2, DEAL_PRICE);
-         openTm    = (datetime)HistoryDealGetInteger(dt2, DEAL_TIME);
-         string oc = HistoryDealGetString(dt2, DEAL_COMMENT);
-         // Comment format from execution: "<comment>|<strat>|<score>"
-         int p1 = StringFind(oc, "|");
-         if(p1 >= 0){
-            int p2 = StringFind(oc, "|", p1 + 1);
-            // v2.0.25 fix: broker comment-length truncation can cut off the
-            // trailing "|score" — fall back to "rest of string" so the
-            // strategy name still comes through instead of "UNKNOWN".
-            strat = (p2 > p1) ? StringSubstr(oc, p1 + 1, p2 - p1 - 1)
-                              : StringSubstr(oc, p1 + 1);
-         }
-         break;
+      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) continue;
+      ulong posId = (ulong)HistoryDealGetInteger(dealTicket, DEAL_POSITION_ID);
+      bool seen = false;
+      for(int k = ArraySize(posIds) - 1; k >= 0; k--)
+         if(posIds[k] == posId){ seen = true; break; }
+      if(!seen){
+         int n = ArraySize(posIds);
+         ArrayResize(posIds, n + 1);
+         posIds[n] = posId;
       }
-      if(openPrice == 0) continue;
+   }
+
+   long account = (long)AccountInfoInteger(ACCOUNT_LOGIN);
+   string body = "{\"trades\":[";
+   bool first = true;
+   int count = 0;
+   for(int i = 0; i < ArraySize(posIds) && count < 50; i++){
+      SNxsLedgerTrade t;
+      // NB: AggregatePosition usa HistorySelectByPosition e cambia la
+      // selezione history globale — per questo gli id sono raccolti prima.
+      if(!NXS_Ledger_AggregatePosition(posIds[i], t)) continue;
+      if(!NXS_Ledger_IsClosed(t)) continue;        // solo trade logici finiti
+      if(t.vol_in <= 0) continue;                  // IN fuori finestra: skip
+      string strat = (t.strategy == "") ? "UNKNOWN" : t.strategy;
 
       if(!first) body += ",";
       first = false;
       body += StringFormat(
          "{\"ticket\":%I64u,\"symbol\":\"%s\",\"side\":\"%s\",\"lots\":%.2f,"
          "\"openPrice\":%.5f,\"closePrice\":%.5f,\"pnl\":%.2f,\"magic\":%I64d,"
-         "\"strategy\":\"%s\",\"openTime\":\"%s\",\"closeTime\":\"%s\",\"reason\":\"%s\"}",
-         posId, sym, side, lots, openPrice, closePrice, pnl, magic, strat,
-         NXS_IsoTime(openTm),
-         NXS_IsoTime(closeTm),
-         reason);
+         "\"strategy\":\"%s\",\"openTime\":\"%s\",\"closeTime\":\"%s\",\"reason\":\"%s\","
+         "\"event\":\"resync\",\"positionId\":%I64u,\"tradeUid\":\"%I64d:%I64u\","
+         "\"partialCount\":%d,\"volumeOut\":%.2f}",
+         t.position_id, t.symbol, t.side, t.vol_in, t.vwap_in, t.vwap_out,
+         t.pnl, t.magic, strat,
+         NXS_IsoTime(t.open_time), NXS_IsoTime(t.close_time), t.close_reason,
+         t.position_id, account, t.position_id, t.partial_count, t.vol_out);
       count++;
-      if(count >= 50) break;   // cap batch size
    }
    body += "]}";
 

@@ -205,37 +205,48 @@ double _nxs_stats_dealHoldSec(ulong outTicket){
    return 0.0;
 }
 
+// PR1: prima questo scanner registrava UN outcome per OGNI deal OUT — un
+// trade chiuso in 3 parziali contava 3 wins/losses e la R era calcolata sul
+// PnL del singolo spezzone contro il rischio INTERO (doppio errore). Ora
+// l'outcome e' registrato una sola volta per TRADE LOGICO alla chiusura
+// finale (NXS_EA_OnLogicalClose, via ledger). Lo scanner resta come rete di
+// sicurezza: alimenta il ledger con i deal che OnTradeTransaction avesse
+// perso; il dedupe del ledger (diff di stato) rende innocuo il doppio feed.
 void NXS_Stats_ProcessClosedTrades(){
    if(!HistorySelect(g_stats_sessionStart, TimeCurrent())) return;
    int total = HistoryDealsTotal();
+
+   // 1) raccogli le position dei deal OUT nuovi PRIMA di toccare il ledger:
+   //    NXS_Ledger_Touch usa HistorySelectByPosition e invaliderebbe gli
+   //    indici di questa selezione a meta' iterazione.
+   ulong newPos[];
    for(int k = 0; k < total; k++){
       ulong dt = HistoryDealGetTicket(k);
       datetime dtime = (datetime)HistoryDealGetInteger(dt, DEAL_TIME);
       if(dtime < g_stats_lastDealTime) continue;
       if(dtime == g_stats_lastDealTime && dt <= g_stats_lastDealTicket) continue;
       long entry = HistoryDealGetInteger(dt, DEAL_ENTRY);
-      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) continue;
       string sym = HistoryDealGetString(dt, DEAL_SYMBOL);
-      if(sym != g_sym){ g_stats_lastDealTime = dtime; g_stats_lastDealTicket = dt; continue; }
-      long posId = HistoryDealGetInteger(dt, DEAL_POSITION_ID);
-      string stratName=""; double scoreUsed=0;
-      bool found = false;
-      int n2 = HistoryDealsTotal();
-      for(int j = 0; j < n2; j++){
-         ulong dt2 = HistoryDealGetTicket(j);
-         if(HistoryDealGetInteger(dt2, DEAL_POSITION_ID) != posId) continue;
-         if(HistoryDealGetInteger(dt2, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
-         string cm2 = HistoryDealGetString(dt2, DEAL_COMMENT);
-         if(_nxs_stats_parseComment(cm2, stratName, scoreUsed)) found = true;
-         break;
-      }
-      if(found){
-         double R    = _nxs_stats_dealR(dt);
-         double hold = _nxs_stats_dealHoldSec(dt);
-         NXS_Stats_RecordOutcome(stratName, R, scoreUsed, hold);
+      if((entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY) && sym == g_sym){
+         ulong posId = (ulong)HistoryDealGetInteger(dt, DEAL_POSITION_ID);
+         bool seen = false;
+         for(int q = ArraySize(newPos) - 1; q >= 0; q--)
+            if(newPos[q] == posId){ seen = true; break; }
+         if(!seen){
+            int n = ArraySize(newPos);
+            ArrayResize(newPos, n + 1);
+            newPos[n] = posId;
+         }
       }
       g_stats_lastDealTime   = dtime;
       g_stats_lastDealTicket = dt;
+   }
+
+   // 2) tocca il ledger: eventuali chiusure logiche finiscono in coda e
+   //    vengono drenate dal chiamante centrale (NXS_EA_DrainLedger).
+   for(int i = 0; i < ArraySize(newPos); i++){
+      double dummy;
+      NXS_Ledger_Touch(newPos[i], dummy);
    }
 }
 
