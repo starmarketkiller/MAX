@@ -2,24 +2,24 @@
  "schema": 2,
  "evidence_engine_version": "1.1.0",
  "distinzione_permanente": "Run.confidence = qualita' dell'import; evidence_strength = forza delle fonti di UN claim. Mai fuse.",
- "output_fingerprint": "f0d3b339fe277c95",
- "totale_claims": 631,
- "totale_evidence_links": 631,
+ "output_fingerprint": "57ab33e922aa679f",
+ "totale_claims": 639,
+ "totale_evidence_links": 639,
  "distribuzione_status": {
   "partially_supported": 1,
-  "supported": 630
+  "supported": 638
  },
  "distribuzione_strength": {
-  "moderate": 222,
-  "strong": 409
+  "moderate": 221,
+  "strong": 418
  },
  "distribuzione_scope": {
   "code_history": 125,
   "data_quality": 2,
-  "documentation": 251,
-  "execution_integrity": 159,
-  "metadata": 66,
-  "signal_level": 28
+  "documentation": 253,
+  "execution_integrity": 165,
+  "metadata": 65,
+  "signal_level": 29
  },
  "claims": [
   {
@@ -1219,6 +1219,37 @@
       "checksum_match"
      ],
      "related_artifact_id": "art-a19768df1f48786f"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
+   "claim_id": "clm-11a98df1b1fd",
+   "claim_type": "run_exists",
+   "claim_text": "La run sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509 esiste ed e' collegata a un artefatto con checksum",
+   "subject_type": "run",
+   "subject_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R02] run registrata con artefatto checksummato"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-ff6a141715ab",
+     "source_type": "run",
+     "source_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "run_registered",
+      "artifact_linked"
+     ],
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
     }
    ],
    "created_by_engine_version": "1.1.0",
@@ -3484,6 +3515,37 @@
    "knowledge_schema_version": 2
   },
   {
+   "claim_id": "clm-2ea4ed748155",
+   "claim_type": "metric_observed",
+   "claim_text": "Metriche SEGNALE osservate per BREAKOUT_ACC in sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509: trade=216, PF=0.85, WR=47.59%, expR=-0.024 (livello segnale/lotto fisso - NON equity di conto)",
+   "subject_type": "run",
+   "subject_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R11] metriche da artefatto baseline validato (checksum registrato)"
+   ],
+   "data_scope": "signal_level",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-f258951f972b",
+     "source_type": "run",
+     "source_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "metrics_parsed",
+      "scope=signal_level"
+     ],
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
    "claim_id": "clm-2ea8bef2c71c",
    "claim_type": "timeline_event_recorded",
    "claim_text": "Evento redesign per MALAYSIAN_SNR il 2026-07-17: Redesign",
@@ -3816,6 +3878,38 @@
      "related_event_id": "evt-cf29feca6daa",
      "related_commit": null,
      "related_run_id": null
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
+   "claim_id": "clm-367518de5bab",
+   "claim_type": "timeline_event_recorded",
+   "claim_text": "Evento sweep_executed per BREAKOUT_ACC il 2026-07-20: Sweep sweep37-baseline-e6ce816 S09",
+   "subject_type": "timeline_event",
+   "subject_id": "evt-8c1b4f8b5211",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R15] evento ancorato a commit/run"
+   ],
+   "data_scope": "documentation",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-539e851fdb33",
+     "source_type": "timeline_event",
+     "source_id": "evt-8c1b4f8b5211",
+     "source_path": "knowledge/runs_database.json",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "event_registered",
+      "source_backed"
+     ],
+     "related_event_id": "evt-8c1b4f8b5211",
+     "related_commit": null,
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509"
     }
    ],
    "created_by_engine_version": "1.1.0",
@@ -6539,6 +6633,36 @@
    "knowledge_schema_version": 2
   },
   {
+   "claim_id": "clm-56d03c42b93e",
+   "claim_type": "strategy_identity_verified",
+   "claim_text": "L'identita' selector<->strategia della run sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509 e' verificata",
+   "subject_type": "run",
+   "subject_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R05] identity check superato (mappa selector estratta dal codice EA)"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-6a4871ec14a3",
+     "source_type": "run",
+     "source_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "identity_check_passed"
+     ],
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
    "claim_id": "clm-5705c453df5b",
    "claim_type": "timeline_event_recorded",
    "claim_text": "Evento bug_fixed per LIQ_SWEEP il 2026-07-16: Bug risolto: BUG-003",
@@ -8583,6 +8707,36 @@
      "related_event_id": "evt-a552d844412e",
      "related_commit": "3cba036",
      "related_run_id": null
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
+   "claim_id": "clm-6f772a30e88a",
+   "claim_type": "run_completed",
+   "claim_text": "La run sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509 e' completa",
+   "subject_type": "run",
+   "subject_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R03] riga attiva parsata dall'artefatto validato"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-50252e3ceda6",
+     "source_type": "run",
+     "source_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "parse_complete"
+     ],
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
     }
    ],
    "created_by_engine_version": "1.1.0",
@@ -12982,6 +13136,35 @@
    "knowledge_schema_version": 2
   },
   {
+   "claim_id": "clm-ab2779bec2d3",
+   "claim_type": "artifact_exists",
+   "claim_text": "L'artefatto results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv esiste su disco",
+   "subject_type": "artifact",
+   "subject_id": "art-c3c5b1c23abc72a0",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R09a] file presente al path registrato"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-afbf81c53c39",
+     "source_type": "artifact",
+     "source_id": "art-c3c5b1c23abc72a0",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "file_exists"
+     ],
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
    "claim_id": "clm-ab70741aac2a",
    "claim_type": "strategy_exists",
    "claim_text": "La strategia BREAKOUT_ACC esiste nel Knowledge Engine",
@@ -13736,6 +13919,39 @@
    "knowledge_schema_version": 2
   },
   {
+   "claim_id": "clm-b53fcd775239",
+   "claim_type": "baseline_run_available",
+   "claim_text": "Esiste una run baseline valida per BREAKOUT_ACC",
+   "subject_type": "strategy",
+   "subject_id": "BREAKOUT_ACC",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-ccbce8b43d14",
+     "source_type": "run",
+     "source_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "baseline_round",
+      "completed",
+      "identity_ok",
+      "artifact_verified_on_disk"
+     ],
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
+  },
+  {
    "claim_id": "clm-b56c6d11d094",
    "claim_type": "run_exists",
    "claim_text": "La run sweep37-gate1pos-r3__S01__ADX_RSI__20260716_183817 esiste ed e' collegata a un artefatto con checksum",
@@ -14048,6 +14264,35 @@
    "baseline_availability_state": "not_yet_observed"
   },
   {
+   "claim_id": "clm-b9cb65cf2cde",
+   "claim_type": "artifact_checksum_verified",
+   "claim_text": "Il checksum di results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv e' stato riverificato ora e coincide",
+   "subject_type": "artifact",
+   "subject_id": "art-c3c5b1c23abc72a0",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R10a] sha256 ricalcolato dal file == checksum registrato all'import"
+   ],
+   "data_scope": "execution_integrity",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-8f844d9be17f",
+     "source_type": "artifact",
+     "source_id": "art-c3c5b1c23abc72a0",
+     "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "validation_results": [
+      "checksum_match"
+     ],
+     "related_artifact_id": "art-c3c5b1c23abc72a0"
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
    "claim_id": "clm-bae8b4011b81",
    "claim_type": "timeline_event_recorded",
    "claim_text": "Evento bug_fixed per PO3 il 2026-07-16: Bug risolto: BUG-003",
@@ -14266,35 +14511,6 @@
    "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2,
    "baseline_availability_state": "available"
-  },
-  {
-   "claim_id": "clm-be3f2cc9a063",
-   "claim_type": "baseline_run_missing",
-   "claim_text": "Nessuna run baseline per BREAKOUT_ACC: passata non ancora raggiunta (sweep in corso)",
-   "subject_type": "strategy",
-   "subject_id": "BREAKOUT_ACC",
-   "evidence_status": "supported",
-   "evidence_strength": "moderate",
-   "evidence_reason": [
-    "[R08b] assenza attesa e transitoria: lo sweep non e' ancora arrivato a questa passata"
-   ],
-   "data_scope": "metadata",
-   "independent_source_count": 1,
-   "evidence_links": [
-    {
-     "evidence_id": "evl-16a0901fb957",
-     "source_type": "database",
-     "source_id": "runs_database.json",
-     "source_path": "knowledge/runs_database.json",
-     "source_checksum": null,
-     "validation_results": [
-      "pass_not_yet_reached"
-     ]
-    }
-   ],
-   "created_by_engine_version": "1.1.0",
-   "knowledge_schema_version": 2,
-   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-bef82c34103c",
@@ -19040,6 +19256,38 @@
      "related_event_id": "evt-d8dc5745af3e",
      "related_commit": null,
      "related_run_id": null
+    }
+   ],
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2
+  },
+  {
+   "claim_id": "clm-fe0979bf65c2",
+   "claim_type": "timeline_event_recorded",
+   "claim_text": "Evento baseline_reached per BREAKOUT_ACC il 2026-07-20: Prima run baseline valida (post-fix, e6ce816)",
+   "subject_type": "timeline_event",
+   "subject_id": "evt-27ec90a7ccbb",
+   "evidence_status": "supported",
+   "evidence_strength": "strong",
+   "evidence_reason": [
+    "[R15] evento ancorato a commit/run"
+   ],
+   "data_scope": "documentation",
+   "independent_source_count": 1,
+   "evidence_links": [
+    {
+     "evidence_id": "evl-198995198f04",
+     "source_type": "timeline_event",
+     "source_id": "evt-27ec90a7ccbb",
+     "source_path": "knowledge/runs_database.json",
+     "source_checksum": null,
+     "validation_results": [
+      "event_registered",
+      "source_backed"
+     ],
+     "related_event_id": "evt-27ec90a7ccbb",
+     "related_commit": null,
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509"
     }
    ],
    "created_by_engine_version": "1.1.0",

@@ -310,13 +310,26 @@
    "redesign_effettuati": [],
    "bug_storici": [],
    "fix_applicati": [],
-   "ultimo_sweep": null,
+   "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+    "round": "sweep37-baseline-e6ce816",
+    "passata": "S09",
+    "file": "SWEEP37_S09_20260720_184509_stats.csv",
+    "completed": true,
+    "trade_eseguiti": 216,
+    "wins": 89,
+    "losses": 98,
+    "winrate_pct": 47.59,
+    "expectancy_R": -0.024,
+    "profit_factor": 0.85,
+    "avg_holding_sec": 22664.0
+   },
    "nota_sweep": null,
-   "trade": null,
-   "PF": null,
-   "WR_pct": null,
-   "expectancy_R": null,
-   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "trade": 216,
+   "PF": 0.85,
+   "WR_pct": 47.59,
+   "expectancy_R": -0.024,
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "auditata sessione precedente, nessun problema grave",
    "note": null
   },
@@ -1013,5 +1026,5 @@
    "note": " | proxy a pivot, non vero conteggio"
   }
  ],
- "aggiornato_da_importer": "2026-07-20T11:36:30Z"
+ "aggiornato_da_importer": "2026-07-20T21:33:30Z"
 }

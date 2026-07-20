@@ -511,6 +511,21 @@
     "knowledge_schema_version": 2,
     "ea_version": null
    }
+  },
+  {
+   "artifact_id": "art-c3c5b1c23abc72a0",
+   "checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+   "source_path": "results/reports/sweep37/SWEEP37_S09_20260720_184509_stats.csv",
+   "type": "strategy_stats_csv",
+   "run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+   "note": null,
+   "status": "validated",
+   "provenance": {
+    "imported_at": "2026-07-20T21:33:18Z",
+    "import_engine_version": "1.1.0",
+    "knowledge_schema_version": 2,
+    "ea_version": "2.50"
+   }
   }
  ]
 }

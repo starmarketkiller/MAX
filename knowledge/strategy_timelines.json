@@ -2,7 +2,7 @@
  "schema": 1,
  "timeline_engine_version": "1.1.0",
  "regole": "solo fatti documentati; cronologia non determinabile = nessun evento; nessuna statistica/ranking/confronto",
- "totale_eventi": 309,
+ "totale_eventi": 311,
  "coverage_terminology": "complete_for_available_evidence",
  "strategie_storia_completa": [
   "ADX_RSI",
@@ -11,11 +11,11 @@
   "TSI",
   "BJORGUM",
   "LIQ_SWEEP",
-  "FVG_CONT"
+  "FVG_CONT",
+  "BREAKOUT_ACC"
  ],
  "strategie_storia_parziale": [
   "SAR",
-  "BREAKOUT_ACC",
   "LONDON_BO",
   "EMA_PULLBACK",
   "BB_SQUEEZE",
@@ -1338,7 +1338,7 @@
   "BREAKOUT_ACC": {
    "strategy_id": "BREAKOUT_ACC",
    "stato_corrente": "auditata sessione precedente, nessun problema grave",
-   "timeline_coverage": "partial_for_available_evidence",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-937e22b53e85",
@@ -1403,6 +1403,32 @@
      "source_checksum": null,
      "related_commit": null,
      "related_run_id": null,
+     "confidence": "high"
+    },
+    {
+     "event_id": "evt-27ec90a7ccbb",
+     "strategy_id": "BREAKOUT_ACC",
+     "timestamp": "2026-07-20T18:45:09Z",
+     "event_type": "baseline_reached",
+     "title": "Prima run baseline valida (post-fix, e6ce816)",
+     "description": "run_id=sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "source_document": "knowledge/runs_database.json",
+     "source_checksum": null,
+     "related_commit": null,
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+     "confidence": "high"
+    },
+    {
+     "event_id": "evt-8c1b4f8b5211",
+     "strategy_id": "BREAKOUT_ACC",
+     "timestamp": "2026-07-20T18:45:09Z",
+     "event_type": "sweep_executed",
+     "title": "Sweep sweep37-baseline-e6ce816 S09",
+     "description": "trade=216, PF=0.85, completed=True, identity_ok=True, confidence_import=high",
+     "source_document": "knowledge/runs_database.json",
+     "source_checksum": "c3c5b1c23abc72a0829a534273bdfd28460621394a6e7997bb7f526c25fbd6a4",
+     "related_commit": null,
+     "related_run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
      "confidence": "high"
     }
    ]

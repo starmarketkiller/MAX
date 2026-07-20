@@ -1,6 +1,6 @@
 # Nexus — Strategy Timeline (indice)
 
-Generato da timeline_engine.py v1.1.0 · 309 eventi · 7 strategie con storia completa per le evidenze disponibili, 30 parziale
+Generato da timeline_engine.py v1.1.0 · 311 eventi · 8 strategie con storia completa per le evidenze disponibili, 29 parziale
 
 Solo ricostruzione cronologica di fatti documentati — nessuna statistica, nessun ranking, nessuna raccomandazione.
 
@@ -123,12 +123,14 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-19** · sweep_executed · Sweep sweep37-baseline-e6ce816 S08 (run `sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743`)
 - **Stato attuale**: lifecycle persistente in coda (non ancora implementato)
 
-## BREAKOUT_ACC  (storia parziale per le evidenze disponibili)
+## BREAKOUT_ACC  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-003
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-028
+- **2026-07-20** · baseline_reached · Prima run baseline valida (post-fix, e6ce816) (run `sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509`)
+- **2026-07-20** · sweep_executed · Sweep sweep37-baseline-e6ce816 S09 (run `sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509`)
 - **Stato attuale**: auditata sessione precedente, nessun problema grave
 
 ## LONDON_BO  (storia parziale per le evidenze disponibili)
