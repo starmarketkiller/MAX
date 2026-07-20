@@ -26,7 +26,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KNOW = os.path.join(ROOT, "knowledge")
 
-EVIDENCE_ENGINE_VERSION = "1.0.0"
+EVIDENCE_ENGINE_VERSION = "1.1.0"  # 1.1.0 = M4.1: baseline_availability_state
 KNOWLEDGE_SCHEMA_VERSION = 2
 
 ALLOWED_CLAIM_TYPES = {
@@ -42,6 +42,11 @@ STATUSES = ("supported", "partially_supported", "conflicting", "unsupported", "i
 STRENGTHS = ("strong", "moderate", "weak", "invalid")
 SCOPES = ("signal_level", "equity_level", "metadata", "execution_integrity",
           "code_history", "documentation", "data_quality")
+# M4.1 - enum controllato, additivo: presente SOLO sui claim di disponibilita'
+# baseline (baseline_run_available / baseline_run_missing). Il claim_type dice
+# che non esiste una baseline eleggibile; questo campo dice PERCHE'.
+BASELINE_AVAILABILITY_STATES = ("available", "expected_but_missing",
+                                "not_yet_observed", "invalid", "unknown")
 
 BASELINE_ROUND = "sweep37-baseline-e6ce816"
 
@@ -89,9 +94,11 @@ class Builder:
     def add(self, rule, claim_type, subject_type, subject_id, claim_text,
             status, strength, reason, data_scope, source_type, source_id,
             source_path=None, source_checksum=None, related=None,
-            validation_results=None):
+            validation_results=None, baseline_availability_state=None):
         assert claim_type in ALLOWED_CLAIM_TYPES, claim_type
         assert status in STATUSES and strength in STRENGTHS and data_scope in SCOPES
+        if baseline_availability_state is not None:
+            assert baseline_availability_state in BASELINE_AVAILABILITY_STATES
         claim_id = cid(claim_type, subject_type, subject_id)
         c = self.claims.get(claim_id)
         if c is None:
@@ -121,6 +128,11 @@ class Builder:
                 c["evidence_strength"] = strength
             if f"[{rule}] {reason}" not in c["evidence_reason"]:
                 c["evidence_reason"].append(f"[{rule}] {reason}")
+        if baseline_availability_state is not None:
+            prev = c.get("baseline_availability_state")
+            assert prev is None or prev == baseline_availability_state, \
+                f"stato baseline incoerente per {claim_id}: {prev} vs {baseline_availability_state}"
+            c["baseline_availability_state"] = baseline_availability_state
         link_id = eid(claim_id, source_type, source_id, source_checksum)
         if any(l["evidence_id"] == link_id for l in c["evidence_links"]):
             return c  # stessa fonte gia' collegata: nessun duplicato
@@ -139,6 +151,34 @@ class Builder:
         return c
 
 
+def classify_baseline(candidates, selector_index, max_baseline_idx, artifact_ok):
+    """M4.1 - classificazione deterministica della disponibilita' baseline.
+
+    Input: SOLO esistenza dei candidati, completezza, identita', verifica
+    artefatto e posizione nella sequenza dello sweep. Nessuna metrica di
+    profittabilita' (PF/WR/expectancy) entra mai in questa funzione.
+    Ritorna (state, cause) con state in BASELINE_AVAILABILITY_STATES;
+    cause e' valorizzata solo per lo stato invalid (priorita' deterministica:
+    identity_mismatch > incomplete > checksum_conflict).
+    """
+    valid = [r for r in candidates
+             if r["completed"] and r.get("identity_ok") is not False
+             and artifact_ok(r.get("artifact_checksum"))]
+    if valid:
+        return "available", None
+    if candidates:
+        if any(r.get("identity_ok") is False for r in candidates):
+            return "invalid", "identity_mismatch"
+        if any(not r["completed"] for r in candidates):
+            return "invalid", "incomplete"
+        return "invalid", "checksum_conflict"
+    if selector_index is None:
+        return "unknown", None
+    if selector_index <= max_baseline_idx:
+        return "expected_but_missing", None
+    return "not_yet_observed", None
+
+
 def build():
     strat_db = load("strategy_database.json")
     runs_db = load("runs_database.json")
@@ -153,6 +193,14 @@ def build():
     arts_by_checksum = {a["checksum"]: a for a in arts_db["artifacts"]}
     issue_ids = {i["id"] for i in iss_db["issues"]}
 
+    # sha256 reale su disco, calcolato una volta per artefatto: usato sia dalla
+    # verifica R09/R10 sia (M4.1) dall'eleggibilita' baseline.
+    art_actual = {a["checksum"]: sha256_file(os.path.join(ROOT, a["source_path"]))
+                  for a in arts_db["artifacts"]}
+
+    def artifact_ok(chk):
+        return chk is not None and art_actual.get(chk) == chk
+
     # ---------------- strategie ----------------
     for s in strat_db["strategie"]:
         b.add("R01", "strategy_exists", "strategy", s["nome"],
@@ -164,7 +212,7 @@ def build():
               validation_results=["subject_exists"])
 
     # ---------------- run ----------------
-    baseline_pass_by_strategy = {}
+    baseline_candidates = {}   # strategia -> TUTTE le run del round baseline
     max_baseline_idx = 0
     for r in runs_db["runs"]:
         rid, strat = r["run_id"], r["strategy"]
@@ -236,52 +284,93 @@ def build():
                   source_path=r["source_file"], source_checksum=r["artifact_checksum"],
                   related=related, validation_results=["metrics_parsed", "scope=signal_level"])
 
-        if is_baseline and r["completed"] and r.get("identity_ok") is not False and strat:
-            baseline_pass_by_strategy.setdefault(strat, []).append(r)
+        if is_baseline and strat:
+            baseline_candidates.setdefault(strat, []).append(r)
 
-    # ---------------- baseline per strategia ----------------
-    strat_idx = {s["nome"]: s.get("selector_index") for s in strat_db["strategie"]}
+    # ---------------- baseline per strategia (M4.1: 5 stati espliciti) -------
+    # selector index: prima dal database strategie, altrimenti dalla mappa
+    # NXS_SelectorAllows estratta dal codice EA (import_engine.SELECTOR_MAP).
+    # Cosi' "unknown" resta riservato ai casi davvero non classificabili.
+    if KNOW not in sys.path:
+        sys.path.insert(0, KNOW)
+    from import_engine import SELECTOR_MAP
+    sel_rev = {}
+    for i, sel_names in SELECTOR_MAP.items():
+        for n in sorted(sel_names):
+            sel_rev.setdefault(n, i)
+    strat_idx = {s["nome"]: (s["selector_index"] if s.get("selector_index") is not None
+                             else sel_rev.get(s["nome"]))
+                 for s in strat_db["strategie"]}
     for name in names:
-        runs_ok = baseline_pass_by_strategy.get(name, [])
-        if runs_ok:
-            r = sorted(runs_ok, key=lambda x: x["run_id"])[-1]
+        cands = baseline_candidates.get(name, [])
+        idx = strat_idx.get(name)
+        state, cause = classify_baseline(cands, idx, max_baseline_idx, artifact_ok)
+
+        if state == "available":
+            valid = [r for r in cands
+                     if r["completed"] and r.get("identity_ok") is not False
+                     and artifact_ok(r.get("artifact_checksum"))]
+            r = sorted(valid, key=lambda x: x["run_id"])[-1]
             b.add("R07", "baseline_run_available", "strategy", name,
                   f"Esiste una run baseline valida per {name}",
                   "supported", "strong",
-                  "run baseline completa con identity verificata e artefatto checksummato",
+                  "run baseline completa con identity verificata e artefatto riverificato su disco",
                   "execution_integrity", "run", r["run_id"],
                   source_path=r["source_file"], source_checksum=r["artifact_checksum"],
                   related={"related_run_id": r["run_id"]},
-                  validation_results=["baseline_round", "completed", "identity_ok"])
-        else:
-            idx = strat_idx.get(name)
-            expected_missing = idx is not None and idx <= max_baseline_idx
-            if expected_missing:
-                dqi = f"dqi-missing-S{idx:02d}-{BASELINE_ROUND}"
-                b.add("R08a", "baseline_run_missing", "strategy", name,
-                      f"Nessuna run baseline valida per {name}: passata S{idx:02d} attesa ma assente",
-                      "supported", "strong",
-                      "gap rilevato deterministicamente nella sequenza delle passate baseline",
-                      "data_quality", "data_quality_issue",
-                      dqi if dqi in issue_ids else "runs_database.json",
-                      source_path="knowledge/data_quality_issues.json" if dqi in issue_ids
-                      else "knowledge/runs_database.json",
-                      related={"related_run_id": None},
-                      validation_results=["gap_in_baseline_sequence"] +
-                      (["dqi_linked"] if dqi in issue_ids else []))
-            else:
-                b.add("R08b", "baseline_run_missing", "strategy", name,
-                      f"Nessuna run baseline per {name}: passata non ancora raggiunta (sweep in corso)",
-                      "supported", "moderate",
-                      "assenza attesa e transitoria: lo sweep non e' ancora arrivato a questa passata",
-                      "metadata", "database", "runs_database.json",
-                      source_path="knowledge/runs_database.json",
-                      validation_results=["pass_not_yet_reached"])
+                  validation_results=["baseline_round", "completed", "identity_ok",
+                                      "artifact_verified_on_disk"],
+                  baseline_availability_state="available")
+        elif state == "invalid":
+            r = sorted(cands, key=lambda x: x["run_id"])[-1]
+            status = "conflicting" if cause == "checksum_conflict" else "invalidated"
+            b.add("R08c", "baseline_run_missing", "strategy", name,
+                  f"Nessuna baseline eleggibile per {name}: candidato presente ma squalificato ({cause})",
+                  status, "invalid",
+                  f"candidato baseline squalificato deterministicamente: {cause}",
+                  "data_quality", "run", r["run_id"],
+                  source_path=r["source_file"], source_checksum=r.get("artifact_checksum"),
+                  related={"related_run_id": r["run_id"]},
+                  validation_results=["baseline_candidate_disqualified", cause],
+                  baseline_availability_state="invalid")
+        elif state == "expected_but_missing":
+            dqi = f"dqi-missing-S{idx:02d}-{BASELINE_ROUND}"
+            b.add("R08a", "baseline_run_missing", "strategy", name,
+                  f"Nessuna run baseline valida per {name}: passata S{idx:02d} attesa ma assente",
+                  "supported", "strong",
+                  "gap rilevato deterministicamente nella sequenza delle passate baseline",
+                  "data_quality", "data_quality_issue",
+                  dqi if dqi in issue_ids else "runs_database.json",
+                  source_path="knowledge/data_quality_issues.json" if dqi in issue_ids
+                  else "knowledge/runs_database.json",
+                  related={"related_run_id": None},
+                  validation_results=["gap_in_baseline_sequence"] +
+                  (["dqi_linked"] if dqi in issue_ids else []),
+                  baseline_availability_state="expected_but_missing")
+        elif state == "not_yet_observed":
+            # stato normale e transitorio dello sweep in corso: NON e' un'anomalia
+            # e NON crea/collega mai una data_quality_issue.
+            b.add("R08b", "baseline_run_missing", "strategy", name,
+                  f"Nessuna run baseline per {name}: passata non ancora raggiunta (sweep in corso)",
+                  "supported", "moderate",
+                  "assenza attesa e transitoria: lo sweep non e' ancora arrivato a questa passata",
+                  "metadata", "database", "runs_database.json",
+                  source_path="knowledge/runs_database.json",
+                  validation_results=["pass_not_yet_reached"],
+                  baseline_availability_state="not_yet_observed")
+        else:  # unknown: nessuna classificazione deterministica possibile
+            b.add("R08d", "baseline_run_missing", "strategy", name,
+                  f"Stato baseline non determinabile per {name}: selector index assente dai dati",
+                  "partially_supported", "weak",
+                  "ne' candidati ne' posizione nella sequenza sweep: stato non classificabile a macchina",
+                  "metadata", "database", "runs_database.json",
+                  source_path="knowledge/runs_database.json",
+                  validation_results=["state_not_determinable"],
+                  baseline_availability_state="unknown")
 
     # ---------------- artefatti (verifica REALE del checksum su disco) -------
     for a in arts_db["artifacts"]:
-        path = os.path.join(ROOT, a["source_path"])
-        actual = sha256_file(path)
+        actual = art_actual[a["checksum"]]
         related = {"related_artifact_id": a["artifact_id"]}
         if actual is None:
             b.add("R09b", "artifact_missing", "artifact", a["artifact_id"],
@@ -447,6 +536,7 @@ def main():
     claims = sorted(b.claims.values(), key=lambda c: c["claim_id"])
     fingerprint = hashlib.sha256(json.dumps(
         [(c["claim_id"], c["evidence_status"], c["evidence_strength"],
+          c.get("baseline_availability_state"),
           len(c["evidence_links"])) for c in claims]).encode()).hexdigest()[:16]
 
     from collections import Counter
@@ -480,8 +570,15 @@ def main():
                 json.dump(iss, f, ensure_ascii=False, indent=1)
 
     # ---- indice umano ----
-    base_ok = sorted(c["subject_id"] for c in claims if c["claim_type"] == "baseline_run_available")
-    base_missing = sorted(c["subject_id"] for c in claims if c["claim_type"] == "baseline_run_missing")
+    def by_state(s):
+        return sorted(c["subject_id"] for c in claims
+                      if c.get("baseline_availability_state") == s)
+
+    avail = by_state("available")
+    exp_missing = by_state("expected_but_missing")
+    not_yet = by_state("not_yet_observed")
+    invalid = by_state("invalid")
+    unknown = by_state("unknown")
     lines = [
         "# Nexus — Evidence Index (M4)", "",
         f"Generato da evidence_engine v{EVIDENCE_ENGINE_VERSION} · fingerprint `{fingerprint}` · deterministico, senza interpretazioni.", "",
@@ -490,10 +587,19 @@ def main():
         f"- **Status**: {dict(sorted(st.items()))}",
         f"- **Strength**: {dict(sorted(fz.items()))}",
         f"- **Scope**: {dict(sorted(sc.items()))}", "",
-        f"## Strategie con evidenza baseline disponibile ({len(base_ok)})",
-        ", ".join(base_ok) or "(nessuna)", "",
-        f"## Strategie senza evidenza baseline ({len(base_missing)})",
-        ", ".join(base_missing) or "(nessuna)", "",
+        "## Disponibilita' baseline per strategia (M4.1)", "",
+        "Campo controllato `baseline_availability_state`: distingue a macchina i motivi "
+        "dell'assenza, senza inferenze dal testo libero.", "",
+        f"### Baseline disponibile ({len(avail)})",
+        ", ".join(avail) or "(nessuna)", "",
+        f"### Attesa ma assente ({len(exp_missing)}) — anomalia reale, tracciata come data quality issue",
+        ", ".join(exp_missing) or "(nessuna)", "",
+        f"### Non ancora osservata ({len(not_yet)}) — stato NORMALE e transitorio: lo sweep in corso non e' ancora arrivato a queste passate. Non e' un'anomalia.",
+        ", ".join(not_yet) or "(nessuna)", "",
+        f"### Invalida ({len(invalid)}) — candidato presente ma squalificato (identity mismatch / incompleta / checksum)",
+        ", ".join(invalid) or "(nessuna)", "",
+        f"### Non determinabile ({len(unknown)})",
+        ", ".join(unknown) or "(nessuna)", "",
         "## Issue di qualita' collegate alle evidenze",
     ]
     iss = load("data_quality_issues.json")
@@ -516,10 +622,11 @@ def main():
 
 # ------------------------------- selftest ---------------------------------
 def selftest():
-    fails = []
+    fails, ran = [], []
 
     def check(name, cond):
         print(("PASS" if cond else "FAIL"), "-", name)
+        ran.append(name)
         if not cond:
             fails.append(name)
 
@@ -576,7 +683,74 @@ def selftest():
     check("11: nessun claim speculativo/di giudizio",
           all(c["claim_type"] in ALLOWED_CLAIM_TYPES for c in claims))
 
-    print(f"\nselftest: {'OK (12/12)' if not fails else 'FALLITI: ' + ', '.join(fails)}")
+    # ----------------- M4.1: baseline_availability_state -----------------
+    base_claims = [c for c in claims
+                   if c["claim_type"] in ("baseline_run_available", "baseline_run_missing")]
+    check("13: ogni claim di disponibilita' baseline porta il campo controllato",
+          len(base_claims) > 0 and
+          all(c.get("baseline_availability_state") in BASELINE_AVAILABILITY_STATES
+              for c in base_claims))
+    check("14: tutte le baseline_run_available sono state=available",
+          all(c["baseline_availability_state"] == "available"
+              for c in base_claims if c["claim_type"] == "baseline_run_available"))
+    check("15: S04/SAR e' expected_but_missing",
+          len(s04) == 1 and s04[0].get("baseline_availability_state") == "expected_but_missing")
+
+    # frontiera calcolata dagli input, non hardcoded (stesso fallback selector del build)
+    strat_db = load("strategy_database.json")
+    runs_now = load("runs_database.json")
+    max_idx = max([r["pass_index"] for r in runs_now["runs"]
+                   if r["round"] == BASELINE_ROUND], default=0)
+    if KNOW not in sys.path:
+        sys.path.insert(0, KNOW)
+    from import_engine import SELECTOR_MAP
+    sel_rev = {}
+    for i, sel_names in SELECTOR_MAP.items():
+        for nm in sorted(sel_names):
+            sel_rev.setdefault(nm, i)
+    beyond = {s["nome"] for s in strat_db["strategie"]
+              if (s.get("selector_index") if s.get("selector_index") is not None
+                  else sel_rev.get(s["nome"], 0)) > max_idx}
+    beyond_claims = [c for c in base_claims if c["subject_id"] in beyond]
+    check("16: ogni strategia oltre la frontiera dello sweep = not_yet_observed",
+          len(beyond_claims) > 0 and
+          all(c["baseline_availability_state"] == "not_yet_observed" for c in beyond_claims))
+    check("17: not_yet_observed non crea ne' collega data_quality_issue",
+          all("dqi_linked" not in l["validation_results"]
+              for c in beyond_claims for l in c["evidence_links"]) and
+          not any("missing-S" in i["id"] for i in b1.new_issues))
+
+    # classificatore puro: cause di invalidita'
+    ok_art = lambda chk: True
+    cand_mm = [{"completed": True, "identity_ok": False, "artifact_checksum": "x", "run_id": "r"}]
+    cand_inc = [{"completed": False, "identity_ok": True, "artifact_checksum": "x", "run_id": "r"}]
+    cand_chk = [{"completed": True, "identity_ok": True, "artifact_checksum": "x", "run_id": "r"}]
+    check("18: candidato squalificato -> invalid con causa deterministica",
+          classify_baseline(cand_mm, 4, 8, ok_art) == ("invalid", "identity_mismatch") and
+          classify_baseline(cand_inc, 4, 8, ok_art) == ("invalid", "incomplete") and
+          classify_baseline(cand_chk, 4, 8, lambda c: False) == ("invalid", "checksum_conflict") and
+          classify_baseline([], None, 8, ok_art) == ("unknown", None))
+
+    # indipendenza dalla profittabilita': stessa classificazione con PF opposti,
+    # e la firma del classificatore non accetta alcun input metrico
+    import inspect
+    sig = str(inspect.signature(classify_baseline)).lower()
+    c_low = [{"completed": True, "identity_ok": True, "artifact_checksum": "x",
+              "run_id": "r", "metrics": {"profit_factor": 0.1, "winrate_pct": 1.0}}]
+    c_high = [dict(c_low[0], metrics={"profit_factor": 9.9, "winrate_pct": 99.0})]
+    check("19: classificazione indipendente dalle metriche di profittabilita'",
+          classify_baseline(c_low, 1, 8, ok_art) == classify_baseline(c_high, 1, 8, ok_art)
+          and not any(k in sig for k in ("profit", "winrate", "expectancy", "metric")))
+
+    check("20: claim_id stabili (stessa formula pre-M4.1: tipo|soggetto)",
+          all(c["claim_id"] == cid(c["claim_type"], c["subject_type"], c["subject_id"])
+              for c in base_claims))
+    check("21: stati distinguibili dal solo campo enum (nessuna inferenza testuale)",
+          s04[0]["baseline_availability_state"] != beyond_claims[0]["baseline_availability_state"]
+          if s04 and beyond_claims else False)
+
+    n = len(ran) + 1  # +1: il check 1 copre due validazioni (determinismo+idempotenza)
+    print(f"\nselftest: {'OK (%d/%d)' % (n, n) if not fails else 'FALLITI: ' + ', '.join(fails)}")
     return 0 if not fails else 1
 
 

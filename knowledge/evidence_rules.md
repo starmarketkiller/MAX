@@ -1,6 +1,6 @@
-# Nexus — Evidence Rules (M4)
+# Nexus — Evidence Rules (M4 + M4.1)
 
-Regole deterministiche con cui `evidence_engine.py` v1.0.0 genera ogni claim di
+Regole deterministiche con cui `evidence_engine.py` v1.1.0 genera ogni claim di
 `evidence_database.json`. Nessun claim nasce fuori da queste regole; ogni regola è
 trasparente, ripetibile e verificabile a macchina. **Mai** viene usato Profit Factor,
 win rate, expectancy o profittabilità per decidere la forza di un'evidenza.
@@ -26,6 +26,15 @@ win rate, expectancy o profittabilità per decidere la forza di un'evidenza.
   `metadata` · `execution_integrity` · `code_history` · `documentation` ·
   `data_quality`. Le metriche degli sweep sono **sempre** `signal_level`:
   mai rappresentate come PF/PnL/DD di conto, mai inferite oltre il CSV.
+- **baseline_availability_state** (M4.1, additivo — presente SOLO sui claim
+  `baseline_run_available`/`baseline_run_missing`): `available` ·
+  `expected_but_missing` · `not_yet_observed` · `invalid` · `unknown`.
+  Semantica: il *claim_type* dice se esiste o meno una baseline eleggibile
+  (mantenuto per retrocompatibilità); questo campo dice **perché**, in forma
+  machine-readable. Nessun consumatore (Query Engine incluso) deve inferire la
+  distinzione dal testo libero, dalla strength, dall'identificatore di regola o
+  dalla sola presenza di una DataQualityIssue. `unknown` è ammesso solo quando
+  nessuna classificazione deterministica è possibile.
 
 ## Identità deterministiche
 
@@ -107,31 +116,78 @@ Il motore **non risolve mai** i conflitti da solo: li registra e li espone.
   metriche di quella passata a diventare `invalidated` (R03/R11).
 - **Esempio (selftest)**: file S08 con dentro MACD ⇒ questo claim + run invalidata.
 
-### R07 — baseline_run_available
-- **Input**: per ogni strategia, almeno una run con `round = sweep37-baseline-e6ce816`,
-  `completed = true`, `identity_ok ≠ false`. Se più d'una, si àncora all'ultima in
-  ordine deterministico di `run_id`.
-- **Output**: `supported` / `strong`, scope `execution_integrity`.
-- **Razionale**: "esiste una run baseline valida" richiede tutte e tre le condizioni;
-  runs incomplete o con mismatch non contano (validazione 5 del selftest).
+### Classificazione baseline (M4.1): `classify_baseline`
 
-### R08a — baseline_run_missing (attesa ma assente)
-- **Input**: strategia senza run baseline valida **e** `selector_index ≤` all'indice
+Una funzione pura decide lo stato per ogni strategia, in ordine deterministico.
+**Input ammessi**: candidati del round baseline (esistenza, `completed`,
+`identity_ok`, verifica sha256 dell'artefatto su disco) e posizione della
+strategia nella sequenza sweep (`selector_index`, con fallback alla mappa
+`NXS_SelectorAllows` estratta dal codice EA quando il database non lo riporta).
+**Input vietati**: qualunque metrica di profittabilità — la firma della funzione
+non accetta metriche e il selftest (check 19) lo verifica strutturalmente.
+
+| Condizione (in ordine) | state | Regola emessa |
+|---|---|---|
+| ≥1 candidato completo, identity ok, artefatto riverificato | `available` | R07 |
+| candidati presenti ma tutti squalificati | `invalid` | R08c |
+| nessun candidato, passata ≤ frontiera sweep | `expected_but_missing` | R08a |
+| nessun candidato, passata > frontiera sweep | `not_yet_observed` | R08b |
+| selector index non determinabile | `unknown` | R08d |
+
+### R07 — baseline_run_available (`state = available`)
+- **Input**: per ogni strategia, almeno una run con `round = sweep37-baseline-e6ce816`,
+  `completed = true`, `identity_ok ≠ false` **e artefatto riverificato su disco
+  (sha256 attuale == registrato, M4.1)**. Se più d'una, si àncora all'ultima in
+  ordine deterministico di `run_id`.
+- **Output**: `supported` / `strong`, scope `execution_integrity`,
+  `baseline_availability_state = available`.
+- **Razionale**: "esiste una run baseline valida" richiede tutte le condizioni;
+  runs incomplete o con mismatch non contano (validazione 5 del selftest); la
+  strength deriva dalla provenienza (run valida + artefatto verificato).
+
+### R08a — baseline_run_missing (`state = expected_but_missing`)
+- **Input**: strategia senza candidato baseline **e** `selector_index ≤` all'indice
   massimo di passata baseline già importato (il gap è dentro la sequenza percorsa).
-- **Output**: `supported` / `strong`, scope `data_quality`; il link punta alla
+- **Output**: `supported` / `strong` (claim fattuale di assenza, rilevata
+  deterministicamente), scope `data_quality`; il link punta alla
   data_quality_issue se esiste (es. `dqi-missing-S04-sweep37-baseline-e6ce816`).
 - **Esempio**: SAR/S04 — lo sweep ha superato S04 ma le stats non sono mai arrivate.
 - **Edge case**: se la DQI non esistesse ancora, la fonte resta `runs_database.json`
-  (il gap è comunque rilevato deterministicamente).
+  (il gap è comunque rilevato deterministicamente). È l'**unica** assenza baseline
+  che può essere presentata come anomalia (insieme a `invalid`).
 
-### R08b — baseline_run_missing (non ancora raggiunta)
-- **Input**: strategia senza run baseline valida e `selector_index >` all'indice
+### R08b — baseline_run_missing (`state = not_yet_observed`)
+- **Input**: strategia senza candidato baseline e `selector_index >` all'indice
   massimo importato.
 - **Output**: `supported` / `moderate`, scope `metadata`.
-- **Razionale**: assenza attesa e **transitoria** (sweep in corso): vera oggi, ma
-  destinata a sparire con i prossimi import — per questo moderate, non strong.
+- **Razionale**: assenza attesa e **transitoria** (sweep in corso): stato normale
+  del workflow, vero oggi ma destinato a sparire con i prossimi import — per
+  questo moderate, non strong. **Non è un'anomalia**: non crea né collega mai una
+  DataQualityIssue (selftest check 17).
 - **Edge case**: al prossimo import il claim viene naturalmente sostituito da R07
   (stesso subject, claim_type diverso ⇒ claim_id diverso; il DB si rigenera).
+
+### R08c — baseline_run_missing (`state = invalid`)
+- **Input**: esistono candidati del round baseline ma nessuno è eleggibile. Causa
+  con priorità deterministica: `identity_mismatch` > `incomplete` >
+  `checksum_conflict` (artefatto assente/alterato/non registrato).
+- **Output**: `invalidated` / `invalid` per identity mismatch e incompletezza;
+  `conflicting` / `invalid` per conflitto di checksum. Scope `data_quality`,
+  fonte = la run squalificata (ultima per `run_id`).
+- **Razionale**: un candidato che esiste ma non qualifica è diverso sia da un gap
+  reale sia da una passata non ancora eseguita; le cause sottostanti generano già
+  i propri claim (R06/R04/R10b) ed eventuali DQI — R08c non ne duplica.
+- **Stato attuale**: zero casi nel dataset reale (percorso coperto dal selftest,
+  check 18).
+
+### R08d — baseline_run_missing (`state = unknown`)
+- **Input**: nessun candidato e selector index non determinabile né dal database
+  strategie né dalla mappa selector del codice EA.
+- **Output**: `partially_supported` / `weak`, scope `metadata`.
+- **Razionale**: il motore ammette esplicitamente di non poter classificare; da
+  usare solo quando davvero inevitabile.
+- **Stato attuale**: zero casi — il fallback sulla mappa `NXS_SelectorAllows`
+  risolve tutte le 37 strategie.
 
 ### R09a — artifact_exists / R09b — artifact_missing
 - **Input**: per ogni artefatto registrato, **verifica reale su disco** (`sha256_file`).
@@ -209,8 +265,13 @@ Il motore **non risolve mai** i conflitti da solo: li registra e li espone.
 
 Prima della scrittura: ogni `related_run_id`/`related_artifact_id`/`related_bug_id`/
 `related_decision_id`/`related_event_id` deve esistere nei rispettivi database, ogni
-claim deve avere ≥1 evidence_link e un claim_type ammesso. Il selftest (12 controlli)
+claim deve avere ≥1 evidence_link e un claim_type ammesso. Il selftest (21 controlli)
 copre: determinismo del doppio build, dedupe fonti, indipendenza per checksum,
 invalidazione su mismatch, esclusione delle run incomplete dalla baseline, S04→DQI,
 scope signal_level universale per le metriche, separazione strength/confidence,
-integrità referenziale, fonte obbligatoria, divieto di claim speculativi, idempotenza.
+integrità referenziale, fonte obbligatoria, divieto di claim speculativi, idempotenza,
+e per M4.1: campo controllato su ogni claim baseline, available/expected_but_missing/
+not_yet_observed classificati dai dati reali, not_yet_observed senza DQI, cause di
+invalidità deterministiche, indipendenza dalla profittabilità (strutturale, sulla
+firma del classificatore), stabilità dei claim_id pre/post M4.1, distinguibilità
+degli stati dal solo campo enum.

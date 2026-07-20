@@ -1,8 +1,8 @@
 {
  "schema": 2,
- "evidence_engine_version": "1.0.0",
+ "evidence_engine_version": "1.1.0",
  "distinzione_permanente": "Run.confidence = qualita' dell'import; evidence_strength = forza delle fonti di UN claim. Mai fuse.",
- "output_fingerprint": "4572455096c6e398",
+ "output_fingerprint": "f0d3b339fe277c95",
  "totale_claims": 631,
  "totale_evidence_links": 631,
  "distribuzione_status": {
@@ -50,7 +50,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -81,7 +81,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -112,7 +112,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -144,7 +144,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -174,7 +174,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -206,7 +206,7 @@
      "related_run_id": "sweep37-prefix-r1__S04__SAR__20260716_120507"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -237,7 +237,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -269,7 +269,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -299,7 +299,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -330,7 +330,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -360,8 +360,9 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "expected_but_missing"
   },
   {
    "claim_id": "clm-0567e27d78ba",
@@ -389,7 +390,7 @@
      "related_bug_id": "BUG-001"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -418,7 +419,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -447,7 +448,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -478,7 +479,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -510,7 +511,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -539,7 +540,7 @@
      "related_artifact_id": "art-d3b535ac93ce92ea"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -570,7 +571,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -601,7 +602,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -629,7 +630,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -661,7 +662,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -690,7 +691,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -721,7 +722,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -752,7 +753,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -781,7 +782,7 @@
      "related_artifact_id": "art-7da9b108dd681b6e"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -813,7 +814,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -825,7 +826,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -839,13 +840,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-0e65bf386c90",
@@ -874,7 +877,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -906,7 +909,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S03__MACD__20260717_171311"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -938,7 +941,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -970,7 +973,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1001,7 +1004,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1032,7 +1035,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1063,7 +1066,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1094,7 +1097,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1125,7 +1128,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1157,7 +1160,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1189,7 +1192,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1218,7 +1221,7 @@
      "related_artifact_id": "art-a19768df1f48786f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1249,7 +1252,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1278,7 +1281,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1306,7 +1309,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1336,7 +1339,7 @@
      "related_commit": "e6ce816"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1366,7 +1369,7 @@
      "related_commit": "1bb167a"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1397,7 +1400,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1428,7 +1431,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1460,7 +1463,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1492,7 +1495,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1524,7 +1527,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1555,7 +1558,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1586,7 +1589,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1615,7 +1618,7 @@
      "related_decision_id": "DEC-006"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1646,7 +1649,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1677,7 +1680,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1706,7 +1709,7 @@
      "related_artifact_id": "art-df2ac517d7827acf"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1738,7 +1741,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1769,7 +1772,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1800,7 +1803,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1831,7 +1834,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1860,7 +1863,7 @@
      "related_bug_id": "BUG-004"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1892,7 +1895,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1923,7 +1926,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1955,7 +1958,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -1986,7 +1989,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2016,7 +2019,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2045,7 +2048,7 @@
      "related_bug_id": "BUG-018"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2073,7 +2076,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2101,8 +2104,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-1d5c45461848",
@@ -2130,7 +2134,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2161,7 +2165,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2193,7 +2197,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2221,7 +2225,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2250,7 +2254,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2281,7 +2285,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2313,7 +2317,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2345,7 +2349,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2374,7 +2378,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2403,7 +2407,7 @@
      "related_bug_id": "BUG-022"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2435,7 +2439,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2463,7 +2467,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2495,7 +2499,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2527,7 +2531,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S06__BJORGUM__20260717_002455"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2556,7 +2560,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2588,7 +2592,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2618,7 +2622,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2649,7 +2653,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2680,7 +2684,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2711,7 +2715,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2743,7 +2747,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2771,7 +2775,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2802,7 +2806,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2833,7 +2837,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2864,7 +2868,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2896,7 +2900,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2928,7 +2932,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2959,7 +2963,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -2991,7 +2995,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3022,7 +3026,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3050,7 +3054,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3080,7 +3084,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3109,7 +3113,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3140,7 +3144,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3172,7 +3176,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3202,7 +3206,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3232,7 +3236,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3262,7 +3266,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3291,7 +3295,7 @@
      "related_bug_id": "BUG-009"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3319,7 +3323,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3351,7 +3355,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3382,7 +3386,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3413,7 +3417,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3444,7 +3448,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3476,7 +3480,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3507,7 +3511,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3538,7 +3542,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3569,7 +3573,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3601,7 +3605,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S07__LIQ_SWEEP__20260717_005658"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3632,7 +3636,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3663,7 +3667,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3675,7 +3679,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -3689,13 +3693,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-33e833e65cca",
@@ -3723,7 +3729,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3752,7 +3758,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3780,8 +3786,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-366ca8ddf1dc",
@@ -3811,7 +3818,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3842,7 +3849,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3873,7 +3880,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3904,7 +3911,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3936,7 +3943,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3965,7 +3972,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -3996,7 +4003,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4024,8 +4031,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-387b7feff9d5",
@@ -4056,7 +4064,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4086,7 +4094,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4118,7 +4126,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4148,7 +4156,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4179,7 +4187,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4208,7 +4216,7 @@
      "related_bug_id": "BUG-017"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4237,7 +4245,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4268,7 +4276,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4299,7 +4307,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4328,7 +4336,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4357,7 +4365,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4389,7 +4397,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4421,7 +4429,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4451,7 +4459,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4482,7 +4490,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4512,7 +4520,7 @@
      "related_commit": "9db13f9"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4543,7 +4551,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4572,7 +4580,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4601,7 +4609,7 @@
      "related_bug_id": "BUG-006"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4632,7 +4640,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4663,7 +4671,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4695,7 +4703,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S04__SAR__20260716_234407"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4725,7 +4733,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4754,7 +4762,7 @@
      "related_bug_id": "BUG-030"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4783,7 +4791,7 @@
      "related_bug_id": "BUG-025"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4815,7 +4823,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4846,7 +4854,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4878,7 +4886,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S03__MACD__20260716_233522"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4906,8 +4914,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-43c03d0f3983",
@@ -4937,7 +4946,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4967,7 +4976,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -4996,7 +5005,7 @@
      "related_decision_id": "DEC-004"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5027,7 +5036,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5058,7 +5067,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5087,7 +5096,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5119,7 +5128,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5151,7 +5160,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5179,8 +5188,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-472dd4ac5ae5",
@@ -5191,7 +5201,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -5205,13 +5215,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-4751442d783c",
@@ -5242,7 +5254,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5271,7 +5283,7 @@
      "related_bug_id": "BUG-026"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5302,7 +5314,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5333,7 +5345,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5365,7 +5377,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5393,7 +5405,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5425,7 +5437,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5456,7 +5468,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5487,7 +5499,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5518,7 +5530,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5548,7 +5560,7 @@
      "related_commit": "d051ece"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5580,7 +5592,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5612,7 +5624,7 @@
      "related_run_id": "sweep37-prefix-r1__S03__MACD__20260716_115221"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5641,7 +5653,7 @@
      "related_decision_id": "DEC-003"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5669,7 +5681,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5699,7 +5711,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5730,7 +5742,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5762,7 +5774,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5794,7 +5806,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5825,7 +5837,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5856,7 +5868,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5884,8 +5896,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-503a4fb85dd9",
@@ -5913,7 +5926,7 @@
      "related_bug_id": "BUG-015"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5942,7 +5955,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -5972,7 +5985,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6001,7 +6014,7 @@
      "related_artifact_id": "art-d3b535ac93ce92ea"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6033,7 +6046,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6065,7 +6078,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6093,7 +6106,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6124,7 +6137,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6153,7 +6166,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6182,7 +6195,7 @@
      "related_artifact_id": "art-c04c2e0cb97ecffe"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6214,7 +6227,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6245,7 +6258,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6276,7 +6289,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6304,7 +6317,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6333,7 +6346,7 @@
      "related_bug_id": "BUG-016"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6365,7 +6378,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6396,7 +6409,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6428,7 +6441,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6460,7 +6473,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6492,7 +6505,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6522,7 +6535,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6554,7 +6567,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6582,8 +6595,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-5765ce252f42",
@@ -6611,7 +6625,7 @@
      "related_decision_id": "DEC-010"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6641,7 +6655,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6671,7 +6685,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6702,7 +6716,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6731,7 +6745,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6760,7 +6774,7 @@
      "related_artifact_id": "art-a19768df1f48786f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6792,7 +6806,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6823,7 +6837,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6854,7 +6868,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6884,7 +6898,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6914,7 +6928,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6946,7 +6960,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -6974,7 +6988,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7005,7 +7019,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7034,7 +7048,7 @@
      "related_bug_id": "BUG-023"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7066,7 +7080,7 @@
      "related_run_id": "sweep37-prefix-r1__S01__ADX_RSI__20260716_101301"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7097,7 +7111,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7129,7 +7143,7 @@
      "related_run_id": "sweep37-prefix-r2__S03__MACD__20260716_141813"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7158,7 +7172,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7186,7 +7200,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7215,7 +7229,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7246,7 +7260,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7278,7 +7292,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7307,7 +7321,7 @@
      "related_decision_id": "DEC-001"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7338,7 +7352,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7368,7 +7382,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7400,7 +7414,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7431,7 +7445,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7460,7 +7474,7 @@
      "related_decision_id": "DEC-011"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7491,7 +7505,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7523,7 +7537,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7552,7 +7566,7 @@
      "related_decision_id": "DEC-008"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7583,7 +7597,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7614,7 +7628,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7642,7 +7656,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7673,7 +7687,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7703,7 +7717,7 @@
      "related_commit": "9eeeb85"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7734,7 +7748,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7766,7 +7780,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7796,7 +7810,7 @@
      "related_artifact_id": "art-7b2c06887ca60f7f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7827,7 +7841,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7855,7 +7869,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7885,7 +7899,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7914,7 +7928,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7943,7 +7957,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -7972,7 +7986,7 @@
      "related_artifact_id": "art-79533b7226415961"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8004,7 +8018,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8033,7 +8047,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8062,7 +8076,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8090,8 +8104,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-68362ed30245",
@@ -8119,7 +8134,7 @@
      "related_bug_id": "BUG-012"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8147,7 +8162,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8175,8 +8190,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-6a1f71cb8368",
@@ -8206,7 +8222,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8237,7 +8253,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8265,8 +8281,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-6b52370ce66c",
@@ -8297,7 +8314,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8325,8 +8342,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-6ca57fa59439",
@@ -8357,7 +8375,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8388,7 +8406,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8417,7 +8435,7 @@
      "related_decision_id": "DEC-012"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8445,7 +8463,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8474,7 +8492,7 @@
      "related_bug_id": "BUG-002"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8505,7 +8523,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8535,7 +8553,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8567,7 +8585,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8599,7 +8617,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8627,7 +8645,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8658,7 +8676,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8686,8 +8704,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-7020d0cc3e17",
@@ -8715,7 +8734,7 @@
      "related_bug_id": "BUG-011"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8744,7 +8763,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8772,7 +8791,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8801,7 +8820,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8833,7 +8852,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8863,7 +8882,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8893,7 +8912,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8924,7 +8943,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -8952,8 +8971,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-74b89bfbcc4c",
@@ -8981,7 +9001,7 @@
      "related_decision_id": "DEC-005"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9010,7 +9030,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9041,7 +9061,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9071,7 +9091,7 @@
      "related_commit": "3cba036"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9099,7 +9119,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9130,7 +9150,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9159,7 +9179,7 @@
      "related_artifact_id": "art-79533b7226415961"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9190,7 +9210,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9220,7 +9240,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9250,7 +9270,7 @@
      "related_commit": "383a27a"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9281,7 +9301,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9309,8 +9329,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-7adc97916c00",
@@ -9338,7 +9359,7 @@
      "related_artifact_id": "art-c04c2e0cb97ecffe"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9367,7 +9388,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9397,7 +9418,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9428,7 +9449,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9459,7 +9480,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9487,7 +9508,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9519,7 +9540,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S05__TSI__20260717_201524"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9550,7 +9571,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9578,7 +9599,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9607,7 +9628,7 @@
      "related_artifact_id": "art-7da9b108dd681b6e"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9638,7 +9659,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9667,7 +9688,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9696,7 +9717,7 @@
      "related_bug_id": "BUG-005"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9727,7 +9748,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9759,7 +9780,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9788,7 +9809,7 @@
      "related_bug_id": "BUG-013"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9819,7 +9840,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9849,7 +9870,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9878,7 +9899,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9910,7 +9931,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9941,7 +9962,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -9971,7 +9992,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10002,7 +10023,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10033,7 +10054,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10065,7 +10086,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S02__BOLLINGER__20260717_140406"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10097,7 +10118,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10128,7 +10149,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10157,7 +10178,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10189,7 +10210,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10219,7 +10240,7 @@
      "related_commit": "b892476"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10248,7 +10269,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10279,7 +10300,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10309,7 +10330,7 @@
      "related_commit": "3b2298c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10340,7 +10361,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10368,8 +10389,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-87d11f100462",
@@ -10400,7 +10422,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10432,7 +10454,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10461,7 +10483,7 @@
      "related_decision_id": "DEC-009"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10492,7 +10514,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10523,7 +10545,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10535,7 +10557,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -10549,13 +10571,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-8afa7b0af4cf",
@@ -10582,7 +10606,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10611,7 +10635,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10642,7 +10666,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10673,7 +10697,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10702,7 +10726,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10731,7 +10755,7 @@
      "related_bug_id": "BUG-024"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10763,7 +10787,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10791,7 +10815,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10822,7 +10846,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10852,7 +10876,7 @@
      "related_commit": "4d6e2ce"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10882,7 +10906,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10910,7 +10934,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -10938,8 +10962,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-8f2a33ba8aba",
@@ -10969,7 +10994,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11001,7 +11026,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11032,7 +11057,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11063,7 +11088,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11094,7 +11119,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11123,7 +11148,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11152,7 +11177,7 @@
      "related_bug_id": "BUG-008"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11183,7 +11208,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11214,7 +11239,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11245,7 +11270,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11273,7 +11298,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11301,7 +11326,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11329,8 +11354,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-9460de38d6c6",
@@ -11358,7 +11384,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11389,7 +11415,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11419,7 +11445,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11450,7 +11476,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11481,7 +11507,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11512,7 +11538,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11543,7 +11569,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11574,7 +11600,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11605,7 +11631,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11637,7 +11663,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11666,7 +11692,7 @@
      "related_artifact_id": "art-e96c8ebd0af209ff"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11697,7 +11723,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11729,7 +11755,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11758,7 +11784,7 @@
      "related_artifact_id": "art-390ada892816ea32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11787,7 +11813,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11816,7 +11842,7 @@
      "related_bug_id": "BUG-029"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11847,7 +11873,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11876,7 +11902,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11907,7 +11933,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11938,7 +11964,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -11969,7 +11995,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12001,7 +12027,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12032,7 +12058,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12064,7 +12090,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12095,7 +12121,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12126,7 +12152,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12157,7 +12183,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12186,7 +12212,7 @@
      "related_bug_id": "BUG-023"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12216,7 +12242,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12247,7 +12273,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12275,8 +12301,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-a1066718b4fc",
@@ -12306,7 +12333,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12338,7 +12365,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12370,7 +12397,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12402,7 +12429,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S02__BOLLINGER__20260716_213223"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12433,7 +12460,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12464,7 +12491,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12492,8 +12519,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-a451cc3e9831",
@@ -12520,7 +12548,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12551,7 +12579,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12580,7 +12608,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12609,7 +12637,7 @@
      "related_bug_id": "BUG-031"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12640,7 +12668,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12671,7 +12699,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12701,7 +12729,7 @@
      "related_artifact_id": "art-12faea77a3091bf2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12732,7 +12760,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12764,7 +12792,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12795,7 +12823,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12826,7 +12854,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12858,7 +12886,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12887,7 +12915,7 @@
      "related_artifact_id": "art-86652b295f943871"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12918,7 +12946,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12950,7 +12978,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -12978,7 +13006,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13006,7 +13034,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13037,7 +13065,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13068,7 +13096,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13099,7 +13127,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13131,7 +13159,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13162,7 +13190,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13190,7 +13218,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13218,8 +13246,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-ad3905be8bc1",
@@ -13246,8 +13275,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-ad41562bfb3b",
@@ -13277,7 +13307,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13306,7 +13336,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13337,7 +13367,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13369,7 +13399,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13401,7 +13431,7 @@
      "related_run_id": "sweep37-prefix-r1__S02__BOLLINGER__20260716_104132"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13432,7 +13462,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13464,7 +13494,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13493,7 +13523,7 @@
      "related_bug_id": "BUG-010"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13524,7 +13554,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13553,7 +13583,7 @@
      "related_bug_id": "BUG-007"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13583,7 +13613,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13611,7 +13641,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13641,7 +13671,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13670,7 +13700,7 @@
      "related_bug_id": "BUG-021"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13702,7 +13732,7 @@
      "related_run_id": "sweep37-prefix-r2__S04__SAR__20260716_143004"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13733,7 +13763,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13763,7 +13793,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13795,7 +13825,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13826,7 +13856,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13858,7 +13888,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13870,7 +13900,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -13884,13 +13914,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-b7e0364a117b",
@@ -13920,7 +13952,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13952,7 +13984,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -13983,7 +14015,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14011,8 +14043,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-bae8b4011b81",
@@ -14043,7 +14076,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14073,7 +14106,7 @@
      "related_artifact_id": "art-ffb494c5e99c25eb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14103,7 +14136,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14134,7 +14167,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14166,7 +14199,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14198,7 +14231,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14210,7 +14243,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -14224,13 +14257,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-be3f2cc9a063",
@@ -14257,8 +14292,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-bef82c34103c",
@@ -14288,7 +14324,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14318,7 +14354,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14349,7 +14385,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14380,7 +14416,7 @@
      "related_artifact_id": "art-2551c33a3dc0427c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14411,7 +14447,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14442,7 +14478,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14454,7 +14490,7 @@
    "evidence_status": "supported",
    "evidence_strength": "strong",
    "evidence_reason": [
-    "[R07] run baseline completa con identity verificata e artefatto checksummato"
+    "[R07] run baseline completa con identity verificata e artefatto riverificato su disco"
    ],
    "data_scope": "execution_integrity",
    "independent_source_count": 1,
@@ -14468,13 +14504,15 @@
      "validation_results": [
       "baseline_round",
       "completed",
-      "identity_ok"
+      "identity_ok",
+      "artifact_verified_on_disk"
      ],
      "related_run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449"
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "available"
   },
   {
    "claim_id": "clm-c1ea5662048a",
@@ -14503,7 +14541,7 @@
      "related_artifact_id": "art-9439cd3614187dc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14531,8 +14569,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-c223c97eaad7",
@@ -14563,7 +14602,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14591,7 +14630,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14622,7 +14661,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14653,7 +14692,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14682,7 +14721,7 @@
      "related_decision_id": "DEC-007"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14710,7 +14749,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14740,7 +14779,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14768,8 +14807,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-c56559ebd4fd",
@@ -14799,7 +14839,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14827,8 +14867,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-c5fcdbd07ef4",
@@ -14859,7 +14900,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14891,7 +14932,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14922,7 +14963,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14953,7 +14994,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -14984,7 +15025,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15015,7 +15056,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15047,7 +15088,7 @@
      "related_run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15078,7 +15119,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15109,7 +15150,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15140,7 +15181,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15170,7 +15211,7 @@
      "related_commit": "6831495"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15200,7 +15241,7 @@
      "related_commit": "375c29e"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15232,7 +15273,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15263,7 +15304,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15293,7 +15334,7 @@
      "related_artifact_id": "art-8a41071672d49600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15324,7 +15365,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15355,7 +15396,7 @@
      "related_artifact_id": "art-59cac068a7761aba"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15385,7 +15426,7 @@
      "related_commit": "e24f16f"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15416,7 +15457,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15447,7 +15488,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15477,7 +15518,7 @@
      "related_artifact_id": "art-4bfb5569f869427d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15508,7 +15549,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15540,7 +15581,7 @@
      "related_run_id": "sweep37-prefix-r2__S02__BOLLINGER__20260716_131436"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15570,7 +15611,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15601,7 +15642,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15633,7 +15674,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15661,8 +15702,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-d2799245a880",
@@ -15692,7 +15734,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15722,7 +15764,7 @@
      "related_commit": "6745e43"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15754,7 +15796,7 @@
      "related_run_id": "sweep37-prefix-r2__S01__ADX_RSI__20260716_125117"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15785,7 +15827,7 @@
      "related_artifact_id": "art-8b7e4b84e940a1b0"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15817,7 +15859,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15848,7 +15890,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15880,7 +15922,7 @@
      "related_run_id": "sweep37-prefix-r2__S05__TSI__20260716_144137"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15910,7 +15952,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15939,7 +15981,7 @@
      "related_decision_id": "DEC-002"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -15971,7 +16013,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16002,7 +16044,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16033,7 +16075,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16062,7 +16104,7 @@
      "related_bug_id": "BUG-020"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16092,7 +16134,7 @@
      "related_artifact_id": "art-56ebd0abd5220107"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16121,7 +16163,7 @@
      "related_bug_id": "BUG-019"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16150,7 +16192,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16179,7 +16221,7 @@
      "related_bug_id": "BUG-028"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16208,7 +16250,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16239,7 +16281,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16268,7 +16310,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16297,7 +16339,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16329,7 +16371,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S04__SAR__20260717_194244"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16357,8 +16399,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-daa4e6accf33",
@@ -16388,7 +16431,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16420,7 +16463,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16450,7 +16493,7 @@
      "related_commit": "5bf7f6d"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16481,7 +16524,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16510,7 +16553,7 @@
      "related_bug_id": "BUG-003"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16540,7 +16583,7 @@
      "related_commit": "8352eb3"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16571,7 +16614,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16602,7 +16645,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16633,7 +16676,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16664,7 +16707,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16694,7 +16737,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16724,7 +16767,7 @@
      "related_commit": "d8fa8c3"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16756,7 +16799,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16787,7 +16830,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16816,7 +16859,7 @@
      "related_bug_id": "BUG-027"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16847,7 +16890,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16878,7 +16921,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16909,7 +16952,7 @@
      "related_artifact_id": "art-d25edfe2b06acee2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16940,7 +16983,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -16971,7 +17014,7 @@
      "related_artifact_id": "art-28e2f934361d06bd"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17000,7 +17043,7 @@
      "related_artifact_id": "art-16d1ee7b4e649cc2"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17032,7 +17075,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17062,7 +17105,7 @@
      "related_artifact_id": "art-68d4f75d3d471f6c"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17094,7 +17137,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S01__ADX_RSI__20260716_183817"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17126,7 +17169,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17155,7 +17198,7 @@
      "related_artifact_id": "art-d2133c8cafde1a10"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17187,7 +17230,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17218,7 +17261,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17249,7 +17292,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17280,7 +17323,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17311,7 +17354,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17342,7 +17385,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17371,7 +17414,7 @@
      "related_decision_id": "DEC-013"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17402,7 +17445,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17432,7 +17475,7 @@
      "related_commit": "74dc4cc"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17462,7 +17505,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17492,7 +17535,7 @@
      "related_commit": "375c29e"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17522,7 +17565,7 @@
      "related_artifact_id": "art-a388575069627043"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17554,7 +17597,7 @@
      "related_run_id": "sweep37-gate1pos-r3__S05__TSI__20260717_001357"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17585,7 +17628,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17617,7 +17660,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17645,7 +17688,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17675,7 +17718,7 @@
      "related_commit": "1331377"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17707,7 +17750,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17739,7 +17782,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17771,7 +17814,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17802,7 +17845,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17834,7 +17877,7 @@
      "related_run_id": "sweep37-postfix12h-killed__S01__ADX_RSI__20260717_110029"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17863,7 +17906,7 @@
      "related_artifact_id": "art-74cc66b3152a87fa"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17895,7 +17938,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17927,7 +17970,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17958,7 +18001,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -17987,7 +18030,7 @@
      "related_artifact_id": "art-df2ac517d7827acf"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18015,8 +18058,9 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
-   "knowledge_schema_version": 2
+   "created_by_engine_version": "1.1.0",
+   "knowledge_schema_version": 2,
+   "baseline_availability_state": "not_yet_observed"
   },
   {
    "claim_id": "clm-ef0edaedfade",
@@ -18046,7 +18090,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18075,7 +18119,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18105,7 +18149,7 @@
      "related_artifact_id": "art-ee32e85a15d37600"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18134,7 +18178,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18166,7 +18210,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18198,7 +18242,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18229,7 +18273,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18257,7 +18301,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18286,7 +18330,7 @@
      "related_bug_id": "BUG-014"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18317,7 +18361,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18346,7 +18390,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18377,7 +18421,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18409,7 +18453,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18439,7 +18483,7 @@
      "related_artifact_id": "art-f64b34c4301ade00"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18470,7 +18514,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18502,7 +18546,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18534,7 +18578,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18562,7 +18606,7 @@
      ]
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18593,7 +18637,7 @@
      "related_artifact_id": "art-273381001f1b7d32"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18625,7 +18669,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18657,7 +18701,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18688,7 +18732,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18719,7 +18763,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18750,7 +18794,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18782,7 +18826,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18813,7 +18857,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18844,7 +18888,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18876,7 +18920,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18907,7 +18951,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18937,7 +18981,7 @@
      "related_commit": "a1c8242"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18967,7 +19011,7 @@
      "related_artifact_id": "art-c163da206eb63534"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -18998,7 +19042,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19028,7 +19072,7 @@
      "related_artifact_id": "art-a8e222784d565feb"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19058,7 +19102,7 @@
      "related_commit": "bced090"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19090,7 +19134,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19121,7 +19165,7 @@
      "related_artifact_id": "art-2f90a7fce2410809"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19150,7 +19194,7 @@
      "related_artifact_id": "art-bac28d7cf649ba34"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19181,7 +19225,7 @@
      "related_run_id": null
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   },
   {
@@ -19212,7 +19256,7 @@
      "related_artifact_id": "art-0d003ae97279d1de"
     }
    ],
-   "created_by_engine_version": "1.0.0",
+   "created_by_engine_version": "1.1.0",
    "knowledge_schema_version": 2
   }
  ]

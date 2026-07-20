@@ -139,15 +139,15 @@
       "status": "implicit"
     },
     "EvidenceLink": {
-      "purpose": "RISERVATA (M4, non implementata): collegamento tipizzato conclusione->evidenze con forza della prova. Da NON confondere con Run.confidence (qualita' dell'import).",
-      "file": "(futuro)",
-      "identifier": "(futuro) evidence_id",
-      "required": ["(da definire in M4)"],
-      "optional": [],
-      "immutable": [],
-      "mutable": [],
-      "relationships": ["(futuro)"],
-      "status": "reserved"
+      "purpose": "Implementata in M4 (evidence_engine): collegamento tipizzato claim->evidenze con forza della prova. Da NON confondere con Run.confidence (qualita' dell'import).",
+      "file": "knowledge/evidence_database.json",
+      "identifier": "evidence_id = evl-{sha1(claim_id|source_type|source_id|checksum)[:12]}; claim_id = clm-{sha1(claim_type|subject_type|subject_id)[:12]}",
+      "required": ["claim_id", "claim_type", "claim_text", "subject_type", "subject_id", "evidence_status", "evidence_strength", "evidence_reason", "data_scope", "independent_source_count", "evidence_links"],
+      "optional": ["baseline_availability_state (M4.1, additivo: SOLO su claim baseline_run_available/baseline_run_missing; enum controllato che spiega a macchina il motivo della disponibilita'/assenza)"],
+      "immutable": ["claim_id", "evidence_id (derivati deterministicamente)"],
+      "mutable": ["evidence_status", "evidence_strength", "evidence_reason (rigenerati a ogni build dagli input correnti)"],
+      "relationships": ["claim -> Run/Artifact/Bug/Decision/TimelineEvent/DataQualityIssue via related_*_id"],
+      "status": "implemented (M4; campo additivo M4.1, semantica v1 invariata)"
     }
   },
 
@@ -174,7 +174,10 @@
     "event_confidence": ["high", "medium"],
     "round_id": ["sweep37-prefix-r1", "sweep37-prefix-r2", "sweep37-gate1pos-r3", "sweep37-postfix12h-killed", "sweep37-baseline-e6ce816"],
     "bug_stato_v1_NON_NORMALIZZATO": "testo libero in v1 ('risolto', 'risolto (…)', 'APERTO', 'APERTO (deliberato)') - vedi proposta P1",
-    "identity_ok": ["true", "false", "null (check non applicabile)"]
+    "identity_ok": ["true", "false", "null (check non applicabile)"],
+    "evidence_status": ["supported", "partially_supported", "conflicting", "unsupported", "invalidated"],
+    "evidence_strength": ["strong", "moderate", "weak", "invalid"],
+    "baseline_availability_state": ["available", "expected_but_missing", "not_yet_observed", "invalid", "unknown"]
   },
 
   "validation_rules": [
