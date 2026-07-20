@@ -1,0 +1,285 @@
+{
+ "generato": "2026-07-19",
+ "totale": 31,
+ "bug": [
+  {
+   "id": "BUG-001",
+   "descrizione": "Gate '1 posizione per strategia' mancante in DataCollectionMode: segnali state-based aprivano su quasi ogni tick (fino a 17.218 aperture per strategia), pile-up -> ESL mass-flatten continui (97.8% delle chiusure in cluster <=15s, tp raggiunto 1 volta su ~4000)",
+   "strategie_coinvolte": "tutte le 37",
+   "commit_fix": "3cba036",
+   "data": "2026-07-17",
+   "impatto": "critico - il bug dominante, invalidava ogni misura",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-002",
+   "descrizione": "Cap di durata massima piatto a 12h su ~25 strategie (tabella NXS_StrategySourceTF disallineata)",
+   "strategie_coinvolte": "~25 strategie multi-TF",
+   "commit_fix": "bced090",
+   "data": "2026-07-17",
+   "impatto": "alto",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-003",
+   "descrizione": "Due sistemi di durata massima indipendenti e in conflitto (Management P1 vs Protections MaxHold)",
+   "strategie_coinvolte": "tutte",
+   "commit_fix": "d051ece",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-004",
+   "descrizione": "Logging CSV rotto: ticket/lots hardcoded a 0, strat/reason calcolati dopo la scrittura",
+   "strategie_coinvolte": "-",
+   "commit_fix": "d8fa8c3 + 5f44426",
+   "data": "2026-07-16/17",
+   "impatto": "alto (impediva ogni analisi trade-level)",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-005",
+   "descrizione": "NEXUS_trades.csv append-forever mai svuotato (24.8MB+), sospettato nei timeout Tester",
+   "strategie_coinvolte": "-",
+   "commit_fix": "8352eb3",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto (reset opt-in con archiviazione)"
+  },
+  {
+   "id": "BUG-006",
+   "descrizione": "Race condition Tester: lanci troppo ravvicinati -> passata con dati della strategia precedente (S01 conteneva LIQ_SWEEP)",
+   "strategie_coinvolte": "sweep runner",
+   "commit_fix": "script runner (fuori repo) + rimozione dati 5bf7f6d",
+   "data": "2026-07-17",
+   "impatto": "critico (corruzione dati)",
+   "stato": "risolto (delay 20s + identity check)"
+  },
+  {
+   "id": "BUG-007",
+   "descrizione": "LIQ_VOID: geometria FVG sbagliata (high vs high, non un gap)",
+   "strategie_coinvolte": "LIQ_VOID",
+   "commit_fix": "375c29e",
+   "data": "2026-07-17",
+   "impatto": "critico (zero-trade)",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-008",
+   "descrizione": "Doppio motore in competizione (NXR vs legacy a colpi di score) per IFVG/FVG_MIT/OB_MIT + OB_MIT si attribuiva gli eventi breaker",
+   "strategie_coinvolte": "IFVG, FVG_MIT, OB_MIT",
+   "commit_fix": "375c29e",
+   "data": "2026-07-17",
+   "impatto": "alto",
+   "stato": "risolto (NXR unica fonte)"
+  },
+  {
+   "id": "BUG-009",
+   "descrizione": "SH_BMS_RTO: sequenza causale collassata su un solo tick",
+   "strategie_coinvolte": "SH_BMS_RTO",
+   "commit_fix": "9eeeb85",
+   "data": "2026-07-17",
+   "impatto": "critico",
+   "stato": "risolto (state machine)"
+  },
+  {
+   "id": "BUG-010",
+   "descrizione": "TSI non implementava il True Strength Index (era RSI+EMA20)",
+   "strategie_coinvolte": "TSI",
+   "commit_fix": "b892476",
+   "data": "2026-07-17",
+   "impatto": "critico (mismatch nominale)",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-011",
+   "descrizione": "ORDER_BLOCK usava la candela displacement come zona OB, senza BOS",
+   "strategie_coinvolte": "ORDER_BLOCK",
+   "commit_fix": "e24f16f",
+   "data": "2026-07-17",
+   "impatto": "critico",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-012",
+   "descrizione": "SILVER_BULLET: solo sweep in finestra oraria (mancavano displacement/FVG/retest)",
+   "strategie_coinvolte": "SILVER_BULLET",
+   "commit_fix": "4d6e2ce",
+   "data": "2026-07-17",
+   "impatto": "critico",
+   "stato": "risolto (state machine)"
+  },
+  {
+   "id": "BUG-013",
+   "descrizione": "CISD: nome improprio per un pattern 3-candele+rottura",
+   "strategie_coinvolte": "CISD",
+   "commit_fix": "1bb167a",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto (rename THREE_BAR_DELIVERY_BREAK)"
+  },
+  {
+   "id": "BUG-014",
+   "descrizione": "DISP_REBAL: 50% della candela intera spacciato per Consequent Encroachment",
+   "strategie_coinvolte": "DISP_REBAL",
+   "commit_fix": "a1c8242",
+   "data": "2026-07-17",
+   "impatto": "critico",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-015",
+   "descrizione": "LONDON_BO senza validazione breakout; EMA_PULLBACK solo cross istantaneo",
+   "strategie_coinvolte": "LONDON_BO, EMA_PULLBACK",
+   "commit_fix": "6745e43",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-016",
+   "descrizione": "refHigh/refLow senza i livelli weekly/monthly appena aggiunti; AMD_CONT mescolava barra chiusa e bid live",
+   "strategie_coinvolte": "LDN_REVERSAL, TURTLE_SOUP, PO3, AMD_REVERSAL, AMD_CONT",
+   "commit_fix": "9db13f9",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-017",
+   "descrizione": "BOLLINGER/ICHIMOKU: indicatore shift1 confrontato con prezzo shift2; BB_SQUEEZE soglia assoluta; MALAYSIAN_SNR unita' ATR miste + W1 morto",
+   "strategie_coinvolte": "BOLLINGER, ICHIMOKU, BB_SQUEEZE, MALAYSIAN_SNR",
+   "commit_fix": "74dc4cc",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-018",
+   "descrizione": "WEEKLY_EXP: corpo H4 confrontato con ATR D1 (quasi bloccante) + BOS assente",
+   "strategie_coinvolte": "WEEKLY_EXP",
+   "commit_fix": "3b2298c",
+   "data": "2026-07-17",
+   "impatto": "critico (zero-trade)",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-019",
+   "descrizione": "RANGE_FADE: range qualificato da una sola lettura ADX + mix live/chiusa",
+   "strategie_coinvolte": "RANGE_FADE",
+   "commit_fix": "383a27a",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-020",
+   "descrizione": "OTE_CONT: Fibonacci ancorato a rolling high/low generico, mai a un vero BOS; entry su bid live",
+   "strategie_coinvolte": "OTE_CONT",
+   "commit_fix": "1331377",
+   "data": "2026-07-17",
+   "impatto": "medio",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-021",
+   "descrizione": "NY_REVERSAL: sessione Londra con offset GMT fisso (no DST) aggregata dal TF strategia",
+   "strategie_coinvolte": "NY_REVERSAL",
+   "commit_fix": "e6ce816",
+   "data": "2026-07-18",
+   "impatto": "alto",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-022",
+   "descrizione": "ZeroMemory su struct con campo string (comportamento non definito MQL5)",
+   "strategie_coinvolte": "SNXSSweepExt",
+   "commit_fix": "6831495",
+   "data": "2026-07-17",
+   "impatto": "basso (latente)",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-023",
+   "descrizione": "Proxy del motore sito non fedeli (sig_sar=EMA cross, sig_macd/adx_rsi/rsi_div errati)",
+   "strategie_coinvolte": "SAR, MACD, ADX_RSI, RSI_DIV (lato sito)",
+   "commit_fix": "pre-sessione (vault: Audit Fedelta' Trigger)",
+   "data": "2026-07-15",
+   "impatto": "alto",
+   "stato": "risolto"
+  },
+  {
+   "id": "BUG-024",
+   "descrizione": "Leva effettiva 1:100 nonostante Leverage=500 nell'.ini del runner (sospetto formato chiave)",
+   "strategie_coinvolte": "test di portafoglio futuri",
+   "commit_fix": "-",
+   "data": "2026-07-18",
+   "impatto": "nullo su sweep isolati (verificato nel codice), critico per portafoglio",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-025",
+   "descrizione": "CHOCH booleano persistente senza timestamp/event-id: falso legame causale possibile con sweep vecchi",
+   "strategie_coinvolte": "JUDAS_SWING, LDN_REVERSAL",
+   "commit_fix": "spec pronta (agente logico), non implementata",
+   "data": "2026-07-18",
+   "impatto": "medio",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-026",
+   "descrizione": "AMD_REVERSAL/PO3 senza memoria di fase giornaliera + rischio doppio trade sullo stesso sweep",
+   "strategie_coinvolte": "AMD_REVERSAL, PO3",
+   "commit_fix": "spec pronta, non implementata",
+   "data": "2026-07-18",
+   "impatto": "medio",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-027",
+   "descrizione": "ELLIOTT presentata come conteggio Elliott ma e' un proxy a pivot",
+   "strategie_coinvolte": "ELLIOTT",
+   "commit_fix": "rename deciso, in attesa fine sweep",
+   "data": "2026-07-17",
+   "impatto": "basso (nominale)",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-028",
+   "descrizione": "Gate HTF: prezzo barra in formazione (shift0) vs EMA200 cache (shift1) - asimmetria probabilmente non voluta",
+   "strategie_coinvolte": "tutte con htf=true",
+   "commit_fix": "-",
+   "data": "2026-07-17",
+   "impatto": "basso",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-029",
+   "descrizione": "Contatore 'executed' anomalo nel path best-per-bar standard",
+   "strategie_coinvolte": "diagnostica",
+   "commit_fix": "-",
+   "data": "2026-07-13",
+   "impatto": "medio (solo diagnostica)",
+   "stato": "APERTO"
+  },
+  {
+   "id": "BUG-030",
+   "descrizione": "Nessun gate sul drawdown cumulato dal picco (solo daily) - DD 87% ricorrente",
+   "strategie_coinvolte": "portafoglio",
+   "commit_fix": "-",
+   "data": "2026-07-14",
+   "impatto": "alto - DELIBERATAMENTE non 'fixato' come camuffamento (decisione DEC-002)",
+   "stato": "APERTO (consapevole)"
+  },
+  {
+   "id": "BUG-031",
+   "descrizione": "Protezioni account-level bypassate in Tester (MQL_TESTER) - i backtest non le includono",
+   "strategie_coinvolte": "portafoglio",
+   "commit_fix": "-",
+   "data": "2026-07-13",
+   "impatto": "medio - deliberato, da testare con protezioni ON prima del live",
+   "stato": "APERTO (deliberato)"
+  }
+ ]
+}

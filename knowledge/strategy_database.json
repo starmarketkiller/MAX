@@ -1,0 +1,1009 @@
+{
+ "generato": "2026-07-19",
+ "fonte_sweep": "results/reports/sweep37 (file stats piu' recente per passata)",
+ "baseline": "e6ce816 / branch baseline-post-infra-audit",
+ "totale_strategie": 37,
+ "avvertenza": "PF/WR/expectancy del round corrente: strategia ISOLATA, lotto fisso 0.01, DataCollectionMode - misurano il comportamento del trigger, non il P&L di portafoglio",
+ "strategie": [
+  {
+   "nome": "ADX_RSI",
+   "selector_index": 1,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "nome improprio: non usa un vero ADX come trigger (solo filtro g_adx<20), documentato"
+   ],
+   "fix_applicati": [
+    "v2.5.1 profilo TP10x/BE1.5R da analisi MFE/MAE",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S01",
+    "file": "SWEEP37_S01_20260718_161350_stats.csv",
+    "data_file": "20260718",
+    "round_corrente": true,
+    "trade_eseguiti": 915,
+    "wins": 319,
+    "losses": 338,
+    "winrate_pct": 48.55,
+    "expectancy_R": -0.028,
+    "profit_factor": 0.82,
+    "avg_holding_sec": 25093.0
+   },
+   "nota_sweep": null,
+   "trade": 915,
+   "PF": 0.82,
+   "WR_pct": 48.55,
+   "expectancy_R": -0.028,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "config TP10x+BE1.5R confermata in direzione su 2 motori (TV+sito)",
+   "note": "trigger: EMA50 slope + banda RSI su D1"
+  },
+  {
+   "nome": "BOLLINGER",
+   "selector_index": 2,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: allineamento banda shift1/shift2 corretto"
+   ],
+   "bug_storici": [
+    "confronto Close[2] con banda di shift1"
+   ],
+   "fix_applicati": [
+    "fix shift (74dc4cc)",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S02",
+    "file": "SWEEP37_S02_20260718_190107_stats.csv",
+    "data_file": "20260718",
+    "round_corrente": true,
+    "trade_eseguiti": 144,
+    "wins": 59,
+    "losses": 48,
+    "winrate_pct": 55.14,
+    "expectancy_R": -0.033,
+    "profit_factor": 0.79,
+    "avg_holding_sec": 23569.0
+   },
+   "nota_sweep": null,
+   "trade": 144,
+   "PF": 0.79,
+   "WR_pct": 55.14,
+   "expectancy_R": -0.033,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "re-entry mean reversion, minimale ma valida (audit)",
+   "note": null
+  },
+  {
+   "nome": "MACD",
+   "selector_index": 3,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "proxy sito falso corretto pre-sessione",
+    "regressione v2.5.0 (config sito sostitui' config MT5 validata)"
+   ],
+   "fix_applicati": [
+    "TP8x+BE1R (17/07, in produzione)",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S03",
+    "file": "SWEEP37_S03_20260718_205653_stats.csv",
+    "data_file": "20260718",
+    "round_corrente": true,
+    "trade_eseguiti": 1244,
+    "wins": 461,
+    "losses": 363,
+    "winrate_pct": 55.95,
+    "expectancy_R": -0.038,
+    "profit_factor": 0.79,
+    "avg_holding_sec": 15293.0
+   },
+   "nota_sweep": null,
+   "trade": 1244,
+   "PF": 0.79,
+   "WR_pct": 55.95,
+   "expectancy_R": -0.038,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "fix TP-largo+BE confermato su 3 motori indipendenti - la migliore evidenza del progetto",
+   "note": "signal MT5 = SMA (non EMA come TV)"
+  },
+  {
+   "nome": "SAR",
+   "selector_index": 4,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "proxy sito falso (era EMA cross)"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": {
+    "passata": "S04",
+    "file": "SWEEP37_S04_20260717_194244_stats.csv",
+    "data_file": "20260717",
+    "round_corrente": false,
+    "trade_eseguiti": 261,
+    "wins": 93,
+    "losses": 141,
+    "winrate_pct": 39.74,
+    "expectancy_R": -0.09,
+    "profit_factor": 0.6,
+    "avg_holding_sec": 22847.0
+   },
+   "nota_sweep": "ATTENZIONE: file piu' recente disponibile per S04 datato 17/07 (round precedente): la passata S04 del round corrente non risulta nei report",
+   "trade": 261,
+   "PF": 0.6,
+   "WR_pct": 39.74,
+   "expectancy_R": -0.09,
+   "affidabilita_dati": "dato da round precedente, non baseline",
+   "decisione_corrente": "variante BE NON applicata: 2 motori in disaccordo sulla direzione del PF",
+   "note": "trigger: SAR vs prezzo + EMA9/21, H4"
+  },
+  {
+   "nome": "TSI",
+   "selector_index": 5,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: vero True Strength Index di Blau (25/13/7, cross signal line)"
+   ],
+   "bug_storici": [
+    "CRITICO: non calcolava TSI, era RSI+EMA20 col nome sbagliato"
+   ],
+   "fix_applicati": [
+    "riscrittura completa (b892476)",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S05",
+    "file": "SWEEP37_S05_20260719_022556_stats.csv",
+    "data_file": "20260719",
+    "round_corrente": true,
+    "trade_eseguiti": 839,
+    "wins": 254,
+    "losses": 209,
+    "winrate_pct": 54.86,
+    "expectancy_R": -0.028,
+    "profit_factor": 0.76,
+    "avg_holding_sec": 19806.0
+   },
+   "nota_sweep": null,
+   "trade": 839,
+   "PF": 0.76,
+   "WR_pct": 54.86,
+   "expectancy_R": -0.028,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "dati storici da azzerare: appartengono a un'altra logica",
+   "note": "warmup 3x periodo lungo prima dei segnali"
+  },
+  {
+   "nome": "BJORGUM",
+   "selector_index": 6,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [],
+   "fix_applicati": [],
+   "ultimo_sweep": {
+    "passata": "S06",
+    "file": "SWEEP37_S06_20260719_052449_stats.csv",
+    "data_file": "20260719",
+    "round_corrente": true,
+    "trade_eseguiti": 397,
+    "wins": 150,
+    "losses": 156,
+    "winrate_pct": 49.02,
+    "expectancy_R": -0.071,
+    "profit_factor": 0.68,
+    "avg_holding_sec": 15667.0
+   },
+   "nota_sweep": null,
+   "trade": 397,
+   "PF": 0.68,
+   "WR_pct": 49.02,
+   "expectancy_R": -0.071,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "PF 2.14 storico su 5 trade = rumore statistico (Principio 4)",
+   "note": null
+  },
+  {
+   "nome": "LIQ_SWEEP",
+   "selector_index": 7,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: esteso a sweep weekly (PWH/PWL) e monthly (PMH/PML), tag livello nel reason"
+   ],
+   "bug_storici": [
+    "refHigh/refLow inizialmente senza i nuovi livelli (corretto 9db13f9)"
+   ],
+   "fix_applicati": [
+    "estensione multi-livello (6831495)",
+    "filtro corpo delivery >=0.7xATR (16/07)",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S07",
+    "file": "SWEEP37_S07_20260719_080122_stats.csv",
+    "data_file": "20260719",
+    "round_corrente": true,
+    "trade_eseguiti": 292,
+    "wins": 100,
+    "losses": 100,
+    "winrate_pct": 50.0,
+    "expectancy_R": 0.004,
+    "profit_factor": 1.04,
+    "avg_holding_sec": 26738.0
+   },
+   "nota_sweep": null,
+   "trade": 292,
+   "PF": 1.04,
+   "WR_pct": 50.0,
+   "expectancy_R": 0.004,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "un solo motore di rilevamento con tag diagnostico, non 3 cloni",
+   "note": null
+  },
+  {
+   "nome": "FVG_CONT",
+   "selector_index": 8,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "16/07: filtro trend esterno H1 al posto di EMA50 locale"
+   ],
+   "bug_storici": [
+    "entra alla formazione del gap, non sul retest (audit: lifecycle in coda)"
+   ],
+   "fix_applicati": [
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": {
+    "passata": "S08",
+    "file": "SWEEP37_S08_20260719_193743_stats.csv",
+    "data_file": "20260719",
+    "round_corrente": true,
+    "trade_eseguiti": 251,
+    "wins": 105,
+    "losses": 124,
+    "winrate_pct": 45.85,
+    "expectancy_R": -0.013,
+    "profit_factor": 0.96,
+    "avg_holding_sec": 16901.0
+   },
+   "nota_sweep": null,
+   "trade": 251,
+   "PF": 0.96,
+   "WR_pct": 45.85,
+   "expectancy_R": -0.013,
+   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "decisione_corrente": "lifecycle persistente in coda (non ancora implementato)",
+   "note": null
+  },
+  {
+   "nome": "BREAKOUT_ACC",
+   "selector_index": 9,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "auditata sessione precedente, nessun problema grave",
+   "note": null
+  },
+  {
+   "nome": "LONDON_BO",
+   "selector_index": 10,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: validazione breakout (corpo minimo, buffer, close location value)"
+   ],
+   "bug_storici": [
+    "qualsiasi close marginale oltre Asia contava come breakout"
+   ],
+   "fix_applicati": [
+    "6745e43",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "DST sessione condiviso con NY_REVERSAL (fatto li')",
+   "note": null
+  },
+  {
+   "nome": "EMA_PULLBACK",
+   "selector_index": 11,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: trend persistente 5 barre + impulso precedente >=1xATR + vera rejection"
+   ],
+   "bug_storici": [
+    "era un cross EMA20 istantaneo, non un pullback"
+   ],
+   "fix_applicati": [
+    "6745e43",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "trigger cambiato: dati storici non comparabili",
+   "note": null
+  },
+  {
+   "nome": "BB_SQUEEZE",
+   "selector_index": 12,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: squeeze percentile-relativo (150 barre, <=20mo pct), persistenza minima, one-shot"
+   ],
+   "bug_storici": [
+    "soglia assoluta 2.5xATR non dimostrava compressione"
+   ],
+   "fix_applicati": [
+    "74dc4cc",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "ICHIMOKU",
+   "selector_index": 13,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: allineamento cloud shift1/shift2"
+   ],
+   "bug_storici": [
+    "prev confrontato con cloud di shift1"
+   ],
+   "fix_applicati": [
+    "74dc4cc",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "Kumo breakout semplificato dichiarato (audit: rinominabile ICHIMOKU_KUMO_BREAKOUT)",
+   "note": null
+  },
+  {
+   "nome": "RSI_DIV",
+   "selector_index": 14,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "proxy sito falso corretto pre-sessione"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "sospetta regime-dipendenza: TV (1.5y) in perdita, sito profittevole - da verificare su dati MT5 puliti",
+   "note": "divergenza a finestra fissa 8 barre, H1, senza filtro HTF"
+  },
+  {
+   "nome": "ORDER_BLOCK",
+   "selector_index": 15,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: origine = ultima candela opposta pre-impulso + BOS richiesto + zona persistente one-shot"
+   ],
+   "bug_storici": [
+    "CRITICO: usava la candela displacement stessa come OB"
+   ],
+   "fix_applicati": [
+    "e24f16f",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": "mantiene trend H1 esterno + reaction gate SMC"
+  },
+  {
+   "nome": "STRUCT_REACT",
+   "selector_index": 16,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "meta-engine: dipende dalla qualita' del reaction engine (audit: dependency-opaque)"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "decisione architetturale in coda: strategia autonoma O gate per le altre, non entrambe",
+   "note": null
+  },
+  {
+   "nome": "TURTLE_SOUP",
+   "selector_index": 17,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "verificata 17/07: nessun bug reale (sweep/rejection stessa barra per costruzione)",
+   "note": "MT5 2.12 vs sito 0.77 storici: Principio 5"
+  },
+  {
+   "nome": "IFVG",
+   "selector_index": 18,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "consolidata su NXR",
+   "redesign_effettuati": [
+    "17/07: motore NXR (zone persistenti) unica fonte, legacy escluso"
+   ],
+   "bug_storici": [
+    "zero-trade storica: riconosceva solo invalidazione immediata (barre 4/2)",
+    "due motori in gara a colpi di score"
+   ],
+   "fix_applicati": [
+    "375c29e",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "FVG_MIT",
+   "selector_index": 19,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "consolidata su NXR",
+   "redesign_effettuati": [
+    "17/07: idem IFVG"
+   ],
+   "bug_storici": [
+    "FVG a eta' fissa shift 5/7"
+   ],
+   "fix_applicati": [
+    "375c29e",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "OB_MIT",
+   "selector_index": 20,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "consolidata su NXR",
+   "redesign_effettuati": [
+    "17/07: idem + separato dal concetto breaker"
+   ],
+   "bug_storici": [
+    "era wrapper puro di ORDER_BLOCK",
+    "si attribuiva anche gli eventi breaker"
+   ],
+   "fix_applicati": [
+    "375c29e",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "disabilitata di fatto nel router legacy; breaker = strategia futura separata",
+   "note": null
+  },
+  {
+   "nome": "SH_BMS_RTO",
+   "selector_index": 21,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: macchina a stati IDLE->SWEPT->WAITING_RETURN->entry, per lato"
+   ],
+   "bug_storici": [
+    "CRITICO: sweep+CHOCH+FVG+prezzo tutti sullo stesso tick"
+   ],
+   "fix_applicati": [
+    "9eeeb85",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "vincolo causale sweep<MSS<retest garantito per costruzione",
+   "note": null
+  },
+  {
+   "nome": "SMS_BMS_RTO",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "proxy: midpoint del range non e' una vera origine RTO (audit)"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "fix con spec audit in coda",
+   "note": null
+  },
+  {
+   "nome": "SILVER_BULLET",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: macchina a stati sweep->displacement/BOS->FVG->retest in killzone"
+   ],
+   "bug_storici": [
+    "CRITICO: era solo uno sweep in finestra oraria"
+   ],
+   "fix_applicati": [
+    "4d6e2ce",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "scadenza a barre; killzone fisse GMT (DST in coda)",
+   "note": null
+  },
+  {
+   "nome": "AMD_REVERSAL",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "nessuna memoria di fase: eventi combinati senza causalita'"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "spec state-machine completa pronta (agente logico), non implementata - in attesa approvazione",
+   "note": null
+  },
+  {
+   "nome": "MALAYSIAN_SNR",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: tolleranze in ATR H4, tocco su barra chiusa, W1 da codice morto a bonus confluence"
+   ],
+   "bug_storici": [
+    "mix unita' ATR fra timeframe",
+    "W1 calcolato e mai usato",
+    "17.218 aperture nel bug pile-up (la piu' colpita)"
+   ],
+   "fix_applicati": [
+    "74dc4cc",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "THREE_BAR_DELIVERY_BREAK",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "rinominata (ex CISD)",
+   "redesign_effettuati": [
+    "17/07: rename onesto, logica invariata"
+   ],
+   "bug_storici": [
+    "nome improprio: non era un vero Change In State of Delivery"
+   ],
+   "fix_applicati": [
+    "1bb167a",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "versione 'vera' provata in passato: 0 setup su 1067 - tenuta la logica funzionante",
+   "note": "toggle input resta InpUseStrat_CISD per compatibilita' .set"
+  },
+  {
+   "nome": "AMD_CONT",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: tutto su barra chiusa (era mix close[1]+bid live)"
+   ],
+   "bug_storici": [
+    "mix temporale barra chiusa/prezzo live"
+   ],
+   "fix_applicati": [
+    "9db13f9",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "JUDAS_SWING",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "CHOCH senza timestamp: non garantisce causalita' con lo sweep specifico"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "spec timestamp CHOCH pronta (agente logico), non implementata - in attesa approvazione",
+   "note": null
+  },
+  {
+   "nome": "LDN_REVERSAL",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "beneficia del fix refHigh/refLow (9db13f9)"
+   ],
+   "bug_storici": [
+    "stesso problema CHOCH di JUDAS_SWING"
+   ],
+   "fix_applicati": [
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "spec timestamp CHOCH pronta",
+   "note": null
+  },
+  {
+   "nome": "NY_REVERSAL",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: BST reale calcolato (ultima domenica marzo/ottobre), finestra Londra 08-12 Europe/London, aggregazione da M5"
+   ],
+   "bug_storici": [
+    "CRITICO: offset GMT fisso tutto l'anno + aggregazione dal TF strategia"
+   ],
+   "fix_applicati": [
+    "e6ce816",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "WEEKLY_EXP",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "completata (Modello B)",
+   "redesign_effettuati": [
+    "17/07: ATR H4 dedicato + BOS H4 richiesto"
+   ],
+   "bug_storici": [
+    "CRITICO: corpo H4 confrontato con ATR D1 (soglia quasi irraggiungibile) - causa degli zero-trade storici"
+   ],
+   "fix_applicati": [
+    "3b2298c",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "zero-trade storici = bug, non assenza del pattern",
+   "note": null
+  },
+  {
+   "nome": "PO3",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "fasi ACC/MAN/DIST valutate nello stesso stato corrente, nessuna persistenza"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "spec state-machine completa pronta + dedupe con AMD_REVERSAL via manipulation_event_id - in attesa approvazione",
+   "note": null
+  },
+  {
+   "nome": "LIQ_VOID",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: vera geometria FVG a 3 candele (Low[c3]>High[c1])"
+   ],
+   "bug_storici": [
+    "CRITICO: confrontava high con high, non un gap - zero-trade storica"
+   ],
+   "fix_applicati": [
+    "375c29e",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "DISP_REBAL",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva nel codice, disabilitata in produzione reale",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: CE calcolato sul vero FVG del displacement"
+   ],
+   "bug_storici": [
+    "CRITICO: 50% dell'intera candela spacciato per CE"
+   ],
+   "fix_applicati": [
+    "a1c8242",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "disabilitata in produzione reale (test storico: 10 trade, -53 USD, WR 30%)",
+   "note": null
+  },
+  {
+   "nome": "RANGE_FADE",
+   "selector_index": 37,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "riscritta",
+   "redesign_effettuati": [
+    "17/07: range CONFIRMED solo con persistenza ADX>=70% barre + ampiezza stabile + 2 tocchi/lato + occupazione bilanciata + no breakout recente; entry su barra chiusa"
+   ],
+   "bug_storici": [
+    "ADX solo ultima lettura",
+    "mix barra chiusa/bid live",
+    "zero-trade storica"
+   ],
+   "fix_applicati": [
+    "383a27a",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": null,
+   "note": null
+  },
+  {
+   "nome": "OTE_CONT",
+   "selector_index": null,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si",
+   "redesign_effettuati": [
+    "17/07: gate BOS dedicato (displacement reale che rompe uno swing precedente) + entry su barra chiusa"
+   ],
+   "bug_storici": [
+    "Fibonacci ancorato a rolling high/low generico, mai a un vero BOS",
+    "entry su bid live"
+   ],
+   "fix_applicati": [
+    "1331377",
+    "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+   ],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "zona 62-79% (70.5 centrale) gia' corretta - il fix era l'ancoraggio",
+   "note": "NXS_Fib_Build condivisa col visual bridge, non toccata"
+  },
+  {
+   "nome": "ELLIOTT",
+   "selector_index": 36,
+   "versione": "baseline e6ce816 (EA 2.50)",
+   "stato": "attiva",
+   "implementata": "si (proxy)",
+   "redesign_effettuati": [],
+   "bug_storici": [
+    "conteggio Elliott completo non automatizzabile oggettivamente (audit)"
+   ],
+   "fix_applicati": [],
+   "ultimo_sweep": null,
+   "nota_sweep": null,
+   "trade": null,
+   "PF": null,
+   "WR_pct": null,
+   "expectancy_R": null,
+   "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
+   "decisione_corrente": "DECISO: rename FIVE_SWING_IMPULSE (pattern proprietario dichiarato) - esecuzione a sweep concluso",
+   "note": " | proxy a pivot, non vero conteggio"
+  }
+ ]
+}

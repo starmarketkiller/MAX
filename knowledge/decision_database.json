@@ -1,0 +1,123 @@
+{
+ "generato": "2026-07-19",
+ "totale": 13,
+ "decisioni": [
+  {
+   "id": "DEC-001",
+   "data": "2026-07-17",
+   "decisione": "Push diretto su main per tutti gli agenti (no branch per esperimento)",
+   "motivo": "velocita' di sincronizzazione fra 4 agenti",
+   "evidenze": "decisione esplicita utente ('voglio pushare sul main che e' il metodo piu' veloce'), in deroga alla regola della MASTER ROADMAP",
+   "conseguenze": "tutti gli agenti committano su main; merge frequenti",
+   "documenti_sorgente": "chat + MASTER ROADMAP v3"
+  },
+  {
+   "id": "DEC-002",
+   "data": "2026-07-17",
+   "decisione": "Non usare gate DD/risk come 'fix' delle strategie perdenti",
+   "motivo": "'e' un camuffamento, non una vera soluzione alle strategie' (utente)",
+   "evidenze": "DD 87% ricorrente con cause strutturali nelle strategie, non nel risk layer",
+   "conseguenze": "il bypass Tester resta; il DD cumulato resta aperto e dichiarato; i fix veri sono sui trigger",
+   "documenti_sorgente": "vault: Caccia al Bug + Principi #7"
+  },
+  {
+   "id": "DEC-003",
+   "data": "2026-07-15",
+   "decisione": "Mai disattivare una direzione (buy o sell): costruire setup indipendenti per direzione",
+   "motivo": "rimuovere una direzione elimina i sintomi, non la causa",
+   "evidenze": "asimmetrie buy/sell trovate su SAR/MACD/RSI_DIV",
+   "conseguenze": "framework setup buy/sell separati (vault)",
+   "documenti_sorgente": "Principi #9 + Setup Buy-Sell Framework"
+  },
+  {
+   "id": "DEC-004",
+   "data": "2026-07-17",
+   "decisione": "Metodologia A->B->C: coerenza logica, poi esecuzione, poi statistica - in quest'ordine",
+   "motivo": "misurare la statistica di trigger rotti produce conclusioni senza valore",
+   "evidenze": "zero-trade spiegate da bug (WEEKLY_EXP), non dal mercato",
+   "conseguenze": "tutti i verdetti C pre-fix dichiarati inaffidabili",
+   "documenti_sorgente": "documento 3-anni-vs-10-anni (agente logico) + roadmap"
+  },
+  {
+   "id": "DEC-005",
+   "data": "2026-07-17",
+   "decisione": "CISD: rename onesto invece di riscrittura",
+   "motivo": "la versione 'canonica' provata in passato non scattava mai (0/1067); senza MT5 attivo impossibile validare una nuova",
+   "evidenze": "commento storico v2.3.3 nel codice",
+   "conseguenze": "THREE_BAR_DELIVERY_BREAK ovunque; toggle .set invariato",
+   "documenti_sorgente": "commit 1bb167a"
+  },
+  {
+   "id": "DEC-006",
+   "data": "2026-07-17",
+   "decisione": "ELLIOTT: rename FIVE_SWING_IMPULSE (pattern proprietario dichiarato), esecuzione posticipata",
+   "motivo": "onesta' nominale (audit); rename a meta' sweep romperebbe l'identity check del runner",
+   "evidenze": "audit: conteggio Elliott non automatizzabile oggettivamente",
+   "conseguenze": "in coda a fine sweep",
+   "documenti_sorgente": "audit canonico + chat"
+  },
+  {
+   "id": "DEC-007",
+   "data": "2026-07-17",
+   "decisione": "Motore NXR unica fonte per IFVG/FVG_MIT/OB_MIT",
+   "motivo": "due implementazioni in gara a colpi di score = ambiguita' non diagnosticabile",
+   "evidenze": "audit canonico: 'converge on the persistent lifecycle engine'",
+   "conseguenze": "legacy escluso dal percorso attivo",
+   "documenti_sorgente": "commit 375c29e"
+  },
+  {
+   "id": "DEC-008",
+   "data": "2026-07-18",
+   "decisione": "Baseline tecnica congelata (P0.1/INFRA-001)",
+   "motivo": "nessun risultato e' interpretabile senza identita' di build/config",
+   "evidenze": "MASTER ROADMAP P0.1",
+   "conseguenze": "commit e6ce816, branch baseline-post-infra-audit, manifest v2; risultati pre-18/07 non confrontabili",
+   "documenti_sorgente": "results/manifests/baseline_manifest.json + vault Decisions"
+  },
+  {
+   "id": "DEC-009",
+   "data": "2026-07-18",
+   "decisione": "Sweep lasciato correre a leva effettiva 1:100",
+   "motivo": "impatto nullo verificato nel codice (DataCollectionMode senza margin gate, 1 posizione, lotto fisso); fermarlo = buttare 7 passate per gli stessi numeri",
+   "evidenze": "BUG-024 documentato con due fonti indipendenti",
+   "conseguenze": "uniformita' 1:100 su tutte le 37 passate; fix formato ini prima del test portafoglio",
+   "documenti_sorgente": "manifest v2 + chat"
+  },
+  {
+   "id": "DEC-010",
+   "data": "2026-07-18",
+   "decisione": "Ruoli agenti separati e fissi",
+   "motivo": "mescolare MT5 e browser sulla stessa sessione ha gia' causato contese/timeout",
+   "evidenze": "incidenti timeout + kill accidentale",
+   "conseguenze": "desktop=MT5+repo, Dispatch=browser/TV, codice=questa sessione, logico=analisi via relay",
+   "documenti_sorgente": "chat + vault Piano Agente Desktop"
+  },
+  {
+   "id": "DEC-011",
+   "data": "2026-07-17",
+   "decisione": "TradingView/Pine = terzo punto di osservazione, mai tie-breaker",
+   "motivo": "ogni motore ha fill/spread/dati propri",
+   "evidenze": "SAR: due motori in disaccordo diretto sulla direzione del PF",
+   "conseguenze": "nessuna modifica MQL5 giustificata da un solo motore",
+   "documenti_sorgente": "vault: Confronto 3 Motori"
+  },
+  {
+   "id": "DEC-012",
+   "data": "2026-07-18",
+   "decisione": "Hold implementativo: P0.2/P0.3 e nuove modifiche solo dopo fine sweep + approvazione esplicita",
+   "motivo": "proteggere il primo dataset pulito da cambi di build a meta' misura",
+   "evidenze": "baseline congelata",
+   "conseguenze": "questa sessione in sola lettura fino a fine sweep (Knowledge Engine incluso: nessun codice toccato)",
+   "documenti_sorgente": "chat (audit approvato)"
+  },
+  {
+   "id": "DEC-013",
+   "data": "2026-07-15",
+   "decisione": "Ogni numero va citato con fonte e orizzonte (sito/MT5/TV, 3M/3Y/10Y)",
+   "motivo": "numeri senza contesto hanno gia' causato una regressione (MACD v2.5.0)",
+   "evidenze": "Principio 5/6",
+   "conseguenze": "convenzione applicata in vault e knowledge base",
+   "documenti_sorgente": "vault: Principi"
+  }
+ ]
+}
