@@ -1,8 +1,9 @@
 {
  "schema": 1,
- "timeline_engine_version": "1.0.0",
+ "timeline_engine_version": "1.1.0",
  "regole": "solo fatti documentati; cronologia non determinabile = nessun evento; nessuna statistica/ranking/confronto",
  "totale_eventi": 309,
+ "coverage_terminology": "complete_for_available_evidence",
  "strategie_storia_completa": [
   "ADX_RSI",
   "BOLLINGER",
@@ -72,6 +73,7 @@
   "ADX_RSI": {
    "strategy_id": "ADX_RSI",
    "stato_corrente": "config TP10x+BE1.5R confermata in direzione su 2 motori (TV+sito)",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-f07adff6e1cd",
@@ -247,6 +249,7 @@
   "BOLLINGER": {
    "strategy_id": "BOLLINGER",
    "stato_corrente": "re-entry mean reversion, minimale ma valida (audit)",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-16171b7b53f4",
@@ -448,6 +451,7 @@
   "MACD": {
    "strategy_id": "MACD",
    "stato_corrente": "fix TP-largo+BE confermato su 3 motori indipendenti - la migliore evidenza del progetto",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-052b241cb29a",
@@ -623,6 +627,7 @@
   "SAR": {
    "strategy_id": "SAR",
    "stato_corrente": "variante BE NON applicata: 2 motori in disaccordo sulla direzione del PF",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-5ccbbf983e9e",
@@ -785,6 +790,7 @@
   "TSI": {
    "strategy_id": "TSI",
    "stato_corrente": "dati storici da azzerare: appartengono a un'altra logica",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-7036400e83f5",
@@ -973,6 +979,7 @@
   "BJORGUM": {
    "strategy_id": "BJORGUM",
    "stato_corrente": "PF 2.14 storico su 5 trade = rumore statistico (Principio 4)",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-2803e8fc7e5e",
@@ -1083,6 +1090,7 @@
   "LIQ_SWEEP": {
    "strategy_id": "LIQ_SWEEP",
    "stato_corrente": "un solo motore di rilevamento con tag diagnostico, non 3 cloni",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-d8cdde09aea6",
@@ -1219,6 +1227,7 @@
   "FVG_CONT": {
    "strategy_id": "FVG_CONT",
    "stato_corrente": "lifecycle persistente in coda (non ancora implementato)",
+   "timeline_coverage": "complete_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-8a6c7b7af679",
@@ -1329,6 +1338,7 @@
   "BREAKOUT_ACC": {
    "strategy_id": "BREAKOUT_ACC",
    "stato_corrente": "auditata sessione precedente, nessun problema grave",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-937e22b53e85",
@@ -1400,6 +1410,7 @@
   "LONDON_BO": {
    "strategy_id": "LONDON_BO",
    "stato_corrente": "DST sessione condiviso con NY_REVERSAL (fatto li')",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-d5ee9f2c19bb",
@@ -1510,6 +1521,7 @@
   "EMA_PULLBACK": {
    "strategy_id": "EMA_PULLBACK",
    "stato_corrente": "trigger cambiato: dati storici non comparabili",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-f5fc9305536c",
@@ -1620,6 +1632,7 @@
   "BB_SQUEEZE": {
    "strategy_id": "BB_SQUEEZE",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-8da1ac3f12a0",
@@ -1730,6 +1743,7 @@
   "ICHIMOKU": {
    "strategy_id": "ICHIMOKU",
    "stato_corrente": "Kumo breakout semplificato dichiarato (audit: rinominabile ICHIMOKU_KUMO_BREAKOUT)",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-a552d844412e",
@@ -1840,6 +1854,7 @@
   "RSI_DIV": {
    "strategy_id": "RSI_DIV",
    "stato_corrente": "sospetta regime-dipendenza: TV (1.5y) in perdita, sito profittevole - da verificare su dati MT5 puliti",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-16e7e4efbe83",
@@ -1911,6 +1926,7 @@
   "ORDER_BLOCK": {
    "strategy_id": "ORDER_BLOCK",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-d56af73c557a",
@@ -2021,6 +2037,7 @@
   "STRUCT_REACT": {
    "strategy_id": "STRUCT_REACT",
    "stato_corrente": "decisione architetturale in coda: strategia autonoma O gate per le altre, non entrambe",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-7ef87d030a49",
@@ -2092,6 +2109,7 @@
   "TURTLE_SOUP": {
    "strategy_id": "TURTLE_SOUP",
    "stato_corrente": "verificata 17/07: nessun bug reale (sweep/rejection stessa barra per costruzione)",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-374328ca5b22",
@@ -2189,6 +2207,7 @@
   "IFVG": {
    "strategy_id": "IFVG",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-83bf5ca34649",
@@ -2299,6 +2318,7 @@
   "FVG_MIT": {
    "strategy_id": "FVG_MIT",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-8b40cf514327",
@@ -2409,6 +2429,7 @@
   "OB_MIT": {
    "strategy_id": "OB_MIT",
    "stato_corrente": "disabilitata di fatto nel router legacy; breaker = strategia futura separata",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-55ed72526b37",
@@ -2519,6 +2540,7 @@
   "SH_BMS_RTO": {
    "strategy_id": "SH_BMS_RTO",
    "stato_corrente": "vincolo causale sweep<MSS<retest garantito per costruzione",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-729792beaa47",
@@ -2629,6 +2651,7 @@
   "SMS_BMS_RTO": {
    "strategy_id": "SMS_BMS_RTO",
    "stato_corrente": "fix con spec audit in coda",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-3b74e50d0963",
@@ -2700,6 +2723,7 @@
   "SILVER_BULLET": {
    "strategy_id": "SILVER_BULLET",
    "stato_corrente": "scadenza a barre; killzone fisse GMT (DST in coda)",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-e15a8b0bc636",
@@ -2810,6 +2834,7 @@
   "AMD_REVERSAL": {
    "strategy_id": "AMD_REVERSAL",
    "stato_corrente": "spec state-machine completa pronta (agente logico), non implementata - in attesa approvazione",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-ab3b07d28fe6",
@@ -2920,6 +2945,7 @@
   "MALAYSIAN_SNR": {
    "strategy_id": "MALAYSIAN_SNR",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-c0160c52e805",
@@ -3030,6 +3056,7 @@
   "THREE_BAR_DELIVERY_BREAK": {
    "strategy_id": "THREE_BAR_DELIVERY_BREAK",
    "stato_corrente": "versione 'vera' provata in passato: 0 setup su 1067 - tenuta la logica funzionante",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-b656cfa46f46",
@@ -3153,6 +3180,7 @@
   "AMD_CONT": {
    "strategy_id": "AMD_CONT",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-9386dd1cda34",
@@ -3263,6 +3291,7 @@
   "JUDAS_SWING": {
    "strategy_id": "JUDAS_SWING",
    "stato_corrente": "spec timestamp CHOCH pronta (agente logico), non implementata - in attesa approvazione",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-46be0cb9e72f",
@@ -3347,6 +3376,7 @@
   "LDN_REVERSAL": {
    "strategy_id": "LDN_REVERSAL",
    "stato_corrente": "spec timestamp CHOCH pronta",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-8d85e2ff8816",
@@ -3457,6 +3487,7 @@
   "NY_REVERSAL": {
    "strategy_id": "NY_REVERSAL",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-870e39edd579",
@@ -3567,6 +3598,7 @@
   "WEEKLY_EXP": {
    "strategy_id": "WEEKLY_EXP",
    "stato_corrente": "zero-trade storici = bug, non assenza del pattern",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-255e9e33b825",
@@ -3677,6 +3709,7 @@
   "PO3": {
    "strategy_id": "PO3",
    "stato_corrente": "spec state-machine completa pronta + dedupe con AMD_REVERSAL via manipulation_event_id - in attesa approvazione",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-26538a3f1866",
@@ -3787,6 +3820,7 @@
   "LIQ_VOID": {
    "strategy_id": "LIQ_VOID",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-e1b9ea9ddde5",
@@ -3897,6 +3931,7 @@
   "DISP_REBAL": {
    "strategy_id": "DISP_REBAL",
    "stato_corrente": "disabilitata in produzione reale (test storico: 10 trade, -53 USD, WR 30%)",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-75f2060cf654",
@@ -4007,6 +4042,7 @@
   "RANGE_FADE": {
    "strategy_id": "RANGE_FADE",
    "stato_corrente": "attiva",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-ad14a6bd5083",
@@ -4117,6 +4153,7 @@
   "OTE_CONT": {
    "strategy_id": "OTE_CONT",
    "stato_corrente": "zona 62-79% (70.5 centrale) gia' corretta - il fix era l'ancoraggio",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-68f5268890cb",
@@ -4227,6 +4264,7 @@
   "ELLIOTT": {
    "strategy_id": "ELLIOTT",
    "stato_corrente": "DECISO: rename FIVE_SWING_IMPULSE (pattern proprietario dichiarato) - esecuzione a sweep concluso",
+   "timeline_coverage": "partial_for_available_evidence",
    "eventi": [
     {
      "event_id": "evt-3684d3cab34e",

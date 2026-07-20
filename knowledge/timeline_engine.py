@@ -22,7 +22,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KNOW = os.path.join(ROOT, "knowledge")
 
 TIMELINE_SCHEMA_VERSION = 1
-TIMELINE_ENGINE_VERSION = "1.0.0"
+TIMELINE_ENGINE_VERSION = "1.1.0"  # 1.1.0: correzione terminologia M2 richiesta da M4 (timeline_coverage)
 
 # alias storici -> nome canonico in strategy_database
 ALIASES = {"CISD": "THREE_BAR_DELIVERY_BREAK"}
@@ -233,11 +233,18 @@ def main() -> int:
         "schema": TIMELINE_SCHEMA_VERSION, "timeline_engine_version": TIMELINE_ENGINE_VERSION,
         "regole": "solo fatti documentati; cronologia non determinabile = nessun evento; nessuna statistica/ranking/confronto",
         "totale_eventi": len(all_events),
+        # Terminologia (correzione M4): "completa" significa sempre completa PER LE
+        # EVIDENZE DISPONIBILI, mai storia assoluta. Le chiavi storiche restano per
+        # retrocompatibilita'; timeline_coverage e' il campo canonico additivo.
+        "coverage_terminology": "complete_for_available_evidence",
         "strategie_storia_completa": complete, "strategie_storia_parziale": partial,
         "gap_cronologici": sorted(set(gaps + list(vague_skipped))),
         "assunzioni": assumptions,
         "timelines": {n: {"strategy_id": n,
                           "stato_corrente": by_name[n].get("decisione_corrente") or by_name[n].get("stato"),
+                          "timeline_coverage": ("complete_for_available_evidence"
+                                                if n in complete else
+                                                "partial_for_available_evidence"),
                           "eventi": events[n]} for n in names},
     }
     with open(os.path.join(KNOW, "strategy_timelines.json"), "w", encoding="utf-8") as f:
@@ -246,13 +253,16 @@ def main() -> int:
     # ---------- indice umano ----------
     lines = ["# Nexus — Strategy Timeline (indice)", "",
              f"Generato da timeline_engine.py v{TIMELINE_ENGINE_VERSION} · "
-             f"{len(all_events)} eventi · {len(complete)} strategie con storia completa, "
-             f"{len(partial)} parziale", "",
+             f"{len(all_events)} eventi · {len(complete)} strategie con storia completa "
+             f"per le evidenze disponibili, {len(partial)} parziale", "",
              "Solo ricostruzione cronologica di fatti documentati — nessuna statistica, "
-             "nessun ranking, nessuna raccomandazione.", ""]
+             "nessun ranking, nessuna raccomandazione.", "",
+             "**Terminologia**: \"completa\" = completa PER LE EVIDENZE DISPONIBILI "
+             "(`complete_for_available_evidence`), mai storia assoluta: eventi non "
+             "documentati non esistono per questo motore.", ""]
     for n in names:
         evs = events[n]
-        lines.append(f"## {n}  ({'storia completa' if n in complete else 'storia parziale'})")
+        lines.append(f"## {n}  ({'storia completa per le evidenze disponibili' if n in complete else 'storia parziale per le evidenze disponibili'})")
         if not evs:
             lines.append("- (nessun evento databile nelle fonti)")
         for e in evs:

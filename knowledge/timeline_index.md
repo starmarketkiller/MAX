@@ -1,10 +1,12 @@
 # Nexus — Strategy Timeline (indice)
 
-Generato da timeline_engine.py v1.0.0 · 309 eventi · 7 strategie con storia completa, 30 parziale
+Generato da timeline_engine.py v1.1.0 · 309 eventi · 7 strategie con storia completa per le evidenze disponibili, 30 parziale
 
 Solo ricostruzione cronologica di fatti documentati — nessuna statistica, nessun ranking, nessuna raccomandazione.
 
-## ADX_RSI  (storia completa)
+**Terminologia**: "completa" = completa PER LE EVIDENZE DISPONIBILI (`complete_for_available_evidence`), mai storia assoluta: eventi non documentati non esistono per questo motore.
+
+## ADX_RSI  (storia completa per le evidenze disponibili)
 - **2026-07-15** · bug_discovered · Bug scoperto: BUG-023
 - **2026-07-15** · bug_fixed · Bug risolto: BUG-023 · confidence=medium
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
@@ -20,7 +22,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · sweep_executed · Sweep sweep37-baseline-e6ce816 S01 (run `sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350`)
 - **Stato attuale**: config TP10x+BE1.5R confermata in direzione su 2 motori (TV+sito)
 
-## BOLLINGER  (storia completa)
+## BOLLINGER  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-16** · sweep_executed · Sweep sweep37-prefix-r1 S02 (run `sweep37-prefix-r1__S02__BOLLINGER__20260716_104132`)
@@ -38,7 +40,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · sweep_executed · Sweep sweep37-baseline-e6ce816 S02 (run `sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107`)
 - **Stato attuale**: re-entry mean reversion, minimale ma valida (audit)
 
-## MACD  (storia completa)
+## MACD  (storia completa per le evidenze disponibili)
 - **2026-07-15** · bug_discovered · Bug scoperto: BUG-023
 - **2026-07-15** · bug_fixed · Bug risolto: BUG-023 · confidence=medium
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
@@ -54,7 +56,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · sweep_executed · Sweep sweep37-baseline-e6ce816 S03 (run `sweep37-baseline-e6ce816__S03__MACD__20260718_205653`)
 - **Stato attuale**: fix TP-largo+BE confermato su 3 motori indipendenti - la migliore evidenza del progetto
 
-## SAR  (storia parziale)
+## SAR  (storia parziale per le evidenze disponibili)
 - **2026-07-15** · bug_discovered · Bug scoperto: BUG-023
 - **2026-07-15** · bug_fixed · Bug risolto: BUG-023 · confidence=medium
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
@@ -69,7 +71,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-20** · issue_detected · Issue: missing_artifact (dqi-missing-S04-sweep37-baseline-e6ce816)
 - **Stato attuale**: variante BE NON applicata: 2 motori in disaccordo sulla direzione del PF
 
-## TSI  (storia completa)
+## TSI  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-16** · sweep_executed · Sweep sweep37-prefix-r2 S05 (run `sweep37-prefix-r2__S05__TSI__20260716_144137`)
@@ -86,7 +88,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-19** · sweep_executed · Sweep sweep37-baseline-e6ce816 S05 (run `sweep37-baseline-e6ce816__S05__TSI__20260719_022556`)
 - **Stato attuale**: dati storici da azzerare: appartengono a un'altra logica
 
-## BJORGUM  (storia completa)
+## BJORGUM  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -97,7 +99,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-19** · sweep_executed · Sweep sweep37-baseline-e6ce816 S06 (run `sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449`)
 - **Stato attuale**: PF 2.14 storico su 5 trade = rumore statistico (Principio 4)
 
-## LIQ_SWEEP  (storia completa)
+## LIQ_SWEEP  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -110,7 +112,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-19** · sweep_executed · Sweep sweep37-baseline-e6ce816 S07 (run `sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122`)
 - **Stato attuale**: un solo motore di rilevamento con tag diagnostico, non 3 cloni
 
-## FVG_CONT  (storia completa)
+## FVG_CONT  (storia completa per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-16** · redesign · Redesign
@@ -121,7 +123,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-19** · sweep_executed · Sweep sweep37-baseline-e6ce816 S08 (run `sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743`)
 - **Stato attuale**: lifecycle persistente in coda (non ancora implementato)
 
-## BREAKOUT_ACC  (storia parziale)
+## BREAKOUT_ACC  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -129,7 +131,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-028
 - **Stato attuale**: auditata sessione precedente, nessun problema grave
 
-## LONDON_BO  (storia parziale)
+## LONDON_BO  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -140,7 +142,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-015 (commit `6745e43`)
 - **Stato attuale**: DST sessione condiviso con NY_REVERSAL (fatto li')
 
-## EMA_PULLBACK  (storia parziale)
+## EMA_PULLBACK  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -151,7 +153,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-015 (commit `6745e43`)
 - **Stato attuale**: trigger cambiato: dati storici non comparabili
 
-## BB_SQUEEZE  (storia parziale)
+## BB_SQUEEZE  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -162,7 +164,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-017 (commit `74dc4cc`)
 - **Stato attuale**: attiva
 
-## ICHIMOKU  (storia parziale)
+## ICHIMOKU  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -173,7 +175,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-017 (commit `74dc4cc`)
 - **Stato attuale**: Kumo breakout semplificato dichiarato (audit: rinominabile ICHIMOKU_KUMO_BREAKOUT)
 
-## RSI_DIV  (storia parziale)
+## RSI_DIV  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -181,7 +183,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-028
 - **Stato attuale**: sospetta regime-dipendenza: TV (1.5y) in perdita, sito profittevole - da verificare su dati MT5 puliti
 
-## ORDER_BLOCK  (storia parziale)
+## ORDER_BLOCK  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -192,7 +194,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-011 (commit `e24f16f`)
 - **Stato attuale**: attiva
 
-## STRUCT_REACT  (storia parziale)
+## STRUCT_REACT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -200,7 +202,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-028
 - **Stato attuale**: decisione architetturale in coda: strategia autonoma O gate per le altre, non entrambe
 
-## TURTLE_SOUP  (storia parziale)
+## TURTLE_SOUP  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -210,7 +212,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-016 (commit `9db13f9`)
 - **Stato attuale**: verificata 17/07: nessun bug reale (sweep/rejection stessa barra per costruzione)
 
-## IFVG  (storia parziale)
+## IFVG  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -221,7 +223,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · redesign · Redesign
 - **Stato attuale**: attiva
 
-## FVG_MIT  (storia parziale)
+## FVG_MIT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -232,7 +234,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · redesign · Redesign
 - **Stato attuale**: attiva
 
-## OB_MIT  (storia parziale)
+## OB_MIT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -243,7 +245,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · redesign · Redesign
 - **Stato attuale**: disabilitata di fatto nel router legacy; breaker = strategia futura separata
 
-## SH_BMS_RTO  (storia parziale)
+## SH_BMS_RTO  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -254,7 +256,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · redesign · Redesign
 - **Stato attuale**: vincolo causale sweep<MSS<retest garantito per costruzione
 
-## SMS_BMS_RTO  (storia parziale)
+## SMS_BMS_RTO  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -262,7 +264,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-028
 - **Stato attuale**: fix con spec audit in coda
 
-## SILVER_BULLET  (storia parziale)
+## SILVER_BULLET  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -273,7 +275,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-012 (commit `4d6e2ce`)
 - **Stato attuale**: scadenza a barre; killzone fisse GMT (DST in coda)
 
-## AMD_REVERSAL  (storia parziale)
+## AMD_REVERSAL  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -284,7 +286,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-016 (commit `9db13f9`)
 - **Stato attuale**: spec state-machine completa pronta (agente logico), non implementata - in attesa approvazione
 
-## MALAYSIAN_SNR  (storia parziale)
+## MALAYSIAN_SNR  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -295,7 +297,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-017 (commit `74dc4cc`)
 - **Stato attuale**: attiva
 
-## THREE_BAR_DELIVERY_BREAK  (storia parziale)
+## THREE_BAR_DELIVERY_BREAK  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -307,7 +309,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · renamed_strategy · Rinominata da CISD a THREE_BAR_DELIVERY_BREAK (commit `1bb167a`)
 - **Stato attuale**: versione 'vera' provata in passato: 0 setup su 1067 - tenuta la logica funzionante
 
-## AMD_CONT  (storia parziale)
+## AMD_CONT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -318,7 +320,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-016 (commit `9db13f9`)
 - **Stato attuale**: attiva
 
-## JUDAS_SWING  (storia parziale)
+## JUDAS_SWING  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -327,7 +329,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_discovered · Bug scoperto: BUG-025
 - **Stato attuale**: spec timestamp CHOCH pronta (agente logico), non implementata - in attesa approvazione
 
-## LDN_REVERSAL  (storia parziale)
+## LDN_REVERSAL  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -338,7 +340,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-016 (commit `9db13f9`)
 - **Stato attuale**: spec timestamp CHOCH pronta
 
-## NY_REVERSAL  (storia parziale)
+## NY_REVERSAL  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -349,7 +351,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-021 (commit `e6ce816`)
 - **Stato attuale**: attiva
 
-## WEEKLY_EXP  (storia parziale)
+## WEEKLY_EXP  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -360,7 +362,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-018 (commit `3b2298c`)
 - **Stato attuale**: zero-trade storici = bug, non assenza del pattern
 
-## PO3  (storia parziale)
+## PO3  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -371,7 +373,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-016 (commit `9db13f9`)
 - **Stato attuale**: spec state-machine completa pronta + dedupe con AMD_REVERSAL via manipulation_event_id - in attesa approvazione
 
-## LIQ_VOID  (storia parziale)
+## LIQ_VOID  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -382,7 +384,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-17** · redesign · Redesign
 - **Stato attuale**: attiva
 
-## DISP_REBAL  (storia parziale)
+## DISP_REBAL  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -393,7 +395,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-014 (commit `a1c8242`)
 - **Stato attuale**: disabilitata in produzione reale (test storico: 10 trade, -53 USD, WR 30%)
 
-## RANGE_FADE  (storia parziale)
+## RANGE_FADE  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -404,7 +406,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-019 (commit `383a27a`)
 - **Stato attuale**: attiva
 
-## OTE_CONT  (storia parziale)
+## OTE_CONT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
@@ -415,7 +417,7 @@ Solo ricostruzione cronologica di fatti documentati — nessuna statistica, ness
 - **2026-07-18** · bug_fixed · Bug risolto: BUG-020 (commit `1331377`)
 - **Stato attuale**: zona 62-79% (70.5 centrale) gia' corretta - il fix era l'ancoraggio
 
-## ELLIOTT  (storia parziale)
+## ELLIOTT  (storia parziale per le evidenze disponibili)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-001 (commit `3cba036`)
 - **2026-07-16** · bug_fixed · Bug risolto: BUG-003 (commit `d051ece`)
 - **2026-07-17** · bug_discovered · Bug scoperto: BUG-001
