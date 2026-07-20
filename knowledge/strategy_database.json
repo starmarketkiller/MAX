@@ -20,10 +20,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S01",
     "file": "SWEEP37_S01_20260718_161350_stats.csv",
-    "data_file": "20260718",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 915,
     "wins": 319,
     "losses": 338,
@@ -37,7 +38,7 @@
    "PF": 0.82,
    "WR_pct": 48.55,
    "expectancy_R": -0.028,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "config TP10x+BE1.5R confermata in direzione su 2 motori (TV+sito)",
    "note": "trigger: EMA50 slope + banda RSI su D1"
   },
@@ -58,10 +59,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S02",
     "file": "SWEEP37_S02_20260718_190107_stats.csv",
-    "data_file": "20260718",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 144,
     "wins": 59,
     "losses": 48,
@@ -75,7 +77,7 @@
    "PF": 0.79,
    "WR_pct": 55.14,
    "expectancy_R": -0.033,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "re-entry mean reversion, minimale ma valida (audit)",
    "note": null
   },
@@ -95,10 +97,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S03",
     "file": "SWEEP37_S03_20260718_205653_stats.csv",
-    "data_file": "20260718",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 1244,
     "wins": 461,
     "losses": 363,
@@ -112,7 +115,7 @@
    "PF": 0.79,
    "WR_pct": 55.95,
    "expectancy_R": -0.038,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "fix TP-largo+BE confermato su 3 motori indipendenti - la migliore evidenza del progetto",
    "note": "signal MT5 = SMA (non EMA come TV)"
   },
@@ -166,10 +169,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S05",
     "file": "SWEEP37_S05_20260719_022556_stats.csv",
-    "data_file": "20260719",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 839,
     "wins": 254,
     "losses": 209,
@@ -183,7 +187,7 @@
    "PF": 0.76,
    "WR_pct": 54.86,
    "expectancy_R": -0.028,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "dati storici da azzerare: appartengono a un'altra logica",
    "note": "warmup 3x periodo lungo prima dei segnali"
   },
@@ -197,10 +201,11 @@
    "bug_storici": [],
    "fix_applicati": [],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S06",
     "file": "SWEEP37_S06_20260719_052449_stats.csv",
-    "data_file": "20260719",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 397,
     "wins": 150,
     "losses": 156,
@@ -214,7 +219,7 @@
    "PF": 0.68,
    "WR_pct": 49.02,
    "expectancy_R": -0.071,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "PF 2.14 storico su 5 trade = rumore statistico (Principio 4)",
    "note": null
   },
@@ -236,10 +241,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S07",
     "file": "SWEEP37_S07_20260719_080122_stats.csv",
-    "data_file": "20260719",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 292,
     "wins": 100,
     "losses": 100,
@@ -253,7 +259,7 @@
    "PF": 1.04,
    "WR_pct": 50.0,
    "expectancy_R": 0.004,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "un solo motore di rilevamento con tag diagnostico, non 3 cloni",
    "note": null
   },
@@ -273,10 +279,11 @@
     "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
    ],
    "ultimo_sweep": {
+    "run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743",
+    "round": "sweep37-baseline-e6ce816",
     "passata": "S08",
     "file": "SWEEP37_S08_20260719_193743_stats.csv",
-    "data_file": "20260719",
-    "round_corrente": true,
+    "completed": true,
     "trade_eseguiti": 251,
     "wins": 105,
     "losses": 124,
@@ -290,7 +297,7 @@
    "PF": 0.96,
    "WR_pct": 45.85,
    "expectancy_R": -0.013,
-   "affidabilita_dati": "primi dati puliti post-fix (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
+   "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
    "decisione_corrente": "lifecycle persistente in coda (non ancora implementato)",
    "note": null
   },
@@ -1005,5 +1012,6 @@
    "decisione_corrente": "DECISO: rename FIVE_SWING_IMPULSE (pattern proprietario dichiarato) - esecuzione a sweep concluso",
    "note": " | proxy a pivot, non vero conteggio"
   }
- ]
+ ],
+ "aggiornato_da_importer": "2026-07-20T10:59:50Z"
 }

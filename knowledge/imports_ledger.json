@@ -1,0 +1,311 @@
+{
+ "schema": 1,
+ "imports": [
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/manifests/baseline_manifest.json",
+   "checksum": "d3b535ac93ce92eaf23f5bb86506cf6f33095791f979cd08a75e6801f8492914",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "manifest"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S01_20260717_110029_stats.csv",
+   "checksum": "ffb494c5e99c25eb186593071463c1b669ed44a8968749acc39e5e242a07fb7b",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S01__ADX_RSI__20260717_110029",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S01_20260718_161350_stats.csv",
+   "checksum": "8b7e4b84e940a1b0fd709413e19df855233f60f95579db2fa14c91e5182ea175",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S02_20260717_140406_stats.csv",
+   "checksum": "0d003ae97279d1de672c69301cac4da438992b2595aaec35869d9d36fa6319d9",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S02__BOLLINGER__20260717_140406",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S02_20260718_190107_stats.csv",
+   "checksum": "8a41071672d49600583487698e7db1c8585d02ef28adaccf99a31a9a3d711930",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S03_20260717_171311_stats.csv",
+   "checksum": "f64b34c4301ade00944b7ab0b36bbd581fd2f7efe93c6810009e517d77944e42",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S03__MACD__20260717_171311",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S03_20260718_205653_stats.csv",
+   "checksum": "2551c33a3dc0427c9316793f41fcfec74c9e00ba7f19e720c65b2da0cd425437",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S04_20260717_194244_stats.csv",
+   "checksum": "16d1ee7b4e649cc22a897efb830f63afc8c967f43ec36049ecc04363f823571a",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S04__SAR__20260717_194244",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S05_20260717_201524_stats.csv",
+   "checksum": "e96c8ebd0af209ffdcb0d67e7978a99bbb339bbee1a49e8e1b39bea0ec06eca7",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S05__TSI__20260717_201524",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S05_20260719_022556_stats.csv",
+   "checksum": "d25edfe2b06acee2acb5cfd76ca86271f75be78f6928377158d83ce7d8a64a17",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S06_20260719_052449_stats.csv",
+   "checksum": "bac28d7cf649ba3462a6dd257222c9b07a40d045b1c4a16dfb785aaf0b6321e1",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S07_20260717_005658_stats.csv",
+   "checksum": "390ada892816ea32c88b6d6e47c704b4c9d621e5e1c2d6ac71190287f8464a11",
+   "ea_version": "2.50",
+   "run_id": "sweep37-postfix12h-killed__S07__LIQ_SWEEP__20260717_005658",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S07_20260719_080122_stats.csv",
+   "checksum": "68d4f75d3d471f6c430356a6d418f029cbec4abcf74bd7ff56aa18f3410b1895",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/SWEEP37_S08_20260719_193743_stats.csv",
+   "checksum": "12faea77a3091bf24212ffc76c6196e24bc57efadc92bd89e26a9ca2450c4d44",
+   "ea_version": "2.50",
+   "run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round2/SWEEP37_S01_20260716_125117_stats.csv",
+   "checksum": "a8e222784d565febfc14003f61148397c4c87c26b4c9712e6337386e00d1666c",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r2__S01__ADX_RSI__20260716_125117",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round2/SWEEP37_S02_20260716_131436_stats.csv",
+   "checksum": "ee32e85a15d376004b03b48765d58ec056001408c6951258853d7c3e8349b281",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r2__S02__BOLLINGER__20260716_131436",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round2/SWEEP37_S03_20260716_141813_stats.csv",
+   "checksum": "74cc66b3152a87fa044f4612e6e7f5a742649f82be1ed91569da1d3016e5eec8",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r2__S03__MACD__20260716_141813",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round2/SWEEP37_S04_20260716_143004_stats.csv",
+   "checksum": "273381001f1b7d32eb7e7805cecfb0a41df84f2c4b7aaeaf25555cec09f597be",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r2__S04__SAR__20260716_143004",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round2/SWEEP37_S05_20260716_144137_stats.csv",
+   "checksum": "7b2c06887ca60f7fb62398685ecb2e5a53659d72690a9eac7dfeea2116a366e0",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r2__S05__TSI__20260716_144137",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S01_20260716_183817_stats.csv",
+   "checksum": "c163da206eb63534120013b2a2e9f3022649733b85c8d8fa6398722e0e088364",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S01__ADX_RSI__20260716_183817",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S02_20260716_213223_stats.csv",
+   "checksum": "4bfb5569f869427d39fcaebb37cf7cf9ec9cb1c97b0e498d3ef82e8d06b4772e",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S02__BOLLINGER__20260716_213223",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S03_20260716_233522_stats.csv",
+   "checksum": "2f90a7fce24108093fb0bdac57bda3485b1df70cba5ff34ca6dda9fe94eea7e6",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S03__MACD__20260716_233522",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S04_20260716_234407_stats.csv",
+   "checksum": "59cac068a7761aba24df64eacfcd1d5905cf49ef549a44995da3682a111f45e3",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S04__SAR__20260716_234407",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S05_20260717_001357_stats.csv",
+   "checksum": "56ebd0abd522010782c57dc7186dca8d0bf42f9e865850fb311e25d64410d611",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S05__TSI__20260717_001357",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07-round3-gate1pos/SWEEP37_S06_20260717_002455_stats.csv",
+   "checksum": "9439cd3614187dc2b780ef76655359c67ca0daf33119806766ddc0742f416c2b",
+   "ea_version": "2.50",
+   "run_id": "sweep37-gate1pos-r3__S06__BJORGUM__20260717_002455",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07/SWEEP37_S01_20260716_101301_stats.csv",
+   "checksum": "28e2f934361d06bdf31d32c7a5ef97acf0226d6c0255d4d73348cfca861ce146",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r1__S01__ADX_RSI__20260716_101301",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07/SWEEP37_S02_20260716_104132_stats.csv",
+   "checksum": "a388575069627043989ae805242c36f93dc7320cbbc3c71e1f91442f92a3e7d7",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r1__S02__BOLLINGER__20260716_104132",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07/SWEEP37_S03_20260716_115221_stats.csv",
+   "checksum": "86652b295f9438713e4dd046aec46f557577ed7a705b8bac1b760b40bbff0228",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r1__S03__MACD__20260716_115221",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:38Z",
+   "origine": "results/reports/sweep37/pre-fix-16-07/SWEEP37_S04_20260716_120507_stats.csv",
+   "checksum": "d2133c8cafde1a1027df51fcabebee383b79aa92d85d28bdff5ce76c267b74a8",
+   "ea_version": "2.50",
+   "run_id": "sweep37-prefix-r1__S04__SAR__20260716_120507",
+   "esito": "importato",
+   "tipo": "strategy_stats_csv"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:39Z",
+   "origine": "results/reports/sweep37/trades_snapshots/NEXUS_trades_snapshot_20260717_011842_S05.csv",
+   "checksum": "79533b7226415961b1149e2a41bb63532f11518c365ed9821fc8754b9817066a",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "trades_csv_snapshot"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:44Z",
+   "origine": "results/reports/sweep37/trades_snapshots/NEXUS_trades_snapshot_20260717_194309_S05.csv",
+   "checksum": "df2ac517d7827acf85947c5159f033e2f3ac8131e91cecb02e57fc3ccaf46dcc",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "trades_csv_snapshot"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:49Z",
+   "origine": "results/reports/sweep37/trades_snapshots/NEXUS_trades_snapshot_20260717_213152_S05.csv",
+   "checksum": "c04c2e0cb97ecffe10792e42361cad62a799c464a11f535f3a50f28bf9c891f3",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "trades_csv_snapshot"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:49Z",
+   "origine": "results/reports/sweep37/trades_snapshots/NEXUS_trades_snapshot_20260717_S06.csv",
+   "checksum": "a19768df1f48786f4ba32036e39ad804dd3430279517d63306ae4e62cea4eb92",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "trades_csv_snapshot"
+  },
+  {
+   "timestamp": "2026-07-20T10:59:50Z",
+   "origine": "results/reports/sweep37/trades_snapshots/NEXUS_trades_snapshot_20260719_052440_S05.csv",
+   "checksum": "7da9b108dd681b6eda34bf5ad56f414d35b8d800820cf5dfe72d978cd648ab91",
+   "ea_version": "2.50",
+   "run_id": null,
+   "esito": "importato",
+   "tipo": "trades_csv_snapshot"
+  }
+ ]
+}

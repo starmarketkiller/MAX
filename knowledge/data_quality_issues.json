@@ -1,0 +1,17 @@
+{
+ "schema": 1,
+ "issues": [
+  {
+   "id": "dqi-missing-S04-sweep37-baseline-e6ce816",
+   "type": "missing_artifact",
+   "strategy": "SAR",
+   "run": "sweep37-baseline-e6ce816__S04",
+   "severity": "medium",
+   "status": "open",
+   "expected_artifact": "strategy_stats_csv",
+   "actual": "missing",
+   "possible_cause": "unknown",
+   "detected_at": "2026-07-20T10:59:50Z"
+  }
+ ]
+}
