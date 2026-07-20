@@ -99,8 +99,10 @@ bool NXS_Ledger_Emitted(ulong posId){
 void _nxs_ledger_markEmitted(ulong posId){
    if(NXS_Ledger_Emitted(posId)) return;
    int n = ArraySize(g_ledgerEmitted);
-   if(n >= NXS_LEDGER_MAX_EMITTED){       // FIFO trim: scarta il piu' vecchio
-      ArrayCopy(g_ledgerEmitted, g_ledgerEmitted, 0, 1, n - 1);
+   if(n >= NXS_LEDGER_MAX_EMITTED){
+      // FIFO trim: scarta SEMPRE il piu' vecchio. Shift esplicito: la
+      // self-ArrayCopy sovrapposta non ha semantica memmove garantita (F2).
+      for(int i = 1; i < n; i++) g_ledgerEmitted[i - 1] = g_ledgerEmitted[i];
       ArrayResize(g_ledgerEmitted, n - 1);
       n--;
    }
@@ -263,12 +265,21 @@ void _nxs_ledger_pruneStates(){
 // emesse la cui position e' sparita — copre il caso in cui l'ultimo evento
 // deal sia andato perso o sia arrivato mentre la position era ancora viva.
 int NXS_Ledger_SweepPending(){
-   int finals = 0;
+   // F1: snapshot dei candidati PRIMA di toccare — Touch puo' innescare
+   // _nxs_ledger_pruneStates, che ridimensiona/riordina g_ledgerState:
+   // mai iterare l'array mentre Touch puo' potarlo.
+   ulong pending[];
    for(int i = ArraySize(g_ledgerState) - 1; i >= 0; i--){
       if(g_ledgerState[i].emitted) continue;
       if(PositionSelectByTicket(g_ledgerState[i].position_id)) continue;
+      int n = ArraySize(pending);
+      ArrayResize(pending, n + 1);
+      pending[n] = g_ledgerState[i].position_id;
+   }
+   int finals = 0;
+   for(int i = 0; i < ArraySize(pending); i++){
       double dummy;
-      if(NXS_Ledger_Touch(g_ledgerState[i].position_id, dummy) == NXS_LEDGER_EV_FINAL)
+      if(NXS_Ledger_Touch(pending[i], dummy) == NXS_LEDGER_EV_FINAL)
          finals++;
    }
    return finals;
@@ -391,6 +402,93 @@ int NXS_Ledger_Boot(int days = 7){
       if(NXS_Ledger_Touch(posIds[i], dummy, true) == NXS_LEDGER_EV_FINAL) queued++;
    }
    return queued;
+}
+
+// ---------------------------------------------------------------- selftest --
+// Test deterministico dei percorsi F1/F2 (capacita' emitted, prune, snapshot
+// di SweepPending, coda FIFO). DISTRUTTIVO sullo stato in-memory del ledger:
+// chiamarlo SOLO prima che il trading inizi (OnInit di un run di verifica o
+// uno script dedicato). Non tocca file ne' history reale. true = tutti PASS.
+bool NXS_Ledger_SelfTest(){
+   bool ok = true;
+   ArrayFree(g_ledgerState); ArrayFree(g_ledgerEmitted); ArrayFree(g_ledgerClosedQ);
+
+   // --- F2: emitted FIFO oltre capacita' (9000 > 8192) ---
+   int total = NXS_LEDGER_MAX_EMITTED + 808;
+   for(int i = 1; i <= total; i++) _nxs_ledger_markEmitted((ulong)i);
+   int n = ArraySize(g_ledgerEmitted);
+   bool sizeOk = (n == NXS_LEDGER_MAX_EMITTED);
+   bool fifoOk = (n > 0 &&
+                  g_ledgerEmitted[0]   == (ulong)(total - NXS_LEDGER_MAX_EMITTED + 1) &&
+                  g_ledgerEmitted[n-1] == (ulong)total);
+   bool monoOk = true;   // strettamente crescente = ordine FIFO + zero duplicati
+   for(int i = 1; i < n; i++)
+      if(g_ledgerEmitted[i] <= g_ledgerEmitted[i-1]){ monoOk = false; break; }
+   if(!sizeOk || !fifoOk || !monoOk){
+      ok = false;
+      PrintFormat("[LEDGER TEST] FAIL emitted FIFO: size=%d (atteso %d) fifo=%d mono=%d",
+                  n, NXS_LEDGER_MAX_EMITTED, fifoOk, monoOk);
+   } else Print("[LEDGER TEST] PASS emitted FIFO (capacita', piu' vecchio eliminato, no dup)");
+
+   // --- F1a: prune con 2000 stati misti - nessun non-emesso si perde mai ---
+   ArrayFree(g_ledgerState);
+   ArrayResize(g_ledgerState, 2000);
+   int expectKeep = 0;
+   for(int i = 0; i < 2000; i++){
+      g_ledgerState[i].position_id = (ulong)(100000 + i);
+      g_ledgerState[i].deal_count = 1;  g_ledgerState[i].vol_in = 0.1;
+      g_ledgerState[i].vol_out = 0.0;   g_ledgerState[i].pnl = 0.0;
+      g_ledgerState[i].emitted = (i % 3 != 0);   // 1/3 non emessi
+      if(!g_ledgerState[i].emitted) expectKeep++;
+   }
+   _nxs_ledger_pruneStates();
+   int survivors = 0; bool dupOk = true;
+   int m = ArraySize(g_ledgerState);
+   for(int i = 0; i < m; i++){
+      if(!g_ledgerState[i].emitted) survivors++;
+      for(int j = i + 1; j < m; j++)
+         if(g_ledgerState[j].position_id == g_ledgerState[i].position_id){ dupOk = false; break; }
+      if(!dupOk) break;
+   }
+   if(survivors != expectKeep || !dupOk){
+      ok = false;
+      PrintFormat("[LEDGER TEST] FAIL prune: non-emessi %d/%d dup_ok=%d", survivors, expectKeep, dupOk);
+   } else Print("[LEDGER TEST] PASS prune (2000 stati: non-emessi tutti conservati, no dup)");
+
+   // --- F1b: SweepPending con 1500 stati non emessi e position inesistenti:
+   //     lo snapshot deve reggere anche quando Touch/prune possono mutare ---
+   ArrayFree(g_ledgerState);
+   ArrayResize(g_ledgerState, 1500);
+   for(int i = 0; i < 1500; i++){
+      g_ledgerState[i].position_id = (ulong)(900000 + i);
+      g_ledgerState[i].deal_count = 0; g_ledgerState[i].vol_in = 0;
+      g_ledgerState[i].vol_out = 0;    g_ledgerState[i].pnl = 0;
+      g_ledgerState[i].emitted = false;
+   }
+   int finals = NXS_Ledger_SweepPending();   // history vuota: attesi 0 FINAL
+   if(finals != 0 || ArraySize(g_ledgerState) != 1500){
+      ok = false;
+      PrintFormat("[LEDGER TEST] FAIL sweep snapshot: finals=%d size=%d", finals, ArraySize(g_ledgerState));
+   } else Print("[LEDGER TEST] PASS sweep snapshot (1500 stati, iterazione sicura, zero mutazioni spurie)");
+
+   // --- coda chiusure: ordine FIFO e nessuna perdita dell'ultimo FINAL ---
+   ArrayFree(g_ledgerClosedQ);
+   ArrayResize(g_ledgerClosedQ, 3);
+   for(int i = 0; i < 3; i++) g_ledgerClosedQ[i].position_id = (ulong)(i + 1);
+   SNxsLedgerTrade tq;
+   ulong seen[];
+   while(NXS_Ledger_PopClosed(tq)){
+      int k = ArraySize(seen);
+      ArrayResize(seen, k + 1);
+      seen[k] = tq.position_id;
+   }
+   bool qOk = (ArraySize(seen) == 3 && seen[0] == 1 && seen[1] == 2 && seen[2] == 3);
+   if(!qOk){ ok = false; Print("[LEDGER TEST] FAIL coda FIFO chiusure"); }
+   else Print("[LEDGER TEST] PASS coda FIFO chiusure (ordine, ultimo FINAL mai perso)");
+
+   ArrayFree(g_ledgerState); ArrayFree(g_ledgerEmitted); ArrayFree(g_ledgerClosedQ);
+   Print(ok ? "[LEDGER TEST] TUTTI I TEST PASS" : "[LEDGER TEST] FALLIMENTI PRESENTI");
+   return ok;
 }
 
 #endif
