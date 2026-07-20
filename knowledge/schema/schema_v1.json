@@ -1,0 +1,204 @@
+{
+  "canonical_schema_version": "1.0.0",
+  "generated": "2026-07-20",
+  "scope": "Contratto formale del Knowledge Model di Nexus Core. NON e' un database runtime. Descrive cio' che ESISTE (M0-M2); le proposte di modifica sono in 08_schema_summary.md e non sono applicate.",
+  "data_files": {
+    "strategy_database.json": "Strategy[]",
+    "runs_database.json": "Run[]",
+    "artifacts_database.json": "Artifact[]",
+    "imports_ledger.json": "Import[]",
+    "strategy_timelines.json": "TimelineEvent[] raggruppati per Strategy",
+    "bug_database.json": "Bug[]",
+    "decision_database.json": "Decision[]",
+    "data_quality_issues.json": "DataQualityIssue[]",
+    "backtest_database.json": "Backtest[]"
+  },
+
+  "entities": {
+    "Strategy": {
+      "purpose": "Una delle 37 strategie di trading dell'EA. Unita' centrale della conoscenza.",
+      "file": "strategy_database.json#strategie",
+      "identifier": "strategy_id (= campo 'nome')",
+      "required": ["nome", "versione", "stato", "implementata"],
+      "optional": ["selector_index", "redesign_effettuati", "bug_storici", "fix_applicati", "ultimo_sweep", "nota_sweep", "trade", "PF", "WR_pct", "expectancy_R", "affidabilita_dati", "decisione_corrente", "note"],
+      "immutable": ["nome (eccezione: rename documentato con Decision + alias, caso THREE_BAR_DELIVERY_BREAK)", "selector_index"],
+      "mutable": ["stato", "ultimo_sweep e campi di run (scritti SOLO dall'import engine)", "campi curati (scritti SOLO da revisione umana/approvata)"],
+      "field_ownership": {"curati": "umano/sessione approvata", "run-derived": "import_engine"},
+      "relationships": ["1:N Run (via Run.strategy)", "1:N TimelineEvent (via strategy_id)", "N:M Bug (via Bug.strategie_coinvolte)", "1:N DataQualityIssue (via strategy)"]
+    },
+    "Run": {
+      "purpose": "Una esecuzione di test di UNA strategia in UN round (passata di sweep). Mai sovrascritta.",
+      "file": "runs_database.json#runs",
+      "identifier": "run_id",
+      "required": ["run_id", "round", "pass_index", "ea_version", "completed", "confidence", "artifact_checksum", "source_file", "imported_at", "import_engine_version"],
+      "optional": ["strategy (null solo se il parse fallisce)", "commit (solo round baseline)", "broker", "symbol", "leverage_effettiva", "period", "parse_note", "identity_ok", "identity_expected", "identity_note", "confidence_reason", "metrics"],
+      "immutable": ["run_id", "artifact_checksum", "metrics", "source_file"],
+      "mutable": ["nessuno dopo l'import (le run sono append-only; correzioni = nuova run da nuovo file)"],
+      "relationships": ["N:1 Strategy", "1:1 Artifact (via artifact_checksum)", "0..1:1 SignalMetrics (embedded in metrics)", "1:N TimelineEvent (via related_run_id)"]
+    },
+    "SignalMetrics": {
+      "purpose": "Metriche a livello segnale/trade di una Run (embedded, non entita' a file proprio). Derivano dai contatori dell'EA, non dalla equity del conto.",
+      "file": "runs_database.json#runs[].metrics",
+      "identifier": "nessuno (embedded, identita' = run_id del contenitore)",
+      "required": ["trade_eseguiti", "wins", "losses", "winrate_pct", "expectancy_R", "profit_factor", "avg_holding_sec"],
+      "optional": [],
+      "immutable": ["tutti (fotografia del file sorgente)"],
+      "mutable": [],
+      "relationships": ["1:1 Run (embedded)"]
+    },
+    "EquityMetrics": {
+      "purpose": "RISERVATA (future-ready, non implementata): metriche dalla curva equity (DD, net, sequenze). Distinta da SignalMetrics per non mischiare dati di segnale e dati di equity.",
+      "file": "(futuro) runs_database.json#runs[].equity_metrics",
+      "identifier": "nessuno (embedded)",
+      "required": ["(da definire in v2: max_dd_pct, net, ...)"] ,
+      "optional": [],
+      "immutable": ["tutti"],
+      "mutable": [],
+      "relationships": ["1:1 Run (embedded)"],
+      "status": "reserved"
+    },
+    "Artifact": {
+      "purpose": "Un file sorgente registrato (stats CSV, manifest, trade snapshot, HTML). La fonte di verita' resta il file; l'artifact ne certifica identita' e stato di lavorazione.",
+      "file": "artifacts_database.json#artifacts",
+      "identifier": "artifact_id",
+      "required": ["artifact_id", "checksum", "source_path", "type", "status", "provenance"],
+      "optional": ["run_id", "note"],
+      "immutable": ["artifact_id", "checksum", "source_path", "type", "provenance"],
+      "mutable": ["status (solo in avanti: discovered->imported->parsed->validated)", "note"],
+      "relationships": ["0..1:1 Run", "1:N Import (via checksum)"]
+    },
+    "Import": {
+      "purpose": "Evento di importazione nel ledger: chi/quando/cosa/con quale versione. Append-only.",
+      "file": "imports_ledger.json#imports",
+      "identifier": "nessun id proprio (chiave naturale: checksum + timestamp); PROPOSTA v2: import_id esplicito",
+      "required": ["timestamp", "origine", "checksum", "ea_version", "esito", "tipo", "import_engine_version", "knowledge_schema_version"],
+      "optional": ["run_id"],
+      "immutable": ["tutti (append-only)"],
+      "mutable": [],
+      "relationships": ["N:1 Artifact (via checksum)"]
+    },
+    "TimelineEvent": {
+      "purpose": "Un fatto documentato nella storia tecnica di una strategia. Solo ricostruzione, mai invenzione.",
+      "file": "strategy_timelines.json#timelines[strategy].eventi",
+      "identifier": "event_id",
+      "required": ["event_id", "strategy_id", "timestamp", "event_type", "title", "description", "source_document", "confidence"],
+      "optional": ["source_checksum", "related_commit", "related_run_id"],
+      "immutable": ["tutti (rigenerabili deterministicamente dalle fonti; una modifica alle fonti produce eventi nuovi, non modifica i vecchi)"],
+      "mutable": [],
+      "relationships": ["N:1 Strategy", "0..1:1 Run", "0..1:1 Bug (via title BUG-NNN)", "0..1:1 commit git"]
+    },
+    "Bug": {
+      "purpose": "Un difetto documentato: descrizione, strategie coinvolte, fix, stato.",
+      "file": "bug_database.json#bug",
+      "identifier": "bug_id (= campo 'id')",
+      "required": ["id", "descrizione", "strategie_coinvolte", "data", "impatto", "stato"],
+      "optional": ["commit_fix"],
+      "immutable": ["id", "data", "descrizione"],
+      "mutable": ["stato (open->fixed)", "commit_fix (quando arriva il fix)", "impatto (solo raffinamento)"],
+      "relationships": ["N:M Strategy (testo libero in v1 - vedi proposta P2)", "0..1:1 commit git", "1:N TimelineEvent"]
+    },
+    "Decision": {
+      "purpose": "Una decisione vincolante di progetto con motivo, evidenze e conseguenze.",
+      "file": "decision_database.json#decisioni",
+      "identifier": "decision_id (= campo 'id')",
+      "required": ["id", "data", "decisione", "motivo", "evidenze", "conseguenze", "documenti_sorgente"],
+      "optional": [],
+      "immutable": ["id", "data", "decisione (una decisione cambiata = nuova Decision che la sostituisce, con riferimento)"],
+      "mutable": ["conseguenze (solo integrazione)"],
+      "relationships": ["N:M Document (via documenti_sorgente, testo libero in v1)", "0..N TimelineEvent"]
+    },
+    "DataQualityIssue": {
+      "purpose": "Anomalia dei dati interrogabile (artefatto mancante, run incompleta, identity mismatch).",
+      "file": "data_quality_issues.json#issues",
+      "identifier": "quality_issue_id (= campo 'id')",
+      "required": ["id", "type", "severity", "status", "expected_artifact", "actual", "possible_cause", "detected_at"],
+      "optional": ["strategy", "run"],
+      "immutable": ["id", "type", "detected_at"],
+      "mutable": ["status (open->resolved)", "possible_cause (unknown->identificata)"],
+      "relationships": ["0..1:N Strategy", "0..1:1 Run"]
+    },
+    "Backtest": {
+      "purpose": "Una campagna di test storica (granularita' piu' grossa della Run: un'intera tornata).",
+      "file": "backtest_database.json#campagne",
+      "identifier": "nessun id proprio in v1 (chiave naturale: campo 'campagna'); PROPOSTA v2: backtest_id",
+      "required": ["campagna", "broker", "simbolo", "periodo", "leva", "risultato", "report", "affidabilita"],
+      "optional": ["commit", "timeframe", "spread", "qualita_dati", "PF", "DD", "trade"],
+      "immutable": ["campagna"],
+      "mutable": ["risultato/affidabilita (solo integrazione documentata)"],
+      "relationships": ["1:N Run (le run del round appartengono alla campagna; collegamento implicito via round in v1)"]
+    },
+    "Document": {
+      "purpose": "IMPLICITA in v1: un documento sorgente (vault, report, manifest) referenziato per path. Non ha un proprio database.",
+      "file": "(implicita - path repo-relativi nei campi source_document/documenti_sorgente/report)",
+      "identifier": "document_id naturale = path repo-relativo",
+      "required": ["path"],
+      "optional": ["checksum (presente solo per artefatti importati)"],
+      "immutable": ["path come chiave"],
+      "mutable": ["il contenuto vive in git (versionato li')"],
+      "relationships": ["referenziata da TimelineEvent, Decision, Backtest"],
+      "status": "implicit"
+    },
+    "EvidenceLink": {
+      "purpose": "RISERVATA (M4, non implementata): collegamento tipizzato conclusione->evidenze con forza della prova. Da NON confondere con Run.confidence (qualita' dell'import).",
+      "file": "(futuro)",
+      "identifier": "(futuro) evidence_id",
+      "required": ["(da definire in M4)"],
+      "optional": [],
+      "immutable": [],
+      "mutable": [],
+      "relationships": ["(futuro)"],
+      "status": "reserved"
+    }
+  },
+
+  "identifiers": {
+    "strategy_id": {"rule": "nome canonico della strategia cosi' come appare in stratName MQL5 (es. MACD, THREE_BAR_DELIVERY_BREAK)", "uniqueness_scope": "globale", "immutability": "immutabile; rename solo con Decision + alias registrato (ALIASES in timeline_engine)"},
+    "run_id": {"rule": "{round}__S{NN}__{STRATEGY}__{YYYYMMDD}_{HHMMSS} - derivato deterministicamente dal file sorgente", "uniqueness_scope": "globale", "immutability": "immutabile"},
+    "artifact_id": {"rule": "art-{sha256(file)[:16]}", "uniqueness_scope": "globale (derivato dal contenuto)", "immutability": "immutabile"},
+    "event_id": {"rule": "evt-{sha1(strategy|type|date|title)[:12]} - stabile tra rigenerazioni", "uniqueness_scope": "globale", "immutability": "immutabile"},
+    "bug_id": {"rule": "BUG-{NNN} progressivo", "uniqueness_scope": "globale", "immutability": "immutabile"},
+    "decision_id": {"rule": "DEC-{NNN} progressivo", "uniqueness_scope": "globale", "immutability": "immutabile"},
+    "quality_issue_id": {"rule": "dqi-{tipo}-{contesto} (es. dqi-missing-S04-{round}, dqi-identity-{run_id})", "uniqueness_scope": "globale", "immutability": "immutabile"},
+    "document_id": {"rule": "path repo-relativo (chiave naturale)", "uniqueness_scope": "repo", "immutability": "un file spostato = documento nuovo (limite noto, v1)"}
+  },
+
+  "enums": {
+    "run_confidence": ["high", "medium", "low"],
+    "artifact_status": ["discovered", "imported", "parsed", "validated"],
+    "issue_severity": ["low", "medium", "high"],
+    "issue_status": ["open", "resolved"],
+    "issue_type": ["missing_artifact", "incomplete_run", "identity_mismatch"],
+    "import_esito": ["importato"],
+    "artifact_type": ["manifest", "strategy_stats_csv", "trades_csv_snapshot", "html_report"],
+    "event_type": ["implementation", "redesign", "bug_discovered", "bug_fixed", "logic_modification", "parameter_change", "renamed_strategy", "backtest_executed", "sweep_executed", "baseline_reached", "issue_detected", "documentation_update"],
+    "event_confidence": ["high", "medium"],
+    "round_id": ["sweep37-prefix-r1", "sweep37-prefix-r2", "sweep37-gate1pos-r3", "sweep37-postfix12h-killed", "sweep37-baseline-e6ce816"],
+    "bug_stato_v1_NON_NORMALIZZATO": "testo libero in v1 ('risolto', 'risolto (…)', 'APERTO', 'APERTO (deliberato)') - vedi proposta P1",
+    "identity_ok": ["true", "false", "null (check non applicabile)"]
+  },
+
+  "validation_rules": [
+    {"id": "V01", "rule": "Una Run non puo' esistere senza round e pass_index; strategy puo' essere null SOLO se il parse fallisce, e in quel caso completed=false e nasce una DataQualityIssue incomplete_run."},
+    {"id": "V02", "rule": "Un TimelineEvent appartiene a esattamente UNA strategia esistente."},
+    {"id": "V03", "rule": "Il checksum di un Artifact non cambia mai; un file cambiato e' un artifact NUOVO."},
+    {"id": "V04", "rule": "Import duplicati vietati: stesso checksum = skip (idempotenza)."},
+    {"id": "V05", "rule": "identity_mismatch (identity_ok=false) rende la Run NON eleggibile come baseline e non aggiorna mai la vetrina di Strategy; severity=high."},
+    {"id": "V06", "rule": "Passata attesa senza artefatto nel round baseline genera DataQualityIssue missing_artifact."},
+    {"id": "V07", "rule": "Un TimelineEvent senza data determinabile NON viene creato (gap dichiarato, mai inventato)."},
+    {"id": "V08", "rule": "Ogni related_run_id/bug referenziato da un TimelineEvent deve esistere nel rispettivo database."},
+    {"id": "V09", "rule": "Le run sono append-only: mai sovrascritte; round diversi della stessa strategia coesistono."},
+    {"id": "V10", "rule": "artifact.status avanza solo in avanti (discovered->imported->parsed->validated), mai indietro."},
+    {"id": "V11", "rule": "I campi run-derived di Strategy sono scritti solo dall'import engine; i campi curati solo da revisione approvata."},
+    {"id": "V12", "rule": "Nulla entra nella Knowledge senza passare dalla validazione (nessun bypass del lifecycle)."}
+  ],
+
+  "data_lifecycle": ["discovery", "import", "parsing", "validation", "normalization", "knowledge", "timeline", "future_analysis"],
+
+  "versioning": {
+    "canonical_schema": "1.0.0 (questo documento)",
+    "knowledge_schema_version_runtime": 2,
+    "import_engine_version": "1.1.0",
+    "timeline_engine_version": "1.0.0",
+    "policy": "Modifiche additive = minor bump, retrocompatibili. Modifiche di forma/nome campo = major bump + migrazione documentata + rigenerazione DB derivati. I file sorgente (CSV/manifest) non sono mai migrati: sono la verita' storica."
+  }
+}
