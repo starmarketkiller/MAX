@@ -1033,6 +1033,13 @@ void OnTick(){
 //| UNA volta per position, con i valori AGGREGATI del ledger.        |
 //+------------------------------------------------------------------+
 void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
+   // Protezioni loss-streak (anti-revenge, anti-bleed, streak sizing):
+   // ESATTAMENTE una volta per trade logico, con il PnL AGGREGATO
+   // (docs/architecture: "consecutive-loss protections run exactly once per
+   // logical trade"). Prima un trade chiuso in 3 parziali in perdita contava
+   // 3 perdite consecutive e poteva innescare anti-revenge da solo.
+   NXS_OnTradeClosed(tc.pnl);
+
    string reason = tc.close_reason;
    if(reason == "unknown") reason = (tc.pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
 
@@ -1090,11 +1097,11 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    int ev = NXS_Ledger_OnDeal(trans.deal, realizedDelta);
    if(ev == NXS_LEDGER_EV_NONE) return;
 
-   // Il PnL REALIZZATO (anche parziale) alimenta subito le protezioni
-   // daily-DD / anti-revenge: identico in totale al comportamento storico
-   // (che sommava i singoli deal OUT), ma replay-safe perche' e' un delta.
-   if(ev == NXS_LEDGER_EV_PARTIAL || ev == NXS_LEDGER_EV_FINAL)
-      NXS_OnTradeClosed(realizedDelta);
+   // NB: NXS_OnTradeClosed (contatore perdite consecutive / anti-revenge /
+   // streak sizing) NON viene piu' chiamato qui per ogni deal OUT: scatta
+   // una sola volta per trade logico dentro NXS_EA_OnLogicalClose, col PnL
+   // aggregato. I gate daily-DD non passano da qui (usano balance/equity).
+   // realizedDelta resta per la riga CSV PARTIAL.
 
    if(ev == NXS_LEDGER_EV_PARTIAL && HistoryDealSelect(trans.deal)){
       // riga PARTIAL: pnl/lots del singolo deal, cosi' il CSV mostra ogni

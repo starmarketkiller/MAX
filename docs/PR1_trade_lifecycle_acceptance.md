@@ -27,7 +27,12 @@ mode: chiudere 2 volte metà posizione, poi il resto).
 Atteso: 2 righe `PARTIAL` (pnl dello spezzone) + **1 sola** riga `CLOSE` con
 pnl = somma dei tre spezzoni, `lots` = volume totale entrato,
 r_multiple = pnl_totale / rischio iniziale. Stats: **1 solo** outcome.
-(Prima: 3 CLOSE, 3 outcome, chain/notify triplicati.)
+Protezioni loss-streak (anti-revenge/anti-bleed/streak sizing): **1 solo**
+aggiornamento col PnL aggregato — un trade in perdita chiuso in 3 parziali
+conta 1 perdita consecutiva, non 3 (verificabile nel log: nessun
+"Anti-revenge engaged" da un singolo trade parzializzato).
+(Prima: 3 CLOSE, 3 outcome, 3 incrementi del contatore perdite,
+chain/notify triplicati.)
 
 ### 3. Duplicate deal replay
 Non riproducibile direttamente nel tester; equivalente verificato:
@@ -62,8 +67,11 @@ trade_uid HAVING COUNT(*)>1` deve restituire zero righe.
 - Con **zero** chiusure parziali (configurazione sweep attuale: lotto fisso,
   niente split), wins/losses/PF signal-level devono coincidere col vecchio
   codice: il ledger cambia i numeri SOLO dove prima erano sbagliati (parziali).
-- `NXS_OnTradeClosed` (daily-DD/anti-revenge) riceve gli stessi totali di
-  prima (delta realizzato per deal), quindi le protezioni non cambiano.
+- `NXS_OnTradeClosed` (perdite consecutive/anti-revenge/streak sizing) scatta
+  una volta per trade logico col PnL aggregato: con zero parziali equivale
+  esattamente al vecchio comportamento (un OUT = un trade = una chiamata);
+  differisce SOLO sui trade parzializzati, dov'era il bug. I gate daily-DD
+  non passano da questa funzione (usano balance/equity) e sono invariati.
 
 ## Limiti dichiarati
 
