@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.80"
+#property version   "2.90"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -50,11 +50,11 @@
 #include <NEXUS_v1\NXS_SignalQuality.mqh>
 #include <NEXUS_v1\NXS_ShadowTrading.mqh>
 #include <NEXUS_v1\NXS_EntryScore.mqh>
+#include <NEXUS_v1\NXS_RiskShield.mqh>
 #include <NEXUS_v1\NXS_Execution.mqh>
 #include <NEXUS_v1\NXS_SignalRouter.mqh>
 // v2.0.9 — Performance roadmap (Sprint 1+2+3): all auto-active.
 #include <NEXUS_v1\NXS_Performance.mqh>
-#include <NEXUS_v1\NXS_RiskShield.mqh>
 #include <NEXUS_v1\NXS_EdgeAdaptive.mqh>
 #include <NEXUS_v1\NXS_Management.mqh>
 #include <NEXUS_v1\NXS_GridRecovery.mqh>
@@ -601,12 +601,16 @@ void OnTick(){
    // v2.0.9 Sprint 2 — keep spread rolling window fresh + virt SL check
    NXS_RS_SpreadSample();
    NXS_EA_VirtSL_Check();
+   // PR3: refresh controls before any module can create new exposure.
+   NXS_PullSettings();
    datetime prevDay = g_dayStart;
    NXS_DailyRollover();
    if(g_dayStart != prevDay){
       NXS_Prot_OnNewDay();
       if(InpNotifyDailySummary) NXS_Notify_DailySummary();
    }
+   NXS_Ruin_OnTick();
+   NXS_Prot_OnTick();
    if(!NXS_UpdateIndicators()) return;
 
    g_regime  = NXS_DetectRegime();
@@ -630,16 +634,6 @@ void OnTick(){
       NXS_ManageGrid();
       NXS_ManagePyramid(vel);
    }
-
-   // Scudo risk-of-ruin (v2.2.6): congela il trading se la perdita del giorno
-   // supera la soglia; vale anche in backtest. Prima delle altre protezioni.
-   NXS_Ruin_OnTick();
-
-   // Risk Protections (NEXUS v2.0)
-   NXS_Prot_OnTick();
-
-   // Settings sync from dashboard
-   NXS_PullSettings();
 
    // Web push (disabled in Strategy Tester)
    if(!MQLInfoInteger(MQL_TESTER)) NXS_WebPush(htf, vel, amd, sweep);
