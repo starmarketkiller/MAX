@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "3.00"
+#property version   "3.10"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -507,7 +507,7 @@ void OnDeinit(const int reason){
    NXS_Stats_Deinit();      // v2.0.5 final export
    NXS_Ledger_Persist();    // PR1: emitted-set su disco (no-op nel tester)
    NXS_VSL_Persist();       // PR2: stato Virtual SL su disco (no-op nel tester/OFF)
-   NXS_State_Save();
+   NXS_State_Save(true);       // PR5: shutdown snapshot bypasses periodic throttle
    NXS_ActivateOriginal();     // v2.3.0: assicura g_h* = originali prima di rilasciarli
    NXS_ReleaseHandles();
    NXS_MTF_Release();          // v2.3.0: cache handle multi-TF per-strategia
@@ -675,6 +675,9 @@ void OnTick(){
    // AUDITPATCH: count/report every closed-bar decision, including upstream vetoes.
    NXS_Blk_DecisionTick();
    if(g_eaPaused){ NXS_Blk_Bump(BLK_PAUSED); NXS_Blk_MaybeReport(); return; }
+   if(!NXS_State_EntryAllowed()){
+      NXS_Blk_Bump(BLK_PROTECTIONS); NXS_Blk_MaybeReport(); return;
+   }
    if(!NXS_License_Enforce()){ NXS_Blk_Bump(BLK_LICENSE); NXS_Blk_MaybeReport(); return; }
    if(NXS_Prot_EntryBlocked()){ NXS_Blk_Bump(BLK_PROTECTIONS); NXS_Blk_MaybeReport(); return; }
    if(!NXS_SpreadOK()){ NXS_Blk_Bump(BLK_SPREAD); NXS_Blk_MaybeReport(); return; }
