@@ -23,12 +23,15 @@ function StatusDot({ online }) {
 
 function CmdStatusBadge({ status }) {
   const map = {
-    pending: { cls: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Clock3, label: "pending" },
-    running: { cls: "bg-sky-500/15 text-sky-400 border-sky-500/30 animate-pulse", icon: RotateCw, label: "running" },
-    done:    { cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2, label: "done" },
-    failed:  { cls: "bg-rose-500/15 text-rose-400 border-rose-500/30", icon: XCircle, label: "failed" },
+    PENDING: { cls: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Clock3, label: "pending" },
+    LEASED: { cls: "bg-sky-500/15 text-sky-400 border-sky-500/30 animate-pulse", icon: RotateCw, label: "leased" },
+    RUNNING: { cls: "bg-sky-500/15 text-sky-400 border-sky-500/30 animate-pulse", icon: RotateCw, label: "running" },
+    SUCCEEDED: { cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2, label: "succeeded" },
+    FAILED_RETRYABLE: { cls: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: RotateCw, label: "retrying" },
+    FAILED_FINAL: { cls: "bg-rose-500/15 text-rose-400 border-rose-500/30", icon: XCircle, label: "failed" },
+    EXPIRED: { cls: "bg-rose-500/15 text-rose-400 border-rose-500/30", icon: XCircle, label: "expired" },
   };
-  const m = map[status] || map.pending;
+  const m = map[status] || map.PENDING;
   const Icon = m.icon;
   return (
     <span className={cls("inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border", m.cls)}>
@@ -63,7 +66,12 @@ export default function LocalBridgePage() {
   const enqueue = async (action, payload = {}) => {
     setSending(action);
     try {
-      await api.post("/local_bridge/enqueue", { action, payload, host_id: "default" });
+      if (!status.worker?.host_id) throw new Error("Nessun host registrato");
+      await api.post("/local_bridge/enqueue", {
+        command_type: action.toUpperCase(), payload,
+        target: { host_id: status.worker.host_id },
+        idempotency_key: `${status.worker.host_id}:${action}:${Date.now()}`,
+      });
       await load();
     } catch (e) {
       alert(`Errore: ${e?.response?.data?.detail || e.message}`);
@@ -73,8 +81,8 @@ export default function LocalBridgePage() {
   };
 
   const worker = status.worker || { online: false };
-  const onlineSince = worker.last_seen
-    ? new Date(worker.last_seen).toLocaleString()
+  const onlineSince = worker.timestamp
+    ? new Date(worker.timestamp).toLocaleString()
     : "—";
 
   return (
@@ -107,7 +115,7 @@ export default function LocalBridgePage() {
                 Worker {worker.online ? "Online" : "Offline"}
               </div>
               <div className="text-xs text-muted-foreground font-mono">
-                host_id: <b>default</b> · last seen: {onlineSince}
+                host_id: <b>{worker.host_id || "—"}</b> · last seen: {onlineSince}
               </div>
             </div>
           </div>
@@ -188,11 +196,11 @@ export default function LocalBridgePage() {
             color="bg-sky-600 hover:bg-sky-700"
           />
           <ActionButton
-            label="Deploy EA v2.0.13"
+            label="Deploy EA v3.40"
             icon={FileCode2}
             disabled={!worker.online || sending}
             sending={sending === "deploy"}
-            onClick={() => enqueue("deploy_files", { files: [] })}
+            onClick={() => enqueue("deploy_files", { release_id: "nexus-3.40", files: [] })}
             testId="action-deploy"
             color="bg-emerald-600 hover:bg-emerald-700"
             note="Deploya MQL5 files (full reset → riavvia MT5 dopo)"
@@ -212,7 +220,7 @@ export default function LocalBridgePage() {
         ) : (
           <div className="space-y-1.5" data-testid="cmd-history">
             {status.commands.map((c) => (
-              <div key={c._id} className="flex items-start justify-between gap-3 p-2 rounded bg-secondary/30 text-xs">
+              <div key={c.command_id || c.id} className="flex items-start justify-between gap-3 p-2 rounded bg-secondary/30 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
                   <CmdStatusBadge status={c.status} />
                   <span className="font-mono font-semibold truncate">{c.action}</span>

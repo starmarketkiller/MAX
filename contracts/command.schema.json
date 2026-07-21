@@ -1,0 +1,9 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://nexus.local/contracts/command.schema.json",
+  "schema_version":1,
+  "command_types":["PING","COMPILE_EA","RESTART_MT5","DEPLOY_FILES","OPEN_CHART","APPLY_TEMPLATE","SHELL"],
+  "statuses":["PENDING","LEASED","RUNNING","SUCCEEDED","FAILED_RETRYABLE","FAILED_FINAL","EXPIRED","CANCELLED"],
+  "required":["command_id","command_type","schema_version","created_at","created_by","target","payload","idempotency_key","expires_at","status"],
+  "target_fields":["instance_id","host_id","account_id","symbol"]
+}
