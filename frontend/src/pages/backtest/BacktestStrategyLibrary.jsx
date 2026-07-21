@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Library, Loader2, Search, Filter, Play, Lock, AlertCircle, Trophy, ArrowRightCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 
 function cn(...c) { return c.filter(Boolean).join(" "); }
 
@@ -39,7 +40,7 @@ export default function BacktestStrategyLibrary({ symbols, baseCfg, onApplyRow }
   useEffect(() => { load(symbol); /* eslint-disable-next-line */ }, [symbol]);
 
   const rebuild = async () => {
-    setBusy(true); setErr(""); setProgress({ done: 0, total: 36 });
+    setBusy(true); setErr(""); setProgress({ done: 0, total: LIVE_STRATEGY_COUNT });
     try {
       const { data } = await api.post("/backtest/strategy_library/build",
         { symbol, timeframes: ["1d", "1h"] });
@@ -135,7 +136,7 @@ export default function BacktestStrategyLibrary({ symbols, baseCfg, onApplyRow }
             <div className="font-bold tracking-tight">Strategy Library</div>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Per ogni simbolo viene generata la <strong>libreria delle 36 strategie</strong>: ognuna con il suo
+            Per ogni simbolo viene generata la <strong>libreria delle {LIVE_STRATEGY_COUNT} strategie</strong>: ognuna con il suo
             timeframe vincente e la gestione (grid/pyramid/baseline) più robusta. Ranking per Sharpe + DD.
           </p>
 
@@ -212,7 +213,7 @@ export default function BacktestStrategyLibrary({ symbols, baseCfg, onApplyRow }
         {rows.length > 0 && (
           <div className="rounded-xl border border-border bg-card overflow-hidden" data-testid="lib-table">
             <div className="px-4 py-2 border-b border-border bg-secondary/30 text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <Trophy className="h-3.5 w-3.5"/> {symbol} · 36 strategie · best TF × best management
+              <Trophy className="h-3.5 w-3.5"/> {symbol} · {LIVE_STRATEGY_COUNT} strategie · best TF × best management
             </div>
             <div className="overflow-x-auto max-h-[680px] overflow-y-auto">
               <table className="w-full text-xs">

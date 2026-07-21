@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Link2, Save, RotateCcw, RefreshCcw, Zap, Repeat, Plus, X } from "lucide-react";
+import { LIVE_STRATEGY_IDS } from "@/contracts/strategyRegistry";
 
 function cls(...c) { return c.filter(Boolean).join(" "); }
 
-const STRATEGIES = [
-  "ADX_RSI","BOLLINGER","MACD","SAR","TSI","BJORGUM","LIQ_SWEEP","FVG_CONT",
-  "BREAKOUT_ACC","LONDON_BO","EMA_PULLBACK","BB_SQUEEZE","ICHIMOKU","RSI_DIV",
-  "ORDER_BLOCK","STRUCT_REACT","TURTLE_SOUP","IFVG","FVG_MIT","OB_MIT",
-  "SH_BMS_RTO","SMS_BMS_RTO","SILVER_BULLET","AMD_REVERSAL","OTE_CONT",
-  "MALAYSIAN_SNR","CISD","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
-  "WEEKLY_EXP","PO3","LIQ_VOID","DISP_REBAL","RANGE_FADE",
-];
+const STRATEGIES = LIVE_STRATEGY_IDS;
 
 function ChainBridgeEditor({ from, targets, allStrategies, onChange, onRemove }) {
   const [selecting, setSelecting] = useState(false);

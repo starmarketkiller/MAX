@@ -1,5 +1,6 @@
 // Shared primitives, helpers and constants used across Dashboard sub-pages.
 import { ShieldAlert } from "lucide-react";
+import { LIVE_STRATEGIES } from "@/contracts/strategyRegistry";
 
 // ---------- text helpers ----------
 export const fmtMoney = (v, dec = 2) =>
@@ -18,51 +19,8 @@ export const NEG_TEXT = "text-rose-600 dark:text-rose-400";
 
 // ---------- strategies list (v2.0.7b — 35 strategies organized by family) ----------
 // Tuple: [key, label, family]
-export const STRAT_LIST = [
-  // TREND (8)
-  ["ADX_RSI",       "ADX + RSI Trend",         "TREND"],
-  ["MACD",          "MACD Trend",              "TREND"],
-  ["EMA_PULLBACK",  "Trend EMA Pullback",      "TREND"],
-  ["BREAKOUT_ACC",  "Breakout Acceptance",     "TREND"],
-  ["LONDON_BO",     "London Breakout",         "TREND"],
-  ["ICHIMOKU",      "Ichimoku Kumo Break",     "TREND"],
-  ["SAR",           "Parabolic SAR",           "TREND"],
-  ["TSI",           "TSI Momentum (RSI+EMA)",  "TREND"],
-  // REVERSAL (4)
-  ["BOLLINGER",     "Bollinger Mean Reversion","REVERSAL"],
-  ["BJORGUM",       "Bjorgum Key Levels",      "REVERSAL"],
-  ["BB_SQUEEZE",    "BB Squeeze Breakout",     "REVERSAL"],
-  ["RSI_DIV",       "RSI Divergence",          "REVERSAL"],
-  // SMC/ICT (14)
-  ["LIQ_SWEEP",     "Liquidity Sweep",         "SMC"],
-  ["FVG_CONT",      "FVG Continuation",        "SMC"],
-  ["ORDER_BLOCK",   "Order Block Retest",      "SMC"],
-  ["STRUCT_REACT",  "Structure Reaction",      "SMC"],
-  ["TURTLE_SOUP",   "Turtle Soup",             "SMC"],
-  ["IFVG",          "Inverted FVG + MSS",      "SMC"],
-  ["FVG_MIT",       "FVG Mitigation",          "SMC"],
-  ["OB_MIT",        "OB Structural Mitigation","SMC"],
-  ["SH_BMS_RTO",    "Stop Hunt → BMS → RTO",   "SMC"],
-  ["SMS_BMS_RTO",   "SMS → BMS → RTO",         "SMC"],
-  ["SILVER_BULLET", "Silver Bullet (LO/NY KZ)","SMC"],
-  ["AMD_REVERSAL",  "AMD Reversal",            "SMC"],
-  ["OTE_CONT",      "OTE Continuation",        "SMC"],
-  ["MALAYSIAN_SNR", "Malaysian S/R",           "SMC"],
-  // INSTITUTIONAL v2.0.7 (9) — READY_FOR_BACKTEST
-  ["CISD",          "Change In State of Delivery","INSTITUTIONAL"],
-  ["AMD_CONT",      "AMD Continuation",        "INSTITUTIONAL"],
-  ["JUDAS_SWING",   "Judas Swing",             "INSTITUTIONAL"],
-  ["LDN_REVERSAL",  "London Reversal",         "INSTITUTIONAL"],
-  ["NY_REVERSAL",   "NY Reversal",             "INSTITUTIONAL"],
-  ["WEEKLY_EXP",    "Weekly Range Expansion",  "INSTITUTIONAL"],
-  ["PO3",           "Power of Three",          "INSTITUTIONAL"],
-  ["LIQ_VOID",      "Liquidity Void Cont.",    "INSTITUTIONAL"],
-  ["DISP_REBAL",    "Displacement Rebalance",  "INSTITUTIONAL"],
-  // RANGE / COUNTER-HTF v2.0.8
-  ["RANGE_FADE",    "Range Fade (low ADX)",    "REVERSAL"],
-  // ELLIOTT WAVE v2.0.20
-  ["ELLIOTT",       "Elliott Wave (W2/W4/W5)", "INSTITUTIONAL"],
-];
+// Canonical adapter replaces the historical 35/36/37 hand-maintained list.
+export const STRAT_LIST = LIVE_STRATEGIES.map((s) => [s.strategy_id, s.display_name, s.family]);
 
 export const STRAT_FAMILIES = [
   { id: "TREND",         label: "Trend",         color: "blue" },
