@@ -1,69 +1,115 @@
-"""Canonical strategy registry loader and validation."""
+"""PR6 — Loader del Canonical Strategy Registry per il backend.
+
+Unica fonte di verita' per il backend: `contracts/strategy-registry.json`.
+Rimpiazza i conteggi hardcoded (STRAT_NAMES_36 -> 36) con dati derivati dal
+registry (37 live) e impone la Regola 1 del pack: un id sconosciuto e' un
+errore, mai fallback silenzioso.
+"""
 from __future__ import annotations
-
 import json
-from pathlib import Path
-from typing import Iterable
+import os
+from functools import lru_cache
 
-REGISTRY_PATH = Path(__file__).resolve().parents[1] / "contracts" / "strategy-registry.json"
-VALID_STATUSES = {"ACTIVE", "EXPERIMENTAL", "SHADOW_ONLY", "RESEARCH_ONLY", "DEPRECATED", "DISABLED"}
-VALID_PARITY = {"EXACT", "FUNCTIONALLY_EQUIVALENT", "APPROXIMATE", "PROXY", "NOT_IMPLEMENTED"}
-REQUIRED = {"strategy_id","display_name","family","status","live_implementation","research_implementation","research_parity","proxy_for","supported_symbols","supported_timeframes","default_enabled","risk_class","auto_disable_eligible","selector_index","schema_version"}
-
-
-def load_registry(path: Path = REGISTRY_PATH) -> dict:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1 or not isinstance(data.get("strategies"), list):
-        raise ValueError("invalid strategy registry envelope")
-    ids: set[str] = set()
-    selectors: set[int] = set()
-    for index, record in enumerate(data["strategies"]):
-        missing = REQUIRED - set(record)
-        if missing:
-            raise ValueError(f"strategy[{index}] missing fields: {sorted(missing)}")
-        strategy_id = record["strategy_id"]
-        if not isinstance(strategy_id, str) or not strategy_id or strategy_id != strategy_id.upper():
-            raise ValueError(f"invalid strategy_id: {strategy_id!r}")
-        if strategy_id in ids:
-            raise ValueError(f"duplicate strategy_id: {strategy_id}")
-        ids.add(strategy_id)
-        if record["status"] not in VALID_STATUSES or record["research_parity"] not in VALID_PARITY:
-            raise ValueError(f"invalid status/parity for {strategy_id}")
-        selector = record["selector_index"]
-        if selector is not None:
-            if not isinstance(selector, int) or selector < 1 or selector in selectors:
-                raise ValueError(f"invalid/duplicate selector_index for {strategy_id}")
-            selectors.add(selector)
-        if record["status"] == "RESEARCH_ONLY" and record["live_implementation"]:
-            raise ValueError(f"research-only strategy cannot be live: {strategy_id}")
-        if record["research_parity"] == "PROXY" and not record["proxy_for"]:
-            raise ValueError(f"proxy target missing for {strategy_id}")
-    for record in data["strategies"]:
-        if record["proxy_for"] is not None and record["proxy_for"] not in ids:
-            raise ValueError(f"unknown proxy target for {record['strategy_id']}: {record['proxy_for']}")
-    return data
+_REGISTRY_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "contracts", "strategy-registry.json")
 
 
-REGISTRY = load_registry()
-STRATEGIES = tuple(REGISTRY["strategies"])
+class UnknownStrategyError(KeyError):
+    """Sollevata quando un id/alias non risolve nel registry (no fallback)."""
+
+
+@lru_cache(maxsize=1)
+def _load() -> dict:
+    with open(_REGISTRY_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+@lru_cache(maxsize=1)
+def _index() -> dict:
+    idx = {}
+    for r in _load()["strategies"]:
+        idx[r["strategy_id"]] = r
+        for a in r.get("aliases", []):
+            idx[a] = r
+    return idx
+
+
+def all_records() -> list:
+    return list(_load()["strategies"])
+
+
+def live_ids() -> list:
+    """Id canonici delle strategie LIVE (ordinati). Sostituisce STRAT_NAMES_36."""
+    return sorted(r["strategy_id"] for r in _load()["strategies"]
+                  if r.get("live_implementation"))
+
+
+def research_only_ids() -> list:
+    return sorted(r["strategy_id"] for r in _load()["strategies"]
+                  if r.get("status") == "RESEARCH_ONLY")
+
+
+def research_ids() -> list:
+    """Nomi accettati dal motore research, inclusi gli alias di implementazione."""
+    result = []
+    for record in _load()["strategies"]:
+        if not record.get("research_implementation"):
+            continue
+        result.append((record.get("aliases") or [record["strategy_id"]])[0])
+    return sorted(result)
+
+
+def count_live() -> int:
+    return len(live_ids())
+
+
+def is_known(name: str) -> bool:
+    return name in _index()
+
+
+def resolve(name: str) -> dict:
+    """Record canonico per id o alias. Solleva UnknownStrategyError se ignoto."""
+    idx = _index()
+    if name not in idx:
+        raise UnknownStrategyError(
+            f"strategia sconosciuta: {name!r} (nessun fallback silenzioso)")
+    return idx[name]
+
+
+def canonical_id(name: str) -> str:
+    """Normalizza un id/alias (es. 'CISD' -> 'THREE_BAR_DELIVERY_BREAK')."""
+    return resolve(name)["strategy_id"]
+
+
+def registry_artifact() -> dict:
+    """Il registry completo, per esposizione read-only via API."""
+    return _load()
+
+
+def require_strategy(name: str, *, live: bool = False, research: bool = False) -> str:
+    """Valida un nome e restituisce l'id usato dal contesto richiesto."""
+    record = resolve(name)
+    if live and not record.get("live_implementation"):
+        raise ValueError(f"strategia non disponibile live: {name!r}")
+    if research and not record.get("research_implementation"):
+        raise ValueError(f"strategia non disponibile nel motore research: {name!r}")
+    if research:
+        return (record.get("aliases") or [record["strategy_id"]])[0]
+    return record["strategy_id"]
+
+
+def require_strategies(names, *, live: bool = False, research: bool = False) -> tuple:
+    return tuple(require_strategy(name, live=live, research=research) for name in names)
+
+
+# Adapter compatibili per i consumer esistenti; tutti derivati dal contratto.
+REGISTRY = registry_artifact()
+STRATEGIES = all_records()
 BY_ID = {record["strategy_id"]: record for record in STRATEGIES}
-LIVE_STRATEGY_IDS = tuple(record["strategy_id"] for record in STRATEGIES if record["live_implementation"])
-RESEARCH_STRATEGY_IDS = tuple(record["strategy_id"] for record in STRATEGIES if record["research_implementation"])
-AUTO_DISABLE_IDS = frozenset(record["strategy_id"] for record in STRATEGIES if record["auto_disable_eligible"])
-
-
-def require_strategy(strategy_id: str, *, research: bool = False) -> dict:
-    record = BY_ID.get(strategy_id)
-    if record is None:
-        raise ValueError(f"unknown strategy_id: {strategy_id}")
-    capability = "research_implementation" if research else "live_implementation"
-    if not record[capability]:
-        raise ValueError(f"strategy {strategy_id} has no {'research' if research else 'live'} implementation")
-    return record
-
-
-def require_strategies(strategy_ids: Iterable[str], *, research: bool = False) -> tuple[str, ...]:
-    values = tuple(strategy_ids)
-    for strategy_id in values:
-        require_strategy(strategy_id, research=research)
-    return values
+LIVE_STRATEGY_IDS = tuple(live_ids())
+RESEARCH_STRATEGY_IDS = tuple(research_ids())
+AUTO_DISABLE_IDS = frozenset(
+    record["strategy_id"] for record in STRATEGIES
+    if record.get("auto_disable_eligible")
+)

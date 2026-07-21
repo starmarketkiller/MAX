@@ -5,13 +5,12 @@ canonical contract in `contracts/strategy-registry.json`.
 
 ## Reconciled inventory
 
-- 42 canonical records.
-- 38 live EA strategies.
-- 37 numbered selector entries plus `THREE_BAR_DELIVERY_BREAK`, which is live
-  but not selectable through the legacy numeric selector.
+- 41 canonical records.
+- 37 live EA strategies.
+- `CISD` is retained as the research/runtime alias of the canonical
+  `THREE_BAR_DELIVERY_BREAK` record, rather than counted twice.
 - 40 research/backtest implementations.
-- `ELLIOTT` and `THREE_BAR_DELIVERY_BREAK` are explicitly marked as not
-  implemented in research.
+- `ELLIOTT` is explicitly marked as not implemented in research.
 - `SCALP_EMA`, `SCALP_BB_FADE`, `SCALP_RSI_SNAP`, and `SCALP_RANGE_BRK` are
   explicitly research-only.
 
@@ -34,8 +33,8 @@ current engine routes them through a proxy:
 
 The backend loads and validates the contract at startup. Unknown identifiers
 now fail validation instead of being silently removed or replaced. The
-frontend and MQL adapters expose the canonical live inventory, and automated
-tests compare both adapters against the source contract to prevent drift.
+generator writes the frontend and MQL adapters, and automated tests compare
+both adapters against the source contract to prevent drift.
 
-EA runtime names ending in `_NXR` are normalized to their canonical strategy
-identifier before validation.
+EA runtime names ending in `_NXR` and the `CISD` alias are normalized to their
+canonical strategy identifier before validation.

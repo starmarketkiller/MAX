@@ -2719,12 +2719,22 @@ def backtest_strategies(user: str = Depends(require_user)):
     # il frontend (Creator/Run) usa questa chiave per popolare il pool.
     engine = sorted(backtest.STRATEGIES.keys())
     return {"strategies": STRAT_LIST, "all": engine, "engine": engine,
-            "total_ea": len(STRAT_LIST)}
+            "total_ea": len(STRAT_LIST),
+            "research_only": strategy_registry.research_only_ids()}
 
 
+@app.get("/api/strategies/registry")
 @app.get("/api/strategy-registry")
 def strategy_registry_get(user: str = Depends(require_user)):
-    return strategy_registry.REGISTRY
+    return strategy_registry.registry_artifact()
+
+
+@app.get("/api/strategies/resolve/{name}")
+def strategies_resolve(name: str, user: str = Depends(require_user)):
+    try:
+        return strategy_registry.resolve(name)
+    except strategy_registry.UnknownStrategyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/api/backtest/symbols")
