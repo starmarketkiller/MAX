@@ -29,6 +29,38 @@ string g_nxsOpenCtxTag = "";
 datetime g_nxsCounterDay = 0;
 int g_nxsCounterCount = 0;
 
+void NXS_GateTelemetry(string route, string gateId, bool passed,
+                       double observed, double threshold, string reason){
+   PrintFormat("[NEXUS GATE] {\"route\":\"%s\",\"gate_id\":\"%s\",\"passed\":%s,\"observed\":%.8g,\"threshold\":%.8g,\"reason\":\"%s\"}",
+               _JsonEsc(route), _JsonEsc(gateId), (passed ? "true" : "false"),
+               observed, threshold, _JsonEsc(reason));
+}
+
+bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
+                                 ENUM_ORDER_TYPE otype, double price,
+                                 double &sl, double &tp, string &reason){
+   string rsReason = "";
+   bool rsBlocked = NXS_RS_BlockEntry(g_sym, rsReason);
+   NXS_GateTelemetry(route, "RISKSHIELD", !rsBlocked, 0, 0, rsReason);
+   if(rsBlocked){ reason = rsReason; return false; }
+
+   double existing = NXS_DirExposureLots(dir);
+   double cap = NXS_EffectiveMaxDirExposureLots();
+   bool exposureOK = (existing + lots <= cap + 1e-9);
+   string exposureReason = exposureOK ? "" :
+      StringFormat("existing=%.2f+new=%.2f>cap=%.2f", existing, lots, cap);
+   NXS_GateTelemetry(route, "DIR_EXPOSURE", exposureOK, existing + lots, cap,
+                     exposureReason);
+   if(!exposureOK){ reason = "dir_exposure_cap " + exposureReason; return false; }
+
+   string pfReason = "";
+   bool preflightOK = NXS_PreFlight(otype, lots, price, sl, tp, pfReason);
+   NXS_GateTelemetry(route, "BROKER_PREFLIGHT", preflightOK, lots, 0, pfReason);
+   if(!preflightOK){ reason = pfReason; return false; }
+   reason = "";
+   return true;
+}
+
 void NXS_CounterSessionRollover(){
    MqlDateTime mt; TimeToStruct(TimeCurrent(), mt);
    mt.hour = 0; mt.min = 0; mt.sec = 0;
@@ -220,16 +252,6 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // new order must not exceed InpMaxDirExposureLots). Rejects rather than
    // resizing, per spec: a chain of same-direction adds that would otherwise
    // balloon total risk just doesn't get the next leg.
-   double existingExposure = NXS_DirExposureLots(sig.dir);
-   double effCap = NXS_EffectiveMaxDirExposureLots();
-   if(existingExposure + lots > effCap + 1e-9){
-      g_nxsLastOpenFailure = StringFormat("dir_exposure_cap existing=%.2f+new=%.2f>cap=%.2f",
-                                          existingExposure, lots, effCap);
-      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f strat=%s",
-                  NXS_DirName(sig.dir), existingExposure, lots, effCap, sig.stratName);
-      return OPEN_FAIL_INVALID_VOLUME;
-   }
-
    ENUM_ORDER_TYPE otype = (sig.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double refPrice = (sig.dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
                                           : SymbolInfoDouble(g_sym, SYMBOL_BID);
@@ -255,9 +277,10 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       }
    }
    string pfReason = "";
-   if(!NXS_PreFlight(otype, lots, refPrice, sl, tp, pfReason)){
+   if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.dir, lots,
+                                   otype, refPrice, sl, tp, pfReason)){
       g_nxsLastOpenFailure = pfReason;
-      PrintFormat("[NEXUS] OPEN BLOCKED preflight: %s strat=%s", pfReason, sig.stratName);
+      PrintFormat("[NEXUS] OPEN BLOCKED common gate: %s strat=%s", pfReason, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
 

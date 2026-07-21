@@ -41,19 +41,22 @@ void NXS_ManagePyramid(SNXSVel &vel){
       // v2.0.30 SAFETY FIX: same bypass as grid - pyramid adds went straight
       // to NXS_DoBuy/DoSell, skipping the total-exposure cap entirely.
       ENUM_NXS_DIR pyrDir = (type == POSITION_TYPE_BUY) ? DIR_BUY : DIR_SELL;
-      double existingExposure = NXS_DirExposureLots(pyrDir);
-      double effCap = NXS_EffectiveMaxDirExposureLots();
-      if(existingExposure + lots > effCap + 1e-9){
-         PrintFormat("[NEXUS RISK] PYRAMID BLOCCATO: esposizione %s existing=%.2f + new=%.2f supererebbe cap=%.2f",
-                     NXS_DirName(pyrDir), existingExposure, lots, effCap);
+      ENUM_ORDER_TYPE otype = (type == POSITION_TYPE_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+      double refPrice = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
+                                                     : SymbolInfoDouble(g_sym, SYMBOL_BID);
+      double sl = 0, tp = 0;
+      string gateReason = "";
+      if(!NXS_CommonExposurePreflight("PYRAMID", pyrDir, lots, otype, refPrice,
+                                      sl, tp, gateReason)){
+         PrintFormat("[NEXUS RISK] PYRAMID BLOCCATO: %s", gateReason);
          break;
       }
 
       NXS_TradeSetMagic(InpMagic + MAGIC_PYRAMID + NXS_CountPyr() + 1);
       if(type == POSITION_TYPE_BUY)
-         NXS_DoBuy(lots, g_sym, 0, 0, "NEXUS_PYR");
+         NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_PYR");
       else
-         NXS_DoSell(lots, g_sym, 0, 0, "NEXUS_PYR");
+         NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_PYR");
       break;
    }
 }
