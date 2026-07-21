@@ -62,9 +62,11 @@ SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
 SEED_RECIPE_FILE = Path(__file__).resolve().parent / "seed_recipe.json"
 
-# Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
-# Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
-STRAT_LIST = backtest.STRAT_NAMES_36
+# PR6 — Canonical Strategy Registry: fonte unica di verita'.
+# Prima era backtest.STRAT_NAMES_36 (36, con alias CISD, senza ELLIOTT) ->
+# drift 36/37. Ora derivato dal registry: 37 id canonici LIVE, mai hardcoded.
+import strategy_registry
+STRAT_LIST = strategy_registry.live_ids()
 
 # Strategy chain default config (replica del CHANGELOG v2.0.13)
 DEFAULT_CHAIN_CONFIG = {
@@ -2703,7 +2705,24 @@ def backtest_strategies(user: str = Depends(require_user)):
     # il frontend (Creator/Run) usa questa chiave per popolare il pool.
     engine = sorted(backtest.STRATEGIES.keys())
     return {"strategies": STRAT_LIST, "all": engine, "engine": engine,
-            "total_ea": len(STRAT_LIST)}
+            "total_ea": len(STRAT_LIST),                       # dal registry (37)
+            "research_only": strategy_registry.research_only_ids()}
+
+
+@app.get("/api/strategies/registry")
+def strategies_registry(user: str = Depends(require_user)):
+    """PR6 — espone il Canonical Strategy Registry (artefatto read-only)."""
+    return strategy_registry.registry_artifact()
+
+
+@app.get("/api/strategies/resolve/{name}")
+def strategies_resolve(name: str, user: str = Depends(require_user)):
+    """PR6 — risoluzione canonica di un id/alias. Regola 1: unknown = 404,
+    mai fallback silenzioso su un'altra strategia."""
+    try:
+        return strategy_registry.resolve(name)
+    except strategy_registry.UnknownStrategyError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @app.get("/api/backtest/symbols")
