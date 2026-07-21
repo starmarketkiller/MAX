@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus.local/contracts/settings.schema.json",
+  "title": "NEXUS runtime settings",
+  "type": "object",
+  "required": ["schema_version", "settings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "RiskPercent": {"type":"number","minimum":0,"maximum":10,"default":1.0,"multipleOf":0.01,"x-label":"Risk per trade (%)","x-safety-class":"RISK"},
+        "MaxLot": {"type":"number","minimum":0.01,"maximum":100,"default":5.0,"multipleOf":0.01,"x-label":"Max lot size","x-safety-class":"RISK"},
+        "MaxTradesPerDay": {"type":"integer","minimum":0,"maximum":500,"default":12,"x-label":"Max trades / day","x-safety-class":"RISK"},
+        "MaxConcurrent": {"type":"integer","minimum":0,"maximum":40,"default":4,"x-label":"Max concurrent positions","x-safety-class":"RISK"},
+        "MaxDailyDDPct": {"type":"number","minimum":0,"maximum":100,"default":5.0,"multipleOf":0.01,"x-label":"Max daily DD (%)","x-safety-class":"RISK"},
+        "MinEntryScore": {"type":"integer","minimum":0,"maximum":100,"default":50,"x-label":"Min entry score","x-safety-class":"GATE"},
+        "ATR_SL_Mult": {"type":"number","exclusiveMinimum":0,"maximum":20,"default":2.0,"multipleOf":0.01,"x-label":"ATR SL multiplier","x-safety-class":"RISK"},
+        "ATR_TP_Mult": {"type":"number","exclusiveMinimum":0,"maximum":50,"default":2.6,"multipleOf":0.01,"x-label":"ATR TP multiplier","x-safety-class":"RISK"},
+        "BE_TriggerATR": {"type":"number","minimum":0,"maximum":20,"default":1.0,"multipleOf":0.01,"x-label":"BE trigger (ATR)","x-safety-class":"MANAGEMENT"},
+        "TrailActivateATR": {"type":"number","minimum":0,"maximum":20,"default":1.5,"multipleOf":0.01,"x-label":"Trail activate (ATR)","x-safety-class":"MANAGEMENT"},
+        "TrailDistanceATR": {"type":"number","minimum":0,"maximum":20,"default":1.0,"multipleOf":0.01,"x-label":"Trail distance (ATR)","x-safety-class":"MANAGEMENT"},
+        "TF_SLTP_H1": {"type":"number","exclusiveMinimum":0,"maximum":20,"default":2.0,"multipleOf":0.01,"x-label":"SL/TP × H1","x-safety-class":"RISK"},
+        "TF_SLTP_H4": {"type":"number","exclusiveMinimum":0,"maximum":20,"default":3.5,"multipleOf":0.01,"x-label":"SL/TP × H4","x-safety-class":"RISK"},
+        "TF_SLTP_D1": {"type":"number","exclusiveMinimum":0,"maximum":20,"default":5.0,"multipleOf":0.01,"x-label":"SL/TP × D1","x-safety-class":"RISK"},
+        "AsianScoreMin": {"type":"number","minimum":0,"maximum":100,"default":72.0,"multipleOf":0.1,"x-label":"Asian session min score","x-safety-class":"GATE"},
+        "LondonScoreMin": {"type":"number","minimum":0,"maximum":100,"default":68.0,"multipleOf":0.1,"x-label":"London session min score","x-safety-class":"GATE"},
+        "OverlapScoreMin": {"type":"number","minimum":0,"maximum":100,"default":66.0,"multipleOf":0.1,"x-label":"Overlap session min score","x-safety-class":"GATE"},
+        "NYScoreMin": {"type":"number","minimum":0,"maximum":100,"default":68.0,"multipleOf":0.1,"x-label":"NY session min score","x-safety-class":"GATE"},
+        "AfterNYScoreMin": {"type":"number","minimum":0,"maximum":100,"default":74.0,"multipleOf":0.1,"x-label":"After-NY session min score","x-safety-class":"GATE"},
+        "UseNewsFilter": {"type":"boolean","default":true,"x-label":"News filter","x-safety-class":"GATE"},
+        "UseHTFBias": {"type":"boolean","default":true,"x-label":"HTF Bias gate","x-safety-class":"GATE"},
+        "UseVelocityGate": {"type":"boolean","default":true,"x-label":"Velocity gate","x-safety-class":"GATE"},
+        "strategies": {"type":"object","additionalProperties":{"type":"boolean"},"default":{},"x-label":"Strategy enablement","x-safety-class":"GATE"}
+      }
+    }
+  },
+  "$defs": {
+    "lockedProfile": {
+      "type":"object",
+      "required":["profile_id","version","schema_version","created_at","created_by","settings","checksum","status"],
+      "properties": {
+        "profile_id":{"type":"string","minLength":1},
+        "version":{"type":"integer","minimum":1},
+        "schema_version":{"const":1},
+        "created_at":{"type":"string"},
+        "created_by":{"type":"string"},
+        "settings":{"type":"object"},
+        "checksum":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+        "status":{"enum":["ACTIVE","SUPERSEDED","REVOKED"]}
+      }
+    }
+  }
+}

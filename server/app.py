@@ -34,6 +34,7 @@ import jwt
 import backtest
 import bt_verdict
 import strategy_registry
+import settings_contract
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -83,62 +84,33 @@ DEFAULT_CHAIN_CONFIG = {
 }
 
 # Runtime settings default (chiavi lette da NXS_RuntimeSettings.mqh)
-DEFAULT_SETTINGS = {
-    "RiskPercent": 1.0,
-    "MaxLot": 5.0,
-    "MaxTradesPerDay": 30,
-    "MaxConcurrent": 3,
-    "MaxDailyDDPct": 5.0,
-    "MinEntryScore": 70,
-    # Stop/target/trailing (default reali dell'EA, NXS_Inputs.mqh)
-    "ATR_SL_Mult": 2.0,
-    "ATR_TP_Mult": 2.6,
-    "BE_TriggerATR": 1.0,
-    "TrailActivateATR": 1.5,
-    "TrailDistanceATR": 1.0,
-    # SL/TP proporzionati al timeframe di origine del segnale (v2.0.21)
-    "TF_SLTP_H1": 2.0,
-    "TF_SLTP_H4": 3.5,
-    "TF_SLTP_D1": 5.0,
-    # Sessioni
-    "AsianScoreMin": 72.0,
-    "LondonScoreMin": 68.0,
-    "OverlapScoreMin": 66.0,
-    "NYScoreMin": 68.0,
-    "AfterNYScoreMin": 74.0,
-    # Anti-revenge / struttura
-    "AntiRevengeLosses": 3,
-    "AntiRevengeMin": 60,
-    "SwingWing": 3,
-    "OBDisplacement": 1.5,
-    "FVGMinBody": 0.5,
-    "ReactionTol": 0.3,
-    # Protezioni equity/tempo
-    "ESL_IsPercent": True,
-    "ESL_Value": 5.0,
-    "DPT_IsPercent": True,
-    "DPT_Value": 3.0,
-    "MaxHoldHours": 4,
-    "MaxLossPosPct": 2.0,
-    "AutoCloseMin": 15,
-    "MarketCloseGMT": 21,
-    # Confluenza / cap / cooldown
-    "ConfluenceBonus2": 10,
-    "ConfluenceBonus3": 20,
-    "ConfluenceBonus4": 30,
-    "ADXRsiScoreCap": 70,
-    "MaxConsecPerStrategy": 3,
-    "StrategyCooldownMin": 30,
-    # Spread / volatilità
-    "MaxSpreadAtrPct": 8.0,
-    "MaxSpreadPoints": 0,
-    "LowVolAtrPct": 0.15,
-    "HighVolAtrPct": 0.6,
-    # Gate booleani
-    "UseNewsFilter": True,
-    "UseHTFBias": True,
-    "UseVelocityGate": True,
-}
+DEFAULT_SETTINGS = dict(settings_contract.DEFAULT_SETTINGS)
+
+
+def _validated_settings_patch(data):
+    try:
+        clean = settings_contract.validate_settings(data, partial=True)
+        if "strategies" in clean:
+            strategy_registry.require_strategies(clean["strategies"].keys(), live=True)
+        return clean
+    except settings_contract.SettingsValidationError as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "SETTINGS_VALIDATION_FAILED",
+            "schema_version": settings_contract.SCHEMA_VERSION,
+            "errors": exc.errors,
+        }) from exc
+    except (ValueError, strategy_registry.UnknownStrategyError) as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "SETTINGS_VALIDATION_FAILED",
+            "schema_version": settings_contract.SCHEMA_VERSION,
+            "errors": [{"field": "strategies", "code": "unknown", "message": str(exc)}],
+        }) from exc
+
+
+def _current_settings():
+    stored = kv_get("settings", {}) or {}
+    known = {key: value for key, value in stored.items() if key in settings_contract.PROPERTIES}
+    return {**DEFAULT_SETTINGS, **known}
 
 # --------------------------------------------------------------------------- #
 # Database
@@ -456,13 +428,15 @@ def _seed_strategy_results() -> None:
     best = max(evaluated, key=lambda r: (r.get("sharpe") or -9)) if evaluated else None
     if best:
         profiles = kv_get("locked_profiles", {})
-        profiles.setdefault("*", {
+        candidate = {
             "locked": True, "label": f"{best['strategy']} · {best.get('management')}",
             "saved_at": iso(), "strategy": best["strategy"], "management": best.get("management"),
             "metrics": {"sharpe": best.get("sharpe"), "profit_factor": best.get("profit_factor"),
                         "win_rate": best.get("win_rate"), "max_dd": best.get("max_dd")},
             "params": best.get("params", {}),
-        })
+        }
+        if "*" not in profiles:
+            profiles["*"] = settings_contract.version_profile(candidate, created_by="seed")
         kv_set("locked_profiles", profiles)
     kv_set("seed_version", marker)
     print(f"[NEXUS] seeded {len(lib)} strategy results — default lock = {best and best['strategy']}")
@@ -645,7 +619,8 @@ def ea_command(x_nexus_token: Optional[str] = Header(None)):
 @app.get("/api/ea/settings")
 def ea_settings(x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    out = {**DEFAULT_SETTINGS, **(kv_get("settings", {}) or {})}
+    out = _current_settings()
+    out["schema_version"] = settings_contract.SCHEMA_VERSION
     # Strategie disattivate dalla pagina "Strategie" della dashboard: l'EA le
     # legge in runtime (poll ogni 15s) e blocca l'apertura di nuovi trade per
     # queste strategie senza bisogno di riavvio/ricompilazione del profilo.
@@ -1102,14 +1077,16 @@ def dash_notifications(limit: int = 50, user: str = Depends(require_user)):
 
 @app.get("/api/dashboard/settings")
 def dash_settings_get(user: str = Depends(require_user)):
-    return kv_get("settings", DEFAULT_SETTINGS)
+    return _current_settings()
 
 
 @app.put("/api/dashboard/settings")
 async def dash_settings_put(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
-    kv_set("settings", data)
-    return {"ok": True, "settings": data}
+    data = _validated_settings_patch(await request.json())
+    merged = {**_current_settings(), **data}
+    kv_set("settings", merged)
+    kv_set("settings_schema_version", settings_contract.SCHEMA_VERSION)
+    return {"ok": True, "settings": merged, "schema_version": settings_contract.SCHEMA_VERSION}
 
 
 @app.get("/api/dashboard/locked_profiles")
@@ -1120,8 +1097,13 @@ def dash_locked_get(user: str = Depends(require_user)):
 @app.put("/api/dashboard/locked_profiles")
 async def dash_locked_put(request: Request, user: str = Depends(require_user)):
     data = await request.json()
-    kv_set("locked_profiles", data)
-    return {"ok": True, "locked_profiles": data}
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=422, detail="locked_profiles deve essere una mappa")
+    previous = kv_get("locked_profiles", {}) or {}
+    versioned = {symbol: settings_contract.version_profile(profile, previous.get(symbol), created_by=user)
+                 for symbol, profile in data.items()}
+    kv_set("locked_profiles", versioned)
+    return {"ok": True, "locked_profiles": versioned}
 
 
 # ======================= HELPERS (frontend React) ======================= #
@@ -1350,23 +1332,25 @@ async def ea_command_post(request: Request, user: str = Depends(require_user)):
 def settings_get(user: str = Depends(require_user)):
     # Merge sui default: le installazioni esistenti hanno un blob parziale;
     # così ogni campo della pagina Settings mostra sempre un valore reale.
-    return {**DEFAULT_SETTINGS, **(kv_get("settings", {}) or {})}
+    return _current_settings()
+
+
+@app.get("/api/settings/schema")
+def settings_schema(user: str = Depends(require_user)):
+    return settings_contract.SCHEMA
 
 
 @app.put("/api/settings")
 @app.post("/api/settings")
 async def settings_save(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
+    data = _validated_settings_patch(await request.json())
     # I componenti della dashboard inviano patch parziali (es. solo "strategies"
     # dalla pagina Strategie, o solo i parametri di rischio): facciamo merge sul
     # blob esistente per non azzerare le altre impostazioni lette dall'EA.
-    merged = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
-    if isinstance(data, dict):
-        merged.update(data)
-    else:
-        merged = data
+    merged = {**_current_settings(), **data}
     kv_set("settings", merged)
-    return {"ok": True, "settings": merged}
+    kv_set("settings_schema_version", settings_contract.SCHEMA_VERSION)
+    return {"ok": True, "settings": merged, "schema_version": settings_contract.SCHEMA_VERSION}
 
 
 @app.get("/api/strategies")
@@ -2760,7 +2744,7 @@ async def backtest_locked_save(request: Request, user: str = Depends(require_use
     ovr = data.get("overrides") or {}
     strat = (cfg.get("strategies") or [None])[0]
     profiles = kv_get("locked_profiles", {})
-    profiles[sym] = {
+    candidate = {
         "locked": True,
         "label": data.get("label") or (f"{strat} · {sym}"),
         "saved_at": iso(),
@@ -2777,6 +2761,7 @@ async def backtest_locked_save(request: Request, user: str = Depends(require_use
             "BreakevenR": ovr.get("BreakevenR"), "TrailingAtrMult": ovr.get("TrailingAtrMult"),
         },
     }
+    profiles[sym] = settings_contract.version_profile(candidate, profiles.get(sym), created_by=user)
     kv_set("locked_profiles", profiles)
     return {"ok": True, "symbol": sym, "strategy": strat}
 
@@ -2906,7 +2891,7 @@ async def backtest_import_results(request: Request, user: str = Depends(require_
             keep = {"*": best}
         for sym, r in keep.items():
             p = r.get("params") or {}
-            profiles[sym] = {
+            candidate = {
                 "locked": True,
                 "label": f"{r['strategy']} · {r.get('management') or 'default'}",
                 "saved_at": iso(),
@@ -2925,6 +2910,7 @@ async def backtest_import_results(request: Request, user: str = Depends(require_
                     "TrailingAtrMult": p.get("TrailingAtrMult"), "MaxConcurrent": p.get("MaxConcurrent"),
                 },
             }
+            profiles[sym] = settings_contract.version_profile(candidate, profiles.get(sym), created_by=user)
             locked_written += 1
         kv_set("locked_profiles", profiles)
 
