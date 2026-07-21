@@ -37,6 +37,7 @@ import strategy_registry
 import settings_contract
 import settings_schema
 import command_contract
+import ledger_analytics
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -1128,16 +1129,16 @@ def dash_journal(limit: int = 200, user: str = Depends(require_user)):
             "NULLIF(REPLACE(REPLACE(open_time,'.','-'),' ','T'),''), '0000-00-00') DESC, "
             "synced_at DESC LIMIT ?",
             (limit,))]
-        agg = c.execute(
-            "SELECT COUNT(*) n, COALESCE(SUM(pnl),0) total, "
-            "SUM(CASE WHEN pnl>0 THEN 1 ELSE 0 END) wins, "
-            "SUM(CASE WHEN pnl<0 THEN 1 ELSE 0 END) losses FROM trades").fetchone()
+        ledger_rows = ledger_analytics.authoritative_trades(c)
     # Sana i timestamp legacy (formato punto MT5) ad ogni lettura, cosi' le
     # date compaiono corrette nel Journal anche senza aspettare un resync.
     for r in rows:
         r["open_time"] = _normalize_time(r["open_time"])
         r["close_time"] = _normalize_time(r["close_time"])
-    return {"trades": rows, "summary": dict(agg)}
+    pnls = [float(r["pnl"] or 0) for r in ledger_rows]
+    agg = {"n": len(pnls), "total": round(sum(pnls), 2),
+           "wins": sum(p > 0 for p in pnls), "losses": sum(p < 0 for p in pnls)}
+    return {"trades": rows, "summary": agg, "provenance": _analytics_provenance()}
 
 
 @app.get("/api/dashboard/strategy_stats")
@@ -1250,6 +1251,26 @@ def _trades_with_meta(limit=1000):
     return out
 
 
+def _ledger_trades_with_meta(limit=1000):
+    """Read model analitico autorevole; ``trades`` fornisce solo note utente."""
+    with _conn() as c:
+        rows = ledger_analytics.authoritative_trades(c, limit)
+        meta = {m["ticket"]: dict(m) for m in c.execute("SELECT * FROM journal_meta")}
+    for row in rows:
+        row["openTime"] = _normalize_time(row.get("openTime"))
+        row["closeTime"] = _normalize_time(row.get("closeTime"))
+        m = meta.get(row.get("ticket"), {})
+        row["journal_tags"] = json.loads(m["tags"]) if m.get("tags") else []
+        row["journal_rating"] = m.get("rating")
+        row["journal_note"] = m.get("note")
+    return rows
+
+
+def _analytics_provenance():
+    with _conn() as c:
+        return ledger_analytics.provenance(c)
+
+
 def _enqueue_ea_command(action, payload=None):
     cmd_id = secrets.token_hex(8)
     with _conn() as c:
@@ -1293,11 +1314,8 @@ def ea_status_dash(user: str = Depends(require_user)):
 
 
 def _profit_factor(limit=200):
-    """Profit factor sugli ultimi trade sincronizzati. None se non ci sono dati."""
-    with _conn() as c:
-        rows = [r["pnl"] for r in c.execute(
-            "SELECT pnl FROM trades ORDER BY synced_at DESC LIMIT ?", (limit,))
-            if r["pnl"] is not None]
+    """Profit factor derivato dagli ultimi eventi terminali verificati."""
+    rows = [r["pnl"] for r in _ledger_trades_with_meta(limit) if r["pnl"] is not None]
     if not rows:
         return None, 0
     gain = sum(p for p in rows if p > 0)
@@ -1553,11 +1571,8 @@ def _strategy_leaderboard():
     cfg = _strat_risk_cfg()
     manual = kv_get("strategy_risk_manual", {}) or {}
     balance = _account_balance()
-    with _conn() as c:
-        rows = [dict(r) for r in c.execute(
-            "SELECT strategy, pnl, close_time, open_time FROM trades "
-            "WHERE strategy IS NOT NULL AND pnl IS NOT NULL "
-            "ORDER BY COALESCE(close_time, open_time) ASC")]
+    rows = [r for r in reversed(_ledger_trades_with_meta(100000))
+            if r.get("strategy") is not None and r.get("pnl") is not None]
     by = {}
     for r in rows:
         by.setdefault(r["strategy"], []).append(float(r["pnl"]))
@@ -1615,6 +1630,7 @@ def _strategy_leaderboard():
             "avg_trade": round(net / n, 2) if n else 0.0,
             "suggested_mult": suggested, "effective_mult": effective,
             "risk_source": source, "reason": reason,
+            "provenance": ledger_analytics.DERIVED_PROVENANCE,
         })
     out.sort(key=lambda r: (r["profit_factor"], r["net"]), reverse=True)
     return out, cfg, balance
@@ -1636,13 +1652,11 @@ def strategies_leaderboard(user: str = Depends(require_user)):
 
 @app.get("/api/analytics/strategy_performance")
 def analytics_strategy_performance(user: str = Depends(require_user)):
-    """Diagnostica per-strategia dai TRADE REALI dell'EA (tabella trades),
-    non da CSV di backtest. Usato da Strat Diag. Include split BUY/SELL,
+    """Diagnostica per-strategia dagli eventi terminali del ledger.
+    Non usa CSV di backtest. Include split BUY/SELL,
     miglior/peggior trade, expectancy e verdetto."""
-    with _conn() as c:
-        rows = [dict(r) for r in c.execute(
-            "SELECT strategy, side, pnl, close_time, open_time FROM trades "
-            "WHERE strategy IS NOT NULL AND pnl IS NOT NULL")]
+    rows = [r for r in _ledger_trades_with_meta(100000)
+            if r.get("strategy") is not None and r.get("pnl") is not None]
     by = {}
     for r in rows:
         by.setdefault(r["strategy"], []).append(r)
@@ -1680,12 +1694,12 @@ def analytics_strategy_performance(user: str = Depends(require_user)):
             "buys": len(buys), "sells": len(sells),
             "buy_net": round(sum(float(t["pnl"]) for t in buys), 2),
             "sell_net": round(sum(float(t["pnl"]) for t in sells), 2),
-            "verdict": verdict,
+            "verdict": verdict, "provenance": ledger_analytics.DERIVED_PROVENANCE,
         })
     out.sort(key=lambda r: r["net"], reverse=True)
     total = round(sum(r["net"] for r in out), 2)
     return {"strategies": out, "total_net": total, "total_trades": len(rows),
-            "demo": len(out) == 0}
+            "demo": len(out) == 0, "provenance": _analytics_provenance()}
 
 
 @app.post("/api/strategies/risk_config")
@@ -1751,9 +1765,8 @@ def strategy_overview(name: str, user: str = Depends(require_user)):
             for s in (json.loads(r["payload"]).get("strategies") or []):
                 if s.get("name") == name:
                     diag = s
-        trades = [dict(t) for t in c.execute(
-            "SELECT ticket,symbol,side,lots,open_price,close_price,pnl,open_time,close_time,reason "
-            "FROM trades WHERE strategy=? ORDER BY COALESCE(close_time,open_time) DESC LIMIT 20", (name,))]
+    trades = [t for t in _ledger_trades_with_meta(100000)
+              if t.get("strategy") == name][:20]
 
     return {
         "name": name, "enabled": enabled,
@@ -1771,33 +1784,37 @@ def strategy_overview(name: str, user: str = Depends(require_user)):
 @app.get("/api/analytics/trades")
 def analytics_trades(limit: int = 500, user: str = Depends(require_user)):
     # Il frontend usa la risposta come array diretto (.slice/.filter).
-    return _trades_with_meta(limit)
+    return _ledger_trades_with_meta(limit)
 
 
 @app.get("/api/analytics/summary")
 def analytics_summary(user: str = Depends(require_user)):
-    trades = _trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(100000)
     if not trades:
-        return {"demo": True, "trades": 0, "net_pnl": 0, "win_rate": 0,
-                "profit_factor": 0, "wins": 0, "losses": 0}
+        return {"demo": True, "trades": 0, "total_trades": 0,
+                "net_pnl": 0, "total_pnl": 0, "win_rate": 0,
+                "profit_factor": 0, "wins": 0, "losses": 0,
+                "provenance": _analytics_provenance()}
     wins = [t for t in trades if (t["pnl"] or 0) > 0]
     losses = [t for t in trades if (t["pnl"] or 0) < 0]
     gross_win = sum(t["pnl"] for t in wins)
     gross_loss = abs(sum(t["pnl"] for t in losses))
     return {
-        "demo": False, "trades": len(trades),
+        "demo": False, "trades": len(trades), "total_trades": len(trades),
         "net_pnl": round(sum(t["pnl"] or 0 for t in trades), 2),
+        "total_pnl": round(sum(t["pnl"] or 0 for t in trades), 2),
         "wins": len(wins), "losses": len(losses),
         "win_rate": round(len(wins) / len(trades) * 100, 1),
         "profit_factor": round(gross_win / gross_loss, 2) if gross_loss else None,
         "avg_win": round(gross_win / len(wins), 2) if wins else 0,
         "avg_loss": round(-gross_loss / len(losses), 2) if losses else 0,
+        "provenance": _analytics_provenance(),
     }
 
 
 @app.get("/api/analytics/by_reason")
 def analytics_by_reason(user: str = Depends(require_user)):
-    trades = _trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(100000)
     groups = {}
     for t in trades:
         k = t.get("reason") or "—"
@@ -1809,7 +1826,8 @@ def analytics_by_reason(user: str = Depends(require_user)):
     for g in groups.values():
         g["pnl"] = round(g["pnl"], 2)
         g["win_rate"] = round(g["wins"] / g["count"] * 100, 1) if g["count"] else 0
-    return {"by_reason": list(groups.values()), "demo": len(trades) == 0}
+    return {"by_reason": list(groups.values()), "demo": len(trades) == 0,
+            "provenance": _analytics_provenance()}
 
 
 @app.post("/api/analytics/whatif")
@@ -1818,7 +1836,7 @@ async def analytics_whatif(request: Request, user: str = Depends(require_user)):
     body = await request.json()
     excl_strat = set(body.get("exclude_strategies") or [])
     excl_reason = set(body.get("exclude_reasons") or [])
-    trades = _trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(100000)
     kept = [t for t in trades
             if t.get("strategy") not in excl_strat and t.get("reason") not in excl_reason]
     base = round(sum(t["pnl"] or 0 for t in trades), 2)
@@ -2674,7 +2692,7 @@ def settings_history(limit: int = 50, user: str = Depends(require_user)):
 # ---- analytics extra ----
 @app.get("/api/analytics/calendar")
 def analytics_calendar(days: int = 365, user: str = Depends(require_user)):
-    trades = _trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(100000)
     by_day = {}
     for t in trades:
         d = (t.get("closeTime") or "")[:10]
@@ -2685,7 +2703,8 @@ def analytics_calendar(days: int = 365, user: str = Depends(require_user)):
         g["trades"] += 1
     for g in by_day.values():
         g["pnl"] = round(g["pnl"], 2)
-    return {"days": sorted(by_day.values(), key=lambda x: x["date"]), "demo": len(trades) == 0}
+    return {"days": sorted(by_day.values(), key=lambda x: x["date"]), "demo": len(trades) == 0,
+            "provenance": _analytics_provenance()}
 
 
 @app.get("/api/analytics/correlation")
@@ -2696,7 +2715,7 @@ def analytics_correlation(user: str = Depends(require_user)):
 
 @app.get("/api/analytics/heatmap")
 def analytics_heatmap(user: str = Depends(require_user)):
-    trades = _trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(100000)
     cells = {}
     for t in trades:
         ct = t.get("closeTime") or ""
@@ -2706,7 +2725,8 @@ def analytics_heatmap(user: str = Depends(require_user)):
         c["trades"] += 1
     for c in cells.values():
         c["pnl"] = round(c["pnl"], 2)
-    return {"by_hour": sorted(cells.values(), key=lambda x: x["hour"]), "demo": len(trades) == 0}
+    return {"by_hour": sorted(cells.values(), key=lambda x: x["hour"]), "demo": len(trades) == 0,
+            "provenance": _analytics_provenance()}
 
 
 @app.get("/api/analytics/shadow")
@@ -2808,7 +2828,7 @@ def chart_ohlc(symbol: str = "XAUUSD", tf: str = "M15", limit: int = 300,
 
 @app.get("/api/chart/markers")
 def chart_markers(symbol: str = "XAUUSD", user: str = Depends(require_user)):
-    trades = [t for t in _trades_with_meta(200) if t.get("symbol") == symbol]
+    trades = [t for t in _ledger_trades_with_meta(200) if t.get("symbol") == symbol]
     markers = [{"time": t.get("closeTime"), "price": t.get("closePrice"),
                 "side": t.get("side"), "pnl": t.get("pnl"), "ticket": t.get("ticket")}
                for t in trades if t.get("closePrice")]
@@ -3073,19 +3093,20 @@ def backtest_analyze_last(user: str = Depends(require_user)):
 @app.get("/api/analytics/journal_verdict")
 def analytics_journal_verdict(min_trades: int = 10, limit: int = 2000,
                               user: str = Depends(require_user)):
-    """Verdetti per-strategia sui trade REALI gia' sincronizzati dalla demo
-    (tabella trades) - stessa forma di /backtest/analyze_csv, cosi' il frontend
+    """Verdetti per-strategia derivati dal ledger dei trade reali.
+    Stessa forma di /backtest/analyze_csv, cosi' il frontend
     riusa la stessa tabella. Dice quali strategie tenere/spegnere sui soldi veri."""
     try:
         mt = max(1, int(min_trades))
     except (ValueError, TypeError):
         mt = 10
-    trades = _trades_with_meta(limit=limit)
+    trades = _ledger_trades_with_meta(limit=limit)
     out = bt_verdict.analyze_live_trades(trades, min_trades=mt)
     if out.get("error"):
         return {"rows": [], "summary": {"total": 0, "trades": 0}, "recommendations": {},
                 "note": out["error"]}
-    out["source"] = "journal_live"
+    out["source"] = "trade_events"
+    out["provenance"] = _analytics_provenance()
     return out
 
 

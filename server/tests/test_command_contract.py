@@ -90,6 +90,6 @@ def test_single_worker_source_and_manifest_checksums():
     assert (root / "LocalBridge" / "nexus_local_worker.py").exists()
     assert not (root / "server" / "nexus_local_worker.py").exists()
     manifest = json.loads((root / "deploy" / "deployment-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == 1 and manifest["release_id"] == "nexus-3.40"
+    assert manifest["schema_version"] == 1 and manifest["release_id"] == "nexus-3.50"
     for record in manifest["files"]:
         assert hashlib.sha256((root / record["path"]).read_bytes()).hexdigest() == record["sha256"]

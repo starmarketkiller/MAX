@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "release_id": "nexus-3.40",
+  "release_id": "nexus-3.50",
   "files": [
     {
       "path": "MQL5/Experts/NEXUS_EA_v2.mq5",
-      "sha256": "72a15e2a998b8133d2820833f9cc198688b04edab4f800a84c777de4b3ca3e75"
+      "sha256": "8741a9bd6646c642a57e8e866436d36032307097119a11c92c4db54d1eae017b"
     },
     {
       "path": "LocalBridge/nexus_local_worker.py",
-      "sha256": "bdeafd21a6369e77636c617a092b696850eebb85d757276cd895566fe27c6dee"
+      "sha256": "a0654c298bf3e25ecbd8f1433a65e6e9ef80d3bd8e95ecee7971db86ce48fbd3"
     }
   ],
   "minimum_worker_version": "2.0.0",
-  "sha256": "be798837791265a11ce151b99affdf8dff817fa07ee845397c9e3e88d98ba737"
+  "sha256": "8456e1c0b3331ef0109eec2293c5eaa60121b260de3819110e592f0d9d065d7e"
 }
