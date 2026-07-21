@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.90"
+#property version   "3.00"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -56,6 +56,7 @@
 // v2.0.9 — Performance roadmap (Sprint 1+2+3): all auto-active.
 #include <NEXUS_v1\NXS_Performance.mqh>
 #include <NEXUS_v1\NXS_EdgeAdaptive.mqh>
+#include <NEXUS_v1\NXS_PositionCoordinator.mqh>
 #include <NEXUS_v1\NXS_Management.mqh>
 #include <NEXUS_v1\NXS_GridRecovery.mqh>
 #include <NEXUS_v1\NXS_Pyramiding.mqh>
@@ -621,6 +622,8 @@ void OnTick(){
    SNXSAMD   amd   = NXS_GetAMD();
    SNXSSweep sweep = NXS_DetectSweep();
 
+   // PR4: modules submit proposals; one deterministic action wins per ticket.
+   NXS_PM_BeginCycle();
    // Management on every tick
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
@@ -634,6 +637,7 @@ void OnTick(){
       NXS_ManageGrid();
       NXS_ManagePyramid(vel);
    }
+   NXS_PM_ApplyCycle();
 
    // Web push (disabled in Strategy Tester)
    if(!MQLInfoInteger(MQL_TESTER)) NXS_WebPush(htf, vel, amd, sweep);

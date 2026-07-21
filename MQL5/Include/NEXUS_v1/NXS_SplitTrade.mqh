@@ -66,27 +66,21 @@ void NXS_ManageSplit(){
       double minVol = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
 
       // P1: partial close at +InpTP1_ATR (only once per ticket)
-      if(prof >= g_atr * InpTP1_ATR && !_splitHas(t, g_splitP1, g_splitP1Cnt)){
+      if(prof >= g_atr * InpTP1_ATR && !_splitHas(t, g_splitP1, g_splitP1Cnt) &&
+         !NXS_PM_HasApplied(t, "SPLIT_P1")){
          double part = NormalizeDouble(vol * InpTP1_Pct, 2);
          if(part >= minVol && (vol - part) >= minVol){
-            if(NXS_DoClosePartial(t, part)){
-               _splitAdd(t, g_splitP1, g_splitP1Cnt);
-               PrintFormat("[NEXUS] P1 closed %.2f of ticket %I64u @ +%.1fATR",
-                           part, t, InpTP1_ATR);
-            }
+            NXS_PM_ProposePartial(t, part, 70, "SPLIT_P1", "first partial target");
          } else {
             _splitAdd(t, g_splitP1, g_splitP1Cnt);
          }
       }
       // P2: partial close at +InpTP2_ATR (only once per ticket)
-      else if(prof >= g_atr * InpTP2_ATR && !_splitHas(t, g_splitP2, g_splitP2Cnt)){
+      else if(prof >= g_atr * InpTP2_ATR && !_splitHas(t, g_splitP2, g_splitP2Cnt) &&
+              !NXS_PM_HasApplied(t, "SPLIT_P2")){
          double part = NormalizeDouble(vol * InpTP2_Pct, 2);
          if(part >= minVol && (vol - part) >= minVol){
-            if(NXS_DoClosePartial(t, part)){
-               _splitAdd(t, g_splitP2, g_splitP2Cnt);
-               PrintFormat("[NEXUS] P2 closed %.2f of ticket %I64u @ +%.1fATR",
-                           part, t, InpTP2_ATR);
-            }
+            NXS_PM_ProposePartial(t, part, 70, "SPLIT_P2", "second partial target");
          } else {
             _splitAdd(t, g_splitP2, g_splitP2Cnt);
          }
