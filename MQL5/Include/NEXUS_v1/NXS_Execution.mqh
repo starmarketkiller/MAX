@@ -273,11 +273,23 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       ctxTag = StringSubstr(EnumToString(sig.sourceTF), 7);   // "M15","H1","H4","D1"
    string cm = StringFormat("%s|%s|%.1f", InpComment, sig.stratName, sig.score);
    if(StringLen(ctxTag) > 0) cm = cm + "|" + ctxTag;
+   // PR2 Virtual SL: decide lo SL da inviare al broker (hard SL largo in EXECUTE,
+   // SL logico in OFF/OBSERVE/fallback). Il sizing sopra resta sullo SL logico.
+   int    vdir = (sig.dir == DIR_BUY) ? +1 : -1;
+   double brokerSL = sl;
+   if(!NXS_VSL_PrepareEntry(vdir, sig.entryRef, sl, g_atr, brokerSL)){
+      g_nxsLastOpenFailure = "virtsl_hardSL_invalid";
+      PrintFormat("[NEXUS] OPEN BLOCCATO: hard SL Virtual SL non valido strat=%s", sig.stratName);
+      return OPEN_FAIL_INVALID_STOPS;
+   }
    bool ok = false;
-   if(sig.dir == DIR_BUY)       ok = NXS_SafeBuy(lots, g_sym, sl, tp, cm);
-   else if(sig.dir == DIR_SELL) ok = NXS_SafeSell(lots, g_sym, sl, tp, cm);
+   if(sig.dir == DIR_BUY)       ok = NXS_SafeBuy(lots, g_sym, brokerSL, tp, cm);
+   else if(sig.dir == DIR_SELL) ok = NXS_SafeSell(lots, g_sym, brokerSL, tp, cm);
 
    if(ok){
+      // registra l'intent pending correlato all'order ticket reale (match al fill)
+      NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, magic, vdir,
+                          sig.stratName, sig.slPrice, brokerSL);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);

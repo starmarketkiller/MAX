@@ -1898,12 +1898,24 @@ ENUM_NXS_OPEN_RC NXR_OpenTrade(SNXSSignal &sig, long magic,
    sig.tpPrice = tp;
    NXS_TradeSetMagic(magic);
    string cm = StringFormat("%s|%s|%.0f", InpComment, sig.stratName, sig.score);
+   // PR2 Virtual SL (percorso institutional/NXR): stesso schema del classic —
+   // hard SL al broker in EXECUTE, SL logico in OFF/OBSERVE/fallback.
+   int    vdir = (sig.dir == DIR_BUY) ? +1 : -1;
+   double brokerSL = sl;
+   if(!NXS_VSL_PrepareEntry(vdir, sig.entryRef, sl, g_atr, brokerSL))
+   {
+      g_nxsLastOpenFailure = "virtsl_hardSL_invalid";
+      PrintFormat("[NXR OPEN BLOCKED] hard SL Virtual SL non valido strat=%s", sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    bool ok = (sig.dir == DIR_BUY)
-             ? NXS_SafeBuy(lots, g_sym, sl, tp, cm)
-             : NXS_SafeSell(lots, g_sym, sl, tp, cm);
+             ? NXS_SafeBuy(lots, g_sym, brokerSL, tp, cm)
+             : NXS_SafeSell(lots, g_sym, brokerSL, tp, cm);
 
    if(ok)
    {
+      NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, magic, vdir,
+                          sig.stratName, sig.slPrice, brokerSL);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);
