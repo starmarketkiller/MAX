@@ -35,6 +35,7 @@ import backtest
 import bt_verdict
 import strategy_registry
 import settings_contract
+import settings_schema
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -1336,8 +1337,32 @@ def settings_get(user: str = Depends(require_user)):
 
 
 @app.get("/api/settings/schema")
-def settings_schema(user: str = Depends(require_user)):
-    return settings_contract.SCHEMA
+def settings_schema_get(user: str = Depends(require_user)):
+    return {"schema": settings_contract.SCHEMA,
+            "defaults": settings_contract.DEFAULT_SETTINGS,
+            "schema_version": settings_contract.SCHEMA_VERSION}
+
+
+@app.post("/api/settings/validate")
+async def settings_validate(request: Request, user: str = Depends(require_user)):
+    try:
+        normalized = _validated_settings_patch(await request.json())
+        return {"valid": True, "normalized": normalized,
+                "schema_version": settings_contract.SCHEMA_VERSION}
+    except HTTPException as exc:
+        return {"valid": False, "errors": exc.detail.get("errors", []),
+                "schema_version": settings_contract.SCHEMA_VERSION}
+
+
+def build_locked_profile(settings: dict, created_by: str = "operator",
+                         version: int = 1, profile_id: str = None) -> dict:
+    normalized = settings_schema.validate(settings, allow_unknown=True)
+    canonical = json.dumps(normalized, sort_keys=True, separators=(",", ":"))
+    return {"profile_id": profile_id or secrets.token_hex(8), "version": version,
+            "schema_version": settings_contract.SCHEMA_VERSION, "created_at": iso(),
+            "created_by": created_by, "settings": normalized,
+            "checksum": hashlib.sha256(canonical.encode()).hexdigest()[:16],
+            "status": "ACTIVE"}
 
 
 @app.put("/api/settings")

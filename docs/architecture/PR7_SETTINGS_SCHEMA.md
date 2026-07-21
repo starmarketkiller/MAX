@@ -1,40 +1,60 @@
-# PR7 — Settings schema and profiles
+# PR 7 — Settings schema and profiles
 
-## Canonical sources
+Elimina i default divergenti e la validazione mancante: i settings erano definiti
+in `NXS_Inputs.mqh`, backend `DEFAULT_SETTINGS`, fallback frontend e seed, con
+valori/nomi che potevano divergere; il backend accettava blob arbitrari senza
+validazione di tipo/range (NaN inclusi).
 
-- `contracts/settings.schema.json` defines types, ranges, defaults and safety
-  metadata for every runtime-hot-reload setting.
-- `contracts/default-settings.json` is the only backend default source and is
-  aligned with `NXS_Inputs.mqh`.
-- `frontend/src/contracts/settingsContract.js` is the frontend adapter used by
-  the Settings form.
+## Contratto (fonte unica)
 
-The previous backend defaults `MaxTradesPerDay=30`, `MaxConcurrent=3` and
-`MinEntryScore=70` diverged from the EA values 12, 4 and 50. The backend now
-loads the latter from the versioned contract.
+- `contracts/default-settings.json` — 46 default canonici, versionati.
+- `contracts/settings.schema.json` — metadata per chiave: `type`, `default`,
+  `minimum`/`maximum`, `scope`, `hot_reload`, `requires_restart`, `safety_class`,
+  `description`.
+- `contracts/generate_settings_schema.py` — generatore deterministico (idempotente).
 
-## Validation
+Un **test** impone la regola cardine: `backend.DEFAULT_SETTINGS == contract` →
+i default non possono più divergere silenziosamente.
 
-Backend mutations reject unknown keys, non-finite values, numeric strings,
-fractional integers and out-of-range values with HTTP 422 and structured field
-errors. Existing stored blobs are read through a compatibility filter so legacy
-unknown fields do not leak back into the active runtime contract.
+## Validazione backend (`server/settings_schema.py`)
 
-The frontend form uses numeric metadata for input `min`, `max` and `step`, keeps
-an empty input as empty instead of producing `NaN`, and blocks save until local
-validation succeeds.
+Requisiti del pack implementati e testati:
+1. **chiavi ignote rifiutate** (salvo `allow_unknown=True` per il blob operativo
+   che porta anche stato UI come `strategies`);
+2. **NaN / infinito / stringhe non numeriche rifiutati**;
+3. **int vs decimale** (`MaxConcurrent=3.5` → errore);
+4. **range + invarianti cross-field** (DD/rischio ≥ 0, `MarketCloseGMT` 0..23);
+5. **errori strutturati** (lista `{key, error, got}`);
+6. **schema_version applicata** esposta;
+7. **il moltiplicatore 0 non diventa mai 1** — nessuna coercizione di valore.
 
-## Locked profiles
+Le scritture `PUT/POST /api/settings` e `PUT /api/dashboard/settings` validano la
+patch (chiavi canoniche strette, extra UI passano) e rispondono **422** con errori
+strutturati su input non valido.
 
-Every profile written by the dashboard, library lock or results importer now
-contains:
+## Endpoint
 
-- stable `profile_id`;
-- monotonically increasing `version`;
-- settings `schema_version`;
-- creation timestamp and actor;
-- `ACTIVE` status;
-- deterministic SHA-256 checksum over canonicalized profile parameters.
+- `GET /api/settings/schema` — metadata + default (il form frontend deve
+  validare/generarsi da qui, non da fallback divergenti).
+- `POST /api/settings/validate` — dry-run, ritorna errori senza persistere.
 
-Ordinary runtime settings and locked profiles remain separate stores, so a
-settings patch cannot partially overwrite an active locked profile.
+## Profili versionati
+
+`build_locked_profile(settings)` produce un profilo con `profile_id`, `version`,
+`schema_version`, `created_at/by`, `settings` validati, **`checksum` sha256
+deterministico** e `status`. I settings sono validati prima del checksum: un
+profilo non può essere costruito da valori invalidi.
+
+## Verifica (ambiente backend — compilato e testato)
+
+- `server/tests/test_settings_schema.py` → 15 test (non-divergenza, NaN/range/
+  int, 0≠1, chiavi ignote, errori strutturati, profili con checksum, endpoint).
+- Suite backend completa: **46/46**. Generatore idempotente.
+
+## Adapter e verifica desktop
+
+- **Frontend**: il form usa metadata tipati, limiti e validazione locale; un
+  campo vuoto non viene trasformato in `NaN`.
+- **EA/MQL5**: i default core del contratto sono allineati a `NXS_Inputs.mqh`;
+  EA versione 3.30 compilato senza errori o warning.
+- I test runtime MT5 non sono stati eseguiti, come richiesto.
