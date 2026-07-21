@@ -36,6 +36,7 @@ import bt_verdict
 import strategy_registry
 import settings_contract
 import settings_schema
+import command_contract    # PR8 — stati canonici comandi + lease/retry/dead-letter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -259,10 +260,26 @@ def init_db() -> None:
             """
         )
         _migrate_trade_ledger(c)
+        _migrate_bridge_commands(c)
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
         _kv_set_if_absent(c, "locked_profiles", json.dumps({}))
+
+
+def _migrate_bridge_commands(c: sqlite3.Connection) -> None:
+    """PR8 — migrazione additiva di bridge_commands: lease/retry/dead-letter +
+    stato canonico + idempotency. Righe storiche restano valide (colonne NULL)."""
+    cols = {r[1] for r in c.execute("PRAGMA table_info(bridge_commands)")}
+    for name, ddl in (("lease_until", "REAL"), ("attempts", "INTEGER DEFAULT 0"),
+                      ("max_attempts", "INTEGER DEFAULT 3"),
+                      ("canonical_status", "TEXT"), ("idempotency_key", "TEXT"),
+                      ("schema_version", "INTEGER"), ("dead_letter_reason", "TEXT")):
+        if name not in cols:
+            c.execute(f"ALTER TABLE bridge_commands ADD COLUMN {name} {ddl}")
+    # idempotenza: un solo comando attivo per idempotency_key
+    c.execute("CREATE INDEX IF NOT EXISTS idx_bridge_idem "
+              "ON bridge_commands(idempotency_key)")
 
 
 def _migrate_trade_ledger(c: sqlite3.Connection) -> None:
@@ -916,10 +933,31 @@ async def lb_heartbeat(request: Request, x_nexus_token: Optional[str] = Header(N
     return {"ok": True}
 
 
+def _bridge_reclaim_expired(c, host_id):
+    """PR8 — lease scadute: tornano pending se restano tentativi, altrimenti
+    dead-letter (FAILED_FINAL). Nessun comando resta bloccato in 'sent' per sempre."""
+    t = now()
+    rows = c.execute(
+        "SELECT id, attempts, max_attempts FROM bridge_commands "
+        "WHERE host_id=? AND status='sent' AND lease_until IS NOT NULL AND lease_until < ?",
+        (host_id, t)).fetchall()
+    for r in rows:
+        if (r["attempts"] or 0) >= (r["max_attempts"] or 3):
+            c.execute("UPDATE bridge_commands SET status='error', "
+                      "canonical_status=?, dead_letter_reason='lease_expired_max_attempts' WHERE id=?",
+                      (command_contract.FAILED_FINAL, r["id"]))
+        else:
+            c.execute("UPDATE bridge_commands SET status='pending', "
+                      "canonical_status=?, lease_until=NULL WHERE id=?",
+                      (command_contract.PENDING, r["id"]))
+
+
 @app.get("/api/local_bridge/poll")
 def lb_poll(host_id: str = "default", x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
+    lease_secs = 60
     with _conn() as c:
+        _bridge_reclaim_expired(c, host_id)
         row = c.execute(
             "SELECT * FROM bridge_commands WHERE host_id=? AND status='pending' "
             "ORDER BY created_at ASC LIMIT 1",
@@ -927,7 +965,10 @@ def lb_poll(host_id: str = "default", x_nexus_token: Optional[str] = Header(None
         ).fetchone()
         if not row:
             return {"action": None}
-        c.execute("UPDATE bridge_commands SET status='sent' WHERE id=?", (row["id"],))
+        # lease atomico: incrementa attempts, imposta scadenza, stato canonico LEASED
+        c.execute("UPDATE bridge_commands SET status='sent', canonical_status=?, "
+                  "attempts=COALESCE(attempts,0)+1, lease_until=? WHERE id=?",
+                  (command_contract.LEASED, now() + lease_secs, row["id"]))
     return {
         "id": row["id"],
         "action": row["action"],
@@ -941,31 +982,68 @@ async def lb_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
     data = await request.json()
     cmd_id = data.get("id")
     with _conn() as c:
-        c.execute(
-            "UPDATE bridge_commands SET status=?, result=?, error=?, done_at=? WHERE id=?",
-            (
-                "done" if data.get("ok") else "error",
-                json.dumps(data.get("result")),
-                data.get("error"),
-                now(),
-                cmd_id,
-            ),
-        )
+        row = c.execute("SELECT attempts, max_attempts FROM bridge_commands WHERE id=?",
+                        (cmd_id,)).fetchone()
+        if data.get("ok"):
+            c.execute("UPDATE bridge_commands SET status='done', canonical_status=?, "
+                      "result=?, error=?, done_at=? WHERE id=?",
+                      (command_contract.SUCCEEDED, json.dumps(data.get("result")),
+                       data.get("error"), now(), cmd_id))
+        else:
+            # PR8 — retry con dead-letter: se restano tentativi torna pending,
+            # altrimenti FAILED_FINAL (dead-letter). Prima l'errore era terminale.
+            att = (row["attempts"] if row else 0) or 0
+            mx = (row["max_attempts"] if row else 3) or 3
+            if att < mx:
+                c.execute("UPDATE bridge_commands SET status='pending', canonical_status=?, "
+                          "error=?, lease_until=NULL WHERE id=?",
+                          (command_contract.FAILED_RETRYABLE, data.get("error"), cmd_id))
+            else:
+                c.execute("UPDATE bridge_commands SET status='error', canonical_status=?, "
+                          "error=?, done_at=?, dead_letter_reason='max_attempts' WHERE id=?",
+                          (command_contract.FAILED_FINAL, data.get("error"), now(), cmd_id))
     return {"ok": True}
 
 
 @app.post("/api/local_bridge/enqueue")
 async def lb_enqueue(request: Request, user: str = Depends(require_user)):
     data = await request.json()
-    cmd_id = secrets.token_hex(8)
+    host = data.get("host_id", "default")
+    action = data.get("action")
+    payload = data.get("payload", {})
+    # PR8 — idempotenza: stesso comando (host/action/payload) gia' attivo -> no dup
+    idem = command_contract.idempotency_key(action, {"host_id": host}, payload)
+    cmd_id = command_contract.new_command_id()
     with _conn() as c:
+        dup = c.execute(
+            "SELECT id FROM bridge_commands WHERE idempotency_key=? "
+            "AND status IN ('pending','sent') LIMIT 1", (idem,)).fetchone()
+        if dup:
+            return {"ok": True, "id": dup["id"], "idempotent": True}
         c.execute(
-            "INSERT INTO bridge_commands(id,host_id,action,payload,status,created_at) "
-            "VALUES(?,?,?,?, 'pending', ?)",
-            (cmd_id, data.get("host_id", "default"), data.get("action"),
-             json.dumps(data.get("payload", {})), now()),
+            "INSERT INTO bridge_commands(id,host_id,action,payload,status,created_at,"
+            "canonical_status,attempts,max_attempts,idempotency_key,schema_version) "
+            "VALUES(?,?,?,?, 'pending', ?, ?, 0, 3, ?, ?)",
+            (cmd_id, host, action, json.dumps(payload), now(),
+             command_contract.PENDING, idem, command_contract.SCHEMA_VERSION),
         )
     return {"ok": True, "id": cmd_id}
+
+
+@app.get("/api/local_bridge/commands")
+def lb_commands(host_id: str = "", user: str = Depends(require_user)):
+    """PR8 — stato canonico dei comandi (incluso dead-letter FAILED_FINAL).
+    La UI deve mostrare lo stato dal backend, non presumere l'esecuzione."""
+    q = ("SELECT id,host_id,action,status,canonical_status,attempts,max_attempts,"
+         "dead_letter_reason,created_at,done_at FROM bridge_commands")
+    args = ()
+    if host_id:
+        q += " WHERE host_id=?"; args = (host_id,)
+    q += " ORDER BY created_at DESC LIMIT 50"
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(q, args)]
+    dead = [r for r in rows if r.get("canonical_status") == command_contract.FAILED_FINAL]
+    return {"commands": rows, "dead_letter": dead, "schema_version": command_contract.SCHEMA_VERSION}
 
 
 @app.get("/api/local_bridge/status")

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "description": "PR8 — manifest di deployment versionato: versioni dei componenti e dei contratti che devono restare allineati fra EA, backend, worker e frontend.",
+  "components": {
+    "backend": { "service": "server/app.py", "api_version": 1 },
+    "local_bridge_worker": {
+      "canonical_source": "server/nexus_local_worker.py",
+      "entrypoints": ["server/nexus_local_worker.py", "LocalBridge/nexus_local_worker.py"],
+      "note": "LocalBridge/ e' uno shim che esegue la fonte canonica (deduplicato in PR8)."
+    },
+    "ea": { "source": "MQL5/Experts/NEXUS_EA_v2.mq5" }
+  },
+  "contracts": {
+    "strategy_registry": "contracts/strategy-registry.json",
+    "settings_schema": "contracts/settings.schema.json",
+    "command_schema_version": 1
+  },
+  "command_states": [
+    "PENDING", "LEASED", "RUNNING", "SUCCEEDED",
+    "FAILED_RETRYABLE", "FAILED_FINAL", "EXPIRED", "CANCELLED"
+  ]
+}
