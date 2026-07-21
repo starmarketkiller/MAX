@@ -465,6 +465,10 @@ int OnInit(){
          PrintFormat("[NEXUS LEDGER] boot: %d trade logici chiusi offline riconciliati", offlineFinals);
    }
 
+   // PR2 - Virtual SL: ricostruzione stato armato dopo restart (validato per
+   // account+magic, riconciliato con broker/ledger). No-op in modalita' OFF.
+   NXS_EA_VirtSL_Restore();
+
    PrintFormat("[NEXUS v%s] Initialized on %s | Profile=%s | Magic=%I64d | WebSync=%s URL=%s",
                NEXUS_VERSION, g_sym, g_profile.className, InpMagic,
                (InpEnableWebSync ? "ON":"OFF"), InpWebURL);
@@ -501,6 +505,7 @@ void OnDeinit(const int reason){
    NXS_EA_DrainLedger();    // PR1: non perdere chiusure logiche in coda allo shutdown
    NXS_Stats_Deinit();      // v2.0.5 final export
    NXS_Ledger_Persist();    // PR1: emitted-set su disco (no-op nel tester)
+   NXS_VSL_Persist();       // PR2: stato Virtual SL su disco (no-op nel tester/OFF)
    NXS_State_Save();
    NXS_ActivateOriginal();     // v2.3.0: assicura g_h* = originali prima di rilasciarli
    NXS_ReleaseHandles();
@@ -1089,6 +1094,11 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
    // v2.0.9 Sprint 3 — event-driven fill capture (replaces polling)
    NXS_EA_OnTradeTx(trans);
    if(trans.type != TRADE_TRANSACTION_DEAL_ADD) return;
+
+   // PR2 - Virtual SL: aggancio "dopo il fill reale". Filtra DEAL_ENTRY_IN
+   // internamente, matcha l'intent pending per DEAL_ORDER e registra con
+   // DEAL_POSITION_ID. No-op in modalita' OFF.
+   NXS_EA_VirtSL_OnFill(trans.deal);
 
    // PR1 - tutto il ciclo di vita passa dal ledger: il deal fa ri-aggregare
    // la sua position e l'evento nasce dal DIFF di stato, quindi replay di

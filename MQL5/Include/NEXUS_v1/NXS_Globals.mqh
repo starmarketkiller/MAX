@@ -16,6 +16,11 @@ bool NXS_SelectorAllows(int idx){
 long                       g_tradeMagic   = 0;
 ENUM_ORDER_TYPE_FILLING    g_tradeFilling = ORDER_FILLING_FOK;
 uint                       g_tradeRetcode = 0;
+// PR2: order ticket dell'ultimo OrderSend, stesso idioma di g_tradeRetcode.
+// Necessario (non locale): res.order nasce dentro NXS_DoBuy/DoSell e non ha
+// altro canale verso NXS_OpenTrade (SafeBuy/SafeSell ritornano solo bool) —
+// serve per correlare l'intent pending del Virtual SL al fill (DEAL_ORDER).
+ulong                      g_tradeOrderTicket = 0;
 
 // ----- Symbol / context -----
 string  g_sym;
@@ -150,6 +155,7 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
    req.type_filling= g_tradeFilling;
    bool ok = OrderSend(req, res);
    g_tradeRetcode = res.retcode;
+   g_tradeOrderTicket = res.order;
    return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
 }
 
@@ -169,6 +175,7 @@ bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment)
    req.type_filling= g_tradeFilling;
    bool ok = OrderSend(req, res);
    g_tradeRetcode = res.retcode;
+   g_tradeOrderTicket = res.order;
    return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
 }
 
@@ -238,6 +245,7 @@ bool NXS_DoModify(ulong ticket, double sl, double tp){
 }
 
 uint NXS_TradeRetcode(){ return g_tradeRetcode; }
+ulong NXS_TradeOrderTicket(){ return g_tradeOrderTicket; }   // PR2 (Virtual SL)
 
 // Looks up a closed position's opening-deal time via its position id. Needed by
 // OnTradeTransaction, which fires after the position is already gone from
