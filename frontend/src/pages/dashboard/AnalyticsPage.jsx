@@ -452,6 +452,16 @@ export default function AnalyticsPage({ summary, trades, heatmap, byReason, cale
         <h2 className="text-2xl font-semibold tracking-tight mt-1">
           Realised P&amp;L <span className="font-normal text-muted-foreground">by strategy</span>
         </h2>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-400">
+            {summary?.provenance?.metric || "DERIVED_ANALYTICS"} · trade_events
+          </span>
+          {(summary?.provenance?.legacy?.trade_rows ?? 0) > 0 && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-400">
+              LEGACY_UNVERIFIED: {summary.provenance.legacy.trade_rows} esclusi
+            </span>
+          )}
+        </div>
       </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">

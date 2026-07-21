@@ -29,7 +29,7 @@ file. Worker 2.0 sends `RUNNING` and terminal ACKs with its lease ID.
 File deployment validates per-file SHA-256, rejects paths outside MQL5 and
 restores backups if a multi-file deployment fails. The versioned manifest at
 `deploy/deployment-manifest.json` is generated from tracked sources and records
-release `nexus-3.40`, file hashes and minimum worker version.
+release `nexus-3.50`, file hashes and minimum worker version.
 
 ## Compatibility and verification
 

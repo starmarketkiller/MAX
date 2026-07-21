@@ -18,7 +18,7 @@ def main():
         entries.append({"path": relative, "sha256": hashlib.sha256(data).hexdigest()})
     manifest = {
         "schema_version": 1,
-        "release_id": "nexus-3.40",
+        "release_id": "nexus-3.50",
         "files": entries,
         "minimum_worker_version": "2.0.0",
     }
