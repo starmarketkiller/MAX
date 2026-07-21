@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NEXUS Canonical Strategy Registry",
+  "type": "object",
+  "required": ["schema_version", "strategies"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "generator": { "type": "string" },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "note_family": { "type": "string" },
+    "counts": { "type": "object" },
+    "strategies": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/strategy" }
+    }
+  },
+  "definitions": {
+    "strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strategy_id", "display_name", "aliases", "family", "status",
+        "selector_index", "live_implementation", "research_implementation",
+        "research_parity", "proxy_for", "supported_symbols",
+        "supported_timeframes", "default_enabled", "auto_disable_eligible",
+        "risk_class", "schema_version"
+      ],
+      "properties": {
+        "strategy_id": { "type": "string", "pattern": "^[A-Z0-9_]+$" },
+        "display_name": { "type": "string", "minLength": 1 },
+        "aliases": { "type": "array", "items": { "type": "string", "pattern": "^[A-Z0-9_]+$" } },
+        "family": {
+          "type": "string",
+          "enum": ["MOMENTUM", "TREND", "VOLATILITY", "SMC", "LIQUIDITY",
+                   "SESSION", "AMD", "PATTERN", "SCALP", "UNCLASSIFIED"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "EXPERIMENTAL", "SHADOW_ONLY", "RESEARCH_ONLY",
+                   "DEPRECATED", "DISABLED"]
+        },
+        "selector_index": { "type": ["integer", "null"], "minimum": 1, "maximum": 37 },
+        "live_implementation": { "type": "boolean" },
+        "research_implementation": { "type": "boolean" },
+        "research_parity": {
+          "type": "string",
+          "enum": ["EXACT", "FUNCTIONALLY_EQUIVALENT", "APPROXIMATE", "PROXY", "NOT_IMPLEMENTED"]
+        },
+        "proxy_for": { "type": ["string", "null"] },
+        "supported_symbols": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "supported_timeframes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "default_enabled": { "type": "boolean" },
+        "auto_disable_eligible": { "type": "boolean" },
+        "risk_class": { "type": "string", "enum": ["STANDARD", "RESEARCH", "AGGRESSIVE", "DEFENSIVE"] },
+        "schema_version": { "type": "integer", "const": 1 }
+      }
+    }
+  }
+}

@@ -33,6 +33,7 @@ from typing import Any, Optional
 import jwt
 import backtest
 import bt_verdict
+import strategy_registry
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -62,9 +63,8 @@ SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
 SEED_RECIPE_FILE = Path(__file__).resolve().parent / "seed_recipe.json"
 
-# Elenco strategie note (dal contratto EA). Usato da backtest/strategies.
-# Le 36 strategie reali dell'EA (estratte dai sorgenti MQL5).
-STRAT_LIST = backtest.STRAT_NAMES_36
+# Elenco live derivato dal contratto canonico.
+STRAT_LIST = list(strategy_registry.LIVE_STRATEGY_IDS)
 
 # Strategy chain default config (replica del CHANGELOG v2.0.13)
 DEFAULT_CHAIN_CONFIG = {
@@ -1401,6 +1401,12 @@ async def strategies_save(request: Request, user: str = Depends(require_user)):
     override = data.get("strategies") if isinstance(data, dict) else data
     if isinstance(override, list):
         override = {s["name"]: s.get("enabled") for s in override if "name" in s}
+    if override is not None and not isinstance(override, dict):
+        raise HTTPException(status_code=422, detail="strategies deve essere una mappa o una lista")
+    try:
+        strategy_registry.require_strategies((override or {}).keys(), live=True)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     kv_set("strategies_override", override or {})
     return {"ok": True, "strategies_override": override}
 
@@ -2412,6 +2418,12 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
     elif atype in ("disable_strategy", "enable_strategy"):
         if not name:
             raise HTTPException(status_code=400, detail="nome strategia mancante")
+        try:
+            strategy_registry.require_strategy(name)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if atype == "disable_strategy" and name not in strategy_registry.AUTO_DISABLE_IDS:
+            raise HTTPException(status_code=422, detail=f"strategy {name} is not eligible for automated disablement")
         enable = (atype == "enable_strategy")
         settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
         strat = dict(settings.get("strategies") or {})
@@ -2437,6 +2449,10 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
     elif atype == "set_strategy_risk":
         if not name or body.get("mult") is None:
             raise HTTPException(status_code=400, detail="name/mult mancante")
+        try:
+            strategy_registry.require_strategy(name, live=True)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         manual = kv_get("strategy_risk_manual", {}) or {}
         manual[name] = max(0.0, min(10.0, float(body["mult"])))
         kv_set("strategy_risk_manual", manual)
@@ -2703,7 +2719,22 @@ def backtest_strategies(user: str = Depends(require_user)):
     # il frontend (Creator/Run) usa questa chiave per popolare il pool.
     engine = sorted(backtest.STRATEGIES.keys())
     return {"strategies": STRAT_LIST, "all": engine, "engine": engine,
-            "total_ea": len(STRAT_LIST)}
+            "total_ea": len(STRAT_LIST),
+            "research_only": strategy_registry.research_only_ids()}
+
+
+@app.get("/api/strategies/registry")
+@app.get("/api/strategy-registry")
+def strategy_registry_get(user: str = Depends(require_user)):
+    return strategy_registry.registry_artifact()
+
+
+@app.get("/api/strategies/resolve/{name}")
+def strategies_resolve(name: str, user: str = Depends(require_user)):
+    try:
+        return strategy_registry.resolve(name)
+    except strategy_registry.UnknownStrategyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/api/backtest/symbols")
@@ -2828,7 +2859,7 @@ def backtest_library(symbol: str = "", user: str = Depends(require_user)):
 
 @app.post("/api/backtest/import_results")
 async def backtest_import_results(request: Request, user: str = Depends(require_user)):
-    """Importa i risultati reali del backtest (36 strategie) come strategy library
+    """Importa i risultati reali del backtest come strategy library
     e, opzionalmente, come locked profiles pronti all'uso per l'EA.
 
     Body: {
@@ -2980,7 +3011,7 @@ def backtest_library_job(job_id: str, user: str = Depends(require_user)):
     symbol = kv_get(f"btjob:{job_id}", "")
     rows = _library_rows(symbol)
     return {"job_id": job_id, "status": "done", "progress": len(rows),
-            "total": len(rows) or 36, "rows": rows}
+            "total": len(rows) or len(STRAT_LIST), "rows": rows}
 
 
 @app.post("/api/backtest/strategy_library/build")
@@ -3001,7 +3032,7 @@ async def backtest_library_build(request: Request, user: str = Depends(require_u
             kv_set("backtest_library", lib)
         except Exception as e:
             print(f"[NEXUS] library rebuild failed for {sym}: {e}")
-    return {"ok": True, "job_id": job_id, "status": "queued", "total": 36}
+    return {"ok": True, "job_id": job_id, "status": "queued", "total": len(STRAT_LIST)}
 
 
 # ---- coach extra ----

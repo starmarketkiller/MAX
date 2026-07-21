@@ -21,6 +21,7 @@ import math
 import time
 import urllib.request
 from typing import Optional
+from strategy_registry import LIVE_STRATEGY_IDS, require_strategies
 
 # ----------------------------------------------------------------------------- #
 # Dati storici
@@ -1515,15 +1516,9 @@ STRATEGIES = {
     "SILVER_BULLET": sig_silver_bullet,
 }
 
-# Tutte le 36 strategie dell'EA (dai sorgenti MQL5).
-STRAT_NAMES_36 = [
-    "ADX_RSI", "AMD_CONT", "AMD_REVERSAL", "BB_SQUEEZE", "BJORGUM", "BOLLINGER",
-    "BREAKOUT_ACC", "CISD", "DISP_REBAL", "EMA_PULLBACK", "FVG_CONT", "FVG_MIT",
-    "ICHIMOKU", "IFVG", "JUDAS_SWING", "LDN_REVERSAL", "LIQ_SWEEP", "LIQ_VOID",
-    "LONDON_BO", "MACD", "MALAYSIAN_SNR", "NY_REVERSAL", "OB_MIT", "ORDER_BLOCK",
-    "OTE_CONT", "PO3", "RANGE_FADE", "RSI_DIV", "SAR", "SH_BMS_RTO",
-    "SILVER_BULLET", "SMS_BMS_RTO", "STRUCT_REACT", "TSI", "TURTLE_SOUP", "WEEKLY_EXP",
-]
+# Canonical live list. Keep the legacy alias temporarily for API compatibility.
+STRAT_NAMES = list(LIVE_STRATEGY_IDS)
+STRAT_NAMES_36 = STRAT_NAMES
 
 
 # ----------------------------------------------------------------------------- #
@@ -1552,7 +1547,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
-    strat_list = [s for s in strat_list if s in STRATEGIES] or ["ADX_RSI"]
+    strat_list = list(require_strategies(strat_list, research=True))
+    unavailable = [s for s in strat_list if s not in STRATEGIES]
+    if unavailable:
+        raise ValueError(f"research engine implementation missing: {', '.join(unavailable)}")
 
     closes = [c["close"] for c in candles]
 

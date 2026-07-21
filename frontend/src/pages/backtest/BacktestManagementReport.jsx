@@ -2,6 +2,7 @@ import { useState } from "react";
 import api from "@/lib/api";
 import { Brain, Loader2, AlertCircle, TrendingUp, Play, Trophy, GitMerge, Pyramid, Activity, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 
 function cn(...c) { return c.filter(Boolean).join(" "); }
 
@@ -125,7 +126,7 @@ export default function BacktestManagementReport({ baseCfg }) {
         {busy && (
           <div className="rounded-xl border border-border p-12 text-center">
             <Loader2 className="h-12 w-12 mx-auto mb-3 animate-spin text-fuchsia-500"/>
-            <div className="text-muted-foreground">Sto eseguendo {(baseCfg.strategies?.length || 36) * 4} backtest...</div>
+            <div className="text-muted-foreground">Sto eseguendo {(baseCfg.strategies?.length || LIVE_STRATEGY_COUNT) * 4} backtest...</div>
             <div className="text-xs text-muted-foreground/60 mt-2">~30 secondi su 3 anni daily</div>
           </div>
         )}

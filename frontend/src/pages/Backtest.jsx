@@ -9,6 +9,7 @@ import BacktestManagementReport from "@/pages/backtest/BacktestManagementReport"
 import BacktestStrategyLibrary from "@/pages/backtest/BacktestStrategyLibrary";
 import BacktestRealAnalysis from "@/pages/backtest/BacktestRealAnalysis";
 import BacktestCreator from "@/pages/backtest/BacktestCreator";
+import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 
 const DEFAULT_CFG = {
   symbol: "XAUUSD",
@@ -20,7 +21,7 @@ const DEFAULT_CFG = {
   atr_tp_mult: 2.8,
   max_concurrent: 1,
   min_score: 60,
-  strategies: null,            // null = ALL 36 strategies
+  strategies: null,            // null = all canonical live strategies
   // Gates (default OFF to match user's request: gates should improve, not block)
   adx_min: 0.0,
   htf_bias: false,
@@ -179,7 +180,7 @@ export default function BacktestPage() {
             <Sparkles className="h-6 w-6 text-sky-500"/> Backtest Lab v3
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Replay completo delle <strong>36 strategie NEXUS</strong> con tutti i gate dell&apos;EA
+            Replay completo delle <strong>{LIVE_STRATEGY_COUNT} strategie NEXUS</strong> con tutti i gate dell&apos;EA
             (HTF bias, ADX, sessioni, cooldown, partial TP, breakeven, trailing).
           </p>
           <button onClick={loadLiveSettings} data-testid="bt-load-live"

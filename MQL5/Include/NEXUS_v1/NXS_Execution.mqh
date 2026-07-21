@@ -123,6 +123,11 @@ void NXS_ApplyCounterHTFProfile(SNXSSignal &sig){
 
 ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    g_nxsLastOpenFailure = "";
+   if(!NXS_StrategyKnown(sig.stratName)){
+      g_nxsLastOpenFailure = "unknown_strategy:" + sig.stratName;
+      PrintFormat("[NEXUS CONTRACT] OPEN BLOCCATO: strategy_id sconosciuto '%s'", sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.2.6 - scudo risk-of-ruin: se congelato per la perdita del giorno, stop.
    if(NXS_RuinFrozen()){
       g_nxsLastOpenFailure = "ruin_frozen";

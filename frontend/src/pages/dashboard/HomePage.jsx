@@ -14,6 +14,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import HealthScoreCard from "@/pages/dashboard/HealthScoreCard";
 import LockedProfileBanner from "@/components/LockedProfileBanner";
+import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 import {
   Card, KpiCard, Pill, SectionHeader,
   cls, fmtMoney, fmtSign, fmtPct, fmtPrice,
@@ -212,7 +213,7 @@ function ReactionSection({ status }) {
     <Card className="p-6 lg:p-8" testId="reaction-section">
       <SectionHeader
         eyebrow="Reaction engine"
-        title="Trigger source · 36 strategies"
+        title={`Trigger source · ${LIVE_STRATEGY_COUNT} strategies`}
         icon={Sparkles}
       />
       <div className={cls("rounded-xl border p-5", containerTone)}>

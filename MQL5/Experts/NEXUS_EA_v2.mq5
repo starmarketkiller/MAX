@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "3.10"
+#property version   "3.20"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -21,6 +21,7 @@
 #include <NEXUS_v1\NXS_Inputs.mqh>
 #include <NEXUS_v1\NXS_StrategyProfiles.mqh>
 #include <NEXUS_v1\NXS_Globals.mqh>
+#include <NEXUS_v1\NXS_StrategyRegistry.mqh>
 #include <NEXUS_v1\NXS_RuntimeSettings.mqh>
 #include <NEXUS_v1\NXS_Presets.mqh>
 #include <NEXUS_v1\NXS_SymbolProfile.mqh>
@@ -1017,7 +1018,7 @@ void OnTick(){
          bool counter = (reactDir == +1 && htfBias == -1) || (reactDir == -1 && htfBias == +1);
          if(counter){
             NXS_Blk_Bump(BLK_HTF);
-            PrintFormat("[NEXUS BLOCK] reaction=%s qual=%.0f vs HTF=%s → all 36 strategies "
+            PrintFormat("[NEXUS BLOCK] reaction=%s qual=%.0f vs HTF=%s → all strategies "
                         "self-vetoed (counter-trend). Enable Counter-HTF Soft or lower "
                         "%s ScoreMin to allow.",
                         (reactDir == +1 ? "BULL" : "BEAR"),
