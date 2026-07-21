@@ -36,6 +36,7 @@ import bt_verdict
 import strategy_registry
 import settings_contract
 import settings_schema
+import command_contract
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -60,7 +61,7 @@ ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 COACH_MODEL       = os.environ.get("NEXUS_COACH_MODEL", "claude-opus-4-8")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-WORKER_FILE = Path(__file__).resolve().parent / "nexus_local_worker.py"
+WORKER_FILE = Path(__file__).resolve().parents[1] / "LocalBridge" / "nexus_local_worker.py"
 SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
 SEED_RECIPE_FILE = Path(__file__).resolve().parent / "seed_recipe.json"
@@ -200,7 +201,7 @@ def init_db() -> None:
                 host_id    TEXT,
                 action     TEXT,
                 payload    TEXT,
-                status     TEXT DEFAULT 'pending',   -- pending|done|error
+                status     TEXT DEFAULT 'PENDING',
                 result     TEXT,
                 error      TEXT,
                 created_at REAL,
@@ -259,6 +260,7 @@ def init_db() -> None:
             """
         )
         _migrate_trade_ledger(c)
+        _migrate_command_contract(c)
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -285,6 +287,30 @@ def _migrate_trade_ledger(c: sqlite3.Connection) -> None:
     # della tabella, fuori scope per una migrazione additiva).
     c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_trades_uid "
               "ON trades(trade_uid) WHERE trade_uid IS NOT NULL")
+
+
+def _migrate_command_contract(c: sqlite3.Connection) -> None:
+    """Additive PR8 migration for leased, target-scoped bridge commands."""
+    cols = {row[1] for row in c.execute("PRAGMA table_info(bridge_commands)")}
+    additions = {
+        "command_type": "TEXT", "schema_version": "INTEGER DEFAULT 1",
+        "created_by": "TEXT", "target": "TEXT", "idempotency_key": "TEXT",
+        "expires_at": "REAL", "lease_id": "TEXT", "lease_expires_at": "REAL",
+        "attempt_count": "INTEGER DEFAULT 0", "max_attempts": "INTEGER DEFAULT 3",
+        "started_at": "REAL", "updated_at": "REAL",
+    }
+    for name, ddl in additions.items():
+        if name not in cols:
+            c.execute(f"ALTER TABLE bridge_commands ADD COLUMN {name} {ddl}")
+    c.execute("UPDATE bridge_commands SET status=UPPER(status)")
+    c.execute("UPDATE bridge_commands SET status='SUCCEEDED' WHERE status='DONE'")
+    c.execute("UPDATE bridge_commands SET status='FAILED_FINAL' WHERE status='ERROR'")
+    c.execute("UPDATE bridge_commands SET status='LEASED' WHERE status='SENT'")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_bridge_idempotency "
+              "ON bridge_commands(idempotency_key) WHERE idempotency_key IS NOT NULL")
+    c.execute("CREATE TABLE IF NOT EXISTS command_events ("
+              "id INTEGER PRIMARY KEY AUTOINCREMENT, command_id TEXT, status TEXT, "
+              "host_id TEXT, detail TEXT, created_at REAL)")
 
 
 def _pick(t: dict, *keys):
@@ -905,7 +931,9 @@ async def chain_config_put(request: Request, user: str = Depends(require_user)):
 async def lb_heartbeat(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
     data = await request.json()
-    host = data.get("host_id", "default")
+    host = data.get("host_id")
+    if not host:
+        raise HTTPException(status_code=422, detail="host_id required")
     with _conn() as c:
         c.execute(
             "INSERT INTO bridge_hosts(host_id,version,os,meta,last_seen) VALUES(?,?,?,?,?) "
@@ -913,25 +941,45 @@ async def lb_heartbeat(request: Request, x_nexus_token: Optional[str] = Header(N
             "meta=excluded.meta, last_seen=excluded.last_seen",
             (host, data.get("version"), data.get("os"), json.dumps(data), now()),
         )
-    return {"ok": True}
+    return {"ok": True, "host_id": host, "status": "ONLINE", "timestamp": iso()}
 
 
 @app.get("/api/local_bridge/poll")
-def lb_poll(host_id: str = "default", x_nexus_token: Optional[str] = Header(None)):
+def lb_poll(host_id: str, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
+    current = now()
     with _conn() as c:
+        if not c.execute("SELECT 1 FROM bridge_hosts WHERE host_id=?", (host_id,)).fetchone():
+            raise HTTPException(status_code=403, detail="host not registered")
+        c.execute("BEGIN IMMEDIATE")
+        c.execute("UPDATE bridge_commands SET status='FAILED_FINAL', updated_at=? "
+                  "WHERE host_id=? AND status IN ('LEASED','FAILED_RETRYABLE') "
+                  "AND attempt_count>=max_attempts", (current, host_id))
         row = c.execute(
-            "SELECT * FROM bridge_commands WHERE host_id=? AND status='pending' "
+            "SELECT * FROM bridge_commands WHERE host_id=? "
+            "AND (status='PENDING' OR status='FAILED_RETRYABLE' "
+            "OR (status='LEASED' AND lease_expires_at<?)) "
+            "AND (expires_at IS NULL OR expires_at>?) AND attempt_count<max_attempts "
             "ORDER BY created_at ASC LIMIT 1",
-            (host_id,),
+            (host_id, current, current),
         ).fetchone()
         if not row:
-            return {"action": None}
-        c.execute("UPDATE bridge_commands SET status='sent' WHERE id=?", (row["id"],))
+            return {"command": None, "action": None, "timestamp": iso()}
+        lease_id = secrets.token_hex(16)
+        lease_expires = current + command_contract.LEASE_SECONDS
+        c.execute("UPDATE bridge_commands SET status='LEASED', lease_id=?, lease_expires_at=?, "
+                  "attempt_count=attempt_count+1, updated_at=? WHERE id=?",
+                  (lease_id, lease_expires, current, row["id"]))
+        c.execute("INSERT INTO command_events(command_id,status,host_id,created_at) VALUES(?,?,?,?)",
+                  (row["id"], "LEASED", host_id, current))
+    ctype = row["command_type"] or command_contract.command_type(row["action"])
+    payload = json.loads(row["payload"]) if row["payload"] else {}
     return {
-        "id": row["id"],
-        "action": row["action"],
-        "payload": json.loads(row["payload"]) if row["payload"] else {},
+        "command_id": row["id"], "id": row["id"],
+        "command_type": ctype, "action": command_contract.TYPE_TO_ACTION[ctype],
+        "schema_version": command_contract.SCHEMA_VERSION, "status": "LEASED",
+        "lease_id": lease_id, "lease_expires_at": command_contract.iso_timestamp(lease_expires),
+        "payload": payload,
     }
 
 
@@ -939,46 +987,97 @@ def lb_poll(host_id: str = "default", x_nexus_token: Optional[str] = Header(None
 async def lb_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
     data = await request.json()
-    cmd_id = data.get("id")
+    cmd_id = data.get("command_id") or data.get("id")
+    host_id = data.get("host_id")
+    lease_id = data.get("lease_id")
     with _conn() as c:
-        c.execute(
-            "UPDATE bridge_commands SET status=?, result=?, error=?, done_at=? WHERE id=?",
-            (
-                "done" if data.get("ok") else "error",
-                json.dumps(data.get("result")),
-                data.get("error"),
-                now(),
-                cmd_id,
-            ),
-        )
-    return {"ok": True}
+        row = c.execute("SELECT * FROM bridge_commands WHERE id=?", (cmd_id,)).fetchone()
+        if not row or row["host_id"] != host_id or row["lease_id"] != lease_id:
+            raise HTTPException(status_code=409, detail="command lease mismatch")
+        requested = str(data.get("status") or ("SUCCEEDED" if data.get("ok") else "FAILED_RETRYABLE")).upper()
+        if requested not in ("RUNNING", "SUCCEEDED", "FAILED_RETRYABLE", "FAILED_FINAL"):
+            raise HTTPException(status_code=422, detail="invalid acknowledgement status")
+        if requested == "FAILED_RETRYABLE" and row["attempt_count"] >= row["max_attempts"]:
+            requested = "FAILED_FINAL"
+        finished = now() if requested in ("SUCCEEDED", "FAILED_FINAL") else None
+        c.execute("UPDATE bridge_commands SET status=?, result=?, error=?, started_at=COALESCE(started_at,?), "
+                  "done_at=?, updated_at=? WHERE id=?",
+                  (requested, json.dumps(data.get("result")), data.get("error"), now(), finished, now(), cmd_id))
+        c.execute("INSERT INTO command_events(command_id,status,host_id,detail,created_at) VALUES(?,?,?,?,?)",
+                  (cmd_id, requested, host_id, data.get("error"), now()))
+    return {"ok": True, "command_id": cmd_id, "status": requested, "timestamp": iso()}
 
 
 @app.post("/api/local_bridge/enqueue")
 async def lb_enqueue(request: Request, user: str = Depends(require_user)):
     data = await request.json()
-    cmd_id = secrets.token_hex(8)
+    try:
+        ctype = command_contract.command_type(data.get("command_type") or data.get("action"))
+        target = command_contract.validate_target(data.get("target") or {"host_id": data.get("host_id")}, require_host=True)
+    except command_contract.CommandValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    cmd_id = secrets.token_hex(16)
+    idem = data.get("idempotency_key") or cmd_id
+    created = now()
+    expires = created + max(60, int(data.get("ttl_seconds", 3600)))
     with _conn() as c:
+        existing = c.execute("SELECT id,status FROM bridge_commands WHERE idempotency_key=?", (idem,)).fetchone()
+        if existing:
+            return {"ok": True, "command_id": existing["id"], "id": existing["id"],
+                    "status": existing["status"], "duplicate": True}
         c.execute(
-            "INSERT INTO bridge_commands(id,host_id,action,payload,status,created_at) "
-            "VALUES(?,?,?,?, 'pending', ?)",
-            (cmd_id, data.get("host_id", "default"), data.get("action"),
-             json.dumps(data.get("payload", {})), now()),
+            "INSERT INTO bridge_commands(id,host_id,action,command_type,schema_version,created_by,target,payload,"
+            "status,idempotency_key,expires_at,attempt_count,max_attempts,created_at,updated_at) "
+            "VALUES(?,?,?,?,?,?,?,?, 'PENDING', ?,?,0,?,?,?)",
+            (cmd_id, target["host_id"], command_contract.TYPE_TO_ACTION[ctype], ctype,
+             command_contract.SCHEMA_VERSION, user, json.dumps(target), json.dumps(data.get("payload", {})),
+             idem, expires, int(data.get("max_attempts", command_contract.MAX_ATTEMPTS)), created, created),
         )
-    return {"ok": True, "id": cmd_id}
+        c.execute("INSERT INTO command_events(command_id,status,host_id,created_at) VALUES(?,?,?,?)",
+                  (cmd_id, "PENDING", target["host_id"], created))
+    return {"ok": True, "command_id": cmd_id, "id": cmd_id, "status": "PENDING",
+            "created_at": command_contract.iso_timestamp(created),
+            "expires_at": command_contract.iso_timestamp(expires)}
 
 
 @app.get("/api/local_bridge/status")
 def lb_status(user: str = Depends(require_user)):
     with _conn() as c:
         hosts = [dict(r) for r in c.execute("SELECT * FROM bridge_hosts ORDER BY last_seen DESC")]
+        c.execute("UPDATE bridge_commands SET status='EXPIRED', updated_at=? "
+                  "WHERE expires_at IS NOT NULL AND expires_at<=? "
+                  "AND status NOT IN ('SUCCEEDED','FAILED_FINAL','CANCELLED')", (now(), now()))
         cmds = [dict(r) for r in c.execute(
-            "SELECT id,host_id,action,status,error,created_at,done_at "
+            "SELECT id,host_id,action,command_type,status,result,error,attempt_count,max_attempts,"
+            "created_at,started_at,done_at,lease_expires_at "
             "FROM bridge_commands ORDER BY created_at DESC LIMIT 30")]
     t = now()
     for h in hosts:
         h["online"] = (t - (h.get("last_seen") or 0)) < 90
-    return {"hosts": hosts, "commands": cmds}
+        h["status"] = "ONLINE" if h["online"] else "OFFLINE"
+        h["timestamp"] = command_contract.iso_timestamp(h.get("last_seen") or 0)
+    for cmd in cmds:
+        cmd["command_id"] = cmd["id"]
+        cmd["_id"] = cmd["id"]
+        if cmd.get("result"):
+            try:
+                cmd["result"] = json.loads(cmd["result"])
+            except Exception:
+                pass
+        for field in ("created_at", "started_at", "done_at", "lease_expires_at"):
+            if cmd.get(field) is not None:
+                cmd[field] = command_contract.iso_timestamp(cmd[field])
+    return {"hosts": hosts, "worker": hosts[0] if hosts else None,
+            "commands": cmds, "schema_version": command_contract.SCHEMA_VERSION,
+            "timestamp": iso()}
+
+
+@app.get("/api/local_bridge/deployment_manifest")
+def lb_deployment_manifest(user: str = Depends(require_user)):
+    path = Path(__file__).resolve().parents[1] / "deploy" / "deployment-manifest.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="deployment manifest missing")
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 # ======================= DASHBOARD READ/WRITE (JWT) ====================== #

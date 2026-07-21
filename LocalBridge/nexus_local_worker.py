@@ -36,6 +36,7 @@ import shutil
 import platform
 import subprocess
 import base64
+import hashlib
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -57,7 +58,7 @@ DEFAULT_CONFIG = {
     "mql5_include":  "",
     "mql5_experts":  "",
     "poll_sec":      3,
-    "version":       "1.0.0",
+    "version":       "2.0.0",
 }
 
 
@@ -118,10 +119,12 @@ def send_heartbeat(cfg: Dict[str, Any]):
     })
 
 
-def ack(cfg: Dict[str, Any], cmd_id: str, ok: bool, result: Any = None, error: Optional[str] = None):
+def ack(cfg: Dict[str, Any], cmd_id: str, lease_id: str, status: str,
+        result: Any = None, error: Optional[str] = None):
     http_post(cfg, "/api/local_bridge/ack", {
-        "id":      cmd_id,
-        "ok":      ok,
+        "command_id": cmd_id,
+        "lease_id": lease_id,
+        "status": status,
         "result":  result,
         "error":   error,
         "host_id": cfg["host_id"],
@@ -199,19 +202,30 @@ def handle_deploy_files(cfg, payload) -> Dict[str, Any]:
     """
     experts_dir = Path(cfg["mql5_experts"])
     mql5_base = experts_dir.parent
-    written = []
-    for f in payload.get("files", []):
-        target_rel = f["target"].replace("\\", "/")
-        target_abs = mql5_base / target_rel
-        target_abs.parent.mkdir(parents=True, exist_ok=True)
-        data = base64.b64decode(f["b64"])
-        # backup existing
-        if target_abs.exists():
+    written, backups = [], []
+    try:
+        for f in payload.get("files", []):
+            target_rel = f["target"].replace("\\", "/")
+            target_abs = (mql5_base / target_rel).resolve()
+            if mql5_base.resolve() not in target_abs.parents:
+                raise RuntimeError(f"target outside MQL5: {target_rel}")
+            target_abs.parent.mkdir(parents=True, exist_ok=True)
+            data = base64.b64decode(f["b64"])
+            expected = f.get("sha256")
+            if expected and hashlib.sha256(data).hexdigest() != expected:
+                raise RuntimeError(f"checksum mismatch: {target_rel}")
             backup = target_abs.with_suffix(target_abs.suffix + ".bak")
-            shutil.copy2(target_abs, backup)
-        target_abs.write_bytes(data)
-        written.append(str(target_abs))
-    return {"written": written}
+            if target_abs.exists():
+                shutil.copy2(target_abs, backup)
+                backups.append((target_abs, backup))
+            target_abs.write_bytes(data)
+            written.append(str(target_abs))
+        return {"written": written, "release_id": payload.get("release_id")}
+    except Exception:
+        for target, backup in reversed(backups):
+            if backup.exists():
+                shutil.copy2(backup, target)
+        raise
 
 
 def handle_open_chart(cfg, payload) -> Dict[str, Any]:
@@ -291,21 +305,23 @@ def main():
             resp = http_get(cfg, "/api/local_bridge/poll",
                              {"host_id": cfg["host_id"]})
             if resp and resp.get("action"):
-                cmd_id = resp["id"]
+                cmd_id = resp.get("command_id") or resp["id"]
+                lease_id = resp["lease_id"]
                 action = resp["action"]
                 payload = resp.get("payload", {}) or {}
                 print(f"[NEXUS Worker] → {action} (id={cmd_id[:8]}) payload={payload}")
                 handler = HANDLERS.get(action)
                 if not handler:
-                    ack(cfg, cmd_id, False, error=f"Unknown action: {action}")
+                    ack(cfg, cmd_id, lease_id, "FAILED_FINAL", error=f"Unknown action: {action}")
                 else:
                     try:
+                        ack(cfg, cmd_id, lease_id, "RUNNING")
                         result = handler(cfg, payload)
-                        ack(cfg, cmd_id, True, result=result)
+                        ack(cfg, cmd_id, lease_id, "SUCCEEDED", result=result)
                         print(f"[NEXUS Worker] ✓ {action} done")
                     except Exception as e:
                         print(f"[NEXUS Worker] ✗ {action} ERROR: {e}")
-                        ack(cfg, cmd_id, False, error=str(e))
+                        ack(cfg, cmd_id, lease_id, "FAILED_RETRYABLE", error=str(e))
             time.sleep(max(1, int(cfg.get("poll_sec", 3))))
         except KeyboardInterrupt:
             print("[NEXUS Worker] stopping...")
