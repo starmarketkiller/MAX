@@ -44,14 +44,14 @@ void NXS_TrailATR(){
          if(bid - open < actK * g_atr) continue;
          double newSL = NormPrice(bid - k * g_atr);
          if(newSL > curSL + 0.1 * g_point && newSL < bid){
-            NXS_DoModify(t, newSL, curTP);
+            NXS_PM_ProposeModify(t, newSL, curTP, 40, "ATR_TRAILING", "dynamic ATR trail");
          }
       } else if(ptype == POSITION_TYPE_SELL){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
          if(open - ask < actK * g_atr) continue;
          double newSL = NormPrice(ask + k * g_atr);
          if((curSL == 0 || newSL < curSL - 0.1 * g_point) && newSL > ask){
-            NXS_DoModify(t, newSL, curTP);
+            NXS_PM_ProposeModify(t, newSL, curTP, 40, "ATR_TRAILING", "dynamic ATR trail");
          }
       }
    }

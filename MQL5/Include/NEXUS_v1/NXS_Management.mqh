@@ -39,7 +39,7 @@ void NXS_ManageBreakevenAndTrail(){
       if(maxHoldSec > 0){
          datetime openT = (datetime)PositionGetInteger(POSITION_TIME);
          if(openT > 0 && (TimeCurrent() - openT) > maxHoldSec){
-            NXS_DoClose(t);
+            NXS_PM_ProposeClose(t, 80, "CLASSIC_TIME_STOP", "maximum hold time exceeded");
             PrintFormat("[NEXUS] Time-exit (%.1fh) ticket %I64u", maxHoldSec/3600.0, t);
             continue;
          }
@@ -62,16 +62,16 @@ void NXS_ManageBreakevenAndTrail(){
       if(pBeR >= 0 || pTrail >= 0){
          double risk = MathAbs(open - sl);
          if(pBeR > 0 && !beReached && risk > 0 && prof >= pBeR * risk){
-            NXS_DoModify(t, NormPrice(open), tp);   // SL a entry
+            NXS_PM_ProposeModify(t, NormPrice(open), tp, 60, "PROFILE_BREAKEVEN", "profile R threshold");
             beReached = true;
          }
          if(pTrail > 0){
             double td = g_atr * pTrail;
             double nSL = (type == POSITION_TYPE_BUY) ? now - td : now + td;
             if(type == POSITION_TYPE_BUY  && nSL > sl + g_point * 2)
-               NXS_DoModify(t, NormPrice(nSL), tp);
+               NXS_PM_ProposeModify(t, NormPrice(nSL), tp, 40, "PROFILE_TRAIL", "profile ATR trail");
             if(type == POSITION_TYPE_SELL && (sl == 0 || nSL < sl - g_point * 2))
-               NXS_DoModify(t, NormPrice(nSL), tp);
+               NXS_PM_ProposeModify(t, NormPrice(nSL), tp, 40, "PROFILE_TRAIL", "profile ATR trail");
          }
          continue;   // gestita per-strategia, salta il globale
       }
@@ -81,7 +81,7 @@ void NXS_ManageBreakevenAndTrail(){
       if(!beReached && prof >= beTrigger){
          double newSL = (type == POSITION_TYPE_BUY) ? MathMax(sl, open) : MathMin(sl == 0 ? open : sl, open);
          if(MathAbs(newSL - sl) > g_point * 2){
-            NXS_DoModify(t, NormPrice(newSL), tp);
+             NXS_PM_ProposeModify(t, NormPrice(newSL), tp, 60, "GLOBAL_BREAKEVEN", "global BE threshold");
             beReached = true;
          }
       }
@@ -90,9 +90,9 @@ void NXS_ManageBreakevenAndTrail(){
       if(prof >= trailAct){
          double newSL = (type == POSITION_TYPE_BUY) ? now - trailDist : now + trailDist;
          if(type == POSITION_TYPE_BUY  && newSL > sl + g_point * 2)
-            NXS_DoModify(t, NormPrice(newSL), tp);
+            NXS_PM_ProposeModify(t, NormPrice(newSL), tp, 40, "CLASSIC_TRAIL", "classic ATR trail");
          if(type == POSITION_TYPE_SELL && (sl == 0 || newSL < sl - g_point * 2))
-            NXS_DoModify(t, NormPrice(newSL), tp);
+            NXS_PM_ProposeModify(t, NormPrice(newSL), tp, 40, "CLASSIC_TRAIL", "classic ATR trail");
       }
    }
 }

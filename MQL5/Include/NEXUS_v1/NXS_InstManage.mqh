@@ -129,7 +129,7 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
          MathAbs(profP) < atr * InpInstTimeStopATR){
          PrintFormat("[NEXUS INST] TIME-STOP %s ticket=%I64u eta=%dmin prof=%.5f -> chiudo",
                      NXS_DirName(dir), t, (int)(ageS / 60), profP);
-         NXS_DoClose(t);
+         NXS_PM_ProposeClose(t, 80, "INST_TIME_STOP", "institutional stagnation timeout");
          continue;
       }
 
@@ -180,7 +180,8 @@ void _nxs_inst_trail(ENUM_NXS_DIR dir, SNXSInstGroup &g, double atr){
       }
 
       if(MathAbs(newSL - sl) > g_point || MathAbs(newTP - tp) > g_point)
-         NXS_DoModify(t, NormPrice(newSL), NormPrice(newTP));
+         NXS_PM_ProposeModify(t, NormPrice(newSL), NormPrice(newTP), 50,
+                              "INSTITUTIONAL", "institutional trail/runner");
    }
 }
 
