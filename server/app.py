@@ -34,6 +34,7 @@ import jwt
 import backtest
 import bt_verdict
 import strategy_registry
+import settings_schema   # PR7 — contratto Settings (validazione tipata)
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -1108,6 +1109,12 @@ def dash_settings_get(user: str = Depends(require_user)):
 @app.put("/api/dashboard/settings")
 async def dash_settings_put(request: Request, user: str = Depends(require_user)):
     data = await request.json()
+    # PR7 — valida le chiavi canoniche (tipo/range/NaN), lascia passare lo stato UI
+    try:
+        settings_schema.validate(data if isinstance(data, dict) else {}, allow_unknown=True)
+    except settings_schema.SettingsValidationError as e:
+        raise HTTPException(status_code=422, detail={"errors": e.errors,
+                                                     "schema_version": settings_schema.schema_version()})
     kv_set("settings", data)
     return {"ok": True, "settings": data}
 
@@ -1122,6 +1129,45 @@ async def dash_locked_put(request: Request, user: str = Depends(require_user)):
     data = await request.json()
     kv_set("locked_profiles", data)
     return {"ok": True, "locked_profiles": data}
+
+
+@app.get("/api/settings/schema")
+def settings_schema_endpoint(user: str = Depends(require_user)):
+    """PR7 — metadata canonico dei settings (tipo/range/scope/safety). Il form
+    frontend deve validare/generarsi da qui, non da fallback divergenti."""
+    return {"schema": settings_schema.schema(),
+            "defaults": settings_schema.default_settings(),
+            "schema_version": settings_schema.schema_version()}
+
+
+@app.post("/api/settings/validate")
+async def settings_validate_endpoint(request: Request, user: str = Depends(require_user)):
+    """PR7 — dry-run: ritorna errori strutturati senza persistere."""
+    data = await request.json()
+    try:
+        norm = settings_schema.validate(data if isinstance(data, dict) else {}, allow_unknown=True)
+        return {"valid": True, "normalized": norm, "schema_version": settings_schema.schema_version()}
+    except settings_schema.SettingsValidationError as e:
+        return {"valid": False, "errors": e.errors, "schema_version": settings_schema.schema_version()}
+
+
+def build_locked_profile(settings: dict, created_by: str = "operator",
+                         version: int = 1, profile_id: str = None) -> dict:
+    """PR7 — profilo versionato con checksum deterministico dei settings validati.
+    Non converte mai un moltiplicatore 0 in 1 (nessuna coercizione)."""
+    norm = settings_schema.validate(settings, allow_unknown=True)
+    canonical = json.dumps(norm, sort_keys=True, separators=(",", ":"))
+    checksum = hashlib.sha256(canonical.encode()).hexdigest()[:16]
+    return {
+        "profile_id": profile_id or secrets.token_hex(8),
+        "version": version,
+        "schema_version": settings_schema.schema_version(),
+        "created_at": iso(),
+        "created_by": created_by,
+        "settings": norm,
+        "checksum": checksum,
+        "status": "ACTIVE",
+    }
 
 
 # ======================= HELPERS (frontend React) ======================= #
@@ -1360,6 +1406,13 @@ async def settings_save(request: Request, user: str = Depends(require_user)):
     # I componenti della dashboard inviano patch parziali (es. solo "strategies"
     # dalla pagina Strategie, o solo i parametri di rischio): facciamo merge sul
     # blob esistente per non azzerare le altre impostazioni lette dall'EA.
+    # PR7 — valida la patch in ingresso (chiavi canoniche strette, extra UI passano)
+    if isinstance(data, dict):
+        try:
+            settings_schema.validate(data, allow_unknown=True)
+        except settings_schema.SettingsValidationError as e:
+            raise HTTPException(status_code=422, detail={"errors": e.errors,
+                                                         "schema_version": settings_schema.schema_version()})
     merged = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
     if isinstance(data, dict):
         merged.update(data)
