@@ -142,7 +142,9 @@ def init_db() -> None:
                 action     TEXT,
                 payload    TEXT,
                 created_at REAL,
-                consumed   INTEGER DEFAULT 0
+                consumed   INTEGER DEFAULT 0,
+                status     TEXT DEFAULT 'PENDING',
+                delivered_at REAL
             );
             CREATE TABLE IF NOT EXISTS trades (
                 ticket     INTEGER PRIMARY KEY,
@@ -262,6 +264,7 @@ def init_db() -> None:
         )
         _migrate_trade_ledger(c)
         _migrate_command_contract(c)
+        _migrate_ea_command_status(c)
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -312,6 +315,18 @@ def _migrate_command_contract(c: sqlite3.Connection) -> None:
     c.execute("CREATE TABLE IF NOT EXISTS command_events ("
               "id INTEGER PRIMARY KEY AUTOINCREMENT, command_id TEXT, status TEXT, "
               "host_id TEXT, detail TEXT, created_at REAL)")
+
+
+def _migrate_ea_command_status(c: sqlite3.Connection) -> None:
+    """Migrazione additiva per ACK di consegna dei comandi EA legacy."""
+    cols = {row[1] for row in c.execute("PRAGMA table_info(ea_commands)")}
+    if "status" not in cols:
+        c.execute("ALTER TABLE ea_commands ADD COLUMN status TEXT DEFAULT 'PENDING'")
+    if "delivered_at" not in cols:
+        c.execute("ALTER TABLE ea_commands ADD COLUMN delivered_at REAL")
+    c.execute("UPDATE ea_commands SET status='DELIVERED' "
+              "WHERE consumed=1 AND (status IS NULL OR status='' OR status='PENDING')")
+    c.execute("UPDATE ea_commands SET status='PENDING' WHERE status IS NULL OR status='' ")
 
 
 def _pick(t: dict, *keys):
@@ -633,8 +648,11 @@ def ea_command(x_nexus_token: Optional[str] = Header(None)):
         ).fetchone()
         if not row:
             return {"action": None}
-        c.execute("UPDATE ea_commands SET consumed=1 WHERE id=?", (row["id"],))
-    out = {"action": row["action"]}
+        delivered = now()
+        c.execute("UPDATE ea_commands SET consumed=1,status='DELIVERED',delivered_at=? WHERE id=?",
+                  (delivered, row["id"]))
+    out = {"id": row["id"], "command_id": row["id"], "action": row["action"],
+           "status": "DELIVERED"}
     if row["payload"]:
         try:
             out.update(json.loads(row["payload"]))
@@ -1109,14 +1127,11 @@ async def dash_command(request: Request, user: str = Depends(require_user)):
                "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
-    payload = {k: v for k, v in data.items() if k != "action"}
-    cmd_id = secrets.token_hex(8)
-    with _conn() as c:
-        c.execute(
-            "INSERT INTO ea_commands(id,action,payload,created_at,consumed) VALUES(?,?,?,?,0)",
-            (cmd_id, action, json.dumps(payload), now()),
-        )
-    return {"ok": True, "id": cmd_id, "action": action}
+    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
+        k: v for k, v in data.items() if k not in ("action", "payload")}
+    cmd_id = _enqueue_ea_command(action, payload)
+    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
+            "action": action, "status": "PENDING", "created_at": iso()}
 
 
 @app.get("/api/dashboard/journal")
@@ -1275,7 +1290,8 @@ def _enqueue_ea_command(action, payload=None):
     cmd_id = secrets.token_hex(8)
     with _conn() as c:
         c.execute(
-            "INSERT INTO ea_commands(id,action,payload,created_at,consumed) VALUES(?,?,?,?,0)",
+            "INSERT INTO ea_commands(id,action,payload,created_at,consumed,status) "
+            "VALUES(?,?,?,?,0,'PENDING')",
             (cmd_id, action, json.dumps(payload or {}), now()),
         )
     return cmd_id
@@ -1440,9 +1456,11 @@ async def ea_command_post(request: Request, user: str = Depends(require_user)):
                "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
-    payload = {k: v for k, v in data.items() if k not in ("action", "command")}
+    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
+        k: v for k, v in data.items() if k not in ("action", "command", "payload")}
     cmd_id = _enqueue_ea_command(action, payload)
-    return {"ok": True, "id": cmd_id, "action": action}
+    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
+            "action": action, "status": "PENDING", "created_at": iso()}
 
 
 # ======================= SETTINGS / STRATEGIES (JWT) ==================== #
@@ -2679,8 +2697,29 @@ async def command_post(request: Request, user: str = Depends(require_user)):
                "reset_protections"}
     if action not in allowed:
         raise HTTPException(status_code=400, detail=f"action non valida: {action}")
-    payload = {k: v for k, v in data.items() if k not in ("action", "command")}
-    return {"ok": True, "id": _enqueue_ea_command(action, payload), "action": action}
+    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
+        k: v for k, v in data.items() if k not in ("action", "command", "payload")}
+    cmd_id = _enqueue_ea_command(action, payload)
+    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
+            "action": action, "status": "PENDING", "created_at": iso()}
+
+
+@app.get("/api/command/{command_id}")
+def command_status(command_id: str, user: str = Depends(require_user)):
+    with _conn() as c:
+        row = c.execute(
+            "SELECT id,action,status,created_at,delivered_at FROM ea_commands WHERE id=?",
+            (command_id,),
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="command not found")
+    return {
+        "id": row["id"], "command_id": row["id"], "action": row["action"],
+        "status": row["status"] or "PENDING",
+        "created_at": command_contract.iso_timestamp(row["created_at"]),
+        "delivered_at": (command_contract.iso_timestamp(row["delivered_at"])
+                         if row["delivered_at"] is not None else None),
+    }
 
 
 # ---- settings history (array diretto: SettingsPage usa .flatMap/.length) ----
@@ -2794,9 +2833,27 @@ async def strat_stats_upload(request: Request, user: str = Depends(require_user)
 @app.get("/api/license/summary")
 def license_summary(user: str = Depends(require_user)):
     with _conn() as c:
-        total = c.execute("SELECT COUNT(*) n FROM licenses").fetchone()["n"]
-        trial = c.execute("SELECT COUNT(*) n FROM licenses WHERE trial=1").fetchone()["n"]
-    return {"total": total, "trial": trial, "active": total - trial, "mode": LICENSE_MODE}
+        rows = [dict(r) for r in c.execute("SELECT trial,expires_at FROM licenses")]
+    current = now()
+    active = [r for r in rows if not r["expires_at"] or r["expires_at"] > current]
+    expired = [r for r in rows if r["expires_at"] and r["expires_at"] <= current]
+    expiries = [r["expires_at"] for r in active if r["expires_at"]]
+    days = ((min(expiries) - current) / 86400) if expiries else None
+    has_trial = any(bool(r["trial"]) for r in active)
+    if expired and not active:
+        level = "EXPIRED"
+    elif days is not None and days <= 2:
+        level = "CRITICAL"
+    elif days is not None and days <= 14:
+        level = "WARNING"
+    else:
+        level = "OK"
+    return {
+        "total": len(rows), "trial": sum(bool(r["trial"]) for r in rows),
+        "active": len(active), "mode": LICENSE_MODE, "level": level,
+        "has_active": bool(active), "has_trial": has_trial,
+        "expired_count": len(expired), "days_until_expiry": days,
+    }
 
 
 # ---- calendar upcoming (alias del calendario) ----
@@ -2823,7 +2880,8 @@ def chart_ohlc(symbol: str = "XAUUSD", tf: str = "M15", limit: int = 300,
         candles.append({"time": t0 + i * 900, "open": round(o, 3), "high": round(h, 3),
                         "low": round(low, 3), "close": round(c, 3)})
         price = c
-    return {"symbol": symbol, "tf": tf, "candles": candles, "demo": True}
+    return {"symbol": symbol, "tf": tf, "candles": candles, "bars": candles,
+            "source": "SYNTHETIC_DATA", "provenance": "SYNTHETIC_DATA", "demo": True}
 
 
 @app.get("/api/chart/markers")
@@ -2832,7 +2890,9 @@ def chart_markers(symbol: str = "XAUUSD", user: str = Depends(require_user)):
     markers = [{"time": t.get("closeTime"), "price": t.get("closePrice"),
                 "side": t.get("side"), "pnl": t.get("pnl"), "ticket": t.get("ticket")}
                for t in trades if t.get("closePrice")]
-    return {"markers": markers, "demo": len(markers) == 0}
+    return {"markers": markers, "trades": markers, "open": [], "shadows": [],
+            "visuals": [], "provenance": "DERIVED_ANALYTICS",
+            "demo": len(markers) == 0}
 
 
 # ---- backtest extra ----

@@ -60,16 +60,16 @@ export default function BacktestPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [sym, cat, pst] = await Promise.all([
+        const [sym, cat, pst] = await Promise.allSettled([
           api.get("/backtest/symbols"),
           api.get("/backtest/strategies"),
           api.get("/backtest/presets"),
         ]);
-        if (sym.data?.symbols) setSymbols(sym.data.symbols);
-        setCatalog(cat.data);
-        setPresets(pst.data?.presets || []);
-        if (cat.data?.all?.length) {
-          setCfg((c) => ({ ...c, strategies: cat.data.all.slice() }));
+        if (sym.status === "fulfilled" && sym.value.data?.symbols) setSymbols(sym.value.data.symbols);
+        if (cat.status === "fulfilled") setCatalog(cat.value.data);
+        if (pst.status === "fulfilled") setPresets(pst.value.data?.presets || []);
+        if (cat.status === "fulfilled" && cat.value.data?.all?.length) {
+          setCfg((c) => ({ ...c, strategies: cat.value.data.all.slice() }));
         }
       } catch (e) { console.warn("backtest catalog load failed", e); }
     })();

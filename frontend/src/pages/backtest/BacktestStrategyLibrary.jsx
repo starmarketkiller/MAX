@@ -3,6 +3,7 @@ import api from "@/lib/api";
 import { Library, Loader2, Search, Filter, Play, Lock, AlertCircle, Trophy, ArrowRightCircle, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 
 function cn(...c) { return c.filter(Boolean).join(" "); }
 
@@ -49,14 +50,13 @@ export default function BacktestStrategyLibrary({ symbols, baseCfg, onApplyRow }
   };
 
   // Poll the build job
-  useEffect(() => {
+  useVisiblePolling(async () => {
     if (!jobId) return;
-    const it = setInterval(async () => {
       try {
         const { data } = await api.get(`/backtest/strategy_library/${jobId}`);
         setProgress({ done: data.progress, total: data.total });
         if (data.status === "done" || data.status === "failed") {
-          clearInterval(it); setBusy(false); setJobId(null);
+          setBusy(false); setJobId(null);
           if (data.status === "done") {
             toast.success(`Libreria ${symbol} rigenerata: ${(data.rows || []).length} preset`);
             load();
@@ -95,9 +95,7 @@ export default function BacktestStrategyLibrary({ symbols, baseCfg, onApplyRow }
           }
         }
       } catch { /* transient */ }
-    }, 2000);
-    return () => clearInterval(it);
-  }, [jobId]);  // eslint-disable-line
+  }, 2000, !!jobId);
 
   const filtered = filter
     ? rows.filter((r) => r.strategy.toLowerCase().includes(filter.toLowerCase())

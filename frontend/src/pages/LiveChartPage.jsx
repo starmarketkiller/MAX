@@ -5,6 +5,7 @@ import {
   Eye, EyeOff, RefreshCw, Layers,
 } from "lucide-react";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import CoachLiveWidget from "@/components/CoachLiveWidget";
 
 const TF_OPTIONS = ["M1", "M5", "M15", "M30", "H1", "H4", "D1"];
@@ -233,27 +234,29 @@ export default function LiveChartPage() {
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [{ data: o }, { data: m }] = await Promise.all([
+      const [ohlc, markerData] = await Promise.allSettled([
         api.get(`/chart/ohlc?symbol=${symbol}&tf=${tf}&limit=300`),
         api.get(`/chart/markers?symbol=${symbol}`),
       ]);
-      setBars(o.bars || []);
-      setOhlcSource(o.source || "");
-      setMarkers({
-        trades:  m.trades  || [],
-        open:    m.open    || [],
-        shadows: m.shadows || [],
-        visuals: m.visuals || [],
-      });
-      if (o.bars?.length) setLastPrice(o.bars[o.bars.length - 1].close);
+      if (ohlc.status === "fulfilled") {
+        const o = ohlc.value.data;
+        setBars(o.bars || []);
+        setOhlcSource(o.source || o.provenance || "");
+        if (o.bars?.length) setLastPrice(o.bars[o.bars.length - 1].close);
+      }
+      if (markerData.status === "fulfilled") {
+        const m = markerData.value.data;
+        setMarkers({
+          trades: m.trades || m.markers || [], open: m.open || [],
+          shadows: m.shadows || [], visuals: m.visuals || [],
+        });
+      }
     } catch (e) {
       console.warn("[LiveChart] load failed", e?.message || e);
     } finally {
       setRefreshing(false);
     }
   }, [symbol, tf]);
-
-  useEffect(() => { load(); }, [load]);
 
   // Persist current chart context so the Coach widget can pick it up.
   useEffect(() => {
@@ -264,10 +267,7 @@ export default function LiveChartPage() {
   }, [symbol, tf]);
 
   // Live refresh every 5s
-  useEffect(() => {
-    const iv = setInterval(load, 5000);
-    return () => clearInterval(iv);
-  }, [load]);
+  useVisiblePolling(load, 5000);
 
   // -------- Push bars to chart --------
   useEffect(() => {

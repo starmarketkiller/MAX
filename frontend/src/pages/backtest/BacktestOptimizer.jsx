@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import { Wand2, Loader2, Trophy, AlertCircle, Sparkles, Play, X, Lock, Check } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,7 +35,6 @@ export default function BacktestOptimizer({ baseCfg }) {
   const [error, setError] = useState("");
   const [savingIdx, setSavingIdx] = useState(null);
   const [savedIdx, setSavedIdx] = useState(null);
-  const pollRef = useRef(null);
 
   const activeKeys = Object.keys(enabledParams).filter((k) => enabledParams[k]);
   const totalCombos = activeKeys.length
@@ -59,24 +59,20 @@ export default function BacktestOptimizer({ baseCfg }) {
   };
 
   const cancel = () => {
-    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
     setJobId(null); setStatus(null);
   };
 
   // Poll job status
-  useEffect(() => {
+  useVisiblePolling(async () => {
     if (!jobId) return;
-    pollRef.current = setInterval(async () => {
       try {
         const { data } = await api.get(`/backtest/optimize/${jobId}`);
         setStatus(data);
         if (data.status === "done" || data.status === "failed") {
-          clearInterval(pollRef.current); pollRef.current = null;
+          setJobId(null);
         }
       } catch { /* ignore transient */ }
-    }, 1500);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [jobId]);
+  }, 1500, !!jobId);
 
   const pct = status?.total ? Math.round((status.progress / status.total) * 100) : 0;
 

@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 
 const SEV_CFG = {
   critical: { icon: AlertOctagon, cls: "text-rose-300 bg-rose-500/10 border-rose-500/30",
@@ -63,20 +64,14 @@ export default function CoachLiveWidget() {
   const popoverRef = useRef(null);
 
   // Poll proactive alerts every 60s
-  useEffect(() => {
-    let cancelled = false;
-    const fetch = async () => {
-      try {
-        const { data } = await api.get("/coach/proactive_alerts");
-        if (!cancelled) setAlerts(data.alerts || []);
-      } catch (e) {
-        console.warn("[CoachLiveWidget] poll failed", e?.message || e);
-      }
-    };
-    fetch();
-    const iv = setInterval(fetch, 60_000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  useVisiblePolling(async () => {
+    try {
+      const { data } = await api.get("/coach/proactive_alerts");
+      setAlerts(data.alerts || []);
+    } catch (e) {
+      console.warn("[CoachLiveWidget] poll failed", e?.message || e);
+    }
+  }, 60_000);
 
   // Click outside to close
   useEffect(() => {
