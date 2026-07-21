@@ -14,6 +14,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import HealthScoreCard from "@/pages/dashboard/HealthScoreCard";
 import LockedProfileBanner from "@/components/LockedProfileBanner";
+import { DEFAULT_SETTINGS } from "@/contracts/settingsContract";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 import {
   Card, KpiCard, Pill, SectionHeader,
@@ -574,7 +575,7 @@ function resolveSessionMinScore(status, settings) {
   const sessionVal = overrideKey ? settings?.[overrideKey] : undefined;
   if (sessionVal != null) return sessionVal;
   if (SESSION_SCORE_MAP[session] != null) return SESSION_SCORE_MAP[session];
-  return settings?.MinEntryScore ?? 70;
+  return settings?.MinEntryScore ?? DEFAULT_SETTINGS.MinEntryScore;
 }
 
 function checkHtfBias(status, reactDir, wantBuy, wantSell, dirLabel) {
@@ -627,13 +628,13 @@ function checkPaused(status) {
 
 function checkConcurrent(status, settings) {
   const cur = status.positions?.length ?? 0;
-  const max = settings?.MaxConcurrent ?? 4;
+  const max = settings?.MaxConcurrent ?? DEFAULT_SETTINGS.MaxConcurrent;
   return { name: "Max concurrent", ok: cur < max, detail: `${cur} / ${max}`, hint: null };
 }
 
 function checkDailyTrades(status, settings) {
   const cur = status.tradesToday ?? 0;
-  const max = settings?.MaxTradesPerDay ?? 12;
+  const max = settings?.MaxTradesPerDay ?? DEFAULT_SETTINGS.MaxTradesPerDay;
   return { name: "Daily trades", ok: cur < max, detail: `${cur} / ${max}`, hint: null };
 }
 

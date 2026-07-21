@@ -30,6 +30,7 @@ import StrategiesPage from "@/pages/dashboard/StrategiesPage";
 import OptimizerPage from "@/pages/dashboard/OptimizerPage";
 import { StrategyHubProvider } from "@/lib/strategyHub";
 import { TradeHubProvider } from "@/lib/tradeHub";
+import { DEFAULT_SETTINGS, SETTINGS_FIELDS, SETTINGS_BOOLS, validateSettings } from "@/contracts/settingsContract";
 import StrategyAnalyticsPage from "@/pages/dashboard/StrategyAnalyticsPage";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import WhatIfPage from "@/pages/dashboard/WhatIfPage";
@@ -214,9 +215,9 @@ function RiskCenterPage({ status, settings, health }) {
     return <div className="text-muted-foreground text-sm">Loading risk panel…</div>;
   }
   const positions = status.positions || [];
-  const maxConcurrent = settings.MaxConcurrent ?? 4;
-  const maxTrades = settings.MaxTradesPerDay ?? 12;
-  const maxDD = settings.MaxDailyDDPct ?? 3;
+  const maxConcurrent = settings.MaxConcurrent ?? DEFAULT_SETTINGS.MaxConcurrent;
+  const maxTrades = settings.MaxTradesPerDay ?? DEFAULT_SETTINGS.MaxTradesPerDay;
+  const maxDD = settings.MaxDailyDDPct ?? DEFAULT_SETTINGS.MaxDailyDDPct;
   const eslLimitPct = settings.ESL_IsPercent ? settings.ESL_Value : 5;
   const dptTargetPct = settings.DPT_IsPercent ? settings.DPT_Value : 3;
   const antiRevLosses = settings.AntiRevengeLosses ?? 3;
@@ -338,77 +339,10 @@ function RiskCenterPage({ status, settings, health }) {
 // ========================================================================
 // SETTINGS PAGE
 // ========================================================================
-const SETTINGS_FIELDS = [
-  ["RiskPercent", "Risk per trade (%)"],
-  ["MaxLot", "Max lot size"],
-  ["MaxTradesPerDay", "Max trades / day"],
-  ["MaxConcurrent", "Max concurrent positions"],
-  ["MaxDailyDDPct", "Max daily DD (%)"],
-  ["MinEntryScore", "Min entry score"],
-  ["ATR_SL_Mult", "ATR SL multiplier"],
-  ["ATR_TP_Mult", "ATR TP multiplier"],
-  ["BE_TriggerATR", "BE trigger (ATR)"],
-  ["TrailActivateATR", "Trail activate (ATR)"],
-  ["TrailDistanceATR", "Trail distance (ATR)"],
-  ["TF_SLTP_H1", "SL/TP × per segnali H1"],
-  ["TF_SLTP_H4", "SL/TP × per segnali H4"],
-  ["TF_SLTP_D1", "SL/TP × per segnali D1"],
-  ["AsianScoreMin", "Asian session min score"],
-  ["LondonScoreMin", "London session min score"],
-  ["OverlapScoreMin", "Overlap session min score"],
-  ["NYScoreMin", "NY session min score"],
-  ["AfterNYScoreMin", "After-NY session min score"],
-  ["AntiRevengeLosses", "Anti-revenge losses"],
-  ["AntiRevengeMin", "Anti-revenge cooldown (min)"],
-  ["SwingWing", "Swing wing (fractal)"],
-  ["OBDisplacement", "OB displacement (ATR)"],
-  ["FVGMinBody", "FVG min body (ATR)"],
-  ["ReactionTol", "Reaction tolerance (ATR)"],
-  ["ESL_Value", "ESL · Equity SL value"],
-  ["DPT_Value", "DPT · Daily target value"],
-  ["MaxHoldHours", "Max hold (hours)"],
-  ["MaxLossPosPct", "Max loss / position (%)"],
-  ["AutoCloseMin", "Auto-close before market (min)"],
-  ["MarketCloseGMT", "Market close hour (GMT)"],
-  ["ConfluenceBonus2", "Confluence bonus (2 strat)"],
-  ["ConfluenceBonus3", "Confluence bonus (3 strat)"],
-  ["ConfluenceBonus4", "Confluence bonus (4+ strat)"],
-  ["ADXRsiScoreCap", "ADX_RSI score cap"],
-  ["MaxConsecPerStrategy", "Max consec / strategy"],
-  ["StrategyCooldownMin", "Strategy cooldown (min)"],
-  ["MaxSpreadAtrPct", "Max spread (% of ATR)"],
-  ["MaxSpreadPoints", "Max spread (points)"],
-  ["LowVolAtrPct", "Low vol threshold (ATR%)"],
-  ["HighVolAtrPct", "High vol threshold (ATR%)"],
-];
-const SETTINGS_BOOLS = [
-  ["UseHTFBias", "HTF Bias gate"],
-  ["UseVelocityGate", "Velocity gate"],
-  ["UseNewsFilter", "News filter"],
-  ["UseAMD", "AMD model"],
-  ["UseBSP", "Buyer/Seller Pressure"],
-  ["UseSessions", "Session thresholds"],
-  ["UseStructure", "Structure engine"],
-  ["UseReaction", "Reaction engine"],
-  ["UseStructReact", "Structure Reaction (FVG/OB trigger engine)"],
-  ["EnableCloseAndReverse", "Close & Reverse"],
-  ["UseESL", "Equity Stop Loss (ESL)"],
-  ["ESL_IsPercent", "ESL value is percent"],
-  ["UseDPT", "Daily Profit Target (DPT)"],
-  ["DPT_IsPercent", "DPT value is percent"],
-  ["UseMaxHold", "Max hold time per position"],
-  ["UseMaxLossPos", "Max loss per position"],
-  ["UseAutoClose", "Auto-close before market"],
-  ["UseConfluence", "Confluence scoring"],
-  ["UseStrategyCooldown", "Per-strategy cooldown"],
-  ["UseMTFValidation", "MTF (H1+H4) validation"],
-  ["UseDynamicSpread", "Dynamic spread filter"],
-  ["UseVolatilityRegime", "Volatility regime detection"],
-];
-
 function SettingsPage({ settings, onSave }) {
   const [local, setLocal] = useState(settings || {});
   const [history, setHistory] = useState([]);
+  const [validationErrors, setValidationErrors] = useState({});
   const change = (k, v) => setLocal((s) => ({ ...s, [k]: v }));
 
   useEffect(() => {
@@ -425,6 +359,9 @@ function SettingsPage({ settings, onSave }) {
   }, []);
 
   const handleSave = async () => {
+    const errors = validateSettings(local);
+    setValidationErrors(errors);
+    if (Object.keys(errors).length) return;
     await onSave(local);
     try {
       const { data } = await api.get("/settings/history?limit=50");
@@ -455,17 +392,21 @@ function SettingsPage({ settings, onSave }) {
       <Card className="p-6 lg:p-8">
         <div className="eyebrow mb-5">Numeric parameters</div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {SETTINGS_FIELDS.map(([k, label]) => (
+          {SETTINGS_FIELDS.map(([k, label, type, min, max, step]) => (
             <div key={k}>
               <label className="text-sm font-medium mb-1.5 block">{label}</label>
               <input
                 data-testid={`setting-${k}`}
                 type="number"
-                step="0.01"
+                step={step}
+                min={min}
+                max={max}
                 value={local[k] ?? ""}
-                onChange={(e) => change(k, parseFloat(e.target.value))}
+                aria-invalid={!!validationErrors[k]}
+                onChange={(e) => change(k, e.target.value === "" ? "" : (type === "integer" ? Number.parseInt(e.target.value, 10) : Number.parseFloat(e.target.value)))}
                 className="w-full h-10 px-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring font-mono text-sm transition-shadow"
               />
+              {validationErrors[k] && <p className="text-xs text-rose-500 mt-1">{validationErrors[k]}</p>}
             </div>
           ))}
         </div>
