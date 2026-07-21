@@ -1,5 +1,19 @@
 # PR 1 — Trade Lifecycle Ledger: acceptance test (agente desktop)
 
+## Gate automatizzato backend locale
+
+Eseguire la suite riproducibile con:
+
+```bash
+cd server
+python -m pip install --requirement requirements-dev.txt
+python -m pytest tests/test_trade_lifecycle.py --strict-markers --strict-config
+```
+
+Il gate copre i nove test backend, inclusi replay, resync, migrazione legacy
+ed esattamente un evento finale per trade logico. Non sostituisce il gate
+MetaEditor/Strategy Tester descritto sotto.
+
 Il branch `feature/trade-lifecycle-ledger` NON è compilato: questo ambiente non
 ha MetaEditor. Prima di qualsiasi merge l'agente desktop deve:
 
