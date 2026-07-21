@@ -63,10 +63,11 @@ void NXS_ManageSplit(){
       double now  = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_BID)
                                                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
+      double entryAtr = NXS_State_EntryAtr(t, g_atr);
       double minVol = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
 
       // P1: partial close at +InpTP1_ATR (only once per ticket)
-      if(prof >= g_atr * InpTP1_ATR && !_splitHas(t, g_splitP1, g_splitP1Cnt) &&
+      if(prof >= entryAtr * InpTP1_ATR && !_splitHas(t, g_splitP1, g_splitP1Cnt) &&
          !NXS_PM_HasApplied(t, "SPLIT_P1")){
          double part = NormalizeDouble(vol * InpTP1_Pct, 2);
          if(part >= minVol && (vol - part) >= minVol){
@@ -76,7 +77,7 @@ void NXS_ManageSplit(){
          }
       }
       // P2: partial close at +InpTP2_ATR (only once per ticket)
-      else if(prof >= g_atr * InpTP2_ATR && !_splitHas(t, g_splitP2, g_splitP2Cnt) &&
+      else if(prof >= entryAtr * InpTP2_ATR && !_splitHas(t, g_splitP2, g_splitP2Cnt) &&
               !NXS_PM_HasApplied(t, "SPLIT_P2")){
          double part = NormalizeDouble(vol * InpTP2_Pct, 2);
          if(part >= minVol && (vol - part) >= minVol){

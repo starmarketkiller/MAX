@@ -29,6 +29,7 @@ int g_nxsPmAppliedCount = 0;
 void NXS_PM_BeginCycle(){ g_nxsPmBestCount = 0; }
 
 bool NXS_PM_HasApplied(ulong ticket, string source){
+   if(NXS_State_HasApplied(ticket, source)) return true;
    for(int i=0; i<g_nxsPmAppliedCount; i++)
       if(g_nxsPmAppliedTicket[i] == ticket && g_nxsPmAppliedSource[i] == source) return true;
    return false;
@@ -46,6 +47,8 @@ void NXS_PM_RecordApplied(ulong ticket, string source){
    g_nxsPmAppliedTicket[g_nxsPmAppliedCount] = ticket;
    g_nxsPmAppliedSource[g_nxsPmAppliedCount] = source;
    g_nxsPmAppliedCount++;
+   NXS_State_RecordManagement(ticket, source);
+   NXS_State_Save();
 }
 
 bool NXS_PM_StopDoesNotLoosen(ulong ticket, double proposedSL){
