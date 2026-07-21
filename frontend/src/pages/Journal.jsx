@@ -184,12 +184,12 @@ export default function JournalPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [t, ts] = await Promise.all([
+      const [t, ts] = await Promise.allSettled([
         api.get("/analytics/trades", { params: { limit: 200 } }),
         api.get("/journal/tags"),
       ]);
-      setTrades(t.data || []);
-      setTagStats(ts.data.tags || []);
+      if (t.status === "fulfilled") setTrades(t.value.data || []);
+      if (ts.status === "fulfilled") setTagStats(ts.value.data.tags || []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, []);

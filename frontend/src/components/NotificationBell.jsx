@@ -1,23 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 
 export default function NotificationBell() {
   const [unread, setUnread] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetchCount = async () => {
-      try {
-        const { data } = await api.get("/coach/notifications");
-        if (!cancelled) setUnread(data.unread || 0);
-      } catch (e) { console.warn("notification bell fetch failed", e); }
-    };
-    fetchCount();
-    const iv = setInterval(fetchCount, 5 * 60 * 1000); // every 5 min
-    return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  useVisiblePolling(async () => {
+    try {
+      const { data } = await api.get("/coach/notifications");
+      setUnread(data.unread || 0);
+    } catch (e) { console.warn("notification bell fetch failed", e); }
+  }, 5 * 60 * 1000);
 
   return (
     <Link to="/coach" title="Notifiche del Coach"

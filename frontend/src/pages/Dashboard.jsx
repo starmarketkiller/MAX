@@ -10,6 +10,7 @@ import {
 import api from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import LicensesPage from "@/pages/Licenses";
 import CoachPage from "@/pages/Coach";
 import JournalPage from "@/pages/Journal";
@@ -345,18 +346,12 @@ function SettingsPage({ settings, onSave }) {
   const [validationErrors, setValidationErrors] = useState({});
   const change = (k, v) => setLocal((s) => ({ ...s, [k]: v }));
 
-  useEffect(() => {
-    let alive = true;
-    const load = async () => {
-      try {
-        const { data } = await api.get("/settings/history?limit=50");
-        if (alive) setHistory(data);
-      } catch (e) { console.warn("settings history load failed", e); }
-    };
-    load();
-    const id = setInterval(load, 10000);
-    return () => { alive = false; clearInterval(id); };
-  }, []);
+  useVisiblePolling(async () => {
+    try {
+      const { data } = await api.get("/settings/history?limit=50");
+      setHistory(data);
+    } catch (e) { console.warn("settings history load failed", e); }
+  }, 10000);
 
   const handleSave = async () => {
     const errors = validateSettings(local);
@@ -520,6 +515,8 @@ export default function Dashboard({ section = "home" }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [lastCommand, setLastCommand] = useState(null);
+  const [resourceErrors, setResourceErrors] = useState({});
 
   // Global Cmd+K / Ctrl+K listener
   useEffect(() => {
@@ -553,7 +550,7 @@ export default function Dashboard({ section = "home" }) {
 
   const fetchAll = async () => {
     try {
-      const [s, h, st, sm, tr, hm, br, cal, corr, hl] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get("/ea/status"),
         api.get("/ea/history?limit=120"),
         api.get("/settings"),
@@ -565,18 +562,29 @@ export default function Dashboard({ section = "home" }) {
         api.get("/analytics/correlation"),
         api.get("/ea/health"),
       ]);
+      const [s, h, st, sm, tr, hm, br, cal, corr, hl] = results;
+      const keys = ["status", "history", "settings", "summary", "trades",
+        "heatmap", "reasons", "calendar", "correlation", "health"];
+      const errors = {};
+      results.forEach((result, index) => {
+        if (result.status === "rejected" && result.reason?.response?.status !== 401) {
+          errors[keys[index]] = result.reason?.message || "request failed";
+        }
+      });
+      setResourceErrors(errors);
       // v2.0.9 — propagate semantic bridge state from /api/ea/health into status
-      const bridgeCheck = (hl.data?.checks || []).find((c) => c.key === "bridge");
-      setStatus({ ...s.data, bridgeState: bridgeCheck?.state || null });
-      setHistory(h.data);
-      setSettings(st.data);
-      setSummary(sm.data);
-      setTrades(tr.data);
-      setHeatmap(hm.data);
-      setByReason(br.data);
-      setCalendar(cal.data);
-      setCorrelation(corr.data);
-      setHealth(hl.data);
+      const bridgeCheck = (hl.status === "fulfilled" ? hl.value.data?.checks || [] : [])
+        .find((c) => c.key === "bridge");
+      if (s.status === "fulfilled") setStatus({ ...s.value.data, bridgeState: bridgeCheck?.state || null });
+      if (h.status === "fulfilled") setHistory(h.value.data);
+      if (st.status === "fulfilled") setSettings(st.value.data);
+      if (sm.status === "fulfilled") setSummary(sm.value.data);
+      if (tr.status === "fulfilled") setTrades(tr.value.data);
+      if (hm.status === "fulfilled") setHeatmap(hm.value.data);
+      if (br.status === "fulfilled") setByReason(br.value.data);
+      if (cal.status === "fulfilled") setCalendar(cal.value.data);
+      if (corr.status === "fulfilled") setCorrelation(corr.value.data);
+      if (hl.status === "fulfilled") setHealth(hl.value.data);
     } catch (e) {
       if (e?.response?.status !== 401) {
         console.warn("[dashboard] fetchAll failed:", e?.message || e);
@@ -584,12 +592,15 @@ export default function Dashboard({ section = "home" }) {
     }
   };
 
-  useEffect(() => {
-    if (!user) return;
-    fetchAll();
-    const id = setInterval(fetchAll, 5000);
-    return () => clearInterval(id);
-  }, [user]);
+  useVisiblePolling(fetchAll, 5000, !!user);
+
+  useVisiblePolling(async () => {
+    if (!lastCommand?.id || lastCommand.status === "DELIVERED") return;
+    try {
+      const { data } = await api.get(`/command/${lastCommand.id}`);
+      setLastCommand(data);
+    } catch (e) { console.warn("command status failed", e); }
+  }, 1500, !!lastCommand?.id && lastCommand.status !== "DELIVERED");
 
   if (checking) {
     return (
@@ -610,7 +621,8 @@ export default function Dashboard({ section = "home" }) {
 
   const doCmd = async (action, payload) => {
     try {
-      await api.post("/command", { action, payload: payload || {} });
+      const { data } = await api.post("/command", { action, payload: payload || {} });
+      setLastCommand(data);
       await fetchAll();
     } catch (e) {
       console.error("Command failed", e);
@@ -625,7 +637,7 @@ export default function Dashboard({ section = "home" }) {
 
   const saveSettings = async (patch) => {
     const { data } = await api.post("/settings", patch);
-    setSettings(data);
+    setSettings(data.settings || data);
     await fetchAll();
   };
 
@@ -639,6 +651,29 @@ export default function Dashboard({ section = "home" }) {
                     onExportPdf={downloadTearsheet}
                     onShowHelp={() => { resetWizard(); setWizardOpen(true); }}
                     onOpenCmd={() => setCmdOpen(true)} />
+        <div className="px-5 lg:px-8 pt-4 max-w-[1600px] w-full mx-auto space-y-2">
+          <div className="flex flex-wrap gap-2 text-[10px] font-mono">
+            {status && <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-sky-500">OBSERVED_LIVE · EA</span>}
+            {["analytics", "whatif", "journal", "strategy-analytics"].includes(section) &&
+              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-500">DERIVED_ANALYTICS · LEDGER</span>}
+            {trades.some((t) => t.source_provenance === "RECONSTRUCTED_HISTORY") &&
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-500">RECONSTRUCTED_HISTORY</span>}
+            {section === "backtest" &&
+              <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-500">SIMULATED_RESEARCH</span>}
+          </div>
+          {lastCommand && (
+            <div className={cls("rounded-lg border px-3 py-2 text-xs flex justify-between gap-3",
+              lastCommand.status === "DELIVERED" ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10") }>
+              <span>Comando <b>{lastCommand.action}</b> · {lastCommand.id}</span>
+              <span className="font-mono font-bold">{lastCommand.status}</span>
+            </div>
+          )}
+          {Object.keys(resourceErrors).length > 0 && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+              Dati parziali: non disponibili {Object.keys(resourceErrors).join(", ")}. Le altre sezioni continuano ad aggiornarsi.
+            </div>
+          )}
+        </div>
         <div
           className="flex-1 p-5 lg:p-8 max-w-[1600px] w-full mx-auto pb-24 lg:pb-8"
           data-testid={`dashboard-section-${section}`}

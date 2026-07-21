@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import {
   Cpu, RefreshCcw, Play, Hammer, RotateCw, Power, Download,
   CheckCircle2, XCircle, Clock3, Terminal, FileCode2,
@@ -57,11 +58,7 @@ export default function LocalBridgePage() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
-  }, [load]);
+  useVisiblePolling(load, 5000);
 
   const enqueue = async (action, payload = {}) => {
     setSending(action);

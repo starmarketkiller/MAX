@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldAlert, ShieldCheck, AlertOctagon, Clock, X } from "lucide-react";
 import api from "@/lib/api";
+import { useVisiblePolling } from "@/lib/useVisiblePolling";
 
 const LEVEL_CFG = {
   EXPIRED: {
@@ -62,21 +63,14 @@ export default function LicenseBanner() {
   const [summary, setSummary] = useState(null);
   const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    const fetch = async () => {
-      try {
-        const { data } = await api.get("/license/summary");
-        if (!cancelled) setSummary(data);
-      } catch (e) {
-        // Silent — banner is non-critical
-        console.warn("[LicenseBanner] fetch failed", e?.message || e);
-      }
-    };
-    fetch();
-    const iv = setInterval(fetch, 60_000); // refresh once a minute
-    return () => { cancelled = true; clearInterval(iv); };
-  }, []);
+  useVisiblePolling(async () => {
+    try {
+      const { data } = await api.get("/license/summary");
+      setSummary(data);
+    } catch (e) {
+      console.warn("[LicenseBanner] fetch failed", e?.message || e);
+    }
+  }, 60_000);
 
   // Show whenever there's something actionable: expired/critical/warning,
   // an active trial, or any license expiring within 14 days.
