@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Italian Traders Club"
 #property link      "https://nexus.local"
-#property version   "2.60"
+#property version   "2.80"
 #property strict
 #property description "NEXUS EA v2.0 - Commercial-grade adaptive multi-strategy EA"
 #property description "Multi-symbol | License-gated | Confluence scoring | Risk Protections"
@@ -467,7 +467,7 @@ int OnInit(){
 
    // PR2 - Virtual SL: ricostruzione stato armato dopo restart (validato per
    // account+magic, riconciliato con broker/ledger). No-op in modalita' OFF.
-   NXS_EA_VirtSL_Restore();
+   NXS_VSL_Restore();
 
    PrintFormat("[NEXUS v%s] Initialized on %s | Profile=%s | Magic=%I64d | WebSync=%s URL=%s",
                NEXUS_VERSION, g_sym, g_profile.className, InpMagic,
