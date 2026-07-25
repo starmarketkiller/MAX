@@ -58,6 +58,22 @@ from fastapi.staticfiles import StaticFiles
 ENVIRONMENT    = nexus_security.normalize_environment(os.environ.get("NEXUS_ENV"))
 HARDENED       = nexus_security.is_hardened(ENVIRONMENT)
 
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+#: NXS-DB-001 — l'auto-migrazione all'avvio e' comoda su istanza singola ma
+#: pericolosa con piu' repliche. Resta il default; disattivarla richiede di
+#: applicare lo schema fuori banda.
+AUTO_MIGRATE   = _env_flag("NEXUS_AUTO_MIGRATE", True)
+#: AUD0-DB-006 — i seed alterano configurazione operativa: fuori dallo sviluppo
+#: vanno chiesti esplicitamente.
+SEED_ON_START  = _env_flag("NEXUS_SEED_ON_START", not HARDENED)
+
 BRIDGE_TOKEN   = os.environ.get("NEXUS_BRIDGE_TOKEN", "NEXUS_BRIDGE_TOKEN_2026")
 ADMIN_USER     = os.environ.get("NEXUS_ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.environ.get("NEXUS_ADMIN_PASSWORD", "admin")
@@ -118,6 +134,8 @@ DEPLOY_MANIFEST_FILE = next((p for p in _MANIFEST_CANDIDATES if p and p.exists()
 # AUD0-MQL-002: l'identità di versione era incoerente tra artefatti. Una sola
 # costante alimenta FastAPI, /api/health e il registro delle migrazioni.
 APP_VERSION = "5.4.0-security-remediation"
+
+
 
 # AUD0-COMPUTE-001: backtest e optimizer non girano più dentro la richiesta
 # HTTP. Store persistente + pool separato dal thread che serve l'API.
@@ -375,6 +393,14 @@ def init_db() -> None:
         _record_migration(c, "008_bridge_enrollment")
         _migrate_trade_provenance(c)
         _record_migration(c, "009_trade_provenance")
+        _migrate_trade_account_identity(c)
+        _record_migration(c, "010_trade_account_identity")
+        _migrate_event_ledger_integrity(c)
+        _record_migration(c, "011_event_ledger_integrity")
+        _migrate_command_event_structure(c)
+        _record_migration(c, "012_command_event_structure")
+        _migrate_status_history(c)
+        _record_migration(c, "013_status_history")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -520,6 +546,159 @@ def _migrate_trade_provenance(c: sqlite3.Connection) -> None:
               "ON trades(sequence_id) WHERE sequence_id IS NOT NULL")
 
 
+def _migrate_trade_account_identity(c: sqlite3.Connection) -> None:
+    """Rende l'identita' del trade unica PER CONTO.
+
+    AUD0-DB-003 / NXS-DB-004 (P0): `trades.ticket` e' la chiave primaria, ma il
+    ticket e' un identificativo di posizione del BROKER — due conti diversi che
+    usano lo stesso backend possono produrre lo stesso numero. Il risultato non
+    e' un errore: e' un UPSERT che SOVRASCRIVE il trade di un altro conto. Il
+    codice lo documentava come limite noto invece di risolverlo.
+
+    La tabella viene ricostruita con `account_id` esplicito e chiave primaria
+    (account_id, ticket). `account_id` si ricava dal prefisso di `trade_uid`
+    ("<account>:<position>"), che l'EA popola gia'; le righe legacy senza uid
+    finiscono nel conto 0 — un valore riconoscibile, non un conto inventato.
+
+    Nota: SQLite non permette di cambiare una chiave primaria; serve la
+    ricostruzione della tabella. E' additiva sui DATI (nessuna riga persa) ma
+    non sullo schema, quindi ha una propria voce di migrazione.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(trades)")}
+    if not cols:
+        return
+    if "account_id" in cols:
+        return  # gia' migrata
+
+    ordered = [r[1] for r in c.execute("PRAGMA table_info(trades)")]
+    collist = ", ".join(ordered)
+
+    c.execute("ALTER TABLE trades RENAME TO trades_legacy_pre010")
+    c.execute(
+        "CREATE TABLE trades ("
+        "account_id INTEGER NOT NULL DEFAULT 0, "
+        "ticket INTEGER NOT NULL, "
+        "symbol TEXT, strategy TEXT, side TEXT, lots REAL, open_price REAL, "
+        "close_price REAL, pnl REAL, open_time TEXT, close_time TEXT, "
+        "reason TEXT, raw TEXT, synced_at REAL, position_id INTEGER, "
+        "trade_uid TEXT, partial_count INTEGER, volume_out REAL, last_event TEXT, "
+        "sequence_id TEXT, risk_money REAL, risk_known INTEGER, risk_source TEXT, "
+        "identity_source TEXT, "
+        "PRIMARY KEY (account_id, ticket))"
+    )
+    # account_id derivato dal prefisso di trade_uid; 0 = conto sconosciuto.
+    c.execute(
+        f"INSERT INTO trades (account_id, {collist}) "
+        f"SELECT CASE "
+        f"  WHEN trade_uid IS NOT NULL AND instr(trade_uid, ':') > 1 "
+        f"   AND CAST(substr(trade_uid, 1, instr(trade_uid, ':') - 1) AS INTEGER) > 0 "
+        f"  THEN CAST(substr(trade_uid, 1, instr(trade_uid, ':') - 1) AS INTEGER) "
+        f"  ELSE 0 END, {collist} FROM trades_legacy_pre010"
+    )
+    c.execute("DROP TABLE trades_legacy_pre010")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_trades_uid "
+              "ON trades(trade_uid) WHERE trade_uid IS NOT NULL")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_trades_close_time ON trades(close_time)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_trades_sequence "
+              "ON trades(sequence_id) WHERE sequence_id IS NOT NULL")
+
+
+def _migrate_event_ledger_integrity(c: sqlite3.Connection) -> None:
+    """Rende l'append-only del ledger una REGOLA, non una convenzione.
+
+    NXS-DB-008 (P0/P1): `trade_events` e' descritta come append-only, ma niente
+    lo impediva: un UPDATE o un DELETE — per bug, per script di manutenzione o
+    per accesso diretto al file — riscriveva la storia senza lasciare traccia.
+
+    Due controlli:
+      * trigger BEFORE UPDATE / BEFORE DELETE che abortiscono l'operazione;
+      * catena di hash (prev_hash -> hash) che rende rilevabile una
+        manomissione fatta aggirando i trigger, per esempio ricostruendo la
+        tabella.
+
+    NXS-DB-009: l'unicita' copriva solo close/resync. I parziali hanno ora una
+    chiave canonica propria (trade_uid + event + partial_count), cosi' il
+    replay di un parziale non crea un secondo evento.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(trade_events)")}
+    for name, decl in (("prev_hash", "TEXT"), ("hash", "TEXT"),
+                       ("actor", "TEXT"), ("deal_id", "INTEGER")):
+        if name not in cols:
+            c.execute(f"ALTER TABLE trade_events ADD COLUMN {name} {decl}")
+
+    # NXS-DB-009: la chiave canonica di un evento parziale e' il DEAL che lo ha
+    # prodotto — non `partial_count`, che due parziali della stessa posizione
+    # possono condividere. Senza deal_id la duplicazione non e' dimostrabile,
+    # quindi l'evento viene registrato: meglio un doppione visibile in un
+    # registro di audit che un evento reale scartato per una chiave sbagliata.
+    c.execute("DROP INDEX IF EXISTS idx_trade_events_partial_once")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_trade_events_deal_once "
+              "ON trade_events(trade_uid, event, deal_id) "
+              "WHERE deal_id IS NOT NULL")
+
+    # I trigger vanno ricreati: DROP+CREATE mantiene la migrazione idempotente.
+    c.execute("DROP TRIGGER IF EXISTS trg_trade_events_no_update")
+    c.execute("DROP TRIGGER IF EXISTS trg_trade_events_no_delete")
+    c.execute(
+        "CREATE TRIGGER trg_trade_events_no_update BEFORE UPDATE ON trade_events "
+        "BEGIN SELECT RAISE(ABORT, 'trade_events e append-only: UPDATE vietato'); END"
+    )
+    c.execute(
+        "CREATE TRIGGER trg_trade_events_no_delete BEFORE DELETE ON trade_events "
+        "BEGIN SELECT RAISE(ABORT, 'trade_events e append-only: DELETE vietato'); END"
+    )
+
+
+def _migrate_command_event_structure(c: sqlite3.Connection) -> None:
+    """Da riga di log a evento di ciclo di vita verificabile.
+
+    NXS-DB-010: `command_events` aveva solo id, comando, stato, host, dettaglio
+    e istante. Mancava tutto cio' che serve a ricostruire una transizione:
+    chi l'ha causata, da quale stato, con quale lease, con quale payload.
+    Senza, l'audit di un comando distruttivo non e' ricostruibile.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(command_events)")}
+    for name, decl in (
+        ("event_uid", "TEXT"),
+        ("sequence", "INTEGER"),
+        ("prev_status", "TEXT"),
+        ("actor", "TEXT"),
+        ("lease_id", "TEXT"),
+        ("payload_hash", "TEXT"),
+        ("source", "TEXT"),
+    ):
+        if name not in cols:
+            c.execute(f"ALTER TABLE command_events ADD COLUMN {name} {decl}")
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_command_events_uid "
+              "ON command_events(event_uid) WHERE event_uid IS NOT NULL")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_command_events_cmd "
+              "ON command_events(command_id, sequence)")
+
+
+def _migrate_status_history(c: sqlite3.Connection) -> None:
+    """Conserva la storia degli snapshot che venivano sovrascritti.
+
+    NXS-DB-017: `ea_status`, `strategy_stats`, `trade_reasons` e
+    `visual_objects` sono proiezioni dello STATO CORRENTE: ogni push sovrascrive
+    la riga precedente. Va bene per una dashboard, ma significa che la storia
+    operativa — quando una protezione e' scattata, come sono cambiati equity e
+    drawdown — non esiste da nessuna parte.
+
+    Qui si aggiunge una tabella append-only per lo stato EA, con ritenzione
+    gestita dalle regole gia' esistenti in nexus_retention.
+    """
+    c.execute(
+        "CREATE TABLE IF NOT EXISTS ea_status_history ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "account_id INTEGER, magic INTEGER, symbol TEXT, "
+        "balance REAL, equity REAL, floating_pl REAL, daily_pl REAL, "
+        "drawdown_pct REAL, margin_level REAL, open_positions INTEGER, "
+        "paused INTEGER, payload TEXT, created_at REAL)"
+    )
+    c.execute("CREATE INDEX IF NOT EXISTS idx_ea_status_history_key "
+              "ON ea_status_history(account_id, symbol, created_at)")
+
+
 def _migrate_license_security(c: sqlite3.Connection) -> None:
     """Porta le licenze a verificatore hashato + ciclo di vita esplicito.
 
@@ -573,11 +752,17 @@ def _migrate_coach_ownership(c: sqlite3.Connection) -> None:
     Le righe storiche restano con owner NULL e visibili a chiunque: non e'
     possibile attribuirle retroattivamente senza inventare un proprietario.
     """
-    for table in ("coach_memory", "coach_notifications"):
+    # NXS-DB-019: anche la tabella `notifications` (non solo quelle del Coach)
+    # era priva di qualunque ambito: ogni utente del backend vedeva le notifiche
+    # di tutti. `environment` distingue inoltre DEMO da LIVE sullo stesso DB.
+    for table in ("coach_memory", "coach_notifications", "notifications"):
         cols = {row[1] for row in c.execute(f"PRAGMA table_info({table})")}
         if "owner" not in cols:
             c.execute(f"ALTER TABLE {table} ADD COLUMN owner TEXT")
+        if "environment" not in cols:
+            c.execute(f"ALTER TABLE {table} ADD COLUMN environment TEXT")
     c.execute("CREATE INDEX IF NOT EXISTS idx_coach_memory_owner ON coach_memory(owner)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_notifications_owner ON notifications(owner)")
 
 
 def _migrate_bridge_enrollment(c: sqlite3.Connection) -> None:
@@ -737,6 +922,34 @@ def _pick(t: dict, *keys):
     return None
 
 
+def _event_chain_hash(c: sqlite3.Connection, payload: str) -> tuple:
+    """Concatena l'evento al precedente (NXS-DB-008).
+
+    I trigger impediscono UPDATE e DELETE, ma non proteggono da chi ricostruisce
+    la tabella aggirando il database. La catena si': modificare o rimuovere un
+    evento passato rompe l'hash di TUTTI quelli successivi, quindi la
+    manomissione diventa rilevabile anche a posteriori.
+    """
+    row = c.execute("SELECT hash FROM trade_events ORDER BY id DESC LIMIT 1").fetchone()
+    prev = (row["hash"] if row and row["hash"] else "")
+    digest = hashlib.sha256((prev + "|" + payload).encode("utf-8")).hexdigest()
+    return prev, digest
+
+
+def verify_event_chain(c: sqlite3.Connection, limit: int = 5000) -> dict:
+    """Ricalcola la catena e riporta il primo punto di rottura (NXS-DB-008)."""
+    rows = c.execute(
+        "SELECT id, payload, prev_hash, hash FROM trade_events "
+        "WHERE hash IS NOT NULL ORDER BY id ASC LIMIT ?", (limit,)).fetchall()
+    prev = ""
+    for r in rows:
+        expect = hashlib.sha256((prev + "|" + (r["payload"] or "")).encode("utf-8")).hexdigest()
+        if r["hash"] != expect or (r["prev_hash"] or "") != prev:
+            return {"ok": False, "broken_at": r["id"], "checked": len(rows)}
+        prev = r["hash"]
+    return {"ok": True, "broken_at": None, "checked": len(rows)}
+
+
 def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) -> bool:
     """Registra un evento del ciclo di vita nel ledger backend.
 
@@ -754,10 +967,13 @@ def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) ->
         if ticket is None:
             return False
         uid = f"legacy:{ticket}"
+    payload = json.dumps(t)
+    prev_hash, chain_hash = _event_chain_hash(c, payload)
     c.execute(
         "INSERT OR IGNORE INTO trade_events(trade_uid,event,position_id,magic,"
-        "symbol,pnl,lots,partial_count,volume_out,reason,payload,created_at) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+        "symbol,pnl,lots,partial_count,volume_out,reason,payload,created_at,deal_id,"
+        "prev_hash,hash) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             str(uid), ev,
             _pick(t, "positionId", "position_id", "ticket"),
@@ -767,7 +983,9 @@ def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) ->
             _pick(t, "lots", "volume"),
             _pick(t, "partialCount", "partial_count"),
             _pick(t, "volumeOut", "volume_out"),
-            t.get("reason"), json.dumps(t), now(),
+            t.get("reason"), payload, now(),
+            _pick(t, "dealId", "deal_id", "deal"),
+            prev_hash, chain_hash,
         ),
     )
     return True
@@ -785,7 +1003,38 @@ def kv_get(key: str, default: Any = None) -> Any:
     return json.loads(row["value"]) if row else default
 
 
+#: NXS-DB-006 — REGISTRO DEI DOCUMENTI `kv`.
+#:
+#: La tabella `kv` era diventata un secondo database non governato: impostazioni,
+#: profili, storici, risultati dell'optimizer, sessioni del Coach e override di
+#: runtime, tutti come JSON opaco, senza schema, senza proprietario, senza
+#: ritenzione e senza modo di sapere chi scrive cosa.
+#:
+#: Il registro non impone uno schema (sarebbe una riscrittura), ma rende
+#: esplicito cosa e' legittimo che esista e chi lo possiede. Una chiave non
+#: dichiarata viene comunque scritta — rifiutarla romperebbe funzioni esistenti
+#: — ma segnalata una volta, cosi' la crescita non autorizzata e' visibile.
+KV_REGISTRY = {
+    "settings":            "configurazione runtime dell'EA (servizio settings)",
+    "settings_applied":    "stato applicato dichiarato dall'EA",
+    "chain_config":        "catene di strategie",
+    "locked_profiles":     "profili bloccati per simbolo",
+    "equity_history":      "serie equity per il grafico live (cap 300 punti)",
+    "strategy_recipe":     "ricette di strategia seed",
+    "backtest_library":    "libreria risultati di backtest",
+    "strategy_results":    "risultati per strategia (seed/optimizer)",
+    "creator_setups":      "setup del Creator",
+    "journal_meta_legacy": "metadati journal precedenti alla migrazione 004",
+    "deprecations_seen":   "rotte deprecate gia' segnalate",
+}
+_KV_UNKNOWN_REPORTED = set()
+
+
 def kv_set(key: str, value: Any) -> None:
+    if key not in KV_REGISTRY and key not in _KV_UNKNOWN_REPORTED:
+        _KV_UNKNOWN_REPORTED.add(key)
+        print(f"[NEXUS][KV] chiave '{key}' non dichiarata in KV_REGISTRY: "
+              f"documento senza proprietario ne' ritenzione")
     with _conn() as c:
         c.execute(
             "INSERT INTO kv(key,value) VALUES(?,?) "
@@ -1075,15 +1324,39 @@ def _startup() -> None:
         print(f"[NEXUS][WARN] {warning}")
     result.raise_for_status()
 
-    init_db()
+    # NXS-DB-001 / AUD0-DB-001: creazione schema e migrazioni giravano SEMPRE
+    # all'avvio dell'applicazione. Con piu' repliche ognuna tenta la stessa
+    # migrazione, e un cambio di schema diventa un effetto collaterale del
+    # deploy invece di un passo deliberato e reversibile.
+    #
+    # Il comportamento predefinito resta l'auto-migrazione (installazione a
+    # istanza singola), ma ora e' una SCELTA dichiarata: con
+    # NEXUS_AUTO_MIGRATE=false il processo non tocca lo schema e, se le
+    # migrazioni mancano, /api/ready risponde 503 invece di far partire un
+    # servizio che scrive su un database che non conosce.
+    if AUTO_MIGRATE:
+        init_db()
+    else:
+        print("[NEXUS] auto-migrazione DISATTIVATA: lo schema deve essere "
+              "applicato fuori banda (python -m app --migrate)")
     # AUD0-COMPUTE-001: un riavvio lascia job orfani in RUNNING. Dichiararli
     # falliti è l'unica affermazione dimostrabile: il worker non esiste più.
     orphans = JOB_STORE.reap_orphans()
     if orphans:
         print(f"[NEXUS] {orphans} job interrotti dal riavvio marcati FAILED")
-    _seed_strategy_results()
-    _seed_backtest_library()
-    _seed_recipe()
+
+    # AUD0-DB-006: i seed POPOLANO configurazione operativa (risultati per
+    # strategia, libreria di backtest, ricette, profilo bloccato con simbolo
+    # jolly). Eseguirli a ogni avvio significa che un artefatto di rilascio puo'
+    # cambiare in silenzio lo stato operativo dopo un deploy. Restano attivi in
+    # sviluppo, dove servono per avere un'istanza usabile subito; negli ambienti
+    # induriti vanno chiesti esplicitamente.
+    if SEED_ON_START:
+        _seed_strategy_results()
+        _seed_backtest_library()
+        _seed_recipe()
+    else:
+        print("[NEXUS] seed dei dati NON eseguito (NEXUS_SEED_ON_START=false)")
     print(f"[NEXUS] backend up — env={ENVIRONMENT} db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
     print(f"[NEXUS] coach actions={'ENABLED' if COACH_ALLOW_ACTIONS else 'read-only'}")
@@ -1253,6 +1526,23 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
             "ON CONFLICT(key) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at, "
             "magic=excluded.magic, symbol=excluded.symbol",
             (key, magic, symbol, json.dumps(data), now()),
+        )
+        # NXS-DB-017: `ea_status` e' una proiezione dello stato CORRENTE — ogni
+        # push sovrascrive il precedente. La storia operativa (quando equity e
+        # drawdown sono cambiati, quando una protezione e' scattata) non
+        # esisteva da nessuna parte. Qui viene conservata in append-only, con
+        # ritenzione gestita da nexus_retention.
+        c.execute(
+            "INSERT INTO ea_status_history(account_id,magic,symbol,balance,equity,"
+            "floating_pl,daily_pl,drawdown_pct,margin_level,open_positions,paused,"
+            "payload,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (_pick(data, "account_id", "accountId", "account") or 0, magic, symbol,
+             _pick(data, "balance"), _pick(data, "equity"),
+             _pick(data, "floatPnL", "floating_pl"), _pick(data, "dailyPnL", "daily_pl"),
+             _pick(data, "ddPct", "drawdown_pct"), _pick(data, "marginLevel", "margin_level"),
+             _pick(data, "openPositions", "open_positions"),
+             1 if data.get("paused") else 0,
+             json.dumps(data), now()),
         )
     # serie equity per il grafico live (/ea/history) — cap a 300 punti
     try:
@@ -1562,6 +1852,27 @@ def _normalize_time(s):
     return s
 
 
+def _trade_account_id(t: dict) -> int:
+    """Conto proprietario del trade (AUD0-DB-003 / NXS-DB-004).
+
+    L'EA invia `tradeUid` come "<account>:<position>"; se manca si accetta un
+    `account_id` esplicito. Senza nessuno dei due si usa 0 — conto sconosciuto,
+    riconoscibile, mai confuso con un conto reale.
+    """
+    explicit = _pick(t, "account_id", "accountId", "account")
+    if explicit is not None:
+        try:
+            return int(explicit)
+        except (TypeError, ValueError):
+            pass
+    uid = t.get("tradeUid") or t.get("trade_uid")
+    if isinstance(uid, str) and ":" in uid:
+        head = uid.split(":", 1)[0]
+        if head.isdigit():
+            return int(head)
+    return 0
+
+
 def _upsert_trade(c, t, symbol_fallback=None):
     """Upsert di un trade nella tabella `trades` (letta da Journal/Analytics).
     COALESCE protegge i campi ricchi (symbol/strategy/open_*/close_time) quando
@@ -1576,12 +1887,12 @@ def _upsert_trade(c, t, symbol_fallback=None):
     open_time = _normalize_time(t.get("open_time") or t.get("openTime"))
     close_time = _normalize_time(t.get("close_time") or t.get("closeTime"))
     c.execute(
-        "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
+        "INSERT INTO trades(account_id,ticket,symbol,strategy,side,lots,open_price,close_price,"
         "pnl,open_time,close_time,reason,raw,synced_at,"
         "position_id,trade_uid,partial_count,volume_out,last_event,"
         "sequence_id,risk_money,risk_known,risk_source,identity_source) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
-        "ON CONFLICT(ticket) DO UPDATE SET "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(account_id, ticket) DO UPDATE SET "
         "symbol=COALESCE(excluded.symbol, trades.symbol), "
         "strategy=COALESCE(NULLIF(NULLIF(excluded.strategy, ''), 'UNKNOWN'), trades.strategy), "
         "side=excluded.side, lots=excluded.lots, "
@@ -1602,6 +1913,7 @@ def _upsert_trade(c, t, symbol_fallback=None):
         "risk_source=COALESCE(excluded.risk_source, trades.risk_source), "
         "identity_source=COALESCE(excluded.identity_source, trades.identity_source)",
         (
+            _trade_account_id(t),
             int(ticket), symbol, t.get("strategy"), t.get("side") or t.get("type"),
             _pick(t, "lots", "volume"), open_price,
             _pick(t, "close_price", "closePrice"), _pick(t, "pnl", "profit"),
@@ -5637,6 +5949,44 @@ else:
         return JSONResponse({"service": "nexus-backend", "site": "static/ mancante"})
 
 
+def _cli_exit(code: int) -> None:
+    """Chiude i pool prima di uscire.
+
+    Gli executor del modulo hanno thread non daemon: senza questo un comando da
+    riga di comando resterebbe appeso allo spegnimento dell'interprete.
+    """
+    import sys
+    try:
+        _OUTBOUND_POOL.shutdown(wait=False)
+        JOB_RUNNER.shutdown()
+    except Exception:
+        pass
+    sys.stdout.flush()
+    os._exit(code)
+
+
 if __name__ == "__main__":
+    import sys
+
+    # NXS-DB-001 / AUD0-DB-001 — migrazione FUORI BANDA.
+    #
+    # Con `NEXUS_AUTO_MIGRATE=false` il servizio non tocca lo schema all'avvio:
+    # il cambio di schema diventa un passo deliberato e verificabile del deploy
+    # invece di un effetto collaterale del primo avvio di una replica qualunque.
+    if "--migrate" in sys.argv:
+        init_db()
+        with _conn() as _c:
+            applied = [r["migration_id"] for r in _c.execute(
+                "SELECT migration_id FROM schema_migrations ORDER BY migration_id")]
+        print(f"[NEXUS] migrazioni applicate ({len(applied)}): {', '.join(applied)}")
+        _cli_exit(0)
+
+    # NXS-DB-008 — verifica della catena di hash del ledger eventi.
+    if "--verify-ledger" in sys.argv:
+        with _conn() as _c:
+            report = verify_event_chain(_c)
+        print(f"[NEXUS] catena eventi: {report}")
+        _cli_exit(0 if report["ok"] else 1)
+
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=int(os.environ.get("PORT", "8001")))

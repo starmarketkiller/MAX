@@ -54,6 +54,11 @@ RETENTION_RULES = (
                   "oggetti grafici: proiezione rigenerabile"),
     RetentionRule("compute_jobs", "finished_at", 60,
                   "job computazionali conclusi"),
+    # NXS-DB-017: lo storico dello stato EA cresce a ogni push (uno ogni pochi
+    # secondi per istanza). E' materiale diagnostico, non evidenza primaria:
+    # un tetto serve, altrimenti la tabella supera per volume tutto il resto.
+    RetentionRule("ea_status_history", "created_at", 30,
+                  "storico stato EA: diagnostica ad alta frequenza"),
     # Protette: non vengono mai potate automaticamente.
     RetentionRule("trade_events", "created_at", 3650,
                   "ledger dei trade: evidenza primaria", protected=True),

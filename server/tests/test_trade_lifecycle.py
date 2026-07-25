@@ -37,9 +37,21 @@ def _db():
 
 
 def _clear():
+    """Azzera le tabelle fra un test e l'altro.
+
+    NXS-DB-008: `trade_events` e' append-only e i trigger lo IMPONGONO — un
+    DELETE viene abortito dal database. Il fatto che questo helper debba
+    disattivarli esplicitamente e' la prova che il controllo funziona:
+    cancellare eventi non e' piu' qualcosa che puo' accadere per sbaglio.
+    """
     with _db() as c:
         c.execute("DELETE FROM trades")
+        c.execute("DROP TRIGGER IF EXISTS trg_trade_events_no_delete")
         c.execute("DELETE FROM trade_events")
+        c.execute(
+            "CREATE TRIGGER trg_trade_events_no_delete BEFORE DELETE ON trade_events "
+            "BEGIN SELECT RAISE(ABORT, 'trade_events e append-only: DELETE vietato'); END"
+        )
         c.execute("DELETE FROM trade_reasons")
 
 
@@ -264,3 +276,89 @@ def test_migration_is_additive_and_idempotent(tmp_path, monkeypatch):
                        "WHERE ticket=1").fetchone()
     assert row == ("GOLD", 5.5, None)      # riga storica intatta
     conn.close()
+
+
+# --------------------------------------------------------------------- DB ---
+def test_ledger_is_append_only(client):
+    """NXS-DB-008: l'append-only era una convenzione scritta nei commenti.
+
+    Un UPDATE o un DELETE — per bug, script di manutenzione o accesso diretto
+    al file — riscriveva la storia senza lasciare traccia. Ora il database
+    stesso li rifiuta.
+    """
+    _clear()
+    client.post("/api/ea/trade_reason", json=_close_payload(8001, 1.0), headers=TOKEN)
+    assert len(_events("close")) == 1
+
+    with _db() as c:
+        with pytest.raises(sqlite3.IntegrityError):
+            c.execute("UPDATE trade_events SET pnl = 999 WHERE trade_uid = '111:8001'")
+    with _db() as c:
+        with pytest.raises(sqlite3.IntegrityError):
+            c.execute("DELETE FROM trade_events WHERE trade_uid = '111:8001'")
+
+    rows = _events("close")
+    assert len(rows) == 1 and rows[0]["pnl"] == 1.0
+
+
+def test_ledger_hash_chain_detects_tampering(client):
+    """NXS-DB-008: i trigger non proteggono da chi ricostruisce la tabella.
+
+    La catena di hash si': alterare un evento passato rompe la verifica di
+    tutti quelli successivi.
+    """
+    _clear()
+    for i in range(3):
+        client.post("/api/ea/trade_reason",
+                    json=_close_payload(8100 + i, float(i)), headers=TOKEN)
+
+    with _db() as c:
+        assert backend.verify_event_chain(c)["ok"] is True
+
+    # Manomissione fatta AGGIRANDO i trigger (come farebbe chi ha il file).
+    with _db() as c:
+        c.execute("DROP TRIGGER IF EXISTS trg_trade_events_no_update")
+        c.execute("UPDATE trade_events SET payload = '{\"pnl\": 999}' "
+                  "WHERE trade_uid = '111:8101'")
+    with _db() as c:
+        report = backend.verify_event_chain(c)
+    assert report["ok"] is False
+    assert report["broken_at"] is not None
+
+
+def test_same_ticket_on_two_accounts_does_not_overwrite(client):
+    """AUD0-DB-003 / NXS-DB-004: `trades.ticket` era la chiave primaria.
+
+    Due conti sullo stesso backend possono produrre lo stesso numero di
+    posizione: il secondo trade SOVRASCRIVEVA il primo. Ora la chiave e'
+    (account_id, ticket) e i due trade coesistono.
+    """
+    _clear()
+    a = _close_payload(9001, 10.0)
+    a["tradeUid"] = "111:9001"
+    b = _close_payload(9001, -5.0)
+    b["tradeUid"] = "222:9001"          # stesso ticket, conto diverso
+
+    client.post("/api/ea/trade_reason", json=a, headers=TOKEN)
+    client.post("/api/ea/trade_reason", json=b, headers=TOKEN)
+
+    rows = _trades()
+    assert len(rows) == 2
+    assert {r["account_id"] for r in rows} == {111, 222}
+    assert {r["pnl"] for r in rows} == {10.0, -5.0}
+
+
+def test_ea_status_history_is_appended(client):
+    """NXS-DB-017: `ea_status` sovrascriveva ogni push, quindi la storia
+    operativa (equity, drawdown, pause) non esisteva da nessuna parte."""
+    with _db() as c:
+        c.execute("DELETE FROM ea_status_history")
+    for eq in (10000.0, 10100.0, 9900.0):
+        client.post("/api/ea/push",
+                    json={"magic": 990001, "symbol": "GOLD", "equity": eq,
+                          "balance": 10000.0, "account_id": 111},
+                    headers=TOKEN)
+    with _db() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT equity FROM ea_status_history ORDER BY id")]
+    assert [r["equity"] for r in rows] == [10000.0, 10100.0, 9900.0]

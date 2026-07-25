@@ -20,6 +20,12 @@ services:
       # Per un deployment reale imposta NEXUS_ENV=LIVE — il backend rifiuterà
       # di avviarsi finché credenziali e segreti sono quelli di esempio.
       NEXUS_ENV: ${NEXUS_ENV:-DEVELOPMENT}
+      # NXS-DB-015: la persistenza dipendeva dal fatto che NEXUS_DB_PATH puntasse
+      # davvero dentro il volume. Il Dockerfile lo imposta, ma un file .env che
+      # lo sovrascrivesse riporterebbe il database dentro l'immagine — cioe' i
+      # dati sparirebbero al primo redeploy, senza alcun errore. Qui il percorso
+      # e' dichiarato esplicitamente e vince sul .env.
+      NEXUS_DB_PATH: /data/nexus.db
     volumes:
       - nexus-data:/data
     # AUD0-DEP-005 / AUD0-DEPLOY-COMPOSE-002: senza healthcheck un processo
