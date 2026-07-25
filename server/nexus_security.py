@@ -338,6 +338,45 @@ class RateLimiter:
 # --------------------------------------------------------------------------- #
 # Revoca di sessione (AUD0-AUTH-001, NEXUS-SEC-004)
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Step-up authentication (NEXUS-ID-003)
+# --------------------------------------------------------------------------- #
+#: Header con cui il client presenta la prova di ri-autenticazione recente.
+STEPUP_HEADER = "x-nexus-stepup"
+#: Validità della prova. Deliberatamente breve: lo scopo è dimostrare che la
+#: persona è ANCORA davanti alla tastiera, non che lo era all'inizio del turno.
+STEPUP_TTL_SECONDS = 300
+
+
+def make_stepup_token(session_id: str, secret: str, issued_at: float) -> str:
+    """Prova di ri-autenticazione legata alla sessione e all'istante.
+
+    NEXUS-ID-003: le azioni ad alto rischio devono richiedere una
+    ri-autenticazione valida. Un cookie di sessione dimostra che qualcuno si è
+    autenticato ore fa — non che sia la stessa persona, ora, davanti a una
+    postazione non lasciata incustodita.
+    """
+    payload = f"{session_id}|{int(issued_at)}"
+    digest = hmac.new(secret.encode("utf-8"), payload.encode("utf-8"),
+                      hashlib.sha256).hexdigest()
+    return f"{int(issued_at)}.{digest}"
+
+
+def stepup_valid(session_id: str, secret: str, presented: Optional[str],
+                 *, now_ts: float, ttl: int = STEPUP_TTL_SECONDS) -> bool:
+    if not presented or "." not in presented:
+        return False
+    raw_ts, _, digest = presented.partition(".")
+    try:
+        issued = int(raw_ts)
+    except ValueError:
+        return False
+    if now_ts - issued > ttl or issued - now_ts > 60:
+        return False        # scaduta, oppure emessa nel futuro
+    expected = make_stepup_token(session_id, secret, issued)
+    return hmac.compare_digest(expected, presented)
+
+
 class SessionRegistry:
     """Registro dei `jti` revocati, con scadenza automatica.
 

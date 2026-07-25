@@ -533,6 +533,21 @@ void NXS_WebPoll(){
       }
    }
 
+   // NEXUS-ARCH-003 / NEXUS-CMD-001 — SEPARAZIONE DEGLI AMBIENTI.
+   //
+   // Un backend condiviso puo' servire istanze DEMO e LIVE. Senza il campo
+   // ambiente nella busta, un comando prodotto guardando una dashboard DEMO
+   // poteva essere eseguito da un'istanza LIVE con lo stesso account/simbolo.
+   // Il confronto e' fail-closed: ambiente assente o diverso = rifiuto.
+   string cmdEnv = _NXS_JsonStr(resp, "environment");
+   if(StringLen(InpEnvironment) > 0 && StringLen(cmdEnv) > 0 && cmdEnv != InpEnvironment){
+      PrintFormat("[NEXUS] comando %s RIFIUTATO: ambiente '%s' != '%s' di questa istanza",
+                  action, cmdEnv, InpEnvironment);
+      _NXS_CommandAck(commandId, leaseId, "FAILED_FINAL",
+                      "environment mismatch: " + cmdEnv, 0, 0);
+      return;
+   }
+
    // AUD0-WEB-003 — ANTI-REPLAY DUREVOLE. L'EA non teneva alcuna traccia dei
    // comandi gia' eseguiti: una riconsegna dal backend ripeteva l'azione, e
    // per close_all o reset_daily questo significa ripetere un effetto

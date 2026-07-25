@@ -88,6 +88,36 @@ bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
       return false;
    }
 
+   // --- (4a) NEXUS-RISK-002: incertezza sullo stato -> nessuna esposizione ---
+   //
+   // "Uncertainty about live state MUST block new exposure until
+   // reconciliation." I singoli stati degradati erano gia' rilevati, ma
+   // nessuno di essi impediva di APRIRE: l'EA continuava a creare esposizione
+   // mentre non sapeva piu' cosa fosse gia' aperto, con quali stop o con quali
+   // impostazioni.
+   //
+   // Le tre incertezze che contano:
+   //   - ledger anti-doppione degradato: non si sa quali chiusure siano note;
+   //   - snapshot di stato non ripristinato: non si conosce lo stato gestionale
+   //     delle posizioni gia' aperte;
+   //   - indicatori illeggibili: la decisione stessa non e' fondata.
+   if(NXS_Ledger_IsDegraded()){
+      NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "ledger_degraded");
+      reason = "ledger_degraded: stato anti-doppione non affidabile, "
+               "nessuna nuova esposizione fino alla riconciliazione";
+      return false;
+   }
+   if(!NXS_State_EntryAllowed()){
+      NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "state_restore_failed");
+      reason = "state_restore_failed: snapshot operativo non ripristinato";
+      return false;
+   }
+   if(NXS_IndicatorsDegraded()){
+      NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "indicators_degraded");
+      reason = "indicators_degraded: letture di mercato non affidabili";
+      return false;
+   }
+
    // --- (4b) Durabilita' del Virtual SL ------------------------------------
    // NXS-VSL-006: in modalita' EXECUTE lo stop LOGICO e' applicato dall'EA
    // mentre al broker arriva uno stop piu' largo. E' una scelta deliberata, ma

@@ -102,6 +102,13 @@ ALLOWED_ORIGINS = [o.strip() for o in
 # AI Coach (API Claude). La chiave va impostata su Render come ANTHROPIC_API_KEY.
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 COACH_MODEL       = os.environ.get("NEXUS_COACH_MODEL", "claude-opus-4-8")
+#: NEXUS-AI-003: versione del prompt di sistema. Va incrementata a ogni modifica
+#: del prompt, cosi' una raccomandazione archiviata resta interpretabile: senza,
+#: non si puo' sapere con quali istruzioni fosse stata prodotta.
+COACH_PROMPT_VERSION = "coach-prompt-2"
+#: NEXUS-AI-004: finestra entro cui un'approvazione resta legata allo stato su
+#: cui la bozza e' stata formulata.
+COACH_DRAFT_TTL_SECONDS = 300
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 # AUD0-SEC-012: `server/static` è montata pubblicamente su "/". I file
@@ -401,6 +408,8 @@ def init_db() -> None:
         _record_migration(c, "012_command_event_structure")
         _migrate_status_history(c)
         _record_migration(c, "013_status_history")
+        _migrate_command_envelope(c)
+        _record_migration(c, "014_command_envelope")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -697,6 +706,25 @@ def _migrate_status_history(c: sqlite3.Connection) -> None:
     )
     c.execute("CREATE INDEX IF NOT EXISTS idx_ea_status_history_key "
               "ON ea_status_history(account_id, symbol, created_at)")
+
+
+def _migrate_command_envelope(c: sqlite3.Connection) -> None:
+    """Completa la busta canonica del comando (NEXUS-CMD-001).
+
+    Mancavano AMBIENTE e CORRELAZIONE. Senza ambiente un comando emesso da un
+    backend DEMO puo' essere eseguito da un'istanza LIVE che condivide lo stesso
+    database (NEXUS-ARCH-003). Senza correlazione la stessa richiesta non e'
+    rintracciabile lungo audit, eventi di comando e log dell'EA (NEXUS-OPS-001).
+    """
+    for table in ("ea_commands", "bridge_commands"):
+        cols = {row[1] for row in c.execute(f"PRAGMA table_info({table})")}
+        if not cols:
+            continue
+        for name in ("environment", "correlation_id"):
+            if name not in cols:
+                c.execute(f"ALTER TABLE {table} ADD COLUMN {name} TEXT")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_ea_commands_correlation "
+              "ON ea_commands(correlation_id) WHERE correlation_id IS NOT NULL")
 
 
 def _migrate_license_security(c: sqlite3.Connection) -> None:
@@ -1045,6 +1073,33 @@ def kv_set(key: str, value: Any) -> None:
 
 def now() -> float:
     return time.time()
+
+
+def iso_in(seconds: float) -> str:
+    """Istante ISO fra `seconds` secondi (NEXUS-AI-004)."""
+    return (datetime.now(timezone.utc) + timedelta(seconds=seconds)).isoformat()
+
+
+def _coach_data_freshness() -> dict:
+    """Eta' dei dati su cui il Coach ragiona (NEXUS-AI-003).
+
+    Una raccomandazione formulata su uno stato EA di due ore prima non e'
+    sbagliata di per se': e' NON VERIFICABILE finche' non si sa quanto vecchio
+    fosse lo stato. Qui l'eta' viene misurata e dichiarata.
+    """
+    out = {"ea_status_age_sec": None, "last_trade_age_sec": None,
+           "measured_at": iso()}
+    try:
+        with _conn() as c:
+            row = c.execute("SELECT MAX(updated_at) AS t FROM ea_status").fetchone()
+            if row and row["t"]:
+                out["ea_status_age_sec"] = round(now() - float(row["t"]), 1)
+            row = c.execute("SELECT MAX(synced_at) AS t FROM trades").fetchone()
+            if row and row["t"]:
+                out["last_trade_age_sec"] = round(now() - float(row["t"]), 1)
+    except Exception as exc:                       # pragma: no cover - diagnostica
+        out["error"] = str(exc)[:120]
+    return out
 
 
 def iso() -> str:
@@ -1650,6 +1705,11 @@ def ea_command(account_id: str = "", symbol: str = "", magic: Optional[int] = No
         "risk_class": row["risk_class"],
         "reason": row["reason"] or "",
         "actor": row["created_by"] or "",
+        # NEXUS-CMD-001 / NEXUS-OPS-001: ambiente e correlazione viaggiano con
+        # il comando, cosi' l'EA puo' rifiutare un ambiente diverso e la stessa
+        # richiesta e' rintracciabile in audit, eventi e log dell'EA.
+        "environment": row["environment"] or ENVIRONMENT,
+        "correlation_id": row["correlation_id"] or "",
         "confirmed": bool(nexus_policy.EA_ACTIONS.get(row["action"], {}).get("confirm")),
     }
     if row["payload"]:
@@ -2521,14 +2581,25 @@ def dash_overview(user: str = Depends(require_user)):
 
 
 @app.post("/api/dashboard/command")
-async def dash_command(request: Request, user: str = Depends(require_mutation)):
+async def dash_command(request: Request,
+                       authorization: Optional[str] = Header(None),
+                       nexus_session: Optional[str] = Cookie(None)):
     """Rotta canonica per accodare un comando EA.
 
     `/api/ea/command` (POST) e `/api/command` restano come alias di
     compatibilità e condividono la stessa validazione (AUD0-CMD-003).
+
+    NEXUS-ID-003: le azioni di classe PROTECTION — quelle che DISARMANO una
+    protezione — richiedono una ri-autenticazione recente, non solo un cookie
+    di sessione valido da ore.
     """
-    data = await read_json_body(request)
-    return _create_ea_command_from_request(data, actor=user)
+    user = require_mutation(request, authorization, nexus_session)
+    peek = await read_json_body(request)
+    action_name = str(peek.get("action") or peek.get("command") or "")
+    spec = nexus_policy.EA_ACTIONS.get(action_name)
+    if spec and spec["risk_class"] == nexus_policy.RISK_CLASS_PROTECTION:
+        require_stepup(request, authorization, nexus_session)
+    return _create_ea_command_from_request(peek, actor=user)
 
 
 @app.get("/api/dashboard/journal")
@@ -2847,13 +2918,15 @@ def _enqueue_ea_command(command: dict, *, actor: str, actor_type: str = "human")
         c.execute(
             "INSERT INTO ea_commands(id,action,payload,created_at,consumed,status,"
             "schema_version,target,account_id,symbol,magic,risk_class,reason,created_by,"
-            "idempotency_key,expires_at,attempt_count,max_attempts,updated_at) "
-            "VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
+            "idempotency_key,expires_at,attempt_count,max_attempts,updated_at,"
+            "environment,correlation_id) "
+            "VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?,?,0,?,?,?,?)",
             (cmd_id, command["action"], json.dumps(command["payload"]), ts,
              nexus_policy.CMD_PENDING, command["schema_version"],
              json.dumps(target), target.get("account_id"), target.get("symbol"),
              target.get("magic"), command["risk_class"], command["reason"], actor,
-             command.get("idempotency_key"), expires_at, nexus_policy.MAX_ATTEMPTS, ts),
+             command.get("idempotency_key"), expires_at, nexus_policy.MAX_ATTEMPTS, ts,
+             command.get("environment"), command.get("correlation_id")),
         )
 
     audit_log(f"ea.command.{command['action']}", actor=actor, actor_type=actor_type,
@@ -2861,6 +2934,67 @@ def _enqueue_ea_command(command: dict, *, actor: str, actor_type: str = "human")
               detail={"command_id": cmd_id, "risk_class": command["risk_class"],
                       "payload": command["payload"], "expires_at": expires_at})
     return cmd_id
+
+
+def require_stepup(request: Request,
+                   authorization: Optional[str] = Header(None),
+                   nexus_session: Optional[str] = Cookie(None)) -> str:
+    """Autorizza solo con una ri-autenticazione RECENTE (NEXUS-ID-003).
+
+    Le azioni ad alto rischio — chiudere tutto, disarmare una protezione,
+    revocare una licenza — erano autorizzate dallo stesso cookie di sessione
+    che vale dodici ore. Quel cookie dimostra che qualcuno si è autenticato
+    stamattina, non che sia la stessa persona adesso, davanti a una postazione
+    non lasciata incustodita.
+
+    Il client ottiene la prova da POST /api/auth/stepup reinserendo la
+    password; vale cinque minuti.
+    """
+    user = require_mutation(request, authorization, nexus_session)
+    data = _session_from_request(authorization, nexus_session)
+    presented = request.headers.get(nexus_security.STEPUP_HEADER)
+    if not nexus_security.stepup_valid(data.get("jti", ""), JWT_SECRET,
+                                       presented, now_ts=now()):
+        audit_log("auth.stepup", actor=user, decision="DENIED",
+                  reason="prova di ri-autenticazione assente o scaduta")
+        raise HTTPException(status_code=401, detail={
+            "code": "STEPUP_REQUIRED",
+            "message": "Azione ad alto rischio: reinserisci la password "
+                       "(POST /api/auth/stepup) e ripeti la richiesta.",
+            "header": nexus_security.STEPUP_HEADER,
+            "ttl_seconds": nexus_security.STEPUP_TTL_SECONDS,
+        })
+    return user
+
+
+@app.post("/api/auth/stepup")
+async def auth_stepup(request: Request,
+                      authorization: Optional[str] = Header(None),
+                      nexus_session: Optional[str] = Cookie(None)):
+    """Emette una prova di ri-autenticazione a breve scadenza (NEXUS-ID-003)."""
+    user = require_mutation(request, authorization, nexus_session)
+    session = _session_from_request(authorization, nexus_session)
+    body = await read_json_body(request)
+    password = str(body.get("password") or "")
+
+    retry_after = LOGIN_LIMITER.retry_after(f"stepup:{user}")
+    if retry_after > 0:
+        raise HTTPException(status_code=429, detail={
+            "code": "RATE_LIMITED", "retry_after": retry_after})
+
+    if not (ADMIN_PASSWORD and secrets.compare_digest(password, ADMIN_PASSWORD)):
+        LOGIN_LIMITER.register_failure(f"stepup:{user}")
+        audit_log("auth.stepup", actor=user, decision="DENIED",
+                  reason="password non valida")
+        raise HTTPException(status_code=401, detail={
+            "code": "AUTHENTICATION_FAILED", "message": "password non valida"})
+
+    LOGIN_LIMITER.reset(f"stepup:{user}")
+    token = nexus_security.make_stepup_token(session.get("jti", ""), JWT_SECRET, now())
+    audit_log("auth.stepup", actor=user, decision="ACCEPTED")
+    return {"ok": True, "stepup": token,
+            "header": nexus_security.STEPUP_HEADER,
+            "expires_in": nexus_security.STEPUP_TTL_SECONDS}
 
 
 def _create_ea_command_from_request(data: dict, *, actor: str,
@@ -2875,6 +3009,13 @@ def _create_ea_command_from_request(data: dict, *, actor: str,
             ttl_seconds=data.get("ttl_seconds"),
             confirmed=bool(data.get("confirm") or data.get("confirmed")),
             idempotency_key=data.get("idempotency_key"),
+            # NEXUS-CMD-001 / NEXUS-ARCH-003: l'ambiente e' quello del backend
+            # che emette il comando, non un campo che il client puo' dichiarare.
+            # L'EA rifiuta i comandi di un ambiente diverso dal proprio, cosi'
+            # un comando prodotto in DEMO non puo' raggiungere un'istanza LIVE
+            # che condivide lo stesso backend.
+            environment=ENVIRONMENT,
+            correlation_id=data.get("correlation_id") or secrets.token_hex(8),
         )
     except nexus_policy.CommandValidationError as exc:
         action_name = str(data.get("action") or data.get("command") or "")
@@ -4986,13 +5127,50 @@ async def coach_draft_action(request: Request, user: str = Depends(require_user)
         raise HTTPException(status_code=422, detail={
             "code": "VALIDATION_FAILED", "message": f"azione non riconosciuta: {atype}"})
 
+    # NEXUS-AI-003 — PROVENIENZA E FRESCHEZZA.
+    #
+    # Una raccomandazione operativa senza provenienza non e' verificabile: chi
+    # la approva non sa su quali dati sia stata formulata, ne' quanto vecchi
+    # fossero, ne' con quale versione di modello e prompt. La bozza porta ora
+    # tutto questo.
+    freshness = _coach_data_freshness()
     draft.update({
         "draft_id": secrets.token_hex(8),
         "created_at": iso(),
         "authority": "AI_RECOMMENDATION",
         "executed": False,
         "note": "Proposta non eseguita. Richiede autorizzazione umana esplicita.",
+        "provenance": {
+            "model": COACH_MODEL,
+            "prompt_version": COACH_PROMPT_VERSION,
+            "app_version": APP_VERSION,
+            "environment": ENVIRONMENT,
+            "data_freshness": freshness,
+        },
     })
+
+    # NEXUS-AI-004 — L'APPROVAZIONE SI LEGA ALLO STATO ESATTO.
+    #
+    # Senza vincolo, un operatore poteva approvare una bozza formulata su uno
+    # stato di mercato e di conto di dieci minuti prima, ed eseguirla su uno
+    # stato completamente diverso. `binding` e' l'impronta di azione, target e
+    # stato di ingresso: le rotte canoniche possono rifiutare un'approvazione
+    # che non corrisponde piu'.
+    binding_src = json.dumps({
+        "action": draft.get("action"),
+        "kind": draft.get("kind"),
+        "strategy": draft.get("strategy"),
+        "proposed_value": draft.get("proposed_value"),
+        "target": body.get("target"),
+        "freshness": freshness,
+    }, sort_keys=True)
+    draft["binding"] = hashlib.sha256(binding_src.encode("utf-8")).hexdigest()
+    draft["binding_expires_at"] = iso_in(COACH_DRAFT_TTL_SECONDS)
+    # NEXUS-AI-005: il veto resta al Risk Engine. La bozza lo dichiara
+    # esplicitamente, cosi' nessun consumatore puo' presumere il contrario.
+    draft["veto"] = ("Risk Engine e Policy Engine mantengono il veto finale: "
+                     "una bozza approvata puo' comunque essere rifiutata.")
+
     audit_log("coach.draft_action", actor=user, actor_type="ai_agent",
               decision="DRAFTED", detail=draft)
     return {"ok": True, "draft": draft}

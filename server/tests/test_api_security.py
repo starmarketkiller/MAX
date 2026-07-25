@@ -347,3 +347,71 @@ def test_le_azioni_privilegiate_finiscono_nell_audit(logged_in):
     assert any(e["action"] == "ea.command.pause" and e["decision"] == "ACCEPTED"
                for e in events)
     assert any(e["action"] == "auth.login" for e in events)
+
+
+# --------------------------------------------------------------------------- #
+# Step-up per le azioni ad alto rischio — NEXUS-ID-003
+# --------------------------------------------------------------------------- #
+def test_reset_protezioni_richiede_ri_autenticazione(logged_in):
+    """NEXUS-ID-003: disarmare una protezione era autorizzato dallo stesso
+    cookie di sessione valido dodici ore.
+
+    Quel cookie dimostra che qualcuno si e' autenticato stamattina — non che
+    sia la stessa persona adesso, davanti a una postazione non incustodita.
+    """
+    client, headers = logged_in
+    payload = {"action": "reset_protections",
+               "target": {"account_id": "111", "symbol": "GOLD"},
+               "reason": "verifica step-up", "confirm": True}
+
+    resp = client.post("/api/dashboard/command", json=payload, headers=headers)
+    assert resp.status_code == 401
+    assert resp.json()["detail"]["code"] == "STEPUP_REQUIRED"
+
+    # Con la prova di ri-autenticazione il comando passa.
+    proof = client.post("/api/auth/stepup",
+                        json={"password": backend.ADMIN_PASSWORD}, headers=headers)
+    assert proof.status_code == 200
+    token = proof.json()["stepup"]
+
+    resp = client.post("/api/dashboard/command", json=payload,
+                       headers={**headers, backend.nexus_security.STEPUP_HEADER: token})
+    assert resp.status_code == 200
+    assert resp.json()["action"] == "reset_protections"
+
+
+def test_stepup_rifiuta_password_sbagliata(logged_in):
+    client, headers = logged_in
+    resp = client.post("/api/auth/stepup", json={"password": "non-e-questa"},
+                       headers=headers)
+    assert resp.status_code == 401
+
+
+def test_comando_routine_non_richiede_step_up(logged_in):
+    """Il vincolo si applica alle azioni che disarmano protezioni, non a tutto:
+    un `pause` resta immediato."""
+    client, headers = logged_in
+    resp = client.post("/api/dashboard/command",
+                       json={"action": "pause",
+                             "target": {"account_id": "111", "symbol": "GOLD"},
+                             "reason": "verifica"},
+                       headers=headers)
+    assert resp.status_code == 200
+
+
+def test_busta_comando_porta_ambiente_e_correlazione(logged_in):
+    """NEXUS-CMD-001: senza ambiente un comando emesso in DEMO puo' essere
+    eseguito da un'istanza LIVE; senza correlazione la richiesta non e'
+    rintracciabile fra audit, eventi e log dell'EA."""
+    client, headers = logged_in
+    client.post("/api/dashboard/command",
+                json={"action": "pause",
+                      "target": {"account_id": "222", "symbol": "EURUSD"},
+                      "reason": "verifica busta"},
+                headers=headers)
+    resp = client.get("/api/ea/command?account_id=222&symbol=EURUSD",
+                      headers={"X-Nexus-Token": backend.BRIDGE_TOKEN})
+    body = resp.json()
+    assert body["action"] == "pause"
+    assert body["environment"] == backend.ENVIRONMENT
+    assert len(body["correlation_id"]) > 0

@@ -349,7 +349,8 @@ def validate_reason(raw: Any, *, required: bool) -> str:
 
 def build_command(*, action: Any, target: Any, payload: Any = None,
                   reason: Any = None, ttl_seconds: Any = None,
-                  confirmed: bool = False, idempotency_key: Any = None) -> dict:
+                  confirmed: bool = False, idempotency_key: Any = None,
+                  environment: Any = None, correlation_id: Any = None) -> dict:
     """Costruisce un comando canonico validato o solleva CommandValidationError."""
     action = validate_action(action)
     spec = EA_ACTIONS[action]
@@ -372,6 +373,14 @@ def build_command(*, action: Any, target: Any, payload: Any = None,
     else:
         key = None
 
+    # NEXUS-CMD-001 — BUSTA CANONICA COMPLETA.
+    #
+    # La specifica richiede che ogni richiesta eseguibile porti identita',
+    # target, AMBIENTE, scadenza, idempotenza e CORRELAZIONE. Mancavano gli
+    # ultimi due: senza ambiente un comando prodotto in DEMO puo' essere
+    # eseguito da un'istanza LIVE che condivide lo stesso backend; senza
+    # correlazione una richiesta non e' rintracciabile attraverso audit,
+    # eventi di comando e log dell'EA.
     return {
         "schema_version": SCHEMA_VERSION,
         "action": action,
@@ -381,4 +390,6 @@ def build_command(*, action: Any, target: Any, payload: Any = None,
         "reason": clean_reason,
         "ttl_seconds": ttl,
         "idempotency_key": key,
+        "environment": (environment or ea_target.environment or "").upper() or None,
+        "correlation_id": str(correlation_id) if correlation_id else None,
     }

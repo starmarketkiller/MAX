@@ -490,6 +490,12 @@ input bool     InpProtScopeAccountWide = true;  // protezioni di conto: chiudi t
 // che si accetta come caso peggiore. Oltre, l'ordine non parte.
 input double   InpVSL_MaxOfflineRiskMult = 2.0;  // tetto del rischio offline (x budget)
 
+// NEXUS-ARCH-003: ambiente dichiarato di questa istanza. L'EA rifiuta i comandi
+// provenienti da un ambiente diverso: un backend condiviso non deve poter far
+// eseguire a un'istanza LIVE un comando pensato per una DEMO. Vuoto = nessun
+// controllo (solo per installazioni a ambiente unico).
+input string   InpEnvironment      = "";     // DEVELOPMENT|SIMULATION|DEMO|PAPER|LIVE
+
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;
 int      InpConfluenceBonus2 = 10;
