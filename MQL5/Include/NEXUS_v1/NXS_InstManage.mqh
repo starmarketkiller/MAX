@@ -45,12 +45,58 @@ double _nxs_inst_maxExposure(){
    return MathMax(minLot, cap);   // almeno il lotto minimo del broker
 }
 
-// Scansiona tutte le posizioni NEXUS in una direzione e le aggrega.
+// AUD0-INST-006 / AUD0-RS-003: un cap espresso in lotti non dice nulla sul
+// denaro a rischio. Qui si stima la perdita di caso peggiore del gruppo, add
+// incluso, usando la distanza fino allo stop del core, e la si confronta col
+// budget di drawdown del conto.
+bool _nxs_inst_worstCaseOk(ENUM_NXS_DIR dir, SNXSInstGroup &g, double addLots){
+   double tickVal  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);
+   double tickSize = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_SIZE);
+   if(tickVal <= 0 || tickSize <= 0) return true;   // niente metadati: non si stima
+
+   double px = (dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_BID)
+                                : SymbolInfoDouble(g_sym, SYMBOL_ASK);
+   double slDist = 0.0;
+   if(g.coreSL > 0)
+      slDist = MathAbs(px - g.coreSL);
+   else if(g_atr > 0)
+      slDist = g_atr * MathMax(1.0, InpInstGridStepATR) * 2.0;
+   if(slDist <= 0) return true;
+
+   double totalLots = g.totalLots + addLots;
+   double worstLoss = (slDist / tickSize) * tickVal * totalLots;
+
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   double budget  = balance * MathMax(0.1, g_run_MaxDailyDDPct) / 100.0;
+   if(budget <= 0) return true;
+
+   bool ok = (worstLoss <= budget);
+   if(!ok)
+      PrintFormat("[NEXUS INST] worst-case %.2f su lotti %.2f supera il budget %.2f "
+                  "(balance=%.2f ddCap=%.1f%%)",
+                  worstLoss, totalLots, budget, balance, g_run_MaxDailyDDPct);
+   return ok;
+}
+
+// Scansiona le posizioni istituzionali di una direzione e le aggrega.
+//
+// AUD0-INST-004 / AUD0-INST-005: lo scanner assorbiva OGNI posizione dello
+// stesso simbolo e direzione il cui magic cadesse nell'ampio intervallo
+// NEXUS. Trade classici, grid ordinari, piramidi e posizioni legacy finivano
+// nello stesso "gruppo istituzionale" e venivano gestiti insieme, pur non
+// appartenendo alla sequenza. L'appartenenza è ora ristretta ai soli magic
+// che il modello istituzionale usa davvero (core + grid), ed escluse le
+// piramidi e gli split che hanno il proprio ciclo di vita.
+bool _nxs_inst_belongs(long magic){
+   return IsCoreMagic(magic) || IsGridMagic(magic);
+}
+
 void _nxs_inst_scanDir(ENUM_NXS_DIR dir, SNXSInstGroup &g){
    ZeroMemory(g);
    g.tag = "INST_ADD";
    long want = (dir == DIR_BUY) ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
    datetime bestT = 0;
+   int skippedForeign = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
@@ -58,6 +104,10 @@ void _nxs_inst_scanDir(ENUM_NXS_DIR dir, SNXSInstGroup &g){
       long mg = (long)PositionGetInteger(POSITION_MAGIC);
       if(!IsNexusMagic(mg)) continue;
       if(PositionGetInteger(POSITION_TYPE) != want) continue;
+      if(!_nxs_inst_belongs(mg)){
+         skippedForeign++;
+         continue;
+      }
 
       g.count++;
       double vol = PositionGetDouble(POSITION_VOLUME);
@@ -80,25 +130,76 @@ void _nxs_inst_scanDir(ENUM_NXS_DIR dir, SNXSInstGroup &g){
          if(np >= 2 && StringLen(parts[1]) > 0) g.tag = parts[1];
       }
    }
+   if(skippedForeign > 0)
+      PrintFormat("[NEXUS INST] %s: %d posizioni NEXUS estranee alla sequenza "
+                  "istituzionale escluse dal gruppo", NXS_DirName(dir), skippedForeign);
 }
 
-// Piazza un add di grid/recovery (bypassa i gate di ingresso: la sequenza e'
-// gia' stata decisa dal Core, qui la gestiamo). Volume normalizzato allo step.
+// Piazza un add di grid/recovery istituzionale.
+//
+// AUD0-INST-001 / AUD0-INST-002: questa funzione dichiarava esplicitamente di
+// "bypassare i gate di ingresso perché la sequenza è già stata decisa dal
+// Core", e chiamava NXS_SafeBuy/SafeSell direttamente. Saltava quindi
+// licenza, ruin freeze, protezioni giornaliere, RiskShield, cap direzionale,
+// margine proiettato e broker preflight — tutti i controlli che gli altri
+// percorsi di esposizione applicano.
+//
+// Una decisione presa in passato non autorizza esposizione futura illimitata:
+// ogni add rivalida lo stato CORRENTE del conto.
 bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
                    string tag, int level){
    double step = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
    if(step <= 0) step = 0.01;
+   double vmin = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+   double vmax = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MAX);
+
    lots = MathFloor(lots / step) * step;
    lots = NormalizeDouble(lots, 8);
    lots = NXS_License_CapLot(lots);
-   if(lots < step) return false;
+   // AUD0-INST-008: si verificava solo `lots < step`, non il minimo e il
+   // massimo di volume dichiarati dal broker.
+   if(lots < MathMax(step, vmin)) return false;
+   if(vmax > 0 && lots > vmax) lots = MathFloor(vmax / step) * step;
+
+   ENUM_ORDER_TYPE otype = (dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+   double refPrice = (dir == DIR_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
+                                      : SymbolInfoDouble(g_sym, SYMBOL_BID);
+
+   // AUD0-INST-007: l'add ereditava coreSL/coreTP, ZERI COMPRESI. Se il core
+   // non aveva stop lato broker, nemmeno l'add ne aveva uno. Qui si calcola
+   // uno stop valido quando manca, e si rifiuta se non è calcolabile.
+   double useSL = sl, useTP = tp;
+   if(useSL <= 0.0){
+      double atr = (g_atr > 0 ? g_atr : 0.0);
+      if(atr <= 0){
+         Print("[NEXUS INST] ADD BLOCCATO: nessuno stop ereditabile e ATR non valido");
+         return false;
+      }
+      double slDist = atr * MathMax(1.0, InpInstGridStepATR) * 2.0;
+      useSL = (dir == DIR_BUY) ? (refPrice - slDist) : (refPrice + slDist);
+      useSL = NormalizeDouble(useSL, (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS));
+      PrintFormat("[NEXUS INST] core senza SL: stop dell'add calcolato a %.5f", useSL);
+   }
+
+   // Invariante unica: licenza, ruin freeze, protezioni, stop obbligatorio,
+   // RiskShield, cap direzionale, margine proiettato, broker preflight.
+   string gateReason = "";
+   if(!NXS_CommonExposurePreflight("INST:" + tag, dir, lots, otype, refPrice,
+                                   useSL, useTP, gateReason)){
+      PrintFormat("[NEXUS INST] ADD BLOCCATO dal preflight comune: %s", gateReason);
+      return false;
+   }
 
    // magic di grid (resta dentro IsNexusMagic / IsGridMagic).
    long magic = InpMagic + MAGIC_GRID + level;
    NXS_TradeSetMagic(magic);
    string cm = StringFormat("%s|%s|%.1f", InpComment, tag, 0.0);
-   if(dir == DIR_BUY)  return NXS_SafeBuy(lots, g_sym, sl, tp, cm);
-   return NXS_SafeSell(lots, g_sym, sl, tp, cm);
+   bool sent = (dir == DIR_BUY) ? NXS_SafeBuy(lots, g_sym, useSL, useTP, cm)
+                                : NXS_SafeSell(lots, g_sym, useSL, useTP, cm);
+   if(!sent)
+      PrintFormat("[NEXUS INST] ADD FALLITO lvl=%d lots=%.4f retcode=%d",
+                  level, lots, NXS_TradeRetcode());
+   return sent;
 }
 
 // Trailing (training stop) su ogni op del gruppo + runner sull'ultima.
@@ -226,11 +327,32 @@ void _nxs_inst_manageDir(ENUM_NXS_DIR dir){
          }
       }
       if(doAdd){
-         // TETTO DI ESPOSIZIONE: hard cap, l'add che sforerebbe non parte.
+         // AUD0-INST-003: la recovery moltiplica il lotto in modo esponenziale
+         // dentro una sequenza in perdita (martingala). Il contesto poteva
+         // bloccare qualche add, ma non cambiava la struttura di
+         // amplificazione. Il tetto monetario qui sotto la vincola: la perdita
+         // potenziale aggregata non può superare il budget di rischio.
+         double lossBudget = AccountInfoDouble(ACCOUNT_BALANCE)
+                             * MathMax(0.1, g_run_MaxDailyDDPct) / 100.0;
+         double groupLoss = (g.aggPL < 0) ? -g.aggPL : 0.0;
+         if(lossBudget > 0 && groupLoss >= lossBudget){
+            PrintFormat("[NEXUS INST] ADD BLOCCATO %s: perdita del gruppo %.2f "
+                        "ha esaurito il budget di rischio %.2f",
+                        NXS_DirName(dir), groupLoss, lossBudget);
+            doAdd = false;
+         }
+      }
+      if(doAdd){
+         // AUD0-INST-006: il cap era in LOTTI e scalava linearmente col saldo,
+         // senza tener conto di distanza di stop, tick value o volatilità.
+         // Si applica anche un tetto sulla perdita monetaria di caso peggiore.
          double maxExp = _nxs_inst_maxExposure();
          if(maxExp > 0 && g.totalLots + lots > maxExp + 1e-9){
             PrintFormat("[NEXUS INST] ADD BLOCCATO cap esposizione %s: %.2f+%.2f>%.2f",
                         NXS_DirName(dir), g.totalLots, lots, maxExp);
+         } else if(!_nxs_inst_worstCaseOk(dir, g, lots)){
+            PrintFormat("[NEXUS INST] ADD BLOCCATO %s: perdita di caso peggiore "
+                        "oltre il budget di conto", NXS_DirName(dir));
          } else if(_nxs_inst_add(dir, lots, g.coreSL, g.coreTP, g.tag, depth + 1)){
             PrintFormat("[NEXUS INST] %s ADD lvl=%d lots=%.2f (%s) aggPL=%.2f tot=%.2f",
                         (isGrid ? "GRID" : "RECOVERY"), depth + 1, lots, g.tag,

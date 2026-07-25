@@ -32,8 +32,22 @@ void NXS_RS_SpreadSample(){
    if(g_NXSrsSpreadN < InpSpreadBurst_Samples) g_NXSrsSpreadN++;
 }
 
-double NXS_RS_SpreadP95(){
-   if(g_NXSrsSpreadN < 50) return 0;  // warm-up
+// AUD0-RS-005: questa funzione copiava e ORDINAVA fino a 1000 campioni a OGNI
+// preflight d'ingresso (O(n log n) per ogni segnale valutato, su ogni tick).
+// Il P95 di una finestra rolling di 1000 osservazioni non cambia in modo
+// significativo fra due tick: ora si ricalcola con cadenza limitata e si
+// riusa il valore in cache nel frattempo.
+//
+// La cache viene invalidata anche quando la finestra e' cambiata di almeno
+// il 5% dei campioni, cosi' un burst di spread non resta mascherato da un
+// P95 vecchio piu' a lungo del dovuto.
+#define NXS_RS_P95_MAX_AGE_SEC 5
+
+double g_NXSrsP95Cache     = 0.0;
+datetime g_NXSrsP95At      = 0;
+int      g_NXSrsP95SamplesAt = -1;
+
+double _NXS_RS_SpreadP95Compute(){
    double tmp[];
    ArrayResize(tmp, g_NXSrsSpreadN);
    for(int i = 0; i < g_NXSrsSpreadN; ++i) tmp[i] = g_NXSrsSpreadBuf[i];
@@ -41,6 +55,29 @@ double NXS_RS_SpreadP95(){
    int p95Idx = (int)MathFloor(g_NXSrsSpreadN * 0.95);
    if(p95Idx >= g_NXSrsSpreadN) p95Idx = g_NXSrsSpreadN - 1;
    return tmp[p95Idx];
+}
+
+double NXS_RS_SpreadP95(){
+   if(g_NXSrsSpreadN < 50) return 0;  // warm-up
+
+   datetime now = TimeCurrent();
+   // Contatore monotono di campioni visti: g_NXSrsSpreadN si satura al tetto
+   // della finestra, quindi da solo non segnala piu' il ricambio.
+   int churn = (int)MathMax(1, g_NXSrsSpreadN / 20);   // 5% della finestra
+   int win   = (int)MathMax(1, ArraySize(g_NXSrsSpreadBuf));
+   // L'indice e' un ring buffer: la differenza va presa modulo la finestra,
+   // altrimenti il wrap-around produce un delta enorme (o negativo).
+   int delta = (g_NXSrsSpreadIdx - g_NXSrsP95SamplesAt + win) % win;
+   bool stale = (g_NXSrsP95SamplesAt < 0) ||
+                ((now - g_NXSrsP95At) >= NXS_RS_P95_MAX_AGE_SEC) ||
+                (delta >= churn);
+
+   if(stale){
+      g_NXSrsP95Cache      = _NXS_RS_SpreadP95Compute();
+      g_NXSrsP95At         = now;
+      g_NXSrsP95SamplesAt  = g_NXSrsSpreadIdx;
+   }
+   return g_NXSrsP95Cache;
 }
 
 // Call before each new entry attempt. Returns true if entries are blocked.
@@ -61,6 +98,19 @@ bool NXS_RS_SpreadBurst_Block(string &reason){
                             cur, p95, p95 * InpSpreadBurst_P95Cap, InpSpreadBurst_FreezeSec);
       return true;
    }
+   // AUD0-RS-006: durante il warm-up (meno di 50 campioni) il P95 vale zero e
+   // il gate lasciava passare TUTTO, proprio nei primi minuti dopo l'avvio,
+   // quando lo spread è tipicamente più largo. Si applica il tetto duro del
+   // profilo simbolo finché non ci sono abbastanza campioni.
+   if(p95 <= 0){
+      double hardCap = (InpHardMaxSpreadPts > 0) ? (double)InpHardMaxSpreadPts
+                                                 : (double)g_profile.maxSpreadPts;
+      if(hardCap > 0 && cur > hardCap){
+         reason = StringFormat("SPREAD_WARMUP cur=%.0f > cap_profilo=%.0f "
+                               "(campioni insufficienti per il P95)", cur, hardCap);
+         return true;
+      }
+   }
    return false;
 }
 
@@ -74,33 +124,134 @@ int    InpBreaker_LookbackN   = 50;
 double InpBreaker_SharpeMin   = 0.30;
 int    InpBreaker_PauseHours  = 24;
 
-datetime g_NXSrsBreakerUntil = 0;
-double   g_NXSrsLastSharpe   = 0;
+// g_NXSrsBreakerUntil / g_NXSrsLastSharpe: dichiarati in NXS_Globals.mqh
+// perché NXS_State.mqh li persiste ed è incluso prima di questo file.
 
-// Caller provides closed-trade returns (in R or dollars) in chronological order.
-// Returns true if breaker just tripped now (Sharpe below threshold).
+// AUD0-RS-008 — unita' di misura e normalizzazione del Sharpe.
+//
+// La versione precedente accettava valori descritti come "in R o in dollari":
+// due unita' diverse nella stessa finestra rendono la soglia incomparabile, e
+// la deviazione standard era di POPOLAZIONE (divisa per n) invece che
+// campionaria (n-1), sottostimando sistematicamente sigma e gonfiando lo
+// Sharpe proprio quando i campioni sono pochi.
+//
+// Ora il contratto e' esplicito e verificato:
+//   - l'ingresso e' SEMPRE in multipli di R (perdita = -1.0), prodotti da
+//     NXS_RS_Breaker_Update(): il chiamante non sceglie piu' l'unita';
+//   - sigma e' campionaria (n-1);
+//   - lo Sharpe e' PER TRADE, non annualizzato: la soglia InpBreaker_SharpeMin
+//     va letta come "Sharpe medio per operazione", ed e' documentato qui
+//     invece di essere lasciato ambiguo. Annualizzare richiederebbe una
+//     frequenza di trading stabile che questo EA non garantisce (le
+//     protezioni possono sospendere il trading per ore).
+//   - un guardiano di plausibilita' rifiuta finestre che chiaramente non
+//     sono in R (|R| oltre il tetto), invece di calcolare in silenzio uno
+//     Sharpe privo di significato.
+#define NXS_RS_MAX_PLAUSIBLE_R 50.0
+
 bool NXS_RS_Breaker_Check(double &rets[], int n, string &reason){
-   if(!InpBreaker_Enable || n < InpBreaker_LookbackN){ reason = ""; return false; }
+   reason = "";
+   if(!InpBreaker_Enable || n < InpBreaker_LookbackN) return false;
+   if(InpBreaker_LookbackN < 2) return false;   // sigma campionaria indefinita
+
+   int from = n - InpBreaker_LookbackN;
+   int cnt  = InpBreaker_LookbackN;
+
+   // Guardiano di unita': se i valori non sono R, la soglia non ha senso.
+   for(int i = from; i < n; ++i){
+      if(MathAbs(rets[i]) > NXS_RS_MAX_PLAUSIBLE_R){
+         PrintFormat("[NEXUS RS] Equity breaker SALTATO: valore %.2f fuori scala per un "
+                     "multiplo di R (tetto %.1f). La finestra non e' in R: soglia non "
+                     "comparabile, nessuna decisione presa.", rets[i], NXS_RS_MAX_PLAUSIBLE_R);
+         return false;
+      }
+   }
+
    double sum = 0.0;
-   for(int i = n - InpBreaker_LookbackN; i < n; ++i) sum += rets[i];
-   double mean = sum / InpBreaker_LookbackN;
+   for(int i = from; i < n; ++i) sum += rets[i];
+   double mean = sum / cnt;
+
    double sqsum = 0.0;
-   for(int i = n - InpBreaker_LookbackN; i < n; ++i){
+   for(int i = from; i < n; ++i){
       double d = rets[i] - mean;
       sqsum += d * d;
    }
-   double sigma = MathSqrt(sqsum / InpBreaker_LookbackN);
-   double sharpe = (sigma > 1e-9 ? mean / sigma : 0.0);
+   double sigma = MathSqrt(sqsum / (cnt - 1));   // campionaria, non di popolazione
+
+   // sigma ~ 0 con media positiva non e' "Sharpe zero": e' una serie senza
+   // dispersione. Trattarla come 0.0 faceva scattare il breaker su una serie
+   // di vincite identiche. Si esce senza decidere.
+   if(sigma <= 1e-9){
+      g_NXSrsLastSharpe = (mean >= 0 ? 99.0 : -99.0);
+      if(mean >= 0) return false;
+   }
+   double sharpe = (sigma > 1e-9 ? mean / sigma : (mean >= 0 ? 99.0 : -99.0));
    g_NXSrsLastSharpe = sharpe;
+
    if(sharpe < InpBreaker_SharpeMin){
       g_NXSrsBreakerUntil = TimeCurrent() + InpBreaker_PauseHours * 3600;
-      reason = StringFormat("EQUITY_BREAKER sharpe=%.2f<%.2f n=%d pause=%dh",
+      reason = StringFormat("EQUITY_BREAKER sharpe/trade=%.2f<%.2f n=%d pause=%dh",
                             sharpe, InpBreaker_SharpeMin, InpBreaker_LookbackN,
                             InpBreaker_PauseHours);
       return true;
    }
-   reason = "";
    return false;
+}
+
+// AUD0-RS-008 (secondo difetto, non presente nell'audit): il breaker non era
+// MAI alimentato. NXS_RS_Breaker_Check() non veniva chiamato da nessuna parte
+// del progetto, quindi g_NXSrsBreakerUntil restava a 0 e il gate in
+// NXS_RS_BlockEntry() non poteva scattare: una protezione documentata e
+// completamente inerte.
+//
+// Questa funzione costruisce la finestra dei rendimenti dallo storico dei deal
+// e la passa al check. Gira a cadenza limitata: e' una scansione della
+// history, non deve stare sul percorso del tick.
+datetime g_NXSrsBreakerLastCalc = 0;
+#define NXS_RS_BREAKER_CALC_SEC 300
+
+void NXS_RS_Breaker_Update(){
+   if(!InpBreaker_Enable) return;
+   datetime now = TimeCurrent();
+   if(now - g_NXSrsBreakerLastCalc < NXS_RS_BREAKER_CALC_SEC) return;
+   g_NXSrsBreakerLastCalc = now;
+
+   // Denominatore R costante sulla finestra: il budget di rischio nominale per
+   // operazione. Costante ⇒ non altera lo Sharpe (che e' invariante di scala),
+   // ma rende i valori leggibili come R e attivabile il guardiano di unita'.
+   double riskMoney = AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
+   if(riskMoney <= 0.0) return;
+
+   // Finestra temporale generosa: servono InpBreaker_LookbackN chiusure, non
+   // un intervallo fisso. 90 giorni coprono qualunque cadenza realistica.
+   if(!HistorySelect(now - 90 * 86400, now)) return;
+   int total = HistoryDealsTotal();
+   if(total <= 0) return;
+
+   double rets[];
+   ArrayResize(rets, 0);
+   for(int i = 0; i < total; ++i){
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0) continue;
+      if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY) == DEAL_ENTRY_IN) continue;
+      if(!IsNexusMagic((long)HistoryDealGetInteger(ticket, DEAL_MAGIC))) continue;
+      if(HistoryDealGetString(ticket, DEAL_SYMBOL) != g_sym) continue;
+      double net = HistoryDealGetDouble(ticket, DEAL_PROFIT) +
+                   HistoryDealGetDouble(ticket, DEAL_SWAP) +
+                   HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      int k = ArraySize(rets);
+      ArrayResize(rets, k + 1);
+      rets[k] = net / riskMoney;
+   }
+
+   int n = ArraySize(rets);
+   if(n < InpBreaker_LookbackN) return;
+
+   string reason = "";
+   if(NXS_RS_Breaker_Check(rets, n, reason)){
+      PrintFormat("[NEXUS RS] %s — nuove entrate sospese fino a %s",
+                  reason, TimeToString(g_NXSrsBreakerUntil, TIME_DATE | TIME_MINUTES));
+   }
 }
 
 bool NXS_RS_Breaker_Active(){
@@ -144,24 +295,85 @@ string NXS_RS_ClusterOf(string sym){
 
 // Returns true if opening a position on `symbol` would exceed cluster cap.
 // Caller passes the function that returns count of open positions per symbol.
-int NXS_RS_ClusterCount(string targetCluster){
+//: Esposizione FIRMATA di un cluster, in lotti.
+//:
+//: AUD0-RS-002: il conteggio ignorava la direzione, quindi una posizione long
+//: e una short sullo stesso fattore risultavano "due unità di rischio" mentre
+//: in realtà si compensano. AUD0-RS-003: contava i ticket, quindi un trade da
+//: 0.01 lotti e uno da 5 occupavano lo stesso slot.
+//: AUD0-RS-001: contava OGNI posizione del conto, incluse quelle manuali o di
+//: altri EA; ora si distingue esplicitamente il perimetro NEXUS.
+struct SNXSClusterExposure {
+   int    positions;      // conteggio (compatibilità con il cap storico)
+   double netLots;        // lotti firmati: long positivi, short negativi
+   double grossLots;      // lotti in valore assoluto
+   int    foreignSkipped; // posizioni fuori dal perimetro NEXUS
+};
+
+void NXS_RS_ClusterExposure(string targetCluster, SNXSClusterExposure &out){
+   out.positions = 0; out.netLots = 0; out.grossLots = 0; out.foreignSkipped = 0;
    int total = PositionsTotal();
-   int count = 0;
    for(int i = 0; i < total; ++i){
-      string s = PositionGetSymbol(i);
+      ulong ticket = PositionGetTicket(i);
+      if(ticket == 0) continue;
+      string s = PositionGetString(POSITION_SYMBOL);
       if(s == "") continue;
-      if(NXS_RS_ClusterOf(s) == targetCluster) count++;
+      if(NXS_RS_ClusterOf(s) != targetCluster) continue;
+
+      // Perimetro esplicito: il RiskShield governa l'esposizione NEXUS.
+      // Le posizioni estranee vengono contate a parte, non ignorate in
+      // silenzio, così l'operatore sa che esistono.
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))){
+         out.foreignSkipped++;
+         continue;
+      }
+
+      double vol = PositionGetDouble(POSITION_VOLUME);
+      long   ptype = PositionGetInteger(POSITION_TYPE);
+      out.positions++;
+      out.grossLots += vol;
+      out.netLots   += (ptype == POSITION_TYPE_BUY) ? vol : -vol;
    }
-   return count;
+}
+
+//: Compatibilità: il vecchio conteggio per ticket.
+int NXS_RS_ClusterCount(string targetCluster){
+   SNXSClusterExposure e;
+   NXS_RS_ClusterExposure(targetCluster, e);
+   return e.positions;
 }
 
 bool NXS_RS_Cluster_Block(string sym, string &reason){
    string cl = NXS_RS_ClusterOf(sym);
-   int n = NXS_RS_ClusterCount(cl);
-   if(n >= InpCluster_MaxPerCluster){
-      reason = StringFormat("CLUSTER_CAP %s=%d/%d", cl, n, InpCluster_MaxPerCluster);
+
+   // AUD0-RS-004: ogni simbolo non mappato finiva in un unico bucket OTHER
+   // con cap 2, quindi strumenti scorrelati si bloccavano a vicenda. Un
+   // cluster sconosciuto non è un cluster: si segnala e non si applica il cap
+   // condiviso, che sarebbe arbitrario.
+   if(cl == "OTHER"){
+      PrintFormat("[NEXUS RS] simbolo %s non mappato a nessun cluster: "
+                  "cap di correlazione non applicabile (definire un profilo)", sym);
+      return false;
+   }
+
+   SNXSClusterExposure e;
+   NXS_RS_ClusterExposure(cl, e);
+
+   // Il cap resta sul conteggio per non cambiare la calibrazione esistente,
+   // ma si usa l'esposizione NETTA: posizioni opposte sullo stesso fattore
+   // non consumano slot perché non sommano rischio direzionale.
+   double netAbs = MathAbs(e.netLots);
+   bool hedged = (e.grossLots > 0 && netAbs < e.grossLots * 0.25);
+
+   if(e.positions >= InpCluster_MaxPerCluster && !hedged){
+      reason = StringFormat("CLUSTER_CAP %s pos=%d/%d net=%.2f gross=%.2f",
+                            cl, e.positions, InpCluster_MaxPerCluster,
+                            e.netLots, e.grossLots);
       return true;
    }
+   if(e.foreignSkipped > 0)
+      PrintFormat("[NEXUS RS] cluster %s: %d posizioni non-NEXUS non conteggiate",
+                  cl, e.foreignSkipped);
    return false;
 }
 

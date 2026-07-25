@@ -26,17 +26,15 @@ void NXS_ManageBreakevenAndTrail(){
       // (~40 barre di quel TF, come il motore del sito). Il vecchio cap fisso
       // di InpMaxHoldHours (4h) ammazzava le strategie D1/H4 prima del TP ->
       // 0 TP colpiti. Fallback su InpMaxHoldHours per chi non ha profilo.
-      long maxHoldSec = (long)InpMaxHoldHours * 3600;
-      if(InpUseStrategyProfiles){
-         string cm = PositionGetString(POSITION_COMMENT);
-         string cp[]; int ncp = StringSplit(cm, '|', cp);
-         if(ncp >= 2 && StringLen(cp[1]) > 0){
-            ENUM_TIMEFRAMES ptf = NXS_Profile_TF(cp[1]);
-            if(ptf != PERIOD_CURRENT)
-               maxHoldSec = (long)PeriodSeconds(ptf) * 40;   // ~40 barre del TF
-         }
-      }
-      if(maxHoldSec > 0){
+      // NXS-PROT-006: il limite viene ora da NXS_MaxHold_LimitSec(), unica
+      // autorita'. Se la strategia NON e' risolvibile dal commento, questo
+      // modulo NON agisce: la competenza passa interamente a
+      // NXS_Prot_CheckMaxHold(), che applica il limite conservativo. Prima
+      // entrambi agivano con fallback diversi (4h qui, 12h x factor la').
+      bool holdResolved = false;
+      long maxHoldSec = NXS_MaxHold_LimitSec(PositionGetString(POSITION_COMMENT),
+                                             holdResolved);
+      if(holdResolved && maxHoldSec > 0){
          datetime openT = (datetime)PositionGetInteger(POSITION_TIME);
          if(openT > 0 && (TimeCurrent() - openT) > maxHoldSec){
             NXS_PM_ProposeClose(t, 80, "CLASSIC_TIME_STOP", "maximum hold time exceeded");

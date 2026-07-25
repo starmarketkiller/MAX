@@ -408,7 +408,10 @@ bool     InpEnableSplit      = true;
 // input group "=== WEB BRIDGE ==="
 bool     InpEnableWebSync    = true;                                   // WebSync ON di default
 input string   InpWebURL           = "https://nexus-backend-8o4y.onrender.com"; // backend Render di default
-input string   InpWebToken         = "NEXUS_BRIDGE_TOKEN_2026";
+// AUD0-SEC-001: il default era "NEXUS_BRIDGE_TOKEN_2026", identico in ogni
+// copia del progetto e presente nella documentazione pubblica. Ora e' vuoto:
+// senza un token dedicato NXS_WebCredentialPreflight() spegne la WebSync.
+input string   InpWebToken         = "";                               // token bridge dedicato (obbligatorio, >=24 caratteri)
 int      InpPushIntervalSec  = 5;
 int      InpPollIntervalSec  = 3;
 int      InpHistSyncIntervalSec = 1800;                                  // backfill periodico trade chiusi (sec) — safety net oltre OnInit
@@ -446,9 +449,27 @@ input int      InpProt_MaxHoldHours= 12;
 input bool     InpUseMaxLossPos    = true;   // Max loss per position
 input double   InpMaxLossPosPct    = 2.0;    // % of balance
 input int      InpProt_MinLifeMin  = 15;     // v2.0.14: min minuti vita prima che NXS:RISK chiuda
+// AUD0-PROT-007: oltre questo multiplo del limite di perdita, la chiusura NON
+// attende il tempo minimo di vita. Il grace period serve contro il rumore, non
+// per lasciar correre una perdita che ha gia' superato il limite duro.
+input double   InpProt_HardLossFactor = 1.5;  // moltiplicatore del limite oltre cui si chiude subito
 input bool     InpUseAutoClose     = true;   // Flatten before market close
 input int      InpAutoCloseMin     = 15;
-input int      InpMarketCloseGMT   = 21;
+// AUD0-PROT-008: usato solo come RIPIEGO quando il broker non espone le
+// sessioni di trading del simbolo. La chiusura reale viene da
+// SymbolInfoSessionTrade().
+input int      InpMarketCloseGMT   = 21;     // ripiego se il broker non espone sessioni
+
+// AUD0-PROT-009 / AUD0-RISK-004: nel Strategy Tester le protezioni di conto
+// (pausa giornaliera, ESL, DPT, AutoClose) venivano disattivate in blocco.
+// I backtest misuravano quindi un sistema DIVERSO da quello che gira in
+// reale, e le curve prodotte non erano confrontabili con il live.
+//
+// Con parita' attiva (default) il tester applica le stesse regole del live,
+// in modo deterministico. Impostare false SOLO per riprodurre risultati
+// storici prodotti prima di questa correzione: i numeri ottenuti in quel
+// modo non sono rappresentativi del comportamento reale.
+input bool     InpTesterProtectionParity = true;  // tester: stesse protezioni del live
 
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;

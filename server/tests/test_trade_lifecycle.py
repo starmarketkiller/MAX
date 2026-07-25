@@ -192,17 +192,50 @@ def test_exactly_one_trade_closed_per_logical_trade(client):
 
 
 # ------------------------------------------------------- retrocompatibilita' -
-def test_legacy_payload_without_event_still_upserts(client):
-    """Un EA vecchio (senza campo event) deve continuare a funzionare come
-    prima: il payload viene trattato da close autoritativo."""
+def test_legacy_payload_without_event_is_not_authoritative(client):
+    """AUD0-PROT-006: un payload SENZA campo `event` non e' una chiusura
+    confermata dal broker.
+
+    Questo test asseriva il contrario — che il default fosse `close`
+    autoritativo — cioe' proprio il difetto segnalato: i push di richiesta
+    chiusura portano prezzo RICHIESTO e P/L FLOTTANTE, e senza etichetta
+    finivano a sovrascrivere i campi realizzati del trade.
+
+    Il payload resta registrato nel ledger degli eventi (nulla va perso), ma
+    la tabella `trades` la scrivono solo close/resync.
+    """
     _clear()
     legacy = _close_payload(7001, 2.0)
     for k in ("event", "positionId", "tradeUid", "partialCount", "volumeOut"):
         legacy.pop(k)
-    client.post("/api/ea/trade_reason", json=legacy, headers=TOKEN)
+    r = client.post("/api/ea/trade_reason", json=legacy, headers=TOKEN)
+    assert r.status_code == 200
+    assert _trades() == []
+
+    with _db() as c:
+        n = c.execute("SELECT COUNT(*) FROM trade_events "
+                      "WHERE event='close_request'").fetchone()[0]
+    assert n == 1
+
+    # Con l'etichetta esplicita il trade viene invece scritto.
+    confirmed = _close_payload(7001, 2.0)
+    confirmed["event"] = "close"
+    client.post("/api/ea/trade_reason", json=confirmed, headers=TOKEN)
     rows = _trades()
     assert len(rows) == 1
     assert rows[0]["pnl"] == 2.0
+
+
+def test_unknown_trade_event_is_rejected(client):
+    """AUD0-PROT-006: un'etichetta non riconosciuta non deve essere accettata
+    in silenzio — il consumatore non saprebbe come interpretarla."""
+    _clear()
+    payload = _close_payload(7002, 3.0)
+    payload["event"] = "definitivissimo"
+    r = client.post("/api/ea/trade_reason", json=payload, headers=TOKEN)
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "UNKNOWN_TRADE_EVENT"
+    assert _trades() == []
 
 
 def test_migration_is_additive_and_idempotent(tmp_path, monkeypatch):

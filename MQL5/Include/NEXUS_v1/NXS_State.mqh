@@ -5,7 +5,7 @@
 #define __NXS_STATE_MQH__
 
 #define NXS_STATE_MAGIC   0x4E585335
-#define NXS_STATE_SCHEMA  2
+#define NXS_STATE_SCHEMA  3
 #define NXS_STATE_MAX_POS 512
 
 struct SNXSManagedState {
@@ -148,6 +148,19 @@ bool _NXS_StateWrite(string fileName){
    FileWriteInteger(h, g_dptHit ? 1 : 0);
    FileWriteInteger(h, g_pausedUntilNextOpen ? 1 : 0);
    FileWriteInteger(h, g_skipNextSignals);
+   // AUD0-STATE-004 / AUD0-RS-007 / AUD0-PROT-004: questi campi erano solo in
+   // memoria. Un riavvio azzerava freeze di ruin, breaker di equity, flatten
+   // incompiuto e streak: il conto ripartiva come se nulla fosse successo,
+   // proprio dopo l'evento che aveva richiesto la protezione.
+   FileWriteLong(h, (long)g_ruinFrozenDay);
+   FileWriteLong(h, (long)g_NXSrsBreakerUntil);
+   FileWriteDouble(h, g_NXSrsLastSharpe);
+   FileWriteInteger(h, g_autoClosePending ? 1 : 0);
+   FileWriteInteger(h, g_flattenPending ? 1 : 0);
+   _NXS_WriteString(h, g_flattenReason);
+   FileWriteInteger(h, g_streakWins);
+   FileWriteInteger(h, g_streakLosses);
+   FileWriteDouble(h, g_streakLotMult);
    FileWriteInteger(h, g_managedStateCount);
    for(int i=0; i<g_managedStateCount; i++){
       FileWriteLong(h, (long)g_managedState[i].ticket);
@@ -182,6 +195,15 @@ bool _NXS_StateRead(string fileName, bool apply){
    long antiRev = FileReadLong(h);
    int esl = FileReadInteger(h), dpt = FileReadInteger(h);
    int paused = FileReadInteger(h), skip = FileReadInteger(h);
+   long ruinDay      = FileReadLong(h);
+   long breakerUntil = FileReadLong(h);
+   double lastSharpe = FileReadDouble(h);
+   int autoClose     = FileReadInteger(h);
+   int flattenPend   = FileReadInteger(h);
+   string flattenRsn = _NXS_ReadString(h);
+   int streakW       = FileReadInteger(h);
+   int streakL       = FileReadInteger(h);
+   double streakMult = FileReadDouble(h);
    int count = FileReadInteger(h);
    if(count < 0 || count > NXS_STATE_MAX_POS){ FileClose(h); return false; }
    SNXSManagedState loaded[NXS_STATE_MAX_POS];
@@ -205,6 +227,24 @@ bool _NXS_StateRead(string fileName, bool apply){
    if(!apply) return true;
    g_managedStateCount = count;
    for(int i=0; i<count; i++) g_managedState[i] = loaded[i];
+
+   // La safety state va ripristinata SEMPRE, non solo nello stesso giorno:
+   // un breaker di equity con scadenza a 24h o un flatten incompiuto non
+   // smettono di valere perché è cambiata la data.
+   g_ruinFrozenDay      = (datetime)ruinDay;
+   g_NXSrsBreakerUntil  = (datetime)breakerUntil;
+   g_NXSrsLastSharpe    = lastSharpe;
+   g_autoClosePending   = (autoClose != 0);
+   g_flattenPending     = (flattenPend != 0);
+   g_flattenReason      = flattenRsn;
+   g_streakWins         = streakW;
+   g_streakLosses       = streakL;
+   g_streakLotMult      = (streakMult > 0 ? streakMult : 1.0);
+   if(g_flattenPending)
+      PrintFormat("[NEXUS STATE][ALERT] ripreso con FLATTEN INCOMPIUTO (%s): "
+                  "nuove entrate bloccate finche' l'esposizione non e' chiusa",
+                  g_flattenReason);
+
    MqlDateTime dt; TimeToStruct(TimeCurrent(), dt); dt.hour=0; dt.min=0; dt.sec=0;
    if((datetime)dayStart == StructToTime(dt)){
       g_dayStart=(datetime)dayStart; g_balanceDayStart=bal0; g_tradesToday=tradesToday;

@@ -71,6 +71,58 @@ ENUM_TIMEFRAMES NXS_PosSourceTF(const string comment){
    return NXS_StrategySourceTF(strat);
 }
 
+//+------------------------------------------------------------------+
+//| NXS-PROT-006 — AUTORITA' UNICA per la chiusura a durata massima   |
+//|                                                                   |
+//| Il limite di hold era calcolato in DUE punti indipendenti:         |
+//|   - NXS_Management.mqh   : 40 barre del TF di profilo, fallback    |
+//|                            InpMaxHoldHours (4h)                    |
+//|   - NXS_Protections.mqh  : InpProt_MaxHoldHours (12h) x LifeFactor |
+//| Entrambi leggevano la strategia dal COMMENTO della posizione. Se   |
+//| il commento mancava o era troncato dal broker (MT5 tronca a 31     |
+//| caratteri e alcuni broker lo riscrivono), i due moduli ricadevano  |
+//| su fallback DIVERSI e chiudevano la stessa posizione a orari       |
+//| diversi: vinceva chi scattava prima, in modo non riproducibile.    |
+//|                                                                   |
+//| Questo risolutore e' l'unica fonte del limite. Restituisce anche   |
+//| `resolved`, che PARTIZIONA la competenza in modo esaustivo e       |
+//| mutuamente esclusivo:                                             |
+//|   resolved == true  -> la posizione ha un profilo reale: agisce    |
+//|                        SOLO NXS_Management.mqh (integrato con      |
+//|                        breakeven e trailing nello stesso loop)     |
+//|   resolved == false -> strategia ignota o commento illeggibile:    |
+//|                        agisce SOLO NXS_Protections.mqh, con il     |
+//|                        limite CONSERVATIVO (il minore dei due)     |
+//| Nessuna posizione ha due giudici, nessuna resta senza.             |
+//+------------------------------------------------------------------+
+long NXS_MaxHold_LimitSec(const string posComment, bool &resolved){
+   resolved = false;
+   string strat = "";
+   int p1 = StringFind(posComment, "|");
+   if(p1 >= 0){
+      int p2 = StringFind(posComment, "|", p1 + 1);
+      strat = (p2 > p1) ? StringSubstr(posComment, p1 + 1, p2 - p1 - 1)
+                        : StringSubstr(posComment, p1 + 1);
+   }
+
+   if(InpUseStrategyProfiles && StringLen(strat) > 0){
+      ENUM_TIMEFRAMES ptf = NXS_Profile_TF(strat);
+      if(ptf != PERIOD_CURRENT){
+         resolved = true;
+         return (long)PeriodSeconds(ptf) * 40;   // ~40 barre del TF di profilo
+      }
+   }
+
+   // Nessun profilo: si usa il PIU' STRETTO fra i due limiti storici invece di
+   // lasciarli competere. Un limite piu' corto chiude prima — sul lato sicuro.
+   long a = (long)InpMaxHoldHours * 3600;
+   long b = (long)(InpProt_MaxHoldHours * 3600 *
+                   NXS_TF_LifeFactor(NXS_PosSourceTF(posComment)));
+   if(a <= 0) return b;
+   if(b <= 0) return a;
+   return (a < b) ? a : b;
+}
+
 void NXS_DefaultSLTP(SNXSSignal &sig){
    double slMult = g_run_AtrSLMult;          // tunabile dal sito (default = InpATR_SL_Mult)
    if(InpUseAdaptiveSL && g_atrAvg > 0){

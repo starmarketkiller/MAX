@@ -416,8 +416,15 @@ void NXS_CloseOppositeIfBetter(ENUM_NXS_DIR newDir, double newScore){
       if(!(oppToBuy || oppToSell)) continue;
       double profit = PositionGetDouble(POSITION_PROFIT);
       if(profit > 0) continue;
-      NXS_DoClose(t);
-      PrintFormat("[NEXUS] Close&Reverse closing %I64u", t);
+      // AUD0-EXEC-002: si chiamava NXS_DoClose e si stampava "closing" senza
+      // guardare l'esito. Il chiamante procedeva ad aprire la direzione
+      // opposta assumendo che la posizione fosse sparita.
+      bool closed = NXS_DoClose(t);
+      PrintFormat("[NEXUS] Close&Reverse %I64u esito=%s retcode=%d",
+                  t, (closed ? "OK" : "FALLITO"), NXS_TradeRetcode());
+      if(!closed)
+         PrintFormat("[NEXUS][ALERT] Close&Reverse: la posizione %I64u resta APERTA; "
+                     "l'ingresso opposto creerebbe esposizione su due lati", t);
    }
 }
 
@@ -447,9 +454,13 @@ void NXS_SmartCloseOppositeIfBetter(ENUM_NXS_DIR newDir, double newScore, SNXSHT
       double profit = PositionGetDouble(POSITION_PROFIT);
       bool allowLossClose = (newScore >= thresholdUsed + 10.0);
       if(profit > 0 || allowLossClose){
-         NXS_DoClose(t);
-         PrintFormat("[NEXUS] Smart Close&Reverse closing %I64u (score=%.1f thr=%.1f profit=%.2f)",
-                     t, newScore, thresholdUsed, profit);
+         // AUD0-EXEC-002: stesso difetto del percorso non-smart.
+         bool closed = NXS_DoClose(t);
+         PrintFormat("[NEXUS] Smart Close&Reverse %I64u esito=%s (score=%.1f thr=%.1f profit=%.2f retcode=%d)",
+                     t, (closed ? "OK" : "FALLITO"), newScore, thresholdUsed,
+                     profit, NXS_TradeRetcode());
+         if(!closed)
+            PrintFormat("[NEXUS][ALERT] Smart Close&Reverse: posizione %I64u ancora aperta", t);
       }
    }
 }

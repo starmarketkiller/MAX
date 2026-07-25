@@ -75,6 +75,24 @@ int    g_streakLosses     = 0;
 double g_streakLotMult    = 1.0;
 // v2.2.6 - scudo risk-of-ruin: giorno per cui il trading e' congelato.
 datetime g_ruinFrozenDay  = 0;
+
+// ---- SAFETY STATE PERSISTENTE ----
+// AUD0-STATE-004 / AUD0-RS-007 / AUD0-PROT-004: queste variabili vivono qui,
+// e non nei rispettivi moduli, perché NXS_State.mqh (che le serializza) è
+// incluso PRIMA di NXS_RiskShield.mqh e NXS_Protections.mqh. Centralizzarle
+// rende la persistenza indipendente dall'ordine di include (AUD0-MQL-001).
+bool     g_eslHit              = false;
+bool     g_dptHit              = false;
+bool     g_pausedUntilNextOpen = false;
+bool     g_autoClosePending    = false;
+// Flatten d'emergenza non completato: resta esposizione da chiudere.
+bool     g_flattenPending      = false;
+string   g_flattenReason       = "";
+int      g_flattenAttempts     = 0;
+datetime g_flattenSince        = 0;
+// Equity breaker del RiskShield.
+datetime g_NXSrsBreakerUntil   = 0;
+double   g_NXSrsLastSharpe     = 0.0;
 datetime g_dayStart       = 0;
 double g_balanceDayStart  = 0;
 datetime g_lastTradeTime  = 0;
@@ -409,6 +427,61 @@ void NXS_BarDirCapRegisterOpen(ENUM_NXS_DIR dir){
    NXS_BarDirCapRollover();
    if(dir == DIR_BUY) g_newTradesThisBarBuy++;
    else if(dir == DIR_SELL) g_newTradesThisBarSell++;
+}
+
+//+------------------------------------------------------------------+
+//| AUD0-SEC-001 (lato EA): credenziali del bridge fail-closed        |
+//|                                                                   |
+//| InpWebToken aveva come default "NEXUS_BRIDGE_TOKEN_2026", cioe' lo |
+//| stesso valore documentato in ogni copia del progetto: chiunque     |
+//| conoscesse l'URL del backend poteva impersonare l'EA. Il default   |
+//| e' ora vuoto e questo preflight DISATTIVA la sincronizzazione web  |
+//| se il token e' assente, e' un segnaposto noto o e' troppo corto,   |
+//| oppure se l'URL non e' HTTPS (il token viaggerebbe in chiaro).     |
+//|                                                                   |
+//| Il trading locale resta operativo: e' la telemetria a spegnersi,   |
+//| non le protezioni. Fallire chiuso qui significa "nessun canale     |
+//| remoto" invece di "canale remoto non autenticato".                |
+//+------------------------------------------------------------------+
+bool NXS_IsPlaceholderBridgeToken(string tok){
+   string t = tok;
+   StringToUpper(t);
+   if(t == "NEXUS_BRIDGE_TOKEN_2026") return true;
+   if(t == "CAMBIA_QUESTO_TOKEN")     return true;
+   if(t == "CHANGEME")                return true;
+   if(t == "TEST-TOKEN")              return true;
+   if(t == "NEXUS123")                return true;
+   if(t == "ADMIN")                   return true;
+   return false;
+}
+
+void NXS_WebCredentialPreflight(){
+   if(!InpEnableWebSync) return;
+   string reason = "";
+   string url    = InpWebURL;
+   StringTrimLeft(url); StringTrimRight(url);
+
+   if(StringLen(InpWebToken) == 0)
+      reason = "InpWebToken vuoto";
+   else if(NXS_IsPlaceholderBridgeToken(InpWebToken))
+      reason = "InpWebToken e' un segnaposto pubblico noto";
+   else if(StringLen(InpWebToken) < 24)
+      reason = StringFormat("InpWebToken troppo corto (%d caratteri, minimo 24)",
+                            StringLen(InpWebToken));
+   else if(StringLen(url) == 0)
+      reason = "InpWebURL vuoto";
+   else if(StringFind(url, "https://") != 0 &&
+           StringFind(url, "http://127.0.0.1") != 0 &&
+           StringFind(url, "http://localhost") != 0)
+      reason = "InpWebURL non e' HTTPS (il token viaggerebbe in chiaro)";
+
+   if(StringLen(reason) == 0) return;
+
+   InpEnableWebSync = false;
+   PrintFormat("[NEXUS SEC] Sincronizzazione web DISATTIVATA: %s. "
+               "Imposta un token dedicato e un URL HTTPS negli input dell'EA. "
+               "Il trading e le protezioni locali restano attivi.", reason);
+   Alert("NEXUS: WebSync disattivata — " + reason);
 }
 
 #endif

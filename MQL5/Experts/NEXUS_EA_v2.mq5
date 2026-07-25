@@ -21,6 +21,11 @@
 #include <NEXUS_v1\NXS_Inputs.mqh>
 #include <NEXUS_v1\NXS_StrategyProfiles.mqh>
 #include <NEXUS_v1\NXS_Globals.mqh>
+// AUD0-PROT-005 / AUD0-HSYNC-003: coda locale durevole per le consegne HTTP
+// fallite. Deve stare PRIMA di ogni modulo che spinge eventi al backend
+// (protezioni, history sync, ledger), che vi accodano invece di ritentare
+// in linea con Sleep().
+#include <NEXUS_v1\NXS_Outbox.mqh>
 #include <NEXUS_v1\NXS_StrategyRegistry.mqh>
 #include <NEXUS_v1\NXS_RuntimeSettings.mqh>
 #include <NEXUS_v1\NXS_Presets.mqh>
@@ -407,6 +412,10 @@ int OnInit(){
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
    NXS_ResetTradesLogIfRequested();   // 17/07 sera - vedi NXS_Logging.mqh, opt-in, mai automatico
+   // AUD0-SEC-001: prima di QUALSIASI chiamata al backend (il fetch del profilo
+   // qui sotto e' la prima) si verifica che il token del bridge non sia il
+   // segnaposto pubblico e che l'URL sia HTTPS. Altrimenti la WebSync si spegne.
+   NXS_WebCredentialPreflight();
    // v2.0.10 — pull active locked profile from backend (auto-optimizer winner)
    NXS_LockedProfile_Fetch();
    // v2.0.9 — load Sprint 3 learner CSV + reset handle pool
@@ -489,6 +498,9 @@ int OnInit(){
    EventSetTimer(1);
 
    if(InpEnableWebSync && !MQLInfoInteger(MQL_TESTER)){
+      // Le consegne rimaste in sospeso al riavvio precedente vengono
+      // ripristinate qui: il timer le drenera' senza bloccare nulla.
+      NXS_Outbox_Load();
       g_lastPushTime = 0;
       NXS_WebPushSafe();
       // Backfill: invia i trade chiusi negli ultimi 7 giorni alla dashboard
@@ -573,6 +585,10 @@ double OnTester(){
 void OnTimer(){
    // AUDITPATCH: no WebRequest side effects during deterministic backtests.
    if(!MQLInfoInteger(MQL_TESTER)){
+      // AUD0-PROT-005: le consegne fallite sono drenate qui, poche per volta e
+      // con timeout breve, invece di essere ritentate in linea con Sleep() nel
+      // percorso critico delle protezioni.
+      NXS_Outbox_Drain();
       NXS_WebPushSafe();
       NXS_WebPoll();
       NXS_VisualBridge_PushHTTP();   // v2.0.9 — push OB/FVG/SNR to web Live Chart
@@ -589,6 +605,10 @@ void OnTimer(){
    // la position era ancora visibile (o evento perso) vengono riconciliate qui.
    if(NXS_Ledger_SweepPending() > 0) NXS_EA_DrainLedger();
    NXS_License_Verify();     // tester-safe; live hourly re-validation
+   // AUD0-RS-008: l'equity breaker non era mai alimentato — il gate esisteva
+   // ma non poteva scattare. Qui viene ricalcolato a cadenza limitata (5 min),
+   // fuori dal percorso del tick perche' scansiona lo storico dei deal.
+   NXS_RS_Breaker_Update();
    NXS_State_Save();
    if(InpShowDashboard) NXS_Dashboard_Render();
    if(InpStatsEnable){

@@ -108,11 +108,14 @@ double NXS_CalcLot(double slPriceDist){
 }
 
 bool NXS_CheckProtections(string &reason){
-   // v2.0.31: same tester-only bypass as NXS_Prot_EntryBlocked - these
-   // account-level gates (daily DD, max trades/day, max concurrent, margin,
-   // anti-revenge/anti-bleed) exist to protect live capital, which doesn't
-   // apply when backtesting/optimizing. Live behavior is unaffected.
-   if(MQLInfoInteger(MQL_TESTER)) return true;
+   // AUD0-PROT-009 / AUD0-RISK-004: qui c'era lo stesso bypass incondizionato
+   // di NXS_Prot_EntryBlocked. Disattivare nel tester i cap di conto (DD
+   // giornaliero, trade/giorno, concorrenza, margine, anti-revenge/anti-bleed)
+   // significa ottimizzare un sistema SENZA i vincoli che poi lo governano in
+   // reale: il backtest sovrastima sistematicamente frequenza ed esposizione.
+   //
+   // Ora e' governato da InpTesterProtectionParity (default: parita' col live).
+   if(MQLInfoInteger(MQL_TESTER) && !InpTesterProtectionParity) return true;
    // P2: skip queue from anti-bleed
    if(g_skipNextSignals > 0){
       g_skipNextSignals--;

@@ -314,6 +314,25 @@ def test_body_troppo_grande_rifiutato(logged_in):
     assert resp.status_code == 413
 
 
+def test_il_limite_copre_anche_le_rotte_ea_e_analytics(logged_in):
+    """AUD0-API-002: il limite era applicato solo dove si usava read_json_body.
+
+    Sedici rotte leggevano ancora `await request.json()`, cioe' un corpo di
+    dimensione arbitraria in memoria — comprese quelle raggiungibili col solo
+    token del bridge. Qui si verifica sia una rotta EA sia una autenticata.
+    """
+    client, headers = logged_in
+    padding = "x" * (backend.MAX_JSON_BODY_BYTES + 1024)
+
+    resp = client.post("/api/ea/push", json={"magic": 1, "symbol": padding},
+                       headers={"X-Nexus-Token": backend.BRIDGE_TOKEN})
+    assert resp.status_code == 413
+
+    resp = client.post("/api/analytics/whatif",
+                       json={"exclude_strategies": [padding]}, headers=headers)
+    assert resp.status_code == 413
+
+
 # --------------------------------------------------------------------------- #
 # Audit operatore — AUD0-AUDIT-001
 # --------------------------------------------------------------------------- #

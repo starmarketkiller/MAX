@@ -634,6 +634,16 @@ ANALYTICS_MAX_ROWS = int(os.environ.get("NEXUS_ANALYTICS_MAX_ROWS", "5000"))
 #: definizione di sano è cambiata.
 HEALTH_POLICY_VERSION = "health-policy-1"
 
+#: AUD0-PROT-006: eventi del ciclo di vita accettati da /api/ea/trade_reason.
+#: Solo quelli in EA_TRADE_EVENTS_AUTHORITATIVE possono scrivere i campi
+#: realizzati (prezzo e P/L eseguiti) nella tabella `trades`; gli altri
+#: descrivono un'INTENZIONE o uno stato intermedio e finiscono soltanto nel
+#: registro trade_events.
+EA_TRADE_EVENTS_AUTHORITATIVE = {"close", "resync"}
+EA_TRADE_EVENTS = EA_TRADE_EVENTS_AUTHORITATIVE | {
+    "close_request", "partial", "open", "modify",
+}
+
 
 def clamp_limit(value, default: int, maximum: int) -> int:
     """Limite richiesto dal client, sempre entro un massimo (AUD0-PERF-002).
@@ -659,21 +669,34 @@ def public_error(code: str, message: str, status: int = 502, *,
     return HTTPException(status_code=status, detail={"code": code, "message": message})
 
 
-async def read_json_body(request: Request) -> dict:
-    """Legge un body JSON applicando un limite di dimensione (AUD0-API-002)."""
+async def read_json_any(request: Request, *, max_bytes: int = None):
+    """Legge un body JSON con limite di dimensione, preservandone il tipo.
+
+    AUD0-API-002: `await request.json()` legge in memoria un corpo di
+    dimensione arbitraria — un solo client puo' esaurire la RAM del processo.
+    Alcune rotte accettano legittimamente una LISTA in radice (lo storico
+    trade dell'EA), quindi qui il valore viene restituito com'e'; le rotte che
+    vogliono un oggetto usano read_json_body().
+    """
+    limit = MAX_JSON_BODY_BYTES if max_bytes is None else max_bytes
     raw = await request.body()
-    if len(raw) > MAX_JSON_BODY_BYTES:
+    if len(raw) > limit:
         raise HTTPException(status_code=413, detail={
             "code": "PAYLOAD_TOO_LARGE",
-            "max_bytes": MAX_JSON_BODY_BYTES,
+            "max_bytes": limit,
         })
     if not raw:
         return {}
     try:
-        data = json.loads(raw)
+        return json.loads(raw)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail={
             "code": "VALIDATION_FAILED", "message": "body JSON non valido"}) from exc
+
+
+async def read_json_body(request: Request, *, max_bytes: int = None) -> dict:
+    """Legge un body JSON applicando un limite di dimensione (AUD0-API-002)."""
+    data = await read_json_any(request, max_bytes=max_bytes)
     return data if isinstance(data, dict) else {}
 
 
@@ -694,7 +717,9 @@ def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) ->
     rende verificabile 'exactly one TRADE_CLOSED per logical trade'.
     """
     uid = t.get("tradeUid") or t.get("trade_uid")
-    ev = (t.get("event") or "close").lower()
+    # AUD0-PROT-006: un payload privo di etichetta non e' una chiusura
+    # confermata. Il default fail-open lo registrava come "close".
+    ev = (t.get("event") or "close_request").lower()
     if uid is None:
         # payload legacy senza trade_uid: derivalo da magic+ticket se possibile
         ticket = t.get("ticket") or t.get("positionId")
@@ -1190,7 +1215,7 @@ def me(authorization: Optional[str] = Header(None),
 @app.post("/api/ea/push")
 async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     magic = data.get("magic", 0)
     symbol = data.get("symbol", "?")
     key = f"{magic}:{symbol}"
@@ -1472,7 +1497,7 @@ def ea_locked_profile(symbol: str = "", x_nexus_token: Optional[str] = Header(No
 @app.post("/api/ea/strategy_stats")
 async def ea_strategy_stats(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     symbol = data.get("symbol", "?")
     with _conn() as c:
         c.execute(
@@ -1552,7 +1577,7 @@ def _upsert_trade(c, t, symbol_fallback=None):
 @app.post("/api/ea/trade_history_sync")
 async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_any(request)
     trades = data.get("trades") if isinstance(data, dict) else data
     if not isinstance(trades, list):
         trades = [data]
@@ -1574,7 +1599,7 @@ async def ea_trade_history_sync(request: Request, x_nexus_token: Optional[str] =
 @app.post("/api/ea/trade_reason")
 async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     symbol = data.get("symbol") or "?"
     with _conn() as c:
         # Se il simbolo non è nel payload (il push di chiusura live non lo manda),
@@ -1598,11 +1623,25 @@ async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Heade
         # prezzo richiesto) e partial NON devono piu' sovrascrivere il trade —
         # e' cosi' che i parziali corrompevano il PnL. Tutti finiscono nel
         # registro trade_events (audit + dedupe replay).
-        ev = str(data.get("event") or "close").lower()
+        # AUD0-PROT-006: `or "close"` rendeva AUTOREVOLE ogni payload privo di
+        # campo `event` — inclusi i push di richiesta chiusura, che portano
+        # prezzo richiesto e P/L flottante, non il risultato eseguito. Un solo
+        # payload senza etichetta poteva quindi sovrascrivere i campi realizzati
+        # del trade con valori mai confermati dal broker.
+        #
+        # Ora l'etichetta e' obbligatoria e verificata: sconosciuta => 422,
+        # assente => trattata come NON autorevole (close_request).
+        ev = str(data.get("event") or "close_request").lower()
+        if ev not in EA_TRADE_EVENTS:
+            raise HTTPException(status_code=422, detail={
+                "code": "UNKNOWN_TRADE_EVENT",
+                "message": f"evento '{ev}' non riconosciuto",
+                "allowed": sorted(EA_TRADE_EVENTS),
+            })
         if data.get("ticket") is not None:
             try:
                 _insert_trade_event(c, data, symbol_fallback=(None if symbol == "?" else symbol))
-                if ev in ("close", "resync"):
+                if ev in EA_TRADE_EVENTS_AUTHORITATIVE:
                     _upsert_trade(c, data, symbol_fallback=(None if symbol == "?" else symbol))
             except Exception as e:
                 print(f"[NEXUS] trade_reason->trades upsert failed: {e}")
@@ -1612,7 +1651,7 @@ async def ea_trade_reason(request: Request, x_nexus_token: Optional[str] = Heade
 @app.post("/api/ea/shadow_trades")
 async def ea_shadow_trades(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     with _conn() as c:
         c.execute(
             "INSERT INTO shadow_trades(payload,created_at) VALUES(?,?)",
@@ -1624,7 +1663,7 @@ async def ea_shadow_trades(request: Request, x_nexus_token: Optional[str] = Head
 @app.post("/api/ea/visual_objects")
 async def ea_visual_objects(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     symbol = data.get("symbol", "?")
     with _conn() as c:
         c.execute(
@@ -1963,7 +2002,7 @@ def lb_poll(host_id: str, x_nexus_token: Optional[str] = Header(None)):
 @app.post("/api/local_bridge/ack")
 async def lb_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
+    data = await read_json_body(request)
     cmd_id = data.get("command_id") or data.get("id")
     host_id = data.get("host_id")
     lease_id = data.get("lease_id")
@@ -2810,7 +2849,7 @@ def strategies_get(user: str = Depends(require_user)):
 @app.post("/api/strategies")
 @app.put("/api/strategies")
 async def strategies_save(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
+    data = await read_json_body(request)
     override = data.get("strategies") if isinstance(data, dict) else data
     if isinstance(override, list):
         override = {s["name"]: s.get("enabled") for s in override if "name" in s}
@@ -3191,7 +3230,7 @@ def analytics_by_reason(user: str = Depends(require_user)):
 @app.post("/api/analytics/whatif")
 async def analytics_whatif(request: Request, user: str = Depends(require_user)):
     """Ricalcola il P&L escludendo una strategia o un motivo."""
-    body = await request.json()
+    body = await read_json_body(request)
     excl_strat = set(body.get("exclude_strategies") or [])
     excl_reason = set(body.get("exclude_reasons") or [])
     trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
@@ -3761,7 +3800,7 @@ def jobs_cancel(job_id: str, user: str = Depends(require_mutation)):
 
 @app.post("/api/backtest/run")
 async def backtest_run(request: Request, user: str = Depends(require_user)):
-    body = await request.json()
+    body = await read_json_body(request)
     try:
         start_equity = float(body.get("start_equity", body.get("initial_balance", 10000.0)))
         raw = backtest.run_backtest(
@@ -3799,7 +3838,7 @@ async def backtest_creator(request: Request, user: str = Depends(require_user)):
            param_grid:{atr_sl:[...], atr_tp:[...]}, risk_pct, initial_balance,
            min_trades, max_combos}"""
     import itertools
-    body = await request.json()
+    body = await read_json_body(request)
     symbol = body.get("symbol", "XAUUSD")
     timeframe = body.get("timeframe") or body.get("interval") or "D1"
     pool = [s for s in (body.get("pool") or []) if s]
@@ -4180,10 +4219,11 @@ async def backtest_optimize(request: Request, user: str = Depends(require_mutati
 async def backtest_mgmt(request: Request, user: str = Depends(require_user)):
     body = {}
     if request.method == "POST":
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
+        # AUD0-API-002: il try/except ingoiava anche il rifiuto per payload
+        # sopra il limite, ripiegando su {} — il corpo veniva comunque letto
+        # per intero in memoria. read_json_body applica il limite e ritorna
+        # {} su corpo vuoto senza nascondere gli errori reali.
+        body = await read_json_body(request)
     return backtest.management_report(symbol=body.get("symbol", "XAUUSD"),
                                       strategy=body.get("strategy", "ADX_RSI"))
 
@@ -4193,10 +4233,11 @@ async def backtest_mgmt(request: Request, user: str = Depends(require_user)):
 async def backtest_mtf(request: Request, user: str = Depends(require_user)):
     body = {}
     if request.method == "POST":
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
+        # AUD0-API-002: il try/except ingoiava anche il rifiuto per payload
+        # sopra il limite, ripiegando su {} — il corpo veniva comunque letto
+        # per intero in memoria. read_json_body applica il limite e ritorna
+        # {} su corpo vuoto senza nascondere gli errori reali.
+        body = await read_json_body(request)
     return backtest.multi_tf_report(symbol=body.get("symbol", "XAUUSD"),
                                     strategy=body.get("strategy", "ADX_RSI"))
 
@@ -4955,7 +4996,7 @@ def strat_stats_markdown(symbol: str = "", user: str = Depends(require_user)):
 
 @app.post("/api/analytics/strategy_stats/upload")
 async def strat_stats_upload(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
+    data = await read_json_body(request)
     symbol = data.get("symbol", "manual")
     with _conn() as c:
         c.execute("INSERT INTO strategy_stats(symbol,payload,updated_at) VALUES(?,?,?) "
@@ -5080,7 +5121,7 @@ def backtest_symbols(user: str = Depends(require_user)):
 async def backtest_locked_save(request: Request, user: str = Depends(require_user)):
     """Salva un locked profile (dal pulsante LOCK della Strategy Library).
     Mappa il base_cfg del frontend nei params che l'EA legge."""
-    data = await request.json()
+    data = await read_json_body(request)
     sym = data.get("symbol") or "*"
     cfg = data.get("base_cfg") or {}
     ovr = data.get("overrides") or {}
@@ -5303,7 +5344,9 @@ async def backtest_analyze_csv(request: Request, user: str = Depends(require_use
     ritorna la tabella dei verdetti (FORTE/OK/DEBOLE/CRITICA/BLOCCATA/NO_SETUP/
     POCHI_DATI) + raccomandazioni concrete. Body: {csv:"...", min_trades?:int}.
     L'ultimo risultato viene salvato per riaprirlo senza ricaricare il file."""
-    body = await request.json()
+    # Il CSV di un test MT5 puo' superare il limite generico: limite dedicato,
+    # ma sempre un limite (AUD0-API-002).
+    body = await read_json_body(request, max_bytes=8 * 1024 * 1024)
     text = body.get("csv") or body.get("text") or ""
     if not text.strip():
         raise HTTPException(status_code=400, detail="campo 'csv' mancante")
