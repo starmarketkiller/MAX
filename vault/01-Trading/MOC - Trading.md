@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea]
 created: 2026-07-12
-updated: 2026-07-15
+updated: 2026-07-25
 ---
 
 # 📈 Trading — NEXUS EA
@@ -95,6 +95,21 @@ profitto reale, non solo curve di backtest.
   separate per ogni pattern SMC, non una gerarchia di filtri. Primi test:
   funziona come "due varianti" (LIQ_SWEEP), non come gate extra sullo
   stesso bar (IFVG/TURTLE_SOUP, entrambi peggiorati).
+
+## Remediation dell'audit master (25 luglio 2026)
+- **[[NEXUS EA - Remediation Audit v18]]** — revisione completa dei 310 finding
+  del master document e implementazione nel codice. Cosa è stato corretto
+  davvero, e il limite grosso: **niente di MQL5 è stato compilato né eseguito**.
+- **[[DEC - Cambi di comportamento post-remediation]]** — **leggi questa prima di
+  confrontare qualsiasi backtest nuovo con uno vecchio.** La parità tester/live
+  è ora attiva di default: i numeri cambiano, e i confronti storici non valgono
+  più.
+- **[[NEXUS EA - Igiene Repository e Duplicati]]** — 257 MB su 448 sono copie
+  identiche, cinque coppie di report dichiarano strategie diverse ma sono lo
+  stesso file, e il bundle React distribuito contiene ancora le credenziali di
+  default.
+- **[[TODO - Agente Desktop (consegna remediation)]]** — il piano ordinato per
+  chi ha MetaEditor, MT5 e la macchina sotto mano.
 
 ## Stato corrente (15 luglio 2026, aggiornato col segmento 9)
 - Versione EA: **v2.5.0** — applica filtro HTF universale (scoperto nello screening a
