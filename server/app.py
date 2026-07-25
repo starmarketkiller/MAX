@@ -42,6 +42,7 @@ import command_contract
 import ledger_analytics
 import nexus_jobs
 import nexus_policy
+import nexus_retention
 import nexus_security
 import nexus_validation
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
@@ -1389,6 +1390,55 @@ def ea_settings(x_nexus_token: Optional[str] = Header(None)):
     return out
 
 
+@app.post("/api/ea/settings/ack")
+async def ea_settings_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """L'EA dichiara QUALE revisione di configurazione ha effettivamente applicato.
+
+    AUD0-BE-SET-004 / AUD0-FE-OPT-006 / NXS-FE-TRUST-002: il backend conosceva
+    solo lo stato *desiderato*. La UI diceva "applicato" senza alcuna conferma
+    dall'EA, e un payload rifiutato dall'EA restava invisibile.
+    """
+    check_token(x_nexus_token)
+    body = await read_json_body(request)
+    account = str(body.get("account_id") or "")
+    symbol = str(body.get("symbol") or "")
+    if not account or not symbol:
+        raise HTTPException(status_code=400, detail={
+            "code": "TARGET_SCOPE_MISMATCH",
+            "message": "account_id e symbol obbligatori"})
+
+    entry = {
+        "revision": body.get("revision"),
+        "checksum": str(body.get("checksum") or "")[:32],
+        "status": str(body.get("status") or "APPLIED").upper()[:24],
+        "rejected_reason": str(body.get("rejected_reason") or "")[:300],
+        "acked_at": iso(),
+    }
+    applied = kv_get("settings_applied", {}) or {}
+    applied[f"{account}:{symbol}"] = entry
+    kv_set("settings_applied", applied)
+    return {"ok": True, "recorded": entry}
+
+
+@app.get("/api/settings/state")
+def settings_state_route(user: str = Depends(require_user)):
+    """Desiderato vs applicato, esplicitamente separati."""
+    state = settings_state()
+    applied = kv_get("settings_applied", {}) or {}
+    # Un'istanza e' "allineata" solo se dichiara la revisione corrente.
+    in_sync = {k: (v.get("revision") == state["revision"]
+                   and v.get("status") == "APPLIED")
+               for k, v in applied.items()}
+    return {
+        "desired": state,
+        "applied_by_instance": applied,
+        "in_sync": in_sync,
+        "all_in_sync": bool(applied) and all(in_sync.values()),
+        "note": ("Nessuna istanza ha ancora confermato questa revisione"
+                 if not applied else ""),
+    }
+
+
 @app.get("/api/ea/locked_profile")
 def ea_locked_profile(symbol: str = "", x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
@@ -2035,16 +2085,120 @@ def dash_notifications(limit: int = 50, user: str = Depends(require_user)):
 
 @app.get("/api/dashboard/settings")
 def dash_settings_get(user: str = Depends(require_user)):
-    return _current_settings()
+    # Il corpo resta il vecchio shape piatto per compatibilita', con i
+    # metadati di revisione aggiunti: il client deve poterli rispedire.
+    state = settings_state()
+    return {**state["settings"], "_revision": state["revision"],
+            "_checksum": state["checksum"]}
 
 
 @app.put("/api/dashboard/settings")
-async def dash_settings_put(request: Request, user: str = Depends(require_user)):
-    data = _validated_settings_patch(await request.json())
-    merged = {**_current_settings(), **data}
+async def dash_settings_put(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    expected = body.pop("expected_revision", None)
+    reason = str(body.pop("reason", ""))
+    return apply_settings_patch(body, actor=user,
+                                expected_revision=expected, reason=reason)
+
+
+# --------------------------------------------------------------------------- #
+# Servizio settings versionato
+# --------------------------------------------------------------------------- #
+#: AUD0-BE-SET-001 / AUD0-FE-SET-003: le scritture facevano merge e
+#: sovrascrivevano il record condiviso senza alcun controllo di concorrenza.
+#: Due operatori (o un optimizer e un operatore) potevano annullarsi a vicenda
+#: senza accorgersene.
+SETTINGS_HISTORY_MAX = 100
+
+
+def _settings_revision() -> int:
+    return int(kv_get("settings_revision", 0) or 0)
+
+
+def _settings_checksum(settings: dict) -> str:
+    canonical = json.dumps(settings, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()[:16]
+
+
+def settings_state() -> dict:
+    """Stato desiderato corrente con la sua identita' di revisione."""
+    current = _current_settings()
+    return {
+        "settings": current,
+        "revision": _settings_revision(),
+        "checksum": _settings_checksum(current),
+        "schema_version": settings_contract.SCHEMA_VERSION,
+    }
+
+
+def apply_settings_patch(patch: dict, *, actor: str,
+                         expected_revision=None, reason: str = "") -> dict:
+    """Applica un patch validato con compare-and-swap.
+
+    Se il chiamante dichiara `expected_revision` e nel frattempo qualcun altro
+    ha scritto, la richiesta viene RIFIUTATA con 409 invece di sovrascrivere
+    in silenzio il lavoro altrui.
+    """
+    clean = _validated_settings_patch(patch)
+    current = _current_settings()
+    revision = _settings_revision()
+
+    if expected_revision is not None:
+        try:
+            expected = int(expected_revision)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "expected_revision"})
+        if expected != revision:
+            raise HTTPException(status_code=409, detail={
+                "code": "CONFLICT",
+                "message": "le impostazioni sono cambiate da quando le hai caricate",
+                "expected_revision": expected,
+                "current_revision": revision,
+                "current_checksum": _settings_checksum(current),
+            })
+
+    # AUD0-RISK-001: i tetti di rischio valgono su OGNI percorso di scrittura.
+    if "RiskPercent" in clean:
+        clean["RiskPercent"] = _enforce_risk("risk_percent", clean["RiskPercent"],
+                                             actor=actor, context="settings")
+    if "MaxLot" in clean:
+        clean["MaxLot"] = _enforce_risk("max_lot", clean["MaxLot"],
+                                        actor=actor, context="settings")
+    if "MaxDailyDDPct" in clean:
+        clean["MaxDailyDDPct"] = _enforce_risk("max_daily_dd_pct", clean["MaxDailyDDPct"],
+                                               actor=actor, context="settings")
+
+    merged = {**current, **clean}
+    new_revision = revision + 1
+    changed = {k: {"from": current.get(k), "to": v}
+               for k, v in clean.items() if current.get(k) != v}
+
     kv_set("settings", merged)
+    kv_set("settings_revision", new_revision)
     kv_set("settings_schema_version", settings_contract.SCHEMA_VERSION)
-    return {"ok": True, "settings": merged, "schema_version": settings_contract.SCHEMA_VERSION}
+
+    # AUD0-BE-SET-002: nessun evento immutabile registrava chi aveva cambiato
+    # cosa. Lo storico e' ora append-only e consultabile.
+    history = kv_get("settings_history", [])
+    history.append({
+        "revision": new_revision, "actor": actor, "at": iso(),
+        "reason": reason[:500], "changed": changed,
+        "checksum": _settings_checksum(merged),
+    })
+    kv_set("settings_history", history[-SETTINGS_HISTORY_MAX:])
+    audit_log("settings.write", actor=actor, decision="APPLIED", reason=reason,
+              detail={"revision": new_revision, "changed": changed})
+
+    return {
+        "ok": True, "settings": merged, "revision": new_revision,
+        "checksum": _settings_checksum(merged),
+        "changed": changed,
+        "schema_version": settings_contract.SCHEMA_VERSION,
+        # AUD0-BE-SET-004 / AUD0-FE-OPT-006: desiderato != applicato. L'EA
+        # conferma la revisione applicata con /api/ea/settings/ack.
+        "applied_by_ea": kv_get("settings_applied", {}),
+    }
 
 
 @app.get("/api/dashboard/locked_profiles")
@@ -2053,15 +2207,51 @@ def dash_locked_get(user: str = Depends(require_user)):
 
 
 @app.put("/api/dashboard/locked_profiles")
-async def dash_locked_put(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
-    if not isinstance(data, dict):
-        raise HTTPException(status_code=422, detail="locked_profiles deve essere una mappa")
+async def dash_locked_put(request: Request, user: str = Depends(require_mutation)):
+    """Aggiorna i locked profile con semantica di PATCH.
+
+    AUD0-BE-SET-003: il PUT ricostruiva l'intera mappa dal body, quindi un
+    payload parziale CANCELLAVA i profili dei simboli non inclusi. La
+    cancellazione richiede ora un marcatore esplicito.
+    """
+    body = await read_json_body(request)
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED",
+            "message": "locked_profiles deve essere una mappa"})
+
+    # Il body puo' essere la mappa diretta (legacy) o {profiles, delete, replace}.
+    incoming = body.get("profiles") if isinstance(body.get("profiles"), dict) else {
+        k: v for k, v in body.items() if k not in ("profiles", "delete", "replace", "reason")}
+    to_delete = body.get("delete") or []
+    replace_all = bool(body.get("replace"))
+    reason = str(body.get("reason") or "")[:500]
+
     previous = kv_get("locked_profiles", {}) or {}
-    versioned = {symbol: settings_contract.version_profile(profile, previous.get(symbol), created_by=user)
-                 for symbol, profile in data.items()}
-    kv_set("locked_profiles", versioned)
-    return {"ok": True, "locked_profiles": versioned}
+    if replace_all:
+        # Sostituzione totale: ammessa solo se DICHIARATA, non per omissione.
+        merged = {}
+    else:
+        merged = dict(previous)
+
+    for symbol, profile in incoming.items():
+        merged[symbol] = settings_contract.version_profile(
+            profile, previous.get(symbol), created_by=user)
+
+    removed = []
+    for symbol in to_delete:
+        if symbol in merged:
+            merged.pop(symbol)
+            removed.append(symbol)
+
+    kv_set("locked_profiles", merged)
+    audit_log("locked_profiles.write", actor=user, decision="APPLIED", reason=reason,
+              detail={"updated": sorted(incoming), "removed": removed,
+                      "replace_all": replace_all,
+                      "previous_symbols": sorted(previous)})
+    return {"ok": True, "locked_profiles": merged,
+            "updated": sorted(incoming), "removed": removed,
+            "replace_all": replace_all}
 
 
 # ======================= HELPERS (frontend React) ======================= #
@@ -2479,15 +2669,15 @@ def build_locked_profile(settings: dict, created_by: str = "operator",
 
 @app.put("/api/settings")
 @app.post("/api/settings")
-async def settings_save(request: Request, user: str = Depends(require_user)):
-    data = _validated_settings_patch(await request.json())
+async def settings_save(request: Request, user: str = Depends(require_mutation)):
     # I componenti della dashboard inviano patch parziali (es. solo "strategies"
     # dalla pagina Strategie, o solo i parametri di rischio): facciamo merge sul
     # blob esistente per non azzerare le altre impostazioni lette dall'EA.
-    merged = {**_current_settings(), **data}
-    kv_set("settings", merged)
-    kv_set("settings_schema_version", settings_contract.SCHEMA_VERSION)
-    return {"ok": True, "settings": merged, "schema_version": settings_contract.SCHEMA_VERSION}
+    body = await read_json_body(request)
+    expected = body.pop("expected_revision", None)
+    reason = str(body.pop("reason", ""))
+    return apply_settings_patch(body, actor=user,
+                                expected_revision=expected, reason=reason)
 
 
 @app.get("/api/strategies")
@@ -3299,6 +3489,69 @@ def _guard_search_space(**dimensions) -> int:
         }) from exc
 
 
+# ======================= RETENTION / BACKUP ============================== #
+#: AUD0-DB-014: la directory dei backup. Su Render sta sul disco persistente.
+BACKUP_DIR = os.environ.get("NEXUS_BACKUP_DIR",
+                            str(Path(DB_PATH).resolve().parent / "backups"))
+
+
+@app.get("/api/admin/retention")
+def retention_status(user: str = Depends(require_user)):
+    """Quante righe sono oltre la finestra di conservazione (AUD0-DB-013)."""
+    return {"rules": nexus_retention.retention_report(_conn),
+            "note": "Le classi 'protected' non vengono mai potate "
+                    "automaticamente: sono evidenza di audit."}
+
+
+@app.post("/api/admin/retention/apply")
+async def retention_apply(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    dry_run = bool(body.get("dry_run", True))
+    result = nexus_retention.apply_retention(_conn, dry_run=dry_run)
+    audit_log("admin.retention", actor=user,
+              decision="DRY_RUN" if dry_run else "APPLIED", detail=result)
+    return result
+
+
+@app.post("/api/admin/backup")
+def backup_now(user: str = Depends(require_mutation)):
+    """Backup consistente del database (AUD0-DB-014).
+
+    Il volume persistente NON è un backup: protegge dalla sostituzione del
+    container, non dalla corruzione né dalla cancellazione.
+    """
+    try:
+        created = nexus_retention.backup_database(DB_PATH, BACKUP_DIR)
+    except Exception as exc:
+        raise public_error("BACKUP_FAILED", "backup non riuscito", status=500,
+                           internal=str(exc), context="backup") from exc
+    removed = nexus_retention.cleanup_old_backups(BACKUP_DIR)
+    audit_log("admin.backup", actor=user, decision="CREATED",
+              detail={"path": created["path"], "sha256": created["sha256"],
+                      "pruned": len(removed)})
+    return {**created, "pruned_old_backups": len(removed),
+            "warning": "Backup creato ma NON ancora verificato: esegui "
+                       "/api/admin/backup/drill per provarne il ripristino."}
+
+
+@app.post("/api/admin/backup/drill")
+def backup_drill(user: str = Depends(require_mutation)):
+    """Esercitazione di ripristino: backup, verifica integrità, confronto righe.
+
+    AUD0-DB-014: un backup non testato non è un backup. Questa rotta produce
+    l'evidenza richiesta dal gate di rilascio.
+    """
+    try:
+        result = nexus_retention.restore_drill(DB_PATH, BACKUP_DIR)
+    except Exception as exc:
+        raise public_error("BACKUP_DRILL_FAILED", "drill di ripristino fallito",
+                           status=500, internal=str(exc), context="backup_drill") from exc
+    audit_log("admin.backup_drill", actor=user,
+              decision="PASSED" if result["drill_passed"] else "FAILED",
+              detail={"mismatches": result["mismatches"],
+                      "integrity": result["verification"]["integrity_check"]})
+    return result
+
 # ======================= COMPUTE JOBS ==================================== #
 def _submit_compute_job(job_type: str, payload: dict, fn, *, user: str,
                         engine_version: str = "backtest-1") -> dict:
@@ -3823,11 +4076,19 @@ def calendar(user: str = Depends(require_user)):
         (30, "UK", "medium", "BoE Rate Decision"),
         (50, "US", "high", "FOMC Statement"),
     ]
+    # AUD0-DATA-002: questi eventi sono FABBRICATI relativamente all'ora
+    # corrente. Ogni evento porta la propria etichetta di provenienza, non
+    # solo il flag `demo` a livello di risposta: se la UI mostra la lista
+    # senza leggere l'involucro, l'operatore deve comunque vederlo.
     events = [{"ts": (base + timedelta(hours=h)).isoformat(), "country": ctry,
-               "impact": imp, "title": title, "note": ""}
+               "impact": imp, "title": f"[DEMO] {title}", "note": "evento fittizio",
+               "provenance": "SYNTHETIC_DEMO", "synthetic": True}
               for (h, ctry, imp, title) in raw]
     return {"events": events, "demo": True,
-            "note": "Calendario dimostrativo — collegare un feed news reale in seguito."}
+            "provenance": "SYNTHETIC_DEMO",
+            "usable_for_trading_decisions": False,
+            "note": "Calendario DIMOSTRATIVO: eventi generati, non un feed reale. "
+                    "Non usarlo per decisioni operative."}
 
 
 # ======================= DOWNLOADS ===================================== #
