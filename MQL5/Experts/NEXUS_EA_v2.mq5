@@ -26,6 +26,10 @@
 // (protezioni, history sync, ledger), che vi accodano invece di ritentare
 // in linea con Sleep().
 #include <NEXUS_v1\NXS_Outbox.mqh>
+// AUD0-LEDGER-004/006/010, NXS-TX-002: registro dell'intento di esecuzione.
+// Deve precedere sia i moduli che aprono posizioni sia il ledger che ne
+// ricostruisce identita' e rischio.
+#include <NEXUS_v1\NXS_Intent.mqh>
 #include <NEXUS_v1\NXS_StrategyRegistry.mqh>
 #include <NEXUS_v1\NXS_RuntimeSettings.mqh>
 #include <NEXUS_v1\NXS_Presets.mqh>
@@ -412,6 +416,22 @@ int OnInit(){
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
    NXS_ResetTradesLogIfRequested();   // 17/07 sera - vedi NXS_Logging.mqh, opt-in, mai automatico
+
+   // AUD0-LEDGER-007: il ledger assume "una position = un trade logico", vero
+   // solo sui conti HEDGING. Su netting la position sopravvive ai flip di
+   // direzione: P/L, R e conteggi dei trade diventano silenziosamente falsi, e
+   // grid/piramide/istituzionale non possono nemmeno esistere come gambe
+   // separate. Finora era solo una nota nei commenti: ora e' un rifiuto.
+   ENUM_ACCOUNT_MARGIN_MODE marginMode =
+      (ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE);
+   if(marginMode != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING){
+      PrintFormat("[NEXUS ERROR] conto NON hedging (margin_mode=%s). Il modello "
+                  "'una position = un trade logico' non regge: il ledger, la R "
+                  "e le gambe grid/piramide darebbero numeri falsi. EA fermo.",
+                  EnumToString(marginMode));
+      Alert("NEXUS: conto non hedging — EA non avviato");
+      return INIT_FAILED;
+   }
    // AUD0-SEC-001: prima di QUALSIASI chiamata al backend (il fetch del profilo
    // qui sotto e' la prima) si verifica che il token del bridge non sia il
    // segnaposto pubblico e che l'URL sia HTTPS. Altrimenti la WebSync si spegne.
@@ -596,7 +616,13 @@ void OnTimer(){
       // OnInit) so trades lost to a transient push failure (e.g. backend cold
       // start) still land in the backend even if the EA runs for days without
       // restarting.
-      if(InpEnableWebSync && TimeCurrent() - g_lastHistSyncTime >= InpHistSyncIntervalSec){
+      // AUD0-HSYNC-002: la sync consegna un lotto per chiamata. Finche'
+      // dichiara di avere altro da consegnare si continua al tick di timer
+      // successivo, invece di aspettare l'intervallo pieno e perdere tutto
+      // cio' che eccedeva il primo lotto.
+      if(InpEnableWebSync &&
+         (NXS_HSync_HasMore() ||
+          TimeCurrent() - g_lastHistSyncTime >= InpHistSyncIntervalSec)){
          g_lastHistSyncTime = TimeCurrent();
          NXS_SyncRecentClosedTrades();
       }
@@ -1059,6 +1085,22 @@ void OnTick(){
 //| duplicati, PnL parziale spacciato per PnL del trade). Ora gira    |
 //| UNA volta per position, con i valori AGGREGATI del ledger.        |
 //+------------------------------------------------------------------+
+// NXS-TX-003 — quali effetti di una chiusura sono RIGIOCABILI dopo un periodo
+// offline, e quali no.
+//
+// Prima le chiusure trovate dal resync di boot venivano soltanto loggate: lo
+// stato locale (streak di perdite, anti-revenge, catene, statistiche per
+// strategia) restava fermo a prima del downtime, mentre il backend riceveva
+// comunque i trade dalla history sync. I due lati divergevano in silenzio.
+//
+// Politica, ora esplicita:
+//   RIGIOCABILI  — stato di protezione (streak/anti-revenge), statistiche per
+//                  strategia, catene, riga CSV: descrivono FATTI accaduti e
+//                  devono valere anche se l'EA non era in esecuzione;
+//   NON RIGIOCABILI — notifiche (Telegram/push) e cooldown direzionali basati
+//                  sul tempo: allertare ore dopo l'evento e' rumore, e un
+//                  cooldown partito adesso per un SL di ieri bloccherebbe il
+//                  trading per un motivo gia' esaurito.
 void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // Protezioni loss-streak (anti-revenge, anti-bleed, streak sizing):
    // ESATTAMENTE una volta per trade logico, con il PnL AGGREGATO
@@ -1071,13 +1113,22 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    if(reason == "unknown") reason = (tc.pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;
 
    // v2.0.33 — post-SL directional cooldown (invariato, ma ora scatta solo
-   // quando il trade e' davvero finito in SL, non su un parziale qualunque)
-   if(reason == "sl")
+   // quando il trade e' davvero finito in SL, non su un parziale qualunque).
+   // NXS-TX-003: NON rigiocabile — il cooldown e' una finestra temporale che
+   // per una chiusura offline e' gia' scaduta.
+   if(reason == "sl" && !tc.from_boot)
       NXS_RegisterSLClose((tc.side == "BUY") ? DIR_BUY : DIR_SELL);
 
    double holdSec = (double)((long)tc.close_time - (long)tc.open_time);
-   double rMult   = NXS_Ledger_RMultiple(tc);
+   // AUD0-LEDGER-005: quando il rischio iniziale non e' ricostruibile la R non
+   // esiste. Prima veniva forzata a +1/-1 e finiva comunque in statistiche e
+   // ranking: expectancy e win rate in R misuravano un sistema inventato.
+   bool   hasR    = NXS_Ledger_HasR(tc);
+   double rMult   = hasR ? NXS_Ledger_RMultiple(tc) : 0.0;
    string tf      = EnumToString(NXS_Profile_TF(tc.strategy));
+   if(!hasR)
+      PrintFormat("[NEXUS LEDGER] pos %I64u (%s): rischio iniziale ignoto — "
+                  "trade ESCLUSO dalle statistiche in R", tc.position_id, tc.strategy);
 
    // riga CLOSE unica: lots = volume totale entrato, pnl = realizzato totale,
    // prezzo = VWAP di uscita; i parziali hanno le loro righe PARTIAL.
@@ -1086,7 +1137,7 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
 
    // v2.5.1 PR1: outcome stats registrato QUI (unico punto), non piu' un
    // outcome per ogni deal OUT dentro NXS_Stats_ProcessClosedTrades.
-   NXS_Stats_RecordOutcome(tc.strategy, rMult, tc.score, holdSec);
+   if(hasR) NXS_Stats_RecordOutcome(tc.strategy, rMult, tc.score, holdSec);
 
    NXS_Prot_PushTradeReason(tc.position_id, tc.magic, tc.strategy, tc.side,
                             tc.vol_in, tc.vwap_in, tc.vwap_out, tc.pnl, reason,
@@ -1098,14 +1149,19 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    int closeDir = (tc.side == "BUY") ? +1 : -1;
    NXS_Chain_OnTradeClose(tc.strategy, closeDir, tc.vwap_out, tc.pnl);
 
-   NXS_Notify_TradeClose(tc.strategy, tc.pnl, reason);
+   // NXS-TX-003: non rigiocabile — nessuna notifica per chiusure avvenute
+   // mentre l'EA era spento.
+   if(!tc.from_boot) NXS_Notify_TradeClose(tc.strategy, tc.pnl, reason);
 }
 
 // Svuota la coda delle chiusure logiche (di norma 0 o 1 elemento).
 void NXS_EA_DrainLedger(){
    SNxsLedgerTrade tc;
    while(NXS_Ledger_PopClosed(tc)){
-      if(tc.from_boot) continue;   // riconciliazione boot: gia' loggata in OnInit
+      // NXS-TX-003: le chiusure di boot venivano SCARTATE qui, lasciando lo
+      // stato locale (streak, statistiche, catene) fermo a prima del downtime
+      // mentre il backend le riceveva comunque. Ora passano dallo stesso
+      // gestore, che decide da solo quali effetti rigiocare.
       NXS_EA_OnLogicalClose(tc);
    }
 }
@@ -1142,12 +1198,20 @@ void OnTradeTransaction(const MqlTradeTransaction& trans,
       double dLots = HistoryDealGetDouble(trans.deal, DEAL_VOLUME);
       double dPx   = HistoryDealGetDouble(trans.deal, DEAL_PRICE);
       string dRsn  = _NXS_HistTrigger(HistoryDealGetInteger(trans.deal, DEAL_REASON));
+      // NXS-TX-002: l'attribuzione del parziale nasceva dal parsing del
+      // commento della posizione — testo che il broker puo' troncare o
+      // riscrivere. Si consulta prima il registro degli intenti, che porta
+      // l'identita' decisa all'esecuzione.
       string strat = "";
-      string cm = NXS_FindPositionOpenComment(posId, "");
-      int p1 = StringFind(cm, "|");
-      if(p1 >= 0){
-         int p2 = StringFind(cm, "|", p1+1);
-         strat = (p2 > p1) ? StringSubstr(cm, p1+1, p2-p1-1) : StringSubstr(cm, p1+1);
+      SNxsIntent pIntent;
+      if(NXS_Intent_ByPosition(posId, pIntent)) strat = pIntent.strategy;
+      if(strat == ""){
+         string cm = NXS_FindPositionOpenComment(posId, "");
+         int p1 = StringFind(cm, "|");
+         if(p1 >= 0){
+            int p2 = StringFind(cm, "|", p1+1);
+            strat = (p2 > p1) ? StringSubstr(cm, p1+1, p2-p1-1) : StringSubstr(cm, p1+1);
+         }
       }
       NXS_LogTradeCSV("PARTIAL", posId, strat, dPx, dLots, 0, 0, realizedDelta,
                       dRsn, 0, 0, EnumToString(NXS_Profile_TF(strat)));

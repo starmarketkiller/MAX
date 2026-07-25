@@ -42,6 +42,16 @@
 
 #define NXS_LEDGER_MAX_EMITTED 8192   // cap FIFO dell'emitted-set persistito
 
+// AUD0-LEDGER-001: il cap FIFO da solo lega la garanzia exactly-once al
+// NUMERO di chiusure, non al tempo. Con 8192 finali una position vecchia usciva
+// dall'insieme e poteva essere ri-emessa se rientrava nella finestra di
+// resync. La ritenzione e' ora anche TEMPORALE: si scartano per prime le
+// entry piu' vecchie della finestra di ricostruzione, non le piu' vecchie in
+// senso assoluto.
+#define NXS_LEDGER_EMITTED_KEEP_DAYS 400
+#define NXS_LEDGER_FILE_MAGIC  0x4E584C31   // "NXL1"
+#define NXS_LEDGER_FILE_VER    2
+
 // ----- snapshot aggregato di un trade logico (da history) -----
 struct SNxsLedgerTrade {
    ulong    position_id;
@@ -55,7 +65,12 @@ struct SNxsLedgerTrade {
    double   vwap_in;        // prezzo medio pesato di ingresso
    double   vwap_out;       // prezzo medio pesato di uscita
    double   pnl;            // profit+swap+commission REALIZZATI (tutti gli OUT)
-   double   risk_money;     // |open-SL| del primo IN in valuta (0 se SL assente)
+   double   risk_money;     // rischio iniziale in valuta, sommato su TUTTI gli IN con SL
+   bool     risk_known;     // AUD0-LEDGER-005: false => R non calcolabile, MAI inventata
+   bool     risk_partial;   // almeno un ingresso senza stop noto => rischio incompleto
+   bool     risk_from_intent;      // rischio deciso all'esecuzione, non dedotto
+   bool     identity_from_comment; // strategia ricavata dal commento (meno affidabile)
+   ulong    group_id;       // AUD0-LEDGER-010: sequenza logica (core+grid+pyramid)
    datetime open_time;      // primo IN
    datetime close_time;     // ultimo OUT
    string   close_reason;   // trigger dell'ultimo OUT (sl/tp/stop_out/expert/…)
@@ -76,8 +91,29 @@ struct SNxsLedgerState {
 
 SNxsLedgerState g_ledgerState[];
 ulong           g_ledgerEmitted[];      // position_id gia' notificate (persistito)
+datetime        g_ledgerEmittedAt[];    // istante di emissione, parallelo al precedente
 SNxsLedgerTrade g_ledgerClosedQ[];      // coda FIFO delle chiusure logiche
 bool            g_ledgerNettingWarned = false;
+
+// AUD0-LEDGER-003: il caricamento corrotto usciva in silenzio, lasciando il
+// ledger convinto di non aver mai emesso nulla — cioe' pronto a ri-emettere
+// ogni chiusura come nuova. Ora lo stato degradato e' esplicito, viene
+// segnalato e accompagna gli eventi verso il backend, che puo' trattarli come
+// sospetti invece di fidarsi.
+bool   g_ledgerDegraded = false;
+string g_ledgerDegradedReason = "";
+
+void NXS_Ledger_MarkDegraded(string why){
+   if(g_ledgerDegraded) return;
+   g_ledgerDegraded = true;
+   g_ledgerDegradedReason = why;
+   PrintFormat("[NEXUS LEDGER][ALERT] stato anti-doppione DEGRADATO: %s. "
+               "Le chiusure gia' notificate potrebbero essere rinviate: la "
+               "deduplica resta garantita dal backend sul trade_uid.", why);
+}
+
+bool   NXS_Ledger_IsDegraded()      { return g_ledgerDegraded; }
+string NXS_Ledger_DegradedReason()  { return g_ledgerDegradedReason; }
 
 // ---------------------------------------------------------------- utils ----
 double _nxs_ledger_volEps(string sym){
@@ -96,41 +132,198 @@ bool NXS_Ledger_Emitted(ulong posId){
    return false;
 }
 
+void _nxs_ledger_dropEmittedAt(int idx){
+   int n = ArraySize(g_ledgerEmitted);
+   if(idx < 0 || idx >= n) return;
+   for(int i = idx; i < n - 1; i++){
+      g_ledgerEmitted[i]   = g_ledgerEmitted[i + 1];
+      g_ledgerEmittedAt[i] = g_ledgerEmittedAt[i + 1];
+   }
+   ArrayResize(g_ledgerEmitted,   n - 1);
+   ArrayResize(g_ledgerEmittedAt, n - 1);
+}
+
+//: AUD0-LEDGER-001 — potatura per ETA' prima che per numero.
+int _nxs_ledger_pruneEmittedByAge(){
+   datetime cutoff = TimeCurrent() - (long)NXS_LEDGER_EMITTED_KEEP_DAYS * 86400;
+   int dropped = 0;
+   for(int i = ArraySize(g_ledgerEmitted) - 1; i >= 0; i--){
+      if(g_ledgerEmittedAt[i] > 0 && g_ledgerEmittedAt[i] < cutoff){
+         _nxs_ledger_dropEmittedAt(i);
+         dropped++;
+      }
+   }
+   return dropped;
+}
+
 void _nxs_ledger_markEmitted(ulong posId){
    if(NXS_Ledger_Emitted(posId)) return;
    int n = ArraySize(g_ledgerEmitted);
    if(n >= NXS_LEDGER_MAX_EMITTED){
-      // FIFO trim: scarta SEMPRE il piu' vecchio. Shift esplicito: la
-      // self-ArrayCopy sovrapposta non ha semantica memmove garantita (F2).
-      for(int i = 1; i < n; i++) g_ledgerEmitted[i - 1] = g_ledgerEmitted[i];
-      ArrayResize(g_ledgerEmitted, n - 1);
-      n--;
+      // Prima si liberano le entry OLTRE la finestra di ricostruzione: quelle
+      // non possono piu' rientrare in un resync, quindi scartarle non crea
+      // doppioni. Solo se non ne esistono si ricade sul trim FIFO cieco.
+      if(_nxs_ledger_pruneEmittedByAge() == 0){
+         PrintFormat("[NEXUS LEDGER] emitted-set pieno (%d) con tutte le entry "
+                     "recenti: si scarta la piu' vecchia (pos %I64u). La "
+                     "deduplica di quella chiusura resta al backend.",
+                     n, g_ledgerEmitted[0]);
+         _nxs_ledger_dropEmittedAt(0);
+      }
+      n = ArraySize(g_ledgerEmitted);
    }
-   ArrayResize(g_ledgerEmitted, n + 1);
-   g_ledgerEmitted[n] = posId;
+   ArrayResize(g_ledgerEmitted,   n + 1);
+   ArrayResize(g_ledgerEmittedAt, n + 1);
+   g_ledgerEmitted[n]   = posId;
+   g_ledgerEmittedAt[n] = TimeCurrent();
 }
 
 // Persistenza SOLO live: nel tester ogni run parte pulita e non esistono
 // restart a meta' run; un file condiviso inquinerebbe i backtest.
+//: Checksum semplice ma sufficiente a rilevare troncamenti e byte corrotti.
+long _nxs_ledger_checksum(int n){
+   long sum = (long)NXS_LEDGER_FILE_MAGIC ^ (long)NXS_LEDGER_FILE_VER ^ (long)n;
+   for(int i = 0; i < n; i++){
+      sum = (sum * 1000003) ^ (long)g_ledgerEmitted[i];
+      sum = (sum * 1000003) ^ (long)g_ledgerEmittedAt[i];
+   }
+   return sum;
+}
+
+// AUD0-LEDGER-002: il ledger scriveva DIRETTAMENTE sul file definitivo. Un
+// crash a meta' scrittura lasciava un file troncato — e con esso uno stato
+// anti-doppione parziale, senza alcun modo di accorgersene.
+//
+// Si adotta lo stesso schema gia' usato da NXS_State: scrittura su file
+// temporaneo, copia precedente conservata, sostituzione atomica, header con
+// magic/versione/conteggio e checksum a chiusura.
 void NXS_Ledger_Persist(){
    if(MQLInfoInteger(MQL_TESTER)) return;
-   int h = FileOpen(_nxs_ledger_emittedFile(), FILE_WRITE|FILE_BIN);
-   if(h == INVALID_HANDLE) return;
+   string finalName = _nxs_ledger_emittedFile();
+   string tmpName   = finalName + ".tmp";
+   string prevName  = finalName + ".prev";
+
    int n = ArraySize(g_ledgerEmitted);
+   if(ArraySize(g_ledgerEmittedAt) != n) ArrayResize(g_ledgerEmittedAt, n);
+
+   int h = FileOpen(tmpName, FILE_WRITE|FILE_BIN);
+   if(h == INVALID_HANDLE){
+      NXS_Ledger_MarkDegraded(StringFormat("scrittura di %s fallita (err=%d)",
+                                           tmpName, GetLastError()));
+      return;
+   }
+   FileWriteInteger(h, NXS_LEDGER_FILE_MAGIC, INT_VALUE);
+   FileWriteInteger(h, NXS_LEDGER_FILE_VER,   INT_VALUE);
    FileWriteInteger(h, n, INT_VALUE);
-   for(int i = 0; i < n; i++) FileWriteLong(h, (long)g_ledgerEmitted[i]);
+   for(int i = 0; i < n; i++){
+      FileWriteLong(h, (long)g_ledgerEmitted[i]);
+      FileWriteLong(h, (long)g_ledgerEmittedAt[i]);
+   }
+   FileWriteLong(h, _nxs_ledger_checksum(n));
+   FileFlush(h);
    FileClose(h);
+
+   // La copia precedente resta disponibile finche' la nuova non e' al suo posto.
+   if(FileIsExist(finalName)){
+      FileDelete(prevName);
+      FileMove(finalName, 0, prevName, FILE_REWRITE);
+   }
+   if(!FileMove(tmpName, 0, finalName, FILE_REWRITE)){
+      NXS_Ledger_MarkDegraded(StringFormat("sostituzione atomica fallita (err=%d)",
+                                           GetLastError()));
+      // Ripristina la copia precedente: meglio lo stato vecchio che nessuno.
+      if(FileIsExist(prevName)) FileMove(prevName, 0, finalName, FILE_REWRITE);
+   }
+}
+
+//: Legge un singolo file dell'emitted-set. false = assente o non integro.
+bool _nxs_ledger_readEmittedFile(string name, string &why){
+   why = "";
+   if(!FileIsExist(name)){ why = "assente"; return false; }
+   int h = FileOpen(name, FILE_READ|FILE_BIN);
+   if(h == INVALID_HANDLE){
+      why = StringFormat("apertura fallita (err=%d)", GetLastError());
+      return false;
+   }
+   int magic = FileReadInteger(h, INT_VALUE);
+   int ver   = FileReadInteger(h, INT_VALUE);
+   int n     = FileReadInteger(h, INT_VALUE);
+   if(magic != NXS_LEDGER_FILE_MAGIC || ver != NXS_LEDGER_FILE_VER){
+      FileClose(h);
+      why = StringFormat("header non riconosciuto (magic=%d ver=%d)", magic, ver);
+      return false;
+   }
+   if(n < 0 || n > NXS_LEDGER_MAX_EMITTED){
+      FileClose(h);
+      why = StringFormat("conteggio fuori scala (%d)", n);
+      return false;
+   }
+   ArrayResize(g_ledgerEmitted,   n);
+   ArrayResize(g_ledgerEmittedAt, n);
+   for(int i = 0; i < n; i++){
+      g_ledgerEmitted[i]   = (ulong)FileReadLong(h);
+      g_ledgerEmittedAt[i] = (datetime)FileReadLong(h);
+   }
+   long stored = FileReadLong(h);
+   FileClose(h);
+
+   long expect = _nxs_ledger_checksum(n);
+   if(stored != expect){
+      ArrayResize(g_ledgerEmitted, 0);
+      ArrayResize(g_ledgerEmittedAt, 0);
+      why = "checksum non corrispondente (file troncato o corrotto)";
+      return false;
+   }
+   return true;
 }
 
 void _nxs_ledger_loadEmitted(){
    if(MQLInfoInteger(MQL_TESTER)) return;
-   int h = FileOpen(_nxs_ledger_emittedFile(), FILE_READ|FILE_BIN);
-   if(h == INVALID_HANDLE) return;
-   int n = FileReadInteger(h, INT_VALUE);
-   if(n < 0 || n > NXS_LEDGER_MAX_EMITTED){ FileClose(h); return; }
-   ArrayResize(g_ledgerEmitted, n);
-   for(int i = 0; i < n; i++) g_ledgerEmitted[i] = (ulong)FileReadLong(h);
-   FileClose(h);
+   string finalName = _nxs_ledger_emittedFile();
+   string why = "";
+
+   if(_nxs_ledger_readEmittedFile(finalName, why)){
+      _nxs_ledger_pruneEmittedByAge();
+      return;
+   }
+
+   // AUD0-LEDGER-003: qui si usciva in silenzio. Ora si tenta la copia
+   // precedente e, se anche quella non regge, lo stato viene dichiarato
+   // degradato invece di fingere un insieme vuoto.
+   string prevName = finalName + ".prev";
+   string why2 = "";
+   if(_nxs_ledger_readEmittedFile(prevName, why2)){
+      _nxs_ledger_pruneEmittedByAge();
+      NXS_Ledger_MarkDegraded(StringFormat(
+         "file corrente non integro (%s): ripristinata la copia precedente, "
+         "le chiusure fra le due potrebbero essere rinviate", why));
+      return;
+   }
+
+   if(why != "assente" || why2 != "assente")
+      NXS_Ledger_MarkDegraded(StringFormat("nessuna copia integra (corrente: %s; "
+                                           "precedente: %s)", why, why2));
+}
+
+// AUD0-LEDGER-008 — la chiave del ledger e' DEAL_POSITION_ID, ma il codice
+// chiedeva al terminale PositionSelectByTicket(position_id). Ticket della
+// position e POSITION_IDENTIFIER coincidono solo finche' la position non viene
+// modificata in modi che le assegnano un nuovo ticket (parziali su alcuni
+// broker, migrazioni di server). Quando divergono, la position risulta
+// "sparita" mentre e' ancora aperta: il ledger dichiara chiuso un trade vivo.
+//
+// Qui la ricerca avviene sull'IDENTIFIER, che e' il campo davvero confrontabile
+// con DEAL_POSITION_ID; il ticket resta come scorciatoia iniziale.
+bool NXS_Ledger_PositionAlive(ulong posId){
+   if(posId == 0) return false;
+   if(PositionSelectByTicket(posId) &&
+      (ulong)PositionGetInteger(POSITION_IDENTIFIER) == posId) return true;
+   for(int i = PositionsTotal() - 1; i >= 0; i--){
+      ulong tk = PositionGetTicket(i);
+      if(tk == 0) continue;
+      if((ulong)PositionGetInteger(POSITION_IDENTIFIER) == posId) return true;
+   }
+   return false;
 }
 
 int _nxs_ledger_stateIdx(ulong posId){
@@ -139,16 +332,41 @@ int _nxs_ledger_stateIdx(ulong posId){
    return -1;
 }
 
+// AUD0-LEDGER-010 — identificativo della SEQUENZA logica.
+//
+// Grid, piramidazioni e recovery istituzionali producono position separate che
+// il ledger contava come trade indipendenti: drawdown, rischio e P/L della
+// campagna risultavano frammentati fra righe scollegate.
+//
+// La fonte autorevole e' il registro degli intenti, che lega ogni gamba alla
+// sequenza decisa all'esecuzione. Se l'intento non c'e' (posizioni aperte
+// prima di questa versione, o registro potato) si ripiega sulla position
+// stessa: comportamento identico al precedente, ma dichiarato.
+ulong NXS_Ledger_GroupId(long magic, string sym, ulong posId){
+   ulong g = NXS_Intent_GroupOf(posId);
+   return (g != 0) ? g : posId;
+}
+
 // --------------------------------------------------- aggregazione pura -----
 // Ricostruisce lo snapshot aggregato del trade logico dai deal in history.
 // Funzione PURA rispetto allo stato del ledger: usata sia dal diff sia da
 // NXS_HistorySync per il resync a livello di trade logico.
-// NB: usa HistorySelectByPosition, che cambia la selezione history globale:
-// i chiamanti che iterano una propria selezione devono ri-selezionare dopo.
+//
+// AUD0-LEDGER-009 — la selezione history di MT5 e' stato GLOBALE condiviso.
+// HistorySelectByPosition la sostituisce, quindi un chiamante che stava
+// iterando la propria finestra si ritrovava, dopo questa chiamata, a scorrere
+// i deal di UN'ALTRA position senza accorgersene. La convenzione era scritta
+// solo in un commento: chi la dimenticava produceva dati sbagliati in silenzio.
+//
+// Il contratto e' ora esplicito e verificabile: si usa
+// NXS_Ledger_AggregateAndRestore() quando esiste una finestra da preservare —
+// ripristina la selezione precedente prima di restituire il controllo.
 bool NXS_Ledger_AggregatePosition(ulong posId, SNxsLedgerTrade &t){
    t.position_id = posId; t.symbol = ""; t.magic = 0; t.strategy = "";
    t.score = 0; t.side = ""; t.vol_in = 0; t.vol_out = 0; t.vwap_in = 0;
-   t.vwap_out = 0; t.pnl = 0; t.risk_money = 0; t.open_time = 0;
+   t.vwap_out = 0; t.pnl = 0; t.risk_money = 0; t.risk_known = false;
+   t.risk_partial = false; t.risk_from_intent = false;
+   t.identity_from_comment = false; t.group_id = 0; t.open_time = 0;
    t.close_time = 0; t.close_reason = "unknown"; t.partial_count = 0;
    t.deal_count = 0; t.from_boot = false;
 
@@ -183,8 +401,31 @@ bool NXS_Ledger_AggregatePosition(ulong posId, SNxsLedgerTrade &t){
          if(t.open_time == 0 || tm < t.open_time) t.open_time = tm;
          ENUM_DEAL_TYPE dt = (ENUM_DEAL_TYPE)HistoryDealGetInteger(d, DEAL_TYPE);
          if(t.side == "") t.side = (dt == DEAL_TYPE_BUY) ? "BUY" : "SELL";
+         // AUD0-LEDGER-006 / NXS-TX-002 — identita' dal registro degli
+         // INTENTI, non dal commento. Il commento e' testo che il broker puo'
+         // troncare o riscrivere: non e' un identificatore. Si consulta prima
+         // l'intento registrato all'invio (chiave: DEAL_ORDER) e solo in sua
+         // assenza si ricade sul vecchio parsing, dichiarandolo.
+         ulong ordTicket = (ulong)HistoryDealGetInteger(d, DEAL_ORDER);
+         SNxsIntent intent;
+         bool haveIntent = (ordTicket != 0 && NXS_Intent_ByOrder(ordTicket, intent));
+         if(haveIntent){
+            NXS_Intent_BindPosition(ordTicket, posId);
+            if(t.strategy == ""){
+               t.strategy = intent.strategy;
+               t.score    = intent.score;
+            }
+            if(intent.risk_money > 0.0){
+               // Rischio DECISO dal sizer per questa gamba: preciso per
+               // costruzione, mentre quello dedotto dallo stop del deal e'
+               // solo una ricostruzione.
+               t.risk_money += intent.risk_money;
+               t.risk_known  = true;
+               t.risk_from_intent = true;
+            }
+         }
          if(t.strategy == ""){
-            // commento stampato da NXS_OpenTrade: "<comment>|<strat>|<score>"
+            // Ripiego storico: commento "<comment>|<strat>|<score>".
             string cm = HistoryDealGetString(d, DEAL_COMMENT);
             int p1 = StringFind(cm, "|");
             if(p1 >= 0){
@@ -194,14 +435,31 @@ bool NXS_Ledger_AggregatePosition(ulong posId, SNxsLedgerTrade &t){
                   t.score    = StringToDouble(StringSubstr(cm, p2 + 1));
                } else t.strategy = StringSubstr(cm, p1 + 1);
             }
+            t.identity_from_comment = (t.strategy != "");
          }
-         if(t.risk_money == 0){
+         // AUD0-LEDGER-004: il rischio veniva preso UNA volta sola, dal primo
+         // deal IN con SL visibile. Scale-in, gambe di grid/recovery e
+         // piramidazioni aggiungevano volume senza aggiungere rischio al
+         // denominatore: la R risultante sottostimava sistematicamente
+         // l'esposizione reale del trade logico.
+         //
+         // Ora il rischio si SOMMA su ogni deal IN che porta un proprio stop.
+         // Se anche un solo IN entra senza stop visibile, il rischio del trade
+         // non e' piu' ricostruibile e viene marcato come ignoto: meglio
+         // "non calcolabile" che un numero plausibile e falso.
+         if(!haveIntent || intent.risk_money <= 0.0){
             double slP = HistoryDealGetDouble(d, DEAL_SL);
             if(price > 0 && slP > 0){
                double tickV  = SymbolInfoDouble(t.symbol, SYMBOL_TRADE_TICK_VALUE);
                double tickSz = SymbolInfoDouble(t.symbol, SYMBOL_TRADE_TICK_SIZE);
-               if(tickSz > 0)
-                  t.risk_money = (MathAbs(price - slP) / tickSz) * tickV * v;
+               if(tickSz > 0){
+                  t.risk_money += (MathAbs(price - slP) / tickSz) * tickV * v;
+                  t.risk_known  = true;
+               } else {
+                  t.risk_partial = true;
+               }
+            } else {
+               t.risk_partial = true;   // ingresso senza stop noto in questo deal
             }
          }
       }
@@ -222,25 +480,63 @@ bool NXS_Ledger_AggregatePosition(ulong posId, SNxsLedgerTrade &t){
       }
    }
    t.partial_count = (outCount > 0) ? outCount - 1 : 0;
+
+   // AUD0-LEDGER-004: il rischio e' noto solo se OGNI ingresso ha contribuito.
+   // Un solo scale-in senza stop rende l'aggregato non rappresentativo.
+   if(t.risk_money <= 0.0) t.risk_known = false;
+   else if(t.risk_partial && !t.risk_from_intent) t.risk_known = false;
+
+   // AUD0-LEDGER-010: identificativo di SEQUENZA. Grid, piramidazioni e
+   // recovery istituzionali producono position separate che il ledger
+   // trattava come trade logici scollegati: drawdown, rischio e P/L della
+   // sequenza risultavano frammentati. Il group_id lega le gambe alla stessa
+   // campagna, cosi' il backend puo' ricomporle senza indovinare.
+   t.group_id = NXS_Ledger_GroupId(t.magic, t.symbol, posId);
+
    return (t.vol_in > 0 || t.vol_out > 0);
+}
+
+//: AUD0-LEDGER-009 — aggrega e RIPRISTINA la finestra history del chiamante.
+//: Da usare da ogni scansione che itera una propria HistorySelect(from,to).
+bool NXS_Ledger_AggregateAndRestore(ulong posId, SNxsLedgerTrade &t,
+                                    datetime from, datetime to){
+   bool ok = NXS_Ledger_AggregatePosition(posId, t);
+   // Il ripristino avviene SEMPRE, anche quando l'aggregazione fallisce:
+   // altrimenti l'errore lascerebbe il chiamante su una selezione altrui.
+   if(!HistorySelect(from, to))
+      PrintFormat("[NEXUS LEDGER] ripristino della finestra history fallito "
+                  "(%s..%s): il chiamante deve ri-selezionare",
+                  TimeToString(from), TimeToString(to));
+   return ok;
 }
 
 // Il trade logico e' chiuso quando tutto il volume e' uscito E la position
 // non esiste piu' (doppio controllo: il solo volume soffre di arrotondamenti,
 // la sola sparizione della position soffre di race col terminale).
 bool NXS_Ledger_IsClosed(const SNxsLedgerTrade &t){
-   if(t.vol_in <= 0) return (t.vol_out > 0 && !PositionSelectByTicket(t.position_id));
+   // AUD0-LEDGER-008: confronto sull'IDENTIFIER, non sul ticket.
+   if(t.vol_in <= 0) return (t.vol_out > 0 && !NXS_Ledger_PositionAlive(t.position_id));
    bool volDone = (t.vol_out >= t.vol_in - _nxs_ledger_volEps(t.symbol));
-   return volDone && !PositionSelectByTicket(t.position_id);
+   return volDone && !NXS_Ledger_PositionAlive(t.position_id);
 }
 
-// R-multiple aggregata del trade logico: PnL totale / rischio iniziale.
-// Stesso fallback del vecchio _nxs_stats_dealR quando l'SL manca.
+// AUD0-LEDGER-005 — la R non si inventa.
+//
+// Il fallback precedente mappava qualunque esito positivo su +1R e qualunque
+// negativo su -1R quando il rischio non era ricostruibile. Una perdita da 5R e
+// una da 0.2R finivano entrambe a -1R: ogni statistica costruita sopra (win
+// rate in R, expectancy, Sharpe per trade, ranking delle strategie) misurava
+// un sistema che non esiste.
+//
+// Ora l'assenza di rischio noto e' un ESITO: NXS_Ledger_HasR() e' false e il
+// trade va escluso dalle analisi in R, non convertito in un numero comodo.
+bool NXS_Ledger_HasR(const SNxsLedgerTrade &t){
+   return (t.risk_known && t.risk_money > 0.0);
+}
+
 double NXS_Ledger_RMultiple(const SNxsLedgerTrade &t){
-   if(t.risk_money > 0) return t.pnl / t.risk_money;
-   if(t.pnl > 0) return 1.0;
-   if(t.pnl < 0) return -1.0;
-   return 0.0;
+   if(NXS_Ledger_HasR(t)) return t.pnl / t.risk_money;
+   return EMPTY_VALUE;   // R sconosciuta: il chiamante DEVE controllare HasR()
 }
 
 // Nei run lunghi del tester lo stato per-position crescerebbe senza limite:
@@ -271,7 +567,7 @@ int NXS_Ledger_SweepPending(){
    ulong pending[];
    for(int i = ArraySize(g_ledgerState) - 1; i >= 0; i--){
       if(g_ledgerState[i].emitted) continue;
-      if(PositionSelectByTicket(g_ledgerState[i].position_id)) continue;
+      if(NXS_Ledger_PositionAlive(g_ledgerState[i].position_id)) continue;
       int n = ArraySize(pending);
       ArrayResize(pending, n + 1);
       pending[n] = g_ledgerState[i].position_id;

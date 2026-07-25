@@ -89,6 +89,14 @@ void NXS_ManagePyramid(SNXSVel &vel){
       bool sent = (type == POSITION_TYPE_BUY)
                   ? NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_PYR")
                   : NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_PYR");
+      if(sent){
+         NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
+                           NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
+                           "pyramid", NXS_Intent_GroupOfTicket(t), g_atr);
+         NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, (long)InpMagic,
+                             (type == POSITION_TYPE_BUY ? +1 : -1),
+                             "PYRAMID", sl, sl);
+      }
       PrintFormat("[NEXUS PYRAMID] add %s lots=%.4f sl=%.5f result=%s",
                   (type == POSITION_TYPE_BUY ? "BUY" : "SELL"), lots, sl,
                   (sent ? "SENT" : "FAILED"));

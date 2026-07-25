@@ -147,7 +147,7 @@ void _nxs_inst_scanDir(ENUM_NXS_DIR dir, SNXSInstGroup &g){
 // Una decisione presa in passato non autorizza esposizione futura illimitata:
 // ogni add rivalida lo stato CORRENTE del conto.
 bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
-                   string tag, int level){
+                   string tag, int level, ulong parentTicket = 0){
    double step = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
    if(step <= 0) step = 0.01;
    double vmin = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
@@ -196,6 +196,13 @@ bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
    string cm = StringFormat("%s|%s|%.1f", InpComment, tag, 0.0);
    bool sent = (dir == DIR_BUY) ? NXS_SafeBuy(lots, g_sym, useSL, useTP, cm)
                                 : NXS_SafeSell(lots, g_sym, useSL, useTP, cm);
+   if(sent)
+      // AUD0-LEDGER-010: l'add istituzionale appartiene alla sequenza del
+      // gruppo, non e' un trade indipendente. Il gruppo si eredita dalla
+      // posizione piu' recente gia' censita; se ignota, l'add apre la propria.
+      NXS_Intent_Record(NXS_TradeOrderTicket(), tag, 0.0,
+                        NXS_Intent_RiskMoney(g_sym, refPrice, useSL, lots),
+                        "institutional", NXS_Intent_GroupOfTicket(parentTicket), g_atr);
    if(!sent)
       PrintFormat("[NEXUS INST] ADD FALLITO lvl=%d lots=%.4f retcode=%d",
                   level, lots, NXS_TradeRetcode());
@@ -353,7 +360,8 @@ void _nxs_inst_manageDir(ENUM_NXS_DIR dir){
          } else if(!_nxs_inst_worstCaseOk(dir, g, lots)){
             PrintFormat("[NEXUS INST] ADD BLOCCATO %s: perdita di caso peggiore "
                         "oltre il budget di conto", NXS_DirName(dir));
-         } else if(_nxs_inst_add(dir, lots, g.coreSL, g.coreTP, g.tag, depth + 1)){
+         } else if(_nxs_inst_add(dir, lots, g.coreSL, g.coreTP, g.tag, depth + 1,
+                                 g.lastTicket)){
             PrintFormat("[NEXUS INST] %s ADD lvl=%d lots=%.2f (%s) aggPL=%.2f tot=%.2f",
                         (isGrid ? "GRID" : "RECOVERY"), depth + 1, lots, g.tag,
                         g.aggPL, g.totalLots + lots);

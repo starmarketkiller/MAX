@@ -216,6 +216,11 @@ void NXS_VSL_OnRequested(ulong orderTicket, string sym, long magic, int dir,
    if(!NXS_VSL_Active() || orderTicket == 0) return;
    // virtSL = SL logico (sempre); brokerSL registrato = quello davvero inviato.
    NXS_VSL_PendingAdd(orderTicket, sym, magic, dir, strat, logicalSL, brokerSLused);
+   // NXS-VSL-001: l'intento restava SOLO in memoria fino a una persistenza
+   // successiva o a OnDeinit. Un crash fra l'accettazione dell'ordine e il
+   // primo salvataggio lasciava una posizione riempita SENZA il suo stop
+   // logico: al riavvio nessuno sapeva che quella posizione andava protetta.
+   NXS_VSL_Persist();
 }
 
 // Aggancio "dopo il fill reale": dal deal risale a order+position, matcha il
@@ -232,6 +237,11 @@ void NXS_EA_VirtSL_OnFill(ulong dealTicket){
                           g_NXSeaVSLPend[pidx].magic, g_NXSeaVSLPend[pidx].direction,
                           g_NXSeaVSLPend[pidx].virtSL, g_NXSeaVSLPend[pidx].brokerSL);
    _nxs_vsl_pendRemove(pidx);
+   // NXS-VSL-002: il record ARMATO va su disco subito. Prima la prima
+   // persistenza dipendeva da un cambio di stato successivo o da una chiusura
+   // ordinata del terminale: proprio la finestra in cui la posizione e' viva e
+   // protetta solo dalla memoria.
+   NXS_VSL_Persist();
 }
 
 // ----- macchina a stati PURA (testabile senza broker) -----
@@ -361,12 +371,22 @@ string _nxs_vsl_file(){
                        (long)AccountInfoInteger(ACCOUNT_LOGIN), (long)InpMagic);
 }
 
+// NXS-VSL-005: salute della persistenza, esposta a chi decide se e' sicuro
+// aprire nuova esposizione.
+bool g_vslPersistHealthy = true;
+bool NXS_VSL_PersistHealthy(){ return g_vslPersistHealthy; }
+
 void NXS_VSL_Persist(){
    if(!NXS_VSL_Active()) return;            // OFF: nessun file (baseline)
    if(MQLInfoInteger(MQL_TESTER)) return;   // il tester riparte pulito
    string tmp = _nxs_vsl_file() + ".tmp";
    int h = FileOpen(tmp, FILE_WRITE|FILE_CSV|FILE_ANSI, ';');
-   if(h == INVALID_HANDLE) return;
+   if(h == INVALID_HANDLE){
+      g_vslPersistHealthy = false;
+      PrintFormat("[NEXUS VSL][ALERT] impossibile scrivere lo stato (err=%d)",
+                  GetLastError());
+      return;
+   }
    FileWrite(h, "NXVSL", NXS_VSL_PERSIST_VER,
              (long)AccountInfoInteger(ACCOUNT_LOGIN), (long)InpMagic);
    for(int i = 0; i < ArraySize(g_NXSeaVSL); i++){
@@ -385,8 +405,20 @@ void NXS_VSL_Persist(){
                 DoubleToString(g_NXSeaVSLPend[i].virtSL, g_digits),
                 DoubleToString(g_NXSeaVSLPend[i].brokerSL, g_digits));
    }
+   FileFlush(h);
    FileClose(h);
-   FileMove(tmp, 0, _nxs_vsl_file(), FILE_REWRITE);   // sostituzione atomica
+   // NXS-VSL-005: l'esito di FileMove veniva IGNORATO. Se la sostituzione
+   // falliva, lo stato in memoria risultava "persistito" mentre il file
+   // durevole era rimasto quello vecchio — e nessuno lo sapeva.
+   if(!FileMove(tmp, 0, _nxs_vsl_file(), FILE_REWRITE)){
+      g_vslPersistHealthy = false;
+      PrintFormat("[NEXUS VSL][ALERT] persistenza NON riuscita (err=%d): lo stato "
+                  "dei Virtual SL su disco e' obsoleto. Un riavvio adesso "
+                  "perderebbe gli stop logici piu' recenti.", GetLastError());
+      FileDelete(tmp);
+      return;
+   }
+   g_vslPersistHealthy = true;
 }
 
 // Boot: carica, valida (account+magic+versione), riconcilia con broker/ledger.

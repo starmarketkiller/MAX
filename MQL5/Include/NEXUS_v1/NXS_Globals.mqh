@@ -92,6 +92,10 @@ int      g_flattenAttempts     = 0;
 datetime g_flattenSince        = 0;
 // Equity breaker del RiskShield.
 datetime g_NXSrsBreakerUntil   = 0;
+// AUD0-WEB-008: istante dell'ultimo evento di protezione scattato. Serve al
+// raffreddamento che impedisce di disarmare una protezione da remoto nei
+// minuti immediatamente successivi all'evento che l'ha fatta scattare.
+datetime g_lastProtectionEvent = 0;
 double   g_NXSrsLastSharpe     = 0.0;
 datetime g_dayStart       = 0;
 double g_balanceDayStart  = 0;

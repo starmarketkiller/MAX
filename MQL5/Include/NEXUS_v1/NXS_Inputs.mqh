@@ -471,6 +471,13 @@ input int      InpMarketCloseGMT   = 21;     // ripiego se il broker non espone 
 // modo non sono rappresentativi del comportamento reale.
 input bool     InpTesterProtectionParity = true;  // tester: stesse protezioni del live
 
+// AUD0-STATE-008: la persistenza dello stato era disattivata in blocco nel
+// tester, quindi il comportamento di riavvio/ripresa — inclusa la garanzia
+// "una sola gestione per posizione" e il recupero dopo un crash — non era
+// verificabile da nessuna parte. Attivandolo, lo snapshot usa un nome
+// dedicato al tester e non tocca mai i file del conto reale.
+input bool     InpStatePersistInTester = false;  // tester: abilita snapshot (file separato)
+
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;
 int      InpConfluenceBonus2 = 10;

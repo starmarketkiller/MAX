@@ -52,25 +52,79 @@ string _PositionsJSON(){
    return out;
 }
 
+// AUD0-WEB-013 — la telemetria elencava a mano 16 strategie "classiche"
+// mentre l'EA ne implementa 37: il backend e la dashboard vedevano meno di
+// meta' del sistema, e ogni strategia aggiunta ampliava il divario in
+// silenzio.
+//
+// L'elenco viene ora dal REGISTRO CANONICO generato
+// (contracts/generate_registry.py -> NXS_StrategyIdAt). Questa funzione
+// traduce l'id canonico nel suo interruttore; un id del registro senza
+// mappatura vale false e viene segnalato UNA volta, cosi' la deriva e'
+// visibile invece di restare nascosta.
+bool _NXS_StrategyToggle(string id, bool &mapped){
+   mapped = true;
+   if(id=="ADX_RSI")                  return InpStrat_ADX_RSI;
+   if(id=="BOLLINGER")                return InpStrat_BOLLINGER;
+   if(id=="MACD")                     return InpStrat_MACD;
+   if(id=="SAR")                      return InpStrat_SAR;
+   if(id=="TSI")                      return InpStrat_TSI;
+   if(id=="BJORGUM")                  return InpStrat_BJORGUM;
+   if(id=="LIQ_SWEEP")                return InpStrat_LIQ_SWEEP;
+   if(id=="FVG_CONT")                 return InpStrat_FVG_CONT;
+   if(id=="BREAKOUT_ACC")             return InpStrat_BREAKOUT_ACC;
+   if(id=="LONDON_BO")                return InpStrat_LONDON_BO;
+   if(id=="EMA_PULLBACK")             return InpStrat_EMA_PULLBACK;
+   if(id=="BB_SQUEEZE")               return InpStrat_BB_SQUEEZE;
+   if(id=="ICHIMOKU")                 return InpStrat_ICHIMOKU;
+   if(id=="RSI_DIV")                  return InpStrat_RSI_DIV;
+   if(id=="ORDER_BLOCK")              return InpStrat_ORDER_BLOCK;
+   if(id=="STRUCT_REACT")             return InpUseStructReact;
+   if(id=="TURTLE_SOUP")              return InpStrat_TurtleSoup;
+   if(id=="IFVG")                     return InpStrat_IFVG;
+   if(id=="FVG_MIT")                  return InpStrat_FVG_Mit;
+   if(id=="OB_MIT")                   return InpStrat_OB_Mit;
+   if(id=="SH_BMS_RTO")               return InpStrat_SH_BMS_RTO;
+   if(id=="SMS_BMS_RTO")              return InpStrat_SMS_BMS_RTO;
+   if(id=="SILVER_BULLET")            return InpStrat_SilverBullet;
+   if(id=="AMD_REVERSAL")             return InpStrat_AMD_Reversal;
+   if(id=="OTE_CONT")                 return InpStrat_OTE_Cont;
+   if(id=="MALAYSIAN_SNR")            return InpStrat_MalaysianSNR;
+   if(id=="THREE_BAR_DELIVERY_BREAK") return InpUseStrat_CISD;
+   if(id=="AMD_CONT")                 return InpUseStrat_AMD_Cont;
+   if(id=="JUDAS_SWING")              return InpUseStrat_Judas;
+   if(id=="LDN_REVERSAL")             return InpUseStrat_LdnReversal;
+   if(id=="NY_REVERSAL")              return InpUseStrat_NYReversal;
+   if(id=="WEEKLY_EXP")               return InpUseStrat_WeeklyExp;
+   if(id=="PO3")                      return InpUseStrat_PO3;
+   if(id=="LIQ_VOID")                 return InpUseStrat_LiqVoid;
+   if(id=="DISP_REBAL")               return InpUseStrat_DispRebal;
+   if(id=="ELLIOTT")                  return InpUseStrat_Elliott;
+   if(id=="RANGE_FADE")               return InpUseStrat_RangeFade;
+   mapped = false;
+   return false;
+}
+
+bool g_stratDriftReported = false;
+
 string _StrategiesJSON(){
    string s = "{";
-   s += StringFormat("\"ADX_RSI\":%s,",      (InpStrat_ADX_RSI ? "true":"false"));
-   s += StringFormat("\"BOLLINGER\":%s,",    (InpStrat_BOLLINGER ? "true":"false"));
-   s += StringFormat("\"MACD\":%s,",         (InpStrat_MACD ? "true":"false"));
-   s += StringFormat("\"SAR\":%s,",          (InpStrat_SAR ? "true":"false"));
-   s += StringFormat("\"TSI\":%s,",          (InpStrat_TSI ? "true":"false"));
-   s += StringFormat("\"BJORGUM\":%s,",      (InpStrat_BJORGUM ? "true":"false"));
-   s += StringFormat("\"LIQ_SWEEP\":%s,",    (InpStrat_LIQ_SWEEP ? "true":"false"));
-   s += StringFormat("\"FVG_CONT\":%s,",     (InpStrat_FVG_CONT ? "true":"false"));
-   s += StringFormat("\"BREAKOUT_ACC\":%s,", (InpStrat_BREAKOUT_ACC ? "true":"false"));
-   s += StringFormat("\"LONDON_BO\":%s,",    (InpStrat_LONDON_BO ? "true":"false"));
-   s += StringFormat("\"EMA_PULLBACK\":%s,", (InpStrat_EMA_PULLBACK ? "true":"false"));
-   s += StringFormat("\"BB_SQUEEZE\":%s,",   (InpStrat_BB_SQUEEZE ? "true":"false"));
-   s += StringFormat("\"ICHIMOKU\":%s,",     (InpStrat_ICHIMOKU ? "true":"false"));
-   s += StringFormat("\"RSI_DIV\":%s,",      (InpStrat_RSI_DIV ? "true":"false"));
-   s += StringFormat("\"ORDER_BLOCK\":%s,",   (InpStrat_ORDER_BLOCK ? "true":"false"));
-   s += StringFormat("\"STRUCT_REACT\":%s",   (InpUseStructReact ? "true":"false"));
+   int missing = 0;
+   for(int i = 0; i < NXS_LIVE_STRATEGY_COUNT; i++){
+      string id = NXS_StrategyIdAt(i);
+      if(StringLen(id) == 0) continue;
+      bool mapped = false;
+      bool on = _NXS_StrategyToggle(id, mapped);
+      if(!mapped) missing++;
+      if(i > 0) s += ",";
+      s += StringFormat("\"%s\":%s", id, (on ? "true" : "false"));
+   }
    s += "}";
+   if(missing > 0 && !g_stratDriftReported){
+      g_stratDriftReported = true;
+      PrintFormat("[NEXUS] DERIVA CONTRATTO: %d strategie del registro canonico "
+                  "non hanno un interruttore mappato nella telemetria", missing);
+   }
    return s;
 }
 
@@ -272,6 +326,134 @@ void _NXS_CommandAck(string commandId, string leaseId, string status,
       PrintFormat("[NEXUS] ACK comando %s non confermato (http=%d)", commandId, code);
 }
 
+
+// ===================================================================
+//  AUD0-WEB-003 / AUD0-WEB-008 / AUD0-WEB-010
+//  Igiene dei comandi remoti: anti-replay durevole, scadenza, parsing
+//  validato e approvazione esplicita per i comandi che disarmano le
+//  protezioni.
+// ===================================================================
+#define NXS_CMD_SEEN_MAX      256
+#define NXS_CMD_SAFETY_COOLDOWN 300   // secondi dopo un evento di protezione
+
+string   g_cmdSeenId[];
+string   g_cmdSeenStatus[];
+datetime g_cmdSeenAt[];
+bool     g_cmdSeenLoaded = false;
+
+string _nxs_cmd_seenFile(){
+   return StringFormat("NEXUS_v1_cmd_seen_%I64d_%I64d.txt",
+                       (long)AccountInfoInteger(ACCOUNT_LOGIN), (long)InpMagic);
+}
+
+void _nxs_cmd_seenSave(){
+   if(MQLInfoInteger(MQL_TESTER)) return;
+   int h = FileOpen(_nxs_cmd_seenFile(), FILE_WRITE|FILE_TXT|FILE_ANSI);
+   if(h == INVALID_HANDLE) return;
+   for(int i = 0; i < ArraySize(g_cmdSeenId); i++)
+      FileWriteString(h, g_cmdSeenId[i] + "\t" + g_cmdSeenStatus[i] + "\t" +
+                      IntegerToString((long)g_cmdSeenAt[i]) + "\r\n");
+   FileClose(h);
+}
+
+void _nxs_cmd_seenLoad(){
+   if(g_cmdSeenLoaded) return;
+   g_cmdSeenLoaded = true;
+   if(MQLInfoInteger(MQL_TESTER)) return;
+   if(!FileIsExist(_nxs_cmd_seenFile())) return;
+   int h = FileOpen(_nxs_cmd_seenFile(), FILE_READ|FILE_TXT|FILE_ANSI);
+   if(h == INVALID_HANDLE) return;
+   while(!FileIsEnding(h)){
+      string line = FileReadString(h);
+      string parts[];
+      if(StringSplit(line, '\t', parts) < 3) continue;
+      int n = ArraySize(g_cmdSeenId);
+      if(n >= NXS_CMD_SEEN_MAX) break;
+      ArrayResize(g_cmdSeenId, n + 1);
+      ArrayResize(g_cmdSeenStatus, n + 1);
+      ArrayResize(g_cmdSeenAt, n + 1);
+      g_cmdSeenId[n] = parts[0];
+      g_cmdSeenStatus[n] = parts[1];
+      g_cmdSeenAt[n] = (datetime)StringToInteger(parts[2]);
+   }
+   FileClose(h);
+}
+
+//: Stato terminale gia' registrato per questo comando ("" se mai visto).
+string _nxs_cmd_seenStatus(string id){
+   if(StringLen(id) == 0) return "";
+   _nxs_cmd_seenLoad();
+   for(int i = ArraySize(g_cmdSeenId) - 1; i >= 0; i--)
+      if(g_cmdSeenId[i] == id) return g_cmdSeenStatus[i];
+   return "";
+}
+
+void _nxs_cmd_seenRecord(string id, string status){
+   if(StringLen(id) == 0) return;
+   _nxs_cmd_seenLoad();
+   for(int i = ArraySize(g_cmdSeenId) - 1; i >= 0; i--)
+      if(g_cmdSeenId[i] == id){ g_cmdSeenStatus[i] = status; _nxs_cmd_seenSave(); return; }
+   int n = ArraySize(g_cmdSeenId);
+   if(n >= NXS_CMD_SEEN_MAX){
+      for(int i = 1; i < n; i++){
+         g_cmdSeenId[i-1] = g_cmdSeenId[i];
+         g_cmdSeenStatus[i-1] = g_cmdSeenStatus[i];
+         g_cmdSeenAt[i-1] = g_cmdSeenAt[i];
+      }
+      n--;
+      ArrayResize(g_cmdSeenId, n); ArrayResize(g_cmdSeenStatus, n); ArrayResize(g_cmdSeenAt, n);
+   }
+   ArrayResize(g_cmdSeenId, n + 1);
+   ArrayResize(g_cmdSeenStatus, n + 1);
+   ArrayResize(g_cmdSeenAt, n + 1);
+   g_cmdSeenId[n] = id; g_cmdSeenStatus[n] = status; g_cmdSeenAt[n] = TimeCurrent();
+   _nxs_cmd_seenSave();
+}
+
+//: AUD0-WEB-008 — traccia locale IMMUTABILE (append-only) delle azioni che
+//: disarmano una protezione. L'audit del backend non basta: se il backend e'
+//: compromesso o irraggiungibile, quella traccia non esiste.
+void _nxs_cmd_auditLocal(string action, string id, string actor, string reason, string outcome){
+   if(MQLInfoInteger(MQL_TESTER)) return;
+   int h = FileOpen("NEXUS_v1_command_audit.log", FILE_READ|FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_SHARE_READ);
+   if(h == INVALID_HANDLE) return;
+   FileSeek(h, 0, SEEK_END);
+   FileWriteString(h, StringFormat("%s\t%I64d\t%s\t%s\t%s\t%s\t%s\r\n",
+                   TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
+                   (long)AccountInfoInteger(ACCOUNT_LOGIN), g_sym,
+                   action, id, actor + "|" + reason, outcome));
+   FileClose(h);
+}
+
+//: AUD0-WEB-010 — lettura di un booleano JSON, senza assumerne la presenza.
+bool _NXS_JsonBool(string resp, string key, bool &found){
+   found = false;
+   string needle = "\"" + key + "\":";
+   int p = StringFind(resp, needle);
+   if(p < 0) return false;
+   int s = p + StringLen(needle);
+   while(s < StringLen(resp) && StringGetCharacter(resp, s) == ' ') s++;
+   if(StringSubstr(resp, s, 4) == "true"){ found = true; return true; }
+   if(StringSubstr(resp, s, 5) == "false"){ found = true; return false; }
+   return false;
+}
+
+//: AUD0-WEB-010 — un campo che compare PIU' VOLTE rende il payload ambiguo:
+//: il parser a scansione prenderebbe la prima occorrenza, un altro lettore la
+//: seconda. Meglio rifiutare che indovinare.
+bool _NXS_JsonKeyDuplicated(string resp, string key){
+   string needle = "\"" + key + "\":";
+   int first = StringFind(resp, needle);
+   if(first < 0) return false;
+   return (StringFind(resp, needle, first + StringLen(needle)) >= 0);
+}
+
+//: I comandi che disarmano una protezione sono trattati a parte.
+bool _nxs_cmd_isSafetyReset(string action){
+   return (action == "reset_anti_revenge" || action == "reset_daily" ||
+           action == "reset_protections");
+}
+
 void NXS_WebPoll(){
    if(!InpEnableWebSync) return;
    if(TimeCurrent() - g_lastPollTime < InpPollIntervalSec) return;
@@ -318,6 +500,82 @@ void NXS_WebPoll(){
       _NXS_CommandAck(commandId, leaseId, "FAILED_FINAL",
                       "target mismatch", 0, 0);
       return;
+   }
+
+   // AUD0-WEB-010 — il payload viene VALIDATO prima di agire. Prima ogni
+   // campo era estratto per scansione di stringa: un campo ripetuto, un
+   // numero malformato o una struttura inattesa producevano un'esecuzione
+   // silenziosamente diversa da quella richiesta.
+   if(StringLen(commandId) == 0){
+      Print("[NEXUS] comando RIFIUTATO: manca command_id (payload non conforme)");
+      return;
+   }
+   string dupKeys[] = {"action", "command_id", "ticket", "volume", "expires_at"};
+   for(int dk = 0; dk < ArraySize(dupKeys); dk++){
+      if(_NXS_JsonKeyDuplicated(resp, dupKeys[dk])){
+         PrintFormat("[NEXUS] comando %s RIFIUTATO: campo '%s' duplicato nel payload",
+                     commandId, dupKeys[dk]);
+         _NXS_CommandAck(commandId, leaseId, "FAILED_FINAL",
+                         "payload ambiguo: campo duplicato", 0, 0);
+         return;
+      }
+   }
+
+   // AUD0-WEB-003 — ANTI-REPLAY DUREVOLE. L'EA non teneva alcuna traccia dei
+   // comandi gia' eseguiti: una riconsegna dal backend ripeteva l'azione, e
+   // per close_all o reset_daily questo significa ripetere un effetto
+   // distruttivo. Lo stato terminale e' persistito e la riconsegna riceve lo
+   // stesso ACK senza rieseguire nulla.
+   string prior = _nxs_cmd_seenStatus(commandId);
+   if(StringLen(prior) > 0){
+      PrintFormat("[NEXUS] comando %s gia' eseguito (%s): riconsegna ignorata",
+                  commandId, prior);
+      _NXS_CommandAck(commandId, leaseId, prior, "replay: esito precedente", 0, 0);
+      return;
+   }
+
+   // AUD0-WEB-003 — SCADENZA. Un comando rimasto in coda durante un'interruzione
+   // di rete puo' arrivare quando non ha piu' senso (es. "chiudi tutto" per una
+   // condizione di mercato di un'ora prima).
+   bool hasExp = false;
+   double expAt = _NXS_JsonNum(resp, "expires_at", hasExp);
+   if(hasExp && expAt > 0 && (double)TimeGMT() > expAt){
+      PrintFormat("[NEXUS] comando %s SCADUTO (expires_at=%.0f, ora=%I64d): non eseguito",
+                  commandId, expAt, (long)TimeGMT());
+      _nxs_cmd_seenRecord(commandId, "EXPIRED");
+      _NXS_CommandAck(commandId, leaseId, "EXPIRED", "scaduto prima della consegna", 0, 0);
+      return;
+   }
+
+   // AUD0-WEB-008 — i comandi che DISARMANO una protezione non sono comandi
+   // ordinari: riabilitano il trading subito dopo l'evento che lo aveva
+   // fermato. Servono conferma esplicita, un motivo e un periodo di
+   // raffreddamento; tutto finisce anche in un log locale append-only, che
+   // resta leggibile anche se il backend e' irraggiungibile o compromesso.
+   string cmdActor  = _NXS_JsonStr(resp, "actor");
+   string cmdReason = _NXS_JsonStr(resp, "reason");
+   if(_nxs_cmd_isSafetyReset(action)){
+      bool hasConfirm = false;
+      bool confirmed  = _NXS_JsonBool(resp, "confirmed", hasConfirm);
+      if(!hasConfirm || !confirmed || StringLen(cmdReason) < 3){
+         string why = "reset di protezione senza conferma esplicita o senza motivo";
+         PrintFormat("[NEXUS] comando %s RIFIUTATO: %s", action, why);
+         _nxs_cmd_auditLocal(action, commandId, cmdActor, cmdReason, "RIFIUTATO:" + why);
+         _nxs_cmd_seenRecord(commandId, "FAILED_FINAL");
+         _NXS_CommandAck(commandId, leaseId, "FAILED_FINAL", why, 0, 0);
+         return;
+      }
+      long sinceEvent = (long)TimeCurrent() - (long)g_lastProtectionEvent;
+      if(g_lastProtectionEvent > 0 && sinceEvent < NXS_CMD_SAFETY_COOLDOWN){
+         string why = StringFormat("raffreddamento attivo: %I64d s dall'ultimo evento "
+                                   "di protezione (minimo %d)",
+                                   sinceEvent, NXS_CMD_SAFETY_COOLDOWN);
+         PrintFormat("[NEXUS] comando %s RIFIUTATO: %s", action, why);
+         _nxs_cmd_auditLocal(action, commandId, cmdActor, cmdReason, "RIFIUTATO:" + why);
+         _nxs_cmd_seenRecord(commandId, "FAILED_RETRYABLE");
+         _NXS_CommandAck(commandId, leaseId, "FAILED_RETRYABLE", why, 0, 0);
+         return;
+      }
    }
 
    PrintFormat("[NEXUS] Command received: %s (id=%s)", action, commandId);
@@ -433,6 +691,13 @@ void NXS_WebPoll(){
       detail = "azione non supportata da questa build dell'EA";
       PrintFormat("[NEXUS] comando sconosciuto: %s", action);
    }
+
+   // AUD0-WEB-003: l'esito terminale viene persistito PRIMA dell'ACK. Se la
+   // rete cade subito dopo, la riconsegna trovera' lo stato gia' registrato e
+   // non rieseguira' l'azione.
+   if(status != "FAILED_RETRYABLE") _nxs_cmd_seenRecord(commandId, status);
+   if(_nxs_cmd_isSafetyReset(action))
+      _nxs_cmd_auditLocal(action, commandId, cmdActor, cmdReason, status + ":" + detail);
 
    _NXS_CommandAck(commandId, leaseId, status, detail, closed, remaining);
 }

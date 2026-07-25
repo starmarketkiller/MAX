@@ -88,6 +88,19 @@ bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
       return false;
    }
 
+   // --- (4b) Durabilita' del Virtual SL ------------------------------------
+   // NXS-VSL-006: in modalita' EXECUTE lo stop LOGICO e' applicato dall'EA
+   // mentre al broker arriva uno stop piu' largo. E' una scelta deliberata, ma
+   // regge solo finche' l'EA gira, riceve tick e riesce a persistere il proprio
+   // stato. Se la persistenza e' rotta, aprire nuova esposizione significa
+   // creare posizioni la cui protezione reale e' solo in memoria.
+   if(NXS_VSL_Active() && !NXS_VSL_PersistHealthy()){
+      NXS_GateTelemetry(route, "VSL_DURABILITY", false, 0, 0, "vsl_persist_unhealthy");
+      reason = "vsl_persist_unhealthy: stato Virtual SL non persistibile, "
+               "nessuna nuova esposizione";
+      return false;
+   }
+
    // --- (5) RiskShield -----------------------------------------------------
    string rsReason = "";
    bool rsBlocked = NXS_RS_BlockEntry(g_sym, rsReason);
@@ -387,6 +400,13 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       // registra l'intent pending correlato all'order ticket reale (match al fill)
       NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, magic, vdir,
                           sig.stratName, sig.slPrice, brokerSL);
+      // AUD0-LEDGER-004/006/010: identita' e budget di rischio registrati QUI,
+      // dove sono un fatto. Il ledger non dovra' piu' dedurli dal commento ne'
+      // dallo stop del primo deal. groupId=0 => questa entrata apre una nuova
+      // sequenza logica; le gambe di grid/piramide vi si agganceranno.
+      NXS_Intent_Record(NXS_TradeOrderTicket(), sig.stratName, sig.score,
+                        NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
+                        "primary", 0, g_atr);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);

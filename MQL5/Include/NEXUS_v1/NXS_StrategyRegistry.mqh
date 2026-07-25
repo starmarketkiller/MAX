@@ -54,4 +54,48 @@ bool NXS_StrategyKnown(string strategyId){
           id=="WEEKLY_EXP";
 }
 
+// AUD0-WEB-013: elenco canonico indicizzato (0..NXS_LIVE_STRATEGY_COUNT-1).
+// La telemetria lo usa per dichiarare TUTTE le strategie live, invece di un
+// sottoinsieme scritto a mano che restava indietro a ogni aggiunta.
+string NXS_StrategyIdAt(int i){
+   if(i==0) return "ADX_RSI";
+   if(i==1) return "AMD_CONT";
+   if(i==2) return "AMD_REVERSAL";
+   if(i==3) return "BB_SQUEEZE";
+   if(i==4) return "BJORGUM";
+   if(i==5) return "BOLLINGER";
+   if(i==6) return "BREAKOUT_ACC";
+   if(i==7) return "DISP_REBAL";
+   if(i==8) return "ELLIOTT";
+   if(i==9) return "EMA_PULLBACK";
+   if(i==10) return "FVG_CONT";
+   if(i==11) return "FVG_MIT";
+   if(i==12) return "ICHIMOKU";
+   if(i==13) return "IFVG";
+   if(i==14) return "JUDAS_SWING";
+   if(i==15) return "LDN_REVERSAL";
+   if(i==16) return "LIQ_SWEEP";
+   if(i==17) return "LIQ_VOID";
+   if(i==18) return "LONDON_BO";
+   if(i==19) return "MACD";
+   if(i==20) return "MALAYSIAN_SNR";
+   if(i==21) return "NY_REVERSAL";
+   if(i==22) return "OB_MIT";
+   if(i==23) return "ORDER_BLOCK";
+   if(i==24) return "OTE_CONT";
+   if(i==25) return "PO3";
+   if(i==26) return "RANGE_FADE";
+   if(i==27) return "RSI_DIV";
+   if(i==28) return "SAR";
+   if(i==29) return "SH_BMS_RTO";
+   if(i==30) return "SILVER_BULLET";
+   if(i==31) return "SMS_BMS_RTO";
+   if(i==32) return "STRUCT_REACT";
+   if(i==33) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==34) return "TSI";
+   if(i==35) return "TURTLE_SOUP";
+   if(i==36) return "WEEKLY_EXP";
+   return "";
+}
+
 #endif

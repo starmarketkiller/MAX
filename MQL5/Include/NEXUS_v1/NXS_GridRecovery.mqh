@@ -95,6 +95,17 @@ void NXS_ManageGrid(){
       bool sent = (type == POSITION_TYPE_BUY)
                   ? NXS_SafeBuy(addLots, g_sym, sl, tp, "NEXUS_GRID")
                   : NXS_SafeSell(addLots, g_sym, sl, tp, "NEXUS_GRID");
+      if(sent){
+         // AUD0-LEDGER-010: la gamba eredita la SEQUENZA del core, cosi' il
+         // ledger puo' ricomporre drawdown e P/L della campagna invece di
+         // contare ogni position come un trade a se'.
+         NXS_Intent_Record(NXS_TradeOrderTicket(), "GRID_RECOVERY", 0.0,
+                           NXS_Intent_RiskMoney(g_sym, refPrice, sl, addLots),
+                           "grid", NXS_Intent_GroupOfTicket(t), g_atr);
+         NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, (long)InpMagic,
+                             (type == POSITION_TYPE_BUY ? +1 : -1),
+                             "GRID_RECOVERY", sl, sl);
+      }
       PrintFormat("[NEXUS GRID] add %s lots=%.4f sl=%.5f result=%s",
                   (type == POSITION_TYPE_BUY ? "BUY" : "SELL"), addLots, sl,
                   (sent ? "SENT" : "FAILED"));

@@ -205,6 +205,9 @@ int NXS_Prot_CloseAllWithReason(string reason){
 //: Esegue un flatten e registra se e' rimasta esposizione.
 //: Ritorna true solo quando NON resta piu' nulla di aperto.
 bool NXS_Prot_FlattenAll(string reason){
+   // AUD0-WEB-008: da qui parte il raffreddamento che blocca i reset
+   // remoti delle protezioni nei minuti successivi all'evento.
+   g_lastProtectionEvent = TimeCurrent();
    int closed    = NXS_Prot_CloseAllWithReason(reason);
    int remaining = NXS_Prot_OpenNexusCount();
    if(remaining > 0){

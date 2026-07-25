@@ -373,6 +373,8 @@ def init_db() -> None:
         _record_migration(c, "007_coach_ownership")
         _migrate_bridge_enrollment(c)
         _record_migration(c, "008_bridge_enrollment")
+        _migrate_trade_provenance(c)
+        _record_migration(c, "009_trade_provenance")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -490,6 +492,32 @@ def _migrate_journal_identity(c: sqlite3.Connection) -> None:
               "WHERE trade_uid IS NULL")
     c.execute("CREATE INDEX IF NOT EXISTS idx_journal_meta_uid "
               "ON journal_meta(trade_uid) WHERE trade_uid IS NOT NULL")
+
+
+def _migrate_trade_provenance(c: sqlite3.Connection) -> None:
+    """Rende esplicite sequenza logica e provenienza del rischio.
+
+    AUD0-LEDGER-005 / AUD0-LEDGER-010 / AUD0-HSYNC-006: la tabella `trades`
+    non distingueva un R calcolato da un R INVENTATO (l'EA mappava a ±1R ogni
+    trade senza rischio ricostruibile), e trattava ogni position come un trade
+    indipendente anche quando era una gamba di una sequenza grid/piramide.
+
+    Le colonne sono additive: le righe esistenti restano intatte, con
+    `risk_known` a NULL = provenienza sconosciuta, che le analisi in R devono
+    escludere esattamente come un false.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(trades)")}
+    for name, decl in (
+        ("sequence_id", "TEXT"),
+        ("risk_money", "REAL"),
+        ("risk_known", "INTEGER"),
+        ("risk_source", "TEXT"),
+        ("identity_source", "TEXT"),
+    ):
+        if name not in cols:
+            c.execute(f"ALTER TABLE trades ADD COLUMN {name} {decl}")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_trades_sequence "
+              "ON trades(sequence_id) WHERE sequence_id IS NOT NULL")
 
 
 def _migrate_license_security(c: sqlite3.Connection) -> None:
@@ -1324,6 +1352,15 @@ def ea_command(account_id: str = "", symbol: str = "", magic: Optional[int] = No
         "expires_at": row["expires_at"],
         "attempt": (row["attempt_count"] or 0) + 1,
         "max_attempts": row["max_attempts"] or nexus_policy.MAX_ATTEMPTS,
+        # AUD0-WEB-008: l'EA rifiuta i reset di protezione privi di conferma,
+        # motivo e operatore. Il backend li ha gia' verificati in fase di
+        # accodamento (nexus_policy.build_command): qui vengono TRASMESSI,
+        # perche' l'EA possa applicare la propria politica invece di fidarsi
+        # del solo fatto che il comando sia arrivato.
+        "risk_class": row["risk_class"],
+        "reason": row["reason"] or "",
+        "actor": row["created_by"] or "",
+        "confirmed": bool(nexus_policy.EA_ACTIONS.get(row["action"], {}).get("confirm")),
     }
     if row["payload"]:
         try:
@@ -1541,8 +1578,9 @@ def _upsert_trade(c, t, symbol_fallback=None):
     c.execute(
         "INSERT INTO trades(ticket,symbol,strategy,side,lots,open_price,close_price,"
         "pnl,open_time,close_time,reason,raw,synced_at,"
-        "position_id,trade_uid,partial_count,volume_out,last_event) "
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+        "position_id,trade_uid,partial_count,volume_out,last_event,"
+        "sequence_id,risk_money,risk_known,risk_source,identity_source) "
+        "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
         "ON CONFLICT(ticket) DO UPDATE SET "
         "symbol=COALESCE(excluded.symbol, trades.symbol), "
         "strategy=COALESCE(NULLIF(NULLIF(excluded.strategy, ''), 'UNKNOWN'), trades.strategy), "
@@ -1557,7 +1595,12 @@ def _upsert_trade(c, t, symbol_fallback=None):
         "trade_uid=COALESCE(excluded.trade_uid, trades.trade_uid), "
         "partial_count=COALESCE(excluded.partial_count, trades.partial_count), "
         "volume_out=COALESCE(excluded.volume_out, trades.volume_out), "
-        "last_event=COALESCE(excluded.last_event, trades.last_event)",
+        "last_event=COALESCE(excluded.last_event, trades.last_event), "
+        "sequence_id=COALESCE(excluded.sequence_id, trades.sequence_id), "
+        "risk_money=COALESCE(excluded.risk_money, trades.risk_money), "
+        "risk_known=COALESCE(excluded.risk_known, trades.risk_known), "
+        "risk_source=COALESCE(excluded.risk_source, trades.risk_source), "
+        "identity_source=COALESCE(excluded.identity_source, trades.identity_source)",
         (
             int(ticket), symbol, t.get("strategy"), t.get("side") or t.get("type"),
             _pick(t, "lots", "volume"), open_price,
@@ -1569,6 +1612,15 @@ def _upsert_trade(c, t, symbol_fallback=None):
             _pick(t, "partialCount", "partial_count"),
             _pick(t, "volumeOut", "volume_out"),
             t.get("event"),
+            # AUD0-LEDGER-005/010, AUD0-HSYNC-006: provenienza esplicita.
+            # `risk_known` assente => NULL, cioe' "non dichiarato": le analisi
+            # in R devono trattarlo come sconosciuto, non come vero.
+            _pick(t, "sequenceId", "sequence_id"),
+            _pick(t, "riskMoney", "risk_money"),
+            (None if _pick(t, "riskKnown", "risk_known") is None
+             else int(bool(_pick(t, "riskKnown", "risk_known")))),
+            _pick(t, "riskSource", "risk_source"),
+            _pick(t, "identitySource", "identity_source"),
         ),
     )
     return True
