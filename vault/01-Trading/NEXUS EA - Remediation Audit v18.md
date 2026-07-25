@@ -10,8 +10,8 @@ updated: 2026-07-25
 # NEXUS EA — remediation dell'audit master v18
 
 Revisione completa di `docs/NEXUS_MASTER_PROJECT.md` (15.489 righe, 310 identificatori
-di finding) e implementazione nel codice. Branch: `claude/file-review-complete-rwq562`,
-14 commit.
+di finding) e implementazione nel codice. **Unita in `main` il 25/07/2026**:
+13 commit, avanzamento lineare da `ef807ab` a `3cf2b3b`.
 
 **Sì, il codice è stato modificato davvero** — non è un lavoro di sola
 documentazione. Sotto c'è cosa è cambiato, e soprattutto cosa cambia nel

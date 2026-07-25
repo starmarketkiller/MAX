@@ -9,7 +9,7 @@ updated: 2026-07-25
 
 # DEC — cambi di comportamento dopo la remediation
 
-**Data:** 25/07/2026 · **Stato:** attiva · **Branch:** `claude/file-review-complete-rwq562`
+**Data:** 25/07/2026 · **Stato:** attiva · **In `main` da:** `3cf2b3b`
 
 Elenco dei cambiamenti che **alterano numeri o comportamento osservabile**. Vanno
 letti prima di confrontare qualsiasi risultato nuovo con uno vecchio, e prima di

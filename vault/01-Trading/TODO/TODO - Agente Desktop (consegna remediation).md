@@ -12,8 +12,14 @@ updated: 2026-07-25
 Piano d'azione ordinato per **chi ha accesso alla macchina** (MetaEditor, MT5,
 Docker, terminale). Tutto ciò che non era producibile in ambiente remoto è qui.
 
-Branch da usare: **`claude/file-review-complete-rwq562`** (14 commit, non ancora
-unito a `main`).
+Branch da usare: **`main`** — la remediation è stata unita il 25/07/2026
+(13 commit, avanzamento lineare da `ef807ab` a `3cf2b3b`, nessun merge commit).
+Il branch di lavoro `claude/file-review-complete-rwq562` punta allo stesso commit
+e non serve più.
+
+> ⚠️ `main` è la baseline da cui `DEPLOY.md` fa partire il deploy. `autoDeploy`
+> è **disattivato** in `render.yaml`, quindi questo push non ha messo nulla in
+> produzione da solo. Non attivarlo prima dei punti 1 e 2 qui sotto.
 
 Ordine non arbitrario: 1 è una falla di sicurezza attiva, 2-3 sbloccano tutto il
 resto, il seguito è consolidamento.

@@ -50,8 +50,8 @@ Dettaglio: [[NEXUS EA - Analisi Trade-Level SAR MACD RSI_DIV]].
 🔴 REGREDITA — questa è la scoperta più importante su MACD: sotto v2.4.8 era
 **già validata** (PF 1.11 sui 3 anni, 94 trade). Il "raffinamento" v2.5.0
 basato sullo screening sito (motore Python/Yahoo, non MT5) l'ha resa la
-**seconda peggiore strategia del portafoglio**. Conferma [[NEXUS EA -
-Principi]] #5 su scala molto più ampia: un edge del sito non va sostituito a
+**seconda peggiore strategia del portafoglio**. Conferma
+[[NEXUS EA - Principi]] #5 su scala molto più ampia: un edge del sito non va sostituito a
 una config MT5 già validata senza prima confermarlo su MT5. Da valutare se
 tornare alla config v2.4.8 (SL/TP diversi, vedi log commit) e ri-testare.
 
