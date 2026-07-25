@@ -1,0 +1,53 @@
+# AUD0-DEP-007: il build context non aveva alcun filtro, quindi cache, database
+# locali, artefatti di test e file personali finivano nel contesto di build.
+.git/
+.github/
+.gitignore
+
+# segreti e configurazione locale
+**/.env
+**/.env.*
+!**/.env.example
+LocalBridge/nexus_worker.config.json
+**/*.pem
+**/*.key
+**/*.p12
+
+# database e stato runtime
+*.db
+*.db-wal
+*.db-shm
+server/nexus.db*
+data/
+
+# python
+**/__pycache__/
+**/*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# frontend: nel container serve solo la build già prodotta in server/static/app
+frontend/node_modules/
+frontend/build/
+frontend/.cache/
+
+# artefatti MQL5 compilati e log del tester
+**/*.ex5
+results/
+vault/
+knowledge/
+marketing/
+
+# documentazione e materiale non necessario a runtime
+docs/
+*.md
+!README.md
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

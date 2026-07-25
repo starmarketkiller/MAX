@@ -293,14 +293,35 @@ int NXS_EA_VirtSL_Check(){
    if(!NXS_VSL_Active()) return 0;    // OFF: no-op assoluto
    NXS_VSL_PruneExpiredPending();
    int acted = 0;
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
    uint   now = GetTickCount();
    bool   changed = false;
    for(int i = 0; i < ArraySize(g_NXSeaVSL); i++){
       if(g_NXSeaVSL[i].state == NXS_VSLS_CONFIRMED) continue;
       bool posExists  = PositionSelectByTicket(g_NXSeaVSL[i].positionId);
       bool ledgerFin  = NXS_Ledger_Emitted(g_NXSeaVSL[i].positionId);  // PR1
+
+      // NXS-VSL-003: bid/ask venivano letti UNA volta dal simbolo del grafico
+      // e applicati a ogni record, anche a quelli di un altro simbolo. Un
+      // record poteva quindi scattare sul prezzo sbagliato, o non scattare
+      // quando il proprio simbolo attraversava lo stop.
+      string recSym = g_NXSeaVSL[i].symbol;
+      if(StringLen(recSym) == 0) recSym = g_sym;
+      double bid = SymbolInfoDouble(recSym, SYMBOL_BID);
+      double ask = SymbolInfoDouble(recSym, SYMBOL_ASK);
+      if(bid <= 0 || ask <= 0){
+         PrintFormat("[NXS VirtSL][ALERT] quote non disponibili per %s: record pos=%I64u non valutato",
+                     recSym, g_NXSeaVSL[i].positionId);
+         continue;
+      }
+      // NXS-VSL-004: il record non veniva riconciliato con l'identità reale
+      // della posizione selezionata; un ticket riciclato poteva essere chiuso
+      // sulla base di un record estraneo.
+      if(posExists && PositionGetString(POSITION_SYMBOL) != recSym){
+         PrintFormat("[NXS VirtSL][ALERT] mismatch simbolo pos=%I64u atteso=%s trovato=%s: record ignorato",
+                     g_NXSeaVSL[i].positionId, recSym, PositionGetString(POSITION_SYMBOL));
+         continue;
+      }
+
       bool hit = (g_NXSeaVSL[i].direction == +1)
                   ? (bid <= g_NXSeaVSL[i].virtPrice)
                   : (ask >= g_NXSeaVSL[i].virtPrice);

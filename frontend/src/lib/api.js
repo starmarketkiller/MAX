@@ -11,6 +11,33 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// AUD0-FE-AUTH-003 / AUD0-SEC-008: le mutazioni autenticate via cookie non
+// avevano alcuna difesa CSRF. Il backend emette un cookie `nexus_csrf`
+// leggibile da JS (non e' un segreto di sessione, e' un binding) e pretende
+// di ritrovarne il valore nell'header su ogni richiesta che modifica stato.
+export const CSRF_COOKIE = "nexus_csrf";
+export const CSRF_HEADER = "X-Nexus-Csrf";
+
+export function readCsrfToken() {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${CSRF_COOKIE}=([^;]*)`)
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+const SAFE_METHODS = ["get", "head", "options"];
+
+api.interceptors.request.use((config) => {
+  const method = (config.method || "get").toLowerCase();
+  if (!SAFE_METHODS.includes(method)) {
+    const token = readCsrfToken();
+    if (token) {
+      config.headers = { ...config.headers, [CSRF_HEADER]: token };
+    }
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (r) => r,
   (err) => {

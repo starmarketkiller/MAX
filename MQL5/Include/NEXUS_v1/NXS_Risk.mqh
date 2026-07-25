@@ -40,25 +40,66 @@ double NXS_DynamicScoreThreshold(double base){
 }
 
 // v2.3.6 — sizing con rischio% ESPLICITO (usato dal rischio per-strategia diretto).
+//
+// Contratto di ritorno: 0.0 = "rischio non calcolabile, NON aprire".
+// Prima la funzione restituiva 0.01 in ogni caso degenere, trasformando
+// metadati di mercato mancanti in un ordine reale (AUD0-RISK-001), e forzava
+// il lotto al minimo broker anche quando questo superava il rischio richiesto
+// (AUD0-RISK-002). Entrambi i comportamenti sono stati rimossi.
 double NXS_CalcLotRisk(double slPriceDist, double riskPct){
    double risk = AccountInfoDouble(ACCOUNT_BALANCE) * riskPct / 100.0;
    risk *= NXS_AntiBleedMultiplier();   // P2 anti-bleed scaling
    risk *= NXS_AccountLotMult();        // v2.2.1 aggressivita' + scala da streak
+   if(risk <= 0) return 0.0;
+
    double tickVal  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);
    double tickSize = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_SIZE);
-   if(tickVal <= 0 || tickSize <= 0 || slPriceDist <= 0) return 0.01;
+   if(tickVal <= 0 || tickSize <= 0 || slPriceDist <= 0){
+      PrintFormat("[NEXUS RISK] sizing rifiutato: metadati non validi "
+                  "(tickValue=%.8g tickSize=%.8g slDist=%.8g) sym=%s",
+                  tickVal, tickSize, slPriceDist, g_sym);
+      return 0.0;
+   }
    // v2.0.2b — explicit robust formula (audit-friendly):
    //   lots = risk_money / (ticks_in_SL * value_per_tick)
    double ticksInSL = slPriceDist / tickSize;
-   if(ticksInSL <= 0) return 0.01;
+   if(ticksInSL <= 0) return 0.0;
    double lots = risk / (ticksInSL * tickVal);
+
    double minLot = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
    double maxLot = MathMin(g_run_MaxLot, SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MAX));
    double step   = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
    if(step <= 0) step = 0.01;
-   lots = MathMax(minLot, MathMin(maxLot, lots));
+
+   // AUD0-RISK-003: la precisione va derivata dallo step del simbolo, non
+   // assunta a due decimali (0.001 su alcune crypto/CFD).
+   int volDigits = 2;
+   for(int d = 0; d <= 8; d++){
+      if(MathAbs(step * MathPow(10, d) - MathRound(step * MathPow(10, d))) < 1e-9){
+         volDigits = d;
+         break;
+      }
+   }
+
+   lots = MathMin(maxLot, lots);
    lots = MathFloor(lots / step) * step;
-   return NormalizeDouble(lots, 2);
+   lots = NormalizeDouble(lots, volDigits);
+
+   // AUD0-RISK-002: il clamp verso l'ALTO al minimo broker faceva rischiare
+   // più della percentuale configurata su saldi piccoli o stop larghi. Si
+   // verifica il rischio monetario EFFETTIVO dopo la normalizzazione e, se il
+   // minimo tradabile lo supera, si rifiuta l'ordine.
+   if(lots < minLot){
+      double riskAtMin = (slPriceDist / tickSize) * tickVal * minLot;
+      if(riskAtMin > risk * 1.0000001){
+         PrintFormat("[NEXUS RISK] ordine rifiutato: il lotto minimo (%.4f) "
+                     "rischierebbe %.2f contro un budget di %.2f",
+                     minLot, riskAtMin, risk);
+         return 0.0;
+      }
+      lots = NormalizeDouble(minLot, volDigits);
+   }
+   return lots;
 }
 
 // Rischio globale (default, per strategie senza profilo).

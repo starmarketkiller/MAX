@@ -10,11 +10,22 @@ const READY_FOR_BACKTEST = new Set([
 
 export default function StrategiesPage({ settings, onSave, status }) {
   const { open: openStrategy } = useStrategyHub();
-  const enabled = settings?.strategies || Object.fromEntries(STRAT_LIST.map(([k]) => [k, true]));
+  // AUD0-FE-STRAT-003: quando `settings.strategies` mancava (dati parziali,
+  // errore di rete) la pagina costruiva una mappa con TUTTE le strategie
+  // abilitate. Un salvataggio in quel momento le avrebbe attivate davvero.
+  // Ora l'assenza di configurazione autoritativa blocca il salvataggio.
+  const authoritative = settings?.strategies && typeof settings.strategies === "object"
+    ? settings.strategies
+    : null;
+  const settingsUnavailable = authoritative === null;
+  const enabled = authoritative || Object.fromEntries(STRAT_LIST.map(([k]) => [k, false]));
   const [local, setLocal] = useState(enabled);
   const [familyFilter, setFamilyFilter] = useState("ALL");
+  // AUD0-FE-STRAT-004: il conteggio "live" veniva dallo stato locale non
+  // salvato. Si distingue esplicitamente la bozza dallo stato applicato.
+  const [dirty, setDirty] = useState(false);
 
-  const toggle = (k) => setLocal((s) => ({ ...s, [k]: !s[k] }));
+  const toggle = (k) => { setDirty(true); setLocal((s) => ({ ...s, [k]: !s[k] })); };
   const blocked = status?.newsBlock;
   const activeCount = Object.values(local).filter(Boolean).length;
   const total = STRAT_LIST.length;
@@ -34,7 +45,34 @@ export default function StrategiesPage({ settings, onSave, status }) {
     STRAT_LIST.forEach(([k, , fam]) => {
       if (fam === famId) next[k] = turnOn;
     });
+    setDirty(true);
     setLocal(next);
+  };
+
+  // AUD0-FE-STRAT-002: il salvataggio non elencava le strategie effettivamente
+  // modificate rispetto allo stato salvato.
+  const changes = useMemo(() => (
+    STRAT_LIST
+      .map(([k]) => k)
+      .filter((k) => Boolean(local[k]) !== Boolean(enabled[k]))
+      .map((k) => ({ id: k, from: Boolean(enabled[k]), to: Boolean(local[k]) }))
+  ), [local, enabled]);
+
+  const handleSave = () => {
+    if (settingsUnavailable) return;
+    if (changes.length === 0) return;
+    const turningOn = changes.filter((c) => c.to).map((c) => c.id);
+    const turningOff = changes.filter((c) => !c.to).map((c) => c.id);
+    const lines = [
+      `Confermi ${changes.length} modifica/e alla configurazione strategie?`,
+      turningOn.length ? `ATTIVA (${turningOn.length}): ${turningOn.join(", ")}` : "",
+      turningOff.length ? `DISATTIVA (${turningOff.length}): ${turningOff.join(", ")}` : "",
+      "Le modifiche raggiungono l'EA al prossimo poll delle impostazioni.",
+    ].filter(Boolean);
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(lines.join("\n\n"))) return;
+    onSave({ strategies: local });
+    setDirty(false);
   };
 
   return (
@@ -46,8 +84,17 @@ export default function StrategiesPage({ settings, onSave, status }) {
           </div>
           <h2 className="text-2xl font-semibold tracking-tight mt-1">
             <span className="font-normal text-muted-foreground">{total} engines · </span>
-            {activeCount} <span className="font-normal text-muted-foreground">live</span>
+            {activeCount}{" "}
+            <span className="font-normal text-muted-foreground">
+              {dirty ? "in bozza (non salvate)" : "salvate"}
+            </span>
           </h2>
+          {dirty && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              Stato locale non ancora applicato: l'EA continua a usare la
+              configurazione salvata finché non premi «Save changes».
+            </p>
+          )}
           <p className="text-sm text-muted-foreground mt-1.5">
             Trend {familyCounts.TREND} · Reversal {familyCounts.REVERSAL} · SMC/ICT {familyCounts.SMC} ·{" "}
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
@@ -57,12 +104,21 @@ export default function StrategiesPage({ settings, onSave, status }) {
         </div>
         <button
           data-testid="save-strategies-button"
-          onClick={() => onSave({ strategies: local })}
-          className="h-11 px-6 rounded-lg bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400 text-white text-sm font-semibold shadow-sm transition-colors"
+          onClick={handleSave}
+          disabled={settingsUnavailable || changes.length === 0}
+          className="h-11 px-6 rounded-lg bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Save changes
+          {changes.length > 0 ? `Save ${changes.length} change(s)` : "Save changes"}
         </button>
       </Card>
+
+      {settingsUnavailable && (
+        <div className="rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 px-4 py-2.5 text-sm flex items-center gap-2">
+          <Lock className="h-4 w-4" />
+          Configurazione strategie non disponibile dal backend: il salvataggio è
+          bloccato per non riscrivere lo stato con valori non autoritativi.
+        </div>
+      )}
 
       {blocked && (
         <div className="rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 px-4 py-2.5 text-sm flex items-center gap-2">

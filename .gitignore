@@ -1,28 +1,76 @@
-# secrets / local config
+# ============================================================
+# AUD0-GIT-001: la copertura precedente lasciava scoperti .env di root,
+# artefatti compilati MQL5, cache di test, metadati IDE e certificati locali.
+# ============================================================
+
+# --- secrets / local config -------------------------------------------------
+.env
+.env.*
+!.env.example
 server/.env
+server/.env.*
+!server/.env.example
+frontend/.env.local
+frontend/.env.*.local
 LocalBridge/nexus_worker.config.json
+LocalBridge/*.config.json
 scripts/run_sweep37.ps1
 scripts/*credentials*
 scripts/*.local.ps1
 
-# database
+# certificati e chiavi locali
+*.pem
+*.key
+*.p12
+*.pfx
+
+# --- database e stato runtime ----------------------------------------------
 *.db
 *.db-wal
 *.db-shm
 server/nexus.db*
+data/
 
-# python
+# --- python -----------------------------------------------------------------
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .venv/
 venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
-# os
-.DS_Store
-
-# frontend build tooling
+# --- frontend ---------------------------------------------------------------
 frontend/node_modules/
 frontend/build/
+frontend/.cache/
+frontend/.eslintcache
+.yarn/
+.pnp.*
+npm-debug.log*
+yarn-error.log*
+
+# --- artefatti MQL5 ---------------------------------------------------------
+# I .ex5 compilati non vanno versionati: l'artefatto di rilascio è prodotto
+# dalla pipeline e referenziato per digest (NEXUS-STRAT-002).
+*.ex5
+
+# --- log e output di build --------------------------------------------------
+*.log
+dist/
+out/
 
 # huge raw tester agent logs - not useful data, blow past GitHub limits
 results/reports/*agentlog.log
+
+# --- IDE / OS ---------------------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

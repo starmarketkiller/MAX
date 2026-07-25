@@ -1,7 +1,8 @@
 {
-  "backend_url":   "http://IL-TUO-PC-O-VPS:8001",
-  "bridge_token":  "NEXUS_BRIDGE_TOKEN_2026",
-  "host_id":       "default",
+  "_nota": "Copia in nexus_worker.config.json e sostituisci OGNI valore. Il worker rifiuta di avviarsi con i segnaposto: bridge_token deve essere il token generato dal backend (minimo 24 caratteri) e backend_url deve usare HTTPS.",
+  "backend_url":   "https://il-tuo-backend.example",
+  "bridge_token":  "",
+  "host_id":       "workstation-01",
   "mt5_path":      "C:/Program Files/MetaTrader 5/terminal64.exe",
   "metaeditor":    "C:/Program Files/MetaTrader 5/metaeditor64.exe",
   "mql5_experts":  "C:/Users/TUONOME/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Experts",

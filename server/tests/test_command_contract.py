@@ -85,26 +85,53 @@ def test_expired_lease_retries_then_dead_letters(client):
     assert status["commands"][0]["status"] == "FAILED_FINAL"
 
 
-def test_ea_command_reports_delivery_and_flattens_payload(client):
+def test_ea_command_is_leased_not_consumed(client):
+    """Il polling prende il comando in LEASE, non lo consuma.
+
+    Sostituisce il test precedente, che verificava il comportamento
+    poll-consume: l'audit lo ha classificato P0 (AUD0-CMD-001,
+    AUD0-BE-CMD-006) perché `DELIVERED` prova solo che l'EA ha ricevuto il
+    comando, mentre il record veniva già rimosso dalla coda. Un crash
+    successivo lo perdeva senza che nessuno lo sapesse.
+    """
     created = client.post("/api/command", headers=client.user_headers, json={
-        "action": "close_position", "payload": {"ticket": 42},
+        "action": "close_position",
+        "target": {"account_id": "900001", "symbol": "XAUUSD"},
+        "payload": {"ticket": 42},
+        "confirm": True, "reason": "chiusura richiesta dal test",
     })
-    assert created.status_code == 200
+    assert created.status_code == 200, created.text
     body = created.json()
     assert body["status"] == "PENDING" and body["command_id"] == body["id"]
 
     pending = client.get(f"/api/command/{body['id']}", headers=client.user_headers)
     assert pending.json()["status"] == "PENDING"
+    assert pending.json()["terminal"] is False
 
-    delivered = client.get("/api/ea/command", headers=BRIDGE)
-    assert delivered.status_code == 200
-    assert delivered.json()["status"] == "DELIVERED"
-    assert delivered.json()["ticket"] == 42
-    assert "payload" not in delivered.json()
+    leased = client.get("/api/ea/command", headers=BRIDGE,
+                        params={"account_id": "900001", "symbol": "XAUUSD"})
+    assert leased.status_code == 200
+    leased_body = leased.json()
+    assert leased_body["status"] == "LEASED"
+    assert leased_body["lease_id"]
+    assert leased_body["ticket"] == 42          # payload appiattito
+    assert "payload" not in leased_body
 
     status = client.get(f"/api/command/{body['id']}", headers=client.user_headers).json()
-    assert status["status"] == "DELIVERED"
+    assert status["status"] == "LEASED"
+    # Il punto centrale: consegnato != eseguito.
+    assert status["terminal"] is False
+    assert status["broker_confirmed"] is False
     assert status["delivered_at"] and "+00:00" in status["delivered_at"]
+
+    # Solo l'ACK dell'EA porta il comando a uno stato terminale.
+    ack = client.post("/api/ea/command/ack", headers=BRIDGE, json={
+        "command_id": body["id"], "lease_id": leased_body["lease_id"],
+        "status": "SUCCEEDED", "retcode": 10009,
+    })
+    assert ack.json()["status"] == "SUCCEEDED"
+    final = client.get(f"/api/command/{body['id']}", headers=client.user_headers).json()
+    assert final["terminal"] is True and final["broker_confirmed"] is True
 
 
 def test_ea_command_status_migration_is_additive(tmp_path, monkeypatch):
@@ -119,7 +146,13 @@ def test_ea_command_status_migration_is_additive(tmp_path, monkeypatch):
     with sqlite3.connect(path) as connection:
         row = connection.execute(
             "SELECT status,delivered_at FROM ea_commands WHERE id='old'").fetchone()
-    assert row == ("DELIVERED", None)
+    # I record storici marcati "consumati" vengono riportati a LEASED: la sola
+    # verità dimostrabile è che erano stati consegnati, non eseguiti
+    # (AUD0-CMD-001). Promuoverli a un esito positivo sarebbe una falsa prova.
+    assert row == ("LEASED", None)
+    with sqlite3.connect(path) as connection:
+        applied = {r[0] for r in connection.execute("SELECT migration_id FROM schema_migrations")}
+    assert "003_ea_command_lifecycle" in applied
 
 
 def test_single_worker_source_and_manifest_checksums():

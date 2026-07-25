@@ -38,6 +38,8 @@ import settings_contract
 import settings_schema
 import command_contract
 import ledger_analytics
+import nexus_policy
+import nexus_security
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -45,24 +47,78 @@ from fastapi.staticfiles import StaticFiles
 # --------------------------------------------------------------------------- #
 # Config
 # --------------------------------------------------------------------------- #
+# Ambiente canonico (spec A3.1 §5.1). Determina se i controlli fail-closed sono
+# bloccanti (DEMO/PAPER/LIVE) oppure solo warning (DEVELOPMENT/SIMULATION).
+# Un valore sconosciuto viene trattato come LIVE: il default è il più severo.
+ENVIRONMENT    = nexus_security.normalize_environment(os.environ.get("NEXUS_ENV"))
+HARDENED       = nexus_security.is_hardened(ENVIRONMENT)
+
 BRIDGE_TOKEN   = os.environ.get("NEXUS_BRIDGE_TOKEN", "NEXUS_BRIDGE_TOKEN_2026")
 ADMIN_USER     = os.environ.get("NEXUS_ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.environ.get("NEXUS_ADMIN_PASSWORD", "admin")
-JWT_SECRET     = os.environ.get("NEXUS_JWT_SECRET", "change-me-" + secrets.token_hex(8))
-JWT_HOURS      = int(os.environ.get("NEXUS_JWT_HOURS", "720"))
+_JWT_SECRET_ENV = os.environ.get("NEXUS_JWT_SECRET")
+JWT_SECRET     = _JWT_SECRET_ENV or ("change-me-" + secrets.token_hex(8))
+# AUD0-SEC-002 / AUD0-BE-AUTH-003: il default era 720h (30 giorni) per una
+# sessione che può chiudere posizioni e ridistribuire il rischio.
+JWT_HOURS      = int(os.environ.get("NEXUS_JWT_HOURS", "12"))
 COOKIE_SECURE  = os.environ.get("NEXUS_COOKIE_SECURE", "true").lower() == "true"
 SESSION_COOKIE = "nexus_session"
 DB_PATH        = os.environ.get("NEXUS_DB_PATH", str(Path(__file__).resolve().parent / "nexus.db"))
 TG_BOT_TOKEN   = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TG_CHAT_ID     = os.environ.get("TELEGRAM_CHAT_ID", "")
-LICENSE_MODE   = os.environ.get("NEXUS_LICENSE_MODE", "open")  # open | strict
+# AUD0-DEPLOY-RENDER-001: in produzione la licenza deve fallire chiusa.
+LICENSE_MODE   = os.environ.get("NEXUS_LICENSE_MODE", "strict" if HARDENED else "open")
+
+# AUD0-AI-001 / NEXUS-AI-002: l'AI Coach non ha autorità di esecuzione. Le
+# mutazioni dirette dal Coach sono disabilitate salvo opt-in esplicito, e il
+# preflight le vieta comunque fuori dallo sviluppo.
+COACH_ALLOW_ACTIONS = os.environ.get("NEXUS_COACH_ALLOW_ACTIONS", "false").lower() == "true"
+
+# AUD0-SEC-008: allow-list di Origin per le mutazioni autenticate via cookie.
+ALLOWED_ORIGINS = [o.strip() for o in
+                   os.environ.get("NEXUS_ALLOWED_ORIGINS", "").split(",") if o.strip()]
 
 # AI Coach (API Claude). La chiave va impostata su Render come ANTHROPIC_API_KEY.
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 COACH_MODEL       = os.environ.get("NEXUS_COACH_MODEL", "claude-opus-4-8")
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
-WORKER_FILE = Path(__file__).resolve().parents[1] / "LocalBridge" / "nexus_local_worker.py"
+# AUD0-SEC-012: `server/static` è montata pubblicamente su "/". I file
+# scaricabili (preset, sorgenti, pacchetti) devono stare FUORI da quella radice
+# e passare solo dalla rotta autenticata. `NEXUS_DOWNLOADS_DIR` permette di
+# puntare al percorso usato nell'immagine container.
+PROTECTED_DOWNLOADS_DIR = Path(
+    os.environ.get("NEXUS_DOWNLOADS_DIR",
+                   str(Path(__file__).resolve().parent / "protected" / "downloads"))
+)
+# AUD0-DEP-011: nel container il worker non sta sotto <repo>/LocalBridge.
+# Si cerca prima il percorso interno all'immagine, poi quello del repository.
+_WORKER_CANDIDATES = [
+    Path(os.environ.get("NEXUS_WORKER_FILE", "")) if os.environ.get("NEXUS_WORKER_FILE") else None,
+    Path(__file__).resolve().parent / "protected" / "nexus_local_worker.py",
+    Path(__file__).resolve().parents[1] / "LocalBridge" / "nexus_local_worker.py",
+]
+WORKER_FILE = next((p for p in _WORKER_CANDIDATES if p and p.exists()),
+                   Path(__file__).resolve().parents[1] / "LocalBridge" / "nexus_local_worker.py")
+
+# AUD0-DEP-010: il manifest di deployment vive fuori dal build context ./server.
+_MANIFEST_CANDIDATES = [
+    Path(os.environ.get("NEXUS_DEPLOY_MANIFEST", "")) if os.environ.get("NEXUS_DEPLOY_MANIFEST") else None,
+    Path(__file__).resolve().parent / "protected" / "deployment-manifest.json",
+    Path(__file__).resolve().parents[1] / "deploy" / "deployment-manifest.json",
+]
+DEPLOY_MANIFEST_FILE = next((p for p in _MANIFEST_CANDIDATES if p and p.exists()),
+                            Path(__file__).resolve().parents[1] / "deploy" / "deployment-manifest.json")
+
+# AUD0-MQL-002: l'identità di versione era incoerente tra artefatti. Una sola
+# costante alimenta FastAPI, /api/health e il registro delle migrazioni.
+APP_VERSION = "5.4.0-security-remediation"
+
+# Controlli runtime condivisi.
+LOGIN_LIMITER = nexus_security.RateLimiter()
+SESSIONS = nexus_security.SessionRegistry()
+# AUD0-API-002: nessun limite esplicito sulla dimensione dei body JSON.
+MAX_JSON_BODY_BYTES = int(os.environ.get("NEXUS_MAX_BODY_BYTES", str(512 * 1024)))
 SEED_FILE = Path(__file__).resolve().parent / "seed_results.json"
 SEED_LIBRARY_FILE = Path(__file__).resolve().parent / "seed_library.json"
 SEED_RECIPE_FILE = Path(__file__).resolve().parent / "seed_recipe.json"
@@ -122,6 +178,12 @@ def _conn() -> sqlite3.Connection:
     c = sqlite3.connect(DB_PATH, timeout=10)
     c.row_factory = sqlite3.Row
     c.execute("PRAGMA journal_mode=WAL")
+    # AUD0-DB-004 / NXS-DB-003 / NXS-DB-016: la policy di connessione era
+    # incompleta — nessun enforcement delle foreign key, nessuna politica di
+    # sincronizzazione, nessun busy timeout esplicito.
+    c.execute("PRAGMA foreign_keys=ON")
+    c.execute("PRAGMA synchronous=FULL")
+    c.execute("PRAGMA busy_timeout=10000")
     return c
 
 
@@ -146,6 +208,29 @@ def init_db() -> None:
                 status     TEXT DEFAULT 'PENDING',
                 delivered_at REAL
             );
+            -- AUD0-DB-002 / NXS-DB-002: registro ordinato delle migrazioni.
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+                migration_id TEXT PRIMARY KEY,
+                applied_at   REAL,
+                app_version  TEXT
+            );
+            -- AUD0-AUDIT-001 / NEXUS-SEC-005: audit append-only delle azioni
+            -- privilegiate (attore, target, decisione, motivazione, esito).
+            CREATE TABLE IF NOT EXISTS operator_audit (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at    REAL,
+                actor         TEXT,
+                actor_type    TEXT,
+                action        TEXT,
+                target        TEXT,
+                decision      TEXT,
+                reason        TEXT,
+                detail        TEXT,
+                environment   TEXT,
+                correlation_id TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_operator_audit_created
+                ON operator_audit(created_at DESC);
             CREATE TABLE IF NOT EXISTS trades (
                 ticket     INTEGER PRIMARY KEY,
                 symbol     TEXT,
@@ -263,8 +348,11 @@ def init_db() -> None:
             """
         )
         _migrate_trade_ledger(c)
+        _record_migration(c, "001_trade_ledger")
         _migrate_command_contract(c)
+        _record_migration(c, "002_bridge_command_contract")
         _migrate_ea_command_status(c)
+        _record_migration(c, "003_ea_command_lifecycle")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -318,15 +406,96 @@ def _migrate_command_contract(c: sqlite3.Connection) -> None:
 
 
 def _migrate_ea_command_status(c: sqlite3.Connection) -> None:
-    """Migrazione additiva per ACK di consegna dei comandi EA legacy."""
+    """Migrazione additiva per il ciclo di vita canonico dei comandi EA.
+
+    Chiude AUD0-CMD-001/002, AUD0-BE-CMD-005/006/007 e NXS-BE-CMD-001..003:
+    il canale EA passa da "poll-consume" a lease + ACK con target obbligatorio,
+    scadenza, tentativi e risultato broker — lo stesso modello già usato da
+    LocalBridge, che l'audit indicava come implementazione di riferimento.
+    """
     cols = {row[1] for row in c.execute("PRAGMA table_info(ea_commands)")}
-    if "status" not in cols:
-        c.execute("ALTER TABLE ea_commands ADD COLUMN status TEXT DEFAULT 'PENDING'")
-    if "delivered_at" not in cols:
-        c.execute("ALTER TABLE ea_commands ADD COLUMN delivered_at REAL")
-    c.execute("UPDATE ea_commands SET status='DELIVERED' "
+    additions = {
+        "status": "TEXT DEFAULT 'PENDING'",
+        "delivered_at": "REAL",
+        "schema_version": "INTEGER DEFAULT 1",
+        "target": "TEXT",
+        "account_id": "TEXT",
+        "symbol": "TEXT",
+        "magic": "INTEGER",
+        "risk_class": "TEXT",
+        "reason": "TEXT",
+        "created_by": "TEXT",
+        "idempotency_key": "TEXT",
+        "expires_at": "REAL",
+        "lease_id": "TEXT",
+        "lease_expires_at": "REAL",
+        "attempt_count": "INTEGER DEFAULT 0",
+        "max_attempts": "INTEGER DEFAULT 3",
+        "result": "TEXT",
+        "updated_at": "REAL",
+    }
+    for name, ddl in additions.items():
+        if name not in cols:
+            c.execute(f"ALTER TABLE ea_commands ADD COLUMN {name} {ddl}")
+
+    # Record storici: `consumed=1` significa "l'EA lo ha ritirato", nulla di
+    # più. Vanno portati a LEASED — non a un esito positivo (sarebbe una falsa
+    # prova di esecuzione) e non a PENDING (verrebbero riconsegnati ed
+    # eseguiti una seconda volta).
+    c.execute("UPDATE ea_commands SET status='LEASED' WHERE status='DELIVERED'")
+    c.execute("UPDATE ea_commands SET status='LEASED' "
               "WHERE consumed=1 AND (status IS NULL OR status='' OR status='PENDING')")
-    c.execute("UPDATE ea_commands SET status='PENDING' WHERE status IS NULL OR status='' ")
+    c.execute("UPDATE ea_commands SET status='PENDING' WHERE status IS NULL OR status=''")
+    # AUD0-CMD-004: idempotenza dei comandi distruttivi.
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_ea_cmd_idempotency "
+              "ON ea_commands(idempotency_key) WHERE idempotency_key IS NOT NULL")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_ea_cmd_dispatch "
+              "ON ea_commands(status, account_id, symbol, created_at)")
+
+
+def _record_migration(c: sqlite3.Connection, migration_id: str) -> None:
+    c.execute("INSERT OR IGNORE INTO schema_migrations(migration_id,applied_at,app_version) "
+              "VALUES(?,?,?)", (migration_id, now(), APP_VERSION))
+
+
+def audit_log(action: str, *, actor: str, decision: str, target=None,
+              reason: str = "", detail=None, actor_type: str = "human",
+              correlation_id: str = "") -> None:
+    """Scrive un evento immutabile di audit operatore (AUD0-AUDIT-001).
+
+    Non deve mai far fallire la richiesta chiamante: un audit non scrivibile
+    viene segnalato sui log ma non trasforma un'azione riuscita in un errore.
+    """
+    try:
+        with _conn() as c:
+            c.execute(
+                "INSERT INTO operator_audit(created_at,actor,actor_type,action,target,"
+                "decision,reason,detail,environment,correlation_id) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (now(), actor, actor_type, action,
+                 json.dumps(target or {}, default=str), decision, reason,
+                 json.dumps(detail or {}, default=str), ENVIRONMENT, correlation_id),
+            )
+    except Exception as exc:  # pragma: no cover - difensivo
+        print(f"[NEXUS] audit write failed for {action}: {exc}")
+
+
+async def read_json_body(request: Request) -> dict:
+    """Legge un body JSON applicando un limite di dimensione (AUD0-API-002)."""
+    raw = await request.body()
+    if len(raw) > MAX_JSON_BODY_BYTES:
+        raise HTTPException(status_code=413, detail={
+            "code": "PAYLOAD_TOO_LARGE",
+            "max_bytes": MAX_JSON_BODY_BYTES,
+        })
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail={
+            "code": "VALIDATION_FAILED", "message": "body JSON non valido"}) from exc
+    return data if isinstance(data, dict) else {}
 
 
 def _pick(t: dict, *keys):
@@ -410,36 +579,107 @@ def check_token(x_nexus_token: Optional[str]) -> None:
         raise HTTPException(status_code=401, detail="invalid X-Nexus-Token")
 
 
-def make_jwt(user: str) -> str:
+def make_jwt(user: str, session_id: Optional[str] = None) -> tuple[str, str]:
+    """Emette un JWT con identità di sessione revocabile.
+
+    AUD0-SEC-009 / AUD0-BE-AUTH-005: mancavano `iss`, `aud` e un `jti` su cui
+    basare la revoca. AUD0-AUTH-001: il logout non invalidava il token.
+    """
+    session_id = session_id or nexus_security.new_session_id()
     payload = {
         "sub": user,
+        "jti": session_id,
+        "iss": nexus_security.JWT_ISSUER,
+        "aud": nexus_security.JWT_AUDIENCE,
         "iat": datetime.now(timezone.utc),
         "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_HOURS),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256"), session_id
+
+
+def _decode_session(token: str) -> dict:
+    try:
+        data = jwt.decode(
+            token, JWT_SECRET, algorithms=["HS256"],
+            audience=nexus_security.JWT_AUDIENCE,
+            issuer=nexus_security.JWT_ISSUER,
+            options={"require": ["exp", "sub"]},
+        )
+    except jwt.PyJWTError:
+        # I token emessi prima di questa versione non hanno iss/aud: vanno
+        # rifiutati esplicitamente, non accettati per retrocompatibilità.
+        raise HTTPException(status_code=401, detail="invalid or expired token")
+    if SESSIONS.is_revoked(data.get("jti"), data.get("iat")):
+        raise HTTPException(status_code=401, detail="session revoked")
+    return data
+
+
+def _session_from_request(authorization: Optional[str],
+                          nexus_session: Optional[str]) -> dict:
+    token = None
+    from_cookie = False
+    if authorization and authorization.lower().startswith("bearer "):
+        # AUD0-SEC-007 / AUD0-BE-AUTH-004: il Bearer resta solo per la
+        # dashboard statica legacy e non è accettato in ambienti hardened.
+        if HARDENED:
+            raise HTTPException(status_code=401, detail={
+                "code": "AUTHENTICATION_REQUIRED",
+                "message": "bearer token disabilitato in questo ambiente: usa il cookie di sessione",
+            })
+        token = authorization.split(" ", 1)[1].strip()
+    elif nexus_session:
+        token = nexus_session
+        from_cookie = True
+    if not token:
+        raise HTTPException(status_code=401, detail="not authenticated")
+    data = _decode_session(token)
+    data["_from_cookie"] = from_cookie
+    return data
 
 
 def require_user(authorization: Optional[str] = Header(None),
                  nexus_session: Optional[str] = Cookie(None)) -> str:
-    """Auth dashboard: accetta cookie httpOnly (React) OPPURE Bearer (sito statico)."""
-    token = None
-    if authorization and authorization.lower().startswith("bearer "):
-        token = authorization.split(" ", 1)[1].strip()
-    elif nexus_session:
-        token = nexus_session
-    if not token:
-        raise HTTPException(status_code=401, detail="not authenticated")
-    try:
-        data = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    """Auth dashboard in sola lettura: cookie httpOnly (React) o Bearer legacy."""
+    return _session_from_request(authorization, nexus_session)["sub"]
+
+
+def require_mutation(request: Request,
+                     authorization: Optional[str] = Header(None),
+                     nexus_session: Optional[str] = Cookie(None)) -> str:
+    """Auth per le mutazioni: aggiunge Origin check e token anti-CSRF.
+
+    AUD0-SEC-008 / AUD0-BE-AUTH-007 / AUD0-FE-AUTH-003: le richieste di
+    scrittura autenticate via cookie non avevano alcuna difesa CSRF; il cookie
+    `SameSite=Lax` da solo non copre tutti i casi di navigazione.
+    """
+    data = _session_from_request(authorization, nexus_session)
+
+    if request.method.upper() in nexus_security.SAFE_METHODS:
         return data["sub"]
-    except jwt.PyJWTError:
-        raise HTTPException(status_code=401, detail="invalid or expired token")
+
+    origin = request.headers.get("origin") or ""
+    if not nexus_security.origin_allowed(origin, ALLOWED_ORIGINS):
+        raise HTTPException(status_code=403, detail={
+            "code": "AUTHORIZATION_DENIED",
+            "message": "Origin non consentita per una mutazione",
+        })
+
+    # Il double-submit vale solo per l'autenticazione via cookie: un client
+    # Bearer (EA, script, dashboard statica) non è soggetto a CSRF.
+    if data.get("_from_cookie"):
+        presented = request.headers.get(nexus_security.CSRF_HEADER)
+        if not nexus_security.csrf_token_valid(data.get("jti", ""), JWT_SECRET, presented):
+            raise HTTPException(status_code=403, detail={
+                "code": "CSRF_TOKEN_INVALID",
+                "message": f"header {nexus_security.CSRF_HEADER} mancante o non valido",
+            })
+    return data["sub"]
 
 
 # --------------------------------------------------------------------------- #
 # App
 # --------------------------------------------------------------------------- #
-app = FastAPI(title="NEXUS self-hosted backend", version="5.3.0-polish-batch-dof-spring-constellation")
+app = FastAPI(title="NEXUS self-hosted backend", version=APP_VERSION)
 
 
 def _seed_strategy_results() -> None:
@@ -562,21 +802,103 @@ def _recipe_library_rows(symbol=""):
     return rows
 
 
+def security_preflight() -> nexus_security.PreflightResult:
+    """Valuta la configurazione di avvio (AUD0-SEC-001/004, NEXUS-SEC-001)."""
+    return nexus_security.run_preflight(
+        environment=ENVIRONMENT,
+        bridge_token=BRIDGE_TOKEN,
+        admin_user=ADMIN_USER,
+        admin_password=ADMIN_PASSWORD,
+        jwt_secret=JWT_SECRET,
+        jwt_secret_from_env=bool(_JWT_SECRET_ENV),
+        jwt_hours=JWT_HOURS,
+        license_mode=LICENSE_MODE,
+        cookie_secure=COOKIE_SECURE,
+        db_path=DB_PATH,
+        coach_actions_enabled=COACH_ALLOW_ACTIONS,
+    )
+
+
 @app.on_event("startup")
 def _startup() -> None:
+    # Il preflight gira PRIMA di qualsiasi inizializzazione: in DEMO/PAPER/LIVE
+    # una configurazione con credenziali di default impedisce l'avvio.
+    result = security_preflight()
+    for warning in result.warnings:
+        print(f"[NEXUS][WARN] {warning}")
+    result.raise_for_status()
+
     init_db()
     _seed_strategy_results()
     _seed_backtest_library()
     _seed_recipe()
-    print(f"[NEXUS] backend up — db={DB_PATH} license_mode={LICENSE_MODE}")
+    print(f"[NEXUS] backend up — env={ENVIRONMENT} db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
+    print(f"[NEXUS] coach actions={'ENABLED' if COACH_ALLOW_ACTIONS else 'read-only'}")
 
 
 @app.get("/api/health")
 def health():
-    # coach_configured è non-segreto: dice solo SE la chiave è presente, non il valore.
+    """Liveness: il processo risponde. NON prova che il servizio sia usabile.
+
+    AUD0-DB-005 / AUD0-DEPLOY-RENDER-003: l'endpoint precedente veniva usato
+    come health check di Render pur non verificando database né migrazioni.
+    Per quello ora esiste /api/ready.
+    """
     return {"ok": True, "service": "nexus-backend", "version": app.version, "ts": iso(),
+            "environment": ENVIRONMENT, "check": "liveness",
+            # coach_configured è non-segreto: dice solo SE la chiave è presente.
             "coach_configured": bool(ANTHROPIC_API_KEY), "coach_model": COACH_MODEL}
+
+
+@app.get("/api/ready")
+def ready(response: Response):
+    """Readiness: database scrivibile, migrazioni applicate, config sicura.
+
+    Restituisce 503 quando una dipendenza obbligatoria non è disponibile, così
+    che l'orchestratore non instradi traffico verso un'istanza inutilizzabile.
+    """
+    checks: dict[str, Any] = {}
+    ok = True
+
+    try:
+        with _conn() as c:
+            c.execute("CREATE TABLE IF NOT EXISTS _readiness_probe(ts REAL)")
+            c.execute("DELETE FROM _readiness_probe")
+            c.execute("INSERT INTO _readiness_probe(ts) VALUES(?)", (now(),))
+            applied = [r[0] for r in c.execute("SELECT migration_id FROM schema_migrations")]
+        checks["database"] = {"ok": True, "writable": True, "path": DB_PATH}
+        checks["migrations"] = {"ok": len(applied) >= 3, "applied": sorted(applied)}
+        ok = ok and checks["migrations"]["ok"]
+    except Exception as exc:
+        ok = False
+        checks["database"] = {"ok": False, "error": str(exc)[:200]}
+
+    preflight = security_preflight()
+    checks["security"] = {
+        "ok": preflight.ok,
+        "environment": ENVIRONMENT,
+        "failures": preflight.failures,
+        "warnings": preflight.warnings,
+    }
+    ok = ok and preflight.ok
+
+    checks["contracts"] = {
+        "ok": True,
+        "settings_schema_version": settings_contract.SCHEMA_VERSION,
+        "command_schema_version": nexus_policy.SCHEMA_VERSION,
+        "strategy_count": len(strategy_registry.LIVE_STRATEGY_IDS),
+    }
+    checks["artifacts"] = {
+        "ok": True,
+        "worker_available": WORKER_FILE.exists(),
+        "deployment_manifest_available": DEPLOY_MANIFEST_FILE.exists(),
+    }
+
+    if not ok:
+        response.status_code = 503
+    return {"ok": ok, "check": "readiness", "version": app.version,
+            "ts": iso(), "checks": checks}
 
 
 # ======================= DASHBOARD AUTH ==================================== #
@@ -586,30 +908,83 @@ def _user_obj():
 
 @app.post("/api/auth/login")
 async def login(request: Request, response: Response):
-    body = await request.json()
+    body = await read_json_body(request)
     ident = (body.get("email") or body.get("username") or "").strip()
     pw = body.get("password") or ""
-    ok = secrets.compare_digest(ident, ADMIN_USER) and secrets.compare_digest(pw, ADMIN_PASSWORD)
+
+    # AUD0-SEC-006 / NXS-BE-AUTH-005: nessun limite ai tentativi di login.
+    client_ip = (request.client.host if request.client else "unknown")
+    limiter_key = f"{client_ip}|{ident.lower()}"
+    retry_after = LOGIN_LIMITER.retry_after(limiter_key)
+    if retry_after:
+        audit_log("auth.login", actor=ident or "unknown", decision="RATE_LIMITED",
+                  detail={"ip": client_ip, "retry_after": retry_after})
+        raise HTTPException(status_code=429, headers={"Retry-After": str(retry_after)},
+                            detail={"code": "RATE_LIMITED",
+                                    "message": f"troppi tentativi: riprova tra {retry_after}s"})
+
+    ok = (secrets.compare_digest(ident, ADMIN_USER)
+          and secrets.compare_digest(pw, ADMIN_PASSWORD))
     if not ok:
+        LOGIN_LIMITER.register_failure(limiter_key)
+        audit_log("auth.login", actor=ident or "unknown", decision="DENIED",
+                  detail={"ip": client_ip})
         raise HTTPException(status_code=401, detail="credenziali non valide")
-    token = make_jwt(ADMIN_USER)
+
+    LOGIN_LIMITER.reset(limiter_key)
+    token, session_id = make_jwt(ADMIN_USER)
     # Cookie httpOnly per il frontend React (withCredentials).
     response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax",
                         secure=COOKIE_SECURE, max_age=JWT_HOURS * 3600, path="/")
-    # token nel body per retrocompatibilità col sito statico (Bearer).
-    return {"ok": True, "user": _user_obj(), "token": token}
+    # Cookie CSRF leggibile da JS: il frontend lo rispedisce come header
+    # (double-submit). Non è un segreto di sessione, è un binding.
+    csrf = nexus_security.make_csrf_token(session_id, JWT_SECRET)
+    response.set_cookie(nexus_security.CSRF_COOKIE, csrf, httponly=False,
+                        samesite="lax", secure=COOKIE_SECURE,
+                        max_age=JWT_HOURS * 3600, path="/")
+    audit_log("auth.login", actor=ADMIN_USER, decision="ALLOWED",
+              detail={"ip": client_ip, "session_id": session_id})
+
+    out = {"ok": True, "user": _user_obj(), "csrf_token": csrf,
+           "session_expires_in": JWT_HOURS * 3600}
+    # AUD0-SEC-007 / AUD0-BE-AUTH-004: il token non viene più restituito nel
+    # body in ambienti hardened — resta solo per la dashboard statica legacy.
+    if not HARDENED:
+        out["token"] = token
+    return out
 
 
 @app.post("/api/auth/logout")
-def logout(response: Response):
+def logout(response: Response, authorization: Optional[str] = Header(None),
+           nexus_session: Optional[str] = Cookie(None)):
+    # AUD0-AUTH-001: il logout cancellava solo il cookie; una copia del token
+    # restava valida fino a scadenza. Ora il jti viene revocato server-side.
+    try:
+        data = _session_from_request(authorization, nexus_session)
+        SESSIONS.revoke(data.get("jti", ""), float(data.get("exp") or 0))
+        audit_log("auth.logout", actor=data.get("sub", "?"), decision="ALLOWED",
+                  detail={"session_id": data.get("jti")})
+        revoked = True
+    except HTTPException:
+        # Sessione già invalida o assente: la cancellazione del cookie resta utile.
+        revoked = False
     response.delete_cookie(SESSION_COOKIE, path="/")
-    return {"ok": True}
+    response.delete_cookie(nexus_security.CSRF_COOKIE, path="/")
+    # AUD0-FE-AUTH-004: il frontend deve poter distinguere un logout completo
+    # da uno solo locale.
+    return {"ok": True, "server_session_revoked": revoked}
 
 
 @app.get("/api/auth/me")
-def me(user: str = Depends(require_user)):
+def me(authorization: Optional[str] = Header(None),
+       nexus_session: Optional[str] = Cookie(None)):
     # auth.jsx fa setUser(data): ritorniamo direttamente l'oggetto utente.
-    return _user_obj()
+    data = _session_from_request(authorization, nexus_session)
+    out = dict(_user_obj())
+    out["environment"] = ENVIRONMENT
+    # Consente al client di ricostruire l'header CSRF dopo un reload.
+    out["csrf_token"] = nexus_security.make_csrf_token(data.get("jti", ""), JWT_SECRET)
+    return out
 
 
 # ======================= EA: PUSH / COMMAND =============================== #
@@ -638,27 +1013,171 @@ async def ea_push(request: Request, x_nexus_token: Optional[str] = Header(None))
     return {"ok": True}
 
 
+def _expire_ea_commands(c: sqlite3.Connection) -> None:
+    """Porta a EXPIRED i comandi scaduti e libera i lease decaduti.
+
+    AUD0-CMD-004: i comandi distruttivi non avevano scadenza; un `close_all`
+    accodato durante un'interruzione poteva essere eseguito molto più tardi.
+    """
+    ts = now()
+    c.execute(
+        "UPDATE ea_commands SET status=?, updated_at=? "
+        "WHERE status IN (?,?,?) AND expires_at IS NOT NULL AND expires_at < ?",
+        (nexus_policy.CMD_EXPIRED, ts, nexus_policy.CMD_PENDING,
+         nexus_policy.CMD_LEASED, nexus_policy.CMD_RUNNING, ts),
+    )
+    # Lease scaduto senza ACK: il comando torna disponibile finché restano
+    # tentativi, altrimenti diventa definitivamente fallito.
+    c.execute(
+        "UPDATE ea_commands SET status=?, lease_id=NULL, lease_expires_at=NULL, updated_at=? "
+        "WHERE status IN (?,?) AND lease_expires_at IS NOT NULL AND lease_expires_at < ? "
+        "AND attempt_count < max_attempts",
+        (nexus_policy.CMD_PENDING, ts, nexus_policy.CMD_LEASED,
+         nexus_policy.CMD_RUNNING, ts),
+    )
+    c.execute(
+        "UPDATE ea_commands SET status=?, updated_at=? "
+        "WHERE status IN (?,?) AND lease_expires_at IS NOT NULL AND lease_expires_at < ? "
+        "AND attempt_count >= max_attempts",
+        (nexus_policy.CMD_FAILED_FINAL, ts, nexus_policy.CMD_LEASED,
+         nexus_policy.CMD_RUNNING, ts),
+    )
+
+
 @app.get("/api/ea/command")
-def ea_command(x_nexus_token: Optional[str] = Header(None)):
-    """L'EA fa polling qui. Restituiamo il comando piu' vecchio non consumato."""
+def ea_command(account_id: str = "", symbol: str = "", magic: Optional[int] = None,
+               x_nexus_token: Optional[str] = Header(None)):
+    """Polling dell'EA: consegna in *lease* il comando destinato a QUESTA istanza.
+
+    Sostituisce il precedente poll-consume globale, che chiudeva tre finding P0:
+      * AUD0-CMD-001 / AUD0-BE-CMD-006 — il comando risultava `DELIVERED`
+        (e quindi consumato) prima ancora che l'EA lo interpretasse: un crash
+        successivo lo perdeva per sempre;
+      * AUD0-CMD-002 / AUD0-BE-CMD-005 — la query prendeva il comando globale
+        più vecchio, quindi un'istanza poteva eseguire un comando destinato a
+        un altro account/simbolo;
+      * AUD0-BE-CMD-007 — mancavano scadenza, tentativi ed esito.
+
+    L'esito reale arriva da POST /api/ea/command/ack.
+    """
     check_token(x_nexus_token)
+    account_id = (account_id or "").strip()
+    symbol = (symbol or "").strip()
+    if not account_id or not symbol:
+        # Fail-closed: senza identità di target non si consegna nulla.
+        raise HTTPException(status_code=400, detail={
+            "code": "TARGET_SCOPE_MISMATCH",
+            "message": "account_id e symbol sono obbligatori nel polling comandi",
+        })
+
+    ts = now()
     with _conn() as c:
+        _expire_ea_commands(c)
         row = c.execute(
-            "SELECT * FROM ea_commands WHERE consumed=0 ORDER BY created_at ASC LIMIT 1"
+            "SELECT * FROM ea_commands WHERE status=? AND account_id=? AND symbol=? "
+            "AND (magic IS NULL OR ? IS NULL OR magic=?) "
+            "ORDER BY created_at ASC LIMIT 1",
+            (nexus_policy.CMD_PENDING, account_id, symbol, magic, magic),
         ).fetchone()
         if not row:
             return {"action": None}
-        delivered = now()
-        c.execute("UPDATE ea_commands SET consumed=1,status='DELIVERED',delivered_at=? WHERE id=?",
-                  (delivered, row["id"]))
-    out = {"id": row["id"], "command_id": row["id"], "action": row["action"],
-           "status": "DELIVERED"}
+
+        lease_id = secrets.token_hex(8)
+        c.execute(
+            "UPDATE ea_commands SET status=?, consumed=1, delivered_at=?, lease_id=?, "
+            "lease_expires_at=?, attempt_count=attempt_count+1, updated_at=? WHERE id=?",
+            (nexus_policy.CMD_LEASED, ts, lease_id,
+             ts + nexus_policy.LEASE_SECONDS, ts, row["id"]),
+        )
+
+    out = {
+        "id": row["id"], "command_id": row["id"], "action": row["action"],
+        "status": nexus_policy.CMD_LEASED,
+        "lease_id": lease_id,
+        "lease_expires_in": nexus_policy.LEASE_SECONDS,
+        "schema_version": nexus_policy.SCHEMA_VERSION,
+        "target": json.loads(row["target"] or "{}"),
+        "expires_at": row["expires_at"],
+        "attempt": (row["attempt_count"] or 0) + 1,
+        "max_attempts": row["max_attempts"] or nexus_policy.MAX_ATTEMPTS,
+    }
     if row["payload"]:
         try:
             out.update(json.loads(row["payload"]))
         except Exception:
             pass
     return out
+
+
+@app.post("/api/ea/command/ack")
+async def ea_command_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """L'EA dichiara l'esito reale del comando (AUD0-WEB-004, AUD0-CMD-001).
+
+    Il lease deve corrispondere: un ACK con lease scaduto o di un'altra
+    consegna viene rifiutato con 409, così un retry non può sovrascrivere
+    l'esito di un tentativo diverso.
+    """
+    check_token(x_nexus_token)
+    body = await read_json_body(request)
+    command_id = str(body.get("command_id") or body.get("id") or "").strip()
+    lease_id = str(body.get("lease_id") or "").strip()
+    status = str(body.get("status") or "").strip().upper()
+
+    if not command_id or not lease_id:
+        raise HTTPException(status_code=400, detail={
+            "code": "VALIDATION_FAILED", "message": "command_id e lease_id obbligatori"})
+    if status not in nexus_policy.EA_ACK_STATUSES:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED",
+            "message": f"status non valido (ammessi: {sorted(nexus_policy.EA_ACK_STATUSES)})"})
+
+    result = {
+        "retcode": body.get("retcode"),
+        "order_ticket": body.get("order_ticket"),
+        "deal_ticket": body.get("deal_ticket"),
+        "position_id": body.get("position_id"),
+        "closed_count": body.get("closed_count"),
+        "remaining_count": body.get("remaining_count"),
+        "broker_comment": str(body.get("broker_comment") or "")[:200],
+        "detail": str(body.get("detail") or "")[:500],
+        "acked_at": iso(),
+    }
+
+    ts = now()
+    with _conn() as c:
+        row = c.execute("SELECT * FROM ea_commands WHERE id=?", (command_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail={"code": "TARGET_NOT_FOUND"})
+        if (row["lease_id"] or "") != lease_id:
+            raise HTTPException(status_code=409, detail={
+                "code": "IDEMPOTENCY_CONFLICT",
+                "message": "lease non corrispondente: l'ACK si riferisce a un'altra consegna",
+                "current_status": row["status"]})
+        if row["status"] in nexus_policy.EA_TERMINAL_STATUSES:
+            # Replay di un ACK già registrato: idempotente, non un errore.
+            return {"ok": True, "status": row["status"], "duplicate": True}
+
+        # FAILED_RETRYABLE rimette in coda finché restano tentativi.
+        next_status = status
+        if status == nexus_policy.CMD_FAILED_RETRYABLE:
+            attempts = row["attempt_count"] or 0
+            max_attempts = row["max_attempts"] or nexus_policy.MAX_ATTEMPTS
+            next_status = (nexus_policy.CMD_PENDING if attempts < max_attempts
+                           else nexus_policy.CMD_FAILED_FINAL)
+
+        clear_lease = next_status != nexus_policy.CMD_RUNNING
+        c.execute(
+            "UPDATE ea_commands SET status=?, result=?, updated_at=?, "
+            "lease_id=CASE WHEN ? THEN NULL ELSE lease_id END, "
+            "lease_expires_at=CASE WHEN ? THEN NULL ELSE ? END WHERE id=?",
+            (next_status, json.dumps(result), ts, clear_lease, clear_lease,
+             ts + nexus_policy.LEASE_SECONDS, command_id),
+        )
+
+    audit_log("ea.command.ack", actor=f"ea:{row['account_id']}", actor_type="machine",
+              decision=next_status, target=json.loads(row["target"] or "{}"),
+              detail={"command_id": command_id, "action": row["action"], "result": result})
+    return {"ok": True, "status": next_status, "duplicate": False}
 
 
 # ======================= EA: SETTINGS / LOCKED PROFILE =================== #
@@ -1093,7 +1612,9 @@ def lb_status(user: str = Depends(require_user)):
 
 @app.get("/api/local_bridge/deployment_manifest")
 def lb_deployment_manifest(user: str = Depends(require_user)):
-    path = Path(__file__).resolve().parents[1] / "deploy" / "deployment-manifest.json"
+    # AUD0-DEP-010: risolto tramite DEPLOY_MANIFEST_FILE, che include il
+    # percorso interno all'immagine (`server/protected/`).
+    path = DEPLOY_MANIFEST_FILE
     if not path.exists():
         raise HTTPException(status_code=404, detail="deployment manifest missing")
     return json.loads(path.read_text(encoding="utf-8"))
@@ -1118,20 +1639,14 @@ def dash_overview(user: str = Depends(require_user)):
 
 
 @app.post("/api/dashboard/command")
-async def dash_command(request: Request, user: str = Depends(require_user)):
-    """La dashboard accoda un comando per l'EA (pause/resume/close_all/...)."""
-    data = await request.json()
-    action = data.get("action")
-    allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
-               "reset_protections"}
-    if action not in allowed:
-        raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
-    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
-        k: v for k, v in data.items() if k not in ("action", "payload")}
-    cmd_id = _enqueue_ea_command(action, payload)
-    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
-            "action": action, "status": "PENDING", "created_at": iso()}
+async def dash_command(request: Request, user: str = Depends(require_mutation)):
+    """Rotta canonica per accodare un comando EA.
+
+    `/api/ea/command` (POST) e `/api/command` restano come alias di
+    compatibilità e condividono la stessa validazione (AUD0-CMD-003).
+    """
+    data = await read_json_body(request)
+    return _create_ea_command_from_request(data, actor=user)
 
 
 @app.get("/api/dashboard/journal")
@@ -1286,15 +1801,98 @@ def _analytics_provenance():
         return ledger_analytics.provenance(c)
 
 
-def _enqueue_ea_command(action, payload=None):
+def _enqueue_ea_command(command: dict, *, actor: str, actor_type: str = "human") -> str:
+    """Inserisce un comando EA già validato dal contratto canonico.
+
+    Chiude AUD0-CMD-003 / AUD0-BE-CMD-008 / NXS-BE-ROUTE-014: tutte le rotte
+    (dashboard, alias, Coach) passano ora dallo stesso servizio, con lo stesso
+    registro di azioni, la stessa validazione e lo stesso audit.
+    """
     cmd_id = secrets.token_hex(8)
+    ts = now()
+    target = command["target"]
+    expires_at = ts + command["ttl_seconds"]
+
     with _conn() as c:
+        _expire_ea_commands(c)
+        if command.get("idempotency_key"):
+            existing = c.execute(
+                "SELECT id FROM ea_commands WHERE idempotency_key=?",
+                (command["idempotency_key"],)).fetchone()
+            if existing:
+                # Stessa intenzione già accodata: nessun secondo effetto.
+                return existing["id"]
         c.execute(
-            "INSERT INTO ea_commands(id,action,payload,created_at,consumed,status) "
-            "VALUES(?,?,?,?,0,'PENDING')",
-            (cmd_id, action, json.dumps(payload or {}), now()),
+            "INSERT INTO ea_commands(id,action,payload,created_at,consumed,status,"
+            "schema_version,target,account_id,symbol,magic,risk_class,reason,created_by,"
+            "idempotency_key,expires_at,attempt_count,max_attempts,updated_at) "
+            "VALUES(?,?,?,?,0,?,?,?,?,?,?,?,?,?,?,?,0,?,?)",
+            (cmd_id, command["action"], json.dumps(command["payload"]), ts,
+             nexus_policy.CMD_PENDING, command["schema_version"],
+             json.dumps(target), target.get("account_id"), target.get("symbol"),
+             target.get("magic"), command["risk_class"], command["reason"], actor,
+             command.get("idempotency_key"), expires_at, nexus_policy.MAX_ATTEMPTS, ts),
         )
+
+    audit_log(f"ea.command.{command['action']}", actor=actor, actor_type=actor_type,
+              decision="ACCEPTED", target=target, reason=command["reason"],
+              detail={"command_id": cmd_id, "risk_class": command["risk_class"],
+                      "payload": command["payload"], "expires_at": expires_at})
     return cmd_id
+
+
+def _create_ea_command_from_request(data: dict, *, actor: str,
+                                    actor_type: str = "human") -> dict:
+    """Valida una richiesta client e la accoda. Usato da tutte le rotte."""
+    try:
+        command = nexus_policy.build_command(
+            action=data.get("action") or data.get("command"),
+            target=data.get("target"),
+            payload=data.get("payload") if isinstance(data.get("payload"), dict) else data,
+            reason=data.get("reason"),
+            ttl_seconds=data.get("ttl_seconds"),
+            confirmed=bool(data.get("confirm") or data.get("confirmed")),
+            idempotency_key=data.get("idempotency_key"),
+        )
+    except nexus_policy.CommandValidationError as exc:
+        action_name = str(data.get("action") or data.get("command") or "")
+        detail = {"code": "VALIDATION_FAILED", "message": str(exc)}
+        if action_name in nexus_policy.EA_ACTIONS:
+            detail["effects"] = nexus_policy.confirmation_text(action_name)
+            detail["requires_confirmation"] = nexus_policy.requires_confirmation(action_name)
+        audit_log(f"ea.command.{action_name or 'unknown'}", actor=actor,
+                  actor_type=actor_type, decision="REJECTED", detail=detail)
+        raise HTTPException(status_code=422, detail=detail) from exc
+
+    cmd_id = _enqueue_ea_command(command, actor=actor, actor_type=actor_type)
+    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
+            "action": command["action"], "risk_class": command["risk_class"],
+            "target": command["target"], "status": nexus_policy.CMD_PENDING,
+            "expires_in": command["ttl_seconds"], "created_at": iso()}
+
+
+@app.get("/api/ea/command_contract")
+def ea_command_contract(user: str = Depends(require_user)):
+    """Registro canonico delle azioni: la UI genera da qui le conferme.
+
+    AUD0-FE-CMD-002 / AUD0-FE-CMD-003: la dashboard manteneva una lista locale
+    di conferme, incompleta e con testi che sottostimavano gli effetti reali.
+    """
+    return {
+        "schema_version": nexus_policy.SCHEMA_VERSION,
+        "actions": {
+            name: {
+                "risk_class": spec["risk_class"],
+                "requires_confirmation": spec["confirm"],
+                "default_ttl_seconds": spec["ttl"],
+                "effects": nexus_policy.confirmation_text(name),
+            }
+            for name, spec in nexus_policy.EA_ACTIONS.items()
+        },
+        "statuses": sorted(nexus_policy.EA_COMMAND_STATUSES),
+        "terminal_statuses": sorted(nexus_policy.EA_TERMINAL_STATUSES),
+        "target_fields": ["account_id", "symbol", "magic", "instance_id"],
+    }
 
 
 def _anthropic_chat(system: str, messages: list, max_tokens: int = 1024):
@@ -1447,20 +2045,13 @@ def ea_health_dash(user: str = Depends(require_user)):
 
 
 @app.post("/api/ea/command")
-async def ea_command_post(request: Request, user: str = Depends(require_user)):
-    """Dashboard React accoda un comando per l'EA (POST, JWT)."""
-    data = await request.json()
-    action = data.get("action") or data.get("command")
-    allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
-               "reset_protections"}
-    if action not in allowed:
-        raise HTTPException(status_code=400, detail=f"action non valida (ammesse: {sorted(allowed)})")
-    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
-        k: v for k, v in data.items() if k not in ("action", "command", "payload")}
-    cmd_id = _enqueue_ea_command(action, payload)
-    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
-            "action": action, "status": "PENDING", "created_at": iso()}
+async def ea_command_post(request: Request, user: str = Depends(require_mutation)):
+    """Alias di compatibilità di /api/dashboard/command (stessa validazione)."""
+    data = await read_json_body(request)
+    out = _create_ea_command_from_request(data, actor=user)
+    out["deprecated"] = True
+    out["canonical_route"] = "/api/dashboard/command"
+    return out
 
 
 # ======================= SETTINGS / STRATEGIES (JWT) ==================== #
@@ -1720,34 +2311,93 @@ def analytics_strategy_performance(user: str = Depends(require_user)):
             "demo": len(out) == 0, "provenance": _analytics_provenance()}
 
 
+def _enforce_risk(field: str, value, *, actor: str, context: str):
+    """Applica un tetto di policy e registra il rifiuto (NEXUS-RISK-001)."""
+    try:
+        return nexus_policy.enforce_cap(field, value, hardened=HARDENED)
+    except nexus_policy.RiskPolicyDenied as exc:
+        audit_log(f"risk.{context}", actor=actor, decision="RISK_POLICY_DENIED",
+                  detail={"field": exc.field, "requested": exc.requested, "cap": exc.cap})
+        raise HTTPException(status_code=422, detail={
+            "code": "RISK_POLICY_DENIED", "field": exc.field,
+            "requested": exc.requested, "cap": exc.cap,
+            "environment": ENVIRONMENT,
+            "message": str(exc),
+        }) from exc
+
+
+@app.get("/api/risk/policy")
+def risk_policy(user: str = Depends(require_user)):
+    """Espone i tetti hard applicati dal server.
+
+    AUD0-FE-SET-001: la UI deve poter distinguere i limiti tecnici dello schema
+    dai limiti di policy di produzione, invece di offrire range catastrofici.
+    """
+    return {"environment": ENVIRONMENT, "hardened": HARDENED,
+            "caps": nexus_policy.caps_for(HARDENED)}
+
+
 @app.post("/api/strategies/risk_config")
-async def strategies_risk_config(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
+async def strategies_risk_config(request: Request, user: str = Depends(require_mutation)):
+    data = await read_json_body(request)
     cfg = _strat_risk_cfg()
     for k in ("enabled", "min_trades", "target_dd_pct", "max_mult", "min_mult", "min_pf"):
         if k in data:
             cfg[k] = data[k]
-    # clamp di sicurezza
-    cfg["max_mult"] = max(1.0, min(10.0, float(cfg["max_mult"])))
-    cfg["min_mult"] = max(0.0, min(1.0, float(cfg["min_mult"])))
-    cfg["min_trades"] = max(1, int(cfg["min_trades"]))
+
+    # AUD0-RISK-001 / NXS-BE-RISK-001: il clamp precedente ammetteva 10x.
+    # Il valore fuori policy viene ora RIFIUTATO, non troncato in silenzio.
+    cfg["max_mult"] = _enforce_risk("strategy_multiplier", cfg["max_mult"],
+                                    actor=user, context="risk_config")
+    if cfg["max_mult"] < 1.0:
+        cfg["max_mult"] = 1.0
+
+    # AUD0-RISK-002: campi accettati senza alcuna validazione di range.
+    try:
+        cfg["min_mult"] = max(0.0, min(1.0, float(cfg["min_mult"])))
+        cfg["min_trades"] = max(1, int(cfg["min_trades"]))
+        cfg["target_dd_pct"] = max(0.1, min(50.0, float(cfg["target_dd_pct"])))
+        cfg["min_pf"] = max(0.0, min(10.0, float(cfg["min_pf"])))
+        cfg["enabled"] = bool(cfg["enabled"])
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED",
+            "message": f"valore non numerico nella configurazione di rischio: {exc}",
+        }) from exc
+
     kv_set("strategy_risk_config", cfg)
-    return {"ok": True, "config": cfg}
+    audit_log("risk.risk_config", actor=user, decision="APPLIED", detail={"config": cfg})
+    return {"ok": True, "config": cfg, "caps": nexus_policy.caps_for(HARDENED)}
 
 
 @app.post("/api/strategies/risk_manual")
-async def strategies_risk_manual(request: Request, user: str = Depends(require_user)):
+async def strategies_risk_manual(request: Request, user: str = Depends(require_mutation)):
     """Override manuale del moltiplicatore. Valore null per rimuovere l'override."""
-    data = await request.json()
+    data = await read_json_body(request)
     manual = kv_get("strategy_risk_manual", {}) or {}
     overrides = data.get("overrides", data) if isinstance(data, dict) else {}
+    applied = {}
     for name, mult in (overrides or {}).items():
+        if name in ("overrides", "reason"):
+            continue
         if mult is None:
             manual.pop(name, None)
-        else:
-            manual[name] = max(0.0, min(10.0, float(mult)))
+            applied[name] = None
+            continue
+        # AUD0-RISK-003: gli identificativi non venivano validati contro il
+        # registry, lasciando override su strategie inesistenti.
+        try:
+            strategy_registry.require_strategy(name, live=True)
+        except (ValueError, strategy_registry.UnknownStrategyError) as exc:
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": name, "message": str(exc)}) from exc
+        manual[name] = _enforce_risk("strategy_multiplier", mult,
+                                     actor=user, context="risk_manual")
+        applied[name] = manual[name]
     kv_set("strategy_risk_manual", manual)
-    return {"ok": True, "manual": manual}
+    audit_log("risk.risk_manual", actor=user, decision="APPLIED",
+              reason=str(data.get("reason") or "")[:500], detail={"overrides": applied})
+    return {"ok": True, "manual": manual, "caps": nexus_policy.caps_for(HARDENED)}
 
 
 @app.get("/api/strategies/{name}/overview")
@@ -2399,7 +3049,13 @@ def calendar(user: str = Depends(require_user)):
 
 
 # ======================= DOWNLOADS ===================================== #
-DOWNLOADS_DIR = STATIC_DIR / "downloads"
+# AUD0-SEC-012: la directory `server/static/downloads` era raggiungibile senza
+# autenticazione perché tutta `server/static` è montata su "/". I file
+# proprietari (sorgenti .mq5, .ex5, pacchetti) vivono ora sotto
+# PROTECTED_DOWNLOADS_DIR, fuori dalla radice pubblica, e si scaricano solo
+# dalla rotta autenticata `/api/downloads/file/{name}`.
+DOWNLOADS_DIR = PROTECTED_DOWNLOADS_DIR
+LEGACY_PUBLIC_DOWNLOADS_DIR = STATIC_DIR / "downloads"
 _DOWNLOAD_LABELS = {
     ".set": "Preset EA (.set)",
     ".tpl": "Template grafico (.tpl)",
@@ -2407,30 +3063,93 @@ _DOWNLOAD_LABELS = {
     ".mq5": "Sorgente MQL5 (.mq5)",
     ".zip": "Pacchetto (.zip)",
 }
+_ALLOWED_DOWNLOAD_SUFFIXES = frozenset(_DOWNLOAD_LABELS)
+
+
+def _resolve_download(name: str) -> Path:
+    """Risolve un nome file dentro la directory protetta.
+
+    Il nome viene ridotto al solo basename e il path risolto deve restare
+    sotto la radice: nessun `..` o percorso assoluto può uscirne
+    (stesso controllo di containment richiesto da AUD0-WORKER-TPL-001).
+    """
+    base = Path(name).name
+    if not base or base.startswith("."):
+        raise HTTPException(status_code=400, detail={"code": "VALIDATION_FAILED"})
+    candidate = (DOWNLOADS_DIR / base).resolve()
+    root = DOWNLOADS_DIR.resolve()
+    if root not in candidate.parents and candidate != root:
+        raise HTTPException(status_code=400, detail={"code": "VALIDATION_FAILED"})
+    if candidate.suffix.lower() not in _ALLOWED_DOWNLOAD_SUFFIXES:
+        raise HTTPException(status_code=415, detail={
+            "code": "VALIDATION_FAILED",
+            "message": f"estensione non consentita: {candidate.suffix}"})
+    if not candidate.is_file():
+        raise HTTPException(status_code=404, detail={"code": "TARGET_NOT_FOUND"})
+    return candidate
 
 
 @app.get("/api/downloads/list")
 def downloads_list(user: str = Depends(require_user)):
-    """Elenco file scaricabili da server/static/downloads (preset, template…)."""
+    """Elenco dei file scaricabili dalla directory protetta."""
     items = []
     if DOWNLOADS_DIR.exists():
         for f in sorted(DOWNLOADS_DIR.iterdir()):
-            if f.is_file():
+            if f.is_file() and f.suffix.lower() in _ALLOWED_DOWNLOAD_SUFFIXES:
+                digest = hashlib.sha256(f.read_bytes()).hexdigest()
                 items.append({
                     "name": f.name,
                     "size": f.stat().st_size,
                     "kind": _DOWNLOAD_LABELS.get(f.suffix.lower(), f.suffix),
-                    "url": f"/downloads/{f.name}",
+                    # AUD0-WORKER-DEPLOY-001: ogni artefatto espone il proprio
+                    # digest, così il destinatario può verificarlo.
+                    "sha256": digest,
+                    "url": f"/api/downloads/file/{f.name}",
                 })
-    return {"files": items, "count": len(items)}
+    # Se restano file nella vecchia cartella pubblica, va segnalato: sono
+    # ancora raggiungibili senza autenticazione dal mount statico.
+    leftovers = []
+    if LEGACY_PUBLIC_DOWNLOADS_DIR.exists():
+        leftovers = [f.name for f in LEGACY_PUBLIC_DOWNLOADS_DIR.iterdir() if f.is_file()]
+    return {"files": items, "count": len(items),
+            "public_leftovers": leftovers,
+            "public_leftovers_warning": (
+                "Questi file sono nel mount statico pubblico e restano "
+                "scaricabili senza autenticazione: spostali in "
+                f"{DOWNLOADS_DIR}" if leftovers else "")}
+
+
+@app.get("/api/downloads/file/{name}")
+def download_file(name: str, user: str = Depends(require_user)):
+    path = _resolve_download(name)
+    audit_log("downloads.file", actor=user, decision="ALLOWED",
+              detail={"file": path.name, "size": path.stat().st_size})
+    return FileResponse(str(path), filename=path.name,
+                        media_type="application/octet-stream")
 
 
 @app.get("/api/downloads/local_worker")
 def download_worker(user: str = Depends(require_user)):
     if WORKER_FILE.exists():
+        digest = hashlib.sha256(WORKER_FILE.read_bytes()).hexdigest()
+        audit_log("downloads.local_worker", actor=user, decision="ALLOWED",
+                  detail={"sha256": digest})
+        # AUD0-FE-BRIDGE-007: l'utente deve poter verificare l'artefatto che
+        # sta per eseguire sulla propria macchina di trading.
         return FileResponse(str(WORKER_FILE), media_type="text/x-python",
-                            filename="nexus_local_worker.py")
+                            filename="nexus_local_worker.py",
+                            headers={"X-Nexus-Artifact-SHA256": digest})
     raise HTTPException(status_code=404, detail="worker non incluso in questa build")
+
+
+@app.get("/api/downloads/local_worker/checksum")
+def download_worker_checksum(user: str = Depends(require_user)):
+    """Digest dichiarato dell'artefatto worker, per verifica pre-esecuzione."""
+    if not WORKER_FILE.exists():
+        raise HTTPException(status_code=404, detail="worker non incluso in questa build")
+    return {"filename": "nexus_local_worker.py",
+            "sha256": hashlib.sha256(WORKER_FILE.read_bytes()).hexdigest(),
+            "size": WORKER_FILE.stat().st_size}
 
 
 # ======================= AI COACH (JWT) ================================ #
@@ -2534,31 +3253,110 @@ def coach_alerts(user: str = Depends(require_user)):
     return {"alerts": alerts, "demo": False}
 
 
+#: Mappa proposta Coach → azione canonica EA.
+_COACH_CMD_MAP = {
+    "pause_ea": "pause", "pause": "pause",
+    "resume_ea": "resume", "resume": "resume",
+    "close_all": "close_all",
+    "reset_anti_revenge": "reset_anti_revenge",
+    "reset_daily": "reset_daily",
+    "reset_protections": "reset_protections",
+}
+_COACH_SETTINGS_ACTIONS = {"disable_strategy", "enable_strategy",
+                           "set_risk", "set_strategy_risk"}
+
+
+@app.post("/api/coach/draft_action")
+async def coach_draft_action(request: Request, user: str = Depends(require_user)):
+    """Trasforma un suggerimento del Coach in una *bozza* non eseguibile.
+
+    Chiude AUD0-AI-001 / AUD0-BE-AI-007 / NXS-AI-BOUNDARY-001: prima il Coach
+    poteva applicare direttamente pause/close_all/reset e cambi di rischio.
+    Ora produce solo una proposta che l'operatore deve confermare passando
+    dalle rotte canoniche di comando o di settings, con i loro controlli.
+    """
+    body = await read_json_body(request)
+    atype = str(body.get("type") or body.get("action") or "").strip()
+    name = body.get("name")
+
+    if atype in _COACH_CMD_MAP:
+        action = _COACH_CMD_MAP[atype]
+        draft = {
+            "kind": "EA_COMMAND",
+            "action": action,
+            "risk_class": nexus_policy.EA_ACTIONS[action]["risk_class"],
+            "requires_confirmation": nexus_policy.requires_confirmation(action),
+            "effects": nexus_policy.confirmation_text(action),
+            "submit_to": "/api/dashboard/command",
+            "required_fields": ["target.account_id", "target.symbol", "reason", "confirm"],
+        }
+    elif atype in _COACH_SETTINGS_ACTIONS:
+        draft = {
+            "kind": "SETTINGS_CHANGE",
+            "action": atype,
+            "strategy": name,
+            "proposed_value": body.get("pct", body.get("mult")),
+            "requires_confirmation": True,
+            "submit_to": ("/api/strategies/risk_manual"
+                          if atype == "set_strategy_risk" else "/api/settings"),
+            "caps": nexus_policy.caps_for(HARDENED),
+        }
+    else:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "message": f"azione non riconosciuta: {atype}"})
+
+    draft.update({
+        "draft_id": secrets.token_hex(8),
+        "created_at": iso(),
+        "authority": "AI_RECOMMENDATION",
+        "executed": False,
+        "note": "Proposta non eseguita. Richiede autorizzazione umana esplicita.",
+    })
+    audit_log("coach.draft_action", actor=user, actor_type="ai_agent",
+              decision="DRAFTED", detail=draft)
+    return {"ok": True, "draft": draft}
+
+
 @app.post("/api/coach/apply_action")
-async def coach_apply(request: Request, user: str = Depends(require_user)):
-    body = await request.json()
-    # Il Coach invia {type, name, pct, duration_min, ...}; retro-compat con {action}.
+async def coach_apply(request: Request, user: str = Depends(require_mutation)):
+    """Applicazione diretta da Coach — disabilitata per default.
+
+    AUD0-AI-001/002/003, AUD0-BE-AI-007/008/009, NEXUS-AI-002: questa rotta
+    convertiva un suggerimento del modello in una mutazione live (pausa,
+    close_all, reset protezioni, rischio fino al 10%) con la sola
+    autenticazione. Resta disponibile solo in sviluppo e con opt-in esplicito
+    (`NEXUS_COACH_ALLOW_ACTIONS=true`); altrove risponde 403 e indirizza alla
+    bozza + conferma umana.
+    """
+    if not COACH_ALLOW_ACTIONS:
+        body = await read_json_body(request)
+        audit_log("coach.apply_action", actor=user, actor_type="ai_agent",
+                  decision="DENIED_POLICY",
+                  detail={"type": body.get("type") or body.get("action")})
+        raise HTTPException(status_code=403, detail={
+            "code": "AUTHORIZATION_DENIED",
+            "message": "L'AI Coach non ha autorità di esecuzione. "
+                       "Usa POST /api/coach/draft_action e conferma l'azione "
+                       "dalle rotte canoniche.",
+            "draft_route": "/api/coach/draft_action",
+        })
+
+    body = await read_json_body(request)
     atype = body.get("type") or body.get("action")
     name = body.get("name")
     cmd_id = None
 
-    # 1. Comandi runtime EA
-    cmd_map = {
-        "pause_ea": "pause", "pause": "pause",
-        "resume_ea": "resume", "resume": "resume",
-        "close_all": "close_all",
-        "reset_anti_revenge": "reset_anti_revenge",
-        "reset_daily": "reset_daily",
-        "reset_protections": "reset_protections",
-    }
-    if atype in cmd_map:
-        payload = {}
-        if body.get("duration_min"):
-            payload["duration_min"] = body["duration_min"]
-        cmd_id = _enqueue_ea_command(cmd_map[atype], payload or None)
-        note = f"Comando EA dal Coach: {cmd_map[atype]}"
+    if atype in _COACH_CMD_MAP:
+        action = _COACH_CMD_MAP[atype]
+        result = _create_ea_command_from_request(
+            {"action": action, "target": body.get("target"),
+             "payload": body.get("payload"),
+             "reason": body.get("reason") or "coach action (dev mode)",
+             "confirm": True},
+            actor=user, actor_type="ai_agent")
+        cmd_id = result["command_id"]
+        note = f"Comando EA dal Coach: {action}"
 
-    # 2. Abilita/disabilita strategia (live, via /api/ea/settings)
     elif atype in ("disable_strategy", "enable_strategy"):
         if not name:
             raise HTTPException(status_code=400, detail="nome strategia mancante")
@@ -2567,29 +3365,31 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         if atype == "disable_strategy" and name not in strategy_registry.AUTO_DISABLE_IDS:
-            raise HTTPException(status_code=422, detail=f"strategy {name} is not eligible for automated disablement")
+            raise HTTPException(status_code=422,
+                                detail=f"strategy {name} is not eligible for automated disablement")
         enable = (atype == "enable_strategy")
-        settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
-        strat = dict(settings.get("strategies") or {})
+        # AUD0-BE-AI-009: passa dal validatore canonico invece di scrivere
+        # direttamente nel KV.
+        current = _current_settings()
+        strat = dict(current.get("strategies") or {})
         strat[name] = enable
-        settings["strategies"] = strat
+        clean = _validated_settings_patch({"strategies": strat})
+        settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
+        settings.update(clean)
         kv_set("settings", settings)
-        ov = kv_get("strategies_override", {}) or {}
-        ov[name] = enable
-        kv_set("strategies_override", ov)
         note = f"{'Riattivata' if enable else 'Disattivata'} strategia {name} dal Coach"
 
-    # 3. Imposta rischio globale (RiskPercent, live)
     elif atype == "set_risk":
         pct = body.get("pct")
         if pct is None:
             raise HTTPException(status_code=400, detail="pct mancante")
+        value = _enforce_risk("risk_percent", pct, actor=user, context="coach_set_risk")
+        clean = _validated_settings_patch({"RiskPercent": value})
         settings = dict(kv_get("settings", DEFAULT_SETTINGS) or {})
-        settings["RiskPercent"] = max(0.0, min(10.0, float(pct)))
+        settings.update(clean)
         kv_set("settings", settings)
-        note = f"Risk impostato a {settings['RiskPercent']}% dal Coach"
+        note = f"Risk impostato a {value}% dal Coach"
 
-    # 4. Imposta moltiplicatore rischio per-strategia (live)
     elif atype == "set_strategy_risk":
         if not name or body.get("mult") is None:
             raise HTTPException(status_code=400, detail="name/mult mancante")
@@ -2598,7 +3398,8 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         manual = kv_get("strategy_risk_manual", {}) or {}
-        manual[name] = max(0.0, min(10.0, float(body["mult"])))
+        manual[name] = _enforce_risk("strategy_multiplier", body["mult"],
+                                     actor=user, context="coach_set_strategy_risk")
         kv_set("strategy_risk_manual", manual)
         note = f"Rischio {name} → x{manual[name]} dal Coach"
 
@@ -2608,6 +3409,8 @@ async def coach_apply(request: Request, user: str = Depends(require_user)):
     with _conn() as c:
         c.execute("INSERT INTO coach_notifications(text,read,created_at) VALUES(?,0,?)",
                   (note, now()))
+    audit_log("coach.apply_action", actor=user, actor_type="ai_agent",
+              decision="APPLIED", detail={"type": atype, "note": note, "command_id": cmd_id})
     return {"ok": True, "id": cmd_id, "action": atype, "note": note}
 
 
@@ -2689,37 +3492,64 @@ def ea_history(limit: int = 120, user: str = Depends(require_user)):
 
 # ---- generic command (React POSTs /command) ----
 @app.post("/api/command")
-async def command_post(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
-    action = data.get("action") or data.get("command")
-    allowed = {"pause", "resume", "close_all", "close_position",
-               "partial_close", "reset_anti_revenge", "reset_daily", "resync_trades",
-               "reset_protections"}
-    if action not in allowed:
-        raise HTTPException(status_code=400, detail=f"action non valida: {action}")
-    payload = data.get("payload") if isinstance(data.get("payload"), dict) else {
-        k: v for k, v in data.items() if k not in ("action", "command", "payload")}
-    cmd_id = _enqueue_ea_command(action, payload)
-    return {"ok": True, "id": cmd_id, "command_id": cmd_id,
-            "action": action, "status": "PENDING", "created_at": iso()}
+async def command_post(request: Request, user: str = Depends(require_mutation)):
+    """Alias di compatibilità di /api/dashboard/command (stessa validazione)."""
+    data = await read_json_body(request)
+    out = _create_ea_command_from_request(data, actor=user)
+    out["deprecated"] = True
+    out["canonical_route"] = "/api/dashboard/command"
+    return out
 
 
 @app.get("/api/command/{command_id}")
 def command_status(command_id: str, user: str = Depends(require_user)):
     with _conn() as c:
+        _expire_ea_commands(c)
         row = c.execute(
-            "SELECT id,action,status,created_at,delivered_at FROM ea_commands WHERE id=?",
+            "SELECT id,action,status,created_at,delivered_at,target,risk_class,"
+            "attempt_count,max_attempts,expires_at,result FROM ea_commands WHERE id=?",
             (command_id,),
         ).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="command not found")
+    status = row["status"] or nexus_policy.CMD_PENDING
     return {
         "id": row["id"], "command_id": row["id"], "action": row["action"],
-        "status": row["status"] or "PENDING",
+        "status": status,
+        # AUD0-FE-CMD-001 / NXS-FE-TRUST-002: il client non deve dedurre il
+        # successo dal fatto che il polling si è fermato. `terminal` dice se
+        # lo stato è definitivo, `broker_confirmed` se il broker ha eseguito.
+        "terminal": status in nexus_policy.EA_TERMINAL_STATUSES,
+        "broker_confirmed": status == nexus_policy.CMD_SUCCEEDED,
+        "risk_class": row["risk_class"],
+        "target": json.loads(row["target"] or "{}"),
+        "attempt_count": row["attempt_count"] or 0,
+        "max_attempts": row["max_attempts"] or nexus_policy.MAX_ATTEMPTS,
+        "result": json.loads(row["result"] or "null"),
         "created_at": command_contract.iso_timestamp(row["created_at"]),
+        "expires_at": (command_contract.iso_timestamp(row["expires_at"])
+                       if row["expires_at"] is not None else None),
         "delivered_at": (command_contract.iso_timestamp(row["delivered_at"])
                          if row["delivered_at"] is not None else None),
     }
+
+
+@app.get("/api/audit/operator")
+def operator_audit(limit: int = 100, user: str = Depends(require_user)):
+    """Registro append-only delle azioni privilegiate (AUD0-AUDIT-001)."""
+    limit = max(1, min(500, int(limit)))
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT created_at,actor,actor_type,action,target,decision,reason,detail,"
+            "environment FROM operator_audit ORDER BY created_at DESC LIMIT ?", (limit,))]
+    for r in rows:
+        r["created_at"] = command_contract.iso_timestamp(r["created_at"])
+        for field in ("target", "detail"):
+            try:
+                r[field] = json.loads(r[field] or "{}")
+            except Exception:
+                r[field] = {}
+    return {"events": rows, "count": len(rows)}
 
 
 # ---- settings history (array diretto: SettingsPage usa .flatMap/.length) ----

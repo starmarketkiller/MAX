@@ -13,6 +13,11 @@ enum ENUM_NXS_OPEN_RC {
    OPEN_FAIL_SEND
 };
 
+// NXS_Protections.mqh è incluso DOPO questo file nell'entrypoint, ma il
+// preflight comune deve poter interrogare il blocco protezioni: dichiarazione
+// anticipata per non dipendere dall'ordine di include (AUD0-MQL-001).
+bool NXS_Prot_EntryBlocked();
+
 string g_nxsLastOpenFailure = "";
 int g_nxsCounterSessionKey = -1;
 // v2.1.7 — il modello istituzionale lo alza SOLO per l'apertura di gruppo di un
@@ -36,14 +41,60 @@ void NXS_GateTelemetry(string route, string gateId, bool passed,
                observed, threshold, _JsonEsc(reason));
 }
 
+//+------------------------------------------------------------------+
+//| Invariante unica di creazione esposizione.                        |
+//|                                                                   |
+//| L'audit (AUD0-ADD-001/002/003, AUD0-INST-001/002) ha rilevato che |
+//| esistevano tre pipeline distinte con sottoinsiemi DIVERSI di       |
+//| controlli:                                                        |
+//|   1. entry primaria  -> licenza, ruin, margine, RiskShield...     |
+//|   2. grid/pyramid    -> solo RiskShield + cap direzionale         |
+//|   3. istituzionale   -> nessuno dei precedenti                    |
+//|                                                                   |
+//| Le verifiche non aggirabili sono state spostate QUI, così ogni     |
+//| chiamante le eredita per costruzione e non per convenzione.        |
+//+------------------------------------------------------------------+
 bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
                                  ENUM_ORDER_TYPE otype, double price,
                                  double &sl, double &tp, string &reason){
+   // --- (1) Licenza / entitlement -----------------------------------------
+   // AUD0-ADD-001 / AUD0-EXEC-001: grid e pyramid giravano durante la gestione
+   // posizioni, PRIMA che il router raggiungesse il gate di licenza esterno.
+   bool licOK = NXS_License_Enforce();
+   NXS_GateTelemetry(route, "LICENSE", licOK, 0, 0, licOK ? "" : "license_denied");
+   if(!licOK){ reason = "license_denied"; return false; }
+
+   // --- (2) Kill switch di conto ------------------------------------------
+   // AUD0-ADD-002: il freeze risk-of-ruin era verificato solo in NXS_OpenTrade,
+   // quindi gli add potevano creare esposizione a conto congelato.
+   bool ruinOK = !NXS_RuinFrozen();
+   NXS_GateTelemetry(route, "RUIN_FREEZE", ruinOK, 0, 0, ruinOK ? "" : "ruin_frozen");
+   if(!ruinOK){ reason = "ruin_frozen"; return false; }
+
+   // --- (3) Protezioni giornaliere / pausa --------------------------------
+   bool protOK = !NXS_Prot_EntryBlocked();
+   NXS_GateTelemetry(route, "PROTECTIONS", protOK, 0, 0, protOK ? "" : "protections_block");
+   if(!protOK){ reason = "protections_block"; return false; }
+
+   // --- (4) Stop di protezione obbligatorio -------------------------------
+   // AUD0-ADD-005 / AUD0-INST-007 / NXS-EXP-002: grid, pyramid e add
+   // istituzionali inviavano ordini con sl=0, cioè posizioni prive di stop
+   // lato broker. Nessun percorso può creare esposizione non protetta.
+   bool stopPresent = (sl > 0.0);
+   NXS_GateTelemetry(route, "HARD_STOP", stopPresent, sl, 0,
+                     stopPresent ? "" : "missing_broker_stop");
+   if(!stopPresent){
+      reason = "missing_broker_stop: ogni ordine deve avere uno stop valido";
+      return false;
+   }
+
+   // --- (5) RiskShield -----------------------------------------------------
    string rsReason = "";
    bool rsBlocked = NXS_RS_BlockEntry(g_sym, rsReason);
    NXS_GateTelemetry(route, "RISKSHIELD", !rsBlocked, 0, 0, rsReason);
    if(rsBlocked){ reason = rsReason; return false; }
 
+   // --- (6) Cap di esposizione direzionale --------------------------------
    double existing = NXS_DirExposureLots(dir);
    double cap = NXS_EffectiveMaxDirExposureLots();
    bool exposureOK = (existing + lots <= cap + 1e-9);
@@ -53,10 +104,40 @@ bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
                      exposureReason);
    if(!exposureOK){ reason = "dir_exposure_cap " + exposureReason; return false; }
 
+   // --- (7) Margine proiettato ---------------------------------------------
+   // AUD0-ADD-003: il gate viveva in NXS_OpenTrade, quindi grid e pyramid lo
+   // saltavano completamente.
+   if(InpUseMarginGate && InpMinMarginLevelPct > 0){
+      double marginReq = 0.0;
+      if(OrderCalcMargin(otype, g_sym, lots, price, marginReq) && marginReq > 0){
+         double equity     = AccountInfoDouble(ACCOUNT_EQUITY);
+         double usedMargin = AccountInfoDouble(ACCOUNT_MARGIN);
+         double projLevel  = (usedMargin + marginReq > 0)
+                             ? equity / (usedMargin + marginReq) * 100.0 : 1e9;
+         bool marginOK = (projLevel >= InpMinMarginLevelPct);
+         NXS_GateTelemetry(route, "PROJECTED_MARGIN", marginOK, projLevel,
+                           InpMinMarginLevelPct, marginOK ? "" : "margin_gate");
+         if(!marginOK){
+            reason = StringFormat("margin_gate proj=%.0f<%.0f", projLevel,
+                                  InpMinMarginLevelPct);
+            return false;
+         }
+      }
+   }
+
+   // --- (8) Preflight broker -----------------------------------------------
    string pfReason = "";
    bool preflightOK = NXS_PreFlight(otype, lots, price, sl, tp, pfReason);
    NXS_GateTelemetry(route, "BROKER_PREFLIGHT", preflightOK, lots, 0, pfReason);
    if(!preflightOK){ reason = pfReason; return false; }
+
+   // Post-condizione: il preflight non deve poter azzerare lo stop.
+   if(sl <= 0.0){
+      NXS_GateTelemetry(route, "HARD_STOP_POST", false, sl, 0, "stop_cleared_by_preflight");
+      reason = "preflight_cleared_stop";
+      return false;
+   }
+
    reason = "";
    return true;
 }
@@ -265,22 +346,10 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // a regolare la concorrenza: un trade aperto in profitto alza l'equity ->
    // alza il livello -> apre spazio ad altre strategie; un drawdown lo abbassa
    // -> frena. Sostituisce la contesa arbitraria per slot con "profitto=margine".
-   if(InpUseMarginGate && InpMinMarginLevelPct > 0){
-      double marginReq = 0;
-      if(OrderCalcMargin(otype, g_sym, lots, refPrice, marginReq) && marginReq > 0){
-         double equity     = AccountInfoDouble(ACCOUNT_EQUITY);
-         double usedMargin = AccountInfoDouble(ACCOUNT_MARGIN);
-         double projLevel  = (usedMargin + marginReq > 0)
-                             ? equity / (usedMargin + marginReq) * 100.0 : 1e9;
-         if(projLevel < InpMinMarginLevelPct){
-            g_nxsLastOpenFailure = StringFormat("margin_gate proj=%.0f<%.0f",
-                                                projLevel, InpMinMarginLevelPct);
-            PrintFormat("[NEXUS MARGIN] OPEN BLOCCATO: margin level proiettato %.0f%% < %.0f%% (equity=%.2f usato=%.2f +req=%.2f) strat=%s",
-                        projLevel, InpMinMarginLevelPct, equity, usedMargin, marginReq, sig.stratName);
-            return OPEN_FAIL_PREFLIGHT;
-         }
-      }
-   }
+   //
+   // Il controllo è stato SPOSTATO dentro NXS_CommonExposurePreflight: qui
+   // copriva solo l'entry primaria, mentre grid, pyramid e add istituzionali
+   // lo saltavano (AUD0-ADD-003). La chiamata qui sotto lo eredita.
    string pfReason = "";
    if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.dir, lots,
                                    otype, refPrice, sl, tp, pfReason)){

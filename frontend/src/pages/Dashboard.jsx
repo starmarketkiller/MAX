@@ -7,7 +7,7 @@ import {
   Gauge, Command as CommandIcon,
   Sun, Moon,
 } from "lucide-react";
-import api from "@/lib/api";
+import api, { formatApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { useVisiblePolling } from "@/lib/useVisiblePolling";
@@ -516,6 +516,7 @@ export default function Dashboard({ section = "home" }) {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [lastCommand, setLastCommand] = useState(null);
+  const [commandError, setCommandError] = useState("");
   const [resourceErrors, setResourceErrors] = useState({});
 
   // Global Cmd+K / Ctrl+K listener
@@ -594,13 +595,18 @@ export default function Dashboard({ section = "home" }) {
 
   useVisiblePolling(fetchAll, 5000, !!user);
 
+  // AUD0-FE-CMD-001 / NXS-FE-TRUST-002: il polling si fermava su DELIVERED e
+  // lo mostrava come stato verde di successo. DELIVERED provava solo che l'EA
+  // aveva ricevuto il comando, non che il broker lo avesse eseguito. Ora si
+  // attende uno stato terminale dichiarato dal backend.
+  const commandIsTerminal = !!lastCommand?.terminal;
   useVisiblePolling(async () => {
-    if (!lastCommand?.id || lastCommand.status === "DELIVERED") return;
+    if (!lastCommand?.id || commandIsTerminal) return;
     try {
       const { data } = await api.get(`/command/${lastCommand.id}`);
       setLastCommand(data);
     } catch (e) { console.warn("command status failed", e); }
-  }, 1500, !!lastCommand?.id && lastCommand.status !== "DELIVERED");
+  }, 1500, !!lastCommand?.id && !commandIsTerminal);
 
   if (checking) {
     return (
@@ -620,11 +626,38 @@ export default function Dashboard({ section = "home" }) {
   };
 
   const doCmd = async (action, payload) => {
+    // AUD0-CMD-002 / AUD0-FE-CMD-005: ogni comando deve dichiarare a QUALE
+    // istanza è destinato. Il target si ricava dallo stato dell'EA attualmente
+    // mostrato: senza di esso il backend rifiuta la richiesta, invece di
+    // consegnarla a un'istanza qualsiasi.
+    const target = {
+      account_id: String(status?.account ?? status?.login ?? status?.account_id ?? ""),
+      symbol: status?.symbol || "",
+      magic: status?.magic,
+    };
+    if (!target.account_id || !target.symbol) {
+      setCommandError(
+        "Nessuna istanza EA identificata (account/simbolo mancanti): " +
+        "il comando non è stato inviato."
+      );
+      return;
+    }
+    setCommandError("");
     try {
-      const { data } = await api.post("/command", { action, payload: payload || {} });
+      const { data } = await api.post("/dashboard/command", {
+        action,
+        target,
+        payload: payload || {},
+        // Le azioni ad alto impatto richiedono conferma e motivazione: la
+        // dialog di conferma è già stata mostrata prima di arrivare qui.
+        confirm: true,
+        reason: `Azione operatore dalla dashboard: ${action}`,
+      });
       setLastCommand(data);
       await fetchAll();
     } catch (e) {
+      const detail = e?.response?.data?.detail;
+      setCommandError(formatApiError(detail) || e?.message || "errore sconosciuto");
       console.error("Command failed", e);
     }
   };
@@ -662,10 +695,32 @@ export default function Dashboard({ section = "home" }) {
               <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-500">SIMULATED_RESEARCH</span>}
           </div>
           {lastCommand && (
-            <div className={cls("rounded-lg border px-3 py-2 text-xs flex justify-between gap-3",
-              lastCommand.status === "DELIVERED" ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10") }>
-              <span>Comando <b>{lastCommand.action}</b> · {lastCommand.id}</span>
-              <span className="font-mono font-bold">{lastCommand.status}</span>
+            /* Verde SOLO quando il broker ha confermato l'esecuzione; rosso
+               per un esito terminale negativo; ambra finché è in corso. */
+            <div className={cls("rounded-lg border px-3 py-2 text-xs flex flex-wrap justify-between gap-2",
+              lastCommand.broker_confirmed
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : (lastCommand.terminal
+                    ? "border-rose-500/30 bg-rose-500/10"
+                    : "border-amber-500/30 bg-amber-500/10")) }>
+              <span>
+                Comando <b>{lastCommand.action}</b> · {lastCommand.id}
+                {lastCommand.target?.symbol && (
+                  <> · target <b>{lastCommand.target.account_id}/{lastCommand.target.symbol}</b></>
+                )}
+              </span>
+              <span className="font-mono font-bold">
+                {lastCommand.status}
+                {!lastCommand.broker_confirmed && lastCommand.status === "LEASED" &&
+                  " · ricevuto dall'EA, esecuzione non ancora confermata"}
+              </span>
+            </div>
+          )}
+          {commandError && (
+            /* AUD0-FE-CMD-004: gli errori di comando finivano solo in console. */
+            <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-600 dark:text-rose-400 flex justify-between gap-3">
+              <span>Comando non accettato: {commandError}</span>
+              <button type="button" className="underline" onClick={() => setCommandError("")}>chiudi</button>
             </div>
           )}
           {Object.keys(resourceErrors).length > 0 && (

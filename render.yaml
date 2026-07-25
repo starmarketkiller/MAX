@@ -1,27 +1,58 @@
-# Blueprint Render.com — deploy con un click del backend+dashboard NEXUS.
+# Blueprint Render.com — deploy del backend+dashboard NEXUS.
 # Su https://dashboard.render.com  ->  New  ->  Blueprint  ->  scegli il repo MAX.
+#
+# NOTA DI RILASCIO (audit master, RP0-06):
+# il deploy automatico dal branch di default verso produzione è disattivato.
+# Una promozione in produzione richiede un artefatto passato dalla CI e
+# un'approvazione manuale nella dashboard Render.
 services:
   - type: web
     name: nexus-backend
     runtime: docker
     dockerfilePath: ./server/Dockerfile
-    dockerContext: ./server
+    # AUD0-DEPLOY-DOCKER-002 / AUD0-DEP-010 / AUD0-DEP-011: con context ./server
+    # il worker LocalBridge e il deployment manifest restavano fuori
+    # dall'immagine e i rispettivi endpoint rispondevano 404 in container.
+    dockerContext: .
     plan: starter            # "starter" = sempre acceso. "free" si spegne dopo inattivita'.
-    healthCheckPath: /api/health
-    autoDeploy: true
+    # AUD0-DEPLOY-RENDER-003: /api/health prova solo che il processo risponde.
+    # /api/ready verifica database, migrazioni e preflight di sicurezza.
+    healthCheckPath: /api/ready
+    # AUD0-DEPLOY-RENDER-002: autoDeploy portava ogni commit del branch di
+    # default direttamente in produzione, senza gate di CI né staging.
+    autoDeploy: false
     envVars:
+      # Ambiente canonico. Con LIVE il backend rifiuta di avviarsi finché
+      # restano credenziali di default o segreti placeholder (NEXUS-SEC-001).
+      - key: NEXUS_ENV
+        value: LIVE
       - key: NEXUS_BRIDGE_TOKEN      # token condiviso con EA e worker — impostalo tu
         sync: false
+      # AUD0-DEP-003: la dashboard React presenta il campo come email; il
+      # valore 'admin' produceva un contratto d'identità incoerente.
       - key: NEXUS_ADMIN_USER
-        value: admin
+        sync: false
       - key: NEXUS_ADMIN_PASSWORD    # password della dashboard — impostala tu
         sync: false
       - key: NEXUS_JWT_SECRET        # generato automaticamente da Render
         generateValue: true
+      # AUD0-SEC-002 / AUD0-BE-AUTH-003: sessione privilegiata breve.
+      - key: NEXUS_JWT_HOURS
+        value: "12"
+      - key: NEXUS_COOKIE_SECURE
+        value: "true"
       - key: NEXUS_DB_PATH
         value: /data/nexus.db
+      # AUD0-DEPLOY-RENDER-001: 'open' accetta qualunque chiave di licenza.
       - key: NEXUS_LICENSE_MODE
-        value: open
+        value: strict
+      # AUD0-AI-001: l'AI Coach non ha autorità di esecuzione in produzione.
+      - key: NEXUS_COACH_ALLOW_ACTIONS
+        value: "false"
+      # AUD0-SEC-008: allow-list di Origin per le mutazioni via cookie.
+      # Imposta l'URL pubblico del servizio, es. https://nexus.onrender.com
+      - key: NEXUS_ALLOWED_ORIGINS
+        sync: false
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID

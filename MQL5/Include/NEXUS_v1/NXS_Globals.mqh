@@ -132,11 +132,32 @@ double NormPrice(double p){ return NormalizeDouble(p, g_digits); }
 // ----- Raw trade helpers (replace CTrade) -----
 void NXS_TradeSetMagic(long m){ g_tradeMagic = m; }
 
-void NXS_TradeSetFillingBySymbol(string sym){
+// AUD0-RAW-004: `g_tradeFilling` era inizializzato una sola volta per il
+// simbolo del grafico, ma le chiusure ricevono posizioni il cui simbolo si
+// legge dal ticket. In operazioni multi-simbolo la modalità di riempimento
+// poteva non essere supportata dal simbolo effettivo della richiesta.
+// La modalità va risolta PER RICHIESTA, immediatamente prima dell'invio.
+ENUM_ORDER_TYPE_FILLING NXS_FillingForSymbol(string sym){
    long mode = (long)SymbolInfoInteger(sym, SYMBOL_FILLING_MODE);
-   if((mode & SYMBOL_FILLING_FOK) != 0)      g_tradeFilling = ORDER_FILLING_FOK;
-   else if((mode & SYMBOL_FILLING_IOC) != 0) g_tradeFilling = ORDER_FILLING_IOC;
-   else                                       g_tradeFilling = ORDER_FILLING_RETURN;
+   if((mode & SYMBOL_FILLING_FOK) != 0)      return ORDER_FILLING_FOK;
+   if((mode & SYMBOL_FILLING_IOC) != 0)      return ORDER_FILLING_IOC;
+   return ORDER_FILLING_RETURN;
+}
+
+void NXS_TradeSetFillingBySymbol(string sym){
+   g_tradeFilling = NXS_FillingForSymbol(sym);
+}
+
+// AUD0-RAW-003: `req.deviation = 30` era fisso per ogni strumento. 30 point
+// hanno un significato economico completamente diverso su EURUSD, XAUUSD e
+// BTCUSD. Si deriva dallo spread corrente del simbolo, con un tetto rigido.
+ulong NXS_DeviationForSymbol(string sym){
+   long spread = (long)SymbolInfoInteger(sym, SYMBOL_SPREAD);
+   if(spread <= 0) return 30;
+   long dev = spread * 3;
+   if(dev < 10)   dev = 10;
+   if(dev > 300)  dev = 300;
+   return (ulong)dev;
 }
 
 bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
@@ -149,10 +170,10 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
    req.price       = SymbolInfoDouble(sym, SYMBOL_ASK);
    req.sl          = sl;
    req.tp          = tp;
-   req.deviation   = 30;
+   req.deviation   = NXS_DeviationForSymbol(sym);
    req.magic       = g_tradeMagic;
    req.comment     = comment;
-   req.type_filling= g_tradeFilling;
+   req.type_filling= NXS_FillingForSymbol(sym);
    bool ok = OrderSend(req, res);
    g_tradeRetcode = res.retcode;
    g_tradeOrderTicket = res.order;
@@ -169,10 +190,10 @@ bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment)
    req.price       = SymbolInfoDouble(sym, SYMBOL_BID);
    req.sl          = sl;
    req.tp          = tp;
-   req.deviation   = 30;
+   req.deviation   = NXS_DeviationForSymbol(sym);
    req.magic       = g_tradeMagic;
    req.comment     = comment;
-   req.type_filling= g_tradeFilling;
+   req.type_filling= NXS_FillingForSymbol(sym);
    bool ok = OrderSend(req, res);
    g_tradeRetcode = res.retcode;
    g_tradeOrderTicket = res.order;
@@ -190,9 +211,9 @@ bool NXS_DoClose(ulong ticket){
    req.position    = ticket;
    req.symbol      = sym;
    req.volume      = vol;
-   req.deviation   = 30;
+   req.deviation   = NXS_DeviationForSymbol(sym);
    req.magic       = (long)PositionGetInteger(POSITION_MAGIC);
-   req.type_filling= g_tradeFilling;
+   req.type_filling= NXS_FillingForSymbol(sym);
    if(ptype == POSITION_TYPE_BUY){
       req.type  = ORDER_TYPE_SELL;
       req.price = SymbolInfoDouble(sym, SYMBOL_BID);
@@ -209,15 +230,38 @@ bool NXS_DoClosePartial(ulong ticket, double volume){
    if(!PositionSelectByTicket(ticket)) return false;
    string sym = PositionGetString(POSITION_SYMBOL);
    long   ptype = PositionGetInteger(POSITION_TYPE);
+
+   // AUD0-RAW-005: il volume del chiamante veniva inviato senza alcuna
+   // validazione locale contro volume corrente, minimo, step e residuo.
+   // Un valore non valido produceva un rifiuto del broker (o, peggio, un
+   // residuo non tradabile) invece di un errore chiaro lato EA.
+   double curVol = PositionGetDouble(POSITION_VOLUME);
+   double vmin   = SymbolInfoDouble(sym, SYMBOL_VOLUME_MIN);
+   double vstep  = SymbolInfoDouble(sym, SYMBOL_VOLUME_STEP);
+   if(vstep <= 0) vstep = 0.01;
+   volume = MathFloor(volume / vstep) * vstep;
+   if(volume <= 0 || volume > curVol + 1e-9){
+      PrintFormat("[NEXUS EXEC] partial close rifiutato: volume %.4f non valido "
+                  "(posizione %.4f) ticket=%I64u", volume, curVol, ticket);
+      return false;
+   }
+   double residual = curVol - volume;
+   // Il residuo deve essere zero (chiusura totale) oppure ancora tradabile.
+   if(residual > 1e-9 && residual < vmin - 1e-9){
+      PrintFormat("[NEXUS EXEC] partial close rifiutato: residuo %.4f sotto il "
+                  "minimo broker %.4f ticket=%I64u", residual, vmin, ticket);
+      return false;
+   }
+
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action      = TRADE_ACTION_DEAL;
    req.position    = ticket;
    req.symbol      = sym;
    req.volume      = volume;
-   req.deviation   = 30;
+   req.deviation   = NXS_DeviationForSymbol(sym);
    req.magic       = (long)PositionGetInteger(POSITION_MAGIC);
-   req.type_filling= g_tradeFilling;
+   req.type_filling= NXS_FillingForSymbol(sym);
    if(ptype == POSITION_TYPE_BUY){
       req.type  = ORDER_TYPE_SELL;
       req.price = SymbolInfoDouble(sym, SYMBOL_BID);

@@ -48,19 +48,56 @@ void NXS_ManageGrid(){
       ENUM_ORDER_TYPE otype = (type == POSITION_TYPE_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
       double refPrice = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_ASK)
                                                      : SymbolInfoDouble(g_sym, SYMBOL_BID);
-      double sl = 0, tp = 0;
+
+      // AUD0-ADD-005 / NXS-EXP-002: la leg veniva inviata con sl=0 e tp=0,
+      // cioè priva di stop lato broker. Se l'EA o il terminale si fermavano
+      // prima di una successiva modifica, la posizione restava scoperta.
+      // Lo stop viene calcolato dallo stesso ATR usato per il passo di griglia.
+      double slDist = g_atr * InpGridStepATR * (double)MAX_GRID_LAYERS;
+      if(slDist <= 0){
+         Print("[NEXUS RISK] GRID BLOCCATO: distanza di stop non calcolabile (ATR non valido)");
+         break;
+      }
+      double sl = (type == POSITION_TYPE_BUY) ? (refPrice - slDist) : (refPrice + slDist);
+      sl = NormalizeDouble(sl, (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS));
+      double tp = 0;
+
+      // AUD0-ADD-004 / NXS-EXP-003: la leg replicava l'INTERO volume del core
+      // in perdita, quindi core + 3 layer arrivavano a 4x l'esposizione
+      // iniziale. Il volume viene ora derivato dal budget di rischio residuo
+      // e dalla distanza di stop effettiva, non dal volume del genitore.
+      double budgetLots = NXS_CalcLot(slDist);
+      if(budgetLots <= 0){
+         Print("[NEXUS RISK] GRID BLOCCATO: rischio non calcolabile per la leg");
+         break;
+      }
+      double addLots = MathMin(lots, budgetLots);
+      double vstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
+      double vmin  = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+      if(vstep > 0) addLots = MathFloor(addLots / vstep) * vstep;
+      if(addLots < vmin){
+         PrintFormat("[NEXUS RISK] GRID BLOCCATO: lotto derivato dal budget (%.4f) "
+                     "sotto il minimo broker (%.4f)", addLots, vmin);
+         break;
+      }
+
       string gateReason = "";
-      if(!NXS_CommonExposurePreflight("GRID", gridDir, lots, otype, refPrice,
+      if(!NXS_CommonExposurePreflight("GRID", gridDir, addLots, otype, refPrice,
                                       sl, tp, gateReason)){
          PrintFormat("[NEXUS RISK] GRID BLOCCATO: %s", gateReason);
          break;
       }
 
       NXS_TradeSetMagic(InpMagic + MAGIC_GRID + NXS_CountGrid() + 1);
-      if(type == POSITION_TYPE_BUY)
-         NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_GRID");
-      else
-         NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_GRID");
+      // AUD0-ADD-007: l'esito dell'invio veniva ignorato, quindi un fallimento
+      // restava invisibile e la logica dei layer si basava solo su scansioni
+      // successive delle posizioni.
+      bool sent = (type == POSITION_TYPE_BUY)
+                  ? NXS_SafeBuy(addLots, g_sym, sl, tp, "NEXUS_GRID")
+                  : NXS_SafeSell(addLots, g_sym, sl, tp, "NEXUS_GRID");
+      PrintFormat("[NEXUS GRID] add %s lots=%.4f sl=%.5f result=%s",
+                  (type == POSITION_TYPE_BUY ? "BUY" : "SELL"), addLots, sl,
+                  (sent ? "SENT" : "FAILED"));
       break;
    }
 }

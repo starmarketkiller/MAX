@@ -76,8 +76,11 @@ export default function Login() {
   const { login } = useAuth();
   const { theme, toggle } = useTheme();
   const nav = useNavigate();
-  const [email, setEmail] = useState("admin@nexus.local");
-  const [password, setPassword] = useState("nexus123");
+  // AUD0-FE-AUTH-001: il form precompilava e mostrava a schermo le credenziali
+  // di default. Qualunque deployment che le avesse mantenute era accessibile
+  // subito, e anche chi le aveva cambiate rivelava la convenzione usata.
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [clock, setClock] = useState("");
@@ -259,7 +262,7 @@ export default function Login() {
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Secured with JWT · default: admin@nexus.local / nexus123
+              Sessione con cookie httpOnly · credenziali definite dall'installazione
             </div>
           </form>
         </div>

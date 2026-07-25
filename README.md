@@ -1,9 +1,33 @@
 # NEXUS — Trading System (self-hosted)
 
-Sistema completo NEXUS migrato **fuori da Emergent**: ora tutto il progetto vive qui ed è
-self-hosted. Nessuna dipendenza da servizi esterni.
+Sistema completo NEXUS migrato **fuori da Emergent**: il core di trading è
+self-hostabile e non richiede Emergent.
 
-Il progetto ha **3 componenti** che parlano tra loro:
+> **AUD0-DOC-003 — precisazione.** Il README dichiarava "nessuna dipendenza da
+> servizi esterni", contraddicendosi poi con Telegram, Anthropic e il deploy su
+> cloud pubblico. La formulazione corretta è: il **core** gira in autonomia;
+> alcune funzionalità **opzionali** dipendono da servizi esterni (Telegram per
+> le notifiche, Anthropic per l'AI Coach, il provider cloud se non self-hosti).
+
+---
+
+## ⚠️ Stato del progetto: NO-GO per la produzione
+
+Un audit completo del repository è in `docs/NEXUS_MASTER_PROJECT.md`; lo stato
+di chiusura dei finding è in [`docs/REMEDIATION_STATUS.md`](docs/REMEDIATION_STATUS.md).
+
+**Consentito:** sviluppo, simulazione, backtest controllato, conti demo.
+**Bloccato:** trading con capitale reale, deploy remoto in produzione,
+uso multi-account sullo stesso backend, modalità istituzionale dell'EA,
+Virtual SL in modalità EXECUTE, azioni live dell'AI Coach.
+
+Il backend **rifiuta di avviarsi** con `NEXUS_ENV` diverso da
+DEVELOPMENT/SIMULATION finché restano credenziali di default o segreti
+segnaposto. È voluto.
+
+---
+
+Il progetto ha **componenti principali** che parlano tra loro:
 
 ```
 ┌────────────────┐   push stato + poll comandi   ┌──────────────────────┐
@@ -21,7 +45,11 @@ Il progetto ha **3 componenti** che parlano tra loro:
 |----------------|---------------|
 | `MQL5/`        | L'Expert Advisor `NEXUS_EA_v2.mq5` + tutti gli include `NXS_*.mqh` |
 | `LocalBridge/` | Il worker Python che gira sul PC con MT5 (compila EA, riavvia, deploy file) |
-| `server/`      | **NUOVO** — backend FastAPI + dashboard web che sostituisce Emergent |
+| `server/`      | Backend FastAPI + dashboard statica di fallback |
+| `frontend/`    | Sorgente della dashboard React "cockpit" servita sotto `/app` |
+| `contracts/`   | Contratti canonici (strategy registry, settings, comandi) e generatori |
+| `deploy/`      | Manifest di deployment versionato |
+| `docs/`        | Audit master, specifiche architetturali, stato della remediazione |
 
 ---
 
@@ -57,10 +85,14 @@ Apri `server/.env` e imposta **almeno** questi valori:
 | Variabile | A cosa serve |
 |-----------|--------------|
 | `NEXUS_BRIDGE_TOKEN` | Token condiviso EA ↔ Backend ↔ Worker. **Deve essere identico** ovunque. |
-| `NEXUS_ADMIN_USER` / `NEXUS_ADMIN_PASSWORD` | Credenziali dashboard. ⚠️ La dashboard React (`/app`) usa un campo **email**: imposta `NEXUS_ADMIN_USER` come email (es. `admin@nexus.local`). |
-| `NEXUS_JWT_SECRET` | Stringa lunga e casuale per firmare le sessioni. |
+| `NEXUS_ADMIN_USER` / `NEXUS_ADMIN_PASSWORD` | Credenziali dashboard. La dashboard React (`/app`) usa un campo **email**: imposta `NEXUS_ADMIN_USER` come indirizzo email reale. Password di almeno 12 caratteri. |
+| `NEXUS_JWT_SECRET` | Stringa lunga e casuale per firmare le sessioni. Se assente, il backend ne genererebbe una effimera e ogni riavvio invaliderebbe le sessioni: fuori dallo sviluppo l'avvio viene rifiutato. |
+| `NEXUS_ENV` | `DEVELOPMENT` \| `SIMULATION` \| `DEMO` \| `PAPER` \| `LIVE`. Da `DEMO` in su i controlli fail-closed sono bloccanti. Un valore sconosciuto è trattato come `LIVE`. |
+| `NEXUS_JWT_HOURS` | Durata sessione (default 12h, massimo 24h in ambiente hardened). |
+| `NEXUS_ALLOWED_ORIGINS` | Origin ammesse per le mutazioni via cookie (anti-CSRF). |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | (Opzionale) per ricevere le notifiche su Telegram. |
-| `NEXUS_LICENSE_MODE` | `open` = ogni chiave è valida (consigliato self-hosted). |
+| `NEXUS_LICENSE_MODE` | `strict` = valida solo le chiavi in tabella. `open` accetta **qualunque** chiave: è utile solo in sviluppo e viene rifiutato in ambiente hardened. |
+| `NEXUS_COACH_ALLOW_ACTIONS` | L'AI Coach non ha autorità di esecuzione: produce proposte. Abilitabile solo in sviluppo. |
 | `ANTHROPIC_API_KEY` | (Opzionale) chiave API Claude per l'**AI Coach** (`/api/coach/chat`). Senza, il Coach risponde "non disponibile". |
 | `NEXUS_COACH_MODEL` | Modello del Coach (default `claude-opus-4-8`). |
 
@@ -92,9 +124,16 @@ Sul PC Windows dove gira MT5:
 ```powershell
 pip install requests
 copy LocalBridge\nexus_worker.config.example.json nexus_worker.config.json
-# modifica nexus_worker.config.json: backend_url + bridge_token + i path MT5
+# modifica nexus_worker.config.json: backend_url (HTTPS) + bridge_token + path MT5
 python LocalBridge\nexus_local_worker.py
 ```
+
+> ⚠️ **Il worker scrive ed esegue codice sulla macchina di trading.**
+> Eseguilo con un account Windows dedicato, con permessi limitati alla cartella
+> MQL5. Prima di eseguirlo, verifica il digest dell'artefatto contro
+> `GET /api/downloads/local_worker/checksum`. Il worker rifiuta di avviarsi con
+> valori di esempio, token corto o `backend_url` non HTTPS. L'azione `shell`
+> generica è stata rimossa (era esecuzione di comandi arbitrari).
 
 Dettagli completi in [`LocalBridge/README_LOCAL_WORKER_IT.md`](LocalBridge/README_LOCAL_WORKER_IT.md).
 Il worker comparirà nella dashboard sotto **Local Bridge**.
@@ -123,11 +162,18 @@ poi copia `frontend/build/` in `server/static/app/`.
 
 ## 📡 API (contratto con EA e worker)
 
-Tutti gli endpoint EA/worker richiedono l'header `X-Nexus-Token`. Gli endpoint dashboard
-richiedono `Authorization: Bearer <jwt>` ottenuto da `POST /api/auth/login`.
+Tutti gli endpoint EA/worker richiedono l'header `X-Nexus-Token`.
+
+Gli endpoint dashboard usano un **cookie di sessione httpOnly** emesso da
+`POST /api/auth/login` (il client React invia `withCredentials`). Le richieste
+che modificano stato devono inoltre presentare l'header `X-Nexus-Csrf` con il
+valore del cookie `nexus_csrf` (double-submit). Il vecchio `Authorization:
+Bearer <jwt>` resta solo per la dashboard statica legacy ed è **rifiutato**
+negli ambienti hardened (finding AUD0-DOC-005 / AUD0-SEC-007).
 
 **EA → backend**
-`POST /api/ea/push` · `GET /api/ea/command` · `GET /api/ea/settings` ·
+`POST /api/ea/push` · `GET /api/ea/command` (richiede `account_id` e `symbol`) ·
+`POST /api/ea/command/ack` · `GET /api/ea/settings` ·
 `GET /api/ea/locked_profile` · `POST /api/ea/strategy_stats` ·
 `POST /api/ea/trade_history_sync` · `POST /api/ea/trade_reason` ·
 `POST /api/ea/shadow_trades` · `POST /api/ea/visual_objects` ·
@@ -141,7 +187,13 @@ richiedono `Authorization: Bearer <jwt>` ottenuto da `POST /api/auth/login`.
 `POST /api/auth/login` · `GET /api/dashboard/overview` · `POST /api/dashboard/command` ·
 `GET /api/dashboard/journal` · `GET /api/dashboard/strategy_stats` ·
 `GET/PUT /api/dashboard/settings` · `GET/PUT /api/dashboard/locked_profiles` ·
-`GET/PUT /api/strategy_chain/config` · `GET /api/local_bridge/status` · `POST /api/local_bridge/enqueue`
+`GET/PUT /api/strategy_chain/config` · `GET /api/local_bridge/status` · `POST /api/local_bridge/enqueue` ·
+`GET /api/ea/command_contract` · `GET /api/risk/policy` · `GET /api/audit/operator`
+
+**Salute del servizio**
+`GET /api/health` — liveness: prova solo che il processo risponde.
+`GET /api/ready` — readiness: database scrivibile, migrazioni applicate,
+preflight di sicurezza superato. Restituisce 503 con l'elenco dei problemi.
 
 ---
 
@@ -151,7 +203,20 @@ Il backend è una singola app FastAPI con SQLite: gira su qualsiasi host che acc
 container (Railway, Render, Fly.io, un VPS, ecc.). Punta `InpWebURL` (EA) e `backend_url`
 (worker) all'URL pubblico HTTPS e ricordati di whitelistare quell'URL in MT5.
 
+Guida completa in [`DEPLOY.md`](DEPLOY.md).
+
+**Il build context dell'immagine è la root del repository**, non `server/`: il
+backend serve anche il worker LocalBridge e il deployment manifest, che vivono
+fuori da `server/`.
+
+```bash
+docker build -f server/Dockerfile -t nexus-backend .
+```
+
 I dati persistono nel volume Docker `nexus-data` (file `nexus.db`).
+**Il volume non è un backup**: protegge dalla sostituzione del container, non
+dalla corruzione né dalla cancellazione. Copia periodicamente `/data/nexus.db`
+fuori dall'host e verifica il ripristino.
 
 ---
 

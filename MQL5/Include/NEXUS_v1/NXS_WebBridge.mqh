@@ -213,12 +213,79 @@ void NXS_WebPushSafe(){
    NXS_WebPush(h, v, a, s);
 }
 
+// --- helper di parsing --------------------------------------------------- #
+string _NXS_JsonStr(string resp, string key){
+   string needle = "\"" + key + "\":\"";
+   int p = StringFind(resp, needle);
+   if(p < 0) return "";
+   int s = p + StringLen(needle);
+   int e = StringFind(resp, "\"", s);
+   return (e > s) ? StringSubstr(resp, s, e - s) : "";
+}
+
+double _NXS_JsonNum(string resp, string key, bool &found){
+   found = false;
+   string needle = "\"" + key + "\":";
+   int p = StringFind(resp, needle);
+   if(p < 0) return 0;
+   int s = p + StringLen(needle);
+   while(s < StringLen(resp) && StringGetCharacter(resp, s) == ' ') s++;
+   int e = s;
+   while(e < StringLen(resp)){
+      ushort c = StringGetCharacter(resp, e);
+      if((c >= '0' && c <= '9') || c == '.' || c == '-') e++; else break;
+   }
+   if(e <= s) return 0;
+   found = true;
+   return StringToDouble(StringSubstr(resp, s, e - s));
+}
+
+// AUD0-WEB-006: le chiusure remote non verificavano che il ticket
+// appartenesse davvero a questa istanza prima di inviare l'ordine.
+bool _NXS_OwnsPosition(ulong ticket){
+   if(!PositionSelectByTicket(ticket)) return false;
+   if(PositionGetString(POSITION_SYMBOL) != g_sym) return false;
+   return IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC));
+}
+
+// AUD0-WEB-004: l'EA non comunicava mai l'esito reale al backend, quindi
+// "DELIVERED" era l'unica informazione disponibile. Ora ogni comando termina
+// con un ACK esplicito che riporta lo stato broker.
+void _NXS_CommandAck(string commandId, string leaseId, string status,
+                     string detail, int closedCount, int remainingCount){
+   if(StringLen(commandId) == 0 || StringLen(leaseId) == 0) return;
+   string body = "{";
+   body += "\"command_id\":\"" + _JsonEsc(commandId) + "\",";
+   body += "\"lease_id\":\""   + _JsonEsc(leaseId)   + "\",";
+   body += "\"status\":\""     + status              + "\",";
+   body += "\"retcode\":"      + (string)NXS_TradeRetcode() + ",";
+   body += "\"closed_count\":" + (string)closedCount + ",";
+   body += "\"remaining_count\":" + (string)remainingCount + ",";
+   body += "\"detail\":\""     + _JsonEsc(detail)    + "\"}";
+
+   char data[]; StringToCharArray(body, data, 0, StringLen(body), CP_UTF8);
+   char result[]; string headersOut;
+   string headers = "Content-Type: application/json\r\nX-Nexus-Token: " + InpWebToken + "\r\n";
+   int code = WebRequest("POST", InpWebURL + "/api/ea/command/ack", headers, 5000,
+                         data, result, headersOut);
+   if(code != 200)
+      PrintFormat("[NEXUS] ACK comando %s non confermato (http=%d)", commandId, code);
+}
+
 void NXS_WebPoll(){
    if(!InpEnableWebSync) return;
    if(TimeCurrent() - g_lastPollTime < InpPollIntervalSec) return;
    g_lastPollTime = TimeCurrent();
 
-   string url = InpWebURL + "/api/ea/command";
+   // AUD0-CMD-002 / AUD0-WEB-002: il polling non dichiarava a quale istanza
+   // appartenesse, quindi il backend consegnava il comando globale più
+   // vecchio — potenzialmente destinato a un altro account o simbolo.
+   long   account = (long)AccountInfoInteger(ACCOUNT_LOGIN);
+   string url = InpWebURL + "/api/ea/command"
+              + "?account_id=" + (string)account
+              + "&symbol=" + g_sym
+              + "&magic=" + (string)InpMagic;
+
    char empty[]; char result[]; string headersOut;
    string headers = "X-Nexus-Token: " + InpWebToken + "\r\n";
    int code = WebRequest("GET", url, headers, 3000, empty, result, headersOut);
@@ -234,88 +301,115 @@ void NXS_WebPoll(){
    string resp = CharArrayToString(result, 0, -1, CP_UTF8);
    if(StringFind(resp, "\"action\":null") >= 0) return;
 
-   // Extract action
-   string action = "";
-   int aPos = StringFind(resp, "\"action\":\"");
-   if(aPos >= 0){
-      int s = aPos + 10;
-      int e = StringFind(resp, "\"", s);
-      if(e > s) action = StringSubstr(resp, s, e - s);
-   }
+   string action    = _NXS_JsonStr(resp, "action");
+   string commandId = _NXS_JsonStr(resp, "command_id");
+   string leaseId   = _NXS_JsonStr(resp, "lease_id");
    if(action == "") return;
-   PrintFormat("[NEXUS] Command received: %s", action);
+
+   // AUD0-WEB-002: il target dichiarato dal backend deve corrispondere
+   // ESATTAMENTE a questa istanza. Un comando indirizzato altrove viene
+   // rifiutato in modo definitivo, non eseguito.
+   string tgtAccount = _NXS_JsonStr(resp, "account_id");
+   string tgtSymbol  = _NXS_JsonStr(resp, "symbol");
+   if((StringLen(tgtAccount) > 0 && tgtAccount != (string)account) ||
+      (StringLen(tgtSymbol)  > 0 && tgtSymbol  != g_sym)){
+      PrintFormat("[NEXUS] comando %s RIFIUTATO: target %s/%s != istanza %I64d/%s",
+                  action, tgtAccount, tgtSymbol, account, g_sym);
+      _NXS_CommandAck(commandId, leaseId, "FAILED_FINAL",
+                      "target mismatch", 0, 0);
+      return;
+   }
+
+   PrintFormat("[NEXUS] Command received: %s (id=%s)", action, commandId);
+   string status = "SUCCEEDED";
+   string detail = "";
+   int    closed = 0, remaining = 0;
 
    if(action == "pause"){
       g_eaPaused = true;
+      detail = "trading in pausa";
    }
    else if(action == "resume"){
       g_eaPaused = false;
+      detail = "trading ripreso";
    }
    else if(action == "close_all"){
+      // AUD0-WEB-005: il loop ignorava ogni esito e stampava comunque
+      // "close_all executed", anche con posizioni ancora aperte.
       for(int i = PositionsTotal()-1; i >= 0; i--){
          ulong t = PositionGetTicket(i);
          if(t == 0) continue;
          if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
          long mg = (long)PositionGetInteger(POSITION_MAGIC);
          if(!IsNexusMagic(mg)) continue;
-         NXS_DoClose(t);
+         if(NXS_DoClose(t)) closed++; else remaining++;
       }
-      Print("[NEXUS] close_all executed");
+      if(remaining > 0){
+         // Restano posizioni: il comando NON è riuscito. Retryable, così il
+         // backend lo riprova finché ci sono tentativi disponibili.
+         status = "FAILED_RETRYABLE";
+         detail = StringFormat("chiuse %d, ancora aperte %d", closed, remaining);
+      } else {
+         detail = StringFormat("chiuse %d posizioni", closed);
+      }
+      PrintFormat("[NEXUS] close_all: chiuse=%d rimaste=%d", closed, remaining);
    }
    else if(action == "close_position"){
-      // extract ticket from payload
-      int tPos = StringFind(resp, "\"ticket\":");
-      if(tPos >= 0){
-         int s = tPos + 9;
-         // skip spaces
-         while(s < StringLen(resp) && (StringGetCharacter(resp, s) == ' ')) s++;
-         int e = s;
-         while(e < StringLen(resp)){
-            ushort c = StringGetCharacter(resp, e);
-            if(c >= '0' && c <= '9') e++; else break;
-         }
-         if(e > s){
-            ulong ticket = (ulong)StringToInteger(StringSubstr(resp, s, e - s));
-            if(NXS_DoClose(ticket))
-               PrintFormat("[NEXUS] close_position OK ticket=%I64u", ticket);
-            else
-               PrintFormat("[NEXUS] close_position FAIL ticket=%I64u retcode=%d", ticket, NXS_TradeRetcode());
+      bool found = false;
+      double tRaw = _NXS_JsonNum(resp, "ticket", found);
+      if(!found){
+         status = "FAILED_FINAL"; detail = "ticket mancante";
+      } else {
+         ulong ticket = (ulong)tRaw;
+         if(!_NXS_OwnsPosition(ticket)){
+            status = "FAILED_FINAL";
+            detail = StringFormat("ticket %I64u non appartiene a questa istanza", ticket);
+            PrintFormat("[NEXUS] close_position RIFIUTATO: %s", detail);
+         } else if(NXS_DoClose(ticket)){
+            closed = 1;
+            detail = StringFormat("ticket %I64u chiuso", ticket);
+         } else {
+            status = "FAILED_RETRYABLE";
+            detail = StringFormat("close fallito retcode=%d", NXS_TradeRetcode());
          }
       }
    }
    else if(action == "partial_close"){
-      int tPos = StringFind(resp, "\"ticket\":");
-      int vPos = StringFind(resp, "\"volume\":");
-      if(tPos >= 0 && vPos >= 0){
-         int ts = tPos + 9, te = ts;
-         while(te < StringLen(resp)){
-            ushort c = StringGetCharacter(resp, te);
-            if(c >= '0' && c <= '9') te++; else break;
-         }
-         int vs = vPos + 9, ve = vs;
-         while(ve < StringLen(resp)){
-            ushort c = StringGetCharacter(resp, ve);
-            if((c >= '0' && c <= '9') || c == '.') ve++; else break;
-         }
-         if(te > ts && ve > vs){
-            ulong  ticket = (ulong)StringToInteger(StringSubstr(resp, ts, te - ts));
-            double volume = StringToDouble(StringSubstr(resp, vs, ve - vs));
-            if(NXS_DoClosePartial(ticket, volume))
-               PrintFormat("[NEXUS] partial_close OK ticket=%I64u vol=%.2f", ticket, volume);
-            else
-               PrintFormat("[NEXUS] partial_close FAIL ticket=%I64u", ticket);
+      bool fT = false, fV = false;
+      double tRaw = _NXS_JsonNum(resp, "ticket", fT);
+      double vol  = _NXS_JsonNum(resp, "volume", fV);
+      if(!fT || !fV){
+         status = "FAILED_FINAL"; detail = "ticket o volume mancante";
+      } else {
+         ulong ticket = (ulong)tRaw;
+         // AUD0-WEB-007: ticket e volume finivano direttamente nell'helper
+         // raw, senza verifica di ownership né di volume valido.
+         if(!_NXS_OwnsPosition(ticket)){
+            status = "FAILED_FINAL";
+            detail = StringFormat("ticket %I64u non appartiene a questa istanza", ticket);
+         } else if(NXS_DoClosePartial(ticket, vol)){
+            detail = StringFormat("chiusi %.4f lotti su %I64u", vol, ticket);
+         } else {
+            status = "FAILED_FINAL";
+            detail = StringFormat("volume non valido o rifiutato retcode=%d", NXS_TradeRetcode());
          }
       }
    }
    else if(action == "reset_anti_revenge"){
       g_antiRevengeUntil = 0;
       g_consecLosses = 0;
+      detail = "anti-revenge azzerato";
       Print("[NEXUS] anti-revenge reset");
    }
    else if(action == "reset_daily"){
+      // AUD0-WEB-009: il comando riscrive la baseline di drawdown giornaliero.
+      // L'effetto viene ora dichiarato esplicitamente nell'ACK, così resta
+      // tracciato nell'audit del backend e non solo nel log locale.
       g_tradesToday = 0;
       g_balanceDayStart = AccountInfoDouble(ACCOUNT_BALANCE);
-      Print("[NEXUS] daily counters reset");
+      detail = StringFormat("contatori azzerati; baseline DD riportata a %.2f",
+                            g_balanceDayStart);
+      Print("[NEXUS] daily counters reset — baseline drawdown riscritta");
    }
    // v2.0.24 — remote unlock for ESL/DPT/AutoClose pause. Previously only a
    // state-file delete + EA restart could clear g_pausedUntilNextOpen; this
@@ -325,8 +419,22 @@ void NXS_WebPoll(){
       g_dptHit = false;
       g_pausedUntilNextOpen = false;
       g_autoClosePending = false;
+      detail = "ESL/DPT/AutoClose pause azzerati";
       Print("[NEXUS] protections reset (ESL/DPT/AutoClose pause cleared) via dashboard");
    }
+   else if(action == "resync_trades"){
+      // AUD0-BE-CMD-009: il backend accettava questa azione ma il parser MQL
+      // non la gestiva, quindi non accadeva nulla e nessuno se ne accorgeva.
+      g_lastHistSyncTime = 0;   // forza la risincronizzazione al prossimo ciclo
+      detail = "risincronizzazione storico richiesta";
+   }
+   else {
+      status = "FAILED_FINAL";
+      detail = "azione non supportata da questa build dell'EA";
+      PrintFormat("[NEXUS] comando sconosciuto: %s", action);
+   }
+
+   _NXS_CommandAck(commandId, leaseId, status, detail, closed, remaining);
 }
 
 #endif

@@ -29,7 +29,21 @@ bool g_stateRestoreHealthy = true;
 SNXSManagedState g_managedState[NXS_STATE_MAX_POS];
 int g_managedStateCount = 0;
 
-string _NXS_StateFile(){ return StringFormat("NEXUS_state_%I64d_%s.bin", InpMagic, g_sym); }
+// AUD0-STATE-001 / NXS-STATE-001: il nome conteneva solo magic e simbolo, ma
+// i file vivono in FILE_COMMON — cartella CONDIVISA tra tutti i terminali
+// della macchina. Due account (o due terminali) con lo stesso magic sullo
+// stesso simbolo scrivevano nello stesso snapshot, contaminandosi a vicenda.
+// La chiave include ora login del conto e server del broker.
+string _NXS_StateFile(){
+   string server = AccountInfoString(ACCOUNT_SERVER);
+   StringReplace(server, "\\", "_");
+   StringReplace(server, "/", "_");
+   StringReplace(server, " ", "_");
+   StringReplace(server, ":", "_");
+   return StringFormat("NEXUS_state_%I64d_%s_%I64d_%s.bin",
+                       (long)AccountInfoInteger(ACCOUNT_LOGIN), server,
+                       InpMagic, g_sym);
+}
 string _NXS_StateTmp(){ return _NXS_StateFile() + ".tmp"; }
 string _NXS_StatePrev(){ return _NXS_StateFile() + ".prev"; }
 
