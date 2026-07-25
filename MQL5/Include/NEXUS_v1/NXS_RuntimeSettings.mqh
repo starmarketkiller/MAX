@@ -160,11 +160,37 @@ string _NXS_JsonObject(const string &json, const string key){
    return StringSubstr(json, start, e - start);
 }
 
-// Moltiplicatore di rischio per la strategia (1.0 se non specificato).
+// AUD0-EXEC-008 — SEMANTICA DEL MOLTIPLICATORE DI RISCHIO REMOTO.
+//
+// Qualunque valore assente, malformato o non positivo ricadeva su 1.0, cioe'
+// "rischio pieno". Per un valore accidentalmente a zero e' innocuo; per una
+// richiesta del piano di controllo che voleva DISATTIVARE o ridurre
+// drasticamente una strategia e' l'esatto contrario di cio' che era stato
+// chiesto: il comando "azzera il rischio" diventava "rischio normale".
+//
+// I tre casi sono ora distinti:
+//   chiave assente  -> 1.0 (nessuna istruzione: comportamento predefinito)
+//   valore 0 o < 0  -> 0.0 (istruzione esplicita di NON operare)
+//   valore malformato -> 0.0 + allarme (non si indovina cosa volesse dire)
+//
+// Un moltiplicatore 0.0 blocca l'apertura a valle, dove il lotto risultante
+// non supera il minimo.
 double NXS_Runtime_StrategyLotMult(const string name){
    if(StringLen(g_run_StrategyRiskJson) == 0) return 1.0;
    double v = _NXS_JsonNum(g_run_StrategyRiskJson, name);
-   if(v == EMPTY_VALUE || v <= 0.0) return 1.0;
+   if(v == EMPTY_VALUE) return 1.0;              // nessuna istruzione per questa strategia
+   if(v <= 0.0){
+      PrintFormat("[NEXUS RUNTIME] moltiplicatore di rischio %.4f per '%s': "
+                  "interpretato come DISATTIVAZIONE (nessuna nuova esposizione)",
+                  v, name);
+      return 0.0;
+   }
+   if(!MathIsValidNumber(v)){
+      PrintFormat("[NEXUS RUNTIME][ALERT] moltiplicatore di rischio non valido per "
+                  "'%s': la strategia viene DISATTIVATA invece di operare a "
+                  "rischio pieno", name);
+      return 0.0;
+   }
    return v;
 }
 

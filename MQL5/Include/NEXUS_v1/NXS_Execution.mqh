@@ -172,6 +172,15 @@ bool NXS_IsCounterHTFDirection(ENUM_NXS_DIR dir, SNXSHTF &htf){
           (dir == DIR_SELL && htf.bias == HTF_BULL);
 }
 
+// AUD0-EXEC-007 — questo elenco duplica il contratto delle strategie: e' una
+// TERZA lista mantenuta a mano, dopo il registro canonico e i profili. Una
+// strategia aggiunta al registro e dimenticata qui perde silenziosamente
+// l'idoneita' counter-HTF (o la ottiene per sbaglio se rinominata).
+//
+// La lista resta qui perche' "price action / reversal" e' una proprieta' di
+// TASSONOMIA che il registro non modella ancora, ma ora e' VERIFICATA contro
+// il registro: un nome che non esiste piu' viene segnalato all'avvio invece di
+// restare per anni come voce morta.
 bool NXS_IsCounterHTFPriceActionStrategy(string name){
    return (name == "BOLLINGER" || name == "RSI_DIV" || name == "BJORGUM" ||
            name == "BB_SQUEEZE" || name == "LIQ_SWEEP" || name == "FVG_MIT" ||
@@ -182,6 +191,28 @@ bool NXS_IsCounterHTFPriceActionStrategy(string name){
            name == "MALAYSIAN_SNR" || name == "THREE_BAR_DELIVERY_BREAK" || name == "JUDAS_SWING" ||
            name == "LDN_REVERSAL" || name == "NY_REVERSAL" || name == "PO3" ||
            name == "DISP_REBAL" || name == "RANGE_FADE");
+}
+
+//: AUD0-EXEC-007 — verifica di coerenza all'avvio fra la lista counter-HTF e
+//: il registro canonico. Segnala le voci che non corrispondono a nessuna
+//: strategia viva, cioe' la deriva di contratto che l'audit descrive.
+void NXS_CounterHTF_AuditList(){
+   string names[] = {"BOLLINGER","RSI_DIV","BJORGUM","BB_SQUEEZE","LIQ_SWEEP",
+                     "FVG_MIT","IFVG","OB_MIT","ORDER_BLOCK","STRUCT_REACT",
+                     "TURTLE_SOUP","SH_BMS_RTO","SMS_BMS_RTO","SILVER_BULLET",
+                     "AMD_REVERSAL","MALAYSIAN_SNR","THREE_BAR_DELIVERY_BREAK",
+                     "JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL","PO3",
+                     "DISP_REBAL","RANGE_FADE"};
+   int stale = 0;
+   for(int i = 0; i < ArraySize(names); i++){
+      if(!NXS_StrategyKnown(names[i])){
+         stale++;
+         PrintFormat("[NEXUS][CONTRATTO] '%s' e' nella lista counter-HTF ma non "
+                     "esiste nel registro canonico", names[i]);
+      }
+   }
+   if(stale == 0)
+      Print("[NEXUS] lista counter-HTF coerente con il registro canonico");
 }
 
 bool NXS_CounterHTFSoftEligible(SNXSSignal &sig, SNXSHTF &htf){
@@ -280,11 +311,28 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
          bool sameDir = (sig.dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
                         (sig.dir == DIR_SELL && ptype == POSITION_TYPE_SELL);
          if(!sameDir) continue;
-         // stesso TF? leggo la strategia dal comment -> il suo TF profilo
-         string pcm = PositionGetString(POSITION_COMMENT);
-         string pp[]; int npp = StringSplit(pcm, '|', pp);
-         ENUM_TIMEFRAMES posTF = (npp >= 2 && StringLen(pp[1]) > 0)
-                                 ? NXS_Profile_TF(pp[1]) : PERIOD_CURRENT;
+         // AUD0-EXEC-006: il TF della posizione veniva dedotto dal COMMENTO.
+         // Un commento troncato dal broker (o una posizione manuale/legacy)
+         // faceva risultare la posizione "senza TF", quindi fuori dal budget:
+         // il cap per direzione/timeframe si allargava da solo, in silenzio.
+         // Il registro degli intenti porta l'identita' decisa all'esecuzione.
+         string posStrat = "";
+         SNxsIntent pIntent;
+         if(NXS_Intent_ByPosition((ulong)PositionGetInteger(POSITION_IDENTIFIER), pIntent))
+            posStrat = pIntent.strategy;
+         if(posStrat == ""){
+            string pcm = PositionGetString(POSITION_COMMENT);
+            string pp[]; int npp = StringSplit(pcm, '|', pp);
+            if(npp >= 2) posStrat = pp[1];
+         }
+         ENUM_TIMEFRAMES posTF = (StringLen(posStrat) > 0)
+                                 ? NXS_Profile_TF(posStrat) : PERIOD_CURRENT;
+         if(posTF == PERIOD_CURRENT){
+            // Identita' non risolvibile: la posizione conta comunque nel
+            // budget del TF del segnale. Ignorarla significherebbe permettere
+            // di aprirne altre proprio quando non si sa cosa c'e' gia' aperto.
+            posTF = sigTF;
+         }
          if(posTF == sigTF) sameDirTF++;
       }
       if(sameDirTF >= InpMaxPerDirTF){
@@ -327,7 +375,15 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // capati da InpMaxTotalLotMult. Il rischio per-strategia NON e' piu' qui:
    // e' gia' nel sizing base -> il cap non lo tocca.
    double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
-   if(stratRisk <= 0) stratRisk = 1.0;
+   // AUD0-EXEC-008: qui un moltiplicatore a zero veniva RIPORTATO A 1.0, cioe'
+   // l'istruzione "non operare con questa strategia" diventava "opera a
+   // rischio pieno". Ora zero significa zero: nessuna apertura.
+   if(stratRisk <= 0.0){
+      g_nxsLastOpenFailure = "strategy_risk_disabled";
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s ha moltiplicatore di rischio "
+                  "nullo dal piano di controllo", sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double rawMult = MathMax(0.01, lotMult) * stratRisk;
    double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
    if(cappedMult < rawMult - 1e-9){
@@ -396,16 +452,25 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    if(sig.dir == DIR_BUY)       ok = NXS_SafeBuy(lots, g_sym, brokerSL, tp, cm);
    else if(sig.dir == DIR_SELL) ok = NXS_SafeSell(lots, g_sym, brokerSL, tp, cm);
 
+   // NXS-RAW-002: si copia SUBITO l'esito in una struttura locale. Leggere
+   // g_tradeOrderTicket piu' avanti significa correlare il Virtual SL a
+   // qualunque ordine sia stato inviato nel frattempo da un altro percorso.
+   SNXSExecResult exec; NXS_LastExec(exec);
+
    if(ok){
       // registra l'intent pending correlato all'order ticket reale (match al fill)
-      NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, magic, vdir,
+      NXS_VSL_OnRequested(exec.order, g_sym, magic, vdir,
                           sig.stratName, sig.slPrice, brokerSL);
       // AUD0-LEDGER-004/006/010: identita' e budget di rischio registrati QUI,
       // dove sono un fatto. Il ledger non dovra' piu' dedurli dal commento ne'
       // dallo stop del primo deal. groupId=0 => questa entrata apre una nuova
       // sequenza logica; le gambe di grid/piramide vi si agganceranno.
-      NXS_Intent_Record(NXS_TradeOrderTicket(), sig.stratName, sig.score,
-                        NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
+      // AUD0-RAW-002: il prezzo EFFETTIVAMENTE eseguito, quando disponibile,
+      // e' un denominatore di rischio migliore del prezzo di riferimento
+      // pre-invio (che ignora slippage).
+      double fillPx = (exec.price > 0 ? exec.price : refPrice);
+      NXS_Intent_Record(exec.order, sig.stratName, sig.score,
+                        NXS_Intent_RiskMoney(g_sym, fillPx, sl, lots),
                         "primary", 0, g_atr);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();

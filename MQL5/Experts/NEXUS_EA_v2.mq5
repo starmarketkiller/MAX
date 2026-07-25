@@ -232,43 +232,105 @@ bool NXS_StrategyHasOpenPos(const string name){
 // valuta ogni strategia una volta per barra). Senza, una strategia D1 viene
 // rivalutata a OGNI barra M15 e produce lo stesso segnale ~96 volte/giorno,
 // inondando gli slot (caso TSI: 555 "setup" in 2 settimane).
-string   g_tfbarName[48];
-datetime g_tfbarTime[48];
+// AUD0-MQL-004: la capacita' era il numero magico 48 (e 64 nel percorso
+// multi-TF), scollegato dal numero reale di strategie. Aggiungendone abbastanza
+// il troncamento sarebbe avvenuto in SILENZIO: alcune strategie semplicemente
+// non sarebbero piu' state valutate, senza alcun errore.
+//
+// La capacita' deriva ora dal registro canonico generato, con margine per le
+// varianti (_NXR) e per i segnali multipli della stessa strategia.
+#define NXS_MAX_SIGNALS (NXS_LIVE_STRATEGY_COUNT * 2 + 16)
+
+string   g_tfbarName[NXS_MAX_SIGNALS];
+datetime g_tfbarTime[NXS_MAX_SIGNALS];
 int      g_tfbarN = 0;
+bool     g_signalOverflowReported = false;
 datetime NXS_GetLastTfBar(const string name){
    for(int i = 0; i < g_tfbarN; i++) if(g_tfbarName[i] == name) return g_tfbarTime[i];
    return 0;
 }
 void NXS_SetLastTfBar(const string name, datetime t){
    for(int i = 0; i < g_tfbarN; i++){ if(g_tfbarName[i] == name){ g_tfbarTime[i] = t; return; } }
-   if(g_tfbarN < 48){ g_tfbarName[g_tfbarN] = name; g_tfbarTime[g_tfbarN] = t; g_tfbarN++; }
+   if(g_tfbarN < NXS_MAX_SIGNALS){
+      g_tfbarName[g_tfbarN] = name; g_tfbarTime[g_tfbarN] = t; g_tfbarN++;
+   } else if(!g_signalOverflowReported){
+      g_signalOverflowReported = true;
+      PrintFormat("[NEXUS][ALERT] tabella barre-per-TF piena (%d): la regola "
+                  "'una decisione per barra' non e' piu' applicata a '%s' e alle "
+                  "strategie successive", NXS_MAX_SIGNALS, name);
+   }
+}
+
+// AUD0-MQL-010 — un fallimento di CopyBuffer faceva uscire la funzione con
+// `false` e OnTick tornava indietro in silenzio. L'EA poteva restare CIECO per
+// ore — nessuna decisione, nessun errore, nessuna traccia — e l'unico sintomo
+// era l'assenza di operazioni.
+//
+// Ora il fallimento e' contato, segnalato a cadenza limitata, e oltre una
+// soglia gli handle vengono ricreati; lo stato degradato e' esposto a chi
+// decide se e' sicuro aprire nuova esposizione.
+int      g_indFailStreak    = 0;
+datetime g_indLastFailLog   = 0;
+bool     g_indDegraded      = false;
+#define NXS_IND_FAIL_ALERT     5     // fallimenti consecutivi prima dell'allarme
+#define NXS_IND_FAIL_RECREATE 20     // fallimenti consecutivi prima di ricreare
+#define NXS_IND_LOG_EVERY_SEC 60
+
+bool NXS_IndicatorsDegraded(){ return g_indDegraded; }
+
+void _NXS_IndicatorFailure(string which){
+   g_indFailStreak++;
+   if(g_indFailStreak >= NXS_IND_FAIL_ALERT){
+      g_indDegraded = true;
+      if(TimeCurrent() - g_indLastFailLog >= NXS_IND_LOG_EVERY_SEC){
+         g_indLastFailLog = TimeCurrent();
+         PrintFormat("[NEXUS][ALERT] lettura indicatori fallita %d volte di fila "
+                     "(ultimo: %s, err=%d): l'EA non sta prendendo decisioni",
+                     g_indFailStreak, which, GetLastError());
+      }
+   }
+   if(g_indFailStreak == NXS_IND_FAIL_RECREATE){
+      Print("[NEXUS] ricreazione degli handle indicatore dopo fallimenti persistenti");
+      NXS_ReleaseHandles();
+      NXS_CreateHandles();
+   }
+}
+
+void _NXS_IndicatorSuccess(){
+   if(g_indFailStreak > 0)
+      PrintFormat("[NEXUS] lettura indicatori ripristinata dopo %d fallimenti",
+                  g_indFailStreak);
+   g_indFailStreak = 0;
+   g_indDegraded   = false;
 }
 
 bool NXS_UpdateIndicators(){
    double a[]; ArraySetAsSeries(a, true);
-   if(CopyBuffer(g_hADX, 0, 1, 1, a) <= 0) return false; g_adx = a[0];
-   if(CopyBuffer(g_hADX, 1, 1, 1, a) <= 0) return false; g_adxPlus = a[0];
-   if(CopyBuffer(g_hADX, 2, 1, 1, a) <= 0) return false; g_adxMinus= a[0];
-   if(CopyBuffer(g_hRSI, 0, 1, 1, a) <= 0) return false; g_rsi = a[0];
-   if(CopyBuffer(g_hBB, 1, 1, 1, a) <= 0) return false; g_bbUpper = a[0];
-   if(CopyBuffer(g_hBB, 2, 1, 1, a) <= 0) return false; g_bbLower = a[0];
-   if(CopyBuffer(g_hBB, 0, 1, 1, a) <= 0) return false; g_bbMid   = a[0];
-   if(CopyBuffer(g_hMACD, 0, 1, 1, a) <= 0) return false; g_macd    = a[0];
-   if(CopyBuffer(g_hMACD, 1, 1, 1, a) <= 0) return false; g_macdSig = a[0];
-   if(CopyBuffer(g_hSAR, 0, 1, 1, a) <= 0) return false; g_sar = a[0];
-   if(CopyBuffer(g_hATR, 0, 1, 1, a) <= 0) return false; g_atr = a[0];
+   if(CopyBuffer(g_hADX, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("ADX"); return false; }
+   g_adx = a[0];
+   if(CopyBuffer(g_hADX, 1, 1, 1, a) <= 0){ _NXS_IndicatorFailure("ADX"); return false; } g_adxPlus = a[0];
+   if(CopyBuffer(g_hADX, 2, 1, 1, a) <= 0){ _NXS_IndicatorFailure("ADX"); return false; } g_adxMinus= a[0];
+   if(CopyBuffer(g_hRSI, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("RSI"); return false; } g_rsi = a[0];
+   if(CopyBuffer(g_hBB, 1, 1, 1, a) <= 0){ _NXS_IndicatorFailure("BollingerBands"); return false; } g_bbUpper = a[0];
+   if(CopyBuffer(g_hBB, 2, 1, 1, a) <= 0){ _NXS_IndicatorFailure("BollingerBands"); return false; } g_bbLower = a[0];
+   if(CopyBuffer(g_hBB, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("BollingerBands"); return false; } g_bbMid   = a[0];
+   if(CopyBuffer(g_hMACD, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("MACD"); return false; } g_macd    = a[0];
+   if(CopyBuffer(g_hMACD, 1, 1, 1, a) <= 0){ _NXS_IndicatorFailure("MACD"); return false; } g_macdSig = a[0];
+   if(CopyBuffer(g_hSAR, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("SAR"); return false; } g_sar = a[0];
+   if(CopyBuffer(g_hATR, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("ATR"); return false; } g_atr = a[0];
    double atrArr[];
    if(CopyBuffer(g_hATR, 0, 1, InpATR_AvgPeriod, atrArr) > 0){
       double s = 0; int n = ArraySize(atrArr); for(int k=0;k<n;k++) s += atrArr[k];
       g_atrAvg = (n>0) ? s/n : g_atr;
    } else g_atrAvg = g_atr;
-   if(CopyBuffer(g_hEMA200, 0, 1, 1, a) <= 0) return false; g_ema200 = a[0];
-   if(CopyBuffer(g_hEMA9,   0, 1, 1, a) <= 0) return false; g_ema9   = a[0];
-   if(CopyBuffer(g_hEMA21,  0, 1, 1, a) <= 0) return false; g_ema21  = a[0];
-   if(CopyBuffer(g_hICHI, 0, 1, 1, a) <= 0) return false; g_ichiTenkan = a[0];
-   if(CopyBuffer(g_hICHI, 1, 1, 1, a) <= 0) return false; g_ichiKijun  = a[0];
-   if(CopyBuffer(g_hICHI, 2, 1, 1, a) <= 0) return false; g_ichiSpanA  = a[0];
-   if(CopyBuffer(g_hICHI, 3, 1, 1, a) <= 0) return false; g_ichiSpanB  = a[0];
+   if(CopyBuffer(g_hEMA200, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("EMA200"); return false; } g_ema200 = a[0];
+   if(CopyBuffer(g_hEMA9,   0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("EMA9"); return false; } g_ema9   = a[0];
+   if(CopyBuffer(g_hEMA21,  0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("EMA21"); return false; } g_ema21  = a[0];
+   if(CopyBuffer(g_hICHI, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiTenkan = a[0];
+   if(CopyBuffer(g_hICHI, 1, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiKijun  = a[0];
+   if(CopyBuffer(g_hICHI, 2, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiSpanA  = a[0];
+   if(CopyBuffer(g_hICHI, 3, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiSpanB  = a[0];
+   _NXS_IndicatorSuccess();
    return true;
 }
 
@@ -374,9 +436,25 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    if(InpUseStrategyProfiles && InpProfileMultiTF){
       // Un passaggio per TF: attiva gli handle del TF, raccogli, e tieni solo
       // le strategie il cui TF ottimale (dal backtest) coincide col passaggio.
-      ENUM_TIMEFRAMES passes[3];
-      passes[0] = PERIOD_D1; passes[1] = PERIOD_H4; passes[2] = PERIOD_H1;
-      for(int p = 0; p < 3; p++){
+      // AUD0-MQL-005: i passaggi erano fissi a D1/H4/H1. Un profilo canonico
+      // che scegliesse M30 o M15 non veniva MAI valutato — la strategia
+      // spariva senza un errore. I timeframe si ricavano ora dai profili reali
+      // delle strategie del registro: aggiungerne uno nuovo non richiede di
+      // ricordarsi di toccare questo elenco.
+      ENUM_TIMEFRAMES passes[16];
+      int npasses = 0;
+      for(int si = 0; si < NXS_LIVE_STRATEGY_COUNT && npasses < 16; si++){
+         ENUM_TIMEFRAMES stf = NXS_Profile_TF(NXS_StrategyIdAt(si));
+         if(stf == PERIOD_CURRENT) continue;
+         bool dup = false;
+         for(int q = 0; q < npasses; q++) if(passes[q] == stf){ dup = true; break; }
+         if(!dup) passes[npasses++] = stf;
+      }
+      if(npasses == 0){   // nessun profilo con TF: comportamento storico
+         passes[0] = PERIOD_D1; passes[1] = PERIOD_H4; passes[2] = PERIOD_H1;
+         npasses = 3;
+      }
+      for(int p = 0; p < npasses; p++){
          if(!NXS_ActivateTF(passes[p])) continue;   // handle non pronti: salta il TF
          // Phase 2: struttura + sweep ricalcolati sul TF del passaggio, cosi'
          // anche le strategie SMC (LIQ_SWEEP, OB, FVG...) girano sul loro TF.
@@ -384,7 +462,7 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
          g_reaction = NXS_DetectReaction(g_sym, passes[p]); // v2.4.2: reazione sul TF del passaggio (per le SMC)
          SNXSSweep    swP  = NXS_DetectSweep();
          SNXSSweepExt swxP = NXS_DetectSweepExt();
-         SNXSSignal tmp[64];
+         SNXSSignal tmp[NXS_MAX_SIGNALS];
          int m = NXS_CollectRaw(swP, swxP, amd, tmp);
          for(int k = 0; k < m && n < ArraySize(out); k++){
             if(NXS_Profile_TF(tmp[k].stratName) != passes[p]) continue;
@@ -479,6 +557,9 @@ int OnInit(){
 
    // Diagnostics
    NXS_Diag_OnInit();
+   // AUD0-EXEC-007: verifica una volta all'avvio che le liste di strategie
+   // mantenute a mano non siano andate alla deriva rispetto al registro.
+   NXS_CounterHTF_AuditList();
    NXS_Stats_Init();   // v2.0.5 strategy stats tracker
 
    // PR1 - Trade Ledger: riconcilia lo stato con la history (emitted-set +
@@ -518,15 +599,19 @@ int OnInit(){
    EventSetTimer(1);
 
    if(InpEnableWebSync && !MQLInfoInteger(MQL_TESTER)){
-      // Le consegne rimaste in sospeso al riavvio precedente vengono
-      // ripristinate qui: il timer le drenera' senza bloccare nulla.
+      // AUD0-MQL-007 — qui partivano una push immediata e la riconciliazione di
+      // 7 giorni di storico, entrambe con WebRequest bloccanti. Con un backend
+      // lento o irraggiungibile l'aggancio dell'EA al grafico restava appeso, e
+      // un riavvio di MT5 con piu' grafici moltiplicava l'attesa.
+      //
+      // OnInit fa ora solo lavoro locale: carica l'outbox e ARMA il primo
+      // ciclo. La prima push e il backfill avvengono al primo scatto di timer,
+      // dove esiste gia' un budget e nulla blocca l'avvio.
       NXS_Outbox_Load();
-      g_lastPushTime = 0;
-      NXS_WebPushSafe();
-      // Backfill: invia i trade chiusi negli ultimi 7 giorni alla dashboard
-      // (recupera quelli chiusi mentre MT5/EA era offline).
-      NXS_SyncRecentClosedTrades();
-      g_lastHistSyncTime = TimeCurrent();
+      g_lastPushTime     = 0;   // il timer eseguira' subito la prima push
+      g_lastHistSyncTime = 0;   // ... e subito dopo il backfill dello storico
+      Print("[NEXUS] sincronizzazione web armata: la prima consegna avviene dal "
+            "timer, l'avvio non attende la rete");
    }
 
    // Initial dashboard render
@@ -558,6 +643,43 @@ void OnDeinit(const int reason){
 //| Each parallel tester "agent" writes to its own sandboxed          |
 //| MQL5\Files, so a batch run must collect+merge across all agents.  |
 //+------------------------------------------------------------------+
+// AUD0-MQL-013 — l'obiettivo di ottimizzazione era il SOLO profit factor.
+//
+// Il profit factor non contiene numero di operazioni, drawdown, recupero ne'
+// stabilita': l'ottimizzatore premiava insiemi di parametri con pochissimi
+// trade fortunati e drawdown insostenibili, che poi non reggevano in reale.
+//
+// Il criterio e' ora composito ed esplicito:
+//   - sotto un numero minimo di operazioni il risultato vale 0 (campione non
+//     informativo, non "ottimo");
+//   - il profit factor viene scalato dal recovery factor (profitto rispetto al
+//     drawdown massimo), cosi' un drawdown grande non puo' essere compensato
+//     da un profit factor alto;
+//   - un drawdown oltre il limite di rischio dichiarato azzera il punteggio.
+#define NXS_TESTER_MIN_TRADES   30
+#define NXS_TESTER_MAX_DD_PCT   35.0
+
+double NXS_TesterObjective(){
+   double trades = TesterStatistics(STAT_TRADES);
+   if(trades < NXS_TESTER_MIN_TRADES) return 0.0;
+
+   double pf = TesterStatistics(STAT_PROFIT_FACTOR);
+   if(pf <= 0.0) return 0.0;
+
+   double ddPct = TesterStatistics(STAT_EQUITY_DDREL_PERCENT);
+   if(ddPct >= NXS_TESTER_MAX_DD_PCT) return 0.0;
+
+   double recovery = TesterStatistics(STAT_RECOVERY_FACTOR);
+   if(recovery <= 0.0) recovery = 0.01;
+
+   double expectancy = TesterStatistics(STAT_EXPECTED_PAYOFF);
+   if(expectancy <= 0.0) return 0.0;   // aspettativa negativa: mai "ottimo"
+
+   // Penalita' lineare sul drawdown: a parita' di PF vince chi soffre meno.
+   double ddPenalty = 1.0 - (ddPct / NXS_TESTER_MAX_DD_PCT);
+   return pf * MathSqrt(recovery) * ddPenalty;
+}
+
 double OnTester(){
    string fname = "NEXUS\\nexus_optimization_log.csv";
    bool isNew = !FileIsExist(fname);
@@ -599,19 +721,39 @@ double OnTester(){
       DoubleToString(winRate, 2)
    );
    FileClose(h);
-   return TesterStatistics(STAT_PROFIT_FACTOR);
+   return NXS_TesterObjective();
 }
+
+// AUD0-MQL-006: tetto di tempo per uno scatto di timer.
+#define NXS_TIMER_BUDGET_MS 400
+bool g_timerBudgetWarned = false;
 
 void OnTimer(){
    // AUDITPATCH: no WebRequest side effects during deterministic backtests.
    if(!MQLInfoInteger(MQL_TESTER)){
-      // AUD0-PROT-005: le consegne fallite sono drenate qui, poche per volta e
-      // con timeout breve, invece di essere ritentate in linea con Sleep() nel
-      // percorso critico delle protezioni.
+      // AUD0-MQL-006 — il timer a 1 secondo invocava NOVE attivita' di rete e
+      // I/O a ogni scatto: push, polling, bridge visuale, riconciliazione,
+      // sweep del ledger, licenza, salvataggio stato, dashboard, statistiche.
+      // Ognuna con il proprio throttle interno, ma nessun budget complessivo:
+      // in una giornata lenta gli scatti si accavallavano.
+      //
+      // Ora c'e' un BUDGET per scatto. Le attivita' sono in ordine di
+      // priorita'; quando il budget e' esaurito le restanti slittano al
+      // secondo successivo invece di allungare lo scatto corrente. Le
+      // protezioni e il ledger stanno fuori dal budget: non slittano mai.
+      uint tmBudgetStart = GetTickCount();
       NXS_Outbox_Drain();
-      NXS_WebPushSafe();
-      NXS_WebPoll();
-      NXS_VisualBridge_PushHTTP();   // v2.0.9 — push OB/FVG/SNR to web Live Chart
+      // AUD0-MQL-008: il pull delle impostazioni vive qui, non nel tick.
+      NXS_PullSettings();
+      if(GetTickCount() - tmBudgetStart < NXS_TIMER_BUDGET_MS) NXS_WebPushSafe();
+      if(GetTickCount() - tmBudgetStart < NXS_TIMER_BUDGET_MS) NXS_WebPoll();
+      if(GetTickCount() - tmBudgetStart < NXS_TIMER_BUDGET_MS)
+         NXS_VisualBridge_PushHTTP();   // v2.0.9 — push OB/FVG/SNR to web Live Chart
+      else if(!g_timerBudgetWarned){
+         g_timerBudgetWarned = true;
+         PrintFormat("[NEXUS] budget del timer esaurito (%d ms): attivita' non "
+                     "critiche rimandate al prossimo scatto", NXS_TIMER_BUDGET_MS);
+      }
       // Safety net: re-run the closed-trade backfill periodically (not just at
       // OnInit) so trades lost to a transient push failure (e.g. backend cold
       // start) still land in the backend even if the EA runs for days without
@@ -649,8 +791,11 @@ void OnTick(){
    // v2.0.9 Sprint 2 — keep spread rolling window fresh + virt SL check
    NXS_RS_SpreadSample();
    NXS_EA_VirtSL_Check();
-   // PR3: refresh controls before any module can create new exposure.
-   NXS_PullSettings();
+   // AUD0-MQL-008: qui c'era NXS_PullSettings(), che esegue una WebRequest con
+   // timeout 3s SUL PERCORSO DEL TICK. Anche con il throttling interno, ogni
+   // volta che scattava il tick restava bloccato fino a 3 secondi — e in quella
+   // finestra non giravano Virtual SL, protezioni e OnTradeTransaction.
+   // Il pull vive ora nel timer; il tick usa i valori gia' scaricati.
    datetime prevDay = g_dayStart;
    NXS_DailyRollover();
    if(g_dayStart != prevDay){
@@ -734,7 +879,8 @@ void OnTick(){
 
    // ---- Phase 2 router with fallback ----
    SNXSSweepExt swExt = NXS_DetectSweepExt();
-   SNXSSignal all[48];
+   // AUD0-MQL-004: dimensione derivata dal registro, non un numero magico.
+   SNXSSignal all[NXS_MAX_SIGNALS];
    int n = NXS_CollectAllSignals(sweep, swExt, amd, all);
    int directionalSignals = 0;
    for(int ds = 0; ds < n; ds++) if(all[ds].dir != DIR_NONE) directionalSignals++;

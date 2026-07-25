@@ -22,6 +22,72 @@ uint                       g_tradeRetcode = 0;
 // serve per correlare l'intent pending del Virtual SL al fill (DEAL_ORDER).
 ulong                      g_tradeOrderTicket = 0;
 
+// AUD0-RAW-002 / NXS-RAW-002 — ESITO DI ESECUZIONE STRUTTURATO.
+//
+// Gli helper conservavano solo `res.order` in una singola variabile globale
+// mutabile: niente deal, niente prezzo eseguito, niente volume, nessun modo di
+// correlare richiesta e risposta. Con i retry o con due percorsi di ordine nello
+// stesso tick, quella globale veniva sovrascritta e il Virtual SL correlava il
+// fill SBAGLIATO.
+//
+// Ora ogni invio produce uno snapshot completo. Il chiamante lo copia subito
+// dopo l'invio e lavora sulla propria copia, immune a sovrascritture successive.
+struct SNXSExecResult {
+   ulong    request_id;    // progressivo locale: correla richiesta e risposta
+   ulong    order;
+   ulong    deal;
+   double   price;         // prezzo EFFETTIVAMENTE eseguito
+   double   volume;        // volume effettivamente eseguito
+   uint     retcode;
+   string   symbol;
+   string   comment;       // commento del broker sul risultato
+   datetime sent_at;
+   bool     done;          // true solo su TRADE_RETCODE_DONE
+   bool     placed_only;   // accettato ma non ancora eseguito
+};
+
+SNXSExecResult g_lastExec;
+ulong          g_execRequestSeq = 0;
+
+void _NXS_CaptureExec(const MqlTradeRequest &req, const MqlTradeResult &res, bool sent){
+   g_execRequestSeq++;
+   g_lastExec.request_id  = g_execRequestSeq;
+   g_lastExec.order       = res.order;
+   g_lastExec.deal        = res.deal;
+   g_lastExec.price       = res.price;
+   g_lastExec.volume      = res.volume;
+   g_lastExec.retcode     = res.retcode;
+   g_lastExec.symbol      = req.symbol;
+   g_lastExec.comment     = res.comment;
+   g_lastExec.sent_at     = TimeCurrent();
+   g_lastExec.done        = (sent && res.retcode == TRADE_RETCODE_DONE);
+   g_lastExec.placed_only = (sent && res.retcode == TRADE_RETCODE_PLACED);
+   g_tradeRetcode         = res.retcode;
+   g_tradeOrderTicket     = res.order;
+}
+
+//: Copia immutabile dell'ultimo esito. Da chiamare SUBITO dopo l'invio.
+void NXS_LastExec(SNXSExecResult &out){ out = g_lastExec; }
+
+// NXS-RAW-001 — `TRADE_RETCODE_PLACED` non e' un'esecuzione: e' un'accettazione.
+// Tutti gli helper lo trattavano come successo, quindi aperture, chiusure,
+// parziali e modifiche potevano essere contate come completate mentre il broker
+// non aveva ancora nulla di definitivo.
+//
+// Il criterio e' ora esplicito: DONE = eseguito; PLACED = accettato, da
+// confermare dallo stato reale. Gli helper che possono verificare la
+// post-condizione (chiusura, modifica) lo fanno; per l'apertura il ledger e
+// OnTradeTransaction restano l'autorita', e il PLACED viene dichiarato nel log.
+bool _NXS_ExecAccepted(bool sent, uint rc, string what){
+   if(sent && rc == TRADE_RETCODE_DONE) return true;
+   if(sent && rc == TRADE_RETCODE_PLACED){
+      PrintFormat("[NEXUS EXEC] %s: il broker ha risposto PLACED (accettato, non "
+                  "ancora eseguito): l'esito definitivo arrivera' dai deal", what);
+      return true;
+   }
+   return false;
+}
+
 // ----- Symbol / context -----
 string  g_sym;
 double  g_point;
@@ -197,9 +263,8 @@ bool NXS_DoBuy(double volume, string sym, double sl, double tp, string comment){
    req.comment     = comment;
    req.type_filling= NXS_FillingForSymbol(sym);
    bool ok = OrderSend(req, res);
-   g_tradeRetcode = res.retcode;
-   g_tradeOrderTicket = res.order;
-   return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
+   _NXS_CaptureExec(req, res, ok);
+   return _NXS_ExecAccepted(ok, res.retcode, "apertura " + sym);
 }
 
 bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment){
@@ -217,9 +282,8 @@ bool NXS_DoSell(double volume, string sym, double sl, double tp, string comment)
    req.comment     = comment;
    req.type_filling= NXS_FillingForSymbol(sym);
    bool ok = OrderSend(req, res);
-   g_tradeRetcode = res.retcode;
-   g_tradeOrderTicket = res.order;
-   return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
+   _NXS_CaptureExec(req, res, ok);
+   return _NXS_ExecAccepted(ok, res.retcode, "apertura " + sym);
 }
 
 bool NXS_DoClose(ulong ticket){
@@ -244,8 +308,16 @@ bool NXS_DoClose(ulong ticket){
       req.price = SymbolInfoDouble(sym, SYMBOL_ASK);
    }
    bool ok = OrderSend(req, res);
-   g_tradeRetcode = res.retcode;
-   return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
+   _NXS_CaptureExec(req, res, ok);
+   if(!_NXS_ExecAccepted(ok, res.retcode, "chiusura " + sym)) return false;
+   // NXS-RAW-001: post-condizione. Su PLACED la position puo' essere ancora
+   // aperta: si verifica lo stato reale invece di dichiarare la chiusura fatta.
+   if(res.retcode == TRADE_RETCODE_PLACED && PositionSelectByTicket(ticket)){
+      PrintFormat("[NEXUS EXEC] chiusura %I64u accettata ma la posizione risulta "
+                  "ancora aperta: NON dichiarata chiusa", ticket);
+      return false;
+   }
+   return true;
 }
 
 bool NXS_DoClosePartial(ulong ticket, double volume){
@@ -292,22 +364,52 @@ bool NXS_DoClosePartial(ulong ticket, double volume){
       req.price = SymbolInfoDouble(sym, SYMBOL_ASK);
    }
    bool ok = OrderSend(req, res);
-   g_tradeRetcode = res.retcode;
-   return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
+   _NXS_CaptureExec(req, res, ok);
+   return _NXS_ExecAccepted(ok, res.retcode, "chiusura parziale " + sym);
 }
 
 bool NXS_DoModify(ulong ticket, double sl, double tp){
    if(!PositionSelectByTicket(ticket)) return false;
+   string sym = PositionGetString(POSITION_SYMBOL);
    MqlTradeRequest req;  ZeroMemory(req);
    MqlTradeResult  res;  ZeroMemory(res);
    req.action   = TRADE_ACTION_SLTP;
    req.position = ticket;
-   req.symbol   = PositionGetString(POSITION_SYMBOL);
+   req.symbol   = sym;
    req.sl       = sl;
    req.tp       = tp;
    bool ok = OrderSend(req, res);
-   g_tradeRetcode = res.retcode;
-   return ok && (res.retcode == TRADE_RETCODE_DONE || res.retcode == TRADE_RETCODE_PLACED);
+   _NXS_CaptureExec(req, res, ok);
+   if(!_NXS_ExecAccepted(ok, res.retcode, "modifica SL/TP " + sym)) return false;
+
+   // AUD0-RAW-006 — VERIFICA DELLA POST-CONDIZIONE.
+   //
+   // L'helper dichiarava successo in base al solo esito dell'invio. Su una
+   // modifica di stop questo e' un difetto di protezione: il codice chiamante
+   // (breakeven, trailing, riparazione dello stop) crede che la posizione sia
+   // protetta al nuovo livello, mentre il broker puo' aver applicato un valore
+   // diverso — o nessuno. Qui si rilegge lo stato reale.
+   if(!PositionSelectByTicket(ticket)){
+      PrintFormat("[NEXUS EXEC] modifica %I64u: posizione non piu' selezionabile, "
+                  "stop NON confermato", ticket);
+      return false;
+   }
+   double point = SymbolInfoDouble(sym, SYMBOL_POINT);
+   double tol   = (point > 0 ? point : 1e-8) * 2.0;
+   double curSL = PositionGetDouble(POSITION_SL);
+   double curTP = PositionGetDouble(POSITION_TP);
+   if(sl > 0 && MathAbs(curSL - sl) > tol){
+      PrintFormat("[NEXUS EXEC][ALERT] modifica %I64u: SL richiesto %.5f ma la "
+                  "posizione riporta %.5f — protezione NON confermata",
+                  ticket, sl, curSL);
+      return false;
+   }
+   if(tp > 0 && MathAbs(curTP - tp) > tol){
+      PrintFormat("[NEXUS EXEC] modifica %I64u: TP richiesto %.5f ma la posizione "
+                  "riporta %.5f", ticket, tp, curTP);
+      return false;
+   }
+   return true;
 }
 
 uint NXS_TradeRetcode(){ return g_tradeRetcode; }
