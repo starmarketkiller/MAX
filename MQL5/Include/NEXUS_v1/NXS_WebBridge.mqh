@@ -174,6 +174,18 @@ void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
    body += "\"tradesToday\":"  + (string)g_tradesToday + ",";
    body += "\"consecLosses\":" + (string)g_consecLosses + ",";
    body += "\"marginLevel\":"  + _D2(marginLvl) + ",";
+   // AUD0-SET-004 / AUD0-MQL-010 / NXS-VSL-005: la salute dei canali interni
+   // non lasciava alcuna traccia osservabile. Un EA con impostazioni vecchie di
+   // giorni, indicatori illeggibili o Virtual SL non persistibile sembrava
+   // perfettamente sano dalla dashboard.
+   body += "\"settingsStaleSec\":" + (string)NXS_Settings_StaleSec() + ",";
+   body += "\"settingsFailStreak\":" + (string)NXS_Settings_FailStreak() + ",";
+   body += "\"settingsLastCode\":" + (string)NXS_Settings_LastCode() + ",";
+   body += "\"indicatorsDegraded\":" + _BOOL(NXS_IndicatorsDegraded()) + ",";
+   body += "\"vslPersistHealthy\":" + _BOOL(NXS_VSL_PersistHealthy()) + ",";
+   body += "\"ledgerDegraded\":" + _BOOL(NXS_Ledger_IsDegraded()) + ",";
+   body += "\"outboxPending\":" + (string)NXS_Outbox_Count() + ",";
+   body += "\"flattenPending\":" + _BOOL(g_flattenPending) + ",";
    body += "\"htfBias\":\""    + NXS_HTFName(htf.bias) + "\",";
    body += "\"velocity\":\""   + NXS_VelName(vel.state) + "\",";
    body += "\"newsBlock\":"    + _BOOL(newsBlock) + ",";

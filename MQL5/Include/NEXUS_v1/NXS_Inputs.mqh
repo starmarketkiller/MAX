@@ -478,6 +478,18 @@ input bool     InpTesterProtectionParity = true;  // tester: stesse protezioni d
 // dedicato al tester e non tocca mai i file del conto reale.
 input bool     InpStatePersistInTester = false;  // tester: abilita snapshot (file separato)
 
+// AUD0-PROT-001 / AUD0-RISK-006: ESL, DPT e scudo di ruin ricavano le soglie
+// dall'equity del CONTO ma chiudevano solo il simbolo del grafico. Con questo
+// attivo il perimetro segue la soglia. Disattivalo solo se piu' istanze si
+// dividono deliberatamente lo stesso conto per simbolo.
+input bool     InpProtScopeAccountWide = true;  // protezioni di conto: chiudi tutte le posizioni NEXUS
+
+// NXS-EXEC-001: in modalita' Virtual SL EXECUTE il broker riceve uno stop piu'
+// largo di quello logico. Se l'EA e' offline la perdita reale e' quella dello
+// stop del broker: questo e' il moltiplicatore massimo del budget di rischio
+// che si accetta come caso peggiore. Oltre, l'ordine non parte.
+input double   InpVSL_MaxOfflineRiskMult = 2.0;  // tetto del rischio offline (x budget)
+
 // input group "=== CONFLUENCE + COOLDOWN (Phase 3) ==="
 bool     InpUseConfluence    = true;
 int      InpConfluenceBonus2 = 10;

@@ -162,9 +162,19 @@ datetime g_NXSrsBreakerUntil   = 0;
 // raffreddamento che impedisce di disarmare una protezione da remoto nei
 // minuti immediatamente successivi all'evento che l'ha fatta scattare.
 datetime g_lastProtectionEvent = 0;
+// AUD0-MQL-010: salute della lettura indicatori. Vive qui, e non nell'EA,
+// perche' NXS_WebBridge.mqh la pubblica nella telemetria ed e' incluso PRIMA
+// del corpo dell'EA (l'inclusione in MQL5 e' testuale: l'ordine conta).
+int      g_indFailStreak      = 0;
+datetime g_indLastFailLog     = 0;
+bool     g_indDegraded        = false;
+bool NXS_IndicatorsDegraded(){ return g_indDegraded; }
 double   g_NXSrsLastSharpe     = 0.0;
 datetime g_dayStart       = 0;
 double g_balanceDayStart  = 0;
+// AUD0-RISK-005: equity di inizio giornata, la baseline corretta del drawdown
+// giornaliero (il bilancio ignora il flottante ereditato dalla notte).
+double g_equityDayStart   = 0;
 datetime g_lastTradeTime  = 0;
 datetime g_antiRevengeUntil = 0;
 datetime g_lastPushTime   = 0;

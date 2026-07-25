@@ -261,7 +261,19 @@ void NXS_DailyRollover(){
    if(today != g_dayStart){
       g_dayStart = today;
       g_tradesToday = 0;
-      g_balanceDayStart = AccountInfoDouble(ACCOUNT_BALANCE);
+      // AUD0-RISK-005 — la baseline del drawdown giornaliero era il BILANCIO,
+      // che non include il P/L flottante. Con posizioni aperte a cavallo della
+      // mezzanotte il confronto "equity corrente contro bilancio di inizio
+      // giornata" misura anche il flottante ereditato dal giorno prima: una
+      // posizione gia' in perdita di 3% faceva partire la giornata come se
+      // avesse gia' consumato il 3% del limite, e una in profitto regalava
+      // margine che non era stato guadagnato oggi.
+      //
+      // La baseline corretta e' l'EQUITY di inizio giornata: include il
+      // flottante ereditato, quindi il drawdown misurato e' esattamente quello
+      // prodotto DA OGGI.
+      g_balanceDayStart = AccountInfoDouble(ACCOUNT_EQUITY);
+      g_equityDayStart  = g_balanceDayStart;
    }
 }
 
@@ -273,15 +285,26 @@ bool NXS_RuinFrozen(){
    return (InpRuinEnable && g_ruinFrozenDay != 0 && g_ruinFrozenDay == g_dayStart);
 }
 
-// Chiude tutte le posizioni NEXUS sul simbolo corrente.
+// AUD0-RISK-006 — la soglia di ruin e' sull'EQUITY DEL CONTO, ma il flatten
+// chiudeva solo il simbolo del grafico: su un conto multi-simbolo l'istanza si
+// congelava mentre l'esposizione altrove restava aperta, con la stessa equity
+// che aveva fatto scattare lo scudo che continuava a scendere.
+// Il perimetro segue ora la soglia (cfr. InpProtScopeAccountWide).
 void _nxs_ruin_flatten(){
+   int closed = 0, failed = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
-      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      string psym = PositionGetString(POSITION_SYMBOL);
+      if(!InpProtScopeAccountWide && psym != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
-      NXS_DoClose(t);
+      if(NXS_DoClose(t)) closed++; else failed++;
    }
+   if(failed > 0)
+      PrintFormat("[NEXUS RUIN][ALERT] flatten INCOMPLETO: chiuse=%d, fallite=%d — "
+                  "l'esposizione residua resta scoperta", closed, failed);
+   else
+      PrintFormat("[NEXUS RUIN] flatten completato: %d posizioni chiuse", closed);
 }
 
 // Da chiamare a ogni tick: se la perdita del giorno supera la soglia, congela.

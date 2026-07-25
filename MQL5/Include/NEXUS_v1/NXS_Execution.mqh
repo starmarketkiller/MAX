@@ -448,6 +448,39 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       PrintFormat("[NEXUS] OPEN BLOCCATO: hard SL Virtual SL non valido strat=%s", sig.stratName);
       return OPEN_FAIL_INVALID_STOPS;
    }
+
+   // NXS-EXEC-001 — IL RISCHIO REALE E' QUELLO DELLO STOP INVIATO AL BROKER.
+   //
+   // Il lotto e' dimensionato sulla distanza dello SL LOGICO, ma in modalita'
+   // EXECUTE al broker arriva uno stop piu' LARGO (basato su ATR). Lo stop
+   // logico vale solo finche' l'EA gira e riceve tick; se il terminale e'
+   // spento, la rete cade o l'EA e' bloccato, la perdita effettiva e' quella
+   // dello stop del broker — cioe' MOLTO PIU' GRANDE del budget approvato.
+   //
+   // Il rischio di caso peggiore viene ora calcolato sullo stop realmente
+   // inviato e confrontato con un tetto esplicito. Oltre il tetto l'ordine non
+   // parte: meglio non aprire che aprire un'esposizione il cui peggior caso
+   // nessuno ha approvato.
+   double brokerDist = MathAbs(sig.entryRef - brokerSL);
+   if(brokerDist > slDist * 1.0000001){
+      double worstCase = NXS_Intent_RiskMoney(g_sym, sig.entryRef, brokerSL, lots);
+      double budget    = AccountInfoDouble(ACCOUNT_BALANCE)
+                       * ((prPct > 0) ? prPct : g_run_RiskPercent) / 100.0;
+      double cap       = budget * MathMax(1.0, InpVSL_MaxOfflineRiskMult);
+      if(budget > 0 && worstCase > cap){
+         g_nxsLastOpenFailure = "virtsl_offline_risk_over_cap";
+         PrintFormat("[NEXUS RISK] OPEN BLOCCATO: con lo stop inviato al broker "
+                     "(%.5f) il caso peggiore offline sarebbe %.2f, oltre il tetto "
+                     "%.2f (budget %.2f x %.2f) strat=%s",
+                     brokerSL, worstCase, cap, budget, InpVSL_MaxOfflineRiskMult,
+                     sig.stratName);
+         return OPEN_FAIL_PREFLIGHT;
+      }
+      PrintFormat("[NEXUS RISK] stop broker piu' largo dello stop logico: caso "
+                  "peggiore offline %.2f su budget %.2f (tetto %.2f)",
+                  worstCase, budget, cap);
+   }
+
    bool ok = false;
    if(sig.dir == DIR_BUY)       ok = NXS_SafeBuy(lots, g_sym, brokerSL, tp, cm);
    else if(sig.dir == DIR_SELL) ok = NXS_SafeSell(lots, g_sym, brokerSL, tp, cm);

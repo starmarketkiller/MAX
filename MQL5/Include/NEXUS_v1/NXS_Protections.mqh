@@ -178,12 +178,30 @@ bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
 // g_flattenPending / g_flattenReason / g_flattenAttempts: NXS_Globals.mqh.
 
 //: Conta le posizioni NEXUS ancora aperte sul simbolo corrente.
+// AUD0-PROT-001 / AUD0-RISK-006 — PERIMETRO DELLE PROTEZIONI DI CONTO.
+//
+// ESL, DPT e lo scudo di ruin ricavano le loro soglie da BILANCIO ed EQUITY DEL
+// CONTO, ma chiudevano solo le posizioni del simbolo del GRAFICO. Su un conto
+// multi-simbolo questo significa: l'equity del conto scende sotto il limite,
+// l'istanza su XAUUSD appiattisce XAUUSD e si mette in pausa — e le posizioni
+// su BTCUSD, EURUSD e indici restano aperte, con la stessa equity che
+// continua a scendere e nessuno che le chiuda.
+//
+// Il perimetro e' ora coerente con la soglia: una protezione di CONTO agisce
+// su tutte le posizioni NEXUS del conto. InpProtScopeAccountWide permette di
+// tornare al comportamento per-simbolo dove piu' istanze si dividono
+// deliberatamente il conto.
+bool _nxs_prot_inScope(string posSymbol){
+   if(InpProtScopeAccountWide) return true;
+   return (posSymbol == g_sym);
+}
+
 int NXS_Prot_OpenNexusCount(){
    int n = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
-      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!_nxs_prot_inScope(PositionGetString(POSITION_SYMBOL))) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
       n++;
    }
@@ -195,7 +213,9 @@ int NXS_Prot_CloseAllWithReason(string reason){
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
-      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      // AUD0-PROT-001: perimetro coerente con la soglia che ha fatto scattare
+      // la protezione (di conto, non di simbolo).
+      if(!_nxs_prot_inScope(PositionGetString(POSITION_SYMBOL))) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
       if(NXS_Prot_ClosePositionWithReason(t, reason)) closed++;
    }

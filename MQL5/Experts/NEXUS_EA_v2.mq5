@@ -269,14 +269,13 @@ void NXS_SetLastTfBar(const string name, datetime t){
 // Ora il fallimento e' contato, segnalato a cadenza limitata, e oltre una
 // soglia gli handle vengono ricreati; lo stato degradato e' esposto a chi
 // decide se e' sicuro aprire nuova esposizione.
-int      g_indFailStreak    = 0;
-datetime g_indLastFailLog   = 0;
-bool     g_indDegraded      = false;
+// Lo STATO (g_indFailStreak / g_indDegraded / NXS_IndicatorsDegraded) vive in
+// NXS_Globals.mqh: la telemetria lo pubblica e NXS_WebBridge.mqh e' incluso
+// prima di questo file. Qui resta la LOGICA, che deve poter chiamare
+// NXS_ReleaseHandles/NXS_CreateHandles definite nell'EA.
 #define NXS_IND_FAIL_ALERT     5     // fallimenti consecutivi prima dell'allarme
 #define NXS_IND_FAIL_RECREATE 20     // fallimenti consecutivi prima di ricreare
 #define NXS_IND_LOG_EVERY_SEC 60
-
-bool NXS_IndicatorsDegraded(){ return g_indDegraded; }
 
 void _NXS_IndicatorFailure(string which){
    g_indFailStreak++;
