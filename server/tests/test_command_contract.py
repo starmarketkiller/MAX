@@ -23,9 +23,56 @@ def client(tmp_path, monkeypatch):
 
 
 def register(client, host):
+    """Arruola un host: richiesta dall'host + approvazione dell'operatore.
+
+    AUD0-SEC-010: prima il solo heartbeat creava l'host. Chiunque avesse il
+    token condiviso poteva quindi registrare o impersonare host arbitrari.
+    Il primo heartbeat ora apre una richiesta e riceve 403 finché un
+    operatore non la approva.
+    """
+    first = client.post("/api/local_bridge/heartbeat", headers=BRIDGE,
+                        json={"host_id": host, "version": "2.0.0", "os": "test"})
+    assert first.status_code == 403
+    assert first.json()["detail"]["enrollment_state"] == "PENDING"
+
+    approved = client.post(f"/api/local_bridge/hosts/{host}/enroll",
+                           headers=client.user_headers, json={"approve": True})
+    assert approved.status_code == 200, approved.text
+
     response = client.post("/api/local_bridge/heartbeat", headers=BRIDGE,
                            json={"host_id": host, "version": "2.0.0", "os": "test"})
     assert response.status_code == 200
+
+
+def test_host_non_arruolato_non_riceve_comandi(client):
+    """Un host sconosciuto non deve poter fare polling (AUD0-SEC-010)."""
+    heartbeat = client.post("/api/local_bridge/heartbeat", headers=BRIDGE,
+                            json={"host_id": "host-intruso", "version": "x", "os": "y"})
+    assert heartbeat.status_code == 403
+
+    # La richiesta di arruolamento resta però registrata e visibile.
+    hosts = client.get("/api/local_bridge/hosts", headers=client.user_headers).json()
+    assert "host-intruso" in hosts["pending"]
+
+
+def test_host_revocato_viene_respinto(client):
+    register(client, "host-da-revocare")
+    revoked = client.post("/api/local_bridge/hosts/host-da-revocare/enroll",
+                          headers=client.user_headers,
+                          json={"approve": False, "reason": "macchina dismessa"})
+    assert revoked.json()["enrollment_state"] == "REVOKED"
+
+    resp = client.post("/api/local_bridge/heartbeat", headers=BRIDGE,
+                       json={"host_id": "host-da-revocare", "version": "2.0.0"})
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["enrollment_state"] == "REVOKED"
+
+
+def test_revoca_host_richiede_motivazione(client):
+    register(client, "host-motivazione")
+    resp = client.post("/api/local_bridge/hosts/host-motivazione/enroll",
+                       headers=client.user_headers, json={"approve": False})
+    assert resp.status_code == 422
 
 
 def enqueue(client, host, key="key-1", max_attempts=3):

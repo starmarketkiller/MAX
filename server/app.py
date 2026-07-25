@@ -371,6 +371,8 @@ def init_db() -> None:
         _record_migration(c, "006_compute_jobs")
         _migrate_coach_ownership(c)
         _record_migration(c, "007_coach_ownership")
+        _migrate_bridge_enrollment(c)
+        _record_migration(c, "008_bridge_enrollment")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -548,6 +550,23 @@ def _migrate_coach_ownership(c: sqlite3.Connection) -> None:
         if "owner" not in cols:
             c.execute(f"ALTER TABLE {table} ADD COLUMN owner TEXT")
     c.execute("CREATE INDEX IF NOT EXISTS idx_coach_memory_owner ON coach_memory(owner)")
+
+
+def _migrate_bridge_enrollment(c: sqlite3.Connection) -> None:
+    """Arruolamento esplicito degli host LocalBridge (AUD0-SEC-010).
+
+    Gli host gia' presenti vengono considerati arruolati: revocarli
+    retroattivamente interromperebbe installazioni funzionanti senza che
+    l'operatore lo abbia chiesto. I NUOVI host partono da PENDING.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(bridge_hosts)")}
+    additions = {"enrolled": "INTEGER DEFAULT 0", "revoked": "INTEGER DEFAULT 0",
+                 "enrolled_by": "TEXT", "enrolled_at": "REAL"}
+    for name, ddl in additions.items():
+        if name not in cols:
+            c.execute(f"ALTER TABLE bridge_hosts ADD COLUMN {name} {ddl}")
+    if "enrolled" not in cols:
+        c.execute("UPDATE bridge_hosts SET enrolled=1, enrolled_by='migration:pre-esistente'")
 
 
 def _record_migration(c: sqlite3.Connection, migration_id: str) -> None:
@@ -1801,19 +1820,102 @@ async def chain_config_put(request: Request, user: str = Depends(require_mutatio
 # ======================= LOCAL BRIDGE (worker) =========================== #
 @app.post("/api/local_bridge/heartbeat")
 async def lb_heartbeat(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """Heartbeat di un host LocalBridge gia' ARRUOLATO.
+
+    AUD0-SEC-010 / AUD0-BE-ROUTE-006: l'heartbeat accettava un `host_id`
+    scelto dal chiamante e lo creava al volo. Chiunque possedesse il token
+    condiviso poteva quindi registrare host arbitrari o impersonarne uno
+    esistente. Ora la creazione richiede un arruolamento approvato da un
+    operatore: l'heartbeat aggiorna soltanto host gia' noti.
+    """
     check_token(x_nexus_token)
-    data = await request.json()
-    host = data.get("host_id")
-    if not host:
-        raise HTTPException(status_code=422, detail="host_id required")
+    data = await read_json_body(request)
+    host = str(data.get("host_id") or "").strip()
+    if not host or not re.match(r"^[A-Za-z0-9._\-]{1,64}$", host):
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "message": "host_id mancante o non valido"})
+
+    meta = json.dumps(data)[:4000]
     with _conn() as c:
-        c.execute(
-            "INSERT INTO bridge_hosts(host_id,version,os,meta,last_seen) VALUES(?,?,?,?,?) "
-            "ON CONFLICT(host_id) DO UPDATE SET version=excluded.version, os=excluded.os, "
-            "meta=excluded.meta, last_seen=excluded.last_seen",
-            (host, data.get("version"), data.get("os"), json.dumps(data), now()),
-        )
+        known = c.execute("SELECT enrolled, revoked FROM bridge_hosts WHERE host_id=?",
+                          (host,)).fetchone()
+        if known:
+            state = ("REVOKED" if known["revoked"]
+                     else ("ACTIVE" if known["enrolled"] else "PENDING"))
+        else:
+            # Fail-closed: l'host non si auto-registra. Si crea una richiesta
+            # di arruolamento che un operatore deve approvare. L'INSERT viene
+            # committato PRIMA di rifiutare, altrimenti il rollback del
+            # context manager cancellerebbe la richiesta.
+            c.execute(
+                "INSERT INTO bridge_hosts(host_id,version,os,meta,last_seen,enrolled,revoked) "
+                "VALUES(?,?,?,?,?,0,0) ON CONFLICT(host_id) DO NOTHING",
+                (host, data.get("version"), data.get("os"), meta, now()))
+            state = "PENDING"
+
+        if state == "ACTIVE":
+            c.execute("UPDATE bridge_hosts SET version=?, os=?, meta=?, last_seen=? "
+                      "WHERE host_id=?",
+                      (data.get("version"), data.get("os"), meta, now(), host))
+
+    if state != "ACTIVE":
+        if state == "PENDING":
+            audit_log("local_bridge.enrollment_requested", actor=f"host:{host}",
+                      actor_type="machine", decision="PENDING",
+                      detail={"os": data.get("os"), "version": data.get("version")})
+        raise HTTPException(status_code=403, detail={
+            "code": "AUTHORIZATION_DENIED",
+            "message": ("host revocato" if state == "REVOKED"
+                        else "host non arruolato: un operatore deve approvarlo"),
+            "host_id": host, "enrollment_state": state})
+
     return {"ok": True, "host_id": host, "status": "ONLINE", "timestamp": iso()}
+
+
+@app.get("/api/local_bridge/hosts")
+def lb_hosts(user: str = Depends(require_user)):
+    """Inventario degli host, con stato di arruolamento.
+
+    AUD0-FE-BRIDGE-002: la UI usava `status.worker.host_id`, cioe' il primo
+    host della lista, come bersaglio implicito dei comandi.
+    """
+    t = now()
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT host_id,version,os,last_seen,enrolled,revoked,enrolled_by,enrolled_at "
+            "FROM bridge_hosts ORDER BY last_seen DESC")]
+    for r in rows:
+        r["online"] = (t - (r.get("last_seen") or 0)) < 90
+        r["enrollment_state"] = ("REVOKED" if r.get("revoked")
+                                 else ("ACTIVE" if r.get("enrolled") else "PENDING"))
+    return {"hosts": rows,
+            "pending": [r["host_id"] for r in rows if r["enrollment_state"] == "PENDING"]}
+
+
+@app.post("/api/local_bridge/hosts/{host_id}/enroll")
+async def lb_enroll(host_id: str, request: Request,
+                    user: str = Depends(require_mutation)):
+    """Approva o revoca l'arruolamento di un host (AUD0-SEC-010)."""
+    body = await read_json_body(request)
+    approve = bool(body.get("approve", True))
+    reason = str(body.get("reason") or "")[:500]
+    if not approve and len(reason) < 3:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": "reason",
+            "message": "la revoca di un host richiede una motivazione"})
+
+    with _conn() as c:
+        if not c.execute("SELECT 1 FROM bridge_hosts WHERE host_id=?",
+                         (host_id,)).fetchone():
+            raise HTTPException(status_code=404, detail={"code": "TARGET_NOT_FOUND"})
+        c.execute("UPDATE bridge_hosts SET enrolled=?, revoked=?, enrolled_by=?, "
+                  "enrolled_at=? WHERE host_id=?",
+                  (1 if approve else 0, 0 if approve else 1, user, now(), host_id))
+    audit_log("local_bridge.enrollment", actor=user,
+              decision="APPROVED" if approve else "REVOKED", reason=reason,
+              detail={"host_id": host_id})
+    return {"ok": True, "host_id": host_id,
+            "enrollment_state": "ACTIVE" if approve else "REVOKED"}
 
 
 @app.get("/api/local_bridge/poll")
@@ -3488,6 +3590,49 @@ def _guard_search_space(**dimensions) -> int:
                            for k, v in dimensions.items()},
         }) from exc
 
+
+# ======================= REGISTRO DEPRECAZIONI =========================== #
+#: AUD0-BE-COMPAT-001: gli alias di compatibilità tendono a restare per
+#: sempre e a divergere dalla rotta canonica. Ogni alias è registrato con
+#: proprietario, sostituto e versione di rimozione, ed è interrogabile.
+DEPRECATED_ROUTES = {
+    "/api/ea/command [POST]": {
+        "canonical": "/api/dashboard/command",
+        "reason": "duplicato del servizio comandi: policy e validazione divergevano",
+        "finding": "AUD0-CMD-003 / AUD0-BE-CMD-008",
+        "deprecated_since": "5.4.0",
+        "removal_target": "6.0.0",
+    },
+    "/api/command [POST]": {
+        "canonical": "/api/dashboard/command",
+        "reason": "alias storico del client React",
+        "finding": "AUD0-BE-ROUTE-014",
+        "deprecated_since": "5.4.0",
+        "removal_target": "6.0.0",
+    },
+    "/api/coach/apply_action [POST]": {
+        "canonical": "/api/coach/draft_action + conferma umana",
+        "reason": "l'AI non può avere autorità di esecuzione",
+        "finding": "AUD0-AI-001 / AUD0-BE-AI-007",
+        "deprecated_since": "5.4.0",
+        "removal_target": "6.0.0",
+    },
+    "/api/backtest/optimize/{job_id} [GET]": {
+        "canonical": "/api/jobs/{job_id}",
+        "reason": "ignorava il job_id e restituiva l'ultimo risultato globale",
+        "finding": "AUD0-COMPUTE-005",
+        "deprecated_since": "5.4.0",
+        "removal_target": "6.0.0",
+    },
+}
+
+
+@app.get("/api/meta/deprecations")
+def deprecations(user: str = Depends(require_user)):
+    """Elenco degli alias di compatibilità e delle loro sostituzioni."""
+    return {"app_version": APP_VERSION, "routes": DEPRECATED_ROUTES,
+            "policy": "Un alias non può bypassare autorizzazione, target "
+                      "scoping, validazione, risk policy o audit."}
 
 # ======================= RETENTION / BACKUP ============================== #
 #: AUD0-DB-014: la directory dei backup. Su Render sta sul disco persistente.
