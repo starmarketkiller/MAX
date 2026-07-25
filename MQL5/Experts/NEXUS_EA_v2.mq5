@@ -303,7 +303,28 @@ void _NXS_IndicatorSuccess(){
    g_indDegraded   = false;
 }
 
+// AUD0-MQL-009 — LETTURE INDICATORE SEQUENZIALI.
+//
+// La funzione esegue ~20 CopyBuffer separati, chiamati a ogni tick e di nuovo a
+// ogni attivazione di timeframe nel percorso multi-TF. Il costo non e' nel
+// singolo CopyBuffer ma nel loro NUMERO moltiplicato per la frequenza.
+//
+// Le letture riguardano tutte la BARRA CHIUSA (shift 1), che per definizione
+// non cambia finche' non si forma una barra nuova: rileggerle a ogni tick
+// produce esattamente gli stessi valori. Qui si aggiunge una cache per barra e
+// per timeframe attivo; la rilettura avviene solo quando la barra cambia,
+// oppure quando l'ultimo tentativo era fallito (per non restare bloccati su
+// valori vecchi durante un degrado).
+datetime g_indCachedBar = 0;
+ENUM_TIMEFRAMES g_indCachedTF = PERIOD_CURRENT;
+
 bool NXS_UpdateIndicators(){
+   ENUM_TIMEFRAMES etf = NXS_EffTF();
+   datetime curBar = iTime(g_sym, etf, 0);
+   if(curBar > 0 && curBar == g_indCachedBar && etf == g_indCachedTF &&
+      g_indFailStreak == 0)
+      return true;   // stessa barra, stesso TF, ultima lettura riuscita
+
    double a[]; ArraySetAsSeries(a, true);
    if(CopyBuffer(g_hADX, 0, 1, 1, a) <= 0){ _NXS_IndicatorFailure("ADX"); return false; }
    g_adx = a[0];
@@ -329,6 +350,8 @@ bool NXS_UpdateIndicators(){
    if(CopyBuffer(g_hICHI, 1, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiKijun  = a[0];
    if(CopyBuffer(g_hICHI, 2, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiSpanA  = a[0];
    if(CopyBuffer(g_hICHI, 3, 1, 1, a) <= 0){ _NXS_IndicatorFailure("Ichimoku"); return false; } g_ichiSpanB  = a[0];
+   g_indCachedBar = curBar;
+   g_indCachedTF  = etf;
    _NXS_IndicatorSuccess();
    return true;
 }
@@ -343,6 +366,40 @@ bool NXS_UpdateIndicators(){
 // (SNXSSweep invece di SNXSSweepExt) che avrebbe rotto la compilazione dopo
 // il fix del sweep su LIQ_SWEEP - rimossa invece di tenerla in sincrono per
 // una funzione morta.
+
+// AUD0-MQL-003 — DERIVA FRA ROUTER, SELETTORE E REGISTRO.
+//
+// Il router chiama a mano ogni strategia e assegna numeri di selettore fissi
+// (1..37). Esistono pero' tre elenchi paralleli della stessa cosa: questo
+// codice, la mappa dei numeri di selettore in NXS_Inputs.mqh e il registro
+// canonico generato. Rinominare o aggiungere una strategia in uno solo dei tre
+// non produce alcun errore: produce una strategia che non viene mai valutata,
+// o un numero di selettore che isola quella sbagliata.
+//
+// Unificare i tre in una tabella dati sola e' una riscrittura del router. Qui
+// si chiude il buco che conta: la DERIVA diventa VISIBILE all'avvio invece di
+// restare silenziosa per mesi.
+void NXS_Router_AuditRegistry(){
+   int missing = 0;
+   for(int i = 0; i < NXS_LIVE_STRATEGY_COUNT; i++){
+      string id = NXS_StrategyIdAt(i);
+      if(StringLen(id) == 0) continue;
+      bool mapped = false;
+      _NXS_StrategyToggle(id, mapped);
+      if(!mapped){
+         missing++;
+         PrintFormat("[NEXUS][CONTRATTO] '%s' e' nel registro canonico ma il "
+                     "router non ha un interruttore per essa: non verra' mai "
+                     "valutata", id);
+      }
+   }
+   if(missing == 0)
+      PrintFormat("[NEXUS] router allineato al registro canonico (%d strategie)",
+                  NXS_LIVE_STRATEGY_COUNT);
+   else
+      PrintFormat("[NEXUS][CONTRATTO][ALERT] %d strategie del registro non sono "
+                  "raggiungibili dal router", missing);
+}
 
 // ============================================================
 // PHASE 2 — Signal Router with fallback.
@@ -489,6 +546,7 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 //| OnInit                                                            |
 //+------------------------------------------------------------------+
 int OnInit(){
+   g_testerPassStart = TimeCurrent();   // AUD0-MQL-014
    g_sym    = _Symbol;
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
@@ -513,8 +571,17 @@ int OnInit(){
    // qui sotto e' la prima) si verifica che il token del bridge non sia il
    // segnaposto pubblico e che l'URL sia HTTPS. Altrimenti la WebSync si spegne.
    NXS_WebCredentialPreflight();
-   // v2.0.10 — pull active locked profile from backend (auto-optimizer winner)
-   NXS_LockedProfile_Fetch();
+   // AUD0-MQL-011 — ORDINE DI INIZIALIZZAZIONE.
+   //
+   // Il profilo bloccato veniva scaricato PRIMA di: validazione della
+   // whitelist simboli, creazione degli handle indicatore, inizializzazione
+   // delle impostazioni runtime, applicazione dei preset, verifica della
+   // licenza e caricamento dello stato persistito. Quindi valori remoti
+   // potevano sovrascrivere — o essere sovrascritti da — layer che non erano
+   // ancora stati inizializzati, in un ordine che nessuno aveva dichiarato.
+   //
+   // Il fetch e' ora RINVIATO a fine OnInit, quando tutti i layer locali
+   // esistono e la precedenza e' esplicita: locale prima, remoto dopo.
    // v2.0.9 — load Sprint 3 learner CSV + reset handle pool
    NXS_HandlePool_Release();
    NXS_EA_Learner_Load();
@@ -559,6 +626,19 @@ int OnInit(){
    // AUD0-EXEC-007: verifica una volta all'avvio che le liste di strategie
    // mantenute a mano non siano andate alla deriva rispetto al registro.
    NXS_CounterHTF_AuditList();
+   NXS_Router_AuditRegistry();
+
+   // AUD0-MQL-012 — una licenza non valida NON fa fallire OnInit: l'EA resta
+   // caricato in modalita' inerte e dipende dal gate di licenza che ogni
+   // percorso di esposizione attraversa (gate 1 di NXS_CommonExposurePreflight).
+   // E' una scelta di recuperabilita' — una licenza puo' tornare valida senza
+   // riattaccare l'EA — ma va DICHIARATA, altrimenti un EA "caricato" sembra
+   // operativo mentre non lo e'.
+   if(InpEnableLicense && !NXS_License_Enforce()){
+      Print("[NEXUS][LICENZA] EA caricato in MODALITA' INERTE: nessuna nuova "
+            "esposizione finche' la licenza non e' valida. La gestione delle "
+            "posizioni gia' aperte e le protezioni restano attive.");
+   }
    NXS_Stats_Init();   // v2.0.5 strategy stats tracker
 
    // PR1 - Trade Ledger: riconcilia lo stato con la history (emitted-set +
@@ -612,6 +692,11 @@ int OnInit(){
       Print("[NEXUS] sincronizzazione web armata: la prima consegna avviene dal "
             "timer, l'avvio non attende la rete");
    }
+
+   // AUD0-MQL-011: il profilo bloccato si applica QUI, dopo che whitelist,
+   // handle, preset, licenza e stato persistito esistono gia'. La precedenza
+   // e' dichiarata: il remoto sovrascrive il locale, mai il contrario.
+   NXS_LockedProfile_Fetch();
 
    // Initial dashboard render
    if(InpShowDashboard) NXS_Dashboard_Render();
@@ -679,6 +764,23 @@ double NXS_TesterObjective(){
    return pf * MathSqrt(recovery) * ddPenalty;
 }
 
+// AUD0-MQL-014: identita' stabile della passata di ottimizzazione. Deriva dai
+// parametri della passata, quindi due agenti che eseguono la STESSA
+// combinazione producono lo stesso id — cosi' un duplicato si riconosce invece
+// di sembrare due risultati distinti.
+datetime g_testerPassStart = 0;
+
+string _nxs_tester_runId(){
+   string seed = StringFormat("%s|%s|%.4f|%.4f|%.1f|%d",
+                              _Symbol, EnumToString((ENUM_TIMEFRAMES)Period()),
+                              InpATR_SL_Mult, InpATR_TP_Mult, InpMinEntryScore,
+                              InpStrategySelector);
+   long h = 5381;
+   for(int i = 0; i < StringLen(seed); i++)
+      h = ((h * 33) ^ (long)StringGetCharacter(seed, i)) & 0x7FFFFFFFFFFF;
+   return StringFormat("%I64X", h);
+}
+
 double OnTester(){
    string fname = "NEXUS\\nexus_optimization_log.csv";
    bool isNew = !FileIsExist(fname);
@@ -690,7 +792,11 @@ double OnTester(){
       // thresholds, ADX_RSI score cap, Elliott params) - always, regardless
       // of which strategy is under test, so a run's grid dimension is never
       // silently missing from the CSV again (lost for the FVG_Mit pilot).
-      FileWrite(h, "atr_sl_mult","atr_tp_mult","min_entry_score",
+      // AUD0-MQL-014: ogni agente del tester scrive nella propria sandbox. Senza
+      // identita' del run e dell'agente, unire i CSV produce righe che nessuno
+      // sa piu' a quale passata appartengano — o duplicati indistinguibili.
+      FileWrite(h, "run_id","agent","pass_started_at",
+                "atr_sl_mult","atr_tp_mult","min_entry_score",
                 "nxr_min_fvg_size_atr","nxr_displacement_atr","adxrsi_score_cap",
                 "ell_swing_wing","ell_retrace_min","ell_retrace_max","ell_min_score",
                 "trades","net_profit","profit_factor","expected_payoff",
@@ -700,6 +806,12 @@ double OnTester(){
    double wins    = TesterStatistics(STAT_PROFIT_TRADES);
    double winRate = (trades > 0) ? (wins / trades * 100.0) : 0.0;
    FileWrite(h,
+      // AUD0-MQL-014: identita' del run e dell'agente in ogni riga, cosi' un
+      // merge fra sandbox e' deterministico e i duplicati sono riconoscibili.
+      _nxs_tester_runId(),
+      IntegerToString((long)TerminalInfoInteger(TERMINAL_BUILD)) + ":" +
+        IntegerToString((long)MQLInfoInteger(MQL_MEMORY_USED)),
+      TimeToString(g_testerPassStart, TIME_DATE|TIME_SECONDS),
       DoubleToString(InpATR_SL_Mult, 2),
       DoubleToString(InpATR_TP_Mult, 2),
       DoubleToString(InpMinEntryScore, 1),

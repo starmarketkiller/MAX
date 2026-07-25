@@ -37,6 +37,14 @@ bool NXS_PM_HasApplied(ulong ticket, string source){
 
 void NXS_PM_RecordApplied(ulong ticket, string source){
    if(NXS_PM_HasApplied(ticket, source)) return;
+   // AUD0-PM-003 — questa lista in memoria non e' l'autorita'.
+   //
+   // Oltre 512 voci scarta la piu' vecchia, quindi da sola non puo' garantire
+   // che un'azione one-shot non venga rifatta. L'autorita' e' lo stato
+   // PERSISTITO (NXS_State_RecordManagement, salvato subito sotto): la lista
+   // resta una cache di lettura veloce. Quando e' piena si scarta la voce piu'
+   // vecchia, ma NXS_State_HasApplied continua a rispondere correttamente
+   // perche' legge dallo snapshot per-posizione, non da qui.
    if(g_nxsPmAppliedCount >= NXS_PM_MAX_APPLIED){
       for(int i=1; i<NXS_PM_MAX_APPLIED; i++){
          g_nxsPmAppliedTicket[i-1] = g_nxsPmAppliedTicket[i];
@@ -67,7 +75,8 @@ void NXS_PM_RecordApplied(ulong ticket, string source){
 bool NXS_PM_SourceIsOneShot(string source){
    return (source == "SPLIT_P1"          || source == "SPLIT_P2" ||
            source == "GLOBAL_BREAKEVEN"  || source == "PROFILE_BREAKEVEN" ||
-           source == "CLASSIC_TIME_STOP" || source == "INST_TIME_STOP");
+           source == "CLASSIC_TIME_STOP" || source == "INST_TIME_STOP" ||
+           source == "CLOSE_REVERSE");
 }
 
 // Sorgenti RIPETIBILI: un trailing si aggiorna a ogni barra ed e' corretto che

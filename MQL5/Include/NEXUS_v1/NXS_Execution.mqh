@@ -341,7 +341,8 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
          bool sameDir = (sig.dir == DIR_BUY  && ptype == POSITION_TYPE_BUY) ||
                         (sig.dir == DIR_SELL && ptype == POSITION_TYPE_SELL);
          if(!sameDir) continue;
-         // AUD0-EXEC-006: il TF della posizione veniva dedotto dal COMMENTO.
+         // AUD0-EXEC-006 / NXS-EXEC-002: il TF della posizione veniva dedotto
+         // dal COMMENTO.
          // Un commento troncato dal broker (o una posizione manuale/legacy)
          // faceva risultare la posizione "senza TF", quindi fuori dal budget:
          // il cap per direzione/timeframe si allargava da solo, in silenzio.
@@ -534,7 +535,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       double fillPx = (exec.price > 0 ? exec.price : refPrice);
       NXS_Intent_Record(exec.order, sig.stratName, sig.score,
                         NXS_Intent_RiskMoney(g_sym, fillPx, sl, lots),
-                        "primary", 0, g_atr);
+                        "primary", 0, g_atr, lots);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);
@@ -567,7 +568,20 @@ void NXS_CloseOppositeIfBetter(ENUM_NXS_DIR newDir, double newScore){
       // AUD0-EXEC-002: si chiamava NXS_DoClose e si stampava "closing" senza
       // guardare l'esito. Il chiamante procedeva ad aprire la direzione
       // opposta assumendo che la posizione fosse sparita.
+      //
+      // NXS-EXEC-003: la chiusura resta DIRETTA e non passa dal coordinatore.
+      // E' una scelta, non una dimenticanza: il close-and-reverse deve
+      // completarsi PRIMA dell'apertura opposta nello stesso tick, mentre il
+      // coordinatore applica le proposte a fine ciclo — la posizione
+      // resterebbe aperta mentre si apre il lato opposto, creando esattamente
+      // l'esposizione bilaterale che il reverse vuole evitare.
+      //
+      // Il conflitto con una proposta concorrente sullo stesso ticket viene
+      // neutralizzato registrando l'azione nel coordinatore subito dopo: una
+      // proposta successiva sulla stessa posizione trovera' un ticket che non
+      // esiste piu' e verra' scartata in NXS_PM_ApplyCycle.
       bool closed = NXS_DoClose(t);
+      if(closed) NXS_PM_RecordApplied(t, "CLOSE_REVERSE");
       PrintFormat("[NEXUS] Close&Reverse %I64u esito=%s retcode=%d",
                   t, (closed ? "OK" : "FALLITO"), NXS_TradeRetcode());
       if(!closed)

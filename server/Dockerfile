@@ -5,6 +5,20 @@
 # server/ (AUD0-DEP-010, AUD0-DEP-011, AUD0-DEPLOY-DOCKER-002).
 #
 # Build:  docker build -f server/Dockerfile -t nexus-backend .
+# AUD0-SUPPLY-002 — IMMAGINE BASE NON ANCORATA AL DIGEST.
+#
+# `python:3.12-slim` e' un tag MUTABILE: lo stesso Dockerfile, ricostruito fra
+# una settimana, produce un'immagine diversa. Una build non riproducibile
+# significa che non si puo' sapere cosa sta girando in produzione ne' tornare
+# esattamente alla versione precedente.
+#
+# Il digest va aggiornato deliberatamente (rinnovo pianificato delle patch di
+# sicurezza), non subito in silenzio a ogni build. Per aggiornarlo:
+#   docker pull python:3.12-slim && docker inspect --format='{{index .RepoDigests 0}}' python:3.12-slim
+#
+# NOTA: il digest qui sotto va sostituito con quello effettivamente verificato
+# nel proprio ambiente prima del rilascio; finche' resta il tag, la build NON e'
+# riproducibile e questo e' un difetto aperto, non una scelta.
 FROM python:3.12-slim
 
 # AUD0-DEP-008 / AUD0-DEPLOY-DOCKER-003: il container girava come root.
@@ -13,8 +27,18 @@ RUN groupadd --system --gid 10001 nexus \
 
 WORKDIR /app
 
+# AUD0-SUPPLY-001: se esiste il lock riproducibile lo si usa con verifica degli
+# hash; altrimenti si ricade sul file di intento, dichiarandolo nel log della
+# build invece di far sembrare riproducibile una build che non lo e'.
 COPY server/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY server/requirements.lock.tx[t] ./
+RUN if [ -f requirements.lock.txt ]; then \
+        echo "[build] installo dal lock riproducibile (hash verificati)"; \
+        pip install --no-cache-dir --require-hashes -r requirements.lock.txt; \
+    else \
+        echo "[build][ATTENZIONE] requirements.lock.txt assente: build NON riproducibile"; \
+        pip install --no-cache-dir -r requirements.txt; \
+    fi
 
 # AUD0-DEP-006 / AUD0-DEPLOY-DOCKER-001: la lista fissa di COPY ometteva
 # moduli importati da app.py (strategy_registry, settings_contract,

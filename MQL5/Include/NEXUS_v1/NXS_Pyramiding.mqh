@@ -92,7 +92,11 @@ void NXS_ManagePyramid(SNXSVel &vel){
       if(sent){
          NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
                            NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
-                           "pyramid", NXS_Intent_GroupOfTicket(t), g_atr);
+                           "pyramid", NXS_Intent_GroupOfTicket(t), g_atr, lots);
+         // NXS-VSL-007 / NXS-EXP-001: la correlazione del Virtual SL escludeva
+         // le gambe secondarie, creando DUE classi di protezione — ingressi
+         // con stop logico ed esposizione aggiuntiva senza. Ora la copertura
+         // e' la stessa su ogni percorso che crea esposizione.
          NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, (long)InpMagic,
                              (type == POSITION_TYPE_BUY ? +1 : -1),
                              "PYRAMID", sl, sl);

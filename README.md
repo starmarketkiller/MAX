@@ -149,6 +149,14 @@ Il sorgente React è in `frontend/`; la build è servita da FastAPI sotto `/app`
 Per ricostruirla: `cd frontend && npm install --legacy-peer-deps && npm run build`,
 poi copia `frontend/build/` in `server/static/app/`.
 
+> **AUD0-DOC-006 — questa non è una pipeline di rilascio.** Copiare a mano gli
+> artefatti significa che l'immagine può contenere un frontend costruito da un
+> commit diverso da quello del backend, senza che nulla lo segnali. La CI
+> costruisce il frontend (`frontend-build`) ma non ne pubblica l'artefatto
+> versionato: finché è così, **verifica a ogni rilascio** che
+> `server/static/app/` provenga dallo stesso commit del backend. È un difetto
+> aperto, non una procedura approvata.
+
 ## 🌐 Dashboard statica — cosa puoi fare
 
 - **Panoramica** — stato live di ogni EA (balance, equity, P&L, drawdown, HTF/velocity, sessione) + posizioni aperte, con pulsanti **Pausa / Riprendi / Chiudi tutto / Chiudi posizione**.
@@ -221,3 +229,88 @@ fuori dall'host e verifica il ripristino.
 ---
 
 *Migrato da Emergent — progetto ora interamente self-hosted e indipendente.*
+
+---
+
+## Precisazioni dell'audit su questo documento
+
+Punti in cui il README diceva meno di quanto serviva, o lo diceva in modo
+ambiguo. Sono qui invece che sparsi nel testo, così restano leggibili insieme.
+
+### Autenticazione — chi usa cosa (AUD0-DOC-002)
+
+Il documento descriveva la dashboard React come autenticata via cookie httpOnly
+e, poche righe dopo, dichiarava genericamente che le rotte della dashboard
+richiedono un Bearer JWT. Sono due meccanismi diversi e la distinzione conta:
+
+| Client | Autenticazione | Protezione CSRF |
+|---|---|---|
+| Dashboard React (`/app`) | Cookie di sessione `httpOnly` | **Sì** — double-submit: header `X-Nexus-Csrf` + cookie `nexus_csrf`, legati al `jti` del token |
+| Script / integrazioni | `Authorization: Bearer <JWT>` | Non applicabile: un client Bearer non invia cookie automaticamente |
+| EA MetaTrader e worker LocalBridge | Header `X-Nexus-Token` | Non applicabile |
+
+In DEMO/PAPER/LIVE il Bearer è **rifiutato** sulle rotte di dashboard: in
+ambiente indurito l'unico canale umano è il cookie di sessione, che è
+revocabile lato server.
+
+### LocalBridge — cosa comporta davvero (AUD0-DOC-004)
+
+Il worker era presentato come una comoda funzione di controllo remoto. Va detto
+per intero, perché il rischio non è teorico:
+
+- il worker **esegue comandi sul PC** dove gira MT5 (compilazione, deploy di
+  file, riavvio del terminale);
+- l'esecuzione di shell arbitraria **è stata rimossa**: restano solo azioni
+  tipizzate con percorsi e digest verificati;
+- il deploy richiede **SHA-256 per ogni file**, mette in staging, attiva in modo
+  atomico e fa rollback se qualcosa non torna;
+- il riavvio termina **solo** l'eseguibile configurato, non processi arbitrari;
+- fuori da Windows il riavvio è un errore permanente, non un tentativo;
+- l'host deve essere **arruolato esplicitamente** prima che i suoi heartbeat
+  vengano accettati.
+
+Resta un fatto da tenere presente: il token del bridge è **condiviso** fra le
+istanze. Chi lo possiede può impersonare qualunque EA o worker. Vedi
+`docs/NORMATIVE_CONFORMANCE.md` (NEXUS-ID-004) per lo stato di questa lacuna.
+
+### Il sito statico e `/app` sono pubblici — di proposito (AUD0-API-006)
+
+Le rotte statiche e l'applicazione React non richiedono autenticazione: sono
+l'involucro, non i dati. Ogni chiamata API che espone dati operativi passa da
+`require_user` o `require_mutation`. La conseguenza pratica: il bundle React
+**non deve contenere segreti** — non li contiene, e la CI ha uno scanner che lo
+verifica ad ogni push.
+
+### I grafici a candele sono sintetici (AUD0-DATA-003)
+
+L'endpoint dei grafici genera candele matematiche e dichiara la provenienza
+`SYNTHETIC_DATA`. Non sono dati di mercato reali. La dashboard deve mostrare
+quella provenienza in modo visibile e **non** mescolare candele sintetiche con
+marcatori di trade reali senza avvertimento: due dati con affidabilità diverse
+nello stesso grafico si leggono come se fossero la stessa cosa.
+
+### Evidenza di esecuzione MT5 — assente (AUD0-TEST-001)
+
+Nessuna delle modifiche a `MQL5/` è stata compilata in MetaEditor né eseguita in
+Strategy Tester in questo ambiente: gli strumenti non ci sono. La verifica fatta
+qui è statica (bilanciamento dei blocchi, unicità delle definizioni, ordine di
+dichiarazione fra moduli, coerenza con il registro canonico). **Prima di usare
+capitale reale**, l'EA va compilato e fatto girare in Strategy Tester e su conto
+demo: è un passo obbligatorio, non una formalità.
+
+### Identificatori dei finding, non numeri di PR (AUD0-GOV-001)
+
+Le etichette `PR6`/`PR7`/`PR8` nella storia del repository non corrispondono
+sempre al numero della pull request su GitHub. Per riferirsi a un lavoro, usa
+gli **identificatori dei finding** (`AUD0-*`, `NXS-*`, `NEXUS-*`): sono
+immutabili e tracciabili in `docs/REMEDIATION_STATUS.md`.
+
+### Inventario dei file (AUD0-INV-001)
+
+L'inventario originale della migrazione non copre più il repository: dopo la
+migrazione sono arrivati `NXS_InstManage.mqh`, `NXS_PositionCoordinator.mqh`,
+`NXS_TradeLedger.mqh`, `NXS_StrategyRegistry.mqh`, `NXS_Intent.mqh`,
+`NXS_Outbox.mqh`, il sorgente React, i contratti canonici, i test e i documenti
+di architettura. La tabella delle cartelle più in alto in questo README è
+l'inventario corrente; `deploy/deployment-manifest.json` è quello **verificabile
+per digest** degli artefatti che vengono distribuiti.

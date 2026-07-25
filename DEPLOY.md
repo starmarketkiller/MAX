@@ -155,3 +155,24 @@ container, non dalla corruzione né dalla cancellazione. Nessuna procedura di
 backup automatico è ancora implementata (finding AUD0-DB-014). Finché non
 esiste, copia periodicamente `/data/nexus.db` fuori dall'host e **verifica il
 ripristino**: un backup mai testato non è un backup.
+
+---
+
+## Arresto e prontezza del container (AUD0-DEP-009)
+
+- **Prontezza:** `/api/ready` è l'unico endpoint che prova che il servizio sia
+  *usabile* (database scrivibile, migrazioni applicate, preflight superato).
+  `/api/health` prova solo che il processo risponda. Gli healthcheck di Docker
+  e Render puntano a `/api/ready`.
+- **Migrazioni:** con `NEXUS_AUTO_MIGRATE=false` il servizio non tocca lo schema
+  all'avvio; applicalo con `python -m app --migrate` **prima** di far entrare la
+  nuova versione in servizio. È l'unico modo sicuro con più repliche, dove
+  altrimenti ogni istanza tenterebbe la stessa migrazione.
+- **Arresto:** uvicorn gestisce SIGTERM chiudendo le connessioni in corso. Le
+  richieste già accettate vengono completate; i job computazionali interrotti
+  vengono marcati FAILED al riavvio successivo (`reap_orphans`), perché il
+  worker che li eseguiva non esiste più: dichiararli falliti è l'unica
+  affermazione dimostrabile.
+- **Verifica del rilascio:** `python -m app --verify-ledger` controlla la catena
+  di hash del ledger eventi. Un esito negativo significa che qualcuno ha
+  riscritto la storia aggirando i trigger del database.

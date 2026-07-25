@@ -1,3 +1,20 @@
+# AUD0-SUPPLY-001 — DIPENDENZE ANCORATE MA NON BLOCCATE IN MODO RIPRODUCIBILE.
+#
+# Le versioni dirette sono fissate, ma le loro DIPENDENZE TRANSITIVE no: pip
+# risolve quello che trova al momento della build. Due build dello stesso commit
+# possono quindi installare alberi diversi — e nessuna delle due e' verificabile
+# per hash.
+#
+# Il file bloccato riproducibile e' requirements.lock.txt, generato con:
+#   pip install pip-tools
+#   pip-compile --generate-hashes --output-file=server/requirements.lock.txt \
+#               server/requirements.txt
+#
+# In produzione si installa DAL LOCK, non da questo file:
+#   pip install --require-hashes -r server/requirements.lock.txt
+#
+# Questo file resta la dichiarazione di INTENTO (cosa vogliamo), il lock e' il
+# FATTO (cosa viene installato).
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 PyJWT==2.10.1

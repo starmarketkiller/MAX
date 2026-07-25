@@ -181,6 +181,13 @@ bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
       PrintFormat("[NEXUS INST] core senza SL: stop dell'add calcolato a %.5f", useSL);
    }
 
+   // AUD0-INST-009: con esposizione su entrambe le direzioni non si amplia.
+   if(g_instHedgedBoth){
+      PrintFormat("[NEXUS INST] ADD BLOCCATO: esposizione gia' su entrambe le "
+                  "direzioni, il rischio netto non giustifica un ampliamento");
+      return false;
+   }
+
    // Invariante unica: licenza, ruin freeze, protezioni, stop obbligatorio,
    // RiskShield, cap direzionale, margine proiettato, broker preflight.
    string gateReason = "";
@@ -202,7 +209,7 @@ bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
       // posizione piu' recente gia' censita; se ignota, l'add apre la propria.
       NXS_Intent_Record(NXS_TradeOrderTicket(), tag, 0.0,
                         NXS_Intent_RiskMoney(g_sym, refPrice, useSL, lots),
-                        "institutional", NXS_Intent_GroupOfTicket(parentTicket), g_atr);
+                        "institutional", NXS_Intent_GroupOfTicket(parentTicket), g_atr, lots);
    if(!sent)
       PrintFormat("[NEXUS INST] ADD FALLITO lvl=%d lots=%.4f retcode=%d",
                   level, lots, NXS_TradeRetcode());
@@ -376,6 +383,43 @@ void _nxs_inst_manageDir(ENUM_NXS_DIR dir){
 // attivo (la gestione classica BE/trail/grid/pyramid resta per il modello
 // best-per-bar).
 void NXS_InstManage_OnTick(){
+   // AUD0-INST-009 — GESTIONE SIMULTANEA DELLE DUE DIREZIONI.
+   //
+   // Il modulo gestisce i gruppi BUY e SELL in modo indipendente a ogni tick.
+   // Puo' essere hedging deliberato, ma senza una politica di rischio NETTO di
+   // conto due gruppi opposti possono crescere insieme: il margine e il rischio
+   // di caso peggiore si sommano, mentre l'esposizione netta — e quindi il
+   // "beneficio" della copertura — resta vicina a zero. Si paga spread e swap
+   // su entrambi i lati per un'esposizione che non c'e'.
+   //
+   // Qui il caso viene RILEVATO e limitato: se entrambe le direzioni sono
+   // aperte oltre una soglia minima, si smette di ampliare la piu' piccola.
+   {
+      double blots = 0, slots = 0;
+      for(int i = PositionsTotal() - 1; i >= 0; i--){
+         ulong pt = PositionGetTicket(i);
+         if(pt == 0) continue;
+         if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+         if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+         double v = PositionGetDouble(POSITION_VOLUME);
+         if(PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) blots += v;
+         else                                                        slots += v;
+      }
+      double vmin = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+      if(blots > vmin && slots > vmin){
+         g_instHedgedBoth = true;
+         static datetime lastHedgeLog = 0;
+         if(TimeCurrent() - lastHedgeLog > 300){
+            lastHedgeLog = TimeCurrent();
+            PrintFormat("[NEXUS INST] esposizione su ENTRAMBE le direzioni "
+                        "(BUY %.2f / SELL %.2f): nessun ampliamento del lato "
+                        "minore finche' dura", blots, slots);
+         }
+      } else {
+         g_instHedgedBoth = false;
+      }
+   }
+
    if(!InpUseInstitutionalCore) return;
    _nxs_inst_manageDir(DIR_BUY);
    _nxs_inst_manageDir(DIR_SELL);

@@ -170,7 +170,7 @@ bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
 
 // ----- Close ALL positions w/ reason -----
 //
-// AUD0-PROT-002: la funzione restituiva quante posizioni erano state chiuse,
+// AUD0-PROT-002 / NXS-PROT-001 / NXS-PROT-002: la funzione restituiva quante posizioni erano state chiuse,
 // ma i chiamanti alzavano comunque i flag di protezione. Se una chiusura
 // falliva, il sistema si dichiarava "in pausa dopo aver chiuso tutto" mentre
 // l'esposizione era ancora aperta, e NXS_Prot_OnTick usciva subito senza
@@ -512,6 +512,11 @@ void NXS_Prot_OnTick(){
       return;   // finche' resta esposizione da chiudere, nient'altro conta
    }
 
+   // AUD0-PROT-003: questo `return` sospende anche la GESTIONE delle posizioni
+   // aperte, non solo le nuove entrate — il nome del flag suggerisce il
+   // contrario. E' voluto (dopo un evento di protezione si vuole quiete), ma
+   // va detto: max-hold, perdita per posizione, ESL, DPT e auto-close NON
+   // girano finche' dura.
    if(g_pausedUntilNextOpen) return;
    NXS_Prot_CheckMaxHold();
    NXS_Prot_CheckMaxLossPerPos();

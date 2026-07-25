@@ -101,7 +101,11 @@ void NXS_ManageGrid(){
          // contare ogni position come un trade a se'.
          NXS_Intent_Record(NXS_TradeOrderTicket(), "GRID_RECOVERY", 0.0,
                            NXS_Intent_RiskMoney(g_sym, refPrice, sl, addLots),
-                           "grid", NXS_Intent_GroupOfTicket(t), g_atr);
+                           "grid", NXS_Intent_GroupOfTicket(t), g_atr, addLots);
+         // NXS-VSL-007 / NXS-EXP-001: la correlazione del Virtual SL escludeva
+         // le gambe secondarie, creando DUE classi di protezione — ingressi
+         // con stop logico ed esposizione aggiuntiva senza. Ora la copertura
+         // e' la stessa su ogni percorso che crea esposizione.
          NXS_VSL_OnRequested(NXS_TradeOrderTicket(), g_sym, (long)InpMagic,
                              (type == POSITION_TYPE_BUY ? +1 : -1),
                              "GRID_RECOVERY", sl, sl);

@@ -122,3 +122,19 @@ Tre requisiti restano parziali per ragioni strutturali, non per svista:
 
 Quattro requisiti (**NEXUS-OPS-004** e i due sopra) dipendono da pratiche
 operative: il codice fornisce l'evidenza, non può imporre il processo.
+
+---
+
+## Finding correlati chiusi da questi stessi controlli
+
+Alcuni finding dell'audit descrivono lo stesso difetto dei requisiti normativi
+qui sopra, da un'angolazione diversa. Sono chiusi dagli stessi controlli:
+
+| Finding | Dove è chiuso |
+|---|---|
+| `AUD0-WEB-001` — comandi distruttivi autenticati dal solo token condiviso | Mitigato: target obbligatorio, ambiente, scadenza, anti-replay durevole, conferma + motivo + raffreddamento per i reset, step-up lato backend, audit locale append-only. **Resta aperta** la credenziale per istanza (NEXUS-ID-004). |
+| `AUD0-WEB-011` — la telemetria espone dati sensibili a un endpoint condiviso | Mitigato: `NXS_WebCredentialPreflight` impone HTTPS e un token dedicato (niente più default pubblico), altrimenti la WebSync si spegne. **Resta** l'endpoint condiviso: vedi NEXUS-ID-004. |
+| `NXS-CONFIG-001 … NXS-CONFIG-019` — catena di configurazione parallela (`Inp*` / preset / `g_run_*` / profili bloccati / runtime) | Parzialmente chiuso: l'applicazione runtime è ora atomica e validata (`AUD0-SET-001/002/003`), l'ordine di inizializzazione è dichiarato (`AUD0-MQL-011`) e i profili bloccati sono validati contro registro e policy (`AUD0-PROFILE-001`). L'unificazione dei livelli in una sola configurazione effettiva resta una riscrittura non ancora fatta. |
+| `NXS-EXP-005` — grid e piramide ereditano solo l'identità del simbolo del grafico | Per costruzione: entrambi operano sul simbolo dell'istanza (`g_sym`), che è anche l'unico su cui l'EA calcola ATR e regime. Il legame alla sequenza è ora esplicito (`group_id` nel registro degli intenti) invece di essere implicito nel commento. Un'estensione multi-simbolo richiederebbe un contesto per simbolo, non presente. |
+| `NXS-EXEC-003` — close-and-reverse non passa dal coordinatore | Scelta deliberata e documentata nel codice: la chiusura deve completarsi *prima* dell'apertura opposta nello stesso tick, mentre il coordinatore applica a fine ciclo. Il conflitto è neutralizzato registrando l'azione (`CLOSE_REVERSE`) subito dopo. |
+| `AUD0-DEP-001`, `AUD0-DOC-001` | `DEPLOY.md` indica `main` come unica baseline; il README ha la tabella delle cartelle aggiornata e la sezione di precisazioni dell'audit. |

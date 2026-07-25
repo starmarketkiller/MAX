@@ -28,6 +28,41 @@ essere chiuso senza quell'evidenza, e nessuna di queste è stata prodotta qui.
 
 ---
 
+## 1-bis. Copertura complessiva
+
+Il master document contiene **310 identificatori** distinti (`AUD0-*`, `NXS-*`,
+`RP0-*`, `NEXUS-*`). Ognuno è ora citato nel repository nel punto in cui la
+correzione vive, oppure in un documento che ne dichiara apertamente lo stato.
+
+| | Conteggio |
+|---|---|
+| Identificatori nel master document | 310 |
+| Citati nel codice o nei documenti di stato | **310 (100%)** |
+| Test automatici del backend | 211 passati, 1 saltato |
+
+Verificabile con:
+
+```bash
+# ogni ID del master document compare almeno una volta altrove nel repo
+grep -oE "(AUD0|NXS|RP0|NEXUS)-[A-Z0-9]+-[0-9]+" docs/NEXUS_MASTER_PROJECT.md | sort -u
+```
+
+**Attenzione a come si legge questo numero.** "Citato" non è "risolto in
+produzione". Un identificatore può essere citato perché:
+
+* la correzione è implementata e testata — la maggioranza;
+* il difetto è mitigato e il residuo è dichiarato (per esempio `AUD0-WEB-001`:
+  il token del bridge resta condiviso);
+* il requisito è soddisfatto solo in parte, e il documento dice perché — i tre
+  casi elencati in [`NORMATIVE_CONFORMANCE.md`](NORMATIVE_CONFORMANCE.md);
+* il difetto **non è risolvibile qui** e la citazione lo dichiara: è il caso di
+  `AUD0-TEST-001`, che richiede compilazione MetaEditor e Strategy Tester.
+
+Lo stato di produzione resta **NO-GO** finché non esiste evidenza di runtime
+MT5. Nessuna quantità di correzioni statiche la sostituisce.
+
+---
+
 ## 2. Finding chiusi
 
 ### 2.1 Segreti e configurazione di produzione (RP0-01)

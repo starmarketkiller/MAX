@@ -91,6 +91,28 @@ int _nxs_inst_setupType(int dir){
 }
 
 // Costruisce la decisione dominante raggruppando i segnali per direzione.
+//: AUD0-INST-010 — famiglia di appartenenza usata per pesare i contributi
+//: correlati. Raggruppa per CONCETTO letto, non per nome.
+string _nxs_inst_family(string name){
+   if(StringFind(name, "FVG") >= 0 || StringFind(name, "IFVG") >= 0 ||
+      StringFind(name, "DISP") >= 0 || StringFind(name, "VOID") >= 0)
+      return "IMBALANCE";
+   if(StringFind(name, "OB") >= 0 || StringFind(name, "ORDER_BLOCK") >= 0 ||
+      StringFind(name, "BMS") >= 0 || StringFind(name, "STRUCT") >= 0)
+      return "STRUCTURE";
+   if(StringFind(name, "LIQ") >= 0 || StringFind(name, "SWEEP") >= 0 ||
+      StringFind(name, "TURTLE") >= 0 || StringFind(name, "JUDAS") >= 0)
+      return "LIQUIDITY";
+   if(StringFind(name, "REVERSAL") >= 0 || StringFind(name, "RSI") >= 0 ||
+      StringFind(name, "BOLLINGER") >= 0 || StringFind(name, "RANGE") >= 0)
+      return "MEAN_REVERSION";
+   if(StringFind(name, "BREAKOUT") >= 0 || StringFind(name, "BO") >= 0 ||
+      StringFind(name, "MACD") >= 0 || StringFind(name, "ADX") >= 0 ||
+      StringFind(name, "EMA") >= 0 || StringFind(name, "SAR") >= 0)
+      return "MOMENTUM";
+   return "OTHER";
+}
+
 // Ritorna d.valid=false se non c'e' conviction sufficiente.
 SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    SNXSDecision d; ZeroMemory(d); d.dir = DIR_NONE; d.valid = false;
@@ -113,7 +135,40 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    if(buyN == 0 && sellN == 0) return d;
 
    int dir = (buySum >= sellSum) ? +1 : -1;
-   double net = MathAbs(buySum - sellSum);   // conviction netta: piu' concordano, piu' e' forte
+
+   // AUD0-INST-010 — LA CONVICTION NON E' UNA SOMMA.
+   //
+   // Sommare gli score di strategie ALTAMENTE CORRELATE moltiplica la
+   // convinzione apparente senza aggiungere informazione: cinque varianti dello
+   // stesso concetto (FVG_CONT, FVG_MIT, IFVG, OB_MIT, DISP_REBAL leggono tutte
+   // squilibri di prezzo) producono una conviction cinque volte piu' alta di un
+   // singolo segnale, pur dicendo la stessa cosa. L'esposizione risultante e'
+   // sproporzionata rispetto all'evidenza reale.
+   //
+   // Si applica un peso decrescente ai contributi successivi al primo DENTRO
+   // la stessa famiglia: il primo vale pieno, i successivi sempre meno. E' una
+   // correzione grossolana — la matrice di correlazione vera non esiste nel
+   // registro — ma e' esplicita e verificabile, invece di un'ipotesi implicita
+   // di indipendenza che il sistema non ha mai avuto.
+   double buyAdj = 0, sellAdj = 0;
+   string famSeen[]; int famCnt[];
+   for(int i = 0; i < n; i++){
+      if(all[i].dir == DIR_NONE) continue;
+      string fam = _nxs_inst_family(all[i].stratName);
+      int idx = -1;
+      for(int f = 0; f < ArraySize(famSeen); f++) if(famSeen[f] == fam){ idx = f; break; }
+      if(idx < 0){
+         idx = ArraySize(famSeen);
+         ArrayResize(famSeen, idx + 1); ArrayResize(famCnt, idx + 1);
+         famSeen[idx] = fam; famCnt[idx] = 0;
+      }
+      // 1.0, 0.5, 0.33, 0.25 ... per contributi successivi della stessa famiglia
+      double w = 1.0 / (double)(famCnt[idx] + 1);
+      famCnt[idx]++;
+      if(all[i].dir == DIR_BUY) buyAdj += all[i].score * w;
+      else                      sellAdj += all[i].score * w;
+   }
+   double net = MathAbs(buyAdj - sellAdj);
    int contributors = (dir > 0) ? buyN : sellN;
    if(net < InpInstMinConviction) return d;
    if(contributors < InpInstMinContributors) return d;
@@ -130,7 +185,12 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
    for(int i = 0; i < n; i++){
       if(all[i].dir != wantDir) continue;
       string nm = all[i].stratName;
-      if(StringLen(group) + StringLen(nm) + 1 > 20){ group += "+"; break; }  // cap: lascia spazio a score+ctx nel comment MT5
+      // AUD0-INST-011 — questa firma viene TRONCATA per stare nel commento MT5
+      // (31 caratteri). Un commento troncato non e' provenienza: e' una nota
+      // diagnostica. L'appartenenza autorevole al gruppo vive nel registro
+      // degli intenti (group_id), che l'add istituzionale propaga e che il
+      // ledger usa per ricomporre la sequenza. Qui resta solo la leggibilita'.
+      if(StringLen(group) + StringLen(nm) + 1 > 20){ group += "+"; break; }
       if(gAdded > 0) group += "+";
       group += nm;
       gAdded++;

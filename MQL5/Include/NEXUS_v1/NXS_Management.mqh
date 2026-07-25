@@ -50,15 +50,48 @@ void NXS_ManageBreakevenAndTrail(){
       // profilo: BE a beR x RISCHIO (0=off), trailing a trailATR x ATR (0=off).
       double pBeR = -1, pTrail = -1;
       if(InpUseStrategyProfiles){
-         string cmt = PositionGetString(POSITION_COMMENT);
-         string pp[]; int npp = StringSplit(cmt, '|', pp);
-         if(npp >= 2 && StringLen(pp[1]) > 0){
+         // NXS-MGMT-002: la gestione dipendeva dal parsing del COMMENTO. Un
+         // commento troncato dal broker faceva perdere il profilo, quindi la
+         // posizione finiva sul percorso globale con soglie diverse da quelle
+         // della sua strategia. Il registro degli intenti e' l'autorita'.
+         string stratName = "";
+         SNxsIntent pIntent;
+         if(NXS_Intent_ByPosition((ulong)PositionGetInteger(POSITION_IDENTIFIER), pIntent))
+            stratName = pIntent.strategy;
+         if(stratName == ""){
+            string cmt = PositionGetString(POSITION_COMMENT);
+            string pp[]; int npp = StringSplit(cmt, '|', pp);
+            if(npp >= 2) stratName = pp[1];
+         }
+         if(StringLen(stratName) > 0){
             double a, b; bool h; double be, tr;
-            if(NXS_Profile_Get(pp[1], a, b, h, be, tr)){ pBeR = be; pTrail = tr; }
+            if(NXS_Profile_Get(stratName, a, b, h, be, tr)){ pBeR = be; pTrail = tr; }
          }
       }
       if(pBeR >= 0 || pTrail >= 0){
+         // NXS-MGMT-001 — IL RISCHIO INIZIALE E' IMMUTABILE.
+         //
+         // `|apertura - SL corrente|` non e' il rischio del trade: e' la
+         // distanza dallo stop DI ADESSO. Dopo il primo spostamento (breakeven
+         // o trailing) quel numero si restringe, quindi la soglia "profitto >=
+         // N x rischio" diventa via via piu' facile da superare: le azioni di
+         // gestione scattano prima di quanto la regola prevedesse, e in modo
+         // diverso a ogni posizione a seconda di quanto lo stop si e' mosso.
+         //
+         // Il rischio iniziale e' registrato all'esecuzione: si usa quello.
          double risk = MathAbs(open - sl);
+         SNxsIntent mIntent;
+         double posVol = PositionGetDouble(POSITION_VOLUME);
+         if(NXS_Intent_ByPosition((ulong)PositionGetInteger(POSITION_IDENTIFIER), mIntent) &&
+            mIntent.risk_money > 0 && posVol > 0){
+            // risk_money e' in valuta: si riconverte in distanza di prezzo.
+            double tickV  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);
+            double tickSz = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_SIZE);
+            if(tickV > 0 && tickSz > 0){
+               double origDist = (mIntent.risk_money / (tickV * posVol)) * tickSz;
+               if(origDist > 0) risk = origDist;
+            }
+         }
          if(pBeR > 0 && !beReached && risk > 0 && prof >= pBeR * risk){
             NXS_PM_ProposeModify(t, NormPrice(open), tp, 60, "PROFILE_BREAKEVEN", "profile R threshold");
             beReached = true;

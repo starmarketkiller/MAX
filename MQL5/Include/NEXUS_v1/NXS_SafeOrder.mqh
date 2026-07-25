@@ -12,7 +12,7 @@ bool _NXS_IsRetryable(uint rc){
            rc == 10022 /* TIMEOUT */);
 }
 
-// AUD0-EXEC-003: il backoff usava Sleep() dentro il gestore eventi di
+// AUD0-EXEC-003 / NXS-RAW-004 / AUD0-EXEC-004: il backoff usava Sleep() dentro il gestore eventi di
 // trading. Con 3 tentativi si arrivava a ~900ms di blocco totale del thread
 // dell'EA: in quella finestra non giravano il controllo del Virtual SL, le
 // protezioni d'emergenza, il timer e OnTradeTransaction.

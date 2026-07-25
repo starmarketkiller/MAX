@@ -410,6 +410,8 @@ def init_db() -> None:
         _record_migration(c, "013_status_history")
         _migrate_command_envelope(c)
         _record_migration(c, "014_command_envelope")
+        _migrate_license_lifecycle(c)
+        _record_migration(c, "015_license_lifecycle")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -709,7 +711,16 @@ def _migrate_status_history(c: sqlite3.Connection) -> None:
 
 
 def _migrate_command_envelope(c: sqlite3.Connection) -> None:
-    """Completa la busta canonica del comando (NEXUS-CMD-001).
+    """Completa la busta canonica del comando (NEXUS-CMD-001, NXS-DB-011).
+
+    NXS-DB-011 / NXS-OWNERSHIP-002: `ea_commands` era una coda minima con solo
+    lo stato di consegna, mentre `bridge_commands` aveva lease, retry,
+    idempotenza e ciclo di vita completo — due definizioni diverse della stessa
+    cosa, con due livelli di garanzia diversi. Le migrazioni 002/003 hanno
+    portato `ea_commands` allo stesso modello; questa aggiunge gli ultimi due
+    campi a ENTRAMBE le tabelle, così i due canali condividono la stessa busta.
+    Restano tabelle distinte (i destinatari sono diversi: EA e worker), ma il
+    contratto è uno solo.
 
     Mancavano AMBIENTE e CORRELAZIONE. Senza ambiente un comando emesso da un
     backend DEMO puo' essere eseguito da un'istanza LIVE che condivide lo stesso
@@ -725,6 +736,42 @@ def _migrate_command_envelope(c: sqlite3.Connection) -> None:
                 c.execute(f"ALTER TABLE {table} ADD COLUMN {name} TEXT")
     c.execute("CREATE INDEX IF NOT EXISTS idx_ea_commands_correlation "
               "ON ea_commands(correlation_id) WHERE correlation_id IS NOT NULL")
+
+
+def _migrate_license_lifecycle(c: sqlite3.Connection) -> None:
+    """Completa l'audit di ciclo di vita della licenza (NXS-DB-018).
+
+    La tabella conservava chiave, conto, trial, scadenza e nota. Mancava tutto
+    ciò che serve a rispondere a "chi l'ha emessa, quando, per quale
+    deployment, quando e perché è stata revocata, quando è stata verificata
+    l'ultima volta". Gli eventi vivono già in `license_events`; qui si porta lo
+    STATO CORRENTE allo stesso livello, così una singola lettura risponde senza
+    dover ricostruire la storia.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(licenses)")}
+    if not cols:
+        return
+    for name, decl in (
+        ("issued_at", "REAL"),
+        ("issued_by", "TEXT"),
+        ("revoked_at", "REAL"),
+        ("revoked_by", "TEXT"),
+        ("revocation_reason", "TEXT"),
+        ("deployment_scope", "TEXT"),
+        ("last_verified_at", "REAL"),
+        ("verification_count", "INTEGER"),
+    ):
+        if name not in cols:
+            c.execute(f"ALTER TABLE licenses ADD COLUMN {name} {decl}")
+    # Backfill: l'emissione è il primo evento registrato per quella licenza.
+    # L'identità pubblica di una licenza è `key_hash` (la chiave in chiaro non
+    # viene mai conservata), ed è quella che `license_events.license_id` usa.
+    if "key_hash" in cols:
+        c.execute(
+            "UPDATE licenses SET issued_at = ("
+            "  SELECT MIN(created_at) FROM license_events e "
+            "  WHERE e.license_id = licenses.key_hash) "
+            "WHERE issued_at IS NULL")
 
 
 def _migrate_license_security(c: sqlite3.Connection) -> None:
@@ -981,6 +1028,13 @@ def verify_event_chain(c: sqlite3.Connection, limit: int = 5000) -> dict:
 def _insert_trade_event(c: sqlite3.Connection, t: dict, symbol_fallback=None) -> bool:
     """Registra un evento del ciclo di vita nel ledger backend.
 
+    NXS-DB-007: il payload completo resta in `payload` come JSON — serve alla
+    compatibilità con EA di versioni diverse e all'audit. I campi su cui si
+    interroga e si applicano vincoli sono però ESTRATTI in colonne tipizzate
+    (trade_uid, event, position_id, magic, symbol, pnl, lots, partial_count,
+    volume_out, deal_id, hash): un indice non si può costruire su un campo che
+    esiste solo dentro una stringa.
+
     INSERT OR IGNORE + indice parziale (trade_uid,event) ⇒ il replay di un
     close/resync gia' registrato non crea un secondo evento: e' questo che
     rende verificabile 'exactly one TRADE_CLOSED per logical trade'.
@@ -1071,6 +1125,20 @@ def kv_set(key: str, value: Any) -> None:
         )
 
 
+# NXS-DB-012 — CONVENZIONE SUI TIMESTAMP.
+#
+# Il database mescolava epoch REAL, scadenze intere, stringhe ISO dentro i
+# payload e testo MT5 legacy ("2026.07.20 10:00:00"). Ordinare, applicare la
+# ritenzione e riconciliare diventava un esercizio di indovinare il formato.
+#
+# La convenzione, d'ora in poi, è una sola:
+#   * COLONNE di database  -> epoch UTC in REAL (`now()`), sempre;
+#   * CAMPI di payload/API -> stringa ISO-8601 UTC (`iso()`), sempre;
+#   * testo MT5 legacy     -> normalizzato in ISO da `_normalize_time` in
+#                             lettura e in scrittura, mai propagato com'è.
+#
+# Le colonne che esistevano già in formato diverso restano tali per
+# compatibilità: la conversione è fatta al confine, non nel database.
 def now() -> float:
     return time.time()
 
@@ -2707,6 +2775,17 @@ def settings_state() -> dict:
     }
 
 
+# NXS-OWNERSHIP-001 — PROPRIETÀ DELLE IMPOSTAZIONI.
+#
+# Le impostazioni si potevano cambiare da: rotte canoniche, alias di dashboard,
+# override per strategia, rischio per strategia, azioni del Coach e replace dei
+# profili bloccati. Sei porte, ognuna con la propria validazione — quindi sei
+# definizioni diverse di cosa fosse lecito.
+#
+# Questa funzione è ora l'UNICO punto di scrittura: ogni rotta ci passa. Applica
+# lo schema, i tetti di `nexus_policy`, il confronto con la revisione attesa
+# (compare-and-swap) e l'audit. Una rotta che scrivesse direttamente su `kv`
+# aggirerebbe tutto questo: non deve esistere, ed è questo il contratto.
 def apply_settings_patch(patch: dict, *, actor: str,
                          expected_revision=None, reason: str = "") -> dict:
     """Applica un patch validato con compare-and-swap.
@@ -5668,6 +5747,61 @@ async def backtest_locked_save(request: Request, user: str = Depends(require_use
     cfg = data.get("base_cfg") or {}
     ovr = data.get("overrides") or {}
     strat = (cfg.get("strategies") or [None])[0]
+
+    # AUD0-PROFILE-001 — un profilo bloccato E' configurazione operativa.
+    #
+    # I valori arrivavano da `base_cfg`/`overrides` e finivano nei parametri che
+    # l'EA legge senza alcun controllo di intervallo né verifica che la
+    # strategia esista. Un profilo con RiskPct a 50 o una strategia inventata
+    # veniva salvato e poi applicato all'EA come se fosse stato approvato.
+    if strat is not None and not strategy_registry.is_known(str(strat)):
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED",
+            "message": f"strategia sconosciuta nel registro canonico: {strat}"})
+
+    _PROFILE_BOUNDS = {
+        "risk_pct":        (0.01, nexus_policy.caps_for(HARDENED)["risk_percent"]),
+        "atr_sl_mult":     (0.1, 20.0),
+        "atr_tp_mult":     (0.1, 50.0),
+        "min_score":       (0.0, 100.0),
+        "adx_min":         (0.0, 100.0),
+        "cooldown_bars":   (0, 5000),
+        "daily_dd_cap":    (0.1, nexus_policy.caps_for(HARDENED)["max_daily_dd_pct"]),
+        "max_concurrent":  (1, nexus_policy.caps_for(HARDENED)["max_concurrent"]),
+    }
+    for field, (lo, hi) in _PROFILE_BOUNDS.items():
+        raw = cfg.get(field)
+        if raw is None:
+            continue
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED",
+                "message": f"{field}: valore non numerico"}) from None
+        if not (lo <= val <= hi):
+            raise HTTPException(status_code=422, detail={
+                "code": "RISK_POLICY_DENIED",
+                "message": f"{field}={val} fuori dall'intervallo consentito "
+                           f"[{lo}, {hi}] per un profilo operativo",
+                "field": field, "min": lo, "max": hi})
+
+    for field, (lo, hi) in (("BreakevenR", (0.0, 20.0)),
+                            ("TrailingAtrMult", (0.0, 20.0))):
+        raw = ovr.get(field)
+        if raw is None:
+            continue
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED",
+                "message": f"{field}: valore non numerico"}) from None
+        if not (lo <= val <= hi):
+            raise HTTPException(status_code=422, detail={
+                "code": "RISK_POLICY_DENIED",
+                "message": f"{field}={val} fuori dall'intervallo [{lo}, {hi}]"})
+
     profiles = kv_get("locked_profiles", {})
     candidate = {
         "locked": True,

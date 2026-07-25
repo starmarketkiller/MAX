@@ -78,6 +78,10 @@ void NXS_LastExec(SNXSExecResult &out){ out = g_lastExec; }
 // confermare dallo stato reale. Gli helper che possono verificare la
 // post-condizione (chiusura, modifica) lo fanno; per l'apertura il ledger e
 // OnTradeTransaction restano l'autorita', e il PLACED viene dichiarato nel log.
+// AUD0-EXEC-005: l'esito positivo del wrapper non prova lo stato finale della
+// posizione lato broker. Qui la distinzione fra DONE (eseguito) e PLACED
+// (accettato) diventa esplicita, e i chiamanti che possono verificare la
+// post-condizione lo fanno prima di dichiarare l'azione compiuta.
 bool _NXS_ExecAccepted(bool sent, uint rc, string what){
    if(sent && rc == TRADE_RETCODE_DONE) return true;
    if(sent && rc == TRADE_RETCODE_PLACED){
@@ -149,6 +153,15 @@ datetime g_ruinFrozenDay  = 0;
 // rende la persistenza indipendente dall'ordine di include (AUD0-MQL-001).
 bool     g_eslHit              = false;
 bool     g_dptHit              = false;
+// AUD0-PROT-003 — il nome dice "in pausa fino alla prossima apertura", ma il
+// comportamento e' piu' forte: quando e' attivo NXS_Prot_OnTick esce PRIMA di
+// ogni altro controllo (max-hold, perdita per posizione, ESL, DPT, auto-close),
+// quindi non si limita a impedire nuove entrate — sospende l'INTERA gestione
+// delle posizioni gia' aperte. Viene azzerato dal cambio giorno.
+//
+// Il nome resta per compatibilita' con lo snapshot di stato persistito; la
+// semantica reale e' documentata qui e nel punto d'uso, invece di dover essere
+// dedotta leggendo il flusso.
 bool     g_pausedUntilNextOpen = false;
 bool     g_autoClosePending    = false;
 // Flatten d'emergenza non completato: resta esposizione da chiudere.
@@ -162,6 +175,8 @@ datetime g_NXSrsBreakerUntil   = 0;
 // raffreddamento che impedisce di disarmare una protezione da remoto nei
 // minuti immediatamente successivi all'evento che l'ha fatta scattare.
 datetime g_lastProtectionEvent = 0;
+// AUD0-INST-009: esposizione contemporanea su entrambe le direzioni.
+bool     g_instHedgedBoth      = false;
 // AUD0-MQL-010: salute della lettura indicatori. Vive qui, e non nell'EA,
 // perche' NXS_WebBridge.mqh la pubblica nella telemetria ed e' incluso PRIMA
 // del corpo dell'EA (l'inclusione in MQL5 e' testuale: l'ordine conta).
@@ -230,7 +245,7 @@ double NormPrice(double p){ return NormalizeDouble(p, g_digits); }
 // ----- Raw trade helpers (replace CTrade) -----
 void NXS_TradeSetMagic(long m){ g_tradeMagic = m; }
 
-// AUD0-RAW-004: `g_tradeFilling` era inizializzato una sola volta per il
+// AUD0-RAW-004 / NXS-RAW-003: `g_tradeFilling` era inizializzato una sola volta per il
 // simbolo del grafico, ma le chiusure ricevono posizioni il cui simbolo si
 // legge dal ticket. In operazioni multi-simbolo la modalità di riempimento
 // poteva non essere supportata dal simbolo effettivo della richiesta.
@@ -246,7 +261,7 @@ void NXS_TradeSetFillingBySymbol(string sym){
    g_tradeFilling = NXS_FillingForSymbol(sym);
 }
 
-// AUD0-RAW-003: `req.deviation = 30` era fisso per ogni strumento. 30 point
+// AUD0-RAW-003 / NXS-RAW-003: `req.deviation = 30` era fisso per ogni strumento. 30 point
 // hanno un significato economico completamente diverso su EURUSD, XAUUSD e
 // BTCUSD. Si deriva dallo spread corrente del simbolo, con un tetto rigido.
 ulong NXS_DeviationForSymbol(string sym){

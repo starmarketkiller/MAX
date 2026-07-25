@@ -16,6 +16,15 @@
 //|  chiave e' il ticket dell'ordine, che il ledger ritrova su ogni    |
 //|  deal via DEAL_ORDER.                                              |
 //|                                                                   |
+//|  NXS-STATE-006 / NXS-TX-001: questo registro E' il giornale degli  |
+//|  intenti che alla riconciliazione mancava. NXS_State_ReconcileBroker|
+//|  ricostruisce solo le posizioni APERTE del simbolo del grafico e non|
+//|  sapeva nulla degli ordini inviati e non ancora confermati. Un      |
+//|  intento registrato all'invio e persistito subito sopravvive al     |
+//|  crash fra accettazione dell'ordine e primo fill; la ricostruzione  |
+//|  autorevole resta quella dai deal, con cursore e finestra           |
+//|  documentati in NXS_HistorySync.mqh.                                |
+//|                                                                   |
 //|  Il registro e' persistito (sopravvive ai riavvii), limitato e     |
 //|  potato per eta'. Se un intento non si trova, i consumatori        |
 //|  ricadono sul vecchio parsing del commento: nessuna regressione,   |
@@ -37,6 +46,8 @@ struct SNxsIntent {
    double   score;
    double   risk_money;     // budget di rischio DECISO, non dedotto
    double   entry_atr;      // AUD0-STATE-003: ATR AL MOMENTO dell'ingresso
+   double   entry_volume;   // NXS-SPLIT-001: volume all'apertura, per capire
+                            // se un parziale e' gia' avvenuto dopo un crash
    string   route;          // primary | grid | pyramid | institutional | split
    datetime created;
 };
@@ -96,6 +107,7 @@ void NXS_Intent_Save(){
       FileWriteDouble(h, g_nxsIntents[i].score);
       FileWriteDouble(h, g_nxsIntents[i].risk_money);
       FileWriteDouble(h, g_nxsIntents[i].entry_atr);
+      FileWriteDouble(h, g_nxsIntents[i].entry_volume);
       FileWriteLong(h,   (long)g_nxsIntents[i].created);
       FileWriteString(h, g_nxsIntents[i].strategy, 32);
       FileWriteString(h, g_nxsIntents[i].route,    16);
@@ -133,6 +145,7 @@ void NXS_Intent_Load(){
       g_nxsIntents[i].score        = FileReadDouble(h);
       g_nxsIntents[i].risk_money   = FileReadDouble(h);
       g_nxsIntents[i].entry_atr    = FileReadDouble(h);
+      g_nxsIntents[i].entry_volume = FileReadDouble(h);
       g_nxsIntents[i].created      = (datetime)FileReadLong(h);
       g_nxsIntents[i].strategy     = FileReadString(h, 32);
       g_nxsIntents[i].route        = FileReadString(h, 16);
@@ -156,7 +169,7 @@ double NXS_Intent_RiskMoney(string sym, double entry, double sl, double lots){
 //: il ticket dell'ordine stesso, stabile e unico).
 void NXS_Intent_Record(ulong orderTicket, string strategy, double score,
                        double riskMoney, string route, ulong groupId = 0,
-                       double entryAtr = 0.0){
+                       double entryAtr = 0.0, double entryVolume = 0.0){
    if(orderTicket == 0) return;
    NXS_Intent_Load();
    int idx = _nxs_intent_idxByOrder(orderTicket);
@@ -175,6 +188,7 @@ void NXS_Intent_Record(ulong orderTicket, string strategy, double score,
    // distanza dello stop), cambiando le soglie di gestione di una posizione
    // gia' aperta. Qui viene registrato quando e' ancora quello vero.
    g_nxsIntents[idx].entry_atr    = (entryAtr > 0.0 ? entryAtr : g_atr);
+   g_nxsIntents[idx].entry_volume = entryVolume;
    g_nxsIntents[idx].route        = route;
    g_nxsIntents[idx].created      = TimeCurrent();
    g_nxsIntentDirty = true;

@@ -415,3 +415,41 @@ def test_busta_comando_porta_ambiente_e_correlazione(logged_in):
     assert body["action"] == "pause"
     assert body["environment"] == backend.ENVIRONMENT
     assert len(body["correlation_id"]) > 0
+
+
+def test_profilo_bloccato_rifiuta_valori_fuori_policy(logged_in):
+    """AUD0-PROFILE-001: un profilo bloccato E' configurazione operativa.
+
+    I valori finivano nei parametri che l'EA legge senza alcun controllo: un
+    profilo con rischio al 50% veniva salvato e poi applicato come se fosse
+    stato approvato.
+    """
+    client, headers = logged_in
+    resp = client.post("/api/backtest/locked_profile",
+                       json={"symbol": "XAUUSD",
+                             "base_cfg": {"strategies": ["MACD"], "risk_pct": 50.0}},
+                       headers=headers)
+    assert resp.status_code == 422
+    assert resp.json()["detail"]["code"] == "RISK_POLICY_DENIED"
+
+
+def test_profilo_bloccato_rifiuta_strategia_inesistente(logged_in):
+    client, headers = logged_in
+    resp = client.post("/api/backtest/locked_profile",
+                       json={"symbol": "XAUUSD",
+                             "base_cfg": {"strategies": ["STRATEGIA_INVENTATA"],
+                                          "risk_pct": 1.0}},
+                       headers=headers)
+    assert resp.status_code == 422
+
+
+def test_profilo_bloccato_accetta_valori_validi(logged_in):
+    client, headers = logged_in
+    resp = client.post("/api/backtest/locked_profile",
+                       json={"symbol": "XAUUSD",
+                             "base_cfg": {"strategies": ["MACD"], "risk_pct": 1.0,
+                                          "atr_sl_mult": 2.0, "min_score": 60},
+                             "overrides": {"BreakevenR": 1.5}},
+                       headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["strategy"] == "MACD"
