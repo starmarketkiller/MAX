@@ -265,6 +265,40 @@ def validate_ttl(action: str, raw: Any) -> int:
     return max(MIN_TTL_SECONDS, min(MAX_TTL_SECONDS, ttl))
 
 
+#: Limiti per i comandi LocalBridge (AUD0-VAL-002, AUD0-VAL-003).
+BRIDGE_MIN_TTL_SECONDS = 60
+BRIDGE_MAX_TTL_SECONDS = 6 * 3600
+BRIDGE_DEFAULT_TTL_SECONDS = 3600
+BRIDGE_MAX_ATTEMPTS = 5
+
+
+def validate_ttl_bridge(raw: Any) -> int:
+    """TTL di un comando LocalBridge, con minimo E massimo.
+
+    AUD0-VAL-002: l'implementazione precedente calcolava `max(60, ttl)`, cioè
+    imponeva solo un pavimento. Un chiamante poteva chiedere una vita utile
+    arbitrariamente lunga per un'operazione distruttiva.
+    """
+    if raw in (None, ""):
+        return BRIDGE_DEFAULT_TTL_SECONDS
+    try:
+        ttl = int(raw)
+    except (TypeError, ValueError):
+        return BRIDGE_DEFAULT_TTL_SECONDS
+    return max(BRIDGE_MIN_TTL_SECONDS, min(BRIDGE_MAX_TTL_SECONDS, ttl))
+
+
+def validate_max_attempts(raw: Any) -> int:
+    """Numero di tentativi, con tetto superiore (AUD0-VAL-003)."""
+    if raw in (None, ""):
+        return MAX_ATTEMPTS
+    try:
+        attempts = int(raw)
+    except (TypeError, ValueError):
+        return MAX_ATTEMPTS
+    return max(1, min(BRIDGE_MAX_ATTEMPTS, attempts))
+
+
 def requires_confirmation(action: str) -> bool:
     return bool(EA_ACTIONS[validate_action(action)]["confirm"])
 

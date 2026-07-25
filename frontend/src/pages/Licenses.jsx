@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import api from "@/lib/api";
+import api, { formatApiError } from "@/lib/api";
 import { Copy, Plus, Trash2, RefreshCcw, Power, Calendar, Globe, Smartphone } from "lucide-react";
 
 function classNames(...c) { return c.filter(Boolean).join(" "); }
@@ -85,7 +85,9 @@ function CreateForm({ onCreated }) {
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Generated:</span>
             <code className="font-mono text-emerald-600 dark:text-emerald-400 select-all">{lastKey}</code>
-            <button type="button" onClick={()=>navigator.clipboard.writeText(lastKey)}
+            <button type="button"
+                    onClick={()=>navigator.clipboard.writeText(lastKey).catch(
+                      ()=>window.alert("Copia negata dal browser: seleziona e copia manualmente."))}
                     className="p-1 hover:text-foreground" title="Copy"
                     data-testid="license-copy-last-btn">
               <Copy className="h-3.5 w-3.5"/>
@@ -102,36 +104,66 @@ function CreateForm({ onCreated }) {
   );
 }
 
-function LicenseRow({ lic, onChanged }) {
-  const expired = lic.expires_at && new Date(lic.expires_at) < new Date();
-  const expDate = lic.expires_at ? new Date(lic.expires_at) : null;
+function LicenseRow({ lic, onChanged, onError }) {
+  // Il backend calcola lo stato: EXPIRED tiene conto anche della revoca.
+  const expired = lic.status === "EXPIRED";
+  const expDate = lic.expires_at ? new Date(lic.expires_at * 1000) : null;
   const expStr = expDate ? expDate.toLocaleDateString() : "never";
-  const lastSeen = lic.last_seen_at ? new Date(lic.last_seen_at).toLocaleString() : "—";
+  const lastSeen = lic.last_verified_at
+    ? new Date(lic.last_verified_at * 1000).toLocaleString() : "—";
 
-  const toggleActive = async () => {
-    await api.patch(`/license/${lic.id}`, { active: !lic.active });
-    onChanged();
+  // AUD0-FE-LIC-004: abilitazione, estensione e revoca partivano al primo
+  // click, senza conferma né motivazione registrata.
+  const run = async (fn) => {
+    try { await fn(); onChanged(); }
+    catch (e) { onError(formatApiError(e?.response?.data?.detail) || e.message); }
   };
-  const extend = async (n) => {
-    await api.patch(`/license/${lic.id}`, { extend_days: n });
-    onChanged();
+
+  const toggleActive = () => {
+    if (lic.active) {
+      // eslint-disable-next-line no-alert
+      const reason = window.prompt(
+        `Disabilitare la licenza ${lic.fingerprint}?\n\n` +
+        "L'EA associato smetterà di validarsi al prossimo controllo.\n" +
+        "Indica il motivo (registrato nell'audit):");
+      if (!reason) return;
+      return run(() => api.patch(`/license/${lic.id}`, { active: false, reason }));
+    }
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(`Riattivare la licenza ${lic.fingerprint}?`)) return;
+    return run(() => api.patch(`/license/${lic.id}`, { active: true, reason: "riattivazione" }));
   };
-  const remove = async () => {
-    if (!confirm(`Delete license ${lic.key}? This cannot be undone.`)) return;
-    await api.delete(`/license/${lic.id}`);
-    onChanged();
+
+  const extend = (n) => {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm(
+      `Estendere di ${n} giorni la licenza ${lic.fingerprint}?\n\n` +
+      `Scadenza attuale: ${expStr}`)) return;
+    return run(() => api.patch(`/license/${lic.id}`,
+      { extend_days: n, reason: `estensione di ${n} giorni` }));
+  };
+
+  const remove = () => {
+    // eslint-disable-next-line no-alert
+    const reason = window.prompt(
+      `Revocare la licenza ${lic.fingerprint}?\n\n` +
+      "La licenza resta nello storico ma non sarà più valida.\n" +
+      "Indica il motivo (obbligatorio, registrato nell'audit):");
+    if (!reason) return;
+    return run(() => api.delete(`/license/${lic.id}`, { params: { reason } }));
   };
 
   return (
     <tr className="border-t border-border hover:bg-secondary/40 transition-colors"
         data-testid={`license-row-${lic.id}`}>
       <td className="py-3 px-3">
+        {/* AUD0-FE-LIC-001 / AUD0-FE-LIC-002: la tabella mostrava la chiave
+            riutilizzabile per intero, con copia in un click. Ora il backend
+            restituisce solo un'impronta non riutilizzabile. */}
         <div className="flex items-center gap-2">
-          <code className="font-mono text-xs">{lic.key}</code>
-          <button onClick={()=>navigator.clipboard.writeText(lic.key)}
-                  className="p-0.5 text-muted-foreground hover:text-foreground" title="Copy">
-            <Copy className="h-3 w-3"/>
-          </button>
+          <code className="font-mono text-xs" title="Impronta: la chiave completa non è recuperabile">
+            {lic.fingerprint}
+          </code>
         </div>
       </td>
       <td className="py-3 px-3 text-sm">{lic.client || "—"}</td>
@@ -169,14 +201,21 @@ function LicenseRow({ lic, onChanged }) {
 export default function LicensesPage() {
   const [licenses, setLicenses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [mode, setMode] = useState("");
+  const [enforcement, setEnforcement] = useState("");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await api.get("/license/list");
       setLicenses(data.licenses || []);
+      setMode(data.mode || "");
+      setEnforcement(data.enforcement || "");
+      setError("");
     } catch (e) {
       console.error("license fetch failed", e);
+      setError(formatApiError(e?.response?.data?.detail) || "caricamento licenze fallito");
     } finally {
       setLoading(false);
     }
@@ -186,6 +225,21 @@ export default function LicensesPage() {
 
   return (
     <div className="space-y-6" data-testid="licenses-page">
+      {/* AUD0-LIC-001: se l'enforcement è disattivato, la pagina non deve
+          far credere che le licenze stiano proteggendo qualcosa. */}
+      {enforcement === "disabled" && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          <b>Enforcement disattivato</b> (NEXUS_LICENSE_MODE={mode}). Qualunque
+          chiave viene accettata dall'EA: questa pagina è amministrativa, non
+          sta proteggendo l'accesso al prodotto.
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-400 flex justify-between gap-3">
+          <span>{error}</span>
+          <button type="button" className="underline" onClick={()=>setError("")}>chiudi</button>
+        </div>
+      )}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Licenses</h1>
@@ -244,13 +298,13 @@ export default function LicensesPage() {
           <table className="w-full text-sm">
             <thead className="text-xs text-muted-foreground bg-secondary/20">
               <tr>
-                <th className="text-left py-2 px-3 font-medium">Key</th>
+                <th className="text-left py-2 px-3 font-medium">Impronta</th>
                 <th className="text-left py-2 px-3 font-medium">Client</th>
                 <th className="text-left py-2 px-3 font-medium">Plan</th>
                 <th className="text-left py-2 px-3 font-medium">Account</th>
                 <th className="text-left py-2 px-3 font-medium">Status</th>
                 <th className="text-left py-2 px-3 font-medium">Expires</th>
-                <th className="text-left py-2 px-3 font-medium">Last seen</th>
+                <th className="text-left py-2 px-3 font-medium">Ultima verifica</th>
                 <th className="text-right py-2 px-3 font-medium">Actions</th>
               </tr>
             </thead>
@@ -262,7 +316,7 @@ export default function LicensesPage() {
                   </td>
                 </tr>
               ) : licenses.map((lic) => (
-                <LicenseRow key={lic.id} lic={lic} onChanged={fetchAll}/>
+                <LicenseRow key={lic.id} lic={lic} onChanged={fetchAll} onError={setError}/>
               ))}
             </tbody>
           </table>

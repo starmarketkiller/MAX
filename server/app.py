@@ -26,6 +26,7 @@ import hashlib
 import secrets
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Optional
@@ -40,6 +41,7 @@ import command_contract
 import ledger_analytics
 import nexus_policy
 import nexus_security
+import nexus_validation
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -353,6 +355,10 @@ def init_db() -> None:
         _record_migration(c, "002_bridge_command_contract")
         _migrate_ea_command_status(c)
         _record_migration(c, "003_ea_command_lifecycle")
+        _migrate_journal_identity(c)
+        _record_migration(c, "004_journal_trade_identity")
+        _migrate_license_security(c)
+        _record_migration(c, "005_license_security")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
@@ -453,9 +459,101 @@ def _migrate_ea_command_status(c: sqlite3.Connection) -> None:
               "ON ea_commands(status, account_id, symbol, created_at)")
 
 
+def _migrate_journal_identity(c: sqlite3.Connection) -> None:
+    """Lega i metadati del journal all'identità canonica del trade.
+
+    AUD0-DATA-001 / NXS-DB-020: `journal_meta` era indicizzata sul solo
+    `ticket`, che il backend stesso documenta come collidibile tra account
+    diversi sullo stesso database. Note e valutazioni potevano quindi
+    attaccarsi al trade sbagliato.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(journal_meta)")}
+    if "trade_uid" not in cols:
+        c.execute("ALTER TABLE journal_meta ADD COLUMN trade_uid TEXT")
+    # Backfill dalle righe di trades che hanno già un uid.
+    c.execute("UPDATE journal_meta SET trade_uid = ("
+              "SELECT t.trade_uid FROM trades t WHERE t.ticket = journal_meta.ticket) "
+              "WHERE trade_uid IS NULL")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_journal_meta_uid "
+              "ON journal_meta(trade_uid) WHERE trade_uid IS NOT NULL")
+
+
+def _migrate_license_security(c: sqlite3.Connection) -> None:
+    """Porta le licenze a verificatore hashato + ciclo di vita esplicito.
+
+    * AUD0-BE-LIC-001 / AUD0-DB-018: la chiave riutilizzabile era la PRIMARY
+      KEY in chiaro e `SELECT *` la restituiva intera alla dashboard.
+    * AUD0-BE-LIC-004: la UI esponeva attivo/disattivo ma la tabella non
+      aveva alcuna colonna corrispondente: un controllo amministrativo
+      inesistente.
+    * AUD0-DB-018: mancavano issued_at, issued_by, revoked_at e motivazione.
+
+    La colonna `key` resta per compatibilità durante la transizione, ma la
+    verifica passa dall'hash e le rotte di lettura non la espongono più.
+    """
+    cols = {row[1] for row in c.execute("PRAGMA table_info(licenses)")}
+    additions = {
+        "key_hash": "TEXT",
+        "key_prefix": "TEXT",
+        "active": "INTEGER DEFAULT 1",
+        "issued_at": "REAL",
+        "issued_by": "TEXT",
+        "revoked_at": "REAL",
+        "revoked_reason": "TEXT",
+        "last_verified_at": "REAL",
+        "plan": "TEXT",
+        "client": "TEXT",
+    }
+    for name, ddl in additions.items():
+        if name not in cols:
+            c.execute(f"ALTER TABLE licenses ADD COLUMN {name} {ddl}")
+
+    # Backfill: calcola hash e prefisso per le chiavi storiche in chiaro.
+    for row in c.execute("SELECT key FROM licenses WHERE key_hash IS NULL").fetchall():
+        raw = row[0] or ""
+        if not raw:
+            continue
+        c.execute("UPDATE licenses SET key_hash=?, key_prefix=?, issued_at=COALESCE(issued_at,?) "
+                  "WHERE key=?",
+                  (_license_hash(raw), raw[:8], now(), raw))
+    c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_license_hash "
+              "ON licenses(key_hash) WHERE key_hash IS NOT NULL")
+    c.execute("CREATE TABLE IF NOT EXISTS license_events ("
+              "id INTEGER PRIMARY KEY AUTOINCREMENT, license_id TEXT, event TEXT, "
+              "actor TEXT, reason TEXT, detail TEXT, created_at REAL)")
+
+
 def _record_migration(c: sqlite3.Connection, migration_id: str) -> None:
     c.execute("INSERT OR IGNORE INTO schema_migrations(migration_id,applied_at,app_version) "
               "VALUES(?,?,?)", (migration_id, now(), APP_VERSION))
+
+
+def _license_hash(raw_key: str) -> str:
+    """Verificatore hashato della chiave di licenza (AUD0-BE-LIC-001).
+
+    La chiave in chiaro non deve essere conservata: si memorizza solo un
+    digest confrontabile a tempo costante. Il segreto di firma fa da pepe,
+    così un dump del solo database non permette il confronto offline.
+    """
+    return hashlib.sha256((JWT_SECRET + "|license|" + raw_key).encode()).hexdigest()
+
+
+def _license_mask(prefix: str) -> str:
+    """Impronta non riutilizzabile mostrata nella UI (AUD0-LIC-004)."""
+    return f"{(prefix or '????')[:8]}…"
+
+
+def license_event(license_id: str, event: str, *, actor: str, reason: str = "",
+                  detail=None) -> None:
+    """Registro immutabile del ciclo di vita della licenza (AUD0-DB-018)."""
+    try:
+        with _conn() as c:
+            c.execute("INSERT INTO license_events(license_id,event,actor,reason,detail,created_at) "
+                      "VALUES(?,?,?,?,?,?)",
+                      (license_id, event, actor, reason,
+                       json.dumps(detail or {}, default=str), now()))
+    except Exception as exc:  # pragma: no cover
+        print(f"[NEXUS] license event write failed: {exc}")
 
 
 def audit_log(action: str, *, actor: str, decision: str, target=None,
@@ -478,6 +576,41 @@ def audit_log(action: str, *, actor: str, decision: str, target=None,
             )
     except Exception as exc:  # pragma: no cover - difensivo
         print(f"[NEXUS] audit write failed for {action}: {exc}")
+
+
+#: AUD0-PERF-001: diverse rotte analitiche chiedevano 100.000 righe di ledger
+#: e aggregavano in Python. Un solo client autenticato poteva monopolizzare
+#: l'unico worker applicativo. Tetto unico e dichiarato.
+ANALYTICS_MAX_ROWS = int(os.environ.get("NEXUS_ANALYTICS_MAX_ROWS", "5000"))
+
+#: AUD0-BE-AN-002: versione della policy che definisce le soglie di "salute".
+#: Va incrementata a ogni cambio di soglia, così i consumatori sanno che la
+#: definizione di sano è cambiata.
+HEALTH_POLICY_VERSION = "health-policy-1"
+
+
+def clamp_limit(value, default: int, maximum: int) -> int:
+    """Limite richiesto dal client, sempre entro un massimo (AUD0-PERF-002).
+
+    Prima i `limit` arrivavano direttamente a SQL senza alcun tetto.
+    """
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(1, min(maximum, n))
+
+
+def public_error(code: str, message: str, status: int = 502, *,
+                 internal: str = "", context: str = ""):
+    """Errore pubblico stabile + dettaglio interno solo nei log.
+
+    AUD0-API-004 / AUD0-BE-AI-011 / AUD0-BE-BT-010: testo di eccezioni e
+    risposte del provider esterno finivano nel corpo restituito al client.
+    """
+    if internal:
+        print(f"[NEXUS][ERR] {context or code}: {internal[:1000]}")
+    return HTTPException(status_code=status, detail={"code": code, "message": message})
 
 
 async def read_json_body(request: Request) -> dict:
@@ -680,6 +813,21 @@ def require_mutation(request: Request,
 # App
 # --------------------------------------------------------------------------- #
 app = FastAPI(title="NEXUS self-hosted backend", version=APP_VERSION)
+
+# AUD0-CORS-001: nessun middleware CORS era presente. Con frontend e backend
+# sulla stessa origine non serve, ma se si separano le origini le richieste
+# falliscono in modo opaco. Si registra una allow-list ESPLICITA — mai il
+# wildcard, che con `allow_credentials` è vietato e insicuro.
+if ALLOWED_ORIGINS:
+    from fastapi.middleware.cors import CORSMiddleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization", nexus_security.CSRF_HEADER],
+        max_age=600,
+    )
 
 
 def _seed_strategy_results() -> None:
@@ -1398,28 +1546,91 @@ def ea_visual_objects_get(symbol: str = "", x_nexus_token: Optional[str] = Heade
 # ======================= LICENSE ========================================= #
 @app.post("/api/license/verify")
 async def license_verify(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """Verifica una chiave di licenza.
+
+    AUD0-LIC-001: in modalità `open` ogni chiave è valida. Resta possibile per
+    il self-hosting, ma la risposta lo DICHIARA (`enforcement: "disabled"`),
+    così l'EA e la UI non possono scambiarla per una verifica reale. Il
+    preflight vieta comunque `open` negli ambienti hardened.
+    """
     check_token(x_nexus_token)
-    data = await request.json()
-    key = data.get("key", "")
+    data = await read_json_body(request)
+    key = str(data.get("key", ""))
     account = data.get("account", 0)
+
     if LICENSE_MODE == "open":
-        return {"valid": True, "trial": False, "expires_at": 0, "reason": "open-mode"}
+        return {"valid": True, "trial": False, "expires_at": 0,
+                "reason": "open-mode", "enforcement": "disabled",
+                "warning": "NEXUS_LICENSE_MODE=open: nessuna chiave viene realmente verificata"}
+
     with _conn() as c:
-        row = c.execute("SELECT * FROM licenses WHERE key=?", (key,)).fetchone()
+        # AUD0-BE-LIC-001: confronto sull'hash, non sulla chiave in chiaro.
+        row = c.execute("SELECT * FROM licenses WHERE key_hash=?",
+                        (_license_hash(key),)).fetchone()
+        if row:
+            c.execute("UPDATE licenses SET last_verified_at=? WHERE key_hash=?",
+                      (now(), row["key_hash"]))
+
+    base = {"trial": False, "expires_at": 0, "enforcement": "strict"}
     if not row:
-        return {"valid": False, "trial": False, "expires_at": 0, "reason": "unknown-key"}
+        return {**base, "valid": False, "reason": "unknown-key"}
+    # AUD0-BE-LIC-004: la disattivazione ora ha effetto reale sull'EA.
+    if not int(row["active"] if row["active"] is not None else 1):
+        return {**base, "valid": False, "reason": "revoked"}
     if row["account"] and account and int(row["account"]) != int(account):
-        return {"valid": False, "trial": False, "expires_at": 0, "reason": "account-mismatch"}
+        return {**base, "valid": False, "reason": "account-mismatch"}
     exp = int(row["expires_at"] or 0)
     if exp and now() > exp:
-        return {"valid": False, "trial": False, "expires_at": exp, "reason": "expired"}
-    return {"valid": True, "trial": bool(row["trial"]), "expires_at": exp, "reason": "ok"}
+        return {**base, "valid": False, "expires_at": exp, "reason": "expired"}
+    return {**base, "valid": True, "trial": bool(row["trial"]),
+            "expires_at": exp, "reason": "ok"}
 
 
 # ======================= NOTIFY (Telegram) =============================== #
-def _send_telegram(text: str) -> bool:
-    if not TG_BOT_TOKEN or not TG_CHAT_ID:
+#: AUD0-SEC-011 / AUD0-BE-ROUTE-010: chiunque possieda il token del bridge
+#: poteva inviare messaggi arbitrari attraverso il bot configurato e riempire
+#: la tabella notifiche. Limiti di dimensione e di frequenza.
+TELEGRAM_MAX_TEXT = 1000
+TELEGRAM_LIMITER = nexus_security.RateLimiter(max_attempts=30, window_seconds=60,
+                                              lockout_seconds=60)
+
+#: AUD0-API-003: le chiamate uscenti erano sincrone dentro il processo FastAPI
+#: (Telegram 10s, Anthropic 60s): un upstream lento occupava il worker.
+#: Vengono spostate su un pool limitato, con circuit breaker.
+_OUTBOUND_POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix="nexus-outbound")
+
+
+class _CircuitBreaker:
+    """Interrompe le chiamate verso un upstream che sta fallendo."""
+
+    def __init__(self, threshold: int = 5, cooldown: int = 60):
+        self.threshold = threshold
+        self.cooldown = cooldown
+        self._failures = 0
+        self._open_until = 0.0
+
+    def is_open(self) -> bool:
+        if self._open_until and time.time() < self._open_until:
+            return True
+        if self._open_until:
+            self._open_until = 0.0
+            self._failures = 0
         return False
+
+    def record(self, ok: bool) -> None:
+        if ok:
+            self._failures = 0
+            return
+        self._failures += 1
+        if self._failures >= self.threshold:
+            self._open_until = time.time() + self.cooldown
+
+
+TELEGRAM_BREAKER = _CircuitBreaker()
+ANTHROPIC_BREAKER = _CircuitBreaker(threshold=3, cooldown=120)
+
+
+def _send_telegram_blocking(text: str) -> bool:
     try:
         url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
         body = urllib.parse.urlencode({"chat_id": TG_CHAT_ID, "text": text}).encode()
@@ -1431,11 +1642,36 @@ def _send_telegram(text: str) -> bool:
         return False
 
 
+def _send_telegram(text: str) -> bool:
+    if not TG_BOT_TOKEN or not TG_CHAT_ID:
+        return False
+    if TELEGRAM_BREAKER.is_open():
+        print("[NEXUS] telegram circuit breaker aperto: invio saltato")
+        return False
+    try:
+        ok = _OUTBOUND_POOL.submit(_send_telegram_blocking, text).result(timeout=12)
+    except FuturesTimeout:
+        print("[NEXUS] telegram: timeout del pool uscente")
+        ok = False
+    TELEGRAM_BREAKER.record(ok)
+    return ok
+
+
 @app.post("/api/notify/telegram")
 async def notify_telegram(request: Request, x_nexus_token: Optional[str] = Header(None)):
     check_token(x_nexus_token)
-    data = await request.json()
-    text = data.get("text") or data.get("message") or json.dumps(data)
+    data = await read_json_body(request)
+    text = str(data.get("text") or data.get("message") or json.dumps(data))
+    if len(text) > TELEGRAM_MAX_TEXT:
+        text = text[:TELEGRAM_MAX_TEXT] + "…[troncato]"
+
+    client_ip = (request.client.host if request.client else "bridge")
+    if TELEGRAM_LIMITER.retry_after(client_ip):
+        raise HTTPException(status_code=429, detail={
+            "code": "RATE_LIMITED",
+            "message": "troppe notifiche: limite di frequenza superato"})
+    TELEGRAM_LIMITER.register_failure(client_ip)   # conta ogni invio
+
     delivered = _send_telegram(text)
     with _conn() as c:
         c.execute(
@@ -1458,10 +1694,27 @@ def chain_config_get(user: str = Depends(require_user)):
 
 
 @app.put("/api/strategy_chain/config")
-async def chain_config_put(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
-    kv_set("chain_config", data)
-    return {"ok": True, "config": data}
+async def chain_config_put(request: Request, user: str = Depends(require_mutation)):
+    """Aggiorna la configurazione della strategy chain, VALIDATA.
+
+    AUD0-VAL-001 / AUD0-BE-ROUTE-008: il body veniva scritto integralmente nel
+    KV senza schema, senza limiti numerici e senza verificare gli
+    identificativi di strategia. Quella configurazione viene poi letta dall'EA.
+    """
+    data = await read_json_body(request)
+    try:
+        clean = nexus_validation.validate_chain_config(
+            data, strategy_registry.LIVE_STRATEGY_IDS)
+    except nexus_validation.ValidationError as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": exc.field,
+            "message": exc.message}) from exc
+    previous = kv_get("chain_config", DEFAULT_CHAIN_CONFIG)
+    kv_set("chain_config", clean)
+    audit_log("strategy_chain.config", actor=user, decision="APPLIED",
+              detail={"previous": previous, "new": clean})
+    return {"ok": True, "config": clean,
+            "schema_version": nexus_validation.SCHEMA_VERSION}
 
 
 # ======================= LOCAL BRIDGE (worker) =========================== #
@@ -1490,6 +1743,9 @@ def lb_poll(host_id: str, x_nexus_token: Optional[str] = Header(None)):
         if not c.execute("SELECT 1 FROM bridge_hosts WHERE host_id=?", (host_id,)).fetchone():
             raise HTTPException(status_code=403, detail="host not registered")
         c.execute("BEGIN IMMEDIATE")
+        # La scadenza dei comandi è ora manutenuta qui, dove una scrittura è
+        # già attesa, invece che dentro il GET /status (AUD0-API-001).
+        _expire_bridge_commands(c)
         c.execute("UPDATE bridge_commands SET status='FAILED_FINAL', updated_at=? "
                   "WHERE host_id=? AND status IN ('LEASED','FAILED_RETRYABLE') "
                   "AND attempt_count>=max_attempts", (current, host_id))
@@ -1547,18 +1803,22 @@ async def lb_ack(request: Request, x_nexus_token: Optional[str] = Header(None)):
 
 
 @app.post("/api/local_bridge/enqueue")
-async def lb_enqueue(request: Request, user: str = Depends(require_user)):
-    data = await request.json()
+async def lb_enqueue(request: Request, user: str = Depends(require_mutation)):
+    data = await read_json_body(request)
     try:
         ctype = command_contract.command_type(data.get("command_type") or data.get("action"))
         target = command_contract.validate_target(data.get("target") or {"host_id": data.get("host_id")}, require_host=True)
     except command_contract.CommandValidationError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "message": str(exc)}) from exc
     cmd_id = secrets.token_hex(16)
     idem = data.get("idempotency_key") or cmd_id
     created = now()
-    expires = created + max(60, int(data.get("ttl_seconds", 3600)))
+    # AUD0-VAL-002: il TTL aveva un minimo ma nessun massimo, quindi un comando
+    # operativo poteva restare eseguibile per un tempo arbitrariamente lungo.
+    expires = created + nexus_policy.validate_ttl_bridge(data.get("ttl_seconds"))
     with _conn() as c:
+        _expire_bridge_commands(c)
         existing = c.execute("SELECT id,status FROM bridge_commands WHERE idempotency_key=?", (idem,)).fetchone()
         if existing:
             return {"ok": True, "command_id": existing["id"], "id": existing["id"],
@@ -1569,7 +1829,10 @@ async def lb_enqueue(request: Request, user: str = Depends(require_user)):
             "VALUES(?,?,?,?,?,?,?,?, 'PENDING', ?,?,0,?,?,?)",
             (cmd_id, target["host_id"], command_contract.TYPE_TO_ACTION[ctype], ctype,
              command_contract.SCHEMA_VERSION, user, json.dumps(target), json.dumps(data.get("payload", {})),
-             idem, expires, int(data.get("max_attempts", command_contract.MAX_ATTEMPTS)), created, created),
+             idem, expires,
+             # AUD0-VAL-003: max_attempts arrivava dal client senza alcun tetto,
+             # quindi un'operazione distruttiva poteva essere ritentata all'infinito.
+             nexus_policy.validate_max_attempts(data.get("max_attempts")), created, created),
         )
         c.execute("INSERT INTO command_events(command_id,status,host_id,created_at) VALUES(?,?,?,?)",
                   (cmd_id, "PENDING", target["host_id"], created))
@@ -1578,13 +1841,38 @@ async def lb_enqueue(request: Request, user: str = Depends(require_user)):
             "expires_at": command_contract.iso_timestamp(expires)}
 
 
+def _expire_bridge_commands(c: sqlite3.Connection) -> int:
+    """Porta a EXPIRED i comandi bridge scaduti.
+
+    AUD0-API-001 / AUD0-BE-ROUTE-007: questa scrittura viveva dentro
+    `GET /api/local_bridge/status`, cioè un semplice caricamento pagina (o un
+    prefetch del browser, o una sonda di monitoraggio) poteva cambiare lo
+    stato dei comandi. Ora la manutenzione è una funzione esplicita, invocata
+    dai percorsi che già mutano stato (poll ed enqueue).
+    """
+    cur = c.execute("UPDATE bridge_commands SET status='EXPIRED', updated_at=? "
+                    "WHERE expires_at IS NOT NULL AND expires_at<=? "
+                    "AND status NOT IN ('SUCCEEDED','FAILED_FINAL','CANCELLED')",
+                    (now(), now()))
+    return cur.rowcount or 0
+
+
+@app.post("/api/local_bridge/maintenance")
+def lb_maintenance(user: str = Depends(require_mutation)):
+    """Manutenzione esplicita della coda comandi (sostituisce l'effetto del GET)."""
+    with _conn() as c:
+        expired = _expire_bridge_commands(c)
+    audit_log("local_bridge.maintenance", actor=user, decision="APPLIED",
+              detail={"expired": expired})
+    return {"ok": True, "expired": expired}
+
+
 @app.get("/api/local_bridge/status")
 def lb_status(user: str = Depends(require_user)):
+    # GET puro: nessuna mutazione. I comandi scaduti sono comunque mostrati
+    # come tali grazie al confronto su expires_at.
     with _conn() as c:
         hosts = [dict(r) for r in c.execute("SELECT * FROM bridge_hosts ORDER BY last_seen DESC")]
-        c.execute("UPDATE bridge_commands SET status='EXPIRED', updated_at=? "
-                  "WHERE expires_at IS NOT NULL AND expires_at<=? "
-                  "AND status NOT IN ('SUCCEEDED','FAILED_FINAL','CANCELLED')", (now(), now()))
         cmds = [dict(r) for r in c.execute(
             "SELECT id,host_id,action,command_type,status,result,error,attempt_count,max_attempts,"
             "created_at,started_at,done_at,lease_expires_at "
@@ -1597,12 +1885,20 @@ def lb_status(user: str = Depends(require_user)):
     for cmd in cmds:
         cmd["command_id"] = cmd["id"]
         cmd["_id"] = cmd["id"]
+        # Il GET non scrive: la scadenza viene DERIVATA per la sola
+        # presentazione, così l'operatore la vede senza che la lettura muti
+        # lo stato persistito (AUD0-API-001).
+        expires = cmd.get("expires_at")
+        if (expires is not None and expires <= t
+                and cmd.get("status") not in ("SUCCEEDED", "FAILED_FINAL", "CANCELLED")):
+            cmd["status"] = "EXPIRED"
+            cmd["status_derived"] = True
         if cmd.get("result"):
             try:
                 cmd["result"] = json.loads(cmd["result"])
             except Exception:
                 pass
-        for field in ("created_at", "started_at", "done_at", "lease_expires_at"):
+        for field in ("created_at", "started_at", "done_at", "lease_expires_at", "expires_at"):
             if cmd.get(field) is not None:
                 cmd[field] = command_contract.iso_timestamp(cmd[field])
     return {"hosts": hosts, "worker": hosts[0] if hosts else None,
@@ -1895,10 +2191,7 @@ def ea_command_contract(user: str = Depends(require_user)):
     }
 
 
-def _anthropic_chat(system: str, messages: list, max_tokens: int = 1024):
-    """Chiama la Messages API di Anthropic via stdlib. Ritorna (testo, errore)."""
-    if not ANTHROPIC_API_KEY:
-        return None, "ANTHROPIC_API_KEY non configurata sul backend (impostala su Render)."
+def _anthropic_chat_blocking(system: str, messages: list, max_tokens: int):
     body = json.dumps({
         "model": COACH_MODEL, "max_tokens": max_tokens,
         "system": system, "messages": messages,
@@ -1908,14 +2201,42 @@ def _anthropic_chat(system: str, messages: list, max_tokens: int = 1024):
         headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
                  "content-type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with urllib.request.urlopen(req, timeout=45) as r:
             data = json.loads(r.read())
         text = "".join(p.get("text", "") for p in data.get("content", []) if p.get("type") == "text")
         return text, None
     except urllib.error.HTTPError as e:
-        return None, f"Anthropic HTTP {e.code}: {e.read().decode(errors='replace')[:300]}"
+        # AUD0-API-004 / AUD0-BE-AI-011: prima si restituivano al client fino a
+        # 300 caratteri della risposta del provider. Ora resta solo nei log.
+        detail = e.read().decode(errors="replace")[:500]
+        print(f"[NEXUS][ERR] anthropic HTTP {e.code}: {detail}")
+        return None, f"provider_http_{e.code}"
     except Exception as e:
-        return None, str(e)
+        print(f"[NEXUS][ERR] anthropic call failed: {e}")
+        return None, "provider_unavailable"
+
+
+def _anthropic_chat(system: str, messages: list, max_tokens: int = 1024):
+    """Chiama la Messages API di Anthropic. Ritorna (testo, codice_errore).
+
+    AUD0-API-003 / AUD0-BE-AI-006: la chiamata era sincrona con timeout fino a
+    60s dentro il processo API, quindi un provider lento consumava i worker
+    che servono anche le rotte di controllo del trading. Ora gira sul pool
+    uscente, con circuit breaker.
+    """
+    if not ANTHROPIC_API_KEY:
+        return None, "provider_not_configured"
+    if ANTHROPIC_BREAKER.is_open():
+        return None, "provider_circuit_open"
+    try:
+        text, err = _OUTBOUND_POOL.submit(
+            _anthropic_chat_blocking, system, messages, max_tokens).result(timeout=50)
+    except FuturesTimeout:
+        ANTHROPIC_BREAKER.record(False)
+        print("[NEXUS][ERR] anthropic: timeout del pool uscente")
+        return None, "provider_timeout"
+    ANTHROPIC_BREAKER.record(err is None)
+    return text, err
 
 
 # ======================= EA STATUS / HEALTH (JWT) ======================= #
@@ -2041,6 +2362,29 @@ def ea_health_dash(user: str = Depends(require_user)):
         "level": level,
         "checks": checks,
         "anomaly": anomaly,
+        # AUD0-RISK-004 / NXS-OWNERSHIP-003: un punteggio alto veniva letto
+        # come "il trading è sicuro". Non lo è: è telemetria auto-dichiarata
+        # dall'EA, valutata contro soglie codificate nell'applicazione.
+        # I metadati qui sotto rendono esplicito da dove arriva la conclusione.
+        "score_kind": "TELEMETRY_HEALTH",
+        "score_disclaimer": (
+            "Salute della telemetria auto-riportata dall'EA. NON è una verifica "
+            "indipendente dei controlli di rischio né una garanzia di sicurezza "
+            "operativa."
+        ),
+        "provenance": {
+            "source_type": "OBSERVED_EA_TELEMETRY",
+            "instance": f"{primary.get('magic')}:{primary.get('symbol')}",
+            "observed_age_sec": primary.get("_updated_ago"),
+            "stale": (primary.get("_updated_ago") or 0) > 30,
+            # AUD0-BE-AN-002: le soglie erano costanti sparse nel codice, quindi
+            # una release della dashboard poteva ridefinire in silenzio cosa
+            # significa "sano". Ora la versione della policy è dichiarata.
+            "health_policy_version": HEALTH_POLICY_VERSION,
+            # AUD0-BE-DATA-008: l'istanza "primaria" è scelta euristicamente.
+            "primary_selection": "first_online_else_most_recent",
+            "primary_is_implicit": len(rows) > 1,
+        },
     }
 
 
@@ -2070,13 +2414,24 @@ def settings_schema_get(user: str = Depends(require_user)):
 
 
 @app.post("/api/settings/validate")
-async def settings_validate(request: Request, user: str = Depends(require_user)):
+async def settings_validate(request: Request, response: Response,
+                            user: str = Depends(require_user)):
+    """Valida un patch di settings SENZA applicarlo.
+
+    AUD0-API-005: la rotta catturava l'eccezione e restituiva 200 con
+    `{valid: false}`. Client, monitoraggio e automazioni che guardano solo lo
+    status code interpretavano una configurazione invalida come richiesta
+    riuscita. Lo status ora riflette l'esito.
+    """
     try:
-        normalized = _validated_settings_patch(await request.json())
+        normalized = _validated_settings_patch(await read_json_body(request))
         return {"valid": True, "normalized": normalized,
                 "schema_version": settings_contract.SCHEMA_VERSION}
     except HTTPException as exc:
-        return {"valid": False, "errors": exc.detail.get("errors", []),
+        response.status_code = exc.status_code
+        detail = exc.detail if isinstance(exc.detail, dict) else {}
+        return {"valid": False, "code": detail.get("code", "SETTINGS_VALIDATION_FAILED"),
+                "errors": detail.get("errors", []),
                 "schema_version": settings_contract.SCHEMA_VERSION}
 
 
@@ -2180,7 +2535,7 @@ def _strategy_leaderboard():
     cfg = _strat_risk_cfg()
     manual = kv_get("strategy_risk_manual", {}) or {}
     balance = _account_balance()
-    rows = [r for r in reversed(_ledger_trades_with_meta(100000))
+    rows = [r for r in reversed(_ledger_trades_with_meta(ANALYTICS_MAX_ROWS))
             if r.get("strategy") is not None and r.get("pnl") is not None]
     by = {}
     for r in rows:
@@ -2264,7 +2619,7 @@ def analytics_strategy_performance(user: str = Depends(require_user)):
     """Diagnostica per-strategia dagli eventi terminali del ledger.
     Non usa CSV di backtest. Include split BUY/SELL,
     miglior/peggior trade, expectancy e verdetto."""
-    rows = [r for r in _ledger_trades_with_meta(100000)
+    rows = [r for r in _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
             if r.get("strategy") is not None and r.get("pnl") is not None]
     by = {}
     for r in rows:
@@ -2405,6 +2760,18 @@ def strategy_overview(name: str, user: str = Depends(require_user)):
     """Vista unica per strategia: stato live, metriche reali + rischio,
     miglior config da backtest, diagnostica e ultimi trade. Unisce in un
     solo endpoint i dati di Strategies, Optimizer, Backtest e Strat Diag."""
+    # AUD0-VAL-005: il path parameter finiva in query su settings, backtest,
+    # diagnostica e scansioni di ledger senza mai essere validato. Un nome
+    # inesistente produceva una risposta vuota ma "riuscita", più una
+    # scansione completa dello storico per nulla.
+    try:
+        strategy_registry.require_strategy(name)
+    except (ValueError, strategy_registry.UnknownStrategyError) as exc:
+        raise HTTPException(status_code=404, detail={
+            "code": "TARGET_NOT_FOUND",
+            "message": f"strategia sconosciuta: {name}",
+            "detail": str(exc)}) from exc
+
     # 1. stato abilitazione
     settings = kv_get("settings", DEFAULT_SETTINGS) or {}
     primary, _ = _primary_ea()
@@ -2433,7 +2800,7 @@ def strategy_overview(name: str, user: str = Depends(require_user)):
             for s in (json.loads(r["payload"]).get("strategies") or []):
                 if s.get("name") == name:
                     diag = s
-    trades = [t for t in _ledger_trades_with_meta(100000)
+    trades = [t for t in _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
               if t.get("strategy") == name][:20]
 
     return {
@@ -2457,7 +2824,7 @@ def analytics_trades(limit: int = 500, user: str = Depends(require_user)):
 
 @app.get("/api/analytics/summary")
 def analytics_summary(user: str = Depends(require_user)):
-    trades = _ledger_trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
     if not trades:
         return {"demo": True, "trades": 0, "total_trades": 0,
                 "net_pnl": 0, "total_pnl": 0, "win_rate": 0,
@@ -2482,7 +2849,7 @@ def analytics_summary(user: str = Depends(require_user)):
 
 @app.get("/api/analytics/by_reason")
 def analytics_by_reason(user: str = Depends(require_user)):
-    trades = _ledger_trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
     groups = {}
     for t in trades:
         k = t.get("reason") or "—"
@@ -2504,7 +2871,7 @@ async def analytics_whatif(request: Request, user: str = Depends(require_user)):
     body = await request.json()
     excl_strat = set(body.get("exclude_strategies") or [])
     excl_reason = set(body.get("exclude_reasons") or [])
-    trades = _ledger_trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
     kept = [t for t in trades
             if t.get("strategy") not in excl_strat and t.get("reason") not in excl_reason]
     base = round(sum(t["pnl"] or 0 for t in trades), 2)
@@ -2534,70 +2901,299 @@ def journal_tags(user: str = Depends(require_user)):
 
 
 @app.post("/api/trades/{ticket}/tag")
-async def trade_tag(ticket: int, request: Request, user: str = Depends(require_user)):
-    body = await request.json()
-    tags = body.get("tags")
-    if isinstance(tags, str):
-        tags = [tags]
+async def trade_tag(ticket: int, request: Request, user: str = Depends(require_mutation)):
+    """Annota un trade. AUD0-VAL-004: tag, rating e note erano illimitati."""
+    body = await read_json_body(request)
+    try:
+        clean = nexus_validation.validate_journal_meta(body)
+    except nexus_validation.ValidationError as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": exc.field,
+            "message": exc.message}) from exc
+
     with _conn() as c:
+        # AUD0-VAL-004: nessuna verifica che il trade esistesse davvero.
+        exists = c.execute("SELECT 1 FROM trades WHERE ticket=?", (ticket,)).fetchone()
+        if not exists:
+            raise HTTPException(status_code=404, detail={
+                "code": "TARGET_NOT_FOUND",
+                "message": f"nessun trade con ticket {ticket}"})
+        # AUD0-DATA-001 / NXS-DB-020: i metadati si legavano al solo ticket,
+        # che il backend stesso documenta come collidibile tra account.
+        # Si registra anche il trade_uid, identità canonica del trade logico.
+        uid_row = c.execute("SELECT trade_uid FROM trades WHERE ticket=?",
+                            (ticket,)).fetchone()
+        trade_uid = uid_row["trade_uid"] if uid_row else None
         c.execute(
-            "INSERT INTO journal_meta(ticket,tags,rating,note,updated_at) VALUES(?,?,?,?,?) "
+            "INSERT INTO journal_meta(ticket,trade_uid,tags,rating,note,updated_at) "
+            "VALUES(?,?,?,?,?,?) "
             "ON CONFLICT(ticket) DO UPDATE SET "
+            "trade_uid=COALESCE(excluded.trade_uid,journal_meta.trade_uid), "
             "tags=COALESCE(excluded.tags,journal_meta.tags), "
             "rating=COALESCE(excluded.rating,journal_meta.rating), "
             "note=COALESCE(excluded.note,journal_meta.note), updated_at=excluded.updated_at",
-            (ticket, json.dumps(tags) if tags is not None else None,
-             body.get("rating"), body.get("note"), now()),
+            (ticket, trade_uid,
+             json.dumps(clean["tags"]) if "tags" in clean else None,
+             clean.get("rating"), clean.get("note"), now()),
         )
-    return {"ok": True, "ticket": ticket}
+    return {"ok": True, "ticket": ticket, "trade_uid": trade_uid, "applied": clean}
 
 
 # ======================= LICENSE CRUD (JWT) ============================ #
+#: Piani ammessi. AUD0-FE-LIC-005: erano hard-coded solo nella UI.
+LICENSE_PLANS = ("trial", "standard", "pro", "lifetime")
+LICENSE_MAX_DAYS = 3650
+
+
+def _license_public(row: dict) -> dict:
+    """Rappresentazione senza segreti di una licenza (AUD0-LIC-004).
+
+    La chiave riutilizzabile NON compare mai in una risposta di lettura:
+    viene mostrata una sola volta alla creazione e poi solo l'impronta.
+    """
+    exp = int(row.get("expires_at") or 0)
+    active = int(row.get("active") if row.get("active") is not None else 1)
+    if not active:
+        status = "REVOKED"
+    elif exp and now() > exp:
+        status = "EXPIRED"
+    else:
+        status = "ACTIVE"
+    return {
+        "id": row.get("key_hash"),
+        "fingerprint": _license_mask(row.get("key_prefix")),
+        "account": row.get("account"),
+        "client": row.get("client"),
+        "plan": row.get("plan"),
+        "trial": bool(row.get("trial")),
+        "active": bool(active),
+        "status": status,
+        "expires_at": exp,
+        "note": row.get("note"),
+        "issued_at": row.get("issued_at"),
+        "issued_by": row.get("issued_by"),
+        "revoked_at": row.get("revoked_at"),
+        "revoked_reason": row.get("revoked_reason"),
+        "last_verified_at": row.get("last_verified_at"),
+    }
+
+
+def _license_row(c, license_id: str):
+    return c.execute("SELECT * FROM licenses WHERE key_hash=?", (license_id,)).fetchone()
+
+
 @app.get("/api/license/list")
 def license_list(user: str = Depends(require_user)):
     with _conn() as c:
-        rows = [dict(r) for r in c.execute("SELECT * FROM licenses ORDER BY key")]
-    for r in rows:
-        r["id"] = r["key"]   # il frontend usa lic.id per PATCH/DELETE
-    return {"licenses": rows, "mode": LICENSE_MODE}
+        rows = [dict(r) for r in c.execute(
+            "SELECT * FROM licenses ORDER BY COALESCE(issued_at,0) DESC")]
+    return {
+        "licenses": [_license_public(r) for r in rows],
+        "mode": LICENSE_MODE,
+        # AUD0-LIC-001: la UI deve poter dire se l'enforcement è reale.
+        "enforcement": "strict" if LICENSE_MODE == "strict" else "disabled",
+        "plans": list(LICENSE_PLANS),
+    }
 
 
 @app.post("/api/license/create")
-async def license_create(request: Request, user: str = Depends(require_user)):
-    body = await request.json()
-    key = body.get("key") or ("NXS-" + secrets.token_hex(6).upper())
+async def license_create(request: Request, user: str = Depends(require_mutation)):
+    """Emette una nuova licenza. Insert-only.
+
+    AUD0-LIC-002 / AUD0-BE-LIC-002: era un upsert, quindi una "creazione" con
+    una chiave esistente ne sovrascriveva silenziosamente i dati.
+    """
+    body = await read_json_body(request)
+
+    # AUD0-LIC-003: nessuna validazione di formato, account, scadenza o nota.
+    plan = str(body.get("plan") or "standard").lower()
+    if plan not in LICENSE_PLANS:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": "plan",
+            "message": f"piano non valido (ammessi: {list(LICENSE_PLANS)})"})
+    try:
+        account = int(body.get("account", 0) or 0)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": "account",
+            "message": "account deve essere numerico"})
+    note = str(body.get("note") or "")[:500]
+    client = str(body.get("client") or "")[:120]
+
+    expires_at = body.get("expires_at")
+    if expires_at in (None, "", 0):
+        days = body.get("days")
+        try:
+            days = int(days) if days not in (None, "") else 365
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "days",
+                "message": "days deve essere numerico"})
+        if not (0 < days <= LICENSE_MAX_DAYS):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "days",
+                "message": f"days fuori range (1..{LICENSE_MAX_DAYS})"})
+        expires_at = int(now() + days * 86400)
+    else:
+        try:
+            expires_at = int(expires_at)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "expires_at",
+                "message": "expires_at deve essere un timestamp"})
+        if expires_at and expires_at <= now():
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "expires_at",
+                "message": "la scadenza deve essere futura"})
+
+    raw_key = str(body.get("key") or ("NXS-" + secrets.token_hex(10).upper()))
+    if len(raw_key) < 8 or len(raw_key) > 128:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": "key",
+            "message": "chiave di lunghezza non valida (8..128)"})
+    key_hash = _license_hash(raw_key)
+
     with _conn() as c:
+        if _license_row(c, key_hash):
+            raise HTTPException(status_code=409, detail={
+                "code": "CONFLICT", "message": "licenza già esistente"})
         c.execute(
-            "INSERT INTO licenses(key,account,trial,expires_at,note) VALUES(?,?,?,?,?) "
-            "ON CONFLICT(key) DO UPDATE SET account=excluded.account, trial=excluded.trial, "
-            "expires_at=excluded.expires_at, note=excluded.note",
-            (key, body.get("account", 0), 1 if body.get("trial") else 0,
-             int(body.get("expires_at", 0) or 0), body.get("note")),
+            "INSERT INTO licenses(key,key_hash,key_prefix,account,client,plan,trial,"
+            "expires_at,note,active,issued_at,issued_by) "
+            "VALUES(?,?,?,?,?,?,?,?,?,1,?,?)",
+            # La colonna legacy `key` resta ma NON conserva più il segreto.
+            (f"hashed:{key_hash[:16]}", key_hash, raw_key[:8], account, client, plan,
+             1 if body.get("trial") else 0, expires_at, note, now(), user),
         )
-    return {"ok": True, "key": key}
+    license_event(key_hash, "ISSUED", actor=user,
+                  detail={"plan": plan, "account": account, "expires_at": expires_at})
+    audit_log("license.create", actor=user, decision="ISSUED",
+              detail={"license_id": key_hash, "plan": plan, "account": account})
+    return {
+        "ok": True,
+        "id": key_hash,
+        "fingerprint": _license_mask(raw_key[:8]),
+        # Unica occasione in cui il segreto viene restituito.
+        "key": raw_key,
+        "key_shown_once": True,
+        "warning": "Conserva subito questa chiave: non sarà più recuperabile.",
+    }
 
 
-@app.patch("/api/license/{key}")
-async def license_update(key: str, request: Request, user: str = Depends(require_user)):
-    body = await request.json()
-    fields, vals = [], []
-    for col in ("account", "trial", "expires_at", "note"):
-        if col in body:
-            fields.append(f"{col}=?")
-            vals.append(body[col])
-    if not fields:
-        return {"ok": True, "unchanged": True}
-    vals.append(key)
+@app.patch("/api/license/{license_id}")
+async def license_update(license_id: str, request: Request,
+                         user: str = Depends(require_mutation)):
+    """Modifica una licenza esistente. Richiede motivazione."""
+    body = await read_json_body(request)
+    reason = str(body.get("reason") or "")[:500]
+
+    fields, vals, applied = [], [], {}
+    if "account" in body:
+        try:
+            applied["account"] = int(body["account"] or 0)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail={
+                "code": "VALIDATION_FAILED", "field": "account"})
+        fields.append("account=?"); vals.append(applied["account"])
+    if "note" in body:
+        applied["note"] = str(body["note"] or "")[:500]
+        fields.append("note=?"); vals.append(applied["note"])
+    if "trial" in body:
+        applied["trial"] = 1 if body["trial"] else 0
+        fields.append("trial=?"); vals.append(applied["trial"])
+    if "expires_at" in body or "extend_days" in body:
+        pass  # gestito sotto, serve la riga corrente
+    if "active" in body:
+        applied["active"] = 1 if body["active"] else 0
+        fields.append("active=?"); vals.append(applied["active"])
+        if not applied["active"]:
+            if not reason:
+                raise HTTPException(status_code=422, detail={
+                    "code": "VALIDATION_FAILED", "field": "reason",
+                    "message": "la revoca richiede una motivazione"})
+            fields += ["revoked_at=?", "revoked_reason=?"]
+            vals += [now(), reason]
+        else:
+            fields += ["revoked_at=?", "revoked_reason=?"]
+            vals += [None, None]
+
     with _conn() as c:
-        c.execute(f"UPDATE licenses SET {', '.join(fields)} WHERE key=?", vals)
-    return {"ok": True, "key": key}
+        row = _license_row(c, license_id)
+        # AUD0-LIC-003: l'update non verificava l'esistenza della licenza.
+        if not row:
+            raise HTTPException(status_code=404, detail={
+                "code": "TARGET_NOT_FOUND", "message": "licenza inesistente"})
+
+        if "extend_days" in body:
+            try:
+                days = int(body["extend_days"])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail={
+                    "code": "VALIDATION_FAILED", "field": "extend_days"})
+            if not (0 < days <= LICENSE_MAX_DAYS):
+                raise HTTPException(status_code=422, detail={
+                    "code": "VALIDATION_FAILED", "field": "extend_days",
+                    "message": f"fuori range (1..{LICENSE_MAX_DAYS})"})
+            base = max(int(row["expires_at"] or 0), int(now()))
+            applied["expires_at"] = base + days * 86400
+            fields.append("expires_at=?"); vals.append(applied["expires_at"])
+        elif "expires_at" in body:
+            try:
+                applied["expires_at"] = int(body["expires_at"])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail={
+                    "code": "VALIDATION_FAILED", "field": "expires_at"})
+            fields.append("expires_at=?"); vals.append(applied["expires_at"])
+
+        if not fields:
+            return {"ok": True, "unchanged": True}
+        vals.append(license_id)
+        c.execute(f"UPDATE licenses SET {', '.join(fields)} WHERE key_hash=?", vals)
+        updated = dict(_license_row(c, license_id))
+
+    license_event(license_id, "UPDATED", actor=user, reason=reason, detail=applied)
+    audit_log("license.update", actor=user, decision="APPLIED", reason=reason,
+              detail={"license_id": license_id, "changes": applied})
+    return {"ok": True, "license": _license_public(updated)}
 
 
-@app.delete("/api/license/{key}")
-def license_delete(key: str, user: str = Depends(require_user)):
+@app.delete("/api/license/{license_id}")
+def license_delete(license_id: str, reason: str = "",
+                   user: str = Depends(require_mutation)):
+    """Revoca una licenza. Non cancella: mantiene la traccia di audit."""
+    reason = str(reason or "")[:500]
+    if len(reason) < 3:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": "reason",
+            "message": "la revoca richiede una motivazione"})
     with _conn() as c:
-        c.execute("DELETE FROM licenses WHERE key=?", (key,))
-    return {"ok": True, "deleted": key}
+        if not _license_row(c, license_id):
+            raise HTTPException(status_code=404, detail={
+                "code": "TARGET_NOT_FOUND", "message": "licenza inesistente"})
+        # AUD0-DB-018: la cancellazione fisica distruggeva la storia della
+        # licenza. La revoca conserva l'evidenza.
+        c.execute("UPDATE licenses SET active=0, revoked_at=?, revoked_reason=? "
+                  "WHERE key_hash=?", (now(), reason, license_id))
+    license_event(license_id, "REVOKED", actor=user, reason=reason)
+    audit_log("license.revoke", actor=user, decision="REVOKED", reason=reason,
+              detail={"license_id": license_id})
+    return {"ok": True, "revoked": license_id, "reason": reason}
+
+
+@app.get("/api/license/{license_id}/events")
+def license_history(license_id: str, user: str = Depends(require_user)):
+    """Storia immutabile della licenza (AUD0-DB-018)."""
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(
+            "SELECT event,actor,reason,detail,created_at FROM license_events "
+            "WHERE license_id=? ORDER BY created_at DESC LIMIT 200", (license_id,))]
+    for r in rows:
+        r["created_at"] = command_contract.iso_timestamp(r["created_at"])
+        try:
+            r["detail"] = json.loads(r["detail"] or "{}")
+        except Exception:
+            r["detail"] = {}
+    return {"events": rows, "count": len(rows)}
 
 
 # ======================= BACKTEST (JWT, demo) ========================== #
@@ -2905,17 +3501,25 @@ async def backtest_optimize_multi_tf(request: Request, user: str = Depends(requi
 
 
 @app.post("/api/backtest/creator/save")
-async def backtest_creator_save(request: Request, user: str = Depends(require_user)):
+async def backtest_creator_save(request: Request, user: str = Depends(require_mutation)):
     """Salva un setup creato (combo+parametri) nella lista dei setup del Creator."""
-    body = await request.json()
-    setup = body.get("setup") or {}
-    if not setup.get("combo"):
-        raise HTTPException(status_code=400, detail="setup.combo mancante")
-    saved = kv_get("creator_setups", [])
+    body = await read_json_body(request)
+    try:
+        # AUD0-VAL-006 / AUD0-BE-BT-004: si verificava solo la presenza di
+        # `combo`, poi l'oggetto del chiamante veniva mutato in place e
+        # salvato così com'era.
+        setup = nexus_validation.validate_creator_setup(
+            body.get("setup") or {}, strategy_registry.LIVE_STRATEGY_IDS)
+    except nexus_validation.ValidationError as exc:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "field": exc.field,
+            "message": exc.message}) from exc
     setup["saved_at"] = iso()
+    setup["saved_by"] = user
+    saved = kv_get("creator_setups", [])
     saved.insert(0, setup)
     kv_set("creator_setups", saved[:50])
-    return {"ok": True, "count": len(saved[:50])}
+    return {"ok": True, "count": len(saved[:50]), "setup": setup}
 
 
 @app.get("/api/backtest/creator/saved")
@@ -3561,7 +4165,7 @@ def settings_history(limit: int = 50, user: str = Depends(require_user)):
 # ---- analytics extra ----
 @app.get("/api/analytics/calendar")
 def analytics_calendar(days: int = 365, user: str = Depends(require_user)):
-    trades = _ledger_trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
     by_day = {}
     for t in trades:
         d = (t.get("closeTime") or "")[:10]
@@ -3584,7 +4188,7 @@ def analytics_correlation(user: str = Depends(require_user)):
 
 @app.get("/api/analytics/heatmap")
 def analytics_heatmap(user: str = Depends(require_user)):
-    trades = _ledger_trades_with_meta(100000)
+    trades = _ledger_trades_with_meta(ANALYTICS_MAX_ROWS)
     cells = {}
     for t in trades:
         ct = t.get("closeTime") or ""
@@ -3663,8 +4267,11 @@ async def strat_stats_upload(request: Request, user: str = Depends(require_user)
 @app.get("/api/license/summary")
 def license_summary(user: str = Depends(require_user)):
     with _conn() as c:
-        rows = [dict(r) for r in c.execute("SELECT trial,expires_at FROM licenses")]
+        # Le licenze revocate non contano come attive (AUD0-BE-LIC-004).
+        rows = [dict(r) for r in c.execute(
+            "SELECT trial,expires_at,active FROM licenses")]
     current = now()
+    rows = [r for r in rows if int(r.get("active") if r.get("active") is not None else 1)]
     active = [r for r in rows if not r["expires_at"] or r["expires_at"] > current]
     expired = [r for r in rows if r["expires_at"] and r["expires_at"] <= current]
     expiries = [r["expires_at"] for r in active if r["expires_at"]]

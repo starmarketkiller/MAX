@@ -123,5 +123,16 @@ def test_settings_put_accepts_valid_and_ui_state(client):
 
 def test_settings_validate_dryrun(client):
     h = _auth(client)
-    r = client.post("/api/settings/validate", json={"MaxDailyDDPct": -5}, headers=h)
-    assert r.status_code == 200 and r.json()["valid"] is False
+
+    # Patch valido: 200 e nessun errore.
+    ok = client.post("/api/settings/validate", json={"MaxDailyDDPct": 5}, headers=h)
+    assert ok.status_code == 200 and ok.json()["valid"] is True
+
+    # Patch invalido: lo status DEVE riflettere l'esito.
+    # AUD0-API-005: prima la rotta restituiva 200 con {"valid": false}, quindi
+    # monitoraggio e automazioni che guardano solo lo status code leggevano una
+    # configurazione invalida come richiesta riuscita.
+    bad = client.post("/api/settings/validate", json={"MaxDailyDDPct": -5}, headers=h)
+    assert bad.status_code == 422
+    body = bad.json()
+    assert body["valid"] is False and body["errors"]
