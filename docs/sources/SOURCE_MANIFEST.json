@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "description": "Registro delle fonti documentali acquisite per l'audit NEXUS. Ogni record dichiara identita' crittografica e stato di lavorazione.",
+  "sources": [
+    {
+      "filename": "NEXUS_MASTER_PROJECT_v18.md",
+      "repository_path": "docs/sources/master/NEXUS_MASTER_PROJECT_v18.md",
+      "category": "MASTER_PROJECT_DOCUMENT",
+      "size_bytes": 460362,
+      "line_count": 15490,
+      "sha256": "72c51a725c152f8246ccce26d4b30578a25e80dfc817ecd13e935420bfbd16e2",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "analysis_artifacts": [
+        "docs/audits/master/NEXUS_MASTER_PROJECT_v18_ANALYSIS.md",
+        "docs/audits/master/NEXUS_MASTER_STRATEGY_INVENTORY.json",
+        "docs/audits/master/NEXUS_MASTER_REQUIREMENTS.json",
+        "docs/audits/master/NEXUS_MASTER_GAPS.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": null,
+      "notes": [
+        "Byte-identico al file gia' tracciato come docs/NEXUS_MASTER_PROJECT.md (stesso SHA-256): l'archiviazione non introduce contenuto nuovo, aggiunge identita' dichiarata.",
+        "La fonte NON contiene definizioni di strategie: e' un audit di repository, architettura e sicurezza piu' una specifica di governance.",
+        "Dichiara un corpus di 13 PDF (1092 pagine) che NON sono presenti nel repository: e' la dipendenza bloccante per l'audit di fedelta' delle strategie.",
+        "Data dichiarata nella fonte: Last consolidated 2026-07-23."
+      ]
+    }
+  ],
+  "counts": {
+    "total": 1,
+    "ingested": 1,
+    "analyzed": 1,
+    "pending_original_sources": 13
+  }
+}
