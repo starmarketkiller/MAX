@@ -51,13 +51,15 @@ def research_only_ids() -> list:
 
 
 def research_ids() -> list:
-    """Nomi accettati dal motore research, inclusi gli alias di implementazione."""
-    result = []
-    for record in _load()["strategies"]:
-        if not record.get("research_implementation"):
-            continue
-        result.append((record.get("aliases") or [record["strategy_id"]])[0])
-    return sorted(result)
+    """Id canonici accettati dal motore research.
+
+    Fase A / MM-08: prima questa funzione restituiva il PRIMO ALIAS quando
+    esisteva, perche' `server/backtest.py` indicizzava THREE_BAR_DELIVERY_BREAK
+    sotto "CISD". Ora il motore e' indicizzato per id canonico e gli alias sono
+    risolti da `backtest.resolve_research_key`, quindi qui torna l'id canonico.
+    """
+    return sorted(record["strategy_id"] for record in _load()["strategies"]
+                  if record.get("research_implementation"))
 
 
 def count_live() -> int:
@@ -94,8 +96,6 @@ def require_strategy(name: str, *, live: bool = False, research: bool = False) -
         raise ValueError(f"strategia non disponibile live: {name!r}")
     if research and not record.get("research_implementation"):
         raise ValueError(f"strategia non disponibile nel motore research: {name!r}")
-    if research:
-        return (record.get("aliases") or [record["strategy_id"]])[0]
     return record["strategy_id"]
 
 

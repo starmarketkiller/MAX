@@ -4,13 +4,23 @@
   "sources": [
     "knowledge/strategy_database.json",
     "MQL5/Include/NEXUS_v1/NXS_StrategyProfiles.mqh (NXS_Profile_TF)",
-    "server/backtest.py (STRAT_MAP)"
+    "MQL5 via contracts/extract_selectors.py (selector_index, interruttori)",
+    "server/backtest.py (STRATEGIES)"
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
+  "note_default_enabled": "`default_enabled` e `auto_disable_eligible` derivano dallo STATO DICHIARATO nel knowledge base. Il fatto operativo e' `code_default_enabled`, letto dagli input MQL5. Dove i due divergono, `declaration_conflict` lo dichiara: la riconciliazione e' una decisione del proprietario, non del generatore.",
+  "note_null": "`null` in `supported_symbols`/`supported_timeframes` significa NON DICHIARATO. Non significa 'tutti': prima era scritto \"*\", che trasformava un'assenza in un'affermazione di universalita'.",
+  "note_collision": "Le strategie con `implementation_collision` condividono la stessa funzione del motore research. Gli id restano distinti; finche' la collisione e' UNRESOLVED, le analisi di diversificazione devono contare il gruppo come UN SOLO generatore di segnali (`counts_as_independent_signal_generator`).",
+  "current_sweep_round": "sweep37-baseline-e6ce816",
   "counts": {
     "total": 41,
     "live": 37,
-    "research_only": 4
+    "research_only": 4,
+    "evidence_measured": 8,
+    "evidence_surrogate": 1,
+    "evidence_unknown": 28,
+    "implementation_collisions": 6,
+    "declaration_conflicts": 2
   },
   "strategies": [
     {
@@ -24,14 +34,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_adx_rsi",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_ADX_RSI",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S01__ADX_RSI__20260718_161350",
+        "trades": 915,
+        "profit_factor": 0.82,
+        "winrate_pct": 48.55,
+        "expectancy_R": -0.028,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -41,19 +67,33 @@
       "aliases": [],
       "family": "AMD",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 28,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_amd_cont",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_AMD_Cont",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -63,19 +103,33 @@
       "aliases": [],
       "family": "AMD",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 24,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_amd_reversal",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_AMD_Reversal",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -90,14 +144,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_bb_squeeze",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_BB_SQUEEZE",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -112,14 +182,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_bjorgum",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_BJORGUM",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449",
+        "trades": 397,
+        "profit_factor": 0.68,
+        "winrate_pct": 49.02,
+        "expectancy_R": -0.071,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -134,14 +220,47 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": null,
+      "research_function": "sig_bollinger",
+      "research_shared_with": [
+        "RANGE_FADE"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_bollinger",
+        "partners": [
+          "RANGE_FADE"
+        ],
+        "counts_as_independent_signal_generator": true
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_BOLLINGER",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S02__BOLLINGER__20260718_190107",
+        "trades": 144,
+        "profit_factor": 0.79,
+        "winrate_pct": 55.14,
+        "expectancy_R": -0.033,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -156,14 +275,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_breakout_acc",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_BREAKOUT_ACC",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S09__BREAKOUT_ACC__20260720_184509",
+        "trades": 216,
+        "profit_factor": 0.85,
+        "winrate_pct": 47.59,
+        "expectancy_R": -0.024,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -173,19 +308,40 @@
       "aliases": [],
       "family": "SMC",
       "status": "DISABLED",
-      "selector_index": null,
+      "selector_index": 35,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_disp_rebal",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
+      "code_toggle": "InpUseStrat_DispRebal",
+      "code_default_enabled": true,
+      "declaration_conflict": {
+        "code_default": "ENABLED",
+        "registry_status": "DISABLED",
+        "dashboard_auto_disable": "BLOCKED",
+        "resolution": "PENDING_OWNER_DECISION"
+      },
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -200,14 +356,33 @@
       "research_implementation": false,
       "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": null,
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_Elliott",
+      "code_default_enabled": false,
+      "declaration_conflict": {
+        "code_default": "DISABLED",
+        "registry_status": "ACTIVE",
+        "dashboard_auto_disable": "ALLOWED",
+        "resolution": "PENDING_OWNER_DECISION"
+      },
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -222,14 +397,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ema_pullback",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_EMA_PULLBACK",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -244,14 +435,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_fvg_cont_ext",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_FVG_CONT",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S08__FVG_CONT__20260719_193743",
+        "trades": 251,
+        "profit_factor": 0.96,
+        "winrate_pct": 45.85,
+        "expectancy_R": -0.013,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -266,14 +473,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_fvg_mit",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_FVG_Mit",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -288,14 +511,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ichimoku",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_ICHIMOKU",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -310,14 +549,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ifvg",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_IFVG",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -327,19 +582,33 @@
       "aliases": [],
       "family": "SESSION",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 29,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_judas_swing",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_Judas",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -349,19 +618,33 @@
       "aliases": [],
       "family": "SESSION",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 30,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ldn_reversal",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_LdnReversal",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -376,14 +659,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_liq_sweep_ext",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_LIQ_SWEEP",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S07__LIQ_SWEEP__20260719_080122",
+        "trades": 292,
+        "profit_factor": 1.04,
+        "winrate_pct": 50.0,
+        "expectancy_R": 0.004,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -393,19 +692,35 @@
       "aliases": [],
       "family": "SMC",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 34,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "FVG_CONT",
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": false,
+      "research_function": "sig_fvg_cont",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_LiqVoid",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -420,14 +735,47 @@
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "BREAKOUT_ACC",
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": false,
+      "research_function": "sig_breakout",
+      "research_shared_with": [
+        "WEEKLY_EXP"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_breakout",
+        "partners": [
+          "WEEKLY_EXP"
+        ],
+        "counts_as_independent_signal_generator": true
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_LONDON_BO",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -442,14 +790,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_macd",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_MACD",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S03__MACD__20260718_205653",
+        "trades": 1244,
+        "profit_factor": 0.79,
+        "winrate_pct": 55.95,
+        "expectancy_R": -0.038,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -459,19 +823,35 @@
       "aliases": [],
       "family": "LIQUIDITY",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 26,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_malaysian_snr",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_MalaysianSNR",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -481,19 +861,33 @@
       "aliases": [],
       "family": "SESSION",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 31,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ny_reversal",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_NYReversal",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -508,14 +902,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ob_mit_ext",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_OB_Mit",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -530,14 +940,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_order_block_ext",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_ORDER_BLOCK",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -547,19 +973,35 @@
       "aliases": [],
       "family": "SMC",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 25,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_ote_cont",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_OTE_Cont",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -569,19 +1011,33 @@
       "aliases": [],
       "family": "AMD",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 33,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_po3",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_PO3",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -596,14 +1052,47 @@
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "BOLLINGER",
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": true,
+      "research_function": "sig_bollinger",
+      "research_shared_with": [
+        "BOLLINGER"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_bollinger",
+        "partners": [
+          "BOLLINGER"
+        ],
+        "counts_as_independent_signal_generator": false
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_RangeFade",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -618,14 +1107,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_rsi_div",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_RSI_DIV",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -640,14 +1145,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_sar",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_SAR",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "SURROGATE",
+        "source_round": "round precedente (file 20260717)",
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": 261,
+        "profit_factor": 0.6,
+        "winrate_pct": 39.74,
+        "expectancy_R": -0.09,
+        "note": "ATTENZIONE: file piu' recente disponibile per S04 datato 17/07 (round precedente): la passata S04 del round corrente non risulta nei report"
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -662,14 +1183,28 @@
       "research_implementation": true,
       "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_scalp_bb_fade",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": false,
       "auto_disable_eligible": false,
+      "code_toggle": null,
+      "code_default_enabled": null,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "NOT_APPLICABLE",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": "strategia di sola ricerca: nessuna passata isolata EA"
+      },
       "risk_class": "RESEARCH",
       "schema_version": 1
     },
@@ -684,14 +1219,28 @@
       "research_implementation": true,
       "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_scalp_ema",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": false,
       "auto_disable_eligible": false,
+      "code_toggle": null,
+      "code_default_enabled": null,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "NOT_APPLICABLE",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": "strategia di sola ricerca: nessuna passata isolata EA"
+      },
       "risk_class": "RESEARCH",
       "schema_version": 1
     },
@@ -706,14 +1255,28 @@
       "research_implementation": true,
       "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_scalp_range_brk",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": false,
       "auto_disable_eligible": false,
+      "code_toggle": null,
+      "code_default_enabled": null,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "NOT_APPLICABLE",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": "strategia di sola ricerca: nessuna passata isolata EA"
+      },
       "risk_class": "RESEARCH",
       "schema_version": 1
     },
@@ -728,14 +1291,28 @@
       "research_implementation": true,
       "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_scalp_rsi_snap",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": false,
       "auto_disable_eligible": false,
+      "code_toggle": null,
+      "code_default_enabled": null,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "NOT_APPLICABLE",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": "strategia di sola ricerca: nessuna passata isolata EA"
+      },
       "risk_class": "RESEARCH",
       "schema_version": 1
     },
@@ -750,14 +1327,47 @@
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "OB_MIT",
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": false,
+      "research_function": "sig_ob_mit",
+      "research_shared_with": [
+        "SMS_BMS_RTO"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_ob_mit",
+        "partners": [
+          "SMS_BMS_RTO"
+        ],
+        "counts_as_independent_signal_generator": true
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_SH_BMS_RTO",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -767,19 +1377,33 @@
       "aliases": [],
       "family": "SESSION",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 23,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_silver_bullet",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
+      "supported_timeframes": null,
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_SilverBullet",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -789,19 +1413,52 @@
       "aliases": [],
       "family": "LIQUIDITY",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 22,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "OB_MIT",
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": false,
+      "research_function": "sig_ob_mit",
+      "research_shared_with": [
+        "SH_BMS_RTO"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_ob_mit",
+        "partners": [
+          "SH_BMS_RTO"
+        ],
+        "counts_as_independent_signal_generator": false
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_SMS_BMS_RTO",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -816,14 +1473,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_struct_react",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStructReact",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -835,19 +1508,35 @@
       ],
       "family": "LIQUIDITY",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 27,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_cisd",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_CISD",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -862,14 +1551,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_tsi",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_TSI",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "MEASURED",
+        "source_round": "sweep37-baseline-e6ce816",
+        "current_isolated_run": "PRESENT",
+        "run_id": "sweep37-baseline-e6ce816__S05__TSI__20260719_022556",
+        "trades": 839,
+        "profit_factor": 0.76,
+        "winrate_pct": 54.86,
+        "expectancy_R": -0.028,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -884,14 +1589,30 @@
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
       "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
+      "proxy_target_shares_function": null,
+      "research_function": "sig_turtle_soup",
+      "research_shared_with": [],
+      "implementation_collision": null,
+      "supported_symbols": null,
       "supported_timeframes": [
         "H1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpStrat_TurtleSoup",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -901,19 +1622,52 @@
       "aliases": [],
       "family": "SESSION",
       "status": "ACTIVE",
-      "selector_index": null,
+      "selector_index": 32,
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "PROXY",
       "proxy_for": "BREAKOUT_ACC",
-      "supported_symbols": [
-        "*"
+      "proxy_target_shares_function": false,
+      "research_function": "sig_breakout",
+      "research_shared_with": [
+        "LONDON_BO"
       ],
+      "implementation_collision": {
+        "kind": "IMPLEMENTATION_COLLISION",
+        "status": "UNRESOLVED",
+        "classification": "PENDING_OWNER_REVIEW",
+        "candidate_classifications": [
+          "INTENTIONAL_ALIAS",
+          "DISTINCT_CONCEPT_PROXY_IMPL",
+          "ACCIDENTAL_DUPLICATE",
+          "INCOMPLETE_PLACEHOLDER"
+        ],
+        "shared_function": "sig_breakout",
+        "partners": [
+          "LONDON_BO"
+        ],
+        "counts_as_independent_signal_generator": false
+      },
+      "supported_symbols": null,
       "supported_timeframes": [
         "D1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "code_toggle": "InpUseStrat_WeeklyExp",
+      "code_default_enabled": true,
+      "declaration_conflict": null,
+      "evidence": {
+        "historical_status": "UNKNOWN",
+        "source_round": null,
+        "current_isolated_run": "MISSING",
+        "run_id": null,
+        "trades": null,
+        "profit_factor": null,
+        "winrate_pct": null,
+        "expectancy_R": null,
+        "note": null
+      },
       "risk_class": "STANDARD",
       "schema_version": 1
     }

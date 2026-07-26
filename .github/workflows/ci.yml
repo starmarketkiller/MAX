@@ -44,6 +44,22 @@ jobs:
       - name: Validate canonical contracts
         run: python contracts/validate_registry.py
 
+      # Fase A: il registro deve essere una DERIVAZIONE, non una trascrizione.
+      # Se rigenerarlo produce un diff, qualcuno ha scritto a mano un campo
+      # generato — oppure una fonte e' cambiata senza rigenerare.
+      - name: Registry rigenerabile senza diff
+        run: |
+          python contracts/generate_registry.py
+          git diff --exit-code -- contracts/strategy-registry.json \
+            frontend/src/contracts/strategyRegistry.js \
+            MQL5/Include/NEXUS_v1/NXS_StrategyRegistry.mqh
+
+      - name: Documenti di stato allineati al registro
+        run: python contracts/gen_strategy_docs.py --check
+
+      - name: Selector MQL5 completi, contigui e senza duplicati
+        run: python contracts/extract_selectors.py
+
       - name: Run test suite
         working-directory: server
         env:

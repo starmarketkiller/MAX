@@ -123,6 +123,26 @@ bool     InpUseStrategyProfiles  = true;
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
 double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
+// === EXPERIMENTAL — pesatura dei contributi correlati alla conviction ========
+// OFF di default, e va lasciata OFF finche' non e' validata.
+//
+// Con `false` la conviction e' la somma degli score, esattamente come prima che
+// questa funzione esistesse: nessun effetto su conviction, sizing o esposizione.
+//
+// Con `true` i contributi successivi al primo DENTRO la stessa famiglia pesano
+// 1/(n+1). Perche' NON e' comportamento canonico:
+//   - il peso 1/(n+1) e' un'euristica scelta a intuito, mai confrontata con la
+//     baseline ne' misurata: modificare il sizing su questa base e' proprio cio'
+//     che il work package vieta (§3.4, §20);
+//   - la "famiglia" viene da `_nxs_inst_family()`, che raggruppa per SOTTOSTRINGA
+//     DEL NOME, non per concetto: 12 strategie su 37 finiscono in "OTHER" e si
+//     penalizzano a vicenda pur non essendo correlate, e la classificazione e' in
+//     disaccordo con il registro canonico su 154 coppie su 666
+//     (docs/NEXUS_STRATEGY_MISMATCH_REPORT.md, MM-12 e MM-13).
+// Il problema che voleva risolvere resta reale — sommare cinque varianti dello
+// stesso concetto sovrastima la convinzione — ma la soluzione va misurata prima
+// di essere adottata, e serve una tassonomia che misuri davvero la correlazione.
+input bool InpInstCorrelationWeighting = false;  // EXPERIMENTAL: pesa 1/(n+1) i contributi della stessa famiglia
 double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
 int      InpInstMinContributors  = 1;      // min strategie concordi per aprire

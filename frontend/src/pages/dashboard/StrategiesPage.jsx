@@ -1,10 +1,17 @@
 import { useState, useMemo } from "react";
 import { Layers, Cpu, Lock, Filter, Sparkles } from "lucide-react";
-import { Card, cls, STRAT_LIST, STRAT_FAMILIES, STRAT_FAMILY_COLOR } from "@/pages/dashboard/shared";
+import {
+  Card, cls, STRAT_LIST, STRAT_FAMILIES, STRAT_FAMILY_COLOR,
+  STRAT_EVIDENCE, EVIDENCE_COLOR, EVIDENCE_HINT,
+} from "@/pages/dashboard/shared";
 import { useStrategyHub } from "@/lib/strategyHub";
 
+// Fase A / MM-08: la voce era "CISD", che e' un ALIAS. Le chiavi di STRAT_LIST
+// sono id canonici, quindi il confronto non riusciva mai e il badge non
+// compariva per quella strategia. Id canonico, alias conservato accanto.
 const READY_FOR_BACKTEST = new Set([
-  "CISD", "AMD_CONT", "JUDAS_SWING", "LDN_REVERSAL", "NY_REVERSAL",
+  "THREE_BAR_DELIVERY_BREAK", "CISD",
+  "AMD_CONT", "JUDAS_SWING", "LDN_REVERSAL", "NY_REVERSAL",
   "WEEKLY_EXP", "PO3", "LIQ_VOID", "DISP_REBAL",
 ]);
 
@@ -35,6 +42,19 @@ export default function StrategiesPage({ settings, onSave, status }) {
     STRAT_LIST.forEach(([, , fam]) => { m[fam] = (m[fam] || 0) + 1; });
     return m;
   }, []);
+
+  const evidenceCounts = useMemo(() => {
+    const m = {};
+    STRAT_LIST.forEach(([k]) => {
+      const st = STRAT_EVIDENCE[k]?.status;
+      if (st) m[st] = (m[st] || 0) + 1;
+    });
+    return m;
+  }, []);
+
+  const collisionCount = useMemo(() => (
+    STRAT_LIST.filter(([k]) => STRAT_EVIDENCE[k]?.hasCollision).length
+  ), []);
 
   const filtered = useMemo(() => (
     familyFilter === "ALL" ? STRAT_LIST : STRAT_LIST.filter(([, , fam]) => fam === familyFilter)
@@ -100,6 +120,22 @@ export default function StrategiesPage({ settings, onSave, status }) {
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
               Institutional {familyCounts.INSTITUTIONAL} <Sparkles className="inline h-3 w-3" />
             </span>
+          </p>
+          {/* Fase A / MM-06: quante di queste hanno davvero una misura. */}
+          <p data-testid="evidence-summary" className="text-xs text-muted-foreground mt-1">
+            Evidenza:{" "}
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+              {evidenceCounts.MEASURED || 0} misurate
+            </span>{" · "}
+            <span className="text-amber-600 dark:text-amber-400 font-medium">
+              {evidenceCounts.SURROGATE || 0} surrogate
+            </span>{" · "}
+            {evidenceCounts.UNKNOWN || 0} mai misurate
+            {collisionCount > 0 && (
+              <> · <span className="text-amber-600 dark:text-amber-400">
+                {collisionCount} con implementazione di ricerca condivisa
+              </span></>
+            )}
           </p>
         </div>
         <button
@@ -184,6 +220,7 @@ export default function StrategiesPage({ settings, onSave, status }) {
         {filtered.map(([key, label, family]) => {
           const on = !!local[key];
           const isRFB = READY_FOR_BACKTEST.has(key);
+          const ev = STRAT_EVIDENCE[key];
           return (
             <Card
               key={key}
@@ -210,12 +247,35 @@ export default function StrategiesPage({ settings, onSave, status }) {
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground mt-1 font-mono flex items-center gap-1.5">
+                  <div className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground mt-1 font-mono flex items-center gap-1.5 flex-wrap">
                     {key}
                     <span className={cls(
                       "px-1 py-0.5 rounded text-[8px] font-bold border tabular-nums",
                       STRAT_FAMILY_COLOR[family]
                     )}>{family}</span>
+                    {/* Fase A / MM-09: misurata, surrogata o mai misurata.
+                        Senza questo, scegliere dalla dashboard significa
+                        scegliere senza sapere se esiste evidenza. */}
+                    {ev && (
+                      <span
+                        data-testid={`strategy-evidence-${key.toLowerCase()}`}
+                        title={[
+                          EVIDENCE_HINT[ev.status],
+                          ev.sourceRound ? `Round: ${ev.sourceRound}` : null,
+                        ].filter(Boolean).join(" ")}
+                        className={cls(
+                          "px-1 py-0.5 rounded text-[8px] font-bold border",
+                          EVIDENCE_COLOR[ev.status]
+                        )}
+                      >{ev.label}</span>
+                    )}
+                    {ev?.hasCollision && (
+                      <span
+                        data-testid={`strategy-collision-${key.toLowerCase()}`}
+                        title={`Condivide l'implementazione di ricerca con ${ev.collisionPartners.join(", ")}: il gruppo vale UN generatore di segnali finche' la collisione non e' risolta.`}
+                        className="px-1 py-0.5 rounded text-[8px] font-bold border bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                      >= {ev.collisionPartners.join("/")}</span>
+                    )}
                   </div>
                 </div>
               </div>

@@ -92,7 +92,30 @@ int _nxs_inst_setupType(int dir){
 
 // Costruisce la decisione dominante raggruppando i segnali per direzione.
 //: AUD0-INST-010 — famiglia di appartenenza usata per pesare i contributi
-//: correlati. Raggruppa per CONCETTO letto, non per nome.
+//: correlati SOLO quando InpInstCorrelationWeighting e' true (default: false).
+//
+// ⚠️ QUESTA CLASSIFICAZIONE NON E' AFFIDABILE, ed e' documentato che non lo sia.
+// Il commento originale diceva "raggruppa per CONCETTO letto, non per nome":
+// era falso. L'implementazione raggruppa per SOTTOSTRINGA DEL NOME, cioe'
+// esattamente per nome. Conseguenze verificate (MM-12):
+//
+//   - 12 strategie live su 37 cadono in "OTHER" — AMD_CONT, BB_SQUEEZE, BJORGUM,
+//     ELLIOTT, ICHIMOKU, MALAYSIAN_SNR, OTE_CONT, PO3, SILVER_BULLET,
+//     THREE_BAR_DELIVERY_BREAK, TSI, WEEKLY_EXP — e "OTHER" e' trattato come una
+//     famiglia vera: 66 coppie non imparentate si penalizzano a vicenda;
+//   - ADX_RSI finisce in MEAN_REVERSION perche' il nome contiene "RSI";
+//     LDN_REVERSAL e NY_REVERSAL perche' contengono "REVERSAL", pur essendo
+//     strategie di sessione;
+//   - la partizione e' in disaccordo con la famiglia del registro canonico su
+//     154 coppie di strategie su 666;
+//   - l'ordine delle regole conta: BOLLINGER evita MOMENTUM (che cerca "BO")
+//     solo perche' la regola MEAN_REVERSION viene prima. Fragile al primo
+//     rename o alla prima regola inserita in mezzo.
+//
+// Non la sostituisco con un'altra formula: servirebbe una tassonomia canonica
+// definita e una misura reale della correlazione fra strategie. Finche' non
+// esistono, questa funzione ha effetto solo se qualcuno accende esplicitamente
+// l'input sperimentale.
 string _nxs_inst_family(string name){
    if(StringFind(name, "FVG") >= 0 || StringFind(name, "IFVG") >= 0 ||
       StringFind(name, "DISP") >= 0 || StringFind(name, "VOID") >= 0)
@@ -111,6 +134,41 @@ string _nxs_inst_family(string name){
       StringFind(name, "EMA") >= 0 || StringFind(name, "SAR") >= 0)
       return "MOMENTUM";
    return "OTHER";
+}
+
+// EXPERIMENTAL — conviction netta con peso decrescente sui contributi della
+// stessa famiglia: il primo vale pieno, il secondo 1/2, il terzo 1/3...
+//
+// Isolata in una funzione propria per tre motivi, tutti richiesti prima di
+// poterla anche solo considerare:
+//   1. il chiamante puo' non eseguirla affatto (default), e allora il
+//      comportamento e' esattamente quello della baseline;
+//   2. e' confrontabile: stessa lista di segnali, due numeri, una differenza;
+//   3. e' evidente che sia un ramo separato e non la regola del sistema.
+//
+// NON adottare come canonica senza: confronto contro baseline su dati reali,
+// una tassonomia di famiglia che misuri correlazione (non sottostringhe del
+// nome), e una motivazione per la forma 1/(n+1) invece di qualunque altra.
+double _nxs_inst_correlationAdjustedNet(SNXSSignal &all[], int n){
+   double buyAdj = 0, sellAdj = 0;
+   string famSeen[]; int famCnt[];
+   for(int i = 0; i < n; i++){
+      if(all[i].dir == DIR_NONE) continue;
+      string fam = _nxs_inst_family(all[i].stratName);
+      int idx = -1;
+      for(int f = 0; f < ArraySize(famSeen); f++) if(famSeen[f] == fam){ idx = f; break; }
+      if(idx < 0){
+         idx = ArraySize(famSeen);
+         ArrayResize(famSeen, idx + 1); ArrayResize(famCnt, idx + 1);
+         famSeen[idx] = fam; famCnt[idx] = 0;
+      }
+      // 1.0, 0.5, 0.33, 0.25 ... per contributi successivi della stessa famiglia
+      double w = 1.0 / (double)(famCnt[idx] + 1);
+      famCnt[idx]++;
+      if(all[i].dir == DIR_BUY) buyAdj += all[i].score * w;
+      else                      sellAdj += all[i].score * w;
+   }
+   return MathAbs(buyAdj - sellAdj);
 }
 
 // Ritorna d.valid=false se non c'e' conviction sufficiente.
@@ -136,39 +194,24 @@ SNXSDecision NXS_Institutional_Decide(SNXSSignal &all[], int n){
 
    int dir = (buySum >= sellSum) ? +1 : -1;
 
-   // AUD0-INST-010 — LA CONVICTION NON E' UNA SOMMA.
+   // AUD0-INST-010 / MM-13 — conviction netta.
    //
-   // Sommare gli score di strategie ALTAMENTE CORRELATE moltiplica la
-   // convinzione apparente senza aggiungere informazione: cinque varianti dello
-   // stesso concetto (FVG_CONT, FVG_MIT, IFVG, OB_MIT, DISP_REBAL leggono tutte
-   // squilibri di prezzo) producono una conviction cinque volte piu' alta di un
-   // singolo segnale, pur dicendo la stessa cosa. L'esposizione risultante e'
-   // sproporzionata rispetto all'evidenza reale.
-   //
-   // Si applica un peso decrescente ai contributi successivi al primo DENTRO
-   // la stessa famiglia: il primo vale pieno, i successivi sempre meno. E' una
-   // correzione grossolana — la matrice di correlazione vera non esiste nel
-   // registro — ma e' esplicita e verificabile, invece di un'ipotesi implicita
-   // di indipendenza che il sistema non ha mai avuto.
-   double buyAdj = 0, sellAdj = 0;
-   string famSeen[]; int famCnt[];
-   for(int i = 0; i < n; i++){
-      if(all[i].dir == DIR_NONE) continue;
-      string fam = _nxs_inst_family(all[i].stratName);
-      int idx = -1;
-      for(int f = 0; f < ArraySize(famSeen); f++) if(famSeen[f] == fam){ idx = f; break; }
-      if(idx < 0){
-         idx = ArraySize(famSeen);
-         ArrayResize(famSeen, idx + 1); ArrayResize(famCnt, idx + 1);
-         famSeen[idx] = fam; famCnt[idx] = 0;
-      }
-      // 1.0, 0.5, 0.33, 0.25 ... per contributi successivi della stessa famiglia
-      double w = 1.0 / (double)(famCnt[idx] + 1);
-      famCnt[idx]++;
-      if(all[i].dir == DIR_BUY) buyAdj += all[i].score * w;
-      else                      sellAdj += all[i].score * w;
+   // COMPORTAMENTO CANONICO (InpInstCorrelationWeighting = false, default):
+   // la conviction e' la somma degli score, identica a prima che la pesatura
+   // per famiglia esistesse. Nessun ramo sperimentale viene eseguito, quindi
+   // conviction, sizing ed esposizione sono bit-per-bit quelli della baseline.
+   double net = MathAbs(buySum - sellSum);   // conviction netta: piu' concordano, piu' e' forte
+
+   // EXPERIMENTAL, disattivato di default. Il problema che affronta e' reale —
+   // sommare cinque varianti dello stesso concetto sovrastima la convinzione —
+   // ma il peso 1/(n+1) non e' stato validato e la famiglia su cui poggia non
+   // misura correlazione (vedi il blocco su _nxs_inst_family). Resta qui,
+   // accendibile e confrontabile, invece di essere cancellato: cosi' si potra'
+   // misurare contro la baseline quando ci sara' una tassonomia canonica.
+   if(InpInstCorrelationWeighting){
+      net = _nxs_inst_correlationAdjustedNet(all, n);
    }
-   double net = MathAbs(buyAdj - sellAdj);
+
    int contributors = (dir > 0) ? buyN : sellN;
    if(net < InpInstMinConviction) return d;
    if(contributors < InpInstMinContributors) return d;

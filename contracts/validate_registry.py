@@ -55,6 +55,123 @@ def resolve(reg, name):
     return idx[name]
 
 
+EVIDENCE_STATUSES = {"MEASURED", "SURROGATE", "UNKNOWN"}
+
+
+def validate_selectors(reg):
+    """Fase A — il selector non puo' piu' mancare, duplicarsi o uscire di sequenza.
+
+    Tre controlli, tutti bloccanti, che coprono i tre modi in cui MM-01 potrebbe
+    ripresentarsi:
+
+    1. ogni strategia LIVE ha un `selector_index` (era assente per 14 su 37);
+    2. gli indici dei live sono esattamente 1..N, senza buchi e senza duplicati;
+    3. la mappa del registro coincide con quella REALE letta dal codice MQL5.
+
+    Il terzo e' quello che conta: rende impossibile che il registro affermi un
+    isolamento che l'EA non applica, o viceversa.
+    """
+    errors = []
+    live = [r for r in reg["strategies"] if r.get("live_implementation")]
+    got = {}
+    for r in live:
+        sid, si = r["strategy_id"], r.get("selector_index")
+        if si is None:
+            errors.append(f"{sid}: live senza selector_index")
+            continue
+        if si in got:
+            errors.append(f"selector_index {si} duplicato: {got[si]} e {sid}")
+        got[si] = sid
+
+    idxs = sorted(got)
+    expected = list(range(1, len(live) + 1))
+    if idxs != expected:
+        for missing in sorted(set(expected) - set(idxs)):
+            errors.append(f"selector_index {missing} mancante nella sequenza 1..{len(live)}")
+        for extra in sorted(set(idxs) - set(expected)):
+            errors.append(f"selector_index {extra} fuori dalla sequenza 1..{len(live)}")
+
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "contracts"))
+        from extract_selectors import selector_map
+        code = selector_map()
+    except Exception as exc:                       # pragma: no cover - diagnostico
+        errors.append(f"impossibile leggere i selector dal codice MQL5: {exc}")
+        return errors
+
+    for sid, si in sorted((r["strategy_id"], r.get("selector_index")) for r in live):
+        actual = code.get(sid)
+        if actual is None:
+            errors.append(f"{sid}: nel registro come live, ma il codice MQL5 non la isola")
+        elif actual != si:
+            errors.append(f"{sid}: selector {si} nel registro, {actual} nel codice MQL5")
+    for sid in sorted(set(code) - {r["strategy_id"] for r in live}):
+        errors.append(f"{sid}: isolata dal codice MQL5 ma non live nel registro")
+    return errors
+
+
+def validate_evidence(reg):
+    """Lo stato dell'evidenza deve essere dichiarato e coerente con i dati."""
+    errors = []
+    for r in reg["strategies"]:
+        sid = r["strategy_id"]
+        ev = r.get("evidence")
+        if not isinstance(ev, dict):
+            errors.append(f"{sid}: manca il blocco evidence")
+            continue
+        st = ev.get("historical_status")
+        if st not in EVIDENCE_STATUSES:
+            errors.append(f"{sid}: evidence.historical_status non valido {st!r}")
+            continue
+        if st == "MEASURED":
+            if ev.get("current_isolated_run") != "PRESENT":
+                errors.append(f"{sid}: MEASURED ma current_isolated_run != PRESENT")
+            if ev.get("source_round") != reg.get("current_sweep_round"):
+                errors.append(f"{sid}: MEASURED ma non sul round corrente")
+            if not ev.get("trades"):
+                errors.append(f"{sid}: MEASURED senza trade")
+        if st == "SURROGATE" and ev.get("source_round") == reg.get("current_sweep_round"):
+            errors.append(f"{sid}: SURROGATE ma dichiarato sul round corrente")
+        if st == "UNKNOWN" and ev.get("trades"):
+            errors.append(f"{sid}: UNKNOWN ma con {ev['trades']} trade registrati")
+    return errors
+
+
+def validate_collisions(reg):
+    """Le collisioni devono essere simmetriche e con UN solo rappresentante.
+
+    Se due strategie condividono la funzione research, entrambe devono saperlo,
+    e il gruppo deve contare come UN generatore di segnali: esattamente uno dei
+    membri porta `counts_as_independent_signal_generator = true`.
+    """
+    errors = []
+    by_id = {r["strategy_id"]: r for r in reg["strategies"]}
+    groups = {}
+    for r in reg["strategies"]:
+        coll = r.get("implementation_collision")
+        if not coll:
+            continue
+        sid = r["strategy_id"]
+        for p in coll.get("partners", []):
+            other = by_id.get(p)
+            if other is None:
+                errors.append(f"{sid}: collisione con {p}, che non esiste nel registro")
+                continue
+            oc = other.get("implementation_collision") or {}
+            if sid not in oc.get("partners", []):
+                errors.append(f"collisione non simmetrica: {sid} cita {p}, {p} non cita {sid}")
+        key = "+".join(sorted([sid] + list(coll.get("partners", []))))
+        groups.setdefault(key, []).append(
+            (sid, coll.get("counts_as_independent_signal_generator")))
+
+    for key, members in sorted(groups.items()):
+        reps = [sid for sid, flag in members if flag]
+        if len(reps) != 1:
+            errors.append(
+                f"gruppo {key}: {len(reps)} rappresentanti indipendenti, atteso 1")
+    return errors
+
+
 def validate(reg):
     errors = []
     ids = set()
@@ -92,6 +209,16 @@ def validate(reg):
         # regola 6: research-only non promuovibile senza live reference
         if r.get("status") == "RESEARCH_ONLY" and r.get("default_enabled"):
             errors.append(f"{sid}: RESEARCH_ONLY non puo' essere default_enabled")
+        # Fase A: un'assenza non si dichiara "*". Se il campo esiste, o e' una
+        # lista di valori reali o e' null.
+        for field in ("supported_symbols", "supported_timeframes"):
+            val = r.get(field)
+            if val is not None and (not isinstance(val, list) or "*" in val):
+                errors.append(
+                    f"{sid}: {field}={val!r} — usare null per 'non dichiarato', mai \"*\"")
+    errors += validate_selectors(reg)
+    errors += validate_evidence(reg)
+    errors += validate_collisions(reg)
     return errors
 
 
