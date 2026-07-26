@@ -3,6 +3,161 @@
   "description": "Registro delle fonti documentali acquisite per l'audit NEXUS. Ogni record dichiara identita' crittografica e stato di lavorazione.",
   "sources": [
     {
+      "filename": "My Rare SNR Course 2.pdf",
+      "repository_path": "docs/sources/corpus/My Rare SNR Course 2.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 13446336,
+      "page_count": 10,
+      "sha256": "edac626e9dabbcfaab449193758276473c88b0a8442d159a5207a1f1ca91c111",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 10,
+        "pages_with_text": 10,
+        "characters": "2.091"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo. Letto per rendering visivo."
+      ]
+    },
+    {
+      "filename": "My Rare SNR Course.pdf",
+      "repository_path": "docs/sources/corpus/My Rare SNR Course.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 4711593,
+      "page_count": 29,
+      "sha256": "3666ce0550f192d242ce3b849d1dbf537fa400724faaee88a3016fe3cc25028f",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ",
+      "native_text": {
+        "pages_with_text": 29,
+        "characters": 290
+      },
+      "declared_in_master_a4_2": {
+        "pages": 29,
+        "pages_with_text": 29,
+        "characters": "13.111"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
+      "filename": "SNR Malaysia.pdf",
+      "repository_path": "docs/sources/corpus/SNR Malaysia.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 9893907,
+      "page_count": 74,
+      "sha256": "709453d587704b81d161cb0cf86dc24b3d9857db872499c82bad5f4828ccfd42",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 74,
+        "characters": 740
+      },
+      "declared_in_master_a4_2": {
+        "pages": 74,
+        "pages_with_text": 74,
+        "characters": "18.153"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
+      "filename": "Secret Of 411(1).pdf",
+      "repository_path": "docs/sources/corpus/Secret Of 411(1).pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 22070279,
+      "page_count": 16,
+      "sha256": "cda549eb54266f2750b8b7beffe95d9c74cb1b22a11f0bc5955dfc7a79f56b79",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 16,
+        "pages_with_text": 16,
+        "characters": "2.698"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo. Richiede lettura visiva."
+      ]
+    },
+    {
+      "filename": "ict-trading-250828073107-caca0de9.pdf",
+      "repository_path": "docs/sources/corpus/ict-trading-250828073107-caca0de9.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 2807798,
+      "page_count": 91,
+      "sha256": "3d073e5273ae760e7b58776653fab6bf53a37e9d5203fd034ab0fe2d46c9e8c1",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 91,
+        "characters": 57352
+      },
+      "declared_in_master_a4_2": {
+        "pages": 91,
+        "pages_with_text": 91,
+        "characters": "57.806"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
       "filename": "NEXUS_MASTER_PROJECT_v18.md",
       "repository_path": "docs/sources/master/NEXUS_MASTER_PROJECT_v18.md",
       "category": "MASTER_PROJECT_DOCUMENT",
@@ -28,9 +183,11 @@
     }
   ],
   "counts": {
-    "total": 1,
-    "ingested": 1,
-    "analyzed": 1,
-    "pending_original_sources": 13
+    "total": 6,
+    "ingested": 6,
+    "analyzed": 4,
+    "corpus_pdfs_received": 5,
+    "corpus_pdfs_declared_in_a4_2": 13,
+    "corpus_pdfs_still_missing": 8
   }
 }
