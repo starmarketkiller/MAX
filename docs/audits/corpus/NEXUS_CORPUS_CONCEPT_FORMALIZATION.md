@@ -8,11 +8,12 @@
 | | |
 |---|---|
 | Data | 2026-07-26 |
-| PDF ricevuti | **7 su 13** dichiarati nel blocco A4.2 del Master v18 |
-| PDF letti integralmente | 3 (`My Rare SNR Course`, `My Rare SNR Course 2`, `ict-trading`) |
+| PDF ricevuti | **8 su 13** dichiarati in A4.2, **+1 fuori elenco** (`CANDLE_RANGE_THEORY`) |
+| PDF letti integralmente | 5 (`My Rare SNR Course`, `My Rare SNR Course 2`, `ict-trading`, `Yanu Emmanuel`, `CANDLE_RANGE_THEORY`) |
 | PDF letti parzialmente | 1 (`Sequence` — 20 pagine su 76) |
 | PDF archiviati e non ancora letti | 3 (`SNR Malaysia` 74 p, `Secret Of 411(1)` 16 p, `Sequence_1` 74 p) |
-| PDF ancora mancanti | **6** |
+| Conferme incrociate della primitiva open/close | **4 fonti indipendenti** |
+| PDF ancora mancanti | **5** |
 | Registro fonti | `docs/sources/SOURCE_MANIFEST.json` |
 
 ## Verifica di integrità delle fonti
@@ -26,11 +27,13 @@
 | `ict-trading-…pdf` | 91 | 91 | ✅ | 91/91 (58.358 car.) |
 | `Sequence.pdf` | 76 | 76 | ✅ | **0/76** |
 | `Sequence_1.pdf` | 74 | 74 | ✅ | **0/74** |
+| `…the-Alchemist-Yanu-Emmanuel.pdf` | 51 | 51 | ✅ | 39/51 (24.685 car.) |
+| `CANDLE_RANGE_THEORY.pdf` | 12 | — | n/d | 12/12 (3.247 car.) |
 
-**I conteggi pagina di A4.2 sono corretti su tutti e sette i file**, verificati
+**I conteggi pagina di A4.2 sono corretti su tutti e otto i file dichiarati**, verificati
 con `pypdf`. I conteggi di *caratteri* non sono riproducibili con estrazione
-nativa perché quell'audit usava OCR supplementare: **sei file su sette** hanno
-10 caratteri per pagina o meno — cioè solo il numero di pagina. **Sono corsi visivi.** La
+nativa perché quell'audit usava OCR supplementare: **sei file su otto** hanno 10 caratteri
+per pagina o meno — cioè solo il numero di pagina. **Sono corsi visivi.** La
 lettura utile richiede rendering delle pagine, non estrazione di testo.
 
 ## Legenda
@@ -540,6 +543,228 @@ livello orizzontale.
 
 ---
 
+# PARTE 5 — Malaysian SNR (Yanu Emmanuel)
+
+Fonte: `863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf`, 51 pagine,
+testo nativo 39/51 (24.685 caratteri). **È il documento più completo del
+corpus**: ha indice, capitoli e prosa, non solo diagrammi.
+
+Struttura: Introduzione → Malaysian SNR → Storyline (bias MTF) → Confluenze
+(trendline, sessioni/killzone) → Action Plans (chart refinement, esempi, risk
+management, backtesting).
+
+## M-01 · Identificazione del livello SNR — `EXPLICIT`, quarta conferma
+
+> "To identify the SNR level, your focus is on the close and open prices. You
+> draw a line across the first candlestick's close to join the next
+> candlestick's open. **Ignore the wicks**."
+> "For resistance level, you draw line from the bullish candle's close to join
+> the next bearish candle's open… You'll identify this as **'A' shape** on line
+> chart."
+> "On support level, you draw a line across bearish candle's close to join next
+> bullish candle's open. This can be identified on a line chart as **'V' shape**."
+
+**Quarta fonte indipendente, stessa primitiva.** E risolve un'ambiguità: i nomi
+`CLASSIC V` e `CLASSIC A` di Alchemist (A-06) sono **le forme che il livello
+assume su un grafico a linee** — perché la linea unisce le chiusure, e ignorare
+le ombre produce una V al supporto e una A alla resistenza.
+
+| Fonte | Nome della primitiva |
+|---|---|
+| `My Rare SNR Course` | livello SNR (S-01) |
+| `Sequence.pdf` (Alchemist) | OCL — Open Close Levels (A-05) |
+| `Sequence.pdf` (Alchemist) | Classic V / Classic A (A-06) |
+| `Yanu Emmanuel` | SNR level, forme V e A su line chart (M-01) |
+
+## M-02 · Perché la primitiva è il confine open/close — `EXPLICIT`
+
+> "1. If price is to move UP, it must first move DOWN. 2. If price is to move
+> DOWN, it must first move UP. Why this is so? Because the essence of every
+> major player in the financial markets is to MANIPULATE prices to his own
+> advantage. They trade off the liquidity (bulk orders) at each level of support
+> and resistance (SnR)."
+
+È il razionale del metodo, non una regola operativa. Lo riporto perché è
+l'unica giustificazione esplicita che il corpus offre per la scelta della
+primitiva.
+
+## M-03 · Stato di un livello: fresh / unfresh / flipped — `EXPLICIT`
+
+La regola più operativa dell'intero corpus. È una **macchina a stati**:
+
+```text
+FRESH     livello mai toccato dal prezzo — né da ombra né da corpo
+          "untouched snow"; forte e affidabile
+          motivo: conserva liquidità non raccolta
+
+  ── ombra tocca il livello ──▶
+
+UNFRESH   già toccato o rotto; più debole, "usato"
+
+  ── una candela CHIUDE OLTRE con corpo pieno (non solo ombra) ──▶
+
+FLIPPED   il ruolo si inverte: supporto → resistenza (SBR),
+          resistenza → supporto (RBS)
+
+  ── il prezzo torna e lo TOCCA solo con l'ombra, senza romperlo ──▶
+
+FRESH di nuovo, ma nella direzione invertita
+          "the level has essentially been cleansed and reborn with a new role"
+```
+
+Il discriminante **corpo vs ombra** compare per la terza volta nel corpus
+(S-04, M-03, M-05): è la regola più ripetuta e più codificabile che le fonti
+esprimano.
+
+## M-04 · Il livello NON è un segnale — `EXPLICIT`, ed è vincolante
+
+> "we treat these key levels **not as automatic trade signals**, but as
+> potential zones of interest. These levels become actionable **only after all
+> other confluences have been confirmed** — such as candlestick patterns,
+> momentum indicators, or liquidity sweeps — and we observe a clear rejection
+> from that zone. This rejection must align with the higher timeframe order
+> flow, directional bias, prevailing trend, or overall market structure."
+> "**We do not blindly execute trades simply because price has reached an SNR
+> level.**"
+
+**Questa è la frase più importante che ho letto in tutto il corpus.** La fonte
+dichiara esplicitamente che il livello da solo non genera un ingresso. Servono,
+nell'ordine: confluenze confermate, rifiuto osservato dalla zona, allineamento
+con l'order flow del timeframe superiore.
+
+## M-05 · Break of Market Structure — `EXPLICIT`
+
+> "Break of market structure occurs when price **closes** above a swing
+> high/low… A break of structure is only considered valid when price closes
+> above the higher high **with a full body**; when price closes above the swing
+> high **with a wick**, this is not considered as a break of structure."
+> "After break of structure, always wait for retracement."
+> "Always trade in the direction of the BOS."
+
+Tre regole distinte e tutte codificabili: validità (corpo), attesa
+(ritracciamento), direzione (concorde al BOS).
+
+## M-06 · Candela di rifiuto — `EXPLICIT`, `MISSING` sulle soglie
+
+> "The rejection candle… The anatomy and concept is similar to the classic 'Pin
+> Bar'. Rejection candles communicate denial of higher or lower prices… This
+> denial leaves a very distinct feature: a long lower or upper wick. **The
+> better quality rejection candles pack thicker candle bodies** (closing in the
+> direction of the rejection)."
+
+`MISSING`: "long wick" e "thicker body" non sono quantificati.
+
+## M-07 · GAP SNR come zona nascosta HTF — `EXPLICIT`
+
+> "Gap is usually a 'Hidden Zone' in a higher timeframe (HTF) but when refined
+> in a lower timeframe turns a Breakout (Flipped SNR)."
+
+Coincide con S-09 (`Hidden / Internal GAP_SNR`) di un'altra fonte: il gap HTF si
+risolve in un livello flipped sul timeframe inferiore.
+
+## M-08 · Sessioni e killzone — `EXPLICIT` sull'uso, `MISSING` sugli orari
+
+> "Kill zones refers to the hot trading hours… based on the four primary
+> sessions: Sydney, Tokyo, London and New York."
+> "With the Malaysian SNR, we **mainly focus on trading the London and NY
+> killzones**, since they have the most volatility throughout the whole day."
+
+**Gli orari non sono dichiarati nemmeno qui.** Terza fonte che nomina le
+killzone senza definirle. L'unica fonte del corpus che dà orari resta il PDF
+ICT (I-07: 10–11 ET e 3–4 ET).
+
+---
+
+# PARTE 6 — Candle Range Theory (CRT)
+
+Fonte: `CANDLE_RANGE_THEORY.pdf`, 12 pagine, di Suven Raj, testo nativo
+completo. **Non è fra i 13 PDF dichiarati in A4.2**: è una fonte aggiuntiva.
+
+È il metodo **più precisamente codificabile dell'intero corpus**.
+
+## C-01 · Primitiva — `EXPLICIT`
+
+> "candle range theory or crt is a trading concept that focuses on the price
+> range high or low of a single candlestick on the chart… each candle
+> represents a trading range. If you break this down into lower timeframe
+> candle, you will notice that high and low of the candle often act as turning
+> point on the lower timeframe. These points form the most important liquidity
+> level because that is the highest and lowest price traded during previous
+> trading period."
+
+```text
+CRH = Candle Range High = high[i]   (livello di liquidità superiore)
+CRL = Candle Range Low  = low[i]    (livello di liquidità inferiore)
+```
+
+> "PERIOD: CAN BE A DAILY, H4, H1 … M1" — vale su qualunque timeframe.
+
+## C-02 · Modello a tre candele con ruoli — `EXPLICIT`
+
+```text
+prima candela   definisce il range   (CRH, CRL)
+seconda candela crea lo sweep
+terza candela   fornisce l'ingresso
+```
+
+## C-03 · Regola completa, con invalidazione — `EXPLICIT`
+
+Setup ribassista (speculare per il rialzista):
+
+> "if the second candle attacks the liquidity above the CRH and immediately
+> reverses, there is high probability that next target will be the liquidity
+> below the Candle Range Low."
+> "If instead, we see the second candle **close above the CRH**, then the
+> potential Candle Range Theory setup becomes **invalid**… it's more likely
+> that the market will continue pushing upward."
+> "if the criteria are met, and the second candle **fails to close above** the
+> Candle Range High, we can then look to the third candle for a potential short
+> setup with our target being the Candle Range Low."
+
+**Predicato deterministico completo:**
+
+```text
+CRH = high[i-2]
+CRL = low[i-2]
+
+sweep        :  high[i-1] >  CRH            la seconda candela attacca la liquidità
+validità     :  close[i-1] <= CRH           NON chiude oltre → setup valido
+invalidazione:  close[i-1] >  CRH           → setup ANNULLATO
+
+se valido:  ingresso SHORT sulla terza candela, target = CRL
+```
+
+Ingresso, invalidazione e target sono tutti espressi in termini di OHLC. **Non
+richiede alcuna interpretazione.** È l'unico blocco del corpus che si può
+scrivere in codice leggendolo una volta sola.
+
+## C-04 · Limite dichiarato dalla fonte — `MISSING`
+
+L'indice elenca cinque sezioni, quattro delle quali marcate `CLASS`:
+`RULES & STEPS`, `CRT + MARKET DIRECTION`, `CRT MISTAKES`, `REAL CHART EXAMPLE`.
+Il documento si chiude con:
+
+> "THE REST WILL BE TAUGHT IN THE UPCOMING CLASS."
+
+**Questo PDF contiene solo l'introduzione.** Regole operative complete,
+direzione di mercato, errori tipici ed esempi reali non ci sono.
+
+### Un tratto ricorrente del corpus, che vale la pena dichiarare
+
+Terza fonte su sette che trattiene deliberatamente la parte operativa:
+
+| Fonte | Cosa trattiene | Dove |
+|---|---|---|
+| `My Rare SNR Course` | "CHART REFINEMENT" | S-12, riservato ai membri VIP |
+| `My Rare SNR Course 2` | "trade secret that I employ on a daily basis" (XR TL) | T-03 |
+| `CANDLE_RANGE_THEORY` | regole, direzione, errori, esempi | C-04, "upcoming class" |
+
+Non è un problema di archiviazione: **i materiali gratuiti sono strutturati per
+introdurre e rimandare**. Va messo in conto nella pianificazione: acquisire più
+PDF gratuiti non garantisce di ottenere più regole operative.
+
+---
+
 # Confronto preliminare con l'implementazione
 
 **Nessuna di queste voci è un verdetto.** Sono confronti fra una fonte e una
@@ -632,10 +857,69 @@ canonico:
 `OCL`, che è la stessa cosa del livello SNR di MSNR (A-05) — la primitiva più
 fondamentale dell'intero corpus.
 
+## D-08 · Il livello da solo non è un segnale · `EXPLICIT` nella fonte
+
+Questa **non** è una mia inferenza: è una frase della fonte (M-04).
+
+> "We do not blindly execute trades simply because price has reached an SNR
+> level. These levels become actionable only after all other confluences have
+> been confirmed… and we observe a clear rejection from that zone. This
+> rejection must align with the higher timeframe order flow."
+
+Il metodo prescrive tre condizioni **in cascata** prima di un ingresso:
+
+```text
+1. livello raggiunto              (condizione necessaria, non sufficiente)
+2. confluenze confermate          (pattern, momentum, sweep di liquidità)
+3. rifiuto osservato dalla zona
+4. allineamento con l'order flow del timeframe superiore
+```
+
+**Da verificare sull'implementazione:** quante delle strategie SMC/SNR dell'EA
+richiedano tutte e quattro le condizioni, e quante generino un segnale al solo
+tocco del livello. Non l'ho verificato in questa consegna. È il controllo di
+fedeltà a più alto rendimento fra quelli ora possibili, perché la fonte è
+esplicita e la condizione è binaria.
+
+## D-09 · Corpo contro ombra: la regola più ripetuta del corpus · `EXPLICIT`
+
+Tre fonti indipendenti usano lo stesso discriminante:
+
+| Fonte | Regola |
+|---|---|
+| `My Rare SNR Course` (S-04) | un livello è rotto solo da un **corpo** di candela |
+| `Yanu Emmanuel` (M-03) | un livello diventa flipped solo se una candela **chiude oltre con corpo pieno**, non con l'ombra |
+| `Yanu Emmanuel` (M-05) | il BOS è valido solo con **corpo pieno**; con l'ombra non è un BOS |
+
+**Da verificare sull'implementazione:** se le rotture di livello e i BOS nel
+codice usino il corpo o l'estremo della candela. È un controllo puntuale, e una
+divergenza qui cambierebbe il comportamento di ogni strategia strutturale.
+
+## D-10 · CRT non ha una strategia dedicata, ma tre candidate · `da verificare`
+
+Il modello a tre candele di C-03 (range → sweep → ingresso, con invalidazione su
+chiusura) somiglia a tre strategie dell'EA:
+
+| Strategia EA | Selettore | Perché candidata |
+|---|---|---|
+| `THREE_BAR_DELIVERY_BREAK` | 27 | modello a **tre barre**, come CRT |
+| `TURTLE_SOUP` | 17 | archetipo dello sweep di liquidità fallito |
+| `LIQ_SWEEP` | 7 | sweep esplicito, ed è la sola strategia misurata con PF > 1 (1.04) |
+
+Nessun confronto eseguito. Ma CRT fornisce una **regola di invalidazione
+esatta** (`close[i-1] > CRH` annulla il setup) che è il tipo di condizione che
+distingue uno sweep vero da una rottura: vale la pena verificare se una delle
+tre la implementi.
+
 ## D-07 · L'architettura del corpus e quella dell'EA non coincidono · `INFERRED`
 
 **Questa è una lettura mia, non un'affermazione della fonte.** La segnalo perché
 riguarda il modo in cui l'intero progetto è impostato.
+
+> Aggiornamento dopo la lettura di Yanu Emmanuel: D-08 rafforza questa lettura,
+> ma **non la dimostra**. D-08 è esplicito nella fonte e riguarda una singola
+> strategia (Malaysian SNR); D-07 resta una mia generalizzazione all'intera
+> architettura.
 
 | | Corpus (Alchemist) | EA NEXUS |
 |---|---|---|

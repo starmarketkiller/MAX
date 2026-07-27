@@ -3,6 +3,69 @@
   "description": "Registro delle fonti documentali acquisite per l'audit NEXUS. Ogni record dichiara identita' crittografica e stato di lavorazione.",
   "sources": [
     {
+      "filename": "863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf",
+      "repository_path": "docs/sources/corpus/863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 5623928,
+      "page_count": 51,
+      "sha256": "9f75d6ad349af6c8680ac78707479c14bb800cefee89db91a6bb59913672fc1d",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 39,
+        "characters": 24685
+      },
+      "declared_in_master_a4_2": {
+        "pages": 51,
+        "pages_with_text": 51,
+        "characters": "28.447"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (archivio ZIP)",
+      "notes": [
+        "Documento piu' completo del corpus: indice, capitoli, prosa nativa.",
+        "Capitolo 2 e' interamente sulla MALAYSIAN SNR, che corrisponde alla strategia MALAYSIAN_SNR (selettore 26) dell'EA.",
+        "Il titolo contiene la stessa composizione dichiarata da Sequence.pdf: MSNR x SMC x ICT the Alchemist.",
+        "Quarta conferma indipendente della primitiva open/close, e spiega perche' Alchemist la chiama Classic V / Classic A: sono le forme su grafico a linee."
+      ]
+    },
+    {
+      "filename": "CANDLE_RANGE_THEORY.pdf",
+      "repository_path": "docs/sources/corpus/CANDLE_RANGE_THEORY.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 1305456,
+      "page_count": 12,
+      "sha256": "991c4a764a42a7c0c9c12e556879738c3ee52700ff37ce36e645c986818d797a",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 12,
+        "characters": 3247
+      },
+      "declared_in_master_a4_2": null,
+      "declared_matches_actual": null,
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "fornito dal proprietario; NON dichiarato nel blocco A4.2 del Master v18",
+      "notes": [
+        "Fonte AGGIUNTIVA: non fa parte dei 13 PDF del corpus dichiarato.",
+        "Metodo piu' precisamente codificabile del corpus: modello a tre candele con regola di invalidazione esatta su close.",
+        "Contiene solo l'introduzione: quattro sezioni su cinque sono rimandate a una classe successiva."
+      ]
+    },
+    {
       "filename": "My Rare SNR Course 2.pdf",
       "repository_path": "docs/sources/corpus/My Rare SNR Course 2.pdf",
       "category": "TRADING_COURSE_CORPUS",
@@ -249,11 +312,13 @@
     }
   ],
   "counts": {
-    "total": 8,
-    "ingested": 8,
-    "analyzed": 4,
-    "corpus_pdfs_received": 7,
+    "total": 10,
+    "ingested": 10,
+    "analyzed": 6,
+    "corpus_pdfs_received": 9,
     "corpus_pdfs_declared_in_a4_2": 13,
-    "corpus_pdfs_still_missing": 6
+    "corpus_pdfs_from_a4_2_received": 8,
+    "corpus_pdfs_outside_a4_2": 1,
+    "corpus_pdfs_still_missing": 5
   }
 }
