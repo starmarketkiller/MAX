@@ -127,6 +127,72 @@
       ]
     },
     {
+      "filename": "Sequence.pdf",
+      "repository_path": "docs/sources/corpus/Sequence.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 21517214,
+      "page_count": 76,
+      "sha256": "f7205bb9cd144bc8f29ee9c155817ba929bfebca205e407f34f539651c61c7f3",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PARTIAL",
+      "read_status": "PARTIALLY_READ_20_OF_76",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 76,
+        "pages_with_text": 56,
+        "characters": "4.588"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (consegnato in archivio ZIP)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo.",
+        "Contiene il framework ALCHEMIST: composizione dichiarata MSNR -> SMC -> LIT -> ICT con ruoli assegnati."
+      ]
+    },
+    {
+      "filename": "Sequence_1.pdf",
+      "repository_path": "docs/sources/corpus/Sequence_1.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 32633011,
+      "page_count": 74,
+      "sha256": "bc81027618a3f835e904c34874285d93ef9de1a63e7151fda736e7af5e1ef78a",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 74,
+        "pages_with_text": 46,
+        "characters": "55.488"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (consegnato in archivio ZIP)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo.",
+        "Seconda parte della famiglia Alchemist. A4.2 le attribuisce 55.488 caratteri OCR, la densita' testuale piu' alta della famiglia."
+      ]
+    },
+    {
       "filename": "ict-trading-250828073107-caca0de9.pdf",
       "repository_path": "docs/sources/corpus/ict-trading-250828073107-caca0de9.pdf",
       "category": "TRADING_COURSE_CORPUS",
@@ -183,11 +249,11 @@
     }
   ],
   "counts": {
-    "total": 6,
-    "ingested": 6,
+    "total": 8,
+    "ingested": 8,
     "analyzed": 4,
-    "corpus_pdfs_received": 5,
+    "corpus_pdfs_received": 7,
     "corpus_pdfs_declared_in_a4_2": 13,
-    "corpus_pdfs_still_missing": 8
+    "corpus_pdfs_still_missing": 6
   }
 }

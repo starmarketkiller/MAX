@@ -8,10 +8,11 @@
 | | |
 |---|---|
 | Data | 2026-07-26 |
-| PDF ricevuti | **5 su 13** dichiarati nel blocco A4.2 del Master v18 |
+| PDF ricevuti | **7 su 13** dichiarati nel blocco A4.2 del Master v18 |
 | PDF letti integralmente | 3 (`My Rare SNR Course`, `My Rare SNR Course 2`, `ict-trading`) |
-| PDF archiviati e non ancora letti | 2 (`SNR Malaysia` 74 p, `Secret Of 411(1)` 16 p) |
-| PDF ancora mancanti | 8 |
+| PDF letti parzialmente | 1 (`Sequence` — 20 pagine su 76) |
+| PDF archiviati e non ancora letti | 3 (`SNR Malaysia` 74 p, `Secret Of 411(1)` 16 p, `Sequence_1` 74 p) |
+| PDF ancora mancanti | **6** |
 | Registro fonti | `docs/sources/SOURCE_MANIFEST.json` |
 
 ## Verifica di integrità delle fonti
@@ -23,11 +24,13 @@
 | `SNR Malaysia.pdf` | 74 | 74 | ✅ | 74/74 (888 car.) |
 | `Secret Of 411(1).pdf` | 16 | 16 | ✅ | **0/16** |
 | `ict-trading-…pdf` | 91 | 91 | ✅ | 91/91 (58.358 car.) |
+| `Sequence.pdf` | 76 | 76 | ✅ | **0/76** |
+| `Sequence_1.pdf` | 74 | 74 | ✅ | **0/74** |
 
-**I conteggi pagina di A4.2 sono corretti**, verificati con `pypdf`. I conteggi
-di *caratteri* di A4.2 non sono riproducibili con estrazione nativa perché
-quell'audit usava OCR supplementare: quattro file su cinque hanno 10 caratteri
-per pagina o meno — cioè solo il numero di pagina. **Sono corsi visivi.** La
+**I conteggi pagina di A4.2 sono corretti su tutti e sette i file**, verificati
+con `pypdf`. I conteggi di *caratteri* non sono riproducibili con estrazione
+nativa perché quell'audit usava OCR supplementare: **sei file su sette** hanno
+10 caratteri per pagina o meno — cioè solo il numero di pagina. **Sono corsi visivi.** La
 lettura utile richiede rendering delle pagine, non estrazione di testo.
 
 ## Legenda
@@ -42,24 +45,57 @@ lettura utile richiede rendering delle pagine, non estrazione di testo.
 
 ---
 
-## ⚠️ Il corpus contiene tre metodologie distinte, non una
+## ⚠️ Il corpus non è una raccolta di metodi separati: ha un framework che li compone
 
-La prima cosa che la lettura diretta smentisce è un'assunzione implicita: che i
-file "SNR" siano lo stesso corso in più parti.
+> **Correzione a una versione precedente di questo documento.** Dopo la lettura
+> dei primi tre PDF avevo scritto che il corpus conteneva "tre metodologie
+> distinte, non una". Al livello dei singoli file è vero. Ma `Sequence.pdf`,
+> letto dopo, mostra che esiste un **framework di integrazione dichiarato** che
+> le compone con ruoli espliciti. L'affermazione precedente era incompleta e va
+> letta con questa sezione.
 
-| Famiglia | File | Autore/origine | Metodo |
+`Sequence.pdf` si intitola **"SMART MONEY ABAY FX — ALCHEMIST"** e definisce
+Alchemist così (p. 1–2, `EXPLICIT`):
+
+> "ALCHEMIST SENDIRI ADALAH SATU KE SATUAN ATAU GABUNGAN DARI BERBAGAI METODE
+> YANG MENJADI SATU"
+> "Alchemist is a method that mixes several other methods to form a unified whole
+> to analyze a market."
+
+Con un diagramma di flusso e un'assegnazione di **ruoli**:
+
+```text
+MSNR  →  SMC  →  LIT  →  ICT
+
+MSNR : ENTRY POI
+ICT  : KILL ZONES
+SMC  : STRUCTURE
+LIT  : LIQUIDITY / STRUCTURE
+```
+
+**Questo è il pezzo che mancava.** I singoli corsi non sono alternative fra cui
+scegliere: sono **componenti con funzioni diverse dentro una sola pipeline**. La
+struttura viene da SMC, la liquidità da LIT, il timing da ICT, il punto di
+ingresso da MSNR.
+
+### Le tre famiglie, riviste
+
+| Famiglia | File | Origine | Ruolo in Alchemist |
 |---|---|---|---|
-| **SNR / Flipping** | `My Rare SNR Course.pdf` | Price Action Traders, `@iadegboruwa` | livelli SNR dal confine close/open, flipping, GAP_SNR, DOJI_SNR |
-| **Trendline "411"** | `My Rare SNR Course 2.pdf` | `liquidityinducementcourses.com`, "by 411" | 6 tipi di trendline, confluenza SNR+TL, XR/QM/666 TL |
-| **ICT** | `ict-trading-…pdf` | dipprofit.com (divulgazione del metodo di Michael J. Huddleston) | FVG, OTE, Order Block, Displacement, Silver Bullet |
+| **ALCHEMIST** | `Sequence.pdf`, `Sequence_1.pdf` | Smart Money Abay FX | **framework di composizione** |
+| **MSNR / SNR-Flipping** | `My Rare SNR Course.pdf` | Price Action Traders | ENTRY POI |
+| **Trendline "411"** | `My Rare SNR Course 2.pdf` | liquidityinducementcourses.com | parte di MSNR (confluenza SNR+TL) |
+| **ICT** | `ict-trading-…pdf` | dipprofit.com (metodo Huddleston) | KILL ZONES + AOI |
 
-`My Rare SNR Course 2.pdf` **non è la seconda parte** di `My Rare SNR Course.pdf`:
-è un corso di un altro autore su un altro metodo. Il nome del file induce in
-errore, e A4.2 li aveva raggruppati come se fossero affini.
+Resta vero che `My Rare SNR Course 2.pdf` **non è la seconda parte** di
+`My Rare SNR Course.pdf` — è un altro autore. Ma non è nemmeno un metodo
+estraneo: Alchemist usa la confluenza SNR+trendline come costruttore di POI, e
+`Sequence.pdf` p. 10 la chiama **"THE [X] FACTOR OF TRENDLINE"** con la stessa
+definizione di confluenza del corso 411.
 
-**Conseguenza:** la regola §A4.2 "la terminologia duplicata fra corsi non va
-trattata come equivalenza semantica senza riconciliazione" non è teorica. Qui
-"SNR" significa due cose diverse in due file che si chiamano quasi uguale.
+**Conseguenza per la regola §A4.2** ("la terminologia duplicata fra corsi non va
+trattata come equivalenza semantica senza riconciliazione"): la riconciliazione
+non solo è necessaria — è **possibile**, perché Alchemist la fornisce.
 
 ---
 
@@ -384,6 +420,126 @@ autorità finale.
 
 ---
 
+# PARTE 4 — Framework ALCHEMIST
+
+Fonte: `Sequence.pdf`, 76 pagine, lette le prime 20. Documento bilingue
+indonesiano/inglese, interamente per immagini.
+
+## A-01 · Composizione e ruoli — `EXPLICIT`
+
+Vedi la sezione iniziale. `MSNR → SMC → LIT → ICT`, con ruoli assegnati.
+
+## A-02 · Tassonomia POI / AOI — `EXPLICIT`
+
+La distinzione più utile del documento, perché separa **livelli** da **zone**:
+
+```text
+POI — Point of Interest   (un LIVELLO, prezzo singolo)
+  esempi: QM, RBS, SBR, OCL
+  SNR POI:  support = CLASSIC V   ·   resistance = CLASSIC A
+
+AOI — Area of Interest    (una ZONA, intervallo di prezzo)
+  esempi: FVG, BPR, IFVG, BISI, ORDER BLOCK, BREAKER BLOCK
+```
+
+## A-03 · RBS / SBR — `EXPLICIT`, con sequenza operativa
+
+```text
+RBS = Resistance Becomes Support
+      pattern: Break → Retest → Continue Up      (bias rialzista, area di acquisto)
+
+SBR = Support Becomes Resistance
+      pattern: Break → Retest → Continue Down    (bias ribassista, area di vendita)
+```
+
+È la stessa nozione di *flipping* di S-03, con la sequenza in tre tempi resa
+esplicita. **Due fonti indipendenti concordano** — è il primo concetto del
+corpus con doppia conferma.
+
+## A-04 · QM / Quasimodo — `EXPLICIT`, struttura precisa
+
+> "Quasimodo is a reversal pattern that forms after a market structure break,
+> marking the Smart Money reversal zone."
+
+```text
+QM ribassista:  Higher High → Higher Low → Lower High → Lower Low
+QM rialzista:   Lower Low  → Lower High → Higher Low  → Higher High
+
+Sequenza operativa (versione ribassista, dal testo indonesiano):
+  1. il mercato fa un Higher High (HH)
+  2. poi fa un Lower Low (LL)  → la struttura inizia a indebolirsi
+  3. quando il prezzo ritraccia e forma un Lower High (LH) nell'area
+     precedente — il QM Level — quella è la zona di ingresso short
+```
+
+## A-05 · OCL — Open Close Levels — `EXPLICIT`
+
+```text
+OCL           livello chiave dall'HTF          → zona base
+Candela HTF   definisce l'area di reazione     → zona di setup
+Struttura LTF fornisce la conferma d'ingresso  → zona di entry
+Buying/Selling Model  determina la direzione   → fase di esecuzione
+```
+
+**OCL è lo stesso oggetto di S-01**: un livello definito dal confine
+open/close. Due fonti indipendenti, stessa primitiva, nomi diversi
+(`SNR level` in MSNR, `OCL` in Alchemist). È esattamente il tipo di
+riconciliazione terminologica che §A4.2 richiede.
+
+## A-06 · Classic V / Classic A — `EXPLICIT`
+
+```text
+CLASSIC V (supporto):
+  il prezzo scende su un'area di supporto e rimbalza formando una "V"
+  rifiuto rapido dalla zona di supporto
+  una candela rialzista si forma SUBITO DOPO che una ribassista tocca il livello
+  → uso: ingressi di acquisto sul supporto
+
+CLASSIC A (resistenza):
+  il prezzo sale su un'area di resistenza e ricade formando una "A"
+  una candela ribassista compare subito dopo che una rialzista tocca il livello
+  → uso: ingressi di vendita sulla resistenza
+```
+
+Il diagramma mostra candela ribassista seguita da rialzista al supporto:
+**è la stessa costruzione di S-01**. Terza conferma incrociata della primitiva
+close/open.
+
+## A-07 · QMX — `EXPLICIT` (diagrammi), `MISSING` (regole quantitative)
+
+> "QMX — Comprises of QM + Trendline crossing (X)"
+
+I diagrammi (p. 11–12) mostrano, per la versione di vendita: livello SNR toccato
+tre volte (1, 2, 3), trendline ascendente che lo interseca al terzo tocco, e una
+candela **ENGULF** al punto di incrocio. Il POI è il punto di intersezione fra
+SNR e trendline.
+
+`MISSING`: la fonte non definisce la tolleranza dell'intersezione né i criteri
+di validità della candela engulfing.
+
+## A-08 · Tipi di trendline in MSNR — `EXPLICIT`
+
+```text
+Regular Trendline   → supporto/resistenza dinamici; ingresso sul retest
+Breakout Trendline  → rottura della TL = possibile cambio di struttura;
+                      si attende il retest per confermare la nuova direzione
+Trendline Divergence → prezzo e angolo della TL divergono
+                      (es. il prezzo fa higher high ma la TL si appiattisce)
+                      → debolezza del trend, potenziale reversal
+```
+
+## A-09 · Confluenza / [X] Factor — `EXPLICIT`
+
+> "Two or three points of convergence that result in the same direction. These
+> points could be: SNR + Trendline, or two SNR levels converging at the same
+> point to give a sell or buy signal."
+
+Il POI operativo è il punto dove **due o tre elementi indipendenti convergono**.
+Nei grafici XAUUSD (p. 13–20) il POI è l'intersezione di due trendline con un
+livello orizzontale.
+
+---
+
 # Confronto preliminare con l'implementazione
 
 **Nessuna di queste voci è un verdetto.** Sono confronti fra una fonte e una
@@ -414,7 +570,7 @@ Due osservazioni distinte:
 2. la finestra "London 10–11 GMT" corrisponde a 05:00–06:00 ET e non compare in
    questa fonte.
 
-**Da confermare:** se un'altra fonte del corpus (8 PDF ancora mancanti) definisca
+**Da confermare:** se un'altra fonte del corpus (6 PDF ancora mancanti) definisca
 una killzone di Londra, oppure se la finestra sia una scelta di progetto non
 derivata dal corso.
 
@@ -453,6 +609,49 @@ confronto con il codice non è stato eseguito in questa consegna.
 
 Vedi T-05. Non è una divergenza: è un'assenza.
 
+## D-06 · Primitive di Alchemist assenti dall'EA · `EXPLICIT`
+
+Confronto fra la tassonomia POI/AOI (A-02) e i 37 identificatori del registro
+canonico:
+
+| Primitiva Alchemist | Tipo | Strategia EA corrispondente |
+|---|---|---|
+| `FVG` / `BISI` | AOI | `FVG_CONT`, `FVG_MIT` ✅ |
+| `IFVG` | AOI | `IFVG` ✅ |
+| `ORDER BLOCK` | AOI | `ORDER_BLOCK`, `OB_MIT` ✅ |
+| `RBS` / `SBR` | POI | `SH_BMS_RTO`, `SMS_BMS_RTO` — **da verificare** |
+| **`QM` (Quasimodo)** | POI | **nessuna** |
+| **`OCL` (Open Close Levels)** | POI | **nessuna** |
+| **`CLASSIC V` / `CLASSIC A`** | POI | **nessuna** |
+| **`BPR`** | AOI | **nessuna** |
+| **`BREAKER BLOCK`** | AOI | **nessuna** |
+| **`QMX`** | composito | **nessuna** |
+| **trendline (3 tipi + confluenza)** | POI | **nessuna** |
+
+**Sette primitive su undici non hanno alcuna implementazione.** Fra queste c'è
+`OCL`, che è la stessa cosa del livello SNR di MSNR (A-05) — la primitiva più
+fondamentale dell'intero corpus.
+
+## D-07 · L'architettura del corpus e quella dell'EA non coincidono · `INFERRED`
+
+**Questa è una lettura mia, non un'affermazione della fonte.** La segnalo perché
+riguarda il modo in cui l'intero progetto è impostato.
+
+| | Corpus (Alchemist) | EA NEXUS |
+|---|---|---|
+| Forma | **una pipeline** con ruoli: struttura → liquidità → killzone → POI d'ingresso | **37 strategie parallele e indipendenti** |
+| Decisione | un POI si forma quando 2–3 elementi **convergono** | ogni strategia produce un segnale per conto proprio |
+| Composizione | dichiarata e ordinata (`MSNR → SMC → LIT → ICT`) | somma di score, con conviction (oggi disattivata) |
+
+Nel corpus, `FVG`, `ORDER BLOCK` e `SNR` **non sono strategie**: sono
+*primitive* che il metodo compone. Nell'EA sono diventate 37 strategie che
+votano in parallelo.
+
+Non concludo che questo spieghi l'assenza di edge — sarebbe una spiegazione
+comoda e non l'ho misurata. Ma è un'ipotesi **testabile**, ed è la prima
+ipotesi strutturale che il corpus permette di formulare. Va messa fra le
+decisioni del proprietario, non applicata.
+
 ---
 
 # Cosa manca ancora
@@ -461,21 +660,30 @@ Vedi T-05. Non è una divergenza: è un'assenza.
 
 | File | Pagine | Perché serve |
 |---|---:|---|
+| `Sequence.pdf` (p. 21–76) | 56 | resto del framework Alchemist: 20 pagine su 76 lette |
+| `Sequence_1.pdf` | 74 | seconda parte di Alchemist; A4.2 le attribuisce 55.488 caratteri OCR, la densità testuale più alta della famiglia |
 | `SNR Malaysia.pdf` | 74 | è la fonte plausibile di `MALAYSIAN_SNR` (selettore 26), strategia live mai misurata |
 | `Secret Of 411(1).pdf` | 16 | famiglia "411", stessa origine del metodo trendline; interamente per immagini |
 
-## PDF ancora mancanti — 8 su 13
+## PDF ancora mancanti — 6 su 13
 
 `863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf` ·
-`Sequence.pdf` · `Sequence_1.pdf` · `Sequence_2_unlocked.pdf` ·
+`Sequence_2_unlocked.pdf` ·
 `allyouneedtoknow-230110032117-f4fdcdb0.pdf` ·
 `candlesticksfibonacciandchartpatterntrading-…pdf` ·
-`flippingmarkets1-230503210106-91bd5cfc.pdf` · (+ eventuale duplicato SNR)
+`flippingmarkets1-230503210106-91bd5cfc.pdf` · `My Rare SNR Course 2.pdf`
+(voce distinta in A4.2 con 10 pagine — ricevuta)
 
-**I tre file `Sequence*` restano i più importanti e i più problematici:** A4.2
-dichiara che `Sequence_2_unlocked.pdf` ha 119 pagine e **zero** testo estratto.
-Sono la famiglia "Sequence / Proprietary Models", cioè il modello proprietario
-che il Master raccomanda di isolare.
+Il primo della lista merita attenzione: il titolo
+`MSNR-x-SMC-x-ICT-the-Alchemist` contiene **la stessa composizione** che
+`Sequence.pdf` dichiara (`MSNR → SMC → LIT → ICT`). È verosimilmente una
+seconda esposizione dello stesso framework, di un altro autore.
+
+**`Sequence_2_unlocked.pdf` resta il caso peggiore:** A4.2 gli attribuisce 119
+pagine e **zero** testo estratto. Con i due file ricevuti ora sappiamo che la
+famiglia "Sequence" **è** Alchemist, cioè il framework di composizione — non un
+modello proprietario oscuro. Il terzo file resta l'unico non recuperabile con
+l'estrazione, e va letto a vista come gli altri.
 
 ## Informazioni che nessuno dei file letti fornisce
 
