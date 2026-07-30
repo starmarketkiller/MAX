@@ -1,0 +1,301 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia SILVER_BULLET (sweep→displacement→FVG→retest) — XAUUSD M15
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_SilverBullet / NXS_SB_UpdateSide (NXS_Strategies_SMC.mqh).
+//
+// Fonte formalizzata: I-07 (PDF ICT) + fonti esterne corroboranti. Verdetto
+// di fedeltà: NEXUS_STRATEGY_FIDELITY_REPORT_01.md, F-02 (REMEDIATO il
+// 30/07 — tre killzone ET, DST-aware, in luogo delle due finestre GMT fisse
+// della versione precedente). Questo script riflette il codice GIÀ corretto.
+//
+// MACCHINA A STATI (due indipendenti, buy e sell), IDLE -> SWEPT -> WAITING_RETURN:
+//   1. IDLE: durante una delle tre killzone ET, se un livello di liquidità
+//      viene "sweepato" (wick oltre il livello, chiusura dentro) nella
+//      direzione giusta -> SWEPT, memorizza il livello.
+//   2. SWEPT: cerca una candela displacement (corpo >= 0.8×ATR, colore giusto)
+//      che rompe uno swing di riferimento (12 barre, BOS) -> forma un FVG a 3
+//      candele -> WAITING_RETURN. Scaduto dopo 15 barre senza displacement.
+//   3. WAITING_RETURN: se il prezzo richiude oltre il livello di sweep nella
+//      direzione sbagliata, annulla. Altrimenti aspetta il retest del FVG ->
+//      segnale, one-shot. Scaduto dopo 15 barre senza retest.
+//
+// KILLZONE (F-02): tre finestre ET, non due finestre GMT fisse — London Open
+// 03-04 ET, AM 10-11 ET, PM 14-15 ET. A differenza della versione MQL5 (che
+// calcola la DST USA a mano, vedi NXS_IsUSEDT in NXS_Strategies_SMC.mqh),
+// Pine supporta nativamente le timezone IANA con DST automatica —
+// hour(time, "America/New_York") — stessa specifica, calcolo più diretto.
+//
+// SWEEP (NXS_DetectSweepExt, NXS_MarketAnalysis.mqh): livelli di liquidità
+// candidati, in ordine di precedenza CASCATA (l'ultimo che scatta sulla
+// stessa barra vince — mensile > settimanale > giornaliero > sessione Asia):
+// Asia High/Low (scan sessione GMT configurabile), PDH/PDL, PWH/PWL, PMH/PML.
+//
+// SEMPLIFICAZIONE NOTA (omessa di proposito): il fallback Equal-High/Equal-Low
+// (EQH/EQL — coppia di swing entro tolleranza ATR) NON è replicato. Nel
+// codice reale scatta SOLO come ultima risorsa, se nessuno dei sei livelli
+// sopra ha già confermato uno sweep sulla stessa barra — richiederebbe un
+// rilevatore di swing con clustering su 60 barre, sproporzionato per un
+// fallback che si attiva solo quando tutto il resto tace.
+//
+// GESTIONE USCITA — a differenza delle altre 9 strategie già portate (tutte
+// con profilo MQL5 dedicato, SL/TP fisso, trailATR=0), SILVER_BULLET non ha
+// un profilo in NXS_StrategyProfiles.mqh ("session/Elliott... usano i
+// globali"): usa il fallback GLOBALE di NXS_Management.mqh — breakeven a
+// 1.0×ATR di profitto flottante (ATR CORRENTE, non quello congelato
+// all'apertura), poi trailing da 1.5×ATR con distanza 1.0×ATR (0.7×ATR dopo
+// il breakeven). SL/TP iniziali restano fissi (0.6×ATR dal livello di sweep,
+// 2.8×ATR dall'ingresso, ATR al momento del segnale) finché non scattano.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. Il retest del FVG
+// usa il prezzo BID live in MQL5 — qui approssimato col range low/high della
+// barra appena chiusa, come in LIQ_VOID/ORDER_BLOCK/DISP_REBAL. Anche il
+// breakeven/trailing (BID/ASK live in MQL5) è approssimato con la chiusura
+// della barra, stessa logica.
+// =============================================================================
+strategy("NEXUS EA - SILVER_BULLET (XAUUSD M15)", shorttitle="NXS-SB", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+asianStartH = input.int(0, "Sessione Asia: ora inizio (GMT)")
+asianEndH   = input.int(7, "Sessione Asia: ora fine (GMT)")
+swingLookback  = input.int(12, "Swing/BOS: barre di riferimento")
+maxBars        = input.int(15, "Fasi SWEPT/WAITING_RETURN: scadenza dopo N barre")
+dispBodyMult   = input.float(0.8, "Displacement: corpo minimo × ATR")
+slSweepMult    = input.float(0.6, "SL: offset oltre il livello di sweep × ATR")
+tpMult         = input.float(2.8, "TP × ATR (al momento del segnale)")
+beTriggerMult       = input.float(1.0, "Breakeven: trigger × ATR corrente")
+trailActivateMult   = input.float(1.5, "Trailing: attivazione × ATR corrente")
+trailDistMult       = input.float(1.0, "Trailing: distanza × ATR corrente (pre-BE)")
+trailDistPostBEMult = input.float(0.7, "Trailing: distanza × ATR corrente (post-BE)")
+maxHoldBars = input.int(40, "Time-exit posizione (barre)", tooltip="Chiusura forzata a mercato dopo N barre dall'apertura — stesso ~40 barre del TF strategia usato dalle altre strategie già portate (NXS_Management.mqh), indipendente dalle 15 barre di scadenza delle fasi SWEPT/WAITING_RETURN sopra.")
+atrLen = input.int(14, "ATR length")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal  = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Killzone (F-02, DST nativa Pine) -------------
+etHour = hour(time, "America/New_York")
+killzoneLdnOpen = etHour >= 3  and etHour < 4
+killzoneAM      = etHour >= 10 and etHour < 11
+killzonePM      = etHour >= 14 and etHour < 15
+inKillzone = killzoneLdnOpen or killzoneAM or killzonePM
+
+// ----------------------------- Livelli di liquidità (PDH/PDL/PWH/PWL/PMH/PML) --
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_off)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_off)
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_off)
+pwl = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_off)
+pmh = request.security(syminfo.tickerid, "M", high[1], lookahead=barmerge.lookahead_off)
+pml = request.security(syminfo.tickerid, "M", low[1],  lookahead=barmerge.lookahead_off)
+
+// ----------------------------- Asia High/Low (scan 96 barre M15 = ~24h) -----
+get_asia_range() =>
+    float hi = na
+    float lo = na
+    for i = 0 to 95
+        gh = hour(time[i], "UTC")
+        if gh >= asianStartH and gh <= asianEndH
+            hi := na(hi) ? high[i] : math.max(hi, high[i])
+            lo := na(lo) ? low[i]  : math.min(lo, low[i])
+    [hi, lo]
+
+[asiaHiRaw, asiaLoRaw] = get_asia_range()
+asiaHi = na(asiaHiRaw) ? pdh : asiaHiRaw
+asiaLo = na(asiaLoRaw) ? pdl : asiaLoRaw
+
+// ----------------------------- Sweep (cascata Asia -> Daily -> Weekly -> Monthly) --
+h1v = high
+l1v = low
+c1v = close
+
+sweepDir = "NONE"
+sweepLevel = float(na)
+
+if h1v > asiaHi and c1v < asiaHi
+    sweepDir := "SELL"
+    sweepLevel := asiaHi
+if l1v < asiaLo and c1v > asiaLo
+    sweepDir := "BUY"
+    sweepLevel := asiaLo
+if h1v > pdh and c1v < pdh
+    sweepDir := "SELL"
+    sweepLevel := pdh
+if l1v < pdl and c1v > pdl
+    sweepDir := "BUY"
+    sweepLevel := pdl
+if h1v > pwh and c1v < pwh
+    sweepDir := "SELL"
+    sweepLevel := pwh
+if l1v < pwl and c1v > pwl
+    sweepDir := "BUY"
+    sweepLevel := pwl
+if not na(pmh) and h1v > pmh and c1v < pmh
+    sweepDir := "SELL"
+    sweepLevel := pmh
+if not na(pml) and l1v < pml and c1v > pml
+    sweepDir := "BUY"
+    sweepLevel := pml
+
+sweepConfirmed = sweepDir != "NONE"
+
+// ----------------------------- Swing/BOS di riferimento ---------------------
+swingRefHi = ta.highest(high[2], swingLookback)   // offset[2..2+lookback-1] = shift[3..3+lookback-1]
+swingRefLo = ta.lowest(low[2],  swingLookback)
+
+// ----------------------------- Stato BUY (dir +1) ----------------------------
+var int   sbBuyState      = 0   // 0=IDLE, 1=SWEPT, 2=WAITING_RETURN
+var float sbBuySweepLevel = na
+var float sbBuyFvgLo      = na
+var float sbBuyFvgHi      = na
+var int   sbBuyBarsWaited = 0
+buySignal = false
+
+if sbBuyState == 0
+    if inRange and inKillzone and sweepConfirmed and sweepDir == "BUY"
+        sbBuyState := 1
+        sbBuyBarsWaited := 0
+        sbBuySweepLevel := sweepLevel
+else if sbBuyState == 1
+    sbBuyBarsWaited := sbBuyBarsWaited + 1
+    if sbBuyBarsWaited > maxBars
+        sbBuyState := 0
+    else
+        o2 = open[1]
+        c2 = close[1]
+        body2 = math.abs(c2 - o2)
+        if body2 >= dispBodyMult * atrVal and c2 > o2 and c2 > swingRefHi
+            c1High = high[2]
+            c3Low  = low
+            if c3Low > c1High
+                sbBuyFvgLo := c1High
+                sbBuyFvgHi := c3Low
+                sbBuyState := 2
+                sbBuyBarsWaited := 0
+else if sbBuyState == 2
+    sbBuyBarsWaited := sbBuyBarsWaited + 1
+    if sbBuyBarsWaited > maxBars
+        sbBuyState := 0
+    else if close < sbBuySweepLevel
+        sbBuyState := 0
+    else if sbBuyFvgHi > sbBuyFvgLo and low <= sbBuyFvgHi and high >= sbBuyFvgLo
+        buySignal := true
+        sbBuyState := 0
+
+// ----------------------------- Stato SELL (dir -1) ---------------------------
+var int   sbSellState      = 0
+var float sbSellSweepLevel = na
+var float sbSellFvgLo      = na
+var float sbSellFvgHi      = na
+var int   sbSellBarsWaited = 0
+sellSignal = false
+
+if sbSellState == 0
+    if inRange and inKillzone and sweepConfirmed and sweepDir == "SELL"
+        sbSellState := 1
+        sbSellBarsWaited := 0
+        sbSellSweepLevel := sweepLevel
+else if sbSellState == 1
+    sbSellBarsWaited := sbSellBarsWaited + 1
+    if sbSellBarsWaited > maxBars
+        sbSellState := 0
+    else
+        o2 = open[1]
+        c2 = close[1]
+        body2 = math.abs(c2 - o2)
+        if body2 >= dispBodyMult * atrVal and c2 < o2 and c2 < swingRefLo
+            c1Low  = low[2]
+            c3High = high
+            if c3High < c1Low
+                sbSellFvgLo := c3High
+                sbSellFvgHi := c1Low
+                sbSellState := 2
+                sbSellBarsWaited := 0
+else if sbSellState == 2
+    sbSellBarsWaited := sbSellBarsWaited + 1
+    if sbSellBarsWaited > maxBars
+        sbSellState := 0
+    else if close > sbSellSweepLevel
+        sbSellState := 0
+    else if sbSellFvgHi > sbSellFvgLo and high >= sbSellFvgLo and low <= sbSellFvgHi
+        sellSignal := true
+        sbSellState := 0
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and buySignal
+shortCond = inRange and sellSignal
+
+// ----------------------------- SL/TP iniziali (pending, come LIQ_VOID) ------
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var bool  beReached  = false
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    beReached := false
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    pendingSL := sbBuySweepLevel - slSweepMult * atrVal
+    pendingTP := close + tpMult * atrVal
+    strategy.entry("Long", strategy.long, comment="SB:sweep+fvg_retest_bull")
+if shortCond and strategy.position_size >= 0
+    pendingSL := sbSellSweepLevel + slSweepMult * atrVal
+    pendingTP := close - tpMult * atrVal
+    strategy.entry("Short", strategy.short, comment="SB:sweep+fvg_retest_bear")
+
+// ----------------------------- Breakeven + trailing (fallback globale) ------
+if strategy.position_size != 0 and not na(slLevel)
+    isLong = strategy.position_size > 0
+    openPx = strategy.position_avg_price
+    prof   = isLong ? (close - openPx) : (openPx - close)
+    beTrigger     = atrVal * beTriggerMult
+    trailActivate = atrVal * trailActivateMult
+    trailDist     = atrVal * (beReached ? trailDistPostBEMult : trailDistMult)
+
+    if not beReached and prof >= beTrigger
+        beNewSL = isLong ? math.max(slLevel, openPx) : math.min(slLevel, openPx)
+        if beNewSL != slLevel
+            slLevel := beNewSL
+            beReached := true
+
+    if prof >= trailActivate
+        trailNewSL = isLong ? close - trailDist : close + trailDist
+        if isLong and trailNewSL > slLevel
+            slLevel := trailNewSL
+        if not isLong and trailNewSL < slLevel
+            slLevel := trailNewSL
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(sbBuyState  == 2 ? sbBuyFvgLo  : na, "FVG bull lo", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(sbBuyState  == 2 ? sbBuyFvgHi  : na, "FVG bull hi", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(sbSellState == 2 ? sbSellFvgLo : na, "FVG bear lo", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(sbSellState == 2 ? sbSellFvgHi : na, "FVG bear hi", color=color.new(color.red, 0), style=plot.style_linebr)
+bgcolor(inKillzone ? color.new(color.yellow, 92) : na, title="Killzone attiva")
+
+if barstate.islast and timeframe.period != "15"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su M15 — imposta il chart a 15 minuti", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS SILVER_BULLET BUY", "NEXUS SILVER_BULLET: retest FVG bullish su barra chiusa")
+alertcondition(shortCond, "NXS SILVER_BULLET SELL", "NEXUS SILVER_BULLET: retest FVG bearish su barra chiusa")
