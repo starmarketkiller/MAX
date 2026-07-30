@@ -1,0 +1,260 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia SH_BMS_RTO (Sweep→MSS→Ritorno origine) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_SH_BMS_RTO / NXS_SHBMS_UpdateSide (NXS_Strategies_SMC.mqh), che
+// legge il rilevatore condiviso NXS_DetectSweepExt, e il profilo attuale
+// (NXS_StrategyProfiles.mqh: SH_BMS_RTO -> slMult=1.0, tpMult=4.5 nel
+// profilo, MA SL/TP reali sono geometrici — vedi sotto; htf=false, beR=0,
+// trailATR=0, PERIOD_D1).
+//
+// MACCHINA A STATI (due indipendenti, buy e sell), IDLE -> SWEPT -> WAITING_RETURN:
+//   1. IDLE: sweep di liquidità confermato (cascata PDH/PDL/PWH/PWL/PMH/PML,
+//      priorità Monthly>Weekly>Daily) nella direzione voluta -> SWEPT,
+//      memorizza il livello sweepato e lo swing di riferimento (massimo/
+//      minimo delle 15 barre precedenti, shift 2..16) che l'MSS dovrà rompere.
+//   2. SWEPT: si invalida se una barra chiude oltre il livello sweepato nel
+//      verso sbagliato. Altrimenti cerca il Market Structure Shift: una
+//      barra con corpo >= 0.8×ATR che chiude oltre lo swing di riferimento.
+//      Scaduto dopo 20 barre senza MSS. Confermato l'MSS, l'origine della
+//      zona è l'ultima candela di colore OPPOSTO entro le 5 barre precedenti
+//      (shift 2..6, più vicina prima).
+//   3. WAITING_RETURN: si invalida come sopra. Altrimenti aspetta che il
+//      prezzo rientri nella zona d'origine (qui approssimato col range
+//      low/high della barra chiusa, come LIQ_VOID/ORDER_BLOCK) -> segnale,
+//      one-shot. Scaduto dopo 15 barre senza ritorno.
+//
+// SL/TP (pending): SL è geometrico (bordo della zona ∓ buffer ATR), TP è
+// un multiplo ATR FISSO sull'entry — non un multiplo del rischio (R) come
+// in TURTLE_SOUP. Fedele a _smc_tp(entry, dir, 2.6) in MQL5: entry ± 2.6×ATR,
+// indipendente dalla distanza dello SL. Il vero R:R quindi varia in base a
+// quanto è larga la zona d'origine.
+//   BUY : SL = min(sweepLevel, originLo) - 0.5×ATR, TP = entry + 2.6×ATR
+//   SELL: SL = max(sweepLevel, originHi) + 0.5×ATR, TP = entry - 2.6×ATR
+//
+// SEMPLIFICAZIONE NOTA: stessa di NEXUS_SILVER_BULLET.pine — Asia High/Low e
+// il fallback Equal-High/Equal-Low non sono replicati nella cascata sweep
+// (richiederebbero request.security_lower_tf, sproporzionato). Weekly/
+// Monthly restano nella cascata.
+//
+// Nessun filtro HTF (htf=false nel profilo). Nessun breakeven/trailing.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - SH_BMS_RTO (XAUUSD D1)", shorttitle="NXS-SHBMS", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+swingLookback = input.int(15, "Swing di riferimento: barre")
+maxMSSBars    = input.int(20, "Scadenza SWEPT (barre senza MSS)")
+maxWaitBars   = input.int(15, "Scadenza WAITING_RETURN (barre senza ritorno)")
+dispBodyMult  = input.float(0.8, "MSS: corpo minimo × ATR")
+slBufferMult  = input.float(0.5, "SL: buffer oltre il livello × ATR")
+tpAtrMult     = input.float(2.6, "TP: multiplo ATR fisso sull'entry (non su R)")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Livelli di liquidità e sweep (cascata) -------
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_off)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_off)
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_off)
+pwl = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_off)
+pmh = request.security(syminfo.tickerid, "M", high[1], lookahead=barmerge.lookahead_off)
+pml = request.security(syminfo.tickerid, "M", low[1],  lookahead=barmerge.lookahead_off)
+
+h1v = high
+l1v = low
+c1v = close
+
+sweepDir = "NONE"
+sweepLevel = float(na)
+if h1v > pdh and c1v < pdh
+    sweepDir := "SELL"
+    sweepLevel := pdh
+if l1v < pdl and c1v > pdl
+    sweepDir := "BUY"
+    sweepLevel := pdl
+if h1v > pwh and c1v < pwh
+    sweepDir := "SELL"
+    sweepLevel := pwh
+if l1v < pwl and c1v > pwl
+    sweepDir := "BUY"
+    sweepLevel := pwl
+if not na(pmh) and h1v > pmh and c1v < pmh
+    sweepDir := "SELL"
+    sweepLevel := pmh
+if not na(pml) and l1v < pml and c1v > pml
+    sweepDir := "BUY"
+    sweepLevel := pml
+sweepConfirmed = sweepDir != "NONE"
+
+swingRefHi = ta.highest(high[2], swingLookback)   // offset[2..2+lookback-1] = shift[2..16]
+swingRefLo = ta.lowest(low[2],  swingLookback)
+
+// ----------------------------- Stato BUY (dir +1) ----------------------------
+var int   buyState      = 0   // 0=IDLE, 1=SWEPT, 2=WAITING_RETURN
+var float buySweepLevel = na
+var float buySwingRef   = na
+var float buyOriginLo   = na
+var float buyOriginHi   = na
+var int   buyBarsWaited = 0
+buySignal = false
+
+if buyState == 0
+    if sweepConfirmed and sweepDir == "BUY"
+        buyState := 1
+        buyBarsWaited := 0
+        buySweepLevel := sweepLevel
+        buySwingRef := swingRefLo
+else if buyState == 1
+    if close < buySweepLevel
+        buyState := 0
+    else
+        buyBarsWaited := buyBarsWaited + 1
+        if buyBarsWaited > maxMSSBars
+            buyState := 0
+        else
+            body1 = math.abs(close - open)
+            if not na(buySwingRef) and close > buySwingRef and body1 >= dispBodyMult * atrVal
+                originA = open
+                originB = close
+                if close[1] > open[1]
+                    originA := open[1]
+                    originB := close[1]
+                else if close[2] > open[2]
+                    originA := open[2]
+                    originB := close[2]
+                else if close[3] > open[3]
+                    originA := open[3]
+                    originB := close[3]
+                else if close[4] > open[4]
+                    originA := open[4]
+                    originB := close[4]
+                buyOriginLo := math.min(originA, originB)
+                buyOriginHi := math.max(originA, originB)
+                buyState := 2
+                buyBarsWaited := 0
+else if buyState == 2
+    if close < buySweepLevel
+        buyState := 0
+    else
+        buyBarsWaited := buyBarsWaited + 1
+        if buyBarsWaited > maxWaitBars
+            buyState := 0
+        else if buyOriginHi > buyOriginLo and low <= buyOriginHi and high >= buyOriginLo
+            buySignal := true
+            buyState := 0
+
+// ----------------------------- Stato SELL (dir -1) ---------------------------
+var int   sellState      = 0
+var float sellSweepLevel = na
+var float sellSwingRef   = na
+var float sellOriginLo   = na
+var float sellOriginHi   = na
+var int   sellBarsWaited = 0
+sellSignal = false
+
+if sellState == 0
+    if sweepConfirmed and sweepDir == "SELL"
+        sellState := 1
+        sellBarsWaited := 0
+        sellSweepLevel := sweepLevel
+        sellSwingRef := swingRefHi
+else if sellState == 1
+    if close > sellSweepLevel
+        sellState := 0
+    else
+        sellBarsWaited := sellBarsWaited + 1
+        if sellBarsWaited > maxMSSBars
+            sellState := 0
+        else
+            body1 = math.abs(close - open)
+            if not na(sellSwingRef) and close < sellSwingRef and body1 >= dispBodyMult * atrVal
+                originA = open
+                originB = close
+                if close[1] < open[1]
+                    originA := open[1]
+                    originB := close[1]
+                else if close[2] < open[2]
+                    originA := open[2]
+                    originB := close[2]
+                else if close[3] < open[3]
+                    originA := open[3]
+                    originB := close[3]
+                else if close[4] < open[4]
+                    originA := open[4]
+                    originB := close[4]
+                sellOriginLo := math.min(originA, originB)
+                sellOriginHi := math.max(originA, originB)
+                sellState := 2
+                sellBarsWaited := 0
+else if sellState == 2
+    if close > sellSweepLevel
+        sellState := 0
+    else
+        sellBarsWaited := sellBarsWaited + 1
+        if sellBarsWaited > maxWaitBars
+            sellState := 0
+        else if sellOriginHi > sellOriginLo and high >= sellOriginLo and low <= sellOriginHi
+            sellSignal := true
+            sellState := 0
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and buySignal
+shortCond = inRange and sellSignal
+
+// ----------------------------- SL/TP iniziali (pending, geometria zona) -----
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    entryPx = close
+    pendingSL := math.min(buySweepLevel, buyOriginLo) - slBufferMult * atrVal
+    pendingTP := entryPx + tpAtrMult * atrVal
+    strategy.entry("Long", strategy.long, comment="SH+BMS+RTO bull:origin_return")
+if shortCond and strategy.position_size >= 0
+    entryPx = close
+    pendingSL := math.max(sellSweepLevel, sellOriginHi) + slBufferMult * atrVal
+    pendingTP := entryPx - tpAtrMult * atrVal
+    strategy.entry("Short", strategy.short, comment="SH+BMS+RTO bear:origin_return")
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(buyState  == 2 ? buyOriginLo  : na, "Origin buy lo", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(buyState  == 2 ? buyOriginHi  : na, "Origin buy hi", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(sellState == 2 ? sellOriginLo : na, "Origin sell lo", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(sellState == 2 ? sellOriginHi : na, "Origin sell hi", color=color.new(color.red, 0), style=plot.style_linebr)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS SH_BMS_RTO BUY", "NEXUS SH_BMS_RTO: ritorno nella zona d'origine dopo sweep+MSS (BUY)")
+alertcondition(shortCond, "NXS SH_BMS_RTO SELL", "NEXUS SH_BMS_RTO: ritorno nella zona d'origine dopo sweep+MSS (SELL)")

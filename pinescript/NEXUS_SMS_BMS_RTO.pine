@@ -1,0 +1,163 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia SMS_BMS_RTO (failure swing + CHoCH + ritorno) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_SMS_BMS_RTO (NXS_Strategies_SMC.mqh:268), che legge il motore di
+// struttura condiviso NXS_ComputeStructureCore (NXS_Structure.mqh), e il
+// profilo attuale (NXS_StrategyProfiles.mqh: SMS_BMS_RTO -> slMult=1.0,
+// tpMult=4.5 nel profilo, MA SL/TP reali sono geometrici/ATR fisso — vedi
+// sotto; htf=false, beR=0, trailATR=0, PERIOD_D1).
+//
+// Trigger (identico a MQL5, su barra CHIUSA):
+//   1) Failure swing: confronta l'estremo delle 10 barre più recenti
+//      (shift1..10) con quello delle 20 barre precedenti (shift11..30).
+//      failureLow (HL)  = minimo recente > minimo precedente (fallimento nel
+//      fare un nuovo minimo) — setup BUY.
+//      failureHigh (LH) = massimo recente < massimo precedente (fallimento
+//      nel fare un nuovo massimo) — setup SELL.
+//   2) CHoCH (Change of Character) nella direzione del failure swing, dal
+//      motore struttura condiviso: ultimi 2 swing (pivot fractal, ala 3
+//      barre) confermano un trend, poi la chiusura rompe l'ultimo swing
+//      swing nella direzione OPPOSTA al trend precedente (isteresi: un
+//      pattern di swing ambiguo mantiene il trend precedente invece di
+//      azzerarlo).
+//   3) Candela di rigetto (corpo >= 0.3×ATR) nella direzione del setup.
+//   4) Prezzo nella metà "a sconto/premio" del range recente/vecchio
+//      (bid <= midpoint per BUY, bid >= midpoint per SELL — qui approssimato
+//      con la chiusura della barra, non il bid live).
+//
+// SL/TP: SL geometrico (estremo del failure swing ∓ 0.5×ATR), TP è un
+// multiplo ATR FISSO sull'entry (identico a SH_BMS_RTO: _smc_tp(entry,dir,2.6)
+// = entry ± 2.6×ATR, non un multiplo di R).
+//
+// Nessun filtro HTF (htf=false nel profilo). Nessun breakeven/trailing.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// I pivot (ta.pivothigh/pivotlow) sono per costruzione confermati con
+// ritardo (3 barre dopo il picco, come il fractal MQL5 a ala 3) — nessun
+// repaint: al momento in cui vengono letti sono già barre chiuse.
+// =============================================================================
+strategy("NEXUS EA - SMS_BMS_RTO (XAUUSD D1)", shorttitle="NXS-SMSBMS", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+swingWing = input.int(3, "Struttura: ala del pivot (barre per lato)")
+rejectionBodyMult = input.float(0.3, "Corpo minimo candela di rigetto (x ATR)")
+slBufferMult = input.float(0.5, "SL: buffer oltre l'estremo × ATR")
+tpAtrMult    = input.float(2.6, "TP: multiplo ATR fisso sull'entry (non su R)")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Motore struttura condiviso (BOS/CHoCH) -------
+// Fedele a NXS_ComputeStructureCore: ultimi 2 swing (pivot fractal ala
+// swingWing) determinano il trend (HH+HL=up, LH+LL=down, isteresi altrimenti),
+// poi CHoCH quando la chiusura rompe l'ultimo swing in direzione OPPOSTA al
+// trend precedente (prima dell'eventuale aggiornamento di questo bar).
+ph = ta.pivothigh(swingWing, swingWing)
+pl = ta.pivotlow(swingWing, swingWing)
+
+var float lastSwingHigh = na
+var float prevSwingHigh = na
+var float lastSwingLow  = na
+var float prevSwingLow  = na
+if not na(ph)
+    prevSwingHigh := lastSwingHigh
+    lastSwingHigh := ph
+if not na(pl)
+    prevSwingLow := lastSwingLow
+    lastSwingLow := pl
+
+var int structTrend = 0
+trendBefore = structTrend
+if not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow)
+    hh = lastSwingHigh > prevSwingHigh
+    hl = lastSwingLow > prevSwingLow
+    lh = lastSwingHigh < prevSwingHigh
+    ll = lastSwingLow < prevSwingLow
+    if hh and hl
+        structTrend := 1
+    else if lh and ll
+        structTrend := -1
+
+c1s = close[1]
+chochUp   = not na(lastSwingHigh) and c1s > lastSwingHigh and trendBefore == -1
+chochDown = not na(lastSwingLow)  and c1s < lastSwingLow  and trendBefore == 1
+
+// ----------------------------- Failure swing (10 vs 20 barre) ---------------
+hi_recent = ta.highest(high[1], 10)
+hi_older  = ta.highest(high[11], 20)
+lo_recent = ta.lowest(low[1], 10)
+lo_older  = ta.lowest(low[11], 20)
+
+failureLow  = lo_recent > lo_older    // HL: fallimento nel fare un nuovo minimo
+failureHigh = hi_recent < hi_older    // LH: fallimento nel fare un nuovo massimo
+midpoint = (hi_recent + lo_recent) * 0.5
+
+// ----------------------------- Rigetto -------------------------------------
+o1 = open[1]
+bodyAbs = math.abs(c1s - o1)
+rejectionBull = c1s > o1 and bodyAbs > atrVal * rejectionBodyMult
+rejectionBear = c1s < o1 and bodyAbs > atrVal * rejectionBodyMult
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = failureLow  and chochUp   and rejectionBull and close <= midpoint
+rawShort = failureHigh and chochDown and rejectionBear and close >= midpoint
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+// ----------------------------- SL/TP iniziali (pending) ---------------------
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    entryPx = close
+    pendingSL := lo_recent - slBufferMult * atrVal
+    pendingTP := entryPx + tpAtrMult * atrVal
+    strategy.entry("Long", strategy.long, comment="SMS:HL+BMS_up+RTO")
+if shortCond and strategy.position_size >= 0
+    entryPx = close
+    pendingSL := hi_recent + slBufferMult * atrVal
+    pendingTP := entryPx - tpAtrMult * atrVal
+    strategy.entry("Short", strategy.short, comment="SMS:LH+BMS_down+RTO")
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(lastSwingHigh, title="Ultimo swing high", color=color.new(color.red, 40))
+plot(lastSwingLow, title="Ultimo swing low", color=color.new(color.lime, 40))
+plotshape(longCond, title="SMS Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="SMS Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS SMS_BMS_RTO BUY", "NEXUS SMS_BMS_RTO: failure swing + CHoCH rialzista + rigetto")
+alertcondition(shortCond, "NXS SMS_BMS_RTO SELL", "NEXUS SMS_BMS_RTO: failure swing + CHoCH ribassista + rigetto")

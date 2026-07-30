@@ -1,0 +1,120 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia THREE_BAR_DELIVERY_BREAK (ex CISD) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_CISD
+// (MQL5/Include/NEXUS_v1/NXS_Strategies_Institutional.mqh:83) e il profilo
+// attuale (NXS_StrategyProfiles.mqh: THREE_BAR_DELIVERY_BREAK -> slMult=1.5,
+// tpMult=3.0, htf=true, beR=0, trailATR=0, PERIOD_H4).
+//
+// ⚠️ Nome storico "CISD" (Change In State of Delivery): rinominata il 17/07 in
+// MQL5 perché la logica reale NON è un vero CISD canonico (rottura del
+// livello/open che sosteneva la sequenza) — è un pattern di rottura "tre
+// candele dello stesso colore + rottura del loro estremo", funzionante ma
+// concettualmente diverso. Un tentativo precedente di CISD "vero"
+// (displacement+delivery+sweep+reclaim) non generava MAI segnali (0 su 1067
+// barre) ed è stato scartato in MQL5 — questo script riflette la logica
+// SEMPLICE realmente in produzione, non il concetto CISD originale.
+//
+// Trigger (identico a MQL5, su barre CHIUSE, offset[2]/[3]/[4] = shift[2]/[3]/[4]):
+//   BUY  : le 3 barre shift[2..4] sono tutte ribassiste (close<open) E
+//          close[1] > massimo(high[2],high[3],high[4])
+//   SELL : le 3 barre shift[2..4] sono tutte rialziste (close>open) E
+//          close[1] < minimo(low[2],low[3],low[4])
+//
+// Filtro HTF: attivo (EMA200 stesso TF H4, gate generico di profilo).
+// Nessun breakeven/trailing (beR=0, trailATR=0).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - THREE_BAR_DELIVERY_BREAK (XAUUSD H4)", shorttitle="NXS-3BDB", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo.")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.5, "SL (x ATR)")
+tpMult = input.float(3.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+
+o2 = open[2]
+c2 = close[2]
+h2 = high[2]
+l2 = low[2]
+o3 = open[3]
+c3 = close[3]
+h3 = high[3]
+l3 = low[3]
+o4 = open[4]
+c4 = close[4]
+h4v = high[4]
+l4 = low[4]
+
+bear3 = c2 < o2 and c3 < o3 and c4 < o4
+bull3 = c2 > o2 and c3 > o3 and c4 > o4
+hh = math.max(h2, math.max(h3, h4v))
+ll = math.min(l2, math.min(l3, l4))
+c1 = close[1]
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = bear3 and c1 > hh
+rawShort = bull3 and c1 < ll
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="3BDB bull (3bear+break)")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="3BDB bear (3bull+break)")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="3BDB Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="3BDB Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS THREE_BAR_DELIVERY_BREAK BUY", "NEXUS 3BDB: rottura rialzista dopo 3 barre ribassiste")
+alertcondition(shortCond, "NXS THREE_BAR_DELIVERY_BREAK SELL", "NEXUS 3BDB: rottura ribassista dopo 3 barre rialziste")

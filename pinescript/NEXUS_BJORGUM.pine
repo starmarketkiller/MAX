@@ -1,0 +1,93 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia BJORGUM (rimbalzo/rigetto sui pivot 30 barre) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_Bjorgum
+// (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:340) e il profilo attuale
+// (NXS_StrategyProfiles.mqh: BJORGUM -> slMult=1.5, tpMult=3.0, htf=false,
+// beR=0, trailATR=0, PERIOD_H4).
+//
+// Trigger (identico a MQL5, su barra CHIUSA):
+//   Pivot alto/basso = massimo/minimo delle 30 barre precedenti la barra
+//   chiusa (shift 2..31, offset[2..31] in Pine).
+//   BUY  : |close[1] - pivotLow| <= 0.5×ATR E close[1] > pivotLow (rimbalzo)
+//   SELL : |close[1] - pivotHigh| <= 0.5×ATR E close[1] < pivotHigh (rigetto)
+//
+// Nessun filtro HTF (htf=false). Nessun breakeven/trailing (beR=0, trailATR=0).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - BJORGUM (XAUUSD H4)", shorttitle="NXS-BJORGUM", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+pivotLookback = input.int(30, "Pivot: barre di lookback")
+distMult = input.float(0.5, "Distanza massima dal pivot (x ATR)")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.5, "SL (x ATR)")
+tpMult = input.float(3.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+pivHi = ta.highest(high[2], pivotLookback)   // offset[2..2+lookback-1] = shift[3..3+lookback-1]... vedi nota
+pivLo = ta.lowest(low[2],  pivotLookback)
+// Nota fedeltà: MQL5 usa iHighest/iLowest su 30 barre a partire da shift 2
+// (`iHighest(sym, tf, MODE_HIGH, 30, 2)`), cioè shift 2..31. `high[2]` seguito
+// da `ta.highest(_, 30)` in Pine copre offset 2..31 — stessa finestra.
+c1 = close[1]
+dist = atrVal * distMult
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and math.abs(c1 - pivLo) <= dist and c1 > pivLo
+shortCond = inRange and math.abs(c1 - pivHi) <= dist and c1 < pivHi
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Bjorgum_bounce_low")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Bjorgum_reject_high")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(pivHi, title="Pivot High (30 barre)", color=color.new(color.red, 40))
+plot(pivLo, title="Pivot Low (30 barre)", color=color.new(color.lime, 40))
+plotshape(longCond, title="Bjorgum Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Bjorgum Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS BJORGUM BUY", "NEXUS BJORGUM: rimbalzo su pivot basso")
+alertcondition(shortCond, "NXS BJORGUM SELL", "NEXUS BJORGUM: rigetto su pivot alto")

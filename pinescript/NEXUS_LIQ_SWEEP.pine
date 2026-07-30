@@ -1,0 +1,145 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia LIQ_SWEEP (sweep di liquidità a cascata + delivery) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_LiqSweep
+// (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:377), che legge il rilevatore
+// condiviso NXS_DetectSweepExt (NXS_MarketAnalysis.mqh), e il profilo attuale
+// (NXS_StrategyProfiles.mqh: LIQ_SWEEP -> slMult=1.5, tpMult=3.0, htf=true,
+// beR=0, trailATR=0, PERIOD_D1).
+//
+// Trigger (identico a MQL5, su barra CHIUSA):
+//   1) sweep confermato su un livello di liquidità cascata (PDH/PDL/PWH/PWL/
+//      PMH/PML, priorità Monthly > Weekly > Daily — l'ultimo che scatta sulla
+//      stessa barra vince, stesso ordine di NXS_DetectSweepExt);
+//   2) corpo della barra shift1 >= 0.7×ATR ("candela delivery/OB", non un
+//      rimbalzo qualsiasi — filtro aggiunto il 16/07 dopo revisione di
+//      screenshot ICT reali);
+//   3) colore della barra shift1 concorde con la direzione dello sweep
+//      (chiusura rialzista dopo sweep ribassista per BUY, e viceversa).
+//
+// SEMPLIFICAZIONE NOTA (omessa di proposito, stessa di NEXUS_SILVER_BULLET.pine):
+// Asia High/Low e il fallback Equal-High/Equal-Low NON sono replicati. In
+// MQL5 l'Asia range è sempre calcolato da un scan M15 (indipendente dal TF
+// della strategia chiamante), riproducibile su un chart D1 solo con
+// request.security_lower_tf — sproporzionato qui perché PDH/PDL/PWH/PWL/PMH/
+// PML coprono la stessa cascata con priorità più alta nell'89% dei casi
+// pratici (il fallback Asia/EQH/EQL scatta solo quando NESSUNO degli altri
+// 6 livelli si è mosso sulla stessa barra).
+//
+// Filtro HTF: attivo (EMA200 stesso TF D1, gate generico di profilo).
+// Nessun breakeven/trailing (beR=0, trailATR=0).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - LIQ_SWEEP (XAUUSD D1)", shorttitle="NXS-LIQSWEEP", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+bodyMinMult = input.float(0.7, "Corpo minimo candela delivery (x ATR)")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo.")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.5, "SL (x ATR)")
+tpMult = input.float(3.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Livelli di liquidità (PDH/PDL/PWH/PWL/PMH/PML) --
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_off)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_off)
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_off)
+pwl = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_off)
+pmh = request.security(syminfo.tickerid, "M", high[1], lookahead=barmerge.lookahead_off)
+pml = request.security(syminfo.tickerid, "M", low[1],  lookahead=barmerge.lookahead_off)
+
+// ----------------------------- Sweep (cascata Daily -> Weekly -> Monthly) ---
+h1v = high[1]
+l1v = low[1]
+c1v = close[1]
+o1v = open[1]
+
+sweepDir = "NONE"
+sweepTag = ""
+
+if h1v > pdh and c1v < pdh
+    sweepDir := "SELL"
+    sweepTag := "Daily-High"
+if l1v < pdl and c1v > pdl
+    sweepDir := "BUY"
+    sweepTag := "Daily-Low"
+if h1v > pwh and c1v < pwh
+    sweepDir := "SELL"
+    sweepTag := "Weekly-High"
+if l1v < pwl and c1v > pwl
+    sweepDir := "BUY"
+    sweepTag := "Weekly-Low"
+if not na(pmh) and h1v > pmh and c1v < pmh
+    sweepDir := "SELL"
+    sweepTag := "Monthly-High"
+if not na(pml) and l1v < pml and c1v > pml
+    sweepDir := "BUY"
+    sweepTag := "Monthly-Low"
+
+sweepConfirmed = sweepDir != "NONE"
+bodyOK = math.abs(c1v - o1v) >= bodyMinMult * atrVal
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = sweepConfirmed and sweepDir == "BUY"  and bodyOK and c1v > o1v
+rawShort = sweepConfirmed and sweepDir == "SELL" and bodyOK and c1v < o1v
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Sweep_low_reversal:" + sweepTag)
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Sweep_high_reversal:" + sweepTag)
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="LiqSweep Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="LiqSweep Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS LIQ_SWEEP BUY", "NEXUS LIQ_SWEEP: reversal dopo sweep di liquidità (BUY)")
+alertcondition(shortCond, "NXS LIQ_SWEEP SELL", "NEXUS LIQ_SWEEP: reversal dopo sweep di liquidità (SELL)")

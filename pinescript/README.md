@@ -38,6 +38,42 @@ su un terzo motore prima ancora che la modifica MQL5 sia stata compilata:
 | `NEXUS_MALAYSIAN_SNR.pine` | MALAYSIAN_SNR | D1 | SMC/ICT (Support/Resistance H4 con conferma W1, storyline H4, F-05: contatore utilizzi per livello) |
 | `NEXUS_SILVER_BULLET.pine` | SILVER_BULLET | M15 | SMC/ICT (Silver Bullet ICT — sweep di liquidità cascata + FVG nelle killzone ET, F-02: killzone DST-aware) |
 
+**Batch 4** (30/07) — famiglia VOLATILITY, porta a termine il portafoglio
+"indicatori classici". `BOLLINGER` copre anche `RANGE_FADE` (verificato che
+non ha una funzione MQL5 dedicata — instradata come lo stesso trigger di
+Bollinger da `NXS_SignalRouter.mqh`, nessun file Pine separato):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_BOLLINGER.pine` | BOLLINGER, RANGE_FADE | D1 | Mean-reversion (rientro dalle bande di Bollinger 20/2.0) |
+| `NEXUS_BB_SQUEEZE.pine` | BB_SQUEEZE | D1 | Volatility breakout (percentile bandwidth, macchina a stati one-shot per episodio — **disabilitata in produzione MT5**, vedi sotto) |
+
+**Batch 5** (30/07) — famiglia LIQUIDITY (6 delle 7; STRUCT_REACT rimandata
+a un passaggio dedicato, vedi nota sotto la tabella):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_BJORGUM.pine` | BJORGUM | H4 | Rimbalzo/rigetto sui pivot delle 30 barre precedenti |
+| `NEXUS_LIQ_SWEEP.pine` | LIQ_SWEEP | D1 | SMC/ICT (sweep di liquidità cascata Daily/Weekly/Monthly + candela delivery) |
+| `NEXUS_TURTLE_SOUP.pine` | TURTLE_SOUP | H1 | SMC/ICT (sweep del massimo/minimo giornaliero + rigetto, SL/TP geometrici 2.0R) |
+| `NEXUS_SH_BMS_RTO.pine` | SH_BMS_RTO | D1 | SMC/ICT (macchina a stati sweep→MSS→ritorno nella zona d'origine) |
+| `NEXUS_SMS_BMS_RTO.pine` | SMS_BMS_RTO | D1 | SMC/ICT (failure swing + CHoCH dal motore struttura condiviso + rigetto) |
+| `NEXUS_THREE_BAR_DELIVERY_BREAK.pine` | THREE_BAR_DELIVERY_BREAK (ex CISD) | H4 | Rottura dopo 3 candele consecutive dello stesso colore |
+
+`STRUCT_REACT` (H1) non è in questo batch: si appoggia a un motore di
+struttura+reazione esterno molto più corposo (`NXS_Reaction.mqh` +
+`NXS_Structure.mqh`, ~470 righe insieme) rispetto alle altre 6 di questo
+batch, ed è già **confermata bloccata in produzione** (`NXS_Profile_Enabled`
+ritorna `false`, nota nel codice: "v2.3.1 test reale: 85 trade, -102$,
+peggiore") — non genera mai trade reali oggi. Portata in un passaggio
+dedicato successivo, con lo stesso standard di fedeltà delle altre.
+
+> ⚠️ **Regola zero (30/07)**: su richiesta dell'utente, tutti i risultati già
+> registrati nelle tabelle sotto (Batch 1/2/3) sono da considerarsi **non
+> verificati** — si riparte da zero su tutte le 37 strategie, protocollo
+> completo in `docs/testing/TRADINGVIEW_AGENT_PROMPT.md`. Le tabelle restano
+> per ora come riferimento storico, non come dato affidabile.
+
 Scope di questo lavoro: le 10 strategie sopra (Batch 1+2+3). Nessuna
 modifica a `server/backtest.py`. Le uniche modifiche MQL5 correlate sono i
 fix F-05/F-02 già committati separatamente in `MQL5/Include/NEXUS_v1/`.

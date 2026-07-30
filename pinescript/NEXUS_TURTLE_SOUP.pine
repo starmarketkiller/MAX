@@ -1,0 +1,140 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia TURTLE_SOUP (sweep del giorno + rigetto) — XAUUSD H1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_TurtleSoup
+// (MQL5/Include/NEXUS_v1/NXS_Strategies_SMC.mqh:24), che legge il rilevatore
+// condiviso NXS_DetectSweepExt (NXS_MarketAnalysis.mqh), e il profilo attuale
+// (NXS_StrategyProfiles.mqh: TURTLE_SOUP -> slMult=1.0, tpMult=4.5 nel
+// profilo, MA il trigger reale calcola SL/TP dalla geometria dello sweep,
+// non dal profilo — vedi sotto; htf=true, beR=0, trailATR=0, PERIOD_H1).
+//
+// Trigger (identico a MQL5, su barra CHIUSA):
+//   SELL : livello Daily-High sweepato su questa barra (wick oltre PDH,
+//          chiusura sotto) E corpo candela >= 0.4×ATR E close[1] < open[1]
+//          E close[1] < refHigh (il livello usato per lo SL, cascata
+//          Monthly>Weekly>Daily se più livelli sweepano sulla stessa barra)
+//   BUY  : speculare su Daily-Low / refLow
+//
+// SL/TP (pending, geometria dello sweep — NON un multiplo ATR generico sul
+// prezzo d'ingresso, come LIQ_VOID/MALAYSIAN_SNR/SILVER_BULLET):
+//   SELL: SL = refHigh + 0.5×ATR, TP = entry - 2.0×(SL - entry)  → 2.0R fisso
+//   BUY : SL = refLow  - 0.5×ATR, TP = entry + 2.0×(entry - SL)  → 2.0R fisso
+//
+// SEMPLIFICAZIONE NOTA (omessa di proposito, stessa di NEXUS_LIQ_SWEEP.pine):
+// il codice reale attiva il trigger anche su sweep di Equal-High/Equal-Low
+// (sw.sweptEQH/sweptEQL), non solo Daily-High/Low — omesso qui (richiede un
+// rilevatore di cluster di swing su 60 barre, sproporzionato). Anche Asia
+// High/Low (via scan M15, indipendente dal TF del chart) è omesso per lo
+// stesso motivo di NEXUS_SILVER_BULLET.pine/NEXUS_LIQ_SWEEP.pine. Weekly/
+// Monthly restano nella cascata per il calcolo di refHigh/refLow (SL), ma
+// SOLO se sweepano sulla STESSA barra in cui sweepa anche il Daily — il gate
+// d'ingresso in MQL5 richiede esplicitamente sweptPDH/sweptPDL, non l'intera
+// cascata come in LIQ_SWEEP.
+//
+// Filtro HTF: attivo (EMA200 stesso TF H1, gate generico di profilo).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - TURTLE_SOUP (XAUUSD H1)", shorttitle="NXS-TSOUP", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+bodyMinMult = input.float(0.4, "Corpo minimo candela di rigetto (x ATR)")
+slBufferMult = input.float(0.5, "SL: buffer oltre il livello (x ATR)")
+rMult = input.float(2.0, "TP: multiplo R fisso")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Blocca i BUY quando il prezzo è sotto EMA200 e i SELL quando è sopra — gate reale del profilo.")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Livelli di liquidità (PDH/PDL/PWH/PWL/PMH/PML) --
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_off)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_off)
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_off)
+pwl = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_off)
+pmh = request.security(syminfo.tickerid, "M", high[1], lookahead=barmerge.lookahead_off)
+pml = request.security(syminfo.tickerid, "M", low[1],  lookahead=barmerge.lookahead_off)
+
+h1v = high[1]
+l1v = low[1]
+c1v = close[1]
+o1v = open[1]
+
+sweptPDH = h1v > pdh and c1v < pdh
+sweptPDL = l1v < pdl and c1v > pdl
+sweptPWH = h1v > pwh and c1v < pwh
+sweptPWL = l1v < pwl and c1v > pwl
+sweptPMH = not na(pmh) and h1v > pmh and c1v < pmh
+sweptPML = not na(pml) and l1v < pml and c1v > pml
+
+refHigh = sweptPMH ? pmh : sweptPWH ? pwh : pdh
+refLow  = sweptPML ? pml : sweptPWL ? pwl : pdl
+
+bodyOK = math.abs(c1v - o1v) >= bodyMinMult * atrVal
+
+// ----------------------------- Trigger --------------------------------------
+rawShort = sweptPDH and bodyOK and c1v < o1v and c1v < refHigh
+rawLong  = sweptPDL and bodyOK and c1v > o1v and c1v > refLow
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+// ----------------------------- SL/TP iniziali (pending, geometria sweep) ----
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    entryPx = close
+    sl = refLow - slBufferMult * atrVal
+    pendingSL := sl
+    pendingTP := entryPx + rMult * (entryPx - sl)
+    strategy.entry("Long", strategy.long, comment="TS:sweptLo+closeBack+body")
+if shortCond and strategy.position_size >= 0
+    entryPx = close
+    sl = refHigh + slBufferMult * atrVal
+    pendingSL := sl
+    pendingTP := entryPx - rMult * (sl - entryPx)
+    strategy.entry("Short", strategy.short, comment="TS:sweptHi+closeBack+body")
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="TurtleSoup Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="TurtleSoup Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "60"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H1 — imposta il chart a H1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS TURTLE_SOUP BUY", "NEXUS TURTLE_SOUP: rigetto dopo sweep del minimo giornaliero")
+alertcondition(shortCond, "NXS TURTLE_SOUP SELL", "NEXUS TURTLE_SOUP: rigetto dopo sweep del massimo giornaliero")
