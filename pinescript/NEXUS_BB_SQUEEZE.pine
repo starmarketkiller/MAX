@@ -1,0 +1,148 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia BB_SQUEEZE (compressione bande + breakout) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// ⚠️ DISABILITATA in produzione MT5 oggi: NXS_Profile_Enabled("BB_SQUEEZE")
+// ritorna false in NXS_StrategyProfiles.mqh:276 ("POCHI_DATI troppi pochi
+// trade"). Portata comunque su Pine per completezza di verifica, come
+// DISP_REBAL nel Batch 2.
+//
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_BBSqueeze
+// (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:558) e il profilo attuale
+// (NXS_StrategyProfiles.mqh: BB_SQUEEZE -> slMult=1.0, tpMult=4.5, htf=false,
+// beR=0, trailATR=0, PERIOD_D1).
+//
+// Logica (macchina a stati persistente, fedele a NXS_Strat_BBSqueeze):
+//   1) Bollinger(20, 2.0) come in BOLLINGER/RANGE_FADE (stesso handle g_hBB in
+//      MQL5). bandwidth = (upper-lower)/basis.
+//   2) Percentile rank della bandwidth dell'ultima barra chiusa (bw1, shift1)
+//      contro una finestra di 150 barre precedenti (shift3..shift152 — NON le
+//      2 barre più recenti, escluse dal confronto in MQL5): percentuale di
+//      quelle 150 con bandwidth < bw1. isSqueeze quando percentile <= 20%
+//      (InpBBSQ_PercentileMax).
+//   3) squeezeBars conta le barre consecutive in isSqueeze; appena isSqueeze
+//      torna false, squeezeBars si azzera E il flag "consumed" si resetta
+//      (nuovo episodio di squeeze possibile).
+//   4) Il breakout scatta solo se: siamo ancora in isSqueeze, squeezeBars >= 5
+//      (InpBBSQ_MinSqueezeBars), NON è già stato consumato un segnale per
+//      questo episodio (one-shot), la bandwidth si sta espandendo
+//      (bw1 > bw2, shift1 > shift2) E il prezzo di chiusura shift1 rompe sopra
+//      la banda superiore shift1 (BUY) o sotto quella inferiore (SELL).
+//   5) Al segnale, consumed diventa true: niente altri segnali sullo stesso
+//      episodio di squeeze finché isSqueeze non torna false almeno una volta.
+//
+// Nessun filtro HTF (htf=false). Nessun breakeven/trailing (beR=0, trailATR=0).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - BB_SQUEEZE (XAUUSD D1)", shorttitle="NXS-BBSQ", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+bbLen = input.int(20, "Bollinger: periodo SMA")
+bbDev = input.float(2.0, "Bollinger: deviazioni standard")
+lookbackBars   = input.int(150, "Percentile: finestra barre")
+percentileMax  = input.float(20.0, "Percentile massimo per squeeze (%)")
+minSqueezeBars = input.int(5, "Barre minime consecutive in squeeze")
+atrLen = input.int(14, "ATR length (per SL/TP)")
+slMult = input.float(1.0, "SL (x ATR)")
+tpMult = input.float(4.5, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+basis  = ta.sma(close, bbLen)
+dev    = ta.stdev(close, bbLen)
+upperVal = basis + bbDev * dev
+lowerVal = basis - bbDev * dev
+bw = basis != 0 ? (upperVal - lowerVal) / basis : 0.0
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Stato squeeze --------------------------------
+var int  squeezeBars = 0
+var bool consumed    = false
+
+bw1 = bw[1]
+bw2 = bw[2]
+
+count = 0
+for k = 3 to lookbackBars + 2
+    if bw[k] < bw1
+        count += 1
+percentile = lookbackBars > 0 ? 100.0 * count / lookbackBars : 100.0
+isSqueeze = bw1 > 0 and percentile <= percentileMax
+
+if isSqueeze
+    squeezeBars := squeezeBars + 1
+else
+    squeezeBars := 0
+    consumed := false
+
+canFire = isSqueeze and squeezeBars >= minSqueezeBars and not consumed
+expanding = bw1 > bw2
+
+longCond  = false
+shortCond = false
+if canFire and expanding
+    if close[1] > upperVal[1]
+        longCond := true
+    else if close[1] < lowerVal[1]
+        shortCond := true
+
+if longCond or shortCond
+    consumed := true
+
+longCond  := inRange and longCond
+shortCond := inRange and shortCond
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Squeeze_breakout_up")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Squeeze_breakout_down")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(upperVal, title="BB Upper", color=color.new(color.gray, 40))
+plot(lowerVal, title="BB Lower", color=color.new(color.gray, 40))
+bgcolor(isSqueeze ? color.new(color.yellow, 88) : na, title="Squeeze attivo")
+plotshape(longCond, title="Squeeze Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Squeeze Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+if barstate.islast
+    label.new(bar_index, low, "⚠ DISABILITATA in produzione MT5 oggi (troppi pochi trade) — solo verifica", style=label.style_label_up, color=color.new(color.orange, 0), textcolor=color.white, size=size.small)
+
+alertcondition(longCond, "NXS BB_SQUEEZE BUY", "NEXUS BB_SQUEEZE: breakout rialzista da compressione")
+alertcondition(shortCond, "NXS BB_SQUEEZE SELL", "NEXUS BB_SQUEEZE: breakout ribassista da compressione")
