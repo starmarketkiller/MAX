@@ -1,0 +1,99 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia BREAKOUT_ACC (accettazione oltre il range 20 barre) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_BreakoutAcc (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:431) e il
+// profilo attuale (NXS_StrategyProfiles.mqh: BREAKOUT_ACC -> slMult=1.0,
+// tpMult=4.5, htf=true, beR=0, trailATR=0, PERIOD_D1).
+//
+// Trigger (identico a MQL5, su barre CHIUSE, offset[1]/[2] = shift[1]/[2]):
+//   Range di riferimento = massimo/minimo delle 20 barre precedenti (shift
+//   3..22, escluse le 2 barre più recenti — stesso schema di NEXUS_BJORGUM.pine).
+//   BUY  : close[1] > range_hi E close[2] > range_hi (accettazione, non un
+//          singolo tocco marginale — due chiusure consecutive oltre il range)
+//   SELL : close[1] < range_lo E close[2] < range_lo
+//
+// Filtro HTF: attivo (EMA200 stesso TF D1, gate generico di profilo).
+// Nessun breakeven/trailing (beR=0, trailATR=0).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("NEXUS EA - BREAKOUT_ACC (XAUUSD D1)", shorttitle="NXS-BRKACC", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+rangeLookback = input.int(20, "Range: barre di lookback")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.0, "SL (x ATR)")
+tpMult = input.float(4.5, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+rangeHi = ta.highest(high[3], rangeLookback)   // offset[3..3+lookback-1] = shift[3..22]
+rangeLo = ta.lowest(low[3],  rangeLookback)
+c1 = close[1]
+c2 = close[2]
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = c1 > rangeHi and c2 > rangeHi
+rawShort = c1 < rangeLo and c2 < rangeLo
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Acceptance_above_range")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Acceptance_below_range")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(rangeHi, title="Range High (20 barre)", color=color.new(color.red, 40))
+plot(rangeLo, title="Range Low (20 barre)", color=color.new(color.lime, 40))
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="BreakoutAcc Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="BreakoutAcc Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS BREAKOUT_ACC BUY", "NEXUS BREAKOUT_ACC: accettazione sopra il range")
+alertcondition(shortCond, "NXS BREAKOUT_ACC SELL", "NEXUS BREAKOUT_ACC: accettazione sotto il range")

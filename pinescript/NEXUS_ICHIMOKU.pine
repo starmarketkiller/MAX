@@ -1,0 +1,135 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia ICHIMOKU (rottura della nuvola Kumo) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// ⚠️ DISABILITATA in produzione MT5 oggi: NXS_Profile_Enabled("ICHIMOKU")
+// ritorna false in NXS_StrategyProfiles.mqh:284 ("sweep HTF0 anomalo +
+// rumore su MT5 -> resta ferma per ora"). Portata comunque su Pine per
+// completezza di verifica, come DISP_REBAL/BB_SQUEEZE/STRUCT_REACT/OTE_CONT.
+//
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_Ichimoku
+// (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:617), Ichimoku standard (9,26,52,
+// stesso di iIchimoku(sym, tf, 9, 26, 52) in MQL5), e il profilo attuale
+// (NXS_StrategyProfiles.mqh: ICHIMOKU -> slMult=1.0, tpMult=4.5, htf=true,
+// beR=0, trailATR=0, PERIOD_H4).
+//
+// Nota tecnica sul forward-shift della nuvola: in MT5 i buffer Senkou
+// Span A/B dell'indicatore Ichimoku sono già proiettati in avanti di 26
+// barre (kijun period) — leggerli a shift1 restituisce la nuvola come
+// VISUALIZZATA in quel punto del grafico, non il valore "grezzo" calcolato
+// in quel momento. In Pine, dove si calcolano Span A/B "grezzi" ad ogni
+// barra, la nuvola visualizzata alla barra shift1 corrisponde al valore
+// grezzo calcolato 26 barre prima di quella, cioè offset[1+26]=offset[27].
+// Tenkan/Kijun NON sono proiettati in avanti (letti direttamente a shift1).
+//
+// Trigger (identico a MQL5, su barre CHIUSE):
+//   kumoTop/kumoBot (shift1)  = max/min(spanA_grezzo[27], spanB_grezzo[27])
+//   kumoTop/kumoBot (shift2)  = max/min(spanA_grezzo[28], spanB_grezzo[28])
+//   BUY  : close[2] <= kumoTop(shift2) E close[1] > kumoTop(shift1) E
+//          tenkan[1] > kijun[1]
+//   SELL : close[2] >= kumoBot(shift2) E close[1] < kumoBot(shift1) E
+//          tenkan[1] < kijun[1]
+//
+// Filtro HTF: attivo (EMA200 stesso TF H4, gate generico di profilo).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("NEXUS EA - ICHIMOKU (XAUUSD H4)", shorttitle="NXS-ICHI", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+tenkanLen = input.int(9, "Tenkan-sen periodo")
+kijunLen  = input.int(26, "Kijun-sen periodo")
+senkouBLen = input.int(52, "Senkou Span B periodo")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.0, "SL (x ATR)")
+tpMult = input.float(4.5, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+tenkanSeries = (ta.highest(high, tenkanLen) + ta.lowest(low, tenkanLen)) / 2
+kijunSeries  = (ta.highest(high, kijunLen)  + ta.lowest(low, kijunLen))  / 2
+spanARaw = (tenkanSeries + kijunSeries) / 2
+spanBRaw = (ta.highest(high, senkouBLen) + ta.lowest(low, senkouBLen)) / 2
+
+// Nuvola come visualizzata a shift1/shift2 (proiezione in avanti di kijunLen,
+// vedi nota in testa): offset[1+kijunLen] / offset[2+kijunLen] del valore grezzo.
+spanA_s1 = spanARaw[1 + kijunLen]
+spanB_s1 = spanBRaw[1 + kijunLen]
+spanA_s2 = spanARaw[2 + kijunLen]
+spanB_s2 = spanBRaw[2 + kijunLen]
+
+kumoTop1 = math.max(spanA_s1, spanB_s1)
+kumoBot1 = math.min(spanA_s1, spanB_s1)
+kumoTop2 = math.max(spanA_s2, spanB_s2)
+kumoBot2 = math.min(spanA_s2, spanB_s2)
+
+tenkan1 = tenkanSeries[1]
+kijun1  = kijunSeries[1]
+price = close[1]
+prevPx = close[2]
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = prevPx <= kumoTop2 and price > kumoTop1 and tenkan1 > kijun1
+rawShort = prevPx >= kumoBot2 and price < kumoBot1 and tenkan1 < kijun1
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Kumo_break_up")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Kumo_break_down")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(kumoTop1, title="Kumo top (visualizzata)", color=color.new(color.green, 50))
+plot(kumoBot1, title="Kumo bottom (visualizzata)", color=color.new(color.red, 50))
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="Ichimoku Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Ichimoku Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+if barstate.islast
+    label.new(bar_index, low, "⚠ DISABILITATA in produzione MT5 oggi (rumore/sweep anomalo) — solo verifica", style=label.style_label_up, color=color.new(color.orange, 0), textcolor=color.white, size=size.small)
+
+alertcondition(longCond, "NXS ICHIMOKU BUY", "NEXUS ICHIMOKU: rottura Kumo rialzista")
+alertcondition(shortCond, "NXS ICHIMOKU SELL", "NEXUS ICHIMOKU: rottura Kumo ribassista")

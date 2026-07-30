@@ -85,6 +85,26 @@ produzione** (`NXS_Profile_Enabled` ritorna `false`, nota nel codice: "v2.3.1
 test reale: 6 trade, -30$") — zero trade reali oggi, stessa situazione di
 STRUCT_REACT. Passaggio dedicato successivo.
 
+**Batch 7** (30/07) — famiglia TREND, 3 delle 4 (LONDON_BO rimandata, vedi
+nota sotto la tabella):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_BREAKOUT_ACC.pine` | BREAKOUT_ACC | D1 | Trend-following (accettazione: 2 chiusure consecutive oltre il range 20 barre) |
+| `NEXUS_EMA_PULLBACK.pine` | EMA_PULLBACK | H4 | Trend-following (trend persistente 5 barre + impulso + pullback con rigetto su EMA20) |
+| `NEXUS_ICHIMOKU.pine` | ICHIMOKU | H4 | Trend-following (rottura della nuvola Kumo, Tenkan/Kijun 9/26/52 — **disabilitata in produzione MT5**, vedi sotto) |
+
+`LONDON_BO` (D1) non è in questo batch: nel codice reale il suo range Asia
+viene sempre letto dal timeframe globale `InpTFEntry` (M15), indipendente
+dal TF della strategia (D1) — stesso limite già documentato per
+SILVER_BULLET/LIQ_SWEEP/SH_BMS_RTO (richiederebbe `request.security_lower_tf`).
+In più ha un gate di sessione intraday (solo durante London, controllato sui
+tick live in MQL5) che non si mappa in modo pulito sulla valutazione a barra
+chiusa D1 di Pine — un ordine si riempirebbe all'apertura della barra
+successiva (mezzanotte), non durante l'orario London. Due problemi che si
+sommano sulla stessa strategia: passaggio dedicato invece di una soluzione
+approssimata.
+
 > ⚠️ **Regola zero (30/07)**: su richiesta dell'utente, tutti i risultati già
 > registrati nelle tabelle sotto (Batch 1/2/3) sono da considerarsi **non
 > verificati** — si riparte da zero su tutte le 37 strategie, protocollo

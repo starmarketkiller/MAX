@@ -1,0 +1,139 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia EMA_PULLBACK (trend persistente + impulso + rigetto) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_EMAPullback (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:493) e il
+// profilo attuale (NXS_StrategyProfiles.mqh: EMA_PULLBACK -> slMult=1.5,
+// tpMult=4.0, htf=true, beR=0, trailATR=0, PERIOD_H4).
+//
+// Trigger (identico a MQL5, su barre CHIUSE — fix reale del 17/07, da un
+// semplice cross istantaneo EMA20/EMA50 a un vero pullback con 4 condizioni):
+//   1) Trend persistente: per le 5 barre precedenti (shift1..5), EMA20 sopra
+//      (o sotto) EMA50 E in salita/discesa rispetto alla barra ancora
+//      precedente (shift[k+1]) — non solo nell'istante attuale.
+//   2) Impulso precedente: nelle barre shift2..12, il prezzo deve essersi
+//      allontanato dall'EMA20 di almeno 1.0×ATR in almeno una di esse.
+//   3) Pullback con vera rejection sulla barra chiusa shift1: il minimo (per
+//      un trend rialzista) tocca l'EMA20 ± tolleranza (0.15×ATR).
+//   4) Reclaim: chiusura shift1 sopra EMA20 E sopra il colore della candela
+//      (close>open) E sopra EMA50 (niente entry se EMA50 è stata rotta).
+//   BUY/SELL speculari.
+//
+// Filtro HTF: attivo (EMA200 stesso TF H4, gate generico di profilo,
+// indipendente da EMA20/50 del trigger).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("NEXUS EA - EMA_PULLBACK (XAUUSD H4)", shorttitle="NXS-EMAPB", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+trendPersistBars = input.int(5, "Trend persistente: barre")
+minDistMult = input.float(1.0, "Impulso: distanza minima da EMA20 × ATR")
+touchToleranceMult = input.float(0.15, "Pullback: tolleranza tocco EMA20 × ATR")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)")
+atrLen = input.int(14, "ATR length")
+slMult = input.float(1.5, "SL (x ATR)")
+tpMult = input.float(4.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+ema20s = ta.ema(close, 20)
+ema50s = ta.ema(close, 50)
+e20 = ema20s[1]
+e50 = ema50s[1]
+up = e20 > e50
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- (1) Trend persistente -------------------------
+trendPersistOK = true
+for k = 1 to trendPersistBars
+    e20k  = ema20s[k]
+    e50k  = ema50s[k]
+    e20kp = ema20s[k + 1]
+    okK = up ? (e20k > e50k and e20k >= e20kp) : (e20k < e50k and e20k <= e20kp)
+    if not okK
+        trendPersistOK := false
+
+// ----------------------------- (2) Impulso precedente ------------------------
+hadImpulse = false
+for k = 2 to 12
+    e20k = ema20s[k]
+    pxk = up ? high[k] : low[k]
+    dist = up ? (pxk - e20k) : (e20k - pxk)
+    if dist >= atrVal * minDistMult
+        hadImpulse := true
+
+// ----------------------------- (3)+(4) Pullback + reclaim --------------------
+c1 = close[1]
+o1 = open[1]
+l1 = low[1]
+h1 = high[1]
+tol = atrVal * touchToleranceMult
+
+touchedUp   = l1 <= e20 + tol
+reclaimUp   = c1 > e20 and c1 > o1 and c1 > e50
+touchedDown = h1 >= e20 - tol
+reclaimDown = c1 < e20 and c1 < o1 and c1 < e50
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = trendPersistOK and hadImpulse and up   and touchedUp   and reclaimUp
+rawShort = trendPersistOK and hadImpulse and not up and touchedDown and reclaimDown
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="EMA_PB_bull:pullback+reject")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="EMA_PB_bear:pullback+reject")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema20s, title="EMA20", color=color.new(color.aqua, 20))
+plot(ema50s, title="EMA50", color=color.new(color.fuchsia, 20))
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plotshape(longCond, title="EMA_PB Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="EMA_PB Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS EMA_PULLBACK BUY", "NEXUS EMA_PULLBACK: pullback rialzista con rigetto su EMA20")
+alertcondition(shortCond, "NXS EMA_PULLBACK SELL", "NEXUS EMA_PULLBACK: pullback ribassista con rigetto su EMA20")
