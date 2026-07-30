@@ -57,16 +57,24 @@ ENV NEXUS_DB_PATH=/data/nexus.db \
     NEXUS_DOWNLOADS_DIR=/app/protected/downloads \
     PYTHONUNBUFFERED=1
 
-# /data è un volume: deve essere scrivibile dall'utente non privilegiato.
-RUN mkdir -p /data && chown -R nexus:nexus /app /data
+# /data è un volume: il chown qui riguarda solo il layer immagine. Il disco
+# persistente reale viene montato da Render a runtime con proprietario
+# proprio (root di norma), quindi va risistemato dall'entrypoint a ogni
+# avvio — vedi docker-entrypoint.sh.
+RUN mkdir -p /data && chown -R nexus:nexus /app /data \
+ && chmod +x docker-entrypoint.sh
 
-USER nexus
 EXPOSE 8001
 
 # AUD0-DEP-005: nessun healthcheck. Si usa /api/ready (database + migrazioni +
 # preflight di sicurezza), non /api/health che prova solo la liveness.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD python -c "import os,urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:%s/api/ready' % os.environ.get('PORT','8001'), timeout=4).status == 200 else 1)"
+
+# Resta root fino all'entrypoint: serve per il chown del volume montato a
+# runtime. L'entrypoint droppa a nexus (uid 10001) via su prima di eseguire
+# il comando applicativo — il processo servito non gira mai come root.
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Il cloud (Render/Railway) inietta la variabile PORT; in locale usa 8001.
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8001}"]
