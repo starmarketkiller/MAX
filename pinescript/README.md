@@ -68,6 +68,23 @@ ritorna `false`, nota nel codice: "v2.3.1 test reale: 85 trade, -102$,
 peggiore") — non genera mai trade reali oggi. Portata in un passaggio
 dedicato successivo, con lo stesso standard di fedeltà delle altre.
 
+**Batch 6** (30/07) — famiglia SMC, 4 delle 5 (OTE_CONT rimandata, vedi nota
+sotto la tabella):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_FVG_CONT.pine` | FVG_CONT | H4 | SMC/ICT (gap 3 candele + trend H1 esterno cross-TF) |
+| `NEXUS_IFVG.pine` | IFVG | H4 | SMC/ICT (Inversion FVG: gap invalidato + CHoCH dal motore struttura) |
+| `NEXUS_FVG_MIT.pine` | FVG_MIT | D1 | SMC/ICT (retest di un FVG maturo, non appena formato, + rigetto) |
+| `NEXUS_OB_MIT.pine` | OB_MIT | D1 | SMC/ICT — **wrapper letterale di ORDER_BLOCK in MQL5** (stessa funzione, stesso SL/TP; il profilo proprio di OB_MIT nel registro non è mai applicato, vedi nota in testa al file) |
+
+`OTE_CONT` (D1) non è in questo batch: richiede una Fibonacci OTE calcolata
+cross-TF su H1 (`request.security`) più un gate BOS con scan su 10 barre H1
+— più complessa delle altre 4. È inoltre già **confermata bloccata in
+produzione** (`NXS_Profile_Enabled` ritorna `false`, nota nel codice: "v2.3.1
+test reale: 6 trade, -30$") — zero trade reali oggi, stessa situazione di
+STRUCT_REACT. Passaggio dedicato successivo.
+
 > ⚠️ **Regola zero (30/07)**: su richiesta dell'utente, tutti i risultati già
 > registrati nelle tabelle sotto (Batch 1/2/3) sono da considerarsi **non
 > verificati** — si riparte da zero su tutte le 37 strategie, protocollo

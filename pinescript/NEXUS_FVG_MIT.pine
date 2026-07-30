@@ -1,0 +1,129 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia FVG_MIT (retest di un FVG maturo + rigetto) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_FVG_Mitigation (NXS_Strategies_SMC.mqh:91) e il profilo attuale
+// (NXS_StrategyProfiles.mqh: FVG_MIT -> slMult=1.5, tpMult=4.5 nel profilo,
+// MA SL/TP reali sono geometrico/ATR fisso — vedi sotto; htf=true, beR=0,
+// trailATR=0, PERIOD_D1).
+//
+// A differenza di LIQ_VOID/DISP_REBAL (FVG appena formato, entry sul CE),
+// questa strategia cerca un FVG VECCHIO/maturo (barre shift 5 e shift 7, non
+// le ultime 1-3) e richiede che il prezzo sia già tornato dentro la zona con
+// una candela di rigetto — non un CE fresco.
+//
+// Trigger (identico a MQL5, su barra CHIUSA, offset[5]/[7] = shift[5]/[7]):
+//   Zona bullish matura : low[7] > high[5] + 0.15×ATR → zona [high[5], low[7]]
+//   Zona bearish matura : high[7] < low[5] - 0.15×ATR → zona [high[7], low[5]]
+//   BUY  : prezzo nella zona bullish E candela shift1 di rigetto rialzista
+//          (corpo > 0.35×ATR, close>open)
+//   SELL : speculare sulla zona bearish
+//
+// SL/TP: SL = bordo della zona ∓ 0.4×ATR (geometrico); TP è un multiplo ATR
+// FISSO sull'entry (_smc_tp(entry,dir,2.5) = entry ± 2.5×ATR, non un
+// multiplo di R — stessa convenzione di SH_BMS_RTO/SMS_BMS_RTO).
+//
+// Filtro HTF: attivo (EMA200 stesso TF D1, gate generico di profilo).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. Il "prezzo nella
+// zona" usa il bid LIVE in MQL5 — qui approssimato col range low/high della
+// barra appena chiusa, stessa barra della candela di rigetto (come in
+// LIQ_VOID/ORDER_BLOCK/DISP_REBAL).
+// =============================================================================
+strategy("NEXUS EA - FVG_MIT (XAUUSD D1)", shorttitle="NXS-FVGMIT", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+gapMinMult = input.float(0.15, "Gap minimo della zona × ATR")
+rejectionBodyMult = input.float(0.35, "Corpo minimo candela di rigetto × ATR")
+slBufferMult = input.float(0.4, "SL: buffer oltre il bordo zona × ATR")
+tpAtrMult = input.float(2.5, "TP: multiplo ATR fisso sull'entry (non su R)")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+h2 = high[5]
+l2 = low[5]
+h0 = high[7]
+l0 = low[7]
+c1 = close[1]
+o1 = open[1]
+bodyAbs = math.abs(c1 - o1)
+rejectionBull = c1 > o1 and bodyAbs > atrVal * rejectionBodyMult
+rejectionBear = c1 < o1 and bodyAbs > atrVal * rejectionBodyMult
+
+bullZoneValid = l0 > h2 + gapMinMult * atrVal
+bullLo = h2
+bullHi = l0
+bullTouch = low <= bullHi and high >= bullLo
+
+bearZoneValid = h0 < l2 - gapMinMult * atrVal
+bearLo = h0
+bearHi = l2
+bearTouch = high >= bearLo and low <= bearHi
+
+// ----------------------------- Trigger --------------------------------------
+rawLong  = bullZoneValid and bullTouch and rejectionBull
+rawShort = bearZoneValid and bearTouch and rejectionBear
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+// ----------------------------- SL/TP iniziali (pending) ---------------------
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    entryPx = close
+    pendingSL := bullLo - slBufferMult * atrVal
+    pendingTP := entryPx + tpAtrMult * atrVal
+    strategy.entry("Long", strategy.long, comment="FVG_MIT bull retest+reject")
+if shortCond and strategy.position_size >= 0
+    entryPx = close
+    pendingSL := bearHi + slBufferMult * atrVal
+    pendingTP := entryPx - tpAtrMult * atrVal
+    strategy.entry("Short", strategy.short, comment="FVG_MIT bear retest+reject")
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(bullZoneValid ? bullLo : na, "Zona bull lo", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bullZoneValid ? bullHi : na, "Zona bull hi", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(bearZoneValid ? bearLo : na, "Zona bear lo", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(bearZoneValid ? bearHi : na, "Zona bear hi", color=color.new(color.red, 0), style=plot.style_linebr)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS FVG_MIT BUY", "NEXUS FVG_MIT: rigetto sul retest di un FVG bullish maturo")
+alertcondition(shortCond, "NXS FVG_MIT SELL", "NEXUS FVG_MIT: rigetto sul retest di un FVG bearish maturo")

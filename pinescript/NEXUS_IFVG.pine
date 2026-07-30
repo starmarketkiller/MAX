@@ -1,0 +1,160 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia IFVG (Inversion FVG: gap invalidato + CHoCH) — XAUUSD H4
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_IFVG_Reversal (NXS_Strategies_SMC.mqh:56), che legge il motore di
+// struttura condiviso NXS_ComputeStructureCore (NXS_Structure.mqh), e il
+// profilo attuale (NXS_StrategyProfiles.mqh: IFVG -> slMult=1.5, tpMult=4.5
+// nel profilo, MA SL/TP reali sono geometrico/ATR fisso — vedi sotto;
+// htf=true, beR=0, trailATR=0, PERIOD_H4).
+//
+// Concetto: un FVG (gap a 3 candele) che viene ATTRAVERSATO nella direzione
+// sbagliata (invalidato) diventa un segnale di inversione, se confermato da
+// un CHoCH nella nuova direzione e da una candela di reazione.
+//
+// Trigger (identico a MQL5, su barra CHIUSA, offset[2]/[4] = shift[2]/[4] —
+// nota: usa shift 2 e 4 per il gap, lasciando shift1 libera per la reazione,
+// diversamente dal FVG a 3 candele consecutive di LIQ_VOID/DISP_REBAL):
+//   FVG bullish [high[4]..low[2]] invalidato IN GIÙ:
+//     low[2] > high[4] + 0.2×ATR  E  close[1] < high[4]  E  candela shift1 di
+//     rigetto ribassista (corpo>0.3×ATR)  E  CHoCH ribassista (motore
+//     struttura) → SELL, SL = low[2] + 0.5×ATR, TP = entry - 2.4×ATR
+//   FVG bearish [high[2]..low[4]] invalidato IN SU: speculare → BUY,
+//     SL = high[2] - 0.5×ATR, TP = entry + 2.4×ATR
+//
+// Motore struttura (fedele a NXS_ComputeStructureCore, stesso porting di
+// NEXUS_SMS_BMS_RTO.pine): ultimi 2 swing (pivot fractal ala 3 barre)
+// determinano il trend (HH+HL=up, LH+LL=down, isteresi altrimenti), CHoCH
+// quando la chiusura rompe l'ultimo swing in direzione OPPOSTA al trend
+// precedente. Qui calcolato sullo STESSO TF della strategia (H4, g_struct),
+// a differenza di FVG_CONT che legge g_structH1 (H1 indipendente).
+//
+// Filtro HTF: attivo (EMA200 stesso TF H4, gate generico di profilo).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. I pivot
+// (ta.pivothigh/pivotlow) sono confermati con 3 barre di ritardo — nessun
+// repaint, sono già barre chiuse quando letti.
+// =============================================================================
+strategy("NEXUS EA - IFVG (XAUUSD H4)", shorttitle="NXS-IFVG", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+swingWing = input.int(3, "Struttura: ala del pivot (barre per lato)")
+gapMinMult = input.float(0.2, "Gap minimo invalidazione × ATR")
+reactionBodyMult = input.float(0.3, "Corpo minimo candela di reazione × ATR")
+slBufferMult = input.float(0.5, "SL: buffer oltre il bordo del gap × ATR")
+tpAtrMult = input.float(2.4, "TP: multiplo ATR fisso sull'entry (non su R)")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+ema200 = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Motore struttura (BOS/CHoCH, stesso TF) ------
+ph = ta.pivothigh(swingWing, swingWing)
+pl = ta.pivotlow(swingWing, swingWing)
+
+var float lastSwingHigh = na
+var float prevSwingHigh = na
+var float lastSwingLow  = na
+var float prevSwingLow  = na
+if not na(ph)
+    prevSwingHigh := lastSwingHigh
+    lastSwingHigh := ph
+if not na(pl)
+    prevSwingLow := lastSwingLow
+    lastSwingLow := pl
+
+var int structTrend = 0
+trendBefore = structTrend
+if not na(lastSwingHigh) and not na(prevSwingHigh) and not na(lastSwingLow) and not na(prevSwingLow)
+    hh = lastSwingHigh > prevSwingHigh
+    hl = lastSwingLow > prevSwingLow
+    lh = lastSwingHigh < prevSwingHigh
+    ll = lastSwingLow < prevSwingLow
+    if hh and hl
+        structTrend := 1
+    else if lh and ll
+        structTrend := -1
+
+c1 = close[1]
+chochUp   = not na(lastSwingHigh) and c1 > lastSwingHigh and trendBefore == -1
+chochDown = not na(lastSwingLow)  and c1 < lastSwingLow  and trendBefore == 1
+
+// ----------------------------- Gap + reazione --------------------------------
+h2 = high[2]
+l2 = low[2]
+h4v = high[4]
+l4 = low[4]
+o1 = open[1]
+bodyAbs = math.abs(c1 - o1)
+reactionBear = c1 < o1 and bodyAbs > atrVal * reactionBodyMult
+reactionBull = c1 > o1 and bodyAbs > atrVal * reactionBodyMult
+
+bullFvgInvalidatedDown = l2 > h4v + gapMinMult * atrVal and c1 < h4v
+bearFvgInvalidatedUp   = h2 < l4 - gapMinMult * atrVal and c1 > l4
+
+// ----------------------------- Trigger --------------------------------------
+rawShort = bullFvgInvalidatedDown and reactionBear and chochDown
+rawLong  = bearFvgInvalidatedUp   and reactionBull and chochUp
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and rawLong  and not htfBlocksBuy
+shortCond = inRange and rawShort and not htfBlocksSell
+
+// ----------------------------- SL/TP iniziali (pending) ---------------------
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    entryPx = close
+    pendingSL := h2 - slBufferMult * atrVal
+    pendingTP := entryPx + tpAtrMult * atrVal
+    strategy.entry("Long", strategy.long, comment="IFVG bear→bull +MSS")
+if shortCond and strategy.position_size >= 0
+    entryPx = close
+    pendingSL := l2 + slBufferMult * atrVal
+    pendingTP := entryPx - tpAtrMult * atrVal
+    strategy.entry("Short", strategy.short, comment="IFVG bull→bear +MSS")
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(ema200, title="EMA200", color=color.new(color.orange, 30))
+plot(lastSwingHigh, title="Ultimo swing high", color=color.new(color.red, 60))
+plot(lastSwingLow, title="Ultimo swing low", color=color.new(color.lime, 60))
+plotshape(longCond, title="IFVG Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="IFVG Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS IFVG BUY", "NEXUS IFVG: FVG bearish invalidato in su + CHoCH rialzista")
+alertcondition(shortCond, "NXS IFVG SELL", "NEXUS IFVG: FVG bullish invalidato in giù + CHoCH ribassista")
