@@ -2,18 +2,19 @@
 
 > Prima verifica di fedeltà eseguita contro le fonti originali, ora disponibili.
 > Fino al 2026-07-30 questo documento constatava soltanto, senza correggere.
-> **F-05 è la prima eccezione**: gap chiuso su richiesta esplicita del
-> proprietario, codice modificato di conseguenza (vedi la sezione `REMEDIATO`
-> dentro F-05). Tutte le altre voci restano constatazioni, non correzioni.
+> **F-05 e F-02 sono le prime eccezioni**: gap chiusi su richiesta esplicita
+> del proprietario, codice modificato di conseguenza (vedi le sezioni
+> `REMEDIATO` dentro ciascuna voce). Tutte le altre restano constatazioni, non
+> correzioni.
 
 | | |
 |---|---|
-| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`; F-05 remediato) |
+| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`; F-05 e F-02 remediati) |
 | Fonti primarie usate | `docs/sources/corpus/` (11 PDF archiviati con hash) |
 | Formalizzazione di riferimento | `docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` (PARTE 1-7) |
 | Codice esaminato | `NXS_Structure.mqh`, `NXS_Strategies_SMC.mqh`, `NXS_AMDModel.mqh`, `NXS_BjorgumZones.mqh` (baseline `main` = `4465873`) |
-| Codice modificato | `NXS_Strategies_SMC.mqh` — contatore utilizzi per livello, F-05 |
-| Esiti | 1 fedele · 2 divergenze confermate (F-02, F-06) · 1 divergenza strutturale (F-03) · 1 remediato (F-05) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
+| Codice modificato | `NXS_Strategies_SMC.mqh` — contatore utilizzi per livello (F-05), killzone Silver Bullet DST-aware (F-02) |
+| Esiti | 1 fedele · 1 divergenza confermata (F-06) · 1 divergenza strutturale (F-03) · 2 remediati (F-02, F-05) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
 
 ## Livelli di giudizio
 
@@ -69,7 +70,7 @@ punto dove il codice usa l'ombra in questo percorso.
 
 ---
 
-## F-02 · `SILVER_BULLET` — `DIVERGENTE` 🔴
+## F-02 · `SILVER_BULLET` — `DIVERGENTE` 🔴 → `REMEDIATO` ✅ (2026-07-30)
 
 **Fonte primaria** (I-07, PDF ICT):
 
@@ -124,6 +125,45 @@ che nessuna fonte indica, e nell'altra metà in una finestra corretta solo
 d'estate. `SILVER_BULLET` non ha dati di sweep: qualsiasi misura futura senza
 correggere questo misurerebbe una strategia diversa da quella che dichiara di
 essere.
+
+### `REMEDIATO` ✅ — 2026-07-30
+
+Sostituite le due finestre GMT fisse con le tre finestre ET (03-04, 10-11,
+14-15) convertite correttamente in GMT in base alla DST USA (2a domenica di
+marzo - 1a domenica di novembre — verificato contro le transizioni reali
+2025/2026/2027: 9 mar-2 nov, 8 mar-1 nov, 14 mar-7 nov). È una regola diversa
+dalla BST inglese già gestita altrove nel codice (`NXS_IsLondonBST` in
+`NXS_Strategies_Institutional.mqh`) — UK e USA non condividono le date di
+cambio ora, motivo per cui serviva un helper dedicato, non un riuso.
+
+`NXS_Strategies_SMC.mqh` è incluso in `NEXUS_EA_v2.mq5` **prima** di
+`NXS_Strategies_Institutional.mqh`: l'helper (`NXS_IsUSEDT`,
+`NXS_SMC_NthSundayUTC`) è stato aggiunto localmente in questo stesso file
+invece di spostare o duplicare quello inglese, per non toccare l'ordine di
+inclusione né altri strategie.
+
+```cpp
+bool edt = NXS_IsUSEDT(gmtNow);
+bool killzoneLdnOpen = edt ? (h >= 7  && h < 8)  : (h >= 8  && h < 9);    // 03-04 ET
+bool killzoneAM      = edt ? (h >= 14 && h < 15) : (h >= 15 && h < 16);   // 10-11 ET
+bool killzonePM      = edt ? (h >= 18 && h < 19) : (h >= 19 && h < 20);   // 14-15 ET
+```
+
+Le sei coppie di orari (EST/EDT × tre finestre) coincidono esattamente con la
+tabella "Conversione, con e senza ora legale americana" sopra, già
+corroborata dalle fonti esterne.
+
+**Non verificato**: la London Open Killzone (02:00–05:00 ET) e la New York
+Open Killzone (08:30–11:00 ET) citate dalle fonti esterne sono finestre più
+ampie della *specifica* Silver Bullet (le tre ore singole), usate da alcune
+fonti come contesto più largo in cui la Silver Bullet si inserisce. Non le ho
+aggiunte: la fonte primaria (I-07) parla solo delle tre finestre strette, e
+le fonti esterne le trattano come concetti distinti, non equivalenti.
+
+**Non compilato**, stesso limite di F-05: nessun compilatore MQL5 in questo
+ambiente. La correttezza delle date DST è stata verificata con una
+simulazione Python indipendente dello stesso algoritmo (stessa aritmetica di
+`day_of_week`), non con l'esecuzione del codice MQL5.
 
 ---
 
@@ -407,7 +447,7 @@ dei suoi cinque ingredienti esiste.
 | Verifica | Esito |
 |---|---|
 | F-01 Break of Structure | **FEDELE** — usa la chiusura, come la fonte |
-| F-02 `SILVER_BULLET` killzone | **DIVERGENTE** — una finestra inesistente, una corretta solo d'estate, una mancante |
+| F-02 `SILVER_BULLET` killzone | **REMEDIATO** ✅ — tre finestre ET, conversione GMT DST-aware con helper dedicato |
 | F-03 `MALAYSIAN_SNR` | **PARZIALE** — primitiva del livello diversa, fresh degradato a bonus, flip assente, struttura non consultata |
 | F-04 copertura dei gate | 0 strategie su 10 applicano la cascata completa; `OB_MIT` non applica alcun gate |
 | F-05 `MALAYSIAN_SNR` fresh/unfresh, numeri esatti | **REMEDIATO** ✅ — contatore di 2 usi per livello aggiunto; eccezione daily gap non implementata per scelta (soglia non quantificata dalla fonte) |

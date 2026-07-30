@@ -401,15 +401,45 @@ SNXSSignal NXS_SB_UpdateSide(int dir, SNXSSBState &st, SNXSSweepExt &sw, bool in
    return s;
 }
 
+// F-02 (fidelity report 01, I-07 + fonti esterne corroboranti): le tre
+// finestre Silver Bullet sono in ET (London Open 03-04, AM 10-11, PM 14-15),
+// non GMT. L'ET segue la DST USA (2a domenica di marzo - 1a domenica di
+// novembre), una regola DIVERSA dalla BST inglese gia' gestita altrove
+// (NXS_IsLondonBST in NXS_Strategies_Institutional.mqh, non riusabile qui:
+// quel file e' incluso DOPO questo in NEXUS_EA_v2.mq5, e comunque e' la
+// regola sbagliata - UK e USA non condividono le date di cambio ora, vedi
+// il commento li'). Helper locale, stesso schema (Nma domenica UTC di un
+// mese), regola diversa.
+datetime NXS_SMC_NthSundayUTC(int year, int month, int nth){
+   MqlDateTime mt; mt.year = year; mt.mon = month; mt.day = 1; mt.hour = 0; mt.min = 0; mt.sec = 0;
+   datetime t = StructToTime(mt);
+   MqlDateTime norm; TimeToStruct(t, norm);
+   datetime firstSunday = t + ((7 - norm.day_of_week) % 7) * 86400;   // day_of_week: 0=domenica
+   return firstSunday + (nth - 1) * 7 * 86400;
+}
+bool NXS_IsUSEDT(datetime utcTime){
+   MqlDateTime mt; TimeToStruct(utcTime, mt);
+   // DST inizia alle 07:00 UTC (02:00 EST) della 2a domenica di marzo,
+   // finisce alle 06:00 UTC (02:00 EDT) della 1a domenica di novembre.
+   datetime dstStart = NXS_SMC_NthSundayUTC(mt.year, 3,  2) + 7 * 3600;
+   datetime dstEnd   = NXS_SMC_NthSundayUTC(mt.year, 11, 1) + 6 * 3600;
+   return (utcTime >= dstStart && utcTime < dstEnd);
+}
+
 SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
    // v2.0.5b: GMT-corrected killzones (server time → GMT)
    datetime gmtNow = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
    MqlDateTime mt; TimeToStruct(gmtNow, mt);
    int h = mt.hour;
-   bool killzoneLO = (h >= 10 && h < 11);   // London KZ 10-11 GMT
-   bool killzoneNY = (h >= 14 && h < 15);   // NY KZ 14-15 GMT
-   bool inKillzone = killzoneLO || killzoneNY;
-   string kzTag = killzoneLO ? "SB:LO-KZ" : "SB:NY-KZ";
+   // F-02: tre finestre ET convertite in GMT secondo la DST USA corrente,
+   // non due finestre GMT fisse (una delle quali non corrispondeva a nulla
+   // nella fonte, l'altra corretta solo sei mesi l'anno).
+   bool edt = NXS_IsUSEDT(gmtNow);
+   bool killzoneLdnOpen = edt ? (h >= 7  && h < 8)  : (h >= 8  && h < 9);    // 03-04 ET
+   bool killzoneAM      = edt ? (h >= 14 && h < 15) : (h >= 15 && h < 16);   // 10-11 ET
+   bool killzonePM      = edt ? (h >= 18 && h < 19) : (h >= 19 && h < 20);   // 14-15 ET
+   bool inKillzone = killzoneLdnOpen || killzoneAM || killzonePM;
+   string kzTag = killzoneLdnOpen ? "SB:LDNOPEN-KZ" : (killzoneAM ? "SB:AM-KZ" : "SB:PM-KZ");
    ENUM_TIMEFRAMES tf = NXS_EffTF();
    double atr = _smc_atr();
    datetime curBar0 = iTime(g_sym, tf, 0);
