@@ -7,13 +7,13 @@
 
 | | |
 |---|---|
-| Data | 2026-07-26 |
-| PDF ricevuti | **8 su 13** dichiarati in A4.2, **+1 fuori elenco** (`CANDLE_RANGE_THEORY`) |
-| PDF letti integralmente | 5 (`My Rare SNR Course`, `My Rare SNR Course 2`, `ict-trading`, `Yanu Emmanuel`, `CANDLE_RANGE_THEORY`) |
+| Data | 2026-07-26 · aggiornato 2026-07-30 (PARTE 7, `Sequence_2.pdf`) |
+| PDF ricevuti | **9 su 13** dichiarati in A4.2, **+1 fuori elenco** (`CANDLE_RANGE_THEORY`) |
+| PDF letti integralmente | 6 (`My Rare SNR Course`, `My Rare SNR Course 2`, `ict-trading`, `Yanu Emmanuel`, `CANDLE_RANGE_THEORY`, `Sequence_2`) |
 | PDF letti parzialmente | 1 (`Sequence` — 20 pagine su 76) |
 | PDF archiviati e non ancora letti | 3 (`SNR Malaysia` 74 p, `Secret Of 411(1)` 16 p, `Sequence_1` 74 p) |
-| Conferme incrociate della primitiva open/close | **4 fonti indipendenti** |
-| PDF ancora mancanti | **5** |
+| Conferme incrociate della primitiva open/close | **6 fonti indipendenti** (S-01, A-05, A-06, M-01, Q-03, Q-08) |
+| PDF ancora mancanti | **4** |
 | Registro fonti | `docs/sources/SOURCE_MANIFEST.json` |
 
 ## Verifica di integrità delle fonti
@@ -765,6 +765,374 @@ PDF gratuiti non garantisce di ottenere più regole operative.
 
 ---
 
+# PARTE 7 — Sequence_2.pdf (il file 9/13, ora recuperato)
+
+Fonte: `Sequence_2.pdf`, 119 pagine, lette integralmente via rendering
+multimodale (zero testo nativo, confermato da A4.2 e da questa verifica).
+Bilingue inglese/indonesiano, autore `@abayforex`, stessa firma di
+`Sequence.pdf`. **È la fonte più densa e più precisamente quantificata
+dell'intero corpus.**
+
+A differenza di `Sequence.pdf` (framework Alchemist a livello di composizione),
+questo file entra nel dettaglio operativo di singoli concetti — spesso con
+numeri esatti dove le altre fonti si fermavano a una descrizione qualitativa.
+Dove un concetto qui **ri-conferma** una voce già formalizzata (es. A-03, A-04,
+A-05), lo segnalo esplicitamente invece di duplicare il predicato.
+
+## Q-01 · Fresh / Unfresh / Flipped — `EXPLICIT`, specifica completa
+
+Ri-conferma e **completa** M-03 (Yanu Emmanuel), che aveva già la macchina a
+stati ma non i numeri. Qui la fonte li dà:
+
+> "A zone is considered fresh if it has never been touched." · "If touched by a
+> wick → unfresh." · "If broken through by a full body candle → the zone
+> becomes fresh again." · "A zone can only be used a maximum of **2 times**."
+> "Exception: if it was previously a daily gap that produced a strong reaction,
+> then the zone can be reused without following the 2-use limit."
+
+**Predicato deterministico completo:**
+
+```text
+stato(livello) = FRESH        se mai toccato da wick o corpo
+stato(livello) = UNFRESH      se toccato da un wick (non rotto a corpo pieno)
+stato(livello) = FRESH        se rotto da una candela a CORPO PIENO (si "flippa")
+usi_massimi(livello) = 2
+  eccezione: livello nato da un daily gap con reazione forte pregressa
+             → nessun limite di utilizzo
+```
+
+Rispetto a M-03 (che aveva la transizione qualitativa) questo predicato
+aggiunge due elementi **quantitativi e testabili**: il numero massimo di usi
+(2) e l'eccezione del daily gap. È lo stesso identico discriminante corpo/ombra
+già visto in S-04, M-03, M-05 — quinta conferma indipendente.
+
+## Q-02 · Checklist di validazione SNR — `EXPLICIT`, tre condizioni congiunte
+
+> "To confirm whether an SNR level is tradable, make sure: 1. Price has tapped
+> the wick/shadow. 2. Liquidity has been collected (liquidity sweep). 3. Price
+> is located in a congestion or reaction zone. If all three conditions are met,
+> the level is considered valid for buying or selling."
+
+```text
+valido(livello) = tocco_wick(livello) AND liquidity_sweep(livello) AND zona_congestione(livello)
+```
+
+È una versione più operativa di M-04 (livello → confluenze → rifiuto →
+allineamento HTF): qui le "confluenze" sono ridotte a tre condizioni
+enumerate e congiunte, non una lista aperta.
+
+## Q-03 · RBS / SBR — `EXPLICIT`, ri-conferma di A-03 con esempio numerico
+
+Stessa definizione di A-03 (Break → Retest → Continue), qui con un esempio
+concreto e quantificato:
+
+> "If XAU/USD breaks above the $2,400 resistance level and then retests that
+> level while showing bullish rejection candles, the level now acts as RBS.
+> Traders may look for long entries around $2,400 with stop-losses placed
+> slightly below the zone."
+
+Nota aggiuntiva della fonte, non presente in A-03: *"Higher timeframes (such as
+H4 or Daily) give stronger and more reliable RBS/SBR levels."* — un requisito
+di timeframe minimo che le altre fonti non davano.
+
+## Q-04 · QM / Quasimodo — `EXPLICIT`, sequenza a 4 passi per entrambe le direzioni
+
+Estende A-04 con la sequenza completa e simmetrica (A-04 aveva solo la versione
+ribassista):
+
+```text
+QM ribassista (Sell Setup):
+  1. il prezzo sale  → forma un Higher High (HH)
+  2. pullback        → forma un Higher Low (HL)
+  3. il prezzo risale ma con momentum più debole, poi rompe sotto l'HL
+     → la struttura inizia a rompersi
+  4. il prezzo ritraccia sulla stessa area → QUELLO è l'entry SELL
+
+QM rialzista (Buy Setup):
+  1. il prezzo scende → forma un Lower Low (LL)
+  2. pullback         → forma un Lower High (LH)
+  3. il prezzo riscende ma fallisce un nuovo LL, poi rompe sopra l'LH
+     → la struttura inizia a spostarsi
+  4. il prezzo ritraccia sulla stessa area → QUELLO è l'entry BUY
+```
+
+> "Price seems to still follow the previous direction, but suddenly the
+> structure breaks and the direction changes." · "QM is a trap area — where the
+> market intentionally lures the majority of traders into entering in the
+> wrong direction."
+
+## Q-05 · QMM — Quasimodo Manipulation — `EXPLICIT`, concetto nuovo
+
+Non presente in nessun'altra fonte del corpus. Un sotto-pattern di QM:
+
+> "QMM (Quasimodo Manipulation) is the phase where the market pretends to break
+> a key level (QML) to trap most traders, before eventually moving back in the
+> true direction." · "Price fakes a break above or below the QML, making it
+> look like a valid breakout. Then price returns back inside the range and
+> continues in the original direction."
+
+```text
+QMM: rottura FALSA del livello QM → il prezzo rientra nel range
+     → si muove nella direzione ORIGINALE (opposta alla falsa rottura)
+```
+
+`MISSING`: nessuna soglia su quanto la falsa rottura debba estendersi oltre il
+livello prima di essere considerata QMM invece di una rottura vera.
+
+## Q-06 · QMC — Quasimodo Continuation — `EXPLICIT`, concetto nuovo
+
+Complementare a QMM: qui la falsa mossa precede una **continuazione**, non
+un'inversione.
+
+```text
+Uptrend:
+  1. il mercato forma un Higher High (HH)
+  2. ritraccia formando un Higher Low (HL)
+  3. risale a formare un FALSO HH (liquidity grab / fake wick)
+  4. rompe e chiude sotto l'HL → segnale di cambio struttura
+
+Downtrend: sequenza speculare (LL → LH → falso LL → rottura sopra l'LH)
+```
+
+> "QMC = a fake continuation move + a clean retest entry." · "Waiting for the
+> break + retest offers a far safer and more reliable entry than chasing
+> normal support or resistance levels."
+
+## Q-07 · QMX — QM + Trendline Crossing — `EXPLICIT`, completa A-07
+
+A-07 (da `Sequence.pdf`) aveva i diagrammi ma nessuna regola quantitativa
+("MISSING: la fonte non definisce la tolleranza dell'intersezione né i criteri
+di validità della candela engulfing"). Questa fonte la completa:
+
+```text
+QMX = rottura di struttura QM  +  incrocio fra trendline e area QM/SNR
+segnale di conferma: candela ENGULFING nel punto di incrocio
+```
+
+> "QMX is a combination of two major market elements: 1. QM (Quasimodo / Change
+> of Character) 2. Trendline Crossing (X) — the intersection between the
+> trendline and the QM/SNR area. This combination creates a high-probability
+> reversal signal because two strong confirmations appear at the same time."
+
+`MISSING` resta: nessuna tolleranza numerica di prezzo/tempo per definire
+"stesso punto" fra i due elementi. Ma la logica dei tre requisiti congiunti
+(rottura QM + incrocio trendline + candela engulfing) è ora esplicita, dove
+prima era solo un diagramma.
+
+## Q-08 · OCL — Open-Close Level — `EXPLICIT`, ri-conferma A-05/M-01 con peso di sessione
+
+Stessa primitiva di A-05, S-01, M-01 (**sesta conferma indipendente** della
+primitiva close/open), con un elemento nuovo: la sessione in cui si forma
+influenza l'affidabilità.
+
+> "An OCL formed during the New York or London sessions often gives us
+> stronger zones and better momentum compared to the Asian session. If the OCL
+> is created during the London/New York overlap, it tends to be more reliable
+> with a lower chance of being fake-broken."
+
+```text
+forza(OCL) = alta   se formata in sessione Londra/NY (specialmente overlap)
+forza(OCL) = bassa  se formata in sessione Asia
+```
+
+Nessuna delle altre cinque fonti che parlano della stessa primitiva
+(open/close level) menziona un peso legato alla sessione di formazione.
+
+## Q-09 · Candle Equilibrium (CE) — `EXPLICIT`, concetto nuovo, zona quantificata
+
+Non presente altrove nel corpus. Definizione precisa:
+
+> "CE (Candle Equilibrium) is the balance point of a candle — the exact area
+> where buying and selling pressure are equalized." · "The most commonly used
+> area is the **45%-50% zone of the candle's range** (high to low, including
+> wicks)." · "Why this range? 1. Price naturally gravitates toward the midpoint
+> to rebalance orders. 2. It filters noise from very long wicks. 3. It provides
+> a more accurate equilibrium than the exact 50%."
+
+**Predicato deterministico:**
+
+```text
+range_candela = high[i] - low[i]                (include le ombre)
+CE_zona = [low[i] + 0.45 * range_candela ,  low[i] + 0.50 * range_candela]   (candela bearish, misurato da high)
+CE_zona = [high[i] - 0.50 * range_candela , high[i] - 0.45 * range_candela]  (per simmetria, versione bullish da open/low)
+```
+
+Uso operativo dichiarato: si aspetta il ritorno del prezzo in questa zona dopo
+una candela impulsiva, con conferma di rigetto (wick, BOS, sweep di liquidità)
+prima di entrare nella direzione dell'impulso originale.
+
+## Q-10 · Regole di tocco trendline (MSNR Trendlines) — `EXPLICIT`, completa A-08/T-01
+
+Aggiunge due regole quantitative assenti in A-08 e T-01:
+
+> "Touches must be equally spaced — this creates a strong trendline." · "Touches
+> must occur above or below SNR. If price is above SNR → strong trend (bullish
+> bias). If price is below SNR → weak trend (bearish bias)." · "Never force a
+> line the market doesn't show you — don't try to make it fit."
+
+```text
+trendline_valida = tocchi equidistanti (non forzati)
+bias = bullish  se prezzo sopra SNR
+bias = bearish  se prezzo sotto SNR
+```
+
+`MISSING`: nessuna tolleranza numerica per "equidistanti".
+
+## Q-11 · Confluenza / [X] Factor — `EXPLICIT`, ri-conferma A-09 con una regola operativa in più
+
+Stessa definizione di A-09 (2-3 elementi che convergono nello stesso punto),
+con un'aggiunta pratica assente altrove:
+
+> "You don't need to wait for a perfect candle confirmation, because when
+> everything aligns, the plan itself already tells you to act." · "This is
+> trading based on 'confirmation through the plan,' not confirmation through
+> emotion."
+
+Cioè: quando **trendline + SNR + liquidity** (o altre 2-3 fonti indipendenti)
+convergono nello stesso punto, la fonte dichiara esplicitamente che **non serve
+un'ulteriore candela di conferma**. È in tensione con M-06 (che richiede una
+candela di rifiuto con corpo spesso) — due fonti diverse, non riconciliate qui.
+
+## Q-12 · SMT Divergence — `EXPLICIT`, concetto nuovo, con coppie nominate
+
+Non presente altrove nel corpus.
+
+> "SMT stands for Smart Money Technique. Divergence simply means a difference
+> in movement. In simple terms, SMT Divergence is used to spot when two assets
+> that normally move together... start moving differently."
+
+**Tabella degli scenari, completa e deterministica:**
+
+```text
+Gold (XAU) scende, Silver (XAG) NON scende  → il calo di Gold è probabile fake  → segui Silver, aspettati reversal rialzista
+Silver (XAG) scende, Gold (XAU) NON scende  → il calo di Silver è probabile fake → segui Gold, aspettati reversal rialzista
+Gold (XAU) sale, Silver (XAG) NON sale      → il rialzo di Gold è probabile fake → segui Silver, aspettati reversal ribassista
+Silver (XAG) sale, Gold (XAU) NON sale      → il rialzo di Silver è probabile fake → segui Gold, aspettati reversal ribassista
+```
+
+Coppie correlate dichiarate esplicitamente per l'applicazione dello stesso
+principio: **EURUSD ⇌ GBPUSD**, **USDCAD ⇌ USDCHF**, **AUDUSD ⇌ NZDUSD**, oltre
+a Gold-Silver. Condizioni di conferma richieste (non basta la divergenza sola):
+struttura di mercato chiara (SMT vicino a fine trend, non a metà), sweep di
+liquidità sul lato "fake", e una reazione/BOS sul lato che non ha fatto la
+mossa fake, prima di entrare.
+
+## Q-13 · Quarterly Theory (QT) — `EXPLICIT`, AMD multi-timeframe con orari
+
+Il modello è **Accumulation → Manipulation → Distribution → Reversal/Continuation
+(Q1→Q2→Q3→Q4)**, applicato in modo **frattale** su cinque livelli temporali
+annidati: annuale, mensile, settimanale, giornaliero, intraday (finestre di 90
+minuti).
+
+**Tabella oraria giornaliera dichiarata (GMT+7):**
+
+```text
+Q1 Asia        00:00–06:00   Accumulation
+Q2 London      06:00–12:00   Manipulation
+Q3 New York AM 12:00–18:00   Distribution
+Q4 New York PM 18:00–00:00   Reversal / Continuation
+```
+
+Più una tabella intraday dettagliata (finestre da 90 minuti dentro ogni
+sessione, con orari Asia KZ/London Open/New York/PM per ciascun quarto) e una
+struttura annuale/mensile/settimanale con la stessa logica Q1-Q4 applicata a
+anno, mese e settimana.
+
+> "The market does not move randomly. Every period follows the same rhythm:
+> Accumulation → Manipulation → True Direction Revealed → Continuation or
+> Reversal."
+
+`ATTENZIONE`: la fonte etichetta la tabella "GMT+7" ma non chiarisce se sia il
+fuso del broker dell'autore o un riferimento assoluto; non l'ho potuto
+verificare con una fonte esterna come fatto per D-01/F-02. Va trattata come
+`CANDIDATE`, non presa alla lettera per un confronto orario diretto.
+
+## Q-14 · Daily Bias Cheat Sheet — `EXPLICIT`, checklist a 5 concetti
+
+> "I use the following five core concepts to define my daily bias."
+
+```text
+1. Internal & External Range Liquidity (IRL/ERL) — il prezzo si muove da ERL a IRL o viceversa?
+2. Candle Body Close (PDH/L & PWH/L)             — il close ha superato l'high/low del giorno precedente?
+3. Institutional Order Flow                       — la struttura è bullish o bearish? il prezzo rispetta i PD Arrays?
+4. SMT Divergence                                 — c'è divergenza con un mercato correlato?
+5. Weekly Profiles                                 — è confermato l'high o il low della settimana?
+
+Conclusione: c'è un Draw on Liquidity chiaro? Se no → restare neutrali è la decisione corretta.
+```
+
+## Q-15 · IRL / ERL — Internal / External Range Liquidity — `EXPLICIT`, concetto nuovo
+
+> "External Range Liquidity (ERL) is defined by Swing Highs and Swing Lows,
+> where the accumulation of liquidity tends to reside." · "Internal Range
+> Liquidity (IRL) is defined by imbalances (FVG/Fair Value Gaps)." · "After
+> price takes ERL, the draw on liquidity shifts toward IRL. After price moves
+> into IRL, liquidity will move back toward ERL."
+
+```text
+ERL = ai livelli di Swing High/Swing Low
+IRL = agli squilibri (FVG) dentro il range
+il prezzo alterna la destinazione fra ERL e IRL
+```
+
+## Q-16 · Institutional Order Flow — STH/ITH/LTH — `EXPLICIT`, concetto nuovo
+
+Gerarchia a tre livelli per i punti di struttura, con criterio di validazione:
+
+```text
+STH/STL (Short-Term High/Low)        = high/low fra due candele successive di direzione opposta
+ITH/ITL (Intermediate-Term High/Low) = STH/STL fra due Short-Term High/Low sul lato opposto
+LTH/LTL (Long-Term High/Low)         = formato da un livello di timeframe superiore
+```
+
+> "Once an ITH is confirmed, it is expected to remain intact until price
+> reaches an opposing higher-timeframe draw on liquidity."
+
+## Q-17 · Weekly Profiles — `EXPLICIT`, quattro pattern nominati
+
+```text
+Classic Expansion (bullish)   — consolidamento Lun-Mer, espansione Gio-Ven
+Midweek Reversal (bearish)    — Lun/Mar salgono, Mer inverte
+Consolidation + Thursday Reversal (bullish) — range Lun-Mer, Gio rompe HTF discount, Ven espande
+TGIF Friday (bearish)         — espansione Lun-Gio, Ven ritraccia nel range settimanale
+```
+
+`MISSING`: nessuna soglia quantitativa su cosa distingue un "consolidamento"
+da un "range" o un'"espansione".
+
+## Q-18 · Daily Profiles — `EXPLICIT`, cinque pattern con orari sessione
+
+Cinque profili giornalieri nominati, ciascuno con orari di sessione dichiarati
+esplicitamente (tutti nello stesso formato ET-like usato dalla fonte, non
+GMT+7 come in Q-13 — le due tabelle orarie della stessa fonte usano
+**convenzioni diverse**, mai riconciliate esplicitamente nel testo):
+
+```text
+1. London Reversal, NY Continuation — Londra inverte, NY continua la direzione vera
+   Forex 07:00-10:00, Indici 08:30-11:00 (orario non specificato se ET o altro)
+
+2. NY Reversal — Londra fallisce ad espandersi, NY forma il vero high/low del giorno
+
+3. NY Manipulation & Expansion — Londra accumula/consolida, manipolazione e
+   espansione avvengono entrambe a New York (esempio esplicito di AMD/Power of 3)
+
+4. NY Judas — falsa direzione a Londra ("Judas Swing"), inversione e
+   espansione vera a New York
+
+5. Seek and Destroy — nessun bias direzionale chiaro, il prezzo prende
+   liquidità su entrambi i lati prima di mostrare l'intento reale
+```
+
+Ogni profilo specifica anche il comportamento atteso di High/Low of the Day
+(fasce orarie in cui tipicamente si formano) e l'uso opzionale di SMT
+Divergence come conferma aggiuntiva (mai obbligatoria).
+
+`MISSING`: la fonte non chiarisce se gli orari "07:00-10:00" ecc. siano ET,
+GMT o server time — diversamente da I-07 (PDF ICT) che specifica "ET" in modo
+esplicito.
+
+---
+
 # Confronto preliminare con l'implementazione
 
 **Nessuna di queste voci è un verdetto.** Sono confronti fra una fonte e una
@@ -845,7 +1213,7 @@ canonico:
 | `IFVG` | AOI | `IFVG` ✅ |
 | `ORDER BLOCK` | AOI | `ORDER_BLOCK`, `OB_MIT` ✅ |
 | `RBS` / `SBR` | POI | `SH_BMS_RTO`, `SMS_BMS_RTO` — **da verificare** |
-| **`QM` (Quasimodo)** | POI | **nessuna** |
+| `QM` (Quasimodo) | POI | **esiste** (`NXS_Quasimodo_Detect`, `NXS_BjorgumZones.mqh:113-146`) ma **nessuna strategia la consulta** — vedi F-06 |
 | **`OCL` (Open Close Levels)** | POI | **nessuna** |
 | **`CLASSIC V` / `CLASSIC A`** | POI | **nessuna** |
 | **`BPR`** | AOI | **nessuna** |
@@ -853,9 +1221,12 @@ canonico:
 | **`QMX`** | composito | **nessuna** |
 | **trendline (3 tipi + confluenza)** | POI | **nessuna** |
 
-**Sette primitive su undici non hanno alcuna implementazione.** Fra queste c'è
-`OCL`, che è la stessa cosa del livello SNR di MSNR (A-05) — la primitiva più
-fondamentale dell'intero corpus.
+**Sei primitive su undici non hanno alcun codice.** Fra queste c'è `OCL`, che è
+la stessa cosa del livello SNR di MSNR (A-05) — la primitiva più fondamentale
+dell'intero corpus. `QM` è un caso a parte: il codice esiste (rilevatore
+visivo) ma nessuna strategia lo consulta per decidere un ingresso — vedi F-06.
+È lo stesso pattern già visto per BOS/CHOCH in F-04: capacità presente, non
+usata.
 
 ## D-08 · Il livello da solo non è un segnale · `EXPLICIT` nella fonte
 
@@ -911,6 +1282,82 @@ esatta** (`close[i-1] > CRH` annulla il setup) che è il tipo di condizione che
 distingue uno sweep vero da una rottura: vale la pena verificare se una delle
 tre la implementi.
 
+## D-11 · `QM` (Quasimodo) esiste nel codice, ma solo per il disegno · `CANDIDATE_MATCH` sulla struttura, `DIVERGENTE` sull'uso
+
+**Fonte** (Q-04): sequenza a 4 passi (HH→HL→rottura debole→retest = entry
+sell, e speculare per buy), usata per generare un **segnale di ingresso**.
+
+**Codice** (`NXS_BjorgumZones.mqh:105-146`):
+
+```cpp
+// Quasimodo detector (HH then deeper LL then HL above prior LH) - pure visual
+struct SNXSQuasimodo { bool detected; int direction; double anchorPrice; datetime anchorTime; };
+SNXSQuasimodo NXS_Quasimodo_Detect(...)
+```
+
+Il commento nel codice stesso dice **"pure visual"**. Verificato: l'unico altro
+punto del codice che referenzia `NXS_Quasimodo_Detect` o `SNXSQuasimodo` è
+`NEXUS_VisualSuite_v2.mq5:381-390`, che lo disegna sul grafico
+(`NXS_VS_DrawQuasimodo`). **Nessuna delle 37 strategie live lo consulta.** È
+verificato per ricerca esaustiva del simbolo in tutto `MQL5/Include/` e
+`MQL5/Experts/`.
+
+La struttura di rilevamento (`hs[0]<hs[1]>hs[2]` con condizioni sui minimi) è
+concettualmente compatibile con la sequenza HH→HL→LH→LL della fonte — non ho
+verificato riga per riga la corrispondenza esatta dei quattro passi, quindi la
+marco `CANDIDATE_MATCH` sulla logica interna. Ma sull'**uso** il verdetto è
+netto: `DIVERGENTE`, perché la fonte prescrive QM come base per un ingresso e
+nel codice è **solo un layer visivo dell'indicatore**, esattamente come BOS/CHOCH
+in F-04 — capacità presente, mai collegata a una decisione di trading.
+
+## D-12 · `AMD` / Quarterly Theory · `PARZIALE` — struttura presente, nesting multi-timeframe assente
+
+**Fonte** (Q-13): Q1 Accumulation → Q2 Manipulation → Q3 Distribution → Q4
+Reversal/Continuation, applicato in modo **frattale** su 5 livelli temporali
+(anno, mese, settimana, giorno, intraday 90 min).
+
+**Codice** (`NXS_AMDModel.mqh:7-119`): una macchina a stati con esattamente
+quattro fasi — `AMD_ACCUMULATION`, `AMD_MANIPULATION`,
+`AMD_CONTINUATION_DISTRIBUTION`, `AMD_REVERSAL_DISTRIBUTION` — che replica
+concettualmente Q1→Q4: dentro il range asiatico = accumulation; prima chiusura
+oltre il range = manipulation; 2+ chiusure oltre lo stesso lato = distribution
+di continuazione; chiusura di rientro nel range dopo una manipolazione =
+distribution di reversal. **Struttura a quattro fasi confermata, verificata
+riga per riga.**
+
+Due divergenze, non una:
+
+1. **Nessun nesting multi-timeframe.** Il codice applica AMD **solo al livello
+   giornaliero** (reset una volta al giorno, `g_amdSessionDay`). La fonte
+   applica lo stesso ciclo Q1-Q4 anche ad anno, mese e settimana. Assente.
+2. **Orari non confrontabili con certezza.** Il default del codice
+   (`InpAsianStartHour=0`, `InpAsianEndHour=7`, in GMT) e la tabella oraria di
+   Q-13 (Asia 00:00-06:00 **GMT+7**) non sono nella stessa unità e la fonte
+   stessa non chiarisce se "GMT+7" sia un riferimento assoluto o il fuso del
+   broker dell'autore — la stessa riserva già segnata in Q-13. **Non marco
+   questo punto come divergenza confermata**, a differenza di D-01/F-02 dove
+   avevo conferma esterna: qui servirebbe verificare l'intento dell'autore
+   prima di trarre conclusioni sull'orario.
+
+## D-13 · CE, OCL, SMT Divergence, IRL/ERL — nessuna implementazione · `EXPLICIT`
+
+Ricerca esaustiva nel codice (`MQL5/Include/NEXUS_v1/*.mqh`,
+`MQL5/Experts/*.mq5`, `MQL5/Indicators/*.mq5`) per ciascun concetto:
+
+| Concetto | Fonte | Trovato nel codice |
+|---|---|---|
+| Candle Equilibrium (CE), zona 45-50% | Q-09 | **nessuno** |
+| OCL — Open Close Level | Q-08 / A-05 / M-01 | **nessuno** (già in D-06) |
+| SMT Divergence | Q-12 | **nessuno** |
+| IRL / ERL | Q-15 | **nessuno** |
+| STH / ITH / LTH (Institutional Order Flow) | Q-16 | **nessuno** |
+| Weekly / Daily Profiles nominati | Q-17, Q-18 | **nessuno** |
+
+Sei concetti, tutti quantificati con precisione dalla fonte, **zero
+implementazioni**. A differenza di QM (D-11) o della struttura BOS/CHOCH
+(F-01/F-04), qui non c'è nemmeno una capacità inutilizzata: il codice non ha
+alcun riferimento, nemmeno visivo, a nessuno di questi sei concetti.
+
 ## D-07 · L'architettura del corpus e quella dell'EA non coincidono · `INFERRED`
 
 **Questa è una lettura mia, non un'affermazione della fonte.** La segnalo perché
@@ -949,25 +1396,24 @@ decisioni del proprietario, non applicata.
 | `SNR Malaysia.pdf` | 74 | è la fonte plausibile di `MALAYSIAN_SNR` (selettore 26), strategia live mai misurata |
 | `Secret Of 411(1).pdf` | 16 | famiglia "411", stessa origine del metodo trendline; interamente per immagini |
 
-## PDF ancora mancanti — 6 su 13
+## PDF ancora mancanti — 4 su 13
 
-`863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf` ·
-`Sequence_2_unlocked.pdf` ·
-`allyouneedtoknow-230110032117-f4fdcdb0.pdf` ·
-`candlesticksfibonacciandchartpatterntrading-…pdf` ·
-`flippingmarkets1-230503210106-91bd5cfc.pdf` · `My Rare SNR Course 2.pdf`
-(voce distinta in A4.2 con 10 pagine — ricevuta)
+`Malaysian SNR Emperor.pdf` (distinto da `SNR Malaysia.pdf`, già ricevuto —
+sono due file diversi in A4.2, prima confusi in una singola voce di questo
+elenco) · `allyouneedtoknow-230110032117-f4fdcdb0.pdf` ·
+`candlesticksfibonacciandchartpatterntrading-forexfactorypdfdrive-210313181656.pdf`
+· `flippingmarkets1-230503210106-91bd5cfc.pdf`
 
-Il primo della lista merita attenzione: il titolo
-`MSNR-x-SMC-x-ICT-the-Alchemist` contiene **la stessa composizione** che
-`Sequence.pdf` dichiara (`MSNR → SMC → LIT → ICT`). È verosimilmente una
-seconda esposizione dello stesso framework, di un altro autore.
+`Sequence_2_unlocked.pdf` (ricevuto come `Sequence_2.pdf`, PARTE 7) e
+`863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf` (ricevuto, PARTE 5)
+erano ancora in questo elenco per una svista di aggiornamento: entrambi sono
+già formalizzati altrove in questo documento. Rimossi qui.
 
-**`Sequence_2_unlocked.pdf` resta il caso peggiore:** A4.2 gli attribuisce 119
-pagine e **zero** testo estratto. Con i due file ricevuti ora sappiamo che la
-famiglia "Sequence" **è** Alchemist, cioè il framework di composizione — non un
-modello proprietario oscuro. Il terzo file resta l'unico non recuperabile con
-l'estrazione, e va letto a vista come gli altri.
+Con tutti e tre i file `Sequence*` ora in mano (`Sequence.pdf` parziale,
+`Sequence_1.pdf` non ancora letto, `Sequence_2.pdf` integrale) sappiamo che la
+famiglia **è** Alchemist, cioè il framework di composizione — non un modello
+proprietario oscuro. `Sequence_2.pdf` era il "caso peggiore" per zero testo
+estraibile: ora letto per intero via rendering multimodale.
 
 ## Informazioni che nessuno dei file letti fornisce
 

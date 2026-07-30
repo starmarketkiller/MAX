@@ -6,11 +6,11 @@
 
 | | |
 |---|---|
-| Data | 2026-07-27 |
-| Fonti primarie usate | `docs/sources/corpus/` (9 PDF archiviati con hash) |
-| Formalizzazione di riferimento | `docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` |
-| Codice esaminato | `NXS_Structure.mqh`, `NXS_Strategies_SMC.mqh` (baseline `main` = `4465873`) |
-| Esiti | 1 fedele · 1 divergenza confermata · 1 divergenza strutturale · 9 strategie con copertura di gate insufficiente |
+| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`) |
+| Fonti primarie usate | `docs/sources/corpus/` (11 PDF archiviati con hash) |
+| Formalizzazione di riferimento | `docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` (PARTE 1-7) |
+| Codice esaminato | `NXS_Structure.mqh`, `NXS_Strategies_SMC.mqh`, `NXS_AMDModel.mqh`, `NXS_BjorgumZones.mqh` (baseline `main` = `4465873`) |
+| Esiti | 1 fedele · 3 divergenze confermate (F-02, F-05, F-06) · 1 divergenza strutturale (F-03) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
 
 ## Livelli di giudizio
 
@@ -259,6 +259,120 @@ usata.
 
 ---
 
+## F-05 · `MALAYSIAN_SNR`, fresh/unfresh — aggiornamento quantitativo · `DIVERGENTE` 🔴
+
+F-03 aveva già stabilito la divergenza a livello qualitativo (finestra di 20
+barre invece di "mai toccato", tolleranza ±0.3 ATR, `i > 3` che esclude le
+ultime 3 barre, bonus di +5 punti invece di un gate). `Sequence_2.pdf` (Q-01)
+fornisce ora i numeri esatti che M-03 non aveva:
+
+> "A zone can only be used a maximum of **2 times**. Exception: if it was
+> previously a daily gap that produced a strong reaction, then the zone can be
+> reused without following the 2-use limit."
+
+**Codice** (`NXS_Strategies_SMC.mqh`, stessa funzione già citata in F-03): non
+esiste alcun contatore di utilizzi per livello, in nessuna forma. Verificato
+per ricerca del simbolo: nessuna variabile che tracci quante volte un livello
+SNR sia stato toccato o usato per un ingresso.
+
+**Conclusione più precisa di F-03:** non è solo che la finestra a 20 barre non
+corrisponde a "mai toccato" — è che la fonte ora specifica un limite
+**numerico e verificabile** (2 usi, con un'eccezione altrettanto precisa) che
+il codice non implementa in nessuna forma, nemmeno approssimata. La divergenza
+di F-03 punto 2 passa da "descrizione qualitativa diversa" a "regola
+quantificata, assente dal codice".
+
+---
+
+## F-06 · `QM` (Quasimodo) — rilevato ma mai consultato · `DIVERGENTE` 🔴
+
+**Fonte** (Q-04, Sequence_2.pdf): sequenza HH→HL→rottura debole→retest usata
+per **generare un ingresso** (sell setup, e speculare per buy).
+
+**Codice** (`NXS_BjorgumZones.mqh:105-146`):
+
+```cpp
+// Quasimodo detector (HH then deeper LL then HL above prior LH) - pure visual
+struct SNXSQuasimodo { bool detected; int direction; double anchorPrice; datetime anchorTime; };
+SNXSQuasimodo NXS_Quasimodo_Detect(string sym, ENUM_TIMEFRAMES tf, int lookback){ ... }
+```
+
+Ricerca esaustiva del simbolo `NXS_Quasimodo_Detect` e `SNXSQuasimodo` in tutto
+`MQL5/Include/NEXUS_v1/*.mqh` e `MQL5/Experts/*.mq5`: l'unico altro punto che
+lo referenzia è `NEXUS_VisualSuite_v2.mq5:381-390`
+(`NXS_VS_DrawQuasimodo`), che lo disegna sul grafico come layer visivo
+dell'indicatore. **Nessuna delle 37 strategie live consulta questo
+rilevatore.** Il commento nel codice stesso lo dichiara: *"pure visual"*.
+
+La fonte prescrive QM come base di un ingresso operativo. Il codice ha
+l'infrastruttura di rilevamento — probabilmente concettualmente compatibile,
+non l'ho verificata riga per riga contro la sequenza a 4 passi di Q-04 — ma la
+usa **solo per disegnare**, mai per decidere. Stesso pattern già osservato per
+BOS/CHOCH in F-04: capacità presente, non collegata ad alcuna strategia.
+
+---
+
+## F-07 · `AMD` / Quarterly Theory — `PARZIALE`
+
+**Fonte** (Q-13, Sequence_2.pdf): Q1 Accumulation → Q2 Manipulation → Q3
+Distribution → Q4 Reversal/Continuation, applicato in modo frattale su cinque
+livelli temporali annidati (anno, mese, settimana, giorno, intraday).
+
+**Codice** (`NXS_AMDModel.mqh`, intero file, 129 righe): una macchina a stati
+a quattro fasi — `AMD_ACCUMULATION → AMD_MANIPULATION →
+AMD_CONTINUATION_DISTRIBUTION` o `AMD_REVERSAL_DISTRIBUTION` — verificata riga
+per riga.
+
+### Cosa combacia ✅
+
+La struttura a quattro fasi è concettualmente fedele: dentro il range asiatico
+= accumulation; prima chiusura oltre il range = manipulation; due o più
+chiusure oltre lo stesso lato = distribution di continuazione; chiusura di
+rientro nel range dopo una manipolazione fallita = distribution di reversal.
+È lo stesso ciclo Q1→Q4 descritto dalla fonte, con la stessa logica di
+transizione (manipolazione che fallisce → reversal; manipolazione che tiene →
+continuazione).
+
+### Dove diverge 🔴
+
+1. **Nessun nesting multi-timeframe.** Il codice applica AMD **solo al livello
+   giornaliero**: `g_amdSessionDay` resetta la macchina a stati una volta al
+   giorno. La fonte applica lo stesso ciclo anche a anno, mese e settimana,
+   con tabelle orarie separate per ciascun livello. Questa parte della
+   prescrizione è del tutto assente.
+2. **Orari non verificabili con certezza** (già segnalato in D-12 come
+   `CANDIDATE`, non confermato): il default del codice
+   (`InpAsianStartHour=0`, `InpAsianEndHour=7` GMT) e la tabella di Q-13
+   (Asia 00:00-06:00 "GMT+7") non sono direttamente comparabili perché la
+   fonte non chiarisce se "GMT+7" sia un riferimento assoluto o il fuso
+   dell'autore. A differenza di F-02 (dove avevo conferma esterna sugli orari
+   ET), qui non marco una divergenza confermata — resta `NON VERIFICATO`.
+
+---
+
+## F-08 · CE, OCL, SMT Divergence, IRL/ERL, STH/ITH/LTH — assenza confermata
+
+Non è un verdetto di divergenza: come per il metodo trendline (T-05), è
+un'**assenza**. Ricerca esaustiva nel codice per ciascun concetto quantificato
+da `Sequence_2.pdf` (Q-08, Q-09, Q-12, Q-15, Q-16):
+
+| Concetto | Predicato | Trovato nel codice |
+|---|---|---|
+| Candle Equilibrium (CE), zona 45-50% | Q-09 | nessuna occorrenza |
+| OCL — Open Close Level | Q-08 | nessuna occorrenza (coerente con D-06) |
+| SMT Divergence | Q-12 | nessuna occorrenza |
+| IRL / ERL | Q-15 | nessuna occorrenza |
+| STH / ITH / LTH | Q-16 | nessuna occorrenza |
+| Weekly / Daily Profiles nominati | Q-17, Q-18 | nessuna occorrenza |
+
+Sei concetti, tutti con predicati numerici o strutturali precisi nella fonte,
+zero implementazioni — nemmeno un layer visivo come per QM (F-06). Il
+Daily Bias Cheat Sheet (Q-14), che compone cinque di questi elementi in una
+checklist decisionale, non ha quindi alcuna controparte nel codice: nessuno
+dei suoi cinque ingredienti esiste.
+
+---
+
 ## Sintesi
 
 | Verifica | Esito |
@@ -267,6 +381,10 @@ usata.
 | F-02 `SILVER_BULLET` killzone | **DIVERGENTE** — una finestra inesistente, una corretta solo d'estate, una mancante |
 | F-03 `MALAYSIAN_SNR` | **PARZIALE** — primitiva del livello diversa, fresh degradato a bonus, flip assente, struttura non consultata |
 | F-04 copertura dei gate | 0 strategie su 10 applicano la cascata completa; `OB_MIT` non applica alcun gate |
+| F-05 `MALAYSIAN_SNR` fresh/unfresh, numeri esatti | **DIVERGENTE** — limite di 2 usi (Q-01) assente, nessun contatore nel codice |
+| F-06 `QM` (Quasimodo) | **DIVERGENTE** — rilevatore esiste, mai consultato da alcuna strategia: solo disegno |
+| F-07 `AMD` / Quarterly Theory | **PARZIALE** — struttura a 4 fasi fedele a livello giornaliero, nesting multi-timeframe assente, orari non verificabili |
+| F-08 CE, OCL, SMT, IRL/ERL, STH/ITH/LTH, Weekly/Daily Profiles | **assenti** — sei concetti quantificati dalla fonte, zero occorrenze nel codice |
 
 ### Il quadro che ne esce
 
@@ -294,6 +412,14 @@ sotto delle constatazioni verificate invece che un'impressione.
   presenza di un riferimento, non la sua logica.
 - `FVG_CONT`, `ORDER_BLOCK`, `DISP_REBAL`, `LIQ_VOID` contro I-01/I-05/I-06.
 - CRT (C-03) contro `THREE_BAR_DELIVERY_BREAK`, `TURTLE_SOUP`, `LIQ_SWEEP`.
+- La corrispondenza riga-per-riga fra la sequenza a 4 passi di QM (Q-04) e la
+  logica interna di `NXS_Quasimodo_Detect` (F-06 verifica solo che non sia
+  mai consultato, non la sua correttezza interna).
+- Se l'unità oraria "GMT+7" di Quarterly Theory (Q-13) sia un riferimento
+  assoluto o il fuso dell'autore — necessario per completare F-07 sul punto
+  degli orari.
+- `RBS`/`SBR` (A-03, Q-03) contro `SH_BMS_RTO`, `SMS_BMS_RTO` — segnalato come
+  "da verificare" fin da D-06, ancora non eseguito.
 - Qualunque cosa richieda esecuzione: **il codice MQL5 non è mai stato
   compilato**, in questa fase come in tutte le precedenti.
 
