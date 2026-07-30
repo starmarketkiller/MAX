@@ -105,6 +105,24 @@ successiva (mezzanotte), non durante l'orario London. Due problemi che si
 sommano sulla stessa strategia: passaggio dedicato invece di una soluzione
 approssimata.
 
+**Batch 8** (30/07) — famiglia SESSION, 1 delle 4 (JUDAS_SWING/LDN_REVERSAL/
+NY_REVERSAL rimandate, vedi nota sotto la tabella):
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_WEEKLY_EXP.pine` | WEEKLY_EXP | D1 | SMC/ICT (discount/premium settimanale + displacement H4 cross-TF con BOS + estensione Fibonacci 1.272) |
+
+`JUDAS_SWING`, `LDN_REVERSAL`, `NY_REVERSAL` non sono in questo batch: tutte
+e 3 hanno lo stesso gate di sessione intraday (attivo solo durante
+London/NY/overlap, controllato sui tick live in MQL5) che non si mappa in
+modo pulito sulla valutazione a barra chiusa di Pine — stesso problema già
+documentato per `LONDON_BO`. `NY_REVERSAL` è la più complessa delle tre:
+calcola il range della sessione di Londra **del giorno corrente** con uno
+scan di 300 barre M5 e un calcolo BST reale (ultima domenica di marzo/
+ottobre — stessa famiglia di regola DST già portata per Silver Bullet F-02,
+ma per il Regno Unito, non gli USA: date di cambio ora diverse). Passaggio
+dedicato successivo, stesso standard di cura di `LONDON_BO`.
+
 > ⚠️ **Regola zero (30/07)**: su richiesta dell'utente, tutti i risultati già
 > registrati nelle tabelle sotto (Batch 1/2/3) sono da considerarsi **non
 > verificati** — si riparte da zero su tutte le 37 strategie, protocollo
