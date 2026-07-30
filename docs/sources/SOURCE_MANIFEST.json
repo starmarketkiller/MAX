@@ -1,0 +1,359 @@
+{
+  "schema_version": 1,
+  "description": "Registro delle fonti documentali acquisite per l'audit NEXUS. Ogni record dichiara identita' crittografica e stato di lavorazione.",
+  "sources": [
+    {
+      "filename": "863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf",
+      "repository_path": "docs/sources/corpus/863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 5623928,
+      "page_count": 51,
+      "sha256": "9f75d6ad349af6c8680ac78707479c14bb800cefee89db91a6bb59913672fc1d",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 39,
+        "characters": 24685
+      },
+      "declared_in_master_a4_2": {
+        "pages": 51,
+        "pages_with_text": 51,
+        "characters": "28.447"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (archivio ZIP)",
+      "notes": [
+        "Documento piu' completo del corpus: indice, capitoli, prosa nativa.",
+        "Capitolo 2 e' interamente sulla MALAYSIAN SNR, che corrisponde alla strategia MALAYSIAN_SNR (selettore 26) dell'EA.",
+        "Il titolo contiene la stessa composizione dichiarata da Sequence.pdf: MSNR x SMC x ICT the Alchemist.",
+        "Quarta conferma indipendente della primitiva open/close, e spiega perche' Alchemist la chiama Classic V / Classic A: sono le forme su grafico a linee."
+      ]
+    },
+    {
+      "filename": "CANDLE_RANGE_THEORY.pdf",
+      "repository_path": "docs/sources/corpus/CANDLE_RANGE_THEORY.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 1305456,
+      "page_count": 12,
+      "sha256": "991c4a764a42a7c0c9c12e556879738c3ee52700ff37ce36e645c986818d797a",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 12,
+        "characters": 3247
+      },
+      "declared_in_master_a4_2": null,
+      "declared_matches_actual": null,
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "fornito dal proprietario; NON dichiarato nel blocco A4.2 del Master v18",
+      "notes": [
+        "Fonte AGGIUNTIVA: non fa parte dei 13 PDF del corpus dichiarato.",
+        "Metodo piu' precisamente codificabile del corpus: modello a tre candele con regola di invalidazione esatta su close.",
+        "Contiene solo l'introduzione: quattro sezioni su cinque sono rimandate a una classe successiva."
+      ]
+    },
+    {
+      "filename": "My Rare SNR Course 2.pdf",
+      "repository_path": "docs/sources/corpus/My Rare SNR Course 2.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 13446336,
+      "page_count": 10,
+      "sha256": "edac626e9dabbcfaab449193758276473c88b0a8442d159a5207a1f1ca91c111",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 10,
+        "pages_with_text": 10,
+        "characters": "2.091"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo. Letto per rendering visivo."
+      ]
+    },
+    {
+      "filename": "My Rare SNR Course.pdf",
+      "repository_path": "docs/sources/corpus/My Rare SNR Course.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 4711593,
+      "page_count": 29,
+      "sha256": "3666ce0550f192d242ce3b849d1dbf537fa400724faaee88a3016fe3cc25028f",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ",
+      "native_text": {
+        "pages_with_text": 29,
+        "characters": 290
+      },
+      "declared_in_master_a4_2": {
+        "pages": 29,
+        "pages_with_text": 29,
+        "characters": "13.111"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
+      "filename": "SNR Malaysia.pdf",
+      "repository_path": "docs/sources/corpus/SNR Malaysia.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 9893907,
+      "page_count": 74,
+      "sha256": "709453d587704b81d161cb0cf86dc24b3d9857db872499c82bad5f4828ccfd42",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 74,
+        "characters": 740
+      },
+      "declared_in_master_a4_2": {
+        "pages": 74,
+        "pages_with_text": 74,
+        "characters": "18.153"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
+      "filename": "Secret Of 411(1).pdf",
+      "repository_path": "docs/sources/corpus/Secret Of 411(1).pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 22070279,
+      "page_count": 16,
+      "sha256": "cda549eb54266f2750b8b7beffe95d9c74cb1b22a11f0bc5955dfc7a79f56b79",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 16,
+        "pages_with_text": 16,
+        "characters": "2.698"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo. Richiede lettura visiva."
+      ]
+    },
+    {
+      "filename": "Sequence.pdf",
+      "repository_path": "docs/sources/corpus/Sequence.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 21517214,
+      "page_count": 76,
+      "sha256": "f7205bb9cd144bc8f29ee9c155817ba929bfebca205e407f34f539651c61c7f3",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PARTIAL",
+      "read_status": "PARTIALLY_READ_20_OF_76",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 76,
+        "pages_with_text": 56,
+        "characters": "4.588"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (consegnato in archivio ZIP)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo.",
+        "Contiene il framework ALCHEMIST: composizione dichiarata MSNR -> SMC -> LIT -> ICT con ruoli assegnati."
+      ]
+    },
+    {
+      "filename": "Sequence_1.pdf",
+      "repository_path": "docs/sources/corpus/Sequence_1.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 32633011,
+      "page_count": 74,
+      "sha256": "bc81027618a3f835e904c34874285d93ef9de1a63e7151fda736e7af5e1ef78a",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "ARCHIVED_NOT_YET_READ",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 74,
+        "pages_with_text": 46,
+        "characters": "55.488"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": false,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (consegnato in archivio ZIP)",
+      "notes": [
+        "PDF interamente per immagini: zero testo nativo.",
+        "Seconda parte della famiglia Alchemist. A4.2 le attribuisce 55.488 caratteri OCR, la densita' testuale piu' alta della famiglia."
+      ]
+    },
+    {
+      "filename": "Sequence_2.pdf",
+      "repository_path": "docs/sources/corpus/Sequence_2.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 4306428,
+      "page_count": 119,
+      "sha256": "d596d9e3f942c28dfc2852161d5e15c7b06448358eb4bf665979a1eac2d78189",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "FULLY_READ_VIA_IMAGE_RENDERING_119_OF_119",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": {
+        "pages": 119,
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "coincide esattamente su tutte e tre le misure: A4.2 dichiarava 119 pagine, 0 con testo estratto, 0 caratteri; la verifica nativa con pypdf sull'artefatto ricevuto conferma 119/0/0."
+      },
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-30",
+      "original_source": "fornito dal proprietario via Google Drive. E' uno dei 13 PDF dichiarati nel blocco A4.2 del Master v18 (nome originale Sequence_2_unlocked.pdf, 9 su 13), il 'caso peggiore' gia' segnalato in NEXUS_CORPUS_CONCEPT_FORMALIZATION.md: unico file del corpus con zero testo estraibile e mai ricevuto prima d'ora. File originale 135,9 MB (135.874.732 byte, sha256 non registrato perche' mai archiviato), ricompresso dal proprietario con iLovePDF a qualita' minima per stare sotto i limiti di trasferimento: l'artefatto qui archiviato (4,3 MB) e' la versione ricompressa, non l'originale.",
+      "notes": [
+        "NON e' una fonte aggiuntiva: e' il file 9/13 di A4.2, l'unico ancora mancante della famiglia Sequence. Con questo arrivo il corpus dichiarato passa da 8 a 9 file su 13 effettivamente ricevuti.",
+        "PDF interamente per immagini: zero testo nativo, confermato sia da A4.2 (OCR supplementare incluso) sia dalla verifica pypdf su questo artefatto. Lette tutte le 119 pagine via rendering multimodale, l'unico modo possibile per questa fonte.",
+        "Fonte piu' densa e operativamente precisa del corpus finora incontrata: specifica ESATTA della macchina a stati fresh/unfresh/flipped (fresh=mai toccato, wick=unfresh, chiusura a corpo pieno=fresh di nuovo, max 2 usi salvo eccezione daily gap) — la stessa lacuna segnalata in F-03 (NEXUS_STRATEGY_FIDELITY_REPORT_01.md) su MALAYSIAN_SNR.",
+        "Contiene: 5 Daily Profiles con orari sessione espliciti (London Reversal/NY Continuation, NY Reversal, NY Manipulation & Expansion, NY Judas, Seek & Destroy), Weekly Profiles (4 pattern), Quarterly Theory con tabella oraria multi-timeframe completa (annuale/mensile/settimanale/intraday, GMT+7), Daily Bias Cheat Sheet a 5 punti, IRL/ERL, Institutional Order Flow (STH/ITH/LTH), CE (Candle Equilibrium) con zona 45-50% quantificata, RBS/SBR, famiglia QM/QMM/QMC/QMX, OCL, regole di tocco trendline, SMT Divergence con elenco esplicito delle coppie correlate.",
+        "Formalizzazione concettuale e confronto di fedelta' eseguiti separatamente in NEXUS_CORPUS_CONCEPT_FORMALIZATION.md (PARTE 7) e NEXUS_STRATEGY_FIDELITY_REPORT_01.md."
+      ]
+    },
+    {
+      "filename": "ict-trading-250828073107-caca0de9.pdf",
+      "repository_path": "docs/sources/corpus/ict-trading-250828073107-caca0de9.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 2807798,
+      "page_count": 91,
+      "sha256": "3d073e5273ae760e7b58776653fab6bf53a37e9d5203fd034ab0fe2d46c9e8c1",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "read_status": "FULLY_READ_VIA_NATIVE_TEXT",
+      "native_text": {
+        "pages_with_text": 91,
+        "characters": 57352
+      },
+      "declared_in_master_a4_2": {
+        "pages": 91,
+        "pages_with_text": 91,
+        "characters": "57.806"
+      },
+      "declared_matches_actual": {
+        "pages": true,
+        "pages_with_text": true,
+        "characters_note": "A4.2 usa OCR supplementare; l'estrazione nativa non lo riproduce"
+      },
+      "analysis_artifacts": [
+        "docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": "corpus PDF fornito dal proprietario (5 di 13 dichiarati in A4.2)",
+      "notes": []
+    },
+    {
+      "filename": "NEXUS_MASTER_PROJECT_v18.md",
+      "repository_path": "docs/sources/master/NEXUS_MASTER_PROJECT_v18.md",
+      "category": "MASTER_PROJECT_DOCUMENT",
+      "size_bytes": 460362,
+      "line_count": 15490,
+      "sha256": "72c51a725c152f8246ccce26d4b30578a25e80dfc817ecd13e935420bfbd16e2",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "ANALYZED",
+      "analysis_artifacts": [
+        "docs/audits/master/NEXUS_MASTER_PROJECT_v18_ANALYSIS.md",
+        "docs/audits/master/NEXUS_MASTER_STRATEGY_INVENTORY.json",
+        "docs/audits/master/NEXUS_MASTER_REQUIREMENTS.json",
+        "docs/audits/master/NEXUS_MASTER_GAPS.md"
+      ],
+      "analysis_date": "2026-07-26",
+      "original_source": null,
+      "notes": [
+        "Byte-identico al file gia' tracciato come docs/NEXUS_MASTER_PROJECT.md (stesso SHA-256): l'archiviazione non introduce contenuto nuovo, aggiunge identita' dichiarata.",
+        "La fonte NON contiene definizioni di strategie: e' un audit di repository, architettura e sicurezza piu' una specifica di governance.",
+        "Dichiara un corpus di 13 PDF (1092 pagine) che NON sono presenti nel repository: e' la dipendenza bloccante per l'audit di fedelta' delle strategie.",
+        "Data dichiarata nella fonte: Last consolidated 2026-07-23."
+      ]
+    }
+  ],
+  "counts": {
+    "total": 10,
+    "ingested": 10,
+    "analyzed": 6,
+    "corpus_pdfs_received": 9,
+    "corpus_pdfs_declared_in_a4_2": 13,
+    "corpus_pdfs_from_a4_2_received": 8,
+    "corpus_pdfs_outside_a4_2": 1,
+    "corpus_pdfs_still_missing": 5
+  }
+}

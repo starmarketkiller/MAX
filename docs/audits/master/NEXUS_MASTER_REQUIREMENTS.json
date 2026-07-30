@@ -1,0 +1,1041 @@
+{
+  "source": "NEXUS_MASTER_PROJECT_v18.md",
+  "source_sha256": "72c51a725c152f8246ccce26d4b30578a25e80dfc817ecd13e935420bfbd16e2",
+  "source_repository_path": "docs/sources/master/NEXUS_MASTER_PROJECT_v18.md",
+  "analysis_date": "2026-07-26",
+  "identifier_scheme": {
+    "NEXUS-*": "requisiti normativi trascritti letteralmente dalla fonte (linguaggio MUST), sezione A4.0 §7",
+    "MASTER-*": "requisiti derivati da affermazioni esplicite della fonte e indicizzati da questa analisi"
+  },
+  "counts": {
+    "total": 65,
+    "normative_verbatim": 38,
+    "derived_indexed": 27,
+    "requiring_original_source": 5,
+    "strategy_logic_requirements": 0
+  },
+  "strategy_logic_note": "Zero requisiti riguardano la LOGICA di una strategia (ingresso, uscita, stop, target, filtri). I quattro NEXUS-STRAT-* riguardano il CICLO DI VITA di una strategia, non il suo comportamento di mercato.",
+  "requirements": [
+    {
+      "requirement_id": "NEXUS-ARCH-001",
+      "category": "architecture",
+      "title": "Single execution authority",
+      "description": "Every executable trading action MUST pass through the canonical command path.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14722,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ARCH-002",
+      "category": "architecture",
+      "title": "Source-of-truth precedence",
+      "description": "Broker-confirmed state MUST override internal expectations, AI interpretation and cached UI state.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14725,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ARCH-003",
+      "category": "architecture",
+      "title": "Environment separation",
+      "description": "RESEARCH, SHADOW, PAPER, LIMITED_LIVE and LIVE MUST remain operationally separated.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14728,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ID-001",
+      "category": "identity_authorization",
+      "title": "Distinct identities",
+      "description": "Human, service, machine, terminal, EA and AI identities MUST remain distinct.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14733,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ID-002",
+      "category": "identity_authorization",
+      "title": "Capability enforcement",
+      "description": "Authorization MUST be capability-based and target-scoped.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14736,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ID-003",
+      "category": "identity_authorization",
+      "title": "Privileged step-up",
+      "description": "High-risk actions MUST require valid step-up authentication.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14739,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-ID-004",
+      "category": "identity_authorization",
+      "title": "Revocable machine credentials",
+      "description": "Each production deployment or EA instance MUST use a unique revocable credential.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14742,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-EVT-001",
+      "category": "events",
+      "title": "Immutable transitions",
+      "description": "Every material state transition MUST emit a canonical event.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14747,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-EVT-002",
+      "category": "events",
+      "title": "Correction by new event",
+      "description": "Historical events MUST NOT be rewritten to hide later corrections.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14750,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-CMD-001",
+      "category": "commands",
+      "title": "Canonical command envelope",
+      "description": "Every executable request MUST include identity, target, environment, expiry, idempotency and correlation.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14753,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-CMD-002",
+      "category": "commands",
+      "title": "Duplicate safety",
+      "description": "Repeated delivery of the same command MUST NOT cause duplicate execution.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14756,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-CMD-003",
+      "category": "commands",
+      "title": "Expiry enforcement",
+      "description": "Expired commands MUST NOT execute.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14759,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-RISK-001",
+      "category": "risk_policy",
+      "title": "No bypass path",
+      "description": "No manual, automated or AI-generated action MAY bypass Risk Engine and Policy Engine evaluation.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14764,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-RISK-002",
+      "category": "risk_policy",
+      "title": "Fail-safe uncertainty",
+      "description": "Uncertainty about live state MUST block new exposure until reconciliation.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14767,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-RISK-003",
+      "category": "risk_policy",
+      "title": "Protection precedence",
+      "description": "Active hard protections MUST override strategy and operator requests.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14770,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-RISK-004",
+      "category": "risk_policy",
+      "title": "Deterministic sizing",
+      "description": "Position sizing and exposure calculations MUST be performed by deterministic services.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14773,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-LIFE-001",
+      "category": "trading_lifecycle",
+      "title": "Broker reconciliation",
+      "description": "Startup, reconnect, restart and ambiguous execution states MUST trigger reconciliation.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14778,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-LIFE-002",
+      "category": "trading_lifecycle",
+      "title": "Logical trade continuity",
+      "description": "Orders, positions, partial closes and finalization MUST remain traceable to one logical trade.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14781,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-LIFE-003",
+      "category": "trading_lifecycle",
+      "title": "Finalization evidence",
+      "description": "A trade MUST NOT be considered final until broker-confirmed closure and reconciliation are recorded.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14784,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-STRAT-001",
+      "category": "strategy_governance",
+      "title": "Controlled lifecycle",
+      "description": "A strategy MUST move through the approved lifecycle before LIVE.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14789,
+      "applies_to": "strategy_lifecycle",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte.",
+        "Riguarda il ciclo di vita delle strategie, non la loro logica: non descrive cosa una strategia debba fare."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-STRAT-002",
+      "category": "strategy_governance",
+      "title": "Artifact-evidence equivalence",
+      "description": "The deployed artifact and parameter set MUST match the tested evidence package.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14792,
+      "applies_to": "strategy_lifecycle",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte.",
+        "Riguarda il ciclo di vita delle strategie, non la loro logica: non descrive cosa una strategia debba fare."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-STRAT-003",
+      "category": "strategy_governance",
+      "title": "Limited-live requirement",
+      "description": "LIVE approval MUST require limited-live evidence.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14795,
+      "applies_to": "strategy_lifecycle",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte.",
+        "Riguarda il ciclo di vita delle strategie, non la loro logica: non descrive cosa una strategia debba fare."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-STRAT-004",
+      "category": "strategy_governance",
+      "title": "Quarantine on breach",
+      "description": "A material live-performance or integrity breach MUST trigger quarantine or equivalent safe state.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14798,
+      "applies_to": "strategy_lifecycle",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte.",
+        "Riguarda il ciclo di vita delle strategie, non la loro logica: non descrive cosa una strategia debba fare."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-SEC-001",
+      "category": "security",
+      "title": "No default credentials",
+      "description": "Production MUST fail closed when default credentials or fallback signing secrets are present.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14803,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-SEC-002",
+      "category": "security",
+      "title": "Secret protection",
+      "description": "Sensitive and critical secrets MUST NOT be embedded in source, frontend bundles, logs or shared static tokens.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14806,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-SEC-003",
+      "category": "security",
+      "title": "Signed artifacts",
+      "description": "Production deployment artifacts MUST be signed and verified before activation.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14809,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-SEC-004",
+      "category": "security",
+      "title": "Session revocation",
+      "description": "Privileged sessions MUST be revocable server-side.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14812,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-SEC-005",
+      "category": "security",
+      "title": "Tamper-evident audit",
+      "description": "Security and trading audit records MUST be append-only and tamper-evident.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14815,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-OPS-001",
+      "category": "operations_observability",
+      "title": "Correlated observability",
+      "description": "Critical flows MUST produce correlated logs, metrics, traces and events.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14820,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-OPS-002",
+      "category": "operations_observability",
+      "title": "Readiness before service",
+      "description": "A component MUST NOT be considered ready until mandatory dependencies and checks pass.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14823,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-OPS-003",
+      "category": "operations_observability",
+      "title": "Verified deployment",
+      "description": "Deployment MUST NOT be considered complete until continuous verification succeeds.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14826,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-OPS-004",
+      "category": "operations_observability",
+      "title": "Incident governance",
+      "description": "P0 and P1 incidents MUST receive postmortem and corrective-action tracking.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14829,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-OPS-005",
+      "category": "operations_observability",
+      "title": "Tested restore",
+      "description": "A backup MUST NOT be considered valid until restore testing succeeds.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14832,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-AI-001",
+      "category": "ai_governance",
+      "title": "AI is non-authoritative",
+      "description": "AI output MUST NOT be treated as broker state, risk state or execution evidence.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14837,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-AI-002",
+      "category": "ai_governance",
+      "title": "No direct live mutation",
+      "description": "AI MUST NOT directly change live trading, risk, deployment, license or security state.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14840,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-AI-003",
+      "category": "ai_governance",
+      "title": "Provenance and freshness",
+      "description": "Operational AI recommendations MUST include provenance, data freshness and model/prompt version.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14843,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-AI-004",
+      "category": "ai_governance",
+      "title": "Human approval binding",
+      "description": "Approval of an AI recommendation MUST bind to the exact action, target and input state.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14846,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "NEXUS-AI-005",
+      "category": "ai_governance",
+      "title": "Deterministic veto",
+      "description": "Risk Engine and Policy Engine MUST retain final veto over AI-assisted requests.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §7 — Initial canonical requirement baseline",
+      "source_line": 14849,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Requisito normativo con linguaggio MUST, trascritto letteralmente dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-GOV-001",
+      "category": "governance",
+      "title": null,
+      "description": "Questo documento e' l'unico documento di progetto autorevole; Audit-0, Operational Backlog, specifica PR-A, Reviewer Pack, Agent Pack e checklist di rilascio sono conservati al suo interno e non vanno piu' mantenuti separatamente.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "DOCUMENT GOVERNANCE",
+      "source_line": 14,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": [
+        "Contraddizione C-1 dell'analisi: si dichiara fonte unica di verita' ma non contiene alcuna specifica di strategia."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-GOV-002",
+      "category": "governance",
+      "title": null,
+      "description": "La precedente dichiarazione 'AUDIT-0 100% completo' e' formalmente ritirata: erano stati confusi il completamento del documento e la copertura tecnica del repository.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "STATUS CORRECTION",
+      "source_line": 31,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-GOV-003",
+      "category": "governance",
+      "title": null,
+      "description": "Lo stato corretto del progetto e' 'AUDIT OPEN — 91% TECHNICAL COVERAGE — NO-GO'.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "STATUS CORRECTION",
+      "source_line": 89,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": [
+        "Il metodo di calcolo delle percentuali di copertura non e' dichiarato (ambiguita' A-5)."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-GOV-004",
+      "category": "governance",
+      "title": null,
+      "description": "Il trading a denaro reale, il deploy remoto di codice, il deploy automatico in produzione, l'uso multi-account in produzione, le mutazioni live dell'AI Coach e 'Point 5' sono bloccati. Sviluppo isolato, revisione statica, simulazione, backtesting controllato e prototipazione non di produzione sono permessi.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "CURRENT PROJECT DECISION",
+      "source_line": 130,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": [
+        "'Point 5' non e' mai definito nella fonte (ambiguita' A-3)."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-ARCH-001",
+      "category": "architecture",
+      "title": null,
+      "description": "L'entrypoint EA include oltre cinquanta moduli .mqh locali, creando accoppiamento sull'ordine di inclusione, difficolta' di compilazione isolata, collisioni di simboli globali e dipendenze implicite da globali inizializzate altrove.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-001",
+      "source_line": 1729,
+      "applies_to": "MQL5",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Azione richiesta: definire confini di include a livelli (tipi, calcoli puri, strategie, rischio/esecuzione, persistenza, orchestrazione) e vietare dipendenze inverse."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-ARCH-002",
+      "category": "architecture",
+      "title": null,
+      "description": "L'esecuzione dei trade evita deliberatamente la libreria standard MT5 e usa helper nativi raw.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Verified architecture facts (Block 8)",
+      "source_line": 1703,
+      "applies_to": "MQL5",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-ARCH-003",
+      "category": "architecture",
+      "title": null,
+      "description": "La modalita' multi-timeframe valuta passate fisse D1, H4 e H1 su un solo grafico.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Verified architecture facts (Block 8)",
+      "source_line": 1708,
+      "applies_to": "MQL5",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "La fonte non dice quale strategia usi quale timeframe."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-STRAT-001",
+      "category": "strategy_contract",
+      "title": null,
+      "description": "Il routing delle strategie e' duplicato come codice hard-coded e identificatori numerici di selettore: rinomina, aggiunta o rimozione di una strategia puo' divergere fra MQL, backtest Python, backend e frontend; il mapping numerico puo' andare off-by-one; una strategia puo' risultare live in un sottosistema e non eseguire in un altro.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-003",
+      "source_line": 1776,
+      "applies_to": "strategy_contract",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Severita' dichiarata dalla fonte: P0 strategy-contract integrity.",
+        "Azione richiesta: generare il registro/dispatch MQL da una sola fonte canonica e aggiungere test di parita' fra MQL, backend e motore di backtest."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-STRAT-002",
+      "category": "strategy_contract",
+      "title": null,
+      "description": "Il router usa array a dimensione fissa (48 nel percorso di ingresso esaminato, 64 in un percorso multi-TF temporaneo) con incremento manuale del conteggio: aggiungere strategie puo' troncare o sforare le assunzioni.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-004",
+      "source_line": 1790,
+      "applies_to": "strategy_contract",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-RISK-001",
+      "category": "risk",
+      "title": null,
+      "description": "Il gate delle protezioni all'ingresso ritorna esplicitamente 'non bloccato' nel tester, confermando il divario di parita' live/backtest.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Block 10",
+      "source_line": 2597,
+      "applies_to": "risk",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Conseguenza: i risultati di backtest non descrivono il comportamento live."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-RISK-002",
+      "category": "risk",
+      "title": null,
+      "description": "I risultati di ottimizzazione e backtest non modellano i vincoli di esecuzione live; drawdown giornaliero, limiti di trade, concorrenza, cooldown e semantica di pausa devono restare testabili nei backtest.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Block 9",
+      "source_line": 2187,
+      "applies_to": "risk",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-RISK-003",
+      "category": "risk",
+      "title": null,
+      "description": "Un fallimento del controllo licenza non fa fallire OnInit: l'EA resta caricato in modalita' inattiva. Ogni percorso che crea esposizione deve quindi passare dallo stesso gate di licenza.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-012",
+      "source_line": 1897,
+      "applies_to": "risk",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Severita' dichiarata: P0 verification requirement."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-TEST-001",
+      "category": "testing",
+      "title": null,
+      "description": "OnTester ottimizza solo per profit factor. Il profit factor da solo non codifica numero minimo di trade, drawdown, recovery, expectancy, stabilita' e performance out-of-sample: l'ottimizzazione puo' favorire insiemi di parametri sparsi o instabili.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-013",
+      "source_line": 1905,
+      "applies_to": "research_validity",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "Severita' dichiarata: P0 research validity.",
+        "La fonte non fornisce i criteri numerici sostitutivi: dice che servono, non quali."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-TEST-002",
+      "category": "testing",
+      "title": null,
+      "description": "I CSV di ottimizzazione scritti da agenti paralleli richiedono un contratto di merge esterno: senza run ID, hash EA/versione, simbolo, timeframe, intervallo dataset, checksum dei parametri e identita' dell'agente, i risultati possono essere incompleti, duplicati o mescolati fra run diversi.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "AUD0-MQL-014",
+      "source_line": 1918,
+      "applies_to": "research_reproducibility",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-TEST-003",
+      "category": "testing",
+      "title": null,
+      "description": "L'audit puo' essere dichiarato chiuso solo dopo: revisione modulo per modulo di MQL5; revisione completa di rotte, storage e migrazioni backend; revisione di pagine e percorsi di mutazione frontend; inventario dei test; inventario dei workflow CI; evidenza di build e avvio Docker puliti; evidenza di compilazione MQL5; evidenza di parita' backtest/runtime; evidenza di backup e restore; evidenza end-to-end di replay dei comandi e crash recovery.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Required audit closure work",
+      "source_line": 74,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_EVIDENCE",
+      "original_source_required": false,
+      "notes": [
+        "Nessuna di queste evidenze e' allegata alla fonte."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-TEST-004",
+      "category": "testing",
+      "title": null,
+      "description": "La copertura di revisione di 'Testing and executable evidence' e' 68%, la piu' bassa fra tutte le aree.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Current technical audit coverage",
+      "source_line": 53,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-ENV-001",
+      "category": "environments",
+      "title": null,
+      "description": "Gli ambienti canonici sono RESEARCH (analisi offline o esplorativa), SHADOW (osservazione in tempo reale senza esecuzione), PAPER (esecuzione simulata con workflow simile a produzione), LIMITED_LIVE (esecuzione connessa al broker sotto vincoli ridotti espliciti) e LIVE (esecuzione di produzione connessa al broker).",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §9 — Ambiguity closure",
+      "source_line": 14873,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-ENV-002",
+      "category": "environments",
+      "title": null,
+      "description": "'Specification-ready' significa architetturalmente completo; 'production-ready' significa implementato, testato, messo in sicurezza ed evidenziato. I due termini NON devono essere usati in modo intercambiabile.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §9 — Ambiguity closure",
+      "source_line": 14881,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-CONFIG-001",
+      "category": "configuration",
+      "title": null,
+      "description": "PR-A deve produrre una sola configurazione effettiva (SNXSEffectiveConfig con revision, profileId, registryHash, configHash, issuedAt, expiresAt, riskPct, maxLot, maxConcurrent, maxDailyDDPct) e rimuovere la catena parallela Inp* / preset / g_run_* / g_NXSlp_* / runtime dashboard.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "PR-A — Effective Config Resolver",
+      "source_line": 6546,
+      "applies_to": "configuration",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_AGAINST_IMPLEMENTATION",
+      "original_source_required": false,
+      "notes": [
+        "La struttura e' dichiarata; i valori dei campi no."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-BACKLOG-001",
+      "category": "process",
+      "title": null,
+      "description": "La roadmap ufficiale prevede 12 pull request PR-A..PR-L in ordine vincolante A -> B -> C -> D -> E -> F -> G -> H -> I -> J -> K -> L; undici sono P0, PR-L (cleanup) e' P1; tutte allo stato TODO.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Tabella sintetica / Ordine di esecuzione",
+      "source_line": 6989,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-SRC-001",
+      "category": "source_dependency",
+      "title": null,
+      "description": "Il corpus di origine consta di 13 PDF, 1092 pagine totali, 912 con testo nativo o OCR non vuoto. Nessuno dei 13 file e' presente nel repository.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.2 — FULL CORPUS AUDIT INTEGRATION",
+      "source_line": 15058,
+      "applies_to": "strategy_fidelity",
+      "affected_strategy_or_module": null,
+      "verifiability": "NOT_VERIFIABLE_WITHOUT_ORIGINAL_SOURCE",
+      "original_source_required": true,
+      "notes": [
+        "E' la dipendenza che blocca l'audit di fedelta' delle strategie."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-SRC-002",
+      "category": "source_dependency",
+      "title": null,
+      "description": "Nessun concetto di fonte diventa logica eseguibile senza formalizzazione deterministica; nessuna regola di corso puo' bypassare Policy Engine o Risk Engine; le regole derivate visivamente richiedono verifica a livello di pagina; la terminologia duplicata fra corsi non va trattata come equivalenza semantica senza riconciliazione; le regole ambigue, discrezionali o non testabili restano candidate di ricerca; ogni regola promossa richiede identificatori di requisito, test, evidenze e proprieta' versionata.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.2 — Status and authority",
+      "source_line": 15068,
+      "applies_to": "strategy_fidelity",
+      "affected_strategy_or_module": null,
+      "verifiability": "NOT_VERIFIABLE_WITHOUT_ORIGINAL_SOURCE",
+      "original_source_required": true,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-SRC-003",
+      "category": "source_dependency",
+      "title": null,
+      "description": "L'audit semantico del corpus e' dichiarato PRELIMINARY COMPLETE; la verifica grafica supplementare e' IN PROGRESS; il confronto finale contro NEXUS e' NOT YET DECLARED COMPLETE.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.2 — Current completion state",
+      "source_line": 15079,
+      "applies_to": "strategy_fidelity",
+      "affected_strategy_or_module": null,
+      "verifiability": "NOT_VERIFIABLE_WITHOUT_ORIGINAL_SOURCE",
+      "original_source_required": true,
+      "notes": [
+        "Contraddice la dichiarazione di revisione delle contraddizioni al 100% (contraddizione C-3 dell'analisi)."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-SRC-004",
+      "category": "source_dependency",
+      "title": null,
+      "description": "Un'occorrenza non dimostra che una regola sia corretta, completa o traducibile automaticamente in codice; corsi diversi possono usare la stessa parola con significati differenti e la normalizzazione va fatta corso per corso.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "Limiti ancora aperti",
+      "source_line": 15486,
+      "applies_to": "strategy_fidelity",
+      "affected_strategy_or_module": null,
+      "verifiability": "NOT_VERIFIABLE_WITHOUT_ORIGINAL_SOURCE",
+      "original_source_required": true,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-SRC-005",
+      "category": "source_dependency",
+      "title": null,
+      "description": "Sequence_2_unlocked.pdf ha 119 pagine e 0 pagine con testo estratto (0 caratteri). Sommando Sequence.pdf (56/76) e Sequence_1.pdf (46/74), 180 pagine su 269 della famiglia 'Sequence' non hanno testo estratto.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.2 — per-PDF statistics",
+      "source_line": 15058,
+      "applies_to": "strategy_fidelity",
+      "affected_strategy_or_module": null,
+      "verifiability": "NOT_VERIFIABLE_WITHOUT_ORIGINAL_SOURCE",
+      "original_source_required": true,
+      "notes": [
+        "La bassa densita' della categoria 'Sequence / Proprietary Models' (22 occorrenze) non dimostra che il tema sia poco trattato: dimostra che e' poco leggibile con l'estrazione usata.",
+        "Calcolo dei totali eseguito da questa analisi sui valori per-PDF dichiarati dalla fonte."
+      ]
+    },
+    {
+      "requirement_id": "MASTER-DEC-001",
+      "category": "open_decisions",
+      "title": null,
+      "description": "Dieci decisioni implementative restano aperte (OD-001 tecnologia database di produzione, OD-002 trasporto eventi, OD-003 prodotto di secret management, OD-004 meccanismo di identita' macchina, OD-005 stack di observability, OD-006 piattaforma CI/CD, OD-007 provider e set di modelli AI, OD-008 modello di isolamento del broker-adapter, OD-009 deployment singolo nodo o distribuito, OD-010 periodi di retention per classe di dato). Ognuna richiede un ADR prima del lock implementativo.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §10 — Open-decision register",
+      "source_line": 14890,
+      "applies_to": "process",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    },
+    {
+      "requirement_id": "MASTER-ASM-001",
+      "category": "assumptions",
+      "title": null,
+      "description": "Assunzioni correnti dichiarate: MetaTrader 5 e' l'ambiente di esecuzione iniziale; il comportamento del broker varia per simbolo e conto; il primo deployment di produzione puo' essere vincolato e su singolo nodo; l'AI resta non critica per l'esecuzione sicura; un tenant puo' possedere piu' conti e deployment; la validazione di produzione richiede evidenza connessa al broker; piu' strategie non devono condividere autorita' illimitata.",
+      "evidence_level": "EXPLICIT",
+      "source_section": "A4.0 §12 — Assumption register",
+      "source_line": 14935,
+      "applies_to": "platform",
+      "affected_strategy_or_module": null,
+      "verifiability": "VERIFIABLE_BY_INSPECTION",
+      "original_source_required": false,
+      "notes": []
+    }
+  ]
+}

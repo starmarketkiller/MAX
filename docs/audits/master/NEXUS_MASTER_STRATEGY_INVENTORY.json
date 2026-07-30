@@ -1,0 +1,102 @@
+{
+  "source": "NEXUS_MASTER_PROJECT_v18.md",
+  "source_sha256": "72c51a725c152f8246ccce26d4b30578a25e80dfc817ecd13e935420bfbd16e2",
+  "source_repository_path": "docs/sources/master/NEXUS_MASTER_PROJECT_v18.md",
+  "analysis_date": "2026-07-26",
+  "extraction_method": "lettura integrale della fonte + ricerca esaustiva di identificatori di strategia con confini di parola",
+  "result": "NO_STRATEGY_DEFINITIONS_IN_SOURCE",
+  "result_explanation": "La fonte non definisce, nomina o elenca alcuna strategia di trading. E' un audit di repository, architettura e sicurezza piu' una specifica di governance. La ricerca esaustiva dei 38 identificatori canonici noti ha prodotto 2 occorrenze su 38 sonde, entrambe sulla STESSA riga 1857 e in quanto nomi di INDICATORE dentro un reperto di prestazioni ('MACD' 1 volta, 'SAR' 1 volta): nessuna delle due e' un identificatore di strategia, e le restanti 36 sonde hanno prodotto zero occorrenze. Le ricerche di vocabolario di logica di trading (entry rule, killzone, fair value gap, liquidity sweep, break of structure, swing high/low, premium/discount, divergence, breakout, pullback, London, New York, Asian) hanno prodotto zero occorrenze. L'inventario e' quindi VUOTO per costruzione: popolarlo richiederebbe fonti non allegate a questo incarico.",
+  "probe": {
+    "identifiers_probed": 38,
+    "identifiers_found": 2,
+    "matches": {
+      "MACD": 1,
+      "SAR": 1
+    },
+    "matches_are_strategy_identifiers": false,
+    "matches_explanation": "'MACD' e 'SAR' sono nomi che il progetto usa sia come identificatore di strategia sia come nome di indicatore tecnico. In questa fonte compaiono solo nel secondo senso, entrambi alla riga 1857, nell'elenco di CopyBuffer di un finding di prestazioni. Non descrivono una strategia e non permettono di dedurne l'esistenza.",
+    "note": "La sonda usa confini di parola. Senza confini, 'RSI' produce 372 falsi positivi perche' e' sottostringa di 'VERSION', e 'SAR' 34 perche' e' sottostringa di 'necessary'. Con confini di parola, 'RSI' compare 1 volta sola (riga 1857) e 'SAR' 1 volta (stessa riga)."
+  },
+  "trading_logic_probe": {
+    "entry rule": 0,
+    "killzone": 0,
+    "fair value gap": 0,
+    "liquidity sweep": 0,
+    "break of structure": 0,
+    "swing high": 0,
+    "swing low": 0,
+    "premium": 0,
+    "discount": 0,
+    "divergence": 0,
+    "breakout": 0,
+    "pullback": 0,
+    "London": 0,
+    "New York": 0,
+    "Asian": 0,
+    "risk-reward": 0
+  },
+  "only_trading_reference": {
+    "line": 1857,
+    "quote": "The reviewed update function performs individual `CopyBuffer` calls for ADX components, RSI, Bollinger bands, MACD, SAR, ATR, moving averages and Ichimoku values. It is called on ticks and again during multi-timeframe activation.",
+    "classification": "EXPLICIT",
+    "interpretation": "Unica riga della fonte che nomina indicatori di trading, e li nomina come reperto di PRESTAZIONI (numero di CopyBuffer per tick), non come logica di strategia. Non permette di dedurre quale strategia usi quale indicatore, con quali parametri o con quale regola."
+  },
+  "indirect_strategy_facts": [
+    {
+      "fact": "Il router assegna numeri di selettore fissi 'come 17-37'.",
+      "source_section": "AUD0-MQL-003 — Strategy routing is duplicated as hard-coded code and numeric selector IDs",
+      "source_line": 1776,
+      "evidence_level": "EXPLICIT",
+      "what_it_does_not_prove": "Non dichiara quante strategie esistano ne' quali siano: descrive la FORMA del routing, non il suo contenuto."
+    },
+    {
+      "fact": "Il router usa array a dimensione fissa (48 nel percorso di ingresso, 64 in un percorso multi-TF temporaneo).",
+      "source_section": "AUD0-MQL-004 — Fixed-size strategy arrays create a silent future capacity boundary",
+      "source_line": 1790,
+      "evidence_level": "EXPLICIT",
+      "what_it_does_not_prove": "48 e 64 sono capacita' di array, non conteggi di strategie."
+    },
+    {
+      "fact": "Esistono moduli MQL5 con nome di strategia: NXS_Strategies.mqh, NXS_Strategies_Institutional.mqh, NXS_Strategies_SMC.mqh, NXS_StrategyChain.mqh, NXS_StrategyRegistry.mqh, NXS_SignalRouter.mqh.",
+      "source_section": "Verified MQL5 include modules",
+      "source_line": 191,
+      "evidence_level": "EXPLICIT",
+      "what_it_does_not_prove": "La fonte elenca i nomi dei file; non descrive il contenuto di nessuno."
+    },
+    {
+      "fact": "La valutazione delle strategie usa valori di barra chiusa (shift=1) nella funzione di update esaminata.",
+      "source_section": "Positive controls observed (Block 8)",
+      "source_line": 1717,
+      "evidence_level": "EXPLICIT",
+      "what_it_does_not_prove": "Vale per la funzione esaminata, non e' dichiarato come invariante di tutte le strategie."
+    }
+  ],
+  "strategies": [],
+  "strategy_count_in_source": 0,
+  "requires_original_source_verification": true,
+  "blocking_sources": [
+    "I 13 PDF del corpus indicizzati nel blocco A4.2 (righe 15058-15460), nessuno presente nel repository",
+    "Un documento che dichiari l'elenco canonico delle strategie e la loro logica"
+  ],
+  "notes": [
+    "Vincolo dell'incarico rispettato: non sono state consultate altre fonti.",
+    "Un inventario popolato con nomi presi dal codice sarebbe una deduzione presentata come dato: esplicitamente vietato dall'incarico (punti 1, 2, 5).",
+    "Lo schema di record richiesto dall'incarico e' conservato in `strategy_record_schema` per il momento in cui le fonti saranno disponibili."
+  ],
+  "strategy_record_schema": {
+    "strategy_id": "string|null",
+    "strategy_name": "string|null",
+    "aliases": "array<string>",
+    "status_in_source": "string|null",
+    "concepts": "array<string>",
+    "entry_rules": "array<string>",
+    "exit_rules": "array<string>",
+    "risk_rules": "array<string>",
+    "session_rules": "array<string>",
+    "required_indicators": "array<string>",
+    "source_sections": "array<string>",
+    "evidence_level": "EXPLICIT|INFERRED|AMBIGUOUS",
+    "requires_original_source_verification": "boolean",
+    "notes": "array<string>"
+  }
+}

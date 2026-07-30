@@ -1,0 +1,195 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia MALAYSIAN_SNR (SNR body-based H4 + storyline) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per
+// NXS_Strat_MalaysianSNR_Rejection (NXS_Strategies_SMC.mqh) e il profilo
+// (NXS_StrategyProfiles.mqh: slMult=2.0/tpMult=4.5/htf=true, ma il codice
+// reale calcola SL/TP direttamente dalla geometria — vedi sotto — non passa
+// da NXS_DefaultSLTP con quei moltiplicatori).
+//
+// Fonte formalizzata: PARTE 5 (Yanu Emmanuel, M-01..M-08) e PARTE 7 (Q-01,
+// Q-02) di NEXUS_CORPUS_CONCEPT_FORMALIZATION.md. Verdetto di fedeltà:
+// NEXUS_STRATEGY_FIDELITY_REPORT_01.md, F-03 (PARZIALE) + F-05 (REMEDIATO
+// il 30/07 — vedi sotto, è l'unico punto di F-03 corretto finora).
+//
+// Livello SNR: massimo/minimo delle chiusure H4 (non ombre) sulle ultime 12
+// barre — "body-based", ma NON la primitiva esatta della fonte (M-01: confine
+// close/open fra due candele adiacenti). Divergenza nota, non corretta qui
+// (F-03 punto 1): questo script replica il codice REALE, non la fonte.
+// Confluenza: massimo/minimo delle chiusure W1 sulle ultime 8 barre — se il
+// livello H4 è entro 0.5×ATR-H4 dal livello W1, bonus di score (qui solo
+// informativo: nel codice il bonus serve al sistema di voto multi-strategia
+// dell'EA, che qui non esiste — non altera se un trade parte o no).
+// Storyline (bias direzionale, M-04/M-05): H4 shift1 vs shift4 in salita/
+// discesa, concorde con D1 shift1 vs shift2. Candela di rigetto (M-06):
+// corpo D1 > 0.5×ATR-D1, chiusura nella direzione del rigetto.
+//
+// F-05 (REMEDIATO 30/07): contatore utilizzi per livello, Q-01 — "A zone can
+// only be used a maximum of 2 times." Un livello nuovo (fuori tolleranza
+// 0.3×ATR-H4 dal precedente) resetta il contatore; esaurito, niente segnale.
+// L'eccezione della fonte per i livelli da daily gap con "reazione forte" non
+// è implementata né qui né in MQL5 — "strong" non è mai quantificato da
+// nessuna fonte del corpus.
+//
+// SEMPLIFICAZIONI NOTE (omesse di proposito):
+// - Il bonus "fresh" (+5 punti di score se il livello non è stato toccato
+//   nelle ultime 20 barre H4, esclusione delle ultime 3) è omesso: nel
+//   codice reale è puramente informativo (score per il voto multi-strategia
+//   dell'EA), non un gate — non altera mai se QUESTA funzione genera un
+//   segnale. La macchina a stati fresh/unfresh/flipped completa (M-03) resta
+//   assente sia in MQL5 sia qui (gap dichiarato, non risolto).
+// - Il filtro "salta la sessione Asiatica" del codice reale (g_session ==
+//   SESS_ASIAN) non è replicato: è un concetto intraday (quale sessione è
+//   ORA) valutato a ogni tick su un EA live; su un chart D1 con valutazione
+//   a barra chiusa non esiste un "adesso" intraday a cui agganciarlo senza
+//   inventare una convenzione arbitraria. M-08 (killzone Londra/NY) non è
+//   comunque applicato nemmeno nel codice reale per questa strategia.
+// - H4/W1 letti via request.security (valore aggregato, non loop barra per
+//   barra): Pine non permette di iterare le singole barre H4 storiche da un
+//   chart D1 allo stesso modo di MQL5. ta.highest/ta.lowest calcolati nel
+//   contesto H4/W1 replicano correttamente il VALORE del livello.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, entrate su barra D1
+// chiusa. request.security con lookahead=barmerge.lookahead_off e offset
+// [1]/[4]/[8]/[12] applicati DENTRO l'espressione, stesso schema già usato
+// in NEXUS_LIQ_VOID.pine per il bias multi-timeframe.
+// =============================================================================
+strategy("NEXUS EA - MALAYSIAN_SNR (XAUUSD D1)", shorttitle="NXS-MSNR", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", tooltip="Gate generico di profilo (htf=true): blocca i BUY sotto EMA200, i SELL sopra, sullo stesso TF della strategia (D1).")
+h4Lookback   = input.int(12, "Livello H4: barre indietro (max/min chiusura)")
+w1Lookback   = input.int(8, "Confluenza W1: barre indietro (max/min chiusura)")
+w1TolMult    = input.float(0.5, "Confluenza W1: tolleranza × ATR-H4")
+touchTolMult = input.float(0.4, "Tocco livello: tolleranza × ATR-H4")
+bodyMinATR   = input.float(0.5, "Corpo minimo candela rigetto × ATR (D1)")
+maxUsesPerLevel    = input.int(2, "Max utilizzi per livello (F-05 / Q-01)")
+levelChangeTolMult = input.float(0.3, "Livello nuovo: soglia di cambiamento × ATR-H4")
+slOffsetMult = input.float(0.5, "SL: offset oltre il livello × ATR-H4")
+tpMult       = input.float(2.3, "TP × ATR (D1, al momento del segnale)")
+atrLen       = input.int(14, "ATR length")
+maxHoldBars  = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal    = ta.atr(atrLen)      // ATR sul TF proprio della strategia (D1)
+ema200Htf = ta.ema(close, 200)
+inRange   = time >= startDate and time <= endDate
+
+atrH4 = request.security(syminfo.tickerid, "240", ta.atr(atrLen)[1], lookahead=barmerge.lookahead_off)
+h4Hi  = request.security(syminfo.tickerid, "240", ta.highest(close, h4Lookback)[1], lookahead=barmerge.lookahead_off)
+h4Lo  = request.security(syminfo.tickerid, "240", ta.lowest(close, h4Lookback)[1], lookahead=barmerge.lookahead_off)
+w1Hi  = request.security(syminfo.tickerid, "W", ta.highest(close, w1Lookback)[1], lookahead=barmerge.lookahead_off)
+w1Lo  = request.security(syminfo.tickerid, "W", ta.lowest(close, w1Lookback)[1], lookahead=barmerge.lookahead_off)
+h4C1  = request.security(syminfo.tickerid, "240", close[1], lookahead=barmerge.lookahead_off)
+h4C4  = request.security(syminfo.tickerid, "240", close[4], lookahead=barmerge.lookahead_off)
+
+// ----------------------------- Storyline (M-04/M-05) ------------------------
+storyBull = h4C1 > h4C4 and close >= close[1]
+storyBear = h4C1 < h4C4 and close <= close[1]
+
+// ----------------------------- Candela di rigetto (D1, barra chiusa) -------
+c1 = close
+o1 = open
+l1 = low
+h1 = high
+bodyAbs = math.abs(c1 - o1)
+validBody = bodyAbs > bodyMinATR * atrVal
+
+// ----------------------------- Confluenza W1 (informativa) ------------------
+w1ConfluenceLo = math.abs(h4Lo - w1Lo) <= w1TolMult * atrH4
+w1ConfluenceHi = math.abs(h4Hi - w1Hi) <= w1TolMult * atrH4
+
+// ----------------------------- Tocco livello --------------------------------
+touchLo = l1 <= h4Lo + touchTolMult * atrH4 and l1 >= h4Lo - touchTolMult * atrH4
+touchHi = h1 >= h4Hi - touchTolMult * atrH4 and h1 <= h4Hi + touchTolMult * atrH4
+
+// ----------------------------- F-05: contatore utilizzi per livello ---------
+var float snrLoLevel = na
+var int   snrLoUses  = 0
+var float snrHiLevel = na
+var int   snrHiUses  = 0
+
+buySignal  = false
+sellSignal = false
+
+buyBase = validBody and touchLo and c1 > o1 and storyBull
+if buyBase
+    if na(snrLoLevel)
+        snrLoLevel := h4Lo
+        snrLoUses := 0
+    else if math.abs(h4Lo - snrLoLevel) > levelChangeTolMult * atrH4
+        snrLoLevel := h4Lo
+        snrLoUses := 0
+    if snrLoUses < maxUsesPerLevel
+        snrLoUses := snrLoUses + 1
+        buySignal := true
+
+sellBase = validBody and touchHi and c1 < o1 and storyBear
+if sellBase
+    if na(snrHiLevel)
+        snrHiLevel := h4Hi
+        snrHiUses := 0
+    else if math.abs(h4Hi - snrHiLevel) > levelChangeTolMult * atrH4
+        snrHiLevel := h4Hi
+        snrHiUses := 0
+    if snrHiUses < maxUsesPerLevel
+        snrHiUses := snrHiUses + 1
+        sellSignal := true
+
+// ----------------------------- Trigger --------------------------------------
+htfBlocksBuy  = useHtfFilter and close < ema200Htf
+htfBlocksSell = useHtfFilter and close > ema200Htf
+
+longCond  = inRange and buySignal and not htfBlocksBuy
+shortCond = inRange and sellSignal and not htfBlocksSell
+
+// ----------------------------- SL/TP (geometria del livello, non ATR generico sul prezzo di fill) --
+var float pendingSL   = na
+var float pendingTP   = na
+var float slLevel     = na
+var float tpLevel     = na
+var int   entryBarIdx = na
+
+// STEP 1: consuma i livelli calcolati sulla barra del segnale (fill = barra dopo)
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+// STEP 2: nuovi segnali -> calcola SL/TP dalla geometria e piazza l'ordine
+if longCond and strategy.position_size <= 0
+    pendingSL := h4Lo - slOffsetMult * atrH4
+    pendingTP := close + tpMult * atrVal
+    strategy.entry("Long", strategy.long, comment=w1ConfluenceLo ? "SNR_bull_story_W1" : "SNR_bull_story")
+if shortCond and strategy.position_size >= 0
+    pendingSL := h4Hi + slOffsetMult * atrH4
+    pendingTP := close - tpMult * atrVal
+    strategy.entry("Short", strategy.short, comment=w1ConfluenceHi ? "SNR_bear_story_W1" : "SNR_bear_story")
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(h4Lo, "Livello H4 (support)", color=color.new(color.lime, 0), style=plot.style_linebr)
+plot(h4Hi, "Livello H4 (resistance)", color=color.new(color.red, 0), style=plot.style_linebr)
+plot(w1Lo, "Confluenza W1 (low)", color=color.new(color.aqua, 60), style=plot.style_circles)
+plot(w1Hi, "Confluenza W1 (high)", color=color.new(color.orange, 60), style=plot.style_circles)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a Daily", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS MALAYSIAN_SNR BUY", "NEXUS MALAYSIAN_SNR: rigetto rialzista su barra chiusa")
+alertcondition(shortCond, "NXS MALAYSIAN_SNR SELL", "NEXUS MALAYSIAN_SNR: rigetto ribassista su barra chiusa")

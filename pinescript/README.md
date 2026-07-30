@@ -28,8 +28,19 @@ concetti SMC/ICT):
 | `NEXUS_DISP_REBAL.pine` | DISP_REBAL | H4 | SMC/ICT (stessa geometria FVG, entry sul CE — **disabilitata in produzione MT5**, vedi sotto) |
 | `NEXUS_ORDER_BLOCK.pine` | ORDER_BLOCK | D1 | SMC/ICT (zona origine pre-displacement + BOS, macchina a stati con retest one-shot) |
 
-Scope di questo lavoro: solo le 8 strategie sopra. Nessuna modifica a `MQL5/`
-o `server/backtest.py`.
+**Batch 3** (30/07) — le prime due strategie SMC/ICT del portafoglio con fix
+di fedeltà reali appena chiusi in MQL5 (F-05 e F-02 nel
+`NEXUS_STRATEGY_FIDELITY_REPORT_01.md`), portate qui per verificarne l'edge
+su un terzo motore prima ancora che la modifica MQL5 sia stata compilata:
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_MALAYSIAN_SNR.pine` | MALAYSIAN_SNR | D1 | SMC/ICT (Support/Resistance H4 con conferma W1, storyline H4, F-05: contatore utilizzi per livello) |
+| `NEXUS_SILVER_BULLET.pine` | SILVER_BULLET | M15 | SMC/ICT (Silver Bullet ICT — sweep di liquidità cascata + FVG nelle killzone ET, F-02: killzone DST-aware) |
+
+Scope di questo lavoro: le 10 strategie sopra (Batch 1+2+3). Nessuna
+modifica a `server/backtest.py`. Le uniche modifiche MQL5 correlate sono i
+fix F-05/F-02 già committati separatamente in `MQL5/Include/NEXUS_v1/`.
 
 ## Come usarle nello Strategy Tester di TradingView
 
@@ -64,7 +75,13 @@ o `server/backtest.py`.
    variante — non è emersa alcuna analisi MFE/MAE per queste 4). LIQ_VOID ha
    due toggle HTF indipendenti (vedi sezione dedicata) e DISP_REBAL è
    **disabilitata in produzione MT5** oggi (portata comunque per completezza).
-6. Range di date di default: 2019-01-01 → oggi, per allinearsi alla finestra
+6. **Batch 3** (MALAYSIAN_SNR/SILVER_BULLET): una sola configurazione
+   ciascuna, già col fix di fedeltà applicato (F-05 per MALAYSIAN_SNR, F-02
+   per SILVER_BULLET — vedi "Riepilogo logica" sotto). Per SILVER_BULLET usa
+   un chart **M15**: il TF nativo è granulare, quindi TradingView potrebbe
+   offrire meno storico intraday del previsto sul piano Basic (stesso limite
+   già osservato per RSI_DIV H1, vedi nota sotto).
+7. Range di date di default: 2019-01-01 → oggi, per allinearsi alla finestra
    dei 6 anni "affidabili" usata nel backtest 10Y segmentato MT5. Modificabile
    dagli input in cima allo script.
 7. Quantità fissa a 1 contratto per tutte (non è calibrata sul lot sizing
@@ -206,6 +223,87 @@ o `server/backtest.py`.
   la versione Pine è quindi **meno filtrata** (più segnali) del comportamento
   MT5 reale.
 
+### MALAYSIAN_SNR (D1)
+- **Indicatori**: livelli Support/Resistance H4 (max/min 12 barre H4, offset
+  1 = ultima barra H4 chiusa), confluenza opzionale con livello W1
+  equivalente, "storyline" H4 (candela shift1 vs shift4, per stabilire se il
+  livello è stato appena testato con momentum a favore), ATR(14) su D1 e
+  ATR(14) su H4 (letto via `request.security`, serve per il fix F-05).
+- **BUY**: prezzo D1 tocca/rientra nel livello H4 di supporto (± tolleranza
+  ATR), storyline H4 conferma rigetto rialzista, **e il contatore utilizzi
+  per quel livello non ha già raggiunto il massimo** (fix F-05, vedi sotto).
+  **SELL**: speculare sul livello di resistenza.
+- **F-05 — contatore utilizzi per livello** (chiude la divergenza F-05 del
+  fidelity report): in MQL5 lo stesso livello S/R poteva generare segnali
+  ripetuti illimitati finché il prezzo continuava a rimbalzarci; il codice
+  reale ora traccia il livello H4 corrente con una tolleranza pari a
+  `0.3×ATR(H4)` (stesso livello se il nuovo massimo/minimo H4 non si è
+  spostato più di così) e permette **al massimo 2 utilizzi consecutivi**
+  prima di richiedere che il livello H4 si aggiorni. Portato identico qui,
+  con stato persistente `var float`/`var int` per livello Hi e Lo.
+- **SL/TP**: **non** un multiplo ATR generico sul prezzo d'ingresso — SL
+  appena oltre il livello H4 (± buffer ATR sul lato sbagliato), TP proiettato
+  verso il livello opposto (pattern "pending" a due step, come LIQ_VOID/
+  DISP_REBAL, perché la geometria dipende dalla barra segnale, non dalla
+  barra di riempimento). Nessun breakeven/trailing dedicato (usa il fallback
+  globale se il profilo non ne specifica uno — vedi "Gestione uscita" sotto).
+- **Filtro HTF**: attivo (EMA200 stesso TF D1), replica il toggle `htf=true`
+  del profilo MQL5 attuale.
+- **Time-exit**: 40 barre D1, stessa convenzione delle altre 9.
+- **Semplificazioni note (omesse di proposito)**: il bonus di score per
+  livello "fresh" (mai toccato prima) è solo informativo in MQL5 — non
+  condiziona l'ingresso, quindi omesso; il filtro che salta la sessione
+  Asia è un concetto intraday senza significato su valutazione a barra
+  D1 chiusa, quindi omesso; i livelli H4/W1 sono letti come aggregati via
+  `request.security` (da un chart D1) invece che con loop barra-per-barra
+  nativi H4/W1 — equivalente per come vengono usati qui (solo max/min su
+  finestra fissa), ma non identico byte-per-byte al loop MQL5.
+
+### SILVER_BULLET (M15)
+- **Indicatori**: nessun indicatore classico — è un modello di **sweep di
+  liquidità cascata + Fair Value Gap** nelle killzone orarie ICT. Range Asia
+  (scansione M15 sulle ultime 96 barre = 24h), PDH/PDL (Previous Day
+  High/Low), PWH/PWL (Previous Week), PMH/PML (Previous Month), tutti letti
+  via `request.security`; priorità di override in cascata identica a
+  `NXS_DetectSweepExt` (Monthly > Weekly > Daily > Asia > fallback Equal
+  High/Low). ATR(14) su M15 per il buffer SL e la gestione uscita.
+- **F-02 — killzone DST-aware** (chiude la divergenza F-02 del fidelity
+  report): il codice reale usava due finestre a orario GMT fisso, sbagliate
+  per metà dell'anno rispetto alle vere killzone ICT in orario di New York
+  (3-4, 10-11, 14-15 ET). Qui la correzione usa il supporto nativo IANA di
+  Pine (`hour(time, "America/New_York")`) per calcolare l'ora ET barra per
+  barra — **più semplice e più affidabile** della replica manuale
+  dell'algoritmo DST US fatta in MQL5 (2ª domenica di marzo → 1ª domenica di
+  novembre), scelta deliberata e documentata nell'intestazione dello script.
+- **BUY**: nella killzone, sweep ribassista rilevato (prezzo rompe sotto un
+  livello di liquidità e richiude sopra) seguito da un FVG bullish nelle
+  barre successive, macchina a stati (`IDLE → SWEPT → WAITING_RETURN →
+  entry`) replica `NXS_SB_UpdateSide`/`ENUM_NXS_SB_STATE`. **SELL**:
+  speculare (sweep rialzista + FVG bearish).
+- **SL/TP**: SL oltre l'estremo dello sweep (± buffer ATR), TP via multiplo
+  R fisso sulla distanza SL — pattern "pending" STEP1/STEP2 come
+  MALAYSIAN_SNR, perché anche qui la geometria dipende dalla barra segnale.
+- **Gestione uscita — l'unica delle 10 con breakeven+trailing genuini**:
+  Silver Bullet non ha un profilo dedicato in `NXS_StrategyProfiles.mqh`,
+  quindi in MQL5 usa il **fallback globale** di `NXS_Management.mqh`
+  (diverso da tutte le altre 9, che usano SL/TP fissi da profilo). Replicato
+  qui con un blocco dedicato che sposta lo stop a breakeven quando il
+  profitto flottante raggiunge `beTriggerMult×ATR`, poi traila con
+  `trailDistMult×ATR` (o `trailDistPostBEMult×ATR` dopo il breakeven) usando
+  l'**ATR corrente/live**, non quello congelato all'apertura — a differenza
+  del SL/TP iniziale (quello sì fisso all'ingresso).
+- **Time-exit**: 40 barre M15 (`maxHoldBars`, stessa convenzione EA-wide di
+  "~40 barre del TF della strategia" documentata in `NXS_Management.mqh`).
+- **Filtro HTF**: nessuno (Silver Bullet in MQL5 non ha un gate HTF —
+  la selettività viene dalle killzone + sweep + FVG, non da un bias di
+  trend).
+- **Semplificazioni note (omesse di proposito)**: il fallback Equal
+  High/Low (usato in MQL5 quando nessuno sweep Asia/Daily/Weekly/Monthly è
+  disponibile) non è replicato — se nessun livello di liquidità cascata è
+  rilevato nella finestra, lo script semplicemente non genera un setup per
+  quella barra, invece di cercare un pattern di doppio massimo/minimo
+  approssimato.
+
 ## Filtro HTF — cos'è, e correzione del 18/07
 
 **Corretto il 18/07** — la prima versione di questo filtro (SAR/MACD/ADX_RSI)
@@ -257,6 +355,25 @@ EMA200 generico, come le altre).
 
 ## Gestione uscita
 
+**MALAYSIAN_SNR** (SL/TP dalla geometria del livello S/R, non ATR generico):
+- Stesso pattern "pending" a due step di LIQ_VOID/DISP_REBAL: SL/TP calcolati
+  una sola volta al momento del segnale come prezzi assoluti derivati dal
+  livello H4 (± buffer ATR). Nessun breakeven/trailing dedicato in
+  `NXS_StrategyProfiles.mqh` per questa strategia — usa il fallback globale
+  se mai attivato, qui non replicato separatamente (nessuna evidenza che sia
+  mai stato osservato attivo per questa strategia nei test reali).
+
+**SILVER_BULLET** (l'unica delle 10 con breakeven+trailing genuini):
+- SL iniziale fisso all'ingresso (oltre l'estremo dello sweep ± buffer ATR),
+  ma poi gestito attivamente durante la vita del trade con lo stesso
+  fallback globale di `NXS_Management.mqh` usato in MQL5 quando una
+  strategia non ha un profilo dedicato — breakeven quando il profitto
+  raggiunge `beTriggerMult×ATR(live)`, poi trailing con `trailDistMult×ATR`
+  (o `trailDistPostBEMult×ATR` dopo breakeven). Vedi "Riepilogo logica" sopra
+  per i dettagli — è un modello diverso da tutte le altre 9 strategie di
+  questo README (che non modificano mai lo stop dopo l'apertura, a parte
+  l'eventuale singolo salto a breakeven).
+
 **SAR/MACD/ADX_RSI/RSI_DIV/TSI/ORDER_BLOCK** (SL/TP via formula ATR):
 - SL/TP calcolati una sola volta all'apertura del trade, come multiplo
   dell'ATR(14) **al momento dell'ingresso** (non ricalcolato durante la vita
@@ -272,12 +389,13 @@ EMA200 generico, come le altre).
   multiplo ATR generico applicato al prezzo d'ingresso. Nessun breakeven per
   nessuna delle due (beR=0 nel profilo).
 
-**Tutte e 8**:
+**Tutte e 10**:
 - **Time-exit a 40 barre**: se né SL né TP vengono toccati entro 40 barre dal
   timeframe della strategia, la posizione viene chiusa a mercato — replica il
   "time-based forced exit" reale di MQL5 (`~40 barre del TF della strategia`).
-- Nessun trailing stop: tutte hanno `trailATR=0` nel profilo MQL5 attuale
-  (confermato inefficace dal test MFE/MAE del 17/07 per il Batch 1).
+- Nessun trailing stop per le 9 con SL/TP fisso (`trailATR=0` nel profilo
+  MQL5 attuale, confermato inefficace dal test MFE/MAE del 17/07 per il
+  Batch 1) — l'eccezione è SILVER_BULLET, vedi sopra.
 
 ## Risultati dei test manuali — Batch 1 (SAR/MACD/ADX_RSI/RSI_DIV)
 
@@ -399,3 +517,23 @@ Da compilare dopo i test manuali, stesso formato del Batch 1 sopra.
 
 ### Osservazioni (Batch 2)
 _(da compilare)_
+
+## Risultati dei test manuali — Batch 3 (MALAYSIAN_SNR/SILVER_BULLET)
+
+Da compilare dopo i test manuali, stesso formato dei batch precedenti.
+
+### MALAYSIAN_SNR (D1)
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| Config attuale (livello H4 + conferma W1, F-05 max 2 utilizzi/livello) | | | | | | |
+
+### SILVER_BULLET (M15)
+| Config | Periodo | Trade | PF | Win Rate | Max DD | Net PnL |
+|---|---|---|---|---|---|---|
+| Config attuale (killzone ET DST-aware F-02, sweep cascata + FVG, BE+trailing) | | | | | | |
+
+### Osservazioni (Batch 3)
+_(da compilare — con queste due si raggiungono le 10 strategie del
+portafoglio portate su Pine Script; una volta compilati questi risultati e
+quelli del Batch 2, il quadro "10 strategie con edge reale testato" richiesto
+sarà completo su un terzo motore/dataset indipendente da MT5 e dal sito.)_

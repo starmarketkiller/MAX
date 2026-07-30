@@ -1,0 +1,509 @@
+# RAPPORTO DI FEDELTÀ 01 — SMC / SNR contro le fonti d'origine
+
+> Prima verifica di fedeltà eseguita contro le fonti originali, ora disponibili.
+> Fino al 2026-07-30 questo documento constatava soltanto, senza correggere.
+> **F-05 e F-02 sono le prime eccezioni**: gap chiusi su richiesta esplicita
+> del proprietario, codice modificato di conseguenza (vedi le sezioni
+> `REMEDIATO` dentro ciascuna voce). Tutte le altre restano constatazioni, non
+> correzioni.
+
+| | |
+|---|---|
+| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`; F-05 e F-02 remediati) |
+| Fonti primarie usate | `docs/sources/corpus/` (11 PDF archiviati con hash) |
+| Formalizzazione di riferimento | `docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` (PARTE 1-7) |
+| Codice esaminato | `NXS_Structure.mqh`, `NXS_Strategies_SMC.mqh`, `NXS_AMDModel.mqh`, `NXS_BjorgumZones.mqh` (baseline `main` = `4465873`) |
+| Codice modificato | `NXS_Strategies_SMC.mqh` — contatore utilizzi per livello (F-05), killzone Silver Bullet DST-aware (F-02) |
+| Esiti | 1 fedele · 1 divergenza confermata (F-06) · 1 divergenza strutturale (F-03) · 2 remediati (F-02, F-05) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
+
+## Livelli di giudizio
+
+| | Significato |
+|---|---|
+| `FEDELE` | il codice implementa ciò che la fonte prescrive, verificato riga per riga |
+| `DIVERGENTE` | fonte e codice dicono cose diverse, entrambe citate |
+| `PARZIALE` | implementa una parte della prescrizione e ne omette altre |
+| `NON VERIFICATO` | non esaminato in questa consegna |
+
+**Cosa questo rapporto non fa.** Non dice che una strategia sia buona o cattiva:
+la fedeltà a una fonte non è un edge. Una strategia può essere perfettamente
+fedele e perdere denaro, e viceversa. Non ho misurato nulla qui.
+
+---
+
+## F-01 · Break of Structure — `FEDELE` ✅
+
+**Fonte** (M-05, Yanu Emmanuel):
+
+> "Break of market structure occurs when price **closes** above a swing
+> high/low… A break of structure is only considered valid when price closes
+> above the higher high **with a full body**; when price closes above the swing
+> high **with a wick**, this is not considered as a break of structure."
+
+**Codice** (`NXS_Structure.mqh:239-252`):
+
+```cpp
+double c1 = iClose(sym, tf, 1);
+if(st.lastSwingHigh > 0 && c1 > st.lastSwingHigh){
+   if(trendBefore == -1) st.chochUp = true;
+   else                  st.bosUp   = true;
+}
+if(st.lastSwingLow > 0 && c1 < st.lastSwingLow){
+   if(trendBefore == 1) st.chochDown = true;
+   else                 st.bosDown   = true;
+}
+```
+
+Il confronto è su `iClose`, non su `iHigh`/`iLow`. Una candela che perfora lo
+swing con l'ombra ma chiude sotto **non** produce un BOS. È esattamente la
+regola della fonte.
+
+**In più, non richiesto dalla fonte ma corretto:** la separazione BOS/CHOCH è
+mutuamente esclusiva e dipende dal trend *precedente* alla rottura. La fonte
+parla solo di BOS; il codice distingue continuazione da inversione. È
+un'estensione coerente, non una divergenza.
+
+**Nota residua:** gli swing point sono individuati con `iHigh`/`iLow` (ombre).
+La fonte non prescrive nulla in merito, e usare gli estremi per *individuare*
+uno swing è convenzionale. Non è una divergenza; lo segnalo perché è l'unico
+punto dove il codice usa l'ombra in questo percorso.
+
+---
+
+## F-02 · `SILVER_BULLET` — `DIVERGENTE` 🔴 → `REMEDIATO` ✅ (2026-07-30)
+
+**Fonte primaria** (I-07, PDF ICT):
+
+> "The strategy works best when the market is busy, usually between **10 am–11
+> am ET or 3 am–4 am ET**."
+
+**Fonti esterne consultate** (marcate come tali: non fanno parte del corpus):
+le tre finestre Silver Bullet sono London Open **03:00–04:00 ET**, AM Session
+**10:00–11:00 ET**, PM Session **14:00–15:00 ET**; la London Open Killzone è
+02:00–05:00 ET e la New York Open Killzone 08:30–11:00 ET. Le fonti esterne
+**confermano** il PDF del corpus e aggiungono la terza finestra.
+
+**Codice** (`NXS_Strategies_SMC.mqh:404-412`):
+
+```cpp
+datetime gmtNow = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
+MqlDateTime mt; TimeToStruct(gmtNow, mt);
+int h = mt.hour;
+bool killzoneLO = (h >= 10 && h < 11);   // London KZ 10-11 GMT
+bool killzoneNY = (h >= 14 && h < 15);   // NY KZ 14-15 GMT
+```
+
+### Conversione, con e senza ora legale americana
+
+| Finestra della fonte | GMT in EST (inverno) | GMT in EDT (estate) |
+|---|---|---|
+| 03:00–04:00 ET (London Open SB) | 08:00–09:00 | 07:00–08:00 |
+| 10:00–11:00 ET (AM SB) | 15:00–16:00 | 14:00–15:00 |
+| 14:00–15:00 ET (PM SB) | 19:00–20:00 | 18:00–19:00 |
+
+| Finestra del codice | Corrisponde in EST | Corrisponde in EDT |
+|---|---|---|
+| 10:00–11:00 GMT ("London KZ") | 05:00–06:00 ET → **nessuna finestra** | 06:00–07:00 ET → **nessuna finestra** |
+| 14:00–15:00 GMT ("NY KZ") | 09:00–10:00 ET → **un'ora in anticipo** | 10:00–11:00 ET → **corretta** |
+
+### Tre constatazioni distinte
+
+1. **La finestra "London" non corrisponde a nulla.** 10:00–11:00 GMT è
+   05:00–06:00 ET d'inverno e 06:00–07:00 ET d'estate. Non è la Silver Bullet
+   di London Open (03:00–04:00 ET), e cade **fuori** anche dalla London Open
+   Killzone (02:00–05:00 ET) in entrambi i regimi.
+2. **La finestra "NY" è corretta solo sei mesi l'anno.** Coincide con
+   10:00–11:00 ET durante l'ora legale americana; durante l'ora solare parte
+   un'ora prima. Il codice converte l'ora del server in GMT tramite
+   `InpServerGMTOffset`, ma **GMT non segue il DST americano**: lo sfasamento è
+   strutturale, non un parametro da tarare.
+3. **La terza finestra non esiste nel codice.** La PM Session (14:00–15:00 ET)
+   non è implementata.
+
+**Conseguenza pratica.** La strategia opera per metà del tempo in una finestra
+che nessuna fonte indica, e nell'altra metà in una finestra corretta solo
+d'estate. `SILVER_BULLET` non ha dati di sweep: qualsiasi misura futura senza
+correggere questo misurerebbe una strategia diversa da quella che dichiara di
+essere.
+
+### `REMEDIATO` ✅ — 2026-07-30
+
+Sostituite le due finestre GMT fisse con le tre finestre ET (03-04, 10-11,
+14-15) convertite correttamente in GMT in base alla DST USA (2a domenica di
+marzo - 1a domenica di novembre — verificato contro le transizioni reali
+2025/2026/2027: 9 mar-2 nov, 8 mar-1 nov, 14 mar-7 nov). È una regola diversa
+dalla BST inglese già gestita altrove nel codice (`NXS_IsLondonBST` in
+`NXS_Strategies_Institutional.mqh`) — UK e USA non condividono le date di
+cambio ora, motivo per cui serviva un helper dedicato, non un riuso.
+
+`NXS_Strategies_SMC.mqh` è incluso in `NEXUS_EA_v2.mq5` **prima** di
+`NXS_Strategies_Institutional.mqh`: l'helper (`NXS_IsUSEDT`,
+`NXS_SMC_NthSundayUTC`) è stato aggiunto localmente in questo stesso file
+invece di spostare o duplicare quello inglese, per non toccare l'ordine di
+inclusione né altri strategie.
+
+```cpp
+bool edt = NXS_IsUSEDT(gmtNow);
+bool killzoneLdnOpen = edt ? (h >= 7  && h < 8)  : (h >= 8  && h < 9);    // 03-04 ET
+bool killzoneAM      = edt ? (h >= 14 && h < 15) : (h >= 15 && h < 16);   // 10-11 ET
+bool killzonePM      = edt ? (h >= 18 && h < 19) : (h >= 19 && h < 20);   // 14-15 ET
+```
+
+Le sei coppie di orari (EST/EDT × tre finestre) coincidono esattamente con la
+tabella "Conversione, con e senza ora legale americana" sopra, già
+corroborata dalle fonti esterne.
+
+**Non verificato**: la London Open Killzone (02:00–05:00 ET) e la New York
+Open Killzone (08:30–11:00 ET) citate dalle fonti esterne sono finestre più
+ampie della *specifica* Silver Bullet (le tre ore singole), usate da alcune
+fonti come contesto più largo in cui la Silver Bullet si inserisce. Non le ho
+aggiunte: la fonte primaria (I-07) parla solo delle tre finestre strette, e
+le fonti esterne le trattano come concetti distinti, non equivalenti.
+
+**Non compilato**, stesso limite di F-05: nessun compilatore MQL5 in questo
+ambiente. La correttezza delle date DST è stata verificata con una
+simulazione Python indipendente dello stesso algoritmo (stessa aritmetica di
+`day_of_week`), non con l'esecuzione del codice MQL5.
+
+---
+
+## F-03 · `MALAYSIAN_SNR` — `PARZIALE`
+
+È la strategia con più materiale d'origine disponibile: un capitolo intero del
+PDF Yanu Emmanuel. Confronto punto per punto.
+
+### Cosa il codice fa bene ✅
+
+| Prescrizione della fonte | Codice |
+|---|---|
+| M-01 — livelli sui prezzi di **chiusura**, ignorare le ombre | `iHighest(..., MODE_CLOSE, ...)`, `iClose(...)`; il commento dice esplicitamente *"Body-based levels (close, not wick)"* |
+| M-06 — candela di rifiuto con corpo spesso | `bodyAbs = MathAbs(c1-o1)`; richiede `bodyAbs > atr*0.5` |
+| M-06 — la candela chiude nella direzione del rifiuto | `c1 > o1` per il buy al supporto, `c1 < o1` per il sell alla resistenza |
+| Cap. 3 — *storyline* come bias direzionale | `storyBull`/`storyBear` da chiusure H4 e D1 |
+| Confluenza multi-timeframe | bonus di punteggio se il livello H4 coincide con un livello W1 |
+| M-08 — evitare le ore a bassa volatilità | esclude la sessione asiatica |
+
+Il commento nel codice — *"Body-based levels (close, not wick)"* — dimostra che
+chi l'ha scritto conosceva la regola. Su questo punto la fedeltà è
+**intenzionale**, non accidentale.
+
+### Dove diverge 🔴
+
+**1. Il livello non è la primitiva della fonte.**
+
+> Fonte (M-01): *"You draw a line across the first candlestick's close to join
+> the next candlestick's open."*
+
+Il livello SNR è il **confine fra due candele adiacenti**: la chiusura di una e
+l'apertura della successiva. Il codice invece calcola:
+
+```cpp
+int idxH4Hi = iHighest(g_sym, InpTFHigh, MODE_CLOSE, 12, 1);
+double h4Hi = iClose(g_sym, InpTFHigh, idxH4Hi);
+```
+
+cioè **la chiusura più alta delle ultime 12 barre H4**. È un massimo su finestra
+mobile, non una giunzione close/open. Entrambi sono "body-based", ma sono
+oggetti diversi: la fonte produce **molti** livelli (uno per ogni coppia di
+candele qualificata), il codice ne produce **due** (un massimo e un minimo di
+finestra).
+
+Questa è la divergenza più importante del rapporto, perché riguarda la
+primitiva su cui tutte e quattro le fonti concordano.
+
+**2. "Fresh" ha una definizione diversa, e non è un gate.**
+
+> Fonte (M-03): *"A fresh SNR level is one that hasn't been touched or broken by
+> the candle's wick or body."* — mai toccato, in assoluto.
+
+```cpp
+for(int i = 1; i <= 20; i++){
+   if(hh >= h4Hi - atrH4*0.3 && hh <= h4Hi + atrH4*0.3 && i > 3) freshHi = false;
+   ...
+}
+s.score = 68.0 + (freshHi ? 5.0 : 0.0);
+```
+
+Tre differenze:
+- finestra di **20 barre**, non "mai";
+- tolleranza di ±0.3 ATR attorno al livello, mentre la fonte parla di contatto;
+- `i > 3` **esclude le ultime 3 barre**: un livello toccato due barre fa risulta
+  ancora fresh.
+
+E soprattutto: nella fonte fresh/unfresh determina **se il livello è
+affidabile**; nel codice vale **+5 punti di score**. Un livello unfresh opera
+comunque.
+
+**3. La macchina a stati del flip è assente.**
+
+M-03 descrive il ciclo `FRESH → UNFRESH → FLIPPED (SBR/RBS) → FRESH nella
+direzione invertita`. In questa funzione non c'è: nessun tracciamento dello
+stato del livello, nessuna inversione di ruolo. È il meccanismo centrale del
+metodo, ed è il motivo per cui il corso si intitola *flipping*.
+
+**4. L'allineamento con la struttura non usa la struttura.**
+
+M-04 richiede allineamento con *"higher timeframe order flow, directional bias,
+prevailing trend, or overall market structure"*. Il codice usa:
+
+```cpp
+bool storyBull = (h4C1 > h4C4 && d1C1 >= d1C2);
+```
+
+due confronti fra chiusure. `g_struct.trend`, `bosUp`, `chochUp` — che il
+progetto calcola già correttamente (F-01) — **non sono consultati**.
+
+**5. Le killzone non sono applicate.**
+
+M-08: *"we mainly focus on trading the London and NY killzones"*. Il codice
+esclude solo l'Asia, quindi ammette tutte le altre ore, non le due killzone.
+
+---
+
+## F-04 · Copertura dei gate nelle 12 funzioni SMC
+
+Scansione automatica dei corpi delle funzioni `SNXSSignal` in
+`NXS_Strategies_SMC.mqh`, per verificare **la presenza** dei gate che la fonte
+prescrive (M-04: livello → confluenze → rifiuto → allineamento HTF).
+
+| Strategia | struttura/BOS | sessione | fresh | candela rifiuto | bias HTF | gate |
+|---|:---:|:---:|:---:|:---:|:---:|---:|
+| `MALAYSIAN_SNR` | — | ✅ | ✅ | ✅ | ✅ | **4** |
+| `SILVER_BULLET` | — | ✅ | — | ✅ | — | 2 |
+| `IFVG` | ✅ | — | — | ✅ | — | 2 |
+| `SMS_BMS_RTO` | ✅ | — | — | ✅ | — | 2 |
+| `OTE_CONT` | ✅ | — | — | ✅ | — | 2 |
+| `AMD_REVERSAL` | ✅ | — | — | — | — | 1 |
+| `SH_BMS_RTO` | — | — | — | ✅ | — | 1 |
+| `TURTLE_SOUP` | — | — | — | ✅ | — | 1 |
+| `FVG_MIT` | — | — | — | ✅ | — | 1 |
+| `OB_MIT` | — | — | — | — | — | **0** |
+
+> La scansione rileva la **presenza** di un riferimento, non la sua correttezza.
+> Un ✅ significa "il gate esiste", non "il gate è giusto" — `MALAYSIAN_SNR` ha
+> quattro gate su cinque e resta `PARZIALE` per i motivi in F-03.
+
+### Cosa dice questa tabella
+
+**Nessuna strategia applica tutti e cinque i gate.** La migliore, `MALAYSIAN_SNR`,
+ne ha quattro e non consulta la struttura. `OB_MIT` non ne ha nessuno: opera
+sull'evento del livello, che è precisamente ciò che la fonte vieta —
+
+> *"We do not blindly execute trades simply because price has reached an SNR
+> level."*
+
+**Il filtro di sessione esiste in 2 strategie su 10**, mentre le fonti
+attribuiscono alle killzone un ruolo centrale (ICT le assegna esplicitamente il
+ruolo di *timing* nella composizione Alchemist: `ICT : KILL ZONES`).
+
+**Il riferimento alla struttura esiste in 4 su 10**, benché il progetto calcoli
+BOS e CHOCH correttamente in un modulo dedicato. È capacità presente e non
+usata.
+
+---
+
+## F-05 · `MALAYSIAN_SNR`, fresh/unfresh — aggiornamento quantitativo · `DIVERGENTE` 🔴
+
+F-03 aveva già stabilito la divergenza a livello qualitativo (finestra di 20
+barre invece di "mai toccato", tolleranza ±0.3 ATR, `i > 3` che esclude le
+ultime 3 barre, bonus di +5 punti invece di un gate). `Sequence_2.pdf` (Q-01)
+fornisce ora i numeri esatti che M-03 non aveva:
+
+> "A zone can only be used a maximum of **2 times**. Exception: if it was
+> previously a daily gap that produced a strong reaction, then the zone can be
+> reused without following the 2-use limit."
+
+**Codice** (`NXS_Strategies_SMC.mqh`, stessa funzione già citata in F-03): non
+esiste alcun contatore di utilizzi per livello, in nessuna forma. Verificato
+per ricerca del simbolo: nessuna variabile che tracci quante volte un livello
+SNR sia stato toccato o usato per un ingresso.
+
+**Conclusione più precisa di F-03:** non è solo che la finestra a 20 barre non
+corrisponde a "mai toccato" — è che la fonte ora specifica un limite
+**numerico e verificabile** (2 usi, con un'eccezione altrettanto precisa) che
+il codice non implementa in nessuna forma, nemmeno approssimata. La divergenza
+di F-03 punto 2 passa da "descrizione qualitativa diversa" a "regola
+quantificata, assente dal codice".
+
+### `REMEDIATO` ✅ — 2026-07-30
+
+Aggiunto un contatore di utilizzi per livello in
+`NXS_Strat_MalaysianSNR_Rejection()` (`NXS_Strategies_SMC.mqh`), uno per il
+lato supporto (`s_snrLoLevel`/`s_snrLoUses`) e uno per il lato resistenza
+(`s_snrHiLevel`/`s_snrHiUses`). Al momento in cui la condizione di ingresso
+sarebbe soddisfatta: se il livello H4 corrente è fuori dalla tolleranza già
+usata altrove in questa funzione per il touch/fresh check (`atrH4*0.3`)
+rispetto all'ultimo livello tracciato, il contatore resetta (è un livello
+nuovo); se il contatore ha già raggiunto 2, il segnale è bloccato (`return s`
+con `dir` invariato a `DIR_NONE`); altrimenti il contatore incrementa e il
+segnale procede.
+
+**Non implementata** l'eccezione della fonte per i livelli nati da un daily
+gap con "reazione forte": nessuna fonte del corpus quantifica "strong", e il
+codice non ha un rilevatore di daily gap su cui appoggiare la regola.
+Inventare una soglia numerica per implementarla avrebbe significato scrivere
+una regola che la fonte non dà — la stessa disciplina già seguita per S-07,
+M-06, T-03. Resta un gap dichiarato, non risolto per scelta esplicita.
+
+**Non compilato**: nessun compilatore MQL5 disponibile in questo ambiente,
+come per ogni fase precedente del progetto. La verifica è stata sintattica
+(bilanciamento parentesi/graffe sull'intero file) e per confronto di pattern
+con il codice statico già esistente nella stessa funzione (`hAtrH4`), non
+un'esecuzione.
+
+---
+
+## F-06 · `QM` (Quasimodo) — rilevato ma mai consultato · `DIVERGENTE` 🔴
+
+**Fonte** (Q-04, Sequence_2.pdf): sequenza HH→HL→rottura debole→retest usata
+per **generare un ingresso** (sell setup, e speculare per buy).
+
+**Codice** (`NXS_BjorgumZones.mqh:105-146`):
+
+```cpp
+// Quasimodo detector (HH then deeper LL then HL above prior LH) - pure visual
+struct SNXSQuasimodo { bool detected; int direction; double anchorPrice; datetime anchorTime; };
+SNXSQuasimodo NXS_Quasimodo_Detect(string sym, ENUM_TIMEFRAMES tf, int lookback){ ... }
+```
+
+Ricerca esaustiva del simbolo `NXS_Quasimodo_Detect` e `SNXSQuasimodo` in tutto
+`MQL5/Include/NEXUS_v1/*.mqh` e `MQL5/Experts/*.mq5`: l'unico altro punto che
+lo referenzia è `NEXUS_VisualSuite_v2.mq5:381-390`
+(`NXS_VS_DrawQuasimodo`), che lo disegna sul grafico come layer visivo
+dell'indicatore. **Nessuna delle 37 strategie live consulta questo
+rilevatore.** Il commento nel codice stesso lo dichiara: *"pure visual"*.
+
+La fonte prescrive QM come base di un ingresso operativo. Il codice ha
+l'infrastruttura di rilevamento — probabilmente concettualmente compatibile,
+non l'ho verificata riga per riga contro la sequenza a 4 passi di Q-04 — ma la
+usa **solo per disegnare**, mai per decidere. Stesso pattern già osservato per
+BOS/CHOCH in F-04: capacità presente, non collegata ad alcuna strategia.
+
+---
+
+## F-07 · `AMD` / Quarterly Theory — `PARZIALE`
+
+**Fonte** (Q-13, Sequence_2.pdf): Q1 Accumulation → Q2 Manipulation → Q3
+Distribution → Q4 Reversal/Continuation, applicato in modo frattale su cinque
+livelli temporali annidati (anno, mese, settimana, giorno, intraday).
+
+**Codice** (`NXS_AMDModel.mqh`, intero file, 129 righe): una macchina a stati
+a quattro fasi — `AMD_ACCUMULATION → AMD_MANIPULATION →
+AMD_CONTINUATION_DISTRIBUTION` o `AMD_REVERSAL_DISTRIBUTION` — verificata riga
+per riga.
+
+### Cosa combacia ✅
+
+La struttura a quattro fasi è concettualmente fedele: dentro il range asiatico
+= accumulation; prima chiusura oltre il range = manipulation; due o più
+chiusure oltre lo stesso lato = distribution di continuazione; chiusura di
+rientro nel range dopo una manipolazione fallita = distribution di reversal.
+È lo stesso ciclo Q1→Q4 descritto dalla fonte, con la stessa logica di
+transizione (manipolazione che fallisce → reversal; manipolazione che tiene →
+continuazione).
+
+### Dove diverge 🔴
+
+1. **Nessun nesting multi-timeframe.** Il codice applica AMD **solo al livello
+   giornaliero**: `g_amdSessionDay` resetta la macchina a stati una volta al
+   giorno. La fonte applica lo stesso ciclo anche a anno, mese e settimana,
+   con tabelle orarie separate per ciascun livello. Questa parte della
+   prescrizione è del tutto assente.
+2. **Orari non verificabili con certezza** (già segnalato in D-12 come
+   `CANDIDATE`, non confermato): il default del codice
+   (`InpAsianStartHour=0`, `InpAsianEndHour=7` GMT) e la tabella di Q-13
+   (Asia 00:00-06:00 "GMT+7") non sono direttamente comparabili perché la
+   fonte non chiarisce se "GMT+7" sia un riferimento assoluto o il fuso
+   dell'autore. A differenza di F-02 (dove avevo conferma esterna sugli orari
+   ET), qui non marco una divergenza confermata — resta `NON VERIFICATO`.
+
+---
+
+## F-08 · CE, OCL, SMT Divergence, IRL/ERL, STH/ITH/LTH — assenza confermata
+
+Non è un verdetto di divergenza: come per il metodo trendline (T-05), è
+un'**assenza**. Ricerca esaustiva nel codice per ciascun concetto quantificato
+da `Sequence_2.pdf` (Q-08, Q-09, Q-12, Q-15, Q-16):
+
+| Concetto | Predicato | Trovato nel codice |
+|---|---|---|
+| Candle Equilibrium (CE), zona 45-50% | Q-09 | nessuna occorrenza |
+| OCL — Open Close Level | Q-08 | nessuna occorrenza (coerente con D-06) |
+| SMT Divergence | Q-12 | nessuna occorrenza |
+| IRL / ERL | Q-15 | nessuna occorrenza |
+| STH / ITH / LTH | Q-16 | nessuna occorrenza |
+| Weekly / Daily Profiles nominati | Q-17, Q-18 | nessuna occorrenza |
+
+Sei concetti, tutti con predicati numerici o strutturali precisi nella fonte,
+zero implementazioni — nemmeno un layer visivo come per QM (F-06). Il
+Daily Bias Cheat Sheet (Q-14), che compone cinque di questi elementi in una
+checklist decisionale, non ha quindi alcuna controparte nel codice: nessuno
+dei suoi cinque ingredienti esiste.
+
+---
+
+## Sintesi
+
+| Verifica | Esito |
+|---|---|
+| F-01 Break of Structure | **FEDELE** — usa la chiusura, come la fonte |
+| F-02 `SILVER_BULLET` killzone | **REMEDIATO** ✅ — tre finestre ET, conversione GMT DST-aware con helper dedicato |
+| F-03 `MALAYSIAN_SNR` | **PARZIALE** — primitiva del livello diversa, fresh degradato a bonus, flip assente, struttura non consultata |
+| F-04 copertura dei gate | 0 strategie su 10 applicano la cascata completa; `OB_MIT` non applica alcun gate |
+| F-05 `MALAYSIAN_SNR` fresh/unfresh, numeri esatti | **REMEDIATO** ✅ — contatore di 2 usi per livello aggiunto; eccezione daily gap non implementata per scelta (soglia non quantificata dalla fonte) |
+| F-06 `QM` (Quasimodo) | **DIVERGENTE** — rilevatore esiste, mai consultato da alcuna strategia: solo disegno |
+| F-07 `AMD` / Quarterly Theory | **PARZIALE** — struttura a 4 fasi fedele a livello giornaliero, nesting multi-timeframe assente, orari non verificabili |
+| F-08 CE, OCL, SMT, IRL/ERL, STH/ITH/LTH, Weekly/Daily Profiles | **assenti** — sei concetti quantificati dalla fonte, zero occorrenze nel codice |
+
+### Il quadro che ne esce
+
+Il progetto **conosce** le regole giuste — il commento *"Body-based levels
+(close, not wick)"*, il BOS su chiusura, il concetto di fresh, la storyline
+sono tutti presenti e corretti nell'intenzione. Ciò che manca è la
+**composizione**: le condizioni che la fonte prescrive in cascata sono
+implementate a macchia di leopardo, una qui e una là, e mai tutte insieme.
+
+Questo è coerente con l'osservazione strutturale già registrata (D-07): il
+corpus descrive una pipeline dove il segnale nasce dalla convergenza; l'EA
+implementa strategie parallele dove ciascuna decide da sola con i gate che le
+sono capitati.
+
+**Non concludo che sia questa la causa dell'assenza di edge.** Non l'ho
+misurato, e sarebbe una spiegazione comoda. Ma è la prima ipotesi che ora ha
+sotto delle constatazioni verificate invece che un'impressione.
+
+---
+
+## Cosa NON è stato verificato
+
+- Le strategie non-SMC (momentum, volatilità, trend): 25 su 37.
+- La correttezza *interna* dei gate rilevati da F-04: la scansione vede la
+  presenza di un riferimento, non la sua logica.
+- `FVG_CONT`, `ORDER_BLOCK`, `DISP_REBAL`, `LIQ_VOID` contro I-01/I-05/I-06.
+- CRT (C-03) contro `THREE_BAR_DELIVERY_BREAK`, `TURTLE_SOUP`, `LIQ_SWEEP`.
+- La corrispondenza riga-per-riga fra la sequenza a 4 passi di QM (Q-04) e la
+  logica interna di `NXS_Quasimodo_Detect` (F-06 verifica solo che non sia
+  mai consultato, non la sua correttezza interna).
+- Se l'unità oraria "GMT+7" di Quarterly Theory (Q-13) sia un riferimento
+  assoluto o il fuso dell'autore — necessario per completare F-07 sul punto
+  degli orari.
+- `RBS`/`SBR` (A-03, Q-03) contro `SH_BMS_RTO`, `SMS_BMS_RTO` — segnalato come
+  "da verificare" fin da D-06, ancora non eseguito.
+- Qualunque cosa richieda esecuzione: **il codice MQL5 non è mai stato
+  compilato**, in questa fase come in tutte le precedenti.
+
+## Fonti esterne consultate
+
+Usate solo per **corroborare** il PDF del corpus sugli orari delle killzone,
+mai come fonte primaria. Marcate `EXTERNAL_REFERENCE` in questo rapporto.
+
+- [ICT Silver Bullet Trading Strategy: The 1-Hour Killzones Setup](https://forexbee.co/ict-silver-bullet-trading-strategy/)
+- [ICT Silver Bullet & Killzones — The Complete 2026 Trading Guide](https://chartwhisperer.ca/blog/ict-silver-bullet-killzones-trading-guide)
+- [ICT Kill Zones: Complete Guide to Trading Sessions](https://www.ictkillzone.com/ict-kill-zones)
+- [ICT Killzones — All 4 Session Times](https://innercircletrader.net/tutorials/master-ict-kill-zones/)
+
+## Collegamenti
+
+`docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` ·
+`docs/sources/SOURCE_MANIFEST.json` ·
+`docs/audits/master/NEXUS_MASTER_GAPS.md`

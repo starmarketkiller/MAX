@@ -401,15 +401,45 @@ SNXSSignal NXS_SB_UpdateSide(int dir, SNXSSBState &st, SNXSSweepExt &sw, bool in
    return s;
 }
 
+// F-02 (fidelity report 01, I-07 + fonti esterne corroboranti): le tre
+// finestre Silver Bullet sono in ET (London Open 03-04, AM 10-11, PM 14-15),
+// non GMT. L'ET segue la DST USA (2a domenica di marzo - 1a domenica di
+// novembre), una regola DIVERSA dalla BST inglese gia' gestita altrove
+// (NXS_IsLondonBST in NXS_Strategies_Institutional.mqh, non riusabile qui:
+// quel file e' incluso DOPO questo in NEXUS_EA_v2.mq5, e comunque e' la
+// regola sbagliata - UK e USA non condividono le date di cambio ora, vedi
+// il commento li'). Helper locale, stesso schema (Nma domenica UTC di un
+// mese), regola diversa.
+datetime NXS_SMC_NthSundayUTC(int year, int month, int nth){
+   MqlDateTime mt; mt.year = year; mt.mon = month; mt.day = 1; mt.hour = 0; mt.min = 0; mt.sec = 0;
+   datetime t = StructToTime(mt);
+   MqlDateTime norm; TimeToStruct(t, norm);
+   datetime firstSunday = t + ((7 - norm.day_of_week) % 7) * 86400;   // day_of_week: 0=domenica
+   return firstSunday + (nth - 1) * 7 * 86400;
+}
+bool NXS_IsUSEDT(datetime utcTime){
+   MqlDateTime mt; TimeToStruct(utcTime, mt);
+   // DST inizia alle 07:00 UTC (02:00 EST) della 2a domenica di marzo,
+   // finisce alle 06:00 UTC (02:00 EDT) della 1a domenica di novembre.
+   datetime dstStart = NXS_SMC_NthSundayUTC(mt.year, 3,  2) + 7 * 3600;
+   datetime dstEnd   = NXS_SMC_NthSundayUTC(mt.year, 11, 1) + 6 * 3600;
+   return (utcTime >= dstStart && utcTime < dstEnd);
+}
+
 SNXSSignal NXS_Strat_SilverBullet(SNXSSweepExt &sw){
    // v2.0.5b: GMT-corrected killzones (server time → GMT)
    datetime gmtNow = (datetime)((long)TimeCurrent() - (long)InpServerGMTOffset * 3600);
    MqlDateTime mt; TimeToStruct(gmtNow, mt);
    int h = mt.hour;
-   bool killzoneLO = (h >= 10 && h < 11);   // London KZ 10-11 GMT
-   bool killzoneNY = (h >= 14 && h < 15);   // NY KZ 14-15 GMT
-   bool inKillzone = killzoneLO || killzoneNY;
-   string kzTag = killzoneLO ? "SB:LO-KZ" : "SB:NY-KZ";
+   // F-02: tre finestre ET convertite in GMT secondo la DST USA corrente,
+   // non due finestre GMT fisse (una delle quali non corrispondeva a nulla
+   // nella fonte, l'altra corretta solo sei mesi l'anno).
+   bool edt = NXS_IsUSEDT(gmtNow);
+   bool killzoneLdnOpen = edt ? (h >= 7  && h < 8)  : (h >= 8  && h < 9);    // 03-04 ET
+   bool killzoneAM      = edt ? (h >= 14 && h < 15) : (h >= 15 && h < 16);   // 10-11 ET
+   bool killzonePM      = edt ? (h >= 18 && h < 19) : (h >= 19 && h < 20);   // 14-15 ET
+   bool inKillzone = killzoneLdnOpen || killzoneAM || killzonePM;
+   string kzTag = killzoneLdnOpen ? "SB:LDNOPEN-KZ" : (killzoneAM ? "SB:AM-KZ" : "SB:PM-KZ");
    ENUM_TIMEFRAMES tf = NXS_EffTF();
    double atr = _smc_atr();
    datetime curBar0 = iTime(g_sym, tf, 0);
@@ -517,6 +547,14 @@ SNXSSignal NXS_Strat_OTE_Continuation(){
 //     bid live mescolato con la rejection su barra chiusa;
 // (3) W1 non e' piu' calcolato e scartato: e' un vero bonus di confluence
 //     (livello W1 vicino = +score), o rimosso dal trigger come suggerito.
+// F-05 (fidelity report 01, Q-01 in NEXUS_CORPUS_CONCEPT_FORMALIZATION.md):
+// "A zone can only be used a maximum of 2 times." Contatore per livello,
+// con reset quando il livello H4 si sposta oltre la stessa tolleranza gia'
+// usata altrove in questa funzione per il touch/fresh check (atrH4*0.3).
+// L'eccezione della fonte per i livelli nati da un daily gap con "reazione
+// forte" NON e' implementata: "strong" non e' mai quantificato da nessuna
+// fonte del corpus (stesso limite gia' segnalato in M-06, S-07, T-03), e il
+// codice non ha alcun rilevatore di daily gap su cui appoggiarla.
 SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "MALAYSIAN_SNR";
@@ -527,6 +565,9 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    // NXS_Performance.mqh in NEXUS_EA_v2.mq5, quella funzione non sarebbe
    // ancora dichiarata): creato una sola volta, poi riusato ad ogni chiamata.
    static int hAtrH4 = INVALID_HANDLE;
+   // F-05: contatore utilizzi per livello (Q-01), stessa persistenza per-call di hAtrH4.
+   static double s_snrLoLevel = 0; static int s_snrLoUses = 0;
+   static double s_snrHiLevel = 0; static int s_snrHiUses = 0;
    if(hAtrH4 == INVALID_HANDLE) hAtrH4 = iATR(g_sym, InpTFHigh, 14);
    double atrH4Arr[]; double atrH4 = 0;
    if(hAtrH4 != INVALID_HANDLE) CopyBuffer(hAtrH4, 0, 1, 1, atrH4Arr);
@@ -564,6 +605,11 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    bool storyBear = (h4C1 < h4C4 && d1C1 <= d1C2);
    // BUY at support - tocco su barra chiusa 1 (low), non bid live.
    if(l1 <= h4Lo + atrH4 * 0.4 && l1 >= h4Lo - atrH4 * 0.4 && c1 > o1 && storyBull){
+      // F-05 / Q-01: "A zone can only be used a maximum of 2 times." Livello
+      // nuovo (fuori tolleranza) resetta il contatore; esaurito -> niente segnale.
+      if(MathAbs(h4Lo - s_snrLoLevel) > atrH4 * 0.3){ s_snrLoLevel = h4Lo; s_snrLoUses = 0; }
+      if(s_snrLoUses >= 2) return s;
+      s_snrLoUses++;
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = h4Lo - 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.3);
@@ -573,6 +619,10 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
       return s;
    }
    if(h1 >= h4Hi - atrH4 * 0.4 && h1 <= h4Hi + atrH4 * 0.4 && c1 < o1 && storyBear){
+      // F-05 / Q-01: stessa regola del ramo BUY, sul livello di resistenza.
+      if(MathAbs(h4Hi - s_snrHiLevel) > atrH4 * 0.3){ s_snrHiLevel = h4Hi; s_snrHiUses = 0; }
+      if(s_snrHiUses >= 2) return s;
+      s_snrHiUses++;
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = h4Hi + 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.3);

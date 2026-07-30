@@ -1,0 +1,104 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia BOLLINGER (rientro dalle bande di Bollinger) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_Bollinger
+// (MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:221) e il profilo attuale
+// (NXS_StrategyProfiles.mqh: BOLLINGER -> slMult=1.0, tpMult=2.0, htf=false,
+// beR=0, trailATR=0, PERIOD_D1).
+//
+// Trigger (identico a MQL5, confronto su barre CHIUSE, offset1=shift1,
+// offset2=shift2 — nessun lookahead):
+//   BUY  (rientro dalla banda inferiore): close[2] <= lowerBand[2]
+//        E lowerBand[1] < close[1]  (il prezzo era sotto/sulla banda 2 barre fa,
+//        ora è tornato sopra sull'ultima barra chiusa)
+//   SELL (rientro dalla banda superiore): close[2] >= upperBand[2]
+//        E upperBand[1] > close[1]  (speculare)
+// Bande di Bollinger: SMA(20) ± 2.0×stdev(20), stesso periodo/deviazione di
+// InpBB_Period=20 / InpBB_Dev=2.0 in NXS_Inputs.mqh.
+//
+// Nessun filtro HTF (htf=false nel profilo attuale). Nessun breakeven/trailing
+// (beR=0, trailATR=0).
+//
+// RANGE_FADE (strategia separata nel registry, contracts/strategy-registry.json
+// proxy_for=BOLLINGER, stesso slMult/tpMult/htf del profilo BOLLINGER) NON ha
+// una funzione MQL5 dedicata: NXS_SignalRouter.mqh la instrada come lo stesso
+// trigger di Bollinger, esentato dal blocco Velocity-neutral (RANGE_FADE è
+// progettata apposta per i regimi a bassa volatilità/range in cui Velocity è
+// piatta). Non essendoci logica di rilevamento distinta da replicare, questo
+// stesso script copre entrambe le voci del registry — non viene creato un
+// NEXUS_RANGE_FADE.pine separato.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false, condizioni valutate
+// sulla barra chiusa, ordine riempito all'apertura della barra successiva.
+// =============================================================================
+strategy("NEXUS EA - BOLLINGER (XAUUSD D1)", shorttitle="NXS-BOLL", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+bbLen = input.int(20, "Bollinger: periodo SMA")
+bbDev = input.float(2.0, "Bollinger: deviazioni standard")
+atrLen = input.int(14, "ATR length (per SL/TP)")
+slMult = input.float(1.0, "SL (x ATR)")
+tpMult = input.float(2.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)", tooltip="Chiusura forzata a mercato dopo N barre se né SL né TP sono stati toccati — replica NXS_ManageBreakevenAndTrail (~40 barre del TF della strategia).")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+basis  = ta.sma(close, bbLen)
+dev    = ta.stdev(close, bbLen)
+upperVal = basis + bbDev * dev
+lowerVal = basis - bbDev * dev
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+longCond  = inRange and close[2] <= lowerVal[2] and lowerVal[1] < close[1]
+shortCond = inRange and close[2] >= upperVal[2] and upperVal[1] > close[1]
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="BB_lower_reentry")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="BB_upper_reentry")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(upperVal, title="BB Upper", color=color.new(color.gray, 40))
+plot(lowerVal, title="BB Lower", color=color.new(color.gray, 40))
+plotshape(longCond, title="BB Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="BB Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "NXS BOLLINGER BUY", "NEXUS BOLLINGER: rientro dalla banda inferiore su barra chiusa")
+alertcondition(shortCond, "NXS BOLLINGER SELL", "NEXUS BOLLINGER: rientro dalla banda superiore su barra chiusa")
