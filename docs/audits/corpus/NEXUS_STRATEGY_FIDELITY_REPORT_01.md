@@ -1,16 +1,19 @@
 # RAPPORTO DI FEDELTÀ 01 — SMC / SNR contro le fonti d'origine
 
 > Prima verifica di fedeltà eseguita contro le fonti originali, ora disponibili.
-> **Nessun file di codice è stato modificato.** Questo documento constata; non
-> corregge.
+> Fino al 2026-07-30 questo documento constatava soltanto, senza correggere.
+> **F-05 è la prima eccezione**: gap chiuso su richiesta esplicita del
+> proprietario, codice modificato di conseguenza (vedi la sezione `REMEDIATO`
+> dentro F-05). Tutte le altre voci restano constatazioni, non correzioni.
 
 | | |
 |---|---|
-| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`) |
+| Data | 2026-07-27 · aggiornato 2026-07-30 (F-05..F-08, dopo `Sequence_2.pdf`; F-05 remediato) |
 | Fonti primarie usate | `docs/sources/corpus/` (11 PDF archiviati con hash) |
 | Formalizzazione di riferimento | `docs/audits/corpus/NEXUS_CORPUS_CONCEPT_FORMALIZATION.md` (PARTE 1-7) |
 | Codice esaminato | `NXS_Structure.mqh`, `NXS_Strategies_SMC.mqh`, `NXS_AMDModel.mqh`, `NXS_BjorgumZones.mqh` (baseline `main` = `4465873`) |
-| Esiti | 1 fedele · 3 divergenze confermate (F-02, F-05, F-06) · 1 divergenza strutturale (F-03) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
+| Codice modificato | `NXS_Strategies_SMC.mqh` — contatore utilizzi per livello, F-05 |
+| Esiti | 1 fedele · 2 divergenze confermate (F-02, F-06) · 1 divergenza strutturale (F-03) · 1 remediato (F-05) · 1 parziale (F-07) · 6 concetti confermati assenti (F-08) · 9 strategie con copertura di gate insufficiente |
 
 ## Livelli di giudizio
 
@@ -282,6 +285,32 @@ il codice non implementa in nessuna forma, nemmeno approssimata. La divergenza
 di F-03 punto 2 passa da "descrizione qualitativa diversa" a "regola
 quantificata, assente dal codice".
 
+### `REMEDIATO` ✅ — 2026-07-30
+
+Aggiunto un contatore di utilizzi per livello in
+`NXS_Strat_MalaysianSNR_Rejection()` (`NXS_Strategies_SMC.mqh`), uno per il
+lato supporto (`s_snrLoLevel`/`s_snrLoUses`) e uno per il lato resistenza
+(`s_snrHiLevel`/`s_snrHiUses`). Al momento in cui la condizione di ingresso
+sarebbe soddisfatta: se il livello H4 corrente è fuori dalla tolleranza già
+usata altrove in questa funzione per il touch/fresh check (`atrH4*0.3`)
+rispetto all'ultimo livello tracciato, il contatore resetta (è un livello
+nuovo); se il contatore ha già raggiunto 2, il segnale è bloccato (`return s`
+con `dir` invariato a `DIR_NONE`); altrimenti il contatore incrementa e il
+segnale procede.
+
+**Non implementata** l'eccezione della fonte per i livelli nati da un daily
+gap con "reazione forte": nessuna fonte del corpus quantifica "strong", e il
+codice non ha un rilevatore di daily gap su cui appoggiare la regola.
+Inventare una soglia numerica per implementarla avrebbe significato scrivere
+una regola che la fonte non dà — la stessa disciplina già seguita per S-07,
+M-06, T-03. Resta un gap dichiarato, non risolto per scelta esplicita.
+
+**Non compilato**: nessun compilatore MQL5 disponibile in questo ambiente,
+come per ogni fase precedente del progetto. La verifica è stata sintattica
+(bilanciamento parentesi/graffe sull'intero file) e per confronto di pattern
+con il codice statico già esistente nella stessa funzione (`hAtrH4`), non
+un'esecuzione.
+
 ---
 
 ## F-06 · `QM` (Quasimodo) — rilevato ma mai consultato · `DIVERGENTE` 🔴
@@ -381,7 +410,7 @@ dei suoi cinque ingredienti esiste.
 | F-02 `SILVER_BULLET` killzone | **DIVERGENTE** — una finestra inesistente, una corretta solo d'estate, una mancante |
 | F-03 `MALAYSIAN_SNR` | **PARZIALE** — primitiva del livello diversa, fresh degradato a bonus, flip assente, struttura non consultata |
 | F-04 copertura dei gate | 0 strategie su 10 applicano la cascata completa; `OB_MIT` non applica alcun gate |
-| F-05 `MALAYSIAN_SNR` fresh/unfresh, numeri esatti | **DIVERGENTE** — limite di 2 usi (Q-01) assente, nessun contatore nel codice |
+| F-05 `MALAYSIAN_SNR` fresh/unfresh, numeri esatti | **REMEDIATO** ✅ — contatore di 2 usi per livello aggiunto; eccezione daily gap non implementata per scelta (soglia non quantificata dalla fonte) |
 | F-06 `QM` (Quasimodo) | **DIVERGENTE** — rilevatore esiste, mai consultato da alcuna strategia: solo disegno |
 | F-07 `AMD` / Quarterly Theory | **PARZIALE** — struttura a 4 fasi fedele a livello giornaliero, nesting multi-timeframe assente, orari non verificabili |
 | F-08 CE, OCL, SMT, IRL/ERL, STH/ITH/LTH, Weekly/Daily Profiles | **assenti** — sei concetti quantificati dalla fonte, zero occorrenze nel codice |

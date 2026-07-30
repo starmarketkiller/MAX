@@ -517,6 +517,14 @@ SNXSSignal NXS_Strat_OTE_Continuation(){
 //     bid live mescolato con la rejection su barra chiusa;
 // (3) W1 non e' piu' calcolato e scartato: e' un vero bonus di confluence
 //     (livello W1 vicino = +score), o rimosso dal trigger come suggerito.
+// F-05 (fidelity report 01, Q-01 in NEXUS_CORPUS_CONCEPT_FORMALIZATION.md):
+// "A zone can only be used a maximum of 2 times." Contatore per livello,
+// con reset quando il livello H4 si sposta oltre la stessa tolleranza gia'
+// usata altrove in questa funzione per il touch/fresh check (atrH4*0.3).
+// L'eccezione della fonte per i livelli nati da un daily gap con "reazione
+// forte" NON e' implementata: "strong" non e' mai quantificato da nessuna
+// fonte del corpus (stesso limite gia' segnalato in M-06, S-07, T-03), e il
+// codice non ha alcun rilevatore di daily gap su cui appoggiarla.
 SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "MALAYSIAN_SNR";
@@ -527,6 +535,9 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    // NXS_Performance.mqh in NEXUS_EA_v2.mq5, quella funzione non sarebbe
    // ancora dichiarata): creato una sola volta, poi riusato ad ogni chiamata.
    static int hAtrH4 = INVALID_HANDLE;
+   // F-05: contatore utilizzi per livello (Q-01), stessa persistenza per-call di hAtrH4.
+   static double s_snrLoLevel = 0; static int s_snrLoUses = 0;
+   static double s_snrHiLevel = 0; static int s_snrHiUses = 0;
    if(hAtrH4 == INVALID_HANDLE) hAtrH4 = iATR(g_sym, InpTFHigh, 14);
    double atrH4Arr[]; double atrH4 = 0;
    if(hAtrH4 != INVALID_HANDLE) CopyBuffer(hAtrH4, 0, 1, 1, atrH4Arr);
@@ -564,6 +575,11 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    bool storyBear = (h4C1 < h4C4 && d1C1 <= d1C2);
    // BUY at support - tocco su barra chiusa 1 (low), non bid live.
    if(l1 <= h4Lo + atrH4 * 0.4 && l1 >= h4Lo - atrH4 * 0.4 && c1 > o1 && storyBull){
+      // F-05 / Q-01: "A zone can only be used a maximum of 2 times." Livello
+      // nuovo (fuori tolleranza) resetta il contatore; esaurito -> niente segnale.
+      if(MathAbs(h4Lo - s_snrLoLevel) > atrH4 * 0.3){ s_snrLoLevel = h4Lo; s_snrLoUses = 0; }
+      if(s_snrLoUses >= 2) return s;
+      s_snrLoUses++;
       s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
       s.slPrice = h4Lo - 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_BUY, 2.3);
@@ -573,6 +589,10 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
       return s;
    }
    if(h1 >= h4Hi - atrH4 * 0.4 && h1 <= h4Hi + atrH4 * 0.4 && c1 < o1 && storyBear){
+      // F-05 / Q-01: stessa regola del ramo BUY, sul livello di resistenza.
+      if(MathAbs(h4Hi - s_snrHiLevel) > atrH4 * 0.3){ s_snrHiLevel = h4Hi; s_snrHiUses = 0; }
+      if(s_snrHiUses >= 2) return s;
+      s_snrHiUses++;
       s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
       s.slPrice = h4Hi + 0.5 * atrH4;
       s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.3);
