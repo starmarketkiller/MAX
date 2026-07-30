@@ -256,6 +256,33 @@
       ]
     },
     {
+      "filename": "Sequence_2.pdf",
+      "repository_path": "docs/sources/corpus/Sequence_2.pdf",
+      "category": "TRADING_COURSE_CORPUS",
+      "size_bytes": 4306428,
+      "page_count": 119,
+      "sha256": "d596d9e3f942c28dfc2852161d5e15c7b06448358eb4bf665979a1eac2d78189",
+      "ingestion_status": "INGESTED",
+      "analysis_status": "PENDING",
+      "read_status": "FULLY_READ_VIA_IMAGE_RENDERING_119_OF_119",
+      "native_text": {
+        "pages_with_text": 0,
+        "characters": 0
+      },
+      "declared_in_master_a4_2": null,
+      "declared_matches_actual": null,
+      "analysis_artifacts": [],
+      "analysis_date": "2026-07-30",
+      "original_source": "fornito dal proprietario via Google Drive; NON dichiarato nel blocco A4.2 del Master v18. File originale 135,9 MB (135.874.732 byte, stesso SHA-256 non registrato perche' mai archiviato), ricompresso dal proprietario con iLovePDF a qualita' minima per stare sotto i limiti di trasferimento: l'artefatto qui archiviato (4,3 MB) e' quello ricompresso, non l'originale.",
+      "notes": [
+        "Fonte AGGIUNTIVA: non fa parte dei 13 PDF del corpus dichiarato ne' della famiglia Sequence.pdf/Sequence_1.pdf gia' presente, benche' il nome suggerisca continuita' (stesso autore @abayforex).",
+        "PDF interamente per immagini: zero testo nativo (pypdf estrae 0 caratteri su 119 pagine). Lette tutte le pagine via rendering multimodale.",
+        "Fonte piu' densa e operativamente precisa del corpus finora incontrata: specifica ESATTA della macchina a stati fresh/unfresh/flipped (fresh=mai toccato, wick=unfresh, chiusura a corpo pieno=fresh di nuovo, max 2 usi salvo eccezione daily gap) — la stessa lacuna segnalata in F-03 (NEXUS_STRATEGY_FIDELITY_REPORT_01.md) su MALAYSIAN_SNR.",
+        "Contiene: 5 Daily Profiles con orari sessione espliciti (London Reversal/NY Continuation, NY Reversal, NY Manipulation & Expansion, NY Judas, Seek & Destroy), Weekly Profiles (4 pattern), Quarterly Theory con tabella oraria multi-timeframe completa (annuale/mensile/settimanale/intraday, GMT+7), Daily Bias Cheat Sheet a 5 punti, IRL/ERL, Institutional Order Flow (STH/ITH/LTH), CE (Candle Equilibrium) con zona 45-50% quantificata, RBS/SBR, famiglia QM/QMM/QMC/QMX, OCL, regole di tocco trendline, SMT Divergence con elenco esplicito delle coppie correlate.",
+        "Nessun verdetto di fedelta' ancora eseguito su questa fonte: solo ingestione e lettura complete."
+      ]
+    },
+    {
       "filename": "ict-trading-250828073107-caca0de9.pdf",
       "repository_path": "docs/sources/corpus/ict-trading-250828073107-caca0de9.pdf",
       "category": "TRADING_COURSE_CORPUS",
