@@ -123,48 +123,68 @@ l'accesso fallisce (401/404), **fermati e chiedi all'operatore di incollare
 il contenuto del file** — non ricostruire o indovinare il codice a memoria,
 anche se pensi di conoscere una versione simile.
 
-### Coda di lavoro — le 10 strategie pronte ora
+### Coda di lavoro — le 27 strategie pronte ora (aggiornato 30/07, batch 4-9)
 
-| Strategia | TF | Toggle da spegnere in Fase 1 | File / URL raw |
-|---|---|---|---|
-| SAR | H4 | `useHtfFilter` | `pinescript/NEXUS_SAR.pine` — https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_SAR.pine |
-| MACD | H4 | `useHtfFilter` | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_MACD.pine |
-| ADX_RSI | D1 | `useHtfFilter` | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_ADX_RSI.pine |
-| RSI_DIV | H1 | (nessuno — niente filtro HTF nello script) | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_RSI_DIV.pine |
-| TSI | D1 | `useHtfFilter` | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_TSI.pine |
-| LIQ_VOID | H4 | `requireBiasHtf` **e** `useHtfFilter` (due toggle indipendenti, spegnili entrambi in Fase 1) | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_LIQ_VOID.pine |
-| DISP_REBAL | H4 | (nessuno) — nota: disabilitata in produzione MT5 oggi, testala comunque per completezza | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_DISP_REBAL.pine |
-| ORDER_BLOCK | D1 | `useHtfFilter` | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_ORDER_BLOCK.pine |
-| MALAYSIAN_SNR | D1 | `useHtfFilter` | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_MALAYSIAN_SNR.pine |
-| SILVER_BULLET | M15 | (nessuno — niente filtro HTF nello script; ha però breakeven+trailing strutturali, non spegnerli) | https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/NEXUS_SILVER_BULLET.pine |
+URL raw: `https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/<file>`
 
-Testa queste 10 in quest'ordine, una alla volta, con il protocollo sopra.
+| Strategia | TF | Toggle da spegnere in Fase 1 | File | Note |
+|---|---|---|---|---|
+| SAR | H4 | `useHtfFilter` | `NEXUS_SAR.pine` | |
+| MACD | H4 | `useHtfFilter` | `NEXUS_MACD.pine` | |
+| ADX_RSI | D1 | `useHtfFilter` | `NEXUS_ADX_RSI.pine` | |
+| RSI_DIV | H1 | (nessuno) | `NEXUS_RSI_DIV.pine` | |
+| TSI | D1 | `useHtfFilter` | `NEXUS_TSI.pine` | |
+| LIQ_VOID | H4 | `requireBiasHtf` **e** `useHtfFilter` (due toggle) | `NEXUS_LIQ_VOID.pine` | |
+| DISP_REBAL | H4 | (nessuno) | `NEXUS_DISP_REBAL.pine` | disabilitata in produzione MT5 oggi — testala per completezza |
+| ORDER_BLOCK | D1 | `useHtfFilter` | `NEXUS_ORDER_BLOCK.pine` | |
+| MALAYSIAN_SNR | D1 | `useHtfFilter` | `NEXUS_MALAYSIAN_SNR.pine` | |
+| SILVER_BULLET | M15 | (nessuno; ha breakeven+trailing strutturali, non spegnerli) | `NEXUS_SILVER_BULLET.pine` | |
+| BOLLINGER | D1 | (nessuno) | `NEXUS_BOLLINGER.pine` | copre anche RANGE_FADE (nessun file separato, stessa funzione MQL5) |
+| BB_SQUEEZE | D1 | (nessuno) | `NEXUS_BB_SQUEEZE.pine` | disabilitata in produzione MT5 oggi — testala per completezza |
+| BJORGUM | H4 | (nessuno) | `NEXUS_BJORGUM.pine` | |
+| LIQ_SWEEP | D1 | `useHtfFilter` | `NEXUS_LIQ_SWEEP.pine` | |
+| TURTLE_SOUP | H1 | `useHtfFilter` | `NEXUS_TURTLE_SOUP.pine` | |
+| SH_BMS_RTO | D1 | (nessuno) | `NEXUS_SH_BMS_RTO.pine` | |
+| SMS_BMS_RTO | D1 | (nessuno) | `NEXUS_SMS_BMS_RTO.pine` | |
+| THREE_BAR_DELIVERY_BREAK | H4 | `useHtfFilter` | `NEXUS_THREE_BAR_DELIVERY_BREAK.pine` | ex CISD |
+| FVG_CONT | H4 | `useHtfFilter` | `NEXUS_FVG_CONT.pine` | |
+| IFVG | H4 | `useHtfFilter` | `NEXUS_IFVG.pine` | |
+| FVG_MIT | D1 | `useHtfFilter` | `NEXUS_FVG_MIT.pine` | |
+| OB_MIT | D1 | `useHtfFilter` | `NEXUS_OB_MIT.pine` | wrapper letterale di ORDER_BLOCK in MQL5 (stessa logica/SL-TP) |
+| BREAKOUT_ACC | D1 | `useHtfFilter` | `NEXUS_BREAKOUT_ACC.pine` | |
+| EMA_PULLBACK | H4 | `useHtfFilter` | `NEXUS_EMA_PULLBACK.pine` | |
+| ICHIMOKU | H4 | `useHtfFilter` | `NEXUS_ICHIMOKU.pine` | disabilitata in produzione MT5 oggi — testala per completezza |
+| WEEKLY_EXP | D1 | (nessuno) | `NEXUS_WEEKLY_EXP.pine` | |
+| ELLIOTT | M15 | (nessuno) | `NEXUS_ELLIOTT.pine` | mai testata prima (spenta solo perché nuova, non per test negativo) — priorità alta, primo dato reale in assoluto su questa strategia |
+
+Testa queste 27 in quest'ordine, una alla volta, con il protocollo sopra.
 Non passare alla successiva finché non hai completato il formato di riporto
-per quella corrente.
+per quella corrente. Le tre marcate "disabilitata in produzione" vanno
+comunque testate (per completezza di verifica), ma segnala chiaramente nel
+report che oggi non generano trade reali in MT5.
 
-### Le altre 27 strategie attive — NON testabili ora, non tentare di scriverle tu
+### Le altre 9 strategie attive — NON testabili ora, non tentare di scriverle tu
 
-Il portafoglio live ha 36 strategie attive (più alcune disabilitate/solo
-ricerca). Le seguenti 27 non hanno ancora un porting Pine Script e **non
-vanno testate** in questa sessione: qualunque tentativo di ricostruirle da
-zero sulla base del nome non sarebbe fedele al codice MQL5 reale e
-produrrebbe numeri inaffidabili. Elencale semplicemente come "in coda,
-porting non ancora fatto" nel report finale, senza inventare script:
+Le seguenti 9 non hanno ancora un porting Pine Script e **non vanno
+testate** in questa sessione: qualunque tentativo di ricostruirle da zero
+sulla base del nome non sarebbe fedele al codice MQL5 reale e produrrebbe
+numeri inaffidabili. Tutte e 9 dipendono da un range Asia calcolato via
+scan intraday M15 cross-timeframe e/o da un gate di sessione (London/NY)
+controllato sui tick live in MQL5 — nessuna delle due cose si presta a
+un'approssimazione fedele su Pine con `calc_on_every_tick=false`.
+Elencale come "in coda, porting non ancora fatto" nel report finale, senza
+inventare script:
 
-AMD_CONT, AMD_REVERSAL, BB_SQUEEZE, BJORGUM, BOLLINGER, BREAKOUT_ACC,
-ELLIOTT, EMA_PULLBACK, FVG_CONT, FVG_MIT, ICHIMOKU, IFVG, JUDAS_SWING,
-LDN_REVERSAL, LIQ_SWEEP, LONDON_BO, NY_REVERSAL, OB_MIT, OTE_CONT, PO3,
-RANGE_FADE, SH_BMS_RTO, SMS_BMS_RTO, STRUCT_REACT,
-THREE_BAR_DELIVERY_BREAK, TURTLE_SOUP, WEEKLY_EXP.
+AMD_CONT, AMD_REVERSAL, JUDAS_SWING, LDN_REVERSAL, LONDON_BO, NY_REVERSAL,
+OTE_CONT, PO3, STRUCT_REACT.
 
 ---
 
 ## Nota per l'operatore (non fa parte del prompt sopra)
 
 Il repo `starmarketkiller/MAX` potrebbe essere privato: se l'agente browser
-non riesce a raggiungere gli URL raw, tieni pronti i 10 file `.pine` da
+non riesce a raggiungere gli URL raw, tieni pronti i 27 file `.pine` da
 incollare manualmente quando richiesto (sono in `pinescript/` in questo
-repository). Le 27 strategie mancanti sono la prossima cosa da portare su
-Pine, in batch successivi, seguendo lo stesso schema di
-`pinescript/NEXUS_MALAYSIAN_SNR.pine`/`NEXUS_SILVER_BULLET.pine` — da
-avviare quando si vorrà coprire l'intero portafoglio invece delle prime 10.
+repository). Le 9 strategie mancanti sono in coda nei task del progetto,
+da affrontare con un porting dedicato (non un'approssimazione) quando si
+vorrà chiudere l'intero portafoglio.
