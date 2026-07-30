@@ -123,6 +123,23 @@ ottobre — stessa famiglia di regola DST già portata per Silver Bullet F-02,
 ma per il Regno Unito, non gli USA: date di cambio ora diverse). Passaggio
 dedicato successivo, stesso standard di cura di `LONDON_BO`.
 
+**Batch 9** (30/07) — ELLIOTT, l'unica famiglia PATTERN. A differenza di
+quanto indicato nel registry Python (`research_implementation: false`,
+"NOT_IMPLEMENTED"), il codice MQL5 reale (`NXS_Strategies_Elliott.mqh`, 151
+righe) **è pienamente algoritmico e deterministico** — non soggettivo/
+visuale come si poteva temere leggendo solo il registry:
+
+| File | Strategia | Timeframe | Tipo |
+|---|---|---|---|
+| `NEXUS_ELLIOTT.pine` | ELLIOTT | M15 | Pattern (conteggio onde su pivot fractal alternati, 6 pattern Fibonacci: onda2→3, onda4→5, reversal fine onda5) |
+
+⚠️ Diversamente da DISP_REBAL/BB_SQUEEZE/STRUCT_REACT/ICHIMOKU/OTE_CONT
+(spente con un test reale negativo già registrato nel codice), ELLIOTT è
+spenta di default (`InpUseStrat_Elliott=false`) semplicemente perché **non è
+mai stata testata** ("nuova strategia, backtesta prima"). Questo script è
+quindi la prima verifica indipendente mai fatta su questa strategia, su
+qualunque motore — nessun numero pregresso di alcun tipo con cui confrontare.
+
 > ⚠️ **Regola zero (30/07)**: su richiesta dell'utente, tutti i risultati già
 > registrati nelle tabelle sotto (Batch 1/2/3) sono da considerarsi **non
 > verificati** — si riparte da zero su tutte le 37 strategie, protocollo

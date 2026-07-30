@@ -1,0 +1,238 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia ELLIOTT (conteggio onde su pivot alternati) — XAUUSD M15
+// -----------------------------------------------------------------------------
+// ⚠️ DISATTIVATA di default in MQL5 (InpUseStrat_Elliott=false, commento nel
+// codice: "nuova strategia, backtesta prima") — a differenza di
+// DISP_REBAL/BB_SQUEEZE/STRUCT_REACT/ICHIMOKU/OTE_CONT, NON è una strategia
+// con un test reale negativo già registrato: è semplicemente mai stata
+// validata. Nel registry canonico risulta anche `research_implementation:
+// false` (l'UNICA delle 37 strategie live assenti dal motore Python interno,
+// MM-03 nel mismatch report) — questo script Pine è quindi la PRIMA verifica
+// indipendente mai fatta su questa strategia, su qualunque motore.
+//
+// Terzo motore di verifica indipendente (TradingView) per NXS_Strat_Elliott
+// (MQL5/Include/NEXUS_v1/NXS_Strategies_Elliott.mqh). Nessun profilo dedicato
+// in NXS_StrategyProfiles.mqh (SL/TP sono sempre geometrici/Fibonacci, mai
+// NXS_DefaultSLTP) — timeframe M15, fallback globale `InpTFEntry` che
+// `NXS_EffTF()` usa quando una strategia non ha un override di profilo.
+//
+// LOGICA: estrae fino a 8 pivot di swing ALTERNATI (fractal ala 3 barre,
+// stesso motore di NEXUS_SMS_BMS_RTO.pine/NEXUS_IFVG.pine, qui mantenuti in
+// un array anziché in due sole variabili "ultimo/precedente" perché servono
+// fino a 6 pivot in sequenza per il pattern più lungo). p[0] = pivot
+// confermato più recente. Confronta la sequenza di tipi (+1 high / -1 low)
+// contro 6 pattern:
+//   • Fine onda 2 → entry onda 3 (continuazione, retracement 38.2-78.6%
+//     dell'onda 1, target = proiezione 1.618× dell'onda 1)
+//   • Fine onda 4 → entry onda 5 (retracement 23.6-61.8% dell'onda 3,
+//     target = onda5 ≈ ampiezza onda1-3)
+//   • Fine onda 5 (impulso completo a 5 onde) → reversal, target
+//     ritracciamento 50% dell'intero impulso
+//
+// SEMPLIFICAZIONE NOTA: "bid"/"ask" (MQL5) approssimati con la chiusura
+// della barra, come nelle altre strategie di questo portafoglio.
+//
+// Nessun filtro HTF (nessun profilo = nessun gate generico applicato).
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. I pivot
+// (ta.pivothigh/pivotlow) sono confermati con ritardo — nessun repaint.
+// =============================================================================
+strategy("NEXUS EA - ELLIOTT (XAUUSD M15)", shorttitle="NXS-ELLIOTT", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+swingWing = input.int(3, "Onde: ala del pivot (barre per lato)")
+retraceMin23 = input.float(0.382, "Onda2->3: retracement minimo")
+retraceMax23 = input.float(0.786, "Onda2->3: retracement massimo")
+retraceMin45 = input.float(0.236, "Onda4->5: retracement minimo")
+retraceMax45 = input.float(0.618, "Onda4->5: retracement massimo")
+slBufferMult = input.float(0.4, "SL buffer (onde 2->3 / 4->5) × ATR")
+slBufferMult5 = input.float(0.5, "SL buffer (reversal onda 5) × ATR")
+atrLen = input.int(14, "ATR length")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Pivot alternati (array, [0]=più recente) -----
+ph = ta.pivothigh(swingWing, swingWing)
+pl = ta.pivotlow(swingWing, swingWing)
+
+var float[] pivPrice = array.new_float(0)
+var int[]   pivType  = array.new_int(0)
+
+if not na(ph) or not na(pl)
+    newType  = not na(ph) ? 1 : -1
+    newPrice = not na(ph) ? ph : pl
+    lastType = array.size(pivType) > 0 ? array.get(pivType, 0) : 0
+    if newType != lastType
+        array.unshift(pivType, newType)
+        array.unshift(pivPrice, newPrice)
+        if array.size(pivType) > 8
+            array.pop(pivType)
+            array.pop(pivPrice)
+
+np = array.size(pivType)
+t0 = np > 0 ? array.get(pivType, 0) : 0
+t1 = np > 1 ? array.get(pivType, 1) : 0
+t2 = np > 2 ? array.get(pivType, 2) : 0
+t3 = np > 3 ? array.get(pivType, 3) : 0
+t4 = np > 4 ? array.get(pivType, 4) : 0
+t5 = np > 5 ? array.get(pivType, 5) : 0
+p0 = np > 0 ? array.get(pivPrice, 0) : na
+p1 = np > 1 ? array.get(pivPrice, 1) : na
+p2 = np > 2 ? array.get(pivPrice, 2) : na
+p3 = np > 3 ? array.get(pivPrice, 3) : na
+p4 = np > 4 ? array.get(pivPrice, 4) : na
+p5 = np > 5 ? array.get(pivPrice, 5) : na
+
+c1 = close[1]
+o1 = open[1]
+bull1 = c1 > o1
+bear1 = c1 < o1
+bidApprox = close
+askApprox = close
+
+// ----------------------------- Pattern matching -----------------------------
+rawLong = false
+rawShort = false
+slGeom = float(na)
+tpGeom = float(na)
+tag = ""
+
+// Onda2->3 UP: L2=p0(-1), H1=p1(+1), L0=p2(-1)
+if not rawLong and not rawShort and np >= 3 and t0 == -1 and t1 == 1 and t2 == -1
+    L2 = p0
+    H1 = p1
+    L0 = p2
+    if H1 > L0 and L2 > L0
+        retr = math.abs(H1 - L2) / math.abs(H1 - L0)
+        if retr >= retraceMin23 and retr <= retraceMax23 and bull1 and bidApprox <= H1
+            rawLong := true
+            slGeom := math.min(L2, L0) - slBufferMult * atrVal
+            tpGeom := L2 + 1.618 * (H1 - L0)
+            tag := "ELLIOTT W2->W3 buy"
+
+// Onda2->3 DOWN: H2=p0(+1), L1=p1(-1), H0=p2(+1)
+if not rawLong and not rawShort and np >= 3 and t0 == 1 and t1 == -1 and t2 == 1
+    H2 = p0
+    L1 = p1
+    H0 = p2
+    if L1 < H0 and H2 < H0
+        retr = math.abs(L1 - H2) / math.abs(L1 - H0)
+        if retr >= retraceMin23 and retr <= retraceMax23 and bear1 and bidApprox >= L1
+            rawShort := true
+            slGeom := math.max(H2, H0) + slBufferMult * atrVal
+            tpGeom := H2 - 1.618 * (H0 - L1)
+            tag := "ELLIOTT W2->W3 sell"
+
+// Onda4->5 UP: L4=p0(-1),H3=p1(+1),L2=p2(-1),H1=p3(+1),L0=p4(-1)
+if not rawLong and not rawShort and np >= 5 and t0 == -1 and t1 == 1 and t2 == -1 and t3 == 1 and t4 == -1
+    L4 = p0
+    H3 = p1
+    L2 = p2
+    H1 = p3
+    L0 = p4
+    if H3 > H1 and H1 > L0 and L2 > L0 and L4 > H1
+        retr = math.abs(H3 - L4) / math.abs(H3 - L2)
+        if retr >= retraceMin45 and retr <= retraceMax45 and bull1 and bidApprox <= H3
+            rawLong := true
+            slGeom := L4 - slBufferMult * atrVal
+            tpGeom := L4 + 1.0 * (H3 - L2)
+            tag := "ELLIOTT W4->W5 buy"
+
+// Onda4->5 DOWN: H4=p0(+1),L3=p1(-1),H2=p2(+1),L1=p3(-1),H0=p4(+1)
+if not rawLong and not rawShort and np >= 5 and t0 == 1 and t1 == -1 and t2 == 1 and t3 == -1 and t4 == 1
+    H4 = p0
+    L3 = p1
+    H2 = p2
+    L1 = p3
+    H0 = p4
+    if L3 < L1 and L1 < H0 and H2 < H0 and H4 < L1
+        retr = math.abs(L3 - H4) / math.abs(L3 - H2)
+        if retr >= retraceMin45 and retr <= retraceMax45 and bear1 and bidApprox >= L3
+            rawShort := true
+            slGeom := H4 + slBufferMult * atrVal
+            tpGeom := H4 - 1.0 * (H2 - L3)
+            tag := "ELLIOTT W4->W5 sell"
+
+// Reversal fine onda5, impulso UP completo (SELL): H5,L4,H3,L2,H1,L0
+if not rawLong and not rawShort and np >= 6 and t0 == 1 and t1 == -1 and t2 == 1 and t3 == -1 and t4 == 1 and t5 == -1
+    H5 = p0
+    L4 = p1
+    H3 = p2
+    L2 = p3
+    H1 = p4
+    L0 = p5
+    if H5 > H3 and H3 > H1 and L4 > L2 and L2 > L0 and bear1 and bidApprox < H5
+        rawShort := true
+        slGeom := H5 + slBufferMult5 * atrVal
+        tpGeom := H5 - 0.5 * (H5 - L0)
+        tag := "ELLIOTT W5 reversal sell"
+
+// Reversal fine onda5, impulso DOWN completo (BUY): L5,H4,L3,H2,L1,H0
+if not rawLong and not rawShort and np >= 6 and t0 == -1 and t1 == 1 and t2 == -1 and t3 == 1 and t4 == -1 and t5 == 1
+    L5 = p0
+    H4 = p1
+    L3 = p2
+    H2 = p3
+    L1 = p4
+    H0 = p5
+    if L5 < L3 and L3 < L1 and H4 < H2 and H2 < H0 and bull1 and askApprox > L5
+        rawLong := true
+        slGeom := L5 - slBufferMult5 * atrVal
+        tpGeom := L5 + 0.5 * (H0 - L5)
+        tag := "ELLIOTT W5 reversal buy"
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+// ----------------------------- SL/TP iniziali (pending, geometria/Fib) ------
+var float pendingSL = na
+var float pendingTP = na
+var float slLevel   = na
+var float tpLevel   = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    slLevel := pendingSL
+    tpLevel := pendingTP
+    entryBarIdx := bar_index
+
+if longCond and strategy.position_size <= 0
+    pendingSL := slGeom
+    pendingTP := tpGeom
+    strategy.entry("Long", strategy.long, comment=tag)
+if shortCond and strategy.position_size >= 0
+    pendingSL := slGeom
+    pendingTP := tpGeom
+    strategy.entry("Short", strategy.short, comment=tag)
+
+// ----------------------------- Time-exit + uscita ---------------------------
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plotshape(longCond, title="Elliott Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Elliott Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "15"
+    label.new(bar_index, high, "⚠ Questa strategia è tarata su M15 — imposta il chart a 15 minuti", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+if barstate.islast
+    label.new(bar_index, low, "ℹ Mai testata prima (spenta di default, non nel motore Python) — questa è la prima verifica reale", style=label.style_label_up, color=color.new(color.blue, 0), textcolor=color.white, size=size.small)
+
+alertcondition(longCond, "NXS ELLIOTT BUY", "NEXUS ELLIOTT: setup rialzista")
+alertcondition(shortCond, "NXS ELLIOTT SELL", "NEXUS ELLIOTT: setup ribassista")
