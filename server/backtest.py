@@ -1501,7 +1501,11 @@ STRATEGIES = {
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
-    "CISD": sig_cisd,
+    # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta
+    # accettato ovunque tramite RESEARCH_ALIASES, ma non e' piu' l'unica chiave:
+    # chi iterava STRATEGIES e confrontava con il registro concludeva che
+    # THREE_BAR_DELIVERY_BREAK non avesse implementazione research. Ce l'ha.
+    "THREE_BAR_DELIVERY_BREAK": sig_cisd,
     "WEEKLY_EXP": sig_breakout,       # range expansion proxy
     "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
     "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
@@ -1515,6 +1519,17 @@ STRATEGIES = {
     "PO3": sig_po3,
     "SILVER_BULLET": sig_silver_bullet,
 }
+
+# Fase A / MM-08 — retrocompatibilita' esplicita degli id storici.
+# Nessun id viene riscritto senza questa mappa: un chiamante che passa "CISD"
+# continua a funzionare, e la chiave primaria resta quella canonica.
+RESEARCH_ALIASES = {"CISD": "THREE_BAR_DELIVERY_BREAK"}
+
+
+def resolve_research_key(name: str) -> str:
+    """Id storico -> chiave canonica di STRATEGIES. Sconosciuto: invariato."""
+    return RESEARCH_ALIASES.get(name, name)
+
 
 # Canonical live list. Keep the legacy alias temporarily for API compatibility.
 STRAT_NAMES = list(LIVE_STRATEGY_IDS)
@@ -1548,6 +1563,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = list(require_strategies(strat_list, research=True))
+    # Un chiamante puo' passare id storico e id canonico della stessa strategia
+    # (es. "CISD" e "THREE_BAR_DELIVERY_BREAK"): risolti alla stessa chiave, la
+    # strategia girerebbe due volte e comparirebbe due volte nei risultati.
+    strat_list = list(dict.fromkeys(resolve_research_key(s) for s in strat_list))
     unavailable = [s for s in strat_list if s not in STRATEGIES]
     if unavailable:
         raise ValueError(f"research engine implementation missing: {', '.join(unavailable)}")

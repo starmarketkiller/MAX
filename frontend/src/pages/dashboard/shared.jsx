@@ -1,6 +1,6 @@
 // Shared primitives, helpers and constants used across Dashboard sub-pages.
 import { ShieldAlert } from "lucide-react";
-import { LIVE_STRATEGIES } from "@/contracts/strategyRegistry";
+import { LIVE_STRATEGIES, EVIDENCE_LABEL } from "@/contracts/strategyRegistry";
 
 // ---------- text helpers ----------
 export const fmtMoney = (v, dec = 2) =>
@@ -21,6 +21,34 @@ export const NEG_TEXT = "text-rose-600 dark:text-rose-400";
 // Tuple: [key, label, family]
 // Canonical adapter replaces the historical 35/36/37 hand-maintained list.
 export const STRAT_LIST = LIVE_STRATEGIES.map((s) => [s.strategy_id, s.display_name, s.family]);
+
+// ---------- stato dell'evidenza (Fase A / MM-09) ----------
+// La dashboard mostrava 37 strategie tutte uguali: una con 915 trade misurati e
+// una mai eseguita avevano lo stesso aspetto, e un surrogato di un'altra
+// strategia sembrava una strategia indipendente. Questi tre stati rendono la
+// differenza visibile dove si sceglie.
+export const STRAT_EVIDENCE = Object.fromEntries(
+  LIVE_STRATEGIES.map((s) => [s.strategy_id, {
+    status: s.evidence_status,
+    label: EVIDENCE_LABEL[s.evidence_status] || s.evidence_status,
+    sourceRound: s.evidence_source_round,
+    hasCollision: s.has_collision,
+    collisionPartners: s.collision_partners,
+    proxyFor: s.proxy_for,
+  }])
+);
+
+export const EVIDENCE_COLOR = {
+  MEASURED:  "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  SURROGATE: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  UNKNOWN:   "bg-secondary text-muted-foreground border-border",
+};
+
+export const EVIDENCE_HINT = {
+  MEASURED:  "Passata isolata completata sul round corrente.",
+  SURROGATE: "I numeri esistono ma vengono da un altro round: non descrivono il codice attuale.",
+  UNKNOWN:   "Nessuna passata isolata. Assenza di misura, non misura di assenza.",
+};
 
 export const STRAT_FAMILIES = [
   { id: "TREND",         label: "Trend",         color: "blue" },

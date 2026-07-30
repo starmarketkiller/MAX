@@ -2,6 +2,7 @@
  "generato": "2026-07-19",
  "fonte_sweep": "results/reports/sweep37 (file stats piu' recente per passata)",
  "baseline": "e6ce816 / branch baseline-post-infra-audit",
+ "selector_index_fonte": "derivato dal codice MQL5 con contracts/extract_selectors.py (NXS_SelectorAllows): 37 indici, contigui 1-37, nessun duplicato. Non trascrivere a mano: rieseguire l'estrattore.",
  "totale_strategie": 37,
  "avvertenza": "PF/WR/expectancy del round corrente: strategia ISOLATA, lotto fisso 0.01, DataCollectionMode - misurano il comportamento del trigger, non il P&L di portafoglio",
  "strategie": [
@@ -632,7 +633,7 @@
   },
   {
    "nome": "SMS_BMS_RTO",
-   "selector_index": null,
+   "selector_index": 22,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -653,7 +654,7 @@
   },
   {
    "nome": "SILVER_BULLET",
-   "selector_index": null,
+   "selector_index": 23,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "riscritta",
@@ -679,7 +680,7 @@
   },
   {
    "nome": "AMD_REVERSAL",
-   "selector_index": null,
+   "selector_index": 24,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -700,7 +701,7 @@
   },
   {
    "nome": "MALAYSIAN_SNR",
-   "selector_index": null,
+   "selector_index": 26,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -728,7 +729,7 @@
   },
   {
    "nome": "THREE_BAR_DELIVERY_BREAK",
-   "selector_index": null,
+   "selector_index": 27,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "rinominata (ex CISD)",
@@ -754,7 +755,7 @@
   },
   {
    "nome": "AMD_CONT",
-   "selector_index": null,
+   "selector_index": 28,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -780,7 +781,7 @@
   },
   {
    "nome": "JUDAS_SWING",
-   "selector_index": null,
+   "selector_index": 29,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -801,7 +802,7 @@
   },
   {
    "nome": "LDN_REVERSAL",
-   "selector_index": null,
+   "selector_index": 30,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -826,7 +827,7 @@
   },
   {
    "nome": "NY_REVERSAL",
-   "selector_index": null,
+   "selector_index": 31,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "riscritta",
@@ -852,7 +853,7 @@
   },
   {
    "nome": "WEEKLY_EXP",
-   "selector_index": null,
+   "selector_index": 32,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "completata (Modello B)",
@@ -878,7 +879,7 @@
   },
   {
    "nome": "PO3",
-   "selector_index": null,
+   "selector_index": 33,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
@@ -899,7 +900,7 @@
   },
   {
    "nome": "LIQ_VOID",
-   "selector_index": null,
+   "selector_index": 34,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "riscritta",
@@ -925,7 +926,7 @@
   },
   {
    "nome": "DISP_REBAL",
-   "selector_index": null,
+   "selector_index": 35,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva nel codice, disabilitata in produzione reale",
    "implementata": "riscritta",
@@ -979,7 +980,7 @@
   },
   {
    "nome": "OTE_CONT",
-   "selector_index": null,
+   "selector_index": 25,
    "versione": "baseline e6ce816 (EA 2.50)",
    "stato": "attiva",
    "implementata": "si",
