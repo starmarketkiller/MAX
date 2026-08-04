@@ -35,11 +35,16 @@ che risultano già testate.
    script) e imposta:
    - Capitale iniziale: **10.000 USD**
    - Dimensione ordine: **1 contratto fisso** (non % equity)
-   - **Commissione**: 0.02% per lato (approssimazione di uno spread/costo
-     reale — i test precedenti di questo progetto avevano commissioni a 0,
-     il che li rendeva otticamente migliori del reale; non ripetere
-     l'errore)
-   - **Slippage**: 2 tick
+   - **Commissione**: 0.06% per lato — corretto il 31/07 (era 0.02%, troppo
+     basso). Verificato via ricerca web: XAUUSD retail standard ha spread
+     tipico $2-5 round-trip (1 pip gold = $0.10, 20-50 pip di spread), qui
+     approssimato a $2.50 round-trip ≈ 0.057%/lato assumendo oro ~$2200 nel
+     periodo testato (stessi valori di `server/backtest.py`,
+     `COST_PRESETS["retail_standard"]` — tenere i due motori coerenti).
+   - **Slippage**: ~25 tick per fill (assumendo tick $0.01 sul tuo feed —
+     verifica il tick size reale e aggiusta se diverso; l'obiettivo è
+     ~$0.25 di slippage aggiuntivo per fill, ~$0.50 round-trip totale, oltre
+     allo spread già coperto dalla commissione sopra)
    - `calc_on_every_tick` è già `false` dentro lo script (non modificarlo)
 5. Range di date: **2019-01-01 → oggi**, salvo che TradingView non abbia
    così tanto storico per quel timeframe/simbolo (succede su TF intraday,
