@@ -210,3 +210,48 @@ di un effetto di regime/periodo che confonde qualunque conclusione sui
 parametri specifici, non solo il rischio normale di overfitting che il
 gate già intercetta. Va segnalato esplicitamente, non nascosto dietro un
 PF che "comunque migliora".
+
+## Aggiornamento 04/08 — Fedeltà motore Python vs MQL5 reale: GRAVE
+
+Confrontati `sig_silver_bullet` (Python) con `NXS_Strat_SilverBullet`/
+`NXS_SB_UpdateSide` (MQL5 reale). A differenza di AMD_CONT (dove il cuore
+della logica era fedele), qui il proxy **manca di un pezzo strutturale
+intero**, non di un dettaglio.
+
+**Il vero `NXS_Strat_SilverBullet` è una state machine a 3 stadi su più
+barre**:
+1. `SB_IDLE` → sweep confermato in killzone nella direzione voluta →
+   `SB_SWEPT`
+2. `SB_SWEPT` → attende (fino a `InpSB_MaxBars`) una **candela di
+   displacement** (corpo > ATR×soglia, colore giusto) che rompe la
+   struttura (**Break of Structure** contro lo swing recente) → forma un
+   **FVG** tra la candela 1 e la candela 3 → `SB_WAITING_RETURN`
+3. `SB_WAITING_RETURN` → attende che il prezzo **ritorni dentro il FVG**
+   prima di generare il segnale vero e proprio
+
+**Il Python spara il segnale immediatamente al solo sweep-in-killzone**,
+saltando TUTTI E TRE gli stadi di conferma (displacement/BOS, formazione
+FVG, ritorno nel FVG). Non è una semplificazione di dettaglio — è
+l'assenza dell'intero meccanismo che rende "Silver Bullet" quello che è
+nella metodologia ICT.
+
+**Inoltre**: manca una killzone su tre (London Open, 03-04 ET) e il
+codice MQL5 gestisce la DST USA convertendo GMT↔ET dinamicamente, mentre
+Python usa ore GMT fisse tutto l'anno.
+
+### Impatto sul verdetto — più severo di AMD_CONT
+
+Il punteggio 62/100 e la decisione "osservazione" **non sono più
+sostenibili così come sono**. Quello che ho testato in Fase 1-8 non è
+"Silver Bullet con fedeltà imperfetta" — è un segnale strutturalmente
+diverso e molto più permissivo (spara su ogni sweep in killzone, non solo
+su quelli seguiti da displacement+BOS+FVG+ritorno). Tutti i numeri di
+questo deep-dive (PF, WR, MaxDD, la scoperta del filtro sessione) si
+riferiscono a QUELLO, non alla strategia che gira davvero sul conto.
+
+**Nuova decisione: NON VALIDO nella forma attuale.** Prima di qualunque
+altra conclusione su SILVER_BULLET va riscritto `sig_silver_bullet` per
+replicare la vera state machine (sweep→displacement/BOS→FVG→ritorno) e
+rifatta la pipeline da capo su quella base — il lavoro Fase 1-8 fatto qui
+resta utile come riferimento di processo, non come risultato su cui
+agire.

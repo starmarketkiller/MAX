@@ -304,3 +304,44 @@ automaticamente in CHE DIREZIONE muoversi — va sempre testata, non dedotta.
 4. Un PF spettacolare su un campione minuscolo (qui: PF 2.60 su 5 trade,
    M5) resta un'ipotesi, non un risultato — vale anche quando il numero è
    allettante.
+
+## Aggiornamento 04/08 — Fedeltà motore Python vs MQL5 reale (confronto riga-per-riga)
+
+Confrontati `sig_amd_cont`/`_session_amd_series` (Python) con
+`NXS_Strat_AMD_Continuation`/`NXS_AMDModel.mqh` (MQL5 reale, il codice che
+girerà davvero sul conto).
+
+**Fedele**:
+- La state machine delle fasi (ACCUMULATION→MANIPULATION→CONTINUATION_
+  DISTRIBUTION/REVERSAL_DISTRIBUTION) è replicata correttamente, confrontata
+  riga per riga.
+- Il gate a sessione (LONDON/OVERLAP/NY) è identico.
+
+**Non fedele**:
+- **Retest**: MQL5 confronta il LOW della barra con la fascia di retest
+  (`l1 <= asianHigh + atr*0.6` — con un commento esplicito che documenta un
+  bug già corretto il 17/07, "mescolava close/bid live"). Python usa la
+  CLOSE per entrambe le condizioni — la stessa imprecisione che l'MQL5
+  aveva corretto, riprodotta qui senza saperlo.
+- **Filtro HTF**: MQL5 usa una vera struct di bias multi-timeframe
+  (`SNXSHTF &htf`, calcolata altrove); Python inventa un proxy EMA200
+  stesso-timeframe con una condizione OR permissiva — non equivalenti.
+- **SL/TP — il problema più serio**: MQL5 calcola SL da
+  `min(asianHigh - 0.3×ATR, midpoint_asia)` e TP come 2.4×R fisso da quel
+  SL. Il motore Python **non implementa questa formula per AMD_CONT** —
+  usa il generico SL/TP a multiplo ATR fisso passato dall'esterno (2.5/4.0,
+  trovato in Fase 6). **Tutta l'ottimizzazione SL/TP della Fase 6 ha
+  esplorato uno spazio di parametri che non esiste nell'EA reale**: lì il
+  SL/TP di AMD_CONT è strutturalmente derivato dal range asiatico, non
+  regolabile via multiplo ATR.
+
+### Impatto sul verdetto
+
+Il punteggio 72/100 e la decisione "osservazione" restano ragionevoli per
+la LOGICA DI INGRESSO (fase AMD + sessione, la parte fedele) — ma i
+risultati specifici di Fase 6 (SL=2.5×ATR/TP=4.0×ATR) **non sono
+trasferibili all'EA reale così come sono**, perché quel parametro non
+esiste nella sua forma testata. Prima di qualunque promozione a
+"mantieni": (a) riscrivere `sig_amd_cont` per usare il vero retest-su-low
+e la vera formula SL/TP derivata dal range asiatico, (b) ri-fare la Fase 6
+su QUELLA base, non su quella attuale.

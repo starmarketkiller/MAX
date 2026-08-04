@@ -7,12 +7,31 @@ prossima strategia da approfondire o quando si torna su una già chiusa.
 
 ## Aperte
 
-- **Fedeltà motore Python vs MQL5 reale** (da AMD_CONT, Fase 9) — confronto
-  riga-per-riga tra `_session_amd_series`/`sig_amd_cont` (Python) e
-  `NXS_AMDModel.mqh` (MQL5 reale). Blocca la promozione di AMD_CONT a
-  "mantieni". Probabilmente utile anche per le altre strategie a sessione
-  (SILVER_BULLET, JUDAS_SWING, ecc.) che condividono la stessa
-  infrastruttura `_session_amd_series`.
+- **Riscrivere `sig_silver_bullet` con la vera state machine MQL5**
+  (urgente, da verifica fedeltà 04/08) — sweep confermato in killzone →
+  candela di displacement con BOS → formazione FVG → ritorno nel FVG →
+  SOLO ALLORA segnale. Il proxy attuale spara al solo sweep, saltando 3
+  stadi di conferma interi. Tutto il deep-dive SILVER_BULLET fatto finora
+  va rifatto da capo su questa base.
+
+- **Riscrivere il retest di `sig_amd_cont` (low, non close) e implementare
+  la vera formula SL/TP** (da verifica fedeltà 04/08) — MQL5 usa
+  `l1 <= asianHigh+atr*0.6` per il retest (non la close) e
+  `SL=min(asianHigh-0.3×ATR, mid)` / `TP=entry+2.4×R` (non un multiplo ATR
+  libero). La Fase 6 di AMD_CONT (SL2.5/TP4.0) va rifatta su una versione
+  che implementi questa formula, non sul generico ATR-multiple.
+
+- **Verificare fedeltà motore-vs-MQL5 per OGNI prossima strategia SUBITO
+  dopo la Fase 1** (lezione #11, non aspettare fino a dopo un deep-dive
+  completo come successo per AMD_CONT/SILVER_BULLET) — se il proxy manca
+  un meccanismo intero (come successo con SILVER_BULLET), le fasi 2-8 fatte
+  prima di scoprirlo sono lavoro sprecato.
+
+- **Verificare se altre strategie hanno una formula SL/TP propria in MQL5
+  non coperta da `STRATEGY_TARGETS_ALWAYS`/`STRATEGY_TARGETS_OPTIN`**
+  (lezione #12) — prima di fidarsi di qualunque risultato Fase 6 su quelle
+  strategie (rischio di ottimizzare un parametro che nell'EA reale non
+  esiste, come successo con AMD_CONT).
 
 - **Storico H4/H1 più lungo per la validazione** (da AMD_CONT, Fase 9) —
   Yahoo limita H4/H1 a ~2 anni. Serve un export MT5 (quando l'utente è al

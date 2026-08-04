@@ -81,3 +81,32 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     segnalato esplicitamente nel punteggio finale (vedi SILVER_BULLET,
     Fase 9: 62/100, "serve dati" come priorità assoluta), non nascosto
     dietro un PF che "comunque migliora fuori campione".
+
+## Dalla verifica di fedeltà motore-Python-vs-MQL5 (04/08, primo confronto reale)
+
+11. **"Fedeltà mai verificata" (rischio #7) non è un rischio uniforme —
+    va verificato per OGNI strategia, non assunto uguale.** Confronto
+    riga-per-riga: AMD_CONT ha il cuore della logica (fase AMD, gate
+    sessione) fedele, con problemi localizzati (retest su close invece di
+    low, HTF bias proxy, SL/TP non implementato affatto - vedi
+    `AMD_CONT_DEEPDIVE.md`). SILVER_BULLET invece manca l'INTERO
+    meccanismo di conferma (displacement→BOS→FVG→ritorno, 3 stadi su più
+    barre) - il Python spara al solo sweep-in-killzone. Stesso rischio
+    dichiarato, gravità radicalmente diversa: uno è "impreciso su alcuni
+    dettagli", l'altro è "sta testando una strategia diversa". **Priorità
+    per la prossima strategia**: fare questo confronto SUBITO dopo la
+    Fase 1 (non aspettare fino a dopo un deep-dive completo come successo
+    qui) — se il proxy manca un meccanismo intero, tutto il lavoro dopo la
+    Fase 1 è sprecato.
+
+12. **Il SL/TP generico del motore (multiplo ATR fisso) non è sempre
+    quello che usa la strategia reale.** Molte strategie MQL5 (AMD_CONT
+    confermato, probabilmente altre con logica strutturale simile -
+    JUDAS_SWING/PO3/LDN_REVERSAL hanno gia' `STRATEGY_TARGETS_ALWAYS` nel
+    motore, quindi sono coperte) calcolano SL/TP da livelli di prezzo
+    strutturali (range asiatico, swing, sweep level), non da un multiplo
+    ATR libero. Se una strategia non è nei dict `STRATEGY_TARGETS_ALWAYS`/
+    `STRATEGY_TARGETS_OPTIN` di `backtest.py`, va verificato ESPLICITAMENTE
+    se il vero MQL5 ha una formula SL/TP propria prima di fidarsi di
+    qualunque ottimizzazione Fase 6 fatta sul multiplo ATR generico -
+    altrimenti si ottimizza un parametro che nell'EA reale non esiste.
