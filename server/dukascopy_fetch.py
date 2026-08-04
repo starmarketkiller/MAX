@@ -79,7 +79,12 @@ def _cache_path(symbol: str, day: datetime) -> str:
 
 def fetch_day_ticks(symbol: str, day: datetime, max_workers: int = 12) -> list:
     """Tick di un intero giorno (24 file orari), con cache locale su disco -
-    un giorno gia' scaricato non viene mai ri-scaricato."""
+    un giorno gia' scaricato non viene mai ri-scaricato.
+    Resiliente per-ora: un'ora che fallisce anche dopo i retry di
+    _fetch_hour_ticks (es. 503 transitorio, host irraggiungibile per
+    quell'archivio) viene loggata e trattata come vuota, non fa fallire
+    l'intero giorno/anno - un fetch multi-anno non deve morire per un
+    singolo file 404/503 in mezzo a migliaia."""
     cp = _cache_path(symbol, day)
     if os.path.exists(cp):
         with open(cp, encoding="utf-8") as f:
@@ -89,7 +94,11 @@ def fetch_day_ticks(symbol: str, day: datetime, max_workers: int = 12) -> list:
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         futs = {ex.submit(_fetch_hour_ticks, symbol, h): h for h in hours}
         for fut in as_completed(futs):
-            all_ticks.extend(fut.result())
+            h = futs[fut]
+            try:
+                all_ticks.extend(fut.result())
+            except Exception as e:
+                print(f"[dukascopy] ora persa {symbol} {h.isoformat()}: {str(e)[:100]}", flush=True)
     all_ticks.sort(key=lambda x: x[0])
     with open(cp, "w", encoding="utf-8") as f:
         json.dump(all_ticks, f)

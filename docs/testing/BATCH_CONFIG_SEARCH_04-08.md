@@ -531,4 +531,88 @@ per costruzione, o limitate dal poco storico intraday di Yahoo).
   fedeli con un segnale di partenza onesto (TURTLE_SOUP, TSI, ADX_RSI,
   EMA_PULLBACK, LONDON_BO, SAR).
 
+## Aggiornamento 04/08 (11) — "Fallo su tutte" + "serve una finestra più
+## ampia": ottimizzazione meccanizzata su 24 strategie + avvio storico
+## esteso Dukascopy
+
+Su richiesta esplicita, girato `find_all_configs.py` (Fase 3 toggle +
+Fase 6 SL/TP/breakeven/trailing + Fase 4 OOS gate, meccanizzato) sulle 24
+strategie con almeno un timeframe sopra soglia campione dall'aggiornamento
+precedente (esclude AMD_CONT/SILVER_BULLET/TURTLE_SOUP, già con deep-dive
+manuale più approfondito). Lista `CANDIDATES` ricostruita da zero (quella
+del 16/07 era su proxy in gran parte superati da questa sessione).
+
+### Risultato: 6 PASS, 6 MARGINALE, 12 FAIL
+
+**PASS (regge il gate OOS con lo stesso rigore di AMD_CONT/SILVER_BULLET/
+TURTLE_SOUP)**, ordinati per solidità del campione OOS:
+
+| Strategia | TF | Config | Combo PF | OOS PF | OOS trade |
+|---|---|---|---|---|---|
+| ADX_RSI | 1d | htf_filter=True, atr_sl=3.0 | 1.30 | 1.94 | 35 |
+| TSI | 1h | atr_sl=2.0 | 1.11 | 1.17 | 38 |
+| LIQ_SWEEP | 1d | htf_filter=True, atr_sl=3.0 | 1.80 | 2.54 | 24 |
+| SCALP_BB_FADE | 4h | atr_tp=5.0 | 1.97 | 2.24 | 22 |
+| LONDON_BO | 1h | atr_sl=2.5 | 1.79 | 1.45 | 12 |
+| EMA_PULLBACK | 1d | atr_tp=4.0 | 2.13 | 2.06 | 10 |
+
+Nota onesta: **LIQ_SWEEP non ha mai avuto il giro di fedeltà rigoroso
+04/08** (solo un controllo del 16/07, "misto/non decisivo") e
+**SCALP_BB_FADE non è mai stata auditata** (nessuna delle 4 SCALP_* lo
+è stata) — questi due PASS vanno quindi trattati con più cautela degli
+altri 4, che poggiano su un segnale già verificato riga-per-riga.
+ADX_RSI resta il più credibile in assoluto: campione OOS più ampio (35
+trade) e nessuna bandiera di sospetto.
+
+**MARGINALE** (SAR, SH_BMS_RTO, SCALP_RANGE_BRK, LIQ_VOID, OTE_CONT: PF
+OOS esplode sopra 3.0 su un campione OOS minuscolo — 10-14 trade,
+classico segno di rumore non di edge, es. SH_BMS_RTO PF OOS 10.98 su 10
+trade; BREAKOUT_ACC: degrado OOS oltre il 40%, sospetto overfitting) —
+nessuno di questi va promosso senza revisione manuale.
+
+**Scoperta importante — un limite dello script, non delle strategie**:
+FVG_CONT e MACD (i due PF più alti di TUTTO il giro di baseline, 3.15 e
+2.94) risultano "FAIL: nessun parametro batte la baseline" — ma questo
+NON significa che il loro edge sia falso, significa che lo script non
+prova mai a validare Out-of-Sample la baseline STESSA quando nessun
+parametro la batte (bug di disegno: salta il gate invece di applicarlo
+al segnale grezzo). Controllo manuale supplementare fatto subito dopo:
+
+| Strategia | Baseline PF | In-sample PF (trade) | OOS PF (trade) |
+|---|---|---|---|
+| FVG_CONT/1wk | 3.15 | 2.41 (8tr) | 2.88 (**5tr**) |
+| MACD/1wk | 2.94 | 0.62 (8tr) | **None (0tr)** |
+
+La causa vera: **25 trade totali su W1 si spezzano in 8/5 o 8/0 con lo
+split 60/40** — troppo pochi per QUALUNQUE verdetto, non solo per la
+ricerca di parametri. Non possiamo ancora sapere se FVG_CONT/MACD hanno
+un vantaggio vero o sono i prossimi "PF spettacolare su campione
+minuscolo" (lezione #4) — serve più storico per allargare quei 25 trade
+a un numero validabile, la stessa richiesta esplicita che ha motivato il
+punto successivo.
+
+### Avvio storico esteso via Dukascopy (risposta a "serve una finestra
+### più ampia")
+
+Yahoo limita H1/H4 a ~1.74 anni osservati (causa nota del "confondimento
+di regime", lezioni #10/#18) — nessun export MT5 disponibile da questo
+ambiente. Trovato e riattivato `server/dukascopy_fetch.py` (già presente
+in repo da un tentativo precedente, mai portato a termine): scarica tick
+gratuiti Dukascopy senza API key, aggregati a candele M15 da cui si
+ricampiona H1/H4/M30 (stesso schema di `_resample_4h`).
+
+Verificato: **il 2022 non è raggiungibile da questo ambiente** (timeout
+SSL sistematico su ogni ora testata, anche con retry) — **il 2023 in poi
+sì**. Avviato un fetch in background da 2023-01-01 a oggi (~3.5 anni,
+circa il doppio dello storico attuale). Il primo tentativo è fallito
+dopo il primissimo giorno per un 503 non gestito (un'ora fallita faceva
+crollare l'intero fetch multi-anno) — corretto `dukascopy_fetch.py`
+(`fetch_day_ticks`) perché un'ora persa dopo i retry venga loggata e
+trattata come vuota, non interrompa il resto. Fetch rilanciato, gira in
+background (richiede diverse ore data la granularità tick-by-tick) — al
+termine va ricostruita la pipeline di lettura di `backtest.py` per usare
+questa cache locale invece di/oltre a Yahoo sui timeframe intraday, poi
+ripetuti i test più rilevanti (in primis FVG_CONT/MACD, TURTLE_SOUP/
+SILVER_BULLET per il confondimento di regime) sulla finestra nuova.
+
 244 test verdi.
