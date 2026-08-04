@@ -2352,7 +2352,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
                  confirm_bars=0, loss_cooldown_bars=0,
                  spread_price=0.0, commission_r=0.0, slippage_price=0.0,
-                 strategy_profiles=None, bar_range=None, session_filter=None):
+                 strategy_profiles=None, bar_range=None, session_filter=None,
+                 pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -2387,6 +2388,29 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # all'uscita SL/TIME (anch'esse a mercato, quindi soggette a slittare),
     # MAI alla TP (ordine limite: si presume riempito al prezzo richiesto o
     # meglio, come nella prassi broker reale). Convertito in R come spread.
+    # 04/08 (12) - pyramid_max_legs/pyramid_r/pyramid_risk_mult: piramidazione
+    # SUL PROFITTO (Fase 7, richiesta esplicita dall'utente - "voglio anche
+    # in esposizione sul profitto"). Default pyramid_max_legs=0 (disattivo,
+    # comportamento IDENTICO a prima - una sola gamba, stesso pnl/r di
+    # sempre). Se >0: ogni volta che il prezzo avanza di pyramid_r x R
+    # (sul rischio ORIGINALE, la stessa "riga" usata per MAE/MFE) oltre
+    # l'ultima gamba aggiunta, si apre una nuova gamba (fino a
+    # pyramid_max_legs extra), ciascuna con la propria size (equity al
+    # momento x risk_pct x pyramid_risk_mult) e il proprio rischio
+    # (distanza dal SUO entry allo SL CORRENTE nel momento in cui viene
+    # aggiunta - se lo SL e' gia' stato spostato a breakeven/trailing,
+    # quella gamba puo' avere un rischio molto piu' piccolo, o quasi nullo,
+    # della prima). Tutte le gambe condividono lo stesso SL/TP della
+    # posizione originale e si chiudono insieme allo stesso evento di
+    # uscita - non e' un motore multi-posizione indipendente, e' size
+    # variabile sulla STESSA idea di trade. Nessuna esclusione hard-coded
+    # per strategia: e' un meccanismo di gestione posizione generico,
+    # indipendente da come nasce il segnale - su strategie con TP stretto
+    # (es. SCALP_*, molte SLTP strutturali con target vicino) semplicemente
+    # non scatta mai perche' il prezzo esce prima di raggiungere il primo
+    # livello di piramide, non serve una lista nera per "non applicarlo
+    # dove non ha senso": la meccanica stessa lo esclude quando non c'e'
+    # spazio.
     # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
     # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
     # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
@@ -2453,6 +2477,24 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
                 pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
                 pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
+            # --- PYRAMIDING SUL PROFITTO (opt-in, default off - vedi nota
+            # sui parametri sopra): puo' aggiungere piu' di una gamba sulla
+            # stessa barra se l'escursione hi/lo la attraversa. ---
+            if pos["next_pyramid_level"] is not None:
+                extreme = hi if pos["dir"] == 1 else lo
+                while len(pos["legs"]) - 1 < pyramid_max_legs and (
+                        (pos["dir"] == 1 and extreme >= pos["next_pyramid_level"]) or
+                        (pos["dir"] == -1 and extreme <= pos["next_pyramid_level"])):
+                    leg_entry = pos["next_pyramid_level"]
+                    leg_risk_dist = abs(leg_entry - pos["sl"])
+                    if leg_risk_dist <= 0:
+                        break
+                    pos["legs"].append({
+                        "entry": leg_entry,
+                        "risk_money": equity * (risk_pct / 100.0) * pyramid_risk_mult,
+                        "risk_dist": leg_risk_dist,
+                    })
+                    pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
             # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
             # (04/08: usa l'override per-strategia se presente, altrimenti il
             # parametro globale - vedi nota strategy_profiles sopra)
@@ -2488,31 +2530,43 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 hit = ("TIME", px)
             if hit:
                 reason, exitpx = hit
-                # R sul RISCHIO ORIGINALE (lo SL puo' essere stato spostato a BE/trail).
-                rd = pos["risk_dist"] if pos["risk_dist"] > 0 else 1e-9
-                r_mult = ((exitpx - pos["entry"]) / rd) if pos["dir"] == 1 \
-                    else ((pos["entry"] - exitpx) / rd)
-                # Costi di realismo (31/07): spread convertito in R sul rischio di
-                # QUESTO trade (pesa di piu' su SL stretti), commissione gia' in R.
-                spread_r = (spread_price / rd) if spread_price > 0 else 0.0
-                # Slippage: sull'entry (sempre a mercato) + sull'uscita SE a
-                # mercato (SL/TIME). La TP (ordine limite) non slitta contro
-                # di noi - assunzione standard broker.
-                slip_r = 0.0
-                if slippage_price > 0:
-                    slip_r = slippage_price / rd   # entry, sempre
-                    if reason in ("SL", "TIME"):
-                        slip_r += slippage_price / rd   # uscita a mercato
-                r_mult_net = r_mult - spread_r - commission_r - slip_r
-                pnl = round(r_mult_net * pos["risk_money"], 2)
+                # Somma su tutte le gambe (1 sola se pyramid_max_legs=0 -
+                # stesso identico risultato di prima, bit per bit: legs
+                # contiene un solo elemento uguale a entry/risk_money/
+                # risk_dist originali). Ogni gamba ha il proprio rischio
+                # (congelato al momento in cui e' stata aperta) e paga i
+                # costi di realismo separatamente sul SUO risk_dist -
+                # stessa convenzione gia' in uso ("pesa di piu' su SL
+                # stretti"), qui applicata gamba per gamba perche' ognuna
+                # e' a tutti gli effetti un fill separato.
+                total_pnl = 0.0
+                total_gross_pnl = 0.0
+                total_risk_money = 0.0
+                for leg in pos["legs"]:
+                    rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
+                    r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
+                        else ((leg["entry"] - exitpx) / rd)
+                    spread_r = (spread_price / rd) if spread_price > 0 else 0.0
+                    slip_r = 0.0
+                    if slippage_price > 0:
+                        slip_r = slippage_price / rd
+                        if reason in ("SL", "TIME"):
+                            slip_r += slippage_price / rd
+                    r_mult_net = r_mult - spread_r - commission_r - slip_r
+                    total_pnl += r_mult_net * leg["risk_money"]
+                    total_gross_pnl += r_mult * leg["risk_money"]
+                    total_risk_money += leg["risk_money"]
+                pnl = round(total_pnl, 2)
                 equity += pnl
+                r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                r_gross_blended = (total_gross_pnl / total_risk_money) if total_risk_money > 0 else 0.0
                 trades.append({
                     "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
                     "side": "BUY" if pos["dir"] == 1 else "SELL",
                     "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                    "pnl": pnl, "r": round(r_mult_net, 2), "r_gross": round(r_mult, 2),
+                    "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
                     "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
-                    "reason": reason,
+                    "reason": reason, "legs": len(pos["legs"]),
                     "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
                 })
                 curve.append({"i": i, "equity": round(equity, 2),
@@ -2592,11 +2646,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                                     sl_mult=eff_sl, pick=dynamic_tp_pick)
                 if dyn_tp is not None:
                     tp = dyn_tp
+            risk_dist0 = abs(px - sl)
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
                    "risk_money": risk_money, "strat": who,
-                   "risk_dist": abs(px - sl), "mae_r": 0.0, "mfe_r": 0.0,
+                   "risk_dist": risk_dist0, "mae_r": 0.0, "mfe_r": 0.0,
                    "breakeven_r": prof.get("breakeven_r", breakeven_r),
-                   "trailing_atr": prof.get("trailing_atr", trailing_atr)}
+                   "trailing_atr": prof.get("trailing_atr", trailing_atr),
+                   "legs": [{"entry": px, "risk_money": risk_money, "risk_dist": risk_dist0}],
+                   "next_pyramid_level": (
+                       px + sig * pyramid_r * risk_dist0
+                       if pyramid_max_legs > 0 and risk_dist0 > 0 else None)}
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
