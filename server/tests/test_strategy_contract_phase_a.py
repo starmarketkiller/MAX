@@ -103,9 +103,17 @@ def test_collisions_are_declared_for_every_shared_research_function(live):
         if r["research_function"]:
             by_func.setdefault(r["research_function"], []).append(r["strategy_id"])
     shared = {fn: sorted(ids) for fn, ids in by_func.items() if len(ids) > 1}
+    # 04/08 - LONDON_BO/WEEKLY_EXP non e' piu' una collisione: erano proxy
+    # generici (sig_breakout) che nascondevano due strategie MQL5 reali
+    # DIVERSE (NXS_Strat_LondonBO: breakout sessione Londra del range
+    # asiatico con filtro CLV; NXS_Strat_WeeklyRangeExp: sconto/premio
+    # settimanale + displacement H4/BOS/CHoCH+Fibonacci) - verificato
+    # riga-per-riga e implementate separatamente (sig_london_bo/
+    # sig_weekly_exp in backtest.py). Non un'unione di id, una correzione
+    # di fedelta': erano gia' due strategie indipendenti, il motore le
+    # trattava per errore come la stessa.
     assert shared == {
         "sig_bollinger": ["BOLLINGER", "RANGE_FADE"],
-        "sig_breakout": ["LONDON_BO", "WEEKLY_EXP"],
         "sig_ob_mit": ["SH_BMS_RTO", "SMS_BMS_RTO"],
     }
     for r in live:
@@ -121,7 +129,7 @@ def test_collision_group_counts_as_one_signal_generator(live):
             continue
         key = "+".join(sorted([r["strategy_id"]] + coll["partners"]))
         groups.setdefault(key, []).append(coll["counts_as_independent_signal_generator"])
-    assert len(groups) == 3
+    assert len(groups) == 2   # 04/08: LONDON_BO/WEEKLY_EXP non e' piu' una collisione, vedi sopra
     for key, flags in groups.items():
         assert sum(1 for f in flags if f) == 1, key
     # gli id NON vengono fusi: restano tutti e 37

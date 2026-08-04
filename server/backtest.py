@@ -373,6 +373,7 @@ def _prep(candles):
     atr_s = atr_series(candles, 14)
     sess = _session_amd_series(candles)
     sb_signal, sb_sweep_level = _silver_bullet_series(candles, sess, atr_s)
+    weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
     return {
         "candles": candles,
         "close": closes,
@@ -396,6 +397,7 @@ def _prep(candles):
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
+        "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
     }
 
 
@@ -459,6 +461,124 @@ def sig_breakout(c, ind, i, n=20):
     if px < ll:
         return -1
     return 0
+
+
+def _weekly_levels_series(candles):
+    """Per ogni barra: (PWH, PWL della settimana civile PRECEDENTE gia'
+    completata, apertura della settimana CORRENTE) - nessun look-ahead,
+    la settimana precedente e' sempre gia' conclusa quando la si legge."""
+    from datetime import datetime
+    n = len(candles)
+    week_key = [None] * n
+    for i, cd in enumerate(candles):
+        d = datetime.strptime(cd["time"].split(" ")[0], "%Y-%m-%d")
+        week_key[i] = d.isocalendar()[:2]   # (iso_year, iso_week)
+
+    week_hi, week_lo, week_open = {}, {}, {}
+    for i, cd in enumerate(candles):
+        wk = week_key[i]
+        week_hi[wk] = max(week_hi.get(wk, -1e18), cd["high"])
+        week_lo[wk] = min(week_lo.get(wk, 1e18), cd["low"])
+        if wk not in week_open:
+            week_open[wk] = cd["open"]
+
+    weeks_sorted = sorted(week_hi.keys())
+    prev_week = {wk: weeks_sorted[idx - 1] for idx, wk in enumerate(weeks_sorted) if idx > 0}
+
+    pwh, pwl, wopen = [None] * n, [None] * n, [None] * n
+    for i in range(n):
+        wk = week_key[i]
+        pw = prev_week.get(wk)
+        if pw is not None:
+            pwh[i], pwl[i] = week_hi.get(pw), week_lo.get(pw)
+        wopen[i] = week_open.get(wk)
+    return pwh, pwl, wopen
+
+
+def sig_london_bo(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_LondonBO
+    # (MQL5 reale): prima "LONDON_BO" e "WEEKLY_EXP" condividevano lo
+    # stesso proxy generico sig_breakout() (rottura di un massimo/minimo a
+    # 20 barre qualsiasi, nessun gate sessione, nessun filtro) - le due
+    # strategie MQL5 vere sono completamente diverse (vedi sig_weekly_exp
+    # sotto), la "collisione" era un artefatto del motore, non della realta'.
+    # Vera logica: gate sessione LONDON, rottura del range ASIATICO (non un
+    # massimo/minimo qualsiasi a 20 barre), corpo minimo 0.5xATR, buffer
+    # 0.15xATR oltre il livello, Close Location Value >= 0.6 (chiusura
+    # vicina all'estremo della barra = convinzione, non un tocco marginale).
+    sess = ind["sess"]
+    if sess["session"][i] != "LONDON":
+        return 0
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    cur = c[i]
+    o1, c1, h1, l1 = cur["open"], cur["close"], cur["high"], cur["low"]
+    body1 = abs(c1 - o1)
+    range1 = h1 - l1
+    if body1 < atr * 0.5 or range1 <= 0:
+        return 0
+    clv_up = (c1 - l1) / range1
+    clv_down = (h1 - c1) / range1
+    if c1 > ah + atr * 0.15 and clv_up >= 0.6:
+        return 1
+    if c1 < al - atr * 0.15 and clv_down >= 0.6:
+        return -1
+    return 0
+
+
+def sig_weekly_exp(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_WeeklyRangeExp
+    # (MQL5 reale, girato su H4): sconto/premio rispetto al midpoint della
+    # settimana PRECEDENTE (PWH/PWL), displacement H4 (corpo>=0.8xATR H4)
+    # che rompe uno swing H4 a 15 barre (BOS), reclaim dell'apertura della
+    # settimana CORRENTE, CHoCH di conferma - non un semplice breakout a 20
+    # barre come faceva il proxy condiviso con LONDON_BO prima.
+    pwh, pwl, wopen = ind["weekly_pwh"][i], ind["weekly_pwl"][i], ind["weekly_open"][i]
+    if pwh is None or pwl is None or wopen is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr or i < 15:
+        return 0
+    cur = c[i]
+    o1, c1 = cur["open"], cur["close"]
+    if abs(c1 - o1) < atr * 0.8:
+        return 0
+    window = c[i - 15:i]
+    swing_hi = max(x["high"] for x in window)
+    swing_lo = min(x["low"] for x in window)
+    w_mid = (pwh + pwl) / 2.0
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if c1 < w_mid and c1 > o1 and c1 > swing_hi and c1 > wopen and choch_up:
+        return 1
+    if c1 > w_mid and c1 < o1 and c1 < swing_lo and c1 < wopen and choch_down:
+        return -1
+    return 0
+
+
+def _weekly_exp_sl_tp(c, ind, i, direction, entry, atr):
+    pwh, pwl = ind["weekly_pwh"][i], ind["weekly_pwl"][i]
+    if pwh is None or pwl is None:
+        return None
+    leg = pwh - pwl
+    if direction == 1:
+        sl = min(pwl, entry - 1.5 * atr)
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        fib1272 = pwh + 0.272 * leg
+        tp = max(pwh, fib1272, entry + 2.6 * risk)
+        return sl, tp
+    sl = max(pwh, entry + 1.5 * atr)
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    fib1272 = pwl - 0.272 * leg
+    tp = min(pwl, fib1272, entry - 2.6 * risk)
+    return sl, tp
 
 
 def sig_breakout_acc(c, ind, i, n=20):
@@ -1664,6 +1784,7 @@ def sig_scalp_range_brk(c, ind, i, n=12):
 STRATEGY_SLTP_ALWAYS = {
     "AMD_CONT": _amd_cont_sl_tp,
     "SILVER_BULLET": _silver_bullet_sl_tp,
+    "WEEKLY_EXP": _weekly_exp_sl_tp,
 }
 
 
@@ -1682,7 +1803,7 @@ STRATEGIES = {
     "BB_SQUEEZE": sig_bb_squeeze,
     "TSI": sig_tsi,
     "ICHIMOKU": sig_ichimoku,
-    "LONDON_BO": sig_breakout,        # breakout-based proxy
+    "LONDON_BO": sig_london_bo,        # 04/08: fedele a NXS_Strat_LondonBO (prima proxy generico)
     "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
     # --- strutturali / SMC (nuove, v2.2.8) ---
     "SAR": sig_sar,
@@ -1703,7 +1824,7 @@ STRATEGIES = {
     # chi iterava STRATEGIES e confrontava con il registro concludeva che
     # THREE_BAR_DELIVERY_BREAK non avesse implementazione research. Ce l'ha.
     "THREE_BAR_DELIVERY_BREAK": sig_cisd,
-    "WEEKLY_EXP": sig_breakout,       # range expansion proxy
+    "WEEKLY_EXP": sig_weekly_exp,      # 04/08: fedele a NXS_Strat_WeeklyRangeExp (prima condivideva sig_breakout con LONDON_BO)
     "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
     "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
     "SMS_BMS_RTO": sig_ob_mit,        # proxy

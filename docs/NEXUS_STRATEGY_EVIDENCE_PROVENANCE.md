@@ -83,7 +83,7 @@ Tutte girano. Nessuna ha una passata isolata.
 | `JUDAS_SWING` | 29 | — | `sig_judas_swing` | — | 1 | 0 |
 | `LDN_REVERSAL` | 30 | — | `sig_ldn_reversal` | — | 1 | 1 |
 | `LIQ_VOID` | 34 | H4 | `sig_fvg_cont` | — | 1 | 2 |
-| `LONDON_BO` | 10 | D1 | `sig_breakout` | WEEKLY_EXP | 1 | 2 |
+| `LONDON_BO` | 10 | D1 | `sig_london_bo` | — | 1 | 2 |
 | `MALAYSIAN_SNR` | 26 | D1 | `sig_malaysian_snr` | — | 3 | 2 |
 | `NY_REVERSAL` | 31 | — | `sig_ny_reversal` | — | 1 | 2 |
 | `OB_MIT` | 20 | D1 | `sig_ob_mit_ext` | — | 2 | 2 |
@@ -98,7 +98,7 @@ Tutte girano. Nessuna ha una passata isolata.
 | `STRUCT_REACT` | 16 | H1 | `sig_struct_react` | — | 1 | 0 |
 | `THREE_BAR_DELIVERY_BREAK` | 27 | H4 | `sig_cisd` | — | 1 | 2 |
 | `TURTLE_SOUP` | 17 | H1 | `sig_turtle_soup` | — | 0 | 0 |
-| `WEEKLY_EXP` | 32 | D1 | `sig_breakout` | LONDON_BO | 1 | 2 |
+| `WEEKLY_EXP` | 32 | D1 | `sig_weekly_exp` | — | 1 | 2 |
 
 ---
 

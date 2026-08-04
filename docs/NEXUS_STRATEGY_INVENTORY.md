@@ -12,7 +12,7 @@
 | Misurate sul round corrente | 8 |
 | Con dato surrogato | 1 |
 | Mai misurate | 28 |
-| Collisioni di implementazione | 6 |
+| Collisioni di implementazione | 4 |
 | Conflitti fra stato dichiarato e codice | 2 |
 
 ## Fonti
@@ -61,7 +61,7 @@ Legenda: **Sel** indice di isolamento · **TF** timeframe dichiarato
 | 16 | `LDN_REVERSAL` | SESSION | 30 | `InpUseStrat_LdnReversal`=T | — | `sig_ldn_reversal` | UNKNOWN | — |
 | 17 | `LIQ_SWEEP` | LIQUIDITY | 7 | `InpStrat_LIQ_SWEEP`=T | D1 | `sig_liq_sweep_ext` | **MEASURED** | — |
 | 18 | `LIQ_VOID` | SMC | 34 | `InpUseStrat_LiqVoid`=T | H4 | `sig_fvg_cont` | UNKNOWN | — |
-| 19 | `LONDON_BO` | TREND | 10 | `InpStrat_LONDON_BO`=T | D1 | `sig_breakout` | UNKNOWN | WEEKLY_EXP |
+| 19 | `LONDON_BO` | TREND | 10 | `InpStrat_LONDON_BO`=T | D1 | `sig_london_bo` | UNKNOWN | — |
 | 20 | `MACD` | MOMENTUM | 3 | `InpStrat_MACD`=T | H4 | `sig_macd` | **MEASURED** | — |
 | 21 | `MALAYSIAN_SNR` | LIQUIDITY | 26 | `InpStrat_MalaysianSNR`=T | D1 | `sig_malaysian_snr` | UNKNOWN | — |
 | 22 | `NY_REVERSAL` | SESSION | 31 | `InpUseStrat_NYReversal`=T | — | `sig_ny_reversal` | UNKNOWN | — |
@@ -79,7 +79,7 @@ Legenda: **Sel** indice di isolamento · **TF** timeframe dichiarato
 | 34 | `THREE_BAR_DELIVERY_BREAK` | LIQUIDITY | 27 | `InpUseStrat_CISD`=T | H4 | `sig_cisd` | UNKNOWN | — |
 | 35 | `TSI` | MOMENTUM | 5 | `InpStrat_TSI`=T | D1 | `sig_tsi` | **MEASURED** | — |
 | 36 | `TURTLE_SOUP` | LIQUIDITY | 17 | `InpStrat_TurtleSoup`=T | H1 | `sig_turtle_soup` | UNKNOWN | — |
-| 37 | `WEEKLY_EXP` | SESSION | 32 | `InpUseStrat_WeeklyExp`=T | D1 | `sig_breakout` | UNKNOWN | LONDON_BO |
+| 37 | `WEEKLY_EXP` | SESSION | 32 | `InpUseStrat_WeeklyExp`=T | D1 | `sig_weekly_exp` | UNKNOWN | — |
 
 ### Research-only (non live)
 
@@ -107,7 +107,6 @@ collisione e' `UNRESOLVED`, il gruppo vale **un solo generatore di segnali**.
 | Gruppo | Funzione condivisa | Rappresentante | Classificazione |
 |---|---|---|---|
 | BOLLINGER ≡ RANGE_FADE | `sig_bollinger` | `BOLLINGER` | PENDING_OWNER_REVIEW |
-| LONDON_BO ≡ WEEKLY_EXP | `sig_breakout` | `LONDON_BO` | PENDING_OWNER_REVIEW |
 | SH_BMS_RTO ≡ SMS_BMS_RTO | `sig_ob_mit` | `SH_BMS_RTO` | PENDING_OWNER_REVIEW |
 
 ## Proxy dichiarati
@@ -118,11 +117,11 @@ la funzione research usata coincide con quella del bersaglio dichiarato?
 | Strategia | Proxy dichiarato di | Funzione usata | Coincide col bersaglio |
 |---|---|---|---|
 | `LIQ_VOID` | `FVG_CONT` | `sig_fvg_cont` | **no** |
-| `LONDON_BO` | `BREAKOUT_ACC` | `sig_breakout` | **no** |
+| `LONDON_BO` | `BREAKOUT_ACC` | `sig_london_bo` | **no** |
 | `RANGE_FADE` | `BOLLINGER` | `sig_bollinger` | sì |
 | `SH_BMS_RTO` | `OB_MIT` | `sig_ob_mit` | **no** |
 | `SMS_BMS_RTO` | `OB_MIT` | `sig_ob_mit` | **no** |
-| `WEEKLY_EXP` | `BREAKOUT_ACC` | `sig_breakout` | **no** |
+| `WEEKLY_EXP` | `BREAKOUT_ACC` | `sig_weekly_exp` | **no** |
 
 ## Collegamenti
 

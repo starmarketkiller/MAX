@@ -18,7 +18,7 @@ export const STRATEGY_REGISTRY = [
   ["LDN_REVERSAL","Ldn Reversal","SESSION",true,true,"UNKNOWN",null,false,[],null],
   ["LIQ_SWEEP","Liq Sweep","LIQUIDITY",true,true,"MEASURED","sweep37-baseline-e6ce816",false,[],null],
   ["LIQ_VOID","Liq Void","SMC",true,true,"UNKNOWN",null,false,[],"FVG_CONT"],
-  ["LONDON_BO","London Bo","TREND",true,true,"UNKNOWN",null,true,["WEEKLY_EXP"],"BREAKOUT_ACC"],
+  ["LONDON_BO","London Bo","TREND",true,true,"UNKNOWN",null,false,[],"BREAKOUT_ACC"],
   ["MACD","MACD","MOMENTUM",true,true,"MEASURED","sweep37-baseline-e6ce816",false,[],null],
   ["MALAYSIAN_SNR","Malaysian Snr","LIQUIDITY",true,true,"UNKNOWN",null,false,[],null],
   ["NY_REVERSAL","Ny Reversal","SESSION",true,true,"UNKNOWN",null,false,[],null],
@@ -40,7 +40,7 @@ export const STRATEGY_REGISTRY = [
   ["THREE_BAR_DELIVERY_BREAK","Three-Bar Delivery Break (CISD)","LIQUIDITY",true,true,"UNKNOWN",null,false,[],null],
   ["TSI","True Strength Index","MOMENTUM",true,true,"MEASURED","sweep37-baseline-e6ce816",false,[],null],
   ["TURTLE_SOUP","Turtle Soup","LIQUIDITY",true,true,"UNKNOWN",null,false,[],null],
-  ["WEEKLY_EXP","Weekly Exp","SESSION",true,true,"UNKNOWN",null,true,["LONDON_BO"],"BREAKOUT_ACC"],
+  ["WEEKLY_EXP","Weekly Exp","SESSION",true,true,"UNKNOWN",null,false,[],"BREAKOUT_ACC"],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation, evidence_status, evidence_source_round, has_collision, collision_partners, proxy_for]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
   evidence_status, evidence_source_round, has_collision, collision_partners, proxy_for,

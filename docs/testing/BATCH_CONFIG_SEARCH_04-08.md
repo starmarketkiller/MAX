@@ -80,3 +80,47 @@ pronte:
 - Fase 9/10 (punteggio, decisione, diario)
 - Gli stessi due rischi aperti di AMD_CONT/SILVER_BULLET: fedeltà motore
   Python vs MQL5 reale (mai verificata), storico H4/W1 corto (limite Yahoo)
+
+## Aggiornamento 04/08 — LONDON_BO/WEEKLY_EXP corrette, verdetto PASS superato
+
+Verifica di fedeltà (ordine deciso con l'utente: fedeltà prima di tutto,
+non dopo un deep-dive): `LONDON_BO` e `WEEKLY_EXP` condividevano lo stesso
+proxy generico `sig_breakout` (rottura di un massimo/minimo a 20 barre
+qualsiasi) — la "collisione" documentata nel registro non era un caso
+d'uso reale, erano due strategie MQL5 **completamente diverse**:
+
+- `NXS_Strat_LondonBO`: breakout H4 del range asiatico durante la sessione
+  di Londra, con corpo minimo 0.5×ATR, buffer 0.15×ATR oltre il livello,
+  Close Location Value ≥ 0.6 (convinzione della chiusura, non un tocco
+  marginale).
+- `NXS_Strat_WeeklyRangeExp`: sconto/premio rispetto al midpoint della
+  settimana precedente (PWH/PWL), displacement H4 (corpo≥0.8×ATR H4) con
+  Break of Structure su uno swing H4 a 15 barre, reclaim dell'apertura
+  della settimana corrente, CHoCH di conferma, target Fibonacci 1.272.
+
+Implementate separatamente (`sig_london_bo`, `sig_weekly_exp` in
+`backtest.py`, con `_weekly_exp_sl_tp` per il vero SL/TP strutturale di
+WEEKLY_EXP — SL da PWH/PWL, TP dal massimo tra livello strutturale,
+estensione Fibonacci 1.272 e 2.6×R). Registro (`contracts/strategy-
+registry.json`) e documentazione rigenerati di conseguenza (collisioni
+6→4, poi 4 confermate dopo la rigenerazione — non più 3, LONDON_BO/
+WEEKLY_EXP non condividono più funzione).
+
+**Il verdetto "PASS" del batch precedente per LONDON_BO/WEEKLY_EXP è
+superato** — era calcolato sul proxy condiviso, non sulle strategie vere.
+Ri-baseline onesto (parametri di default):
+
+| Strategia | TF | PF | Trade | WR% | MaxDD% |
+|---|---|---|---|---|---|
+| LONDON_BO | H4 | 0.84 | 83 | 32.5 | 24.58 |
+| LONDON_BO | H1 | 1.22 | 38 | 42.1 | 7.39 |
+| WEEKLY_EXP | H4 | 0.16 | 5 | 20.0 | 4.11 |
+| WEEKLY_EXP | H1 | 0.40 | 8 | 25.0 | 2.56 |
+
+(D1 dà zero trade per entrambe: la sessione di Londra e il gate BOS H4
+non si distinguono su barre giornaliere — atteso, non un bug.)
+
+LONDON_BO su H1 (PF1.22/38 trade) è l'unico risultato con un campione
+minimamente utilizzabile, comunque sotto la soglia di affidabilità
+(MIN_BASELINE_TRADES=25 usata nel batch, qui sotto). WEEKLY_EXP è debole
+e su campioni troppo piccoli ovunque (5-8 trade) per dire alcunché.

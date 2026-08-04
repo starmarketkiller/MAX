@@ -19,7 +19,7 @@
     "evidence_measured": 8,
     "evidence_surrogate": 1,
     "evidence_unknown": 28,
-    "implementation_collisions": 6,
+    "implementation_collisions": 4,
     "declaration_conflicts": 2
   },
   "strategies": [
@@ -736,26 +736,9 @@
       "research_parity": "PROXY",
       "proxy_for": "BREAKOUT_ACC",
       "proxy_target_shares_function": false,
-      "research_function": "sig_breakout",
-      "research_shared_with": [
-        "WEEKLY_EXP"
-      ],
-      "implementation_collision": {
-        "kind": "IMPLEMENTATION_COLLISION",
-        "status": "UNRESOLVED",
-        "classification": "PENDING_OWNER_REVIEW",
-        "candidate_classifications": [
-          "INTENTIONAL_ALIAS",
-          "DISTINCT_CONCEPT_PROXY_IMPL",
-          "ACCIDENTAL_DUPLICATE",
-          "INCOMPLETE_PLACEHOLDER"
-        ],
-        "shared_function": "sig_breakout",
-        "partners": [
-          "WEEKLY_EXP"
-        ],
-        "counts_as_independent_signal_generator": true
-      },
+      "research_function": "sig_london_bo",
+      "research_shared_with": [],
+      "implementation_collision": null,
       "supported_symbols": null,
       "supported_timeframes": [
         "D1"
@@ -1628,26 +1611,9 @@
       "research_parity": "PROXY",
       "proxy_for": "BREAKOUT_ACC",
       "proxy_target_shares_function": false,
-      "research_function": "sig_breakout",
-      "research_shared_with": [
-        "LONDON_BO"
-      ],
-      "implementation_collision": {
-        "kind": "IMPLEMENTATION_COLLISION",
-        "status": "UNRESOLVED",
-        "classification": "PENDING_OWNER_REVIEW",
-        "candidate_classifications": [
-          "INTENTIONAL_ALIAS",
-          "DISTINCT_CONCEPT_PROXY_IMPL",
-          "ACCIDENTAL_DUPLICATE",
-          "INCOMPLETE_PLACEHOLDER"
-        ],
-        "shared_function": "sig_breakout",
-        "partners": [
-          "LONDON_BO"
-        ],
-        "counts_as_independent_signal_generator": false
-      },
+      "research_function": "sig_weekly_exp",
+      "research_shared_with": [],
+      "implementation_collision": null,
       "supported_symbols": null,
       "supported_timeframes": [
         "D1"
