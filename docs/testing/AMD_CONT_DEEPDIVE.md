@@ -78,6 +78,39 @@ aumentati (PF 1.47 out-of-sample stress). Non è un caso di "edge sparito" —
 **Prosegue in Fase 5** (Money Management) con i parametri di baseline
 (SL 1.5×ATR, TP 3.0×ATR, nessun toggle d'ingresso) — non con `confirm_bars=1`.
 
-## Fase 5-10
+## Fase 5 — Money Management (position sizing)
+
+Unica leva del motore: `risk_pct` (rischio % fisso-frazionario, compounda
+sull'equity corrente). Sweep a parità di tutto il resto (baseline Fase 4):
+
+| risk_pct | PF | Return% | MaxDD% | Return/DD | Equity finale (da 10.000) |
+|---|---|---|---|---|---|
+| 0.25% | 1.65 | 5.84 | 1.65 | 3.54 | 10.584 |
+| 0.5% | 1.64 | 11.92 | 3.28 | 3.63 | 11.192 |
+| 0.75% | 1.63 | 18.24 | 4.88 | 3.74 | 11.824 |
+| 1.0% | 1.62 | 24.81 | 6.47 | 3.83 | 12.481 |
+| 1.5% | 1.60 | 38.68 | 9.56 | 4.05 | 13.868 |
+| 2.0% | 1.58 | 53.54 | 12.58 | 4.26 | 15.354 |
+| 3.0% | 1.55 | 86.25 | 18.35 | 4.70 | 18.625 |
+| 4.0% | 1.51 | 122.82 | 23.81 | 5.16 | 22.282 |
+| **5.0%** | **1.48** | **162.98** | **28.96** | 5.63 | 26.298 |
+
+Nota: PF cala leggermente e Return/DD sale con `risk_pct` più alto — effetto
+di compounding legato alla sequenza storica specifica di vincite/perdite di
+*questo* backtest, non una legge generale (una sequenza diversa potrebbe
+mostrare l'opposto). Non è un ottimo matematico: è una scelta di tolleranza
+al rischio, non qualcosa che il backtest "risolve" da solo.
+
+**Decisione dell'utente (04/08): `risk_pct = 5%`**, esplicitamente sopra la
+raccomandazione iniziale (1%, motivata da MaxDD 6.47% e dal fatto che
+AMD_CONT sarà una delle diverse strategie attive in parallelo, dove il
+rischio si somma). Segnalato prima di fissarlo: **MaxDD 28.96% isolato**
+significa un conto che scende quasi a 1/3 sotto il massimo nel punto peggiore
+di questi ~2 anni di dati — con una sola strategia attiva; con più strategie
+in parallelo allo stesso rischio, il rischio aggregato è più alto. Decisione
+registrata come scelta esplicita dell'utente sul proprio capitale, non come
+raccomandazione del motore.
+
+## Fase 6-10
 
 Da fare.
