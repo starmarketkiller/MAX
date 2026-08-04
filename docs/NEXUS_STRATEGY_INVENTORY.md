@@ -12,7 +12,7 @@
 | Misurate sul round corrente | 8 |
 | Con dato surrogato | 1 |
 | Mai misurate | 28 |
-| Collisioni di implementazione | 4 |
+| Collisioni di implementazione | 2 |
 | Conflitti fra stato dichiarato e codice | 2 |
 
 ## Fonti
@@ -72,9 +72,9 @@ Legenda: **Sel** indice di isolamento · **TF** timeframe dichiarato
 | 27 | `RANGE_FADE` | VOLATILITY | 37 | `InpUseStrat_RangeFade`=T | D1 | `sig_bollinger` | UNKNOWN | BOLLINGER |
 | 28 | `RSI_DIV` | MOMENTUM | 14 | `InpStrat_RSI_DIV`=T | H1 | `sig_rsi_div` | UNKNOWN | — |
 | 29 | `SAR` | MOMENTUM | 4 | `InpStrat_SAR`=T | H4 | `sig_sar` | ⚠️ SURROGATE | — |
-| 30 | `SH_BMS_RTO` | LIQUIDITY | 21 | `InpStrat_SH_BMS_RTO`=T | D1 | `sig_ob_mit` | UNKNOWN | SMS_BMS_RTO |
+| 30 | `SH_BMS_RTO` | LIQUIDITY | 21 | `InpStrat_SH_BMS_RTO`=T | D1 | `sig_sh_bms_rto` | UNKNOWN | — |
 | 31 | `SILVER_BULLET` | SESSION | 23 | `InpStrat_SilverBullet`=T | — | `sig_silver_bullet` | UNKNOWN | — |
-| 32 | `SMS_BMS_RTO` | LIQUIDITY | 22 | `InpStrat_SMS_BMS_RTO`=T | D1 | `sig_ob_mit` | UNKNOWN | SH_BMS_RTO |
+| 32 | `SMS_BMS_RTO` | LIQUIDITY | 22 | `InpStrat_SMS_BMS_RTO`=T | D1 | `sig_sms_bms_rto` | UNKNOWN | — |
 | 33 | `STRUCT_REACT` | LIQUIDITY | 16 | `InpUseStructReact`=T | H1 | `sig_struct_react` | UNKNOWN | — |
 | 34 | `THREE_BAR_DELIVERY_BREAK` | LIQUIDITY | 27 | `InpUseStrat_CISD`=T | H4 | `sig_cisd` | UNKNOWN | — |
 | 35 | `TSI` | MOMENTUM | 5 | `InpStrat_TSI`=T | D1 | `sig_tsi` | **MEASURED** | — |
@@ -107,7 +107,6 @@ collisione e' `UNRESOLVED`, il gruppo vale **un solo generatore di segnali**.
 | Gruppo | Funzione condivisa | Rappresentante | Classificazione |
 |---|---|---|---|
 | BOLLINGER ≡ RANGE_FADE | `sig_bollinger` | `BOLLINGER` | PENDING_OWNER_REVIEW |
-| SH_BMS_RTO ≡ SMS_BMS_RTO | `sig_ob_mit` | `SH_BMS_RTO` | PENDING_OWNER_REVIEW |
 
 ## Proxy dichiarati
 
@@ -119,8 +118,8 @@ la funzione research usata coincide con quella del bersaglio dichiarato?
 | `LIQ_VOID` | `FVG_CONT` | `sig_fvg_cont` | **no** |
 | `LONDON_BO` | `BREAKOUT_ACC` | `sig_london_bo` | **no** |
 | `RANGE_FADE` | `BOLLINGER` | `sig_bollinger` | sì |
-| `SH_BMS_RTO` | `OB_MIT` | `sig_ob_mit` | **no** |
-| `SMS_BMS_RTO` | `OB_MIT` | `sig_ob_mit` | **no** |
+| `SH_BMS_RTO` | `OB_MIT` | `sig_sh_bms_rto` | **no** |
+| `SMS_BMS_RTO` | `OB_MIT` | `sig_sms_bms_rto` | **no** |
 | `WEEKLY_EXP` | `BREAKOUT_ACC` | `sig_weekly_exp` | **no** |
 
 ## Collegamenti

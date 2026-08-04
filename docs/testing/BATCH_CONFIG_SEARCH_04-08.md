@@ -372,4 +372,80 @@ promozione, nessuna bocciatura — serve più storico (stesso limite Yahoo
 H4/H1 ~1.74 anni, ancora più severo qui per il gate di sessione che
 riduce ulteriormente le occasioni) prima di poter dire qualunque cosa.
 
+## Aggiornamento 04/08 (9) — ORDER_BLOCK, OB_MIT, SH_BMS_RTO, SMS_BMS_RTO
+## (la riscrittura più grande di questo giro)
+
+Il pezzo di lavoro più grande rimasto identificato: 4 strategie che nel
+proxy Python precedente erano segnali a barra singola (o condividevano
+tutte lo stesso proxy generico `sig_ob_mit`), mentre nel vero MQL5 sono
+2 famiglie di state machine multi-barra distinte, mai portate prima:
+
+- **ORDER_BLOCK/OB_MIT** (`NXS_OB_UpdateSide`, `NXS_Strategies.mqh`):
+  zona attiva con memoria fra barre — impulso (corpo≥1.2×ATR, 3-10 barre
+  fa) che ROMPE uno swing di riferimento a 15 barre pre-impulso (BOS, non
+  un impulso qualsiasi come faceva il proxy), zona di retest = ultima
+  candela di colore OPPOSTO prima dell'impulso (non il body dell'impulso
+  stesso), attesa fino a 20 barre di un ritorno con candela di rejection,
+  one-shot. **Scoperta di fedeltà aggiuntiva**: nel vero MQL5, OB_MIT non
+  ha una logica propria — `NXS_Strat_OB_Mitigation_Structural` è
+  letteralmente un wrapper che RIUSA `NXS_Strat_OrderBlock()` (stesso
+  `dir`, solo `score`/`reason`/nome diversi). Il proxy precedente le
+  aveva implementate come due funzioni DIVERSE (BOS a 5 barre per OB_MIT
+  contro 15 per ORDER_BLOCK) — ora `sig_ob_mit`/`sig_ob_mit_ext`
+  richiamano semplicemente `sig_order_block`/`sig_order_block_ext`, come
+  nel vero EA.
+- **SH_BMS_RTO** (`NXS_SHBMS_UpdateSide`, `NXS_Strategies_SMC.mqh`, già
+  riscritta come state machine nel codice MQL5 il 17/07, mai portata qui
+  prima d'ora): sequenza reale a 3 stadi IDLE→SWEPT→WAITING_RETURN —
+  sweep di liquidità (stesso rilevatore esteso PDH/PDL/Asia già usato da
+  TURTLE_SOUP) → entro 20 barre un vero MSS/BOS (corpo≥0.8×ATR che rompe
+  lo swing pre-sweep) → zona d'origine → attesa fino a 15 barre del primo
+  ritorno = entry. Il proxy precedente usava `sig_ob_mit`, la logica di
+  tutt'altra strategia (order block, non sweep+MSS+return).
+- **SMS_BMS_RTO** (`NXS_Strat_SMS_BMS_RTO`): a differenza di SH_BMS_RTO
+  NON è una state machine multi-barra — è un controllo composito sulla
+  STESSA barra (failure swing HL/LH sugli ultimi 10 vs 20 bar + CHoCH
+  strutturale opposto + candela di rejection + prezzo tornato nella metà
+  giusta del range). Anche questa condivideva `sig_ob_mit` nel proxy
+  precedente — logica completamente diversa da quella reale.
+
+Aggiunte 2 formule SL/TP strutturali a `STRATEGY_SLTP_ALWAYS`
+(`_shbms_sl_tp`, `_sms_bms_sl_tp` — entrambe TP a multiplo ATR fisso
+2.6×, non R-multiplo). ORDER_BLOCK/OB_MIT restano SENZA entry in quel
+dict: il vero MQL5 chiama `NXS_DefaultSLTP` generico per queste due, non
+ha una formula propria.
+
+**Limite di fedeltà dichiarato esplicitamente, non nascosto**: il vero
+MQL5 applica anche `NXS_SMCReactionOK` (motore "reazione" globale che
+scansiona TUTTE le zone OB/FVG attive dell'EA, `NXS_Reaction.mqh`) come
+filtro aggiuntivo sopra la candela di rejection già richiesta qui — è un
+sottosistema separato e ampio, condiviso fra più strategie, non
+riprodotto in questo giro. Stesso tipo di limite già accettato
+esplicitamente per NY_REVERSAL (M5 cross-TF).
+
+### Risultato onesto
+
+| Strategia | H4 | H1 | D1 | W1 | M30 | M15 |
+|---|---|---|---|---|---|---|
+| ORDER_BLOCK/OB_MIT (identici) | PF0.86/12tr | PF1.03/8tr | PF0.38/12tr | PF0.0/2tr | PF1.43/4tr | PF0.56/7tr |
+| SH_BMS_RTO | PF0.78/25tr | PF1.67/6tr | PF0.97/34tr | PF1.05/6tr | PF0.87/8tr | PF1.41/7tr |
+| SMS_BMS_RTO | PF0.0/2tr | 0tr | 0tr | 0tr | 0tr | PF0.0/1tr |
+
+**Confermato che ORDER_BLOCK==OB_MIT numericamente** dopo la correzione
+(stesso segnale, come nel vero MQL5) — prima erano diversi per via del
+bug di fedeltà, ora la riga H4/H1/D1/W1/M30/M15 è identica per entrambi,
+esattamente come atteso da un wrapper.
+
+Solo SH_BMS_RTO raggiunge un campione sopra soglia utilizzabile (H4 25tr,
+D1 34tr) — ma il risultato è onestamente negativo/piatto (PF 0.78-0.97),
+nessun edge trovato, non un artefatto di campione piccolo. ORDER_BLOCK/
+OB_MIT restano sotto soglia ovunque (max 12 trade) — la zona attiva è
+molto più selettiva del vecchio proxy (BOS a 15 barre reale, non un
+impulso qualsiasi). SMS_BMS_RTO è quasi silenziosa (0-2 trade su ogni
+TF) — il controllo composito a barra singola (failure swing + CHoCH +
+rejection + metà range) è estremamente raro nello storico disponibile,
+un dato di per sé (il vero setup SMC "SMS+BMS+RTO" è raro per
+costruzione, non un bug del motore). Nessuna promozione possibile per
+nessuna delle 4 — serve più storico, stesso limite di sempre.
+
 244 test verdi.

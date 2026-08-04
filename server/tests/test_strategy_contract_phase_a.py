@@ -112,9 +112,14 @@ def test_collisions_are_declared_for_every_shared_research_function(live):
     # sig_weekly_exp in backtest.py). Non un'unione di id, una correzione
     # di fedelta': erano gia' due strategie indipendenti, il motore le
     # trattava per errore come la stessa.
+    # 04/08 (2) - stesso schema per SH_BMS_RTO/SMS_BMS_RTO: condividevano
+    # sig_ob_mit come proxy generico "sweep+BOS+return", ma sono due
+    # strategie MQL5 reali diverse (NXS_SHBMS_UpdateSide: state machine a
+    # 3 stadi IDLE->SWEPT->WAITING_RETURN su piu' barre; NXS_Strat_SMS_BMS_RTO:
+    # controllo composito sulla stessa barra, failure swing+CHoCH+rejection)
+    # - implementate separatamente (sig_sh_bms_rto/sig_sms_bms_rto).
     assert shared == {
         "sig_bollinger": ["BOLLINGER", "RANGE_FADE"],
-        "sig_ob_mit": ["SH_BMS_RTO", "SMS_BMS_RTO"],
     }
     for r in live:
         assert bool(r["implementation_collision"]) == bool(r["research_shared_with"])
@@ -129,7 +134,7 @@ def test_collision_group_counts_as_one_signal_generator(live):
             continue
         key = "+".join(sorted([r["strategy_id"]] + coll["partners"]))
         groups.setdefault(key, []).append(coll["counts_as_independent_signal_generator"])
-    assert len(groups) == 2   # 04/08: LONDON_BO/WEEKLY_EXP non e' piu' una collisione, vedi sopra
+    assert len(groups) == 1   # 04/08 (2): SH_BMS_RTO/SMS_BMS_RTO non e' piu' una collisione, vedi sopra
     for key, flags in groups.items():
         assert sum(1 for f in flags if f) == 1, key
     # gli id NON vengono fusi: restano tutti e 37

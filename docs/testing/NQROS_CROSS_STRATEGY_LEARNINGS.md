@@ -203,3 +203,45 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     #6) qui pesa più che altrove. Non forzare una decisione (mantieni/
     archivia) quando il campione è sotto soglia: la risposta onesta è
     "serve più storico", non un PF calcolato su 2-3 trade.
+
+## Da ORDER_BLOCK, OB_MIT, SH_BMS_RTO, SMS_BMS_RTO (04/08)
+
+21. **Un proxy condiviso fra 2+ strategie diverse (lezione #16, tipo "proxy
+    generico condiviso") va cercato per NOME di funzione, non per
+    famiglia.** `sig_ob_mit` era usato da OB_MIT (il suo nome-strategia
+    "giusto"), ma ANCHE da SH_BMS_RTO e SMS_BMS_RTO — due strategie SMC
+    completamente diverse (una state machine a 3 stadi multi-barra,
+    l'altra un controllo composito a barra singola con failure swing) che
+    per pigrizia implementativa erano state fatte puntare allo stesso
+    segnale "sweep+BOS+return" generico. Il test di collisione
+    (`test_collisions_are_declared_for_every_shared_research_function`)
+    lo aveva già segnalato come collisione dichiarata da mesi — la
+    fedeltà l'ha finalmente risolta, non solo documentata.
+
+22. **Quando il vero MQL5 stesso dichiara che una strategia è un wrapper
+    di un'altra (OB_MIT = `NXS_Strat_OrderBlock()` riusata, solo
+    score/nome diversi), il Python deve rispecchiarlo letteralmente
+    (una funzione richiama l'altra), non reimplementare due volte la
+    stessa idea con dettagli leggermente diversi** — il proxy precedente
+    aveva OB_MIT con un BOS a 5 barre e ORDER_BLOCK con logica diversa,
+    divergenza che non esiste nel vero EA e che quindi era essa stessa
+    fonte di infedeltà, indipendentemente da quale delle due fosse "più
+    giusta".
+
+23. **Non tutte le fedeltà corrette producono un campione testabile, e
+    va bene così (rinforza lezione #20).** SMS_BMS_RTO fedele è quasi
+    silenziosa (0-2 trade su ogni TF): il vero setup ICT "failure
+    swing + BMS + return" è raro per costruzione (richiede un fallimento
+    di struttura seguito da un CHoCH E una rejection E un prezzo tornato
+    nella metà giusta, tutto sulla stessa barra) — non un sintomo di
+    codice rotto. Confermare che il conteggio-trade basso sia dovuto alla
+    selettività del vero setup (leggendo il codice) e non a un bug prima
+    di scartare la strategia come "inutilizzabile col motore".
+
+24. **Un filtro reale non riprodotto (qui: `NXS_SMCReactionOK`, un motore
+    "reazione" globale multi-strategia usato anche da OB_MIT/FVG) va
+    dichiarato esplicitamente come limite, non ignorato silenziosamente
+    — anche quando portarlo fedelmente richiederebbe un sottosistema
+    intero a parte** (qui: scansione di tutte le zone OB/FVG attive
+    dell'EA). Stesso principio già applicato a NY_REVERSAL (M5 cross-TF):
+    onestà sul limite > falsa precisione.

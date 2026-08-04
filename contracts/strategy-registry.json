@@ -19,7 +19,7 @@
     "evidence_measured": 8,
     "evidence_surrogate": 1,
     "evidence_unknown": 28,
-    "implementation_collisions": 4,
+    "implementation_collisions": 2,
     "declaration_conflicts": 2
   },
   "strategies": [
@@ -1311,26 +1311,9 @@
       "research_parity": "PROXY",
       "proxy_for": "OB_MIT",
       "proxy_target_shares_function": false,
-      "research_function": "sig_ob_mit",
-      "research_shared_with": [
-        "SMS_BMS_RTO"
-      ],
-      "implementation_collision": {
-        "kind": "IMPLEMENTATION_COLLISION",
-        "status": "UNRESOLVED",
-        "classification": "PENDING_OWNER_REVIEW",
-        "candidate_classifications": [
-          "INTENTIONAL_ALIAS",
-          "DISTINCT_CONCEPT_PROXY_IMPL",
-          "ACCIDENTAL_DUPLICATE",
-          "INCOMPLETE_PLACEHOLDER"
-        ],
-        "shared_function": "sig_ob_mit",
-        "partners": [
-          "SMS_BMS_RTO"
-        ],
-        "counts_as_independent_signal_generator": true
-      },
+      "research_function": "sig_sh_bms_rto",
+      "research_shared_with": [],
+      "implementation_collision": null,
       "supported_symbols": null,
       "supported_timeframes": [
         "D1"
@@ -1402,26 +1385,9 @@
       "research_parity": "PROXY",
       "proxy_for": "OB_MIT",
       "proxy_target_shares_function": false,
-      "research_function": "sig_ob_mit",
-      "research_shared_with": [
-        "SH_BMS_RTO"
-      ],
-      "implementation_collision": {
-        "kind": "IMPLEMENTATION_COLLISION",
-        "status": "UNRESOLVED",
-        "classification": "PENDING_OWNER_REVIEW",
-        "candidate_classifications": [
-          "INTENTIONAL_ALIAS",
-          "DISTINCT_CONCEPT_PROXY_IMPL",
-          "ACCIDENTAL_DUPLICATE",
-          "INCOMPLETE_PLACEHOLDER"
-        ],
-        "shared_function": "sig_ob_mit",
-        "partners": [
-          "SH_BMS_RTO"
-        ],
-        "counts_as_independent_signal_generator": false
-      },
+      "research_function": "sig_sms_bms_rto",
+      "research_shared_with": [],
+      "implementation_collision": null,
       "supported_symbols": null,
       "supported_timeframes": [
         "D1"

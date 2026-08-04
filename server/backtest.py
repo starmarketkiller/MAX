@@ -373,6 +373,8 @@ def _prep(candles):
     atr_s = atr_series(candles, 14)
     sess = _session_amd_series(candles)
     sb_signal, sb_sweep_level = _silver_bullet_series(candles, sess, atr_s)
+    ob_signal = _ob_series(candles, atr_s)
+    shbms_signal, shbms_ref = _shbms_series(candles, sess, atr_s)
     weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
@@ -400,6 +402,8 @@ def _prep(candles):
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
+        "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
+        "shbms_signal": shbms_signal, "shbms_ref": shbms_ref,  # precalcolato, vedi _shbms_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
     }
@@ -879,97 +883,44 @@ def sig_bjorgum(c, ind, i):
 
 
 def sig_order_block(c, ind, i):
-    # impulso (body>1.2 ATR) 3-10 barre fa, poi retest del body con rifiuto
-    atr = ind["atr"][i]
-    if not atr or i < 12:
-        return 0
-    for k in range(3, 11):
-        cd = c[i - k]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        if _bull(cd) and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_OB_UpdateSide (MQL5
+    # reale, condivisa da ORDER_BLOCK e OB_MIT - vedi sotto): il proxy
+    # precedente confondeva "candela impulso" con "zona d'origine" (usava
+    # il body dell'impulso come zona di retest) e non richiedeva un vero
+    # BOS (rottura di uno swing pre-impulso), solo un impulso qualsiasi.
+    # La vera logica e' una state machine su piu' barre (zona attiva,
+    # attesa fino a InpOB_MaxWaitBars barre di un ritorno + rejection) -
+    # precalcolata in ind["ob_signal"] (vedi _ob_series), come sb_signal.
+    return ind["ob_signal"][i]
 
 
 def sig_order_block_ext(c, ind, i):
-    # 16/07 - variante "esterna" (non un gate sullo stesso bar, una lente
-    # diversa sull'origine dell'impulso): richiede che la candela impulso
-    # sia nata mentre il trend ESTERNO (timeframe superiore reale,
-    # ind["choch_ext"]) era gia' nella stessa direzione - "questo blocco
-    # e' l'origine di una gamba strutturale vera", non un impulso qualsiasi.
-    atr = ind["atr"][i]
-    if not atr or i < 12:
+    # Fedele a NXS_Strat_OrderBlock: il vero MQL5 applica SEMPRE il filtro
+    # di trend H1 esterno (g_structH1.trend) sopra la zona OB di
+    # ind["ob_signal"] - non esiste una variante "senza" nel vero EA,
+    # sig_order_block (sopra) resta solo per confronto interno.
+    sig = ind["ob_signal"][i]
+    if sig == 0:
         return 0
-    ext_trend = ind["choch_ext"][0]
-    for k in range(3, 11):
-        idx = i - k
-        cd = c[idx]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        if _bull(cd) and ext_trend[idx] == 1 and cur["low"] <= top \
-                and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and ext_trend[idx] == -1 and cur["high"] >= bot \
-                and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    ext_trend = ind["choch_ext"][0][i]
+    if sig == 1 and ext_trend != 1:
+        return 0
+    if sig == -1 and ext_trend != -1:
+        return 0
+    return sig
 
 
 def sig_ob_mit(c, ind, i):
-    # order block CON displacement/BOS: l'impulso rompe lo swing a 5 barre
-    atr = ind["atr"][i]
-    if not atr or i < 14:
-        return 0
-    for k in range(3, 11):
-        cd = c[i - k]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        phi, plo = _hh(c, 5, i - k - 1), _ll(c, 5, i - k - 1)
-        if _bull(cd) and phi and cd["close"] > phi and cur["low"] <= top \
-                and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and plo and cd["close"] < plo and cur["high"] >= bot \
-                and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    # Fedele a NXS_Strat_OB_Mitigation_Structural: nel vero MQL5 OB_MIT e'
+    # un wrapper che RIUSA NXS_Strat_OrderBlock() cosi' com'e' (stesso dir,
+    # solo score/reason/nome diversi) - non una logica propria diversa
+    # come implementava il proxy precedente (BOS a 5 barre inline, diverso
+    # da quello vero a 15 barre di ORDER_BLOCK).
+    return sig_order_block(c, ind, i)
 
 
 def sig_ob_mit_ext(c, ind, i):
-    # 16/07 - variante "esterna": stessa logica di sig_ob_mit (impulso +
-    # BOS interno a 5 barre) con l'aggiunta del trend ESTERNO vero
-    # all'origine dell'impulso, stessa lente di sig_order_block_ext.
-    atr = ind["atr"][i]
-    if not atr or i < 14:
-        return 0
-    ext_trend = ind["choch_ext"][0]
-    for k in range(3, 11):
-        idx = i - k
-        cd = c[idx]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        phi, plo = _hh(c, 5, idx - 1), _ll(c, 5, idx - 1)
-        if _bull(cd) and phi and cd["close"] > phi and ext_trend[idx] == 1 \
-                and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and plo and cd["close"] < plo and ext_trend[idx] == -1 \
-                and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    return sig_order_block_ext(c, ind, i)
 
 
 def sig_fvg_cont(c, ind, i):
@@ -1990,6 +1941,244 @@ def _silver_bullet_sl_tp(c, ind, i, direction, entry, atr):
     return level + 0.6 * atr, entry - 2.8 * atr
 
 
+def _ob_series(candles, atr):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_OB_UpdateSide (MQL5
+    # reale, condivisa da ORDER_BLOCK e OB_MIT): un order block "vero" e'
+    # un impulso (body>=1.2xATR, 3-10 barre fa) che ROMPE uno swing di
+    # riferimento a 15 barre pre-impulso (BOS, non un impulso qualsiasi) -
+    # la zona di retest e' l'ultima candela di colore OPPOSTO prima
+    # dell'impulso (fino a 6 barre indietro, fallback l'impulso stesso se
+    # non trovata), NON il body dell'impulso come faceva il proxy
+    # precedente. Poi si aspetta un ritorno nella zona (fino a
+    # InpOB_MaxWaitBars=20 barre) con una candela di rejection - one-shot,
+    # la zona e' consumata al primo retest valido o alla scadenza/
+    # invalidazione. Precalcolato qui (come sb_signal) perche' la zona
+    # attiva ha memoria fra barre, cosa che le sig_*() stateless non
+    # supportano.
+    #
+    # Fedelta' PARZIALE dichiarata: il vero MQL5 applica anche
+    # NXS_SMCReactionOK (motore "reazione" globale che scansiona TUTTE le
+    # zone OB/FVG attive dell'EA, NXS_Reaction.mqh) come ulteriore filtro
+    # sopra la candela di rejection gia' richiesta qui - e' un sottosistema
+    # separato e ampio (multi-strategia, non specifico di OB), non
+    # riprodotto in questo giro. Stesso tipo di limite gia' accettato
+    # esplicitamente per NY_REVERSAL (M5 cross-TF).
+    SWING_LOOKBACK = 15   # InpOB_SwingLookback
+    MAX_WAIT = 20          # InpOB_MaxWaitBars
+    n = len(candles)
+    out_sig = [0] * n
+    st = {d: {"active": False, "lo": None, "hi": None, "bars_waited": 0} for d in (1, -1)}
+    for i in range(20, n):
+        a = atr[i]
+        if not a:
+            continue
+        for d in (1, -1):
+            s = st[d]
+            if not s["active"]:
+                for shift in range(3, 11):
+                    idx = i - (shift - 1)
+                    if idx - SWING_LOOKBACK < 0:
+                        continue
+                    cd = candles[idx]
+                    body = abs(cd["close"] - cd["open"])
+                    if body < 1.2 * a:
+                        continue
+                    right_color = (cd["close"] > cd["open"]) if d == 1 else (cd["close"] < cd["open"])
+                    if not right_color:
+                        continue
+                    window = candles[idx - SWING_LOOKBACK:idx]
+                    swing_ref = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                    bos = (cd["close"] > swing_ref) if d == 1 else (cd["close"] < swing_ref)
+                    if not bos:
+                        continue
+                    origin = cd
+                    for k in range(1, 7):
+                        idx2 = idx - k
+                        if idx2 < 0:
+                            break
+                        ck = candles[idx2]
+                        opposite = (ck["close"] < ck["open"]) if d == 1 else (ck["close"] > ck["open"])
+                        if opposite:
+                            origin = ck
+                            break
+                    s["lo"] = min(origin["open"], origin["close"])
+                    s["hi"] = max(origin["open"], origin["close"])
+                    s["active"], s["bars_waited"] = True, 0
+                    break
+                continue
+            s["bars_waited"] += 1
+            if s["bars_waited"] > MAX_WAIT:
+                s["active"] = False
+                continue
+            c1 = candles[i]["close"]
+            if (d == 1 and c1 < s["lo"]) or (d == -1 and c1 > s["hi"]):
+                s["active"] = False
+                continue
+            if s["hi"] is None or s["hi"] <= s["lo"]:
+                continue
+            lo_b, hi_b = candles[i]["low"], candles[i]["high"]
+            if hi_b < s["lo"] or lo_b > s["hi"]:
+                continue
+            o1 = candles[i]["open"]
+            rejection = (c1 > o1) if d == 1 else (c1 < o1)
+            if not rejection:
+                continue
+            out_sig[i] = d
+            s["active"] = False
+    return out_sig
+
+
+def _shbms_series(candles, sess, atr):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_SHBMS_UpdateSide
+    # (SH_BMS_RTO, MQL5 reale - gia' riscritta come state machine nel
+    # codice MQL5 il 17/07, mai portata qui: il proxy Python usava
+    # sig_ob_mit, una logica di TUTT'ALTRA strategia). Sequenza reale:
+    # sweep di liquidita' (stesso rilevatore esteso PDH/PDL/Asia gia' usato
+    # da TURTLE_SOUP) -> entro InpSHBMS_MaxMSSBars=20 barre, un vero
+    # MSS/BOS (corpo>=0.8xATR che rompe lo swing pre-sweep a 15 barre) ->
+    # zona d'origine (ultima candela di colore opposto prima dell'MSS,
+    # fallback l'MSS stesso) -> attesa del primo ritorno nella zona (fino
+    # a InpSHBMS_MaxWaitBars=15 barre) = entry. Vincolo causale
+    # sweep<MSS<retest garantito per costruzione (si avanza di stato solo
+    # su barre chiuse successive, mai sullo stesso "tick").
+    SWING_LOOKBACK = 15   # InpSHBMS_SwingLookback
+    MAX_MSS_BARS = 20      # InpSHBMS_MaxMSSBars
+    MAX_WAIT = 15           # InpSHBMS_MaxWaitBars
+    DISP_BODY_ATR = 0.8    # InpSHBMS_DispBodyATR
+    IDLE, SWEPT, WAITING = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_ref = [None] * n
+    st = {d: {"state": IDLE, "bars_waited": 0, "sweep_level": None,
+              "swing_ref": None, "origin_lo": None, "origin_hi": None} for d in (1, -1)}
+
+    for i in range(16, n):
+        a = atr[i]
+        if not a:
+            continue
+        sw = _sweep_ext_at(candles, sess, i)
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                if sw and sw["confirmed"] and sw["dir"] == d:
+                    window = candles[max(0, i - SWING_LOOKBACK):i]
+                    if not window:
+                        continue
+                    s["swing_ref"] = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                    s["sweep_level"] = sw["level"]
+                    s["state"], s["bars_waited"] = SWEPT, 0
+                continue
+            if s["state"] == SWEPT:
+                c1 = candles[i]["close"]
+                if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                    s["state"] = IDLE
+                    continue
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_MSS_BARS:
+                    s["state"] = IDLE
+                    continue
+                o1 = candles[i]["open"]
+                body1 = abs(c1 - o1)
+                if s["swing_ref"] is None:
+                    continue
+                mss = (c1 > s["swing_ref"] and body1 >= a * DISP_BODY_ATR) if d == 1 \
+                    else (c1 < s["swing_ref"] and body1 >= a * DISP_BODY_ATR)
+                if not mss:
+                    continue
+                origin = candles[i]
+                for k in range(1, 6):
+                    idx2 = i - k
+                    if idx2 < 0:
+                        break
+                    ck = candles[idx2]
+                    opposite = (ck["close"] < ck["open"]) if d == 1 else (ck["close"] > ck["open"])
+                    if opposite:
+                        origin = ck
+                        break
+                s["origin_lo"] = min(origin["open"], origin["close"])
+                s["origin_hi"] = max(origin["open"], origin["close"])
+                s["state"], s["bars_waited"] = WAITING, 0
+                continue
+            # WAITING_RETURN
+            s["bars_waited"] += 1
+            if s["bars_waited"] > MAX_WAIT:
+                s["state"] = IDLE
+                continue
+            c1 = candles[i]["close"]
+            if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                s["state"] = IDLE
+                continue
+            if s["origin_hi"] is None or s["origin_hi"] <= s["origin_lo"]:
+                continue
+            lo_b, hi_b = candles[i]["low"], candles[i]["high"]
+            if hi_b < s["origin_lo"] or lo_b > s["origin_hi"]:
+                continue
+            out_sig[i] = d
+            out_ref[i] = min(s["sweep_level"], s["origin_lo"]) if d == 1 else max(s["sweep_level"], s["origin_hi"])
+            s["state"] = IDLE
+    return out_sig, out_ref
+
+
+def sig_sh_bms_rto(c, ind, i):
+    return ind["shbms_signal"][i]
+
+
+def _shbms_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_SHBMS_UpdateSide: SL = min/max(sweepLevel, zona
+    # d'origine) -/+ 0.5xATR, TP a multiplo ATR FISSO (2.6x, via _smc_tp -
+    # non un R-multiplo dello stop).
+    ref = ind["shbms_ref"][i]
+    if ref is None:
+        return None
+    if direction == 1:
+        return ref - 0.5 * atr, entry + 2.6 * atr
+    return ref + 0.5 * atr, entry - 2.6 * atr
+
+
+def sig_sms_bms_rto(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SMS_BMS_RTO
+    # (MQL5 reale): a differenza di SH_BMS_RTO, NON e' una state machine
+    # multi-barra - e' un controllo composito sulla STESSA barra: failure
+    # swing (HL/LH: gli ultimi 10 bar non fanno un nuovo estremo rispetto
+    # ai 20 precedenti) + CHoCH strutturale nella direzione opposta al
+    # failure swing + candela di rejection + prezzo tornato nella meta'
+    # giusta del range [hi_recent..lo_recent]. Il proxy precedente
+    # condivideva sig_ob_mit (sweep+BOS generico) - logica completamente
+    # diversa da quella reale.
+    atr = ind["atr"][i]
+    if not atr or i < 30:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body_abs = abs(c1 - o1)
+    rejection_bull = c1 > o1 and body_abs > atr * 0.3
+    rejection_bear = c1 < o1 and body_abs > atr * 0.3
+    win_a = c[i - 9:i + 1]      # shift 1..10 (piu' recente)
+    win_b = c[i - 29:i - 9]     # shift 11..30 (precedente)
+    hi_recent, lo_recent = max(x["high"] for x in win_a), min(x["low"] for x in win_a)
+    hi_older, lo_older = max(x["high"] for x in win_b), min(x["low"] for x in win_b)
+    failure_low = lo_recent > lo_older    # HL = fallito un nuovo minimo
+    failure_high = hi_recent < hi_older   # LH = fallito un nuovo massimo
+    mid = (hi_recent + lo_recent) / 2
+    choch_up, choch_down = ind["choch_int"][1], ind["choch_int"][2]
+    bid = c1
+    if failure_low and choch_up[i] and rejection_bull and bid <= mid:
+        return 1
+    if failure_high and choch_down[i] and rejection_bear and bid >= mid:
+        return -1
+    return 0
+
+
+def _sms_bms_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_SMS_BMS_RTO: SL dall'estremo recente (10 barre)
+    # -/+ 0.5xATR, TP a multiplo ATR FISSO (2.6x).
+    win_a = c[i - 9:i + 1]
+    if direction == 1:
+        lo_recent = min(x["low"] for x in win_a)
+        return lo_recent - 0.5 * atr, entry + 2.6 * atr
+    hi_recent = max(x["high"] for x in win_a)
+    return hi_recent + 0.5 * atr, entry - 2.6 * atr
+
+
 # --------------------------------------------------------------------------- #
 # SCALP / profit-taker (v2.3.0) - pensate per M15/M30: ingressi veloci, TP
 # stretto. Registrate nel motore per l'ottimizzazione multi-TF sui TF bassi.
@@ -2077,7 +2266,13 @@ STRATEGY_SLTP_ALWAYS = {
     "JUDAS_SWING": _judas_swing_sl_tp,
     "LDN_REVERSAL": _ldn_reversal_sl_tp,
     "NY_REVERSAL": _ny_reversal_sl_tp,
+    "SH_BMS_RTO": _shbms_sl_tp,
+    "SMS_BMS_RTO": _sms_bms_sl_tp,
 }
+# ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
+# chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una
+# formula strutturale propria (a differenza delle altre strategie in questo
+# dict).
 
 
 # Strategie con logica Python reale (le altre usano i risultati reali importati)
@@ -2118,8 +2313,8 @@ STRATEGIES = {
     "THREE_BAR_DELIVERY_BREAK": sig_cisd,
     "WEEKLY_EXP": sig_weekly_exp,      # 04/08: fedele a NXS_Strat_WeeklyRangeExp (prima condivideva sig_breakout con LONDON_BO)
     "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
-    "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
-    "SMS_BMS_RTO": sig_ob_mit,        # proxy
+    "SH_BMS_RTO": sig_sh_bms_rto,      # 04/08: fedele a NXS_SHBMS_UpdateSide (prima proxy sig_ob_mit)
+    "SMS_BMS_RTO": sig_sms_bms_rto,    # 04/08: fedele a NXS_Strat_SMS_BMS_RTO (prima proxy sig_ob_mit)
     # --- strategie a sessione (16/07) - richiedono candele intraday reali ---
     "AMD_CONT": sig_amd_cont,
     "AMD_REVERSAL": sig_amd_reversal,

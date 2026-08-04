@@ -92,9 +92,9 @@ Tutte girano. Nessuna ha una passata isolata.
 | `PO3` | 33 | — | `sig_po3` | — | 1 | 0 |
 | `RANGE_FADE` | 37 | D1 | `sig_bollinger` | BOLLINGER | 3 | 2 |
 | `RSI_DIV` | 14 | H1 | `sig_rsi_div` | — | 1 | 0 |
-| `SH_BMS_RTO` | 21 | D1 | `sig_ob_mit` | SMS_BMS_RTO | 1 | 2 |
+| `SH_BMS_RTO` | 21 | D1 | `sig_sh_bms_rto` | — | 1 | 2 |
 | `SILVER_BULLET` | 23 | — | `sig_silver_bullet` | — | 1 | 2 |
-| `SMS_BMS_RTO` | 22 | D1 | `sig_ob_mit` | SH_BMS_RTO | 1 | 0 |
+| `SMS_BMS_RTO` | 22 | D1 | `sig_sms_bms_rto` | — | 1 | 0 |
 | `STRUCT_REACT` | 16 | H1 | `sig_struct_react` | — | 1 | 0 |
 | `THREE_BAR_DELIVERY_BREAK` | 27 | H4 | `sig_cisd` | — | 1 | 2 |
 | `TURTLE_SOUP` | 17 | H1 | `sig_turtle_soup` | — | 0 | 0 |
