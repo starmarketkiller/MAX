@@ -1545,7 +1545,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  htf_filter=False, trend_period=50,
                  breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
-                 confirm_bars=0, loss_cooldown_bars=0):
+                 confirm_bars=0, loss_cooldown_bars=0,
+                 spread_price=0.0, commission_r=0.0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1559,6 +1560,22 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # loss_cooldown_bars: cooldown applicato SOLO dopo un'uscita in perdita
     # vera (pnl<0) - un'uscita a breakeven/trailing (pnl>=0) non blocca il
     # rientro immediato, indipendente dal cooldown_bars generico sopra.
+    # 31/07 - due leve di realismo mai presenti prima (11_BACKTEST_CAPABILITY_MATRIX.md
+    # elencava "spread/commission/slippage: Missing" come difetto): a
+    # spread_price=0/commission_r=0 (default, invariato) il comportamento e'
+    # identico a prima.
+    # spread_price: spread in unita' di prezzo grezzo (es. 0.30 per XAUUSD a
+    # $0.30) applicato UNA VOLTA per trade round-trip (convenzione
+    # semplificata: costa quanto attraversare bid/ask una volta, non due
+    # meta' separate su entry+exit) - convertito in R dividendo per
+    # risk_dist del trade specifico, cosi' pesa di piu' sugli SL stretti
+    # (dove infatti pesa di piu' anche nella realta').
+    # commission_r: costo fisso in multipli di R per round-trip, alternativa
+    # semplice a una % sul nozionale - questo motore lavora in R-multipli
+    # astratti (risk_money), non in lotti/nozionale reali, quindi una
+    # percentuale di commissione avrebbe bisogno di un valore-lotto che qui
+    # non esiste; un costo fisso in R e' l'approssimazione onesta compatibile
+    # con l'astrazione esistente, non una simulazione di commissione vera.
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
@@ -1592,6 +1609,17 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         if pos:
             hi, lo = candles[i]["high"], candles[i]["low"]
             risk_dist = pos["risk_dist"]
+            # --- MAE/MFE: massima escursione avversa/favorevole in R, sul
+            # rischio ORIGINALE (non su uno SL spostato da BE/trailing) -
+            # serve a distinguere "stop troppo stretto/rumore" (MAE vicino a
+            # 1R su un trade poi comunque perdente o addirittura vincente)
+            # da "segnale genuinamente sbagliato" (MAE piccola prima di
+            # andare in perdita), invece di indovinarlo.
+            if risk_dist > 0:
+                adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
+                favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
+                pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
             # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
             if breakeven_r > 0 and risk_dist > 0:
                 prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
@@ -1627,13 +1655,19 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 rd = pos["risk_dist"] if pos["risk_dist"] > 0 else 1e-9
                 r_mult = ((exitpx - pos["entry"]) / rd) if pos["dir"] == 1 \
                     else ((pos["entry"] - exitpx) / rd)
-                pnl = round(r_mult * pos["risk_money"], 2)
+                # Costi di realismo (31/07): spread convertito in R sul rischio di
+                # QUESTO trade (pesa di piu' su SL stretti), commissione gia' in R.
+                spread_r = (spread_price / rd) if spread_price > 0 else 0.0
+                r_mult_net = r_mult - spread_r - commission_r
+                pnl = round(r_mult_net * pos["risk_money"], 2)
                 equity += pnl
                 trades.append({
                     "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
                     "side": "BUY" if pos["dir"] == 1 else "SELL",
                     "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                    "pnl": pnl, "r": round(r_mult, 2), "reason": reason,
+                    "pnl": pnl, "r": round(r_mult_net, 2), "r_gross": round(r_mult, 2),
+                    "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
+                    "reason": reason,
                     "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
                 })
                 curve.append({"i": i, "equity": round(equity, 2),
@@ -1692,7 +1726,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     tp = dyn_tp
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
                    "risk_money": risk_money, "strat": who,
-                   "risk_dist": abs(px - sl)}
+                   "risk_dist": abs(px - sl), "mae_r": 0.0, "mfe_r": 0.0}
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
@@ -1718,6 +1752,12 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         sd = math.sqrt(var)
         sharpe = mean / sd if sd > 1e-9 else 0.0
     n = len(trades)
+    # 31/07 - MAE medio dei perdenti: diagnostica "stop troppo stretto/rumore"
+    # (MAE vicino a 1R = stop quasi giusto, sfiorato) vs "segnale sbagliato"
+    # (MAE piccola prima di andare comunque in perdita) - vedi commento nel loop.
+    loss_maes = [t["mae_r"] for t in losses if "mae_r" in t]
+    avg_loss_mae_r = round(sum(loss_maes) / len(loss_maes), 2) if loss_maes else None
+    near_miss_losses = sum(1 for m in loss_maes if m >= 0.85)   # MAE quasi a 1R = quasi salvato
     return {
         "demo": False, "data_source": src, "symbol": symbol, "timeframe": tf,
         "strategies": strat_list,
@@ -1732,21 +1772,38 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         "expectancy_r": round(sum(t["r"] for t in trades) / n, 3) if n else 0,
         "max_dd_pct": round(maxdd, 2),
         "sharpe": round(sharpe, 2),
+        "avg_loss_mae_r": avg_loss_mae_r,
+        "near_miss_loss_pct": round(near_miss_losses / len(losses) * 100, 1) if losses else None,
         "equity_curve": curve,
         "trade_list": trades[-200:],
     }
 
 
-def optimize(symbol="XAUUSD", strategy="ADX_RSI", **kw):
+def optimize(symbol="XAUUSD", strategy="ADX_RSI", sweep_management=False, **kw):
+    # 31/07 - griglia SL/TP invariata di default (stesso comportamento di
+    # prima). sweep_management=True aggiunge breakeven_r/trailing_atr, gia'
+    # accettati da run_backtest ma mai spazzolati qui - 3x3x3x3=81 run invece
+    # di 9, usare con giudizio (ogni run e' cache-friendly sullo stesso feed,
+    # ma comunque piu' lento).
+    be_grid = (0.0, 1.0, 1.5) if sweep_management else (0.0,)
+    trail_grid = (0.0, 1.5, 2.5) if sweep_management else (0.0,)
     results = []
     for sl in (1.0, 1.5, 2.0):
         for tp in (2.0, 3.0, 4.0):
-            r = run_backtest(symbol=symbol, strategy=strategy, atr_sl=sl, atr_tp=tp)
-            results.append({"atr_sl": sl, "atr_tp": tp, "profit_factor": r["profit_factor"],
-                            "net_pnl": r["net_pnl"], "win_rate": r["win_rate"],
-                            "max_dd_pct": r["max_dd_pct"], "trades": r["trades"]})
+            for be in be_grid:
+                for trail in trail_grid:
+                    r = run_backtest(symbol=symbol, strategy=strategy, atr_sl=sl, atr_tp=tp,
+                                     breakeven_r=be, trailing_atr=trail, **kw)
+                    row = {"atr_sl": sl, "atr_tp": tp, "profit_factor": r["profit_factor"],
+                           "net_pnl": r["net_pnl"], "win_rate": r["win_rate"],
+                           "max_dd_pct": r["max_dd_pct"], "trades": r["trades"]}
+                    if sweep_management:
+                        row["breakeven_r"] = be
+                        row["trailing_atr"] = trail
+                    results.append(row)
     ranked = sorted(results, key=lambda x: (x["profit_factor"] or 0), reverse=True)
     return {"demo": False, "symbol": symbol, "strategy": strategy,
+            "sweep_management": sweep_management,
             "results": ranked, "best": ranked[0] if ranked else None}
 
 
