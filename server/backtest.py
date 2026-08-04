@@ -1610,11 +1610,12 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             hi, lo = candles[i]["high"], candles[i]["low"]
             risk_dist = pos["risk_dist"]
             # --- MAE/MFE: massima escursione avversa/favorevole in R, sul
-            # rischio ORIGINALE (non su uno SL spostato da BE/trailing) -
-            # serve a distinguere "stop troppo stretto/rumore" (MAE vicino a
-            # 1R su un trade poi comunque perdente o addirittura vincente)
-            # da "segnale genuinamente sbagliato" (MAE piccola prima di
-            # andare in perdita), invece di indovinarlo.
+            # rischio ORIGINALE (non su uno SL spostato da BE/trailing).
+            # Nota (31/07): il MAE da solo NON distingue "stop troppo
+            # stretto" da "segnale sbagliato" per i trade usciti in SL - e'
+            # quasi sempre >= 1R per costruzione. E' il MFE dei perdenti
+            # (quanto erano andati a favore prima di girare) il segnale
+            # diagnostico utile - vedi _metrics().
             if risk_dist > 0:
                 adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
                 favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
@@ -1752,12 +1753,19 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         sd = math.sqrt(var)
         sharpe = mean / sd if sd > 1e-9 else 0.0
     n = len(trades)
-    # 31/07 - MAE medio dei perdenti: diagnostica "stop troppo stretto/rumore"
-    # (MAE vicino a 1R = stop quasi giusto, sfiorato) vs "segnale sbagliato"
-    # (MAE piccola prima di andare comunque in perdita) - vedi commento nel loop.
-    loss_maes = [t["mae_r"] for t in losses if "mae_r" in t]
-    avg_loss_mae_r = round(sum(loss_maes) / len(loss_maes), 2) if loss_maes else None
-    near_miss_losses = sum(1 for m in loss_maes if m >= 0.85)   # MAE quasi a 1R = quasi salvato
+    # 31/07 - corretto un mio errore di analisi durante il primo run reale di
+    # prova: il MAE di un trade uscito in SL e' quasi tautologicamente >= 1R
+    # (per finire in perdita lo stop DEVE essere stato toccato, cioe' il
+    # prezzo E' andato contro di ~1R per definizione) - "vicino al MAE" non
+    # distingue nulla, viene ~100% su qualunque strategia. Il segnale utile
+    # e' il MFE dei perdenti: quanto il prezzo era andato A FAVORE prima di
+    # girare e stoppare. MFE alto (vicino al target) = trade quasi vincente,
+    # rigirato - un trailing/TP piu' vicino potrebbe aiutare. MFE vicino a 0
+    # = il trade era sbagliato fin dall'inizio, nessun aggiustamento di
+    # uscita lo salva.
+    loss_mfes = [t["mfe_r"] for t in losses if "mfe_r" in t]
+    avg_loss_mfe_r = round(sum(loss_mfes) / len(loss_mfes), 2) if loss_mfes else None
+    near_miss_losses = sum(1 for m in loss_mfes if m >= 0.5)   # arrivato a meta' strada verso un 1:1 prima di girare
     return {
         "demo": False, "data_source": src, "symbol": symbol, "timeframe": tf,
         "strategies": strat_list,
@@ -1772,7 +1780,7 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         "expectancy_r": round(sum(t["r"] for t in trades) / n, 3) if n else 0,
         "max_dd_pct": round(maxdd, 2),
         "sharpe": round(sharpe, 2),
-        "avg_loss_mae_r": avg_loss_mae_r,
+        "avg_loss_mfe_r": avg_loss_mfe_r,
         "near_miss_loss_pct": round(near_miss_losses / len(losses) * 100, 1) if losses else None,
         "equity_curve": curve,
         "trade_list": trades[-200:],

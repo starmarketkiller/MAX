@@ -40,12 +40,16 @@ The code explicitly describes strategy logic as Python re-implementations rather
 - constant positive-R series can produce zero due to zero standard deviation;
 - drawdown ignores open-position floating loss;
 - PnL is modeled from R × risk money, without broker contract details;
-- MAE/MFE (`mae_r`/`mfe_r` per trade, `avg_loss_mae_r`/`near_miss_loss_pct`
-  in the summary, added 31/07) are tracked from bar high/low while a
-  position is open, on the ORIGINAL risk distance (not a moved BE/trailing
-  stop) — the bar that triggers the stop is included in the MAE calculation
-  for that trade, which can make MAE slightly exceed 1R (bar-based
-  approximation, not intrabar-sequenced).
+- MAE/MFE (`mae_r`/`mfe_r` per trade, added 31/07) are tracked from bar
+  high/low while a position is open, on the ORIGINAL risk distance (not a
+  moved BE/trailing stop). MAE alone is not diagnostic for SL-exit trades:
+  it is tautologically ~1R for any trade that exits on a stop (the stop
+  price, by definition, requires ~1R of adverse movement to be touched) —
+  a design mistake caught by inspecting real output before it shipped as a
+  claimed insight, fixed same day. The useful summary field is
+  `avg_loss_mfe_r` / `near_miss_loss_pct`: how far losing trades moved in
+  favor before reversing, which does distinguish "nearly a winner, got
+  stopped by a reversal" from "wrong from the start."
 
 ## Strategy parity caveats
 
