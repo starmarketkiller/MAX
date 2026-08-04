@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""
+Applica meccanicamente la disciplina NQROS v3.1 usata a mano su AMD_CONT e
+SILVER_BULLET a tutte le strategie sopravvissute alla Fase 1
+(multi_tf_baseline.py): baseline -> toggle uno alla volta (htf_filter,
+confirm_bars) -> SL/TP/breakeven/trailing uno alla volta -> combinazione
+dichiarata dei singoli vincitori -> ri-validazione Out-of-Sample (60/40).
+
+Non sostituisce un deep-dive completo (Fase 0/2/9/10 restano manuali, qui
+c'e' solo la parte meccanizzabile: 1/3/5/6/8-lite/4). Ogni strategia
+ottiene un verdetto: PASS (il gate OOS regge), MARGINALE (regge ma con
+degrado vistoso o campione sotto soglia), FAIL (crolla fuori campione o
+baseline gia' negativa).
+
+Esegui dalla root del repo: python3 server/research_scripts/find_all_configs.py
+"""
+import sys
+import time
+sys.path.insert(0, "server")
+import backtest as bt
+
+MIN_TRADES = 15
+COSTS = bt.COST_PRESETS["retail_standard"]
+STRESS = bt.COST_PRESETS["stress"]
+
+# Strategie/TF da multi_tf_baseline.py (04/08) con PF baseline > 1.0 sul
+# miglior TF - le negative su ogni TF (LIQ_SWEEP, RSI_DIV, BOLLINGER/
+# RANGE_FADE, MALAYSIAN_SNR, LDN_REVERSAL, STRUCT_REACT, AMD_REVERSAL,
+# JUDAS_SWING) sono escluse: nessun parametro di gestione trasforma un
+# segnale senza edge in uno con edge. AMD_CONT e SILVER_BULLET gia' fatte
+# a mano (deep-dive dedicato), escluse qui.
+CANDIDATES = {
+    "FVG_CONT": "1wk", "MACD": "1wk", "THREE_BAR_DELIVERY_BREAK": "4h",
+    "IFVG": "4h", "LONDON_BO": "1wk", "WEEKLY_EXP": "1wk", "LIQ_VOID": "1wk",
+    "ADX_RSI": "1wk", "SAR": "1wk", "TSI": "1wk", "OB_MIT": "1d",
+    "OTE_CONT": "1d", "SH_BMS_RTO": "1wk", "SMS_BMS_RTO": "1wk",
+    "FVG_MIT": "4h", "ORDER_BLOCK": "1wk", "ICHIMOKU": "1h", "PO3": "4h",
+    "BJORGUM": "4h", "TURTLE_SOUP": "1h", "NY_REVERSAL": "1h",
+}
+
+
+MIN_BASELINE_TRADES = 25   # cosi' i due tagli OOS hanno >=10 trade ciascuno
+MIN_OOS_TRADES = 10        # per lato (in-sample e out-of-sample)
+MAX_DECLARED_PARAMS = 2    # come fatto a mano su AMD_CONT/SILVER_BULLET: al
+                            # massimo un toggle + UN parametro di gestione,
+                            # mai impilare 4-5 cose insieme senza controllo
+
+
+def process(strategy, tf):
+    common = dict(symbol="XAUUSD", strategy=strategy, timeframe=tf, **COSTS)
+    baseline = bt.run_backtest(**common, atr_sl=1.5, atr_tp=3.0)
+    if baseline["profit_factor"] is None or baseline["trades"] < MIN_BASELINE_TRADES:
+        return {"strategy": strategy, "tf": tf, "verdict": "SKIP",
+                "reason": f"baseline sotto {MIN_BASELINE_TRADES} trade ({baseline['trades']})"}
+    base_pf = baseline["profit_factor"]
+
+    declared = {}  # parametro -> valore vincente (tipi primitivi, non dict)
+
+    # Fase 3: toggle uno alla volta (al massimo UNO entra nella combinazione)
+    toggle_wins = []
+    for name, kw in [("htf_filter", {"htf_filter": True}), ("confirm_bars", {"confirm_bars": 1})]:
+        r = bt.run_backtest(**common, atr_sl=1.5, atr_tp=3.0, **kw)
+        if r["profit_factor"] is not None and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            toggle_wins.append((name, kw, r["profit_factor"]))
+    if toggle_wins:
+        toggle_wins.sort(key=lambda x: x[2], reverse=True)
+        best_name, best_kw, _ = toggle_wins[0]
+        declared[best_name] = best_kw[best_name]
+
+    base_kw = dict(common)
+    if "htf_filter" in declared:
+        base_kw["htf_filter"] = True
+    if "confirm_bars" in declared:
+        base_kw["confirm_bars"] = declared["confirm_bars"]
+
+    # Fase 6: SL/TP/breakeven/trailing uno alla volta - candidati raccolti,
+    # ma solo il SINGOLO migliore (per PF, a campione sufficiente) entra
+    # nella combinazione finale, non tutti insieme.
+    mgmt_candidates = []
+    for v in (1.0, 2.0, 2.5, 3.0):
+        r = bt.run_backtest(**base_kw, atr_sl=v, atr_tp=3.0)
+        if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            mgmt_candidates.append(("atr_sl", v, r["profit_factor"]))
+    for v in (2.0, 4.0, 5.0):
+        r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=v)
+        if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            mgmt_candidates.append(("atr_tp", v, r["profit_factor"]))
+    for v in (1.0, 1.5, 2.0):
+        r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, breakeven_r=v)
+        if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            mgmt_candidates.append(("breakeven_r", v, r["profit_factor"]))
+    for v in (2.0, 2.5):
+        r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, trailing_atr=v)
+        if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            mgmt_candidates.append(("trailing_atr", v, r["profit_factor"]))
+
+    if mgmt_candidates:
+        mgmt_candidates.sort(key=lambda x: x[2], reverse=True)
+        pname, pval, _ = mgmt_candidates[0]
+        declared[pname] = pval
+
+    if len(declared) > MAX_DECLARED_PARAMS:
+        # non dovrebbe succedere (max 1 toggle + 1 mgmt = 2), ma per sicurezza
+        declared = dict(list(declared.items())[:MAX_DECLARED_PARAMS])
+
+    if not declared:
+        return {"strategy": strategy, "tf": tf, "baseline_pf": base_pf, "verdict": "FAIL",
+                "reason": "nessun parametro batte la baseline con campione sufficiente", "declared": {}}
+
+    final_kw = dict(common)
+    final_kw.update(declared)
+    if "atr_sl" not in final_kw:
+        final_kw["atr_sl"] = 1.5
+    if "atr_tp" not in final_kw:
+        final_kw["atr_tp"] = 3.0
+
+    combo = bt.run_backtest(**final_kw)
+    if combo["profit_factor"] is None or combo["trades"] < MIN_BASELINE_TRADES:
+        return {"strategy": strategy, "tf": tf, "baseline_pf": base_pf, "verdict": "FAIL",
+                "reason": "combinazione sotto soglia trade", "declared": declared}
+
+    # Fase 4: ri-validazione OOS della combinazione (stesso rigore, sempre)
+    oos_kw = {k: v for k, v in final_kw.items() if k not in ("spread_price", "commission_r", "slippage_price")}
+    is_r = bt.run_backtest(**oos_kw, bar_range=(0.0, 0.6), **COSTS)
+    oos_r = bt.run_backtest(**oos_kw, bar_range=(0.6, 1.0), **COSTS)
+    oos_stress = bt.run_backtest(**oos_kw, bar_range=(0.6, 1.0), **STRESS)
+
+    verdict, reason = "FAIL", ""
+    if oos_r["profit_factor"] is None or oos_r["trades"] < MIN_OOS_TRADES or is_r["trades"] < MIN_OOS_TRADES:
+        reason = f"campione OOS troppo piccolo (in={is_r['trades']}, out={oos_r['trades']}, soglia={MIN_OOS_TRADES})"
+        verdict = "MARGINALE"
+    elif oos_r["profit_factor"] < 1.0:
+        reason = "PF crolla sotto 1.0 fuori campione"
+        verdict = "FAIL"
+    elif oos_r["profit_factor"] > 3.0:
+        reason = "PF OOS sopra 3.0 - troppo bello per fidarsi senza revisione manuale, anche a campione sufficiente"
+        verdict = "MARGINALE"
+    elif is_r["profit_factor"] and oos_r["profit_factor"] < is_r["profit_factor"] * 0.6:
+        reason = "degrado OOS >40% relativo, sospetto overfitting"
+        verdict = "MARGINALE"
+    else:
+        reason = "regge OOS"
+        verdict = "PASS"
+
+    return {
+        "strategy": strategy, "tf": tf, "baseline_pf": base_pf, "combo_pf": combo["profit_factor"],
+        "combo_trades": combo["trades"], "declared": declared,
+        "is_pf": is_r["profit_factor"], "is_trades": is_r["trades"],
+        "oos_pf": oos_r["profit_factor"], "oos_trades": oos_r["trades"],
+        "oos_stress_pf": oos_stress["profit_factor"],
+        "verdict": verdict, "reason": reason,
+    }
+
+
+def main():
+    t0 = time.time()
+    results = []
+    for i, (strat, tf) in enumerate(sorted(CANDIDATES.items()), 1):
+        try:
+            res = process(strat, tf)
+        except Exception as e:
+            res = {"strategy": strat, "tf": tf, "verdict": "ERRORE", "reason": str(e)[:100]}
+        results.append(res)
+        print(f"[{i}/{len(CANDIDATES)}] {strat} -> {res['verdict']} ({time.time()-t0:.1f}s)", flush=True)
+
+    order = {"PASS": 0, "MARGINALE": 1, "FAIL": 2, "SKIP": 3, "ERRORE": 4}
+    results.sort(key=lambda r: (order.get(r["verdict"], 9), -(r.get("combo_pf") or 0)))
+
+    print("\n" + "=" * 130)
+    for r in results:
+        print(f"\n{r['strategy']} ({r['tf']}) - {r['verdict']}: {r.get('reason','')}")
+        if "baseline_pf" in r:
+            print(f"  Baseline PF {r['baseline_pf']}")
+        if "combo_pf" in r:
+            decl = ", ".join(f"{k}={v}" for k, v in r.get('declared', {}).items()) or "(nessuna, baseline vince)"
+            print(f"  Config dichiarata: {decl}")
+            print(f"  Combo: PF {r['combo_pf']} / {r['combo_trades']} trade")
+            print(f"  OOS: in-sample PF {r['is_pf']} ({r['is_trades']}tr) -> out-of-sample PF {r['oos_pf']} "
+                  f"({r['oos_trades']}tr), stress PF {r['oos_stress_pf']}")
+    print("=" * 130)
+    print(f"Tempo totale: {time.time()-t0:.1f}s")
+
+
+if __name__ == "__main__":
+    main()
