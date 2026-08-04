@@ -296,3 +296,80 @@ che non ne hanno — sono motore di ricerca puro). Gruppo 1 di questo giro:
 EMA_PULLBACK/D1 è il candidato più interessante emerso da questo gruppo —
 da validare Out-of-Sample prima di qualunque conclusione (stessa
 disciplina di sempre).
+
+## Aggiornamento 04/08 (8) — Gruppo sessione/AMD: AMD_REVERSAL, JUDAS_SWING,
+## LDN_REVERSAL, NY_REVERSAL, PO3
+
+Le 5 strategie di `NXS_Strategies_Institutional.mqh` condividevano lo
+stesso bug: usavano `_choch_at(c, i)`, il vecchio proxy CHoCH "a
+estremo rolling" (approssimativo), invece del vero CHoCH strutturale a
+frattali già disponibile nel motore (`ind["choch_int"]`, prodotto da
+`_fractal_choch_series`, l'unico fedele a `NXS_ComputeStructureCore`).
+Il proxy rolling era già stato scartato per altre strategie in
+precedenza in questa sessione — non era mai stato tolto da queste 5.
+
+Corretto (`sig_amd_reversal`, `sig_judas_swing`, `sig_ldn_reversal`,
+`sig_ny_reversal`, `sig_po3`): sostituito `_choch_at(c, i)` con
+`ind["choch_int"][1][i], ind["choch_int"][2][i]` in tutte e 5.
+
+Aggiunte 4 formule SL/TP strutturali (`STRATEGY_SLTP_ALWAYS`, transcritte
+da `NXS_Strat_AMD_Reversal`/`NXS_Strat_JudasSwing`/
+`NXS_Strat_LondonReversal`/`NXS_Strat_NYReversal`):
+
+- `_amd_reversal_sl_tp`: SL dal refLow/refHigh dello sweep ∓0.5×ATR,
+  TP fisso a 2.5×ATR.
+- `_judas_swing_sl_tp`: SL da min/max(bar low/high, livello asiatico)
+  ∓0.4×ATR, TP dal lato opposto del range asiatico o 2.5×R.
+- `_ldn_reversal_sl_tp`: SL dal refLow/refHigh dello sweep ∓0.5×ATR, TP
+  dal lato opposto asiatico (fallback 2.0×R).
+- `_ny_reversal_sl_tp`: SL dal low/high della barra ∓0.5×ATR, TP dal
+  london_hi/lo (fallback 2.5×R) — usa la stessa finestra `look=48`
+  barre già presente nel segnale, vedi limite sotto.
+
+**Limiti onesti dichiarati esplicitamente nel codice, non nascosti:**
+- **NY_REVERSAL** resta un fix PARZIALE: il vero MQL5 aggrega dati tick
+  M5 reali per l'hi/lo della sessione di Londra con conversione BST/UTC;
+  questo motore lavora su un solo timeframe per run e non può farlo —
+  mantenuta l'approssimazione esistente (finestra di 48 barre H4).
+- **PO3**: solo la formula CHoCH è stata corretta. Non è stata trovata/
+  confermata in questo giro una formula SL reale propria per PO3 — resta
+  in `STRATEGY_TARGETS_ALWAYS` col solo TP strutturale (`_po3_target`)
+  già presente, SL generico ATR. Segnato come backlog aperto.
+
+Rimossi da `STRATEGY_TARGETS_ALWAYS` gli entry ormai superati
+`JUDAS_SWING`/`LDN_REVERSAL` (le vecchie funzioni `_judas_swing_target`/
+`_ldn_reversal_target` coprivano solo il TP; ora entrambe le strategie
+hanno la formula SL+TP completa in `STRATEGY_SLTP_ALWAYS`, che ha
+priorità — il guard `if target_fn and not sltp_fn` le avrebbe comunque
+saltate, rimosse per pulizia).
+
+### Risultato onesto: campione troppo piccolo per concludere qualunque cosa
+
+Queste 5 strategie sono fortemente session-gated (fase AMD/killzone
+specifica) — dopo la correzione, il numero di segnali che rispettano
+TUTTI i filtri reali (sweep + CHoCH + sessione + eventuali buffer) crolla
+molto sotto la soglia minima già fissata per questa sessione
+(`MIN_BASELINE_TRADES=25`). Nessuna cella della tabella sotto è
+utilizzabile come base per una decisione — riportata solo per onestà,
+non come "risultato":
+
+| Strategia | H4 | H1 | M30 | M15 |
+|---|---|---|---|---|
+| AMD_REVERSAL | PF4.17/3tr | PF—/1tr | PF1.58/2tr | PF0.6/4tr |
+| JUDAS_SWING | PF0.39/9tr | 0tr | 0tr | 0tr |
+| LDN_REVERSAL | PF1.21/14tr | PF2.51/3tr | PF0.07/3tr | PF0.16/8tr |
+| NY_REVERSAL | 0tr | PF—/2tr | PF3.54/3tr | PF0.0/1tr |
+| PO3 | PF0.9/7tr | PF2.21/2tr | PF1.97/2tr | PF0.0/3tr |
+
+D1/W1: 0 trade su tutte e 5 (storico troppo corto per una fase AMD/
+sessione intraday su timeframe daily+). Nessun timeframe raggiunge una
+soglia di campione utilizzabile — a differenza dei gruppi precedenti
+(TURTLE_SOUP, EMA_PULLBACK), qui la correzione di fedeltà non ha
+prodotto un candidato testabile, solo la conferma che il vecchio proxy
+sparava su condizioni molto più larghe (probabile causa dei conteggi-
+trade più alti visti nel batch pre-fedeltà per queste strategie). Nessuna
+promozione, nessuna bocciatura — serve più storico (stesso limite Yahoo
+H4/H1 ~1.74 anni, ancora più severo qui per il gate di sessione che
+riduce ulteriormente le occasioni) prima di poter dire qualunque cosa.
+
+244 test verdi.

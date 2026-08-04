@@ -1201,10 +1201,12 @@ def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=No
 # errore lo stesso SL/TP ATR generico per tutte, omettendo questa parte
 # gia' presente in MQL5 per queste 3.
 STRATEGY_TARGETS_ALWAYS = {
-    "JUDAS_SWING": _judas_swing_target,
-    "LDN_REVERSAL": _ldn_reversal_target,
     "PO3": _po3_target,
 }
+# JUDAS_SWING/LDN_REVERSAL: superate dalle formule SL+TP complete in
+# STRATEGY_SLTP_ALWAYS (_judas_swing_sl_tp/_ldn_reversal_sl_tp, 04/08) -
+# _judas_swing_target/_ldn_reversal_target restano definite ma inutilizzate
+# qui (il guard "if target_fn and not sltp_fn" le avrebbe comunque saltate).
 # STRATEGY_TARGETS_OPTIN - ipotesi TESTATA ma NON presente nel vero
 # NXS_Strat_LiqSweep() MQL5 (che usa solo NXS_DefaultSLTP, ATR fisso) -
 # testata su richiesta dell'utente (16/07), risultato misto/non decisivo
@@ -1647,6 +1649,10 @@ def _amd_cont_sl_tp(c, ind, i, direction, entry, atr):
 
 
 def sig_amd_reversal(c, ind, i):
+    # 04/08 - fedelta': usava _choch_at() (proxy rozzo a estremo mobile,
+    # gia' superato per altre strategie) invece del vero CHoCH frattale
+    # (ind["choch_int"], NXS_ComputeStructureCore fedele) - condizioni
+    # d'ingresso gia' corrette, solo il CHoCH era quello vecchio.
     sess = ind["sess"]
     ph = sess["amd_phase"][i] if i < len(sess["amd_phase"]) else None
     if ph is None or ph[0] != "REVERSAL_DISTRIBUTION":
@@ -1654,7 +1660,7 @@ def sig_amd_reversal(c, ind, i):
     sw = _sweep_ext_at(c, sess, i)
     if not sw:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     if sw["sweptAsiaHigh"] and choch_down:
         return -1
     if sw["sweptAsiaLow"] and choch_up:
@@ -1662,7 +1668,21 @@ def sig_amd_reversal(c, ind, i):
     return 0
 
 
+def _amd_reversal_sl_tp(c, ind, i, direction, entry, atr):
+    sw = _sweep_ext_at(c, ind["sess"], i)
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        return sw["refLow"] - 0.5 * atr, entry + 2.5 * atr
+    if sw["refHigh"] is None:
+        return None
+    return sw["refHigh"] + 0.5 * atr, entry - 2.5 * atr
+
+
 def sig_judas_swing(c, ind, i):
+    # 04/08 - fedelta': stesso swap CHoCH di sopra (_choch_at -> reale).
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "NY"):
         return 0
@@ -1677,7 +1697,7 @@ def sig_judas_swing(c, ind, i):
     if not atr:
         return 0
     sw = _sweep_ext_at(c, sess, i)
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
     wicked_down = (sw and (sw["sweptAsiaLow"])) or l1 < al
     if wicked_down and c1 > al and choch_up:
@@ -1688,14 +1708,36 @@ def sig_judas_swing(c, ind, i):
     return 0
 
 
+def _judas_swing_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_JudasSwing: SL da min/max(low/high barra, asia) +-
+    # 0.4xATR, TP = il piu' ambizioso tra il livello asiatico opposto e
+    # 2.5xR dalla distanza di rischio REALE (non un multiplo ATR fisso).
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if ah is None or al is None:
+        return None
+    l1, h1 = c[i]["low"], c[i]["high"]
+    if direction == 1:
+        sl = min(l1, al) - 0.4 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, max(ah, entry + 2.5 * risk)
+    sl = max(h1, ah) + 0.4 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, min(al, entry - 2.5 * risk)
+
+
 def sig_ldn_reversal(c, ind, i):
+    # 04/08 - fedelta': stesso swap CHoCH di sopra.
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "OVERLAP"):
         return 0
     sw = _sweep_ext_at(c, sess, i)
     if not sw or not sw["confirmed"]:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1 = c[i]["close"]
     if (sw["sweptAsiaHigh"] or sw["sweptPDH"]) and c1 < sw["refHigh"] and choch_down:
         return -1
@@ -1704,7 +1746,41 @@ def sig_ldn_reversal(c, ind, i):
     return 0
 
 
+def _ldn_reversal_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_LondonReversal: SL dal livello di sweep +-0.5xATR,
+    # TP = il piu' ambizioso tra il livello asiatico opposto (o 2.5xR se
+    # assente) e 2.0xR dalla distanza di rischio reale.
+    sw = _sweep_ext_at(c, ind["sess"], i)
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        tgt = ah if ah is not None else (entry + 2.5 * risk)
+        return sl, max(tgt, entry + 2.0 * risk)
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    tgt = al if al is not None else (entry - 2.5 * risk)
+    return sl, min(tgt, entry - 2.0 * risk)
+
+
 def sig_ny_reversal(c, ind, i, look=48):
+    # 04/08 - fedelta' PARZIALE: stesso swap CHoCH di sopra fatto, MA la
+    # vera NXS_Strat_NYReversal calcola l'alto/basso della sessione Londra
+    # aggregando dati M5 con conversione BST/UTC esplicita - questo motore
+    # lavora su UNA sola serie di candele (qualunque TF stia girando), non
+    # ha accesso a M5 quando gira su H4/D1. L'approssimazione qui (finestra
+    # di `look` barre del TF corrente con ora 6-12) resta un proxy, non la
+    # vera aggregazione M5 - vedi NQROS_IDEA_BACKLOG.md.
     sess = ind["sess"]
     if sess["session"][i] not in ("NY", "OVERLAP"):
         return 0
@@ -1721,7 +1797,7 @@ def sig_ny_reversal(c, ind, i, look=48):
             london_lo = ll if london_lo is None else min(london_lo, ll)
     if london_hi is None or london_lo is None:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1, h1, l1 = c[i]["close"], c[i]["high"], c[i]["low"]
     if h1 > london_hi and c1 < london_hi and choch_down:
         return -1
@@ -1730,7 +1806,38 @@ def sig_ny_reversal(c, ind, i, look=48):
     return 0
 
 
+def _ny_reversal_sl_tp(c, ind, i, direction, entry, atr, look=48):
+    sess = ind["sess"]
+    london_hi, london_lo = None, None
+    for k in range(1, look + 1):
+        j = i - k
+        if j < 0:
+            break
+        if sess["hour"][j] is not None and 6 <= sess["hour"][j] < 12:
+            hh, ll = c[j]["high"], c[j]["low"]
+            london_hi = hh if london_hi is None else max(london_hi, hh)
+            london_lo = ll if london_lo is None else min(london_lo, ll)
+    if london_hi is None or london_lo is None:
+        return None
+    l1, h1 = c[i]["low"], c[i]["high"]
+    if direction == 1:
+        sl = l1 - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, max(london_hi, entry + 2.5 * risk)
+    sl = h1 + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, min(london_lo, entry - 2.5 * risk)
+
+
 def sig_po3(c, ind, i):
+    # 04/08 - fedelta' PARZIALE: stesso swap CHoCH di sopra fatto. Il TP e'
+    # gia' strutturale via _po3_target (STRATEGY_TARGETS_ALWAYS); il SL
+    # resta il multiplo ATR generico - non ho trovato la formula SL reale
+    # di NXS_Strat_PO3 durante questo giro, vedi NQROS_IDEA_BACKLOG.md.
     sess = ind["sess"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     if ah is None or al is None:
@@ -1742,7 +1849,7 @@ def sig_po3(c, ind, i):
     if abs(c1 - o1) < atr * 0.6:
         return 0
     sw = _sweep_ext_at(c, sess, i)
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     if sw and sw["sweptAsiaLow"] and c1 > al and c1 > o1 and choch_up:
         return 1
     if sw and sw["sweptAsiaHigh"] and c1 < ah and c1 < o1 and choch_down:
@@ -1966,6 +2073,10 @@ STRATEGY_SLTP_ALWAYS = {
     "IFVG": _ifvg_sl_tp,
     "TURTLE_SOUP": _turtle_soup_sl_tp,
     "FVG_MIT": _fvg_mit_sl_tp,
+    "AMD_REVERSAL": _amd_reversal_sl_tp,
+    "JUDAS_SWING": _judas_swing_sl_tp,
+    "LDN_REVERSAL": _ldn_reversal_sl_tp,
+    "NY_REVERSAL": _ny_reversal_sl_tp,
 }
 
 

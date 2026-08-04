@@ -177,3 +177,29 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     caratteristica di una singola strategia. Aspettarselo su ogni
     prossimo deep-dive che usa lo stesso storico, finché non arriva più
     storico reale (MT5 export).
+
+## Dal gruppo sessione/AMD: AMD_REVERSAL, JUDAS_SWING, LDN_REVERSAL,
+## NY_REVERSAL, PO3 (04/08)
+
+19. **Un proxy CHoCH sbagliato può sopravvivere a lungo senza essere
+    notato se il codice non viene mai riletto strategia per strategia.**
+    `_choch_at(c, i)` (proxy rolling-extreme, già scartato per altre
+    strategie in questa sessione) era ancora in uso in 5 strategie
+    diverse — nessuna delle 5 era stata toccata dal giro di verifica
+    fedeltà precedente perché il focus era andato su altri meccanismi
+    (sweep, SL/TP). **Corollario operativo**: quando si trova un bug di
+    fedeltà "generico" (non specifico di una strategia, come un proxy
+    condiviso), va cercato ESPLICITAMENTE in tutte le altre strategie che
+    potrebbero usarlo — non basta averlo corretto dove l'ha fatto notare
+    il primo test.
+
+20. **Una correzione di fedeltà non produce sempre un campione testabile
+    — a volte produce solo "non lo sappiamo ancora".** A differenza di
+    TURTLE_SOUP/EMA_PULLBACK (dove la correzione ha isolato un edge o una
+    sua assenza chiara), il gruppo sessione/AMD ha campioni troppo
+    piccoli (0-14 trade) su ogni timeframe per dire qualunque cosa — il
+    filtro combinato sweep+CHoCH+sessione reale è molto più selettivo del
+    vecchio proxy generico, e lo storico H4/H1 limitato di Yahoo (lezione
+    #6) qui pesa più che altrove. Non forzare una decisione (mantieni/
+    archivia) quando il campione è sotto soglia: la risposta onesta è
+    "serve più storico", non un PF calcolato su 2-3 trade.
