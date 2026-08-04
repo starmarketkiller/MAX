@@ -615,4 +615,51 @@ questa cache locale invece di/oltre a Yahoo sui timeframe intraday, poi
 ripetuti i test più rilevanti (in primis FVG_CONT/MACD, TURTLE_SOUP/
 SILVER_BULLET per il confondimento di regime) sulla finestra nuova.
 
+## Aggiornamento 04/08 (12) — Piramidazione sul profitto (Fase 7) + rilancio
+## storico a 10 anni
+
+Su richiesta esplicita ("li voglio anche in esposizione sul profitto" +
+"grid piramidazione" + "scarica più storico possibile"): tre interventi.
+
+**1. Piramidazione sul profitto implementata nel motore** (`backtest.py`,
+parametri `pyramid_max_legs`/`pyramid_r`/`pyramid_risk_mult`, default
+`pyramid_max_legs=0` — nessun cambiamento per tutto il lavoro già fatto,
+verificato bit-per-bit). Ogni volta che il prezzo avanza di `pyramid_r`
+× R sul rischio ORIGINALE oltre l'ultima gamba, si apre una nuova gamba
+con la propria size e il proprio rischio (distanza dal suo entry allo SL
+corrente, non quello originale — se lo SL è già a breakeven, una gamba
+successiva rischia meno). Tutte le gambe condividono SL/TP e si chiudono
+insieme. Nessuna esclusione per strategia scritta a mano: su una
+strategia con TP troppo vicino il primo livello di piramide semplicemente
+non viene mai raggiunto, il meccanismo stesso è un no-op lì dove non ha
+senso — non serve una lista nera.
+
+**Non è stato costruito il grid/martingala** (aumento di size su un
+trade in PERDITA) — solo la piramidazione sul profitto richiesta
+esplicitamente. Segnalato esplicitamente il motivo: aumentare
+l'esposizione contro il prezzo può ingigantire una perdita in modo molto
+più pericoloso di una singola operazione persa, un rischio che va
+contro l'obiettivo dichiarato di questo progetto (far crescere in modo
+sicuro un conto piccolo).
+
+**2. Aggiunta come leva testabile in `find_all_configs.py`** (Fase 6,
+stessa disciplina delle altre: provata da sola, entra solo se batte la
+baseline a campione sufficiente). Ri-eseguito su tutte le 24 strategie:
+stesso quadro di prima (6 PASS/6 MARGINALE/12 FAIL) ma **TSI (H1)
+migliora in modo concreto** — il vincitore precedente (`atr_sl=2.0`, OOS
+PF 1.17/38tr) è stato superato da `pyramid_max_legs=1` (**OOS PF 1.35 su
+un campione ancora più ampio, 41 trade**) — non solo un PF migliore, un
+campione OOS più grande insieme, il segnale più solido di un
+miglioramento reale raccolto finora in questo giro. `pyramid_max_legs=1`
+vince anche per MACD/LIQ_VOID/MALAYSIAN_SNR, ma su MACD questo ha solo
+reso più visibile il problema di dati già noto: batte la baseline (PF
+3.38 vs 2.94) ma il test fuori campione ha **0 trade disponibili** (in=8,
+out=0) — non un giudizio negativo, un campione insufficiente per
+qualunque giudizio, ennesima conferma che serve più storico.
+
+**3. Rilanciato il fetch Dukascopy a 10 anni** (2016-01-01, non più
+2023-01-01) — riscritto per scrivere snapshot incrementali ogni 20
+giorni invece di attendere il completamento (un fetch da 15-20+ ore deve
+poter essere letto o interrotto senza perdere il lavoro fatto). In corso.
+
 244 test verdi.
