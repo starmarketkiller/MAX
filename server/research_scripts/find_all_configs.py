@@ -23,19 +23,25 @@ MIN_TRADES = 15
 COSTS = bt.COST_PRESETS["retail_standard"]
 STRESS = bt.COST_PRESETS["stress"]
 
-# Strategie/TF da multi_tf_baseline.py (04/08) con PF baseline > 1.0 sul
-# miglior TF - le negative su ogni TF (LIQ_SWEEP, RSI_DIV, BOLLINGER/
-# RANGE_FADE, MALAYSIAN_SNR, LDN_REVERSAL, STRUCT_REACT, AMD_REVERSAL,
-# JUDAS_SWING) sono escluse: nessun parametro di gestione trasforma un
-# segnale senza edge in uno con edge. AMD_CONT e SILVER_BULLET gia' fatte
-# a mano (deep-dive dedicato), escluse qui.
+# 04/08 (11) - lista ricostruita da zero dopo il giro di fedelta' completo
+# della sessione (tutte le 39 strategie testate su 6 TF con parametri di
+# default, vedi BATCH_CONFIG_SEARCH_04-08.md aggiornamento 10): ogni
+# strategia con almeno un TF sopra soglia campione (25 trade), al suo
+# MIGLIOR TF per numero di trade/PF. La lista precedente (16/07) era
+# basata su proxy in gran parte gia' superati (IFVG/OB_MIT/ORDER_BLOCK/
+# PO3/BJORGUM/TURTLE_SOUP fra gli altri sono stati riscritti da allora) -
+# ricalcolata, non solo aggiornata a mano. AMD_CONT, SILVER_BULLET,
+# TURTLE_SOUP restano escluse: hanno gia' un deep-dive manuale completo
+# (Fase 0-10) piu' approfondito di quanto questo script automatizzi.
 CANDIDATES = {
-    "FVG_CONT": "1wk", "MACD": "1wk", "THREE_BAR_DELIVERY_BREAK": "4h",
-    "IFVG": "4h", "LONDON_BO": "1wk", "WEEKLY_EXP": "1wk", "LIQ_VOID": "1wk",
-    "ADX_RSI": "1wk", "SAR": "1wk", "TSI": "1wk", "OB_MIT": "1d",
-    "OTE_CONT": "1d", "SH_BMS_RTO": "1wk", "SMS_BMS_RTO": "1wk",
-    "FVG_MIT": "4h", "ORDER_BLOCK": "1wk", "ICHIMOKU": "1h", "PO3": "4h",
-    "BJORGUM": "4h", "TURTLE_SOUP": "1h", "NY_REVERSAL": "1h",
+    "ADX_RSI": "1d", "BJORGUM": "1h", "BOLLINGER": "1h",
+    "BREAKOUT_ACC": "1wk", "EMA_PULLBACK": "1d", "FVG_CONT": "1wk",
+    "FVG_MIT": "30m", "ICHIMOKU": "30m", "LIQ_SWEEP": "1d",
+    "LIQ_VOID": "1wk", "LONDON_BO": "1h", "MACD": "1wk",
+    "MALAYSIAN_SNR": "4h", "OTE_CONT": "1d", "RANGE_FADE": "1h",
+    "RSI_DIV": "4h", "SAR": "1wk", "SCALP_BB_FADE": "4h",
+    "SCALP_EMA": "4h", "SCALP_RANGE_BRK": "1wk", "SCALP_RSI_SNAP": "1h",
+    "SH_BMS_RTO": "1d", "STRUCT_REACT": "4h", "TSI": "1h",
 }
 
 
