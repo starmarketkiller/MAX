@@ -23,7 +23,7 @@ The code explicitly describes strategy logic as Python re-implementations rather
 | Split management | Yes | Limited/general exits | Missing/approximate |
 | Dynamic sizing by broker contract | Yes | No | Missing |
 | Margin/leverage | Broker-aware | No | Missing |
-| Spread/commission/slippage/swap | Live broker | Partial (31/07): optional `spread_price` (converted to R per-trade) and `commission_r` (flat R cost), both default 0.0 (unchanged behavior unless set); no slippage/swap model | Approximate |
+| Spread/commission/slippage/swap | Live broker | Partial (31/07): optional `spread_price` (converted to R per-trade, once per round-trip), `commission_r` (flat R cost), `slippage_price` (applied on market-style fills — entry always, exit only for SL/TIME, never TP) — all default 0.0 (unchanged behavior unless set). Spread/slippage are FIXED, not session/volatility-aware (real XAUUSD spread widens in thin Asia liquidity and around news — not modeled). No swap/rollover cost for overnight holds. | Approximate |
 | Full protection pipeline | Yes/partial wiring | No | Missing |
 | News and correlation gates | Present live | No | Missing |
 | Floating drawdown | Live | No; closed-equity only | Missing |

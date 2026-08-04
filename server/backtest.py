@@ -1546,7 +1546,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
                  confirm_bars=0, loss_cooldown_bars=0,
-                 spread_price=0.0, commission_r=0.0):
+                 spread_price=0.0, commission_r=0.0, slippage_price=0.0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1576,6 +1576,11 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # percentuale di commissione avrebbe bisogno di un valore-lotto che qui
     # non esiste; un costo fisso in R e' l'approssimazione onesta compatibile
     # con l'astrazione esistente, non una simulazione di commissione vera.
+    # slippage_price: movimento avverso aggiuntivo (unita' di prezzo grezzo)
+    # su ogni fill "a mercato" - APPLICATO all'entry (sempre a mercato) e
+    # all'uscita SL/TIME (anch'esse a mercato, quindi soggette a slittare),
+    # MAI alla TP (ordine limite: si presume riempito al prezzo richiesto o
+    # meglio, come nella prassi broker reale). Convertito in R come spread.
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
@@ -1659,7 +1664,15 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 # Costi di realismo (31/07): spread convertito in R sul rischio di
                 # QUESTO trade (pesa di piu' su SL stretti), commissione gia' in R.
                 spread_r = (spread_price / rd) if spread_price > 0 else 0.0
-                r_mult_net = r_mult - spread_r - commission_r
+                # Slippage: sull'entry (sempre a mercato) + sull'uscita SE a
+                # mercato (SL/TIME). La TP (ordine limite) non slitta contro
+                # di noi - assunzione standard broker.
+                slip_r = 0.0
+                if slippage_price > 0:
+                    slip_r = slippage_price / rd   # entry, sempre
+                    if reason in ("SL", "TIME"):
+                        slip_r += slippage_price / rd   # uscita a mercato
+                r_mult_net = r_mult - spread_r - commission_r - slip_r
                 pnl = round(r_mult_net * pos["risk_money"], 2)
                 equity += pnl
                 trades.append({
