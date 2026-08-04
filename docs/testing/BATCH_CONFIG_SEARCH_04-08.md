@@ -149,3 +149,21 @@ solo 5 trade su D1 (e negativi, PF 0.89). Il "PASS" del batch precedente
 permissivo. Stesso pattern già visto su SILVER_BULLET — un setup ICT
 molto selettivo che il campione di dati attuale non riesce a popolare a
 sufficienza per un giudizio.
+
+## Aggiornamento 04/08 (3) — BJORGUM corretta (off-by-one), verdetto PASS superato
+
+Verifica di fedeltà (#3): `NXS_Strat_Bjorgum` (MQL5 reale) confrontata con
+`sig_bjorgum`. Il concetto (rimbalzo/rifiuto su pivot a 30 barre) era già
+giusto, ma un **off-by-one**: MQL5 usa shift1 (barra appena chiusa) per la
+close e la finestra pivot parte da shift2 — nella convenzione di questo
+motore (shift1 MQL5 = indice `i`, già usata per le correzioni precedenti
+di oggi) il proxy usava `c[i-1]` per la close e `c[i-32:i-2]` per la
+finestra, entrambi spostati indietro di una barra in più del dovuto.
+Corretto: `c1=c[i]`, finestra=`c[i-30:i]`.
+
+**Risultato onesto**: dopo la correzione, BJORGUM è **negativa su ogni
+timeframe** (H4 PF 0.68, H1 0.90, D1 0.71, W1 0.39). Il "PASS" del batch
+precedente (PF 1.06→1.09 con SL=2.0) era un artefatto dell'indicizzazione
+sbagliata — con quella corretta l'edge sparisce del tutto. Nessuna
+formula SL/TP custom necessaria (BJORGUM usa `NXS_DefaultSLTP`, generico,
+già quello che il motore applica di default).

@@ -759,15 +759,23 @@ def sig_bjorgum(c, ind, i):
     # concetti opposti. Non testava mai la vera strategia (stesso tipo di bug
     # gia' trovato su SAR il 15/07). Vedi vault NEXUS EA - Ricerca Esterna e
     # Test A-B per Strategia.
+    #
+    # 04/08 - fedelta' verificata riga-per-riga: off-by-one trovato. MQL5 usa
+    # shift1 (barra appena chiusa) per la close E la finestra pivot parte da
+    # shift2 (iHighest/iLowest con start=2, count=30 -> shift2..31). In
+    # questo motore shift1 MQL5 == indice i (stessa convenzione gia' usata
+    # per AMD_CONT/SILVER_BULLET/IFVG/LONDON_BO/WEEKLY_EXP) - qui invece
+    # c1 usava c[i-1] e la finestra c[i-32:i-2], entrambi spostati indietro
+    # di una barra in piu' del dovuto. Corretto: c1=c[i], finestra=c[i-30:i].
     atr = ind["atr"][i]
-    if not atr or i < 32:
+    if not atr or i < 30:
         return 0
-    window = c[i - 32:i - 2]
+    window = c[i - 30:i]
     if not window:
         return 0
     piv_hi = max(x["high"] for x in window)
     piv_lo = min(x["low"] for x in window)
-    c1 = c[i - 1]["close"]
+    c1 = c[i]["close"]
     dist = atr * 0.5
     if abs(c1 - piv_lo) <= dist and c1 > piv_lo:
         return 1
