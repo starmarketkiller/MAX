@@ -370,3 +370,26 @@ resta solo dove già identificato: retest su close invece di low, filtro
 HTF proxy, SL/TP non implementato — dettagli di esecuzione, non la
 struttura del segnale. A differenza di SILVER_BULLET (dove il problema è
 strutturale), qui è più contenuto ma comunque reale sui numeri esatti.
+
+## Aggiornamento 04/08 (3) — CORRETTO nel motore, ri-baseline onesto
+
+`sig_amd_cont` riscritta (retest su low/high) e aggiunta `_amd_cont_sl_tp`
+(SL dal range asiatico, TP=2.4×R fisso) in `server/backtest.py`. **Tutti i
+numeri di Fase 1-9 sopra sono superati** — calcolati su una logica che
+non era quella vera. Ri-baseline con la versione fedele, H4, parametri
+di default (nessuna Fase 6 ancora fatta su questa base):
+
+| TF | PF | Trade | WR% | MaxDD% |
+|---|---|---|---|---|
+| H4 | 1.09 | **103** | 36.9 | 16.02 |
+| H1 | 0.90 | 49 | 34.7 | 8.75 |
+| M30 | 1.62 | 26 | 53.8 | 3.85 |
+| M15 | 1.05 | 17 | 35.3 | 3.96 |
+
+**Onesto**: il PF vero (1.09 su H4, 103 trade — campione più ampio di
+prima perché il retest-su-low è una condizione più larga) è molto più
+debole del 72/100 misurato sulla versione infedele — un edge marginale,
+non quello che il punteggio precedente suggeriva. M30 (PF1.62/26 trade)
+è interessante ma sotto la soglia di campione affidabile. **Il punteggio
+72/100 e la decisione "osservazione" sono superati**: serve ripartire da
+Fase 1 su questa base corretta prima di qualunque nuova conclusione.

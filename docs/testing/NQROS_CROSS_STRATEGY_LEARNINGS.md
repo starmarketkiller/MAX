@@ -124,3 +124,17 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     serio (l'EA reale che gira sul conto, non solo lo strumento di
     ricerca) — vale la pena controllare anche quel lato, non darlo per
     scontato solo perché finora ha sempre retto.
+
+14. **Corretta la fedeltà, i numeri sono crollati — ed è la conferma che
+    valeva la pena farlo.** Dopo aver riscritto `sig_amd_cont` (retest
+    corretto + vero SL/TP) e `sig_silver_bullet` (state machine completa a
+    3 stadi): AMD_CONT H4 passa da PF 1.62 (proxy infedele, punteggio
+    72/100) a **PF 1.09** (103 trade); SILVER_BULLET H4 da PF 1.62 a **PF
+    1.03** (20 trade, contro i 65 del proxy). Entrambi gli score/decisioni
+    Fase 9 precedenti sono superati — non per un errore nel processo Fase
+    0-9 in sé (quello ha funzionato bene, ha isolato bottleneck reali e
+    scartato overfitting), ma perché era applicato a un segnale sbagliato.
+    **Lezione operativa per tutte le prossime strategie**: fare la
+    verifica di fedeltà (lezione #11) SUBITO dopo la Fase 1, PRIMA di
+    qualunque Fase 2-9 — il costo di scoprirlo dopo (qui: due deep-dive
+    completi da rifare) è alto.

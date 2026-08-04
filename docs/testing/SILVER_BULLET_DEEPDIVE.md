@@ -279,3 +279,33 @@ Fonti: [EBC Financial Group](https://www.ebc.com/forex/what-is-the-ict-silver-bu
 [ForexBee](https://forexbee.co/ict-silver-bullet-trading-strategy/),
 [GrandAlgo](https://grandalgo.com/blog/ict-silver-bullet-strategy),
 [ICT Killzone Times](https://ictkillzonetimes.com/ict-silver-bullet-strategy/)
+
+## Aggiornamento 04/08 (3) — CORRETTO nel motore, ri-baseline onesto
+
+`sig_silver_bullet` riscritta da zero come state machine a 3 stadi
+(IDLE→SWEPT→WAITING_RETURN, `_silver_bullet_series` precalcolata) in
+`server/backtest.py`, verificata riga-per-riga contro
+`NXS_Strat_SilverBullet`/`NXS_SB_UpdateSide`. **Tutti i numeri di Fase 1-8
+sopra sono superati** — calcolati su un segnale che non era quello vero.
+
+Ri-baseline con la versione fedele, parametri di default:
+
+| TF | PF | Trade | WR% | MaxDD% |
+|---|---|---|---|---|
+| H4 | 1.03 | 20 | 50.0 | 4.27 |
+| H1 | 0.39 | 8 | 37.5 | 3.50 |
+| M30 | 0.68 | 7 | 42.9 | 3.42 |
+| M15 | 0.25 | 3 | 33.3 | 2.69 |
+
+**Onesto, e deludente**: la vera ICT Silver Bullet, testata fedelmente,
+non mostra un edge chiaro su XAUUSD in questo campione — H4 è
+sostanzialmente pareggio (PF 1.03), tutti gli altri TF sono deboli o
+troppo sottili per giudicare (3-8 trade). Il campione crolla da 65 trade
+(proxy infedele) a 20 (versione vera) — la conferma a 3 stadi filtra
+moltissimo, coerente con "highest-probability setups" della fonte
+pubblica, ma qui non basta a produrre un edge misurabile su questo
+storico. **Nuova decisione: nessun edge trovato finora nella forma
+fedele** — non "bocciata per sempre", ma non c'è ancora nulla su cui
+costruire una Fase 5-9. Da riprendere solo con più storico (il campione
+attuale è troppo piccolo anche per un primo giudizio) o abbandonata a
+favore di candidati più promettenti.
