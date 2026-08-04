@@ -1,0 +1,124 @@
+//@version=6
+// =============================================================================
+// RSI(2) Mean Reversion — Larry Connors — XAUUSD D1
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Fonte: Larry Connors & Cesar Alvarez, "Short
+// Term Trading Strategies That Work" (2008) — regole pubblicate con
+// statistiche di backtest quantificate dagli stessi autori (win rate
+// 70-85% su indici broad, secondo le fonti secondarie citate sotto).
+//
+// Verificato via ricerca web il 31/07/2026 (non a memoria) contro fonti
+// secondarie affidabili — non ho accesso diretto al testo del libro in
+// questo ambiente, quindi le regole sotto sono quelle riportate in modo
+// consistente da più fonti indipendenti, con le variazioni numeriche
+// esplicitamente segnalate dove le fonti divergono:
+//   • StockCharts ChartSchool (chartschool.stockcharts.com/.../rsi-2):
+//     trend filter SMA200, entry RSI(2)<5 (Connors trovò rendimenti
+//     migliori con soglia 5 rispetto a 10), uscita long su chiusura sopra
+//     la SMA a 5 giorni. Speculare per lo short: RSI(2)>95, uscita sotto
+//     SMA5.
+//   • QuantifiedStrategies.com e altre fonti secondarie: stessa struttura,
+//     alcune citano soglia 10 invece di 5 come "versione base" — qui
+//     esposta come input configurabile, default 5 (la soglia che Connors
+//     stesso indica come migliore nei suoi test).
+//
+// REGOLE (come verificate sopra):
+//   1) Filtro di trend: prezzo sopra SMA(200) → solo long. Sotto SMA(200)
+//      → solo short (versione simmetrica; Connors testava principalmente
+//      la versione long-only su indici in uptrend strutturale).
+//   2) Entry long: RSI(2) chiude sotto la soglia (default 5).
+//      Entry short: RSI(2) chiude sopra 100-soglia (default 95).
+//   3) Entry al CLOSE del giorno del segnale (qui: barra chiusa shift1,
+//      ordine riempito all'apertura della barra successiva — stessa
+//      convenzione anti-repaint di tutto il resto del repo).
+//   4) Uscita: chiusura sopra la SMA a 5 giorni (long) / sotto la SMA a 5
+//      giorni (short). Nessuno stop-loss nella formulazione originale.
+//
+// SEMPLIFICAZIONE/AGGIUNTA DICHIARATA: uno stop ATR opzionale (spento di
+// default) per rendere il test comparabile alle altre strategie del repo —
+// non fa parte della formulazione originale, che non ha un rischio definito
+// a priori oltre l'uscita sulla SMA5.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("RSI(2) Mean Reversion - Connors (XAUUSD D1)", shorttitle="RSI2-MR", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+rsiLen = input.int(2, "RSI length")
+entryThreshold = input.float(5.0, "Soglia RSI(2) long (short = 100-soglia)", tooltip="Connors trovò rendimenti migliori con 5 rispetto a 10 nei suoi test pubblicati. Alcune fonti secondarie citano 10 come 'versione base' più conservativa.")
+trendSmaLen = input.int(200, "SMA filtro di trend")
+exitSmaLen = input.int(5, "SMA uscita")
+allowShort = input.bool(true, "Abilita anche gli short (versione simmetrica, non solo long-only)")
+useAtrStop = input.bool(false, "Aggiungi stop ATR (NON nella formulazione originale, spento di default)")
+atrLen = input.int(14, "ATR length (solo se stop attivo)")
+atrStopMult = input.float(3.0, "Stop × ATR (solo se stop attivo)")
+startDate = input.time(timestamp("2015-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+rsiVal = ta.rsi(close, rsiLen)
+smaTrend = ta.sma(close, trendSmaLen)
+smaExit = ta.sma(close, exitSmaLen)
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+c1 = close[1]
+rsi1 = rsiVal[1]
+smaTrend1 = smaTrend[1]
+smaExit1 = smaExit[1]
+
+// ----------------------------- Trigger --------------------------------------
+uptrend = c1 > smaTrend1
+downtrend = c1 < smaTrend1
+
+rawLong  = uptrend and rsi1 < entryThreshold
+rawShort = allowShort and downtrend and rsi1 > (100 - entryThreshold)
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+exitLongCond  = c1 > smaExit1
+exitShortCond = c1 < smaExit1
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="RSI2_oversold")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="RSI2_overbought")
+if exitLongCond and strategy.position_size > 0
+    strategy.close("Long", comment="Close_above_SMA5")
+if exitShortCond and strategy.position_size < 0
+    strategy.close("Short", comment="Close_below_SMA5")
+
+// ----------------------------- Stop ATR opzionale (non originale) -----------
+var float slLevel = na
+var float atrAtEntry = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * atrStopMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * atrStopMult
+
+if useAtrStop
+    if strategy.position_size > 0
+        strategy.exit("Stop Long", "Long", stop=slLevel)
+    if strategy.position_size < 0
+        strategy.exit("Stop Short", "Short", stop=slLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(smaTrend, title="SMA 200 (trend filter)", color=color.new(color.orange, 30))
+plot(smaExit, title="SMA 5 (uscita)", color=color.new(color.gray, 30))
+plotshape(longCond, title="RSI2 Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="RSI2 Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Sistema classico su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "RSI2 BUY", "RSI(2) Mean Reversion: ipervenduto in uptrend")
+alertcondition(shortCond, "RSI2 SELL", "RSI(2) Mean Reversion: ipercomprato in downtrend")

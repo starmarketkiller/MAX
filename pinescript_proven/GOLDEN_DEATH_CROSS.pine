@@ -1,0 +1,99 @@
+//@version=6
+// =============================================================================
+// Golden Cross / Death Cross — SMA 50/200 — XAUUSD D1
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Il filtro di trend più studiato e replicato
+// della letteratura tecnica: nessun singolo autore/anno di invenzione (le
+// medie mobili sono un concetto generico), ma l'uso specifico dell'incrocio
+// SMA50/SMA200 come segnale di svolta di trend di lungo periodo è pratica
+// istituzionale documentata da decenni (usato da desk di trading, fondi ed
+// analisti come indicatore macro di regime, non solo da retail).
+//
+// REGOLA ORIGINALE (testuale, come descritta universalmente in letteratura
+// tecnica — non ha parametri "segreti" da un'unica fonte primaria):
+//   • Golden Cross: SMA(50) incrocia SOPRA SMA(200) → segnale di svolta
+//     rialzista di lungo periodo → entra/resta LONG.
+//   • Death Cross: SMA(50) incrocia SOTTO SMA(200) → segnale di svolta
+//     ribassista di lungo periodo → esci dal long (versione "long-only",
+//     la più comune per investitori) o entra SHORT (versione long/short).
+//   • Nella formulazione originale NON c'è uno stop-loss: è un sistema
+//     "sempre nel mercato" (o flat) che segue il trend fino all'incrocio
+//     opposto, non un trade con rischio definito a priori.
+//
+// SEMPLIFICAZIONE/AGGIUNTA DICHIARATA: uno stop ATR opzionale è incluso qui
+// (spento di default) SOLO per rendere il test comparabile alle altre
+// strategie del repo (che hanno tutte un rischio definito) — non fa parte
+// della formulazione originale. Con lo stop spento, il sistema si comporta
+// esattamente come il Golden/Death Cross testuale: entra/esce solo
+// sull'incrocio.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. L'incrocio è
+// valutato sulla barra chiusa, l'ordine si riempie all'apertura della
+// barra successiva.
+// =============================================================================
+strategy("Golden-Death Cross SMA 50/200 (XAUUSD D1)", shorttitle="GDCROSS", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+fastLen = input.int(50, "SMA veloce")
+slowLen = input.int(200, "SMA lenta")
+longOnly = input.bool(true, "Solo long (versione classica investitori: Death Cross = esci, non shortare)")
+useAtrStop = input.bool(false, "Aggiungi stop ATR (NON nella formulazione originale, spento di default)")
+atrLen = input.int(14, "ATR length (solo se stop attivo)")
+atrStopMult = input.float(3.0, "Stop × ATR (solo se stop attivo)")
+startDate = input.time(timestamp("2015-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+smaFast = ta.sma(close, fastLen)
+smaSlow = ta.sma(close, slowLen)
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+goldenCross = ta.crossover(smaFast, smaSlow)[1]   // valutato su barra chiusa shift1
+deathCross  = ta.crossunder(smaFast, smaSlow)[1]
+
+longCond  = inRange and goldenCross
+exitLongOnCross = deathCross
+shortCond = inRange and deathCross and not longOnly
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="Golden_Cross")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="Death_Cross")
+if longOnly and exitLongOnCross and strategy.position_size > 0
+    strategy.close("Long", comment="Death_Cross_exit")
+
+// ----------------------------- Stop ATR opzionale (non originale) -----------
+var float slLevel = na
+var float atrAtEntry = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * atrStopMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * atrStopMult
+
+if useAtrStop
+    if strategy.position_size > 0
+        strategy.exit("Stop Long", "Long", stop=slLevel)
+    if strategy.position_size < 0
+        strategy.exit("Stop Short", "Short", stop=slLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(smaFast, title="SMA 50", color=color.new(color.aqua, 0))
+plot(smaSlow, title="SMA 200", color=color.new(color.orange, 0))
+plotshape(longCond, title="Golden Cross", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.small)
+plotshape(deathCross and inRange, title="Death Cross", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.small)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Sistema classico su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "GOLDEN CROSS", "Golden Cross: SMA50 sopra SMA200")
+alertcondition(deathCross, "DEATH CROSS", "Death Cross: SMA50 sotto SMA200")

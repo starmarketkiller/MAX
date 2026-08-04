@@ -56,3 +56,5 @@ _(aggiornato man mano che le strategie vengono aggiunte e testate)_
 | File | Strategia | Timeframe | Stato |
 |---|---|---|---|
 | `TURTLE_DONCHIAN.pine` | Turtle System 1 (Donchian 20/10) | D1 | Pronta per il test — piramidazione e filtro "skip" della fonte originale omessi in questa v1, dichiarato in testa al file |
+| `GOLDEN_DEATH_CROSS.pine` | Golden/Death Cross (SMA 50/200) | D1 | Pronta per il test — formulazione originale non ha stop-loss, aggiunto solo come opzione spenta di default |
+| `RSI2_MEAN_REVERSION.pine` | RSI(2) Mean Reversion (Connors) | D1 | Pronta per il test — regole verificate via ricerca web (non a memoria) il 31/07, fonti citate in testa al file |
