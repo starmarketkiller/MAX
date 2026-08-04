@@ -248,3 +248,51 @@ la versione fedele lo conferma. Il "PASS" del batch precedente (PF
 **Unico vero candidato positivo emerso da questo giro**: TURTLE_SOUP su H4.
 Tutti gli altri "PASS" del batch precedente erano artefatti di proxy
 infedeli — corretti, l'edge sparisce quasi ovunque tranne lì.
+
+## Aggiornamento 04/08 (7) — Estensione a tutte le strategie ("facciamole tutte")
+
+Su richiesta esplicita, esteso il giro di verifica fedeltà a tutte le
+strategie rimanenti (27 con equivalente MQL5 reale, escluse le 4 SCALP_*
+che non ne hanno — sono motore di ricerca puro). Gruppo 1 di questo giro:
+
+- **ADX_RSI, MACD, BREAKOUT_ACC, RSI_DIV**: già fedeli, nessuna
+  correzione necessaria (verificato riga-per-riga contro `NXS_Strat_
+  ADXRSI`/`NXS_Strat_MACD`/`NXS_Strat_BreakoutAcc`/`NXS_Strat_RSIDiv`).
+- **LONDON_BO**: già corretta nel gruppo precedente, confermata fedele
+  anche da questa rilettura di `NXS_Strat_LondonBO`.
+- **BOLLINGER/RANGE_FADE**: stesso bug di mixing-shift già trovato e
+  corretto in MQL5 il 17/07 ("prezzo storico confrontato con una banda
+  temporalmente diversa") — il proxy calcolava la banda una sola volta
+  alla barra corrente invece che separatamente a shift1 e shift2.
+  Corretta.
+- **SAR**: divergenza più seria — MQL5 usa una condizione di **stato**
+  (SAR vs prezzo + EMA9/EMA21), non un trigger di **flip** come faceva il
+  proxy (solo il bar del cambio di lato PSAR), e usa EMA9/21 non EMA20 da
+  sola. Corretta, aggiunto `ema21` a `_prep()`.
+- **EMA_PULLBACK**: gap importante — mancavano trend persistente (5
+  barre), impulso precedente (prezzo allontanato ≥1.0×ATR da EMA20),
+  vera candela di rejection (non un cross istantaneo), filtro EMA50.
+  Riscritta seguendo `NXS_Strat_EMAPullback`.
+- **TSI**: la nota nel codice ("non è il vero TSI né qui né in MQL5")
+  era riferita a una versione MQL5 più vecchia — il codice attuale
+  (`NXS_Strat_TSI`, struct `SNXSTSIState`) calcola il vero TSI a doppio
+  smoothing (Blau) con signal line e segnala sul cross, non su soglie
+  RSI fisse. `tsi_series()` esisteva già (mai usata); aggiunta la signal
+  line (`_tsi_signal_series`) e il cross — decisione esplicita sul
+  trade-off frequenza/qualità già rimandata in precedenza, presa ora.
+- **BB_SQUEEZE**: divergenza reale trovata (percentile-rank vs soglia
+  assoluta, stato multi-barra mancante) ma **strategia già disattivata
+  nell'EA reale** (`NXS_Profile_Enabled`) — non corretta, priorità bassa.
+
+### Risultati onesti (parametri di default)
+
+| Strategia | Miglior TF | PF | Trade | WR% | MaxDD% |
+|---|---|---|---|---|---|
+| BOLLINGER/RANGE_FADE | tutti negativi | 0.35–0.89 | | | |
+| SAR | W1 | 1.65 | 43 | 46.5 | 8.33 |
+| **EMA_PULLBACK** | **D1** | **1.62** | **35** | **51.4** | **4.71** |
+| TSI | H1 | 1.08 | 102 | 40.2 | 11.47 |
+
+EMA_PULLBACK/D1 è il candidato più interessante emerso da questo gruppo —
+da validare Out-of-Sample prima di qualunque conclusione (stessa
+disciplina di sempre).

@@ -374,12 +374,15 @@ def _prep(candles):
     sess = _session_amd_series(candles)
     sb_signal, sb_sweep_level = _silver_bullet_series(candles, sess, atr_s)
     weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
+    tsi_vals = tsi_series(closes, r=25, s=13)
+    tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     return {
         "candles": candles,
         "close": closes,
         "ema5": ema_series(closes, 5),
         "ema9": ema_series(closes, 9),
         "ema20": ema_series(closes, 20),
+        "ema21": ema_series(closes, 21),
         "ema50": ema_series(closes, 50),
         "ema12": ema12,
         "ema26": ema26,
@@ -398,19 +401,55 @@ def _prep(candles):
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
+        "tsi": tsi_vals, "tsi_signal": tsi_sig,
     }
 
 
 def sig_ema_pullback(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_EMAPullback
+    # (MQL5 reale): era un semplice cross-back su EMA20 (esattamente il
+    # "cross istantaneo" che l'MQL5 stesso documenta di aver sostituito il
+    # 17/07 - "non dimostrava un trend persistente ne' un vero impulso
+    # precedente ne' una rejection"). Mancavano: (1) trend persistente 5
+    # barre (non solo l'istante attuale), (2) un impulso precedente (prezzo
+    # allontanato >=1.0xATR da EMA20 nelle 2-12 barre prima), (3) pullback
+    # con vera rejection (tocco EMA20 + chiusura in direzione, non un cross),
+    # (4) niente entry se EMA50 viene rotta.
     e20, e50 = ind["ema20"][i], ind["ema50"][i]
-    if None in (e20, e50, ind["ema20"][i - 1]):
+    atr = ind["atr"][i]
+    if e20 is None or e50 is None or not atr or i < 13:
         return 0
     up = e20 > e50
-    px, ppx = ind["close"][i], ind["close"][i - 1]
-    if up and ppx < ind["ema20"][i - 1] and px > e20:
-        return 1
-    if not up and ppx > ind["ema20"][i - 1] and px < e20:
-        return -1
+    TREND_PERSIST, MIN_DIST_ATR, TOUCH_TOL_ATR = 5, 1.0, 0.15
+    for k in range(TREND_PERSIST):
+        idx, idx_p = i - k, i - k - 1
+        e20k, e50k, e20kp = ind["ema20"][idx], ind["ema50"][idx], ind["ema20"][idx_p]
+        if e20k is None or e50k is None or e20kp is None:
+            return 0
+        trend_ok = (e20k > e50k and e20k >= e20kp) if up else (e20k < e50k and e20k <= e20kp)
+        if not trend_ok:
+            return 0
+    had_impulse = False
+    for k in range(1, 12):
+        idx = i - k
+        e20k = ind["ema20"][idx]
+        if e20k is None:
+            continue
+        pxk = c[idx]["high"] if up else c[idx]["low"]
+        dist = (pxk - e20k) if up else (e20k - pxk)
+        if dist >= atr * MIN_DIST_ATR:
+            had_impulse = True
+            break
+    if not had_impulse:
+        return 0
+    c1, o1, l1, h1 = c[i]["close"], c[i]["open"], c[i]["low"], c[i]["high"]
+    tol = atr * TOUCH_TOL_ATR
+    if up:
+        if l1 <= e20 + tol and c1 > e20 and c1 > o1 and c1 > e50:
+            return 1
+    else:
+        if h1 >= e20 - tol and c1 < e20 and c1 < o1 and c1 < e50:
+            return -1
     return 0
 
 
@@ -621,16 +660,26 @@ def sig_adx_rsi(c, ind, i):
 
 
 def sig_bollinger(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_Bollinger
+    # (MQL5 reale, gia' corretto li' il 17/07 per lo stesso bug qui trovato
+    # nel motore Python): le bande vanno lette a shift1 E shift2
+    # SEPARATAMENTE (prezzo di ogni shift confrontato con la banda di QUEL
+    # preciso shift) - il proxy calcolava la banda una sola volta alla
+    # barra corrente e la usava per confrontare sia il prezzo attuale che
+    # quello precedente, la stessa imprecisione ("prezzo storico
+    # confrontato con una banda temporalmente diversa") gia' corretta in
+    # MQL5.
     closes = ind["close"]
-    sd = _std(closes, 20, i)
-    mid = sma(closes, 20, i)
-    if None in (sd, mid) or sd == 0:
+    sd, mid = _std(closes, 20, i), sma(closes, 20, i)
+    sd_p, mid_p = _std(closes, 20, i - 1), sma(closes, 20, i - 1)
+    if None in (sd, mid, sd_p, mid_p) or sd == 0 or sd_p == 0:
         return 0
     upper, lower = mid + 2 * sd, mid - 2 * sd
+    upper_p, lower_p = mid_p + 2 * sd_p, mid_p - 2 * sd_p
     px, ppx = closes[i], closes[i - 1]
-    if ppx <= lower < px:          # rientro dalla banda inferiore
+    if ppx <= lower_p and lower < px:          # rientro dalla banda inferiore
         return 1
-    if ppx >= upper > px:          # rientro dalla banda superiore
+    if ppx >= upper_p and upper > px:          # rientro dalla banda superiore
         return -1
     return 0
 
@@ -655,30 +704,31 @@ def sig_bb_squeeze(c, ind, i, look=40):
 
 
 def sig_tsi(c, ind, i):
-    # proxy momentum (come nel MQL5: RSI/EMA): RSI>52 e prezzo>ema20 in salita.
-    # NOTA (15/07): non e' il vero True Strength Index (doppio smoothing EMA
-    # del momentum) - ne' qui ne' in MQL5 (NXS_Strat_TSI, commento esplicito
-    # "simplified RSI/EMA proxy"). Test A/B col vero TSI (vedi tsi_series() e
-    # NEXUS EA - Ricerca Esterna e Test A-B per Strategia): PF migliora
-    # (1.35->1.42) e DD si dimezza (10.57%->4.99%), ma i trade crollano
-    # (245->67 su 10y sito, verosimilmente -90% anche su MT5 dove oggi fa 721
-    # trade/6y) - non sostituito qui senza una decisione esplicita
-    # sull'accettare molta meno frequenza per una qualita' migliore.
-    r = ind["rsi"][i]
-    e = ind["ema20"][i]
-    if None in (r, e, ind["ema20"][i - 1]):
+    # 04/08 - fedelta' verificata riga-per-riga: la nota precedente qui
+    # ("ne' qui ne' in MQL5 e' il vero TSI, e' un proxy RSI/EMA") era
+    # riferita a una versione MQL5 piu' vecchia - il codice MQL5 ATTUALE
+    # (NXS_Strat_TSI, struct SNXSTSIState) calcola il vero True Strength
+    # Index a doppio smoothing (Blau: doppio-EMA(momentum)/doppio-
+    # EMA(|momentum|), periodi 25/13 = InpTSI_LongPeriod/ShortPeriod) con
+    # una signal line (EMA(TSI, InpTSI_SignalPeriod=7)) e segnala sul
+    # CROSS TSI/signal - non su una soglia fissa di RSI. tsi_series() gia'
+    # calcolava il TSI vero (stessi periodi) ma sig_tsi() non lo usava,
+    # deliberatamente, in attesa di una decisione esplicita sul trade-off
+    # frequenza/qualita' gia' documentato nel test A/B citato sotto -
+    # decisione presa oggi nel giro di verifica fedelta' completo.
+    tsi, sig = ind["tsi"], ind["tsi_signal"]
+    if tsi[i] is None or sig[i] is None or tsi[i - 1] is None or sig[i - 1] is None:
         return 0
-    if r > 52 and ind["close"][i] > e and e > ind["ema20"][i - 1]:
+    if tsi[i - 1] <= sig[i - 1] and tsi[i] > sig[i]:
         return 1
-    if r < 48 and ind["close"][i] < e and e < ind["ema20"][i - 1]:
+    if tsi[i - 1] >= sig[i - 1] and tsi[i] < sig[i]:
         return -1
     return 0
 
 
 def tsi_series(closes, r=25, s=13):
     """Vero True Strength Index (doppio smoothing EMA del momentum, William
-    Blau). Disponibile per confronto A/B - non ancora usato da sig_tsi(),
-    vedi nota sopra sul trade-off frequenza/qualita'."""
+    Blau) - periodi di default = InpTSI_LongPeriod/ShortPeriod MQL5."""
     n = len(closes)
     mom = [0.0] * n
     for i in range(1, n):
@@ -703,6 +753,23 @@ def tsi_series(closes, r=25, s=13):
         if ema2_mom[i] is not None and ema2_abs[i] not in (None, 0):
             tsi[i] = 100.0 * ema2_mom[i] / ema2_abs[i]
     return tsi
+
+
+def _tsi_signal_series(tsi_vals, period=7):
+    """EMA(TSI, InpTSI_SignalPeriod) - la signal line MQL5 per il cross."""
+    n = len(tsi_vals)
+    sig = [None] * n
+    k = 2.0 / (period + 1)
+    seed_i = next((idx for idx, v in enumerate(tsi_vals) if v is not None), None)
+    if seed_i is None:
+        return sig
+    e = tsi_vals[seed_i]
+    for i in range(seed_i, n):
+        if tsi_vals[i] is None:
+            continue
+        e = tsi_vals[i] * k + e * (1 - k)
+        sig[i] = e
+    return sig
 
 
 def sig_ichimoku(c, ind, i):
@@ -757,20 +824,24 @@ def _bear(cd): return cd["close"] < cd["open"]
 def sig_sar(c, ind, i):
     # v2.5.1 - prima era un proxy EMA20/EMA50 identico, trade per trade, a
     # sig_ema_pullback() (bug trovato il 15/07, vedi vault NEXUS EA - Motore
-    # Sito: Audit e Confronto 10Y): non testava mai Parabolic SAR. Ora usa
-    # il vero Parabolic SAR (psar_series) + allineamento EMA20, che in test
-    # A/B su XAUUSD D1 10y batte nettamente il vecchio proxy (PF 1.17->1.28,
-    # drawdown quasi dimezzato). Non aggiungere filtro ADX: testato, peggiora.
-    if i < 22:
+    # Sito: Audit e Confronto 10Y): non testava mai Parabolic SAR.
+    #
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SAR (MQL5
+    # reale): non e' un trigger di FLIP (solo il bar in cui il trend PSAR
+    # cambia lato, come faceva la versione precedente qui) - e' una
+    # condizione di STATO: SAR sotto/sopra il prezzo (valore vero, non solo
+    # il segno del trend) E allineamento EMA9/EMA21 (non EMA20 da sola),
+    # vera OGNI barra in cui entrambe reggono, non solo al cambio di lato.
+    if i < 21:
         return 0
-    trend, trend_p = ind["psar_trend"][i], ind["psar_trend"][i - 1]
-    e20 = ind["ema20"][i]
-    if trend is None or trend_p is None or e20 is None:
+    sar = ind["psar"][i]
+    e9, e21 = ind["ema9"][i], ind["ema21"][i]
+    if sar is None or e9 is None or e21 is None:
         return 0
     px = ind["close"][i]
-    if trend == 1 and trend_p == -1 and px > e20:
+    if sar < px and e9 > e21:
         return 1
-    if trend == -1 and trend_p == 1 and px < e20:
+    if sar > px and e9 < e21:
         return -1
     return 0
 
