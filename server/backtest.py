@@ -1578,7 +1578,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
                  confirm_bars=0, loss_cooldown_bars=0,
                  spread_price=0.0, commission_r=0.0, slippage_price=0.0,
-                 strategy_profiles=None, bar_range=None):
+                 strategy_profiles=None, bar_range=None, session_filter=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1781,6 +1781,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             if sma is not None:
                 if (sig == 1 and px < sma) or (sig == -1 and px > sma):
                     sig = 0
+        # --- SESSION FILTER (04/08): prendi solo se la sessione GMT della
+        # barra e' tra quelle ammesse - gate AGGIUNTIVO sopra quello gia'
+        # interno alle strategie a sessione (es. sig_amd_cont ammette
+        # LONDON/OVERLAP/NY; session_filter puo' restringere ulteriormente,
+        # es. {"LONDON","NY"} per escludere una sessione debole trovata in
+        # analisi). None (default) = nessun filtro, comportamento invariato.
+        if sig != 0 and session_filter is not None:
+            cur_sess = ind["sess"]["session"][i]
+            if cur_sess not in session_filter:
+                sig = 0
         if sig != 0:
             # 04/08: override per-strategia (solo per chi e' presente nel dict -
             # le altre restano sui parametri globali passati alla funzione).

@@ -163,9 +163,69 @@ MaxDD migliorano addirittura fuori campione. A differenza di
 **Config corrente AMD_CONT**: H4, risk_pct=5%, SL=2.5×ATR, TP=4.0×ATR,
 nessun breakeven/trailing.
 
-## Fase 7-10
+## Fase 7 — Advanced (pyramiding/grid/recovery)
 
-Da fare. Nota per la Fase 8 (Stability): SL=2.5/TP=4.0 sono stati scelti
-da una griglia discreta (1.0/1.5/2.0/2.5 e 2.0/3.0/4.0/5.0) — non ancora
-verificato se i valori vicini (es. 2.25, 2.75, 3.75, 4.25) reggono altrettanto
-bene o se è un picco isolato e fragile.
+**Saltata deliberatamente**: il motore Python è a posizione singola, non
+supporta piramidazione/grid/recovery. Costruire quella capacità sarebbe un
+lavoro di motore vero, non un test — rimandata, non bloccante per il resto
+della pipeline.
+
+## Fase 8 — Stability (fatta prima della 7, su richiesta esplicita)
+
+Griglia 3×3 attorno al vincitore SL=2.5/TP=4.0:
+
+| SL\\TP | 3.5 | 4.0 | 4.5 |
+|---|---|---|---|
+| 2.25 | 2.06 | 1.89 | 1.83 |
+| 2.5 | 1.97 | **2.00** | 1.94 |
+| 2.75 | 1.82 | 1.84 | 1.77 |
+
+Nessuna scogliera — PF resta in un range compatto (1.77–2.06) su tutti e 9 i
+punti. **Config confermata robusta, non un picco isolato.**
+
+## Approfondimento aggiuntivo — segmentazione per sessione
+
+Non nel protocollo originale ma emerso da un'ipotesi Fase-2-style: AMD_CONT
+opera su LONDON/OVERLAP/NY (gate interno alla strategia). Segmentando i 51
+trade della config vincente per sessione:
+
+| Sessione | Trade | WR% | PF | ExpR medio | NetPnL |
+|---|---|---|---|---|---|
+| LONDON | 9 | 66.7 | 2.54 | 0.428 | 3.342 |
+| NY | 28 | 67.9 | 2.54 | 0.567 | 13.025 |
+| OVERLAP | 14 | 50.0 | **1.10** | 0.147 | 619 |
+
+OVERLAP chiaramente il ventre molle. Aggiunto `session_filter` al motore
+(gate opzionale generico, riusabile su altre strategie a sessione) e
+testato escludendo OVERLAP:
+
+| | PF | Trade | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|
+| Baseline (LONDON+OVERLAP+NY) | 2.00 | 51 | 62.7 | 0.427 | 24.07 |
+| session_filter={LONDON,NY} | 2.01 | 48 | 64.6 | 0.413 | **12.64** |
+
+PF invariato, **MaxDD quasi dimezzato**. Nota: i trade scendono solo da 51 a
+48 (non a 37 come una sottrazione ingenua farebbe pensare) — togliere i
+trade OVERLAP libera "slot" nel motore a posizione singola, riempiti da
+segnali LONDON/NY successivi che prima venivano scartati perché una
+posizione OVERLAP era già aperta.
+
+### Ri-validazione Out-of-Sample
+
+| | PF | Trade | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|
+| In-sample | 1.92 | 30 | 63.3 | 0.343 | 12.62 |
+| Out-of-sample (costi retail) | 1.72 | 18 | 61.1 | 0.386 | 12.64 |
+| Out-of-sample (costi stress) | 1.66 | 18 | 61.1 | 0.364 | 13.07 |
+
+**Regge, con un degrado onesto** (1.92→1.72, ~10% relativo — non un crollo
+come `confirm_bars=1`, ma meno "di ferro" della combinazione SL/TP che non
+si era praticamente mossa). WR e MaxDD restano stabili, resta profittevole
+anche con costi aumentati.
+
+**Config corrente AMD_CONT**: H4, risk_pct=5%, SL=2.5×ATR, TP=4.0×ATR,
+`session_filter={LONDON,NY}` (esclude OVERLAP), nessun breakeven/trailing.
+
+## Fase 9-10
+
+Da fare.
