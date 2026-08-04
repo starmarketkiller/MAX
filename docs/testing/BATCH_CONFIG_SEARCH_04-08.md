@@ -448,4 +448,87 @@ un dato di per sé (il vero setup SMC "SMS+BMS+RTO" è raro per
 costruzione, non un bug del motore). Nessuna promozione possibile per
 nessuna delle 4 — serve più storico, stesso limite di sempre.
 
+## Aggiornamento 04/08 (10) — "Testa tutte le strategie": baseline completa
+## su tutto il roster (39 strategie × 6 timeframe, parametri di default)
+
+Su richiesta esplicita, girato un test completo su tutte le 39 strategie
+disponibili nel motore (36 dei 37 id "live" — manca solo ELLIOTT, mai
+portata su Python, solo su Pine — più le 4 SCALP_* di solo studio) su
+6 timeframe (H4, H1, D1, W1, M30, M15), costi realistici standard
+(`retail_standard`), parametri di default (nessuna ricerca/ottimizzazione
+di configurazione — questa è la Fase 1 "grezza", non un giro di ricerca).
+
+Soglia di campione minima usata per giudicare una cella: 25 trade
+(`MIN_BASELINE_TRADES`, stessa soglia adottata in `find_all_configs.py`).
+Su 234 combinazioni strategia×timeframe, **132 superano la soglia**, di
+cui **36 hanno PF>1.0**. 14 strategie non raggiungono MAI la soglia su
+nessun timeframe (stesso elenco già noto/spiegato nei giri precedenti:
+AMD_REVERSAL, BB_SQUEEZE, DISP_REBAL, IFVG, JUDAS_SWING, LDN_REVERSAL,
+NY_REVERSAL, OB_MIT, ORDER_BLOCK, PO3, SILVER_BULLET, SMS_BMS_RTO,
+THREE_BAR_DELIVERY_BREAK, WEEKLY_EXP — tutte strategie molto selettive
+per costruzione, o limitate dal poco storico intraday di Yahoo).
+
+### I 26 con almeno un timeframe sopra soglia, miglior PF ciascuna
+
+| Strategia | Fedeltà verificata? | Best TF | PF | Trade | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|---|---|
+| FVG_CONT | Sì (16/07, filtro trend H1 esterno) | W1 | 3.15 | 25 | 64.0 | +0.804 | 2.16 |
+| MACD | Sì (già fedele) | W1 | 2.94 | 25 | 60.0 | +0.768 | 5.25 |
+| LIQ_VOID | **No — proxy dichiarato di FVG_CONT** (filtro EMA50, non trend H1) | W1 | 1.69 | 38 | 47.4 | +0.374 | 7.08 |
+| SAR | Sì (04/08, riscritta) | W1 | 1.65 | 43 | 46.5 | +0.344 | 8.33 |
+| AMD_CONT | Sì (deep-dive, 04/08) | M30 | 1.62 | 26 | 53.8 | +0.323 | 3.85 |
+| EMA_PULLBACK | Sì (04/08, riscritta) | D1 | 1.62 | 35 | 51.4 | +0.352 | 4.71 |
+| SCALP_RANGE_BRK | **No** (mai auditata) | W1 | 1.51 | 31 | 45.2 | +0.304 | 5.30 |
+| BREAKOUT_ACC | Sì (già fedele) | W1 | 1.44 | 25 | 44.0 | +0.274 | 5.28 |
+| OTE_CONT | **No** — disattivata nell'EA reale, divergenza nota non corretta | D1 | 1.34 | 43 | 44.2 | +0.210 | 8.55 |
+| SCALP_EMA | **No** (mai auditata) | H4 | 1.30 | 87 | 42.5 | +0.205 | 6.99 |
+| LONDON_BO | Sì (04/08, riscritta) | H1 | 1.22 | 38 | 42.1 | +0.155 | 7.39 |
+| TURTLE_SOUP | Sì (deep-dive, 04/08) | H4 | 1.15 | 86 | 41.9 | +0.108 | 12.45 |
+| TSI | Sì (04/08, riscritta) | H1 | 1.08 | 102 | 40.2 | +0.059 | 11.47 |
+| ADX_RSI | Sì (già fedele) | D1 | 1.07 | 146 | 39.7 | +0.057 | 11.98 |
+| FVG_MIT | Sì (04/08, riscritta) | M30 | 1.05 | 33 | 30.3 | +0.122 | 15.41 |
+| SCALP_RSI_SNAP | **No** | H1 | 0.98 | 77 | 39.0 | -0.007 | 8.45 |
+| LIQ_SWEEP | Parziale (16/07, pre-rigore 04/08) | D1 | 0.97 | 101 | 37.6 | -0.010 | 19.45 |
+| RSI_DIV | Sì (già fedele) | H4 | 0.97 | 80 | 36.2 | -0.008 | 14.32 |
+| SCALP_BB_FADE | **No** | H4 | 0.97 | 65 | 36.9 | -0.009 | 14.51 |
+| SH_BMS_RTO | Sì (questo giro) | D1 | 0.97 | 34 | 52.9 | -0.007 | 9.98 |
+| MALAYSIAN_SNR | **No** — architettura cross-TF non replicabile | H4 | 0.96 | 168 | 36.9 | -0.017 | 17.88 |
+| BJORGUM | Sì (04/08, off-by-one corretto) | H1 | 0.90 | 95 | 35.8 | -0.059 | 17.07 |
+| BOLLINGER/RANGE_FADE | Sì (04/08, mixing-shift corretto) | H1 | 0.89 | 107 | 35.5 | -0.067 | 16.54 |
+| ICHIMOKU | Sì (04/08, shift Kumo corretto) — disattivata nell'EA reale | M30 | 0.88 | 40 | 37.5 | -0.076 | 11.59 |
+| STRUCT_REACT | **No** — disattivata nell'EA reale | H4 | 0.83 | 77 | 33.8 | -0.114 | 23.48 |
+
+### Lettura onesta
+
+- **Il PF più alto in assoluto (FVG_CONT/MACD, 2.9-3.2) è su W1 a
+  campione minimo (25 trade, esattamente la soglia)** — lo stesso
+  pattern già visto più volte in questa sessione ("PF spettacolare su
+  campione minuscolo è un'ipotesi, non un risultato", lezione #4). Non è
+  motivo per scartarli, ma nemmeno per promuoverli senza un Fase 4 vero.
+- **Le uniche strategie con un campione davvero ampio (>80 trade) E PF
+  sopra 1 sono TURTLE_SOUP (86tr/PF1.15, già in deep-dive, 67/100
+  OSSERVAZIONE) e TSI/ADX_RSI (100+tr, PF 1.07-1.08, margine minimo)** —
+  nessuna di queste è un edge forte, sono le più credibili proprio
+  perché il PF modesto non si è "sciolto" nemmeno su un campione grande.
+- **LIQ_VOID (il terzo miglior PF, 1.69/38tr) è un proxy dichiarato di
+  FVG_CONT MAI verificato per fedeltà propria** — condivide solo il gap
+  a 3 candele, ma usa il filtro trend locale (EMA50) invece del trend H1
+  esterno reale che FVG_CONT usa già. Va controllato se LIQ_VOID ha una
+  vera implementazione MQL5 propria prima di fidarsi di questo numero.
+- **6 dei 26 risultati sopra soglia vengono da strategie MAI auditate per
+  fedeltà in questa sessione** (LIQ_VOID, SCALP_RANGE_BRK, SCALP_EMA,
+  OTE_CONT, SCALP_RSI_SNAP, SCALP_BB_FADE, MALAYSIAN_SNR — 7 in realtà) —
+  i loro numeri vanno presi con la stessa cautela di AMD_CONT/
+  SILVER_BULLET PRIMA della correzione (lezione #14): potrebbero
+  sciogliersi o capovolgersi una volta verificati riga-per-riga contro
+  MQL5, esattamente come è successo a 5 delle 6 strategie del primo
+  batch pre-fedeltà.
+- **Le 14 sotto soglia ovunque + le 13 sopra ma con PF<1 confermano un
+  quadro coerente con tutto il resto della sessione**: un vantaggio
+  reale, ampio e robusto non emerge facilmente su questo storico H4
+  limitato (1.74 anni) con parametri di default — serve o più storico, o
+  una ricerca di configurazione mirata (Fase 3+) sulle strategie già
+  fedeli con un segnale di partenza onesto (TURTLE_SOUP, TSI, ADX_RSI,
+  EMA_PULLBACK, LONDON_BO, SAR).
+
 244 test verdi.
