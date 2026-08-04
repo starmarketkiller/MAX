@@ -906,20 +906,41 @@ def sig_fvg_cont_ext(c, ind, i):
 
 
 def sig_fvg_mit(c, ind, i):
-    # ritorno in un FVG vecchio (~5 barre fa) + rifiuto
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_FVG_Mitigation
+    # (MQL5 reale): i nomi delle variabili MQL5 sono fuorvianti ("h2/l2" e'
+    # in realta' shift5, "h0/l0" e' shift7, non shift2/shift0) - il proxy
+    # precedente aveva scambiato quali candele definiscono il gap e la
+    # condizione stessa (confrontava candele/direzioni non corrispondenti
+    # a nessuno dei due rami MQL5). Riscritta seguendo esattamente MQL5
+    # (shift5->i-4, shift7->i-6, shift1->i), "bid" approssimato dal range
+    # [low,high] della barra (tocco della zona), non solo la close.
     atr = ind["atr"][i]
-    if not atr or i < 8:
+    if not atr or i < 7:
         return 0
-    lo_e, hi_e = c[i - 6]["high"], c[i - 4]["low"]          # FVG bull
-    cur = c[i]
-    if hi_e > lo_e and lo_e - 0.3 * atr <= cur["low"] <= hi_e \
-            and _bull(cur) and cur["close"] > (lo_e + hi_e) / 2:
-        return 1
-    lo_b, hi_b = c[i - 4]["high"], c[i - 6]["low"]          # FVG bear
-    if hi_b > lo_b and lo_b <= cur["high"] <= hi_b + 0.3 * atr \
-            and _bear(cur) and cur["close"] < (lo_b + hi_b) / 2:
-        return -1
+    h2, l2 = c[i - 4]["high"], c[i - 4]["low"]
+    h0, l0 = c[i - 6]["high"], c[i - 6]["low"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    cur_lo, cur_hi = c[i]["low"], c[i]["high"]
+    body_abs = abs(c1 - o1)
+    rejection_bull = (c1 > o1) and (body_abs > atr * 0.35)
+    rejection_bear = (c1 < o1) and (body_abs > atr * 0.35)
+    if l0 > h2 + atr * 0.15:
+        fvg_lo, fvg_hi = h2, l0
+        if cur_hi >= fvg_lo and cur_lo <= fvg_hi and rejection_bull:
+            return 1
+    if h0 < l2 - atr * 0.15:
+        fvg_lo, fvg_hi = h0, l2
+        if cur_hi >= fvg_lo and cur_lo <= fvg_hi and rejection_bear:
+            return -1
     return 0
+
+
+def _fvg_mit_sl_tp(c, ind, i, direction, entry, atr):
+    h2 = c[i - 4]["high"]
+    l2 = c[i - 4]["low"]
+    if direction == 1:
+        return h2 - 0.4 * atr, entry + 2.5 * atr
+    return l2 + 0.4 * atr, entry - 2.5 * atr
 
 
 def sig_ifvg(c, ind, i):
@@ -1850,6 +1871,7 @@ STRATEGY_SLTP_ALWAYS = {
     "WEEKLY_EXP": _weekly_exp_sl_tp,
     "IFVG": _ifvg_sl_tp,
     "TURTLE_SOUP": _turtle_soup_sl_tp,
+    "FVG_MIT": _fvg_mit_sl_tp,
 }
 
 

@@ -193,3 +193,20 @@ debole/sottile.
 
 H4 è il candidato più credibile finora tra le correzioni di oggi (insieme
 a LONDON_BO/H1) — non ancora ottimizzato (Fase 6), solo baseline fedele.
+
+## Aggiornamento 04/08 (5) — FVG_MIT corretta, verdetto PASS superato
+
+Verifica di fedeltà (#5): `NXS_Strat_FVG_Mitigation` (MQL5 reale) ha nomi
+di variabili fuorvianti (`h2/l2` sono in realtà shift5, `h0/l0` sono
+shift7, non shift2/shift0) — il proxy precedente aveva scambiato quali
+candele definiscono il gap, la condizione stessa non corrispondeva a
+nessuno dei due rami reali. Riscritta seguendo esattamente MQL5
+(`sig_fvg_mit` + `_fvg_mit_sl_tp`: SL dal bordo del gap ±0.4×ATR, TP a
+2.5×ATR fisso), "bid" approssimato dal range [low,high] della barra
+(tocco della zona) invece della sola close.
+
+**Risultato onesto**: debole ovunque. D1 quasi pareggio (PF 1.03, 83
+trade — campione reale ma nessun edge), H4 chiaramente negativo (0.39),
+H1 debole (0.87), W1 troppo sottile (7 trade) per giudicare. Il "PASS"
+del batch precedente (PF 1.24→1.41) è superato — nessun timeframe mostra
+un edge credibile con la versione fedele.
