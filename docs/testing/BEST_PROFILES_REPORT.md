@@ -102,9 +102,70 @@ delle altre. Gruppo D1: ADX_RSI/BREAKOUT_ACC/TSI dominano (54+59+53=166/219).
    (MALAYSIAN_SNR, STRUCT_REACT, LIQ_SWEEP restano negativi anche
    ottimizzati), non per certificare i migliori.
 
+## Aggiornamento 04/08: Fase 1 NQROS vera — baseline su TUTTI i timeframe
+
+Il report sopra testava ogni strategia solo sul suo TF "nativo" da profilo
+MQL5. Su richiesta ("hai provato anche su vari timeframe?"), rifatto un vero
+Fase 1 NQROS: **tutte** le 40 strategie del motore (non solo le 29 con TF
+fisso), baseline a parametri di default, su **tutti** i 7 timeframe
+disponibili (W1/D1/H4/H1/M30/M15/M5). Script:
+`server/research_scripts/multi_tf_baseline.py`. 280 run in 13.4s.
+
+### Miglior TF per strategia (PF più alto tra i TF con ≥15 trade)
+
+| Strategia | TF | PF | Trades | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|---|
+| FVG_CONT | W1 | 3.15 | 25 | 64.0 | 0.804 | 2.16 |
+| MACD | W1 | 2.94 | 25 | 60.0 | 0.768 | 5.25 |
+| THREE_BAR_DELIVERY_BREAK | H4 | 2.25 | 15 | 53.3 | 0.576 | 2.27 |
+| IFVG | H4 | 2.06 | 36 | 55.6 | 0.517 | 4.19 |
+| LONDON_BO / WEEKLY_EXP | W1 | 1.71 | 27 | 48.1 | 0.398 | 4.09 |
+| LIQ_VOID | W1 | 1.69 | 38 | 47.4 | 0.374 | 7.08 |
+| AMD_CONT | H4 | 1.62 | 64 | 50.0 | 0.358 | 6.47 |
+| ADX_RSI | W1 | 1.57 | 24 | 45.8 | 0.330 | 5.24 |
+| SAR | W1 | 1.47 | 18 | 44.4 | 0.280 | 4.26 |
+| TSI | W1 | 1.45 | 55 | 43.6 | 0.259 | 9.13 |
+| SILVER_BULLET | H4 | 1.37 | 65 | 43.1 | 0.223 | 10.48 |
+| OB_MIT | D1 | 1.35 | 32 | 46.9 | 0.226 | 4.41 |
+| OTE_CONT | D1 | 1.34 | 43 | 44.2 | 0.210 | 8.55 |
+| SH_BMS_RTO / SMS_BMS_RTO | W1 | 1.29 | 17 | 41.2 | 0.188 | 4.56 |
+| ... (resto positivo/marginale: FVG_MIT, ORDER_BLOCK, ICHIMOKU, PO3, BJORGUM, TURTLE_SOUP, NY_REVERSAL) | | 0.97–1.24 | | | | |
+| LIQ_SWEEP, RSI_DIV, BOLLINGER/RANGE_FADE, MALAYSIAN_SNR, LDN_REVERSAL, STRUCT_REACT, AMD_REVERSAL, JUDAS_SWING | vario | 0.72–0.97 | | | | negativi/deboli su OGNI TF |
+
+CSV completo (40 strategie × 7 TF, tutte le metriche) generato dallo script.
+
+### Scoperte principali
+
+1. **WEEKLY_EXP performa meglio su W1 (1.71) che su D1 (1.11)** dove l'avevo
+   testata finora — coerente col nome, correggere il TF_MAP per i prossimi
+   batch di ottimizzazione mirata.
+2. **AMD_CONT e SILVER_BULLET** (escluse dal batch precedente come "nessun TF
+   fisso pulito") mostrano segnale reale su H4 (PF 1.62/64 trade e 1.37/65
+   trade) — i gate a sessione (ora GMT letta dal timestamp della candela)
+   funzionano anche su bar aggregate H4, non solo su dati intrabar fini.
+   Vale la pena approfondirle, non erano da scartare.
+3. **JUDAS_SWING, LDN_REVERSAL, AMD_REVERSAL, STRUCT_REACT, MALAYSIAN_SNR**
+   restano deboli/negativi su **ogni** timeframe testato — non è un problema
+   di TF sbagliato, la logica del segnale stesso non ha edge su questo
+   simbolo/periodo.
+4. **Attenzione ai risultati W1 (weekly)**: PF alti come 3.15/2.94 girano su
+   soli 25 trade in ~10 anni (~1 ogni 4 mesi) — il campione più piccolo di
+   tutto il report, quindi il più a rischio dell'esatto errore già
+   documentato nella knowledge base (`vault: Lezione Overfitting 3Y` —
+   "Sharpe 3.19... poi smentito sui 3 anni"). Trattare come ipotesi da
+   validare, non come risultato.
+5. **I risultati W1/D1 delle strategie SCALP_* sono da ignorare**: sono
+   progettate per momentum intrabar veloce (M15/M5), il PF "decente" che
+   mostrano su W1 (es. SCALP_RANGE_BRK 1.51) sta testando una cosa diversa
+   dal loro scopo (un incrocio EMA/RSI qualsiasi su barre settimanali, non
+   uno scalp) — su M15/M5, il loro vero habitat, sono deboli (0.3–0.9),
+   coerente con l'assenza di un vero edge lì.
+
 ## Prossimo passo
 
-Out-of-Sample split (NQROS Fase 4) su IFVG e THREE_BAR_DELIVERY_BREAK prima
-di tutto — sono i profili col PF più alto ma il campione più piccolo, il
-rischio di overfitting è massimo proprio lì. Poi conferma su TradingView dei
-candidati con campione più solido (SAR, MACD, SH_BMS_RTO/SMS_BMS_RTO).
+Out-of-Sample split (NQROS Fase 4) prima di tutto su FVG_CONT/MACD (W1, PF
+più alto ma campione minimo) e su IFVG/THREE_BAR_DELIVERY_BREAK (H4) — sono
+i profili con PF più alto ma anche il rischio di overfitting più alto. Poi
+approfondire AMD_CONT/SILVER_BULLET (scoperta nuova di oggi) e confermare su
+TradingView i candidati con campione più solido (SAR, MACD, SH_BMS_RTO/
+SMS_BMS_RTO).
