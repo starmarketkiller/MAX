@@ -915,14 +915,37 @@ def sig_fvg_mit(c, ind, i):
 
 
 def sig_ifvg(c, ind, i):
-    # inverse FVG: un FVG che viene violato -> flip nella direzione della rottura
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_IFVG_Reversal
+    # (MQL5 reale): il concetto di base (gap violato -> flip) era gia'
+    # presente, ma mancavano: buffer ATR sul gap (0.2xATR, non un tocco
+    # marginale), filtro di forza sulla candela di reazione (corpo>0.3xATR),
+    # e la conferma CHoCH - senza queste il proxy prendeva flip deboli che
+    # la vera strategia scarta. Mappatura shift MQL5->indice Python (shift1
+    # = barra appena chiusa = i): h2/l2=c[i-1], h4/l4=c[i-3], c1/o1=c[i].
     if i < 4:
         return 0
-    if c[i - 1]["low"] > c[i - 3]["high"] and c[i]["close"] < c[i - 3]["high"]:
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    h2, l2 = c[i - 1]["high"], c[i - 1]["low"]
+    h4, l4 = c[i - 3]["high"], c[i - 3]["low"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body1 = abs(c1 - o1)
+    reaction_bear = (c1 < o1) and (body1 > atr * 0.3)
+    reaction_bull = (c1 > o1) and (body1 > atr * 0.3)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if l2 > h4 + atr * 0.2 and c1 < h4 and reaction_bear and choch_down:
         return -1
-    if c[i - 1]["high"] < c[i - 3]["low"] and c[i]["close"] > c[i - 3]["low"]:
+    if h2 < l4 - atr * 0.2 and c1 > l4 and reaction_bull and choch_up:
         return 1
     return 0
+
+
+def _ifvg_sl_tp(c, ind, i, direction, entry, atr):
+    h2, l2 = c[i - 1]["high"], c[i - 1]["low"]
+    if direction == 1:
+        return h2 - 0.5 * atr, entry + 2.4 * atr
+    return l2 + 0.5 * atr, entry - 2.4 * atr
 
 
 def sig_liq_sweep(c, ind, i):
@@ -1785,6 +1808,7 @@ STRATEGY_SLTP_ALWAYS = {
     "AMD_CONT": _amd_cont_sl_tp,
     "SILVER_BULLET": _silver_bullet_sl_tp,
     "WEEKLY_EXP": _weekly_exp_sl_tp,
+    "IFVG": _ifvg_sl_tp,
 }
 
 

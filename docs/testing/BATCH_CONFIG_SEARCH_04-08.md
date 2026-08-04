@@ -124,3 +124,28 @@ LONDON_BO su H1 (PF1.22/38 trade) è l'unico risultato con un campione
 minimamente utilizzabile, comunque sotto la soglia di affidabilità
 (MIN_BASELINE_TRADES=25 usata nel batch, qui sotto). WEEKLY_EXP è debole
 e su campioni troppo piccoli ovunque (5-8 trade) per dire alcunché.
+
+## Aggiornamento 04/08 (2) — IFVG corretta, verdetto PASS superato
+
+Verifica di fedeltà (#2 nell'ordine concordato): `NXS_Strat_IFVG_Reversal`
+(MQL5 reale) confrontata con `sig_ifvg`. Il concetto di base (gap violato →
+flip) era già presente nel proxy, ma mancavano: buffer ATR sul gap
+(0.2×ATR, non un tocco marginale), filtro di forza sulla candela di
+reazione (corpo>0.3×ATR), e soprattutto la conferma **CHoCH sulla stessa
+barra** — la vera strategia richiede che il flip coincida esattamente con
+un cambio di struttura, non un semplice ritorno di prezzo.
+
+Corretta (`sig_ifvg` + `_ifvg_sl_tp`, quest'ultimo aggiunto a
+`STRATEGY_SLTP_ALWAYS` per il vero SL/TP: SL dal bordo del gap ±0.5×ATR,
+TP a 2.4×ATR fisso dall'entry). Verificato che il filtro CHoCH abbia la
+stessa semantica "evento per barra" in Python e MQL5 (`g_struct.chochUp/
+chochDown` resettati a `false` a ogni ricalcolo in `NXS_Structure.mqh` —
+non è un bug del porting).
+
+**Risultato onesto**: la coincidenza esatta gap+reazione+CHoCH sulla
+stessa barra è rarissima nel nostro storico — **zero trade su H4/H1/M30/W1**,
+solo 5 trade su D1 (e negativi, PF 0.89). Il "PASS" del batch precedente
+(PF 2.06→2.28, 34 trade) è superato: era calcolato su un proxy troppo
+permissivo. Stesso pattern già visto su SILVER_BULLET — un setup ICT
+molto selettivo che il campione di dati attuale non riesce a popolare a
+sufficienza per un giudizio.
