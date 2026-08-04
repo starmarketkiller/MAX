@@ -226,6 +226,81 @@ anche con costi aumentati.
 **Config corrente AMD_CONT**: H4, risk_pct=5%, SL=2.5×ATR, TP=4.0×ATR,
 `session_filter={LONDON,NY}` (esclude OVERLAP), nessun breakeven/trailing.
 
-## Fase 9-10
+### Multi-TF con la config vincente
 
-Da fare.
+Ri-testata la config finale su tutti i TF disponibili — solo H4 è
+utilizzabile con un campione affidabile (48 trade, 1.74 anni di dati Yahoo,
+che non arrivano a 10 anni per limite della fonte dati, non per scelta).
+H1 negativo, M30 borderline (14 trade, non validabile OOS), M15/M5
+inutilizzabili (troppo pochi trade, PF 2.60 su 5 trade è un numero da
+ignorare, non un risultato).
+
+## Fase 9 — Analisi finale
+
+### Punteggio /100 (rubrica dichiarata, per essere verificabile)
+
+| Dimensione | Punti | Motivazione |
+|---|---|---|
+| Edge supera il gate OOS | 26/30 | Passato due volte (SL/TP: quasi immobile 2.01→1.99; filtro sessione: degrado onesto 1.92→1.72, ancora positivo con costi stress). Non pieno: un solo split, non un vero walk-forward multi-finestra. |
+| Stabilità parametri (Fase 8) | 14/15 | Griglia 3×3 senza scogliere, plateau largo (PF 1.77–2.06). |
+| Qualità/ampiezza campione | 8/15 | 48 trade è un campione onesto ma corto: solo 1.74 anni di storico H4 (limite Yahoo), non i 10 anni auspicati. |
+| Comprensione del meccanismo (Fase 2) | 13/15 | Bottleneck identificato con dati reali, ipotesi iniziale (gestione stretta) corretta in corsa quando i dati hanno detto il contrario (serve spazio, non stringere) — segno di analisi vera, non conferma cercata. |
+| Fedeltà motore Python vs vera logica MQL5 | 3/10 | **Mai verificata** — `_session_amd_series` è una mia ricostruzione di `NXS_AMDModel.mqh`, non un confronto riga-per-riga. Rischio aperto, segnalato ma non chiuso. |
+| Generalizzazione (altri TF) | 4/10 | Funziona solo su H4. Non è necessariamente un difetto (ogni strategia il suo TF, come da architettura EA), ma è comunque uno solo. |
+| Gestione rischio operativo | 4/5 | MaxDD 12.64% ragionevole; risk_pct=5% è sopra la mia raccomandazione iniziale (scelta esplicita dell'utente, documentata in Fase 5), da rivedere quando altre strategie saranno attive in parallelo. |
+| **Totale** | **72/100** | |
+
+### Dove funziona
+
+- Segnale con logica comprensibile (sweep+CHoCH+continuazione post-manipolazione), non un pattern trovato a forza di grid search.
+- SL/TP largo (2.5/4.0×ATR) e filtro sessione LONDON+NY sono entrambi **validati Out-of-Sample**, non solo in-sample.
+- Config stabile (Fase 8): non è un picco fragile.
+
+### Dove non funziona / rischi aperti
+
+- Campione ancora corto in termini assoluti (48 trade, <2 anni).
+- Nessun confronto di fedeltà con la vera logica MQL5 (`NXS_AMDModel.mqh`) — il motore Python potrebbe divergere dalla strategia che girerà davvero sul conto.
+- Funziona solo su H4 — nessuna ridondanza di timeframe.
+- `risk_pct=5%` scelto sopra la raccomandazione iniziale: da ridiscutere in ottica portafoglio multi-strategia.
+
+### Decisione: OSSERVAZIONE
+
+Non "mantieni" (capitale vero) finché non si chiudono i due rischi aperti
+più concreti: (1) verifica di fedeltà motore-vs-MQL5, (2) più storico H4
+reale (export MT5) per confermare che il ritmo di ~27,6 trade/anno e l'edge
+tengano oltre gli 1,74 anni disponibili oggi. Non "archivia": l'edge è
+reale e validato due volte OOS con questo campione, sarebbe uno spreco
+scartarla. **Serve ricerca** (fedeltà MQL5) e **serve dati** (storico più
+lungo) prima della promozione a "mantieni".
+
+## Fase 10 — Memoria
+
+### Diario di ricerca — AMD_CONT
+
+**Scoperta più sorprendente**: AMD_CONT era stata esclusa dal primo batch di
+questa sessione ("nessun TF pulito, serve dato intraday fine") — un errore
+di giudizio mio, smentito dalla Fase 1 multi-timeframe che ha mostrato
+segnale reale su H4 con gate a sessione che funzionano bene anche su barre
+aggregate H4 (non serve granularità intrabar fine come temevo).
+
+**Ipotesi smentita**: la lettura Fase 2 ("44% delle perdite erano quasi
+vincenti → serve bloccare il profitto prima") era corretta nella diagnosi
+(il bottleneck è davvero nella gestione post-ingresso) ma sbagliata nella
+cura proposta — breakeven/trailing STRETTI sono stati catastrofici (PF
+crollato a 0.5-0.6), mentre la soluzione vera era l'opposto: dare più
+spazio (SL/TP più larghi). La Fase 2 dice DOVE guardare, non
+automaticamente in CHE DIREZIONE muoversi — va sempre testata, non dedotta.
+
+**Lezioni per le altre strategie** (vedi anche `NQROS_CROSS_STRATEGY_LEARNINGS.md`):
+1. Ogni combinazione di parametri trovata via ricerca (anche a metà pipeline,
+   non solo in Fase 4) va ri-validata Out-of-Sample con lo stesso rigore —
+   ha già smascherato un falso positivo (`confirm_bars=1`) e confermato due
+   veri positivi (SL/TP largo, filtro sessione).
+2. Per strategie a sessione, segmentare i trade per sessione è un check
+   economico che può dimezzare il MaxDD (qui: escludere OVERLAP).
+3. Non dare per scontato che stringere la gestione (breakeven/trailing) sia
+   più sicuro — su strategie dove i vincitori hanno bisogno di spazio per
+   svilupparsi, stringere è stato il modo più veloce per distruggere l'edge.
+4. Un PF spettacolare su un campione minuscolo (qui: PF 2.60 su 5 trade,
+   M5) resta un'ipotesi, non un risultato — vale anche quando il numero è
+   allettante.
