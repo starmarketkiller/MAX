@@ -706,18 +706,41 @@ def tsi_series(closes, r=25, s=13):
 
 
 def sig_ichimoku(c, ind, i):
-    # Kumo break semplificato: tenkan/kijun + prezzo vs nuvola
-    if i < 52:
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_Ichimoku
+    # (MQL5 reale - il commento nel codice MQL5 stesso documenta un bug
+    # gia' corretto li' il 17/07, mai riportato qui nel motore Python): le
+    # Senkou Span A/B sono "shiftate in avanti" di 26 barre (comportamento
+    # nativo Ichimoku/MT5, il buffer indicatore di MT5 lo gestisce da solo)
+    # - la nuvola confrontata col prezzo alla barra i e' calcolata con
+    # tenkan/kijun/senkouB di 26 barre PRIMA (i-26), non quelli correnti
+    # come faceva il proxy. Tenkan/Kijun per il confronto di trend restano
+    # invece quelli CORRENTI (non shiftati, coerente con MQL5: tenkan[0]/
+    # kijun[0] letti a shift1 = i).
+    shift = 26
+    if i < 52 + shift + 1:
         return 0
-    tenkan = (_hh(c, 9, i) + _ll(c, 9, i)) / 2
-    kijun = (_hh(c, 26, i) + _ll(c, 26, i)) / 2
-    spanA = (tenkan + kijun) / 2
-    spanB = (_hh(c, 52, i) + _ll(c, 52, i)) / 2
-    top, bot = max(spanA, spanB), min(spanA, spanB)
-    px, ppx = ind["close"][i], ind["close"][i - 1]
-    if ppx <= top < px and tenkan > kijun:
+
+    def tenkan_at(k):
+        return (_hh(c, 9, k) + _ll(c, 9, k)) / 2
+
+    def kijun_at(k):
+        return (_hh(c, 26, k) + _ll(c, 26, k)) / 2
+
+    def span_a_at(k):
+        return (tenkan_at(k) + kijun_at(k)) / 2
+
+    def span_b_at(k):
+        return (_hh(c, 52, k) + _ll(c, 52, k)) / 2
+
+    span_a1, span_b1 = span_a_at(i - shift), span_b_at(i - shift)
+    span_a2, span_b2 = span_a_at(i - shift - 1), span_b_at(i - shift - 1)
+    kumo_top1, kumo_bot1 = max(span_a1, span_b1), min(span_a1, span_b1)
+    kumo_top2, kumo_bot2 = max(span_a2, span_b2), min(span_a2, span_b2)
+    tenkan1, kijun1 = tenkan_at(i), kijun_at(i)
+    price, prev = c[i]["close"], c[i - 1]["close"]
+    if prev <= kumo_top2 and price > kumo_top1 and tenkan1 > kijun1:
         return 1
-    if ppx >= bot > px and tenkan < kijun:
+    if prev >= kumo_bot2 and price < kumo_bot1 and tenkan1 < kijun1:
         return -1
     return 0
 

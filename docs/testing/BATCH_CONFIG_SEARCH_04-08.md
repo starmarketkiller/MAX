@@ -210,3 +210,41 @@ trade — campione reale ma nessun edge), H4 chiaramente negativo (0.39),
 H1 debole (0.87), W1 troppo sottile (7 trade) per giudicare. Il "PASS"
 del batch precedente (PF 1.24→1.41) è superato — nessun timeframe mostra
 un edge credibile con la versione fedele.
+
+## Aggiornamento 04/08 (6) — ICHIMOKU corretta, verdetto PASS superato (ultima del gruppo)
+
+Verifica di fedeltà (#6, ultima dell'ordine concordato): `NXS_Strat_Ichimoku`
+(MQL5 reale) — il commento nel codice MQL5 stesso documenta un bug già
+corretto lì il 17/07, mai riportato nel motore Python: le Senkou Span A/B
+sono "shiftate in avanti" di 26 barre (comportamento nativo Ichimoku/MT5).
+La nuvola confrontata col prezzo alla barra corrente va calcolata con
+tenkan/kijun/senkouB di **26 barre prima**, non quelli correnti come
+faceva il proxy — il proxy confrontava il prezzo con una nuvola "del
+futuro" rispetto a quella che un trader reale vedrebbe in quel momento.
+
+Corretta (`sig_ichimoku`, nessuna formula SL/TP custom necessaria —
+ICHIMOKU usa `NXS_DefaultSLTP` generico).
+
+**Risultato onesto, e coerente con quanto già sapevamo**: negativa su
+ogni timeframe (H4 PF 0.63, H1 0.82, D1 0.59, W1 0.61). Coerente con la
+nota già raccolta durante il primo audit di fedeltà su AMD_CONT/
+SILVER_BULLET: l'EA reale ha **già disattivato ICHIMOKU** in
+`NXS_Profile_Enabled()` per rumore sui dati broker MT5, nonostante
+risultati misti/positivi nel motore Python col proxy vecchio — ora anche
+la versione fedele lo conferma. Il "PASS" del batch precedente (PF
+1.09→1.19) è superato.
+
+## Riepilogo — 6/6 correzioni di fedeltà completate (ordine concordato)
+
+| # | Strategia | Problema trovato | Esito onesto post-fix |
+|---|---|---|---|
+| 1 | LONDON_BO/WEEKLY_EXP | Proxy generico condiviso, due strategie reali diverse | LONDON_BO/H1 unico segnale utilizzabile (PF1.22/38tr) |
+| 2 | IFVG | Mancavano buffer ATR, filtro reazione, CHoCH sulla stessa barra | Quasi nessun trade nel nostro storico (setup troppo selettivo) |
+| 3 | BJORGUM | Off-by-one (finestra/close spostate di una barra) | Negativa ovunque, edge era un artefatto |
+| 4 | TURTLE_SOUP | Usava estremo generico invece del vero sweep esteso PDH/PDL | H4 mostra edge reale (PF1.15/86tr) — nuovo TF rispetto a prima |
+| 5 | FVG_MIT | Indici/candele del gap scambiati (nomi MQL5 fuorvianti) | Debole ovunque, nessun edge |
+| 6 | ICHIMOKU | Mancava lo shift in avanti di 26 barre della nuvola (bug già noto in MQL5, mai riportato qui) | Negativa ovunque, coerente col fatto che l'EA reale l'ha già disattivata |
+
+**Unico vero candidato positivo emerso da questo giro**: TURTLE_SOUP su H4.
+Tutti gli altri "PASS" del batch precedente erano artefatti di proxy
+infedeli — corretti, l'edge sparisce quasi ovunque tranne lì.
