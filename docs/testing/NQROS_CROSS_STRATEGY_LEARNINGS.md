@@ -56,3 +56,28 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
    una copia 1:1 del codice MQL5 reale. Prima di promuovere qualunque
    strategia a "mantieni" (capitale vero), andrebbe fatto un confronto
    riga-per-riga con l'implementazione MQL5 corrispondente.
+
+## Da SILVER_BULLET (secondo ciclo completo, 04/08)
+
+8. **Un toggle che funziona su una strategia può essere inutile (o dannoso)
+   su una strategia "gemella" della stessa famiglia.** `htf_filter` era
+   ridondante su AMD_CONT (filtro EMA200 già interno) ma un vincitore netto
+   e non ridondante su SILVER_BULLET (nessun filtro di trend interno). Non
+   generalizzare un toggle-vincente da una strategia all'altra senza
+   ritestarlo — dipende da cosa la strategia ha già dentro.
+
+9. **"Dai più spazio a SL/TP" (lezione #3, da AMD_CONT) non è una regola
+   universale** — su SILVER_BULLET SL stretto (1.0×ATR) batte quello largo.
+   La parte che SI generalizza è più specifica: **breakeven/trailing
+   STRETTI sono quasi sempre distruttivi** (confermato identico su
+   entrambe le strategie), non "sempre allargare tutto".
+
+10. **Un pass Out-of-Sample che non collassa non è automaticamente pulito.**
+    Se OGNI configurazione testata (con/senza filtro, con/senza
+    combinazione) mostra lo stesso miglioramento nella stessa metà del
+    periodo, è il segno di un effetto di regime/periodo di mercato che
+    confonde la lettura — un rischio diverso e più subdolo del semplice
+    overfitting sui parametri che il gate normalmente intercetta. Va
+    segnalato esplicitamente nel punteggio finale (vedi SILVER_BULLET,
+    Fase 9: 62/100, "serve dati" come priorità assoluta), non nascosto
+    dietro un PF che "comunque migliora fuori campione".
