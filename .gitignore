@@ -74,3 +74,7 @@ results/reports/*agentlog.log
 *.swo
 .DS_Store
 Thumbs.db
+
+# Cache locale dati storici Dukascopy (server/dukascopy_fetch.py) - dati
+# scaricati, non codice: puo' arrivare a migliaia di file, mai da versionare.
+server/data_cache/
