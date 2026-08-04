@@ -1,0 +1,114 @@
+//@version=6
+// =============================================================================
+// MACD Classico (12/26/9) — Gerald Appel — XAUUSD H4
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Fonte: Gerald Appel, sviluppatore del MACD
+// (Moving Average Convergence Divergence) alla fine degli anni '70,
+// pubblicato in dettaglio nei suoi lavori successivi sull'analisi tecnica.
+// I parametri 12/26/9 sono quelli ORIGINALI dell'autore, diventati lo
+// standard universale — non una variante "ottimizzata".
+//
+// REGOLA ORIGINALE:
+//   • MACD line = EMA(12) − EMA(26) del prezzo di chiusura.
+//   • Signal line = EMA(9) della MACD line.
+//   • Histogram = MACD line − Signal line (misura la velocità/accelerazione
+//     della convergenza-divergenza, aggiunto da Thomas Aspray nel 1986 come
+//     estensione al lavoro di Appel — qui incluso solo come visualizzazione,
+//     non come regola di trigger).
+//   • Segnale rialzista: MACD line incrocia SOPRA la signal line.
+//   • Segnale ribassista: MACD line incrocia SOTTO la signal line.
+//   • Conferma di trend spesso associata (non parte stretta della
+//     definizione originale, ma pratica standard derivata): MACD line sopra
+//     zero rafforza il segnale rialzista, sotto zero rafforza quello
+//     ribassista — qui esposta come filtro opzionale.
+//
+// A differenza della versione MACD già portata in `pinescript/` (che
+// replica `iMACD` di MT5 con signal SMA, non EMA — dettaglio tecnico
+// specifico di quella piattaforma), qui la signal line è una EMA come
+// nella definizione originale di Appel.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("MACD Classico 12/26/9 - Appel (XAUUSD H4)", shorttitle="MACD-APPEL", overlay=false,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+fastLen = input.int(12, "EMA veloce")
+slowLen = input.int(26, "EMA lenta")
+signalLen = input.int(9, "EMA signal")
+requireZeroConfirm = input.bool(false, "Richiedi MACD line sopra/sotto zero (conferma trend, non nella definizione stretta)")
+atrLen = input.int(14, "ATR length (per SL/TP)")
+slMult = input.float(2.0, "SL (x ATR)")
+tpMult = input.float(4.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2015-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+emaFast = ta.ema(close, fastLen)
+emaSlow = ta.ema(close, slowLen)
+macdLine = emaFast - emaSlow
+signalLine = ta.ema(macdLine, signalLen)
+histLine = macdLine - signalLine
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+macdLine1 = macdLine[1]
+signalLine1 = signalLine[1]
+crossUp = ta.crossover(macdLine, signalLine)[1]
+crossDown = ta.crossunder(macdLine, signalLine)[1]
+
+// ----------------------------- Trigger --------------------------------------
+zeroOkLong = not requireZeroConfirm or macdLine1 > 0
+zeroOkShort = not requireZeroConfirm or macdLine1 < 0
+
+rawLong  = crossUp and zeroOkLong
+rawShort = crossDown and zeroOkShort
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="MACD_bull_cross")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="MACD_bear_cross")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot -----------------------------------------
+plot(macdLine, title="MACD line", color=color.new(color.blue, 0))
+plot(signalLine, title="Signal line", color=color.new(color.orange, 0))
+plot(histLine, title="Histogram", color=histLine >= 0 ? color.new(color.lime, 50) : color.new(color.red, 50), style=plot.style_columns)
+hline(0, "Zero", color=color.new(color.gray, 50))
+
+if barstate.islast and timeframe.period != "240"
+    label.new(bar_index, macdLine, "⚠ Tarato su H4 — imposta il chart a 4 ore", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "MACD BUY", "MACD Appel: incrocio rialzista")
+alertcondition(shortCond, "MACD SELL", "MACD Appel: incrocio ribassista")

@@ -1,0 +1,122 @@
+//@version=6
+// =============================================================================
+// Directional Movement System (DMI/ADX) — J. Welles Wilder — XAUUSD D1
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Fonte: J. Welles Wilder Jr., "New Concepts in
+// Technical Trading Systems" (1978), Sezione IV — il sistema ORIGINALE del
+// creatore stesso di ADX/DMI, non una reinterpretazione successiva.
+// Verificato via ricerca web il 31/07/2026 (non a memoria).
+//
+// REGOLE ORIGINALI (Extreme Point Rule di Wilder):
+//   • +DI e −DI calcolati col periodo 14 (default originale di Wilder,
+//     rimasto lo standard universale), smoothing Wilder/RMA nativo — usato
+//     qui `ta.dmi()` di Pine, che implementa esattamente questo calcolo.
+//   • Incrocio rialzista: +DI sale sopra −DI. Incrocio ribassista: −DI sale
+//     sopra +DI.
+//   • Extreme Point Rule (il cuore del sistema, pensato da Wilder per
+//     ridurre i whipsaw): sulla barra dell'incrocio si annota il punto
+//     estremo — il MASSIMO della barra se l'incrocio è rialzista, il
+//     MINIMO se è ribassista. Il trade si attiva SOLO quando il prezzo
+//     successivamente rompe quel punto estremo, non sull'incrocio stesso.
+//   • Wilder non specifica uno stop-loss/take-profit fisso nel sistema
+//     originale; qui aggiunto un rischio ATR (dichiarato esplicitamente
+//     come aggiunta, come nelle altre strategie di questa cartella).
+//
+// FILTRO ADX OPZIONALE (non stretta parte della Extreme Point Rule, ma
+// pratica ampiamente documentata derivata dal lavoro di Wilder sull'uso
+// dell'ADX come regime filter): ADX sopra 25 = mercato in trend (favorisce
+// il trend-following), sotto 20 = mercato laterale (da evitare). Spento di
+// default per testare prima il sistema puro, come da protocollo del repo.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false. L'incrocio e la
+// rottura del punto estremo sono valutati su barre CHIUSE (deviazione
+// dichiarata dalla fonte, che userebbe un vero stop-entry intrabar il
+// giorno successivo all'incrocio — stessa nota già fatta per
+// TURTLE_DONCHIAN.pine).
+// =============================================================================
+strategy("DMI-ADX Wilder Extreme Point (XAUUSD D1)", shorttitle="DMI-WILDER", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+diLen = input.int(14, "DI length (originale Wilder)")
+adxLen = input.int(14, "ADX smoothing (originale Wilder)")
+useAdxFilter = input.bool(false, "Filtro ADX>25 (regime filter documentato, non stretta Extreme Point Rule)")
+adxThreshold = input.float(25.0, "Soglia ADX (solo se filtro attivo)")
+atrLen = input.int(14, "ATR length (per SL/TP, aggiunta non originale)")
+slMult = input.float(2.0, "SL (x ATR)")
+tpMult = input.float(4.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2015-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+[diPlus, diMinus, adxVal] = ta.dmi(diLen, adxLen)
+atrVal = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+bullCross = ta.crossover(diPlus, diMinus)[1]
+bearCross = ta.crossunder(diPlus, diMinus)[1]
+
+// ----------------------------- Extreme Point Rule ----------------------------
+var float extremeLevel = na
+var string pendingDir = "NONE"
+
+if bullCross
+    extremeLevel := high[1]
+    pendingDir := "BUY"
+if bearCross
+    extremeLevel := low[1]
+    pendingDir := "SELL"
+
+adxOkLong  = not useAdxFilter or adxVal[1] > adxThreshold
+adxOkShort = not useAdxFilter or adxVal[1] > adxThreshold
+
+rawLong  = pendingDir == "BUY"  and not na(extremeLevel) and close[1] > extremeLevel and adxOkLong
+rawShort = pendingDir == "SELL" and not na(extremeLevel) and close[1] < extremeLevel and adxOkShort
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="DMI_extreme_point_buy")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="DMI_extreme_point_sell")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(extremeLevel, title="Extreme Point pendente", color=color.new(color.yellow, 20), style=plot.style_circles)
+plotshape(longCond, title="DMI Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="DMI Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Tarato su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "DMI WILDER BUY", "DMI Wilder: rottura punto estremo rialzista")
+alertcondition(shortCond, "DMI WILDER SELL", "DMI Wilder: rottura punto estremo ribassista")

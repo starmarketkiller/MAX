@@ -58,3 +58,12 @@ _(aggiornato man mano che le strategie vengono aggiunte e testate)_
 | `TURTLE_DONCHIAN.pine` | Turtle System 1 (Donchian 20/10) | D1 | Pronta per il test — piramidazione e filtro "skip" della fonte originale omessi in questa v1, dichiarato in testa al file |
 | `GOLDEN_DEATH_CROSS.pine` | Golden/Death Cross (SMA 50/200) | D1 | Pronta per il test — formulazione originale non ha stop-loss, aggiunto solo come opzione spenta di default |
 | `RSI2_MEAN_REVERSION.pine` | RSI(2) Mean Reversion (Connors) | D1 | Pronta per il test — regole verificate via ricerca web (non a memoria) il 31/07, fonti citate in testa al file |
+| `MACD_CLASSIC_APPEL.pine` | MACD 12/26/9 (Appel) | H4 | Pronta per il test — signal line EMA (definizione originale), diversa dalla versione già in `pinescript/` (SMA, specifica di MT5) |
+| `BOLLINGER_SQUEEZE_BREAKOUT.pine` | Bollinger Squeeze Breakout (Bollinger) | D1 | Pronta per il test — è un sistema di CONTINUAZIONE, non mean-reversion: le regole ufficiali di Bollinger (Regola 8) lo dicono esplicitamente, verificato via web il 31/07 |
+| `ADX_DMI_WILDER.pine` | DMI/ADX Extreme Point Rule (Wilder) | D1 | Pronta per il test — Extreme Point Rule verificata via ricerca web il 31/07, sistema originale del 1978 |
+
+Roadmap iniziale di 6 completata (31/07). Prossimi passi: eseguire il
+protocollo di test (`docs/testing/TRADINGVIEW_AGENT_PROMPT.md`) su queste
+6, poi valutare se estendere la lista con altre strategie ugualmente
+consolidate (es. Ichimoku Kinko Hyo di Hosoda, Parabolic SAR di Wilder,
+Dual Moving Average Crossover).

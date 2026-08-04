@@ -1,0 +1,144 @@
+//@version=6
+// =============================================================================
+// Bollinger Band Squeeze Breakout — John Bollinger (regole ufficiali) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Fonte: John Bollinger, creatore delle Bollinger
+// Bands (anni '80) e delle regole ufficiali pubblicate su bollingerbands.com
+// ("Bollinger on Bollinger Bands" + "Bollinger Band Rules"), verificate via
+// ricerca web il 31/07/2026 (non a memoria).
+//
+// ⚠️ ATTENZIONE — questa NON è la strategia "compra sul tocco della banda
+// bassa, vendi sul tocco della banda alta" che molti associano (erroneamente)
+// alle Bollinger Bands. Le regole ufficiali di Bollinger dicono l'OPPOSTO su
+// questo punto specifico:
+//   • Regola 6: "Tags of the bands are just that, tags not signals. A tag of
+//     the upper Bollinger Band is NOT in-and-of-itself a sell signal."
+//   • Regola 7: in mercati in trend il prezzo può "camminare" lungo la banda
+//     superiore o inferiore per molte barre consecutive — un tocco non è
+//     un'inversione.
+//   • Regola 8: "closes outside the bands are initially CONTINUATION
+//     signals, NOT reversal signals."
+// La strategia ufficiale è quindi di CONTINUAZIONE/breakout, non di mean
+// reversion — coerente con lo "squeeze play" descritto da Bollinger stesso:
+//   • Squeeze: la Bollinger BandWidth (banda superiore − banda inferiore,
+//     normalizzata sulla media mobile centrale) tocca il suo minimo delle
+//     ultime 125 barre — la definizione ESATTA di "squeeze" di Bollinger
+//     (125 periodi, applicabile a qualunque timeframe secondo l'autore).
+//   • Segnale: dopo lo squeeze, una chiusura FUORI dalla banda (sopra la
+//     superiore = rialzista, sotto l'inferiore = ribassista) è un segnale
+//     di CONTINUAZIONE del nuovo movimento, non di rientro.
+//   • Bollinger avverte esplicitamente del rischio di "head fake" (falsa
+//     rottura seguita da inversione immediata) — nessuna regola numerica
+//     specifica per filtrarlo nella fonte, citato qui solo come nota di
+//     cautela dell'autore, non come parametro implementabile.
+//
+// Parametri standard: SMA(20) ± 2 deviazioni standard (i default originali
+// di Bollinger, universali).
+//
+// Regola 4 di Bollinger (non implementata come filtro attivo, solo
+// documentata): "se si usa più di un indicatore, non devono essere
+// direttamente correlati fra loro" — un indicatore di momentum si abbina
+// bene a uno di volume, non a un altro di momentum. Nessun secondo
+// indicatore è aggiunto qui per restare fedeli alla definizione pura delle
+// bande; l'input `useVolumeConfirm` sotto è un'aggiunta OPZIONALE,
+// esplicitamente dichiarata come non parte della fonte primaria.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("Bollinger Squeeze Breakout - Bollinger (XAUUSD D1)", shorttitle="BB-SQZ-OFFICIAL", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+bbLen = input.int(20, "Bollinger: periodo SMA")
+bbDev = input.float(2.0, "Bollinger: deviazioni standard")
+squeezeLookback = input.int(125, "Squeeze: finestra bandwidth (barre)", tooltip="Definizione esatta di Bollinger: il minimo della BandWidth nelle ultime 125 barre, valida su qualunque timeframe secondo l'autore.")
+useVolumeConfirm = input.bool(false, "Conferma volume (AGGIUNTA non nella fonte primaria, Regola 4 di Bollinger su indicatori non correlati)")
+volumeMult = input.float(1.5, "Volume minimo × media 20 barre (solo se conferma attiva)")
+atrLen = input.int(14, "ATR length (per SL/TP)")
+slMult = input.float(2.0, "SL (x ATR)")
+tpMult = input.float(4.0, "TP (x ATR)")
+maxHoldBars = input.int(40, "Time-exit (barre)")
+startDate = input.time(timestamp("2015-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+basis = ta.sma(close, bbLen)
+dev = ta.stdev(close, bbLen)
+upperVal = basis + bbDev * dev
+lowerVal = basis - bbDev * dev
+bandwidth = basis != 0 ? (upperVal - lowerVal) / basis : 0.0
+atrVal = ta.atr(atrLen)
+avgVol = ta.sma(volume, 20)
+inRange = time >= startDate and time <= endDate
+
+bw1 = bandwidth[1]
+isSqueeze = bw1 <= ta.lowest(bandwidth, squeezeLookback)[1]
+
+c1 = close[1]
+upper1 = upperVal[1]
+lower1 = lowerVal[1]
+volOk = not useVolumeConfirm or volume[1] >= avgVol[1] * volumeMult
+
+// ----------------------------- Trigger --------------------------------------
+// "Squeeze avvenuto di recente" (entro le ultime squeezeLookback/10 barre,
+// approssimazione ragionevole di "subito dopo lo squeeze" — Bollinger non
+// specifica un numero esatto di barre di finestra per il breakout successivo).
+var int barsSinceSqueeze = 999999
+if isSqueeze
+    barsSinceSqueeze := 0
+else
+    barsSinceSqueeze := barsSinceSqueeze + 1
+
+recentSqueeze = barsSinceSqueeze <= math.round(squeezeLookback / 10)
+
+rawLong  = recentSqueeze and c1 > upper1 and volOk
+rawShort = recentSqueeze and c1 < lower1 and volOk
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, comment="BB_squeeze_breakout_up")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, comment="BB_squeeze_breakout_down")
+
+// ----------------------------- Gestione SL/TP/Time-exit ---------------------
+var float slLevel    = na
+var float tpLevel    = na
+var float atrAtEntry = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    atrAtEntry := atrVal
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price + atrAtEntry * tpMult
+    else
+        slLevel := strategy.position_avg_price + atrAtEntry * slMult
+        tpLevel := strategy.position_avg_price - atrAtEntry * tpMult
+
+if strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(upperVal, title="BB Upper", color=color.new(color.gray, 40))
+plot(lowerVal, title="BB Lower", color=color.new(color.gray, 40))
+bgcolor(isSqueeze ? color.new(color.yellow, 88) : na, title="Squeeze (minimo bandwidth 125 barre)")
+plotshape(longCond, title="Squeeze Breakout Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Squeeze Breakout Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Tarato su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "BB SQUEEZE BUY", "Bollinger Squeeze Breakout: rottura rialzista dopo squeeze")
+alertcondition(shortCond, "BB SQUEEZE SELL", "Bollinger Squeeze Breakout: rottura ribassista dopo squeeze")

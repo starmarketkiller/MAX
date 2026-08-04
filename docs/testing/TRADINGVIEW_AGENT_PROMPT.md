@@ -123,7 +123,31 @@ l'accesso fallisce (401/404), **fermati e chiedi all'operatore di incollare
 il contenuto del file** — non ricostruire o indovinare il codice a memoria,
 anche se pensi di conoscere una versione simile.
 
-### Coda di lavoro — le 27 strategie pronte ora (aggiornato 30/07, batch 4-9)
+### ⚠️ Priorità attuale (31/07) — testa PRIMA `pinescript_proven/`
+
+Su richiesta dell'utente, le 27 strategie NEXUS sotto sono state **messe da
+parte**: non cancellate, ma non più la priorità. La coda da testare PER
+PRIMA è `pinescript_proven/` — 6 strategie ESTERNE a NEXUS, pubblicamente
+documentate con fonte primaria citabile (Turtle/Donchian, Golden-Death
+Cross, RSI-2 di Connors, MACD di Appel, Bollinger Squeeze Breakout,
+DMI/ADX di Wilder). Stesso protocollo (Fase 1/2/3, Regola zero), stesso
+formato di riporto. File e URL raw:
+
+| Strategia | TF | File | Note |
+|---|---|---|---|
+| Turtle System 1 (Donchian 20/10) | D1 | `pinescript_proven/TURTLE_DONCHIAN.pine` | nessun toggle da spegnere — è già il sistema "grezzo" (piramidazione/skip rule della fonte originale omesse, non nascoste) |
+| Golden/Death Cross (SMA 50/200) | D1 | `pinescript_proven/GOLDEN_DEATH_CROSS.pine` | `useAtrStop`=false di default, lascialo spento in Fase 1 (formulazione originale non ha stop) |
+| RSI(2) Mean Reversion (Connors) | D1 | `pinescript_proven/RSI2_MEAN_REVERSION.pine` | `useAtrStop`=false di default, lascialo spento in Fase 1 |
+| MACD 12/26/9 (Appel) | H4 | `pinescript_proven/MACD_CLASSIC_APPEL.pine` | spegni `requireZeroConfirm` in Fase 1 |
+| Bollinger Squeeze Breakout (Bollinger) | D1 | `pinescript_proven/BOLLINGER_SQUEEZE_BREAKOUT.pine` | spegni `useVolumeConfirm` in Fase 1 |
+| DMI/ADX Extreme Point (Wilder) | D1 | `pinescript_proven/ADX_DMI_WILDER.pine` | spegni `useAdxFilter` in Fase 1 |
+
+URL raw: `https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript_proven/<file>`
+
+Testa queste 6 per prime, in questo ordine. Solo dopo, se c'è tempo, passa
+alla coda NEXUS sotto (ordine invariato, priorità più bassa).
+
+### Coda di lavoro — le 27 strategie NEXUS (messe da parte, priorità bassa)
 
 URL raw: `https://raw.githubusercontent.com/starmarketkiller/MAX/nexus/d8-source-package/pinescript/<file>`
 
