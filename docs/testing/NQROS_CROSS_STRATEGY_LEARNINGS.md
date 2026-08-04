@@ -138,3 +138,42 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     verifica di fedeltà (lezione #11) SUBITO dopo la Fase 1, PRIMA di
     qualunque Fase 2-9 — il costo di scoprirlo dopo (qui: due deep-dive
     completi da rifare) è alto.
+
+## Dal giro di verifica fedeltà su 6 strategie + deep-dive TURTLE_SOUP (04/08)
+
+15. **Applicata la lezione #11 sul serio**: verificata la fedeltà di
+    LONDON_BO/WEEKLY_EXP, IFVG, BJORGUM, TURTLE_SOUP, FVG_MIT, ICHIMOKU
+    PRIMA di qualunque deep-dive (non dopo, come con AMD_CONT/
+    SILVER_BULLET). Risultato: **5 delle 6 "PASS" trovate nel batch
+    precedente erano artefatti di proxy infedeli** — solo TURTLE_SOUP
+    (H4) ha mostrato un edge reale dopo la correzione. Conferma forte:
+    la ricerca di configurazione (grid search su toggle/SL/TP) fatta
+    PRIMA della verifica di fedeltà è quasi inutile, produce risultati
+    che poi vengono quasi sempre superati.
+
+16. **Tipi di bug di fedeltà trovati, per categoria** (utile come
+    checklist per le prossime strategie): proxy generico condiviso che
+    nasconde due strategie reali diverse (LONDON_BO/WEEKLY_EXP); filtri
+    di conferma mancanti - buffer ATR, forza candela, CHoCH sulla stessa
+    barra (IFVG); off-by-one nell'indicizzazione delle barre (BJORGUM);
+    uso di un rilevatore di livello generico invece di quello esteso
+    già disponibile nel motore (TURTLE_SOUP); indici/candele del gap
+    scambiati per via di nomi di variabili MQL5 fuorvianti (FVG_MIT);
+    dimenticanza di uno shift temporale nativo dell'indicatore
+    (ICHIMOKU, shift Kumo 26 barre). Nessuno di questi si scopre senza
+    leggere il codice MQL5 riga per riga - non basta "il concetto è lo
+    stesso".
+
+17. **Quando una strategia ha `STRATEGY_SLTP_ALWAYS` (SL/TP strutturale
+    fedele), la Fase 6 "SL/TP width" è un no-op** — i parametri
+    `atr_sl`/`atr_tp` passati al motore vengono bypassati, verificarlo
+    prima di sprecare tempo a testarli (successo su TURTLE_SOUP: stesso
+    risultato identico su ogni valore). Solo breakeven/trailing restano
+    testabili in Fase 6 per quelle strategie.
+
+18. **Il confondimento di regime (lezione #10) si è ripetuto identico su
+    TURTLE_SOUP** — probabile limite dell'intero campione H4 di 1.74 anni
+    usato per ogni strategia in questa sessione (Yahoo), non una
+    caratteristica di una singola strategia. Aspettarselo su ogni
+    prossimo deep-dive che usa lo stesso storico, finché non arriva più
+    storico reale (MT5 export).
