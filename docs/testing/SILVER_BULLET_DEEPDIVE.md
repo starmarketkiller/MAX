@@ -255,3 +255,27 @@ replicare la vera state machine (sweep→displacement/BOS→FVG→ritorno) e
 rifatta la pipeline da capo su quella base — il lavoro Fase 1-8 fatto qui
 resta utile come riferimento di processo, non come risultato su cui
 agire.
+
+## Aggiornamento 04/08 (2) — conferma a tre vie contro la fonte ICT pubblica
+
+Su richiesta esplicita, verificato anche il terzo lato del triangolo:
+teoria ICT pubblica (ricerca web) vs MQL5, non solo MQL5 vs Python.
+
+**MQL5 combacia con la fonte pubblica**: sequenza esatta sweep→
+displacement/MSS→FVG→ritorno-nel-FVG-per-l'entrata, tre killzone da
+1 ora (03-04, 10-11, 14-15 ET) — confermato da EBC Financial Group,
+ForexBee, GrandAlgo, ICTKillzoneTimes (ricerca 04/08). "The retracement
+tap is your entry, not the displacement candle itself" — esattamente
+lo stadio `SB_WAITING_RETURN` che il Python salta.
+
+**Conclusione**: il problema non è mai stato MQL5 — è fedele sia alla
+teoria che (dove testato) alla propria documentazione interna. Il motore
+Python è quello disallineato, su DUE livelli contemporaneamente (non solo
+da MQL5, ma anche dalla metodologia pubblica su cui MQL5 è basato). I
+risultati di questo deep-dive non corrispondono a nulla di reale — non
+alla strategia MQL5, non alla teoria ICT pubblica.
+
+Fonti: [EBC Financial Group](https://www.ebc.com/forex/what-is-the-ict-silver-bullet-meaning-rules-and-examples),
+[ForexBee](https://forexbee.co/ict-silver-bullet-trading-strategy/),
+[GrandAlgo](https://grandalgo.com/blog/ict-silver-bullet-strategy),
+[ICT Killzone Times](https://ictkillzonetimes.com/ict-silver-bullet-strategy/)

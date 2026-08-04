@@ -345,3 +345,28 @@ esiste nella sua forma testata. Prima di qualunque promozione a
 "mantieni": (a) riscrivere `sig_amd_cont` per usare il vero retest-su-low
 e la vera formula SL/TP derivata dal range asiatico, (b) ri-fare la Fase 6
 su QUELLA base, non su quella attuale.
+
+## Aggiornamento 04/08 (2) — conferma a tre vie contro la fonte ICT pubblica
+
+Verificato anche il terzo lato del triangolo (teoria ICT pubblica vs
+MQL5, non solo MQL5 vs Python). Fonti: ICT AMD/Power of Three via
+Dhanith Trading, TTrades, InnerCircleTrader, ICTKillzone.com (ricerca
+04/08): Accumulation (sessione asiatica, range stretto, basso volume) →
+Manipulation (apertura Londra, sweep di un lato del range, "sharp and
+quickly reversed... closes back inside within a short period") →
+Distribution (sessione New York, il vero movimento direzionale).
+
+**La state machine di `NXS_AMDModel.mqh` è una mappatura fedele di
+questo concetto**: MANIPULATION che richiude dentro il range in fretta →
+`REVERSAL_DISTRIBUTION` (era una manipolazione, non un vero movimento);
+MANIPULATION che resta oltre il range per 2+ barre consecutive →
+`CONTINUATION_DISTRIBUTION` (movimento direzionale confermato, non un
+falso segnale). Combacia con "il tratto distintivo della manipolazione è
+che è brusca e rapidamente invertita" della fonte pubblica.
+
+**Conclusione**: la LOGICA DI FASE (quando entrare) è validata su tutta la
+catena — teoria pubblica → MQL5 → Python, tutti d'accordo. Il problema
+resta solo dove già identificato: retest su close invece di low, filtro
+HTF proxy, SL/TP non implementato — dettagli di esecuzione, non la
+struttura del segnale. A differenza di SILVER_BULLET (dove il problema è
+strutturale), qui è più contenuto ma comunque reale sui numeri esatti.

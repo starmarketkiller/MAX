@@ -110,3 +110,17 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     se il vero MQL5 ha una formula SL/TP propria prima di fidarsi di
     qualunque ottimizzazione Fase 6 fatta sul multiplo ATR generico -
     altrimenti si ottimizza un parametro che nell'EA reale non esiste.
+
+13. **La verifica di fedeltà è un triangolo, non una linea**: teoria
+    pubblica (ICT/fonte esterna) ↔ MQL5 ↔ Python. Verificare solo
+    MQL5-vs-Python non basta se si vuole sapere se anche l'MQL5 stesso
+    implementa correttamente il concetto che dichiara di implementare. Su
+    AMD_CONT e SILVER_BULLET (04/08, ricerca web su EBC/ForexBee/
+    GrandAlgo per Silver Bullet, Dhanith/TTrades/InnerCircleTrader per
+    AMD/PO3): **in entrambi i casi MQL5 è risultato fedele alla teoria
+    pubblica** — il problema è sempre stato nel motore Python, mai in
+    MQL5. Non è detto che sia sempre così: se un giorno MQL5 stesso
+    risultasse infedele alla teoria dichiarata, sarebbe un problema più
+    serio (l'EA reale che gira sul conto, non solo lo strumento di
+    ricerca) — vale la pena controllare anche quel lato, non darlo per
+    scontato solo perché finora ha sempre retto.
