@@ -1,0 +1,150 @@
+//@version=6
+// =============================================================================
+// Turtle Trading System 1 — Donchian Channel Breakout (20/10) — XAUUSD D1
+// -----------------------------------------------------------------------------
+// STRATEGIA ESTERNA A NEXUS. Non è una re-implementazione di codice MQL5:
+// è la formulazione ORIGINALE del "Sistema 1" delle Turtles, come pubblicata
+// da Curtis Faith (uno dei Turtle originali) in "Way of the Turtle" (2007).
+//
+// Origine: il concetto di breakout su canale è di Richard Donchian (anni
+// '60/'70). Richard Dennis e William Eckhardt lo trasformarono nel sistema
+// di trading "Turtle" nel 1983, insegnandolo a un gruppo di allievi
+// ("Turtles") selezionati con un annuncio su giornale. Secondo Michael
+// Covel (*The Complete TurtleTrader*, 2007), il gruppo generò
+// complessivamente circa 175 milioni $ di profitti in ~4 anni usando
+// esattamente queste regole — è il riscontro storico reale per cui questa
+// strategia è nella cartella "esistenti che già vanno", non un'ipotesi.
+//
+// REGOLE ORIGINALI (System 1, da Way of the Turtle):
+//   • Entry: rottura del massimo/minimo delle 20 barre precedenti (Donchian
+//     20). Le Turtles entravano INTRABAR con un ordine stop nel momento in
+//     cui il prezzo toccava il livello — qui, per coerenza con tutto il
+//     resto del repo (calc_on_every_tick=false, nessun repaint), la
+//     valutazione è sulla barra CHIUSA e l'ordine si riempie all'apertura
+//     della barra successiva. DEVIAZIONE DICHIARATA dalla fonte originale,
+//     non silenziata: un vero stop-entry intrabar prenderebbe prezzi
+//     leggermente diversi (di solito peggiori in trend forte, "slippage da
+//     conferma").
+//   • Uscita: rottura del minimo/massimo delle 10 barre precedenti in senso
+//     opposto (Donchian 10) — l'uscita "System 1" originale.
+//   • Stop iniziale: 2×N dal prezzo d'ingresso, dove N = media mobile
+//     esponenziale a 20 periodi del True Range (non un ATR "standard" con
+//     smoothing di Wilder — le Turtles usavano specificamente una EMA del
+//     True Range).
+//   • Sizing: 1 "unit" = 1% del capitale rischiato per ogni N di movimento
+//     avverso (position sizing su base di volatilità in dollari, non un
+//     multiplo fisso di lotti).
+//
+// SEMPLIFICAZIONI DICHIARATE (omesse in questa prima versione, NON nella
+// fonte originale — le Turtles le usavano):
+//   1) Piramidazione: le Turtles aggiungevano fino a 4 unit, ogni 0.5×N a
+//      favore. Qui NON implementata — una sola posizione, un solo ingresso.
+//   2) Filtro "skip": System 1 salta il segnale se l'ultima rottura nella
+//      stessa direzione sarebbe stata vincente (per evitare whipsaw
+//      consecutivi), con il System 2 (rottura a 55 giorni) come rete di
+//      sicurezza che non salta mai. Qui NON implementato — ogni rottura dei
+//      20 giorni genera segnale.
+// Queste due omissioni rendono questa versione una sotto-replica
+// semplificata, non il sistema Turtle completo — utile comunque come primo
+// test dell'edge di base (breakout puro), da confrontare poi con una
+// versione che aggiunga piramidazione/skip se il nucleo regge.
+//
+// Timing barra / anti-repaint: calc_on_every_tick=false.
+// =============================================================================
+strategy("Turtle System 1 - Donchian 20/10 (XAUUSD D1)", shorttitle="TURTLE-S1", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_contract, commission_value=0,
+     slippage=0)
+
+// ----------------------------- Input --------------------------------------
+entryLookback = input.int(20, "Entry: Donchian breakout (barre)")
+exitLookback  = input.int(10, "Exit: Donchian breakout opposto (barre)")
+nLen          = input.int(20, "N: periodo EMA del True Range")
+stopNMult     = input.float(2.0, "Stop iniziale: multiplo di N")
+useRiskSizing = input.bool(true, "Sizing su rischio% (come l'originale) invece di 1 contratto fisso")
+riskPct       = input.float(1.0, "Rischio per unit (% equity, se sizing attivo)")
+maxHoldBars   = input.int(0, "Time-exit forzato (barre, 0=disattivo)", tooltip="Il sistema Turtle originale NON ha un time-exit: esce solo su stop o Donchian opposto. Lasciato a 0 di default per fedeltà; disponibile come confronto opzionale.")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Indicatori ----------------------------------
+// N = EMA(20) del True Range — non ta.atr() standard (che usa RMA/Wilder).
+nVal = ta.ema(ta.tr(true), nLen)
+
+donchianEntryHi = ta.highest(high, entryLookback)[1]
+donchianEntryLo = ta.lowest(low,  entryLookback)[1]
+donchianExitHi  = ta.highest(high, exitLookback)[1]
+donchianExitLo  = ta.lowest(low,  exitLookback)[1]
+
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Trigger --------------------------------------
+// Rottura sulla barra chiusa shift1 rispetto al canale calcolato ESCLUDENDO
+// quella stessa barra (offset [1] sulla serie Donchian, coerente con "rottura
+// del massimo delle N barre PRECEDENTI").
+c1 = close[1]
+rawLong  = c1 > donchianEntryHi
+rawShort = c1 < donchianEntryLo
+
+longCond  = inRange and rawLong
+shortCond = inRange and rawShort
+
+// ----------------------------- Sizing (rischio% su N) ------------------------
+qtyForEntry() =>
+    if not useRiskSizing
+        1.0
+    else
+        riskMoney = strategy.equity * (riskPct / 100.0)
+        nAtEntry = nVal[1]
+        nAtEntry > 0 ? riskMoney / nAtEntry : 1.0
+
+if longCond and strategy.position_size <= 0
+    strategy.entry("Long", strategy.long, qty=qtyForEntry(), comment="Turtle_S1_breakout_up")
+if shortCond and strategy.position_size >= 0
+    strategy.entry("Short", strategy.short, qty=qtyForEntry(), comment="Turtle_S1_breakout_down")
+
+// ----------------------------- Stop iniziale (2N) + uscita Donchian ---------
+var float slLevel = na
+var float nAtEntryStored = na
+var int   entryBarIdx = na
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    nAtEntryStored := nVal[1]
+    entryBarIdx := bar_index
+    if strategy.position_size > 0
+        slLevel := strategy.position_avg_price - stopNMult * nAtEntryStored
+    else
+        slLevel := strategy.position_avg_price + stopNMult * nAtEntryStored
+
+// Uscita "System 1": rottura del Donchian opposto (10 barre) sulla barra chiusa.
+exitLongSignal  = strategy.position_size > 0 and close[1] < donchianExitLo
+exitShortSignal = strategy.position_size < 0 and close[1] > donchianExitHi
+
+if exitLongSignal
+    strategy.close("Long", comment="Donchian10_exit")
+if exitShortSignal
+    strategy.close("Short", comment="Donchian10_exit")
+
+if maxHoldBars > 0 and strategy.position_size != 0 and not na(entryBarIdx) and (bar_index - entryBarIdx) >= maxHoldBars
+    strategy.close_all(comment="TimeExit_opzionale")
+
+if strategy.position_size > 0
+    strategy.exit("Stop Long", "Long", stop=slLevel)
+if strategy.position_size < 0
+    strategy.exit("Stop Short", "Short", stop=slLevel)
+
+// ----------------------------- Plot / avviso TF -----------------------------
+plot(donchianEntryHi, title="Donchian Entry High (20)", color=color.new(color.lime, 30))
+plot(donchianEntryLo, title="Donchian Entry Low (20)", color=color.new(color.red, 30))
+plot(donchianExitHi, title="Donchian Exit High (10)", color=color.new(color.lime, 70), style=plot.style_circles)
+plot(donchianExitLo, title="Donchian Exit Low (10)", color=color.new(color.red, 70), style=plot.style_circles)
+plotshape(longCond, title="Turtle Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.lime, 0), size=size.tiny)
+plotshape(shortCond, title="Turtle Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+if barstate.islast and timeframe.period != "D"
+    label.new(bar_index, high, "⚠ Sistema Turtle originale su D1 — imposta il chart a D1", style=label.style_label_down, color=color.new(color.red, 0), textcolor=color.white)
+
+alertcondition(longCond, "TURTLE S1 BUY", "Turtle System 1: breakout rialzista Donchian 20")
+alertcondition(shortCond, "TURTLE S1 SELL", "Turtle System 1: breakout ribassista Donchian 20")

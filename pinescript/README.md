@@ -1,5 +1,15 @@
 # NEXUS EA — Pine Script (terzo motore di verifica, TradingView)
 
+> ⚠️ **Messa da parte (31/07)**, su richiesta esplicita dell'utente: *"tutte
+> le strategie che abbiamo mettiamole da parte, dobbiamo avere una nuova
+> cartella con strategie esistenti che già vanno e provarle e migliorarle"*.
+> Il lavoro qui non è cancellato né sprecato — resta la base di riferimento
+> per il portafoglio NEXUS interno — ma il focus attivo è passato a
+> `pinescript_proven/`: strategie ESTERNE a NEXUS, pubblicamente documentate
+> e con un riscontro storico reale, non port di codice MQL5 interno mai
+> validato prima. I 9 strategie NEXUS ancora da portare (vedi task
+> #41-#45) restano in coda, non urgenti.
+
 Questa cartella contiene strategie NEXUS portate su Pine Script v6, come
 **terzo motore di verifica indipendente** da MT5 (l'EA reale) e dal backtest
 lab interno (`server/backtest.py`, motore Python su dati Yahoo). Scopo: capire
