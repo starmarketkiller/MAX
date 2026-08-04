@@ -1571,7 +1571,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
                  confirm_bars=0, loss_cooldown_bars=0,
-                 spread_price=0.0, commission_r=0.0, slippage_price=0.0):
+                 spread_price=0.0, commission_r=0.0, slippage_price=0.0,
+                 strategy_profiles=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1606,6 +1607,15 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # all'uscita SL/TIME (anch'esse a mercato, quindi soggette a slittare),
     # MAI alla TP (ordine limite: si presume riempito al prezzo richiesto o
     # meglio, come nella prassi broker reale). Convertito in R come spread.
+    # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
+    # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
+    # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
+    # proprio profilo ottimizzato (find_best_profiles.py). Senza questo, un
+    # test multi-strategia applicava lo stesso sl/tp/be/trail a TUTTE
+    # indipendentemente da chi genera il segnale - non e' come funziona l'EA
+    # reale (NXS_DefaultSLTP e' gia' keyed by stratName in MQL5). Strategia
+    # assente dal dict o strategy_profiles=None -> usa i parametri globali
+    # (comportamento invariato).
     candles, src = _fetch_real(symbol, timeframe, bars)
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
@@ -1652,21 +1662,25 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
                 pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
             # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
-            if breakeven_r > 0 and risk_dist > 0:
+            # (04/08: usa l'override per-strategia se presente, altrimenti il
+            # parametro globale - vedi nota strategy_profiles sopra)
+            pos_be = pos.get("breakeven_r", breakeven_r)
+            pos_trail = pos.get("trailing_atr", trailing_atr)
+            if pos_be > 0 and risk_dist > 0:
                 prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
-                if prog >= breakeven_r * risk_dist:
+                if prog >= pos_be * risk_dist:
                     if pos["dir"] == 1:
                         pos["sl"] = max(pos["sl"], pos["entry"])
                     else:
                         pos["sl"] = min(pos["sl"], pos["entry"])
             # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
-            if trailing_atr > 0:
+            if pos_trail > 0:
                 a = ind["atr"][i] or 0
                 if a > 0:
                     if pos["dir"] == 1:
-                        pos["sl"] = max(pos["sl"], px - trailing_atr * a)
+                        pos["sl"] = max(pos["sl"], px - pos_trail * a)
                     else:
-                        pos["sl"] = min(pos["sl"], px + trailing_atr * a)
+                        pos["sl"] = min(pos["sl"], px + pos_trail * a)
             hit = None
             if pos["dir"] == 1:
                 if lo <= pos["sl"]:
@@ -1750,9 +1764,14 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 if (sig == 1 and px < sma) or (sig == -1 and px > sma):
                     sig = 0
         if sig != 0:
+            # 04/08: override per-strategia (solo per chi e' presente nel dict -
+            # le altre restano sui parametri globali passati alla funzione).
+            prof = (strategy_profiles or {}).get(who, {})
+            eff_sl = prof.get("atr_sl", atr_sl)
+            eff_tp = prof.get("atr_tp", atr_tp)
             risk_money = equity * (risk_pct / 100.0)
-            sl = px - sig * atr * atr_sl
-            tp = px + sig * atr * atr_tp
+            sl = px - sig * atr * eff_sl
+            tp = px + sig * atr * eff_tp
             # STRATEGY_TARGETS_ALWAYS: fedelta' al vero calcolo MQL5, sempre attivo.
             target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
             # STRATEGY_TARGETS_OPTIN: ipotesi non presente in MQL5, solo se richiesta.
@@ -1760,12 +1779,14 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 target_fn = STRATEGY_TARGETS_OPTIN.get(who)
             if target_fn:
                 dyn_tp = target_fn(candles, ind, i, sig, px, atr,
-                                    sl_mult=atr_sl, pick=dynamic_tp_pick)
+                                    sl_mult=eff_sl, pick=dynamic_tp_pick)
                 if dyn_tp is not None:
                     tp = dyn_tp
             pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
                    "risk_money": risk_money, "strat": who,
-                   "risk_dist": abs(px - sl), "mae_r": 0.0, "mfe_r": 0.0}
+                   "risk_dist": abs(px - sl), "mae_r": 0.0, "mfe_r": 0.0,
+                   "breakeven_r": prof.get("breakeven_r", breakeven_r),
+                   "trailing_atr": prof.get("trailing_atr", trailing_atr)}
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
