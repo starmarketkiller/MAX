@@ -45,3 +45,15 @@ prossima strategia da approfondire o quando si torna su una già chiusa.
 - ~~AMD_CONT "nessun TF pulito, da escludere"~~ — smentito dalla Fase 1
   multi-timeframe (04/08): H4 funziona bene, il gate a sessione non
   richiede granularità intrabar fine.
+
+- **SILVER_BULLET, isolamento killzone London (10-11 GMT)** (da
+  SILVER_BULLET, Fase 4) — PF 6.42 out-of-sample ma su soli 9 trade,
+  scartato per campione troppo piccolo. Riverificare quando c'è più
+  storico H4 (stesso limite Yahoo di AMD_CONT).
+
+- **SILVER_BULLET, pass condizionato di Fase 4** (da SILVER_BULLET) — sia
+  con che senza `htf_filter` il PF esplode nella seconda metà dello
+  storico H4 disponibile: sospetto forte cambio di regime di mercato
+  nell'oro in quel periodo, non (solo) un effetto del filtro. Da
+  ricontrollare con più storico per capire se è un effetto di periodo che
+  sparisce o una caratteristica reale del setup.
