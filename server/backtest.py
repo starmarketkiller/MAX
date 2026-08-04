@@ -51,6 +51,12 @@ COST_PRESETS = {
     "none": {"spread_price": 0.0, "commission_r": 0.0, "slippage_price": 0.0},
     "retail_standard": {"spread_price": 2.50, "commission_r": 0.0, "slippage_price": 0.50},
     "ecn": {"spread_price": 0.90, "commission_r": 0.0, "slippage_price": 0.15},
+    # 04/08 - "stress": costi aumentati per il gate Fase 4 (NQROS v3.1) -
+    # spread al limite superiore del range retail gia' verificato ($2-5,
+    # non un valore inventato) + slippage raddoppiato rispetto a
+    # retail_standard, per simulare esecuzione peggiore (news/bassa
+    # liquidita') senza uscire dal range reale osservato.
+    "stress": {"spread_price": 4.00, "commission_r": 0.0, "slippage_price": 1.00},
 }
 
 
@@ -1572,7 +1578,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
                  confirm_bars=0, loss_cooldown_bars=0,
                  spread_price=0.0, commission_r=0.0, slippage_price=0.0,
-                 strategy_profiles=None):
+                 strategy_profiles=None, bar_range=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1617,6 +1623,18 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # assente dal dict o strategy_profiles=None -> usa i parametri globali
     # (comportamento invariato).
     candles, src = _fetch_real(symbol, timeframe, bars)
+    # 04/08 - bar_range: (start_frac, end_frac) su [0,1], per isolare una
+    # finestra temporale CONTIGUA della stessa serie (es. (0.0,0.6)=prime 60%
+    # "in-sample", (0.6,1.0)=ultime 40% "out-of-sample", MAI viste durante
+    # Fase 1-3 - NQROS Fase 4). None (default) = comportamento invariato,
+    # tutta la serie disponibile. Gli indicatori (EMA/ATR/...) si ri-scaldano
+    # dall'inizio della finestra tagliata, non hanno memoria del "prima" -
+    # tradeoff standard del walk-forward testing, non un bug.
+    if bar_range is not None:
+        n = len(candles)
+        i0 = max(0, int(n * bar_range[0]))
+        i1 = min(n, int(n * bar_range[1]))
+        candles = candles[i0:i1]
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = list(require_strategies(strat_list, research=True))
