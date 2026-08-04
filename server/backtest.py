@@ -1101,17 +1101,49 @@ STRATEGY_TARGETS_OPTIN = {
 
 
 def sig_turtle_soup(c, ind, i):
-    # falso breakout: sweep del min/max a 20 + candela di reversal forte
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_TurtleSoup
+    # (MQL5 reale): usava un falso-breakout su estremo GENERICO a 20 barre,
+    # ma la vera strategia (SNXSSweepExt &sw nella firma MQL5) usa il
+    # rilevatore di sweep ESTESO (PDH/PDL, priorita' Asia/daily) gia'
+    # disponibile in questo motore via _sweep_ext_at() e gia' usato da
+    # altre strategie (sig_liq_sweep_ext, sig_silver_bullet) - TURTLE_SOUP
+    # semplicemente non lo riusava. Corretto.
     atr = ind["atr"][i]
-    if not atr or i < 21:
+    if not atr:
         return 0
-    pl, ph = _ll(c, 20, i - 1), _hh(c, 20, i - 1)
-    cur = c[i]
-    if pl and cur["low"] < pl and cur["close"] > pl and _bull(cur) and _body(cur) > 0.4 * atr:
-        return 1
-    if ph and cur["high"] > ph and cur["close"] < ph and _bear(cur) and _body(cur) > 0.4 * atr:
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body = abs(c1 - o1)
+    if body < atr * 0.4:
+        return 0
+    sw = _sweep_ext_at(c, ind["sess"], i)
+    if not sw:
+        return 0
+    if sw["sweptPDH"] and c1 < o1 and sw["refHigh"] is not None and c1 < sw["refHigh"]:
         return -1
+    if sw["sweptPDL"] and c1 > o1 and sw["refLow"] is not None and c1 > sw["refLow"]:
+        return 1
     return 0
+
+
+def _turtle_soup_sl_tp(c, ind, i, direction, entry, atr):
+    sw = _sweep_ext_at(c, ind["sess"], i)
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, entry + 2.0 * risk
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, entry - 2.0 * risk
 
 
 def sig_struct_react(c, ind, i):
@@ -1817,6 +1849,7 @@ STRATEGY_SLTP_ALWAYS = {
     "SILVER_BULLET": _silver_bullet_sl_tp,
     "WEEKLY_EXP": _weekly_exp_sl_tp,
     "IFVG": _ifvg_sl_tp,
+    "TURTLE_SOUP": _turtle_soup_sl_tp,
 }
 
 

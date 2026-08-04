@@ -167,3 +167,29 @@ precedente (PF 1.06→1.09 con SL=2.0) era un artefatto dell'indicizzazione
 sbagliata — con quella corretta l'edge sparisce del tutto. Nessuna
 formula SL/TP custom necessaria (BJORGUM usa `NXS_DefaultSLTP`, generico,
 già quello che il motore applica di default).
+
+## Aggiornamento 04/08 (4) — TURTLE_SOUP corretta, verdetto PASS superato (nuovo TF)
+
+Verifica di fedeltà (#4): `NXS_Strat_TurtleSoup` (MQL5 reale) usa il
+rilevatore di sweep ESTESO (PDH/PDL con priorità Asia/daily, `_sweep_ext_at`
+— già disponibile in questo motore e usato da altre strategie come
+`sig_liq_sweep_ext`), non l'estremo generico a 20 barre che usava il
+proxy. Corretta (`sig_turtle_soup` + `_turtle_soup_sl_tp`: SL dal livello
+di sweep ±0.5×ATR, TP a 2.0×R della distanza di rischio reale — non un
+multiplo ATR fisso).
+
+**Risultato onesto, e diverso dal batch precedente**: H4 mostra un edge
+reale (PF 1.15, 86 trade, WR 41.9%, MaxDD 12.45%) — un timeframe diverso
+da quello del "PASS" precedente (era H1, ora **H1 è negativo** PF 0.70).
+D1 pessima (MaxDD 49.32%, campione enorme 187 trade ma perdente). W1
+debole/sottile.
+
+| TF | PF | Trade | WR% | MaxDD% |
+|---|---|---|---|---|
+| H4 | 1.15 | 86 | 41.9 | 12.45 |
+| H1 | 0.70 | 58 | 34.5 | 19.91 |
+| D1 | 0.71 | 187 | 32.6 | 49.32 |
+| W1 | 0.84 | 29 | 31.0 | 8.47 |
+
+H4 è il candidato più credibile finora tra le correzioni di oggi (insieme
+a LONDON_BO/H1) — non ancora ottimizzato (Fase 6), solo baseline fedele.
