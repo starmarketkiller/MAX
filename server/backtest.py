@@ -370,6 +370,9 @@ def _prep(candles):
     ema12 = ema_series(closes, 12)
     ema26 = ema_series(closes, 26)
     macd_line, macd_sig = _macd_signal_series(ema12, ema26)
+    atr_s = atr_series(candles, 14)
+    sess = _session_amd_series(candles)
+    sb_signal, sb_sweep_level = _silver_bullet_series(candles, sess, atr_s)
     return {
         "candles": candles,
         "close": closes,
@@ -384,14 +387,15 @@ def _prep(candles):
         "macd_signal": macd_sig,
         "rsi": rsi_series(closes, 14),
         "rsi7": rsi_series(closes, 7),
-        "atr": atr_series(candles, 14),
+        "atr": atr_s,
         "psar": psar,
         "psar_trend": psar_trend,
         "adx": adx_series(candles, 14),
-        "sess": _session_amd_series(candles),
+        "sess": sess,
         "choch_int": _fractal_choch_series(candles, wing=3),
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
+        "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
     }
 
 
@@ -1290,6 +1294,13 @@ def _external_choch_series(candles, factor=4, wing=3):
 
 
 def sig_amd_cont(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_AMD_Continuation
+    # (MQL5 reale): il retest usava la CLOSE per entrambe le condizioni
+    # (rottura E retest) - la stessa imprecisione che l'MQL5 aveva gia'
+    # corretto il 17/07 ("mescolava close della barra 1 con bid live - due
+    # punti temporali diversi"). MQL5 usa il LOW della barra per il retest
+    # (l1 <= asianHigh+atr*0.6), non la close - un vero "tocco" della
+    # fascia, non "la chiusura e' rimasta vicina". Corretto qui.
     sess = ind["sess"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     if ah is None or al is None or i < 1:
@@ -1305,12 +1316,36 @@ def sig_amd_cont(c, ind, i):
     e200, e200p = ind["ema200"][i], ind["ema200"][i - 1] if i > 0 else None
     htf_bull_or_neutral = e200 is None or e200p is None or c[i]["close"] >= e200 or e200 >= e200p
     htf_bear_or_neutral = e200 is None or e200p is None or c[i]["close"] <= e200 or e200 <= e200p
-    c1, bid = c[i]["close"], c[i]["close"]
-    if c1 > ah and bid <= ah + atr * 0.6 and htf_bull_or_neutral:
+    c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
+    if c1 > ah and l1 <= ah + atr * 0.6 and htf_bull_or_neutral:
         return 1
-    if c1 < al and bid >= al - atr * 0.6 and htf_bear_or_neutral:
+    if c1 < al and h1 >= al - atr * 0.6 and htf_bear_or_neutral:
         return -1
     return 0
+
+
+def _amd_cont_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_AMD_Continuation: SL = min(asianHigh-0.3xATR, mid)
+    # per buy (max per sell), TP = entry +/- 2.4x la distanza di rischio
+    # COSI' CALCOLATA - non un multiplo ATR libero come usava prima il
+    # motore (quel parametro, ottimizzato in una Fase 6 precedente, non
+    # esiste nella forma testata nell'EA reale - vedi AMD_CONT_DEEPDIVE.md).
+    sess = ind["sess"]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return None
+    mid = (ah + al) / 2.0
+    if direction == 1:
+        sl = min(ah - 0.3 * atr, mid)
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, entry + 2.4 * risk
+    sl = max(al + 0.3 * atr, mid)
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, entry - 2.4 * risk
 
 
 def sig_amd_reversal(c, ind, i):
@@ -1417,18 +1452,137 @@ def sig_po3(c, ind, i):
     return 0
 
 
+def _us_dst_start_end(year):
+    """Prima domenica di novembre e 2a di marzo (regola USA EDT/EST, DIVERSA
+    dalla BST inglese) - granularita' a livello di data (non l'ora esatta
+    delle 2:00 locali del cambio), coerente con la precisione oraria gia'
+    usata dal resto del motore (sessioni dedotte dal timestamp della
+    candela)."""
+    import datetime as _dt
+    d = _dt.date(year, 3, 1)
+    first_sun_mar = d + _dt.timedelta(days=(6 - d.weekday()) % 7)
+    dst_start = first_sun_mar + _dt.timedelta(days=7)   # 2a domenica di marzo
+    d2 = _dt.date(year, 11, 1)
+    dst_end = d2 + _dt.timedelta(days=(6 - d2.weekday()) % 7)   # 1a domenica di novembre
+    return dst_start, dst_end
+
+
+def _is_us_edt(date_str):
+    import datetime as _dt
+    d = _dt.datetime.strptime(date_str, "%Y-%m-%d").date()
+    start, end = _us_dst_start_end(d.year)
+    return start <= d < end
+
+
+def _silver_bullet_series(candles, sess, atr):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SilverBullet/
+    # NXS_SB_UpdateSide (MQL5 reale): la vera Silver Bullet e' una state
+    # machine a 3 stadi su piu' barre (IDLE -> SWEPT -> WAITING_RETURN),
+    # non un segnale a barra singola come faceva il proxy precedente (sparava
+    # subito al solo sweep-in-killzone, saltando displacement/BOS/FVG/
+    # ritorno - confermato anche contro fonti ICT pubbliche esterne, vedi
+    # SILVER_BULLET_DEEPDIVE.md). Precalcolato qui (come choch_int/swing_ext)
+    # perche' la logica ha memoria fra barre, cosa che le sig_*() stateless
+    # del motore non supportano.
+    #
+    # Mappatura shift MQL5 -> indice Python (questo motore lavora solo su
+    # barre chiuse, shift1 MQL5 = barra i corrente):
+    #   shift1 (barra appena chiusa)      -> i
+    #   shift2 (candela di displacement)  -> i-1
+    #   shift3 (candela1 del FVG)         -> i-2
+    #   finestra swing (shift 3..14)      -> candles[i-13 : i-1]
+    MAX_BARS = 15          # InpSB_MaxBars
+    DISP_BODY_ATR = 0.8    # InpSB_DispBodyATR
+    SWING_LOOKBACK = 12    # InpSB_SwingLookback
+    IDLE, SWEPT, WAITING = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_level = [None] * n
+    st = {d: {"state": IDLE, "bars_waited": 0, "sweep_level": None,
+               "fvg_lo": None, "fvg_hi": None} for d in (1, -1)}
+
+    def in_killzone(i):
+        h = sess["hour"][i]
+        if h is None:
+            return False
+        edt = _is_us_edt(sess["date"][i])
+        kz_ldn_open = (7 <= h < 8) if edt else (8 <= h < 9)     # 03-04 ET
+        kz_am = (14 <= h < 15) if edt else (15 <= h < 16)       # 10-11 ET
+        kz_pm = (18 <= h < 19) if edt else (19 <= h < 20)       # 14-15 ET
+        return kz_ldn_open or kz_am or kz_pm
+
+    for i in range(14, n):
+        a = atr[i]
+        if not a:
+            continue
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                sw = _sweep_ext_at(candles, sess, i)
+                if in_killzone(i) and sw and sw["confirmed"] and sw["dir"] == d:
+                    s["state"], s["bars_waited"], s["sweep_level"] = SWEPT, 0, sw["level"]
+                continue
+            if s["state"] == SWEPT:
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_BARS:
+                    s["state"] = IDLE
+                    continue
+                o2, c2 = candles[i - 1]["open"], candles[i - 1]["close"]
+                body2 = abs(c2 - o2)
+                right_color = (c2 > o2) if d == 1 else (c2 < o2)
+                if body2 < a * DISP_BODY_ATR or not right_color:
+                    continue
+                window = candles[max(0, i - 1 - SWING_LOOKBACK):i - 1]
+                if not window:
+                    continue
+                swing_ref = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                bos = (c2 > swing_ref) if d == 1 else (c2 < swing_ref)
+                if not bos:
+                    continue
+                c1_high, c1_low = candles[i - 2]["high"], candles[i - 2]["low"]
+                c3_high, c3_low = candles[i]["high"], candles[i]["low"]
+                if d == 1 and c3_low > c1_high:
+                    s["fvg_lo"], s["fvg_hi"] = c1_high, c3_low
+                    s["state"], s["bars_waited"] = WAITING, 0
+                elif d == -1 and c3_high < c1_low:
+                    s["fvg_lo"], s["fvg_hi"] = c3_high, c1_low
+                    s["state"], s["bars_waited"] = WAITING, 0
+                continue
+            if s["state"] == WAITING:
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_BARS:
+                    s["state"] = IDLE
+                    continue
+                c1 = candles[i]["close"]
+                if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                    s["state"] = IDLE
+                    continue
+                if s["fvg_hi"] is None or s["fvg_hi"] <= s["fvg_lo"]:
+                    continue
+                lo, hi = candles[i]["low"], candles[i]["high"]
+                if hi < s["fvg_lo"] or lo > s["fvg_hi"]:
+                    continue
+                out_sig[i] = d
+                out_level[i] = s["sweep_level"]
+                s["state"] = IDLE
+    return out_sig, out_level
+
+
 def sig_silver_bullet(c, ind, i):
-    sess = ind["sess"]
-    h = sess["hour"][i]
-    if h is None:
-        return 0
-    killzone = (10 <= h < 11) or (14 <= h < 15)  # London KZ / NY KZ, GMT
-    if not killzone:
-        return 0
-    sw = _sweep_ext_at(c, sess, i)
-    if not sw or not sw["confirmed"]:
-        return 0
-    return sw["dir"]
+    return ind["sb_signal"][i]
+
+
+def _silver_bullet_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_SB_UpdateSide: SL = sweepLevel -/+ 0.6xATR, TP a multiplo
+    # ATR FISSO dall'entry (2.8x, via _smc_tp in MQL5 - non un R-multiplo
+    # dello stop, la stessa distinzione gia' documentata per altre
+    # strategie SMC in questa sessione).
+    level = ind["sb_sweep_level"][i]
+    if level is None:
+        return None
+    if direction == 1:
+        return level - 0.6 * atr, entry + 2.8 * atr
+    return level + 0.6 * atr, entry - 2.8 * atr
 
 
 # --------------------------------------------------------------------------- #
@@ -1499,6 +1653,18 @@ def sig_scalp_range_brk(c, ind, i, n=12):
     if cur["close"] < ll and body > 0.4 * atr and _bear(cur):
         return -1
     return 0
+
+
+# 04/08 - SL/TP strutturale FEDELE (non un multiplo ATR libero) per le
+# strategie dove la vera NXS_Strat_* MQL5 lo calcola da livelli di prezzo
+# (range asiatico, sweep level, ...) invece che da atr_sl/atr_tp - verificato
+# riga-per-riga durante l'audit di fedelta' del 04/08. Applicato SEMPRE
+# (bypassa completamente sl/tp generico), non opt-in: e' cosi' che la
+# strategia funziona davvero, non un'ipotesi da testare.
+STRATEGY_SLTP_ALWAYS = {
+    "AMD_CONT": _amd_cont_sl_tp,
+    "SILVER_BULLET": _silver_bullet_sl_tp,
+}
 
 
 # Strategie con logica Python reale (le altre usano i risultati reali importati)
@@ -1800,12 +1966,20 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             risk_money = equity * (risk_pct / 100.0)
             sl = px - sig * atr * eff_sl
             tp = px + sig * atr * eff_tp
+            # STRATEGY_SLTP_ALWAYS: SL *E* TP strutturali fedeli al vero
+            # MQL5 (non un multiplo ATR) - bypassa completamente il calcolo
+            # generico sopra, sempre attivo dove presente.
+            sltp_fn = STRATEGY_SLTP_ALWAYS.get(who)
+            if sltp_fn:
+                dyn = sltp_fn(candles, ind, i, sig, px, atr)
+                if dyn is not None:
+                    sl, tp = dyn
             # STRATEGY_TARGETS_ALWAYS: fedelta' al vero calcolo MQL5, sempre attivo.
             target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
             # STRATEGY_TARGETS_OPTIN: ipotesi non presente in MQL5, solo se richiesta.
             if not target_fn and use_dynamic_tp:
                 target_fn = STRATEGY_TARGETS_OPTIN.get(who)
-            if target_fn:
+            if target_fn and not sltp_fn:
                 dyn_tp = target_fn(candles, ind, i, sig, px, atr,
                                     sl_mult=eff_sl, pick=dynamic_tp_pick)
                 if dyn_tp is not None:
