@@ -29,6 +29,31 @@ from strategy_registry import LIVE_STRATEGY_IDS, require_strategies
 _CACHE: dict = {}          # ticker -> (timestamp, candles)
 _CACHE_TTL = 3600
 
+# Profili di costo XAUUSD (31/07) - VERIFICATI via ricerca web, non stimati:
+# "1 pip su gold = $0.10, spread retail standard tipico 20-50 pip ($2-5),
+# ECN 15-25 pip ($1.5-2.5) + commissione $4-8/lotto round-trip" (fonti:
+# DailyForex, ForexSpreadCompare, Tradingpedia - confrontate il 31/07/2026).
+# "none" = comportamento di sempre (nessun costo, invariato). Gli altri due
+# vanno passati esplicitamente a run_backtest/optimize via **COST_PRESETS[x]
+# - MAI applicati di default, per non cambiare risultati gia' salvati altrove
+# senza che sia una scelta esplicita di chi chiama.
+#
+# Nota onesta sulla commissione ECN ($4-8/lotto round-trip): NON e' inclusa
+# come commission_r qui. commission_r e' un costo FISSO in R, ma una
+# commissione per lotto va convertita in R dividendo per risk_dist (identico
+# a come si fa per spread_price) - varia da trade a trade in base alla
+# distanza dello stop, non e' una costante. Approssimarla con un numero
+# fisso avrebbe richiesto un valore inventato, non derivato. Il preset "ecn"
+# qui sotto quindi SOTTOSTIMA il costo reale di un conto ECN di quella parte
+# di commissione - i risultati con questo preset sono un limite superiore
+# ottimistico, non il costo ECN vero e proprio.
+COST_PRESETS = {
+    "none": {"spread_price": 0.0, "commission_r": 0.0, "slippage_price": 0.0},
+    "retail_standard": {"spread_price": 2.50, "commission_r": 0.0, "slippage_price": 0.50},
+    "ecn": {"spread_price": 0.90, "commission_r": 0.0, "slippage_price": 0.15},
+}
+
+
 STOOQ_MAP = {
     "EURUSD": "eurusd", "GBPUSD": "gbpusd", "USDJPY": "usdjpy", "USDCHF": "usdchf",
     "AUDUSD": "audusd", "USDCAD": "usdcad", "NZDUSD": "nzdusd", "XAUUSD": "xauusd",
