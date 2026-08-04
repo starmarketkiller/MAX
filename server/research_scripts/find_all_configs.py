@@ -95,6 +95,18 @@ def process(strategy, tf):
         r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, breakeven_r=v)
         if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
             mgmt_candidates.append(("breakeven_r", v, r["profit_factor"]))
+    # 04/08 (12) - piramidazione sul profitto (richiesta esplicita
+    # dell'utente): stessa disciplina delle altre leve, provata da sola,
+    # entra nella combinazione SOLO se batte la baseline a campione
+    # sufficiente - se per una strategia il TP e' troppo vicino perche' il
+    # prezzo raggiunga mai il primo livello di piramide, semplicemente non
+    # cambia nulla rispetto alla baseline e non viene scelta, senza
+    # bisogno di escluderla a mano.
+    for v in (1, 2):
+        r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0,
+                             pyramid_max_legs=v, pyramid_r=1.0, pyramid_risk_mult=1.0)
+        if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+            mgmt_candidates.append(("pyramid_max_legs", v, r["profit_factor"]))
     for v in (2.0, 2.5):
         r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, trailing_atr=v)
         if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
