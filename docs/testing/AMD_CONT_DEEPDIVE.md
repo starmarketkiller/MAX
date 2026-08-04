@@ -111,6 +111,61 @@ in parallelo allo stesso rischio, il rischio aggregato è più alto. Decisione
 registrata come scelta esplicita dell'utente sul proprio capitale, non come
 raccomandazione del motore.
 
-## Fase 6-10
+## Fase 6 — Trade Management (TP/SL/breakeven/trailing)
 
-Da fare.
+Baseline post-Fase 5 (risk_pct=5%): PF 1.48, MaxDD 28.96%. Un parametro alla
+volta:
+
+| Parametro | Config | PF | Trade | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|---|
+| SL | 1.0×ATR | 1.48 | 67 | 40.3 | 0.456 | 34.62 |
+| SL | 2.0×ATR | 1.39 | 59 | 54.2 | 0.225 | 28.58 |
+| SL | 2.5×ATR | 1.67 | 52 | 63.5 | 0.282 | 24.07 |
+| TP | 2.0×ATR | 1.12 | 74 | 51.4 | 0.096 | 33.39 |
+| TP | 4.0×ATR | 1.73 | 60 | 50.0 | 0.538 | 25.07 |
+| TP | 5.0×ATR | 1.68 | 59 | 45.8 | 0.523 | 29.11 |
+| Breakeven | 0.5R | 0.60 | 83 | 10.8 | -0.128 | 53.92 |
+| Breakeven | 1.0R | 1.44 | 68 | 36.8 | 0.253 | 26.10 |
+| Breakeven | 1.5-2.0R | ~1.48-1.49 | 64 | ~49 | ~0.355 | ~25-29 |
+| Trailing | 1.0×ATR | 0.50 | 84 | 33.3 | -0.190 | 61.04 |
+| Trailing | 1.5×ATR | 1.03 | 73 | 43.8 | 0.042 | 36.70 |
+| Trailing | 2.0×ATR | 1.54 | 66 | 45.5 | 0.332 | 23.50 |
+
+**Ipotesi Fase 2 smentita nella forma stretta**: il 44% di perdite "quasi
+vincenti" (MFE≥0.5R) NON si risolve stringendo la gestione (breakeven/
+trailing stretti sono catastrofici: PF crolla a 0.5-0.6, MaxDD esplode
+oltre il 50% — bloccano lo stop troppo presto sui trade che sarebbero
+tornati a favore). Si risolve invece dando PIÙ spazio: SL 2.5×ATR e TP
+4.0×ATR, ciascuno da solo, sono i due vincitori netti.
+
+### Combinazione dichiarata: SL=2.5×ATR + TP=4.0×ATR
+
+PF 2.00, 51 trade, WR 62.7%, ExpR 0.427, MaxDD 24.07% — il miglior
+risultato aggregato finora. Aggiungere trailing_atr=2.0 sopra peggiora
+leggermente ExpR (0.427→0.248) in cambio di MaxDD più basso (24.07%→20.54%)
+— non chiaramente meglio, scartato per ora.
+
+### Ri-validazione Out-of-Sample (stessa disciplina della Fase 4)
+
+Trovata via ricerca di parametri → stesso rischio di overfitting di
+`confirm_bars=1` in Fase 4. Ri-testata con lo stesso split 60/40:
+
+| | PF | Trade | WR% | ExpR | MaxDD% |
+|---|---|---|---|---|---|
+| In-sample | 2.01 | 33 | 60.6 | 0.395 | 24.07 |
+| Out-of-sample (costi retail) | **1.99** | 18 | 66.7 | 0.486 | 12.65 |
+| Out-of-sample (costi stress) | 1.93 | 18 | 66.7 | 0.464 | 13.08 |
+
+**Regge** — PF praticamente identico in/out-of-sample (2.01 vs 1.99), WR e
+MaxDD migliorano addirittura fuori campione. A differenza di
+`confirm_bars=1`, questa combinazione supera il gate.
+
+**Config corrente AMD_CONT**: H4, risk_pct=5%, SL=2.5×ATR, TP=4.0×ATR,
+nessun breakeven/trailing.
+
+## Fase 7-10
+
+Da fare. Nota per la Fase 8 (Stability): SL=2.5/TP=4.0 sono stati scelti
+da una griglia discreta (1.0/1.5/2.0/2.5 e 2.0/3.0/4.0/5.0) — non ancora
+verificato se i valori vicini (es. 2.25, 2.75, 3.75, 4.25) reggono altrettanto
+bene o se è un picco isolato e fragile.
