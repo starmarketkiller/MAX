@@ -245,3 +245,42 @@ della singola strategia, es. `AMD_CONT_DEEPDIVE.md`).
     intero a parte** (qui: scansione di tutte le zone OB/FVG attive
     dell'EA). Stesso principio già applicato a NY_REVERSAL (M5 cross-TF):
     onestà sul limite > falsa precisione.
+
+## Dal completamento del rilevatore di sweep condiviso (04/08)
+
+25. **Un limite "già annotato a parole" (settimanale/mensile/EQH-EQL
+    mancanti in `_sweep_ext_at`, segnalato più volte in questa sessione
+    come nota, mai risolto) resta un debito reale finché non viene
+    davvero corretto.** Quando l'utente ha chiesto "abbiamo regole troppo
+    rigide?", la risposta onesta richiedeva riaprire il codice, non
+    ripetere la nota già scritta altrove — l'ha confermato un'analisi a
+    imbuto quantitativa (quante barre passano ogni singolo filtro), non
+    un'impressione.
+
+26. **Un rilevatore condiviso da 10+ strategie (sweep di liquidità) va
+    corretto UNA SOLA VOLTA alla fonte, non strategia per strategia** —
+    ma la correzione della fonte NON basta da sola: ogni strategia che lo
+    consuma ha il proprio elenco di quali flag (`sweptPDH`/`sweptEQH`/…)
+    controlla davvero nel vero MQL5, e va verificato singolarmente che il
+    Python usi lo stesso elenco (qui: TURTLE_SOUP/LDN_REVERSAL/
+    JUDAS_SWING controllavano solo un sottoinsieme dei flag reali anche
+    DOPO aver corretto il rilevatore condiviso - due bug distinti, non
+    uno).
+
+27. **Più fedeltà non significa sempre "più vantaggio trovato" - a volte
+    significa il contrario, ed è comunque la correzione giusta.**
+    Completare il rilevatore di sweep ha fatto crescere il campione di
+    TURTLE_SOUP/H4 dell'41% (86→121 trade) ma il PF è sceso da 1.15 a
+    1.00 (pareggio): i segnali aggiuntivi erano genuini (fedeli al vero
+    MQL5) ma diluivano l'edge precedente verso la media reale. La lezione
+    #14 ("corretta la fedeltà, i numeri sono crollati - conferma che
+    valeva la pena farlo") si applica anche quando il "crollo" arriva DA
+    più dati, non da meno.
+
+28. **Leggere un file MQL5 una seconda volta con una domanda diversa può
+    rivelare quello che la prima lettura non cercava.** La formula SL
+    reale di PO3 era segnata come "non trovata" nel backlog — era in
+    `NXS_Strategies_Institutional.mqh`, un file già letto per altre
+    strategie in questa sessione ma non con l'obiettivo specifico di
+    trovare quella formula. Non dare per assodato che "non trovato in un
+    giro precedente" significhi "non esiste nel codice".

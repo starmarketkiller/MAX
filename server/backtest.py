@@ -372,10 +372,13 @@ def _prep(candles):
     macd_line, macd_sig = _macd_signal_series(ema12, ema26)
     atr_s = atr_series(candles, 14)
     sess = _session_amd_series(candles)
-    sb_signal, sb_sweep_level = _silver_bullet_series(candles, sess, atr_s)
-    ob_signal = _ob_series(candles, atr_s)
-    shbms_signal, shbms_ref = _shbms_series(candles, sess, atr_s)
     weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
+    monthly_pmh, monthly_pml = _monthly_levels_series(candles)
+    sb_signal, sb_sweep_level = _silver_bullet_series(
+        candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+    ob_signal = _ob_series(candles, atr_s)
+    shbms_signal, shbms_ref = _shbms_series(
+        candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     return {
@@ -405,6 +408,7 @@ def _prep(candles):
         "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
         "shbms_signal": shbms_signal, "shbms_ref": shbms_ref,  # precalcolato, vedi _shbms_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
+        "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
     }
 
@@ -536,6 +540,36 @@ def _weekly_levels_series(candles):
             pwh[i], pwl[i] = week_hi.get(pw), week_lo.get(pw)
         wopen[i] = week_open.get(wk)
     return pwh, pwl, wopen
+
+
+def _monthly_levels_series(candles):
+    """Stesso principio di _weekly_levels_series ma per il mese civile
+    PRECEDENTE gia' completato - fedele a NXS_DetectSweepExt (pmh/pml =
+    iHigh/iLow(PERIOD_MN1, shift1), il mese precedente, non quello in
+    corso). Nessun look-ahead."""
+    from datetime import datetime
+    n = len(candles)
+    month_key = [None] * n
+    for i, cd in enumerate(candles):
+        d = datetime.strptime(cd["time"].split(" ")[0], "%Y-%m-%d")
+        month_key[i] = (d.year, d.month)
+
+    month_hi, month_lo = {}, {}
+    for i, cd in enumerate(candles):
+        mk = month_key[i]
+        month_hi[mk] = max(month_hi.get(mk, -1e18), cd["high"])
+        month_lo[mk] = min(month_lo.get(mk, 1e18), cd["low"])
+
+    months_sorted = sorted(month_hi.keys())
+    prev_month = {mk: months_sorted[idx - 1] for idx, mk in enumerate(months_sorted) if idx > 0}
+
+    pmh, pml = [None] * n, [None] * n
+    for i in range(n):
+        mk = month_key[i]
+        pm = prev_month.get(mk)
+        if pm is not None:
+            pmh[i], pml[i] = month_hi.get(pm), month_lo.get(pm)
+    return pmh, pml
 
 
 def sig_london_bo(c, ind, i):
@@ -1057,7 +1091,7 @@ def sig_liq_sweep_ext(c, ind, i):
     # su 4, peggiora solo sulla combinazione 4h-no-HTF (gia' la migliore
     # trovata prima del fix) - vedi vault per il dettaglio completo.
     sess = ind["sess"]
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw or not sw["confirmed"]:
         return 0
     atr = ind["atr"][i]
@@ -1134,6 +1168,11 @@ def _ldn_reversal_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5
 def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=None):
     # Fedele a NXS_Strat_PO3: tp = MAX(asianHigh, entry+2.6xrisk) per buy /
     # MIN(asianLow, entry-2.6xrisk) per sell.
+    # 04/08 (15): SUPERATA da _po3_sl_tp - qui il rischio usava il
+    # multiplo ATR generico (sl_mult) perche' la vera formula SL non era
+    # ancora stata trovata. Ora e' nota (vedi sotto), _po3_sl_tp calcola
+    # SL *e* TP insieme sul rischio REALE. Funzione lasciata per
+    # compatibilita', non piu' usata di default (vedi STRATEGY_TARGETS_ALWAYS).
     ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
     risk = atr * sl_mult
     if direction == 1:
@@ -1141,6 +1180,37 @@ def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=No
         return max(ah, fixed) if ah is not None else fixed
     fixed = entry - 2.6 * risk
     return min(al, fixed) if al is not None else fixed
+
+
+def _po3_sl_tp(c, ind, i, direction, entry, atr):
+    # 04/08 (15) - trovata la formula SL reale di NXS_Strat_PO3 (prima
+    # segnata come backlog aperto, "non trovata durante questo giro" -
+    # era in NXS_Strategies_Institutional.mqh, non ancora letto quando fu
+    # scritta quella nota): SL da sw.refLow/refHigh (livello dello sweep)
+    # +-0.4xATR, TP = il piu' ambizioso tra il livello asiatico opposto e
+    # 2.6xR dalla distanza di rischio REALE (non il multiplo ATR generico
+    # che usava _po3_target finora).
+    sw = _sweep_ext_at(c, ind, i)
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.4 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        tgt = ah if ah is not None else (entry + 2.6 * risk)
+        return sl, max(tgt, entry + 2.6 * risk)
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.4 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    tgt = al if al is not None else (entry - 2.6 * risk)
+    return sl, min(tgt, entry - 2.6 * risk)
 
 
 # TP dinamico (livello di liquidita' opposta invece di ATR fisso), due gruppi:
@@ -1151,13 +1221,12 @@ def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=No
 # Il primo giro di test del 16/07 sulle 7 strategie a sessione usava per
 # errore lo stesso SL/TP ATR generico per tutte, omettendo questa parte
 # gia' presente in MQL5 per queste 3.
-STRATEGY_TARGETS_ALWAYS = {
-    "PO3": _po3_target,
-}
-# JUDAS_SWING/LDN_REVERSAL: superate dalle formule SL+TP complete in
-# STRATEGY_SLTP_ALWAYS (_judas_swing_sl_tp/_ldn_reversal_sl_tp, 04/08) -
-# _judas_swing_target/_ldn_reversal_target restano definite ma inutilizzate
-# qui (il guard "if target_fn and not sltp_fn" le avrebbe comunque saltate).
+STRATEGY_TARGETS_ALWAYS = {}
+# JUDAS_SWING/LDN_REVERSAL/PO3: tutte superate dalle formule SL+TP complete
+# in STRATEGY_SLTP_ALWAYS (_judas_swing_sl_tp/_ldn_reversal_sl_tp/
+# _po3_sl_tp, 04/08) - _judas_swing_target/_ldn_reversal_target/
+# _po3_target restano definite ma inutilizzate qui (il guard
+# "if target_fn and not sltp_fn" le avrebbe comunque saltate).
 # STRATEGY_TARGETS_OPTIN - ipotesi TESTATA ma NON presente nel vero
 # NXS_Strat_LiqSweep() MQL5 (che usa solo NXS_DefaultSLTP, ATR fisso) -
 # testata su richiesta dell'utente (16/07), risultato misto/non decisivo
@@ -1172,10 +1241,13 @@ def sig_turtle_soup(c, ind, i):
     # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_TurtleSoup
     # (MQL5 reale): usava un falso-breakout su estremo GENERICO a 20 barre,
     # ma la vera strategia (SNXSSweepExt &sw nella firma MQL5) usa il
-    # rilevatore di sweep ESTESO (PDH/PDL, priorita' Asia/daily) gia'
-    # disponibile in questo motore via _sweep_ext_at() e gia' usato da
-    # altre strategie (sig_liq_sweep_ext, sig_silver_bullet) - TURTLE_SOUP
+    # rilevatore di sweep ESTESO gia' disponibile in questo motore via
+    # _sweep_ext_at() e gia' usato da altre strategie - TURTLE_SOUP
     # semplicemente non lo riusava. Corretto.
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla
+    # "sw.sweptPDH || sw.sweptEQH" / "sw.sweptPDL || sw.sweptEQL", non solo
+    # PDH/PDL da soli - EQH/EQL (massimi/minimi uguali) mancava del tutto
+    # prima di questa sessione, aggiunto ora al rilevatore condiviso.
     atr = ind["atr"][i]
     if not atr:
         return 0
@@ -1183,18 +1255,18 @@ def sig_turtle_soup(c, ind, i):
     body = abs(c1 - o1)
     if body < atr * 0.4:
         return 0
-    sw = _sweep_ext_at(c, ind["sess"], i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw:
         return 0
-    if sw["sweptPDH"] and c1 < o1 and sw["refHigh"] is not None and c1 < sw["refHigh"]:
+    if (sw["sweptPDH"] or sw["sweptEQH"]) and c1 < o1 and sw["refHigh"] is not None and c1 < sw["refHigh"]:
         return -1
-    if sw["sweptPDL"] and c1 > o1 and sw["refLow"] is not None and c1 > sw["refLow"]:
+    if (sw["sweptPDL"] or sw["sweptEQL"]) and c1 > o1 and sw["refLow"] is not None and c1 > sw["refLow"]:
         return 1
     return 0
 
 
 def _turtle_soup_sl_tp(c, ind, i, direction, entry, atr):
-    sw = _sweep_ext_at(c, ind["sess"], i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw:
         return None
     if direction == 1:
@@ -1393,29 +1465,150 @@ def _session_amd_series(candles):
             "amd_phase": amd_phase}
 
 
-def _sweep_ext_at(candles, sess, i):
+def _is_swing_high_at(candles, p, wing):
+    if p - wing < 0 or p + wing >= len(candles):
+        return False
+    h = candles[p]["high"]
+    for k in range(1, wing + 1):
+        if candles[p + k]["high"] >= h or candles[p - k]["high"] >= h:
+            return False
+    return True
+
+
+def _is_swing_low_at(candles, p, wing):
+    if p - wing < 0 or p + wing >= len(candles):
+        return False
+    lo = candles[p]["low"]
+    for k in range(1, wing + 1):
+        if candles[p + k]["low"] <= lo or candles[p - k]["low"] <= lo:
+            return False
+    return True
+
+
+def _find_equal_high(candles, i, wing, tol):
+    # Fedele a NXS_FindEqualHigh: la coppia PIU' RECENTE di swing high
+    # confermati (wing=3, InpSwingWing) entro tol l'uno dall'altro - non il
+    # massimo generico su una finestra. shift wing+1..59 -> python
+    # p = i-(shift-1), fino a 8 swing raccolti (nearest-first).
+    vals = []
+    for s in range(wing + 1, 60):
+        if len(vals) >= 8:
+            break
+        p = i - s + 1
+        if p - wing < 0:
+            continue
+        if _is_swing_high_at(candles, p, wing):
+            vals.append(candles[p]["high"])
+    for a in range(len(vals)):
+        for b in range(a + 1, len(vals)):
+            if abs(vals[a] - vals[b]) <= tol:
+                return max(vals[a], vals[b])
+    return None
+
+
+def _find_equal_low(candles, i, wing, tol):
+    vals = []
+    for s in range(wing + 1, 60):
+        if len(vals) >= 8:
+            break
+        p = i - s + 1
+        if p - wing < 0:
+            continue
+        if _is_swing_low_at(candles, p, wing):
+            vals.append(candles[p]["low"])
+    for a in range(len(vals)):
+        for b in range(a + 1, len(vals)):
+            if abs(vals[a] - vals[b]) <= tol:
+                return min(vals[a], vals[b])
+    return None
+
+
+def _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
+    # 04/08 (15) - fedelta' verificata riga-per-riga con NXS_DetectSweepExt
+    # (MQL5 reale, NXS_MarketAnalysis.mqh): il proxy precedente controllava
+    # SOLO Asia+PDH/PDL, con una logica di priorita' "vince il livello piu'
+    # estremo" che il vero MQL5 non ha - la' l'ordine e' fisso e SEQUENZIALE
+    # (Asia -> daily -> weekly -> monthly, ogni blocco sovrascrive
+    # INCONDIZIONATAMENTE se scatta, quindi in pratica vince l'ultimo/il piu'
+    # raro se piu' livelli scattano sulla stessa barra), con EQH/EQL
+    # (massimi/minimi uguali, cluster REALE di 2+ swing entro 0.2xATR, non
+    # un proxy) come fallback SOLO se nessun altro livello e' scattato.
+    # Livelli settimanali/mensili mancavano del tutto (mai implementati) -
+    # aggiunti qui (weekly gia' calcolato altrove per WEEKLY_EXP, monthly
+    # nuovo). Questo e' il rilevatore di sweep condiviso da 10+ strategie
+    # (TURTLE_SOUP, SILVER_BULLET, SH_BMS_RTO, JUDAS_SWING, LDN_REVERSAL,
+    # AMD_REVERSAL, PO3, LIQ_SWEEP...) - la correzione si propaga a tutte.
     if i < 1:
         return None
     h1, l1, c1 = candles[i]["high"], candles[i]["low"], candles[i]["close"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     pdh, pdl = sess["pdh"][i], sess["pdl"][i]
+    pwh = weekly_pwh[i] if weekly_pwh else None
+    pwl = weekly_pwl[i] if weekly_pwl else None
+    pmh = monthly_pmh[i] if monthly_pmh else None
+    pml = monthly_pml[i] if monthly_pml else None
+
     d, level, ref_hi, ref_lo, confirmed = 0, 0, None, None, False
     swept_asia_hi = swept_asia_lo = swept_pdh = swept_pdl = False
+    swept_pwh = swept_pwl = swept_pmh = swept_pml = swept_eqh = swept_eql = False
+
     if ah is not None and h1 > ah and c1 < ah:
-        swept_asia_hi, d, level, ref_hi, confirmed = True, -1, ah, ah, True
+        swept_asia_hi = True
+        d, level, ref_hi, confirmed = -1, ah, ah, True
+    if al is not None and l1 < al and c1 > al:
+        swept_asia_lo = True
+        d, level, ref_lo, confirmed = 1, al, al, True
     if pdh is not None and h1 > pdh and c1 < pdh:
         swept_pdh = True
-        if not confirmed or pdh > (ref_hi if ref_hi is not None else -1e18):
-            d, level, ref_hi, confirmed = -1, pdh, pdh, True
-    if al is not None and l1 < al and c1 > al:
-        swept_asia_lo, d, level, ref_lo, confirmed = True, 1, al, al, True
+        d, level, ref_hi, confirmed = -1, pdh, pdh, True
     if pdl is not None and l1 < pdl and c1 > pdl:
         swept_pdl = True
-        if not confirmed or pdl < (ref_lo if ref_lo is not None else 1e18):
-            d, level, ref_lo, confirmed = 1, pdl, pdl, True
+        d, level, ref_lo, confirmed = 1, pdl, pdl, True
+    if pwh is not None and h1 > pwh and c1 < pwh:
+        swept_pwh = True
+        d, level, ref_hi, confirmed = -1, pwh, pwh, True
+    if pwl is not None and l1 < pwl and c1 > pwl:
+        swept_pwl = True
+        d, level, ref_lo, confirmed = 1, pwl, pwl, True
+    if pmh is not None and h1 > pmh and c1 < pmh:
+        swept_pmh = True
+        d, level, ref_hi, confirmed = -1, pmh, pmh, True
+    if pml is not None and l1 < pml and c1 > pml:
+        swept_pml = True
+        d, level, ref_lo, confirmed = 1, pml, pml, True
+
+    a = atr[i] if atr else None
+    if a:
+        tol = a * 0.2
+        eqh = _find_equal_high(candles, i, 3, tol)
+        eql = _find_equal_low(candles, i, 3, tol)
+        if eqh is not None and h1 > eqh and c1 < eqh:
+            swept_eqh = True
+            if d == 0:
+                d, level, ref_hi, confirmed = -1, eqh, eqh, True
+        if eql is not None and l1 < eql and c1 > eql:
+            swept_eql = True
+            if d == 0:
+                d, level, ref_lo, confirmed = 1, eql, eql, True
+
+    if ref_hi is None and (pdh is not None or ah is not None):
+        ref_hi = max(x for x in (pdh, ah) if x is not None)
+    if ref_lo is None and (pdl is not None or al is not None):
+        ref_lo = min(x for x in (pdl, al) if x is not None)
+
     return {"dir": d, "level": level, "refHigh": ref_hi, "refLow": ref_lo,
-            "confirmed": confirmed, "sweptAsiaHigh": swept_asia_hi,
-            "sweptAsiaLow": swept_asia_lo, "sweptPDH": swept_pdh, "sweptPDL": swept_pdl}
+            "confirmed": confirmed,
+            "sweptAsiaHigh": swept_asia_hi, "sweptAsiaLow": swept_asia_lo,
+            "sweptPDH": swept_pdh, "sweptPDL": swept_pdl,
+            "sweptPWH": swept_pwh, "sweptPWL": swept_pwl,
+            "sweptPMH": swept_pmh, "sweptPML": swept_pml,
+            "sweptEQH": swept_eqh, "sweptEQL": swept_eql}
+
+
+def _sweep_ext_at(candles, ind, i):
+    return _sweep_ext_at_raw(candles, ind["sess"], i, ind["atr"],
+                              ind["weekly_pwh"], ind["weekly_pwl"],
+                              ind["monthly_pmh"], ind["monthly_pml"])
 
 
 def _choch_at(c, i, look=10):
@@ -1608,7 +1801,7 @@ def sig_amd_reversal(c, ind, i):
     ph = sess["amd_phase"][i] if i < len(sess["amd_phase"]) else None
     if ph is None or ph[0] != "REVERSAL_DISTRIBUTION":
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw:
         return 0
     choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
@@ -1620,7 +1813,7 @@ def sig_amd_reversal(c, ind, i):
 
 
 def _amd_reversal_sl_tp(c, ind, i, direction, entry, atr):
-    sw = _sweep_ext_at(c, ind["sess"], i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw:
         return None
     if direction == 1:
@@ -1634,6 +1827,10 @@ def _amd_reversal_sl_tp(c, ind, i, direction, entry, atr):
 
 def sig_judas_swing(c, ind, i):
     # 04/08 - fedelta': stesso swap CHoCH di sopra (_choch_at -> reale).
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla
+    # "sw.sweptAsiaLow || sw.sweptPDL || sw.sweptEQL || l1<asianLow"
+    # (mirror per sweptAsiaHigh/PDH/EQH) - mancavano PDL/PDH e EQL/EQH,
+    # qui c'era solo il check Asia + il fallback sul wick grezzo.
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "NY"):
         return 0
@@ -1647,13 +1844,13 @@ def sig_judas_swing(c, ind, i):
     atr = ind["atr"][i]
     if not atr:
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
-    wicked_down = (sw and (sw["sweptAsiaLow"])) or l1 < al
+    wicked_down = (sw and (sw["sweptAsiaLow"] or sw["sweptPDL"] or sw["sweptEQL"])) or l1 < al
     if wicked_down and c1 > al and choch_up:
         return 1
-    wicked_up = (sw and (sw["sweptAsiaHigh"])) or h1 > ah
+    wicked_up = (sw and (sw["sweptAsiaHigh"] or sw["sweptPDH"] or sw["sweptEQH"])) or h1 > ah
     if wicked_up and c1 < ah and choch_down:
         return -1
     return 0
@@ -1682,17 +1879,20 @@ def _judas_swing_sl_tp(c, ind, i, direction, entry, atr):
 
 def sig_ldn_reversal(c, ind, i):
     # 04/08 - fedelta': stesso swap CHoCH di sopra.
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla anche sw.sweptEQH/
+    # sweptEQL ("sw.sweptAsiaHigh || sw.sweptPDH || sw.sweptEQH"), mancava
+    # prima di questa sessione (EQH/EQL non esisteva nel rilevatore).
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "OVERLAP"):
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw or not sw["confirmed"]:
         return 0
     choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1 = c[i]["close"]
-    if (sw["sweptAsiaHigh"] or sw["sweptPDH"]) and c1 < sw["refHigh"] and choch_down:
+    if (sw["sweptAsiaHigh"] or sw["sweptPDH"] or sw["sweptEQH"]) and c1 < sw["refHigh"] and choch_down:
         return -1
-    if (sw["sweptAsiaLow"] or sw["sweptPDL"]) and c1 > sw["refLow"] and choch_up:
+    if (sw["sweptAsiaLow"] or sw["sweptPDL"] or sw["sweptEQL"]) and c1 > sw["refLow"] and choch_up:
         return 1
     return 0
 
@@ -1701,7 +1901,7 @@ def _ldn_reversal_sl_tp(c, ind, i, direction, entry, atr):
     # Fedele a NXS_Strat_LondonReversal: SL dal livello di sweep +-0.5xATR,
     # TP = il piu' ambizioso tra il livello asiatico opposto (o 2.5xR se
     # assente) e 2.0xR dalla distanza di rischio reale.
-    sw = _sweep_ext_at(c, ind["sess"], i)
+    sw = _sweep_ext_at(c, ind, i)
     ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
     if not sw:
         return None
@@ -1799,7 +1999,7 @@ def sig_po3(c, ind, i):
     c1, o1 = c[i]["close"], c[i]["open"]
     if abs(c1 - o1) < atr * 0.6:
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     if sw and sw["sweptAsiaLow"] and c1 > al and c1 > o1 and choch_up:
         return 1
@@ -1830,7 +2030,7 @@ def _is_us_edt(date_str):
     return start <= d < end
 
 
-def _silver_bullet_series(candles, sess, atr):
+def _silver_bullet_series(candles, sess, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
     # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SilverBullet/
     # NXS_SB_UpdateSide (MQL5 reale): la vera Silver Bullet e' una state
     # machine a 3 stadi su piu' barre (IDLE -> SWEPT -> WAITING_RETURN),
@@ -1874,7 +2074,7 @@ def _silver_bullet_series(candles, sess, atr):
         for d in (1, -1):
             s = st[d]
             if s["state"] == IDLE:
-                sw = _sweep_ext_at(candles, sess, i)
+                sw = _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
                 if in_killzone(i) and sw and sw["confirmed"] and sw["dir"] == d:
                     s["state"], s["bars_waited"], s["sweep_level"] = SWEPT, 0, sw["level"]
                 continue
@@ -2028,7 +2228,7 @@ def _ob_series(candles, atr):
     return out_sig
 
 
-def _shbms_series(candles, sess, atr):
+def _shbms_series(candles, sess, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
     # 04/08 - fedelta' verificata riga-per-riga con NXS_SHBMS_UpdateSide
     # (SH_BMS_RTO, MQL5 reale - gia' riscritta come state machine nel
     # codice MQL5 il 17/07, mai portata qui: il proxy Python usava
@@ -2056,7 +2256,7 @@ def _shbms_series(candles, sess, atr):
         a = atr[i]
         if not a:
             continue
-        sw = _sweep_ext_at(candles, sess, i)
+        sw = _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
         for d in (1, -1):
             s = st[d]
             if s["state"] == IDLE:
@@ -2268,6 +2468,7 @@ STRATEGY_SLTP_ALWAYS = {
     "NY_REVERSAL": _ny_reversal_sl_tp,
     "SH_BMS_RTO": _shbms_sl_tp,
     "SMS_BMS_RTO": _sms_bms_sl_tp,
+    "PO3": _po3_sl_tp,
 }
 # ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
 # chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una

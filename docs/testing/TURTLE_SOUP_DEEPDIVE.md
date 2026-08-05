@@ -149,3 +149,62 @@ ripetuto identico su TURTLE_SOUP — probabilmente un limite dell'intero
 campione H4 di 1.74 anni usato per OGNI strategia in questa sessione, non
 una caratteristica specifica di una singola strategia. Da tenere a mente
 per ogni prossimo deep-dive su questo stesso storico.
+
+## Aggiornamento 04/08 (16) — Rilevatore di sweep completato: il campione
+## cresce, il vantaggio si sgonfia
+
+Su richiesta esplicita ("abbiamo paura che ci siano regole troppo
+rigide o un gate che blocca gli ingressi"): fatta un'analisi a imbuto sul
+rilevatore di sweep condiviso (`_sweep_ext_at`). Trovato un limite reale,
+non un bug: il vero MQL5 (`NXS_DetectSweepExt`, `NXS_MarketAnalysis.mqh`)
+controlla sweep su **Asia, giorno precedente, SETTIMANA precedente, MESE
+precedente, e massimi/minimi UGUALI (EQH/EQL, cluster reale di 2+ swing
+entro 0.2×ATR)** — il nostro rilevatore implementava solo Asia+giorno
+precedente. Settimanale/mensile/EQH-EQL mancavano completamente, un
+limite già annotato a parole in questa sessione ma mai risolto prima
+d'ora.
+
+**Corretto**: aggiunto `_monthly_levels_series` (stesso principio di
+quello settimanale già esistente per WEEKLY_EXP), riscritto
+`_sweep_ext_at` con l'ordine di priorità fedele (Asia→giorno→settimana→
+mese, sovrascrittura incondizionata in quest'ordine; EQH/EQL solo come
+fallback se nient'altro è scattato — esattamente come nel vero MQL5, non
+più "vince il livello più estremo" come faceva il proxy). Inoltre
+TURTLE_SOUP stesso non controllava `sweptEQH`/`sweptEQL` nel suo gate
+d'ingresso (solo `sweptPDH`/`sweptPDL`) — corretto anche questo, insieme
+allo stesso problema su LDN_REVERSAL e JUDAS_SWING (mancavano PDH/PDL/
+EQH/EQL nei rispettivi gate). Trovata anche, come bonus, la formula SL
+reale di PO3 (prima segnata come "non trovata" — era in un file non
+ancora letto), ora strutturale come le altre.
+
+### Risultato onesto: +41% di campione, ma il vantaggio si avvicina al pareggio
+
+| | Prima (solo Asia+giorno, gate incompleto) | Dopo (rilevatore + gate completi) |
+|---|---|---|
+| H4 | PF 1.15, 86 trade | **PF 1.00, 121 trade** |
+| H1 | — | PF 0.78, 78 trade |
+| D1 | — | PF 0.82, 195 trade |
+| W1 | — | PF 0.79, 33 trade |
+
+La paura era fondata solo in parte: non c'era un gate "sbagliato" nel
+senso di un bug, ma mancava davvero un pezzo importante della logica
+reale (settimanale/mensile/EQH-EQL) — averlo aggiunto ha portato **35
+operazioni H4 in più (86→121, +41%)**, un campione più solido. Ma
+il PF è sceso da 1.15 a **esattamente 1.00** — pareggio, non più un
+vantaggio dimostrato. Interpretazione onesta: il precedente PF 1.15 era
+in parte un artefatto di un campione più piccolo che per caso pescava
+più operazioni vincenti; con più segnali genuini (fedeli al vero MQL5)
+il risultato regredisce verso il pareggio. Non è un fallimento del
+lavoro — è esattamente il tipo di scoperta che il rigore di questa
+sessione è pensato per produrre: un risultato che sembrava un vantaggio
+non regge quando lo si guarda con dati più completi.
+
+**Verdetto aggiornato**: TURTLE_SOUP passa da "OSSERVAZIONE con edge
+reale ma rischio da rivedere" a **"nessun vantaggio dimostrato dopo la
+correzione completa del rilevatore di sweep"** — il punteggio 67/100 e
+la decisione precedente sono superati dallo stesso motivo di AMD_CONT/
+SILVER_BULLET all'inizio di questa sessione: andava rifatta la verifica
+di fedeltà completa (qui: il rilevatore condiviso, non la singola
+strategia) prima di fidarsi del numero.
+
+244 test verdi.
