@@ -722,3 +722,49 @@ Nessuna delle nostre strategie esistenti viene adattata a questa logica
 — la verifica indipendente non supporta la promessa della fonte.
 
 244 test verdi.
+
+## Aggiornamento 04/08 (17-18) — Execution Audit (Fase 0) esteso a tutte
+## le 40 strategie: il limite a posizione singola è sistemico
+
+Su proposta esplicita dell'utente (protocollo "Fase 0 - Execution Audit",
+da eseguire PRIMA di qualunque backtest): costruito `execution_audit.py`
++ `execution_audit_all.py`, eseguito su tutte le 40 strategie × 4
+timeframe. Misura l'opportunity loss (segnali teorici vs trade aperti) e
+il motivo esatto dello scarto, non solo per TURTLE_SOUP (pilota) ma per
+l'intero roster.
+
+**Correzione fatta PRIMA di fidarsi del risultato**: alcune strategie
+(ADX_RSI, SAR, MACD, RSI_DIV) hanno una condizione che resta vera per
+più barre consecutive (media 5.4, fino a 29 su ADX_RSI/1h) - contare
+ogni barra come segnale indipendente gonfiava l'opportunity loss in modo
+fuorviante (1167 "segnali" contro ~228 veri inizi di trend distinti).
+Aggiunto un conteggio "fresh" (solo quando il segnale cambia rispetto
+alla barra precedente) - il numero onesto e comparabile fra strategie
+"a evento" e "a condizione persistente".
+
+### Risultato: non è un problema di UNA strategia, è sistemico
+
+Su 96 combinazioni strategia/timeframe con almeno 15 segnali nuovi
+misurabili:
+
+- **Perdita mediana: 31.5%** dei segnali nuovi genuini
+- 71.9% delle combinazioni perde almeno il 20%
+- 56.2% perde almeno il 30%
+- 30.2% perde almeno il 40%
+
+Le più colpite: MALAYSIAN_SNR (56-68%), LIQ_VOID (39-59%), ADX_RSI
+(43-56%), FVG_CONT (40-55%), OTE_CONT (40-51%). Le meno colpite:
+SH_BMS_RTO, SILVER_BULLET, LDN_REVERSAL, FVG_MIT, SCALP_RSI_SNAP
+(tutte sotto il 10%) - strategie con segnali rari e ben distanziati nel
+tempo, dove la posizione precedente si chiude naturalmente prima che
+arrivi il prossimo (raro) setup.
+
+**Conclusione**: il vincolo "una sola posizione alla volta" del motore
+non è un dettaglio tecnico marginale - è il singolo fattore che
+distorce di più i risultati misurati finora in questa sessione, più di
+qualunque correzione di fedeltà fatta finora. Priorità confermata:
+costruire il supporto multi-posizione nel motore prima di continuare a
+ottimizzare parametri su numeri che riflettono in parte questo limite,
+non la logica delle strategie stesse.
+
+244 test verdi.
