@@ -662,4 +662,63 @@ qualunque giudizio, ennesima conferma che serve più storico.
 giorni invece di attendere il completamento (un fetch da 15-20+ ore deve
 poter essere letto o interrotto senza perdere il lavoro fatto). In corso.
 
+## Aggiornamento 04/08 (13) — Verifica indipendente di un'idea social
+## ("Liquidity Grab + EMA30", @pranamghagare)
+
+Su richiesta esplicita, verificata un'idea trovata su un post social (8
+slide screenshottate): liquidity grab su pivot a 1 barra per lato
+(Left=1/Right=1, il livello più sensibile possibile) + filtro EMA30 +
+target 1:1 dichiarato ("Low RR = Higher Win Rate"). Claim della fonte:
+76.53% win rate, <2% drawdown, ~98 trade in **un solo mese** (2-28
+aprile), nessuna validazione Out-of-Sample mostrata.
+
+**Non è una strategia del roster NEXUS** (nessun corrispettivo MQL5,
+nessun selector_index) — verificata come script indipendente
+(`test_liquidity_grab_ema30.py`), riusa i pezzi generici del motore
+senza toccare il registro canonico delle 37+4 strategie.
+
+Implementazione: livello di supporto/resistenza attivo = ultimo pivot
+1-barra CONFERMATO (con 1 barra di ritardo, no lookahead — il livello
+usato per il check "rottura" di una barra è quello noto PRIMA che quella
+barra chiuda). Entry approssimata alla chiusura della barra di segnale
+(convenzione di tutto il resto del motore, invece di un vero ordine stop
+al massimo/minimo che potrebbe non riempirsi mai — leggermente
+ottimistica ma preserva la forma del rischio). SL/TP: 1:1 dal minimo/
+massimo della stessa barra, esattamente come dichiarato dalla fonte.
+
+### Risultato onesto: negativo, e con un campione ampio e affidabile
+
+| TF | PF (costi reali) | PF (senza costi) | Trade | WR% (senza costi) | MaxDD% (costi reali) |
+|---|---|---|---|---|---|
+| M15 | 0.17 | 0.93 | 159 | 48.4 | 79.83 |
+| M30 | 0.36 | 1.13 | 131 | 53.4 | 50.48 |
+| H1 | 0.49 | 0.89 | 158 | 46.8 | 46.76 |
+| H4 | 0.45 | 0.78 | 140 | 44.3 | 44.21 |
+
+A differenza di quasi tutto il resto di questa sessione, qui il campione
+NON è il problema (130-159 trade per TF, ben sopra la soglia minima) —
+è un risultato negativo genuino, non un "serve più storico".
+
+**Anche senza costi di trading il segnale è sostanzialmente un lancio di
+moneta** (PF 0.78-1.13, coerente con WR%/(1-WR%) atteso per un vero 1:1
+- verificato: 48.4%/51.6%=0.938 ≈ PF 0.93 misurato, conferma che la
+simulazione implementa correttamente la regola 1:1 dichiarata, non un
+bug). **Con i costi reali crolla** (PF fino a 0.17, MaxDD fino
+all'80%): lo stop di questa strategia è il minimo/massimo di UNA singola
+candela — spesso una distanza in dollari molto piccola, specialmente su
+M15 — quindi i costi fissi (spread ~$2.50, slippage ~$0.50 su XAUUSD)
+mangiano una frazione enorme del rischio dichiarato. Stessa dinamica
+"pesa di più sugli stop stretti" già documentata altrove in questa
+sessione, qui portata all'estremo dalla scelta di SL a barra singola.
+
+**Perché la fonte mostra 76%/2%**: la finestra di un mese mostrata (2-28
+aprile) è visibilmente un trend pulito e continuo nello screenshot —
+condizione in cui un filtro di trend semplice funziona quasi sempre.
+Nessuna validazione Out-of-Sample, stesso schema già diffidato tutta
+questa sessione (lezione #4: "un PF spettacolare su un campione
+minuscolo è un'ipotesi, non un risultato").
+
+Nessuna delle nostre strategie esistenti viene adattata a questa logica
+— la verifica indipendente non supporta la promessa della fonte.
+
 244 test verdi.
