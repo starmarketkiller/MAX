@@ -138,8 +138,18 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
                 v_chk = fn(candles, ind, i) if (atr_chk and atr_chk > 0) else 0
                 if v_chk != 0:
                     reasons["ALREADY_IN_POSITION"] += 1
+                    # 04/08 (19) - distinzione richiesta dall'utente: il
+                    # segnale bloccato e' nella STESSA direzione della
+                    # posizione aperta (candidato piramidazione, ora
+                    # risolvibile in parte con pyramid_max_legs) o
+                    # OPPOSTA (una possibile inversione persa del tutto -
+                    # categoria piu' seria, il motore a posizione singola
+                    # non puo' "flippare" senza chiudere prima).
+                    same_dir = "ALREADY_IN_POSITION_SAME_DIR" if v_chk == pos["dir"] else "ALREADY_IN_POSITION_OPPOSITE_DIR"
+                    reasons[same_dir] += 1
                     if v_chk != prev_raw:
                         fresh_reasons["ALREADY_IN_POSITION"] += 1
+                        fresh_reasons[same_dir] += 1
                 prev_raw = v_chk
             continue
 
