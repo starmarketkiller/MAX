@@ -111,6 +111,14 @@ def process(strategy, tf):
         r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, trailing_atr=v)
         if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
             mgmt_candidates.append(("trailing_atr", v, r["profit_factor"]))
+    # 04/08 (19) - flip (richiesta esplicita: "correggiamo tutto quello
+    # che abbiamo trovato"): risultato onesto sul campione pilota - aiuta
+    # le strategie da inversione (TURTLE_SOUP/LIQ_SWEEP), danneggia
+    # quelle da trend (TSI/ADX_RSI/SCALP_EMA) - stessa disciplina delle
+    # altre leve, entra SOLO se batte la baseline, non attivato a priori.
+    r = bt.run_backtest(**base_kw, atr_sl=1.5, atr_tp=3.0, allow_flip=True)
+    if r["profit_factor"] and r["trades"] >= MIN_BASELINE_TRADES and r["profit_factor"] > base_pf:
+        mgmt_candidates.append(("allow_flip", True, r["profit_factor"]))
 
     if mgmt_candidates:
         mgmt_candidates.sort(key=lambda x: x[2], reverse=True)

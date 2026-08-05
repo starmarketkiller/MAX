@@ -768,3 +768,45 @@ ottimizzare parametri su numeri che riflettono in parte questo limite,
 non la logica delle strategie stesse.
 
 244 test verdi.
+
+## Aggiornamento 04/08 (19) — Costruito il "flip": risultato onesto, misto
+
+Su richiesta esplicita ("correggiamo qualsiasi cosa abbiamo trovato"):
+costruito `allow_flip` in `run_backtest` (default False, nessuna
+regressione — verificato bit-per-bit contro la versione precedente).
+Quando attivo: se un segnale fresco in direzione OPPOSTA arriva mentre
+una posizione e' aperta (e nessun altro SL/TP/TIME e' scattato sulla
+stessa barra), la posizione si chiude a mercato e se ne apre subito una
+nuova nella nuova direzione, sulla stessa barra - risposta diretta alla
+scomposizione stessa-direzione/opposta della sessione precedente.
+Refactoring: la ricerca del segnale e l'apertura posizione sono state
+fattorizzate in `_find_signal`/`_open_position` (riusate sia dal
+percorso normale sia dal flip), non piu' duplicate.
+
+### Risultato: aiuta le strategie da inversione, danneggia quelle da trend
+
+| Strategia | Senza flip | Con flip |
+|---|---|---|
+| TURTLE_SOUP/4h | PF 0.95, 111 trade | **PF 1.06, 139 trade** |
+| LIQ_SWEEP/1d | PF 1.06, 122 trade | **PF 1.16, 175 trade** |
+| TSI/1h | PF 1.14, 102 trade | PF 0.87, 185 trade |
+| TSI/4h | PF 1.21, 110 trade | PF 1.08, 176 trade |
+| ADX_RSI/1h | PF 0.88 (già negativa) | PF 0.75 |
+| SCALP_EMA/1h | PF 1.25, 83 trade | PF 0.93, 156 trade |
+
+Non e' un miglioramento universale, ed e' onesto dirlo: il flip aiuta le
+strategie costruite sul concetto di inversione (TURTLE_SOUP, LIQ_SWEEP,
+dove un segnale opposto fresco e' spesso un vero cambio di direzione),
+ma danneggia le strategie da trend/momentum (TSI, ADX_RSI, SCALP_EMA,
+dove il "segnale opposto" e' spesso solo rumore di breve termine dentro
+un trend piu' lungo - interromperlo per girarsi taglia trade vincenti a
+meta'). Stessa disciplina di sempre: il meccanismo va attivato dove i
+dati lo confermano, non ovunque solo perche' recupera operazioni perse.
+
+**Prossimo passo naturale**: usare `find_all_configs.py` (gia' esteso a
+pyramid_max_legs) per aggiungere anche `allow_flip` come leva testabile
+in Fase 6, cosi' la scelta "flip si/no" per ogni strategia diventa parte
+della stessa ricerca automatica con lo stesso rigore (baseline, OOS,
+soglie di campione), non una decisione a occhio.
+
+244 test verdi.

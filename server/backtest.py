@@ -2554,7 +2554,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  confirm_bars=0, loss_cooldown_bars=0,
                  spread_price=0.0, commission_r=0.0, slippage_price=0.0,
                  strategy_profiles=None, bar_range=None, session_filter=None,
-                 pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0):
+                 pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0,
+                 allow_flip=False):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -2612,6 +2613,20 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # livello di piramide, non serve una lista nera per "non applicarlo
     # dove non ha senso": la meccanica stessa lo esclude quando non c'e'
     # spazio.
+    # 04/08 (19) - allow_flip: risposta diretta all'Execution Audit esteso
+    # a 40 strategie - una posizione aperta blocca circa 1/3 dei segnali
+    # nuovi genuini (per alcune strategie da inversione, come TURTLE_SOUP,
+    # 3 su 4) perche' sono in direzione OPPOSTA alla posizione aperta - la
+    # piramidazione non aiuta li' (aggiunge size nella STESSA direzione).
+    # Default False (comportamento identico a prima, verificato). Se True:
+    # quando arriva un segnale fresco in direzione OPPOSTA a una posizione
+    # aperta (nessun altro hit SL/TP/TIME su quella barra), la posizione
+    # corrente si chiude a mercato (stesso costo di uno SL/TIME, non un
+    # ordine limite) e se ne apre subito una nuova nella nuova direzione,
+    # sulla STESSA barra - un "flip", non due eventi separati. Il segnale
+    # che genera il flip passa dagli STESSI filtri (confirm_bars/
+    # htf_filter/session_filter) di un ingresso normale, non e' un
+    # ingresso "gratis".
     # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
     # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
     # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
@@ -2651,6 +2666,72 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         if idx < p - 1:
             return None
         return sum(closes[idx - p + 1: idx + 1]) / p
+
+    def _find_signal(idx, price):
+        # Fattorizzato da quello che prima era inline solo nel ramo
+        # "nessuna posizione aperta" (04/08 (19), per allow_flip: lo
+        # stesso identico scan/filtri serve anche per decidere se un
+        # segnale opposto sblocca un flip mentre una posizione e' aperta -
+        # un segnale di flip passa dagli STESSI filtri di un ingresso
+        # normale, non e' una scorciatoia.
+        atr_i = ind["atr"][idx]
+        if not atr_i or atr_i <= 0:
+            return 0, None, atr_i
+        sig, who = 0, None
+        for s in strat_list:
+            v = STRATEGIES[s](candles, ind, idx)
+            if v == 0:
+                continue
+            if confirm_bars > 0:
+                ok = True
+                for k in range(1, confirm_bars + 1):
+                    if idx - k < 0 or STRATEGIES[s](candles, ind, idx - k) != v:
+                        ok = False
+                        break
+                if not ok:
+                    continue
+            sig, who = v, s
+            break
+        if sig != 0 and htf_filter:
+            sma = _sma(idx, int(trend_period))
+            if sma is not None and ((sig == 1 and price < sma) or (sig == -1 and price > sma)):
+                sig = 0
+        if sig != 0 and session_filter is not None:
+            cur_sess = ind["sess"]["session"][idx]
+            if cur_sess not in session_filter:
+                sig = 0
+        return sig, who, atr_i
+
+    def _open_position(idx, price, sig, who, atr_i):
+        prof = (strategy_profiles or {}).get(who, {})
+        eff_sl = prof.get("atr_sl", atr_sl)
+        eff_tp = prof.get("atr_tp", atr_tp)
+        risk_money = equity * (risk_pct / 100.0)
+        sl = price - sig * atr_i * eff_sl
+        tp = price + sig * atr_i * eff_tp
+        sltp_fn = STRATEGY_SLTP_ALWAYS.get(who)
+        if sltp_fn:
+            dyn = sltp_fn(candles, ind, idx, sig, price, atr_i)
+            if dyn is not None:
+                sl, tp = dyn
+        target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
+        if not target_fn and use_dynamic_tp:
+            target_fn = STRATEGY_TARGETS_OPTIN.get(who)
+        if target_fn and not sltp_fn:
+            dyn_tp = target_fn(candles, ind, idx, sig, price, atr_i,
+                                sl_mult=eff_sl, pick=dynamic_tp_pick)
+            if dyn_tp is not None:
+                tp = dyn_tp
+        risk_dist0 = abs(price - sl)
+        return {"dir": sig, "entry": price, "sl": sl, "tp": tp, "open_i": idx,
+                "risk_money": risk_money, "strat": who,
+                "risk_dist": risk_dist0, "mae_r": 0.0, "mfe_r": 0.0,
+                "breakeven_r": prof.get("breakeven_r", breakeven_r),
+                "trailing_atr": prof.get("trailing_atr", trailing_atr),
+                "legs": [{"entry": price, "risk_money": risk_money, "risk_dist": risk_dist0}],
+                "next_pyramid_level": (
+                    price + sig * pyramid_r * risk_dist0
+                    if pyramid_max_legs > 0 and risk_dist0 > 0 else None)}
 
     equity = start_equity
     curve = [{"i": 0, "equity": round(equity, 2),
@@ -2729,6 +2810,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     hit = ("TP", pos["tp"])
             if not hit and (i - pos["open_i"]) >= max_hold:
                 hit = ("TIME", px)
+            # --- FLIP (opt-in, default off - vedi nota sui parametri
+            # sopra): nessun altro hit su questa barra, un segnale fresco
+            # in direzione OPPOSTA chiude la posizione a mercato e ne apre
+            # subito una nuova, sulla STESSA barra. ---
+            flip_sig = flip_who = flip_atr = None
+            if not hit and allow_flip:
+                fsig, fwho, fatr = _find_signal(i, px)
+                if fsig != 0 and fsig != pos["dir"]:
+                    hit = ("FLIP", px)
+                    flip_sig, flip_who, flip_atr = fsig, fwho, fatr
             if hit:
                 reason, exitpx = hit
                 # Somma su tutte le gambe (1 sola se pyramid_max_legs=0 -
@@ -2751,7 +2842,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     slip_r = 0.0
                     if slippage_price > 0:
                         slip_r = slippage_price / rd
-                        if reason in ("SL", "TIME"):
+                        if reason in ("SL", "TIME", "FLIP"):
                             slip_r += slippage_price / rd
                     r_mult_net = r_mult - spread_r - commission_r - slip_r
                     total_pnl += r_mult_net * leg["risk_money"]
@@ -2776,6 +2867,12 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 last_close_i = i
                 if pnl < 0:
                     last_loss_i = i
+                if reason == "FLIP" and flip_sig:
+                    # Apre subito la nuova posizione sulla direzione
+                    # opposta, sulla STESSA barra - stessa logica di
+                    # apertura di un ingresso normale (_open_position),
+                    # nessuna scorciatoia.
+                    pos = _open_position(i, px, flip_sig, flip_who, flip_atr)
             continue
         # --- COOLDOWN: barre minime tra un trade e il successivo ---
         if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
@@ -2783,80 +2880,13 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         # --- LOSS COOLDOWN: barre minime SOLO dopo una perdita vera (pnl<0) ---
         if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
             continue
-        # nuovo segnale
-        atr = ind["atr"][i]
-        if not atr or atr <= 0:
+        # nuovo segnale (04/08 (19): fattorizzato in _find_signal/
+        # _open_position, stessa logica di prima, riusata anche dal flip)
+        sig, who, atr = _find_signal(i, px)
+        if atr is None or atr <= 0:
             continue
-        sig, who = 0, None
-        for s in strat_list:
-            v = STRATEGIES[s](candles, ind, i)
-            if v == 0:
-                continue
-            # --- CONFIRM: il segnale deve reggere per N barre precedenti
-            # consecutive nella stessa direzione prima di essere preso ---
-            if confirm_bars > 0:
-                ok = True
-                for k in range(1, confirm_bars + 1):
-                    if i - k < 0 or STRATEGIES[s](candles, ind, i - k) != v:
-                        ok = False
-                        break
-                if not ok:
-                    continue
-            sig, who = v, s
-            break
-        # --- HTF FILTER: prendi solo nel senso del trend (close vs SMA) ---
-        if sig != 0 and htf_filter:
-            sma = _sma(i, int(trend_period))
-            if sma is not None:
-                if (sig == 1 and px < sma) or (sig == -1 and px > sma):
-                    sig = 0
-        # --- SESSION FILTER (04/08): prendi solo se la sessione GMT della
-        # barra e' tra quelle ammesse - gate AGGIUNTIVO sopra quello gia'
-        # interno alle strategie a sessione (es. sig_amd_cont ammette
-        # LONDON/OVERLAP/NY; session_filter puo' restringere ulteriormente,
-        # es. {"LONDON","NY"} per escludere una sessione debole trovata in
-        # analisi). None (default) = nessun filtro, comportamento invariato.
-        if sig != 0 and session_filter is not None:
-            cur_sess = ind["sess"]["session"][i]
-            if cur_sess not in session_filter:
-                sig = 0
         if sig != 0:
-            # 04/08: override per-strategia (solo per chi e' presente nel dict -
-            # le altre restano sui parametri globali passati alla funzione).
-            prof = (strategy_profiles or {}).get(who, {})
-            eff_sl = prof.get("atr_sl", atr_sl)
-            eff_tp = prof.get("atr_tp", atr_tp)
-            risk_money = equity * (risk_pct / 100.0)
-            sl = px - sig * atr * eff_sl
-            tp = px + sig * atr * eff_tp
-            # STRATEGY_SLTP_ALWAYS: SL *E* TP strutturali fedeli al vero
-            # MQL5 (non un multiplo ATR) - bypassa completamente il calcolo
-            # generico sopra, sempre attivo dove presente.
-            sltp_fn = STRATEGY_SLTP_ALWAYS.get(who)
-            if sltp_fn:
-                dyn = sltp_fn(candles, ind, i, sig, px, atr)
-                if dyn is not None:
-                    sl, tp = dyn
-            # STRATEGY_TARGETS_ALWAYS: fedelta' al vero calcolo MQL5, sempre attivo.
-            target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
-            # STRATEGY_TARGETS_OPTIN: ipotesi non presente in MQL5, solo se richiesta.
-            if not target_fn and use_dynamic_tp:
-                target_fn = STRATEGY_TARGETS_OPTIN.get(who)
-            if target_fn and not sltp_fn:
-                dyn_tp = target_fn(candles, ind, i, sig, px, atr,
-                                    sl_mult=eff_sl, pick=dynamic_tp_pick)
-                if dyn_tp is not None:
-                    tp = dyn_tp
-            risk_dist0 = abs(px - sl)
-            pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
-                   "risk_money": risk_money, "strat": who,
-                   "risk_dist": risk_dist0, "mae_r": 0.0, "mfe_r": 0.0,
-                   "breakeven_r": prof.get("breakeven_r", breakeven_r),
-                   "trailing_atr": prof.get("trailing_atr", trailing_atr),
-                   "legs": [{"entry": px, "risk_money": risk_money, "risk_dist": risk_dist0}],
-                   "next_pyramid_level": (
-                       px + sig * pyramid_r * risk_dist0
-                       if pyramid_max_legs > 0 and risk_dist0 > 0 else None)}
+            pos = _open_position(i, px, sig, who, atr)
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
