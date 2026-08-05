@@ -87,10 +87,21 @@ def signal_series(candles, ema30):
     return out
 
 
-def run(symbol, timeframe, bars=2500, cost_preset="retail_standard"):
+def run(symbol, timeframe, bars=2500, cost_preset="retail_standard", atr_buffer=0.0, bar_range=None):
+    # 04/08 (14) - atr_buffer: "e se allarghiamo lo stop?" - allarga lo SL
+    # (e col rapporto 1:1 dichiarato, allo stesso modo il TP) oltre il
+    # minimo/massimo grezzo della barra di segnale di atr_buffer x ATR.
+    # 0.0 (default) = comportamento identico alla versione precedente.
+    # bar_range: (start_frac, end_frac) - stessa convenzione in-sample/
+    # out-of-sample di backtest.run_backtest, per non fidarsi di un
+    # buffer "migliore" trovato solo perche' cercato su tutta la serie.
     candles, src = bt._fetch_real(symbol, timeframe, bars)
+    if bar_range is not None:
+        n = len(candles)
+        candles = candles[max(0, int(n * bar_range[0])):min(n, int(n * bar_range[1]))]
     closes = [c["close"] for c in candles]
     ema30 = bt.ema_series(closes, 30)
+    atr = bt.atr_series(candles, 14)
     sig = signal_series(candles, ema30)
     costs = bt.COST_PRESETS[cost_preset]
 
@@ -138,7 +149,8 @@ def run(symbol, timeframe, bars=2500, cost_preset="retail_standard"):
         v = sig[i]
         if v == 0:
             continue
-        sl = candles[i]["low"] if v == 1 else candles[i]["high"]
+        a = atr[i] or 0.0
+        sl = (candles[i]["low"] - atr_buffer * a) if v == 1 else (candles[i]["high"] + atr_buffer * a)
         risk_dist = abs(px - sl)
         if risk_dist <= 0:
             continue
