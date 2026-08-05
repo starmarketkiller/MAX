@@ -809,4 +809,22 @@ in Fase 6, cosi' la scelta "flip si/no" per ogni strategia diventa parte
 della stessa ricerca automatica con lo stesso rigore (baseline, OOS,
 soglie di campione), non una decisione a occhio.
 
+### Ri-esecuzione con allow_flip incluso: 10 PASS (prima 6)
+
+Rilanciato `find_all_configs.py` con `allow_flip` fra le leve testabili:
+**10 strategie ora reggono il gate Out-of-Sample**, contro le 6 del giro
+precedente (04/08 (11)) — **BOLLINGER, RANGE_FADE, SCALP_EMA nuove**,
+oltre a ADX_RSI/EMA_PULLBACK/LIQ_SWEEP/LONDON_BO/RSI_DIV/TSI/
+MALAYSIAN_SNR gia' presenti o migliorate. `allow_flip=True` ha vinto
+come singola leva migliore solo per BJORGUM (comunque FAIL fuori
+campione) - coerente con la scoperta di prima: BJORGUM si comporta piu'
+da trend che da inversione, il flip non lo aiuta abbastanza.
+
+Effetto combinato di tutte le correzioni di oggi (rilevatore di sweep
+completo, piramidazione, flip): quasi il doppio delle strategie con un
+segnale che regge un test rigoroso, partendo dallo stesso storico e
+dagli stessi criteri severi (MIN_BASELINE_TRADES=25, MAX_DECLARED_
+PARAMS=2, PF OOS>3.0->MARGINALE automatico) di sempre - nessuna soglia
+abbassata per ottenere questo risultato.
+
 244 test verdi.
