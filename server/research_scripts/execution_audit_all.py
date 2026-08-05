@@ -25,6 +25,7 @@ OUT_PATH = "server/data_cache/execution_audit_all.json"
 def _json_safe(r):
     out = dict(r)
     out["reasons"] = dict(r["reasons"])
+    out["fresh_reasons"] = dict(r.get("fresh_reasons", {}))
     out["entry_quality_dist"] = {str(k): v for k, v in r["entry_quality_dist"].items()}
     out.pop("entries", None)   # dettaglio per-trade non serve nel riepilogo, tenerlo gonfierebbe il file
     return out

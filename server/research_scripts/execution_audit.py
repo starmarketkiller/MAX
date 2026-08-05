@@ -62,12 +62,23 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
             return None
         return sum(closes[idx - p + 1: idx + 1]) / p
 
-    reasons = Counter()
+    reasons = Counter()          # OGNI barra con segnale grezzo non-zero
+    fresh_reasons = Counter()    # SOLO l'inizio di un segnale (04/08 (18) -
+    # correzione importante: alcune strategie (ADX_RSI/SAR/MACD/RSI_DIV,
+    # tipo "condizione persistente") restano vere per piu' barre di fila
+    # (media 5.4, fino a 29 consecutive su ADX_RSI/1h) - contarle come
+    # segnali indipendenti gonfia l'opportunity loss in modo fuorviante
+    # (1167 "segnali" quando i veri inizi di trend distinti sono ~228).
+    # fresh_reasons conta solo quando il segnale CAMBIA rispetto alla
+    # barra precedente (nuova direzione o da 0) - il numero onesto e
+    # comparabile fra strategie "a evento" (TURTLE_SOUP) e "a condizione
+    # persistente" (ADX_RSI).
     entries = []   # dettaglio per ogni trade aperto: quality score
     equity = 10000.0
     pos = None
     last_close_i = -10 ** 9
     last_loss_i = -10 ** 9
+    prev_raw = 0
     fn = bt.STRATEGIES[strategy]
 
     for i in range(2, len(candles)):
@@ -124,14 +135,21 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
                 # su queste barre e questa voce risulta sempre 0 - bug
                 # trovato e corretto prima di fidarsi del report).
                 atr_chk = ind["atr"][i]
-                if atr_chk and atr_chk > 0 and fn(candles, ind, i) != 0:
+                v_chk = fn(candles, ind, i) if (atr_chk and atr_chk > 0) else 0
+                if v_chk != 0:
                     reasons["ALREADY_IN_POSITION"] += 1
+                    if v_chk != prev_raw:
+                        fresh_reasons["ALREADY_IN_POSITION"] += 1
+                prev_raw = v_chk
             continue
 
         atr = ind["atr"][i]
         if not atr or atr <= 0:
+            prev_raw = 0
             continue
         v = fn(candles, ind, i)
+        is_fresh = (v != 0 and v != prev_raw)
+        prev_raw = v
         if v == 0:
             continue   # nessun segnale grezzo su questa barra - non conta per l'opportunity loss
 
@@ -139,27 +157,39 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
         # stesso ORDINE di controllo di run_backtest.
         if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
             reasons["COOLDOWN"] += 1
+            if is_fresh:
+                fresh_reasons["COOLDOWN"] += 1
             continue
         if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
             reasons["LOSS_COOLDOWN"] += 1
+            if is_fresh:
+                fresh_reasons["LOSS_COOLDOWN"] += 1
             continue
         if confirm_bars > 0:
             ok = all(i - k >= 0 and fn(candles, ind, i - k) == v for k in range(1, confirm_bars + 1))
             if not ok:
                 reasons["CONFIRM_BARS"] += 1
+                if is_fresh:
+                    fresh_reasons["CONFIRM_BARS"] += 1
                 continue
         sig = v
         if htf_filter:
             sma = _sma(i, int(trend_period))
             if sma is not None and ((sig == 1 and px < sma) or (sig == -1 and px > sma)):
                 reasons["HTF_FILTER"] += 1
+                if is_fresh:
+                    fresh_reasons["HTF_FILTER"] += 1
                 continue
         if session_filter is not None and ind["sess"]["session"][i] not in session_filter:
             reasons["SESSION_FILTER"] += 1
+            if is_fresh:
+                fresh_reasons["SESSION_FILTER"] += 1
             continue
 
         # Segnale accettato -> apre un trade (stessa logica SL/TP di run_backtest)
         reasons["TRADE_OPENED"] += 1
+        if is_fresh:
+            fresh_reasons["TRADE_OPENED"] += 1
         sl = px - sig * atr * atr_sl
         tp = px + sig * atr * atr_tp
         sltp_fn = bt.STRATEGY_SLTP_ALWAYS.get(strategy)
@@ -181,6 +211,14 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
     opened = reasons.get("TRADE_OPENED", 0)
     opp_loss_pct = round((1 - opened / theoretical) * 100, 1) if theoretical else 0.0
 
+    # Numero onesto e comparabile: solo gli INIZI di segnale distinti
+    # (vedi nota sopra su fresh_reasons) - questo e' il numero da guardare
+    # per confrontare strategie "a evento" e "a condizione persistente".
+    fresh_theoretical = sum(fresh_reasons.values())
+    fresh_opened = fresh_reasons.get("TRADE_OPENED", 0)
+    fresh_opp_loss_pct = round((1 - fresh_opened / fresh_theoretical) * 100, 1) if fresh_theoretical else 0.0
+    is_persistent_condition = theoretical > 0 and fresh_theoretical > 0 and (theoretical / fresh_theoretical) > 1.5
+
     star_avg = round(sum(e["stars"] for e in entries) / len(entries), 2) if entries else 0.0
     sltp_kind = ("strutturale" if strategy in bt.STRATEGY_SLTP_ALWAYS
                  else ("TP strutturale/SL generico" if strategy in bt.STRATEGY_TARGETS_ALWAYS
@@ -190,7 +228,11 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
         "strategy": strategy, "tf": timeframe, "bars": len(candles), "src": src,
         "theoretical_signals": theoretical, "trades_opened": opened,
         "opportunity_loss_pct": opp_loss_pct,
+        "fresh_theoretical_signals": fresh_theoretical, "fresh_trades_opened": fresh_opened,
+        "fresh_opportunity_loss_pct": fresh_opp_loss_pct,
+        "is_persistent_condition": is_persistent_condition,
         "reasons": dict(reasons),
+        "fresh_reasons": dict(fresh_reasons),
         "sltp_kind": sltp_kind,
         "entry_quality_avg_stars": star_avg,
         "entry_quality_dist": Counter(e["stars"] for e in entries),
@@ -200,11 +242,14 @@ def execution_audit(strategy, timeframe, symbol="XAUUSD", bars=2500,
 
 def print_report(r):
     print(f"\n=== {r['strategy']} ({r['tf']}, {r['bars']} barre, {r['src']}) ===")
-    print(f"  Segnali teorici: {r['theoretical_signals']}")
+    tag = " [CONDIZIONE PERSISTENTE]" if r.get("is_persistent_condition") else ""
+    print(f"  Segnali teorici (barre grezze): {r['theoretical_signals']}{tag}")
+    print(f"  Segnali teorici (solo inizi nuovi): {r['fresh_theoretical_signals']}")
     print(f"  Trade aperti:    {r['trades_opened']}")
-    print(f"  Opportunity Loss: {r['opportunity_loss_pct']}%")
-    print(f"  Motivi scarto:")
-    for k, v in sorted(r["reasons"].items(), key=lambda x: -x[1]):
+    print(f"  Opportunity Loss (grezzo): {r['opportunity_loss_pct']}%")
+    print(f"  Opportunity Loss (solo inizi nuovi, onesto): {r['fresh_opportunity_loss_pct']}%")
+    print(f"  Motivi scarto (inizi nuovi):")
+    for k, v in sorted(r["fresh_reasons"].items(), key=lambda x: -x[1]):
         if k != "TRADE_OPENED":
             print(f"    {k}: {v}")
     print(f"  SL/TP: {r['sltp_kind']}")
