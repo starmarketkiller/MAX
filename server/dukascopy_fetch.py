@@ -23,7 +23,22 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
 DUKASCOPY_POINT_DIVISOR = {"XAUUSD": 1000.0}
-CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_cache", "dukascopy")
+
+
+def data_cache_root() -> str:
+    """Radice della cache dati (snapshot M15 + cache grezza per-giorno).
+    Su Render il filesystem dell'immagine e' effimero (perso ad ogni deploy/
+    riavvio) tranne il disco persistente montato su /data (vedi render.yaml,
+    oggi usato solo dal database) - NEXUS_DUKASCOPY_DIR permette di puntare
+    li' (es. /data/dukascopy) in produzione, restando sul path relativo di
+    sempre in locale/dev quando la variabile non e' impostata."""
+    override = os.environ.get("NEXUS_DUKASCOPY_DIR")
+    if override:
+        return override
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_cache")
+
+
+CACHE_DIR = os.path.join(data_cache_root(), "dukascopy")
 
 
 def _hour_url(symbol: str, dt: datetime) -> str:

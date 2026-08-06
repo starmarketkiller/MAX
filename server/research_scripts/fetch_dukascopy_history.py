@@ -58,8 +58,18 @@ START = END - timedelta(days=365 * 10)
 TF_MINUTES = 15
 DAY_WORKERS = 1           # giorni scaricati in parallelo (ognuno con 12 thread interni sulle 24 ore) - vedi nota sopra
 SNAPSHOT_EVERY = 10       # giorni fra uno snapshot incrementale e il successivo
-OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data_cache", "dukascopy_xauusd_m15.json")
-PROGRESS_PATH = os.path.join(os.path.dirname(__file__), "..", "data_cache", "dukascopy_fetch_progress.json")
+_DATA_ROOT = dk.data_cache_root()
+OUT_PATH = os.path.join(_DATA_ROOT, "dukascopy_xauusd_m15.json")
+PROGRESS_PATH = os.path.join(_DATA_ROOT, "dukascopy_fetch_progress.json")
+# 06/08 - il disco persistente su Render e' 1GB (render.yaml, condiviso col
+# database), la cache grezza per-giorno (~3.4MB/giorno) su 10 anni
+# supererebbe da sola quel budget (~9GB). Lo snapshot M15 aggregato (questo
+# OUT_PATH, solo OHLC, non i tick) e' la fonte durevole - i file grezzi per-
+# giorno servono solo a rendere ripetibile un fetch interrotto, non oltre.
+# Tenerne solo gli ultimi RAW_KEEP_DAYS (i giorni non ancora coperti da uno
+# snapshot scritto) mantiene l'uso disco costante invece di crescere per
+# sempre con lo storico.
+RAW_KEEP_DAYS = SNAPSHOT_EVERY * 2
 
 
 def _day_range_desc(start: datetime, end: datetime):
@@ -67,6 +77,31 @@ def _day_range_desc(start: datetime, end: datetime):
     while d >= start:
         yield d
         d -= timedelta(days=1)
+
+
+def _prune_raw_cache(oldest_frontier: datetime):
+    """Elimina la cache grezza per-giorno piu' vecchia della finestra di
+    sicurezza RAW_KEEP_DAYS oltre il fronte di avanzamento corrente - quei
+    giorni sono gia' scritti nello snapshot durevole (OUT_PATH), tenerli
+    anche come file grezzi individuali servirebbe solo a riprendere un
+    fetch interrotto, non a ricostruire lo storico (quello lo fa lo
+    snapshot). Vedi nota RAW_KEEP_DAYS sopra sul budget disco."""
+    cutoff = oldest_frontier + timedelta(days=RAW_KEEP_DAYS)
+    day_dir = os.path.join(dk.CACHE_DIR, SYMBOL)
+    if not os.path.isdir(day_dir):
+        return
+    for fname in os.listdir(day_dir):
+        if not fname.endswith(".json"):
+            continue
+        try:
+            fday = datetime.strptime(fname[:-5], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if fday > cutoff:
+            try:
+                os.remove(os.path.join(day_dir, fname))
+            except OSError:
+                pass
 
 
 def main():
@@ -118,6 +153,7 @@ def main():
                         "m15_candles_so_far": len(merged),
                         "elapsed_s": round(time.time() - t0),
                     }, f, indent=2)
+                _prune_raw_cache(oldest_done)
                 print(f"[fetch] {i}/{n_days} giorni, {days_with_data} con dati, "
                       f"copertura fino a {oldest_done.date()}, {len(merged)} candele M15, "
                       f"{time.time()-t0:.0f}s trascorsi", flush=True)

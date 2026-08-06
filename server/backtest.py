@@ -177,8 +177,13 @@ _RESAMPLE_BUCKET_SEC = {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
 
 
 def _dukascopy_path(symbol: str) -> str:
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "data_cache", f"dukascopy_{symbol.lower()}_m15.json")
+    # NEXUS_DUKASCOPY_DIR (stessa variabile di dukascopy_fetch.data_cache_root):
+    # su Render il filesystem dell'immagine e' effimero, /data e' l'unico
+    # disco persistente (vedi render.yaml) - in locale/dev, senza la
+    # variabile impostata, resta il path relativo di sempre.
+    root = os.environ.get("NEXUS_DUKASCOPY_DIR") or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "data_cache")
+    return os.path.join(root, f"dukascopy_{symbol.lower()}_m15.json")
 
 
 def _load_dukascopy_m15(symbol: str):
