@@ -531,6 +531,7 @@ def _prep(candles):
     ob_signal = _ob_series(candles, atr_s)
     shbms_signal, shbms_ref = _shbms_series(
         candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+    snr_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(candles, sess, atr_s)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -561,6 +562,8 @@ def _prep(candles):
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
         "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
         "shbms_signal": shbms_signal, "shbms_ref": shbms_ref,  # precalcolato, vedi _shbms_series
+        "snr_signal": snr_signal, "snr_h4hi": snr_h4hi, "snr_h4lo": snr_h4lo,
+        "snr_atrH4": snr_atrH4,  # precalcolato, vedi _malaysian_snr_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
@@ -1458,19 +1461,76 @@ def sig_struct_react(c, ind, i):
 
 
 def sig_malaysian_snr(c, ind, i):
-    # rifiuto su S/R basati su chiusura (swing close a 20)
-    atr = ind["atr"][i]
-    if not atr or i < 22:
-        return 0
-    closes = ind["close"]
-    hi, lo = max(closes[i - 20:i]), min(closes[i - 20:i])
-    cur = c[i]
-    tol = 0.5 * atr
-    if abs(cur["low"] - lo) < tol and _bull(cur):
-        return 1
-    if abs(cur["high"] - hi) < tol and _bear(cur):
-        return -1
-    return 0
+    # 06/08 - riscritta: fedelta' verificata riga-per-riga con
+    # NXS_Strat_MalaysianSNR_Rejection (MQL5 reale, NXS_Strategies_SMC.mqh).
+    # Il proxy precedente (swing-close a 20 barre sul TF corrente, tolleranza
+    # 0.5xATR) non aveva NULLA della vera logica: la vera strategia usa
+    # livelli S/R su CHIUSURA H4 (12 barre) confermati da W1 (8 barre),
+    # filtro direzionale "storyline" H4+D1 (non solo la posizione attuale),
+    # ed esclude la sessione ASIATICA (bassa volatilita' -> falsi segnali).
+    # Precalcolato in _malaysian_snr_series (come sb_signal/ob_signal) perche'
+    # richiede ricampionare H4/W1/D1 dalla stessa serie, non e' stateless
+    # come le altre sig_*() a barra singola.
+    return ind["snr_signal"][i]
+
+
+def _malaysian_snr_series(candles, sess, atr):
+    # H4=factor 4, D1=factor 24, W1=factor 168 rispetto a una base H1 (l'unico
+    # TF su cui la sessione ha senso - vedi nota AUD0-style gia' usata per
+    # LONDON_BO/WEEKLY_EXP: testarla su D1 dava 0 trade perche' g_session
+    # non esiste su una barra giornaliera).
+    n = len(candles)
+    h4 = _resample_ohlc(candles, 4)
+    w1 = _resample_ohlc(candles, 168)
+    d1 = _resample_ohlc(candles, 24)
+    atr_h4 = atr_series(h4, 14)
+    out_sig = [0] * n
+    out_h4hi = [None] * n
+    out_h4lo = [None] * n
+    out_atrh4 = [None] * n
+    for i in range(n):
+        h4_idx, w1_idx, d1_idx = i // 4 - 1, i // 168 - 1, i // 24 - 1
+        if h4_idx < 12 or h4_idx >= len(h4) or w1_idx < 8 or d1_idx < 2:
+            continue
+        atrH4 = atr_h4[h4_idx]
+        if not atrH4:
+            continue
+        h4Hi = max(x["close"] for x in h4[h4_idx - 11:h4_idx + 1])
+        h4Lo = min(x["close"] for x in h4[h4_idx - 11:h4_idx + 1])
+        out_h4hi[i], out_h4lo[i], out_atrh4[i] = h4Hi, h4Lo, atrH4
+        if sess["session"][i] == "ASIAN":
+            continue
+        a = atr[i]
+        cur = candles[i]
+        c1, o1, l1, h1 = cur["close"], cur["open"], cur["low"], cur["high"]
+        if not a or abs(c1 - o1) <= a * 0.5:
+            continue
+        h4C1, h4C4 = h4[h4_idx]["close"], h4[h4_idx - 3]["close"]
+        d1C1, d1C2 = d1[d1_idx]["close"], d1[d1_idx - 1]["close"]
+        story_bull = h4C1 > h4C4 and d1C1 >= d1C2
+        story_bear = h4C1 < h4C4 and d1C1 <= d1C2
+        if (h4Lo - atrH4 * 0.4 <= l1 <= h4Lo + atrH4 * 0.4) and c1 > o1 and story_bull:
+            out_sig[i] = 1
+        elif (h4Hi - atrH4 * 0.4 <= h1 <= h4Hi + atrH4 * 0.4) and c1 < o1 and story_bear:
+            out_sig[i] = -1
+    return out_sig, out_h4hi, out_h4lo, out_atrh4
+
+
+def _malaysian_snr_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_MalaysianSNR_Rejection: SL dal livello H4 opposto
+    # +-0.5xATR(H4) (non l'ATR del TF base), TP = 2.3xATR BASE da _smc_tp
+    # (che invece usa g_atr, il TF base - le due leve mischiano
+    # deliberatamente i due ATR nell'MQL5 reale, non un refuso di porting).
+    h4Lo, h4Hi, atrH4 = ind["snr_h4lo"][i], ind["snr_h4hi"][i], ind["snr_atrH4"][i]
+    if not atrH4:
+        return None
+    if direction == 1:
+        if h4Lo is None:
+            return None
+        return h4Lo - 0.5 * atrH4, entry + 2.3 * atr
+    if h4Hi is None:
+        return None
+    return h4Hi + 0.5 * atrH4, entry - 2.3 * atr
 
 
 def sig_ote_cont(c, ind, i):
@@ -2623,6 +2683,7 @@ STRATEGY_SLTP_ALWAYS = {
     "SH_BMS_RTO": _shbms_sl_tp,
     "SMS_BMS_RTO": _sms_bms_sl_tp,
     "PO3": _po3_sl_tp,
+    "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
 }
 # ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
 # chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una
