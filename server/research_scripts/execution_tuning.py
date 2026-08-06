@@ -73,6 +73,14 @@ def main():
             drop = 100 * (1 - stress[1] / base[1])
             print(f"    -> PF sotto stress: {'-' if drop>=0 else '+'}{abs(drop):.0f}% "
                   f"rispetto a retail_standard")
+
+        # 06/08 - combinazione cooldown_bars=5 + confirm_bars=1: MACD/FVG_CONT
+        # sotto stress erano scesi a PF~1.0/0.85 (fragili) - verificare se le
+        # due leve, gia' buone da sole, si sommano invece di annullarsi.
+        combo_r = run(strat, params, cooldown_bars=5, confirm_bars=1, **RETAIL)
+        combo_s = run(strat, params, cooldown_bars=5, confirm_bars=1, **STRESS)
+        print(fmt("combo cooldown=5+confirm=1 (retail)", combo_r))
+        print(fmt("combo cooldown=5+confirm=1 (stress)", combo_s))
         print(flush=True)
 
 
