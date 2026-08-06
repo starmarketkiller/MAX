@@ -17,9 +17,12 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import math
+import os
 import time
 import urllib.request
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from strategy_registry import LIVE_STRATEGY_IDS, require_strategies
 
@@ -129,16 +132,108 @@ def _resample_4h(candles):
 
 _REAL_CACHE: dict = {}   # (symbol, interval) -> (ts, candles, src)
 
+# ----------------------------------------------------------------------------- #
+# Dukascopy: storico locale a lungo termine (server/research_scripts/
+# fetch_dukascopy_history.py) - tentato PRIMA di Yahoo in _fetch_real.
+# Yahoo limita H1/H4 a ~1.74 anni osservati; il file locale, quando presente,
+# copre fino a 10 anni su XAUUSD (piu' strumenti in futuro, stesso schema di
+# path). Se il file non esiste ancora (fetch in corso o mai lanciato) o il
+# resample ha meno di 60 barre, si ricade su Yahoo esattamente come oggi -
+# nessun comportamento esistente cambia quando il file manca.
+# ----------------------------------------------------------------------------- #
+_DUKA_CACHE: dict = {}   # symbol -> (mtime, candele M15)
+_RESAMPLE_BUCKET_SEC = {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
+
+
+def _dukascopy_path(symbol: str) -> str:
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "data_cache", f"dukascopy_{symbol.lower()}_m15.json")
+
+
+def _load_dukascopy_m15(symbol: str):
+    """Rilegge il file solo se e' cambiato (mtime) - lo scarico in background
+    lo riscrive periodicamente, quindi un run lungo vede lo storico crescere
+    senza bisogno di riavviare nulla."""
+    path = _dukascopy_path(symbol)
+    if not os.path.exists(path):
+        return None
+    mtime = os.path.getmtime(path)
+    hit = _DUKA_CACHE.get(symbol)
+    if hit and hit[0] == mtime:
+        return hit[1]
+    try:
+        with open(path, encoding="utf-8") as f:
+            candles = json.load(f)
+    except (OSError, ValueError):
+        return None
+    _DUKA_CACHE[symbol] = (mtime, candles)
+    return candles
+
+
+def _epoch_utc(time_str: str) -> int:
+    return int(datetime.strptime(time_str, "%Y-%m-%d %H:%M")
+              .replace(tzinfo=timezone.utc).timestamp())
+
+
+def _week_start_epoch(ep: int) -> int:
+    d = datetime.fromtimestamp(ep, tz=timezone.utc)
+    monday = (d - timedelta(days=d.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    return int(monday.timestamp())
+
+
+def _bucket_m15(candles, bucket_fn):
+    buckets: dict = {}
+    for c in candles:
+        b = bucket_fn(_epoch_utc(c["time"]))
+        agg = buckets.get(b)
+        if agg is None:
+            buckets[b] = {"time": c["time"], "open": c["open"],
+                          "high": c["high"], "low": c["low"], "close": c["close"]}
+        else:
+            agg["high"] = max(agg["high"], c["high"])
+            agg["low"] = min(agg["low"], c["low"])
+            agg["close"] = c["close"]
+    return [buckets[b] for b in sorted(buckets)]
+
+
+def _resample_from_m15(candles_m15: list, interval: str) -> list:
+    if interval in _RESAMPLE_BUCKET_SEC:
+        sec = _RESAMPLE_BUCKET_SEC[interval]
+        if sec == 900:
+            return candles_m15
+        return _bucket_m15(candles_m15, lambda ep, s=sec: (ep // s) * s)
+    if interval == "1wk":
+        return _bucket_m15(candles_m15, _week_start_epoch)
+    # "1d" e qualunque stringa non riconosciuta: stessa scelta di default di
+    # _YF_INTERVAL.get(interval, ("1d", "10y")) sopra - le due fonti dati
+    # restano coerenti anche per un timeframe sconosciuto.
+    return _bucket_m15(candles_m15, lambda ep: ep - (ep % 86400))
+
+
+def _fetch_dukascopy(symbol: str, interval: str):
+    m15 = _load_dukascopy_m15(symbol)
+    if not m15:
+        return None
+    candles = _resample_from_m15(m15, interval)
+    if len(candles) < 60:
+        return None
+    return candles[-_REAL_BARS_CAP:]
+
 
 def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
-    """Dati OHLC reali via Yahoo (riusa sweep.fetch_yahoo, che passa dal proxy).
-    Converte {t,o,h,l,c} -> {time,open,high,low,close}. Fallback su get_ohlc.
+    """Dati OHLC reali: prima Dukascopy locale (se presente), poi Yahoo
+    (riusa sweep.fetch_yahoo, che passa dal proxy), poi get_ohlc/sintetico.
+    Converte {t,o,h,l,c} -> {time,open,high,low,close}.
     Cache per (symbol, interval): l'ottimizzazione multi-TF fa migliaia di run
     sullo stesso feed -> senza cache ri-scaricherebbe ogni volta."""
     ckey = (symbol, interval)
     hit = _REAL_CACHE.get(ckey)
     if hit and time.time() - hit[0] < _CACHE_TTL:
         return hit[1], hit[2]
+    duka = _fetch_dukascopy(symbol, interval)
+    if duka is not None:
+        _REAL_CACHE[ckey] = (time.time(), duka, "dukascopy")
+        return duka, "dukascopy"
     try:
         import sweep
         yf_int, yf_rng = _YF_INTERVAL.get(interval, ("1d", "10y"))
