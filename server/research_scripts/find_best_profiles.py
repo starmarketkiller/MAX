@@ -23,12 +23,21 @@ import backtest as bt
 TF_MAP = {
     "ADX_RSI": "1d", "TSI": "1d", "LIQ_SWEEP": "1d", "SH_BMS_RTO": "1d",
     "SMS_BMS_RTO": "1d", "FVG_MIT": "1d", "OB_MIT": "1d", "ORDER_BLOCK": "1d",
-    "OTE_CONT": "1d", "BREAKOUT_ACC": "1d", "LONDON_BO": "1d", "BOLLINGER": "1d",
-    "BB_SQUEEZE": "1d", "RANGE_FADE": "1d", "WEEKLY_EXP": "1d", "MALAYSIAN_SNR": "1d",
+    "OTE_CONT": "1d", "BREAKOUT_ACC": "1d", "BOLLINGER": "1d",
+    "BB_SQUEEZE": "1d", "RANGE_FADE": "1d", "MALAYSIAN_SNR": "1d",
     "MACD": "4h", "SAR": "4h", "BJORGUM": "4h", "THREE_BAR_DELIVERY_BREAK": "4h",
     "FVG_CONT": "4h", "IFVG": "4h", "EMA_PULLBACK": "4h", "ICHIMOKU": "4h",
     "LIQ_VOID": "4h", "DISP_REBAL": "4h",
+    # 06/08 - WEEKLY_EXP dichiara nel proprio codice di essere verificata
+    # "girato su H4" (sig_weekly_exp in backtest.py) da quando ha smesso di
+    # condividere sig_breakout con LONDON_BO; testarla su 1d dava 0 trade
+    # (nessun bug di formula, TF_MAP non era stato aggiornato col fix).
+    "WEEKLY_EXP": "4h",
     "STRUCT_REACT": "1h", "TURTLE_SOUP": "1h", "RSI_DIV": "1h",
+    # 06/08 - LONDON_BO ora fa gate sulla sessione LONDON (sess["session"]),
+    # un concetto che non esiste su barre giornaliere: su 1d il gate non
+    # scatta mai (0 trade, stesso motivo di WEEKLY_EXP sopra).
+    "LONDON_BO": "1h",
 }
 # Escluse deliberatamente (stesso motivo del porting Pine): sessione
 # intraday/range Asia senza TF fisso D1/H4/H1 pulito (AMD_CONT/AMD_REVERSAL/

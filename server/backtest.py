@@ -246,7 +246,16 @@ def _fetch_dukascopy(symbol: str, interval: str):
     if not m15:
         return None
     candles = _resample_from_m15(m15, interval)
-    if len(candles) < 60:
+    # 06/08 - la soglia originale (60) e' bastata a superare il controllo ma
+    # non a essere un dataset utile: con 121 barre 4h (~20 giorni, il fetch
+    # in corso non aveva ancora coperto abbastanza storico) MACD tornava
+    # sempre 0 (richiede EMA200, mai pronta prima di 200 barre) e
+    # find_best_profiles.py segnalava "nessun candidato valido" per ogni
+    # strategia 4h - un fallback silenzioso su un dataset immaturo, non
+    # un errore visibile. 600 lascia margine oltre il warmup piu' lungo
+    # (EMA200) per avere un campione di segnali/trade minimamente utile,
+    # restando ben sotto _REAL_BARS_CAP.
+    if len(candles) < 600:
         return None
     return candles[-_REAL_BARS_CAP:]
 
