@@ -32,6 +32,37 @@ from strategy_registry import LIVE_STRATEGY_IDS, require_strategies
 _CACHE: dict = {}          # ticker -> (timestamp, candles)
 _CACHE_TTL = 3600
 
+# Profili di costo XAUUSD (31/07) - VERIFICATI via ricerca web, non stimati:
+# "1 pip su gold = $0.10, spread retail standard tipico 20-50 pip ($2-5),
+# ECN 15-25 pip ($1.5-2.5) + commissione $4-8/lotto round-trip" (fonti:
+# DailyForex, ForexSpreadCompare, Tradingpedia - confrontate il 31/07/2026).
+# "none" = comportamento di sempre (nessun costo, invariato). Gli altri due
+# vanno passati esplicitamente a run_backtest/optimize via **COST_PRESETS[x]
+# - MAI applicati di default, per non cambiare risultati gia' salvati altrove
+# senza che sia una scelta esplicita di chi chiama.
+#
+# Nota onesta sulla commissione ECN ($4-8/lotto round-trip): NON e' inclusa
+# come commission_r qui. commission_r e' un costo FISSO in R, ma una
+# commissione per lotto va convertita in R dividendo per risk_dist (identico
+# a come si fa per spread_price) - varia da trade a trade in base alla
+# distanza dello stop, non e' una costante. Approssimarla con un numero
+# fisso avrebbe richiesto un valore inventato, non derivato. Il preset "ecn"
+# qui sotto quindi SOTTOSTIMA il costo reale di un conto ECN di quella parte
+# di commissione - i risultati con questo preset sono un limite superiore
+# ottimistico, non il costo ECN vero e proprio.
+COST_PRESETS = {
+    "none": {"spread_price": 0.0, "commission_r": 0.0, "slippage_price": 0.0},
+    "retail_standard": {"spread_price": 2.50, "commission_r": 0.0, "slippage_price": 0.50},
+    "ecn": {"spread_price": 0.90, "commission_r": 0.0, "slippage_price": 0.15},
+    # 04/08 - "stress": costi aumentati per il gate Fase 4 (NQROS v3.1) -
+    # spread al limite superiore del range retail gia' verificato ($2-5,
+    # non un valore inventato) + slippage raddoppiato rispetto a
+    # retail_standard, per simulare esecuzione peggiore (news/bassa
+    # liquidita') senza uscire dal range reale osservato.
+    "stress": {"spread_price": 4.00, "commission_r": 0.0, "slippage_price": 1.00},
+}
+
+
 STOOQ_MAP = {
     "EURUSD": "eurusd", "GBPUSD": "gbpusd", "USDJPY": "usdjpy", "USDCHF": "usdchf",
     "AUDUSD": "audusd", "USDCAD": "usdcad", "NZDUSD": "nzdusd", "XAUUSD": "xauusd",
@@ -434,12 +465,24 @@ def _prep(candles):
     ema12 = ema_series(closes, 12)
     ema26 = ema_series(closes, 26)
     macd_line, macd_sig = _macd_signal_series(ema12, ema26)
+    atr_s = atr_series(candles, 14)
+    sess = _session_amd_series(candles)
+    weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
+    monthly_pmh, monthly_pml = _monthly_levels_series(candles)
+    sb_signal, sb_sweep_level = _silver_bullet_series(
+        candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+    ob_signal = _ob_series(candles, atr_s)
+    shbms_signal, shbms_ref = _shbms_series(
+        candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+    tsi_vals = tsi_series(closes, r=25, s=13)
+    tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     return {
         "candles": candles,
         "close": closes,
         "ema5": ema_series(closes, 5),
         "ema9": ema_series(closes, 9),
         "ema20": ema_series(closes, 20),
+        "ema21": ema_series(closes, 21),
         "ema50": ema_series(closes, 50),
         "ema12": ema12,
         "ema26": ema26,
@@ -448,27 +491,68 @@ def _prep(candles):
         "macd_signal": macd_sig,
         "rsi": rsi_series(closes, 14),
         "rsi7": rsi_series(closes, 7),
-        "atr": atr_series(candles, 14),
+        "atr": atr_s,
         "psar": psar,
         "psar_trend": psar_trend,
         "adx": adx_series(candles, 14),
-        "sess": _session_amd_series(candles),
+        "sess": sess,
         "choch_int": _fractal_choch_series(candles, wing=3),
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
+        "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
+        "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
+        "shbms_signal": shbms_signal, "shbms_ref": shbms_ref,  # precalcolato, vedi _shbms_series
+        "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
+        "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
+        "tsi": tsi_vals, "tsi_signal": tsi_sig,
     }
 
 
 def sig_ema_pullback(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_EMAPullback
+    # (MQL5 reale): era un semplice cross-back su EMA20 (esattamente il
+    # "cross istantaneo" che l'MQL5 stesso documenta di aver sostituito il
+    # 17/07 - "non dimostrava un trend persistente ne' un vero impulso
+    # precedente ne' una rejection"). Mancavano: (1) trend persistente 5
+    # barre (non solo l'istante attuale), (2) un impulso precedente (prezzo
+    # allontanato >=1.0xATR da EMA20 nelle 2-12 barre prima), (3) pullback
+    # con vera rejection (tocco EMA20 + chiusura in direzione, non un cross),
+    # (4) niente entry se EMA50 viene rotta.
     e20, e50 = ind["ema20"][i], ind["ema50"][i]
-    if None in (e20, e50, ind["ema20"][i - 1]):
+    atr = ind["atr"][i]
+    if e20 is None or e50 is None or not atr or i < 13:
         return 0
     up = e20 > e50
-    px, ppx = ind["close"][i], ind["close"][i - 1]
-    if up and ppx < ind["ema20"][i - 1] and px > e20:
-        return 1
-    if not up and ppx > ind["ema20"][i - 1] and px < e20:
-        return -1
+    TREND_PERSIST, MIN_DIST_ATR, TOUCH_TOL_ATR = 5, 1.0, 0.15
+    for k in range(TREND_PERSIST):
+        idx, idx_p = i - k, i - k - 1
+        e20k, e50k, e20kp = ind["ema20"][idx], ind["ema50"][idx], ind["ema20"][idx_p]
+        if e20k is None or e50k is None or e20kp is None:
+            return 0
+        trend_ok = (e20k > e50k and e20k >= e20kp) if up else (e20k < e50k and e20k <= e20kp)
+        if not trend_ok:
+            return 0
+    had_impulse = False
+    for k in range(1, 12):
+        idx = i - k
+        e20k = ind["ema20"][idx]
+        if e20k is None:
+            continue
+        pxk = c[idx]["high"] if up else c[idx]["low"]
+        dist = (pxk - e20k) if up else (e20k - pxk)
+        if dist >= atr * MIN_DIST_ATR:
+            had_impulse = True
+            break
+    if not had_impulse:
+        return 0
+    c1, o1, l1, h1 = c[i]["close"], c[i]["open"], c[i]["low"], c[i]["high"]
+    tol = atr * TOUCH_TOL_ATR
+    if up:
+        if l1 <= e20 + tol and c1 > e20 and c1 > o1 and c1 > e50:
+            return 1
+    else:
+        if h1 >= e20 - tol and c1 < e20 and c1 < o1 and c1 < e50:
+            return -1
     return 0
 
 
@@ -521,6 +605,154 @@ def sig_breakout(c, ind, i, n=20):
     return 0
 
 
+def _weekly_levels_series(candles):
+    """Per ogni barra: (PWH, PWL della settimana civile PRECEDENTE gia'
+    completata, apertura della settimana CORRENTE) - nessun look-ahead,
+    la settimana precedente e' sempre gia' conclusa quando la si legge."""
+    from datetime import datetime
+    n = len(candles)
+    week_key = [None] * n
+    for i, cd in enumerate(candles):
+        d = datetime.strptime(cd["time"].split(" ")[0], "%Y-%m-%d")
+        week_key[i] = d.isocalendar()[:2]   # (iso_year, iso_week)
+
+    week_hi, week_lo, week_open = {}, {}, {}
+    for i, cd in enumerate(candles):
+        wk = week_key[i]
+        week_hi[wk] = max(week_hi.get(wk, -1e18), cd["high"])
+        week_lo[wk] = min(week_lo.get(wk, 1e18), cd["low"])
+        if wk not in week_open:
+            week_open[wk] = cd["open"]
+
+    weeks_sorted = sorted(week_hi.keys())
+    prev_week = {wk: weeks_sorted[idx - 1] for idx, wk in enumerate(weeks_sorted) if idx > 0}
+
+    pwh, pwl, wopen = [None] * n, [None] * n, [None] * n
+    for i in range(n):
+        wk = week_key[i]
+        pw = prev_week.get(wk)
+        if pw is not None:
+            pwh[i], pwl[i] = week_hi.get(pw), week_lo.get(pw)
+        wopen[i] = week_open.get(wk)
+    return pwh, pwl, wopen
+
+
+def _monthly_levels_series(candles):
+    """Stesso principio di _weekly_levels_series ma per il mese civile
+    PRECEDENTE gia' completato - fedele a NXS_DetectSweepExt (pmh/pml =
+    iHigh/iLow(PERIOD_MN1, shift1), il mese precedente, non quello in
+    corso). Nessun look-ahead."""
+    from datetime import datetime
+    n = len(candles)
+    month_key = [None] * n
+    for i, cd in enumerate(candles):
+        d = datetime.strptime(cd["time"].split(" ")[0], "%Y-%m-%d")
+        month_key[i] = (d.year, d.month)
+
+    month_hi, month_lo = {}, {}
+    for i, cd in enumerate(candles):
+        mk = month_key[i]
+        month_hi[mk] = max(month_hi.get(mk, -1e18), cd["high"])
+        month_lo[mk] = min(month_lo.get(mk, 1e18), cd["low"])
+
+    months_sorted = sorted(month_hi.keys())
+    prev_month = {mk: months_sorted[idx - 1] for idx, mk in enumerate(months_sorted) if idx > 0}
+
+    pmh, pml = [None] * n, [None] * n
+    for i in range(n):
+        mk = month_key[i]
+        pm = prev_month.get(mk)
+        if pm is not None:
+            pmh[i], pml[i] = month_hi.get(pm), month_lo.get(pm)
+    return pmh, pml
+
+
+def sig_london_bo(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_LondonBO
+    # (MQL5 reale): prima "LONDON_BO" e "WEEKLY_EXP" condividevano lo
+    # stesso proxy generico sig_breakout() (rottura di un massimo/minimo a
+    # 20 barre qualsiasi, nessun gate sessione, nessun filtro) - le due
+    # strategie MQL5 vere sono completamente diverse (vedi sig_weekly_exp
+    # sotto), la "collisione" era un artefatto del motore, non della realta'.
+    # Vera logica: gate sessione LONDON, rottura del range ASIATICO (non un
+    # massimo/minimo qualsiasi a 20 barre), corpo minimo 0.5xATR, buffer
+    # 0.15xATR oltre il livello, Close Location Value >= 0.6 (chiusura
+    # vicina all'estremo della barra = convinzione, non un tocco marginale).
+    sess = ind["sess"]
+    if sess["session"][i] != "LONDON":
+        return 0
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    cur = c[i]
+    o1, c1, h1, l1 = cur["open"], cur["close"], cur["high"], cur["low"]
+    body1 = abs(c1 - o1)
+    range1 = h1 - l1
+    if body1 < atr * 0.5 or range1 <= 0:
+        return 0
+    clv_up = (c1 - l1) / range1
+    clv_down = (h1 - c1) / range1
+    if c1 > ah + atr * 0.15 and clv_up >= 0.6:
+        return 1
+    if c1 < al - atr * 0.15 and clv_down >= 0.6:
+        return -1
+    return 0
+
+
+def sig_weekly_exp(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_WeeklyRangeExp
+    # (MQL5 reale, girato su H4): sconto/premio rispetto al midpoint della
+    # settimana PRECEDENTE (PWH/PWL), displacement H4 (corpo>=0.8xATR H4)
+    # che rompe uno swing H4 a 15 barre (BOS), reclaim dell'apertura della
+    # settimana CORRENTE, CHoCH di conferma - non un semplice breakout a 20
+    # barre come faceva il proxy condiviso con LONDON_BO prima.
+    pwh, pwl, wopen = ind["weekly_pwh"][i], ind["weekly_pwl"][i], ind["weekly_open"][i]
+    if pwh is None or pwl is None or wopen is None:
+        return 0
+    atr = ind["atr"][i]
+    if not atr or i < 15:
+        return 0
+    cur = c[i]
+    o1, c1 = cur["open"], cur["close"]
+    if abs(c1 - o1) < atr * 0.8:
+        return 0
+    window = c[i - 15:i]
+    swing_hi = max(x["high"] for x in window)
+    swing_lo = min(x["low"] for x in window)
+    w_mid = (pwh + pwl) / 2.0
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if c1 < w_mid and c1 > o1 and c1 > swing_hi and c1 > wopen and choch_up:
+        return 1
+    if c1 > w_mid and c1 < o1 and c1 < swing_lo and c1 < wopen and choch_down:
+        return -1
+    return 0
+
+
+def _weekly_exp_sl_tp(c, ind, i, direction, entry, atr):
+    pwh, pwl = ind["weekly_pwh"][i], ind["weekly_pwl"][i]
+    if pwh is None or pwl is None:
+        return None
+    leg = pwh - pwl
+    if direction == 1:
+        sl = min(pwl, entry - 1.5 * atr)
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        fib1272 = pwh + 0.272 * leg
+        tp = max(pwh, fib1272, entry + 2.6 * risk)
+        return sl, tp
+    sl = max(pwh, entry + 1.5 * atr)
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    fib1272 = pwl - 0.272 * leg
+    tp = min(pwl, fib1272, entry - 2.6 * risk)
+    return sl, tp
+
+
 def sig_breakout_acc(c, ind, i, n=20):
     # v2.5.1 - bug trovato il 16/07 (stesso tipo di SAR/BJORGUM/MACD/RSI_DIV):
     # BREAKOUT_ACC usava sig_breakout() generico (1 sola chiusura oltre il
@@ -561,16 +793,26 @@ def sig_adx_rsi(c, ind, i):
 
 
 def sig_bollinger(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_Bollinger
+    # (MQL5 reale, gia' corretto li' il 17/07 per lo stesso bug qui trovato
+    # nel motore Python): le bande vanno lette a shift1 E shift2
+    # SEPARATAMENTE (prezzo di ogni shift confrontato con la banda di QUEL
+    # preciso shift) - il proxy calcolava la banda una sola volta alla
+    # barra corrente e la usava per confrontare sia il prezzo attuale che
+    # quello precedente, la stessa imprecisione ("prezzo storico
+    # confrontato con una banda temporalmente diversa") gia' corretta in
+    # MQL5.
     closes = ind["close"]
-    sd = _std(closes, 20, i)
-    mid = sma(closes, 20, i)
-    if None in (sd, mid) or sd == 0:
+    sd, mid = _std(closes, 20, i), sma(closes, 20, i)
+    sd_p, mid_p = _std(closes, 20, i - 1), sma(closes, 20, i - 1)
+    if None in (sd, mid, sd_p, mid_p) or sd == 0 or sd_p == 0:
         return 0
     upper, lower = mid + 2 * sd, mid - 2 * sd
+    upper_p, lower_p = mid_p + 2 * sd_p, mid_p - 2 * sd_p
     px, ppx = closes[i], closes[i - 1]
-    if ppx <= lower < px:          # rientro dalla banda inferiore
+    if ppx <= lower_p and lower < px:          # rientro dalla banda inferiore
         return 1
-    if ppx >= upper > px:          # rientro dalla banda superiore
+    if ppx >= upper_p and upper > px:          # rientro dalla banda superiore
         return -1
     return 0
 
@@ -595,30 +837,31 @@ def sig_bb_squeeze(c, ind, i, look=40):
 
 
 def sig_tsi(c, ind, i):
-    # proxy momentum (come nel MQL5: RSI/EMA): RSI>52 e prezzo>ema20 in salita.
-    # NOTA (15/07): non e' il vero True Strength Index (doppio smoothing EMA
-    # del momentum) - ne' qui ne' in MQL5 (NXS_Strat_TSI, commento esplicito
-    # "simplified RSI/EMA proxy"). Test A/B col vero TSI (vedi tsi_series() e
-    # NEXUS EA - Ricerca Esterna e Test A-B per Strategia): PF migliora
-    # (1.35->1.42) e DD si dimezza (10.57%->4.99%), ma i trade crollano
-    # (245->67 su 10y sito, verosimilmente -90% anche su MT5 dove oggi fa 721
-    # trade/6y) - non sostituito qui senza una decisione esplicita
-    # sull'accettare molta meno frequenza per una qualita' migliore.
-    r = ind["rsi"][i]
-    e = ind["ema20"][i]
-    if None in (r, e, ind["ema20"][i - 1]):
+    # 04/08 - fedelta' verificata riga-per-riga: la nota precedente qui
+    # ("ne' qui ne' in MQL5 e' il vero TSI, e' un proxy RSI/EMA") era
+    # riferita a una versione MQL5 piu' vecchia - il codice MQL5 ATTUALE
+    # (NXS_Strat_TSI, struct SNXSTSIState) calcola il vero True Strength
+    # Index a doppio smoothing (Blau: doppio-EMA(momentum)/doppio-
+    # EMA(|momentum|), periodi 25/13 = InpTSI_LongPeriod/ShortPeriod) con
+    # una signal line (EMA(TSI, InpTSI_SignalPeriod=7)) e segnala sul
+    # CROSS TSI/signal - non su una soglia fissa di RSI. tsi_series() gia'
+    # calcolava il TSI vero (stessi periodi) ma sig_tsi() non lo usava,
+    # deliberatamente, in attesa di una decisione esplicita sul trade-off
+    # frequenza/qualita' gia' documentato nel test A/B citato sotto -
+    # decisione presa oggi nel giro di verifica fedelta' completo.
+    tsi, sig = ind["tsi"], ind["tsi_signal"]
+    if tsi[i] is None or sig[i] is None or tsi[i - 1] is None or sig[i - 1] is None:
         return 0
-    if r > 52 and ind["close"][i] > e and e > ind["ema20"][i - 1]:
+    if tsi[i - 1] <= sig[i - 1] and tsi[i] > sig[i]:
         return 1
-    if r < 48 and ind["close"][i] < e and e < ind["ema20"][i - 1]:
+    if tsi[i - 1] >= sig[i - 1] and tsi[i] < sig[i]:
         return -1
     return 0
 
 
 def tsi_series(closes, r=25, s=13):
     """Vero True Strength Index (doppio smoothing EMA del momentum, William
-    Blau). Disponibile per confronto A/B - non ancora usato da sig_tsi(),
-    vedi nota sopra sul trade-off frequenza/qualita'."""
+    Blau) - periodi di default = InpTSI_LongPeriod/ShortPeriod MQL5."""
     n = len(closes)
     mom = [0.0] * n
     for i in range(1, n):
@@ -645,19 +888,59 @@ def tsi_series(closes, r=25, s=13):
     return tsi
 
 
+def _tsi_signal_series(tsi_vals, period=7):
+    """EMA(TSI, InpTSI_SignalPeriod) - la signal line MQL5 per il cross."""
+    n = len(tsi_vals)
+    sig = [None] * n
+    k = 2.0 / (period + 1)
+    seed_i = next((idx for idx, v in enumerate(tsi_vals) if v is not None), None)
+    if seed_i is None:
+        return sig
+    e = tsi_vals[seed_i]
+    for i in range(seed_i, n):
+        if tsi_vals[i] is None:
+            continue
+        e = tsi_vals[i] * k + e * (1 - k)
+        sig[i] = e
+    return sig
+
+
 def sig_ichimoku(c, ind, i):
-    # Kumo break semplificato: tenkan/kijun + prezzo vs nuvola
-    if i < 52:
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_Ichimoku
+    # (MQL5 reale - il commento nel codice MQL5 stesso documenta un bug
+    # gia' corretto li' il 17/07, mai riportato qui nel motore Python): le
+    # Senkou Span A/B sono "shiftate in avanti" di 26 barre (comportamento
+    # nativo Ichimoku/MT5, il buffer indicatore di MT5 lo gestisce da solo)
+    # - la nuvola confrontata col prezzo alla barra i e' calcolata con
+    # tenkan/kijun/senkouB di 26 barre PRIMA (i-26), non quelli correnti
+    # come faceva il proxy. Tenkan/Kijun per il confronto di trend restano
+    # invece quelli CORRENTI (non shiftati, coerente con MQL5: tenkan[0]/
+    # kijun[0] letti a shift1 = i).
+    shift = 26
+    if i < 52 + shift + 1:
         return 0
-    tenkan = (_hh(c, 9, i) + _ll(c, 9, i)) / 2
-    kijun = (_hh(c, 26, i) + _ll(c, 26, i)) / 2
-    spanA = (tenkan + kijun) / 2
-    spanB = (_hh(c, 52, i) + _ll(c, 52, i)) / 2
-    top, bot = max(spanA, spanB), min(spanA, spanB)
-    px, ppx = ind["close"][i], ind["close"][i - 1]
-    if ppx <= top < px and tenkan > kijun:
+
+    def tenkan_at(k):
+        return (_hh(c, 9, k) + _ll(c, 9, k)) / 2
+
+    def kijun_at(k):
+        return (_hh(c, 26, k) + _ll(c, 26, k)) / 2
+
+    def span_a_at(k):
+        return (tenkan_at(k) + kijun_at(k)) / 2
+
+    def span_b_at(k):
+        return (_hh(c, 52, k) + _ll(c, 52, k)) / 2
+
+    span_a1, span_b1 = span_a_at(i - shift), span_b_at(i - shift)
+    span_a2, span_b2 = span_a_at(i - shift - 1), span_b_at(i - shift - 1)
+    kumo_top1, kumo_bot1 = max(span_a1, span_b1), min(span_a1, span_b1)
+    kumo_top2, kumo_bot2 = max(span_a2, span_b2), min(span_a2, span_b2)
+    tenkan1, kijun1 = tenkan_at(i), kijun_at(i)
+    price, prev = c[i]["close"], c[i - 1]["close"]
+    if prev <= kumo_top2 and price > kumo_top1 and tenkan1 > kijun1:
         return 1
-    if ppx >= bot > px and tenkan < kijun:
+    if prev >= kumo_bot2 and price < kumo_bot1 and tenkan1 < kijun1:
         return -1
     return 0
 
@@ -674,20 +957,24 @@ def _bear(cd): return cd["close"] < cd["open"]
 def sig_sar(c, ind, i):
     # v2.5.1 - prima era un proxy EMA20/EMA50 identico, trade per trade, a
     # sig_ema_pullback() (bug trovato il 15/07, vedi vault NEXUS EA - Motore
-    # Sito: Audit e Confronto 10Y): non testava mai Parabolic SAR. Ora usa
-    # il vero Parabolic SAR (psar_series) + allineamento EMA20, che in test
-    # A/B su XAUUSD D1 10y batte nettamente il vecchio proxy (PF 1.17->1.28,
-    # drawdown quasi dimezzato). Non aggiungere filtro ADX: testato, peggiora.
-    if i < 22:
+    # Sito: Audit e Confronto 10Y): non testava mai Parabolic SAR.
+    #
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SAR (MQL5
+    # reale): non e' un trigger di FLIP (solo il bar in cui il trend PSAR
+    # cambia lato, come faceva la versione precedente qui) - e' una
+    # condizione di STATO: SAR sotto/sopra il prezzo (valore vero, non solo
+    # il segno del trend) E allineamento EMA9/EMA21 (non EMA20 da sola),
+    # vera OGNI barra in cui entrambe reggono, non solo al cambio di lato.
+    if i < 21:
         return 0
-    trend, trend_p = ind["psar_trend"][i], ind["psar_trend"][i - 1]
-    e20 = ind["ema20"][i]
-    if trend is None or trend_p is None or e20 is None:
+    sar = ind["psar"][i]
+    e9, e21 = ind["ema9"][i], ind["ema21"][i]
+    if sar is None or e9 is None or e21 is None:
         return 0
     px = ind["close"][i]
-    if trend == 1 and trend_p == -1 and px > e20:
+    if sar < px and e9 > e21:
         return 1
-    if trend == -1 and trend_p == 1 and px < e20:
+    if sar > px and e9 < e21:
         return -1
     return 0
 
@@ -699,15 +986,23 @@ def sig_bjorgum(c, ind, i):
     # concetti opposti. Non testava mai la vera strategia (stesso tipo di bug
     # gia' trovato su SAR il 15/07). Vedi vault NEXUS EA - Ricerca Esterna e
     # Test A-B per Strategia.
+    #
+    # 04/08 - fedelta' verificata riga-per-riga: off-by-one trovato. MQL5 usa
+    # shift1 (barra appena chiusa) per la close E la finestra pivot parte da
+    # shift2 (iHighest/iLowest con start=2, count=30 -> shift2..31). In
+    # questo motore shift1 MQL5 == indice i (stessa convenzione gia' usata
+    # per AMD_CONT/SILVER_BULLET/IFVG/LONDON_BO/WEEKLY_EXP) - qui invece
+    # c1 usava c[i-1] e la finestra c[i-32:i-2], entrambi spostati indietro
+    # di una barra in piu' del dovuto. Corretto: c1=c[i], finestra=c[i-30:i].
     atr = ind["atr"][i]
-    if not atr or i < 32:
+    if not atr or i < 30:
         return 0
-    window = c[i - 32:i - 2]
+    window = c[i - 30:i]
     if not window:
         return 0
     piv_hi = max(x["high"] for x in window)
     piv_lo = min(x["low"] for x in window)
-    c1 = c[i - 1]["close"]
+    c1 = c[i]["close"]
     dist = atr * 0.5
     if abs(c1 - piv_lo) <= dist and c1 > piv_lo:
         return 1
@@ -717,97 +1012,44 @@ def sig_bjorgum(c, ind, i):
 
 
 def sig_order_block(c, ind, i):
-    # impulso (body>1.2 ATR) 3-10 barre fa, poi retest del body con rifiuto
-    atr = ind["atr"][i]
-    if not atr or i < 12:
-        return 0
-    for k in range(3, 11):
-        cd = c[i - k]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        if _bull(cd) and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_OB_UpdateSide (MQL5
+    # reale, condivisa da ORDER_BLOCK e OB_MIT - vedi sotto): il proxy
+    # precedente confondeva "candela impulso" con "zona d'origine" (usava
+    # il body dell'impulso come zona di retest) e non richiedeva un vero
+    # BOS (rottura di uno swing pre-impulso), solo un impulso qualsiasi.
+    # La vera logica e' una state machine su piu' barre (zona attiva,
+    # attesa fino a InpOB_MaxWaitBars barre di un ritorno + rejection) -
+    # precalcolata in ind["ob_signal"] (vedi _ob_series), come sb_signal.
+    return ind["ob_signal"][i]
 
 
 def sig_order_block_ext(c, ind, i):
-    # 16/07 - variante "esterna" (non un gate sullo stesso bar, una lente
-    # diversa sull'origine dell'impulso): richiede che la candela impulso
-    # sia nata mentre il trend ESTERNO (timeframe superiore reale,
-    # ind["choch_ext"]) era gia' nella stessa direzione - "questo blocco
-    # e' l'origine di una gamba strutturale vera", non un impulso qualsiasi.
-    atr = ind["atr"][i]
-    if not atr or i < 12:
+    # Fedele a NXS_Strat_OrderBlock: il vero MQL5 applica SEMPRE il filtro
+    # di trend H1 esterno (g_structH1.trend) sopra la zona OB di
+    # ind["ob_signal"] - non esiste una variante "senza" nel vero EA,
+    # sig_order_block (sopra) resta solo per confronto interno.
+    sig = ind["ob_signal"][i]
+    if sig == 0:
         return 0
-    ext_trend = ind["choch_ext"][0]
-    for k in range(3, 11):
-        idx = i - k
-        cd = c[idx]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        if _bull(cd) and ext_trend[idx] == 1 and cur["low"] <= top \
-                and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and ext_trend[idx] == -1 and cur["high"] >= bot \
-                and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    ext_trend = ind["choch_ext"][0][i]
+    if sig == 1 and ext_trend != 1:
+        return 0
+    if sig == -1 and ext_trend != -1:
+        return 0
+    return sig
 
 
 def sig_ob_mit(c, ind, i):
-    # order block CON displacement/BOS: l'impulso rompe lo swing a 5 barre
-    atr = ind["atr"][i]
-    if not atr or i < 14:
-        return 0
-    for k in range(3, 11):
-        cd = c[i - k]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        phi, plo = _hh(c, 5, i - k - 1), _ll(c, 5, i - k - 1)
-        if _bull(cd) and phi and cd["close"] > phi and cur["low"] <= top \
-                and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and plo and cd["close"] < plo and cur["high"] >= bot \
-                and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    # Fedele a NXS_Strat_OB_Mitigation_Structural: nel vero MQL5 OB_MIT e'
+    # un wrapper che RIUSA NXS_Strat_OrderBlock() cosi' com'e' (stesso dir,
+    # solo score/reason/nome diversi) - non una logica propria diversa
+    # come implementava il proxy precedente (BOS a 5 barre inline, diverso
+    # da quello vero a 15 barre di ORDER_BLOCK).
+    return sig_order_block(c, ind, i)
 
 
 def sig_ob_mit_ext(c, ind, i):
-    # 16/07 - variante "esterna": stessa logica di sig_ob_mit (impulso +
-    # BOS interno a 5 barre) con l'aggiunta del trend ESTERNO vero
-    # all'origine dell'impulso, stessa lente di sig_order_block_ext.
-    atr = ind["atr"][i]
-    if not atr or i < 14:
-        return 0
-    ext_trend = ind["choch_ext"][0]
-    for k in range(3, 11):
-        idx = i - k
-        cd = c[idx]
-        if _body(cd) < 1.2 * atr:
-            continue
-        top, bot = max(cd["open"], cd["close"]), min(cd["open"], cd["close"])
-        mid = (top + bot) / 2
-        cur = c[i]
-        phi, plo = _hh(c, 5, idx - 1), _ll(c, 5, idx - 1)
-        if _bull(cd) and phi and cd["close"] > phi and ext_trend[idx] == 1 \
-                and cur["low"] <= top and _bull(cur) and cur["close"] > mid:
-            return 1
-        if _bear(cd) and plo and cd["close"] < plo and ext_trend[idx] == -1 \
-                and cur["high"] >= bot and _bear(cur) and cur["close"] < mid:
-            return -1
-    return 0
+    return sig_order_block_ext(c, ind, i)
 
 
 def sig_fvg_cont(c, ind, i):
@@ -838,31 +1080,75 @@ def sig_fvg_cont_ext(c, ind, i):
 
 
 def sig_fvg_mit(c, ind, i):
-    # ritorno in un FVG vecchio (~5 barre fa) + rifiuto
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_FVG_Mitigation
+    # (MQL5 reale): i nomi delle variabili MQL5 sono fuorvianti ("h2/l2" e'
+    # in realta' shift5, "h0/l0" e' shift7, non shift2/shift0) - il proxy
+    # precedente aveva scambiato quali candele definiscono il gap e la
+    # condizione stessa (confrontava candele/direzioni non corrispondenti
+    # a nessuno dei due rami MQL5). Riscritta seguendo esattamente MQL5
+    # (shift5->i-4, shift7->i-6, shift1->i), "bid" approssimato dal range
+    # [low,high] della barra (tocco della zona), non solo la close.
     atr = ind["atr"][i]
-    if not atr or i < 8:
+    if not atr or i < 7:
         return 0
-    lo_e, hi_e = c[i - 6]["high"], c[i - 4]["low"]          # FVG bull
-    cur = c[i]
-    if hi_e > lo_e and lo_e - 0.3 * atr <= cur["low"] <= hi_e \
-            and _bull(cur) and cur["close"] > (lo_e + hi_e) / 2:
-        return 1
-    lo_b, hi_b = c[i - 4]["high"], c[i - 6]["low"]          # FVG bear
-    if hi_b > lo_b and lo_b <= cur["high"] <= hi_b + 0.3 * atr \
-            and _bear(cur) and cur["close"] < (lo_b + hi_b) / 2:
-        return -1
+    h2, l2 = c[i - 4]["high"], c[i - 4]["low"]
+    h0, l0 = c[i - 6]["high"], c[i - 6]["low"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    cur_lo, cur_hi = c[i]["low"], c[i]["high"]
+    body_abs = abs(c1 - o1)
+    rejection_bull = (c1 > o1) and (body_abs > atr * 0.35)
+    rejection_bear = (c1 < o1) and (body_abs > atr * 0.35)
+    if l0 > h2 + atr * 0.15:
+        fvg_lo, fvg_hi = h2, l0
+        if cur_hi >= fvg_lo and cur_lo <= fvg_hi and rejection_bull:
+            return 1
+    if h0 < l2 - atr * 0.15:
+        fvg_lo, fvg_hi = h0, l2
+        if cur_hi >= fvg_lo and cur_lo <= fvg_hi and rejection_bear:
+            return -1
     return 0
+
+
+def _fvg_mit_sl_tp(c, ind, i, direction, entry, atr):
+    h2 = c[i - 4]["high"]
+    l2 = c[i - 4]["low"]
+    if direction == 1:
+        return h2 - 0.4 * atr, entry + 2.5 * atr
+    return l2 + 0.4 * atr, entry - 2.5 * atr
 
 
 def sig_ifvg(c, ind, i):
-    # inverse FVG: un FVG che viene violato -> flip nella direzione della rottura
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_IFVG_Reversal
+    # (MQL5 reale): il concetto di base (gap violato -> flip) era gia'
+    # presente, ma mancavano: buffer ATR sul gap (0.2xATR, non un tocco
+    # marginale), filtro di forza sulla candela di reazione (corpo>0.3xATR),
+    # e la conferma CHoCH - senza queste il proxy prendeva flip deboli che
+    # la vera strategia scarta. Mappatura shift MQL5->indice Python (shift1
+    # = barra appena chiusa = i): h2/l2=c[i-1], h4/l4=c[i-3], c1/o1=c[i].
     if i < 4:
         return 0
-    if c[i - 1]["low"] > c[i - 3]["high"] and c[i]["close"] < c[i - 3]["high"]:
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    h2, l2 = c[i - 1]["high"], c[i - 1]["low"]
+    h4, l4 = c[i - 3]["high"], c[i - 3]["low"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body1 = abs(c1 - o1)
+    reaction_bear = (c1 < o1) and (body1 > atr * 0.3)
+    reaction_bull = (c1 > o1) and (body1 > atr * 0.3)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if l2 > h4 + atr * 0.2 and c1 < h4 and reaction_bear and choch_down:
         return -1
-    if c[i - 1]["high"] < c[i - 3]["low"] and c[i]["close"] > c[i - 3]["low"]:
+    if h2 < l4 - atr * 0.2 and c1 > l4 and reaction_bull and choch_up:
         return 1
     return 0
+
+
+def _ifvg_sl_tp(c, ind, i, direction, entry, atr):
+    h2, l2 = c[i - 1]["high"], c[i - 1]["low"]
+    if direction == 1:
+        return h2 - 0.5 * atr, entry + 2.4 * atr
+    return l2 + 0.5 * atr, entry - 2.4 * atr
 
 
 def sig_liq_sweep(c, ind, i):
@@ -900,7 +1186,7 @@ def sig_liq_sweep_ext(c, ind, i):
     # su 4, peggiora solo sulla combinazione 4h-no-HTF (gia' la migliore
     # trovata prima del fix) - vedi vault per il dettaglio completo.
     sess = ind["sess"]
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw or not sw["confirmed"]:
         return 0
     atr = ind["atr"][i]
@@ -977,6 +1263,11 @@ def _ldn_reversal_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5
 def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=None):
     # Fedele a NXS_Strat_PO3: tp = MAX(asianHigh, entry+2.6xrisk) per buy /
     # MIN(asianLow, entry-2.6xrisk) per sell.
+    # 04/08 (15): SUPERATA da _po3_sl_tp - qui il rischio usava il
+    # multiplo ATR generico (sl_mult) perche' la vera formula SL non era
+    # ancora stata trovata. Ora e' nota (vedi sotto), _po3_sl_tp calcola
+    # SL *e* TP insieme sul rischio REALE. Funzione lasciata per
+    # compatibilita', non piu' usata di default (vedi STRATEGY_TARGETS_ALWAYS).
     ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
     risk = atr * sl_mult
     if direction == 1:
@@ -984,6 +1275,37 @@ def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=No
         return max(ah, fixed) if ah is not None else fixed
     fixed = entry - 2.6 * risk
     return min(al, fixed) if al is not None else fixed
+
+
+def _po3_sl_tp(c, ind, i, direction, entry, atr):
+    # 04/08 (15) - trovata la formula SL reale di NXS_Strat_PO3 (prima
+    # segnata come backlog aperto, "non trovata durante questo giro" -
+    # era in NXS_Strategies_Institutional.mqh, non ancora letto quando fu
+    # scritta quella nota): SL da sw.refLow/refHigh (livello dello sweep)
+    # +-0.4xATR, TP = il piu' ambizioso tra il livello asiatico opposto e
+    # 2.6xR dalla distanza di rischio REALE (non il multiplo ATR generico
+    # che usava _po3_target finora).
+    sw = _sweep_ext_at(c, ind, i)
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.4 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        tgt = ah if ah is not None else (entry + 2.6 * risk)
+        return sl, max(tgt, entry + 2.6 * risk)
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.4 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    tgt = al if al is not None else (entry - 2.6 * risk)
+    return sl, min(tgt, entry - 2.6 * risk)
 
 
 # TP dinamico (livello di liquidita' opposta invece di ATR fisso), due gruppi:
@@ -994,11 +1316,12 @@ def _po3_target(c, ind, i, direction, entry, atr, min_rr=0, sl_mult=1.5, pick=No
 # Il primo giro di test del 16/07 sulle 7 strategie a sessione usava per
 # errore lo stesso SL/TP ATR generico per tutte, omettendo questa parte
 # gia' presente in MQL5 per queste 3.
-STRATEGY_TARGETS_ALWAYS = {
-    "JUDAS_SWING": _judas_swing_target,
-    "LDN_REVERSAL": _ldn_reversal_target,
-    "PO3": _po3_target,
-}
+STRATEGY_TARGETS_ALWAYS = {}
+# JUDAS_SWING/LDN_REVERSAL/PO3: tutte superate dalle formule SL+TP complete
+# in STRATEGY_SLTP_ALWAYS (_judas_swing_sl_tp/_ldn_reversal_sl_tp/
+# _po3_sl_tp, 04/08) - _judas_swing_target/_ldn_reversal_target/
+# _po3_target restano definite ma inutilizzate qui (il guard
+# "if target_fn and not sltp_fn" le avrebbe comunque saltate).
 # STRATEGY_TARGETS_OPTIN - ipotesi TESTATA ma NON presente nel vero
 # NXS_Strat_LiqSweep() MQL5 (che usa solo NXS_DefaultSLTP, ATR fisso) -
 # testata su richiesta dell'utente (16/07), risultato misto/non decisivo
@@ -1010,17 +1333,52 @@ STRATEGY_TARGETS_OPTIN = {
 
 
 def sig_turtle_soup(c, ind, i):
-    # falso breakout: sweep del min/max a 20 + candela di reversal forte
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_TurtleSoup
+    # (MQL5 reale): usava un falso-breakout su estremo GENERICO a 20 barre,
+    # ma la vera strategia (SNXSSweepExt &sw nella firma MQL5) usa il
+    # rilevatore di sweep ESTESO gia' disponibile in questo motore via
+    # _sweep_ext_at() e gia' usato da altre strategie - TURTLE_SOUP
+    # semplicemente non lo riusava. Corretto.
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla
+    # "sw.sweptPDH || sw.sweptEQH" / "sw.sweptPDL || sw.sweptEQL", non solo
+    # PDH/PDL da soli - EQH/EQL (massimi/minimi uguali) mancava del tutto
+    # prima di questa sessione, aggiunto ora al rilevatore condiviso.
     atr = ind["atr"][i]
-    if not atr or i < 21:
+    if not atr:
         return 0
-    pl, ph = _ll(c, 20, i - 1), _hh(c, 20, i - 1)
-    cur = c[i]
-    if pl and cur["low"] < pl and cur["close"] > pl and _bull(cur) and _body(cur) > 0.4 * atr:
-        return 1
-    if ph and cur["high"] > ph and cur["close"] < ph and _bear(cur) and _body(cur) > 0.4 * atr:
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body = abs(c1 - o1)
+    if body < atr * 0.4:
+        return 0
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return 0
+    if (sw["sweptPDH"] or sw["sweptEQH"]) and c1 < o1 and sw["refHigh"] is not None and c1 < sw["refHigh"]:
         return -1
+    if (sw["sweptPDL"] or sw["sweptEQL"]) and c1 > o1 and sw["refLow"] is not None and c1 > sw["refLow"]:
+        return 1
     return 0
+
+
+def _turtle_soup_sl_tp(c, ind, i, direction, entry, atr):
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, entry + 2.0 * risk
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, entry - 2.0 * risk
 
 
 def sig_struct_react(c, ind, i):
@@ -1202,29 +1560,150 @@ def _session_amd_series(candles):
             "amd_phase": amd_phase}
 
 
-def _sweep_ext_at(candles, sess, i):
+def _is_swing_high_at(candles, p, wing):
+    if p - wing < 0 or p + wing >= len(candles):
+        return False
+    h = candles[p]["high"]
+    for k in range(1, wing + 1):
+        if candles[p + k]["high"] >= h or candles[p - k]["high"] >= h:
+            return False
+    return True
+
+
+def _is_swing_low_at(candles, p, wing):
+    if p - wing < 0 or p + wing >= len(candles):
+        return False
+    lo = candles[p]["low"]
+    for k in range(1, wing + 1):
+        if candles[p + k]["low"] <= lo or candles[p - k]["low"] <= lo:
+            return False
+    return True
+
+
+def _find_equal_high(candles, i, wing, tol):
+    # Fedele a NXS_FindEqualHigh: la coppia PIU' RECENTE di swing high
+    # confermati (wing=3, InpSwingWing) entro tol l'uno dall'altro - non il
+    # massimo generico su una finestra. shift wing+1..59 -> python
+    # p = i-(shift-1), fino a 8 swing raccolti (nearest-first).
+    vals = []
+    for s in range(wing + 1, 60):
+        if len(vals) >= 8:
+            break
+        p = i - s + 1
+        if p - wing < 0:
+            continue
+        if _is_swing_high_at(candles, p, wing):
+            vals.append(candles[p]["high"])
+    for a in range(len(vals)):
+        for b in range(a + 1, len(vals)):
+            if abs(vals[a] - vals[b]) <= tol:
+                return max(vals[a], vals[b])
+    return None
+
+
+def _find_equal_low(candles, i, wing, tol):
+    vals = []
+    for s in range(wing + 1, 60):
+        if len(vals) >= 8:
+            break
+        p = i - s + 1
+        if p - wing < 0:
+            continue
+        if _is_swing_low_at(candles, p, wing):
+            vals.append(candles[p]["low"])
+    for a in range(len(vals)):
+        for b in range(a + 1, len(vals)):
+            if abs(vals[a] - vals[b]) <= tol:
+                return min(vals[a], vals[b])
+    return None
+
+
+def _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
+    # 04/08 (15) - fedelta' verificata riga-per-riga con NXS_DetectSweepExt
+    # (MQL5 reale, NXS_MarketAnalysis.mqh): il proxy precedente controllava
+    # SOLO Asia+PDH/PDL, con una logica di priorita' "vince il livello piu'
+    # estremo" che il vero MQL5 non ha - la' l'ordine e' fisso e SEQUENZIALE
+    # (Asia -> daily -> weekly -> monthly, ogni blocco sovrascrive
+    # INCONDIZIONATAMENTE se scatta, quindi in pratica vince l'ultimo/il piu'
+    # raro se piu' livelli scattano sulla stessa barra), con EQH/EQL
+    # (massimi/minimi uguali, cluster REALE di 2+ swing entro 0.2xATR, non
+    # un proxy) come fallback SOLO se nessun altro livello e' scattato.
+    # Livelli settimanali/mensili mancavano del tutto (mai implementati) -
+    # aggiunti qui (weekly gia' calcolato altrove per WEEKLY_EXP, monthly
+    # nuovo). Questo e' il rilevatore di sweep condiviso da 10+ strategie
+    # (TURTLE_SOUP, SILVER_BULLET, SH_BMS_RTO, JUDAS_SWING, LDN_REVERSAL,
+    # AMD_REVERSAL, PO3, LIQ_SWEEP...) - la correzione si propaga a tutte.
     if i < 1:
         return None
     h1, l1, c1 = candles[i]["high"], candles[i]["low"], candles[i]["close"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     pdh, pdl = sess["pdh"][i], sess["pdl"][i]
+    pwh = weekly_pwh[i] if weekly_pwh else None
+    pwl = weekly_pwl[i] if weekly_pwl else None
+    pmh = monthly_pmh[i] if monthly_pmh else None
+    pml = monthly_pml[i] if monthly_pml else None
+
     d, level, ref_hi, ref_lo, confirmed = 0, 0, None, None, False
     swept_asia_hi = swept_asia_lo = swept_pdh = swept_pdl = False
+    swept_pwh = swept_pwl = swept_pmh = swept_pml = swept_eqh = swept_eql = False
+
     if ah is not None and h1 > ah and c1 < ah:
-        swept_asia_hi, d, level, ref_hi, confirmed = True, -1, ah, ah, True
+        swept_asia_hi = True
+        d, level, ref_hi, confirmed = -1, ah, ah, True
+    if al is not None and l1 < al and c1 > al:
+        swept_asia_lo = True
+        d, level, ref_lo, confirmed = 1, al, al, True
     if pdh is not None and h1 > pdh and c1 < pdh:
         swept_pdh = True
-        if not confirmed or pdh > (ref_hi if ref_hi is not None else -1e18):
-            d, level, ref_hi, confirmed = -1, pdh, pdh, True
-    if al is not None and l1 < al and c1 > al:
-        swept_asia_lo, d, level, ref_lo, confirmed = True, 1, al, al, True
+        d, level, ref_hi, confirmed = -1, pdh, pdh, True
     if pdl is not None and l1 < pdl and c1 > pdl:
         swept_pdl = True
-        if not confirmed or pdl < (ref_lo if ref_lo is not None else 1e18):
-            d, level, ref_lo, confirmed = 1, pdl, pdl, True
+        d, level, ref_lo, confirmed = 1, pdl, pdl, True
+    if pwh is not None and h1 > pwh and c1 < pwh:
+        swept_pwh = True
+        d, level, ref_hi, confirmed = -1, pwh, pwh, True
+    if pwl is not None and l1 < pwl and c1 > pwl:
+        swept_pwl = True
+        d, level, ref_lo, confirmed = 1, pwl, pwl, True
+    if pmh is not None and h1 > pmh and c1 < pmh:
+        swept_pmh = True
+        d, level, ref_hi, confirmed = -1, pmh, pmh, True
+    if pml is not None and l1 < pml and c1 > pml:
+        swept_pml = True
+        d, level, ref_lo, confirmed = 1, pml, pml, True
+
+    a = atr[i] if atr else None
+    if a:
+        tol = a * 0.2
+        eqh = _find_equal_high(candles, i, 3, tol)
+        eql = _find_equal_low(candles, i, 3, tol)
+        if eqh is not None and h1 > eqh and c1 < eqh:
+            swept_eqh = True
+            if d == 0:
+                d, level, ref_hi, confirmed = -1, eqh, eqh, True
+        if eql is not None and l1 < eql and c1 > eql:
+            swept_eql = True
+            if d == 0:
+                d, level, ref_lo, confirmed = 1, eql, eql, True
+
+    if ref_hi is None and (pdh is not None or ah is not None):
+        ref_hi = max(x for x in (pdh, ah) if x is not None)
+    if ref_lo is None and (pdl is not None or al is not None):
+        ref_lo = min(x for x in (pdl, al) if x is not None)
+
     return {"dir": d, "level": level, "refHigh": ref_hi, "refLow": ref_lo,
-            "confirmed": confirmed, "sweptAsiaHigh": swept_asia_hi,
-            "sweptAsiaLow": swept_asia_lo, "sweptPDH": swept_pdh, "sweptPDL": swept_pdl}
+            "confirmed": confirmed,
+            "sweptAsiaHigh": swept_asia_hi, "sweptAsiaLow": swept_asia_lo,
+            "sweptPDH": swept_pdh, "sweptPDL": swept_pdl,
+            "sweptPWH": swept_pwh, "sweptPWL": swept_pwl,
+            "sweptPMH": swept_pmh, "sweptPML": swept_pml,
+            "sweptEQH": swept_eqh, "sweptEQL": swept_eql}
+
+
+def _sweep_ext_at(candles, ind, i):
+    return _sweep_ext_at_raw(candles, ind["sess"], i, ind["atr"],
+                              ind["weekly_pwh"], ind["weekly_pwl"],
+                              ind["monthly_pmh"], ind["monthly_pml"])
 
 
 def _choch_at(c, i, look=10):
@@ -1354,6 +1833,13 @@ def _external_choch_series(candles, factor=4, wing=3):
 
 
 def sig_amd_cont(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_AMD_Continuation
+    # (MQL5 reale): il retest usava la CLOSE per entrambe le condizioni
+    # (rottura E retest) - la stessa imprecisione che l'MQL5 aveva gia'
+    # corretto il 17/07 ("mescolava close della barra 1 con bid live - due
+    # punti temporali diversi"). MQL5 usa il LOW della barra per il retest
+    # (l1 <= asianHigh+atr*0.6), non la close - un vero "tocco" della
+    # fascia, non "la chiusura e' rimasta vicina". Corretto qui.
     sess = ind["sess"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     if ah is None or al is None or i < 1:
@@ -1369,23 +1855,51 @@ def sig_amd_cont(c, ind, i):
     e200, e200p = ind["ema200"][i], ind["ema200"][i - 1] if i > 0 else None
     htf_bull_or_neutral = e200 is None or e200p is None or c[i]["close"] >= e200 or e200 >= e200p
     htf_bear_or_neutral = e200 is None or e200p is None or c[i]["close"] <= e200 or e200 <= e200p
-    c1, bid = c[i]["close"], c[i]["close"]
-    if c1 > ah and bid <= ah + atr * 0.6 and htf_bull_or_neutral:
+    c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
+    if c1 > ah and l1 <= ah + atr * 0.6 and htf_bull_or_neutral:
         return 1
-    if c1 < al and bid >= al - atr * 0.6 and htf_bear_or_neutral:
+    if c1 < al and h1 >= al - atr * 0.6 and htf_bear_or_neutral:
         return -1
     return 0
 
 
+def _amd_cont_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_AMD_Continuation: SL = min(asianHigh-0.3xATR, mid)
+    # per buy (max per sell), TP = entry +/- 2.4x la distanza di rischio
+    # COSI' CALCOLATA - non un multiplo ATR libero come usava prima il
+    # motore (quel parametro, ottimizzato in una Fase 6 precedente, non
+    # esiste nella forma testata nell'EA reale - vedi AMD_CONT_DEEPDIVE.md).
+    sess = ind["sess"]
+    ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+    if ah is None or al is None:
+        return None
+    mid = (ah + al) / 2.0
+    if direction == 1:
+        sl = min(ah - 0.3 * atr, mid)
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, entry + 2.4 * risk
+    sl = max(al + 0.3 * atr, mid)
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, entry - 2.4 * risk
+
+
 def sig_amd_reversal(c, ind, i):
+    # 04/08 - fedelta': usava _choch_at() (proxy rozzo a estremo mobile,
+    # gia' superato per altre strategie) invece del vero CHoCH frattale
+    # (ind["choch_int"], NXS_ComputeStructureCore fedele) - condizioni
+    # d'ingresso gia' corrette, solo il CHoCH era quello vecchio.
     sess = ind["sess"]
     ph = sess["amd_phase"][i] if i < len(sess["amd_phase"]) else None
     if ph is None or ph[0] != "REVERSAL_DISTRIBUTION":
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     if sw["sweptAsiaHigh"] and choch_down:
         return -1
     if sw["sweptAsiaLow"] and choch_up:
@@ -1393,7 +1907,25 @@ def sig_amd_reversal(c, ind, i):
     return 0
 
 
+def _amd_reversal_sl_tp(c, ind, i, direction, entry, atr):
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        return sw["refLow"] - 0.5 * atr, entry + 2.5 * atr
+    if sw["refHigh"] is None:
+        return None
+    return sw["refHigh"] + 0.5 * atr, entry - 2.5 * atr
+
+
 def sig_judas_swing(c, ind, i):
+    # 04/08 - fedelta': stesso swap CHoCH di sopra (_choch_at -> reale).
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla
+    # "sw.sweptAsiaLow || sw.sweptPDL || sw.sweptEQL || l1<asianLow"
+    # (mirror per sweptAsiaHigh/PDH/EQH) - mancavano PDL/PDH e EQL/EQH,
+    # qui c'era solo il check Asia + il fallback sul wick grezzo.
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "NY"):
         return 0
@@ -1407,35 +1939,94 @@ def sig_judas_swing(c, ind, i):
     atr = ind["atr"][i]
     if not atr:
         return 0
-    sw = _sweep_ext_at(c, sess, i)
-    choch_up, choch_down = _choch_at(c, i)
+    sw = _sweep_ext_at(c, ind, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1, l1, h1 = c[i]["close"], c[i]["low"], c[i]["high"]
-    wicked_down = (sw and (sw["sweptAsiaLow"])) or l1 < al
+    wicked_down = (sw and (sw["sweptAsiaLow"] or sw["sweptPDL"] or sw["sweptEQL"])) or l1 < al
     if wicked_down and c1 > al and choch_up:
         return 1
-    wicked_up = (sw and (sw["sweptAsiaHigh"])) or h1 > ah
+    wicked_up = (sw and (sw["sweptAsiaHigh"] or sw["sweptPDH"] or sw["sweptEQH"])) or h1 > ah
     if wicked_up and c1 < ah and choch_down:
         return -1
     return 0
 
 
+def _judas_swing_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_JudasSwing: SL da min/max(low/high barra, asia) +-
+    # 0.4xATR, TP = il piu' ambizioso tra il livello asiatico opposto e
+    # 2.5xR dalla distanza di rischio REALE (non un multiplo ATR fisso).
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if ah is None or al is None:
+        return None
+    l1, h1 = c[i]["low"], c[i]["high"]
+    if direction == 1:
+        sl = min(l1, al) - 0.4 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, max(ah, entry + 2.5 * risk)
+    sl = max(h1, ah) + 0.4 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, min(al, entry - 2.5 * risk)
+
+
 def sig_ldn_reversal(c, ind, i):
+    # 04/08 - fedelta': stesso swap CHoCH di sopra.
+    # 04/08 (15) - secondo giro: il vero MQL5 controlla anche sw.sweptEQH/
+    # sweptEQL ("sw.sweptAsiaHigh || sw.sweptPDH || sw.sweptEQH"), mancava
+    # prima di questa sessione (EQH/EQL non esisteva nel rilevatore).
     sess = ind["sess"]
     if sess["session"][i] not in ("LONDON", "OVERLAP"):
         return 0
-    sw = _sweep_ext_at(c, sess, i)
+    sw = _sweep_ext_at(c, ind, i)
     if not sw or not sw["confirmed"]:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1 = c[i]["close"]
-    if (sw["sweptAsiaHigh"] or sw["sweptPDH"]) and c1 < sw["refHigh"] and choch_down:
+    if (sw["sweptAsiaHigh"] or sw["sweptPDH"] or sw["sweptEQH"]) and c1 < sw["refHigh"] and choch_down:
         return -1
-    if (sw["sweptAsiaLow"] or sw["sweptPDL"]) and c1 > sw["refLow"] and choch_up:
+    if (sw["sweptAsiaLow"] or sw["sweptPDL"] or sw["sweptEQL"]) and c1 > sw["refLow"] and choch_up:
         return 1
     return 0
 
 
+def _ldn_reversal_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_LondonReversal: SL dal livello di sweep +-0.5xATR,
+    # TP = il piu' ambizioso tra il livello asiatico opposto (o 2.5xR se
+    # assente) e 2.0xR dalla distanza di rischio reale.
+    sw = _sweep_ext_at(c, ind, i)
+    ah, al = ind["sess"]["asian_hi"][i], ind["sess"]["asian_lo"][i]
+    if not sw:
+        return None
+    if direction == 1:
+        if sw["refLow"] is None:
+            return None
+        sl = sw["refLow"] - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        tgt = ah if ah is not None else (entry + 2.5 * risk)
+        return sl, max(tgt, entry + 2.0 * risk)
+    if sw["refHigh"] is None:
+        return None
+    sl = sw["refHigh"] + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    tgt = al if al is not None else (entry - 2.5 * risk)
+    return sl, min(tgt, entry - 2.0 * risk)
+
+
 def sig_ny_reversal(c, ind, i, look=48):
+    # 04/08 - fedelta' PARZIALE: stesso swap CHoCH di sopra fatto, MA la
+    # vera NXS_Strat_NYReversal calcola l'alto/basso della sessione Londra
+    # aggregando dati M5 con conversione BST/UTC esplicita - questo motore
+    # lavora su UNA sola serie di candele (qualunque TF stia girando), non
+    # ha accesso a M5 quando gira su H4/D1. L'approssimazione qui (finestra
+    # di `look` barre del TF corrente con ora 6-12) resta un proxy, non la
+    # vera aggregazione M5 - vedi NQROS_IDEA_BACKLOG.md.
     sess = ind["sess"]
     if sess["session"][i] not in ("NY", "OVERLAP"):
         return 0
@@ -1452,7 +2043,7 @@ def sig_ny_reversal(c, ind, i, look=48):
             london_lo = ll if london_lo is None else min(london_lo, ll)
     if london_hi is None or london_lo is None:
         return 0
-    choch_up, choch_down = _choch_at(c, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     c1, h1, l1 = c[i]["close"], c[i]["high"], c[i]["low"]
     if h1 > london_hi and c1 < london_hi and choch_down:
         return -1
@@ -1461,7 +2052,38 @@ def sig_ny_reversal(c, ind, i, look=48):
     return 0
 
 
+def _ny_reversal_sl_tp(c, ind, i, direction, entry, atr, look=48):
+    sess = ind["sess"]
+    london_hi, london_lo = None, None
+    for k in range(1, look + 1):
+        j = i - k
+        if j < 0:
+            break
+        if sess["hour"][j] is not None and 6 <= sess["hour"][j] < 12:
+            hh, ll = c[j]["high"], c[j]["low"]
+            london_hi = hh if london_hi is None else max(london_hi, hh)
+            london_lo = ll if london_lo is None else min(london_lo, ll)
+    if london_hi is None or london_lo is None:
+        return None
+    l1, h1 = c[i]["low"], c[i]["high"]
+    if direction == 1:
+        sl = l1 - 0.5 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, max(london_hi, entry + 2.5 * risk)
+    sl = h1 + 0.5 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, min(london_lo, entry - 2.5 * risk)
+
+
 def sig_po3(c, ind, i):
+    # 04/08 - fedelta' PARZIALE: stesso swap CHoCH di sopra fatto. Il TP e'
+    # gia' strutturale via _po3_target (STRATEGY_TARGETS_ALWAYS); il SL
+    # resta il multiplo ATR generico - non ho trovato la formula SL reale
+    # di NXS_Strat_PO3 durante questo giro, vedi NQROS_IDEA_BACKLOG.md.
     sess = ind["sess"]
     ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
     if ah is None or al is None:
@@ -1472,8 +2094,8 @@ def sig_po3(c, ind, i):
     c1, o1 = c[i]["close"], c[i]["open"]
     if abs(c1 - o1) < atr * 0.6:
         return 0
-    sw = _sweep_ext_at(c, sess, i)
-    choch_up, choch_down = _choch_at(c, i)
+    sw = _sweep_ext_at(c, ind, i)
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
     if sw and sw["sweptAsiaLow"] and c1 > al and c1 > o1 and choch_up:
         return 1
     if sw and sw["sweptAsiaHigh"] and c1 < ah and c1 < o1 and choch_down:
@@ -1481,18 +2103,375 @@ def sig_po3(c, ind, i):
     return 0
 
 
+def _us_dst_start_end(year):
+    """Prima domenica di novembre e 2a di marzo (regola USA EDT/EST, DIVERSA
+    dalla BST inglese) - granularita' a livello di data (non l'ora esatta
+    delle 2:00 locali del cambio), coerente con la precisione oraria gia'
+    usata dal resto del motore (sessioni dedotte dal timestamp della
+    candela)."""
+    import datetime as _dt
+    d = _dt.date(year, 3, 1)
+    first_sun_mar = d + _dt.timedelta(days=(6 - d.weekday()) % 7)
+    dst_start = first_sun_mar + _dt.timedelta(days=7)   # 2a domenica di marzo
+    d2 = _dt.date(year, 11, 1)
+    dst_end = d2 + _dt.timedelta(days=(6 - d2.weekday()) % 7)   # 1a domenica di novembre
+    return dst_start, dst_end
+
+
+def _is_us_edt(date_str):
+    import datetime as _dt
+    d = _dt.datetime.strptime(date_str, "%Y-%m-%d").date()
+    start, end = _us_dst_start_end(d.year)
+    return start <= d < end
+
+
+def _silver_bullet_series(candles, sess, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SilverBullet/
+    # NXS_SB_UpdateSide (MQL5 reale): la vera Silver Bullet e' una state
+    # machine a 3 stadi su piu' barre (IDLE -> SWEPT -> WAITING_RETURN),
+    # non un segnale a barra singola come faceva il proxy precedente (sparava
+    # subito al solo sweep-in-killzone, saltando displacement/BOS/FVG/
+    # ritorno - confermato anche contro fonti ICT pubbliche esterne, vedi
+    # SILVER_BULLET_DEEPDIVE.md). Precalcolato qui (come choch_int/swing_ext)
+    # perche' la logica ha memoria fra barre, cosa che le sig_*() stateless
+    # del motore non supportano.
+    #
+    # Mappatura shift MQL5 -> indice Python (questo motore lavora solo su
+    # barre chiuse, shift1 MQL5 = barra i corrente):
+    #   shift1 (barra appena chiusa)      -> i
+    #   shift2 (candela di displacement)  -> i-1
+    #   shift3 (candela1 del FVG)         -> i-2
+    #   finestra swing (shift 3..14)      -> candles[i-13 : i-1]
+    MAX_BARS = 15          # InpSB_MaxBars
+    DISP_BODY_ATR = 0.8    # InpSB_DispBodyATR
+    SWING_LOOKBACK = 12    # InpSB_SwingLookback
+    IDLE, SWEPT, WAITING = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_level = [None] * n
+    st = {d: {"state": IDLE, "bars_waited": 0, "sweep_level": None,
+               "fvg_lo": None, "fvg_hi": None} for d in (1, -1)}
+
+    def in_killzone(i):
+        h = sess["hour"][i]
+        if h is None:
+            return False
+        edt = _is_us_edt(sess["date"][i])
+        kz_ldn_open = (7 <= h < 8) if edt else (8 <= h < 9)     # 03-04 ET
+        kz_am = (14 <= h < 15) if edt else (15 <= h < 16)       # 10-11 ET
+        kz_pm = (18 <= h < 19) if edt else (19 <= h < 20)       # 14-15 ET
+        return kz_ldn_open or kz_am or kz_pm
+
+    for i in range(14, n):
+        a = atr[i]
+        if not a:
+            continue
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                sw = _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+                if in_killzone(i) and sw and sw["confirmed"] and sw["dir"] == d:
+                    s["state"], s["bars_waited"], s["sweep_level"] = SWEPT, 0, sw["level"]
+                continue
+            if s["state"] == SWEPT:
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_BARS:
+                    s["state"] = IDLE
+                    continue
+                o2, c2 = candles[i - 1]["open"], candles[i - 1]["close"]
+                body2 = abs(c2 - o2)
+                right_color = (c2 > o2) if d == 1 else (c2 < o2)
+                if body2 < a * DISP_BODY_ATR or not right_color:
+                    continue
+                window = candles[max(0, i - 1 - SWING_LOOKBACK):i - 1]
+                if not window:
+                    continue
+                swing_ref = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                bos = (c2 > swing_ref) if d == 1 else (c2 < swing_ref)
+                if not bos:
+                    continue
+                c1_high, c1_low = candles[i - 2]["high"], candles[i - 2]["low"]
+                c3_high, c3_low = candles[i]["high"], candles[i]["low"]
+                if d == 1 and c3_low > c1_high:
+                    s["fvg_lo"], s["fvg_hi"] = c1_high, c3_low
+                    s["state"], s["bars_waited"] = WAITING, 0
+                elif d == -1 and c3_high < c1_low:
+                    s["fvg_lo"], s["fvg_hi"] = c3_high, c1_low
+                    s["state"], s["bars_waited"] = WAITING, 0
+                continue
+            if s["state"] == WAITING:
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_BARS:
+                    s["state"] = IDLE
+                    continue
+                c1 = candles[i]["close"]
+                if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                    s["state"] = IDLE
+                    continue
+                if s["fvg_hi"] is None or s["fvg_hi"] <= s["fvg_lo"]:
+                    continue
+                lo, hi = candles[i]["low"], candles[i]["high"]
+                if hi < s["fvg_lo"] or lo > s["fvg_hi"]:
+                    continue
+                out_sig[i] = d
+                out_level[i] = s["sweep_level"]
+                s["state"] = IDLE
+    return out_sig, out_level
+
+
 def sig_silver_bullet(c, ind, i):
-    sess = ind["sess"]
-    h = sess["hour"][i]
-    if h is None:
+    return ind["sb_signal"][i]
+
+
+def _silver_bullet_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_SB_UpdateSide: SL = sweepLevel -/+ 0.6xATR, TP a multiplo
+    # ATR FISSO dall'entry (2.8x, via _smc_tp in MQL5 - non un R-multiplo
+    # dello stop, la stessa distinzione gia' documentata per altre
+    # strategie SMC in questa sessione).
+    level = ind["sb_sweep_level"][i]
+    if level is None:
+        return None
+    if direction == 1:
+        return level - 0.6 * atr, entry + 2.8 * atr
+    return level + 0.6 * atr, entry - 2.8 * atr
+
+
+def _ob_series(candles, atr):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_OB_UpdateSide (MQL5
+    # reale, condivisa da ORDER_BLOCK e OB_MIT): un order block "vero" e'
+    # un impulso (body>=1.2xATR, 3-10 barre fa) che ROMPE uno swing di
+    # riferimento a 15 barre pre-impulso (BOS, non un impulso qualsiasi) -
+    # la zona di retest e' l'ultima candela di colore OPPOSTO prima
+    # dell'impulso (fino a 6 barre indietro, fallback l'impulso stesso se
+    # non trovata), NON il body dell'impulso come faceva il proxy
+    # precedente. Poi si aspetta un ritorno nella zona (fino a
+    # InpOB_MaxWaitBars=20 barre) con una candela di rejection - one-shot,
+    # la zona e' consumata al primo retest valido o alla scadenza/
+    # invalidazione. Precalcolato qui (come sb_signal) perche' la zona
+    # attiva ha memoria fra barre, cosa che le sig_*() stateless non
+    # supportano.
+    #
+    # Fedelta' PARZIALE dichiarata: il vero MQL5 applica anche
+    # NXS_SMCReactionOK (motore "reazione" globale che scansiona TUTTE le
+    # zone OB/FVG attive dell'EA, NXS_Reaction.mqh) come ulteriore filtro
+    # sopra la candela di rejection gia' richiesta qui - e' un sottosistema
+    # separato e ampio (multi-strategia, non specifico di OB), non
+    # riprodotto in questo giro. Stesso tipo di limite gia' accettato
+    # esplicitamente per NY_REVERSAL (M5 cross-TF).
+    SWING_LOOKBACK = 15   # InpOB_SwingLookback
+    MAX_WAIT = 20          # InpOB_MaxWaitBars
+    n = len(candles)
+    out_sig = [0] * n
+    st = {d: {"active": False, "lo": None, "hi": None, "bars_waited": 0} for d in (1, -1)}
+    for i in range(20, n):
+        a = atr[i]
+        if not a:
+            continue
+        for d in (1, -1):
+            s = st[d]
+            if not s["active"]:
+                for shift in range(3, 11):
+                    idx = i - (shift - 1)
+                    if idx - SWING_LOOKBACK < 0:
+                        continue
+                    cd = candles[idx]
+                    body = abs(cd["close"] - cd["open"])
+                    if body < 1.2 * a:
+                        continue
+                    right_color = (cd["close"] > cd["open"]) if d == 1 else (cd["close"] < cd["open"])
+                    if not right_color:
+                        continue
+                    window = candles[idx - SWING_LOOKBACK:idx]
+                    swing_ref = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                    bos = (cd["close"] > swing_ref) if d == 1 else (cd["close"] < swing_ref)
+                    if not bos:
+                        continue
+                    origin = cd
+                    for k in range(1, 7):
+                        idx2 = idx - k
+                        if idx2 < 0:
+                            break
+                        ck = candles[idx2]
+                        opposite = (ck["close"] < ck["open"]) if d == 1 else (ck["close"] > ck["open"])
+                        if opposite:
+                            origin = ck
+                            break
+                    s["lo"] = min(origin["open"], origin["close"])
+                    s["hi"] = max(origin["open"], origin["close"])
+                    s["active"], s["bars_waited"] = True, 0
+                    break
+                continue
+            s["bars_waited"] += 1
+            if s["bars_waited"] > MAX_WAIT:
+                s["active"] = False
+                continue
+            c1 = candles[i]["close"]
+            if (d == 1 and c1 < s["lo"]) or (d == -1 and c1 > s["hi"]):
+                s["active"] = False
+                continue
+            if s["hi"] is None or s["hi"] <= s["lo"]:
+                continue
+            lo_b, hi_b = candles[i]["low"], candles[i]["high"]
+            if hi_b < s["lo"] or lo_b > s["hi"]:
+                continue
+            o1 = candles[i]["open"]
+            rejection = (c1 > o1) if d == 1 else (c1 < o1)
+            if not rejection:
+                continue
+            out_sig[i] = d
+            s["active"] = False
+    return out_sig
+
+
+def _shbms_series(candles, sess, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_SHBMS_UpdateSide
+    # (SH_BMS_RTO, MQL5 reale - gia' riscritta come state machine nel
+    # codice MQL5 il 17/07, mai portata qui: il proxy Python usava
+    # sig_ob_mit, una logica di TUTT'ALTRA strategia). Sequenza reale:
+    # sweep di liquidita' (stesso rilevatore esteso PDH/PDL/Asia gia' usato
+    # da TURTLE_SOUP) -> entro InpSHBMS_MaxMSSBars=20 barre, un vero
+    # MSS/BOS (corpo>=0.8xATR che rompe lo swing pre-sweep a 15 barre) ->
+    # zona d'origine (ultima candela di colore opposto prima dell'MSS,
+    # fallback l'MSS stesso) -> attesa del primo ritorno nella zona (fino
+    # a InpSHBMS_MaxWaitBars=15 barre) = entry. Vincolo causale
+    # sweep<MSS<retest garantito per costruzione (si avanza di stato solo
+    # su barre chiuse successive, mai sullo stesso "tick").
+    SWING_LOOKBACK = 15   # InpSHBMS_SwingLookback
+    MAX_MSS_BARS = 20      # InpSHBMS_MaxMSSBars
+    MAX_WAIT = 15           # InpSHBMS_MaxWaitBars
+    DISP_BODY_ATR = 0.8    # InpSHBMS_DispBodyATR
+    IDLE, SWEPT, WAITING = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_ref = [None] * n
+    st = {d: {"state": IDLE, "bars_waited": 0, "sweep_level": None,
+              "swing_ref": None, "origin_lo": None, "origin_hi": None} for d in (1, -1)}
+
+    for i in range(16, n):
+        a = atr[i]
+        if not a:
+            continue
+        sw = _sweep_ext_at_raw(candles, sess, i, atr, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                if sw and sw["confirmed"] and sw["dir"] == d:
+                    window = candles[max(0, i - SWING_LOOKBACK):i]
+                    if not window:
+                        continue
+                    s["swing_ref"] = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                    s["sweep_level"] = sw["level"]
+                    s["state"], s["bars_waited"] = SWEPT, 0
+                continue
+            if s["state"] == SWEPT:
+                c1 = candles[i]["close"]
+                if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                    s["state"] = IDLE
+                    continue
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_MSS_BARS:
+                    s["state"] = IDLE
+                    continue
+                o1 = candles[i]["open"]
+                body1 = abs(c1 - o1)
+                if s["swing_ref"] is None:
+                    continue
+                mss = (c1 > s["swing_ref"] and body1 >= a * DISP_BODY_ATR) if d == 1 \
+                    else (c1 < s["swing_ref"] and body1 >= a * DISP_BODY_ATR)
+                if not mss:
+                    continue
+                origin = candles[i]
+                for k in range(1, 6):
+                    idx2 = i - k
+                    if idx2 < 0:
+                        break
+                    ck = candles[idx2]
+                    opposite = (ck["close"] < ck["open"]) if d == 1 else (ck["close"] > ck["open"])
+                    if opposite:
+                        origin = ck
+                        break
+                s["origin_lo"] = min(origin["open"], origin["close"])
+                s["origin_hi"] = max(origin["open"], origin["close"])
+                s["state"], s["bars_waited"] = WAITING, 0
+                continue
+            # WAITING_RETURN
+            s["bars_waited"] += 1
+            if s["bars_waited"] > MAX_WAIT:
+                s["state"] = IDLE
+                continue
+            c1 = candles[i]["close"]
+            if (d == 1 and c1 < s["sweep_level"]) or (d == -1 and c1 > s["sweep_level"]):
+                s["state"] = IDLE
+                continue
+            if s["origin_hi"] is None or s["origin_hi"] <= s["origin_lo"]:
+                continue
+            lo_b, hi_b = candles[i]["low"], candles[i]["high"]
+            if hi_b < s["origin_lo"] or lo_b > s["origin_hi"]:
+                continue
+            out_sig[i] = d
+            out_ref[i] = min(s["sweep_level"], s["origin_lo"]) if d == 1 else max(s["sweep_level"], s["origin_hi"])
+            s["state"] = IDLE
+    return out_sig, out_ref
+
+
+def sig_sh_bms_rto(c, ind, i):
+    return ind["shbms_signal"][i]
+
+
+def _shbms_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_SHBMS_UpdateSide: SL = min/max(sweepLevel, zona
+    # d'origine) -/+ 0.5xATR, TP a multiplo ATR FISSO (2.6x, via _smc_tp -
+    # non un R-multiplo dello stop).
+    ref = ind["shbms_ref"][i]
+    if ref is None:
+        return None
+    if direction == 1:
+        return ref - 0.5 * atr, entry + 2.6 * atr
+    return ref + 0.5 * atr, entry - 2.6 * atr
+
+
+def sig_sms_bms_rto(c, ind, i):
+    # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SMS_BMS_RTO
+    # (MQL5 reale): a differenza di SH_BMS_RTO, NON e' una state machine
+    # multi-barra - e' un controllo composito sulla STESSA barra: failure
+    # swing (HL/LH: gli ultimi 10 bar non fanno un nuovo estremo rispetto
+    # ai 20 precedenti) + CHoCH strutturale nella direzione opposta al
+    # failure swing + candela di rejection + prezzo tornato nella meta'
+    # giusta del range [hi_recent..lo_recent]. Il proxy precedente
+    # condivideva sig_ob_mit (sweep+BOS generico) - logica completamente
+    # diversa da quella reale.
+    atr = ind["atr"][i]
+    if not atr or i < 30:
         return 0
-    killzone = (10 <= h < 11) or (14 <= h < 15)  # London KZ / NY KZ, GMT
-    if not killzone:
-        return 0
-    sw = _sweep_ext_at(c, sess, i)
-    if not sw or not sw["confirmed"]:
-        return 0
-    return sw["dir"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body_abs = abs(c1 - o1)
+    rejection_bull = c1 > o1 and body_abs > atr * 0.3
+    rejection_bear = c1 < o1 and body_abs > atr * 0.3
+    win_a = c[i - 9:i + 1]      # shift 1..10 (piu' recente)
+    win_b = c[i - 29:i - 9]     # shift 11..30 (precedente)
+    hi_recent, lo_recent = max(x["high"] for x in win_a), min(x["low"] for x in win_a)
+    hi_older, lo_older = max(x["high"] for x in win_b), min(x["low"] for x in win_b)
+    failure_low = lo_recent > lo_older    # HL = fallito un nuovo minimo
+    failure_high = hi_recent < hi_older   # LH = fallito un nuovo massimo
+    mid = (hi_recent + lo_recent) / 2
+    choch_up, choch_down = ind["choch_int"][1], ind["choch_int"][2]
+    bid = c1
+    if failure_low and choch_up[i] and rejection_bull and bid <= mid:
+        return 1
+    if failure_high and choch_down[i] and rejection_bear and bid >= mid:
+        return -1
+    return 0
+
+
+def _sms_bms_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele a NXS_Strat_SMS_BMS_RTO: SL dall'estremo recente (10 barre)
+    # -/+ 0.5xATR, TP a multiplo ATR FISSO (2.6x).
+    win_a = c[i - 9:i + 1]
+    if direction == 1:
+        lo_recent = min(x["low"] for x in win_a)
+        return lo_recent - 0.5 * atr, entry + 2.6 * atr
+    hi_recent = max(x["high"] for x in win_a)
+    return hi_recent + 0.5 * atr, entry - 2.6 * atr
 
 
 # --------------------------------------------------------------------------- #
@@ -1565,6 +2544,33 @@ def sig_scalp_range_brk(c, ind, i, n=12):
     return 0
 
 
+# 04/08 - SL/TP strutturale FEDELE (non un multiplo ATR libero) per le
+# strategie dove la vera NXS_Strat_* MQL5 lo calcola da livelli di prezzo
+# (range asiatico, sweep level, ...) invece che da atr_sl/atr_tp - verificato
+# riga-per-riga durante l'audit di fedelta' del 04/08. Applicato SEMPRE
+# (bypassa completamente sl/tp generico), non opt-in: e' cosi' che la
+# strategia funziona davvero, non un'ipotesi da testare.
+STRATEGY_SLTP_ALWAYS = {
+    "AMD_CONT": _amd_cont_sl_tp,
+    "SILVER_BULLET": _silver_bullet_sl_tp,
+    "WEEKLY_EXP": _weekly_exp_sl_tp,
+    "IFVG": _ifvg_sl_tp,
+    "TURTLE_SOUP": _turtle_soup_sl_tp,
+    "FVG_MIT": _fvg_mit_sl_tp,
+    "AMD_REVERSAL": _amd_reversal_sl_tp,
+    "JUDAS_SWING": _judas_swing_sl_tp,
+    "LDN_REVERSAL": _ldn_reversal_sl_tp,
+    "NY_REVERSAL": _ny_reversal_sl_tp,
+    "SH_BMS_RTO": _shbms_sl_tp,
+    "SMS_BMS_RTO": _sms_bms_sl_tp,
+    "PO3": _po3_sl_tp,
+}
+# ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
+# chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una
+# formula strutturale propria (a differenza delle altre strategie in questo
+# dict).
+
+
 # Strategie con logica Python reale (le altre usano i risultati reali importati)
 STRATEGIES = {
     "SCALP_EMA": sig_scalp_ema,
@@ -1580,7 +2586,7 @@ STRATEGIES = {
     "BB_SQUEEZE": sig_bb_squeeze,
     "TSI": sig_tsi,
     "ICHIMOKU": sig_ichimoku,
-    "LONDON_BO": sig_breakout,        # breakout-based proxy
+    "LONDON_BO": sig_london_bo,        # 04/08: fedele a NXS_Strat_LondonBO (prima proxy generico)
     "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
     # --- strutturali / SMC (nuove, v2.2.8) ---
     "SAR": sig_sar,
@@ -1596,11 +2602,15 @@ STRATEGIES = {
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
-    "CISD": sig_cisd,
-    "WEEKLY_EXP": sig_breakout,       # range expansion proxy
+    # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta
+    # accettato ovunque tramite RESEARCH_ALIASES, ma non e' piu' l'unica chiave:
+    # chi iterava STRATEGIES e confrontava con il registro concludeva che
+    # THREE_BAR_DELIVERY_BREAK non avesse implementazione research. Ce l'ha.
+    "THREE_BAR_DELIVERY_BREAK": sig_cisd,
+    "WEEKLY_EXP": sig_weekly_exp,      # 04/08: fedele a NXS_Strat_WeeklyRangeExp (prima condivideva sig_breakout con LONDON_BO)
     "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
-    "SH_BMS_RTO": sig_ob_mit,         # sweep+BOS+return proxy
-    "SMS_BMS_RTO": sig_ob_mit,        # proxy
+    "SH_BMS_RTO": sig_sh_bms_rto,      # 04/08: fedele a NXS_SHBMS_UpdateSide (prima proxy sig_ob_mit)
+    "SMS_BMS_RTO": sig_sms_bms_rto,    # 04/08: fedele a NXS_Strat_SMS_BMS_RTO (prima proxy sig_ob_mit)
     # --- strategie a sessione (16/07) - richiedono candele intraday reali ---
     "AMD_CONT": sig_amd_cont,
     "AMD_REVERSAL": sig_amd_reversal,
@@ -1610,6 +2620,17 @@ STRATEGIES = {
     "PO3": sig_po3,
     "SILVER_BULLET": sig_silver_bullet,
 }
+
+# Fase A / MM-08 — retrocompatibilita' esplicita degli id storici.
+# Nessun id viene riscritto senza questa mappa: un chiamante che passa "CISD"
+# continua a funzionare, e la chiave primaria resta quella canonica.
+RESEARCH_ALIASES = {"CISD": "THREE_BAR_DELIVERY_BREAK"}
+
+
+def resolve_research_key(name: str) -> str:
+    """Id storico -> chiave canonica di STRATEGIES. Sconosciuto: invariato."""
+    return RESEARCH_ALIASES.get(name, name)
+
 
 # Canonical live list. Keep the legacy alias temporarily for API compatibility.
 STRAT_NAMES = list(LIVE_STRATEGY_IDS)
@@ -1625,7 +2646,11 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  htf_filter=False, trend_period=50,
                  breakeven_r=0.0, trailing_atr=0.0, cooldown_bars=0,
                  use_dynamic_tp=False, dynamic_tp_pick="nearest",
-                 confirm_bars=0, loss_cooldown_bars=0):
+                 confirm_bars=0, loss_cooldown_bars=0,
+                 spread_price=0.0, commission_r=0.0, slippage_price=0.0,
+                 strategy_profiles=None, bar_range=None, session_filter=None,
+                 pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0,
+                 allow_flip=False):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -1639,10 +2664,93 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # loss_cooldown_bars: cooldown applicato SOLO dopo un'uscita in perdita
     # vera (pnl<0) - un'uscita a breakeven/trailing (pnl>=0) non blocca il
     # rientro immediato, indipendente dal cooldown_bars generico sopra.
+    # 31/07 - due leve di realismo mai presenti prima (11_BACKTEST_CAPABILITY_MATRIX.md
+    # elencava "spread/commission/slippage: Missing" come difetto): a
+    # spread_price=0/commission_r=0 (default, invariato) il comportamento e'
+    # identico a prima.
+    # spread_price: spread in unita' di prezzo grezzo (es. 0.30 per XAUUSD a
+    # $0.30) applicato UNA VOLTA per trade round-trip (convenzione
+    # semplificata: costa quanto attraversare bid/ask una volta, non due
+    # meta' separate su entry+exit) - convertito in R dividendo per
+    # risk_dist del trade specifico, cosi' pesa di piu' sugli SL stretti
+    # (dove infatti pesa di piu' anche nella realta').
+    # commission_r: costo fisso in multipli di R per round-trip, alternativa
+    # semplice a una % sul nozionale - questo motore lavora in R-multipli
+    # astratti (risk_money), non in lotti/nozionale reali, quindi una
+    # percentuale di commissione avrebbe bisogno di un valore-lotto che qui
+    # non esiste; un costo fisso in R e' l'approssimazione onesta compatibile
+    # con l'astrazione esistente, non una simulazione di commissione vera.
+    # slippage_price: movimento avverso aggiuntivo (unita' di prezzo grezzo)
+    # su ogni fill "a mercato" - APPLICATO all'entry (sempre a mercato) e
+    # all'uscita SL/TIME (anch'esse a mercato, quindi soggette a slittare),
+    # MAI alla TP (ordine limite: si presume riempito al prezzo richiesto o
+    # meglio, come nella prassi broker reale). Convertito in R come spread.
+    # 04/08 (12) - pyramid_max_legs/pyramid_r/pyramid_risk_mult: piramidazione
+    # SUL PROFITTO (Fase 7, richiesta esplicita dall'utente - "voglio anche
+    # in esposizione sul profitto"). Default pyramid_max_legs=0 (disattivo,
+    # comportamento IDENTICO a prima - una sola gamba, stesso pnl/r di
+    # sempre). Se >0: ogni volta che il prezzo avanza di pyramid_r x R
+    # (sul rischio ORIGINALE, la stessa "riga" usata per MAE/MFE) oltre
+    # l'ultima gamba aggiunta, si apre una nuova gamba (fino a
+    # pyramid_max_legs extra), ciascuna con la propria size (equity al
+    # momento x risk_pct x pyramid_risk_mult) e il proprio rischio
+    # (distanza dal SUO entry allo SL CORRENTE nel momento in cui viene
+    # aggiunta - se lo SL e' gia' stato spostato a breakeven/trailing,
+    # quella gamba puo' avere un rischio molto piu' piccolo, o quasi nullo,
+    # della prima). Tutte le gambe condividono lo stesso SL/TP della
+    # posizione originale e si chiudono insieme allo stesso evento di
+    # uscita - non e' un motore multi-posizione indipendente, e' size
+    # variabile sulla STESSA idea di trade. Nessuna esclusione hard-coded
+    # per strategia: e' un meccanismo di gestione posizione generico,
+    # indipendente da come nasce il segnale - su strategie con TP stretto
+    # (es. SCALP_*, molte SLTP strutturali con target vicino) semplicemente
+    # non scatta mai perche' il prezzo esce prima di raggiungere il primo
+    # livello di piramide, non serve una lista nera per "non applicarlo
+    # dove non ha senso": la meccanica stessa lo esclude quando non c'e'
+    # spazio.
+    # 04/08 (19) - allow_flip: risposta diretta all'Execution Audit esteso
+    # a 40 strategie - una posizione aperta blocca circa 1/3 dei segnali
+    # nuovi genuini (per alcune strategie da inversione, come TURTLE_SOUP,
+    # 3 su 4) perche' sono in direzione OPPOSTA alla posizione aperta - la
+    # piramidazione non aiuta li' (aggiunge size nella STESSA direzione).
+    # Default False (comportamento identico a prima, verificato). Se True:
+    # quando arriva un segnale fresco in direzione OPPOSTA a una posizione
+    # aperta (nessun altro hit SL/TP/TIME su quella barra), la posizione
+    # corrente si chiude a mercato (stesso costo di uno SL/TIME, non un
+    # ordine limite) e se ne apre subito una nuova nella nuova direzione,
+    # sulla STESSA barra - un "flip", non due eventi separati. Il segnale
+    # che genera il flip passa dagli STESSI filtri (confirm_bars/
+    # htf_filter/session_filter) di un ingresso normale, non e' un
+    # ingresso "gratis".
+    # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
+    # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
+    # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
+    # proprio profilo ottimizzato (find_best_profiles.py). Senza questo, un
+    # test multi-strategia applicava lo stesso sl/tp/be/trail a TUTTE
+    # indipendentemente da chi genera il segnale - non e' come funziona l'EA
+    # reale (NXS_DefaultSLTP e' gia' keyed by stratName in MQL5). Strategia
+    # assente dal dict o strategy_profiles=None -> usa i parametri globali
+    # (comportamento invariato).
     candles, src = _fetch_real(symbol, timeframe, bars)
+    # 04/08 - bar_range: (start_frac, end_frac) su [0,1], per isolare una
+    # finestra temporale CONTIGUA della stessa serie (es. (0.0,0.6)=prime 60%
+    # "in-sample", (0.6,1.0)=ultime 40% "out-of-sample", MAI viste durante
+    # Fase 1-3 - NQROS Fase 4). None (default) = comportamento invariato,
+    # tutta la serie disponibile. Gli indicatori (EMA/ATR/...) si ri-scaldano
+    # dall'inizio della finestra tagliata, non hanno memoria del "prima" -
+    # tradeoff standard del walk-forward testing, non un bug.
+    if bar_range is not None:
+        n = len(candles)
+        i0 = max(0, int(n * bar_range[0]))
+        i1 = min(n, int(n * bar_range[1]))
+        candles = candles[i0:i1]
     ind = _prep(candles)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = list(require_strategies(strat_list, research=True))
+    # Un chiamante puo' passare id storico e id canonico della stessa strategia
+    # (es. "CISD" e "THREE_BAR_DELIVERY_BREAK"): risolti alla stessa chiave, la
+    # strategia girerebbe due volte e comparirebbe due volte nei risultati.
+    strat_list = list(dict.fromkeys(resolve_research_key(s) for s in strat_list))
     unavailable = [s for s in strat_list if s not in STRATEGIES]
     if unavailable:
         raise ValueError(f"research engine implementation missing: {', '.join(unavailable)}")
@@ -1653,6 +2761,72 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         if idx < p - 1:
             return None
         return sum(closes[idx - p + 1: idx + 1]) / p
+
+    def _find_signal(idx, price):
+        # Fattorizzato da quello che prima era inline solo nel ramo
+        # "nessuna posizione aperta" (04/08 (19), per allow_flip: lo
+        # stesso identico scan/filtri serve anche per decidere se un
+        # segnale opposto sblocca un flip mentre una posizione e' aperta -
+        # un segnale di flip passa dagli STESSI filtri di un ingresso
+        # normale, non e' una scorciatoia.
+        atr_i = ind["atr"][idx]
+        if not atr_i or atr_i <= 0:
+            return 0, None, atr_i
+        sig, who = 0, None
+        for s in strat_list:
+            v = STRATEGIES[s](candles, ind, idx)
+            if v == 0:
+                continue
+            if confirm_bars > 0:
+                ok = True
+                for k in range(1, confirm_bars + 1):
+                    if idx - k < 0 or STRATEGIES[s](candles, ind, idx - k) != v:
+                        ok = False
+                        break
+                if not ok:
+                    continue
+            sig, who = v, s
+            break
+        if sig != 0 and htf_filter:
+            sma = _sma(idx, int(trend_period))
+            if sma is not None and ((sig == 1 and price < sma) or (sig == -1 and price > sma)):
+                sig = 0
+        if sig != 0 and session_filter is not None:
+            cur_sess = ind["sess"]["session"][idx]
+            if cur_sess not in session_filter:
+                sig = 0
+        return sig, who, atr_i
+
+    def _open_position(idx, price, sig, who, atr_i):
+        prof = (strategy_profiles or {}).get(who, {})
+        eff_sl = prof.get("atr_sl", atr_sl)
+        eff_tp = prof.get("atr_tp", atr_tp)
+        risk_money = equity * (risk_pct / 100.0)
+        sl = price - sig * atr_i * eff_sl
+        tp = price + sig * atr_i * eff_tp
+        sltp_fn = STRATEGY_SLTP_ALWAYS.get(who)
+        if sltp_fn:
+            dyn = sltp_fn(candles, ind, idx, sig, price, atr_i)
+            if dyn is not None:
+                sl, tp = dyn
+        target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
+        if not target_fn and use_dynamic_tp:
+            target_fn = STRATEGY_TARGETS_OPTIN.get(who)
+        if target_fn and not sltp_fn:
+            dyn_tp = target_fn(candles, ind, idx, sig, price, atr_i,
+                                sl_mult=eff_sl, pick=dynamic_tp_pick)
+            if dyn_tp is not None:
+                tp = dyn_tp
+        risk_dist0 = abs(price - sl)
+        return {"dir": sig, "entry": price, "sl": sl, "tp": tp, "open_i": idx,
+                "risk_money": risk_money, "strat": who,
+                "risk_dist": risk_dist0, "mae_r": 0.0, "mfe_r": 0.0,
+                "breakeven_r": prof.get("breakeven_r", breakeven_r),
+                "trailing_atr": prof.get("trailing_atr", trailing_atr),
+                "legs": [{"entry": price, "risk_money": risk_money, "risk_dist": risk_dist0}],
+                "next_pyramid_level": (
+                    price + sig * pyramid_r * risk_dist0
+                    if pyramid_max_legs > 0 and risk_dist0 > 0 else None)}
 
     equity = start_equity
     curve = [{"i": 0, "equity": round(equity, 2),
@@ -1668,22 +2842,56 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         if pos:
             hi, lo = candles[i]["high"], candles[i]["low"]
             risk_dist = pos["risk_dist"]
+            # --- MAE/MFE: massima escursione avversa/favorevole in R, sul
+            # rischio ORIGINALE (non su uno SL spostato da BE/trailing).
+            # Nota (31/07): il MAE da solo NON distingue "stop troppo
+            # stretto" da "segnale sbagliato" per i trade usciti in SL - e'
+            # quasi sempre >= 1R per costruzione. E' il MFE dei perdenti
+            # (quanto erano andati a favore prima di girare) il segnale
+            # diagnostico utile - vedi _metrics().
+            if risk_dist > 0:
+                adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
+                favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
+                pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
+            # --- PYRAMIDING SUL PROFITTO (opt-in, default off - vedi nota
+            # sui parametri sopra): puo' aggiungere piu' di una gamba sulla
+            # stessa barra se l'escursione hi/lo la attraversa. ---
+            if pos["next_pyramid_level"] is not None:
+                extreme = hi if pos["dir"] == 1 else lo
+                while len(pos["legs"]) - 1 < pyramid_max_legs and (
+                        (pos["dir"] == 1 and extreme >= pos["next_pyramid_level"]) or
+                        (pos["dir"] == -1 and extreme <= pos["next_pyramid_level"])):
+                    leg_entry = pos["next_pyramid_level"]
+                    leg_risk_dist = abs(leg_entry - pos["sl"])
+                    if leg_risk_dist <= 0:
+                        break
+                    pos["legs"].append({
+                        "entry": leg_entry,
+                        "risk_money": equity * (risk_pct / 100.0) * pyramid_risk_mult,
+                        "risk_dist": leg_risk_dist,
+                    })
+                    pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
             # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
-            if breakeven_r > 0 and risk_dist > 0:
+            # (04/08: usa l'override per-strategia se presente, altrimenti il
+            # parametro globale - vedi nota strategy_profiles sopra)
+            pos_be = pos.get("breakeven_r", breakeven_r)
+            pos_trail = pos.get("trailing_atr", trailing_atr)
+            if pos_be > 0 and risk_dist > 0:
                 prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
-                if prog >= breakeven_r * risk_dist:
+                if prog >= pos_be * risk_dist:
                     if pos["dir"] == 1:
                         pos["sl"] = max(pos["sl"], pos["entry"])
                     else:
                         pos["sl"] = min(pos["sl"], pos["entry"])
             # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
-            if trailing_atr > 0:
+            if pos_trail > 0:
                 a = ind["atr"][i] or 0
                 if a > 0:
                     if pos["dir"] == 1:
-                        pos["sl"] = max(pos["sl"], px - trailing_atr * a)
+                        pos["sl"] = max(pos["sl"], px - pos_trail * a)
                     else:
-                        pos["sl"] = min(pos["sl"], px + trailing_atr * a)
+                        pos["sl"] = min(pos["sl"], px + pos_trail * a)
             hit = None
             if pos["dir"] == 1:
                 if lo <= pos["sl"]:
@@ -1697,19 +2905,55 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     hit = ("TP", pos["tp"])
             if not hit and (i - pos["open_i"]) >= max_hold:
                 hit = ("TIME", px)
+            # --- FLIP (opt-in, default off - vedi nota sui parametri
+            # sopra): nessun altro hit su questa barra, un segnale fresco
+            # in direzione OPPOSTA chiude la posizione a mercato e ne apre
+            # subito una nuova, sulla STESSA barra. ---
+            flip_sig = flip_who = flip_atr = None
+            if not hit and allow_flip:
+                fsig, fwho, fatr = _find_signal(i, px)
+                if fsig != 0 and fsig != pos["dir"]:
+                    hit = ("FLIP", px)
+                    flip_sig, flip_who, flip_atr = fsig, fwho, fatr
             if hit:
                 reason, exitpx = hit
-                # R sul RISCHIO ORIGINALE (lo SL puo' essere stato spostato a BE/trail).
-                rd = pos["risk_dist"] if pos["risk_dist"] > 0 else 1e-9
-                r_mult = ((exitpx - pos["entry"]) / rd) if pos["dir"] == 1 \
-                    else ((pos["entry"] - exitpx) / rd)
-                pnl = round(r_mult * pos["risk_money"], 2)
+                # Somma su tutte le gambe (1 sola se pyramid_max_legs=0 -
+                # stesso identico risultato di prima, bit per bit: legs
+                # contiene un solo elemento uguale a entry/risk_money/
+                # risk_dist originali). Ogni gamba ha il proprio rischio
+                # (congelato al momento in cui e' stata aperta) e paga i
+                # costi di realismo separatamente sul SUO risk_dist -
+                # stessa convenzione gia' in uso ("pesa di piu' su SL
+                # stretti"), qui applicata gamba per gamba perche' ognuna
+                # e' a tutti gli effetti un fill separato.
+                total_pnl = 0.0
+                total_gross_pnl = 0.0
+                total_risk_money = 0.0
+                for leg in pos["legs"]:
+                    rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
+                    r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
+                        else ((leg["entry"] - exitpx) / rd)
+                    spread_r = (spread_price / rd) if spread_price > 0 else 0.0
+                    slip_r = 0.0
+                    if slippage_price > 0:
+                        slip_r = slippage_price / rd
+                        if reason in ("SL", "TIME", "FLIP"):
+                            slip_r += slippage_price / rd
+                    r_mult_net = r_mult - spread_r - commission_r - slip_r
+                    total_pnl += r_mult_net * leg["risk_money"]
+                    total_gross_pnl += r_mult * leg["risk_money"]
+                    total_risk_money += leg["risk_money"]
+                pnl = round(total_pnl, 2)
                 equity += pnl
+                r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                r_gross_blended = (total_gross_pnl / total_risk_money) if total_risk_money > 0 else 0.0
                 trades.append({
                     "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
                     "side": "BUY" if pos["dir"] == 1 else "SELL",
                     "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                    "pnl": pnl, "r": round(r_mult, 2), "reason": reason,
+                    "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
+                    "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
+                    "reason": reason, "legs": len(pos["legs"]),
                     "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
                 })
                 curve.append({"i": i, "equity": round(equity, 2),
@@ -1718,6 +2962,12 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 last_close_i = i
                 if pnl < 0:
                     last_loss_i = i
+                if reason == "FLIP" and flip_sig:
+                    # Apre subito la nuova posizione sulla direzione
+                    # opposta, sulla STESSA barra - stessa logica di
+                    # apertura di un ingresso normale (_open_position),
+                    # nessuna scorciatoia.
+                    pos = _open_position(i, px, flip_sig, flip_who, flip_atr)
             continue
         # --- COOLDOWN: barre minime tra un trade e il successivo ---
         if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
@@ -1725,50 +2975,13 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         # --- LOSS COOLDOWN: barre minime SOLO dopo una perdita vera (pnl<0) ---
         if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
             continue
-        # nuovo segnale
-        atr = ind["atr"][i]
-        if not atr or atr <= 0:
+        # nuovo segnale (04/08 (19): fattorizzato in _find_signal/
+        # _open_position, stessa logica di prima, riusata anche dal flip)
+        sig, who, atr = _find_signal(i, px)
+        if atr is None or atr <= 0:
             continue
-        sig, who = 0, None
-        for s in strat_list:
-            v = STRATEGIES[s](candles, ind, i)
-            if v == 0:
-                continue
-            # --- CONFIRM: il segnale deve reggere per N barre precedenti
-            # consecutive nella stessa direzione prima di essere preso ---
-            if confirm_bars > 0:
-                ok = True
-                for k in range(1, confirm_bars + 1):
-                    if i - k < 0 or STRATEGIES[s](candles, ind, i - k) != v:
-                        ok = False
-                        break
-                if not ok:
-                    continue
-            sig, who = v, s
-            break
-        # --- HTF FILTER: prendi solo nel senso del trend (close vs SMA) ---
-        if sig != 0 and htf_filter:
-            sma = _sma(i, int(trend_period))
-            if sma is not None:
-                if (sig == 1 and px < sma) or (sig == -1 and px > sma):
-                    sig = 0
         if sig != 0:
-            risk_money = equity * (risk_pct / 100.0)
-            sl = px - sig * atr * atr_sl
-            tp = px + sig * atr * atr_tp
-            # STRATEGY_TARGETS_ALWAYS: fedelta' al vero calcolo MQL5, sempre attivo.
-            target_fn = STRATEGY_TARGETS_ALWAYS.get(who)
-            # STRATEGY_TARGETS_OPTIN: ipotesi non presente in MQL5, solo se richiesta.
-            if not target_fn and use_dynamic_tp:
-                target_fn = STRATEGY_TARGETS_OPTIN.get(who)
-            if target_fn:
-                dyn_tp = target_fn(candles, ind, i, sig, px, atr,
-                                    sl_mult=atr_sl, pick=dynamic_tp_pick)
-                if dyn_tp is not None:
-                    tp = dyn_tp
-            pos = {"dir": sig, "entry": px, "sl": sl, "tp": tp, "open_i": i,
-                   "risk_money": risk_money, "strat": who,
-                   "risk_dist": abs(px - sl)}
+            pos = _open_position(i, px, sig, who, atr)
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
@@ -1794,6 +3007,19 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         sd = math.sqrt(var)
         sharpe = mean / sd if sd > 1e-9 else 0.0
     n = len(trades)
+    # 31/07 - corretto un mio errore di analisi durante il primo run reale di
+    # prova: il MAE di un trade uscito in SL e' quasi tautologicamente >= 1R
+    # (per finire in perdita lo stop DEVE essere stato toccato, cioe' il
+    # prezzo E' andato contro di ~1R per definizione) - "vicino al MAE" non
+    # distingue nulla, viene ~100% su qualunque strategia. Il segnale utile
+    # e' il MFE dei perdenti: quanto il prezzo era andato A FAVORE prima di
+    # girare e stoppare. MFE alto (vicino al target) = trade quasi vincente,
+    # rigirato - un trailing/TP piu' vicino potrebbe aiutare. MFE vicino a 0
+    # = il trade era sbagliato fin dall'inizio, nessun aggiustamento di
+    # uscita lo salva.
+    loss_mfes = [t["mfe_r"] for t in losses if "mfe_r" in t]
+    avg_loss_mfe_r = round(sum(loss_mfes) / len(loss_mfes), 2) if loss_mfes else None
+    near_miss_losses = sum(1 for m in loss_mfes if m >= 0.5)   # arrivato a meta' strada verso un 1:1 prima di girare
     return {
         "demo": False, "data_source": src, "symbol": symbol, "timeframe": tf,
         "strategies": strat_list,
@@ -1808,21 +3034,38 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         "expectancy_r": round(sum(t["r"] for t in trades) / n, 3) if n else 0,
         "max_dd_pct": round(maxdd, 2),
         "sharpe": round(sharpe, 2),
+        "avg_loss_mfe_r": avg_loss_mfe_r,
+        "near_miss_loss_pct": round(near_miss_losses / len(losses) * 100, 1) if losses else None,
         "equity_curve": curve,
         "trade_list": trades[-200:],
     }
 
 
-def optimize(symbol="XAUUSD", strategy="ADX_RSI", **kw):
+def optimize(symbol="XAUUSD", strategy="ADX_RSI", sweep_management=False, **kw):
+    # 31/07 - griglia SL/TP invariata di default (stesso comportamento di
+    # prima). sweep_management=True aggiunge breakeven_r/trailing_atr, gia'
+    # accettati da run_backtest ma mai spazzolati qui - 3x3x3x3=81 run invece
+    # di 9, usare con giudizio (ogni run e' cache-friendly sullo stesso feed,
+    # ma comunque piu' lento).
+    be_grid = (0.0, 1.0, 1.5) if sweep_management else (0.0,)
+    trail_grid = (0.0, 1.5, 2.5) if sweep_management else (0.0,)
     results = []
     for sl in (1.0, 1.5, 2.0):
         for tp in (2.0, 3.0, 4.0):
-            r = run_backtest(symbol=symbol, strategy=strategy, atr_sl=sl, atr_tp=tp)
-            results.append({"atr_sl": sl, "atr_tp": tp, "profit_factor": r["profit_factor"],
-                            "net_pnl": r["net_pnl"], "win_rate": r["win_rate"],
-                            "max_dd_pct": r["max_dd_pct"], "trades": r["trades"]})
+            for be in be_grid:
+                for trail in trail_grid:
+                    r = run_backtest(symbol=symbol, strategy=strategy, atr_sl=sl, atr_tp=tp,
+                                     breakeven_r=be, trailing_atr=trail, **kw)
+                    row = {"atr_sl": sl, "atr_tp": tp, "profit_factor": r["profit_factor"],
+                           "net_pnl": r["net_pnl"], "win_rate": r["win_rate"],
+                           "max_dd_pct": r["max_dd_pct"], "trades": r["trades"]}
+                    if sweep_management:
+                        row["breakeven_r"] = be
+                        row["trailing_atr"] = trail
+                    results.append(row)
     ranked = sorted(results, key=lambda x: (x["profit_factor"] or 0), reverse=True)
     return {"demo": False, "symbol": symbol, "strategy": strategy,
+            "sweep_management": sweep_management,
             "results": ranked, "best": ranked[0] if ranked else None}
 
 
