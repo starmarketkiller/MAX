@@ -2706,7 +2706,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0,
                  allow_flip=False,
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
-                 grid_regime_filter=True):
+                 grid_regime_filter=True, max_per_dir=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -2802,6 +2802,24 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # gia' esistente, la granularita' e' la barra e tutte le gambe
     # condividono lo stesso SL/TP e si chiudono insieme - stessa
     # semplificazione gia' accettata per il pyramid, non nuova.
+    # 06/08 - max_per_dir: porting del cap InpMaxPerDirTF (NXS_Execution.mqh,
+    # v2.3.4 SETUP MATRIX) - il motore permetteva SOLO una posizione totale
+    # alla volta, indipendentemente dalla strategia, mentre l'EA reale
+    # limita per DIREZIONE (il "per timeframe" del nome collassa a 1 qui: un
+    # run lavora gia' su un solo timeframe). Trovato con
+    # debug_all_strategies.py: per strategie a segnale "sempre acceso"
+    # (MACD, SAR, ADX_RSI - la condizione resta vera per decine/centinaia di
+    # barre consecutive, VERIFICATO identico nel vero MQL5 - NXS_Strat_MACD/
+    # NXS_Strat_SAR hanno la stessa identica logica a stato, non e' un bug
+    # di formula) l'86-89% dei segnali grezzi veniva scartato dal limite a 1
+    # posizione: un campionamento quasi arbitrario di QUANDO capitava che
+    # l'unica posizione si chiudesse, non una misura della qualita' del
+    # segnale. Default None = comportamento IDENTICO a prima (mai piu' di
+    # una posizione totale, invariato bit-per-bit - percorso di codice
+    # separato sotto, non un caso limite del nuovo). Se impostato (>=1):
+    # fino a max_per_dir posizioni indipendenti PER DIREZIONE (BUY e SELL
+    # contano separatamente, come sameDirTF nell'MQL5), ognuna col proprio
+    # SL/TP/gambe pyramid/grid - non condividono piu' un unico "pos".
     # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
     # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
     # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
@@ -2920,181 +2938,317 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     last_close_i = -10 ** 9   # per il cooldown
     last_loss_i = -10 ** 9    # per il loss_cooldown_bars (solo perdite vere)
 
-    for i in range(2, len(candles)):
-        px = candles[i]["close"]
-        # gestione posizione aperta
-        if pos:
-            hi, lo = candles[i]["high"], candles[i]["low"]
-            risk_dist = pos["risk_dist"]
-            # --- MAE/MFE: massima escursione avversa/favorevole in R, sul
-            # rischio ORIGINALE (non su uno SL spostato da BE/trailing).
-            # Nota (31/07): il MAE da solo NON distingue "stop troppo
-            # stretto" da "segnale sbagliato" per i trade usciti in SL - e'
-            # quasi sempre >= 1R per costruzione. E' il MFE dei perdenti
-            # (quanto erano andati a favore prima di girare) il segnale
-            # diagnostico utile - vedi _metrics().
-            if risk_dist > 0:
-                adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
-                favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
-                pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
-                pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
-            # --- PYRAMIDING SUL PROFITTO (opt-in, default off - vedi nota
-            # sui parametri sopra): puo' aggiungere piu' di una gamba sulla
-            # stessa barra se l'escursione hi/lo la attraversa. ---
-            if pos["next_pyramid_level"] is not None:
-                extreme = hi if pos["dir"] == 1 else lo
-                while len(pos["legs"]) - 1 < pyramid_max_legs and (
-                        (pos["dir"] == 1 and extreme >= pos["next_pyramid_level"]) or
-                        (pos["dir"] == -1 and extreme <= pos["next_pyramid_level"])):
-                    leg_entry = pos["next_pyramid_level"]
-                    leg_risk_dist = abs(leg_entry - pos["sl"])
-                    if leg_risk_dist <= 0:
-                        break
-                    pos["legs"].append({
-                        "entry": leg_entry,
-                        "risk_money": equity * (risk_pct / 100.0) * pyramid_risk_mult,
-                        "risk_dist": leg_risk_dist,
-                    })
-                    pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
-            # --- GRID RECOVERY (opt-in, default off - porting di
-            # NXS_ManageGrid, vedi nota sui parametri sopra): aggiunge una
-            # gamba nella stessa direzione quando il prezzo si muove CONTRO
-            # la posizione di grid_step_atr x ATR CORRENTE oltre l'ultimo
-            # livello, gate di regime opzionale (STRONG_TREND/WEAK_TREND,
-            # come InpEnableGrid dell'MQL5 reale). Al massimo una gamba per
-            # barra (granularita' del motore, non per-tick come l'OnTimer
-            # MQL5) - vedi nota di fedelta' dichiarata sopra. ---
-            if pos["next_grid_level"] is not None and pos["grid_legs_added"] < grid_max_legs:
-                adverse_extreme = lo if pos["dir"] == 1 else hi
-                triggered = ((pos["dir"] == 1 and adverse_extreme <= pos["next_grid_level"]) or
-                            (pos["dir"] == -1 and adverse_extreme >= pos["next_grid_level"]))
-                regime_ok = (not grid_regime_filter or
-                            ind["regime"][i] in (_REGIME_STRONG_TREND, _REGIME_WEAK_TREND))
-                if triggered and regime_ok:
-                    leg_entry = pos["next_grid_level"]
-                    leg_risk_dist = abs(leg_entry - pos["sl"])
-                    core_risk_money = pos["legs"][0]["risk_money"]
-                    leg_risk_money = min(equity * (risk_pct / 100.0) * grid_risk_mult,
-                                        core_risk_money)
-                    if leg_risk_dist > 0 and leg_risk_money > 0:
+    if max_per_dir is None:
+        for i in range(2, len(candles)):
+            px = candles[i]["close"]
+            # gestione posizione aperta
+            if pos:
+                hi, lo = candles[i]["high"], candles[i]["low"]
+                risk_dist = pos["risk_dist"]
+                # --- MAE/MFE: massima escursione avversa/favorevole in R, sul
+                # rischio ORIGINALE (non su uno SL spostato da BE/trailing).
+                # Nota (31/07): il MAE da solo NON distingue "stop troppo
+                # stretto" da "segnale sbagliato" per i trade usciti in SL - e'
+                # quasi sempre >= 1R per costruzione. E' il MFE dei perdenti
+                # (quanto erano andati a favore prima di girare) il segnale
+                # diagnostico utile - vedi _metrics().
+                if risk_dist > 0:
+                    adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
+                    favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                    pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
+                    pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
+                # --- PYRAMIDING SUL PROFITTO (opt-in, default off - vedi nota
+                # sui parametri sopra): puo' aggiungere piu' di una gamba sulla
+                # stessa barra se l'escursione hi/lo la attraversa. ---
+                if pos["next_pyramid_level"] is not None:
+                    extreme = hi if pos["dir"] == 1 else lo
+                    while len(pos["legs"]) - 1 < pyramid_max_legs and (
+                            (pos["dir"] == 1 and extreme >= pos["next_pyramid_level"]) or
+                            (pos["dir"] == -1 and extreme <= pos["next_pyramid_level"])):
+                        leg_entry = pos["next_pyramid_level"]
+                        leg_risk_dist = abs(leg_entry - pos["sl"])
+                        if leg_risk_dist <= 0:
+                            break
                         pos["legs"].append({
-                            "entry": leg_entry, "risk_money": leg_risk_money,
+                            "entry": leg_entry,
+                            "risk_money": equity * (risk_pct / 100.0) * pyramid_risk_mult,
                             "risk_dist": leg_risk_dist,
                         })
-                        pos["grid_legs_added"] += 1
-                    a_now = ind["atr"][i] or 0
-                    pos["next_grid_level"] = (
-                        leg_entry - pos["dir"] * grid_step_atr * a_now if a_now > 0 else None)
-            # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
-            # (04/08: usa l'override per-strategia se presente, altrimenti il
-            # parametro globale - vedi nota strategy_profiles sopra)
-            pos_be = pos.get("breakeven_r", breakeven_r)
-            pos_trail = pos.get("trailing_atr", trailing_atr)
-            if pos_be > 0 and risk_dist > 0:
-                prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
-                if prog >= pos_be * risk_dist:
-                    if pos["dir"] == 1:
-                        pos["sl"] = max(pos["sl"], pos["entry"])
-                    else:
-                        pos["sl"] = min(pos["sl"], pos["entry"])
-            # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
-            if pos_trail > 0:
-                a = ind["atr"][i] or 0
-                if a > 0:
-                    if pos["dir"] == 1:
-                        pos["sl"] = max(pos["sl"], px - pos_trail * a)
-                    else:
-                        pos["sl"] = min(pos["sl"], px + pos_trail * a)
-            hit = None
-            if pos["dir"] == 1:
-                if lo <= pos["sl"]:
-                    hit = ("SL", pos["sl"])
-                elif hi >= pos["tp"]:
-                    hit = ("TP", pos["tp"])
-            else:
-                if hi >= pos["sl"]:
-                    hit = ("SL", pos["sl"])
-                elif lo <= pos["tp"]:
-                    hit = ("TP", pos["tp"])
-            if not hit and (i - pos["open_i"]) >= max_hold:
-                hit = ("TIME", px)
-            # --- FLIP (opt-in, default off - vedi nota sui parametri
-            # sopra): nessun altro hit su questa barra, un segnale fresco
-            # in direzione OPPOSTA chiude la posizione a mercato e ne apre
-            # subito una nuova, sulla STESSA barra. ---
-            flip_sig = flip_who = flip_atr = None
-            if not hit and allow_flip:
-                fsig, fwho, fatr = _find_signal(i, px)
-                if fsig != 0 and fsig != pos["dir"]:
-                    hit = ("FLIP", px)
-                    flip_sig, flip_who, flip_atr = fsig, fwho, fatr
-            if hit:
-                reason, exitpx = hit
-                # Somma su tutte le gambe (1 sola se pyramid_max_legs=0 -
-                # stesso identico risultato di prima, bit per bit: legs
-                # contiene un solo elemento uguale a entry/risk_money/
-                # risk_dist originali). Ogni gamba ha il proprio rischio
-                # (congelato al momento in cui e' stata aperta) e paga i
-                # costi di realismo separatamente sul SUO risk_dist -
-                # stessa convenzione gia' in uso ("pesa di piu' su SL
-                # stretti"), qui applicata gamba per gamba perche' ognuna
-                # e' a tutti gli effetti un fill separato.
-                total_pnl = 0.0
-                total_gross_pnl = 0.0
-                total_risk_money = 0.0
-                for leg in pos["legs"]:
-                    rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
-                    r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
-                        else ((leg["entry"] - exitpx) / rd)
-                    spread_r = (spread_price / rd) if spread_price > 0 else 0.0
-                    slip_r = 0.0
-                    if slippage_price > 0:
-                        slip_r = slippage_price / rd
-                        if reason in ("SL", "TIME", "FLIP"):
-                            slip_r += slippage_price / rd
-                    r_mult_net = r_mult - spread_r - commission_r - slip_r
-                    total_pnl += r_mult_net * leg["risk_money"]
-                    total_gross_pnl += r_mult * leg["risk_money"]
-                    total_risk_money += leg["risk_money"]
-                pnl = round(total_pnl, 2)
-                equity += pnl
-                r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
-                r_gross_blended = (total_gross_pnl / total_risk_money) if total_risk_money > 0 else 0.0
-                trades.append({
-                    "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
-                    "side": "BUY" if pos["dir"] == 1 else "SELL",
-                    "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                    "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
-                    "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
-                    "reason": reason, "legs": len(pos["legs"]),
-                    "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
-                })
-                curve.append({"i": i, "equity": round(equity, 2),
-                              "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
-                pos = None
-                last_close_i = i
-                if pnl < 0:
-                    last_loss_i = i
-                if reason == "FLIP" and flip_sig:
-                    # Apre subito la nuova posizione sulla direzione
-                    # opposta, sulla STESSA barra - stessa logica di
-                    # apertura di un ingresso normale (_open_position),
-                    # nessuna scorciatoia.
-                    pos = _open_position(i, px, flip_sig, flip_who, flip_atr)
-            continue
-        # --- COOLDOWN: barre minime tra un trade e il successivo ---
-        if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
-            continue
-        # --- LOSS COOLDOWN: barre minime SOLO dopo una perdita vera (pnl<0) ---
-        if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
-            continue
-        # nuovo segnale (04/08 (19): fattorizzato in _find_signal/
-        # _open_position, stessa logica di prima, riusata anche dal flip)
-        sig, who, atr = _find_signal(i, px)
-        if atr is None or atr <= 0:
-            continue
-        if sig != 0:
-            pos = _open_position(i, px, sig, who, atr)
+                        pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
+                # --- GRID RECOVERY (opt-in, default off - porting di
+                # NXS_ManageGrid, vedi nota sui parametri sopra): aggiunge una
+                # gamba nella stessa direzione quando il prezzo si muove CONTRO
+                # la posizione di grid_step_atr x ATR CORRENTE oltre l'ultimo
+                # livello, gate di regime opzionale (STRONG_TREND/WEAK_TREND,
+                # come InpEnableGrid dell'MQL5 reale). Al massimo una gamba per
+                # barra (granularita' del motore, non per-tick come l'OnTimer
+                # MQL5) - vedi nota di fedelta' dichiarata sopra. ---
+                if pos["next_grid_level"] is not None and pos["grid_legs_added"] < grid_max_legs:
+                    adverse_extreme = lo if pos["dir"] == 1 else hi
+                    triggered = ((pos["dir"] == 1 and adverse_extreme <= pos["next_grid_level"]) or
+                                (pos["dir"] == -1 and adverse_extreme >= pos["next_grid_level"]))
+                    regime_ok = (not grid_regime_filter or
+                                ind["regime"][i] in (_REGIME_STRONG_TREND, _REGIME_WEAK_TREND))
+                    if triggered and regime_ok:
+                        leg_entry = pos["next_grid_level"]
+                        leg_risk_dist = abs(leg_entry - pos["sl"])
+                        core_risk_money = pos["legs"][0]["risk_money"]
+                        leg_risk_money = min(equity * (risk_pct / 100.0) * grid_risk_mult,
+                                            core_risk_money)
+                        if leg_risk_dist > 0 and leg_risk_money > 0:
+                            pos["legs"].append({
+                                "entry": leg_entry, "risk_money": leg_risk_money,
+                                "risk_dist": leg_risk_dist,
+                            })
+                            pos["grid_legs_added"] += 1
+                        a_now = ind["atr"][i] or 0
+                        pos["next_grid_level"] = (
+                            leg_entry - pos["dir"] * grid_step_atr * a_now if a_now > 0 else None)
+                # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
+                # (04/08: usa l'override per-strategia se presente, altrimenti il
+                # parametro globale - vedi nota strategy_profiles sopra)
+                pos_be = pos.get("breakeven_r", breakeven_r)
+                pos_trail = pos.get("trailing_atr", trailing_atr)
+                if pos_be > 0 and risk_dist > 0:
+                    prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                    if prog >= pos_be * risk_dist:
+                        if pos["dir"] == 1:
+                            pos["sl"] = max(pos["sl"], pos["entry"])
+                        else:
+                            pos["sl"] = min(pos["sl"], pos["entry"])
+                # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
+                if pos_trail > 0:
+                    a = ind["atr"][i] or 0
+                    if a > 0:
+                        if pos["dir"] == 1:
+                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                        else:
+                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                hit = None
+                if pos["dir"] == 1:
+                    if lo <= pos["sl"]:
+                        hit = ("SL", pos["sl"])
+                    elif hi >= pos["tp"]:
+                        hit = ("TP", pos["tp"])
+                else:
+                    if hi >= pos["sl"]:
+                        hit = ("SL", pos["sl"])
+                    elif lo <= pos["tp"]:
+                        hit = ("TP", pos["tp"])
+                if not hit and (i - pos["open_i"]) >= max_hold:
+                    hit = ("TIME", px)
+                # --- FLIP (opt-in, default off - vedi nota sui parametri
+                # sopra): nessun altro hit su questa barra, un segnale fresco
+                # in direzione OPPOSTA chiude la posizione a mercato e ne apre
+                # subito una nuova, sulla STESSA barra. ---
+                flip_sig = flip_who = flip_atr = None
+                if not hit and allow_flip:
+                    fsig, fwho, fatr = _find_signal(i, px)
+                    if fsig != 0 and fsig != pos["dir"]:
+                        hit = ("FLIP", px)
+                        flip_sig, flip_who, flip_atr = fsig, fwho, fatr
+                if hit:
+                    reason, exitpx = hit
+                    # Somma su tutte le gambe (1 sola se pyramid_max_legs=0 -
+                    # stesso identico risultato di prima, bit per bit: legs
+                    # contiene un solo elemento uguale a entry/risk_money/
+                    # risk_dist originali). Ogni gamba ha il proprio rischio
+                    # (congelato al momento in cui e' stata aperta) e paga i
+                    # costi di realismo separatamente sul SUO risk_dist -
+                    # stessa convenzione gia' in uso ("pesa di piu' su SL
+                    # stretti"), qui applicata gamba per gamba perche' ognuna
+                    # e' a tutti gli effetti un fill separato.
+                    total_pnl = 0.0
+                    total_gross_pnl = 0.0
+                    total_risk_money = 0.0
+                    for leg in pos["legs"]:
+                        rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
+                        r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
+                            else ((leg["entry"] - exitpx) / rd)
+                        spread_r = (spread_price / rd) if spread_price > 0 else 0.0
+                        slip_r = 0.0
+                        if slippage_price > 0:
+                            slip_r = slippage_price / rd
+                            if reason in ("SL", "TIME", "FLIP"):
+                                slip_r += slippage_price / rd
+                        r_mult_net = r_mult - spread_r - commission_r - slip_r
+                        total_pnl += r_mult_net * leg["risk_money"]
+                        total_gross_pnl += r_mult * leg["risk_money"]
+                        total_risk_money += leg["risk_money"]
+                    pnl = round(total_pnl, 2)
+                    equity += pnl
+                    r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                    r_gross_blended = (total_gross_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                    trades.append({
+                        "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
+                        "side": "BUY" if pos["dir"] == 1 else "SELL",
+                        "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
+                        "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
+                        "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
+                        "reason": reason, "legs": len(pos["legs"]),
+                        "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
+                    })
+                    curve.append({"i": i, "equity": round(equity, 2),
+                                  "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
+                    pos = None
+                    last_close_i = i
+                    if pnl < 0:
+                        last_loss_i = i
+                    if reason == "FLIP" and flip_sig:
+                        # Apre subito la nuova posizione sulla direzione
+                        # opposta, sulla STESSA barra - stessa logica di
+                        # apertura di un ingresso normale (_open_position),
+                        # nessuna scorciatoia.
+                        pos = _open_position(i, px, flip_sig, flip_who, flip_atr)
+                continue
+            # --- COOLDOWN: barre minime tra un trade e il successivo ---
+            if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
+                continue
+            # --- LOSS COOLDOWN: barre minime SOLO dopo una perdita vera (pnl<0) ---
+            if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
+                continue
+            # nuovo segnale (04/08 (19): fattorizzato in _find_signal/
+            # _open_position, stessa logica di prima, riusata anche dal flip)
+            sig, who, atr = _find_signal(i, px)
+            if atr is None or atr <= 0:
+                continue
+            if sig != 0:
+                pos = _open_position(i, px, sig, who, atr)
+    else:
+        # --- motore multi-posizione (max_per_dir): stessa gestione per-
+        # posizione del ramo sopra (MAE/MFE, pyramid, grid, BE, trailing,
+        # hit SL/TP/TIME), applicata a una LISTA di posizioni indipendenti
+        # invece di una sola. allow_flip non supportato qui (non necessario
+        # per i casi d'uso attuali - MACD/SAR/ADX_RSI non lo usano).
+        positions = []
+        for i in range(2, len(candles)):
+            px = candles[i]["close"]
+            hi, lo = candles[i]["high"], candles[i]["low"]
+            still_open = []
+            for pos in positions:
+                risk_dist = pos["risk_dist"]
+                if risk_dist > 0:
+                    adverse = (pos["entry"] - lo) if pos["dir"] == 1 else (hi - pos["entry"])
+                    favorable = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                    pos["mae_r"] = max(pos["mae_r"], adverse / risk_dist)
+                    pos["mfe_r"] = max(pos["mfe_r"], favorable / risk_dist)
+                if pos["next_pyramid_level"] is not None:
+                    extreme = hi if pos["dir"] == 1 else lo
+                    while len(pos["legs"]) - 1 < pyramid_max_legs and (
+                            (pos["dir"] == 1 and extreme >= pos["next_pyramid_level"]) or
+                            (pos["dir"] == -1 and extreme <= pos["next_pyramid_level"])):
+                        leg_entry = pos["next_pyramid_level"]
+                        leg_risk_dist = abs(leg_entry - pos["sl"])
+                        if leg_risk_dist <= 0:
+                            break
+                        pos["legs"].append({
+                            "entry": leg_entry,
+                            "risk_money": equity * (risk_pct / 100.0) * pyramid_risk_mult,
+                            "risk_dist": leg_risk_dist,
+                        })
+                        pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
+                if pos["next_grid_level"] is not None and pos["grid_legs_added"] < grid_max_legs:
+                    adverse_extreme = lo if pos["dir"] == 1 else hi
+                    triggered = ((pos["dir"] == 1 and adverse_extreme <= pos["next_grid_level"]) or
+                                (pos["dir"] == -1 and adverse_extreme >= pos["next_grid_level"]))
+                    regime_ok = (not grid_regime_filter or
+                                ind["regime"][i] in (_REGIME_STRONG_TREND, _REGIME_WEAK_TREND))
+                    if triggered and regime_ok:
+                        leg_entry = pos["next_grid_level"]
+                        leg_risk_dist = abs(leg_entry - pos["sl"])
+                        core_risk_money = pos["legs"][0]["risk_money"]
+                        leg_risk_money = min(equity * (risk_pct / 100.0) * grid_risk_mult,
+                                            core_risk_money)
+                        if leg_risk_dist > 0 and leg_risk_money > 0:
+                            pos["legs"].append({
+                                "entry": leg_entry, "risk_money": leg_risk_money,
+                                "risk_dist": leg_risk_dist,
+                            })
+                            pos["grid_legs_added"] += 1
+                        a_now = ind["atr"][i] or 0
+                        pos["next_grid_level"] = (
+                            leg_entry - pos["dir"] * grid_step_atr * a_now if a_now > 0 else None)
+                pos_be = pos.get("breakeven_r", breakeven_r)
+                pos_trail = pos.get("trailing_atr", trailing_atr)
+                if pos_be > 0 and risk_dist > 0:
+                    prog = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                    if prog >= pos_be * risk_dist:
+                        if pos["dir"] == 1:
+                            pos["sl"] = max(pos["sl"], pos["entry"])
+                        else:
+                            pos["sl"] = min(pos["sl"], pos["entry"])
+                if pos_trail > 0:
+                    a = ind["atr"][i] or 0
+                    if a > 0:
+                        if pos["dir"] == 1:
+                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                        else:
+                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                hit = None
+                if pos["dir"] == 1:
+                    if lo <= pos["sl"]:
+                        hit = ("SL", pos["sl"])
+                    elif hi >= pos["tp"]:
+                        hit = ("TP", pos["tp"])
+                else:
+                    if hi >= pos["sl"]:
+                        hit = ("SL", pos["sl"])
+                    elif lo <= pos["tp"]:
+                        hit = ("TP", pos["tp"])
+                if not hit and (i - pos["open_i"]) >= max_hold:
+                    hit = ("TIME", px)
+                if hit:
+                    reason, exitpx = hit
+                    total_pnl = 0.0
+                    total_gross_pnl = 0.0
+                    total_risk_money = 0.0
+                    for leg in pos["legs"]:
+                        rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
+                        r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
+                            else ((leg["entry"] - exitpx) / rd)
+                        spread_r = (spread_price / rd) if spread_price > 0 else 0.0
+                        slip_r = 0.0
+                        if slippage_price > 0:
+                            slip_r = slippage_price / rd
+                            if reason in ("SL", "TIME"):
+                                slip_r += slippage_price / rd
+                        r_mult_net = r_mult - spread_r - commission_r - slip_r
+                        total_pnl += r_mult_net * leg["risk_money"]
+                        total_gross_pnl += r_mult * leg["risk_money"]
+                        total_risk_money += leg["risk_money"]
+                    pnl = round(total_pnl, 2)
+                    equity += pnl
+                    r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                    r_gross_blended = (total_gross_pnl / total_risk_money) if total_risk_money > 0 else 0.0
+                    trades.append({
+                        "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
+                        "side": "BUY" if pos["dir"] == 1 else "SELL",
+                        "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
+                        "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
+                        "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
+                        "reason": reason, "legs": len(pos["legs"]),
+                        "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
+                    })
+                    curve.append({"i": i, "equity": round(equity, 2),
+                                  "ts": str(candles[i]["time"]), "close": candles[i]["close"]})
+                    last_close_i = i
+                    if pnl < 0:
+                        last_loss_i = i
+                else:
+                    still_open.append(pos)
+            positions = still_open
+
+            if cooldown_bars > 0 and (i - last_close_i) < cooldown_bars:
+                continue
+            if loss_cooldown_bars > 0 and (i - last_loss_i) < loss_cooldown_bars:
+                continue
+            sig, who, atr = _find_signal(i, px)
+            if atr is None or atr <= 0:
+                continue
+            if sig != 0:
+                same_dir = sum(1 for p in positions if p["dir"] == sig)
+                if same_dir < max_per_dir:
+                    positions.append(_open_position(i, px, sig, who, atr))
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
