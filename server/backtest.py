@@ -468,6 +468,36 @@ def _macd_signal_series(ema12, ema26, period=9):
     return macd_line, sig
 
 
+# 06/08 - porting di NXS_DetectRegime() (NXS_MarketAnalysis.mqh), usato dal
+# gate grid_regime_filter di run_backtest. STRONG_TREND/WEAK_TREND per
+# ADX/soglia, VOLATILE quando l'ATR corrente supera 1.5x la sua media sulle
+# 20 barre precedenti (offset di 2 barre come CopyBuffer(...,2,20,...) in
+# MQL5, per non guardare la barra che si sta ancora formando).
+_REGIME_UNKNOWN, _REGIME_STRONG_TREND, _REGIME_WEAK_TREND = 0, 1, 2
+_REGIME_VOLATILE, _REGIME_CHOPPY, _REGIME_RANGING = 3, 4, 5
+
+
+def _regime_series(atr, adx):
+    n = len(atr)
+    out = [_REGIME_UNKNOWN] * n
+    for i in range(n):
+        a, adx_i = atr[i], adx[i]
+        if not a or a <= 0 or not adx_i or adx_i <= 0:
+            continue
+        window = [x for x in atr[max(0, i - 21):max(0, i - 1)] if x]
+        atr_prev = sum(window) / len(window) if window else 0
+        volatile_ = atr_prev > 0 and a > atr_prev * 1.5
+        if adx_i >= 30:
+            out[i] = _REGIME_VOLATILE if volatile_ else _REGIME_STRONG_TREND
+        elif adx_i >= 20:
+            out[i] = _REGIME_WEAK_TREND
+        elif adx_i < 15 and volatile_:
+            out[i] = _REGIME_CHOPPY
+        else:
+            out[i] = _REGIME_RANGING
+    return out
+
+
 def _prep(candles):
     closes = [c["close"] for c in candles]
     psar, psar_trend = psar_series(candles)
@@ -485,9 +515,11 @@ def _prep(candles):
         candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
+    adx_s = adx_series(candles, 14)
     return {
         "candles": candles,
         "close": closes,
+        "regime": _regime_series(atr_s, adx_s),  # vedi _regime_series, gate del grid
         "ema5": ema_series(closes, 5),
         "ema9": ema_series(closes, 9),
         "ema20": ema_series(closes, 20),
@@ -503,7 +535,7 @@ def _prep(candles):
         "atr": atr_s,
         "psar": psar,
         "psar_trend": psar_trend,
-        "adx": adx_series(candles, 14),
+        "adx": adx_s,
         "sess": sess,
         "choch_int": _fractal_choch_series(candles, wing=3),
         "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
@@ -2659,7 +2691,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  spread_price=0.0, commission_r=0.0, slippage_price=0.0,
                  strategy_profiles=None, bar_range=None, session_filter=None,
                  pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0,
-                 allow_flip=False):
+                 allow_flip=False,
+                 grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
+                 grid_regime_filter=True):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -2731,6 +2765,30 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # che genera il flip passa dagli STESSI filtri (confirm_bars/
     # htf_filter/session_filter) di un ingresso normale, non e' un
     # ingresso "gratis".
+    # 06/08 - grid_max_legs/grid_step_atr/grid_risk_mult/grid_regime_filter:
+    # porting di MQL5/Include/NEXUS_v1/NXS_GridRecovery.mqh (NXS_ManageGrid),
+    # non un meccanismo inventato qui. Default grid_max_legs=0 (disattivo,
+    # comportamento IDENTICO a prima). Se >0: quando il prezzo si muove
+    # CONTRO la posizione di grid_step_atr x ATR CORRENTE oltre l'ultimo
+    # livello aggiunto, si apre una nuova gamba nella STESSA direzione (fino
+    # a grid_max_legs extra) - stessa infrastruttura "legs" del pyramid
+    # sopra (SL/TP condivisi, chiusura unica), non un motore multi-posizione
+    # indipendente, per lo stesso motivo gia' dichiarato per il pyramid.
+    # Rischio della gamba: come nell'MQL5 (v2.0.30 SAFETY FIX, budget-based
+    # non un multiplo del volume del genitore) - equity x risk_pct x
+    # grid_risk_mult, MAI oltre il rischio della gamba originale (stesso
+    # tetto "mai piu' del volume del core" del vero NXS_ManageGrid).
+    # grid_regime_filter=True riproduce il gate InpEnableGrid dell'MQL5
+    # reale (regime STRONG_TREND o WEAK_TREND via NXS_DetectRegime, ADX+ATR
+    # - vedi _nxs_regime sotto): un grid contro-trend su un mercato in range
+    # e' esattamente lo scenario che l'audit ha segnalato come piu'
+    # pericoloso, il default replica la cautela della versione live.
+    # Fedelta' DICHIARATA: l'MQL5 controlla la distanza ad ogni OnTimer (piu'
+    # frequente di una barra) e da' ad ogni gamba il proprio SL indipendente
+    # (slDist = ATR x step x MAX_LAYERS dalla gamba); qui, come il pyramid
+    # gia' esistente, la granularita' e' la barra e tutte le gambe
+    # condividono lo stesso SL/TP e si chiudono insieme - stessa
+    # semplificazione gia' accettata per il pyramid, non nuova.
     # 04/08 - strategy_profiles: {strat_id: {"atr_sl":.., "atr_tp":.., "breakeven_r":..,
     # "trailing_atr":..}} - override PER STRATEGIA di sl/tp/gestione, usato SOLO
     # quando piu' strategie girano insieme (strategies=[...]) e ognuna ha il
@@ -2835,7 +2893,11 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 "legs": [{"entry": price, "risk_money": risk_money, "risk_dist": risk_dist0}],
                 "next_pyramid_level": (
                     price + sig * pyramid_r * risk_dist0
-                    if pyramid_max_legs > 0 and risk_dist0 > 0 else None)}
+                    if pyramid_max_legs > 0 and risk_dist0 > 0 else None),
+                "next_grid_level": (
+                    price - sig * grid_step_atr * atr_i
+                    if grid_max_legs > 0 and atr_i else None),
+                "grid_legs_added": 0}
 
     equity = start_equity
     curve = [{"i": 0, "equity": round(equity, 2),
@@ -2881,6 +2943,35 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         "risk_dist": leg_risk_dist,
                     })
                     pos["next_pyramid_level"] = leg_entry + pos["dir"] * pyramid_r * pos["risk_dist"]
+            # --- GRID RECOVERY (opt-in, default off - porting di
+            # NXS_ManageGrid, vedi nota sui parametri sopra): aggiunge una
+            # gamba nella stessa direzione quando il prezzo si muove CONTRO
+            # la posizione di grid_step_atr x ATR CORRENTE oltre l'ultimo
+            # livello, gate di regime opzionale (STRONG_TREND/WEAK_TREND,
+            # come InpEnableGrid dell'MQL5 reale). Al massimo una gamba per
+            # barra (granularita' del motore, non per-tick come l'OnTimer
+            # MQL5) - vedi nota di fedelta' dichiarata sopra. ---
+            if pos["next_grid_level"] is not None and pos["grid_legs_added"] < grid_max_legs:
+                adverse_extreme = lo if pos["dir"] == 1 else hi
+                triggered = ((pos["dir"] == 1 and adverse_extreme <= pos["next_grid_level"]) or
+                            (pos["dir"] == -1 and adverse_extreme >= pos["next_grid_level"]))
+                regime_ok = (not grid_regime_filter or
+                            ind["regime"][i] in (_REGIME_STRONG_TREND, _REGIME_WEAK_TREND))
+                if triggered and regime_ok:
+                    leg_entry = pos["next_grid_level"]
+                    leg_risk_dist = abs(leg_entry - pos["sl"])
+                    core_risk_money = pos["legs"][0]["risk_money"]
+                    leg_risk_money = min(equity * (risk_pct / 100.0) * grid_risk_mult,
+                                        core_risk_money)
+                    if leg_risk_dist > 0 and leg_risk_money > 0:
+                        pos["legs"].append({
+                            "entry": leg_entry, "risk_money": leg_risk_money,
+                            "risk_dist": leg_risk_dist,
+                        })
+                        pos["grid_legs_added"] += 1
+                    a_now = ind["atr"][i] or 0
+                    pos["next_grid_level"] = (
+                        leg_entry - pos["dir"] * grid_step_atr * a_now if a_now > 0 else None)
             # --- BREAKEVEN: SL a entry dopo breakeven_r x rischio ---
             # (04/08: usa l'override per-strategia se presente, altrimenti il
             # parametro globale - vedi nota strategy_profiles sopra)
