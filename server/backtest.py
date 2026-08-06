@@ -241,21 +241,34 @@ def _resample_from_m15(candles_m15: list, interval: str) -> list:
     return _bucket_m15(candles_m15, lambda ep: ep - (ep % 86400))
 
 
+_DUKASCOPY_MIN_SPAN_DAYS = 300
+
+
 def _fetch_dukascopy(symbol: str, interval: str):
     m15 = _load_dukascopy_m15(symbol)
     if not m15:
         return None
     candles = _resample_from_m15(m15, interval)
-    # 06/08 - la soglia originale (60) e' bastata a superare il controllo ma
-    # non a essere un dataset utile: con 121 barre 4h (~20 giorni, il fetch
-    # in corso non aveva ancora coperto abbastanza storico) MACD tornava
-    # sempre 0 (richiede EMA200, mai pronta prima di 200 barre) e
-    # find_best_profiles.py segnalava "nessun candidato valido" per ogni
-    # strategia 4h - un fallback silenzioso su un dataset immaturo, non
-    # un errore visibile. 600 lascia margine oltre il warmup piu' lungo
-    # (EMA200) per avere un campione di segnali/trade minimamente utile,
-    # restando ben sotto _REAL_BARS_CAP.
-    if len(candles) < 600:
+    # 06/08 (prima correzione) - la soglia originale (60 barre) bastava a
+    # superare il controllo ma non a essere un dataset utile: con 121 barre
+    # 4h (~20 giorni) MACD tornava sempre 0 (richiede EMA200). Alzata a 600.
+    #
+    # 06/08 (seconda correzione, stesso giorno) - 600 e' un CONTEGGIO di
+    # barre, non un intervallo di calendario: su 1h il fetch in background
+    # aveva accumulato 1058 barre (600 superate) ma sono solo ~44 giorni -
+    # contro i 2 ANNI che Yahoo da' per lo stesso timeframe. Le strategie a
+    # sessione fissa (JUDAS_SWING, NY_REVERSAL, ...) sono scattate quasi mai
+    # non perche' rotte, ma perche' testate silenziosamente su 44 giorni
+    # invece di 2 anni - lo stesso tipo di errore silenzioso della prima
+    # correzione, stavolta mascherato perche' 1058 > 600 supera comunque il
+    # controllo per conteggio. Ora si richiede una COPERTURA DI CALENDARIO
+    # minima (300 giorni fra prima e ultima barra), indipendente dal
+    # timeframe: 600 barre significano cose diverse su D1/H4/H1, i giorni
+    # di calendario no.
+    if len(candles) < 60:
+        return None
+    span_days = (_epoch_utc(candles[-1]["time"]) - _epoch_utc(candles[0]["time"])) / 86400.0
+    if span_days < _DUKASCOPY_MIN_SPAN_DAYS:
         return None
     return candles[-_REAL_BARS_CAP:]
 
