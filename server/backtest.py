@@ -2822,11 +2822,15 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  pyramid_max_legs=0, pyramid_r=1.0, pyramid_risk_mult=1.0,
                  allow_flip=False,
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
-                 grid_regime_filter=True, max_per_dir=None):
+                 grid_regime_filter=True, max_per_dir=None, adx_min=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
     # (trailing a N x ATR), cooldown_bars (barre minime tra un trade e il successivo).
+    # 06/08 - adx_min: filtro regime (scomposizione A/B/C/D del brief edge-
+    # decomposition) - il segnale passa solo se ind["adx"][idx] >= adx_min,
+    # None (default) = invariato. Riusa l'ADX(14) gia' calcolato in _prep(),
+    # stessa serie usata per _regime_series/grid_regime_filter.
     # 17/07 - due leve nuove richieste dall'utente (ipotesi "serve conferma
     # prima di entrare" / "dopo uno stop protetto da BE si puo' rientrare
     # subito, dopo una perdita vera no"):
@@ -3008,6 +3012,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         if sig != 0 and session_filter is not None:
             cur_sess = ind["sess"]["session"][idx]
             if cur_sess not in session_filter:
+                sig = 0
+        if sig != 0 and adx_min is not None:
+            adx_i = ind["adx"][idx]
+            if not adx_i or adx_i < adx_min:
                 sig = 0
         return sig, who, atr_i
 
