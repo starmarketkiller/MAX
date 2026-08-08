@@ -43,6 +43,26 @@ services:
         value: "true"
       - key: NEXUS_DB_PATH
         value: /data/nexus.db
+      # 06/08 — storico Dukascopy per il motore di backtest (server/backtest.py):
+      # senza questa, il fetch scrive su un path relativo dentro l'immagine
+      # Docker (effimero, perso a ogni deploy/riavvio) invece che sul disco
+      # persistente dichiarato sotto. Il default (variabile assente) resta
+      # invariato — va impostata esplicitamente per farla sopravvivere ai deploy.
+      - key: NEXUS_DUKASCOPY_DIR
+        value: /data/dukascopy
+      # 06/08 — opt-in per avviare il fetch storico Dukascopy all'avvio del
+      # servizio (un'istanza Render non ha shell interattiva per lanciarlo a
+      # mano).
+      # 08/08 — portato a "true": il fetch nel container di sviluppo di
+      # questa sessione si e' interrotto due volte senza errori visibili e
+      # non riprende da dove si ferma (la cache grezza per-giorno e' potata
+      # apposta, non e' un checkpoint di ripresa - vedi fetch_dukascopy_history.py).
+      # Il servizio Render (persistente, non un container di sessione
+      # effimero) resta la via affidabile per completare lo storico multi-
+      # anno servito da NEXUS_DUKASCOPY_DIR sopra. Il lock PID anti-doppio-
+      # avvio (_start_dukascopy_autofetch) e' gia' testato.
+      - key: NEXUS_DUKASCOPY_AUTOFETCH
+        value: "true"
       # AUD0-DEPLOY-RENDER-001: 'open' accetta qualunque chiave di licenza.
       - key: NEXUS_LICENSE_MODE
         value: strict

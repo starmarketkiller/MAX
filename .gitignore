@@ -31,6 +31,10 @@ scripts/*.local.ps1
 server/nexus.db*
 data/
 
+# storico locale scaricato da server/research_scripts/fetch_dukascopy_history.py
+# (fino a 10y di tick XAUUSD, ricostruibile da zero - non e' codice, non va versionato)
+server/data_cache/
+
 # --- python -----------------------------------------------------------------
 __pycache__/
 *.py[cod]

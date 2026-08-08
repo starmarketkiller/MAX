@@ -21,6 +21,8 @@ from __future__ import annotations
 import os
 import json
 import re
+import subprocess
+import sys
 import time
 import sqlite3
 import hashlib
@@ -73,6 +75,12 @@ AUTO_MIGRATE   = _env_flag("NEXUS_AUTO_MIGRATE", True)
 #: AUD0-DB-006 — i seed alterano configurazione operativa: fuori dallo sviluppo
 #: vanno chiesti esplicitamente.
 SEED_ON_START  = _env_flag("NEXUS_SEED_ON_START", not HARDENED)
+#: 06/08 — storico Dukascopy per il motore di backtest (server/backtest.py,
+#: server/dukascopy_fetch.py): un fetch multi-anno non puo' essere lanciato a
+#: mano su un servizio Render senza shell interattiva. Default False, stesso
+#: principio di AUTO_MIGRATE/SEED_ON_START: un'attivita' di fondo che scarica
+#: e scrive su disco per ore va chiesta esplicitamente, non assunta.
+DUKASCOPY_AUTOFETCH = _env_flag("NEXUS_DUKASCOPY_AUTOFETCH", False)
 
 BRIDGE_TOKEN   = os.environ.get("NEXUS_BRIDGE_TOKEN", "NEXUS_BRIDGE_TOKEN_2026")
 ADMIN_USER     = os.environ.get("NEXUS_ADMIN_USER", "admin")
@@ -1438,6 +1446,43 @@ def security_preflight() -> nexus_security.PreflightResult:
     )
 
 
+def _start_dukascopy_autofetch() -> None:
+    """Lancia in background il fetch storico Dukascopy (server/backtest.py lo
+    consuma da NEXUS_DUKASCOPY_DIR se impostata, altrimenti dal path relativo
+    di sempre — vedi dukascopy_fetch.data_cache_root()). Opt-in
+    (NEXUS_DUKASCOPY_AUTOFETCH): un servizio Render non ha shell interattiva
+    per lanciarlo a mano, ma resta un'attivita' di ore che scrive su disco,
+    quindi non parte mai in silenzio.
+
+    Lock su PID (non uno spawn condizionale generico): un riavvio del
+    processo web non deve mai far partire un secondo fetch mentre il
+    precedente e' ancora vivo — dukascopy_fetch.fetch_day_ticks e' idempotente
+    per giorno (salta quelli gia' in cache), quindi un doppio avvio non
+    corromperebbe i dati, ma sprecherebbe thread/rete per lavoro duplicato.
+    """
+    import dukascopy_fetch as dk
+    root = dk.data_cache_root()
+    os.makedirs(root, exist_ok=True)
+    lock_path = os.path.join(root, "dukascopy_fetch.lock")
+    if os.path.exists(lock_path):
+        try:
+            old_pid = int(open(lock_path, encoding="utf-8").read().strip())
+            os.kill(old_pid, 0)   # non termina il processo, solleva se non esiste
+            print(f"[NEXUS] fetch Dukascopy gia' in corso (pid {old_pid}), non rilanciato")
+            return
+        except (ValueError, OSError):
+            pass   # lock orfano (processo precedente morto senza pulirlo) - si rilancia
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                          "research_scripts", "fetch_dukascopy_history.py")
+    log_path = os.path.join(root, "dukascopy_fetch.log")
+    log_file = open(log_path, "a", encoding="utf-8")
+    proc = subprocess.Popen([sys.executable, script], stdout=log_file, stderr=subprocess.STDOUT,
+                            start_new_session=True)
+    with open(lock_path, "w", encoding="utf-8") as f:
+        f.write(str(proc.pid))
+    print(f"[NEXUS] fetch storico Dukascopy avviato in background (pid {proc.pid}, log {log_path})")
+
+
 @app.on_event("startup")
 def _startup() -> None:
     # Il preflight gira PRIMA di qualsiasi inizializzazione: in DEMO/PAPER/LIVE
@@ -1480,6 +1525,16 @@ def _startup() -> None:
         _seed_recipe()
     else:
         print("[NEXUS] seed dei dati NON eseguito (NEXUS_SEED_ON_START=false)")
+    if DUKASCOPY_AUTOFETCH:
+        try:
+            _start_dukascopy_autofetch()
+        except Exception as e:
+            # Non deve mai far fallire l'avvio del servizio: il motore di
+            # backtest funziona comunque (fallback Yahoo), il fetch e' un
+            # miglioramento opportunistico, non una dipendenza.
+            print(f"[NEXUS][WARN] avvio fetch Dukascopy fallito: {e}")
+    else:
+        print("[NEXUS] fetch storico Dukascopy NON avviato (NEXUS_DUKASCOPY_AUTOFETCH=false)")
     print(f"[NEXUS] backend up — env={ENVIRONMENT} db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
     print(f"[NEXUS] coach actions={'ENABLED' if COACH_ALLOW_ACTIONS else 'read-only'}")
@@ -1497,6 +1552,38 @@ def health():
             "environment": ENVIRONMENT, "check": "liveness",
             # coach_configured è non-segreto: dice solo SE la chiave è presente.
             "coach_configured": bool(ANTHROPIC_API_KEY), "coach_model": COACH_MODEL}
+
+
+@app.get("/api/dukascopy_status")
+def dukascopy_status():
+    """Stato read-only del fetch storico Dukascopy in background (vedi
+    NEXUS_DUKASCOPY_AUTOFETCH). Legge il file di progresso gia' scritto da
+    fetch_dukascopy_history.py, nessuna logica nuova - serve a poter
+    controllare l'avanzamento da fuori (curl/WebFetch) senza shell sul
+    servizio Render, che non ne ha una interattiva. Pubblico come /api/health:
+    espone solo conteggi/date, nessun dato sensibile.
+    """
+    import dukascopy_fetch as dk
+    path = os.path.join(dk.data_cache_root(), "dukascopy_fetch_progress.json")
+    if not os.path.exists(path):
+        return {"ok": True, "started": False,
+                "detail": "nessun fetch ancora avviato o autofetch disattivo"}
+    try:
+        with open(path, encoding="utf-8") as f:
+            progress = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        return {"ok": False, "error": str(e)[:200]}
+    span_days = None
+    oldest, newest = progress.get("oldest_day_covered"), progress.get("newest_day_covered")
+    if oldest and newest:
+        try:
+            span_days = (datetime.fromisoformat(newest) - datetime.fromisoformat(oldest)).days
+        except ValueError:
+            pass
+    return {"ok": True, "started": True, "progress": progress,
+            "span_days": span_days,
+            "min_span_needed": 300,
+            "ready_for_intraday_reconfirm": bool(span_days and span_days >= 300)}
 
 
 @app.get("/api/ready")
