@@ -3293,7 +3293,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  allow_flip=False,
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
-                 direction_lock=None):
+                 direction_lock=None, htf_factor=None, htf_fresh_bars=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -3443,6 +3443,21 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         i1 = min(n, int(n * bar_range[1]))
         candles = candles[i0:i1]
     ind = _prep(candles)
+    # 08/08 - htf_factor: bias multi-timeframe VERO (CHoCH/trend su un TF
+    # ricampionato per davvero, _external_choch_series - stessa funzione gia'
+    # usata per choch_ext/ORDER_BLOCK's htf gate), non lo SMA(trend_period)
+    # sullo STESSO TF che htf_filter usa quando htf_factor e' None (proxy
+    # dichiarato fin dal primo screening A-F, mai una vera candela HTF).
+    # None (default) = htf_filter si comporta come sempre (SMA proxy).
+    # htf_fresh_bars: in aggiunta al trend allineato, richiede che un CHoCH
+    # HTF nella direzione del segnale sia avvenuto entro le ultime
+    # htf_fresh_bars barre HTF (non solo "il trend e' quello da sempre") -
+    # la finestra "cerca il trigger LTF entro N barre da un bias HTF fresco"
+    # del cascade D1->H4/H1->M15 discusso con l'utente, non solo un gate di
+    # conferma statico. Richiede htf_factor settato, altrimenti ignorato.
+    htf_trend_s = htf_up_s = htf_down_s = None
+    if htf_factor is not None:
+        htf_trend_s, htf_up_s, htf_down_s = _external_choch_series(candles, factor=int(htf_factor), wing=3)
     strat_list = strategies or ([strategy] if strategy else list(STRATEGIES))
     strat_list = list(require_strategies(strat_list, research=True))
     # Un chiamante puo' passare id storico e id canonico della stessa strategia
@@ -3486,9 +3501,26 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             sig, who = v, s
             break
         if sig != 0 and htf_filter:
-            sma = _sma(idx, int(trend_period))
-            if sma is not None and ((sig == 1 and price < sma) or (sig == -1 and price > sma)):
-                sig = 0
+            if htf_factor is not None:
+                et = htf_trend_s[idx]
+                if et == 0 or (sig == 1 and et != 1) or (sig == -1 and et != -1):
+                    sig = 0
+                elif htf_fresh_bars is not None:
+                    lookback = int(htf_fresh_bars) * int(htf_factor)
+                    fresh = False
+                    for k in range(0, lookback + 1):
+                        j = idx - k
+                        if j < 0:
+                            break
+                        if (sig == 1 and htf_up_s[j]) or (sig == -1 and htf_down_s[j]):
+                            fresh = True
+                            break
+                    if not fresh:
+                        sig = 0
+            else:
+                sma = _sma(idx, int(trend_period))
+                if sma is not None and ((sig == 1 and price < sma) or (sig == -1 and price > sma)):
+                    sig = 0
         if sig != 0 and session_filter is not None:
             cur_sess = ind["sess"]["session"][idx]
             if cur_sess not in session_filter:
