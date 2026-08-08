@@ -1554,6 +1554,38 @@ def health():
             "coach_configured": bool(ANTHROPIC_API_KEY), "coach_model": COACH_MODEL}
 
 
+@app.get("/api/dukascopy_status")
+def dukascopy_status():
+    """Stato read-only del fetch storico Dukascopy in background (vedi
+    NEXUS_DUKASCOPY_AUTOFETCH). Legge il file di progresso gia' scritto da
+    fetch_dukascopy_history.py, nessuna logica nuova - serve a poter
+    controllare l'avanzamento da fuori (curl/WebFetch) senza shell sul
+    servizio Render, che non ne ha una interattiva. Pubblico come /api/health:
+    espone solo conteggi/date, nessun dato sensibile.
+    """
+    import dukascopy_fetch as dk
+    path = os.path.join(dk.data_cache_root(), "dukascopy_fetch_progress.json")
+    if not os.path.exists(path):
+        return {"ok": True, "started": False,
+                "detail": "nessun fetch ancora avviato o autofetch disattivo"}
+    try:
+        with open(path, encoding="utf-8") as f:
+            progress = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        return {"ok": False, "error": str(e)[:200]}
+    span_days = None
+    oldest, newest = progress.get("oldest_day_covered"), progress.get("newest_day_covered")
+    if oldest and newest:
+        try:
+            span_days = (datetime.fromisoformat(newest) - datetime.fromisoformat(oldest)).days
+        except ValueError:
+            pass
+    return {"ok": True, "started": True, "progress": progress,
+            "span_days": span_days,
+            "min_span_needed": 300,
+            "ready_for_intraday_reconfirm": bool(span_days and span_days >= 300)}
+
+
 @app.get("/api/ready")
 def ready(response: Response):
     """Readiness: database scrivibile, migrazioni applicate, config sicura.
