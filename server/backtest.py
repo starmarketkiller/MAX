@@ -535,6 +535,16 @@ def _prep(candles):
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
+    choch_int_s = _fractal_choch_series(candles, wing=3)
+    choch_ext_s = _external_choch_series(candles, factor=4, wing=3)
+    # 08/08 - varianti "_v2" pastate dall'utente (vedi nota di modulo sopra
+    # _shbms_v2_series): precalcolate qui come le altre strategie con
+    # memoria fra barre (sb_signal/ob_signal/shbms_signal).
+    shbms_v2_sig, shbms_v2_sl, shbms_v2_tp = _shbms_v2_series(candles, sess, atr_s, adx_s, choch_int_s)
+    sbv2_sig, sbv2_sl, sbv2_tp = _silver_bullet_v2_series(candles, sess, atr_s, adx_s)
+    ote_v2_sig, ote_v2_sl, ote_v2_tp = _ote_cont_v2_series(candles, atr_s, adx_s, choch_int_s)
+    ob_v2_sig, ob_v2_sl, ob_v2_tp = _order_block_v2_series(candles, atr_s, adx_s, choch_int_s)
+    fvg_v2_sig, fvg_v2_sl, fvg_v2_tp = _fvg_cont_v2_series(candles, atr_s, adx_s, choch_int_s, choch_ext_s)
     return {
         "candles": candles,
         "close": closes,
@@ -556,8 +566,8 @@ def _prep(candles):
         "psar_trend": psar_trend,
         "adx": adx_s,
         "sess": sess,
-        "choch_int": _fractal_choch_series(candles, wing=3),
-        "choch_ext": _external_choch_series(candles, factor=4, wing=3),  # (trend, up, down)
+        "choch_int": choch_int_s,
+        "choch_ext": choch_ext_s,  # (trend, up, down)
         "swing_ext": _external_swing_price_series(candles, factor=4, wing=3),  # (hi, lo) su TF esterno reale
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
         "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
@@ -568,6 +578,12 @@ def _prep(candles):
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
+        # 08/08 - varianti "_v2", vedi nota di modulo sopra _shbms_v2_series
+        "shbms_v2_signal": shbms_v2_sig, "shbms_v2_sl": shbms_v2_sl, "shbms_v2_tp": shbms_v2_tp,
+        "sbv2_signal": sbv2_sig, "sbv2_sl": sbv2_sl, "sbv2_tp": sbv2_tp,
+        "ote_v2_signal": ote_v2_sig, "ote_v2_sl": ote_v2_sl, "ote_v2_tp": ote_v2_tp,
+        "ob_v2_signal": ob_v2_sig, "ob_v2_sl": ob_v2_sl, "ob_v2_tp": ob_v2_tp,
+        "fvg_v2_signal": fvg_v2_sig, "fvg_v2_sl": fvg_v2_sl, "fvg_v2_tp": fvg_v2_tp,
     }
 
 
@@ -2597,6 +2613,444 @@ def _shbms_sl_tp(c, ind, i, direction, entry, atr):
     return ref + 0.5 * atr, entry - 2.6 * atr
 
 
+# --------------------------------------------------------------------------- #
+# 08/08 - varianti "_v2" pastate dall'utente (file NXS_Strat_*_v2.mqh generati
+# da un agente esterno per il brief "Decomposizione Edge Strategie NEXUS" -
+# NON esistono nel repository MQL5 originale, sono revisioni esterne fornite
+# come testo). Portate qui riga-per-riga con lo stesso standard di fedelta'
+# del resto del motore. Filtro Volume (presente in 3 dei 5 file) OMESSO
+# ovunque compaia - questo motore lavora su OHLC puro, nessun dato tick
+# volume - dichiarato esplicitamente ad ogni funzione dove si applica,
+# nessun proxy finto al suo posto.
+#
+# Durante il porting ho trovato 3 bug REALI nel codice v2 pastato (presenti
+# gia' nel file originale, non introdotti qui - portati cosi' come sono,
+# fedelta' = anche ai bug, non "aggiustati" silenziosamente):
+#  - SILVER_BULLET_v2: il controllo "FVG fresh" (entrambe le direzioni)
+#    confronta la low/high dello SHIFT 3 - la STESSA candela che definisce
+#    il bordo h3/l3 del gap - contro se stessa (low<=high della stessa
+#    candela e' sempre vero) -> "fresh" e' sempre False -> 0 segnali,
+#    sempre, in nessuna direzione.
+#  - FVG_CONT_v2: il controllo "EntryAt50Pct" (entrambe le direzioni)
+#    confronta fvgHigh/fvgLow con il proprio punto medio, ma fvgHigh (BUY) /
+#    fvgLow (SELL) sono definiti come lo STESSO prezzo del bordo appena
+#    rilevato del gap -> la condizione e' sempre vera per costruzione ->
+#    ritorna sempre prima di poter generare un segnale -> 0 segnali, sempre,
+#    in nessuna direzione.
+#  - OTE_CONT_v2: SOLO lato SELL - fib618/fib705 usano lo stesso segno
+#    additivo del lato BUY (swingLow + range*0.618 / +range*0.705) invece di
+#    invertirlo, quindi fib705>fib618 e la condizione "c1>fib705 && c1<fib618"
+#    e' un intervallo vuoto/impossibile -> 0 segnali SELL, sempre. Il lato
+#    BUY e' invece corretto e testabile.
+# Le altre due (SH_BMS_RTO_v2, ORDER_BLOCK_v2) non hanno bug di questo tipo,
+# solo alcuni input dichiarati ma mai letti nel corpo della funzione (es.
+# InpSHBMSv2_SL_ATR, InpSHBMSv2_DispBodyATR, InpOBv2_InvalidateOnSL) -
+# no-op nel file originale, portati come tali (nessun effetto).
+# --------------------------------------------------------------------------- #
+def _shbms_v2_series(candles, sess, atr, adx, choch_int):
+    # NXS_Strat_SH_BMS_RTO_v2: sweep (rilevatore esteso condiviso) -> MSS
+    # "morbido" (nessuna soglia body-ATR nonostante InpSHBMSv2_DispBodyATR
+    # dichiarato - il file v2 non lo usa mai nel corpo) -> attesa ritorno in
+    # zona [sweepLevel..mssLevel] con rejection. MaxWaitBars (12) condiviso
+    # da entrambe le fasi (v1 usa due costanti separate, 20+15). Filtro
+    # Volume (InpSHBMSv2_VolMult) OMESSO.
+    MAX_WAIT = 12
+    IDLE, SWEPT, WAITING = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    trend = choch_int[0]
+    st = {d: {"state": IDLE, "bars_waited": 0, "sweep_level": None, "mss_level": None} for d in (1, -1)}
+    for i in range(16, n):
+        a = atr[i]
+        adx_i = adx[i]
+        if not a or adx_i is None or adx_i < 20.0 or trend[i] == 0:
+            continue
+        sw = _sweep_ext_at_raw(candles, sess, i, atr, None, None, None, None)
+        c1, o1 = candles[i]["close"], candles[i]["open"]
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                if sw and sw["confirmed"] and sw["dir"] == d:
+                    s["sweep_level"] = sw["level"]
+                    s["state"], s["bars_waited"] = SWEPT, 0
+                continue
+            if s["state"] == SWEPT:
+                s["bars_waited"] += 1
+                if s["bars_waited"] > MAX_WAIT:
+                    s["state"] = IDLE
+                    continue
+                mss = (c1 > o1 and c1 > s["sweep_level"]) if d == 1 else (c1 < o1 and c1 < s["sweep_level"])
+                if mss:
+                    s["mss_level"] = c1
+                    s["state"], s["bars_waited"] = WAITING, 0
+                continue
+            # WAITING (ritorno alla zona)
+            s["bars_waited"] += 1
+            if s["bars_waited"] > MAX_WAIT:
+                s["state"] = IDLE
+                continue
+            zone_top = s["mss_level"] if d == 1 else s["sweep_level"]
+            zone_bot = s["sweep_level"] if d == 1 else s["mss_level"]
+            if zone_top is None or zone_top <= zone_bot:
+                continue
+            mid = (zone_top + zone_bot) / 2.0
+            body = abs(c1 - o1)
+            if d == 1:
+                touch = candles[i]["low"] <= zone_top
+                rej = c1 > o1 and c1 > mid and body >= a * 0.3
+            else:
+                touch = candles[i]["high"] >= zone_bot
+                rej = c1 < o1 and c1 < mid and body >= a * 0.3
+            if touch and rej:
+                out_sig[i] = d
+                sl = s["sweep_level"] - 0.3 * a if d == 1 else s["sweep_level"] + 0.3 * a
+                tp = c1 + (c1 - sl) * 2.0 if d == 1 else c1 - (sl - c1) * 2.0
+                out_sl[i], out_tp[i] = sl, tp
+                s["state"] = IDLE
+    return out_sig, out_sl, out_tp
+
+
+def sig_sh_bms_rto_v2(c, ind, i):
+    return ind["shbms_v2_signal"][i]
+
+
+def _shbms_v2_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["shbms_v2_sl"][i], ind["shbms_v2_tp"][i]
+
+
+def _silver_bullet_v2_series(candles, sess, atr, adx):
+    # NXS_Strat_SilverBullet_v2: killzone allargata a 2h (London 10-12 GMT,
+    # NY 14-16 GMT) -> filtro range asiatico minimo (>=0.8xATR, evita mercato
+    # morto) -> ADX>=22 -> sweep con chiusura di rientro (close back inside)
+    # -> displacement (corpo>=0.5xATR) -> FVG 3 candele + controllo "fresh"
+    # (BUG: sempre falso, vedi nota di modulo) -> mai raggiunge l'entry.
+    MAX_WAIT = 12
+    FVG_FRESH_BARS = 5
+    IDLE, SWEPT, DISPLACED = 0, 1, 2
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    st = {d: {"state": IDLE, "waited": 0, "sweep_level": None} for d in (1, -1)}
+    for i in range(14, n):
+        a = atr[i]
+        adx_i = adx[i]
+        h = sess["hour"][i]
+        if not a or adx_i is None or adx_i < 22.0 or h is None:
+            continue
+        london_kill = 10 <= h < 12
+        ny_kill = 14 <= h < 16
+        if not (london_kill or ny_kill):
+            continue
+        ah, al = sess["asian_hi"][i], sess["asian_lo"][i]
+        if ah is None or al is None or (ah - al) < 0.8 * a:
+            continue
+        sw = _sweep_ext_at_raw(candles, sess, i, atr, None, None, None, None)
+        o1, c1, h1, l1 = candles[i]["open"], candles[i]["close"], candles[i]["high"], candles[i]["low"]
+        h3, l3 = candles[i - 2]["high"], candles[i - 2]["low"]
+        for d in (1, -1):
+            s = st[d]
+            if s["state"] == IDLE:
+                swept = sw and ((sw["sweptPDL"] or sw["sweptAsiaLow"] or sw["sweptEQL"]) if d == 1
+                                 else (sw["sweptPDH"] or sw["sweptAsiaHigh"] or sw["sweptEQH"]))
+                close_back = (c1 > al and c1 > o1) if d == 1 else (c1 < ah and c1 < o1)
+                if swept and close_back:
+                    s["sweep_level"] = min(l1, al) if d == 1 else max(h1, ah)
+                    s["state"], s["waited"] = SWEPT, 0
+                continue
+            if s["state"] == SWEPT:
+                s["waited"] += 1
+                if s["waited"] > MAX_WAIT:
+                    s["state"] = IDLE
+                    continue
+                disp = (c1 > o1 and c1 > s["sweep_level"] and abs(c1 - o1) >= 0.5 * a) if d == 1 \
+                    else (c1 < o1 and c1 < s["sweep_level"] and abs(c1 - o1) >= 0.5 * a)
+                if disp:
+                    s["state"], s["waited"] = DISPLACED, 0
+                continue
+            # DISPLACED (attesa FVG fresco)
+            s["waited"] += 1
+            if s["waited"] > MAX_WAIT:
+                s["state"] = IDLE
+                continue
+            fvg = (l1 > h3) if d == 1 else (h1 < l3)
+            if not fvg:
+                continue
+            fresh = True
+            for k in range(0, FVG_FRESH_BARS):
+                idxk = i - k
+                if idxk < 0:
+                    break
+                if d == 1:
+                    if candles[idxk]["low"] <= h3:
+                        fresh = False
+                        break
+                else:
+                    if candles[idxk]["high"] >= l3:
+                        fresh = False
+                        break
+            if not fresh:
+                continue
+            out_sig[i] = d
+            sl = s["sweep_level"] - 0.4 * a if d == 1 else s["sweep_level"] + 0.4 * a
+            tp = c1 + (c1 - sl) * 2.0 if d == 1 else c1 - (sl - c1) * 2.0
+            out_sl[i], out_tp[i] = sl, tp
+            s["state"] = IDLE
+    return out_sig, out_sl, out_tp
+
+
+def sig_silver_bullet_v2(c, ind, i):
+    return ind["sbv2_signal"][i]
+
+
+def _silver_bullet_v2_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["sbv2_sl"][i], ind["sbv2_tp"][i]
+
+
+def _swing_extremes_shift(candles, i, lookback):
+    """Prezzo E shift (1=piu' recente) dell'estremo hi/lo in una finestra di
+    `lookback` barre chiuse (shift1..shift_lookback) - serve a OTE_CONT_v2
+    per confrontare l'ORDINE TEMPORALE di high e low, non solo il prezzo
+    (iHighest/iLowest MQL5 restituiscono lo shift, non il prezzo)."""
+    hi_price, hi_shift = -1e18, None
+    lo_price, lo_shift = 1e18, None
+    for shift in range(1, lookback + 1):
+        idx = i - shift + 1
+        if idx < 0:
+            break
+        h, l = candles[idx]["high"], candles[idx]["low"]
+        if h > hi_price:
+            hi_price, hi_shift = h, shift
+        if l < lo_price:
+            lo_price, lo_shift = l, shift
+    return hi_price, hi_shift, lo_price, lo_shift
+
+
+def _ote_cont_v2_series(candles, atr, adx, choch_int):
+    # NXS_Strat_OTE_Continuation_v2: swing 15 barre (shift1..15) + zona fib
+    # 61.8-70.5% (piu' stretta del 62-79% di v1, niente sweep) + "BOS M15"
+    # dichiarato nel nome ma nel codice v2 e' in realta' g_struct.bosUp/
+    # bosDown, lo STESSO CHoCH sul TF base usato ovunque in questo motore
+    # (choch_int) - non una vera struttura M15 separata. Portato cosi' come
+    # scritto, non come dichiarato nei commenti del file v2. SELL strutturalmente
+    # morto (vedi nota di modulo). Filtro Volume (ImpulseVolMult) OMESSO.
+    SWING_BARS = 15
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    trend = choch_int[0]
+    up, down = choch_int[1], choch_int[2]
+    for i in range(SWING_BARS + 1, n):
+        a = atr[i]
+        adx_i = adx[i]
+        if not a or adx_i is None or adx_i < 22.0 or trend[i] == 0:
+            continue
+        hi_price, hi_shift, lo_price, lo_shift = _swing_extremes_shift(candles, i, SWING_BARS)
+        if hi_shift is None or lo_shift is None:
+            continue
+        rng = hi_price - lo_price
+        if rng <= 0:
+            continue
+        c1, o1 = candles[i]["close"], candles[i]["open"]
+        if trend[i] > 0:
+            if lo_shift >= hi_shift:
+                continue
+            fib618 = hi_price - rng * 0.618
+            fib705 = hi_price - rng * 0.705
+            if not (c1 < fib618 and c1 > fib705):
+                continue
+            if not up[i]:
+                continue
+            if c1 > o1:
+                out_sig[i] = 1
+                sl = lo_price - 0.3 * a
+                out_sl[i] = sl
+                out_tp[i] = hi_price + rng * 0.618
+        elif trend[i] < 0:
+            if hi_shift >= lo_shift:
+                continue
+            fib618 = lo_price + rng * 0.618
+            fib705 = lo_price + rng * 0.705
+            if not (c1 > fib705 and c1 < fib618):
+                continue
+            if not down[i]:
+                continue
+            if c1 < o1:
+                out_sig[i] = -1
+                sl = hi_price + 0.3 * a
+                out_sl[i] = sl
+                out_tp[i] = lo_price - rng * 0.618
+    return out_sig, out_sl, out_tp
+
+
+def sig_ote_cont_v2(c, ind, i):
+    return ind["ote_v2_signal"][i]
+
+
+def _ote_cont_v2_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["ote_v2_sl"][i], ind["ote_v2_tp"][i]
+
+
+def _order_block_v2_series(candles, atr, adx, choch_int):
+    # NXS_Strat_OrderBlock_Retest_v2: displacement (shift2) + BOS "morbido"
+    # (g_struct.bosUp o semplice close>high-precedente) -> zona = PRIMA
+    # candela di colore giusto trovata scansionando shift3..9 (v1 cerca
+    # l'impulso su 15 barre poi la candela opposta a parte - v2 fonde i due
+    # passaggi in uno) -> filtro "breaker" (l'high/low della zona deve gia'
+    # aver rotto il displacement) -> retest al 50% con rejection. Nessun bug
+    # di tautologia qui (a differenza delle altre 3) - InpOBv2_InvalidateOnSL
+    # e' dichiarato ma mai usato nel corpo (entrambi i branch dell'if fanno
+    # la stessa cosa), no-op, portato come tale.
+    MAX_WAIT = 10
+    DISP_BODY_ATR = 0.5
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    trend = choch_int[0]
+    up, down = choch_int[1], choch_int[2]
+    st = {d: {"active": False, "lo": None, "hi": None, "origin": None, "waited": 0} for d in (1, -1)}
+    for i in range(10, n):
+        a = atr[i]
+        adx_i = adx[i]
+        if not a or adx_i is None or adx_i < 20.0 or trend[i] == 0:
+            continue
+        o1, c1, h1, l1 = candles[i]["open"], candles[i]["close"], candles[i]["high"], candles[i]["low"]
+        o2, c2, h2, l2 = candles[i - 1]["open"], candles[i - 1]["close"], candles[i - 1]["high"], candles[i - 1]["low"]
+        for d in (1, -1):
+            s = st[d]
+            if not s["active"]:
+                if d == 1:
+                    disp = c2 < o2 and abs(c2 - o2) >= DISP_BODY_ATR * a
+                    bos = up[i] or (c1 > h2)
+                else:
+                    disp = c2 > o2 and abs(c2 - o2) >= DISP_BODY_ATR * a
+                    bos = down[i] or (c1 < l2)
+                if not (disp and bos):
+                    continue
+                ob = None
+                for shift in range(3, 10):
+                    idx = i - shift + 1
+                    if idx < 0:
+                        break
+                    cd = candles[idx]
+                    is_right = (cd["close"] > cd["open"]) if d == 1 else (cd["close"] < cd["open"])
+                    if is_right:
+                        ob = cd
+                        break
+                if ob is None:
+                    continue
+                ob_hi, ob_lo = ob["high"], ob["low"]
+                if d == 1 and ob_hi < h2:
+                    continue
+                if d == -1 and ob_lo > l2:
+                    continue
+                s["active"], s["lo"], s["hi"], s["origin"] = True, ob_lo, ob_hi, ob["close"]
+                s["waited"] = 0
+                continue
+            s["waited"] += 1
+            if s["waited"] > MAX_WAIT:
+                s["active"] = False
+                continue
+            if s["hi"] is None or s["hi"] <= s["lo"]:
+                continue
+            mid = (s["hi"] + s["lo"]) / 2.0
+            if d == 1:
+                touch = l1 <= mid and c1 > o1 and c1 >= s["lo"]
+                rej = c1 > mid
+            else:
+                touch = h1 >= mid and c1 < o1 and c1 <= s["hi"]
+                rej = c1 < mid
+            if touch and rej:
+                out_sig[i] = d
+                sl = s["origin"] - 0.3 * a if d == 1 else s["origin"] + 0.3 * a
+                tp = c1 + (c1 - sl) * 2.0 if d == 1 else c1 - (sl - c1) * 2.0
+                out_sl[i], out_tp[i] = sl, tp
+                s["active"] = False
+    return out_sig, out_sl, out_tp
+
+
+def sig_order_block_v2(c, ind, i):
+    return ind["ob_v2_signal"][i]
+
+
+def _order_block_v2_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["ob_v2_sl"][i], ind["ob_v2_tp"][i]
+
+
+def _fvg_cont_v2_series(candles, atr, adx, choch_int, choch_ext):
+    # NXS_Strat_FVG_Continuation_v2: FVG 3 candele in direzione del trend +
+    # trend H1 concorde (in realta' choch_ext, il proxy HTF esterno gia'
+    # usato da htf_filter/ORDER_BLOCK in questo motore - "H1" nel commento
+    # del file v2 e' quello che c'e', non una vera query cross-TF separata)
+    # + corpo di creazione >=0.6xATR -> BUG (vedi nota di modulo): il
+    # controllo EntryAt50Pct e' sempre vero per costruzione -> 0 segnali,
+    # sempre, in nessuna direzione.
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    trend = choch_int[0]
+    ext_trend = choch_ext[0]
+    for i in range(3, n):
+        a = atr[i]
+        adx_i = adx[i]
+        if not a or adx_i is None or adx_i < 20.0 or trend[i] == 0:
+            continue
+        o1, c1, h1, l1 = candles[i]["open"], candles[i]["close"], candles[i]["high"], candles[i]["low"]
+        o2, c2 = candles[i - 1]["open"], candles[i - 1]["close"]
+        h3, l3 = candles[i - 2]["high"], candles[i - 2]["low"]
+        body2 = abs(c2 - o2)
+        if trend[i] > 0:
+            if not (l1 > h3):
+                continue
+            if ext_trend[i] <= 0:
+                continue
+            if body2 < 0.6 * a:
+                continue
+            fvg_lo, fvg_hi = h3, l1
+            fvg_mid = (fvg_lo + fvg_hi) / 2.0
+            if not (l1 <= fvg_hi and h1 >= fvg_lo):
+                continue
+            if l1 > fvg_mid:  # sempre vero (fvg_hi==l1) - vedi nota di modulo
+                continue
+            if c1 > o1:
+                out_sig[i] = 1
+                sl = fvg_lo - 0.3 * a
+                out_sl[i] = sl
+                out_tp[i] = c1 + (c1 - sl) * 1.5
+        elif trend[i] < 0:
+            if not (h1 < l3):
+                continue
+            if ext_trend[i] >= 0:
+                continue
+            if body2 < 0.6 * a:
+                continue
+            fvg_hi, fvg_lo = l3, h1
+            fvg_mid = (fvg_lo + fvg_hi) / 2.0
+            if not (h1 >= fvg_lo and l1 <= fvg_hi):
+                continue
+            if h1 < fvg_mid:  # sempre vero (fvg_lo==h1) - vedi nota di modulo
+                continue
+            if c1 < o1:
+                out_sig[i] = -1
+                sl = fvg_hi + 0.3 * a
+                out_sl[i] = sl
+                out_tp[i] = c1 - (sl - c1) * 1.5
+    return out_sig, out_sl, out_tp
+
+
+def sig_fvg_cont_v2(c, ind, i):
+    return ind["fvg_v2_signal"][i]
+
+
+def _fvg_cont_v2_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["fvg_v2_sl"][i], ind["fvg_v2_tp"][i]
+
+
 def sig_sms_bms_rto(c, ind, i):
     # 04/08 - fedelta' verificata riga-per-riga con NXS_Strat_SMS_BMS_RTO
     # (MQL5 reale): a differenza di SH_BMS_RTO, NON e' una state machine
@@ -2733,6 +3187,14 @@ STRATEGY_SLTP_ALWAYS = {
     "PO3": _po3_sl_tp,
     "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
     "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
+    # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
+    # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
+    # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
+    "SH_BMS_RTO_V2": _shbms_v2_sl_tp,
+    "SILVER_BULLET_V2": _silver_bullet_v2_sl_tp,
+    "OTE_CONT_V2": _ote_cont_v2_sl_tp,
+    "ORDER_BLOCK_V2": _order_block_v2_sl_tp,
+    "FVG_CONT_V2": _fvg_cont_v2_sl_tp,
 }
 # ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
 # chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una
@@ -2789,6 +3251,14 @@ STRATEGIES = {
     "NY_REVERSAL": sig_ny_reversal,
     "PO3": sig_po3,
     "SILVER_BULLET": sig_silver_bullet,
+    # 08/08 - varianti "_v2" (brief Decomposizione Edge, file pastati
+    # dall'utente, vedi nota di modulo sopra _shbms_v2_series) - EXPERIMENTAL,
+    # nessuna controparte MQL5 nel repository originale.
+    "SH_BMS_RTO_V2": sig_sh_bms_rto_v2,
+    "SILVER_BULLET_V2": sig_silver_bullet_v2,
+    "OTE_CONT_V2": sig_ote_cont_v2,
+    "ORDER_BLOCK_V2": sig_order_block_v2,
+    "FVG_CONT_V2": sig_fvg_cont_v2,
 }
 
 # Fase A / MM-08 — retrocompatibilita' esplicita degli id storici.

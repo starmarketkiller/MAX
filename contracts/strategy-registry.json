@@ -5,11 +5,12 @@
     "knowledge/strategy_database.json",
     "MQL5/Include/NEXUS_v1/NXS_StrategyProfiles.mqh (NXS_Profile_TF)",
     "server/backtest.py (STRAT_MAP)",
-    "server/backtest.py (MALAYSIAN_SNR_BREAKOUT - variante sperimentale senza controparte MQL5, 06/08)"
+    "server/backtest.py (MALAYSIAN_SNR_BREAKOUT - variante sperimentale senza controparte MQL5, 06/08)",
+    "server/backtest.py (SH_BMS_RTO_V2/SILVER_BULLET_V2/OTE_CONT_V2/ORDER_BLOCK_V2/FVG_CONT_V2 - varianti sperimentali pastate dall'utente per il brief Decomposizione Edge, nessuna controparte MQL5 nel repo, 08/08)"
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 42,
+    "total": 47,
     "live": 37,
     "research_only": 4
   },
@@ -254,6 +255,28 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "FVG_CONT_V2",
+      "display_name": "FVG Continuation v2 (experimental, external revision)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -565,6 +588,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "ORDER_BLOCK_V2",
+      "display_name": "Order Block Retest v2 (experimental, external revision)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "OTE_CONT",
       "display_name": "Ote Cont",
       "aliases": [],
@@ -584,6 +629,28 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "OTE_CONT_V2",
+      "display_name": "OTE Continuation v2 (experimental, external revision)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -785,6 +852,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "SH_BMS_RTO_V2",
+      "display_name": "SH+BMS+RTO v2 (experimental, external revision)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "SILVER_BULLET",
       "display_name": "Silver Bullet",
       "aliases": [],
@@ -804,6 +893,28 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "SILVER_BULLET_V2",
+      "display_name": "Silver Bullet v2 (experimental, external revision)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
