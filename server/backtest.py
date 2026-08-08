@@ -531,7 +531,7 @@ def _prep(candles):
     ob_signal = _ob_series(candles, atr_s)
     shbms_signal, shbms_ref = _shbms_series(
         candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
-    snr_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(candles, sess, atr_s)
+    snr_signal, snr_brk_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(candles, sess, atr_s)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -562,7 +562,8 @@ def _prep(candles):
         "sb_signal": sb_signal, "sb_sweep_level": sb_sweep_level,  # precalcolato, vedi _silver_bullet_series
         "ob_signal": ob_signal,  # precalcolato, vedi _ob_series
         "shbms_signal": shbms_signal, "shbms_ref": shbms_ref,  # precalcolato, vedi _shbms_series
-        "snr_signal": snr_signal, "snr_h4hi": snr_h4hi, "snr_h4lo": snr_h4lo,
+        "snr_signal": snr_signal, "snr_brk_signal": snr_brk_signal,
+        "snr_h4hi": snr_h4hi, "snr_h4lo": snr_h4lo,
         "snr_atrH4": snr_atrH4,  # precalcolato, vedi _malaysian_snr_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
@@ -1479,12 +1480,24 @@ def _malaysian_snr_series(candles, sess, atr):
     # TF su cui la sessione ha senso - vedi nota AUD0-style gia' usata per
     # LONDON_BO/WEEKLY_EXP: testarla su D1 dava 0 trade perche' g_session
     # non esiste su una barra giornaliera).
+    #
+    # 06/08 (2) - out_brk: variante SPERIMENTALE (non fedelta' MQL5) chiesta
+    # dall'utente dopo aver verificato che la vera NXS_Strat_MalaysianSNR_
+    # Rejection produce 0 trade per una quasi-tautologia fra "tocco l'estremo
+    # H4 a 12 barre" e "l'H4 mostra gia' ripresa a 4 barre" (vedi commit
+    # precedente). La rottura chiede l'opposto: chiusura OLTRE il livello H4
+    # (non il tocco) nella stessa direzione della storyline - le due
+    # condizioni ora si rinforzano (rompere resistenza CON un momentum H4/D1
+    # gia' rialzista e' coerente, non contraddittorio) invece di confliggere.
+    # Registrata come strategia SEPARATA (MALAYSIAN_SNR_BREAKOUT), la
+    # rejection fedele all'MQL5 resta intatta sotto MALAYSIAN_SNR.
     n = len(candles)
     h4 = _resample_ohlc(candles, 4)
     w1 = _resample_ohlc(candles, 168)
     d1 = _resample_ohlc(candles, 24)
     atr_h4 = atr_series(h4, 14)
     out_sig = [0] * n
+    out_brk = [0] * n
     out_h4hi = [None] * n
     out_h4lo = [None] * n
     out_atrh4 = [None] * n
@@ -1513,7 +1526,14 @@ def _malaysian_snr_series(candles, sess, atr):
             out_sig[i] = 1
         elif (h4Hi - atrH4 * 0.4 <= h1 <= h4Hi + atrH4 * 0.4) and c1 < o1 and story_bear:
             out_sig[i] = -1
-    return out_sig, out_h4hi, out_h4lo, out_atrh4
+        # Rottura fresca (non ancora oltre il livello alla barra precedente,
+        # cosi' non risegnala ogni barra finche' il prezzo resta esteso).
+        c_prev = candles[i - 1]["close"] if i > 0 else c1
+        if c1 > h4Hi and c_prev <= h4Hi and story_bull:
+            out_brk[i] = 1
+        elif c1 < h4Lo and c_prev >= h4Lo and story_bear:
+            out_brk[i] = -1
+    return out_sig, out_brk, out_h4hi, out_h4lo, out_atrh4
 
 
 def _malaysian_snr_sl_tp(c, ind, i, direction, entry, atr):
@@ -1531,6 +1551,34 @@ def _malaysian_snr_sl_tp(c, ind, i, direction, entry, atr):
     if h4Hi is None:
         return None
     return h4Hi + 0.5 * atrH4, entry - 2.3 * atr
+
+
+def sig_malaysian_snr_breakout(c, ind, i):
+    # 06/08 - variante SPERIMENTALE, non fedelta' MQL5 (dichiarato: la vera
+    # NXS_Strat_MalaysianSNR_Rejection e' sopra, sig_malaysian_snr). Chiesta
+    # dall'utente: "rotture di supporti e resistenze", non rimbalzi.
+    # Stesso structure engine H4/W1/D1 (_malaysian_snr_series), stessi filtri
+    # di sessione/corpo/storyline - solo l'evento d'ingresso e' diverso:
+    # chiusura OLTRE il livello H4 nella direzione della storyline, non il
+    # tocco dell'estremo nella direzione opposta.
+    return ind["snr_brk_signal"][i]
+
+
+def _malaysian_snr_breakout_sl_tp(c, ind, i, direction, entry, atr):
+    # SL torna DENTRO il livello appena rotto (ora supporto/resistenza
+    # invertiti) +-0.5xATR(H4) - convenzione opposta alla rejection sopra,
+    # perche' qui il livello rotto e' quello su cui si punta a stare, non
+    # quello da cui si rimbalza. TP invariato: 2.3xATR base.
+    h4Lo, h4Hi, atrH4 = ind["snr_h4lo"][i], ind["snr_h4hi"][i], ind["snr_atrH4"][i]
+    if not atrH4:
+        return None
+    if direction == 1:
+        if h4Hi is None:
+            return None
+        return h4Hi - 0.5 * atrH4, entry + 2.3 * atr
+    if h4Lo is None:
+        return None
+    return h4Lo + 0.5 * atrH4, entry - 2.3 * atr
 
 
 def sig_ote_cont(c, ind, i):
@@ -2684,6 +2732,7 @@ STRATEGY_SLTP_ALWAYS = {
     "SMS_BMS_RTO": _sms_bms_sl_tp,
     "PO3": _po3_sl_tp,
     "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
+    "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
 }
 # ORDER_BLOCK/OB_MIT: nessun entry qui - il vero MQL5 (NXS_Strat_OrderBlock)
 # chiama NXS_DefaultSLTP(s), il multiplo ATR generico del motore, non una
@@ -2720,6 +2769,7 @@ STRATEGIES = {
     "TURTLE_SOUP": sig_turtle_soup,
     "STRUCT_REACT": sig_struct_react,
     "MALAYSIAN_SNR": sig_malaysian_snr,
+    "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta

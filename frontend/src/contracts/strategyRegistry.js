@@ -21,6 +21,7 @@ export const STRATEGY_REGISTRY = [
   ["LONDON_BO","London Bo","TREND",true,true],
   ["MACD","MACD","MOMENTUM",true,true],
   ["MALAYSIAN_SNR","Malaysian Snr","LIQUIDITY",true,true],
+  ["MALAYSIAN_SNR_BREAKOUT","Malaysian SNR Breakout (experimental)","SMC",false,true],
   ["NY_REVERSAL","Ny Reversal","SESSION",true,true],
   ["OB_MIT","Ob Mit","SMC",true,true],
   ["ORDER_BLOCK","Order Block","SMC",true,true],

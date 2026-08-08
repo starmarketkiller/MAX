@@ -4,11 +4,12 @@
   "sources": [
     "knowledge/strategy_database.json",
     "MQL5/Include/NEXUS_v1/NXS_StrategyProfiles.mqh (NXS_Profile_TF)",
-    "server/backtest.py (STRAT_MAP)"
+    "server/backtest.py (STRAT_MAP)",
+    "server/backtest.py (MALAYSIAN_SNR_BREAKOUT - variante sperimentale senza controparte MQL5, 06/08)"
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 41,
+    "total": 42,
     "live": 37,
     "research_only": 4
   },
@@ -473,6 +474,28 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_BREAKOUT",
+      "display_name": "Malaysian SNR Breakout (experimental)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {

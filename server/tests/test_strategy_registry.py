@@ -43,7 +43,10 @@ def test_registry_validates_and_reconciles():
 def test_counts_are_37_live_plus_4_research():
     assert sr.count_live() == 37
     assert len(sr.research_only_ids()) == 4
-    assert len(sr.all_records()) == 41
+    # 42, non 41: + MALAYSIAN_SNR_BREAKOUT (06/08, status EXPERIMENTAL -
+    # variante sperimentale senza controparte MQL5, research_only_ids()
+    # resta a 4 perche' filtra su status=="RESEARCH_ONLY", non su questo).
+    assert len(sr.all_records()) == 42
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -104,7 +107,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 41
+    assert r.json()["counts"]["total"] == 42
 
 
 def test_resolve_endpoint_404_on_unknown(client):
