@@ -49,6 +49,23 @@ def test_ready_verifica_database_e_migrazioni(client):
     assert "security" in body["checks"]
 
 
+def test_dukascopy_snapshot_404_se_assente(client, tmp_path, monkeypatch):
+    import dukascopy_fetch as dk
+    monkeypatch.setattr(dk, "data_cache_root", lambda: str(tmp_path))
+    r = client.get("/api/dukascopy_snapshot")
+    assert r.status_code == 404
+
+
+def test_dukascopy_snapshot_serve_il_file_esistente(client, tmp_path, monkeypatch):
+    import dukascopy_fetch as dk
+    monkeypatch.setattr(dk, "data_cache_root", lambda: str(tmp_path))
+    snap = tmp_path / "dukascopy_xauusd_m15.json"
+    snap.write_text('[{"time": "2026-01-01T00:00:00", "open": 1.0}]', encoding="utf-8")
+    r = client.get("/api/dukascopy_snapshot")
+    assert r.status_code == 200
+    assert r.json() == [{"time": "2026-01-01T00:00:00", "open": 1.0}]
+
+
 # --------------------------------------------------------------------------- #
 # Sessione e CSRF — AUD0-SEC-008 / AUD0-AUTH-001
 # --------------------------------------------------------------------------- #

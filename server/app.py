@@ -48,6 +48,7 @@ import nexus_retention
 import nexus_security
 import nexus_validation
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
+from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -1600,6 +1601,27 @@ def dukascopy_status():
             "span_days": span_days,
             "min_span_needed": 300,
             "ready_for_intraday_reconfirm": bool(span_days and span_days >= 300)}
+
+
+@app.get("/api/dukascopy_snapshot")
+def dukascopy_snapshot(symbol: str = "XAUUSD"):
+    """Export read-only dello snapshot Dukascopy M15 gia' scritto da
+    fetch_dukascopy_history.py (stesso file che backtest.py legge da
+    NEXUS_DUKASCOPY_DIR - vedi _dukascopy_path). Serve a portare lo storico
+    reale fuori dal disco persistente di Render (che non ha una shell
+    interattiva) per rieseguire in locale gli script di ricerca TREND_GATE su
+    dati intraday reali invece che sul fallback Yahoo a finestra corta.
+    Pubblico come /api/dukascopy_status: solo OHLC storico dell'oro, nessun
+    dato sensibile.
+    """
+    import dukascopy_fetch as dk
+    path = os.path.join(dk.data_cache_root(), f"dukascopy_{symbol.lower()}_m15.json")
+    if not os.path.exists(path):
+        raise public_error("DUKASCOPY_SNAPSHOT_NOT_FOUND",
+                           f"nessuno snapshot Dukascopy trovato per {symbol}",
+                           status=404, context="dukascopy_snapshot")
+    return FileResponse(path, media_type="application/json",
+                        filename=os.path.basename(path))
 
 
 @app.get("/api/ready")
