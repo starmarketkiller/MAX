@@ -87,6 +87,14 @@ input double   InpMaxDailyDDPct    = 5.0;
 // drawdown lo abbassa -> frena da solo. "profitto = margine = spazio".
 input bool     InpUseMarginGate    = true;    // v2.4.8: HEDGE ON - regola la concorrenza col margine (freno di sicurezza sul DD)
 input double   InpMinMarginLevelPct = 500.0; // livello margine minimo proiettato per aprire (0=off)
+// v2.5.x — tetto ESPLICITO al rischio quando il lotto minimo broker supera il
+// budget calcolato (vedi AUD0-RISK-002 in NXS_Risk.mqh). Default 0 = comportamento
+// invariato: l'ordine viene rifiutato. Se > 0, il lotto minimo viene comunque
+// accettato a patto che il rischio EFFETTIVO in quel trade non superi questa %
+// del saldo (indipendente dal rischio% nominale della strategia) — pensato per
+// conti piccoli (~€200-1000) dove il lotto minimo e' strutturalmente sopra il
+// budget nominale su XAUUSD. Ogni sforamento viene loggato come tale, mai silente.
+input double   InpMaxRiskAtMinLotPct = 0.0;
 double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;

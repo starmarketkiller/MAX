@@ -89,12 +89,28 @@ double NXS_CalcLotRisk(double slPriceDist, double riskPct){
    // più della percentuale configurata su saldi piccoli o stop larghi. Si
    // verifica il rischio monetario EFFETTIVO dopo la normalizzazione e, se il
    // minimo tradabile lo supera, si rifiuta l'ordine.
+   //
+   // v2.5.x — su conti piccoli (~€200-1000) il lotto minimo supera quasi
+   // sempre il budget nominale su XAUUSD: il reject secco azzera l'operatività
+   // per cui l'EA era stato pensato (vedi "vincolo del conto piccolo" nel
+   // vault, 15/07). InpMaxRiskAtMinLotPct riapre il floor ma con un TETTO
+   // esplicito e sempre loggato — non il clamp incondizionato pre-fix.
    if(lots < minLot){
       double riskAtMin = (slPriceDist / tickSize) * tickVal * minLot;
       if(riskAtMin > risk * 1.0000001){
+         double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+         double ceilingMoney = balance * InpMaxRiskAtMinLotPct / 100.0;
+         if(InpMaxRiskAtMinLotPct > 0 && riskAtMin <= ceilingMoney){
+            PrintFormat("[NEXUS RISK] lotto minimo (%.4f) eseguito a RISCHIO MAGGIORATO: "
+                        "%.2f contro un budget nominale di %.2f (tetto %.1f%% saldo = %.2f)",
+                        minLot, riskAtMin, risk, InpMaxRiskAtMinLotPct, ceilingMoney);
+            lots = NormalizeDouble(minLot, volDigits);
+            return lots;
+         }
          PrintFormat("[NEXUS RISK] ordine rifiutato: il lotto minimo (%.4f) "
-                     "rischierebbe %.2f contro un budget di %.2f",
-                     minLot, riskAtMin, risk);
+                     "rischierebbe %.2f contro un budget di %.2f%s",
+                     minLot, riskAtMin, risk,
+                     (InpMaxRiskAtMinLotPct > 0 ? " (oltre anche il tetto configurato)" : ""));
          return 0.0;
       }
       lots = NormalizeDouble(minLot, volDigits);
