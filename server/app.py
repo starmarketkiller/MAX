@@ -1459,6 +1459,18 @@ def _start_dukascopy_autofetch() -> None:
     precedente e' ancora vivo — dukascopy_fetch.fetch_day_ticks e' idempotente
     per giorno (salta quelli gia' in cache), quindi un doppio avvio non
     corromperebbe i dati, ma sprecherebbe thread/rete per lavoro duplicato.
+
+    09/08 - bug trovato in produzione: lock_path vive su root (disco
+    persistente /data), che sopravvive a un redeploy Render, ma un redeploy
+    ricrea il container con un namespace PID nuovo da zero - il numero pid
+    scritto nel lock da un container precedente puo' quindi coincidere per
+    puro caso con un processo COMPLETAMENTE DIVERSO nel container nuovo
+    (osservato: lock con pid 13 di un container morto, il container nuovo
+    aveva per caso un pid 12 vivo). os.kill(pid, 0) verifica solo "esiste un
+    processo con questo numero", non "e' il nostro fetch" - falso positivo,
+    fetch mai rilanciato, days_done bloccato per sempre. Fix: verificare via
+    /proc/<pid>/cmdline che il pid sia davvero fetch_dukascopy_history.py,
+    non un pid qualunque riassegnato dal kernel dopo il riavvio.
     """
     import dukascopy_fetch as dk
     root = dk.data_cache_root()
@@ -1468,10 +1480,14 @@ def _start_dukascopy_autofetch() -> None:
         try:
             old_pid = int(open(lock_path, encoding="utf-8").read().strip())
             os.kill(old_pid, 0)   # non termina il processo, solleva se non esiste
+            with open(f"/proc/{old_pid}/cmdline", "rb") as f:
+                cmdline = f.read()
+            if b"fetch_dukascopy_history.py" not in cmdline:
+                raise OSError("pid riassegnato ad un altro processo dopo un riavvio del container")
             print(f"[NEXUS] fetch Dukascopy gia' in corso (pid {old_pid}), non rilanciato")
             return
         except (ValueError, OSError):
-            pass   # lock orfano (processo precedente morto senza pulirlo) - si rilancia
+            pass   # lock orfano/riassegnato (processo precedente morto o pid riciclato) - si rilancia
     script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                           "research_scripts", "fetch_dukascopy_history.py")
     log_path = os.path.join(root, "dukascopy_fetch.log")
