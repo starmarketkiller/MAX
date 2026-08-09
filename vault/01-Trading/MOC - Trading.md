@@ -71,6 +71,11 @@ profitto reale, non solo curve di backtest.
   identico a EMA_PULLBACK (non testa mai la vera strategia).
 - **[[TODO - Backtest 10Y]]** (cartella `01-Trading/TODO/`) — piano d'azione
   strategia-per-strategia e aggiornamenti da fare appena arriva il segmento 10.
+- **[[TODO - Agente Desktop (validazione MT5 post-Dukascopy, 09-08)]]** —
+  per chi ha MT5/MetaEditor sotto mano: cosa validare dopo la sessione
+  Dukascopy del 09/08 (nucleo hedge BREAKOUT_ACC mai testato insieme, vero
+  LIQ_VOID mai testato — dormiente di default, SAR/MACD/RSI_DIV/ADX_RSI da
+  ri-validare con la parità tester/live post-remediation attiva).
 - **[[NEXUS EA - Setup Buy-Sell — Framework]]** — metodologia per ricostruire
   ogni strategia come due setup indipendenti (buy e sell), con il primo
   esempio completo (MALAYSIAN_SNR). **Leggi anche [[NEXUS EA - Principi]]
