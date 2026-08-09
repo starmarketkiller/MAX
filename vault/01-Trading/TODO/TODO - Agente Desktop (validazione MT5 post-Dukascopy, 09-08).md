@@ -24,7 +24,43 @@ qualunque test qui sotto — nessuna riga di `MQL5/` risulta mai compilata.
 
 ---
 
-## 🔴 1. Priorità massima — il nucleo hedge mai testato per davvero
+## 🔴 1. Nuovo — floor sul lotto minimo con tetto esplicito (`InpMaxRiskAtMinLotPct`)
+
+Scoperta empiricamente durante il primo smoke test del punto 2 (sotto): con
+conto 10.000 USD e rischio 0,5% (budget 50 USD), quasi tutti i segnali
+BREAKOUT_ACC venivano rifiutati perché il lotto minimo 0,01 su XAUUSD
+rischiava ~95 USD. Non era un bug del test — è `AUD0-RISK-002`
+(`NXS_Risk.mqh:88-99`, chiuso 25/07): il clamp incondizionato al lotto minimo
+fu sostituito con un reject secco perché rischiava più del configurato senza
+limite né log.
+
+**Il problema**: quel fix, corretto in sé, ha anche disattivato il modello
+operativo per cui l'EA era stato pensato fin dal 15/07 (vedi
+"Il vincolo del conto piccolo" in [[NEXUS EA - Panoramica]]) — su ~200-1000
+EUR il lotto minimo è quasi sempre sopra il budget nominale, e il progetto
+assumeva che il rischio% restasse "inerte" (più alto del nominale) finché il
+conto non cresce, non che il trade venisse rifiutato.
+
+**Fix di oggi (non compilato, da verificare)**: nuovo input
+`InpMaxRiskAtMinLotPct` (default `0.0` = comportamento invariato, reject
+secco). Se impostato > 0, il lotto minimo viene comunque eseguito, ma solo se
+il rischio effettivo resta sotto quella percentuale del saldo — e ogni volta
+che succede viene loggato esplicitamente come `RISCHIO MAGGIORATO`, mai in
+modo silente. Codice in `NXS_Risk.mqh`/`NXS_Inputs.mqh`.
+
+**Cosa verificare**:
+1. Con `InpMaxRiskAtMinLotPct = 0.0` (default): stesso identico risultato di
+   oggi (reject) — conferma che i conti esistenti non cambiano comportamento.
+2. Con un valore tipo `5.0`-`10.0` su un run a 200 EUR: nel Journal deve
+   comparire `RISCHIO MAGGIORATO` sui trade a lotto minimo, e il conteggio
+   trade eseguiti deve salire rispetto al reject secco.
+3. Quanto spesso questo ramo viene effettivamente usato su un mese intero a
+   200 EUR — è il dato che dice se il tetto proposto (5-10%?) è realistico o
+   va discusso con l'utente.
+
+---
+
+## 🔴 2. Priorità massima — il nucleo hedge mai testato per davvero
 
 [[TODO - Backtest 10Y]] lo segnalava già a luglio come "potenziale da
 sfruttare, non ancora testato": **BREAKOUT_ACC + TURTLE_SOUP + THREE_BAR_DELIVERY_BREAK
@@ -45,7 +81,7 @@ una alla volta), usa i profili `InpStrat_*`/`InpUseStrat_*` (anch'essi già
 `input`, commit `dc480f8`): disattiva tutte le altre 34, lascia solo
 BREAKOUT_ACC + TURTLE_SOUP + THREE_BAR_DELIVERY_BREAK attive, storico più
 lungo disponibile dal broker, **`InpTesterProtectionParity = true`**
-(default — vedi punto 3).
+(default — vedi punto 4).
 
 **Report atteso**: Net/PF/DD/Sharpe combinato, non le tre isolate — quello già
 c'è (vedi [[NEXUS EA - Hedge nel Tempo]]). La domanda a cui questo test
@@ -54,7 +90,7 @@ alla somma algebrica, o no?
 
 ---
 
-## 🔴 2. Il vero LIQ_VOID non è mai stato testato — è dormiente di default
+## 🔴 3. Il vero LIQ_VOID non è mai stato testato — è dormiente di default
 
 Scoperta di oggi, verificata a tre livelli nel codice (non un'ipotesi):
 
@@ -82,7 +118,7 @@ stesso bias, non solo LIQ_VOID) è dell'utente, non implicita in questo test.
 
 ---
 
-## 🟠 3. Ri-validare SAR/MACD/RSI_DIV/ADX_RSI — i vecchi numeri sono pre-remediation
+## 🟠 4. Ri-validare SAR/MACD/RSI_DIV/ADX_RSI — i vecchi numeri sono pre-remediation
 
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] (15/07) le indica come le 4
 peggiori del portafoglio (-34.3R/-21.1R/-17.5R/-15.3R, ~75% della perdita
@@ -98,7 +134,7 @@ escludeva ancora i trade con rischio iniziale non ricostruibile (vedi
 e quelli di oggi non sono direttamente confrontabili finché non c'è un test
 MT5 fresco con la parità attiva.**
 
-**Come**: stesso storico/setup del punto 1, isolare le 4 una alla volta (o
+**Come**: stesso storico/setup del punto 2, isolare le 4 una alla volta (o
 insieme, se si vuole anche la lettura combinata) con `InpTesterProtectionParity
 = true`. Segmentare per anno se lo storico del broker lo permette, stesso
 formato di [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] — permette un
@@ -106,7 +142,7 @@ confronto diretto riga per riga col vecchio ranking invece di un numero isolato.
 
 ---
 
-## 🟡 4. Se c'è tempo: sweep completo con la parità attiva
+## 🟡 5. Se c'è tempo: sweep completo con la parità attiva
 
 `results/sets/SWEEP_37_DataCollectionMode.set` è già pronto e carica
 `InpStrategySelector` in Optimization 1→37 + `InpDataCollectionMode=true` (
@@ -122,7 +158,7 @@ il tuo EA la richiede.
 
 ---
 
-## 🟢 5. Opzionale ma risolutivo — Simbolo Personalizzato Dukascopy in MT5
+## 🟢 6. Opzionale ma risolutivo — Simbolo Personalizzato Dukascopy in MT5
 
 MT5 oggi usa **esclusivamente** lo storico del broker collegato al terminale
 (confermato: zero riferimenti a "dukascopy" in tutto `MQL5/`) mentre Python/il
@@ -181,7 +217,7 @@ sicuramente logica, non più prezzo. Le aree più probabili, in ordine:
 
 Stesso formato di [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]: Net, PF,
 Drawdown Max (Equity), Sharpe, per strategia (e per anno se segmentato). Per
-il punto 2 (LIQ_VOID), specificare esplicitamente che `InpUseHTFBias` era
+il punto 3 (LIQ_VOID), specificare esplicitamente che `InpUseHTFBias` era
 forzato a `true`. Annotare eventuali bug/anomalie nel log (stesso schema di
 `executed` rotto/`DERIVA CONTRATTO` già noto da
 [[TODO - Agente Desktop (consegna remediation)]] §3).
