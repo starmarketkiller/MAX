@@ -34,10 +34,16 @@ a giorno singolo che non ha mai avuto un errore) e' piu' lento ma
 completo - qui la correttezza dei dati vale piu' della velocita', dato
 che serviranno a decidere il rischio reale.
 
-Ogni giorno scaricato resta in cache locale su disco
-(server/data_cache/dukascopy/XAUUSD/*.json) - un rilancio non ri-scarica
-mai un giorno gia' presente, quindi lo script e' idempotente e riprendibile
-in qualunque momento, in qualunque ordine.
+08/08 - bug trovato e corretto (mordendo due volte: nel container di
+sviluppo di questa sessione E su Render dopo un riavvio del servizio): la
+frase sopra era vera solo per la cache grezza per-giorno, che pero' viene
+POTATA apposta (RAW_KEEP_DAYS sotto) per stare nel budget disco - quindi
+oltre quella finestra un riavvio ri-scaricava TUTTO da zero, senza mai
+controllare cosa fosse gia' scritto in OUT_PATH (lo snapshot durevole).
+Corretto: all'avvio lo script carica OUT_PATH se esiste, raggruppa le
+candele gia' presenti per giorno civile, e scarica SOLO i giorni mancanti -
+idempotente per davvero adesso, non solo nella finestra dei 20 giorni di
+cache grezza.
 
 Esegui dalla root del repo (pensato per girare in background per ore):
 python3 server/research_scripts/fetch_dukascopy_history.py
@@ -104,23 +110,51 @@ def _prune_raw_cache(oldest_frontier: datetime):
                 pass
 
 
+def _load_existing_snapshot():
+    """Carica OUT_PATH (se esiste) e raggruppa le candele per giorno civile
+    (stesso oggetto datetime UTC-mezzanotte usato da _day_range_desc) - così
+    un riavvio sa quali giorni sono gia' coperti invece di ripartire da capo.
+    File assente/corrotto -> ripresa vuota, nessun errore (stesso
+    comportamento di prima quando OUT_PATH non esisteva ancora)."""
+    if not os.path.exists(OUT_PATH):
+        return {}
+    try:
+        with open(OUT_PATH, encoding="utf-8") as f:
+            candles = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    by_day = {}
+    for c in candles:
+        try:
+            d = datetime.strptime(c["time"][:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except (KeyError, ValueError):
+            continue
+        by_day.setdefault(d, []).append(c)
+    return by_day
+
+
 def main():
     t0 = time.time()
-    days = list(_day_range_desc(START, END))
-    n_days = len(days)
-    print(f"[fetch] {SYMBOL} {END.date()} -> {START.date()} (a ritroso, {n_days} giorni), "
+    all_days = list(_day_range_desc(START, END))
+    n_days = len(all_days)
+
+    ohlc_by_day = _load_existing_snapshot()
+    already_done = len(ohlc_by_day)
+    days = [d for d in all_days if d not in ohlc_by_day]
+
+    print(f"[fetch] {SYMBOL} {END.date()} -> {START.date()} (a ritroso, {n_days} giorni totali, "
+          f"{already_done} gia' presenti dallo snapshot, {len(days)} da scaricare), "
           f"TF={TF_MINUTES}m, {DAY_WORKERS} giorni in parallelo, "
           f"snapshot ogni {SNAPSHOT_EVERY} giorni", flush=True)
 
-    ohlc_by_day = {}   # day.date() -> list[candle], cosi' il riordino finale e' deterministico
-    days_with_data = 0
-    oldest_done = END
+    days_with_data = sum(1 for lst in ohlc_by_day.values() if lst)
+    oldest_done = min(ohlc_by_day) if ohlc_by_day else END
 
     def _fetch_one(day):
         ticks = dk.fetch_day_ticks(SYMBOL, day, max_workers=12)
         return day, dk.ticks_to_ohlc(ticks, TF_MINUTES)
 
-    i = 0
+    i = already_done
     with ThreadPoolExecutor(max_workers=DAY_WORKERS) as pool:
         futures = {pool.submit(_fetch_one, day): day for day in days}
         for fut in as_completed(futures):
@@ -133,7 +167,7 @@ def main():
                 candles = []
             if candles:
                 days_with_data += 1
-                ohlc_by_day[day.date()] = candles
+                ohlc_by_day[day] = candles
             if day < oldest_done:
                 oldest_done = day
 
