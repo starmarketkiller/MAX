@@ -516,14 +516,14 @@ def _regime_series(atr, adx):
     return out
 
 
-def _prep(candles):
+def _prep(candles, intraday_ref=None):
     closes = [c["close"] for c in candles]
     psar, psar_trend = psar_series(candles)
     ema12 = ema_series(closes, 12)
     ema26 = ema_series(closes, 26)
     macd_line, macd_sig = _macd_signal_series(ema12, ema26)
     atr_s = atr_series(candles, 14)
-    sess = _session_amd_series(candles)
+    sess = _session_amd_series(candles, intraday_ref=intraday_ref)
     weekly_pwh, weekly_pwl, weekly_open = _weekly_levels_series(candles)
     monthly_pmh, monthly_pml = _monthly_levels_series(candles)
     sb_signal, sb_sweep_level = _silver_bullet_series(
@@ -1663,7 +1663,7 @@ def sig_cisd(c, ind, i):
 # / reversal_distribution (chiusura di rientro dopo la manipolazione).
 # CHoCH: stesso proxy failure-swing gia' usato per TURTLE_SOUP/IFVG (non è
 # il vero g_struct fractal-based di MQL5 - approssimazione dichiarata).
-def _session_amd_series(candles):
+def _session_amd_series_raw(candles):
     n = len(candles)
     hour = [None] * n
     date = [None] * n
@@ -1737,6 +1737,74 @@ def _session_amd_series(candles):
             if opp_beyond:
                 manip_dir, phase, beyond_count = -manip_dir, "MANIPULATION", 1
         amd_phase[i] = (phase, manip_dir)
+
+    return {"hour": hour, "date": date, "session": session,
+            "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
+            "amd_phase": amd_phase}
+
+
+def _session_amd_series(candles, intraday_ref=None):
+    """Contesto di sessione/Asian-range/AMD per ogni barra di `candles`.
+
+    09/08 - bug trovato confrontando col vero MQL5 (NXS_AMDModel.mqh,
+    NXS_GetAMD): li' il range asiatico si scandisce SEMPRE su InpTFEntry
+    (il timeframe operativo fine-grained dell'EA), indipendentemente dal
+    profilo della strategia (NXS_Profile_TF - es. D1 per LONDON_BO, che
+    serve solo a leggere la candela di ingresso via iClose(g_sym,
+    NXS_EffTF(), 1), non a calcolare l'Asian range). Qui invece
+    _session_amd_series_raw(candles) veniva chiamata sulle STESSE barre
+    richieste per il test - su una barra D1 non esiste piu' nessuna barra
+    con hour in [0,7): la sessione ASIAN sparisce, l'Asian range resta
+    sempre None, e ogni strategia che ne dipende (LONDON_BO, AMD_CONT,
+    AMD_REVERSAL, JUDAS_SWING, PO3, LDN_REVERSAL, NY_REVERSAL) smette di
+    generare segnali - non perche' la strategia sia rotta, ma perche' il
+    motore di test le toglie l'informazione di cui ha bisogno. Su 4h la
+    perdita e' meno totale (una singola barra 4h puo' comunque attraversare
+    piu' sessioni) ma presente.
+
+    intraday_ref: serie fine-grained (M15 Dukascopy) su cui calcolare
+    DAVVERO sessione/Asian-range/AMD, poi proiettata su ogni barra di
+    `candles` prendendo l'ultimo valore intraday con timestamp STRETTAMENTE
+    PRIMA dell'apertura della barra successiva di `candles` (bordo
+    esclusivo) - cio' che l'EA saprebbe alla chiusura di quella barra, mai
+    un'informazione dal futuro della barra. Per l'ULTIMA barra di `candles`
+    il bordo si estrapola di una larghezza di barra (invece di restare
+    aperto fino alla fine di `intraday_ref`): `candles` puo' essere una
+    finestra TAGLIATA da bar_range (walk-forward in/out-of-sample) mentre
+    intraday_ref resta sempre la serie intraday COMPLETA - un bordo aperto
+    farebbe trapelare barre intraday oltre la fine della finestra tagliata,
+    esattamente il look-ahead che bar_range vuole impedire.
+    None (default) = comportamento invariato, calcola da `candles` stesse
+    (fallback Yahoo, dove non esiste una serie intraday piu' fine per il
+    periodo testato)."""
+    if not intraday_ref or intraday_ref is candles:
+        return _session_amd_series_raw(candles)
+
+    fine = _session_amd_series_raw(intraday_ref)
+    fine_epochs = [_epoch_utc(c["time"]) for c in intraday_ref]
+
+    n = len(candles)
+    cand_epochs = [_epoch_utc(c["time"]) for c in candles]
+    bar_width = (cand_epochs[-1] - cand_epochs[0]) / (n - 1) if n > 1 else 86400
+    boundaries = cand_epochs[1:] + [cand_epochs[-1] + bar_width]
+
+    hour, date, session = [None] * n, [None] * n, [None] * n
+    asian_hi, asian_lo = [None] * n, [None] * n
+    pdh, pdl = [None] * n, [None] * n
+    amd_phase = [None] * n
+
+    j = -1
+    m = len(intraday_ref)
+    for i in range(n):
+        end = boundaries[i]
+        while j + 1 < m and fine_epochs[j + 1] < end:
+            j += 1
+        if j < 0:
+            continue
+        hour[i], date[i], session[i] = fine["hour"][j], fine["date"][j], fine["session"][j]
+        asian_hi[i], asian_lo[i] = fine["asian_hi"][j], fine["asian_lo"][j]
+        pdh[i], pdl[i] = fine["pdh"][j], fine["pdl"][j]
+        amd_phase[i] = fine["amd_phase"][j]
 
     return {"hour": hour, "date": date, "session": session,
             "asian_hi": asian_hi, "asian_lo": asian_lo, "pdh": pdh, "pdl": pdl,
@@ -3442,7 +3510,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         i0 = max(0, int(n * bar_range[0]))
         i1 = min(n, int(n * bar_range[1]))
         candles = candles[i0:i1]
-    ind = _prep(candles)
+    # 09/08 - sessione/Asian-range/AMD vanno SEMPRE calcolati su dati
+    # intraday fini (vedi nota in _session_amd_series) - quando la fonte e'
+    # Dukascopy la serie M15 grezza esiste gia' su disco, indipendente dal
+    # timeframe richiesto per questo test. bar_range si applica solo a
+    # `candles` (la finestra in/out-of-sample del test), non alla serie
+    # intraday di riferimento, che resta completa: e' solo il contesto di
+    # sessione, non il segnale stesso, quindi non introduce look-ahead
+    # sull'informazione bar_range vuole nascondere.
+    intraday_ref = _load_dukascopy_m15(symbol) if src == "dukascopy" else None
+    ind = _prep(candles, intraday_ref=intraday_ref)
     # 08/08 - htf_factor: bias multi-timeframe VERO (CHoCH/trend su un TF
     # ricampionato per davvero, _external_choch_series - stessa funzione gia'
     # usata per choch_ext/ORDER_BLOCK's htf gate), non lo SMA(trend_period)
