@@ -266,10 +266,15 @@ int      InpAntiRevengeLosses= 3;
 int      InpAntiRevengeMin   = 60;
 
 // input group "=== HTF BIAS ==="
-bool     InpUseHTFBias       = false;   // OFF by default — gate must IMPROVE not BLOCK
-int      InpHTF_EMAPeriod    = 50;
-double   InpHTF_MinConf      = 0.55;
-bool     InpHTF_AllowReversal= true;
+// v2.5.x — erano variabili semplici, non `input`: MetaTrader non le espone
+// nei file .set ne' nel tester a riga di comando, quindi restavano sempre al
+// default hardcoded qui sotto qualunque cosa dicesse un preset. Nessun test
+// esterno le ha mai potute davvero pilotare finora (vedi TODO desktop punto 3
+// per l'isolamento di LIQ_VOID, che dipende proprio da questo flag).
+input bool     InpUseHTFBias       = false;   // OFF by default — gate must IMPROVE not BLOCK
+input int      InpHTF_EMAPeriod    = 50;
+input double   InpHTF_MinConf      = 0.55;
+input bool     InpHTF_AllowReversal= true;
 
 // input group "=== VELOCITY GATE ==="
 bool     InpUseVelocity      = false;   // OFF by default — was blocking too many trades
