@@ -122,6 +122,61 @@ il tuo EA la richiede.
 
 ---
 
+## 🟢 5. Opzionale ma risolutivo — Simbolo Personalizzato Dukascopy in MT5
+
+MT5 oggi usa **esclusivamente** lo storico del broker collegato al terminale
+(confermato: zero riferimenti a "dukascopy" in tutto `MQL5/`) mentre Python/il
+sito usano **esclusivamente** lo snapshot Dukascopy — due feed di prezzo
+diversi, sempre. Questo da solo garantisce che i risultati non coincidano mai
+al 100%, anche a parità di logica (spread/quotazioni diversi fra broker e
+Dukascopy).
+
+**Se vuoi eliminare questa variabile** per isolare le differenze rimaste a
+sola logica (non più a dati): MT5 supporta l'import di storico tick esterno
+come "Simbolo Personalizzato" (Ctrl+U → Crea simbolo personalizzato → scheda
+Tick → Importa tick). Script pronto per generare il CSV:
+
+```bash
+python3 server/research_scripts/export_dukascopy_ticks_mt5.py \
+    --start 2021-01-01 --end 2026-08-09 --out xauusd_ticks_mt5.csv
+```
+
+- Fonte: stessa API Dukascopy già usata dal fetch di produzione, ma con
+  bid/ask **separati** (il fetch di produzione tiene solo il mid — serviva
+  una funzione nuova, non riusa `dukascopy_fetch.fetch_day_ticks`).
+- Formato CSV: `<DATE>,<TIME>,<BID>,<ASK>,<LAST>,<VOLUME>` — quello
+  documentato per l'import tick di MT5. **Non verificato contro un'istanza
+  MT5 reale** (nessun accesso qui) — fai UN giorno di prova
+  (`--start`/`--end` uguali) e verifica che l'import vada a buon fine prima
+  di lanciare un range multi-anno.
+- Riprendibile: salta i giorni già scritti nel CSV se lo rilanci.
+- **Scala reale, testata oggi**: ~217.000 tick/giorno, ~10 MB/giorno →
+  **~3.6 GB/anno**. Per 3-5 anni servono 10-18 GB di disco libero. Esegui
+  questo script sulla tua macchina (dove hai spazio e MT5), non sul
+  container Render (1GB condiviso col database) né chiedendolo a questa
+  sessione remota di scaricarlo e poi trasferirtelo.
+- Dopo l'import: Strategy Tester → simbolo personalizzato → modello
+  **"Ogni tick basato su tick reali"** — è il confronto più pulito possibile
+  con Python, che invece lavora su OHLC aggregato (nessuna simulazione
+  tick-by-tick nel motore Python attuale — vedi nota sotto).
+
+**Se dopo aver allineato i dati vedi ancora differenze**: a quel punto è
+sicuramente logica, non più prezzo. Le aree più probabili, in ordine:
+1. **Ordine di tocco SL/TP nella stessa barra**: `backtest.py` controlla
+   sempre SL prima di TP (righe 3746-3755, entrambe le direzioni) — una
+   convenzione conservativa, non una simulazione tick-accurate. Se MT5 "ogni
+   tick reali" mostra l'ordine opposto su una barra specifica, è qui che
+   guardare.
+2. **Timezone/sessioni**: già corretto per Python oggi (`_session_amd_series`),
+   verificare che l'offset del tuo broker (`InpServerGMTOffset`) sia
+   impostato correttamente per il confronto.
+3. Gli indicatori (EMA/ATR/PSAR/ADX/MACD) sono scritti a mano in `backtest.py`
+   e già verificati riga-per-riga contro le funzioni MQL5 native in sessioni
+   precedenti — meno probabile che sia qui, ma se serve isolare: stampa il
+   valore su una barra specifica e confrontalo con la Finestra Dati di MT5.
+
+---
+
 ## Cosa riportare indietro
 
 Stesso formato di [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]: Net, PF,
