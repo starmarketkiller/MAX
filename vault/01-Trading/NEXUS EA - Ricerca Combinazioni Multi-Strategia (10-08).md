@@ -81,23 +81,58 @@ lo spazio di ricerca è enorme (C(35,15) è intrattabile, nessun metodo
 qui è stato esaustivo) — ma tre tentativi seri con metodi diversi non
 l'hanno trovata.
 
-## Dove guardare ancora, se si vuole insistere
-- **Pesi diversi per membro** invece di un voto uniforme (una strategia
-  "vale" più delle altre nel conteggio) — non testato in nessuno dei
-  tre metodi sopra.
-- **Combinazione condizionata al regime** (vedi il filtro di direzione
-  dinamico proposto in [[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]
-  — non ancora implementato) invece di una combinazione statica sempre
-  attiva.
-- **Storico più lungo**: con solo ~3,9 anni disponibili (in crescita),
-  uno split 60/40 lascia comunque finestre dominate da un unico regime
-  di mercato (vedi la scoperta "BUY-only = trend, non struttura" nello
-  stesso documento) — più storico potrebbe rivelare pattern di
-  combinazione che qui restano nascosti nel rumore di un solo regime.
-- **Bitcoin** (dati già disponibili via Yahoo, 10 anni, cicli toro/orso
-  veri) come banco di prova incrociato, non ancora esteso alla ricerca
-  di combinazioni (finora usato solo per il test direzionale nel
-  documento MALAYSIAN_SNR).
+## Le quattro piste, tutte provate il 10/08 (2)
+
+### 1. Bitcoin come banco di prova incrociato — stessa conclusione dell'oro
+`ensemble_engine_search.py` parametrizzato e rieseguito su BTCUSD
+(Yahoo, 1d, 10 anni, cicli toro/orso veri — vedi
+[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]] per la
+conferma che i dati BTC sono gia' accessibili senza codice nuovo).
+BREAKOUT_ACC e' la migliore singola (FORTE/FORTE, OOS PF 1.64 su 56
+trade) e resta la migliore anche dopo 15 round di ricerca greedy
+sull'ensemble (che oscilla 0.83-1.22, mai sopra 1.64). Conferma
+cross-market della Fase 2/3.
+
+### 2. Voto pesato (peso = PF individuale IS) — aiuta poco, non risolve
+Rallenta il degrado rispetto al voto uniforme nei primi round (OOS PF
+1.37 al round 3 contro 1.24 uniforme) ma il risultato finale a 15
+membri (1.17) resta comunque sotto MACD da sola (1.58).
+
+### 3. Filtro di regime sull'ensemble — funziona, ma non abbastanza
+Il miglior ensemble oro (15 membri) filtrato per regime STRONG_TREND
+migliora davvero: OOS PF 1.13→1.33 (53 trade, campione credibile). Ma
+applicato a **MACD da sola**, lo stesso filtro migliora molto di più:
+OOS PF 1.58→2.08 (47 trade) — il filtro di regime aiuta la singola
+migliore piu' di quanto aiuti l'ensemble, non chiude il divario a
+favore delle combinazioni.
+
+**Correzione importante (10/08, dopo aver ripetuto il test su altre
+singole)**: quel numero di MACD (2.08) veniva da un test scelto **a
+mano** (ipotesi mirata su STRONG_TREND), non da una selezione
+disciplinata solo-su-IS come il resto della sessione. Rifatto con
+selezione IS-blind (tutti i regimi confrontati, scelta solo sul
+punteggio in-sample) su MACD + le altre singole buone
+(`regime_filter_singles.py`):
+
+| Strategia | Regime scelto (su IS) | OOS filtrato | OOS baseline (no filtro) |
+|---|---|---|---|
+| MACD | nessun filtro (score IS preferisce il volume) | — | 1.58 |
+| TURTLE_SOUP | WEAK_TREND | 1.48 (30 trade) | **2.03 — il filtro peggiora** |
+| BREAKOUT_ACC | STRONG_TREND | **1.84** (43 trade) | 1.78 — aiuta |
+| LIQ_SWEEP | STRONG_TREND | **2.17** (21 trade) | 1.48 — aiuta |
+| LONDON_BO | WEAK_TREND | 1.46 (18 trade) | 1.38 — aiuta poco, campione piccolo |
+| FVG_MIT | WEAK_TREND (IS gia' CRITICA, PF 0.48) | 1.57 (20 trade) | 1.66 — il filtro peggiora |
+
+**Non e' un pattern universale**: aiuta 3 su 6, peggiora 2 su 6, e per
+MACD stessa una selezione disciplinata non avrebbe nemmeno scelto il
+filtro che sembrava vincente. Il filtro di regime resta un'ipotesi
+interessante caso-per-caso (BREAKOUT_ACC e LIQ_SWEEP meritano
+approfondimento), non una leva generale da applicare a tutto il
+portafoglio.
+
+### 4. Storico più lungo — non eseguibile oggi
+Richiede solo tempo: il Dukascopy continua a crescere in background
+verso il target di 10 anni.
 
 ## Collegamenti
 [[MOC - Trading]] ·
