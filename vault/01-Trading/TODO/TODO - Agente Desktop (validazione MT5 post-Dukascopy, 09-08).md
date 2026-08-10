@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, todo, agente-desktop, mt5, dukascopy]
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-10
 ---
 
 # TODO — agente desktop: validazione MT5 dopo la sessione Dukascopy (09/08)
@@ -60,7 +60,47 @@ modo silente. Codice in `NXS_Risk.mqh`/`NXS_Inputs.mqh`.
 
 ---
 
-## 🔴 2. Priorità massima — il nucleo hedge mai testato per davvero
+## 🔴 2. Nuovo — BREAKOUT_ACC filtrata per regime STRONG_TREND
+
+Scoperta del 10/08, dopo una giornata di test su combinazioni multi-
+strategia (tre metodi indipendenti, nessuna combinazione batte le
+singole — vedi [[NEXUS EA - Ricerca Combinazioni Multi-Strategia (10-08)]]):
+il candidato con più evidenza reale non è un motore a voto, è
+**BREAKOUT_ACC filtrata al solo regime `REGIME_STRONG_TREND`**.
+
+**Cosa dice il dato Python** (`server/backtest.py`, storico Dukascopy
+pieno ~3,9 anni, split in-sample 60%/out-of-sample 40%): BREAKOUT_ACC
+senza filtro fa OOS PF 1.78; filtrata a STRONG_TREND (solo `_regime_series`,
+lo stesso classificatore ADX-based già usato per `grid_regime_filter`)
+sale a OOS PF 1.84. Non enorme, ma verificato con tre controlli aggiuntivi:
+- **walk-forward a 5 finestre sequenziali**: il filtro vince 3 finestre su
+  5 — non è un artefatto di un singolo split fortunato, ma **la finestra
+  più recente favorisce il baseline senza filtro** (1.38 vs 1.83) — da
+  tenere d'occhio, non liquidare.
+- segnali filtrati ben distribuiti nel tempo (95% dello span della
+  finestra OOS), non ammassati in un tratto fortunato.
+- **confermato su BTCUSD** (Yahoo, 10 anni, cicli toro/orso veri): filtro
+  meglio del baseline sia in-sample (1.88 vs 1.70) sia out-of-sample
+  (1.97 vs 1.70) — l'unico dei candidati di oggi a reggere su due mercati
+  indipendenti (LIQ_SWEEP aveva lo stesso filtro promettente sull'oro ma
+  **peggiora** su BTC — trattalo come ipotesi solo-oro, non generalizzabile).
+
+**Cosa esiste già in MQL5, non serve costruirlo da zero**: il classificatore
+di regime esiste (`ENUM_NXS_REGIME`, `NXS_MarketAnalysis.mqh:37`,
+`g_regime`), oggi usato solo come bonus di score (+4 in `NXS_EntryScore.mqh:38`)
+e come gate per il modulo grid (`NXS_GridRecovery.mqh:22`) — **mai come
+gate diretto per BREAKOUT_ACC**.
+
+**Cosa testare**: un run isolato di BREAKOUT_ACC con un gate esplicito
+`g_regime == REGIME_STRONG_TREND` prima di aprire (non solo il bonus di
+score attuale), confrontato a parità di tutto il resto con BREAKOUT_ACC
+senza quel gate, sullo stesso periodo storico broker. Riportare Net/PF/DD
+di entrambi, non solo quello filtrato — il confronto è il punto, non il
+numero isolato.
+
+---
+
+## 🔴 3. Priorità massima — il nucleo hedge mai testato per davvero
 
 [[TODO - Backtest 10Y]] lo segnalava già a luglio come "potenziale da
 sfruttare, non ancora testato": **BREAKOUT_ACC + TURTLE_SOUP + THREE_BAR_DELIVERY_BREAK
@@ -81,7 +121,7 @@ una alla volta), usa i profili `InpStrat_*`/`InpUseStrat_*` (anch'essi già
 `input`, commit `dc480f8`): disattiva tutte le altre 34, lascia solo
 BREAKOUT_ACC + TURTLE_SOUP + THREE_BAR_DELIVERY_BREAK attive, storico più
 lungo disponibile dal broker, **`InpTesterProtectionParity = true`**
-(default — vedi punto 4).
+(default — vedi punto 5).
 
 **Report atteso**: Net/PF/DD/Sharpe combinato, non le tre isolate — quello già
 c'è (vedi [[NEXUS EA - Hedge nel Tempo]]). La domanda a cui questo test
@@ -90,7 +130,7 @@ alla somma algebrica, o no?
 
 ---
 
-## 🔴 3. Il vero LIQ_VOID non è mai stato testato — è dormiente di default
+## 🔴 4. Il vero LIQ_VOID non è mai stato testato — è dormiente di default
 
 Scoperta di oggi, verificata a tre livelli nel codice (non un'ipotesi):
 
@@ -118,7 +158,7 @@ stesso bias, non solo LIQ_VOID) è dell'utente, non implicita in questo test.
 
 ---
 
-## 🟠 4. Ri-validare SAR/MACD/RSI_DIV/ADX_RSI — i vecchi numeri sono pre-remediation
+## 🟠 5. Ri-validare SAR/MACD/RSI_DIV/ADX_RSI — i vecchi numeri sono pre-remediation
 
 [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] (15/07) le indica come le 4
 peggiori del portafoglio (-34.3R/-21.1R/-17.5R/-15.3R, ~75% della perdita
@@ -134,7 +174,7 @@ escludeva ancora i trade con rischio iniziale non ricostruibile (vedi
 e quelli di oggi non sono direttamente confrontabili finché non c'è un test
 MT5 fresco con la parità attiva.**
 
-**Come**: stesso storico/setup del punto 2, isolare le 4 una alla volta (o
+**Come**: stesso storico/setup del punto 3, isolare le 4 una alla volta (o
 insieme, se si vuole anche la lettura combinata) con `InpTesterProtectionParity
 = true`. Segmentare per anno se lo storico del broker lo permette, stesso
 formato di [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] — permette un
@@ -142,7 +182,7 @@ confronto diretto riga per riga col vecchio ranking invece di un numero isolato.
 
 ---
 
-## 🟡 5. Se c'è tempo: sweep completo con la parità attiva
+## 🟡 6. Se c'è tempo: sweep completo con la parità attiva
 
 `results/sets/SWEEP_37_DataCollectionMode.set` è già pronto e carica
 `InpStrategySelector` in Optimization 1→37 + `InpDataCollectionMode=true` (
@@ -158,7 +198,7 @@ il tuo EA la richiede.
 
 ---
 
-## 🟢 6. Opzionale ma risolutivo — Simbolo Personalizzato Dukascopy in MT5
+## 🟢 7. Opzionale ma risolutivo — Simbolo Personalizzato Dukascopy in MT5
 
 MT5 oggi usa **esclusivamente** lo storico del broker collegato al terminale
 (confermato: zero riferimenti a "dukascopy" in tutto `MQL5/`) mentre Python/il
@@ -217,7 +257,7 @@ sicuramente logica, non più prezzo. Le aree più probabili, in ordine:
 
 Stesso formato di [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]: Net, PF,
 Drawdown Max (Equity), Sharpe, per strategia (e per anno se segmentato). Per
-il punto 3 (LIQ_VOID), specificare esplicitamente che `InpUseHTFBias` era
+il punto 4 (LIQ_VOID), specificare esplicitamente che `InpUseHTFBias` era
 forzato a `true`. Annotare eventuali bug/anomalie nel log (stesso schema di
 `executed` rotto/`DERIVA CONTRATTO` già noto da
 [[TODO - Agente Desktop (consegna remediation)]] §3).
