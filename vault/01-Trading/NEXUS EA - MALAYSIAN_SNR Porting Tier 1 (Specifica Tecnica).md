@@ -245,6 +245,28 @@ livello opposto valido.
    funzione per ~1512 barre di lookback — nel vero MQL5 il livello W1
    è solo un bonus di score, mai un blocco. Rimosso: la baseline stessa
    ora produce 2-3× più trade a parità di logica.
+
+2. ⏭️ **Pilastro 2 (Fresh/Unfresh/Flip) saltato per ora** — su
+   richiesta esplicita, si è passati direttamente al Pilastro 3
+   (vedi sotto), quello che la diagnosi indicava come decisivo. Resta
+   nel piano per una fase successiva.
+
+3. ✅ **Pilastro 3 — fatto il 10/08** (`MALAYSIAN_SNR_V2_STAGE3`).
+   State machine per direzione (IDLE → ATTESA_BOS → ATTESA_PULLBACK →
+   segnale, `SWING_LOOKBACK=15`, `MAX_WAIT_BOS=12`,
+   `MAX_WAIT_PULLBACK=8`), costruita sopra i livelli close-to-open
+   dello Stadio 1. Semplificazione dichiarata: "scendere di due
+   timeframe" diventa qui H4 (livello) → serie base del test
+   (BOS/pullback), non una camminata letterale sulla scala
+   D1/H4/H1/M30. **Risultato il più "a forma di libro di testo" di
+   tutta la sessione**: su 30m sia IS (PF 1.8/11 trade, FORTE) sia OOS
+   (PF 2.41/5 trade) sono chiaramente positivi — non il crollo IS→OOS
+   visto ovunque altrove. Ma l'OOS resta sotto la soglia minima di 8
+   trade (POCHI_DATI): la maggiore selettività della state machine
+   riduce la frequenza rispetto allo Stadio 1, e con lei il campione.
+   15m e 1h restano deboli/inconcludenti. **Non ancora certificabile,
+   ma la direzione più promettente trovata finora** — da rivalutare
+   quando il Dukascopy avrà più storico.
 2. **Pilastro 2 + registro**: aggiungere fresh/unfresh/flip come
    struttura dati, ancora senza il Pilastro 3 — verificare che il
    registro non esploda in dimensione su uno storico lungo (pruning).
