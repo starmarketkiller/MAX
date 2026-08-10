@@ -250,7 +250,17 @@ def _resample_from_m15(candles_m15: list, interval: str) -> list:
 _DUKASCOPY_MIN_SPAN_DAYS = 300
 
 
-def _fetch_dukascopy(symbol: str, interval: str):
+def _fetch_dukascopy(symbol: str, interval: str, bars: int = _REAL_BARS_CAP):
+    # 10/08 - `bars` era ignorato qui: _fetch_real(symbol, interval, bars)
+    # passava il parametro fino a questa funzione ma il taglio finale usava
+    # sempre la costante _REAL_BARS_CAP=2500, indipendentemente da quanto
+    # storico esistesse su disco. Effetto silenzioso su 15m/30m (dove 2500
+    # barre sono solo 26-52 giorni di calendario): ogni run_backtest(bars=...)
+    # piu' largo di 2500 su quei TF non aveva alcun effetto, anche con anni
+    # di storico Dukascopy disponibili. Scoperto testando MALAYSIAN_SNR_V2_
+    # STAGE3 con la cache locale riallineata a 1420 giorni di produzione:
+    # 4h/1d migliorati (barre piu' larghe = piu' calendario a paritaeta' di
+    # conteggio), 15m/30m identici a prima byte per byte.
     m15 = _load_dukascopy_m15(symbol)
     if not m15:
         return None
@@ -276,20 +286,28 @@ def _fetch_dukascopy(symbol: str, interval: str):
     span_days = (_epoch_utc(candles[-1]["time"]) - _epoch_utc(candles[0]["time"])) / 86400.0
     if span_days < _DUKASCOPY_MIN_SPAN_DAYS:
         return None
-    return candles[-_REAL_BARS_CAP:]
+    # max(), non bars diretto: run_backtest ha default bars=800, sotto
+    # _REAL_BARS_CAP=2500 - non deve MAI restringere il comportamento di
+    # oggi, solo allargarlo quando un chiamante chiede esplicitamente di
+    # piu' (es. bars=30000 per riusare storico Dukascopy profondo).
+    cap = max(bars or 0, _REAL_BARS_CAP)
+    return candles[-cap:]
 
 
 def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
     """Dati OHLC reali: prima Dukascopy locale (se presente), poi Yahoo
     (riusa sweep.fetch_yahoo, che passa dal proxy), poi get_ohlc/sintetico.
     Converte {t,o,h,l,c} -> {time,open,high,low,close}.
-    Cache per (symbol, interval): l'ottimizzazione multi-TF fa migliaia di run
-    sullo stesso feed -> senza cache ri-scaricherebbe ogni volta."""
-    ckey = (symbol, interval)
+    Cache per (symbol, interval, bars): l'ottimizzazione multi-TF fa
+    migliaia di run sullo stesso feed -> senza cache ri-scaricherebbe ogni
+    volta. `bars` e' nella chiave perche' due chiamate con richieste di
+    profondita' diverse non devono condividere un risultato tagliato per
+    l'altra (vedi nota 10/08 in _fetch_dukascopy)."""
+    ckey = (symbol, interval, bars)
     hit = _REAL_CACHE.get(ckey)
     if hit and time.time() - hit[0] < _CACHE_TTL:
         return hit[1], hit[2]
-    duka = _fetch_dukascopy(symbol, interval)
+    duka = _fetch_dukascopy(symbol, interval, bars)
     if duka is not None:
         _REAL_CACHE[ckey] = (time.time(), duka, "dukascopy")
         return duka, "dukascopy"
@@ -305,7 +323,7 @@ def _fetch_real(symbol: str, interval: str = "1d", bars: int = 800):
             candles = _resample_4h(candles)
         if len(candles) < 60:
             raise ValueError("troppe poche barre reali")
-        out = candles[-_REAL_BARS_CAP:]
+        out = candles[-max(bars or 0, _REAL_BARS_CAP):]
         _REAL_CACHE[ckey] = (time.time(), out, src)
         return out, src
     except Exception as e:
