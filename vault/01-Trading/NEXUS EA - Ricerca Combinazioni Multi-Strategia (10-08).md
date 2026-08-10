@@ -130,6 +130,37 @@ interessante caso-per-caso (BREAKOUT_ACC e LIQ_SWEEP meritano
 approfondimento), non una leva generale da applicare a tutto il
 portafoglio.
 
+### Approfondimento su BREAKOUT_ACC e LIQ_SWEEP (10/08, 3)
+I due candidati che il filtro STRONG_TREND aveva davvero aiutato.
+Tre controlli aggiuntivi (`regime_filter_deepdive.py`): walk-forward a
+5 finestre sequenziali (non solo lo split 60/40), distribuzione
+temporale dei trade filtrati entro l'OOS, verifica incrociata su BTC.
+
+**BREAKOUT_ACC — il più solido dei due**: vince 3 finestre su 5 nel
+walk-forward oro (2/5: 2.11 vs 1.6; 4/5: 2.3 vs 1.81; 1/5 di poco), ma
+**la finestra più recente (5/5) favorisce il baseline** (1.38 filtrato
+vs 1.83 senza filtro) — da tenere d'occhio, non ignorare. I segnali
+filtrati sono ben distribuiti (95% dello span della finestra, non
+ammassati) e il 47% dei segnali totali cade in STRONG_TREND pur essendo
+solo il 31% delle barre — coerente con un vero legame segnale/regime,
+non rumore. **Confermato su BTC**: filtro meglio del baseline sia IS
+(1.88 vs 1.70) sia OOS (1.97 vs 1.70) — la prova incrociata regge.
+
+**LIQ_SWEEP — consistente sull'oro, ma non regge su BTC**: il pattern
+più pulito dei due nel walk-forward oro (vince 4 finestre su 5, perde
+solo la 3/5 di poco), segnali ben distribuiti (82% dello span). **Ma
+su BTC il filtro peggiora la strategia** invece di aiutarla (IS 0.83
+vs baseline 0.88, OOS 0.71 vs 0.78) — il pattern trovato sull'oro non
+si generalizza, probabilmente specifico a XAUUSD (struttura di
+sessione/volatilita' propria dell'oro) piuttosto che un vero legame
+universale segnale-regime.
+
+**Conclusione**: BREAKOUT_ACC+STRONG_TREND è il candidato più
+solido di tutta la sessione — non perfetto (finestra più recente
+debole), ma cross-validato su due mercati indipendenti. LIQ_SWEEP+
+STRONG_TREND resta un'ipotesi solo-oro, promettente ma non
+generalizzabile finché non si capisce perché fallisce su BTC.
+
 ### 4. Storico più lungo — non eseguibile oggi
 Richiede solo tempo: il Dukascopy continua a crescere in background
 verso il target di 10 anni.
