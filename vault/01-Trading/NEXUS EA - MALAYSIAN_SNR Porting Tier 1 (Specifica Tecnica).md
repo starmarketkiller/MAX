@@ -226,10 +226,25 @@ livello opposto valido.
 
 ## Piano di implementazione consigliato (ordine, non tutto insieme)
 
-1. **Pilastro 1 isolato**: sostituire solo l'identificazione dei
-   livelli (close-to-open invece di max/min a 12 barre) tenendo il
-   resto della logica attuale invariato — misura da sola quanto cambia
-   la frequenza dei livelli trovati, prima di aggiungere stato.
+1. ✅ **Pilastro 1 isolato — fatto il 10/08** (`MALAYSIAN_SNR_V2_STAGE1`
+   in `server/backtest.py`). Ipotesi di frequenza **confermata**: 24
+   trade su 30m contro 3 della baseline, stesso ordine di grandezza su
+   ogni TF (15m 22 vs 6, 1h 23 vs 4, 4h 10 vs 1, 1d 2 vs 0). Ma la
+   profittabilità non segue automaticamente — split IS/OOS onesto su
+   30m (l'unico TF con PF>1 a periodo intero): IS PF 1.36/15 trade
+   (OK), OOS PF 1.05/9 trade (DEBOLE, campione al limite). 15m e 1h
+   collassano sotto 1 in OOS. **Conclusione**: la sola identificazione
+   dei livelli non basta a produrre edge — coerente con l'ipotesi che
+   sia la "2 TF's Confirmation Rule" (Pilastro 3) a fare il lavoro
+   vero, non il Pilastro 1 da solo. Non un fallimento dello stadio: è
+   esattamente la domanda che doveva rispondere.
+   
+   Scoperto en passant durante questo stadio, corretto separatamente
+   nella stessa sessione: `_malaysian_snr_series` (la baseline fedele
+   all'MQL5) aveva un gate su `w1_idx<8` che bloccava l'intera
+   funzione per ~1512 barre di lookback — nel vero MQL5 il livello W1
+   è solo un bonus di score, mai un blocco. Rimosso: la baseline stessa
+   ora produce 2-3× più trade a parità di logica.
 2. **Pilastro 2 + registro**: aggiungere fresh/unfresh/flip come
    struttura dati, ancora senza il Pilastro 3 — verificare che il
    registro non esploda in dimensione su uno storico lungo (pruning).
