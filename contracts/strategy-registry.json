@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 47,
+    "total": 48,
     "live": 37,
     "research_only": 4
   },
@@ -502,6 +502,28 @@
     {
       "strategy_id": "MALAYSIAN_SNR_BREAKOUT",
       "display_name": "Malaysian SNR Breakout (experimental)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_STAGE1",
+      "display_name": "Malaysian SNR v2 Stage 1 (experimental, close-to-open levels)",
       "aliases": [],
       "family": "SMC",
       "status": "EXPERIMENTAL",

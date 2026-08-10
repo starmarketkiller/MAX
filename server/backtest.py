@@ -534,6 +534,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
     snr_signal, snr_brk_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(
         candles, sess, atr_s, ref=snr_ref)
+    snr_v2s1_signal, snr_v2s1_h4hi, snr_v2s1_h4lo, snr_v2s1_atrH4 = _malaysian_snr_v2_stage1_series(
+        candles, sess, atr_s, ref=snr_ref)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -577,6 +579,9 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "snr_signal": snr_signal, "snr_brk_signal": snr_brk_signal,
         "snr_h4hi": snr_h4hi, "snr_h4lo": snr_h4lo,
         "snr_atrH4": snr_atrH4,  # precalcolato, vedi _malaysian_snr_series
+        "snr_v2s1_signal": snr_v2s1_signal, "snr_v2s1_h4hi": snr_v2s1_h4hi,
+        "snr_v2s1_h4lo": snr_v2s1_h4lo, "snr_v2s1_atrH4": snr_v2s1_atrH4,
+        # precalcolato, vedi _malaysian_snr_v2_stage1_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
@@ -1494,10 +1499,11 @@ def sig_malaysian_snr(c, ind, i):
 
 
 def _malaysian_snr_series(candles, sess, atr, ref=None):
-    # H4=factor 4, D1=factor 24, W1=factor 168 rispetto a una base H1 (l'unico
-    # TF su cui la sessione ha senso - vedi nota AUD0-style gia' usata per
-    # LONDON_BO/WEEKLY_EXP: testarla su D1 dava 0 trade perche' g_session
-    # non esiste su una barra giornaliera).
+    # H4=factor 4, D1=factor 24 rispetto a una base H1 (l'unico TF su cui la
+    # sessione ha senso - vedi nota AUD0-style gia' usata per LONDON_BO/
+    # WEEKLY_EXP: testarla su D1 dava 0 trade perche' g_session non esiste
+    # su una barra giornaliera). W1 non e' piu' calcolato qui - vedi nota
+    # 10/08 sotto.
     #
     # 10/08 - stesso bug di classe dell'Asian-range (_session_amd_series):
     # il livello W1 richiede i//168-1 >= 8, cioe' ALMENO 1512 barre di
@@ -1507,10 +1513,11 @@ def _malaysian_snr_series(candles, sess, atr, ref=None):
     # silenziosamente 0 segnali per l'intero split, non perche' la strategia
     # non tradi ma perche' il taglio le toglie la memoria di cui ha bisogno
     # (scoperto testando MALAYSIAN_SNR_BREAKOUT in IS/OOS: 16-18 trade a
-    # periodo intero su 1h, 0 su ENTRAMBI gli split). `ref` (se fornito) e'
-    # la stessa serie PRIMA del taglio bar_range: i livelli H4/D1/W1 si
-    # calcolano sempre da li', proiettati sulla finestra `candles` per
-    # timestamp - stesso principio di intraday_ref in _session_amd_series.
+    # periodo intero su 1h, 0 su ENTRAMBI gli split - un limite peggiorato
+    # anche dal bug W1 rimosso sotto). `ref` (se fornito) e' la stessa serie
+    # PRIMA del taglio bar_range: i livelli H4/D1 si calcolano sempre da li',
+    # proiettati sulla finestra `candles` per timestamp - stesso principio di
+    # intraday_ref in _session_amd_series.
     #
     # 06/08 (2) - out_brk: variante SPERIMENTALE (non fedelta' MQL5) chiesta
     # dall'utente dopo aver verificato che la vera NXS_Strat_MalaysianSNR_
@@ -1531,7 +1538,6 @@ def _malaysian_snr_series(candles, sess, atr, ref=None):
         cand_epochs = [_epoch_utc(c["time"]) for c in candles]
         idx_map = [bisect.bisect_left(ref_epochs, e) for e in cand_epochs]
     h4 = _resample_ohlc(ref, 4)
-    w1 = _resample_ohlc(ref, 168)
     d1 = _resample_ohlc(ref, 24)
     atr_h4 = atr_series(h4, 14)
     out_sig = [0] * n
@@ -1541,8 +1547,16 @@ def _malaysian_snr_series(candles, sess, atr, ref=None):
     out_atrh4 = [None] * n
     for i in range(n):
         ri = idx_map[i]
-        h4_idx, w1_idx, d1_idx = ri // 4 - 1, ri // 168 - 1, ri // 24 - 1
-        if h4_idx < 12 or h4_idx >= len(h4) or w1_idx < 8 or d1_idx < 2:
+        # 10/08 - rimosso il gate su w1_idx (livello W1 a 8 barre): nel vero
+        # MQL5 (NXS_Strat_MalaysianSNR_Rejection) il W1 e' usato SOLO per un
+        # bonus di score quando vicino al livello H4 (s.score += 4.0), MAI
+        # per bloccare il trigger - qui era diventato un gate duro che
+        # richiedeva ~1512 barre di lookback (w1_idx>=8, fattore 168) per
+        # qualcosa che nella realta' non blocca mai nulla. Questo motore di
+        # ricerca non ha un concetto di "score" (segnali binari -1/0/1), quindi
+        # il bonus W1 e' semplicemente omesso qui, non finto con un gate.
+        h4_idx, d1_idx = ri // 4 - 1, ri // 24 - 1
+        if h4_idx < 12 or h4_idx >= len(h4) or d1_idx < 2:
             continue
         atrH4 = atr_h4[h4_idx]
         if not atrH4:
@@ -1621,6 +1635,105 @@ def _malaysian_snr_breakout_sl_tp(c, ind, i, direction, entry, atr):
     if h4Lo is None:
         return None
     return h4Lo + 0.5 * atrH4, entry - 2.3 * atr
+
+
+def _malaysian_snr_v2_stage1_series(candles, sess, atr, ref=None):
+    # 10/08 - Stadio 1 del porting Tier 1 (vedi vault: "MALAYSIAN_SNR
+    # Porting Tier 1 - Specifica Tecnica"). Sostituisce SOLO
+    # l'identificazione dei livelli H4: pivot "close-to-open" (Pilastro 1
+    # della fonte MSNR x SMC x ICT - Yanu Emmanuel) invece del max/min
+    # delle chiusure H4 a 12 barre. Resto della pipeline INVARIATO rispetto
+    # a _malaysian_snr_series: storyline H4+D1, tolleranza 0.4xATR(H4),
+    # filtro corpo forte, esclusione ASIAN. Nessuno stato persistente
+    # ancora (fresh/unfresh/flip e la regola dei 2 TF sono gli Stadi 2-3,
+    # non qui) - obiettivo di QUESTO stadio: isolare l'effetto del solo
+    # cambio di identificazione livelli sulla frequenza dei segnali.
+    #
+    # Pivot: barra H4 rialzista (close>open) la cui apertura successiva e'
+    # piu' bassa del suo close -> RESISTENZA al prezzo = quel close (forma
+    # "A" a linea). Barra ribassista con apertura successiva piu' alta del
+    # suo close -> SUPPORTO (forma "V"). Confermato al momento in cui la
+    # barra successiva APRE (nessun look-ahead: il prezzo d'apertura e'
+    # noto in tempo reale prima che quella barra chiuda). Nessuna soglia
+    # minima di gap - la fonte non ne specifica una; se il risultato e'
+    # rumoroso (pivot su quasi ogni barra) e' la prima cosa da correggere
+    # allo Stadio 2, non una scelta preventiva qui.
+    n = len(candles)
+    if ref is None or ref is candles:
+        ref = candles
+        idx_map = list(range(n))
+    else:
+        ref_epochs = [_epoch_utc(c["time"]) for c in ref]
+        cand_epochs = [_epoch_utc(c["time"]) for c in candles]
+        idx_map = [bisect.bisect_left(ref_epochs, e) for e in cand_epochs]
+    h4 = _resample_ohlc(ref, 4)
+    d1 = _resample_ohlc(ref, 24)
+    atr_h4 = atr_series(h4, 14)
+    m = len(h4)
+    res_at = [None] * m
+    sup_at = [None] * m
+    last_res = last_sup = None
+    for k in range(m):
+        res_at[k] = last_res
+        sup_at[k] = last_sup
+        if k + 1 < m:
+            bull = h4[k]["close"] > h4[k]["open"]
+            bear = h4[k]["close"] < h4[k]["open"]
+            if bull and h4[k + 1]["open"] < h4[k]["close"]:
+                last_res = h4[k]["close"]
+            if bear and h4[k + 1]["open"] > h4[k]["close"]:
+                last_sup = h4[k]["close"]
+    out_sig = [0] * n
+    out_h4hi = [None] * n
+    out_h4lo = [None] * n
+    out_atrh4 = [None] * n
+    for i in range(n):
+        ri = idx_map[i]
+        h4_idx, d1_idx = ri // 4 - 1, ri // 24 - 1
+        if h4_idx < 3 or h4_idx >= m or d1_idx < 2:
+            continue
+        atrH4 = atr_h4[h4_idx]
+        if not atrH4:
+            continue
+        h4Hi, h4Lo = res_at[h4_idx], sup_at[h4_idx]
+        out_h4hi[i], out_h4lo[i], out_atrh4[i] = h4Hi, h4Lo, atrH4
+        if h4Hi is None and h4Lo is None:
+            continue
+        if sess["session"][i] == "ASIAN":
+            continue
+        a = atr[i]
+        cur = candles[i]
+        c1, o1, l1, h1 = cur["close"], cur["open"], cur["low"], cur["high"]
+        if not a or abs(c1 - o1) <= a * 0.5:
+            continue
+        h4C1, h4C4 = h4[h4_idx]["close"], h4[h4_idx - 3]["close"]
+        d1C1, d1C2 = d1[d1_idx]["close"], d1[d1_idx - 1]["close"]
+        story_bull = h4C1 > h4C4 and d1C1 >= d1C2
+        story_bear = h4C1 < h4C4 and d1C1 <= d1C2
+        if h4Lo is not None and (h4Lo - atrH4 * 0.4 <= l1 <= h4Lo + atrH4 * 0.4) and c1 > o1 and story_bull:
+            out_sig[i] = 1
+        elif h4Hi is not None and (h4Hi - atrH4 * 0.4 <= h1 <= h4Hi + atrH4 * 0.4) and c1 < o1 and story_bear:
+            out_sig[i] = -1
+    return out_sig, out_h4hi, out_h4lo, out_atrh4
+
+
+def sig_malaysian_snr_v2_stage1(c, ind, i):
+    return ind["snr_v2s1_signal"][i]
+
+
+def _malaysian_snr_v2_stage1_sl_tp(c, ind, i, direction, entry, atr):
+    # Stessa formula di _malaysian_snr_sl_tp (fedele): SL dal livello H4
+    # opposto +-0.5xATR(H4), TP = 2.3xATR base.
+    h4Lo, h4Hi, atrH4 = ind["snr_v2s1_h4lo"][i], ind["snr_v2s1_h4hi"][i], ind["snr_v2s1_atrH4"][i]
+    if not atrH4:
+        return None
+    if direction == 1:
+        if h4Lo is None:
+            return None
+        return h4Lo - 0.5 * atrH4, entry + 2.3 * atr
+    if h4Hi is None:
+        return None
+    return h4Hi + 0.5 * atrH4, entry - 2.3 * atr
 
 
 def sig_ote_cont(c, ind, i):
@@ -3281,6 +3394,7 @@ STRATEGY_SLTP_ALWAYS = {
     "PO3": _po3_sl_tp,
     "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
     "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
+    "MALAYSIAN_SNR_V2_STAGE1": _malaysian_snr_v2_stage1_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
     # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
@@ -3326,6 +3440,7 @@ STRATEGIES = {
     "STRUCT_REACT": sig_struct_react,
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,
+    "MALAYSIAN_SNR_V2_STAGE1": sig_malaysian_snr_v2_stage1,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta

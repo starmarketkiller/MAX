@@ -43,13 +43,15 @@ def test_registry_validates_and_reconciles():
 def test_counts_are_37_live_plus_4_research():
     assert sr.count_live() == 37
     assert len(sr.research_only_ids()) == 4
-    # 47, non 42: + SH_BMS_RTO_V2/SILVER_BULLET_V2/OTE_CONT_V2/ORDER_BLOCK_V2/
+    # 48, non 42: + SH_BMS_RTO_V2/SILVER_BULLET_V2/OTE_CONT_V2/ORDER_BLOCK_V2/
     # FVG_CONT_V2 (08/08, status EXPERIMENTAL - varianti "_v2" pastate
     # dall'utente per il brief Decomposizione Edge, nessuna controparte MQL5
-    # nel repo - stesso trattamento di MALAYSIAN_SNR_BREAKOUT).
+    # nel repo - stesso trattamento di MALAYSIAN_SNR_BREAKOUT) +
+    # MALAYSIAN_SNR_V2_STAGE1 (10/08, status EXPERIMENTAL - Stadio 1 del
+    # porting Tier 1, vedi vault "MALAYSIAN_SNR Porting Tier 1").
     # research_only_ids() resta a 4 perche' filtra su
     # status=="RESEARCH_ONLY", non su EXPERIMENTAL.
-    assert len(sr.all_records()) == 47
+    assert len(sr.all_records()) == 48
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -110,7 +112,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 47
+    assert r.json()["counts"]["total"] == 48
 
 
 def test_resolve_endpoint_404_on_unknown(client):

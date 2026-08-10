@@ -23,6 +23,7 @@ export const STRATEGY_REGISTRY = [
   ["MACD","MACD","MOMENTUM",true,true],
   ["MALAYSIAN_SNR","Malaysian Snr","LIQUIDITY",true,true],
   ["MALAYSIAN_SNR_BREAKOUT","Malaysian SNR Breakout (experimental)","SMC",false,true],
+  ["MALAYSIAN_SNR_V2_STAGE1","Malaysian SNR v2 Stage 1 (experimental, close-to-open levels)","SMC",false,true],
   ["NY_REVERSAL","Ny Reversal","SESSION",true,true],
   ["OB_MIT","Ob Mit","SMC",true,true],
   ["ORDER_BLOCK","Order Block","SMC",true,true],
