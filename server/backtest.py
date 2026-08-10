@@ -536,6 +536,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         candles, sess, atr_s, ref=snr_ref)
     snr_v2s1_signal, snr_v2s1_h4hi, snr_v2s1_h4lo, snr_v2s1_atrH4 = _malaysian_snr_v2_stage1_series(
         candles, sess, atr_s, ref=snr_ref)
+    snr_v2s3_signal, snr_v2s3_slref = _malaysian_snr_v2_stage3_series(
+        candles, sess, atr_s, ref=snr_ref)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -582,6 +584,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "snr_v2s1_signal": snr_v2s1_signal, "snr_v2s1_h4hi": snr_v2s1_h4hi,
         "snr_v2s1_h4lo": snr_v2s1_h4lo, "snr_v2s1_atrH4": snr_v2s1_atrH4,
         # precalcolato, vedi _malaysian_snr_v2_stage1_series
+        "snr_v2s3_signal": snr_v2s3_signal, "snr_v2s3_slref": snr_v2s3_slref,
+        # precalcolato, vedi _malaysian_snr_v2_stage3_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
@@ -1734,6 +1738,136 @@ def _malaysian_snr_v2_stage1_sl_tp(c, ind, i, direction, entry, atr):
     if h4Hi is None:
         return None
     return h4Hi + 0.5 * atrH4, entry - 2.3 * atr
+
+
+def _malaysian_snr_v2_stage3_series(candles, sess, atr, ref=None):
+    # 10/08 - Stadio 3 del porting Tier 1 (vault: "MALAYSIAN_SNR Porting
+    # Tier 1 - Specifica Tecnica"): la "2 TF's Confirmation Rule", il pezzo
+    # che la diagnosi indica come quello che risolve davvero la
+    # quasi-tautologia della baseline (tocco+storyline sulla STESSA barra).
+    # Qui si separano due eventi in sequenza, con memoria fra barre (state
+    # machine per direzione, stesso pattern architetturale di _ob_series):
+    #
+    #   IDLE -> rifiuto su livello H4 fresh (Pilastro 1/Stadio 1: pivot
+    #   close-to-open) con storyline concorde -> ATTESA_BOS (max
+    #   MAX_WAIT_BOS barre) -> chiusura di corpo oltre uno swing a
+    #   SWING_LOOKBACK barre (stessa direzione) -> ATTESA_PULLBACK (max
+    #   MAX_WAIT_PULLBACK barre) -> prezzo torna verso lo swing rotto senza
+    #   richiudere oltre -> SEGNALE.
+    #
+    # Semplificazione dichiarata rispetto alla fonte: "scendere di due
+    # timeframe" (es. Daily->H1) qui diventa H4 (livello) -> serie base
+    # passata al test (BOS/pullback) - non una camminata letterale sui due
+    # gradini della scala D1/H4/H1/M30, che richiederebbe un terzo TF
+    # ricampionato. Vedi nota nel documento di progettazione.
+    n = len(candles)
+    if ref is None or ref is candles:
+        ref = candles
+        idx_map = list(range(n))
+    else:
+        ref_epochs = [_epoch_utc(c["time"]) for c in ref]
+        cand_epochs = [_epoch_utc(c["time"]) for c in candles]
+        idx_map = [bisect.bisect_left(ref_epochs, e) for e in cand_epochs]
+    h4 = _resample_ohlc(ref, 4)
+    d1 = _resample_ohlc(ref, 24)
+    atr_h4 = atr_series(h4, 14)
+    m = len(h4)
+    res_at = [None] * m
+    sup_at = [None] * m
+    last_res = last_sup = None
+    for k in range(m):
+        res_at[k] = last_res
+        sup_at[k] = last_sup
+        if k + 1 < m:
+            bull = h4[k]["close"] > h4[k]["open"]
+            bear = h4[k]["close"] < h4[k]["open"]
+            if bull and h4[k + 1]["open"] < h4[k]["close"]:
+                last_res = h4[k]["close"]
+            if bear and h4[k + 1]["open"] > h4[k]["close"]:
+                last_sup = h4[k]["close"]
+
+    SWING_LOOKBACK = 15
+    MAX_WAIT_BOS = 12
+    MAX_WAIT_PULLBACK = 8
+    PULLBACK_TOL_ATR = 0.3
+
+    out_sig = [0] * n
+    out_slref = [None] * n
+    st = {1: {"phase": "IDLE", "expire": 0, "swing_ref": None},
+          -1: {"phase": "IDLE", "expire": 0, "swing_ref": None}}
+    seen_h4 = -1
+
+    for i in range(SWING_LOOKBACK, n):
+        ri = idx_map[i]
+        h4_idx, d1_idx = ri // 4 - 1, ri // 24 - 1
+        if h4_idx < 3 or h4_idx >= m or d1_idx < 2:
+            continue
+        atrH4 = atr_h4[h4_idx]
+        a = atr[i]
+        if not atrH4 or not a:
+            continue
+        c1 = candles[i]["close"]
+
+        if h4_idx != seen_h4:
+            seen_h4 = h4_idx
+            h4bar = h4[h4_idx]
+            h4C1, h4C4 = h4bar["close"], h4[h4_idx - 3]["close"]
+            d1C1, d1C2 = d1[d1_idx]["close"], d1[d1_idx - 1]["close"]
+            story_bull = h4C1 > h4C4 and d1C1 >= d1C2
+            story_bear = h4C1 < h4C4 and d1C1 <= d1C2
+            supL, resL = sup_at[h4_idx], res_at[h4_idx]
+            if st[1]["phase"] == "IDLE" and supL is not None and story_bull:
+                touched = supL - atrH4 * 0.4 <= h4bar["low"] <= supL + atrH4 * 0.4
+                rejected = h4bar["close"] > supL
+                if touched and rejected:
+                    st[1] = {"phase": "ATTESA_BOS", "expire": i + MAX_WAIT_BOS, "swing_ref": None}
+            if st[-1]["phase"] == "IDLE" and resL is not None and story_bear:
+                touched = resL - atrH4 * 0.4 <= h4bar["high"] <= resL + atrH4 * 0.4
+                rejected = h4bar["close"] < resL
+                if touched and rejected:
+                    st[-1] = {"phase": "ATTESA_BOS", "expire": i + MAX_WAIT_BOS, "swing_ref": None}
+
+        for d in (1, -1):
+            s = st[d]
+            if s["phase"] == "IDLE":
+                continue
+            if i > s["expire"]:
+                st[d] = {"phase": "IDLE", "expire": 0, "swing_ref": None}
+                continue
+            if s["phase"] == "ATTESA_BOS":
+                window = candles[i - SWING_LOOKBACK:i]
+                swing_ref = max(x["high"] for x in window) if d == 1 else min(x["low"] for x in window)
+                bos = (c1 > swing_ref) if d == 1 else (c1 < swing_ref)
+                if bos:
+                    st[d] = {"phase": "ATTESA_PULLBACK", "expire": i + MAX_WAIT_PULLBACK, "swing_ref": swing_ref}
+                continue
+            swing_ref = s["swing_ref"]
+            invalidated = (c1 < swing_ref) if d == 1 else (c1 > swing_ref)
+            if invalidated:
+                st[d] = {"phase": "IDLE", "expire": 0, "swing_ref": None}
+                continue
+            if abs(c1 - swing_ref) <= PULLBACK_TOL_ATR * a:
+                out_sig[i] = d
+                out_slref[i] = swing_ref
+                st[d] = {"phase": "IDLE", "expire": 0, "swing_ref": None}
+    return out_sig, out_slref
+
+
+def sig_malaysian_snr_v2_stage3(c, ind, i):
+    return ind["snr_v2s3_signal"][i]
+
+
+def _malaysian_snr_v2_stage3_sl_tp(c, ind, i, direction, entry, atr):
+    # SL dalla struttura appena confermata (lo swing rotto nel BOS) +-
+    # 0.5xATR base, non il livello H4 originale (qui il riferimento e' il
+    # pullback sullo swing LTF, non il rimbalzo sul livello HTF). TP
+    # invariato: 2.3xATR base, per restare comparabile alle altre varianti.
+    swing_ref = ind["snr_v2s3_slref"][i]
+    if swing_ref is None or not atr:
+        return None
+    if direction == 1:
+        return swing_ref - 0.5 * atr, entry + 2.3 * atr
+    return swing_ref + 0.5 * atr, entry - 2.3 * atr
 
 
 def sig_ote_cont(c, ind, i):
@@ -3395,6 +3529,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
     "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
     "MALAYSIAN_SNR_V2_STAGE1": _malaysian_snr_v2_stage1_sl_tp,
+    "MALAYSIAN_SNR_V2_STAGE3": _malaysian_snr_v2_stage3_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
     # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
@@ -3441,6 +3576,7 @@ STRATEGIES = {
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,
     "MALAYSIAN_SNR_V2_STAGE1": sig_malaysian_snr_v2_stage1,
+    "MALAYSIAN_SNR_V2_STAGE3": sig_malaysian_snr_v2_stage3,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta
