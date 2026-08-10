@@ -172,7 +172,10 @@ def greedy_search():
     sigs_is = _precompute_signals(candles_is, ind_is, POOL)
     sigs_oos = _precompute_signals(candles_oos, ind_oos, POOL)
 
-    VOTE_THRESHOLDS = [2, 3, 4, 5]
+    # bug 10/08: partiva da 2, ma con un combo di 1 strategia i voti
+    # possono valere al massimo 1 - nessuna soglia >=2 era mai raggiungibile
+    # al primo round, la ricerca si fermava subito senza aggiungere nulla.
+    VOTE_THRESHOLDS = [1, 2, 3, 4, 5, 6]
     combo = []
     history = []
     remaining = list(POOL)
