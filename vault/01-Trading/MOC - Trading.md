@@ -76,6 +76,12 @@ profitto reale, non solo curve di backtest.
   Dukascopy del 09/08 (nucleo hedge BREAKOUT_ACC mai testato insieme, vero
   LIQ_VOID mai testato — dormiente di default, SAR/MACD/RSI_DIV/ADX_RSI da
   ri-validare con la parità tester/live post-remediation attiva).
+- **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
+  architettura completa (non ancora codice) per ricostruire la strategia
+  fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
+  è quasi tautologico, i 5 pilastri mancanti (SNR close-to-open,
+  fresh/unfresh/flip, regola di conferma a 2 timeframe, filtro MISS,
+  killzone), e un piano d'implementazione in 4 stadi.
 - **[[NEXUS EA - Setup Buy-Sell — Framework]]** — metodologia per ricostruire
   ogni strategia come due setup indipendenti (buy e sell), con il primo
   esempio completo (MALAYSIAN_SNR). **Leggi anche [[NEXUS EA - Principi]]

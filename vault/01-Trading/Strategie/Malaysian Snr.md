@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: MALAYSIAN_SNR
 created: 2026-07-12
-updated: 2026-07-15
+updated: 2026-08-10
 ---
 
 # Strategia: MALAYSIAN_SNR
@@ -49,8 +49,19 @@ buy/sell ricostruito dalla fonte: [[NEXUS EA - Setup Buy-Sell — Framework]].
 ora esegue, va solo lasciata accumulare più campione. **Candidata prioritaria
 per il refactor guidato dalla fonte** (Tier 1), non solo per attesa dati.
 
+## Aggiornamento 10/08 — quasi-tautologia trovata, specifica Tier 1 pronta
+Diagnosi precisa del perché scatta così di rado: il trigger richiede
+simultaneamente "prezzo all'estremo H4 a 12 barre" e "H4 recente già in
+inversione" — le due condizioni tendono a contraddirsi. Variante
+sperimentale `MALAYSIAN_SNR_BREAKOUT` (tocco→chiusura oltre il livello)
+testata con split IS/OOS: segnale diagnostico non ancora probante (limiti
+di finestra dati, vedi nota sotto), ma la diagnosi strutturale già
+giustifica il refactor. Specifica tecnica completa dei 5 pilastri della
+fonte (close-to-open, fresh/unfresh/flip, regola 2 TF, filtro MISS,
+killzone) in [[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]].
+
 ## Note
 
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]] · [[NEXUS EA - Setup Buy-Sell — Framework]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Fonte MSNR SMC ICT (Yanu Emmanuel)]] · [[NEXUS EA - Setup Buy-Sell — Framework]] · [[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]
