@@ -76,6 +76,12 @@ profitto reale, non solo curve di backtest.
   Dukascopy del 09/08 (nucleo hedge BREAKOUT_ACC mai testato insieme, vero
   LIQ_VOID mai testato — dormiente di default, SAR/MACD/RSI_DIV/ADX_RSI da
   ri-validare con la parità tester/live post-remediation attiva).
+- **[[NEXUS EA - Ricerca Combinazioni Multi-Strategia (10-08)]]** — tre
+  metodi indipendenti (accordo unanime, pipeline gerarchica, voto greedy
+  su pool di 20 strategie) per trovare una combinazione che batta la
+  singola migliore. Nessuno dei tre ci riesce — MACD da sola resta
+  meglio di ogni ensemble provato, inclusa la ricerca dopo aver corretto
+  un bug di overfitting nello score dell'ensemble stesso.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
