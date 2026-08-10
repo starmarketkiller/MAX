@@ -15,6 +15,12 @@ ne puo' spremere ancora da uno che gia' funziona).
 
 TF proprio di ciascuna strategia (dalla Fase 4: quello col piu' alto
 conteggio trade tra 15m/30m/1h), non 4h come nella Fase 3.
+
+10/08 (2) - RI-ESEGUITO dopo il fix del bug bars/_fetch_dukascopy: la
+prima esecuzione (stesso giorno) girava senza saperlo su un tetto di
+~52 giorni di calendario su 30m, ~26 su 15m - non l'intero storico
+Dukascopy disponibile (~3.9 anni). BARS=60000 sotto forza l'uso dello
+storico pieno.
 """
 import sys
 import os
@@ -36,13 +42,20 @@ TRAIL_OPTS = [0.0, 2.0]
 RANK = {"FORTE": 0, "OK": 1, "DEBOLE": 2, "CRITICA": 3, "POCHI_DATI": 4, "NO_SETUP": 5}
 
 
+BARS = 60000  # 10/08 - vedi nota di modulo: senza questo _fetch_dukascopy
+# tagliava sempre alle ultime 2500 barre (26-52 giorni su 15m/30m)
+# indipendentemente dallo storico su disco - bug corretto in backtest.py,
+# ma i chiamanti devono comunque chiedere esplicitamente di piu' del
+# default (run_backtest(bars=800)) per usarlo davvero.
+
+
 def _eval(strat, tf, sl, tp, htf, be, tr, bar_range):
     try:
         r = bt.run_backtest(
             symbol=SYMBOL, timeframe=tf, strategy=strat, strategies=[strat],
             risk_pct=1.0, atr_sl=float(sl), atr_tp=float(tp), start_equity=10000.0,
             htf_filter=bool(htf), breakeven_r=float(be), trailing_atr=float(tr),
-            bar_range=bar_range)
+            bar_range=bar_range, bars=BARS)
     except Exception:
         return None
     n = r.get("trades", 0)

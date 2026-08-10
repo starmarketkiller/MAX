@@ -46,12 +46,17 @@ GROUP_A = {
 }
 
 
+BARS = 60000  # 10/08 (2) - vedi nota di modulo: senza questo, _fetch_dukascopy
+# tagliava sempre alle ultime 2500 barre (26-104 giorni su 15m/30m/1h)
+# indipendentemente dallo storico su disco - bug corretto in backtest.py.
+
+
 def _eval(strat, tf, bar_range):
     try:
         r = bt.run_backtest(
             symbol=SYMBOL, timeframe=tf, strategy=strat, strategies=[strat],
             risk_pct=1.0, atr_sl=1.5, atr_tp=3.0, start_equity=10000.0,
-            bar_range=bar_range)
+            bar_range=bar_range, bars=BARS)
     except Exception as e:
         return {"error": str(e)}
     n = r.get("trades", 0)

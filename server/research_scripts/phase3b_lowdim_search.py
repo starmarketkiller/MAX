@@ -30,12 +30,17 @@ TFS = ["15m", "30m", "1h", "4h", "1d"]
 MIN_TRADES = 8
 
 
+BARS = 60000  # 10/08 (2) - vedi nota di modulo: senza questo, _fetch_dukascopy
+# tagliava sempre alle ultime 2500 barre indipendentemente dallo storico su
+# disco - bug corretto in backtest.py, ri-eseguito con storico pieno.
+
+
 def _eval(strat, tf, bar_range, direction_lock=None):
     try:
         r = bt.run_backtest(
             symbol=SYMBOL, timeframe=tf, strategy=strat, strategies=[strat],
             risk_pct=1.0, atr_sl=1.5, atr_tp=3.0, start_equity=10000.0,
-            bar_range=bar_range, direction_lock=direction_lock)
+            bar_range=bar_range, direction_lock=direction_lock, bars=BARS)
     except Exception:
         return None
     n = r.get("trades", 0)
