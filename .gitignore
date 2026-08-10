@@ -35,6 +35,10 @@ data/
 # (fino a 10y di tick XAUUSD, ricostruibile da zero - non e' codice, non va versionato)
 server/data_cache/
 
+# output generati dagli script di ricerca in server/research_scripts/ (dati di
+# corsa, riproducibili rilanciando lo script - non e' codice, non va versionato)
+server/research_scripts/*_results.json
+
 # --- python -----------------------------------------------------------------
 __pycache__/
 *.py[cod]
