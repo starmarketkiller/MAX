@@ -27,6 +27,17 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // breakeven a 1.5R (lascia correre ma protegge una volta partiti):
    // PF1.48->1.97, net +7.191->+8.991 (10y sito). DD leggermente peggiore
    // (11.54%->12.48%, campione -23%) - non ancora validato su MT5.
+   // 10/08 - AMD_CONT/LDN_REVERSAL/AMD_REVERSAL: mai avuto un profilo (erano
+   // nel gruppo "session/Elliott, da ottimizzare su MT5/intraday"). Config
+   // demo 15-strategie: scan multi-TF su dati Dukascopy reali (35 strategie x
+   // 15m/30m/1h/4h/1d, IS/OOS) - SL/TP di default (nessuna leva d'uscita
+   // migliora, verificato oggi su tutte e 15 le candidate demo), htf=false
+   // (mai testato), TF dal miglior OOS PF con campione credibile. Terreno
+   // vergine su MT5 reale - nessuna storia precedente ne' a favore ne' contro,
+   // a differenza di MACD/FVG_CONT (vedi NXS_Profile_Risk sotto).
+   if(name == "AMD_CONT")          { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 30m OOS PF1.52 n169
+   if(name == "LDN_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.23 n66
+   if(name == "AMD_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.97 n59
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
@@ -104,7 +115,14 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "BREAKOUT_ACC")      return PERIOD_D1;
    if(name == "THREE_BAR_DELIVERY_BREAK")              return PERIOD_H4;
    if(name == "DISP_REBAL")        return PERIOD_H4;
-   if(name == "EMA_PULLBACK")      return PERIOD_H4;
+   // 10/08 - scan multi-TF (Dukascopy reale, 5 TF, IS/OOS): EMA_PULLBACK
+   // rendeva meglio su H1 (OOS PF1.54, 124 trade - campione ampio e
+   // credibile, non un caso limite) invece di H4. Aggiornato. Le altre
+   // strategie con profilo esistente restano sul loro TF anche dove lo scan
+   // di oggi suggeriva un'alternativa (es. TSI/SAR): un solo split IS/OOS
+   // di oggi non basta a scavalcare un TF gia' radicato nel profilo
+   // esistente - vedi vault NEXUS EA - Config Demo 15 Strategie (10-08).
+   if(name == "EMA_PULLBACK")      return PERIOD_H1;
    if(name == "FVG_CONT")          return PERIOD_H4;
    if(name == "FVG_MIT")           return PERIOD_D1;
    if(name == "ICHIMOKU")          return PERIOD_H4;
@@ -113,6 +131,9 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "LIQ_VOID")          return PERIOD_H4;
    if(name == "LONDON_BO")         return PERIOD_D1;
    if(name == "MACD")              return PERIOD_H4;
+   if(name == "AMD_CONT")          return PERIOD_M30;
+   if(name == "LDN_REVERSAL")      return PERIOD_M15;
+   if(name == "AMD_REVERSAL")      return PERIOD_M15;
    if(name == "MALAYSIAN_SNR")     return PERIOD_D1;
    if(name == "OB_MIT")            return PERIOD_D1;
    if(name == "ORDER_BLOCK")       return PERIOD_D1;
@@ -145,10 +166,22 @@ double NXS_Profile_Risk(const string name){
    if(name == "EMA_PULLBACK")      return 1.5;    // PF 1.63 reale (riportata 2.3.8)
    if(name == "SAR")               return 1.5;    // PF 1.31 reale, 196 trade (workhorse)
    if(name == "RSI_DIV")           return 1.5;    // PF 1.21 reale, 98 trade
-   if(name == "MACD")              return 1.5;    // PF 1.10 reale, 131 trade
+   // 10/08 - MACD abbassata per la config demo 15-strategie: PF reale 1.10 e'
+   // al limite (era CRITICA su campione enorme, 1.496 trade/10y, prima di
+   // "riprendersi" - causa mai chiarita, sospetto di esecuzione MT5 mai
+   // risolto, vedi NEXUS EA - Ricerca Esterna e Test A-B per Strategia). Il
+   // backtest Python di oggi (storico Dukascopy pieno) la conferma FORTE
+   // (OOS PF 1.63) ma quello NON garantisce l'esecuzione reale - e' proprio
+   // il tipo di divario gia' visto qui. Rischio ridotto finche' il demo non
+   // conferma o smentisce con esecuzione vera.
+   if(name == "MACD")              return 0.5;    // era 1.5 - vedi commento sopra
    if(name == "ADX_RSI")           return 1.3;    // PF 1.14 reale (riportata 2.3.8)
    // --- Perdenti reali (PF<1.0): size al minimo, non spente ---
    if(name == "TSI")               return 0.5;    // PF 0.86 (riportata, in ripresa 0.40->0.86)
+   // 10/08 - FVG_CONT: gia' a rischio ridotto per lo stesso motivo di MACD
+   // sopra (confermata CRITICA su MT5 reale nonostante backtest Python/sito
+   // buoni - vedi commento MACD). Nessuna modifica, il valore esistente era
+   // gia' la scelta giusta per la config demo.
    if(name == "FVG_CONT")          return 0.4;    // PF 0.79 (SMC non porta pulito)
    if(name == "ORDER_BLOCK")       return 0.5;    // PF 0.67
    if(name == "OB_MIT")            return 0.5;    // PF 0.38 (crollata per interazione)
@@ -164,6 +197,13 @@ double NXS_Profile_Risk(const string name){
    if(name == "LIQ_SWEEP")         return 0.6;
    if(name == "LIQ_VOID")          return 0.5;
    if(name == "LONDON_BO")         return 0.5;
+   // 10/08 - AMD_CONT/LDN_REVERSAL/AMD_REVERSAL: mai avuto un profilo,
+   // terreno vergine su MT5 (a differenza di MACD/FVG_CONT sopra, qui non
+   // c'e' ne' storia positiva ne' negativa). Stessa size prudente delle
+   // altre "da validare sul broker".
+   if(name == "AMD_CONT")          return 0.5;
+   if(name == "LDN_REVERSAL")      return 0.5;
+   if(name == "AMD_REVERSAL")      return 0.4;    // campione ancora piu' piccolo delle altre due
    if(name == "OTE_CONT")          return 0.5;
    if(name == "RANGE_FADE")        return 0.6;
    if(name == "SH_BMS_RTO")        return 0.5;
@@ -272,19 +312,39 @@ bool NXS_Profile_HTF(const string name, bool &htf){
 // Disabilitate dal test reale v2.3.1 (3 settimane): la loro logica MQL5 non
 // regge sui dati del broker -> perdite confermate, si spengono finche' non le
 // riallineiamo al motore del sito.
+//
+// 10/08 - FASE DEMO 15-STRATEGIE: su richiesta esplicita, il conto demo deve
+// far lavorare solo le 15 candidate scelte dal report di stato ottimizzazione
+// (buone + benino + potenziale, non le "rare per design"/CRITICA), non tutte
+// e 35. Questo e' l'UNICO gate uniforme che vale per tutte le strategie a
+// prescindere che abbiano anche un InpStrat_XXX dedicato (solo 9 delle 15 lo
+// hanno - vedi NXS_Inputs.mqh "STRATEGIES TOGGLE"; le altre 6, incluse
+// TURTLE_SOUP/FVG_MIT, non hanno alcun altro modo di essere isolate senza
+// ricompilare). Default cambiato da true a false: attivo SOLO dietro
+// InpUseStrategyProfiles=true, quindi non tocca un conto che lo tiene off.
+// Per tornare al comportamento "tutte attive" di prima: default a true, o
+// InpUseStrategyProfiles=false in .set. Vedi vault NEXUS EA - Config Demo
+// 15 Strategie (10-08).
 bool NXS_Profile_Enabled(const string name){
-   if(name == "BB_SQUEEZE")    return false;   // POCHI_DATI (troppi pochi trade)
-   if(name == "STRUCT_REACT")  return false;   // v2.3.1 test reale: 85 trade, -102$ (peggiore)
-   if(name == "DISP_REBAL")    return false;   // v2.3.1 test reale: 10 trade, -53$ (WR 30%)
-   if(name == "OTE_CONT")      return false;   // v2.3.1 test reale: 6 trade, -30$
-   // v2.3.7 — perdente non ancora riportato (logica SMC da rivedere):
-   // v2.5.0 — RIABILITATE: lo sweep sul sito (10 anni) mostra edge statistico solido
-   // con HTF ON + TP largo: BREAKOUT_ACC PF1.86 (128 trade), TSI PF1.62 (174 trade).
-   // Da validare su MT5 3M+3Y: se l'HTF filter generalizza, l'edge si trasferisce.
-   if(name == "ICHIMOKU")      return false;   // sweep HTF0 anomalo + rumore su MT5 -> resta ferma per ora
-   // v2.3.8/2.3.9 — RIPORTATE alla logica del sito e riabilitate:
-   //   ADX_RSI, EMA_PULLBACK (2.3.8) · FVG_CONT, ORDER_BLOCK (2.3.9)
-   return true;
+   if(name == "BREAKOUT_ACC")           return true;
+   if(name == "TURTLE_SOUP")            return true;
+   if(name == "MACD")                   return true;
+   if(name == "LONDON_BO")              return true;
+   if(name == "FVG_MIT")                return true;
+   if(name == "LIQ_SWEEP")              return true;
+   if(name == "AMD_CONT")               return true;
+   if(name == "FVG_CONT")               return true;
+   if(name == "TSI")                    return true;
+   if(name == "ADX_RSI")                return true;
+   if(name == "SAR")                    return true;
+   if(name == "EMA_PULLBACK")           return true;
+   if(name == "THREE_BAR_DELIVERY_BREAK") return true;
+   if(name == "LDN_REVERSAL")           return true;
+   if(name == "AMD_REVERSAL")           return true;
+   // Le rimanenti restano note per la cronaca (gia' spente da prima per
+   // perdite reali confermate, non fanno parte della lista delle 15):
+   //   BB_SQUEEZE, STRUCT_REACT, DISP_REBAL, OTE_CONT, ICHIMOKU.
+   return false;   // 10/08 - era true: tutte le altre 20 spente per la fase demo
 }
 
 #endif
