@@ -3308,7 +3308,13 @@ STRATEGIES = {
     # THREE_BAR_DELIVERY_BREAK non avesse implementazione research. Ce l'ha.
     "THREE_BAR_DELIVERY_BREAK": sig_cisd,
     "WEEKLY_EXP": sig_weekly_exp,      # 04/08: fedele a NXS_Strat_WeeklyRangeExp (prima condivideva sig_breakout con LONDON_BO)
-    "LIQ_VOID": sig_fvg_cont,         # liquidity void = FVG proxy
+    # 10/08: allineato a sig_fvg_cont_ext (era rimasto sulla versione PRIMA
+    # dell'upgrade 16/07 di FVG_CONT - filtro EMA50 semplice invece del
+    # trend strutturale esterno vero). Confermato via test A/B che le due
+    # NON davano piu' risultati identici (LIQ_VOID PF 0.68/35 trade vs
+    # FVG_CONT PF 1.49/21 sullo stesso storico) - proxy scaduto, non una
+    # variante voluta.
+    "LIQ_VOID": sig_fvg_cont_ext,      # liquidity void = FVG proxy
     "SH_BMS_RTO": sig_sh_bms_rto,      # 04/08: fedele a NXS_SHBMS_UpdateSide (prima proxy sig_ob_mit)
     "SMS_BMS_RTO": sig_sms_bms_rto,    # 04/08: fedele a NXS_Strat_SMS_BMS_RTO (prima proxy sig_ob_mit)
     # --- strategie a sessione (16/07) - richiedono candele intraday reali ---
