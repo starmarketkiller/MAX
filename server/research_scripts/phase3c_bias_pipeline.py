@@ -29,8 +29,25 @@ import majority_vote_combo as mv
 SYMBOL = "XAUUSD"
 TF = "4h"
 MASTER = "BREAKOUT_ACC"
-SLAVES = ["AMD_REVERSAL", "FVG_CONT", "MACD", "TURTLE_SOUP", "LONDON_BO",
-          "EMA_PULLBACK", "ADX_RSI", "SAR", "ICHIMOKU", "FVG_MIT"]
+
+
+def _all_slaves():
+    """Tutte le strategie ATTIVE del registro canonico con implementazione
+    Python, escluso il master stesso - non solo un sottoinsieme scelto a
+    mano. LIQ_VOID resta inclusa deliberatamente anche se e' un proxy
+    letterale di FVG_CONT (stessa funzione, server/backtest.py:3311): i due
+    risultati usciranno identici, ed e' informativo vederlo confermato qui
+    invece di escluderlo silenziosamente."""
+    import json
+    reg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                             "contracts", "strategy-registry.json")
+    reg = json.load(open(reg_path, encoding="utf-8"))
+    active = [x["strategy_id"] for x in reg["strategies"]
+              if x.get("research_implementation") and x.get("status") == "ACTIVE"]
+    return sorted(s for s in active if s != MASTER and s in bt.STRATEGIES)
+
+
+SLAVES = _all_slaves()
 MIN_OOS_TRADES = 5
 
 
