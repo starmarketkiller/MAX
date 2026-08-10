@@ -7,40 +7,43 @@ a voto con ~10-15 strategie insieme - non coppie/triple isolate come
 nella Fase 2, non 2-3 strategie "buone" scelte a mano.
 
 Due parti:
-1. baseline IS/OOS per TUTTE le ~34 strategie attive del registro
-   (bars=60000, storico Dukascopy pieno post-fix, non piu' i campioni
-   minuscoli di stamattina) - il quadro onesto completo, non solo i
-   vincitori gia' noti.
-2. ricerca GREEDY (non esaustiva - C(34,15) e' intrattabile) di un
+1. baseline IS/OOS per TUTTE le strategie attive del registro
+   (bars=60000, storico Dukascopy pieno post-fix) - il quadro onesto
+   completo, non solo i vincitori gia' noti.
+2. ricerca GREEDY (non esaustiva - C(35,15) e' intrattabile) di un
    ensemble a voto: si parte vuoti, ad ogni round si aggiunge la
-   strategia che migliora di piu' il PF in-sample dell'engine a voto
-   a maggioranza, si ferma quando la dimensione target e' raggiunta o
-   i miglioramenti si esauriscono. Soglia di voto FISSA (non unanime -
-   con 10-15 membri l'accordo unanime sulla stessa barra sarebbe quasi
-   impossibile, diluirebbe a zero trade) - min_votes tarato empiricamente
-   nel corso della ricerca stessa, sempre e solo su IS.
+   strategia che migliora di piu' il punteggio in-sample dell'engine a
+   voto, si ferma quando la dimensione target e' raggiunta o i
+   miglioramenti si esauriscono.
+
+10/08 (5) - parametrizzato (symbol/tf/bars non piu' costanti globali)
+per riuso su altri mercati (BTCUSD) e generalizzato con due varianti
+opzionali richieste dall'utente dopo il primo esito negativo su oro:
+- voto PESATO (peso = PF individuale IS della strategia, non 1 voto
+  ciascuna) invece di uniforme;
+- filtro di REGIME (_regime_series gia' esistente in backtest.py) sopra
+  l'ensemble trovato, per vedere se filtrare per regime di mercato
+  aiuta un ensemble che a voto pieno non batte la singola migliore.
 """
 import sys
 import os
 import time
+import json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import backtest as bt
 import bt_verdict
 
-SYMBOL = "XAUUSD"
-TF = "4h"
-BARS = 60000
 MIN_TRADES = 8
 START_EQUITY = 10000.0
 RISK_PCT = 1.0
 MAX_HOLD = 40
 ATR_SL, ATR_TP = 1.5, 3.0
 TARGET_SIZE = 15
+ENSEMBLE_MIN_TRADES = 20
 
 
-def _pool():
-    import json
+def pool_for(symbol):
     reg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
                              "contracts", "strategy-registry.json")
     reg = json.load(open(reg_path, encoding="utf-8"))
@@ -49,21 +52,18 @@ def _pool():
     return sorted(s for s in active if s in bt.STRATEGIES)
 
 
-POOL = _pool()
-
-
 # --------------------------------------------------------------------- #
 # Parte 1: baseline individuale IS/OOS per tutto il pool
 # --------------------------------------------------------------------- #
-def baseline_all():
+def baseline_all(pool, symbol, tf, bars):
     results = []
-    for strat in POOL:
+    for strat in pool:
         row = {"strategy": strat}
         for label, br in [("is", (0.0, 0.6)), ("oos", (0.6, 1.0))]:
             try:
-                r = bt.run_backtest(symbol=SYMBOL, timeframe=TF, strategy=strat, strategies=[strat],
+                r = bt.run_backtest(symbol=symbol, timeframe=tf, strategy=strat, strategies=[strat],
                                      risk_pct=RISK_PCT, atr_sl=ATR_SL, atr_tp=ATR_TP,
-                                     start_equity=START_EQUITY, bar_range=br, bars=BARS)
+                                     start_equity=START_EQUITY, bar_range=br, bars=bars)
             except Exception as e:
                 row[label] = {"error": str(e)[:60]}
                 continue
@@ -78,20 +78,29 @@ def baseline_all():
     return results
 
 
+def print_baseline(base):
+    base_sorted = sorted(base, key=lambda r: (r.get("oos", {}).get("pf") or 0), reverse=True)
+    print(f"{'Strategia':<26}{'IS PF':>7}{'IS n':>6}{'IS V':>9}   {'OOS PF':>7}{'OOS n':>6}{'OOS V':>9}")
+    for r in base_sorted:
+        i, o = r.get("is", {}), r.get("oos", {})
+        print(f"{r['strategy']:<26}{i.get('pf','-'):>7}{i.get('trades','-'):>6}{i.get('verdict','-'):>9}   "
+              f"{o.get('pf','-'):>7}{o.get('trades','-'):>6}{o.get('verdict','-'):>9}")
+
+
 # --------------------------------------------------------------------- #
 # Parte 2: motore a voto - precompute dei segnali per velocita'
 # --------------------------------------------------------------------- #
-def _load_slice(frac_range):
-    candles, src = bt._fetch_real(SYMBOL, TF, bars=BARS)
+def load_slice(symbol, tf, bars, frac_range):
+    candles, src = bt._fetch_real(symbol, tf, bars=bars)
     n = len(candles)
     i0, i1 = int(n * frac_range[0]), int(n * frac_range[1])
     candles = candles[i0:i1]
-    intraday = bt._load_dukascopy_m15(SYMBOL) if src == "dukascopy" else None
+    intraday = bt._load_dukascopy_m15(symbol) if src == "dukascopy" else None
     ind = bt._prep(candles, intraday_ref=intraday)
     return candles, ind
 
 
-def _precompute_signals(candles, ind, pool):
+def precompute_signals(candles, ind, pool):
     sigs = {}
     for s in pool:
         fn = bt.STRATEGIES[s]
@@ -99,8 +108,12 @@ def _precompute_signals(candles, ind, pool):
     return sigs
 
 
-def _simulate(candles, ind, sigs, combo, min_votes):
+def simulate(candles, ind, sigs, combo, min_votes, weights=None, regime_ok=None):
+    """weights: dict strategia->peso (default 1.0 ciascuna, voto uniforme).
+    regime_ok: se dato, set di codici regime (_REGIME_*) in cui e' permesso
+    aprire - il resto del bar viene ignorato anche se i voti bastano."""
     atr = ind["atr"]
+    regime = ind.get("regime") if regime_ok is not None else None
     equity = START_EQUITY
     trades = []
     position = None
@@ -134,7 +147,12 @@ def _simulate(candles, ind, sigs, combo, min_votes):
         a = atr[i]
         if not a:
             continue
-        votes = sum(sigs[s][i] for s in combo)
+        if regime_ok is not None and regime[i] not in regime_ok:
+            continue
+        if weights:
+            votes = sum(sigs[s][i] * weights.get(s, 1.0) for s in combo)
+        else:
+            votes = sum(sigs[s][i] for s in combo)
         if votes >= min_votes:
             dir_ = 1
         elif votes <= -min_votes:
@@ -156,38 +174,21 @@ def _simulate(candles, ind, sigs, combo, min_votes):
             "net": round(equity - START_EQUITY, 2)}
 
 
-ENSEMBLE_MIN_TRADES = 20  # 10/08 (2): molto piu' alto di MIN_TRADES=8 - vedi nota sotto
-
-
-def _score(res):
+def score(res):
     """10/08 (2) - PRIMA VERSIONE (bug): premiava il PF grezzo con soglia
-    a 8 trade -> la ricerca greedy convergeva su JUDAS_SWING/IFVG/
-    BB_SQUEEZE/SMS_BMS_RTO/MALAYSIAN_SNR (le stesse strategie gia'
-    segnalate stamattina come troppo rare per giudicare) con soglie di
-    voto lasche, PF in-sample fino a 9.51 su 8-20 trade, OOS in perdita
-    (PF 0.4-0.66). Overfitting da manuale, sull'ensemble stesso.
-
-    Corretto: punteggio = expectancy_R * sqrt(trade) (stessa filosofia
-    del 'robust' score usato in Fase 3/4b), non PF grezzo - premia
-    frequenza E qualita' insieme, penalizza con continuita' i campioni
-    piccoli invece di un taglio secco. Soglia dura alzata a
-    ENSEMBLE_MIN_TRADES=20 (non 8): un ensemble che vince a 8-10 trade
-    non e' un motore, e' un incidente statistico."""
+    a 8 trade -> la ricerca greedy convergeva su strategie troppo rare
+    per giudicare, PF in-sample fino a 9.51 su 8-20 trade, OOS in perdita.
+    Corretto: punteggio = expectancy_R * sqrt(trade), soglia dura a
+    ENSEMBLE_MIN_TRADES=20 - vedi nota di modulo per il dettaglio."""
     if res["pf"] is None or res["trades"] < ENSEMBLE_MIN_TRADES:
         return -999
     return res["exp_r"] * (res["trades"] ** 0.5)
 
 
-def _robust_pool(baseline, min_is_trades=30):
-    """10/08 (2) - il pool per la ricerca dell'ensemble non e' tutto il
-    registro: esclude le strategie troppo magre anche a periodo intero
-    (WEEKLY_EXP/BB_SQUEEZE/IFVG/MALAYSIAN_SNR/NY_REVERSAL/PO3/
-    SMS_BMS_RTO - meno di 30 trade IS anche con lo storico pieno, la
-    causa diretta dell'overfitting sopra) e i proxy duplicati (LIQ_VOID
-    == FVG_CONT dal fix di oggi, RANGE_FADE == BOLLINGER dal registro) -
-    altrimenti pesano due volte lo stesso segnale. Non esclude le
-    strategie DEBOLI o CRITICA - quelle restano nel pool, e' proprio
-    quello che l'utente ha chiesto di testare, non solo le 3 andate bene."""
+def robust_pool(baseline, min_is_trades=30):
+    """Esclude le strategie troppo magre anche a periodo intero e i proxy
+    duplicati (LIQ_VOID==FVG_CONT, RANGE_FADE==BOLLINGER) - non esclude
+    le strategie deboli/CRITICA, quelle restano nel pool di proposito."""
     DUPES = {"LIQ_VOID", "RANGE_FADE"}
     keep = []
     for row in baseline:
@@ -200,16 +201,20 @@ def _robust_pool(baseline, min_is_trades=30):
     return sorted(keep)
 
 
-def greedy_search(pool):
-    candles_is, ind_is = _load_slice((0.0, 0.6))
-    candles_oos, ind_oos = _load_slice((0.6, 1.0))
-    sigs_is = _precompute_signals(candles_is, ind_is, pool)
-    sigs_oos = _precompute_signals(candles_oos, ind_oos, pool)
+def greedy_search(pool, symbol, tf, bars, weights=None):
+    candles_is, ind_is = load_slice(symbol, tf, bars, (0.0, 0.6))
+    candles_oos, ind_oos = load_slice(symbol, tf, bars, (0.6, 1.0))
+    sigs_is = precompute_signals(candles_is, ind_is, pool)
+    sigs_oos = precompute_signals(candles_oos, ind_oos, pool)
 
     # bug 10/08: partiva da 2, ma con un combo di 1 strategia i voti
-    # possono valere al massimo 1 - nessuna soglia >=2 era mai raggiungibile
-    # al primo round, la ricerca si fermava subito senza aggiungere nulla.
+    # possono valere al massimo il peso di quella sola strategia -
+    # nessuna soglia >=2 era mai raggiungibile al primo round.
     VOTE_THRESHOLDS = [1, 2, 3, 4, 5, 6]
+    if weights:
+        # con pesi non-interi le soglie fisse vanno scalate sul range
+        # tipico dei pesi (PF individuali, in genere 0.5-2.5)
+        VOTE_THRESHOLDS = [0.5, 1, 1.5, 2, 3, 4, 5, 6, 8]
     combo = []
     history = []
     remaining = list(pool)
@@ -219,16 +224,14 @@ def greedy_search(pool):
         for cand in remaining:
             trial = combo + [cand]
             for mv in VOTE_THRESHOLDS:
-                if mv > len(trial):
-                    continue
-                res_is = _simulate(candles_is, ind_is, sigs_is, trial, mv)
-                sc = _score(res_is)
+                res_is = simulate(candles_is, ind_is, sigs_is, trial, mv, weights=weights)
+                sc = score(res_is)
                 if best is None or sc > best["score"]:
                     best = {"cand": cand, "mv": mv, "score": sc, "is": res_is}
         if best is None or best["score"] <= -900:
             break
         combo.append(best["cand"])
-        res_oos = _simulate(candles_oos, ind_oos, sigs_oos, combo, best["mv"])
+        res_oos = simulate(candles_oos, ind_oos, sigs_oos, combo, best["mv"], weights=weights)
         history.append({"size": len(combo), "added": best["cand"], "min_votes": best["mv"],
                          "is": best["is"], "oos": res_oos, "combo": list(combo)})
         remaining.remove(best["cand"])
@@ -239,30 +242,26 @@ def greedy_search(pool):
     return history
 
 
-def main():
-    print("=== Parte 1: baseline individuale (pool completo) ===", flush=True)
+def main(symbol="XAUUSD", tf="4h", bars=60000, out_name="ensemble_engine_results.json"):
+    pool = pool_for(symbol)
+    print(f"=== Parte 1: baseline individuale ({symbol} {tf}, pool completo: {len(pool)}) ===", flush=True)
     t0 = time.time()
-    base = baseline_all()
+    base = baseline_all(pool, symbol, tf, bars)
     print(f"fatto in {time.time()-t0:.0f}s\n", flush=True)
-    base_sorted = sorted(base, key=lambda r: (r.get("oos", {}).get("pf") or 0), reverse=True)
-    print(f"{'Strategia':<26}{'IS PF':>7}{'IS n':>6}{'IS V':>9}   {'OOS PF':>7}{'OOS n':>6}{'OOS V':>9}")
-    for r in base_sorted:
-        i, o = r.get("is", {}), r.get("oos", {})
-        print(f"{r['strategy']:<26}{i.get('pf','-'):>7}{i.get('trades','-'):>6}{i.get('verdict','-'):>9}   "
-              f"{o.get('pf','-'):>7}{o.get('trades','-'):>6}{o.get('verdict','-'):>9}")
+    print_baseline(base)
 
-    pool2 = _robust_pool(base, min_is_trades=30)
+    pool2 = robust_pool(base, min_is_trades=30)
     print(f"\nPool per l'ensemble (>=30 trade IS, deduplicato): {len(pool2)} strategie")
     print(", ".join(pool2))
 
     print("\n=== Parte 2: ricerca greedy dell'ensemble a voto ===", flush=True)
-    hist = greedy_search(pool2)
+    hist = greedy_search(pool2, symbol, tf, bars)
 
-    import json
-    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ensemble_engine_results.json")
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), out_name)
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({"baseline": base, "pool_ensemble": pool2, "greedy": hist}, f, indent=2)
+        json.dump({"symbol": symbol, "tf": tf, "baseline": base, "pool_ensemble": pool2, "greedy": hist}, f, indent=2)
     print(f"\nSalvato: {out_path}")
+    return base, pool2, hist
 
 
 if __name__ == "__main__":
