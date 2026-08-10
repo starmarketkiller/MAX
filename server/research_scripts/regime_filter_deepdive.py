@@ -19,7 +19,25 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ensemble_engine_search as e
 
-CANDIDATES = [("BREAKOUT_ACC", {1}), ("LIQ_SWEEP", {1})]  # {1} = STRONG_TREND
+import sys as _sys
+# 10/08 (8) - candidati passabili da riga di comando come "STRAT:REGIME_LABEL"
+# (default: i due di ieri, STRONG_TREND). REGIME_LABEL deve essere una chiave
+# di REGIME_MAP sotto.
+REGIME_MAP = {"STRONG_TREND": {1}, "WEAK_TREND": {2}, "VOLATILE": {3},
+              "CHOPPY": {4}, "RANGING": {5}, "STRONG+WEAK_TREND": {1, 2}}
+
+
+def _parse_candidates():
+    if len(_sys.argv) > 1:
+        out = []
+        for arg in _sys.argv[1:]:
+            strat, label = arg.split(":")
+            out.append((strat, REGIME_MAP[label], label))
+        return out
+    return [("BREAKOUT_ACC", {1}, "STRONG_TREND"), ("LIQ_SWEEP", {1}, "STRONG_TREND")]
+
+
+CANDIDATES = _parse_candidates()
 
 
 def walk_forward(symbol, tf, bars, strat, regime_ok, n_windows=5):
@@ -35,11 +53,10 @@ def walk_forward(symbol, tf, bars, strat, regime_ok, n_windows=5):
               f"{str(r_base['pf']):>12}{r_base['trades']:>5}")
 
 
-def trade_timing(symbol, tf, bars, strat, regime_ok):
+def trade_timing(symbol, tf, bars, strat, regime_ok, regime_label):
     """Dove cadono nel tempo i trade filtrati vs quelli scartati, dentro l'OOS."""
     candles, ind = e.load_slice(symbol, tf, bars, (0.6, 1.0))
     regime = ind["regime"]
-    sig_fn = ind is not None
     import backtest as bt
     fn = bt.STRATEGIES[strat]
     n = len(candles)
@@ -48,8 +65,8 @@ def trade_timing(symbol, tf, bars, strat, regime_ok):
     sig_bars = [i for i, s in signals if s != 0]
     sig_in_regime = [i for i, s in signals if s != 0 and regime[i] in regime_ok]
     print(f"\n--- {strat}: dove cadono i segnali nell'OOS ({symbol}) ---")
-    print(f"barre totali OOS: {n}, barre in STRONG_TREND: {in_regime_bars} ({100*in_regime_bars/n:.0f}%)")
-    print(f"segnali totali: {len(sig_bars)}, di cui in STRONG_TREND: {len(sig_in_regime)} "
+    print(f"barre totali OOS: {n}, barre in {regime_label}: {in_regime_bars} ({100*in_regime_bars/n:.0f}%)")
+    print(f"segnali totali: {len(sig_bars)}, di cui in {regime_label}: {len(sig_in_regime)} "
           f"({100*len(sig_in_regime)/max(1,len(sig_bars)):.0f}%)")
     if sig_in_regime:
         span = sig_in_regime[-1] - sig_in_regime[0]
@@ -70,9 +87,9 @@ def btc_check(strat, regime_ok):
 
 
 def main():
-    for strat, regime_ok in CANDIDATES:
+    for strat, regime_ok, regime_label in CANDIDATES:
         walk_forward("XAUUSD", "4h", 60000, strat, regime_ok, n_windows=5)
-        trade_timing("XAUUSD", "4h", 60000, strat, regime_ok)
+        trade_timing("XAUUSD", "4h", 60000, strat, regime_ok, regime_label)
         btc_check(strat, regime_ok)
 
 
