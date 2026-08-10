@@ -154,6 +154,16 @@ bool NXS_CheckProtections(string &reason){
    }
    if(g_tradesToday >= g_run_MaxTradesPerDay){ reason = "max_trades"; return false; }
    if(NXS_CountPositions() >= g_run_MaxConcurrent){ reason = "max_concurrent"; return false; }
+   // 10/08 - CAP DI RISCHIO AGGREGATO: InpMaxConcurrent sopra limita il NUMERO
+   // di posizioni, non la loro somma in %. Con 15 strategie indipendenti che
+   // possono aprire sulla stessa barra (rischio individuale fino al 3%,
+   // NXS_StrategyProfiles.mqh), l'esposizione reale puo' superare di molto il
+   // rischio nominale "per trade" - vedi vault NEXUS EA - Config Demo 15
+   // Strategie (10-08). Reject esplicito come tutti gli altri gate qui sopra,
+   // non un clamp silenzioso della size (stesso principio di AUD0-RISK-002/003).
+   if(InpMaxAggregateRiskPct > 0 && NXS_OpenRiskPct() >= InpMaxAggregateRiskPct){
+      reason = "aggregate_risk_cap"; return false;
+   }
    if(g_eaPaused){ reason = "ea_paused"; return false; }
    return true;
 }

@@ -485,6 +485,38 @@ int NXS_CountPositions(){
    return n;
 }
 
+// 10/08 - rischio aggregato APERTO in questo momento, come % dell'equity
+// corrente. Somma su tutte le posizioni NEXUS (stesso perimetro di
+// InpProtScopeAccountWide gia' usato dallo scudo ruin) la distanza SL-prezzo
+// ATTUALE (non il rischio bloccato all'apertura) - una posizione gia' spostata
+// a breakeven/trailing pesa meno o zero, riflette l'esposizione VERA di adesso,
+// non quella storica del momento dell'apertura. Usato da NXS_CheckProtections
+// per il cap di rischio aggregato (config demo 15-strategie, vedi vault NEXUS
+// EA - Config Demo 15 Strategie): con piu' strategie indipendenti che possono
+// aprire sulla stessa barra, il rischio non resta N% a trade, si somma.
+double NXS_OpenRiskPct(){
+   double eq = AccountInfoDouble(ACCOUNT_EQUITY);
+   if(eq <= 0) return 0.0;
+   double riskMoney = 0.0;
+   for(int i = PositionsTotal()-1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(!InpProtScopeAccountWide && PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      double sl = PositionGetDouble(POSITION_SL);
+      if(sl <= 0) continue;   // niente SL -> non calcolabile, non contato (non azzerato: vedi nota gate)
+      string psym    = PositionGetString(POSITION_SYMBOL);
+      double price   = PositionGetDouble(POSITION_PRICE_CURRENT);
+      double vol     = PositionGetDouble(POSITION_VOLUME);
+      double tickVal = SymbolInfoDouble(psym, SYMBOL_TRADE_TICK_VALUE);
+      double tickSz  = SymbolInfoDouble(psym, SYMBOL_TRADE_TICK_SIZE);
+      if(tickVal <= 0 || tickSz <= 0) continue;
+      double dist = MathAbs(price - sl);
+      riskMoney += (dist / tickSz) * tickVal * vol;
+   }
+   return riskMoney / eq * 100.0;
+}
+
 double NXS_FloatingPnL(){
    double s = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){

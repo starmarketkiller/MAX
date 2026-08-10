@@ -112,9 +112,37 @@ solido lì secondo lo scan).
 *MACD e FVG_CONT a rischio ridotto per la bandiera rossa storica MT5
 sopra, non per un problema trovato oggi.
 
+## Config implementata in `NXS_StrategyProfiles.mqh` (commit 78bb300)
+- AMD_CONT/LDN_REVERSAL/AMD_REVERSAL: profilo nuovo (TF dallo scan, SL/TP
+  default, rischio prudente 0.4-0.5%).
+- EMA_PULLBACK: TF H4→H1.
+- MACD: rischio 1.5%→0.5% (bandiera rossa storica MT5).
+- FVG_CONT: rischio 0.4% confermato (era già prudente).
+- `NXS_Profile_Enabled()`: diventa il gate esplicito delle 15 — le altre
+  20 spente. Attivo solo dietro `InpUseStrategyProfiles=true` (non
+  esposto come `input`, quindi sempre attivo per ora — nota aperta).
+
+## Cap di rischio aggregato (richiesto dopo la config, 10/08)
+`InpMaxConcurrent` limita solo il NUMERO di posizioni, non la somma del
+rischio — con 15 strategie indipendenti (fino al 3% ciascuna) che possono
+aprire sulla stessa barra, l'esposizione reale può superare di molto il
+rischio "per trade" nominale (vedi anche la discussione sul conto 3000€
+in questa stessa conversazione). Implementato:
+- `NXS_OpenRiskPct()` (`NXS_Globals.mqh`) — somma la distanza SL-prezzo
+  ATTUALE (non il rischio storico all'apertura, quindi una posizione già
+  a breakeven pesa meno) su tutte le posizioni NEXUS aperte, come % 
+  dell'equity corrente.
+- `InpMaxAggregateRiskPct` (`NXS_Inputs.mqh`, default 15.0, 0=disattivo).
+- Gate in `NXS_CheckProtections()` (`NXS_Risk.mqh`): un nuovo ingresso
+  viene rifiutato (reason="aggregate_risk_cap") se il rischio già aperto
+  è al tetto o oltre — reject esplicito, non un clamp silenzioso della
+  size, stesso principio di AUD0-RISK-002/003.
+
 ## Prossimo passo
-Fondere questa tabella con `NXS_StrategyProfiles.mqh` esistente (non
-sostituirlo alla cieca) e preparare la config EA per il demo — in corso.
+Config demo completa lato codice. Resta da decidere se rendere
+`InpUseStrategyProfiles` `input` (per poter tornare a "tutte e 35" via
+.set senza ricompilare) — non urgente se il demo è l'unico uso previsto
+per ora.
 
 ## Collegamenti
 [[MOC - Trading]] ·

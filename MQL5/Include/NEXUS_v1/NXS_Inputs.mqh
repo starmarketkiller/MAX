@@ -87,6 +87,18 @@ input double   InpMaxDailyDDPct    = 5.0;
 // drawdown lo abbassa -> frena da solo. "profitto = margine = spazio".
 input bool     InpUseMarginGate    = true;    // v2.4.8: HEDGE ON - regola la concorrenza col margine (freno di sicurezza sul DD)
 input double   InpMinMarginLevelPct = 500.0; // livello margine minimo proiettato per aprire (0=off)
+// 10/08 - CAP DI RISCHIO AGGREGATO: InpMaxConcurrent limita il NUMERO di
+// posizioni ma non la loro somma in %. Con la config demo a 15 strategie
+// indipendenti (rischio individuale fino al 3%, vedi NXS_StrategyProfiles.mqh)
+// piu' segnali possono scattare sulla stessa barra e sommare un'esposizione
+// ben oltre il rischio "per trade" nominale - vedi vault NEXUS EA - Config
+// Demo 15 Strategie (10-08). 0 = disattivo (comportamento identico a prima).
+// Controllato in NXS_CheckProtections via NXS_OpenRiskPct() (NXS_Globals.mqh):
+// se il rischio GIA' aperto (somma su tutte le posizioni NEXUS, distanza SL
+// ATTUALE non quella storica all'apertura) e' gia' al tetto, un nuovo ingresso
+// viene rifiutato indipendentemente dalla sua size - stesso stile "reject
+// esplicito, mai clamp silenzioso" di AUD0-RISK-002/003.
+input double   InpMaxAggregateRiskPct = 15.0;
 // v2.5.x — tetto ESPLICITO al rischio quando il lotto minimo broker supera il
 // budget calcolato (vedi AUD0-RISK-002 in NXS_Risk.mqh). Default 0 = comportamento
 // invariato: l'ordine viene rifiutato. Se > 0, il lotto minimo viene comunque
