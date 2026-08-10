@@ -12,6 +12,10 @@ Per ciascuna strategia: sceglie il regime migliore SOLO su in-sample
 (tra tutti i _REGIME_* singoli + STRONG+WEAK_TREND insieme + nessun
 filtro), verifica il risultato di quella scelta su out-of-sample mai
 visto durante la selezione - stessa disciplina di tutta la sessione.
+
+10/08 (8) - STRATS reso configurabile da riga di comando: ri-eseguito
+su ADX_RSI/SAR/TSI (campione grande, mai isolate prima con un filtro
+di regime proprio - segnalate nel report di stato ottimizzazione).
 """
 import sys
 import os
@@ -20,7 +24,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ensemble_engine_search as e
 
 SYMBOL, TF, BARS = "XAUUSD", "4h", 60000
-STRATS = ["MACD", "TURTLE_SOUP", "BREAKOUT_ACC", "LIQ_SWEEP", "LONDON_BO", "FVG_MIT"]
+STRATS = sys.argv[1:] if len(sys.argv) > 1 else \
+    ["MACD", "TURTLE_SOUP", "BREAKOUT_ACC", "LIQ_SWEEP", "LONDON_BO", "FVG_MIT"]
 MIN_IS_TRADES = 15
 
 REGIMES = {
