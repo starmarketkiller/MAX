@@ -84,6 +84,12 @@ profitto reale, non solo curve di backtest.
   singola migliore. Nessuno dei tre ci riesce — MACD da sola resta
   meglio di ogni ensemble provato, inclusa la ricerca dopo aver corretto
   un bug di overfitting nello score dell'ensemble stesso.
+- **[[NEXUS EA - Config Demo 15 Strategie (10-08)]]** — piano per un conto
+  demo a 15 strategie: scan multi-TF completo (frequenza sì, qualità no
+  sui TF bassi), exit-management isolato (nessun miglioramento credibile
+  su 15 strategie dopo walk-forward), scoperta di un secondo layer di
+  ottimizzazione MQL5 preesistente con bandiera rossa reale su MT5 per
+  MACD/FVG_CONT mai risolta.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
