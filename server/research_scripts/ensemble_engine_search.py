@@ -156,21 +156,55 @@ def _simulate(candles, ind, sigs, combo, min_votes):
             "net": round(equity - START_EQUITY, 2)}
 
 
+ENSEMBLE_MIN_TRADES = 20  # 10/08 (2): molto piu' alto di MIN_TRADES=8 - vedi nota sotto
+
+
 def _score(res):
-    """Punteggio per la selezione greedy (solo su IS): PF penalizzato se
-    il campione e' sotto MIN_TRADES, cosi' non si sceglie un PF alto ma
-    fasullo su 3 trade."""
-    if res["pf"] is None or res["trades"] < MIN_TRADES:
+    """10/08 (2) - PRIMA VERSIONE (bug): premiava il PF grezzo con soglia
+    a 8 trade -> la ricerca greedy convergeva su JUDAS_SWING/IFVG/
+    BB_SQUEEZE/SMS_BMS_RTO/MALAYSIAN_SNR (le stesse strategie gia'
+    segnalate stamattina come troppo rare per giudicare) con soglie di
+    voto lasche, PF in-sample fino a 9.51 su 8-20 trade, OOS in perdita
+    (PF 0.4-0.66). Overfitting da manuale, sull'ensemble stesso.
+
+    Corretto: punteggio = expectancy_R * sqrt(trade) (stessa filosofia
+    del 'robust' score usato in Fase 3/4b), non PF grezzo - premia
+    frequenza E qualita' insieme, penalizza con continuita' i campioni
+    piccoli invece di un taglio secco. Soglia dura alzata a
+    ENSEMBLE_MIN_TRADES=20 (non 8): un ensemble che vince a 8-10 trade
+    non e' un motore, e' un incidente statistico."""
+    if res["pf"] is None or res["trades"] < ENSEMBLE_MIN_TRADES:
         return -999
-    pf = res["pf"] if res["pf"] != float("inf") else 5.0
-    return pf + min(res["trades"], 100) / 1000.0
+    return res["exp_r"] * (res["trades"] ** 0.5)
 
 
-def greedy_search():
+def _robust_pool(baseline, min_is_trades=30):
+    """10/08 (2) - il pool per la ricerca dell'ensemble non e' tutto il
+    registro: esclude le strategie troppo magre anche a periodo intero
+    (WEEKLY_EXP/BB_SQUEEZE/IFVG/MALAYSIAN_SNR/NY_REVERSAL/PO3/
+    SMS_BMS_RTO - meno di 30 trade IS anche con lo storico pieno, la
+    causa diretta dell'overfitting sopra) e i proxy duplicati (LIQ_VOID
+    == FVG_CONT dal fix di oggi, RANGE_FADE == BOLLINGER dal registro) -
+    altrimenti pesano due volte lo stesso segnale. Non esclude le
+    strategie DEBOLI o CRITICA - quelle restano nel pool, e' proprio
+    quello che l'utente ha chiesto di testare, non solo le 3 andate bene."""
+    DUPES = {"LIQ_VOID", "RANGE_FADE"}
+    keep = []
+    for row in baseline:
+        sid = row["strategy"]
+        if sid in DUPES:
+            continue
+        is_n = row.get("is", {}).get("trades", 0)
+        if isinstance(is_n, int) and is_n >= min_is_trades:
+            keep.append(sid)
+    return sorted(keep)
+
+
+def greedy_search(pool):
     candles_is, ind_is = _load_slice((0.0, 0.6))
     candles_oos, ind_oos = _load_slice((0.6, 1.0))
-    sigs_is = _precompute_signals(candles_is, ind_is, POOL)
-    sigs_oos = _precompute_signals(candles_oos, ind_oos, POOL)
+    sigs_is = _precompute_signals(candles_is, ind_is, pool)
+    sigs_oos = _precompute_signals(candles_oos, ind_oos, pool)
 
     # bug 10/08: partiva da 2, ma con un combo di 1 strategia i voti
     # possono valere al massimo 1 - nessuna soglia >=2 era mai raggiungibile
@@ -178,7 +212,7 @@ def greedy_search():
     VOTE_THRESHOLDS = [1, 2, 3, 4, 5, 6]
     combo = []
     history = []
-    remaining = list(POOL)
+    remaining = list(pool)
 
     while remaining and len(combo) < TARGET_SIZE:
         best = None
@@ -217,13 +251,17 @@ def main():
         print(f"{r['strategy']:<26}{i.get('pf','-'):>7}{i.get('trades','-'):>6}{i.get('verdict','-'):>9}   "
               f"{o.get('pf','-'):>7}{o.get('trades','-'):>6}{o.get('verdict','-'):>9}")
 
+    pool2 = _robust_pool(base, min_is_trades=30)
+    print(f"\nPool per l'ensemble (>=30 trade IS, deduplicato): {len(pool2)} strategie")
+    print(", ".join(pool2))
+
     print("\n=== Parte 2: ricerca greedy dell'ensemble a voto ===", flush=True)
-    hist = greedy_search()
+    hist = greedy_search(pool2)
 
     import json
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ensemble_engine_results.json")
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump({"baseline": base, "greedy": hist}, f, indent=2)
+        json.dump({"baseline": base, "pool_ensemble": pool2, "greedy": hist}, f, indent=2)
     print(f"\nSalvato: {out_path}")
 
 
