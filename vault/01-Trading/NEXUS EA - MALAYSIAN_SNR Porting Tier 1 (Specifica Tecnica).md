@@ -296,16 +296,41 @@ campioni finalmente a 3-4 cifre invece di 5-30 trade):
   campioni di 16-70 trade — e nessuna mostra edge robusto. Il meglio
   e' DEBOLE (WEEKLY_EXP, LDN_REVERSAL), il resto CRITICA. Chiusura
   onesta, non piu' "forse con altri dati": con dati veri, no.
-- **Fase 3b — la scoperta piu' importante di questo giro**: il
+- **Fase 3b — la scoperta piu' importante di questo giro, MA con una
+  causa identificata che ne ridimensiona la portata**: il
   direction-lock BUY-only su 4h, con campioni ora enormi (54-114
   trade per lato), regge su **tutte e tre** MACD/TURTLE_SOUP/
   BREAKOUT_ACC, sempre FORTE sia IS che OOS, sempre meglio del
   proprio baseline senza lock (MACD 1.58→1.72, TURTLE_SOUP 1.96→2.60,
-  BREAKOUT_ACC 1.75→2.74). Il risultato piu' statisticamente credibile
-  di tutta la sessione — non un singolo caso isolato, coerente su tre
-  strategie indipendenti. **Non ancora portato al motore MQL5/EA**:
-  resta un risultato di ricerca Python, il prossimo passo naturale
-  se si vuole seguire questa pista.
+  BREAKOUT_ACC 1.75→2.74).
+
+  **Approfondimento 10/08 (3) — perche': l'oro nella finestra testata
+  e' salito del +160% (1.666→4.343 $, sia IS +76% sia OOS +48%
+  fortemente rialzisti)**. SELL-only nello stesso periodo e'
+  sistematicamente piu' debole di BUY-only su tutte e tre (es.
+  TURTLE_SOUP SELL-only IS PF 0.47, BREAKOUT_ACC SELL-only OOS PF
+  0.76) - la firma di un mercato in trend, non di un'asimmetria
+  strutturale della logica. **Verifica decisiva**: isolato l'unico
+  tratto davvero ribassista dentro il dataset (ultimi ~5 mesi, oro
+  -16,2%, 5.187→4.343) e il pattern si INVERTE su tutte e tre -
+  SELL-only diventa il lato piu' forte (MACD SELL PF 1.59 vs BUY
+  troppo magro per giudicare; TURTLE_SOUP SELL PF 3.46 vs BUY 1.99;
+  BREAKOUT_ACC SELL PF 1.70 vs BUY 0.99, appena sopra breakeven).
+
+  **Conclusione onesta**: non e' un'edge BUY-only strutturale, e'
+  un'edge "con il trend" - queste strategie catturano meglio la
+  direzione dominante, qualunque essa sia, non il rialzo in se'.
+  Il BUY-only ha funzionato finora perche' il trend e' stato quasi
+  sempre rialzista in questi ~3,9 anni, non perche' l'oro "sale
+  meglio di quanto scenda" nella logica delle strategie. Implicazione
+  operativa: un filtro di direzione **dinamico legato al regime/trend
+  in corso** (non un BUY-only statico) e' l'ipotesi piu' difendibile
+  da testare dopo - riprende l'idea di "cambio di strategia per
+  regime" gia' esplorata prima nella sessione (allora inconcludente
+  per campione troppo piccolo), ora con un meccanismo molto meglio
+  identificato (allineamento direzione/trend) e un vero tratto
+  ribassista su cui verificarla, anche se corto (~5 mesi). Non ancora
+  implementato ne' portato in MQL5.
 - **Stadio 1 di MALAYSIAN_SNR**: confermato invariato nella sostanza
   - nessun TF mostra edge consistente IS+OOS anche con campioni di
     100-280 trade. La sola identificazione dei livelli non basta,
