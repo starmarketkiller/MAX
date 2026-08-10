@@ -161,6 +161,29 @@ debole), ma cross-validato su due mercati indipendenti. LIQ_SWEEP+
 STRONG_TREND resta un'ipotesi solo-oro, promettente ma non
 generalizzabile finché non si capisce perché fallisce su BTC.
 
+### Estensione ad ADX_RSI, SAR, TSI (10/08, 4)
+Le tre segnalate nel report di stato ottimizzazione come campione
+grande mai isolato con un filtro di regime proprio
+(`regime_filter_singles.py ADX_RSI SAR TSI`):
+
+- **ADX_RSI + STRONG_TREND**: miglioramento marginale (OOS PF 1.24→1.25)
+  — sostanzialmente rumore, non approfondito oltre.
+- **SAR + WEAK_TREND**: il walk-forward più pulito di tutta la sessione,
+  **vince tutte e 5 le finestre sull'oro** (mai successo prima), segnali
+  ben distribuiti (96% dello span). Ma su BTC aiuta solo l'in-sample
+  (2.25 vs 1.74) e **peggiora l'out-of-sample** (0.87 vs 1.01) — non
+  cross-valida pulito.
+- **TSI + WEAK_TREND**: walk-forward meno netto (vince 3 finestre su 5),
+  ma **su BTC aiuta su entrambi i lati** (IS 3.02 vs 1.13, OOS 1.02 vs
+  0.76) — il pattern opposto di SAR, più debole sull'oro, più coerente
+  cross-market.
+
+**Nessuno dei due è pulito come BREAKOUT_ACC** (unico con walk-forward
+decente E conferma BTC su entrambi i lati). SAR e TSI restano ipotesi
+reali ma imperfette, ciascuna con un punto debole diverso — non
+promuoverle a "candidato confermato" senza un terzo controllo (più
+storico, o un terzo mercato).
+
 ### 4. Storico più lungo — non eseguibile oggi
 Richiede solo tempo: il Dukascopy continua a crescere in background
 verso il target di 10 anni.
