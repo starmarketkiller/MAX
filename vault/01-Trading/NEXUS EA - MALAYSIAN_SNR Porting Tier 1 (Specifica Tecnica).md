@@ -258,15 +258,31 @@ livello opposto valido.
    dello Stadio 1. Semplificazione dichiarata: "scendere di due
    timeframe" diventa qui H4 (livello) → serie base del test
    (BOS/pullback), non una camminata letterale sulla scala
-   D1/H4/H1/M30. **Risultato il più "a forma di libro di testo" di
-   tutta la sessione**: su 30m sia IS (PF 1.8/11 trade, FORTE) sia OOS
-   (PF 2.41/5 trade) sono chiaramente positivi — non il crollo IS→OOS
-   visto ovunque altrove. Ma l'OOS resta sotto la soglia minima di 8
-   trade (POCHI_DATI): la maggiore selettività della state machine
-   riduce la frequenza rispetto allo Stadio 1, e con lei il campione.
-   15m e 1h restano deboli/inconcludenti. **Non ancora certificabile,
-   ma la direzione più promettente trovata finora** — da rivalutare
-   quando il Dukascopy avrà più storico.
+   D1/H4/H1/M30.
+
+   **Primo test (campione stretto, ~52 giorni per un bug di cap
+   scoperto dopo)**: sembrava il risultato più "a forma di libro di
+   testo" della sessione — 30m IS PF 1.8/11 trade, OOS PF 2.41/5
+   trade, entrambi positivi. **Smentito dal retest con lo storico
+   pieno** (~3,9 anni, dopo il fix del bug sotto): 15m IS PF 1.22/166
+   trade (OK) → OOS PF 0.77/97 trade (CRITICA); 30m IS PF 0.74/70
+   (CRITICA) → OOS PF 1.03/55 (DEBOLE); 1h IS PF 1.16/33 (OK) → OOS PF
+   0.20/23 (CRITICA, WR 4.3%). **Nessun timeframe regge con un
+   campione vero.** Il risultato incoraggiante di prima era esso
+   stesso un miraggio da campione minuscolo — la stessa lezione
+   ribadita un'altra volta, stavolta sulla propria diagnosi.
+
+   **Bug scoperto ripetendo il test**: `_fetch_dukascopy` ignorava
+   completamente il parametro `bars`, tagliando sempre alle ultime
+   2500 barre indipendentemente dallo storico su disco — su 15m/30m
+   questo e' un tetto di calendario di 26-52 giorni. Corretto
+   (`server/backtest.py`, 10/08): ora rispetta `max(bars,
+   _REAL_BARS_CAP)`. **Portata**: ha limitato silenziosamente OGNI
+   test 15m/30m/1h di oggi che non passava `bars` esplicitamente (di
+   fatto tutti) — Fase 3b, Fase 4, Fase 4b e lo Stadio 1 vanno
+   ri-verificati con la correzione attiva prima di fidarsi dei loro
+   numeri su quei timeframe. Fase 2/3 (solo 4h) e Fase 3c (solo 4h)
+   non sono toccate.
 2. **Pilastro 2 + registro**: aggiungere fresh/unfresh/flip come
    struttura dati, ancora senza il Pilastro 3 — verificare che il
    registro non esploda in dimensione su uno storico lungo (pruning).
