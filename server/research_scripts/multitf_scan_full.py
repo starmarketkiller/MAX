@@ -31,12 +31,30 @@ MIN_TRADES = 8
 
 def main():
     pool = e.pool_for(SYMBOL)
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "multitf_scan_full_results.json")
     results = {}
+    # 10/08 (11) - salvataggio incrementale dopo OGNI timeframe: la prima
+    # esecuzione e' stata uccisa da un timeout esterno (timeout 1100) a meta'
+    # del secondo TF, perdendo il lavoro del primo (15m, 904s) perche' il
+    # JSON veniva scritto solo a fine funzione. Ora ogni TF completato viene
+    # salvato subito, cosi' un'interruzione a meta' non perde i TF gia' fatti.
+    if os.path.exists(out_path):
+        try:
+            with open(out_path, encoding="utf-8") as f:
+                prev = json.load(f)
+            results = prev.get("by_tf", {})
+        except Exception:
+            results = {}
     for tf in TFS:
+        if tf in results:
+            print(f"=== {tf} gia' presente nel salvataggio precedente, salto ===", flush=True)
+            continue
         t0 = time.time()
         base = e.baseline_all(pool, SYMBOL, tf, BARS)
         results[tf] = base
-        print(f"=== {tf} fatto in {time.time()-t0:.0f}s ===", flush=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump({"by_tf": results, "summary": []}, f, indent=2)
+        print(f"=== {tf} fatto in {time.time()-t0:.0f}s (salvato) ===", flush=True)
 
     # per strategia: quale TF ha l'OOS PF migliore con campione credibile (>=15 trade)
     print(f"\n{'Strategia':<26}{'TF migliore (OOS)':<10}{'OOS PF':>8}{'OOS n':>7}   "
@@ -63,7 +81,6 @@ def main():
             print(f"{strat:<26}{'--':<10}{'nessun TF con campione OOS credibile':<38}{freq_trend:<30}")
             summary.append({"strategy": strat, "best_tf": None, "freq_trend": freq_trend})
 
-    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "multitf_scan_full_results.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump({"by_tf": results, "summary": summary}, f, indent=2)
     print(f"\nSalvato: {out_path}")
