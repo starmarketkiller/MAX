@@ -15,6 +15,7 @@ accetta il parametro `timeframe` ma lavora sui dati disponibili.
 """
 from __future__ import annotations
 
+import bisect
 import csv
 import io
 import json
@@ -516,7 +517,7 @@ def _regime_series(atr, adx):
     return out
 
 
-def _prep(candles, intraday_ref=None):
+def _prep(candles, intraday_ref=None, snr_ref=None):
     closes = [c["close"] for c in candles]
     psar, psar_trend = psar_series(candles)
     ema12 = ema_series(closes, 12)
@@ -531,7 +532,8 @@ def _prep(candles, intraday_ref=None):
     ob_signal = _ob_series(candles, atr_s)
     shbms_signal, shbms_ref = _shbms_series(
         candles, sess, atr_s, weekly_pwh, weekly_pwl, monthly_pmh, monthly_pml)
-    snr_signal, snr_brk_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(candles, sess, atr_s)
+    snr_signal, snr_brk_signal, snr_h4hi, snr_h4lo, snr_atrH4 = _malaysian_snr_series(
+        candles, sess, atr_s, ref=snr_ref)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -1491,11 +1493,24 @@ def sig_malaysian_snr(c, ind, i):
     return ind["snr_signal"][i]
 
 
-def _malaysian_snr_series(candles, sess, atr):
+def _malaysian_snr_series(candles, sess, atr, ref=None):
     # H4=factor 4, D1=factor 24, W1=factor 168 rispetto a una base H1 (l'unico
     # TF su cui la sessione ha senso - vedi nota AUD0-style gia' usata per
     # LONDON_BO/WEEKLY_EXP: testarla su D1 dava 0 trade perche' g_session
     # non esiste su una barra giornaliera).
+    #
+    # 10/08 - stesso bug di classe dell'Asian-range (_session_amd_series):
+    # il livello W1 richiede i//168-1 >= 8, cioe' ALMENO 1512 barre di
+    # lookback prima che il primo segnale sia anche solo calcolabile. Se
+    # `candles` e' una finestra TAGLIATA da bar_range (walk-forward IS/OOS),
+    # quella storia non c'e' PIU' dentro la finestra - il motore restituiva
+    # silenziosamente 0 segnali per l'intero split, non perche' la strategia
+    # non tradi ma perche' il taglio le toglie la memoria di cui ha bisogno
+    # (scoperto testando MALAYSIAN_SNR_BREAKOUT in IS/OOS: 16-18 trade a
+    # periodo intero su 1h, 0 su ENTRAMBI gli split). `ref` (se fornito) e'
+    # la stessa serie PRIMA del taglio bar_range: i livelli H4/D1/W1 si
+    # calcolano sempre da li', proiettati sulla finestra `candles` per
+    # timestamp - stesso principio di intraday_ref in _session_amd_series.
     #
     # 06/08 (2) - out_brk: variante SPERIMENTALE (non fedelta' MQL5) chiesta
     # dall'utente dopo aver verificato che la vera NXS_Strat_MalaysianSNR_
@@ -1508,9 +1523,16 @@ def _malaysian_snr_series(candles, sess, atr):
     # Registrata come strategia SEPARATA (MALAYSIAN_SNR_BREAKOUT), la
     # rejection fedele all'MQL5 resta intatta sotto MALAYSIAN_SNR.
     n = len(candles)
-    h4 = _resample_ohlc(candles, 4)
-    w1 = _resample_ohlc(candles, 168)
-    d1 = _resample_ohlc(candles, 24)
+    if ref is None or ref is candles:
+        ref = candles
+        idx_map = list(range(n))
+    else:
+        ref_epochs = [_epoch_utc(c["time"]) for c in ref]
+        cand_epochs = [_epoch_utc(c["time"]) for c in candles]
+        idx_map = [bisect.bisect_left(ref_epochs, e) for e in cand_epochs]
+    h4 = _resample_ohlc(ref, 4)
+    w1 = _resample_ohlc(ref, 168)
+    d1 = _resample_ohlc(ref, 24)
     atr_h4 = atr_series(h4, 14)
     out_sig = [0] * n
     out_brk = [0] * n
@@ -1518,7 +1540,8 @@ def _malaysian_snr_series(candles, sess, atr):
     out_h4lo = [None] * n
     out_atrh4 = [None] * n
     for i in range(n):
-        h4_idx, w1_idx, d1_idx = i // 4 - 1, i // 168 - 1, i // 24 - 1
+        ri = idx_map[i]
+        h4_idx, w1_idx, d1_idx = ri // 4 - 1, ri // 168 - 1, ri // 24 - 1
         if h4_idx < 12 or h4_idx >= len(h4) or w1_idx < 8 or d1_idx < 2:
             continue
         atrH4 = atr_h4[h4_idx]
@@ -1543,8 +1566,11 @@ def _malaysian_snr_series(candles, sess, atr):
         elif (h4Hi - atrH4 * 0.4 <= h1 <= h4Hi + atrH4 * 0.4) and c1 < o1 and story_bear:
             out_sig[i] = -1
         # Rottura fresca (non ancora oltre il livello alla barra precedente,
-        # cosi' non risegnala ogni barra finche' il prezzo resta esteso).
-        c_prev = candles[i - 1]["close"] if i > 0 else c1
+        # cosi' non risegnala ogni barra finche' il prezzo resta esteso) -
+        # presa da `ref` (mai da un fallback su c1) cosi' anche la prima
+        # barra di una finestra bar_range tagliata conosce la sua vera
+        # barra precedente invece di fingere "nessun movimento".
+        c_prev = ref[ri - 1]["close"] if ri > 0 else c1
         if c1 > h4Hi and c_prev <= h4Hi and story_bull:
             out_brk[i] = 1
         elif c1 < h4Lo and c_prev >= h4Lo and story_bear:
@@ -3511,6 +3537,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # tutta la serie disponibile. Gli indicatori (EMA/ATR/...) si ri-scaldano
     # dall'inizio della finestra tagliata, non hanno memoria del "prima" -
     # tradeoff standard del walk-forward testing, non un bug.
+    full_candles = candles
     if bar_range is not None:
         n = len(candles)
         i0 = max(0, int(n * bar_range[0]))
@@ -3525,7 +3552,10 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     # sessione, non il segnale stesso, quindi non introduce look-ahead
     # sull'informazione bar_range vuole nascondere.
     intraday_ref = _load_dukascopy_m15(symbol) if src == "dukascopy" else None
-    ind = _prep(candles, intraday_ref=intraday_ref)
+    # 10/08 - stesso principio per MALAYSIAN_SNR: i livelli H4/D1/W1 vanno
+    # SEMPRE calcolati sulla serie PRIMA del taglio bar_range (full_candles),
+    # mai sulla finestra tagliata - vedi nota in _malaysian_snr_series.
+    ind = _prep(candles, intraday_ref=intraday_ref, snr_ref=full_candles)
     # 08/08 - htf_factor: bias multi-timeframe VERO (CHoCH/trend su un TF
     # ricampionato per davvero, _external_choch_series - stessa funzione gia'
     # usata per choch_ext/ORDER_BLOCK's htf gate), non lo SMA(trend_period)
