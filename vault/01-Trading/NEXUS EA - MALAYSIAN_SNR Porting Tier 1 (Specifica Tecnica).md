@@ -279,10 +279,37 @@ livello opposto valido.
    (`server/backtest.py`, 10/08): ora rispetta `max(bars,
    _REAL_BARS_CAP)`. **Portata**: ha limitato silenziosamente OGNI
    test 15m/30m/1h di oggi che non passava `bars` esplicitamente (di
-   fatto tutti) — Fase 3b, Fase 4, Fase 4b e lo Stadio 1 vanno
-   ri-verificati con la correzione attiva prima di fidarsi dei loro
-   numeri su quei timeframe. Fase 2/3 (solo 4h) e Fase 3c (solo 4h)
-   non sono toccate.
+   fatto tutti).
+
+## Ri-verifica di tutti i test 15m/30m/1h del 10/08 (dopo il fix)
+
+Rieseguiti con `bars=60000` (storico Dukascopy pieno, ~3,9 anni,
+campioni finalmente a 3-4 cifre invece di 5-30 trade):
+
+- **Fase 4b (OTE_CONT/RSI_DIV)**: il risultato "più solido della
+  serie" (RSI_DIV IS PF 1.36/OOS PF 1.16) **non regge** — con 432 IS
+  e 302 OOS trade veri, PF 0.94/1.07 (CRITICA/DEBOLE), sostanzialmente
+  breakeven. OTE_CONT confermato negativo come nella diagnosi
+  originale (PF 0.77-0.99).
+- **Fase 4 (9 strategie, TF naturali)**: tutte passano da POCHI_DATI
+  (campione troppo piccolo per giudicare) a verdetti veri con
+  campioni di 16-70 trade — e nessuna mostra edge robusto. Il meglio
+  e' DEBOLE (WEEKLY_EXP, LDN_REVERSAL), il resto CRITICA. Chiusura
+  onesta, non piu' "forse con altri dati": con dati veri, no.
+- **Fase 3b — la scoperta piu' importante di questo giro**: il
+  direction-lock BUY-only su 4h, con campioni ora enormi (54-114
+  trade per lato), regge su **tutte e tre** MACD/TURTLE_SOUP/
+  BREAKOUT_ACC, sempre FORTE sia IS che OOS, sempre meglio del
+  proprio baseline senza lock (MACD 1.58→1.72, TURTLE_SOUP 1.96→2.60,
+  BREAKOUT_ACC 1.75→2.74). Il risultato piu' statisticamente credibile
+  di tutta la sessione — non un singolo caso isolato, coerente su tre
+  strategie indipendenti. **Non ancora portato al motore MQL5/EA**:
+  resta un risultato di ricerca Python, il prossimo passo naturale
+  se si vuole seguire questa pista.
+- **Stadio 1 di MALAYSIAN_SNR**: confermato invariato nella sostanza
+  - nessun TF mostra edge consistente IS+OOS anche con campioni di
+    100-280 trade. La sola identificazione dei livelli non basta,
+    come gia' concluso, ora su base statistica molto piu' solida.
 2. **Pilastro 2 + registro**: aggiungere fresh/unfresh/flip come
    struttura dati, ancora senza il Pilastro 3 — verificare che il
    registro non esploda in dimensione su uno storico lungo (pruning).

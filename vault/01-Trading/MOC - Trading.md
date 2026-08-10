@@ -81,7 +81,13 @@ profitto reale, non solo curve di backtest.
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
   è quasi tautologico, i 5 pilastri mancanti (SNR close-to-open,
   fresh/unfresh/flip, regola di conferma a 2 timeframe, filtro MISS,
-  killzone), e un piano d'implementazione in 4 stadi.
+  killzone), e un piano d'implementazione in 4 stadi. Contiene anche un
+  bug importante scoperto durante i test (`_fetch_dukascopy` ignorava il
+  parametro `bars`, tetto silenzioso di 26-104 giorni su 15m/30m/1h) e
+  la sua correzione, e — la scoperta più solida della sessione del
+  10/08 — il **direction-lock BUY-only su 4h** che regge con campioni
+  di 54-114 trade su MACD/TURTLE_SOUP/BREAKOUT_ACC insieme, sempre
+  meglio del rispettivo baseline, mai ancora portato in MQL5.
 - **[[NEXUS EA - Setup Buy-Sell — Framework]]** — metodologia per ricostruire
   ogni strategia come due setup indipendenti (buy e sell), con il primo
   esempio completo (MALAYSIAN_SNR). **Leggi anche [[NEXUS EA - Principi]]
