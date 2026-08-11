@@ -1443,8 +1443,18 @@ STRATEGY_TARGETS_ALWAYS = {}
 # testata su richiesta dell'utente (16/07), risultato misto/non decisivo
 # (vedi vault Liq Sweep), quindi resta opt-in (use_dynamic_tp=True),
 # NON applicata di default.
+# 11/08 (13) - _liq_sweep_target e' generica (PDH/PDL/Asia/swing esterno,
+# nessuno stato specifico a LIQ_SWEEP) - richiesta esplicita dell'utente
+# di riprovare l'idea "TP sulla prossima liquidita' reale" (lo stesso
+# meccanismo che rende forte CRT) sulle altre strategie del nucleo dove
+# il concetto si applica. Candidati limitati a chi NON ha gia' un SL/TP
+# strutturale in STRATEGY_SLTP_ALWAYS (quello ha sempre priorita' - vedi
+# guard "target_fn and not sltp_fn" in _open_position, un target dinamico
+# su TURTLE_SOUP/FVG_MIT sarebbe codice morto, mai eseguito). FVG_CONT
+# resta l'unico altro candidato pulito nel nucleo (SMC, nessun override).
 STRATEGY_TARGETS_OPTIN = {
     "LIQ_SWEEP": _liq_sweep_target,
+    "FVG_CONT": _liq_sweep_target,
 }
 
 
