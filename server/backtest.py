@@ -1356,6 +1356,59 @@ def _ifvg_sl_tp(c, ind, i, direction, entry, atr):
     return l2 + 0.5 * atr, entry - 2.4 * atr
 
 
+# 11/08 (18) - IFVG_CHOCH_WINDOW: la nota vault "Strategie/Ifvg.md" (16/07)
+# aveva gia' scritto la lezione generale ("aggiungere una conferma CHoCH
+# sullo stesso bar di un altro trigger e' quasi sempre troppo restrittivo
+# - vero anche per TURTLE_SOUP") ma non l'aveva mai applicata a IFVG
+# stessa - confermato 0 segnali su ogni TF con CHoCH fedele richiesto
+# sulla stessa barra del gap+invalidazione+reazione. Stessa correzione
+# gia' validata oggi su TURTLE_SOUP_CHOCH: CHoCH entro una finestra di
+# barre invece che sulla stessa barra esatta.
+_IFVG_CHOCH_WINDOW = 5
+
+
+def _ifvg_base_raw(c, ind, i):
+    if i < 4:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    h2, l2 = c[i - 1]["high"], c[i - 1]["low"]
+    h4, l4 = c[i - 3]["high"], c[i - 3]["low"]
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body1 = abs(c1 - o1)
+    reaction_bear = (c1 < o1) and (body1 > atr * 0.3)
+    reaction_bull = (c1 > o1) and (body1 > atr * 0.3)
+    if l2 > h4 + atr * 0.2 and c1 < h4 and reaction_bear:
+        return -1
+    if h2 < l4 - atr * 0.2 and c1 > l4 and reaction_bull:
+        return 1
+    return 0
+
+
+def sig_ifvg_choch_window(c, ind, i):
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    for k in range(i - _IFVG_CHOCH_WINDOW, i + 1):
+        if k < 0:
+            continue
+        raw = _ifvg_base_raw(c, ind, k)
+        if choch_up and raw == 1:
+            return 1
+        if choch_down and raw == -1:
+            return -1
+    return 0
+
+
+def _ifvg_choch_window_sl_tp(c, ind, i, direction, entry, atr):
+    # Approssimazione dichiarata (stessa di TURTLE_SOUP_CHOCH): ancora al
+    # gap della barra CORRENTE (conferma CHoCH), non alla barra originale
+    # del setup - i due bordi del gap IFVG usano offset piccoli (i-1/i-3),
+    # non cambiano molto entro la finestra di 5 barre.
+    return _ifvg_sl_tp(c, ind, i, direction, entry, atr)
+
+
 def sig_liq_sweep(c, ind, i):
     # sweep del max/min a 20 barre + chiusura di rientro (reversal)
     # NOTA: superata da sig_liq_sweep_ext() il 16/07 - tenuta per riferimento.
@@ -3921,6 +3974,57 @@ def _sms_bms_sl_tp(c, ind, i, direction, entry, atr):
     return hi_recent + 0.5 * atr, entry - 2.6 * atr
 
 
+# 11/08 (18) - SMS_BMS_RTO_CHOCH_WINDOW: stesso problema di IFVG - failure
+# swing + CHoCH + rejection + zona premium/discount richiesti TUTTI sulla
+# stessa barra (4 condizioni AND, gia' diagnosticato come rarita'
+# strutturale nella nota vault, non un bug). Stessa correzione di
+# TURTLE_SOUP_CHOCH/IFVG_CHOCH_WINDOW: CHoCH entro una finestra di barre
+# invece che sulla stessa barra esatta.
+_SMS_BMS_CHOCH_WINDOW = 5
+
+
+def _sms_bms_base_raw(c, ind, i):
+    atr = ind["atr"][i]
+    if not atr or i < 30:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    body_abs = abs(c1 - o1)
+    rejection_bull = c1 > o1 and body_abs > atr * 0.3
+    rejection_bear = c1 < o1 and body_abs > atr * 0.3
+    win_a = c[i - 9:i + 1]
+    win_b = c[i - 29:i - 9]
+    hi_recent, lo_recent = max(x["high"] for x in win_a), min(x["low"] for x in win_a)
+    hi_older, lo_older = max(x["high"] for x in win_b), min(x["low"] for x in win_b)
+    failure_low = lo_recent > lo_older
+    failure_high = hi_recent < hi_older
+    mid = (hi_recent + lo_recent) / 2
+    bid = c1
+    if failure_low and rejection_bull and bid <= mid:
+        return 1
+    if failure_high and rejection_bear and bid >= mid:
+        return -1
+    return 0
+
+
+def sig_sms_bms_rto_choch_window(c, ind, i):
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    for k in range(i - _SMS_BMS_CHOCH_WINDOW, i + 1):
+        if k < 30:
+            continue
+        raw = _sms_bms_base_raw(c, ind, k)
+        if choch_up and raw == 1:
+            return 1
+        if choch_down and raw == -1:
+            return -1
+    return 0
+
+
+def _sms_bms_choch_window_sl_tp(c, ind, i, direction, entry, atr):
+    return _sms_bms_sl_tp(c, ind, i, direction, entry, atr)
+
+
 # --------------------------------------------------------------------------- #
 # SCALP / profit-taker (v2.3.0) - pensate per M15/M30: ingressi veloci, TP
 # stretto. Registrate nel motore per l'ottimizzazione multi-TF sui TF bassi.
@@ -4002,6 +4106,7 @@ STRATEGY_SLTP_ALWAYS = {
     "SILVER_BULLET": _silver_bullet_sl_tp,
     "WEEKLY_EXP": _weekly_exp_sl_tp,
     "IFVG": _ifvg_sl_tp,
+    "IFVG_CHOCH_WINDOW": _ifvg_choch_window_sl_tp,
     "TURTLE_SOUP": _turtle_soup_sl_tp,
     # 11/08 (10) - riusa lo stesso SL/TP di TURTLE_SOUP: approssimazione
     # dichiarata, ancora al livello di riferimento CORRENTE (bar della
@@ -4017,6 +4122,7 @@ STRATEGY_SLTP_ALWAYS = {
     "NY_REVERSAL": _ny_reversal_sl_tp,
     "SH_BMS_RTO": _shbms_sl_tp,
     "SMS_BMS_RTO": _sms_bms_sl_tp,
+    "SMS_BMS_RTO_CHOCH_WINDOW": _sms_bms_choch_window_sl_tp,
     "PO3": _po3_sl_tp,
     "MALAYSIAN_SNR": _malaysian_snr_sl_tp,
     "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
@@ -4068,6 +4174,7 @@ STRATEGIES = {
     "FVG_MIT": sig_fvg_mit,
     "FVG_MIT_WINDOW": sig_fvg_mit_window,
     "IFVG": sig_ifvg,
+    "IFVG_CHOCH_WINDOW": sig_ifvg_choch_window,
     "LIQ_SWEEP": sig_liq_sweep_ext,
     "TURTLE_SOUP": sig_turtle_soup,
     "TURTLE_SOUP_CHOCH": sig_turtle_soup_choch,
@@ -4097,6 +4204,7 @@ STRATEGIES = {
     "LIQ_VOID": sig_fvg_cont_ext,      # liquidity void = FVG proxy
     "SH_BMS_RTO": sig_sh_bms_rto,      # 04/08: fedele a NXS_SHBMS_UpdateSide (prima proxy sig_ob_mit)
     "SMS_BMS_RTO": sig_sms_bms_rto,    # 04/08: fedele a NXS_Strat_SMS_BMS_RTO (prima proxy sig_ob_mit)
+    "SMS_BMS_RTO_CHOCH_WINDOW": sig_sms_bms_rto_choch_window,
     # --- strategie a sessione (16/07) - richiedono candele intraday reali ---
     "AMD_CONT": sig_amd_cont,
     "AMD_REVERSAL": sig_amd_reversal,

@@ -73,7 +73,14 @@ def test_counts_are_37_live_plus_4_research():
     # di zone attive fino a 15 barre invece di un solo istante fisso -
     # stessa architettura di SH_BMS_RTO_V2/TURTLE_SOUP_CHOCH, per il
     # secondo problema aperto del nucleo).
-    assert len(sr.all_records()) == 56
+    # 58, non 56: + IFVG_CHOCH_WINDOW e SMS_BMS_RTO_CHOCH_WINDOW (11/08,
+    # stessa idea CHoCH-entro-finestra-di-N-barre invece che sulla stessa
+    # barra di un altro trigger, gia' provata su TURTLE_SOUP_CHOCH - la
+    # nota vault di IFVG generalizzava gia' questo insight ("vero anche
+    # per TURTLE_SOUP, non solo qui") ma non era mai stata applicata a se
+    # stessa; SMS_BMS_RTO condivide la stessa struttura a 4 condizioni
+    # sulla stessa barra).
+    assert len(sr.all_records()) == 58
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -134,7 +141,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 56
+    assert r.json()["counts"]["total"] == 58
 
 
 def test_resolve_endpoint_404_on_unknown(client):

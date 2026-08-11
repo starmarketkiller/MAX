@@ -56,6 +56,8 @@ export const STRATEGY_REGISTRY = [
   ["MALAYSIAN_SNR_V2_RETEST_OUTRANGE","Malaysian SNR v2 Retest + gate fuori-range (experimental)","SMC",false,true],
   ["TSI_EXTREME","TSI cross from extreme zone (experimental)","MOMENTUM",false,true],
   ["FVG_MIT_WINDOW","FVG Mitigation with active-zone registry (experimental)","SMC",false,true],
+  ["IFVG_CHOCH_WINDOW","IFVG with windowed CHoCH confirmation (experimental)","SMC",false,true],
+  ["SMS_BMS_RTO_CHOCH_WINDOW","SMS/BMS RTO with windowed CHoCH confirmation (experimental)","SMC",false,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));
