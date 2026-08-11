@@ -153,6 +153,17 @@ profitto reale, non solo curve di backtest.
   walk-forward 2/5 su entrambi i TF, era un artefatto dello stesso tipo
   dei filtri di regime (motore standalone, SL/TP sbagliato). Nessuna
   variante regge un test onesto.
+- **I due problemi aperti del nucleo, approfonditi (11/08)** — TSI:
+  variante "cross da zona estrema" (soglia motivata, mediana del TSI
+  assoluto) testata su 1d/4h, **negativa su entrambi** (peggiora su 1d,
+  identica ma con meno campione su 4h). Resta senza soluzione. FVG_MIT:
+  il trigger valuta ogni gap per mitigazione una sola volta (4-6 barre
+  dopo la formazione, mai più tardi) — registro di zone attive fino a
+  15 barre (`FVG_MIT_WINDOW`) **promettente su 4h** (campione quasi
+  triplicato, walk-forward molto più stabile, range 0.95-1.55 contro le
+  oscillazioni 0.39-1.85 della baseline), ma peggiora nettamente su 1h
+  (drawdown 58%) — fix specifico al TF naturale, non universale. Vedi
+  [[Tsi]] e [[Fvg Mit]].
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
