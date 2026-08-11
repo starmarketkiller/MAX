@@ -456,6 +456,33 @@ rottura) resta un fondamento statistico solido per il PATTERN in
 generale; il P&L specifico di questa implementazione (SL/TP/zona
 scelti) non lo è ancora altrettanto.
 
+### Gate/confluenze aggiuntivi (11/08) — CRT aiuta, gli altri due no
+
+Su richiesta esplicita dell'utente ("proviamo più versioni, non solo la
+fonte, basta che ci sia motivazione e prova"): tre gate testati su
+RETEST con selezione IS-blind + verifica OOS (`msnr_retest_gates.py`),
+ciascuno con una motivazione precisa, non a caso.
+
+- **Regime STRONG_TREND** (ipotesi: RETEST è un pattern di
+  continuazione, come BREAKOUT_ACC): **non regge** — peggiora l'IS su
+  entrambi i TF, scartato dalla selezione disciplinata su entrambi.
+- **Confluenza LIQ_SWEEP** (idea dell'utente: un segnale RETEST è più
+  forte se coincide con un vero sweep di liquidità entro poche barre,
+  stesso principio del Marriage Concept ma con liquidità invece di
+  trendline): campione troppo sottile dopo il filtro su entrambi i TF
+  (1h: 1 trade OOS con PF "inf" — scartato subito come inutilizzabile).
+  Ipotesi non verificabile con questi dati, non smentita.
+- **CRT — Candle Range Theory** (dalla fonte, mai implementata prima:
+  prezzo fuori dal range max/min del giorno precedente): **aiuta a
+  30m**, scelto dalla selezione IS-blind, confermato su OOS (PF
+  1.12→1.22, campione 103→58 trade) e su walk-forward a 5 finestre
+  (**vince 4 finestre su 5**, perde solo la prima di poco). Non aiuta a
+  1h (non scelto dalla selezione IS-blind lì).
+
+**Conclusione onesta**: delle tre idee "fuori dallo schema" testate,
+una regge (CRT a 30m), una non regge (regime), una resta indecisa per
+campione insufficiente (confluenza liquidità).
+
 ## Cosa NON tocca questo documento
 
 - Nessun cambio al MQL5 live (`NXS_Strat_MalaysianSNR_Rejection`
