@@ -121,6 +121,16 @@ profitto reale, non solo curve di backtest.
   versione scartata è una CRT nascosta. Include anche il censimento
   completo e coerente di tutte le 50 strategie del motore (16 nucleo +
   34 escluse), stesso metodo per tutte.
+- **[[NEXUS EA - Riverifica su Storico Ampliato (11-08)]]** (corretta lo
+  stesso giorno) — i 5 filtri di regime "confermati due volte" erano un
+  artefatto di test (motore semplificato, TF 4h invece del vero TF di
+  profilo). Riverificati sul motore vero (`regime_filter` aggiunto a
+  `run_backtest`): nessuno regge, walk-forward 1/5-3/5 su campioni
+  spesso troppo sottili. TURTLE_SOUP + CHoCH entro 5 barre dopo il sweep
+  (idea già diagnosticata il 16/07, mai testata su storico sufficiente):
+  promettente su 4h (walk-forward 4/5, drawdown dimezzato), non su 1h.
+  SAR e TSI: i fix "trigger vero" trovati a luglio sono già applicati,
+  non sono opportunità nuove.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

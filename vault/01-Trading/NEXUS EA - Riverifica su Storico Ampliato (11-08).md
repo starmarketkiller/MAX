@@ -35,19 +35,37 @@ walk-forward su più dati — utile ricordarlo prima di trattarle come
 "blindate". TURTLE_SOUP e BREAKOUT_ACC scendono leggermente rispetto
 al vecchio storico, resta comunque un edge reale.
 
-## 2. Filtri di regime — tutti e 5 confermati, alcuni migliorano
+## 2. Filtri di regime — ⚠️ CORREZIONE (11/08, stesso giorno): NESSUNO REGGE
 
-| Filtro | OOS filtrato (nuovo) | OOS baseline (nuovo) | OOS filtrato (vecchio) |
+**Questa sezione era sbagliata.** I numeri sotto (e la conclusione "tutti
+e 5 confermati") venivano da `ensemble_engine_search.simulate()` - un
+motore SEMPLIFICATO, non `run_backtest` - e tutte e 5 le confluenze erano
+forzate sul TF 4h di riferimento sessione invece del vero TF di profilo
+di ognuna (TSI/LIQ_SWEEP/BREAKOUT_ACC sono realmente 1d). Riverificate lo
+stesso giorno con `regime_filter` aggiunto a `run_backtest()` (stesso
+motore di tutto il resto, TF di profilo reale, walk-forward a 5
+finestre):
+
+| Filtro | Walk-forward sul motore vero | Verdetto |
+|---|---|---|
+| BREAKOUT_ACC+STRONG_TREND (1d) | 1/5, campioni 3-9 | **negativo** |
+| LIQ_SWEEP+STRONG_TREND (1d) | 3/5, campioni 4-11 | **troppo sottile** |
+| SAR+WEAK_TREND (4h) | 2/5 | **negativo** |
+| TSI+WEAK_TREND (1d) | 2/5, campioni 2-9 | **negativo** |
+| FVG_CONT+STRONG/WEAK_TREND (4h) | 3/5 | **marginale** |
+
+Nessuna delle 5 regge un test onesto sul motore che conta davvero.
+Dettaglio: `regime_filter_real_engine.py`,
+[[NEXUS EA - CISD_TRUE (versione vera, negativa) e Censimento Completo (11-08)]].
+I numeri originali sotto restano per la cronaca, **non affidabili**.
+
+| Filtro (numeri originali, NON affidabili) | OOS filtrato (nuovo) | OOS baseline (nuovo) | OOS filtrato (vecchio) |
 |---|---|---|---|
 | BREAKOUT_ACC+STRONG_TREND | 1.59 | 1.48 | 1.84 |
 | LIQ_SWEEP+STRONG_TREND | 1.84 | 1.33 | 2.17 |
 | SAR+WEAK_TREND | 1.29 | 1.21 | 1.47 |
-| TSI+WEAK_TREND | **1.82** | 1.26 | 1.02 (marginale prima) |
+| TSI+WEAK_TREND | 1.82 | 1.26 | 1.02 (marginale prima) |
 | FVG_CONT+STRONG/WEAK_TREND | 1.39 | 1.29 | 1.32 |
-
-Tutti e 5 continuano ad aiutare rispetto al proprio baseline —
-robustezza confermata su dati quasi doppi. TSI+WEAK_TREND migliora
-molto (era il più marginale, ora il più forte del gruppo).
 
 ## 3. MALAYSIAN_SNR_V2_RETEST — si indebolisce parecchio
 
@@ -88,12 +106,13 @@ di dati) — invariato rispetto alla diagnosi precedente.
 
 ## Conclusione — cosa ha retto, cosa no
 
-**Confermato solido**: le tre buone, i 5 filtri di regime, **CRT
-(soprattutto)**.
+**Confermato solido**: le tre buone, **CRT (soprattutto)**.
 **Ridimensionato**: MALAYSIAN_SNR_V2_RETEST — non pronta per il demo
 senza ulteriore lavoro (il gate fuori-range specifico non ancora
 riverificato su questo storico).
-**Confermato negativo**: STAGE1/STAGE3.
+**Confermato negativo**: STAGE1/STAGE3, e (correzione stesso giorno,
+vedi sezione 2) **i 5 filtri di regime — nessuno regge sul motore vero**,
+erano stati validati con un motore semplificato sul TF sbagliato.
 
 ## Collegamenti
 [[MOC - Trading]] ·
