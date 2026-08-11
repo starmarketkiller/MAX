@@ -494,6 +494,19 @@ ciascuno con una motivazione precisa, non a caso.
 una regge (gate fuori-range a 30m), una non regge (regime), una resta indecisa per
 campione insufficiente (confluenza liquidità).
 
+**⚠️ Correzione 11/08 (3) — il gate fuori-range NON regge**: il test sopra
+usava `msnr_retest_gates.py`, un motore standalone con SL/TP FISSO
+1.5×/3.0× ATR — ma RETEST ha un SL/TP strutturale proprio (zona ±ATR
+H4, mai rispettato in quel test). Riportato come strategia vera
+(`MALAYSIAN_SNR_V2_RETEST_OUTRANGE`, riusa il segnale e il SL/TP reali)
+e testato attraverso `run_backtest` sullo storico ampliato, walk-forward
+a 5 finestre: **2/5 su entrambi i TF, identico al baseline senza gate**
+(30m: 1.7/0.75/0.95/0.9/1.22; 1h: 0.97/0.85/1.09/3.16/0.34, quest'ultimo
+con un outlier isolato su campione minuscolo). Stesso pattern già visto
+con i 5 filtri di regime: un motore parallelo con SL/TP sbagliato aveva
+prodotto un falso segnale positivo. **Nessuna delle idee "fuori dallo
+schema" testate su RETEST regge davvero.**
+
 ### Vera Candle Range Theory (11/08) — registrata come strategia, forte su oro, non su BTC
 
 Dal PDF fonte caricato dall'utente ("Candle Range Theory" di Suven Raj):

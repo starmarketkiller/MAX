@@ -80,9 +80,13 @@ walk-forward a 30m peggiora da 3/5 a 2/5. Non era un errore tenerla
 nella ricerca — era comunque un'ipotesi motivata (91% di retest dopo
 rottura, verificato) — ma **non è pronta per il demo**: il segnale
 grezzo non regge quanto sembrava sul campione più piccolo. Il gate
-fuori-range specifico non è stato riverificato qui (richiederebbe
-rifare `msnr_retest_gates.py` sul nuovo storico) — da fare se si vuole
-ancora considerarla.
+fuori-range specifico è stato riverificato (stesso giorno, attraverso
+`run_backtest` col vero SL/TP strutturale, non più il motore standalone
+di `msnr_retest_gates.py`): **non aiuta, walk-forward 2/5 su entrambi i
+TF, identico al baseline senza gate** — vedi "MALAYSIAN_SNR Porting Tier
+1", correzione 11/08 (3). Famiglia SNR/MSNR chiusa: nessuna variante
+(rejection, Stadio 1, Stadio 3, RETEST, RETEST+gate) mostra un edge che
+regge un test onesto sul motore vero.
 
 ## 4. CRT — confermata in modo schiacciante, la più solida di sempre
 

@@ -146,6 +146,13 @@ profitto reale, non solo curve di backtest.
   (freshness/EntryAt50Pct auto-referenziali, fib618/705 invertiti) —
   FVG_CONT_V2 ora promettente (non ancora confermato), SILVER_BULLET_V2
   troppo sottile, OTE_CONT_V2 strutturalmente morto anche corretto.
+  **Famiglia SNR/MSNR chiusa (11/08)**: già diagnosticata come
+  quasi-tautologica (condizioni contraddittorie), il Pilastro 3 costruito
+  apposta per risolverlo non regge su nessun TF; l'ultimo filo aperto
+  (gate fuori-range su RETEST) testato col motore vero — non aiuta,
+  walk-forward 2/5 su entrambi i TF, era un artefatto dello stesso tipo
+  dei filtri di regime (motore standalone, SL/TP sbagliato). Nessuna
+  variante regge un test onesto.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
