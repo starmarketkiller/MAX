@@ -3877,7 +3877,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  allow_flip=False,
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
-                 direction_lock=None, htf_factor=None, htf_fresh_bars=None):
+                 direction_lock=None, htf_factor=None, htf_fresh_bars=None,
+                 track_floating_dd=False):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4175,6 +4176,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     pos = None  # {dir, entry, sl, tp, open_i, risk_money, strat, risk_dist}
     last_close_i = -10 ** 9   # per il cooldown
     last_loss_i = -10 ** 9    # per il loss_cooldown_bars (solo perdite vere)
+    # 11/08 (7) - track_floating_dd (opt-in, default off, zero effetto sul
+    # comportamento esistente): il max_dd_pct standard si aggiorna SOLO alla
+    # chiusura del trade (curve.append e' dentro "if hit:") - non vede
+    # l'escursione avversa flottante DURANTE un trade aperto. Per un
+    # meccanismo di recovery (gambe aggiunte proprio nel punto di massima
+    # escursione avversa) questo puo' nascondere un rischio reale piu' alto
+    # di quello che il PF/DD "a trade chiuso" suggerisce - qui si marca a
+    # mercato ogni barra (mark-to-market di tutte le gambe aperte).
+    floating_peak = start_equity
+    floating_maxdd = 0.0
 
     if max_per_dir is None:
         for i in range(2, len(candles)):
@@ -4262,6 +4273,18 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                             pos["sl"] = max(pos["sl"], px - pos_trail * a)
                         else:
                             pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                if track_floating_dd:
+                    unreal = 0.0
+                    for leg in pos["legs"]:
+                        rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
+                        r_now = ((px - leg["entry"]) / rd) if pos["dir"] == 1 \
+                            else ((leg["entry"] - px) / rd)
+                        unreal += r_now * leg["risk_money"]
+                    floating_equity = equity + unreal
+                    floating_peak = max(floating_peak, floating_equity)
+                    if floating_peak > 0:
+                        floating_maxdd = max(floating_maxdd,
+                                              (floating_peak - floating_equity) / floating_peak * 100)
                 hit = None
                 if pos["dir"] == 1:
                     if lo <= pos["sl"]:
@@ -4490,6 +4513,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
 
     res = _metrics(symbol, timeframe, strat_list, start_equity, equity, trades, curve, src)
     res["bars"] = len(candles)
+    if track_floating_dd:
+        res["floating_max_dd_pct"] = round(floating_maxdd, 2)
     return res
 
 
