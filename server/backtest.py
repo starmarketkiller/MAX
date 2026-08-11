@@ -4001,7 +4001,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
-                 track_floating_dd=False):
+                 track_floating_dd=False, regime_filter=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4254,6 +4254,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             if direction_lock == "BUY" and sig != 1:
                 sig = 0
             elif direction_lock in ("SELL", "SHORT") and sig != -1:
+                sig = 0
+        # 11/08 (11) - regime_filter (opt-in, default None = nessun effetto):
+        # gate per-strategia sul regime di mercato (ind["regime"], porting
+        # fedele di NXS_DetectRegime), stesso motore/esecuzione di tutto il
+        # resto - non un motore parallelo "semplificato". Riverifica le 5
+        # confluenze regime trovate l'11/08 con ensemble_engine_search (TF
+        # 4h di riferimento sessione per tutte, non il vero TF di profilo
+        # di ognuna) sull'unico motore che conta davvero.
+        if sig != 0 and regime_filter is not None:
+            if ind["regime"][idx] not in regime_filter:
                 sig = 0
         return sig, who, atr_i
 
