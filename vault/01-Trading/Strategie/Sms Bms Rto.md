@@ -44,15 +44,38 @@ di tutto il Blocco 1. 6 dei 10 anni a zero setup completo.
 (4) prezzo già in zona discount/premium (sotto/sopra il punto medio dello
 swing). Fedeltà del trigger confermata (fa davvero quello che dice il
 nome) — ma un AND a 4 condizioni indipendenti su D1 è strutturalmente raro,
-non un bug. **Non testabile sul motore sito** (proxy dichiarato, riusa
-`sig_ob_mit` — vedi [[NEXUS EA - Audit Fedeltà Trigger (tutte le 37 strategie)]]):
-un A/B lì non direbbe nulla sulla vera logica.
+non un bug. ~~Non testabile sul motore sito (proxy dichiarato, riusa
+`sig_ob_mit`)~~ **Correzione 11/08: claim obsoleta.** Dal 04/08 il motore
+sito ha un'implementazione reale e fedele (`sig_sms_bms_rto`, non più
+proxy) — verificato direttamente nel codice. La strategia è testabile.
 
 Nessun cambio di codice proposto: allentare una delle 4 condizioni senza
 dati per validarlo sarebbe esattamente l'overfitting descritto in
 [[NEXUS EA - Principi]] #3. In attesa dei risultati dello sweep Optimization
 1-37 su MT5 (più anni = più occasioni di accumulare campione anche con un
 trigger raro).
+
+## Aggiornamento 11/08 — CHoCH a finestra (stesso fix di IFVG/TURTLE_SOUP), risultato negativo
+
+Stessa struttura di IFVG: CHoCH richiesto sullo stesso bar delle altre 3
+condizioni (failure swing, rejection, discount/premium). Registrata
+`SMS_BMS_RTO_CHOCH_WINDOW` con la stessa detection CHoCH fractal fedele
+entro una finestra di 5 barre. Testata su 1d (vero TF di profilo),
+confronto diretto con la baseline (confermata a 0 trade strutturali su
+tutto il periodo 2019-2026, IS/OOS/ogni finestra):
+
+| Variante | IS | OOS | Walk-forward (5 finestre) |
+|---|---|---|---|
+| SMS_BMS_RTO (baseline) | 0 trade | 0 trade | 0 trade in tutte le 5 finestre |
+| SMS_BMS_RTO_CHOCH_WINDOW | 1.15/5 | **0.0/2** | 0.49/2, 0.0/1, 0/0, 0.0/1, 0.0/1 |
+
+Il fix sblocca il pattern (0→qualche trade) ma **il segno è negativo**: OOS
+perde su entrambi i trade, e 3 delle 5 finestre walk-forward sono a PF 0
+(tutti perdenti). Campione estremamente scarso (2-5 trade per lato,
+prevedibile su D1 — stesso limite già visto ripetutamente in sessione), ma
+a differenza di IFVG qui non c'è nemmeno un segnale direzionale positivo
+da seguire. **Risultato negativo**, non un'idea da approfondire ulteriormente
+senza più dati.
 
 ## Note
 

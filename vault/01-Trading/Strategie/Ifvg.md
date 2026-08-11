@@ -79,6 +79,31 @@ di dati reali, per vedere quale delle 4 è il vero collo di bottiglia — non
 proporre un fix alla cieca senza sapere quale condizione è il problema.
 Nessun cambio di codice applicato.
 
+## Aggiornamento 11/08 — applicata a se stessa la propria generalizzazione (CHoCH a finestra), risultato promettente ma non confermato
+
+La nota sopra generalizzava già l'insight ("vero anche per TURTLE_SOUP, non
+solo qui") ma non era mai stata applicata a IFVG stessa. Registrata
+`IFVG_CHOCH_WINDOW`: stessa detection CHoCH fractal fedele (`ind["choch_int"]`),
+ma verificata entro una finestra di 5 barre prima/alla barra corrente invece
+che esattamente sulla stessa barra delle altre 3 condizioni (gap+invalidazione+
+reaction). Testata su 4h (vero TF di profilo), confronto diretto con la
+baseline:
+
+| Variante | IS | OOS | Walk-forward (5 finestre) |
+|---|---|---|---|
+| IFVG (baseline) | 0.59/3 | —/3 (0 vincenti) | quasi tutto vuoto: 0,0,2,3,0 trade |
+| IFVG_CHOCH_WINDOW | **3.32/7** | **1.53/10** | 0/0, 0.0/1, 6.71/5, 7.9/6, 0.0/4 |
+
+Il fix sblocca davvero il pattern (da quasi-zero strutturale a un campione
+piccolo ma non trascurabile, OOS PF 1.53 su 10 trade) — la direzione è
+corretta, coerente col fix già visto su TURTLE_SOUP_CHOCH/FVG_MIT_WINDOW.
+Ma il walk-forward è molto volatile: due finestre a PF 0 (perdenti), due a
+PF molto alto (6-8, su soli 5-6 trade ciascuna) e una vuota — troppo
+irregolare per dire "confermato" nel senso di CRT o anche di
+FVG_MIT_WINDOW (che aveva un range stretto 0.95-1.55). Da trattare come
+**promettente ma non confermato**, campione ancora troppo piccolo per
+distinguere edge reale da rumore su singole finestre da 5-7 trade.
+
 ## Note
 
 

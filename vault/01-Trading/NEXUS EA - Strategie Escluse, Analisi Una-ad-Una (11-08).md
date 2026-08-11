@@ -95,12 +95,41 @@ altre, si torna qui solo se emerge un segnale forte altrove.
   oggi mostra che scatta regolarmente (IS 1.06/54, OOS 1.09/39) — nessuna
   rigidità flaggata, solo dati preliminari.
 
+## 6. IFVG e SMS_BMS_RTO — stesso fix "CHoCH a finestra" di TURTLE_SOUP, esiti opposti
+
+Entrambe condividevano la stessa struttura di IFVG (già diagnosticata in
+16/07): un CHoCH fractal fedele richiesto **sullo stesso bar** di altre
+2-3 condizioni indipendenti (gap/failure-swing/rejection/discount-premium)
+— la nota vault di IFVG aveva già generalizzato l'insight ("vero anche
+per TURTLE_SOUP, non solo qui") ma non era mai stata applicata a se
+stessa né a SMS_BMS_RTO. Corretta anche una claim vault obsoleta:
+SMS_BMS_RTO diceva "non testabile sul motore sito" (proxy dichiarato) —
+falso dal 04/08, esiste un'implementazione reale fedele.
+
+Registrate `IFVG_CHOCH_WINDOW` (4h, vero TF di profilo) e
+`SMS_BMS_RTO_CHOCH_WINDOW` (1d, vero TF di profilo), stessa detection
+CHoCH fractal ma entro una finestra di 5 barre invece che sulla barra
+esatta:
+
+| Strategia | Baseline | Windowed | Verdetto |
+|---|---|---|---|
+| IFVG (4h) | 0.59/3 IS, quasi zero OOS | **3.32/7 IS, 1.53/10 OOS** — walk-forward volatile (0,0,6.71,7.9,0) | **promettente, non confermato** (stessa cautela di FVG_CONT_V2) |
+| SMS_BMS_RTO (1d) | 0 trade strutturali ovunque | 1.15/5 IS, **0.0/2 OOS** — walk-forward quasi tutto a PF 0 | **negativo** |
+
+Il fix sblocca il pattern in entrambi i casi (prova che l'architettura
+"finestra invece di stesso-bar" è generalmente corretta), ma solo IFVG
+mostra un segno diretto positivo — SMS_BMS_RTO resta debole anche
+sbloccato, coerente con l'AND a 4 condizioni indipendenti già diagnosticato
+come strutturalmente raro anche da sbloccato. Dettaglio in [[Ifvg]] e
+[[Sms Bms Rto]].
+
 ## Prossimi passi
 Restano da coprire: BB_SQUEEZE, BOLLINGER/RANGE_FADE (proxy dichiarato),
-DISP_REBAL, IFVG, LIQ_VOID (proxy dichiarato di FVG_CONT), NY_REVERSAL,
+DISP_REBAL, LIQ_VOID (proxy dichiarato di FVG_CONT), NY_REVERSAL,
 ORDER_BLOCK_V2, OTE_CONT (v1), SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP,
 SH_BMS_RTO_V2 (numeri già buoni, verificare solo se manca qualcosa),
-SILVER_BULLET (v1), SMS_BMS_RTO.
+SILVER_BULLET (v1). BB_SQUEEZE/DISP_REBAL/NY_REVERSAL già letti e chiusi
+(vault-only, thin o già spiegati) — da loggare qui.
 
 ## Collegamenti
 [[MOC - Trading]] ·

@@ -164,6 +164,14 @@ profitto reale, non solo curve di backtest.
   oscillazioni 0.39-1.85 della baseline), ma peggiora nettamente su 1h
   (drawdown 58%) — fix specifico al TF naturale, non universale. Vedi
   [[Tsi]] e [[Fvg Mit]].
+- **IFVG e SMS_BMS_RTO (11/08)**: stesso fix "CHoCH a finestra di N barre"
+  applicato con esiti opposti. IFVG (4h): sbloccata da quasi-zero a OOS
+  1.53/10, ma walk-forward volatile (0,0,6.71,7.9,0) — **promettente, non
+  confermato**. SMS_BMS_RTO (1d): sbloccata da 0 trade strutturali a un
+  campione minimo, ma OOS 0.0/2 e walk-forward quasi tutto perdente —
+  **negativo**. Corretta anche una claim vault obsoleta su SMS_BMS_RTO
+  ("non testabile sul motore sito", falsa dal 04/08). Vedi [[Ifvg]],
+  [[Sms Bms Rto]] e [[NEXUS EA - Strategie Escluse, Analisi Una-ad-Una (11-08)]].
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
