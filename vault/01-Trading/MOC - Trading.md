@@ -131,6 +131,14 @@ profitto reale, non solo curve di backtest.
   promettente su 4h (walk-forward 4/5, drawdown dimezzato), non su 1h.
   SAR e TSI: i fix "trigger vero" trovati a luglio sono già applicati,
   non sono opportunità nuove.
+- **[[NEXUS EA - Ensemble Riverificato e TP Dinamico su Liquidità (11-08)]]** —
+  l'ensemble a voto (segnato "oro") non aveva lo stesso bug dei filtri di
+  regime (SL/TP piatto = convenzione flat baseline di tutta la sessione,
+  non un difetto), solo lo storico vecchio (60k→110k barre). Riverificato:
+  consistente (IS≈OOS) ma non superiore a CRT da sola. TP dinamico su
+  liquidità reale (il meccanismo di CRT) esteso a LIQ_SWEEP/FVG_CONT: non
+  si trasferisce, walk-forward 2/5-3/5 — probabile causa, in CRT target e
+  ingresso condividono la stessa struttura locale, qui no.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
