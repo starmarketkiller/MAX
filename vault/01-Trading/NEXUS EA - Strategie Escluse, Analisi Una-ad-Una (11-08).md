@@ -54,14 +54,53 @@ rotto ereditato da un brief esterno mai verificato. FVG_CONT_V2 è il più
 promettente dei tre — da tenere d'occhio, stesso status di
 TURTLE_SOUP_CHOCH (promettente, non confermato).
 
+## 3. Famiglia SNR/MSNR — chiusa (vedi nota dedicata)
+Tutte e 5 le varianti (rejection, Stadio 1, Stadio 3, RETEST,
+RETEST+gate fuori-range) testate a fondo, nessuna regge un test onesto
+sul motore vero. Dettaglio in "MALAYSIAN_SNR Porting Tier 1" e
+"Riverifica su Storico Ampliato".
+
+## 4. ORDER_BLOCK / OB_MIT — fonte "Secret of 4.11" trovata, rimandata
+Esiste una fonte intera mai implementata (ciclo ZIKIR: breakout doppio→
+pullback→entry, registro ISL/HSL, 5 tipi di Engulfing) che si
+applicherebbe a ORDER_BLOCK/OB_MIT/FVG_CONT/FVG_MIT/IFVG e potenzialmente
+BREAKOUT_ACC/TURTLE_SOUP/LIQ_SWEEP/SH_BMS_RTO. Portata paragonabile a
+MSNR Tier 1 (un giorno di lavoro, alla fine nessun edge). **Su scelta
+esplicita dell'utente, rimandata** — si continua il giro veloce sulle
+altre, si torna qui solo se emerge un segnale forte altrove.
+[[NEXUS EA - Fonte Secret of 4111 (Ali Yusoff)]]
+
+## 5. Batch veloce (vault-only, nessun codice necessario)
+- **BJORGUM**: bug reale già trovato e corretto (proxy testava
+  tutt'altra strategia). "Back Check"/conferma flip testata e respinta.
+  Config già ottimizzata, resta negativa nel lungo periodo (-8.6R reali).
+- **ICHIMOKU**: disabilitata per rumore reale su MT5, non un problema di
+  trigger.
+- **RSI_DIV**: bug reale già corretto (vera divergenza, non rientro RSI
+  generico). Config già ottimale. Resta un caso "segnale Python
+  confermato, MT5 reale smentisce" — problema di esecuzione live, fuori
+  scope per un fix di trigger.
+- **STRUCT_REACT**: disabilitata per perdite reali confermate su MT5.
+- **JUDAS_SWING**: TP dinamico già applicato. Rara per costruzione
+  (finestra sessione 3h + sweep + CHoCH), non un caso di rigidità da
+  correggere.
+- **PO3**: TP dinamico già applicato, numeri già discreti (census OOS
+  1.44/22) per una strategia a bassa frequenza per design.
+- **SH_BMS_RTO**: caso reale di troppa rigidità (4 condizioni
+  simultanee sulla stessa barra, come CISD) — ma **SH_BMS_RTO_V2 ha già
+  risolto il problema** con una state machine multi-barra (SWEPT→
+  WAITING→segnale), da cui il suo campione molto più ampio (224 OOS vs
+  17). Nessun fix aggiuntivo necessario.
+- **WEEKLY_EXP**: nota vault stale (diceva "0 trade"), il censimento di
+  oggi mostra che scatta regolarmente (IS 1.06/54, OOS 1.09/39) — nessuna
+  rigidità flaggata, solo dati preliminari.
+
 ## Prossimi passi
-Restano da coprire: BB_SQUEEZE, BJORGUM, BOLLINGER, DISP_REBAL, ICHIMOKU,
-IFVG, JUDAS_SWING, LIQ_VOID (proxy dichiarato di FVG_CONT, probabilmente
-da saltare), MALAYSIAN_SNR, MALAYSIAN_SNR_V2_RETEST/STAGE1/STAGE3 (già
-ampiamente studiate in sessione), NY_REVERSAL, OB_MIT, ORDER_BLOCK,
-ORDER_BLOCK_V2, OTE_CONT (v1), PO3, RANGE_FADE (proxy di BOLLINGER),
-RSI_DIV, SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP, SH_BMS_RTO, SH_BMS_RTO_V2,
-SILVER_BULLET (v1), SMS_BMS_RTO, STRUCT_REACT, WEEKLY_EXP.
+Restano da coprire: BB_SQUEEZE, BOLLINGER/RANGE_FADE (proxy dichiarato),
+DISP_REBAL, IFVG, LIQ_VOID (proxy dichiarato di FVG_CONT), NY_REVERSAL,
+ORDER_BLOCK_V2, OTE_CONT (v1), SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP,
+SH_BMS_RTO_V2 (numeri già buoni, verificare solo se manca qualcosa),
+SILVER_BULLET (v1), SMS_BMS_RTO.
 
 ## Collegamenti
 [[MOC - Trading]] ·
