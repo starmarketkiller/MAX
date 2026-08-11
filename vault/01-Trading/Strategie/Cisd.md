@@ -53,6 +53,21 @@ ora.
 
 ## Note
 
+**11/08 - correzione a questa nota**: la "logica identica" verificata il
+16/07 sopra e' la versione SEMPLIFICATA (3 candele + rottura estremo).
+Quello che questa nota non diceva (la storia viveva solo in un commit
+git, mai trascritta qui): prima del 10/07 esisteva una versione "vera"
+(displacement + ultima candela di delivery OPPOSTA + sweep di liquidita'
++ reclaim, SL/TP hardcoded) che sul sito dava **PF 5.95** ma non
+scattava MAI (0 setup su 1067) - sostituita ovunque (sito, MQL5, Python)
+dalla versione semplice il 10/07 (commit `dc13566`), rinominata
+THREE_BAR_DELIVERY_BREAK il 17/07 (commit `1bb167a`, "nome onesto,
+logica invariata"). Riportata e testata a fondo l'11/08 come `CISD_TRUE`
+- spara regolarmente sullo storico ampliato ma il walk-forward e'
+negativo su 15m/1h/4h, non promossa. Vedi
+[[NEXUS EA - CISD_TRUE (versione vera, negativa) e Censimento Completo (11-08)]]
+per il dettaglio completo - questa volta la versione scartata NON
+nascondeva un edge (a differenza di CRT).
 
 ## Collegamenti
-[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]]
+[[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - CISD_TRUE (versione vera, negativa) e Censimento Completo (11-08)]]
