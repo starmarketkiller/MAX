@@ -1476,6 +1476,36 @@ def sig_turtle_soup(c, ind, i):
     return 0
 
 
+# 11/08 (10) - TURTLE_SOUP_CHOCH: variante segnalata dalla nota vault
+# "Strategie/Turtle Soup.md" (test A/B 15-16/07) - il CHoCH fractal fedele
+# (NXS_ComputeStructureCore, ind["choch_int"]) richiesto sulla STESSA barra
+# del sweep dava 0 trade su H1/4h, diagnosi esplicita in quella nota: "il
+# problema e' l'idea di richiedere l'allineamento sullo stesso bar, non i
+# parametri" - un pivot fractal richiede barre di conferma dopo di se',
+# quindi arriva sempre in ritardo rispetto al sweep. Mai testato: CHoCH
+# confermato entro una finestra di N barre DOPO il sweep (non sulla stessa).
+# Anche lo storico usato allora (Yahoo intraday, ~2 anni) era il vero
+# limite dichiarato nella nota - qui uso i 7+ anni Dukascopy.
+_TURTLE_SOUP_CHOCH_LOOKBACK = 5
+
+
+def sig_turtle_soup_choch(c, ind, i):
+    if i < _TURTLE_SOUP_CHOCH_LOOKBACK + 1:
+        return 0
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    for k in range(i - _TURTLE_SOUP_CHOCH_LOOKBACK, i + 1):
+        if k < 0:
+            continue
+        raw = sig_turtle_soup(c, ind, k)
+        if choch_up and raw == 1:
+            return 1
+        if choch_down and raw == -1:
+            return -1
+    return 0
+
+
 def _turtle_soup_sl_tp(c, ind, i, direction, entry, atr):
     sw = _sweep_ext_at(c, ind, i)
     if not sw:
@@ -3831,6 +3861,12 @@ STRATEGY_SLTP_ALWAYS = {
     "WEEKLY_EXP": _weekly_exp_sl_tp,
     "IFVG": _ifvg_sl_tp,
     "TURTLE_SOUP": _turtle_soup_sl_tp,
+    # 11/08 (10) - riusa lo stesso SL/TP di TURTLE_SOUP: approssimazione
+    # dichiarata, ancora al livello di riferimento CORRENTE (bar della
+    # conferma CHoCH), non alla barra originale del sweep - i livelli
+    # PDH/PDL/AsiaHigh/AsiaLow non cambiano molto entro la finestra di
+    # 5 barre usata qui.
+    "TURTLE_SOUP_CHOCH": _turtle_soup_sl_tp,
     "FVG_MIT": _fvg_mit_sl_tp,
     "AMD_REVERSAL": _amd_reversal_sl_tp,
     "JUDAS_SWING": _judas_swing_sl_tp,
@@ -3888,6 +3924,7 @@ STRATEGIES = {
     "IFVG": sig_ifvg,
     "LIQ_SWEEP": sig_liq_sweep_ext,
     "TURTLE_SOUP": sig_turtle_soup,
+    "TURTLE_SOUP_CHOCH": sig_turtle_soup_choch,
     "STRUCT_REACT": sig_struct_react,
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,

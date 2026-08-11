@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 52,
+    "total": 53,
     "live": 37,
     "research_only": 4
   },
@@ -1157,6 +1157,29 @@
       ],
       "supported_timeframes": [
         "15m",
+        "1h",
+        "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH",
+      "display_name": "Turtle Soup with CHoCH confirmation (experimental, N-bar window)",
+      "aliases": [],
+      "family": "LIQUIDITY",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
         "1h",
         "4h"
       ],

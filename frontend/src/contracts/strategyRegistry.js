@@ -52,6 +52,7 @@ export const STRATEGY_REGISTRY = [
   ["TURTLE_SOUP","Turtle Soup","LIQUIDITY",true,true],
   ["WEEKLY_EXP","Weekly Exp","SESSION",true,true],
   ["CISD_TRUE","Change in State of Delivery (true, displacement+delivery+sweep+reclaim)","SMC",false,true],
+  ["TURTLE_SOUP_CHOCH","Turtle Soup with CHoCH confirmation (experimental, N-bar window)","LIQUIDITY",false,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));
