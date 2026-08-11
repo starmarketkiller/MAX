@@ -3475,7 +3475,15 @@ def _silver_bullet_v2_series(candles, sess, atr, adx):
             fresh = True
             for k in range(0, FVG_FRESH_BARS):
                 idxk = i - k
-                if idxk < 0:
+                # 11/08 (14) - fix: il loop originale (pastato dal brief
+                # esterno) includeva idxk<=i-2, la STESSA barra che
+                # definisce h3/l3 (il bordo del gap) - confrontarla contro
+                # se stessa e' sempre vero (una barra ha sempre low<=high),
+                # quindi "fresh" era sempre False e il segnale non
+                # scattava mai (0/0 confermato empiricamente). Limitato
+                # alle barre realmente successive alla formazione del gap
+                # (i, i-1) - le uniche che potrebbero averlo gia' riempito.
+                if idxk < 0 or idxk <= i - 2:
                     break
                 if d == 1:
                     if candles[idxk]["low"] <= h3:
@@ -3568,7 +3576,15 @@ def _ote_cont_v2_series(candles, atr, adx, choch_int):
                 continue
             fib618 = lo_price + rng * 0.618
             fib705 = lo_price + rng * 0.705
-            if not (c1 > fib705 and c1 < fib618):
+            # 11/08 (14) - fix: fib705 > fib618 per costruzione (entrambi
+            # lo_price + rng*percentuale, 0.705>0.618) - il controllo
+            # originale (pastato dal brief esterno) chiedeva
+            # "c1>fib705 and c1<fib618", un intervallo vuoto (soglia
+            # superiore piu' bassa della soglia inferiore), sempre falso ->
+            # 0 trade SELL confermato empiricamente. Il lato BUY specchio
+            # (hi_price - rng*percentuale) aveva l'ordine giusto per
+            # costruzione - qui basta invertire il confronto.
+            if not (c1 > fib618 and c1 < fib705):
                 continue
             if not down[i]:
                 continue
@@ -3706,11 +3722,16 @@ def _fvg_cont_v2_series(candles, atr, adx, choch_int, choch_ext):
             if body2 < 0.6 * a:
                 continue
             fvg_lo, fvg_hi = h3, l1
-            fvg_mid = (fvg_lo + fvg_hi) / 2.0
             if not (l1 <= fvg_hi and h1 >= fvg_lo):
                 continue
-            if l1 > fvg_mid:  # sempre vero (fvg_hi==l1) - vedi nota di modulo
-                continue
+            # 11/08 (14) - fix: rimosso "if l1 > fvg_mid: continue"
+            # (pastato dal brief esterno) - fvg_hi e' DEFINITO come l1
+            # poco sopra, quindi l1>fvg_mid era sempre vero per
+            # costruzione (il bordo superiore del gap e' sempre sopra il
+            # suo stesso centro) -> il segnale non scattava mai (0/0
+            # confermato empiricamente). Non c'era un'informazione reale
+            # da recuperare invertendo il confronto (a differenza di
+            # OTE_CONT_V2): tolto, non sostituito con un'ipotesi nuova.
             if c1 > o1:
                 out_sig[i] = 1
                 sl = fvg_lo - 0.3 * a
@@ -3724,11 +3745,10 @@ def _fvg_cont_v2_series(candles, atr, adx, choch_int, choch_ext):
             if body2 < 0.6 * a:
                 continue
             fvg_hi, fvg_lo = l3, h1
-            fvg_mid = (fvg_lo + fvg_hi) / 2.0
             if not (h1 >= fvg_lo and l1 <= fvg_hi):
                 continue
-            if h1 < fvg_mid:  # sempre vero (fvg_lo==h1) - vedi nota di modulo
-                continue
+            # 11/08 (14) - fix: stesso taglio del lato BUY sopra (fvg_lo
+            # e' definito come h1, quindi h1<fvg_mid era sempre vero).
             if c1 < o1:
                 out_sig[i] = -1
                 sl = fvg_hi + 0.3 * a
