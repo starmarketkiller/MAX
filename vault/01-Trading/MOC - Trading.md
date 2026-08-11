@@ -96,6 +96,13 @@ profitto reale, non solo curve di backtest.
   finestre walk-forward su 3 TF, quasi 20.000 trade), i 5 filtri di
   regime confermati, le 3 buone confermate ma non perfette, RETEST
   ridimensionata (non pronta per il demo senza altro lavoro).
+- **[[NEXUS EA - Audit Ricetta Ufficiale vs Baseline Piatta (11-08)]]** —
+  verifica se i profili MQL5 già esistenti (mai testati sul motore
+  corretto + storico ampio) nascondessero un profilo migliore non
+  riconosciuto, come successo con CRT. Risultato: nessuna modifica
+  necessaria — FVG_CONT/TURTLE_SOUP/EMA_PULLBACK confermati già ottimali
+  (walk-forward 5/5, 4/5, 4/5), il resto alla pari o senza campione
+  sufficiente. Nessuna "perla" trovata neanche tra le strategie escluse.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
