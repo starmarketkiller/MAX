@@ -178,6 +178,14 @@ profitto reale, non solo curve di backtest.
   è universale, aiuta solo dove il pattern di base ha edge reale offuscato
   dal timing (IFVG/FVG_MIT/TURTLE_SOUP), non dove il pattern non ha edge
   (SMS_BMS_RTO/NY_REVERSAL). Vedi [[Ny Reversal]].
+- **Famiglia SCALP_* (11/08) — miglioramento reale**: le 4 SCALP_*
+  (BB_FADE/EMA/RANGE_BRK/RSI_SNAP, 15m) avevano drawdown 35-79% pur con
+  PF vicino/sopra 1. Il filtro `regime_filter=STRONG_TREND` (motore vero)
+  dimezza il drawdown su tutte e 4, confermato IS/OOS e su ogni finestra
+  walk-forward, PF stabile/migliore su 3 delle 4. Non serve una nuova
+  strategia — è un parametro runtime già esistente, quindi una
+  **configurazione raccomandata** per l'uso pratico di queste 4. Vedi
+  [[Scalp Family]].
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

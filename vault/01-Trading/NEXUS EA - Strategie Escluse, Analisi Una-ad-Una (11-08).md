@@ -151,13 +151,24 @@ NY_REVERSAL — entrambi negativi). Dettaglio in [[Ny Reversal]].
   eseguito. Chiuso, nessun margine di miglioramento realistico via fix di
   trigger.
 
+## 9. Famiglia SCALP_* — miglioramento reale trovato (filtro di regime)
+
+Le 4 SCALP_* (BB_FADE/EMA/RANGE_BRK/RSI_SNAP, 15m) avevano PF vicino/sopra
+1 ma drawdown 35-79% su campioni enormi (3.100-5.000 trade). Il report
+diagnostico proponeva un filtro di regime/volatilità, mai testato prima
+su queste 4. Verificato con `regime_filter=(_REGIME_STRONG_TREND,)` sul
+motore vero: **drawdown circa dimezzato su tutte e 4, confermato IS/OOS
+e su ogni singola finestra walk-forward** (non solo sull'aggregato), PF
+stabile o migliorato per 3 delle 4 (EMA resta la più debole anche
+filtrata). Non richiede una nuova strategia — `regime_filter` è già un
+parametro runtime di `run_backtest`, quindi è una **configurazione
+raccomandata**, non una variante sperimentale separata. Dettaglio in
+[[Scalp Family]].
+
 ## Prossimi passi
 Restano da coprire: BOLLINGER/RANGE_FADE (proxy dichiarato), LIQ_VOID
-(proxy dichiarato di FVG_CONT), ORDER_BLOCK_V2, OTE_CONT (v1),
-SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP (in corso — PF vicino/sopra 1 ma
-drawdown 35-79% su 15m, ipotesi filtro di regime/volatilità da testare),
-SH_BMS_RTO_V2 (numeri già buoni, verificare solo se manca qualcosa),
-SILVER_BULLET (v1).
+(proxy dichiarato di FVG_CONT), ORDER_BLOCK_V2, OTE_CONT (v1), SH_BMS_RTO_V2
+(numeri già buoni, verificare solo se manca qualcosa), SILVER_BULLET (v1).
 
 ## Collegamenti
 [[MOC - Trading]] ·
