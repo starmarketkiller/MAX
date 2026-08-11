@@ -139,6 +139,13 @@ profitto reale, non solo curve di backtest.
   liquidità reale (il meccanismo di CRT) esteso a LIQ_SWEEP/FVG_CONT: non
   si trasferisce, walk-forward 2/5-3/5 — probabile causa, in CRT target e
   ingresso condividono la stessa struttura locale, qui no.
+- **[[NEXUS EA - Strategie Escluse, Analisi Una-ad-Una (11-08)]]** (in
+  corso) — le 34 escluse dal nucleo, una alla volta, stesso metodo.
+  MALAYSIAN_SNR_BREAKOUT: chiuso, il vault aveva già la risposta (IS-blind
+  trap). Le varianti "_v2": trovati e corretti 3 bug reali mai sistemati
+  (freshness/EntryAt50Pct auto-referenziali, fib618/705 invertiti) —
+  FVG_CONT_V2 ora promettente (non ancora confermato), SILVER_BULLET_V2
+  troppo sottile, OTE_CONT_V2 strutturalmente morto anche corretto.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
