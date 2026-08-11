@@ -123,13 +123,41 @@ sbloccato, coerente con l'AND a 4 condizioni indipendenti già diagnosticato
 come strutturalmente raro anche da sbloccato. Dettaglio in [[Ifvg]] e
 [[Sms Bms Rto]].
 
+## 7. NY_REVERSAL — stesso fix, qui negativo (importante: il fix non è universale)
+
+Stessa struttura di IFVG/SMS_BMS_RTO (CHoCH sulla stessa barra dello
+sweep+reclaim del range di Londra). Registrata `NY_REVERSAL_CHOCH_WINDOW`,
+testata su 1h e 30m: a differenza di IFVG, qui il fix **peggiora** — il
+campione cresce 3-4x ma il PF scende verso 1.0 e il drawdown esplode (30m:
+IS dd 6.3%→25.4%, OOS dd 5.7%→16.8%). La OOS 4.92/11 della baseline sul 1h
+era quasi certamente rumore (walk-forward oscilla 0-8.28), ma la finestra
+non lo sostituisce con edge vero, solo con più trade mediocri.
+
+**Conclusione generale sulla famiglia "CHoCH a finestra"**: non è un fix
+universale. Funziona quando il pattern di base ha edge reale offuscato da
+un timing troppo rigido (IFVG, FVG_MIT_WINDOW, TURTLE_SOUP_CHOCH — tutti
+"promettenti"), non quando il pattern di base non ha edge (SMS_BMS_RTO,
+NY_REVERSAL — entrambi negativi). Dettaglio in [[Ny Reversal]].
+
+## 8. BB_SQUEEZE, DISP_REBAL — chiusi, vault-only
+
+- **BB_SQUEEZE**: disabilitata per campione troppo piccolo su MT5 (0
+  trade in 3 mesi/3 anni nel build reale). Nessuna rigidità diagnosticata
+  nel codice — thin per rarità del setup (squeeze di volatilità), non per
+  un bug. Nessun fix proposto, serve solo più storico live.
+- **DISP_REBAL**: disabilitata per perdite reali confermate su MT5 (test
+  v2.3.1: 10 trade, -53$, WR 30%). Non un problema di rigidità/trigger —
+  il pattern scatta (103 setup rilevati in 3 mesi) ma perde quando
+  eseguito. Chiuso, nessun margine di miglioramento realistico via fix di
+  trigger.
+
 ## Prossimi passi
-Restano da coprire: BB_SQUEEZE, BOLLINGER/RANGE_FADE (proxy dichiarato),
-DISP_REBAL, LIQ_VOID (proxy dichiarato di FVG_CONT), NY_REVERSAL,
-ORDER_BLOCK_V2, OTE_CONT (v1), SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP,
+Restano da coprire: BOLLINGER/RANGE_FADE (proxy dichiarato), LIQ_VOID
+(proxy dichiarato di FVG_CONT), ORDER_BLOCK_V2, OTE_CONT (v1),
+SCALP_BB_FADE/EMA/RANGE_BRK/RSI_SNAP (in corso — PF vicino/sopra 1 ma
+drawdown 35-79% su 15m, ipotesi filtro di regime/volatilità da testare),
 SH_BMS_RTO_V2 (numeri già buoni, verificare solo se manca qualcosa),
-SILVER_BULLET (v1). BB_SQUEEZE/DISP_REBAL/NY_REVERSAL già letti e chiusi
-(vault-only, thin o già spiegati) — da loggare qui.
+SILVER_BULLET (v1).
 
 ## Collegamenti
 [[MOC - Trading]] ·

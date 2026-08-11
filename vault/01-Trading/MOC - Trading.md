@@ -172,6 +172,12 @@ profitto reale, non solo curve di backtest.
   **negativo**. Corretta anche una claim vault obsoleta su SMS_BMS_RTO
   ("non testabile sul motore sito", falsa dal 04/08). Vedi [[Ifvg]],
   [[Sms Bms Rto]] e [[NEXUS EA - Strategie Escluse, Analisi Una-ad-Una (11-08)]].
+- **NY_REVERSAL (11/08)**: stesso fix "CHoCH a finestra" applicato,
+  stavolta **negativo** — campione cresce 3-4x ma PF scende verso 1.0 e
+  drawdown esplode (30m: 6.3%→25.4% IS). Conferma importante: il fix non
+  è universale, aiuta solo dove il pattern di base ha edge reale offuscato
+  dal timing (IFVG/FVG_MIT/TURTLE_SOUP), non dove il pattern non ha edge
+  (SMS_BMS_RTO/NY_REVERSAL). Vedi [[Ny Reversal]].
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
