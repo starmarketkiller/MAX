@@ -90,6 +90,12 @@ profitto reale, non solo curve di backtest.
   su 15 strategie dopo walk-forward), scoperta di un secondo layer di
   ottimizzazione MQL5 preesistente con bandiera rossa reale su MT5 per
   MACD/FVG_CONT mai risolta.
+- **[[NEXUS EA - Riverifica su Storico Ampliato (11-08)]]** — cache
+  Dukascopy quasi raddoppiata (2.636 giorni, dal 2019), riverifica di
+  tutte le scoperte "buone": CRT confermata in modo schiacciante (15/15
+  finestre walk-forward su 3 TF, quasi 20.000 trade), i 5 filtri di
+  regime confermati, le 3 buone confermate ma non perfette, RETEST
+  ridimensionata (non pronta per il demo senza altro lavoro).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
