@@ -5,7 +5,7 @@ status: active
 tags: [trading, nexus-ea, strategia]
 strategia: MALAYSIAN_SNR
 created: 2026-07-12
-updated: 2026-08-10
+updated: 2026-08-11
 ---
 
 # Strategia: MALAYSIAN_SNR
@@ -59,6 +59,17 @@ di finestra dati, vedi nota sotto), ma la diagnosi strutturale già
 giustifica il refactor. Specifica tecnica completa dei 5 pilastri della
 fonte (close-to-open, fresh/unfresh/flip, regola 2 TF, filtro MISS,
 killzone) in [[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]].
+
+## Aggiornamento 11/08 — quarta variante RETEST, dal modello mentale del trader manuale
+L'utente (che usa questa strategia manualmente) ha descritto il proprio
+modello: rottura del key level + ritracciamento sulla STESSA linea rotta
+(zona ~50 pip, non punto esatto) + continuazione — un pattern "break and
+retest" diverso da rejection/breakout/Stadio 3 già testati. Implementato
+`MALAYSIAN_SNR_V2_RETEST`. Risultato IS/OOS non conclusivo: 4h campione
+troppo piccolo (5 trade OOS), 1h negativo su campione credibile (PF 0.81,
+35 trade), 30m positivo ma modesto (PF 1.24, 103 trade) — nessun walk-
+forward ancora fatto. Dettaglio completo in
+[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]].
 
 ## Note
 

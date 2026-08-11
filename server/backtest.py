@@ -556,6 +556,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         candles, sess, atr_s, ref=snr_ref)
     snr_v2s3_signal, snr_v2s3_slref = _malaysian_snr_v2_stage3_series(
         candles, sess, atr_s, ref=snr_ref)
+    snr_v2ret_signal, snr_v2ret_slref, snr_v2ret_atrH4 = _malaysian_snr_v2_retest_series(
+        candles, sess, atr_s, ref=snr_ref)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -604,6 +606,9 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         # precalcolato, vedi _malaysian_snr_v2_stage1_series
         "snr_v2s3_signal": snr_v2s3_signal, "snr_v2s3_slref": snr_v2s3_slref,
         # precalcolato, vedi _malaysian_snr_v2_stage3_series
+        "snr_v2ret_signal": snr_v2ret_signal, "snr_v2ret_slref": snr_v2ret_slref,
+        "snr_v2ret_atrH4": snr_v2ret_atrH4,
+        # precalcolato, vedi _malaysian_snr_v2_retest_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
@@ -1886,6 +1891,149 @@ def _malaysian_snr_v2_stage3_sl_tp(c, ind, i, direction, entry, atr):
     if direction == 1:
         return swing_ref - 0.5 * atr, entry + 2.3 * atr
     return swing_ref + 0.5 * atr, entry - 2.3 * atr
+
+
+def _malaysian_snr_v2_retest_series(candles, sess, atr, ref=None):
+    # 11/08 - variante "break and retest" richiesta esplicitamente
+    # dall'utente (trader manuale della strategia): "il Malaysian SNR deve
+    # essere accoppiato con breakout - rottura del livello, poi un breve
+    # ritracciamento SULLA STESSA linea rotta, poi continuazione". Diversa
+    # dalle 3 varianti gia' testate:
+    #   - MALAYSIAN_SNR (rejection): il livello non si rompe mai, si
+    #     rimbalza sopra/sotto l'estremo H4 intatto.
+    #   - MALAYSIAN_SNR_BREAKOUT: entra SUBITO alla rottura, nessuna attesa
+    #     del ritracciamento.
+    #   - Stadio 3 (2 TF's Rule): parte da un RIMBALZO (non una rottura),
+    #     poi cerca uno swing SEPARATO formatosi dopo - il pullback e' su
+    #     quello swing, non sul livello H4 originale.
+    # Qui: rottura fresca H4 (chiusura H4 oltre il livello, stesso evento di
+    # snr_brk_signal) -> attesa che il prezzo TORNI sulla stessa zona ->
+    # segnale se regge (non richiude oltre la zona dalla parte sbagliata).
+    #
+    # Zona, non linea: l'utente segnala che il ritracciamento raramente
+    # tocca il prezzo esatto del livello - trattato come una piccola zona
+    # (~50 pip XAUUSD). Assunto qui: convenzione MT5 "punti" per l'oro
+    # (quotazione a 2 decimali, es. 2650.32) dove 50 pip ~= $5.00 - DA
+    # CONFERMARE con l'utente se la convenzione e' un'altra (es. 1 pip=$0.01
+    # darebbe $0.50, dieci volte piu' stretta).
+    ZONE_WIDTH_PRICE = 5.0
+    MAX_WAIT_RETEST = 12
+
+    n = len(candles)
+    if ref is None or ref is candles:
+        ref = candles
+        idx_map = list(range(n))
+    else:
+        ref_epochs = [_epoch_utc(c["time"]) for c in ref]
+        cand_epochs = [_epoch_utc(c["time"]) for c in candles]
+        idx_map = [bisect.bisect_left(ref_epochs, e) for e in cand_epochs]
+    h4 = _resample_ohlc(ref, 4)
+    d1 = _resample_ohlc(ref, 24)
+    atr_h4 = atr_series(h4, 14)
+    m = len(h4)
+    res_at = [None] * m
+    sup_at = [None] * m
+    last_res = last_sup = None
+    for k in range(m):
+        res_at[k] = last_res
+        sup_at[k] = last_sup
+        if k + 1 < m:
+            bull = h4[k]["close"] > h4[k]["open"]
+            bear = h4[k]["close"] < h4[k]["open"]
+            if bull and h4[k + 1]["open"] < h4[k]["close"]:
+                last_res = h4[k]["close"]
+            if bear and h4[k + 1]["open"] > h4[k]["close"]:
+                last_sup = h4[k]["close"]
+
+    out_sig = [0] * n
+    out_slref = [None] * n
+    out_atrh4 = [None] * n
+    st = {1: {"phase": "IDLE", "expire": 0, "level": None},
+          -1: {"phase": "IDLE", "expire": 0, "level": None}}
+    seen_h4 = -1
+
+    for i in range(n):
+        ri = idx_map[i]
+        h4_idx, d1_idx = ri // 4 - 1, ri // 24 - 1
+        if h4_idx < 3 or h4_idx >= m or d1_idx < 2:
+            continue
+        atrH4 = atr_h4[h4_idx]
+        a = atr[i]
+        out_atrh4[i] = atrH4
+        if not atrH4 or not a:
+            continue
+        cur = candles[i]
+        c1, o1 = cur["close"], cur["open"]
+
+        if h4_idx != seen_h4:
+            seen_h4 = h4_idx
+            h4bar = h4[h4_idx]
+            h4prev = h4[h4_idx - 1]
+            h4C1, h4C4 = h4bar["close"], h4[h4_idx - 3]["close"]
+            d1C1, d1C2 = d1[d1_idx]["close"], d1[d1_idx - 1]["close"]
+            story_bull = h4C1 > h4C4 and d1C1 >= d1C2
+            story_bear = h4C1 < h4C4 and d1C1 <= d1C2
+            resL, supL = res_at[h4_idx], sup_at[h4_idx]
+            # rottura fresca: la barra H4 chiude oltre il livello, quella
+            # PRIMA era ancora dalla parte opposta (stesso evento di
+            # snr_brk_signal, ma sulla candela H4, non sulla barra base).
+            if st[1]["phase"] == "IDLE" and resL is not None and story_bull \
+               and h4bar["close"] > resL and h4prev["close"] <= resL:
+                st[1] = {"phase": "ATTESA_RETEST", "expire": i + MAX_WAIT_RETEST, "level": resL}
+            if st[-1]["phase"] == "IDLE" and supL is not None and story_bear \
+               and h4bar["close"] < supL and h4prev["close"] >= supL:
+                st[-1] = {"phase": "ATTESA_RETEST", "expire": i + MAX_WAIT_RETEST, "level": supL}
+
+        if sess["session"][i] == "ASIAN":
+            continue
+
+        for d in (1, -1):
+            s = st[d]
+            if s["phase"] != "ATTESA_RETEST":
+                continue
+            if i > s["expire"]:
+                st[d] = {"phase": "IDLE", "expire": 0, "level": None}
+                continue
+            level = s["level"]
+            if d == 1:
+                # fallita: richiude sotto la zona (il livello non ha retto)
+                if c1 < level - ZONE_WIDTH_PRICE:
+                    st[d] = {"phase": "IDLE", "expire": 0, "level": None}
+                    continue
+                in_zone = level - ZONE_WIDTH_PRICE <= c1 <= level + ZONE_WIDTH_PRICE
+                if in_zone and c1 > o1:   # candela di reazione rialzista dentro la zona
+                    out_sig[i] = 1
+                    out_slref[i] = level
+                    st[d] = {"phase": "IDLE", "expire": 0, "level": None}
+            else:
+                if c1 > level + ZONE_WIDTH_PRICE:
+                    st[d] = {"phase": "IDLE", "expire": 0, "level": None}
+                    continue
+                in_zone = level - ZONE_WIDTH_PRICE <= c1 <= level + ZONE_WIDTH_PRICE
+                if in_zone and c1 < o1:
+                    out_sig[i] = -1
+                    out_slref[i] = level
+                    st[d] = {"phase": "IDLE", "expire": 0, "level": None}
+    return out_sig, out_slref, out_atrh4
+
+
+def sig_malaysian_snr_v2_retest(c, ind, i):
+    return ind["snr_v2ret_signal"][i]
+
+
+def _malaysian_snr_v2_retest_sl_tp(c, ind, i, direction, entry, atr):
+    # SL oltre il bordo della zona (non il livello esatto - l'invalidazione
+    # del setup stesso e' "richiude oltre la zona", lo stop segue la stessa
+    # logica) +0.5xATR(H4) di margine. TP invariato: 2.3xATR base, per
+    # restare comparabile alle altre varianti MALAYSIAN_SNR.
+    level = ind["snr_v2ret_slref"][i]
+    atrH4 = ind["snr_v2ret_atrH4"][i]
+    if level is None or not atrH4:
+        return None
+    ZONE_WIDTH_PRICE = 5.0
+    if direction == 1:
+        return level - ZONE_WIDTH_PRICE - 0.5 * atrH4, entry + 2.3 * atr
+    return level + ZONE_WIDTH_PRICE + 0.5 * atrH4, entry - 2.3 * atr
 
 
 def sig_ote_cont(c, ind, i):
@@ -3548,6 +3696,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR_BREAKOUT": _malaysian_snr_breakout_sl_tp,
     "MALAYSIAN_SNR_V2_STAGE1": _malaysian_snr_v2_stage1_sl_tp,
     "MALAYSIAN_SNR_V2_STAGE3": _malaysian_snr_v2_stage3_sl_tp,
+    "MALAYSIAN_SNR_V2_RETEST": _malaysian_snr_v2_retest_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
     # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
@@ -3595,6 +3744,7 @@ STRATEGIES = {
     "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,
     "MALAYSIAN_SNR_V2_STAGE1": sig_malaysian_snr_v2_stage1,
     "MALAYSIAN_SNR_V2_STAGE3": sig_malaysian_snr_v2_stage3,
+    "MALAYSIAN_SNR_V2_RETEST": sig_malaysian_snr_v2_retest,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta

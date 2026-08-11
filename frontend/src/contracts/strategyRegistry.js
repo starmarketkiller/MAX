@@ -25,6 +25,7 @@ export const STRATEGY_REGISTRY = [
   ["MALAYSIAN_SNR_BREAKOUT","Malaysian SNR Breakout (experimental)","SMC",false,true],
   ["MALAYSIAN_SNR_V2_STAGE1","Malaysian SNR v2 Stage 1 (experimental, close-to-open levels)","SMC",false,true],
   ["MALAYSIAN_SNR_V2_STAGE3","Malaysian SNR v2 Stage 3 (experimental, 2 TF confirmation rule)","SMC",false,true],
+  ["MALAYSIAN_SNR_V2_RETEST","Malaysian SNR v2 Retest (experimental, break-and-retest zone)","SMC",false,true],
   ["NY_REVERSAL","Ny Reversal","SESSION",true,true],
   ["OB_MIT","Ob Mit","SMC",true,true],
   ["ORDER_BLOCK","Order Block","SMC",true,true],

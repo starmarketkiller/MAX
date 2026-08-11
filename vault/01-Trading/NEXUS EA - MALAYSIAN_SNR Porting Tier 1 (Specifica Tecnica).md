@@ -361,6 +361,56 @@ computazionale più alto (registro di livelli + state machine multi-TF
 invece di una funzione stateless), preferire test su un singolo TF
 alla volta invece di scansionare 5 TF × 4 stadi in un colpo solo.
 
+## Variante RETEST (11/08) — quarto pattern, descritto dall'utente da trader manuale
+
+L'utente usa questa strategia manualmente da tempo e ha descritto il
+proprio modello mentale: rottura di un key level (massimo/minimo o
+struttura) + breve ritracciamento **sulla stessa linea rotta** (ora
+S/R capovolta) + continuazione. Confrontato con le 3 varianti già
+testate, **non corrisponde a nessuna**:
+
+- **MALAYSIAN_SNR (rejection)**: il livello non si rompe mai, si
+  rimbalza sull'estremo H4 intatto — l'opposto.
+- **MALAYSIAN_SNR_BREAKOUT**: entra SUBITO alla rottura, nessuna attesa
+  del ritracciamento.
+- **Stadio 3 (2 TF's Rule)**: parte da un RIMBALZO (non una rottura),
+  poi cerca uno swing SEPARATO formatosi dopo — il pullback è su quello
+  swing, non sul livello H4 originale.
+
+Implementata come quarta variante, `MALAYSIAN_SNR_V2_RETEST`
+(`server/backtest.py`, `_malaysian_snr_v2_retest_series`): rottura
+fresca del livello H4 (stesso evento di `snr_brk_signal`, sulla
+candela H4) → stato `ATTESA_RETEST` (max 12 barre) → segnale quando il
+prezzo rientra nella **zona** del livello rotto con una candela di
+reazione nella direzione della continuazione, invalidato se richiude
+oltre la zona dalla parte sbagliata (il breakout fallisce/viene
+riassorbito).
+
+**Zona, non linea**: l'utente ha segnalato che il prezzo raramente
+ritraccia esattamente sul prezzo del livello — trattata come una
+piccola zona (~50 pip XAUUSD). **Assunzione da confermare**:
+`ZONE_WIDTH_PRICE = $5.0`, convenzione MT5 "punti" per l'oro
+(quotazione a 2 decimali, es. 2650.32) dove 50 pip ≈ $5.00. Se la
+convenzione dell'utente è diversa (es. 1 pip = $0.01 → $0.50, dieci
+volte più stretta), i risultati sotto cambiano e vanno rifatti.
+
+### Risultati diagnostici (XAUUSD, storico Dukascopy pieno, IS 60%/OOS 40%)
+
+| TF | IS PF / n | OOS PF / n |
+|---|---|---|
+| 4h | 1.31 / 22 | 0.35 / **5** (troppo pochi per giudicare) |
+| 1h | 1.23 / 137 | **0.81** / 35 (campione credibile, negativo) |
+| 30m | 1.06 / 284 | **1.24** / 103 (campione credibile, positivo ma modesto) |
+
+**Non conclusivo, misto tra timeframe**: a 1h l'OOS è sott'acqua
+(campione grande, quindi non un caso di rumore da pochi trade), a 30m
+è leggermente positivo su un campione ancora più grande. Nessun walk-
+forward multi-finestra ancora fatto (a differenza di BREAKOUT_ACC+
+regime) — prima di trarre conclusioni serve lo stesso trattamento.
+Nessuna controparte MQL5, stesso status delle altre varianti "_v2"
+(EXPERIMENTAL, `research_implementation=True`, `live_implementation=
+False`, registrata in `contracts/strategy-registry.json`).
+
 ## Cosa NON tocca questo documento
 
 - Nessun cambio al MQL5 live (`NXS_Strat_MalaysianSNR_Rejection`
