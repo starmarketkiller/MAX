@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 58,
+    "total": 59,
     "live": 37,
     "research_only": 4
   },
@@ -1295,6 +1295,29 @@
       ],
       "supported_timeframes": [
         "1d"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "NY_REVERSAL_CHOCH_WINDOW",
+      "display_name": "NY Reversal with windowed CHoCH confirmation (experimental)",
+      "aliases": [],
+      "family": "SESSION",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1h",
+        "30m"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,

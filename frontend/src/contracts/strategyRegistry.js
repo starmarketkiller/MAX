@@ -58,6 +58,7 @@ export const STRATEGY_REGISTRY = [
   ["FVG_MIT_WINDOW","FVG Mitigation with active-zone registry (experimental)","SMC",false,true],
   ["IFVG_CHOCH_WINDOW","IFVG with windowed CHoCH confirmation (experimental)","SMC",false,true],
   ["SMS_BMS_RTO_CHOCH_WINDOW","SMS/BMS RTO with windowed CHoCH confirmation (experimental)","SMC",false,true],
+  ["NY_REVERSAL_CHOCH_WINDOW","NY Reversal with windowed CHoCH confirmation (experimental)","SESSION",false,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));

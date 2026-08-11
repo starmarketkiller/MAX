@@ -3121,6 +3121,53 @@ def _ny_reversal_sl_tp(c, ind, i, direction, entry, atr, look=48):
     return sl, min(london_lo, entry - 2.5 * risk)
 
 
+_NY_REVERSAL_CHOCH_WINDOW = 5
+
+
+def _ny_reversal_base_raw(c, ind, i, look=48):
+    sess = ind["sess"]
+    if sess["session"][i] not in ("NY", "OVERLAP"):
+        return 0
+    if i < look:
+        return 0
+    london_hi, london_lo = None, None
+    for k in range(1, look + 1):
+        j = i - k
+        if j < 0:
+            break
+        if sess["hour"][j] is not None and 6 <= sess["hour"][j] < 12:
+            hh, ll = c[j]["high"], c[j]["low"]
+            london_hi = hh if london_hi is None else max(london_hi, hh)
+            london_lo = ll if london_lo is None else min(london_lo, ll)
+    if london_hi is None or london_lo is None:
+        return 0
+    c1, h1, l1 = c[i]["close"], c[i]["high"], c[i]["low"]
+    if h1 > london_hi and c1 < london_hi:
+        return -1
+    if l1 < london_lo and c1 > london_lo:
+        return 1
+    return 0
+
+
+def sig_ny_reversal_choch_window(c, ind, i, look=48):
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    for k in range(i - _NY_REVERSAL_CHOCH_WINDOW, i + 1):
+        if k < look:
+            continue
+        raw = _ny_reversal_base_raw(c, ind, k, look=look)
+        if choch_up and raw == 1:
+            return 1
+        if choch_down and raw == -1:
+            return -1
+    return 0
+
+
+def _ny_reversal_choch_window_sl_tp(c, ind, i, direction, entry, atr, look=48):
+    return _ny_reversal_sl_tp(c, ind, i, direction, entry, atr, look=look)
+
+
 def sig_po3(c, ind, i):
     # 04/08 - fedelta' PARZIALE: stesso swap CHoCH di sopra fatto. Il TP e'
     # gia' strutturale via _po3_target (STRATEGY_TARGETS_ALWAYS); il SL
@@ -4120,6 +4167,7 @@ STRATEGY_SLTP_ALWAYS = {
     "JUDAS_SWING": _judas_swing_sl_tp,
     "LDN_REVERSAL": _ldn_reversal_sl_tp,
     "NY_REVERSAL": _ny_reversal_sl_tp,
+    "NY_REVERSAL_CHOCH_WINDOW": _ny_reversal_choch_window_sl_tp,
     "SH_BMS_RTO": _shbms_sl_tp,
     "SMS_BMS_RTO": _sms_bms_sl_tp,
     "SMS_BMS_RTO_CHOCH_WINDOW": _sms_bms_choch_window_sl_tp,
@@ -4211,6 +4259,7 @@ STRATEGIES = {
     "JUDAS_SWING": sig_judas_swing,
     "LDN_REVERSAL": sig_ldn_reversal,
     "NY_REVERSAL": sig_ny_reversal,
+    "NY_REVERSAL_CHOCH_WINDOW": sig_ny_reversal_choch_window,
     "PO3": sig_po3,
     "SILVER_BULLET": sig_silver_bullet,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, file pastati

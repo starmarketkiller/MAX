@@ -80,7 +80,10 @@ def test_counts_are_37_live_plus_4_research():
     # per TURTLE_SOUP, non solo qui") ma non era mai stata applicata a se
     # stessa; SMS_BMS_RTO condivide la stessa struttura a 4 condizioni
     # sulla stessa barra).
-    assert len(sr.all_records()) == 58
+    # 59, non 58: + NY_REVERSAL_CHOCH_WINDOW (11/08, stessa idea CHoCH-
+    # entro-finestra applicata a un quarto caso - il trigger richiedeva
+    # sweep+reclaim della sessione Londra E CHoCH sulla stessa barra).
+    assert len(sr.all_records()) == 59
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -141,7 +144,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 58
+    assert r.json()["counts"]["total"] == 59
 
 
 def test_resolve_endpoint_404_on_unknown(client):
