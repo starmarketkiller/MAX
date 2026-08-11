@@ -435,6 +435,27 @@ configurazione non verrebbe nemmeno scelta (il numero attraente è solo
 sull'OOS, l'IS dice il contrario). Entrare subito alla rottura non paga
 in modo consistente; aspettare il retest resta l'ipotesi più solida.
 
+### Walk-forward su MALAYSIAN_SNR_V2_RETEST (11/08) — mai netto come BREAKOUT_ACC/SAR
+
+5 finestre sequenziali, 1h e 30m (`msnr_retest_walkforward.py`):
+
+| Finestra | 1h PF/n | 30m PF/n |
+|---|---|---|
+| 1/5 | 1.26/47 | 1.17/98 |
+| 2/5 | 0.87/56 | 1.04/108 |
+| 3/5 | 1.88/35 | 1.00/79 |
+| 4/5 | 1.10/23 | 1.85/67 |
+| 5/5 | 0.43/12 | 0.66/36 |
+
+**Misto su entrambi i TF, nessun pattern pulito**: 3/5 finestre sopra 1
+su entrambi, ma senza la coerenza vista con BREAKOUT_ACC+regime (vince
+3/5 con motivazione strutturale) o SAR+WEAK_TREND (vince 5/5 su 5).
+Oscilla troppo per essere già un candidato — non smentito, ma nemmeno
+confermato. La caratterizzazione delle zone OC sopra (91% retest dopo
+rottura) resta un fondamento statistico solido per il PATTERN in
+generale; il P&L specifico di questa implementazione (SL/TP/zona
+scelti) non lo è ancora altrettanto.
+
 ## Cosa NON tocca questo documento
 
 - Nessun cambio al MQL5 live (`NXS_Strat_MalaysianSNR_Rejection`
