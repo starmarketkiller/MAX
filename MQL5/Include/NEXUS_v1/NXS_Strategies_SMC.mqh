@@ -584,4 +584,44 @@ SNXSSignal NXS_Strat_MalaysianSNR_Rejection(){
    return s;
 }
 
+// === CRT — Candle Range Theory (11/08, fonte: PDF "Candle Range Theory" ===
+// di Suven Raj, caricato dall'utente). Pattern a 3 candele CONSECUTIVE sul
+// TF della strategia (NXS_EffTF(), M30 di default nel profilo - vedi
+// NXS_StrategyProfiles.mqh):
+//   barra shift 2 = RANGE -> CRH/CRL (high/low di quella candela)
+//   barra shift 1 = SWEEP -> stoppino oltre CRH (o CRL) ma chiude DENTRO
+//                   il range (altrimenti il setup e' invalido - il
+//                   mercato sta continuando, non invertendo)
+//   ora (entrata)  -> direzione OPPOSTA allo sweep, target il lato
+//                   opposto del range
+// Nessun filtro di sessione/storyline aggiuntivo - fedele esattamente a
+// come e' stata validata in Python (server/backtest.py, _crt_series):
+// walk-forward 5/5 finestre su 4h/1h/30m dopo la riverifica sullo storico
+// ampliato (11/08), quasi 20.000 trade totali - la scoperta piu' solida
+// di tutta la sessione di ricerca. slPrice/tpPrice impostati direttamente
+// dai livelli reali del pattern, NON da NXS_DefaultSLTP (nessun multiplo
+// ATR - stesso stile di NXS_Strat_MalaysianSNR_Rejection sopra).
+SNXSSignal NXS_Strat_CRT(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_STRUCT_REACT; s.stratName = "CRT";
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double crh = iHigh(g_sym, tf, 2);
+   double crl = iLow (g_sym, tf, 2);
+   double sweepHi = iHigh (g_sym, tf, 1);
+   double sweepLo = iLow  (g_sym, tf, 1);
+   double sweepC  = iClose(g_sym, tf, 1);
+   bool sweptHigh = (sweepHi > crh && sweepC <= crh);
+   bool sweptLow  = (sweepLo < crl && sweepC >= crl);
+   if(sweptHigh && !sweptLow){
+      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+      s.slPrice = sweepHi; s.tpPrice = crl;
+      s.score = 68.0; s.reason = "CRT sweep CRH, target CRL";
+   } else if(sweptLow && !sweptHigh){
+      s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      s.slPrice = sweepLo; s.tpPrice = crh;
+      s.score = 68.0; s.reason = "CRT sweep CRL, target CRH";
+   }
+   return s;
+}
+
 #endif

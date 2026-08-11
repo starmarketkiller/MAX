@@ -147,6 +147,12 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "TSI")               return PERIOD_D1;
    if(name == "TURTLE_SOUP")       return PERIOD_H1;
    if(name == "WEEKLY_EXP")        return PERIOD_D1;
+   // 11/08 - CRT: 30m e' il TF con il campione piu' ampio E il walk-forward
+   // piu' pulito dopo la riverifica sullo storico ampliato (5/5 su tutti e
+   // tre i TF provati - 4h/1h/30m - ma 30m ha quasi 12.000 trade totali
+   // contro le centinaia degli altri, il campione statisticamente piu'
+   // solido). Vedi NEXUS EA - Riverifica su Storico Ampliato (11-08).
+   if(name == "CRT")               return PERIOD_M30;
    return PERIOD_CURRENT;
 }
 
@@ -204,6 +210,13 @@ double NXS_Profile_Risk(const string name){
    if(name == "AMD_CONT")          return 0.5;
    if(name == "LDN_REVERSAL")      return 0.5;
    if(name == "AMD_REVERSAL")      return 0.4;    // campione ancora piu' piccolo delle altre due
+   // 11/08 - CRT: terreno vergine su MT5 (nessuna storia reale, mai
+   // eseguita prima d'ora), ma l'evidenza Python e' la piu' forte di
+   // tutta la sessione (walk-forward 5/5 su 3 TF, ~20.000 trade) - size
+   // leggermente sopra la fascia prudente standard (0.5%) per riflettere
+   // la qualita' insolita della ricerca, ma ancora ben sotto la fascia
+   // "core vincente" (1.5-3.0%) finche' non c'e' conferma reale.
+   if(name == "CRT")               return 0.6;
    if(name == "OTE_CONT")          return 0.5;
    if(name == "RANGE_FADE")        return 0.6;
    if(name == "SH_BMS_RTO")        return 0.5;
@@ -341,10 +354,18 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "THREE_BAR_DELIVERY_BREAK") return true;
    if(name == "LDN_REVERSAL")           return true;
    if(name == "AMD_REVERSAL")           return true;
+   // 11/08 - CRT aggiunta come 16a: unica scoperta con walk-forward 5/5 su
+   // tre timeframe dopo la riverifica sullo storico ampliato, la piu'
+   // solida della sessione - vedi NXS_Strat_CRT() (NXS_Strategies_SMC.mqh)
+   // e NEXUS EA - Riverifica su Storico Ampliato (11-08). MALAYSIAN_SNR_V2_
+   // RETEST NON e' mai stata qui: e' solo Python, nessuna controparte
+   // MQL5 - la riverifica l'ha comunque ridimensionata (walk-forward
+   // 30m sceso a 2/5), quindi resta giustamente fuori.
+   if(name == "CRT")                    return true;
    // Le rimanenti restano note per la cronaca (gia' spente da prima per
-   // perdite reali confermate, non fanno parte della lista delle 15):
+   // perdite reali confermate, non fanno parte del nucleo demo):
    //   BB_SQUEEZE, STRUCT_REACT, DISP_REBAL, OTE_CONT, ICHIMOKU.
-   return false;   // 10/08 - era true: tutte le altre 20 spente per la fase demo
+   return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 
 #endif

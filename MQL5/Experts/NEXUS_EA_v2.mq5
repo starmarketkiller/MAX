@@ -461,6 +461,9 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // v2.0.20 — Elliott Wave (#37)
    if(InpUseStrat_Elliott     && NXS_SelectorAllows(36)) out[n++] = NXS_Strat_Elliott();
 
+   // 11/08 — CRT (Candle Range Theory, #38)
+   if(InpUseStrat_CRT         && NXS_SelectorAllows(38)) out[n++] = NXS_Strat_CRT();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

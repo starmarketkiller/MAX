@@ -589,6 +589,12 @@ input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
 input bool     InpUseStrat_LiqVoid       = true;
 input bool     InpUseStrat_DispRebal     = true;
+// 11/08 - CRT (Candle Range Theory): unica scoperta della sessione con
+// walk-forward 5/5 su 3 timeframe dopo la riverifica sullo storico
+// ampliato - vedi NXS_Strategies_SMC.mqh, NXS_Strat_CRT(). Nessuna
+// controparte precedente nel sito ("sperimentale" come MALAYSIAN_SNR_
+// BREAKOUT quando fu introdotta).
+input bool     InpUseStrat_CRT           = true;
 
 // input group "=== TIMEFRAME-AWARE SL/TP + LIFE (v2.0.21) ==="
 double   InpTF_SLTP_H1   = 2.0;    // moltiplicatore SL/TP per segnali origine H1 (× ATR chart)
