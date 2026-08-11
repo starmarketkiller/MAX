@@ -47,6 +47,34 @@ anno su 5 positivo (solo 2023)**. Dettaglio:
 (539 trade, campione ampio) ma il segnale resta negativo in 4 anni su 5,
 con un miglioramento solo nell'ultimo anno da monitorare.
 
+## Aggiornamento 11/08 — variante "cross da zona estrema" testata, negativa
+
+Il trigger MQL5 (`NXS_Strat_TSI`) è un cross puro TSI/signal-line, senza
+alcun filtro di zona — verificato riga-per-riga, il port Python è già
+fedele al 100%, non era un bug da correggere. Ipotesi nuova (non di
+fedeltà): richiedere che il cross parta da una zona di momentum estremo
+(soglia=15, mediana del TSI assoluto su XAUUSD 1d) invece di un cross
+qualunque vicino allo zero - stessa logica per cui RSI si usa quasi
+sempre con soglie di ipercomprato/ipervenduto.
+
+Registrata `TSI_EXTREME`, testata su 1d (vero TF di profilo) e 4h:
+
+| TF | OOS baseline | OOS extreme | Walk-forward extreme |
+|---|---|---|---|
+| 1d | 0.71/39 | **0.63/22 (peggio)** | 3/5, con una finestra a 0.25 |
+| 4h | 1.24/169 | 1.24/108 (identico, meno trade) | 3/5, stesso pattern del baseline |
+
+**Negativo su entrambi i TF** — su 1d peggiora, su 4h è semplicemente
+lo stesso segnale con meno campione (nessun guadagno di qualità).
+L'ipotesi non regge. **TSI resta un problema aperto senza soluzione
+trovata** dopo aver esaurito: fix del trigger (già fatto, era necessario
+ma non sufficiente), filtro di regime WEAK_TREND (smentito, artefatto
+di motore/TF sbagliati), cross da zona estrema (appena testato,
+negativo). Prossime idee non ancora tentate: cambiare i periodi
+long/short/signal (25/13/7, mai ottimizzati per l'oro specificamente),
+o accettare che TSI su D1 XAUUSD semplicemente non ha edge con questo
+approccio e valutare la sua rimozione dal nucleo.
+
 ## Note
 
 

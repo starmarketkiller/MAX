@@ -55,6 +55,7 @@ export const STRATEGY_REGISTRY = [
   ["TURTLE_SOUP_CHOCH","Turtle Soup with CHoCH confirmation (experimental, N-bar window)","LIQUIDITY",false,true],
   ["MALAYSIAN_SNR_V2_RETEST_OUTRANGE","Malaysian SNR v2 Retest + gate fuori-range (experimental)","SMC",false,true],
   ["TSI_EXTREME","TSI cross from extreme zone (experimental)","MOMENTUM",false,true],
+  ["FVG_MIT_WINDOW","FVG Mitigation with active-zone registry (experimental)","SMC",false,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));

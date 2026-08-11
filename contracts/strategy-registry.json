@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 55,
+    "total": 56,
     "live": 37,
     "research_only": 4
   },
@@ -1228,6 +1228,29 @@
       "supported_timeframes": [
         "1d",
         "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "FVG_MIT_WINDOW",
+      "display_name": "FVG Mitigation with active-zone registry (experimental)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "4h",
+        "1h"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,

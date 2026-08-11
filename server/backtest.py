@@ -572,6 +572,7 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
     ote_v2_sig, ote_v2_sl, ote_v2_tp = _ote_cont_v2_series(candles, atr_s, adx_s, choch_int_s)
     ob_v2_sig, ob_v2_sl, ob_v2_tp = _order_block_v2_series(candles, atr_s, adx_s, choch_int_s)
     fvg_v2_sig, fvg_v2_sl, fvg_v2_tp = _fvg_cont_v2_series(candles, atr_s, adx_s, choch_int_s, choch_ext_s)
+    fvgmitw_sig, fvgmitw_sl, fvgmitw_tp = _fvg_mit_window_series(candles, atr_s)
     return {
         "candles": candles,
         "close": closes,
@@ -621,6 +622,7 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "ote_v2_signal": ote_v2_sig, "ote_v2_sl": ote_v2_sl, "ote_v2_tp": ote_v2_tp,
         "ob_v2_signal": ob_v2_sig, "ob_v2_sl": ob_v2_sl, "ob_v2_tp": ob_v2_tp,
         "fvg_v2_signal": fvg_v2_sig, "fvg_v2_sl": fvg_v2_sl, "fvg_v2_tp": fvg_v2_tp,
+        "fvgmitw_signal": fvgmitw_sig, "fvgmitw_sl": fvgmitw_sl, "fvgmitw_tp": fvgmitw_tp,
     }
 
 
@@ -1256,6 +1258,68 @@ def _fvg_mit_sl_tp(c, ind, i, direction, entry, atr):
     if direction == 1:
         return h2 - 0.4 * atr, entry + 2.5 * atr
     return l2 + 0.4 * atr, entry - 2.5 * atr
+
+
+# 11/08 (17) - FVG_MIT_WINDOW: sig_fvg_mit sopra confronta il gap tra le
+# candele i-6/i-4 SOLO con la barra CORRENTE i - dato che i-6/i-4 sono
+# offset relativi alla barra in corso, ogni coppia di candele (K, K+2)
+# viene valutata per gap+mitigazione UNA SOLA VOLTA, esattamente alla
+# barra K+6 - se il prezzo impiega piu' di 0 barre extra a ritornare sul
+# gap, il segnale e' perso per sempre (nessun registro persistente, a
+# differenza di SH_BMS_RTO_V2/OB style). Non e' un'ipotesi di fedelta'
+# (MQL5 fa la stessa cosa) - e' una variante sperimentale nuova: registro
+# di zone attive, ogni gap tracciato fino a MAX_WAIT barre invece di un
+# solo istante, stessa architettura di successo usata oggi per
+# TURTLE_SOUP_CHOCH/SH_BMS_RTO_V2.
+_FVG_MIT_WINDOW_MAX_WAIT = 15
+
+
+def _fvg_mit_window_series(candles, atr):
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    bull_zones, bear_zones = [], []
+    for i in range(6, n):
+        a = atr[i]
+        if not a:
+            continue
+        h2, l2 = candles[i - 4]["high"], candles[i - 4]["low"]
+        h0, l0 = candles[i - 6]["high"], candles[i - 6]["low"]
+        if l0 > h2 + a * 0.15:
+            bull_zones.append({"lo": h2, "hi": l0, "born_i": i})
+        if h0 < l2 - a * 0.15:
+            bear_zones.append({"lo": h0, "hi": l2, "born_i": i})
+        bull_zones = [z for z in bull_zones if i - z["born_i"] <= _FVG_MIT_WINDOW_MAX_WAIT]
+        bear_zones = [z for z in bear_zones if i - z["born_i"] <= _FVG_MIT_WINDOW_MAX_WAIT]
+        c1, o1 = candles[i]["close"], candles[i]["open"]
+        cur_lo, cur_hi = candles[i]["low"], candles[i]["high"]
+        body = abs(c1 - o1)
+        if c1 > o1 and body > a * 0.35:
+            for z in bull_zones:
+                if cur_hi >= z["lo"] and cur_lo <= z["hi"]:
+                    out_sig[i] = 1
+                    sl = z["lo"] - 0.4 * a
+                    out_sl[i], out_tp[i] = sl, c1 + (c1 - sl) * 2.5
+                    bull_zones.remove(z)
+                    break
+        if not out_sig[i] and c1 < o1 and body > a * 0.35:
+            for z in bear_zones:
+                if cur_hi >= z["lo"] and cur_lo <= z["hi"]:
+                    out_sig[i] = -1
+                    sl = z["hi"] + 0.4 * a
+                    out_sl[i], out_tp[i] = sl, c1 - (sl - c1) * 2.5
+                    bear_zones.remove(z)
+                    break
+    return out_sig, out_sl, out_tp
+
+
+def sig_fvg_mit_window(c, ind, i):
+    return ind["fvgmitw_signal"][i]
+
+
+def _fvg_mit_window_sl_tp(c, ind, i, direction, entry, atr):
+    return ind["fvgmitw_sl"][i], ind["fvgmitw_tp"][i]
 
 
 def sig_ifvg(c, ind, i):
@@ -3946,6 +4010,7 @@ STRATEGY_SLTP_ALWAYS = {
     # 5 barre usata qui.
     "TURTLE_SOUP_CHOCH": _turtle_soup_sl_tp,
     "FVG_MIT": _fvg_mit_sl_tp,
+    "FVG_MIT_WINDOW": _fvg_mit_window_sl_tp,
     "AMD_REVERSAL": _amd_reversal_sl_tp,
     "JUDAS_SWING": _judas_swing_sl_tp,
     "LDN_REVERSAL": _ldn_reversal_sl_tp,
@@ -4001,6 +4066,7 @@ STRATEGIES = {
     "OB_MIT": sig_ob_mit_ext,
     "FVG_CONT": sig_fvg_cont_ext,
     "FVG_MIT": sig_fvg_mit,
+    "FVG_MIT_WINDOW": sig_fvg_mit_window,
     "IFVG": sig_ifvg,
     "LIQ_SWEEP": sig_liq_sweep_ext,
     "TURTLE_SOUP": sig_turtle_soup,

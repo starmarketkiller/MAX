@@ -69,8 +69,11 @@ def test_counts_are_37_live_plus_4_research():
     # TSI/signal richiesto da zona estrema invece che ovunque - non e'
     # un'ipotesi di fedelta' MQL5, il port attuale e' gia' fedele al
     # 100%, e' una variante sperimentale nuova per l'unico problema
-    # aperto senza soluzione nel nucleo).
-    assert len(sr.all_records()) == 55
+    # aperto senza soluzione nel nucleo) + FVG_MIT_WINDOW (11/08, registro
+    # di zone attive fino a 15 barre invece di un solo istante fisso -
+    # stessa architettura di SH_BMS_RTO_V2/TURTLE_SOUP_CHOCH, per il
+    # secondo problema aperto del nucleo).
+    assert len(sr.all_records()) == 56
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -131,7 +134,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 55
+    assert r.json()["counts"]["total"] == 56
 
 
 def test_resolve_endpoint_404_on_unknown(client):
