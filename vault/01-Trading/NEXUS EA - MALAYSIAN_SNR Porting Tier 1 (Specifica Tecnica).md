@@ -411,6 +411,30 @@ Nessuna controparte MQL5, stesso status delle altre varianti "_v2"
 (EXPERIMENTAL, `research_implementation=True`, `live_implementation=
 False`, registrata in `contracts/strategy-registry.json`).
 
+### Caratterizzazione delle zone OC (11/08) — perché il retest è fondato
+
+Richiesta di seguito dall'utente: prima di validare ulteriormente
+RETEST, capire empiricamente cosa succede davvero sui livelli OC quando
+il prezzo li ritocca (`server/research_scripts/msnr_oc_zone_diagnostic.py`,
+storico Dukascopy pieno, 4h).
+
+**Frequenza** (638 livelli OC formati, 97% ritoccati entro 60 barre):
+- **60% TENGONO** (rimbalzo/rifiuto) — l'inversione è il comportamento
+  più comune sui livelli OC, più della rottura.
+- **40% si ROMPONO** (continuazione) — di questi, **91% fa retest entro
+  12 barre**. Conferma indipendente e su campione ampio che aspettare il
+  retest dopo una rottura (il pattern che l'utente ha descritto da
+  trader manuale) è statisticamente ben fondato, non un caso raro.
+
+**P&L della continuazione immediata** (rottura del livello OC, entra
+subito, NESSUNA attesa di retest — il pezzo che ancora mancava:
+`MALAYSIAN_SNR_BREAKOUT` usa i livelli VECCHI a 12 barre, non questi
+OC): IS 37 trade PF 0.74 (in perdita), OOS 32 trade PF 1.88. **Non
+affidabile** — con la disciplina IS-blind di tutta la sessione questa
+configurazione non verrebbe nemmeno scelta (il numero attraente è solo
+sull'OOS, l'IS dice il contrario). Entrare subito alla rottura non paga
+in modo consistente; aspettare il retest resta l'ipotesi più solida.
+
 ## Cosa NON tocca questo documento
 
 - Nessun cambio al MQL5 live (`NXS_Strat_MalaysianSNR_Rejection`
