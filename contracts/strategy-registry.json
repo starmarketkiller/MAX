@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 54,
+    "total": 55,
     "live": 37,
     "research_only": 4
   },
@@ -1205,6 +1205,29 @@
       "supported_timeframes": [
         "30m",
         "1h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TSI_EXTREME",
+      "display_name": "TSI cross from extreme zone (experimental)",
+      "aliases": [],
+      "family": "MOMENTUM",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1d",
+        "4h"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,

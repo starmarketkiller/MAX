@@ -65,8 +65,12 @@ def test_counts_are_37_live_plus_4_research():
     # "Strategie/Turtle Soup") + MALAYSIAN_SNR_V2_RETEST_OUTRANGE (11/08,
     # riverifica del gate fuori-range attraverso run_backtest col vero
     # SL/TP strutturale, mai fatta prima - il test originale usava un
-    # motore standalone con SL/TP fisso).
-    assert len(sr.all_records()) == 54
+    # motore standalone con SL/TP fisso) + TSI_EXTREME (11/08, cross
+    # TSI/signal richiesto da zona estrema invece che ovunque - non e'
+    # un'ipotesi di fedelta' MQL5, il port attuale e' gia' fedele al
+    # 100%, e' una variante sperimentale nuova per l'unico problema
+    # aperto senza soluzione nel nucleo).
+    assert len(sr.all_records()) == 55
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -127,7 +131,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 54
+    assert r.json()["counts"]["total"] == 55
 
 
 def test_resolve_endpoint_404_on_unknown(client):

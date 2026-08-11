@@ -975,6 +975,31 @@ def sig_tsi(c, ind, i):
     return 0
 
 
+# 11/08 (16) - TSI_EXTREME: TSI in MQL5 (NXS_Strat_TSI) e' un cross puro
+# TSI/signal-line, nessun filtro di zona - verificato riga-per-riga, il
+# port Python e' gia' fedele al 100%, non c'e' un bug da correggere qui.
+# Il problema e' concettuale: un cross puro genera molti falsi segnali
+# vicino allo zero (rumore laterale), stessa ragione per cui RSI si usa
+# quasi sempre con soglie di ipercomprato/ipervenduto, non un cross
+# semplice. Non e' un'ipotesi di fedelta' (MQL5 non ha questo filtro) -
+# e' una variante sperimentale nuova, come TURTLE_SOUP_CHOCH. Richiede
+# che il TSI fosse in zona estrema APPENA PRIMA del cross (momentum che
+# gira da un estremo, non un cross qualunque) - soglia=15, la mediana
+# del TSI assoluto su XAUUSD 1d (2019-2026), non un numero a caso.
+_TSI_EXTREME_THRESHOLD = 15.0
+
+
+def sig_tsi_extreme(c, ind, i):
+    tsi, sig = ind["tsi"], ind["tsi_signal"]
+    if tsi[i] is None or sig[i] is None or tsi[i - 1] is None or sig[i - 1] is None:
+        return 0
+    if tsi[i - 1] <= sig[i - 1] and tsi[i] > sig[i] and tsi[i - 1] <= -_TSI_EXTREME_THRESHOLD:
+        return 1
+    if tsi[i - 1] >= sig[i - 1] and tsi[i] < sig[i] and tsi[i - 1] >= _TSI_EXTREME_THRESHOLD:
+        return -1
+    return 0
+
+
 def tsi_series(closes, r=25, s=13):
     """Vero True Strength Index (doppio smoothing EMA del momentum, William
     Blau) - periodi di default = InpTSI_LongPeriod/ShortPeriod MQL5."""
@@ -3965,6 +3990,7 @@ STRATEGIES = {
     "BOLLINGER": sig_bollinger,
     "BB_SQUEEZE": sig_bb_squeeze,
     "TSI": sig_tsi,
+    "TSI_EXTREME": sig_tsi_extreme,
     "ICHIMOKU": sig_ichimoku,
     "LONDON_BO": sig_london_bo,        # 04/08: fedele a NXS_Strat_LondonBO (prima proxy generico)
     "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
