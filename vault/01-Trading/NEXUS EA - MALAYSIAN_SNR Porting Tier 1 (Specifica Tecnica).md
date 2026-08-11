@@ -555,6 +555,23 @@ avrebbero superato un walk-forward "pulito" sui propri termini, solo
 il confronto diretto con `run_backtest` ha rivelato quale delle due
 correzioni fosse quella giusta.
 
+**v1 vs v3, confronto onesto** (11/08, richiesto dall'utente prima di
+scartare v1 come "inferiore"): non è che v1 fosse superiore — sui
+walk-forward sono comparabili (30m: entrambe 5/5, range PF quasi
+identico), e su 4h v3 è persino più pulita (5/5 senza l'outlier 3.04
+di v1 che gonfiava l'impressione iniziale). Non è stata scartata una
+versione migliore — quella registrata è già la migliore trovata.
+
+**Variante "candela di conferma" testata** (`crt_confirm_variant.py`):
+invece di entrare appena lo sweep si conferma (CRT base), aspetta
+un'ulteriore candela che chiuda nella direzione attesa prima di
+entrare - stessa convenzione di esecuzione del motore (chiusura della
+barra segnale), solo un evento in più richiesto. **Risultato negativo
+e netto**: PF 0.30-0.69 su tutte le 15 combinazioni testate (3 TF × 5
+finestre) - aspettare la conferma peggiora sempre, l'edge di CRT sta
+proprio nel cogliere l'inversione appena lo sweep si chiude, non dopo.
+Non registrata.
+
 ## Cosa NON tocca questo documento
 
 - Nessun cambio al MQL5 live (`NXS_Strat_MalaysianSNR_Rejection`
