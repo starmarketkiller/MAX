@@ -456,7 +456,18 @@ rottura) resta un fondamento statistico solido per il PATTERN in
 generale; il P&L specifico di questa implementazione (SL/TP/zona
 scelti) non lo è ancora altrettanto.
 
-### Gate/confluenze aggiuntivi (11/08) — CRT aiuta, gli altri due no
+### Gate/confluenze aggiuntivi (11/08) — un gate "fuori range" aiuta, gli altri due no
+
+⚠️ **Correzione 11/08 (2)**: il gate sotto chiamato "CRT" **non è la vera
+Candle Range Theory**. L'utente ha caricato il PDF fonte (Suven Raj,
+"Candle Range Theory") e la vera CRT è un pattern preciso a 3 candele
+(range → sweep con chiusura dentro il range → entrata nella direzione
+opposta, target il lato opposto del range) — vedi sezione dedicata più
+sotto. Quello testato qui era solo "prezzo fuori dal range del giorno
+precedente", una mia semplificazione con lo stesso nome per errore.
+Ridenominato **"gate fuori-range"** per non confonderlo con la CRT vera
+(che invece, testata correttamente, non ha mostrato nessun edge — vedi
+sotto).
 
 Su richiesta esplicita dell'utente ("proviamo più versioni, non solo la
 fonte, basta che ci sia motivazione e prova"): tre gate testati su
@@ -472,16 +483,57 @@ ciascuno con una motivazione precisa, non a caso.
   trendline): campione troppo sottile dopo il filtro su entrambi i TF
   (1h: 1 trade OOS con PF "inf" — scartato subito come inutilizzabile).
   Ipotesi non verificabile con questi dati, non smentita.
-- **CRT — Candle Range Theory** (dalla fonte, mai implementata prima:
-  prezzo fuori dal range max/min del giorno precedente): **aiuta a
+- **Gate fuori-range** (prezzo fuori dal range max/min del giorno
+  precedente — NON la vera CRT, vedi correzione sopra): **aiuta a
   30m**, scelto dalla selezione IS-blind, confermato su OOS (PF
   1.12→1.22, campione 103→58 trade) e su walk-forward a 5 finestre
   (**vince 4 finestre su 5**, perde solo la prima di poco). Non aiuta a
   1h (non scelto dalla selezione IS-blind lì).
 
 **Conclusione onesta**: delle tre idee "fuori dallo schema" testate,
-una regge (CRT a 30m), una non regge (regime), una resta indecisa per
+una regge (gate fuori-range a 30m), una non regge (regime), una resta indecisa per
 campione insufficiente (confluenza liquidità).
+
+### Vera Candle Range Theory (11/08) — testata da sola, nessun edge (dopo un errore di metodo scoperto e corretto)
+
+Dal PDF fonte caricato dall'utente ("Candle Range Theory" di Suven Raj):
+pattern preciso a 3 candele **consecutive** sullo stesso timeframe
+(qualunque - Daily/H4/H1/M1, non fisso):
+1. Candela 1 = **Range** → CRH/CRL (high/low di quella candela).
+2. Candela 2 = **Sweep** → stoppino oltre CRH (o CRL) ma **chiusura
+   dentro** il range (se chiude oltre, il setup è invalido — il mercato
+   sta continuando, non invertendo).
+3. Candela 3 = **Entrata** → direzione opposta allo sweep, target il
+   lato opposto del range.
+
+Testata come pattern a sé (`crt_diagnostic.py`), non come filtro:
+segnale/SL/TP dai livelli reali della fonte, non multipli ATR.
+
+**Errore di metodo scoperto e corretto durante il test**: la prima
+versione simulava l'entrata all'APERTURA della candela 3 — dava numeri
+vistosi (XAUUSD 4h: OOS PF 1.63 su 442 trade; 30m: walk-forward **5
+finestre su 5** positive, 1.300+ trade a finestra, il risultato più
+pulito di tutta la sessione). Controllando come esegue davvero
+`run_backtest` (`px = candles[i]["close"]` — il motore entra SEMPRE
+alla CHIUSURA della barra del segnale, mai alla sua apertura), quella
+simulazione non corrispondeva a come gira il motore reale. Corretto
+(segnale alla chiusura della candela sweep stessa, non un'altra dopo)
+e rifatto tutto:
+
+| TF | OOS PF/n (timing sbagliato) | OOS PF/n (timing corretto) |
+|---|---|---|
+| 4h | 1.63/442 | 0.91/431 |
+| 1h | — | 0.84/1328 |
+| 30m | walk-forward 5/5 positive | walk-forward: 4/5 finestre **sotto** 1 |
+
+**Nessun edge con la tempistica corretta**, su nessun timeframe testato
+— il risultato vistoso di prima era interamente un artefatto della
+simulazione, non un pattern reale. Non registrata come strategia (il
+codice aggiunto a `backtest.py` è stato rimosso). Lezione per il resto
+della sessione: un risultato eccezionale merita PRIMA una verifica di
+coerenza metodologica (la convenzione di esecuzione del motore), non
+solo un walk-forward — il walk-forward da solo su questi dati avrebbe
+comunque mostrato "5/5" senza rivelare il problema.
 
 ## Cosa NON tocca questo documento
 
