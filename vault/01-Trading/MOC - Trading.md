@@ -103,6 +103,16 @@ profitto reale, non solo curve di backtest.
   necessaria — FVG_CONT/TURTLE_SOUP/EMA_PULLBACK confermati già ottimali
   (walk-forward 5/5, 4/5, 4/5), il resto alla pari o senza campione
   sufficiente. Nessuna "perla" trovata neanche tra le strategie escluse.
+- **[[NEXUS EA - Fase C Recovery Baseline e Rischio Flottante (11-08)]]** —
+  primo passo della Fase C (recovery/pyramiding ottimizzati): il recovery
+  uniforme già esistente nel motore aiuta CRT/FVG_CONT ma danneggia
+  EMA_PULLBACK/SAR — non è un miglioramento universale, conferma la
+  richiesta di gestione differenziata per gamba. Scoperto e corretto un
+  buco di misurazione: il drawdown esistente è "a trade chiuso", non
+  mark-to-market — aggiunto `track_floating_dd` a `run_backtest`.
+  Rivelato che CRT ha un drawdown flottante strutturale enorme (stop
+  ancorato al wick, non ATR) — non un rischio attivo oggi (`InpEnableGrid
+  =false` di default), ma da tenere presente prima di costruire sopra.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
