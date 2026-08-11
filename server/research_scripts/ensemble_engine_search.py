@@ -24,6 +24,17 @@ opzionali richieste dall'utente dopo il primo esito negativo su oro:
 - filtro di REGIME (_regime_series gia' esistente in backtest.py) sopra
   l'ensemble trovato, per vedere se filtrare per regime di mercato
   aiuta un ensemble che a voto pieno non batte la singola migliore.
+
+11/08 (12) - richiesta esplicita dell'utente: verificare se questo lavoro
+(segnato "oro" all'epoca) ha lo stesso difetto appena trovato sui 5
+filtri di regime singoli (motore parallelo, storico vecchio). Verdetto:
+il SL/TP piatto in simulate() NON e' un bug unico di questo script - e'
+la stessa convenzione "flat baseline" (1.5x/3.0x ATR) usata come
+riferimento comune in tutta la sessione (profile_recipe_audit.py,
+full_census.py, ecc.), e le funzioni segnale (che decidono i voti) non
+dipendono comunque dal SL/TP. Il vero problema, condiviso con i filtri di
+regime, era bars=60000 (storico vecchio, pre-ampliamento) - corretto qui
+a 110000.
 """
 import sys
 import os
@@ -242,7 +253,7 @@ def greedy_search(pool, symbol, tf, bars, weights=None):
     return history
 
 
-def main(symbol="XAUUSD", tf="4h", bars=60000, out_name="ensemble_engine_results.json"):
+def main(symbol="XAUUSD", tf="4h", bars=110000, out_name="ensemble_engine_results.json"):
     pool = pool_for(symbol)
     print(f"=== Parte 1: baseline individuale ({symbol} {tf}, pool completo: {len(pool)}) ===", flush=True)
     t0 = time.time()
