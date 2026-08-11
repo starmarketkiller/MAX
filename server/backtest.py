@@ -2079,6 +2079,29 @@ def _malaysian_snr_v2_retest_sl_tp(c, ind, i, direction, entry, atr):
     return level + ZONE_WIDTH_PRICE + 0.5 * atrH4, entry - 2.3 * atr
 
 
+# 11/08 (15) - RETEST_OUTRANGE: il gate "fuori-range" (chiusura fuori dal
+# max/min del giorno prima) su MALAYSIAN_SNR_V2_RETEST aveva mostrato un
+# vantaggio (30m, walk-forward 4/5) ma testato con msnr_retest_gates.py -
+# un motore standalone con SL/TP FISSO 1.5x/3.0x ATR, che ignora il SL/TP
+# strutturale reale di RETEST (zona +- ATR H4). Mai riverificato attraverso
+# run_backtest (che applica il vero SL/TP) ne' sullo storico ampliato -
+# vedi nota "Riverifica su Storico Ampliato". Riusa sig_malaysian_snr_v2_
+# retest/_malaysian_snr_v2_retest_sl_tp cosi' com'e' (nessuna
+# reimplementazione parallela), aggiunge solo il gate.
+def sig_malaysian_snr_v2_retest_outrange(c, ind, i):
+    base = ind["snr_v2ret_signal"][i]
+    if base == 0:
+        return 0
+    sess = ind["sess"]
+    pdh, pdl = sess["pdh"][i], sess["pdl"][i]
+    if pdh is None or pdl is None:
+        return 0
+    c1 = c[i]["close"]
+    if c1 > pdh or c1 < pdl:
+        return base
+    return 0
+
+
 def _crt_series(candles):
     # 11/08 - Candle Range Theory (fonte: PDF "Candle Range Theory" di
     # Suven Raj, caricato dall'utente). Terza versione, dopo due errori
@@ -3910,6 +3933,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR_V2_STAGE1": _malaysian_snr_v2_stage1_sl_tp,
     "MALAYSIAN_SNR_V2_STAGE3": _malaysian_snr_v2_stage3_sl_tp,
     "MALAYSIAN_SNR_V2_RETEST": _malaysian_snr_v2_retest_sl_tp,
+    "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": _malaysian_snr_v2_retest_sl_tp,
     "CRT": _crt_sl_tp,
     "CISD_TRUE": _cisd_true_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
@@ -3961,6 +3985,7 @@ STRATEGIES = {
     "MALAYSIAN_SNR_V2_STAGE1": sig_malaysian_snr_v2_stage1,
     "MALAYSIAN_SNR_V2_STAGE3": sig_malaysian_snr_v2_stage3,
     "MALAYSIAN_SNR_V2_RETEST": sig_malaysian_snr_v2_retest,
+    "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": sig_malaysian_snr_v2_retest_outrange,
     "CRT": sig_crt,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,

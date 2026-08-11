@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 53,
+    "total": 54,
     "live": 37,
     "research_only": 4
   },
@@ -1182,6 +1182,29 @@
       "supported_timeframes": [
         "1h",
         "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+      "display_name": "Malaysian SNR v2 Retest + gate fuori-range (experimental)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "30m",
+        "1h"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
