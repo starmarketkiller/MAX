@@ -494,7 +494,7 @@ ciascuno con una motivazione precisa, non a caso.
 una regge (gate fuori-range a 30m), una non regge (regime), una resta indecisa per
 campione insufficiente (confluenza liquidità).
 
-### Vera Candle Range Theory (11/08) — testata da sola, nessun edge (dopo un errore di metodo scoperto e corretto)
+### Vera Candle Range Theory (11/08) — registrata come strategia, forte su oro, non su BTC
 
 Dal PDF fonte caricato dall'utente ("Candle Range Theory" di Suven Raj):
 pattern preciso a 3 candele **consecutive** sullo stesso timeframe
@@ -506,34 +506,54 @@ pattern preciso a 3 candele **consecutive** sullo stesso timeframe
 3. Candela 3 = **Entrata** → direzione opposta allo sweep, target il
    lato opposto del range.
 
-Testata come pattern a sé (`crt_diagnostic.py`), non come filtro:
-segnale/SL/TP dai livelli reali della fonte, non multipli ATR.
+**Tre versioni prima di arrivare a quella giusta** (`crt_diagnostic.py`,
+poi registrata in `backtest.py` come `CRT`):
 
-**Errore di metodo scoperto e corretto durante il test**: la prima
-versione simulava l'entrata all'APERTURA della candela 3 — dava numeri
-vistosi (XAUUSD 4h: OOS PF 1.63 su 442 trade; 30m: walk-forward **5
-finestre su 5** positive, 1.300+ trade a finestra, il risultato più
-pulito di tutta la sessione). Controllando come esegue davvero
-`run_backtest` (`px = candles[i]["close"]` — il motore entra SEMPRE
-alla CHIUSURA della barra del segnale, mai alla sua apertura), quella
-simulazione non corrispondeva a come gira il motore reale. Corretto
-(segnale alla chiusura della candela sweep stessa, non un'altra dopo)
-e rifatto tutto:
+- **v1**: 3 candele distinte come vuole la fonte, ma simulava l'entrata
+  all'APERTURA della candela 3 — numeri vistosi (4h OOS PF 1.63/442,
+  30m walk-forward 5/5) ma non corrispondenti a come esegue davvero
+  `run_backtest` (`px = candles[i]["close"]` — entra sempre alla
+  CHIUSURA della barra del segnale, mai alla sua apertura).
+- **v2**: "corretta" fondendo sweep+entrata nella stessa candela per
+  allinearsi alla chiusura del motore — ma così lo stop (estremo della
+  candela sweep) finiva innaturalmente vicino alla chiusura di quella
+  STESSA candela, tradendo la fonte (candela 3 dev'essere nuova e
+  separata). Risultato: nessun edge su nessun TF (falso negativo).
+- **v3 (quella giusta)**: 3 candele distinte come in v1, ma segnale
+  registrato SULLA candela 3 così che il motore esegua alla sua
+  chiusura (non alla sua apertura come in v1, né fusa con lo sweep
+  come in v2) — sintesi corretta fonte+motore.
 
-| TF | OOS PF/n (timing sbagliato) | OOS PF/n (timing corretto) |
+**Risultato v3, verificato attraverso `run_backtest` (non solo lo
+script standalone) — walk-forward a 5 finestre**:
+
+| TF | Finestre PF | Walk-forward |
 |---|---|---|
-| 4h | 1.63/442 | 0.91/431 |
-| 1h | — | 0.84/1328 |
-| 30m | walk-forward 5/5 positive | walk-forward: 4/5 finestre **sotto** 1 |
+| 4h | 1.04, 1.31, 1.01, 2.01, 1.11 | **5/5 sopra 1** |
+| 1h | 1.06, 1.72, 0.85, 1.15, 1.30 | 4/5 sopra 1 |
+| 30m | 1.17, 1.37, 1.21, 1.48, 1.23 | **5/5 sopra 1, range strettissimo** |
 
-**Nessun edge con la tempistica corretta**, su nessun timeframe testato
-— il risultato vistoso di prima era interamente un artefatto della
-simulazione, non un pattern reale. Non registrata come strategia (il
-codice aggiunto a `backtest.py` è stato rimosso). Lezione per il resto
-della sessione: un risultato eccezionale merita PRIMA una verifica di
-coerenza metodologica (la convenzione di esecuzione del motore), non
-solo un walk-forward — il walk-forward da solo su questi dati avrebbe
-comunque mostrato "5/5" senza rivelare il problema.
+Campioni enormi (210-1470 trade a finestra) — il risultato più solido
+di tutta la sessione, walk-forward più pulito persino di BREAKOUT_ACC+
+regime (che vinceva 3/5) o SAR+WEAK_TREND (5/5 ma campioni di 40-80).
+
+**Non confermata su BTC** (1d/4h/1h, OOS PF 0.87-1.09, IS 0.92-1.19 —
+nessun edge chiaro) — stessa storia di LIQ_SWEEP+regime e del gate
+fuori-range oggi: probabilmente un pattern legato alla struttura di
+sessione dei mercati come oro/forex (liquidità che si forma e viene
+"cacciata" agli estremi di sessione), non un edge universale su un
+mercato 24/7 come BTC.
+
+**Registrata come `CRT`** in `backtest.py`/`contracts/strategy-registry.json`
+(EXPERIMENTAL, `research_implementation=True`, `live_implementation=
+False`, nessuna controparte MQL5).
+
+**Lezione di metodo**: un risultato eccezionale merita PRIMA una
+verifica di coerenza con la convenzione di esecuzione del motore, non
+solo un walk-forward — sia v1 (falso positivo) sia v2 (falso negativo)
+avrebbero superato un walk-forward "pulito" sui propri termini, solo
+il confronto diretto con `run_backtest` ha rivelato quale delle due
+correzioni fosse quella giusta.
 
 ## Cosa NON tocca questo documento
 

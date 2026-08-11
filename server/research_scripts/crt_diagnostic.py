@@ -35,32 +35,43 @@ SYMBOL, BARS = "XAUUSD", 60000
 
 
 def crt_series(candles):
-    # 11/08 - CORRETTO: il motore run_backtest apre SEMPRE alla CHIUSURA
-    # della barra del segnale (px = candles[i]["close"], vedi run_backtest),
-    # non alla sua apertura. Il segnale va quindi generato alla chiusura
-    # della candela SWEEP stessa (non un'altra candela dopo) - il motore
-    # entrera' li', il momento piu' vicino a "candela 3 fornisce l'entrata"
-    # ottenibile con la convenzione fissa di questo engine. Prima versione
-    # (segnale alla candela successiva, entrata alla sua apertura) non
-    # corrispondeva a come gira davvero il motore - numeri di quella
-    # versione scartati, non piu' validi.
+    # 11/08 (3) - terza versione, sintesi delle due precedenti (entrambe
+    # sbagliate per motivi diversi):
+    #
+    #   v1 (originale): 3 candele DISTINTE (range=k-2, sweep=k-1,
+    #      entrata=k - fedele al PDF, "la candela 3 fornisce l'entrata"),
+    #      ma simulava l'entrata all'APERTURA di k - non come esegue
+    #      davvero run_backtest (entra sempre alla CHIUSURA della barra
+    #      del segnale).
+    #   v2 ("correzione" sbagliata): ha fuso sweep+entrata nella STESSA
+    #      candela per allinearsi alla convenzione "chiusura del motore" -
+    #      ma cosi' lo stop (alto/basso della candela sweep) finisce
+    #      innaturalmente vicino alla chiusura di quella STESSA candela,
+    #      non fedele al PDF (che vuole una candela 3 nuova e separata).
+    #
+    #   v3 (questa): 3 candele distinte come in v1 (range=k-2, sweep=k-1,
+    #      entrata=k - fedele al PDF), segnale registrato SU k cosi' che
+    #      run_backtest esegua alla chiusura di k (non alla sua apertura
+    #      come in v1, ma nemmeno fusa con lo sweep come in v2) - la
+    #      sintesi corretta tra fedelta' alla fonte e convenzione reale
+    #      del motore.
     n = len(candles)
     out_sig = [0] * n
     out_sl = [None] * n
     out_tp = [None] * n
-    for i in range(1, n):
-        rng, sweep = candles[i - 1], candles[i]
+    for k in range(2, n):
+        rng, sweep = candles[k - 2], candles[k - 1]
         crh, crl = rng["high"], rng["low"]
         swept_high = sweep["high"] > crh and sweep["close"] <= crh
         swept_low = sweep["low"] < crl and sweep["close"] >= crl
         if swept_high and not swept_low:
-            out_sig[i] = -1
-            out_sl[i] = sweep["high"]
-            out_tp[i] = crl
+            out_sig[k] = -1
+            out_sl[k] = sweep["high"]
+            out_tp[k] = crl
         elif swept_low and not swept_high:
-            out_sig[i] = 1
-            out_sl[i] = sweep["low"]
-            out_tp[i] = crh
+            out_sig[k] = 1
+            out_sl[k] = sweep["low"]
+            out_tp[k] = crh
     return out_sig, out_sl, out_tp
 
 

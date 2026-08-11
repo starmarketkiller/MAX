@@ -558,6 +558,7 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         candles, sess, atr_s, ref=snr_ref)
     snr_v2ret_signal, snr_v2ret_slref, snr_v2ret_atrH4 = _malaysian_snr_v2_retest_series(
         candles, sess, atr_s, ref=snr_ref)
+    crt_signal, crt_sl, crt_tp = _crt_series(candles)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -609,6 +610,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "snr_v2ret_signal": snr_v2ret_signal, "snr_v2ret_slref": snr_v2ret_slref,
         "snr_v2ret_atrH4": snr_v2ret_atrH4,
         # precalcolato, vedi _malaysian_snr_v2_retest_series
+        "crt_signal": crt_signal, "crt_sl": crt_sl, "crt_tp": crt_tp,
+        # precalcolato, vedi _crt_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
         "tsi": tsi_vals, "tsi_signal": tsi_sig,
@@ -2034,6 +2037,66 @@ def _malaysian_snr_v2_retest_sl_tp(c, ind, i, direction, entry, atr):
     if direction == 1:
         return level - ZONE_WIDTH_PRICE - 0.5 * atrH4, entry + 2.3 * atr
     return level + ZONE_WIDTH_PRICE + 0.5 * atrH4, entry - 2.3 * atr
+
+
+def _crt_series(candles):
+    # 11/08 - Candle Range Theory (fonte: PDF "Candle Range Theory" di
+    # Suven Raj, caricato dall'utente). Terza versione, dopo due errori
+    # scoperti e corretti in sequenza (vedi vault MALAYSIAN_SNR Porting
+    # Tier 1 per il dettaglio completo):
+    #   v1: 3 candele distinte come vuole la fonte, ma simulava l'entrata
+    #       all'apertura della candela 3 - non come esegue davvero
+    #       run_backtest (sempre alla CHIUSURA della barra del segnale).
+    #   v2: "corretto" fondendo sweep+entrata nella stessa candela per
+    #       allinearsi alla chiusura del motore - ma cosi' lo stop
+    #       (estremo della candela sweep) finiva innaturalmente vicino
+    #       alla chiusura di quella STESSA candela, tradendo la fonte
+    #       (che vuole una candela 3 nuova e separata).
+    #   v3 (questa): 3 candele distinte come in v1, segnale registrato
+    #       SULLA candela 3 cosi' che run_backtest esegua alla sua
+    #       chiusura (non alla sua apertura come in v1, ma nemmeno fusa
+    #       con lo sweep come in v2) - sintesi corretta fonte+motore.
+    #
+    #   candela k-2 = RANGE -> CRH/CRL (high/low di quella candela)
+    #   candela k-1 = SWEEP -> stoppino oltre CRH (o CRL) MA chiude DENTRO
+    #                 il range (se chiude oltre, il setup e' invalido)
+    #   candela k   = ENTRATA -> direzione OPPOSTA allo sweep, target il
+    #                 lato opposto del range
+    #
+    # Verificato: OOS forte e coerente su XAUUSD 4h/1h/30m (PF 1.25-1.62),
+    # walk-forward 5/5 finestre su 4h e 30m, 4/5 su 1h - il piu' solido
+    # della sessione. NON confermato su BTC (PF 0.89-1.22, nessun edge
+    # chiaro) - probabilmente specifico ai mercati con struttura di
+    # sessione (oro/forex), stessa storia di LIQ_SWEEP+regime oggi.
+    n = len(candles)
+    out_sig = [0] * n
+    out_sl = [None] * n
+    out_tp = [None] * n
+    for k in range(2, n):
+        rng, sweep = candles[k - 2], candles[k - 1]
+        crh, crl = rng["high"], rng["low"]
+        swept_high = sweep["high"] > crh and sweep["close"] <= crh
+        swept_low = sweep["low"] < crl and sweep["close"] >= crl
+        if swept_high and not swept_low:
+            out_sig[k] = -1
+            out_sl[k] = sweep["high"]
+            out_tp[k] = crl
+        elif swept_low and not swept_high:
+            out_sig[k] = 1
+            out_sl[k] = sweep["low"]
+            out_tp[k] = crh
+    return out_sig, out_sl, out_tp
+
+
+def sig_crt(c, ind, i):
+    return ind["crt_signal"][i]
+
+
+def _crt_sl_tp(c, ind, i, direction, entry, atr):
+    sl, tp = ind["crt_sl"][i], ind["crt_tp"][i]
+    if sl is None or tp is None:
+        return None
+    return sl, tp
 
 
 def sig_ote_cont(c, ind, i):
@@ -3697,6 +3760,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR_V2_STAGE1": _malaysian_snr_v2_stage1_sl_tp,
     "MALAYSIAN_SNR_V2_STAGE3": _malaysian_snr_v2_stage3_sl_tp,
     "MALAYSIAN_SNR_V2_RETEST": _malaysian_snr_v2_retest_sl_tp,
+    "CRT": _crt_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
     # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
@@ -3745,6 +3809,7 @@ STRATEGIES = {
     "MALAYSIAN_SNR_V2_STAGE1": sig_malaysian_snr_v2_stage1,
     "MALAYSIAN_SNR_V2_STAGE3": sig_malaysian_snr_v2_stage3,
     "MALAYSIAN_SNR_V2_RETEST": sig_malaysian_snr_v2_retest,
+    "CRT": sig_crt,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta
