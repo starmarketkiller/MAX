@@ -124,12 +124,19 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // esistente - vedi vault NEXUS EA - Config Demo 15 Strategie (10-08).
    if(name == "EMA_PULLBACK")      return PERIOD_H1;
    if(name == "FVG_CONT")          return PERIOD_H4;
-   if(name == "FVG_MIT")           return PERIOD_D1;
+   // 11/08 - FVG_MIT/LONDON_BO: il profilo diceva D1, ma la riverifica
+   // sullo storico ampliato mostra che era sbagliato - su D1 il campione
+   // era troppo sottile per essere reale (LONDON_BO: 4-5 trade totali!),
+   // 4h e' il TF gia' confermato dallo scan multi-TF del 10/08 e ora
+   // ri-confermato con campioni utilizzabili (LONDON_BO OOS PF1.38/99,
+   // walk-forward 4/5; FVG_MIT OOS PF1.01/78, quasi pareggio ma almeno
+   // un campione vero). Vedi NEXUS EA - Riverifica su Storico Ampliato.
+   if(name == "FVG_MIT")           return PERIOD_H4;
    if(name == "ICHIMOKU")          return PERIOD_H4;
    if(name == "IFVG")              return PERIOD_H4;
    if(name == "LIQ_SWEEP")         return PERIOD_D1;
    if(name == "LIQ_VOID")          return PERIOD_H4;
-   if(name == "LONDON_BO")         return PERIOD_D1;
+   if(name == "LONDON_BO")         return PERIOD_H4;
    if(name == "MACD")              return PERIOD_H4;
    if(name == "AMD_CONT")          return PERIOD_M30;
    if(name == "LDN_REVERSAL")      return PERIOD_M15;
