@@ -83,6 +83,26 @@ richiedere l'allineamento sullo stesso bar, non i parametri.
 
 ## Note
 
+**11/08 - seguito diretto della diagnosi 16/07**: quella nota concludeva
+"il problema e' l'idea di richiedere l'allineamento sullo stesso bar, non
+i parametri" ma non aveva mai testato la correzione ovvia (CHoCH entro
+una finestra di barre DOPO il sweep) ne' sui 7+ anni Dukascopy (allora
+solo ~2 anni Yahoo, dichiarato insufficiente). Riportata come
+`TURTLE_SOUP_CHOCH` (finestra 5 barre, riusa `sig_turtle_soup` +
+`ind["choch_int"]` fractal fedele, stesso motore `run_backtest`):
+- **1h** (TF di profilo reale): non migliora, walk-forward 2/5, non
+  meglio del baseline.
+- **4h**: promettente. IS 1.37/68, OOS 1.33/42 (coerenti), walk-forward
+  **4/5** (baseline 3/5), drawdown dimezzato/triplicato in meno
+  (7.4%/5.1% vs 23%/11% del baseline flat). Il filtro CHoCH taglia il
+  volume di trade del ~73% (110 vs 410 totali su IS+OOS) - meno trade ma
+  nettamente piu' puliti, coerente con l'idea che uno sweep senza CHoCH
+  successivo sia spesso un fakeout che continua contro la posizione.
+  Campioni per finestra ancora sottili (16-28) - promettente ma non al
+  livello di robustezza di CRT, da tenere d'occhio non da promuovere
+  subito nel nucleo. Non ancora walk-forward-validata su un secondo
+  giro/altra finestra di lookback (3 o 7 barre) prima di considerarla
+  definitiva.
 
 ## Collegamenti
 [[MOC - Trading]] · [[MOC - Strategie]] · [[NEXUS EA - Screening Strategie (sito 10y)]] · [[NEXUS EA - Lezione Overfitting 3Y]] · [[NEXUS EA - Hedge nel Tempo]] · [[NEXUS EA - Backtest 10Y Segmentato - Analisi]] · [[NEXUS EA - Ricerca Esterna e Test A-B per Strategia]]
