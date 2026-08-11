@@ -55,7 +55,12 @@ def test_counts_are_37_live_plus_4_research():
     # EXPERIMENTAL, vedi vault "MALAYSIAN_SNR Porting Tier 1".
     # research_only_ids() resta a 4 perche' filtra su
     # status=="RESEARCH_ONLY", non su EXPERIMENTAL.
-    assert len(sr.all_records()) == 51
+    # 52, non 51: + CISD_TRUE (11/08, versione "vera" di CISD -
+    # displacement+delivery+sweep+reclaim - scartata sia sul sito che in
+    # MQL5 perche' non scattava mai su un test live corto, ma spara
+    # regolarmente sullo storico ampliato 2019-2026 - vedi vault
+    # "NEXUS EA - CISD_TRUE").
+    assert len(sr.all_records()) == 52
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -116,7 +121,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 51
+    assert r.json()["counts"]["total"] == 52
 
 
 def test_resolve_endpoint_404_on_unknown(client):

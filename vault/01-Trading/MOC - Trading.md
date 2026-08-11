@@ -113,6 +113,14 @@ profitto reale, non solo curve di backtest.
   Rivelato che CRT ha un drawdown flottante strutturale enorme (stop
   ancorato al wick, non ATR) — non un rischio attivo oggi (`InpEnableGrid
   =false` di default), ma da tenere presente prima di costruire sopra.
+- **[[NEXUS EA - CISD_TRUE (versione vera, negativa) e Censimento Completo (11-08)]]** —
+  stessa indagine fatta per CRT (versione "vera" scartata perché non
+  scattava mai) applicata a THREE_BAR_DELIVERY_BREAK/CISD: sul sito dava
+  PF 5.95 ma 0/1067 setup. Sullo storico ampliato spara regolarmente, ma
+  il test onesto (walk-forward) è negativo su tutti e 3 i TF — non ogni
+  versione scartata è una CRT nascosta. Include anche il censimento
+  completo e coerente di tutte le 50 strategie del motore (16 nucleo +
+  34 escluse), stesso metodo per tutte.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

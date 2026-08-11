@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 51,
+    "total": 52,
     "live": 37,
     "research_only": 4
   },
@@ -1139,6 +1139,30 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "CISD_TRUE",
+      "display_name": "Change in State of Delivery (true, displacement+delivery+sweep+reclaim)",
+      "aliases": [],
+      "family": "SMC",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "15m",
+        "1h",
+        "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     }
   ]

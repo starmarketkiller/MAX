@@ -2148,6 +2148,90 @@ def sig_cisd(c, ind, i):
     return 0
 
 
+# 11/08 (9) - CISD_TRUE: riporta la versione "vera" di CISD (displacement +
+# ultima candela di delivery OPPOSTA + sweep di liquidita' + reclaim) che
+# era stata scartata sia sul sito che in MQL5 perche' non scattava MAI
+# (0 setup su 1067) - sostituita ovunque dalla versione semplice sopra
+# (sig_cisd/THREE_BAR_DELIVERY_BREAK). Codice originale: git show
+# dc13566^:MQL5/Include/NEXUS_v1/NXS_Strategies_Institutional.mqh
+# (NXS_Strat_CISD pre-semplificazione, v2.3.3). Diagnostica di frequenza
+# (cisd_real_diagnostic.py) mostra che su QUESTO storico (2019-2026,
+# molto piu' ampio del test live che dava 0/1067) la logica spara
+# regolarmente: 2236 segnali su 15m, 631 su 1h, 265 su 4h - il collo di
+# bottiglia (sweep di liquidita' reale) non e' mai zero, solo raro (~17%
+# dei displacement bar). Riusa _sweep_ext_at(), lo stesso rilevatore
+# fedele condiviso da TURTLE_SOUP/JUDAS_SWING.
+_CISD_TRUE_DISPLACEMENT_MULT = 0.7
+_CISD_TRUE_DELIVERY_MULT = 0.5
+_CISD_TRUE_LOOKBACK = 15
+
+
+def _cisd_true_last_opposite_delivery(c, ind, i, want_bull):
+    atr = ind["atr"][i]
+    for k in range(1, _CISD_TRUE_LOOKBACK + 1):
+        j = i - k
+        if j < 0:
+            break
+        cd = c[j]
+        body = abs(cd["close"] - cd["open"])
+        if body < atr * _CISD_TRUE_DELIVERY_MULT:
+            continue
+        is_bull = cd["close"] > cd["open"]
+        if is_bull == want_bull:
+            return cd["high"], cd["low"]
+    return None, None
+
+
+def sig_cisd_true(c, ind, i):
+    atr = ind["atr"][i]
+    if not atr or i < _CISD_TRUE_LOOKBACK + 1:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    if abs(c1 - o1) < atr * _CISD_TRUE_DISPLACEMENT_MULT:
+        return 0
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return 0
+    if c1 > o1:
+        bear_hi, _ = _cisd_true_last_opposite_delivery(c, ind, i, want_bull=False)
+        swept_low = sw["sweptPDL"] or sw["sweptEQL"] or sw["sweptAsiaLow"]
+        if bear_hi is not None and swept_low and c1 > bear_hi:
+            return 1
+    elif c1 < o1:
+        _, bull_lo = _cisd_true_last_opposite_delivery(c, ind, i, want_bull=True)
+        swept_high = sw["sweptPDH"] or sw["sweptEQH"] or sw["sweptAsiaHigh"]
+        if bull_lo is not None and swept_high and c1 < bull_lo:
+            return -1
+    return 0
+
+
+def _cisd_true_sl_tp(c, ind, i, direction, entry, atr):
+    # Fedele all'originale MQL5: SL al livello di sweep (o alla delivery
+    # candle se non confermato) con un piccolo buffer, TP a R:R 2.5 fisso.
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return None
+    if direction == 1:
+        bear_hi, bear_lo = _cisd_true_last_opposite_delivery(c, ind, i, want_bull=False)
+        anchor = sw["level"] if sw["confirmed"] and sw["level"] else bear_lo
+        if anchor is None:
+            return None
+        sl = anchor - 0.4 * atr
+        risk = entry - sl
+        if risk <= 0:
+            return None
+        return sl, entry + 2.5 * risk
+    bull_hi, bull_lo = _cisd_true_last_opposite_delivery(c, ind, i, want_bull=True)
+    anchor = sw["level"] if sw["confirmed"] and sw["level"] else bull_hi
+    if anchor is None:
+        return None
+    sl = anchor + 0.4 * atr
+    risk = sl - entry
+    if risk <= 0:
+        return None
+    return sl, entry - 2.5 * risk
+
+
 # ---------------------------------------------------------------------------- #
 # Strategie a sessione (16/07) - AMD_CONT, AMD_REVERSAL, JUDAS_SWING,
 # LDN_REVERSAL, NY_REVERSAL, PO3, SILVER_BULLET. Prima assenti dal motore
@@ -3761,6 +3845,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR_V2_STAGE3": _malaysian_snr_v2_stage3_sl_tp,
     "MALAYSIAN_SNR_V2_RETEST": _malaysian_snr_v2_retest_sl_tp,
     "CRT": _crt_sl_tp,
+    "CISD_TRUE": _cisd_true_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
     # stessa (livelli sweep/swing/FVG), non da atr_sl/atr_tp generici.
@@ -3817,6 +3902,7 @@ STRATEGIES = {
     # chi iterava STRATEGIES e confrontava con il registro concludeva che
     # THREE_BAR_DELIVERY_BREAK non avesse implementazione research. Ce l'ha.
     "THREE_BAR_DELIVERY_BREAK": sig_cisd,
+    "CISD_TRUE": sig_cisd_true,
     "WEEKLY_EXP": sig_weekly_exp,      # 04/08: fedele a NXS_Strat_WeeklyRangeExp (prima condivideva sig_breakout con LONDON_BO)
     # 10/08: allineato a sig_fvg_cont_ext (era rimasto sulla versione PRIMA
     # dell'upgrade 16/07 di FVG_CONT - filtro EMA50 semplice invece del

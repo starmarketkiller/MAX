@@ -51,6 +51,7 @@ export const STRATEGY_REGISTRY = [
   ["TSI","True Strength Index","MOMENTUM",true,true],
   ["TURTLE_SOUP","Turtle Soup","LIQUIDITY",true,true],
   ["WEEKLY_EXP","Weekly Exp","SESSION",true,true],
+  ["CISD_TRUE","Change in State of Delivery (true, displacement+delivery+sweep+reclaim)","SMC",false,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));
