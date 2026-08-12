@@ -497,9 +497,14 @@ void NXS_Stats_Init(){
       "THREE_BAR_DELIVERY_BREAK","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
       "WEEKLY_EXP","PO3","LIQ_VOID","DISP_REBAL",
       // v2.0.8
-      "RANGE_FADE"
+      "RANGE_FADE",
+      // 12/08 - CRT mancava dall'elenco noto da quando e' stata portata in
+      // MQL5 (11/08): _nxs_stats_idx() la crea comunque al primo utilizzo,
+      // ma restava assente dal report finche' non scattava il primo segnale.
+      "CRT"
    };
    for(int i = 0; i < ArraySize(known); i++) _nxs_stats_idx(known[i]);
+   NXS_Stats_SetEnabled("CRT", InpUseStrat_CRT);
    // v2.0.7b: sync ALL classic strategies (was missing — defaulted to enabled=true regardless of toggle)
    NXS_Stats_SetEnabled("ADX_RSI",        InpStrat_ADX_RSI);
    NXS_Stats_SetEnabled("BOLLINGER",      InpStrat_BOLLINGER);

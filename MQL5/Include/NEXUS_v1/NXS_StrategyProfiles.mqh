@@ -165,65 +165,81 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
 
 // Rischio % per-strategia (dimensionato a budget di drawdown ~10% nel backtest).
 // Ritorna <=0 se non c'e' profilo -> usa il rischio globale InpRiskPercent.
-double NXS_Profile_Risk(const string name){
-   // v2.4.0: rischio RIALLOCATO sui dati REALI del broker (backtest 3M v2.3.9),
-   // non piu' sull'ottimizzazione del sito (Yahoo). Con anti-bleed e streak
-   // sizing spenti, questi valori sono il rischio EFFETTIVO per trade.
-   //   - VINCENTI reali (PF>1.1) -> size alzata (creano margine)
-   //   - PERDENTI reali (PF<1.0) -> size tagliata al minimo (smettono di
-   //     dissanguare, restano vive finche' non le riportiamo/rivediamo)
-   // --- Core vincente (PF reale >1.1) ---
-   if(name == "TURTLE_SOUP")       return 3.0;    // PF 2.04 reale, la stella
-   if(name == "BJORGUM")           return 2.5;    // PF 1.90 reale
+//
+// 12/08 — RITARATO per conto piccolo (~200-300 EUR), su richiesta esplicita
+// dell'utente: a 0.5% flat il lotto minimo XAUUSD spesso supera il budget
+// nominale (vedi InpMaxRiskAtMinLotPct), quindi l'EA di fatto non tradava.
+// Nuova fascia a 5 livelli per le 16 strategie del nucleo attivo (demo/live),
+// costruita incrociando DUE evidenze indipendenti - non una sola:
+//   1) PF reale MT5 (dove esiste una storia — la piu' affidabile, e' quello
+//      che il conto ha davvero visto, comprende slippage/spread/esecuzione)
+//   2) OOS + walk-forward Python sullo storico Dukascopy ampio 2019-2026
+//      (vedi vault "NEXUS EA - Riverifica su Storico Ampliato" e "NEXUS EA -
+//      Diagnosi per strategia", 11/08)
+// Le red flag di esecuzione reale nota (MACD, FVG_CONT — CRITICA su MT5 pur
+// con backtest Python forte) SOVRASCRIVONO un buon numero Python: eseguire
+// male dal vivo conta piu' di un backtest pulito. Le altre 20 strategie non
+// nel nucleo attuale restano ai valori precedenti (fuori scope di questo
+// giro, nessuna nuova evidenza raccolta su quelle).
+//
+// Tier S (5.0%) — doppia conferma forte, nessuna red flag:
+   if(name == "EMA_PULLBACK")      return 5.0;    // reale PF1.63 + Python WF4/5 (1.47->1.52 ricetta uff.)
+   if(name == "SAR")               return 5.0;    // reale PF1.31/196 trade (workhorse) + Python OOS1.22/276
+   // TURTLE_SOUP: reale PF2.04 "la stella" e' con la RICETTA UFFICIALE attiva
+   // (slMult1.0/tpMult4.5/htf, vedi NXS_Profile_Get sopra) - sul flat baseline
+   // il Python e' debole (0.96/398, quasi pareggio), con la stessa ricetta
+   // sale a 1.15 WF4/5. Coerente, non contraddittorio: la ricetta e' cio' che
+   // gira davvero, non il flat.
+   if(name == "TURTLE_SOUP")       return 5.0;
+// Tier A (2.5%) — terreno vergine su MT5 ma Python solido/campione ampio,
+// oppure singola conferma forte con una riserva strutturale nota:
+   if(name == "LONDON_BO")         return 2.5;    // Python OOS1.38/99 WF4/5, nessuna storia reale
+   if(name == "AMD_CONT")          return 2.5;    // Python OOS1.38/282 WF4/5, campione grande
+   if(name == "ADX_RSI")           return 2.5;    // reale PF1.14 positivo, ma campione D1 sottile -> non tier S
+   // CRT: l'evidenza Python e' la piu' forte di tutta la sessione (WF5/5 su
+   // 3 TF, ~20.000 trade) ma resta terreno vergine su MT5 E ha una riserva
+   // strutturale nota (stop ancorato al wick del sweep, non un multiplo ATR -
+   // drawdown flottante 107% osservato in una finestra quando il wick e'
+   // minimo, vedi vault "Fase C Recovery Baseline e Rischio Flottante").
+   // Floor minimo sullo stop aggiunto in NXS_Strat_CRT stesso giro (12/08) -
+   // tier A e non S finche' il floor non e' verificato su MT5 reale.
+   if(name == "CRT")               return 2.5;
+// Tier B (1.2%) — terreno vergine, Python piu' modesto o meno pulito:
+   if(name == "LDN_REVERSAL")      return 1.2;    // Python OOS1.22/145 WF4/5
+   if(name == "AMD_REVERSAL")      return 1.2;    // Python OOS1.59/117 ma WF solo 3/5
+// Tier C (0.5%) — red flag di esecuzione reale nota, o debolezza Python
+// conclamata (DEBOLE/IS negativo/WF incoerente): vive ma a size minima,
+// stesso principio "non spente, tagliate" gia' in uso prima di questo giro.
+   if(name == "MACD")              return 0.5;    // CRITICA storica su MT5 (PF1.10 al limite, mai chiarita)
+   if(name == "FVG_CONT")          return 0.5;    // CRITICA su MT5 reale (PF0.79) pur con backtest Python forte
+   if(name == "BREAKOUT_ACC")      return 0.5;    // Python DEBOLE, OOS2.71 smentito da WF reale 1/5 (rumore D1)
+   if(name == "LIQ_SWEEP")         return 0.5;    // Python DEBOLE, IS 0.91 sotto pareggio
+   if(name == "THREE_BAR_DELIVERY_BREAK") return 0.5;  // Python DEBOLE, WF 2/5 incoerente tra finestre
+   // FVG_MIT: il miglioramento trovato (FVG_MIT_WINDOW, 4h) e' ancora
+   // EXPERIMENTAL solo Python, non portato in MQL5 - il trigger live resta
+   // quello base (OOS PF1.01/78, debole), stessa fascia degli altri Tier C.
+   if(name == "FVG_MIT")           return 0.5;
+// Tier D (0.3%) — problema aperto confermato, nessuna soluzione trovata
+// dopo piu' tentativi, l'unica del nucleo sotto pareggio in OOS:
+   if(name == "TSI")               return 0.3;    // reale PF0.86 "in ripresa" ma OOS Python 0.71/39
+// --- Fuori dal nucleo attuale, valori precedenti invariati (fuori scope) ---
+   // 12/08 - BJORGUM: commento precedente ("PF 1.90 reale") era STALE -
+   // superato dalla chiusura di sessione dell'11/08 (-8.6R reali, 5/6 anni
+   // negativi, vedi vault "Strategie Escluse... §5"). Corretto qui perche'
+   // trovato durante questo giro, anche se BJORGUM non e' nel nucleo attivo
+   // (nessun profilo enabled): 2.5 sarebbe stato un tier alto ingiustificato
+   // se mai riattivata.
+   if(name == "BJORGUM")           return 0.4;
    if(name == "ICHIMOKU")          return 1.8;    // PF 1.91 reale (campione piccolo)
-   if(name == "EMA_PULLBACK")      return 1.5;    // PF 1.63 reale (riportata 2.3.8)
-   if(name == "SAR")               return 1.5;    // PF 1.31 reale, 196 trade (workhorse)
    if(name == "RSI_DIV")           return 1.5;    // PF 1.21 reale, 98 trade
-   // 10/08 - MACD abbassata per la config demo 15-strategie: PF reale 1.10 e'
-   // al limite (era CRITICA su campione enorme, 1.496 trade/10y, prima di
-   // "riprendersi" - causa mai chiarita, sospetto di esecuzione MT5 mai
-   // risolto, vedi NEXUS EA - Ricerca Esterna e Test A-B per Strategia). Il
-   // backtest Python di oggi (storico Dukascopy pieno) la conferma FORTE
-   // (OOS PF 1.63) ma quello NON garantisce l'esecuzione reale - e' proprio
-   // il tipo di divario gia' visto qui. Rischio ridotto finche' il demo non
-   // conferma o smentisce con esecuzione vera.
-   if(name == "MACD")              return 0.5;    // era 1.5 - vedi commento sopra
-   if(name == "ADX_RSI")           return 1.3;    // PF 1.14 reale (riportata 2.3.8)
-   // --- Perdenti reali (PF<1.0): size al minimo, non spente ---
-   if(name == "TSI")               return 0.5;    // PF 0.86 (riportata, in ripresa 0.40->0.86)
-   // 10/08 - FVG_CONT: gia' a rischio ridotto per lo stesso motivo di MACD
-   // sopra (confermata CRITICA su MT5 reale nonostante backtest Python/sito
-   // buoni - vedi commento MACD). Nessuna modifica, il valore esistente era
-   // gia' la scelta giusta per la config demo.
-   if(name == "FVG_CONT")          return 0.4;    // PF 0.79 (SMC non porta pulito)
    if(name == "ORDER_BLOCK")       return 0.5;    // PF 0.67
    if(name == "OB_MIT")            return 0.5;    // PF 0.38 (crollata per interazione)
-   if(name == "THREE_BAR_DELIVERY_BREAK")              return 0.5;    // PF 0.66
    if(name == "MALAYSIAN_SNR")     return 0.4;    // PF 0.00
    if(name == "BOLLINGER")         return 0.6;    // riportata 2.4.0, in osservazione
-   // --- Ancora da validare sul broker: size prudente ---
    if(name == "BB_SQUEEZE")        return 0.6;
-   if(name == "BREAKOUT_ACC")      return 0.5;
    if(name == "DISP_REBAL")        return 0.5;
-   if(name == "FVG_MIT")           return 0.5;
    if(name == "IFVG")              return 0.5;
-   if(name == "LIQ_SWEEP")         return 0.6;
    if(name == "LIQ_VOID")          return 0.5;
-   if(name == "LONDON_BO")         return 0.5;
-   // 10/08 - AMD_CONT/LDN_REVERSAL/AMD_REVERSAL: mai avuto un profilo,
-   // terreno vergine su MT5 (a differenza di MACD/FVG_CONT sopra, qui non
-   // c'e' ne' storia positiva ne' negativa). Stessa size prudente delle
-   // altre "da validare sul broker".
-   if(name == "AMD_CONT")          return 0.5;
-   if(name == "LDN_REVERSAL")      return 0.5;
-   if(name == "AMD_REVERSAL")      return 0.4;    // campione ancora piu' piccolo delle altre due
-   // 11/08 - CRT: terreno vergine su MT5 (nessuna storia reale, mai
-   // eseguita prima d'ora), ma l'evidenza Python e' la piu' forte di
-   // tutta la sessione (walk-forward 5/5 su 3 TF, ~20.000 trade) - size
-   // leggermente sopra la fascia prudente standard (0.5%) per riflettere
-   // la qualita' insolita della ricerca, ma ancora ben sotto la fascia
-   // "core vincente" (1.5-3.0%) finche' non c'e' conferma reale.
-   if(name == "CRT")               return 0.6;
    if(name == "OTE_CONT")          return 0.5;
    if(name == "RANGE_FADE")        return 0.6;
    if(name == "SH_BMS_RTO")        return 0.5;

@@ -34,6 +34,7 @@
 #include <NEXUS_v1\NXS_RuntimeSettings.mqh>
 #include <NEXUS_v1\NXS_Presets.mqh>
 #include <NEXUS_v1\NXS_SymbolProfile.mqh>
+#include <NEXUS_v1\NXS_StreakRisk.mqh>
 #include <NEXUS_v1\NXS_Risk.mqh>
 #include <NEXUS_v1\NXS_Slippage.mqh>
 #include <NEXUS_v1\NXS_SafeOrder.mqh>
@@ -1368,6 +1369,11 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // logical trade"). Prima un trade chiuso in 3 parziali in perdita contava
    // 3 perdite consecutive e poteva innescare anti-revenge da solo.
    NXS_OnTradeClosed(tc.pnl);
+   // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA: stesso
+   // punto/stesso pnl AGGREGATO di NXS_OnTradeClosed sopra (esattamente una
+   // volta per trade logico, non per deal parziale). No-op se
+   // InpUseLossStreakScaling e' off. Vedi NXS_StreakRisk.mqh.
+   NXS_StreakRisk_OnTradeClosed(tc.strategy, tc.pnl);
 
    string reason = tc.close_reason;
    if(reason == "unknown") reason = (tc.pnl >= 0) ? NXS_R_PROFIT : NXS_R_DD;

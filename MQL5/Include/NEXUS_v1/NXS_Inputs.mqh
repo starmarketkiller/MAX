@@ -88,17 +88,24 @@ input double   InpMaxDailyDDPct    = 5.0;
 input bool     InpUseMarginGate    = true;    // v2.4.8: HEDGE ON - regola la concorrenza col margine (freno di sicurezza sul DD)
 input double   InpMinMarginLevelPct = 500.0; // livello margine minimo proiettato per aprire (0=off)
 // 10/08 - CAP DI RISCHIO AGGREGATO: InpMaxConcurrent limita il NUMERO di
-// posizioni ma non la loro somma in %. Con la config demo a 15 strategie
-// indipendenti (rischio individuale fino al 3%, vedi NXS_StrategyProfiles.mqh)
-// piu' segnali possono scattare sulla stessa barra e sommare un'esposizione
-// ben oltre il rischio "per trade" nominale - vedi vault NEXUS EA - Config
-// Demo 15 Strategie (10-08). 0 = disattivo (comportamento identico a prima).
-// Controllato in NXS_CheckProtections via NXS_OpenRiskPct() (NXS_Globals.mqh):
-// se il rischio GIA' aperto (somma su tutte le posizioni NEXUS, distanza SL
-// ATTUALE non quella storica all'apertura) e' gia' al tetto, un nuovo ingresso
-// viene rifiutato indipendentemente dalla sua size - stesso stile "reject
-// esplicito, mai clamp silenzioso" di AUD0-RISK-002/003.
-input double   InpMaxAggregateRiskPct = 15.0;
+// posizioni ma non la loro somma in %. Con la config demo a 15+ strategie
+// indipendenti (rischio individuale fino al 5%, vedi NXS_StrategyProfiles.mqh,
+// ritarato 12/08 per conto piccolo) piu' segnali possono scattare sulla stessa
+// barra e sommare un'esposizione ben oltre il rischio "per trade" nominale -
+// vedi vault NEXUS EA - Config Demo 15 Strategie (10-08). 0 = disattivo
+// (comportamento identico a prima). Controllato in NXS_CheckProtections via
+// NXS_OpenRiskPct() (NXS_Globals.mqh): se il rischio GIA' aperto (somma su
+// tutte le posizioni NEXUS, distanza SL ATTUALE non quella storica
+// all'apertura) e' gia' al tetto, un nuovo ingresso viene rifiutato
+// indipendentemente dalla sua size - stesso stile "reject esplicito, mai
+// clamp silenzioso" di AUD0-RISK-002/003.
+// 12/08 - alzato 15.0->25.0: coi tier per-strategia ora fino al 5% (contro il
+// 3% massimo precedente), 15% avrebbe bloccato l'operativita' normale gia'
+// con 3 strategie tier S aperte insieme (15%). 25% resta un freno reale (il
+// caso limite teorico con tutte e 16 le strategie del nucleo aperte insieme
+// sarebbe ~31% - vedi vault "Rischio a Livelli e Moltiplicatore da Streak"),
+// non un cap simbolico.
+input double   InpMaxAggregateRiskPct = 25.0;
 // v2.5.x — tetto ESPLICITO al rischio quando il lotto minimo broker supera il
 // budget calcolato (vedi AUD0-RISK-002 in NXS_Risk.mqh). Default 0 = comportamento
 // invariato: l'ordine viene rifiutato. Se > 0, il lotto minimo viene comunque
@@ -106,7 +113,34 @@ input double   InpMaxAggregateRiskPct = 15.0;
 // del saldo (indipendente dal rischio% nominale della strategia) — pensato per
 // conti piccoli (~€200-1000) dove il lotto minimo e' strutturalmente sopra il
 // budget nominale su XAUUSD. Ogni sforamento viene loggato come tale, mai silente.
-input double   InpMaxRiskAtMinLotPct = 0.0;
+// 12/08 - alzato 0.0->8.0: con un conto ~200-300 EUR il lotto minimo XAUUSD
+// supera quasi sempre il budget nominale sui tier bassi (0.3-0.5%), quindi a
+// 0.0 l'EA di fatto non tradava la maggior parte dei segnali - vedi vault
+// "Rischio a Livelli e Moltiplicatore da Streak" (12/08).
+input double   InpMaxRiskAtMinLotPct = 8.0;
+
+input group "=== RISCHIO A LIVELLI: MOLTIPLICATORE DA PERDITE CONSECUTIVE (12/08) ==="
+// Richiesta esplicita dell'utente (conto ~200-300 EUR): dopo una serie di
+// perdite consecutive SULLA STESSA STRATEGIA, il rischio di quella strategia
+// sale temporaneamente per recuperare piu' in fretta, invece di restare
+// piatto. E' l'OPPOSTO concettuale di InpUseAntiBleed/InpUseStreakSizing
+// sotto (quelli RIDUCONO il rischio dopo perdite) - NON abilitare insieme
+// sulla stessa strategia, l'effetto netto sarebbe imprevedibile. Vedi
+// NXS_StreakRisk.mqh per i dettagli e i guardrail. Default OFF (comportamento
+// invariato) - l'utente lo abilita esplicitamente sul proprio conto live.
+input bool     InpUseLossStreakScaling = false;
+// Ogni quante perdite consecutive scatta uno step di scalata (ripetuto: alla
+// 3a, 6a, 9a... perdita di fila, fino al tetto InpSRisk_MaxMult).
+input int      InpSRisk_LossesToScale  = 3;
+// Moltiplicatore applicato ad ogni step (non un raddoppio: 1.3x per step,
+// non 2x - un martingale puro con InpSRisk_LossesToScale=3 impiegherebbe
+// solo 3 serie di 3 perdite per arrivare a 8x il rischio base).
+input double   InpSRisk_ScaleStep      = 1.3;
+// Tetto assoluto: il moltiplicatore non supera mai questo valore,
+// indipendentemente da quante perdite consecutive si accumulano. Con i
+// default sopra servono 9 perdite consecutive sulla stessa strategia per
+// arrivare al tetto (1.3^3 = 2.197, cappato a 2.0).
+input double   InpSRisk_MaxMult        = 2.0;
 double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;
@@ -595,6 +629,13 @@ input bool     InpUseStrat_DispRebal     = true;
 // controparte precedente nel sito ("sperimentale" come MALAYSIAN_SNR_
 // BREAKOUT quando fu introdotta).
 input bool     InpUseStrat_CRT           = true;
+// 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
+// del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
+// un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'
+// esplodere prima che il trade chiuda (107% osservato in una finestra, vedi
+// vault "Fase C Recovery Baseline e Rischio Flottante"). 0 = disattivo
+// (comportamento originale, mai un floor). Vedi NXS_Strat_CRT().
+input double   InpCRT_MinStopATR         = 0.3;
 
 // input group "=== TIMEFRAME-AWARE SL/TP + LIFE (v2.0.21) ==="
 double   InpTF_SLTP_H1   = 2.0;    // moltiplicatore SL/TP per segnali origine H1 (× ATR chart)

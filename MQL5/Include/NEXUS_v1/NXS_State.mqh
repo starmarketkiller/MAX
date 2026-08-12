@@ -5,7 +5,7 @@
 #define __NXS_STATE_MQH__
 
 #define NXS_STATE_MAGIC   0x4E585335
-#define NXS_STATE_SCHEMA  4
+#define NXS_STATE_SCHEMA  5   // 12/08 — v5: aggiunto il moltiplicatore streak per-strategia (NXS_StreakRisk.mqh)
 #define NXS_STATE_MAX_POS 512
 
 struct SNXSManagedState {
@@ -267,6 +267,17 @@ bool _NXS_StateWrite(string fileName){
       _NXS_WInt(h, g_managedState[i].splitP1 ? 1 : 0);
       _NXS_WInt(h, g_managedState[i].splitP2 ? 1 : 0);
    }
+   // v5 — moltiplicatore streak per-strategia (NXS_StreakRisk.mqh). Senza
+   // questo, un riavvio a meta' di una serie di perdite azzererebbe il
+   // moltiplicatore in silenzio, facendo ripartire da rischio base come se
+   // la serie non fosse mai iniziata.
+   int srCount = NXS_StreakRisk_Count();
+   _NXS_WInt(h, srCount);
+   for(int i=0; i<srCount; i++){
+      _NXS_WriteString(h, NXS_StreakRisk_NameAt(i));
+      _NXS_WInt(h, NXS_StreakRisk_LossesAt(i));
+      _NXS_WDbl(h, NXS_StreakRisk_MultAt(i));
+   }
    FileWriteLong(h, g_nxsStateSum);                 // AUD0-STATE-006
    FileWriteInteger(h, NXS_STATE_MAGIC, INT_VALUE);
    FileFlush(h); FileClose(h);
@@ -328,6 +339,17 @@ bool _NXS_StateRead(string fileName, bool apply){
       loaded[i].splitP1 = _NXS_RInt(h) != 0;
       loaded[i].splitP2 = _NXS_RInt(h) != 0;
    }
+   // v5 — moltiplicatore streak per-strategia (NXS_StreakRisk.mqh).
+   int srCount = _NXS_RInt(h);
+   if(srCount < 0 || srCount > NXS_SRISK_MAX_NAMES){ FileClose(h); return false; }
+   string srName[NXS_SRISK_MAX_NAMES];
+   int    srLosses[NXS_SRISK_MAX_NAMES];
+   double srMult[NXS_SRISK_MAX_NAMES];
+   for(int i=0; i<srCount; i++){
+      srName[i]   = _NXS_ReadString(h);
+      srLosses[i] = _NXS_RInt(h);
+      srMult[i]   = _NXS_RDbl(h);
+   }
    long storedSum = FileReadLong(h);
    long computed  = g_nxsStateSum;
    int trailer = FileReadInteger(h, INT_VALUE); FileClose(h);
@@ -348,6 +370,12 @@ bool _NXS_StateRead(string fileName, bool apply){
 
    g_managedStateCount = count;
    for(int i=0; i<count; i++) g_managedState[i] = loaded[i];
+
+   // v5 — moltiplicatore streak per-strategia: ripristinato SEMPRE (come le
+   // altre protezioni sotto), non solo nello stesso giorno — una serie di
+   // perdite non si esaurisce a mezzanotte.
+   for(int i=0; i<srCount; i++)
+      NXS_StreakRisk_Restore(srName[i], srLosses[i], srMult[i]);
 
    // La safety state va ripristinata SEMPRE, non solo nello stesso giorno:
    // un breaker di equity con scadenza a 24h o un flatten incompiuto non

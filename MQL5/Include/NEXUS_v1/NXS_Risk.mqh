@@ -46,10 +46,15 @@ double NXS_DynamicScoreThreshold(double base){
 // metadati di mercato mancanti in un ordine reale (AUD0-RISK-001), e forzava
 // il lotto al minimo broker anche quando questo superava il rischio richiesto
 // (AUD0-RISK-002). Entrambi i comportamenti sono stati rimossi.
-double NXS_CalcLotRisk(double slPriceDist, double riskPct){
+double NXS_CalcLotRisk(double slPriceDist, double riskPct, const string stratName = ""){
    double risk = AccountInfoDouble(ACCOUNT_BALANCE) * riskPct / 100.0;
    risk *= NXS_AntiBleedMultiplier();   // P2 anti-bleed scaling
    risk *= NXS_AccountLotMult();        // v2.2.1 aggressivita' + scala da streak
+   // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA (opposto
+   // concettuale di AntiBleed/AccountLotMult sopra, vedi NXS_StreakRisk.mqh
+   // per il perche' - qui aumenta invece di ridurre). No-op (1.0) se
+   // InpUseLossStreakScaling e' off o se non viene passato un nome.
+   risk *= NXS_StreakRisk_Mult(stratName);
    if(risk <= 0) return 0.0;
 
    double tickVal  = SymbolInfoDouble(g_sym, SYMBOL_TRADE_TICK_VALUE);

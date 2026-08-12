@@ -196,6 +196,22 @@ profitto reale, non solo curve di backtest.
   complessivo del giro: 2 miglioramenti reali, 1 promettente non
   confermato, il resto negativi onesti o già chiusi. Dettaglio completo in
   [[NEXUS EA - Strategie Escluse, Analisi Una-ad-Una (11-08)]].
+- **[[NEXUS EA - Rischio a Livelli e Moltiplicatore da Streak (12-08)]]** —
+  richiesta esplicita dell'utente (conto ~200-300 EUR, 0.5% flat troppo
+  poco e sotto il lotto minimo XAUUSD). Costruiti: (1) 5 fasce di rischio
+  per-strategia (0.3%-5.0%, prima flat) sulle 16 del nucleo, incrociando
+  PF reale MT5 + Python OOS/WF, con le red flag di esecuzione note che
+  sovrascrivono un buon backtest; (2) moltiplicatore da perdite consecutive
+  per-strategia (`NXS_StreakRisk.mqh`, nuovo modulo) — dichiaratamente un
+  martingale, ma cappato (max 2x, +30%/step, 9 perdite per il tetto) e
+  scoped per-strategia, guardrail concordati esplicitamente prima di
+  costruirlo; (3) `InpMaxRiskAtMinLotPct` alzato 0→8 (senza, il floor sul
+  lotto minimo restava inutilizzato su un conto così piccolo); (4)
+  `InpMaxAggregateRiskPct` 15→25 (i tier più alti lo avrebbero reso un
+  collo di bottiglia); (5) floor minimo sullo stop di CRT (0.3×ATR),
+  necessario ora che il suo tier sale, per la riserva di rischio flottante
+  già nota. Tutto scritto ma **non compilato/testato** (sessione remota
+  senza MT5) — verifica live richiesta prima dell'uso su conto reale.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

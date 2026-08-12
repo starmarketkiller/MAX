@@ -621,6 +621,24 @@ SNXSSignal NXS_Strat_CRT(){
       s.slPrice = sweepLo; s.tpPrice = crh;
       s.score = 68.0; s.reason = "CRT sweep CRL, target CRH";
    }
+   // 12/08 — floor minimo sulla distanza dello stop (vedi vault "Fase C
+   // Recovery Baseline e Rischio Flottante", 11/08): lo stop e' ancorato al
+   // wick della candela di sweep, non a un multiplo ATR. Quando il wick e'
+   // minimo il rischio flottante durante il trade puo' esplodere (107%
+   // osservato in una finestra) prima che il trade chiuda correttamente a
+   // -1R — non un rischio attivo con size fissa, ma un vincolo da rispettare
+   // ora che il rischio per-strategia sale (NXS_Profile_Risk tier A). Se la
+   // distanza wick-based scende sotto InpCRT_MinStopATR x ATR, lo stop viene
+   // esteso (mai stretto) fino al floor — allarga solo il rischio nominale
+   // per trade, non tocca la logica del target.
+   if(s.dir != DIR_NONE && g_atr > 0 && InpCRT_MinStopATR > 0){
+      double floorDist = InpCRT_MinStopATR * g_atr;
+      double curDist   = MathAbs(s.entryRef - s.slPrice);
+      if(curDist > 0 && curDist < floorDist){
+         if(s.dir == DIR_SELL) s.slPrice = s.entryRef + floorDist;
+         else                  s.slPrice = s.entryRef - floorDist;
+      }
+   }
    return s;
 }
 
