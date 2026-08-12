@@ -249,6 +249,19 @@ profitto reale, non solo curve di backtest.
   "extra-strategia" trovato finora in sessione. SAR migliora ma più
   debolmente. TSI e MACD: nessun beneficio reale (IS peggiora, walk-forward
   invariata). La claim originale non regge per tutte e 4 come affermato.
+- **[[NEXUS EA - Ottimizzazione Uscite Tutte le 58 Strategie (12-08)]]** —
+  richiesta esplicita dell'utente: estendere la griglia SL/TP/BE/trailing
+  a tutte le 58, non solo il nucleo. Griglia dimezzata per stare nei
+  tempi (58 strategie, alcune 15m/30m molto pesanti) — **confermato che
+  questo fa perdere il vincitore migliore**: per CRT/FVG_CONT (dove
+  esiste anche la ricerca dedicata a griglia piena) il batch trova un
+  risultato nettamente peggiore, usare i numeri della ricerca dedicata
+  per quelle due. 19/58 migliorate, ma solo 10 con campione OOS robusto
+  (n≥100) — le altre 9 sono indizi da riverificare, non conclusioni.
+  MACD/EMA_PULLBACK migliorano il PF ma peggiorano il drawdown (stesso
+  trade-off già visto). TSI (problema aperto del nucleo) mostra il primo
+  segnale di miglioramento mai trovato, ma su campione troppo sottile
+  (n=21) — prossimo candidato per una ricerca dedicata.
 - **[[NEXUS EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)]]** —
   griglia SL/TP × breakeven × trailing (script fornito dall'utente,
   adattato al vero `run_backtest`: niente df/params, chiavi vere, e
