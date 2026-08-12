@@ -239,6 +239,20 @@ profitto reale, non solo curve di backtest.
   "extra-strategia" trovato finora in sessione. SAR migliora ma più
   debolmente. TSI e MACD: nessun beneficio reale (IS peggiora, walk-forward
   invariata). La claim originale non regge per tutte e 4 come affermato.
+- **[[NEXUS EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)]]** —
+  griglia SL/TP × breakeven × trailing (script fornito dall'utente,
+  adattato al vero `run_backtest`: niente df/params, chiavi vere, e
+  scoperto che per CRT `atr_sl`/`atr_tp` sono INERTI perché la sua SL/TP è
+  sempre quella ancorata al wick/sweep — sweepati solo be/trailing).
+  **CRT**: BE a 1R + trailing 1×ATR insieme migliora DD 36.5%→29.1% e PF
+  1.25→1.38, walk-forward più stabile. **FVG_CONT**: lo script (come
+  quello di riferimento) sceglieva solo il PF più alto ignorando il DD —
+  quel candidato (sl1.0/tp4.0) alza il PF a 1.43 ma quasi raddoppia il DD
+  (13.5%→20.9%). Verificato a mano un candidato "duale" (sl2.0/tp3.0,
+  niente BE/trailing): PF 1.29→1.33 più modesto ma DD scende a 12.1% ed è
+  l'unico profilo la cui walk-forward non scende mai sotto pareggio —
+  coerente con l'obiettivo dichiarato (ridurre il DD), non ancora portato
+  in MQL5.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
