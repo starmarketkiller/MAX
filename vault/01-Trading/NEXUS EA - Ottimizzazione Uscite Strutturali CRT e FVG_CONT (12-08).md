@@ -168,20 +168,68 @@ Non è un "vincitore" nel senso di dominare ogni metrica (nessuno lo fa),
 ma è quello che non sacrifica pesantemente né la coerenza walk-forward
 né l'efficienza sul capitale.
 
+## Scoperta critica (12/08, stesso giorno) — un secondo trailing SEMPRE ATTIVO mai modellato
+
+Prima di estendere il lavoro a tutte le strategie, trovato un problema di
+fondo che invalida anche le due scelte sopra: in MQL5 esiste un
+**secondo sistema di trailing**, `NXS_TrailingATR.mqh` (v2.4.5),
+completamente separato dal `beR/trailATR` per-strategia testato finora
+(`NXS_Management.mqh`/`NXS_Profile_Get`):
+
+- **Attivo di default per TUTTE le strategie** (`InpUseAtrTrail = true`),
+  nessuno switch per-strategia per spegnerlo — solo la LARGHEZZA è
+  per-strategia (`NXS_Profile_TrailK`), non il fatto che sia attivo.
+- Larghezza: `NXS_Profile_TrailK(nome)` se presente, altrimenti fallback
+  al globale `InpAtrTrailMult = 2.5`.
+- Si attiva solo dopo `InpAtrTrailActivateATR = 1.0` × ATR di profitto
+  (attivazione per-strategia esisteva in v2.4.6 ma è stata rimossa in
+  v2.4.7 — "dava netto più basso", vedi commento in codice).
+
+Il motore Python non modellava questa soglia di attivazione (il
+`trailing_atr` di `run_backtest` inseguiva da subito, non dopo 1×ATR) —
+aggiunto `trailing_activate_atr` (default 0.0 = comportamento invariato)
+per replicarla fedelmente.
+
+**Impatto**: CRT non ha una voce in `NXS_Profile_TrailK`, quindi ha già
+un trailing 2.5×ATR attivo di default via fallback globale — testato,
+l'effetto è **trascurabile** per CRT (il suo SL è già stretto per natura,
+il trailing raramente interviene prima del target): baseline vero
+pf=1.25/dd=36.73% contro pf=1.25/dd=36.47% del "baseline Python" usato
+sopra — praticamente identici. **Il pick CRT (be=1.0+trail=1.0) resta
+valido**, anzi con l'attivazione modellata correttamente migliora
+leggermente (OOS pf 1.38→1.39, dd 29.1%→28.05%).
+
+**FVG_CONT invece cambia sostanzialmente**: ha `TrailK=2.5` esplicito, e
+il vero baseline live (htf=True, sl1.0/tp4.5, overlay trail 2.5/attiva a
+1×ATR **sempre presente**) è **OOS pf=1.55, dd=13.41%** — molto peggio
+del "baseline senza overlay" usato per la scelta precedente (pf=1.71,
+dd=11.36%, mai esistito nella realtà). Il pick di prima (sl1.5/tp5.0/be1.5)
+ricalcolato con l'overlay reale sopra scende da pf 1.80 a **pf 1.63** —
+resta un miglioramento sul vero live (1.55) ma meno netto di quanto
+sembrava.
+
+**Rifatta la ricerca tenendo l'overlay FISSO come vincolo reale** (non
+disattivabile per-strategia con l'architettura attuale), sweepando
+sl/tp/be sopra: **vincitore SL1.5×/TP6.0×/BE1.5R** — OOS pf 1.55→**1.74**,
+drawdown 13.41%→**7.06%** (quasi dimezzato), calmar 0.104→**0.196** (quasi
+raddoppiato). Walk-forward: 1.36·1.21·0.96·1.72·1.67 (una finestra debole
+a 0.96, sotto pareggio di poco — il vero baseline ha 1.01 nella stessa
+finestra, quindi non è un problema introdotto dal cambio).
+
 ## Raccomandazione
 
 - **CRT**: breakeven a 1R + trailing 1×ATR — miglioramento di DD chiaro e
   coerente con il problema strutturale già noto, buon candidato per il
   porting MQL5.
-- **FVG_CONT**: aggiornato dopo l'approfondimento quantitativo —
-  **sl=2.0×ATR / tp=4.0×ATR** (niente BE/trailing) come miglior
-  compromesso tra robustezza walk-forward e DD-efficienza (nessuna delle
-  due metriche lo vede ultimo). sl=2.0/tp=2.0 resta l'opzione da
-  considerare se la priorità assoluta è il drawdown minimo (7.78%, ma
-  profilo di trade diverso: win rate quasi raddoppiato); sl=1.0/tp=4.0 se
-  la priorità è la coerenza walk-forward accettando il DD più alto del
-  gruppo. Tre alternative concrete, non una sola risposta — scelta di
-  rischio da confermare con l'utente prima del porting.
+- **FVG_CONT**: **aggiornato di nuovo dopo la scoperta dell'overlay
+  trailing sempre attivo (vedi sezione sopra)** — le raccomandazioni
+  precedenti (sl2.0/tp4.0, poi sl1.5/tp5.0/be1.5) erano contro un
+  baseline che non esiste dal vivo. Pick finale, verificato contro il
+  vero baseline (htf=True + overlay trail 2.5/attiva 1×ATR sempre
+  presente): **SL1.5×/TP6.0×/BE1.5R** — OOS pf 1.55→1.74, DD
+  13.41%→7.06%, calmar quasi raddoppiato. Non richiede modifiche
+  all'overlay (che resta acceso, non è disattivabile per-strategia oggi),
+  solo ai parametri SL/TP/BE del profilo.
 
 Nessuna delle due modifiche è stata ancora portata in MQL5 — solo
 verificata sul motore Python. Prossimo passo naturale: decidere quale

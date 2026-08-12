@@ -4305,7 +4305,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
-                 track_floating_dd=False, regime_filter=None, master_bias=None):
+                 track_floating_dd=False, regime_filter=None, master_bias=None,
+                trailing_activate_atr=0.0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4729,13 +4730,25 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         else:
                             pos["sl"] = min(pos["sl"], pos["entry"])
                 # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
+                # 12/08 - trailing_activate_atr (default 0.0 = comportamento invariato,
+                # insegue da subito): replica la soglia di attivazione REALE dell'overlay
+                # MQL5 NXS_TrailingATR.mqh (InpAtrTrailActivateATR, default 1.0 li'),
+                # un meccanismo SEPARATO e SEMPRE ATTIVO di default (InpUseAtrTrail=true)
+                # per OGNI strategia - scoperto durante l'ottimizzazione uscite CRT/
+                # FVG_CONT del 12/08: il "baseline trail=0" usato fino a questo punto
+                # non corrispondeva al vero comportamento live (che ha gia' un trailing
+                # 2.5xATR di default via NXS_Profile_TrailK/InpAtrTrailMult). Gate in
+                # unita' di prezzo grezzo (come in MQL5: "prog >= act*ATR"), non in R -
+                # i due sistemi sono indipendenti nel motore reale, qui replicati fedeli.
                 if pos_trail > 0:
                     a = ind["atr"][i] or 0
                     if a > 0:
-                        if pos["dir"] == 1:
-                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
-                        else:
-                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                        prog_tr = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                        if trailing_activate_atr <= 0 or prog_tr >= trailing_activate_atr * a:
+                            if pos["dir"] == 1:
+                                pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                            else:
+                                pos["sl"] = min(pos["sl"], px + pos_trail * a)
                 if track_floating_dd:
                     unreal = 0.0
                     for leg in pos["legs"]:
@@ -4904,10 +4917,12 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 if pos_trail > 0:
                     a = ind["atr"][i] or 0
                     if a > 0:
-                        if pos["dir"] == 1:
-                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
-                        else:
-                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                        prog_tr = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                        if trailing_activate_atr <= 0 or prog_tr >= trailing_activate_atr * a:
+                            if pos["dir"] == 1:
+                                pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                            else:
+                                pos["sl"] = min(pos["sl"], px + pos_trail * a)
                 hit = None
                 if pos["dir"] == 1:
                     if lo <= pos["sl"]:
