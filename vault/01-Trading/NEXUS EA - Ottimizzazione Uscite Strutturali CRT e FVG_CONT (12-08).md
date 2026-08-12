@@ -109,16 +109,79 @@ Walk-forward a confronto (5 finestre):
   1 finestra fallita nel baseline stesso). Meno spettacolare in aggregato,
   più solido come profilo strutturale.
 
+## Approfondimento quantitativo (12/08, stesso giorno) — tutti i candidati, non solo i pick a mano
+
+Richiesta esplicita dell'utente: approfondire **tutte** le combinazioni
+sopravvissute al filtro IS, non solo i 2-3 scelte a mano sopra.
+`research_scripts/exit_optimizer_deepdive.py` — walk-forward completo a 5
+finestre + tutte le metriche OOS (`win_rate`, `expectancy_r`, `sharpe`,
+già calcolate da `run_backtest` ma non stampate prima) per le 6
+combinazioni CRT e le 12 candidate FVG_CONT, più due punteggi
+quantitativi trasparenti:
+
+- **Robustezza** = media(PF walk-forward) − dev.std(PF walk-forward) —
+  premia un edge medio alto e penalizza l'incoerenza tra finestre (stesso
+  principio dello Sharpe applicato al PF, non ai ritorni).
+- **Calmar-like** = media(PF walk-forward) / DD% OOS — ritorno per unità
+  di drawdown, quanto è "efficiente" sul capitale.
+
+Artifact con tabella completa ordinabile:
+https://claude.ai/code/artifact/5354f55e-a728-4463-847c-3c725ba5139f
+
+### CRT — i due punteggi concordano, conferma il pick precedente
+
+| Config | Robustezza | Calmar | OOS pf/dd |
+|---|---|---|---|
+| be=1.0 trail=1.0 | **1.257** (1°) | 0.0473 (2°) | 1.38 / 29.1% |
+| be=0.0 trail=1.0 | 1.213 (2°) | **0.0477** (1°) | 1.34 / 28.57% |
+| be=0.0 trail=0.0 (baseline) | 1.2 | 0.0373 | 1.25 / 36.47% |
+| be=1.5 trail=1.0 | 1.173 | 0.0413 | 1.34 / 31.83% |
+| be=1.5 trail=0.0 | 1.044 | 0.0289 | 1.12 / 40.41% |
+| be=1.0 trail=0.0 | 1.041 | 0.0309 | 1.11 / 37.93% |
+
+**Scoperta nuova**: il breakeven **da solo** (senza trailing) è
+*peggiore* del baseline su entrambi i punteggi — non un effetto neutro,
+proprio dannoso (probabilmente esce a pareggio da trade che poi
+sarebbero arrivati a TP). Il trailing è la leva che fa il lavoro vero; il
+breakeven aiuta solo se abbinato al trailing (effetto di interazione, non
+additivo). Confermato: **be=1.0 + trail=1.0** resta il pick per CRT.
+
+### FVG_CONT — divergenza reale tra i due punteggi, non un solo vincitore
+
+| Config | Robustezza | Calmar | OOS pf/dd/wr |
+|---|---|---|---|
+| sl1.0/tp4.0/be0 | **1.201** (1°) | 0.0687 (**ultimo**, 12°) | 1.43 / 20.91% / 27.6% |
+| sl2.0/tp2.0/be0 | 1.02 (9°) | **0.1506** (1°) | 1.29 / 7.78% / **56.6%** |
+| sl2.0/tp4.0/be0 | 1.154 (2°) | 0.1023 (4°) | 1.38 / 13.66% / 44.0% |
+| sl2.0/tp3.0/be0 | 1.096 (5°) | 0.100 (5°) | 1.33 / 12.06% / 47.8% |
+
+Il candidato più "robusto" per walk-forward (sl1.0/tp4.0) è
+**contemporaneamente il peggiore per efficienza sul drawdown** — un vero
+trade-off, non rumore. Il migliore per calmar (sl2.0/tp2.0, R:R 1:1) ha
+un profilo di trade diverso: win rate quasi raddoppiato (56.6% contro il
+27-48% di tutti gli altri) e drawdown quasi un terzo del baseline, ma è
+solo a metà classifica per robustezza walk-forward.
+
+**Compromesso migliore su entrambi gli assi**: sl=2.0/tp=4.0/be=0 — 2°
+per robustezza, 4° per calmar, senza essere ultimo su nessuno dei due.
+Non è un "vincitore" nel senso di dominare ogni metrica (nessuno lo fa),
+ma è quello che non sacrifica pesantemente né la coerenza walk-forward
+né l'efficienza sul capitale.
+
 ## Raccomandazione
 
 - **CRT**: breakeven a 1R + trailing 1×ATR — miglioramento di DD chiaro e
   coerente con il problema strutturale già noto, buon candidato per il
   porting MQL5.
-- **FVG_CONT**: **sl=2.0×ATR / tp=3.0×ATR** (stop più largo, target
-  invariato, niente BE/trailing) come primo candidato — coerente con
-  l'obiettivo dichiarato di ridurre il drawdown; sl=1.0/tp=4.0 resta
-  un'alternativa legittima se si preferisce PF più alto accettando più
-  drawdown, da valutare esplicitamente con l'utente prima di sceglierla.
+- **FVG_CONT**: aggiornato dopo l'approfondimento quantitativo —
+  **sl=2.0×ATR / tp=4.0×ATR** (niente BE/trailing) come miglior
+  compromesso tra robustezza walk-forward e DD-efficienza (nessuna delle
+  due metriche lo vede ultimo). sl=2.0/tp=2.0 resta l'opzione da
+  considerare se la priorità assoluta è il drawdown minimo (7.78%, ma
+  profilo di trade diverso: win rate quasi raddoppiato); sl=1.0/tp=4.0 se
+  la priorità è la coerenza walk-forward accettando il DD più alto del
+  gruppo. Tre alternative concrete, non una sola risposta — scelta di
+  rischio da confermare con l'utente prima del porting.
 
 Nessuna delle due modifiche è stata ancora portata in MQL5 — solo
 verificata sul motore Python. Prossimo passo naturale: decidere quale
