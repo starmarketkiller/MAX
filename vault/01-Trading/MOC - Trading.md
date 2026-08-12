@@ -226,6 +226,19 @@ profitto reale, non solo curve di backtest.
   quasi identici tra le due finestre (conferma robustezza), ADX_RSI/
   THREE_BAR_DELIVERY_BREAK guadagnano campione con la finestra più ampia
   (conferma, non smentisce, i verdetti già dati sui campioni sottili D1).
+- **[[NEXUS EA - Riverifica Master-Slave Bias sul Motore Vero (12-08)]]** —
+  la claim del piano utente ("BREAKOUT_ACC come Master ha aiutato SAR/
+  FVG_CONT/TSI/MACD") veniva da `phase3c_bias_pipeline.py`, un motore
+  parallelo con SL/TP piatto hardcoded — mai riverificata dopo la scoperta
+  dello stesso difetto sui 5 filtri di regime. Aggiunto `master_bias=` a
+  `run_backtest()` (stesso principio di `regime_filter`, ogni slave gira
+  col proprio SL/TP reale) e riverificato IS/OOS/WF su XAUUSD 4h.
+  **Risultato misto, non un fallimento totale**: FVG_CONT migliora in modo
+  coerente su OGNI finestra walk-forward (5/5 vs 4/5 baseline, drawdown IS
+  quasi dimezzato) — il segnale più convincente per un vettore
+  "extra-strategia" trovato finora in sessione. SAR migliora ma più
+  debolmente. TSI e MACD: nessun beneficio reale (IS peggiora, walk-forward
+  invariata). La claim originale non regge per tutte e 4 come affermato.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

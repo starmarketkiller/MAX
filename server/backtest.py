@@ -4305,7 +4305,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
-                 track_floating_dd=False, regime_filter=None):
+                 track_floating_dd=False, regime_filter=None, master_bias=None):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4493,6 +4493,29 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     if unavailable:
         raise ValueError(f"research engine implementation missing: {', '.join(unavailable)}")
 
+    # 12/08 - master_bias (opt-in, default None = nessun effetto): riverifica
+    # sul motore vero la "pipeline gerarchica master->slave" trovata l'8/10
+    # con phase3c_bias_pipeline.py, che NON usava run_backtest ma un
+    # simulatore proprio con SL/TP piatto hardcoded (stesso tipo di
+    # motore-parallelo gia' trovato inaffidabile con ensemble_engine_search.py
+    # e msnr_retest_gates.py) - mai riverificata sul motore vero. Il bias del
+    # master PERSISTE (resta l'ultimo segnale non-zero) finche' non si
+    # inverte, esattamente come nello script originale - qui pero' ogni
+    # slave gira con il proprio SL/TP/profilo reale, non un ATR 1.5/3.0 fisso
+    # per tutte.
+    master_bias_s = None
+    if master_bias is not None:
+        if master_bias not in STRATEGIES:
+            raise ValueError(f"master_bias sconosciuto: {master_bias}")
+        master_fn = STRATEGIES[master_bias]
+        master_bias_s = [0] * len(candles)
+        cur = 0
+        for i in range(len(candles)):
+            v = master_fn(candles, ind, i)
+            if v != 0:
+                cur = v
+            master_bias_s[i] = cur
+
     closes = [c["close"] for c in candles]
 
     def _sma(idx, p):
@@ -4568,6 +4591,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         # di ognuna) sull'unico motore che conta davvero.
         if sig != 0 and regime_filter is not None:
             if ind["regime"][idx] not in regime_filter:
+                sig = 0
+        if sig != 0 and master_bias_s is not None:
+            if master_bias_s[idx] == 0 or sig != master_bias_s[idx]:
                 sig = 0
         return sig, who, atr_i
 
