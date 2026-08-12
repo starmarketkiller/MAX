@@ -54,6 +54,18 @@ diverso per limite strutturale di MQL5 (nessuno storico per barra).
 Resta candidato Tier 1 per il framework Setup Buy-Sell (le "5 tipologie
 di Engulfing" di Secret of 4.11) per un refactor più profondo in futuro.
 
+## Aggiornamento 11/08 — ORDER_BLOCK_V2: trappola IS-blind, non il miglioramento che sembrava
+
+Il report diagnostico aveva flaggato `ORDER_BLOCK_V2` (variante "_v2"
+pastata dal brief esterno Decomposizione Edge, 08/08) come "DA MONITORARE"
+con OOS PF 1.44/161 su 30m, mai walk-forward-validata. Fatto ora: **IS PF
+0.83/234 → OOS PF 1.44/161** — stesso pattern di MALAYSIAN_SNR_BREAKOUT/
+BREAKOUT_ACC, l'OOS attraente nasconde un IS in perdita. Con la disciplina
+IS-blind di tutta la sessione questa configurazione non verrebbe mai
+scelta. Walk-forward: solo 3/5 finestre sopra 1.0 (0.62, 1.21, 0.74, 1.21,
+1.66) — non convincente nemmeno guardando l'aggregato. **Non promuovibile**,
+stesso esito di ORDER_BLOCK v1 (nessun edge stabile confermato).
+
 ## Note
 
 

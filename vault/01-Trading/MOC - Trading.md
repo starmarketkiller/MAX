@@ -186,6 +186,16 @@ profitto reale, non solo curve di backtest.
   strategia — è un parametro runtime già esistente, quindi una
   **configurazione raccomandata** per l'uso pratico di queste 4. Vedi
   [[Scalp Family]].
+- **Giro veloce completato (11/08)**: coperte tutte le strategie escluse
+  rimanenti — BOLLINGER/RANGE_FADE (proxy, quasi pareggio su 1d), LIQ_VOID
+  (proxy corretto, eredita lo stato SOLIDA di FVG_CONT), ORDER_BLOCK_V2
+  (trappola IS-blind, non promuovibile), OTE_CONT v1 (decadimento
+  classico, chiuso), SH_BMS_RTO v1 (claim vault obsoleta corretta, debole
+  su entrambi i lati — v2 resta la versione da preferire), SILVER_BULLET
+  v1 (overfitting su 1h e 4h, filtro regime non aiuta). Bilancio
+  complessivo del giro: 2 miglioramenti reali, 1 promettente non
+  confermato, il resto negativi onesti o già chiusi. Dettaglio completo in
+  [[NEXUS EA - Strategie Escluse, Analisi Una-ad-Una (11-08)]].
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

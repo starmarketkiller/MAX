@@ -31,6 +31,19 @@ Liquidity void (proxy FVG sul sito). Mai vista in setup su MT5 (0 trade).
 ## Stato
 PENDING — nessun trade eseguito sui 3 anni, dato insufficiente
 
+## Aggiornamento 11/08 — proxy già corretto in sessione, nessun problema residuo
+
+Il proxy era già stato allineato a `sig_fvg_cont_ext` (10/08, task tracciato
+in sessione: "Fix proxy LIQ_VOID -> sig_fvg_cont_ext"). Verificato ora sullo
+storico ampio: **LIQ_VOID e FVG_CONT producono risultati identici byte-per-
+byte** su 4h (504 trade, PF 1.25, dd 16.72% entrambe) — è un proxy
+letterale, non un'approssimazione, quindi eredita esattamente lo stato
+"SOLIDA" di [[Fvg Cont]] (nucleo). Non è mai stato promosso a nucleo
+probabilmente solo perché ridondante con FVG_CONT stessa, non per un
+problema tecnico. Nessun test aggiuntivo necessario — qualunque
+miglioramento trovato su FVG_CONT (es. la "ricetta ufficiale" SL1.0/TP4.5/
+HTF) si applica identico qui.
+
 ## Note
 
 

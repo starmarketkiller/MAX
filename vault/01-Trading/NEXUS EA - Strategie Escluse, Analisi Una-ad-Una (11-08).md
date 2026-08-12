@@ -165,10 +165,49 @@ parametro runtime di `run_backtest`, quindi è una **configurazione
 raccomandata**, non una variante sperimentale separata. Dettaglio in
 [[Scalp Family]].
 
-## Prossimi passi
-Restano da coprire: BOLLINGER/RANGE_FADE (proxy dichiarato), LIQ_VOID
-(proxy dichiarato di FVG_CONT), ORDER_BLOCK_V2, OTE_CONT (v1), SH_BMS_RTO_V2
-(numeri già buoni, verificare solo se manca qualcosa), SILVER_BULLET (v1).
+## 10. BOLLINGER/RANGE_FADE, LIQ_VOID — proxy, nessun problema nuovo
+
+- **BOLLINGER**: 1d (vero TF) ora ha campione sufficiente (94 trade),
+  quasi pareggio IS 1.05/OOS 0.85. Filtro `regime_filter=WEAK_TREND`
+  aiuta solo su 4h (fuori dal TF di profilo reale) — IS 1.52/OOS 1.08,
+  walk-forward 4/5. Su 1d non aiuta. `RANGE_FADE` è un proxy letterale
+  (`sig_bollinger` riusato 1:1) — stessa conclusione, nessun test
+  separato. Dettaglio in [[Bollinger]].
+- **LIQ_VOID**: proxy già corretto in sessione (10/08, → `sig_fvg_cont_ext`).
+  Verificato: risultati identici byte-per-byte a FVG_CONT (nucleo,
+  SOLIDA). Nessun problema residuo, eredita lo stato del nucleo.
+  Dettaglio in [[Liq Void]].
+
+## 11. ORDER_BLOCK_V2, OTE_CONT (v1), SH_BMS_RTO (v1), SILVER_BULLET (v1) — chiusi
+
+- **ORDER_BLOCK_V2**: il report lo aveva flaggato "DA MONITORARE" (OOS
+  1.44/161) ma walk-forward-validato ora rivela una trappola IS-blind
+  (IS 0.83, OOS 1.44) — stesso pattern di MALAYSIAN_SNR_BREAKOUT. Non
+  promuovibile. Dettaglio in [[Order Block]].
+- **OTE_CONT (v1)**: IS 1.31/OOS 0.86 su 4h — decadimento classico,
+  coerente col test reale MT5 (perdita). Chiuso.
+- **SH_BMS_RTO (v1)**: claim vault "non testabile" obsoleta (proxy
+  corretto dal 04/08, come SMS_BMS_RTO). Testata: IS 0.77/OOS 0.81 su
+  1h, debole su entrambi i lati. Conferma che **SH_BMS_RTO_V2** (state
+  machine, già "DA MONITORARE" nel report) è la versione da preferire —
+  OOS 1.47/224, walk-forward 4/5. v1 chiusa. Dettaglio in [[Sh Bms Rto]].
+- **SILVER_BULLET (v1)**: overfitting confermato su 1h E 4h (non
+  specifico a un TF). Filtro regime STRONG_TREND testato, non aiuta
+  (OOS resta sotto 1). Chiuso senza soluzione. Dettaglio in
+  [[Silver Bullet]].
+
+## Bilancio del giro veloce (11/08)
+
+Copertura completa delle strategie escluse pianificate. Esiti: **2
+miglioramenti reali** (SCALP_* filtro regime, FVG_MIT_WINDOW), **1
+promettente non confermato** (IFVG_CHOCH_WINDOW, oltre a TURTLE_SOUP_CHOCH
+e FVG_CONT_V2 già trovati prima), **diversi negativi onesti** (TSI_EXTREME,
+SMS_BMS_RTO_CHOCH_WINDOW, NY_REVERSAL_CHOCH_WINDOW, ORDER_BLOCK_V2,
+SILVER_BULLET v1) e **diverse chiusure per dati/perdite reali** (BJORGUM,
+DISP_REBAL, OTE_CONT, MALAYSIAN_SNR family). Il fix "CHoCH a finestra" si
+conferma non universale: funziona su 3/5 candidati testati (60%), sempre
+sullo stesso principio (edge reale offuscato dal timing, non assenza di
+edge).
 
 ## Collegamenti
 [[MOC - Trading]] ·

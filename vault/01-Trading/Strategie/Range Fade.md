@@ -31,6 +31,14 @@ Fade del range (mean-reversion in laterale). Mai vista in setup su MT5 (0 trade 
 ## Stato
 PENDING — nessun trade eseguito sui 3 anni, dato insufficiente
 
+## Aggiornamento 11/08 — proxy letterale, nessun test separato necessario
+
+Confermato in `backtest.py`: `"RANGE_FADE": sig_bollinger, # mean-reversion
+proxy` — riusa esattamente lo stesso trigger di BOLLINGER, non una logica
+indipendente. Qualunque risultato su BOLLINGER si applica identico qui.
+Vedi [[Bollinger]] per l'analisi (storico ampio: 1d quasi pareggio,
+filtro regime WEAK_TREND aiuta solo fuori dal TF di profilo reale).
+
 ## Note
 
 

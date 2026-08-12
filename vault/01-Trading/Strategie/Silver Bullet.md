@@ -52,6 +52,25 @@ Terzo miglior segnale del gruppo su 4h, ma negativo su 1h — coerente con
 le fonti che indicano finestre orarie precise più che un timeframe fisso.
 Non ancora validata su MT5 (`InpStrategySelector=23`).
 
+## Aggiornamento 11/08 — storico ampio: overfitting confermato su entrambi i TF, filtro regime non aiuta
+
+Sullo storico Dukascopy ampio (2019-2026) il pattern di decadimento
+IS→OOS è confermato su entrambi i TF storicamente buoni:
+
+| TF | IS | OOS | Walk-forward |
+|---|---|---|---|
+| 1h | 1.24/105 | 0.71/57 | 4/5 finestre vicino/sopra 1 ma una a 0.42 |
+| 4h | 1.08/53 | 0.69/35 | solo 2/5 finestre sopra 1 |
+
+Overfitting classico su entrambi — non specifico a un TF come altri casi
+visti in sessione. Testato `regime_filter=(_REGIME_STRONG_TREND,)` e
+`TREND_BOTH` su 1h (ipotesi: SILVER_BULLET è un breakout/sweep di sessione,
+potenzialmente sensibile al regime come le SCALP_*): **non aiuta**, OOS
+resta a 0.83 in entrambi i casi (contro 0.71 baseline — leggero
+miglioramento ma ancora sotto pareggio, con campione dimezzato). Nessun
+fix trovato. Chiuso senza soluzione, coerente con la diagnosi originale
+"overfitting classico".
+
 ## Note
 
 ## Collegamenti

@@ -53,6 +53,26 @@ confermato + CHoCH + FVG a 3 candele formato + prezzo già dentro quella
 zona) — rarità spiegata dal codice, non un mistero né necessariamente un
 difetto. Nessun cambio proposto finché non c'è più campione da MT5.
 
+## Aggiornamento 11/08 — claim "non testabile" obsoleta; v1 confermata debole, v2 la risolve
+
+~~Non testabile sul motore sito (proxy dichiarato, riusa `sig_ob_mit`)~~
+**Correzione: claim obsoleta.** Dal 04/08 esiste un'implementazione reale
+fedele (`sig_sh_bms_rto`, commento: "fedele a NXS_SHBMS_UpdateSide, prima
+proxy sig_ob_mit") — verificato nel codice. Testata ora sullo storico
+ampio (2019-2026): su **1h** il campione non è più minuscolo (204 trade)
+ma il trigger v1 (3 condizioni sullo stesso bar) resta debole su entrambi
+i lati — **IS PF 0.77/118 → OOS PF 0.81/86**, nessuna direzione positiva.
+
+Conferma quantitativamente quello che si sapeva solo qualitativamente:
+**SH_BMS_RTO_V2** (state machine multi-barra sweep→attesa MSS→attesa
+ritorno in zona, stesso principio di TURTLE_SOUP_CHOCH) risolve davvero il
+problema strutturale della v1 — OOS PF 1.47/224, walk-forward 4/5 finestre
+sopra 1.0 (0.84-1.65), drawdown contenuto (7-16%). La v1 non ha ricevuto
+(e non riceverà) un fix "finestra" dedicato: la v2 è già la soluzione
+migliore trovata per questa famiglia di pattern, nessun motivo di
+duplicare lo sforzo. **v2 è la versione da preferire**, v1 chiusa senza
+ulteriori tentativi.
+
 ## Note
 
 
