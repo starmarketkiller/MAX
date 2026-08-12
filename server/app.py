@@ -4512,6 +4512,20 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
     body = await read_json_body(request)
     try:
         start_equity = float(body.get("start_equity", body.get("initial_balance", 10000.0)))
+        # 12/08 — bars/bar_range non erano esposti su questo endpoint: ogni
+        # chiamata usava il default di run_backtest (800 barre), molto meno
+        # dello storico Dukascopy ampio (2019-2026, ~110.000 barre M15) usato
+        # per tutta la ricerca di sessione. Additivo, retrocompatibile:
+        # default invariati se il chiamante non li passa (dashboard React
+        # esistente continua a comportarsi come prima).
+        bars = int(body.get("bars", 800) or 800)
+        bar_range = body.get("bar_range")
+        if bar_range is not None:
+            try:
+                lo, hi = float(bar_range[0]), float(bar_range[1])
+                bar_range = (lo, hi)
+            except (TypeError, ValueError, IndexError):
+                bar_range = None
         raw = backtest.run_backtest(
             symbol=body.get("symbol", "XAUUSD"),
             timeframe=body.get("timeframe") or body.get("interval") or "D1",
@@ -4522,6 +4536,8 @@ async def backtest_run(request: Request, user: str = Depends(require_user)):
             atr_sl=float(body.get("atr_sl", body.get("atr_sl_mult", body.get("AtrSLMult", 1.5)))),
             atr_tp=float(body.get("atr_tp", body.get("atr_tp_mult", body.get("AtrTPMult", 3.0)))),
             start_equity=start_equity,
+            bars=bars,
+            bar_range=bar_range,
             # GATE ora applicati davvero dal motore -> il backtest e' la fonte di
             # verita', e l'EA verra' adattato al setup vincente qui trovato.
             htf_filter=bool(body.get("htf_bias", body.get("htf_filter", False))),
