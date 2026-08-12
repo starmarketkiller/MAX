@@ -226,6 +226,16 @@ profitto reale, non solo curve di backtest.
   quasi identici tra le due finestre (conferma robustezza), ADX_RSI/
   THREE_BAR_DELIVERY_BREAK guadagnano campione con la finestra più ampia
   (conferma, non smentisce, i verdetti già dati sui campioni sottili D1).
+- **[[NEXUS EA - Demo Multi-Timeframe Pronta (12-08)]]** — richiesta
+  esplicita dell'utente (martingale spento, test in demo su tutti i TF).
+  Verificato che è già il comportamento di default (nessun `.set`
+  necessario): `InpUseStrategyProfiles=true` attiva sia il TF
+  per-strategia sia il gate `NXS_Profile_Enabled` che decide chi apre
+  davvero. Scoperta collaterale: **THREE_BAR_DELIVERY_BREAK non ha mai
+  avuto un'implementazione MQL5** (solo Python) — il nucleo davvero
+  tradabile in demo è di 15 strategie, non 16. File di convenienza
+  `.set` creato per rendere la config esplicita/riproducibile, checklist
+  pre-demo inclusa (nulla ancora compilato/testato in questa sessione).
 - **[[NEXUS EA - Riverifica Master-Slave Bias sul Motore Vero (12-08)]]** —
   la claim del piano utente ("BREAKOUT_ACC come Master ha aiutato SAR/
   FVG_CONT/TSI/MACD") veniva da `phase3c_bias_pipeline.py`, un motore

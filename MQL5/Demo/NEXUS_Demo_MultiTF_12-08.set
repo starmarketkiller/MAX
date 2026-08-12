@@ -1,0 +1,29 @@
+; NEXUS_EA_v2 - Demo Multi-Timeframe (12/08)
+; Non cambia i default compilati - rende solo esplicita/riproducibile la
+; configurazione del nucleo demo (15 strategie tradabili, ognuna sul suo
+; timeframe naturale), moltiplicatore da streak spento su richiesta esplicita.
+; Vedi vault "NEXUS EA - Demo Multi-Timeframe Pronta (12-08)" per i dettagli.
+
+; --- Interruttori principali ---
+InpUseStrategyProfiles=true
+InpUseLossStreakScaling=false
+InpMaxAggregateRiskPct=25.0
+InpMaxRiskAtMinLotPct=8.0
+InpCRT_MinStopATR=0.3
+
+; --- Le 15 strategie del nucleo demo (tutte devono restare true) ---
+InpStrat_ADX_RSI=true
+InpStrat_MACD=true
+InpStrat_SAR=true
+InpStrat_TSI=true
+InpStrat_LIQ_SWEEP=true
+InpStrat_FVG_CONT=true
+InpStrat_BREAKOUT_ACC=true
+InpStrat_LONDON_BO=true
+InpStrat_EMA_PULLBACK=true
+InpStrat_TurtleSoup=true
+InpStrat_FVG_Mit=true
+InpUseStrat_AMD_Cont=true
+InpUseStrat_LdnReversal=true
+InpStrat_AMD_Reversal=true
+InpUseStrat_CRT=true
