@@ -212,6 +212,20 @@ profitto reale, non solo curve di backtest.
   necessario ora che il suo tier sale, per la riserva di rischio flottante
   già nota. Tutto scritto ma **non compilato/testato** (sessione remota
   senza MT5) — verifica live richiesta prima dell'uso su conto reale.
+- **[[NEXUS EA - Riverifica via Sito su Storico Esteso 2016-2026 (12-08)]]**
+  — richiesta esplicita dell'utente: rifare il censimento attraverso il
+  motore DEL SITO (Render), non `run_backtest` diretto. Scoperto che il
+  sito ha 3 anni di storico in più del file locale usato tutta la sessione
+  (2016-08 contro 2019-05) — aggiunto supporto `bars`/`bar_range`
+  all'endpoint `/api/backtest/run` (mancava, sempre 800 barre di default)
+  e deployato. 45/59 strategie completate puliteremente; 14 (soprattutto
+  15m/alta-frequenza: SCALP_*, OTE_CONT*, SH_BMS_RTO*) non hanno mai
+  completato dopo retry — limite reale della piattaforma (il sito è anche
+  crashato una volta per il carico, poi riavviato da Render), non un bug
+  nostro. **Nessuna sorpresa che ribalti un verdetto**: CRT e TURTLE_SOUP
+  quasi identici tra le due finestre (conferma robustezza), ADX_RSI/
+  THREE_BAR_DELIVERY_BREAK guadagnano campione con la finestra più ampia
+  (conferma, non smentisce, i verdetti già dati sui campioni sottili D1).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
