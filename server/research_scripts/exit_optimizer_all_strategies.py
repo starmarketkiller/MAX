@@ -219,11 +219,17 @@ def optimize_strategy(strat, profiles, tfs, trailks):
     min_is_trades = max(15, int(is_n * 0.4)) if is_n < 100 else 50
     min_is_pf = 1.10
 
-    sl_grid = [1.0, 1.5, 2.0] if not inert else [cfg["sl"]]
-    tp_grid = [3.0, 4.5, 6.0] if not inert else [cfg["tp"]]
-    be_grid = [0.0, 1.0, 1.5]
+    # 12/08 - griglia ridotta dopo il collaudo tempi: CRT (30m, inert, 18 combo)
+    # 7m38s; FVG_CONT (4h, 156 combo) 8m57s; SCALP_RSI_SNAP (15m, 156 combo)
+    # 50m6s - una griglia da 162 combo su 58 strategie (parecchie 15m/30m ad
+    # alta frequenza) avrebbe richiesto 12-15+ ore. Dimezzata su ogni asse
+    # (estremi strutturali, non i valori medi) per restare in ordine di
+    # qualche ora: ~32 combo max (non inert), ~8 (inert) invece di 162/18.
+    sl_grid = [1.0, 2.0] if not inert else [cfg["sl"]]
+    tp_grid = [3.0, 6.0] if not inert else [cfg["tp"]]
+    be_grid = [0.0, 1.5]
     htf_grid = [True, False]
-    trail_grid = [1.0, 2.0, 3.0]   # larghezza overlay, mai 0 - vedi nota su call()
+    trail_grid = [1.5, 3.0]   # larghezza overlay, mai 0 - vedi nota su call()
 
     candidates = []
     tested = 0
