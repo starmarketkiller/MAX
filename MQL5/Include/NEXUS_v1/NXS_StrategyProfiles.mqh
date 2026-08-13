@@ -52,10 +52,30 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "BJORGUM")           { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h - fix 16/07, vedi commento sopra
    if(name == "BOLLINGER")         { slMult=1.0; tpMult=2.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d OK PF1.17 R0.94
    if(name == "BREAKOUT_ACC")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
+   // 12/08 - CRT non aveva mai una voce qui: la sua SL/TP e' SEMPRE quella
+   // ancorata al wick/sweep (NXS_Strat_CRT in NXS_Strategies_SMC.mqh, "dai
+   // livelli reali del pattern, NON da NXS_DefaultSLTP") - slMult/tpMult
+   // sotto sono INERTI per costruzione (mai letti per questa strategia,
+   // verificato prima di aggiungerli - vedi NXS_DefaultSLTP: usa il
+   // profilo solo se pSl>0 && pTp>0, qui restano 0). Aggiunta solo per
+   // portare beR (breakeven) dalla ricerca dedicata di oggi: baseline vero
+   // OOS PF1.25/DD36.73% (drawdown flottante gia' noto, vedi vault "Fase C
+   // Recovery Baseline e Rischio Flottante"), con be=1.0R + overlay
+   // trailing 1.0x (vedi NXS_Profile_TrailK sotto) OOS PF1.25->1.39,
+   // DD36.73%->28.05%, walk-forward 1.24/1.39/1.59/1.34/1.40 - vedi vault
+   // "NEXUS EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)".
+   if(name == "CRT")               { slMult=0.0; tpMult=0.0; htf=false; beR=1.0; trailATR=0.0; return true; }  // 30m - vedi nota 12/08 sopra, slMult/tpMult inerti
    if(name == "THREE_BAR_DELIVERY_BREAK")              { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h; trail ora via overlay per-strategia (v2.4.5)
    if(name == "DISP_REBAL")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.68 R2.0
    if(name == "EMA_PULLBACK")      { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
-   if(name == "FVG_CONT")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.67 R0.65
+   // 12/08 - ricerca dedicata uscite post-scoperta overlay trailing sempre
+   // attivo (NXS_TrailingATR.mqh, vedi NXS_Profile_TrailK sotto): il vero
+   // baseline live (sl1.0/tp4.5/htf/overlay 2.5x) dava OOS PF1.55/DD13.41%.
+   // Testato sl/tp/be sopra l'overlay FISSO (non disattivabile per-strategia
+   // con l'architettura attuale): OOS PF1.55->1.74, DD13.41%->7.06% (quasi
+   // dimezzato), walk-forward 1.36/1.21/0.96/1.72/1.67 - vedi vault "NEXUS
+   // EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)".
+   if(name == "FVG_CONT")          { slMult=1.5; tpMult=6.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // 4h - vedi nota 12/08 sopra
    if(name == "FVG_MIT")           { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.04 R2.0
    if(name == "ICHIMOKU")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.75 R1.13
    if(name == "IFVG")              { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF2.51 R2.0
@@ -96,7 +116,18 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "SMS_BMS_RTO")       { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "STRUCT_REACT")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.87 R2.0
-   if(name == "TSI")               { slMult=1.5; tpMult=4.5; htf=true ; beR=1.0; trailATR=0.0; return true; }  // 1d FORTE PF1.68 R1.04
+   // 12/08 - ricerca dedicata uscite: TSI e' un "problema aperto" del
+   // nucleo mai risolto (vedi vault "I due problemi aperti del nucleo,
+   // approfonditi", 11/08). Baseline vero (sl1.5/tp4.5/be1.0/htf/overlay
+   // 1.5x) OOS PF1.35/DD2.97%/n31, IS addirittura sotto pareggio (0.73).
+   // Griglia da 330 combinazioni: 79 sopra baseline, i migliori raggruppati
+   // sulla stessa zona (SL/TP molto larghi) - un plateau, non un picco
+   // isolato. Vincitore: OOS PF1.35->2.41, DD2.97%->1.99%, walk-forward
+   // 1.76/1.91/1.97/1.84/2.95 (mai sotto 1.76). Campione ancora sottile
+   // (22-24 trade OOS, D1) - la scoperta piu' fragile di oggi, trattarla
+   // come ipotesi forte da confermare, non un fatto acquisito come CRT/
+   // FVG_CONT. Vedi vault "NEXUS EA - TSI Ricerca Dedicata Uscite (12-08)".
+   if(name == "TSI")               { slMult=2.0; tpMult=6.0; htf=true ; beR=1.0; trailATR=0.0; return true; }  // 1d - vedi nota 12/08 sopra
    if(name == "TURTLE_SOUP")       { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.83 R2.0
    if(name == "WEEKLY_EXP")        { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
    // Le session/Elliott (SILVER_BULLET, AMD_*, JUDAS, LDN/NY_REVERSAL, PO3,
@@ -280,13 +311,24 @@ double NXS_Profile_TrailK(const string name){
    if(name == "ICHIMOKU")      return 1.5;   // 2.34->0
    if(name == "EMA_PULLBACK")  return 1.5;   // 1.37->1.00
    if(name == "MACD")          return 1.5;   // 1.27 vs 1.23 ~neutro -> stretto
-   if(name == "TSI")           return 1.5;
+   // 12/08 - TSI: ricerca dedicata uscite (vedi NXS_Profile_Get sopra),
+   // 1.5->2.0 - il vincitore usava un trail piu' largo del default stretto
+   // qui sotto, coerente con l'SL/TP molto piu' larghi trovati nello
+   // stesso giro (il pattern di TSI si comporta piu' da trend/continuazione
+   // con questa configurazione che da mean-reversion).
+   if(name == "TSI")           return 2.0;
    if(name == "BOLLINGER")     return 1.5;   // mean-reversion
    if(name == "BB_SQUEEZE")    return 1.5;
    if(name == "RANGE_FADE")    return 1.5;
    if(name == "STRUCT_REACT")  return 1.5;
    if(name == "MALAYSIAN_SNR") return 1.5;
    if(name == "THREE_BAR_DELIVERY_BREAK")          return 1.5;
+   // 12/08 - CRT non aveva mai una voce qui (fallback al globale 2.5).
+   // Ricerca dedicata: 1.0 (piu' stretto del globale) e' il vincitore
+   // insieme a be=1.0R (vedi NXS_Profile_Get sopra) - coerente con lo SL
+   // di CRT gia' stretto per natura (ancorato al wick), un trail piu'
+   // stretto lo segue meglio invece di lasciargli troppo spazio.
+   if(name == "CRT")           return 1.0;
    return 0.0;   // fallback -> globale
 }
 

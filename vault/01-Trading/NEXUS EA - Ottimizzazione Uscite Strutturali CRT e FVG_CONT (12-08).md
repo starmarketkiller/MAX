@@ -231,11 +231,15 @@ finestra, quindi non è un problema introdotto dal cambio).
   all'overlay (che resta acceso, non è disattivabile per-strategia oggi),
   solo ai parametri SL/TP/BE del profilo.
 
-Nessuna delle due modifiche è stata ancora portata in MQL5 — solo
-verificata sul motore Python. Prossimo passo naturale: decidere quale
-profilo FVG_CONT preferire, poi portare entrambi (CRT + FVG_CONT) nei
-profili SL/TP/BE/trailing già esistenti in `NXS_StrategyProfiles.mqh`
-(stesso meccanismo usato per gli altri override per-strategia).
+**Aggiornamento 12/08 (stesso giorno) — portate in MQL5.** Entrambe
+scritte in `NXS_StrategyProfiles.mqh` (insieme a TSI, vedi
+[[NEXUS EA - TSI Ricerca Dedicata Uscite (12-08)]]): CRT ha ricevuto la
+sua prima voce in `NXS_Profile_Get` (non ne aveva mai avuta una — slMult/
+tpMult restano inerti per costruzione, solo `beR=1.0` conta) e in
+`NXS_Profile_TrailK` (`1.0`, nuova). FVG_CONT aggiornata a slMult=1.5/
+tpMult=6.0/beR=1.5 (TrailK invariato a 2.5, non era parte della ricerca
+dedicata). **Non ancora compilato/testato** (sessione remota senza MT5) —
+verifica locale richiesta prima del demo.
 
 ## Collegamenti
 [[MOC - Trading]] ·

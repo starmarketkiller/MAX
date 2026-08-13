@@ -249,6 +249,16 @@ profitto reale, non solo curve di backtest.
   "extra-strategia" trovato finora in sessione. SAR migliora ma più
   debolmente. TSI e MACD: nessun beneficio reale (IS peggiora, walk-forward
   invariata). La claim originale non regge per tutte e 4 come affermato.
+- **[[NEXUS EA - TSI Ricerca Dedicata Uscite (12-08)]]** — ricerca a
+  griglia piena per il secondo "problema aperto" del nucleo (dopo il
+  segnale troppo sottile del batch sulle 58). Baseline vero OOS PF1.35/
+  DD2.97%/n31 (IS sotto pareggio). 330 combinazioni, 79 sopra baseline,
+  i migliori raggruppati sulla stessa zona (non un picco isolato).
+  Vincitore: SL2.0×/TP6.0×/BE1R/HTF on/trail2.0× — OOS PF1.35→**2.41**,
+  DD2.97%→**1.99%**, walk-forward 1.76-2.95 (mai sotto 1.76). Resta la
+  scoperta più fragile della sessione (22-24 trade OOS, D1) — ipotesi
+  forte, non un fatto acquisito. **Portata in MQL5** insieme a CRT e
+  FVG_CONT (non ancora compilata/testata).
 - **[[NEXUS EA - Ottimizzazione Uscite Tutte le 58 Strategie (12-08)]]** —
   richiesta esplicita dell'utente: estendere la griglia SL/TP/BE/trailing
   a tutte le 58, non solo il nucleo. Griglia dimezzata per stare nei
