@@ -11,6 +11,14 @@ InpMaxAggregateRiskPct=25.0
 InpMaxRiskAtMinLotPct=8.0
 InpCRT_MinStopATR=0.3
 
+; --- Web bridge (Local Bridge / dashboard) ---
+; InpWebToken lasciato vuoto qui APPOSTA: e' un segreto, non va nel repo.
+; Compilalo con lo stesso valore che hai messo in bridge_token dentro
+; LocalBridge/nexus_worker.config.json (e su Render, env var
+; NEXUS_BRIDGE_TOKEN) - deve combaciare identico nei tre punti.
+InpWebURL=https://nexus-backend-8o4y.onrender.com
+InpWebToken=
+
 ; --- Le 15 strategie del nucleo demo (tutte devono restare true) ---
 InpStrat_ADX_RSI=true
 InpStrat_MACD=true
