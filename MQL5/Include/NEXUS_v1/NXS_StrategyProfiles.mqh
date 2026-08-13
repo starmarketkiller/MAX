@@ -213,6 +213,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
 // nel nucleo attuale restano ai valori precedenti (fuori scope di questo
 // giro, nessuna nuova evidenza raccolta su quelle).
 //
+double NXS_Profile_Risk(const string name){
 // Tier S (5.0%) — doppia conferma forte, nessuna red flag:
    if(name == "EMA_PULLBACK")      return 5.0;    // reale PF1.63 + Python WF4/5 (1.47->1.52 ricetta uff.)
    if(name == "SAR")               return 5.0;    // reale PF1.31/196 trade (workhorse) + Python OOS1.22/276
