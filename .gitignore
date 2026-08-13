@@ -75,6 +75,12 @@ out/
 # huge raw tester agent logs - not useful data, blow past GitHub limits
 results/reports/*agentlog.log
 
+# i .set (preset EA) del tester MT5 incorporano InpWebToken/InpWebURL in
+# chiaro nei parametri di input salvati - erano finiti nel repo pubblico
+# esponendo il bridge token. Artefatti generati localmente, non vanno
+# versionati (vedi MQL5/Demo/*.set per il pattern corretto: token vuoto).
+results/sets/**/*.set
+
 # --- IDE / OS ---------------------------------------------------------------
 .idea/
 .vscode/
