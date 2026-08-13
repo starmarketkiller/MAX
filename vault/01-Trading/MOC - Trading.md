@@ -286,6 +286,12 @@ profitto reale, non solo curve di backtest.
   l'unico profilo la cui walk-forward non scende mai sotto pareggio —
   coerente con l'obiettivo dichiarato (ridurre il DD), non ancora portato
   in MQL5.
+- **[[NEXUS EA - Incidente Sicurezza e Setup Desktop (13-08)]]** — bridge
+  token e license key trovati in chiaro in 45 `.set` + 103 report `.htm`
+  già pubblici su GitHub (entrambi ora invalidati, repo ripulito dal
+  tracking, commit ancora da fare); worker locale + MetaTrader configurati
+  e collegati a Render; bug reale trovato e corretto (`NXS_Profile_Risk`
+  senza firma, mai compilato dopo il 12/08) — l'EA ora compila pulito.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
