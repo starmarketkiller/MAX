@@ -184,3 +184,6 @@ le 5 come "shadow/watch, size minima" scommettendo che il trend prosegua,
 (b) investire in una ricerca di edge genuinamente nuova (fuori dal
 catalogo attuale), o (c) accettare che oggi NEXUS non ha ancora nulla di
 pronto per size vera e ridefinire l'obiettivo a più lungo termine.
+
+## Collegamenti
+[[MOC - Trading]]

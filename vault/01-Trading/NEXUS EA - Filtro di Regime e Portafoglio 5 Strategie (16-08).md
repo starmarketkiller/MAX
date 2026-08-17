@@ -229,3 +229,6 @@ definizione.
 - Validazione MT5 tick-reale (infrastruttura già pronta, `C:\MT5-Tester`)
   ha senso ora che esiste un candidato che supera la prova economica —
   prima non ne valeva la pena (vedi discussione 16/08 su OHLC vs tick).
+
+## Collegamenti
+[[MOC - Trading]]

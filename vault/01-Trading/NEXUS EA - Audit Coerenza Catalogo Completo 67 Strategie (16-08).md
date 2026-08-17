@@ -83,3 +83,6 @@ muoversi nella direzione giusta rispetto a `side` e all'esito), non una
 fedeltà MQL5 completa — cattura inversioni di segno e geometrie rotte,
 non garantisce che la logica di ingresso rispecchi esattamente l'EA reale
 (quello è verificato separatamente, caso per caso, dove già fatto).
+
+## Collegamenti
+[[MOC - Trading]]

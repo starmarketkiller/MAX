@@ -45,3 +45,6 @@ Metodologia proposta dall'agente logico — **diagnostica per gate prima di tocc
 2. Valutare il fix diretto di WEEKLY_EXP (ATR H4 invece di D1) separatamente, come correzione di coerenza — non come tuning.
 3. Cross-check della matrice completa (sezione 4 del documento, tutte le strategie non ancora auditate a Livello A) prima di considerare "chiuso" l'audit statico.
 4. Solo dopo diagnostica/fix Livello A+B per queste strategie, procedere a un nuovo Livello C (statistica) — le zero-trade non vanno ancora interpretate come "pattern inesistente su XAUUSD".
+
+## Collegamenti
+[[MOC - Trading]]

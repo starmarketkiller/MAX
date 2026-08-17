@@ -36,3 +36,6 @@ Dopo i test Pine Script su TradingView (`pinescript/README.md`), ho fatto girare
 ## Cosa NON fare con questi dati
 
 Nessuna modifica a `MQL5/` sulla base di questo confronto da solo — resta un terzo/quarto punto di osservazione, non un tie-breaker (principio già stabilito). Il fix MACD è già in produzione (applicato il 17/07) ed è quello con più conferme incrociate. Per SAR e RSI_DIV, aspettare più dati (sweep MT5 in corso, eventuale finestra dati più lunga) prima di decidere.
+
+## Collegamenti
+[[MOC - Trading]]

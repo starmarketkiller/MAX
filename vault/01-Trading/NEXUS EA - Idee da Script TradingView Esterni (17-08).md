@@ -107,3 +107,6 @@ sottile e concentrato in una finestra per fidarsene.
 Validazione due-metà-storia sul falso-breakout-su-swing-maggiore (1h),
 poi eventuale ingresso nel portafoglio insieme a Z_SCORE_BREAKOUT (vedi
 [[NEXUS EA - Stop Strutturale M5 su Segnali H1 (16-08)]], addendum 17/08).
+
+## Collegamenti
+[[MOC - Trading]]

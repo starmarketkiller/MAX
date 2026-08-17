@@ -175,3 +175,6 @@ Borderline: SAR_ADX20 (retail 0.93 quasi pari, ECN 1.39 su 5/5), SAR_FLIP
 che la famiglia sweep (TURTLE_SOUP, CISD_TRUE, SH_BMS_RTO*) non regge con
 nessuno stop provato finora — tre tentativi diversi, stessa risposta.
 Script: `full_catalog_native_stop_17-08.py`.
+
+## Collegamenti
+[[MOC - Trading]]

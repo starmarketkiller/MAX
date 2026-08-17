@@ -142,3 +142,6 @@ Deciso esplicitamente di NON "aggiustare" questo come se fosse un fix delle stra
 ## Log aggiornamenti di questo documento
 
 - **17/07 notte** — creazione. Stato fotografato: Fase 0 quasi chiusa (sweep in corso), Fase 1 al ~40% (2 fix su 7 rimanenti + audit completo), Fase 2 iniziata su 4/37 strategie, Fasi 3-7 non ancora iniziate.
+
+## Collegamenti
+[[MOC - Trading]]
