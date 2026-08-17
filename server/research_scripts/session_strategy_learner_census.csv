@@ -1,0 +1,72 @@
+[
+  {
+    "strategy": "EMA_PULLBACK",
+    "session": "LONDON",
+    "session_code": 2,
+    "oos_pf": 0.7,
+    "oos_n": 29,
+    "oos_dd": 10.52,
+    "neg_windows": 3,
+    "reason": "OOS_PF_0.70_WF_3of5"
+  },
+  {
+    "strategy": "LDN_REVERSAL",
+    "session": "OVERLAP",
+    "session_code": 3,
+    "oos_pf": 0.73,
+    "oos_n": 43,
+    "oos_dd": 10.25,
+    "neg_windows": 4,
+    "reason": "OOS_PF_0.73_WF_4of5"
+  },
+  {
+    "strategy": "TSI",
+    "session": "AFTERNY",
+    "session_code": 5,
+    "oos_pf": 0.56,
+    "oos_n": 20,
+    "oos_dd": 8.32,
+    "neg_windows": 5,
+    "reason": "OOS_PF_0.56_WF_5of5"
+  },
+  {
+    "strategy": "TURTLE_SOUP",
+    "session": "ASIAN",
+    "session_code": 1,
+    "oos_pf": 0.86,
+    "oos_n": 85,
+    "oos_dd": 14.63,
+    "neg_windows": 3,
+    "reason": "OOS_PF_0.86_WF_3of5"
+  },
+  {
+    "strategy": "TURTLE_SOUP",
+    "session": "LONDON",
+    "session_code": 2,
+    "oos_pf": 0.86,
+    "oos_n": 56,
+    "oos_dd": 9.91,
+    "neg_windows": 3,
+    "reason": "OOS_PF_0.86_WF_3of5"
+  },
+  {
+    "strategy": "TURTLE_SOUP",
+    "session": "NY",
+    "session_code": 4,
+    "oos_pf": 0.73,
+    "oos_n": 60,
+    "oos_dd": 12.32,
+    "neg_windows": 4,
+    "reason": "OOS_PF_0.73_WF_4of5"
+  },
+  {
+    "strategy": "TURTLE_SOUP",
+    "session": "AFTERNY",
+    "session_code": 5,
+    "oos_pf": 0.68,
+    "oos_n": 30,
+    "oos_dd": 8.53,
+    "neg_windows": 3,
+    "reason": "OOS_PF_0.68_WF_3of5"
+  }
+]
