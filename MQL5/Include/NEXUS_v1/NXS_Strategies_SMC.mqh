@@ -124,6 +124,125 @@ SNXSSignal NXS_Strat_FVG_Mitigation(){
    return s;
 }
 
+// === 3b. FVG MITIGATION — WINDOW (11-08/13-08) ==============================
+// La #3 sopra valuta ogni gap SOLO all'istante fisso shift5-7 vs il prezzo di
+// ORA: se il ritorno sulla zona non avviene esattamente in quel momento, il
+// segnale e' perso per sempre (nessun registro). Qui il gap resta "attivo"
+// fino a NXS_FVGMITW_MAX_WAIT barre: ogni barra nuova puo' ancora mitigarlo.
+// Confermato due volte indipendentemente su 4h (walk-forward 11/08 + batch
+// grid 12/08, n=129 robusto) - vedi vault "NEXUS EA - Incidente Sicurezza e
+// Setup Desktop (13-08)". Porting fedele di _fvg_mit_window_series/
+// sig_fvg_mit_window/_fvg_mit_window_sl_tp in server/backtest.py: stessa
+// coppia di candele per la formazione del gap (shift5/shift7), stesso
+// registro di zone con eta' massima, stesso SL (bordo zona ∓0.4×ATR) e
+// stesso TP a multiplo-R (2.5R sulla distanza SL, NON 2.5×ATR fisso come la
+// #3 - e' l'unica differenza di formula tra le due). HTF=true e trailing
+// 3.0×ATR vengono dal miglior candidato del batch grezzo del 12/08 (non da
+// una ricerca dedicata a griglia piena come CRT/FVG_CONT/TSI - trattarli con
+// meno certezza di quei tre). Tier di rischio invariato (0.5%, Tier C) finche'
+// non c'e' storia reale su MT5.
+#define NXS_FVGMITW_MAX_ZONES 24
+#define NXS_FVGMITW_MAX_WAIT  15
+
+struct SNXSFvgMitWZone {
+   double   lo;
+   double   hi;
+   datetime tBorn;
+};
+
+SNXSFvgMitWZone g_fvgMitWBull[NXS_FVGMITW_MAX_ZONES];
+int             g_fvgMitWBullCount = 0;
+SNXSFvgMitWZone g_fvgMitWBear[NXS_FVGMITW_MAX_ZONES];
+int             g_fvgMitWBearCount = 0;
+datetime        g_fvgMitWLastBar   = 0;
+
+void _fvgMitW_removeBull(int idx){
+   for(int k = idx; k < g_fvgMitWBullCount - 1; k++) g_fvgMitWBull[k] = g_fvgMitWBull[k+1];
+   g_fvgMitWBullCount--;
+}
+void _fvgMitW_removeBear(int idx){
+   for(int k = idx; k < g_fvgMitWBearCount - 1; k++) g_fvgMitWBear[k] = g_fvgMitWBear[k+1];
+   g_fvgMitWBearCount--;
+}
+
+// Aggiorna il registro UNA VOLTA per barra nuova (stato persistente fra
+// chiamate - deve girare sempre, anche se il toggle e' spento in questo giro,
+// altrimenti il registro perde barre e la finestra si sfasa rispetto al
+// Python, che itera ogni candela senza saltarne mai una).
+void NXS_FvgMitWindow_Update(){
+   datetime tBar1 = iTime(g_sym, NXS_EffTF(), 1);
+   if(tBar1 == g_fvgMitWLastBar) return;
+   g_fvgMitWLastBar = tBar1;
+
+   double atr = _smc_atr();
+   if(atr <= 0) return;
+
+   double h2 = iHigh(g_sym, NXS_EffTF(), 5), l2 = iLow(g_sym, NXS_EffTF(), 5);
+   double h0 = iHigh(g_sym, NXS_EffTF(), 7), l0 = iLow(g_sym, NXS_EffTF(), 7);
+   if(l0 > h2 + atr * 0.15 && g_fvgMitWBullCount < NXS_FVGMITW_MAX_ZONES){
+      g_fvgMitWBull[g_fvgMitWBullCount].lo    = h2;
+      g_fvgMitWBull[g_fvgMitWBullCount].hi    = l0;
+      g_fvgMitWBull[g_fvgMitWBullCount].tBorn = tBar1;
+      g_fvgMitWBullCount++;
+   }
+   if(h0 < l2 - atr * 0.15 && g_fvgMitWBearCount < NXS_FVGMITW_MAX_ZONES){
+      g_fvgMitWBear[g_fvgMitWBearCount].lo    = h0;
+      g_fvgMitWBear[g_fvgMitWBearCount].hi    = l2;
+      g_fvgMitWBear[g_fvgMitWBearCount].tBorn = tBar1;
+      g_fvgMitWBearCount++;
+   }
+
+   for(int i = g_fvgMitWBullCount - 1; i >= 0; i--){
+      int age = iBarShift(g_sym, NXS_EffTF(), g_fvgMitWBull[i].tBorn) - 1;
+      if(age > NXS_FVGMITW_MAX_WAIT) _fvgMitW_removeBull(i);
+   }
+   for(int i = g_fvgMitWBearCount - 1; i >= 0; i--){
+      int age = iBarShift(g_sym, NXS_EffTF(), g_fvgMitWBear[i].tBorn) - 1;
+      if(age > NXS_FVGMITW_MAX_WAIT) _fvgMitW_removeBear(i);
+   }
+}
+
+SNXSSignal NXS_Strat_FVG_Mitigation_Window(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_FVG_CONT; s.stratName = "FVG_MIT_WINDOW";
+   NXS_FvgMitWindow_Update();
+   double atr = _smc_atr();
+   if(atr <= 0) return s;
+   double c1    = iClose(g_sym, NXS_EffTF(), 1);
+   double o1    = iOpen (g_sym, NXS_EffTF(), 1);
+   double curLo = iLow  (g_sym, NXS_EffTF(), 1);
+   double curHi = iHigh (g_sym, NXS_EffTF(), 1);
+   double bodyAbs = MathAbs(c1 - o1);
+   bool rejectionBull = (c1 > o1) && bodyAbs > atr * 0.35;
+   bool rejectionBear = (c1 < o1) && bodyAbs > atr * 0.35;
+
+   if(rejectionBull){
+      for(int i = 0; i < g_fvgMitWBullCount; i++){
+         if(curHi >= g_fvgMitWBull[i].lo && curLo <= g_fvgMitWBull[i].hi){
+            s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+            s.slPrice = g_fvgMitWBull[i].lo - 0.4 * atr;
+            s.tpPrice = s.entryRef + (s.entryRef - s.slPrice) * 2.5;
+            s.score = 70.0; s.reason = "FVG_MIT_WINDOW bull retest+reject";
+            _fvgMitW_removeBull(i);
+            return s;
+         }
+      }
+   }
+   if(rejectionBear){
+      for(int i = 0; i < g_fvgMitWBearCount; i++){
+         if(curHi >= g_fvgMitWBear[i].lo && curLo <= g_fvgMitWBear[i].hi){
+            s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+            s.slPrice = g_fvgMitWBear[i].hi + 0.4 * atr;
+            s.tpPrice = s.entryRef - (s.slPrice - s.entryRef) * 2.5;
+            s.score = 70.0; s.reason = "FVG_MIT_WINDOW bear retest+reject";
+            _fvgMitW_removeBear(i);
+            return s;
+         }
+      }
+   }
+   return s;
+}
+
 // === 4. OB MITIGATION STRUCTURAL ======================================
 // Uses NXS_Structure last OB (after displacement+BOS) → wrapper
 SNXSSignal NXS_Strat_OB_Mitigation_Structural(){
@@ -256,6 +375,102 @@ SNXSSignal NXS_Strat_SH_BMS_RTO(SNXSSweepExt &sw){
    SNXSSignal s = NXS_SHBMS_UpdateSide(+1, g_shbmsBuy, sw, tf, atr, curBar0);
    if(s.dir != DIR_NONE) return s;
    return NXS_SHBMS_UpdateSide(-1, g_shbmsSell, sw, tf, atr, curBar0);
+}
+
+// === 5b. SH+BMS+RTO V2 (14/08) — state machine piu' semplice, MSS "morbido" =
+// Porting fedele di _shbms_v2_series/sig_sh_bms_rto_v2 in server/backtest.py.
+// Regole DIVERSE dalla v1 sopra (non un refactor, una variante indipendente
+// gia' esistente lato Python dall'08/08): nessuna soglia body-ATR sull'MSS,
+// zona di ritorno [sweepLevel..mssLevel] invece della "candela opposta
+// pre-displacement", rejection a 0.3xATR sul punto medio della zona, timeout
+// 12 barre condiviso da entrambe le fasi, gate ADX>=20 + trend di struttura
+// != 0 che blocca l'avanzamento di stato (non solo l'ingresso) - un bar
+// gated-out non fa avanzare barsWaited, fedele al "continue" Python che
+// salta l'intera barra per entrambe le direzioni insieme.
+// Risultato 14/08: walk-forward 5/5 su 1h, il piu' robusto della sessione -
+// vedi vault "50 Maestri del Trading, Sintesi e Confronto col Nucleo (14-08)".
+#define NXS_SHBMSV2_MAX_WAIT 12
+enum ENUM_NXS_SHBMSV2_STATE { SHBMSV2_IDLE = 0, SHBMSV2_SWEPT, SHBMSV2_WAITING };
+
+struct SNXSSHBmsV2State {
+   int    state;
+   int    barsWaited;
+   double sweepLevel;
+   double mssLevel;
+};
+SNXSSHBmsV2State g_shbmsV2Buy, g_shbmsV2Sell;
+datetime         g_shbmsV2LastBar = 0;
+
+void NXS_SHBMSV2_Reset(SNXSSHBmsV2State &st){
+   st.state = SHBMSV2_IDLE; st.barsWaited = 0; st.sweepLevel = 0; st.mssLevel = 0;
+}
+
+SNXSSignal NXS_SHBMSV2_StepSide(int dir, SNXSSHBmsV2State &st, SNXSSweepExt &sw,
+                                double c1, double o1, double curLo, double curHi, double atr){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_STRUCT_REACT; s.stratName = "SH_BMS_RTO_V2";
+   ENUM_NXS_DIR wantSweep = (dir == +1) ? DIR_BUY : DIR_SELL;
+
+   if(st.state == SHBMSV2_IDLE){
+      if(sw.confirmed && sw.dir == wantSweep){
+         st.sweepLevel = sw.level; st.state = SHBMSV2_SWEPT; st.barsWaited = 0;
+      }
+      return s;
+   }
+   if(st.state == SHBMSV2_SWEPT){
+      st.barsWaited++;
+      if(st.barsWaited > NXS_SHBMSV2_MAX_WAIT){ NXS_SHBMSV2_Reset(st); return s; }
+      bool mss = (dir == +1) ? (c1 > o1 && c1 > st.sweepLevel) : (c1 < o1 && c1 < st.sweepLevel);
+      if(mss){ st.mssLevel = c1; st.state = SHBMSV2_WAITING; st.barsWaited = 0; }
+      return s;
+   }
+   // SHBMSV2_WAITING
+   st.barsWaited++;
+   if(st.barsWaited > NXS_SHBMSV2_MAX_WAIT){ NXS_SHBMSV2_Reset(st); return s; }
+   double zoneTop = (dir == +1) ? st.mssLevel   : st.sweepLevel;
+   double zoneBot = (dir == +1) ? st.sweepLevel : st.mssLevel;
+   if(zoneTop <= zoneBot) return s;
+   double mid  = (zoneTop + zoneBot) * 0.5;
+   double body = MathAbs(c1 - o1);
+   bool touch, rej;
+   if(dir == +1){ touch = (curLo <= zoneTop); rej = (c1 > o1 && c1 > mid && body >= atr * 0.3); }
+   else         { touch = (curHi >= zoneBot); rej = (c1 < o1 && c1 < mid && body >= atr * 0.3); }
+   if(!(touch && rej)) return s;
+   double sl = (dir == +1) ? st.sweepLevel - 0.3*atr : st.sweepLevel + 0.3*atr;
+   double tp = (dir == +1) ? c1 + (c1 - sl) * 2.0     : c1 - (sl - c1) * 2.0;
+   s.dir = (dir == +1) ? DIR_BUY : DIR_SELL;
+   s.entryRef = (dir == +1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   s.slPrice = sl; s.tpPrice = tp;
+   s.score = 70.0; s.reason = "SH_BMS_RTO_V2 sweep+MSS+retest";
+   NXS_SHBMSV2_Reset(st);
+   return s;
+}
+
+SNXSSignal NXS_Strat_SH_BMS_RTO_V2(SNXSSweepExt &sw){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_STRUCT_REACT; s.stratName = "SH_BMS_RTO_V2";
+   datetime tBar1 = iTime(g_sym, NXS_EffTF(), 1);
+   if(tBar1 == g_shbmsV2LastBar) return s;   // gia' avanzato per questa barra
+   g_shbmsV2LastBar = tBar1;
+
+   double atr = _smc_atr();
+   // Gate ADX+trend: fedele al "continue" Python che salta l'INTERA barra
+   // (nessun avanzamento di stato per nessuna delle due direzioni), non solo
+   // il segnale.
+   if(atr <= 0 || g_adx < 20.0 || g_struct.trend == 0) return s;
+
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double o1 = iOpen (g_sym, NXS_EffTF(), 1);
+   double curLo = iLow (g_sym, NXS_EffTF(), 1);
+   double curHi = iHigh(g_sym, NXS_EffTF(), 1);
+
+   SNXSSignal sBuy = NXS_SHBMSV2_StepSide(+1, g_shbmsV2Buy, sw, c1, o1, curLo, curHi, atr);
+   SNXSSignal sSell = NXS_SHBMSV2_StepSide(-1, g_shbmsV2Sell, sw, c1, o1, curLo, curHi, atr);
+   // Fedele a Python: se entrambe le direzioni segnalano nello stesso giro
+   // (raro), vince l'ultima valutata (sell) - stesso ordine del ciclo "for d
+   // in (1,-1)" che sovrascrive out_sig[i].
+   if(sSell.dir != DIR_NONE) return sSell;
+   return sBuy;
 }
 
 // === 6. SMS + BMS + RTO (v2.0.3 — failure swing reale con HH/LL labelling) ==

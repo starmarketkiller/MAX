@@ -525,8 +525,10 @@ void NXS_Stats_Init(){
    NXS_Stats_SetEnabled("TURTLE_SOUP",    InpStrat_TurtleSoup);
    NXS_Stats_SetEnabled("IFVG",           InpStrat_IFVG);
    NXS_Stats_SetEnabled("FVG_MIT",        InpStrat_FVG_Mit);
+   NXS_Stats_SetEnabled("FVG_MIT_WINDOW", InpStrat_FVG_MIT_WINDOW);
    NXS_Stats_SetEnabled("OB_MIT",         InpStrat_OB_Mit);
    NXS_Stats_SetEnabled("SH_BMS_RTO",     InpStrat_SH_BMS_RTO);
+   NXS_Stats_SetEnabled("SH_BMS_RTO_V2",  InpStrat_SH_BMS_RTO_V2);
    NXS_Stats_SetEnabled("SMS_BMS_RTO",    InpStrat_SMS_BMS_RTO);
    NXS_Stats_SetEnabled("SILVER_BULLET",  InpStrat_SilverBullet);
    NXS_Stats_SetEnabled("AMD_REVERSAL",   InpStrat_AMD_Reversal);

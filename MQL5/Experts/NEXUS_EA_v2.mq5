@@ -436,8 +436,12 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    if(InpStrat_TurtleSoup    && NXS_SelectorAllows(17)) out[n++] = NXS_Strat_TurtleSoup(swExt);
    if(InpStrat_IFVG          && NXS_SelectorAllows(18)) out[n++] = NXS_Strat_IFVG_Reversal();
    if(InpStrat_FVG_Mit       && NXS_SelectorAllows(19)) out[n++] = NXS_Strat_FVG_Mitigation();
+   // 13/08 - variante a registro (15 barre), vedi NXS_Strategies_SMC.mqh
+   if(InpStrat_FVG_MIT_WINDOW && NXS_SelectorAllows(39)) out[n++] = NXS_Strat_FVG_Mitigation_Window();
    if(InpStrat_OB_Mit        && NXS_SelectorAllows(20)) out[n++] = NXS_Strat_OB_Mitigation_Structural();
    if(InpStrat_SH_BMS_RTO    && NXS_SelectorAllows(21)) out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
+   // 14/08 - state machine V2 indipendente, walk-forward 5/5 su 1h (vedi vault)
+   if(InpStrat_SH_BMS_RTO_V2 && NXS_SelectorAllows(40)) out[n++] = NXS_Strat_SH_BMS_RTO_V2(swExt);
    if(InpStrat_SMS_BMS_RTO   && NXS_SelectorAllows(22)) out[n++] = NXS_Strat_SMS_BMS_RTO();
    if(InpStrat_SilverBullet  && NXS_SelectorAllows(23)) out[n++] = NXS_Strat_SilverBullet(swExt);
    if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24)) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);

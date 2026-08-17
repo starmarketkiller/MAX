@@ -10,7 +10,7 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 59,
+    "total": 63,
     "live": 37,
     "research_only": 4
   },
@@ -832,11 +832,165 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "SAR_ADX20",
+      "display_name": "Parabolic SAR + ADX>=20 gate (experimental variant)",
+      "aliases": [],
+      "family": "MOMENTUM",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "H4"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "SAR_FLIP",
+      "display_name": "Parabolic SAR flip-only event entry (experimental variant)",
+      "aliases": [],
+      "family": "MOMENTUM",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "H4"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "SCALP_BB_FADE",
       "display_name": "Scalp Bb Fade",
       "aliases": [],
       "family": "SCALP",
       "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "DONCHIAN_TURTLE",
+      "display_name": "Donchian Turtle Trend-Following (Richard Dennis, 14/08 experiment)",
+      "aliases": [],
+      "family": "TREND",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "DARVAS_BOX",
+      "display_name": "Darvas Box breakout (Nicolas Darvas, 14/08 experiment)",
+      "aliases": [],
+      "family": "TREND",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "Z_SCORE_BREAKOUT",
+      "display_name": "Z-Score breakout with SMA200 regime filter (14/08 experiment)",
+      "aliases": [],
+      "family": "MOMENTUM",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "EMA_CROSS_BENCHMARK",
+      "display_name": "EMA 50/200 crossover benchmark (14/08, motore sanity check)",
+      "aliases": [],
+      "family": "MOMENTUM",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "CRT_MINSTOP_FILTER",
+      "display_name": "CRT with tight-stop trades filtered out, not widened (14/08 experiment)",
+      "aliases": [],
+      "family": "LIQUIDITY",
+      "status": "EXPERIMENTAL",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -1168,6 +1322,52 @@
     {
       "strategy_id": "TURTLE_SOUP_CHOCH",
       "display_name": "Turtle Soup with CHoCH confirmation (experimental, N-bar window)",
+      "aliases": [],
+      "family": "LIQUIDITY",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1h",
+        "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_NEAR",
+      "display_name": "Turtle Soup CHoCH, entry near original sweep level (13/08 experiment)",
+      "aliases": [],
+      "family": "LIQUIDITY",
+      "status": "EXPERIMENTAL",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "1h",
+        "4h"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_DBLBODY",
+      "display_name": "Turtle Soup CHoCH, double body confirmation (13/08 experiment)",
       "aliases": [],
       "family": "LIQUIDITY",
       "status": "EXPERIMENTAL",

@@ -605,8 +605,15 @@ bool     InpDebugDecisionLog               = true;
 input bool     InpStrat_TurtleSoup     = true;
 input bool     InpStrat_IFVG           = true;
 input bool     InpStrat_FVG_Mit        = true;
+// 13/08 - variante a registro (15 barre) della strategia sopra, vedi
+// NXS_Strat_FVG_Mitigation_Window() in NXS_Strategies_SMC.mqh e vault
+// "NEXUS EA - Incidente Sicurezza e Setup Desktop (13-08)".
+input bool     InpStrat_FVG_MIT_WINDOW = true;
 input bool     InpStrat_OB_Mit         = true;
 input bool     InpStrat_SH_BMS_RTO     = true;
+// 14/08 - state machine indipendente (regole diverse, non un refactor della
+// v1 sopra), vedi NXS_Strat_SH_BMS_RTO_V2 in NXS_Strategies_SMC.mqh.
+input bool     InpStrat_SH_BMS_RTO_V2  = true;
 input bool     InpStrat_SMS_BMS_RTO    = true;
 input bool     InpStrat_SilverBullet   = true;
 input bool     InpStrat_AMD_Reversal   = true;

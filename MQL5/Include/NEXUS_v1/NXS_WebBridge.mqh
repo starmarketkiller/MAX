@@ -83,8 +83,10 @@ bool _NXS_StrategyToggle(string id, bool &mapped){
    if(id=="TURTLE_SOUP")              return InpStrat_TurtleSoup;
    if(id=="IFVG")                     return InpStrat_IFVG;
    if(id=="FVG_MIT")                  return InpStrat_FVG_Mit;
+   if(id=="FVG_MIT_WINDOW")           return InpStrat_FVG_MIT_WINDOW;
    if(id=="OB_MIT")                   return InpStrat_OB_Mit;
    if(id=="SH_BMS_RTO")               return InpStrat_SH_BMS_RTO;
+   if(id=="SH_BMS_RTO_V2")            return InpStrat_SH_BMS_RTO_V2;
    if(id=="SMS_BMS_RTO")              return InpStrat_SMS_BMS_RTO;
    if(id=="SILVER_BULLET")            return InpStrat_SilverBullet;
    if(id=="AMD_REVERSAL")             return InpStrat_AMD_Reversal;

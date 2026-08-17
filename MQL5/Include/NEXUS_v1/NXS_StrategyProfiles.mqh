@@ -77,6 +77,12 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)".
    if(name == "FVG_CONT")          { slMult=1.5; tpMult=6.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // 4h - vedi nota 12/08 sopra
    if(name == "FVG_MIT")           { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.04 R2.0
+   // 13/08 - FVG_MIT_WINDOW: slMult/tpMult restano inerti come per CRT (SL/TP
+   // sono calcolati dal registro zone in NXS_Strat_FVG_Mitigation_Window, non
+   // da un multiplo ATR fisso) - qui conta solo htf. htf=true viene dal
+   // miglior candidato del batch grid 12/08 (non da una ricerca dedicata come
+   // CRT/FVG_CONT/TSI - meno certo di quei tre, vedi commento nella funzione).
+   if(name == "FVG_MIT_WINDOW")    { slMult=0.0; tpMult=0.0; htf=true ; beR=0.0; trailATR=0.0; return true; }
    if(name == "ICHIMOKU")          { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF1.75 R1.13
    if(name == "IFVG")              { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h FORTE PF2.51 R2.0
    if(name == "LIQ_SWEEP")         { slMult=1.5; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.48 R2.0
@@ -114,6 +120,11 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
    if(name == "SAR")               { slMult=1.5; tpMult=4.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: HTF ON + SL1.5/TP4.0 -> PF1.52
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
+   // 14/08 - SH_BMS_RTO_V2: slMult/tpMult inerti come CRT (SL/TP calcolati
+   // dalla state machine in NXS_Strat_SH_BMS_RTO_V2, non da un multiplo ATR
+   // fisso). htf=false: il gate ADX>=20+trend di struttura e' gia' interno
+   // alla state machine (fedele a Python), non serve il gate HTF generico.
+   if(name == "SH_BMS_RTO_V2")     { slMult=0.0; tpMult=0.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "SMS_BMS_RTO")       { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    if(name == "STRUCT_REACT")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.87 R2.0
    // 12/08 - ricerca dedicata uscite: TSI e' un "problema aperto" del
@@ -163,6 +174,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // walk-forward 4/5; FVG_MIT OOS PF1.01/78, quasi pareggio ma almeno
    // un campione vero). Vedi NEXUS EA - Riverifica su Storico Ampliato.
    if(name == "FVG_MIT")           return PERIOD_H4;
+   if(name == "FVG_MIT_WINDOW")    return PERIOD_H4;
    if(name == "ICHIMOKU")          return PERIOD_H4;
    if(name == "IFVG")              return PERIOD_H4;
    if(name == "LIQ_SWEEP")         return PERIOD_D1;
@@ -180,6 +192,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "RSI_DIV")           return PERIOD_H1;
    if(name == "SAR")               return PERIOD_H4;
    if(name == "SH_BMS_RTO")        return PERIOD_D1;
+   if(name == "SH_BMS_RTO_V2")     return PERIOD_H1;
    if(name == "SMS_BMS_RTO")       return PERIOD_D1;
    if(name == "STRUCT_REACT")      return PERIOD_H1;
    if(name == "TSI")               return PERIOD_D1;
@@ -236,6 +249,11 @@ double NXS_Profile_Risk(const string name){
    // Floor minimo sullo stop aggiunto in NXS_Strat_CRT stesso giro (12/08) -
    // tier A e non S finche' il floor non e' verificato su MT5 reale.
    if(name == "CRT")               return 2.5;
+   // 14/08 - SH_BMS_RTO_V2: terreno vergine su MT5, ma walk-forward 5/5 su
+   // 1h (il piu' pulito trovato in sessione, campioni grandi e consistenti
+   // 60-68 trade/finestra) - Tier A coerente con AMD_CONT/LONDON_BO (stessa
+   // qualita' di evidenza: vergine + campione ampio + WF pulito).
+   if(name == "SH_BMS_RTO_V2")     return 2.5;
 // Tier B (1.2%) — terreno vergine, Python piu' modesto o meno pulito:
    if(name == "LDN_REVERSAL")      return 1.2;    // Python OOS1.22/145 WF4/5
    if(name == "AMD_REVERSAL")      return 1.2;    // Python OOS1.59/117 ma WF solo 3/5
@@ -247,10 +265,12 @@ double NXS_Profile_Risk(const string name){
    if(name == "BREAKOUT_ACC")      return 0.5;    // Python DEBOLE, OOS2.71 smentito da WF reale 1/5 (rumore D1)
    if(name == "LIQ_SWEEP")         return 0.5;    // Python DEBOLE, IS 0.91 sotto pareggio
    if(name == "THREE_BAR_DELIVERY_BREAK") return 0.5;  // Python DEBOLE, WF 2/5 incoerente tra finestre
-   // FVG_MIT: il miglioramento trovato (FVG_MIT_WINDOW, 4h) e' ancora
-   // EXPERIMENTAL solo Python, non portato in MQL5 - il trigger live resta
-   // quello base (OOS PF1.01/78, debole), stessa fascia degli altri Tier C.
+   // FVG_MIT: 13/08 - portata in MQL5 la variante FVG_MIT_WINDOW (vedi
+   // NXS_Profile_Enabled sotto: sostituisce FVG_MIT nel nucleo demo). Stessa
+   // fascia di rischio della base finche' non c'e' storia reale su MT5 -
+   // il porting cambia il trigger, non lo status "da verificare dal vivo".
    if(name == "FVG_MIT")           return 0.5;
+   if(name == "FVG_MIT_WINDOW")    return 0.5;
 // Tier D (0.3%) — problema aperto confermato, nessuna soluzione trovata
 // dopo piu' tentativi, l'unica del nucleo sotto pareggio in OOS:
    if(name == "TSI")               return 0.3;    // reale PF0.86 "in ripresa" ma OOS Python 0.71/39
@@ -301,6 +321,7 @@ double NXS_Profile_TrailK(const string name){
    if(name == "SMS_BMS_RTO")   return 2.5;
    if(name == "IFVG")          return 2.5;
    if(name == "FVG_MIT")       return 2.5;
+   if(name == "FVG_MIT_WINDOW") return 3.0;  // 13/08 - batch grid 12/08, piu' largo della base
    if(name == "LONDON_BO")     return 2.5;   // breakout continuation
    if(name == "BREAKOUT_ACC")  return 2.5;
    if(name == "WEEKLY_EXP")    return 2.5;
@@ -362,6 +383,7 @@ double NXS_Profile_TrailActivate(const string name){
    if(name == "FVG_CONT")      return 1.0;
    if(name == "SAR")           return 1.0;
    if(name == "FVG_MIT")       return 1.0;
+   if(name == "FVG_MIT_WINDOW") return 1.0;
    if(name == "IFVG")          return 1.0;
    if(name == "LIQ_VOID")      return 1.0;
    if(name == "SH_BMS_RTO")    return 1.0;
@@ -406,10 +428,20 @@ bool NXS_Profile_HTF(const string name, bool &htf){
 // 15 Strategie (10-08).
 bool NXS_Profile_Enabled(const string name){
    if(name == "BREAKOUT_ACC")           return true;
-   if(name == "TURTLE_SOUP")            return true;
+   // 14/08 - TURTLE_SOUP disattivata: era Tier S (la piu' fidata, doppia
+   // conferma MT5+Python) ma il batch di riverifica costi di oggi (dati
+   // Dukascopy ampi, costi retail_standard in R, n=250 OOS - campione
+   // largo, non rumore) mostra PF 0.55 e DD 62.7%. Il vecchio PF2.04 "reale
+   // MT5" citato in NXS_Profile_Risk sotto non aveva mai visto questo
+   // standard di costi. Vedi batch nucleus_cost_reverify_14-08.py.
+   if(name == "TURTLE_SOUP")            return false;
    if(name == "MACD")                   return true;
    if(name == "LONDON_BO")              return true;
-   if(name == "FVG_MIT")                return true;
+   // 14/08 - FVG_MIT_WINDOW disattivata: stesso batch costi di oggi mostra
+   // PF retail 0.98 (da 1.64 senza costi) e DD che salta da 6% a 21.4% -
+   // non regge il gate. La "doppia conferma" del 13/08 (vedi sotto) era
+   // anch'essa senza costi realistici applicati.
+   if(name == "FVG_MIT_WINDOW")         return false;
    if(name == "LIQ_SWEEP")              return true;
    if(name == "AMD_CONT")               return true;
    if(name == "FVG_CONT")               return true;
@@ -420,14 +452,17 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "THREE_BAR_DELIVERY_BREAK") return true;
    if(name == "LDN_REVERSAL")           return true;
    if(name == "AMD_REVERSAL")           return true;
-   // 11/08 - CRT aggiunta come 16a: unica scoperta con walk-forward 5/5 su
-   // tre timeframe dopo la riverifica sullo storico ampliato, la piu'
-   // solida della sessione - vedi NXS_Strat_CRT() (NXS_Strategies_SMC.mqh)
-   // e NEXUS EA - Riverifica su Storico Ampliato (11-08). MALAYSIAN_SNR_V2_
-   // RETEST NON e' mai stata qui: e' solo Python, nessuna controparte
-   // MQL5 - la riverifica l'ha comunque ridimensionata (walk-forward
-   // 30m sceso a 2/5), quindi resta giustamente fuori.
-   if(name == "CRT")                    return true;
+   // 14/08 - CRT disattivata: il WF5/5 citato sotto era SENZA costi. Con
+   // costi retail applicati in R (spread/risk_dist esplode sugli stop a
+   // wick di CRT) il PF crolla a 0.08-0.25 e il DD chiuso arriva al 100%
+   // su OGNI combinazione di floor MinStopATR testata (0/0.3/0.5/0.8) -
+   // revisione approfondita 14/08, nessun parametro salva l'edge. Vedi
+   // vault e nucleus_cost_reverify_14-08.py.
+   if(name == "CRT")                    return false;
+   // 14/08 - SH_BMS_RTO_V2 disattivata: Gate 1 del Validator Framework con
+   // costi retail dava gia' PF 0.75/DD 50%; il batch nucleo (campione piu'
+   // ampio, n=140) conferma PF 0.89 - sotto pareggio, non un quasi.
+   if(name == "SH_BMS_RTO_V2")          return false;
    // Le rimanenti restano note per la cronaca (gia' spente da prima per
    // perdite reali confermate, non fanno parte del nucleo demo):
    //   BB_SQUEEZE, STRUCT_REACT, DISP_REBAL, OTE_CONT, ICHIMOKU.

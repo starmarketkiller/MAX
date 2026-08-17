@@ -31,6 +31,9 @@ InpStrat_LONDON_BO=true
 InpStrat_EMA_PULLBACK=true
 InpStrat_TurtleSoup=true
 InpStrat_FVG_Mit=true
+; 13/08 - FVG_MIT_WINDOW sostituisce FVG_MIT nel nucleo (vedi NXS_Profile_Enabled),
+; ma il toggle di FVG_MIT resta true: compilata, disponibile per confronto isolato.
+InpStrat_FVG_MIT_WINDOW=true
 InpUseStrat_AMD_Cont=true
 InpUseStrat_LdnReversal=true
 InpStrat_AMD_Reversal=true
