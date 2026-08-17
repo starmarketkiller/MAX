@@ -34,6 +34,7 @@ data/
 # storico locale scaricato da server/research_scripts/fetch_dukascopy_history.py
 # (fino a 10y di tick XAUUSD, ricostruibile da zero - non e' codice, non va versionato)
 server/data_cache/
+server/data_cache_m5/
 
 # output generati dagli script di ricerca in server/research_scripts/ (dati di
 # corsa, riproducibili rilanciando lo script - non e' codice, non va versionato)
@@ -69,8 +70,13 @@ yarn-error.log*
 
 # --- log e output di build --------------------------------------------------
 *.log
+compile_log_*.txt
 dist/
 out/
+
+# output di estrazione da docx (rigenerabili, non e' codice)
+docx_extract/
+docx_extracted.txt
 
 # huge raw tester agent logs - not useful data, blow past GitHub limits
 results/reports/*agentlog.log
