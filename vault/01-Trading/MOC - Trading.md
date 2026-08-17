@@ -292,6 +292,96 @@ profitto reale, non solo curve di backtest.
   tracking, commit ancora da fare); worker locale + MetaTrader configurati
   e collegati a Render; bug reale trovato e corretto (`NXS_Profile_Risk`
   senza firma, mai compilato dopo il 12/08) — l'EA ora compila pulito.
+  **13/08 (stesso giorno)**: FVG_MIT_WINDOW portata in MQL5 (registro di
+  zone a 15 barre, confermato due volte) e sostituisce FVG_MIT nel nucleo
+  demo.
+- **[[NEXUS EA - Malaysian SNR Test Annuale Basso Timeframe (13-08)]]** —
+  QML base non manca di segnali su M15/M5/M1, ma nessun rapporto
+  setup→esecuzione supera sviluppo+validazione: M30→M5 è l'unico con 3/3
+  fold di sviluppo positivi ma fallisce in validazione (PF 0.55,
+  -0.36R); M1 è economicamente morto (costi ≈-0.377R/trade). Resta
+  disabilitata live, nessun cambio di codice. V4 consigliata: filtro di
+  contesto su M30→M5, testato una variabile alla volta.
+- **[[NEXUS EA - 50 Maestri del Trading, Sintesi e Confronto col Nucleo (14-08)]]**
+  — i 5 pilastri (trend/breakout, price action/asta, macro, quant/rischio,
+  momentum/mean-reversion) incrociati col nucleo: gran parte già presente
+  (SMC/ICT = teoria dell'asta, TURTLE_SOUP = Raschke, HTF gate = filtro
+  regime), il pilastro macro/fondamentale quasi tutto non applicabile a un
+  EA tecnico su oro. 3 candidati nuovi testati (Donchian Turtle, Darvas
+  Box, Z-Score breakout) — tutti con lo stesso pattern sospetto (IS debole,
+  OOS gonfiato): probabile artefatto di regime (trend recente dell'oro),
+  non edge confermato. Nessuno promuovibile senza riverifica IS/OOS
+  scambiati.
+- **[[NEXUS EA - Motore Costi e Riverifica Nucleo (14-08)]]** — scoperto che
+  nessun test della sessione (CRT inclusa) aveva mai applicato costi
+  realistici; trovato e corretto un bug reale (`spread_r = spread/risk_dist`
+  senza cap, equity negativa su stop stretti). CRT chiusa in modo
+  definitivo dopo aver testato ogni combinazione floor/breakeven/trailing
+  sotto costi (mai sopra DD 100%). Riverifica nucleo-wide (flat poi ricetta
+  corretta, stesso errore metodologico trovato e fissato): solo 5
+  sopravvivono (SAR, LONDON_BO, MACD, EMA_PULLBACK, FVG_CONT). 4 strategie
+  disattivate nel codice e compilate (CRT, TURTLE_SOUP, SH_BMS_RTO_V2,
+  FVG_MIT_WINDOW). Variante SAR flip-only promettente (PF 1.96 vs 1.38
+  baseline, DD 4.2% vs 10.2%), ADX gate invece peggiora.
+- **[[NEXUS EA - Riverifica Walk-Forward 5 Finestre e Dipendenza da Regime (15-08)]]**
+  — le 5 "sopravvissute ai costi" del 14/08 NON sono walk-forward stabili:
+  stesso pattern su tutte (PF cresce dalla finestra più vecchia alla più
+  recente, 3-4/5 finestre sotto pareggio), `regime_filter` ADX-based non
+  risolve, TF più bassi peggiorano sistematicamente (ipotesi utente
+  testata e smentita: 15m sempre 0/5 finestre). Diagnosi confermata senza
+  bug: `avg_loss_mfe_r=0.78`, `near_miss_loss_pct=55.8%` su SAR 15m — la
+  direzione è spesso giusta ma il rumore a TF basso fa girare il prezzo
+  prima del TP. Nessuna delle 5 è pronta per live/demo in size.
+- **[[NEXUS EA - Audit Coerenza Catalogo Completo 67 Strategie (16-08)]]** —
+  debug esteso a tutte le 67 strategie registrate (dopo il nucleo, già
+  verificato con scenari sintetici formali): 46 pulite, 2 senza segnali
+  nel campione (non bug), **2 bug reali trovati** — CRT/CRT_MINSTOP_FILTER
+  (22-33% dei trade con target già dietro l'entry, nessun controllo
+  floor sul lato TP a differenza dello SL) e famiglia FVG_MIT/
+  FVG_MIT_WINDOW/IFVG_CHOCH_WINDOW/ORDER_BLOCK_V2/SILVER_BULLET_V2 (SL
+  calcolato dal bordo della zona assumendo prossimità all'entry, che non
+  sempre regge). Nessuna delle strategie coinvolte è nel nucleo live,
+  nessuna azione urgente.
+- **[[NEXUS EA - Filtro di Regime e Portafoglio 5 Strategie (16-08)]]** —
+  prima risposta concreta a "come creiamo un sistema profittevole":
+  filtro di regime vero (Efficiency Ratio di Kaufman, lookback ~167
+  giorni) migliora 4 finestre su 5 su 4 strategie indipendenti (limite
+  noto ai punti di svolta, capito e documentato, non aggirabile).
+  Portafoglio a 5 strategie con questo filtro: **primo risultato netto
+  positivo su 7 anni di tutta l'indagine**, sia a costi retail che ECN,
+  ma richiede capitale ≥€500-1000 (a €300 il conto può fallire per il
+  pavimento del lotto minimo) e drawdown resta severo (50-93%) — non
+  ancora pronto per soldi veri. **Aggiornamento stesso giorno**: trovato
+  che il lotto minimo (non il target di rischio) era il vero vincolo,
+  fino a €61 di rischio reale per trade indipendente dal capitale;
+  aggiunto un tetto diretto in € sul rischio per trade (non solo sui
+  lotti) — risultato: DD sotto 11% (da 33-93%) E profitto più alto
+  insieme, non un compromesso, validato su due metà della storia
+  separate. Il candidato più solido di tutta l'indagine ad oggi.
+- **[[NEXUS EA - Stop Strutturale M5 su Segnali H1 (16-08)]]** — stop
+  ancorato al minimo/massimo delle ultime 12 candele M5 (invece di un
+  multiplo ATR) su 16 strategie diverse: SAR/MACD confermate, ICHIMOKU
+  nuova candidata. Ipotesi "serve uno stop diverso per famiglia" (sweep/
+  rejection/divergenza, già nel motore) testata e chiusa in negativo su
+  tutte e 6 le strategie riprovate — incluso LIQ_SWEEP/TURTLE_SOUP_CHOCH,
+  lo "Spring" di Wyckoff, chiuso anche da questo lato. **Addendum 17/08**:
+  il portafoglio in euro col nuovo stop risolve meccanicamente il vincolo
+  del lotto minimo (rischio reale mediana $23→$6.84) ma esplode comunque
+  (DD100%+) — o R:R eccessivo (serie di 159-172 perdite consecutive) se
+  il target resta ATR-largo, o costi dominanti (stessa lezione di CRT)
+  se il target si restringe col nuovo stop. Nessuna delle due varianti
+  batte il candidato del pomeriggio (stop ATR + tetto-€). Sottoprodotto:
+  catalogo esteso a 30 strategie in più, **Z_SCORE_BREAKOUT nuova
+  scoperta solida** (retail PF1.29/4/5, ECN PF1.71/5/5).
+- **[[NEXUS EA - Idee da Script TradingView Esterni (17-08)]]** — triage
+  di una decina di script TradingView condivisi dall'utente: la
+  maggior parte duplica concetti già nel catalogo o richiede volume
+  reale (assente su XAUUSD OTC). Due idee nuove testate: MACD+SMA200
+  (ChartArt) promettente su 4h (PF1.39/4/5) ma campione troppo sottile
+  (34 trade); falso breakout su swing MAGGIORE (20/15 barre, non
+  sessione/giornaliero come i 3 tentativi precedenti di sweep) — il
+  candidato migliore, 234 trade su 1h, ECN PF1.57 su 5/5 finestre,
+  retail borderline. Non ancora validato due-metà-storia.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
