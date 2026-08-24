@@ -164,5 +164,72 @@ nel porting CRT/FVG_CONT/TSI del 13/08 (commit 145cc71). Verifica locale
 (compilazione + smoke test isolato con InpStrategySelector=41) richiesta
 prima di qualunque uso demo/live.
 
+## Addendum 24/08 (3) - altri 4 script TradingView, 3 testati
+
+L'utente ha condiviso altri 4 script (mentre il porting MQL5 sopra era in
+corso). Uno era gia' stato testato:
+
+- **HHLL (HPotter, 4 deviazioni standard reverse breakout)**: identico
+  allo script gia' testato il 17/08 sopra ("Breakout su banda estrema 4
+  deviazioni standard") - stesso verdetto, bocciata (campione troppo
+  sottile/concentrato in una finestra). Non riverificato.
+
+Testati oggi con la stessa pipeline (walk-forward 5 finestre, filtro
+regime ER trend soglia 0.045 - entrambi sistemi trend-following per
+costruzione, stessa logica di scelta filtro del 16-17/08, conversione a
+evento invece di "sempre in mercato" - stessa scelta di MACD+SMA200):
+
+**Hull Suite (InSilico/DashTrader, HMA len=55, segnale=cambio direzione
+HULL[0] vs HULL[2])** - `hull_suite_24-08.py`:
+
+| TF | Preset | aggPF | finestre PF>=1 |
+|---|---|---|---|
+| 4h | retail | 0.98 | 2/5 |
+| 4h | ECN | 1.11 | 3/5 |
+| 1h | retail | 0.91 | 1/5 |
+| 1h | ECN | 1.12 | 4/5 |
+
+**Verdetto**: bocciata. Retail sotto/a pari su entrambi i TF, ECN
+marginale (1.11-1.12, mai un plateau pulito). Conferma l'ipotesi gia'
+scritta il 17/08 ("rifa concetti gia' presenti nel catalogo, trend-
+following via medie come SAR/MACD") - nessun edge aggiuntivo reale.
+
+**ML Adaptive SuperTrend (AlgoAlpha, SuperTrend fattore 3 su ATR10, ma
+l'ATR e' sostituito dal centroide di un k-means a 3 cluster - alta/media/
+bassa volatilita' - fittato sugli ultimi 100 valori, warm-start dal
+centroide del bar precedente come nello script Pine originale)** -
+`ml_adaptive_supertrend_24-08.py`:
+
+| TF | Preset | aggPF | finestre PF>=1 |
+|---|---|---|---|
+| 4h | retail | 1.00 | 2/5 |
+| 4h | ECN | 1.12 | 3/5 |
+| 1h | retail | 0.88 | 2/5 |
+| 1h | ECN | 1.06 | 3/5 |
+
+**Verdetto**: bocciata, stesso pattern di Hull Suite - retail a/sotto
+pari, ECN marginale. La sostituzione ATR->centroide k-means non produce un edge misurabile
+rispetto a un supertrend con ATR grezzo (mai testato qui per confronto
+diretto, ma il livello assoluto del risultato non giustifica il costo di
+un k-means online solo per validare quel confronto). Nessun plateau
+pulito su 4-5 finestre in nessuno dei due test di oggi.
+
+**KZP - ICT Killzones & Pivots (tradeforopp)** - NON testato,
+deliberatamente. E' un `indicator()`, non uno `strategy()`: nessuna
+`strategy.entry()`, nessuna direzione, nessuna uscita - solo box di
+sessione (Asia/London/NY AM-PM), linee dei massimi/minimi per killzone e
+statistiche di hit-rate. Per testarlo avrei dovuto INVENTARE una regola
+di ingresso (es. "compra alla rottura del massimo della killzone X") che
+lo script stesso non definisce - esattamente il tipo di regola gia'
+testata ripetutamente su questo storico con esito negativo (LIQ_SWEEP/
+TURTLE_SOUP/CISD_TRUE ancorati a PDH/PDL/Asia, vedi sopra: "livelli
+intraday/sessione... usati da tutte le versioni precedenti" contro cui il
+pivot di swing maggiore ha appena vinto). Costruire un'altra variante
+sessione-ancorata senza una tesi nuova sarebbe il tipo di filtro
+aggiunto "perche' suona professionale" che il roadmap vieta esplicitamente
+(sezione 12). Se l'utente ha in mente una regola di ingresso specifica
+basata su KZP, va testata come ipotesi dichiarata, non dedotta da un
+indicatore di visualizzazione.
+
 ## Collegamenti
 [[MOC - Trading]]
