@@ -607,6 +607,18 @@ profitto reale, non solo curve di backtest.
   indipendenti su due sessioni, tutti falliti** - chiuso definitivamente,
   servirebbe uno strumento con spread molto piu' piccolo (fuori scope,
   nessun dato reale per altri simboli).
+- **[[NEXUS EA - Drawdown per Strategia e Sizing Dinamico (24-08)]]** -
+  drawdown massimo per strategia (in R): scala con la FREQUENZA dei
+  trade, non solo col PF - SAR ha PF piu' basso del gruppo diversificatrici
+  ma DD piu' alto (98.3R vs 7.5R di STRUCT_REACT) semplicemente perche'
+  fa 30x piu' trade. Aumentare la size in drawdown contenuto (1.5-2.0x
+  quando DD<3-5R): funziona su STRUCT_REACT (+55% rendimento, DD solo
+  7.5R->9.6R) ma va calibrato (2.0x peggiora LIQ_SWEEP rispetto a 1.5x).
+  **Stesso meccanismo su SCALP_RANGE_BRK (PF0.71) non cambia quasi
+  nulla** (-691R baseline -> -675/-685R con leva) - dimostrato con i
+  numeri, non solo spiegato: il sizing scala l'ampiezza dei trade, non
+  l'aspettativa - su un sistema a valore atteso negativo moltiplica
+  proporzionalmente le stesse perdite, non le recupera.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
