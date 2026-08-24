@@ -537,6 +537,13 @@ profitto reale, non solo curve di backtest.
   la finestra piu' vecchia (2020-2024) e' gia' forte da sola (PF1.42),
   diverso dai rescue BUY-only bocciati ieri sera (li' la finestra vecchia
   era debole/beta). LIQ_SWEEP promossa da borderline a candidata solida.
+- **[[NEXUS EA - Ottimizzazione OTE_CONT (24-08)]]** - terza
+  ottimizzazione individuale. Allineamento D1 (sostituisce ER) e' di
+  nuovo il piu' pulito: retail PF1.61->1.83, **tutte e 5 le finestre
+  positive** (erano 3/5), campione quasi raddoppiato. Trailing e
+  BUY-only migliorano ma con piu' instabilita' tra finestre; SELL-only
+  scartata. **Seconda vittoria di fila per l'allineamento D1** (dopo
+  FVG_MIT ieri sera) - da provare sistematicamente sulle altre baseline.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
