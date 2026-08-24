@@ -455,6 +455,19 @@ profitto reale, non solo curve di backtest.
   profittevoli, retail PF mai sopra 0.59 nemmeno allargando lo stop.
   Tre assi indipendenti provati (TF, ampiezza stop, timing di uscita) -
   nessuno risolve. Nessuna aggiunta al totale di 14.
+- **[[NEXUS EA - Split BUY-SELL e Timeframe D1 (24-08)]]** - probabilmente
+  la scoperta piu' grande della giornata: split BUY/SELL su 10 strategie
+  bocciate/marginali - **pattern quasi universale**, BUY nettamente sopra
+  SELL ovunque (BOLLINGER e STRUCT_REACT superano PF2.7 con 5/5 finestre
+  SOLO sul lato long). 7 baseline rescue genuine (BOLLINGER/STRUCT_REACT/
+  FVG_MIT/BJORGUM/ICHIMOKU/TSI_EXTREME/RSI_DIV). Interpretazione onesta:
+  quasi certamente un'altra faccia della dipendenza dal rally/trend
+  rialzista secolare, non un edge indipendente - una leva di esposizione,
+  non una nuova tesi. Poi timeframe D1 (mai testato prima oggi): 4
+  baseline nuove/rafforzate solide (LIQ_SWEEP il salto piu' netto,
+  EMA_PULLBACK l'unica senza dipendenza dal rally, BREAKOUT_ACC, TSI) +
+  alcune con aggregato ottimo ma prima meta' fragile (OTE_CONT m1=0.30!)
+  da non contare senza riverifica. **Totale giornata: 25 baseline**.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
