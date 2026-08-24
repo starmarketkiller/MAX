@@ -771,6 +771,15 @@ profitto reale, non solo curve di backtest.
   non solo beta mascherato. Primo caso in cui riaprire un verdetto
   pre-disciplina-laterale produce una vera promozione - da considerare
   per altri "borderline ECN-only" archiviati con la stessa firma.
+- **[[NEXUS EA - Riapertura BOLLINGER RSI_DIV ICHIMOKU TSI_EXTREME (25-08)]]** -
+  seguito diretto della riapertura Hull Suite/ML SuperTrend: queste 4
+  erano state scartate SOLO in forma simmetrica, mai testate BUY/SELL.
+  **BOLLINGER(=RANGE_FADE) e RSI_DIV promosse** (SELL laterale forte:
+  PF3.34 n=10 e PF1.36 n=21 rispettivamente - flip genuini). ICHIMOKU
+  inconcludente (campioni n=2-6). TSI_EXTREME resta rifiutata (BUY-only
+  aggregato gia' sotto pareggio). **3 nuove promozioni in totale oggi**
+  dal filone "riapertura verdetti pre-disciplina-laterale" - bilancio
+  finale: 23 strategie solide, aggiornato nella tabella master.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

@@ -76,6 +76,8 @@ ATR era leggermente controproducente qui).
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
 |---|---|---|---|---|---|---|
 | ML_ADAPTIVE_SUPERTREND | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.94 (1.33/2.79, n=123, 4/5)** | Script TradingView esterno (AlgoAlpha), era "bocciata/ECN-only borderline" dal 17-24/08 — riaperta con floor+BUY-SELL+laterale: **flip genuino confermato** (SELL laterale PF1.88 n=11, stessa fascia di SAR/ADX_RSI), non solo beta. Campione ancora sottile, factor SuperTrend=1.5 (k-means su ATR10, training 100), non ancora in MQL5 |
+| BOLLINGER (= RANGE_FADE) | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.54 (1.27/1.85, n=67, 4/5)** | Era "confermata debole" solo in forma simmetrica — mai testata BUY/SELL. SELL laterale PF3.34 (n=10), flip genuino. Non ancora in MQL5 |
+| RSI_DIV | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.65 (1.41/1.91, n=53, 4/5)** | Idem — SELL laterale PF1.36 sul campione laterale più ampio verificato oggi (n=21). Non ancora in MQL5 |
 
 ## Altre solide (5)
 
@@ -102,9 +104,18 @@ ATR era leggermente controproducente qui).
 ## Rifiutate definitivamente oggi (non riprovare senza nuova ipotesi)
 
 CRT, CRT_MINSTOP_FILTER, BJORGUM (simmetrica e BUY-only, beta mascherato
-confermato dalla diagnosi per-data), RSI_DIV, TSI_EXTREME, OTE_CONT su
-D1 (morta pre-2024), BOLLINGER (solo "watch"), l'intera famiglia
-sessione/AMD/SCALP_* su M15/M30, LIQ_VOID (segnale identico a FVG_CONT).
+confermato dalla diagnosi per-data), TSI_EXTREME (BUY-only aggregato
+già sotto pareggio, riverificato 25/08), OTE_CONT su D1 (morta
+pre-2024), l'intera famiglia sessione/AMD/SCALP_* su M15/M30, LIQ_VOID
+(segnale identico a FVG_CONT). ICHIMOKU riverificata 25/08 ma
+inconcludente (campioni laterali troppo sottili, n=2-6), non promossa
+né definitivamente chiusa.
+
+**Correzioni 25/08**: RSI_DIV e BOLLINGER erano qui per errore — mai
+testate BUY/SELL prima di oggi, solo in forma simmetrica. Riaperte con
+lo split e la verifica laterale: **entrambe promosse**, vedi
+[[NEXUS EA - Riapertura BOLLINGER RSI_DIV ICHIMOKU TSI_EXTREME (25-08)]]
+e la sezione "Nuova (25/08)" sopra.
 
 ## Bilancio
 
@@ -136,9 +147,25 @@ promossa a confermata-con-cautela (plateau su 16 combinazioni
 parametriche), TURTLE_SOUP resta provvisoria (finestre instabili,
 asimmetria BUY/SELL non spiegata) — vedi
 [[NEXUS EA - Riverifica TURTLE_SOUP e LDN_REVERSAL (24-25-08)]]. Bilancio
-finale: **20 strategie ragionevolmente solide, 1 (TURTLE_SOUP) ancora
-da maneggiare con cautela** — chiude la revisione completa del
-catalogo del 24-25/08.
+a quel punto: **20 strategie ragionevolmente solide, 1 (TURTLE_SOUP)
+ancora da maneggiare con cautela**.
+
+**Addendum 25/08 — riapertura di verdetti pre-disciplina-laterale**:
+diverse strategie erano state scartate PRIMA che lo split BUY/SELL +
+verifica sulla finestra laterale diventasse la prassi standard di
+oggi — riaperte con gli stessi strumenti usati su tutto il resto.
+Risultato: **3 nuove promozioni** (ML_ADAPTIVE_SUPERTREND, BOLLINGER/
+RANGE_FADE, RSI_DIV — tutte flip genuini confermati sulla finestra
+laterale, non beta mascherato), 2 conferme del rifiuto (Hull Suite,
+TSI_EXTREME), 1 inconcludente (ICHIMOKU, campioni troppo sottili). Vedi
+[[NEXUS EA - Riverifica Hull Suite e ML Adaptive SuperTrend con BUY-SELL e Laterale (25-08)]]
+e [[NEXUS EA - Riapertura BOLLINGER RSI_DIV ICHIMOKU TSI_EXTREME (25-08)]].
+
+**Bilancio finale (25/08)**: **23 strategie ragionevolmente solide**
+(20 di ieri + 3 nuove promozioni), 1 (TURTLE_SOUP) ancora da maneggiare
+con cautela, 1 (ICHIMOKU) inconcludente. Nessuna modifica al codice
+MQL5 live in questo secondo giro — su richiesta esplicita dell'utente,
+resta solo ricerca finché non viene chiesto diversamente.
 
 ## Collegamenti
 [[MOC - Trading]]
