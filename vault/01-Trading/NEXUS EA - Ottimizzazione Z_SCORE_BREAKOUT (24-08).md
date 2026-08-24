@@ -64,10 +64,14 @@ produzione** — richiede una modifica separata e deliberata a
 
 ## Prossimi passi aperti
 
-- Se si decide di applicare il trailing, serve portarlo in MQL5
-  (attualmente `NXS_DefaultSLTP` gestisce solo SL/TP fissi per questa
-  strategia — il trailing richiede un meccanismo diverso, `NXS_Profile_TrailK`
-  esiste già nel motore per altre strategie, riusabile).
+- ⚠️ **Aggiornamento 25/08**: verificato che aggiungere solo
+  `NXS_Profile_TrailK` **non basta** — il motore live tiene il TP fisso
+  come tetto anche con l'overlay trailing attivo (sposta solo lo SL),
+  mentre questo test usava un chandelier puro senza TP. Con il TP
+  fisso ancora vivo il trailing è piatto/leggermente peggiorativo
+  (PF1.32-1.34, non 1.38). Serve rimuovere il TP fisso per replicare
+  davvero il miglioramento — una decisione più consequenziale, non
+  ancora presa. Vedi [[NEXUS EA - Correzione Trailing Z_SCORE_BREAKOUT, il TP fisso lo annullava (25-08)]].
 
 ## Collegamenti
 [[MOC - Trading]]

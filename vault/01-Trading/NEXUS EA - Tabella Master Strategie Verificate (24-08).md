@@ -44,7 +44,7 @@ vedi la correzione sopra prima di fidarsene.
 | MACD | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | **1.72 (1.43/2.04, n=1498, 5/5)** | Cluster (alta) | No |
 | FVG_CONT | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.63 (1.64/1.63, n=396, 4/5 — ultima finestra 0.82)** | Cluster | No |
 | LONDON_BO | 4h | 1.0 init, **trailing 2.0×ATR** | ER (no floor) | **BUY-only** | **1.83 (1.38/2.32, n=70, 5/5)** | Bassa | No |
-| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, **trailing 3.0×ATR** | ER+floor 0.3 | simmetrica | 1.38 (1.28/1.50) | Bassa | **Sì (trailing non ancora applicato al codice)** |
+| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, **trailing 3.0×ATR SENZA TP fisso** | ER+floor 0.3 | simmetrica | 1.38-1.40 (chandelier puro) | Bassa | **Sì — codice live INVARIATO: il trailing richiede rimuovere il TP fisso, verificato 25/08 che altrimenti è inefficace (PF1.32-1.34), decisione non ancora presa** |
 
 ## Cluster trend-following (5) — correlati 0.45-0.997 tra loro, non sommare ciecamente
 

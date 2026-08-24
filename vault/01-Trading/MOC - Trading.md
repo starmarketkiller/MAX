@@ -750,6 +750,17 @@ profitto reale, non solo curve di backtest.
   plateau sul target confermato ma 3 finestre su 5 sono flat-o-negative
   (0.68/0.99/0.94) e c'e' un'asimmetria BUY1.75/SELL0.70 non ancora
   spiegata. Chiude la revisione di tutte le 21 strategie candidate.
+- **[[NEXUS EA - Correzione Trailing Z_SCORE_BREAKOUT, il TP fisso lo annullava (25-08)]]** -
+  tentativo di portare il trailing trovato ieri nel codice MQL5 gia' in
+  produzione, fermato prima di scrivere codice. Il motore live
+  (`NXS_TrailingATR.mqh`) sposta solo lo SL, il TP resta un ordine
+  fisso - un meccanismo diverso dal chandelier puro (nessun TP) testato
+  ieri. Verificato: con il TP fisso ancora attivo il trailing e' PIATTO
+  o leggermente peggiorativo (PF1.32-1.34 contro 1.35 baseline), NON
+  1.38 come sembrava ieri. Il miglioramento vero richiede rimuovere il
+  TP fisso - un cambio di rischio piu' consequenziale, non fatto senza
+  conferma esplicita dell'utente. Nessuna modifica al codice in questo
+  turno.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
