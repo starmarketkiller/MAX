@@ -14,6 +14,11 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Tabella Master Strategie Verificate (24-08)]]** —
+  riferimento rapido: configurazione vincente per ciascuna delle 21
+  strategie verificate il 24/08 (TF, SL/TP, filtro, direzione, PF),
+  senza dover ricostruirla dalle ~15 note sparse. **Consulta questa
+  prima se cerchi "qual è la config giusta per X".**
 - **[[NEXUS EA - Panoramica]]** — cos'è, architettura, filosofia (multi-TF, hedge per
   strategia, "il conto è il regolatore").
 - **[[NEXUS EA - Principi]]** — le lezioni dure, in forma di regole durature. **Leggi
