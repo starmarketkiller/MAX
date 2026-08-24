@@ -468,6 +468,20 @@ profitto reale, non solo curve di backtest.
   EMA_PULLBACK l'unica senza dipendenza dal rally, BREAKOUT_ACC, TSI) +
   alcune con aggregato ottimo ma prima meta' fragile (OTE_CONT m1=0.30!)
   da non contare senza riverifica. **Totale giornata: 25 baseline**.
+- **[[NEXUS EA - Diagnosi Onesta del BUY-only (24-08)]]** - l'utente ha
+  giustamente obiettato che BUY-only profittevole durante un rally puo'
+  essere solo beta, non edge. Verificato con PF per-finestra CON LE DATE
+  (non solo il conteggio): **scoperta metodologica** - le finestre
+  "equal-count" su segnali rari NON sono equal-calendario, una finestra
+  puo' coprire 4 anni con 14 trade mentre le altre 4 coprono meno di 2
+  anni. Verdetto differenziato, non piu' uniforme: STRUCT_REACT e' la
+  piu' genuina (SELL era ECCELLENTE, PF2.85, nella finestra vecchia
+  laterale, poi flip verso BUY nel rally recente - vera logica
+  bidirezionale). BJORGUM **rimossa dalla lista baseline** - BUY e SELL
+  sostanzialmente pari e sotto pareggio nella finestra vecchia, il PF
+  alto aggregato e' beta mascherato, sospetto dell'utente confermato dai
+  dati. BOLLINGER declassata a "watch". Combinazione BUY-only+D1
+  deliberatamente NON eseguita (D1 avrebbe lo stesso problema, peggiore).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
