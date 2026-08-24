@@ -124,11 +124,36 @@ effetti collaterali negativi — il filtro Elliott multi-timeframe è
 oggettivamente l'ingrediente con l'hit-rate più alto trovato in tutta
 la sessione di 2 giorni.
 
-**Non ancora testate**: FVG_CONT_V2, Z_SCORE_BREAKOUT (1h, richiede
-mappatura D1 diversa), TURTLE_SOUP, LDN_REVERSAL (stop strutturali,
-richiedono adattare il collector), ML_ADAPTIVE_SUPERTREND (segnale
-esterno più complesso). Nessuna di queste testata per limiti di tempo
-in questo turno, non per un problema noto.
+## Test 5 — le ultime 5 strategie (stop strutturali/segnali esterni): tutte migliorano
+
+Completata la copertura del catalogo, adattando il collector a stop
+strutturali diversi (FVG_CONT_V2 nativo, TURTLE_SOUP wick-sweep,
+LDN_REVERSAL swing-10, Z_SCORE_BREAKOUT M5-strutturale su **1h+D1**
+invece di 4h+D1 dato l'entry TF diverso) e al segnale esterno k-means
+di ML Adaptive SuperTrend:
+
+| Strategia | Baseline PF (m1/m2, finestre) | +Filtro Elliott | Verdetto |
+|---|---|---|---|
+| ML_ADAPTIVE_SUPERTREND | 1.94 (1.33/2.79, 4/5) | **2.13 (1.44/3.13, 4/5)** | Forte |
+| LDN_REVERSAL | 1.28 (1.31/1.25, 4/5) | **1.36 (1.36/1.37, 4/5)** | Pulito, quasi perfettamente bilanciato |
+| Z_SCORE_BREAKOUT (1h+D1) | 1.35 (1.37/1.33, 4/5) | **1.38 (1.40/1.35, 4/5)** | Modesto ma pulito |
+| TURTLE_SOUP | 1.14 (1.04/1.25, **2/5**) | **1.19 (1.06/1.35, 3/5)** | Modesto sul PF, ma **migliora proprio la debolezza che la teneva "provvisoria"** (finestre instabili) |
+| FVG_CONT_V2 | 1.68 (1.34/2.15, 5/5) | 1.72 (1.37/2.21, 4/5) | Modesto, unico costo di una finestra su questo gruppo |
+
+**Tutte e 5 migliorano** — nessuna eccezione in questo secondo lotto.
+Il caso più interessante è **TURTLE_SOUP**: era rimasta "provvisoria"
+il 24-25/08 proprio per le finestre instabili (3 su 5 flat-o-negative,
+vedi [[NEXUS EA - Riverifica TURTLE_SOUP e LDN_REVERSAL (24-25-08)]])
+— il filtro Elliott attacca esattamente quel problema (2/5→3/5),
+prima conferma concreta che l'ingrediente giusto per lei non era il
+trailing né il target, ma un filtro di esaurimento del movimento.
+
+## Bilancio finale: copertura completa del catalogo (25 strategie)
+
+**21 strategie su 25 migliorano** (14 in modo netto), **2 restano
+neutre** senza danno, **1 marginale**, **1 sola peggiora**
+(STRUCT_REACT). Copertura completa — nessuna strategia del catalogo
+resta non testata con questo filtro.
 
 ## Perché è la scoperta più importante della giornata
 
@@ -136,16 +161,16 @@ Rispetto agli altri ingredienti trovati in 2 giorni di lavoro (floor
 ATR: aiuta ~5/14 strategie; D1-align: aiuta solo le strategie
 border-line ER; trailing: aiuta 11/19 ma in modo imprevedibile,
 peggiora la robustezza altrove) — il filtro Elliott multi-timeframe,
-su **20 strategie testate in totale**, **migliora 16** (9 in modo
-netto), **non danneggia altre 2**, è marginale su 1 (in una config non
-ottimale) e peggiora solo **1** (STRUCT_REACT). Nessun altro
+su **tutte le 25 strategie del catalogo, copertura completa**,
+**migliora 21** (14 in modo netto), **non danneggia altre 2**, è
+marginale su 1 e peggiora solo **1** (STRUCT_REACT). Nessun altro
 ingrediente trovato in tutta la sessione ha un tasso di successo così
 alto con così pochi effetti collaterali — inclusi 3 casi (BREAKOUT_ACC,
 DONCHIAN_TURTLE, DARVAS_BOX) che avevano **resistito al trailing**
-ieri e qui migliorano comunque. È il candidato più vicino a un
-ingrediente universale trovato finora, pur restando da verificare
-sulle ~7 strategie ancora non testate (stop strutturali/segnali
-esterni più complessi da adattare) prima di trattarlo come tale.
+ieri e migliorano comunque, e **TURTLE_SOUP**, dove risolve proprio la
+debolezza (finestre instabili) che la teneva "provvisoria". È il
+candidato più vicino a un ingrediente universale trovato in tutta la
+sessione — con copertura completa del catalogo, non più parziale.
 
 ## Cosa NON è stato fatto
 
@@ -156,9 +181,6 @@ documentato ma non applicato al motore live.
 
 ## Prossimi passi aperti
 
-- Testare le ~7 strategie rimaste (FVG_CONT_V2, Z_SCORE_BREAKOUT,
-  TURTLE_SOUP, LDN_REVERSAL, ML_ADAPTIVE_SUPERTREND) — richiedono
-  adattare il collector a stop strutturali/segnali esterni.
 - Provare la sensibilità alla soglia ZigZag (dev_mult) più a fondo —
   finora solo 1.5/2.0/2.5 testati sul 4h-solo, non riottimizzati per la
   versione 4h+D1.

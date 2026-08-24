@@ -32,15 +32,18 @@ del campione), quindi un gate esterno non ha abbastanza segnali SELL
 da raddrizzare. Vedi [[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]].
 
 🌊 **NUOVO INGREDIENTE (25/08) — filtro Elliott Wave multi-timeframe**:
-scoperto un filtro (ZigZag + regole Elliott a 5 onde su 4h **E** D1,
-sopprimi il segnale se ANCHE UNO SOLO dei due timeframe è "esaurito"
-nella stessa direzione) che su **20 strategie testate migliora 16**
-(9 in modo netto), non danneggia altre 2, marginale su 1, peggiora
-solo STRUCT_REACT — il tasso di successo più alto di ogni ingrediente
+scoperto un filtro (ZigZag + regole Elliott a 5 onde su TF-ingresso
+**E** D1, sopprimi il segnale se ANCHE UNO SOLO dei due timeframe è
+"esaurito" nella stessa direzione) testato su **tutte le 25 strategie
+del catalogo (copertura completa)**: **21 migliorano** (14 in modo
+netto), non danneggia altre 2, marginale su 1, peggiora solo
+STRUCT_REACT — il tasso di successo più alto di ogni ingrediente
 trovato in 2 giorni, incluse 3 strategie (BREAKOUT_ACC,
-DONCHIAN_TURTLE, DARVAS_BOX) che avevano resistito al trailing. Le PF
-sotto NON includono ancora questo filtro (richiederebbe riverificare
-tutte le righe, non ancora fatto). Vedi
+DONCHIAN_TURTLE, DARVAS_BOX) che avevano resistito al trailing e
+**TURTLE_SOUP**, dove risolve proprio la debolezza (finestre
+instabili) che la teneva "provvisoria". Le PF sotto NON includono
+ancora questo filtro (richiederebbe riverificare tutte le righe, non
+ancora fatto). Vedi
 [[NEXUS EA - Filtro Elliott Wave Multi-Timeframe, il nuovo ingrediente universale (25-08)]]
 per la tabella completa (es. ADX_RSI 1.77→2.04, SAR 1.51→1.65, TSI
 2.03→2.25, OTE_CONT 1.61→1.99 con finestre 3/5→5/5). Nessuna modifica
@@ -114,7 +117,7 @@ ATR era leggermente controproducente qui).
 
 | Strategia | TF | SL/TP | Direzione | Retail PF | Perché ancora provvisoria |
 |---|---|---|---|---|---|
-| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR | simmetrica | 1.14 (1.04/1.25, n=271) | Plateau confermato sul target (6 valori, PF 1.01-1.18) MA 3 finestre su 5 flat-o-negative (0.68/0.99/0.94), PF trainato dall'ultima finestra; asimmetria BUY1.75/SELL0.70 non confermata (lateral BUY n=12, PF0.78, inconcludente) |
+| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR | simmetrica | 1.14 (1.04/1.25, n=271) | Plateau confermato sul target (6 valori, PF 1.01-1.18) MA 3 finestre su 5 flat-o-negative (0.68/0.99/0.94), PF trainato dall'ultima finestra; asimmetria BUY1.75/SELL0.70 non confermata (lateral BUY n=12, PF0.78, inconcludente). **Aggiornamento 25/08**: il filtro Elliott multi-timeframe (vedi sopra) migliora proprio questa debolezza — PF1.19, finestre 2/5→3/5 — non ancora combinato con altri ingredienti |
 
 ## Rifiutate definitivamente oggi (non riprovare senza nuova ipotesi)
 

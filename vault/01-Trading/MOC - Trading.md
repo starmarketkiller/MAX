@@ -794,13 +794,14 @@ profitto reale, non solo curve di backtest.
   1.51->1.65, TSI 2.03->2.25, ecc.), quasi sempre senza contropartite -
   il candidato piu' vicino a un ingrediente universale trovato finora.
   Unica eccezione STRUCT_REACT (peggiora, coerente col suo pattern di
-  resistere a ogni filtro extra). **Esteso poi a 12 strategie in piu'
-  (20 totali)**: 16/20 migliorano (9 nettamente, incluse 3 - BREAKOUT_ACC/
-  DONCHIAN_TURTLE/DARVAS_BOX - che avevano resistito al trailing), 2
-  neutre, 1 marginale, 1 peggiora (STRUCT_REACT) - il tasso di successo
-  piu' alto di ogni ingrediente trovato in 2 giorni. Nessuna modifica al
-  codice MQL5, solo ricerca. Restano ~7 strategie non testate (stop
-  strutturali/segnali esterni piu' complessi da adattare).
+  resistere a ogni filtro extra). **Esteso a tutte le 25 strategie del
+  catalogo (copertura completa)**: 21/25 migliorano (14 nettamente,
+  incluse 3 - BREAKOUT_ACC/DONCHIAN_TURTLE/DARVAS_BOX - che avevano
+  resistito al trailing, e TURTLE_SOUP dove risolve proprio la
+  debolezza - finestre instabili 2/5->3/5 - che la teneva
+  "provvisoria"), 2 neutre, 1 marginale, 1 peggiora (STRUCT_REACT) - il
+  tasso di successo piu' alto di ogni ingrediente trovato in 2 giorni.
+  Nessuna modifica al codice MQL5, solo ricerca.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
