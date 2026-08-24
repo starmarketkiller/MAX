@@ -161,6 +161,36 @@ universale — va scelto in base alla tesi della strategia (trend-
 following → filtro trend; mean-reversion/compressione → filtro laterale
 o nessun filtro), non applicato meccanicamente a tutto il catalogo.
 
+## Addendum 17/08 (2) — griglia SL/TP + filtro HTF, confronto con MT5 reale
+
+Richiesta dell'utente dopo aver visto un agente parallelo validare SAR su
+tick MT5 reali (SL1.0/TP6.0, HTF on/off): perché non avevamo mai provato
+questo asse (griglia SL/TP sistematica + filtro HTF) su SAR o sulle altre
+bocciate di oggi? Risposta onesta: oggi l'asse scelto era un altro (stop
+M5 vs ATR); una griglia SL/TP era già stata fatta il 12/08 per l'intero
+catalogo ma non con l'HTF come leva esplicita per SAR.
+
+**Su SAR** (`run_backtest` diretto, motore canonico, ultimo anno circa,
+4h e 1h, costi retail): risultati in linea con quelli MT5 dell'agente
+parallelo per la stessa config (SL1.0/TP6.0 HTF=off: PF1.29/DD18.03% qui
+contro PF1.44/DD18.77% su MT5 — stesso ordine di grandezza, buona
+conferma incrociata tra motori diversi). Ma la griglia ha trovato di
+meglio: **SL1.5/TP4.0 HTF=off, PF1.40/DD8.89%** su 4h — il miglior
+risultato per SAR di tutta l'indagine, drawdown meno della metà delle
+config a stop più largo. Su 1h tutto peggiora nettamente (PF1.05-1.21,
+DD 19-48%) — 4h resta il timeframe giusto per SAR, confermato.
+
+**Sulle 9 bocciate/borderline di oggi** (SAR_ADX20, SAR_FLIP,
+BREAKOUT_ACC, DARVAS_BOX, TSI, LIQ_SWEEP, TURTLE_SOUP, STRUCT_REACT,
+SH_BMS_RTO — griglia 4 combinazioni SL/TP × HTF on/off, storico intero +
+split a due metà): **nessuna salvata**. PF tra 0.28 e 0.77 ovunque, DD
+90-100% quasi sempre, coerente su entrambe le metà — non era un problema
+di parametri, l'edge non c'è. Nota: per TURTLE_SOUP e SH_BMS_RTO la
+griglia SL/TP è risultata INERTE (stesso comportamento già noto per
+CRT — il loro stop è sempre quello strutturale ancorato al wick, mai
+quello ATR impostato dal parametro).
+Script: `grid_htf_rescue_17-08.py`.
+
 ## Sottoprodotto utile: catalogo esteso con stop nativo per famiglia
 
 Estesa la classificazione stop-nativo (sweep/rejection/nativo-precalcolato/

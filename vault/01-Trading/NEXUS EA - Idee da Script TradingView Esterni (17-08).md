@@ -108,5 +108,25 @@ Validazione due-metà-storia sul falso-breakout-su-swing-maggiore (1h),
 poi eventuale ingresso nel portafoglio insieme a Z_SCORE_BREAKOUT (vedi
 [[NEXUS EA - Stop Strutturale M5 su Segnali H1 (16-08)]], addendum 17/08).
 
+## Addendum 24/08 — validazione due-metà-storia: promosso
+
+Eseguita la verifica lasciata aperta (`bjorgum_swing_falsebreak_twohalf_24-08.py`,
+stessa logica di segnale del 17/08, nessuna riottimizzazione — solo split
+del campione 1h a metà). Nessuna metà negativa in nessuno dei due preset:
+
+| Preset | Aggregato | Prima metà | Seconda metà |
+|---|---|---|---|
+| retail | PF 1.29, sumR +50.9, n=234 | PF 1.14, n=117 | PF 1.46, n=117 |
+| ECN | PF 1.57, sumR +87.4, n=234 | PF 1.42, n=117 | PF 1.74, n=117 |
+
+Retail migliora nella seconda metà invece di degradare (buon segno,
+esclude che il risultato aggregato sia trascinato da un singolo periodo
+favorevole all'inizio). **Promosso da candidato a strategia validata** —
+nome di lavoro `SWING_FALSEBREAK` (1h, stop ATR 1.5/4.0, filtro regime ER
+trend ≥0.045). Prossimo passo reale: portare in MQL5 (stesso trattamento
+di CRT/FVG_CONT/TSI, vedi commit `145cc71`) e aggiungerlo al pool di
+candidati per il portafoglio a 10-15 strategie insieme a Z_SCORE_BREAKOUT,
+ICHIMOKU, BB_SQUEEZE (filtro laterale), SAR_ADX20/SAR_FLIP (borderline).
+
 ## Collegamenti
 [[MOC - Trading]]
