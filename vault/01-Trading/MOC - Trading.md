@@ -567,6 +567,20 @@ profitto reale, non solo curve di backtest.
   l'unica dove il miglioramento non vale la pena (SELL resta
   marginalmente positivo). Tabella master aggiornata con tutte le nuove
   config.
+- **[[NEXUS EA - CORREZIONE Il BUY-only e Regime-Dipendente non Universale (24-08)]]** -
+  l'utente ha giustamente rimesso in dubbio lo sweep BUY/SELL di prima.
+  Isolata la finestra genuinamente laterale (2020-11→2023-10, gia'
+  classificata il 15/08): **il verdetto si RIBALTA** - SELL domina su
+  tutte le 6 strategie controllate (ADX_RSI: BUY PF0.23 vs SELL PF2.53!).
+  Il "13/14 migliorano con BUY-only" di prima era vero solo
+  nell'aggregato 2019-2026 (a maggioranza rialzista) - un flip di
+  regime reale (BUY vince nei trend, SELL nel laterale), non un lato
+  strutturalmente migliore. Stessa trappola equal-count-non-equal-
+  calendario di ieri sera, qui su campioni piu' grandi (145 trade)
+  quindi piu' ingannevole. Verifica su altro mercato tentata ma
+  inconcludente (solo 2 anni via Yahoo per BTCUSD/EURUSD, dati non
+  comparabili). Prossimo passo naturale: direction-lock CONDIZIONATO al
+  regime (BUY se trend, SELL se laterale), non BUY-only statico.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

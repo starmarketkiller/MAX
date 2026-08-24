@@ -16,11 +16,20 @@ con la fonte per chi vuole il dettaglio completo. Tutte le PF sono
 retail_standard su 4h salvo indicato, con costi scalati sul prezzo
 storico. `m1`/`m2` = due metà della storia.
 
-**Aggiornamento più recente**: split BUY/SELL sistematico (vedi
+⚠️ **CORREZIONE (vedi [[NEXUS EA - CORREZIONE Il BUY-only e Regime-Dipendente non Universale (24-08)]])**:
+le config "BUY-only" sotto sono valide come descrizione dell'AGGREGATO
+2019-2026, ma isolando la finestra genuinamente laterale (2020-11→
+2023-10) il verdetto si RIBALTA — è SELL a vincere lì (es. ADX_RSI: BUY
+PF0.23 vs SELL PF2.53 nel laterale). Non è un lato strutturalmente
+migliore, è un flip di regime (BUY vince nei trend, SELL nel laterale).
+Trattare "BUY-only" come una scommessa sulla continuazione del trend
+rialzista, non come un edge di segnale scoperto — la vera opportunità
+(non ancora costruita) è un direction-lock condizionato al regime.
+
+**Aggiornamento precedente**: split BUY/SELL sistematico (vedi
 [[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]) — 13 strategie su 14
-testate migliorano nettamente passando a BUY-only, verificato con
-campioni ampi (60-1471 trade) e finestra più vecchia genuinamente sopra
-pareggio (non beta mascherato come i casi bocciati ieri sera).
+testate migliorano nettamente passando a BUY-only nell'aggregato, ma
+vedi la correzione sopra prima di fidarsene.
 
 ## Nucleo storico (5)
 
