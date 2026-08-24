@@ -415,6 +415,21 @@ profitto reale, non solo curve di backtest.
   peggiora, non si sommano. Divario meta1/meta2 ridotto sostanzialmente,
   non eliminato — finestra 2020-11→2022-04 resta la più debole in
   assoluto.
+- **[[NEXUS EA - Screening Catalogo Completo e Confluenze (24-08)]]** -
+  applicata la ricetta ER+floor a tutte le 67 strategie del catalogo:
+  9 nuove baseline verificate due-meta-storia (DONCHIAN_TURTLE quasi
+  identica tra le due meta, ADX_RSI non dipende nemmeno dal rally,
+  MALAYSIAN_SNR_BREAKOUT/DARVAS_BOX/AMD_CONT/SAR_FLIP/EMA_PULLBACK/
+  SAR_ADX20/BREAKOUT_ACC) - EMA_PULLBACK ribalta il verdetto negativo del
+  16/08. LIQ_VOID scartata dal conteggio (segnale identico a FVG_CONT).
+  Poi confluenze tra strategie/indicatori diversi (richiesta esplicita):
+  MACD come conferma di momentum funziona bene su ADX_RSI (PF1.27->1.48
+  retail, entrambe le meta migliorano) ma NON generalizza a
+  DONCHIAN_TURTLE (nessun effetto) - confermata l'avvertenza dell'utente,
+  un filtro buono per una non lo e' per un'altra. Zona di ritracciamento
+  Fibonacci su EMA_PULLBACK inconcludente (campione crolla a 9 trade,
+  troppi filtri impilati) - non una tesi falsificata, un disegno da
+  rifare.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
