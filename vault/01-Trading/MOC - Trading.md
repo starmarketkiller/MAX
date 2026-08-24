@@ -681,6 +681,15 @@ profitto reale, non solo curve di backtest.
   cambiamento. Bilancio del blocco: solo SAR_FLIP e FVG_CONT_V2 hanno
   trovato un miglioramento reale col trailing, TSI e MALAYSIAN_SNR
   no - non e' un ingrediente universale nemmeno dentro lo stesso blocco.
+- **[[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]]** -
+  dodicesima ottimizzazione, prima del nucleo storico. Trailing
+  2.0xATR adottato (PF1.51->1.64, campione piu' grande della giornata,
+  n=1471). Primo tentativo concreto dell'idea "direction-lock per
+  regime" citata nella correzione BUY-only: classificatore D1 (ER a
+  120gg) etichetta bene il laterale 2021-2023, ma il generatore di
+  segnale SAR produce quasi solo BUY anche li' (94.6% del campione) -
+  un gate esterno non basta, serve un segnale SELL nativo distinto.
+  Tentativo onestamente documentato come fallito.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

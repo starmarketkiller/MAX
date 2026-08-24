@@ -23,8 +23,13 @@ le config "BUY-only" sotto sono valide come descrizione dell'AGGREGATO
 PF0.23 vs SELL PF2.53 nel laterale). Non è un lato strutturalmente
 migliore, è un flip di regime (BUY vince nei trend, SELL nel laterale).
 Trattare "BUY-only" come una scommessa sulla continuazione del trend
-rialzista, non come un edge di segnale scoperto — la vera opportunità
-(non ancora costruita) è un direction-lock condizionato al regime.
+rialzista, non come un edge di segnale scoperto. **Primo tentativo di
+direction-lock condizionato al regime fatto il 24/08 su SAR (il flip
+meglio campionato) — non ha funzionato**: il classificatore di regime
+macro (D1, ER a 120gg) etichetta correttamente il laterale 2021-2023,
+ma il generatore di segnale SAR produce quasi solo BUY anche lì (94.6%
+del campione), quindi un gate esterno non ha abbastanza segnali SELL
+da raddrizzare. Vedi [[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]].
 
 **Aggiornamento precedente**: split BUY/SELL sistematico (vedi
 [[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]) — 13 strategie su 14
@@ -35,7 +40,7 @@ vedi la correzione sopra prima di fidarsene.
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Correlazione | MQL5 |
 |---|---|---|---|---|---|---|---|
-| SAR | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.51 (1.36/1.69)** | Cluster (alta) | No |
+| SAR | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.64 (1.28/2.04, n=1471, 5/5)** | Cluster (alta) | No |
 | MACD | 4h | 1.5/4.0 | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | 1.46 (1.39/1.54) | Cluster (alta) | No |
 | FVG_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.51 (1.35/1.69)** | Cluster | No |
 | LONDON_BO | 4h | 1.0/4.5 | ER (no floor) | **BUY-only** | **1.60 (1.71/1.49)** | Bassa | No |
