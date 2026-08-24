@@ -506,6 +506,19 @@ profitto reale, non solo curve di backtest.
   piu' "quali strategie sono buone" ma **come allocare il rischio tra
   loro** - analisi di correlazione e criterio di priorita' nel bucket
   ancora da fare.
+- **[[NEXUS EA - Correlazione tra le 20 Strategie (24-08)]]** - spiega
+  la causa del portafoglio squilibrato: DARVAS_BOX e DONCHIAN_TURTLE
+  correlate al **99.7%** (praticamente la stessa strategia), un cluster
+  trend-following {SAR/SAR_ADX20/MACD/ADX_RSI/BREAKOUT_ACC/DARVAS_BOX/
+  DONCHIAN_TURTLE/FVG_CONT} correlato 0.45-0.84 tra loro. Solo 5 vere
+  diversificatrici: STRUCT_REACT (correlazione NEGATIVA con SAR/
+  SAR_ADX20 - hedge naturale genuino), EMA_PULLBACK, FVG_MIT, OTE_CONT,
+  LIQ_SWEEP - non a caso le stesse che il portafoglio a 2 slot escludeva
+  o penalizzava. Due tentativi di correzione (slot dedicati
+  cluster/diversificatrici, deduplicazione semplice) NON risolvono -
+  serve un budget di rischio indipendente per strategia, non un
+  aggiustamento di parametri. Su richiesta dell'utente, in pausa per ora
+  a favore dell'ottimizzazione per-strategia.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
