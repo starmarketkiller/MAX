@@ -715,6 +715,12 @@ profitto reale, non solo curve di backtest.
   risultato l'ingrediente piu' consistente su questo blocco, anche se
   non universale sull'intero portafoglio (vedi blocco "altre solide"
   dove ha funzionato solo su 2/5).
+- **[[NEXUS EA - Ottimizzazione ADX_RSI (24-08)]]** - sedicesima
+  ottimizzazione, prima del cluster trend-following. Verifica laterale
+  gia' fatta (il flip piu' netto della giornata: BUY0.23/SELL2.53).
+  Trailing 2.5xATR e' il miglioramento piu' pulito visto finora: PF
+  1.77->2.20 (+24%), 5/5 finestre, le due meta' praticamente identiche
+  (2.20/2.21) - nessun compromesso da segnalare.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
