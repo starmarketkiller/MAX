@@ -592,6 +592,21 @@ profitto reale, non solo curve di backtest.
   non piu' un problema di ricetta, verdetto finale: le SCALP_* cosi'
   come codificate non hanno edge sfruttabile, servirebbe un segnale
   nuovo, fuori scope.
+- **[[NEXUS EA - Riscrittura SCALP con Ricerca Esterna (24-08)]]** - su
+  richiesta dell'utente, riscrittura vera (non un filtro) informata da
+  ricerca web (overlap London-NY 12-16 UTC, liquidity sweep reversal -
+  fonti citate). Restringere le SCALP_* esistenti all'overlap aiuta ma
+  non basta (resta sotto pareggio). Segnale NUOVO (sweep swing M15 +
+  rientro, R:R 1:2, overlap-only): **peggio delle originali**, PF
+  0.15-0.61. Diagnosi quantificata: risk_dist mediano $3.45, costo
+  tipico $2.37 (69% dello stop!), win rate grezzo 32.3% contro 33.3% di
+  pareggio - il segnale non ha edge nemmeno prima dei costi. Stesso
+  meccanismo (sweep+rientro) funziona su H1 (SWING_FALSEBREAK, PF1.29)
+  ma non su M15 - non e' l'idea, e' la SCALA: costi fissi retail non
+  permettono economia su stop di pochi dollari/minuti. **7 tentativi
+  indipendenti su due sessioni, tutti falliti** - chiuso definitivamente,
+  servirebbe uno strumento con spread molto piu' piccolo (fuori scope,
+  nessun dato reale per altri simboli).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
