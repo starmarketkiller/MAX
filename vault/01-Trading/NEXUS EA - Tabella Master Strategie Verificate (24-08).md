@@ -34,16 +34,17 @@ da raddrizzare. Vedi [[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock 
 🌊 **NUOVO INGREDIENTE (25/08) — filtro Elliott Wave multi-timeframe**:
 scoperto un filtro (ZigZag + regole Elliott a 5 onde su 4h **E** D1,
 sopprimi il segnale se ANCHE UNO SOLO dei due timeframe è "esaurito"
-nella stessa direzione) che migliora **7 strategie su 8** testate
-finora, quasi sempre senza contropartite (finestre stabili/migliori,
-metà storiche più equilibrate) — il candidato più vicino a un
-ingrediente universale trovato in tutta la sessione. Le PF sotto NON
-includono ancora questo filtro (richiederebbe riverificare tutte le
-righe, non ancora fatto). Vedi
+nella stessa direzione) che su **20 strategie testate migliora 16**
+(9 in modo netto), non danneggia altre 2, marginale su 1, peggiora
+solo STRUCT_REACT — il tasso di successo più alto di ogni ingrediente
+trovato in 2 giorni, incluse 3 strategie (BREAKOUT_ACC,
+DONCHIAN_TURTLE, DARVAS_BOX) che avevano resistito al trailing. Le PF
+sotto NON includono ancora questo filtro (richiederebbe riverificare
+tutte le righe, non ancora fatto). Vedi
 [[NEXUS EA - Filtro Elliott Wave Multi-Timeframe, il nuovo ingrediente universale (25-08)]]
-per la tabella completa dei miglioramenti (es. ADX_RSI 1.77→2.04, SAR
-1.51→1.65, TSI 2.03→2.25). Nessuna modifica al codice MQL5 — solo
-ricerca, su richiesta esplicita dell'utente.
+per la tabella completa (es. ADX_RSI 1.77→2.04, SAR 1.51→1.65, TSI
+2.03→2.25, OTE_CONT 1.61→1.99 con finestre 3/5→5/5). Nessuna modifica
+al codice MQL5 — solo ricerca, su richiesta esplicita dell'utente.
 
 **Aggiornamento precedente**: split BUY/SELL sistematico (vedi
 [[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]) — 13 strategie su 14
