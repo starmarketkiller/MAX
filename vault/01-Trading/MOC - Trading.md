@@ -529,6 +529,14 @@ profitto reale, non solo curve di backtest.
   a 6xATR e' gia' competitivo) e i pochi reverse isolati mostrano PF
   esattamente 1.00 pre-costi (nessun edge nemmeno grezzo, ma campione
   troppo sottile per un verdetto definitivo).
+- **[[NEXUS EA - Ottimizzazione LIQ_SWEEP (24-08)]]** - seconda
+  ottimizzazione individuale. Stop nativo dello sweep peggiora (a
+  differenza di TURTLE_SOUP). Allineamento D1 migliora un po'. **BUY-only
+  e' la scoperta pulita**: retail PF1.73, le due meta' IDENTICHE
+  (1.73/1.73), tutte e 5 le finestre positive, verificato con le date -
+  la finestra piu' vecchia (2020-2024) e' gia' forte da sola (PF1.42),
+  diverso dai rescue BUY-only bocciati ieri sera (li' la finestra vecchia
+  era debole/beta). LIQ_SWEEP promossa da borderline a candidata solida.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
