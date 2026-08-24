@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 37
+#define NXS_LIVE_STRATEGY_COUNT 38
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -48,6 +48,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="SILVER_BULLET" ||
           id=="SMS_BMS_RTO" ||
           id=="STRUCT_REACT" ||
+          id=="SWING_FALSEBREAK" ||
           id=="THREE_BAR_DELIVERY_BREAK" ||
           id=="TSI" ||
           id=="TURTLE_SOUP" ||
@@ -91,10 +92,11 @@ string NXS_StrategyIdAt(int i){
    if(i==30) return "SILVER_BULLET";
    if(i==31) return "SMS_BMS_RTO";
    if(i==32) return "STRUCT_REACT";
-   if(i==33) return "THREE_BAR_DELIVERY_BREAK";
-   if(i==34) return "TSI";
-   if(i==35) return "TURTLE_SOUP";
-   if(i==36) return "WEEKLY_EXP";
+   if(i==33) return "SWING_FALSEBREAK";
+   if(i==34) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==35) return "TSI";
+   if(i==36) return "TURTLE_SOUP";
+   if(i==37) return "WEEKLY_EXP";
    return "";
 }
 

@@ -4,15 +4,13 @@
   "sources": [
     "knowledge/strategy_database.json",
     "MQL5/Include/NEXUS_v1/NXS_StrategyProfiles.mqh (NXS_Profile_TF)",
-    "server/backtest.py (STRAT_MAP)",
-    "server/backtest.py (MALAYSIAN_SNR_BREAKOUT - variante sperimentale senza controparte MQL5, 06/08)",
-    "server/backtest.py (SH_BMS_RTO_V2/SILVER_BULLET_V2/OTE_CONT_V2/ORDER_BLOCK_V2/FVG_CONT_V2 - varianti sperimentali pastate dall'utente per il brief Decomposizione Edge, nessuna controparte MQL5 nel repo, 08/08)"
+    "server/backtest.py (STRAT_MAP)"
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 63,
-    "live": 37,
-    "research_only": 4
+    "total": 69,
+    "live": 38,
+    "research_only": 31
   },
   "strategies": [
     {
@@ -52,7 +50,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "*"
+        "M30"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -74,7 +72,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "*"
+        "M15"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -170,6 +168,94 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "CISD_TRUE",
+      "display_name": "Cisd True",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "CRT",
+      "display_name": "Crt",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "CRT_MINSTOP_FILTER",
+      "display_name": "Crt Minstop Filter",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "DARVAS_BOX",
+      "display_name": "Darvas Box",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "DISP_REBAL",
       "display_name": "Disp Rebal",
       "aliases": [],
@@ -189,6 +275,28 @@
       "default_enabled": false,
       "auto_disable_eligible": false,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "DONCHIAN_TURTLE",
+      "display_name": "Donchian Turtle",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -214,6 +322,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "EMA_CROSS_BENCHMARK",
+      "display_name": "Ema Cross Benchmark",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "EMA_PULLBACK",
       "display_name": "Ema Pullback",
       "aliases": [],
@@ -228,7 +358,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "H4"
+        "H1"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -259,10 +389,10 @@
     },
     {
       "strategy_id": "FVG_CONT_V2",
-      "display_name": "FVG Continuation v2 (experimental, external revision)",
+      "display_name": "Fvg Cont V2",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -272,7 +402,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1d"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -294,11 +424,33 @@
         "*"
       ],
       "supported_timeframes": [
-        "D1"
+        "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "FVG_MIT_WINDOW",
+      "display_name": "Fvg Mit Window",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -346,6 +498,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "IFVG_CHOCH_WINDOW",
+      "display_name": "Ifvg Choch Window",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "JUDAS_SWING",
       "display_name": "Judas Swing",
       "aliases": [],
@@ -382,7 +556,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "*"
+        "M15"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -448,7 +622,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "D1"
+        "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -501,10 +675,10 @@
     },
     {
       "strategy_id": "MALAYSIAN_SNR_BREAKOUT",
-      "display_name": "Malaysian SNR Breakout (experimental)",
+      "display_name": "Malaysian Snr Breakout",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -514,51 +688,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "MALAYSIAN_SNR_V2_STAGE1",
-      "display_name": "Malaysian SNR v2 Stage 1 (experimental, close-to-open levels)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
         "*"
-      ],
-      "supported_timeframes": [
-        "1h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "MALAYSIAN_SNR_V2_STAGE3",
-      "display_name": "Malaysian SNR v2 Stage 3 (experimental, 2 TF confirmation rule)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1h"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -567,10 +697,10 @@
     },
     {
       "strategy_id": "MALAYSIAN_SNR_V2_RETEST",
-      "display_name": "Malaysian SNR v2 Retest (experimental, break-and-retest zone)",
+      "display_name": "Malaysian Snr V2 Retest",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -580,7 +710,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1h"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -588,11 +718,11 @@
       "schema_version": 1
     },
     {
-      "strategy_id": "CRT",
-      "display_name": "Candle Range Theory (experimental, range/sweep/entry 3-candle)",
+      "strategy_id": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+      "display_name": "Malaysian Snr V2 Retest Outrange",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -602,9 +732,51 @@
         "*"
       ],
       "supported_timeframes": [
-        "30m",
-        "1h",
-        "4h"
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_STAGE1",
+      "display_name": "Malaysian Snr V2 Stage1",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "MALAYSIAN_SNR_V2_STAGE3",
+      "display_name": "Malaysian Snr V2 Stage3",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -631,6 +803,28 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "NY_REVERSAL_CHOCH_WINDOW",
+      "display_name": "Ny Reversal Choch Window",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -679,10 +873,10 @@
     },
     {
       "strategy_id": "ORDER_BLOCK_V2",
-      "display_name": "Order Block Retest v2 (experimental, external revision)",
+      "display_name": "Order Block V2",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -692,7 +886,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1d"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -723,10 +917,10 @@
     },
     {
       "strategy_id": "OTE_CONT_V2",
-      "display_name": "OTE Continuation v2 (experimental, external revision)",
+      "display_name": "Ote Cont V2",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -736,7 +930,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1d"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -833,51 +1027,7 @@
     },
     {
       "strategy_id": "SAR_ADX20",
-      "display_name": "Parabolic SAR + ADX>=20 gate (experimental variant)",
-      "aliases": [],
-      "family": "MOMENTUM",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "H4"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "SAR_FLIP",
-      "display_name": "Parabolic SAR flip-only event entry (experimental variant)",
-      "aliases": [],
-      "family": "MOMENTUM",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "H4"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "SCALP_BB_FADE",
-      "display_name": "Scalp Bb Fade",
+      "display_name": "Sar Adx20",
       "aliases": [],
       "family": "SCALP",
       "status": "RESEARCH_ONLY",
@@ -898,11 +1048,11 @@
       "schema_version": 1
     },
     {
-      "strategy_id": "DONCHIAN_TURTLE",
-      "display_name": "Donchian Turtle Trend-Following (Richard Dennis, 14/08 experiment)",
+      "strategy_id": "SAR_FLIP",
+      "display_name": "Sar Flip",
       "aliases": [],
-      "family": "TREND",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -920,77 +1070,11 @@
       "schema_version": 1
     },
     {
-      "strategy_id": "DARVAS_BOX",
-      "display_name": "Darvas Box breakout (Nicolas Darvas, 14/08 experiment)",
+      "strategy_id": "SCALP_BB_FADE",
+      "display_name": "Scalp Bb Fade",
       "aliases": [],
-      "family": "TREND",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "Z_SCORE_BREAKOUT",
-      "display_name": "Z-Score breakout with SMA200 regime filter (14/08 experiment)",
-      "aliases": [],
-      "family": "MOMENTUM",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "EMA_CROSS_BENCHMARK",
-      "display_name": "EMA 50/200 crossover benchmark (14/08, motore sanity check)",
-      "aliases": [],
-      "family": "MOMENTUM",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "*"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "CRT_MINSTOP_FILTER",
-      "display_name": "CRT with tight-stop trades filtered out, not widened (14/08 experiment)",
-      "aliases": [],
-      "family": "LIQUIDITY",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -1097,10 +1181,10 @@
     },
     {
       "strategy_id": "SH_BMS_RTO_V2",
-      "display_name": "SH+BMS+RTO v2 (experimental, external revision)",
+      "display_name": "Sh Bms Rto V2",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -1110,7 +1194,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1d"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -1141,10 +1225,10 @@
     },
     {
       "strategy_id": "SILVER_BULLET_V2",
-      "display_name": "Silver Bullet v2 (experimental, external revision)",
+      "display_name": "Silver Bullet V2",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -1154,7 +1238,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "1d"
+        "*"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,
@@ -1184,6 +1268,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "SMS_BMS_RTO_CHOCH_WINDOW",
+      "display_name": "Sms Bms Rto Choch Window",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "STRUCT_REACT",
       "display_name": "Struct React",
       "aliases": [],
@@ -1193,6 +1299,28 @@
       "live_implementation": true,
       "research_implementation": true,
       "research_parity": "APPROXIMATE",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "H1"
+      ],
+      "default_enabled": true,
+      "auto_disable_eligible": true,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "SWING_FALSEBREAK",
+      "display_name": "Swing Falsebreak",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "ACTIVE",
+      "selector_index": 41,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
       "proxy_for": null,
       "supported_symbols": [
         "*"
@@ -1252,6 +1380,28 @@
       "schema_version": 1
     },
     {
+      "strategy_id": "TSI_EXTREME",
+      "display_name": "Tsi Extreme",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
       "strategy_id": "TURTLE_SOUP",
       "display_name": "Turtle Soup",
       "aliases": [],
@@ -1271,6 +1421,72 @@
       "default_enabled": true,
       "auto_disable_eligible": true,
       "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH",
+      "display_name": "Turtle Soup Choch",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_DBLBODY",
+      "display_name": "Turtle Soup Choch Dblbody",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "TURTLE_SOUP_CHOCH_NEAR",
+      "display_name": "Turtle Soup Choch Near",
+      "aliases": [],
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
+      "selector_index": null,
+      "live_implementation": false,
+      "research_implementation": true,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "*"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "RESEARCH",
       "schema_version": 1
     },
     {
@@ -1296,11 +1512,11 @@
       "schema_version": 1
     },
     {
-      "strategy_id": "CISD_TRUE",
-      "display_name": "Change in State of Delivery (true, displacement+delivery+sweep+reclaim)",
+      "strategy_id": "Z_SCORE_BREAKOUT",
+      "display_name": "Z Score Breakout",
       "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
+      "family": "SCALP",
+      "status": "RESEARCH_ONLY",
       "selector_index": null,
       "live_implementation": false,
       "research_implementation": true,
@@ -1310,214 +1526,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "15m",
-        "1h",
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "TURTLE_SOUP_CHOCH",
-      "display_name": "Turtle Soup with CHoCH confirmation (experimental, N-bar window)",
-      "aliases": [],
-      "family": "LIQUIDITY",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
         "*"
-      ],
-      "supported_timeframes": [
-        "1h",
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "TURTLE_SOUP_CHOCH_NEAR",
-      "display_name": "Turtle Soup CHoCH, entry near original sweep level (13/08 experiment)",
-      "aliases": [],
-      "family": "LIQUIDITY",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1h",
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "TURTLE_SOUP_CHOCH_DBLBODY",
-      "display_name": "Turtle Soup CHoCH, double body confirmation (13/08 experiment)",
-      "aliases": [],
-      "family": "LIQUIDITY",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1h",
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
-      "display_name": "Malaysian SNR v2 Retest + gate fuori-range (experimental)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "30m",
-        "1h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "TSI_EXTREME",
-      "display_name": "TSI cross from extreme zone (experimental)",
-      "aliases": [],
-      "family": "MOMENTUM",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1d",
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "FVG_MIT_WINDOW",
-      "display_name": "FVG Mitigation with active-zone registry (experimental)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "4h",
-        "1h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "IFVG_CHOCH_WINDOW",
-      "display_name": "IFVG with windowed CHoCH confirmation (experimental)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "4h"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "SMS_BMS_RTO_CHOCH_WINDOW",
-      "display_name": "SMS/BMS RTO with windowed CHoCH confirmation (experimental)",
-      "aliases": [],
-      "family": "SMC",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1d"
-      ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
-      "schema_version": 1
-    },
-    {
-      "strategy_id": "NY_REVERSAL_CHOCH_WINDOW",
-      "display_name": "NY Reversal with windowed CHoCH confirmation (experimental)",
-      "aliases": [],
-      "family": "SESSION",
-      "status": "EXPERIMENTAL",
-      "selector_index": null,
-      "live_implementation": false,
-      "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
-      "proxy_for": null,
-      "supported_symbols": [
-        "*"
-      ],
-      "supported_timeframes": [
-        "1h",
-        "30m"
       ],
       "default_enabled": false,
       "auto_disable_eligible": false,

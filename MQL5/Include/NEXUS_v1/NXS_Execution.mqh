@@ -215,7 +215,7 @@ bool NXS_IsCounterHTFPriceActionStrategy(string name){
    return (name == "BOLLINGER" || name == "RSI_DIV" || name == "BJORGUM" ||
            name == "BB_SQUEEZE" || name == "LIQ_SWEEP" || name == "FVG_MIT" ||
            name == "IFVG" || name == "OB_MIT" || name == "ORDER_BLOCK" ||
-           name == "STRUCT_REACT" || name == "TURTLE_SOUP" ||
+           name == "STRUCT_REACT" || name == "TURTLE_SOUP" || name == "SWING_FALSEBREAK" ||
            name == "SH_BMS_RTO" || name == "SMS_BMS_RTO" ||
            name == "SILVER_BULLET" || name == "AMD_REVERSAL" ||
            name == "MALAYSIAN_SNR" || name == "THREE_BAR_DELIVERY_BREAK" || name == "JUDAS_SWING" ||
@@ -229,7 +229,7 @@ bool NXS_IsCounterHTFPriceActionStrategy(string name){
 void NXS_CounterHTF_AuditList(){
    string names[] = {"BOLLINGER","RSI_DIV","BJORGUM","BB_SQUEEZE","LIQ_SWEEP",
                      "FVG_MIT","IFVG","OB_MIT","ORDER_BLOCK","STRUCT_REACT",
-                     "TURTLE_SOUP","SH_BMS_RTO","SMS_BMS_RTO","SILVER_BULLET",
+                     "TURTLE_SOUP","SWING_FALSEBREAK","SH_BMS_RTO","SMS_BMS_RTO","SILVER_BULLET",
                      "AMD_REVERSAL","MALAYSIAN_SNR","THREE_BAR_DELIVERY_BREAK",
                      "JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL","PO3",
                      "DISP_REBAL","RANGE_FADE"};

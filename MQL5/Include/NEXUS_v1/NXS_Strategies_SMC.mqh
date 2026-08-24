@@ -52,6 +52,113 @@ SNXSSignal NXS_Strat_TurtleSoup(SNXSSweepExt &sw){
    return s;
 }
 
+// === 1b. SWING FALSE-BREAK (24/08 — pivot di swing maggiore) ================
+// Spunto da script TradingView "Bjorgum Key Levels" condiviso dall'utente
+// (vedi vault "NEXUS EA - Idee da Script TradingView Esterni (17-08)").
+// Stesso concetto sweep+rientro di TURTLE_SOUP sopra, ma con un ancoraggio
+// MAI provato prima: pivot di swing MAGGIORE (left=20/right=15 barre,
+// confermato solo 15 barre dopo essersi formato - nessun lookahead, stesso
+// principio del choch_int interno ma finestra piu' larga) invece dei
+// livelli intraday/sessione (PDH/PDL/Asia) usati da TURTLE_SOUP/LIQ_SWEEP.
+// Zona larga min(prezzo*2%, 0.5xATR) intorno al pivot.
+//
+// Validato in Python su 1h con verifica due-meta'-storia (nessuna meta'
+// negativa): retail PF 1.14->1.46, ECN PF 1.42->1.74 (234 trade grezzi
+// nel campione di validazione). SL/TP: profilo ATR standard via
+// NXS_DefaultSLTP (vedi NXS_Profile_Get "SWING_FALSEBREAK": 1.5/4.0xATR,
+// gli stessi usati nel backtest Python) - non un anchoring strutturale
+// come TURTLE_SOUP, qui lo stop e' un multiplo ATR fisso.
+//
+// GAP NOTO: il filtro di regime (Efficiency Ratio, lookback lungo) usato
+// nella validazione Python NON e' ancora portato in MQL5 come gate live -
+// stesso gap dell'intero portafoglio SAR/MACD/LONDON_BO/FVG_CONT (vedi
+// vault "NEXUS EA - Filtro di Regime e Portafoglio 5 Strategie 16-08").
+// Senza quel filtro il comportamento live puo' differire da quello
+// validato, in particolare nei mercati laterali dove la ricerca prevede
+// che la strategia perda edge.
+#define NXS_SFB_LEFT        20
+#define NXS_SFB_RIGHT       15
+#define NXS_SFB_MAXLOOKBACK 300
+
+bool _sfb_isPivotHigh(int m){
+   double h = iHigh(g_sym, NXS_EffTF(), m);
+   if(h <= 0) return false;
+   for(int j = m - NXS_SFB_RIGHT; j <= m + NXS_SFB_LEFT; j++){
+      if(j == m) continue;
+      double hj = iHigh(g_sym, NXS_EffTF(), j);
+      if(hj <= 0) return false;
+      if(hj > h) return false;
+   }
+   return true;
+}
+bool _sfb_isPivotLow(int m){
+   double l = iLow(g_sym, NXS_EffTF(), m);
+   if(l <= 0) return false;
+   for(int j = m - NXS_SFB_RIGHT; j <= m + NXS_SFB_LEFT; j++){
+      if(j == m) continue;
+      double lj = iLow(g_sym, NXS_EffTF(), j);
+      if(lj <= 0) return false;
+      if(lj < l) return false;
+   }
+   return true;
+}
+// Pivot CONFERMATO piu' recente (il primo trovato scendendo da RIGHT+1 -
+// stesso "last_ph/last_pl" del find_pivots Python, ma calcolato al volo
+// invece che precomputato su tutto l'array, senza cache tra i tick).
+double _sfb_lastPivotHigh(){
+   for(int m = NXS_SFB_RIGHT + 1; m <= NXS_SFB_MAXLOOKBACK; m++)
+      if(_sfb_isPivotHigh(m)) return iHigh(g_sym, NXS_EffTF(), m);
+   return 0.0;
+}
+double _sfb_lastPivotLow(){
+   for(int m = NXS_SFB_RIGHT + 1; m <= NXS_SFB_MAXLOOKBACK; m++)
+      if(_sfb_isPivotLow(m)) return iLow(g_sym, NXS_EffTF(), m);
+   return 0.0;
+}
+
+SNXSSignal NXS_Strat_SwingFalseBreak(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_STRUCT_REACT; s.stratName = "SWING_FALSEBREAK";
+   if(!InpStrat_SwingFalseBreak || !NXS_SelectorAllows(41)) return s;
+   double atr = _smc_atr();
+   double c1  = iClose(g_sym, NXS_EffTF(), 1);
+   double o1  = iOpen (g_sym, NXS_EffTF(), 1);
+   double band = MathMin(c1 * 0.02, 0.5 * atr);
+
+   // Sweep ribassista risolto: il pivot low e' stato rotto nelle ultime 3
+   // barre chiuse ma la barra corrente chiude sopra la zona (rientro).
+   double pl = _sfb_lastPivotLow();
+   if(pl > 0){
+      double zoneBottom = pl - band;
+      bool swept = false;
+      for(int k = 1; k <= 3; k++){
+         if(iLow(g_sym, NXS_EffTF(), k) < zoneBottom){ swept = true; break; }
+      }
+      if(swept && c1 > zoneBottom && c1 > o1){
+         s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+         s.score = 70.0; s.reason = "SFB:sweptPivotLow+closeBack";
+         NXS_DefaultSLTP(s);
+         return s;
+      }
+   }
+   // Speculare: sweep rialzista del pivot high, rientro sotto zona.
+   double ph = _sfb_lastPivotHigh();
+   if(ph > 0){
+      double zoneTop = ph + band;
+      bool swept = false;
+      for(int k = 1; k <= 3; k++){
+         if(iHigh(g_sym, NXS_EffTF(), k) > zoneTop){ swept = true; break; }
+      }
+      if(swept && c1 < zoneTop && c1 < o1){
+         s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+         s.score = 70.0; s.reason = "SFB:sweptPivotHigh+closeBack";
+         NXS_DefaultSLTP(s);
+         return s;
+      }
+   }
+   return s;
+}
+
 // === 2. IFVG REVERSAL (v2.0.3 — richiede MSS opposto + reaction candle) =====
 SNXSSignal NXS_Strat_IFVG_Reversal(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;

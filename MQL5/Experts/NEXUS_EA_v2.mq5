@@ -447,6 +447,8 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24)) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
    if(InpStrat_OTE_Cont      && NXS_SelectorAllows(25)) out[n++] = NXS_Strat_OTE_Continuation();
    if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26)) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
+   // 24/08 - pivot di swing maggiore, vedi NXS_Strategies_SMC.mqh
+   if(InpStrat_SwingFalseBreak && NXS_SelectorAllows(41)) out[n++] = NXS_Strat_SwingFalseBreak();
 
    // v2.0.7 INSTITUTIONAL MODELS (9)
    SNXSHTF htfInst = NXS_GetHTFBias();

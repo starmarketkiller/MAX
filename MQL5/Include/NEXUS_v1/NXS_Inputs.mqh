@@ -619,6 +619,9 @@ input bool     InpStrat_SilverBullet   = true;
 input bool     InpStrat_AMD_Reversal   = true;
 input bool     InpStrat_OTE_Cont       = true;
 input bool     InpStrat_MalaysianSNR   = true;
+// 24/08 - vedi NXS_Strat_SwingFalseBreak in NXS_Strategies_SMC.mqh e vault
+// "NEXUS EA - Idee da Script TradingView Esterni (17-08)", addendum 24/08.
+input bool     InpStrat_SwingFalseBreak = true;
 
 // input group "=== INSTITUTIONAL MODELS (v2.0.7) ==="
 input bool     InpUseStrat_CISD          = true;

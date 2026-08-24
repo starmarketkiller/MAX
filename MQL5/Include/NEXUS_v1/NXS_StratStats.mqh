@@ -491,7 +491,7 @@ void NXS_Stats_Init(){
       "ADX_RSI","BOLLINGER","MACD","SAR","TSI","BJORGUM","LIQ_SWEEP","FVG_CONT",
       "BREAKOUT_ACC","LONDON_BO","EMA_PULLBACK","BB_SQUEEZE","ICHIMOKU","RSI_DIV",
       "ORDER_BLOCK","STRUCT_REACT",
-      "TURTLE_SOUP","IFVG","FVG_MIT","OB_MIT","SH_BMS_RTO","SMS_BMS_RTO",
+      "TURTLE_SOUP","SWING_FALSEBREAK","IFVG","FVG_MIT","OB_MIT","SH_BMS_RTO","SMS_BMS_RTO",
       "SILVER_BULLET","AMD_REVERSAL","OTE_CONT","MALAYSIAN_SNR",
       // v2.0.7 institutional
       "THREE_BAR_DELIVERY_BREAK","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
@@ -523,6 +523,7 @@ void NXS_Stats_Init(){
    NXS_Stats_SetEnabled("ORDER_BLOCK",    InpStrat_ORDER_BLOCK);
    // Mark SMC strategies enabled/disabled based on inputs
    NXS_Stats_SetEnabled("TURTLE_SOUP",    InpStrat_TurtleSoup);
+   NXS_Stats_SetEnabled("SWING_FALSEBREAK", InpStrat_SwingFalseBreak);
    NXS_Stats_SetEnabled("IFVG",           InpStrat_IFVG);
    NXS_Stats_SetEnabled("FVG_MIT",        InpStrat_FVG_Mit);
    NXS_Stats_SetEnabled("FVG_MIT_WINDOW", InpStrat_FVG_MIT_WINDOW);

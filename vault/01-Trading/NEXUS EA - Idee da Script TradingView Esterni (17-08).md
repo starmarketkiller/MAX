@@ -128,5 +128,41 @@ di CRT/FVG_CONT/TSI, vedi commit `145cc71`) e aggiungerlo al pool di
 candidati per il portafoglio a 10-15 strategie insieme a Z_SCORE_BREAKOUT,
 ICHIMOKU, BB_SQUEEZE (filtro laterale), SAR_ADX20/SAR_FLIP (borderline).
 
+## Addendum 24/08 (2) - porting MQL5 completato
+
+NXS_Strat_SwingFalseBreak() aggiunta a NXS_Strategies_SMC.mqh (bucket
+STRAT_STRUCT_REACT, stessa famiglia di TURTLE_SOUP - sweep+rientro, ma
+ancorato al pivot di swing maggiore invece di PDH/PDL/Asia). Toccati in
+sincrono, seguendo esattamente il precedente TURTLE_SOUP: NXS_Inputs.mqh
+(InpStrat_SwingFalseBreak), NEXUS_EA_v2.mq5 (call site, selector_index
+41 - primo libero dopo lo scan 1-40 nel codice reale), NXS_StrategyProfiles.mqh
+(Get: SL1.5/TP4.0 ATR, stessi moltiplicatori del backtest Python; TF: H1),
+NXS_SignalRouter.mqh (FAM_SMC), NXS_Execution.mqh (counter-HTF price-action
+list + audit list), NXS_StratStats.mqh (registrazione nome + SetEnabled),
+NXS_WebBridge.mqh (toggle dashboard). Registro canonico aggiornato alla
+fonte vera (knowledge/strategy_database.json, 37->38 live) e rigenerato
+con contracts/generate_registry.py - non editato a mano (validato con
+contracts/validate_registry.py: OK).
+
+Gap dichiarato, non nascosto: il filtro di regime (Efficiency Ratio)
+usato nella validazione Python NON e' stato portato come gate live - e'
+lo stesso gap trovato per l'intero portafoglio SAR/MACD/LONDON_BO/FVG_CONT
+(mai deployato live neanche quello). Commento nel codice lo segnala
+esplicitamente. Senza quel filtro il comportamento live puo' discostarsi
+da quello validato, specialmente in mercati laterali.
+
+Non fatto oggi, deliberatamente fuori scope: nessuna integrazione in
+server/backtest.py (STRAT_MAP) - la strategia resta research-only sullo
+script dedicato (bjorgum_swing_falsebreak_17-08.py /
+_twohalf_24-08.py), non un motore Python condiviso con ind{}. Toccare
+quel builder centrale per una sola strategia avrebbe un raggio d'azione
+troppo ampio (usato da ogni altro backtest) per uno scope "porta in MQL5".
+
+Non verificato: compilazione MT5 reale - sessione senza MetaEditor
+(nessun ambiente Windows/MT5 disponibile qui). Stesso limite dichiarato
+nel porting CRT/FVG_CONT/TSI del 13/08 (commit 145cc71). Verifica locale
+(compilazione + smoke test isolato con InpStrategySelector=41) richiesta
+prima di qualunque uso demo/live.
+
 ## Collegamenti
 [[MOC - Trading]]

@@ -27,7 +27,7 @@ ENUM_NXS_FAMILY NXS_StratFamily(string name){
       || name == "OB_MIT" || name == "ORDER_BLOCK" || name == "STRUCT_REACT"
       || name == "TURTLE_SOUP" || name == "SH_BMS_RTO" || name == "SMS_BMS_RTO"
       || name == "SILVER_BULLET" || name == "AMD_REVERSAL" || name == "OTE_CONT"
-      || name == "MALAYSIAN_SNR"
+      || name == "MALAYSIAN_SNR" || name == "SWING_FALSEBREAK"
       // v2.0.27 — "_NXR" labeling (Phase 2 attribution fix) reuses these same
       // strategies' family classification; keep counter-HTF/family gating
       // identical to the legacy variant, only the stored name differs.
