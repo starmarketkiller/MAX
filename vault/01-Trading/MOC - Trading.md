@@ -741,6 +741,15 @@ profitto reale, non solo curve di backtest.
   8/19 nessuno (config invariata) - vedi il bilancio aggiornato in
   [[NEXUS EA - Tabella Master Strategie Verificate (24-08)]]. Restano
   solo le 2 provvisorie (TURTLE_SOUP, LDN_REVERSAL) da riverificare.
+- **[[NEXUS EA - Riverifica TURTLE_SOUP e LDN_REVERSAL (24-25-08)]]** -
+  primo plateau-check (sensibilita' ai parametri) su entrambe le
+  provvisorie rimaste. **LDN_REVERSAL promossa**: plateau su 16
+  combinazioni swing x RR, e la config nota (swing10/RR3.0) e' anche
+  il punto piu' bilanciato della griglia, non il PF piu' alto -
+  buon segno anti-overfitting. **TURTLE_SOUP resta provvisoria**:
+  plateau sul target confermato ma 3 finestre su 5 sono flat-o-negative
+  (0.68/0.99/0.94) e c'e' un'asimmetria BUY1.75/SELL0.70 non ancora
+  spiegata. Chiude la revisione di tutte le 21 strategie candidate.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

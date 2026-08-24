@@ -81,12 +81,17 @@ ATR era leggermente controproducente qui).
 | FVG_CONT_V2 | 4h | stop nativo, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **2.03 (1.72/2.60, n=65, 5/5)** |
 | AMD_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.62 (1.26/2.06, n=137)** — trailing e D1-align provati e scartati (peggiorano sempre) |
 
-## Provvisorie — riverifica raccomandata prima di fidarsene
+## Confermata con cautela sul campione (riverificata 24-25/08)
 
-| Strategia | TF | SL/TP | Direzione | Retail PF | Perché provvisoria |
+| Strategia | TF | SL/TP | Direzione | Retail PF | Nota |
 |---|---|---|---|---|---|
-| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR | simmetrica | 1.14 (1.04/1.25) | Ribalta 3+ rifiuti precedenti |
-| LDN_REVERSAL | 4h | stop strutturale (swing 10 barre), RR 1:3 | simmetrica | 1.28 (1.31/1.25) | Campione sottile (n=31) |
+| LDN_REVERSAL | 4h | stop strutturale (swing 10 barre), RR 1:3 | simmetrica | 1.28 (1.31/1.25, n=31, 4/5) | Plateau confermato su griglia 16 combinazioni swing×RR; la config nota è anche il punto più bilanciato della griglia (non scelta per il PF massimo) — promossa da provvisoria, ma campione assoluto ancora piccolo |
+
+## Ancora provvisoria — riverifica non ha sciolto i dubbi
+
+| Strategia | TF | SL/TP | Direzione | Retail PF | Perché ancora provvisoria |
+|---|---|---|---|---|---|
+| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR | simmetrica | 1.14 (1.04/1.25, n=271) | Plateau confermato sul target (6 valori, PF 1.01-1.18) MA 3 finestre su 5 flat-o-negative (0.68/0.99/0.94), PF trainato dall'ultima finestra; asimmetria BUY1.75/SELL0.70 non confermata (lateral BUY n=12, PF0.78, inconcludente) |
 
 ## Rifiutate definitivamente oggi (non riprovare senza nuova ipotesi)
 
@@ -120,8 +125,14 @@ DONCHIAN_TURTLE/DARVAS_BOX (cluster) — pattern comune: il trailing
 aggregato, quindi non promosso. Un primo tentativo di
 "direction-lock per regime" (su SAR) non ha funzionato — vedi
 [[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]].
-Restano da riverificare solo le 2 provvisorie (TURTLE_SOUP,
-LDN_REVERSAL).
+**Le 2 provvisorie sono state riverificate (25/08)**: LDN_REVERSAL
+promossa a confermata-con-cautela (plateau su 16 combinazioni
+parametriche), TURTLE_SOUP resta provvisoria (finestre instabili,
+asimmetria BUY/SELL non spiegata) — vedi
+[[NEXUS EA - Riverifica TURTLE_SOUP e LDN_REVERSAL (24-25-08)]]. Bilancio
+finale: **20 strategie ragionevolmente solide, 1 (TURTLE_SOUP) ancora
+da maneggiare con cautela** — chiude la revisione completa del
+catalogo del 24-25/08.
 
 ## Collegamenti
 [[MOC - Trading]]
