@@ -430,6 +430,17 @@ profitto reale, non solo curve di backtest.
   Fibonacci su EMA_PULLBACK inconcludente (campione crolla a 9 trade,
   troppi filtri impilati) - non una tesi falsificata, un disegno da
   rifare.
+- **[[NEXUS EA - Espansione Baseline con Ricetta Variabile (24-08)]]** -
+  su richiesta dell'utente, ricetta VARIABILE per strategia (griglia
+  SL/TP + stop nativo con floor mai provato sopra) invece della ricetta
+  unica. 4 candidati forti nuovi: OTE_CONT (il migliore della giornata,
+  PF1.61/entrambe le meta forti - il verdetto "fragile" di prima era un
+  problema di SL/TP non di segnale), FVG_CONT_V2, TSI (molto piu' solida
+  con SL1.0/TP6.0), TURTLE_SOUP (**ribalta 3+ rifiuti precedenti** - il
+  floor ATR non era mai stato provato sopra il suo stop nativo, da
+  riverificare vista la storia). CRT/CRT_MINSTOP_FILTER confermate
+  definitivamente rotte anche col floor. Totale giornata: 13 nuove
+  baseline verificate due-meta-storia oltre alle 4 gia' solide.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
