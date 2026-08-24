@@ -653,6 +653,13 @@ profitto reale, non solo curve di backtest.
   nettamente (stessa firma di "non aiuta chi e' gia' ben filtrato con
   ER"). Verifica laterale fatta subito: stessa direzione delle altre
   ma campione troppo sottile (n=6) per confermare. Config invariata.
+- **[[NEXUS EA - Ottimizzazione TSI (24-08)]]** - ottava ottimizzazione
+  individuale, la piu' forte del blocco "altre solide" (BUY-only
+  PF2.03, n=134). Verifica laterale fatta subito: n=13, PF0.39,
+  sumR=-8.9 - stessa direzione delle altre gia' viste ma campione
+  troppo sottile per confermare. Trailing provato (2.0/2.5/3.0xATR):
+  peggiora sempre rispetto al target fisso 6.0xATR gia' in uso -
+  nessun cambiamento, config invariata.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
