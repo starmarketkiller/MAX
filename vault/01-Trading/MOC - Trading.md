@@ -726,6 +726,11 @@ profitto reale, non solo curve di backtest.
   ampio n=83, PF0.34, sumR=-54.3 - conferma solida della stessa
   direzione. Trailing 2.0xATR adottato: PF1.49->1.61, 5/5 finestre
   come il baseline, su un campione enorme (n=1000).
+- **[[NEXUS EA - Ottimizzazione BREAKOUT_ACC (24-08)]]** - diciottesima
+  ottimizzazione. Verifica laterale: n=18, PF0.64, coerente con le
+  altre. Trailing scartato: ogni variante peggiora la robustezza delle
+  finestre (3/5 o 2/5 contro il 4/5 del target fisso) nonostante
+  qualche PF aggregato piu' alto - config invariata.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
