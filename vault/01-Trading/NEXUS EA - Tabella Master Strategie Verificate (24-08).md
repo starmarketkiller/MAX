@@ -39,7 +39,7 @@ vedi la correzione sopra prima di fidarsene.
 | MACD | 4h | 1.5/4.0 | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | 1.46 (1.39/1.54) | Cluster (alta) | No |
 | FVG_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.51 (1.35/1.69)** | Cluster | No |
 | LONDON_BO | 4h | 1.0/4.5 | ER (no floor) | **BUY-only** | **1.60 (1.71/1.49)** | Bassa | No |
-| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, target 4.0×ATR | ER+floor 0.3 | simmetrica | 1.29 (1.20/1.38) | Bassa | **Sì** |
+| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, **trailing 3.0×ATR** | ER+floor 0.3 | simmetrica | 1.38 (1.28/1.50) | Bassa | **Sì (trailing non ancora applicato al codice)** |
 
 ## Cluster trend-following (5) — correlati 0.45-0.997 tra loro, non sommare ciecamente
 

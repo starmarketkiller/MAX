@@ -636,6 +636,16 @@ profitto reale, non solo curve di backtest.
   modo consistente (segnale di trend piu' lento si adatta meglio alla
   tesi "mitigation" che aspetta gia' un ritorno) - non ancora combinato
   col trailing.
+- **[[NEXUS EA - Ottimizzazione Z_SCORE_BREAKOUT (24-08)]]** - sesta
+  ottimizzazione individuale, su una delle 2 strategie gia' in MQL5.
+  BUY-only sembrava pulitissimo (m1=1.57/m2=1.71, quasi identiche) ma
+  la verifica laterale immediata rivela **zero trade prima del
+  2024-04** - il filtro di regime GIA' incorporato nel segnale
+  (bull_regime=close>SMA200) lo rende strutturalmente ancora piu'
+  dipendente dal rally delle altre 6 corrette prima, non promosso.
+  Trailing 3.0xATR invece e' un miglioramento reale e pulito (1.35->
+  1.38, simmetrico, su tutto lo storico) - non ancora applicato al
+  codice MQL5 gia' in produzione, richiede modifica separata.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
