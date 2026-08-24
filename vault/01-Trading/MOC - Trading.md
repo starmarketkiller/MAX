@@ -482,6 +482,30 @@ profitto reale, non solo curve di backtest.
   alto aggregato e' beta mascherato, sospetto dell'utente confermato dai
   dati. BOLLINGER declassata a "watch". Combinazione BUY-only+D1
   deliberatamente NON eseguita (D1 avrebbe lo stesso problema, peggiore).
+- **[[NEXUS EA - Nuovi Ingredienti (Stop Struttura, Allineamento D1, Giorno) 24-08]]** -
+  FVG_MIT con allineamento D1 al posto del filtro ER e' la scoperta piu'
+  pulita della giornata: retail PF1.48, **tutte e 5 le finestre** tra
+  1.35 e 1.83 (nessuna debole), copertura genuina 2020-2026. LDN_REVERSAL
+  con stop strutturale (swing 10 barre) da' il primo risultato pulito di
+  tutta la giornata per questa strategia ma campione sottile (31).
+  Filtro giorno-della-settimana: nessun miglioramento su nessuna delle 6
+  strategie riprovate.
+- **[[NEXUS EA - Portafoglio a 20 Strategie (24-08)]]** - prima
+  simulazione di portafoglio con la lista aggiornata (stessa disciplina
+  del 16/08: euro reali, tetto €40, max 2 concorrenti). Risultato
+  headline positivo (+€2.725 retail, +€4.383 ECN su conto €1000) ma
+  **trainato quasi solo da SAR** (contributo maggiore del netPnL totale)
+  - 6-4 strategie su 16-20 sono NETTE PERDENTI dentro il portafoglio pur
+  essendo profittevoli da sole (LIQ_SWEEP la peggiore, -€207, nonostante
+  fosse "doppiamente confermata" in isolamento). Causa: bucket FIFO a 2
+  slot penalizza le strategie a bassa frequenza quando competono con
+  SAR/MACD/ADX_RSI (migliaia di segnali grezzi). Sweep max_concorrenti:
+  piu' slot = piu' profitto ma DD esplosivo non-lineare (a 20 slot il
+  portafoglio VA IN PERDITA, DD100%) - prova diretta che molte delle 20
+  strategie sono correlate, non indipendenti. Il problema ora non e'
+  piu' "quali strategie sono buone" ma **come allocare il rischio tra
+  loro** - analisi di correlazione e criterio di priorita' nel bucket
+  ancora da fare.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
