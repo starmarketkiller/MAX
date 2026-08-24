@@ -558,6 +558,15 @@ profitto reale, non solo curve di backtest.
   raddoppia ma la qualita' cala (m1 crolla quasi ovunque). L'allineamento
   D1 e' uno strumento di SALVATAGGIO per strategie con filtro debole, non
   un upgrade universale - stessa lezione del floor ATR di ieri.
+- **[[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]** - split BUY/SELL
+  su altre 14 baseline: **13/14 migliorano nettamente sul lato BUY**,
+  verificato con campioni ampi (60-1471 trade, non i pochi trade dei
+  rescue bocciati ieri sera) e finestra piu' vecchia genuinamente sopra
+  pareggio (ADX_RSI-BUY: F0 2020-2024, n=145, PF1.27 - controllato con
+  le date, non solo il conteggio). TSI-BUY il migliore (PF2.03), MACD
+  l'unica dove il miglioramento non vale la pena (SELL resta
+  marginalmente positivo). Tabella master aggiornata con tutte le nuove
+  config.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
