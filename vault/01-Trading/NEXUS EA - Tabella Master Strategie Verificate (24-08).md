@@ -74,7 +74,7 @@ ATR era leggermente controproducente qui).
 | MALAYSIAN_SNR_BREAKOUT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.93 (1.83/2.04, n=75)** |
 | SAR_FLIP | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.82 (1.64/2.02, n=76)** |
 | FVG_CONT_V2 | 4h | stop nativo, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **2.03 (1.72/2.60, n=65, 5/5)** |
-| AMD_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.62 (1.26/2.06, n=137)** |
+| AMD_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.62 (1.26/2.06, n=137)** — trailing e D1-align provati e scartati (peggiorano sempre) |
 
 ## Provvisorie — riverifica raccomandata prima di fidarsene
 

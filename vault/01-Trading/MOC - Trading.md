@@ -673,6 +673,14 @@ profitto reale, non solo curve di backtest.
   un miglioramento pulito: PF1.68->2.03, 5/5 finestre in entrambi i
   casi, due meta' equilibrate. 3.0xATR ha PF piu' alto ma solo 3/5
   finestre e sbilanciato verso fine storico - non promosso.
+- **[[NEXUS EA - Ottimizzazione AMD_CONT (24-08)]]** - undicesima
+  ottimizzazione, chiude il blocco "altre solide". Verifica laterale:
+  n=14, PF0.37, sumR=-8.5 - stessa direzione delle altre. Trailing
+  (peggiora in modo monotono col multiplo) e D1-align (peggiora
+  nonostante campione quasi raddoppiato) entrambi scartati - nessun
+  cambiamento. Bilancio del blocco: solo SAR_FLIP e FVG_CONT_V2 hanno
+  trovato un miglioramento reale col trailing, TSI e MALAYSIAN_SNR
+  no - non e' un ingrediente universale nemmeno dentro lo stesso blocco.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
