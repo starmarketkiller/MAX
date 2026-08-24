@@ -77,6 +77,36 @@ SAR_FLIP, EMA_PULLBACK, SAR_ADX20, BREAKOUT_ACC, OTE_CONT, FVG_CONT_V2,
 TSI, TURTLE_SOUP (quest'ultima da riverificare per la storia di rifiuti
 precedenti). Nessuna ancora portata in MQL5.
 
+## Addendum 24/08 (2) — trailing stop (nuovo tipo di gestione, non solo SL/TP fisso)
+
+Richiesta esplicita dell'utente: lo stop ATR/nativo su 4h potrebbe non
+essere il tipo di GESTIONE giusto per certe strategie, non un problema
+del segnale — provare un ingrediente diverso, non solo varianti dello
+stesso (SL/TP fisso). `trailing_exit_experiments_24-08.py`: chandelier
+stop (iniziale 1.5xATR, poi segue l'estremo favorevole a trail_mult*ATR
+di distanza, NESSUN target fisso — il prezzo decide quando finisce il
+movimento), sweep trail_mult 2.0/2.5/3.0, sulle strategie ancora deboli
+dopo fase 1/2.
+
+| Strategia | trail | retail PF (m1/m2) | Verdetto |
+|---|---|---|---|
+| **LIQ_SWEEP** | 3.0xATR | 1.07 (**1.06/1.08**) | **Doppia conferma indipendente** — praticamente identico al risultato SL1.5/TP6.0 di fase 1 (1.07, 1.03/1.11) con un meccanismo di uscita completamente diverso. Due strade diverse che arrivano allo stesso numero è la prova più convincente di un edge reale vista oggi, non un artefatto di un singolo test |
+| ICHIMOKU | 3.0xATR | 1.05 (0.95/1.14) | Marginale, non pulito quanto LIQ_SWEEP |
+| BOLLINGER | 3.0xATR | 1.02 (0.98/1.06) | Marginale — leggermente più bilanciato del SL1.0/TP6.0 di fase 1 ma stesso livello debole |
+| SH_BMS_RTO_V2 | 2.0xATR | 1.02 (0.67/1.41) | Il trailing sblocca un po' di edge ma resta asimmetrico (stessa firma rally-dipendente) |
+| FVG_MIT_WINDOW | 3.0xATR | 1.11 (0.76/1.54) | Idem — meglio della fase 1 (0.65) ma ancora asimmetrico |
+| BJORGUM/RSI_DIV/FVG_MIT/LDN_REVERSAL/TSI_EXTREME/STRUCT_REACT | vario | tutte <1.0 retail | Confermate deboli con un TERZO tipo di uscita — non è più "lo stop sbagliato", il segnale stesso non ha edge sufficiente per questi 6 |
+
+**Nota su STRUCT_REACT**: era borderline-positiva con SL2.0/TP6.0 fisso
+(1.07, entrambe le metà ≥1) ma PEGGIORA col trailing (0.86) — conferma
+diretta che il tipo di gestione giusto è specifico per strategia, non
+intercambiabile: per STRUCT_REACT il target fisso batte il trailing,
+per LIQ_SWEEP funzionano entrambi quasi identicamente, per altre nessuno
+dei due aiuta.
+
+**LIQ_SWEEP promossa** a baseline verificata (doppia conferma) —
+portando il totale delle nuove baseline di oggi a **14**.
+
 ## Prossimi passi aperti
 
 - Nessun plateau-check ancora fatto sulla fase 1 (best-of-6 SL/TP) — a
