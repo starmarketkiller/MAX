@@ -31,6 +31,20 @@ ma il generatore di segnale SAR produce quasi solo BUY anche lì (94.6%
 del campione), quindi un gate esterno non ha abbastanza segnali SELL
 da raddrizzare. Vedi [[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]].
 
+🌊 **NUOVO INGREDIENTE (25/08) — filtro Elliott Wave multi-timeframe**:
+scoperto un filtro (ZigZag + regole Elliott a 5 onde su 4h **E** D1,
+sopprimi il segnale se ANCHE UNO SOLO dei due timeframe è "esaurito"
+nella stessa direzione) che migliora **7 strategie su 8** testate
+finora, quasi sempre senza contropartite (finestre stabili/migliori,
+metà storiche più equilibrate) — il candidato più vicino a un
+ingrediente universale trovato in tutta la sessione. Le PF sotto NON
+includono ancora questo filtro (richiederebbe riverificare tutte le
+righe, non ancora fatto). Vedi
+[[NEXUS EA - Filtro Elliott Wave Multi-Timeframe, il nuovo ingrediente universale (25-08)]]
+per la tabella completa dei miglioramenti (es. ADX_RSI 1.77→2.04, SAR
+1.51→1.65, TSI 2.03→2.25). Nessuna modifica al codice MQL5 — solo
+ricerca, su richiesta esplicita dell'utente.
+
 **Aggiornamento precedente**: split BUY/SELL sistematico (vedi
 [[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]) — 13 strategie su 14
 testate migliorano nettamente passando a BUY-only nell'aggregato, ma

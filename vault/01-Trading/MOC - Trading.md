@@ -780,6 +780,22 @@ profitto reale, non solo curve di backtest.
   aggregato gia' sotto pareggio). **3 nuove promozioni in totale oggi**
   dal filone "riapertura verdetti pre-disciplina-laterale" - bilancio
   finale: 23 strategie solide, aggiornato nella tabella master.
+- **[[NEXUS EA - Filtro Elliott Wave Multi-Timeframe, il nuovo ingrediente universale (25-08)]]** -
+  prima implementazione concreta dell'idea Elliott Wave dell'utente:
+  ZigZag + regole classiche a 5 onde (onda2 non ritraccia sotto onda1,
+  onda3 non e' la piu' corta, onda4 non sovrappone onda1) su 4h, usato
+  come filtro per sopprimere segnali quando un impulso appena si e'
+  esaurito. Su richiesta dell'utente ("il sistema e' frattale, si
+  ripete da TF piu' grande a piu' piccoli") esteso a multi-timeframe:
+  **unione 4h+D1** (basta un timeframe esaurito, non serve la
+  confluenza di entrambi - l'AND e' quasi inerte) e' la combinazione
+  vincente, la terza scala 1h non aggiunge nulla (troppo rumorosa).
+  Validato su 8 strategie: **7/8 migliorano** (ADX_RSI 1.77->2.04, SAR
+  1.51->1.65, TSI 2.03->2.25, ecc.), quasi sempre senza contropartite -
+  il candidato piu' vicino a un ingrediente universale trovato finora.
+  Unica eccezione STRUCT_REACT (peggiora, coerente col suo pattern di
+  resistere a ogni filtro extra). Nessuna modifica al codice MQL5, solo
+  ricerca. Da estendere alle restanti ~15 strategie del catalogo.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
