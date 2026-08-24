@@ -581,6 +581,17 @@ profitto reale, non solo curve di backtest.
   inconcludente (solo 2 anni via Yahoo per BTCUSD/EURUSD, dati non
   comparabili). Prossimo passo naturale: direction-lock CONDIZIONATO al
   regime (BUY se trend, SELL se laterale), non BUY-only statico.
+- **[[NEXUS EA - Verdetto Finale SCALP (24-08)]]** - su richiesta
+  dell'utente, altri 2 ingredienti provati per rendere profittevoli le
+  SCALP_*. Filtro ER lungo (167gg, standard del catalogo): uccide il
+  99.9%+ dei segnali (contraddizione di scala - un trend di mesi quasi
+  mai coincide con un trigger di microstruttura M15). ER a finestra
+  corta (12.5-50h) + target stretto da scalp (0.5/1.0xATR): PF
+  catastrofico 0.05-0.12 (costi dominanti, stessa saga CRT). **5
+  ingredienti indipendenti provati su due sessioni, nessuno funziona** -
+  non piu' un problema di ricetta, verdetto finale: le SCALP_* cosi'
+  come codificate non hanno edge sfruttabile, servirebbe un segnale
+  nuovo, fuori scope.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
