@@ -619,6 +619,15 @@ profitto reale, non solo curve di backtest.
   numeri, non solo spiegato: il sizing scala l'ampiezza dei trade, non
   l'aspettativa - su un sistema a valore atteso negativo moltiplica
   proporzionalmente le stesse perdite, non le recupera.
+- **[[NEXUS EA - Ottimizzazione EMA_PULLBACK (24-08)]]** - quarta
+  ottimizzazione individuale, risolve la tensione D1(pochi trade)/
+  4h(PF modesto). Due leve, entrambe migliorano invece di scambiare:
+  D1 SENZA floor (mai verificato su questa strategia) porta n da 32 a
+  39 E il PF sale (2.41->2.57, 5/5 finestre) - il floor ATR era
+  leggermente controproducente qui, terzo caso di un ingrediente non
+  universale. 4h+D1-align+trailing 3.0xATR (mai provato) porta il PF
+  da 1.42 a 1.87 sullo stesso campione ampio (241). Due config
+  complementari ora nella tabella master, non piu' un compromesso.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

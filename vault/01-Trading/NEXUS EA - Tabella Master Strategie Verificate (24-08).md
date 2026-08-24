@@ -59,12 +59,12 @@ vedi la correzione sopra prima di fidarsene.
 | LIQ_SWEEP | 4h | 1.5/6.0 | ER+floor 0.3 | **BUY-only** | 1.73 (1.73/1.73, 5/5) | 0.084 |
 | OTE_CONT | 4h | 1.0/6.0 | **D1-align** | simmetrica (BUY/SELL split non ancora provato) | 1.83 (1.89/1.77, 5/5) | 0.028 |
 | FVG_MIT | 4h | 2.0/6.0 | **D1-align** | simmetrica (BUY/SELL split non ancora provato) | 1.48 (1.33/1.64, 5/5) | 0.015 |
-| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h) / 1.5/6.0 (D1) | **D1-align** (4h) / ER+floor0.2 (D1) | simmetrica (BUY/SELL split non ancora provato) | 1.42 (1.15/1.74) su 4h, n=241 · **2.53 (2.88/2.23) su D1, n=32** | -0.012 |
+| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h) / 1.5/6.0 (D1) | **D1-align+trailing 3.0×ATR** (4h) / ER, no floor (D1) | simmetrica | **1.87 (1.26/2.49) su 4h, n=241** · **2.57 (1.69/3.70) su D1, n=39, 5/5 finestre** | -0.012 |
 
-EMA_PULLBACK ha due varianti valide con trade-off opposto: 4h+D1-align
-(campione ampio, PF più modesto) o D1 nativo (PF eccezionale ma solo 32
-trade). Usare la versione 4h come baseline principale, la D1 come
-conferma/upside.
+EMA_PULLBACK aggiornata (24/08, vedi [[NEXUS EA - Ottimizzazione EMA_PULLBACK (24-08)]]):
+config principale 4h+D1-align+trailing (campione ampio, PF1.87), D1
+nativo SENZA floor come conferma/upside (PF2.57, 5/5 finestre, il floor
+ATR era leggermente controproducente qui).
 
 ## Altre solide (5)
 
