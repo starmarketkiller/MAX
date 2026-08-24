@@ -83,6 +83,43 @@ motore di costi. Non un problema di ricetta ma di struttura: i costi
 retail fissi non permettono economia a questa scala temporale su
 questo strumento.
 
+## Addendum 24/08 (2) — "allarghiamo lo stop?" verificato con una griglia completa
+
+Domanda diretta dell'utente dopo il verdetto, testata con una griglia
+SL 1.5→8.0×ATR (TP sempre 2× lo SL) sulle 4 SCALP_* originali, 24h e
+overlap:
+
+| SL/TP | SCALP_RANGE_BRK retail (24h) | ECN (24h) |
+|---|---|---|
+| 1.5/3.0 | 0.40 | 0.72 |
+| 2.0/4.0 | 0.51 | 0.80 |
+| 3.0/6.0 | 0.66 | 0.89 |
+| **4.0/8.0** | **0.73** | **0.92** |
+| 5.0/10.0 | 0.74 (m2=**1.03**) | **0.90** |
+| 6.0/12.0 | 0.73 | 0.86 |
+| 8.0/16.0 | 0.66 | 0.75 |
+
+**Sì, allargare aiuta molto — fino a un punto**: plateau netto a
+SL4.0-5.0×ATR/TP8.0-10.0×ATR (non un picco isolato, tre configurazioni
+vicine danno risultati simili), poi la curva si inverte e peggiora di
+nuovo oltre SL6. Al plateau, ECN sfiora il pareggio (0.90-0.92) e la
+seconda metà della storia lo supera persino (m2=1.03) — ma il **retail
+non lo raggiunge mai** (0.73-0.74 il massimo).
+
+**Il problema di fondo**: a quella larghezza di stop (4-5×ATR M15, tipicamente
+$15-25 su XAUUSD), il trade non è più uno scalp — è un trade che può
+restare aperto ore o giorni aspettando un target 8-10×ATR, con un
+trigger di ingresso a scala M15 ma una gestione a scala swing. A quel
+punto conviene usare una strategia PROGETTATA per quella scala
+(DONCHIAN_TURTLE/BREAKOUT_ACC/ecc., già in catalogo, già validate a
+livelli PF 1.3-1.8) invece di allargare artificialmente lo stop di un
+segnale nato per essere veloce.
+
+**Risposta diretta**: allargare lo stop è la leva giusta in direzione,
+ma non basta da sola a rendere le SCALP_* profittevoli sui costi retail
+— aiuta a metà strada, non fino in fondo, e nel farlo trasforma la
+strategia in qualcosa che non è più "scalping".
+
 ## Prossimi passi aperti
 
 - Se si vuole riprendere lo scalping, servirebbe uno strumento con
