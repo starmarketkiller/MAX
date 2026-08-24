@@ -660,6 +660,12 @@ profitto reale, non solo curve di backtest.
   troppo sottile per confermare. Trailing provato (2.0/2.5/3.0xATR):
   peggiora sempre rispetto al target fisso 6.0xATR gia' in uso -
   nessun cambiamento, config invariata.
+- **[[NEXUS EA - Ottimizzazione SAR_FLIP (24-08)]]** - nona
+  ottimizzazione individuale. Verifica laterale: n=8, PF0.31, sumR=-5.5
+  - stessa direzione delle altre, campione troppo sottile. Trailing
+  2.0xATR adottato al posto del target fisso: PF1.78->1.82, ma
+  soprattutto riequilibra le due meta' della storia (m1 1.40->1.64,
+  prima dipendeva troppo dalla seconda meta').
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

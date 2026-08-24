@@ -72,7 +72,7 @@ ATR era leggermente controproducente qui).
 |---|---|---|---|---|---|
 | TSI | 4h | 1.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.03 (1.97/2.10, n=134)** — il migliore di questo blocco, trailing provato e scartato (peggiora sempre) |
 | MALAYSIAN_SNR_BREAKOUT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.93 (1.83/2.04, n=75)** |
-| SAR_FLIP | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.78 (1.40/2.27, n=76)** |
+| SAR_FLIP | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.82 (1.64/2.02, n=76)** |
 | FVG_CONT_V2 | 4h | stop nativo precalcolato | ER+floor 0.3 | **BUY-only** | **1.68 (1.34/2.15, n=65)** |
 | AMD_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.62 (1.26/2.06, n=137)** |
 
