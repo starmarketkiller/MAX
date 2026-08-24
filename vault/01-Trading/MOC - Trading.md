@@ -400,6 +400,21 @@ profitto reale, non solo curve di backtest.
   Il floor 0.3×ATR (che salva il CRT classico) qui NON basta: scarta il
   93% dei trade e i superstiti restano negativi. Bocciata, causa
   diagnosticata non solo osservata.
+- **[[NEXUS EA - Attacco alla Dipendenza dal Rally 2023-2026 (24-08)]]** —
+  la prima correzione REALE trovata (dopo settimane di sola diagnosi) al
+  problema più vecchio dell'indagine. Tre leve testate su SAR/MACD (4h):
+  breakeven sul near-miss **rigettato** (peggiora sempre — uccide i
+  vincenti che ritracciano e poi continuano, più di quanto salvi i
+  perdenti); soglia ER adattiva a percentile mobile migliora ma con
+  finestre rumorose, più debole del floor; **floor di volatilità
+  assoluta (percentile ATR mobile, ortogonale al filtro ER di forma) —
+  la scoperta**: MACD retail meta1 1.27→1.39-1.41, SAR 1.01→1.09 (5/5
+  finestre), FVG_CONT 1.15→1.19, tutti confermati su un plateau
+  0.2-0.5, non un picco isolato. Non universale (LONDON_BO non ne ha
+  bisogno, verificato non assunto). Combinare floor+soglia-adattiva
+  peggiora, non si sommano. Divario meta1/meta2 ridotto sostanzialmente,
+  non eliminato — finestra 2020-11→2022-04 resta la più debole in
+  assoluto.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
