@@ -696,6 +696,12 @@ profitto reale, non solo curve di backtest.
   2.0xATR e' uno dei miglioramenti piu' netti della giornata: PF1.46->
   1.72 (+18%), campione grande (n=1498), 5/5 finestre in entrambi i
   casi, completamente simmetrico - nessun rischio di beta di rally.
+- **[[NEXUS EA - Ottimizzazione FVG_CONT (24-08)]]** - quattordicesima
+  ottimizzazione. Verifica laterale: n=25, PF0.43, coerente con le
+  altre. Trailing 2.0xATR adottato: PF1.51->1.63 e riequilibra quasi
+  perfettamente le due meta' (1.64/1.63), ma perde una finestra su
+  cinque (l'ultima, PF0.82, sotto breakeven) - segnalato onestamente
+  invece di nasconderlo dietro il PF aggregato.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
