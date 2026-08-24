@@ -74,6 +74,26 @@ possono ingannare anche con centinaia di trade, non solo con manciate.
   SELL quando è laterale (ER basso) — non ancora costruito/testato,
   ma è la conclusione naturale di questa verifica.
 
+## Addendum 24/08 (2) — OTE_CONT/FVG_MIT/EMA_PULLBACK: stessa direzione, campione troppo sottile per confermare
+
+Split BUY/SELL con verifica laterale immediata (non rimandata) sulle 3
+diversificatrici rimaste:
+
+| Strategia | BUY aggregato | BUY laterale | SELL laterale |
+|---|---|---|---|
+| OTE_CONT | PF2.13 (n=85) | PF0.00 (n=**10**) | PF19.31 (n=**5**) |
+| FVG_MIT | PF2.27 (n=24) | PF0.00 (n=**1**) | PF1.32 (n=**6**) |
+| EMA_PULLBACK | PF1.56 (n=77) | PF0.00 (n=**4**) | PF1.32 (n=**8**) |
+
+Stessa direzione delle altre 6 (SELL relativamente più forte nel
+laterale) ma campioni troppo sottili (1-10 trade) per confermare o
+smentire con fiducia — a differenza di ADX_RSI (63-728 trade nella
+stessa finestra). **Non contate come conferma né come smentita** — la
+config BUY-only per queste 3 resta quella che era: valida
+nell'aggregato 2019-2026, di natura incerta rispetto al regime, senza
+prova né a favore né contro sulla dipendenza dal rally per mancanza di
+campione.
+
 ## Prossimi passi aperti
 
 - Costruire e testare un direction-lock regime-condizionato (BUY se
