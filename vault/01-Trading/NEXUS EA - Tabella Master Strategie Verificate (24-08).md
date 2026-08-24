@@ -71,6 +71,12 @@ config principale 4h+D1-align+trailing (campione ampio, PF1.87), D1
 nativo SENZA floor come conferma/upside (PF2.57, 5/5 finestre, il floor
 ATR era leggermente controproducente qui).
 
+## Nuova (25/08) — riapertura di un verdetto pre-disciplina-laterale
+
+| Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
+|---|---|---|---|---|---|---|
+| ML_ADAPTIVE_SUPERTREND | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.94 (1.33/2.79, n=123, 4/5)** | Script TradingView esterno (AlgoAlpha), era "bocciata/ECN-only borderline" dal 17-24/08 — riaperta con floor+BUY-SELL+laterale: **flip genuino confermato** (SELL laterale PF1.88 n=11, stessa fascia di SAR/ADX_RSI), non solo beta. Campione ancora sottile, factor SuperTrend=1.5 (k-means su ATR10, training 100), non ancora in MQL5 |
+
 ## Altre solide (5)
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) |

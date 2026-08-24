@@ -761,6 +761,16 @@ profitto reale, non solo curve di backtest.
   TP fisso - un cambio di rischio piu' consequenziale, non fatto senza
   conferma esplicita dell'utente. Nessuna modifica al codice in questo
   turno.
+- **[[NEXUS EA - Riverifica Hull Suite e ML Adaptive SuperTrend con BUY-SELL e Laterale (25-08)]]** -
+  riapertura di 2 verdetti "chiusi" prima della disciplina laterale di
+  oggi (script TradingView esterni, erano "borderline ECN-only, non
+  promosse"). Con floor+BUY-SELL+verifica laterale: **Hull Suite
+  resta non promossa** (SELL laterale vicino al pareggio, PF0.99,
+  pattern debole). **ML Adaptive SuperTrend promossa**: SELL laterale
+  PF1.88 (n=11) - un flip genuino nella stessa fascia di SAR/ADX_RSI,
+  non solo beta mascherato. Primo caso in cui riaprire un verdetto
+  pre-disciplina-laterale produce una vera promozione - da considerare
+  per altri "borderline ECN-only" archiviati con la stessa firma.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
