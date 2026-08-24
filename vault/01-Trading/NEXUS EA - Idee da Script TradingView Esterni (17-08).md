@@ -231,5 +231,82 @@ aggiunto "perche' suona professionale" che il roadmap vieta esplicitamente
 basata su KZP, va testata come ipotesi dichiarata, non dedotta da un
 indicatore di visualizzazione.
 
+## Addendum 24/08 (4) - Hull Suite e ML Adaptive SuperTrend: risultato ribaltato con lo sweep
+
+L'utente ha chiesto di riprovare invece di fermarsi al config di default
+(erano state bocciate entrambe con i parametri "consigliati dall'autore").
+Sweep sistematico (un asse alla volta, cerca di un plateau non di un
+picco isolato - regola P4.6/P2.5 del roadmap), poi verifica due-meta'-
+storia sul candidato centrale del plateau trovato.
+
+**Hull Suite** (`hull_suite_sweep_24-08.py`) - sweep length 8-200 su 4h e
+1h, poi sweep mode (Ehma/Thma) a length 55/200. Trovato un **plateau
+reale** su 4h, length 17-45 (Hma), molto diverso dal singolo punto
+testato prima (length=55, che sta appena fuori dal bordo positivo):
+
+| length (4h) | retail PF | ECN PF | finestre ECN>=1 |
+|---|---|---|---|
+| 17 | 1.04 | 1.17 | 5/5 |
+| 21 | 1.12 | 1.26 | 5/5 |
+| 25 | 1.11 | 1.24 | 4/5 |
+| 34 | 0.96 | 1.09 | 4/5 |
+| 45 | 1.14 | 1.29 | 5/5 |
+| 55 (default autore) | 0.98 | 1.11 | 3/5 |
+
+Non monotono ma consistentemente sopra 1 su ECN in tutto il range 17-45
+(34 e' un avvallamento interno, non rompe il plateau). Modalita' Ehma/Thma
+non aggiungono nulla di consistente (Thma buono a len 55, pessimo a len
+200 - interazione inaffidabile, scartata). Ablation senza filtro di
+regime: peggiora ovunque (retail 0.77-0.86) - il filtro resta necessario.
+
+**Verifica due-meta'-storia** (length 25/34/45, 4h): qui la promozione si
+ferma. **Stessa firma gia' documentata nel resto dell'indagine** (vedi
+[[NEXUS EA - Filtro di Regime e Portafoglio 5 Strategie (16-08)]]) - retail
+e' vicino o sotto pari nella prima meta' (2019-2023 circa, PF 0.92-1.02) e
+forte solo nella seconda (PF 1.28-1.40, il rally 2023-2026). ECN e' invece
+positivo in ENTRAMBE le meta' (1.08-1.16 prima, 1.43-1.55 seconda) per
+tutte e 3 le length testate - piu' pulito, non regge il criterio piu'
+severo del retail.
+
+**ML Adaptive SuperTrend** (`ml_adaptive_supertrend_sweep_24-08.py`) -
+sweep del fattore SuperTrend (1.0-8.0, ATR/training fissi) su 4h e 1h.
+Su 4h, **plateau reale a fattore 1.25-2.5** (default autore=3.0 era
+appena fuori, sul bordo di discesa):
+
+| factor (4h) | retail PF | ECN PF | finestre ECN>=1 |
+|---|---|---|---|
+| 1.0 | 0.94 | 1.06 | 3/5 |
+| 1.25 | 1.15 | 1.29 | 4/5 |
+| 1.5 | 1.14 | 1.27 | 4/5 |
+| 1.75 | 1.14 | 1.28 | 4/5 |
+| 2.5 | 1.06 | 1.19 | 4/5 |
+| 3.0 (default autore) | 1.00 | 1.12 | 3/5 |
+
+Su 1h nessun plateau vero - i valori "buoni" (factor=5, factor=8) sono
+picchi isolati su campioni sottili (n=93/47) con finestre a varianza
+enorme (0.24-2.98 PF) - scartati come rumore, non un edge.
+
+**Verifica due-meta'-storia** (factor 1.25/1.5/1.75, 4h): **identica firma**
+di Hull Suite - retail sotto pari nella prima meta' (PF 0.92-0.95), forte
+nella seconda (PF 1.38-1.40); ECN positivo in entrambe (1.03-1.08 prima,
+1.53-1.55 seconda).
+
+## Verdetto aggiornato: promozione parziale, non piena
+
+Entrambe passano da "bocciata" a **candidata borderline ECN-only**, stessa
+categoria di SAR_ADX20/DONCHIAN_TURTLE nel catalogo esistente ("regge solo
+a costi ECN"): il config di default testato la prima volta era
+sfortunatamente fuori dal plateau reale per entrambe, ma anche al centro
+del plateau il risultato retail dipende dal rally 2023-2026 - lo stesso
+problema di fondo mai risolto per l'intero portafoglio (vedi nota 16/08
+collegata sopra), non un difetto specifico di questi due script. Non
+promosse a Core; da tenere presenti se/quando si affronta il problema di
+fondo della dipendenza dal regime storico invece di riprovare varianti
+dello stesso sintomo.
+
+Config rappresentativi del plateau (non i picchi assoluti, per evitare di
+scegliere il punto piu' fortunato): Hull Suite length=25/Hma/4h; ML
+Adaptive SuperTrend factor=1.5/4h.
+
 ## Collegamenti
 [[MOC - Trading]]
