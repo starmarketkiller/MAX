@@ -646,6 +646,13 @@ profitto reale, non solo curve di backtest.
   Trailing 3.0xATR invece e' un miglioramento reale e pulito (1.35->
   1.38, simmetrico, su tutto lo storico) - non ancora applicato al
   codice MQL5 gia' in produzione, richiede modifica separata.
+- **[[NEXUS EA - Ottimizzazione MALAYSIAN_SNR_BREAKOUT (24-08)]]** -
+  settima ottimizzazione individuale, risultato onesto: **nessun
+  miglioramento trovato**. Trailing si avvicina ma non supera mai il
+  target fisso gia' noto (PF1.93, 5/5 finestre); D1-align peggiora
+  nettamente (stessa firma di "non aiuta chi e' gia' ben filtrato con
+  ER"). Verifica laterale fatta subito: stessa direzione delle altre
+  ma campione troppo sottile (n=6) per confermare. Config invariata.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
