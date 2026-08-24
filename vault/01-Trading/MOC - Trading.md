@@ -666,6 +666,13 @@ profitto reale, non solo curve di backtest.
   2.0xATR adottato al posto del target fisso: PF1.78->1.82, ma
   soprattutto riequilibra le due meta' della storia (m1 1.40->1.64,
   prima dipendeva troppo dalla seconda meta').
+- **[[NEXUS EA - Ottimizzazione FVG_CONT_V2 (24-08)]]** - decima
+  ottimizzazione individuale. Verifica laterale non informativa (n=2,
+  campione troppo piccolo anche solo per indicare una direzione).
+  Trailing 2.0xATR sullo stop nativo (strutturale, legato alla FVG) e'
+  un miglioramento pulito: PF1.68->2.03, 5/5 finestre in entrambi i
+  casi, due meta' equilibrate. 3.0xATR ha PF piu' alto ma solo 3/5
+  finestre e sbilanciato verso fine storico - non promosso.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
