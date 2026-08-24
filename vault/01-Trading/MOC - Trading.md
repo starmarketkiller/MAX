@@ -439,8 +439,22 @@ profitto reale, non solo curve di backtest.
   con SL1.0/TP6.0), TURTLE_SOUP (**ribalta 3+ rifiuti precedenti** - il
   floor ATR non era mai stato provato sopra il suo stop nativo, da
   riverificare vista la storia). CRT/CRT_MINSTOP_FILTER confermate
-  definitivamente rotte anche col floor. Totale giornata: 13 nuove
-  baseline verificate due-meta-storia oltre alle 4 gia' solide.
+  definitivamente rotte anche col floor. Trailing stop (chandelier,
+  nessun target fisso) testato sulle deboli residue: LIQ_SWEEP
+  **doppiamente confermata** (PF1.07, meta 1.06/1.08 - quasi identico al
+  risultato SL fisso con un meccanismo di uscita indipendente, la
+  conferma piu' solida della giornata). STRUCT_REACT peggiora col
+  trailing (era ok col target fisso) - il tipo di gestione va scelto per
+  strategia. Totale: 14 nuove baseline verificate due-meta-storia oltre
+  alle 4 gia' solide.
+- **[[NEXUS EA - Famiglia Sessione e SCALP su M15-M30 (24-08)]]** -
+  JUDAS_SWING/SILVER_BULLET/NY_REVERSAL/AMD_REVERSAL/PO3/WEEKLY_EXP/
+  SCALP_* testate sul loro TF nativo (M15/M30) con uscita a fine
+  giornata invece del target multi-ATR usato altrove: **negativo su
+  tutta la linea**, 26 combinazioni (13 strategie x 2 TF), zero baseline
+  profittevoli, retail PF mai sopra 0.59 nemmeno allargando lo stop.
+  Tre assi indipendenti provati (TF, ampiezza stop, timing di uscita) -
+  nessuno risolve. Nessuna aggiunta al totale di 14.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
