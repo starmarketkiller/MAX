@@ -50,8 +50,8 @@ vedi la correzione sopra prima di fidarsene.
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
 |---|---|---|---|---|---|---|
-| DONCHIAN_TURTLE | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.56 (1.47/1.67)** | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa |
-| DARVAS_BOX | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.58 (1.44/1.73)** | Vedi sopra — tenerne solo una delle due in portafoglio |
+| DONCHIAN_TURTLE | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.56 (1.47/1.67)** | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa; trailing provato e scartato (collassa le finestre 5/5→2/5) |
+| DARVAS_BOX | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.58 (1.44/1.73)** | Vedi sopra — tenerne solo una delle due in portafoglio; trailing scartato, stesso pattern |
 | ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR** | ER+floor 0.3 | **BUY-only** | **2.20 (2.20/2.21, n=728, 5/5)** | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
 | SAR_ADX20 | 4h | 1.5 init, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.61 (1.16/2.15, n=1000, 5/5)** | Campione enorme, laterale verificata (n=83, PF0.34) |
 | BREAKOUT_ACC | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.33 (1.19/1.48)** | Miglioramento più modesto del cluster — trailing provato e scartato (peggiora sempre la robustezza) |
@@ -104,6 +104,24 @@ versione BUY-only (migliorate rispetto alla forma simmetrica). Solo
 allocazione del portafoglio (correlazione, budget di rischio) resta
 aperto, ora da riverificare con le config BUY-only aggiornate — vedi
 [[NEXUS EA - Correlazione tra le 20 Strategie (24-08)]].
+
+**Ciclo di ottimizzazione individuale completato (24-25/08)**: tutte le
+19 strategie verificate sono state passate una per una (verifica
+laterale dove applicabile + test trailing/D1-align/altri ingredienti).
+**11 su 19 hanno trovato un miglioramento reale** (quasi sempre
+trailing 2.0-2.5×ATR): STRUCT_REACT/LIQ_SWEEP/OTE_CONT/FVG_MIT/
+EMA_PULLBACK (diversificatrici, fatte prima), SAR_FLIP/FVG_CONT_V2
+(altre solide), SAR/MACD/FVG_CONT/LONDON_BO (nucleo storico),
+ADX_RSI/SAR_ADX20 (cluster). **8 su 19 nessun miglioramento trovato**
+(config invariata, risultato onestamente documentato): TSI/
+MALAYSIAN_SNR_BREAKOUT/AMD_CONT (altre solide), BREAKOUT_ACC/
+DONCHIAN_TURTLE/DARVAS_BOX (cluster) — pattern comune: il trailing
+"collassa" la robustezza delle finestre pur mantenendo il PF
+aggregato, quindi non promosso. Un primo tentativo di
+"direction-lock per regime" (su SAR) non ha funzionato — vedi
+[[NEXUS EA - Ottimizzazione SAR e Tentativo Direction-Lock (24-08)]].
+Restano da riverificare solo le 2 provvisorie (TURTLE_SOUP,
+LDN_REVERSAL).
 
 ## Collegamenti
 [[MOC - Trading]]

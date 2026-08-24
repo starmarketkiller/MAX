@@ -731,6 +731,16 @@ profitto reale, non solo curve di backtest.
   altre. Trailing scartato: ogni variante peggiora la robustezza delle
   finestre (3/5 o 2/5 contro il 4/5 del target fisso) nonostante
   qualche PF aggregato piu' alto - config invariata.
+- **[[NEXUS EA - Ottimizzazione DONCHIAN_TURTLE e DARVAS_BOX (24-08)]]** -
+  diciannovesima/ventesima ottimizzazione, chiudono il cluster
+  trend-following. Testate insieme (correlate 99.7%, numeri quasi
+  identici come atteso). Trailing scartato per entrambe: collassa le
+  finestre (5/5->2-4/5) su tutti i multipli provati. **Chiude il
+  ciclo di ottimizzazione individuale sulle 19 strategie verificate**:
+  11/19 hanno trovato un miglioramento reale (quasi sempre trailing),
+  8/19 nessuno (config invariata) - vedi il bilancio aggiornato in
+  [[NEXUS EA - Tabella Master Strategie Verificate (24-08)]]. Restano
+  solo le 2 provvisorie (TURTLE_SOUP, LDN_REVERSAL) da riverificare.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
