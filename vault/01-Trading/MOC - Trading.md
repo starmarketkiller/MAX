@@ -702,6 +702,19 @@ profitto reale, non solo curve di backtest.
   perfettamente le due meta' (1.64/1.63), ma perde una finestra su
   cinque (l'ultima, PF0.82, sotto breakeven) - segnalato onestamente
   invece di nasconderlo dietro il PF aggregato.
+- **[[NEXUS EA - Ottimizzazione LONDON_BO (24-08)]]** - quindicesima
+  ottimizzazione, chiude il nucleo storico (5/5). Verifica laterale:
+  n=8, PF0.0 (nessun trade vincente li'), coerente con le altre.
+  Trailing 2.0xATR e' un miglioramento su entrambi gli assi: PF1.69->
+  1.83 E finestre piu' solide (5/5 contro 4/5) - adottato. 2.5xATR ha
+  PF piu' alto (2.18) ma solo 3/5 finestre, scartato per lo stesso
+  motivo gia' visto oggi su FVG_CONT_V2/MALAYSIAN_SNR_BREAKOUT.
+  **Bilancio nucleo storico**: tutte e 5 le strategie ora hanno
+  trailing 2.0xATR come miglioramento adottato (SAR, MACD, FVG_CONT,
+  LONDON_BO, gia' Z_SCORE_BREAKOUT con 3.0xATR) - il trailing e'
+  risultato l'ingrediente piu' consistente su questo blocco, anche se
+  non universale sull'intero portafoglio (vedi blocco "altre solide"
+  dove ha funzionato solo su 2/5).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
