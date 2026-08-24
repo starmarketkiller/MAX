@@ -381,7 +381,25 @@ profitto reale, non solo curve di backtest.
   (34 trade); falso breakout su swing MAGGIORE (20/15 barre, non
   sessione/giornaliero come i 3 tentativi precedenti di sweep) — il
   candidato migliore, 234 trade su 1h, ECN PF1.57 su 5/5 finestre,
-  retail borderline. Non ancora validato due-metà-storia.
+  retail borderline. **Addendum 24/08**: falso breakout su swing maggiore
+  validato due-metà-storia (nessuna metà negativa) → promosso e portato
+  in MQL5 come `SWING_FALSEBREAK`. Altri 4 script testati: Hull Suite e
+  ML Adaptive SuperTrend (k-means su ATR) entrambe bocciate (retail
+  a/sotto pari, ECN marginale senza plateau); HHLL già bocciato il 17/08;
+  KZP non testato (indicator puro, nessuna regola di ingresso propria).
+  `Z_SCORE_BREAKOUT` (scoperto il 17/08, vedi nota Stop Strutturale M5)
+  portato in MQL5 lo stesso giorno.
+- **[[NEXUS EA - CRT Range H4 con Conferma M5 (24-08)]]** — ipotesi
+  dell'utente: range da candela H4 chiusa, conferma di falso breakout su
+  candele M5 (non stessa TF come il CRT classico), uscita fissa 1:2.
+  Edge grezzo reale ma sottilissimo (PF1.08 senza costi, win rate 35%
+  contro 33.3% di pareggio) — collassa con i costi (retail PF0.04, ECN
+  PF0.23, 15.197 trade) perché lo stop mediano è ~$1.22: la stessa
+  candela di sweep può restare valida per più barre M5 consecutive,
+  producendo trade ripetuti a rischio quasi nullo sullo stesso livello.
+  Il floor 0.3×ATR (che salva il CRT classico) qui NON basta: scarta il
+  93% dei trade e i superstiti restano negativi. Bocciata, causa
+  diagnosticata non solo osservata.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
