@@ -628,6 +628,14 @@ profitto reale, non solo curve di backtest.
   universale. 4h+D1-align+trailing 3.0xATR (mai provato) porta il PF
   da 1.42 a 1.87 sullo stesso campione ampio (241). Due config
   complementari ora nella tabella master, non piu' un compromesso.
+- **[[NEXUS EA - Ottimizzazione FVG_MIT (24-08)]]** - quinta
+  ottimizzazione individuale, il salto piu' grande trovato oggi su una
+  singola strategia: trailing 3.0xATR (mai provato) quasi raddoppia il
+  PF rispetto al miglior target fisso (1.58->2.72), tutte e 5 le
+  finestre positive, stesso campione (79). EMA100 D1 batte EMA50 in
+  modo consistente (segnale di trend piu' lento si adatta meglio alla
+  tesi "mitigation" che aspetta gia' un ritorno) - non ancora combinato
+  col trailing.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
