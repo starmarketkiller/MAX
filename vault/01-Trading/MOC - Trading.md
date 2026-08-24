@@ -544,6 +544,15 @@ profitto reale, non solo curve di backtest.
   BUY-only migliorano ma con piu' instabilita' tra finestre; SELL-only
   scartata. **Seconda vittoria di fila per l'allineamento D1** (dopo
   FVG_MIT ieri sera) - da provare sistematicamente sulle altre baseline.
+- **[[NEXUS EA - Sweep Sistematico Allineamento D1 (24-08)]]** - testato
+  su 14 baseline non ancora provate: **NON generalizza**, solo 3/14
+  migliorano (LONDON_BO, TSI, EMA_PULLBACK - tutte gia' con filtro ER
+  borderline). Le 11 gia' forti con ER (SAR/MACD/FVG_CONT/
+  DONCHIAN_TURTLE/ADX_RSI/ecc, tutte 5/5 o 4/5 finestre pulite)
+  **peggiorano sistematicamente** col D1-alignment - il campione quasi
+  raddoppia ma la qualita' cala (m1 crolla quasi ovunque). L'allineamento
+  D1 e' uno strumento di SALVATAGGIO per strategie con filtro debole, non
+  un upgrade universale - stessa lezione del floor ATR di ieri.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
