@@ -115,6 +115,33 @@ soluzione completa al problema (resta un divario residuo, e la finestra
 ma è il primo miglioramento REALE e riproducibile trovato su questo
 fronte in tutta l'indagine dal 14/08 a oggi.
 
+## Addendum 24/08 (2) — floor ATR riverificato sui 4 candidati di oggi: 2 su 4 rispondono
+
+`rally_dependency_attack_part2_24-08.py` — stessa verifica "per
+strategia, non meccanica" promessa sopra, applicata a Hull Suite/ML
+Adaptive SuperTrend/Z_SCORE_BREAKOUT/SWING_FALSEBREAK (tutti e 4
+mostravano la firma prima-meta-debole quando scoperti oggi, prima di
+questo attacco).
+
+| Strategia | meta1 retail senza floor | meta1 retail floor 0.3 | floor 0.4 | Verdetto |
+|---|---|---|---|---|
+| **Z_SCORE_BREAKOUT** | 1.20 | **1.37** | **1.39** | **Risponde bene** — stesso pattern di SAR/MACD/FVG_CONT, aggPF 1.29→1.35-1.37, ECN 5/5 finestre mantenuto |
+| Hull Suite (len25) | 0.95 | 1.01 | 0.98 | Neutro — miglioramento minimo, non un plateau pulito (finestre 2/5→4/5 non monotone) |
+| ML Adaptive SuperTrend (f1.5) | 0.92 | 0.93 | 0.87 | Neutro/leggermente negativo a floor piu' alto |
+| SWING_FALSEBREAK | 1.14 | 1.04 | 1.20 | **Non monotono** — peggiora a 0.3, migliora a 0.4, campione gia' sottile (234→195-206 trade) prima ancora di dividerlo in 5 finestre; rumore piu' probabile di un edge reale |
+
+**Conclusione**: il floor ATR non è un fix universale nemmeno tra i
+candidati nuovi — 2 su 4 (Z_SCORE_BREAKOUT chiaramente, nessun altro con
+la stessa pulizia). La differenza plausibile: SAR/MACD/FVG_CONT/
+Z_SCORE_BREAKOUT hanno tutti campioni da centinaia a migliaia di trade;
+Hull Suite/ML SuperTrend/SWING_FALSEBREAK partivano già più sottili
+(234-370 trade) — a quella scala, un ulteriore taglio a percentile
+comincia a intaccare la significatività statistica invece di isolare
+selettivamente il rumore. **Lezione**: il floor va provato e verificato
+per ogni strategia, non assunto come miglioramento automatico — quarta
+conferma diretta di questo principio nella stessa giornata (dopo
+LONDON_BO, e ora Hull Suite/ML SuperTrend/SWING_FALSEBREAK).
+
 ## Prossimi passi aperti
 
 - Riverificare il floor ATR su Hull Suite/ML Adaptive SuperTrend (stessa
