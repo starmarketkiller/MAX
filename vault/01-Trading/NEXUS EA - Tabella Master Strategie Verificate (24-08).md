@@ -53,7 +53,7 @@ vedi la correzione sopra prima di fidarsene.
 | DONCHIAN_TURTLE | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.56 (1.47/1.67)** | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa |
 | DARVAS_BOX | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.58 (1.44/1.73)** | Vedi sopra — tenerne solo una delle due in portafoglio |
 | ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR** | ER+floor 0.3 | **BUY-only** | **2.20 (2.20/2.21, n=728, 5/5)** | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
-| SAR_ADX20 | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.49 (1.35/1.64, n=1000)** | Campione enorme |
+| SAR_ADX20 | 4h | 1.5 init, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.61 (1.16/2.15, n=1000, 5/5)** | Campione enorme, laterale verificata (n=83, PF0.34) |
 | BREAKOUT_ACC | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.33 (1.19/1.48)** | Miglioramento più modesto del cluster |
 
 ## Diversificatrici genuine (5) — le più preziose per il portafoglio, bassa/negativa correlazione

@@ -721,6 +721,11 @@ profitto reale, non solo curve di backtest.
   Trailing 2.5xATR e' il miglioramento piu' pulito visto finora: PF
   1.77->2.20 (+24%), 5/5 finestre, le due meta' praticamente identiche
   (2.20/2.21) - nessun compromesso da segnalare.
+- **[[NEXUS EA - Ottimizzazione SAR_ADX20 (24-08)]]** - diciassettesima
+  ottimizzazione, cluster trend-following. Verifica laterale: campione
+  ampio n=83, PF0.34, sumR=-54.3 - conferma solida della stessa
+  direzione. Trailing 2.0xATR adottato: PF1.49->1.61, 5/5 finestre
+  come il baseline, su un campione enorme (n=1000).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
