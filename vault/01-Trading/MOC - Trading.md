@@ -690,6 +690,12 @@ profitto reale, non solo curve di backtest.
   segnale SAR produce quasi solo BUY anche li' (94.6% del campione) -
   un gate esterno non basta, serve un segnale SELL nativo distinto.
   Tentativo onestamente documentato come fallito.
+- **[[NEXUS EA - Ottimizzazione MACD (24-08)]]** - tredicesima
+  ottimizzazione. Unica del nucleo storico rimasta simmetrica (BUY-only
+  non conveniva), quindi nessuna verifica laterale necessaria. Trailing
+  2.0xATR e' uno dei miglioramenti piu' netti della giornata: PF1.46->
+  1.72 (+18%), campione grande (n=1498), 5/5 finestre in entrambi i
+  casi, completamente simmetrico - nessun rischio di beta di rally.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

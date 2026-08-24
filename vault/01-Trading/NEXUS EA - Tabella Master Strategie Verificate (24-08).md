@@ -41,7 +41,7 @@ vedi la correzione sopra prima di fidarsene.
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Correlazione | MQL5 |
 |---|---|---|---|---|---|---|---|
 | SAR | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.64 (1.28/2.04, n=1471, 5/5)** | Cluster (alta) | No |
-| MACD | 4h | 1.5/4.0 | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | 1.46 (1.39/1.54) | Cluster (alta) | No |
+| MACD | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | **1.72 (1.43/2.04, n=1498, 5/5)** | Cluster (alta) | No |
 | FVG_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.51 (1.35/1.69)** | Cluster | No |
 | LONDON_BO | 4h | 1.0/4.5 | ER (no floor) | **BUY-only** | **1.60 (1.71/1.49)** | Bassa | No |
 | Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, **trailing 3.0×ATR** | ER+floor 0.3 | simmetrica | 1.38 (1.28/1.50) | Bassa | **Sì (trailing non ancora applicato al codice)** |
