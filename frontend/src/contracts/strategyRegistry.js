@@ -59,7 +59,7 @@ export const STRATEGY_REGISTRY = [
   ["SMS_BMS_RTO","Sms Bms Rto","LIQUIDITY",true,true],
   ["SMS_BMS_RTO_CHOCH_WINDOW","Sms Bms Rto Choch Window","SCALP",false,true],
   ["STRUCT_REACT","Struct React","LIQUIDITY",true,true],
-  ["SWING_FALSEBREAK","Swing Falsebreak","UNCLASSIFIED",true,false],
+  ["SWING_FALSEBREAK","Swing Falsebreak","LIQUIDITY",true,false],
   ["THREE_BAR_DELIVERY_BREAK","Three-Bar Delivery Break (CISD)","LIQUIDITY",true,true],
   ["TSI","True Strength Index","MOMENTUM",true,true],
   ["TSI_EXTREME","Tsi Extreme","SCALP",false,true],
@@ -68,7 +68,7 @@ export const STRATEGY_REGISTRY = [
   ["TURTLE_SOUP_CHOCH_DBLBODY","Turtle Soup Choch Dblbody","SCALP",false,true],
   ["TURTLE_SOUP_CHOCH_NEAR","Turtle Soup Choch Near","SCALP",false,true],
   ["WEEKLY_EXP","Weekly Exp","SESSION",true,true],
-  ["Z_SCORE_BREAKOUT","Z Score Breakout","SCALP",false,true],
+  ["Z_SCORE_BREAKOUT","Z Score Breakout","TREND",true,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
 }));

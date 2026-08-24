@@ -141,6 +141,7 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "TSI")               { slMult=2.0; tpMult=6.0; htf=true ; beR=1.0; trailATR=0.0; return true; }  // 1d - vedi nota 12/08 sopra
    if(name == "TURTLE_SOUP")       { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.83 R2.0
    if(name == "SWING_FALSEBREAK")  { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 24/08 - stessi mult del backtest Python di validazione (1h), nessuna ottimizzazione uscite ancora fatta - vedi NXS_Strat_SwingFalseBreak
+   if(name == "Z_SCORE_BREAKOUT")  { slMult=1.0; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 24/08 - slMult INERTE come TURTLE_SOUP/CRT (stop vero: strutturale M5 in NXS_Strat_ZScoreBreakout), tpMult=4.0 e' quello realmente usato (4.0xATR, dal backtest Python del 17/08)
    if(name == "WEEKLY_EXP")        { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
    // Le session/Elliott (SILVER_BULLET, AMD_*, JUDAS, LDN/NY_REVERSAL, PO3,
    // ELLIOTT): da ottimizzare su MT5/intraday -> nessun profilo, usano i globali.
@@ -199,6 +200,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "TSI")               return PERIOD_D1;
    if(name == "TURTLE_SOUP")       return PERIOD_H1;
    if(name == "SWING_FALSEBREAK")  return PERIOD_H1;
+   if(name == "Z_SCORE_BREAKOUT")  return PERIOD_H1;
    if(name == "WEEKLY_EXP")        return PERIOD_D1;
    // 11/08 - CRT: 30m e' il TF con il campione piu' ampio E il walk-forward
    // piu' pulito dopo la riverifica sullo storico ampliato (5/5 su tutti e

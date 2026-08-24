@@ -82,6 +82,7 @@ bool _NXS_StrategyToggle(string id, bool &mapped){
    if(id=="STRUCT_REACT")             return InpUseStructReact;
    if(id=="TURTLE_SOUP")              return InpStrat_TurtleSoup;
    if(id=="SWING_FALSEBREAK")         return InpStrat_SwingFalseBreak;
+   if(id=="Z_SCORE_BREAKOUT")         return InpStrat_ZScoreBreakout;
    if(id=="IFVG")                     return InpStrat_IFVG;
    if(id=="FVG_MIT")                  return InpStrat_FVG_Mit;
    if(id=="FVG_MIT_WINDOW")           return InpStrat_FVG_MIT_WINDOW;

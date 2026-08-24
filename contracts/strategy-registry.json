@@ -9,8 +9,8 @@
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
     "total": 69,
-    "live": 38,
-    "research_only": 31
+    "live": 39,
+    "research_only": 30
   },
   "strategies": [
     {
@@ -1315,7 +1315,7 @@
       "strategy_id": "SWING_FALSEBREAK",
       "display_name": "Swing Falsebreak",
       "aliases": [],
-      "family": "UNCLASSIFIED",
+      "family": "LIQUIDITY",
       "status": "ACTIVE",
       "selector_index": 41,
       "live_implementation": true,
@@ -1515,22 +1515,22 @@
       "strategy_id": "Z_SCORE_BREAKOUT",
       "display_name": "Z Score Breakout",
       "aliases": [],
-      "family": "SCALP",
-      "status": "RESEARCH_ONLY",
-      "selector_index": null,
-      "live_implementation": false,
+      "family": "TREND",
+      "status": "ACTIVE",
+      "selector_index": 42,
+      "live_implementation": true,
       "research_implementation": true,
-      "research_parity": "NOT_IMPLEMENTED",
+      "research_parity": "APPROXIMATE",
       "proxy_for": null,
       "supported_symbols": [
         "*"
       ],
       "supported_timeframes": [
-        "*"
+        "H1"
       ],
-      "default_enabled": false,
-      "auto_disable_eligible": false,
-      "risk_class": "RESEARCH",
+      "default_enabled": true,
+      "auto_disable_eligible": true,
+      "risk_class": "STANDARD",
       "schema_version": 1
     }
   ]

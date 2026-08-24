@@ -445,6 +445,91 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
    return s;
 }
 
+//------------------------------------ Z-Score Breakout (24/08 - porting da server/backtest.py sig_z_score_breakout)
+// Ipotesi "quant" (Z-Score + regime SMA200): interpretazione BREAKOUT
+// (scommette sulla continuazione) delle bande a 2 deviazioni standard,
+// OPPOSTA a BOLLINGER gia' nel motore (mean-reversion, scommette sul
+// ritorno alla media) - stesse bande statistiche, ipotesi di mercato
+// opposta. Regime: SMA200 sullo stesso TF (bull se close>SMA200, bear se
+// close<SMA200), z-score sulla finestra di 20 barre.
+//
+// Stop NON via profilo ATR: strutturale M5 (minimo/massimo delle ultime
+// 12 candele M5 chiuse prima dell'ingresso, pavimento 0.3xATR(H1)),
+// stessa famiglia di stop gia' validata su SAR/MACD/ICHIMOKU (vedi vault
+// "NEXUS EA - Stop Strutturale M5 su Segnali H1 16-08"). Target 4.0xATR.
+// Validata su H1 il 17/08 (`full_catalog_native_stop_17-08.py`): retail
+// PF1.29 (4/5 finestre), ECN PF1.71 (5/5 finestre), 557 trade - il
+// miglior risultato retail di tutta quell'indagine.
+//
+// GAP NOTO (come SWING_FALSEBREAK): il filtro di regime ER (Efficiency
+// Ratio, lookback lungo) usato nella validazione NON e' un gate live qui.
+double _zsb_smaN(int n){
+   double s = 0;
+   for(int k = 1; k <= n; k++) s += iClose(g_sym, NXS_EffTF(), k);
+   return s / n;
+}
+double _zsb_stdN(int n, double mean){
+   double s = 0;
+   for(int k = 1; k <= n; k++){
+      double d = iClose(g_sym, NXS_EffTF(), k) - mean;
+      s += d * d;
+   }
+   return MathSqrt(s / n);
+}
+// Minimo/massimo delle 12 candele M5 chiuse piu' recenti (shift 1..12 su
+// PERIOD_M5) - stesso concetto di make_m5_stop() nello script Python, qui
+// letto direttamente dal terminale invece che dalla cache JSON offline.
+double _zsb_m5StructStop(int dir){
+   double best = (dir == 1) ? DBL_MAX : -DBL_MAX;
+   int found = 0;
+   for(int k = 1; k <= 12; k++){
+      if(dir == 1){
+         double l = iLow(g_sym, PERIOD_M5, k);
+         if(l > 0){ if(l < best) best = l; found++; }
+      } else {
+         double h = iHigh(g_sym, PERIOD_M5, k);
+         if(h > 0){ if(h > best) best = h; found++; }
+      }
+   }
+   return (found >= 3) ? best : 0.0;   // stesso min 3 candele del Python (len(window)<3 -> None)
+}
+
+SNXSSignal NXS_Strat_ZScoreBreakout(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_BREAKOUT_ACC; s.stratName = "Z_SCORE_BREAKOUT";
+   if(!InpStrat_ZScoreBreakout || !NXS_SelectorAllows(42)) return s;
+   double atr = (g_atr > 0) ? g_atr : g_point;   // NXS_Strategies.mqh e' incluso prima di _smc_atr() in NXS_Strategies_SMC.mqh, niente dipendenza cross-file
+   if(atr <= 0) return s;
+   double mean20 = _zsb_smaN(20);
+   double sd20   = _zsb_stdN(20, mean20);
+   if(sd20 <= 0) return s;
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double z  = (c1 - mean20) / sd20;
+   double htfSma = _zsb_smaN(200);
+   bool bullRegime = c1 > htfSma;
+   bool bearRegime = c1 < htfSma;
+   int dir = 0;
+   if(bullRegime && z > 2.0) dir = 1;
+   else if(bearRegime && z < -2.0) dir = -1;
+   if(dir == 0) return s;
+
+   double m5lvl = _zsb_m5StructStop(dir);
+   if(m5lvl <= 0) return s;
+   double entry = (dir == 1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double riskDist = MathAbs(entry - m5lvl);
+   double floorDist = 0.3 * atr;
+   if(riskDist < floorDist) riskDist = floorDist;
+   if(riskDist <= 0) return s;
+
+   s.dir      = (dir == 1) ? DIR_BUY : DIR_SELL;
+   s.entryRef = entry;
+   s.slPrice  = (dir == 1) ? entry - riskDist : entry + riskDist;
+   s.tpPrice  = (dir == 1) ? entry + 4.0 * atr : entry - 4.0 * atr;
+   s.score    = 71.0;
+   s.reason   = (dir == 1) ? "ZSB:bull_z>2+M5struct" : "ZSB:bear_z<-2+M5struct";
+   return s;
+}
+
 //------------------------------------ H4 London Breakout
 // 17/07 notte - validazione breakout aggiunta, da audit esterno canonico:
 // prima qualsiasi close marginale oltre l'Asia contava come breakout.

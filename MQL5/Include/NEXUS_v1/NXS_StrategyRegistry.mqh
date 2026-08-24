@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 38
+#define NXS_LIVE_STRATEGY_COUNT 39
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -52,7 +52,8 @@ bool NXS_StrategyKnown(string strategyId){
           id=="THREE_BAR_DELIVERY_BREAK" ||
           id=="TSI" ||
           id=="TURTLE_SOUP" ||
-          id=="WEEKLY_EXP";
+          id=="WEEKLY_EXP" ||
+          id=="Z_SCORE_BREAKOUT";
 }
 
 // AUD0-WEB-013: elenco canonico indicizzato (0..NXS_LIVE_STRATEGY_COUNT-1).
@@ -97,6 +98,7 @@ string NXS_StrategyIdAt(int i){
    if(i==35) return "TSI";
    if(i==36) return "TURTLE_SOUP";
    if(i==37) return "WEEKLY_EXP";
+   if(i==38) return "Z_SCORE_BREAKOUT";
    return "";
 }
 

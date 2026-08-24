@@ -622,6 +622,9 @@ input bool     InpStrat_MalaysianSNR   = true;
 // 24/08 - vedi NXS_Strat_SwingFalseBreak in NXS_Strategies_SMC.mqh e vault
 // "NEXUS EA - Idee da Script TradingView Esterni (17-08)", addendum 24/08.
 input bool     InpStrat_SwingFalseBreak = true;
+// 24/08 - vedi NXS_Strat_ZScoreBreakout in NXS_Strategies.mqh, validata
+// 17/08 su H1 (retail PF1.29 4/5, ECN PF1.71 5/5, 557 trade).
+input bool     InpStrat_ZScoreBreakout  = true;
 
 // input group "=== INSTITUTIONAL MODELS (v2.0.7) ==="
 input bool     InpUseStrat_CISD          = true;

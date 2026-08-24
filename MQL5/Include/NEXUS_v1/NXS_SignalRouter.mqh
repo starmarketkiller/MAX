@@ -19,7 +19,7 @@ enum ENUM_NXS_FAMILY {
 ENUM_NXS_FAMILY NXS_StratFamily(string name){
    if(name == "ADX_RSI" || name == "MACD" || name == "EMA_PULLBACK"
       || name == "BREAKOUT_ACC" || name == "ICHIMOKU" || name == "LONDON_BO"
-      || name == "SAR" || name == "TSI")
+      || name == "SAR" || name == "TSI" || name == "Z_SCORE_BREAKOUT")
       return FAM_TREND;
    if(name == "BOLLINGER" || name == "RSI_DIV" || name == "BJORGUM" || name == "BB_SQUEEZE")
       return FAM_REVERSAL;

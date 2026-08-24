@@ -449,6 +449,8 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26)) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
    // 24/08 - pivot di swing maggiore, vedi NXS_Strategies_SMC.mqh
    if(InpStrat_SwingFalseBreak && NXS_SelectorAllows(41)) out[n++] = NXS_Strat_SwingFalseBreak();
+   // 24/08 - z-score + regime SMA200, stop strutturale M5, vedi NXS_Strategies.mqh
+   if(InpStrat_ZScoreBreakout  && NXS_SelectorAllows(42)) out[n++] = NXS_Strat_ZScoreBreakout();
 
    // v2.0.7 INSTITUTIONAL MODELS (9)
    SNXSHTF htfInst = NXS_GetHTFBias();

@@ -2,7 +2,7 @@
   "generato": "2026-07-19",
   "fonte_sweep": "results/reports/sweep37 (file stats piu' recente per passata)",
   "baseline": "e6ce816 / branch baseline-post-infra-audit",
-  "totale_strategie": 38,
+  "totale_strategie": 39,
   "avvertenza": "PF/WR/expectancy del round corrente: strategia ISOLATA, lotto fisso 0.01, DataCollectionMode - misurano il comportamento del trigger, non il P&L di portafoglio",
   "strategie": [
     {
@@ -1042,6 +1042,25 @@
       "expectancy_R": null,
       "affidabilita_dati": "nessuna passata MT5 ancora eseguita - validata solo in Python (walk-forward 5 finestre + due meta storia, 1h, XAUUSD Dukascopy 2019-2026): retail PF1.29 (aggregato), ECN PF1.57, nessuna meta negativa",
       "decisione_corrente": "promossa da candidato a strategia validata il 24/08 dopo verifica due-meta-storia (vedi vault NEXUS EA - Idee da Script TradingView Esterni 17-08, addendum 24/08); in attesa di smoke test MT5 isolato (selector_index 41) prima di considerarla Core",
+      "note": "filtro di regime (Efficiency Ratio) della validazione Python NON ancora portato come gate live in MQL5 - stesso gap del resto del portafoglio"
+    },
+    {
+      "nome": "Z_SCORE_BREAKOUT",
+      "selector_index": 42,
+      "versione": "24/08 - porting MQL5 (gia' presente come research in server/backtest.py dal 17/08)",
+      "stato": "attiva",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": null,
+      "trade": 557,
+      "PF": 1.29,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "PF/trade dal backtest Python (full_catalog_native_stop_17-08.py, H1, retail_standard, walk-forward 4/5 finestre, ECN PF1.71 5/5) - nessuna passata MT5 ancora eseguita per la versione MQL5",
+      "decisione_corrente": "porting MQL5 completato il 24/08 su richiesta esplicita - stop strutturale M5 letto live da PERIOD_M5 invece della cache JSON offline usata in Python, stessa logica; in attesa di smoke test MT5 isolato (selector_index 42)",
       "note": "filtro di regime (Efficiency Ratio) della validazione Python NON ancora portato come gate live in MQL5 - stesso gap del resto del portafoglio"
     }
   ],

@@ -206,5 +206,25 @@ che la famiglia sweep (TURTLE_SOUP, CISD_TRUE, SH_BMS_RTO*) non regge con
 nessuno stop provato finora — tre tentativi diversi, stessa risposta.
 Script: `full_catalog_native_stop_17-08.py`.
 
+## Addendum 24/08 - Z_SCORE_BREAKOUT portata in MQL5
+
+`NXS_Strat_ZScoreBreakout()` aggiunta a `NXS_Strategies.mqh` (bucket
+STRAT_BREAKOUT_ACC, famiglia FAM_TREND - e' un breakout con filtro di
+regime SMA200, non uno sweep). Stop NON via profilo ATR ma strutturale
+M5 vero e proprio, come descritto sopra: minimo/massimo delle 12 candele
+M5 chiuse piu' recenti lette live da `PERIOD_M5` (non dalla cache JSON
+offline usata dallo script Python), pavimento 0.3xATR(H1), target
+4.0xATR(H1) - stessa formula di `full_catalog_native_stop_17-08.py`.
+selector_index 42 (dopo SWING_FALSEBREAK=41). Registro canonico
+aggiornato (knowledge/strategy_database.json, 38->39 live) e rigenerato -
+questa e' l'unica delle due porting di oggi che ha gia' una controparte
+research in `server/backtest.py` (`sig_z_score_breakout`), quindi il
+registro la marca `research_implementation=True,
+research_parity=APPROXIMATE` invece di NOT_IMPLEMENTED.
+
+Stesso gap dichiarato di SWING_FALSEBREAK: filtro di regime ER non
+ancora live, non compilata (nessun MetaEditor in questa sessione) -
+verifica locale richiesta prima di demo/live.
+
 ## Collegamenti
 [[MOC - Trading]]
