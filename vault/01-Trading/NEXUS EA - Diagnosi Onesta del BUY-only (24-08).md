@@ -82,6 +82,51 @@ verificati) e ai candidati D1 con divario ampio (OTE_CONT/MACD/
 DARVAS_BOX/DONCHIAN_TURTLE) prima di aggiungere altro sopra una base non
 ancora del tutto verificata.
 
+## Addendum 24/08 (2) — diagnosi completata su tutti i candidati residui
+
+**BUY-only, i 3 non ancora controllati** (FVG_MIT, TSI_EXTREME, RSI_DIV):
+nessuno mostra la firma genuina di STRUCT_REACT. FVG_MIT-BUY debole nella
+finestra vecchia (0.66, n=5 pochissimi trade) e debole anche nell'ultima
+finestra (0.92) — il PF2.20 aggregato vive quasi solo su F1-F3 (2024-2025).
+TSI_EXTREME-BUY debole su ENTRAMBE le finestre vecchie (0.89 e 0.37,
+quest'ultima copre oltre 3 anni) mentre il SELL nella finestra più vecchia
+era positivo (1.09) — stessa firma di BJORGUM, beta mascherato.
+RSI_DIV inconcludente (campioni troppo sottili, segnale rumoroso anche
+dentro le finestre di rally).
+
+**Verdetto finale sul rescue BUY-only di ieri**: da 7 a **1 sola
+confermata** (STRUCT_REACT) + 1 in osservazione (BOLLINGER). BJORGUM,
+FVG_MIT, TSI_EXTREME rimosse dalla lista baseline. ICHIMOKU/RSI_DIV
+inconcludenti, non contate.
+
+**D1, i 4 candidati a divario ampio**: scoperta aggiuntiva — il filtro
+ER+floor su D1 è così selettivo che **nessun trade esiste prima del
+2022-02/03** per nessuno dei 4 (l'intero periodo 2019-2022, incluso il
+crash COVID, è assente dal test). Dentro la finestra disponibile
+(2022-2026):
+- **OTE_CONT**: **PF=0.00 nelle prime due finestre** (2022-03→2024-01,
+  quasi 2 anni, zero trade vincenti) poi esplode (7.46, 8.91) — non
+  fragile, **morta** prima del 2024. Rimossa dalla lista baseline.
+- **MACD D1**: prima finestra disponibile (2022-02→2023-04) sotto pari
+  (0.67) — stessa dipendenza dal rally già nota per MACD 4h, solo
+  confermata anche qui. Resta comunque positiva nell'aggregato e su 4h è
+  già una baseline solida — non serve come baseline D1 a sé.
+- **DARVAS_BOX / DONCHIAN_TURTLE**: **le uniche pulite** — anche nella
+  finestra più vecchia disponibile (2022-2023) restano positive (PF1.29
+  e 1.28), ogni finestra successiva migliora ma nessuna è sotto pari.
+  Confermate come baseline D1 genuine.
+
+## Bilancio rivisto delle baseline (sostituisce il conteggio di 25)
+
+Rimosse: BJORGUM, FVG_MIT, TSI_EXTREME (BUY-only beta mascherato),
+OTE_CONT-D1 (morta pre-2024). Confermate con evidenza genuina: STRUCT_REACT
+(BUY-only), DARVAS_BOX-D1, DONCHIAN_TURTLE-D1. Il conteggio "25" di ieri
+sera era ottimistico — il numero vero, dopo questa verifica più severa,
+è più vicino a **18-19 solide** (le 14 di ieri pre-BUY/D1, meno le
+rimozioni nette da questi due esperimenti, più STRUCT_REACT/DARVAS_BOX-D1/
+DONCHIAN_TURTLE-D1 come aggiunte reali). Conteggio esatto da ricostruire
+con una lista consolidata dedicata, non ancora fatta.
+
 ## Prossimi passi aperti
 
 - Diagnosi per-finestra-con-date su ICHIMOKU/FVG_MIT/TSI_EXTREME/RSI_DIV
