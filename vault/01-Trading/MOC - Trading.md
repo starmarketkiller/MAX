@@ -519,6 +519,16 @@ profitto reale, non solo curve di backtest.
   serve un budget di rischio indipendente per strategia, non un
   aggiustamento di parametri. Su richiesta dell'utente, in pausa per ora
   a favore dell'ottimizzazione per-strategia.
+- **[[NEXUS EA - STRUCT_REACT con Fibonacci Esaurimento-Reverse (24-08)]]** -
+  prima ottimizzazione individuale (su richiesta dell'utente, dopo la
+  correlazione). Fibonacci come USCITA/reverse (non filtro d'ingresso,
+  idea esplicita dell'utente): livello di esaurimento a estensione
+  1.618 dello swing 20 barre, chiude il trade li' e apre un reverse a
+  lotto ridotto. Non promosso - la baseline gia' fortissima (PF2.65,
+  5/5 finestre) non migliora: il trigger scatta raramente (8/50, il TP
+  a 6xATR e' gia' competitivo) e i pochi reverse isolati mostrano PF
+  esattamente 1.00 pre-costi (nessun edge nemmeno grezzo, ma campione
+  troppo sottile per un verdetto definitivo).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
