@@ -185,10 +185,12 @@ documentato ma non applicato al motore live.
   che dev_mult=2.0/2.0 è dentro una zona stabile, non un picco isolato,
   su griglia 4×4 su ADX_RSI e SAR. Vedi
   [[NEXUS EA - Filtro Elliott Plateau-Check sulla Soglia ZigZag (25-08)]].
-- Capire perché STRUCT_REACT è l'unica a peggiorare — potrebbe
-  condividere la stessa causa della sua resistenza al trailing/Fibonacci
-  (segnale già molto selettivo, ogni filtro aggiuntivo taglia solo
-  campione senza guadagno).
+- ✅ **Fatto (25/08)**: capito perché STRUCT_REACT peggiora — il
+  filtro rimuove esattamente i suoi 9 trade migliori (PF5.32 tra i
+  rimossi contro 2.28 tra i tenuti). Il suo trigger strutturale cattura
+  già parte dell'informazione che l'Elliott misura, e i due a volte
+  disaccordano proprio sui trade migliori. Vedi
+  [[NEXUS EA - Perché STRUCT_REACT Peggiora col Filtro Elliott (25-08)]].
 - Capire perché BOLLINGER è l'unica a perdere robustezza per finestra
   (4/5→3/5) pur guadagnando molto in PF — vale la pena controllare
   quale finestra specifica peggiora prima di considerarla equivalente

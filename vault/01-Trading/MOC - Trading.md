@@ -821,6 +821,15 @@ profitto reale, non solo curve di backtest.
   2.0/2.0 e' ben dentro la zona stabile (per SAR addirittura la cella
   migliore). Conferma che la scelta usata in tutta la sessione non e'
   fortunata - nessun bisogno di rifare i test con altri valori.
+- **[[NEXUS EA - Perché STRUCT_REACT Peggiora col Filtro Elliott (25-08)]]** -
+  diagnosi diretta dell'unica eccezione del filtro Elliott. Scomposti
+  i trade: i 9 rimossi dal filtro hanno **PF5.32** (6 vincite da +3.0R,
+  3 perdite da -1.0R) contro 2.28 dei 41 tenuti - il filtro taglia
+  esattamente i trade migliori, non rumore. Causa: STRUCT_REACT entra
+  gia' in reazione alla struttura del prezzo, un concetto vicino a
+  quello che l'Elliott misura - i due a volte disaccordano proprio sui
+  trade migliori. Confermato: non combinare Elliott con STRUCT_REACT,
+  gli altri 24/25 casi restano il consiglio di default.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
