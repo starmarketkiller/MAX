@@ -882,7 +882,16 @@ profitto reale, non solo curve di backtest.
   rimuoverlo migliora il portafoglio invece di peggiorarlo. Anche solo
   le ottimizzazioni individuali di oggi (trailing+Elliott) avevano gia'
   quasi raddoppiato il PnL di ieri a parita' di struttura (+EUR2.725->
-  +EUR5.471, DD 35.9%->28.0%).
+  +EUR5.471, DD 35.9%->28.0%). **Addendum**: sweep di max_concorrenti
+  sul portafoglio a 9 - il DD non esplode mai, si stabilizza intorno
+  al 27% anche a concorrenza "illimitata" (ma cautela: e' un limite
+  del backtest, non prova di rischio zero, il rischio di coda non
+  visto nello storico non e' catturato). Testate le 8 strategie
+  escluse aggiunte una alla volta: TSI/LIQ_SWEEP/SAR_FLIP/LONDON_BO/
+  FVG_CONT_V2 aiutano (MALAYSIAN_SNR_BREAKOUT/AMD_CONT/ELLIOTT_WAVE3_CONT
+  no). **Configurazione finale consigliata: 14 strategie, mc=3 ->
+  netPnL +EUR9.180, DD 25.2%** - ancora nettamente meglio del catalogo
+  completo.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

@@ -82,14 +82,17 @@ in perdita netta dentro il bucket condiviso.
 
 ## Verdetto
 
-**Il portafoglio diversificato a 9 strategie (8 diversificatrici +
-ADX_RSI) è la configurazione consigliata**, non il catalogo completo.
-Conferma diretta della diagnosi del 24/08: il problema non era il
-bucket in sé, era usarlo con un pool di strategie ridondanti tra
-loro — un pool piccolo e davvero indipendente lo risolve senza
-bisogno di riprogettare il motore di simulazione (l'ipotesi "budget di
-rischio indipendente per strategia" resta un'alternativa più
-complessa, non più necessaria in via prioritaria).
+**Configurazione consigliata (aggiornata dopo gli addendum sotto): 14
+strategie (le 8 diversificatrici + ADX_RSI + TSI/LIQ_SWEEP/SAR_FLIP/
+LONDON_BO/FVG_CONT_V2), max_concorrenti=3 — netPnL +€9.180, DD 25.2%**.
+Sia la versione a 9 sia quella a 14 restano nettamente meglio del
+catalogo completo (24 strategie: +€5.471/DD28.0%). Conferma diretta
+della diagnosi del 24/08: il problema non era il bucket in sé, era
+usarlo con un pool di strategie ridondanti tra loro — un pool piccolo
+e davvero indipendente lo risolve senza bisogno di riprogettare il
+motore di simulazione (l'ipotesi "budget di rischio indipendente per
+strategia" resta un'alternativa più complessa, non più necessaria in
+via prioritaria).
 
 ## Limiti dichiarati
 
@@ -104,13 +107,67 @@ complessa, non più necessaria in via prioritaria).
 - Simulazione ancora in Python, non nel motore MT5 reale — stessa
   cautela di sempre prima di qualunque passo verso demo/live.
 
+## Addendum — sweep di max_concorrenti: nessuna esplosione, ma serve cautela
+
+Sul portafoglio a 9 strategie, il drawdown **non esplode mai** anche a
+concorrenza molto alta — pattern opposto a quello trovato il 24/08 sul
+portafoglio correlato (dove più slot faceva salire il DD fino al
+55.8%):
+
+| max_concorrenti | netPnL | DD massimo |
+|---|---|---|
+| 2 | +€5.754 | 23.3% |
+| 3 | +€7.780 | 24.5% |
+| 5 | +€11.149 | 28.1% |
+| 8 | +€15.599 | 27.0% |
+| 15 | +€19.910 | 27.2% |
+| 20+ (praticamente illimitato) | +€20.034-20.111 | **27.2% (plateau)** |
+
+Il DD si stabilizza intorno al 27% e non sale oltre, anche rimuovendo
+ogni tetto — segno che le 9 strategie raramente perdono nello stesso
+momento. **Cautela importante**: questo è un limite del metodo, non
+una prova che la concorrenza sia priva di rischio — la correlazione
+misurata è storica (894-901 giorni 2019-2026), un evento di coda mai
+visto nello storico (es. un flash crash che muove tutte le strategie
+nella stessa direzione contemporaneamente) non sarebbe catturato. Non
+raccomandabile usare concorrenza "illimitata" solo perché il backtest
+non mostra un limite — il rendimento marginale oltre max_concorrenti=8
+è comunque modesto (+€4.500 da 8 a 20, contro +€10.000 da 2 a 8).
+
+## Addendum — le strategie escluse aggiungono valore, selettivamente
+
+Testate le 8 strategie escluse (né nel cluster né tra le diversificatrici
+principali) aggiunte una alla volta al portafoglio a 9 (mc=3, base
++€7.780/DD24.5%):
+
+| Aggiunta | ΔnetPnL | ΔDD | Verdetto |
+|---|---|---|---|
+| **TSI** | +€655 | +0.3pp | Aggiungere — la migliore |
+| **LIQ_SWEEP** | +€356 | +0.1pp | Aggiungere |
+| MALAYSIAN_SNR_BREAKOUT | +€411 | **+1.3pp** | Scartare — compromesso peggiore |
+| SAR_FLIP | +€245 | +0.0pp | Aggiungere |
+| LONDON_BO | +€197 | +0.0pp | Aggiungere |
+| FVG_CONT_V2 | +€113 | +0.0pp | Marginale, aggiungibile |
+| AMD_CONT | -€1 | +0.4pp | Scartare — netto negativo |
+| ELLIOTT_WAVE3_CONT | -€20 | +0.0pp | Scartare — coerente col suo stato provvisorio |
+
+**Portafoglio esteso a 14 strategie** (9 + TSI/LIQ_SWEEP/SAR_FLIP/
+LONDON_BO/FVG_CONT_V2), mc=3: **netPnL +€9.180, DD 25.2%** — meglio
+del portafoglio a 9 (+€7.780/24.5%) per un costo di rischio modesto
+(+0.7pp). A concorrenza più alta però il DD sale più rapidamente che
+nel portafoglio puro a 9 (mc=5: DD30.9% contro 28.1%) — alcune delle
+5 aggiunte (SAR_FLIP/FVG_CONT_V2, entrambe vicine al cluster)
+reintroducono un po' di correlazione ad alta concorrenza. **Consigliato
+il portafoglio a 14 strategie con mc=3**, non spingere la concorrenza
+oltre su questa versione estesa senza riverificare.
+
 ## Prossimi passi aperti
 
-- Scomporre il DD del portafoglio diversificato per anno/regime.
-- Valutare se le strategie escluse (FVG_CONT_V2/TSI/ecc.) aggiungono
-  valore se incluse una alla volta.
-- Provare max_concorrenti=4-5 sul portafoglio diversificato per
-  trovare il punto di rottura (finora fermato a 3).
+- Scomporre il DD del portafoglio (9 o 14 strategie) per anno/regime —
+  non ancora fatto.
+- Stress-test qualitativo del rischio di coda non catturato dalla
+  correlazione storica (la cautela sopra) — richiede un'ipotesi
+  esplicita su cosa simulare, non ancora definita.
 
 ## Collegamenti
 [[MOC - Trading]]
