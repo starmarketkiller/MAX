@@ -636,12 +636,17 @@ input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
 input bool     InpUseStrat_LiqVoid       = true;
 input bool     InpUseStrat_DispRebal     = true;
-// 11/08 - CRT (Candle Range Theory): unica scoperta della sessione con
-// walk-forward 5/5 su 3 timeframe dopo la riverifica sullo storico
-// ampliato - vedi NXS_Strategies_SMC.mqh, NXS_Strat_CRT(). Nessuna
-// controparte precedente nel sito ("sperimentale" come MALAYSIAN_SNR_
-// BREAKOUT quando fu introdotta).
-input bool     InpUseStrat_CRT           = true;
+// 11/08 - CRT (Candle Range Theory): promettente all'inizio (walk-forward
+// 5/5 su 3 timeframe) ma la riverifica costi del 24/08 l'ha confermata
+// definitivamente rotta (saga costi-dominanti mai risolta) - esclusa dal
+// registro canonico generato (contracts/generate_registry.py). Il
+// generatore di segnale in NXS_Strategies_SMC.mqh, NXS_Strat_CRT(), resta
+// nel codice ma senza una voce nel registro ogni segnale viene bloccato a
+// valle da NXS_Contract ("strategy_id sconosciuto 'CRT'") - innocuo ma
+// rumoroso nei log a ogni barra. 25/08: disattivata di default per non
+// generare segnali morti in partenza; lasciata come input per chi vuole
+// riabilitarla manualmente per un test isolato.
+input bool     InpUseStrat_CRT           = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'
