@@ -812,6 +812,15 @@ profitto reale, non solo curve di backtest.
   (+27%, 1.82->2.31). I due ingredienti sono ortogonali (trailing =
   gestione uscita, Elliott = timing d'ingresso), non si sovrappongono.
   Tabella master aggiornata riga per riga con le PF combinate finali.
+- **[[NEXUS EA - Filtro Elliott Plateau-Check sulla Soglia ZigZag (25-08)]]** -
+  la soglia dev_mult=2.0/2.0 usata in tutti i test Elliott di oggi non
+  era mai stata sottoposta al plateau-check (lo stesso che ha salvato
+  Hull Suite/ML SuperTrend da overfitting nascosto). Griglia 4x4
+  (dev_4h x dev_D1) su ADX_RSI e SAR: **ogni cella batte il baseline**
+  (range 1.84-2.07 su ADX_RSI, 1.55-1.65 su SAR, mai sotto baseline),
+  2.0/2.0 e' ben dentro la zona stabile (per SAR addirittura la cella
+  migliore). Conferma che la scelta usata in tutta la sessione non e'
+  fortunata - nessun bisogno di rifare i test con altri valori.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

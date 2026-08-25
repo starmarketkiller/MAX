@@ -181,9 +181,10 @@ documentato ma non applicato al motore live.
 
 ## Prossimi passi aperti
 
-- Provare la sensibilità alla soglia ZigZag (dev_mult) più a fondo —
-  finora solo 1.5/2.0/2.5 testati sul 4h-solo, non riottimizzati per la
-  versione 4h+D1.
+- ✅ **Fatto (25/08)**: plateau-check sulla soglia ZigZag — confermato
+  che dev_mult=2.0/2.0 è dentro una zona stabile, non un picco isolato,
+  su griglia 4×4 su ADX_RSI e SAR. Vedi
+  [[NEXUS EA - Filtro Elliott Plateau-Check sulla Soglia ZigZag (25-08)]].
 - Capire perché STRUCT_REACT è l'unica a peggiorare — potrebbe
   condividere la stessa causa della sua resistenza al trailing/Fibonacci
   (segnale già molto selettivo, ogni filtro aggiuntivo taglia solo
