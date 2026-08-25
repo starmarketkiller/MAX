@@ -229,18 +229,19 @@ def collect(candles, ind, atr, closes, wave_sig, sl_mult, tp_mult, buy_only=Fals
         rd = abs(entry - sl)
         if rd <= 0:
             continue
-        exit_r = None
+        exit_r, close_idx = None, None
         for j in range(i + 2, min(i + 2 + MAX_HOLD, n)):
             hi, lo = candles[j]["high"], candles[j]["low"]
             if sig == 1:
-                if lo <= sl: exit_r = (sl - entry) / rd; break
-                elif hi >= tp: exit_r = (tp - entry) / rd; break
+                if lo <= sl: exit_r, close_idx = (sl - entry) / rd, j; break
+                elif hi >= tp: exit_r, close_idx = (tp - entry) / rd, j; break
             else:
-                if hi >= sl: exit_r = (entry - sl) / rd; break
-                elif lo <= tp: exit_r = (entry - tp) / rd; break
+                if hi >= sl: exit_r, close_idx = (entry - sl) / rd, j; break
+                elif lo <= tp: exit_r, close_idx = (entry - tp) / rd, j; break
         if exit_r is None:
             continue
-        out.append({"entry": entry, "risk_dist": rd, "raw_r": exit_r, "dir": sig, "time": candles[i + 1]["time"]})
+        out.append({"entry": entry, "risk_dist": rd, "raw_r": exit_r, "dir": sig,
+                     "time": candles[i + 1]["time"], "close_time": candles[close_idx]["time"]})
     return out
 
 

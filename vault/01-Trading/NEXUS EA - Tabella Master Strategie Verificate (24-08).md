@@ -162,10 +162,17 @@ chiusura definitiva, non riprovare senza un'ipotesi radicalmente diversa.
 **19 strategie verificate e pronte** + 2 provvisorie = **21 candidate
 totali**, contro le 4 di partenza di stamattina — 13 di queste ora in
 versione BUY-only (migliorate rispetto alla forma simmetrica). Solo
-**2 sono in MQL5** (SWING_FALSEBREAK, Z_SCORE_BREAKOUT). Il problema di
-allocazione del portafoglio (correlazione, budget di rischio) resta
-aperto, ora da riverificare con le config BUY-only aggiornate — vedi
-[[NEXUS EA - Correlazione tra le 20 Strategie (24-08)]].
+**2 sono in MQL5** (SWING_FALSEBREAK, Z_SCORE_BREAKOUT). ⚠️
+**Aggiornamento 25/08 — problema di allocazione del portafoglio
+RISOLTO**: riverificata la correlazione con le config di oggi
+(trailing+Elliott) e simulato un portafoglio deliberatamente
+diversificato (8 diversificatrici + ADX_RSI, 9 strategie invece di
+tutto il catalogo) — batte il portafoglio completo su PnL E drawdown
+insieme (+€5.754/DD23.3% contro +€5.471/DD28.0%). Vedi
+[[NEXUS EA - Portafoglio Diversificato, Risolto il Problema del Bucket Condiviso (25-08)]]
+e [[NEXUS EA - Correlazione Aggiornata con le Config di Oggi (25-08)]]
+(supera [[NEXUS EA - Correlazione tra le 20 Strategie (24-08)]], le
+cui config sono ora superate).
 
 **Ciclo di ottimizzazione individuale completato (24-25/08)**: tutte le
 19 strategie verificate sono state passate una per una (verifica

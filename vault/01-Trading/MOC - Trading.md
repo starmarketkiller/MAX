@@ -863,6 +863,26 @@ profitto reale, non solo curve di backtest.
   (n=5-8) per una promozione piena - provvisoria come le prime scoperte
   di ieri. Prima nuova STRATEGIA (non solo filtro) nata dal lavoro
   Elliott di oggi.
+- **[[NEXUS EA - Portafoglio Diversificato, Risolto il Problema del Bucket Condiviso (25-08)]]**
+  - riprende il problema di portafoglio in pausa dal 24/08, su
+  richiesta esplicita dell'utente ("procedi col portafoglio"). Prima
+  ricalcolata la correlazione con le config aggiornate di oggi (vedi
+  [[NEXUS EA - Correlazione Aggiornata con le Config di Oggi (25-08)]]:
+  il cluster trend resta correlato, ma il pool di diversificatrici
+  raddoppia da 5 a 8, con FVG_MIT - ora anche la strategia piu' forte
+  del catalogo - correlazione NEGATIVA). Poi simulato un portafoglio
+  a 9 strategie (8 diversificatrici + solo ADX_RSI dal cluster) contro
+  quello a 24 strategie intere: **il piccolo batte il grande su
+  entrambi gli assi** - PnL piu' alto (+EUR5.754 contro +EUR5.471) E
+  drawdown piu' basso (23.3% contro 28.0%), pur facendo 176 trade in
+  meno. Bonus: allentando il tetto di concorrenza a 3 (il portafoglio
+  piccolo compete meno per gli slot) il PnL sale a +EUR7.780 con DD
+  ancora contenuto (24.5%). Conferma diretta la diagnosi di ieri: il
+  cluster non aggiunge diversificazione, solo rumore di concorrenza -
+  rimuoverlo migliora il portafoglio invece di peggiorarlo. Anche solo
+  le ottimizzazioni individuali di oggi (trailing+Elliott) avevano gia'
+  quasi raddoppiato il PnL di ieri a parita' di struttura (+EUR2.725->
+  +EUR5.471, DD 35.9%->28.0%).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
