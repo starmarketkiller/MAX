@@ -626,13 +626,31 @@ bool     InpDebugDecisionLog               = true;
 // stesso non ha edge su XAUUSD. Vedi
 // server/research_scripts/turtle_soup_live_signal_25-08.py.
 input bool     InpStrat_TurtleSoup     = false;
-input bool     InpStrat_IFVG           = true;
-input bool     InpStrat_FVG_Mit        = true;
+// 25/08 - CORREZIONE: la disattivazione di IFVG di poco fa (PF0.66 sul
+// backtest del vero segnale live) era per il motivo SBAGLIATO. Scoperto
+// dopo, leggendo NXS_ReusePerformancePack.mqh: NXS_Strat_IFVG_Reversal e'
+// rediretta via #define a NXR_Strat_IFVG_Reversal (riga ~2364), che per
+// design (audit 17/07, "converge on NXR as sole source of truth", NESSUN
+// fallback sulla logica legacy) ritorna sempre segnale vuoto a meno che
+// InpNXR_Enable sia true - e InpNXR_Enable e' hardcoded false (non e'
+// nemmeno un input, serve ricompilare per cambiarlo). Quindi il vero
+// segnale live NON e' mai stato quello che ho backtestato: e' morto per
+// costruzione, come CRT/LIQ_VOID, indipendentemente dalla profittabilita'.
+// Il toggle resta false (era gia' irrilevante), ma per il motivo giusto.
+input bool     InpStrat_IFVG           = false;
+// 25/08 - disattivata per lo stesso motivo di IFVG sopra: NXS_Strat_
+// FVG_Mitigation e' rediretta a NXR_Strat_FVG_Mitigation, stesso "nessun
+// fallback" con InpNXR_Enable hardcoded false - morta per costruzione.
+input bool     InpStrat_FVG_Mit        = false;
 // 13/08 - variante a registro (15 barre) della strategia sopra, vedi
 // NXS_Strat_FVG_Mitigation_Window() in NXS_Strategies_SMC.mqh e vault
-// "NEXUS EA - Incidente Sicurezza e Setup Desktop (13-08)".
+// "NEXUS EA - Incidente Sicurezza e Setup Desktop (13-08)". NON rediretta
+// dal blocco NXR (nome diverso, verificato) - resta viva.
 input bool     InpStrat_FVG_MIT_WINDOW = true;
-input bool     InpStrat_OB_Mit         = true;
+// 25/08 - disattivata: NXS_Strat_OB_Mitigation_Structural e' rediretta a
+// NXR_Strat_OB_Mitigation, stesso schema "nessun fallback senza InpNXR_
+// Enable" di IFVG/FVG_MIT sopra - morta per costruzione.
+input bool     InpStrat_OB_Mit         = false;
 input bool     InpStrat_SH_BMS_RTO     = true;
 // 14/08 - state machine indipendente (regole diverse, non un refactor della
 // v1 sopra), vedi NXS_Strat_SH_BMS_RTO_V2 in NXS_Strategies_SMC.mqh.
@@ -670,7 +688,14 @@ input bool     InpUseStrat_LdnReversal   = false;
 input bool     InpUseStrat_NYReversal    = true;
 input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
-input bool     InpUseStrat_LiqVoid       = true;
+// 25/08 - disattivata (LIQ_VOID): NXS_Strat_LiquidityVoid richiede
+// htf.bias==HTF_BULL o HTF_BEAR in modo stretto (mai HTF_NEUTRAL), ma
+// InpUseHTFBias=false di default rende NXS_GetHTFBias() SEMPRE
+// HTF_NEUTRAL in live - il segnale non puo' strutturalmente mai
+// scattare, stesso schema di CRT (segnale morto, non un problema di
+// SL/TP/trailing). Nessun backtest necessario: e' irraggiungibile per
+// costruzione, non un caso di scarsa profittabilita'.
+input bool     InpUseStrat_LiqVoid       = false;
 input bool     InpUseStrat_DispRebal     = true;
 // 11/08 - CRT (Candle Range Theory): promettente all'inizio (walk-forward
 // 5/5 su 3 timeframe) ma la riverifica costi del 24/08 l'ha confermata
@@ -707,7 +732,14 @@ double   InpEllRetraceMax          = 0.786;    // retracement max onda 2 (Fib)
 double   InpEllMinScore            = 70.0;     // score base dei setup Elliott
 
 // input group "=== RANGE / COUNTER-HTF (v2.0.8) ==="
-input bool     InpUseStrat_RangeFade     = true;     // mean-revert sui range stretti
+// 25/08 - disattivata (RANGE_FADE): il gate di conferma range (persistenza
+// ADX 40 barre + stabilita' ampiezza + 2+ tocchi per lato + no-breakout) e'
+// cosi' restrittivo che su ~10 anni di D1 XAUUSD scatta solo 6 volte
+// (PF0.00, tutte in perdita) - non un verdetto di profittabilita' solido
+// vista la scarsissima numerosita', ma un segnale che nella pratica non
+// contribuisce mai al sistema live. Vedi
+// remaining_institutional_smc_live_signal_25-08.py.
+input bool     InpUseStrat_RangeFade     = false;    // mean-revert sui range stretti
 bool     InpEnableCounterHTFSoft   = false;    // OPTIONAL: counter-trend HTF micro-trade
 double   InpCounterHTF_MinReactQ   = 75.0;     // min reaction quality
 double   InpCounterHTF_LotMult     = 0.40;     // lot reducer (40% of base)
