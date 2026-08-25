@@ -140,6 +140,17 @@ lo split e la verifica laterale: **entrambe promosse**, vedi
 [[NEXUS EA - Riapertura BOLLINGER RSI_DIV ICHIMOKU TSI_EXTREME (25-08)]]
 e la sezione "Nuova (25/08)" sopra.
 
+**Ingrediente rifiutato definitivamente (25/08)**: Fibonacci come
+esaurimento-reverse (chiudi in profitto + reverse quando il prezzo
+raggiunge un'estensione 1.618 dello swing). Riprovata oggi con un vero
+rilevatore di pivot ZigZag (non più la finestra fissa di ieri) su 4
+strategie (STRUCT_REACT/SAR/ADX_RSI/MACD) — il reverse peggiora
+**sempre**, a size piena o ridotta, senza eccezioni. Non un problema di
+rilevamento dello swing, l'idea stessa non regge: un'estensione 1.618
+non è un segnale affidabile di inversione sull'oro, più spesso il
+trend continua. Vedi [[NEXUS EA - Fibonacci Esaurimento-Reverse, Chiusura Definitiva (25-08)]] —
+chiusura definitiva, non riprovare senza un'ipotesi radicalmente diversa.
+
 ## Bilancio
 
 **19 strategie verificate e pronte** + 2 provvisorie = **21 candidate

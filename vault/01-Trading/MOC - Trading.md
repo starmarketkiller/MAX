@@ -841,6 +841,17 @@ profitto reale, non solo curve di backtest.
   combinazione migliorano ulteriormente**, la sola eccezione resta
   LONDON_BO (neutro, non dannoso). Chiude la validazione del filtro
   Elliott su tutte le config realmente promosse del catalogo.
+- **[[NEXUS EA - Fibonacci Esaurimento-Reverse, Chiusura Definitiva (25-08)]]** -
+  riprova dell'idea Fibonacci-reverse dell'utente (chiudi in profitto +
+  reverse a un'estensione 1.618 dello swing), stavolta con un vero
+  rilevatore di pivot ZigZag invece della finestra fissa a 20 barre di
+  ieri (che aveva fallito solo su STRUCT_REACT). Testata su 4
+  strategie diverse (STRUCT_REACT/SAR/ADX_RSI/MACD): **il reverse
+  peggiora sempre**, size piena o ridotta, nessuna eccezione. Non era
+  un problema di rilevamento dello swing - l'idea stessa non regge,
+  un'estensione 1.618 non segnala inversione affidabile sull'oro.
+  Chiusura definitiva del filone, non riprovare senza un'ipotesi
+  radicalmente diversa.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
