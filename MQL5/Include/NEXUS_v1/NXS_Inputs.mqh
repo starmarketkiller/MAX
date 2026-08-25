@@ -277,8 +277,13 @@ bool     InpMTFRequireHTF         = false;  // v2.2.8: sostituito dal gate HTF P
 
 // input group "=== SAFETY CAPS (v2.0.26) ==="
 int      InpMaxNewTradesPerBarDir = 8;    // v2.3.4: non-binding; il vero cap e' la Setup Matrix per-TF
-double   InpMaxTotalLotMult  = 1.5;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
-double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one direction (core positions) before new entries are rejected - generic/fallback value
+// 25/08 - alzati leggermente su richiesta esplicita ("solo i tetti
+// massimi", non il rischio base per trade): 1.5->1.8 e 0.40->0.50 lotti
+// (+20/+25%). Sono SOLO soffitti - si sentono solo nei casi gia' al
+// limite (chain/counter-HTF/rischio-per-strategia gia' alti insieme),
+// il sizing normale per-trade (InpRiskPercent=1.0%) resta invariato.
+double   InpMaxTotalLotMult  = 1.8;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
+double   InpMaxDirExposureLots = 0.50;     // max sum of open lots in one direction (core positions) before new entries are rejected - generic/fallback value
 // v2.0.30: a flat lot cap doesn't mean the same thing across symbols with very
 // different contract sizes (e.g. BTCUSD vs GOLD) - these optional per-symbol
 // overrides let you set a realistic cap for each. 0 = fall back to the
