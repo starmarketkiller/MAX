@@ -375,7 +375,13 @@ input bool     InpStrat_TSI          = true;
 int InpTSI_LongPeriod   = 25;
 int InpTSI_ShortPeriod  = 13;
 int InpTSI_SignalPeriod = 7;
-input bool     InpStrat_BJORGUM      = true;
+// 25/08 - disattivata: riverificata sulla ricetta live esatta (4h,
+// SL1.5/TP3.0, no HTF), PF 0.61-0.67 su tutto lo storico Dukascopy
+// con QUALUNQUE larghezza di trailing provata - in perdita, non un
+// problema di uscita. Coerente con la diagnosi indipendente di luglio
+// (-8.6R reali, 5/6 anni negativi). Vedi
+// server/research_scripts/live_recipe_trailing_verify_25-08.py.
+input bool     InpStrat_BJORGUM      = false;
 input bool     InpStrat_LIQ_SWEEP    = true;
 input bool     InpStrat_FVG_CONT     = true;
 input bool     InpStrat_BREAKOUT_ACC = true;
@@ -635,7 +641,11 @@ input bool     InpStrat_SwingFalseBreak = true;
 input bool     InpStrat_ZScoreBreakout  = true;
 
 // input group "=== INSTITUTIONAL MODELS (v2.0.7) ==="
-input bool     InpUseStrat_CISD          = true;
+// 25/08 - disattivata (THREE_BAR_DELIVERY_BREAK, stratName di questa
+// strategia): riverificata sulla ricetta live esatta (4h, SL1.5/TP3.0,
+// HTF), PF 0.51-0.65 con qualunque larghezza di trailing - in perdita
+// su tutto lo storico. Vedi live_recipe_trailing_verify_25-08.py.
+input bool     InpUseStrat_CISD          = false;
 input bool     InpUseStrat_AMD_Cont      = true;
 input bool     InpUseStrat_Judas         = true;
 input bool     InpUseStrat_LdnReversal   = true;

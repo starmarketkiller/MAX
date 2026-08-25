@@ -490,6 +490,20 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
                out[k].dir = DIR_NONE;   // controtrend -> scartato per questa strategia
             }
          }
+         // 25/08 - blocco direzione per strategia (NXS_Profile_DirectionLock):
+         // verificato oggi che alcune strategie rendono nettamente meglio
+         // solo in una direzione sulla loro ricetta live reale - prima
+         // conferma concreta STRUCT_REACT (simmetrica H1 PF0.61 in perdita,
+         // BUY-only 4h PF2.32-2.43). Altre strategie della ricerca 24/08
+         // (SAR/ADX_RSI/ecc.) mostravano lo stesso pattern ma NON ancora
+         // riverificate sulla ricetta live esatta - non attivato per loro
+         // finche' non c'e' lo stesso livello di conferma.
+         if(out[k].dir != DIR_NONE){
+            int lock = NXS_Profile_DirectionLock(out[k].stratName);
+            if((lock > 0 && out[k].dir == DIR_SELL) || (lock < 0 && out[k].dir == DIR_BUY)){
+               out[k].dir = DIR_NONE;
+            }
+         }
       }
    }
    return n;

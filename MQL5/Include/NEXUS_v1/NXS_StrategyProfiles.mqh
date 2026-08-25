@@ -126,7 +126,11 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // alla state machine (fedele a Python), non serve il gate HTF generico.
    if(name == "SH_BMS_RTO_V2")     { slMult=0.0; tpMult=0.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "SMS_BMS_RTO")       { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
-   if(name == "STRUCT_REACT")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.87 R2.0
+   // 25/08 - riverificato sulla ricetta live esatta: SL1.0/TP4.5 su H1
+   // simmetrica era IN PERDITA (PF0.61 su tutto lo storico Dukascopy).
+   // SL2.0/TP6.0 su 4h + BUY-only (NXS_Profile_DirectionLock) sale a
+   // PF2.32-2.43, vicino al PF2.65 validato in Python il 24/08.
+   if(name == "STRUCT_REACT")      { slMult=2.0; tpMult=6.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h BUY-only, vedi nota 25/08 sopra
    // 12/08 - ricerca dedicata uscite: TSI e' un "problema aperto" del
    // nucleo mai risolto (vedi vault "I due problemi aperti del nucleo,
    // approfonditi", 11/08). Baseline vero (sl1.5/tp4.5/be1.0/htf/overlay
@@ -197,7 +201,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "SH_BMS_RTO")        return PERIOD_D1;
    if(name == "SH_BMS_RTO_V2")     return PERIOD_H1;
    if(name == "SMS_BMS_RTO")       return PERIOD_D1;
-   if(name == "STRUCT_REACT")      return PERIOD_H1;
+   if(name == "STRUCT_REACT")      return PERIOD_H4;   // 25/08 - vedi NXS_Profile_Get sopra, H1 era in perdita
    if(name == "TSI")               return PERIOD_D1;
    if(name == "TURTLE_SOUP")       return PERIOD_H1;
    if(name == "SWING_FALSEBREAK")  return PERIOD_H1;
@@ -326,17 +330,18 @@ double NXS_Profile_TrailK(const string name){
    if(name == "EMA_PULLBACK")  return 2.5;   // 25/08: 1.5->2.5, PF1.04->1.28 (insieme al cambio TF H1->H4)
    if(name == "TSI")           return 3.0;   // 25/08: 2.0->3.0, PF2.16->2.39, 5/5 finestre in entrambe le meta'
    if(name == "BOLLINGER")     return 2.0;   // 25/08: 1.5->2.0, PF1.05->1.19
-   // ADX_RSI, FVG_MIT, OTE_CONT: il trailing (qualunque larghezza) e'
-   // risultato PEGGIORE del target fisso gia' in uso sulla ricetta vera
-   // (es. ADX_RSI: PF2.24 fisso contro 1.83-1.95 con trailing) -
-   // disattivate del tutto via NXS_Profile_TrailForceOff() sotto,
-   // non lasciate a un valore che comunque attiverebbe l'overlay.
+   if(name == "LIQ_SWEEP")     return 3.0;   // 25/08: 2.5->3.0, PF1.65->1.71 (nota: m1 debole 0.35-0.77 in ogni config, non solo col trailing - edge concentrato nella seconda meta' storica)
+   // ADX_RSI, FVG_MIT, OTE_CONT, STRUCT_REACT, ICHIMOKU: il trailing
+   // (qualunque larghezza) e' risultato PEGGIORE del target fisso gia'
+   // in uso sulla ricetta vera (es. ADX_RSI: PF2.24 fisso contro
+   // 1.83-1.95 con trailing; ICHIMOKU: PF1.12 fisso contro 1.04-1.11) -
+   // disattivate del tutto via NXS_Profile_TrailForceOff() sotto, non
+   // lasciate a un valore che comunque attiverebbe l'overlay.
 
    // --- LARGO 2.5 (trend/continuazione: corrono) ---
    if(name == "TURTLE_SOUP")   return 2.5;   // 2.04->2.72 col largo
    if(name == "ORDER_BLOCK")   return 2.5;   // 0.94->2.03
    if(name == "OB_MIT")        return 2.5;   // 0.46->1.52
-   if(name == "LIQ_SWEEP")     return 2.5;   // stessa famiglia SMC
    if(name == "LIQ_VOID")      return 2.5;
    if(name == "SH_BMS_RTO")    return 2.5;
    if(name == "SMS_BMS_RTO")   return 2.5;
@@ -349,10 +354,10 @@ double NXS_Profile_TrailK(const string name){
    // --- STRETTO 1.5 (mean-reversion/alto-WR: prendono profitto) ---
    if(name == "RSI_DIV")       return 1.5;   // 1.21->0.81 col largo -> stringi (25/08: la ricetta live resta debole anche su 4h/trailing diversi, non toccata - serve prima una diagnosi del segnale, non dell'uscita)
    if(name == "BJORGUM")       return 1.5;   // 1.89->0.89
-   if(name == "ICHIMOKU")      return 1.5;   // 2.34->0
+   // ICHIMOKU: valore qui inerte, disattivata via NXS_Profile_TrailForceOff (25/08)
    if(name == "BB_SQUEEZE")    return 1.5;
    if(name == "RANGE_FADE")    return 1.5;
-   if(name == "STRUCT_REACT")  return 1.5;
+   // STRUCT_REACT: valore qui inerte, disattivata via NXS_Profile_TrailForceOff sopra (25/08)
    if(name == "MALAYSIAN_SNR") return 1.5;
    if(name == "THREE_BAR_DELIVERY_BREAK")          return 1.5;
    // 12/08 - CRT non aveva mai una voce qui (fallback al globale 2.5).
@@ -376,7 +381,26 @@ bool NXS_Profile_TrailForceOff(const string name){
    if(name == "ADX_RSI")  return true;
    if(name == "FVG_MIT")  return true;
    if(name == "OTE_CONT") return true;
+   if(name == "STRUCT_REACT") return true;   // 25/08 - vedi NXS_Profile_DirectionLock: fisso (PF2.36) leggermente sotto trail2.5 (PF2.43) ma piu' coerente col pattern gia' visto oggi (STRUCT_REACT preferisce target fisso, vedi anche il test Fibonacci-reverse)
+   if(name == "ICHIMOKU") return true;       // 25/08: fisso PF1.12 batte ogni larghezza di trailing provata (1.04-1.11)
    return false;
+}
+
+// 25/08 - blocco direzione per-strategia: 0=nessun vincolo, 1=solo BUY,
+// -1=solo SELL. Verificato SOLO sulla ricetta live esatta della
+// strategia (non la mia ricetta di ricerca) prima di attivarlo - vedi
+// NEXUS_EA_v2.mq5 dove viene applicato dopo il gate HTF.
+int NXS_Profile_DirectionLock(const string name){
+   // STRUCT_REACT: la ricetta live simmetrica su H1 e' IN PERDITA
+   // (PF0.61) su tutto lo storico Dukascopy - portata su 4h (vedi
+   // NXS_Profile_TF sotto) + BUY-only sale a PF2.32-2.43, vicino al
+   // PF2.65 validato in Python il 24/08 (differenza residua: qui usa
+   // il gate HTF gia' live, non il filtro ER di ricerca). Prima
+   // conferma concreta di questo pattern sulla ricetta reale - le
+   // altre strategie BUY-only trovate il 24/08 (SAR/ADX_RSI/ecc.) non
+   // sono ancora state riverificate con lo stesso rigore, non attivate.
+   if(name == "STRUCT_REACT") return 1;
+   return 0;
 }
 
 // v2.4.6 — Soglia di ATTIVAZIONE del trailing per-strategia (x ATR di profitto
