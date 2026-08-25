@@ -40,7 +40,15 @@ ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
 // input group "=== PRESET / SCALING ==="
 // 0=Custom, 1=Conservative, 2=Balanced, 3=Aggressive, 4=MVP_v206 (5 SMC MVP)
 int      InpRiskProfile      = 2;
-bool     InpAutoScaleByAccount = true;
+// 25/08 - disattivato di default su richiesta esplicita dell'utente
+// (account demo 318337486, balance<1000): con true il rischio del
+// preset BALANCED (1.0%) veniva dimezzato a 0.5% effettivo, troppo
+// stretto per far passare anche il lotto minimo su GOLD ai prezzi
+// attuali (~$4370). Nota: anche a 1.0% pieno un trade che richiede il
+// lotto minimo puo' ancora essere rifiutato se lo stop e' molto largo -
+// non e' una leva che garantisce l'esecuzione, solo raddoppia il
+// budget di rischio disponibile.
+bool     InpAutoScaleByAccount = false;
 
 // input group "=== SYMBOL WHITELIST ==="
 bool     InpUseSymbolWhitelist = true;
