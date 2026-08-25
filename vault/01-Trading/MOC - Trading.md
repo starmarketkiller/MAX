@@ -852,6 +852,17 @@ profitto reale, non solo curve di backtest.
   un'estensione 1.618 non segnala inversione affidabile sull'oro.
   Chiusura definitiva del filone, non riprovare senza un'ipotesi
   radicalmente diversa.
+- **[[NEXUS EA - Nuova Strategia ELLIOTT_WAVE3_CONT (25-08)]]** -
+  completa il lato mancante dell'idea Elliott dell'utente: finora
+  usata solo come filtro di esclusione, qui come **trigger d'ingresso
+  proprio** - compra quando lo ZigZag conferma "onda1+onda2 completate"
+  (regole classiche + zona Fibonacci 38.2-78.6% per onda2), scommettendo
+  sulla ripartenza in onda3. BUY-only PF2.06 (n=66, 4/5), plateau
+  confermato su 2 assi indipendenti (zona di ritracciamento e soglia
+  ZigZag - mai una cella isolata). Laterale pero' troppo sottile
+  (n=5-8) per una promozione piena - provvisoria come le prime scoperte
+  di ieri. Prima nuova STRATEGIA (non solo filtro) nata dal lavoro
+  Elliott di oggi.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

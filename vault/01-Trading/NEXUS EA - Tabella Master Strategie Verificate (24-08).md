@@ -94,6 +94,12 @@ config principale 4h+D1-align+trailing (campione ampio, PF1.87), D1
 nativo SENZA floor come conferma/upside (PF2.57, 5/5 finestre, il floor
 ATR era leggermente controproducente qui).
 
+## Nuova strategia standalone (25/08) — provvisoria
+
+| Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
+|---|---|---|---|---|---|---|
+| ELLIOTT_WAVE3_CONT | 4h | 2.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.06 (1.91/2.23, n=66, 4/5)** | Nuova, mai esistita prima — usa lo ZigZag Elliott come trigger d'ingresso proprio (onda1+onda2 completate, compra la ripartenza in onda3), non solo come filtro. Plateau confermato su 2 assi (zona Fibonacci e soglia ZigZag), ma laterale troppo sottile (BUY n=8 PF0.0, SELL n=5 PF0.66) — provvisoria come MALAYSIAN_SNR_BREAKOUT/TSI all'inizio. Non ancora in MQL5, non ancora combinata col filtro di esaurimento di grado superiore |
+
 ## Nuova (25/08) — riapertura di un verdetto pre-disciplina-laterale
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
