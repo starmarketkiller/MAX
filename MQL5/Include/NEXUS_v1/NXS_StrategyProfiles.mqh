@@ -131,6 +131,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // SL2.0/TP6.0 su 4h + BUY-only (NXS_Profile_DirectionLock) sale a
    // PF2.32-2.43, vicino al PF2.65 validato in Python il 24/08.
    if(name == "STRUCT_REACT")      { slMult=2.0; tpMult=6.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 4h BUY-only, vedi nota 25/08 sopra
+   // 25/08 - ELLIOTT (NXS_Strat_Elliott, mai testata prima, InpUseStrat_
+   // Elliott era OFF di default "backtesta prima"): ricetta live esatta su
+   // M15 (fallback InpTFEntry, nessuna voce di profilo esisteva) in perdita
+   // netta (PF0.49, 0/5 finestre) e lato SELL rotto su ogni TF provato. Su
+   // 4h BUY-only invece PF1.51, n=633, 4/5 finestre - campione robusto,
+   // stesso schema di correzione TF+direzione gia' visto oggi per
+   // STRUCT_REACT. slMult/tpMult inerti (stop nativo dal pattern d'onda).
+   if(name == "ELLIOTT")           { slMult=0.0; tpMult=0.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 4h BUY-only
    // 12/08 - ricerca dedicata uscite: TSI e' un "problema aperto" del
    // nucleo mai risolto (vedi vault "I due problemi aperti del nucleo,
    // approfonditi", 11/08). Baseline vero (sl1.5/tp4.5/be1.0/htf/overlay
@@ -194,6 +202,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "MALAYSIAN_SNR")     return PERIOD_D1;
    if(name == "OB_MIT")            return PERIOD_D1;
    if(name == "ORDER_BLOCK")       return PERIOD_D1;
+   if(name == "ELLIOTT")           return PERIOD_H4;   // 25/08 - vedi NXS_Profile_Get sopra, M15 (fallback) era in perdita netta
    if(name == "OTE_CONT")          return PERIOD_D1;
    if(name == "RANGE_FADE")        return PERIOD_D1;
    if(name == "RSI_DIV")           return PERIOD_H1;
@@ -400,6 +409,9 @@ int NXS_Profile_DirectionLock(const string name){
    // altre strategie BUY-only trovate il 24/08 (SAR/ADX_RSI/ecc.) non
    // sono ancora state riverificate con lo stesso rigore, non attivate.
    if(name == "STRUCT_REACT") return 1;
+   // ELLIOTT: vedi NXS_Profile_Get/TF sopra - 4h BUY-only PF1.51 n=633
+   // 4/5 finestre; SELL rotto su ogni TF provato (M15/M5/H1/H4).
+   if(name == "ELLIOTT")      return 1;
    return 0;
 }
 

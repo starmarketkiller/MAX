@@ -730,7 +730,14 @@ double   InpTF_Life_H4   = 20.0;   // idem H4
 double   InpTF_Life_D1   = 60.0;   // idem D1
 
 // input group "=== ELLIOTT WAVE (v2.0.20) ==="
-input bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima
+// 25/08 - backtestata sulla ricetta live esatta (mai fatto prima). Su M15
+// (fallback InpTFEntry, nessun profilo esisteva) in perdita netta
+// (PF0.49, 0/5 finestre) col lato SELL rotto su ogni TF provato. Corretta
+// su 4h BUY-only (NXS_Profile_TF/DirectionLock in NXS_StrategyProfiles.mqh):
+// PF1.51, n=633, 4/5 finestre - stesso schema di correzione gia' visto
+// oggi per STRUCT_REACT. Riattivata con questa correzione, non nella
+// forma originale. Vedi server/research_scripts/elliott_strat_live_signal_25-08.py.
+input bool     InpUseStrat_Elliott       = true;
 int      InpEllSwingWing           = 3;        // ampiezza fractal per i pivot di swing
 double   InpEllRetraceMin          = 0.382;    // retracement min onda 2 (Fib)
 double   InpEllRetraceMax          = 0.786;    // retracement max onda 2 (Fib)
