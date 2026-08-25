@@ -70,6 +70,20 @@ inizialmente. Completa concettualmente il lavoro Elliott di oggi: ora
 esiste sia l'uso negativo (filtro di esclusione, 21/25 strategie
 migliorate) sia quello positivo (trigger d'ingresso proprio).
 
+## Addendum — estensione a onda4→5: non aiuta
+
+Tentativo di allargare il campione (il vero limite alla promozione)
+aggiungendo il caso simmetrico un grado dopo: onda1-4 completate,
+compra la ripartenza attesa in onda5. Risultato: segnale molto più
+raro (33 trade contro 116) e più debole da solo (BUY-only PF1.56,
+m1=1.16 vicino a pari, 3/5 finestre) — il requisito di 4 pivot
+allineati in sequenza è troppo restrittivo per generare un campione
+comparabile a onda3. **Combinare onda3+onda5 non risolve il problema
+del campione laterale** (resta identico, n=8, PF0.0 — i segnali onda5
+non cadono affatto in quella finestra) e diluisce la qualità
+aggregata (PF2.06→1.85, finestre 4/5→3/5). **Onda3 da sola resta la
+versione migliore**, non promossa a combinarla con onda5.
+
 Non ancora testato: combinazione col filtro di esaurimento (di grado
 superiore, es. D1) come ulteriore conferma; trailing invece del target
 fisso; in MQL5.

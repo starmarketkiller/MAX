@@ -160,6 +160,50 @@ def wave3_signal_series(candles, atr, dev_mult=DEV_MULT):
     return sig
 
 
+RETRACE4_MIN, RETRACE4_MAX = 0.236, 0.618
+
+
+def wave5_signal_series(candles, atr, dev_mult=DEV_MULT):
+    """Simmetrico a wave3_signal_series ma un grado dopo: onda1-4
+    completate (P0..P4), segnale di continuazione in onda5 alla
+    conferma del pivot 'onda 4'. Stesse regole classiche: onda2 non
+    ritraccia sotto l'inizio di onda1 (qui verificato implicitamente
+    dalla sequenza), onda4 non sovrappone il territorio di onda1
+    (P4 non oltre P1), profondita' di onda4 in una zona Fibonacci piu'
+    stretta di onda2 (23.6%-61.8%, tipica per onda4)."""
+    n = len(candles)
+    pivots, pivot_at = build_zigzag_pivots(candles, atr, dev_mult)
+    sig = [0] * n
+    for i in range(n):
+        k = pivot_at[i]
+        if k is None or k < 4:
+            continue
+        P0, P1, P2, P3, P4 = pivots[k - 4:k + 1]
+        if P0[2] == "L" and P1[2] == "H" and P2[2] == "L" and P3[2] == "H" and P4[2] == "L":
+            wave1 = P1[1] - P0[1]
+            wave3 = P3[1] - P2[1]
+            wave4 = P3[1] - P4[1]
+            if wave1 <= 0 or wave3 <= 0 or wave4 <= 0:
+                continue
+            if P2[1] <= P0[1] or P4[1] <= P1[1]:
+                continue  # onda2 sotto inizio onda1, o onda4 sovrappone onda1
+            retrace = wave4 / wave3
+            if RETRACE4_MIN <= retrace <= RETRACE4_MAX:
+                sig[i] = 1
+        elif P0[2] == "H" and P1[2] == "L" and P2[2] == "H" and P3[2] == "L" and P4[2] == "H":
+            wave1 = P0[1] - P1[1]
+            wave3 = P2[1] - P3[1]
+            wave4 = P4[1] - P3[1]
+            if wave1 <= 0 or wave3 <= 0 or wave4 <= 0:
+                continue
+            if P2[1] >= P0[1] or P4[1] >= P1[1]:
+                continue
+            retrace = wave4 / wave3
+            if RETRACE4_MIN <= retrace <= RETRACE4_MAX:
+                sig[i] = -1
+    return sig
+
+
 def collect(candles, ind, atr, closes, wave_sig, sl_mult, tp_mult, buy_only=False):
     n = len(candles)
     atr_hist, out = [], []
