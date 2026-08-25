@@ -616,7 +616,16 @@ bool     InpTryNextSignalIfBlocked         = true;
 bool     InpDebugDecisionLog               = true;
 
 // input group "=== SMC/ICT STRATEGIES (v2.0.2) ==="
-input bool     InpStrat_TurtleSoup     = true;
+// 25/08 - disattivata: prima ricerca DA ZERO (non porting) sul vero
+// segnale live (sweep PDH/PDL/EQH/EQL + candela di rientro forte, stop
+// nativo, RR2.0 fisso - completamente diverso dal pattern Python
+// "TURTLE_SOUP" usato nel resto della sessione, che condivide solo il
+// nome). Testato su H1(live)/4h/30m, simmetrica e BUY/SELL-only:
+// **mai profittevole in modo robusto** (max PF0.94 su 4h BUY-only,
+// 3/5 finestre) - non un problema di timeframe o direzione, il pattern
+// stesso non ha edge su XAUUSD. Vedi
+// server/research_scripts/turtle_soup_live_signal_25-08.py.
+input bool     InpStrat_TurtleSoup     = false;
 input bool     InpStrat_IFVG           = true;
 input bool     InpStrat_FVG_Mit        = true;
 // 13/08 - variante a registro (15 barre) della strategia sopra, vedi
