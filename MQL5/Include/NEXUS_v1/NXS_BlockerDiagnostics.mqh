@@ -28,16 +28,21 @@ enum ENUM_NXS_BLOCK {
    // un errore generico di margine/stop/volume come le altre cause che
    // restano in PREFLIGHT.
    BLK_RISK_SIZE,
+   // 25/08 - filtro Elliott multi-timeframe (NXS_ElliottFilter.mqh):
+   // segnale soppresso perche' un impulso a 5 onde si e' appena esaurito
+   // nella stessa direzione, sul TF d'ingresso o su D1 (vedi
+   // NXS_ElliottBlocks). Categoria dedicata, non PREFLIGHT generico.
+   BLK_ELLIOTT,
    BLK_MAX
 };
 
-string g_blockNames[15] = {
+string g_blockNames[16] = {
    "NONE","NO_SIGNAL","COOLDOWN","MTF","HTF","VELOCITY","NEWS",
    "SPREAD","PROTECTIONS","SCORE_BELOW","PREFLIGHT","LICENSE","PAUSED","SEND_FAILED",
-   "RISK_SIZE"
+   "RISK_SIZE","ELLIOTT"
 };
 
-long g_blockCount[15];
+long g_blockCount[16];
 long g_decisionTicks = 0;
 datetime g_lastDecisionReport = 0;
 
@@ -57,6 +62,7 @@ ENUM_NXS_BLOCK NXS_BlkFromFailure(const string r){
       StringFind(r, "order_send")         >= 0 ||
       StringFind(r, "send_failed")        >= 0) return BLK_SEND_FAILED;
    if(StringFind(r, "lot_calc_zero")      >= 0) return BLK_RISK_SIZE;
+   if(StringFind(r, "elliott")            >= 0) return BLK_ELLIOTT;
    return BLK_PREFLIGHT;   // margin, invalid stops, sl distance
 }
 

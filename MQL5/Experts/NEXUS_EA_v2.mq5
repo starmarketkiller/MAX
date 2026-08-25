@@ -54,6 +54,7 @@
 #include <NEXUS_v1\NXS_FibonacciContext.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
+#include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>

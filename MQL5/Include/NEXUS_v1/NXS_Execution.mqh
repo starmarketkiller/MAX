@@ -390,6 +390,18 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReason, NXS_DirName(sig.dir), sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
+   // 25/08 - filtro Elliott multi-timeframe (vedi NXS_ElliottFilter.mqh):
+   // sopprime il segnale se un impulso a 5 onde si e' appena esaurito nella
+   // stessa direzione, sul TF d'ingresso della strategia O su D1. Opt-in
+   // per strategia (NXS_Profile_UseElliott) - solo le 20 gia' validate in
+   // Python il 25/08, non un gate universale (STRUCT_REACT ne e' esclusa
+   // di proposito, la danneggia).
+   if(InpUseStrategyProfiles && NXS_Profile_UseElliott(sig.stratName) && NXS_ElliottBlocks(sig.dir)){
+      g_nxsLastOpenFailure = "elliott_wave_exhaustion";
+      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: elliott_wave_exhaustion dir=%s strat=%s",
+                  NXS_DirName(sig.dir), sig.stratName);
+      return OPEN_FAIL_PREFLIGHT;
+   }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
    if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }
