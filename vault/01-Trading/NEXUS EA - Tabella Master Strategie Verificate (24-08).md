@@ -45,9 +45,13 @@ instabili) che la teneva "provvisoria". Le PF sotto NON includono
 ancora questo filtro (richiederebbe riverificare tutte le righe, non
 ancora fatto). Vedi
 [[NEXUS EA - Filtro Elliott Wave Multi-Timeframe, il nuovo ingrediente universale (25-08)]]
-per la tabella completa (es. ADX_RSI 1.77→2.04, SAR 1.51→1.65, TSI
-2.03→2.25, OTE_CONT 1.61→1.99 con finestre 3/5→5/5). Nessuna modifica
-al codice MQL5 — solo ricerca, su richiesta esplicita dell'utente.
+per la tabella completa. **Le righe sotto sono già state aggiornate**
+con le PF combinate (trailing + Elliott dove entrambi si applicano) —
+vedi [[NEXUS EA - Combinazione Trailing + Filtro Elliott, gli effetti si sommano (25-08)]]:
+i due ingredienti si sommano quasi ovunque (7/8 casi testati), es.
+ADX_RSI 2.20→**2.62** (seconda config più forte del catalogo dopo
+STRUCT_REACT). Nessuna modifica al codice MQL5 — solo ricerca, su
+richiesta esplicita dell'utente.
 
 **Aggiornamento precedente**: split BUY/SELL sistematico (vedi
 [[NEXUS EA - Sweep Sistematico BUY-SELL (24-08)]]) — 13 strategie su 14
@@ -58,31 +62,31 @@ vedi la correzione sopra prima di fidarsene.
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Correlazione | MQL5 |
 |---|---|---|---|---|---|---|---|
-| SAR | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.64 (1.28/2.04, n=1471, 5/5)** | Cluster (alta) | No |
-| MACD | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | **1.72 (1.43/2.04, n=1498, 5/5)** | Cluster (alta) | No |
-| FVG_CONT | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.63 (1.64/1.63, n=396, 4/5 — ultima finestra 0.82)** | Cluster | No |
+| SAR | 4h | 1.5/4.0, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.87 (1.44/2.36, n=1370, 5/5)** — trailing da solo 1.64 | Cluster (alta) | No |
+| MACD | 4h | 1.5/4.0, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | simmetrica (BUY-only solo +0.12, non vale la pena) | **1.84 (1.53/2.17, n=1443, 5/5)** — trailing da solo 1.72 | Cluster (alta) | No |
+| FVG_CONT | 4h | 1.5/4.0, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.78 (1.66/1.91, n=379, 4/5)** — trailing da solo 1.63 | Cluster | No |
 | LONDON_BO | 4h | 1.0 init, **trailing 2.0×ATR** | ER (no floor) | **BUY-only** | **1.83 (1.38/2.32, n=70, 5/5)** | Bassa | No |
-| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, **trailing 3.0×ATR SENZA TP fisso** | ER+floor 0.3 | simmetrica | 1.38-1.40 (chandelier puro) | Bassa | **Sì — codice live INVARIATO: il trailing richiede rimuovere il TP fisso, verificato 25/08 che altrimenti è inefficace (PF1.32-1.34), decisione non ancora presa** |
+| Z_SCORE_BREAKOUT | 1h | stop M5 strutturale, target 4.0×ATR fisso, **filtro Elliott 1h/D1** | ER+floor 0.3 | simmetrica | **1.38 (1.40/1.35, n=509, 4/5)** — senza Elliott 1.35; il trailing "puro" (1.38-1.40) richiederebbe invece rimuovere il TP fisso, non ancora deciso | Bassa | **Sì — codice live INVARIATO: il trailing richiede rimuovere il TP fisso, verificato 25/08 che altrimenti è inefficace (PF1.32-1.34), decisione non ancora presa. Il filtro Elliott invece è compatibile col TP fisso attuale (agisce solo sull'ingresso), non ancora applicato al codice** |
 
 ## Cluster trend-following (5) — correlati 0.45-0.997 tra loro, non sommare ciecamente
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
 |---|---|---|---|---|---|---|
-| DONCHIAN_TURTLE | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.56 (1.47/1.67)** | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa; trailing provato e scartato (collassa le finestre 5/5→2/5) |
-| DARVAS_BOX | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.58 (1.44/1.73)** | Vedi sopra — tenerne solo una delle due in portafoglio; trailing scartato, stesso pattern |
-| ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR** | ER+floor 0.3 | **BUY-only** | **2.20 (2.20/2.21, n=728, 5/5)** | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
-| SAR_ADX20 | 4h | 1.5 init, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.61 (1.16/2.15, n=1000, 5/5)** | Campione enorme, laterale verificata (n=83, PF0.34) |
-| BREAKOUT_ACC | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.33 (1.19/1.48)** | Miglioramento più modesto del cluster — trailing provato e scartato (peggiora sempre la robustezza) |
+| DONCHIAN_TURTLE | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.63 (1.45/1.83, n=332, 5/5)** — senza Elliott 1.56 | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa; trailing provato e scartato (collassa le finestre 5/5→2/5), Elliott invece aiuta |
+| DARVAS_BOX | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.65 (1.43/1.89, n=330, 5/5)** — senza Elliott 1.58 | Vedi sopra — tenerne solo una delle due in portafoglio; trailing scartato, Elliott aiuta come per DONCHIAN_TURTLE |
+| ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.62 (2.57/2.66, n=657, 5/5)** — trailing da solo 2.20; seconda config più forte del catalogo dopo STRUCT_REACT | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
+| SAR_ADX20 | 4h | 1.5 init, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.81 (1.28/2.44, n=936, 5/5)** — trailing da solo 1.61 | Campione enorme, laterale verificata (n=83, PF0.34) |
+| BREAKOUT_ACC | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.38 (1.24/1.54, n=268, 5/5)** — senza Elliott 1.33 | Miglioramento più modesto del cluster — trailing provato e scartato (peggiora sempre la robustezza), Elliott invece aiuta (finestre 4/5→5/5) |
 
 ## Diversificatrici genuine (5) — le più preziose per il portafoglio, bassa/negativa correlazione
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Correlazione media |
 |---|---|---|---|---|---|---|
 | **STRUCT_REACT** | 4h | 2.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.65 (2.82/2.48, 5/5)** | **-0.019 (negativa con SAR/SAR_ADX20 — hedge naturale)** |
-| LIQ_SWEEP | 4h | 1.5/6.0 | ER+floor 0.3 | **BUY-only** | 1.73 (1.73/1.73, 5/5) | 0.084 |
-| OTE_CONT | 4h | 1.0/6.0 | **D1-align** | simmetrica (BUY/SELL split non ancora provato) | 1.83 (1.89/1.77, 5/5) | 0.028 |
-| FVG_MIT | 4h | 2.0/6.0, **trailing 3.0×ATR** | **D1-align (EMA50)** | simmetrica | **2.72 (1.32/4.26, 5/5)** | 0.015 |
-| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h) / 1.5/6.0 (D1) | **D1-align+trailing 3.0×ATR** (4h) / ER, no floor (D1) | simmetrica | **1.87 (1.26/2.49) su 4h, n=241** · **2.57 (1.69/3.70) su D1, n=39, 5/5 finestre** | -0.012 |
+| LIQ_SWEEP | 4h | 1.5/6.0 | ER+floor 0.3 | **BUY-only** | 1.73 (1.73/1.73, 5/5) | 0.084 — filtro Elliott provato, neutro (PF invariato, non aiuta né danneggia qui) |
+| OTE_CONT | 4h | 1.0/6.0, **filtro Elliott 4h/D1** | **D1-align** (test Elliott fatto su ER standard, non ancora su D1-align insieme) | simmetrica (BUY/SELL split non ancora provato) | **1.99 (2.29/1.70, n=111, 5/5)** su ricetta ER standard — senza Elliott 1.61 (3/5) | 0.028 |
+| FVG_MIT | 4h | 2.0/6.0, **trailing 3.0×ATR** | **D1-align (EMA50)** | simmetrica | **2.72 (1.32/4.26, 5/5)** — filtro Elliott testato solo sulla config base ER standard (0.97→1.03), non ancora su questa config D1-align+trailing promossa | 0.015 |
+| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h) / 1.5/6.0 (D1) | **D1-align+trailing 3.0×ATR** (4h) / ER, no floor (D1) | simmetrica | **1.87 (1.26/2.49) su 4h, n=241** · **2.57 (1.69/3.70) su D1, n=39, 5/5 finestre** — filtro Elliott testato solo sulla config base ER standard 1.5/4.0 (1.30→1.45), non ancora su questa config promossa | -0.012 |
 
 EMA_PULLBACK aggiornata (24/08, vedi [[NEXUS EA - Ottimizzazione EMA_PULLBACK (24-08)]]):
 config principale 4h+D1-align+trailing (campione ampio, PF1.87), D1
@@ -93,31 +97,31 @@ ATR era leggermente controproducente qui).
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Nota |
 |---|---|---|---|---|---|---|
-| ML_ADAPTIVE_SUPERTREND | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.94 (1.33/2.79, n=123, 4/5)** | Script TradingView esterno (AlgoAlpha), era "bocciata/ECN-only borderline" dal 17-24/08 — riaperta con floor+BUY-SELL+laterale: **flip genuino confermato** (SELL laterale PF1.88 n=11, stessa fascia di SAR/ADX_RSI), non solo beta. Campione ancora sottile, factor SuperTrend=1.5 (k-means su ATR10, training 100), non ancora in MQL5 |
-| BOLLINGER (= RANGE_FADE) | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.54 (1.27/1.85, n=67, 4/5)** | Era "confermata debole" solo in forma simmetrica — mai testata BUY/SELL. SELL laterale PF3.34 (n=10), flip genuino. Non ancora in MQL5 |
-| RSI_DIV | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.65 (1.41/1.91, n=53, 4/5)** | Idem — SELL laterale PF1.36 sul campione laterale più ampio verificato oggi (n=21). Non ancora in MQL5 |
+| ML_ADAPTIVE_SUPERTREND | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.13 (1.44/3.13, n=117, 4/5)** — senza Elliott 1.94 | Script TradingView esterno (AlgoAlpha), era "bocciata/ECN-only borderline" dal 17-24/08 — riaperta con floor+BUY-SELL+laterale: **flip genuino confermato** (SELL laterale PF1.88 n=11, stessa fascia di SAR/ADX_RSI), non solo beta. Campione ancora sottile, factor SuperTrend=1.5 (k-means su ATR10, training 100), non ancora in MQL5 |
+| BOLLINGER (= RANGE_FADE) | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.95 (1.91/1.99, n=52, 3/5)** — senza Elliott 1.54, ma finestre 4/5→3/5 (unico costo di robustezza visto con questo filtro) | Era "confermata debole" solo in forma simmetrica — mai testata BUY/SELL. SELL laterale PF3.34 (n=10), flip genuino. Non ancora in MQL5 |
+| RSI_DIV | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.96 (2.21/1.73, n=48, 4/5)** — senza Elliott 1.65 | Idem — SELL laterale PF1.36 sul campione laterale più ampio verificato oggi (n=21). Non ancora in MQL5 |
 
 ## Altre solide (5)
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) |
 |---|---|---|---|---|---|
-| TSI | 4h | 1.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.03 (1.97/2.10, n=134)** — il migliore di questo blocco, trailing provato e scartato (peggiora sempre) |
-| MALAYSIAN_SNR_BREAKOUT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.93 (1.83/2.04, n=75)** |
-| SAR_FLIP | 4h | 1.5/4.0, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **1.82 (1.64/2.02, n=76)** |
-| FVG_CONT_V2 | 4h | stop nativo, **trailing 2.0×ATR** | ER+floor 0.3 | **BUY-only** | **2.03 (1.72/2.60, n=65, 5/5)** |
-| AMD_CONT | 4h | 1.5/4.0 | ER+floor 0.3 | **BUY-only** | **1.62 (1.26/2.06, n=137)** — trailing e D1-align provati e scartati (peggiorano sempre) |
+| TSI | 4h | 1.0/6.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.25 (2.04/2.46, n=125, 5/5)** — senza Elliott 2.03; il migliore di questo blocco; trailing provato e scartato (peggiora sempre) |
+| MALAYSIAN_SNR_BREAKOUT | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.14 (1.81/2.51, n=71, 5/5)** — senza Elliott 1.93 |
+| SAR_FLIP | 4h | 1.5/4.0, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.31 (1.54/3.49, n=68, 4/5)** — trailing da solo 1.82 |
+| FVG_CONT_V2 | 4h | stop nativo, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.40 (2.10/2.93, n=61, 5/5)** — trailing da solo 2.03 |
+| AMD_CONT | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.80 (1.43/2.25, n=127, 4/5)** — senza Elliott 1.62; trailing e D1-align provati e scartati (peggiorano sempre), Elliott invece aiuta |
 
 ## Confermata con cautela sul campione (riverificata 24-25/08)
 
 | Strategia | TF | SL/TP | Direzione | Retail PF | Nota |
 |---|---|---|---|---|---|
-| LDN_REVERSAL | 4h | stop strutturale (swing 10 barre), RR 1:3 | simmetrica | 1.28 (1.31/1.25, n=31, 4/5) | Plateau confermato su griglia 16 combinazioni swing×RR; la config nota è anche il punto più bilanciato della griglia (non scelta per il PF massimo) — promossa da provvisoria, ma campione assoluto ancora piccolo |
+| LDN_REVERSAL | 4h | stop strutturale (swing 10 barre), RR 1:3, **filtro Elliott 4h/D1** | simmetrica | **1.36 (1.36/1.37, n=30, 4/5)** — senza Elliott 1.28, ora quasi perfettamente bilanciata | Plateau confermato su griglia 16 combinazioni swing×RR; la config nota è anche il punto più bilanciato della griglia (non scelta per il PF massimo) — promossa da provvisoria, campione assoluto ancora piccolo |
 
 ## Ancora provvisoria — riverifica non ha sciolto i dubbi
 
 | Strategia | TF | SL/TP | Direzione | Retail PF | Perché ancora provvisoria |
 |---|---|---|---|---|---|
-| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR | simmetrica | 1.14 (1.04/1.25, n=271) | Plateau confermato sul target (6 valori, PF 1.01-1.18) MA 3 finestre su 5 flat-o-negative (0.68/0.99/0.94), PF trainato dall'ultima finestra; asimmetria BUY1.75/SELL0.70 non confermata (lateral BUY n=12, PF0.78, inconcludente). **Aggiornamento 25/08**: il filtro Elliott multi-timeframe (vedi sopra) migliora proprio questa debolezza — PF1.19, finestre 2/5→3/5 — non ancora combinato con altri ingredienti |
+| TURTLE_SOUP | 4h | stop wick sweep + floor 0.3, target 4.0×ATR, **filtro Elliott 4h/D1** | simmetrica | **1.19 (1.06/1.35, n=262, 3/5)** — senza Elliott 1.14 (2/5); migliora proprio la debolezza (finestre instabili) che la teneva "provvisoria" | Plateau confermato sul target (6 valori, PF 1.01-1.18) MA finestre storicamente instabili; asimmetria BUY1.75/SELL0.70 non confermata (lateral BUY n=12, PF0.78, inconcludente). Ancora la più fragile del catalogo, ma il filtro Elliott è un primo passo concreto di miglioramento |
 
 ## Rifiutate definitivamente oggi (non riprovare senza nuova ipotesi)
 

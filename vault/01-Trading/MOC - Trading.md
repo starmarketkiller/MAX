@@ -802,6 +802,16 @@ profitto reale, non solo curve di backtest.
   "provvisoria"), 2 neutre, 1 marginale, 1 peggiora (STRUCT_REACT) - il
   tasso di successo piu' alto di ogni ingrediente trovato in 2 giorni.
   Nessuna modifica al codice MQL5, solo ricerca.
+- **[[NEXUS EA - Combinazione Trailing + Filtro Elliott, gli effetti si sommano (25-08)]]** -
+  domanda aperta: il filtro Elliott di oggi si somma al trailing
+  adottato ieri o e' ridondante? Testato su 8 strategie con trailing
+  gia' adottato: **7/8 migliorano ulteriormente** (nessun conflitto),
+  la 8a (LONDON_BO) resta neutra senza danno. ADX_RSI arriva a
+  **PF2.62** (trailing da solo dava 2.20) - seconda config piu' forte
+  del catalogo dopo STRUCT_REACT (2.65). SAR_FLIP il salto piu' grande
+  (+27%, 1.82->2.31). I due ingredienti sono ortogonali (trailing =
+  gestione uscita, Elliott = timing d'ingresso), non si sovrappongono.
+  Tabella master aggiornata riga per riga con le PF combinate finali.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
