@@ -159,14 +159,15 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "BREAKOUT_ACC")      return PERIOD_D1;
    if(name == "THREE_BAR_DELIVERY_BREAK")              return PERIOD_H4;
    if(name == "DISP_REBAL")        return PERIOD_H4;
-   // 10/08 - scan multi-TF (Dukascopy reale, 5 TF, IS/OOS): EMA_PULLBACK
-   // rendeva meglio su H1 (OOS PF1.54, 124 trade - campione ampio e
-   // credibile, non un caso limite) invece di H4. Aggiornato. Le altre
-   // strategie con profilo esistente restano sul loro TF anche dove lo scan
-   // di oggi suggeriva un'alternativa (es. TSI/SAR): un solo split IS/OOS
-   // di oggi non basta a scavalcare un TF gia' radicato nel profilo
-   // esistente - vedi vault NEXUS EA - Config Demo 15 Strategie (10-08).
-   if(name == "EMA_PULLBACK")      return PERIOD_H1;
+   // 10/08 - scan multi-TF: H1 sembrava migliore (OOS PF1.54, 124 trade)
+   // di un singolo split IS/OOS.
+   // 25/08 - riverifica sulla ricetta live ESATTA (SL1.5/TP4.0/HTF/
+   // trailing) su tutto lo storico Dukascopy con walk-forward a 5
+   // finestre: H1 e' risultato SOTTO PARI (PF0.87 anche col trailing
+   // migliore) mentre H4 e' nettamente meglio (PF1.24-1.28) - il
+   // singolo split IS/OOS del 10/08 non aveva visto abbastanza storico.
+   // Vedi server/research_scripts/live_recipe_trailing_verify_25-08.py.
+   if(name == "EMA_PULLBACK")      return PERIOD_H4;
    if(name == "FVG_CONT")          return PERIOD_H4;
    // 11/08 - FVG_MIT/LONDON_BO: il profilo diceva D1, ma la riverifica
    // sullo storico ampliato mostra che era sbagliato - su D1 il campione
@@ -312,38 +313,43 @@ double NXS_Profile_Risk(const string name){
 //   - mean-reversion/alto-WR -> trail STRETTO (1.5): prendi profitto presto
 // Ritorna <=0 se non specificato -> l'overlay usa il globale InpAtrTrailMult.
 double NXS_Profile_TrailK(const string name){
+   // --- 25/08: riverifica sulla RICETTA LIVE ESATTA di ciascuna
+   // strategia (SL/TP/HTF/breakeven reali, non una ricetta semplificata
+   // di ricerca) - vedi server/research_scripts/
+   // live_recipe_trailing_verify_25-08.py e vault "NEXUS EA -
+   // Trasformare la Ricerca in Codice: Trailing Verificato (25-08)".
+   // Solo le strategie dove un valore diverso batte chiaramente quello
+   // gia' in uso sono state cambiate; le altre restano intatte.
+   if(name == "SAR")           return 2.0;   // 25/08: 2.5->2.0, PF1.08->1.09 sulla ricetta vera
+   if(name == "FVG_CONT")      return 3.0;   // 25/08: 2.5->3.0, PF1.27->1.31
+   if(name == "MACD")          return 3.0;   // 25/08: 1.5->3.0, PF1.15->1.25 (batteva anche il fisso 1.23)
+   if(name == "EMA_PULLBACK")  return 2.5;   // 25/08: 1.5->2.5, PF1.04->1.28 (insieme al cambio TF H1->H4)
+   if(name == "TSI")           return 3.0;   // 25/08: 2.0->3.0, PF2.16->2.39, 5/5 finestre in entrambe le meta'
+   if(name == "BOLLINGER")     return 2.0;   // 25/08: 1.5->2.0, PF1.05->1.19
+   // ADX_RSI, FVG_MIT, OTE_CONT: il trailing (qualunque larghezza) e'
+   // risultato PEGGIORE del target fisso gia' in uso sulla ricetta vera
+   // (es. ADX_RSI: PF2.24 fisso contro 1.83-1.95 con trailing) -
+   // disattivate del tutto via NXS_Profile_TrailForceOff() sotto,
+   // non lasciate a un valore che comunque attiverebbe l'overlay.
+
    // --- LARGO 2.5 (trend/continuazione: corrono) ---
    if(name == "TURTLE_SOUP")   return 2.5;   // 2.04->2.72 col largo
-   if(name == "FVG_CONT")      return 2.5;   // 0.88->1.99
    if(name == "ORDER_BLOCK")   return 2.5;   // 0.94->2.03
    if(name == "OB_MIT")        return 2.5;   // 0.46->1.52
-   if(name == "SAR")           return 2.5;   // 1.14->1.21
-   if(name == "ADX_RSI")       return 2.5;   // 1.03->1.15
    if(name == "LIQ_SWEEP")     return 2.5;   // stessa famiglia SMC
    if(name == "LIQ_VOID")      return 2.5;
    if(name == "SH_BMS_RTO")    return 2.5;
    if(name == "SMS_BMS_RTO")   return 2.5;
    if(name == "IFVG")          return 2.5;
-   if(name == "FVG_MIT")       return 2.5;
    if(name == "FVG_MIT_WINDOW") return 3.0;  // 13/08 - batch grid 12/08, piu' largo della base
    if(name == "LONDON_BO")     return 2.5;   // breakout continuation
    if(name == "BREAKOUT_ACC")  return 2.5;
    if(name == "WEEKLY_EXP")    return 2.5;
-   if(name == "OTE_CONT")      return 2.5;
    if(name == "DISP_REBAL")    return 2.5;
    // --- STRETTO 1.5 (mean-reversion/alto-WR: prendono profitto) ---
-   if(name == "RSI_DIV")       return 1.5;   // 1.21->0.81 col largo -> stringi
+   if(name == "RSI_DIV")       return 1.5;   // 1.21->0.81 col largo -> stringi (25/08: la ricetta live resta debole anche su 4h/trailing diversi, non toccata - serve prima una diagnosi del segnale, non dell'uscita)
    if(name == "BJORGUM")       return 1.5;   // 1.89->0.89
    if(name == "ICHIMOKU")      return 1.5;   // 2.34->0
-   if(name == "EMA_PULLBACK")  return 1.5;   // 1.37->1.00
-   if(name == "MACD")          return 1.5;   // 1.27 vs 1.23 ~neutro -> stretto
-   // 12/08 - TSI: ricerca dedicata uscite (vedi NXS_Profile_Get sopra),
-   // 1.5->2.0 - il vincitore usava un trail piu' largo del default stretto
-   // qui sotto, coerente con l'SL/TP molto piu' larghi trovati nello
-   // stesso giro (il pattern di TSI si comporta piu' da trend/continuazione
-   // con questa configurazione che da mean-reversion).
-   if(name == "TSI")           return 2.0;
-   if(name == "BOLLINGER")     return 1.5;   // mean-reversion
    if(name == "BB_SQUEEZE")    return 1.5;
    if(name == "RANGE_FADE")    return 1.5;
    if(name == "STRUCT_REACT")  return 1.5;
@@ -353,9 +359,24 @@ double NXS_Profile_TrailK(const string name){
    // Ricerca dedicata: 1.0 (piu' stretto del globale) e' il vincitore
    // insieme a be=1.0R (vedi NXS_Profile_Get sopra) - coerente con lo SL
    // di CRT gia' stretto per natura (ancorato al wick), un trail piu'
-   // stretto lo segue meglio invece di lasciargli troppo spazio.
+   // stretto lo segue meglio invece di lasciargli troppo spazio. CRT
+   // resta comunque disattivata di default (25/08, vedi NXS_Inputs.mqh).
    if(name == "CRT")           return 1.0;
    return 0.0;   // fallback -> globale
+}
+
+// 25/08 - una strategia con TrailK<=0 ricade sul trailing GLOBALE
+// (InpAtrTrailMult), non resta "senza trailing": non esisteva un modo
+// per disattivare l'overlay SOLO per una strategia specifica. Serviva
+// per ADX_RSI/FVG_MIT/OTE_CONT, dove la riverifica sulla ricetta live
+// esatta (25/08) ha mostrato che QUALUNQUE larghezza di trailing
+// peggiora rispetto al target fisso gia' in uso (es. ADX_RSI: PF2.24
+// fisso contro 1.83-1.95 con trailing, in ogni larghezza provata).
+bool NXS_Profile_TrailForceOff(const string name){
+   if(name == "ADX_RSI")  return true;
+   if(name == "FVG_MIT")  return true;
+   if(name == "OTE_CONT") return true;
+   return false;
 }
 
 // v2.4.6 — Soglia di ATTIVAZIONE del trailing per-strategia (x ATR di profitto

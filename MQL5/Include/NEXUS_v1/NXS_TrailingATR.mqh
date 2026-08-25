@@ -33,6 +33,12 @@ void NXS_TrailATR(){
          string cm = PositionGetString(POSITION_COMMENT);
          string pp[]; int npp = StringSplit(cm, '|', pp);
          if(npp >= 2 && StringLen(pp[1]) > 0){
+            // 25/08 - alcune strategie (ADX_RSI/FVG_MIT/OTE_CONT) rendono
+            // peggio con QUALUNQUE larghezza di trailing rispetto al
+            // target fisso gia' in uso - senza questo controllo un
+            // TrailK<=0 ricadrebbe comunque sul trailing globale invece
+            // di restare disattivato. Vedi NXS_Profile_TrailForceOff().
+            if(NXS_Profile_TrailForceOff(pp[1])) continue;
             double pk = NXS_Profile_TrailK(pp[1]);
             if(pk > 0) k = pk;   // solo la LARGHEZZA e' per-strategia (v2.4.5, vincente)
          }
