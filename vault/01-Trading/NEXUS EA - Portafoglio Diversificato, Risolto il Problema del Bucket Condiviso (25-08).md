@@ -161,13 +161,44 @@ reintroducono un po' di correlazione ad alta concorrenza. **Consigliato
 il portafoglio a 14 strategie con mc=3**, non spingere la concorrenza
 oltre su questa versione estesa senza riverificare.
 
+## Addendum — il drawdown si concentra quasi interamente nel 2022 (periodo laterale)
+
+Scomposto il DD del portafoglio finale a 14 strategie (mc=3) per anno:
+
+| Anno | DD massimo nell'anno | Equity a fine anno | Variazione |
+|---|---|---|---|
+| 2020 | 8.5% | 1.443 | +443 |
+| 2021 | 15.7% | 1.216 | -226 |
+| **2022** | **25.2%** | 1.818 | +602 |
+| 2023 | 4.0% | 2.897 | +1.079 |
+| 2024 | 4.4% | 4.796 | +1.899 |
+| 2025 | 6.1% | 8.555 | +3.759 |
+| 2026 | 2.6% | 10.180 | +1.625 |
+
+Il **drawdown massimo assoluto (25.2%) è un singolo picco del
+25/02/2022**, non un rischio ricorrente distribuito uniformemente nel
+tempo. **2021-2022 sono chiaramente gli anni più difficili** (DD 15.7%
+e 25.2%, il 2021 anche con equity in calo netto -€226) — esattamente
+il periodo classificato come "genuinamente laterale" nella diagnosi
+del 15/08 (2020-11→2023-10, l'oro senza trend chiaro). Dal 2023 in poi
+il DD annuo non supera mai il 6.1%, coerente con la fase di rally
+2023-2026 dove quasi tutte le strategie del catalogo performano meglio
+(lo stesso pattern rally-dipendenza diagnosticato più volte oggi).
+
+**Implicazione per il rischio**: il worst-case realistico da aspettarsi
+non è "un drawdown ricorrente ogni tanto", è "un anno-tipo-2022" se il
+mercato tornasse in un regime laterale prolungato — il 25.2% storico è
+un limite inferiore plausibile per quello scenario, non un tetto
+garantito (il campione di un solo episodio laterale nello storico
+disponibile non permette di escludere un DD peggiore in una futura
+fase laterale diversa).
+
 ## Prossimi passi aperti
 
-- Scomporre il DD del portafoglio (9 o 14 strategie) per anno/regime —
-  non ancora fatto.
 - Stress-test qualitativo del rischio di coda non catturato dalla
-  correlazione storica (la cautela sopra) — richiede un'ipotesi
-  esplicita su cosa simulare, non ancora definita.
+  correlazione storica (la cautela sull'esplosione della concorrenza
+  sopra) — richiede un'ipotesi esplicita su cosa simulare, non ancora
+  definita.
 
 ## Collegamenti
 [[MOC - Trading]]

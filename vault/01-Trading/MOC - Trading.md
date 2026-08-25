@@ -891,7 +891,13 @@ profitto reale, non solo curve di backtest.
   FVG_CONT_V2 aiutano (MALAYSIAN_SNR_BREAKOUT/AMD_CONT/ELLIOTT_WAVE3_CONT
   no). **Configurazione finale consigliata: 14 strategie, mc=3 ->
   netPnL +EUR9.180, DD 25.2%** - ancora nettamente meglio del catalogo
-  completo.
+  completo. **Scomposto il DD per anno**: il 25.2% e' un singolo picco
+  del 25/02/2022, non un rischio ricorrente - 2021-2022 (DD 15.7% e
+  25.2%) sono chiaramente gli anni piu' difficili, esattamente il
+  periodo "genuinamente laterale" gia' diagnosticato il 15/08. Dal
+  2023 in poi il DD annuo non supera mai il 6.1%. Worst-case realistico:
+  un anno-tipo-2022 se il mercato tornasse laterale, non un tetto
+  garantito (un solo episodio nello storico disponibile).
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale
