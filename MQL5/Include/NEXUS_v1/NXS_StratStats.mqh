@@ -308,7 +308,7 @@ void NXS_Stats_ExportCSV(){
       "avg_spread_pts","avg_holding_sec",
       "blk_NONE","blk_NO_SIGNAL","blk_COOLDOWN","blk_MTF","blk_HTF","blk_VELOCITY",
       "blk_NEWS","blk_SPREAD","blk_PROTECTIONS","blk_SCORE_BELOW","blk_PREFLIGHT",
-      "blk_LICENSE","blk_PAUSED","blk_SEND_FAILED",
+      "blk_LICENSE","blk_PAUSED","blk_SEND_FAILED","blk_RISK_SIZE",
       "dominant_blocker","reachability_pct","exec_rate_pct","health"
    );
    for(int i = 0; i < g_stratStatsCount; i++){
@@ -349,7 +349,7 @@ void NXS_Stats_ExportCSV(){
          (string)r.blockedAt[3], (string)r.blockedAt[4], (string)r.blockedAt[5],
          (string)r.blockedAt[6], (string)r.blockedAt[7], (string)r.blockedAt[8],
          (string)r.blockedAt[9], (string)r.blockedAt[10], (string)r.blockedAt[11],
-         (string)r.blockedAt[12], (string)r.blockedAt[13],
+         (string)r.blockedAt[12], (string)r.blockedAt[13], (string)r.blockedAt[14],
          IntegerToString(domIdx),
          DoubleToString(reach,2), DoubleToString(execR,2),
          health
