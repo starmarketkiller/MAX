@@ -655,9 +655,18 @@ input bool     InpStrat_ZScoreBreakout  = true;
 // HTF), PF 0.51-0.65 con qualunque larghezza di trailing - in perdita
 // su tutto lo storico. Vedi live_recipe_trailing_verify_25-08.py.
 input bool     InpUseStrat_CISD          = false;
-input bool     InpUseStrat_AMD_Cont      = true;
+// 25/08 - disattivata (AMD_CONT): ricerca da zero sul vero segnale live
+// (fase AMD_CONTINUATION_DISTRIBUTION su M15 InpTFEntry + retest nativo
+// su EffTF M30), mai in profitto ne' su M30/M15/H1 ne' su BUY/SELL-only
+// (PF 0.53-0.71, max 1/5 finestre positive). Vedi
+// amd_cont_ldn_reversal_live_signal_25-08.py e _tf_scan_25-08.py.
+input bool     InpUseStrat_AMD_Cont      = false;
 input bool     InpUseStrat_Judas         = true;
-input bool     InpUseStrat_LdnReversal   = true;
+// 25/08 - disattivata (LDN_REVERSAL): stesso trattamento, segnale
+// nativo (sweep AsiaHi/PDH/EQH + CHOCH) mai in profitto su M15/M30/H1
+// ne' su BUY/SELL-only (PF 0.36-0.78, max 1/5 finestre positive). Vedi
+// amd_cont_ldn_reversal_live_signal_25-08.py e _tf_scan_25-08.py.
+input bool     InpUseStrat_LdnReversal   = false;
 input bool     InpUseStrat_NYReversal    = true;
 input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
