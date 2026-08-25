@@ -897,7 +897,15 @@ profitto reale, non solo curve di backtest.
   periodo "genuinamente laterale" gia' diagnosticato il 15/08. Dal
   2023 in poi il DD annuo non supera mai il 6.1%. Worst-case realistico:
   un anno-tipo-2022 se il mercato tornasse laterale, non un tetto
-  garantito (un solo episodio nello storico disponibile).
+  garantito (un solo episodio nello storico disponibile). **Bootstrap
+  a blocchi trimestrali (500 ricampionamenti)** per stimare il range
+  plausibile: mediana 16.2%, 90-esimo percentile 26.9%, **99-esimo
+  32.9%**, peggiore osservato 38.9% - il DD storico (25.2%) si colloca
+  intorno all'88-89esimo percentile, moderatamente sfavorevole ma non
+  il caso peggiore possibile con lo stesso materiale storico.
+  Pianificare per un DD fino al 30-33% in condizioni sfavorevoli
+  plausibili, non fermarsi al 25.2% osservato. Chiude in modo completo
+  il filone portafoglio riaperto oggi.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

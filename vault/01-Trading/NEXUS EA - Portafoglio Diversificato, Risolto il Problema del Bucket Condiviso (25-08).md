@@ -193,12 +193,46 @@ garantito (il campione di un solo episodio laterale nello storico
 disponibile non permette di escludere un DD peggiore in una futura
 fase laterale diversa).
 
+## Addendum — stress-test del rischio di coda: bootstrap a blocchi trimestrali
+
+Il DD storico (25.2%) è un solo percorso — un solo episodio laterale
+nello storico disponibile non basta per escludere qualcosa di peggiore
+(la cautela lasciata aperta sopra). Metodo standard per rispondere:
+**bootstrap a blocchi** — invece di ricampionare singoli giorni (che
+distruggerebbe il raggruppamento temporale di un regime laterale),
+i 901 giorni di trade vengono divisi in 25 blocchi trimestrali (~90
+giorni ciascuno, ~80 trade/blocco) e ricampionati con reinserimento
+500 volte, ricostruendo 500 "storie alternative" con lo stesso
+materiale storico ma in un ordine diverso.
+
+| Percentile | DD |
+|---|---|
+| Mediana | 16.2% |
+| 90° | 26.9% |
+| 95° | 30.8% |
+| 99° | 32.9% |
+| Peggiore osservato (su 500) | 38.9% |
+| **Storico originale (non ricampionato)** | **25.2%** |
+
+Il DD storico si colloca intorno all'**88°-89° percentile** della
+distribuzione ricampionata — un risultato moderatamente sfavorevole
+(i blocchi 2021-2022 si sono capitati in sequenza nella storia reale),
+ma non il caso peggiore possibile con lo stesso materiale storico. Al
+99° percentile il DD plausibile sale al **32.9%**, e nel peggiore dei
+500 ricampionamenti si arriva al **38.9%**. Questo è il range più
+onesto disponibile con i dati che abbiamo: **pianificare per un
+drawdown fino al 30-33% in condizioni sfavorevoli plausibili, non
+fermarsi al 25.2% osservato come se fosse un tetto**. Resta comunque
+un limite di fondo dichiarato: il bootstrap ricombina blocchi
+REALMENTE accaduti, non genera scenari mai visti nello storico
+(es. una vera crisi di liquidità/flash-crash) — è una stima migliore
+del rischio "conosciuto", non una garanzia contro l'ignoto.
+
 ## Prossimi passi aperti
 
-- Stress-test qualitativo del rischio di coda non catturato dalla
-  correlazione storica (la cautela sull'esplosione della concorrenza
-  sopra) — richiede un'ipotesi esplicita su cosa simulare, non ancora
-  definita.
+Nessuno esplicitamente aperto — il filone portafoglio (correlazione,
+costruzione, sweep di concorrenza, aggiunte selettive, scomposizione
+annuale, stress-test di coda) è ora coperto in modo completo.
 
 ## Collegamenti
 [[MOC - Trading]]
