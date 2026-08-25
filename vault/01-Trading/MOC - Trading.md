@@ -830,6 +830,17 @@ profitto reale, non solo curve di backtest.
   quello che l'Elliott misura - i due a volte disaccordano proprio sui
   trade migliori. Confermato: non combinare Elliott con STRUCT_REACT,
   gli altri 24/25 casi restano il consiglio di default.
+- **[[NEXUS EA - Combinazione Trailing + Filtro Elliott, gli effetti si sommano (25-08)]]**
+  (aggiornata) - colmato l'ultimo buco: le 3 strategie con D1-align
+  invece di ER standard (FVG_MIT/OTE_CONT/EMA_PULLBACK) erano rimaste
+  non testate in combinazione. Tutte e 3 migliorano: **FVG_MIT sale a
+  PF3.24** (+19%, ora la configurazione piu' forte dell'intero
+  catalogo di 25 strategie, superando ADX_RSI 2.62 e STRUCT_REACT
+  2.65), EMA_PULLBACK a 2.13 (finestre 4/5->5/5), OTE_CONT a 2.14
+  (quasi perfettamente bilanciata). **10 strategie su 11 testate in
+  combinazione migliorano ulteriormente**, la sola eccezione resta
+  LONDON_BO (neutro, non dannoso). Chiude la validazione del filtro
+  Elliott su tutte le config realmente promosse del catalogo.
 - **[[NEXUS EA - MALAYSIAN_SNR Porting Tier 1 (Specifica Tecnica)]]** —
   architettura completa (non ancora codice) per ricostruire la strategia
   fedele alla fonte originale (Yanu Emmanuel): perché il trigger attuale

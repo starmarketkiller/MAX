@@ -49,8 +49,9 @@ per la tabella completa. **Le righe sotto sono già state aggiornate**
 con le PF combinate (trailing + Elliott dove entrambi si applicano) —
 vedi [[NEXUS EA - Combinazione Trailing + Filtro Elliott, gli effetti si sommano (25-08)]]:
 i due ingredienti si sommano quasi ovunque (7/8 casi testati), es.
-ADX_RSI 2.20→**2.62** (seconda config più forte del catalogo dopo
-STRUCT_REACT). Nessuna modifica al codice MQL5 — solo ricerca, su
+ADX_RSI 2.20→**2.62**. La configurazione più forte dell'intero
+catalogo è ora **FVG_MIT a PF3.24** (D1-align+trailing+Elliott
+insieme). Nessuna modifica al codice MQL5 — solo ricerca, su
 richiesta esplicita dell'utente.
 
 **Aggiornamento precedente**: split BUY/SELL sistematico (vedi
@@ -74,7 +75,7 @@ vedi la correzione sopra prima di fidarsene.
 |---|---|---|---|---|---|---|
 | DONCHIAN_TURTLE | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.63 (1.45/1.83, n=332, 5/5)** — senza Elliott 1.56 | **Correlata al 99.7% con DARVAS_BOX** — praticamente la stessa; trailing provato e scartato (collassa le finestre 5/5→2/5), Elliott invece aiuta |
 | DARVAS_BOX | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.65 (1.43/1.89, n=330, 5/5)** — senza Elliott 1.58 | Vedi sopra — tenerne solo una delle due in portafoglio; trailing scartato, Elliott aiuta come per DONCHIAN_TURTLE |
-| ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.62 (2.57/2.66, n=657, 5/5)** — trailing da solo 2.20; seconda config più forte del catalogo dopo STRUCT_REACT | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
+| ADX_RSI | 4h | 1.5 init, **trailing 2.5×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **2.62 (2.57/2.66, n=657, 5/5)** — trailing da solo 2.20; terza config più forte del catalogo dopo FVG_MIT (3.24) e STRUCT_REACT (2.65) | Verificato per-data e sulla finestra laterale (flip più netto: BUY0.23/SELL2.53) — il più solido del cluster |
 | SAR_ADX20 | 4h | 1.5 init, **trailing 2.0×ATR + filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.81 (1.28/2.44, n=936, 5/5)** — trailing da solo 1.61 | Campione enorme, laterale verificata (n=83, PF0.34) |
 | BREAKOUT_ACC | 4h | 1.5/4.0, **filtro Elliott 4h/D1** | ER+floor 0.3 | **BUY-only** | **1.38 (1.24/1.54, n=268, 5/5)** — senza Elliott 1.33 | Miglioramento più modesto del cluster — trailing provato e scartato (peggiora sempre la robustezza), Elliott invece aiuta (finestre 4/5→5/5) |
 
@@ -82,11 +83,11 @@ vedi la correzione sopra prima di fidarsene.
 
 | Strategia | TF | SL/TP | Filtro | Direzione | Retail PF (m1/m2) | Correlazione media |
 |---|---|---|---|---|---|---|
-| **STRUCT_REACT** | 4h | 2.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.65 (2.82/2.48, 5/5)** | **-0.019 (negativa con SAR/SAR_ADX20 — hedge naturale)** |
+| **FVG_MIT** | 4h | 2.0/6.0, **trailing 3.0×ATR + filtro Elliott 4h/D1** | **D1-align (EMA50)** | simmetrica | **3.24 (1.57/5.06, n=74, 5/5)** — senza Elliott 2.72; **la configurazione più forte dell'intero catalogo** | 0.015 |
+| **STRUCT_REACT** | 4h | 2.0/6.0 | ER+floor 0.3 | **BUY-only** | **2.65 (2.82/2.48, 5/5)** | **-0.019 (negativa con SAR/SAR_ADX20 — hedge naturale). Unica strategia dove il filtro Elliott PEGGIORA (2.65→2.28) — rimuove i suoi trade migliori, vedi [[NEXUS EA - Perché STRUCT_REACT Peggiora col Filtro Elliott (25-08)]], non applicarlo qui** |
+| OTE_CONT | 4h | 1.0/6.0, **filtro Elliott 4h/D1** | **D1-align** | simmetrica (BUY/SELL split non ancora provato) | **2.14 (2.16/2.12, n=214, 5/5)** su config D1-align reale — senza Elliott 1.83 | 0.028 |
+| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h), **filtro Elliott 4h/D1** / 1.5/6.0 (D1) | **D1-align+trailing 3.0×ATR** (4h) / ER, no floor (D1) | simmetrica | **2.13 (1.44/2.83) su 4h, n=223, 5/5** (senza Elliott 1.87, 4/5) · 2.57 (1.69/3.70) su D1, n=39, 5/5 (Elliott non ancora testato su questa variante D1) | -0.012 |
 | LIQ_SWEEP | 4h | 1.5/6.0 | ER+floor 0.3 | **BUY-only** | 1.73 (1.73/1.73, 5/5) | 0.084 — filtro Elliott provato, neutro (PF invariato, non aiuta né danneggia qui) |
-| OTE_CONT | 4h | 1.0/6.0, **filtro Elliott 4h/D1** | **D1-align** (test Elliott fatto su ER standard, non ancora su D1-align insieme) | simmetrica (BUY/SELL split non ancora provato) | **1.99 (2.29/1.70, n=111, 5/5)** su ricetta ER standard — senza Elliott 1.61 (3/5) | 0.028 |
-| FVG_MIT | 4h | 2.0/6.0, **trailing 3.0×ATR** | **D1-align (EMA50)** | simmetrica | **2.72 (1.32/4.26, 5/5)** — filtro Elliott testato solo sulla config base ER standard (0.97→1.03), non ancora su questa config D1-align+trailing promossa | 0.015 |
-| EMA_PULLBACK | 4h **o** D1 | 1.5/4.0 (4h) / 1.5/6.0 (D1) | **D1-align+trailing 3.0×ATR** (4h) / ER, no floor (D1) | simmetrica | **1.87 (1.26/2.49) su 4h, n=241** · **2.57 (1.69/3.70) su D1, n=39, 5/5 finestre** — filtro Elliott testato solo sulla config base ER standard 1.5/4.0 (1.30→1.45), non ancora su questa config promossa | -0.012 |
 
 EMA_PULLBACK aggiornata (24/08, vedi [[NEXUS EA - Ottimizzazione EMA_PULLBACK (24-08)]]):
 config principale 4h+D1-align+trailing (campione ampio, PF1.87), D1

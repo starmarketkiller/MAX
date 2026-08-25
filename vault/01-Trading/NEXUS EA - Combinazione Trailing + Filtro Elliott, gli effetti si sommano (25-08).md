@@ -64,12 +64,34 @@ bisogno di combinazione essendo già la loro configurazione base.
 Nessuna modifica al codice MQL5 — resta ricerca Python, come da
 indicazione esplicita dell'utente.
 
+## Addendum — combinazione anche con D1-align (non solo ER+floor)
+
+Le 3 strategie con **D1-align** al posto del filtro ER standard
+(FVG_MIT, OTE_CONT, EMA_PULLBACK) erano rimaste non testate — l'unico
+test Elliott fatto su di loro usava la ricetta ER generica, non la
+loro vera config promossa. Colmato:
+
+| Strategia | Config promossa (D1-align, +trailing dove presente) | +Elliott | Δ |
+|---|---|---|---|
+| **FVG_MIT** | 2.72 (1.32/4.26, 5/5) | **3.24 (1.57/5.06, n=74, 5/5)** | **+19%, ora la più forte del catalogo** |
+| **EMA_PULLBACK** (4h) | 1.87 (1.26/2.49, 4/5) | **2.13 (1.44/2.83, n=223, 5/5)** | **+14%, finestre 4/5→5/5** |
+| OTE_CONT | 1.83 (1.89/1.77, 5/5) | **2.14 (2.16/2.12, n=214, 5/5)** | +17%, quasi perfettamente bilanciata |
+
+Tutte e 3 migliorano, confermando che il filtro Elliott si somma bene
+anche a D1-align (non solo a trailing su ER standard) — **10 strategie
+su 11 testate in combinazione con altri ingredienti migliorano
+ulteriormente**, la sola eccezione resta LONDON_BO (neutro, non
+dannoso). FVG_MIT a PF3.24 è ora la configurazione più forte
+dell'intero catalogo di 25 strategie.
+
 ## Prossimi passi aperti
 
 - Aggiornare sistematicamente tutte le righe della tabella master con
-  le PF combinate finali (fatto per le 8 di questa nota).
+  le PF combinate finali (fatto per le 11 di questa nota).
 - Risolvere il problema del TP fisso di Z_SCORE_BREAKOUT prima di
   poter testare la combinazione anche lì.
+- Testare Elliott sulla variante D1-nativa di EMA_PULLBACK (PF2.57),
+  non ancora fatto.
 
 ## Collegamenti
 [[MOC - Trading]]
