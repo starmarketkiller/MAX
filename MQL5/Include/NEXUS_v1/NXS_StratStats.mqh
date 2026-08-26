@@ -502,7 +502,10 @@ void NXS_Stats_Init(){
       // 12/08 - CRT mancava dall'elenco noto da quando e' stata portata in
       // MQL5 (11/08): _nxs_stats_idx() la crea comunque al primo utilizzo,
       // ma restava assente dal report finche' non scattava il primo segnale.
-      "CRT"
+      "CRT",
+      // 26/08 - ELLIOTT (NXS_Strat_Elliott) mancava dall'elenco da quando e'
+      // stata riattivata stasera (H4 BUY-only) - stesso problema di CRT sopra.
+      "ELLIOTT"
    };
    for(int i = 0; i < ArraySize(known); i++) _nxs_stats_idx(known[i]);
    NXS_Stats_SetEnabled("CRT", InpUseStrat_CRT);
@@ -551,6 +554,8 @@ void NXS_Stats_Init(){
    NXS_Stats_SetEnabled("DISP_REBAL",    InpUseStrat_DispRebal);
    // v2.0.8: Range Fade
    NXS_Stats_SetEnabled("RANGE_FADE",    InpUseStrat_RangeFade);
+   // 26/08: Elliott
+   NXS_Stats_SetEnabled("ELLIOTT",       InpUseStrat_Elliott);
    // Ensure subfolder exists by attempting a write
    string seed = StringFormat("%s\\.keep", NXS_STATS_FOLDER);
    int fh = FileOpen(seed, FILE_WRITE | FILE_TXT | FILE_ANSI);
