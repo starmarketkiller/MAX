@@ -105,7 +105,20 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // TP8.0 + breakeven a 1R: PF1.48->2.05, DD6.23%->5.85%, net
    // +2.879->+3.643 (10y sito, campione -35%). Non ancora validato su MT5.
    if(name == "MACD")              { slMult=2.0; tpMult=8.0; htf=true ; beR=1.0; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
-   if(name == "MALAYSIAN_SNR")     { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.96 R2.0
+   // 25/08 - riverificata sulla ricetta live esatta (mai fatto prima): su
+   // D1 (nativo) PF0.76 n=117, SELL rotto (0.60) - combacia col commento
+   // gia' presente in NXS_Profile_Risk ("PF 0.00", qualcuno l'aveva gia'
+   // osservata dal vivo in perdita e aveva tagliato il rischio al minimo
+   // senza correggerla). Il livello chiave H4/W1 e' identico in ogni TF -
+   // il problema era SOLO controllare il tocco una volta al giorno invece
+   // che piu' spesso. Su M30 (stessa logica, stesso livello, controllo
+   // piu' frequente): PF1.75 simmetrico, n=1289, 5/5 finestre su ENTRAMBE
+   // le direzioni, risk_dist mediano $10.42 (non stiracchiato come CRT).
+   // slMult/tpMult sotto restano inerti (stop nativo dal livello H4).
+   // Nota: il test Python non modella il gate HTF generico (htf=true,
+   // EMA200 su EffTF) che il vero EA applica in aggiunta - atteso neutro/
+   // migliorativo (filtra segnali contro-trend), non verificato qui.
+   if(name == "MALAYSIAN_SNR")     { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 30m, vedi nota 25/08 sopra
    if(name == "OB_MIT")            { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // v2.5.0 sweep 10y: SL1.5/TP4.0 + trail -> PF1.80
    if(name == "ORDER_BLOCK")       { slMult=1.0; tpMult=3.0; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.55 R1.71
    if(name == "OTE_CONT")          { slMult=2.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.78 R2.0
@@ -199,7 +212,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "AMD_CONT")          return PERIOD_M30;
    if(name == "LDN_REVERSAL")      return PERIOD_M15;
    if(name == "AMD_REVERSAL")      return PERIOD_M15;
-   if(name == "MALAYSIAN_SNR")     return PERIOD_D1;
+   if(name == "MALAYSIAN_SNR")     return PERIOD_M30;   // 25/08 - vedi NXS_Profile_Get sopra, D1 era in perdita col SELL rotto
    if(name == "OB_MIT")            return PERIOD_D1;
    if(name == "ORDER_BLOCK")       return PERIOD_D1;
    if(name == "ELLIOTT")           return PERIOD_H4;   // 25/08 - vedi NXS_Profile_Get sopra, M15 (fallback) era in perdita netta
@@ -304,7 +317,12 @@ double NXS_Profile_Risk(const string name){
    if(name == "RSI_DIV")           return 1.5;    // PF 1.21 reale, 98 trade
    if(name == "ORDER_BLOCK")       return 0.5;    // PF 0.67
    if(name == "OB_MIT")            return 0.5;    // PF 0.38 (crollata per interazione)
-   if(name == "MALAYSIAN_SNR")     return 0.4;    // PF 0.00
+   // 25/08 - il PF 0.00 sopra era su D1 (nativo, ora corretto a M30 in
+   // NXS_Profile_TF): stesso livello H4/W1, controllato ogni 30m invece
+   // che una volta al giorno, da PF0.76/SELL-rotto a PF1.75 simmetrico
+   // (n=1289, 5/5 finestre su entrambe le direzioni). Tier alzato ma non
+   // al massimo - prima conferma live ancora da avere su questa TF.
+   if(name == "MALAYSIAN_SNR")     return 1.8;
    if(name == "BOLLINGER")         return 0.6;    // riportata 2.4.0, in osservazione
    if(name == "BB_SQUEEZE")        return 0.6;
    if(name == "DISP_REBAL")        return 0.5;
