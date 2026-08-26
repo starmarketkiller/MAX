@@ -258,9 +258,20 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
 // giro, nessuna nuova evidenza raccolta su quelle).
 //
 double NXS_Profile_Risk(const string name){
-// Tier S (5.0%) — doppia conferma forte, nessuna red flag:
-   if(name == "EMA_PULLBACK")      return 5.0;    // reale PF1.63 + Python WF4/5 (1.47->1.52 ricetta uff.)
-   if(name == "SAR")               return 5.0;    // reale PF1.31/196 trade (workhorse) + Python OOS1.22/276
+// 25/08 - SAR e EMA_PULLBACK erano al tier massimo (5.0%) nonostante un
+// PF sottile (SAR ~1.09-1.31, EMA_PULLBACK ~1.5). Il Monte Carlo del
+// portafoglio v3.0 (12 strategie, tier reali) ha trovato DD mediano 98%
+// e rovina nel 78% degli scenari - causa isolata: SAR da solo genera il
+// 39% del volume di trade del portafoglio (7062/17891) al tier piu' alto
+// con un edge cosi' sottile che il rischio composto produce crescita
+// GEOMETRICA negativa nonostante il PF aritmetico sia sopra 1 (volatility
+// drag - effetto matematico reale legato al criterio di Kelly, non un
+// bug). Togliendo SAR (ed EMA_PULLBACK, stesso tier) dal conteggio la
+// rovina scende dal 78% al 13%. Tier abbassati qui invece di disattivare
+// le strategie - l'edge esiste, il problema era solo il rischio per
+// trade troppo aggressivo rispetto alla sua sottigliezza.
+   if(name == "EMA_PULLBACK")      return 2.5;    // 5.0->2.5, PF piu' solido (~1.5) di SAR ma comunque tagliato per prudenza
+   if(name == "SAR")               return 1.0;    // 5.0->1.0, edge piu' sottile (PF~1.09-1.31) e maggior volume di trade
    // TURTLE_SOUP: reale PF2.04 "la stella" e' con la RICETTA UFFICIALE attiva
    // (slMult1.0/tpMult4.5/htf, vedi NXS_Profile_Get sopra) - sul flat baseline
    // il Python e' debole (0.96/398, quasi pareggio), con la stessa ricetta
