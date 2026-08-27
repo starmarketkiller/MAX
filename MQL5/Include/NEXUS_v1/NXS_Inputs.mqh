@@ -181,7 +181,7 @@ input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte conte
 bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 posizione per strategia (come nel backtest)
 // v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
 // (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
-bool     InpUseStrategyProfiles  = true;
+input bool     InpUseStrategyProfiles  = true;   // 27/08 - reso input (era plain, invisibile al Tester/Optimization)
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
 double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
@@ -428,9 +428,16 @@ int      InpEMA9_Period      = 9;
 int      InpEMA21_Period     = 21;
 
 // input group "=== SL / TP ==="
-double   InpATR_SL_Mult      = 2.0;    // v2.0.14: 1.8→2.0 (SL piu' largo su M5 gold)
-double   InpATR_TP_Mult      = 2.6;
-double   InpMinSLMult        = 1.5;    // v2.0.14: pavimento minimo moltiplicatore SL
+// 27/08 - resi input (erano plain nonostante il commento "input group" sopra,
+// stesso bug gia' trovato e corretto il 17/07 per il gruppo BREAK EVEN & TRAIL:
+// invisibili al Tester/Optimization/.set, impossibile ottimizzarli sul backtest
+// MQL5 reale come richiesto. Nessuna di queste viene mai riassegnata a runtime
+// se non da g_run_AtrSLMult/TpMult (NXS_RuntimeSettings.mqh), che a loro volta
+// partono da questi due come default e restano tali in Strategy Tester (il
+// polling remoto dal sito non gira nel Tester).
+input double   InpATR_SL_Mult      = 2.0;    // v2.0.14: 1.8→2.0 (SL piu' largo su M5 gold)
+input double   InpATR_TP_Mult      = 2.6;
+input double   InpMinSLMult        = 1.5;    // v2.0.14: pavimento minimo moltiplicatore SL
 
 // input group "=== CLOSE & REVERSE ==="
 bool     InpEnableCloseReverse = true;
@@ -480,7 +487,11 @@ double   InpAB_ScoreBonus_DDHard = 10.0; // require MinEntryScore+10 when DD har
 // input group "=== GRID / PYRAMID / SPLIT ==="
 bool     InpEnableGrid       = false;
 double   InpGridStepATR      = 1.2;
-bool     InpEnablePyramid    = false;
+bool     InpEnablePyramid    = true;    // 27/08 - gia' costruito e auditato (AUD0-ADD-005/006/007),
+                                         // rispetta lo stesso preflight di rischio delle entrate normali;
+                                         // era solo spento di default. Max 3 gambe pyramid CONTEMPORANEE
+                                         // su tutto il conto (non per-posizione), +1 ATR di profitto
+                                         // e velocity concorde richiesti prima di ogni aggiunta.
 bool     InpEnableSplit      = true;
 
 // input group "=== WEB BRIDGE ==="
