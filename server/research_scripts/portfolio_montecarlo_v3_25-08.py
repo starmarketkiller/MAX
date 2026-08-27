@@ -41,8 +41,13 @@ GRID_POINTS = 101
 # per il drag da rischio percentuale composto. Con rischio piatto 1% lo
 # stavo SOTTOSTIMANDO, non sovrastimando.
 RISK_PCT_BY_STRAT = {
-    "ADX_RSI": 2.5, "SAR": 5.0, "MACD": 0.5, "FVG_CONT": 0.5,
-    "EMA_PULLBACK": 5.0, "OTE_CONT": 0.5, "TSI": 0.3, "RSI_DIV": 1.5,
+    # 27/08 - riallineato a NXS_Profile_Risk (NXS_StrategyProfiles.mqh) COME
+    # E' ORA nel codice live: SAR e EMA_PULLBACK erano gia' stati abbassati
+    # (5.0->1.0 e 5.0->2.5) in una sessione precedente proprio a causa di
+    # QUESTO Monte Carlo - lo script pero' era rimasto con i valori vecchi.
+    # Tutti gli altri invariati (confermati via grep sul codice).
+    "ADX_RSI": 2.5, "SAR": 1.0, "MACD": 0.5, "FVG_CONT": 0.5,
+    "EMA_PULLBACK": 2.5, "OTE_CONT": 0.5, "TSI": 0.3, "RSI_DIV": 1.5,
     "BOLLINGER": 0.6, "BREAKOUT_ACC": 0.5, "MALAYSIAN_SNR": 1.8,
     "STRUCT_REACT": 0.5,
 }

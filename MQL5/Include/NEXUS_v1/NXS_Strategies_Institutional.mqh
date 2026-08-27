@@ -430,7 +430,16 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
    bool bosDownH4 = (swingLoH4 > 0 && cH4 < swingLoH4);
 
    double wMid = (pwh + pwl) * 0.5;
-   g_wexpState.armedAtH4Bar = h4Bar1;
+   // 27/08 - FIX: NON marcare la barra H4 come "valutata" qui. chochUp/
+   // chochDown sono flag a cadenza M15 (NXS_ComputeStructureCore, resettati
+   // ogni barra M15) - veri solo per la durata di UNA barra M15 dentro le
+   // ~16 che compongono la barra H4. Segnare armedAtH4Bar incondizionatamente
+   // al primo tick della barra H4 blocca tutti i tick successivi PRIMA che
+   // il choch possa mai diventare vero durante quella barra H4 - risultato
+   // (verificato su Tester MT5 a tick reali, 10 mesi): 0 trade. Va marcata
+   // SOLO quando ci si arma davvero, cosi' si continua a ricontrollare a
+   // ogni tick per tutta la durata della barra H4 (comportamento originale
+   // pre-refactor), fino a intercettare il momento in cui il choch e' vero.
 
    if(bid < wMid && cH4 > oH4 && bosUpH4 && bid > wOpen && g_struct.chochUp){
       g_wexpState.state = WEXP_WAITING_LTF;
@@ -438,6 +447,7 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
       g_wexpState.pwh = pwh; g_wexpState.pwl = pwl;
       g_wexpState.barsWaited = 0;
       g_wexpState.lastM15Bar = iTime(g_sym, PERIOD_M15, 1);
+      g_wexpState.armedAtH4Bar = h4Bar1;
       return s;
    }
    if(bid > wMid && cH4 < oH4 && bosDownH4 && bid < wOpen && g_struct.chochDown){
@@ -446,6 +456,7 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
       g_wexpState.pwh = pwh; g_wexpState.pwl = pwl;
       g_wexpState.barsWaited = 0;
       g_wexpState.lastM15Bar = iTime(g_sym, PERIOD_M15, 1);
+      g_wexpState.armedAtH4Bar = h4Bar1;
       return s;
    }
    return s;
