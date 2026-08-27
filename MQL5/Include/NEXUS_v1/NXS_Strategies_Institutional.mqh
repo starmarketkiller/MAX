@@ -314,20 +314,99 @@ SNXSSignal NXS_Strat_NYReversal(SNXSSweepExt &sw){
 // mancava del tutto la verifica che il displacement rompa uno swing H4
 // (BOS) - senza quella non e' "displacement che produce continuation", e'
 // solo "una candela H4 abbastanza grande".
+// 26/08 - macchina a stati a due tappe (proposta esplicita dell'utente
+// dopo la scoperta RISK_SIZE: lo stop nativo 1.5xATR(D1) dal livello
+// settimanale e' spesso $30-45, che al lotto minimo su un conto piccolo
+// supera l'8% e l'ordine viene rifiutato prima ancora dello spread).
+// Verificato in Python (weekly_exp_ltf_entry_structural_trail_26-08.py,
+// ricetta CON filtro CHOCH): nativo PF1.18 n=16 rischio mediano $38 ->
+// ingresso raffinato + BE/trailing PF1.64 n=15 rischio mediano $3.51,
+// rifiuti RISK_SIZE a conto $500 dal 37.5% al 6.7%. Campione ancora
+// piccolo (n=15-16), prima conferma live ancora da avere.
+//
+// STAGE 1 (IDLE): il trigger H4/settimanale resta IDENTICO a prima -
+// non e' il segnale a cambiare, e' cosa succede DOPO che scatta.
+// STAGE 2 (WAITING_LTF): invece di entrare subito con lo stop nativo
+// largo, aspetta fino a NXS_WEXP_MAX_WAIT_M15 barre M15 una vera
+// candela di reazione (stessa logica di NXS_HasPriceReaction: pin bar
+// o chiusura direzionale) DENTRO la finestra aperta dal trigger H4, e
+// usa il suo estremo (+-0.2xATR M15) come stop - molto piu' stretto.
+// Target: lasciato come "tetto di sicurezza" lontano (stesso calcolo
+// Fibonacci di prima) - la gestione vera del profitto e' delegata a
+// NXS_WeeklyExpManage() (breakeven 1.0R + trailing strutturale 1.5R,
+// vedi NXS_WeeklyExpManage.mqh), che di solito chiude prima del tetto.
+enum ENUM_NXS_WEXP_STATE { WEXP_IDLE = 0, WEXP_WAITING_LTF };
+#define NXS_WEXP_MAX_WAIT_M15 8
+struct SNXSWExpState {
+   int      state;
+   int      dir;             // +1 buy, -1 sell
+   double   pwh, pwl;        // per il calcolo del target
+   datetime armedAtH4Bar;    // barra H4 gia' valutata (evita ri-armare sullo stesso H4)
+   int      barsWaited;
+   datetime lastM15Bar;
+};
+SNXSWExpState g_wexpState;
+
 SNXSSignal NXS_Strat_WeeklyRangeExp(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "WEEKLY_EXP";
    if(!InpUseStrat_WeeklyExp) return s;
+
+   // ---- STAGE 2: in attesa della conferma M15 ----
+   if(g_wexpState.state == WEXP_WAITING_LTF){
+      datetime m15Bar1 = iTime(g_sym, PERIOD_M15, 1);
+      if(m15Bar1 == g_wexpState.lastM15Bar) return s;   // nessuna nuova barra M15
+      g_wexpState.lastM15Bar = m15Bar1;
+      g_wexpState.barsWaited++;
+      if(g_wexpState.barsWaited > NXS_WEXP_MAX_WAIT_M15){
+         g_wexpState.state = WEXP_IDLE;
+         return s;
+      }
+      double a15 = NXS_ATRv(PERIOD_M15, 1);
+      if(a15 <= 0) return s;
+      double o1 = iOpen (g_sym, PERIOD_M15, 1), c1 = iClose(g_sym, PERIOD_M15, 1);
+      double h1 = iHigh (g_sym, PERIOD_M15, 1), l1 = iLow  (g_sym, PERIOD_M15, 1);
+      double body = MathAbs(c1 - o1);
+      if(body < a15 * 0.3) return s;
+      int dir = g_wexpState.dir;
+      double upWick = h1 - MathMax(o1, c1), dnWick = MathMin(o1, c1) - l1;
+      double rng = MathMax(h1 - l1, _Point);
+      bool reacted = false; double sl0 = 0;
+      if(dir == 1){
+         bool pin = (dnWick > body * 1.5 && dnWick > rng * 0.5);
+         if(pin || c1 > o1){ reacted = true; sl0 = l1 - 0.2 * a15; }
+      } else {
+         bool pin = (upWick > body * 1.5 && upWick > rng * 0.5);
+         if(pin || c1 < o1){ reacted = true; sl0 = h1 + 0.2 * a15; }
+      }
+      if(!reacted) return s;
+
+      s.dir = (dir == 1) ? DIR_BUY : DIR_SELL;
+      s.entryRef = (dir == 1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+      s.slPrice = sl0;
+      double leg = g_wexpState.pwh - g_wexpState.pwl;
+      if(dir == 1){
+         double fib1272 = g_wexpState.pwh + 0.272 * leg;
+         s.tpPrice = MathMax(MathMax(g_wexpState.pwh, fib1272), s.entryRef + 2.6 * (s.entryRef - s.slPrice));
+         s.reason  = "WK-EXP bull:LTF-refined entry";
+      } else {
+         double fib1272 = g_wexpState.pwl - 0.272 * leg;
+         s.tpPrice = MathMin(MathMin(g_wexpState.pwl, fib1272), s.entryRef - 2.6 * (s.slPrice - s.entryRef));
+         s.reason  = "WK-EXP bear:LTF-refined entry";
+      }
+      s.score = 70.0;
+      g_wexpState.state = WEXP_IDLE;   // one-shot
+      return s;
+   }
+
+   // ---- STAGE 1: trigger H4/settimanale (logica invariata) ----
    double atr = _inst_atr();
-   // PWH/PWL = previous week (W1, shift 1)
    double pwh = iHigh(g_sym, PERIOD_W1, 1);
    double pwl = iLow (g_sym, PERIOD_W1, 1);
-   double wOpen = iOpen(g_sym, PERIOD_W1, 0);   // current week open
+   double wOpen = iOpen(g_sym, PERIOD_W1, 0);
    if(pwh <= 0 || pwl <= 0 || wOpen <= 0) return s;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
 
-   // ATR H4 dedicato (handle statico locale, non g_atr che qui e' l'ATR D1
-   // del profilo di questa strategia - unita' sbagliata per un corpo H4).
    static int hAtrH4 = INVALID_HANDLE;
    if(hAtrH4 == INVALID_HANDLE) hAtrH4 = iATR(g_sym, InpTFHigh, 14);
    double atrH4Arr[]; double atrH4 = 0;
@@ -340,7 +419,9 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
    double bH4 = MathAbs(cH4 - oH4);
    if(bH4 < atrH4 * 0.8) return s;
 
-   // BOS: il displacement H4 deve rompere uno swing H4 precedente (mancava del tutto).
+   datetime h4Bar1 = iTime(g_sym, InpTFHigh, 1);
+   if(h4Bar1 == g_wexpState.armedAtH4Bar) return s;   // questa barra H4 gia' valutata
+
    int hiIdxH4 = iHighest(g_sym, InpTFHigh, MODE_HIGH, 15, 2);
    int loIdxH4 = iLowest (g_sym, InpTFHigh, MODE_LOW,  15, 2);
    double swingHiH4 = hiIdxH4 >= 0 ? iHigh(g_sym, InpTFHigh, hiIdxH4) : 0;
@@ -348,28 +429,23 @@ SNXSSignal NXS_Strat_WeeklyRangeExp(){
    bool bosUpH4   = (swingHiH4 > 0 && cH4 > swingHiH4);
    bool bosDownH4 = (swingLoH4 > 0 && cH4 < swingLoH4);
 
-   // BUY: weekly discount (below midpoint), bullish 4H displacement con BOS, weekly open reclaim
    double wMid = (pwh + pwl) * 0.5;
+   g_wexpState.armedAtH4Bar = h4Bar1;
+
    if(bid < wMid && cH4 > oH4 && bosUpH4 && bid > wOpen && g_struct.chochUp){
-      s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-      s.slPrice = MathMin(pwl, bid - 1.5 * atr);
-      // v2.0.9 P3 #25: Fibonacci 1.272 extension target if strong leg
-      double leg = pwh - pwl;
-      double fib1272 = pwh + 0.272 * leg;
-      s.tpPrice = MathMax(MathMax(pwh, fib1272), s.entryRef + 2.6 * (s.entryRef - s.slPrice));
-      s.score   = 70.0;
-      s.reason  = "WK-EXP bull:disc+disp+fib1.272";
+      g_wexpState.state = WEXP_WAITING_LTF;
+      g_wexpState.dir = 1;
+      g_wexpState.pwh = pwh; g_wexpState.pwl = pwl;
+      g_wexpState.barsWaited = 0;
+      g_wexpState.lastM15Bar = iTime(g_sym, PERIOD_M15, 1);
       return s;
    }
-   // SELL mirror
    if(bid > wMid && cH4 < oH4 && bosDownH4 && bid < wOpen && g_struct.chochDown){
-      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
-      s.slPrice = MathMax(pwh, bid + 1.5 * atr);
-      double leg = pwh - pwl;
-      double fib1272 = pwl - 0.272 * leg;
-      s.tpPrice = MathMin(MathMin(pwl, fib1272), s.entryRef - 2.6 * (s.slPrice - s.entryRef));
-      s.score   = 70.0;
-      s.reason  = "WK-EXP bear:prem+disp+fib1.272";
+      g_wexpState.state = WEXP_WAITING_LTF;
+      g_wexpState.dir = -1;
+      g_wexpState.pwh = pwh; g_wexpState.pwl = pwl;
+      g_wexpState.barsWaited = 0;
+      g_wexpState.lastM15Bar = iTime(g_sym, PERIOD_M15, 1);
       return s;
    }
    return s;

@@ -167,7 +167,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "TURTLE_SOUP")       { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1h FORTE PF1.83 R2.0
    if(name == "SWING_FALSEBREAK")  { slMult=1.5; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 24/08 - stessi mult del backtest Python di validazione (1h), nessuna ottimizzazione uscite ancora fatta - vedi NXS_Strat_SwingFalseBreak
    if(name == "Z_SCORE_BREAKOUT")  { slMult=1.0; tpMult=4.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 24/08 - slMult INERTE come TURTLE_SOUP/CRT (stop vero: strutturale M5 in NXS_Strat_ZScoreBreakout), tpMult=4.0 e' quello realmente usato (4.0xATR, dal backtest Python del 17/08)
-   if(name == "WEEKLY_EXP")        { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63
+   // 26/08 - ingresso raffinato M15 (vedi NXS_Strat_WeeklyRangeExp in
+   // NXS_Strategies_Institutional.mqh) invece dello stop nativo largo
+   // (1.5xATR-D1 dal livello settimanale, mediana $38, bloccato da
+   // RISK_SIZE 37.5% delle volte a conto $500). Python: PF1.18->1.64,
+   // rischio mediano $38->$3.51, rifiuti RISK_SIZE 37.5%->6.7%. slMult/
+   // tpMult sotto restano inerti (stop nativo dalla candela M15 di
+   // reazione, uscita gestita da NXS_WeeklyExpManage.mqh).
+   if(name == "WEEKLY_EXP")        { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }
    // Le session/Elliott (SILVER_BULLET, AMD_*, JUDAS, LDN/NY_REVERSAL, PO3,
    // ELLIOTT): da ottimizzare su MT5/intraday -> nessun profilo, usano i globali.
    return false;
@@ -421,6 +428,11 @@ bool NXS_Profile_TrailForceOff(const string name){
    if(name == "OTE_CONT") return true;
    if(name == "STRUCT_REACT") return true;   // 25/08 - vedi NXS_Profile_DirectionLock: fisso (PF2.36) leggermente sotto trail2.5 (PF2.43) ma piu' coerente col pattern gia' visto oggi (STRUCT_REACT preferisce target fisso, vedi anche il test Fibonacci-reverse)
    if(name == "ICHIMOKU") return true;       // 25/08: fisso PF1.12 batte ogni larghezza di trailing provata (1.04-1.11)
+   // 26/08 - WEEKLY_EXP ha ora una gestione dedicata (NXS_WeeklyExpManage.mqh,
+   // breakeven 1.0R + trailing strutturale su candela M15 precedente) - il
+   // trailing ATR generico deve restare fuori per non litigare sullo stesso
+   // stop con logiche diverse.
+   if(name == "WEEKLY_EXP") return true;
    return false;
 }
 

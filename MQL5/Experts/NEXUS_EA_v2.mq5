@@ -78,6 +78,7 @@
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
 #include <NEXUS_v1\NXS_Protections.mqh>
 #include <NEXUS_v1\NXS_TrailingATR.mqh>
+#include <NEXUS_v1\NXS_WeeklyExpManage.mqh>
 #include <NEXUS_v1\NXS_Notify.mqh>
 #include <NEXUS_v1\NXS_Dashboard.mqh>
 #include <NEXUS_v1\NXS_HistorySync.mqh>
@@ -957,6 +958,7 @@ void OnTick(){
    // Management on every tick
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
+   NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
