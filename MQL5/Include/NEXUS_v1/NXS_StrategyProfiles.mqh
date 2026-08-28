@@ -256,6 +256,10 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // 28/08 - RSI Divergence su pivot (portata da Pine TradingView): H1,
    // coerente con la finestra di 5-60 barre dei pivot dello script originale.
    if(name == "RSI_DIV_PINE")      return PERIOD_H1;
+   // 28/08 - Ichimoku+HullMA+MACD (portata da Pine TradingView): H4, coerente
+   // con Ichimoku (pensato per TF piu' alti) e i 5 filtri simultanei gia'
+   // molto restrittivi di suo.
+   if(name == "ICHIMOKU_HULL_MACD") return PERIOD_H4;
    return PERIOD_CURRENT;
 }
 
@@ -370,6 +374,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "ICHIMOKU_HULL_MACD") return 0.5;  // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

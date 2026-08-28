@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 43
+#define NXS_LIVE_STRATEGY_COUNT 44
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -29,6 +29,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="FVG_CONT" ||
           id=="FVG_MIT" ||
           id=="ICHIMOKU" ||
+          id=="ICHIMOKU_HULL_MACD" ||
           id=="IFVG" ||
           id=="JUDAS_SWING" ||
           id=="LDN_REVERSAL" ||
@@ -78,35 +79,36 @@ string NXS_StrategyIdAt(int i){
    if(i==11) return "FVG_CONT";
    if(i==12) return "FVG_MIT";
    if(i==13) return "ICHIMOKU";
-   if(i==14) return "IFVG";
-   if(i==15) return "JUDAS_SWING";
-   if(i==16) return "LDN_REVERSAL";
-   if(i==17) return "LIQ_SWEEP";
-   if(i==18) return "LIQ_VOID";
-   if(i==19) return "LONDON_BO";
-   if(i==20) return "MACD";
-   if(i==21) return "MACD_SMA200";
-   if(i==22) return "MALAYSIAN_SNR";
-   if(i==23) return "NY_REVERSAL";
-   if(i==24) return "OB_MIT";
-   if(i==25) return "ORDER_BLOCK";
-   if(i==26) return "OTE_CONT";
-   if(i==27) return "PMAX";
-   if(i==28) return "PO3";
-   if(i==29) return "RANGE_FADE";
-   if(i==30) return "RSI_DIV";
-   if(i==31) return "RSI_DIV_PINE";
-   if(i==32) return "SAR";
-   if(i==33) return "SH_BMS_RTO";
-   if(i==34) return "SILVER_BULLET";
-   if(i==35) return "SMS_BMS_RTO";
-   if(i==36) return "STRUCT_REACT";
-   if(i==37) return "SWING_FALSEBREAK";
-   if(i==38) return "THREE_BAR_DELIVERY_BREAK";
-   if(i==39) return "TSI";
-   if(i==40) return "TURTLE_SOUP";
-   if(i==41) return "WEEKLY_EXP";
-   if(i==42) return "Z_SCORE_BREAKOUT";
+   if(i==14) return "ICHIMOKU_HULL_MACD";
+   if(i==15) return "IFVG";
+   if(i==16) return "JUDAS_SWING";
+   if(i==17) return "LDN_REVERSAL";
+   if(i==18) return "LIQ_SWEEP";
+   if(i==19) return "LIQ_VOID";
+   if(i==20) return "LONDON_BO";
+   if(i==21) return "MACD";
+   if(i==22) return "MACD_SMA200";
+   if(i==23) return "MALAYSIAN_SNR";
+   if(i==24) return "NY_REVERSAL";
+   if(i==25) return "OB_MIT";
+   if(i==26) return "ORDER_BLOCK";
+   if(i==27) return "OTE_CONT";
+   if(i==28) return "PMAX";
+   if(i==29) return "PO3";
+   if(i==30) return "RANGE_FADE";
+   if(i==31) return "RSI_DIV";
+   if(i==32) return "RSI_DIV_PINE";
+   if(i==33) return "SAR";
+   if(i==34) return "SH_BMS_RTO";
+   if(i==35) return "SILVER_BULLET";
+   if(i==36) return "SMS_BMS_RTO";
+   if(i==37) return "STRUCT_REACT";
+   if(i==38) return "SWING_FALSEBREAK";
+   if(i==39) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==40) return "TSI";
+   if(i==41) return "TURTLE_SOUP";
+   if(i==42) return "WEEKLY_EXP";
+   if(i==43) return "Z_SCORE_BREAKOUT";
    return "";
 }
 

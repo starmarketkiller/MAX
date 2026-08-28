@@ -22,6 +22,7 @@ export const STRATEGY_REGISTRY = [
   ["FVG_MIT","Fvg Mit","SMC",true,true],
   ["FVG_MIT_WINDOW","Fvg Mit Window","SCALP",false,true],
   ["ICHIMOKU","Ichimoku","TREND",true,true],
+  ["ICHIMOKU_HULL_MACD","Ichimoku Hull Macd","UNCLASSIFIED",true,false],
   ["IFVG","Ifvg","SMC",true,true],
   ["IFVG_CHOCH_WINDOW","Ifvg Choch Window","SCALP",false,true],
   ["JUDAS_SWING","Judas Swing","SESSION",true,true],

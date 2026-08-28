@@ -750,6 +750,11 @@ input bool     InpStrat_MacdSma200       = false;
 // Divergence Indicator"): pivot RSI veri (non finestra fissa come il nostro
 // RSI_DIV nativo). Mai verificata su MT5 - disattivata come le altre.
 input bool     InpStrat_RsiDivPine       = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("Ichimoku +
+// Daily-Candle_X + HULL-MA_X + MacD"): 5 filtri in AND (Hull MA in salita,
+// trend giornaliero, prezzo vs Hull MA, cloud Ichimoku, MACD su Hull MA).
+// Mai verificata su MT5 - disattivata come le altre nuove aggiunte.
+input bool     InpStrat_IchimokuHull     = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'

@@ -1138,6 +1138,25 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "divergenza su pivot RSI veri (lbL=1,lbR=3,range 5-60 barre), diverso dal nostro RSI_DIV nativo (finestra fissa 8 barre, gia forte PF1.21 reale). TF H1"
+    },
+    {
+      "nome": "ICHIMOKU_HULL_MACD",
+      "selector_index": 47,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (Ichimoku + Daily-Candle_X + HULL-MA_X + MacD)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_IchimokuHull=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "5 filtri in AND: Hull MA in salita, trend giornaliero D1, prezzo vs Hull MA, cloud Ichimoku, MACD su Hull MA (signal approssimata a media semplice 3 barre). Probabile segnale molto raro per via dei 5 filtri simultanei. TF H4"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

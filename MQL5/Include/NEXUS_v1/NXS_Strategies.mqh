@@ -204,6 +204,48 @@ double NXS_SMAv(int period, ENUM_TIMEFRAMES tf, int shift){
    return a[0];
 }
 
+// 28/08 - WMA (stesso pattern), serve come mattone per la Hull MA vera (non
+// approssimata con una EMA) usata dallo script Ichimoku+HullMA+MACD.
+int             g_wmaCacheP[16];
+ENUM_TIMEFRAMES g_wmaCacheTF[16];
+int             g_wmaCacheH[16];
+int             g_wmaCacheN = 0;
+double NXS_WMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_wmaCacheN; i++)
+      if(g_wmaCacheP[i] == period && g_wmaCacheTF[i] == tf){ h = g_wmaCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iMA(g_sym, tf, period, 0, MODE_LWMA, PRICE_CLOSE);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_wmaCacheN < 16){
+         g_wmaCacheP[g_wmaCacheN] = period; g_wmaCacheTF[g_wmaCacheN] = tf;
+         g_wmaCacheH[g_wmaCacheN] = h; g_wmaCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
+// Hull MA vera: WMA(2*WMA(n/2)-WMA(n), round(sqrt(n))). WMA(n/2) e WMA(n)
+// vengono lette da handle nativi (cache sopra); la WMA finale sulla serie
+// derivata va fatta a mano (non e' una serie con un proprio handle MT5).
+double NXS_HMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int halfP = MathMax(1, period / 2);
+   int sqrtP = (int)MathMax(1, MathRound(MathSqrt(period)));
+   double sum = 0, wsum = 0;
+   for(int k = 0; k < sqrtP; k++){
+      double wHalf = NXS_WMAv(halfP, tf, shift + k);
+      double wFull = NXS_WMAv(period, tf, shift + k);
+      if(wHalf <= 0 || wFull <= 0) return 0.0;
+      double raw = 2.0 * wHalf - wFull;
+      double weight = (double)(sqrtP - k);   // piu' peso alla barra piu' recente
+      sum += raw * weight;
+      wsum += weight;
+   }
+   return (wsum > 0) ? sum / wsum : 0.0;
+}
+
 //------------------------------------ K1 ADX_RSI (riportata alla logica del sito:
 // trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.
 // v2.5.1 - il "backtest" a cui si divergeva era il motore sito, che pero' non
@@ -420,6 +462,73 @@ SNXSSignal NXS_Strat_MacdSma200(){
       s.dir = DIR_BUY;  s.score = 60; s.reason = "MACD_SMA200_bull";
    } else if(crossDown && macd < 0 && fastMA < slowMA && closeSlowAgo < veryslowMA){
       s.dir = DIR_SELL; s.score = 60; s.reason = "MACD_SMA200_bear";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4e Ichimoku + Hull MA + MACD (script Pine pubblico)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("Ichimoku +
+// Daily-Candle_X + HULL-MA_X + MacD"). Inizialmente scartata per sospetto
+// repaint, poi corretta la valutazione: la revisione (set 2020) usa
+// barmerge.lookahead_off su ogni security() e ha commissione/slippage -
+// merita un vero test MT5, non uno scarto a priori (vedi vault).
+//
+// 5 condizioni in AND (fedeli all'originale, non semplificate):
+// 1) Hull MA in salita: hma(price,14) > hma(price,14) di 1 barra fa - dato
+//    che la Hull MA e' un filtro lineare, hma(price[1],n) a una barra equivale
+//    esattamente a hma(price,n) alla barra precedente, quindi si riduce a un
+//    confronto NXS_HMAv(shift=1) vs NXS_HMAv(shift=2).
+// 2) Trend giornaliero: apertura D1 di ieri (chiusa) > apertura D1 di
+//    l'altro ieri (chiusa) - "Daily-Candle_cross" originale.
+// 3) Prezzo (apertura, fonte di default dello script) sopra la Hull MA di 1
+//    barra fa.
+// 4) Cloud Ichimoku rialzista (leadLine1>leadLine2, letti dagli stessi
+//    buffer gia' cachati per il TF attivo).
+// 5) MACD costruito su Hull MA (non EMA) sopra la sua signal line - la
+//    signal line dell'originale e' anch'essa una Hull MA (hma(MACD,9));
+//    qui approssimata con una media semplice del MACD sulle ultime
+//    round(sqrt(9))=3 barre per restare dentro un costo di calcolo
+//    ragionevole - unica semplificazione dichiarata, il resto e' fedele.
+struct SNXSIcHullState { datetime lastBarTime; };
+SNXSIcHullState g_icHullState;
+
+SNXSSignal NXS_Strat_IchimokuHullMacd(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "ICHIMOKU_HULL_MACD";
+   if(!InpStrat_IchimokuHull || !NXS_SelectorAllows(47)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_icHullState.lastBarTime == curBar0) return s;
+   g_icHullState.lastBarTime = curBar0;
+
+   int hmaLen = 14, macdFast = 12, macdSlow = 26, macdSig = 9;
+   double hma1 = NXS_HMAv(hmaLen, tf, 1), hma2 = NXS_HMAv(hmaLen, tf, 2);
+   if(hma1 <= 0 || hma2 <= 0) return s;
+
+   double dOpen1 = iOpen(g_sym, PERIOD_D1, 1), dOpen2 = iOpen(g_sym, PERIOD_D1, 2);
+   if(dOpen1 <= 0 || dOpen2 <= 0) return s;
+
+   double price = iOpen(g_sym, tf, 1);   // "Source of Price" default = open
+
+   double leadLine1 = g_ichiSpanA, leadLine2 = g_ichiSpanB;
+   if(leadLine1 <= 0 || leadLine2 <= 0) return s;
+
+   double macdNow = NXS_HMAv(macdFast, tf, 1) - NXS_HMAv(macdSlow, tf, 1);
+   double sigSum = 0; int sigN = (int)MathMax(1, MathRound(MathSqrt(macdSig)));
+   for(int k = 0; k < sigN; k++)
+      sigSum += NXS_HMAv(macdFast, tf, 1 + k) - NXS_HMAv(macdSlow, tf, 1 + k);
+   double aMacd = sigSum / sigN;
+   if(macdNow == 0 && aMacd == 0) return s;
+
+   bool hullUp   = hma1 > hma2;
+   bool hullDown = hma1 < hma2;
+   bool dailyUp   = dOpen1 > dOpen2;
+   bool dailyDown = dOpen1 < dOpen2;
+
+   if(hullUp && dailyUp && price > hma2 && leadLine1 > leadLine2 && macdNow > aMacd){
+      s.dir = DIR_BUY;  s.score = 62; s.reason = "IchiHullMacd_bull";
+   } else if(hullDown && dailyDown && price < hma2 && leadLine1 < leadLine2 && macdNow < aMacd){
+      s.dir = DIR_SELL; s.score = 62; s.reason = "IchiHullMacd_bear";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
