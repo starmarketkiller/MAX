@@ -484,6 +484,9 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 28/08 — MACD+SMA200, portata da script Pine TradingView pubblico (#45)
    if(InpStrat_MacdSma200     && NXS_SelectorAllows(45)) out[n++] = NXS_Strat_MacdSma200();
 
+   // 28/08 — RSI Divergence su pivot, portata da script Pine TradingView pubblico (#46)
+   if(InpStrat_RsiDivPine     && NXS_SelectorAllows(46)) out[n++] = NXS_Strat_RsiDivPine();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

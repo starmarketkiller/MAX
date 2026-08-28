@@ -1119,6 +1119,25 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "MACD su SMA (non EMA) + filtro trend SMA200, diverso dal nostro MACD nativo (K3, EMA-based). TF H4"
+    },
+    {
+      "nome": "RSI_DIV_PINE",
+      "selector_index": 46,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (RSI Divergence Indicator)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_RsiDivPine=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "divergenza su pivot RSI veri (lbL=1,lbR=3,range 5-60 barre), diverso dal nostro RSI_DIV nativo (finestra fissa 8 barre, gia forte PF1.21 reale). TF H1"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

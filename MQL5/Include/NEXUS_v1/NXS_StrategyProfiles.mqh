@@ -253,6 +253,9 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // 28/08 - MACD+SMA200 (portata da Pine TradingView): serve una SMA200
    // affidabile, H4 da abbastanza storia senza essere troppo lento a girare.
    if(name == "MACD_SMA200")       return PERIOD_H4;
+   // 28/08 - RSI Divergence su pivot (portata da Pine TradingView): H1,
+   // coerente con la finestra di 5-60 barre dei pivot dello script originale.
+   if(name == "RSI_DIV_PINE")      return PERIOD_H1;
    return PERIOD_CURRENT;
 }
 
@@ -366,6 +369,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

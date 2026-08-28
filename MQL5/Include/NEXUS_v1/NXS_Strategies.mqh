@@ -887,6 +887,76 @@ SNXSSignal NXS_Strat_Ichimoku(){
    return s;
 }
 
+//------------------------------------ H8b RSI Divergence su pivot (script Pine pubblico)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("RSI
+// Divergence Indicator"): metodo di rilevamento diverso dal nostro RSI_DIV
+// nativo appena sopra (finestra fissa 8 barre) - qui i pivot RSI veri
+// (minimo/massimo locale su lbL+lbR barre) e la distanza tra due pivot deve
+// stare in un range (5-60 barre di default), come nello script originale.
+// Non un sostituto: un secondo meccanismo da confrontare, dato che il
+// nostro nativo e' gia' forte (PF1.21 reale).
+struct SNXSRsiDivPineState { datetime lastBarTime; };
+SNXSRsiDivPineState g_rsiDivPineState;
+
+bool _nxs_rsidivpine_pivot_low(const double &rsi[], int n, int idx, int lbL, int lbR){
+   if(idx - lbL < 0 || idx + lbR >= n) return false;
+   double v = rsi[idx];
+   for(int k = idx - lbL; k <= idx + lbR; k++){ if(k != idx && rsi[k] < v) return false; }
+   return true;
+}
+bool _nxs_rsidivpine_pivot_high(const double &rsi[], int n, int idx, int lbL, int lbR){
+   if(idx - lbL < 0 || idx + lbR >= n) return false;
+   double v = rsi[idx];
+   for(int k = idx - lbL; k <= idx + lbR; k++){ if(k != idx && rsi[k] > v) return false; }
+   return true;
+}
+
+SNXSSignal NXS_Strat_RsiDivPine(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_RSI_DIV; s.stratName = "RSI_DIV_PINE";
+   if(!InpStrat_RsiDivPine || !NXS_SelectorAllows(46)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_rsiDivPineState.lastBarTime == curBar0) return s;
+   g_rsiDivPineState.lastBarTime = curBar0;
+
+   int lbL = 1, lbR = 3, rangeLower = 5, rangeUpper = 60;
+   int need = rangeUpper + lbR + lbL + 10;
+   double rsi[]; ArraySetAsSeries(rsi, true);
+   if(CopyBuffer(g_hRSI, 0, 0, need, rsi) < need) return s;
+   int n = ArraySize(rsi);
+
+   // scansione dal pivot piu' recente possibile (shift lbR) verso il passato:
+   // raccoglie i primi due pivot low e i primi due pivot high confermati.
+   int plIdx[2] = {-1,-1}, phIdx[2] = {-1,-1}, plN = 0, phN = 0;
+   for(int i = lbR; i < n - lbL && (plN < 2 || phN < 2); i++){
+      if(plN < 2 && _nxs_rsidivpine_pivot_low (rsi, n, i, lbL, lbR)) plIdx[plN++] = i;
+      if(phN < 2 && _nxs_rsidivpine_pivot_high(rsi, n, i, lbL, lbR)) phIdx[phN++] = i;
+   }
+
+   // Bullish regular: pivot RSI piu' recente > pivot precedente (minimo piu'
+   // alto), prezzo piu' basso, pivot fresco (confermato adesso, non vecchio).
+   if(plN == 2 && plIdx[0] <= lbR + 1){
+      int dist = plIdx[1] - plIdx[0];
+      if(dist >= rangeLower && dist <= rangeUpper){
+         double loRecent = iLow(g_sym, tf, plIdx[0]), loPrev = iLow(g_sym, tf, plIdx[1]);
+         if(rsi[plIdx[0]] > rsi[plIdx[1]] && loRecent < loPrev){
+            s.dir = DIR_BUY; s.score = 60; s.reason = "RSI_DIV_PINE_bull";
+         }
+      }
+   }
+   if(s.dir == DIR_NONE && phN == 2 && phIdx[0] <= lbR + 1){
+      int dist = phIdx[1] - phIdx[0];
+      if(dist >= rangeLower && dist <= rangeUpper){
+         double hiRecent = iHigh(g_sym, tf, phIdx[0]), hiPrev = iHigh(g_sym, tf, phIdx[1]);
+         if(rsi[phIdx[0]] < rsi[phIdx[1]] && hiRecent > hiPrev){
+            s.dir = DIR_SELL; s.score = 60; s.reason = "RSI_DIV_PINE_bear";
+         }
+      }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
 //------------------------------------ H8 RSI Divergence
 SNXSSignal NXS_Strat_RSIDiv(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_RSI_DIV; s.stratName = "RSI_DIV";

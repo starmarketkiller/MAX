@@ -746,6 +746,10 @@ input double   InpPMax_ATRMult           = 3.0;
 // piu' filtro di trend SMA200. Mai verificata su MT5 - disattivata come le
 // altre nuove aggiunte di stasera.
 input bool     InpStrat_MacdSma200       = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("RSI
+// Divergence Indicator"): pivot RSI veri (non finestra fissa come il nostro
+// RSI_DIV nativo). Mai verificata su MT5 - disattivata come le altre.
+input bool     InpStrat_RsiDivPine       = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'

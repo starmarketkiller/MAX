@@ -48,6 +48,7 @@ export const STRATEGY_REGISTRY = [
   ["PO3","Po3","AMD",true,true],
   ["RANGE_FADE","Range Fade","VOLATILITY",true,true],
   ["RSI_DIV","RSI Divergence","MOMENTUM",true,true],
+  ["RSI_DIV_PINE","Rsi Div Pine","UNCLASSIFIED",true,false],
   ["SAR","Parabolic SAR","MOMENTUM",true,true],
   ["SAR_ADX20","Sar Adx20","SCALP",false,true],
   ["SAR_FLIP","Sar Flip","SCALP",false,true],
