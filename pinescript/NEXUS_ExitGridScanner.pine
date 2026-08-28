@@ -1,0 +1,125 @@
+//@version=6
+indicator("NEXUS EA - Exit Grid Scanner (SAR)", shorttitle="NXS-ExitGrid", overlay=false)
+
+// =============================================================================
+// METODO RIUSABILE per ottimizzare SL/TP su TradingView senza editing manuale
+// -----------------------------------------------------------------------------
+// Invece di cambiare a mano SL/TP nello script e rilanciare il tester per ogni
+// combinazione, questo indicator simula in UN SOLO run TUTTE le combinazioni
+// di una griglia SL x TP sullo stesso segnale di ingresso, e mostra una
+// tabella con Profit Factor / trade / WR per ciascuna cella.
+//
+// Per riusarlo su un'altra strategia: sostituire SOLO il blocco
+// "ENTRY SIGNAL" qui sotto con la logica della strategia da testare (stessa
+// forma di NXS_<nome>.pine, stesso stile long/shortCond) — il motore di
+// griglia/simulazione/tabella sotto resta invariato.
+//
+// Approssimazioni consapevoli (valide per il confronto RELATIVO fra
+// combinazioni, non per il PnL assoluto — quello si conferma dopo, sul
+// vincitore, con lo script "vero" a costi inclusi):
+// - Entry alla chiusura della barra di segnale (non alla barra successiva
+//   come nello script strategy() reale) - stessa convenzione per tutte le
+//   combo, non distorce il confronto fra loro.
+// - Se SL e TP sono toccati nella stessa barra, vince lo SL (ipotesi
+//   prudente) - stessa convenzione per tutte le combo.
+// - Nessun costo/spread modellato qui - il confronto è sulla GEOMETRIA
+//   SL/TP, non sull'edge economico netto.
+// =============================================================================
+
+// ---------------- ENTRY SIGNAL (sostituire per altre strategie) -----------
+sarStart     = input.float(0.02, "SAR Step", group="Entry (SAR)")
+sarMax       = input.float(0.2, "SAR Max", group="Entry (SAR)")
+useHtfFilter = input.bool(true, "Filtro HTF (EMA200 stesso TF)", group="Entry (SAR)")
+
+atrLen    = input.int(14, "ATR length", group="Generale")
+startDate = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da", group="Generale")
+endDate   = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a", group="Generale")
+
+atrVal  = ta.atr(atrLen)
+sarVal  = ta.sar(sarStart, sarStart, sarMax)
+ema9    = ta.ema(close, 9)
+ema21   = ta.ema(close, 21)
+ema200  = ta.ema(close, 200)
+inRange = time >= startDate and time <= endDate
+
+htfBlocksBuy  = useHtfFilter and close < ema200
+htfBlocksSell = useHtfFilter and close > ema200
+
+longCond  = inRange and sarVal < close and ema9 > ema21 and not htfBlocksBuy
+shortCond = inRange and sarVal > close and ema9 < ema21 and not htfBlocksSell
+
+// ---------------- GRIGLIA SL / TP (in multipli di ATR) --------------------
+var float[] slList = array.from(1.0, 1.5, 2.0, 2.5, 3.0)
+var float[] tpList = array.from(2.0, 3.0, 4.0, 5.0, 6.0, 8.0)
+nSL = array.size(slList)
+nTP = array.size(tpList)
+nCombo = nSL * nTP
+
+var float[] gProfit = array.new_float(nCombo, 0.0)
+var float[] gLoss   = array.new_float(nCombo, 0.0)
+var int[]   gWins   = array.new_int(nCombo, 0)
+var int[]   gTrades = array.new_int(nCombo, 0)
+var bool[]  gInPos  = array.new_bool(nCombo, false)
+var int[]   gDir    = array.new_int(nCombo, 0)
+var float[] gEntryP = array.new_float(nCombo, na)
+var float[] gSLPx   = array.new_float(nCombo, na)
+var float[] gTPPx   = array.new_float(nCombo, na)
+
+for i = 0 to nCombo - 1
+    slIdx = i % nSL
+    tpIdx = int(math.floor(i / nSL))
+    slMult = array.get(slList, slIdx)
+    tpMult = array.get(tpList, tpIdx)
+
+    if array.get(gInPos, i)
+        d  = array.get(gDir, i)
+        sl = array.get(gSLPx, i)
+        tp = array.get(gTPPx, i)
+        ep = array.get(gEntryP, i)
+        hitSL = d == 1 ? low <= sl : high >= sl
+        hitTP = d == 1 ? high >= tp : low <= tp
+        if hitSL
+            r = d == 1 ? sl - ep : ep - sl
+            array.set(gLoss, i, array.get(gLoss, i) + math.abs(r))
+            array.set(gTrades, i, array.get(gTrades, i) + 1)
+            array.set(gInPos, i, false)
+        else if hitTP
+            r = d == 1 ? tp - ep : ep - tp
+            array.set(gProfit, i, array.get(gProfit, i) + math.abs(r))
+            array.set(gWins, i, array.get(gWins, i) + 1)
+            array.set(gTrades, i, array.get(gTrades, i) + 1)
+            array.set(gInPos, i, false)
+
+    if not array.get(gInPos, i)
+        if longCond
+            array.set(gInPos, i, true)
+            array.set(gDir, i, 1)
+            array.set(gEntryP, i, close)
+            array.set(gSLPx, i, close - slMult * atrVal)
+            array.set(gTPPx, i, close + tpMult * atrVal)
+        else if shortCond
+            array.set(gInPos, i, true)
+            array.set(gDir, i, -1)
+            array.set(gEntryP, i, close)
+            array.set(gSLPx, i, close + slMult * atrVal)
+            array.set(gTPPx, i, close - tpMult * atrVal)
+
+// ---------------- TABELLA RISULTATI (solo sull'ultima barra) --------------
+var table resultTable = table.new(position.top_right, nTP + 1, nSL + 1, border_width=1, border_color=color.gray)
+
+if barstate.islast
+    table.cell(resultTable, 0, 0, "SL\\TP", text_color=color.white, bgcolor=color.new(color.gray, 20))
+    for j = 0 to nTP - 1
+        table.cell(resultTable, j + 1, 0, str.tostring(array.get(tpList, j), "#.#"), text_color=color.white, bgcolor=color.new(color.gray, 20))
+    for i = 0 to nSL - 1
+        table.cell(resultTable, 0, i + 1, str.tostring(array.get(slList, i), "#.#"), text_color=color.white, bgcolor=color.new(color.gray, 20))
+        for j = 0 to nTP - 1
+            idx = j * nSL + i
+            trades = array.get(gTrades, idx)
+            profit = array.get(gProfit, idx)
+            loss   = array.get(gLoss, idx)
+            wins   = array.get(gWins, idx)
+            pf     = loss > 0 ? profit / loss : (profit > 0 ? 99.0 : 0.0)
+            cellTxt = trades > 0 ? str.tostring(pf, "#.##") + "\n" + str.tostring(trades) + "tr" : "-"
+            cellColor = trades == 0 ? color.new(color.gray, 80) : pf >= 1.3 ? color.new(color.green, 40) : pf >= 1.0 ? color.new(color.yellow, 55) : color.new(color.red, 55)
+            table.cell(resultTable, j + 1, i + 1, cellTxt, text_color=color.white, bgcolor=cellColor)

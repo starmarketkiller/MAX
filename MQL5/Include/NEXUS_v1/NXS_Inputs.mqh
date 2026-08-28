@@ -40,7 +40,15 @@ ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
 // input group "=== PRESET / SCALING ==="
 // 0=Custom, 1=Conservative, 2=Balanced, 3=Aggressive, 4=MVP_v206 (5 SMC MVP)
 int      InpRiskProfile      = 2;
-bool     InpAutoScaleByAccount = true;
+// 25/08 - disattivato di default su richiesta esplicita dell'utente
+// (account demo 318337486, balance<1000): con true il rischio del
+// preset BALANCED (1.0%) veniva dimezzato a 0.5% effettivo, troppo
+// stretto per far passare anche il lotto minimo su GOLD ai prezzi
+// attuali (~$4370). Nota: anche a 1.0% pieno un trade che richiede il
+// lotto minimo puo' ancora essere rifiutato se lo stop e' molto largo -
+// non e' una leva che garantisce l'esecuzione, solo raddoppia il
+// budget di rischio disponibile.
+bool     InpAutoScaleByAccount = false;
 
 // input group "=== SYMBOL WHITELIST ==="
 bool     InpUseSymbolWhitelist = true;
@@ -173,7 +181,7 @@ input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte conte
 bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 posizione per strategia (come nel backtest)
 // v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
 // (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
-bool     InpUseStrategyProfiles  = true;
+input bool     InpUseStrategyProfiles  = true;   // 27/08 - reso input (era plain, invisibile al Tester/Optimization)
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
 double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
@@ -269,8 +277,13 @@ bool     InpMTFRequireHTF         = false;  // v2.2.8: sostituito dal gate HTF P
 
 // input group "=== SAFETY CAPS (v2.0.26) ==="
 int      InpMaxNewTradesPerBarDir = 8;    // v2.3.4: non-binding; il vero cap e' la Setup Matrix per-TF
-double   InpMaxTotalLotMult  = 1.5;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
-double   InpMaxDirExposureLots = 0.40;     // max sum of open lots in one direction (core positions) before new entries are rejected - generic/fallback value
+// 25/08 - alzati leggermente su richiesta esplicita ("solo i tetti
+// massimi", non il rischio base per trade): 1.5->1.8 e 0.40->0.50 lotti
+// (+20/+25%). Sono SOLO soffitti - si sentono solo nei casi gia' al
+// limite (chain/counter-HTF/rischio-per-strategia gia' alti insieme),
+// il sizing normale per-trade (InpRiskPercent=1.0%) resta invariato.
+double   InpMaxTotalLotMult  = 1.8;        // hard cap on the combined lot multiplier (chain x counter-HTF x per-strategy risk x ...)
+double   InpMaxDirExposureLots = 0.50;     // max sum of open lots in one direction (core positions) before new entries are rejected - generic/fallback value
 // v2.0.30: a flat lot cap doesn't mean the same thing across symbols with very
 // different contract sizes (e.g. BTCUSD vs GOLD) - these optional per-symbol
 // overrides let you set a realistic cap for each. 0 = fall back to the
@@ -367,7 +380,13 @@ input bool     InpStrat_TSI          = true;
 int InpTSI_LongPeriod   = 25;
 int InpTSI_ShortPeriod  = 13;
 int InpTSI_SignalPeriod = 7;
-input bool     InpStrat_BJORGUM      = true;
+// 25/08 - disattivata: riverificata sulla ricetta live esatta (4h,
+// SL1.5/TP3.0, no HTF), PF 0.61-0.67 su tutto lo storico Dukascopy
+// con QUALUNQUE larghezza di trailing provata - in perdita, non un
+// problema di uscita. Coerente con la diagnosi indipendente di luglio
+// (-8.6R reali, 5/6 anni negativi). Vedi
+// server/research_scripts/live_recipe_trailing_verify_25-08.py.
+input bool     InpStrat_BJORGUM      = false;
 input bool     InpStrat_LIQ_SWEEP    = true;
 input bool     InpStrat_FVG_CONT     = true;
 input bool     InpStrat_BREAKOUT_ACC = true;
@@ -409,9 +428,16 @@ int      InpEMA9_Period      = 9;
 int      InpEMA21_Period     = 21;
 
 // input group "=== SL / TP ==="
-double   InpATR_SL_Mult      = 2.0;    // v2.0.14: 1.8→2.0 (SL piu' largo su M5 gold)
-double   InpATR_TP_Mult      = 2.6;
-double   InpMinSLMult        = 1.5;    // v2.0.14: pavimento minimo moltiplicatore SL
+// 27/08 - resi input (erano plain nonostante il commento "input group" sopra,
+// stesso bug gia' trovato e corretto il 17/07 per il gruppo BREAK EVEN & TRAIL:
+// invisibili al Tester/Optimization/.set, impossibile ottimizzarli sul backtest
+// MQL5 reale come richiesto. Nessuna di queste viene mai riassegnata a runtime
+// se non da g_run_AtrSLMult/TpMult (NXS_RuntimeSettings.mqh), che a loro volta
+// partono da questi due come default e restano tali in Strategy Tester (il
+// polling remoto dal sito non gira nel Tester).
+input double   InpATR_SL_Mult      = 2.0;    // v2.0.14: 1.8→2.0 (SL piu' largo su M5 gold)
+input double   InpATR_TP_Mult      = 2.6;
+input double   InpMinSLMult        = 1.5;    // v2.0.14: pavimento minimo moltiplicatore SL
 
 // input group "=== CLOSE & REVERSE ==="
 bool     InpEnableCloseReverse = true;
@@ -461,7 +487,14 @@ double   InpAB_ScoreBonus_DDHard = 10.0; // require MinEntryScore+10 when DD har
 // input group "=== GRID / PYRAMID / SPLIT ==="
 bool     InpEnableGrid       = false;
 double   InpGridStepATR      = 1.2;
-bool     InpEnablePyramid    = false;
+bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
+                                         // ORA FUNZIONA (bug di sizing trovato e corretto, 26 gambe/mese
+                                         // confermate su Tester MT5 a tick reali), ma sul portafoglio
+                                         // v3.0 attuale l'effetto e' NEGATIVO (PF1.02->0.98, netto
+                                         // +$31.68->-$28.06, 10 mesi tick reali) - amplifica esposizione
+                                         // su strategie con edge gia' sottile/negativo (SAR, EMA_PULLBACK)
+                                         // invece di aggiungere profitto. Da riattivare solo quando il
+                                         // mix di strategie e' solido (PF portafoglio chiaramente >1).
 bool     InpEnableSplit      = true;
 
 // input group "=== WEB BRIDGE ==="
@@ -602,33 +635,130 @@ bool     InpTryNextSignalIfBlocked         = true;
 bool     InpDebugDecisionLog               = true;
 
 // input group "=== SMC/ICT STRATEGIES (v2.0.2) ==="
-input bool     InpStrat_TurtleSoup     = true;
-input bool     InpStrat_IFVG           = true;
-input bool     InpStrat_FVG_Mit        = true;
-input bool     InpStrat_OB_Mit         = true;
+// 25/08 - disattivata: prima ricerca DA ZERO (non porting) sul vero
+// segnale live (sweep PDH/PDL/EQH/EQL + candela di rientro forte, stop
+// nativo, RR2.0 fisso - completamente diverso dal pattern Python
+// "TURTLE_SOUP" usato nel resto della sessione, che condivide solo il
+// nome). Testato su H1(live)/4h/30m, simmetrica e BUY/SELL-only:
+// **mai profittevole in modo robusto** (max PF0.94 su 4h BUY-only,
+// 3/5 finestre) - non un problema di timeframe o direzione, il pattern
+// stesso non ha edge su XAUUSD. Vedi
+// server/research_scripts/turtle_soup_live_signal_25-08.py.
+input bool     InpStrat_TurtleSoup     = false;
+// 25/08 - CORREZIONE: la disattivazione di IFVG di poco fa (PF0.66 sul
+// backtest del vero segnale live) era per il motivo SBAGLIATO. Scoperto
+// dopo, leggendo NXS_ReusePerformancePack.mqh: NXS_Strat_IFVG_Reversal e'
+// rediretta via #define a NXR_Strat_IFVG_Reversal (riga ~2364), che per
+// design (audit 17/07, "converge on NXR as sole source of truth", NESSUN
+// fallback sulla logica legacy) ritorna sempre segnale vuoto a meno che
+// InpNXR_Enable sia true - e InpNXR_Enable e' hardcoded false (non e'
+// nemmeno un input, serve ricompilare per cambiarlo). Quindi il vero
+// segnale live NON e' mai stato quello che ho backtestato: e' morto per
+// costruzione, come CRT/LIQ_VOID, indipendentemente dalla profittabilita'.
+// Il toggle resta false (era gia' irrilevante), ma per il motivo giusto.
+input bool     InpStrat_IFVG           = false;
+// 25/08 - disattivata per lo stesso motivo di IFVG sopra: NXS_Strat_
+// FVG_Mitigation e' rediretta a NXR_Strat_FVG_Mitigation, stesso "nessun
+// fallback" con InpNXR_Enable hardcoded false - morta per costruzione.
+input bool     InpStrat_FVG_Mit        = false;
+// 13/08 - variante a registro (15 barre) della strategia sopra, vedi
+// NXS_Strat_FVG_Mitigation_Window() in NXS_Strategies_SMC.mqh e vault
+// "NEXUS EA - Incidente Sicurezza e Setup Desktop (13-08)". NON rediretta
+// dal blocco NXR (nome diverso, verificato) - resta viva.
+input bool     InpStrat_FVG_MIT_WINDOW = true;
+// 25/08 - disattivata: NXS_Strat_OB_Mitigation_Structural e' rediretta a
+// NXR_Strat_OB_Mitigation, stesso schema "nessun fallback senza InpNXR_
+// Enable" di IFVG/FVG_MIT sopra - morta per costruzione.
+input bool     InpStrat_OB_Mit         = false;
 input bool     InpStrat_SH_BMS_RTO     = true;
+// 14/08 - state machine indipendente (regole diverse, non un refactor della
+// v1 sopra), vedi NXS_Strat_SH_BMS_RTO_V2 in NXS_Strategies_SMC.mqh.
+input bool     InpStrat_SH_BMS_RTO_V2  = true;
 input bool     InpStrat_SMS_BMS_RTO    = true;
 input bool     InpStrat_SilverBullet   = true;
 input bool     InpStrat_AMD_Reversal   = true;
 input bool     InpStrat_OTE_Cont       = true;
 input bool     InpStrat_MalaysianSNR   = true;
+// 24/08 - vedi NXS_Strat_SwingFalseBreak in NXS_Strategies_SMC.mqh e vault
+// "NEXUS EA - Idee da Script TradingView Esterni (17-08)", addendum 24/08.
+input bool     InpStrat_SwingFalseBreak = true;
+// 24/08 - vedi NXS_Strat_ZScoreBreakout in NXS_Strategies.mqh, validata
+// 17/08 su H1 (retail PF1.29 4/5, ECN PF1.71 5/5, 557 trade).
+input bool     InpStrat_ZScoreBreakout  = true;
 
 // input group "=== INSTITUTIONAL MODELS (v2.0.7) ==="
-input bool     InpUseStrat_CISD          = true;
-input bool     InpUseStrat_AMD_Cont      = true;
+// 25/08 - disattivata (THREE_BAR_DELIVERY_BREAK, stratName di questa
+// strategia): riverificata sulla ricetta live esatta (4h, SL1.5/TP3.0,
+// HTF), PF 0.51-0.65 con qualunque larghezza di trailing - in perdita
+// su tutto lo storico. Vedi live_recipe_trailing_verify_25-08.py.
+input bool     InpUseStrat_CISD          = false;
+// 25/08 - disattivata (AMD_CONT): ricerca da zero sul vero segnale live
+// (fase AMD_CONTINUATION_DISTRIBUTION su M15 InpTFEntry + retest nativo
+// su EffTF M30), mai in profitto ne' su M30/M15/H1 ne' su BUY/SELL-only
+// (PF 0.53-0.71, max 1/5 finestre positive). Vedi
+// amd_cont_ldn_reversal_live_signal_25-08.py e _tf_scan_25-08.py.
+input bool     InpUseStrat_AMD_Cont      = false;
 input bool     InpUseStrat_Judas         = true;
-input bool     InpUseStrat_LdnReversal   = true;
+// 25/08 - disattivata (LDN_REVERSAL): stesso trattamento, segnale
+// nativo (sweep AsiaHi/PDH/EQH + CHOCH) mai in profitto su M15/M30/H1
+// ne' su BUY/SELL-only (PF 0.36-0.78, max 1/5 finestre positive). Vedi
+// amd_cont_ldn_reversal_live_signal_25-08.py e _tf_scan_25-08.py.
+input bool     InpUseStrat_LdnReversal   = false;
 input bool     InpUseStrat_NYReversal    = true;
 input bool     InpUseStrat_WeeklyExp     = true;
 input bool     InpUseStrat_PO3           = true;
-input bool     InpUseStrat_LiqVoid       = true;
+// 25/08 - disattivata (LIQ_VOID): NXS_Strat_LiquidityVoid richiede
+// htf.bias==HTF_BULL o HTF_BEAR in modo stretto (mai HTF_NEUTRAL), ma
+// InpUseHTFBias=false di default rende NXS_GetHTFBias() SEMPRE
+// HTF_NEUTRAL in live - il segnale non puo' strutturalmente mai
+// scattare, stesso schema di CRT (segnale morto, non un problema di
+// SL/TP/trailing). Nessun backtest necessario: e' irraggiungibile per
+// costruzione, non un caso di scarsa profittabilita'.
+input bool     InpUseStrat_LiqVoid       = false;
 input bool     InpUseStrat_DispRebal     = true;
-// 11/08 - CRT (Candle Range Theory): unica scoperta della sessione con
-// walk-forward 5/5 su 3 timeframe dopo la riverifica sullo storico
-// ampliato - vedi NXS_Strategies_SMC.mqh, NXS_Strat_CRT(). Nessuna
-// controparte precedente nel sito ("sperimentale" come MALAYSIAN_SNR_
-// BREAKOUT quando fu introdotta).
-input bool     InpUseStrat_CRT           = true;
+// 11/08 - CRT (Candle Range Theory): promettente all'inizio (walk-forward
+// 5/5 su 3 timeframe) ma la riverifica costi del 24/08 l'ha confermata
+// definitivamente rotta (saga costi-dominanti mai risolta) - esclusa dal
+// registro canonico generato (contracts/generate_registry.py). Il
+// generatore di segnale in NXS_Strategies_SMC.mqh, NXS_Strat_CRT(), resta
+// nel codice ma senza una voce nel registro ogni segnale viene bloccato a
+// valle da NXS_Contract ("strategy_id sconosciuto 'CRT'") - innocuo ma
+// rumoroso nei log a ogni barra. 25/08: disattivata di default per non
+// generare segnali morti in partenza; lasciata come input per chi vuole
+// riabilitarla manualmente per un test isolato.
+input bool     InpUseStrat_CRT           = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("BarUpDn",
+// ChartArt): pattern price-action puro, nessun indicatore. Barra corrente
+// verde E apre sopra la chiusura precedente -> buy (mirror per sell). Mai
+// verificata su MT5 - disattivata di default finche' non c'e' un backtest
+// reale a confermarla, stesso trattamento riservato a CRT.
+input bool     InpStrat_BarUpDn          = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
+// Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
+// sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).
+// Mai verificata su MT5 - disattivata di default come BarUpDn/CRT.
+input bool     InpStrat_PMax             = false;
+input int      InpPMax_ATRPeriod         = 10;    // default script originale
+input int      InpPMax_MALength          = 10;
+input double   InpPMax_ATRMult           = 3.0;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("MACD +
+// SMA 200 Strategy", ChartArt): MACD su medie semplici (non esponenziali)
+// piu' filtro di trend SMA200. Mai verificata su MT5 - disattivata come le
+// altre nuove aggiunte di stasera.
+input bool     InpStrat_MacdSma200       = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("RSI
+// Divergence Indicator"): pivot RSI veri (non finestra fissa come il nostro
+// RSI_DIV nativo). Mai verificata su MT5 - disattivata come le altre.
+input bool     InpStrat_RsiDivPine       = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("Ichimoku +
+// Daily-Candle_X + HULL-MA_X + MacD"): 5 filtri in AND (Hull MA in salita,
+// trend giornaliero, prezzo vs Hull MA, cloud Ichimoku, MACD su Hull MA).
+// Mai verificata su MT5 - disattivata come le altre nuove aggiunte.
+input bool     InpStrat_IchimokuHull     = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("3Commas
+// Bot" / "Bj Bot"): incrocio EMA21/50 + stop su swing ATR + target R:R 1:1.
+// Mai verificata su MT5 - disattivata come le altre nuove aggiunte.
+input bool     InpStrat_3CommasBot       = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'
@@ -646,14 +776,28 @@ double   InpTF_Life_H4   = 20.0;   // idem H4
 double   InpTF_Life_D1   = 60.0;   // idem D1
 
 // input group "=== ELLIOTT WAVE (v2.0.20) ==="
-input bool     InpUseStrat_Elliott       = false;    // OFF di default: nuova strategia, backtesta prima
+// 25/08 - backtestata sulla ricetta live esatta (mai fatto prima). Su M15
+// (fallback InpTFEntry, nessun profilo esisteva) in perdita netta
+// (PF0.49, 0/5 finestre) col lato SELL rotto su ogni TF provato. Corretta
+// su 4h BUY-only (NXS_Profile_TF/DirectionLock in NXS_StrategyProfiles.mqh):
+// PF1.51, n=633, 4/5 finestre - stesso schema di correzione gia' visto
+// oggi per STRUCT_REACT. Riattivata con questa correzione, non nella
+// forma originale. Vedi server/research_scripts/elliott_strat_live_signal_25-08.py.
+input bool     InpUseStrat_Elliott       = true;
 int      InpEllSwingWing           = 3;        // ampiezza fractal per i pivot di swing
 double   InpEllRetraceMin          = 0.382;    // retracement min onda 2 (Fib)
 double   InpEllRetraceMax          = 0.786;    // retracement max onda 2 (Fib)
 double   InpEllMinScore            = 70.0;     // score base dei setup Elliott
 
 // input group "=== RANGE / COUNTER-HTF (v2.0.8) ==="
-input bool     InpUseStrat_RangeFade     = true;     // mean-revert sui range stretti
+// 25/08 - disattivata (RANGE_FADE): il gate di conferma range (persistenza
+// ADX 40 barre + stabilita' ampiezza + 2+ tocchi per lato + no-breakout) e'
+// cosi' restrittivo che su ~10 anni di D1 XAUUSD scatta solo 6 volte
+// (PF0.00, tutte in perdita) - non un verdetto di profittabilita' solido
+// vista la scarsissima numerosita', ma un segnale che nella pratica non
+// contribuisce mai al sistema live. Vedi
+// remaining_institutional_smc_live_signal_25-08.py.
+input bool     InpUseStrat_RangeFade     = false;    // mean-revert sui range stretti
 bool     InpEnableCounterHTFSoft   = false;    // OPTIONAL: counter-trend HTF micro-trade
 double   InpCounterHTF_MinReactQ   = 75.0;     // min reaction quality
 double   InpCounterHTF_LotMult     = 0.40;     // lot reducer (40% of base)

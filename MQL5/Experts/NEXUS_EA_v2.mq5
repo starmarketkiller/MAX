@@ -54,6 +54,7 @@
 #include <NEXUS_v1\NXS_FibonacciContext.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
+#include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
@@ -77,6 +78,7 @@
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
 #include <NEXUS_v1\NXS_Protections.mqh>
 #include <NEXUS_v1\NXS_TrailingATR.mqh>
+#include <NEXUS_v1\NXS_WeeklyExpManage.mqh>
 #include <NEXUS_v1\NXS_Notify.mqh>
 #include <NEXUS_v1\NXS_Dashboard.mqh>
 #include <NEXUS_v1\NXS_HistorySync.mqh>
@@ -436,13 +438,21 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    if(InpStrat_TurtleSoup    && NXS_SelectorAllows(17)) out[n++] = NXS_Strat_TurtleSoup(swExt);
    if(InpStrat_IFVG          && NXS_SelectorAllows(18)) out[n++] = NXS_Strat_IFVG_Reversal();
    if(InpStrat_FVG_Mit       && NXS_SelectorAllows(19)) out[n++] = NXS_Strat_FVG_Mitigation();
+   // 13/08 - variante a registro (15 barre), vedi NXS_Strategies_SMC.mqh
+   if(InpStrat_FVG_MIT_WINDOW && NXS_SelectorAllows(39)) out[n++] = NXS_Strat_FVG_Mitigation_Window();
    if(InpStrat_OB_Mit        && NXS_SelectorAllows(20)) out[n++] = NXS_Strat_OB_Mitigation_Structural();
    if(InpStrat_SH_BMS_RTO    && NXS_SelectorAllows(21)) out[n++] = NXS_Strat_SH_BMS_RTO(swExt);
+   // 14/08 - state machine V2 indipendente, walk-forward 5/5 su 1h (vedi vault)
+   if(InpStrat_SH_BMS_RTO_V2 && NXS_SelectorAllows(40)) out[n++] = NXS_Strat_SH_BMS_RTO_V2(swExt);
    if(InpStrat_SMS_BMS_RTO   && NXS_SelectorAllows(22)) out[n++] = NXS_Strat_SMS_BMS_RTO();
    if(InpStrat_SilverBullet  && NXS_SelectorAllows(23)) out[n++] = NXS_Strat_SilverBullet(swExt);
    if(InpStrat_AMD_Reversal  && NXS_SelectorAllows(24)) out[n++] = NXS_Strat_AMD_Reversal(swExt, amd);
    if(InpStrat_OTE_Cont      && NXS_SelectorAllows(25)) out[n++] = NXS_Strat_OTE_Continuation();
    if(InpStrat_MalaysianSNR  && NXS_SelectorAllows(26)) out[n++] = NXS_Strat_MalaysianSNR_Rejection();
+   // 24/08 - pivot di swing maggiore, vedi NXS_Strategies_SMC.mqh
+   if(InpStrat_SwingFalseBreak && NXS_SelectorAllows(41)) out[n++] = NXS_Strat_SwingFalseBreak();
+   // 24/08 - z-score + regime SMA200, stop strutturale M5, vedi NXS_Strategies.mqh
+   if(InpStrat_ZScoreBreakout  && NXS_SelectorAllows(42)) out[n++] = NXS_Strat_ZScoreBreakout();
 
    // v2.0.7 INSTITUTIONAL MODELS (9)
    SNXSHTF htfInst = NXS_GetHTFBias();
@@ -465,6 +475,24 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 11/08 — CRT (Candle Range Theory, #38)
    if(InpUseStrat_CRT         && NXS_SelectorAllows(38)) out[n++] = NXS_Strat_CRT();
 
+   // 28/08 — BarUpDn, portata da script Pine TradingView pubblico (#43)
+   if(InpStrat_BarUpDn        && NXS_SelectorAllows(43)) out[n++] = NXS_Strat_BarUpDn();
+
+   // 28/08 — PMax, portata da script Pine TradingView pubblico (#44)
+   if(InpStrat_PMax           && NXS_SelectorAllows(44)) out[n++] = NXS_Strat_PMax();
+
+   // 28/08 — MACD+SMA200, portata da script Pine TradingView pubblico (#45)
+   if(InpStrat_MacdSma200     && NXS_SelectorAllows(45)) out[n++] = NXS_Strat_MacdSma200();
+
+   // 28/08 — RSI Divergence su pivot, portata da script Pine TradingView pubblico (#46)
+   if(InpStrat_RsiDivPine     && NXS_SelectorAllows(46)) out[n++] = NXS_Strat_RsiDivPine();
+
+   // 28/08 — Ichimoku+HullMA+MACD, portata da script Pine TradingView pubblico (#47)
+   if(InpStrat_IchimokuHull   && NXS_SelectorAllows(47)) out[n++] = NXS_Strat_IchimokuHullMacd();
+
+   // 28/08 — 3Commas Bot, portata da script Pine TradingView pubblico (#48)
+   if(InpStrat_3CommasBot     && NXS_SelectorAllows(48)) out[n++] = NXS_Strat_3CommasBot();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
@@ -479,6 +507,20 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
             if((out[k].dir == DIR_BUY  && px200 < g_ema200) ||
                (out[k].dir == DIR_SELL && px200 > g_ema200)){
                out[k].dir = DIR_NONE;   // controtrend -> scartato per questa strategia
+            }
+         }
+         // 25/08 - blocco direzione per strategia (NXS_Profile_DirectionLock):
+         // verificato oggi che alcune strategie rendono nettamente meglio
+         // solo in una direzione sulla loro ricetta live reale - prima
+         // conferma concreta STRUCT_REACT (simmetrica H1 PF0.61 in perdita,
+         // BUY-only 4h PF2.32-2.43). Altre strategie della ricerca 24/08
+         // (SAR/ADX_RSI/ecc.) mostravano lo stesso pattern ma NON ancora
+         // riverificate sulla ricetta live esatta - non attivato per loro
+         // finche' non c'e' lo stesso livello di conferma.
+         if(out[k].dir != DIR_NONE){
+            int lock = NXS_Profile_DirectionLock(out[k].stratName);
+            if((lock > 0 && out[k].dir == DIR_SELL) || (lock < 0 && out[k].dir == DIR_BUY)){
+               out[k].dir = DIR_NONE;
             }
          }
       }
@@ -934,6 +976,7 @@ void OnTick(){
    // Management on every tick
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
+   NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing

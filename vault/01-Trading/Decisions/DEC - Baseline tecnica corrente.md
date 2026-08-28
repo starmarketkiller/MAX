@@ -33,4 +33,4 @@ Ogni modifica futura a `MQL5/` sposta la baseline SOLO se accompagnata da: nuovo
 
 ## Collegamenti
 
-[[NEXUS EA - MASTER ROADMAP v3]] · [[NEXUS EA - Roadmap verso il Live]] · [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]]
+[[MOC - Trading]] · [[NEXUS EA - MASTER ROADMAP v3]] · [[NEXUS EA - Roadmap verso il Live]] · [[NEXUS EA - Caccia al Bug Esecuzione (17-07)]]

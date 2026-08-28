@@ -112,10 +112,14 @@ double NXS_CalcLotRisk(double slPriceDist, double riskPct, const string stratNam
             lots = NormalizeDouble(minLot, volDigits);
             return lots;
          }
-         PrintFormat("[NEXUS RISK] ordine rifiutato: il lotto minimo (%.4f) "
-                     "rischierebbe %.2f contro un budget di %.2f%s",
-                     minLot, riskAtMin, risk,
-                     (InpMaxRiskAtMinLotPct > 0 ? " (oltre anche il tetto configurato)" : ""));
+         // 25/08 - aggiunto stratName e distanza SL: senza, il log non permette
+         // di capire QUALE strategia ha prodotto uno stop cosi' largo, ne'
+         // quanto largo in prezzo (solo il rischio in valuta gia' derivato).
+         PrintFormat("[NEXUS RISK] ordine rifiutato (%s): il lotto minimo (%.4f) "
+                     "rischierebbe %.2f contro un budget di %.2f%s | slDist=%.2f (%.0f tick)",
+                     (stratName != "" ? stratName : "?"), minLot, riskAtMin, risk,
+                     (InpMaxRiskAtMinLotPct > 0 ? " (oltre anche il tetto configurato)" : ""),
+                     slPriceDist, ticksInSL);
          return 0.0;
       }
       lots = NormalizeDouble(minLot, volDigits);

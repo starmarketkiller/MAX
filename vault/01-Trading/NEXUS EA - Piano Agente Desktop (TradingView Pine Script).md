@@ -113,3 +113,6 @@ Nota tecnica riportata dall'agente desktop: l'attivazione di un connettore Chrom
 **Domanda aperta dell'agente desktop (non ancora decisa):** aspettare che il connettore funzioni prima di pushare, oppure pushare comunque il codice Pine già pronto su GitHub separatamente dall'esecuzione/verifica del test (che richiederebbe il browser/TradingView).
 
 **Nessuna azione presa qui** — su richiesta esplicita dell'utente, solo aggiornamento del vault. Da decidere insieme come procedere.
+
+## Collegamenti
+[[MOC - Trading]]

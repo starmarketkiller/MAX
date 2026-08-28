@@ -1334,3 +1334,6 @@ Prima:
 8. non modificare trigger, score o rischio finché l'integrità dei test non è dimostrata.
 
 La qualità del sistema dipende prima dalla qualità delle prove, poi dalla qualità delle strategie.
+
+## Collegamenti
+[[MOC - Trading]]

@@ -63,6 +63,52 @@ COST_PRESETS = {
     "stress": {"spread_price": 4.00, "commission_r": 0.0, "slippage_price": 1.00},
 }
 
+# 14/08 - tetto sul costo per trade espresso in R, scoperto necessario dal
+# Gate 1 del framework di validazione: per strategie con SL strutturale
+# molto stretto (es. CRT, ancorato al wick del sweep - a volte pochi
+# centesimi su XAUUSD), spread_price/rd esplode (anche 50R+ su un singolo
+# trade), e senza un tetto sul lotto (che il motore research non modella,
+# a differenza dell'EA MQL5 reale con InpMaxLot/InpMaxTotalLotMult) l'equity
+# crollava sotto zero entro poche decine di trade, corrompendo il resto del
+# backtest (posizioni successive dimensionate su equity ~0 -> pnl fantasma
+# a 0.0). Il tetto e' una spiegazione onesta, non un dato misurato: un
+# broker/l'EA reale non lascerebbe mai che il solo costo consumi 5x il
+# rischio previsto (rifiuterebbe l'ordine o limiterebbe il lotto prima) -
+# 5R lascia ampio margine per le strategie con SL normale (dove
+# spread_r+slip_r e' tipicamente <1R) senza mascherare il problema reale
+# (SL troppo stretto per la size a rischio fisso), che resta visibile nel
+# confronto "PF con costo" vs "PF senza costo".
+MAX_COST_R_PER_TRADE = 5.0
+
+# 16/08 - COST_PRESETS e' tarato su un prezzo oro "moderno" (~2500), ma i
+# walk-forward multi-finestra coprono 2019-2026 dove il prezzo (e la
+# volatilita' assoluta, vedi ATR) e' variato di 3-4x (~1300 nel 2019,
+# ~4300+ nel 2026). Uno spread FISSO in $ applicato uniformemente
+# sovra-tassa gli anni a prezzo/volatilita' bassi: scoperto confrontando
+# SAR/MACD/FVG_CONT sulla finestra piu' vecchia (2019-2020) con costi flat
+# vs scalati - la finestra piu' vecchia migliora sensibilmente (es. MACD
+# PF 0.90->1.10, FVG_CONT 0.96->1.22), NON e' l'unica causa del fallimento
+# nelle finestre di mezzo (2020-2023, confermato "laterale puro" in modo
+# indipendente dai costi - vedi vault "Riverifica Walk-Forward 5 Finestre e
+# Dipendenza da Regime (15-08)"), ma e' un difetto reale del confronto
+# storico che va corretto quando si testano periodi lunghi a prezzo/oro
+# molto diverso da oggi.
+_COST_SCALE_REF_PRICE = 2500.0
+
+
+def scaled_cost_for_price(preset_name, price, ref_price=_COST_SCALE_REF_PRICE):
+    """Spread/slippage del preset scalati sul prezzo corrente (vs
+    _COST_SCALE_REF_PRICE, il livello a cui COST_PRESETS e' tarato) - da
+    usare al posto del preset flat quando si testano periodi storici con
+    prezzo/oro molto diverso da oggi (es. walk-forward 2019-2026)."""
+    base = COST_PRESETS[preset_name]
+    k = (price / ref_price) if ref_price else 1.0
+    return {
+        "spread_price": base["spread_price"] * k,
+        "commission_r": base["commission_r"],
+        "slippage_price": base["slippage_price"] * k,
+    }
+
 
 STOOQ_MAP = {
     "EURUSD": "eurusd", "GBPUSD": "gbpusd", "USDJPY": "usdjpy", "USDCHF": "usdchf",
@@ -558,7 +604,8 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         candles, sess, atr_s, ref=snr_ref)
     snr_v2ret_signal, snr_v2ret_slref, snr_v2ret_atrH4 = _malaysian_snr_v2_retest_series(
         candles, sess, atr_s, ref=snr_ref)
-    crt_signal, crt_sl, crt_tp = _crt_series(candles)
+    crt_signal, crt_sl, crt_tp = _crt_series(candles, atr_s)
+    crt_filt_signal, crt_filt_sl, crt_filt_tp = _crt_filtered_series(candles, atr_s)
     tsi_vals = tsi_series(closes, r=25, s=13)
     tsi_sig = _tsi_signal_series(tsi_vals, period=7)
     adx_s = adx_series(candles, 14)
@@ -612,6 +659,7 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "snr_v2ret_atrH4": snr_v2ret_atrH4,
         # precalcolato, vedi _malaysian_snr_v2_retest_series
         "crt_signal": crt_signal, "crt_sl": crt_sl, "crt_tp": crt_tp,
+        "crt_filt_signal": crt_filt_signal, "crt_filt_sl": crt_filt_sl, "crt_filt_tp": crt_filt_tp,
         # precalcolato, vedi _crt_series
         "weekly_pwh": weekly_pwh, "weekly_pwl": weekly_pwl, "weekly_open": weekly_open,
         "monthly_pmh": monthly_pmh, "monthly_pml": monthly_pml,  # precalcolato, vedi _monthly_levels_series
@@ -1118,6 +1166,37 @@ def sig_sar(c, ind, i):
     if sar < px and e9 > e21:
         return 1
     if sar > px and e9 < e21:
+        return -1
+    return 0
+
+
+def sig_sar_adx(c, ind, i, adx_min=20.0):
+    # 14/08 - variante A/B di sig_sar: stesso stato PSAR+EMA9/21, con gate
+    # ADX>=20 per tagliare i trade in chop dove SAR sfarfalla e le EMA
+    # restano allineate solo a tratti. Riusa sig_sar cosi' le due funzioni
+    # non possono divergere sulla logica base.
+    base = sig_sar(c, ind, i)
+    if base == 0:
+        return 0
+    adx = ind["adx"][i]
+    if adx is None or adx < adx_min:
+        return 0
+    return base
+
+
+def sig_sar_flip(c, ind, i):
+    # 14/08 - variante evento (non stato): entry solo sul bar in cui il
+    # trend PSAR cambia lato, non su ogni barra in cui SAR+EMA9/21 restano
+    # allineati. Riusa lo stesso filtro EMA9/21 di sig_sar come conferma.
+    if i < 22:
+        return 0
+    tr = ind.get("psar_trend")
+    e9, e21 = ind["ema9"][i], ind["ema21"][i]
+    if tr is None or tr[i] is None or tr[i - 1] is None or e9 is None or e21 is None:
+        return 0
+    if tr[i] == 1 and tr[i - 1] == -1 and e9 > e21:
+        return 1
+    if tr[i] == -1 and tr[i - 1] == 1 and e9 < e21:
         return -1
     return 0
 
@@ -1654,6 +1733,72 @@ def sig_turtle_soup_choch(c, ind, i):
         if choch_up and raw == 1:
             return 1
         if choch_down and raw == -1:
+            return -1
+    return 0
+
+
+# 13/08 - due varianti di ENTRY (non di uscita) per TURTLE_SOUP_CHOCH,
+# per rispondere a due domande aperte sul perche' l'entry a mercato sulla
+# barra del CHoCH possa essere di qualita' diversa dal sweep originale:
+#
+# NEAR: lo SL/TP (vedi _turtle_soup_sl_tp sotto) si ancora al sweep
+# CORRENTE (_sweep_ext_at chiamato su i, non su k) - stessa convenzione
+# gia' in uso nel motore. Se il prezzo si e' allontanato dalla zona di
+# sweep prima che il CHoCH confermi, l'R:R reale puo' essere peggiore di
+# quello misurato sull'aggregato. Filtra i segnali dove il prezzo alla
+# conferma NON e' piu' entro _TURTLE_SOUP_CHOCH_NEAR_ATR dal livello.
+_TURTLE_SOUP_CHOCH_NEAR_ATR = 1.0
+
+
+def sig_turtle_soup_choch_near(c, ind, i):
+    if i < _TURTLE_SOUP_CHOCH_LOOKBACK + 1:
+        return 0
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    sw = _sweep_ext_at(c, ind, i)
+    if not sw:
+        return 0
+    px = c[i]["close"]
+    for k in range(i - _TURTLE_SOUP_CHOCH_LOOKBACK, i + 1):
+        if k < 0:
+            continue
+        raw = sig_turtle_soup(c, ind, k)
+        if choch_up and raw == 1 and sw["refLow"] is not None:
+            if abs(px - sw["refLow"]) <= _TURTLE_SOUP_CHOCH_NEAR_ATR * atr:
+                return 1
+        if choch_down and raw == -1 and sw["refHigh"] is not None:
+            if abs(px - sw["refHigh"]) <= _TURTLE_SOUP_CHOCH_NEAR_ATR * atr:
+                return -1
+    return 0
+
+
+# DBLBODY: richiede il filtro body-forte (0.4xATR, gia' usato dal sweep
+# originale dentro sig_turtle_soup) anche sulla barra del CHoCH stessa,
+# non solo su quella del sweep - doppia conferma di rigetto invece di una
+# sola. Ipotesi: filtra rumore residuo, a costo di meno trade.
+def sig_turtle_soup_choch_dblbody(c, ind, i):
+    if i < _TURTLE_SOUP_CHOCH_LOOKBACK + 1:
+        return 0
+    choch_up, choch_down = ind["choch_int"][1][i], ind["choch_int"][2][i]
+    if not choch_up and not choch_down:
+        return 0
+    atr = ind["atr"][i]
+    if not atr:
+        return 0
+    c1, o1 = c[i]["close"], c[i]["open"]
+    if abs(c1 - o1) < atr * 0.4:
+        return 0
+    for k in range(i - _TURTLE_SOUP_CHOCH_LOOKBACK, i + 1):
+        if k < 0:
+            continue
+        raw = sig_turtle_soup(c, ind, k)
+        if choch_up and raw == 1 and c1 > o1:
+            return 1
+        if choch_down and raw == -1 and c1 < o1:
             return -1
     return 0
 
@@ -2244,7 +2389,15 @@ def sig_malaysian_snr_v2_retest_outrange(c, ind, i):
     return 0
 
 
-def _crt_series(candles):
+def _crt_series(candles, atr, min_stop_atr=0.3, mode="widen"):
+    # mode="widen": fedele al vero EA MQL5 (allarga lo stop fino al floor).
+    # mode="skip": 14/08 - variante sperimentale, MAI nel vero EA. L'allargare
+    # peggiora il PF anche senza costi (1.22->0.92, vedi vault sessione
+    # 14-08): il wick stretto sembra correlato alla qualita' del setup, non
+    # un difetto arbitrario. "skip" non tocca la geometria dei trade che
+    # sopravvivono (nessuna distorsione) - scarta interamente quelli col
+    # rischio troppo stretto per essere economicamente sostenibile a costi
+    # reali, invece di alterarli.
     # 11/08 - Candle Range Theory (fonte: PDF "Candle Range Theory" di
     # Suven Raj, caricato dall'utente). Terza versione, dopo due errori
     # scoperti e corretti in sequenza (vedi vault MALAYSIAN_SNR Porting
@@ -2290,11 +2443,52 @@ def _crt_series(candles):
             out_sig[k] = 1
             out_sl[k] = sweep["low"]
             out_tp[k] = crh
+        # 14/08 - floor minimo sulla distanza dello stop, porting fedele di
+        # NXS_Strat_CRT (MQL5, aggiunto 12/08 - vedi vault "Fase C Recovery
+        # Baseline e Rischio Flottante") MAI portato prima in Python: lo
+        # stop e' ancorato al wick della candela di sweep, quando il wick e'
+        # minimo il rischio flottante puo' esplodere PRIMA che il trade
+        # chiuda, e (scoperta 14/08, Gate 1 del framework di validazione)
+        # il costo in R (spread/distanza) diventa enorme e indipendente dal
+        # sizing - nessun tetto su lotto/rischio% puo' correggerlo, solo
+        # allargare la distanza vera dello stop lo fa. Allarga (mai
+        # stringe) fino a min_stop_atr*ATR - stessa logica, stesso default
+        # (0.3) del vero EA.
+        if out_sig[k] != 0 and min_stop_atr > 0:
+            a = atr[k]
+            if a:
+                entry_ref = candles[k]["close"]
+                floor_dist = min_stop_atr * a
+                cur_dist = abs(entry_ref - out_sl[k])
+                if 0 < cur_dist < floor_dist:
+                    if mode == "skip":
+                        out_sig[k] = 0
+                        out_sl[k] = None
+                        out_tp[k] = None
+                    elif out_sig[k] == -1:
+                        out_sl[k] = entry_ref + floor_dist
+                    else:
+                        out_sl[k] = entry_ref - floor_dist
     return out_sig, out_sl, out_tp
+
+
+def _crt_filtered_series(candles, atr):
+    return _crt_series(candles, atr, min_stop_atr=0.3, mode="skip")
 
 
 def sig_crt(c, ind, i):
     return ind["crt_signal"][i]
+
+
+def sig_crt_filtered(c, ind, i):
+    return ind["crt_filt_signal"][i]
+
+
+def _crt_filtered_sl_tp(c, ind, i, direction, entry, atr):
+    sl, tp = ind["crt_filt_sl"][i], ind["crt_filt_tp"][i]
+    if sl is None or tp is None:
+        return None
+    return sl, tp
 
 
 def _crt_sl_tp(c, ind, i, direction, entry, atr):
@@ -4073,6 +4267,104 @@ def _sms_bms_choch_window_sl_tp(c, ind, i, direction, entry, atr):
 
 
 # --------------------------------------------------------------------------- #
+# 14/08 - due candidati nuovi, mai presenti nel motore, dal materiale "50
+# maestri del trading" portato dall'utente. SL/TP generici (atr_sl/atr_tp
+# via run_backtest), nessun override strutturale - testati SEPARATAMENTE,
+# non fusi in un unico filtro composito con altri pilastri (regime/volume/
+# candela insieme avrebbero riprodotto lo stesso collasso di frequenza gia'
+# visto su IFVG_CHOCH_WINDOW). Vedi vault sessione 14/08.
+def sig_donchian_turtle(c, ind, i, n=20):
+    # Richard Dennis / Turtle Traders System 1: breakout puro dal canale
+    # Donchian a N barre (esclusa la corrente). Trend-following puro -
+    # ATTENZIONE nome: "turtle" qui e' opposto a TURTLE_SOUP gia' nel
+    # nucleo (Linda Raschke, reversal su falso breakout) - stesso aneddoto
+    # storico ("tartarughe"), logica di mercato opposta (trend vs reversal).
+    # Piramidazione/uscita a canale: approssimate coi meccanismi generici
+    # gia' nel motore (pyramid_r, trailing_atr), non un'uscita a canale
+    # Donchian dedicata - il motore non la supporta nativamente.
+    if i < n + 1:
+        return 0
+    hh = max(x["high"] for x in c[i - n:i])
+    ll = min(x["low"] for x in c[i - n:i])
+    cur = c[i]
+    if cur["close"] > hh:
+        return 1
+    if cur["close"] < ll:
+        return -1
+    return 0
+
+
+def sig_darvas_box(c, ind, i, n=20, max_width_pct=0.10):
+    # Nicolas Darvas: rottura del tetto di un box di consolidamento stretto
+    # (ampiezza tetto-pavimento < max_width_pct del pavimento, calcolata
+    # sulle n barre PRIMA della corrente) verso l'alto. Darvas operava solo
+    # long; il lato short sotto e' simmetria di motore (stessa convenzione
+    # "testa entrambe le direzioni" di ogni altra strategia qui), non parte
+    # della fonte originale.
+    if i < n + 1:
+        return 0
+    window = c[i - n:i]
+    top = max(x["high"] for x in window)
+    bottom = min(x["low"] for x in window)
+    if bottom <= 0:
+        return 0
+    if (top - bottom) / bottom >= max_width_pct:
+        return 0
+    prev, cur = c[i - 1], c[i]
+    if prev["close"] <= top and cur["close"] > top:
+        return 1
+    if prev["close"] >= bottom and cur["close"] < bottom:
+        return -1
+    return 0
+
+
+def sig_ema_cross_benchmark(c, ind, i):
+    # 14/08 - benchmark "Hello World" richiesto dall'utente per validare il
+    # MOTORE stesso (non per cercare edge): EMA50/200 golden/death cross,
+    # zero stati, zero filtri, zero strutture SMC - se anche questa da'
+    # risultati assurdi (PF>2 o <0.3), il sospetto cade sul motore, non
+    # sulle strategie. SL/TP generici (atr_sl=2.0/atr_tp=4.0 via
+    # run_backtest), nessun override strutturale.
+    e50, e50p = ind["ema50"][i], ind["ema50"][i - 1] if i > 0 else None
+    e200, e200p = ind["ema200"][i], ind["ema200"][i - 1] if i > 0 else None
+    if None in (e50, e50p, e200, e200p):
+        return 0
+    if e50p <= e200p and e50 > e200:
+        return 1
+    if e50p >= e200p and e50 < e200:
+        return -1
+    return 0
+
+
+def sig_z_score_breakout(c, ind, i, n=20, z_threshold=2.0, htf_period=200):
+    # Ipotesi "quant" (Z-Score + regime SMA200): interpretazione BREAKOUT
+    # (scommette sulla continuazione) delle bande a 2 deviazioni standard,
+    # OPPOSTA a BOLLINGER gia' nel motore (mean-reversion, scommette sul
+    # ritorno alla media) - stesse bande statistiche, ipotesi di mercato
+    # opposta. Uscita "mean reversion a Z<0" della fonte non replicata (il
+    # motore non ha uscite a segnale dinamico) - approssimata con
+    # trailing_atr esterno, come per DONCHIAN_TURTLE.
+    if i < max(n, htf_period) + 1:
+        return 0
+    closes = [c[k]["close"] for k in range(i - n + 1, i + 1)]
+    mean = sum(closes) / n
+    var = sum((x - mean) ** 2 for x in closes) / n
+    std = var ** 0.5
+    if std <= 0:
+        return 0
+    z = (c[i]["close"] - mean) / std
+    htf_closes = [c[k]["close"] for k in range(i - htf_period + 1, i + 1)]
+    htf_sma = sum(htf_closes) / htf_period
+    bull_regime = c[i]["close"] > htf_sma
+    bear_regime = c[i]["close"] < htf_sma
+    if bull_regime and z > z_threshold:
+        return 1
+    if bear_regime and z < -z_threshold:
+        return -1
+    return 0
+
+
+# --------------------------------------------------------------------------- #
 # SCALP / profit-taker (v2.3.0) - pensate per M15/M30: ingressi veloci, TP
 # stretto. Registrate nel motore per l'ottimizzazione multi-TF sui TF bassi.
 # --------------------------------------------------------------------------- #
@@ -4161,6 +4453,8 @@ STRATEGY_SLTP_ALWAYS = {
     # PDH/PDL/AsiaHigh/AsiaLow non cambiano molto entro la finestra di
     # 5 barre usata qui.
     "TURTLE_SOUP_CHOCH": _turtle_soup_sl_tp,
+    "TURTLE_SOUP_CHOCH_NEAR": _turtle_soup_sl_tp,
+    "TURTLE_SOUP_CHOCH_DBLBODY": _turtle_soup_sl_tp,
     "FVG_MIT": _fvg_mit_sl_tp,
     "FVG_MIT_WINDOW": _fvg_mit_window_sl_tp,
     "AMD_REVERSAL": _amd_reversal_sl_tp,
@@ -4179,6 +4473,7 @@ STRATEGY_SLTP_ALWAYS = {
     "MALAYSIAN_SNR_V2_RETEST": _malaysian_snr_v2_retest_sl_tp,
     "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": _malaysian_snr_v2_retest_sl_tp,
     "CRT": _crt_sl_tp,
+    "CRT_MINSTOP_FILTER": _crt_filtered_sl_tp,
     "CISD_TRUE": _cisd_true_sl_tp,
     # 08/08 - varianti "_v2" (brief Decomposizione Edge, vedi nota di modulo
     # sopra _shbms_v2_series): SL/TP calcolati dallo stato della strategia
@@ -4197,6 +4492,10 @@ STRATEGY_SLTP_ALWAYS = {
 
 # Strategie con logica Python reale (le altre usano i risultati reali importati)
 STRATEGIES = {
+    "DONCHIAN_TURTLE": sig_donchian_turtle,
+    "DARVAS_BOX": sig_darvas_box,
+    "Z_SCORE_BREAKOUT": sig_z_score_breakout,
+    "EMA_CROSS_BENCHMARK": sig_ema_cross_benchmark,
     "SCALP_EMA": sig_scalp_ema,
     "SCALP_BB_FADE": sig_scalp_bb_fade,
     "SCALP_RSI_SNAP": sig_scalp_rsi_snap,
@@ -4215,6 +4514,8 @@ STRATEGIES = {
     "RANGE_FADE": sig_bollinger,      # mean-reversion proxy
     # --- strutturali / SMC (nuove, v2.2.8) ---
     "SAR": sig_sar,
+    "SAR_ADX20": sig_sar_adx,
+    "SAR_FLIP": sig_sar_flip,
     "BJORGUM": sig_bjorgum,
     "ORDER_BLOCK": sig_order_block_ext,
     "OB_MIT": sig_ob_mit_ext,
@@ -4226,6 +4527,8 @@ STRATEGIES = {
     "LIQ_SWEEP": sig_liq_sweep_ext,
     "TURTLE_SOUP": sig_turtle_soup,
     "TURTLE_SOUP_CHOCH": sig_turtle_soup_choch,
+    "TURTLE_SOUP_CHOCH_NEAR": sig_turtle_soup_choch_near,
+    "TURTLE_SOUP_CHOCH_DBLBODY": sig_turtle_soup_choch_dblbody,
     "STRUCT_REACT": sig_struct_react,
     "MALAYSIAN_SNR": sig_malaysian_snr,
     "MALAYSIAN_SNR_BREAKOUT": sig_malaysian_snr_breakout,
@@ -4234,6 +4537,7 @@ STRATEGIES = {
     "MALAYSIAN_SNR_V2_RETEST": sig_malaysian_snr_v2_retest,
     "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": sig_malaysian_snr_v2_retest_outrange,
     "CRT": sig_crt,
+    "CRT_MINSTOP_FILTER": sig_crt_filtered,
     "OTE_CONT": sig_ote_cont,
     "DISP_REBAL": sig_disp_rebal,
     # Fase A / MM-08: la chiave e' l'id CANONICO. L'alias storico "CISD" resta
@@ -4305,7 +4609,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_max_legs=0, grid_step_atr=1.2, grid_risk_mult=1.0,
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
-                 track_floating_dd=False, regime_filter=None):
+                 track_floating_dd=False, regime_filter=None, master_bias=None,
+                trailing_activate_atr=0.0):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4493,6 +4798,29 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
     if unavailable:
         raise ValueError(f"research engine implementation missing: {', '.join(unavailable)}")
 
+    # 12/08 - master_bias (opt-in, default None = nessun effetto): riverifica
+    # sul motore vero la "pipeline gerarchica master->slave" trovata l'8/10
+    # con phase3c_bias_pipeline.py, che NON usava run_backtest ma un
+    # simulatore proprio con SL/TP piatto hardcoded (stesso tipo di
+    # motore-parallelo gia' trovato inaffidabile con ensemble_engine_search.py
+    # e msnr_retest_gates.py) - mai riverificata sul motore vero. Il bias del
+    # master PERSISTE (resta l'ultimo segnale non-zero) finche' non si
+    # inverte, esattamente come nello script originale - qui pero' ogni
+    # slave gira con il proprio SL/TP/profilo reale, non un ATR 1.5/3.0 fisso
+    # per tutte.
+    master_bias_s = None
+    if master_bias is not None:
+        if master_bias not in STRATEGIES:
+            raise ValueError(f"master_bias sconosciuto: {master_bias}")
+        master_fn = STRATEGIES[master_bias]
+        master_bias_s = [0] * len(candles)
+        cur = 0
+        for i in range(len(candles)):
+            v = master_fn(candles, ind, i)
+            if v != 0:
+                cur = v
+            master_bias_s[i] = cur
+
     closes = [c["close"] for c in candles]
 
     def _sma(idx, p):
@@ -4568,6 +4896,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
         # di ognuna) sull'unico motore che conta davvero.
         if sig != 0 and regime_filter is not None:
             if ind["regime"][idx] not in regime_filter:
+                sig = 0
+        if sig != 0 and master_bias_s is not None:
+            if master_bias_s[idx] == 0 or sig != master_bias_s[idx]:
                 sig = 0
         return sig, who, atr_i
 
@@ -4703,13 +5034,25 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         else:
                             pos["sl"] = min(pos["sl"], pos["entry"])
                 # --- TRAILING ATR: insegue lo SL a trailing_atr x ATR ---
+                # 12/08 - trailing_activate_atr (default 0.0 = comportamento invariato,
+                # insegue da subito): replica la soglia di attivazione REALE dell'overlay
+                # MQL5 NXS_TrailingATR.mqh (InpAtrTrailActivateATR, default 1.0 li'),
+                # un meccanismo SEPARATO e SEMPRE ATTIVO di default (InpUseAtrTrail=true)
+                # per OGNI strategia - scoperto durante l'ottimizzazione uscite CRT/
+                # FVG_CONT del 12/08: il "baseline trail=0" usato fino a questo punto
+                # non corrispondeva al vero comportamento live (che ha gia' un trailing
+                # 2.5xATR di default via NXS_Profile_TrailK/InpAtrTrailMult). Gate in
+                # unita' di prezzo grezzo (come in MQL5: "prog >= act*ATR"), non in R -
+                # i due sistemi sono indipendenti nel motore reale, qui replicati fedeli.
                 if pos_trail > 0:
                     a = ind["atr"][i] or 0
                     if a > 0:
-                        if pos["dir"] == 1:
-                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
-                        else:
-                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                        prog_tr = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                        if trailing_activate_atr <= 0 or prog_tr >= trailing_activate_atr * a:
+                            if pos["dir"] == 1:
+                                pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                            else:
+                                pos["sl"] = min(pos["sl"], px + pos_trail * a)
                 if track_floating_dd:
                     unreal = 0.0
                     for leg in pos["legs"]:
@@ -4769,7 +5112,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                             slip_r = slippage_price / rd
                             if reason in ("SL", "TIME", "FLIP"):
                                 slip_r += slippage_price / rd
-                        r_mult_net = r_mult - spread_r - commission_r - slip_r
+                        cost_r = min(spread_r + commission_r + slip_r, MAX_COST_R_PER_TRADE)
+                        r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
                         total_gross_pnl += r_mult * leg["risk_money"]
                         total_risk_money += leg["risk_money"]
@@ -4878,10 +5222,12 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 if pos_trail > 0:
                     a = ind["atr"][i] or 0
                     if a > 0:
-                        if pos["dir"] == 1:
-                            pos["sl"] = max(pos["sl"], px - pos_trail * a)
-                        else:
-                            pos["sl"] = min(pos["sl"], px + pos_trail * a)
+                        prog_tr = (hi - pos["entry"]) if pos["dir"] == 1 else (pos["entry"] - lo)
+                        if trailing_activate_atr <= 0 or prog_tr >= trailing_activate_atr * a:
+                            if pos["dir"] == 1:
+                                pos["sl"] = max(pos["sl"], px - pos_trail * a)
+                            else:
+                                pos["sl"] = min(pos["sl"], px + pos_trail * a)
                 hit = None
                 if pos["dir"] == 1:
                     if lo <= pos["sl"]:
@@ -4910,7 +5256,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                             slip_r = slippage_price / rd
                             if reason in ("SL", "TIME"):
                                 slip_r += slippage_price / rd
-                        r_mult_net = r_mult - spread_r - commission_r - slip_r
+                        cost_r = min(spread_r + commission_r + slip_r, MAX_COST_R_PER_TRADE)
+                        r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
                         total_gross_pnl += r_mult * leg["risk_money"]
                         total_risk_money += leg["risk_money"]

@@ -1,0 +1,284 @@
+//@version=6
+// =============================================================================
+// NEXUS EA — Strategia CRT v2 (Candle Range Theory) — pivot-based + sessione
+// -----------------------------------------------------------------------------
+// RISCRITTURA COMPLETA (18/08) dopo lettura integrale delle fonti CRT
+// originali (6 PDF: CRT.pdf, Romeo-Written-CRT-Unlocked, CRT-SECRETS-SERIES,
+// Mastering-CRT-by-Maher, CRT-TBS-ebook, CRT-Enigma) piu' terminologia ICT.
+// La v1 (shift2=range, shift1=sweep fissi) NON era CRT vero - le fonti
+// concordano che la candela di range deve essere:
+//   1. Un vero pivot strutturale (corpo>>wick, un vecchio massimo/minimo
+//      davvero "spazzato" - OHP/OLP), non una barra qualsiasi due indietro.
+//   2. A distanza VARIABILE dallo sweep (puo' arrivare molte barre dopo),
+//      non fissa a 1 barra.
+//   3. Ancorata a sessione: modello piu' citato = Asia forma il range,
+//      Londra/NY "spazzano" (sweep) ed entrano - orari da fonte ICT:
+//      Asia 19:00-03:00 NY, Londra killzone 02:00-05:00 NY,
+//      NY killzone 07:00-09:00 NY.
+// Qui: (1)+(2) via ta.pivothigh/pivotlow (pivot confermato con lag reale,
+// niente repainting), (3) via filtro orario sulla barra di sweep + opzione
+// per richiedere che il pivot si sia formato in sessione Asia.
+// Target: invece del lato opposto della STESSA candela (non ha piu' senso
+// con pivot indipendenti), usiamo il pivot opposto piu' recente e fresco
+// (liquidita' opposta) - se non disponibile, fallback a un multiplo fisso
+// di rischio.
+// Il resto (stop ATR-based, filtro qualita' sweep, modalita' di ingresso
+// mercato/retest/breakout) riprende i risultati migliori trovati oggi sulla
+// v1 (retest parziale 50% del livello: PF 0.528 su H4, il record).
+// =============================================================================
+strategy("NEXUS EA - CRT v2 (XAUUSD)", shorttitle="NXS-CRTv2", overlay=true,
+     calc_on_every_tick=false, pyramiding=0, default_qty_type=strategy.fixed,
+     default_qty_value=1, initial_capital=10000, currency=currency.USD,
+     commission_type=strategy.commission.cash_per_order,
+     commission_value=2.5,
+     slippage=2)
+// NB: commission_value deve essere una costante (Pine non accetta input.float
+// qui) - per cambiare il costo simulato, modifica il numero sopra e rilancia.
+// 2.5 = ipotesi "retail_standard" del motore Python (spread $2.50 + slippage
+// $0.50 separato via il parametro slippage sopra).
+
+// ----------------------------- Input: pivot (range strutturale) -----------
+pivotLeft    = input.int(5, "Pivot: barre a sinistra")
+pivotRight   = input.int(5, "Pivot: barre a destra (conferma, introduce lag reale anti-repaint)")
+maxLookback  = input.int(50, "Pivot: barre massime di validita' prima che sia considerato 'vecchio'")
+
+// ----------------------------- Input: modalita' CRT -------------------------
+crtMode = input.string("Breakout", "Modalita' CRT", options=["Reversal", "Breakout"], tooltip="Idea mai testata (19/08): finora abbiamo sempre modellato il 'Judas swing' - il prezzo sfonda il livello poi richiude DENTRO il range (rigetto, nessuna continuazione) e si fa fade, cioe' si entra in direzione OPPOSTA allo sweep. Ma spesso il prezzo non ritraccia: sfonda il livello e richiude FUORI dal range (rottura vera, nessun rigetto) - in quel caso la direzione corretta e' seguire la rottura, non contrastarla. 'Reversal' = comportamento attuale (fade). 'Breakout' = segue la rottura invece di contrastarla, target a multiplo fisso di rischio (non ha senso il pivot opposto per una continuazione).")
+
+// ----------------------------- Input: filtro HTF (trend, doppia conferma) --
+useHtfFilter = input.bool(false, "Filtro HTF #1: richiedi trend allineato su timeframe superiore", tooltip="Idea mai testata: richiede che il prezzo sia sopra una EMA su un timeframe superiore per i Long, sotto per gli Short - filtra i trade controtrend rispetto al quadro piu' ampio.")
+htfTF        = input.timeframe("D", "Timeframe superiore per il filtro HTF #1")
+htfEmaLen    = input.int(50, "Lunghezza EMA sul timeframe superiore #1")
+useHtfFilter2 = input.bool(false, "Filtro HTF #2: richiedi doppia conferma su un secondo timeframe superiore", tooltip="Idea mai testata: come il filtro HTF #1 ma su un secondo timeframe (es. 4H mentre il #1 e' Daily) - se attivi entrambi, serve l'allineamento su TUTTI e due i timeframe (doppia conferma) prima di entrare.")
+htfTF2        = input.timeframe("240", "Secondo timeframe superiore (doppia conferma)")
+htfEmaLen2    = input.int(50, "Lunghezza EMA sul secondo timeframe superiore")
+
+// ----------------------------- Input: forma V/A del pivot --------------------
+useVAShape    = input.bool(false, "TEST: richiedi pivot a forma di V/A pulita (candele continue, senza gap)", tooltip="Idea mai testata (20/08): richiede che le candele nella gamba del pivot (tante quante pivotLeft/pivotRight) siano 'continue' - ogni apertura vicina alla chiusura della candela precedente, senza gap - per formare una V pulita (minimo/supporto) o una A pulita (massimo/resistenza). Un pivot 'sporco' con gap o candele scomposte viene scartato.")
+vaShapeTolATR = input.float(0.15, "TEST: tolleranza gap V/A (xATR)", step=0.05, tooltip="Quanto puo' discostarsi l'apertura di una candela dalla chiusura della precedente, nella gamba del pivot, per essere ancora considerata 'continua' (senza gap).")
+
+// ----------------------------- Input: sessione (orari NY, da fonte ICT) ---
+useSessionFilter = input.bool(false, "Filtro sessione: richiedi sweep in kill zone")
+useLondonKZ  = input.bool(true, "Kill zone Londra attiva (02:00-05:00 NY)")
+useNYKZ      = input.bool(true, "Kill zone New York attiva (07:00-09:00 NY)")
+useAsiaRange = input.bool(false, "TEST: richiedi che il pivot di range si sia formato in sessione Asia (19:00-03:00 NY)", tooltip="Idea mai testata: le fonti CRT descrivono il modello Asia=range/Londra=sweep/NY=entry come il piu' affidabile - qui e' opzionale perche' e' un filtro molto restrittivo (il pivot puo' formarsi ovunque nel tempo, non solo appena prima).")
+
+// ----------------------------- Input: stop / target ------------------------
+useAtrStop   = input.bool(true, "Stop ATR-based invece del wick")
+atrStopMult  = input.float(1.5, "Stop ATR multiplier", step=0.25)
+minStopATR   = input.float(0.3, "Floor minimo stop wick-based (xATR, 0=disattivato, ignorato se useAtrStop)", step=0.1)
+useTpSanity  = input.bool(false, "Scarta se TP gia' dietro/vicino all'entry")
+tpSanityMinR = input.float(0.5, "Distanza minima target (xRischio)", step=0.1)
+tpFallbackR  = input.float(2.0, "Target di fallback (xRischio) se il pivot opposto non e' disponibile/fresco", step=0.5, tooltip="Nel modello a pivot indipendenti, a volte non esiste un pivot opposto recente da usare come target di liquidita'. In quel caso si usa un multiplo fisso del rischio invece di scartare il trade.")
+
+// ----------------------------- Input: qualita' sweep ------------------------
+useSweepQ    = input.bool(false, "Richiedi sweep di qualita' (rigetto deciso)")
+minSweepQ    = input.float(0.2, "Soglia qualita' sweep (0-1, wick-oltre/range candela)", step=0.05)
+
+// ----------------------------- Input: modalita' di ingresso -----------------
+entryMode    = input.string("Market", "Modalita' di ingresso", options=["Market", "Retest limit", "Breakout confirm"], tooltip="Risultati v1: Market PF0.463, Retest limit (frazione 0.5) PF0.528 (il migliore), Breakout confirm PF0.204 (sbagliato per una strategia mean-reversion).")
+retestBars   = input.int(10, "Barre max di attesa prima di annullare (retest/breakout)", step=1)
+retestFrac   = input.float(0.5, "Retest: frazione (0=prezzo attuale, 1=livello pieno)", step=0.1)
+
+atrLen       = input.int(14, "ATR length")
+startDate    = input.time(timestamp("2019-01-01T00:00:00"), "Backtest da")
+endDate      = input.time(timestamp("2026-12-31T00:00:00"), "Backtest a")
+
+// ----------------------------- Sessione --------------------------------------
+nyHour    = hour(time, "America/New_York")
+inLondonKZ = nyHour >= 2 and nyHour < 5
+inNYKZ     = nyHour >= 7 and nyHour < 9
+inKZ       = (useLondonKZ and inLondonKZ) or (useNYKZ and inNYKZ)
+sessionOk  = not useSessionFilter or inKZ
+inAsia     = nyHour >= 19 or nyHour < 3
+
+atrVal  = ta.atr(atrLen)
+inRange = time >= startDate and time <= endDate
+
+// ----------------------------- Filtro HTF (doppia conferma) -------------------
+htfEma      = request.security(syminfo.tickerid, htfTF, ta.ema(close, htfEmaLen), lookahead=barmerge.lookahead_off)
+htfOkLong1  = not useHtfFilter or close > htfEma
+htfOkShort1 = not useHtfFilter or close < htfEma
+htfEma2     = request.security(syminfo.tickerid, htfTF2, ta.ema(close, htfEmaLen2), lookahead=barmerge.lookahead_off)
+htfOkLong2  = not useHtfFilter2 or close > htfEma2
+htfOkShort2 = not useHtfFilter2 or close < htfEma2
+htfOkLong   = htfOkLong1 and htfOkLong2
+htfOkShort  = htfOkShort1 and htfOkShort2
+
+// ----------------------------- Pivot (range strutturale) --------------------
+var float lastPivotHigh     = na
+var float lastPivotLow      = na
+var int   lastPivotHighBar  = na
+var int   lastPivotLowBar   = na
+var bool  lastPivotHighAsia = false
+var bool  lastPivotLowAsia  = false
+var bool  pivotHighUsed     = false
+var bool  pivotLowUsed      = false
+var bool  lastPivotHighShapeOk = true
+var bool  lastPivotLowShapeOk  = true
+
+ph = ta.pivothigh(pivotLeft, pivotRight)
+pl = ta.pivotlow(pivotLeft, pivotRight)
+
+if not na(ph)
+    lastPivotHigh := ph
+    lastPivotHighBar := bar_index - pivotRight
+    lastPivotHighAsia := inAsia[pivotRight]
+    pivotHighUsed := false
+    shapeOkH = true
+    if useVAShape
+        for k = 0 to pivotRight - 2
+            if math.abs(open[k] - close[k + 1]) > vaShapeTolATR * atrVal
+                shapeOkH := false
+        for k = pivotRight to pivotRight + pivotLeft - 1
+            if math.abs(open[k] - close[k + 1]) > vaShapeTolATR * atrVal
+                shapeOkH := false
+    lastPivotHighShapeOk := shapeOkH
+if not na(pl)
+    lastPivotLow := pl
+    lastPivotLowBar := bar_index - pivotRight
+    lastPivotLowAsia := inAsia[pivotRight]
+    pivotLowUsed := false
+    shapeOkL = true
+    if useVAShape
+        for k = 0 to pivotRight - 2
+            if math.abs(open[k] - close[k + 1]) > vaShapeTolATR * atrVal
+                shapeOkL := false
+        for k = pivotRight to pivotRight + pivotLeft - 1
+            if math.abs(open[k] - close[k + 1]) > vaShapeTolATR * atrVal
+                shapeOkL := false
+    lastPivotLowShapeOk := shapeOkL
+
+pivotHighFresh = not na(lastPivotHigh) and not pivotHighUsed and (bar_index - lastPivotHighBar) <= maxLookback and (not useAsiaRange or lastPivotHighAsia) and lastPivotHighShapeOk
+pivotLowFresh  = not na(lastPivotLow)  and not pivotLowUsed  and (bar_index - lastPivotLowBar)  <= maxLookback and (not useAsiaRange or lastPivotLowAsia) and lastPivotLowShapeOk
+
+// ----------------------------- Sweep (barra corrente) ------------------------
+// Rigetto (reversal, "Judas swing"): sfonda e richiude DENTRO il range
+rejectHigh = pivotHighFresh and high > lastPivotHigh and close <= lastPivotHigh
+rejectLow  = pivotLowFresh  and low  < lastPivotLow  and close >= lastPivotLow
+// Rottura vera (breakout): sfonda e richiude FUORI dal range, nessun rigetto
+breakHigh  = pivotHighFresh and high > lastPivotHigh and close > lastPivotHigh
+breakLow   = pivotLowFresh  and low  < lastPivotLow  and close < lastPivotLow
+
+sweepCandleRange = high - low
+wickBeyondHigh   = rejectHigh ? high - lastPivotHigh : na
+wickBeyondLow    = rejectLow  ? lastPivotLow - low    : na
+sweepQHigh       = sweepCandleRange > 0 and rejectHigh ? wickBeyondHigh / sweepCandleRange : 0
+sweepQLow        = sweepCandleRange > 0 and rejectLow  ? wickBeyondLow  / sweepCandleRange : 0
+sweepHighOk      = not useSweepQ or sweepQHigh >= minSweepQ
+sweepLowOk       = not useSweepQ or sweepQLow  >= minSweepQ
+
+// Qualita' rottura per breakout: quanto ha chiuso oltre il livello rispetto al range della candela
+breakQHigh  = sweepCandleRange > 0 and breakHigh ? (close - lastPivotHigh) / sweepCandleRange : 0
+breakQLow   = sweepCandleRange > 0 and breakLow  ? (lastPivotLow - close) / sweepCandleRange  : 0
+breakHighOk = not useSweepQ or breakQHigh >= minSweepQ
+breakLowOk  = not useSweepQ or breakQLow  >= minSweepQ
+
+// Pivot opposto (liquidita' target, solo Reversal) fresco e disponibile?
+oppHighAvailForLong  = not na(lastPivotHigh) and (bar_index - lastPivotHighBar) <= maxLookback
+oppLowAvailForShort  = not na(lastPivotLow)  and (bar_index - lastPivotLowBar)  <= maxLookback
+
+longCond  = inRange and sessionOk and htfOkLong  and (crtMode == "Reversal" ? (rejectLow  and not rejectHigh and sweepLowOk)  : (breakHigh and not breakLow  and breakHighOk))
+shortCond = inRange and sessionOk and htfOkShort and (crtMode == "Reversal" ? (rejectHigh and not rejectLow  and sweepHighOk) : (breakLow  and not breakHigh and breakLowOk))
+
+if crtMode == "Reversal"
+    if longCond
+        pivotLowUsed := true
+    if shortCond
+        pivotHighUsed := true
+else
+    if longCond
+        pivotHighUsed := true
+    if shortCond
+        pivotLowUsed := true
+
+// ----------------------------- Ingresso --------------------------------------
+var int pendingExpiry = na
+
+retestLimitLong  = close + retestFrac * (lastPivotLow  - close)
+retestLimitShort = close + retestFrac * (lastPivotHigh - close)
+
+if longCond and strategy.position_size <= 0
+    if entryMode == "Market"
+        strategy.entry("Long", strategy.long, comment="CRT_sweepLow")
+    else if entryMode == "Retest limit"
+        strategy.entry("Long", strategy.long, limit=retestLimitLong, comment="CRT_retest_long")
+        pendingExpiry := bar_index + retestBars
+    else
+        strategy.entry("Long", strategy.long, stop=high, comment="CRT_breakout_long")
+        pendingExpiry := bar_index + retestBars
+if shortCond and strategy.position_size >= 0
+    if entryMode == "Market"
+        strategy.entry("Short", strategy.short, comment="CRT_sweepHigh")
+    else if entryMode == "Retest limit"
+        strategy.entry("Short", strategy.short, limit=retestLimitShort, comment="CRT_retest_short")
+        pendingExpiry := bar_index + retestBars
+    else
+        strategy.entry("Short", strategy.short, stop=low, comment="CRT_breakout_short")
+        pendingExpiry := bar_index + retestBars
+
+if entryMode != "Market" and strategy.position_size == 0 and not na(pendingExpiry) and bar_index >= pendingExpiry
+    strategy.cancel("Long")
+    strategy.cancel("Short")
+    pendingExpiry := na
+
+// ----------------------------- Gestione SL/TP --------------------------------
+var float slLevel = na
+var float tpLevel = na
+var float rawSlBuy  = na
+var float rawSlSell = na
+var bool  skipThis  = false
+var bool  tpIsFallback = false
+
+if longCond
+    rawSlBuy := low
+if shortCond
+    rawSlSell := high
+
+atrSig = atrVal
+
+newPosition = strategy.position_size != 0 and strategy.position_size[1] == 0
+if newPosition
+    entryPx = strategy.position_avg_price
+    if strategy.position_size > 0
+        sl = useAtrStop ? entryPx - atrStopMult * atrSig : rawSlBuy
+        floorDist = minStopATR * atrSig
+        curDist = entryPx - sl
+        if not useAtrStop and floorDist > 0 and curDist > 0 and curDist < floorDist
+            sl := entryPx - floorDist
+        tpIsFallback := crtMode == "Breakout" or not oppHighAvailForLong
+        risk0 = entryPx - sl
+        tp = crtMode == "Reversal" and oppHighAvailForLong ? lastPivotHigh : entryPx + tpFallbackR * risk0
+        risk = entryPx - sl
+        tpDist = tp - entryPx
+        skipThis := useTpSanity and risk > 0 and tpDist < tpSanityMinR * risk
+        slLevel := sl
+        tpLevel := tp
+    else
+        sl = useAtrStop ? entryPx + atrStopMult * atrSig : rawSlSell
+        floorDist = minStopATR * atrSig
+        curDist = sl - entryPx
+        if not useAtrStop and floorDist > 0 and curDist > 0 and curDist < floorDist
+            sl := entryPx + floorDist
+        tpIsFallback := crtMode == "Breakout" or not oppLowAvailForShort
+        risk0 = sl - entryPx
+        tp = crtMode == "Reversal" and oppLowAvailForShort ? lastPivotLow : entryPx - tpFallbackR * risk0
+        risk = sl - entryPx
+        tpDist = entryPx - tp
+        skipThis := useTpSanity and risk > 0 and tpDist < tpSanityMinR * risk
+        slLevel := sl
+        tpLevel := tp
+    if skipThis
+        strategy.close_all(comment="TP_sanity_skip")
+
+if strategy.position_size > 0
+    strategy.exit("Exit Long", "Long", stop=slLevel, limit=tpLevel)
+if strategy.position_size < 0
+    strategy.exit("Exit Short", "Short", stop=slLevel, limit=tpLevel)
+
+// ----------------------------- Plot ------------------------------------------
+plot(pivotHighFresh ? lastPivotHigh : na, "Pivot High (range)", color=color.new(color.orange, 40), style=plot.style_circles, offset=0)
+plot(pivotLowFresh  ? lastPivotLow  : na, "Pivot Low (range)",  color=color.new(color.aqua, 40),   style=plot.style_circles, offset=0)
+
+alertcondition(longCond, "NXS CRT BUY", "NEXUS CRT: sweep pivot low, target pivot high opposto")
+alertcondition(shortCond, "NXS CRT SELL", "NEXUS CRT: sweep pivot high, target pivot low opposto")

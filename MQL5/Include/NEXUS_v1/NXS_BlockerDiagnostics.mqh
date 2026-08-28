@@ -20,15 +20,29 @@ enum ENUM_NXS_BLOCK {
    BLK_LICENSE,
    BLK_PAUSED,
    BLK_SEND_FAILED,
+   // 25/08 - separata dal PREFLIGHT generico su richiesta esplicita
+   // dell'utente durante il debug live (account 318337486): il rifiuto
+   // "lotto minimo rischierebbe X contro budget Y" (NXS_CalcLotRisk,
+   // lot_calc_zero) e' una causa DIVERSA e diagnosticabile a se' (conto
+   // troppo piccolo per lo stop della strategia su questo simbolo), non
+   // un errore generico di margine/stop/volume come le altre cause che
+   // restano in PREFLIGHT.
+   BLK_RISK_SIZE,
+   // 25/08 - filtro Elliott multi-timeframe (NXS_ElliottFilter.mqh):
+   // segnale soppresso perche' un impulso a 5 onde si e' appena esaurito
+   // nella stessa direzione, sul TF d'ingresso o su D1 (vedi
+   // NXS_ElliottBlocks). Categoria dedicata, non PREFLIGHT generico.
+   BLK_ELLIOTT,
    BLK_MAX
 };
 
-string g_blockNames[14] = {
+string g_blockNames[16] = {
    "NONE","NO_SIGNAL","COOLDOWN","MTF","HTF","VELOCITY","NEWS",
-   "SPREAD","PROTECTIONS","SCORE_BELOW","PREFLIGHT","LICENSE","PAUSED","SEND_FAILED"
+   "SPREAD","PROTECTIONS","SCORE_BELOW","PREFLIGHT","LICENSE","PAUSED","SEND_FAILED",
+   "RISK_SIZE","ELLIOTT"
 };
 
-long g_blockCount[14];
+long g_blockCount[16];
 long g_decisionTicks = 0;
 datetime g_lastDecisionReport = 0;
 
@@ -47,7 +61,9 @@ ENUM_NXS_BLOCK NXS_BlkFromFailure(const string r){
    if(StringFind(r, "retcode")            >= 0 ||
       StringFind(r, "order_send")         >= 0 ||
       StringFind(r, "send_failed")        >= 0) return BLK_SEND_FAILED;
-   return BLK_PREFLIGHT;   // margin, invalid stops, sl distance, volume
+   if(StringFind(r, "lot_calc_zero")      >= 0) return BLK_RISK_SIZE;
+   if(StringFind(r, "elliott")            >= 0) return BLK_ELLIOTT;
+   return BLK_PREFLIGHT;   // margin, invalid stops, sl distance
 }
 
 void NXS_Blk_Reset(){

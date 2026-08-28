@@ -6,7 +6,12 @@
 #ifndef __NXS_DEFINES_MQH__
 #define __NXS_DEFINES_MQH__
 
-#define NEXUS_VERSION       "2.5.0-mtf"
+// 25/08 - v3.0: milestone dopo la verifica sistematica "segnale nativo
+// vero" (non il proxy Python) su ~20 strategie in una sola sessione -
+// vedi vault 01-Trading del 25/08 per il changelog completo (dead-code
+// NXR, AMD_CONT/LDN_REVERSAL/TURTLE_SOUP/CRT disattivate con evidenza,
+// STRUCT_REACT/MALAYSIAN_SNR/ELLIOTT corrette TF+direzione).
+#define NEXUS_VERSION       "3.0.0"
 #define MAX_GRID_LAYERS     3
 #define MAX_PYRAMID         3
 #define MAX_STRATEGIES      15

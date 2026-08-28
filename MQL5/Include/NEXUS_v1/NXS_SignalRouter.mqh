@@ -19,7 +19,7 @@ enum ENUM_NXS_FAMILY {
 ENUM_NXS_FAMILY NXS_StratFamily(string name){
    if(name == "ADX_RSI" || name == "MACD" || name == "EMA_PULLBACK"
       || name == "BREAKOUT_ACC" || name == "ICHIMOKU" || name == "LONDON_BO"
-      || name == "SAR" || name == "TSI")
+      || name == "SAR" || name == "TSI" || name == "Z_SCORE_BREAKOUT")
       return FAM_TREND;
    if(name == "BOLLINGER" || name == "RSI_DIV" || name == "BJORGUM" || name == "BB_SQUEEZE")
       return FAM_REVERSAL;
@@ -27,7 +27,7 @@ ENUM_NXS_FAMILY NXS_StratFamily(string name){
       || name == "OB_MIT" || name == "ORDER_BLOCK" || name == "STRUCT_REACT"
       || name == "TURTLE_SOUP" || name == "SH_BMS_RTO" || name == "SMS_BMS_RTO"
       || name == "SILVER_BULLET" || name == "AMD_REVERSAL" || name == "OTE_CONT"
-      || name == "MALAYSIAN_SNR"
+      || name == "MALAYSIAN_SNR" || name == "SWING_FALSEBREAK"
       // v2.0.27 — "_NXR" labeling (Phase 2 attribution fix) reuses these same
       // strategies' family classification; keep counter-HTF/family gating
       // identical to the legacy variant, only the stored name differs.

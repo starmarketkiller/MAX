@@ -181,6 +181,71 @@ double NXS_EMAv(int period, ENUM_TIMEFRAMES tf, int shift){
    return a[0];
 }
 
+// 28/08 - stesso pattern di NXS_EMAv ma SMA (serve per MACD+SMA200, che a
+// differenza del nostro MACD nativo usa medie semplici, non esponenziali).
+int             g_smaCacheP[16];
+ENUM_TIMEFRAMES g_smaCacheTF[16];
+int             g_smaCacheH[16];
+int             g_smaCacheN = 0;
+double NXS_SMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_smaCacheN; i++)
+      if(g_smaCacheP[i] == period && g_smaCacheTF[i] == tf){ h = g_smaCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iMA(g_sym, tf, period, 0, MODE_SMA, PRICE_CLOSE);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_smaCacheN < 16){
+         g_smaCacheP[g_smaCacheN] = period; g_smaCacheTF[g_smaCacheN] = tf;
+         g_smaCacheH[g_smaCacheN] = h; g_smaCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
+// 28/08 - WMA (stesso pattern), serve come mattone per la Hull MA vera (non
+// approssimata con una EMA) usata dallo script Ichimoku+HullMA+MACD.
+int             g_wmaCacheP[16];
+ENUM_TIMEFRAMES g_wmaCacheTF[16];
+int             g_wmaCacheH[16];
+int             g_wmaCacheN = 0;
+double NXS_WMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_wmaCacheN; i++)
+      if(g_wmaCacheP[i] == period && g_wmaCacheTF[i] == tf){ h = g_wmaCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iMA(g_sym, tf, period, 0, MODE_LWMA, PRICE_CLOSE);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_wmaCacheN < 16){
+         g_wmaCacheP[g_wmaCacheN] = period; g_wmaCacheTF[g_wmaCacheN] = tf;
+         g_wmaCacheH[g_wmaCacheN] = h; g_wmaCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
+// Hull MA vera: WMA(2*WMA(n/2)-WMA(n), round(sqrt(n))). WMA(n/2) e WMA(n)
+// vengono lette da handle nativi (cache sopra); la WMA finale sulla serie
+// derivata va fatta a mano (non e' una serie con un proprio handle MT5).
+double NXS_HMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int halfP = MathMax(1, period / 2);
+   int sqrtP = (int)MathMax(1, MathRound(MathSqrt(period)));
+   double sum = 0, wsum = 0;
+   for(int k = 0; k < sqrtP; k++){
+      double wHalf = NXS_WMAv(halfP, tf, shift + k);
+      double wFull = NXS_WMAv(period, tf, shift + k);
+      if(wHalf <= 0 || wFull <= 0) return 0.0;
+      double raw = 2.0 * wHalf - wFull;
+      double weight = (double)(sqrtP - k);   // piu' peso alla barra piu' recente
+      sum += raw * weight;
+      wsum += weight;
+   }
+   return (wsum > 0) ? sum / wsum : 0.0;
+}
+
 //------------------------------------ K1 ADX_RSI (riportata alla logica del sito:
 // trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.
 // v2.5.1 - il "backtest" a cui si divergeva era il motore sito, che pero' non
@@ -261,6 +326,268 @@ SNXSSignal NXS_Strat_SAR(){
       s.dir = DIR_SELL; s.score = 60; s.reason = "SAR_above_price";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4b BarUpDn (price-action puro)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("BarUpDn",
+// ChartArt): nessun indicatore, solo la relazione OHLC tra due barre
+// consecutive. Barra corrente verde E apre sopra la chiusura precedente ->
+// buy; barra rossa E apre sotto la chiusura precedente -> sell (mirror).
+SNXSSignal NXS_Strat_BarUpDn(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "BAR_UPDN";
+   if(!InpStrat_BarUpDn || !NXS_SelectorAllows(43)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
+   double c2 = iClose(g_sym, tf, 2);
+   if(c1 > o1 && o1 > c2){
+      s.dir = DIR_BUY;  s.score = 58; s.reason = "BarUpDn_bull";
+   } else if(c1 < o1 && o1 < c2){
+      s.dir = DIR_SELL; s.score = 58; s.reason = "BarUpDn_bear";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4c PMax (SuperTrend ATR-adattivo)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
+// Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, concettualmente
+// piu' robusto del Parabolic SAR nativo (step/max fissi) - candidato mirato
+// dopo che SAR e' risultato negativo (PF0.92) sul motore reale. Replica
+// fedele di Pmax_Func: longStop/shortStop "agganciati" (si muovono solo
+// nella direzione favorevole finche' il trend regge), dir cambia solo
+// quando la MA rompe lo stop opposto. Stato persistente per barra chiusa
+// (stesso pattern di NXS_Strat_TSI - un aggiornamento per barra, non per
+// tick, altrimenti il flip non e' univoco).
+struct SNXSPMaxState {
+   bool     init;
+   datetime lastBarTime;
+   double   longStop, shortStop;
+   int      dir;   // +1 o -1
+};
+SNXSPMaxState g_pmaxState;
+
+SNXSSignal NXS_Strat_PMax(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PMAX";
+   if(!InpStrat_PMax || !NXS_SelectorAllows(44)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_pmaxState.lastBarTime == curBar0) return s;   // gia' valutata su questa barra
+
+   double atr = NXS_ATRv(tf, 1, InpPMax_ATRPeriod);
+   double ma  = NXS_EMAv(InpPMax_MALength, tf, 1);
+   if(atr <= 0 || ma <= 0) return s;
+
+   double longStop  = ma - InpPMax_ATRMult * atr;
+   double shortStop = ma + InpPMax_ATRMult * atr;
+
+   if(!g_pmaxState.init){
+      g_pmaxState.init = true;
+      g_pmaxState.longStop  = longStop;
+      g_pmaxState.shortStop = shortStop;
+      g_pmaxState.dir = 1;
+      g_pmaxState.lastBarTime = curBar0;
+      return s;
+   }
+
+   double maPrev = NXS_EMAv(InpPMax_MALength, tf, 2);
+   if(maPrev > g_pmaxState.longStop)  longStop  = MathMax(longStop,  g_pmaxState.longStop);
+   if(maPrev < g_pmaxState.shortStop) shortStop = MathMin(shortStop, g_pmaxState.shortStop);
+
+   int dir = g_pmaxState.dir;
+   if(dir == -1 && ma > g_pmaxState.shortStop)     dir = 1;
+   else if(dir == 1 && ma < g_pmaxState.longStop)  dir = -1;
+   bool flip = (dir != g_pmaxState.dir);
+
+   g_pmaxState.longStop  = longStop;
+   g_pmaxState.shortStop = shortStop;
+   g_pmaxState.dir = dir;
+   g_pmaxState.lastBarTime = curBar0;
+
+   if(flip){
+      if(dir == 1){ s.dir = DIR_BUY;  s.score = 60; s.reason = "PMax_flip_bull"; }
+      else        { s.dir = DIR_SELL; s.score = 60; s.reason = "PMax_flip_bear"; }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4d MACD+SMA200 (medie semplici, non esponenziali)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("MACD +
+// SMA 200 Strategy", ChartArt): a differenza del nostro MACD nativo (K3,
+// EMA-based su iMACD), qui MACD e signal sono costruiti su medie MOBILI
+// SEMPLICI (SMA), con un filtro di trend SMA200 aggiuntivo. Segnale: hist
+// (macd-signal) attraversa lo zero verso l'alto, macd>0, fastMA>slowMA, e il
+// close di "slowLength" barre fa era sopra la SMA200 (replica esatta della
+// condizione originale close[slowLength]>veryslowMA, non semplificata).
+// Bar-gated: la ricostruzione del signal (SMA(macd,9)) richiede una piccola
+// media manuale su piu' barre, troppo costosa per ricalcolarla ad ogni tick.
+struct SNXSMacdSmaState { datetime lastBarTime; };
+SNXSMacdSmaState g_macdSmaState;
+
+double _nxs_macdsma_hist(ENUM_TIMEFRAMES tf, int shift, int fastLen, int slowLen, int sigLen){
+   double sum = 0;
+   for(int k = 0; k < sigLen; k++){
+      double f = NXS_SMAv(fastLen, tf, shift + k);
+      double sl = NXS_SMAv(slowLen, tf, shift + k);
+      sum += (f - sl);
+   }
+   double signal = sum / sigLen;
+   double macdNow = NXS_SMAv(fastLen, tf, shift) - NXS_SMAv(slowLen, tf, shift);
+   return macdNow - signal;
+}
+
+SNXSSignal NXS_Strat_MacdSma200(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "MACD_SMA200";
+   if(!InpStrat_MacdSma200 || !NXS_SelectorAllows(45)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_macdSmaState.lastBarTime == curBar0) return s;
+   g_macdSmaState.lastBarTime = curBar0;
+
+   int fastLen = 12, slowLen = 26, sigLen = 9, verySlowLen = 200;
+   double fastMA = NXS_SMAv(fastLen, tf, 1), slowMA = NXS_SMAv(slowLen, tf, 1);
+   double veryslowMA = NXS_SMAv(verySlowLen, tf, 1);
+   if(fastMA <= 0 || slowMA <= 0 || veryslowMA <= 0) return s;
+
+   double macd = fastMA - slowMA;
+   double histCur  = _nxs_macdsma_hist(tf, 1, fastLen, slowLen, sigLen);
+   double histPrev = _nxs_macdsma_hist(tf, 2, fastLen, slowLen, sigLen);
+   double closeSlowAgo = iClose(g_sym, tf, 1 + slowLen);
+
+   bool crossUp   = (histPrev <= 0 && histCur > 0);
+   bool crossDown = (histPrev >= 0 && histCur < 0);
+
+   if(crossUp && macd > 0 && fastMA > slowMA && closeSlowAgo > veryslowMA){
+      s.dir = DIR_BUY;  s.score = 60; s.reason = "MACD_SMA200_bull";
+   } else if(crossDown && macd < 0 && fastMA < slowMA && closeSlowAgo < veryslowMA){
+      s.dir = DIR_SELL; s.score = 60; s.reason = "MACD_SMA200_bear";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4e Ichimoku + Hull MA + MACD (script Pine pubblico)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("Ichimoku +
+// Daily-Candle_X + HULL-MA_X + MacD"). Inizialmente scartata per sospetto
+// repaint, poi corretta la valutazione: la revisione (set 2020) usa
+// barmerge.lookahead_off su ogni security() e ha commissione/slippage -
+// merita un vero test MT5, non uno scarto a priori (vedi vault).
+//
+// 5 condizioni in AND (fedeli all'originale, non semplificate):
+// 1) Hull MA in salita: hma(price,14) > hma(price,14) di 1 barra fa - dato
+//    che la Hull MA e' un filtro lineare, hma(price[1],n) a una barra equivale
+//    esattamente a hma(price,n) alla barra precedente, quindi si riduce a un
+//    confronto NXS_HMAv(shift=1) vs NXS_HMAv(shift=2).
+// 2) Trend giornaliero: apertura D1 di ieri (chiusa) > apertura D1 di
+//    l'altro ieri (chiusa) - "Daily-Candle_cross" originale.
+// 3) Prezzo (apertura, fonte di default dello script) sopra la Hull MA di 1
+//    barra fa.
+// 4) Cloud Ichimoku rialzista (leadLine1>leadLine2, letti dagli stessi
+//    buffer gia' cachati per il TF attivo).
+// 5) MACD costruito su Hull MA (non EMA) sopra la sua signal line - la
+//    signal line dell'originale e' anch'essa una Hull MA (hma(MACD,9));
+//    qui approssimata con una media semplice del MACD sulle ultime
+//    round(sqrt(9))=3 barre per restare dentro un costo di calcolo
+//    ragionevole - unica semplificazione dichiarata, il resto e' fedele.
+struct SNXSIcHullState { datetime lastBarTime; };
+SNXSIcHullState g_icHullState;
+
+SNXSSignal NXS_Strat_IchimokuHullMacd(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "ICHIMOKU_HULL_MACD";
+   if(!InpStrat_IchimokuHull || !NXS_SelectorAllows(47)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_icHullState.lastBarTime == curBar0) return s;
+   g_icHullState.lastBarTime = curBar0;
+
+   int hmaLen = 14, macdFast = 12, macdSlow = 26, macdSig = 9;
+   double hma1 = NXS_HMAv(hmaLen, tf, 1), hma2 = NXS_HMAv(hmaLen, tf, 2);
+   if(hma1 <= 0 || hma2 <= 0) return s;
+
+   double dOpen1 = iOpen(g_sym, PERIOD_D1, 1), dOpen2 = iOpen(g_sym, PERIOD_D1, 2);
+   if(dOpen1 <= 0 || dOpen2 <= 0) return s;
+
+   double price = iOpen(g_sym, tf, 1);   // "Source of Price" default = open
+
+   double leadLine1 = g_ichiSpanA, leadLine2 = g_ichiSpanB;
+   if(leadLine1 <= 0 || leadLine2 <= 0) return s;
+
+   double macdNow = NXS_HMAv(macdFast, tf, 1) - NXS_HMAv(macdSlow, tf, 1);
+   double sigSum = 0; int sigN = (int)MathMax(1, MathRound(MathSqrt(macdSig)));
+   for(int k = 0; k < sigN; k++)
+      sigSum += NXS_HMAv(macdFast, tf, 1 + k) - NXS_HMAv(macdSlow, tf, 1 + k);
+   double aMacd = sigSum / sigN;
+   if(macdNow == 0 && aMacd == 0) return s;
+
+   bool hullUp   = hma1 > hma2;
+   bool hullDown = hma1 < hma2;
+   bool dailyUp   = dOpen1 > dOpen2;
+   bool dailyDown = dOpen1 < dOpen2;
+
+   if(hullUp && dailyUp && price > hma2 && leadLine1 > leadLine2 && macdNow > aMacd){
+      s.dir = DIR_BUY;  s.score = 62; s.reason = "IchiHullMacd_bull";
+   } else if(hullDown && dailyDown && price < hma2 && leadLine1 < leadLine2 && macdNow < aMacd){
+      s.dir = DIR_SELL; s.score = 62; s.reason = "IchiHullMacd_bear";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4f 3Commas Bot (EMA cross + stop su swing ATR)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("3Commas
+// Bot" / "Bj Bot"): incrocio EMA21/EMA50 (default script, altri tipi di MA
+// dell'originale non replicati - solo EMA/EMA), stop ancorato allo swing
+// low/high (lookback 5 barre, default script) +-1xATR(14), target a R:R
+// 1:1 (RnR=1, default originale - non alterato). Nessun trailing (l'opzione
+// era OFF di default nello script). Concettualmente simile al nostro
+// SAR (incrocio EMA9/21) ma con periodo diverso e stop/target strutturati
+// invece di ATR generico - un secondo meccanismo da confrontare.
+struct SNXS3CommasState { datetime lastBarTime; };
+SNXS3CommasState g_3commasState;
+
+SNXSSignal NXS_Strat_3CommasBot(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "3COMMAS_BOT";
+   if(!InpStrat_3CommasBot || !NXS_SelectorAllows(48)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_3commasState.lastBarTime == curBar0) return s;
+   g_3commasState.lastBarTime = curBar0;
+
+   int maLen1 = 21, maLen2 = 50, swingLB = 5;
+   double atr = NXS_ATRv(tf, 1, 14);
+   if(atr <= 0) return s;
+
+   double ma1cur = NXS_EMAv(maLen1, tf, 1), ma2cur = NXS_EMAv(maLen2, tf, 1);
+   double ma1prev = NXS_EMAv(maLen1, tf, 2), ma2prev = NXS_EMAv(maLen2, tf, 2);
+   if(ma1cur <= 0 || ma2cur <= 0 || ma1prev <= 0 || ma2prev <= 0) return s;
+
+   bool crossUp   = (ma1prev <= ma2prev && ma1cur > ma2cur);
+   bool crossDown = (ma1prev >= ma2prev && ma1cur < ma2cur);
+   if(!crossUp && !crossDown) return s;
+
+   int loIdx = iLowest(g_sym, tf, MODE_LOW, swingLB, 1);
+   int hiIdx = iHighest(g_sym, tf, MODE_HIGH, swingLB, 1);
+   double lowestLow  = (loIdx >= 0) ? iLow(g_sym, tf, loIdx)  : 0;
+   double highestHigh= (hiIdx >= 0) ? iHigh(g_sym, tf, hiIdx) : 0;
+   if(lowestLow <= 0 || highestHigh <= 0) return s;
+
+   double close1 = iClose(g_sym, tf, 1);
+   if(crossUp){
+      double stop = lowestLow - atr;
+      double risk = close1 - stop;
+      if(risk <= 0) return s;
+      s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      s.slPrice = stop; s.tpPrice = close1 + risk;   // RnR 1:1, default script originale
+      s.score = 58; s.reason = "3CommasBot_bull";
+   } else {
+      double stop = highestHigh + atr;
+      double risk = stop - close1;
+      if(risk <= 0) return s;
+      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+      s.slPrice = stop; s.tpPrice = close1 - risk;
+      s.score = 58; s.reason = "3CommasBot_bear";
+   }
    return s;
 }
 
@@ -445,6 +772,91 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
    return s;
 }
 
+//------------------------------------ Z-Score Breakout (24/08 - porting da server/backtest.py sig_z_score_breakout)
+// Ipotesi "quant" (Z-Score + regime SMA200): interpretazione BREAKOUT
+// (scommette sulla continuazione) delle bande a 2 deviazioni standard,
+// OPPOSTA a BOLLINGER gia' nel motore (mean-reversion, scommette sul
+// ritorno alla media) - stesse bande statistiche, ipotesi di mercato
+// opposta. Regime: SMA200 sullo stesso TF (bull se close>SMA200, bear se
+// close<SMA200), z-score sulla finestra di 20 barre.
+//
+// Stop NON via profilo ATR: strutturale M5 (minimo/massimo delle ultime
+// 12 candele M5 chiuse prima dell'ingresso, pavimento 0.3xATR(H1)),
+// stessa famiglia di stop gia' validata su SAR/MACD/ICHIMOKU (vedi vault
+// "NEXUS EA - Stop Strutturale M5 su Segnali H1 16-08"). Target 4.0xATR.
+// Validata su H1 il 17/08 (`full_catalog_native_stop_17-08.py`): retail
+// PF1.29 (4/5 finestre), ECN PF1.71 (5/5 finestre), 557 trade - il
+// miglior risultato retail di tutta quell'indagine.
+//
+// GAP NOTO (come SWING_FALSEBREAK): il filtro di regime ER (Efficiency
+// Ratio, lookback lungo) usato nella validazione NON e' un gate live qui.
+double _zsb_smaN(int n){
+   double s = 0;
+   for(int k = 1; k <= n; k++) s += iClose(g_sym, NXS_EffTF(), k);
+   return s / n;
+}
+double _zsb_stdN(int n, double mean){
+   double s = 0;
+   for(int k = 1; k <= n; k++){
+      double d = iClose(g_sym, NXS_EffTF(), k) - mean;
+      s += d * d;
+   }
+   return MathSqrt(s / n);
+}
+// Minimo/massimo delle 12 candele M5 chiuse piu' recenti (shift 1..12 su
+// PERIOD_M5) - stesso concetto di make_m5_stop() nello script Python, qui
+// letto direttamente dal terminale invece che dalla cache JSON offline.
+double _zsb_m5StructStop(int dir){
+   double best = (dir == 1) ? DBL_MAX : -DBL_MAX;
+   int found = 0;
+   for(int k = 1; k <= 12; k++){
+      if(dir == 1){
+         double l = iLow(g_sym, PERIOD_M5, k);
+         if(l > 0){ if(l < best) best = l; found++; }
+      } else {
+         double h = iHigh(g_sym, PERIOD_M5, k);
+         if(h > 0){ if(h > best) best = h; found++; }
+      }
+   }
+   return (found >= 3) ? best : 0.0;   // stesso min 3 candele del Python (len(window)<3 -> None)
+}
+
+SNXSSignal NXS_Strat_ZScoreBreakout(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_BREAKOUT_ACC; s.stratName = "Z_SCORE_BREAKOUT";
+   if(!InpStrat_ZScoreBreakout || !NXS_SelectorAllows(42)) return s;
+   double atr = (g_atr > 0) ? g_atr : g_point;   // NXS_Strategies.mqh e' incluso prima di _smc_atr() in NXS_Strategies_SMC.mqh, niente dipendenza cross-file
+   if(atr <= 0) return s;
+   double mean20 = _zsb_smaN(20);
+   double sd20   = _zsb_stdN(20, mean20);
+   if(sd20 <= 0) return s;
+   double c1 = iClose(g_sym, NXS_EffTF(), 1);
+   double z  = (c1 - mean20) / sd20;
+   double htfSma = _zsb_smaN(200);
+   bool bullRegime = c1 > htfSma;
+   bool bearRegime = c1 < htfSma;
+   int dir = 0;
+   if(bullRegime && z > 2.0) dir = 1;
+   else if(bearRegime && z < -2.0) dir = -1;
+   if(dir == 0) return s;
+
+   double m5lvl = _zsb_m5StructStop(dir);
+   if(m5lvl <= 0) return s;
+   double entry = (dir == 1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double riskDist = MathAbs(entry - m5lvl);
+   double floorDist = 0.3 * atr;
+   if(riskDist < floorDist) riskDist = floorDist;
+   if(riskDist <= 0) return s;
+
+   s.dir      = (dir == 1) ? DIR_BUY : DIR_SELL;
+   s.entryRef = entry;
+   s.slPrice  = (dir == 1) ? entry - riskDist : entry + riskDist;
+   s.tpPrice  = (dir == 1) ? entry + 4.0 * atr : entry - 4.0 * atr;
+   s.score    = 71.0;
+   s.reason   = (dir == 1) ? "ZSB:bull_z>2+M5struct" : "ZSB:bear_z<-2+M5struct";
+   return s;
+}
+
 //------------------------------------ H4 London Breakout
 // 17/07 notte - validazione breakout aggiunta, da audit esterno canonico:
 // prima qualsiasi close marginale oltre l'Asia contava come breakout.
@@ -486,9 +898,11 @@ SNXSSignal NXS_Strat_LondonBO(){
 // barre (non solo l'istante attuale), (2) un impulso precedente che si sia
 // allontanato dall'EMA20 di una distanza minima, (3) pullback con vera
 // rejection (non solo un cross), (4) niente entry se EMA50 viene rotta.
-int    InpEMAPB_TrendPersistBars = 5;
-double InpEMAPB_MinDistATR       = 1.0;
-double InpEMAPB_TouchToleranceATR= 0.15;
+// 27/08 - resi input (stesso bug del gruppo SL/TP in NXS_Inputs.mqh):
+// invisibili al Tester/Optimization cosi' com'erano.
+input int    InpEMAPB_TrendPersistBars = 5;
+input double InpEMAPB_MinDistATR       = 1.0;
+input double InpEMAPB_TouchToleranceATR= 0.15;
 
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
@@ -634,6 +1048,76 @@ SNXSSignal NXS_Strat_Ichimoku(){
       s.dir = DIR_BUY;  s.score = 65; s.reason = "Kumo_break_up";
    } else if(prev >= kumoBot2 && price < kumoBot1 && tenkan[0] < kijun[0]){
       s.dir = DIR_SELL; s.score = 65; s.reason = "Kumo_break_down";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ H8b RSI Divergence su pivot (script Pine pubblico)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("RSI
+// Divergence Indicator"): metodo di rilevamento diverso dal nostro RSI_DIV
+// nativo appena sopra (finestra fissa 8 barre) - qui i pivot RSI veri
+// (minimo/massimo locale su lbL+lbR barre) e la distanza tra due pivot deve
+// stare in un range (5-60 barre di default), come nello script originale.
+// Non un sostituto: un secondo meccanismo da confrontare, dato che il
+// nostro nativo e' gia' forte (PF1.21 reale).
+struct SNXSRsiDivPineState { datetime lastBarTime; };
+SNXSRsiDivPineState g_rsiDivPineState;
+
+bool _nxs_rsidivpine_pivot_low(const double &rsi[], int n, int idx, int lbL, int lbR){
+   if(idx - lbL < 0 || idx + lbR >= n) return false;
+   double v = rsi[idx];
+   for(int k = idx - lbL; k <= idx + lbR; k++){ if(k != idx && rsi[k] < v) return false; }
+   return true;
+}
+bool _nxs_rsidivpine_pivot_high(const double &rsi[], int n, int idx, int lbL, int lbR){
+   if(idx - lbL < 0 || idx + lbR >= n) return false;
+   double v = rsi[idx];
+   for(int k = idx - lbL; k <= idx + lbR; k++){ if(k != idx && rsi[k] > v) return false; }
+   return true;
+}
+
+SNXSSignal NXS_Strat_RsiDivPine(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_RSI_DIV; s.stratName = "RSI_DIV_PINE";
+   if(!InpStrat_RsiDivPine || !NXS_SelectorAllows(46)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_rsiDivPineState.lastBarTime == curBar0) return s;
+   g_rsiDivPineState.lastBarTime = curBar0;
+
+   int lbL = 1, lbR = 3, rangeLower = 5, rangeUpper = 60;
+   int need = rangeUpper + lbR + lbL + 10;
+   double rsi[]; ArraySetAsSeries(rsi, true);
+   if(CopyBuffer(g_hRSI, 0, 0, need, rsi) < need) return s;
+   int n = ArraySize(rsi);
+
+   // scansione dal pivot piu' recente possibile (shift lbR) verso il passato:
+   // raccoglie i primi due pivot low e i primi due pivot high confermati.
+   int plIdx[2] = {-1,-1}, phIdx[2] = {-1,-1}, plN = 0, phN = 0;
+   for(int i = lbR; i < n - lbL && (plN < 2 || phN < 2); i++){
+      if(plN < 2 && _nxs_rsidivpine_pivot_low (rsi, n, i, lbL, lbR)) plIdx[plN++] = i;
+      if(phN < 2 && _nxs_rsidivpine_pivot_high(rsi, n, i, lbL, lbR)) phIdx[phN++] = i;
+   }
+
+   // Bullish regular: pivot RSI piu' recente > pivot precedente (minimo piu'
+   // alto), prezzo piu' basso, pivot fresco (confermato adesso, non vecchio).
+   if(plN == 2 && plIdx[0] <= lbR + 1){
+      int dist = plIdx[1] - plIdx[0];
+      if(dist >= rangeLower && dist <= rangeUpper){
+         double loRecent = iLow(g_sym, tf, plIdx[0]), loPrev = iLow(g_sym, tf, plIdx[1]);
+         if(rsi[plIdx[0]] > rsi[plIdx[1]] && loRecent < loPrev){
+            s.dir = DIR_BUY; s.score = 60; s.reason = "RSI_DIV_PINE_bull";
+         }
+      }
+   }
+   if(s.dir == DIR_NONE && phN == 2 && phIdx[0] <= lbR + 1){
+      int dist = phIdx[1] - phIdx[0];
+      if(dist >= rangeLower && dist <= rangeUpper){
+         double hiRecent = iHigh(g_sym, tf, phIdx[0]), hiPrev = iHigh(g_sym, tf, phIdx[1]);
+         if(rsi[phIdx[0]] < rsi[phIdx[1]] && hiRecent > hiPrev){
+            s.dir = DIR_SELL; s.score = 60; s.reason = "RSI_DIV_PINE_bear";
+         }
+      }
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

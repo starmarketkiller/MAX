@@ -308,7 +308,7 @@ void NXS_Stats_ExportCSV(){
       "avg_spread_pts","avg_holding_sec",
       "blk_NONE","blk_NO_SIGNAL","blk_COOLDOWN","blk_MTF","blk_HTF","blk_VELOCITY",
       "blk_NEWS","blk_SPREAD","blk_PROTECTIONS","blk_SCORE_BELOW","blk_PREFLIGHT",
-      "blk_LICENSE","blk_PAUSED","blk_SEND_FAILED",
+      "blk_LICENSE","blk_PAUSED","blk_SEND_FAILED","blk_RISK_SIZE","blk_ELLIOTT",
       "dominant_blocker","reachability_pct","exec_rate_pct","health"
    );
    for(int i = 0; i < g_stratStatsCount; i++){
@@ -349,7 +349,8 @@ void NXS_Stats_ExportCSV(){
          (string)r.blockedAt[3], (string)r.blockedAt[4], (string)r.blockedAt[5],
          (string)r.blockedAt[6], (string)r.blockedAt[7], (string)r.blockedAt[8],
          (string)r.blockedAt[9], (string)r.blockedAt[10], (string)r.blockedAt[11],
-         (string)r.blockedAt[12], (string)r.blockedAt[13],
+         (string)r.blockedAt[12], (string)r.blockedAt[13], (string)r.blockedAt[14],
+         (string)r.blockedAt[15],
          IntegerToString(domIdx),
          DoubleToString(reach,2), DoubleToString(execR,2),
          health
@@ -491,7 +492,7 @@ void NXS_Stats_Init(){
       "ADX_RSI","BOLLINGER","MACD","SAR","TSI","BJORGUM","LIQ_SWEEP","FVG_CONT",
       "BREAKOUT_ACC","LONDON_BO","EMA_PULLBACK","BB_SQUEEZE","ICHIMOKU","RSI_DIV",
       "ORDER_BLOCK","STRUCT_REACT",
-      "TURTLE_SOUP","IFVG","FVG_MIT","OB_MIT","SH_BMS_RTO","SMS_BMS_RTO",
+      "TURTLE_SOUP","SWING_FALSEBREAK","Z_SCORE_BREAKOUT","IFVG","FVG_MIT","OB_MIT","SH_BMS_RTO","SMS_BMS_RTO",
       "SILVER_BULLET","AMD_REVERSAL","OTE_CONT","MALAYSIAN_SNR",
       // v2.0.7 institutional
       "THREE_BAR_DELIVERY_BREAK","AMD_CONT","JUDAS_SWING","LDN_REVERSAL","NY_REVERSAL",
@@ -501,7 +502,10 @@ void NXS_Stats_Init(){
       // 12/08 - CRT mancava dall'elenco noto da quando e' stata portata in
       // MQL5 (11/08): _nxs_stats_idx() la crea comunque al primo utilizzo,
       // ma restava assente dal report finche' non scattava il primo segnale.
-      "CRT"
+      "CRT",
+      // 26/08 - ELLIOTT (NXS_Strat_Elliott) mancava dall'elenco da quando e'
+      // stata riattivata stasera (H4 BUY-only) - stesso problema di CRT sopra.
+      "ELLIOTT"
    };
    for(int i = 0; i < ArraySize(known); i++) _nxs_stats_idx(known[i]);
    NXS_Stats_SetEnabled("CRT", InpUseStrat_CRT);
@@ -523,10 +527,14 @@ void NXS_Stats_Init(){
    NXS_Stats_SetEnabled("ORDER_BLOCK",    InpStrat_ORDER_BLOCK);
    // Mark SMC strategies enabled/disabled based on inputs
    NXS_Stats_SetEnabled("TURTLE_SOUP",    InpStrat_TurtleSoup);
+   NXS_Stats_SetEnabled("SWING_FALSEBREAK", InpStrat_SwingFalseBreak);
+   NXS_Stats_SetEnabled("Z_SCORE_BREAKOUT", InpStrat_ZScoreBreakout);
    NXS_Stats_SetEnabled("IFVG",           InpStrat_IFVG);
    NXS_Stats_SetEnabled("FVG_MIT",        InpStrat_FVG_Mit);
+   NXS_Stats_SetEnabled("FVG_MIT_WINDOW", InpStrat_FVG_MIT_WINDOW);
    NXS_Stats_SetEnabled("OB_MIT",         InpStrat_OB_Mit);
    NXS_Stats_SetEnabled("SH_BMS_RTO",     InpStrat_SH_BMS_RTO);
+   NXS_Stats_SetEnabled("SH_BMS_RTO_V2",  InpStrat_SH_BMS_RTO_V2);
    NXS_Stats_SetEnabled("SMS_BMS_RTO",    InpStrat_SMS_BMS_RTO);
    NXS_Stats_SetEnabled("SILVER_BULLET",  InpStrat_SilverBullet);
    NXS_Stats_SetEnabled("AMD_REVERSAL",   InpStrat_AMD_Reversal);
@@ -546,6 +554,8 @@ void NXS_Stats_Init(){
    NXS_Stats_SetEnabled("DISP_REBAL",    InpUseStrat_DispRebal);
    // v2.0.8: Range Fade
    NXS_Stats_SetEnabled("RANGE_FADE",    InpUseStrat_RangeFade);
+   // 26/08: Elliott
+   NXS_Stats_SetEnabled("ELLIOTT",       InpUseStrat_Elliott);
    // Ensure subfolder exists by attempting a write
    string seed = StringFormat("%s\\.keep", NXS_STATS_FOLDER);
    int fh = FileOpen(seed, FILE_WRITE | FILE_TXT | FILE_ANSI);
