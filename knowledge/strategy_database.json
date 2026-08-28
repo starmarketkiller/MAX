@@ -1100,6 +1100,25 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "SuperTrend ATR-adattivo stop-and-reverse, candidato a sostituire/affiancare SAR (PF0.92 reale). TF H1, ATR(10) x3.0, MA EMA(10)"
+    },
+    {
+      "nome": "MACD_SMA200",
+      "selector_index": 45,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (MACD + SMA 200 Strategy, ChartArt)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_MacdSma200=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "MACD su SMA (non EMA) + filtro trend SMA200, diverso dal nostro MACD nativo (K3, EMA-based). TF H4"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

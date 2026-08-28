@@ -250,6 +250,9 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
    // lento a girare.
    if(name == "PMAX")              return PERIOD_H1;
+   // 28/08 - MACD+SMA200 (portata da Pine TradingView): serve una SMA200
+   // affidabile, H4 da abbastanza storia senza essere troppo lento a girare.
+   if(name == "MACD_SMA200")       return PERIOD_H4;
    return PERIOD_CURRENT;
 }
 
@@ -362,6 +365,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

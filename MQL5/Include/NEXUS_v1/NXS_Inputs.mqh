@@ -741,6 +741,11 @@ input bool     InpStrat_PMax             = false;
 input int      InpPMax_ATRPeriod         = 10;    // default script originale
 input int      InpPMax_MALength          = 10;
 input double   InpPMax_ATRMult           = 3.0;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("MACD +
+// SMA 200 Strategy", ChartArt): MACD su medie semplici (non esponenziali)
+// piu' filtro di trend SMA200. Mai verificata su MT5 - disattivata come le
+// altre nuove aggiunte di stasera.
+input bool     InpStrat_MacdSma200       = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'

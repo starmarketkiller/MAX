@@ -30,6 +30,7 @@ export const STRATEGY_REGISTRY = [
   ["LIQ_VOID","Liq Void","SMC",true,true],
   ["LONDON_BO","London Bo","TREND",true,true],
   ["MACD","MACD","MOMENTUM",true,true],
+  ["MACD_SMA200","Macd Sma200","UNCLASSIFIED",true,false],
   ["MALAYSIAN_SNR","Malaysian Snr","LIQUIDITY",true,true],
   ["MALAYSIAN_SNR_BREAKOUT","Malaysian Snr Breakout","SCALP",false,true],
   ["MALAYSIAN_SNR_V2_RETEST","Malaysian Snr V2 Retest","SCALP",false,true],

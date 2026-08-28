@@ -181,6 +181,29 @@ double NXS_EMAv(int period, ENUM_TIMEFRAMES tf, int shift){
    return a[0];
 }
 
+// 28/08 - stesso pattern di NXS_EMAv ma SMA (serve per MACD+SMA200, che a
+// differenza del nostro MACD nativo usa medie semplici, non esponenziali).
+int             g_smaCacheP[16];
+ENUM_TIMEFRAMES g_smaCacheTF[16];
+int             g_smaCacheH[16];
+int             g_smaCacheN = 0;
+double NXS_SMAv(int period, ENUM_TIMEFRAMES tf, int shift){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_smaCacheN; i++)
+      if(g_smaCacheP[i] == period && g_smaCacheTF[i] == tf){ h = g_smaCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iMA(g_sym, tf, period, 0, MODE_SMA, PRICE_CLOSE);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_smaCacheN < 16){
+         g_smaCacheP[g_smaCacheN] = period; g_smaCacheTF[g_smaCacheN] = tf;
+         g_smaCacheH[g_smaCacheN] = h; g_smaCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
 //------------------------------------ K1 ADX_RSI (riportata alla logica del sito:
 // trend EMA50 + banda RSI. La vecchia usava ADX+EMA200 -> divergeva dal backtest.
 // v2.5.1 - il "backtest" a cui si divergeva era il motore sito, che pero' non
@@ -342,6 +365,61 @@ SNXSSignal NXS_Strat_PMax(){
    if(flip){
       if(dir == 1){ s.dir = DIR_BUY;  s.score = 60; s.reason = "PMax_flip_bull"; }
       else        { s.dir = DIR_SELL; s.score = 60; s.reason = "PMax_flip_bear"; }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4d MACD+SMA200 (medie semplici, non esponenziali)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("MACD +
+// SMA 200 Strategy", ChartArt): a differenza del nostro MACD nativo (K3,
+// EMA-based su iMACD), qui MACD e signal sono costruiti su medie MOBILI
+// SEMPLICI (SMA), con un filtro di trend SMA200 aggiuntivo. Segnale: hist
+// (macd-signal) attraversa lo zero verso l'alto, macd>0, fastMA>slowMA, e il
+// close di "slowLength" barre fa era sopra la SMA200 (replica esatta della
+// condizione originale close[slowLength]>veryslowMA, non semplificata).
+// Bar-gated: la ricostruzione del signal (SMA(macd,9)) richiede una piccola
+// media manuale su piu' barre, troppo costosa per ricalcolarla ad ogni tick.
+struct SNXSMacdSmaState { datetime lastBarTime; };
+SNXSMacdSmaState g_macdSmaState;
+
+double _nxs_macdsma_hist(ENUM_TIMEFRAMES tf, int shift, int fastLen, int slowLen, int sigLen){
+   double sum = 0;
+   for(int k = 0; k < sigLen; k++){
+      double f = NXS_SMAv(fastLen, tf, shift + k);
+      double sl = NXS_SMAv(slowLen, tf, shift + k);
+      sum += (f - sl);
+   }
+   double signal = sum / sigLen;
+   double macdNow = NXS_SMAv(fastLen, tf, shift) - NXS_SMAv(slowLen, tf, shift);
+   return macdNow - signal;
+}
+
+SNXSSignal NXS_Strat_MacdSma200(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "MACD_SMA200";
+   if(!InpStrat_MacdSma200 || !NXS_SelectorAllows(45)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_macdSmaState.lastBarTime == curBar0) return s;
+   g_macdSmaState.lastBarTime = curBar0;
+
+   int fastLen = 12, slowLen = 26, sigLen = 9, verySlowLen = 200;
+   double fastMA = NXS_SMAv(fastLen, tf, 1), slowMA = NXS_SMAv(slowLen, tf, 1);
+   double veryslowMA = NXS_SMAv(verySlowLen, tf, 1);
+   if(fastMA <= 0 || slowMA <= 0 || veryslowMA <= 0) return s;
+
+   double macd = fastMA - slowMA;
+   double histCur  = _nxs_macdsma_hist(tf, 1, fastLen, slowLen, sigLen);
+   double histPrev = _nxs_macdsma_hist(tf, 2, fastLen, slowLen, sigLen);
+   double closeSlowAgo = iClose(g_sym, tf, 1 + slowLen);
+
+   bool crossUp   = (histPrev <= 0 && histCur > 0);
+   bool crossDown = (histPrev >= 0 && histCur < 0);
+
+   if(crossUp && macd > 0 && fastMA > slowMA && closeSlowAgo > veryslowMA){
+      s.dir = DIR_BUY;  s.score = 60; s.reason = "MACD_SMA200_bull";
+   } else if(crossDown && macd < 0 && fastMA < slowMA && closeSlowAgo < veryslowMA){
+      s.dir = DIR_SELL; s.score = 60; s.reason = "MACD_SMA200_bear";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

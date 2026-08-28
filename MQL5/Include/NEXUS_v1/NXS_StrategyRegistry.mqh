@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 41
+#define NXS_LIVE_STRATEGY_COUNT 42
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -36,6 +36,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="LIQ_VOID" ||
           id=="LONDON_BO" ||
           id=="MACD" ||
+          id=="MACD_SMA200" ||
           id=="MALAYSIAN_SNR" ||
           id=="NY_REVERSAL" ||
           id=="OB_MIT" ||
@@ -83,26 +84,27 @@ string NXS_StrategyIdAt(int i){
    if(i==18) return "LIQ_VOID";
    if(i==19) return "LONDON_BO";
    if(i==20) return "MACD";
-   if(i==21) return "MALAYSIAN_SNR";
-   if(i==22) return "NY_REVERSAL";
-   if(i==23) return "OB_MIT";
-   if(i==24) return "ORDER_BLOCK";
-   if(i==25) return "OTE_CONT";
-   if(i==26) return "PMAX";
-   if(i==27) return "PO3";
-   if(i==28) return "RANGE_FADE";
-   if(i==29) return "RSI_DIV";
-   if(i==30) return "SAR";
-   if(i==31) return "SH_BMS_RTO";
-   if(i==32) return "SILVER_BULLET";
-   if(i==33) return "SMS_BMS_RTO";
-   if(i==34) return "STRUCT_REACT";
-   if(i==35) return "SWING_FALSEBREAK";
-   if(i==36) return "THREE_BAR_DELIVERY_BREAK";
-   if(i==37) return "TSI";
-   if(i==38) return "TURTLE_SOUP";
-   if(i==39) return "WEEKLY_EXP";
-   if(i==40) return "Z_SCORE_BREAKOUT";
+   if(i==21) return "MACD_SMA200";
+   if(i==22) return "MALAYSIAN_SNR";
+   if(i==23) return "NY_REVERSAL";
+   if(i==24) return "OB_MIT";
+   if(i==25) return "ORDER_BLOCK";
+   if(i==26) return "OTE_CONT";
+   if(i==27) return "PMAX";
+   if(i==28) return "PO3";
+   if(i==29) return "RANGE_FADE";
+   if(i==30) return "RSI_DIV";
+   if(i==31) return "SAR";
+   if(i==32) return "SH_BMS_RTO";
+   if(i==33) return "SILVER_BULLET";
+   if(i==34) return "SMS_BMS_RTO";
+   if(i==35) return "STRUCT_REACT";
+   if(i==36) return "SWING_FALSEBREAK";
+   if(i==37) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==38) return "TSI";
+   if(i==39) return "TURTLE_SOUP";
+   if(i==40) return "WEEKLY_EXP";
+   if(i==41) return "Z_SCORE_BREAKOUT";
    return "";
 }
 
