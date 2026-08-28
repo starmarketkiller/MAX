@@ -66,13 +66,37 @@ in attesa di backtest isolato reale prima di qualunque attivazione.
   le altre opzioni di MA (HEMA/SMA/HMA/WMA/DEMA/VWMA/VWAP/T3)
   dell'originale non sono state portate.
 
-## Prossimo passo
+## Bug critico scoperto durante il primo test (PMAX): tutte e 6 bloccate all'origine
 
-Backtest isolati MT5 a tick reali per ciascuna (stesso protocollo di
-stanotte: `InpStrategySelector` dedicato, 10 mesi, $1000 USD) — priorità a
-**PMAX** (candidato diretto a sostituire SAR). Il primo test PMax è in
-corso mentre questa nota viene scritta.
+Primo backtest isolato di PMAX: **0 trade in 8 mesi**, nonostante una
+diagnostica dedicata confermasse che il segnale si genera correttamente
+(il `dir` dello stop-and-reverse cambia più volte, come atteso da un
+SuperTrend). Aggiunta una seconda diagnostica sul motivo esatto del
+rifiuto: **`reason='profile_disabled'`, ogni singolo tentativo**.
+
+Causa: `NXS_Profile_Enabled()` (`NXS_StrategyProfiles.mqh`) è una
+whitelist **indipendente** sia da `InpStrat_X` (il toggle "voglio
+provarla") sia da `InpStrategySelector` (l'isolamento per il test) — un
+terzo cancello, "questa strategia è abbastanza validata da aprire
+ordini", con default `false` per qualunque nome non esplicitamente
+elencato (`NXS_Execution.mqh:293-295` → `OPEN_FAIL_PREFLIGHT`). **Tutte
+e 6** le strategie di questa nota ci cadevano dentro senza che me ne
+accorgessi — le avevo registrate in `NXS_Profile_TF` e
+`NXS_Profile_Risk` ma dimenticato questo terzo registro. Corretto
+aggiungendo tutte e 6 con `return true` (l'unica vera protezione contro
+l'attivazione accidentale resta `InpStrat_X=false` di default).
+
+**Lezione di metodo**: quando si aggiunge una nuova strategia a questo
+codice, ci sono ALMENO 4 punti di registrazione separati che devono
+combaciare (dispatcher in `NEXUS_EA_v2.mq5`, `NXS_Profile_TF`,
+`NXS_Profile_Risk`, **`NXS_Profile_Enabled`**) oltre al registro
+canonico generato — dimenticarne anche solo uno produce zero trade
+senza errori di compilazione, silenzioso fino al primo backtest reale.
+Da controllare esplicitamente ad ogni nuova aggiunta futura.
+
+Test di conferma su PMAX (10 mesi, tick reali, con il fix) in corso.
 
 ## Collegamenti
 [[MOC - Trading]]
 [[NEXUS EA - Piramidare, Debug Completo e Verdetto sul Portafoglio (28-08)]]
+[[NEXUS EA - Diff Python vs MQL5 su SAR-EMA_PULLBACK, Limite Strutturale del Motore Ricerca (28-08)]]
