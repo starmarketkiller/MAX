@@ -534,6 +534,63 @@ SNXSSignal NXS_Strat_IchimokuHullMacd(){
    return s;
 }
 
+//------------------------------------ K4f 3Commas Bot (EMA cross + stop su swing ATR)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("3Commas
+// Bot" / "Bj Bot"): incrocio EMA21/EMA50 (default script, altri tipi di MA
+// dell'originale non replicati - solo EMA/EMA), stop ancorato allo swing
+// low/high (lookback 5 barre, default script) +-1xATR(14), target a R:R
+// 1:1 (RnR=1, default originale - non alterato). Nessun trailing (l'opzione
+// era OFF di default nello script). Concettualmente simile al nostro
+// SAR (incrocio EMA9/21) ma con periodo diverso e stop/target strutturati
+// invece di ATR generico - un secondo meccanismo da confrontare.
+struct SNXS3CommasState { datetime lastBarTime; };
+SNXS3CommasState g_3commasState;
+
+SNXSSignal NXS_Strat_3CommasBot(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "3COMMAS_BOT";
+   if(!InpStrat_3CommasBot || !NXS_SelectorAllows(48)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_3commasState.lastBarTime == curBar0) return s;
+   g_3commasState.lastBarTime = curBar0;
+
+   int maLen1 = 21, maLen2 = 50, swingLB = 5;
+   double atr = NXS_ATRv(tf, 1, 14);
+   if(atr <= 0) return s;
+
+   double ma1cur = NXS_EMAv(maLen1, tf, 1), ma2cur = NXS_EMAv(maLen2, tf, 1);
+   double ma1prev = NXS_EMAv(maLen1, tf, 2), ma2prev = NXS_EMAv(maLen2, tf, 2);
+   if(ma1cur <= 0 || ma2cur <= 0 || ma1prev <= 0 || ma2prev <= 0) return s;
+
+   bool crossUp   = (ma1prev <= ma2prev && ma1cur > ma2cur);
+   bool crossDown = (ma1prev >= ma2prev && ma1cur < ma2cur);
+   if(!crossUp && !crossDown) return s;
+
+   int loIdx = iLowest(g_sym, tf, MODE_LOW, swingLB, 1);
+   int hiIdx = iHighest(g_sym, tf, MODE_HIGH, swingLB, 1);
+   double lowestLow  = (loIdx >= 0) ? iLow(g_sym, tf, loIdx)  : 0;
+   double highestHigh= (hiIdx >= 0) ? iHigh(g_sym, tf, hiIdx) : 0;
+   if(lowestLow <= 0 || highestHigh <= 0) return s;
+
+   double close1 = iClose(g_sym, tf, 1);
+   if(crossUp){
+      double stop = lowestLow - atr;
+      double risk = close1 - stop;
+      if(risk <= 0) return s;
+      s.dir = DIR_BUY; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      s.slPrice = stop; s.tpPrice = close1 + risk;   // RnR 1:1, default script originale
+      s.score = 58; s.reason = "3CommasBot_bull";
+   } else {
+      double stop = highestHigh + atr;
+      double risk = stop - close1;
+      if(risk <= 0) return s;
+      s.dir = DIR_SELL; s.entryRef = SymbolInfoDouble(g_sym, SYMBOL_BID);
+      s.slPrice = stop; s.tpPrice = close1 - risk;
+      s.score = 58; s.reason = "3CommasBot_bear";
+   }
+   return s;
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva

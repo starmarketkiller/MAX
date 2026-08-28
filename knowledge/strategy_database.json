@@ -1157,6 +1157,25 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "5 filtri in AND: Hull MA in salita, trend giornaliero D1, prezzo vs Hull MA, cloud Ichimoku, MACD su Hull MA (signal approssimata a media semplice 3 barre). Probabile segnale molto raro per via dei 5 filtri simultanei. TF H4"
+    },
+    {
+      "nome": "3COMMAS_BOT",
+      "selector_index": 48,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (3Commas Bot / Bj Bot)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_3CommasBot=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "incrocio EMA21/50 + stop su swing(5) ATR(14) + target R:R 1:1 (default script). Solo variante EMA replicata, non gli altri tipi di MA opzionali. TF H1"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

@@ -755,6 +755,10 @@ input bool     InpStrat_RsiDivPine       = false;
 // trend giornaliero, prezzo vs Hull MA, cloud Ichimoku, MACD su Hull MA).
 // Mai verificata su MT5 - disattivata come le altre nuove aggiunte.
 input bool     InpStrat_IchimokuHull     = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("3Commas
+// Bot" / "Bj Bot"): incrocio EMA21/50 + stop su swing ATR + target R:R 1:1.
+// Mai verificata su MT5 - disattivata come le altre nuove aggiunte.
+input bool     InpStrat_3CommasBot       = false;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'

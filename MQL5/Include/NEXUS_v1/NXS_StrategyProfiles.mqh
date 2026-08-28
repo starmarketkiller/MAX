@@ -260,6 +260,10 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // con Ichimoku (pensato per TF piu' alti) e i 5 filtri simultanei gia'
    // molto restrittivi di suo.
    if(name == "ICHIMOKU_HULL_MACD") return PERIOD_H4;
+   // 28/08 - 3Commas Bot (portata da Pine TradingView): H1, incrocio EMA
+   // relativamente veloce (21/50), coerente con lo stop/target propri (non
+   // serve un TF lento come le strategie a stop strutturale).
+   if(name == "3COMMAS_BOT")       return PERIOD_H1;
    return PERIOD_CURRENT;
 }
 
@@ -375,6 +379,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "ICHIMOKU_HULL_MACD") return 0.5;  // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "3COMMAS_BOT")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

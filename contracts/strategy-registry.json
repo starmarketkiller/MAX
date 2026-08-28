@@ -8,11 +8,33 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 74,
-    "live": 44,
+    "total": 75,
+    "live": 45,
     "research_only": 30
   },
   "strategies": [
+    {
+      "strategy_id": "3COMMAS_BOT",
+      "display_name": "3Commas Bot",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 48,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "H1"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
     {
       "strategy_id": "ADX_RSI",
       "display_name": "ADX + RSI",
