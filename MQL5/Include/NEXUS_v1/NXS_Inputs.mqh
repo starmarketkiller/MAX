@@ -487,11 +487,14 @@ double   InpAB_ScoreBonus_DDHard = 10.0; // require MinEntryScore+10 when DD har
 // input group "=== GRID / PYRAMID / SPLIT ==="
 bool     InpEnableGrid       = false;
 double   InpGridStepATR      = 1.2;
-bool     InpEnablePyramid    = true;    // 27/08 - gia' costruito e auditato (AUD0-ADD-005/006/007),
-                                         // rispetta lo stesso preflight di rischio delle entrate normali;
-                                         // era solo spento di default. Max 3 gambe pyramid CONTEMPORANEE
-                                         // su tutto il conto (non per-posizione), +1 ATR di profitto
-                                         // e velocity concorde richiesti prima di ogni aggiunta.
+bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
+                                         // ORA FUNZIONA (bug di sizing trovato e corretto, 26 gambe/mese
+                                         // confermate su Tester MT5 a tick reali), ma sul portafoglio
+                                         // v3.0 attuale l'effetto e' NEGATIVO (PF1.02->0.98, netto
+                                         // +$31.68->-$28.06, 10 mesi tick reali) - amplifica esposizione
+                                         // su strategie con edge gia' sottile/negativo (SAR, EMA_PULLBACK)
+                                         // invece di aggiungere profitto. Da riattivare solo quando il
+                                         // mix di strategie e' solido (PF portafoglio chiaramente >1).
 bool     InpEnableSplit      = true;
 
 // input group "=== WEB BRIDGE ==="
