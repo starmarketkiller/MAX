@@ -596,6 +596,26 @@ bool NXS_Profile_Enabled(const string name){
    // Le rimanenti restano note per la cronaca (gia' spente da prima per
    // perdite reali confermate, non fanno parte del nucleo demo):
    //   BB_SQUEEZE, STRUCT_REACT, DISP_REBAL, OTE_CONT, ICHIMOKU.
+   //
+   // 28/08 - BUG TROVATO stasera: questa e' una whitelist separata da
+   // InpStrat_X (il toggle "voglio provarla") e da InpStrategySelector
+   // (isolamento per il test) - un terzo cancello indipendente, "questa
+   // strategia e' abbastanza validata da aprire ordini" (return false =
+   // OPEN_FAIL_PREFLIGHT/"profile_disabled", vedi NXS_Execution.mqh).
+   // Le 6 strategie portate stasera da script Pine TradingView caivano
+   // TUTTE qui dentro senza saperlo: zero trade in ogni backtest isolato,
+   // a prescindere da InpStrat_X=true e dal selector - scoperto solo dopo
+   // diagnostica dedicata su PMAX (dir flip confermato, segnale generato,
+   // ma ogni apertura rifiutata con reason='profile_disabled'). Aggiunte
+   // qui (return true) cosi' il loro InpStrat_X=false di default resta
+   // l'unica vera protezione - "abilitata al test" non e' "abilitata di
+   // default", quel controllo resta su InpStrat_X.
+   if(name == "BAR_UPDN")               return true;
+   if(name == "PMAX")                   return true;
+   if(name == "MACD_SMA200")            return true;
+   if(name == "RSI_DIV_PINE")           return true;
+   if(name == "ICHIMOKU_HULL_MACD")     return true;
+   if(name == "3COMMAS_BOT")            return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 
