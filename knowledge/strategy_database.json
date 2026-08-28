@@ -1062,6 +1062,25 @@
       "affidabilita_dati": "PF/trade dal backtest Python (full_catalog_native_stop_17-08.py, H1, retail_standard, walk-forward 4/5 finestre, ECN PF1.71 5/5) - nessuna passata MT5 ancora eseguita per la versione MQL5",
       "decisione_corrente": "porting MQL5 completato il 24/08 su richiesta esplicita - stop strutturale M5 letto live da PERIOD_M5 invece della cache JSON offline usata in Python, stessa logica; in attesa di smoke test MT5 isolato (selector_index 42)",
       "note": "filtro di regime (Efficiency Ratio) della validazione Python NON ancora portato come gate live in MQL5 - stesso gap del resto del portafoglio"
+    },
+    {
+      "nome": "BAR_UPDN",
+      "selector_index": 43,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (ChartArt)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_BarUpDn=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "price-action puro: barra corrente verde+apre sopra chiusura precedente=buy (mirror sell), TF M15"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

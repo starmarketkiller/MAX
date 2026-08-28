@@ -242,6 +242,10 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // contro le centinaia degli altri, il campione statisticamente piu'
    // solido). Vedi NEXUS EA - Riverifica su Storico Ampliato (11-08).
    if(name == "CRT")               return PERIOD_M30;
+   // 28/08 - BarUpDn (portata da Pine TradingView): pattern price-action a
+   // barra singola, "any timeframe" nell'originale. M15 = TF di ingresso
+   // di default, coerente con la granularita' del pattern.
+   if(name == "BAR_UPDN")          return PERIOD_M15;
    return PERIOD_CURRENT;
 }
 
@@ -352,6 +356,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "SMS_BMS_RTO")       return 0.5;
    if(name == "STRUCT_REACT")      return 0.5;
    if(name == "WEEKLY_EXP")        return 0.5;
+   if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

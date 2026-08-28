@@ -264,6 +264,26 @@ SNXSSignal NXS_Strat_SAR(){
    return s;
 }
 
+//------------------------------------ K4b BarUpDn (price-action puro)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("BarUpDn",
+// ChartArt): nessun indicatore, solo la relazione OHLC tra due barre
+// consecutive. Barra corrente verde E apre sopra la chiusura precedente ->
+// buy; barra rossa E apre sotto la chiusura precedente -> sell (mirror).
+SNXSSignal NXS_Strat_BarUpDn(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "BAR_UPDN";
+   if(!InpStrat_BarUpDn || !NXS_SelectorAllows(43)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
+   double c2 = iClose(g_sym, tf, 2);
+   if(c1 > o1 && o1 > c2){
+      s.dir = DIR_BUY;  s.score = 58; s.reason = "BarUpDn_bull";
+   } else if(c1 < o1 && o1 < c2){
+      s.dir = DIR_SELL; s.score = 58; s.reason = "BarUpDn_bear";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva
@@ -571,9 +591,11 @@ SNXSSignal NXS_Strat_LondonBO(){
 // barre (non solo l'istante attuale), (2) un impulso precedente che si sia
 // allontanato dall'EMA20 di una distanza minima, (3) pullback con vera
 // rejection (non solo un cross), (4) niente entry se EMA50 viene rotta.
-int    InpEMAPB_TrendPersistBars = 5;
-double InpEMAPB_MinDistATR       = 1.0;
-double InpEMAPB_TouchToleranceATR= 0.15;
+// 27/08 - resi input (stesso bug del gruppo SL/TP in NXS_Inputs.mqh):
+// invisibili al Tester/Optimization cosi' com'erano.
+input int    InpEMAPB_TrendPersistBars = 5;
+input double InpEMAPB_MinDistATR       = 1.0;
+input double InpEMAPB_TouchToleranceATR= 0.15;
 
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";

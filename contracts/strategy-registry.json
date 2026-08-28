@@ -8,8 +8,8 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 69,
-    "live": 39,
+    "total": 70,
+    "live": 40,
     "research_only": 30
   },
   "strategies": [
@@ -76,6 +76,28 @@
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "BAR_UPDN",
+      "display_name": "Bar Updn",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 43,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M15"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -314,7 +336,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "*"
+        "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -358,7 +380,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "H1"
+        "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -666,7 +688,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "D1"
+        "M30"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
@@ -1304,7 +1326,7 @@
         "*"
       ],
       "supported_timeframes": [
-        "H1"
+        "H4"
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,

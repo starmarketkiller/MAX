@@ -475,6 +475,9 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 11/08 — CRT (Candle Range Theory, #38)
    if(InpUseStrat_CRT         && NXS_SelectorAllows(38)) out[n++] = NXS_Strat_CRT();
 
+   // 28/08 — BarUpDn, portata da script Pine TradingView pubblico (#43)
+   if(InpStrat_BarUpDn        && NXS_SelectorAllows(43)) out[n++] = NXS_Strat_BarUpDn();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

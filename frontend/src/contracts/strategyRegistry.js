@@ -3,6 +3,7 @@ export const STRATEGY_REGISTRY = [
   ["ADX_RSI","ADX + RSI","MOMENTUM",true,true],
   ["AMD_CONT","Amd Cont","AMD",true,true],
   ["AMD_REVERSAL","Amd Reversal","AMD",true,true],
+  ["BAR_UPDN","Bar Updn","UNCLASSIFIED",true,false],
   ["BB_SQUEEZE","Bb Squeeze","VOLATILITY",true,true],
   ["BJORGUM","Bjorgum","LIQUIDITY",true,true],
   ["BOLLINGER","Bollinger","VOLATILITY",true,true],

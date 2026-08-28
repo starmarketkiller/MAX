@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 39
+#define NXS_LIVE_STRATEGY_COUNT 40
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -18,6 +18,7 @@ bool NXS_StrategyKnown(string strategyId){
    return id=="ADX_RSI" ||
           id=="AMD_CONT" ||
           id=="AMD_REVERSAL" ||
+          id=="BAR_UPDN" ||
           id=="BB_SQUEEZE" ||
           id=="BJORGUM" ||
           id=="BOLLINGER" ||
@@ -63,42 +64,43 @@ string NXS_StrategyIdAt(int i){
    if(i==0) return "ADX_RSI";
    if(i==1) return "AMD_CONT";
    if(i==2) return "AMD_REVERSAL";
-   if(i==3) return "BB_SQUEEZE";
-   if(i==4) return "BJORGUM";
-   if(i==5) return "BOLLINGER";
-   if(i==6) return "BREAKOUT_ACC";
-   if(i==7) return "DISP_REBAL";
-   if(i==8) return "ELLIOTT";
-   if(i==9) return "EMA_PULLBACK";
-   if(i==10) return "FVG_CONT";
-   if(i==11) return "FVG_MIT";
-   if(i==12) return "ICHIMOKU";
-   if(i==13) return "IFVG";
-   if(i==14) return "JUDAS_SWING";
-   if(i==15) return "LDN_REVERSAL";
-   if(i==16) return "LIQ_SWEEP";
-   if(i==17) return "LIQ_VOID";
-   if(i==18) return "LONDON_BO";
-   if(i==19) return "MACD";
-   if(i==20) return "MALAYSIAN_SNR";
-   if(i==21) return "NY_REVERSAL";
-   if(i==22) return "OB_MIT";
-   if(i==23) return "ORDER_BLOCK";
-   if(i==24) return "OTE_CONT";
-   if(i==25) return "PO3";
-   if(i==26) return "RANGE_FADE";
-   if(i==27) return "RSI_DIV";
-   if(i==28) return "SAR";
-   if(i==29) return "SH_BMS_RTO";
-   if(i==30) return "SILVER_BULLET";
-   if(i==31) return "SMS_BMS_RTO";
-   if(i==32) return "STRUCT_REACT";
-   if(i==33) return "SWING_FALSEBREAK";
-   if(i==34) return "THREE_BAR_DELIVERY_BREAK";
-   if(i==35) return "TSI";
-   if(i==36) return "TURTLE_SOUP";
-   if(i==37) return "WEEKLY_EXP";
-   if(i==38) return "Z_SCORE_BREAKOUT";
+   if(i==3) return "BAR_UPDN";
+   if(i==4) return "BB_SQUEEZE";
+   if(i==5) return "BJORGUM";
+   if(i==6) return "BOLLINGER";
+   if(i==7) return "BREAKOUT_ACC";
+   if(i==8) return "DISP_REBAL";
+   if(i==9) return "ELLIOTT";
+   if(i==10) return "EMA_PULLBACK";
+   if(i==11) return "FVG_CONT";
+   if(i==12) return "FVG_MIT";
+   if(i==13) return "ICHIMOKU";
+   if(i==14) return "IFVG";
+   if(i==15) return "JUDAS_SWING";
+   if(i==16) return "LDN_REVERSAL";
+   if(i==17) return "LIQ_SWEEP";
+   if(i==18) return "LIQ_VOID";
+   if(i==19) return "LONDON_BO";
+   if(i==20) return "MACD";
+   if(i==21) return "MALAYSIAN_SNR";
+   if(i==22) return "NY_REVERSAL";
+   if(i==23) return "OB_MIT";
+   if(i==24) return "ORDER_BLOCK";
+   if(i==25) return "OTE_CONT";
+   if(i==26) return "PO3";
+   if(i==27) return "RANGE_FADE";
+   if(i==28) return "RSI_DIV";
+   if(i==29) return "SAR";
+   if(i==30) return "SH_BMS_RTO";
+   if(i==31) return "SILVER_BULLET";
+   if(i==32) return "SMS_BMS_RTO";
+   if(i==33) return "STRUCT_REACT";
+   if(i==34) return "SWING_FALSEBREAK";
+   if(i==35) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==36) return "TSI";
+   if(i==37) return "TURTLE_SOUP";
+   if(i==38) return "WEEKLY_EXP";
+   if(i==39) return "Z_SCORE_BREAKOUT";
    return "";
 }
 
