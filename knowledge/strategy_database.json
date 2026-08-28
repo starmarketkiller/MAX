@@ -1081,6 +1081,25 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "price-action puro: barra corrente verde+apre sopra chiusura precedente=buy (mirror sell), TF M15"
+    },
+    {
+      "nome": "PMAX",
+      "selector_index": 44,
+      "versione": "nuova 28/08 - portata da Pine Script TradingView pubblico (PMax Explorer, KivancOzbilgic)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_PMax=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "SuperTrend ATR-adattivo stop-and-reverse, candidato a sostituire/affiancare SAR (PF0.92 reale). TF H1, ATR(10) x3.0, MA EMA(10)"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

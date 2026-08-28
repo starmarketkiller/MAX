@@ -730,6 +730,14 @@ input bool     InpUseStrat_CRT           = false;
 // verificata su MT5 - disattivata di default finche' non c'e' un backtest
 // reale a confermarla, stesso trattamento riservato a CRT.
 input bool     InpStrat_BarUpDn          = false;
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
+// Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
+// sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).
+// Mai verificata su MT5 - disattivata di default come BarUpDn/CRT.
+input bool     InpStrat_PMax             = false;
+input int      InpPMax_ATRPeriod         = 10;    // default script originale
+input int      InpPMax_MALength          = 10;
+input double   InpPMax_ATRMult           = 3.0;
 // 12/08 — floor minimo sulla distanza dello stop di CRT (in multipli di ATR
 // del TF di CRT). Lo stop e' ancorato al wick della candela di sweep, non a
 // un multiplo ATR fisso - quando il wick e' minimo il rischio flottante puo'

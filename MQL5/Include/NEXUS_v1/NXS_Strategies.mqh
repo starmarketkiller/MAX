@@ -284,6 +284,69 @@ SNXSSignal NXS_Strat_BarUpDn(){
    return s;
 }
 
+//------------------------------------ K4c PMax (SuperTrend ATR-adattivo)
+// 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
+// Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, concettualmente
+// piu' robusto del Parabolic SAR nativo (step/max fissi) - candidato mirato
+// dopo che SAR e' risultato negativo (PF0.92) sul motore reale. Replica
+// fedele di Pmax_Func: longStop/shortStop "agganciati" (si muovono solo
+// nella direzione favorevole finche' il trend regge), dir cambia solo
+// quando la MA rompe lo stop opposto. Stato persistente per barra chiusa
+// (stesso pattern di NXS_Strat_TSI - un aggiornamento per barra, non per
+// tick, altrimenti il flip non e' univoco).
+struct SNXSPMaxState {
+   bool     init;
+   datetime lastBarTime;
+   double   longStop, shortStop;
+   int      dir;   // +1 o -1
+};
+SNXSPMaxState g_pmaxState;
+
+SNXSSignal NXS_Strat_PMax(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PMAX";
+   if(!InpStrat_PMax || !NXS_SelectorAllows(44)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_pmaxState.lastBarTime == curBar0) return s;   // gia' valutata su questa barra
+
+   double atr = NXS_ATRv(tf, 1, InpPMax_ATRPeriod);
+   double ma  = NXS_EMAv(InpPMax_MALength, tf, 1);
+   if(atr <= 0 || ma <= 0) return s;
+
+   double longStop  = ma - InpPMax_ATRMult * atr;
+   double shortStop = ma + InpPMax_ATRMult * atr;
+
+   if(!g_pmaxState.init){
+      g_pmaxState.init = true;
+      g_pmaxState.longStop  = longStop;
+      g_pmaxState.shortStop = shortStop;
+      g_pmaxState.dir = 1;
+      g_pmaxState.lastBarTime = curBar0;
+      return s;
+   }
+
+   double maPrev = NXS_EMAv(InpPMax_MALength, tf, 2);
+   if(maPrev > g_pmaxState.longStop)  longStop  = MathMax(longStop,  g_pmaxState.longStop);
+   if(maPrev < g_pmaxState.shortStop) shortStop = MathMin(shortStop, g_pmaxState.shortStop);
+
+   int dir = g_pmaxState.dir;
+   if(dir == -1 && ma > g_pmaxState.shortStop)     dir = 1;
+   else if(dir == 1 && ma < g_pmaxState.longStop)  dir = -1;
+   bool flip = (dir != g_pmaxState.dir);
+
+   g_pmaxState.longStop  = longStop;
+   g_pmaxState.shortStop = shortStop;
+   g_pmaxState.dir = dir;
+   g_pmaxState.lastBarTime = curBar0;
+
+   if(flip){
+      if(dir == 1){ s.dir = DIR_BUY;  s.score = 60; s.reason = "PMax_flip_bull"; }
+      else        { s.dir = DIR_SELL; s.score = 60; s.reason = "PMax_flip_bear"; }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva

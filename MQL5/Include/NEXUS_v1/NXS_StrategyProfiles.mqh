@@ -246,6 +246,10 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // barra singola, "any timeframe" nell'originale. M15 = TF di ingresso
    // di default, coerente con la granularita' del pattern.
    if(name == "BAR_UPDN")          return PERIOD_M15;
+   // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
+   // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
+   // lento a girare.
+   if(name == "PMAX")              return PERIOD_H1;
    return PERIOD_CURRENT;
 }
 
@@ -357,6 +361,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "STRUCT_REACT")      return 0.5;
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    return 0.0;
 }
 

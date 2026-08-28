@@ -478,6 +478,9 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 28/08 — BarUpDn, portata da script Pine TradingView pubblico (#43)
    if(InpStrat_BarUpDn        && NXS_SelectorAllows(43)) out[n++] = NXS_Strat_BarUpDn();
 
+   // 28/08 — PMax, portata da script Pine TradingView pubblico (#44)
+   if(InpStrat_PMax           && NXS_SelectorAllows(44)) out[n++] = NXS_Strat_PMax();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
