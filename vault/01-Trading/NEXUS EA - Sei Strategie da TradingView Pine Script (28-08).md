@@ -94,7 +94,24 @@ canonico generato — dimenticarne anche solo uno produce zero trade
 senza errori di compilazione, silenzioso fino al primo backtest reale.
 Da controllare esplicitamente ad ogni nuova aggiunta futura.
 
-Test di conferma su PMAX (10 mesi, tick reali, con il fix) in corso.
+Test di conferma su PMAX (10 mesi, tick reali, con il fix): **risultato
+positivo**, primo vero segnale di vita su una delle 6 nuove candidate.
+
+| | SAR (nativo) | PMAX (nuova) |
+|---|---|---|
+| Trade | 175 | 42 |
+| Profit Factor | 0.92 | **1.09** |
+| Netto | -$118.95 | **+$26.18** |
+| Max DD | $287 (28.7%) | **$102 (10.2%)** |
+| Sharpe | — | **2.27** |
+| Long/Short | — | 11/31 (fortemente short-biased) |
+
+Campione ancora piccolo (42 trade), ma PMAX batte SAR su ogni metrica
+sullo stesso periodo/simbolo/conto — il candidato più concreto finora
+per sostituire (o affiancare a peso ridotto) SAR nel portafoglio v3.0.
+Prossimo passo: le altre 5 strategie vanno ritestate con lo stesso fix
+(erano tutte bloccate dallo stesso bug), poi eventuale attivazione
+cauta di PMAX con un tier di rischio conservativo.
 
 ## Collegamenti
 [[MOC - Trading]]
