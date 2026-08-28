@@ -32,21 +32,19 @@ void NXS_ManagePyramid(SNXSVel &vel){
                                                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
       if(prof < g_atr) continue;
-      // 28/08 - causa REALE trovata dopo due giri di verifica su Tester MT5 a
-      // tick reali (0 gambe pyramid in 195 trade/10 mesi anche dopo aver
-      // accettato le varianti _PB): il velocity gate e' spento di default a
-      // livello globale (InpUseVelocity=false, NXS_Inputs.mqh - disattivato
-      // in passato perche' troppo restrittivo sull'ingresso primario). Con
-      // il gate spento NXS_GetVelocity() ritorna SEMPRE VEL_NEUTRAL
-      // (NXS_Velocity.mqh, prima riga della funzione) - un check che pretende
-      // VEL_BULL/VEL_BEAR (o le varianti _PB) non puo' MAI essere vero,
-      // qualunque fosse la sintassi esatta del confronto. Stesso trattamento
-      // gia' riservato al gate primario (NXS_VelocityBlocks: "if(!gate)
-      // return false" - nessun blocco quando il gate e' disattivato): il
-      // piramidare ora richiede la direzione SOLO quando il gate e' attivo.
+      // 28/08 - il velocity gate e' spento di default a livello globale
+      // (InpUseVelocity=false, NXS_Inputs.mqh - disattivato in passato perche'
+      // troppo restrittivo sull'ingresso primario). Con il gate spento
+      // NXS_GetVelocity() ritorna SEMPRE VEL_NEUTRAL (NXS_Velocity.mqh, prima
+      // riga della funzione): il controllo di direzione si applica solo
+      // quando il gate e' davvero attivo, stesso trattamento gia' riservato
+      // al gate primario (NXS_VelocityBlocks: "if(!gate) return false").
+      // Accetta anche le varianti _PB (pullback dentro un trend in corso),
+      // coerenti col resto del codice (NXS_SignalRouter.mqh).
       if(g_run_UseVelocityGate){
-         if(type == POSITION_TYPE_BUY  && vel.state != VEL_BULL && vel.state != VEL_BULL_PB) continue;
-         if(type == POSITION_TYPE_SELL && vel.state != VEL_BEAR && vel.state != VEL_BEAR_PB) continue;
+         bool velBlocks = (type == POSITION_TYPE_BUY  && vel.state != VEL_BULL && vel.state != VEL_BULL_PB) ||
+                          (type == POSITION_TYPE_SELL && vel.state != VEL_BEAR && vel.state != VEL_BEAR_PB);
+         if(velBlocks) continue;
       }
       // v2.0.30 SAFETY FIX: same bypass as grid - pyramid adds went straight
       // to NXS_DoBuy/DoSell, skipping the total-exposure cap entirely.
@@ -70,16 +68,28 @@ void NXS_ManagePyramid(SNXSVel &vel){
       // solo clamp al minimo broker — nessuna normalizzazione allo step e
       // nessun legame con il rischio effettivo. Ora si prende il minore tra
       // metà del genitore e il lotto consentito dal budget di rischio.
-      double half = PositionGetDouble(POSITION_VOLUME) * 0.5;
+      //
+      // 28/08 - causa REALE trovata con diagnostica dedicata sul Tester MT5 a
+      // tick reali (939.234 volte "profitto raggiunto", 0 gambe aperte mai):
+      // su un conto piccolo ($500-1000) le posizioni normali aprono quasi
+      // sempre al lotto minimo (0.01, per il gate RISK_SIZE gia' noto) -
+      // "meta' del genitore" e' allora 0.005, che arrotondato per difetto
+      // allo step del broker (0.01) diventa ESATTAMENTE ZERO. NXS_CalcLot()
+      // calcolava correttamente un budget valido (verificato nei log: a volte
+      // 0.01 "a rischio maggiorato"), ma MathMin(half, budgetLots) faceva
+      // sempre vincere lo zero. Ora "meta' del genitore" non scende mai sotto
+      // il lotto minimo tradabile - il budget di rischio resta comunque il
+      // tetto vero tramite MathMin con budgetLots subito sotto.
+      double vstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
+      double vmin  = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+      double vmax  = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MAX);
+      double half = MathMax(PositionGetDouble(POSITION_VOLUME) * 0.5, vmin);
       double budgetLots = NXS_CalcLot(slDist);
       if(budgetLots <= 0){
          Print("[NEXUS RISK] PYRAMID BLOCCATO: rischio non calcolabile per la leg");
          break;
       }
       double lots  = MathMin(half, budgetLots);
-      double vstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
-      double vmin  = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
-      double vmax  = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MAX);
       if(vstep > 0) lots = MathFloor(lots / vstep) * vstep;
       if(vmax  > 0) lots = MathMin(lots, vmax);
       if(lots < vmin){
