@@ -32,8 +32,22 @@ void NXS_ManagePyramid(SNXSVel &vel){
                                                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
       if(prof < g_atr) continue;
-      if(type == POSITION_TYPE_BUY  && vel.state != VEL_BULL) continue;
-      if(type == POSITION_TYPE_SELL && vel.state != VEL_BEAR) continue;
+      // 28/08 - causa REALE trovata dopo due giri di verifica su Tester MT5 a
+      // tick reali (0 gambe pyramid in 195 trade/10 mesi anche dopo aver
+      // accettato le varianti _PB): il velocity gate e' spento di default a
+      // livello globale (InpUseVelocity=false, NXS_Inputs.mqh - disattivato
+      // in passato perche' troppo restrittivo sull'ingresso primario). Con
+      // il gate spento NXS_GetVelocity() ritorna SEMPRE VEL_NEUTRAL
+      // (NXS_Velocity.mqh, prima riga della funzione) - un check che pretende
+      // VEL_BULL/VEL_BEAR (o le varianti _PB) non puo' MAI essere vero,
+      // qualunque fosse la sintassi esatta del confronto. Stesso trattamento
+      // gia' riservato al gate primario (NXS_VelocityBlocks: "if(!gate)
+      // return false" - nessun blocco quando il gate e' disattivato): il
+      // piramidare ora richiede la direzione SOLO quando il gate e' attivo.
+      if(g_run_UseVelocityGate){
+         if(type == POSITION_TYPE_BUY  && vel.state != VEL_BULL && vel.state != VEL_BULL_PB) continue;
+         if(type == POSITION_TYPE_SELL && vel.state != VEL_BEAR && vel.state != VEL_BEAR_PB) continue;
+      }
       // v2.0.30 SAFETY FIX: same bypass as grid - pyramid adds went straight
       // to NXS_DoBuy/DoSell, skipping the total-exposure cap entirely.
       ENUM_NXS_DIR pyrDir = (type == POSITION_TYPE_BUY) ? DIR_BUY : DIR_SELL;
