@@ -19,7 +19,14 @@
 #ifndef __NXS_ELLIOTT_FILTER_MQH__
 #define __NXS_ELLIOTT_FILTER_MQH__
 
-double InpElliottDevMult = 2.0;   // plateau-check 25/08: qualunque valore 1.5-3.0 batte il baseline
+// 30/08 - resi input veri (erano plain, invisibili al Tester/.set - stessa
+// classe di bug gia' trovata e corretta piu' volte in NXS_Inputs.mqh).
+// InpUseElliottFilter di default true per non cambiare il comportamento
+// live attuale; serve spento per l'esperimento "baseline nuda" chiesto
+// dall'utente il 29/08 (spoglia tutti i filtri, reintegra uno alla volta
+// sul Tester reale).
+input bool   InpUseElliottFilter = true;
+input double InpElliottDevMult   = 2.0;   // plateau-check 25/08: qualunque valore 1.5-3.0 batte il baseline
 #define NXS_ELLIOTT_LOOKBACK_BARS 700
 #define NXS_ELLIOTT_MAX_PIVOTS    350
 

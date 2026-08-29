@@ -111,12 +111,39 @@ _spec = importlib.util.spec_from_file_location("nxs_real_engine", os.path.join(H
 eng = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(eng)
 
+# 30/08 - SCOPERTA: il filtro di esaurimento Elliott Wave multi-timeframe
+# (server/research_scripts/elliott_wave_filter_25-08.py, vault "Filtro
+# Elliott Wave Multi-Timeframe") NON e' solo ricerca Python abbandonata -
+# e' gia' vivo in MQL5 (NXS_ElliottFilter.mqh, agganciato in
+# NXS_Execution.mqh:399) e GIA' ATTIVO per SAR (NXS_Profile_UseElliott
+# ("SAR")=true, InpUseStrategyProfiles=true di default). Significa che
+# OGNI test reale di stanotte aveva gia' questo filtro acceso, mentre
+# questo motore Python non l'ha mai saputo - candidato forte per il
+# "mistero" della densita' novembre/dicembre mai risolto. Riusa
+# build_zigzag_full() gia' validato in ricerca, non riscritto da zero.
+_espec = importlib.util.spec_from_file_location("elliott_filter", os.path.join(HERE, "elliott_wave_filter_25-08.py"))
+_emod = importlib.util.module_from_spec(_espec)
+import sys as _sys
+_sys.modules.setdefault("elliott_filter", _emod)
+try:
+    _espec.loader.exec_module(_emod)
+except Exception:
+    _emod = None   # elliott_wave_filter_25-08.py importa backtest.py - se fallisce, filtro disattivato
+
 # ---- parametri gestione, dal codice reale (NXS_Inputs.mqh / NXS_TrailingATR.mqh) ----
 TRAIL_ACTIVATE_ATR = 1.0
 TRAIL_K = 2.0   # NXS_Profile_TrailK("SAR") - override specifico, non il globale 2.5 (NXS_StrategyProfiles.mqh:400)
 MAX_LOSS_POS_PCT = 2.0
 DAILY_AUTOCLOSE_HOUR = 23   # NXS_Prot_CheckAutoClose - orario osservato su ogni NXS:TIME reale: "23:43:0x"
 DAILY_AUTOCLOSE_MIN = 43
+# 30/08 - tre gate a livello di CONTO trovati leggendo NXS_CheckProtections()
+# (NXS_Risk.mqh) dopo la richiesta dell'utente di "spogliare MT5" - attivi
+# di default nel Tester (InpTesterProtectionParity=true, "stesse protezioni
+# del live"), mai modellati prima:
+MAX_DAILY_DD_PCT = 5.0       # InpMaxDailyDDPct - blocca nuove entrate per il resto della giornata
+MAX_TRADES_PER_DAY = 12      # InpMaxTradesPerDay
+ANTI_REVENGE_LOSSES = 3      # InpAntiRevengeLosses - dopo 3 perdite CONSECUTIVE...
+ANTI_REVENGE_MIN = 60        # ...blocca nuove entrate per 60 minuti (InpAntiRevengeMin)
 # 29/08 - cooldown per-strategia (NXS_Confluence.mqh, InpUseStrategyCD/
 # InpMaxConsecPerStrat/InpStratCooldownMin). Scartato all'inizio come
 # "impatto trascurabile sull'aggregato dei 10 mesi" - sbagliato: l'utente
@@ -207,6 +234,41 @@ def atr_series(candles, n=14):
     return out
 
 
+def resample_d1_from_h4(h4):
+    """Barre D1 sintetiche dalle H4 (stesso broker/dati, niente nuovo
+    export MT5 necessario): un giorno = le barre H4 di quella data."""
+    days = {}
+    order = []
+    for c in h4:
+        d = c["time"].date()
+        if d not in days:
+            days[d] = {"time": dt.datetime(d.year, d.month, d.day), "open": c["open"],
+                       "high": c["high"], "low": c["low"], "close": c["close"]}
+            order.append(d)
+        else:
+            rec = days[d]
+            rec["high"] = max(rec["high"], c["high"])
+            rec["low"] = min(rec["low"], c["low"])
+            rec["close"] = c["close"]
+    return [days[d] for d in order]
+
+
+def compute_elliott_exhaustion(h4, atr4, dev_mult=2.0):
+    """Esaurimento Elliott su H4 e D1 (D1 ricampionato dalle H4), stessa
+    logica gia' validata in ricerca (elliott_wave_filter_25-08.py,
+    build_zigzag_full) e gia' viva in MQL5 (NXS_ElliottFilter.mqh,
+    NXS_Execution.mqh:399) - GIA' ATTIVA per SAR sul motore reale
+    (NXS_Profile_UseElliott("SAR")=true), mai modellata qui finora.
+    Ritorna (exh_h4, d1, exh_d1) - array allineati a h4/d1."""
+    if _emod is None:
+        return [0] * len(h4), [], []
+    exh_h4, _ = _emod.build_zigzag_full(h4, atr4, dev_mult)
+    d1 = resample_d1_from_h4(h4)
+    atr_d1 = atr_series(d1, 14)
+    exh_d1, _ = _emod.build_zigzag_full(d1, atr_d1, dev_mult)
+    return exh_h4, d1, exh_d1
+
+
 def psar_series(candles, af_step=0.02, af_max=0.2):
     n = len(candles)
     psar = [None] * n
@@ -258,6 +320,8 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
         atr4 = atr_series(h4, 14)
         psar4, _ = psar_series(h4)
     atr15 = atr_series(m15, 14)
+    exh_h4, d1, exh_d1 = compute_elliott_exhaustion(h4, atr4, dev_mult=2.0)
+    d1_closed_idx = -1   # ultimo giorno D1 CHIUSO (data < data corrente)
 
     # indice M15 di partenza per ogni barra H4 (per camminare intraday dopo l'entry)
     m15_idx_by_time = {c["time"]: i for i, c in enumerate(m15)}
@@ -278,6 +342,11 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
     reasons_count = {}
     cd_consec = 0        # NXS_Confluence.mqh: g_cdConsec
     cd_until = None       # g_cdUntil
+    cur_day = None        # NXS_DailyRollover: giorno corrente (server time, proxy: data calendario)
+    day_start_equity = start_equity   # g_balanceDayStart (in realta' equity, non balance - vedi commento MQL5)
+    trades_today = 0      # g_tradesToday
+    consec_losses = 0     # g_consecLosses
+    revenge_until = None  # g_antiRevengeUntil
 
     m15_start_j = next(j for j, c in enumerate(m15) if c["time"] >= start_dt)
     m15_end_j = next((j for j, c in enumerate(m15) if c["time"] >= end_dt), len(m15))
@@ -301,10 +370,23 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
         bar = m15[j]
         t = bar["time"]
 
+        # NXS_DailyRollover() (NXS_Risk.mqh): a mezzanotte server time reset
+        # del contatore trade/giorno e della baseline del drawdown giornaliero
+        # (equity di inizio giornata, non balance - include il flottante
+        # ereditato dal giorno prima, vedi commento MQL5 AUD0-RISK-005).
+        if t.date() != cur_day:
+            cur_day = t.date()
+            trades_today = 0
+            day_start_equity = equity
+
         # avanza il cursore H4: h4[h4_closed_idx] e' l'ultima barra chiusa
         # (equivalente a iClose(...,1) nel momento t)
         while h4_closed_idx + 1 < len(h4) - 1 and h4[h4_closed_idx + 2]["time"] <= t:
             h4_closed_idx += 1
+        # avanza il cursore D1: d1[d1_closed_idx] e' l'ultimo giorno CHIUSO
+        # (equivalente a iTime(...,D1,1) nel momento t)
+        while d1_closed_idx + 1 < len(d1) and d1[d1_closed_idx + 1]["time"].date() < t.date():
+            d1_closed_idx += 1
 
         if pos is not None:
             # 29/08 - RIPROVATO dopo la segnalazione dell'utente: nel reale
@@ -362,6 +444,19 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                 if cd_consec >= COOLDOWN_MAX_CONSEC:
                     cd_until = t + dt.timedelta(minutes=COOLDOWN_MIN)
                     cd_consec = 0
+                # NXS_OnTradeClosed() (NXS_Risk.mqh): anti-revenge dopo N
+                # perdite CONSECUTIVE (non trade generici come il cooldown
+                # sopra) - blocca nuove entrate per 60 minuti. Una vincita
+                # non azzera lo streak, lo riduce solo di 1 ("2 vincite per
+                # cancellare 1 perdita" - saggezza anti-bleed nel commento
+                # originale).
+                if pnl_money < 0:
+                    consec_losses += 1
+                    if consec_losses >= ANTI_REVENGE_LOSSES:
+                        revenge_until = t + dt.timedelta(minutes=ANTI_REVENGE_MIN)
+                        consec_losses = 0
+                else:
+                    consec_losses = max(0, consec_losses - 1)
                 peak = max(peak, equity)
                 if peak > 0:
                     max_dd = max(max_dd, (peak - equity) / peak * 100)
@@ -382,6 +477,19 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
             j += 1
             continue
 
+        # NXS_CheckProtections() (NXS_Risk.mqh), attivo di default nel
+        # Tester (InpTesterProtectionParity=true, "stesse protezioni del
+        # live") - tre gate a livello di CONTO mai modellati prima:
+        if revenge_until is not None and t < revenge_until:   # anti_revenge
+            j += 1
+            continue
+        if day_start_equity > 0 and equity <= day_start_equity * (1 - MAX_DAILY_DD_PCT / 100.0):   # daily_dd
+            j += 1
+            continue
+        if trades_today >= MAX_TRADES_PER_DAY:   # max_trades
+            j += 1
+            continue
+
         # nessuna posizione aperta: valuta il segnale sull'ultima H4 chiusa
         if h4_closed_idx < 0 or psar4[h4_closed_idx] is None or ema9_4[h4_closed_idx] is None \
            or ema21_4[h4_closed_idx] is None or atr4[h4_closed_idx] is None:
@@ -395,6 +503,18 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
         elif sar_v > px and e9 < e21:
             sig = -1
         if sig == 0:
+            j += 1
+            continue
+
+        # NXS_ElliottBlocks() (NXS_ElliottFilter.mqh, GIA' vivo in MQL5 e
+        # GIA' attivo per SAR - NXS_Execution.mqh:399): sopprime il segnale
+        # se un impulso Elliott a 5 onde si e' appena esaurito nella STESSA
+        # direzione su H4 O (OR) su D1. Ogni test reale di stanotte aveva
+        # gia' questo filtro attivo - qui modellato per la prima volta.
+        if h4_closed_idx < len(exh_h4) and exh_h4[h4_closed_idx] == sig:
+            j += 1
+            continue
+        if 0 <= d1_closed_idx < len(exh_d1) and exh_d1[d1_closed_idx] == sig:
             j += 1
             continue
 
@@ -430,6 +550,7 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
             "max_loss_money": -(equity * MAX_LOSS_POS_PCT / 100.0),
             "deadline": deadline, "entry_time": t,
         }
+        trades_today += 1
         j += 1
 
     gains = sum(t for t in trades if t > 0)

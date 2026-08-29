@@ -396,7 +396,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // per strategia (NXS_Profile_UseElliott) - solo le 20 gia' validate in
    // Python il 25/08, non un gate universale (STRUCT_REACT ne e' esclusa
    // di proposito, la danneggia).
-   if(InpUseStrategyProfiles && NXS_Profile_UseElliott(sig.stratName) && NXS_ElliottBlocks(sig.dir)){
+   if(InpUseElliottFilter && InpUseStrategyProfiles && NXS_Profile_UseElliott(sig.stratName) && NXS_ElliottBlocks(sig.dir)){
       g_nxsLastOpenFailure = "elliott_wave_exhaustion";
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: elliott_wave_exhaustion dir=%s strat=%s",
                   NXS_DirName(sig.dir), sig.stratName);
