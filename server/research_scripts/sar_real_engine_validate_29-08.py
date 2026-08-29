@@ -67,6 +67,33 @@ DAILY_AUTOCLOSE_HOUR = 23   # NXS_Prot_CheckAutoClose - orario osservato su ogni
 DAILY_AUTOCLOSE_MIN = 43
 
 
+def load_real_indicators(path, h4):
+    """Carica i valori VERI di iSAR/iMA9/iMA21/iATR14 esportati da MT5
+    (CopyBuffer, non una reimplementazione Python) e li allinea per tempo
+    alla lista h4 gia' caricata. DBL_MAX (1.79e308) = barra non ancora
+    calcolabile (warm-up dell'indicatore) -> None."""
+    DBLMAX = 1.7976931348623157e+308
+    by_time = {}
+    with open(path, newline="", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            t = dt.datetime.strptime(r["time"], "%Y.%m.%d %H:%M")
+            def v(key):
+                x = float(r[key])
+                return None if x >= DBLMAX * 0.99 else x
+            by_time[t] = {"sar": v("sar"), "ema9": v("ema9"), "ema21": v("ema21"), "atr14": v("atr14")}
+    sar = [None] * len(h4); ema9 = [None] * len(h4); ema21 = [None] * len(h4); atr14 = [None] * len(h4)
+    n_missing = 0
+    for i, c in enumerate(h4):
+        rec = by_time.get(c["time"])
+        if rec is None:
+            n_missing += 1
+            continue
+        sar[i] = rec["sar"]; ema9[i] = rec["ema9"]; ema21[i] = rec["ema21"]; atr14[i] = rec["atr14"]
+    if n_missing:
+        print(f"[load_real_indicators] ATTENZIONE: {n_missing}/{len(h4)} barre H4 senza indicatore reale corrispondente (time mismatch)")
+    return {"sar": sar, "ema9": ema9, "ema21": ema21, "atr14": atr14}
+
+
 def load_bars(path, m15=False):
     rows = []
     with open(path, newline="", encoding="utf-8") as f:
@@ -147,13 +174,24 @@ def psar_series(candles, af_step=0.02, af_max=0.2):
     return psar, trend
 
 
-def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=None):
+def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=None,
+        real_indicators=None):
+    """real_indicators: se passato (da nxs_h4_gold_indicators_29-08.csv, i valori
+    VERI di iSAR/iMA9/iMA21/iATR14 letti da MT5 via CopyBuffer), sostituisce la
+    reimplementazione Python del segnale H4 - isola se la divergenza segnale-per-
+    segnale viene da un drift della reimplementazione (PSAR e' path-dependent)."""
     rng = random.Random(seed)
     closes4 = [c["close"] for c in h4]
-    ema9_4 = ema_series(closes4, 9)
-    ema21_4 = ema_series(closes4, 21)
-    atr4 = atr_series(h4, 14)
-    psar4, _ = psar_series(h4)
+    if real_indicators is not None:
+        psar4 = real_indicators["sar"]
+        ema9_4 = real_indicators["ema9"]
+        ema21_4 = real_indicators["ema21"]
+        atr4 = real_indicators["atr14"]
+    else:
+        ema9_4 = ema_series(closes4, 9)
+        ema21_4 = ema_series(closes4, 21)
+        atr4 = atr_series(h4, 14)
+        psar4, _ = psar_series(h4)
     atr15 = atr_series(m15, 14)
 
     # indice M15 di partenza per ogni barra H4 (per camminare intraday dopo l'entry)
@@ -171,6 +209,7 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
     peak = start_equity
     max_dd = 0.0
     trades = []
+    trade_log = []   # (entry_time, dir, entry_price, exit_time, exit_price, reason, pnl)
     reasons_count = {}
 
     m15_start_j = next(j for j, c in enumerate(m15) if c["time"] >= start_dt)
@@ -221,6 +260,10 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                 pnl_money = pnl_price / eng.TICK_SIZE * eng.TICK_VALUE_PER_LOT * pos["lots"]
                 equity += pnl_money
                 trades.append(pnl_money)
+                trade_log.append({
+                    "entry_time": pos["entry_time"], "dir": pos["sig"], "entry_price": pos["entry"],
+                    "exit_time": t, "exit_price": exit_price, "reason": exit_reason, "pnl": pnl_money,
+                })
                 reasons_count[exit_reason] = reasons_count.get(exit_reason, 0) + 1
                 peak = max(peak, equity)
                 if peak > 0:
@@ -296,6 +339,7 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
     return {
         "n_trades": len(trades), "pf": pf, "net": equity - start_equity,
         "max_dd_pct": max_dd, "final_equity": equity, "reasons": reasons_count,
+        "trade_log": trade_log,
     }
 
 
