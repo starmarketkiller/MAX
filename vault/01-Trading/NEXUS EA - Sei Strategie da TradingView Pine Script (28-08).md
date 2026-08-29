@@ -109,9 +109,24 @@ positivo**, primo vero segnale di vita su una delle 6 nuove candidate.
 Campione ancora piccolo (42 trade), ma PMAX batte SAR su ogni metrica
 sullo stesso periodo/simbolo/conto — il candidato più concreto finora
 per sostituire (o affiancare a peso ridotto) SAR nel portafoglio v3.0.
-Prossimo passo: le altre 5 strategie vanno ritestate con lo stesso fix
-(erano tutte bloccate dallo stesso bug), poi eventuale attivazione
-cauta di PMAX con un tier di rischio conservativo.
+
+## Risultato finale: tutte e 6 testate (tick reali, 10 mesi, $1000 USD)
+
+| Strategia | Trade | PF | Netto | Max DD | Verdetto |
+|---|---|---|---|---|---|
+| BAR_UPDN | 201 | 0.83 | -$265.33 | $543 (54%) | Negativa — troppo semplice/frequente senza filtri |
+| PMAX | 42 | **1.09** | **+$26.18** | $102 (10.2%) | **Positiva** — batte SAR su ogni metrica |
+| MACD_SMA200 | 0 | — | — | — | Segnale mai scattato — 4 condizioni in AND, plausibile rarità genuina |
+| **RSI_DIV_PINE** | **81** | **1.44** | **+$192.95** | **$93 (9.3%)** | **La migliore delle 6** — batte anche il nostro RSI_DIV nativo (PF1.21) |
+| ICHIMOKU_HULL_MACD | 0 | — | — | — | Segnale mai scattato — come previsto, 5 filtri simultanei troppo restrittivi |
+| 3COMMAS_BOT | 27 | 0.57 | -$93.29 | $147 (14.6%) | Negativa |
+
+**2 vincitrici su 6** (PMAX, RSI_DIV_PINE) — un tasso di successo onesto
+per un giro esplorativo su script pubblici, e in entrambi i casi il
+guadagno arriva con drawdown molto più contenuto delle strategie native
+deboli (SAR $287, EMA_PULLBACK ancora peggio). Prossimo passo:
+attivazione cauta di PMAX e RSI_DIV_PINE nel portafoglio v3.0, con tier
+di rischio ridotto (0.5-1%) data la novità e il campione ancora modesto.
 
 ## Collegamenti
 [[MOC - Trading]]
