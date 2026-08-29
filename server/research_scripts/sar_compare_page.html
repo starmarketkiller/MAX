@@ -452,8 +452,8 @@
         ctx.beginPath();
         ctx.fillStyle = color;
         const sz = 4.2;
-        if (tr.dir === 1) { ctx.moveTo(x, y+sz); ctx.lineTo(x-sz, y-sz); ctx.lineTo(x+sz, y-sz); }
-        else { ctx.moveTo(x, y-sz); ctx.lineTo(x-sz, y+sz); ctx.lineTo(x+sz, y+sz); }
+        if (tr.dir === 1) { ctx.moveTo(x, y-sz); ctx.lineTo(x-sz, y+sz); ctx.lineTo(x+sz, y+sz); }
+        else { ctx.moveTo(x, y+sz); ctx.lineTo(x-sz, y-sz); ctx.lineTo(x+sz, y-sz); }
         ctx.closePath(); ctx.fill();
         tr._sx = x; tr._sy = y; tr._src = source;
       });
