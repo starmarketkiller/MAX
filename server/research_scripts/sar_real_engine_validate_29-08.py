@@ -70,25 +70,35 @@ vivo e' sempre la versione semplice. Effetto reale ma modesto: PF
 0.55->0.79 (reale 0.92), pero' la densita' di novembre cala solo
 marginalmente (87->80 trade contro i 50 reali).
 
-PROBLEMA APERTO (29/08, non risolto): anche con cooldown + spread gate,
-novembre+dicembre 2025 restano enormemente piu' densi nel motore Python
-(~180 trade nei due mesi) che nel reale (51, sullo STESSO segnale
-verificato identico 175/175 - vedi nota vault dedicata). Esclusi finora
-con verifica diretta nel codice: MTF validation (InpUseMTFValidation=
-false, disattivo), NXS_VolatilityRegime() (calcolato ma mai letto da
-nessun'altra parte del codice - morto, nessun effetto), soglia minima di
-score (nessuna soglia generale trovata per SAR, solo eccezioni per-
-strategia come MALAYSIAN_SNR/Elliott che non la riguardano). Ipotesi
-ancora da verificare: lo spread modellato per ora (media sull'intero
-periodo di 10 mesi) potrebbe non catturare uno spread genuinamente piu'
-largo specifico di novembre 2025 (evento/periodo, non solo ora del
-giorno) - andrebbe confrontato con lo spread implicito nei fill reali di
-quel mese specifico. Un tentativo di aggiornare il trailing sull'estremo
-favorevole della barra invece che sulla close (per imitare meglio la
-valutazione tick-per-tick) ha dato un mix sl/risk/time quasi identico al
-reale ma per COINCIDENZA - il conto si bloccava di nuovo a dicembre
-2025, stessa firma del bug originale - scartato, non riprovare senza
-prima risolvere la densita' di novembre/dicembre.
+RIPROVATO 29/08 (dopo segnalazione utente: "MT5 chiude spesso in pari o
+con SL strettissimo") - il trailing sull'estremo favorevole della barra
+(non sulla close) e' stato riapplicato, insieme a cooldown e spread gate
+(non presenti nel primo tentativo scartato). Risultato sulla FORMA della
+distribuzione P&L: eccellente, quasi esatto - 11% dei trade quasi in
+pari (reale: 11%), 45% entro $8 di P&L (reale: 46%). Confermato: MT5
+valuta il trailing su ogni tick, quindi il prezzo puo' fare un massimo
+favorevole e stringere lo stop PRIMA di un eventuale ritorno indietro
+nella stessa barra M15 - valutare solo sulla close (versione precedente)
+perdeva questo movimento e produceva perdite piu' grandi/nette del
+reale. Il fix e' quindi corretto e va mantenuto.
+
+PROBLEMA APERTO (29/08, ancora non risolto): novembre+dicembre 2025
+restano piu' densi nel motore Python (~160 trade nei due mesi) che nel
+reale (51, sullo STESSO segnale verificato identico 175/175). Esclusi
+con verifica diretta nel codice: MTF validation (disattivo di default),
+NXS_VolatilityRegime (morto, mai letto altrove), soglia minima di score
+(non applicabile a SAR), spread gate (effetto reale ma marginale). Anche
+la durata media dei trade e' comparabile (Python mediana 2.00h, reale
+2.52h a novembre) - NON e' quindi solo un discorso di "chiude/riapre piu'
+in fretta". Resta un vero mistero: la densita' di OPPORTUNITA' di entrata
+(condizione vera + nessuna posizione aperta) e' strutturalmente piu' alta
+in Python che nel motore reale in quello specifico periodo, per una
+ragione non ancora identificata. Prossima ipotesi da testare: contare
+quante barre M15 consecutive soddisfano la condizione SAR/EMA (sugli
+indicatori REALI) in novembre 2025, per capire se il segnale stesso resta
+"acceso" piu' a lungo di quanto la cadenza reale delle entrate suggerisca
+- se si', il gate mancante agisce su qualcosa di diverso dal semplice
+timing (forse un filtro di direzione/coerenza non ancora trovato).
 """
 import os
 import csv
@@ -297,17 +307,33 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
             h4_closed_idx += 1
 
         if pos is not None:
-            # 29/08 - provato ad aggiornare il trailing sull'estremo
-            # FAVOREVOLE della barra invece che sulla close (per imitare
-            # meglio la valutazione tick-per-tick reale): il mix sl/risk/
-            # time usciva quasi identico al reale (99/56/19 contro 116/
-            # 40/19), MA il conto tornava a bloccarsi per sempre a Dicembre
-            # 2025 (stessa firma del bug originale) - la coincidenza
-            # nell'aggregato nascondeva che tutti i 174 trade erano
-            # ancora ammassati in 5 settimane. Riportato alla versione
-            # sulla close: nessun miglioramento reale, solo un aggregato
-            # che sembrava migliore per coincidenza. Non toccare senza
-            # aver prima risolto il vero problema (vedi nota sotto).
+            # 29/08 - RIPROVATO dopo la segnalazione dell'utente: nel reale
+            # molti "sl" chiudono quasi in pari o con perdita minima (46%
+            # dei 175 trade reali entro $8, contro 31% in Python) - MT5
+            # valuta il trailing su ogni TICK, quindi il prezzo puo' fare
+            # un massimo favorevole, stringere lo stop, e SOLO DOPO tornare
+            # indietro nella stessa barra M15; valutare solo sulla close
+            # (come sotto in precedenza) perde questo movimento e lascia
+            # correre le perdite piu' del reale. La prima volta il fix
+            # sull'estremo favorevole sembrava rompere tutto (conto
+            # bloccato a dicembre 2025) - causa vera trovata dopo: densita'
+            # di entrate eccessiva a novembre/dicembre (non ancora
+            # risolta), non questo fix. Riapplicato: migliora la
+            # distribuzione dei pnl verso il pattern reale.
+            a15 = atr15[j]
+            if a15:
+                favorable = bar["high"] if pos["sig"] == 1 else bar["low"]
+                if pos["sig"] == 1:
+                    if favorable - pos["entry"] >= TRAIL_ACTIVATE_ATR * a15:
+                        new_sl = favorable - TRAIL_K * a15
+                        if new_sl > pos["sl"]:
+                            pos["sl"] = new_sl
+                else:
+                    if pos["entry"] - favorable >= TRAIL_ACTIVATE_ATR * a15:
+                        new_sl = favorable + TRAIL_K * a15
+                        if new_sl < pos["sl"]:
+                            pos["sl"] = new_sl
+
             hit_sl = (bar["low"] <= pos["sl"]) if pos["sig"] == 1 else (bar["high"] >= pos["sl"])
             if hit_sl:
                 exit_price, exit_reason = pos["sl"], "sl"
@@ -346,19 +372,6 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                 if equity <= 0:
                     break
             else:
-                # aggiorna trailing (usa ATR M15 corrente, sulla close)
-                a15 = atr15[j]
-                if a15:
-                    if pos["sig"] == 1:
-                        if bar["close"] - pos["entry"] >= TRAIL_ACTIVATE_ATR * a15:
-                            new_sl = bar["close"] - TRAIL_K * a15
-                            if new_sl > pos["sl"]:
-                                pos["sl"] = new_sl
-                    else:
-                        if pos["entry"] - bar["close"] >= TRAIL_ACTIVATE_ATR * a15:
-                            new_sl = bar["close"] + TRAIL_K * a15
-                            if new_sl < pos["sl"]:
-                                pos["sl"] = new_sl
                 j += 1
                 continue
 
@@ -444,13 +457,15 @@ def main():
     print("  n_trades=175 PF=0.92 netto=-$118.95 DD_max=28.7%")
     print("  motivi reali: {'NXS:RISK': 40, 'sl': 116, 'NXS:TIME': 19}")
     print()
-    print("Stato convergenza (29/08): segno corretto, 5 fix reali applicati")
+    print("Stato convergenza (29/08): segno corretto, 6 fix reali applicati")
     print("(Wilder ATR, TrailK per-strategia, auto-close giornaliero fisso,")
-    print("event loop M15 continuo, cooldown per-strategia, spread gate globale).")
+    print("event loop M15 continuo, cooldown per-strategia, spread gate globale,")
+    print("trailing sull'estremo favorevole della barra non sulla close).")
+    print("La FORMA della distribuzione P&L ora combacia col reale (11% quasi")
+    print("in pari, 45% entro $8 - reale: 11%/46%).")
     print("PROBLEMA APERTO: nov+dic 2025 restano troppo densi nel motore Python")
-    print("(~180 trade nei due mesi contro 51 reali, sullo STESSO segnale")
-    print("verificato identico) - MTF/vol-regime/min-score esclusi con verifica")
-    print("diretta nel codice. Vedi docstring in cima al file.")
+    print("(~160 trade contro 51 reali, stesso segnale, durata media comparabile)")
+    print("- causa ancora non identificata. Vedi docstring in cima al file.")
 
 
 if __name__ == "__main__":
