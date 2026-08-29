@@ -47,6 +47,36 @@ Gestione replicata (verificata nel codice, NXS_TrailingATR.mqh):
     23:43 server time (stessa ora osservata su OGNI chiusura NXS:TIME
     reale) viene flattata li', indipendentemente da quando e' stata
     aperta.
+  - Cooldown per-strategia dopo 3 trade consecutivi (InpMaxConsecPerStrat,
+    30 minuti, NXS_Confluence.mqh): scartato all'inizio come "trascurabile
+    sull'aggregato 10 mesi", sbagliato - l'utente ha notato una catena di
+    8-10 trade in poche ore il 13/11/2025 che prosciuga il conto da $1000
+    a $247 in 5 settimane; sotto quella soglia QUALUNQUE distanza di SL
+    tipica di GOLD supera l'8% di rischio-al-lotto-minimo e l'ordine viene
+    rifiutato per sempre (verificato: calc_lot_risk(sl=20..40, bal=247) ->
+    lots=0 sempre) - il conto resta bloccato, zero trade per il resto del
+    periodo. Il cooldown e' il meccanismo che nel motore vero spezza
+    queste catene. Aggiunto: la sopravvivenza si estende da dicembre 2025
+    a luglio 2026, ma NON risolve del tutto - vedi "PROBLEMA APERTO" sotto.
+
+PROBLEMA APERTO (29/08, non risolto): anche col cooldown, novembre 2025
+resta enormemente piu' denso nel motore Python (134-174 trade nel solo
+mese) che nel reale (50 trade nello stesso mese, sullo STESSO segnale
+verificato identico 175/175 - vedi nota vault dedicata). Il cooldown di
+30 minuti (2 barre M15) e' troppo debole per replicare qualunque cosa
+stia davvero diradando le rientrate nel motore reale durante un regime
+di mercato agitato/laterale. Non ancora isolato: ipotesi da verificare
+prossimamente sono (a) lo spread modellato per ora potrebbe essere in
+media piu' stretto del vero spread tick-per-tick durante quelle ore
+volatili di novembre, rendendo il lotto calcolato/il trigger SL troppo
+generosi; (b) esiste un altro gate universale (MTF/velocity/news) non
+ancora isolato che nel motore vero taglia le rientrate durante il chop
+molto piu' del solo cooldown. Un tentativo di aggiornare il trailing
+sull'estremo favorevole della barra invece che sulla close (per imitare
+meglio la valutazione tick-per-tick) ha dato un mix sl/risk/time quasi
+identico al reale ma per COINCIDENZA - il conto si bloccava di nuovo a
+dicembre 2025, stessa firma del bug originale - scartato, non riprovare
+senza prima risolvere la densita' di novembre.
 """
 import os
 import csv
@@ -65,6 +95,19 @@ TRAIL_K = 2.0   # NXS_Profile_TrailK("SAR") - override specifico, non il globale
 MAX_LOSS_POS_PCT = 2.0
 DAILY_AUTOCLOSE_HOUR = 23   # NXS_Prot_CheckAutoClose - orario osservato su ogni NXS:TIME reale: "23:43:0x"
 DAILY_AUTOCLOSE_MIN = 43
+# 29/08 - cooldown per-strategia (NXS_Confluence.mqh, InpUseStrategyCD/
+# InpMaxConsecPerStrat/InpStratCooldownMin). Scartato all'inizio come
+# "impatto trascurabile sull'aggregato dei 10 mesi" - sbagliato: l'utente
+# ha notato una catena di 8-10 trade in poche ore il 13/11/2025 (quasi
+# tutti in perdita, -20/-23/-31/-22$) che prosciuga il conto da $1000 a
+# $247 in 5 settimane; sotto quella soglia QUALUNQUE distanza di SL tipica
+# di GOLD supera l'8% di rischio-al-lotto-minimo e l'ordine viene rifiutato
+# per sempre (verificato: calc_lot_risk(sl=20..40, balance=247) -> lots=0
+# in ogni caso) - il conto resta bloccato, zero trade per gli 8 mesi
+# successivi. Il cooldown dopo 3 trade consecutivi della stessa strategia
+# e' proprio il meccanismo che nel motore vero spezza queste catene.
+COOLDOWN_MAX_CONSEC = 3
+COOLDOWN_MIN = 30
 
 
 def load_real_indicators(path, h4):
@@ -211,6 +254,8 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
     trades = []
     trade_log = []   # (entry_time, dir, entry_price, exit_time, exit_price, reason, pnl)
     reasons_count = {}
+    cd_consec = 0        # NXS_Confluence.mqh: g_cdConsec
+    cd_until = None       # g_cdUntil
 
     m15_start_j = next(j for j, c in enumerate(m15) if c["time"] >= start_dt)
     m15_end_j = next((j for j, c in enumerate(m15) if c["time"] >= end_dt), len(m15))
@@ -240,14 +285,24 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
             h4_closed_idx += 1
 
         if pos is not None:
-            # 1) SL (nativo o trailing)
+            # 29/08 - provato ad aggiornare il trailing sull'estremo
+            # FAVOREVOLE della barra invece che sulla close (per imitare
+            # meglio la valutazione tick-per-tick reale): il mix sl/risk/
+            # time usciva quasi identico al reale (99/56/19 contro 116/
+            # 40/19), MA il conto tornava a bloccarsi per sempre a Dicembre
+            # 2025 (stessa firma del bug originale) - la coincidenza
+            # nell'aggregato nascondeva che tutti i 174 trade erano
+            # ancora ammassati in 5 settimane. Riportato alla versione
+            # sulla close: nessun miglioramento reale, solo un aggregato
+            # che sembrava migliore per coincidenza. Non toccare senza
+            # aver prima risolto il vero problema (vedi nota sotto).
             hit_sl = (bar["low"] <= pos["sl"]) if pos["sig"] == 1 else (bar["high"] >= pos["sl"])
             if hit_sl:
                 exit_price, exit_reason = pos["sl"], "sl"
             elif t > pos["deadline"]:
                 exit_price, exit_reason = bar["open"], "time"
             else:
-                # 2) max-loss-per-posizione sul close della barra
+                # 3) max-loss-per-posizione sul close della barra
                 float_pnl_price = (bar["close"] - pos["entry"]) if pos["sig"] == 1 else (pos["entry"] - bar["close"])
                 float_pnl_money = float_pnl_price / eng.TICK_SIZE * eng.TICK_VALUE_PER_LOT * pos["lots"]
                 if float_pnl_money <= pos["max_loss_money"]:
@@ -265,6 +320,10 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                     "exit_time": t, "exit_price": exit_price, "reason": exit_reason, "pnl": pnl_money,
                 })
                 reasons_count[exit_reason] = reasons_count.get(exit_reason, 0) + 1
+                cd_consec += 1
+                if cd_consec >= COOLDOWN_MAX_CONSEC:
+                    cd_until = t + dt.timedelta(minutes=COOLDOWN_MIN)
+                    cd_consec = 0
                 peak = max(peak, equity)
                 if peak > 0:
                     max_dd = max(max_dd, (peak - equity) / peak * 100)
@@ -275,7 +334,7 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                 if equity <= 0:
                     break
             else:
-                # 3) aggiorna trailing (usa ATR M15 corrente)
+                # aggiorna trailing (usa ATR M15 corrente, sulla close)
                 a15 = atr15[j]
                 if a15:
                     if pos["sig"] == 1:
@@ -290,6 +349,13 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
                                 pos["sl"] = new_sl
                 j += 1
                 continue
+
+        # nessuna posizione aperta: cooldown per-strategia dopo N trade
+        # consecutivi (NXS_StrategyOnCooldown) - spezza le catene di
+        # rientrate immediate durante una fase di segnale persistente.
+        if cd_until is not None and t < cd_until:
+            j += 1
+            continue
 
         # nessuna posizione aperta: valuta il segnale sull'ultima H4 chiusa
         if h4_closed_idx < 0 or psar4[h4_closed_idx] is None or ema9_4[h4_closed_idx] is None \
@@ -358,13 +424,13 @@ def main():
     print("  n_trades=175 PF=0.92 netto=-$118.95 DD_max=28.7%")
     print("  motivi reali: {'NXS:RISK': 40, 'sl': 116, 'NXS:TIME': 19}")
     print()
-    print("Stato convergenza (29/08): segno e ordine di grandezza corretti dopo")
-    print("3 fix reali (Wilder ATR, TrailK per-strategia, auto-close giornaliero")
-    print("fisso invece di timer relativo + event loop M15 continuo per l'entry).")
-    print("Gap residuo: n_trades ~20% sotto il reale (139 vs 175), rapporto")
-    print("risk:sl piu' alto del reale (57:62 vs 40:116) - prossimo sospetto:")
-    print("il check max-loss-per-posizione potrebbe scattare piu' spesso qui")
-    print("che nel motore vero sui trade a lotto minimo con rischio maggiorato.")
+    print("Stato convergenza (29/08): segno corretto, 4 fix reali applicati")
+    print("(Wilder ATR, TrailK per-strategia, auto-close giornaliero fisso,")
+    print("event loop M15 continuo, cooldown per-strategia dopo 3 trade).")
+    print("PROBLEMA APERTO: novembre 2025 resta troppo denso nel motore Python")
+    print("(134+ trade nel mese contro 50 reali, sullo STESSO segnale verificato")
+    print("identico) - il conto si deprime piu' del reale prima di stabilizzarsi.")
+    print("Vedi docstring in cima al file per le ipotesi ancora da verificare.")
 
 
 if __name__ == "__main__":
