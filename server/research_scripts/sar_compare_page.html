@@ -139,6 +139,7 @@
   .sw-sell-tri { border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 8px solid var(--text-dim); }
   .sw-candle-up { background: var(--buy); }
   .sw-candle-dn { background: var(--sell); }
+  .sw-exit-circ { width: 9px; height: 9px; border-radius: 50%; border: 1.6px solid var(--text-dim); display: inline-block; background: transparent; }
 
   #chartHost { position: relative; width: 100%; height: 460px; touch-action: none; cursor: grab; }
   #chartHost:active { cursor: grabbing; }
@@ -239,6 +240,7 @@
       <h2 class="panel-title">Prezzo H4 con marker di entrata/uscita</h2>
       <div class="toolbar">
         <button class="btn" id="btnReset">Reset zoom</button>
+        <button class="btn" id="btnFull">Vedi tutto il periodo</button>
         <span class="panel-hint">rotella = zoom · trascina = scorri</span>
       </div>
     </div>
@@ -247,6 +249,7 @@
       <label><input type="checkbox" id="toggleMt" checked><span class="swatch sw-mt"></span>MT5 reale</label>
       <label><span class="sw-buy-tri"></span>buy</label>
       <label><span class="sw-sell-tri"></span>sell</label>
+      <label><span class="sw-exit-circ"></span>chiusura (linea tratteggiata = percorso del trade)</label>
       <label><span class="swatch sw-candle-up"></span>candela rialzista</label>
       <label><span class="swatch sw-candle-dn"></span>candela ribassista</label>
     </div>
@@ -335,7 +338,11 @@
   const mctx = minimap.getContext('2d');
 
   const tMin = h4[0].t.getTime(), tMax = h4[h4.length-1].t.getTime();
-  let viewMin = tMin, viewMax = tMax;
+  // vista iniziale: una finestra leggibile a candele (~7 settimane), non
+  // tutti i 10 mesi schiacciati - a quella scala ogni candela sarebbe
+  // meno di 1px e illeggibile. "Reset zoom" torna qui, non a tutta la serie.
+  const DEFAULT_SPAN_MS = 49 * 24 * 3600 * 1000;
+  let viewMin = tMin, viewMax = Math.min(tMax, tMin + DEFAULT_SPAN_MS);
   const cMin = Math.min(...h4.map(d=>d.c)), cMax = Math.max(...h4.map(d=>d.c));
 
   let showPy = true, showMt = true;
@@ -459,17 +466,43 @@
       trades.forEach(tr => {
         const et = new Date(tr.entry_time+':00').getTime();
         const xt = new Date(tr.exit_time+':00').getTime();
-        if (et < viewMin - 4*3600*1000 || et > viewMax + 4*3600*1000) return;
+        if (xt < viewMin - 4*3600*1000 || et > viewMax + 4*3600*1000) return;
         const x = xOf(et, viewMin, viewMax, W, PAD);
         const y = yOf(tr.entry_price, lo, hi, H, PAD);
-        if (y < PAD.t-20 || y > H-PAD.b+20) return;
-        ctx.beginPath();
-        ctx.fillStyle = color;
-        const sz = 4.2;
-        if (tr.dir === 1) { ctx.moveTo(x, y-sz); ctx.lineTo(x-sz, y+sz); ctx.lineTo(x+sz, y+sz); }
-        else { ctx.moveTo(x, y+sz); ctx.lineTo(x-sz, y-sz); ctx.lineTo(x+sz, y-sz); }
-        ctx.closePath(); ctx.fill();
-        tr._sx = x; tr._sy = y; tr._src = source;
+        const ex = xOf(xt, viewMin, viewMax, W, PAD);
+        const ey = yOf(tr.exit_price, lo, hi, H, PAD);
+        const entryVisible = y >= PAD.t-20 && y <= H-PAD.b+20;
+        const exitVisible = ey >= PAD.t-20 && ey <= H-PAD.b+20;
+
+        // linea entry -> exit (tratteggiata, sottile): rende visibile
+        // DOVE si e' chiuso ogni trade, non solo dove si e' aperto.
+        if (entryVisible || exitVisible) {
+          ctx.save();
+          ctx.globalAlpha = 0.55;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke();
+          ctx.restore();
+        }
+
+        if (entryVisible) {
+          ctx.beginPath();
+          ctx.fillStyle = color;
+          const sz = 4.2;
+          if (tr.dir === 1) { ctx.moveTo(x, y-sz); ctx.lineTo(x-sz, y+sz); ctx.lineTo(x+sz, y+sz); }
+          else { ctx.moveTo(x, y+sz); ctx.lineTo(x-sz, y-sz); ctx.lineTo(x+sz, y-sz); }
+          ctx.closePath(); ctx.fill();
+        }
+        // marker di uscita: cerchio cavo dello stesso colore, per
+        // distinguerlo visivamente dal triangolo pieno di entrata.
+        if (exitVisible) {
+          ctx.beginPath();
+          ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+          ctx.arc(ex, ey, 3.4, 0, Math.PI*2);
+          ctx.stroke();
+        }
+        tr._sx = x; tr._sy = y; tr._ex = ex; tr._ey = ey; tr._src = source;
       });
     }
     if (showPy) drawMarkers(pyTrades, pyCol, 'py');
@@ -546,16 +579,19 @@
     const all = [];
     if (showPy) pyTrades.forEach(t => all.push([t,'py']));
     if (showMt) mtTrades.forEach(t => all.push([t,'mt']));
+    let hitX = 0, hitY = 0;
     for (const [t] of all){
       if (t._sx === undefined) continue;
-      const d = Math.hypot(t._sx-mx, t._sy-my);
-      if (d < bd){ bd = d; hit = t; }
+      const dEntry = Math.hypot(t._sx-mx, t._sy-my);
+      if (dEntry < bd){ bd = dEntry; hit = t; hitX = t._sx; hitY = t._sy; }
+      const dExit = Math.hypot(t._ex-mx, t._ey-my);
+      if (dExit < bd){ bd = dExit; hit = t; hitX = t._ex; hitY = t._ey; }
     }
     if (hit){
       tooltip.className = hit._src;
       tooltip.style.opacity = 1;
-      tooltip.style.left = Math.min(W-190, hit._sx+10)+'px';
-      tooltip.style.top = Math.max(0, hit._sy-70)+'px';
+      tooltip.style.left = Math.min(W-190, hitX+10)+'px';
+      tooltip.style.top = Math.max(0, hitY-70)+'px';
       const dirLabel = hit.dir===1 ? 'buy' : 'sell';
       tooltip.innerHTML = '<div class="tt-src">'+(hit._src==='py'?'Python':'MT5 reale')+' · '+dirLabel+'</div>'
         + '<div class="tt-row">in <b>'+hit.entry_time.replace('T',' ')+'</b> @ <b>'+hit.entry_price+'</b></div>'
@@ -566,7 +602,8 @@
     }
   }
 
-  document.getElementById('btnReset').addEventListener('click', () => { viewMin=tMin; viewMax=tMax; draw(); });
+  document.getElementById('btnReset').addEventListener('click', () => { viewMin=tMin; viewMax=Math.min(tMax, tMin+DEFAULT_SPAN_MS); draw(); });
+  document.getElementById('btnFull').addEventListener('click', () => { viewMin=tMin; viewMax=tMax; draw(); });
   document.getElementById('togglePy').addEventListener('change', e => { showPy = e.target.checked; draw(); });
   document.getElementById('toggleMt').addEventListener('change', e => { showMt = e.target.checked; draw(); });
 
