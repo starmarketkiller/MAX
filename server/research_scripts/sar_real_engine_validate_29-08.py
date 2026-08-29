@@ -1,0 +1,327 @@
+#!/usr/bin/env python3
+"""29/08 - v2: motore Python "come MT5 vero" su SAR, CON gestione intraday
+fedele (non solo entry + SL/TP statico, la v1 divergeva 3x in frequenza e
+di segno sul risultato).
+
+Analisi EMPIRICA dei 175 trade reali di stanotte (nexus_sel_sar_realtick_
+report_deals.csv) prima di riscrivere qualunque cosa:
+  - ZERO trade su 175 chiudono per target (tp) - il TP nativo a 6xATR(H4)
+    non viene MAI raggiunto nella pratica.
+  - 116/175 (66%) chiudono per "sl" - ma a un prezzo diverso dal livello
+    nativo iniziale: e' lo stop TRAILING (NXS_TrailingATR.mqh) che si
+    stringe, non lo stop fisso a 1xATR(H4).
+  - 40/175 (23%) chiudono "NXS:RISK" - protezione max-loss-per-posizione
+    (InpMaxLossPosPct=2.0%, NXS_Protections.mqh).
+  - 19/175 (11%) chiudono "NXS:TIME".
+
+CORREZIONE 29/08 (debug v3, dopo che v2 con timeout relativo a 4h dava
+ancora 350-858 trade contro i 175 reali, 2-5x troppi): **"NXS:TIME" non
+e' un timer per-posizione**. Verificato sul CSV reale: OGNI singola
+chiusura NXS:TIME cade esattamente alle "23:43:0x" server time, in
+QUALSIASI giorno del test, a prescindere da quando la posizione era
+stata aperta (es. entry 20:00 -> chiusa 23:43 stesso giorno = 3h43m di
+hold; entry 18:45 -> chiusa comunque 23:43 = 4h58m di hold: durate
+diverse, stesso orario di chiusura). E' `NXS_Prot_CheckAutoClose()`
+(NXS_Protections.mqh:411) - un flatten-all GIORNALIERO prima della
+chiusura di sessione del broker per GOLD (InpAutoCloseMin=15 minuti
+prima dell'orario di chiusura sessione, quindi la finestra si apre alle
+23:43 se la sessione chiude alle 23:58; essendo su tick reali, la
+prima posizione ancora aperta in quella finestra viene chiusa quasi
+subito, da cui il pattern "23:43:0x" quasi identico ogni volta). NON
+c'entra affatto `NXS_MaxHold_LimitSec()` (il percorso 4h/160h) per SAR:
+quella funzione, se risolve un profilo (SAR ce l'ha, H4), marca
+`holdResolved=true` e la generica `NXS_Prot_CheckMaxHold()` la SALTA
+del tutto (riga 313) - la ricerca precedente di un "4h" empirico era
+un artefatto statistico (molte posizioni chiuse vicino a fine giornata
+per puro caso di orario di apertura), non la causa vera.
+
+Gestione replicata (verificata nel codice, NXS_TrailingATR.mqh):
+  - Trailing ATR: attiva quando il profitto raggiunge act=1.0xATR, poi
+    trail a k=2.0xATR dal prezzo CORRENTE (override per-strategia SAR,
+    NXS_Profile_TrailK, non il globale 2.5 - solo se piu' stretto/
+    favorevole del livello attuale). ATR M15 (g_atr globale, gira dopo
+    il reset multi-TF a InpTFEntry=M15), non l'H4 del trigger.
+  - Max-loss-per-posizione: chiude se la perdita flottante >= 2% del
+    saldo CORRENTE.
+  - Auto-close giornaliero: qualunque posizione ancora aperta alle
+    23:43 server time (stessa ora osservata su OGNI chiusura NXS:TIME
+    reale) viene flattata li', indipendentemente da quando e' stata
+    aperta.
+"""
+import os
+import csv
+import random
+import datetime as dt
+import importlib.util
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+_spec = importlib.util.spec_from_file_location("nxs_real_engine", os.path.join(HERE, "nxs_real_engine_29-08.py"))
+eng = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(eng)
+
+# ---- parametri gestione, dal codice reale (NXS_Inputs.mqh / NXS_TrailingATR.mqh) ----
+TRAIL_ACTIVATE_ATR = 1.0
+TRAIL_K = 2.0   # NXS_Profile_TrailK("SAR") - override specifico, non il globale 2.5 (NXS_StrategyProfiles.mqh:400)
+MAX_LOSS_POS_PCT = 2.0
+DAILY_AUTOCLOSE_HOUR = 23   # NXS_Prot_CheckAutoClose - orario osservato su ogni NXS:TIME reale: "23:43:0x"
+DAILY_AUTOCLOSE_MIN = 43
+
+
+def load_bars(path, m15=False):
+    rows = []
+    with open(path, newline="", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            rows.append({
+                "time": dt.datetime.strptime(r["time"], "%Y.%m.%d %H:%M" if m15 else "%Y.%m.%d %H:%M"),
+                "open": float(r["open"]), "high": float(r["high"]),
+                "low": float(r["low"]), "close": float(r["close"]),
+            })
+    return rows
+
+
+def ema_series(vals, n):
+    # porting esatto da backtest.py (gia' validato riga-per-riga vs MQL5):
+    # seed = SMA delle prime n barre, NON il primo valore grezzo - la mia
+    # prima versione (seed=vals[0]) divergeva dall'iMA nativo di MT5.
+    out = [None] * len(vals)
+    if len(vals) < n:
+        return out
+    k = 2 / (n + 1)
+    e = sum(vals[:n]) / n
+    out[n - 1] = e
+    for i in range(n, len(vals)):
+        e = vals[i] * k + e * (1 - k)
+        out[i] = e
+    return out
+
+
+def atr_series(candles, n=14):
+    # porting esatto da backtest.py: Wilder/SMMA (a = (a*(n-1)+tr)/n), NON
+    # una media mobile semplice - iATR di MT5 usa lo smoothing di Wilder,
+    # la mia prima versione (SMA su finestra) sovra/sottostimava l'ATR e
+    # quindi ogni distanza di SL/trailing/lotto derivata da esso.
+    trs = [0.0]
+    for i in range(1, len(candles)):
+        h, l, pc = candles[i]["high"], candles[i]["low"], candles[i - 1]["close"]
+        trs.append(max(h - l, abs(h - pc), abs(l - pc)))
+    out = [None] * len(candles)
+    if len(candles) <= n:
+        return out
+    a = sum(trs[1:n + 1]) / n
+    out[n] = a
+    for i in range(n + 1, len(candles)):
+        a = (a * (n - 1) + trs[i]) / n
+        out[i] = a
+    return out
+
+
+def psar_series(candles, af_step=0.02, af_max=0.2):
+    n = len(candles)
+    psar = [None] * n
+    trend = [0] * n
+    if n < 3:
+        return psar, trend
+    trend[1] = 1 if candles[1]["close"] > candles[0]["close"] else -1
+    psar[1] = candles[0]["low"] if trend[1] == 1 else candles[0]["high"]
+    ep = candles[1]["high"] if trend[1] == 1 else candles[1]["low"]
+    af = af_step
+    for i in range(2, n):
+        p = psar[i-1] + af * (ep - psar[i-1])
+        if trend[i-1] == 1:
+            p = min(p, candles[i-1]["low"], candles[i-2]["low"])
+            if candles[i]["low"] < p:
+                trend[i] = -1; p = ep; ep = candles[i]["low"]; af = af_step
+            else:
+                trend[i] = 1
+                if candles[i]["high"] > ep:
+                    ep = candles[i]["high"]; af = min(af + af_step, af_max)
+        else:
+            p = max(p, candles[i-1]["high"], candles[i-2]["high"])
+            if candles[i]["high"] > p:
+                trend[i] = 1; p = ep; ep = candles[i]["high"]; af = af_step
+            else:
+                trend[i] = -1
+                if candles[i]["low"] < ep:
+                    ep = candles[i]["low"]; af = min(af + af_step, af_max)
+        psar[i] = p
+    return psar, trend
+
+
+def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=None):
+    rng = random.Random(seed)
+    closes4 = [c["close"] for c in h4]
+    ema9_4 = ema_series(closes4, 9)
+    ema21_4 = ema_series(closes4, 21)
+    atr4 = atr_series(h4, 14)
+    psar4, _ = psar_series(h4)
+    atr15 = atr_series(m15, 14)
+
+    # indice M15 di partenza per ogni barra H4 (per camminare intraday dopo l'entry)
+    m15_idx_by_time = {c["time"]: i for i, c in enumerate(m15)}
+    m15_times_sorted = [c["time"] for c in m15]
+
+    def m15_index_at_or_after(t):
+        # ricerca lineare a partire da un cursore esterno sarebbe piu' veloce,
+        # ma il volume (20k barre) rende accettabile anche binaria semplice
+        import bisect
+        i = bisect.bisect_left(m15_times_sorted, t)
+        return i if i < len(m15_times_sorted) else None
+
+    equity = start_equity
+    peak = start_equity
+    max_dd = 0.0
+    trades = []
+    reasons_count = {}
+
+    m15_start_j = next(j for j, c in enumerate(m15) if c["time"] >= start_dt)
+    m15_end_j = next((j for j, c in enumerate(m15) if c["time"] >= end_dt), len(m15))
+
+    # 29/08 - v3: event loop M15 UNICO e continuo, non piu' un ciclo per
+    # indice H4 che apriva solo "alla barra H4 successiva". Verificato sui
+    # dati reali (nexus_sel_sar_realtick_report_deals.csv): il gap tra una
+    # chiusura e la RIENTRATA successiva va da 0.0h a diverse ore (mediana
+    # 1.7h) - MT5 valuta la condizione SAR/EMA su OGNI TICK usando l'ultima
+    # barra H4 chiusa (shift=1), quindi puo' rientrare in qualunque momento
+    # non appena una posizione si libera, non solo all'apertura della barra
+    # H4 successiva. Con l'entry incollata al boundary H4 (v2) il conteggio
+    # totale restava 2x quello reale (350 contro 175) nonostante il mix
+    # sl/risk/time fosse ormai corretto - la frequenza di ENTRATA, non la
+    # gestione d'uscita, era il problema residuo.
+    h4_closed_idx = -1   # indice dell'ultima barra H4 CHIUSA rispetto al tempo corrente
+
+    pos = None   # None oppure dict con sig/entry/sl/lots/deadline
+    j = max(m15_start_j, 0)
+    while j < m15_end_j:
+        bar = m15[j]
+        t = bar["time"]
+
+        # avanza il cursore H4: h4[h4_closed_idx] e' l'ultima barra chiusa
+        # (equivalente a iClose(...,1) nel momento t)
+        while h4_closed_idx + 1 < len(h4) - 1 and h4[h4_closed_idx + 2]["time"] <= t:
+            h4_closed_idx += 1
+
+        if pos is not None:
+            # 1) SL (nativo o trailing)
+            hit_sl = (bar["low"] <= pos["sl"]) if pos["sig"] == 1 else (bar["high"] >= pos["sl"])
+            if hit_sl:
+                exit_price, exit_reason = pos["sl"], "sl"
+            elif t > pos["deadline"]:
+                exit_price, exit_reason = bar["open"], "time"
+            else:
+                # 2) max-loss-per-posizione sul close della barra
+                float_pnl_price = (bar["close"] - pos["entry"]) if pos["sig"] == 1 else (pos["entry"] - bar["close"])
+                float_pnl_money = float_pnl_price / eng.TICK_SIZE * eng.TICK_VALUE_PER_LOT * pos["lots"]
+                if float_pnl_money <= pos["max_loss_money"]:
+                    exit_price, exit_reason = bar["close"], "risk"
+                else:
+                    exit_price = exit_reason = None
+
+            if exit_reason is not None:
+                pnl_price = (exit_price - pos["entry"]) if pos["sig"] == 1 else (pos["entry"] - exit_price)
+                pnl_money = pnl_price / eng.TICK_SIZE * eng.TICK_VALUE_PER_LOT * pos["lots"]
+                equity += pnl_money
+                trades.append(pnl_money)
+                reasons_count[exit_reason] = reasons_count.get(exit_reason, 0) + 1
+                peak = max(peak, equity)
+                if peak > 0:
+                    max_dd = max(max_dd, (peak - equity) / peak * 100)
+                if verbose_trades and len(trades) <= verbose_trades:
+                    print(f"  #{len(trades)} {pos['entry_time']} dir={pos['sig']} entry={pos['entry']:.2f} "
+                          f"exit={exit_price:.2f} ({exit_reason}) pnl=${pnl_money:.2f} equity=${equity:.2f}")
+                pos = None
+                if equity <= 0:
+                    break
+            else:
+                # 3) aggiorna trailing (usa ATR M15 corrente)
+                a15 = atr15[j]
+                if a15:
+                    if pos["sig"] == 1:
+                        if bar["close"] - pos["entry"] >= TRAIL_ACTIVATE_ATR * a15:
+                            new_sl = bar["close"] - TRAIL_K * a15
+                            if new_sl > pos["sl"]:
+                                pos["sl"] = new_sl
+                    else:
+                        if pos["entry"] - bar["close"] >= TRAIL_ACTIVATE_ATR * a15:
+                            new_sl = bar["close"] + TRAIL_K * a15
+                            if new_sl < pos["sl"]:
+                                pos["sl"] = new_sl
+                j += 1
+                continue
+
+        # nessuna posizione aperta: valuta il segnale sull'ultima H4 chiusa
+        if h4_closed_idx < 0 or psar4[h4_closed_idx] is None or ema9_4[h4_closed_idx] is None \
+           or ema21_4[h4_closed_idx] is None or atr4[h4_closed_idx] is None:
+            j += 1
+            continue
+        sar_v = psar4[h4_closed_idx]; e9 = ema9_4[h4_closed_idx]; e21 = ema21_4[h4_closed_idx]
+        px = closes4[h4_closed_idx]; atr_h4 = atr4[h4_closed_idx]
+        sig = 0
+        if sar_v < px and e9 > e21:
+            sig = 1
+        elif sar_v > px and e9 < e21:
+            sig = -1
+        if sig == 0:
+            j += 1
+            continue
+
+        hour = t.hour
+        spr = eng.spread_price(hour, rng)
+        sl_dist_init = 1.0 * atr_h4
+        if sig == 1:
+            entry = bar["open"] + spr / 2
+            sl = entry - sl_dist_init
+        else:
+            entry = bar["open"] - spr / 2
+            sl = entry + sl_dist_init
+
+        lots, _reason = eng.calc_lot_risk(abs(entry - sl), 1.0, equity, "SAR")
+        if lots <= 0:
+            j += 1
+            continue
+
+        deadline = t.replace(hour=DAILY_AUTOCLOSE_HOUR, minute=DAILY_AUTOCLOSE_MIN, second=0, microsecond=0)
+        if t >= deadline:
+            deadline += dt.timedelta(days=1)
+
+        pos = {
+            "sig": sig, "entry": entry, "sl": sl, "lots": lots,
+            "max_loss_money": -(equity * MAX_LOSS_POS_PCT / 100.0),
+            "deadline": deadline, "entry_time": t,
+        }
+        j += 1
+
+    gains = sum(t for t in trades if t > 0)
+    losses = -sum(t for t in trades if t < 0)
+    pf = gains / losses if losses > 0 else (float("inf") if gains > 0 else 0.0)
+    return {
+        "n_trades": len(trades), "pf": pf, "net": equity - start_equity,
+        "max_dd_pct": max_dd, "final_equity": equity, "reasons": reasons_count,
+    }
+
+
+def main():
+    eng.load_spread_profile()
+    h4 = load_bars(os.path.join(HERE, "nxs_h4_gold_29-08.csv"))
+    m15 = load_bars(os.path.join(HERE, "nxs_m15_gold_29-08.csv"), m15=True)
+    result = run(h4, m15, dt.datetime(2025, 11, 1), dt.datetime(2026, 8, 26), verbose_trades=8)
+    print()
+    print("=== SAR - motore Python v3 (event loop M15 continuo, auto-close giornaliero) ===")
+    print(f"n_trades={result['n_trades']} PF={result['pf']:.2f} netto=${result['net']:.2f} "
+          f"DD_max={result['max_dd_pct']:.1f}% equity_finale=${result['final_equity']:.2f}")
+    print(f"motivi di uscita: {result['reasons']}")
+    print()
+    print("Confronto col Tester MT5 reale (stanotte, tick reali):")
+    print("  n_trades=175 PF=0.92 netto=-$118.95 DD_max=28.7%")
+    print("  motivi reali: {'NXS:RISK': 40, 'sl': 116, 'NXS:TIME': 19}")
+    print()
+    print("Stato convergenza (29/08): segno e ordine di grandezza corretti dopo")
+    print("3 fix reali (Wilder ATR, TrailK per-strategia, auto-close giornaliero")
+    print("fisso invece di timer relativo + event loop M15 continuo per l'entry).")
+    print("Gap residuo: n_trades ~20% sotto il reale (139 vs 175), rapporto")
+    print("risk:sl piu' alto del reale (57:62 vs 40:116) - prossimo sospetto:")
+    print("il check max-loss-per-posizione potrebbe scattare piu' spesso qui")
+    print("che nel motore vero sui trade a lotto minimo con rischio maggiorato.")
+
+
+if __name__ == "__main__":
+    main()
