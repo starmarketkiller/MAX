@@ -59,12 +59,15 @@ input bool     InpEnableLicense    = true;
 input string   InpLicenseKey       = "";
 
 // input group "=== ROBUSTNESS (Phase 1) ==="
-int      InpHardMaxSpreadPts = 0;     // 0 = use profile default
-int      InpOrderRetries     = 3;     // retries on requote/off-quotes
-bool     InpUseStatePersist  = true;  // resume state after MT5 restart
-bool     InpUseAtrTrail      = true;  // ATR-based trailing stop
-double   InpAtrTrailMult     = 2.5;   // v2.4.4: 1.5->2.5 "lascia correre" - trail piu' largo, le vincenti cavalcano il movimento
-double   InpAtrTrailActivateATR = 1.0; // v2.4.4: attiva il trail solo dopo +1.0 ATR (era 0.5) - da' spazio al trade per svilupparsi
+// 30/08 - resi input veri (erano plain, invisibili al Tester/.set - stessa
+// classe di bug gia' corretta piu' volte oggi), necessario per
+// l'esperimento "spoglia e reintegra" chiesto dall'utente.
+input int      InpHardMaxSpreadPts = 0;     // 0 = use profile default
+input int      InpOrderRetries     = 3;     // retries on requote/off-quotes
+input bool     InpUseStatePersist  = true;  // resume state after MT5 restart
+input bool     InpUseAtrTrail      = true;  // ATR-based trailing stop
+input double   InpAtrTrailMult     = 2.5;   // v2.4.4: 1.5->2.5 "lascia correre" - trail piu' largo, le vincenti cavalcano il movimento
+input double   InpAtrTrailActivateATR = 1.0; // v2.4.4: attiva il trail solo dopo +1.0 ATR (era 0.5) - da' spazio al trade per svilupparsi
 
 // input group "=== ON-CHART DASHBOARD ==="
 input bool     InpShowDashboard    = true;
@@ -83,8 +86,8 @@ bool     InpNotifyDailySummary = false;
 
 // input group "=== RISK MANAGEMENT ==="
 input double   InpRiskPercent      = 1.0;
-double   InpMaxLot           = 5.0;
-int      InpMaxTradesPerDay  = 12;
+input double   InpMaxLot           = 5.0;
+input int      InpMaxTradesPerDay  = 12;   // 30/08 - reso input vero (era plain, invisibile al Tester)
 input int      InpMaxConcurrent    = 4;
 input int      InpMaxPerDirTF      = 4;      // v2.4.8: HEDGE ON - corsie indipendenti, ogni strategia la sua (regolate dal gate margine)
 input double   InpMaxDailyDDPct    = 5.0;
@@ -314,15 +317,17 @@ int      InpPostSLCooldownMin  = 0;       // v2.2.8: il backtest non ha cooldown
 // NEW entry that's chasing a move that's already gone too far (consecutive
 // HH/LL with no pullback, price too far from EMA200, or RSI diverging
 // against the entry direction). Applied in both execution paths.
-bool     InpUseExhaustionGate      = false;  // v2.2.8: il backtest non ha exhaustion gate
-int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
-double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
-int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
+// 30/08 - resi input veri (erano plain, stessa classe di bug gia' trovata
+// e corretta per il gruppo HTF BIAS sotto - qui non era mai stato fatto).
+input bool     InpUseExhaustionGate      = false;  // v2.2.8: il backtest non ha exhaustion gate
+input int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
+input double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
+input int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
 
 // input group "=== ANTI-REVENGE ==="
-bool     InpAntiRevenge      = true;
-int      InpAntiRevengeLosses= 3;
-int      InpAntiRevengeMin   = 60;
+input bool     InpAntiRevenge      = true;
+input int      InpAntiRevengeLosses= 3;
+input int      InpAntiRevengeMin   = 60;
 
 // input group "=== HTF BIAS ==="
 // v2.5.x — erano variabili semplici, non `input`: MetaTrader non le espone
@@ -609,20 +614,24 @@ double   InpCtxW_AMD            = 3.0;    // bonus fase AMD attiva (manip/distri
 double   InpCtxZoneATR          = 1.5;    // distanza max zona dal prezzo (× ATR)
 double   InpCtxMaxBonus         = 20.0;   // tetto bonus totale di contesto
 double   InpCtxMaxPenalty       = 15.0;   // tetto penalità totale di contesto
-bool     InpUseStrategyCD    = true;
-int      InpMaxConsecPerStrat= 3;
-int      InpStratCooldownMin = 30;
+// 30/08 - resi input veri (erano plain), necessario per l'esperimento
+// "spoglia e reintegra" chiesto dall'utente - senza questo il Tester
+// ignorava silenziosamente qualunque override da .set/.ini su cooldown,
+// spread gate e MTF validation.
+input bool     InpUseStrategyCD    = true;
+input int      InpMaxConsecPerStrat= 3;
+input int      InpStratCooldownMin = 30;
 
 // input group "=== MTF / SPREAD / VOL REGIME (Audit PDF) ==="
-bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation
-ENUM_TIMEFRAMES InpMTF_TF1   = PERIOD_H1;
-ENUM_TIMEFRAMES InpMTF_TF2   = PERIOD_H4;
-bool     InpUseDynamicSpread = true;
-double   InpMaxSpreadAtrPct  = 8.0;    // spread > 8% of ATR → block
-int      InpMaxSpreadPoints  = 0;     // 0 = use asset-class profile cap
-bool     InpUseVolRegime     = true;
-double   InpLowVolAtrPct     = 0.15;
-double   InpHighVolAtrPct    = 0.6;
+input bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation
+input ENUM_TIMEFRAMES InpMTF_TF1   = PERIOD_H1;
+input ENUM_TIMEFRAMES InpMTF_TF2   = PERIOD_H4;
+input bool     InpUseDynamicSpread = true;
+input double   InpMaxSpreadAtrPct  = 8.0;    // spread > 8% of ATR → block
+input int      InpMaxSpreadPoints  = 0;     // 0 = use asset-class profile cap
+input bool     InpUseVolRegime     = true;
+input double   InpLowVolAtrPct     = 0.15;
+input double   InpHighVolAtrPct    = 0.6;
 
 // input group "=== GATE MODE (v2.0.2 - sblocco trade) ==="
 // 0=Conservative (block aggressive), 1=Balanced, 2=Discovery (very permissive), 3=DebugTrade
