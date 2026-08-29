@@ -117,6 +117,30 @@ def spread_price(hour, rng=random):
     return sample_spread_points(hour, rng) * TICK_SIZE
 
 
+# ---- NXS_SpreadOK (NXS_MTFSpreadVol.mqh) - gate GLOBALE, chiamato in
+# OnTick PRIMA di qualunque dispatch di strategia (NEXUS_EA_v2.mq5:1033):
+# se lo spread e' troppo largo, quel tick non apre NESSUNA nuova posizione
+# per NESSUNA strategia. La variante "adattiva" (NXR_SpreadOK) esiste nel
+# codice ma InpNXR_Enable e' hardcoded false (non e' nemmeno un input) -
+# morta per costruzione (stessa scoperta fatta per IFVG/FVG_Mit il 25/08),
+# quindi il gate VIVO e' sempre la versione semplice sotto.
+MAX_SPREAD_POINTS_GOLD = 80       # g_profile.maxSpreadPts per XAUUSD
+MAX_SPREAD_ATR_PCT = 8.0          # InpMaxSpreadAtrPct
+
+
+def spread_ok(spread_pts, atr):
+    """True se il tick sarebbe passato NXS_SpreadOK(). atr: ATR corrente
+    (M15, e' l'ultimo calcolato al momento del check globale in OnTick,
+    prima che il loop multi-TF lo sovrascriva per-strategia)."""
+    if spread_pts > MAX_SPREAD_POINTS_GOLD:
+        return False
+    if atr and atr > 0:
+        pct_of_atr = (spread_pts * TICK_SIZE / atr) * 100.0
+        if pct_of_atr > MAX_SPREAD_ATR_PCT:
+            return False
+    return True
+
+
 # ---- NXS_CalcLotRisk, porting fedele (NXS_Risk.mqh righe 49-128) ----
 def calc_lot_risk(sl_price_dist, risk_pct, balance, strat_name="",
                    anti_bleed_mult=1.0, account_lot_mult=1.0, streak_mult=1.0,

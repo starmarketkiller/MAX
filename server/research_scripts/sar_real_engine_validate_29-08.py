@@ -59,24 +59,36 @@ Gestione replicata (verificata nel codice, NXS_TrailingATR.mqh):
     queste catene. Aggiunto: la sopravvivenza si estende da dicembre 2025
     a luglio 2026, ma NON risolve del tutto - vedi "PROBLEMA APERTO" sotto.
 
-PROBLEMA APERTO (29/08, non risolto): anche col cooldown, novembre 2025
-resta enormemente piu' denso nel motore Python (134-174 trade nel solo
-mese) che nel reale (50 trade nello stesso mese, sullo STESSO segnale
-verificato identico 175/175 - vedi nota vault dedicata). Il cooldown di
-30 minuti (2 barre M15) e' troppo debole per replicare qualunque cosa
-stia davvero diradando le rientrate nel motore reale durante un regime
-di mercato agitato/laterale. Non ancora isolato: ipotesi da verificare
-prossimamente sono (a) lo spread modellato per ora potrebbe essere in
-media piu' stretto del vero spread tick-per-tick durante quelle ore
-volatili di novembre, rendendo il lotto calcolato/il trigger SL troppo
-generosi; (b) esiste un altro gate universale (MTF/velocity/news) non
-ancora isolato che nel motore vero taglia le rientrate durante il chop
-molto piu' del solo cooldown. Un tentativo di aggiornare il trailing
-sull'estremo favorevole della barra invece che sulla close (per imitare
-meglio la valutazione tick-per-tick) ha dato un mix sl/risk/time quasi
-identico al reale ma per COINCIDENZA - il conto si bloccava di nuovo a
-dicembre 2025, stessa firma del bug originale - scartato, non riprovare
-senza prima risolvere la densita' di novembre.
+Aggiunto anche NXS_SpreadOK() (NXS_MTFSpreadVol.mqh) - gate GLOBALE
+chiamato in OnTick PRIMA di ogni dispatch strategia
+(NEXUS_EA_v2.mq5:1033): spread >80pt o >8% dell'ATR M15 corrente blocca
+QUALUNQUE apertura quel tick, per QUALSIASI strategia (non solo SAR).
+Verificato che la variante "adattiva" (NXR_SpreadOK) e' morta per
+costruzione - InpNXR_Enable e' hardcoded false, non e' nemmeno un input,
+stessa scoperta gia' fatta il 25/08 per IFVG/FVG_Mit - quindi il gate
+vivo e' sempre la versione semplice. Effetto reale ma modesto: PF
+0.55->0.79 (reale 0.92), pero' la densita' di novembre cala solo
+marginalmente (87->80 trade contro i 50 reali).
+
+PROBLEMA APERTO (29/08, non risolto): anche con cooldown + spread gate,
+novembre+dicembre 2025 restano enormemente piu' densi nel motore Python
+(~180 trade nei due mesi) che nel reale (51, sullo STESSO segnale
+verificato identico 175/175 - vedi nota vault dedicata). Esclusi finora
+con verifica diretta nel codice: MTF validation (InpUseMTFValidation=
+false, disattivo), NXS_VolatilityRegime() (calcolato ma mai letto da
+nessun'altra parte del codice - morto, nessun effetto), soglia minima di
+score (nessuna soglia generale trovata per SAR, solo eccezioni per-
+strategia come MALAYSIAN_SNR/Elliott che non la riguardano). Ipotesi
+ancora da verificare: lo spread modellato per ora (media sull'intero
+periodo di 10 mesi) potrebbe non catturare uno spread genuinamente piu'
+largo specifico di novembre 2025 (evento/periodo, non solo ora del
+giorno) - andrebbe confrontato con lo spread implicito nei fill reali di
+quel mese specifico. Un tentativo di aggiornare il trailing sull'estremo
+favorevole della barra invece che sulla close (per imitare meglio la
+valutazione tick-per-tick) ha dato un mix sl/risk/time quasi identico al
+reale ma per COINCIDENZA - il conto si bloccava di nuovo a dicembre
+2025, stessa firma del bug originale - scartato, non riprovare senza
+prima risolvere la densita' di novembre/dicembre.
 """
 import os
 import csv
@@ -374,7 +386,15 @@ def run(h4, m15, start_dt, end_dt, start_equity=1000.0, seed=42, verbose_trades=
             continue
 
         hour = t.hour
-        spr = eng.spread_price(hour, rng)
+        spr_pts = eng.sample_spread_points(hour, rng)
+        # NXS_SpreadOK() (NXS_MTFSpreadVol.mqh) - gate GLOBALE chiamato in
+        # OnTick PRIMA di ogni dispatch strategia (NEXUS_EA_v2.mq5:1033):
+        # spread troppo largo (>80pt o >8% dell'ATR M15 corrente) blocca
+        # QUALUNQUE nuova apertura quel tick, non solo per SAR.
+        if not eng.spread_ok(spr_pts, atr15[j]):
+            j += 1
+            continue
+        spr = spr_pts * eng.TICK_SIZE
         sl_dist_init = 1.0 * atr_h4
         if sig == 1:
             entry = bar["open"] + spr / 2
@@ -424,13 +444,13 @@ def main():
     print("  n_trades=175 PF=0.92 netto=-$118.95 DD_max=28.7%")
     print("  motivi reali: {'NXS:RISK': 40, 'sl': 116, 'NXS:TIME': 19}")
     print()
-    print("Stato convergenza (29/08): segno corretto, 4 fix reali applicati")
+    print("Stato convergenza (29/08): segno corretto, 5 fix reali applicati")
     print("(Wilder ATR, TrailK per-strategia, auto-close giornaliero fisso,")
-    print("event loop M15 continuo, cooldown per-strategia dopo 3 trade).")
-    print("PROBLEMA APERTO: novembre 2025 resta troppo denso nel motore Python")
-    print("(134+ trade nel mese contro 50 reali, sullo STESSO segnale verificato")
-    print("identico) - il conto si deprime piu' del reale prima di stabilizzarsi.")
-    print("Vedi docstring in cima al file per le ipotesi ancora da verificare.")
+    print("event loop M15 continuo, cooldown per-strategia, spread gate globale).")
+    print("PROBLEMA APERTO: nov+dic 2025 restano troppo densi nel motore Python")
+    print("(~180 trade nei due mesi contro 51 reali, sullo STESSO segnale")
+    print("verificato identico) - MTF/vol-regime/min-score esclusi con verifica")
+    print("diretta nel codice. Vedi docstring in cima al file.")
 
 
 if __name__ == "__main__":
