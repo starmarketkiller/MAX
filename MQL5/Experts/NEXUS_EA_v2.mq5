@@ -152,7 +152,19 @@ void NXS_ReleaseHandles(){
 // NXS_UpdateIndicators(). Le funzioni-strategia (che leggono i VALORI globali
 // g_adx/g_atr/g_ema200...) non vengono toccate.
 // ---------------------------------------------------------------------------
-#define NXS_MTF_MAX 4
+// 30/08 - BUG TROVATO durante l'esperimento "spoglia MT5" (richiesto
+// dall'utente): con 4 slot, il registro strategie usa GIA' 5 timeframe
+// distinti (D1/H4/M30/M15/H1 - verificato contando NXS_Profile_TF su
+// tutte le voci di NXS_StrategyProfiles.mqh). NXS_MTF_Index() ritorna -1
+// silenziosamente quando g_mtfCount raggiunge il cap, quindi
+// NXS_ActivateTF() fallisce per QUALUNQUE timeframe scoperto per 5°
+// (l'ordine dipende dall'ordine di scansione del registro) - le
+// strategie su quel timeframe non vengono MAI valutate, senza errori
+// visibili (solo uno "skip" silenzioso, vedi NXS_CollectAllSignals).
+// Verificato dal vivo su SAR (H4): passes[]=[H1,D1,M30,M15,H4], H4 5°
+// della lista, ActivateTF fallisce sempre, SAR non apre mai un trade.
+// Alzato a 8 con margine per eventuali nuove strategie/timeframe futuri.
+#define NXS_MTF_MAX 8
 ENUM_TIMEFRAMES g_mtfTF[NXS_MTF_MAX];
 int g_mtf_hADX[NXS_MTF_MAX], g_mtf_hRSI[NXS_MTF_MAX], g_mtf_hBB[NXS_MTF_MAX],
     g_mtf_hMACD[NXS_MTF_MAX], g_mtf_hSAR[NXS_MTF_MAX], g_mtf_hATR[NXS_MTF_MAX],
