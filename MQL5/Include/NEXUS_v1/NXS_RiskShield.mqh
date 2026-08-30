@@ -119,10 +119,17 @@ bool NXS_RS_SpreadBurst_Block(string &reason){
 // Computes Sharpe over the last N closed trades. If Sharpe < threshold,
 // the EA self-pauses for `InpBreaker_PauseHours` and pushes a Coach alert.
 // =====================================================================
-bool   InpBreaker_Enable      = true;
-int    InpBreaker_LookbackN   = 50;
-double InpBreaker_SharpeMin   = 0.30;
-int    InpBreaker_PauseHours  = 24;
+// 30/08 - resi input veri (erano plain, invisibili al Tester/.set -
+// stessa classe di bug gia' trovata e corretta piu' volte oggi).
+// Scoperto durante l'esperimento pip-sequence: questo breaker (Sharpe
+// rolling su 50 trade < 0.30 -> pausa 24h) restava sempre attivo
+// nonostante non fosse nella lista dei toggle disponibili da .set -
+// visibile nei log come "[NEXUS RS] EQUITY_BREAKER ... nuove entrate
+// sospese".
+input bool   InpBreaker_Enable      = true;
+input int    InpBreaker_LookbackN   = 50;
+input double InpBreaker_SharpeMin   = 0.30;
+input int    InpBreaker_PauseHours  = 24;
 
 // g_NXSrsBreakerUntil / g_NXSrsLastSharpe: dichiarati in NXS_Globals.mqh
 // perché NXS_State.mqh li persiste ed è incluso prima di questo file.
