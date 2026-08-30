@@ -449,11 +449,11 @@ bool     InpEnableCloseReverse = true;
 double   InpMinScoreReverse    = 70.0;       // v2.0.13: lowered 75→70 (chain smart-reverse can lower further)
 
 // input group "=== STRATEGY CHAIN / CONTINUATION (v2.0.13) ==="
-bool     InpChainEnableContinuation     = true;   // dopo profit, riapri in continuazione se setup compatibile
-bool     InpChainEnableSmartReverse     = true;   // abbassa soglia reverse se reaction>=75 AND HTF concorde
-int      InpChainContinuationWindowSec  = 1800;   // 30 min: finestra valida per continuazione
-double   InpChainContinuationLotMult    = 0.6;    // lotto continuazione (60% del base)
-int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo un trade vincente
+input bool     InpChainEnableContinuation     = true;   // dopo profit, riapri in continuazione se setup compatibile
+input bool     InpChainEnableSmartReverse     = true;   // abbassa soglia reverse se reaction>=75 AND HTF concorde
+input int      InpChainContinuationWindowSec  = 1800;   // 30 min: finestra valida per continuazione
+input double   InpChainContinuationLotMult    = 0.6;    // lotto continuazione (60% del base)
+input int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo un trade vincente
 
 // input group "=== BREAK EVEN & TRAIL ==="
 // 17/07 - erano tutti plain (non `input`) nonostante il commento "input
