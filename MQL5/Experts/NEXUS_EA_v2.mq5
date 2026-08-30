@@ -1435,7 +1435,9 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // dell'ultimo OUT" - un pareggio/trailing/max-loss non e' uno stop
    // nativo in senso stretto, solo "sl" (il broker) lo e'.
    if(StringFind(tc.close_reason, "sl") == 0)
-      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1);
+      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1, tc.pnl);
+   else
+      NXS_SLReclaim_OnTradeClosed(tc.pnl);   // un TP o altra uscita in guadagno rompe comunque la catena
    // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA: stesso
    // punto/stesso pnl AGGREGATO di NXS_OnTradeClosed sopra (esattamente una
    // volta per trade logico, non per deal parziale). No-op se

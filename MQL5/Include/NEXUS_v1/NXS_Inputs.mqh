@@ -499,6 +499,11 @@ input double   InpPipSeqPartialLot  = 0.01;
 input bool     InpUseSLReclaim         = false;
 input double   InpSLReclaimLot         = 0.05;
 input int      InpSLReclaimExpireHours = 168;   // 7 giorni - non aspettare all'infinito (0 = nessuna scadenza)
+// 30/08 - sicurezza aggiunta su segnalazione dell'utente ("e se rientra e
+// la direzione e' ancora sbagliata?"): dopo N perdite CONSECUTIVE nella
+// catena di riconquiste, ci si arrende invece di continuare a riaprire
+// sulla stessa chiamata di direzione - vedi NXS_SLReclaim.mqh.
+input int      InpSLReclaimMaxChain    = 2;
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;

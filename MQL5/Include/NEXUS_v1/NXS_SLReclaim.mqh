@@ -22,20 +22,52 @@ double   g_slrLevel = 0;
 int      g_slrDir = 0;          // direzione ORIGINALE del trade stoppato (+1 buy, -1 sell)
 datetime g_slrArmedAt = 0;
 datetime g_slrLastM15Seen = 0;  // evita di ricontrollare la stessa barra M15 piu' volte
+int      g_slrChainLosses = 0;  // 30/08 - perdite CONSECUTIVE nella catena di riconquiste
 
-// Chiamata da NXS_OnTradeClosed (o dal punto in cui si conosce il motivo di
-// chiusura) quando una posizione SAR chiude per STOP nativo/trailing (non
-// per TP, non per altre protezioni) - arma l'attesa della riconquista.
-void NXS_SLReclaim_Arm(double slPrice, int dir){
+// 30/08 - SICUREZZA aggiunta su segnalazione dell'utente: "e se l'EA
+// rientra e la direzione e' ancora sbagliata, o rompe e gira di nuovo?"
+// - senza un limite, una vera inversione di trend (non un falso allarme)
+// puo' far incatenare piu' stop pieni sulla stessa chiamata di direzione
+// sbagliata, ognuno riaperto dalla riconquista precedente. Dopo
+// InpSLReclaimMaxChain perdite consecutive nella catena, ci si arrende:
+// niente altra riconquista finche' non arriva un segnale SAR FRESCO
+// (che ricalcola la direzione da zero, non riusa quella vecchia) o un
+// trade della catena chiude in guadagno (resetta il contatore).
+//
+// Chiamata da NXS_EA_OnLogicalClose per OGNI chiusura di trade SAR (non
+// solo quelle che riarmano) - pnl>=0 rompe la catena di perdite anche se
+// il motivo di chiusura e' "sl" (uno stop trailing puo' chiudere in
+// guadagno, visto stanotte sui trade grezzi).
+void NXS_SLReclaim_OnTradeClosed(double pnl){
+   if(pnl >= 0) g_slrChainLosses = 0;
+}
+
+// Chiamata quando una posizione SAR chiude per STOP nativo (non pareggio/
+// trailing/max-loss/altre protezioni) - arma l'attesa della riconquista,
+// a meno che la catena di perdite consecutive abbia gia' raggiunto il
+// limite.
+void NXS_SLReclaim_Arm(double slPrice, int dir, double pnl){
    if(!InpUseSLReclaim) return;
    if(slPrice <= 0 || dir == 0) return;
+   if(pnl >= 0){
+      g_slrChainLosses = 0;   // uno stop trailing in guadagno non e' una sconfitta - nessuna riconquista necessaria
+      return;
+   }
+   g_slrChainLosses++;
+   if(InpSLReclaimMaxChain > 0 && g_slrChainLosses > InpSLReclaimMaxChain){
+      PrintFormat("[NEXUS SLRECLAIM] catena di %d perdite consecutive raggiunta (limite=%d) - "
+                  "NESSUNA riconquista, ci si arrende fino al prossimo segnale SAR fresco",
+                  g_slrChainLosses, InpSLReclaimMaxChain);
+      g_slrPending = false;
+      return;
+   }
    g_slrPending = true;
    g_slrLevel = slPrice;
    g_slrDir = dir;
    g_slrArmedAt = TimeCurrent();
    g_slrLastM15Seen = 0;
-   PrintFormat("[NEXUS SLRECLAIM] armato: livello=%.2f dir=%d (in attesa di una chiusura M15 oltre la linea)",
-               slPrice, dir);
+   PrintFormat("[NEXUS SLRECLAIM] armato (catena=%d/%d): livello=%.2f dir=%d (in attesa di una chiusura M15 oltre la linea)",
+               g_slrChainLosses, InpSLReclaimMaxChain, slPrice, dir);
 }
 
 void NXS_ManageSLReclaim(){
