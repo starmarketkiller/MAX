@@ -474,6 +474,20 @@ int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo u
 // NXS_SymbolProfile.mqh) - 50 pip = $0.50 su GOLD.
 input bool     InpUseFixedBE       = false;
 input double   InpFixedBEPips      = 50.0;
+// 30/08 - schema a piu' stadi richiesto dall'utente per lo stesso
+// esperimento "auto-close off": lotto fisso 0.05, a +50 pip dimezza lo
+// stop e chiudi 0.01, a +100 pip pareggio e chiudi un altro 0.01, se poi
+// il prezzo torna a toccare il pareggio riapre 0.05 con lo stop gia'
+// dimezzato. QUI "pip" = InpPipSeqPipValue in prezzo (confermato
+// dall'utente: 1 pip = $0.10 su GOLD - diverso dal pipSize=0.01 del
+// profilo simbolo usato da InpFixedBEPips sopra, che a quella scala e'
+// finito dentro il rumore). Vedi NXS_PipSequence.mqh.
+input bool     InpUsePipSeq         = false;
+input double   InpPipSeqPipValue    = 0.10;   // $ di prezzo per 1 "pip" in questo schema
+input double   InpPipSeqLot         = 0.05;
+input double   InpPipSeqStage1Pips  = 50.0;
+input double   InpPipSeqStage2Pips  = 100.0;
+input double   InpPipSeqPartialLot  = 0.01;
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;

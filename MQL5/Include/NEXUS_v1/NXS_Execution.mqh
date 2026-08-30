@@ -412,6 +412,10 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // di default (InpRiskPercent) resta solo per le strategie SENZA profilo.
    double prPct = (InpUseStrategyProfiles) ? NXS_Profile_Risk(sig.stratName) : 0.0;
    double lots = (prPct > 0) ? NXS_CalcLotRisk(slDist, prPct, sig.stratName) : NXS_CalcLot(slDist);
+   // 30/08 - esperimento pip-sequence richiesto dall'utente: lotto FISSO
+   // (non a rischio%), la gestione a stadi (NXS_ManagePipSequence) si
+   // occupa lei di stringere lo stop e prendere parziali.
+   if(InpUsePipSeq) lots = InpPipSeqLot;
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
 
    // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),

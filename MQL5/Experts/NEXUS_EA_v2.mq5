@@ -73,6 +73,7 @@
 #include <NEXUS_v1\NXS_GridRecovery.mqh>
 #include <NEXUS_v1\NXS_Pyramiding.mqh>
 #include <NEXUS_v1\NXS_SplitTrade.mqh>
+#include <NEXUS_v1\NXS_PipSequence.mqh>
 #include <NEXUS_v1\NXS_InstManage.mqh>
 #include <NEXUS_v1\NXS_Confluence.mqh>
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
@@ -991,6 +992,7 @@ void OnTick(){
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
+   NXS_ManagePipSequence();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
       // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
