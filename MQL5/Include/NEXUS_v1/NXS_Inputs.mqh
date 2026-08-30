@@ -463,6 +463,17 @@ int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo u
 // queste viene mai riassegnata a runtime nel codice, sicuro renderle
 // input. InpMaxHoldHours in particolare e' il fallback 4h coinvolto
 // nell'indagine di oggi sul cap di durata massima.
+// 30/08 - breakeven FISSO in pip (non in multipli di ATR) - richiesto
+// dall'utente per l'esperimento "auto-close off": SAR nudo tiene le
+// vincite per una mediana di 144h (6 giorni, verificato sui 175 trade
+// dello stack completo vs 112 nudi) - togliere l'auto-close libera il
+// trade a correre, ma senza NESSUNA protezione un trade che va in
+// profitto e poi ritraccia torna in perdita. Il BE fisso protegge il
+// guadagno gia' fatto senza limitare il tempo di detenzione come fa
+// l'auto-close. Pip = pipSize del profilo simbolo (0.01 per GOLD,
+// NXS_SymbolProfile.mqh) - 50 pip = $0.50 su GOLD.
+input bool     InpUseFixedBE       = false;
+input double   InpFixedBEPips      = 50.0;
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;

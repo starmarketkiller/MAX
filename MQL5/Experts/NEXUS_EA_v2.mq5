@@ -986,6 +986,7 @@ void OnTick(){
    // PR4: modules submit proposals; one deterministic action wins per ticket.
    NXS_PM_BeginCycle();
    // Management on every tick
+   NXS_ManageFixedBE();
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
