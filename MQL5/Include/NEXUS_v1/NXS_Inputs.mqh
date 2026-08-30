@@ -488,6 +488,7 @@ input double   InpPipSeqLot         = 0.05;
 input double   InpPipSeqStage1Pips  = 50.0;
 input double   InpPipSeqStage2Pips  = 100.0;
 input double   InpPipSeqPartialLot  = 0.01;
+input int      InpPipSeqMaxChain    = 2;      // 30/08 - cap perdite consecutive in catena di riaperture (vedi NXS_PipSequence.mqh)
 // 30/08 - "riconquista dello stop", richiesto dall'utente come alternativa
 // SICURA al grid (mai media in perdita, mai piu' esposizione nella
 // direzione che sta perdendo): se un trade SAR esce per stop nativo, si

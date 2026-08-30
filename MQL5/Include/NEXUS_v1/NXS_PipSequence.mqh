@@ -40,6 +40,18 @@ bool   g_pipSeqAwaitingReentry = false;
 int    g_pipSeqReentryDir = 0;
 double g_pipSeqReentrySLDist = 0;
 
+// 30/08 - stesso problema segnalato dall'utente per SLReclaim: senza un
+// limite, il loop di riapertura ricombatte la stessa direzione stantia
+// all'infinito se SAR ha semplicemente chiamato il verso sbagliato per un
+// tratto lungo (non rumore) - visto stanotte: PF0.94, netto -809.60 su
+// 1421 trade con l'equity breaker disattivato. Stesso schema di
+// InpSLReclaimMaxChain: conta le perdite REALIZZATE (non presunte) della
+// catena di riaperture, si ferma dopo InpPipSeqMaxChain, resta fermo
+// finche' non arriva una posizione SAR genuinamente fresca (comment senza
+// "PIPSEQ_REENTRY").
+int    g_pipSeqChainLosses = 0;
+ulong  g_pipSeqSeenTicket[NXS_PIPSEQ_MAX]; int g_pipSeqSeenCnt = 0;
+
 bool _pipSeqHas(ulong t, ulong &arr[], int cnt){
    for(int i = 0; i < cnt; i++) if(arr[i] == t) return true;
    return false;
@@ -50,6 +62,20 @@ void _pipSeqAdd(ulong t, ulong &arr[], int &cnt){
       cnt = NXS_PIPSEQ_MAX - 1;
    }
    arr[cnt++] = t;
+}
+double _pipSeqClosedPnl(ulong posId){
+   double sum = 0;
+   if(HistorySelectByPosition(posId)){
+      int total = HistoryDealsTotal();
+      for(int i = 0; i < total; i++){
+         ulong dt = HistoryDealGetTicket(i);
+         if(dt == 0) continue;
+         sum += HistoryDealGetDouble(dt, DEAL_PROFIT)
+              + HistoryDealGetDouble(dt, DEAL_SWAP)
+              + HistoryDealGetDouble(dt, DEAL_COMMISSION);
+      }
+   }
+   return sum;
 }
 double _pipSeqGetHalf(ulong t){
    for(int i = 0; i < g_pipSeqHalfCnt; i++) if(g_pipSeqTicket[i] == t) return g_pipSeqHalfDist[i];
@@ -81,9 +107,21 @@ void NXS_ManagePipSequence(){
       bool stillOpen = false;
       for(int j = 0; j < curCnt; j++) if(curS2Mod[j] == t){ stillOpen = true; break; }
       if(!stillOpen && !g_pipSeqAwaitingReentry){
-         g_pipSeqAwaitingReentry = true;
-         PrintFormat("[NEXUS PIPSEQ] ticket=%I64u chiuso dopo il pareggio - riapertura programmata dir=%d dist=%.2f",
-                     t, g_pipSeqReentryDir, g_pipSeqReentrySLDist);
+         double closedPnl = _pipSeqClosedPnl(t);
+         if(closedPnl < 0) g_pipSeqChainLosses++;
+         else               g_pipSeqChainLosses = 0;
+
+         if(InpPipSeqMaxChain > 0 && g_pipSeqChainLosses > InpPipSeqMaxChain){
+            PrintFormat("[NEXUS PIPSEQ] catena di %d perdite consecutive raggiunta (limite=%d, pnl ultima=%.2f) - "
+                        "NESSUNA riapertura, ci si ferma finche' non arriva un segnale SAR fresco",
+                        g_pipSeqChainLosses, InpPipSeqMaxChain, closedPnl);
+            g_pipSeqReentryDir = 0;
+            g_pipSeqReentrySLDist = 0;
+         } else {
+            g_pipSeqAwaitingReentry = true;
+            PrintFormat("[NEXUS PIPSEQ] ticket=%I64u chiuso dopo il pareggio (pnl=%.2f, catena=%d/%d) - riapertura programmata dir=%d dist=%.2f",
+                        t, closedPnl, g_pipSeqChainLosses, InpPipSeqMaxChain, g_pipSeqReentryDir, g_pipSeqReentrySLDist);
+         }
       }
    }
    ArrayCopy(g_pipSeqPrevS2Mod, curS2Mod, 0, 0, curCnt);
@@ -128,6 +166,18 @@ void NXS_ManagePipSequence(){
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+
+      // prima volta che PipSeq vede questo ticket: se non e' una riapertura
+      // della catena (comment senza PIPSEQ_REENTRY), e' un segnale SAR
+      // genuinamente fresco - la catena di perdite pregresse non conta piu'.
+      if(!_pipSeqHas(t, g_pipSeqSeenTicket, g_pipSeqSeenCnt)){
+         _pipSeqAdd(t, g_pipSeqSeenTicket, g_pipSeqSeenCnt);
+         if(StringFind(PositionGetString(POSITION_COMMENT), "PIPSEQ_REENTRY") < 0 && g_pipSeqChainLosses > 0){
+            PrintFormat("[NEXUS PIPSEQ] segnale SAR fresco (ticket=%I64u) - reset catena perdite (era %d)",
+                        t, g_pipSeqChainLosses);
+            g_pipSeqChainLosses = 0;
+         }
+      }
 
       long type = PositionGetInteger(POSITION_TYPE);
       double open = PositionGetDouble(POSITION_PRICE_OPEN);

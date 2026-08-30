@@ -1,0 +1,1010 @@
+[
+ {
+  "entry_time": "2025-11-03T04:00:00",
+  "dir": -1,
+  "entry_price": 3995.81,
+  "exit_time": "2025-11-10T01:02:00",
+  "exit_price": 4007.02,
+  "reason": "",
+  "pnl": -11.21
+ },
+ {
+  "entry_time": "2025-11-10T01:15:00",
+  "dir": 1,
+  "entry_price": 4010.95,
+  "exit_time": "2025-11-12T17:11:04",
+  "exit_price": 4154.6,
+  "reason": "tp 4154.52",
+  "pnl": 143.65
+ },
+ {
+  "entry_time": "2025-11-12T20:00:00",
+  "dir": 1,
+  "entry_price": 4199.65,
+  "exit_time": "2025-11-13T20:32:10",
+  "exit_price": 4169.66,
+  "reason": "sl 4169.67",
+  "pnl": -29.99
+ },
+ {
+  "entry_time": "2025-11-13T20:45:00",
+  "dir": 1,
+  "entry_price": 4156.13,
+  "exit_time": "2025-11-14T14:17:12",
+  "exit_price": 4122.35,
+  "reason": "sl 4122.51",
+  "pnl": -33.78
+ },
+ {
+  "entry_time": "2025-11-17T01:15:00",
+  "dir": -1,
+  "entry_price": 4098.51,
+  "exit_time": "2025-11-24T01:02:00",
+  "exit_price": 4072.53,
+  "reason": "",
+  "pnl": 25.98
+ },
+ {
+  "entry_time": "2025-11-24T01:15:00",
+  "dir": -1,
+  "entry_price": 4074.02,
+  "exit_time": "2025-11-24T20:51:55",
+  "exit_price": 4117.06,
+  "reason": "sl 4117.05",
+  "pnl": -43.04
+ },
+ {
+  "entry_time": "2025-11-25T01:15:00",
+  "dir": 1,
+  "entry_price": 4129.63,
+  "exit_time": "2025-12-01T17:15:01",
+  "exit_price": 4231.36,
+  "reason": "",
+  "pnl": 101.73
+ },
+ {
+  "entry_time": "2025-12-01T17:30:00",
+  "dir": 1,
+  "entry_price": 4228.47,
+  "exit_time": "2025-12-02T03:09:39",
+  "exit_price": 4191.24,
+  "reason": "sl 4203.45",
+  "pnl": -37.23
+ },
+ {
+  "entry_time": "2025-12-02T03:15:00",
+  "dir": 1,
+  "entry_price": 4205.76,
+  "exit_time": "2025-12-02T17:36:34",
+  "exit_price": 4179.9,
+  "reason": "sl 4179.93",
+  "pnl": -25.86
+ },
+ {
+  "entry_time": "2025-12-03T16:00:00",
+  "dir": 1,
+  "entry_price": 4237.43,
+  "exit_time": "2025-12-03T16:55:09",
+  "exit_price": 4206.87,
+  "reason": "sl 4206.98",
+  "pnl": -30.56
+ },
+ {
+  "entry_time": "2025-12-03T20:00:00",
+  "dir": 1,
+  "entry_price": 4211.45,
+  "exit_time": "2025-12-04T07:49:43",
+  "exit_price": 4179.64,
+  "reason": "sl 4179.70",
+  "pnl": -31.81
+ },
+ {
+  "entry_time": "2025-12-04T08:00:00",
+  "dir": 1,
+  "entry_price": 4181.34,
+  "exit_time": "2025-12-11T01:02:02",
+  "exit_price": 4230.2,
+  "reason": "",
+  "pnl": 48.86
+ },
+ {
+  "entry_time": "2025-12-11T01:15:00",
+  "dir": 1,
+  "entry_price": 4225.79,
+  "exit_time": "2025-12-17T17:15:01",
+  "exit_price": 4342.65,
+  "reason": "",
+  "pnl": 116.86
+ },
+ {
+  "entry_time": "2025-12-17T17:30:00",
+  "dir": 1,
+  "entry_price": 4343.92,
+  "exit_time": "2025-12-18T15:06:50",
+  "exit_price": 4314.93,
+  "reason": "sl 4314.95",
+  "pnl": -28.99
+ },
+ {
+  "entry_time": "2025-12-18T15:15:00",
+  "dir": 1,
+  "entry_price": 4316.74,
+  "exit_time": "2025-12-23T03:03:37",
+  "exit_price": 4477.09,
+  "reason": "tp 4477.08",
+  "pnl": 160.35
+ },
+ {
+  "entry_time": "2025-12-23T03:15:00",
+  "dir": 1,
+  "entry_price": 4485.94,
+  "exit_time": "2025-12-23T16:05:20",
+  "exit_price": 4458.1,
+  "reason": "sl 4458.58",
+  "pnl": -27.84
+ },
+ {
+  "entry_time": "2025-12-23T16:15:00",
+  "dir": 1,
+  "entry_price": 4470.13,
+  "exit_time": "2025-12-23T16:58:59",
+  "exit_price": 4443.49,
+  "reason": "sl 4443.54",
+  "pnl": -26.64
+ },
+ {
+  "entry_time": "2025-12-24T01:15:00",
+  "dir": 1,
+  "entry_price": 4495.67,
+  "exit_time": "2025-12-24T16:50:33",
+  "exit_price": 4465.54,
+  "reason": "sl 4465.55",
+  "pnl": -30.13
+ },
+ {
+  "entry_time": "2025-12-24T17:00:00",
+  "dir": 1,
+  "entry_price": 4464.87,
+  "exit_time": "2025-12-29T13:40:34",
+  "exit_price": 4434.55,
+  "reason": "sl 4434.58",
+  "pnl": -30.32
+ },
+ {
+  "entry_time": "2025-12-29T20:00:00",
+  "dir": -1,
+  "entry_price": 4327.99,
+  "exit_time": "2025-12-30T07:25:03",
+  "exit_price": 4375.11,
+  "reason": "sl 4375.00",
+  "pnl": -47.12
+ },
+ {
+  "entry_time": "2025-12-30T07:30:00",
+  "dir": -1,
+  "entry_price": 4372.07,
+  "exit_time": "2026-01-05T03:04:38",
+  "exit_price": 4416.96,
+  "reason": "sl 4416.75",
+  "pnl": -44.89
+ },
+ {
+  "entry_time": "2026-01-05T16:00:00",
+  "dir": 1,
+  "entry_price": 4417.19,
+  "exit_time": "2026-01-12T08:00:01",
+  "exit_price": 4580.48,
+  "reason": "",
+  "pnl": 163.29
+ },
+ {
+  "entry_time": "2026-01-12T08:15:00",
+  "dir": 1,
+  "entry_price": 4572.98,
+  "exit_time": "2026-01-16T17:34:03",
+  "exit_price": 4539.28,
+  "reason": "sl 4539.48",
+  "pnl": -33.7
+ },
+ {
+  "entry_time": "2026-01-19T04:00:00",
+  "dir": 1,
+  "entry_price": 4657.45,
+  "exit_time": "2026-01-21T08:27:26",
+  "exit_price": 4886.93,
+  "reason": "tp 4886.92",
+  "pnl": 229.48
+ },
+ {
+  "entry_time": "2026-01-21T08:30:00",
+  "dir": 1,
+  "entry_price": 4884.12,
+  "exit_time": "2026-01-21T08:57:25",
+  "exit_price": 4847.22,
+  "reason": "sl 4847.91",
+  "pnl": -36.9
+ },
+ {
+  "entry_time": "2026-01-21T12:00:00",
+  "dir": 1,
+  "entry_price": 4860.68,
+  "exit_time": "2026-01-21T17:21:12",
+  "exit_price": 4826.97,
+  "reason": "sl 4827.17",
+  "pnl": -33.71
+ },
+ {
+  "entry_time": "2026-01-21T17:30:00",
+  "dir": 1,
+  "entry_price": 4831.59,
+  "exit_time": "2026-01-21T21:35:15",
+  "exit_price": 4795.83,
+  "reason": "sl 4797.81",
+  "pnl": -35.76
+ },
+ {
+  "entry_time": "2026-01-21T21:45:00",
+  "dir": 1,
+  "entry_price": 4766.26,
+  "exit_time": "2026-01-26T01:02:00",
+  "exit_price": 5018.93,
+  "reason": "tp 4995.00",
+  "pnl": 252.67
+ },
+ {
+  "entry_time": "2026-01-26T01:45:00",
+  "dir": 1,
+  "entry_price": 5025.21,
+  "exit_time": "2026-01-28T21:57:56",
+  "exit_price": 5331.03,
+  "reason": "tp 5330.88",
+  "pnl": 305.82
+ },
+ {
+  "entry_time": "2026-01-28T22:00:00",
+  "dir": 1,
+  "entry_price": 5325.67,
+  "exit_time": "2026-01-29T17:26:29",
+  "exit_price": 5261.38,
+  "reason": "sl 5265.08",
+  "pnl": -64.29
+ },
+ {
+  "entry_time": "2026-01-29T17:45:00",
+  "dir": 1,
+  "entry_price": 5123.62,
+  "exit_time": "2026-01-30T10:33:40",
+  "exit_price": 5071.92,
+  "reason": "",
+  "pnl": -51.7
+ },
+ {
+  "entry_time": "2026-02-04T16:00:00",
+  "dir": 1,
+  "entry_price": 5054.55,
+  "exit_time": "2026-02-04T17:22:42",
+  "exit_price": 4961.22,
+  "reason": "NXS:DD",
+  "pnl": -93.33
+ },
+ {
+  "entry_time": "2026-02-05T01:15:00",
+  "dir": 1,
+  "entry_price": 5010.02,
+  "exit_time": "2026-02-05T04:11:50",
+  "exit_price": 4926.55,
+  "reason": "NXS:DD",
+  "pnl": -83.47
+ },
+ {
+  "entry_time": "2026-02-06T01:15:00",
+  "dir": -1,
+  "entry_price": 4768.67,
+  "exit_time": "2026-02-06T07:25:26",
+  "exit_price": 4848.73,
+  "reason": "NXS:DD",
+  "pnl": -80.06
+ },
+ {
+  "entry_time": "2026-02-09T04:00:00",
+  "dir": 1,
+  "entry_price": 4982.78,
+  "exit_time": "2026-02-12T18:22:16",
+  "exit_price": 4910.1,
+  "reason": "NXS:DD",
+  "pnl": -72.68
+ },
+ {
+  "entry_time": "2026-02-13T01:15:00",
+  "dir": -1,
+  "entry_price": 4910.46,
+  "exit_time": "2026-02-13T03:11:10",
+  "exit_price": 4967.82,
+  "reason": "sl 4967.59",
+  "pnl": -57.36
+ },
+ {
+  "entry_time": "2026-02-13T04:00:00",
+  "dir": -1,
+  "entry_price": 4980.63,
+  "exit_time": "2026-02-13T21:06:32",
+  "exit_price": 5039.35,
+  "reason": "sl 5039.30",
+  "pnl": -58.72
+ },
+ {
+  "entry_time": "2026-02-13T21:15:00",
+  "dir": -1,
+  "entry_price": 5039.27,
+  "exit_time": "2026-02-20T13:15:01",
+  "exit_price": 5031.62,
+  "reason": "",
+  "pnl": 7.65
+ },
+ {
+  "entry_time": "2026-02-20T13:30:00",
+  "dir": 1,
+  "entry_price": 5029.21,
+  "exit_time": "2026-02-20T17:06:45",
+  "exit_price": 4990.46,
+  "reason": "sl 4990.95",
+  "pnl": -38.75
+ },
+ {
+  "entry_time": "2026-02-20T17:15:00",
+  "dir": 1,
+  "entry_price": 5022.94,
+  "exit_time": "2026-02-24T01:04:21",
+  "exit_price": 5247.42,
+  "reason": "tp 5247.41",
+  "pnl": 224.48
+ },
+ {
+  "entry_time": "2026-02-24T01:15:00",
+  "dir": 1,
+  "entry_price": 5244.89,
+  "exit_time": "2026-02-24T03:07:10",
+  "exit_price": 5199.13,
+  "reason": "sl 5199.14",
+  "pnl": -45.76
+ },
+ {
+  "entry_time": "2026-02-24T04:00:00",
+  "dir": 1,
+  "entry_price": 5177.84,
+  "exit_time": "2026-02-24T15:48:05",
+  "exit_price": 5128.45,
+  "reason": "sl 5128.83",
+  "pnl": -49.39
+ },
+ {
+  "entry_time": "2026-02-25T20:00:00",
+  "dir": 1,
+  "entry_price": 5207.24,
+  "exit_time": "2026-02-25T22:58:13",
+  "exit_price": 5156.47,
+  "reason": "sl 5156.56",
+  "pnl": -50.77
+ },
+ {
+  "entry_time": "2026-02-26T01:15:00",
+  "dir": 1,
+  "entry_price": 5169.13,
+  "exit_time": "2026-03-03T13:29:46",
+  "exit_price": 5113.95,
+  "reason": "sl 5115.56",
+  "pnl": -55.18
+ },
+ {
+  "entry_time": "2026-03-03T20:00:00",
+  "dir": -1,
+  "entry_price": 5079.03,
+  "exit_time": "2026-03-03T20:05:42",
+  "exit_price": 5095.32,
+  "reason": "",
+  "pnl": -16.29
+ },
+ {
+  "entry_time": "2026-03-04T01:15:00",
+  "dir": -1,
+  "entry_price": 5117.0,
+  "exit_time": "2026-03-04T04:09:16",
+  "exit_price": 5180.83,
+  "reason": "NXS:DD",
+  "pnl": -63.83
+ },
+ {
+  "entry_time": "2026-03-05T01:15:00",
+  "dir": -1,
+  "entry_price": 5146.39,
+  "exit_time": "2026-03-10T15:18:09",
+  "exit_price": 5207.42,
+  "reason": "NXS:DD",
+  "pnl": -61.03
+ },
+ {
+  "entry_time": "2026-03-11T01:15:00",
+  "dir": 1,
+  "entry_price": 5192.13,
+  "exit_time": "2026-03-12T01:02:02",
+  "exit_price": 5142.39,
+  "reason": "NXS:DD",
+  "pnl": -49.74
+ },
+ {
+  "entry_time": "2026-03-13T01:15:00",
+  "dir": -1,
+  "entry_price": 5090.49,
+  "exit_time": "2026-03-18T22:27:18",
+  "exit_price": 4819.43,
+  "reason": "tp 4819.47",
+  "pnl": 271.06
+ },
+ {
+  "entry_time": "2026-03-18T22:30:00",
+  "dir": -1,
+  "entry_price": 4811.0,
+  "exit_time": "2026-03-19T03:36:30",
+  "exit_price": 4856.35,
+  "reason": "sl 4856.00",
+  "pnl": -45.35
+ },
+ {
+  "entry_time": "2026-03-19T03:45:00",
+  "dir": -1,
+  "entry_price": 4865.49,
+  "exit_time": "2026-03-19T14:43:11",
+  "exit_price": 4581.38,
+  "reason": "tp 4583.40",
+  "pnl": 284.11
+ },
+ {
+  "entry_time": "2026-03-19T14:45:00",
+  "dir": -1,
+  "entry_price": 4562.96,
+  "exit_time": "2026-03-19T15:58:16",
+  "exit_price": 4619.3,
+  "reason": "sl 4619.16",
+  "pnl": -56.34
+ },
+ {
+  "entry_time": "2026-03-19T16:00:00",
+  "dir": -1,
+  "entry_price": 4620.75,
+  "exit_time": "2026-03-20T03:45:44",
+  "exit_price": 4690.72,
+  "reason": "sl 4690.71",
+  "pnl": -69.97
+ },
+ {
+  "entry_time": "2026-03-20T04:00:00",
+  "dir": -1,
+  "entry_price": 4677.15,
+  "exit_time": "2026-03-23T08:43:15",
+  "exit_price": 4208.47,
+  "reason": "tp 4212.70",
+  "pnl": 468.68
+ },
+ {
+  "entry_time": "2026-03-23T08:45:00",
+  "dir": -1,
+  "entry_price": 4182.92,
+  "exit_time": "2026-03-23T11:15:34",
+  "exit_price": 4280.51,
+  "reason": "NXS:DD",
+  "pnl": -97.59
+ },
+ {
+  "entry_time": "2026-03-27T01:15:00",
+  "dir": -1,
+  "entry_price": 4392.62,
+  "exit_time": "2026-03-27T07:35:17",
+  "exit_price": 4466.26,
+  "reason": "sl 4466.13",
+  "pnl": -73.64
+ },
+ {
+  "entry_time": "2026-03-27T07:45:00",
+  "dir": -1,
+  "entry_price": 4465.68,
+  "exit_time": "2026-03-27T17:18:25",
+  "exit_price": 4538.57,
+  "reason": "sl 4538.04",
+  "pnl": -72.89
+ },
+ {
+  "entry_time": "2026-03-27T17:30:00",
+  "dir": -1,
+  "entry_price": 4543.48,
+  "exit_time": "2026-03-31T04:41:14",
+  "exit_price": 4606.39,
+  "reason": "sl 4605.35",
+  "pnl": -62.91
+ },
+ {
+  "entry_time": "2026-03-31T04:45:00",
+  "dir": 1,
+  "entry_price": 4617.98,
+  "exit_time": "2026-03-31T06:42:03",
+  "exit_price": 4553.05,
+  "reason": "sl 4553.32",
+  "pnl": -64.93
+ },
+ {
+  "entry_time": "2026-03-31T08:00:00",
+  "dir": 1,
+  "entry_price": 4564.82,
+  "exit_time": "2026-04-07T01:02:00",
+  "exit_price": 4664.3,
+  "reason": "",
+  "pnl": 99.48
+ },
+ {
+  "entry_time": "2026-04-08T01:15:01",
+  "dir": 1,
+  "entry_price": 4732.97,
+  "exit_time": "2026-04-13T01:02:00",
+  "exit_price": 4665.18,
+  "reason": "sl 4677.58",
+  "pnl": -67.79
+ },
+ {
+  "entry_time": "2026-04-14T20:00:00",
+  "dir": 1,
+  "entry_price": 4810.55,
+  "exit_time": "2026-04-17T04:12:20",
+  "exit_price": 4770.24,
+  "reason": "sl 4770.66",
+  "pnl": -40.31
+ },
+ {
+  "entry_time": "2026-04-17T20:00:00",
+  "dir": 1,
+  "entry_price": 4867.3,
+  "exit_time": "2026-04-17T23:50:06",
+  "exit_price": 4831.76,
+  "reason": "sl 4832.49",
+  "pnl": -35.54
+ },
+ {
+  "entry_time": "2026-04-20T01:45:00",
+  "dir": 1,
+  "entry_price": 4780.91,
+  "exit_time": "2026-04-20T02:43:14",
+  "exit_price": 4745.49,
+  "reason": "sl 4745.65",
+  "pnl": -35.42
+ },
+ {
+  "entry_time": "2026-04-21T12:00:00",
+  "dir": -1,
+  "entry_price": 4785.81,
+  "exit_time": "2026-04-28T04:00:01",
+  "exit_price": 4690.58,
+  "reason": "",
+  "pnl": 95.23
+ },
+ {
+  "entry_time": "2026-04-28T08:00:00",
+  "dir": -1,
+  "entry_price": 4667.53,
+  "exit_time": "2026-05-05T01:02:01",
+  "exit_price": 4524.78,
+  "reason": "",
+  "pnl": 142.75
+ },
+ {
+  "entry_time": "2026-05-05T01:15:00",
+  "dir": -1,
+  "entry_price": 4521.04,
+  "exit_time": "2026-05-05T14:42:19",
+  "exit_price": 4562.3,
+  "reason": "sl 4562.28",
+  "pnl": -41.26
+ },
+ {
+  "entry_time": "2026-05-05T14:45:00",
+  "dir": -1,
+  "entry_price": 4563.25,
+  "exit_time": "2026-05-06T03:25:20",
+  "exit_price": 4603.64,
+  "reason": "sl 4603.64",
+  "pnl": -40.39
+ },
+ {
+  "entry_time": "2026-05-06T03:30:00",
+  "dir": -1,
+  "entry_price": 4602.13,
+  "exit_time": "2026-05-06T05:55:13",
+  "exit_price": 4639.67,
+  "reason": "sl 4639.41",
+  "pnl": -37.54
+ },
+ {
+  "entry_time": "2026-05-06T08:00:00",
+  "dir": 1,
+  "entry_price": 4649.22,
+  "exit_time": "2026-05-13T01:02:00",
+  "exit_price": 4715.54,
+  "reason": "",
+  "pnl": 66.32
+ },
+ {
+  "entry_time": "2026-05-14T20:00:00",
+  "dir": -1,
+  "entry_price": 4678.33,
+  "exit_time": "2026-05-19T16:31:22",
+  "exit_price": 4477.76,
+  "reason": "tp 4478.07",
+  "pnl": 200.57
+ },
+ {
+  "entry_time": "2026-05-19T20:00:00",
+  "dir": -1,
+  "entry_price": 4507.42,
+  "exit_time": "2026-05-20T18:16:03",
+  "exit_price": 4550.84,
+  "reason": "sl 4550.79",
+  "pnl": -43.42
+ },
+ {
+  "entry_time": "2026-05-20T18:30:00",
+  "dir": -1,
+  "entry_price": 4529.28,
+  "exit_time": "2026-05-21T04:23:18",
+  "exit_price": 4566.52,
+  "reason": "sl 4566.52",
+  "pnl": -37.24
+ },
+ {
+  "entry_time": "2026-05-21T04:30:00",
+  "dir": -1,
+  "entry_price": 4566.72,
+  "exit_time": "2026-05-27T20:30:01",
+  "exit_price": 4450.51,
+  "reason": "",
+  "pnl": 116.21
+ },
+ {
+  "entry_time": "2026-05-27T20:45:00",
+  "dir": -1,
+  "entry_price": 4450.44,
+  "exit_time": "2026-05-28T18:36:02",
+  "exit_price": 4484.27,
+  "reason": "sl 4484.18",
+  "pnl": -33.83
+ },
+ {
+  "entry_time": "2026-05-28T18:45:00",
+  "dir": -1,
+  "entry_price": 4479.1,
+  "exit_time": "2026-05-29T04:18:45",
+  "exit_price": 4520.52,
+  "reason": "sl 4519.87",
+  "pnl": -41.42
+ },
+ {
+  "entry_time": "2026-05-29T16:00:00",
+  "dir": 1,
+  "entry_price": 4523.5,
+  "exit_time": "2026-06-01T16:12:29",
+  "exit_price": 4481.02,
+  "reason": "sl 4481.20",
+  "pnl": -42.48
+ },
+ {
+  "entry_time": "2026-06-02T01:15:00",
+  "dir": -1,
+  "entry_price": 4484.41,
+  "exit_time": "2026-06-02T08:27:20",
+  "exit_price": 4522.02,
+  "reason": "sl 4521.26",
+  "pnl": -37.61
+ },
+ {
+  "entry_time": "2026-06-03T01:15:00",
+  "dir": -1,
+  "entry_price": 4489.26,
+  "exit_time": "2026-06-08T08:36:05",
+  "exit_price": 4281.31,
+  "reason": "tp 4281.54",
+  "pnl": 207.95
+ },
+ {
+  "entry_time": "2026-06-08T08:45:00",
+  "dir": -1,
+  "entry_price": 4287.86,
+  "exit_time": "2026-06-08T14:32:50",
+  "exit_price": 4332.91,
+  "reason": "sl 4332.73",
+  "pnl": -45.05
+ },
+ {
+  "entry_time": "2026-06-08T14:45:00",
+  "dir": -1,
+  "entry_price": 4323.83,
+  "exit_time": "2026-06-11T01:09:52",
+  "exit_price": 4051.71,
+  "reason": "tp 4051.71",
+  "pnl": 272.12
+ },
+ {
+  "entry_time": "2026-06-11T01:15:00",
+  "dir": -1,
+  "entry_price": 4056.33,
+  "exit_time": "2026-06-11T04:25:03",
+  "exit_price": 4103.95,
+  "reason": "sl 4103.69",
+  "pnl": -47.62
+ },
+ {
+  "entry_time": "2026-06-11T04:30:00",
+  "dir": -1,
+  "entry_price": 4104.25,
+  "exit_time": "2026-06-11T20:36:15",
+  "exit_price": 4153.21,
+  "reason": "sl 4153.21",
+  "pnl": -48.96
+ },
+ {
+  "entry_time": "2026-06-11T20:45:00",
+  "dir": -1,
+  "entry_price": 4166.31,
+  "exit_time": "2026-06-12T01:43:08",
+  "exit_price": 4222.83,
+  "reason": "sl 4222.56",
+  "pnl": -56.52
+ },
+ {
+  "entry_time": "2026-06-15T04:00:00",
+  "dir": 1,
+  "entry_price": 4292.96,
+  "exit_time": "2026-06-17T22:28:30",
+  "exit_price": 4233.55,
+  "reason": "sl 4233.55",
+  "pnl": -59.41
+ },
+ {
+  "entry_time": "2026-06-18T16:00:00",
+  "dir": -1,
+  "entry_price": 4246.43,
+  "exit_time": "2026-06-24T15:51:51",
+  "exit_price": 4000.42,
+  "reason": "tp 4000.52",
+  "pnl": 246.01
+ },
+ {
+  "entry_time": "2026-06-24T16:00:00",
+  "dir": -1,
+  "entry_price": 3987.88,
+  "exit_time": "2026-06-24T16:51:43",
+  "exit_price": 4028.93,
+  "reason": "sl 4028.67",
+  "pnl": -41.05
+ },
+ {
+  "entry_time": "2026-06-24T20:00:00",
+  "dir": -1,
+  "entry_price": 4006.51,
+  "exit_time": "2026-06-26T12:26:54",
+  "exit_price": 4050.92,
+  "reason": "sl 4050.85",
+  "pnl": -44.41
+ },
+ {
+  "entry_time": "2026-06-29T20:00:00",
+  "dir": -1,
+  "entry_price": 4023.71,
+  "exit_time": "2026-06-30T17:23:41",
+  "exit_price": 4059.98,
+  "reason": "sl 4059.86",
+  "pnl": -36.27
+ },
+ {
+  "entry_time": "2026-06-30T17:30:00",
+  "dir": -1,
+  "entry_price": 4053.94,
+  "exit_time": "2026-07-01T16:44:34",
+  "exit_price": 4092.51,
+  "reason": "sl 4092.40",
+  "pnl": -38.57
+ },
+ {
+  "entry_time": "2026-07-02T08:00:00",
+  "dir": 1,
+  "entry_price": 4061.07,
+  "exit_time": "2026-07-09T01:02:00",
+  "exit_price": 4078.99,
+  "reason": "",
+  "pnl": 17.92
+ },
+ {
+  "entry_time": "2026-07-09T01:15:00",
+  "dir": -1,
+  "entry_price": 4076.97,
+  "exit_time": "2026-07-09T11:23:22",
+  "exit_price": 4116.91,
+  "reason": "sl 4116.87",
+  "pnl": -39.94
+ },
+ {
+  "entry_time": "2026-07-09T11:30:00",
+  "dir": -1,
+  "entry_price": 4114.64,
+  "exit_time": "2026-07-16T03:30:01",
+  "exit_price": 4058.83,
+  "reason": "",
+  "pnl": 55.81
+ },
+ {
+  "entry_time": "2026-07-16T16:00:00",
+  "dir": -1,
+  "entry_price": 3991.83,
+  "exit_time": "2026-07-20T05:48:49",
+  "exit_price": 4027.79,
+  "reason": "sl 4027.53",
+  "pnl": -35.96
+ },
+ {
+  "entry_time": "2026-07-20T06:00:00",
+  "dir": -1,
+  "entry_price": 4021.76,
+  "exit_time": "2026-07-21T08:26:13",
+  "exit_price": 4055.64,
+  "reason": "sl 4055.63",
+  "pnl": -33.88
+ },
+ {
+  "entry_time": "2026-07-21T08:30:00",
+  "dir": 1,
+  "entry_price": 4055.06,
+  "exit_time": "2026-07-24T05:58:24",
+  "exit_price": 4023.88,
+  "reason": "sl 4023.95",
+  "pnl": -31.18
+ },
+ {
+  "entry_time": "2026-07-24T08:00:00",
+  "dir": -1,
+  "entry_price": 4026.91,
+  "exit_time": "2026-07-24T11:51:48",
+  "exit_price": 4056.07,
+  "reason": "sl 4056.04",
+  "pnl": -29.16
+ },
+ {
+  "entry_time": "2026-07-24T12:00:00",
+  "dir": -1,
+  "entry_price": 4057.46,
+  "exit_time": "2026-07-27T01:02:00",
+  "exit_price": 4093.69,
+  "reason": "sl 4087.36",
+  "pnl": -36.23
+ },
+ {
+  "entry_time": "2026-07-27T01:45:00",
+  "dir": -1,
+  "entry_price": 4091.1,
+  "exit_time": "2026-07-30T17:00:29",
+  "exit_price": 4119.01,
+  "reason": "sl 4118.99",
+  "pnl": -27.91
+ },
+ {
+  "entry_time": "2026-07-30T17:15:00",
+  "dir": 1,
+  "entry_price": 4098.52,
+  "exit_time": "2026-07-31T11:03:39",
+  "exit_price": 4064.13,
+  "reason": "sl 4064.18",
+  "pnl": -34.39
+ },
+ {
+  "entry_time": "2026-07-31T11:15:00",
+  "dir": 1,
+  "entry_price": 4062.53,
+  "exit_time": "2026-07-31T16:39:43",
+  "exit_price": 4026.72,
+  "reason": "sl 4026.73",
+  "pnl": -35.81
+ },
+ {
+  "entry_time": "2026-07-31T16:45:00",
+  "dir": 1,
+  "entry_price": 4025.43,
+  "exit_time": "2026-08-05T17:49:42",
+  "exit_price": 4245.94,
+  "reason": "tp 4245.63",
+  "pnl": 220.51
+ },
+ {
+  "entry_time": "2026-08-05T18:00:00",
+  "dir": 1,
+  "entry_price": 4244.53,
+  "exit_time": "2026-08-12T10:00:01",
+  "exit_price": 4403.35,
+  "reason": "",
+  "pnl": 158.82
+ },
+ {
+  "entry_time": "2026-08-12T10:15:00",
+  "dir": 1,
+  "entry_price": 4401.87,
+  "exit_time": "2026-08-13T11:00:35",
+  "exit_price": 4367.7,
+  "reason": "sl 4368.15",
+  "pnl": -34.17
+ },
+ {
+  "entry_time": "2026-08-14T12:00:00",
+  "dir": -1,
+  "entry_price": 4348.47,
+  "exit_time": "2026-08-14T15:31:30",
+  "exit_price": 4387.05,
+  "reason": "sl 4387.01",
+  "pnl": -38.58
+ },
+ {
+  "entry_time": "2026-08-14T16:00:00",
+  "dir": -1,
+  "entry_price": 4373.49,
+  "exit_time": "2026-08-17T04:22:39",
+  "exit_price": 4412.29,
+  "reason": "sl 4412.27",
+  "pnl": -38.8
+ },
+ {
+  "entry_time": "2026-08-17T04:30:00",
+  "dir": 1,
+  "entry_price": 4407.65,
+  "exit_time": "2026-08-18T17:53:25",
+  "exit_price": 4372.43,
+  "reason": "sl 4372.45",
+  "pnl": -35.22
+ },
+ {
+  "entry_time": "2026-08-18T18:00:00",
+  "dir": 1,
+  "entry_price": 4366.85,
+  "exit_time": "2026-08-18T23:21:14",
+  "exit_price": 4336.33,
+  "reason": "sl 4337.04",
+  "pnl": -30.52
+ },
+ {
+  "entry_time": "2026-08-19T01:15:00",
+  "dir": -1,
+  "entry_price": 4340.2,
+  "exit_time": "2026-08-19T14:03:01",
+  "exit_price": 4371.08,
+  "reason": "sl 4371.07",
+  "pnl": -30.88
+ },
+ {
+  "entry_time": "2026-08-19T14:15:00",
+  "dir": -1,
+  "entry_price": 4373.16,
+  "exit_time": "2026-08-19T15:37:17",
+  "exit_price": 4404.65,
+  "reason": "sl 4404.62",
+  "pnl": -31.49
+ },
+ {
+  "entry_time": "2026-08-19T16:00:00",
+  "dir": 1,
+  "entry_price": 4439.03,
+  "exit_time": "2026-08-24T05:17:45",
+  "exit_price": 4654.02,
+  "reason": "tp 4653.74",
+  "pnl": 214.99
+ },
+ {
+  "entry_time": "2026-08-24T05:30:00",
+  "dir": 1,
+  "entry_price": 4655.71,
+  "exit_time": "2026-08-25T16:23:01",
+  "exit_price": 4615.88,
+  "reason": "sl 4616.19",
+  "pnl": -39.83
+ }
+]
