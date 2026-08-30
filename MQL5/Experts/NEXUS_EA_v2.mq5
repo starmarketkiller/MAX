@@ -74,6 +74,7 @@
 #include <NEXUS_v1\NXS_Pyramiding.mqh>
 #include <NEXUS_v1\NXS_SplitTrade.mqh>
 #include <NEXUS_v1\NXS_PipSequence.mqh>
+#include <NEXUS_v1\NXS_SLReclaim.mqh>
 #include <NEXUS_v1\NXS_InstManage.mqh>
 #include <NEXUS_v1\NXS_Confluence.mqh>
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
@@ -993,6 +994,7 @@ void OnTick(){
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
    NXS_ManagePipSequence();
+   NXS_ManageSLReclaim();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
       // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
@@ -1427,6 +1429,13 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // logical trade"). Prima un trade chiuso in 3 parziali in perdita contava
    // 3 perdite consecutive e poteva innescare anti-revenge da solo.
    NXS_OnTradeClosed(tc.pnl);
+   // 30/08 - NXS_SLReclaim: se il trade e' uscito per stop nativo, arma
+   // l'attesa di una chiusura M15 che riconquisti quel livello (vedi
+   // NXS_SLReclaim.mqh). tc.close_reason viene dal ledger, "trigger
+   // dell'ultimo OUT" - un pareggio/trailing/max-loss non e' uno stop
+   // nativo in senso stretto, solo "sl" (il broker) lo e'.
+   if(StringFind(tc.close_reason, "sl") == 0)
+      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1);
    // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA: stesso
    // punto/stesso pnl AGGREGATO di NXS_OnTradeClosed sopra (esattamente una
    // volta per trade logico, non per deal parziale). No-op se

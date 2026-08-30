@@ -488,6 +488,17 @@ input double   InpPipSeqLot         = 0.05;
 input double   InpPipSeqStage1Pips  = 50.0;
 input double   InpPipSeqStage2Pips  = 100.0;
 input double   InpPipSeqPartialLot  = 0.01;
+// 30/08 - "riconquista dello stop", richiesto dall'utente come alternativa
+// SICURA al grid (mai media in perdita, mai piu' esposizione nella
+// direzione che sta perdendo): se un trade SAR esce per stop nativo, si
+// segna quel livello di prezzo; se poi una candela M15 CHIUDE oltre quella
+// linea nella direzione ORIGINALE del trade (non quella della rottura che
+// aveva stoppato), si riapre nella stessa direzione - il crollo/rally che
+// ha stoppato era probabilmente un falso allarme se il prezzo torna a
+// riconquistare quel livello. Vedi NXS_SLReclaim.mqh.
+input bool     InpUseSLReclaim         = false;
+input double   InpSLReclaimLot         = 0.05;
+input int      InpSLReclaimExpireHours = 168;   // 7 giorni - non aspettare all'infinito (0 = nessuna scadenza)
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;
