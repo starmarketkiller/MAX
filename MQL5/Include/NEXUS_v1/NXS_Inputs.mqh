@@ -663,6 +663,9 @@ double   InpCtxMaxPenalty       = 15.0;   // tetto penalità totale di contesto
 input bool     InpUseStrategyCD    = true;
 input int      InpMaxConsecPerStrat= 3;
 input int      InpStratCooldownMin = 30;
+input bool     InpUseDirCooldown    = false;  // 30/08 - cooldown mirato sulla STESSA direzione ripetuta (vedi NXS_Confluence.mqh)
+input int      InpMaxConsecSameDir  = 2;
+input int      InpDirCooldownMin    = 30;
 
 // input group "=== MTF / SPREAD / VOL REGIME (Audit PDF) ==="
 input bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation

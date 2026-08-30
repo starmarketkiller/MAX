@@ -1268,6 +1268,11 @@ void OnTick(){
             NXS_Stats_RecordBlock(sig.stratName, (int)BLK_COOLDOWN);
             continue;
          }
+         if(NXS_StrategyOnDirCooldown(sig.stratName)){
+            NXS_Blk_Bump(BLK_COOLDOWN);
+            NXS_Stats_RecordBlock(sig.stratName, (int)BLK_COOLDOWN);
+            continue;
+         }
 
          string mtfReason, velReason;
          double baseScore = sig.score;
@@ -1330,6 +1335,7 @@ void OnTick(){
          if(rc == EXEC_OK){
             if(isContinuation) NXS_Chain_OnContinuationOpen();
             NXS_StrategyRegisterTrade(sig.stratName);
+            NXS_StrategyRegisterDirTrade(sig.stratName, (sig.dir == DIR_BUY ? +1 : -1));
             double curSpread = (double)SymbolInfoInteger(g_sym, SYMBOL_SPREAD);
             NXS_Stats_RecordScoreSample(sig.stratName, baseScore, finalScore, thresh);
             NXS_Stats_RecordExec(sig.stratName, finalScore, curSpread);
