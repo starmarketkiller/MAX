@@ -131,6 +131,15 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // resta CRITICA la maggior parte degli anni: stesso sospetto di
    // esecuzione trovato su MACD/FVG_CONT, non di trigger/config.
    if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
+   // 31/08 - override testabile dello slMult: analisi MAE/ATR sui 112 trade
+   // nudi mostra che i vincenti raramente superano 0.7-0.8xATR di escursione
+   // avversa (75-esimo percentile 0.73) mentre i perdenti arrivano quasi
+   // sempre vicino a 1.0xATR (e' li' che chiude lo stop nativo, quasi per
+   // definizione). Stringere a ~0.85xATR taglia solo 2/29 vincenti veri
+   // (-$134.78) ma riduce la dimensione media delle perdite (+$609.22
+   // stimato) - netto stimato +$474.44 sullo stesso campione. Zero =
+   // nessun cambiamento rispetto al default 1.0.
+   if(name == "SAR" && InpSARSlMultOverride > 0){ slMult=InpSARSlMultOverride; tpMult=6.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "SAR")               { slMult=1.0; tpMult=6.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 17/08 - griglia SL/TP TradingView (H4 2023-2026): SL1.0/TP6.0 da solo PF1.85->PF1.62 baseline; poi scoperto che il filtro HTF (mai testato spento) da solo migliora PF1.227->1.328 e DD7.36%->5.93% su 529 trade; SL1.0/TP6.0 + HTF off insieme (non ridondanti, si sommano): PF1.398, DD5.15%, 537 trade - il migliore trovato oggi. Test isolato MT5 in corso per conferma sul motore vero
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    // 14/08 - SH_BMS_RTO_V2: slMult/tpMult inerti come CRT (SL/TP calcolati
