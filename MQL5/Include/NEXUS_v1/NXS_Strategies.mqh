@@ -330,6 +330,26 @@ bool NXS_SAR_CandleAligned(int dir){
    return (bullish && dir == DIR_BUY) || (!bullish && dir == DIR_SELL);
 }
 
+// 31/08 - "pressione" delle ultime 2h (8 barre M15): quante chiudono al
+// rialzo/ribasso + somma dei corpi netti. Contro-intuitivo ma confermato
+// sui dati: SAR va MEGLIO quando la pressione recente e' CONTRARIA alla
+// direzione del segnale (cattura un'inversione vera) che quando e'
+// allineata (rischia di inseguire un movimento gia' esteso). Da solo:
+// PF1.00 (allineata) vs PF1.69 (contraria). Combinato col filtro candela
+// (non ridondante, si sommano): entrambi allineati -> PF3.47 su 18 trade;
+// nessuno dei due -> PF0.04 su 13 trade (quasi tutte perdite).
+bool NXS_SAR_PressureContrary(int dir){
+   int up = 0; double netBody = 0;
+   int N = 8;
+   for(int i = 1; i <= N; i++){
+      double o = iOpen(g_sym, PERIOD_M15, i), c = iClose(g_sym, PERIOD_M15, i);
+      if(c > o) up++;
+      netBody += (c - o);
+   }
+   bool pressureBuy = (up >= N/2) && (netBody > 0);
+   return (!pressureBuy && dir == DIR_BUY) || (pressureBuy && dir == DIR_SELL);
+}
+
 SNXSSignal NXS_Strat_SAR(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_SAR; s.stratName = "SAR";
    if(!InpStrat_SAR || !NXS_SelectorAllows(4)) return s;
@@ -341,6 +361,9 @@ SNXSSignal NXS_Strat_SAR(){
    }
    if(s.dir != DIR_NONE && InpSAR_RequireCandleAlign && !NXS_SAR_CandleAligned(s.dir)){
       s.dir = DIR_NONE; s.reason = "candle_misaligned";
+   }
+   if(s.dir != DIR_NONE && InpSAR_RequirePressureContrary && !NXS_SAR_PressureContrary(s.dir)){
+      s.dir = DIR_NONE; s.reason = "pressure_aligned_not_contrary";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
