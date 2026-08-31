@@ -75,6 +75,7 @@
 #include <NEXUS_v1\NXS_SplitTrade.mqh>
 #include <NEXUS_v1\NXS_PipSequence.mqh>
 #include <NEXUS_v1\NXS_SLReclaim.mqh>
+#include <NEXUS_v1\NXS_ProfitReclaim.mqh>
 #include <NEXUS_v1\NXS_InstManage.mqh>
 #include <NEXUS_v1\NXS_Confluence.mqh>
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
@@ -995,6 +996,7 @@ void OnTick(){
    NXS_ManageSplit();
    NXS_ManagePipSequence();
    NXS_ManageSLReclaim();
+   NXS_ManageProfitReclaim();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
       // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF

@@ -382,6 +382,10 @@ input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR
 input bool     InpSAR_RequirePressureContrary = false;  // 31/08 - vedi NXS_SAR_PressureContrary: non ridondante col filtro candela, si sommano
 input double   InpSARRiskPctOverride = 0;          // 31/08 - override cauto del rischio%/trade di SAR (0 = usa il default 1.0%, vedi NXS_Profile_Risk)
 input double   InpSARSlMultOverride = 0;           // 31/08 - override dello stop nativo di SAR in multipli di ATR (0 = usa il default 1.0x, vedi NXS_Profile_SLTP)
+input bool     InpUseProfitReclaim  = false;       // 31/08 - vedi NXS_ProfitReclaim.mqh: parziale a profitto alto + rientro vicino all'entrata originale
+input double   InpProfitReclaimArmATR = 1.5;
+input double   InpProfitReclaimFrac   = 0.50;
+input double   InpProfitReclaimTolATR = 0.35;
 input bool     InpStrat_TSI          = true;
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
