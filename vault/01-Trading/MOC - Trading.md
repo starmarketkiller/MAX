@@ -14,6 +14,24 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Spoglia e Reintegra su SAR, Filtro Candela H4 Trovato e Validato (30-31-08)]]** —
+  la scoperta più recente: un filtro trovato analizzando i dati reali
+  (candela H4 di entrata allineata alla direzione del segnale) trasforma
+  SAR da edge fragile (PF oscillante 0.29-1.86 a seconda del punto di
+  partenza) a robusto (PF 1.37-1.57 consistente su 5 punti nel tempo
+  diversi). Anche: un bug strutturale per cui cooldown/anti-revenge/
+  chain-continuation non venivano mai controllati per le strategie a
+  profilo, e perché il lotto fisso grande è strutturalmente fragile
+  (si rompe con margine scarso).
+- **[[NEXUS EA - Bug NXS_MTF_MAX, SAR H4 Non Apriva Mai (29-30-08)]]** —
+  bug per cui SAR (H4) non apriva mai nella config "nuda": il dispatch
+  multi-TF era capato a 4 passaggi ma il registro ne usa 5, scartando
+  silenziosamente H4.
+- **[[NEXUS EA - Debug Motore Python Real-Tick su SAR, Tre Bug Trovati (29-08)]]** —
+  debug del motore Python "come MT5 vero" su SAR: trailing ATR
+  sull'estremo di barra, auto-close giornaliero fisso alle 23:43,
+  cooldown per-strategia — un mistero di densità nov-dic 2025 mai
+  risolto (vedi nota per dettagli).
 - **[[NEXUS EA - Tabella Master Strategie Verificate (24-08)]]** —
   riferimento rapido: configurazione vincente per ciascuna delle 21
   strategie verificate il 24/08 (TF, SL/TP, filtro, direzione, PF),
