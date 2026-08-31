@@ -316,6 +316,20 @@ SNXSSignal NXS_Strat_MACD(){
 }
 
 //------------------------------------ K4 Parabolic SAR
+// 31/08 - filtro candela di allineamento, trovato analizzando i 112 trade
+// nudi di stanotte (dati reali, non ipotesi): quando la candela H4 appena
+// chiusa concorda con la direzione del segnale (bullish per buy, bearish
+// per sell), win rate 69% (77% tra i grandi vincenti); quando e' contraria,
+// 46% (50% tra i grandi perdenti - quasi casuale). Filtrando SOLO gli
+// allineati sui dati storici: PF 1.33->1.92, netto $1227.85->$1594.93 su
+// meno trade (112->58). Gli scartati da soli erano in perdita netta
+// (PF 0.81, -$367.08) - non diluivano solo il risultato, lo peggioravano.
+bool NXS_SAR_CandleAligned(int dir){
+   double o1 = iOpen(g_sym, NXS_EffTF(), 1), c1 = iClose(g_sym, NXS_EffTF(), 1);
+   bool bullish = (c1 > o1);
+   return (bullish && dir == DIR_BUY) || (!bullish && dir == DIR_SELL);
+}
+
 SNXSSignal NXS_Strat_SAR(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_SAR; s.stratName = "SAR";
    if(!InpStrat_SAR || !NXS_SelectorAllows(4)) return s;
@@ -324,6 +338,9 @@ SNXSSignal NXS_Strat_SAR(){
       s.dir = DIR_BUY;  s.score = 60; s.reason = "SAR_below_price";
    } else if(g_sar > price && g_ema9 < g_ema21){
       s.dir = DIR_SELL; s.score = 60; s.reason = "SAR_above_price";
+   }
+   if(s.dir != DIR_NONE && InpSAR_RequireCandleAlign && !NXS_SAR_CandleAligned(s.dir)){
+      s.dir = DIR_NONE; s.reason = "candle_misaligned";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

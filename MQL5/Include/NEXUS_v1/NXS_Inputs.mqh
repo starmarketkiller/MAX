@@ -378,6 +378,7 @@ input bool     InpStrat_ADX_RSI      = true;
 input bool     InpStrat_BOLLINGER    = true;
 input bool     InpStrat_MACD         = true;
 input bool     InpStrat_SAR          = true;
+input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi
 input bool     InpStrat_TSI          = true;
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
