@@ -300,6 +300,15 @@ double NXS_Profile_Risk(const string name){
 // le strategie - l'edge esiste, il problema era solo il rischio per
 // trade troppo aggressivo rispetto alla sua sottigliezza.
    if(name == "EMA_PULLBACK")      return 2.5;    // 5.0->2.5, PF piu' solido (~1.5) di SAR ma comunque tagliato per prudenza
+   // 31/08 - override testabile: quel 5.0->1.0 (sopra) resta la scelta di
+   // sicurezza di default - il Monte Carlo del 25/08 aveva trovato rovina
+   // nel 78% degli scenari a tier 5.0%. Con l'edge isolato di SAR ora piu'
+   // forte col filtro candela (PF1.37-1.57 su 5 punti nel tempo, contro
+   // ~1.09-1.31 di allora), si prova un aumento CAUTO (non un ritorno al
+   // 5.0% gia' dimostrato pericoloso) per lasciare che il lotto cresca con
+   // l'equity invece di restare bloccato al minimo broker fino a ~$4000 di
+   // saldo. Zero = nessun cambiamento rispetto al default 1.0%.
+   if(name == "SAR" && InpSARRiskPctOverride > 0) return InpSARRiskPctOverride;
    if(name == "SAR")               return 1.0;    // 5.0->1.0, edge piu' sottile (PF~1.09-1.31) e maggior volume di trade
    // TURTLE_SOUP: reale PF2.04 "la stella" e' con la RICETTA UFFICIALE attiva
    // (slMult1.0/tpMult4.5/htf, vedi NXS_Profile_Get sopra) - sul flat baseline
