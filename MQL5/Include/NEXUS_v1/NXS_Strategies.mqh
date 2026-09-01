@@ -943,6 +943,28 @@ SNXSSignal NXS_Strat_LondonBO(){
 input int    InpEMAPB_TrendPersistBars = 5;
 input double InpEMAPB_MinDistATR       = 1.0;
 input double InpEMAPB_TouchToleranceATR= 0.15;
+input bool   InpEMAPB_RequirePressureAligned = false;
+
+// 01/09 - trovato analizzando 80 trade nudi reali (Oct2023-Aug2026, campione
+// esteso): a differenza di SAR (dove la pressione CONTRARIA vinceva - cattura
+// un'inversione), qui vince la pressione ALLINEATA alla direzione del
+// segnale - coerente con la natura di EMA_PULLBACK, una strategia da
+// CONTINUAZIONE (il trend deve essere ancora vivo, non esaurito). Verificato
+// che regge anche col campione grande (PF1.61 allineata vs 0.72 contraria,
+// contro un PF2.23/0.45 iniziale sul campione piccolo - direzione confermata,
+// solo meno estrema). Filtrando storicamente solo gli allineati: PF
+// 1.51->1.74, netto $821.76->$877.44.
+bool NXS_EMAPB_PressureAligned(int dir){
+   int up = 0; double netBody = 0;
+   int N = 8;
+   for(int i = 1; i <= N; i++){
+      double o = iOpen(g_sym, PERIOD_M15, i), c = iClose(g_sym, PERIOD_M15, i);
+      if(c > o) up++;
+      netBody += (c - o);
+   }
+   bool pressureBuy = (up >= N/2) && (netBody > 0);
+   return (pressureBuy && dir == DIR_BUY) || (!pressureBuy && dir == DIR_SELL);
+}
 
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
@@ -984,6 +1006,9 @@ SNXSSignal NXS_Strat_EMAPullback(){
       bool touched = (h1 >= e20 - tol);
       bool reclaim = (c1 < e20) && (c1 < o1) && (c1 < e50);
       if(touched && reclaim){ s.dir = DIR_SELL; s.score = 64; s.reason = "EMA_PB_bear:pullback+reject"; }
+   }
+   if(s.dir != DIR_NONE && InpEMAPB_RequirePressureAligned && !NXS_EMAPB_PressureAligned(s.dir)){
+      s.dir = DIR_NONE; s.reason = "pressure_contrary";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

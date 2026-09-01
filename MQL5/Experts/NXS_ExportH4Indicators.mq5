@@ -23,9 +23,19 @@ input int      InpATR_Period   = 14;
 int OnInit(){
    SymbolSelect(InpSymbol, true);
    MqlRates rates[];
-   int copied = CopyRates(InpSymbol, PERIOD_H4, InpFrom, InpTo, rates);
+   // 01/09 - su range lontani nel tempo la cronologia H4 non e' ancora
+   // sincronizzata al momento esatto di OnInit: CopyRates fallisce con
+   // err=4401 anche con InpFrom/InpTo corretti. Ritenta con attesa,
+   // stesso pattern gia' usato sotto per BarsCalculated().
+   int copied = 0, copyTries = 0;
+   while(copyTries < 100){
+      copied = CopyRates(InpSymbol, PERIOD_H4, InpFrom, InpTo, rates);
+      if(copied > 0) break;
+      Sleep(200);
+      copyTries++;
+   }
    if(copied <= 0){
-      PrintFormat("[NXS EXPORT H4 IND] CopyRates fallita (err=%d)", GetLastError());
+      PrintFormat("[NXS EXPORT H4 IND] CopyRates fallita dopo %d tentativi (err=%d)", copyTries, GetLastError());
       return INIT_SUCCEEDED;
    }
 
