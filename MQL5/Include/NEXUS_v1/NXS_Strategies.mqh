@@ -954,6 +954,17 @@ input bool   InpEMAPB_RequirePressureAligned = false;
 // contro un PF2.23/0.45 iniziale sul campione piccolo - direzione confermata,
 // solo meno estrema). Filtrando storicamente solo gli allineati: PF
 // 1.51->1.74, netto $821.76->$877.44.
+//
+// TESTATO SUL VERO TESTER (01/09, periodo esteso 2023-2026): NON migliora.
+// PF1.42->1.35, netto $698.88->$581.97, quasi nessuna riduzione dei trade
+// (84->83, contro il 21% di blocco atteso offline). Confermato con
+// diagnostica temporanea che il gate FUNZIONA correttamente a livello di
+// codice (blocca davvero quando la pressione e' contraria) - non e' un bug.
+// Stessa lezione di SAR: bloccare un segnale sposta il timing di tutti i
+// successivi, un effetto a cascata che l'analisi offline (righe fisse di
+// una tabella) non cattura. Lasciato come input disattivabile (default
+// false) per riferimento, ma NON adottato - la baseline nuda estesa
+// (PF1.42, $698.88, 84 trade) resta il riferimento per EMA_PULLBACK.
 bool NXS_EMAPB_PressureAligned(int dir){
    int up = 0; double netBody = 0;
    int N = 8;
