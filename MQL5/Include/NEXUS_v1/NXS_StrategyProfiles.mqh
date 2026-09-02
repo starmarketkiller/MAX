@@ -38,6 +38,12 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "AMD_CONT")          { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 30m OOS PF1.52 n169
    if(name == "LDN_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.23 n66
    if(name == "AMD_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.97 n59
+   // 02/09 - BAR_UPDN non aveva un profilo SL/TP dedicato: cadeva sui default
+   // globali (InpATR_SL_Mult/TP_Mult = 2.0/2.6, R:R 1.3, pensati per le
+   // strategie swing H4/D1). L'utente ha chiesto esplicitamente stop stretto
+   // e target piu' largo per le operazioni scalp (2-2.5:1, vedi screenshot
+   // TradingView BarUpDn condivisi) - qui R:R 2.5, mai verificato dal vivo.
+   if(name == "BAR_UPDN")          { slMult=1.0; tpMult=2.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
@@ -193,6 +199,16 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
 // di ogni strategia su QUESTO timeframe. Se non c'e' profilo -> PERIOD_CURRENT
 // (usa il TF di ingresso globale InpTFEntry, retrocompatibile).
 ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
+   // 02/09 - "sblocco scalp" richiesto dall'utente: BB_SQUEEZE/ORDER_BLOCK/
+   // BREAKOUT_ACC erano tutte e tre su D1 con rischio gia' tagliato a 0.5-0.6%
+   // per edge debole/rumoroso lì (vedi NXS_Profile_Risk). Ipotesi da testare:
+   // le stesse logiche (compressione volatilita', order block SMC, breakout
+   // con accettazione) potrebbero essere piu' genuine su un timeframe scalp
+   // dove il pattern ricorre piu' spesso. Override cauto, di default OFF
+   // (PERIOD_CURRENT = nessun cambiamento, resta D1).
+   if(InpScalpTFOverride != PERIOD_CURRENT &&
+      (name == "BB_SQUEEZE" || name == "ORDER_BLOCK" || name == "BREAKOUT_ACC"))
+      return InpScalpTFOverride;
    if(name == "ADX_RSI")           return PERIOD_D1;
    if(name == "BB_SQUEEZE")        return PERIOD_D1;
    if(name == "BJORGUM")           return PERIOD_H4;
@@ -634,6 +650,17 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "RSI_DIV_PINE")           return true;
    if(name == "ICHIMOKU_HULL_MACD")     return true;
    if(name == "3COMMAS_BOT")            return true;
+   // 02/09 - stesso bug del 28/08 (PMAX ecc.): l'utente ha chiesto di
+   // sbloccare BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC su un timeframe scalp
+   // (vedi InpScalpTFOverride) per un test isolato. BREAKOUT_ACC era gia'
+   // qui (riga sopra); BB_SQUEEZE e ORDER_BLOCK erano invece elencate al
+   // 630 come "gia' spente per perdite reali confermate" - senza questa
+   // riga qualunque test isolato le avrebbe rifiutate in silenzio
+   // (profile_disabled), zero trade a prescindere da InpStrat_X/selector.
+   // Stessa regola: "abilitata al test" non e' "abilitata di default",
+   // quella protezione resta su InpStrat_X (entrambe false di default).
+   if(name == "BB_SQUEEZE")             return true;
+   if(name == "ORDER_BLOCK")            return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 

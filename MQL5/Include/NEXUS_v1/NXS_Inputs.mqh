@@ -390,6 +390,8 @@ input double   InpEMAPBFixedLot     = 0;           // 01/09 - lotto FISSO per EM
                                                     // per rendere possibile un parziale vero (es. 0.02 -> chiude 0.01, minimo
                                                     // broker) invece del lotto risk-based variabile che a volte cade sotto la
                                                     // soglia per un parziale valido a due decimali.
+input ENUM_TIMEFRAMES InpScalpTFOverride = PERIOD_CURRENT;  // 02/09 - sblocca BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC
+                                                    // dal loro D1 di default (vedi NXS_Profile_TF). PERIOD_CURRENT = off.
 input bool     InpStrat_TSI          = true;
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
