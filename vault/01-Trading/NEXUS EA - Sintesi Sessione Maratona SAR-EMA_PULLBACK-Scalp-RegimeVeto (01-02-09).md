@@ -193,13 +193,43 @@ tutti e 32 i trade, ma la condizione non si è mai verificata: nella
 peggior serie di perdite di SAR l'ADX H4 a quanto pare non è mai sceso
 abbastanza da classificare il mercato come ranging/choppy.
 
-**Conclusione**: quella serie di perdite probabilmente non nasce da un
-mercato piatto misclassificabile con l'ADX, ma da falsi breakout dentro
-un trend/volatilità che l'ADX considera comunque "sano". Il veto di
-regime così com'è costruito (solo ADX) **non risolve questo problema
-specifico** per SAR — filone chiuso, non abbandonato a metà: il
-meccanismo funziona, semplicemente non è la leva giusta per questa
-sequenza di perdite.
+**Conclusione (superata dal fix sotto)**: prima ipotesi, quella serie di
+perdite probabilmente non nasce da un mercato piatto misclassificabile
+con l'ADX, ma da falsi breakout dentro un trend/volatilità che l'ADX
+considera comunque "sano".
+
+**Aggiornamento — trovato il vero bug dietro lo zero**: `g_regime`
+veniva calcolato una volta per tick sull'ADX di **M15** (`InpTFEntry`),
+mai sul TF nativo della strategia (H4 per SAR) — il ciclo multi-TF
+resetta il contesto a fine ciclo, prima del prossimo tick. Aggiunte
+`NXS_ADXv`/`NXS_DetectRegimeTF` (`NXS_SignalQuality.mqh`) che
+ricalcolano il regime fresco sul TF proprio della strategia
+(`NXS_Profile_TF(nm)`), stesso pattern cache di `NXS_ATRv`. Rifatto il
+confronto (step43 vs step40, config vera, stessa finestra
+12gen-12apr26):
+
+| | step40 baseline | step43 veto (TF corretto) |
+|---|---|---|
+| Trade | 32 | 35 |
+| PF | 1.50 | 1.31 |
+| Netto | $750.66 | $526.35 |
+| DD equity | $782.90 | $846.29 |
+| Sharpe | 2.95 | 2.31 |
+
+Il veto ora **agisce davvero** (prima non toccava nulla). Il trade count
+più alto con veto attivo (35 > 32) non è un errore di config (ini
+identiche, verificate a diff) — spiegazione più probabile: bloccare
+alcuni trade libera margine/esposizione che nella baseline restava
+occupato, permettendo ad altri segnali di aprirsi più tardi (effetto di
+secondo ordine, non il veto che "genera" trade). Risultato su tutti gli
+indicatori: **peggiore della baseline** (PF -13%, netto -30%, DD equity
++8%, Sharpe -22%).
+
+**Conclusione definitiva**: il veto di regime, wired correttamente sul
+TF giusto, non aiuta SAR in questa finestra — la peggiora. Non è un
+pareggio come sembrava prima del fix: è un peggioramento netto, misurato
+su un confronto pulito. Filone chiuso con una risposta vera, non un
+artefatto.
 
 ## Prossimi passi (in ordine)
 
