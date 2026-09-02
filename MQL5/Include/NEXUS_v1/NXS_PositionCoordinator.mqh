@@ -76,7 +76,7 @@ bool NXS_PM_SourceIsOneShot(string source){
    return (source == "SPLIT_P1"          || source == "SPLIT_P2" ||
            source == "GLOBAL_BREAKEVEN"  || source == "PROFILE_BREAKEVEN" ||
            source == "CLASSIC_TIME_STOP" || source == "INST_TIME_STOP" ||
-           source == "CLOSE_REVERSE");
+           source == "CLOSE_REVERSE"     || source == "FIXEDPIP_PARTIAL");
 }
 
 // Sorgenti RIPETIBILI: un trailing si aggiorna a ogni barra ed e' corretto che

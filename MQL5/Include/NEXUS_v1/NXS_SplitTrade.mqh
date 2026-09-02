@@ -141,4 +141,58 @@ void NXS_ManageSplit(){
    }
 }
 
+// =====================================================================
+// 02/09 - Parziale a SOGLIA PIP FISSA (non in multipli di ATR come
+// NXS_ManageSplit sopra). Richiesto dall'utente: lotto 0.02, chiudi
+// meta' (0.01) al primo picco veloce (es. 100-200 "pip" = $0.10 x
+// pip), lascia correre il resto - un meccanismo mai testato prima
+// (i tentativi falliti su SAR/EMA_PULLBACK usavano soglie in ATR, non
+// pip fissi). Stesso pattern crash-safe di NXS_ManageSplit sopra
+// (verifica sul volume osservato, non solo sul marcatore in memoria).
+// "Pip" = InpPipSeqPipValue in prezzo (0.10 di default, confermato
+// dall'utente per GOLD - non il pipSize=0.01 del profilo simbolo).
+// =====================================================================
+input bool   InpUseFixedPipPartial  = false;
+input double InpFixedPipPartialPips = 200.0;   // soglia in "pip" (InpPipSeqPipValue ciascuno)
+input double InpFixedPipPartialPct  = 0.50;    // frazione del volume corrente chiusa alla soglia
+
+void NXS_ManageFixedPipPartial(){
+   if(!InpUseFixedPipPartial) return;
+   double pipVal = (InpPipSeqPipValue > 0) ? InpPipSeqPipValue : 0.10;
+   double threshDist = InpFixedPipPartialPips * pipVal;
+   double minVol = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_MIN);
+
+   for(int i = PositionsTotal()-1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      long mg = (long)PositionGetInteger(POSITION_MAGIC);
+      if(!IsCoreMagic(mg)) continue;
+
+      double open = PositionGetDouble(POSITION_PRICE_OPEN);
+      double vol  = PositionGetDouble(POSITION_VOLUME);
+      long   type = PositionGetInteger(POSITION_TYPE);
+      double now  = (type == POSITION_TYPE_BUY) ? SymbolInfoDouble(g_sym, SYMBOL_BID)
+                                                 : SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
+
+      SNxsIntent sIntent;
+      bool volumeAlreadyReduced = false;
+      if(NXS_Intent_ByPosition((ulong)PositionGetInteger(POSITION_IDENTIFIER), sIntent) &&
+         sIntent.entry_volume > 0){
+         double vstep = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
+         if(vstep <= 0) vstep = 0.01;
+         volumeAlreadyReduced = (vol < sIntent.entry_volume - vstep * 0.5);
+      }
+
+      if(prof >= threshDist && !NXS_PM_HasApplied(t, "FIXEDPIP_PARTIAL") && !volumeAlreadyReduced){
+         double part = _nxs_split_normalize(g_sym, vol * InpFixedPipPartialPct);
+         if(part >= minVol && (vol - part) >= minVol){
+            NXS_PM_ProposePartial(t, part, 70, "FIXEDPIP_PARTIAL",
+                                  StringFormat("parziale a soglia fissa +%.0f pip", InpFixedPipPartialPips));
+         }
+      }
+   }
+}
+
 #endif

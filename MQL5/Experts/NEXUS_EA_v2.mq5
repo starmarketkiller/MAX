@@ -1007,6 +1007,7 @@ void OnTick(){
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
+   NXS_ManageFixedPipPartial();
    NXS_ManagePipSequence();
    NXS_ManageSLReclaim();
    NXS_ManageProfitReclaim();
