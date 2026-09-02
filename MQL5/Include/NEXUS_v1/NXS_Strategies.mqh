@@ -730,9 +730,19 @@ SNXSSignal NXS_Strat_PivotWick(){
    bool buyOk  = (g_pivotWickState.lastFireTime[0] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[0]) >= cooldownSec);
    bool sellOk = (g_pivotWickState.lastFireTime[1] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[1]) >= cooldownSec);
 
-   // BUY: wick di rigetto inferiore sulla candela di tocco + chiusura su pivot minimo
-   if(buyOk && dnWick >= minWick && dnWick >= InpPivotWickWickRatio * body &&
-      dnWick >= InpPivotWickWickRatio * upWick && c1 > o1){
+   // Condizione di rigetto: se richiesta (InpPivotWickRequireWick), un vero
+   // wick sulla candela di tocco; altrimenti basta il tocco del livello
+   // (gia' un OHLC della candela pivot: high/low) - richiesto dall'utente
+   // dopo che la versione con wick obbligatorio non produceva trade.
+   bool wickBull = !InpPivotWickRequireWick ||
+                   (dnWick >= minWick && dnWick >= InpPivotWickWickRatio * body &&
+                    dnWick >= InpPivotWickWickRatio * upWick && c1 > o1);
+   bool wickBear = !InpPivotWickRequireWick ||
+                   (upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
+                    upWick >= InpPivotWickWickRatio * dnWick && c1 < o1);
+
+   // BUY: tocco di un livello pivot minimo (+ wick di rigetto se richiesto)
+   if(buyOk && wickBull){
       for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
          if(g_pivotWickState.pivLo[i] <= 0) continue;
          if(l1 >= g_pivotWickState.pivLo[i] - tol && l1 <= g_pivotWickState.pivLo[i] + tol){
@@ -742,9 +752,8 @@ SNXSSignal NXS_Strat_PivotWick(){
          }
       }
    }
-   // SELL: wick di rigetto superiore + chiusura su pivot massimo
-   if(s.dir == DIR_NONE && sellOk && upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
-      upWick >= InpPivotWickWickRatio * dnWick && c1 < o1){
+   // SELL: tocco di un livello pivot massimo (+ wick di rigetto se richiesto)
+   if(s.dir == DIR_NONE && sellOk && wickBear){
       for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
          if(g_pivotWickState.pivHi[i] <= 0) continue;
          if(h1 <= g_pivotWickState.pivHi[i] + tol && h1 >= g_pivotWickState.pivHi[i] - tol){

@@ -820,8 +820,9 @@ input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddament
 input bool     InpStrat_PivotWick          = false;
 input int      InpPivotWickLookback        = 5;      // barre a sx/dx per confermare un pivot frattale
 input double   InpPivotWickTouchTolATR     = 0.25;    // tolleranza di "tocco" del livello, in ATR
-input double   InpPivotWickWickRatio       = 1.5;     // wick minimo = N x corpo e N x wick opposto
-input double   InpPivotWickMinWickATR      = 0.15;    // wick minimo assoluto, in ATR (filtra rumore su barre piatte)
+input bool     InpPivotWickRequireWick     = false;   // 02/09 - l'utente ha chiesto anche solo il tocco del livello (OHLC del pivot), senza richiedere un vero wick di rigetto
+input double   InpPivotWickWickRatio       = 1.5;     // wick minimo = N x corpo e N x wick opposto (solo se InpPivotWickRequireWick)
+input double   InpPivotWickMinWickATR      = 0.15;    // wick minimo assoluto, in ATR (solo se InpPivotWickRequireWick)
 input int      InpPivotWickCooldownBars    = 8;       // raffreddamento per direzione (stesso bug BAR_UPDN/BREAKOUT_ACC)
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
