@@ -175,7 +175,31 @@ si riferiva al lotto. Quindi **nessuno dei due test veto sopra è mai
 stato fatto sulla config reale**. Lanciati la sera del 02/09 step40
 (baseline vera, lotto naturale, stessa finestra 12gen-12apr26) e step41
 (stessa finestra con `InpProfileRegimeVeto=true`) per il confronto
-finalmente pulito — risultati non ancora disponibili a questa scrittura.
+finalmente pulito.
+
+### Risultato finale (pulito): il veto non taglia NIENTE su questa finestra
+
+step40 (baseline) vs step41 (veto attivo), stessa finestra 12gen-12apr26,
+lotto naturale: **32 trade in entrambi, PF1.50 in entrambi, netto
+$750.66 vs $752.24** (differenza $1.58, trascurabile). Zero trade
+tagliati dal veto.
+
+Verificato nel codice che non è un bug di wiring: `_nxs_regime_veto()`
+legge `g_regime`, calcolato ad ogni tick da `NXS_DetectRegime()`
+(`NXS_MarketAnalysis.mqh`) in base all'ADX sul TF di SAR (H4) — RANGING/
+CHOPPY solo con ADX sotto 15-20 (più una condizione di volatilità per
+CHOPPY). Il veto è correttamente collegato e correttamente valutato per
+tutti e 32 i trade, ma la condizione non si è mai verificata: nella
+peggior serie di perdite di SAR l'ADX H4 a quanto pare non è mai sceso
+abbastanza da classificare il mercato come ranging/choppy.
+
+**Conclusione**: quella serie di perdite probabilmente non nasce da un
+mercato piatto misclassificabile con l'ADX, ma da falsi breakout dentro
+un trend/volatilità che l'ADX considera comunque "sano". Il veto di
+regime così com'è costruito (solo ADX) **non risolve questo problema
+specifico** per SAR — filone chiuso, non abbandonato a metà: il
+meccanismo funziona, semplicemente non è la leva giusta per questa
+sequenza di perdite.
 
 ## Prossimi passi (in ordine)
 
