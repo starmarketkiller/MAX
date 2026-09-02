@@ -187,6 +187,9 @@ bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 pos
 input bool     InpUseStrategyProfiles  = true;   // 27/08 - reso input (era plain, invisibile al Tester/Optimization)
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
+input bool     InpProfileRegimeVeto    = false;  // 02/09 - veto di regime (_nxs_regime_veto, gia' esistente ma
+                                                  // agganciato solo al modello istituzionale, mai usato sul percorso
+                                                  // a profili) applicato anche qui. Off di default: test esplicito.
 double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
 double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier

@@ -20,7 +20,13 @@
 // Conservativo: veta solo i mismatch piu' netti (mean-reversion in forte trend,
 // trend/breakout in range/choppy). Tutto il resto (SMC/struttura/reversal) passa.
 bool _nxs_regime_veto(const string nm){
-   if(!InpInstRegimeVeto) return false;
+   // 02/09 - la classificazione sotto e' condivisa da due chiamanti: il
+   // modello istituzionale (InpInstRegimeVeto, sotto) e il percorso a
+   // profili (InpProfileRegimeVeto, vedi NXS_OpenTrade in NXS_Execution.mqh
+   // - mai collegato prima, richiesto dall'utente per testare se il veto di
+   // regime avrebbe evitato dei trade nella peggior sequenza di perdite di
+   // SAR, 12/01-12/04/2026, 34/41 perdenti). Basta uno dei due flag attivo.
+   if(!InpInstRegimeVeto && !InpProfileRegimeVeto) return false;
    bool meanRev = (nm == "BOLLINGER" || nm == "BB_SQUEEZE" || nm == "RANGE_FADE" ||
                    nm == "RSI_DIV"   || StringFind(nm, "MALAYSIAN_SNR") >= 0);
    if(meanRev && g_regime == REGIME_STRONG_TREND) return true;

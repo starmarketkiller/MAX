@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Sintesi Sessione Maratona SAR-EMA_PULLBACK-Scalp-RegimeVeto (01-02-09)]]** —
+  **leggi questa per primo se torni su SAR/EMA_PULLBACK/scalp dopo questa
+  sessione.** SAR confermato su 5 punti (PF1.37-1.57, lotto NATURALE non
+  fisso — un lotto fisso 0.05 usato per errore in un test ha prodotto
+  numeri fuorvianti, corretti qui). EMA_PULLBACK solido senza filtri
+  aggiuntivi. Veto di regime collegato al percorso a profili ma i primi
+  risultati sono inquinati dallo stesso errore di lotto - da rifare.
 - **[[NEXUS EA - Ricerca Scalp BAR_UPDN e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)]]** —
   BAR_UPDN e BREAKOUT_ACC sbloccate su M15 scalp: entrambe negative (PF0.72
   e 0.64). Bug trovato (ipotesi utente confermata): nessuno stato

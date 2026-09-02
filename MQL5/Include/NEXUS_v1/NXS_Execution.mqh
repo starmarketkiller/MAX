@@ -297,6 +297,16 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "profile_disabled";
       return OPEN_FAIL_PREFLIGHT;
    }
+   // 02/09 - veto di regime (_nxs_regime_veto, NXS_SignalQuality.mqh): esisteva
+   // gia' ma era agganciato SOLO al modello istituzionale (InpUseInstitutionalCore,
+   // off di default, mai usato in nessun test isolato di stanotte). Richiesto
+   // dall'utente: verificare se avrebbe evitato trade nella peggior sequenza di
+   // perdite di SAR (12/01-12/04/2026: 34/41 perdenti). Off di default
+   // (InpProfileRegimeVeto) - stesso principio "abilitata al test, non di default".
+   if(InpProfileRegimeVeto && _nxs_regime_veto(sig.stratName)){
+      g_nxsLastOpenFailure = "regime_veto";
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.3.0 — "ogni strategia sul suo TF": la strategia apre solo se il TF del
    // grafico coincide col suo timeframe ottimale (dal backtest multi-TF). Cosi'
    // basta far girare un'istanza per TF (D1/H4/H1) e ognuna tradera' solo le SUE
