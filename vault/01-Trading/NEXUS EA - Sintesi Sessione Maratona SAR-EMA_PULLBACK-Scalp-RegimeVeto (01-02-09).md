@@ -53,6 +53,19 @@ tagli quella coda peggiora il risultato. Vedi
 [[NEXUS EA - Spoglia e Reintegra su SAR, Filtro Candela H4 Trovato e Validato (30-31-08)]]
 per il dettaglio dei 9 tentativi.
 
+**Decimo tentativo (02/09, sera): parziale a soglia pip FISSA invece che
+ATR** — nuovo meccanismo `NXS_ManageFixedPipPartial` (mai provato prima,
+richiesto esplicitamente dall'utente: lotto 0.02, chiudi metà a +150 pip
+fissi, lascia correre il resto). Testato sull'intera finestra
+nov2025-ago2026 (step39): 99 trade, PF1.46, netto $2467.70, DD equity
+$1438.97, Sharpe 1.66 — contro un raddoppio "ingenuo" del solo lotto
+(senza parziale) che avrebbe dato circa netto $2900 e DD proporzionale.
+**Stessa conclusione dei 9 tentativi precedenti**: anche con soglia pip
+fissa (non ATR), tagliare metà posizione in anticipo rende peggio del
+semplice raddoppio del lotto senza toccare nulla — Sharpe peggiora
+(2.01→1.66), DD equity cresce più che proporzionalmente. L'edge di SAR
+resta legato a lasciare correre l'intera posizione fino al TP.
+
 ### ⚠️ Errore corretto durante la notte: lotto fisso 0.05 vs lotto naturale
 
 A un certo punto ho usato per sbaglio un file di test (`step20`) che
@@ -154,6 +167,15 @@ verificati):
 - Veto + parziale insieme: PF1.85, +$7291 su 89 trade
 - Questi numeri sono inquinati dal lotto fisso fragile — **da
   riverificare sulla config a lotto naturale prima di trarre conclusioni**
+
+**Errore scoperto due volte**: anche il test "step35_clean_veto" (nome
+scelto per indicare "grid/pyramid/split disattivati per isolare l'effetto
+veto") aveva ANCORA `InpUsePipSeq=true, InpPipSeqLot=0.05` — "clean" non
+si riferiva al lotto. Quindi **nessuno dei due test veto sopra è mai
+stato fatto sulla config reale**. Lanciati la sera del 02/09 step40
+(baseline vera, lotto naturale, stessa finestra 12gen-12apr26) e step41
+(stessa finestra con `InpProfileRegimeVeto=true`) per il confronto
+finalmente pulito — risultati non ancora disponibili a questa scrittura.
 
 ## Prossimi passi (in ordine)
 

@@ -133,6 +133,29 @@ inseguimento visto sopra, da verificare).
    nella nuova implementazione, per non ripetere il bug di inseguimento
    trovato su BAR_UPDN/BREAKOUT_ACC.
 
+## Idea nuova (non ancora eseguita): pivot extension + wick + volume spike
+
+Emersa il 02/09 sera guardando TradingView a mano mentre si aspettava un
+test SAR. L'utente disegna linee orizzontali estese dai pivot (minimi e
+massimi), e cerca **buy su tocco di pivot-minimo, sell su tocco di
+pivot-massimo**, confermato da un **wick di rigetto** sulla candela di
+tocco (stoppino lungo dalla parte del pivot) — visto in screenshot su
+GOLD, es. minimo 4282.6 con stoppino inferiore netto seguito da
+rimbalzo a 4390+.
+
+(Nota: un successivo commento dell'utente su un filtro di volume — "non
+sempre, solo quando c'è più volume in poco tempo" — **non** si riferiva
+a questa idea ma a SAR, vedi sezione SAR sopra per il chiarimento in
+corso.)
+
+Archetipo mean-reversion da supporto/resistenza, concettualmente vicino
+a **MALAYSIAN_SNR** (pivot S/R) + **BAR_UPDN** (pattern di candela, già
+provata e debole da sola) + **ORDER_BLOCK**, ma nessuna delle tre nel
+motore combina esplicitamente "tocco di linea di pivot estesa + wick +
+volume" come condizione unica e più stretta. Non ancora deciso se
+formalizzarla come nuova strategia testabile o se resta lettura manuale
+del grafico — da chiedere all'utente quando riprende il filo.
+
 ## File toccati stanotte
 
 - `NXS_Strategies.mqh`: BAR_UPDN e BREAKOUT_ACC — gate a chiusura barra +
