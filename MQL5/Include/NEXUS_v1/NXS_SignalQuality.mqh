@@ -16,6 +16,57 @@
 #ifndef __NXS_SIGNAL_QUALITY_MQH__
 #define __NXS_SIGNAL_QUALITY_MQH__
 
+// 02/09 - BUG TROVATO dopo step40/41: g_regime e' calcolato UNA SOLA VOLTA
+// per tick, in cima a OnTick, PRIMA che il ciclo multi-TF attivi il
+// timeframe proprio di ogni strategia (NXS_ActivateTF). Alla fine di quel
+// ciclo NXS_ActivateOriginal() riporta g_activeTF a InpTFEntry (M15 di
+// default) - quindi g_regime finisce sempre calcolato sull'ADX di M15, MAI
+// sul TF nativo della strategia da valutare (es. H4 per SAR). Risultato
+// osservato: veto collegato e valutato correttamente, ma su 32/32 trade di
+// SAR (12gen-12apr26, config vera) non ha mai scartato nulla - stava
+// guardando il timeframe sbagliato, non "il mercato non era mai
+// ranging/choppy". Qui sotto: stessa formula di NXS_DetectRegime()
+// (NXS_MarketAnalysis.mqh) ma calcolata FRESCA sul TF della strategia
+// (NXS_Profile_TF(nm)), con handle in cache per TF (stesso pattern di
+// NXS_ATRv in NXS_ElliottFilter.mqh) - non tocca g_activeTF, sicuro da
+// chiamare senza disturbare il contesto della strategia in corso.
+int g_adxCacheTF[8];
+int g_adxCacheH[8];
+int g_adxCacheN = 0;
+
+double NXS_ADXv(ENUM_TIMEFRAMES tf, int shift, int period = 14){
+   int h = INVALID_HANDLE;
+   for(int i = 0; i < g_adxCacheN; i++)
+      if(g_adxCacheTF[i] == (int)tf){ h = g_adxCacheH[i]; break; }
+   if(h == INVALID_HANDLE){
+      h = iADX(g_sym, tf, period);
+      if(h == INVALID_HANDLE) return 0.0;
+      if(g_adxCacheN < 8){
+         g_adxCacheTF[g_adxCacheN] = (int)tf; g_adxCacheH[g_adxCacheN] = h; g_adxCacheN++;
+      }
+   }
+   double a[]; ArraySetAsSeries(a, true);
+   if(CopyBuffer(h, 0, shift, 1, a) <= 0) return 0.0;
+   return a[0];
+}
+
+ENUM_NXS_REGIME NXS_DetectRegimeTF(ENUM_TIMEFRAMES tf){
+   double adxNow = NXS_ADXv(tf, 1, 14);
+   double atrNow = NXS_ATRv(tf, 1, 14);
+   if(adxNow <= 0 || atrNow <= 0) return REGIME_UNKNOWN;
+   double sum = 0; int cnt = 0;
+   for(int i = 2; i <= 21; i++){
+      double a = NXS_ATRv(tf, i, 14);
+      if(a > 0){ sum += a; cnt++; }
+   }
+   double atrPrev = (cnt > 0) ? sum / cnt : 0;
+   bool volatile_ = (atrPrev > 0 && atrNow > atrPrev * 1.5);
+   if(adxNow >= 30) return volatile_ ? REGIME_VOLATILE : REGIME_STRONG_TREND;
+   if(adxNow >= 20) return REGIME_WEAK_TREND;
+   if(adxNow <  15 && volatile_) return REGIME_CHOPPY;
+   return REGIME_RANGING;
+}
+
 // #9 Veto di regime: la strategia va scartata se opera nell'ambiente sbagliato.
 // Conservativo: veta solo i mismatch piu' netti (mean-reversion in forte trend,
 // trend/breakout in range/choppy). Tutto il resto (SMC/struttura/reversal) passa.
@@ -29,11 +80,15 @@ bool _nxs_regime_veto(const string nm){
    if(!InpInstRegimeVeto && !InpProfileRegimeVeto) return false;
    bool meanRev = (nm == "BOLLINGER" || nm == "BB_SQUEEZE" || nm == "RANGE_FADE" ||
                    nm == "RSI_DIV"   || StringFind(nm, "MALAYSIAN_SNR") >= 0);
-   if(meanRev && g_regime == REGIME_STRONG_TREND) return true;
    bool trendFollow = (nm == "ADX_RSI" || nm == "MACD" || nm == "SAR" || nm == "TSI" ||
                        nm == "EMA_PULLBACK" || nm == "ICHIMOKU" || nm == "BJORGUM" ||
                        nm == "BREAKOUT_ACC" || nm == "LONDON_BO");
-   if(trendFollow && (g_regime == REGIME_RANGING || g_regime == REGIME_CHOPPY)) return true;
+   if(!meanRev && !trendFollow) return false;
+   ENUM_TIMEFRAMES tf = NXS_Profile_TF(nm);
+   if(tf == PERIOD_CURRENT) tf = NXS_EffTF();   // strategie senza TF dedicato nel profilo
+   ENUM_NXS_REGIME regime = NXS_DetectRegimeTF(tf);
+   if(meanRev && regime == REGIME_STRONG_TREND) return true;
+   if(trendFollow && (regime == REGIME_RANGING || regime == REGIME_CHOPPY)) return true;
    return false;
 }
 
