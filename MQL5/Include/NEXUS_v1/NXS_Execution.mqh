@@ -54,7 +54,7 @@ void NXS_GateTelemetry(string route, string gateId, bool passed,
 //| Le verifiche non aggirabili sono state spostate QUI, così ogni     |
 //| chiamante le eredita per costruzione e non per convenzione.        |
 //+------------------------------------------------------------------+
-bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
+bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR dir, double lots,
                                  ENUM_ORDER_TYPE otype, double price,
                                  double &sl, double &tp, string &reason){
    // --- (1) Licenza / entitlement -----------------------------------------
@@ -132,8 +132,11 @@ bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
    }
 
    // --- (5) RiskShield -----------------------------------------------------
+   // 02/09 - il breaker Sharpe ora e' PER STRATEGIA (richiesto dall'utente:
+   // bloccare solo la strategia responsabile, non l'intero conto). stratName
+   // arriva dal chiamante - vedi le note ai 4 call site di questa funzione.
    string rsReason = "";
-   bool rsBlocked = NXS_RS_BlockEntry(g_sym, rsReason);
+   bool rsBlocked = NXS_RS_BlockEntry(g_sym, stratName, rsReason);
    NXS_GateTelemetry(route, "RISKSHIELD", !rsBlocked, 0, 0, rsReason);
    if(rsBlocked){ reason = rsReason; return false; }
 
@@ -470,7 +473,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // copriva solo l'entry primaria, mentre grid, pyramid e add istituzionali
    // lo saltavano (AUD0-ADD-003). La chiamata qui sotto lo eredita.
    string pfReason = "";
-   if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.dir, lots,
+   if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.stratName, sig.dir, lots,
                                    otype, refPrice, sl, tp, pfReason)){
       g_nxsLastOpenFailure = pfReason;
       PrintFormat("[NEXUS] OPEN BLOCKED common gate: %s strat=%s", pfReason, sig.stratName);

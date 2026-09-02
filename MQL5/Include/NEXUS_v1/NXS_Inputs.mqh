@@ -809,6 +809,9 @@ input bool     InpUseStrat_CRT           = false;
 // verificata su MT5 - disattivata di default finche' non c'e' un backtest
 // reale a confermarla, stesso trattamento riservato a CRT.
 input bool     InpStrat_BarUpDn          = false;
+input int      InpBarUpDnCooldownBars    = 8;    // 02/09 - raffreddamento locale per direzione (vedi NXS_Strat_BarUpDn):
+                                                  // senza, il motore insegue lo stesso trend riaprendo a ogni barra.
+input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddamento per NXS_Strat_BreakoutAcc
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

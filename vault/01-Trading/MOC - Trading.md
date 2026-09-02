@@ -14,6 +14,15 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Ricerca Scalp BAR_UPDN e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)]]** —
+  BAR_UPDN e BREAKOUT_ACC sbloccate su M15 scalp: entrambe negative (PF0.72
+  e 0.64). Bug trovato (ipotesi utente confermata): nessuno stato
+  "già tradato", il motore insegue lo stesso trend riaprendo ripetutamente
+  — fix a raffreddamento, solo miglioramento marginale. Terzo cancello
+  `NXS_Profile_Enabled` scoperto di nuovo (blocca 27/48 strategie in
+  silenzio, incluse BOLLINGER). RiskShield EQUITY_BREAKER reso
+  per-strategia invece che globale. Piano: BOLLINGER+RSI+candela di
+  conferma (mean-reversion, archetipo mai provato stanotte).
 - **[[NEXUS EA - Spoglia e Reintegra su SAR, Filtro Candela H4 Trovato e Validato (30-31-08)]]** —
   la scoperta più recente: un filtro trovato analizzando i dati reali
   (candela H4 di entrata allineata alla direzione del segnale) trasforma

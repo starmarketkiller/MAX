@@ -82,7 +82,7 @@ void NXS_ManageGrid(){
       }
 
       string gateReason = "";
-      if(!NXS_CommonExposurePreflight("GRID", gridDir, addLots, otype, refPrice,
+      if(!NXS_CommonExposurePreflight("GRID", "GRID", gridDir, addLots, otype, refPrice,
                                       sl, tp, gateReason)){
          PrintFormat("[NEXUS RISK] GRID BLOCCATO: %s", gateReason);
          break;

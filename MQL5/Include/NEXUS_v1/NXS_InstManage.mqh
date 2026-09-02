@@ -191,7 +191,7 @@ bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
    // Invariante unica: licenza, ruin freeze, protezioni, stop obbligatorio,
    // RiskShield, cap direzionale, margine proiettato, broker preflight.
    string gateReason = "";
-   if(!NXS_CommonExposurePreflight("INST:" + tag, dir, lots, otype, refPrice,
+   if(!NXS_CommonExposurePreflight("INST:" + tag, "INST:" + tag, dir, lots, otype, refPrice,
                                    useSL, useTP, gateReason)){
       PrintFormat("[NEXUS INST] ADD BLOCCATO dal preflight comune: %s", gateReason);
       return false;

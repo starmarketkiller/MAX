@@ -374,16 +374,50 @@ SNXSSignal NXS_Strat_SAR(){
 // ChartArt): nessun indicatore, solo la relazione OHLC tra due barre
 // consecutive. Barra corrente verde E apre sopra la chiusura precedente ->
 // buy; barra rossa E apre sotto la chiusura precedente -> sell (mirror).
+//
+// 02/09 - BUG TROVATO (ipotesi dell'utente, confermata sui dati): nessuno
+// stato "gia' tradato questo pattern" - la condizione torna vera piu' volte
+// durante un trend sostenuto, quindi il motore insegue lo stesso movimento
+// con ingressi ripetuti invece di prenderlo una volta sola. Verificato: 134
+// dei 210 trade nudi (M15, 2024) erano raggruppati (stesso verso, entro 6h
+// l'uno dall'altro) - il primo di un gruppo spesso vince, gli inseguimenti
+// quasi sempre perdono.
+//
+// PRIMO TENTATIVO (fallito): one-shot che si resetta appena una barra non
+// soddisfa piu' il pattern - inefficace, perche' in un trend reale il
+// pattern non si ripete su barre CONSECUTIVE perfette, si interrompe e
+// riprende in modo intermittente (conteggio trade sceso solo 210->207).
+// CORREZIONE: raffreddamento per direzione basato sul numero di barre
+// (InpBarUpDnCooldownBars), non sulla continuita' del pattern - blocca lo
+// stesso verso per N barre dopo un ingresso, indipendentemente da quante
+// volte il pattern si ripresenta nel frattempo.
+struct SNXSBarUpDnState { datetime lastBarTime; datetime lastFireTime[2]; };  // [0]=buy [1]=sell
+SNXSBarUpDnState g_barUpDnState;
+
 SNXSSignal NXS_Strat_BarUpDn(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "BAR_UPDN";
    if(!InpStrat_BarUpDn || !NXS_SelectorAllows(43)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_barUpDnState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_barUpDnState.lastBarTime = curBar0;
+
    double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
    double c2 = iClose(g_sym, tf, 2);
-   if(c1 > o1 && o1 > c2){
+   bool bull = (c1 > o1 && o1 > c2);
+   bool bear = (c1 < o1 && o1 < c2);
+
+   long periodSec = PeriodSeconds(tf);
+   long cooldownSec = (long)InpBarUpDnCooldownBars * periodSec;
+   bool buyOk  = (g_barUpDnState.lastFireTime[0] == 0) || ((curBar0 - g_barUpDnState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_barUpDnState.lastFireTime[1] == 0) || ((curBar0 - g_barUpDnState.lastFireTime[1]) >= cooldownSec);
+
+   if(bull && buyOk){
       s.dir = DIR_BUY;  s.score = 58; s.reason = "BarUpDn_bull";
-   } else if(c1 < o1 && o1 < c2){
+      g_barUpDnState.lastFireTime[0] = curBar0;
+   } else if(bear && sellOk){
       s.dir = DIR_SELL; s.score = 58; s.reason = "BarUpDn_bear";
+      g_barUpDnState.lastFireTime[1] = curBar0;
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -795,18 +829,53 @@ SNXSSignal NXS_Strat_FVG(){
 }
 
 //------------------------------------ H3 Breakout Acceptance
+// 02/09 - BUG TROVATO (ipotesi dell'utente, confermata sui dati): stesso
+// difetto di BAR_UPDN sotto - nessuno stato "gia' tradato questo breakout",
+// la condizione di accettazione resta vera per ogni barra finche' il
+// prezzo non rientra nel range, quindi il motore insegue lo stesso
+// movimento aprendo un nuovo trade a ogni barra invece di prenderlo una
+// volta sola. Verificato: 106 dei 201 trade nudi (M15, 2024) erano
+// raggruppati (stesso verso, entro 6h) - es. 7 sell consecutivi tra il 3
+// e il 5 gennaio 2024 sullo stesso movimento, solo il primo (+$20.36) in
+// profitto, i 6 inseguimenti tutti in perdita (-$2/-5 ciascuno). Sul D1
+// nativo il danno era diluito (una barra al giorno); su M15 lo stesso bug
+// spara decine di volte in piu'.
+//
+// PRIMO TENTATIVO (fallito su BAR_UPDN, stesso schema qui): one-shot che
+// si resetta appena l'accettazione non e' piu' vera - inefficace perche'
+// il rientro nel range e' spesso intermittente (una barra dentro, la
+// successiva di nuovo fuori), il reset scatta troppo presto. CORREZIONE:
+// raffreddamento per direzione a numero di barre (InpBreakoutAccCooldownBars).
+struct SNXSBreakoutAccState { datetime lastBarTime; datetime lastFireTime[2]; };  // [0]=buy [1]=sell
+SNXSBreakoutAccState g_breakoutAccState;
+
 SNXSSignal NXS_Strat_BreakoutAcc(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BREAKOUT_ACC; s.stratName = "BREAKOUT_ACC";
    if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_breakoutAccState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_breakoutAccState.lastBarTime = curBar0;
+
    int n = 20;
-   double range_hi = iHigh(g_sym, NXS_EffTF(), iHighest(g_sym, NXS_EffTF(), MODE_HIGH, n, 3));
-   double range_lo = iLow (g_sym, NXS_EffTF(), iLowest (g_sym, NXS_EffTF(), MODE_LOW,  n, 3));
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   double c2 = iClose(g_sym, NXS_EffTF(), 2);
-   if(c1 > range_hi && c2 > range_hi){
+   double range_hi = iHigh(g_sym, tf, iHighest(g_sym, tf, MODE_HIGH, n, 3));
+   double range_lo = iLow (g_sym, tf, iLowest (g_sym, tf, MODE_LOW,  n, 3));
+   double c1 = iClose(g_sym, tf, 1);
+   double c2 = iClose(g_sym, tf, 2);
+   bool acceptUp = (c1 > range_hi && c2 > range_hi);
+   bool acceptDn = (c1 < range_lo && c2 < range_lo);
+
+   long periodSec = PeriodSeconds(tf);
+   long cooldownSec = (long)InpBreakoutAccCooldownBars * periodSec;
+   bool buyOk  = (g_breakoutAccState.lastFireTime[0] == 0) || ((curBar0 - g_breakoutAccState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_breakoutAccState.lastFireTime[1] == 0) || ((curBar0 - g_breakoutAccState.lastFireTime[1]) >= cooldownSec);
+
+   if(acceptUp && buyOk){
       s.dir = DIR_BUY;  s.score = 68; s.reason = "Acceptance_above_range";
-   } else if(c1 < range_lo && c2 < range_lo){
+      g_breakoutAccState.lastFireTime[0] = curBar0;
+   } else if(acceptDn && sellOk){
       s.dir = DIR_SELL; s.score = 68; s.reason = "Acceptance_below_range";
+      g_breakoutAccState.lastFireTime[1] = curBar0;
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
