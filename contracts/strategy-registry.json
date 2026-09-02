@@ -8,8 +8,8 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 75,
-    "live": 45,
+    "total": 76,
+    "live": 46,
     "research_only": 30
   },
   "strategies": [
@@ -1023,6 +1023,28 @@
       "default_enabled": false,
       "auto_disable_eligible": false,
       "risk_class": "RESEARCH",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "PIVOT_WICK",
+      "display_name": "Pivot Wick",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 49,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M15"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "STANDARD",
       "schema_version": 1
     },
     {

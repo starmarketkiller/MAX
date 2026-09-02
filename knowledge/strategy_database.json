@@ -1176,6 +1176,27 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "incrocio EMA21/50 + stop su swing(5) ATR(14) + target R:R 1:1 (default script). Solo variante EMA replicata, non gli altri tipi di MA opzionali. TF H1"
+    },
+    {
+      "nome": "PIVOT_WICK",
+      "selector_index": 49,
+      "versione": "nuova 02/09 - idea originale utente (pivot frattali multi-TF + wick opzionale)",
+      "stato": "disabilitata in produzione",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [
+        "NXS_StrategyKnown non includeva PIVOT_WICK, 0 trade nel primo test isolato (02/09) finche non registrata qui"
+      ],
+      "fix_applicati": [],
+      "ultimo_sweep": null,
+      "nota_sweep": "mai testata su MT5 - InpStrat_PivotWick=false di default finche non c e un backtest reale",
+      "trade": null,
+      "PF": null,
+      "WR_pct": null,
+      "expectancy_R": null,
+      "affidabilita_dati": "nessun dato ancora raccolto",
+      "decisione_corrente": "in attesa di backtest isolato MT5",
+      "note": "pool di pivot frattali OHLC su M15/M30/H1/H4/D1, trigger di reversal su M15 al tocco del livello (wick opzionale, InpPivotWickRequireWick)"
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"
