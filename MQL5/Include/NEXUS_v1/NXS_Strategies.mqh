@@ -667,73 +667,97 @@ SNXSSignal NXS_Strat_3CommasBot(){
 
 //------------------------------------ K6 Pivot Extension + Wick Rejection (#49)
 // 02/09 - idea originale dell'utente, vista a mano su TradingView (GOLD,
-// linee orizzontali estese dai pivot di swing): buy su tocco di un pivot
-// MINIMO con wick di rigetto inferiore, sell su tocco di un pivot MASSIMO
-// con wick di rigetto superiore. Diversa da MALAYSIAN_SNR (quella usa il
-// massimo/minimo di CHIUSURA su una finestra H4/W1 fissa + filtro di
-// storyline direzionale) - qui sono veri pivot frattali (5 barre a
-// sinistra e a destra piu' basse/alte) sul TF di esecuzione, piu' pivot
-// tenuti "vivi" in memoria (si estendono in avanti finche' non escono
-// dalla finestra), condizione di rigetto sul solo wick della candela di
-// tocco. Mai verificata su MT5 - disattivata di default come le altre
-// aggiunte di stanotte. Gate a chiusura barra + raffreddamento per
-// direzione fin dall'inizio (bug di inseguimento gia' trovato stanotte
+// linee orizzontali estese dai pivot di swing). Precisata dall'utente dopo
+// la prima versione (mono-TF): i livelli di supporto/resistenza vengono
+// dai pivot (OHLC high/low) di PIU' TIMEFRAME insieme (M15/M30/H1/H4/D1),
+// ma il segnale di reversal (buy da supporto, sell da resistenza) va
+// valutato solo sulla barra CHIUSA di esecuzione M15 - un pool di livelli
+// multi-TF, un solo trigger intraday. Il caso "rompe invece di rimbalzare"
+// (breakout) e' volutamente fuori scope qui: e' gia' il lavoro di
+// BREAKOUT_ACC e delle altre strategie di rottura del motore.
+//
+// Diversa da MALAYSIAN_SNR (quella usa il massimo/minimo di CHIUSURA su
+// una finestra H4/W1 fissa + filtro di storyline direzionale) - qui sono
+// veri pivot frattali (N barre a sinistra e a destra piu' basse/alte),
+// pool per timeframe, wick di rigetto OPZIONALE (default off: basta il
+// tocco del livello, gia' un OHLC della candela pivot - richiesto
+// dall'utente dopo che la versione con wick obbligatorio non produceva
+// trade). Mai verificata su MT5. Gate a chiusura barra M15 + raffreddamento
+// per direzione fin dall'inizio (bug di inseguimento gia' trovato stanotte
 // su BAR_UPDN/BREAKOUT_ACC senza questa protezione).
 #define NXS_PIVOTWICK_MAXLVL 8
+#define NXS_PIVOTWICK_NTF    5
+int g_pivotWickTFs[NXS_PIVOTWICK_NTF] = { PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1 };
+
 struct SNXSPivotWickState {
-   datetime lastBarTime;
-   double   pivHi[NXS_PIVOTWICK_MAXLVL];
-   double   pivLo[NXS_PIVOTWICK_MAXLVL];
+   datetime lastBarTime;                            // gate sulla barra M15 di esecuzione
+   datetime lastPivotBar[NXS_PIVOTWICK_NTF];         // una scansione pivot per barra chiusa, per TF
+   double   pivHi[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
+   double   pivLo[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
    datetime lastFireTime[2];   // [0]=buy [1]=sell
 };
 SNXSPivotWickState g_pivotWickState;
 
-void _nxs_pivotwick_push(double &arr[], double level){
-   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--) arr[i] = arr[i - 1];
-   arr[0] = level;
+void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], int row, double level){
+   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--) arr[row][i] = arr[row][i - 1];
+   arr[row][0] = level;
+}
+
+// Scandaglia UN timeframe per un nuovo pivot frattale, una volta per barra
+// chiusa DI QUEL TF (indipendente dal gate M15 della funzione principale).
+void _nxs_pivotwick_scan_tf(int tfIdx, ENUM_TIMEFRAMES tf, int L){
+   datetime curBarTF = iTime(g_sym, tf, 0);
+   if(curBarTF <= 0 || g_pivotWickState.lastPivotBar[tfIdx] == curBarTF) return;
+   g_pivotWickState.lastPivotBar[tfIdx] = curBarTF;
+
+   int p = L + 1;   // shift appena confermato come pivot (L barre note a destra)
+   double hiP = iHigh(g_sym, tf, p);
+   double loP = iLow(g_sym, tf, p);
+   if(hiP <= 0 || loP <= 0) return;
+   bool isHiPivot = true, isLoPivot = true;
+   for(int i = p - L; i <= p + L; i++){
+      if(i == p) continue;
+      double hh = iHigh(g_sym, tf, i);
+      double ll = iLow(g_sym, tf, i);
+      if(hh <= 0 || ll <= 0) continue;
+      if(hh >= hiP) isHiPivot = false;
+      if(ll <= loP) isLoPivot = false;
+   }
+   if(isHiPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivHi, tfIdx, hiP);
+   if(isLoPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivLo, tfIdx, loP);
 }
 
 SNXSSignal NXS_Strat_PivotWick(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PIVOT_WICK";
    if(!InpStrat_PivotWick || !NXS_SelectorAllows(49)) return s;
-   ENUM_TIMEFRAMES tf = NXS_EffTF();
-   datetime curBar0 = iTime(g_sym, tf, 0);
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();   // M15 dal profilo (NXS_Profile_TF)
+   datetime curBar0 = iTime(g_sym, execTF, 0);
    if(g_pivotWickState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
    g_pivotWickState.lastBarTime = curBar0;
 
    int L = InpPivotWickLookback;
-   int p = L + 1;   // shift appena confermato come pivot (L barre note a destra)
-   double hiP = iHigh(g_sym, tf, p);
-   double loP = iLow(g_sym, tf, p);
-   bool isHiPivot = true, isLoPivot = true;
-   for(int i = p - L; i <= p + L; i++){
-      if(i == p) continue;
-      if(iHigh(g_sym, tf, i) >= hiP) isHiPivot = false;
-      if(iLow(g_sym, tf, i)  <= loP) isLoPivot = false;
-   }
-   if(isHiPivot) _nxs_pivotwick_push(g_pivotWickState.pivHi, hiP);
-   if(isLoPivot) _nxs_pivotwick_push(g_pivotWickState.pivLo, loP);
+   for(int t = 0; t < NXS_PIVOTWICK_NTF; t++)
+      _nxs_pivotwick_scan_tf(t, (ENUM_TIMEFRAMES)g_pivotWickTFs[t], L);
 
-   double atr = NXS_ATRv(tf, 1, 14);
+   double atr = NXS_ATRv(execTF, 1, 14);
    if(atr <= 0) return s;
    double tol = InpPivotWickTouchTolATR * atr;
    double minWick = InpPivotWickMinWickATR * atr;
 
-   double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
-   double h1 = iHigh(g_sym, tf, 1), l1 = iLow(g_sym, tf, 1);
+   double o1 = iOpen(g_sym, execTF, 1), c1 = iClose(g_sym, execTF, 1);
+   double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
    double body   = MathAbs(c1 - o1);
    double upWick = h1 - MathMax(o1, c1);
    double dnWick = MathMin(o1, c1) - l1;
 
-   long periodSec   = PeriodSeconds(tf);
+   long periodSec   = PeriodSeconds(execTF);
    long cooldownSec = (long)InpPivotWickCooldownBars * periodSec;
    bool buyOk  = (g_pivotWickState.lastFireTime[0] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[0]) >= cooldownSec);
    bool sellOk = (g_pivotWickState.lastFireTime[1] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[1]) >= cooldownSec);
 
    // Condizione di rigetto: se richiesta (InpPivotWickRequireWick), un vero
-   // wick sulla candela di tocco; altrimenti basta il tocco del livello
-   // (gia' un OHLC della candela pivot: high/low) - richiesto dall'utente
-   // dopo che la versione con wick obbligatorio non produceva trade.
+   // wick sulla candela di tocco M15; altrimenti basta il tocco del livello
+   // (gia' un OHLC della candela pivot: high/low, su qualunque dei TF pool).
    bool wickBull = !InpPivotWickRequireWick ||
                    (dnWick >= minWick && dnWick >= InpPivotWickWickRatio * body &&
                     dnWick >= InpPivotWickWickRatio * upWick && c1 > o1);
@@ -741,25 +765,29 @@ SNXSSignal NXS_Strat_PivotWick(){
                    (upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
                     upWick >= InpPivotWickWickRatio * dnWick && c1 < o1);
 
-   // BUY: tocco di un livello pivot minimo (+ wick di rigetto se richiesto)
+   // BUY: tocco M15 di un livello pivot minimo di QUALUNQUE TF del pool
    if(buyOk && wickBull){
-      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
-         if(g_pivotWickState.pivLo[i] <= 0) continue;
-         if(l1 >= g_pivotWickState.pivLo[i] - tol && l1 <= g_pivotWickState.pivLo[i] + tol){
-            s.dir = DIR_BUY; s.score = 60; s.reason = "PivotWick_buy";
-            g_pivotWickState.lastFireTime[0] = curBar0;
-            break;
+      for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            if(g_pivotWickState.pivLo[t][i] <= 0) continue;
+            if(l1 >= g_pivotWickState.pivLo[t][i] - tol && l1 <= g_pivotWickState.pivLo[t][i] + tol){
+               s.dir = DIR_BUY; s.score = 60; s.reason = "PivotWick_buy_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
+               g_pivotWickState.lastFireTime[0] = curBar0;
+               break;
+            }
          }
       }
    }
-   // SELL: tocco di un livello pivot massimo (+ wick di rigetto se richiesto)
+   // SELL: tocco M15 di un livello pivot massimo di QUALUNQUE TF del pool
    if(s.dir == DIR_NONE && sellOk && wickBear){
-      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
-         if(g_pivotWickState.pivHi[i] <= 0) continue;
-         if(h1 <= g_pivotWickState.pivHi[i] + tol && h1 >= g_pivotWickState.pivHi[i] - tol){
-            s.dir = DIR_SELL; s.score = 60; s.reason = "PivotWick_sell";
-            g_pivotWickState.lastFireTime[1] = curBar0;
-            break;
+      for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            if(g_pivotWickState.pivHi[t][i] <= 0) continue;
+            if(h1 <= g_pivotWickState.pivHi[t][i] + tol && h1 >= g_pivotWickState.pivHi[t][i] - tol){
+               s.dir = DIR_SELL; s.score = 60; s.reason = "PivotWick_sell_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
+               g_pivotWickState.lastFireTime[1] = curBar0;
+               break;
+            }
          }
       }
    }
