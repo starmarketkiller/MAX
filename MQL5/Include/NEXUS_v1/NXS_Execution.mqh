@@ -416,6 +416,9 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // (non a rischio%), la gestione a stadi (NXS_ManagePipSequence) si
    // occupa lei di stringere lo stop e prendere parziali.
    if(InpUsePipSeq) lots = InpPipSeqLot;
+   // 01/09 - lotto fisso scoped a EMA_PULLBACK per rendere possibile un
+   // parziale vero (vedi InpEMAPBFixedLot in NXS_Inputs.mqh).
+   if(InpEMAPBFixedLot > 0 && sig.stratName == "EMA_PULLBACK") lots = InpEMAPBFixedLot;
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
 
    // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),
@@ -549,9 +552,24 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       // e' un denominatore di rischio migliore del prezzo di riferimento
       // pre-invio (che ignora slippage).
       double fillPx = (exec.price > 0 ? exec.price : refPrice);
+      // 01/09 - BUG TROVATO: qui veniva registrato g_atr (ATR del timeframe
+      // del grafico, InpTFEntry = M15) come "ATR d'ingresso" per QUALSIASI
+      // strategia, ma NXS_ManageSplit (e altri consumer di NXS_State_EntryAtr)
+      // lo usano come soglia di gestione assumendo la stessa scala usata per
+      // SL/TP del profilo - che per molte strategie (es. EMA_PULLBACK) e' H4,
+      // 4-6x piu' grande dell'ATR M15. Risultato: le soglie "1.0xATR" ecc.
+      // scattavano in realta' a 1/4-1/6 del previsto - verificato: parziali
+      // che chiudevano entro 15-35 minuti dall'apertura con $2-5 di profitto
+      // invece delle decine di dollari attese. Ora si registra l'ATR del
+      // timeframe REALE della strategia (profilo) quando disponibile.
+      double intentAtr = g_atr;
+      if(InpUseStrategyProfiles){
+         double profAtr = NXS_ATRv(NXS_Profile_TF(sig.stratName), 1, InpATR_Period);
+         if(profAtr > 0) intentAtr = profAtr;
+      }
       NXS_Intent_Record(exec.order, sig.stratName, sig.score,
                         NXS_Intent_RiskMoney(g_sym, fillPx, sl, lots),
-                        "primary", 0, g_atr, lots);
+                        "primary", 0, intentAtr, lots);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);

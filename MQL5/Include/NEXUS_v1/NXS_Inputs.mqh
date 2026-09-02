@@ -386,6 +386,10 @@ input bool     InpUseProfitReclaim  = false;       // 31/08 - vedi NXS_ProfitRec
 input double   InpProfitReclaimArmATR = 1.5;
 input double   InpProfitReclaimFrac   = 0.50;
 input double   InpProfitReclaimTolATR = 0.35;
+input double   InpEMAPBFixedLot     = 0;           // 01/09 - lotto FISSO per EMA_PULLBACK (0 = usa il rischio% normale). Serve
+                                                    // per rendere possibile un parziale vero (es. 0.02 -> chiude 0.01, minimo
+                                                    // broker) invece del lotto risk-based variabile che a volte cade sotto la
+                                                    // soglia per un parziale valido a due decimali.
 input bool     InpStrat_TSI          = true;
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
@@ -540,9 +544,17 @@ double   InpAB_RiskMult_DDHard= 0.4;
 double   InpAB_ScoreBonus_DDHard = 10.0; // require MinEntryScore+10 when DD hard
 
 // input group "=== GRID / PYRAMID / SPLIT ==="
-bool     InpEnableGrid       = false;
-double   InpGridStepATR      = 1.2;
-bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
+// 01/09 - BUG TROVATO: queste 4 variabili mancavano della keyword "input",
+// quindi invisibili e non sovrascrivibili da nessun .set/.ini del Tester
+// (stessa classe di bug gia' vista per InpPostSLCooldownMin e i flag Chain).
+// InpEnableSplit=true era quindi SEMPRE attivo, silenziosamente, in OGNI
+// test di questa sessione (SAR ed EMA_PULLBACK inclusi) - scoperto
+// ricostruendo i deal di EMA_PULLBACK e trovando chiusure parziali reali
+// (es. posizione 0.03 aperta, 0.01 chiusa 7h dopo, 0.02 rimanente chiusa
+// il giorno dopo a SL) che l'analisi "nuda" di stanotte non aveva previsto.
+input bool     InpEnableGrid       = false;
+input double   InpGridStepATR      = 1.2;
+input bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
                                          // ORA FUNZIONA (bug di sizing trovato e corretto, 26 gambe/mese
                                          // confermate su Tester MT5 a tick reali), ma sul portafoglio
                                          // v3.0 attuale l'effetto e' NEGATIVO (PF1.02->0.98, netto
@@ -550,7 +562,7 @@ bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica c
                                          // su strategie con edge gia' sottile/negativo (SAR, EMA_PULLBACK)
                                          // invece di aggiungere profitto. Da riattivare solo quando il
                                          // mix di strategie e' solido (PF portafoglio chiaramente >1).
-bool     InpEnableSplit      = true;
+input bool     InpEnableSplit      = true;
 
 // input group "=== WEB BRIDGE ==="
 bool     InpEnableWebSync    = true;                                   // WebSync ON di default

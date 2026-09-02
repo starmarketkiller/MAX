@@ -1,0 +1,493 @@
+<title>EMA Pullback Confronto</title>
+<style>
+:root{
+  --bg:#0e1116;
+  --panel:#151a22;
+  --panel-2:#11151c;
+  --border:#262d3a;
+  --text:#e6e9ef;
+  --text-dim:#8b93a7;
+  --text-faint:#5a6274;
+  --gold:#d4a94a;
+  --gold-dim:#8a6f34;
+  --blue:#5b9dd9;
+  --blue-dim:#2e4a63;
+  --green:#4caf7d;
+  --red:#d9615b;
+  --grid:#1d2330;
+}
+:root[data-theme="light"]{
+  --bg:#f4f2ec;
+  --panel:#ffffff;
+  --panel-2:#faf8f2;
+  --border:#ded8c6;
+  --text:#22201a;
+  --text-dim:#6b6656;
+  --text-faint:#a39d88;
+  --gold:#a97e1f;
+  --gold-dim:#c9a95e;
+  --blue:#2f6fa8;
+  --blue-dim:#a9c8e0;
+  --green:#2e8f5e;
+  --red:#b8433d;
+  --grid:#e8e3d4;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f2ec;
+    --panel:#ffffff;
+    --panel-2:#faf8f2;
+    --border:#ded8c6;
+    --text:#22201a;
+    --text-dim:#6b6656;
+    --text-faint:#a39d88;
+    --gold:#a97e1f;
+    --gold-dim:#c9a95e;
+    --blue:#2f6fa8;
+    --blue-dim:#a9c8e0;
+    --green:#2e8f5e;
+    --red:#b8433d;
+    --grid:#e8e3d4;
+  }
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  min-height:100vh;
+}
+
+.wrap{
+  max-width:1180px;
+  margin:0 auto;
+  padding:20px 24px 48px;
+}
+
+header{
+  margin-bottom:14px;
+}
+.eyebrow{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:6px;
+}
+h1{
+  font-size:20px;
+  font-weight:600;
+  margin:0 0 4px;
+  text-wrap:balance;
+  letter-spacing:-0.01em;
+}
+.sub{
+  color:var(--text-dim);
+  font-size:12.5px;
+  max-width:80ch;
+  line-height:1.45;
+}
+
+.statsbar{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:1px;
+  background:var(--border);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  margin:14px 0 14px;
+}
+.stat{
+  background:var(--panel);
+  padding:9px 16px;
+}
+.stat .label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  margin-bottom:4px;
+}
+.stat .val{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:16px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.stat .val.pos{color:var(--green);}
+.stat .val.neg{color:var(--red);}
+.stat .val.gold{color:var(--gold);}
+
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px 18px 12px;
+  margin-bottom:14px;
+}
+.panel-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+.panel-title{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+.legend{
+  display:flex;
+  gap:16px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.dot{width:8px;height:8px;border-radius:2px;display:inline-block;}
+.dot.up{background:var(--green);}
+.dot.dn{background:var(--red);}
+.dot.eq{background:var(--blue);}
+.dot.bal{background:var(--gold);}
+
+.chart-scroll{
+  overflow-x:auto;
+  overflow-y:hidden;
+}
+canvas{
+  display:block;
+}
+
+.hud{
+  position:relative;
+  height:0;
+}
+.crosshair-box{
+  position:absolute;
+  top:8px;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  line-height:1.7;
+  pointer-events:none;
+  white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  display:none;
+  z-index:5;
+}
+.crosshair-box .row{display:flex;justify-content:space-between;gap:14px;}
+.crosshair-box .k{color:var(--text-faint);}
+.crosshair-box .v{color:var(--text);font-variant-numeric:tabular-nums;}
+.crosshair-box .v.up{color:var(--green);}
+.crosshair-box .v.dn{color:var(--red);}
+.crosshair-box .v.eq{color:var(--blue);}
+.crosshair-box .v.bal{color:var(--gold);}
+.crosshair-box .date{color:var(--gold);font-weight:600;margin-bottom:2px;}
+
+.hint{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-faint);
+  margin-top:8px;
+}
+
+footer{
+  margin-top:28px;
+  font-size:12px;
+  color:var(--text-faint);
+  line-height:1.6;
+  max-width:70ch;
+}
+
+@media (max-width:720px){
+  .statsbar{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">NEXUS EA &middot; XAUUSD &middot; EMA_PULLBACK</div>
+    <h1>Prezzo vs Equity/Bilancio</h1>
+    <div class="sub">Confronto sincronizzato tra il grafico D1 di GOLD con gli ingressi/uscite di EMA_PULLBACK e l'andamento di bilancio ed equity nello stesso periodo (ott 2023 &ndash; ago 2026, dati tick reali MT5).</div>
+  </header>
+
+  <div class="statsbar" id="statsbar"></div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">GOLD D1 &middot; ingressi/uscite EMA_PULLBACK &middot; bilancio/equity sovrapposti</div>
+      <div class="legend">
+        <span><i class="dot up"></i>buy</span>
+        <span><i class="dot dn"></i>sell</span>
+        <span><i class="dot bal"></i>bilancio</span>
+        <span><i class="dot eq"></i>equity</span>
+      </div>
+    </div>
+    <div class="chart-scroll" id="priceScroll">
+      <div class="hud"><div class="crosshair-box" id="crossPrice"></div></div>
+      <canvas id="priceCanvas"></canvas>
+    </div>
+    <div class="hint">Scala prezzo a sinistra, scala bilancio/equity a destra &middot; trascina orizzontalmente per scorrere &middot; passa il mouse per i dettagli del giorno.</div>
+  </div>
+
+  <footer>
+    EMA_PULLBACK &middot; profilo H4, SL 1.5&times;ATR / TP 4.0&times;ATR, rischio 2.5%. Bilancio calcolato come funzione a gradini dal PnL realizzato dei trade ricostruiti; equity approssimata aggiungendo il PnL flottante della posizione aperta, valutato alla chiusura D1 di ogni giorno.
+  </footer>
+</div>
+
+<script>
+const DATA = __DATA_JSON__;
+</script>
+<script>
+(function(){
+  const d1 = DATA.d1, curve = DATA.curve, trades = DATA.trades, stats = DATA.stats;
+  const n = d1.length;
+
+  // ---- stats bar ----
+  const statsbar = document.getElementById('statsbar');
+  const statDefs = [
+    ['Profit Factor', stats.pf.toFixed(2), stats.pf>=1?'pos':'neg'],
+    ['Net P/L', (stats.net>=0?'+':'') + '$' + stats.net.toFixed(2), stats.net>=0?'pos':'neg'],
+    ['Trade', stats.n, 'gold'],
+    ['DD Bilancio', '$' + stats.dd_balance.toFixed(2), 'neg'],
+    ['DD Equity', '$' + stats.dd_equity.toFixed(2), 'neg'],
+  ];
+  statDefs.forEach(([label,val,cls])=>{
+    const el = document.createElement('div');
+    el.className='stat';
+    el.innerHTML = `<div class="label">${label}</div><div class="val ${cls}">${val}</div>`;
+    statsbar.appendChild(el);
+  });
+
+  // ---- layout constants ----
+  const BAR_W = 10;           // px per day - real candle proportions (body+wick clearly visible)
+  const CHART_W = Math.max(n * BAR_W, 900);
+  const PRICE_H = 460;
+  const PAD_L = 60, PAD_R = 60, PAD_T = 14, PAD_B = 22;
+
+  function niceRange(min, max){
+    if(min===max){ min-=1; max+=1; }
+    const pad = (max-min)*0.06;
+    return [min-pad, max+pad];
+  }
+
+  // scala LOGARITMICA sul prezzo: GOLD passa da ~1800 a ~5800 in 3 anni (3.2x),
+  // con scala lineare le candele del 2023 si schiacciano in una fascia minuscola
+  // in fondo al grafico rispetto al 2025-26 - il log mantiene leggibili i
+  // movimenti proporzionali su tutto il periodo.
+  const priceMin0 = Math.min(...d1.map(b=>b.l));
+  const priceMax0 = Math.max(...d1.map(b=>b.h));
+  const logPad = (Math.log(priceMax0) - Math.log(priceMin0)) * 0.06;
+  const logMin = Math.log(priceMin0) - logPad;
+  const logMax = Math.log(priceMax0) + logPad;
+
+  const balVals = curve.map(c=>c.balance);
+  const eqVals = curve.map(c=>c.equity);
+  const eqMin0 = Math.min(...balVals, ...eqVals);
+  const eqMax0 = Math.max(...balVals, ...eqVals);
+  const [eqMin, eqMax] = niceRange(eqMin0, eqMax0);
+
+  function xAt(i){ return PAD_L + i * BAR_W + BAR_W/2; }
+  function yPrice(p){ return PAD_T + (1 - (Math.log(p) - logMin)/(logMax - logMin)) * (PRICE_H - PAD_T - PAD_B); }
+  function yEq(v){ return PAD_T + (1 - (v - eqMin)/(eqMax - eqMin)) * (PRICE_H - PAD_T - PAD_B); }
+
+  // index trades by day for marker lookup
+  const dateIndex = new Map();
+  d1.forEach((b,i)=>dateIndex.set(b.t, i));
+  function nearestIdx(dateStr){
+    if(dateIndex.has(dateStr)) return dateIndex.get(dateStr);
+    // fallback: linear scan for nearest later date
+    for(let i=0;i<n;i++){ if(d1[i].t >= dateStr) return i; }
+    return n-1;
+  }
+  trades.forEach(tr=>{
+    tr._entryIdx = nearestIdx(tr.entry_time.slice(0,10));
+    tr._exitIdx = nearestIdx(tr.exit_time.slice(0,10));
+  });
+
+  const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  // ---- price canvas ----
+  const priceCanvas = document.getElementById('priceCanvas');
+  const priceScroll = document.getElementById('priceScroll');
+  const dpr = Math.max(1, window.devicePixelRatio||1);
+
+  function setupCanvas(cv, w, h){
+    cv.width = w*dpr; cv.height = h*dpr;
+    cv.style.width = w+'px'; cv.style.height = h+'px';
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return ctx;
+  }
+  const pctx = setupCanvas(priceCanvas, CHART_W, PRICE_H);
+
+  function drawGridY(ctx, w, h, minL, maxL, fmtL, minR, maxR, fmtR, padT, padB){
+    const grid = cssVar('--grid'), faint = cssVar('--text-faint'), gold = cssVar('--gold'), blue = cssVar('--blue');
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.strokeStyle = grid;
+    ctx.lineWidth = 1;
+    const steps = 6;
+    for(let s=0; s<=steps; s++){
+      const y = padT + (1 - s/steps)*(h-padT-padB);
+      ctx.beginPath();
+      ctx.moveTo(PAD_L, Math.round(y)+0.5);
+      ctx.lineTo(w-PAD_R, Math.round(y)+0.5);
+      ctx.stroke();
+      const vL = minL + (maxL-minL)*s/steps;
+      ctx.fillStyle = faint;
+      ctx.textAlign = 'right';
+      ctx.fillText(fmtL(vL), PAD_L-8, y+3);
+      const vR = minR + (maxR-minR)*s/steps;
+      ctx.fillStyle = faint;
+      ctx.textAlign = 'left';
+      ctx.fillText(fmtR(vR), w-PAD_R+8, y+3);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  function drawMonthTicks(ctx, h, padB){
+    const grid = cssVar('--grid'), faint = cssVar('--text-faint');
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.fillStyle = faint;
+    let lastMonth = '';
+    for(let i=0;i<n;i++){
+      const ym = d1[i].t.slice(0,7);
+      if(ym !== lastMonth){
+        lastMonth = ym;
+        const x = xAt(i);
+        ctx.strokeStyle = grid;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(x)+0.5, PAD_T);
+        ctx.lineTo(Math.round(x)+0.5, h-padB);
+        ctx.stroke();
+        ctx.fillText(d1[i].t.slice(0,7), x+3, h-6);
+      }
+    }
+  }
+
+  function draw(){
+    pctx.clearRect(0,0,CHART_W,PRICE_H);
+    drawMonthTicks(pctx, PRICE_H, PAD_B);
+    drawGridY(pctx, CHART_W, PRICE_H, logMin, logMax, v=>Math.exp(v).toFixed(0), eqMin, eqMax, v=>'$'+v.toFixed(0), PAD_T, PAD_B);
+
+    // equity/balance lines, overlaid on the same canvas using the right-hand scale.
+    // Alleggerite (alpha + linea sottile) per non competere visivamente con le
+    // candele, che restano il layer primario disegnato sopra.
+    const gold = cssVar('--gold'), blue = cssVar('--blue');
+    function drawLine(key, color, alpha){
+      pctx.save();
+      pctx.globalAlpha = alpha;
+      pctx.strokeStyle = color;
+      pctx.lineWidth = 1.3;
+      pctx.beginPath();
+      curve.forEach((c,i)=>{
+        const x = xAt(i), y = yEq(c[key]);
+        if(i===0) pctx.moveTo(x,y); else pctx.lineTo(x,y);
+      });
+      pctx.stroke();
+      pctx.restore();
+    }
+    drawLine('equity', blue, 0.55);
+    drawLine('balance', gold, 0.7);
+
+    // candles, real body/wick proportions, drawn on top of the equity lines
+    const green = cssVar('--green'), red = cssVar('--red');
+    for(let i=0;i<n;i++){
+      const b = d1[i];
+      const x = xAt(i);
+      const up = b.c >= b.o;
+      pctx.strokeStyle = up? green: red;
+      pctx.fillStyle = up? green: red;
+      pctx.lineWidth = 1;
+      pctx.beginPath();
+      pctx.moveTo(x, yPrice(b.h));
+      pctx.lineTo(x, yPrice(b.l));
+      pctx.stroke();
+      const yo = yPrice(b.o), yc = yPrice(b.c);
+      const top = Math.min(yo,yc), bh = Math.max(1, Math.abs(yc-yo));
+      pctx.fillRect(x-BAR_W*0.36, top, BAR_W*0.72, bh);
+    }
+
+    // trade markers
+    trades.forEach(tr=>{
+      const isBuy = tr.dir === 1;
+      const col = isBuy? green: red;
+      const ex = xAt(tr._entryIdx);
+      const price = d1[tr._entryIdx];
+      const py = isBuy ? yPrice(price.l) + 12 : yPrice(price.h) - 12;
+      pctx.fillStyle = col;
+      pctx.beginPath();
+      if(isBuy){
+        pctx.moveTo(ex, py+6); pctx.lineTo(ex-4, py+12); pctx.lineTo(ex+4, py+12);
+      } else {
+        pctx.moveTo(ex, py-6); pctx.lineTo(ex-4, py-12); pctx.lineTo(ex+4, py-12);
+      }
+      pctx.closePath();
+      pctx.fill();
+    });
+  }
+
+  draw();
+
+  // ---- crosshair ----
+  const crossPrice = document.getElementById('crossPrice');
+
+  function idxFromClientX(scrollEl, clientX){
+    const rect = scrollEl.getBoundingClientRect();
+    const xInCanvas = clientX - rect.left + scrollEl.scrollLeft;
+    let i = Math.round((xInCanvas - PAD_L - BAR_W/2)/BAR_W);
+    return Math.max(0, Math.min(n-1, i));
+  }
+
+  function tradesOnDay(i){
+    const dateStr = d1[i].t;
+    return trades.filter(tr=>tr.entry_time.slice(0,10)===dateStr || tr.exit_time.slice(0,10)===dateStr);
+  }
+
+  function showCross(i, clientX, scrollEl, box){
+    const b = d1[i], c = curve[i];
+    let html = `<div class="date">${b.t}</div>`;
+    html += `<div class="row"><span class="k">O</span><span class="v">${b.o.toFixed(2)}</span></div>`;
+    html += `<div class="row"><span class="k">H</span><span class="v up">${b.h.toFixed(2)}</span></div>`;
+    html += `<div class="row"><span class="k">L</span><span class="v dn">${b.l.toFixed(2)}</span></div>`;
+    html += `<div class="row"><span class="k">C</span><span class="v">${b.c.toFixed(2)}</span></div>`;
+    html += `<div class="row"><span class="k">Bilancio</span><span class="v bal">$${c.balance.toFixed(2)}</span></div>`;
+    html += `<div class="row"><span class="k">Equity</span><span class="v eq">$${c.equity.toFixed(2)}</span></div>`;
+    const td = tradesOnDay(i);
+    td.forEach(tr=>{
+      const kind = tr.entry_time.slice(0,10)===b.t ? 'apre' : 'chiude';
+      const dirLbl = tr.dir===1?'buy':'sell';
+      const cls = tr.pnl>=0?'up':'dn';
+      html += `<div class="row"><span class="k">${kind} ${dirLbl}</span><span class="v ${cls}">${tr.pnl>=0?'+':''}$${tr.pnl.toFixed(2)}</span></div>`;
+    });
+    box.innerHTML = html;
+    box.style.display = 'block';
+    const rect = scrollEl.getBoundingClientRect();
+    let left = clientX - rect.left + scrollEl.scrollLeft + 14;
+    const maxLeft = CHART_W - 150;
+    if(left > maxLeft) left = (clientX - rect.left + scrollEl.scrollLeft) - box.offsetWidth - 14;
+    box.style.left = left+'px';
+  }
+  function hideCross(box){ box.style.display='none'; }
+
+  priceScroll.addEventListener('mousemove', e=>{
+    const i = idxFromClientX(priceScroll, e.clientX);
+    showCross(i, e.clientX, priceScroll, crossPrice);
+  });
+  priceScroll.addEventListener('mouseleave', ()=>hideCross(crossPrice));
+
+  // one continuous chart, start from the beginning of the period
+  requestAnimationFrame(()=>{
+    priceScroll.scrollLeft = 0;
+  });
+})();
+</script>

@@ -988,6 +988,19 @@ void OnTick(){
 
    // PR4: modules submit proposals; one deterministic action wins per ticket.
    NXS_PM_BeginCycle();
+   // 02/09 - BUG TROVATO: NXS_State_ReconcileBroker() (che copia l'ATR
+   // d'ingresso e le altre info dal registro intenti nell'array di stato
+   // vivo g_managedState[], usato da NXS_State_EntryAtr/NXS_State_HasApplied
+   // ecc.) veniva chiamata SOLO dentro NXS_State_Save()/Load(), entrambe
+   // dietro il flag InpStatePersistInTester (default FALSE). Risultato: nel
+   // Tester g_managedState[] non veniva MAI popolato, e ogni consumer di
+   // NXS_State_EntryAtr cadeva SEMPRE sul fallback (g_atr, l'ATR del
+   // timeframe del grafico/M15) invece del vero ATR di ingresso registrato -
+   // scoperto testando un parziale su EMA_PULLBACK che scattava a 1/4-1/6
+   // della soglia prevista. La riconciliazione in memoria e' un concetto
+   // diverso dal salvataggio su disco (persistenza tra riavvii): va fatta
+   // ogni tick a prescindere da InpStatePersistInTester.
+   NXS_State_ReconcileBroker();
    // Management on every tick
    NXS_ManageFixedBE();
    NXS_ManageBreakevenAndTrail();
