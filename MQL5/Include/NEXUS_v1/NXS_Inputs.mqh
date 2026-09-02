@@ -815,6 +815,14 @@ input bool     InpStrat_BarUpDn          = false;
 input int      InpBarUpDnCooldownBars    = 8;    // 02/09 - raffreddamento locale per direzione (vedi NXS_Strat_BarUpDn):
                                                   // senza, il motore insegue lo stesso trend riaprendo a ogni barra.
 input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddamento per NXS_Strat_BreakoutAcc
+// 02/09 - idea originale dell'utente (pivot di swing frattali estesi in
+// avanti + wick di rigetto sul tocco). Mai verificata su MT5.
+input bool     InpStrat_PivotWick          = false;
+input int      InpPivotWickLookback        = 5;      // barre a sx/dx per confermare un pivot frattale
+input double   InpPivotWickTouchTolATR     = 0.25;    // tolleranza di "tocco" del livello, in ATR
+input double   InpPivotWickWickRatio       = 1.5;     // wick minimo = N x corpo e N x wick opposto
+input double   InpPivotWickMinWickATR      = 0.15;    // wick minimo assoluto, in ATR (filtra rumore su barre piatte)
+input int      InpPivotWickCooldownBars    = 8;       // raffreddamento per direzione (stesso bug BAR_UPDN/BREAKOUT_ACC)
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

@@ -665,6 +665,99 @@ SNXSSignal NXS_Strat_3CommasBot(){
    return s;
 }
 
+//------------------------------------ K6 Pivot Extension + Wick Rejection (#49)
+// 02/09 - idea originale dell'utente, vista a mano su TradingView (GOLD,
+// linee orizzontali estese dai pivot di swing): buy su tocco di un pivot
+// MINIMO con wick di rigetto inferiore, sell su tocco di un pivot MASSIMO
+// con wick di rigetto superiore. Diversa da MALAYSIAN_SNR (quella usa il
+// massimo/minimo di CHIUSURA su una finestra H4/W1 fissa + filtro di
+// storyline direzionale) - qui sono veri pivot frattali (5 barre a
+// sinistra e a destra piu' basse/alte) sul TF di esecuzione, piu' pivot
+// tenuti "vivi" in memoria (si estendono in avanti finche' non escono
+// dalla finestra), condizione di rigetto sul solo wick della candela di
+// tocco. Mai verificata su MT5 - disattivata di default come le altre
+// aggiunte di stanotte. Gate a chiusura barra + raffreddamento per
+// direzione fin dall'inizio (bug di inseguimento gia' trovato stanotte
+// su BAR_UPDN/BREAKOUT_ACC senza questa protezione).
+#define NXS_PIVOTWICK_MAXLVL 8
+struct SNXSPivotWickState {
+   datetime lastBarTime;
+   double   pivHi[NXS_PIVOTWICK_MAXLVL];
+   double   pivLo[NXS_PIVOTWICK_MAXLVL];
+   datetime lastFireTime[2];   // [0]=buy [1]=sell
+};
+SNXSPivotWickState g_pivotWickState;
+
+void _nxs_pivotwick_push(double &arr[], double level){
+   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--) arr[i] = arr[i - 1];
+   arr[0] = level;
+}
+
+SNXSSignal NXS_Strat_PivotWick(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PIVOT_WICK";
+   if(!InpStrat_PivotWick || !NXS_SelectorAllows(49)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_pivotWickState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_pivotWickState.lastBarTime = curBar0;
+
+   int L = InpPivotWickLookback;
+   int p = L + 1;   // shift appena confermato come pivot (L barre note a destra)
+   double hiP = iHigh(g_sym, tf, p);
+   double loP = iLow(g_sym, tf, p);
+   bool isHiPivot = true, isLoPivot = true;
+   for(int i = p - L; i <= p + L; i++){
+      if(i == p) continue;
+      if(iHigh(g_sym, tf, i) >= hiP) isHiPivot = false;
+      if(iLow(g_sym, tf, i)  <= loP) isLoPivot = false;
+   }
+   if(isHiPivot) _nxs_pivotwick_push(g_pivotWickState.pivHi, hiP);
+   if(isLoPivot) _nxs_pivotwick_push(g_pivotWickState.pivLo, loP);
+
+   double atr = NXS_ATRv(tf, 1, 14);
+   if(atr <= 0) return s;
+   double tol = InpPivotWickTouchTolATR * atr;
+   double minWick = InpPivotWickMinWickATR * atr;
+
+   double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
+   double h1 = iHigh(g_sym, tf, 1), l1 = iLow(g_sym, tf, 1);
+   double body   = MathAbs(c1 - o1);
+   double upWick = h1 - MathMax(o1, c1);
+   double dnWick = MathMin(o1, c1) - l1;
+
+   long periodSec   = PeriodSeconds(tf);
+   long cooldownSec = (long)InpPivotWickCooldownBars * periodSec;
+   bool buyOk  = (g_pivotWickState.lastFireTime[0] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_pivotWickState.lastFireTime[1] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[1]) >= cooldownSec);
+
+   // BUY: wick di rigetto inferiore sulla candela di tocco + chiusura su pivot minimo
+   if(buyOk && dnWick >= minWick && dnWick >= InpPivotWickWickRatio * body &&
+      dnWick >= InpPivotWickWickRatio * upWick && c1 > o1){
+      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+         if(g_pivotWickState.pivLo[i] <= 0) continue;
+         if(l1 >= g_pivotWickState.pivLo[i] - tol && l1 <= g_pivotWickState.pivLo[i] + tol){
+            s.dir = DIR_BUY; s.score = 60; s.reason = "PivotWick_buy";
+            g_pivotWickState.lastFireTime[0] = curBar0;
+            break;
+         }
+      }
+   }
+   // SELL: wick di rigetto superiore + chiusura su pivot massimo
+   if(s.dir == DIR_NONE && sellOk && upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
+      upWick >= InpPivotWickWickRatio * dnWick && c1 < o1){
+      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+         if(g_pivotWickState.pivHi[i] <= 0) continue;
+         if(h1 <= g_pivotWickState.pivHi[i] + tol && h1 >= g_pivotWickState.pivHi[i] - tol){
+            s.dir = DIR_SELL; s.score = 60; s.reason = "PivotWick_sell";
+            g_pivotWickState.lastFireTime[1] = curBar0;
+            break;
+         }
+      }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva

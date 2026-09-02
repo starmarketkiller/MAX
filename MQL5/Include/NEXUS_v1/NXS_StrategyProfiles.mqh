@@ -44,6 +44,9 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // e target piu' largo per le operazioni scalp (2-2.5:1, vedi screenshot
    // TradingView BarUpDn condivisi) - qui R:R 2.5, mai verificato dal vivo.
    if(name == "BAR_UPDN")          { slMult=1.0; tpMult=2.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
+   // 02/09 - PIVOT_WICK: stop stretto (il rigetto sul pivot e' gia' la
+   // conferma strutturale), target 2.2:1 - stessa filosofia scalp di BAR_UPDN.
+   if(name == "PIVOT_WICK")        { slMult=1.0; tpMult=2.2; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
@@ -271,6 +274,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // barra singola, "any timeframe" nell'originale. M15 = TF di ingresso
    // di default, coerente con la granularita' del pattern.
    if(name == "BAR_UPDN")          return PERIOD_M15;
+   if(name == "PIVOT_WICK")        return PERIOD_M15;   // 02/09 - modalita' scalp richiesta dall'utente
    // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
    // lento a girare.
@@ -409,6 +413,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "STRUCT_REACT")      return 0.5;
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "PIVOT_WICK")        return 0.5;   // 02/09 - nuova, mai verificata su MT5, tier cauto
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
@@ -645,6 +650,7 @@ bool NXS_Profile_Enabled(const string name){
    // l'unica vera protezione - "abilitata al test" non e' "abilitata di
    // default", quel controllo resta su InpStrat_X.
    if(name == "BAR_UPDN")               return true;
+   if(name == "PIVOT_WICK")             return true;
    if(name == "PMAX")                   return true;
    if(name == "MACD_SMA200")            return true;
    if(name == "RSI_DIV_PINE")           return true;
