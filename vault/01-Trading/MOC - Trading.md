@@ -14,6 +14,17 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Censimento 28 EA Candlestick Free Robots, Bug Piercing Line Trovato (03-09)]]** —
+  Fase 1 del piano post-maratona: estratte le 7 logiche di pattern
+  candlestick (Black Crows/White Soldiers, Engulfing, Harami, Meeting
+  Lines, Dark Cloud/Piercing Line, Hanging Man/Hammer, Morning/Evening
+  Star) dai 28 EA campione MetaQuotes. **Bug reale trovato**: Piercing
+  Line ha un if senza graffe che lo rende un falso-positivo strutturale
+  (segnala BUY quasi sempre, non testa mai il vero pattern) — presente
+  identico in tutte e 4 le varianti oscillatore. 4 pattern non ancora
+  coperti da NEXUS (Harami/MeetingLines/PiercingLine-fix/
+  MorningEveningStar); Meeting Lines consigliata come primo candidato
+  (unica senza filtro di trend già impilato).
 - **[[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]]** —
   sessione background dopo `/clear`: analizzati 3 report Tester non
   ancora letti (step2 tpMult=1.0 ancora negativo PF0.90/1538 trade;

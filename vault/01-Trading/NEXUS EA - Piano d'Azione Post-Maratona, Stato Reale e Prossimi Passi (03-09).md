@@ -83,16 +83,20 @@ candele giapponesi × 4 oscillatori di conferma (CCI/MFI/RSI/Stoch)**:
 - Hanging Man / Hammer
 - Morning Star / Evening Star / Doji Star
 
-Da fare (prossima sessione): leggere il codice sorgente di questi 28 (o
-almeno 1 per famiglia, sono varianti sullo stesso pattern con oscillatore
-diverso) per estrarre la LOGICA di riconoscimento pattern — non per
-usarli così come sono, ma per portare pattern non ancora coperti da
-NEXUS (Harami, Meeting Lines, Dark Cloud/Piercing Line, Morning/Evening
-Star non esistono nel motore attuale) nello stesso stile di BAR_UPDN/
-PIVOT_WICK. Censire anche `MQL5/Experts/Examples` e
-`MQL5/Indicators/Examples` (indicatori nativi completi: ADX, Ichimoku,
-Fractals, Gator, Heiken Ashi, DeMarker, Force Index, MFI, ecc. — utile
-sapere cosa esiste già prima di reimplementare).
+~~Da fare (prossima sessione): leggere il codice sorgente di questi 28
+(o almeno 1 per famiglia...)~~ **Fatto (03/09, sessione background)**:
+lette le 7 logiche di pattern (1 variante RSI per famiglia + verifica
+struttura sulle altre 3 oscillatori). Trovato un **bug reale** nel
+codice sorgente Piercing Line (if senza graffe → il pattern vero non
+segnala mai, il fallback segnala sempre BUY) presente identico nelle
+4 varianti — da NON portare così com'è. Dettaglio completo, mappa
+copertura vs NEXUS e candidato consigliato (Meeting Lines, unica
+famiglia senza filtro di trend impilato) in
+[[NEXUS EA - Censimento 28 EA Candlestick Free Robots, Bug Piercing Line Trovato (03-09)]].
+Ancora da fare: variante MFI non letta (dedotta per analogia), censimento
+`MQL5/Experts/Examples` e `MQL5/Indicators/Examples` (indicatori nativi),
+nessun backtest ancora fatto sui 4 pattern nuovi (Harami/MeetingLines/
+PiercingLine-fix/MorningEveningStar) — solo lettura del codice finora.
 
 ### Fase 2 — Revisione architetturale dell'EA (mai fatta in modo sistematico)
 
