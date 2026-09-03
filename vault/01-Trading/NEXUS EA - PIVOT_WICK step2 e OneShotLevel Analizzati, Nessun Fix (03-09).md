@@ -88,6 +88,38 @@ direzione del segnale entro N barre, senza SL/TP fissi — MFE/MAE puro)
 per separare "il pattern non predice nulla" da "il pattern predice ma
 l'uscita/il timing lo vanifica".
 
+## Addendum — c3 RequireCloseConfirm=true: primo segnale reale (03/09, 17:29)
+
+Scoperta durante la sessione: un'intera batteria di test PIVOT_WICK
+(`c1`...`c6`, poi `d1`...`d6`) era già stata costruita e lanciata da
+questa stessa sessione **prima** di un riassunto del contesto — gira in
+background via `terminal64.exe /config:` orchestrato da script
+PowerShell (`wait_and_run_combos.ps1`/`wait_and_run_battery_d.ps1` in
+`tmp/strategy_validation/`), non serve un altro agente per lanciarla.
+c3 (`InpPivotWickRequireCloseConfirm=true`, stesso periodo 3 mesi di
+c1/c2) appena completato:
+
+| | c1 baseline | c2 OneShotLevel | **c3 RequireCloseConfirm** |
+|---|---|---|---|
+| Trade | 503 | 362 | **278** |
+| Win rate | 44.9% | 45.0% | **47.8%** |
+| PF | 0.79 | 0.77 | **0.91** |
+| Net | -546.74 | -431.07 | **-122.26** |
+| Avg win/loss | 8.88/-9.19 | 8.81/-9.36 | 9.32/-9.35 |
+| Buy/Sell netPnL | entrambi negativi | entrambi negativi | **Sell +$32.6 (71/138), Buy -$149 (62/140)** |
+
+A differenza di OneShotLevel, qui il **win rate si sposta davvero**
+(44.9%→47.8%, +2.9pp) non solo il volume — prima conferma che
+richiedere la chiusura della candela prima di validare il pattern (non
+solo il tocco intrabar) è un miglioramento di qualità del segnale, non
+solo un filtro di quantità. PF resta sotto 1 ma il divario si è
+dimezzato. Emerge anche un possibile bias direzionale (Sell positivo,
+Buy negativo) da verificare su campione più ampio prima di trarre
+conclusioni. **c4 (buildup), c5 (RequireWick), c6 (tutti combinati)**
+ancora in coda nella stessa batteria — se c6 combina questi guadagni,
+la conclusione "probabile problema di logica" di questa nota andrebbe
+rivista.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
