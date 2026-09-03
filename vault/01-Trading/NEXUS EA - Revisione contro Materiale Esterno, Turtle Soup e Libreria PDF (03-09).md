@@ -254,6 +254,106 @@ in PIVOT_WICK, nomenclatura diversa.
   MSNR+SMC+LIT+ICT in un unico sistema) — trattarli come un corpus
   unico, non come 3 fonti indipendenti, quando si approfondirà.
 
+## Quarto documento: "Support and Resistance Trading Strategy — The Advanced Guide" (Rayner Teo, TradingwithRayner, 26p)
+
+**Il documento più direttamente utile trovato finora per PIVOT_WICK.**
+Educatore riconosciuto (non un corso anonimo), guida compatta e ben
+argomentata, letta per intero (testo estraibile pulito).
+
+### 5 punti concreti, tutti applicabili a PIVOT_WICK
+
+1. **"Più volte un livello viene testato, PIÙ SI INDEBOLISCE"** (non il
+   contrario) — un livello S/R esiste perché ci sono ordini in attesa
+   lì (istituzionali/smart money); ogni test consuma parte di quegli
+   ordini. **Conferma indipendente del concetto "fresh/non-fresh" di
+   Secret of 4.11**: due fonti diverse arrivano alla stessa conclusione
+   — un livello va scontato/rimosso dopo l'uso, non ritradato
+   all'infinito. PIVOT_WICK attualmente non ha alcun decadimento per
+   numero di tocchi — i livelli restano validi indefinitamente nel pool
+   (8 slot, nessun contatore di utilizzo).
+
+2. **SR sono AREE, non linee** — "undershoot" (il prezzo si avvicina ma
+   non tocca esattamente, il trade viene perso ad aspettare il livello
+   preciso) e "overshoot" (il prezzo supera leggermente il livello, lo
+   si crede rotto, non lo è). PIVOT_WICK usa già una tolleranza
+   (`InpPivotWickTouchTolATR`) — coerente con questo principio, nessuna
+   azione necessaria.
+
+3. **SR è il PEGGIOR posto per lo stop loss — "viene cacciato"**. Due
+   soluzioni concrete offerte: (a) stop a distanza ATR dal livello
+   (esattamente quello che fa già `NXS_DefaultSLTP` — validato); (b)
+   **aspettare la CHIUSURA della candela oltre il livello**, non basarsi
+   sul semplice tocco intrabar (wick), per confermare che il livello sia
+   davvero rotto. **Risposta diretta e con fonte alla domanda iniziale
+   dell'utente** ("i trade a volte prendono stop e invertono dopo
+   poco") — PIVOT_WICK valuta il tocco sul massimo/minimo della barra
+   (wick), non sulla chiusura: uno stop hunt intrabar seguito da
+   inversione è esattamente il pattern che l'attesa della chiusura
+   evita.
+
+4. **Filtro "buildup"**: se il prezzo si consolida (candele piccole, in
+   range stretto) PROPRIO sul livello prima del tocco, è un segnale di
+   DEBOLEZZA — il livello ha più probabilità di ROMPERSI che di
+   reggere. Un filtro che PIVOT_WICK non ha: attualmente tratta ogni
+   tocco allo stesso modo, che sia un tocco pulito e diretto o un
+   consolidamento prolungato proprio sul livello (che secondo questa
+   fonte va evitato per un trade di rigetto, non cercato).
+
+5. **Strategia completa in 5 passi** (per confronto architetturale):
+   segna le aree SR → aspetta un movimento direzionale VERSO l'area →
+   aspetta il rigetto → **entra sulla candela SUCCESSIVA al rigetto**
+   (non sulla stessa) con stop oltre lo swing → target sullo swing
+   opposto. PIVOT_WICK entra potenzialmente sulla stessa barra del
+   tocco — un ritardo di conferma di una barra è una variante
+   facilmente testabile.
+
+### Tre miglioramenti concreti e testabili per PIVOT_WICK (prossima sessione)
+
+1. Contatore di utilizzo per livello — un livello usato (ciclo
+   completo trade) esce dal pool, non viene ritradato (combina i punti
+   1 di questa fonte + Secret of 4.11)
+2. Conferma su CHIUSURA invece che su wick per il tocco — potrebbe
+   ridurre gli stop prematuri seguiti da inversione lamentati
+   dall'utente
+3. Filtro anti-buildup — scartare tocchi preceduti da consolidamento
+   stretto sul livello (calcolabile come range delle ultime N barre
+   vs ATR)
+
+## Quinto/sesto/settimo documento: Simple Trading Book (basso valore), trading-book.pdf (pattern grafici classici), Flipping Markets (conferma #3)
+
+- `643335252-Simple-Trading-Book-Trading-Smart.pdf` (60p) — **basso
+  valore**, contenuto da principiante assoluto ("cos'è una candela"),
+  niente di nuovo. Non approfondire oltre.
+
+- `797807669-trading-book.pdf` (51p, account "@5trader"/"trading_book1")
+  — **enciclopedia di pattern grafici classici con regole quantificate
+  di entry/SL/TP**: Doppio Massimo/Minimo (entry al retest della
+  neckline, TP = altezza pattern proiettata), Rettangolo (**minimo 3
+  tocchi** per validare il range), Testa e Spalle (regolare e
+  invertita, TP = altezza testa-neckline), Cuneo ascendente/discendente,
+  Diamante. **Nessuna di queste è implementata in NEXUS oggi** (nessuna
+  strategia STRUCT_REACT copre doppio massimo/minimo o testa-spalle
+  esplicitamente) — famiglia di pattern completamente nuova, con regole
+  di target già quantificate (misura del pattern proiettata dal
+  breakout), candidata per una futura strategia "Classic Chart
+  Patterns" se si vuole ampliare oltre ICT/SMC.
+
+- `flippingmarkets1-...pdf` (59p, "Flipping Markets") — consiglio di
+  disciplina: scegliere UNA sola coppia/strumento e UNA sola sessione,
+  padroneggiarla col backtest, non disperdersi su 4-5 strumenti insieme
+  (coerente col principio "qualità non quantità" ripetuto
+  dall'utente). Contenuto tecnico: stesso framework ICT (supply/demand,
+  mitigazione, inefficienza/FVG) già coperto. **Ma conferma per la
+  TERZA volta, da un autore indipendente**, il principio "zona non
+  ancora testata = più forte" — qui chiamata "**UNMITIGATED** supply/
+  demand" (una zona mai ritestata è un obiettivo di prezzo più forte di
+  una già testata). **Tre fonti indipendenti (Secret of 4.11, Rayner
+  Teo, Flipping Markets) convergono sulla stessa conclusione** — non è
+  l'opinione di una persona sola, è un principio consolidato nella
+  letteratura di trading. Rafforza ulteriormente la priorità del
+  miglioramento #1 già proposto per PIVOT_WICK (contatore di utilizzo
+  per livello, rimozione dal pool dopo un ciclo completo).
+
 ## Stato onesto e prossimi passi
 
 Letti in profondità 4 PDF su 34 (allyouneedtoknow parziale,
