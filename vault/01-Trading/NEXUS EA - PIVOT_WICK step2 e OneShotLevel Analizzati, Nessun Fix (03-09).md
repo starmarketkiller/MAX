@@ -120,6 +120,43 @@ ancora in coda nella stessa batteria — se c6 combina questi guadagni,
 la conclusione "probabile problema di logica" di questa nota andrebbe
 rivista.
 
+## Addendum 2 — c4 AvoidBuildup (no-op sospetto) e c5 RequireWick (peggiora) (03/09, 18:19)
+
+| | c1 baseline | c3 CloseConfirm | **c4 AvoidBuildup** | **c5 RequireWick** |
+|---|---|---|---|---|
+| Trade | 503 | 278 | **503 (identico a c1)** | **87** |
+| Win rate | 44.9% | 47.8% | **44.9% (identico)** | **41.4%** |
+| PF | 0.79 | 0.91 | **0.79 (identico)** | **0.68** |
+| Net | -546.74 | -122.26 | **-546.74 (identico)** | -143.98 |
+
+**c4 (AvoidBuildup=true)**: risultato **identico a c1 fino al centesimo**
+(stesso numero di trade, stesso net, stesso DD). Verificato nel report
+che il parametro è stato caricato correttamente
+(`InpPivotWickAvoidBuildup=true` presente nei "Dati in ingresso"), e
+verificato nel codice (`NXS_Strategies.mqh` righe 784-794) che
+`buildupOk` è davvero cablato nel gate d'ingresso sia BUY che SELL —
+non è un input morto. Conclusione più probabile: **il filtro non ha mai
+scartato un solo tocco in 3 mesi** (soglia `BuildupMinATR=0.8` mai
+raggiunta in negativo su GOLD M15, o le barre controllate — indice 2 a
+2+6, non 1 a 6 — guardano un punto leggermente diverso da quello
+inteso). Non ancora isolato quale delle due cause sia quella vera —
+richiederebbe un contatore diagnostico nel codice, non fatto qui
+(nessuna modifica MQL5 in questa sessione).
+
+**c5 (RequireWick=true)**: chiude la domanda della Fase 0 originale —
+**peggiora**, non solo riduce il campione. WR scende sotto la baseline
+(44.9%→41.4%), PF scende (0.79→0.68). Il wick di rigetto vero, da solo,
+non è un fix.
+
+**Bilancio dei singoli finora**: su 3 fix isolati testati (OneShotLevel,
+RequireCloseConfirm, AvoidBuildup, RequireWick — 4 in totale), **solo
+RequireCloseConfirm mostra un effetto reale e positivo**. AvoidBuildup
+sembra strutturalmente inerte su questo dataset, RequireWick peggiora,
+OneShotLevel riduce solo il volume. Prossimo dato decisivo: **c6
+(tutti combinati)** — dirà se CloseConfirm da solo regge o se
+combinarlo con gli altri (anche quelli inerti/negativi in isolamento)
+cambia il quadro.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
