@@ -354,6 +354,54 @@ argomentata, letta per intero (testo estraibile pulito).
   miglioramento #1 già proposto per PIVOT_WICK (contatore di utilizzo
   per livello, rimozione dal pool dopo un ciclo completo).
 
+## Corpus Alchemist, CRT, Malaysian SNR — sintesi (sample mirati, non lettura integrale)
+
+### Alchemist (While Srp — diverso dall'"ABAY FX" di Sequence.pdf, due corsi omonimi distinti)
+
+- **OCL (Open Close Level)**: livello definito dall'apertura della
+  candela subito dopo un impulso forte — concettualmente vicino alla
+  "zona origine" già usata in `NXS_SHBMS_UpdateSide` (ultima candela di
+  colore opposto prima del displacement), nomenclatura diversa, stessa
+  idea di fondo.
+- **"4 Key Trendline"**: linea dinamica tracciata tra due pivot nella
+  stessa direzione (1→2), estesa in avanti, **ingresso al terzo tocco
+  (punto 3)**. Geometria diagonale — **PIVOT_WICK non ha nulla di
+  simile** (solo livelli orizzontali da pivot frattali). Idea per una
+  strategia companion (trendline dinamica invece di livello
+  orizzontale), non ancora esplorata nel motore in questa forma.
+
+### CRT (6 PDF, sample rapido — la nota vault CRT esistente già copre l'essenziale)
+
+Confermato: la teoria è compatta (candela 1 definisce il range, candela
+2 dentro, candela 3 rompe) e **combinata esplicitamente con Turtle
+Soup** in almeno una fonte (`754092222-CRT.pdf`, Romeo): "1. CRT per il
+range. 2. Aspetta un turtle soup. 3. Aspetta model #1 ed entra su LTF."
+**Idea concreta non ancora testata**: NEXUS ha sia CRT che TURTLE_SOUP
+come strategie indipendenti — non sono mai state provate in
+combinazione/confluenza (segnale solo quando entrambe concordano sulla
+stessa zona), che è esattamente come le fonti esterne le descrivono
+usate insieme, non separatamente.
+
+### Malaysian SNR Emperor (KORORFX, 67p) — cascata di conferma multi-TF non presente in NEXUS
+
+Confermato l'impianto di base (zone da massimo/minimo di CHIUSURA
+W1/D1, "Weekly to Weekly", "Daily to Daily" — stesso principio di
+`NXS_Strat_MalaysianSNR_Rejection` che usa H4/W1). **Ma trovato un
+livello di sofisticazione in più**: "Setup 2(B) Medium Risk" descrive
+una **cascata di conferma a doppio timeframe** — rigetto sul TF alto
+(es. Daily) seguito dall'attesa di un **breakout di conferma su un TF
+più basso** (H1) prima di entrare, invece di entrare direttamente al
+tocco sul TF alto. `NXS_Strat_MalaysianSNR_Rejection` oggi entra
+direttamente alla chiusura H4 che rispetta le condizioni — **nessun
+passaggio di raffinamento su TF più basso**. Miglioramento concreto e
+testabile per una prossima sessione, simile nello spirito al
+"raffinamento HTF→LTF" già notato nella sezione Confluence del primo
+PDF letto.
+
+`My Rare SNR Course.pdf` non ancora aperto in profondità — stesso
+autore/scuola presumibilmente, priorità bassa vista la sovrapposizione
+già confermata con KORORFX.
+
 ## Stato onesto e prossimi passi
 
 Letti in profondità 4 PDF su 34 (allyouneedtoknow parziale,
