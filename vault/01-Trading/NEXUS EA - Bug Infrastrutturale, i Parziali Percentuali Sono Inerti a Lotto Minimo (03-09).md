@@ -2,22 +2,35 @@
 type: note
 domain: trading
 status: active
-tags: [trading, nexus-ea, bug, infra, p0, partial-close, mql5]
+tags: [trading, nexus-ea, sizing, partial-close, mql5]
 created: 2026-09-03
 updated: 2026-09-03
 ---
 
-# NEXUS EA — Bug infrastrutturale: TUTTI i parziali percentuali sono inerti a lotto minimo (03/09)
+# NEXUS EA — I parziali percentuali sono aritmeticamente impossibili a lotto minimo (03/09)
+
+## Correzione (03/09, dopo commento dell'utente)
+
+Titolo e framing originali dicevano "bug infrastrutturale" — l'utente
+ha giustamente corretto: **non è un bug, è un vincolo fisico**. 0.01 è
+già il lotto minimo/step del simbolo, non esiste una frazione più
+piccola da chiudere; il codice si comporta correttamente rifiutando lo
+split invece di mandare un ordine sotto il minimo (che il broker
+respingerebbe comunque). Resta comunque un vincolo di test/sizing da
+conoscere: vedi sotto la conferma empirica che con lotto sufficiente
+(0.02) il meccanismo funziona davvero.
 
 ## Perché questa nota è separata (non solo un addendum PIVOT_WICK)
 
 Scoperta durante l'analisi della batteria di test PIVOT_WICK (round
-`d1`-`d3`, uscite), ma il bug è in `NXS_SplitTrade.mqh` e riguarda
-**ogni strategia testata a lotto minimo (0.01)**, non solo PIVOT_WICK —
-merita una nota propria per non restare sepolta. Classificazione
-Master Roadmap: **P0** (integrità del test), non P4 (edge) — il
-problema non è "il parziale non aiuta", è "il parziale non è mai stato
-davvero testato".
+`d1`-`d3`, uscite): a 0.01 lotto (lo standard di quasi tutto lo
+screening estivo) nessun parziale percentuale di default può mai
+scattare, per **ogni strategia**, non solo PIVOT_WICK — merita una nota
+propria per non restare sepolta. Non è integrità del test nel senso di
+un bug (P0) — è un limite di sizing da tenere presente quando si
+interpretano risultati storici "il parziale non ha cambiato nulla" a
+lotto minimo: quel risultato è nullo per costruzione, non una prova che
+il parziale non aiuti.
 
 ## La scoperta
 
@@ -77,23 +90,47 @@ travestito da negativo. Da rivedere quali note storiche si basano su
 questo (ricerca futura, non fatta qui — questa nota si limita a
 documentare il meccanismo).
 
+## Conferma empirica — a 0.02 lotto il meccanismo funziona davvero (trovata cercando la risposta a "con 0.02/0.05 è stato fatto?")
+
+Due report mai analizzati, già presenti nella cartella del terminal
+dal 01-02/09 (prima di questa sessione): `nxs_emapb_step33_lot02_partial`
+e `nxs_emapb_step34_lot02_partial_fixed` — EMA_PULLBACK, lotto fisso
+`InpEMAPBFixedLot=0.02`, `InpTP1_Pct=0.50` (50% di 0.02 = 0.01, valido:
+sopravvive all'arrotondamento). Confermato nei deal CSV: posizioni
+0.02 chiuse in due tranche da 0.01 (es. apertura 0.02 alle 16:00,
+chiusura parziale 0.01 alle 16:51 a target, poi il resto 0.01 chiuso
+più tardi a SL) — il meccanismo scatta davvero a questo lotto.
+
+| | step33 | **step34 (fix ATR-TF)** |
+|---|---|---|
+| Trade | 198 | 170 |
+| PF | 0.90 | **1.22** |
+| Net (2023-2026) | -264.85 | **+691.14** |
+| Expectancy | -1.34 | **+4.07** |
+| Max DD balance | 825.43 | 636.56 |
+
+Stessa identica config tra i due — la differenza è il commit `8c197fe`
+("Fix: ATR d'ingresso registrato dal timeframe sbagliato + state mai
+riconciliato nel Tester") applicato tra le due passate. Con l'ATR
+corretto, EMA_PULLBACK+partial(0.02 lotto) passa da sotto pareggio a
+PF1.22 netto positivo su ~3 anni. **Non batte comunque la baseline
+nuda già nota di EMA_PULLBACK** (PF1.41 senza filtri, tabella master
+24/08) — quindi il partial a 0.02 lotto non è un miglioramento rispetto
+al non fare nulla, ma è la prima prova diretta che il meccanismo, di
+per sé, è sano quando i numeri gli permettono di scattare.
+
 ## Non ancora verificato
 
-- d3 (`InpUseVolumePartial`) ancora in corso — previsione: stesso esito
-  nullo, stessa causa aritmetica. Da confermare quando finisce.
-- Se un conto con lotto naturale più alto (es. 0.05-0.10, come nei test
-  SAR "lotto naturale" già confermati) rende i parziali percentuali
-  effettivamente operativi — plausibile (0.03 lotto ÷ P1 30% = 0.009 →
-  arrotonda comunque a 0 con step 0.01; serve un lotto per cui
-  `lotto × pct` superi almeno 0.005 per arrotondare a 0.01, quindi
-  serve un lotto ≥ ~0.03-0.05 a seconda della percentuale) — non
-  ricontrollato sui test SAR storici che menzionano parziali riusciti
-  (`NXS_ManageVolumePartial`, commit 3bd6d82, era per SAR — lì il lotto
-  potrebbe essere stato diverso da 0.01, da verificare).
-- Nessuna modifica al codice fatta qui (solo lettura/analisi) — un fix
-  plausibile (alzare a `MathCeil` invece di `MathFloor` quando il
-  risultato sarebbe altrimenti sotto lo step minimo, o un floor sul
-  volume minimo assoluto invece che sulla percentuale) richiede
+- d3 (`InpUseVolumePartial`, PIVOT_WICK a 0.01) ancora in corso —
+  previsione: stesso esito nullo del d1/d2, stessa causa aritmetica.
+- Non ancora testato PIVOT_WICK a 0.02-0.05 lotto con questi stessi
+  meccanismi (i risultati storici trovati sopra sono per EMA_PULLBACK,
+  non per PIVOT_WICK) — se si vuole valutare i parziali su PIVOT_WICK
+  serve rilanciare `d2`/`d3` con un lotto più alto, non fatto qui.
+- Nessuna modifica al codice fatta in questa sessione (solo lettura/
+  analisi) — un'eventuale modifica per rendere i parziali utilizzabili
+  anche a lotto minimo (es. chiudere l'intera posizione invece di una
+  frazione quando la frazione arrotonderebbe a zero) richiede
   discussione esplicita prima di toccare `NXS_SplitTrade.mqh` (vedi
   [[feedback_no_live_mql5_without_asking]]).
 
