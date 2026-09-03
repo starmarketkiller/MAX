@@ -136,6 +136,155 @@ Tutti in `C:\Users\User\Downloads\Mobile Devices\`. Stato: ✅ letto,
 - ⬜ `994417437-Alchemist-Concepts-in-Forex-Trading-Msnr-Overview.pdf`
 - ⬜ `978173780-isc-10-eng-shrinked.pdf`
 
+## Secondo PDF letto: "Candlesticks, Fibonacci, and Chart Pattern Trading Tools" (Fischer & Fischer, Wiley 2003, 273p)
+
+A differenza del primo, questo è un libro vero (360K caratteri di testo
+estraibile) — letto sia a testo che le figure delle pagine chiave (il
+testo da solo perde le figure, controllato esplicitamente su richiesta
+dell'utente).
+
+### Mindset (Cap. 1 — risponde direttamente alla richiesta "mindset")
+
+13 regole, le più rilevanti per NEXUS/gestione (il tema "80% gestione"
+sollevato dall'utente):
+- **Mai raddoppiare le perdite** — quasi tutti i grandi fallimenti nel
+  trading vengono da posizioni perdenti raddoppiate sperando di
+  recuperare con più leva
+- **Vivere con le perdite fa parte del sistema** — chiudere in pari una
+  posizione che era arrivata al +100% è una perdita reale quanto una
+  posizione chiusa sotto al prezzo d'ingresso (rilevante: è esattamente
+  il fenomeno "giveback" trovato stanotte su SAR/PIVOT_WICK/BAR_UPDN)
+- **La disciplina conta più di ogni strategia** — una strategia
+  efficace non deve essere complicata, ma va eseguita anche dopo una
+  serie di perdite
+- **Conoscere il proprio "pain level"** prima di eseguire una
+  strategia, e non cambiarla senza una ragione sufficiente solo perché
+  il sentiment di breve termine cambia
+- **Diversificare** produce una equity curve più stabile, anche se
+  probabilmente un rendimento medio più basso di un singolo prodotto
+  molto redditizio
+
+### Candele — regole quantitative precise (risponde a "quali candele danno segnali da sole")
+
+| Pattern | Regola quantitativa | Conferma |
+|---|---|---|
+| Hammer / Hanging Man | ombra ≈**3× il corpo**, corpo vicino all'estremo opposto della barra | chiusura oltre l'estremo della barra nei giorni seguenti (più sicuro: chiusura, non solo tocco) |
+| Belt-hold | nessuna ombra da un lato, corpo pieno | forza ∝ dimensione del corpo |
+| Harami | corpo piccolo **interamente dentro** il corpo grande del giorno prima | più forte a fine trend + colore opposto al corpo precedente |
+| Harami Cross | harami con corpo di oggi quasi zero (quasi-doji) | — |
+| Doji | apertura≈chiusura, ombra lunga da un lato | conta di più a fine trend lungo, ancora di più se seguito da un engulfing il giorno dopo |
+| **Piercing / Dark-Cloud Cover** | il corpo di oggi copre **almeno il 50%** del corpo di ieri (soglia quantificata!) | più copre, più forte il segnale |
+| Morning/Evening Star | corpo piccolo **separato da un gap** dal corpo del giorno prima (3 candele) | — |
+
+**Confronto diretto con NEXUS**: la soglia "50% di copertura del corpo
+precedente" per Piercing/Dark-Cloud è molto più precisa del criterio
+attuale di `NXS_Strat_BarUpDn` (semplice relazione OHLC tra due barre,
+nessuna soglia di copertura) o del wick-ratio di PIVOT_WICK (1.5× come
+soglia arbitraria, mai validata contro una fonte). Idea concreta per la
+prossima sessione: implementare Piercing/Dark-Cloud/Harami come
+condizione di rigetto alternativa al wick-ratio attuale in PIVOT_WICK,
+usando la soglia 50% invece di un rapporto inventato — più
+verificabile perché viene da una fonte con criterio esplicito, non da
+un numero scelto a caso.
+
+Non ancora letta: la parte propria di Fibonacci/PHI-ellisse (strumento
+proprietario brevettato dagli autori, difficile da verificare
+indipendentemente — priorità bassa) e il capitolo 4 "Candlestick Chart
+Patterns" applicato (pattern grafici a 3 punti per inversioni di trend,
+p.88 del libro) — da fare se si vuole approfondire oltre le definizioni
+di base.
+
+## Terzo giro: IFVG confermata, "Secret of 4.11" (S/R + zone fresh/non-fresh)
+
+### IFVG (Inverse Fair Value Gap) — confermata fedele
+
+Da `inversefairvaluegapifvginicttradingstrategiesguide.pdf` (guida
+breve, 8p, editore "TradingFinder"): un FVG che viene invalidato
+(rotto nella direzione opposta) cambia ruolo — un FVG ribassista rotto
+verso l'alto diventa zona di domanda (bullish IFVG), un FVG rialzista
+rotto verso il basso diventa zona di offerta (bearish IFVG). Confrontato
+con `NXS_Strat_IFVG_Reversal` (`NXS_Strategies_SMC.mqh:163`): **corretto
+e persino più rigoroso della fonte** — richiede chiusura oltre il
+livello, candela di reazione (corpo ≥0.3×ATR) E conferma di rottura di
+struttura (`chochUp/chochDown`), mentre la guida non menziona la CHoCH
+esplicitamente. Nessuna azione richiesta.
+
+### "Secret of 4.11" (Ali Yusoff, 16p) — framework Breakout-Pullback-Entry, TROVATO CONCETTO NUOVO
+
+Diverso da tutto il resto letto finora — non ICT/SMC, un framework
+compatto proprio dell'autore ("ZIKIR": Breakout → Pullback → Entry).
+Rilevante per NEXUS su due punti concreti:
+
+1. **Criterio di validità del livello: "rottura 2 volte"** — un livello
+   S/R non è tradabile finché non è stato toccato/rotto **due volte**
+   (mostrato con 4 mini-diagrammi breakout/no-breakout). Nessuna
+   strategia NEXUS attuale ha questo criterio — sia PIVOT_WICK che
+   MALAYSIAN_SNR tradano al primo tocco.
+
+2. **Zona "Fresh" vs "Non-Fresh" — un livello si consuma dopo un uso**:
+   una volta completata la sequenza Breakout→Pullback→Entry su una
+   zona, quella zona è "usata" (non fresh) e **non va ritradata**,
+   indipendentemente dal tempo passato. Questo è concettualmente più
+   pulito del raffreddamento a tempo (N barre) usato in PIVOT_WICK/
+   BAR_UPDN/BREAKOUT_ACC per lo stesso problema (inseguimento):
+   invece di "aspetta N barre poi ritrada pure lo stesso livello", dice
+   "quel livello è bruciato, punto" — un livello diverso può tradare
+   subito dopo, un livello riusato mai. Idea concreta per la prossima
+   sessione: aggiungere un flag "used" per-livello nel pool di
+   PIVOT_WICK (accanto ai livelli stessi), invece di (o in aggiunta a)
+   il cooldown a tempo attuale.
+
+Introduce anche ISL (Intermediate Significant Level, breakout di
+prezzo corrente) vs HSL (Historical Significant Level, livello di
+timeframe più alto) — stessa idea del pool multi-TF già implementato
+in PIVOT_WICK, nomenclatura diversa.
+
+### Pattern riconosciuto: molti PDF sono dello stesso publisher/corso
+
+- `technicalanalysisinforexprinciplessupportresistancekey.pdf` e
+  `icttradingstyleabbreviationsandterminologiesfvgsobspo3mmxm.pdf`
+  sono entrambi articoli generici brandizzati "TradingFinder" — tabelle
+  comparative superficiali (TA vs Fundamentale, TA classica vs ICT),
+  glossario di abbreviazioni. **Basso valore aggiunto**, contenuto già
+  coperto meglio altrove nel motore. Non approfondire ulteriormente
+  salvo bisogno specifico di un termine.
+- `Sequence.pdf`, `994417437-Alchemist-Concepts...pdf`,
+  `863955768-MSNR-x-SMC-x-ICT-the-Alchemist-Yanu-Emmanuel.pdf` sono
+  **lo stesso corso** ("Smart Money ABAY FX — Alchemist", combina
+  MSNR+SMC+LIT+ICT in un unico sistema) — trattarli come un corpus
+  unico, non come 3 fonti indipendenti, quando si approfondirà.
+
+## Stato onesto e prossimi passi
+
+Letti in profondità 4 PDF su 34 (allyouneedtoknow parziale,
+candlestick book parziale, IFVG guide completa, Secret of 4.11
+parziale), più una decina scansionati per la copertina/struttura per
+capire cosa contengono. **Non è realistico finire tutti e 34 con
+questa profondità in una sola sessione** — alcuni superano le 270
+pagine. Rimasti da leggere con priorità:
+
+**Alta priorità (probabile contenuto nuovo, non ICT/SMC generico)**
+- `541324475-Support-and-Resistance-Trading-Strategy.pdf` (26p)
+- `692042405-100-SCREENSHOT-SETUP-SNR-CONTINUATION.pdf` (102p — banco
+  di esempi reali per validare MALAYSIAN_SNR)
+- Resto di `Secret Of 411(1).pdf` (pagine 7-16, ne mancano 10)
+- `643335252-Simple-Trading-Book-Trading-Smart.pdf` (60p, non ancora aperto)
+- `797807669-trading-book.pdf` (51p, quasi tutto immagini)
+- `flippingmarkets1-...pdf` (59p)
+
+**Media priorità (corpus Alchemist unificato, MSNR/CRT già in vault)**
+- `Sequence.pdf`/`Sequence_1.pdf`/`Sequence_2_unlocked.pdf` (76p+)
+- `994417437-Alchemist-Concepts...pdf`, `863955768-MSNR-x-SMC-x-ICT...pdf`
+- `978173780-isc-10-eng-shrinked.pdf`
+- I 6 PDF CRT (probabile sovrapposizione con la nota CRT esistente)
+- I 4 PDF SNR Malaysia/My Rare SNR (probabile sovrapposizione con MALAYSIAN_SNR)
+
+**Bassa priorità (già letti/campionati, basso valore aggiunto)**
+- `technicalanalysisinforexprinciplessupportresistancekey.pdf` ✅
+- `icttradingstyleabbreviationsandterminologiesfvgsobspo3mmxm.pdf` ✅ (solo glossario)
+- `inversefairvaluegapifvginicttradingstrategiesguide.pdf` ✅ (confermato, nessuna azione)
+- `whatisthesmartmoneyconcept.pdf` (non ancora aperto ma stesso publisher dei due sopra, probabile stesso valore basso)
+
 ## Prossimi passi
 
 1. Leggere `candlesticksfibonacciandchartpatterntrading` per primo (testo
