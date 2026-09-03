@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - BOLLINGER Filtro RSI e Candela Testati, Nessuno Alza il Win Rate (03-09)]]** —
+  chiude il piano BOLLINGER+RSI+candela del 02/09: RSI(14) divergenza
+  e candela di inversione testati isolati e insieme, nessuno sposta il
+  win rate (25.9-28.1% in tutte le varianti), RSI peggiora il PF
+  (0.83→0.74). Stessa lezione di PIVOT_WICK — il problema è nel
+  trigger nudo, non filtrabile a valle.
 - **[[NEXUS EA - Due Numerazioni Strategia Diverse, InpStrategySelector Non e il Registro (03-09)]]** —
   **scoperta importante (P0)**: `NXS_StrategyRegistry.mqh` numera le
   strategie alfabeticamente (0-45), ma il gate vero che isola una

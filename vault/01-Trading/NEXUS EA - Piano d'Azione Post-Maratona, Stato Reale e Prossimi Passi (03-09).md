@@ -32,7 +32,7 @@ negativa, ma vera), altre aperte.
 | EMA_PULLBACK | ✅ Confermato robusto | PF1.41 nudo, nessun filtro trovato migliora |
 | BAR_UPDN / BREAKOUT_ACC (scalp) | ✅ Chiuso (falliti) | PF0.72/0.64 anche dopo fix bug di inseguimento |
 | **PIVOT_WICK** (strategia nuova) | ⏸️ Fermata su richiesta utente (03/09) | Batteria c1-c6 + d1-d5 completata: 9 varianti isolate testate, solo `RequireCloseConfirm` migliora davvero (PF0.79→0.91, ancora sotto pareggio). Tutte le altre inerti/solo-volume/peggiorative. d6/d7 fermati prima di partire (non necessari, l'utente ha chiuso il filone). Dettaglio e stato finale in [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] — **partire da lì se si riprende**, non ripetere i 9 test |
-| BOLLINGER + RSI + candela (scalp mean-reversion) | 🔶 In corso (03/09) | Step 1 fatto: sbloccata dal terzo cancello + aggiunta a `InpScalpTFOverride` (commit `ce21d50`), compilato pulito. Step 2 in coda: test M5 nuda senza RSI/candela. Se promettente, step 3 (RSI+candela) — vedi [[NEXUS EA - Ricerca Scalp BAR_UPDN e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)]] per l'ordine completo |
+| BOLLINGER + RSI + candela (scalp mean-reversion) | ✅ Chiuso (negativo, 03/09) | Piano eseguito per intero: sbloccata, testata nuda su M5 (306 trade, PF0.83, WR28.1%), poi RSI/candela/entrambi testati isolati — **nessuno sposta il win rate**, RSI peggiora il PF (0.74). Stessa lezione di PIVOT_WICK: il problema è nel trigger, non nei filtri. Vedi [[NEXUS EA - BOLLINGER Filtro RSI e Candela Testati, Nessuno Alza il Win Rate (03-09)]] |
 | WEEKLY_EXP | ⬜ Non iniziato | Task tracciato da settimane, mai isolato su MT5 |
 | RiskShield per-strategia | 🔶 Scritto, non testato dal vivo | Non cambia nulla in isolamento per costruzione |
 
