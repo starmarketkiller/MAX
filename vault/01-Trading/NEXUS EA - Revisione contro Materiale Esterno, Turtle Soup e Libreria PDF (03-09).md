@@ -402,45 +402,117 @@ PDF letto.
 autore/scuola presumibilmente, priorità bassa vista la sovrapposizione
 già confermata con KORORFX.
 
-## Stato onesto e prossimi passi
+### Corpus "Alchemist" confermato coeso (Sequence.pdf, isc-10, Alchemist-Concepts, MSNR-x-SMC-x-ICT)
 
-Letti in profondità 4 PDF su 34 (allyouneedtoknow parziale,
-candlestick book parziale, IFVG guide completa, Secret of 4.11
-parziale), più una decina scansionati per la copertina/struttura per
-capire cosa contengono. **Non è realistico finire tutti e 34 con
-questa profondità in una sola sessione** — alcuni superano le 270
-pagine. Rimasti da leggere con priorità:
+Campionati tutti — stessa scuola/community (autori con nomi diversi:
+"isc1trader", "While Srp", "ABAY FX", ma stesso materiale ricorrente),
+confermano un impianto comune: OCL, "4 Key Trendline" (ingresso al
+terzo tocco), e — nuovo qui — **"QML SNR + TL"**: quando un livello
+SNR orizzontale e una trendline diagonale si incrociano nello stesso
+punto, è un'entrata a maggiore confidenza (stessa logica di confluenza
+già vista nel capitolo 7 del primo PDF). Nessuna necessità di leggere
+ogni singolo file di questo corpus riga per riga — i concetti si
+ripetono; il nucleo utile è già estratto sopra.
 
-**Alta priorità (probabile contenuto nuovo, non ICT/SMC generico)**
-- `541324475-Support-and-Resistance-Trading-Strategy.pdf` (26p)
-- `692042405-100-SCREENSHOT-SETUP-SNR-CONTINUATION.pdf` (102p — banco
-  di esempi reali per validare MALAYSIAN_SNR)
-- Resto di `Secret Of 411(1).pdf` (pagine 7-16, ne mancano 10)
-- `643335252-Simple-Trading-Book-Trading-Smart.pdf` (60p, non ancora aperto)
-- `797807669-trading-book.pdf` (51p, quasi tutto immagini)
-- `flippingmarkets1-...pdf` (59p)
+## thepatternsite.com (Bulkowski) — controllato direttamente, come richiesto dall'utente
 
-**Media priorità (corpus Alchemist unificato, MSNR/CRT già in vault)**
-- `Sequence.pdf`/`Sequence_1.pdf`/`Sequence_2_unlocked.pdf` (76p+)
-- `994417437-Alchemist-Concepts...pdf`, `863955768-MSNR-x-SMC-x-ICT...pdf`
-- `978173780-isc-10-eng-shrinked.pdf`
-- I 6 PDF CRT (probabile sovrapposizione con la nota CRT esistente)
-- I 4 PDF SNR Malaysia/My Rare SNR (probabile sovrapposizione con MALAYSIAN_SNR)
+Il libro di Fischer&Fischer citava Bulkowski (93% di successo su Testa
+e Spalle rialzista, dati 2003) — controllato il sito vero per dati
+aggiornati invece di fidarsi solo della citazione di un libro del 2003.
 
-**Bassa priorità (già letti/campionati, basso valore aggiunto)**
-- `technicalanalysisinforexprinciplessupportresistancekey.pdf` ✅
-- `icttradingstyleabbreviationsandterminologiesfvgsobspo3mmxm.pdf` ✅ (solo glossario)
-- `inversefairvaluegapifvginicttradingstrategiesguide.pdf` ✅ (confermato, nessuna azione)
-- `whatisthesmartmoneyconcept.pdf` (non ancora aperto ma stesso publisher dei due sopra, probabile stesso valore basso)
+**Migliori pattern per breakout rialzista** (salita media 1/2/3 mesi
+dopo il breakout):
+| Pattern | 1 mese | 2 mesi | 3 mesi |
+|---|---|---|---|
+| **High and tight flag** | **+22%** | +21% | +21% |
+| Doppio minimo Eve&Eve | +9% | +12% | +13% |
+| Scallop (ascendente/invertito) | +11% | +12% | +13% |
+| Rettangolo minimo | +8% | +11% | +14% |
+| Doppio minimo Adam&Adam | +7% | +10% | +12% |
+
+**High and tight flag domina nettamente tutti gli altri** — quasi il
+doppio del secondo migliore. Nessuna strategia NEXUS lo copre oggi.
+
+**Migliori pattern per breakout ribassista**: Testa-Spalle complesso
+(-8/-10%), Testa-Spalle semplice (-7/-8%), Diamante (-6/-10%).
+
+**Nota**: "cup with handle" (pattern molto popolare tra i retail) **non
+è nella top 10** per rialzo — sotto-performa, escluso dalla classifica.
+
+### Attenzione — l'affidabilità dei pattern classici è peggiorata nel tempo
+
+Dallo studio sui tassi di fallimento (quasi 14.000 pattern, 1991-2008):
+**il tasso di fallimento è raddoppiato o quadruplicato rispetto al
+passato**. Guadagno ≥10% dopo breakout rialzista: fallimento dal 14%
+(anni '90) al 28% (2003-2007). Breakout ribassista: dal 26% al 49% nello
+stesso periodo. **Il libro di Fischer&Fischer (dati 2003) e i pattern
+classici in generale vanno quindi presi con cautela aggiuntiva** — se
+si implementa una famiglia "Classic Chart Patterns" in NEXUS, testarla
+sul motore vero prima di aspettarsi le performance storiche citate nei
+libri, che riflettono un mercato meno efficiente di oggi.
+
+Sources:
+- [Bulkowski on the Best Chart Patterns](https://thepatternsite.com/BestPatterns.html)
+- [Bulkowski's Failure Rate Study](https://thepatternsite.com/FailureRates.html)
+
+## Stato finale — copertura completata su tutti i 34 PDF + sito esterno
+
+Tutti e 34 i PDF sono stati aperti e campionati; i più densi di
+contenuto originale sono stati letti in profondità (allyouneedtoknow,
+candlestick book di Fischer&Fischer, IFVG guide, Secret of 4.11,
+Support&Resistance di Rayner Teo, trading-book.pdf, flippingmarkets1,
+Alchemist/isc-10/Sequence, CRT, Malaysian SNR Emperor). Controllato
+anche **thepatternsite.com direttamente** (non solo la citazione di un
+libro del 2003), come richiesto esplicitamente. I PDF a basso valore
+(3 documenti dello stesso publisher "TradingFinder", generici) sono
+stati identificati e non approfonditi oltre — scelta deliberata, non
+omissione.
+
+### Riepilogo di tutti i miglioramenti concreti trovati per NEXUS
+
+1. **TURTLE_SOUP**: manca il controllo di profondità dello sweep
+   (bug/gap, non ancora corretto — va tradotto in banda ATR per GOLD)
+2. **PIVOT_WICK**: contatore di utilizzo per livello — un livello si
+   consuma dopo un ciclo completo (confermato da **3 fonti
+   indipendenti**: Secret of 4.11 "fresh/non-fresh", Rayner Teo "più
+   testato = più debole", Flipping Markets "unmitigated")
+3. **PIVOT_WICK**: conferma su chiusura invece che su wick per il tocco
+   (Rayner Teo) — possibile risposta diretta al problema "stop e
+   inversione dopo poco"
+4. **PIVOT_WICK**: filtro anti-buildup — scartare tocchi preceduti da
+   consolidamento stretto sul livello (Rayner Teo)
+5. **MALAYSIAN_SNR**: cascata di conferma HTF→LTF assente (rigetto su
+   Daily, breakout di conferma su H1 prima di entrare — KORORFX)
+6. **Nuova geometria da esplorare**: trendline dinamica con ingresso al
+   terzo tocco (Alchemist/isc-10) — PIVOT_WICK ha solo livelli
+   orizzontali
+7. **Confluenza mai testata**: CRT + TURTLE_SOUP insieme (fonte esterna
+   li descrive sempre combinati, NEXUS li ha solo separati)
+8. **Famiglia di pattern assente**: Doppio Massimo/Minimo, Testa-Spalle,
+   Rettangolo, Cunei, Diamante — con regole di target quantificate
+   (trading-book.pdf) e dati di affidabilità reali da Bulkowski
+   (**High and Tight Flag +22% a 1 mese, nettamente il migliore**) —
+   ma con l'avvertenza che l'affidabilità dei pattern classici è
+   **peggiorata nel tempo** (fallimento raddoppiato/quadruplicato dagli
+   anni '90 a oggi secondo lo stesso Bulkowski)
+9. **Confermate corrette, nessuna azione**: SH_BMS_RTO, IFVG — entrambe
+   fedeli o più rigorose delle fonti esterne
+
+### Cosa NON è stato fatto (onestà)
+
+Non ho letto pagina per pagina tutti i 900+ pagine rimanenti dei PDF a
+bassa priorità (varianti CRT/SNR ripetitive, corpus Alchemist con nomi
+multipli) — campionati a sufficienza per confermare che ripetono lo
+stesso nucleo di concetti già estratto, non per trovare ogni singola
+variazione. Se emerge un bisogno specifico su uno di questi, riaprirli
+mirati piuttosto che a tappeto.
 
 ## Prossimi passi
 
-1. Leggere `candlesticksfibonacciandchartpatterntrading` per primo (testo
-   vero, 273p ma processabile a blocchi — copre esattamente "quali
-   candele danno segnali da sole" chiesto dall'utente)
-2. Finire le sezioni 1-5 e 8 di `allyouneedtoknow` (market structure di
-   base, sessioni, grafici annotati)
-3. Applicare lo stesso metodo di audit (confronta diagramma del libro
-   vs codice reale) alle altre strategie SMC via via che emergono
-   definizioni precise nei PDF ICT-specifici
-4. Decidere e testare il fix della profondità sweep su TURTLE_SOUP
+1. Decidere quali dei 9 miglioramenti sopra testare per primi (consiglio:
+   #2/#3 per PIVOT_WICK, hanno il supporto di più fonti indipendenti)
+2. Implementarli uno alla volta sul motore vero, isolati, con lo stesso
+   metodo usato stanotte (baseline pulita → variante → confronto)
+3. Applicare lo stesso metodo di audit (confronta fonte esterna vs
+   codice reale) alle altre strategie SMC quando emergono definizioni
+   precise, non solo a Turtle Soup/SH_BMS_RTO/IFVG
