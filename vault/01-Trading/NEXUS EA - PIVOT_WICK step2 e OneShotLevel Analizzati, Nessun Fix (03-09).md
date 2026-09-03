@@ -157,6 +157,42 @@ OneShotLevel riduce solo il volume. Prossimo dato decisivo: **c6
 combinarlo con gli altri (anche quelli inerti/negativi in isolamento)
 cambia il quadro.
 
+## Addendum 3 — c6 (tutti e 4 combinati): campione collassato, inconcludente (03/09, 18:41)
+
+`InpPivotWickOneShotLevel=true` + `RequireCloseConfirm=true` +
+`AvoidBuildup=true` + `RequireWick=true` insieme, stesso periodo 3 mesi:
+**5 trade totali** (PF0.62, net -9.48). Campione troppo piccolo per
+qualunque conclusione statistica — non è un risultato "buono" o
+"cattivo", è inutilizzabile. RequireWick da solo aveva già ridotto a 87
+trade (17% del baseline); impilarci sopra CloseConfirm+OneShotLevel
+schiaccia il campione a quasi zero, coerente con la lezione già vista
+più volte in questa indagine (mai impilare filtri prima di misurare
+l'effetto isolato — qui confermato nel modo più diretto possibile).
+
+## Sintesi round c1-c6 (chiuso)
+
+| Test | Trade | WR | PF | Verdetto |
+|---|---|---|---|---|
+| c1 baseline | 503 | 44.9% | 0.79 | riferimento |
+| c2 OneShotLevel | 362 | 45.0% | 0.77 | solo volume, nessun edge |
+| **c3 RequireCloseConfirm** | 278 | **47.8%** | **0.91** | **unico miglioramento reale** |
+| c4 AvoidBuildup | 503 | 44.9% | 0.79 | inerte (identico a c1, verificato nel codice) |
+| c5 RequireWick | 87 | 41.4% | 0.68 | peggiora |
+| c6 tutti combinati | 5 | — | — | campione collassato, inconcludente |
+
+**Conclusione onesta**: nessuno dei 4 fix isolati porta PIVOT_WICK sopra
+pareggio da solo. RequireCloseConfirm è l'unico con un effetto di
+qualità reale (non solo di volume) ma non basta (PF 0.91 < 1). Non
+vale la pena testare altre combinazioni tra questi 4 (AvoidBuildup è
+inerte quindi non aggiunge né toglie, RequireWick peggiora quindi va
+escluso da qualunque combo futura). La direzione utile ora è il lato
+**uscite** (batteria `d1`-`d6`, partial ATR/pip fisso/volume, streak
+sizing, veto regime — parte da questa stessa sessione automaticamente
+subito dopo c6, sulla baseline nuda non su c3) o accettare che
+PIVOT_WICK, con questo trigger, non ha edge sufficiente e richiede una
+revisione della logica di ingresso più profonda (non solo filtri
+aggiuntivi) prima di continuare a investire tempo qui.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
