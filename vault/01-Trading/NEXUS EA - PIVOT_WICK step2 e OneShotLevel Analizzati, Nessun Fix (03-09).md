@@ -260,6 +260,21 @@ riduce il rumore statistico, non l'edge.
 Nessuno dei 5 sposta il PF. d6 (best-combo entry, stesso lotto) e d7
 (FixedPip a lotto più alto via deposito $5000) ancora in coda.
 
+## Fermata su decisione esplicita dell'utente (03/09, ~19:50)
+
+L'utente ha chiesto di fermarsi su questa strategia dopo il round d1-d5
+(d6/d7 fermati prima di partire — i wait/monitor sono stati stoppati,
+`terminal64.exe` NON è stato ucciso se un run era già in corso, solo
+non più seguito). **Stato finale onesto**: su 9 varianti isolate
+testate (c1-c6 entry filters + d1-d5 exit/sizing), **una sola mostra un
+miglioramento di qualità reale** (c3 RequireCloseConfirm, PF0.79→0.91,
+comunque sotto pareggio). Tutte le altre o non hanno effetto (d1-d4,
+per ragioni diverse — arrotondamento a lotto minimo per d1-d3, causa
+non isolata per d4) o riducono solo il volume senza cambiare l'edge
+(c2, c4, d5) o peggiorano (c5). Nessuna configurazione supera PF1.0 su
+questo dataset. Prossima volta che si riprende PIVOT_WICK: partire da
+qui, non ripetere questi 9 test.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto

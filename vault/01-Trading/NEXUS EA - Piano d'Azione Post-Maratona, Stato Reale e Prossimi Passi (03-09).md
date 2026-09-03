@@ -31,7 +31,7 @@ negativa, ma vera), altre aperte.
 | SAR — parziale a pip fissa / volume | ✅ Chiuso (fallito) | Stesso esito dei 9 raffinamenti precedenti |
 | EMA_PULLBACK | ✅ Confermato robusto | PF1.41 nudo, nessun filtro trovato migliora |
 | BAR_UPDN / BREAKOUT_ACC (scalp) | ✅ Chiuso (falliti) | PF0.72/0.64 anche dopo fix bug di inseguimento |
-| **PIVOT_WICK** (strategia nuova) | 🔶 In corso | Batteria c1-c6 completa (round entry-filter): solo `RequireCloseConfirm` migliora davvero (PF0.79→0.91, WR44.9%→47.8%), `AvoidBuildup` inerte (verificato nel codice, non scarta mai un tocco), `RequireWick` peggiora, tutti combinati collassano il campione a 5 trade. Nessuno porta sopra pareggio da solo. Vedi [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]]. **Round successivo (d1-d6, uscite: partial ATR/pip/volume, streak sizing, veto regime) partito automaticamente**, in corso |
+| **PIVOT_WICK** (strategia nuova) | ⏸️ Fermata su richiesta utente (03/09) | Batteria c1-c6 + d1-d5 completata: 9 varianti isolate testate, solo `RequireCloseConfirm` migliora davvero (PF0.79→0.91, ancora sotto pareggio). Tutte le altre inerti/solo-volume/peggiorative. d6/d7 fermati prima di partire (non necessari, l'utente ha chiuso il filone). Dettaglio e stato finale in [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] — **partire da lì se si riprende**, non ripetere i 9 test |
 | BOLLINGER + RSI + candela (scalp mean-reversion) | ⬜ Non iniziato | Piano scritto il 02/09, mai eseguito |
 | WEEKLY_EXP | ⬜ Non iniziato | Task tracciato da settimane, mai isolato su MT5 |
 | RiskShield per-strategia | 🔶 Scritto, non testato dal vivo | Non cambia nulla in isolamento per costruzione |
