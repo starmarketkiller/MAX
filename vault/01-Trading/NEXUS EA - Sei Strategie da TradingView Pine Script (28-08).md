@@ -66,13 +66,69 @@ in attesa di backtest isolato reale prima di qualunque attivazione.
   le altre opzioni di MA (HEMA/SMA/HMA/WMA/DEMA/VWMA/VWAP/T3)
   dell'originale non sono state portate.
 
-## Prossimo passo
+## Bug critico scoperto durante il primo test (PMAX): tutte e 6 bloccate all'origine
 
-Backtest isolati MT5 a tick reali per ciascuna (stesso protocollo di
-stanotte: `InpStrategySelector` dedicato, 10 mesi, $1000 USD) — priorità a
-**PMAX** (candidato diretto a sostituire SAR). Il primo test PMax è in
-corso mentre questa nota viene scritta.
+Primo backtest isolato di PMAX: **0 trade in 8 mesi**, nonostante una
+diagnostica dedicata confermasse che il segnale si genera correttamente
+(il `dir` dello stop-and-reverse cambia più volte, come atteso da un
+SuperTrend). Aggiunta una seconda diagnostica sul motivo esatto del
+rifiuto: **`reason='profile_disabled'`, ogni singolo tentativo**.
+
+Causa: `NXS_Profile_Enabled()` (`NXS_StrategyProfiles.mqh`) è una
+whitelist **indipendente** sia da `InpStrat_X` (il toggle "voglio
+provarla") sia da `InpStrategySelector` (l'isolamento per il test) — un
+terzo cancello, "questa strategia è abbastanza validata da aprire
+ordini", con default `false` per qualunque nome non esplicitamente
+elencato (`NXS_Execution.mqh:293-295` → `OPEN_FAIL_PREFLIGHT`). **Tutte
+e 6** le strategie di questa nota ci cadevano dentro senza che me ne
+accorgessi — le avevo registrate in `NXS_Profile_TF` e
+`NXS_Profile_Risk` ma dimenticato questo terzo registro. Corretto
+aggiungendo tutte e 6 con `return true` (l'unica vera protezione contro
+l'attivazione accidentale resta `InpStrat_X=false` di default).
+
+**Lezione di metodo**: quando si aggiunge una nuova strategia a questo
+codice, ci sono ALMENO 4 punti di registrazione separati che devono
+combaciare (dispatcher in `NEXUS_EA_v2.mq5`, `NXS_Profile_TF`,
+`NXS_Profile_Risk`, **`NXS_Profile_Enabled`**) oltre al registro
+canonico generato — dimenticarne anche solo uno produce zero trade
+senza errori di compilazione, silenzioso fino al primo backtest reale.
+Da controllare esplicitamente ad ogni nuova aggiunta futura.
+
+Test di conferma su PMAX (10 mesi, tick reali, con il fix): **risultato
+positivo**, primo vero segnale di vita su una delle 6 nuove candidate.
+
+| | SAR (nativo) | PMAX (nuova) |
+|---|---|---|
+| Trade | 175 | 42 |
+| Profit Factor | 0.92 | **1.09** |
+| Netto | -$118.95 | **+$26.18** |
+| Max DD | $287 (28.7%) | **$102 (10.2%)** |
+| Sharpe | — | **2.27** |
+| Long/Short | — | 11/31 (fortemente short-biased) |
+
+Campione ancora piccolo (42 trade), ma PMAX batte SAR su ogni metrica
+sullo stesso periodo/simbolo/conto — il candidato più concreto finora
+per sostituire (o affiancare a peso ridotto) SAR nel portafoglio v3.0.
+
+## Risultato finale: tutte e 6 testate (tick reali, 10 mesi, $1000 USD)
+
+| Strategia | Trade | PF | Netto | Max DD | Verdetto |
+|---|---|---|---|---|---|
+| BAR_UPDN | 201 | 0.83 | -$265.33 | $543 (54%) | Negativa — troppo semplice/frequente senza filtri |
+| PMAX | 42 | **1.09** | **+$26.18** | $102 (10.2%) | **Positiva** — batte SAR su ogni metrica |
+| MACD_SMA200 | 0 | — | — | — | Segnale mai scattato — 4 condizioni in AND, plausibile rarità genuina |
+| **RSI_DIV_PINE** | **81** | **1.44** | **+$192.95** | **$93 (9.3%)** | **La migliore delle 6** — batte anche il nostro RSI_DIV nativo (PF1.21) |
+| ICHIMOKU_HULL_MACD | 0 | — | — | — | Segnale mai scattato — come previsto, 5 filtri simultanei troppo restrittivi |
+| 3COMMAS_BOT | 27 | 0.57 | -$93.29 | $147 (14.6%) | Negativa |
+
+**2 vincitrici su 6** (PMAX, RSI_DIV_PINE) — un tasso di successo onesto
+per un giro esplorativo su script pubblici, e in entrambi i casi il
+guadagno arriva con drawdown molto più contenuto delle strategie native
+deboli (SAR $287, EMA_PULLBACK ancora peggio). Prossimo passo:
+attivazione cauta di PMAX e RSI_DIV_PINE nel portafoglio v3.0, con tier
+di rischio ridotto (0.5-1%) data la novità e il campione ancora modesto.
 
 ## Collegamenti
 [[MOC - Trading]]
 [[NEXUS EA - Piramidare, Debug Completo e Verdetto sul Portafoglio (28-08)]]
+[[NEXUS EA - Diff Python vs MQL5 su SAR-EMA_PULLBACK, Limite Strutturale del Motore Ricerca (28-08)]]

@@ -54,7 +54,7 @@ void NXS_GateTelemetry(string route, string gateId, bool passed,
 //| Le verifiche non aggirabili sono state spostate QUI, così ogni     |
 //| chiamante le eredita per costruzione e non per convenzione.        |
 //+------------------------------------------------------------------+
-bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
+bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR dir, double lots,
                                  ENUM_ORDER_TYPE otype, double price,
                                  double &sl, double &tp, string &reason){
    // --- (1) Licenza / entitlement -----------------------------------------
@@ -132,8 +132,11 @@ bool NXS_CommonExposurePreflight(string route, ENUM_NXS_DIR dir, double lots,
    }
 
    // --- (5) RiskShield -----------------------------------------------------
+   // 02/09 - il breaker Sharpe ora e' PER STRATEGIA (richiesto dall'utente:
+   // bloccare solo la strategia responsabile, non l'intero conto). stratName
+   // arriva dal chiamante - vedi le note ai 4 call site di questa funzione.
    string rsReason = "";
-   bool rsBlocked = NXS_RS_BlockEntry(g_sym, rsReason);
+   bool rsBlocked = NXS_RS_BlockEntry(g_sym, stratName, rsReason);
    NXS_GateTelemetry(route, "RISKSHIELD", !rsBlocked, 0, 0, rsReason);
    if(rsBlocked){ reason = rsReason; return false; }
 
@@ -294,6 +297,16 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "profile_disabled";
       return OPEN_FAIL_PREFLIGHT;
    }
+   // 02/09 - veto di regime (_nxs_regime_veto, NXS_SignalQuality.mqh): esisteva
+   // gia' ma era agganciato SOLO al modello istituzionale (InpUseInstitutionalCore,
+   // off di default, mai usato in nessun test isolato di stanotte). Richiesto
+   // dall'utente: verificare se avrebbe evitato trade nella peggior sequenza di
+   // perdite di SAR (12/01-12/04/2026: 34/41 perdenti). Off di default
+   // (InpProfileRegimeVeto) - stesso principio "abilitata al test, non di default".
+   if(InpProfileRegimeVeto && _nxs_regime_veto(sig.stratName)){
+      g_nxsLastOpenFailure = "regime_veto";
+      return OPEN_FAIL_PREFLIGHT;
+   }
    // v2.3.0 — "ogni strategia sul suo TF": la strategia apre solo se il TF del
    // grafico coincide col suo timeframe ottimale (dal backtest multi-TF). Cosi'
    // basta far girare un'istanza per TF (D1/H4/H1) e ognuna tradera' solo le SUE
@@ -396,7 +409,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // per strategia (NXS_Profile_UseElliott) - solo le 20 gia' validate in
    // Python il 25/08, non un gate universale (STRUCT_REACT ne e' esclusa
    // di proposito, la danneggia).
-   if(InpUseStrategyProfiles && NXS_Profile_UseElliott(sig.stratName) && NXS_ElliottBlocks(sig.dir)){
+   if(InpUseElliottFilter && InpUseStrategyProfiles && NXS_Profile_UseElliott(sig.stratName) && NXS_ElliottBlocks(sig.dir)){
       g_nxsLastOpenFailure = "elliott_wave_exhaustion";
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: elliott_wave_exhaustion dir=%s strat=%s",
                   NXS_DirName(sig.dir), sig.stratName);
@@ -412,6 +425,13 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // di default (InpRiskPercent) resta solo per le strategie SENZA profilo.
    double prPct = (InpUseStrategyProfiles) ? NXS_Profile_Risk(sig.stratName) : 0.0;
    double lots = (prPct > 0) ? NXS_CalcLotRisk(slDist, prPct, sig.stratName) : NXS_CalcLot(slDist);
+   // 30/08 - esperimento pip-sequence richiesto dall'utente: lotto FISSO
+   // (non a rischio%), la gestione a stadi (NXS_ManagePipSequence) si
+   // occupa lei di stringere lo stop e prendere parziali.
+   if(InpUsePipSeq) lots = InpPipSeqLot;
+   // 01/09 - lotto fisso scoped a EMA_PULLBACK per rendere possibile un
+   // parziale vero (vedi InpEMAPBFixedLot in NXS_Inputs.mqh).
+   if(InpEMAPBFixedLot > 0 && sig.stratName == "EMA_PULLBACK") lots = InpEMAPBFixedLot;
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
 
    // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),
@@ -463,7 +483,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // copriva solo l'entry primaria, mentre grid, pyramid e add istituzionali
    // lo saltavano (AUD0-ADD-003). La chiamata qui sotto lo eredita.
    string pfReason = "";
-   if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.dir, lots,
+   if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.stratName, sig.dir, lots,
                                    otype, refPrice, sl, tp, pfReason)){
       g_nxsLastOpenFailure = pfReason;
       PrintFormat("[NEXUS] OPEN BLOCKED common gate: %s strat=%s", pfReason, sig.stratName);
@@ -545,9 +565,24 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       // e' un denominatore di rischio migliore del prezzo di riferimento
       // pre-invio (che ignora slippage).
       double fillPx = (exec.price > 0 ? exec.price : refPrice);
+      // 01/09 - BUG TROVATO: qui veniva registrato g_atr (ATR del timeframe
+      // del grafico, InpTFEntry = M15) come "ATR d'ingresso" per QUALSIASI
+      // strategia, ma NXS_ManageSplit (e altri consumer di NXS_State_EntryAtr)
+      // lo usano come soglia di gestione assumendo la stessa scala usata per
+      // SL/TP del profilo - che per molte strategie (es. EMA_PULLBACK) e' H4,
+      // 4-6x piu' grande dell'ATR M15. Risultato: le soglie "1.0xATR" ecc.
+      // scattavano in realta' a 1/4-1/6 del previsto - verificato: parziali
+      // che chiudevano entro 15-35 minuti dall'apertura con $2-5 di profitto
+      // invece delle decine di dollari attese. Ora si registra l'ATR del
+      // timeframe REALE della strategia (profilo) quando disponibile.
+      double intentAtr = g_atr;
+      if(InpUseStrategyProfiles){
+         double profAtr = NXS_ATRv(NXS_Profile_TF(sig.stratName), 1, InpATR_Period);
+         if(profAtr > 0) intentAtr = profAtr;
+      }
       NXS_Intent_Record(exec.order, sig.stratName, sig.score,
                         NXS_Intent_RiskMoney(g_sym, fillPx, sl, lots),
-                        "primary", 0, g_atr, lots);
+                        "primary", 0, intentAtr, lots);
       g_tradesToday++;
       g_lastTradeTime = TimeCurrent();
       NXS_BarDirCapRegisterOpen(sig.dir);

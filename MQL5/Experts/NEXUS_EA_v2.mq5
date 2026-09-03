@@ -73,6 +73,9 @@
 #include <NEXUS_v1\NXS_GridRecovery.mqh>
 #include <NEXUS_v1\NXS_Pyramiding.mqh>
 #include <NEXUS_v1\NXS_SplitTrade.mqh>
+#include <NEXUS_v1\NXS_PipSequence.mqh>
+#include <NEXUS_v1\NXS_SLReclaim.mqh>
+#include <NEXUS_v1\NXS_ProfitReclaim.mqh>
 #include <NEXUS_v1\NXS_InstManage.mqh>
 #include <NEXUS_v1\NXS_Confluence.mqh>
 #include <NEXUS_v1\NXS_MTFSpreadVol.mqh>
@@ -152,7 +155,19 @@ void NXS_ReleaseHandles(){
 // NXS_UpdateIndicators(). Le funzioni-strategia (che leggono i VALORI globali
 // g_adx/g_atr/g_ema200...) non vengono toccate.
 // ---------------------------------------------------------------------------
-#define NXS_MTF_MAX 4
+// 30/08 - BUG TROVATO durante l'esperimento "spoglia MT5" (richiesto
+// dall'utente): con 4 slot, il registro strategie usa GIA' 5 timeframe
+// distinti (D1/H4/M30/M15/H1 - verificato contando NXS_Profile_TF su
+// tutte le voci di NXS_StrategyProfiles.mqh). NXS_MTF_Index() ritorna -1
+// silenziosamente quando g_mtfCount raggiunge il cap, quindi
+// NXS_ActivateTF() fallisce per QUALUNQUE timeframe scoperto per 5°
+// (l'ordine dipende dall'ordine di scansione del registro) - le
+// strategie su quel timeframe non vengono MAI valutate, senza errori
+// visibili (solo uno "skip" silenzioso, vedi NXS_CollectAllSignals).
+// Verificato dal vivo su SAR (H4): passes[]=[H1,D1,M30,M15,H4], H4 5°
+// della lista, ActivateTF fallisce sempre, SAR non apre mai un trade.
+// Alzato a 8 con margine per eventuali nuove strategie/timeframe futuri.
+#define NXS_MTF_MAX 8
 ENUM_TIMEFRAMES g_mtfTF[NXS_MTF_MAX];
 int g_mtf_hADX[NXS_MTF_MAX], g_mtf_hRSI[NXS_MTF_MAX], g_mtf_hBB[NXS_MTF_MAX],
     g_mtf_hMACD[NXS_MTF_MAX], g_mtf_hSAR[NXS_MTF_MAX], g_mtf_hATR[NXS_MTF_MAX],
@@ -492,6 +507,9 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 
    // 28/08 — 3Commas Bot, portata da script Pine TradingView pubblico (#48)
    if(InpStrat_3CommasBot     && NXS_SelectorAllows(48)) out[n++] = NXS_Strat_3CommasBot();
+
+   // 02/09 — Pivot Extension + Wick Rejection, idea originale utente (#49)
+   if(InpStrat_PivotWick      && NXS_SelectorAllows(49)) out[n++] = NXS_Strat_PivotWick();
 
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
@@ -973,11 +991,30 @@ void OnTick(){
 
    // PR4: modules submit proposals; one deterministic action wins per ticket.
    NXS_PM_BeginCycle();
+   // 02/09 - BUG TROVATO: NXS_State_ReconcileBroker() (che copia l'ATR
+   // d'ingresso e le altre info dal registro intenti nell'array di stato
+   // vivo g_managedState[], usato da NXS_State_EntryAtr/NXS_State_HasApplied
+   // ecc.) veniva chiamata SOLO dentro NXS_State_Save()/Load(), entrambe
+   // dietro il flag InpStatePersistInTester (default FALSE). Risultato: nel
+   // Tester g_managedState[] non veniva MAI popolato, e ogni consumer di
+   // NXS_State_EntryAtr cadeva SEMPRE sul fallback (g_atr, l'ATR del
+   // timeframe del grafico/M15) invece del vero ATR di ingresso registrato -
+   // scoperto testando un parziale su EMA_PULLBACK che scattava a 1/4-1/6
+   // della soglia prevista. La riconciliazione in memoria e' un concetto
+   // diverso dal salvataggio su disco (persistenza tra riavvii): va fatta
+   // ogni tick a prescindere da InpStatePersistInTester.
+   NXS_State_ReconcileBroker();
    // Management on every tick
+   NXS_ManageFixedBE();
    NXS_ManageBreakevenAndTrail();
    NXS_TrailATR();                // NEW: ATR-based trailing overlay
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    NXS_ManageSplit();
+   NXS_ManageFixedPipPartial();
+   NXS_ManageVolumePartial();
+   NXS_ManagePipSequence();
+   NXS_ManageSLReclaim();
+   NXS_ManageProfitReclaim();
    if(InpUseInstitutionalCore){
       // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
       // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
@@ -1251,6 +1288,11 @@ void OnTick(){
             NXS_Stats_RecordBlock(sig.stratName, (int)BLK_COOLDOWN);
             continue;
          }
+         if(NXS_StrategyOnDirCooldown(sig.stratName)){
+            NXS_Blk_Bump(BLK_COOLDOWN);
+            NXS_Stats_RecordBlock(sig.stratName, (int)BLK_COOLDOWN);
+            continue;
+         }
 
          string mtfReason, velReason;
          double baseScore = sig.score;
@@ -1313,6 +1355,7 @@ void OnTick(){
          if(rc == EXEC_OK){
             if(isContinuation) NXS_Chain_OnContinuationOpen();
             NXS_StrategyRegisterTrade(sig.stratName);
+            NXS_StrategyRegisterDirTrade(sig.stratName, (sig.dir == DIR_BUY ? +1 : -1));
             double curSpread = (double)SymbolInfoInteger(g_sym, SYMBOL_SPREAD);
             NXS_Stats_RecordScoreSample(sig.stratName, baseScore, finalScore, thresh);
             NXS_Stats_RecordExec(sig.stratName, finalScore, curSpread);
@@ -1412,6 +1455,15 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // logical trade"). Prima un trade chiuso in 3 parziali in perdita contava
    // 3 perdite consecutive e poteva innescare anti-revenge da solo.
    NXS_OnTradeClosed(tc.pnl);
+   // 30/08 - NXS_SLReclaim: se il trade e' uscito per stop nativo, arma
+   // l'attesa di una chiusura M15 che riconquisti quel livello (vedi
+   // NXS_SLReclaim.mqh). tc.close_reason viene dal ledger, "trigger
+   // dell'ultimo OUT" - un pareggio/trailing/max-loss non e' uno stop
+   // nativo in senso stretto, solo "sl" (il broker) lo e'.
+   if(StringFind(tc.close_reason, "sl") == 0)
+      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1, tc.pnl);
+   else
+      NXS_SLReclaim_OnTradeClosed(tc.pnl);   // un TP o altra uscita in guadagno rompe comunque la catena
    // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA: stesso
    // punto/stesso pnl AGGREGATO di NXS_OnTradeClosed sopra (esattamente una
    // volta per trade logico, non per deal parziale). No-op se

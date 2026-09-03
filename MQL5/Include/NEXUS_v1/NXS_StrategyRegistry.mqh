@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 45
+#define NXS_LIVE_STRATEGY_COUNT 46
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -44,6 +44,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="OB_MIT" ||
           id=="ORDER_BLOCK" ||
           id=="OTE_CONT" ||
+          id=="PIVOT_WICK" ||
           id=="PMAX" ||
           id=="PO3" ||
           id=="RANGE_FADE" ||
@@ -95,22 +96,23 @@ string NXS_StrategyIdAt(int i){
    if(i==26) return "OB_MIT";
    if(i==27) return "ORDER_BLOCK";
    if(i==28) return "OTE_CONT";
-   if(i==29) return "PMAX";
-   if(i==30) return "PO3";
-   if(i==31) return "RANGE_FADE";
-   if(i==32) return "RSI_DIV";
-   if(i==33) return "RSI_DIV_PINE";
-   if(i==34) return "SAR";
-   if(i==35) return "SH_BMS_RTO";
-   if(i==36) return "SILVER_BULLET";
-   if(i==37) return "SMS_BMS_RTO";
-   if(i==38) return "STRUCT_REACT";
-   if(i==39) return "SWING_FALSEBREAK";
-   if(i==40) return "THREE_BAR_DELIVERY_BREAK";
-   if(i==41) return "TSI";
-   if(i==42) return "TURTLE_SOUP";
-   if(i==43) return "WEEKLY_EXP";
-   if(i==44) return "Z_SCORE_BREAKOUT";
+   if(i==29) return "PIVOT_WICK";
+   if(i==30) return "PMAX";
+   if(i==31) return "PO3";
+   if(i==32) return "RANGE_FADE";
+   if(i==33) return "RSI_DIV";
+   if(i==34) return "RSI_DIV_PINE";
+   if(i==35) return "SAR";
+   if(i==36) return "SH_BMS_RTO";
+   if(i==37) return "SILVER_BULLET";
+   if(i==38) return "SMS_BMS_RTO";
+   if(i==39) return "STRUCT_REACT";
+   if(i==40) return "SWING_FALSEBREAK";
+   if(i==41) return "THREE_BAR_DELIVERY_BREAK";
+   if(i==42) return "TSI";
+   if(i==43) return "TURTLE_SOUP";
+   if(i==44) return "WEEKLY_EXP";
+   if(i==45) return "Z_SCORE_BREAKOUT";
    return "";
 }
 

@@ -76,6 +76,59 @@ void NXS_StrategyRegisterTrade(string name){
    }
 }
 
+// ---------- Per-strategy cooldown DIREZIONALE ----------
+// 30/08 - ipotesi ragionata dopo step10: il cooldown esistente (sopra) e'
+// cieco alla direzione - blocca "3 trade di fila" anche se alternano
+// buy/sell (inversioni legittime), eppure ha alzato il win rate di SAR dal
+// 25.9% al 66.9% da solo. Spiegazione probabile: i segnali ravvicinati
+// capitano soprattutto nel whipsaw (prezzo che oscilla vicino al punto di
+// flip SAR), e la patologia caratterizzata ieri notte era specificamente
+// la STESSA direzione ripetuta (catene di 3-4 perdite consecutive stesso
+// verso sulla nuda). Questa versione conta solo le ripetizioni nella
+// STESSA direzione - non penalizza un'inversione vera, dovrebbe colpire
+// il whipsaw in modo piu' chirurgico del cooldown generico.
+#define NXS_CDDIR_MAX 32
+string   g_cdDirName[NXS_CDDIR_MAX];
+int      g_cdDirLast[NXS_CDDIR_MAX];     // ultima direzione vista per questa strategia (+1/-1/0)
+int      g_cdDirConsec[NXS_CDDIR_MAX];   // trade consecutivi nella stessa direzione
+datetime g_cdDirUntil[NXS_CDDIR_MAX];
+int      g_cdDirCount = 0;
+
+int _NXS_CDDIR_FindOrCreate(string name){
+   for(int i = 0; i < g_cdDirCount; i++)
+      if(g_cdDirName[i] == name) return i;
+   if(g_cdDirCount >= NXS_CDDIR_MAX) return -1;
+   g_cdDirName[g_cdDirCount] = name;
+   g_cdDirLast[g_cdDirCount] = 0;
+   g_cdDirConsec[g_cdDirCount] = 0;
+   g_cdDirUntil[g_cdDirCount] = 0;
+   int idx = g_cdDirCount;
+   g_cdDirCount++;
+   return idx;
+}
+
+bool NXS_StrategyOnDirCooldown(string name){
+   if(!InpUseDirCooldown) return false;
+   int idx = _NXS_CDDIR_FindOrCreate(name);
+   if(idx < 0) return false;
+   if(g_cdDirUntil[idx] == 0) return false;
+   return TimeCurrent() < g_cdDirUntil[idx];
+}
+
+void NXS_StrategyRegisterDirTrade(string name, int dir){
+   if(!InpUseDirCooldown) return;
+   int idx = _NXS_CDDIR_FindOrCreate(name);
+   if(idx < 0) return;
+   if(g_cdDirLast[idx] == dir) g_cdDirConsec[idx]++;
+   else{ g_cdDirLast[idx] = dir; g_cdDirConsec[idx] = 1; }
+   if(g_cdDirConsec[idx] >= InpMaxConsecSameDir){
+      g_cdDirUntil[idx] = TimeCurrent() + (datetime)(InpDirCooldownMin * 60);
+      g_cdDirConsec[idx] = 0;
+      PrintFormat("[NEXUS CDDIR] Strategy '%s' dir=%d in cooldown direzionale fino a %s",
+                  name, dir, TimeToString(g_cdDirUntil[idx], TIME_MINUTES));
+   }
+}
+
 // Snapshot for backend push (compact JSON fragment)
 string NXS_CooldownsJSON(){
    string s = "{";

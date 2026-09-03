@@ -38,6 +38,20 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    if(name == "AMD_CONT")          { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 30m OOS PF1.52 n169
    if(name == "LDN_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.23 n66
    if(name == "AMD_REVERSAL")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m OOS PF1.97 n59
+   // 02/09 - BAR_UPDN non aveva un profilo SL/TP dedicato: cadeva sui default
+   // globali (InpATR_SL_Mult/TP_Mult = 2.0/2.6, R:R 1.3, pensati per le
+   // strategie swing H4/D1). L'utente ha chiesto esplicitamente stop stretto
+   // e target piu' largo per le operazioni scalp (2-2.5:1, vedi screenshot
+   // TradingView BarUpDn condivisi) - qui R:R 2.5, mai verificato dal vivo.
+   if(name == "BAR_UPDN")          { slMult=1.0; tpMult=2.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
+   // 02/09 - PIVOT_WICK: tpMult 2.2->1.0. Analisi MFE su 230 trade (nov-dic
+   // 2025, config nuda senza wick): 55.6% dei perdenti avevano toccato oltre
+   // $3 di flottante prima di girare a stop - il target a 2.2xATR (~$15-20)
+   // e' troppo lontano per la qualita' reale di questi ingressi. Simulazione
+   // con TP fisso piu' vicino: win rate 29.6%->52% intorno a $7, netto da
+   // -$208 a quasi pareggio. Simulazione approssimata a barre M15, non il
+   // motore vero - questo test isola l'effetto reale.
+   if(name == "PIVOT_WICK")        { slMult=1.0; tpMult=1.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
@@ -131,6 +145,15 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // resta CRITICA la maggior parte degli anni: stesso sospetto di
    // esecuzione trovato su MACD/FVG_CONT, non di trigger/config.
    if(name == "RSI_DIV")           { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // config invariata (gia' la migliore trovata anche col proxy corretto)
+   // 31/08 - override testabile dello slMult: analisi MAE/ATR sui 112 trade
+   // nudi mostra che i vincenti raramente superano 0.7-0.8xATR di escursione
+   // avversa (75-esimo percentile 0.73) mentre i perdenti arrivano quasi
+   // sempre vicino a 1.0xATR (e' li' che chiude lo stop nativo, quasi per
+   // definizione). Stringere a ~0.85xATR taglia solo 2/29 vincenti veri
+   // (-$134.78) ma riduce la dimensione media delle perdite (+$609.22
+   // stimato) - netto stimato +$474.44 sullo stesso campione. Zero =
+   // nessun cambiamento rispetto al default 1.0.
+   if(name == "SAR" && InpSARSlMultOverride > 0){ slMult=InpSARSlMultOverride; tpMult=6.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "SAR")               { slMult=1.0; tpMult=6.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 17/08 - griglia SL/TP TradingView (H4 2023-2026): SL1.0/TP6.0 da solo PF1.85->PF1.62 baseline; poi scoperto che il filtro HTF (mai testato spento) da solo migliora PF1.227->1.328 e DD7.36%->5.93% su 529 trade; SL1.0/TP6.0 + HTF off insieme (non ridondanti, si sommano): PF1.398, DD5.15%, 537 trade - il migliore trovato oggi. Test isolato MT5 in corso per conferma sul motore vero
    if(name == "SH_BMS_RTO")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.66 R1.29
    // 14/08 - SH_BMS_RTO_V2: slMult/tpMult inerti come CRT (SL/TP calcolati
@@ -184,6 +207,16 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
 // di ogni strategia su QUESTO timeframe. Se non c'e' profilo -> PERIOD_CURRENT
 // (usa il TF di ingresso globale InpTFEntry, retrocompatibile).
 ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
+   // 02/09 - "sblocco scalp" richiesto dall'utente: BB_SQUEEZE/ORDER_BLOCK/
+   // BREAKOUT_ACC erano tutte e tre su D1 con rischio gia' tagliato a 0.5-0.6%
+   // per edge debole/rumoroso lì (vedi NXS_Profile_Risk). Ipotesi da testare:
+   // le stesse logiche (compressione volatilita', order block SMC, breakout
+   // con accettazione) potrebbero essere piu' genuine su un timeframe scalp
+   // dove il pattern ricorre piu' spesso. Override cauto, di default OFF
+   // (PERIOD_CURRENT = nessun cambiamento, resta D1).
+   if(InpScalpTFOverride != PERIOD_CURRENT &&
+      (name == "BB_SQUEEZE" || name == "ORDER_BLOCK" || name == "BREAKOUT_ACC"))
+      return InpScalpTFOverride;
    if(name == "ADX_RSI")           return PERIOD_D1;
    if(name == "BB_SQUEEZE")        return PERIOD_D1;
    if(name == "BJORGUM")           return PERIOD_H4;
@@ -246,6 +279,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // barra singola, "any timeframe" nell'originale. M15 = TF di ingresso
    // di default, coerente con la granularita' del pattern.
    if(name == "BAR_UPDN")          return PERIOD_M15;
+   if(name == "PIVOT_WICK")        return PERIOD_M15;   // 02/09 - modalita' scalp richiesta dall'utente
    // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
    // lento a girare.
@@ -300,6 +334,15 @@ double NXS_Profile_Risk(const string name){
 // le strategie - l'edge esiste, il problema era solo il rischio per
 // trade troppo aggressivo rispetto alla sua sottigliezza.
    if(name == "EMA_PULLBACK")      return 2.5;    // 5.0->2.5, PF piu' solido (~1.5) di SAR ma comunque tagliato per prudenza
+   // 31/08 - override testabile: quel 5.0->1.0 (sopra) resta la scelta di
+   // sicurezza di default - il Monte Carlo del 25/08 aveva trovato rovina
+   // nel 78% degli scenari a tier 5.0%. Con l'edge isolato di SAR ora piu'
+   // forte col filtro candela (PF1.37-1.57 su 5 punti nel tempo, contro
+   // ~1.09-1.31 di allora), si prova un aumento CAUTO (non un ritorno al
+   // 5.0% gia' dimostrato pericoloso) per lasciare che il lotto cresca con
+   // l'equity invece di restare bloccato al minimo broker fino a ~$4000 di
+   // saldo. Zero = nessun cambiamento rispetto al default 1.0%.
+   if(name == "SAR" && InpSARRiskPctOverride > 0) return InpSARRiskPctOverride;
    if(name == "SAR")               return 1.0;    // 5.0->1.0, edge piu' sottile (PF~1.09-1.31) e maggior volume di trade
    // TURTLE_SOUP: reale PF2.04 "la stella" e' con la RICETTA UFFICIALE attiva
    // (slMult1.0/tpMult4.5/htf, vedi NXS_Profile_Get sopra) - sul flat baseline
@@ -375,6 +418,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "STRUCT_REACT")      return 0.5;
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
+   if(name == "PIVOT_WICK")        return 0.5;   // 02/09 - nuova, mai verificata su MT5, tier cauto
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
@@ -596,6 +640,38 @@ bool NXS_Profile_Enabled(const string name){
    // Le rimanenti restano note per la cronaca (gia' spente da prima per
    // perdite reali confermate, non fanno parte del nucleo demo):
    //   BB_SQUEEZE, STRUCT_REACT, DISP_REBAL, OTE_CONT, ICHIMOKU.
+   //
+   // 28/08 - BUG TROVATO stasera: questa e' una whitelist separata da
+   // InpStrat_X (il toggle "voglio provarla") e da InpStrategySelector
+   // (isolamento per il test) - un terzo cancello indipendente, "questa
+   // strategia e' abbastanza validata da aprire ordini" (return false =
+   // OPEN_FAIL_PREFLIGHT/"profile_disabled", vedi NXS_Execution.mqh).
+   // Le 6 strategie portate stasera da script Pine TradingView caivano
+   // TUTTE qui dentro senza saperlo: zero trade in ogni backtest isolato,
+   // a prescindere da InpStrat_X=true e dal selector - scoperto solo dopo
+   // diagnostica dedicata su PMAX (dir flip confermato, segnale generato,
+   // ma ogni apertura rifiutata con reason='profile_disabled'). Aggiunte
+   // qui (return true) cosi' il loro InpStrat_X=false di default resta
+   // l'unica vera protezione - "abilitata al test" non e' "abilitata di
+   // default", quel controllo resta su InpStrat_X.
+   if(name == "BAR_UPDN")               return true;
+   if(name == "PIVOT_WICK")             return true;
+   if(name == "PMAX")                   return true;
+   if(name == "MACD_SMA200")            return true;
+   if(name == "RSI_DIV_PINE")           return true;
+   if(name == "ICHIMOKU_HULL_MACD")     return true;
+   if(name == "3COMMAS_BOT")            return true;
+   // 02/09 - stesso bug del 28/08 (PMAX ecc.): l'utente ha chiesto di
+   // sbloccare BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC su un timeframe scalp
+   // (vedi InpScalpTFOverride) per un test isolato. BREAKOUT_ACC era gia'
+   // qui (riga sopra); BB_SQUEEZE e ORDER_BLOCK erano invece elencate al
+   // 630 come "gia' spente per perdite reali confermate" - senza questa
+   // riga qualunque test isolato le avrebbe rifiutate in silenzio
+   // (profile_disabled), zero trade a prescindere da InpStrat_X/selector.
+   // Stessa regola: "abilitata al test" non e' "abilitata di default",
+   // quella protezione resta su InpStrat_X (entrambe false di default).
+   if(name == "BB_SQUEEZE")             return true;
+   if(name == "ORDER_BLOCK")            return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 

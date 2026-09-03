@@ -1,0 +1,302 @@
+<title>Catalogo Strategie NEXUS</title>
+<style>
+:root{
+  --bg:#0e1116;
+  --panel:#151a22;
+  --panel-2:#11151c;
+  --border:#262d3a;
+  --text:#e6e9ef;
+  --text-dim:#8b93a7;
+  --text-faint:#5a6274;
+  --gold:#d4a94a;
+  --green:#4caf7d;
+  --green-dim:#1f3a2c;
+  --red:#d9615b;
+  --red-dim:#3a2225;
+  --amber:#d9a441;
+  --amber-dim:#3a331f;
+  --blue:#5b9dd9;
+  --blue-dim:#1f2c3a;
+  --grid:#1d2330;
+  --row-hover:#171d27;
+}
+:root[data-theme="light"]{
+  --bg:#f4f2ec;
+  --panel:#ffffff;
+  --panel-2:#faf8f2;
+  --border:#ded8c6;
+  --text:#22201a;
+  --text-dim:#6b6656;
+  --text-faint:#a39d88;
+  --gold:#a97e1f;
+  --green:#2e8f5e;
+  --green-dim:#dcefe2;
+  --red:#b8433d;
+  --red-dim:#f7dfdd;
+  --amber:#a97a1a;
+  --amber-dim:#f3e6cc;
+  --blue:#2f6fa8;
+  --blue-dim:#dbe9f5;
+  --grid:#e8e3d4;
+  --row-hover:#f0ede2;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f4f2ec; --panel:#ffffff; --panel-2:#faf8f2; --border:#ded8c6;
+    --text:#22201a; --text-dim:#6b6656; --text-faint:#a39d88; --gold:#a97e1f;
+    --green:#2e8f5e; --green-dim:#dcefe2; --red:#b8433d; --red-dim:#f7dfdd;
+    --amber:#a97a1a; --amber-dim:#f3e6cc; --blue:#2f6fa8; --blue-dim:#dbe9f5;
+    --grid:#e8e3d4; --row-hover:#f0ede2;
+  }
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  min-height:100vh;
+}
+.wrap{max-width:1400px;margin:0 auto;padding:24px 24px 56px;}
+
+header{margin-bottom:16px;}
+.eyebrow{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:6px;
+}
+h1{font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em;}
+.sub{color:var(--text-dim);font-size:13px;max-width:90ch;line-height:1.5;}
+
+.controls{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin:16px 0 12px;
+}
+.controls input[type="text"]{
+  background:var(--panel); border:1px solid var(--border); color:var(--text);
+  padding:8px 12px; border-radius:8px; font-family:"IBM Plex Mono",monospace;
+  font-size:12.5px; min-width:220px;
+}
+.controls input[type="text"]::placeholder{color:var(--text-faint);}
+.chip{
+  font-family:"IBM Plex Mono",monospace; font-size:11px;
+  background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
+  padding:6px 11px; border-radius:999px; cursor:pointer; user-select:none;
+  white-space:nowrap;
+}
+.chip:hover{color:var(--text);}
+.chip.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:600;}
+.count{
+  margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+  color:var(--text-faint);
+}
+
+.table-scroll{
+  overflow-x:auto;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--panel);
+}
+table{border-collapse:collapse;width:100%;min-width:1080px;}
+thead th{
+  position:sticky; top:0; z-index:2;
+  background:var(--panel-2);
+  text-align:left;
+  font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-faint);
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  white-space:nowrap;
+}
+thead th:hover{color:var(--text);}
+thead th .arrow{opacity:.4;margin-left:4px;font-size:9px;}
+thead th.sorted .arrow{opacity:1;color:var(--gold);}
+tbody td{
+  padding:9px 12px;
+  border-bottom:1px solid var(--grid);
+  font-size:12.5px;
+  vertical-align:top;
+}
+tbody tr:hover{background:var(--row-hover);}
+tbody tr:last-child td{border-bottom:none;}
+.name{font-weight:600;font-family:"IBM Plex Mono",monospace;font-size:12.5px;}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+.num{text-align:right;}
+.note{color:var(--text-dim);max-width:420px;line-height:1.5;}
+.tf-badge{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:var(--blue); background:var(--blue-dim);
+  padding:2px 7px;border-radius:5px;white-space:nowrap;
+}
+.htf-yes{color:var(--gold);}
+.htf-no{color:var(--text-faint);}
+.dash{color:var(--text-faint);}
+.en-yes{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--green);}
+.en-no{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--red);}
+
+.status-pill{
+  display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10.5px;
+  padding:3px 9px; border-radius:999px; white-space:nowrap; font-weight:600;
+}
+.st-validata{background:var(--green-dim);color:var(--green);}
+.st-forte{background:var(--green-dim);color:var(--green);}
+.st-ok{background:var(--green-dim);color:var(--green);}
+.st-corretta{background:var(--green-dim);color:var(--green);}
+.st-in_corso{background:var(--blue-dim);color:var(--blue);}
+.st-testata_negativa{background:var(--red-dim);color:var(--red);}
+.st-critica{background:var(--red-dim);color:var(--red);}
+.st-debole{background:var(--red-dim);color:var(--red);}
+.st-attenzione_rischio{background:var(--red-dim);color:var(--red);}
+.st-vergine{background:var(--amber-dim);color:var(--amber);}
+.st-mai_verificata{background:var(--amber-dim);color:var(--amber);}
+.st-ipotesi{background:var(--amber-dim);color:var(--amber);}
+.st-fragile{background:var(--amber-dim);color:var(--amber);}
+.st-contrastante{background:var(--amber-dim);color:var(--amber);}
+.st-da_ottimizzare{background:var(--panel-2);color:var(--text-faint);}
+.st-off_default{background:var(--panel-2);color:var(--text-faint);}
+.st-bloccata_costi{background:var(--red-dim);color:var(--red);}
+.st-prossimo_task{background:var(--blue-dim);color:var(--blue);}
+
+.legend{
+  display:flex; gap:14px; flex-wrap:wrap; margin-top:14px;
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--text-dim);
+}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.legend .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.g{background:var(--green);} .dot.b{background:var(--blue);}
+.dot.r{background:var(--red);} .dot.a{background:var(--amber);}
+.dot.n{background:var(--text-faint);}
+
+footer{
+  margin-top:20px;font-size:11.5px;color:var(--text-faint);line-height:1.6;
+  max-width:90ch;
+}
+@media (max-width:720px){
+  .controls{flex-direction:column;align-items:stretch;}
+  .count{margin-left:0;}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">NEXUS EA &middot; XAUUSD &middot; catalogo strategie</div>
+    <h1>Catalogo Strategie</h1>
+    <div class="sub">Tutte le 48 strategie presenti nel motore, con timeframe nativo, rischio per trade, rapporto rischio/rendimento e stato attuale della verifica &mdash; dai profili di backtest nel codice e dai test dal vivo su MT5. La colonna "Abilitata" riflette un terzo cancello indipendente (<code>NXS_Profile_Enabled</code>, separato dall'interruttore di prova e dal selettore di isolamento) trovato il 02/09: solo 21 delle 48 possono aprire un ordine, le altre vengono rifiutate in silenzio anche selezionandole manualmente.</div>
+  </header>
+
+  <div class="controls" id="controls">
+    <input type="text" id="search" placeholder="Cerca per nome o nota...">
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="table-scroll">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th data-key="name">Strategia<span class="arrow">&#9662;</span></th>
+          <th data-key="tf">TF<span class="arrow">&#9662;</span></th>
+          <th data-key="risk" class="num">Rischio%<span class="arrow">&#9662;</span></th>
+          <th data-key="sl" class="num">SL&times;ATR<span class="arrow">&#9662;</span></th>
+          <th data-key="tp" class="num">TP&times;ATR<span class="arrow">&#9662;</span></th>
+          <th data-key="rr" class="num">R:R<span class="arrow">&#9662;</span></th>
+          <th data-key="htf">HTF<span class="arrow">&#9662;</span></th>
+          <th data-key="enabled">Abilitata<span class="arrow">&#9662;</span></th>
+          <th data-key="status">Stato<span class="arrow">&#9662;</span></th>
+          <th data-key="note">Note</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot g"></i>validata / forte / corretta dal vivo</span>
+    <span><i class="dot b"></i>in corso stanotte / prossimo task</span>
+    <span><i class="dot r"></i>testata negativa / critica / debole</span>
+    <span><i class="dot a"></i>vergine, mai verificata, ipotesi fragile o dati contrastanti</span>
+    <span><i class="dot n"></i>nessun profilo dedicato, usa i default globali</span>
+  </div>
+
+  <footer>
+    Fonte: NXS_StrategyRegistry.mqh (elenco canonico) e NXS_StrategyProfiles.mqh (TF/rischio/SL-TP per strategia), incrociati con i risultati dei test dal vivo su MT5 raccolti in questa sessione e nei commenti storici del codice. "R:R" &egrave; il rapporto TP/SL nominale, non il risultato reale. Clicca le intestazioni per ordinare.
+  </footer>
+</div>
+
+<script>
+const DATA = {"strategies": [{"name": "3COMMAS_BOT", "tf": "H1", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": null, "status": "mai_verificata", "note": "28/08, nuova, mai verificata su MT5 - meccanismo di integrazione bot esterno, non un pattern price-action classico.", "enabled": true}, {"name": "ADX_RSI", "tf": "D1", "risk": 2.5, "sl": 1.0, "tp": 10.0, "rr": 10.0, "htf": true, "status": "debole", "note": "Reale PF1.14 positivo ma campione D1 sottile. Analisi MFE/MAE: 85.6% dei segnali raggiunge 1R, TP10+breakeven1.5R testato offline (PF1.48->1.97) ma mai validato su MT5.", "enabled": true}, {"name": "AMD_CONT", "tf": "M30", "risk": 2.5, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": false, "status": "vergine", "note": "Python OOS PF1.38, 282 trade, WF4/5 - campione grande. Mai testata dal vivo su MT5. Flag di accensione InpUseAMD manca la keyword input (bug non ancora corretto).", "enabled": true}, {"name": "AMD_REVERSAL", "tf": "M15", "risk": 1.2, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": false, "status": "vergine", "note": "Python OOS PF1.97, 59 trade, WF3/5. Mai testata dal vivo su MT5.", "enabled": true}, {"name": "BAR_UPDN", "tf": "M15", "risk": 0.5, "sl": 1.0, "tp": 2.5, "rr": 2.5, "htf": false, "status": "testata_negativa", "note": "TESTATA STANOTTE (02/09): nuda su M15 2024, PF0.72, netto -$165.66, win rate 24.3% su 210 trade. Nessun filtro di salvataggio trovato al primo giro (corpo candela, trend SMA20, momentum, ora del giorno - tutte differenze marginali).", "enabled": true}, {"name": "BB_SQUEEZE", "tf": "D1 (default)", "risk": 0.6, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": false, "status": "in_corso", "note": "[02/09 sbloccata stanotte dal terzo cancello NXS_Profile_Enabled, era su profile_disabled] D1: POCHI_DATI, PF2.92 ma campione troppo piccolo per fidarsi. IN CORSO stanotte: sblocco su M15 scalp via InpScalpTFOverride.", "enabled": true}, {"name": "BJORGUM", "tf": "H4", "risk": 0.4, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": false, "status": "ipotesi", "note": "Proxy sito corretto dopo un bug (EMA ribbon invece della vera logica pivot-bounce). Senza filtro HTF: PF1.20, DD13.4%, 110 trade/10y - ipotesi da validare su MT5 isolato, mai confermata.", "enabled": false}, {"name": "BOLLINGER", "tf": "D1", "risk": 0.6, "sl": 1.0, "tp": 2.0, "rr": 2.0, "htf": false, "status": "ok", "note": "1d OK, PF1.17, R0.94 - in osservazione dal 2.4.0.", "enabled": false}, {"name": "BREAKOUT_ACC", "tf": "D1 (default)", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "in_corso", "note": "Python DEBOLE: OOS2.71 smentito da walk-forward reale (1/5 finestre, rumore D1). IN CORSO stanotte: sblocco su M15 scalp.", "enabled": true}, {"name": "DISP_REBAL", "tf": "H4", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": false, "status": "forte", "note": "4h FORTE, PF1.68, R2.0 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "ELLIOTT", "tf": "H4 (BUY-only)", "risk": null, "sl": null, "tp": null, "rr": null, "htf": false, "status": "corretta", "note": "Mai testata prima (era OFF di default). M15 fallback era in perdita netta (PF0.49, 0/5 finestre, lato SELL rotto). Su H4 BUY-only: PF1.51, n=633, 4/5 finestre - campione robusto. Stop nativo dal pattern d'onda.", "enabled": false}, {"name": "EMA_PULLBACK", "tf": "H4", "risk": 2.5, "sl": 1.5, "tp": 4.0, "rr": 2.67, "htf": true, "status": "validata", "note": "VALIDATA IN QUESTA SESSIONE: baseline pulito PF1.41, net $677, 80 trade (ott2023-ago2026). Filtro pressione 2h allineata trovato offline ma si modera molto su campione esteso (non un vero filtro). Analisi MFE profonda: vincenti catturano 96% del picco; 10 perdenti su 48 avevano toccato oltre $25 di profitto flottante prima di girare in perdita.", "enabled": true}, {"name": "FVG_CONT", "tf": "H4", "risk": 0.5, "sl": 1.5, "tp": 6.0, "rr": 4.0, "htf": true, "status": "critica_poi_migliorata", "note": "CRITICA su MT5 reale (PF0.79) nonostante backtest Python forte - sospetto problema di esecuzione, non di trigger. Con overlay trailing + breakeven 1.5R (scoperta 12/08): OOS PF1.55->1.74, DD13.41%->7.06%.", "enabled": true}, {"name": "FVG_MIT", "tf": "H4", "risk": 0.5, "sl": 1.5, "tp": 4.5, "rr": 3.0, "htf": true, "status": "forte", "note": "FORTE, PF2.04, R2.0 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "ICHIMOKU", "tf": "H4", "risk": 1.8, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "forte", "note": "4h FORTE, PF1.75, R1.13 - reale PF1.91 (campione piccolo). Target fisso batte ogni trailing provato.", "enabled": false}, {"name": "ICHIMOKU_HULL_MACD", "tf": "H4", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": null, "status": "mai_verificata", "note": "28/08, nuova, mai verificata su MT5.", "enabled": true}, {"name": "IFVG", "tf": "H4", "risk": 0.5, "sl": 1.5, "tp": 4.5, "rr": 3.0, "htf": true, "status": "forte", "note": "4h FORTE, PF2.51, R2.0 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "JUDAS_SWING", "tf": "default globale", "risk": null, "sl": null, "tp": null, "rr": null, "htf": null, "status": "da_ottimizzare", "note": "Gruppo session/Elliott: nessun profilo dedicato ancora, usa i parametri globali (SL2.0/TP2.6xATR, R:R1.3). Da ottimizzare su MT5/intraday.", "enabled": false}, {"name": "LDN_REVERSAL", "tf": "M15", "risk": 1.2, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": false, "status": "vergine", "note": "Python OOS PF1.23, 66 trade, WF4/5. Mai testata dal vivo su MT5.", "enabled": true}, {"name": "LIQ_SWEEP", "tf": "D1", "risk": 0.5, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": true, "status": "contrastante", "note": "Commento vecchio: '1d FORTE PF2.48 R2.0'. Commento piu' recente (rischio tagliato a 0.5): 'Python DEBOLE, IS0.91 sotto pareggio' - dati contrastanti nel tempo, da rivalutare.", "enabled": true}, {"name": "LIQ_VOID", "tf": "H4", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "forte", "note": "4h FORTE, PF1.67, R0.65 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "LONDON_BO", "tf": "H4", "risk": 2.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "contrastante", "note": "Commento vecchio: '1d FORTE PF1.86 R0.63'. Commento piu' recente: 'Python OOS1.38/99 WF4/5, nessuna storia reale' - dati contrastanti, rischio comunque tenuto alto (2.5%).", "enabled": true}, {"name": "MACD", "tf": "H4", "risk": 0.5, "sl": 2.0, "tp": 8.0, "rr": 4.0, "htf": true, "status": "critica", "note": "CRITICA storica su MT5 (PF1.10 al limite, mai chiarita) nonostante il sito resti positivo su ogni TF testato (proxy corretto due volte) - sospetto esecuzione, non trigger. 1496 trade su 10 anni, negativo 5 anni su 10.", "enabled": true}, {"name": "MACD_SMA200", "tf": "H4", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": null, "status": "mai_verificata", "note": "28/08, nuova, mai verificata su MT5.", "enabled": true}, {"name": "MALAYSIAN_SNR", "tf": "M30", "risk": 1.8, "sl": 2.0, "tp": 4.5, "rr": 2.25, "htf": true, "status": "corretta", "note": "Su D1 (nativo): PF0.76, lato SELL rotto. Su M30 (stesso livello H4/W1, controllo piu' frequente): PF1.75 simmetrico, n=1289, 5/5 finestre su entrambe le direzioni - correzione riuscita.", "enabled": false}, {"name": "NY_REVERSAL", "tf": "default globale", "risk": null, "sl": null, "tp": null, "rr": null, "htf": null, "status": "da_ottimizzare", "note": "Gruppo session/Elliott: nessun profilo dedicato, usa i parametri globali. Da ottimizzare su MT5/intraday.", "enabled": false}, {"name": "OB_MIT", "tf": "D1", "risk": 0.5, "sl": 1.5, "tp": 4.0, "rr": 2.67, "htf": false, "status": "contrastante", "note": "Commento vecchio: 'SL1.5/TP4.0+trail -> PF1.80'. Commento piu' recente: 'PF0.38 crollata per interazione' - risultato peggiorato nel tempo, rischio tagliato a 0.5%.", "enabled": false}, {"name": "ORDER_BLOCK", "tf": "D1 (default)", "risk": 0.5, "sl": 1.0, "tp": 3.0, "rr": 3.0, "htf": true, "status": "in_corso", "note": "[02/09 sbloccata stanotte dal terzo cancello NXS_Profile_Enabled, era su profile_disabled] Recente: PF0.67, sotto pareggio. Richiede conferma trend H1 esterna + reazione SMC sul retest. IN CORSO stanotte: sblocco su M15/M30 scalp.", "enabled": true}, {"name": "OTE_CONT", "tf": "D1", "risk": 0.5, "sl": 2.0, "tp": 4.5, "rr": 2.25, "htf": true, "status": "forte", "note": "1d FORTE, PF1.78, R2.0 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "PMAX", "tf": "H1", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": null, "status": "mai_verificata", "note": "28/08, nuova (SuperTrend ATR-adattivo, porting da Pine Script), mai verificata su MT5. Candidato mirato dopo che SAR nativo e' risultato negativo (PF0.92).", "enabled": true}, {"name": "PO3", "tf": "default globale", "risk": null, "sl": null, "tp": null, "rr": null, "htf": null, "status": "da_ottimizzare", "note": "Gruppo session/Elliott: nessun profilo dedicato, usa i parametri globali. Da ottimizzare su MT5/intraday.", "enabled": false}, {"name": "RANGE_FADE", "tf": "D1", "risk": 0.6, "sl": 1.0, "tp": 2.0, "rr": 2.0, "htf": false, "status": "ok", "note": "1d OK, PF1.17, R0.94.", "enabled": false}, {"name": "RSI_DIV", "tf": "H1", "risk": 1.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": false, "status": "contrastante", "note": "Proxy sito corretto (era rientro RSI semplice, non vera divergenza). Con la logica vera: H1 senza HTF PF1.34, 84 trade - migliore trovata. Ma MT5 reale (678 trade) resta CRITICA la maggior parte degli anni - stesso sospetto di esecuzione visto su MACD/FVG_CONT.", "enabled": false}, {"name": "RSI_DIV_PINE", "tf": "H1", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": null, "status": "mai_verificata", "note": "28/08, nuova, mai verificata su MT5.", "enabled": true}, {"name": "SAR", "tf": "H4", "risk": 1.0, "sl": 1.0, "tp": 6.0, "rr": 6.0, "htf": false, "status": "validata", "note": "VALIDATA IN QUESTA SESSIONE: filtro allineamento candela H4 (NXS_SAR_CandleAligned) - unica modifica confermata sia offline (PF1.33->1.92) sia dal vivo su 5 punti temporali diversi (PF1.37-1.86, contro un'oscillazione selvaggia 0.29-1.86 prima). 9 raffinamenti successivi (SLReclaim, risk scaling, stop stretto, pressione+candela, breakeven, partial-take, ProfitReclaim v1/v2/v3) TUTTI falliti dal vivo nonostante offline promettente - l'edge dipende dal lasciare correre i vincenti.", "enabled": true}, {"name": "SH_BMS_RTO", "tf": "D1", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": false, "status": "forte", "note": "1d FORTE, PF1.66, R1.29 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "SH_BMS_RTO_V2", "tf": "H1", "risk": 2.5, "sl": null, "tp": null, "rr": null, "htf": false, "status": "off_default", "note": "Bloccata dal terzo cancello NXS_Profile_Enabled: PF0.89, sotto pareggio con costi retail (batch 14/08, n=140).", "enabled": false}, {"name": "SILVER_BULLET", "tf": "default globale", "risk": null, "sl": null, "tp": null, "rr": null, "htf": null, "status": "da_ottimizzare", "note": "Gruppo session/Elliott: nessun profilo dedicato, usa i parametri globali. Da ottimizzare su MT5/intraday.", "enabled": false}, {"name": "SMS_BMS_RTO", "tf": "D1", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": false, "status": "forte", "note": "1d FORTE, PF1.66, R1.29 - non ancora isolata su MT5 reale.", "enabled": false}, {"name": "STRUCT_REACT", "tf": "H4 (BUY-only)", "risk": 0.5, "sl": 2.0, "tp": 6.0, "rr": 3.0, "htf": true, "status": "corretta", "note": "SL1.0/TP4.5 simmetrica su H1 era in perdita (PF0.61, storico Dukascopy completo). Su H4, SL2.0/TP6.0 + BUY-only: PF2.32-2.43, vicino al PF2.65 validato in Python.", "enabled": false}, {"name": "SWING_FALSEBREAK", "tf": "H1", "risk": null, "sl": 1.5, "tp": 4.0, "rr": 2.67, "htf": false, "status": "da_ottimizzare", "note": "Stessi moltiplicatori del backtest Python di validazione (1h) - nessuna ottimizzazione delle uscite ancora fatta.", "enabled": false}, {"name": "THREE_BAR_DELIVERY_BREAK", "tf": "H4", "risk": 0.5, "sl": 1.5, "tp": 3.0, "rr": 2.0, "htf": true, "status": "debole", "note": "Alias storico: CISD. Python DEBOLE, WF 2/5 incoerente tra finestre.", "enabled": true}, {"name": "TSI", "tf": "D1", "risk": 0.3, "sl": 2.0, "tp": 6.0, "rr": 3.0, "htf": true, "status": "fragile", "note": "'Problema aperto' del nucleo. Baseline vero OOS PF1.35, IS sotto pareggio (0.73). Griglia 330 combinazioni: vincitore OOS PF1.35->2.41, DD2.97%->1.99%, walk-forward mai sotto 1.76 - ma campione ancora sottile (22-24 trade OOS su D1), la scoperta piu' fragile del gruppo.", "enabled": true}, {"name": "TURTLE_SOUP", "tf": "H1", "risk": 5.0, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "attenzione_rischio", "note": "1h FORTE, PF1.83, R2.0 - MA rischio ancora al tier MASSIMO (5.0%), lo stesso livello che il Monte Carlo del 25/08 ha trovato causare rovina nel 78% degli scenari per SAR/EMA_PULLBACK. Da rivedere prima di attivarla in portafoglio. Bloccata anche dal terzo cancello NXS_Profile_Enabled: PF0.55/DD62.7% su costi retail realistici (batch 14/08) - disattivata esplicitamente, non solo per il rischio.", "enabled": false}, {"name": "WEEKLY_EXP", "tf": "D1", "risk": 0.5, "sl": 1.0, "tp": 4.5, "rr": 4.5, "htf": true, "status": "prossimo_task", "note": "[ATTENZIONE: bloccata dal terzo cancello NXS_Profile_Enabled - va sbloccata come fatto per BB_SQUEEZE/ORDER_BLOCK prima di testarla, altrimenti zero trade] Ingresso raffinato M15 (stop nativo dalla candela di reazione, non piu' il livello settimanale largo). Python: PF1.18->1.64, rischio mediano $38->$3.51. Prossimo nella lista task di isolamento MT5 (dopo SAR/EMA_PULLBACK), non ancora iniziato.", "enabled": false}, {"name": "Z_SCORE_BREAKOUT", "tf": "H1", "risk": null, "sl": null, "tp": 4.0, "rr": 4.0, "htf": false, "status": "forte", "note": "Ipotesi 'quant' opposta a BOLLINGER (breakout invece di mean-reversion sulle stesse bande statistiche). Validata su H1: retail PF1.29 (4/5 finestre), ECN PF1.71 (5/5 finestre), 557 trade - miglior risultato retail dell'intera indagine di quel giorno. Stop strutturale M5, non ATR fisso.", "enabled": false}, {"name": "CRT", "tf": "M30", "risk": 2.5, "sl": null, "tp": null, "rr": null, "htf": false, "status": "bloccata_costi", "enabled": false, "note": "Stop/target inerti (livelli reali wick/sweep, non ATR fisso). Con costi retail realistici applicati (spread/risk_dist esplode sugli stop a wick): PF crolla a 0.08-0.25 e DD arriva al 100% su ogni combinazione testata (14/08) - nessun parametro salva l'edge. DISABILITATA anche nel terzo cancello NXS_Profile_Enabled: zero trade anche selezionandola manualmente, a meno di sbloccarla come fatto stanotte per BB_SQUEEZE/ORDER_BLOCK."}, {"name": "FVG_MIT_WINDOW", "tf": "H4", "risk": 0.5, "sl": null, "tp": null, "rr": null, "htf": true, "status": "bloccata_costi", "enabled": false, "note": "Stop/target inerti (registro zone, non ATR fisso). Con costi retail realistici: PF passa da 1.64 (senza costi) a 0.98, DD da 6% a 21.4% - non regge il gate. DISABILITATA anche nel terzo cancello NXS_Profile_Enabled: zero trade anche selezionandola manualmente."}]};
+
+const STATUS_LABEL = {
+  validata: 'validata dal vivo', forte: 'forte (backtest)', ok: 'ok', corretta: 'corretta e confermata',
+  in_corso: 'in corso stanotte', testata_negativa: 'testata, negativa', critica: 'critica dal vivo',
+  critica_poi_migliorata: 'critica, poi migliorata', debole: 'debole', attenzione_rischio: 'rischio da rivedere',
+  vergine: 'vergine (mai su MT5)', mai_verificata: 'mai verificata', ipotesi: 'ipotesi da validare',
+  fragile: 'scoperta fragile', contrastante: 'dati contrastanti', da_ottimizzare: 'da ottimizzare',
+  off_default: 'off di default', prossimo_task: 'prossimo task', bloccata_costi: 'bloccata (costi reali)'
+};
+
+let sortKey = 'name', sortDir = 1;
+let filterText = '';
+
+function fmtNum(v, suffix){
+  if(v === null || v === undefined) return '<span class="dash">&mdash;</span>';
+  return v.toFixed(v % 1 === 0 ? 1 : 2) + (suffix||'');
+}
+
+function render(){
+  const q = filterText.trim().toLowerCase();
+  let rows = DATA.strategies.filter(r =>
+    !q || r.name.toLowerCase().includes(q) || (r.note||'').toLowerCase().includes(q) || (r.status||'').toLowerCase().includes(q)
+  );
+  rows.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(av === null || av === undefined) av = sortKey==='name'||sortKey==='status'||sortKey==='note'||sortKey==='tf' ? '' : -Infinity;
+    if(bv === null || bv === undefined) bv = sortKey==='name'||sortKey==='status'||sortKey==='note'||sortKey==='tf' ? '' : -Infinity;
+    if(typeof av === 'string') av = av.toLowerCase();
+    if(typeof bv === 'string') bv = bv.toLowerCase();
+    if(av < bv) return -1*sortDir;
+    if(av > bv) return 1*sortDir;
+    return 0;
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="name">${r.name}</td>
+      <td><span class="tf-badge">${r.tf}</span></td>
+      <td class="num mono">${fmtNum(r.risk,'%')}</td>
+      <td class="num mono">${fmtNum(r.sl,'x')}</td>
+      <td class="num mono">${fmtNum(r.tp,'x')}</td>
+      <td class="num mono">${fmtNum(r.rr,'')}</td>
+      <td>${r.htf===true ? '<span class="htf-yes">si</span>' : r.htf===false ? '<span class="htf-no">no</span>' : '<span class="dash">&mdash;</span>'}</td>
+      <td>${r.enabled ? '<span class="en-yes">puo\' aprire</span>' : '<span class="en-no">bloccata</span>'}</td>
+      <td><span class="status-pill st-${r.status}">${STATUS_LABEL[r.status]||r.status}</span></td>
+      <td class="note">${r.note}</td>
+    </tr>
+  `).join('');
+  document.getElementById('count').textContent = `${rows.length} / ${DATA.strategies.length} strategie`;
+
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key === sortKey);
+    const arrow = th.querySelector('.arrow');
+    if(th.dataset.key === sortKey) arrow.innerHTML = sortDir===1 ? '&#9662;' : '&#9652;';
+  });
+}
+
+document.querySelectorAll('thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+    render();
+  });
+});
+document.getElementById('search').addEventListener('input', e=>{
+  filterText = e.target.value;
+  render();
+});
+
+render();
+</script>

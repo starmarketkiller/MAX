@@ -46,6 +46,7 @@ export const STRATEGY_REGISTRY = [
   ["ORDER_BLOCK_V2","Order Block V2","SCALP",false,true],
   ["OTE_CONT","Ote Cont","SMC",true,true],
   ["OTE_CONT_V2","Ote Cont V2","SCALP",false,true],
+  ["PIVOT_WICK","Pivot Wick","UNCLASSIFIED",true,false],
   ["PMAX","Pmax","UNCLASSIFIED",true,false],
   ["PO3","Po3","AMD",true,true],
   ["RANGE_FADE","Range Fade","VOLATILITY",true,true],

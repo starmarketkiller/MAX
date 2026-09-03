@@ -316,6 +316,40 @@ SNXSSignal NXS_Strat_MACD(){
 }
 
 //------------------------------------ K4 Parabolic SAR
+// 31/08 - filtro candela di allineamento, trovato analizzando i 112 trade
+// nudi di stanotte (dati reali, non ipotesi): quando la candela H4 appena
+// chiusa concorda con la direzione del segnale (bullish per buy, bearish
+// per sell), win rate 69% (77% tra i grandi vincenti); quando e' contraria,
+// 46% (50% tra i grandi perdenti - quasi casuale). Filtrando SOLO gli
+// allineati sui dati storici: PF 1.33->1.92, netto $1227.85->$1594.93 su
+// meno trade (112->58). Gli scartati da soli erano in perdita netta
+// (PF 0.81, -$367.08) - non diluivano solo il risultato, lo peggioravano.
+bool NXS_SAR_CandleAligned(int dir){
+   double o1 = iOpen(g_sym, NXS_EffTF(), 1), c1 = iClose(g_sym, NXS_EffTF(), 1);
+   bool bullish = (c1 > o1);
+   return (bullish && dir == DIR_BUY) || (!bullish && dir == DIR_SELL);
+}
+
+// 31/08 - "pressione" delle ultime 2h (8 barre M15): quante chiudono al
+// rialzo/ribasso + somma dei corpi netti. Contro-intuitivo ma confermato
+// sui dati: SAR va MEGLIO quando la pressione recente e' CONTRARIA alla
+// direzione del segnale (cattura un'inversione vera) che quando e'
+// allineata (rischia di inseguire un movimento gia' esteso). Da solo:
+// PF1.00 (allineata) vs PF1.69 (contraria). Combinato col filtro candela
+// (non ridondante, si sommano): entrambi allineati -> PF3.47 su 18 trade;
+// nessuno dei due -> PF0.04 su 13 trade (quasi tutte perdite).
+bool NXS_SAR_PressureContrary(int dir){
+   int up = 0; double netBody = 0;
+   int N = 8;
+   for(int i = 1; i <= N; i++){
+      double o = iOpen(g_sym, PERIOD_M15, i), c = iClose(g_sym, PERIOD_M15, i);
+      if(c > o) up++;
+      netBody += (c - o);
+   }
+   bool pressureBuy = (up >= N/2) && (netBody > 0);
+   return (!pressureBuy && dir == DIR_BUY) || (pressureBuy && dir == DIR_SELL);
+}
+
 SNXSSignal NXS_Strat_SAR(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_SAR; s.stratName = "SAR";
    if(!InpStrat_SAR || !NXS_SelectorAllows(4)) return s;
@@ -324,6 +358,12 @@ SNXSSignal NXS_Strat_SAR(){
       s.dir = DIR_BUY;  s.score = 60; s.reason = "SAR_below_price";
    } else if(g_sar > price && g_ema9 < g_ema21){
       s.dir = DIR_SELL; s.score = 60; s.reason = "SAR_above_price";
+   }
+   if(s.dir != DIR_NONE && InpSAR_RequireCandleAlign && !NXS_SAR_CandleAligned(s.dir)){
+      s.dir = DIR_NONE; s.reason = "candle_misaligned";
+   }
+   if(s.dir != DIR_NONE && InpSAR_RequirePressureContrary && !NXS_SAR_PressureContrary(s.dir)){
+      s.dir = DIR_NONE; s.reason = "pressure_aligned_not_contrary";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -334,16 +374,50 @@ SNXSSignal NXS_Strat_SAR(){
 // ChartArt): nessun indicatore, solo la relazione OHLC tra due barre
 // consecutive. Barra corrente verde E apre sopra la chiusura precedente ->
 // buy; barra rossa E apre sotto la chiusura precedente -> sell (mirror).
+//
+// 02/09 - BUG TROVATO (ipotesi dell'utente, confermata sui dati): nessuno
+// stato "gia' tradato questo pattern" - la condizione torna vera piu' volte
+// durante un trend sostenuto, quindi il motore insegue lo stesso movimento
+// con ingressi ripetuti invece di prenderlo una volta sola. Verificato: 134
+// dei 210 trade nudi (M15, 2024) erano raggruppati (stesso verso, entro 6h
+// l'uno dall'altro) - il primo di un gruppo spesso vince, gli inseguimenti
+// quasi sempre perdono.
+//
+// PRIMO TENTATIVO (fallito): one-shot che si resetta appena una barra non
+// soddisfa piu' il pattern - inefficace, perche' in un trend reale il
+// pattern non si ripete su barre CONSECUTIVE perfette, si interrompe e
+// riprende in modo intermittente (conteggio trade sceso solo 210->207).
+// CORREZIONE: raffreddamento per direzione basato sul numero di barre
+// (InpBarUpDnCooldownBars), non sulla continuita' del pattern - blocca lo
+// stesso verso per N barre dopo un ingresso, indipendentemente da quante
+// volte il pattern si ripresenta nel frattempo.
+struct SNXSBarUpDnState { datetime lastBarTime; datetime lastFireTime[2]; };  // [0]=buy [1]=sell
+SNXSBarUpDnState g_barUpDnState;
+
 SNXSSignal NXS_Strat_BarUpDn(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "BAR_UPDN";
    if(!InpStrat_BarUpDn || !NXS_SelectorAllows(43)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_barUpDnState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_barUpDnState.lastBarTime = curBar0;
+
    double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
    double c2 = iClose(g_sym, tf, 2);
-   if(c1 > o1 && o1 > c2){
+   bool bull = (c1 > o1 && o1 > c2);
+   bool bear = (c1 < o1 && o1 < c2);
+
+   long periodSec = PeriodSeconds(tf);
+   long cooldownSec = (long)InpBarUpDnCooldownBars * periodSec;
+   bool buyOk  = (g_barUpDnState.lastFireTime[0] == 0) || ((curBar0 - g_barUpDnState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_barUpDnState.lastFireTime[1] == 0) || ((curBar0 - g_barUpDnState.lastFireTime[1]) >= cooldownSec);
+
+   if(bull && buyOk){
       s.dir = DIR_BUY;  s.score = 58; s.reason = "BarUpDn_bull";
-   } else if(c1 < o1 && o1 < c2){
+      g_barUpDnState.lastFireTime[0] = curBar0;
+   } else if(bear && sellOk){
       s.dir = DIR_SELL; s.score = 58; s.reason = "BarUpDn_bear";
+      g_barUpDnState.lastFireTime[1] = curBar0;
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -591,6 +665,136 @@ SNXSSignal NXS_Strat_3CommasBot(){
    return s;
 }
 
+//------------------------------------ K6 Pivot Extension + Wick Rejection (#49)
+// 02/09 - idea originale dell'utente, vista a mano su TradingView (GOLD,
+// linee orizzontali estese dai pivot di swing). Precisata dall'utente dopo
+// la prima versione (mono-TF): i livelli di supporto/resistenza vengono
+// dai pivot (OHLC high/low) di PIU' TIMEFRAME insieme (M15/M30/H1/H4/D1),
+// ma il segnale di reversal (buy da supporto, sell da resistenza) va
+// valutato solo sulla barra CHIUSA di esecuzione M15 - un pool di livelli
+// multi-TF, un solo trigger intraday. Il caso "rompe invece di rimbalzare"
+// (breakout) e' volutamente fuori scope qui: e' gia' il lavoro di
+// BREAKOUT_ACC e delle altre strategie di rottura del motore.
+//
+// Diversa da MALAYSIAN_SNR (quella usa il massimo/minimo di CHIUSURA su
+// una finestra H4/W1 fissa + filtro di storyline direzionale) - qui sono
+// veri pivot frattali (N barre a sinistra e a destra piu' basse/alte),
+// pool per timeframe, wick di rigetto OPZIONALE (default off: basta il
+// tocco del livello, gia' un OHLC della candela pivot - richiesto
+// dall'utente dopo che la versione con wick obbligatorio non produceva
+// trade). Mai verificata su MT5. Gate a chiusura barra M15 + raffreddamento
+// per direzione fin dall'inizio (bug di inseguimento gia' trovato stanotte
+// su BAR_UPDN/BREAKOUT_ACC senza questa protezione).
+#define NXS_PIVOTWICK_MAXLVL 8
+#define NXS_PIVOTWICK_NTF    5
+int g_pivotWickTFs[NXS_PIVOTWICK_NTF] = { PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1 };
+
+struct SNXSPivotWickState {
+   datetime lastBarTime;                            // gate sulla barra M15 di esecuzione
+   datetime lastPivotBar[NXS_PIVOTWICK_NTF];         // una scansione pivot per barra chiusa, per TF
+   double   pivHi[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
+   double   pivLo[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
+   datetime lastFireTime[2];   // [0]=buy [1]=sell
+};
+SNXSPivotWickState g_pivotWickState;
+
+void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], int row, double level){
+   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--) arr[row][i] = arr[row][i - 1];
+   arr[row][0] = level;
+}
+
+// Scandaglia UN timeframe per un nuovo pivot frattale, una volta per barra
+// chiusa DI QUEL TF (indipendente dal gate M15 della funzione principale).
+void _nxs_pivotwick_scan_tf(int tfIdx, ENUM_TIMEFRAMES tf, int L){
+   datetime curBarTF = iTime(g_sym, tf, 0);
+   if(curBarTF <= 0 || g_pivotWickState.lastPivotBar[tfIdx] == curBarTF) return;
+   g_pivotWickState.lastPivotBar[tfIdx] = curBarTF;
+
+   int p = L + 1;   // shift appena confermato come pivot (L barre note a destra)
+   double hiP = iHigh(g_sym, tf, p);
+   double loP = iLow(g_sym, tf, p);
+   if(hiP <= 0 || loP <= 0) return;
+   bool isHiPivot = true, isLoPivot = true;
+   for(int i = p - L; i <= p + L; i++){
+      if(i == p) continue;
+      double hh = iHigh(g_sym, tf, i);
+      double ll = iLow(g_sym, tf, i);
+      if(hh <= 0 || ll <= 0) continue;
+      if(hh >= hiP) isHiPivot = false;
+      if(ll <= loP) isLoPivot = false;
+   }
+   if(isHiPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivHi, tfIdx, hiP);
+   if(isLoPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivLo, tfIdx, loP);
+}
+
+SNXSSignal NXS_Strat_PivotWick(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "PIVOT_WICK";
+   if(!InpStrat_PivotWick || !NXS_SelectorAllows(49)) return s;
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();   // M15 dal profilo (NXS_Profile_TF)
+   datetime curBar0 = iTime(g_sym, execTF, 0);
+   if(g_pivotWickState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_pivotWickState.lastBarTime = curBar0;
+
+   int L = InpPivotWickLookback;
+   for(int t = 0; t < NXS_PIVOTWICK_NTF; t++)
+      _nxs_pivotwick_scan_tf(t, (ENUM_TIMEFRAMES)g_pivotWickTFs[t], L);
+
+   double atr = NXS_ATRv(execTF, 1, 14);
+   if(atr <= 0) return s;
+   double tol = InpPivotWickTouchTolATR * atr;
+   double minWick = InpPivotWickMinWickATR * atr;
+
+   double o1 = iOpen(g_sym, execTF, 1), c1 = iClose(g_sym, execTF, 1);
+   double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
+   double body   = MathAbs(c1 - o1);
+   double upWick = h1 - MathMax(o1, c1);
+   double dnWick = MathMin(o1, c1) - l1;
+
+   long periodSec   = PeriodSeconds(execTF);
+   long cooldownSec = (long)InpPivotWickCooldownBars * periodSec;
+   bool buyOk  = (g_pivotWickState.lastFireTime[0] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_pivotWickState.lastFireTime[1] == 0) || ((curBar0 - g_pivotWickState.lastFireTime[1]) >= cooldownSec);
+
+   // Condizione di rigetto: se richiesta (InpPivotWickRequireWick), un vero
+   // wick sulla candela di tocco M15; altrimenti basta il tocco del livello
+   // (gia' un OHLC della candela pivot: high/low, su qualunque dei TF pool).
+   bool wickBull = !InpPivotWickRequireWick ||
+                   (dnWick >= minWick && dnWick >= InpPivotWickWickRatio * body &&
+                    dnWick >= InpPivotWickWickRatio * upWick && c1 > o1);
+   bool wickBear = !InpPivotWickRequireWick ||
+                   (upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
+                    upWick >= InpPivotWickWickRatio * dnWick && c1 < o1);
+
+   // BUY: tocco M15 di un livello pivot minimo di QUALUNQUE TF del pool
+   if(buyOk && wickBull){
+      for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            if(g_pivotWickState.pivLo[t][i] <= 0) continue;
+            if(l1 >= g_pivotWickState.pivLo[t][i] - tol && l1 <= g_pivotWickState.pivLo[t][i] + tol){
+               s.dir = DIR_BUY; s.score = 60; s.reason = "PivotWick_buy_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
+               g_pivotWickState.lastFireTime[0] = curBar0;
+               break;
+            }
+         }
+      }
+   }
+   // SELL: tocco M15 di un livello pivot massimo di QUALUNQUE TF del pool
+   if(s.dir == DIR_NONE && sellOk && wickBear){
+      for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            if(g_pivotWickState.pivHi[t][i] <= 0) continue;
+            if(h1 <= g_pivotWickState.pivHi[t][i] + tol && h1 >= g_pivotWickState.pivHi[t][i] - tol){
+               s.dir = DIR_SELL; s.score = 60; s.reason = "PivotWick_sell_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
+               g_pivotWickState.lastFireTime[1] = curBar0;
+               break;
+            }
+         }
+      }
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva
@@ -755,18 +959,53 @@ SNXSSignal NXS_Strat_FVG(){
 }
 
 //------------------------------------ H3 Breakout Acceptance
+// 02/09 - BUG TROVATO (ipotesi dell'utente, confermata sui dati): stesso
+// difetto di BAR_UPDN sotto - nessuno stato "gia' tradato questo breakout",
+// la condizione di accettazione resta vera per ogni barra finche' il
+// prezzo non rientra nel range, quindi il motore insegue lo stesso
+// movimento aprendo un nuovo trade a ogni barra invece di prenderlo una
+// volta sola. Verificato: 106 dei 201 trade nudi (M15, 2024) erano
+// raggruppati (stesso verso, entro 6h) - es. 7 sell consecutivi tra il 3
+// e il 5 gennaio 2024 sullo stesso movimento, solo il primo (+$20.36) in
+// profitto, i 6 inseguimenti tutti in perdita (-$2/-5 ciascuno). Sul D1
+// nativo il danno era diluito (una barra al giorno); su M15 lo stesso bug
+// spara decine di volte in piu'.
+//
+// PRIMO TENTATIVO (fallito su BAR_UPDN, stesso schema qui): one-shot che
+// si resetta appena l'accettazione non e' piu' vera - inefficace perche'
+// il rientro nel range e' spesso intermittente (una barra dentro, la
+// successiva di nuovo fuori), il reset scatta troppo presto. CORREZIONE:
+// raffreddamento per direzione a numero di barre (InpBreakoutAccCooldownBars).
+struct SNXSBreakoutAccState { datetime lastBarTime; datetime lastFireTime[2]; };  // [0]=buy [1]=sell
+SNXSBreakoutAccState g_breakoutAccState;
+
 SNXSSignal NXS_Strat_BreakoutAcc(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BREAKOUT_ACC; s.stratName = "BREAKOUT_ACC";
    if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   if(g_breakoutAccState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
+   g_breakoutAccState.lastBarTime = curBar0;
+
    int n = 20;
-   double range_hi = iHigh(g_sym, NXS_EffTF(), iHighest(g_sym, NXS_EffTF(), MODE_HIGH, n, 3));
-   double range_lo = iLow (g_sym, NXS_EffTF(), iLowest (g_sym, NXS_EffTF(), MODE_LOW,  n, 3));
-   double c1 = iClose(g_sym, NXS_EffTF(), 1);
-   double c2 = iClose(g_sym, NXS_EffTF(), 2);
-   if(c1 > range_hi && c2 > range_hi){
+   double range_hi = iHigh(g_sym, tf, iHighest(g_sym, tf, MODE_HIGH, n, 3));
+   double range_lo = iLow (g_sym, tf, iLowest (g_sym, tf, MODE_LOW,  n, 3));
+   double c1 = iClose(g_sym, tf, 1);
+   double c2 = iClose(g_sym, tf, 2);
+   bool acceptUp = (c1 > range_hi && c2 > range_hi);
+   bool acceptDn = (c1 < range_lo && c2 < range_lo);
+
+   long periodSec = PeriodSeconds(tf);
+   long cooldownSec = (long)InpBreakoutAccCooldownBars * periodSec;
+   bool buyOk  = (g_breakoutAccState.lastFireTime[0] == 0) || ((curBar0 - g_breakoutAccState.lastFireTime[0]) >= cooldownSec);
+   bool sellOk = (g_breakoutAccState.lastFireTime[1] == 0) || ((curBar0 - g_breakoutAccState.lastFireTime[1]) >= cooldownSec);
+
+   if(acceptUp && buyOk){
       s.dir = DIR_BUY;  s.score = 68; s.reason = "Acceptance_above_range";
-   } else if(c1 < range_lo && c2 < range_lo){
+      g_breakoutAccState.lastFireTime[0] = curBar0;
+   } else if(acceptDn && sellOk){
       s.dir = DIR_SELL; s.score = 68; s.reason = "Acceptance_below_range";
+      g_breakoutAccState.lastFireTime[1] = curBar0;
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
@@ -903,6 +1142,39 @@ SNXSSignal NXS_Strat_LondonBO(){
 input int    InpEMAPB_TrendPersistBars = 5;
 input double InpEMAPB_MinDistATR       = 1.0;
 input double InpEMAPB_TouchToleranceATR= 0.15;
+input bool   InpEMAPB_RequirePressureAligned = false;
+
+// 01/09 - trovato analizzando 80 trade nudi reali (Oct2023-Aug2026, campione
+// esteso): a differenza di SAR (dove la pressione CONTRARIA vinceva - cattura
+// un'inversione), qui vince la pressione ALLINEATA alla direzione del
+// segnale - coerente con la natura di EMA_PULLBACK, una strategia da
+// CONTINUAZIONE (il trend deve essere ancora vivo, non esaurito). Verificato
+// che regge anche col campione grande (PF1.61 allineata vs 0.72 contraria,
+// contro un PF2.23/0.45 iniziale sul campione piccolo - direzione confermata,
+// solo meno estrema). Filtrando storicamente solo gli allineati: PF
+// 1.51->1.74, netto $821.76->$877.44.
+//
+// TESTATO SUL VERO TESTER (01/09, periodo esteso 2023-2026): NON migliora.
+// PF1.42->1.35, netto $698.88->$581.97, quasi nessuna riduzione dei trade
+// (84->83, contro il 21% di blocco atteso offline). Confermato con
+// diagnostica temporanea che il gate FUNZIONA correttamente a livello di
+// codice (blocca davvero quando la pressione e' contraria) - non e' un bug.
+// Stessa lezione di SAR: bloccare un segnale sposta il timing di tutti i
+// successivi, un effetto a cascata che l'analisi offline (righe fisse di
+// una tabella) non cattura. Lasciato come input disattivabile (default
+// false) per riferimento, ma NON adottato - la baseline nuda estesa
+// (PF1.42, $698.88, 84 trade) resta il riferimento per EMA_PULLBACK.
+bool NXS_EMAPB_PressureAligned(int dir){
+   int up = 0; double netBody = 0;
+   int N = 8;
+   for(int i = 1; i <= N; i++){
+      double o = iOpen(g_sym, PERIOD_M15, i), c = iClose(g_sym, PERIOD_M15, i);
+      if(c > o) up++;
+      netBody += (c - o);
+   }
+   bool pressureBuy = (up >= N/2) && (netBody > 0);
+   return (pressureBuy && dir == DIR_BUY) || (!pressureBuy && dir == DIR_SELL);
+}
 
 SNXSSignal NXS_Strat_EMAPullback(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_EMA_PULLBACK; s.stratName = "EMA_PULLBACK";
@@ -944,6 +1216,9 @@ SNXSSignal NXS_Strat_EMAPullback(){
       bool touched = (h1 >= e20 - tol);
       bool reclaim = (c1 < e20) && (c1 < o1) && (c1 < e50);
       if(touched && reclaim){ s.dir = DIR_SELL; s.score = 64; s.reason = "EMA_PB_bear:pullback+reject"; }
+   }
+   if(s.dir != DIR_NONE && InpEMAPB_RequirePressureAligned && !NXS_EMAPB_PressureAligned(s.dir)){
+      s.dir = DIR_NONE; s.reason = "pressure_contrary";
    }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;

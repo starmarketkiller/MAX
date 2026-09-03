@@ -59,12 +59,15 @@ input bool     InpEnableLicense    = true;
 input string   InpLicenseKey       = "";
 
 // input group "=== ROBUSTNESS (Phase 1) ==="
-int      InpHardMaxSpreadPts = 0;     // 0 = use profile default
-int      InpOrderRetries     = 3;     // retries on requote/off-quotes
-bool     InpUseStatePersist  = true;  // resume state after MT5 restart
-bool     InpUseAtrTrail      = true;  // ATR-based trailing stop
-double   InpAtrTrailMult     = 2.5;   // v2.4.4: 1.5->2.5 "lascia correre" - trail piu' largo, le vincenti cavalcano il movimento
-double   InpAtrTrailActivateATR = 1.0; // v2.4.4: attiva il trail solo dopo +1.0 ATR (era 0.5) - da' spazio al trade per svilupparsi
+// 30/08 - resi input veri (erano plain, invisibili al Tester/.set - stessa
+// classe di bug gia' corretta piu' volte oggi), necessario per
+// l'esperimento "spoglia e reintegra" chiesto dall'utente.
+input int      InpHardMaxSpreadPts = 0;     // 0 = use profile default
+input int      InpOrderRetries     = 3;     // retries on requote/off-quotes
+input bool     InpUseStatePersist  = true;  // resume state after MT5 restart
+input bool     InpUseAtrTrail      = true;  // ATR-based trailing stop
+input double   InpAtrTrailMult     = 2.5;   // v2.4.4: 1.5->2.5 "lascia correre" - trail piu' largo, le vincenti cavalcano il movimento
+input double   InpAtrTrailActivateATR = 1.0; // v2.4.4: attiva il trail solo dopo +1.0 ATR (era 0.5) - da' spazio al trade per svilupparsi
 
 // input group "=== ON-CHART DASHBOARD ==="
 input bool     InpShowDashboard    = true;
@@ -83,8 +86,8 @@ bool     InpNotifyDailySummary = false;
 
 // input group "=== RISK MANAGEMENT ==="
 input double   InpRiskPercent      = 1.0;
-double   InpMaxLot           = 5.0;
-int      InpMaxTradesPerDay  = 12;
+input double   InpMaxLot           = 5.0;
+input int      InpMaxTradesPerDay  = 12;   // 30/08 - reso input vero (era plain, invisibile al Tester)
 input int      InpMaxConcurrent    = 4;
 input int      InpMaxPerDirTF      = 4;      // v2.4.8: HEDGE ON - corsie indipendenti, ogni strategia la sua (regolate dal gate margine)
 input double   InpMaxDailyDDPct    = 5.0;
@@ -184,6 +187,9 @@ bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 pos
 input bool     InpUseStrategyProfiles  = true;   // 27/08 - reso input (era plain, invisibile al Tester/Optimization)
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
+input bool     InpProfileRegimeVeto    = false;  // 02/09 - veto di regime (_nxs_regime_veto, gia' esistente ma
+                                                  // agganciato solo al modello istituzionale, mai usato sul percorso
+                                                  // a profili) applicato anche qui. Off di default: test esplicito.
 double   InpInstMinConviction    = 60.0;   // conviction netta minima (somma score dir dominante - opposta)
 double   InpInstBaseSL           = 2.0;    // SL base (x ATR) prima dello scaling per tier
 double   InpInstBaseTP           = 4.0;    // TP base (x ATR) prima dello scaling per tier
@@ -314,15 +320,17 @@ int      InpPostSLCooldownMin  = 0;       // v2.2.8: il backtest non ha cooldown
 // NEW entry that's chasing a move that's already gone too far (consecutive
 // HH/LL with no pullback, price too far from EMA200, or RSI diverging
 // against the entry direction). Applied in both execution paths.
-bool     InpUseExhaustionGate      = false;  // v2.2.8: il backtest non ha exhaustion gate
-int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
-double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
-int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
+// 30/08 - resi input veri (erano plain, stessa classe di bug gia' trovata
+// e corretta per il gruppo HTF BIAS sotto - qui non era mai stato fatto).
+input bool     InpUseExhaustionGate      = false;  // v2.2.8: il backtest non ha exhaustion gate
+input int      InpExhaustionMaxConsecutive = 5;   // max consecutive HH (buy) / LL (sell) with no pullback before blocking
+input double   InpExhaustionEMADistATR    = 3.0;  // block if |price - EMA200| exceeds this many ATRs
+input int      InpExhaustionRsiDivLookback= 10;   // bars back to compare for RSI divergence check
 
 // input group "=== ANTI-REVENGE ==="
-bool     InpAntiRevenge      = true;
-int      InpAntiRevengeLosses= 3;
-int      InpAntiRevengeMin   = 60;
+input bool     InpAntiRevenge      = true;
+input int      InpAntiRevengeLosses= 3;
+input int      InpAntiRevengeMin   = 60;
 
 // input group "=== HTF BIAS ==="
 // v2.5.x — erano variabili semplici, non `input`: MetaTrader non le espone
@@ -373,6 +381,20 @@ input bool     InpStrat_ADX_RSI      = true;
 input bool     InpStrat_BOLLINGER    = true;
 input bool     InpStrat_MACD         = true;
 input bool     InpStrat_SAR          = true;
+input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi
+input bool     InpSAR_RequirePressureContrary = false;  // 31/08 - vedi NXS_SAR_PressureContrary: non ridondante col filtro candela, si sommano
+input double   InpSARRiskPctOverride = 0;          // 31/08 - override cauto del rischio%/trade di SAR (0 = usa il default 1.0%, vedi NXS_Profile_Risk)
+input double   InpSARSlMultOverride = 0;           // 31/08 - override dello stop nativo di SAR in multipli di ATR (0 = usa il default 1.0x, vedi NXS_Profile_SLTP)
+input bool     InpUseProfitReclaim  = false;       // 31/08 - vedi NXS_ProfitReclaim.mqh: parziale a profitto alto + rientro vicino all'entrata originale
+input double   InpProfitReclaimArmATR = 1.5;
+input double   InpProfitReclaimFrac   = 0.50;
+input double   InpProfitReclaimTolATR = 0.35;
+input double   InpEMAPBFixedLot     = 0;           // 01/09 - lotto FISSO per EMA_PULLBACK (0 = usa il rischio% normale). Serve
+                                                    // per rendere possibile un parziale vero (es. 0.02 -> chiude 0.01, minimo
+                                                    // broker) invece del lotto risk-based variabile che a volte cade sotto la
+                                                    // soglia per un parziale valido a due decimali.
+input ENUM_TIMEFRAMES InpScalpTFOverride = PERIOD_CURRENT;  // 02/09 - sblocca BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC
+                                                    // dal loro D1 di default (vedi NXS_Profile_TF). PERIOD_CURRENT = off.
 input bool     InpStrat_TSI          = true;
 // 17/07 notte - audit esterno: la vecchia "TSI" non calcolava il True
 // Strength Index (era RSI+EMA20), solo il nome coincideva. Periodi veri di
@@ -444,11 +466,11 @@ bool     InpEnableCloseReverse = true;
 double   InpMinScoreReverse    = 70.0;       // v2.0.13: lowered 75→70 (chain smart-reverse can lower further)
 
 // input group "=== STRATEGY CHAIN / CONTINUATION (v2.0.13) ==="
-bool     InpChainEnableContinuation     = true;   // dopo profit, riapri in continuazione se setup compatibile
-bool     InpChainEnableSmartReverse     = true;   // abbassa soglia reverse se reaction>=75 AND HTF concorde
-int      InpChainContinuationWindowSec  = 1800;   // 30 min: finestra valida per continuazione
-double   InpChainContinuationLotMult    = 0.6;    // lotto continuazione (60% del base)
-int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo un trade vincente
+input bool     InpChainEnableContinuation     = true;   // dopo profit, riapri in continuazione se setup compatibile
+input bool     InpChainEnableSmartReverse     = true;   // abbassa soglia reverse se reaction>=75 AND HTF concorde
+input int      InpChainContinuationWindowSec  = 1800;   // 30 min: finestra valida per continuazione
+input double   InpChainContinuationLotMult    = 0.6;    // lotto continuazione (60% del base)
+input int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo un trade vincente
 
 // input group "=== BREAK EVEN & TRAIL ==="
 // 17/07 - erano tutti plain (non `input`) nonostante il commento "input
@@ -458,6 +480,48 @@ int      InpChainMaxContinuations       = 3;      // n. max continuazioni dopo u
 // queste viene mai riassegnata a runtime nel codice, sicuro renderle
 // input. InpMaxHoldHours in particolare e' il fallback 4h coinvolto
 // nell'indagine di oggi sul cap di durata massima.
+// 30/08 - breakeven FISSO in pip (non in multipli di ATR) - richiesto
+// dall'utente per l'esperimento "auto-close off": SAR nudo tiene le
+// vincite per una mediana di 144h (6 giorni, verificato sui 175 trade
+// dello stack completo vs 112 nudi) - togliere l'auto-close libera il
+// trade a correre, ma senza NESSUNA protezione un trade che va in
+// profitto e poi ritraccia torna in perdita. Il BE fisso protegge il
+// guadagno gia' fatto senza limitare il tempo di detenzione come fa
+// l'auto-close. Pip = pipSize del profilo simbolo (0.01 per GOLD,
+// NXS_SymbolProfile.mqh) - 50 pip = $0.50 su GOLD.
+input bool     InpUseFixedBE       = false;
+input double   InpFixedBEPips      = 50.0;
+// 30/08 - schema a piu' stadi richiesto dall'utente per lo stesso
+// esperimento "auto-close off": lotto fisso 0.05, a +50 pip dimezza lo
+// stop e chiudi 0.01, a +100 pip pareggio e chiudi un altro 0.01, se poi
+// il prezzo torna a toccare il pareggio riapre 0.05 con lo stop gia'
+// dimezzato. QUI "pip" = InpPipSeqPipValue in prezzo (confermato
+// dall'utente: 1 pip = $0.10 su GOLD - diverso dal pipSize=0.01 del
+// profilo simbolo usato da InpFixedBEPips sopra, che a quella scala e'
+// finito dentro il rumore). Vedi NXS_PipSequence.mqh.
+input bool     InpUsePipSeq         = false;
+input double   InpPipSeqPipValue    = 0.10;   // $ di prezzo per 1 "pip" in questo schema
+input double   InpPipSeqLot         = 0.05;
+input double   InpPipSeqStage1Pips  = 50.0;
+input double   InpPipSeqStage2Pips  = 100.0;
+input double   InpPipSeqPartialLot  = 0.01;
+input int      InpPipSeqMaxChain    = 2;      // 30/08 - cap perdite consecutive in catena di riaperture (vedi NXS_PipSequence.mqh)
+// 30/08 - "riconquista dello stop", richiesto dall'utente come alternativa
+// SICURA al grid (mai media in perdita, mai piu' esposizione nella
+// direzione che sta perdendo): se un trade SAR esce per stop nativo, si
+// segna quel livello di prezzo; se poi una candela M15 CHIUDE oltre quella
+// linea nella direzione ORIGINALE del trade (non quella della rottura che
+// aveva stoppato), si riapre nella stessa direzione - il crollo/rally che
+// ha stoppato era probabilmente un falso allarme se il prezzo torna a
+// riconquistare quel livello. Vedi NXS_SLReclaim.mqh.
+input bool     InpUseSLReclaim         = false;
+input double   InpSLReclaimLot         = 0.05;
+input int      InpSLReclaimExpireHours = 168;   // 7 giorni - non aspettare all'infinito (0 = nessuna scadenza)
+// 30/08 - sicurezza aggiunta su segnalazione dell'utente ("e se rientra e
+// la direzione e' ancora sbagliata?"): dopo N perdite CONSECUTIVE nella
+// catena di riconquiste, ci si arrende invece di continuare a riaprire
+// sulla stessa chiamata di direzione - vedi NXS_SLReclaim.mqh.
+input int      InpSLReclaimMaxChain    = 2;
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;
@@ -485,9 +549,17 @@ double   InpAB_RiskMult_DDHard= 0.4;
 double   InpAB_ScoreBonus_DDHard = 10.0; // require MinEntryScore+10 when DD hard
 
 // input group "=== GRID / PYRAMID / SPLIT ==="
-bool     InpEnableGrid       = false;
-double   InpGridStepATR      = 1.2;
-bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
+// 01/09 - BUG TROVATO: queste 4 variabili mancavano della keyword "input",
+// quindi invisibili e non sovrascrivibili da nessun .set/.ini del Tester
+// (stessa classe di bug gia' vista per InpPostSLCooldownMin e i flag Chain).
+// InpEnableSplit=true era quindi SEMPRE attivo, silenziosamente, in OGNI
+// test di questa sessione (SAR ed EMA_PULLBACK inclusi) - scoperto
+// ricostruendo i deal di EMA_PULLBACK e trovando chiusure parziali reali
+// (es. posizione 0.03 aperta, 0.01 chiusa 7h dopo, 0.02 rimanente chiusa
+// il giorno dopo a SL) che l'analisi "nuda" di stanotte non aveva previsto.
+input bool     InpEnableGrid       = false;
+input double   InpGridStepATR      = 1.2;
+input bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica completa: il meccanismo
                                          // ORA FUNZIONA (bug di sizing trovato e corretto, 26 gambe/mese
                                          // confermate su Tester MT5 a tick reali), ma sul portafoglio
                                          // v3.0 attuale l'effetto e' NEGATIVO (PF1.02->0.98, netto
@@ -495,7 +567,7 @@ bool     InpEnablePyramid    = false;   // 28/08 - riportato OFF dopo verifica c
                                          // su strategie con edge gia' sottile/negativo (SAR, EMA_PULLBACK)
                                          // invece di aggiungere profitto. Da riattivare solo quando il
                                          // mix di strategie e' solido (PF portafoglio chiaramente >1).
-bool     InpEnableSplit      = true;
+input bool     InpEnableSplit      = true;
 
 // input group "=== WEB BRIDGE ==="
 bool     InpEnableWebSync    = true;                                   // WebSync ON di default
@@ -609,20 +681,27 @@ double   InpCtxW_AMD            = 3.0;    // bonus fase AMD attiva (manip/distri
 double   InpCtxZoneATR          = 1.5;    // distanza max zona dal prezzo (× ATR)
 double   InpCtxMaxBonus         = 20.0;   // tetto bonus totale di contesto
 double   InpCtxMaxPenalty       = 15.0;   // tetto penalità totale di contesto
-bool     InpUseStrategyCD    = true;
-int      InpMaxConsecPerStrat= 3;
-int      InpStratCooldownMin = 30;
+// 30/08 - resi input veri (erano plain), necessario per l'esperimento
+// "spoglia e reintegra" chiesto dall'utente - senza questo il Tester
+// ignorava silenziosamente qualunque override da .set/.ini su cooldown,
+// spread gate e MTF validation.
+input bool     InpUseStrategyCD    = true;
+input int      InpMaxConsecPerStrat= 3;
+input int      InpStratCooldownMin = 30;
+input bool     InpUseDirCooldown    = false;  // 30/08 - cooldown mirato sulla STESSA direzione ripetuta (vedi NXS_Confluence.mqh)
+input int      InpMaxConsecSameDir  = 2;
+input int      InpDirCooldownMin    = 30;
 
 // input group "=== MTF / SPREAD / VOL REGIME (Audit PDF) ==="
-bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation
-ENUM_TIMEFRAMES InpMTF_TF1   = PERIOD_H1;
-ENUM_TIMEFRAMES InpMTF_TF2   = PERIOD_H4;
-bool     InpUseDynamicSpread = true;
-double   InpMaxSpreadAtrPct  = 8.0;    // spread > 8% of ATR → block
-int      InpMaxSpreadPoints  = 0;     // 0 = use asset-class profile cap
-bool     InpUseVolRegime     = true;
-double   InpLowVolAtrPct     = 0.15;
-double   InpHighVolAtrPct    = 0.6;
+input bool     InpUseMTFValidation = false;   // v2.2.8: il backtest non ha MTF validation
+input ENUM_TIMEFRAMES InpMTF_TF1   = PERIOD_H1;
+input ENUM_TIMEFRAMES InpMTF_TF2   = PERIOD_H4;
+input bool     InpUseDynamicSpread = true;
+input double   InpMaxSpreadAtrPct  = 8.0;    // spread > 8% of ATR → block
+input int      InpMaxSpreadPoints  = 0;     // 0 = use asset-class profile cap
+input bool     InpUseVolRegime     = true;
+input double   InpLowVolAtrPct     = 0.15;
+input double   InpHighVolAtrPct    = 0.6;
 
 // input group "=== GATE MODE (v2.0.2 - sblocco trade) ==="
 // 0=Conservative (block aggressive), 1=Balanced, 2=Discovery (very permissive), 3=DebugTrade
@@ -733,6 +812,18 @@ input bool     InpUseStrat_CRT           = false;
 // verificata su MT5 - disattivata di default finche' non c'e' un backtest
 // reale a confermarla, stesso trattamento riservato a CRT.
 input bool     InpStrat_BarUpDn          = false;
+input int      InpBarUpDnCooldownBars    = 8;    // 02/09 - raffreddamento locale per direzione (vedi NXS_Strat_BarUpDn):
+                                                  // senza, il motore insegue lo stesso trend riaprendo a ogni barra.
+input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddamento per NXS_Strat_BreakoutAcc
+// 02/09 - idea originale dell'utente (pivot di swing frattali estesi in
+// avanti + wick di rigetto sul tocco). Mai verificata su MT5.
+input bool     InpStrat_PivotWick          = false;
+input int      InpPivotWickLookback        = 5;      // barre a sx/dx per confermare un pivot frattale
+input double   InpPivotWickTouchTolATR     = 0.25;    // tolleranza di "tocco" del livello, in ATR
+input bool     InpPivotWickRequireWick     = false;   // 02/09 - l'utente ha chiesto anche solo il tocco del livello (OHLC del pivot), senza richiedere un vero wick di rigetto
+input double   InpPivotWickWickRatio       = 1.5;     // wick minimo = N x corpo e N x wick opposto (solo se InpPivotWickRequireWick)
+input double   InpPivotWickMinWickATR      = 0.15;    // wick minimo assoluto, in ATR (solo se InpPivotWickRequireWick)
+input int      InpPivotWickCooldownBars    = 8;       // raffreddamento per direzione (stesso bug BAR_UPDN/BREAKOUT_ACC)
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

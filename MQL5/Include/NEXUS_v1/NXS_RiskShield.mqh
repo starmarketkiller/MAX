@@ -119,10 +119,17 @@ bool NXS_RS_SpreadBurst_Block(string &reason){
 // Computes Sharpe over the last N closed trades. If Sharpe < threshold,
 // the EA self-pauses for `InpBreaker_PauseHours` and pushes a Coach alert.
 // =====================================================================
-bool   InpBreaker_Enable      = true;
-int    InpBreaker_LookbackN   = 50;
-double InpBreaker_SharpeMin   = 0.30;
-int    InpBreaker_PauseHours  = 24;
+// 30/08 - resi input veri (erano plain, invisibili al Tester/.set -
+// stessa classe di bug gia' trovata e corretta piu' volte oggi).
+// Scoperto durante l'esperimento pip-sequence: questo breaker (Sharpe
+// rolling su 50 trade < 0.30 -> pausa 24h) restava sempre attivo
+// nonostante non fosse nella lista dei toggle disponibili da .set -
+// visibile nei log come "[NEXUS RS] EQUITY_BREAKER ... nuove entrate
+// sospese".
+input bool   InpBreaker_Enable      = true;
+input int    InpBreaker_LookbackN   = 50;
+input double InpBreaker_SharpeMin   = 0.30;
+input int    InpBreaker_PauseHours  = 24;
 
 // g_NXSrsBreakerUntil / g_NXSrsLastSharpe: dichiarati in NXS_Globals.mqh
 // perché NXS_State.mqh li persiste ed è incluso prima di questo file.
@@ -149,8 +156,16 @@ int    InpBreaker_PauseHours  = 24;
 //     Sharpe privo di significato.
 #define NXS_RS_MAX_PLAUSIBLE_R 50.0
 
-bool NXS_RS_Breaker_Check(double &rets[], int n, string &reason){
-   reason = "";
+// 02/09 - REFATTORIZZATA: prima calcolava lo Sharpe e scriveva DIRETTAMENTE
+// nei globali g_NXSrsBreakerUntil/g_NXSrsLastSharpe come effetto collaterale.
+// Bloccava TUTTO il conto (ogni strategia, anche quelle che stavano andando
+// bene) quando una sola strategia aveva una serie negativa - richiesto
+// dall'utente: bloccare solo la strategia responsabile. Ora e' una funzione
+// pura (nessun globale toccato): calcola e ritorna lo sharpe, il chiamante
+// decide dove salvare l'esito (vedi NXS_RS_Breaker_Update sotto, che la
+// chiama una volta per ogni strategia con la SUA finestra di rendimenti).
+bool NXS_RS_Breaker_Check(double &rets[], int n, double &sharpeOut, string &reason){
+   reason = ""; sharpeOut = 0.0;
    if(!InpBreaker_Enable || n < InpBreaker_LookbackN) return false;
    if(InpBreaker_LookbackN < 2) return false;   // sigma campionaria indefinita
 
@@ -182,14 +197,13 @@ bool NXS_RS_Breaker_Check(double &rets[], int n, string &reason){
    // dispersione. Trattarla come 0.0 faceva scattare il breaker su una serie
    // di vincite identiche. Si esce senza decidere.
    if(sigma <= 1e-9){
-      g_NXSrsLastSharpe = (mean >= 0 ? 99.0 : -99.0);
+      sharpeOut = (mean >= 0 ? 99.0 : -99.0);
       if(mean >= 0) return false;
    }
    double sharpe = (sigma > 1e-9 ? mean / sigma : (mean >= 0 ? 99.0 : -99.0));
-   g_NXSrsLastSharpe = sharpe;
+   sharpeOut = sharpe;
 
    if(sharpe < InpBreaker_SharpeMin){
-      g_NXSrsBreakerUntil = TimeCurrent() + InpBreaker_PauseHours * 3600;
       reason = StringFormat("EQUITY_BREAKER sharpe/trade=%.2f<%.2f n=%d pause=%dh",
                             sharpe, InpBreaker_SharpeMin, InpBreaker_LookbackN,
                             InpBreaker_PauseHours);
@@ -210,6 +224,32 @@ bool NXS_RS_Breaker_Check(double &rets[], int n, string &reason){
 datetime g_NXSrsBreakerLastCalc = 0;
 #define NXS_RS_BREAKER_CALC_SEC 300
 
+// 02/09 - stato PER STRATEGIA (era un'unica coppia globale che bloccava
+// tutto il conto). Array paralleli, stesso pattern gia' usato altrove nel
+// progetto (es. NXS_ProfitReclaim.mqh) invece di una struct con array
+// dentro, per compatibilita' con le versioni piu' vecchie di MQL5 usate qui.
+#define NXS_RS_BREAKER_MAX 64
+string   g_NXSrsBreakerStrat[NXS_RS_BREAKER_MAX];
+datetime g_NXSrsBreakerStratUntil[NXS_RS_BREAKER_MAX];
+double   g_NXSrsBreakerStratSharpe[NXS_RS_BREAKER_MAX];
+int      g_NXSrsBreakerStratCount = 0;
+
+int _NXS_RS_BreakerStratFind(string name){
+   for(int i = 0; i < g_NXSrsBreakerStratCount; ++i)
+      if(g_NXSrsBreakerStrat[i] == name) return i;
+   return -1;
+}
+int _NXS_RS_BreakerStratEnsure(string name){
+   int i = _NXS_RS_BreakerStratFind(name);
+   if(i >= 0) return i;
+   if(g_NXSrsBreakerStratCount >= NXS_RS_BREAKER_MAX) return -1;   // limite di sicurezza, mai atteso in pratica
+   int idx = g_NXSrsBreakerStratCount++;
+   g_NXSrsBreakerStrat[idx] = name;
+   g_NXSrsBreakerStratUntil[idx] = 0;
+   g_NXSrsBreakerStratSharpe[idx] = 0.0;
+   return idx;
+}
+
 void NXS_RS_Breaker_Update(){
    if(!InpBreaker_Enable) return;
    datetime now = TimeCurrent();
@@ -228,8 +268,11 @@ void NXS_RS_Breaker_Update(){
    int total = HistoryDealsTotal();
    if(total <= 0) return;
 
-   double rets[];
-   ArrayResize(rets, 0);
+   // Un solo giro sullo storico: raccoglie (strategia, rendimento in R) per
+   // ogni deal di chiusura, poi valuta lo Sharpe SEPARATAMENTE per ogni
+   // strategia incontrata - non piu' un'unica serie mescolata.
+   string allName[]; double allRet[];
+   ArrayResize(allName, 0); ArrayResize(allRet, 0);
    for(int i = 0; i < total; ++i){
       ulong ticket = HistoryDealGetTicket(i);
       if(ticket == 0) continue;
@@ -239,26 +282,66 @@ void NXS_RS_Breaker_Update(){
       double net = HistoryDealGetDouble(ticket, DEAL_PROFIT) +
                    HistoryDealGetDouble(ticket, DEAL_SWAP) +
                    HistoryDealGetDouble(ticket, DEAL_COMMISSION);
-      int k = ArraySize(rets);
-      ArrayResize(rets, k + 1);
-      rets[k] = net / riskMoney;
+      string strat, group;
+      _NXS_StateParseComment(HistoryDealGetString(ticket, DEAL_COMMENT), strat, group);
+      int k = ArraySize(allName);
+      ArrayResize(allName, k + 1); ArrayResize(allRet, k + 1);
+      allName[k] = strat; allRet[k] = net / riskMoney;
+   }
+   int n = ArraySize(allName);
+   if(n < InpBreaker_LookbackN) return;   // nemmeno il totale basta per una sola strategia
+
+   string doneNames[]; ArrayResize(doneNames, 0);
+   for(int i = 0; i < n; ++i){
+      string sname = allName[i];
+      bool already = false;
+      for(int k = 0; k < ArraySize(doneNames); ++k) if(doneNames[k] == sname){ already = true; break; }
+      if(already) continue;
+      int dk = ArraySize(doneNames); ArrayResize(doneNames, dk + 1); doneNames[dk] = sname;
+
+      double stratRets[]; ArrayResize(stratRets, 0);
+      for(int j = 0; j < n; ++j){
+         if(allName[j] != sname) continue;
+         int rk = ArraySize(stratRets); ArrayResize(stratRets, rk + 1); stratRets[rk] = allRet[j];
+      }
+      int rn = ArraySize(stratRets);
+      if(rn < InpBreaker_LookbackN) continue;
+
+      double sharpe = 0.0; string reason = "";
+      bool trip = NXS_RS_Breaker_Check(stratRets, rn, sharpe, reason);
+      int idx = _NXS_RS_BreakerStratEnsure(sname);
+      if(idx < 0) continue;
+      g_NXSrsBreakerStratSharpe[idx] = sharpe;
+      if(trip){
+         g_NXSrsBreakerStratUntil[idx] = now + InpBreaker_PauseHours * 3600;
+         PrintFormat("[NEXUS RS] %s strat=%s — nuove entrate di QUESTA STRATEGIA sospese fino a %s "
+                     "(le altre continuano)", reason, sname,
+                     TimeToString(g_NXSrsBreakerStratUntil[idx], TIME_DATE | TIME_MINUTES));
+      }
    }
 
-   int n = ArraySize(rets);
-   if(n < InpBreaker_LookbackN) return;
-
-   string reason = "";
-   if(NXS_RS_Breaker_Check(rets, n, reason)){
-      PrintFormat("[NEXUS RS] %s — nuove entrate sospese fino a %s",
-                  reason, TimeToString(g_NXSrsBreakerUntil, TIME_DATE | TIME_MINUTES));
+   // Compat: i vecchi globali (usati solo per persistenza/telemetria, non
+   // piu' per bloccare) riportano il caso peggiore tra tutte le strategie.
+   double worstSharpe = 999.0; datetime maxUntil = 0;
+   for(int i = 0; i < g_NXSrsBreakerStratCount; ++i){
+      if(g_NXSrsBreakerStratSharpe[i] < worstSharpe) worstSharpe = g_NXSrsBreakerStratSharpe[i];
+      if(g_NXSrsBreakerStratUntil[i] > maxUntil) maxUntil = g_NXSrsBreakerStratUntil[i];
    }
+   if(g_NXSrsBreakerStratCount > 0) g_NXSrsLastSharpe = worstSharpe;
+   g_NXSrsBreakerUntil = maxUntil;
 }
 
-bool NXS_RS_Breaker_Active(){
-   return InpBreaker_Enable && TimeCurrent() < g_NXSrsBreakerUntil;
+bool NXS_RS_Breaker_Active(string stratName){
+   if(!InpBreaker_Enable) return false;
+   int idx = _NXS_RS_BreakerStratFind(stratName);
+   if(idx < 0) return false;   // non ancora abbastanza trade per questa strategia: mai scattato
+   return TimeCurrent() < g_NXSrsBreakerStratUntil[idx];
 }
 
-double NXS_RS_Breaker_LastSharpe(){ return g_NXSrsLastSharpe; }
+double NXS_RS_Breaker_LastSharpe(string stratName){
+   int idx = _NXS_RS_BreakerStratFind(stratName);
+   return (idx >= 0) ? g_NXSrsBreakerStratSharpe[idx] : 0.0;
+}
 
 // =====================================================================
 // #11 — CORRELATION-CLUSTER RISK CAP
@@ -412,9 +495,10 @@ bool NXS_RS_NewsTier3_PartialCloseDue(int minutesUntilRedNews){
 // MASTER GATE — call this in TryExecute before sending the order.
 // One single function that bundles all 4 protections.
 // =====================================================================
-bool NXS_RS_BlockEntry(string sym, string &reason){
-   if(NXS_RS_Breaker_Active()){
-      reason = StringFormat("EQUITY_BREAKER sharpe=%.2f", g_NXSrsLastSharpe);
+bool NXS_RS_BlockEntry(string sym, string stratName, string &reason){
+   if(NXS_RS_Breaker_Active(stratName)){
+      reason = StringFormat("EQUITY_BREAKER strat=%s sharpe=%.2f", stratName,
+                            NXS_RS_Breaker_LastSharpe(stratName));
       return true;
    }
    if(NXS_RS_SpreadBurst_Block(reason)) return true;

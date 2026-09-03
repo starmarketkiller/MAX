@@ -102,7 +102,7 @@ void NXS_ManagePyramid(SNXSVel &vel){
       }
 
       string gateReason = "";
-      if(!NXS_CommonExposurePreflight("PYRAMID", pyrDir, lots, otype, refPrice,
+      if(!NXS_CommonExposurePreflight("PYRAMID", "PYRAMID", pyrDir, lots, otype, refPrice,
                                       sl, tp, gateReason)){
          PrintFormat("[NEXUS RISK] PYRAMID BLOCCATO: %s", gateReason);
          break;

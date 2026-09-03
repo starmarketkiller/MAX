@@ -4,6 +4,38 @@
 #ifndef __NXS_MANAGEMENT_MQH__
 #define __NXS_MANAGEMENT_MQH__
 
+// 30/08 - breakeven fisso in pip, indipendente dal percorso per-strategia/
+// globale di NXS_ManageBreakevenAndTrail() sotto (che per SAR e' inerte,
+// beR=0/trailATR=0 nel profilo - vedi commento li'). Girata su OGNI
+// posizione Nexus, non collegata a nessun profilo: sposta lo stop
+// all'apertura appena il prezzo si muove a favore di InpFixedBEPips pip,
+// senza toccare TP ne' altre logiche di trailing.
+void NXS_ManageFixedBE(){
+   if(!InpUseFixedBE) return;
+   double beDist = InpFixedBEPips * g_profile.pipSize;
+   if(beDist <= 0) return;
+   for(int i = PositionsTotal()-1; i >= 0; i--){
+      ulong t = PositionGetTicket(i);
+      if(t == 0) continue;
+      if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
+      if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      long type = PositionGetInteger(POSITION_TYPE);
+      double open = PositionGetDouble(POSITION_PRICE_OPEN);
+      double sl   = PositionGetDouble(POSITION_SL);
+      double tp   = PositionGetDouble(POSITION_TP);
+      double now  = (type == POSITION_TYPE_BUY)
+                  ? SymbolInfoDouble(g_sym, SYMBOL_BID)
+                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
+      if(prof < beDist) continue;
+      bool alreadyBE = (type == POSITION_TYPE_BUY) ? (sl >= open - g_point * 2)
+                                                    : (sl <= open + g_point * 2 && sl > 0);
+      if(alreadyBE) continue;
+      NXS_PM_ProposeModify(t, NormPrice(open), tp, 55, "FIXED_BE",
+                           StringFormat("breakeven fisso dopo %.0f pip", InpFixedBEPips));
+   }
+}
+
 void NXS_ManageBreakevenAndTrail(){
    if(g_atr <= 0) return;
    for(int i = PositionsTotal()-1; i >= 0; i--){

@@ -14,6 +14,40 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Sintesi Sessione Maratona SAR-EMA_PULLBACK-Scalp-RegimeVeto (01-02-09)]]** —
+  **leggi questa per primo se torni su SAR/EMA_PULLBACK/scalp dopo questa
+  sessione.** SAR confermato su 5 punti (PF1.37-1.57, lotto NATURALE non
+  fisso — un lotto fisso 0.05 usato per errore in un test ha prodotto
+  numeri fuorvianti, corretti qui). EMA_PULLBACK solido senza filtri
+  aggiuntivi. Veto di regime collegato al percorso a profili ma i primi
+  risultati sono inquinati dallo stesso errore di lotto - da rifare.
+- **[[NEXUS EA - Ricerca Scalp BAR_UPDN e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)]]** —
+  BAR_UPDN e BREAKOUT_ACC sbloccate su M15 scalp: entrambe negative (PF0.72
+  e 0.64). Bug trovato (ipotesi utente confermata): nessuno stato
+  "già tradato", il motore insegue lo stesso trend riaprendo ripetutamente
+  — fix a raffreddamento, solo miglioramento marginale. Terzo cancello
+  `NXS_Profile_Enabled` scoperto di nuovo (blocca 27/48 strategie in
+  silenzio, incluse BOLLINGER). RiskShield EQUITY_BREAKER reso
+  per-strategia invece che globale. Piano: BOLLINGER+RSI+candela di
+  conferma (mean-reversion, archetipo mai provato stanotte).
+- **[[NEXUS EA - Spoglia e Reintegra su SAR, Filtro Candela H4 Trovato e Validato (30-31-08)]]** —
+  la scoperta più recente: un filtro trovato analizzando i dati reali
+  (candela H4 di entrata allineata alla direzione del segnale) trasforma
+  SAR da edge fragile (PF oscillante 0.29-1.86 a seconda del punto di
+  partenza) a robusto (PF 1.37-1.57 consistente su 5 punti nel tempo
+  diversi). Anche: un bug strutturale per cui cooldown/anti-revenge/
+  chain-continuation non venivano mai controllati per le strategie a
+  profilo, e perché il lotto fisso grande è strutturalmente fragile
+  (si rompe con margine scarso).
+- **[[NEXUS EA - Bug NXS_MTF_MAX, SAR H4 Non Apriva Mai (29-30-08)]]** —
+  bug per cui SAR (H4) non apriva mai nella config "nuda": il dispatch
+  multi-TF era capato a 4 passaggi ma il registro ne usa 5, scartando
+  silenziosamente H4.
+- **[[NEXUS EA - Debug Motore Python Real-Tick su SAR, Tre Bug Trovati (29-08)]]** —
+  debug del motore Python "come MT5 vero" su SAR: trailing ATR
+  sull'estremo di barra, auto-close giornaliero fisso alle 23:43,
+  cooldown per-strategia — un mistero di densità nov-dic 2025 mai
+  risolto (vedi nota per dettagli).
 - **[[NEXUS EA - Tabella Master Strategie Verificate (24-08)]]** —
   riferimento rapido: configurazione vincente per ciascuna delle 21
   strategie verificate il 24/08 (TF, SL/TP, filtro, direzione, PF),
