@@ -31,7 +31,7 @@ negativa, ma vera), altre aperte.
 | SAR — parziale a pip fissa / volume | ✅ Chiuso (fallito) | Stesso esito dei 9 raffinamenti precedenti |
 | EMA_PULLBACK | ✅ Confermato robusto | PF1.41 nudo, nessun filtro trovato migliora |
 | BAR_UPDN / BREAKOUT_ACC (scalp) | ✅ Chiuso (falliti) | PF0.72/0.64 anche dopo fix bug di inseguimento |
-| **PIVOT_WICK** (strategia nuova) | 🔶 In corso | Motore funziona (2 bug di registro corretti), ma la logica nuda perde (PF0.84, -$208 su 230 trade). tpMult abbassato a 1.0 dopo analisi MFE — **test di conferma sul motore vero ancora in corso** |
+| **PIVOT_WICK** (strategia nuova) | 🔶 In corso | tpMult=1.0 confermato ancora negativo su 10 mesi (PF0.90, -$844, 1538 trade). OneShotLevel testato isolato: -28% trade ma WR/payoff invariati (0.79→0.77 PF) — riduce volume, non cambia l'edge. Vedi [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]]. Ipotesi aggiornata: probabile problema di trigger/edge, non di uscita — prossimo test isolato: `RequireWick=true` da solo |
 | BOLLINGER + RSI + candela (scalp mean-reversion) | ⬜ Non iniziato | Piano scritto il 02/09, mai eseguito |
 | WEEKLY_EXP | ⬜ Non iniziato | Task tracciato da settimane, mai isolato su MT5 |
 | RiskShield per-strategia | 🔶 Scritto, non testato dal vivo | Non cambia nulla in isolamento per costruzione |
@@ -59,7 +59,11 @@ fine.
 
 ### Fase 0 — Chiudere i filoni aperti adesso (immediato)
 
-1. **PIVOT_WICK step2** (tpMult=1.0) — in coda, aspettare il risultato
+1. ~~**PIVOT_WICK step2** (tpMult=1.0) — in coda, aspettare il risultato~~
+   **Fatto (03/09, sessione background)**: ancora negativo (PF0.90).
+   OneShotLevel testato isolato, stesso esito (riduce volume non edge).
+   Vedi nota dedicata. Prossimo: `RequireWick=true` isolato prima di
+   continuare col punto 2 sotto.
 2. **Filtro candela + re-entry per PIVOT_WICK** (richiesto esplicitamente):
    - Riattivare `InpPivotWickRequireWick=true` e confrontare contro il tpMult più vicino (i due fix potrebbero sommarsi: tpMult risolve "il bersaglio è troppo lontano", il wick risolve "l'ingresso è di bassa qualità" — sono cause diverse dello stesso sintomo)
    - **Re-entry "tipo Xander"**: non è chiaro a cosa si riferisca esattamente questo nome — verificare con l'utente nella prossima sessione, o cercare se esiste un sistema di re-entry pubblico con questo nome prima di implementare alla cieca

@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]]** —
+  sessione background dopo `/clear`: analizzati 3 report Tester non
+  ancora letti (step2 tpMult=1.0 ancora negativo PF0.90/1538 trade;
+  OneShotLevel isolato su 3 mesi riduce i trade -28% ma non cambia WR/
+  payoff, PF0.79→0.77). Ipotesi aggiornata: probabile problema di
+  trigger/edge, non di parametri di uscita.
 - **[[NEXUS EA - Revisione contro Materiale Esterno, Turtle Soup e Libreria PDF (03-09)]]** —
   audit di TURTLE_SOUP/SH_BMS_RTO contro un PDF ICT/SMC di riferimento
   (gap trovato: nessun controllo di profondità sullo sweep), più
