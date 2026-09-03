@@ -824,6 +824,15 @@ input bool     InpPivotWickRequireWick     = false;   // 02/09 - l'utente ha chi
 input double   InpPivotWickWickRatio       = 1.5;     // wick minimo = N x corpo e N x wick opposto (solo se InpPivotWickRequireWick)
 input double   InpPivotWickMinWickATR      = 0.15;    // wick minimo assoluto, in ATR (solo se InpPivotWickRequireWick)
 input int      InpPivotWickCooldownBars    = 8;       // raffreddamento per direzione (stesso bug BAR_UPDN/BREAKOUT_ACC)
+// 03/09 - miglioramenti dalla revisione PDF esterna (vedi vault "Revisione
+// contro Materiale Esterno, Turtle Soup e Libreria PDF"): 3 fonti indipendenti
+// (Secret of 4.11, Rayner Teo, Flipping Markets) confermano che un livello
+// va "consumato" dopo un ciclo di trade, non ritradato all'infinito.
+input bool     InpPivotWickOneShotLevel      = false;  // una volta usato, il livello esce dal pool (zona "fresh/non-fresh")
+input bool     InpPivotWickRequireCloseConfirm = false; // la chiusura deve rientrare nella zona del livello, non solo il wick (Rayner Teo)
+input bool     InpPivotWickAvoidBuildup      = false;   // scarta tocchi preceduti da consolidamento stretto sul livello (Rayner Teo)
+input int      InpPivotWickBuildupBars       = 6;       // barre da controllare per il consolidamento
+input double   InpPivotWickBuildupMinATR     = 0.8;     // range minimo (in ATR) delle ultime N barre per NON essere "buildup"
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

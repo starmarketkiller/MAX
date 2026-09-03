@@ -694,13 +694,19 @@ struct SNXSPivotWickState {
    datetime lastPivotBar[NXS_PIVOTWICK_NTF];         // una scansione pivot per barra chiusa, per TF
    double   pivHi[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
    double   pivLo[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
+   bool     pivHiUsed[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];   // 03/09 - zona "fresh/non-fresh"
+   bool     pivLoUsed[NXS_PIVOTWICK_NTF][NXS_PIVOTWICK_MAXLVL];
    datetime lastFireTime[2];   // [0]=buy [1]=sell
 };
 SNXSPivotWickState g_pivotWickState;
 
-void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], int row, double level){
-   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--) arr[row][i] = arr[row][i - 1];
+void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], bool &used[][NXS_PIVOTWICK_MAXLVL], int row, double level){
+   for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--){
+      arr[row][i] = arr[row][i - 1];
+      used[row][i] = used[row][i - 1];
+   }
    arr[row][0] = level;
+   used[row][0] = false;
 }
 
 // Scandaglia UN timeframe per un nuovo pivot frattale, una volta per barra
@@ -723,8 +729,8 @@ void _nxs_pivotwick_scan_tf(int tfIdx, ENUM_TIMEFRAMES tf, int L){
       if(hh >= hiP) isHiPivot = false;
       if(ll <= loP) isLoPivot = false;
    }
-   if(isHiPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivHi, tfIdx, hiP);
-   if(isLoPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivLo, tfIdx, loP);
+   if(isHiPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivHi, g_pivotWickState.pivHiUsed, tfIdx, hiP);
+   if(isLoPivot) _nxs_pivotwick_push_row(g_pivotWickState.pivLo, g_pivotWickState.pivLoUsed, tfIdx, loP);
 }
 
 SNXSSignal NXS_Strat_PivotWick(){
@@ -765,27 +771,57 @@ SNXSSignal NXS_Strat_PivotWick(){
                    (upWick >= minWick && upWick >= InpPivotWickWickRatio * body &&
                     upWick >= InpPivotWickWickRatio * dnWick && c1 < o1);
 
-   // BUY: tocco M15 di un livello pivot minimo di QUALUNQUE TF del pool
-   if(buyOk && wickBull){
+   // 03/09 - conferma su CHIUSURA (Rayner Teo, vedi vault "Revisione contro
+   // Materiale Esterno"): il solo tocco intrabar (wick) puo' essere uno stop
+   // hunt che inverte subito dopo. Se richiesta (InpPivotWickRequireCloseConfirm),
+   // valutata per-livello sotto (la chiusura deve rientrare nella stessa
+   // zona di tolleranza del livello, non solo il minimo/massimo).
+
+   // 03/09 - filtro anti-buildup (Rayner Teo): un consolidamento stretto
+   // (range piccolo vs ATR) nelle ultime N barre PRIMA del tocco e' un
+   // segnale di debolezza del livello (probabile rottura, non rigetto) -
+   // se richiesto, scarta il tocco in quelle condizioni.
+   bool buildupOk = true;
+   if(InpPivotWickAvoidBuildup){
+      double hiN = iHigh(g_sym, execTF, iHighest(g_sym, execTF, MODE_HIGH, InpPivotWickBuildupBars, 2));
+      double loN = iLow (g_sym, execTF, iLowest (g_sym, execTF, MODE_LOW,  InpPivotWickBuildupBars, 2));
+      double rangeN = hiN - loN;
+      buildupOk = (rangeN >= InpPivotWickBuildupMinATR * atr);
+   }
+
+   // BUY: tocco M15 di un livello pivot minimo di QUALUNQUE TF del pool,
+   // non ancora "consumato" (InpPivotWickOneShotLevel)
+   if(buyOk && wickBull && buildupOk){
       for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
          for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
             if(g_pivotWickState.pivLo[t][i] <= 0) continue;
-            if(l1 >= g_pivotWickState.pivLo[t][i] - tol && l1 <= g_pivotWickState.pivLo[t][i] + tol){
+            if(InpPivotWickOneShotLevel && g_pivotWickState.pivLoUsed[t][i]) continue;
+            bool touched = (l1 >= g_pivotWickState.pivLo[t][i] - tol && l1 <= g_pivotWickState.pivLo[t][i] + tol);
+            bool closeOk = !InpPivotWickRequireCloseConfirm ||
+                           (c1 >= g_pivotWickState.pivLo[t][i] - tol && c1 <= g_pivotWickState.pivLo[t][i] + tol);
+            if(touched && closeOk){
                s.dir = DIR_BUY; s.score = 60; s.reason = "PivotWick_buy_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
                g_pivotWickState.lastFireTime[0] = curBar0;
+               if(InpPivotWickOneShotLevel) g_pivotWickState.pivLoUsed[t][i] = true;
                break;
             }
          }
       }
    }
-   // SELL: tocco M15 di un livello pivot massimo di QUALUNQUE TF del pool
-   if(s.dir == DIR_NONE && sellOk && wickBear){
+   // SELL: tocco M15 di un livello pivot massimo di QUALUNQUE TF del pool,
+   // non ancora "consumato"
+   if(s.dir == DIR_NONE && sellOk && wickBear && buildupOk){
       for(int t = 0; t < NXS_PIVOTWICK_NTF && s.dir == DIR_NONE; t++){
          for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
             if(g_pivotWickState.pivHi[t][i] <= 0) continue;
-            if(h1 <= g_pivotWickState.pivHi[t][i] + tol && h1 >= g_pivotWickState.pivHi[t][i] - tol){
+            if(InpPivotWickOneShotLevel && g_pivotWickState.pivHiUsed[t][i]) continue;
+            bool touched = (h1 <= g_pivotWickState.pivHi[t][i] + tol && h1 >= g_pivotWickState.pivHi[t][i] - tol);
+            bool closeOk = !InpPivotWickRequireCloseConfirm ||
+                           (c1 <= g_pivotWickState.pivHi[t][i] + tol && c1 >= g_pivotWickState.pivHi[t][i] - tol);
+            if(touched && closeOk){
                s.dir = DIR_SELL; s.score = 60; s.reason = "PivotWick_sell_" + EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]);
                g_pivotWickState.lastFireTime[1] = curBar0;
+               if(InpPivotWickOneShotLevel) g_pivotWickState.pivHiUsed[t][i] = true;
                break;
             }
          }
