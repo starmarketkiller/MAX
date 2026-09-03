@@ -249,16 +249,21 @@ double   InpInstMinATRfactor      = 0.0;   // 0=off; >0 = ATR corrente >= questo
 // Moltiplicatore lotto a livello di ACCOUNT (oltre il risk% e i cap per-trade).
 // 1.0 = neutro; 1.5-2.0 = piu' aggressivo (lotti piu' alti). ATTENZIONE: amplifica
 // SIA i profitti SIA le perdite -> alzarlo solo quando l'edge e' confermato.
-double   InpLotAggressiveness     = 1.0;
+input double   InpLotAggressiveness     = 1.0;
 // Scala il lotto sull'andamento: sale dopo N vittorie di fila, scende dopo N
 // perdite di fila, dentro [floor, cap]. "Alza sui vincita, abbassa sulle perdite".
-bool     InpUseStreakSizing       = false;  // v2.4.0: OFF -> sizing prevedibile come nel backtest
-int      InpStreakWinsToScale     = 2;      // vittorie di fila per salire di uno step
-double   InpStreakScaleUp         = 1.25;   // x per step in vincita
-double   InpStreakMaxMult         = 2.00;   // tetto del moltiplicatore
-int      InpStreakLossesToScale   = 2;      // perdite di fila per scendere di uno step
-double   InpStreakScaleDown       = 0.60;   // x per step in perdita
-double   InpStreakMinMult         = 0.40;   // pavimento del moltiplicatore
+// 03/09 - BUG TROVATO (stessa classe di InpEnableGrid/Split ecc. stanotte):
+// mancava la keyword 'input' su tutte le 8 righe sotto - invisibili al
+// Tester, mai stato possibile testarle davvero nonostante il commento
+// dicesse "v2.4.0: OFF -> sizing prevedibile come nel backtest" (l'OFF
+// era vero per forza, non per scelta - non si poteva accendere).
+input bool     InpUseStreakSizing       = false;
+input int      InpStreakWinsToScale     = 2;      // vittorie di fila per salire di uno step
+input double   InpStreakScaleUp         = 1.25;   // x per step in vincita
+input double   InpStreakMaxMult         = 2.00;   // tetto del moltiplicatore
+input int      InpStreakLossesToScale   = 2;      // perdite di fila per scendere di uno step
+input double   InpStreakScaleDown       = 0.60;   // x per step in perdita
+input double   InpStreakMinMult         = 0.40;   // pavimento del moltiplicatore
 
 // input group "=== SCUDO RISK-OF-RUIN (v2.2.6) ==="
 // Se la perdita del GIORNO supera la soglia, congela il trading fino al giorno

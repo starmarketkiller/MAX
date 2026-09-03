@@ -79,7 +79,8 @@ bool _nxs_regime_veto(const string nm){
    // SAR, 12/01-12/04/2026, 34/41 perdenti). Basta uno dei due flag attivo.
    if(!InpInstRegimeVeto && !InpProfileRegimeVeto) return false;
    bool meanRev = (nm == "BOLLINGER" || nm == "BB_SQUEEZE" || nm == "RANGE_FADE" ||
-                   nm == "RSI_DIV"   || StringFind(nm, "MALAYSIAN_SNR") >= 0);
+                   nm == "RSI_DIV"   || StringFind(nm, "MALAYSIAN_SNR") >= 0 ||
+                   nm == "PIVOT_WICK");   // 03/09 - fade di supporto/resistenza, stessa famiglia
    bool trendFollow = (nm == "ADX_RSI" || nm == "MACD" || nm == "SAR" || nm == "TSI" ||
                        nm == "EMA_PULLBACK" || nm == "ICHIMOKU" || nm == "BJORGUM" ||
                        nm == "BREAKOUT_ACC" || nm == "LONDON_BO");
