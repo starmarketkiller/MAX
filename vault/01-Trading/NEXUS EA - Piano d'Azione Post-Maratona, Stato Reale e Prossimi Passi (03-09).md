@@ -93,10 +93,23 @@ segnala mai, il fallback segnala sempre BUY) presente identico nelle
 copertura vs NEXUS e candidato consigliato (Meeting Lines, unica
 famiglia senza filtro di trend impilato) in
 [[NEXUS EA - Censimento 28 EA Candlestick Free Robots, Bug Piercing Line Trovato (03-09)]].
-Ancora da fare: variante MFI non letta (dedotta per analogia), censimento
-`MQL5/Experts/Examples` e `MQL5/Indicators/Examples` (indicatori nativi),
-nessun backtest ancora fatto sui 4 pattern nuovi (Harami/MeetingLines/
+Ancora da fare: variante MFI non letta (dedotta per analogia), nessun
+backtest ancora fatto sui 4 pattern nuovi (Harami/MeetingLines/
 PiercingLine-fix/MorningEveningStar) — solo lettura del codice finora.
+
+**Censimento `Experts/Examples`/`Indicators/Examples` — fatto (03/09)**:
+`Experts/Examples` contiene solo demo SDK generiche MetaQuotes
+(ChartInChart, Controls, Math 3D, MACD Sample, Moving Average), niente
+di utile per strategie. `Indicators/Examples` sono le implementazioni
+di riferimento degli indicatori nativi MT5 — non serve portarne il
+codice, sono già richiamabili via funzione nativa (`iAlligator`,
+`iDeMarker`, `iMFI`, `iForce`, ecc.). Confrontato con `NXS_*.mqh`:
+**Ichimoku e Fractals già usati** in NEXUS (ICHIMOKU, Bjorgum zones);
+**Alligator/Gator, Heiken Ashi, DeMarker, MFI, Force Index non usati
+da nessuna parte** — gap reali, non ancora sfruttati, candidati per
+nuovi filtri di contesto o strategie se emerge un'ipotesi concreta (non
+aggiungere solo perché disponibili — stessa regola "niente filtri
+perché suonano professionali" del Master Roadmap §12).
 
 ### Fase 2 — Revisione architetturale dell'EA (mai fatta in modo sistematico)
 
