@@ -44,9 +44,14 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // e target piu' largo per le operazioni scalp (2-2.5:1, vedi screenshot
    // TradingView BarUpDn condivisi) - qui R:R 2.5, mai verificato dal vivo.
    if(name == "BAR_UPDN")          { slMult=1.0; tpMult=2.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
-   // 02/09 - PIVOT_WICK: stop stretto (il rigetto sul pivot e' gia' la
-   // conferma strutturale), target 2.2:1 - stessa filosofia scalp di BAR_UPDN.
-   if(name == "PIVOT_WICK")        { slMult=1.0; tpMult=2.2; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
+   // 02/09 - PIVOT_WICK: tpMult 2.2->1.0. Analisi MFE su 230 trade (nov-dic
+   // 2025, config nuda senza wick): 55.6% dei perdenti avevano toccato oltre
+   // $3 di flottante prima di girare a stop - il target a 2.2xATR (~$15-20)
+   // e' troppo lontano per la qualita' reale di questi ingressi. Simulazione
+   // con TP fisso piu' vicino: win rate 29.6%->52% intorno a $7, netto da
+   // -$208 a quasi pareggio. Simulazione approssimata a barre M15, non il
+   // motore vero - questo test isola l'effetto reale.
+   if(name == "PIVOT_WICK")        { slMult=1.0; tpMult=1.0; htf=false; beR=0.0; trailATR=0.0; return true; }  // 15m MAI VERIFICATA su MT5
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
