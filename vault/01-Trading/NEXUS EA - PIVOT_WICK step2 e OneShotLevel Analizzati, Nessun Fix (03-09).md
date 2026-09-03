@@ -193,6 +193,29 @@ PIVOT_WICK, con questo trigger, non ha edge sufficiente e richiede una
 revisione della logica di ingresso più profonda (non solo filtri
 aggiuntivi) prima di continuare a investire tempo qui.
 
+## Addendum 4 — d1 (ATR partial) è un duplicato di c1, non un test nuovo (03/09, ~19:10)
+
+`nexus_pivotwick_d1_atrpartial.ini` imposta solo `InpEnableSplit=true`
+— ma verificato in `NXS_Inputs.mqh:575` che il default di
+`InpEnableSplit` è **già `true`** dal fix del 01/09 (era una delle 4
+variabili senza `input`, quindi sempre attiva silenziosamente in ogni
+test di questa sessione, SAR/EMA_PULLBACK inclusi — vedi commento
+`NXS_Inputs.mqh:557-564`). Il partial ATR (`InpTP1_ATR=1.5`,
+`InpTP2_ATR=3.0`, `NXS_SplitTrade.mqh:121-132`) era quindi **già attivo
+nella baseline c1** tanto quanto in d1. Risultato: **d1 identico a c1
+al centesimo** (503 trade, PF0.79, net -546.74, DD 606.53) — non
+perché il partial non funzioni, ma perché il test non isola nulla
+(confronta "split ON" contro "split ON", non contro "split OFF").
+Stessa classe di errore metodologico già vista altre volte (§12 Master
+Roadmap: "confrontare report senza build/config hash" — qui config
+identica travestita da test diverso). **Non ripetuto qui** (nessuna
+modifica MQL5, solo osservazione) — se si vuole isolare l'effetto del
+partial ATR servirebbe `InpEnableSplit=false` come baseline di
+confronto, oppure variare `InpTP1_ATR`/`InpTP2_ATR` dai default.
+d2 (`InpUseFixedPipPartial`), d3 (`InpUseVolumePartial`), d5
+(`InpProfileRegimeVeto`) sono invece flag genuinamente distinti dal
+default — verificati nell'`.ini`, questi restano test validi.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
