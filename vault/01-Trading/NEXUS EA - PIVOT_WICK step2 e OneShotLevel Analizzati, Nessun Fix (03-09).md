@@ -260,6 +260,17 @@ riduce il rumore statistico, non l'edge.
 Nessuno dei 5 sposta il PF. d6 (best-combo entry, stesso lotto) e d7
 (FixedPip a lotto più alto via deposito $5000) ancora in coda.
 
+## Addendum 7 — d6 (best-combo entry) arrivato dopo lo stop: 0 trade (03/09, ~20:40)
+
+d6 (`RequireCloseConfirm` + `OneShotLevel` + `AvoidBuildup` + split,
+senza `RequireWick`) era già in coda quando l'utente ha chiesto di
+fermarsi — completato comunque in background: **0 trade in 3 mesi**.
+Conferma finale del pattern già visto con c6: impilare
+`RequireCloseConfirm` (l'unico fix con effetto reale, -45% volume da
+solo) sopra `OneShotLevel` (-28% da solo) collassa il campione anche
+senza il contributo di `RequireWick`. Nessun'altra azione presa, thread
+chiuso come da richiesta.
+
 ## Fermata su decisione esplicita dell'utente (03/09, ~19:50)
 
 L'utente ha chiesto di fermarsi su questa strategia dopo il round d1-d5
