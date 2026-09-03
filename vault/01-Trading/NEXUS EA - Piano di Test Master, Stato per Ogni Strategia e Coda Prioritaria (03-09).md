@@ -40,7 +40,7 @@ Python, ma vedi nota sotto su cosa contro-verificare prima):
 | # | Strategia | PF Python (m1/m2) | Filtro chiave | In MQL5? |
 |---|---|---|---|---|
 | 1 | FVG_MIT | 3.24 (1.57/5.06) | D1-align+trailing+Elliott | No |
-| 2 | ADX_RSI | 2.62 (2.57/2.66) | trailing+Elliott, BUY-only | No |
+| 2 | ADX_RSI | 2.62 (2.57/2.66) | trailing+Elliott, BUY-only | ✅ **Confermata sul vero MT5 (04/09)**: nudo PF2.04, net+$1676/3anni, BUY domina (conferma diretta). Vedi [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]]. Trailing+Elliott ancora da aggiungere |
 | 3 | STRUCT_REACT | 2.65 (2.82/2.48) | nessun Elliott (peggiora qui), BUY-only | No |
 | 4 | FVG_CONT_V2 | 2.40 (2.10/2.93) | trailing+Elliott, BUY-only | No |
 | 5 | SAR_FLIP | 2.31 (1.54/3.49) | trailing+Elliott, BUY-only | No |

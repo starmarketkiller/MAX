@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]]** —
+  primo esito chiaramente positivo della coda prioritaria: nudo su D1
+  (config produzione attuale, 3 anni), PF2.04, net+$1676, payoff
+  ~6.25:1. Conferma diretta della scoperta Python (BUY domina: 44
+  trade +$2309 WR31.8%, SELL rumore puro: 7 trade +$28 WR14.3%).
+  Trailing+Elliott della ricetta Python (PF2.62) ancora da aggiungere.
 - **[[NEXUS EA - BOLLINGER Filtro RSI e Candela Testati, Nessuno Alza il Win Rate (03-09)]]** —
   chiude il piano BOLLINGER+RSI+candela del 02/09: RSI(14) divergenza
   e candela di inversione testati isolati e insieme, nessuno sposta il
