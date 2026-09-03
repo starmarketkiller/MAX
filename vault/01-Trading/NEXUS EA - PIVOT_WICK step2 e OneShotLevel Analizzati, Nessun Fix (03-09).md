@@ -216,6 +216,29 @@ d2 (`InpUseFixedPipPartial`), d3 (`InpUseVolumePartial`), d5
 (`InpProfileRegimeVeto`) sono invece flag genuinamente distinti dal
 default — verificati nell'`.ini`, questi restano test validi.
 
+## Addendum 5 — d4 StreakSizing: identico a c1, ma NON per lo stesso motivo di d1-d3 (03/09)
+
+`InpUseStreakSizing=true` (sale dopo vittorie, `InpStreakScaleUp=1.25`
+per step, soglia solo 2 vittorie di fila, tetto 2.0×) dà anch'esso
+**risultato identico al centesimo** a c1 (503 trade, PF0.79,
+-$546.74). Verificato nei deal grezzi: **tutti e 503 i trade usano
+esattamente 0.01 lotto, zero variazione**, nonostante streak fino a 7
+vittorie di fila osservate (ben oltre la soglia di 2 per attivare lo
+scale-up, che a 4 vittorie raggiungerebbe già il tetto 2.0×).
+
+A differenza di d1-d3 (dove l'arrotondamento a zero è una certezza
+matematica), qui **non è la stessa spiegazione**: con moltiplicatore
+fino a 2.0× il lotto grezzo pre-arrotondamento dovrebbe quasi certamente
+attraversare la soglia dei 0.01 lotti successiva in qualche trade su
+503. Tracciato nel codice fino a `NXS_EA_OnLogicalClose` →
+`NXS_OnTradeClosed` → `_nxs_streak_update` (soglie verificate, tutte
+raggiungibili) — non isolato se `NXS_EA_OnLogicalClose` viene davvero
+richiamato per ogni chiusura PIVOT_WICK in questa modalità di test, o
+se il moltiplicatore si aggiorna ma il lotto grezzo pre-arrotondamento
+resta comunque troppo piccolo per attraversare lo step anche a 2×.
+**Non risolto** — servirebbe un log/contatore diagnostico (modifica
+MQL5, non fatta qui) per chiudere la domanda con certezza.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
