@@ -14,6 +14,19 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Due Numerazioni Strategia Diverse, InpStrategySelector Non e il Registro (03-09)]]** —
+  **scoperta importante (P0)**: `NXS_StrategyRegistry.mqh` numera le
+  strategie alfabeticamente (0-45), ma il gate vero che isola una
+  strategia nel Tester (`NXS_SelectorAllows`, richiamato da ogni
+  `NXS_Strat_X()`) usa una numerazione completamente diversa e
+  indipendente. Su 29 strategie verificate solo 3 coincidono per
+  caso (ADX_RSI, BJORGUM, EMA_PULLBACK) — usare il numero del
+  registro per `InpStrategySelector` produce zero trade silenziosi
+  (o, peggio, isola la strategia sbagliata). Scoperta testando
+  BOLLINGER (registro=7, vero=2). I test PIVOT_WICK di oggi erano
+  salvi perché usavano già il numero vero (49, non 29 del registro).
+  Rischio aperto non confermato: se qualche sweep storico abbia usato
+  il numero sbagliato.
 - **[[NEXUS EA - Bug Infrastrutturale, i Parziali Percentuali Sono Inerti a Lotto Minimo (03-09)]]** —
   non un bug (l'utente ha corretto: 0.01 è già il lotto minimo, il
   codice rifiuta correttamente uno split sotto lo step) ma un vincolo
