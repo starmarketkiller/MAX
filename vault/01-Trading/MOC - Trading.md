@@ -14,6 +14,16 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Bug Infrastrutturale, i Parziali Percentuali Sono Inerti a Lotto Minimo (03-09)]]** —
+  **bug P0, riguarda tutte le strategie non solo PIVOT_WICK**: i 4
+  meccanismi di parziale (ATR-split P1/P2, fixed-pip, volume-spike) in
+  `NXS_SplitTrade.mqh` usano tutti `MathFloor(vol×pct/step)×step` per
+  calcolare il volume da chiudere — a lotto minimo (0.01) e percentuali
+  di default (30-50%) il risultato arrotonda sempre a 0, quindi il
+  parziale non scatta MAI. Confermato empiricamente (d2 oggi identico
+  a baseline al centesimo) e nel codice. Qualunque conclusione storica
+  "il parziale non aiuta" ottenuta a lotto 0.01 non ha mai davvero
+  testato il meccanismo.
 - **[[NEXUS EA - Censimento 28 EA Candlestick Free Robots, Bug Piercing Line Trovato (03-09)]]** —
   Fase 1 del piano post-maratona: estratte le 7 logiche di pattern
   candlestick (Black Crows/White Soldiers, Engulfing, Harami, Meeting
