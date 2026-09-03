@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Piano d'Azione Post-Maratona, Stato Reale e Prossimi Passi (03-09)]]** —
+  **leggi questa per prima quando riprendi dopo un `/clear`.** Stato
+  onesto (solo SAR è davvero chiuso), piano in 5 fasi (chiudere PIVOT_WICK,
+  censire la libreria MT5 — 28 EA su pattern di candele già pronti in
+  "Free Robots" — revisione architetturale dei cancelli/concorrenza,
+  base di conoscenza esterna, sintesi).
 - **[[NEXUS EA - Sintesi Sessione Maratona SAR-EMA_PULLBACK-Scalp-RegimeVeto (01-02-09)]]** —
   **leggi questa per primo se torni su SAR/EMA_PULLBACK/scalp dopo questa
   sessione.** SAR confermato su 5 punti (PF1.37-1.57, lotto NATURALE non
