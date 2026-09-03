@@ -121,8 +121,13 @@ per sé, è sano quando i numeri gli permettono di scattare.
 
 ## Non ancora verificato
 
-- d3 (`InpUseVolumePartial`, PIVOT_WICK a 0.01) ancora in corso —
-  previsione: stesso esito nullo del d1/d2, stessa causa aritmetica.
+- ~~d3 (`InpUseVolumePartial`, PIVOT_WICK a 0.01) ancora in corso~~ —
+  **confermato (03/09)**: identico a c1/d1/d2 al centesimo (503 trade,
+  PF0.79, -$546.74). Previsione verificata, stessa causa aritmetica.
+  I 4 meccanismi di parziale sono ora tutti confermati inerti a 0.01
+  lotto (ATR-split via d1, FixedPip via d2, VolumeSpike via d3 — ATR-P2
+  non isolato singolarmente ma stessa formula, stessa conclusione
+  attesa).
 - Non ancora testato PIVOT_WICK a 0.02-0.05 lotto con questi stessi
   meccanismi (i risultati storici trovati sopra sono per EMA_PULLBACK,
   non per PIVOT_WICK) — se si vuole valutare i parziali su PIVOT_WICK
