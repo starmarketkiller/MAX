@@ -239,6 +239,27 @@ resta comunque troppo piccolo per attraversare lo step anche a 2×.
 **Non risolto** — servirebbe un log/contatore diagnostico (modifica
 MQL5, non fatta qui) per chiudere la domanda con certezza.
 
+## Addendum 6 — d5 RegimeVeto: stesso pattern di OneShotLevel, solo volume (03/09)
+
+`InpProfileRegimeVeto=true`: 330 trade (-34% vs baseline), WR 43.6%
+(vs 44.9%, invariato/leggermente peggio), PF **identico** 0.79, avg
+win/loss ~9.1/-8.9 (invariato). Stesso schema già visto con
+OneShotLevel (c2): filtra un sottoinsieme senza cambiarne la qualità —
+riduce il rumore statistico, non l'edge.
+
+## Sintesi provvisoria round d (uscite/sizing)
+
+| Test | Trade | WR | PF | Verdetto |
+|---|---|---|---|---|
+| d1 ATR partial | 503 | 44.9% | 0.79 | test viziato (già default) |
+| d2 FixedPip partial | 503 | 44.9% | 0.79 | inerte (arrotondamento a 0.01 lotto) |
+| d3 Volume partial | 503 | 44.9% | 0.79 | inerte (stessa causa) |
+| d4 StreakSizing | 503 | 44.9% | 0.79 | inerte, causa non isolata |
+| d5 RegimeVeto | 330 | 43.6% | 0.79 | solo volume, nessun edge |
+
+Nessuno dei 5 sposta il PF. d6 (best-combo entry, stesso lotto) e d7
+(FixedPip a lotto più alto via deposito $5000) ancora in coda.
+
 ## Non ancora verificato
 
 - Se il flag `InpPivotWickRequireWick=true` (pianificato in Fase 0 punto
