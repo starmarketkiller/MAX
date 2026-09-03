@@ -214,8 +214,11 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    // con accettazione) potrebbero essere piu' genuine su un timeframe scalp
    // dove il pattern ricorre piu' spesso. Override cauto, di default OFF
    // (PERIOD_CURRENT = nessun cambiamento, resta D1).
+   // 03/09 - BOLLINGER aggiunta allo stesso override per il test M5 nuda del
+   // piano BOLLINGER+RSI+candela (vedi vault "Ricerca Scalp BAR_UPDN e
+   // BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)"). Stesso default OFF.
    if(InpScalpTFOverride != PERIOD_CURRENT &&
-      (name == "BB_SQUEEZE" || name == "ORDER_BLOCK" || name == "BREAKOUT_ACC"))
+      (name == "BB_SQUEEZE" || name == "ORDER_BLOCK" || name == "BREAKOUT_ACC" || name == "BOLLINGER"))
       return InpScalpTFOverride;
    if(name == "ADX_RSI")           return PERIOD_D1;
    if(name == "BB_SQUEEZE")        return PERIOD_D1;
@@ -672,6 +675,12 @@ bool NXS_Profile_Enabled(const string name){
    // quella protezione resta su InpStrat_X (entrambe false di default).
    if(name == "BB_SQUEEZE")             return true;
    if(name == "ORDER_BLOCK")            return true;
+   // 03/09 - stesso bug/trattamento: sblocco BOLLINGER per il test isolato
+   // as-is su M5 nuda del piano BOLLINGER+RSI+candela (vedi vault "NEXUS EA
+   // - Ricerca Scalp BAR_UPDN e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)").
+   // InpStrat_Bollinger resta false di default - "abilitata al test" non e'
+   // "abilitata di default", stessa regola delle righe sopra.
+   if(name == "BOLLINGER")              return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 
