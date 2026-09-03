@@ -14,6 +14,10 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Revisione contro Materiale Esterno, Turtle Soup e Libreria PDF (03-09)]]** —
+  audit di TURTLE_SOUP/SH_BMS_RTO contro un PDF ICT/SMC di riferimento
+  (gap trovato: nessun controllo di profondità sullo sweep), più
+  catalogo di tracciamento per i 34 PDF di trading mandati dall'utente.
 - **[[NEXUS EA - Piano d'Azione Post-Maratona, Stato Reale e Prossimi Passi (03-09)]]** —
   **leggi questa per prima quando riprendi dopo un `/clear`.** Stato
   onesto (solo SAR è davvero chiuso), piano in 5 fasi (chiudere PIVOT_WICK,
