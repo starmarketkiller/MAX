@@ -384,6 +384,16 @@ input group "=== STRATEGIES TOGGLE ==="
 // (tutte true = comportamento normale identico finche' non le tocchi).
 input bool     InpStrat_ADX_RSI      = true;
 input bool     InpStrat_BOLLINGER    = true;
+// 03/09 - piano BOLLINGER+RSI+candela (vedi vault "Ricerca Scalp BAR_UPDN
+// e BREAKOUT_ACC, Piano BOLLINGER+RSI (02-09)"), step 3: il tocco nudo
+// della banda (306 trade/3 mesi M5, PF0.83, WR28.1% ma payoff ~2.15:1)
+// spara troppi falsi segnali - RSI(14) NON deve confermare l'estremo
+// (divergenza) + candela di inversione, per alzare il win rate.
+// Default entrambi false: comportamento nudo invariato finche' non li tocchi.
+input bool     InpBollingerUseRSIFilter    = false;
+input double   InpBollingerRSIOversold     = 30.0;
+input double   InpBollingerRSIOverbought   = 70.0;
+input bool     InpBollingerUseCandleFilter = false;  // hammer/engulfing (buy), shooting star/engulfing (sell)
 input bool     InpStrat_MACD         = true;
 input bool     InpStrat_SAR          = true;
 input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi

@@ -290,13 +290,61 @@ SNXSSignal NXS_Strat_Bollinger(){
    ArraySetAsSeries(bbUp, true); ArraySetAsSeries(bbLo, true);
    if(CopyBuffer(g_hBB, 1, 1, 2, bbUp) < 2) return s;   // bbUp[0]=shift1, bbUp[1]=shift2
    if(CopyBuffer(g_hBB, 2, 1, 2, bbLo) < 2) return s;
-   double px  = iClose(g_sym, NXS_EffTF(), 1);   // close[1]
-   double ppx = iClose(g_sym, NXS_EffTF(), 2);   // close[2]
-   if(ppx <= bbLo[1] && bbLo[0] < px){
-      s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_reentry";
-   } else if(ppx >= bbUp[1] && bbUp[0] > px){
-      s.dir = DIR_SELL; s.score = 62; s.reason = "BB_upper_reentry";
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   double px  = iClose(g_sym, tf, 1);   // close[1]
+   double ppx = iClose(g_sym, tf, 2);   // close[2]
+
+   // 03/09 - gate a chiusura barra (piano BOLLINGER+RSI+candela, step 5):
+   // il setup (bar 1/2) resta vero per l'intera durata della barra 0 in
+   // formazione - senza questo gate rischia di rivalutare RSI/candela ad
+   // ogni tick invece che una volta alla chiusura, stesso principio del
+   // lastFireTime di NXS_Strat_PivotWick (bug di inseguimento gia' trovato
+   // su BAR_UPDN/BREAKOUT_ACC il 02/09).
+   static datetime lastEvalBar = 0;
+   datetime curBar1 = iTime(g_sym, tf, 1);
+   if(curBar1 == lastEvalBar) return s;
+
+   bool touchLower = (ppx <= bbLo[1] && bbLo[0] < px);
+   bool touchUpper = (ppx >= bbUp[1] && bbUp[0] > px);
+   if(!touchLower && !touchUpper) return s;
+   int dir = touchLower ? DIR_BUY : DIR_SELL;
+
+   // 03/09 - filtro RSI(14): richiede che l'estremo di prezzo NON sia
+   // confermato da un estremo di RSI (divergenza) - vedi vault "Piano
+   // BOLLINGER+RSI (02-09)". Se RSI conferma l'estremo (ipervenduto/
+   // ipercomprato vero), il tocco e' scartato: l'ipotesi e' che
+   // l'assenza di conferma segnali momentum in esaurimento, non un vero
+   // eccesso da cui rimbalzare.
+   if(InpBollingerUseRSIFilter){
+      double rsiArr[];
+      ArraySetAsSeries(rsiArr, true);
+      if(CopyBuffer(g_hRSI, 0, 1, 1, rsiArr) < 1) return s;
+      double rsi1 = rsiArr[0];
+      if(dir == DIR_BUY  && rsi1 <= InpBollingerRSIOversold)   return s;
+      if(dir == DIR_SELL && rsi1 >= InpBollingerRSIOverbought) return s;
    }
+
+   // 03/09 - filtro candela di inversione: hammer/engulfing rialzista sul
+   // tocco della banda inferiore, shooting star/engulfing ribassista su
+   // quella superiore. Valutato sulla barra di tocco (index 1, chiusa).
+   if(InpBollingerUseCandleFilter){
+      double o1 = iOpen(g_sym, tf, 1), c1 = iClose(g_sym, tf, 1);
+      double h1 = iHigh(g_sym, tf, 1), l1 = iLow(g_sym, tf, 1);
+      double o2 = iOpen(g_sym, tf, 2), c2 = iClose(g_sym, tf, 2);
+      double range1 = h1 - l1;
+      if(range1 <= 0) return s;
+      double body1 = MathAbs(c1 - o1);
+      bool hammer     = (MathMin(o1,c1) - l1 >= 2.0*body1) && (h1 - MathMax(o1,c1) <= body1);
+      bool shootStar  = (h1 - MathMax(o1,c1) >= 2.0*body1) && (MathMin(o1,c1) - l1 <= body1);
+      bool bullEngulf = (c2 < o2) && (c1 > o1) && (c1 >= o2) && (o1 <= c2);
+      bool bearEngulf = (c2 > o2) && (c1 < o1) && (c1 <= o2) && (o1 >= c2);
+      if(dir == DIR_BUY  && !(hammer || bullEngulf)) return s;
+      if(dir == DIR_SELL && !(shootStar || bearEngulf)) return s;
+   }
+
+   lastEvalBar = curBar1;
+   if(dir == DIR_BUY){ s.dir = DIR_BUY;  s.score = 62; s.reason = "BB_lower_reentry"; }
+   else              { s.dir = DIR_SELL; s.score = 62; s.reason = "BB_upper_reentry"; }
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
 }
