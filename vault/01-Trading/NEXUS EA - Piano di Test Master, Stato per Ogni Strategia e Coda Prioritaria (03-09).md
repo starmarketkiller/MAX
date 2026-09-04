@@ -51,7 +51,7 @@ Python, ma vedi nota sotto su cosa contro-verificare prima):
 | 10 | ML_ADAPTIVE_SUPERTREND | 2.13 (1.44/3.13) | Elliott, BUY-only | No (script esterno, mai portato) |
 | 11 | SAR_ADX20 | 1.81 (1.28/2.44) | trailing+Elliott, BUY-only | No |
 | 12 | AMD_CONT | 1.80 (1.43/2.25) | Elliott, BUY-only | No |
-| 13 | MACD | 1.84 (1.53/2.17) | trailing+Elliott | No |
+| 13 | MACD | 1.84 (1.53/2.17) | trailing+Elliott | ✅ **Confermata sul vero MT5 (04/09)**: nudo H4 PF1.53, net+$1975/3anni. BUY domina (129 trade, WR37.2%, +$2273) SELL rumore (70 trade, +$162). Vedi [[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]] |
 | 14 | LONDON_BO | 1.83 (1.38/2.32) | trailing, BUY-only | No |
 | 15 | SAR | 1.87 (1.44/2.36) | trailing+Elliott, BUY-only | **Sì, ma ricetta diversa** — la config live confermata oggi (candle-align H4, PF1.37-1.57) è un'altra scoperta, non questa. Da riconciliare, non assumere che siano la stessa cosa |
 | 16 | FVG_CONT | 1.78 (1.66/1.91) | trailing+Elliott, BUY-only | No |

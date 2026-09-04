@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]]** —
+  terza strategia confermata oggi (PF1.53, net+$1975/3anni). Terza
+  conferma dello stesso giorno dello schema BUY-domina/SELL-rumore
+  (BUY 129 trade WR37.2% +$2273, SELL 70 trade +$162) — rafforza
+  l'ipotesi che gran parte dell'edge rifletta il rally secolare
+  dell'oro (+125% nel periodo) più che un segnale indipendente dal trend.
 - **[[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]]** —
   primo esito chiaramente positivo della coda prioritaria: nudo su D1
   (config produzione attuale, 3 anni), PF2.04, net+$1676, payoff
