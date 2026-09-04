@@ -57,3 +57,27 @@ alla ricetta Python completa.
 [[NEXUS EA - Piano di Test Master, Stato per Ogni Strategia e Coda Prioritaria (03-09)]] ·
 [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]] ·
 [[NEXUS EA - Tabella Master Strategie Verificate (24-08)]] · [[MOC - Trading]]
+
+## Addendum — BUY-only isolato, confermato (04/09)
+
+Aggiunto `InpBollingerBuyOnly`, testato isolato (H4, 3 anni, stesso periodo):
+
+| Metrica | Valore |
+|---|---|
+| Trade | 68 (tutti BUY) |
+| Win rate | 50% |
+| PF | **1.35** |
+| Net | **+$352.92** |
+| Sharpe | **2.45** |
+| Max DD balance | $296.24 (29.6% del deposito) |
+
+Profilo di rischio nettamente migliore di ADX_RSI (Sharpe 2.45 vs 1.20,
+DD 29.6% vs 59.6%). Leggera differenza nel conteggio trade rispetto al
+calcolo manuale dal test misto (68 vs 71) — probabilmente il lock
+cambia leggermente il tracking di `lastEvalBar` quando i segnali SELL
+vengono scartati prima di aggiornarlo, non ancora indagato, differenza
+minore non concludente.
+
+**Prossimo passo naturale**: aggiungere il filtro Elliott multi-TF
+(`InpUseElliottFilter`, già esistente e generico) per avvicinarsi alla
+ricetta Python completa (PF1.95) — non ancora fatto.
