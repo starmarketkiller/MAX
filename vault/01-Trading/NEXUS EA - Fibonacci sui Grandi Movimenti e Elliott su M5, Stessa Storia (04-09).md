@@ -79,3 +79,31 @@ per accelerazione/momentum che per un ritmo ciclico ordinato.
 ## Collegamenti
 [[NEXUS EA - Perché Pochi Trade, Analisi CSV Vera su ADX_RSI e BOLLINGER (04-09)]] ·
 [[MOC - Trading]]
+
+## Addendum — confluenza multi-timeframe, giorno della settimana, persistenza (04-05/09)
+
+Su richiesta dell'utente ("trovi pattern di qualsiasi tipo"), tre
+controlli aggiuntivi.
+
+**Giorno della settimana** (punti di swing M30): distribuzione piatta,
+nessun segnale forte (Mar/Mer 21.9%, Ven 16.8%, weekend quasi zero
+come atteso).
+
+**Persistenza higher-highs/lower-lows**: decadimento quasi geometrico
+(46.8% si ferma dopo 1 streak, poi ~50-57% di continuazione a ogni
+passo) — vicino a quanto ci si aspetterebbe dal caso, nessun "hot
+hand" chiaro.
+
+**Confluenza multi-timeframe — il risultato più forte**: vicino a un
+vero pivot D1 (116 nella storia), la densità di livelli M30 (entro
+0.5×ATR) è **75.1 in media, contro 24.5 vicino a un prezzo casuale
+nello stesso range — 3.06× più alta**. I punti dove il mercato inverte
+sul timeframe grande coincidono realmente con l'accumulo di struttura
+sui timeframe piccoli, non per caso. Probabilmente l'ingrediente più
+solido trovato in tutta questa indagine insieme alla sessione oraria
+12-16 UTC.
+
+### Non ancora fatto
+- Non tradotto in una regola testabile (es. "entra solo dove
+  confluenza M30 alta E sessione Overlap E livello esteso").
+- Tolleranza di confluenza (0.5×ATR) non testata con altri valori.
