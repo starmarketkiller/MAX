@@ -81,3 +81,26 @@ minore non concludente.
 **Prossimo passo naturale**: aggiungere il filtro Elliott multi-TF
 (`InpUseElliottFilter`, già esistente e generico) per avvicinarsi alla
 ricetta Python completa (PF1.95) — non ancora fatto.
+
+## Addendum 2 — filtro Elliott: peggiora, non aiuta (04/09)
+
+`InpUseElliottFilter=true` sopra BUY-only H4 (già registrata nel
+filtro, nessun codice nuovo):
+
+| | BUY-only nudo | + Elliott |
+|---|---|---|
+| Trade | 68 | 64 |
+| PF | **1.35** | 1.23 |
+| Net | **$352.92** | $220.69 |
+| Sharpe | **2.45** | 1.57 |
+| Max DD | $296.24 | $345.17 |
+
+Il filtro Elliott (che sul catalogo Python migliorava 21/25 strategie,
+incluso BOLLINGER a PF1.95) **qui peggiora tutto** e taglia pochissimi
+trade (68→64) — non riproduce il beneficio trovato su Python. Stesso
+schema già visto altre volte: un filtro buono altrove non è
+automaticamente buono qui, e Python↔MQL5 non sono garantiti identici.
+
+**Configurazione migliore confermata per BOLLINGER**: H4, BUY-only,
+nessun altro filtro — PF1.35, Sharpe2.45, DD29.6%. Non ancora provato:
+trailing, D1-align (gli altri due ingredienti della ricetta Python).
