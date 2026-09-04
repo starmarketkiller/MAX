@@ -104,3 +104,20 @@ automaticamente buono qui, e Python↔MQL5 non sono garantiti identici.
 **Configurazione migliore confermata per BOLLINGER**: H4, BUY-only,
 nessun altro filtro — PF1.35, Sharpe2.45, DD29.6%. Non ancora provato:
 trailing, D1-align (gli altri due ingredienti della ricetta Python).
+
+## Addendum 3 — confronto timeframe: H4 resta il migliore (04/09)
+
+Richiesta esplicita dell'utente: stesso BUY-only, stesso periodo (3
+anni), testato anche su M30.
+
+| TF | Trade | PF | Sharpe | Net |
+|---|---|---|---|---|
+| M5 (nuda, non BUY-only) | 306 | 0.83 | -2.12 | -$186 |
+| M30 (BUY-only) | 652 | 1.06 | 0.84 | +$247 |
+| **H4 (BUY-only)** | 68 | **1.35** | **2.45** | **+$353** |
+
+M30 produce quasi 10× più trade di H4 ma è quasi al pareggio (PF1.06).
+**H4 resta la timeframe migliore trovata per BOLLINGER** — più
+selettivo, meno rumore, edge più pulito. Coerente con l'intuizione
+originale dell'utente (M30 "tra scalp e day trading") solo in parte:
+qui il timeframe più lento (H4) batte quello intermedio.
