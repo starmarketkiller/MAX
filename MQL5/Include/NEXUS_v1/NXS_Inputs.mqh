@@ -394,6 +394,11 @@ input bool     InpBollingerUseRSIFilter    = false;
 input double   InpBollingerRSIOversold     = 30.0;
 input double   InpBollingerRSIOverbought   = 70.0;
 input bool     InpBollingerUseCandleFilter = false;  // hammer/engulfing (buy), shooting star/engulfing (sell)
+// 04/09 - test H4 nudo (vault "BOLLINGER H4 Nuda, BUY Positivo SELL
+// Negativo"): BUY isolato PF1.33 (71 trade), SELL PF0.61 (138 trade,
+// trascina l'aggregato in perdita) - conferma diretta della scoperta
+// Python del 24/08. Lock di direzione per isolare il numero pulito.
+input bool     InpBollingerBuyOnly         = false;
 input bool     InpStrat_MACD         = true;
 input bool     InpStrat_SAR          = true;
 input bool     InpSAR_RequireCandleAlign = false;  // 31/08 - vedi NXS_Strat_SAR: filtro trovato analizzando i 112 trade nudi

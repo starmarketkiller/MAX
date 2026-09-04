@@ -309,6 +309,11 @@ SNXSSignal NXS_Strat_Bollinger(){
    if(!touchLower && !touchUpper) return s;
    int dir = touchLower ? DIR_BUY : DIR_SELL;
 
+   // 04/09 - lock di direzione: test H4 nudo ha trovato BUY PF1.33 (71
+   // trade) contro SELL PF0.61 (138 trade, trascina l'aggregato in
+   // perdita) - conferma diretta della scoperta Python del 24/08.
+   if(InpBollingerBuyOnly && dir == DIR_SELL) return s;
+
    // 03/09 - filtro RSI(14): richiede che l'estremo di prezzo NON sia
    // confermato da un estremo di RSI (divergenza) - vedi vault "Piano
    // BOLLINGER+RSI (02-09)". Se RSI conferma l'estremo (ipervenduto/
