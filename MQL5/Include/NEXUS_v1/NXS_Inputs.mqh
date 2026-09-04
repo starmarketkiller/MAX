@@ -369,12 +369,19 @@ bool     InpUseBSP           = true;
 double   InpBSPWeight        = 0.20;
 
 // input group "=== SESSIONS ==="
-bool     InpUseSessions      = true;
-double   InpAsianScoreMin    = 65.0;
-double   InpLondonScoreMin   = 60.0;
-double   InpOverlapScoreMin  = 58.0;
-double   InpNYScoreMin       = 60.0;
-double   InpAfterNYScoreMin  = 70.0;
+// 04/09 - BUG TROVATO: queste 6 variabili mancavano della keyword "input",
+// quindi invisibili e non sovrascrivibili da nessun .set/.ini del Tester
+// (stessa classe di bug gia' vista per InpEnableSplit/InpPostSLCooldownMin/
+// Chain flags/InpUseStreakSizing) - scoperto testando l'idea dell'utente di
+// filtrare una strategia esistente sulla sola sessione Overlap: il test
+// dava risultato identico al nudo perche' i valori .ini venivano ignorati
+// in silenzio, sempre i default sotto. Rese "input", default invariati.
+input bool     InpUseSessions      = true;
+input double   InpAsianScoreMin    = 65.0;
+input double   InpLondonScoreMin   = 60.0;
+input double   InpOverlapScoreMin  = 58.0;
+input double   InpNYScoreMin       = 60.0;
+input double   InpAfterNYScoreMin  = 70.0;
 
 input group "=== STRATEGIES TOGGLE ==="
 // 16/07: erano "bool" semplici - mai esposti al Tester nonostante fossero
