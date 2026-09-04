@@ -93,3 +93,24 @@ frequenza è davvero nel trigger, non nella gestione.
 [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]] ·
 [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] ·
 [[MOC - Trading]]
+
+## Addendum — Elliott Wave testato su 4 timeframe, risultato consistente (04/09)
+
+Su richiesta dell'utente, ripetuto il test delle regole Elliott (onda3
+non la più corta, onda4 non invade onda1, onda2 non ritraccia oltre
+il 100% di onda1) su M30/H1/H4/D1, stesso storico Dukascopy 2019-2026.
+
+| TF | Sequenze valide come impulso 5-onde | Correzione "sana" dopo | Correzione profonda dopo |
+|---|---|---|---|
+| M30 | 7.4% | 22.2% | 77.8% |
+| H1 | 7.3% | 22.5% | 77.5% |
+| H4 | 7.2% | 26.3% | 73.7% |
+| D1 | 10.9% | 25.0% | 75.0% |
+
+Risultato **estremamente stabile su tutti e 4 i timeframe** — non un
+artefatto di risoluzione. Circa 1 sequenza su 10-14 è strutturalmente
+un impulso valido, e in ~3/4 dei casi la correzione successiva va
+oltre quanto la teoria considera "sano". L'Elliott Wave, testato con
+le sue stesse regole (non solo etichettato a occhio), non mostra un
+comportamento affidabile su GOLD a nessuna scala temporale in questo
+campione.
