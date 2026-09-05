@@ -109,7 +109,7 @@ long NXS_MaxHold_LimitSec(const string posComment, bool &resolved){
       ENUM_TIMEFRAMES ptf = NXS_Profile_TF(strat);
       if(ptf != PERIOD_CURRENT){
          resolved = true;
-         return (long)PeriodSeconds(ptf) * 40;   // ~40 barre del TF di profilo
+         return (long)PeriodSeconds(ptf) * InpProfileMaxHoldBars;
       }
    }
 

@@ -562,6 +562,12 @@ input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;
 input double   InpTrailDistancePostBE = 0.7;   // tighter trail once BE reached
 input int      InpMaxHoldHours     = 4;        // force-close trade older than this
+// 05/09 - era un "40" hardcoded in NXS_MaxHold_LimitSec() (NXS_Strategies.mqh),
+// il vero limite di durata usato con InpUseStrategyProfiles=true (il ramo
+// InpMaxHoldHours/InpProt_MaxHoldHours sopra non si applica mai in quel caso -
+// scoperto analizzando 31 trade MACD chiusi qui, 30 vincenti, +$2425 su un
+// netto totale di $2088). Esposto per poterlo testare, default invariato.
+input int      InpProfileMaxHoldBars = 40;     // ~N barre del TF di profilo prima del force-close
 input bool     InpUseAdaptiveSL    = true;     // dynamic SL by ATR regime
 input double   InpSL_HighVol_Mult  = 2.0;      // SL multiplier when ATR > avg
 input double   InpSL_LowVol_Mult   = 1.8;      // v2.0.14: 1.5→1.8 (SL piu' largo bassa vol)
