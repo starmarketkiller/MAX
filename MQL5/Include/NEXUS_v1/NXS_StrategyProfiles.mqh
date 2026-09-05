@@ -427,6 +427,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "PIVOT_WICK")        return 0.5;   // 02/09 - nuova, mai verificata su MT5, tier cauto
+   if(name == "LEVEL_CONFLUENCE")  return InpLevelConfRiskPct;   // 06/09 - tunabile via ini, vedi NXS_Inputs.mqh
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
