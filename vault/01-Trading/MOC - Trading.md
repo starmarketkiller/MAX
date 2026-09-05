@@ -14,6 +14,20 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]]** —
+  lo stesso filtro sessione che ha migliorato MACD (PF1.53→1.74)
+  applicato a BOLLINGER H4 BUY-only lo **peggiora**: Sharpe 2.45→0.74,
+  campione compresso da 68 a 11 trade su 3 anni. Il gate funziona
+  correttamente (trade concentrati nelle ore 14-16 server) ma non è
+  un miglioramento universale — dipende da dove si concentra l'edge
+  della strategia specifica. BOLLINGER resta sulla ricetta nuda.
+- **[[NEXUS EA - Il Filtro Sessione Era su un Percorso di Esecuzione Diverso (04-09)]]** —
+  aggiunto un gate di sessione (`InpProfileOverlapOnly`) nel percorso
+  di esecuzione realmente usato dai test (il sistema legacy per
+  sessione era bypassato). Tre falsi negativi consecutivi (EA non
+  ricompilato nei terminali, lancio da Bash senza `/config`, test
+  lento scambiato per bloccato) prima del risultato vero: validato su
+  MACD H4 (PF1.53→1.74, net+5.7%, meno trade ma qualità più alta).
 - **[[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]]** —
   terza strategia confermata oggi (PF1.53, net+$1975/3anni). Terza
   conferma dello stesso giorno dello schema BUY-domina/SELL-rumore

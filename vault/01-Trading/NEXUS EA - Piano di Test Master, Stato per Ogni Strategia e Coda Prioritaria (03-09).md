@@ -35,6 +35,10 @@ specifici di una strategia, rilevanti per QUALUNQUE test futuro):
    i test di oggi (`InpUseStrategyProfiles=true`) — bypassato di
    proposito, non un bug residuo. Aggiunto un gate diretto
    (`InpProfileOverlapOnly`) nel percorso corretto — vedi [[NEXUS EA - Il Filtro Sessione Era su un Percorso di Esecuzione Diverso (04-09)]].
+   **Validato empiricamente il 05/09: aiuta MACD (PF1.53→1.74, trade
+   199→166, net +5.7%) ma peggiora BOLLINGER BUY-only (Sharpe 2.45→0.74,
+   campione crollato a 11 trade) — non è un filtro universale, va
+   testato caso per caso. Vedi [[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]].**
 
 **Dal lato analisi dati grezzi** (grafico GOLD H1/M30/M5, 2019-2026,
 non backtest MT5): confluenza multi-timeframe (3.06× più livelli M30
@@ -117,7 +121,7 @@ restano provvisorie anche sul lato Python — bassa priorità.
 | **FVG_CONT** | ✅ Confermata — **il migliore di oggi** | H4 nudo, PF1.93, Sharpe2.63 | [[NEXUS EA - FVG_CONT Miglior Risultato di Oggi, Contraddice Nota Storica (04-09)]] |
 | ADX_RSI | ✅ Confermata | D1 nudo (config attuale), PF2.04, BUY domina | [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]] |
 | MACD | ✅ Confermata | H4 nudo, PF1.53, BUY domina | [[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]] |
-| BOLLINGER | ✅ Confermata (H4 solo) | H4 BUY-only nudo, PF1.35, **miglior Sharpe (2.45) di tutta l'indagine** — M30/M5 molto più deboli | [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] |
+| BOLLINGER | ✅ Confermata (H4 solo) | H4 BUY-only nudo, PF1.35, **miglior Sharpe (2.45) di tutta l'indagine** — M30/M5 molto più deboli. Overlap-only testato (05/09): peggiora (Sharpe→0.74, 11 trade) — restare sulla ricetta nuda | [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] · [[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]] |
 
 ### 3. Testate sul vero MT5, chiuse con esito negativo dopo indagine approfondita (2)
 
