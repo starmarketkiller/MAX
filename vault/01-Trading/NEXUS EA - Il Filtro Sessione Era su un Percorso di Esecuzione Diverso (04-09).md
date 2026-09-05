@@ -128,9 +128,36 @@ Oltre alle statistiche aggregate, analizzati i 166 trade uno per uno
   drawdown** (`NXS:DD` in `NXS_Protections.mqh`, un Equity Stop-Loss
   separato da `InpMaxDailyDDPct` che nell'ini era impostato a 100 per
   disattivarlo — evidentemente non basta a coprire questo meccanismo,
-  **non ancora risolto**); i restanti 32 chiudono senza tag nel
-  commento (solo il balance) — causa non identificata, da investigare
-  se si ripete su altre strategie.
+  **non ancora risolto**).
+
+### I 31 trade senza commento — indagati (05/09): un time-stop nascosto molto redditizio
+
+Causa trovata: `NXS_MaxHold_LimitSec()` in `NXS_Strategies.mqh:112`
+applica **~40 barre del TF di profilo** come limite di durata massimo
+ogni volta che `InpUseStrategyProfiles=true` — **indipendente** da
+`InpUseMaxHold`/`InpMaxHoldHours`/`InpProt_MaxHoldHours` (quei flag
+coprono solo il ramo "nessun profilo risolto", mai raggiunto quando
+il commento della posizione contiene un nome strategia valido, come
+sempre in questi test). Per MACD su H4: 40×4h = **160.0h esatte** —
+combacia al decimo con tutti e 31 i trade, che infatti hanno
+`durata=160.0h` esatta e nessun tag SL/TP (il time-stop chiude prima
+che la posizione possa toccare uno dei due).
+
+**Scoperta rilevante**: di questi 31, **30 sono vincenti (WR 96.8%)**,
+contributo netto **+$2425.46** — più dell'intero profitto netto del
+test ($2088.06). Significa che i restanti 135 trade (chiusi da
+SL/TP nativi) sono **collettivamente in perdita di ~-$337**. L'edge
+di MACD in questa configurazione sembra concentrarsi quasi tutto nei
+trade che sopravvivono fino al time-stop invece di essere chiusi
+prima — indizio che il TP sia raramente raggiungibile organicamente
+(solo 18 hit su 166) o che lo SL sia troppo stretto rispetto al
+respiro naturale del trade.
+
+**Non ancora fatto** (ipotesi da testare, non implementata): il
+moltiplicatore "40 barre" è un numero magico hardcoded, non esposto
+come input — varrebbe la pena esporlo e testare se allargare la
+finestra (es. 60-80 barre) o allontanare il TP catturi più di questo
+edge organicamente invece di dipendere da un limite di tempo fisso.
 - **Durata**: i trade vincenti restano aperti in media **144h (6
   giorni)**, quelli perdenti solo **56h (2.3 giorni)** — rapporto
   2.6:1, tagliare le perdite e lasciar correre i vincenti, coerente
