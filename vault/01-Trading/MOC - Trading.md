@@ -14,6 +14,11 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]]** —
+  primo risultato reale per STRUCT_REACT dopo lo sblocco: PF1.29,
+  net+$1560, 211 trade tutti BUY. Il time-stop da 40 barre trovato su
+  MACD si ripete identico qui (60 trade a ~160h, 50 vincenti, +$2318)
+  — non è una particolarità di una strategia, è strutturale.
 - **[[NEXUS EA - Terzo Cancello Silenzioso Trovato su 7 Strategie, Audit Proattivo (05-09)]]** —
   STRUCT_REACT primo test: zero trade nonostante selector e flag
   giusti. Causa: `NXS_Profile_Enabled()`, un terzo cancello

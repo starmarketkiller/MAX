@@ -91,7 +91,7 @@ Python, ma vedi nota sotto su cosa contro-verificare prima):
 |---|---|---|---|---|
 | 1 | FVG_MIT | 3.24 (1.57/5.06) | D1-align+trailing+Elliott | No |
 | 2 | ADX_RSI | 2.62 (2.57/2.66) | trailing+Elliott, BUY-only | ✅ **Confermata sul vero MT5 (04/09)**: nudo PF2.04, net+$1676/3anni, BUY domina (conferma diretta). Vedi [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]]. Trailing+Elliott ancora da aggiungere |
-| 3 | STRUCT_REACT | 2.65 (2.82/2.48) | nessun Elliott (peggiora qui), BUY-only | 🔄 **In test (05/09)**: primo tentativo zero trade — bloccata da un terzo cancello silenzioso (`NXS_Profile_Enabled`), sbloccata e ritestata, risultato in arrivo. Vedi [[NEXUS EA - Terzo Cancello Silenzioso Trovato su 7 Strategie, Audit Proattivo (05-09)]] |
+| 3 | STRUCT_REACT | 2.65 (2.82/2.48) | nessun Elliott (peggiora qui), BUY-only | ✅ **Confermata sul vero MT5 (05/09)**: nudo H4 PF1.29, net+$1560/3anni, 211 trade tutti BUY. Primo tentativo zero trade per il cancello silenzioso `NXS_Profile_Enabled`, sbloccata e ritestata. Vedi [[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]] |
 | 4 | FVG_CONT_V2 | 2.40 (2.10/2.93) | trailing+Elliott, BUY-only | No — **verificato 05/09: nessuna implementazione MQL5 esiste nel codice**, non è "da testare", è da scrivere prima |
 | 5 | SAR_FLIP | 2.31 (1.54/3.49) | trailing+Elliott, BUY-only | No — **verificato 05/09: nessuna implementazione MQL5 esiste nel codice**, stesso caso di FVG_CONT_V2 |
 | 6 | TSI | 2.25 (2.04/2.46) | Elliott, BUY-only, no trailing | No |
@@ -132,6 +132,7 @@ restano provvisorie anche sul lato Python — bassa priorità.
 | ADX_RSI | ✅ Confermata | D1 nudo (config attuale), PF2.04, BUY domina | [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]] |
 | MACD | ✅ Confermata | H4 nudo, PF1.53, BUY domina | [[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]] |
 | BOLLINGER | ✅ Confermata (H4 solo) | H4 BUY-only nudo, PF1.35, **miglior Sharpe (2.45) di tutta l'indagine** — M30/M5 molto più deboli. Overlap-only testato (05/09): peggiora (Sharpe→0.74, 11 trade) — restare sulla ricetta nuda | [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] · [[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]] |
+| STRUCT_REACT | ✅ Confermata (05/09) | H4 nudo, PF1.29, net+$1560, 211 trade tutti BUY | [[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]] |
 
 ### 3. Testate sul vero MT5, chiuse con esito negativo dopo indagine approfondita (2)
 
