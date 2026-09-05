@@ -4,10 +4,46 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, piano-test, master-queue, riferimento]
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-05
 ---
 
-# NEXUS EA — Piano di test master: stato per ogni strategia e coda prioritaria (03/09)
+# NEXUS EA — Piano di test master: stato per ogni strategia e coda prioritaria (03-05/09)
+
+## Bilancio al 05/09 (consolidamento)
+
+**7 strategie testate sul vero MT5 in questa indagine (03-04/09)**:
+ADX_RSI, MACD, FVG_CONT, BOLLINGER (M5/M30/H4), PIVOT_WICK. Di queste,
+**3 sono confermate positive** (ADX_RSI PF2.04, MACD PF1.53, FVG_CONT
+PF1.93 — quest'ultima il risultato migliore, contraddice una nota
+storica nel codice), **1 modesta ma pulita** (BOLLINGER H4 BUY-only
+PF1.35, Sharpe2.45 — il miglior profilo di rischio trovato), **2
+chiuse negative** dopo indagine approfondita (PIVOT_WICK — 10 varianti
+isolate su 3 mesi e 3 anni, nessuna regge — e BOLLINGER M5 scalp).
+**2 già confermate prima di oggi** (SAR, EMA_PULLBACK — quest'ultima
+oggi rafforzata da un walk-forward a 4 finestre mai visto prima,
+tutte positive e in miglioramento). Sotto, il dettaglio per categoria.
+
+**3 bug/scoperte infrastrutturali trasversali trovati oggi** (non
+specifici di una strategia, rilevanti per QUALUNQUE test futuro):
+1. Il registro strategie (`NXS_StrategyRegistry.mqh`) usa una
+   numerazione diversa e indipendente da quella che isola davvero una
+   strategia (`NXS_SelectorAllows`) — vedi [[NEXUS EA - Due Numerazioni Strategia Diverse, InpStrategySelector Non e il Registro (03-09)]].
+2. I meccanismi di parziale (ATR/pip-fisso/volume-spike) sono
+   aritmeticamente impossibili a lotto minimo (0.01) — vedi [[NEXUS EA - Bug Infrastrutturale, i Parziali Percentuali Sono Inerti a Lotto Minimo (03-09)]].
+3. Il filtro per sessione (`InpXScoreMin`) appartiene a un percorso di
+   esecuzione diverso (istituzionale legacy) da quello usato da tutti
+   i test di oggi (`InpUseStrategyProfiles=true`) — bypassato di
+   proposito, non un bug residuo. Aggiunto un gate diretto
+   (`InpProfileOverlapOnly`) nel percorso corretto — vedi [[NEXUS EA - Il Filtro Sessione Era su un Percorso di Esecuzione Diverso (04-09)]].
+
+**Dal lato analisi dati grezzi** (grafico GOLD H1/M30/M5, 2019-2026,
+non backtest MT5): confluenza multi-timeframe (3.06× più livelli M30
+vicino a un vero pivot D1) e sessione oraria (36% delle inversioni in
+12-16 UTC) sono gli ingredienti più solidi trovati; Fibonacci OTE,
+Wyckoff/fasi e Elliott Wave (testato su 5 timeframe con le sue stesse
+regole) **non mostrano un edge pulito** su GOLD in questo campione —
+vedi [[NEXUS EA - Perché Pochi Trade, Analisi CSV Vera su ADX_RSI e BOLLINGER (04-09)]]
+e le note collegate.
 
 ## Perché questa nota
 
@@ -54,11 +90,11 @@ Python, ma vedi nota sotto su cosa contro-verificare prima):
 | 13 | MACD | 1.84 (1.53/2.17) | trailing+Elliott | ✅ **Confermata sul vero MT5 (04/09)**: nudo H4 PF1.53, net+$1975/3anni. BUY domina (129 trade, WR37.2%, +$2273) SELL rumore (70 trade, +$162). Vedi [[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]] |
 | 14 | LONDON_BO | 1.83 (1.38/2.32) | trailing, BUY-only | No |
 | 15 | SAR | 1.87 (1.44/2.36) | trailing+Elliott, BUY-only | **Sì, ma ricetta diversa** — la config live confermata oggi (candle-align H4, PF1.37-1.57) è un'altra scoperta, non questa. Da riconciliare, non assumere che siano la stessa cosa |
-| 16 | FVG_CONT | 1.78 (1.66/1.91) | trailing+Elliott, BUY-only | No |
+| 16 | FVG_CONT | 1.78 (1.66/1.91) | trailing+Elliott, BUY-only | ✅ **Confermata sul vero MT5 (04/09) — miglior risultato di oggi**: nudo H4 PF1.93, Sharpe2.63, net+$2655/3anni. SELL genuinamente positivo qui (+$581, non solo rumore). Contraddice una nota storica nel codice (PF0.79 su MT5) — discrepanza non indagata. Vedi [[NEXUS EA - FVG_CONT Miglior Risultato di Oggi, Contraddice Nota Storica (04-09)]] |
 | 17 | LIQ_SWEEP | 1.73 (invariato) | ER+floor, BUY-only | No |
 | 18 | DARVAS_BOX | 1.65 (1.43/1.89) | Elliott, BUY-only | No |
 | 19 | DONCHIAN_TURTLE | 1.63 (1.45/1.83) | Elliott, BUY-only | No — **correlata 99.7% con DARVAS_BOX, tenerne solo una in portafoglio** |
-| 20 | BOLLINGER (=RANGE_FADE) | 1.95 (1.91/1.99) | Elliott, BUY-only, **4h non M5** | No — ⚠️ **diversa dal test M5 di oggi** (negativo, PF0.83) — TF e filtro completamente diversi, non lo stesso esperimento |
+| 20 | BOLLINGER (=RANGE_FADE) | 1.95 (1.91/1.99) | Elliott, BUY-only, **4h non M5** | ✅ **Verificata sul vero MT5 (04/09)**: H4 BUY-only nudo PF1.35, Sharpe2.45 (il miglior profilo di rischio di oggi) — Elliott qui PEGGIORA (PF1.23), diverso da Python. M30 molto più debole (PF1.06, 652 trade). M5 nuda negativa (PF0.83) e RSI/candela non la salvano — tre TF ora confrontati, H4 vince nettamente. Vedi [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] |
 | 21 | RSI_DIV | 1.96 (2.21/1.73) | Elliott, BUY-only | No |
 | 22 | BREAKOUT_ACC | 1.38 (1.24/1.54) | Elliott, BUY-only | No — ⚠️ diverso dal test scalp M15 del 02/09 (negativo) — TF diverso |
 | 23 | LDN_REVERSAL | 1.36 (1.36/1.37) | stop strutturale+Elliott | No |
@@ -72,18 +108,22 @@ ricetta (4h, BUY-only, filtro Elliott) sul vero MT5 — cosa mai fatta.
 **TURTLE_SOUP** (PF1.19, 3/5 finestre) e **ICHIMOKU** (inconcludente)
 restano provvisorie anche sul lato Python — bassa priorità.
 
-### 2. Validate sul vero MT5, chiuse con esito positivo (2)
+### 2. Validate sul vero MT5, confermate positive (6)
 
 | Strategia | Stato | Config | Fonte |
 |---|---|---|---|
-| SAR | ✅ Confermata | Lotto naturale, candle-align H4 | [[NEXUS EA - Sintesi Sessione Maratona SAR-EMA_PULLBACK-Scalp-RegimeVeto (01-02-09)]] |
-| EMA_PULLBACK | ✅ Confermata robusta | Nuda, nessun filtro trova un miglioramento | Idem |
+| SAR | ✅ Confermata | Lotto naturale, candle-align H4, PF1.37-1.57 su 5 finestre | [[NEXUS EA - Sintesi Sessione Maratona SAR-EMA_PULLBACK-Scalp-RegimeVeto (01-02-09)]] |
+| EMA_PULLBACK | ✅ Confermata robusta | Nuda; **walk-forward 4 finestre (04/09) tutte positive, PF1.44→1.71 in miglioramento** | [[NEXUS EA - EMA_PULLBACK Walk-Forward 4 Finestre, Tutte Positive (04-09)]] |
+| **FVG_CONT** | ✅ Confermata — **il migliore di oggi** | H4 nudo, PF1.93, Sharpe2.63 | [[NEXUS EA - FVG_CONT Miglior Risultato di Oggi, Contraddice Nota Storica (04-09)]] |
+| ADX_RSI | ✅ Confermata | D1 nudo (config attuale), PF2.04, BUY domina | [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]] |
+| MACD | ✅ Confermata | H4 nudo, PF1.53, BUY domina | [[NEXUS EA - MACD H4 Confermata Positiva, Terza Conferma BUY-Dominante (04-09)]] |
+| BOLLINGER | ✅ Confermata (H4 solo) | H4 BUY-only nudo, PF1.35, **miglior Sharpe (2.45) di tutta l'indagine** — M30/M5 molto più deboli | [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] |
 
-### 3. Testate sul vero MT5 oggi, chiuse con esito negativo (2)
+### 3. Testate sul vero MT5, chiuse con esito negativo dopo indagine approfondita (2)
 
 | Strategia | Stato | Perché | Fonte |
 |---|---|---|---|
-| PIVOT_WICK | ❌ Chiusa (fermata dall'utente) | 9 varianti isolate, solo 1 migliora la qualità (ancora sotto pareggio) | [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] |
+| PIVOT_WICK | ❌ Chiusa (fermata dall'utente) | 10 varianti isolate (9 su 3 mesi + 1 su 3 anni), solo 1 migliora la qualità e non regge su campione ampio (PF0.91→0.73) | [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] |
 | BOLLINGER M5 scalp (+RSI+candela) | ❌ Chiusa | Nessun filtro isolato sposta il win rate | [[NEXUS EA - BOLLINGER Filtro RSI e Candela Testati, Nessuno Alza il Win Rate (03-09)]] |
 
 ### 4. Mai testate né su Python né su MT5 (~20)
@@ -112,13 +152,22 @@ vault: proxy Python ≠ motore MT5). Usare
 
 ## Non ancora fatto
 
-- Nessuna delle 21 righe della categoria 1 verificata oggi — questa
-  nota è la mappa, non l'esecuzione. Il prossimo passo naturale è
-  scegliere la prima (FVG_MIT, PF3.24) e ripetere il ciclo fatto oggi
-  per PIVOT_WICK/BOLLINGER: sbloccare (se serve), testare nudo su MT5,
-  poi la ricetta completa.
+- **17 righe della categoria 1 ancora da verificare** (FVG_MIT
+  PF3.24 in cima — architettura più complessa, sistema di zone "NXR"
+  condiviso, richiede più studio prima di testarla in sicurezza; poi
+  STRUCT_REACT, FVG_CONT_V2, SAR_FLIP, TSI, ecc. in ordine di PF Python).
+- Nessuna delle 6 strategie confermate positive oggi (cat. 2) ha
+  ancora la ricetta completa Python (trailing+Elliott) — solo il
+  trigger nudo è stato verificato. Test isolati su Elliott (BOLLINGER)
+  hanno già mostrato che non è garantito che aiuti sul vero MT5.
+- Sintesi tentata (livelli+sessione+CloseConfirm su PIVOT_WICK) non
+  ancora conclusa: il fix del filtro sessione è arrivato tardi, il
+  test con il filtro vero non è stato completato in questa sessione.
 - BAR_UPDN va riclassificato in categoria 3 (chiuso negativo il 02/09,
   non ancora fatto in questa nota per limiti di tempo).
+- Nessun walk-forward multi-finestra fatto oggi sulle 5 nuove conferme
+  (ADX_RSI/MACD/FVG_CONT/BOLLINGER) — solo un'unica finestra 2023-2026,
+  a differenza di SAR/EMA_PULLBACK che hanno un walk-forward vero.
 
 ## Collegamenti
 [[NEXUS EA - MASTER ROADMAP v3]] · [[NEXUS EA - Tabella Master Strategie Verificate (24-08)]] ·
