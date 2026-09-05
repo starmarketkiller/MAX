@@ -49,6 +49,27 @@ proxy Python sovrastima sempre rispetto al motore reale.
   rafforza la priorità di testare `InpProfileMaxHoldBars` più ampio
   (test 80 barre già in coda su MACD al momento di scrivere questa nota).
 
+## Addendum (06/09) — BUY-only è un salvataggio, non un progetto trend-following
+
+Punto dell'utente: il confronto con buy&hold (vedi
+[[NEXUS EA - Il Vero Benchmark e Buy&Hold, Quasi Tutto Oggi lo Perde (05-09)]])
+ha senso solo per strategie che NON sono progettate per seguire il
+trend — per quelle, se SELL non regge mentre BUY sì, è la prova che
+non c'è edge, solo esposizione al rally. Controllato il codice
+(`NXS_StrategyProfiles.mqh` riga 165-169): **la versione simmetrica
+di STRUCT_REACT (BUY+SELL, H1) era testata ed era IN PERDITA (PF0.61
+su tutto lo storico Dukascopy)** — il BUY-only attuale è stato scelto
+il 25/08 *dopo* aver visto che SELL non reggeva, non è una scelta di
+progetto per una strategia trend-following.
+
+Questo riclassifica STRUCT_REACT nello stesso gruppo di MACD/ADX_RSI/
+BOLLINGER: "confermata positiva" (PF1.29) era vero alla lettera ma
+probabile riflesso del rally, non di un segnale genuino — coerente
+col Calmar già leggermente sotto il buy&hold (1.41 vs 1.49) trovato
+nella nota sul benchmark. **Non testata** una finestra storica con
+mercato ribassista o laterale per verificare se BUY-only regge anche
+lì (unico modo per distinguere vero edge da semplice beta lunga).
+
 ## Non ancora fatto
 
 - Nessun filtro/ricetta aggiuntiva testata (Elliott, RSI, sessione) —

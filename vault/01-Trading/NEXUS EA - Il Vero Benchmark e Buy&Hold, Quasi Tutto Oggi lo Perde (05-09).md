@@ -63,14 +63,48 @@ cache, 12 giorni prima del ToDate reale dei test):
   il fare niente**. Da ripensare se vale la pena tenerla nel nucleo
   demo così com'è.
 
+## Addendum (06/09) — il vero test è bidirezionale, non il buy&hold da solo
+
+Precisazione importante dell'utente: il confronto con buy&hold ha
+senso solo per strategie che **non sono progettate per seguire il
+trend**. Una vera trend-following ha il DIRITTO di essere sbilanciata
+BUY in un rally — è il suo lavoro, non un difetto. Il test giusto per
+distinguere "vero edge" da "solo esposizione al trend travestita" è:
+**la strategia è profittevole anche sul lato SELL** (per quelle non
+pensate per seguire il trend)?
+
+Verificato su tutto quanto testato oggi/ieri:
+
+| Strategia | BUY | SELL | Verdetto |
+|---|---|---|---|
+| FVG_CONT | positivo | **+$581, genuinamente positivo** | ✅ unica con edge vero su entrambi i lati |
+| MACD Overlap | net $2029, WR33% | net $444, WR22% (debole) | edge quasi solo BUY |
+| ADX_RSI D1 | net $2309, WR32% | net $28/7 trade, WR14% (rumore) | edge solo BUY |
+| BOLLINGER H4 | positivo | **negativo** | nessun edge, solo trend |
+| STRUCT_REACT | BUY-only | **mai testato in produzione**: la versione simmetrica era IN PERDITA (PF0.61), il BUY-only è un salvataggio del 25/08, non una scelta di progetto — vedi [[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]] | probabile solo trend, come le altre |
+
+**FVG_CONT resta l'unica con doppia conferma indipendente** (batte il
+buy&hold in assoluto E ha un lato SELL genuinamente positivo) — le
+altre quattro condividono lo stesso identico schema: BUY va bene
+perché il mercato sale, SELL è rumore o peggio.
+
 ## Correzione di metodo per tutti i test futuri
 
-D'ora in poi, ogni strategia BUY-only o BUY-dominante testata va
-confrontata con il buy&hold dello stesso identico periodo (net e
-Calmar), non solo con PF/Sharpe/Recovery Factor calcolati in
-isolamento. Un PF>1 non è più sufficiente per etichettare un
-risultato "confermato positivo" — serve superare (o almeno avvicinare
-risk-adjusted) il benchmark passivo.
+D'ora in poi, per ogni strategia testata:
+1. Se è **progettata per seguire il trend** (esplicitamente, non
+   perché SELL era rotto e qualcuno ha bloccato la direzione):
+   confrontare con buy&hold (net e Calmar) dello stesso periodo.
+2. Se **non** è progettata per seguire il trend (oscillatori,
+   reversal, mean-reversion): verificare che **sia profittevole anche
+   sul lato SELL**, non solo BUY. Se SELL è rumore/negativo mentre
+   BUY va bene in un mercato che sale, non c'è edge — è solo beta.
+3. Prima di accettare un profilo "BUY-only" come dato di fatto,
+   controllare la cronologia dei commenti in `NXS_StrategyProfiles.mqh`
+   per capire SE è una scelta di progetto o un salvataggio dopo che
+   la versione simmetrica è risultata in perdita (come STRUCT_REACT).
+
+Un PF>1 da solo non è più sufficiente per etichettare un risultato
+"confermato positivo".
 
 ## Non ancora fatto
 
