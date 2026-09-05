@@ -9,6 +9,17 @@ updated: 2026-09-05
 
 # NEXUS EA — Piano di test master: stato per ogni strategia e coda prioritaria (03-05/09)
 
+> ⚠️ **Correzione di metodo (05/09, obiezione dell'utente)**: le
+> etichette "confermata positiva" in questa nota si basano su PF/Sharpe
+> calcolati in isolamento — su un mercato salito +125.5% con strategie
+> BUY-only/BUY-dominanti, questo non basta. Confrontato con un semplice
+> buy&hold sullo stesso periodo e lotto: **solo FVG_CONT lo batte**,
+> MACD Overlap-only lo eguaglia quasi con un terzo del rischio, **tutto
+> il resto (inclusa BOLLINGER, la "migliore per Sharpe") cattura solo
+> il 3-69% del rendimento disponibile stando semplicemente fermi**.
+> Vedi [[NEXUS EA - Il Vero Benchmark e Buy&Hold, Quasi Tutto Oggi lo Perde (05-09)]]
+> prima di prendere per buona qualunque riga sotto etichettata ✅.
+
 ## Bilancio al 05/09 (consolidamento)
 
 **7 strategie testate sul vero MT5 in questa indagine (03-04/09)**:

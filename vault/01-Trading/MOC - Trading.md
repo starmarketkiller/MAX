@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - Il Vero Benchmark e Buy&Hold, Quasi Tutto Oggi lo Perde (05-09)]]** —
+  correzione di metodo importante: le strategie BUY-only testate oggi
+  vanno confrontate col semplice buy&hold (GOLD +125.5% nel periodo),
+  non solo con PF isolato. Solo FVG_CONT lo batte in assoluto; MACD
+  Overlap-only lo eguaglia quasi con 1/3 del drawdown; BOLLINGER
+  cattura solo il 3-14% del rendimento disponibile stando fermi.
+  Da applicare a ogni test futuro e retroattivamente a SAR/EMA_PULLBACK.
 - **[[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]]** —
   primo risultato reale per STRUCT_REACT dopo lo sblocco: PF1.29,
   net+$1560, 211 trade tutti BUY. Il time-stop da 40 barre trovato su
