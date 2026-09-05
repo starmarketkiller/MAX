@@ -1248,6 +1248,13 @@ void OnTick(){
       for(int i = 0; i < n; i++){
          SNXSSignal s = all[i];
          if(s.dir == DIR_NONE) continue;
+         // 04/09 - filtro sessione minimo per il percorso "profili per-strategia"
+         // (quello usato da tutti i test di oggi): il sistema di soglie per
+         // sessione (InpXScoreMin) appartiene al percorso istituzionale legacy
+         // ed e' bypassato di proposito qui (vedi commento sopra) - questo e'
+         // un gate diretto, non collegato a quel sistema. Default false =
+         // comportamento invariato.
+         if(InpProfileOverlapOnly && g_session != SESS_OVERLAP) continue;
          // una posizione per strategia alla volta (come il backtest del sito):
          // niente nuova entrata se la strategia ha gia' un trade aperto.
          if(NXS_StrategyHasOpenPos(s.stratName)) continue;

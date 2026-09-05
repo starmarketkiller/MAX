@@ -185,6 +185,14 @@ bool     InpUseInstitutionalCore = false;  // v2.2.8: OFF -> best-per-bar, 1 pos
 // v2.2.8 - "operare come nel backtest": ogni strategia usa i SUOI parametri
 // (ATR SL/TP dal backtest per-strategia) e le perdenti confermate non aprono.
 input bool     InpUseStrategyProfiles  = true;   // 27/08 - reso input (era plain, invisibile al Tester/Optimization)
+// 04/09 - filtro sessione diretto per il percorso "profili per-strategia":
+// il sistema InpXScoreMin/InpUseSessions e' del percorso istituzionale
+// legacy e viene bypassato di proposito quando InpUseStrategyProfiles=true
+// (vedi NEXUS_EA_v2.mq5, commento "senza i gate soft... score...") - scoperto
+// testando l'idea dell'utente di restringere una strategia alla sola
+// sessione Overlap (12-15 GMT, dove si concentra il 36% delle inversioni
+// storiche, vedi vault). Default false = comportamento invariato.
+input bool     InpProfileOverlapOnly   = false;
 bool     InpProfileTFGate        = true;   // v2.3.0: ogni strategia apre solo sul suo TF (gira 1 istanza per TF: D1/H4/H1)
 input bool     InpProfileMultiTF       = true;  // v2.3.0: UN grafico solo -> l'EA calcola ogni strategia sul suo TF (D1/H4/H1) internamente
 input bool     InpProfileRegimeVeto    = false;  // 02/09 - veto di regime (_nxs_regime_veto, gia' esistente ma
