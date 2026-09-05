@@ -47,6 +47,19 @@ BUY-only l'edge è distribuito su più ore del giorno: restringere a
 sole 3 ore toglie sia rumore sia segnale buono, e il campione residuo
 è troppo piccolo per fidarsene.
 
+## Analisi CSV per-trade
+
+Sugli 11 trade (tutti BUY): 6 chiusi a stop loss, 5 a take profit
+(quasi 50/50 per conteggio, ma il campione è troppo piccolo per
+significato statistico). Pattern di durata **opposto** a quello sano
+visto su MACD Overlap-only: le perdite si chiudono in **6.1h medie**,
+i vincenti impiegano **38.6h** — rapporto 6.3:1 a favore dei vincenti,
+ma su un campione di 11 trade questo dice più sulla fortuna del
+campionamento che sulla strategia. Slippage sugli stop minimo (0.115
+medio). Nessuna chiusura da protezione drawdown o altro meccanismo
+non taggato — a differenza di MACD, qui ogni chiusura ha un motivo
+chiaro nel commento.
+
 ## Decisione
 
 BOLLINGER resta con la ricetta H4 BUY-only **nuda** (senza

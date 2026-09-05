@@ -118,5 +118,34 @@ Il fix è dunque validato empiricamente: `InpProfileOverlapOnly`
 funziona come previsto una volta che l'EA compilato riflette
 davvero il sorgente aggiornato.
 
+### Analisi CSV per-trade (05/09, richiesta esplicita dell'utente)
+
+Oltre alle statistiche aggregate, analizzati i 166 trade uno per uno
+(motivo di chiusura, durata, direzione):
+
+- **Motivo chiusura**: 112 stop loss (67%), 18 take profit (11%), 36
+  "altro" (22%) — di questi 36, **4 sono chiusure da protezione
+  drawdown** (`NXS:DD` in `NXS_Protections.mqh`, un Equity Stop-Loss
+  separato da `InpMaxDailyDDPct` che nell'ini era impostato a 100 per
+  disattivarlo — evidentemente non basta a coprire questo meccanismo,
+  **non ancora risolto**); i restanti 32 chiudono senza tag nel
+  commento (solo il balance) — causa non identificata, da investigare
+  se si ripete su altre strategie.
+- **Durata**: i trade vincenti restano aperti in media **144h (6
+  giorni)**, quelli perdenti solo **56h (2.3 giorni)** — rapporto
+  2.6:1, tagliare le perdite e lasciar correre i vincenti, coerente
+  con un PF>1 nonostante un win rate basso.
+- **BUY vs SELL**: BUY 111 trade/net $2029/WR33.3%, SELL 55
+  trade/net $444/WR21.8% — conferma ancora una volta lo schema
+  BUY-domina già visto su ADX_RSI/FVG_CONT.
+- **Slippage sugli stop**: 0.32 medio, un outlier a 9.74 — frizione
+  di mercato reale minima, non un problema strutturale.
+
+Per BOLLINGER Overlap-only (11 trade, vedi nota dedicata): pattern
+opposto e preoccupante — le perdite si chiudono in **6.1h**, i
+vincenti impiegano **38.6h**, il contrario del comportamento sano
+visto su MACD. Coerente con la conclusione già scritta (il filtro
+comprime troppo il campione e distorce anche questa dinamica).
+
 ## Collegamenti
 [[NEXUS EA - MASTER ROADMAP v3]] · [[NEXUS EA - Piano di Test Master, Stato per Ogni Strategia e Coda Prioritaria (03-09)]] · [[MOC - Trading]]
