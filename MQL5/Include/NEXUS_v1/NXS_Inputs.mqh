@@ -874,6 +874,14 @@ input bool     InpPivotWickRequireCloseConfirm = false; // la chiusura deve rien
 input bool     InpPivotWickAvoidBuildup      = false;   // scarta tocchi preceduti da consolidamento stretto sul livello (Rayner Teo)
 input int      InpPivotWickBuildupBars       = 6;       // barre da controllare per il consolidamento
 input double   InpPivotWickBuildupMinATR     = 0.8;     // range minimo (in ATR) delle ultime N barre per NON essere "buildup"
+// 06/09 - LEVEL_CONFLUENCE: merge di PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR,
+// vedi NXS_Strat_LevelConfluence in NXS_Strategies.mqh. Selettore vero 50.
+input bool     InpStrat_LevelConfluence        = false;
+input double   InpLevelConfTouchTolATR         = 0.25;  // tolleranza tocco/riconquista, in ATR
+input double   InpLevelConfSweepTolATR         = 0.5;   // soglia di perforazione per la modalita' sweep, in ATR
+input bool     InpLevelConfUseTouch            = true;  // trigger: tocco pulito + chiusura di conferma
+input bool     InpLevelConfUseSweep            = true;  // trigger: perfora oltre tolleranza poi riconquista (liquidity grab)
+input bool     InpLevelConfRequireConfluence   = false; // se true, entra SOLO sui livelli in confluenza col pivot D1 (piu' selettivo, rischio piu' alto per trade)
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

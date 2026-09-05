@@ -511,6 +511,10 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 02/09 — Pivot Extension + Wick Rejection, idea originale utente (#49)
    if(InpStrat_PivotWick      && NXS_SelectorAllows(49)) out[n++] = NXS_Strat_PivotWick();
 
+   // 06/09 — LEVEL_CONFLUENCE: merge PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR
+   // con bonus di confluenza multi-TF e trigger touch/sweep, idea utente (#50)
+   if(InpStrat_LevelConfluence && NXS_SelectorAllows(50)) out[n++] = NXS_Strat_LevelConfluence();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

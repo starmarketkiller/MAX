@@ -753,6 +753,9 @@ struct SNXSPivotWickState {
 };
 SNXSPivotWickState g_pivotWickState;
 
+struct SNXSLevelConfState { datetime lastBarTime; };
+SNXSLevelConfState g_levelConfState;
+
 void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], bool &used[][NXS_PIVOTWICK_MAXLVL], int row, double level){
    for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--){
       arr[row][i] = arr[row][i - 1];
@@ -880,6 +883,119 @@ SNXSSignal NXS_Strat_PivotWick(){
          }
       }
    }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   return s;
+}
+
+//------------------------------------ K4b LEVEL_CONFLUENCE (06/09) ------------
+// Merge di PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR: sono la stessa idea
+// (reazione a un livello chiave) implementata tre volte con fonti e conferme
+// diverse, mai incrociate (osservazione dell'utente, verificata sul codice -
+// vedi vault "Terzo Cancello Silenzioso" e discussione 06/09). V1: riusa il
+// pool multi-TF pivot gia' scansionato da PIVOT_WICK (M15/M30/H1/H4/D1,
+// g_pivotWickState) invece di duplicare l'infrastruttura. Due novita' vere:
+// 1) bonus di confluenza multi-TF (un livello M15/M30 vicino a un pivot D1
+//    e' risultato 3.06x piu' rispettato nella ricerca sul grafico - mai
+//    diventato un filtro live finora, solo un'osservazione Python);
+// 2) due modalita' di trigger alternative, non solo tocco istantaneo:
+//    "touch" (tocco + chiusura di conferma, come PIVOT_WICK) oppure "sweep"
+//    (il prezzo perfora il livello oltre tolleranza e poi RICONQUISTA
+//    chiudendo dall'altra parte - liquidity grab, pattern diverso da un
+//    semplice tocco pulito).
+// Nessun direction-lock: testata simmetrica BUY+SELL come da regola
+// (vedi vault "Il Vero Benchmark e Buy&Hold") - se un lato non regge lo si
+// scopre da qui, non lo si assume a priori.
+SNXSSignal NXS_Strat_LevelConfluence(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE";
+   if(!InpStrat_LevelConfluence || !NXS_SelectorAllows(50)) return s;
+
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   datetime curBar0 = iTime(g_sym, execTF, 0);
+   if(g_levelConfState.lastBarTime == curBar0) return s;
+   g_levelConfState.lastBarTime = curBar0;
+
+   // riusa il pool pivot di PIVOT_WICK (idempotente per barra, sicuro anche
+   // se PIVOT_WICK e' disattivato in questo run - lo alimenta comunque)
+   int L = InpPivotWickLookback;
+   for(int t = 0; t < NXS_PIVOTWICK_NTF; t++)
+      _nxs_pivotwick_scan_tf(t, (ENUM_TIMEFRAMES)g_pivotWickTFs[t], L);
+
+   double atr = NXS_ATRv(execTF, 1, 14);
+   if(atr <= 0) return s;
+   double tol      = InpLevelConfTouchTolATR * atr;
+   double sweepTol = InpLevelConfSweepTolATR * atr;
+
+   double o1 = iOpen(g_sym, execTF, 1), c1 = iClose(g_sym, execTF, 1);
+   double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
+   int D1idx = NXS_PIVOTWICK_NTF - 1;  // g_pivotWickTFs[4] = PERIOD_D1
+
+   // -------- BUY: livelli pivot-low sui TF bassi (M15=0, M30=1) --------
+   for(int t = 0; t < 2 && s.dir == DIR_NONE; t++){
+      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+         double lvl = g_pivotWickState.pivLo[t][i];
+         if(lvl <= 0) continue;
+
+         bool touchMode  = InpLevelConfUseTouch &&
+                            (l1 >= lvl - tol && l1 <= lvl + tol) &&
+                            (c1 >= lvl - tol);   // chiusura non sotto il livello
+         bool sweepMode  = InpLevelConfUseSweep &&
+                            (l1 < lvl - sweepTol) &&        // perfora oltre tolleranza
+                            (c1 > lvl - tol);                // ma richiude dentro/sopra
+         if(!touchMode && !sweepMode) continue;
+
+         // confluenza: lo stesso livello (entro sweepTol) coincide con un
+         // pivot-low D1 memorizzato?
+         bool confluent = false;
+         for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
+            double d1lvl = g_pivotWickState.pivLo[D1idx][j];
+            if(d1lvl <= 0) continue;
+            if(MathAbs(d1lvl - lvl) <= sweepTol){ confluent = true; break; }
+         }
+         if(InpLevelConfRequireConfluence && !confluent) continue;
+
+         s.dir = DIR_BUY;
+         s.score = 55.0 + (sweepMode ? 8.0 : 0.0) + (confluent ? 20.0 : 0.0);
+         s.reason = StringFormat("LevelConf_buy_%s_%s%s",
+                                  EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]),
+                                  sweepMode ? "sweep" : "touch",
+                                  confluent ? "_D1conf" : "");
+         break;
+      }
+   }
+   // -------- SELL: livelli pivot-high sui TF bassi (M15=0, M30=1) --------
+   if(s.dir == DIR_NONE){
+      for(int t = 0; t < 2 && s.dir == DIR_NONE; t++){
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            double lvl = g_pivotWickState.pivHi[t][i];
+            if(lvl <= 0) continue;
+
+            bool touchMode = InpLevelConfUseTouch &&
+                              (h1 <= lvl + tol && h1 >= lvl - tol) &&
+                              (c1 <= lvl + tol);
+            bool sweepMode = InpLevelConfUseSweep &&
+                              (h1 > lvl + sweepTol) &&
+                              (c1 < lvl + tol);
+            if(!touchMode && !sweepMode) continue;
+
+            bool confluent = false;
+            for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
+               double d1lvl = g_pivotWickState.pivHi[D1idx][j];
+               if(d1lvl <= 0) continue;
+               if(MathAbs(d1lvl - lvl) <= sweepTol){ confluent = true; break; }
+            }
+            if(InpLevelConfRequireConfluence && !confluent) continue;
+
+            s.dir = DIR_SELL;
+            s.score = 55.0 + (sweepMode ? 8.0 : 0.0) + (confluent ? 20.0 : 0.0);
+            s.reason = StringFormat("LevelConf_sell_%s_%s%s",
+                                     EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]),
+                                     sweepMode ? "sweep" : "touch",
+                                     confluent ? "_D1conf" : "");
+            break;
+         }
+      }
+   }
+
    if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
    return s;
 }
