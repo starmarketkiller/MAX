@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - Secondo Caso dello Stesso Bug, NEXUS_EA_v2.mq5 Va Sempre Copiato (06-09)]]** —
+  costruita LEVEL_CONFLUENCE (merge PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR
+  con confluenza multi-TF e trigger touch/sweep), zero trade per lo
+  stesso identico bug di copia mancata già trovato ieri pomeriggio.
+  Lezione di metodo: un print incondizionato alla prima riga di una
+  funzione senza output punta SUBITO all'infrastruttura di build, non
+  alla logica — risparmia decine di minuti di diagnostica a cascata.
 - **[[NEXUS EA - MACD 80 Barre vs 40, Neutro in Aggregato Peggiora su SELL (06-09)]]** —
   raddoppiare il time-stop nascosto (40→80 barre) non cambia quasi
   nulla in aggregato (PF identico, net +0.8%) ma peggiora il lato
