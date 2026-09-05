@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - MACD 80 Barre vs 40, Neutro in Aggregato Peggiora su SELL (06-09)]]** —
+  raddoppiare il time-stop nascosto (40→80 barre) non cambia quasi
+  nulla in aggregato (PF identico, net +0.8%) ma peggiora il lato
+  SELL (da +$162 a -$54) — ulteriore conferma che l'edge di MACD è
+  quasi tutto esposizione al trend. Calmar comunque sopra il buy&hold
+  (2.76 vs 1.49).
 - ⚠️ **[[NEXUS EA - Il Vero Benchmark e Buy&Hold, Quasi Tutto Oggi lo Perde (05-09)]]** —
   correzione di metodo importante: le strategie BUY-only testate oggi
   vanno confrontate col semplice buy&hold (GOLD +125.5% nel periodo),
