@@ -681,6 +681,26 @@ bool NXS_Profile_Enabled(const string name){
    // InpStrat_Bollinger resta false di default - "abilitata al test" non e'
    // "abilitata di default", stessa regola delle righe sopra.
    if(name == "BOLLINGER")              return true;
+   // 05/09 - stesso bug/trattamento: sblocco STRUCT_REACT per la prima
+   // verifica in assoluto su MT5 reale (selector 16, coda prioritaria
+   // Python PF2.65). Era tra le "gia' spente da prima per perdite reali
+   // confermate" alla riga 645 - ma quella nota risale a prima di questa
+   // indagine, mai verificata sul vero motore. InpUseStructReact resta
+   // false di default - "abilitata al test" non e' "abilitata di default".
+   if(name == "STRUCT_REACT")           return true;
+   // 05/09 - stesso bug: audit proattivo di tutta la coda prioritaria del
+   // piano master dopo aver trovato STRUCT_REACT bloccata qui. Queste 6
+   // hanno un profilo (SL/TP/TF) gia' definito sopra ma NON erano in
+   // questa whitelist - avrebbero dato zero trade silenziosi in qualunque
+   // test nudo futuro, come STRUCT_REACT. Sbloccate per permettere la
+   // prima verifica reale su MT5 di ciascuna. InpStrat_X/InpUseX restano
+   // false di default - "abilitata al test" non e' "abilitata di default".
+   if(name == "FVG_MIT")                return true;
+   if(name == "OTE_CONT")               return true;
+   if(name == "ICHIMOKU")               return true;
+   if(name == "WEEKLY_EXP")             return true;
+   if(name == "RSI_DIV")                return true;
+   if(name == "MALAYSIAN_SNR")          return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 

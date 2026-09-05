@@ -39,6 +39,16 @@ specifici di una strategia, rilevanti per QUALUNQUE test futuro):
    199→166, net +5.7%) ma peggiora BOLLINGER BUY-only (Sharpe 2.45→0.74,
    campione crollato a 11 trade) — non è un filtro universale, va
    testato caso per caso. Vedi [[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]].**
+4. **Terzo cancello silenzioso** `NXS_Profile_Enabled()`: indipendente
+   da `InpStrat_X` e `InpStrategySelector`, blocca l'apertura ordini
+   ("profile_disabled") per qualunque strategia non esplicitamente in
+   whitelist — zero trade silenziosi anche con selector e flag giusti.
+   Trovato su PMAX (28/08), BB_SQUEEZE/ORDER_BLOCK/BOLLINGER (02-03/09),
+   e oggi su STRUCT_REACT + audit proattivo di altre 6 (ICHIMOKU,
+   RSI_DIV, FVG_MIT, OTE_CONT, MALAYSIAN_SNR, WEEKLY_EXP) — tutte
+   sbloccate. **Regola**: prima di un test nudo su una strategia mai
+   provata, controllare `grep 'name == "NOME"' NXS_StrategyProfiles.mqh`
+   per questa whitelist. Vedi [[NEXUS EA - Terzo Cancello Silenzioso Trovato su 7 Strategie, Audit Proattivo (05-09)]].
 
 **Dal lato analisi dati grezzi** (grafico GOLD H1/M30/M5, 2019-2026,
 non backtest MT5): confluenza multi-timeframe (3.06× più livelli M30
@@ -81,9 +91,9 @@ Python, ma vedi nota sotto su cosa contro-verificare prima):
 |---|---|---|---|---|
 | 1 | FVG_MIT | 3.24 (1.57/5.06) | D1-align+trailing+Elliott | No |
 | 2 | ADX_RSI | 2.62 (2.57/2.66) | trailing+Elliott, BUY-only | ✅ **Confermata sul vero MT5 (04/09)**: nudo PF2.04, net+$1676/3anni, BUY domina (conferma diretta). Vedi [[NEXUS EA - ADX_RSI D1 Confermata Positiva sul Vero MT5, BUY Domina (04-09)]]. Trailing+Elliott ancora da aggiungere |
-| 3 | STRUCT_REACT | 2.65 (2.82/2.48) | nessun Elliott (peggiora qui), BUY-only | No |
-| 4 | FVG_CONT_V2 | 2.40 (2.10/2.93) | trailing+Elliott, BUY-only | No |
-| 5 | SAR_FLIP | 2.31 (1.54/3.49) | trailing+Elliott, BUY-only | No |
+| 3 | STRUCT_REACT | 2.65 (2.82/2.48) | nessun Elliott (peggiora qui), BUY-only | 🔄 **In test (05/09)**: primo tentativo zero trade — bloccata da un terzo cancello silenzioso (`NXS_Profile_Enabled`), sbloccata e ritestata, risultato in arrivo. Vedi [[NEXUS EA - Terzo Cancello Silenzioso Trovato su 7 Strategie, Audit Proattivo (05-09)]] |
+| 4 | FVG_CONT_V2 | 2.40 (2.10/2.93) | trailing+Elliott, BUY-only | No — **verificato 05/09: nessuna implementazione MQL5 esiste nel codice**, non è "da testare", è da scrivere prima |
+| 5 | SAR_FLIP | 2.31 (1.54/3.49) | trailing+Elliott, BUY-only | No — **verificato 05/09: nessuna implementazione MQL5 esiste nel codice**, stesso caso di FVG_CONT_V2 |
 | 6 | TSI | 2.25 (2.04/2.46) | Elliott, BUY-only, no trailing | No |
 | 7 | MALAYSIAN_SNR_BREAKOUT | 2.14 (1.81/2.51) | Elliott, BUY-only | No |
 | 8 | OTE_CONT | 2.14 (2.16/2.12) | D1-align+Elliott | No |

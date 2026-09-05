@@ -14,6 +14,17 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Terzo Cancello Silenzioso Trovato su 7 Strategie, Audit Proattivo (05-09)]]** —
+  STRUCT_REACT primo test: zero trade nonostante selector e flag
+  giusti. Causa: `NXS_Profile_Enabled()`, un terzo cancello
+  indipendente da `InpStrat_X`/`InpStrategySelector` (già trovato su
+  PMAX 28/08 e BB_SQUEEZE/ORDER_BLOCK/BOLLINGER 02-03/09, mai chiuso
+  come classe di rischio). Audit proattivo: altre 6 strategie reali
+  (ICHIMOKU, RSI_DIV, FVG_MIT, OTE_CONT, MALAYSIAN_SNR, WEEKLY_EXP)
+  avevano lo stesso blocco silenzioso, tutte sbloccate insieme.
+  Confermato anche che FVG_CONT_V2/SAR_FLIP/SAR_ADX20/DARVAS_BOX/
+  DONCHIAN_TURTLE non hanno alcuna implementazione MQL5 — non sono
+  bloccate, semplicemente non esistono nel codice.
 - **[[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]]** —
   lo stesso filtro sessione che ha migliorato MACD (PF1.53→1.74)
   applicato a BOLLINGER H4 BUY-only lo **peggiora**: Sharpe 2.45→0.74,
