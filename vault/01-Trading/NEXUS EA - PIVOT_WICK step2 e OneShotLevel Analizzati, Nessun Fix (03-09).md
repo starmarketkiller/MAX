@@ -315,3 +315,25 @@ qui (per [[feedback_no_live_mql5_without_asking]]).
 ## Collegamenti
 [[NEXUS EA - Piano d'Azione Post-Maratona, Stato Reale e Prossimi Passi (03-09)]] ·
 [[NEXUS EA - MASTER ROADMAP v3]] · [[MOC - Trading]]
+
+## Addendum 8 — RequireCloseConfirm su 3 anni interi: non regge (04-05/09)
+
+Test con `InpPivotWickRequireCloseConfirm=true` da solo, su tutto il
+periodo 2023-09→2026-08 (non solo i 3 mesi di c3), M15. Nota: il
+filtro sessione Overlap era ancora quello rotto in questo run (vedi
+[[NEXUS EA - Il Filtro Sessione Era su un Percorso di Esecuzione Diverso (04-09)]]),
+quindi questo isola solo l'effetto di CloseConfirm su campione ampio.
+
+| | c3 (3 mesi) | Questo test (3 anni) |
+|---|---|---|
+| Trade | 278 | 1799 |
+| WR | 47.8% | **41.4%** |
+| PF | 0.91 | **0.73** |
+
+Il miglioramento trovato su 3 mesi (c3, PF0.91) **non regge su un
+campione 6× più ampio** — probabilmente era un effetto di campione
+corto, non un vero miglioramento strutturale. Conclusione più solida
+di prima: PIVOT_WICK+CloseConfirm non è una configurazione valida su
+orizzonte lungo. Il filtro sessione vero (ora corretto) resta da
+provare in combinazione, ma la base (CloseConfirm da solo) è
+confermata debole su campione ampio.
