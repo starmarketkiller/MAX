@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - LEVEL_CONFLUENCE Primo Risultato Vero, Negativo su Entrambi i Lati (06-09)]]** —
+  dopo tre bug risolti (wiring, guardiano multi-TF, whitelist
+  NXS_StrategyKnown), primo test vero: PF0.89, net-$646, 424 trade
+  simmetrici BUY/SELL. Entrambi i lati negativi con WR simile
+  (35.8%/32.7%) — diverso dal pattern "BUY va bene per il trend"
+  visto altrove, ma il trigger "touch" grezzo sembra troppo
+  permissivo/rumoroso. Trigger touch/sweep/confluenza non ancora
+  scomponibili (limite di logging), da risolvere prima del prossimo giro.
 - ⚠️ **[[NEXUS EA - Secondo Caso dello Stesso Bug, NEXUS_EA_v2.mq5 Va Sempre Copiato (06-09)]]** —
   costruita LEVEL_CONFLUENCE (merge PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR
   con confluenza multi-TF e trigger touch/sweep), zero trade per lo
