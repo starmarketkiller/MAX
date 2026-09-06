@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - Nessuna Strategia Testata Supererebbe una Prop Firm (06-09)]]** —
+  verifica retroattiva su tutte le curve di balance generate oggi (8
+  strategie): NESSUNA rispetta i limiti tipici di drawdown giornaliero
+  (5%) e totale (10%). Anche FVG_CONT (la migliore) ha DD 15.5%.
+  L'obiettivo di ottimizzazione seguito finora (rendimento totale) è
+  strutturalmente diverso da quello che servirebbe per una prop firm
+  (drawdown vincolato + consistenza) — non ancora affrontato.
 - ⚠️ **[[NEXUS EA - Scoperta ESL, Costo Nascosto Trasversale a Tutti i Test (06-09)]]** —
   analisi CSV più approfondita (MAE/MFE ricostruito da barre reali,
   non solo PF/net) su ADX_RSI: le uscite ESL (circuit-breaker di
