@@ -14,6 +14,16 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Conferma 2 Barre e Livelli HTF, Migliora il Rapporto ma Resta Negativo (06-09)]]** —
+  fix a due mani (livelli H1/H4/D1 + conferma 2 barre): il rapporto
+  vincita/perdita diventa sano (+$32 media vincita vs -$27 perdita,
+  vincite tenute più a lungo) ma il win rate (35%) resta sotto la
+  soglia di pareggio (~46%) — il netto peggiora leggermente
+  (-$837 vs -$646) nonostante meno trade. Prossimo passo: confluenza
+  obbligatoria tra le tre TF alte, non ancora testata.
+- **[[NEXUS EA - LEVEL_CONFLUENCE 3 Anni Conferma il Negativo (06-09)]]** —
+  stessa logica touch originale su scala 3 anni: 1958 trade, PF0.81,
+  net-$975, WR30.8% — conferma il verdetto negativo su campione ampio.
 - **[[NEXUS EA - LEVEL_CONFLUENCE Primo Risultato Vero, Negativo su Entrambi i Lati (06-09)]]** —
   dopo tre bug risolti (wiring, guardiano multi-TF, whitelist
   NXS_StrategyKnown), primo test vero: PF0.89, net-$646, 424 trade
