@@ -145,12 +145,13 @@ restano provvisorie anche sul lato Python — bassa priorità.
 | BOLLINGER | ✅ Confermata (H4 solo) | H4 BUY-only nudo, PF1.35, **miglior Sharpe (2.45) di tutta l'indagine** — M30/M5 molto più deboli. Overlap-only testato (05/09): peggiora (Sharpe→0.74, 11 trade) — restare sulla ricetta nuda | [[NEXUS EA - BOLLINGER H4 Nuda, BUY Positivo SELL Negativo, Conferma Python (04-09)]] · [[NEXUS EA - BOLLINGER Overlap-Only Peggiora, Filtro Non Universale (05-09)]] |
 | STRUCT_REACT | ✅ Confermata (05/09) | H4 nudo, PF1.29, net+$1560, 211 trade tutti BUY | [[NEXUS EA - STRUCT_REACT Prima Conferma Positiva, Time-Stop Replica il Pattern (05-09)]] |
 
-### 3. Testate sul vero MT5, chiuse con esito negativo dopo indagine approfondita (2)
+### 3. Testate sul vero MT5, chiuse con esito negativo dopo indagine approfondita (3)
 
 | Strategia | Stato | Perché | Fonte |
 |---|---|---|---|
 | PIVOT_WICK | ❌ Chiusa (fermata dall'utente) | 10 varianti isolate (9 su 3 mesi + 1 su 3 anni), solo 1 migliora la qualità e non regge su campione ampio (PF0.91→0.73) | [[NEXUS EA - PIVOT_WICK step2 e OneShotLevel Analizzati, Nessun Fix (03-09)]] |
 | BOLLINGER M5 scalp (+RSI+candela) | ❌ Chiusa | Nessun filtro isolato sposta il win rate | [[NEXUS EA - BOLLINGER Filtro RSI e Candela Testati, Nessuno Alza il Win Rate (03-09)]] |
+| LEVEL_CONFLUENCE (merge PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR) | ❌ Chiusa (06/09) | 5 iterazioni indipendenti (touch, conferma-barre, livelli HTF, TF M5, confluenza obbligatoria), mai un risultato netto positivo su 3 mesi o 3 anni. La confluenza obbligatoria ha dimezzato il gap dalla soglia di pareggio (-10.7pp→-3.2pp BUY) ma non lo ha mai chiuso — miglior filtro trovato, non abbastanza | [[NEXUS EA - LEVEL_CONFLUENCE Chiusura, il Quasi Pareggio BUY Non Regge su Campione Ampio (06-09)]] |
 
 ### 4. Mai testate né su Python né su MT5 (~20)
 
@@ -164,12 +165,12 @@ SILVER_BULLET, SMS_BMS_RTO, THREE_BAR_DELIVERY_BREAK (nessuna
 implementazione MQL5 reale, noto), WEEKLY_EXP, 3COMMAS_BOT. Priorità
 bassa finché non si esaurisce la coda 1-2.
 
-### 5. Strategia nuova creata per merge (non nel registro originale a 46): LEVEL_CONFLUENCE
+### 5. Strategia nuova creata per merge (non nel registro originale a 46): LEVEL_CONFLUENCE — ❌ CHIUSA (06/09)
 
 Nata dalla richiesta dell'utente di unire PIVOT_WICK/STRUCT_REACT/
 MALAYSIAN_SNR (stesso concetto: reazione a un livello chiave) con
 trigger non istantaneo (tocco o sweep-poi-reclaim). Percorso completo
-in 4 iterazioni sul vero MT5, tutte negative:
+in 5 iterazioni sul vero MT5, **tutte negative**:
 
 | Iterazione | Config | Trade | PF | Net | Esito |
 |---|---|---|---|---|---|
@@ -177,6 +178,7 @@ in 4 iterazioni sul vero MT5, tutte negative:
 | 2 (touch, M15/M30, 3 anni) | tocco grezzo | 1958 | 0.81 | -$974.82 | ❌ |
 | 3 (conferma 2 barre + H1/H4/D1, M15, 3 mesi) | conferma+HTF | 295 | 0.83 | -$837.33 | ❌ (R:R sano ma WR 35% sotto soglia 45.7%) |
 | 4 (stessa logica, esecuzione M5) | conferma+HTF | 346 | 0.78 | -$894.47 | ❌ (WR 37-40% ma vincite/perdite più piccole, netto peggiore) |
+| 5 (+ confluenza obbligatoria, M15, 3 mesi poi 3 anni) | conferma+HTF+confluenza | 120 poi 1181 | 0.88 poi 0.82 | -$283 poi -$906 | ❌ (BUY quasi pareggio su 73 trade, -$277/gap-3.2pp su 547 — non regge su campione ampio) |
 
 **Tre bug infrastrutturali trovati e fissati durante lo sviluppo**
 (riutilizzabili per future strategie nuove): wiring mai copiato nel
@@ -186,17 +188,15 @@ QUARTO cancello silenzioso mai visto prima (`NXS_StrategyKnown()`
 dentro `NXS_OpenTrade()`, whitelist indipendente da `NXS_Profile_Enabled`)
 — vedi [[NEXUS EA - LEVEL_CONFLUENCE Primo Risultato Vero, Negativo su Entrambi i Lati (06-09)]].
 
-**Verdetto al 06/09**: cambiare TF d'esecuzione (M15↔M5) e fonte dei
-livelli (M15/M30→H1/H4/D1) non ha risolto il problema di fondo. Ma
-**la confluenza obbligatoria (2+ TF alte d'accordo) sì, parzialmente**:
-5ª iterazione, 120 trade (vs 295), PF0.88 (il migliore delle 5),
-net-$283 (la perdita più piccola, -66% rispetto a -$837) — e il lato
-**BUY è praticamente in pareggio** (-$0.51 su 73 trade, WR 35.6%
-uguale alla soglia di pareggio calcolata). Campione piccolo (73 trade
-BUY), non ancora una conferma ma il segnale più promettente trovato
-per questa strategia. SELL resta negativo (-$273, WR 31.9% contro
-soglia 39.1%). Prossimo passo proposto (da confermare con l'utente:
-richiede un nuovo flag MQL5 BUY-only): [[NEXUS EA - Confluenza Obbligatoria, Miglior Risultato Finora e BUY Quasi in Pareggio (06-09)]].
+**Verdetto finale (06/09)**: nessuna delle 5 iterazioni (touch grezzo,
+conferma-barre, livelli HTF, TF M5, confluenza obbligatoria) ha
+prodotto un risultato netto positivo. La confluenza obbligatoria è il
+filtro più efficace trovato — dimezza il gap dalla soglia di pareggio
+(da -10.7pp a -3.2pp sul lato BUY, su un campione di 547 trade) — ma
+non basta a superarlo. Il quasi-pareggio BUY visto sul campione
+piccolo (73 trade, 3 mesi) era un artefatto statistico: su 547 trade
+(3 anni) torna negativo (-$277). **Strategia chiusa**, spostata in
+categoria 3. Vedi [[NEXUS EA - LEVEL_CONFLUENCE Chiusura, il Quasi Pareggio BUY Non Regge su Campione Ampio (06-09)]].
 
 ## Regola operativa per ogni voce della coda
 

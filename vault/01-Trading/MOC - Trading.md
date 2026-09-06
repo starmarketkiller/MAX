@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ❌ **[[NEXUS EA - LEVEL_CONFLUENCE Chiusura, il Quasi Pareggio BUY Non Regge su Campione Ampio (06-09)]]** —
+  chiusura della strategia: il quasi-pareggio BUY visto su 73 trade
+  (3 mesi) era un artefatto di campione piccolo — su 547 trade (3
+  anni) torna negativo (-$277, gap -3.2pp dalla soglia). 5 iterazioni
+  indipendenti, mai un risultato netto positivo. La confluenza
+  obbligatoria resta il miglior filtro trovato (dimezza il gap) ma non
+  basta. Strategia spostata tra le chiuse negative nel piano master.
 - **[[NEXUS EA - Confluenza Obbligatoria, Miglior Risultato Finora e BUY Quasi in Pareggio (06-09)]]** —
   `InpLevelConfRequireConfluence=true` (2+ TF alte d'accordo): miglior
   risultato delle 5 iterazioni LEVEL_CONFLUENCE, PF0.88, net-$283 (vs
