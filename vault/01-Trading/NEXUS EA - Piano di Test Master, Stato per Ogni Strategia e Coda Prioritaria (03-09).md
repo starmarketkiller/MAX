@@ -186,13 +186,17 @@ QUARTO cancello silenzioso mai visto prima (`NXS_StrategyKnown()`
 dentro `NXS_OpenTrade()`, whitelist indipendente da `NXS_Profile_Enabled`)
 — vedi [[NEXUS EA - LEVEL_CONFLUENCE Primo Risultato Vero, Negativo su Entrambi i Lati (06-09)]].
 
-**Verdetto al 06/09**: cambiare TF d'esecuzione (M15↔M5), fonte dei
-livelli (M15/M30→H1/H4/D1) e aggiungere conferma non ha mai risolto il
-problema di fondo — il trigger "tocco/sweep di livello" non seleziona
-punti con abbastanza vantaggio statistico su GOLD in questa finestra.
-Resta da testare solo `InpLevelConfRequireConfluence=true` (2+ TF
-alte d'accordo) prima di chiudere come le altre strategie fallite
-(categoria 3). Vedi [[NEXUS EA - LEVEL_CONFLUENCE M5 vs M15, Stesso Esito Negativo su Entrambi i TF (06-09)]].
+**Verdetto al 06/09**: cambiare TF d'esecuzione (M15↔M5) e fonte dei
+livelli (M15/M30→H1/H4/D1) non ha risolto il problema di fondo. Ma
+**la confluenza obbligatoria (2+ TF alte d'accordo) sì, parzialmente**:
+5ª iterazione, 120 trade (vs 295), PF0.88 (il migliore delle 5),
+net-$283 (la perdita più piccola, -66% rispetto a -$837) — e il lato
+**BUY è praticamente in pareggio** (-$0.51 su 73 trade, WR 35.6%
+uguale alla soglia di pareggio calcolata). Campione piccolo (73 trade
+BUY), non ancora una conferma ma il segnale più promettente trovato
+per questa strategia. SELL resta negativo (-$273, WR 31.9% contro
+soglia 39.1%). Prossimo passo proposto (da confermare con l'utente:
+richiede un nuovo flag MQL5 BUY-only): [[NEXUS EA - Confluenza Obbligatoria, Miglior Risultato Finora e BUY Quasi in Pareggio (06-09)]].
 
 ## Regola operativa per ogni voce della coda
 

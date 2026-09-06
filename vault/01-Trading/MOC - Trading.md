@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - Confluenza Obbligatoria, Miglior Risultato Finora e BUY Quasi in Pareggio (06-09)]]** —
+  `InpLevelConfRequireConfluence=true` (2+ TF alte d'accordo): miglior
+  risultato delle 5 iterazioni LEVEL_CONFLUENCE, PF0.88, net-$283 (vs
+  -$837 precedente). Il lato BUY è praticamente in pareggio (-$0.51 su
+  73 trade) — campione piccolo, segnale promettente non ancora
+  confermato. SELL resta negativo.
 - **[[NEXUS EA - LEVEL_CONFLUENCE M5 vs M15, Stesso Esito Negativo su Entrambi i TF (06-09)]]** —
   stessa logica (livelli H1/H4/D1 + conferma 2 barre) eseguita su M5
   invece di M15: più trade (346 vs 295) e WR più alto (37-40% vs 35%)
