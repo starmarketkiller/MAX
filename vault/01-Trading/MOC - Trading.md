@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - LEVEL_CONFLUENCE M5 vs M15, Stesso Esito Negativo su Entrambi i TF (06-09)]]** —
+  stessa logica (livelli H1/H4/D1 + conferma 2 barre) eseguita su M5
+  invece di M15: più trade (346 vs 295) e WR più alto (37-40% vs 35%)
+  ma netto leggermente peggiore (-$894 vs -$837) perché vincite e
+  perdite sono più piccole e durano un terzo del tempo. Conferma che
+  il problema è la selezione del punto d'ingresso, non il TF
+  d'esecuzione. Resta solo la confluenza obbligatoria da testare prima
+  di chiudere la strategia.
 - **[[NEXUS EA - Conferma 2 Barre e Livelli HTF, Migliora il Rapporto ma Resta Negativo (06-09)]]** —
   fix a due mani (livelli H1/H4/D1 + conferma 2 barre): il rapporto
   vincita/perdita diventa sano (+$32 media vincita vs -$27 perdita,

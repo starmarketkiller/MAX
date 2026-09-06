@@ -4,7 +4,7 @@ domain: trading
 status: active
 tags: [trading, nexus-ea, piano-test, master-queue, riferimento]
 created: 2026-09-03
-updated: 2026-09-05
+updated: 2026-09-06
 ---
 
 # NEXUS EA — Piano di test master: stato per ogni strategia e coda prioritaria (03-05/09)
@@ -163,6 +163,36 @@ OB_MIT, ORDER_BLOCK, PMAX, PO3, RANGE_FADE, RSI_DIV_PINE, SH_BMS_RTO,
 SILVER_BULLET, SMS_BMS_RTO, THREE_BAR_DELIVERY_BREAK (nessuna
 implementazione MQL5 reale, noto), WEEKLY_EXP, 3COMMAS_BOT. Priorità
 bassa finché non si esaurisce la coda 1-2.
+
+### 5. Strategia nuova creata per merge (non nel registro originale a 46): LEVEL_CONFLUENCE
+
+Nata dalla richiesta dell'utente di unire PIVOT_WICK/STRUCT_REACT/
+MALAYSIAN_SNR (stesso concetto: reazione a un livello chiave) con
+trigger non istantaneo (tocco o sweep-poi-reclaim). Percorso completo
+in 4 iterazioni sul vero MT5, tutte negative:
+
+| Iterazione | Config | Trade | PF | Net | Esito |
+|---|---|---|---|---|---|
+| 1 (touch, M15/M30, 3 mesi) | tocco grezzo | 424 | 0.89 | -$646.14 | ❌ |
+| 2 (touch, M15/M30, 3 anni) | tocco grezzo | 1958 | 0.81 | -$974.82 | ❌ |
+| 3 (conferma 2 barre + H1/H4/D1, M15, 3 mesi) | conferma+HTF | 295 | 0.83 | -$837.33 | ❌ (R:R sano ma WR 35% sotto soglia 45.7%) |
+| 4 (stessa logica, esecuzione M5) | conferma+HTF | 346 | 0.78 | -$894.47 | ❌ (WR 37-40% ma vincite/perdite più piccole, netto peggiore) |
+
+**Tre bug infrastrutturali trovati e fissati durante lo sviluppo**
+(riutilizzabili per future strategie nuove): wiring mai copiato nel
+terminale (`NEXUS_EA_v2.mq5` non è junction come gli Include), guardia
+TF mancante che causa doppia valutazione nei pass multi-TF, e un
+QUARTO cancello silenzioso mai visto prima (`NXS_StrategyKnown()`
+dentro `NXS_OpenTrade()`, whitelist indipendente da `NXS_Profile_Enabled`)
+— vedi [[NEXUS EA - LEVEL_CONFLUENCE Primo Risultato Vero, Negativo su Entrambi i Lati (06-09)]].
+
+**Verdetto al 06/09**: cambiare TF d'esecuzione (M15↔M5), fonte dei
+livelli (M15/M30→H1/H4/D1) e aggiungere conferma non ha mai risolto il
+problema di fondo — il trigger "tocco/sweep di livello" non seleziona
+punti con abbastanza vantaggio statistico su GOLD in questa finestra.
+Resta da testare solo `InpLevelConfRequireConfluence=true` (2+ TF
+alte d'accordo) prima di chiudere come le altre strategie fallite
+(categoria 3). Vedi [[NEXUS EA - LEVEL_CONFLUENCE M5 vs M15, Stesso Esito Negativo su Entrambi i TF (06-09)]].
 
 ## Regola operativa per ogni voce della coda
 
