@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - ADX_RSI Filtro Elliott Peggiora, Restare sulla Ricetta Nuda (06-09)]]** —
+  seconda conferma (dopo BOLLINGER) che i filtri Python non sono
+  garantiti su MT5: Elliott peggiora ADX_RSI (PF2.04→1.65,
+  net+$1676→+$1234/3anni). Restare sulla configurazione nuda già
+  confermata. Trailing non testabile senza modifica al profilo
+  hardcoded.
 - ❌ **[[NEXUS EA - LEVEL_CONFLUENCE Chiusura, il Quasi Pareggio BUY Non Regge su Campione Ampio (06-09)]]** —
   chiusura della strategia: il quasi-pareggio BUY visto su 73 trade
   (3 mesi) era un artefatto di campione piccolo — su 547 trade (3
