@@ -877,6 +877,7 @@ input double   InpPivotWickBuildupMinATR     = 0.8;     // range minimo (in ATR)
 // 06/09 - LEVEL_CONFLUENCE: merge di PIVOT_WICK/STRUCT_REACT/MALAYSIAN_SNR,
 // vedi NXS_Strat_LevelConfluence in NXS_Strategies.mqh. Selettore vero 50.
 input bool     InpStrat_LevelConfluence        = false;
+input bool     InpStrat_LevelConfluenceM5      = false;  // 06/09 - gemella su M5, stessi livelli H1/H4/D1 (selettore vero 51)
 input double   InpLevelConfTouchTolATR         = 0.25;  // tolleranza tocco/riconquista, in ATR
 input double   InpLevelConfSweepTolATR         = 0.5;   // soglia di perforazione per la modalita' sweep, in ATR
 input bool     InpLevelConfUseTouch            = true;  // trigger: tocco pulito + chiusura di conferma

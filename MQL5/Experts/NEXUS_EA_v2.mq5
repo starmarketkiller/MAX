@@ -515,6 +515,11 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // con bonus di confluenza multi-TF e trigger touch/sweep, idea utente (#50)
    if(InpStrat_LevelConfluence && NXS_SelectorAllows(50)) out[n++] = NXS_Strat_LevelConfluence();
 
+   // 06/09 — LEVEL_CONFLUENCE gemella su M5: livelli H1/H4/D1, esecuzione M5
+   // invece di M15, idea utente "segnamo i livelli D1 H4 H1 e entriamo su
+   // M15 e M5" (#51)
+   if(InpStrat_LevelConfluenceM5 && NXS_SelectorAllows(51)) out[n++] = NXS_Strat_LevelConfluence_M5();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

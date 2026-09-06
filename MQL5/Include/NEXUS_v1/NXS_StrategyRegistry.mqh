@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 46
+#define NXS_LIVE_STRATEGY_COUNT 47
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -35,6 +35,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="JUDAS_SWING" ||
           id=="LDN_REVERSAL" ||
           id=="LEVEL_CONFLUENCE" ||
+          id=="LEVEL_CONFLUENCE_M5" ||
           id=="LIQ_SWEEP" ||
           id=="LIQ_VOID" ||
           id=="LONDON_BO" ||
@@ -114,6 +115,7 @@ string NXS_StrategyIdAt(int i){
    if(i==43) return "TURTLE_SOUP";
    if(i==44) return "WEEKLY_EXP";
    if(i==45) return "Z_SCORE_BREAKOUT";
+   if(i==46) return "LEVEL_CONFLUENCE_M5";
    return "";
 }
 

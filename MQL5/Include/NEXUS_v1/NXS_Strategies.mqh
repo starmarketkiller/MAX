@@ -762,7 +762,8 @@ struct SNXSLevelConfState {
    bool     pendingConfluent;
    ENUM_TIMEFRAMES pendingTF;
 };
-SNXSLevelConfState g_levelConfState;
+SNXSLevelConfState g_levelConfState;    // esecuzione M15
+SNXSLevelConfState g_levelConfState5;   // esecuzione M5 (06/09 - stessi livelli D1/H4/H1, TF di esecuzione diverso)
 
 void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], bool &used[][NXS_PIVOTWICK_MAXLVL], int row, double level){
    for(int i = NXS_PIVOTWICK_MAXLVL - 1; i > 0; i--){
@@ -913,23 +914,18 @@ SNXSSignal NXS_Strat_PivotWick(){
 // Nessun direction-lock: testata simmetrica BUY+SELL come da regola
 // (vedi vault "Il Vero Benchmark e Buy&Hold") - se un lato non regge lo si
 // scopre da qui, non lo si assume a priori.
-SNXSSignal NXS_Strat_LevelConfluence(){
-   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE";
-   if(!InpStrat_LevelConfluence || !NXS_SelectorAllows(50)) return s;
+// 06/09 - v2: su richiesta dell'utente, i livelli ora vengono SOLO da
+// H1/H4/D1 (indici 2,3,4 del pool NXS_PIVOTWICK, "le TF alte segnano il
+// livello"), e l'esecuzione/conferma gira su M15 O M5 ("entriamo sulle TF
+// basse") - due strategie gemelle (nomi/selettori diversi, stessa logica
+// tramite questo core condiviso) invece di una sola, perche' il sistema
+// di profili supporta un solo TF di esecuzione per strategia.
+SNXSSignal _nxs_levelconf_core(SNXSLevelConfState &st, ENUM_TIMEFRAMES execTF, string stratName){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = stratName;
 
-   ENUM_TIMEFRAMES execTF = NXS_EffTF();
-   // 06/09 - BUG TROVATO: senza questo guardiano la funzione veniva valutata
-   // durante OGNI passaggio del multi-TF dispatcher (H1/H4/D1/M30), non solo
-   // quello M15 del suo profilo - confrontava barre di TF piu' larghi con
-   // tolleranze in scala M15, producendo migliaia di falsi tocchi (3824 in
-   // 18 giorni contro le poche decine attese). Il filtro a valle in
-   // NXS_CollectAllSignals scarta i segnali fuori dal TF di profilo, ma
-   // solo DOPO che il "tocco" e' gia' stato valutato in modo scorretto sul
-   // TF sbagliato - va bloccato qui, non dopo.
-   if(execTF != PERIOD_M15) return s;
    datetime curBar0 = iTime(g_sym, execTF, 0);
-   if(g_levelConfState.lastBarTime == curBar0) return s;
-   g_levelConfState.lastBarTime = curBar0;
+   if(st.lastBarTime == curBar0) return s;
+   st.lastBarTime = curBar0;
 
    // riusa il pool pivot di PIVOT_WICK (idempotente per barra, sicuro anche
    // se PIVOT_WICK e' disattivato in questo run - lo alimenta comunque)
@@ -944,7 +940,9 @@ SNXSSignal NXS_Strat_LevelConfluence(){
 
    double c1 = iClose(g_sym, execTF, 1);
    double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
-   int D1idx = NXS_PIVOTWICK_NTF - 1;  // g_pivotWickTFs[4] = PERIOD_D1
+   // g_pivotWickTFs = {M15, M30, H1, H4, D1} -> livelli SOLO dalle TF alte
+   int H1idx = 2, H4idx = 3, D1idx = 4;
+   int htfIdx[3]; htfIdx[0] = H1idx; htfIdx[1] = H4idx; htfIdx[2] = D1idx;
 
    // 06/09 - OSSERVAZIONE UTENTE (con dati a supporto: sotto i 50 pip di
    // sfondamento il prezzo torna sempre nella zona, sopra i 50 pip spesso
@@ -953,26 +951,24 @@ SNXSSignal NXS_Strat_LevelConfluence(){
    // arriva (WR 34%, 58% dei trade chiusi a SL nel primo test). Fix: non
    // sparare al primo tocco, ma tenerlo "in osservazione" e sparare solo se
    // la direzione regge per InpLevelConfConfirmBars chiusure consecutive.
-   if(g_levelConfState.pendingDir != 0){
+   if(st.pendingDir != 0){
       bool stillValid;
-      if(g_levelConfState.pendingDir > 0)
-         stillValid = (c1 >= g_levelConfState.pendingLevel - tol);
-      else
-         stillValid = (c1 <= g_levelConfState.pendingLevel + tol);
+      if(st.pendingDir > 0) stillValid = (c1 >= st.pendingLevel - tol);
+      else                  stillValid = (c1 <= st.pendingLevel + tol);
 
       if(!stillValid){
-         g_levelConfState.pendingDir = 0;   // invalidato: il prezzo e' tornato indietro/sfondato oltre
+         st.pendingDir = 0;   // invalidato: il prezzo e' tornato indietro/sfondato oltre
       } else {
-         g_levelConfState.pendingBars++;
-         if(g_levelConfState.pendingBars >= InpLevelConfConfirmBars){
-            s.dir = (g_levelConfState.pendingDir > 0) ? DIR_BUY : DIR_SELL;
-            s.score = 55.0 + (g_levelConfState.pendingSweep ? 8.0 : 0.0) + (g_levelConfState.pendingConfluent ? 20.0 : 0.0);
+         st.pendingBars++;
+         if(st.pendingBars >= InpLevelConfConfirmBars){
+            s.dir = (st.pendingDir > 0) ? DIR_BUY : DIR_SELL;
+            s.score = 55.0 + (st.pendingSweep ? 8.0 : 0.0) + (st.pendingConfluent ? 20.0 : 0.0);
             s.reason = StringFormat("LevelConf_%s_%s_%s%s_confirmed",
                                      s.dir==DIR_BUY ? "buy" : "sell",
-                                     EnumToString(g_levelConfState.pendingTF),
-                                     g_levelConfState.pendingSweep ? "sweep" : "touch",
-                                     g_levelConfState.pendingConfluent ? "_D1conf" : "");
-            g_levelConfState.pendingDir = 0;   // consumato
+                                     EnumToString(st.pendingTF),
+                                     st.pendingSweep ? "sweep" : "touch",
+                                     st.pendingConfluent ? "_HTFconf" : "");
+            st.pendingDir = 0;   // consumato
             NXS_DefaultSLTP(s);
             return s;
          }
@@ -980,10 +976,10 @@ SNXSSignal NXS_Strat_LevelConfluence(){
       }
    }
 
-   // nessuna conferma in corso: cerca un nuovo candidato (non spara subito,
-   // apre solo l'osservazione)
-   // -------- candidato BUY: livelli pivot-low sui TF bassi (M15=0, M30=1) --------
-   for(int t = 0; t < 2 && g_levelConfState.pendingDir == 0; t++){
+   // nessuna conferma in corso: cerca un nuovo candidato sui livelli H1/H4/D1
+   // (non spara subito, apre solo l'osservazione)
+   for(int ii = 0; ii < 3 && st.pendingDir == 0; ii++){
+      int t = htfIdx[ii];
       for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
          double lvl = g_pivotWickState.pivLo[t][i];
          if(lvl <= 0) continue;
@@ -996,26 +992,31 @@ SNXSSignal NXS_Strat_LevelConfluence(){
                             (c1 > lvl - tol);
          if(!touchMode && !sweepMode) continue;
 
+         // confluenza: lo stesso livello coincide con un pivot-low di
+         // UN'ALTRA delle tre TF alte (H1/H4/D1 tra loro d'accordo)?
          bool confluent = false;
-         for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
-            double d1lvl = g_pivotWickState.pivLo[D1idx][j];
-            if(d1lvl <= 0) continue;
-            if(MathAbs(d1lvl - lvl) <= sweepTol){ confluent = true; break; }
+         for(int jj = 0; jj < 3 && !confluent; jj++){
+            if(htfIdx[jj] == t) continue;
+            for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
+               double olvl = g_pivotWickState.pivLo[htfIdx[jj]][j];
+               if(olvl <= 0) continue;
+               if(MathAbs(olvl - lvl) <= sweepTol){ confluent = true; break; }
+            }
          }
          if(InpLevelConfRequireConfluence && !confluent) continue;
 
-         g_levelConfState.pendingDir = 1;
-         g_levelConfState.pendingLevel = lvl;
-         g_levelConfState.pendingBars = 1;
-         g_levelConfState.pendingSweep = sweepMode;
-         g_levelConfState.pendingConfluent = confluent;
-         g_levelConfState.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
+         st.pendingDir = 1;
+         st.pendingLevel = lvl;
+         st.pendingBars = 1;
+         st.pendingSweep = sweepMode;
+         st.pendingConfluent = confluent;
+         st.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
          break;
       }
    }
-   // -------- candidato SELL: livelli pivot-high sui TF bassi (M15=0, M30=1) --------
-   if(g_levelConfState.pendingDir == 0){
-      for(int t = 0; t < 2 && g_levelConfState.pendingDir == 0; t++){
+   if(st.pendingDir == 0){
+      for(int ii = 0; ii < 3 && st.pendingDir == 0; ii++){
+         int t = htfIdx[ii];
          for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
             double lvl = g_pivotWickState.pivHi[t][i];
             if(lvl <= 0) continue;
@@ -1029,37 +1030,66 @@ SNXSSignal NXS_Strat_LevelConfluence(){
             if(!touchMode && !sweepMode) continue;
 
             bool confluent = false;
-            for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
-               double d1lvl = g_pivotWickState.pivHi[D1idx][j];
-               if(d1lvl <= 0) continue;
-               if(MathAbs(d1lvl - lvl) <= sweepTol){ confluent = true; break; }
+            for(int jj = 0; jj < 3 && !confluent; jj++){
+               if(htfIdx[jj] == t) continue;
+               for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
+                  double olvl = g_pivotWickState.pivHi[htfIdx[jj]][j];
+                  if(olvl <= 0) continue;
+                  if(MathAbs(olvl - lvl) <= sweepTol){ confluent = true; break; }
+               }
             }
             if(InpLevelConfRequireConfluence && !confluent) continue;
 
-            g_levelConfState.pendingDir = -1;
-            g_levelConfState.pendingLevel = lvl;
-            g_levelConfState.pendingBars = 1;
-            g_levelConfState.pendingSweep = sweepMode;
-            g_levelConfState.pendingConfluent = confluent;
-            g_levelConfState.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
+            st.pendingDir = -1;
+            st.pendingLevel = lvl;
+            st.pendingBars = 1;
+            st.pendingSweep = sweepMode;
+            st.pendingConfluent = confluent;
+            st.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
             break;
          }
       }
    }
 
-   // se la soglia di conferma e' 1, spara subito (comportamento identico a prima)
-   if(g_levelConfState.pendingDir != 0 && InpLevelConfConfirmBars <= 1){
-      s.dir = (g_levelConfState.pendingDir > 0) ? DIR_BUY : DIR_SELL;
-      s.score = 55.0 + (g_levelConfState.pendingSweep ? 8.0 : 0.0) + (g_levelConfState.pendingConfluent ? 20.0 : 0.0);
+   // se la soglia di conferma e' 1, spara subito (comportamento base)
+   if(st.pendingDir != 0 && InpLevelConfConfirmBars <= 1){
+      s.dir = (st.pendingDir > 0) ? DIR_BUY : DIR_SELL;
+      s.score = 55.0 + (st.pendingSweep ? 8.0 : 0.0) + (st.pendingConfluent ? 20.0 : 0.0);
       s.reason = StringFormat("LevelConf_%s_%s_%s%s",
                                s.dir==DIR_BUY ? "buy" : "sell",
-                               EnumToString(g_levelConfState.pendingTF),
-                               g_levelConfState.pendingSweep ? "sweep" : "touch",
-                               g_levelConfState.pendingConfluent ? "_D1conf" : "");
-      g_levelConfState.pendingDir = 0;
+                               EnumToString(st.pendingTF),
+                               st.pendingSweep ? "sweep" : "touch",
+                               st.pendingConfluent ? "_HTFconf" : "");
+      st.pendingDir = 0;
       NXS_DefaultSLTP(s);
    }
    return s;
+}
+
+SNXSSignal NXS_Strat_LevelConfluence(){
+   if(!InpStrat_LevelConfluence || !NXS_SelectorAllows(50)){
+      SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE"; return s;
+   }
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   // 06/09 - BUG TROVATO: senza questo guardiano la funzione veniva valutata
+   // durante OGNI passaggio del multi-TF dispatcher, non solo quello del suo
+   // profilo - confrontava barre di TF piu' larghi con tolleranze in scala
+   // sbagliata, producendo migliaia di falsi tocchi. Va bloccato qui, non
+   // dopo (il filtro a valle scarta il segnale ma il "tocco" e' gia' stato
+   // valutato in modo scorretto sul TF sbagliato).
+   if(execTF != PERIOD_M15){ SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE"; return s; }
+   return _nxs_levelconf_core(g_levelConfState, PERIOD_M15, "LEVEL_CONFLUENCE");
+}
+
+// 06/09 - gemella su M5, stessi livelli H1/H4/D1, idea utente: "segnamo i
+// livelli D1 H4 H1 e entriamo su M15 e M5" - selettore vero 51.
+SNXSSignal NXS_Strat_LevelConfluence_M5(){
+   if(!InpStrat_LevelConfluenceM5 || !NXS_SelectorAllows(51)){
+      SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE_M5"; return s;
+   }
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   if(execTF != PERIOD_M5){ SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_CONFLUENCE_M5"; return s; }
+   return _nxs_levelconf_core(g_levelConfState5, PERIOD_M5, "LEVEL_CONFLUENCE_M5");
 }
 
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
