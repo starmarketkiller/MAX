@@ -753,7 +753,15 @@ struct SNXSPivotWickState {
 };
 SNXSPivotWickState g_pivotWickState;
 
-struct SNXSLevelConfState { datetime lastBarTime; };
+struct SNXSLevelConfState {
+   datetime lastBarTime;
+   int      pendingDir;       // 0=nessuna, 1=buy, -1=sell
+   double   pendingLevel;
+   int      pendingBars;      // barre consecutive di chiusura dalla parte giusta
+   bool     pendingSweep;
+   bool     pendingConfluent;
+   ENUM_TIMEFRAMES pendingTF;
+};
 SNXSLevelConfState g_levelConfState;
 
 void _nxs_pivotwick_push_row(double &arr[][NXS_PIVOTWICK_MAXLVL], bool &used[][NXS_PIVOTWICK_MAXLVL], int row, double level){
@@ -934,26 +942,60 @@ SNXSSignal NXS_Strat_LevelConfluence(){
    double tol      = InpLevelConfTouchTolATR * atr;
    double sweepTol = InpLevelConfSweepTolATR * atr;
 
-   double o1 = iOpen(g_sym, execTF, 1), c1 = iClose(g_sym, execTF, 1);
+   double c1 = iClose(g_sym, execTF, 1);
    double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
    int D1idx = NXS_PIVOTWICK_NTF - 1;  // g_pivotWickTFs[4] = PERIOD_D1
 
-   // -------- BUY: livelli pivot-low sui TF bassi (M15=0, M30=1) --------
-   for(int t = 0; t < 2 && s.dir == DIR_NONE; t++){
+   // 06/09 - OSSERVAZIONE UTENTE (con dati a supporto: sotto i 50 pip di
+   // sfondamento il prezzo torna sempre nella zona, sopra i 50 pip spesso
+   // CONTINUA per un bel po' prima di tornare, se torna) - entrare al primo
+   // tocco scommette su una reversal immediata che il piu' delle volte non
+   // arriva (WR 34%, 58% dei trade chiusi a SL nel primo test). Fix: non
+   // sparare al primo tocco, ma tenerlo "in osservazione" e sparare solo se
+   // la direzione regge per InpLevelConfConfirmBars chiusure consecutive.
+   if(g_levelConfState.pendingDir != 0){
+      bool stillValid;
+      if(g_levelConfState.pendingDir > 0)
+         stillValid = (c1 >= g_levelConfState.pendingLevel - tol);
+      else
+         stillValid = (c1 <= g_levelConfState.pendingLevel + tol);
+
+      if(!stillValid){
+         g_levelConfState.pendingDir = 0;   // invalidato: il prezzo e' tornato indietro/sfondato oltre
+      } else {
+         g_levelConfState.pendingBars++;
+         if(g_levelConfState.pendingBars >= InpLevelConfConfirmBars){
+            s.dir = (g_levelConfState.pendingDir > 0) ? DIR_BUY : DIR_SELL;
+            s.score = 55.0 + (g_levelConfState.pendingSweep ? 8.0 : 0.0) + (g_levelConfState.pendingConfluent ? 20.0 : 0.0);
+            s.reason = StringFormat("LevelConf_%s_%s_%s%s_confirmed",
+                                     s.dir==DIR_BUY ? "buy" : "sell",
+                                     EnumToString(g_levelConfState.pendingTF),
+                                     g_levelConfState.pendingSweep ? "sweep" : "touch",
+                                     g_levelConfState.pendingConfluent ? "_D1conf" : "");
+            g_levelConfState.pendingDir = 0;   // consumato
+            NXS_DefaultSLTP(s);
+            return s;
+         }
+         return s;   // ancora in conferma, nessun segnale questa barra
+      }
+   }
+
+   // nessuna conferma in corso: cerca un nuovo candidato (non spara subito,
+   // apre solo l'osservazione)
+   // -------- candidato BUY: livelli pivot-low sui TF bassi (M15=0, M30=1) --------
+   for(int t = 0; t < 2 && g_levelConfState.pendingDir == 0; t++){
       for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
          double lvl = g_pivotWickState.pivLo[t][i];
          if(lvl <= 0) continue;
 
          bool touchMode  = InpLevelConfUseTouch &&
                             (l1 >= lvl - tol && l1 <= lvl + tol) &&
-                            (c1 >= lvl - tol);   // chiusura non sotto il livello
+                            (c1 >= lvl - tol);
          bool sweepMode  = InpLevelConfUseSweep &&
-                            (l1 < lvl - sweepTol) &&        // perfora oltre tolleranza
-                            (c1 > lvl - tol);                // ma richiude dentro/sopra
+                            (l1 < lvl - sweepTol) &&
+                            (c1 > lvl - tol);
          if(!touchMode && !sweepMode) continue;
 
-         // confluenza: lo stesso livello (entro sweepTol) coincide con un
-         // pivot-low D1 memorizzato?
          bool confluent = false;
          for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
             double d1lvl = g_pivotWickState.pivLo[D1idx][j];
@@ -962,18 +1004,18 @@ SNXSSignal NXS_Strat_LevelConfluence(){
          }
          if(InpLevelConfRequireConfluence && !confluent) continue;
 
-         s.dir = DIR_BUY;
-         s.score = 55.0 + (sweepMode ? 8.0 : 0.0) + (confluent ? 20.0 : 0.0);
-         s.reason = StringFormat("LevelConf_buy_%s_%s%s",
-                                  EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]),
-                                  sweepMode ? "sweep" : "touch",
-                                  confluent ? "_D1conf" : "");
+         g_levelConfState.pendingDir = 1;
+         g_levelConfState.pendingLevel = lvl;
+         g_levelConfState.pendingBars = 1;
+         g_levelConfState.pendingSweep = sweepMode;
+         g_levelConfState.pendingConfluent = confluent;
+         g_levelConfState.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
          break;
       }
    }
-   // -------- SELL: livelli pivot-high sui TF bassi (M15=0, M30=1) --------
-   if(s.dir == DIR_NONE){
-      for(int t = 0; t < 2 && s.dir == DIR_NONE; t++){
+   // -------- candidato SELL: livelli pivot-high sui TF bassi (M15=0, M30=1) --------
+   if(g_levelConfState.pendingDir == 0){
+      for(int t = 0; t < 2 && g_levelConfState.pendingDir == 0; t++){
          for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
             double lvl = g_pivotWickState.pivHi[t][i];
             if(lvl <= 0) continue;
@@ -994,18 +1036,29 @@ SNXSSignal NXS_Strat_LevelConfluence(){
             }
             if(InpLevelConfRequireConfluence && !confluent) continue;
 
-            s.dir = DIR_SELL;
-            s.score = 55.0 + (sweepMode ? 8.0 : 0.0) + (confluent ? 20.0 : 0.0);
-            s.reason = StringFormat("LevelConf_sell_%s_%s%s",
-                                     EnumToString((ENUM_TIMEFRAMES)g_pivotWickTFs[t]),
-                                     sweepMode ? "sweep" : "touch",
-                                     confluent ? "_D1conf" : "");
+            g_levelConfState.pendingDir = -1;
+            g_levelConfState.pendingLevel = lvl;
+            g_levelConfState.pendingBars = 1;
+            g_levelConfState.pendingSweep = sweepMode;
+            g_levelConfState.pendingConfluent = confluent;
+            g_levelConfState.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
             break;
          }
       }
    }
 
-   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+   // se la soglia di conferma e' 1, spara subito (comportamento identico a prima)
+   if(g_levelConfState.pendingDir != 0 && InpLevelConfConfirmBars <= 1){
+      s.dir = (g_levelConfState.pendingDir > 0) ? DIR_BUY : DIR_SELL;
+      s.score = 55.0 + (g_levelConfState.pendingSweep ? 8.0 : 0.0) + (g_levelConfState.pendingConfluent ? 20.0 : 0.0);
+      s.reason = StringFormat("LevelConf_%s_%s_%s%s",
+                               s.dir==DIR_BUY ? "buy" : "sell",
+                               EnumToString(g_levelConfState.pendingTF),
+                               g_levelConfState.pendingSweep ? "sweep" : "touch",
+                               g_levelConfState.pendingConfluent ? "_D1conf" : "");
+      g_levelConfState.pendingDir = 0;
+      NXS_DefaultSLTP(s);
+   }
    return s;
 }
 

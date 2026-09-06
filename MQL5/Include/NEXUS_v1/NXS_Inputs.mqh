@@ -883,6 +883,12 @@ input bool     InpLevelConfUseTouch            = true;  // trigger: tocco pulito
 input bool     InpLevelConfUseSweep            = true;  // trigger: perfora oltre tolleranza poi riconquista (liquidity grab)
 input bool     InpLevelConfRequireConfluence   = false; // se true, entra SOLO sui livelli in confluenza col pivot D1 (piu' selettivo, rischio piu' alto per trade)
 input double   InpLevelConfRiskPct             = 0.5;   // rischio% per trade (tunabile via ini senza ricompilare, per il test a rischio alto su finestra corta)
+// 06/09 - osservazione dell'utente sul grafico: sotto 50 pip di sfondamento
+// il prezzo torna sempre, sopra spesso CONTINUA prima di tornare (se torna) -
+// entrare al primo tocco scommette su una reversal che il piu' delle volte
+// non arriva subito (WR34%, 58% SL). Richiede N chiusure consecutive dalla
+// parte giusta del livello prima di entrare, invece di sparare al tocco.
+input int      InpLevelConfConfirmBars         = 2;     // barre di conferma richieste prima di entrare (1 = comportamento originale, spara al tocco)
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).
