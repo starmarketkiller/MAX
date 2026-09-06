@@ -224,6 +224,11 @@ reale. **Da ripetere questa analisi più approfondita (MAE/MFE, uscite
 per motivo in $, non solo conteggio) su ogni strategia già "confermata"
 prima di considerarla definitiva.**
 Vedi [[NEXUS EA - Scoperta ESL, Costo Nascosto Trasversale a Tutti i Test (06-09)]].
+**Verifica (06/09, sera): disattivarlo PEGGIORA nettamente** ADX_RSI
+(PF2.04→1.26, net+$1676→+$573, DD equity 60%→147% del deposito, oltre
+il capitale iniziale). Le stesse 7 SELL passano da quasi-pareggio a
+0% win rate. L'ESL stava proteggendo, non togliendo trade sani —
+resta attivo. Vedi [[NEXUS EA - ESL Corretto, Disattivarlo Peggiora ADX_RSI (06-09)]].
 
 ## Regola operativa per ogni voce della coda
 

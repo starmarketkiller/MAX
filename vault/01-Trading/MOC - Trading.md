@@ -14,6 +14,13 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - ESL Corretto, Disattivarlo Peggiora ADX_RSI (06-09)]]** —
+  correzione alla nota di stamattina: disattivare l'ESL su ADX_RSI
+  peggiora nettamente (PF2.04→1.26, DD 60%→147% del deposito). Le
+  stesse 7 SELL passano da quasi-pareggio a 0% win rate senza la rete
+  di sicurezza. Un costo medio alto per categoria non implica che
+  rimuoverla migliori il risultato — sempre verificare col confronto
+  diretto, mai assumere dalla sola analisi isolata.
 - **[[NEXUS EA - MACD Elliott Neutro, e il Ritracciamento Conferma il Pattern Controintuitivo (06-09)]]** —
   Elliott su MACD è neutro (PF1.53→1.51). Verificata l'idea utente di
   "aspettare un ritracciamento prima di entrare" sul suo stesso
