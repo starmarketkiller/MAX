@@ -14,6 +14,12 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- **[[NEXUS EA - MACD Elliott Neutro, e il Ritracciamento Conferma il Pattern Controintuitivo (06-09)]]** —
+  Elliott su MACD è neutro (PF1.53→1.51). Verificata l'idea utente di
+  "aspettare un ritracciamento prima di entrare" sul suo stesso
+  esempio: MAE vincenti 81pip vs perdenti 295pip — un ritracciamento
+  profondo predice più spesso una perdita che un'occasione, secondo
+  esito che conferma lo stesso pattern trovato su ADX_RSI.
 - ⚠️ **[[NEXUS EA - Nessuna Strategia Testata Supererebbe una Prop Firm (06-09)]]** —
   verifica retroattiva su tutte le curve di balance generate oggi (8
   strategie): NESSUNA rispetta i limiti tipici di drawdown giornaliero
