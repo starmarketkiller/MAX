@@ -57,6 +57,8 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // BUY+SELL - vedi NXS_Strat_LevelConfluence in NXS_Strategies.mqh.
    if(name == "LEVEL_CONFLUENCE")  { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "LEVEL_CONFLUENCE_M5") { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }
+   if(name == "LEVEL_REACTION")      { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }
+   if(name == "LEVEL_REACTION_M5")   { slMult=1.5; tpMult=3.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    if(name == "ADX_RSI")           { slMult=1.0; tpMult=10.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // v2.5.1 - vedi commento sopra
    if(name == "BB_SQUEEZE")        { slMult=1.0; tpMult=4.5; htf=false; beR=0.0; trailATR=0.0; return true; }  // 1d POCHI_DATI PF2.92 R2.0
    // 16/07: la "PF3.46" sopra veniva dallo screening sito, ma il proxy
@@ -290,6 +292,8 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "PIVOT_WICK")        return PERIOD_M15;   // 02/09 - modalita' scalp richiesta dall'utente
    if(name == "LEVEL_CONFLUENCE")  return PERIOD_M15;   // 06/09 - stesso TF di PIVOT_WICK, riusa lo stesso pool pivot
    if(name == "LEVEL_CONFLUENCE_M5") return PERIOD_M5;  // 06/09 - stessa logica, esecuzione su M5 invece di M15 (idea utente: livelli D1/H4/H1, ingresso M15 E M5)
+   if(name == "LEVEL_REACTION")      return PERIOD_M15;
+   if(name == "LEVEL_REACTION_M5")   return PERIOD_M5;
    // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
    // lento a girare.
@@ -431,6 +435,8 @@ double NXS_Profile_Risk(const string name){
    if(name == "PIVOT_WICK")        return 0.5;   // 02/09 - nuova, mai verificata su MT5, tier cauto
    if(name == "LEVEL_CONFLUENCE")  return InpLevelConfRiskPct;   // 06/09 - tunabile via ini, vedi NXS_Inputs.mqh
    if(name == "LEVEL_CONFLUENCE_M5") return InpLevelConfRiskPct;
+   if(name == "LEVEL_REACTION")      return InpLevelReactRiskPct;
+   if(name == "LEVEL_REACTION_M5")   return InpLevelReactRiskPct;
    if(name == "PMAX")              return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "MACD_SMA200")       return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "RSI_DIV_PINE")      return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
@@ -712,6 +718,8 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "MALAYSIAN_SNR")          return true;
    if(name == "LEVEL_CONFLUENCE")       return true;   // 06/09 - nuova, prima verifica
    if(name == "LEVEL_CONFLUENCE_M5")    return true;
+   if(name == "LEVEL_REACTION")         return true;
+   if(name == "LEVEL_REACTION_M5")      return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 

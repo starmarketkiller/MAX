@@ -14,6 +14,19 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - Scoperta ESL, Costo Nascosto Trasversale a Tutti i Test (06-09)]]** —
+  analisi CSV più approfondita (MAE/MFE ricostruito da barre reali,
+  non solo PF/net) su ADX_RSI: le uscite ESL (circuit-breaker di
+  conto, 5% default) sono la categoria più dannosa, peggio degli SL
+  veri, e già presenti nel risultato "confermato positivo" del 04/09
+  senza mai essere isolate. Probabile problema trasversale per ogni
+  strategia a bersaglio largo. Test con ESL disattivato in coda.
+- **[[NEXUS EA - LEVEL_REACTION, Merge Vero di PIVOT_WICK STRUCT_REACT MALAYSIAN_SNR (06-09)]]** —
+  merge vero (non solo riuso infrastruttura) delle tre strategie
+  "reazione a livello": pivot frattali + S/R a corpo H4 + bonus zone
+  SMC, con gate nuovo sulla profondità di sfondamento (>100 pip =
+  scartato, tarato su 7402 pivot storici: reversal 96.9-99.7% sotto
+  100 pip, solo 69.1% oltre). Compilato, test in coda.
 - **[[NEXUS EA - ADX_RSI Filtro Elliott Peggiora, Restare sulla Ricetta Nuda (06-09)]]** —
   seconda conferma (dopo BOLLINGER) che i filtri Python non sono
   garantiti su MT5: Elliott peggiora ADX_RSI (PF2.04→1.65,

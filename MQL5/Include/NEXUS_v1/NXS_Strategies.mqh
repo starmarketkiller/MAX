@@ -1092,6 +1092,255 @@ SNXSSignal NXS_Strat_LevelConfluence_M5(){
    return _nxs_levelconf_core(g_levelConfState5, PERIOD_M5, "LEVEL_CONFLUENCE_M5");
 }
 
+//------------------------------------ K5b LEVEL_REACTION (06/09) --------------
+// Merge VERO di PIVOT_WICK + STRUCT_REACT + MALAYSIAN_SNR (+ l'ossatura di
+// LEVEL_CONFLUENCE), richiesto dall'utente dopo aver notato che sono la
+// stessa idea (reazione a un livello chiave) implementata quattro volte con
+// fonti diverse mai incrociate. LEVEL_CONFLUENCE (chiusa negativa il 06/09,
+// vedi vault) usava SOLO i pivot frattali H1/H4/D1. Qui due fonti indipendenti:
+//   fonte 1 = pivot frattali H1/H4/D1 (wick-based, pool condiviso con
+//             PIVOT_WICK, g_pivotWickState)
+//   fonte 2 = supporti/resistenze "a corpo" H4 stile MALAYSIAN_SNR (chiusura
+//             delle ultime 12 barre H4, non wick - un vero secondo tipo di
+//             livello, non un duplicato della fonte 1)
+// più un bonus di confluenza con le zone SMC (Order Block/FVG) di STRUCT_REACT
+// (g_reaction, stessa infrastruttura, nessuna duplicazione).
+//
+// L'ingrediente NUOVO (non presente in nessuna delle quattro originali):
+// gate sulla PROFONDITA' di sfondamento in pip. Analisi rifatta da zero il
+// 06/09 su 7402 pivot dell'intera storia GOLD M15 (2019-2026, zigzag
+// K=3xATR14, stesso script del "Gold Reversal Map"): il livello riconquista
+// il prezzo (reversal) nel 99.5% dei casi quando lo sfondamento resta sotto
+// i 50 pip, nel 78.9% tra 50 e 100 pip, ma solo nel 69.1% oltre i 100 pip -
+// oltre quella soglia non e' piu' un liquidity grab, e' probabile rottura
+// strutturale. Qui: sopra InpLevelReactMaxBreachPips (default 100) il
+// candidato viene scartato PRIMA di aprire lo stato di osservazione, non
+// solo penalizzato nello score. Tempo mediano perche' uno sfondamento >=50
+// pip richiuda: ~20h (79 barre M15) - conferma perche' la sola "conferma N
+// barre" di LEVEL_CONFLUENCE (30 min a 2 barre) non bastava da sola contro
+// un movimento che matura in ore: qui gli sfondamenti profondi (>=
+// InpLevelReactDeepBreachPips, default 50) richiedono piu' barre di conferma
+// (InpLevelReactExtraConfirmBarsDeep in piu'), non solo lo stesso numero.
+//
+// Nessun direction-lock e nessun filtro di trend "storyline" (a differenza
+// di MALAYSIAN_SNR originale) - la sessione ha gia' mostrato piu' volte che
+// un filtro di trend in un mercato fortemente direzionale maschera
+// l'esposizione al trend come "edge" (vedi vault "Il Vero Benchmark e
+// Buy&Hold"). Testata simmetrica BUY+SELL come da regola.
+struct SNXSLevelReactState {
+   datetime lastBarTime;
+   int      pendingDir;         // 0=nessuna, 1=buy, -1=sell
+   double   pendingLevel;
+   int      pendingBars;
+   int      pendingReqBars;     // dinamico: base + extra se sfondamento profondo
+   bool     pendingSweep;
+   bool     pendingConfluent;
+   double   pendingBreachPips;
+   string   pendingSource;      // "pivot" o "snr"
+   ENUM_TIMEFRAMES pendingTF;
+};
+SNXSLevelReactState g_levelReactState;    // esecuzione M15
+SNXSLevelReactState g_levelReactState5;   // esecuzione M5
+
+#define NXS_LEVELREACT_PIP_USD 0.10   // convenzione vault per GOLD (1 pip = $0.10,
+                                       // confermata dall'utente) - NON il pipSize=0.01
+                                       // del profilo simbolo usato da InpFixedBEPips
+                                       // altrove (vedi commenti in NXS_Inputs.mqh)
+
+// Confluenza multi-fonte: il livello candidato coincide (in tolleranza) con
+// UN'ALTRA fonte indipendente? Tre fonti possibili: (a) un pivot frattale di
+// un'altra TF alta nel pool PIVOT_WICK, (b) il livello SNR a corpo H4
+// (fonte diversa - wick vs close), (c) una zona SMC attiva (OB/FVG,
+// g_reaction) nella stessa direzione. Stesso principio della confluenza
+// multi-TF osservata sul grafico (un livello dove piu' fonti indipendenti
+// sono d'accordo e' storicamente piu' rispettato). excludeTfIdx=-1 quando il
+// candidato viene dalla fonte SNR (nessun indice pivot da escludere).
+bool _nxs_levelreact_confluent(int excludeTfIdx, double lvl, double tol, bool isLow, double snrHi, double snrLo){
+   int htfIdx[3]; htfIdx[0]=2; htfIdx[1]=3; htfIdx[2]=4;
+   for(int jj = 0; jj < 3; jj++){
+      if(htfIdx[jj] == excludeTfIdx) continue;
+      for(int j = 0; j < NXS_PIVOTWICK_MAXLVL; j++){
+         double olvl = isLow ? g_pivotWickState.pivLo[htfIdx[jj]][j] : g_pivotWickState.pivHi[htfIdx[jj]][j];
+         if(olvl <= 0) continue;
+         if(MathAbs(olvl - lvl) <= tol * 2) return true;   // tolleranza doppia: livelli di TF diverse raramente coincidono al pip esatto
+      }
+   }
+   if(excludeTfIdx != -1){   // il candidato viene da un pivot: controlla anche contro l'SNR
+      double snrLvl = isLow ? snrLo : snrHi;
+      if(snrLvl > 0 && MathAbs(snrLvl - lvl) <= tol * 2) return true;
+   }
+   if(InpLevelReactUseZoneBonus && g_reaction.detected){
+      int wantDir = isLow ? 1 : -1;
+      if(g_reaction.direction == wantDir && MathAbs(g_reaction.levelPrice - lvl) <= tol * 3) return true;
+   }
+   return false;
+}
+
+SNXSSignal _nxs_levelreact_core(SNXSLevelReactState &st, ENUM_TIMEFRAMES execTF, string stratName){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = stratName;
+
+   datetime curBar0 = iTime(g_sym, execTF, 0);
+   if(st.lastBarTime == curBar0) return s;
+   st.lastBarTime = curBar0;
+
+   // riusa il pool pivot condiviso con PIVOT_WICK/LEVEL_CONFLUENCE (idempotente
+   // per barra, sicuro anche se quelle strategie sono disattivate in questo run)
+   int L = InpPivotWickLookback;
+   for(int t = 0; t < NXS_PIVOTWICK_NTF; t++)
+      _nxs_pivotwick_scan_tf(t, (ENUM_TIMEFRAMES)g_pivotWickTFs[t], L);
+
+   double atr = NXS_ATRv(execTF, 1, 14);
+   if(atr <= 0) return s;
+   double tol = InpLevelReactTouchTolATR * atr;
+
+   double c1 = iClose(g_sym, execTF, 1);
+   double h1 = iHigh(g_sym, execTF, 1), l1 = iLow(g_sym, execTF, 1);
+
+   int htfIdx[3]; htfIdx[0]=2; htfIdx[1]=3; htfIdx[2]=4;   // g_pivotWickTFs = {M15,M30,H1,H4,D1}
+
+   // fonte 2: S/R "a corpo" stile Malaysian SNR - chiusura delle ultime 12 H4
+   double snrHi = 0, snrLo = 0;
+   if(InpLevelReactUseSNRLevels){
+      int idxHi = iHighest(g_sym, PERIOD_H4, MODE_CLOSE, 12, 1);
+      int idxLo = iLowest (g_sym, PERIOD_H4, MODE_CLOSE, 12, 1);
+      if(idxHi >= 0) snrHi = iClose(g_sym, PERIOD_H4, idxHi);
+      if(idxLo >= 0) snrLo = iClose(g_sym, PERIOD_H4, idxLo);
+   }
+
+   // --- 1) gestione candidato pendente ---
+   if(st.pendingDir != 0){
+      bool stillValid = (st.pendingDir > 0) ? (c1 >= st.pendingLevel - tol)
+                                             : (c1 <= st.pendingLevel + tol);
+      if(!stillValid){
+         st.pendingDir = 0;
+      } else {
+         st.pendingBars++;
+         if(st.pendingBars >= st.pendingReqBars){
+            s.dir = (st.pendingDir > 0) ? DIR_BUY : DIR_SELL;
+            // sfondamenti piccoli sono storicamente piu' affidabili (99.5%
+            // di reversal sotto i 50 pip contro 78.9% oltre) - bonus di score
+            double breachBonus = (st.pendingBreachPips < InpLevelReactDeepBreachPips) ? 10.0 : 0.0;
+            s.score = 55.0 + (st.pendingSweep ? 6.0 : 0.0) + (st.pendingConfluent ? 20.0 : 0.0) + breachBonus;
+            s.reason = StringFormat("LevelReact_%s_%s_%s_%s_%.0fpip%s",
+                                     s.dir==DIR_BUY ? "buy" : "sell",
+                                     EnumToString(st.pendingTF),
+                                     st.pendingSource,
+                                     st.pendingSweep ? "sweep" : "touch",
+                                     st.pendingBreachPips,
+                                     st.pendingConfluent ? "_conf" : "");
+            st.pendingDir = 0;
+            NXS_DefaultSLTP(s);
+            return s;
+         }
+         return s;
+      }
+   }
+
+   // --- 2) fonte 1: pivot frattali H1/H4/D1, lato BUY (pivot-low) ---
+   for(int ii = 0; ii < 3 && st.pendingDir == 0; ii++){
+      int t = htfIdx[ii];
+      for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+         double lvl = g_pivotWickState.pivLo[t][i];
+         if(lvl <= 0) continue;
+         double breachPips = (l1 < lvl) ? (lvl - l1) / NXS_LEVELREACT_PIP_USD : 0.0;
+         if(breachPips > InpLevelReactMaxBreachPips) continue;   // GATE: oltre ~100 pip il reversal storico crolla al 69%, probabile rottura strutturale
+         bool touchMode = (l1 >= lvl - tol && l1 <= lvl + tol) && (c1 >= lvl - tol);
+         bool sweepMode = (breachPips > 0) && (c1 > lvl - tol);
+         if(!touchMode && !sweepMode) continue;
+
+         bool confluent = _nxs_levelreact_confluent(t, lvl, tol, true, snrHi, snrLo);
+         if(InpLevelReactRequireConfluence && !confluent) continue;
+
+         st.pendingDir = 1; st.pendingLevel = lvl; st.pendingBars = 1;
+         st.pendingSweep = sweepMode; st.pendingConfluent = confluent;
+         st.pendingBreachPips = breachPips; st.pendingSource = "pivot";
+         st.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
+         st.pendingReqBars = InpLevelReactConfirmBars + (breachPips >= InpLevelReactDeepBreachPips ? InpLevelReactExtraConfirmBarsDeep : 0);
+         break;
+      }
+   }
+   // lato SELL (pivot-high)
+   if(st.pendingDir == 0){
+      for(int ii = 0; ii < 3 && st.pendingDir == 0; ii++){
+         int t = htfIdx[ii];
+         for(int i = 0; i < NXS_PIVOTWICK_MAXLVL; i++){
+            double lvl = g_pivotWickState.pivHi[t][i];
+            if(lvl <= 0) continue;
+            double breachPips = (h1 > lvl) ? (h1 - lvl) / NXS_LEVELREACT_PIP_USD : 0.0;
+            if(breachPips > InpLevelReactMaxBreachPips) continue;
+            bool touchMode = (h1 <= lvl + tol && h1 >= lvl - tol) && (c1 <= lvl + tol);
+            bool sweepMode = (breachPips > 0) && (c1 < lvl + tol);
+            if(!touchMode && !sweepMode) continue;
+
+            bool confluent = _nxs_levelreact_confluent(t, lvl, tol, false, snrHi, snrLo);
+            if(InpLevelReactRequireConfluence && !confluent) continue;
+
+            st.pendingDir = -1; st.pendingLevel = lvl; st.pendingBars = 1;
+            st.pendingSweep = sweepMode; st.pendingConfluent = confluent;
+            st.pendingBreachPips = breachPips; st.pendingSource = "pivot";
+            st.pendingTF = (ENUM_TIMEFRAMES)g_pivotWickTFs[t];
+            st.pendingReqBars = InpLevelReactConfirmBars + (breachPips >= InpLevelReactDeepBreachPips ? InpLevelReactExtraConfirmBarsDeep : 0);
+            break;
+         }
+      }
+   }
+
+   // --- 3) fonte 2: livelli SNR a corpo H4 (stesso schema pendente) ---
+   if(st.pendingDir == 0 && InpLevelReactUseSNRLevels){
+      if(snrLo > 0){
+         double breachPips = (l1 < snrLo) ? (snrLo - l1) / NXS_LEVELREACT_PIP_USD : 0.0;
+         bool touchMode = (l1 >= snrLo - tol && l1 <= snrLo + tol) && (c1 >= snrLo - tol);
+         bool sweepMode = (breachPips > 0) && (c1 > snrLo - tol);
+         if(breachPips <= InpLevelReactMaxBreachPips && (touchMode || sweepMode)){
+            bool confluent = _nxs_levelreact_confluent(-1, snrLo, tol, true, snrHi, snrLo);
+            if(!InpLevelReactRequireConfluence || confluent){
+               st.pendingDir = 1; st.pendingLevel = snrLo; st.pendingBars = 1;
+               st.pendingSweep = sweepMode; st.pendingConfluent = confluent;
+               st.pendingBreachPips = breachPips; st.pendingSource = "snr";
+               st.pendingTF = PERIOD_H4;
+               st.pendingReqBars = InpLevelReactConfirmBars + (breachPips >= InpLevelReactDeepBreachPips ? InpLevelReactExtraConfirmBarsDeep : 0);
+            }
+         }
+      }
+      if(st.pendingDir == 0 && snrHi > 0){
+         double breachPips = (h1 > snrHi) ? (h1 - snrHi) / NXS_LEVELREACT_PIP_USD : 0.0;
+         bool touchMode = (h1 <= snrHi + tol && h1 >= snrHi - tol) && (c1 <= snrHi + tol);
+         bool sweepMode = (breachPips > 0) && (c1 < snrHi + tol);
+         if(breachPips <= InpLevelReactMaxBreachPips && (touchMode || sweepMode)){
+            bool confluent = _nxs_levelreact_confluent(-1, snrHi, tol, false, snrHi, snrLo);
+            if(!InpLevelReactRequireConfluence || confluent){
+               st.pendingDir = -1; st.pendingLevel = snrHi; st.pendingBars = 1;
+               st.pendingSweep = sweepMode; st.pendingConfluent = confluent;
+               st.pendingBreachPips = breachPips; st.pendingSource = "snr";
+               st.pendingTF = PERIOD_H4;
+               st.pendingReqBars = InpLevelReactConfirmBars + (breachPips >= InpLevelReactDeepBreachPips ? InpLevelReactExtraConfirmBarsDeep : 0);
+            }
+         }
+      }
+   }
+
+   return s;
+}
+
+SNXSSignal NXS_Strat_LevelReaction(){
+   if(!InpStrat_LevelReaction || !NXS_SelectorAllows(52)){
+      SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_REACTION"; return s;
+   }
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   if(execTF != PERIOD_M15){ SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_REACTION"; return s; }
+   return _nxs_levelreact_core(g_levelReactState, PERIOD_M15, "LEVEL_REACTION");
+}
+
+// gemella su M5, stesso schema di LEVEL_CONFLUENCE_M5 - selettore vero 53.
+SNXSSignal NXS_Strat_LevelReaction_M5(){
+   if(!InpStrat_LevelReactionM5 || !NXS_SelectorAllows(53)){
+      SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_REACTION_M5"; return s;
+   }
+   ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   if(execTF != PERIOD_M5){ SNXSSignal s; ZeroMemory(s); s.strat = STRAT_STRUCT_REACT; s.stratName = "LEVEL_REACTION_M5"; return s; }
+   return _nxs_levelreact_core(g_levelReactState5, PERIOD_M5, "LEVEL_REACTION_M5");
+}
+
 //------------------------------------ K5 TSI Momentum (simplified RSI/EMA proxy)
 // Riportata alla logica del sito: RSI>52 + prezzo sopra EMA20 con EMA20 in
 // salita (short speculare). La vecchia usava EMA9/21 + RSI 55/45 -> divergeva

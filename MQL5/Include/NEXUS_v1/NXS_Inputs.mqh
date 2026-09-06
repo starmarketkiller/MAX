@@ -890,6 +890,25 @@ input double   InpLevelConfRiskPct             = 0.5;   // rischio% per trade (t
 // non arriva subito (WR34%, 58% SL). Richiede N chiusure consecutive dalla
 // parte giusta del livello prima di entrare, invece di sparare al tocco.
 input int      InpLevelConfConfirmBars         = 2;     // barre di conferma richieste prima di entrare (1 = comportamento originale, spara al tocco)
+// 06/09 - LEVEL_REACTION: merge VERO di PIVOT_WICK+STRUCT_REACT+MALAYSIAN_SNR
+// (a differenza di LEVEL_CONFLUENCE che usava solo i pivot frattali) - due
+// fonti di livello indipendenti (pivot H1/H4/D1 + S/R a corpo H4 stile
+// Malaysian) e un gate nuovo sulla profondita' di sfondamento in pip, tarato
+// su un'analisi fresca del 06/09 (7402 pivot, storia intera GOLD M15): sotto
+// 50 pip il reversal storico e' 99.5%, tra 50-100 pip 78.9%, oltre 100 pip
+// solo 69.1% (probabile rottura strutturale, non piu' liquidity grab). Vedi
+// NXS_Strat_LevelReaction in NXS_Strategies.mqh. Selettore vero 52 (M15) / 53 (M5).
+input bool     InpStrat_LevelReaction          = false;
+input bool     InpStrat_LevelReactionM5        = false;
+input double   InpLevelReactTouchTolATR        = 0.25;  // tolleranza tocco/riconquista, in ATR
+input double   InpLevelReactMaxBreachPips      = 100.0; // GATE: oltre questa profondita' di sfondamento, nessun segnale (reversal storico crolla al 69%)
+input double   InpLevelReactDeepBreachPips     = 50.0;  // sopra questa soglia servono piu' barre di conferma (reversal 78.9% invece di 99.5%, richiude in mediana ~20h)
+input int      InpLevelReactConfirmBars        = 2;     // barre di conferma base
+input int      InpLevelReactExtraConfirmBarsDeep = 2;   // barre extra richieste se lo sfondamento e' "profondo" (>= InpLevelReactDeepBreachPips)
+input bool     InpLevelReactRequireConfluence  = false; // se true, entra SOLO su livelli dove 2+ fonti indipendenti sono d'accordo
+input bool     InpLevelReactUseSNRLevels       = true;  // includi i livelli a corpo H4 stile Malaysian SNR come seconda fonte
+input bool     InpLevelReactUseZoneBonus       = true;  // bonus di confluenza se il livello coincide con una zona SMC attiva (OB/FVG, STRUCT_REACT)
+input double   InpLevelReactRiskPct            = 0.5;   // rischio% per trade
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

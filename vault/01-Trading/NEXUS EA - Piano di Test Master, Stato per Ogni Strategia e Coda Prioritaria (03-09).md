@@ -198,6 +198,33 @@ piccolo (73 trade, 3 mesi) era un artefatto statistico: su 547 trade
 (3 anni) torna negativo (-$277). **Strategia chiusa**, spostata in
 categoria 3. Vedi [[NEXUS EA - LEVEL_CONFLUENCE Chiusura, il Quasi Pareggio BUY Non Regge su Campione Ampio (06-09)]].
 
+### 6. Strategia nuova creata per merge vero (06/09): LEVEL_REACTION
+
+Successore di LEVEL_CONFLUENCE (che usava SOLO i pivot frattali H1/H4/D1,
+non era un merge vero). Due fonti indipendenti: pivot frattali
+H1/H4/D1 (PIVOT_WICK) + S/R a corpo H4 (MALAYSIAN_SNR), bonus di
+confluenza con zone SMC (STRUCT_REACT). Ingrediente nuovo: gate sulla
+profondità di sfondamento in pip (>100 pip = nessun segnale, tarato su
+un'analisi fresca di 7402 pivot che mostra reversal 96.9-99.7% sotto i
+100 pip e solo 69.1% oltre). Compilato pulito, test nudo in coda.
+Vedi [[NEXUS EA - LEVEL_REACTION, Merge Vero di PIVOT_WICK STRUCT_REACT MALAYSIAN_SNR (06-09)]].
+
+### 7. Scoperta trasversale (06/09): l'ESL taglia le strategie a bersaglio largo
+
+Analisi CSV più profonda (MAE/MFE ricostruito da barre reali, non solo
+PF/net aggregato) su ADX_RSI ha rivelato che le uscite "dd" (Equity
+Stop Loss a livello di conto, `InpUseESL=true` di default, soglia 5%
+del balance) sono la categoria di uscita più dannosa — peggio degli SL
+veri (net -$594/-$1127 vs -$865/-$598 sui due test ADX_RSI). Era già
+presente nel risultato "confermato positivo" del 04/09, mai isolato
+prima. Probabile problema per qualunque strategia a bersaglio largo
+(TP multiplo alto, hold lungo) testata finora con impostazioni di
+default. Test con `InpUseESL=false` in coda per verificare l'impatto
+reale. **Da ripetere questa analisi più approfondita (MAE/MFE, uscite
+per motivo in $, non solo conteggio) su ogni strategia già "confermata"
+prima di considerarla definitiva.**
+Vedi [[NEXUS EA - Scoperta ESL, Costo Nascosto Trasversale a Tutti i Test (06-09)]].
+
 ## Regola operativa per ogni voce della coda
 
 Per ognuna, seguire §P2.4 Master Roadmap: (1) trigger nudo senza

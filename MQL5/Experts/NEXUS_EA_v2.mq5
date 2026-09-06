@@ -520,6 +520,15 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // M15 e M5" (#51)
    if(InpStrat_LevelConfluenceM5 && NXS_SelectorAllows(51)) out[n++] = NXS_Strat_LevelConfluence_M5();
 
+   // 06/09 — LEVEL_REACTION: merge VERO di PIVOT_WICK+STRUCT_REACT+MALAYSIAN_SNR
+   // (due fonti di livello indipendenti + gate sulla profondita' di
+   // sfondamento in pip tarato sull'analisi fresca del grafico), idea utente
+   // dopo aver notato che sono la stessa idea implementata quattro volte (#52)
+   if(InpStrat_LevelReaction && NXS_SelectorAllows(52)) out[n++] = NXS_Strat_LevelReaction();
+
+   // 06/09 — LEVEL_REACTION gemella su M5 (#53)
+   if(InpStrat_LevelReactionM5 && NXS_SelectorAllows(53)) out[n++] = NXS_Strat_LevelReaction_M5();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
