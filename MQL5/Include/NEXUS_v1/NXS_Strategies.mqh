@@ -910,6 +910,15 @@ SNXSSignal NXS_Strat_LevelConfluence(){
    if(!InpStrat_LevelConfluence || !NXS_SelectorAllows(50)) return s;
 
    ENUM_TIMEFRAMES execTF = NXS_EffTF();
+   // 06/09 - BUG TROVATO: senza questo guardiano la funzione veniva valutata
+   // durante OGNI passaggio del multi-TF dispatcher (H1/H4/D1/M30), non solo
+   // quello M15 del suo profilo - confrontava barre di TF piu' larghi con
+   // tolleranze in scala M15, producendo migliaia di falsi tocchi (3824 in
+   // 18 giorni contro le poche decine attese). Il filtro a valle in
+   // NXS_CollectAllSignals scarta i segnali fuori dal TF di profilo, ma
+   // solo DOPO che il "tocco" e' gia' stato valutato in modo scorretto sul
+   // TF sbagliato - va bloccato qui, non dopo.
+   if(execTF != PERIOD_M15) return s;
    datetime curBar0 = iTime(g_sym, execTF, 0);
    if(g_levelConfState.lastBarTime == curBar0) return s;
    g_levelConfState.lastBarTime = curBar0;

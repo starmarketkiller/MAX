@@ -34,6 +34,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="IFVG" ||
           id=="JUDAS_SWING" ||
           id=="LDN_REVERSAL" ||
+          id=="LEVEL_CONFLUENCE" ||
           id=="LIQ_SWEEP" ||
           id=="LIQ_VOID" ||
           id=="LONDON_BO" ||
