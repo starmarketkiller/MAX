@@ -14,6 +14,10 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ❌ **[[NEXUS EA - LEVEL_REACTION 3 Anni, il Quasi Pareggio Non Regge (Stesso Pattern di LEVEL_CONFLUENCE) (07-09)]]** —
+  su 1833 trade (3 anni) il gap dalla soglia di pareggio passa da
+  -1.1pp (3 mesi) a -4.2pp — stesso pattern di LEVEL_CONFLUENCE, il
+  quasi-pareggio su campione piccolo non regge. Strategia chiusa.
 - ⚠️ **[[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]]** —
   attivate le prime vere protezioni di conto (DailyDD5%+Ruin5%Flatten):
   DD invariato (15.5%) perché il drawdown si accumula su più giorni,
