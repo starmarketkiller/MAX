@@ -98,5 +98,20 @@ Una volta applicato il fix e ricompilato, rilanciare come
 `step6` lo stesso identico setup di step4/step5 (voto75 + regime fix +
 `InpRiskProfile=0`) — sarà quello il vero primo test.
 
+## Fix applicato (07/09, 21:47)
+
+Confermato dall'utente. Cambiata la riga in
+`input int InpRiskProfile = 2;`, ricompilato `NEXUS_EA_v2.mq5` nel
+terminale live (`0 errors, 2 warnings` — i due warning sono preesistenti,
+non collegati a questa modifica). Junction `Include\NEXUS_v1` verificata
+attiva su entrambi i terminali prima della modifica, nessuna copia
+manuale necessaria oltre alla ricompilazione.
+
+Lanciato `nexus_fvgcont_step6_regimescore75_riskprofile0_fixed_3y`
+(PID 9008, avviato 21:50:53) — stesso setup di step5, ma stavolta
+`InpRiskProfile=0` dovrebbe davvero applicarsi. Durata attesa ~3h (come
+step5, 18:11→21:12). Questo sarà il primo test genuino di voto75 +
+regime fix.
+
 ## Collegamenti
 [[NEXUS EA - Bug InpRiskProfile, il Preset BALANCED Sovrascriveva Silenziosamente i Parametri Custom (07-09)]] · [[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]] · [[NEXUS EA - Piano di Test Master, Stato per Ogni Strategia e Coda Prioritaria (03-09)]] · [[MOC - Trading]]

@@ -39,7 +39,7 @@ ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
 
 // input group "=== PRESET / SCALING ==="
 // 0=Custom, 1=Conservative, 2=Balanced, 3=Aggressive, 4=MVP_v206 (5 SMC MVP)
-int      InpRiskProfile      = 2;
+input int InpRiskProfile      = 2;
 // 25/08 - disattivato di default su richiesta esplicita dell'utente
 // (account demo 318337486, balance<1000): con true il rischio del
 // preset BALANCED (1.0%) veniva dimezzato a 0.5% effettivo, troppo
