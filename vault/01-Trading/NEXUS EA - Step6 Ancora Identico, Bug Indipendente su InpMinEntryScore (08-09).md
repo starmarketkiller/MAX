@@ -103,5 +103,18 @@ Applicare il fix + ricompilare + rilanciare come `step7` lo stesso
 identico setup — sarà il quarto tentativo e, se non emergono altri
 cancelli dello stesso tipo, il primo vero test di voto75+regime-fix.
 
+## Fix applicato (08/09, 01:33)
+
+Confermato dall'utente. Aggiunta `input` a `InpMinEntryScore`
+(`NXS_Inputs.mqh:155`), ricompilato — `0 errors, 2 warnings`
+(preesistenti). Lanciato `nexus_fvgcont_step7_regimescore75_minscorefixed_3y`
+(PID reale 19584, avviato 01:34:27) — stesso setup di step4/5/6.
+`InpRuinDailyLossPct` NON toccato in questo giro (non rilevante per
+questo test, i .ini FVG_CONT non usano il modulo Ruin). ETA ~04:34
+(~3h). Verifica definitiva rimandata a fine test: se il commento dei
+trade FVG_CONT mostra ancora solo 70.0, la soglia non si è mossa
+davvero; se compaiono altri punteggi (o zero trade), il fix ha
+funzionato.
+
 ## Collegamenti
 [[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]] · [[NEXUS EA - Bug InpRiskProfile, il Preset BALANCED Sovrascriveva Silenziosamente i Parametri Custom (07-09)]] · [[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]] · [[MOC - Trading]]

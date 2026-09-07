@@ -152,7 +152,7 @@ input double   InpSRisk_ScaleStep      = 1.3;
 // default sopra servono 9 perdite consecutive sulla stessa strategia per
 // arrivare al tetto (1.3^3 = 2.197, cappato a 2.0).
 input double   InpSRisk_MaxMult        = 2.0;
-double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
+input double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;
 
