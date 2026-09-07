@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🐛 **[[NEXUS EA - Bug InpRiskProfile, il Preset BALANCED Sovrascriveva Silenziosamente i Parametri Custom (07-09)]]** —
+  `InpRiskProfile` default=2 (BALANCED) sovrascriveva silenziosamente
+  risk%/maxLot/maxTrades/maxConcurrent/DD%/minScore in OGNI test che
+  non impostava `InpRiskProfile=0`, indipendentemente da cosa dicesse
+  l'.ini. Trovato perché step4 (voto-75+regime fix) era identico al
+  centesimo a step2 (voto-50) — confermato dal log EA stesso. Solo il
+  test del voto-75 è invalidato e da rifare; le altre conclusioni
+  (protezione giornaliera insufficiente) restano valide, anzi rinforzate.
 - ❌ **[[NEXUS EA - LEVEL_REACTION 3 Anni, il Quasi Pareggio Non Regge (Stesso Pattern di LEVEL_CONFLUENCE) (07-09)]]** —
   su 1833 trade (3 anni) il gap dalla soglia di pareggio passa da
   -1.1pp (3 mesi) a -4.2pp — stesso pattern di LEVEL_CONFLUENCE, il
