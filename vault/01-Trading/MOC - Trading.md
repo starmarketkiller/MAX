@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🐛 **[[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]]** —
+  il retest con `InpRiskProfile=0` nell'.ini è uscito di nuovo identico
+  al centesimo a step2/step4 (stesso net, PF, DD, trade-per-trade). Causa
+  reale: `InpRiskProfile` in `NXS_Inputs.mqh:42` non è dichiarato
+  `input` — l'.ini del Tester non può mai impostarlo, checché ne dica.
+  Voto-75+regime-fix **ancora mai testato**. Serve un fix di codice
+  (aggiungere `input`) + ricompilazione, non ancora applicato — in
+  attesa di conferma.
 - 🐛 **[[NEXUS EA - Bug InpRiskProfile, il Preset BALANCED Sovrascriveva Silenziosamente i Parametri Custom (07-09)]]** —
   `InpRiskProfile` default=2 (BALANCED) sovrascriveva silenziosamente
   risk%/maxLot/maxTrades/maxConcurrent/DD%/minScore in OGNI test che

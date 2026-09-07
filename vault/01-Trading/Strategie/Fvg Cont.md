@@ -40,6 +40,20 @@ totali** (il campione più grande del Blocco 2), ma solo 2 dei 10 anni OK,
 gli altri CRITICA/DEBOLE — un campione ampio che smentisce stabilmente,
 non un caso di dati insufficienti.
 
+## Aggiornamento 07/09 — batteria prop-firm su 3 anni (167-168 trade, H4)
+Config reale (SL1.0×ATR/TP4.5×ATR): net 3y ~+$2635-2655 (balance
+~$3635-3655 da $1000), PF ~1.92, DD balance 12.4-15.5%, **DD equity
+22.7-22.8%** — supera comunque i limiti prop-firm standard (giorno -5%
+FTMO-style violato 1 volta, DD totale 10% superato). BE veloce +
+SLReclaim (step3) alza il net a $2893 ma il DD esplode a 36.2% per un
+bug (SLReclaim bypassa le protezioni di conto). Il test del voto-entrata
+75 + fix regime multi-TF (step4, poi step5) **non è mai realmente
+girato**: `InpRiskProfile` non è un vero input MQL5, quindi l'.ini non
+può mai cambiarlo dal default BALANCED — dettagli in
+[[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]].
+Serve il fix di codice + ricompilazione prima di poter dire alcunché sul
+voto75.
+
 ## Test A/B 16/07 (Blocco 2): il sito mostra un edge che MT5 reale non conferma — pattern MACD-like
 Testata la config reale del profilo (SL1.0/TP4.5, HTF ON) su più timeframe
 sul motore sito — dove FVG_CONT è codice reale, non proxy:
