@@ -35,9 +35,22 @@ double NXS_FinalScore(SNXSSignal &sig, SNXSAMD &amd, SNXSSweep &sw){
    if(sig.dir == DIR_SELL && MathAbs(now - pdH) <= prox) score += 4;
 
    // Regime modifier
-   if(g_regime == REGIME_STRONG_TREND) score += 4;
-   if(g_regime == REGIME_CHOPPY)       score -= 6;
-   if(g_regime == REGIME_VOLATILE)     score -= 3;
+   // 07/09 - BUG TROVATO E CORRETTO: qui si leggeva g_regime, calcolato UNA
+   // SOLA VOLTA per tick in cima a OnTick sull'ADX di M15 (InpTFEntry), MAI
+   // aggiornato per il TF nativo della strategia in valutazione - stesso bug
+   // gia' documentato il 02/09 in NXS_SignalQuality.mqh per il percorso
+   // "istituzionale" (mai risolto qui, sul percorso PROFILI usato da OGNI
+   // test di questa sessione - InpUseStrategyProfiles=true). Risultato:
+   // il modificatore regime nello score finale ha sempre giudicato H4/D1
+   // con l'ADX di M15, non il proprio. Riusa NXS_DetectRegimeTF() (gia'
+   // scritta e corretta il 02/09, mai collegata qui) sul TF proprio della
+   // strategia via NXS_Profile_TF().
+   ENUM_NXS_REGIME regimeHere = g_regime;
+   if(InpUseStrategyProfiles && StringLen(sig.stratName) > 0)
+      regimeHere = NXS_DetectRegimeTF(NXS_Profile_TF(sig.stratName));
+   if(regimeHere == REGIME_STRONG_TREND) score += 4;
+   if(regimeHere == REGIME_CHOPPY)       score -= 6;
+   if(regimeHere == REGIME_VOLATILE)     score -= 3;
 
    // Reaction Engine modifier (Structure addendum)
    int sigDirInt = (sig.dir == DIR_BUY) ? 1 : (sig.dir == DIR_SELL ? -1 : 0);
