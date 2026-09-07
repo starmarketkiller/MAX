@@ -206,8 +206,15 @@ H1/H4/D1 (PIVOT_WICK) + S/R a corpo H4 (MALAYSIAN_SNR), bonus di
 confluenza con zone SMC (STRUCT_REACT). Ingrediente nuovo: gate sulla
 profondità di sfondamento in pip (>100 pip = nessun segnale, tarato su
 un'analisi fresca di 7402 pivot che mostra reversal 96.9-99.7% sotto i
-100 pip e solo 69.1% oltre). Compilato pulito, test nudo in coda.
+100 pip e solo 69.1% oltre). Compilato pulito.
 Vedi [[NEXUS EA - LEVEL_REACTION, Merge Vero di PIVOT_WICK STRUCT_REACT MALAYSIAN_SNR (06-09)]].
+**Primo test vero (07/09)**: nudo M15, 3 mesi, PF0.95, net-$299,
+WR39.9%, soglia di pareggio 41.0% — gap solo -1.1pp, il migliore
+della famiglia "reazione a livello" testata in sessione
+(LEVEL_CONFLUENCE arrivava solo a -3.2pp col miglior filtro). BUY/SELL
+bilanciati (SELL quasi esattamente in pareggio). Ancora da verificare
+su 3 anni prima di trarre conclusioni (precedente: il quasi-pareggio
+di LEVEL_CONFLUENCE su piccolo campione non ha retto). Vedi [[NEXUS EA - LEVEL_REACTION Primo Risultato, il Migliore della Famiglia Livelli (07-09)]].
 
 ### 7. Scoperta trasversale (06/09): l'ESL taglia le strategie a bersaglio largo
 
@@ -229,6 +236,27 @@ Vedi [[NEXUS EA - Scoperta ESL, Costo Nascosto Trasversale a Tutti i Test (06-09
 il capitale iniziale). Le stesse 7 SELL passano da quasi-pareggio a
 0% win rate. L'ESL stava proteggendo, non togliendo trade sani —
 resta attivo. Vedi [[NEXUS EA - ESL Corretto, Disattivarlo Peggiora ADX_RSI (06-09)]].
+
+### 8. FVG_CONT resa prop-compliant (07/09): protezione giornaliera insufficiente, bug in SLReclaim
+
+Prime protezioni reali di conto attivate su un test (`InpMaxDailyDDPct=5.0`
++ `InpRuinDailyLossPct=5.0`+`Flatten`, entrambe già nel codice, mai
+attivate prima). Risultato quasi identico al baseline non protetto
+(DD 15.5% invariato, 1 violazione invariata) — non un errore: il
+drawdown di FVG_CONT si accumula su una serie di 4 giorni consecutivi
+in perdita, ognuno sotto la soglia giornaliera del 5%, quindi un
+controllo che si azzera ogni giorno non può fermarlo per costruzione.
+**Manca ancora una vera protezione trailing dal picco di equity**
+(max total drawdown, non giornaliero) — da costruire.
+
+Aggiungendo BE veloce (0.75R) + rientro dopo riconquista dello stop
+(`InpUseSLReclaim=true`) il netto migliora (+$2894 vs +$2635) ma la
+compatibilità prop-firm peggiora nettamente (DD 15.5%→36.2%, 1→37
+violazioni giornaliere) — **bug trovato**: `NXS_ManageSLReclaim()`
+apre gli ordini direttamente (`NXS_SafeBuy`/`NXS_SafeSell`) senza mai
+passare da `NXS_CheckProtections()`, quindi i rientri ignorano
+completamente il limite giornaliero e il congelamento Ruin. Fix
+identificato, non ancora applicato. Vedi [[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]].
 
 ## Regola operativa per ogni voce della coda
 

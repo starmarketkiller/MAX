@@ -14,6 +14,17 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ⚠️ **[[NEXUS EA - FVG_CONT Prop-Compliant, Protezione Giornaliera Non Basta e Bug SLReclaim (07-09)]]** —
+  attivate le prime vere protezioni di conto (DailyDD5%+Ruin5%Flatten):
+  DD invariato (15.5%) perché il drawdown si accumula su più giorni,
+  non in uno — manca una protezione trailing dal picco di equity.
+  Trovato anche un bug reale: SLReclaim bypassa completamente le
+  protezioni di conto (37 violazioni giornaliere invece di 1).
+- **[[NEXUS EA - LEVEL_REACTION Primo Risultato, il Migliore della Famiglia Livelli (07-09)]]** —
+  primo test vero della nuova strategia unificata: PF0.95, gap dalla
+  soglia di pareggio solo -1.1pp — il migliore di tutta la famiglia
+  "reazione a livello" testata in sessione. BUY/SELL bilanciati.
+  Ancora da confermare su campione più ampio.
 - ⚠️ **[[NEXUS EA - ESL Corretto, Disattivarlo Peggiora ADX_RSI (06-09)]]** —
   correzione alla nota di stamattina: disattivare l'ESL su ADX_RSI
   peggiora nettamente (PF2.04→1.26, DD 60%→147% del deposito). Le

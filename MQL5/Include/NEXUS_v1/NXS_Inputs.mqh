@@ -909,6 +909,13 @@ input bool     InpLevelReactRequireConfluence  = false; // se true, entra SOLO s
 input bool     InpLevelReactUseSNRLevels       = true;  // includi i livelli a corpo H4 stile Malaysian SNR come seconda fonte
 input bool     InpLevelReactUseZoneBonus       = true;  // bonus di confluenza se il livello coincide con una zona SMC attiva (OB/FVG, STRUCT_REACT)
 input double   InpLevelReactRiskPct            = 0.5;   // rischio% per trade
+// 06/09 - beR di FVG_CONT reso variabile via input (era 1.5 fisso nel
+// profilo, gia' ottimizzato il 12/08: OOS PF1.55->1.74, DD13.41%->7.06%).
+// Default 1.5 per non cambiare il comportamento di nessun test esistente -
+// override via ini per testare un breakeven piu' veloce (idea utente:
+// "essere veloci nel mettere a be"), da confrontare col default prima di
+// sostituirlo definitivamente.
+input double   InpFvgContBeR                   = 1.5;
 // 28/08 - portata da uno script Pine Script TradingView pubblico ("PMax
 // Explorer", KivancOzbilgic): stop-and-reverse ATR-adattivo, candidato a
 // sostituire/affiancare SAR (risultato negativo, PF0.92, sul motore reale).

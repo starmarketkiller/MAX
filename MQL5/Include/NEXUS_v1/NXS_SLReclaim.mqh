@@ -99,6 +99,21 @@ void NXS_ManageSLReclaim(){
    bool confirmed = (g_slrDir == 1) ? (closeM15 > g_slrLevel) : (closeM15 < g_slrLevel);
    if(!confirmed) return;
 
+   // 07/09 - BUG TROVATO: fino a qui la riapertura chiamava NXS_SafeBuy/
+   // NXS_SafeSell direttamente, bypassando NXS_CheckProtections() - il gate
+   // usato da OGNI altro percorso di apertura (limite giornaliero, congelamento
+   // Ruin, margine). In pratica SLReclaim poteva riaprire posizioni anche a
+   // conto gia' congelato o oltre il limite di drawdown del giorno (osservato:
+   // 37 violazioni della soglia -5%/giorno invece di 1, con le stesse
+   // protezioni attive - vedi vault "FVG_CONT Prop-Compliant"). Resta comunque
+   // "piu' sicuro di un grid" quanto a sizing (nessuna media in perdita), ma
+   // non rispettava le protezioni di conto - ora le rispetta come chiunque altro.
+   string protReason = "";
+   if(!NXS_CheckProtections(protReason)){
+      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata da protezione conto (%s)", protReason);
+      return;
+   }
+
    double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
    // stop/target nativi ricalcolati come un ingresso SAR normale (1xATR/6xATR

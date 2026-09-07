@@ -96,7 +96,7 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // con l'architettura attuale): OOS PF1.55->1.74, DD13.41%->7.06% (quasi
    // dimezzato), walk-forward 1.36/1.21/0.96/1.72/1.67 - vedi vault "NEXUS
    // EA - Ottimizzazione Uscite Strutturali CRT e FVG_CONT (12-08)".
-   if(name == "FVG_CONT")          { slMult=1.5; tpMult=6.0; htf=true ; beR=1.5; trailATR=0.0; return true; }  // 4h - vedi nota 12/08 sopra
+   if(name == "FVG_CONT")          { slMult=1.5; tpMult=6.0; htf=true ; beR=InpFvgContBeR; trailATR=0.0; return true; }  // 4h - vedi nota 12/08 sopra. 06/09: beR reso variabile (era 1.5 fisso, valore gia' ottimizzato il 12/08) per testare "BE piu' veloce" senza perdere il confronto - vedi InpFvgContBeR in NXS_Inputs.mqh
    if(name == "FVG_MIT")           { slMult=1.5; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF2.04 R2.0
    // 13/08 - FVG_MIT_WINDOW: slMult/tpMult restano inerti come per CRT (SL/TP
    // sono calcolati dal registro zone in NXS_Strat_FVG_Mitigation_Window, non
