@@ -54,6 +54,15 @@ può mai cambiarlo dal default BALANCED — dettagli in
 Serve il fix di codice + ricompilazione prima di poter dire alcunché sul
 voto75.
 
+**Aggiornamento 08/09** — fix di `InpRiskProfile` applicato e
+ricompilato, ma step6 è uscito di nuovo identico al centesimo:
+`InpMinEntryScore` è un secondo bug indipendente (non è `input`,
+`NXS_Inputs.mqh:155`). Prova diretta: ogni trade FVG_CONT scora sempre
+70.0 nel commento, quindi con soglia reale 75 il risultato sarebbe stato
+zero trade, non 168 identici. Voto75 ancora mai testato dopo 3
+tentativi (step4/5/6). Dettagli in
+[[NEXUS EA - Step6 Ancora Identico, Bug Indipendente su InpMinEntryScore (08-09)]].
+
 ## Test A/B 16/07 (Blocco 2): il sito mostra un edge che MT5 reale non conferma — pattern MACD-like
 Testata la config reale del profilo (SL1.0/TP4.5, HTF ON) su più timeframe
 sul motore sito — dove FVG_CONT è codice reale, non proxy:

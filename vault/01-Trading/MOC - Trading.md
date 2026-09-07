@@ -14,6 +14,16 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🐛 **[[NEXUS EA - Step6 Ancora Identico, Bug Indipendente su InpMinEntryScore (08-09)]]** —
+  dopo il fix di `InpRiskProfile`, step6 è uscito di nuovo identico al
+  centesimo a step2/4/5. Secondo bug indipendente della stessa classe:
+  `InpMinEntryScore` non è `input`, l'.ini non può mai impostarlo.
+  Prova diretta nei dati: ogni trade FVG_CONT scora sempre 70.0 — con
+  soglia reale 75 sarebbero stati zero trade, non 168 identici. Audit
+  esteso a tutta la cartella MQL5: altre 4 variabili della stessa
+  classe trovate (`InpRuinDailyLossPct` resta al 15% invece del 5%
+  richiesto nei test prop-compliant — le altre 3 innocue). Fix
+  identificato, non applicato, in attesa di conferma.
 - 🐛 **[[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]]** —
   il retest con `InpRiskProfile=0` nell'.ini è uscito di nuovo identico
   al centesimo a step2/step4 (stesso net, PF, DD, trade-per-trade). Causa
