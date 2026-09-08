@@ -67,18 +67,37 @@ void NXS_ManageProfitReclaim(){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK), bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
          double px  = (g_prcReentryDir == 1) ? bid : ask;   // prezzo di mercato dal lato rilevante
          if(MathAbs(px - g_prcReentryEntryPx) <= tol){
+            // 08/09 - AUDIT ESTERNO (A2): questo rientro chiamava NXS_SafeBuy/
+            // NXS_SafeSell DIRETTAMENTE, senza NXS_CommonExposurePreflight()
+            // ne' NXS_CheckProtections() - stesso identico bug appena corretto
+            // in NXS_SLReclaim.mqh, ma sul modulo gemello, dimenticato. Un
+            // rientro poteva riaprire anche a conto congelato (Ruin/DailyDD),
+            // esattamente il pattern delle "37 violazioni invece di 1" gia'
+            // documentato per SLReclaim. Instradato sullo stesso gate pieno.
             string cmt = InpComment + "|SAR|PROFITRECLAIM|" + EnumToString(PERIOD_H4);
             double atrH4 = atr;
-            bool ok;
-            if(g_prcReentryDir == 1){
-               double sl = NormPrice(ask - atrH4 * 1.0);
-               ok = NXS_SafeBuy(g_prcReentryLot, g_sym, sl, 0, cmt);
+            ENUM_NXS_DIR dir      = (g_prcReentryDir == 1) ? DIR_BUY : DIR_SELL;
+            ENUM_ORDER_TYPE otype = (g_prcReentryDir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+            double price = (g_prcReentryDir == 1) ? ask : bid;
+            double sl = (g_prcReentryDir == 1) ? NormPrice(ask - atrH4 * 1.0)
+                                                : NormPrice(bid + atrH4 * 1.0);
+            double tp = 0;   // nessun TP fisso su questo rientro, come nell'originale
+
+            string pfReason = "";
+            if(!NXS_CommonExposurePreflight("PROFITRECLAIM", "SAR", dir, g_prcReentryLot,
+                                            otype, price, sl, tp, pfReason)){
+               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato dal gate comune (%s)", pfReason);
             } else {
-               double sl = NormPrice(bid + atrH4 * 1.0);
-               ok = NXS_SafeSell(g_prcReentryLot, g_sym, sl, 0, cmt);
+               // 08/09 - AUDIT ESTERNO (A4): stesso bug del magic number
+               // stantio di SLReclaim - taggare esplicitamente come rientro
+               // core, non ereditare il magic dell'ultimo modulo che ha aperto.
+               NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
+               bool ok;
+               if(g_prcReentryDir == 1) ok = NXS_SafeBuy(g_prcReentryLot, g_sym, sl, tp, cmt);
+               else                     ok = NXS_SafeSell(g_prcReentryLot, g_sym, sl, tp, cmt);
+               PrintFormat("[NEXUS PROFITRECLAIM] rientro vicino a %.2f (tol=%.2f) dir=%d lot=%.2f esito=%s",
+                           g_prcReentryEntryPx, tol, g_prcReentryDir, g_prcReentryLot, (ok?"OK":"FALLITA"));
             }
-            PrintFormat("[NEXUS PROFITRECLAIM] rientro vicino a %.2f (tol=%.2f) dir=%d lot=%.2f esito=%s",
-                        g_prcReentryEntryPx, tol, g_prcReentryDir, g_prcReentryLot, (ok?"OK":"FALLITA"));
             g_prcAwaitingReentry = false;
          }
       }

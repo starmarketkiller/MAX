@@ -105,30 +105,56 @@ void NXS_ManageSLReclaim(){
    // Ruin, margine). In pratica SLReclaim poteva riaprire posizioni anche a
    // conto gia' congelato o oltre il limite di drawdown del giorno (osservato:
    // 37 violazioni della soglia -5%/giorno invece di 1, con le stesse
-   // protezioni attive - vedi vault "FVG_CONT Prop-Compliant"). Resta comunque
-   // "piu' sicuro di un grid" quanto a sizing (nessuna media in perdita), ma
-   // non rispettava le protezioni di conto - ora le rispetta come chiunque altro.
-   string protReason = "";
-   if(!NXS_CheckProtections(protReason)){
-      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata da protezione conto (%s)", protReason);
-      return;
-   }
-
+   // protezioni attive - vedi vault "FVG_CONT Prop-Compliant").
+   //
+   // 08/09 - AUDIT ESTERNO (A3): NXS_CheckProtections() copre solo DD
+   // giornaliero/margine/max-trade/anti-revenge/anti-bleed/pausa EA. Ogni
+   // altro percorso di apertura passa invece per
+   // NXS_CommonExposurePreflight() (licenza, ruin freeze, protezioni,
+   // stop obbligatorio, stato/indicatori degradati, RiskShield per
+   // strategia, cap esposizione direzionale, margine proiettato, preflight
+   // broker spread/distanza minima stop) - SLReclaim era l'unico percorso
+   // senza questi controlli, rischiava un "invalid stops" silenzioso
+   // proprio durante lo spike di spread che ha appena generato lo stop-out.
+   // Sostituito col gate pieno.
+   ENUM_NXS_DIR dir   = (g_slrDir == 1) ? DIR_BUY : DIR_SELL;
+   ENUM_ORDER_TYPE otype = (g_slrDir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double price = (g_slrDir == 1) ? ask : bid;
    // stop/target nativi ricalcolati come un ingresso SAR normale (1xATR/6xATR
    // H4) - nessuna indicazione diversa data dall'utente per questo caso.
    double atrH4 = NXS_ATRv(PERIOD_H4, 1, InpATR_Period);
    if(atrH4 <= 0) atrH4 = g_atr;
    string cmt = InpComment + "|SAR|SLRECLAIM|" + EnumToString(PERIOD_H4);
+   double sl, tp;
+   if(g_slrDir == 1){
+      sl = NormPrice(ask - atrH4 * 1.0);
+      tp = NormPrice(ask + atrH4 * 6.0);
+   } else {
+      sl = NormPrice(bid + atrH4 * 1.0);
+      tp = NormPrice(bid - atrH4 * 6.0);
+   }
+
+   string pfReason = "";
+   if(!NXS_CommonExposurePreflight("SLRECLAIM", "SAR", dir, InpSLReclaimLot,
+                                   otype, price, sl, tp, pfReason)){
+      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata dal gate comune (%s)", pfReason);
+      return;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
+   }
+
+   // 08/09 - AUDIT ESTERNO (A4): nessuno dei due percorsi (SLReclaim/
+   // ProfitReclaim) chiamava NXS_TradeSetMagic() prima di riaprire - la
+   // posizione ereditava il magic number stantio dell'ultimo modulo che
+   // aveva aperto un ordine (grid/pyramid/entry primaria), corrompendo i
+   // conteggi di layer e disattivando il partial-close (che filtra su
+   // IsCoreMagic). La riapertura è un rientro "core", non un leg di
+   // grid/pyramid - tagga come tale.
+   NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
    bool ok;
    if(g_slrDir == 1){
-      double sl = NormPrice(ask - atrH4 * 1.0);
-      double tp = NormPrice(ask + atrH4 * 6.0);
       ok = NXS_SafeBuy(InpSLReclaimLot, g_sym, sl, tp, cmt);
    } else {
-      double sl = NormPrice(bid + atrH4 * 1.0);
-      double tp = NormPrice(bid - atrH4 * 6.0);
       ok = NXS_SafeSell(InpSLReclaimLot, g_sym, sl, tp, cmt);
    }
    PrintFormat("[NEXUS SLRECLAIM] confermato (M15 close=%.2f oltre linea=%.2f) - riapertura dir=%d lot=%.2f esito=%s",
