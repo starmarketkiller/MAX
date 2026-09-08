@@ -63,6 +63,16 @@ zero trade, non 168 identici. Voto75 ancora mai testato dopo 3
 tentativi (step4/5/6). Dettagli in
 [[NEXUS EA - Step6 Ancora Identico, Bug Indipendente su InpMinEntryScore (08-09)]].
 
+**Aggiornamento 08/09 (step7)** — fix di `InpMinEntryScore` applicato
+e funzionante, ma step7 esce di nuovo identico. Causa vera: il
+punteggio di FVG_CONT è **fisso a 70.0** (non graduato), e
+`NXS_ResolvedEntryThreshold()` con `InpGateMode=1` (default) abbassa
+il voto globale di 5 punti prima di applicarlo — a voto75 la soglia
+reale è 70.0 esatto, che FVG_CONT supera sempre. Con `InpGateMode=0`
+(nessuna leniency, non ancora testato) il risultato atteso è **zero
+trade**, non un filtro migliore. Dettagli in
+[[NEXUS EA - Step7 Ancora Identico, la Vera Causa e' NXS_ResolvedEntryThreshold (08-09)]].
+
 ## Test A/B 16/07 (Blocco 2): il sito mostra un edge che MT5 reale non conferma — pattern MACD-like
 Testata la config reale del profilo (SL1.0/TP4.5, HTF ON) su più timeframe
 sul motore sito — dove FVG_CONT è codice reale, non proxy:

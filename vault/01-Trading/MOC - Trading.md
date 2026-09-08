@@ -14,6 +14,17 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🔍 **[[NEXUS EA - Step7 Ancora Identico, la Vera Causa e' NXS_ResolvedEntryThreshold (08-09)]]** —
+  dopo il fix di `InpMinEntryScore`, step7 è uscito di nuovo identico
+  al centesimo (168 trade, 70.0 fisso). Stavolta il fix ha funzionato
+  davvero, ma `NXS_ResolvedEntryThreshold()` con `InpGateMode=1`
+  (default, "Balanced") abbassa la soglia effettiva di 5 punti sotto
+  il voto globale — a voto75 la soglia reale è 70.0 esatto, e FVG_CONT
+  scora sempre esattamente 70.0: passa sempre, qualunque voto tra 50 e
+  75. `InpGateMode` è a sua volta non-`input` (quinta istanza della
+  stessa classe di bug). Con GateMode=0 (nessuna leniency) il risultato
+  atteso è zero trade, non un filtro migliore — il punteggio di
+  FVG_CONT è fisso, non graduato.
 - 🐛 **[[NEXUS EA - Step6 Ancora Identico, Bug Indipendente su InpMinEntryScore (08-09)]]** —
   dopo il fix di `InpRiskProfile`, step6 è uscito di nuovo identico al
   centesimo a step2/4/5. Secondo bug indipendente della stessa classe:
