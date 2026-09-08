@@ -107,16 +107,29 @@ void NXS_ManageSLReclaim(){
    // 37 violazioni della soglia -5%/giorno invece di 1, con le stesse
    // protezioni attive - vedi vault "FVG_CONT Prop-Compliant").
    //
-   // 08/09 - AUDIT ESTERNO (A3): NXS_CheckProtections() copre solo DD
-   // giornaliero/margine/max-trade/anti-revenge/anti-bleed/pausa EA. Ogni
-   // altro percorso di apertura passa invece per
-   // NXS_CommonExposurePreflight() (licenza, ruin freeze, protezioni,
-   // stop obbligatorio, stato/indicatori degradati, RiskShield per
-   // strategia, cap esposizione direzionale, margine proiettato, preflight
-   // broker spread/distanza minima stop) - SLReclaim era l'unico percorso
-   // senza questi controlli, rischiava un "invalid stops" silenzioso
-   // proprio durante lo spike di spread che ha appena generato lo stop-out.
-   // Sostituito col gate pieno.
+   // 08/09 - AUDIT ESTERNO (A3), CORRETTO dopo test di regressione fallito:
+   // il primo giro sostituiva NXS_CheckProtections() con
+   // NXS_CommonExposurePreflight(), assumendo (come l'audit) che la seconda
+   // fosse un superset della prima. FALSO, verificato leggendo il percorso
+   // primario (NXS_TryExecuteRC, NXS_Execution.mqh:712+486): chiama
+   // ENTRAMBE in sequenza, non l'una al posto dell'altra. Sono complementari:
+   // NXS_CheckProtections copre DD giornaliero (g_run_MaxDailyDDPct),
+   // margine (InpMinMarginLevel), max-trade/giorno, max-concorrenti,
+   // anti-revenge, anti-bleed skip - NXS_CommonExposurePreflight copre
+   // licenza, ruin freeze, ESL/DPT/pausa, stato/indicatori degradati,
+   // RiskShield, cap esposizione direzionale, margine PROIETTATO
+   // (InpMinMarginLevelPct, diverso da InpMinMarginLevel), preflight broker
+   // spread/distanza minima stop. La prima versione di questo fix passava
+   // il test di compilazione ma un test di regressione mirato (SAR+SLReclaim,
+   // DD giornaliero forzato allo 0.5%) mostrava ZERO blocchi nonostante un
+   // DD totale del 25% - la sostituzione aveva silenziosamente eliminato
+   // proprio il controllo DD giornaliero che questo fix doveva rinforzare.
+   // Ora chiama entrambe, stesso ordine del percorso primario.
+   string protReason = "";
+   if(!NXS_CheckProtections(protReason)){
+      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata da protezione conto (%s)", protReason);
+      return;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
+   }
    ENUM_NXS_DIR dir   = (g_slrDir == 1) ? DIR_BUY : DIR_SELL;
    ENUM_ORDER_TYPE otype = (g_slrDir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
    double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);

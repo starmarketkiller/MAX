@@ -67,13 +67,19 @@ void NXS_ManageProfitReclaim(){
          double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK), bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
          double px  = (g_prcReentryDir == 1) ? bid : ask;   // prezzo di mercato dal lato rilevante
          if(MathAbs(px - g_prcReentryEntryPx) <= tol){
-            // 08/09 - AUDIT ESTERNO (A2): questo rientro chiamava NXS_SafeBuy/
-            // NXS_SafeSell DIRETTAMENTE, senza NXS_CommonExposurePreflight()
-            // ne' NXS_CheckProtections() - stesso identico bug appena corretto
-            // in NXS_SLReclaim.mqh, ma sul modulo gemello, dimenticato. Un
-            // rientro poteva riaprire anche a conto congelato (Ruin/DailyDD),
-            // esattamente il pattern delle "37 violazioni invece di 1" gia'
-            // documentato per SLReclaim. Instradato sullo stesso gate pieno.
+            // 08/09 - AUDIT ESTERNO (A2), CORRETTO dopo test di regressione
+            // fallito: questo rientro chiamava NXS_SafeBuy/NXS_SafeSell
+            // DIRETTAMENTE, senza alcun controllo - stesso bug di SLReclaim,
+            // dimenticato sul modulo gemello. Il primo fix chiamava solo
+            // NXS_CommonExposurePreflight(), assumendo fosse un superset di
+            // NXS_CheckProtections() - FALSO (vedi commento aggiornato in
+            // NXS_SLReclaim.mqh): il percorso primario chiama ENTRAMBE in
+            // sequenza, sono complementari (la prima copre DD giornaliero/
+            // margine/max-trade/anti-revenge/anti-bleed, la seconda licenza/
+            // ruin/ESL-DPT/stato/RiskShield/esposizione/margine proiettato/
+            // preflight broker). Un test di regressione mirato (DD giornaliero
+            // forzato allo 0.5%) mostrava zero blocchi con la sola
+            // CommonExposurePreflight - ora chiama entrambe.
             string cmt = InpComment + "|SAR|PROFITRECLAIM|" + EnumToString(PERIOD_H4);
             double atrH4 = atr;
             ENUM_NXS_DIR dir      = (g_prcReentryDir == 1) ? DIR_BUY : DIR_SELL;
@@ -83,8 +89,11 @@ void NXS_ManageProfitReclaim(){
                                                 : NormPrice(bid + atrH4 * 1.0);
             double tp = 0;   // nessun TP fisso su questo rientro, come nell'originale
 
+            string protReason = "";
             string pfReason = "";
-            if(!NXS_CommonExposurePreflight("PROFITRECLAIM", "SAR", dir, g_prcReentryLot,
+            if(!NXS_CheckProtections(protReason)){
+               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato da protezione conto (%s)", protReason);
+            } else if(!NXS_CommonExposurePreflight("PROFITRECLAIM", "SAR", dir, g_prcReentryLot,
                                             otype, price, sl, tp, pfReason)){
                PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato dal gate comune (%s)", pfReason);
             } else {
