@@ -14,6 +14,11 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ✅ **[[NEXUS EA - A1 Extra, A7, B3 Verificati (08-09)]]** — Alert()
+  su preset che scarta valori custom confermato funzionante nel log
+  (elenca correttamente i 3 parametri scartati con vecchio/nuovo
+  valore); zero falsi allarmi HTFBias nello stesso test; ConsecLossBrake
+  marcato come inattivo. Riepilogo completo stato A1-A7/B1-B6 nella nota.
 - ✅ **[[NEXUS EA - A2+A3+A4 Verificati con Test di Regressione, Storia Completa (08-09)]]** —
   SLReclaim/ProfitReclaim ora passano davvero dal gate di protezione
   completo. Storia interessante: il primo fix (seguendo l'audit
