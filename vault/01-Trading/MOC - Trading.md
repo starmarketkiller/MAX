@@ -13,6 +13,14 @@ EA MQL5 per gold/BTC su conto piccolo (~€200-1000), pensato per rispecchiare 1
 motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo:
 profitto reale, non solo curve di backtest.
 
+- 🐛 **[[NEXUS EA - FVG_CONT Piramidale Isolato, Bug di Re-Innesco Senza Freno (09-09)]]** —
+  primo test isolato della coda FVG_CONT: piramidale attivato sopra la
+  baseline prop-compliant. Risultato non un peggioramento ma un
+  collasso: 168→2255 trade, PF1.92→0.75, net +$2635→**-$846**, DD
+  12%→**84.66%**. Causa: bug di re-innesco, nessun cooldown impedisce
+  di riaprire subito una gamba piramide appena quella precedente viene
+  stoppata — 25 gambe in un solo giorno nel campione ispezionato.
+  Non utilizzabile su FVG_CONT finché il bug non è corretto.
 - ✅ **[[NEXUS EA - SAR Verdetto Definitivo, Confermata Sopravvive PipSeq No (08-09)]]** —
   completate le altre 4 finestre: **identiche byte-per-byte** pre/post
   fix (step22-25, la config "candle-align" che è davvero il PF1.37-1.57
