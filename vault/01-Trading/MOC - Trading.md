@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🔴 **[[NEXUS EA - SAR Confermata Positiva Invalidata, il Bug Nascondeva un Freno di Sicurezza (08-09)]]** —
+  re-run mirato confermato DIVERSO dall'originale: 29→31 trade, PF
+  2.02→1.90, **DD equity 45.47%→53.67%**. Causa: il bug forzava
+  silenziosamente `InpMaxDailyDDPct` al 5% (BALANCED) invece del 100%
+  richiesto dall'.ini — un freno di sicurezza mai voluto che nascondeva
+  il vero profilo di rischio. La riga "SAR confermata, PF1.37-1.57"
+  nel piano master si basa su questa stessa famiglia di test — **non
+  più affidabile senza rifare le altre 4 finestre**.
 - 🔍 **[[NEXUS EA - Controllo CSV SAR-EMA_PULLBACK, EMA_PULLBACK Pulita SAR da Riverificare (08-09)]]** —
   controllo sui CSV esistenti invece di rilanciare tutto: **EMA_PULLBACK
   pulita** (DD intra-day mai oltre 5.05%, come FVG_CONT, nessun re-run
