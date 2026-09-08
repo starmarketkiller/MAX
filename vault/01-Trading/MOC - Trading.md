@@ -14,6 +14,16 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🔴 **[[NEXUS EA - Impatto Storico Bug InpRiskProfile su Tutto il Corpus di Test (08-09)]]** —
+  incrociati tutti i 150 `.ini` di test con l'orario reale di
+  esecuzione: **~115 test "nudi" eseguiti prima delle 21:47 del 07/09**
+  giravano con `maxTrades≤12/giorno` e `DD-cap≤5%/giorno` forzati da
+  BALANCED, indipendentemente da cosa dicesse l'.ini. Per FVG_CONT
+  l'impatto è dimostrato trascurabile (step1 vs step2 quasi identici).
+  Per **SAR (tutte le 43 varianti) e EMA_PULLBACK** (entrambe
+  "confermate positive", M15, rischio più alto per il cap trade/giorno)
+  — non ancora riverificate. Da controllare prima di qualunque
+  decisione di portfolio/capitale reale basata su queste due.
 - ✅ **[[NEXUS EA - A1 Extra, A7, B3 Verificati (08-09)]]** — Alert()
   su preset che scarta valori custom confermato funzionante nel log
   (elenca correttamente i 3 parametri scartati con vecchio/nuovo
