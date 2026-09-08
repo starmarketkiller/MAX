@@ -89,13 +89,23 @@ void NXS_ManageProfitReclaim(){
                                                 : NormPrice(bid + atrH4 * 1.0);
             double tp = 0;   // nessun TP fisso su questo rientro, come nell'originale
 
+            // 08/09 - feedback della sessione cloud sul diff di A2: prima di
+            // questo fix, g_prcAwaitingReentry veniva disarmato SEMPRE quando
+            // il prezzo tornava vicino all'entrata, anche se il rientro
+            // veniva bloccato dalle protezioni - a differenza di SLReclaim,
+            // che resta armato e ritenta. Effetto: un freeze proprio nel
+            // momento del ritorno di prezzo faceva perdere l'occasione per
+            // sempre invece di ritentare quando il freeze si scioglie.
+            // Ora simmetrico a SLReclaim: si disarma solo dopo un vero
+            // tentativo di apertura (riuscito o fallito per motivi di
+            // esecuzione), non quando il gate blocca.
             string protReason = "";
             string pfReason = "";
             if(!NXS_CheckProtections(protReason)){
-               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato da protezione conto (%s)", protReason);
+               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato da protezione conto (%s) - resta armato, ritenta", protReason);
             } else if(!NXS_CommonExposurePreflight("PROFITRECLAIM", "SAR", dir, g_prcReentryLot,
                                             otype, price, sl, tp, pfReason)){
-               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato dal gate comune (%s)", pfReason);
+               PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato dal gate comune (%s) - resta armato, ritenta", pfReason);
             } else {
                // 08/09 - AUDIT ESTERNO (A4): stesso bug del magic number
                // stantio di SLReclaim - taggare esplicitamente come rientro
@@ -106,8 +116,8 @@ void NXS_ManageProfitReclaim(){
                else                     ok = NXS_SafeSell(g_prcReentryLot, g_sym, sl, tp, cmt);
                PrintFormat("[NEXUS PROFITRECLAIM] rientro vicino a %.2f (tol=%.2f) dir=%d lot=%.2f esito=%s",
                            g_prcReentryEntryPx, tol, g_prcReentryDir, g_prcReentryLot, (ok?"OK":"FALLITA"));
+               g_prcAwaitingReentry = false;
             }
-            g_prcAwaitingReentry = false;
          }
       }
    }
