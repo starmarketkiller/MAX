@@ -14,6 +14,15 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- ✅ **[[NEXUS EA - A2+A3+A4 Verificati con Test di Regressione, Storia Completa (08-09)]]** —
+  SLReclaim/ProfitReclaim ora passano davvero dal gate di protezione
+  completo. Storia interessante: il primo fix (seguendo l'audit
+  esterno alla lettera) sostituiva `NXS_CheckProtections()` con
+  `NXS_CommonExposurePreflight()`, premessa falsa (sono complementari,
+  non l'una superset dell'altra) — scoperto da un test di regressione
+  dedicato (0/27 blocchi nonostante DD 25%), non dal compile pulito.
+  Corretto per chiamare entrambe: 401 blocchi SLReclaim + 15
+  ProfitReclaim confermati nello stesso test.
 - 🔍 **[[NEXUS EA - Step7 Ancora Identico, la Vera Causa e' NXS_ResolvedEntryThreshold (08-09)]]** —
   dopo il fix di `InpMinEntryScore`, step7 è uscito di nuovo identico
   al centesimo (168 trade, 70.0 fisso). Stavolta il fix ha funzionato
