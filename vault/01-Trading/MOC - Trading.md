@@ -14,6 +14,14 @@ motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo
 profitto reale, non solo curve di backtest.
 
 ## Note in questo dominio
+- 🔍 **[[NEXUS EA - Controllo CSV SAR-EMA_PULLBACK, EMA_PULLBACK Pulita SAR da Riverificare (08-09)]]** —
+  controllo sui CSV esistenti invece di rilanciare tutto: **EMA_PULLBACK
+  pulita** (DD intra-day mai oltre 5.05%, come FVG_CONT, nessun re-run
+  necessario) — ma scoperto che le sue "4 finestre walk-forward"
+  condividono lo stesso `ToDate`, non sono indipendenti (stesso giorno
+  peggiore in tutte e 4). **SAR supera chiaramente su tutte le 5
+  finestre della config confermata** (DD intra-day 5.94-9.80%, non di
+  un pelo) — re-run mirato in corso (`nxs_sar_step44_riskprofile0_recheck`).
 - 🔴 **[[NEXUS EA - Impatto Storico Bug InpRiskProfile su Tutto il Corpus di Test (08-09)]]** —
   incrociati tutti i 150 `.ini` di test con l'orario reale di
   esecuzione: **~115 test "nudi" eseguiti prima delle 21:47 del 07/09**
