@@ -268,6 +268,39 @@ void NXS_RS_Breaker_Update(){
    int total = HistoryDealsTotal();
    if(total <= 0) return;
 
+   // 09/09 - SECONDO GIRO DI FIX: il primo tentativo (NXS_Intent_ByPosition,
+   // sotto) partiva dal presupposto che position_id venisse sempre legato
+   // all'intento tramite NXS_Intent_BindPosition() (NXS_TradeLedger.mqh) -
+   // non verificato con certezza che scatti in ogni caso durante il tester,
+   // e il retest ha confermato che NON risolve (91mila "UNKNOWN" ancora,
+   // stessa velocita' di prima). Via piu' diretta: NXS_Intent_Record()
+   // indicizza per ORDER TICKET incondizionatamente, senza passare da
+   // nessun binding successivo - usarla direttamente e' piu' affidabile.
+   // Pre-passata sui deal DI APERTURA (mai riscritti dal broker): per ogni
+   // posizione, risolve la strategia dal DEAL_ORDER del suo deal IN via
+   // NXS_Intent_ByOrder(), e la mette in una mappa position_id->strategia
+   // usata poi dal giro vero sui deal di chiusura sotto.
+   ulong  posIdMap[]; string posStratMap[];
+   ArrayResize(posIdMap, 0); ArrayResize(posStratMap, 0);
+   for(int i = 0; i < total; ++i){
+      ulong ticket = HistoryDealGetTicket(i);
+      if(ticket == 0) continue;
+      if((ENUM_DEAL_ENTRY)HistoryDealGetInteger(ticket, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
+      if(!IsNexusMagic((long)HistoryDealGetInteger(ticket, DEAL_MAGIC))) continue;
+      ulong posId = (ulong)HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+      if(posId == 0) continue;
+      ulong ordTicket = (ulong)HistoryDealGetInteger(ticket, DEAL_ORDER);
+      string strat = "UNKNOWN"; string dummyGroup;
+      SNxsIntent intent;
+      if(ordTicket != 0 && NXS_Intent_ByOrder(ordTicket, intent) && StringLen(intent.strategy) > 0)
+         strat = intent.strategy;
+      else
+         _NXS_StateParseComment(HistoryDealGetString(ticket, DEAL_COMMENT), strat, dummyGroup);
+      int mk = ArraySize(posIdMap);
+      ArrayResize(posIdMap, mk + 1); ArrayResize(posStratMap, mk + 1);
+      posIdMap[mk] = posId; posStratMap[mk] = strat;
+   }
+
    // Un solo giro sullo storico: raccoglie (strategia, rendimento in R) per
    // ogni deal di chiusura, poi valuta lo Sharpe SEPARATAMENTE per ogni
    // strategia incontrata - non piu' un'unica serie mescolata.
@@ -288,24 +321,15 @@ void NXS_RS_Breaker_Update(){
       // "tp X.XX" o vuoto quando la posizione chiude per stop/target nativi,
       // qualunque fosse il commento originale messo in apertura. Risultato:
       // praticamente OGNI trade chiuso da stop/target (la stragrande
-      // maggioranza) finiva classificato "UNKNOWN", non solo le gambe
-      // piramide - il breaker per-strategia era di fatto inerte per tutto
-      // il progetto, non solo per il piramidale. Stesso bug gia' risolto
-      // altrove (NXS_State_ReconcileBroker, AUD0-STATE-002) usando il
-      // registro degli intenti invece del commento - qui non era stato
-      // applicato. Fix: risolvere la strategia dal registro intenti (che
-      // registra il nome vero al momento dell'apertura, indipendente da
-      // cosa il broker scrive alla chiusura), col commento come fallback
-      // solo se l'intento non e' piu' in memoria (retention 30gg, il
-      // lookback qui e' 90gg - copertura parziale ma correttezza vera sul
-      // periodo che conta davvero per la finestra mobile di N trade).
-      string strat, group;
-      SNxsIntent intent;
-      if(NXS_Intent_ByPosition(HistoryDealGetInteger(ticket, DEAL_POSITION_ID), intent) &&
-         StringLen(intent.strategy) > 0){
-         strat = intent.strategy; group = strat;
-      } else {
-         _NXS_StateParseComment(HistoryDealGetString(ticket, DEAL_COMMENT), strat, group);
+      // maggioranza) finiva classificato "UNKNOWN". Fix (vedi mappa
+      // posIdMap/posStratMap costruita sopra dai deal DI APERTURA, mai
+      // riscritti): cerca la strategia per position_id in quella mappa,
+      // fallback "UNKNOWN" solo se la posizione non e' mai stata vista in
+      // apertura in questa stessa finestra di 90 giorni.
+      string strat = "UNKNOWN";
+      ulong closedPosId = (ulong)HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+      for(int m = 0; m < ArraySize(posIdMap); ++m){
+         if(posIdMap[m] == closedPosId){ strat = posStratMap[m]; break; }
       }
       int k = ArraySize(allName);
       ArrayResize(allName, k + 1); ArrayResize(allRet, k + 1);
