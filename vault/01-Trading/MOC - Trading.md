@@ -13,7 +13,89 @@ EA MQL5 per gold/BTC su conto piccolo (~€200-1000), pensato per rispecchiare 1
 motore di backtest Python del sito ("Backtest Lab" = source of truth). Obiettivo:
 profitto reale, non solo curve di backtest.
 
-## Note in questo dominio
+- 🐛 **[[NEXUS EA - FVG_CONT Piramidale Isolato, Bug di Re-Innesco Senza Freno (09-09)]]** —
+  primo test isolato della coda FVG_CONT: piramidale attivato sopra la
+  baseline prop-compliant. Risultato non un peggioramento ma un
+  collasso: 168→2255 trade, PF1.92→0.75, net +$2635→**-$846**, DD
+  12%→**84.66%**. Causa: bug di re-innesco, nessun cooldown impedisce
+  di riaprire subito una gamba piramide appena quella precedente viene
+  stoppata — 25 gambe in un solo giorno nel campione ispezionato.
+  Non utilizzabile su FVG_CONT finché il bug non è corretto.
+- ✅ **[[NEXUS EA - SAR Verdetto Definitivo, Confermata Sopravvive PipSeq No (08-09)]]** —
+  completate le altre 4 finestre: **identiche byte-per-byte** pre/post
+  fix (step22-25, la config "candle-align" che è davvero il PF1.37-1.57
+  del piano master) — nessun rientro PipSeq, il DD-cap forzato non ha
+  mai avuto occasione di bloccare nulla. **SAR confermata ripristinata.**
+  Solo la variante separata con PipSeq (step35, test di stress) resta
+  invalidata (PF2.02→1.90) — non è la config "confermata", è un
+  esperimento a parte.
+- 🔴 **[[NEXUS EA - SAR Confermata Positiva Invalidata, il Bug Nascondeva un Freno di Sicurezza (08-09)]]** (nota provvisoria, superata dalla successiva) —
+  re-run mirato confermato DIVERSO dall'originale: 29→31 trade, PF
+  2.02→1.90, **DD equity 45.47%→53.67%**. Causa: il bug forzava
+  silenziosamente `InpMaxDailyDDPct` al 5% (BALANCED) invece del 100%
+  richiesto dall'.ini — un freno di sicurezza mai voluto che nascondeva
+  il vero profilo di rischio.
+- 🔍 **[[NEXUS EA - Controllo CSV SAR-EMA_PULLBACK, EMA_PULLBACK Pulita SAR da Riverificare (08-09)]]** —
+  controllo sui CSV esistenti invece di rilanciare tutto: **EMA_PULLBACK
+  pulita** (DD intra-day mai oltre 5.05%, come FVG_CONT, nessun re-run
+  necessario) — ma scoperto che le sue "4 finestre walk-forward"
+  condividono lo stesso `ToDate`, non sono indipendenti (stesso giorno
+  peggiore in tutte e 4). **SAR supera chiaramente su tutte le 5
+  finestre della config confermata** (DD intra-day 5.94-9.80%, non di
+  un pelo) — re-run mirato in corso (`nxs_sar_step44_riskprofile0_recheck`).
+- 🔴 **[[NEXUS EA - Impatto Storico Bug InpRiskProfile su Tutto il Corpus di Test (08-09)]]** —
+  incrociati tutti i 150 `.ini` di test con l'orario reale di
+  esecuzione: **~115 test "nudi" eseguiti prima delle 21:47 del 07/09**
+  giravano con `maxTrades≤12/giorno` e `DD-cap≤5%/giorno` forzati da
+  BALANCED, indipendentemente da cosa dicesse l'.ini. Per FVG_CONT
+  l'impatto è dimostrato trascurabile (step1 vs step2 quasi identici).
+  Per **SAR (tutte le 43 varianti) e EMA_PULLBACK** (entrambe
+  "confermate positive", M15, rischio più alto per il cap trade/giorno)
+  — non ancora riverificate. Da controllare prima di qualunque
+  decisione di portfolio/capitale reale basata su queste due.
+- ✅ **[[NEXUS EA - A1 Extra, A7, B3 Verificati (08-09)]]** — Alert()
+  su preset che scarta valori custom confermato funzionante nel log
+  (elenca correttamente i 3 parametri scartati con vecchio/nuovo
+  valore); zero falsi allarmi HTFBias nello stesso test; ConsecLossBrake
+  marcato come inattivo. Riepilogo completo stato A1-A7/B1-B6 nella nota.
+- ✅ **[[NEXUS EA - A2+A3+A4 Verificati con Test di Regressione, Storia Completa (08-09)]]** —
+  SLReclaim/ProfitReclaim ora passano davvero dal gate di protezione
+  completo. Storia interessante: il primo fix (seguendo l'audit
+  esterno alla lettera) sostituiva `NXS_CheckProtections()` con
+  `NXS_CommonExposurePreflight()`, premessa falsa (sono complementari,
+  non l'una superset dell'altra) — scoperto da un test di regressione
+  dedicato (0/27 blocchi nonostante DD 25%), non dal compile pulito.
+  Corretto per chiamare entrambe: 401 blocchi SLReclaim + 15
+  ProfitReclaim confermati nello stesso test.
+- 🔍 **[[NEXUS EA - Step7 Ancora Identico, la Vera Causa e' NXS_ResolvedEntryThreshold (08-09)]]** —
+  dopo il fix di `InpMinEntryScore`, step7 è uscito di nuovo identico
+  al centesimo (168 trade, 70.0 fisso). Stavolta il fix ha funzionato
+  davvero, ma `NXS_ResolvedEntryThreshold()` con `InpGateMode=1`
+  (default, "Balanced") abbassa la soglia effettiva di 5 punti sotto
+  il voto globale — a voto75 la soglia reale è 70.0 esatto, e FVG_CONT
+  scora sempre esattamente 70.0: passa sempre, qualunque voto tra 50 e
+  75. `InpGateMode` è a sua volta non-`input` (quinta istanza della
+  stessa classe di bug). Con GateMode=0 (nessuna leniency) il risultato
+  atteso è zero trade, non un filtro migliore — il punteggio di
+  FVG_CONT è fisso, non graduato.
+- 🐛 **[[NEXUS EA - Step6 Ancora Identico, Bug Indipendente su InpMinEntryScore (08-09)]]** —
+  dopo il fix di `InpRiskProfile`, step6 è uscito di nuovo identico al
+  centesimo a step2/4/5. Secondo bug indipendente della stessa classe:
+  `InpMinEntryScore` non è `input`, l'.ini non può mai impostarlo.
+  Prova diretta nei dati: ogni trade FVG_CONT scora sempre 70.0 — con
+  soglia reale 75 sarebbero stati zero trade, non 168 identici. Audit
+  esteso a tutta la cartella MQL5: altre 4 variabili della stessa
+  classe trovate (`InpRuinDailyLossPct` resta al 15% invece del 5%
+  richiesto nei test prop-compliant — le altre 3 innocue). Fix
+  identificato, non applicato, in attesa di conferma.
+- 🐛 **[[NEXUS EA - Step5 Ancora Bacato, InpRiskProfile Non e' un Vero Input MQL5 (07-09)]]** —
+  il retest con `InpRiskProfile=0` nell'.ini è uscito di nuovo identico
+  al centesimo a step2/step4 (stesso net, PF, DD, trade-per-trade). Causa
+  reale: `InpRiskProfile` in `NXS_Inputs.mqh:42` non è dichiarato
+  `input` — l'.ini del Tester non può mai impostarlo, checché ne dica.
+  Voto-75+regime-fix **ancora mai testato**. Serve un fix di codice
+  (aggiungere `input`) + ricompilazione, non ancora applicato — in
+  attesa di conferma.
 - 🐛 **[[NEXUS EA - Bug InpRiskProfile, il Preset BALANCED Sovrascriveva Silenziosamente i Parametri Custom (07-09)]]** —
   `InpRiskProfile` default=2 (BALANCED) sovrascriveva silenziosamente
   risk%/maxLot/maxTrades/maxConcurrent/DD%/minScore in OGNI test che

@@ -19,7 +19,22 @@ SNXSHTF NXS_GetHTFBias(){
    double emaH = _bufVal(g_hEMA_HTF, 0, 1);
    double emaM = _bufVal(g_hEMA_MTF, 0, 1);
    double close= iClose(g_sym, InpTFHigh, 1);
-   if(emaH <= 0 || emaM <= 0 || close <= 0) return r;
+   if(emaH <= 0 || emaM <= 0 || close <= 0){
+      // 08/09 - AUDIT ESTERNO (B3): un handle EMA rotto o una CopyBuffer
+      // fallita produceva lo stesso identico output (bias=NEUTRAL, conf=0)
+      // di un mercato genuinamente neutro, senza alcun log - un guasto
+      // tecnico permanente disattivava l'intero filtro HTF senza che
+      // nessuno se ne accorgesse. Loggato una sola volta al minuto per
+      // non intasare il log ad ogni tick se l'handle resta rotto a lungo.
+      static datetime lastWarn = 0;
+      if(TimeCurrent() - lastWarn >= 60){
+         lastWarn = TimeCurrent();
+         PrintFormat("[NEXUS HTFBIAS] lettura fallita (emaH=%.5f emaM=%.5f close=%.5f) - "
+                     "handle indicatore rotto o storico non pronto, NON e' un mercato neutro genuino. "
+                     "Filtro HTF disattivato finche' persiste.", emaH, emaM, close);
+      }
+      return r;
+   }
 
    bool bull = (close > emaH && emaM > emaH);
    bool bear = (close < emaH && emaM < emaH);

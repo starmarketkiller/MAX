@@ -274,6 +274,33 @@ void NXS_Prot_CheckESL(){
 }
 
 // ===================================================================
+//   PROTECTION 1b: Max Total Drawdown dal picco di equity (09/09)
+// ===================================================================
+// A differenza di ESL (soglia sul PnL flottante corrente vs balance
+// corrente, si azzera ogni volta che una posizione chiude) e di
+// InpMaxDailyDDPct (si azzera ogni mezzanotte), questa protezione traccia
+// il MASSIMO storico di equity mai raggiunto e non dimentica mai un
+// drawdown che si e' accumulato su piu' giorni - il buco che la nota
+// vault "FVG_CONT Prop-Compliant" (07-09) aveva descritto senza ancora
+// costruire la soluzione.
+void NXS_Prot_CheckMaxTotalDD(){
+   if(!InpUseMaxTotalDD) return;
+   double eq = AccountInfoDouble(ACCOUNT_EQUITY);
+   if(eq > g_maxDDPeakEquity) g_maxDDPeakEquity = eq;
+   if(g_maxDDHit) return;               // gia' scattato: resta bloccato finche' non resettato a mano
+   if(g_maxDDPeakEquity <= 0.0) return;
+   double ddPct = (g_maxDDPeakEquity - eq) / g_maxDDPeakEquity * 100.0;
+   if(ddPct >= InpMaxTotalDDPct){
+      g_maxDDHit = true;
+      g_pausedUntilNextOpen = true;
+      bool flat = NXS_Prot_FlattenAll(NXS_R_DD);
+      PrintFormat("[NEXUS PROT] MAX_TOTAL_DD HIT: equity=%.2f picco=%.2f dd=%.2f%%>=%.2f%%. "
+                  "Flat=%s. Bloccato fino a reset manuale (dashboard: reset_protections).",
+                  eq, g_maxDDPeakEquity, ddPct, InpMaxTotalDDPct, (flat ? "SI" : "NO - retry in corso"));
+   }
+}
+
+// ===================================================================
 //   PROTECTION 2: Daily Profit Target (DPT)
 // ===================================================================
 void NXS_Prot_CheckDPT(){
@@ -521,6 +548,7 @@ void NXS_Prot_OnTick(){
    NXS_Prot_CheckMaxHold();
    NXS_Prot_CheckMaxLossPerPos();
    NXS_Prot_CheckESL();
+   NXS_Prot_CheckMaxTotalDD();
    NXS_Prot_CheckDPT();
    NXS_Prot_CheckAutoClose();
 }

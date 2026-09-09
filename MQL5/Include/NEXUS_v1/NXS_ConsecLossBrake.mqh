@@ -1,5 +1,20 @@
 //+------------------------------------------------------------------+
 //| NXS_ConsecLossBrake.mqh                                            |
+//|                                                                    |
+//| 08/09 - AUDIT ESTERNO (A7): QUESTO FILE NON E' AGGANCIATO A NULLA. |
+//| Non e' incluso da NEXUS_EA_v2.mq5 ne' da alcun altro .mqh - le sue |
+//| funzioni non vengono mai chiamate. I suoi input (InpUseConsecLossBrake, |
+//| InpConsecLossBrakeMax, InpConsecLossBrakeMin) NON ESISTONO in      |
+//| NXS_Inputs.mqh. Chi legge questo file (o il nome) e crede che l'EA |
+//| abbia un cooldown per-strategia dopo N perdite consecutive ha      |
+//| ZERO protezione reale. Lasciato nel repo per cronaca/eventuale     |
+//| ripresa futura (il freno e' per-strategia, diverso da AntiBleed    |
+//| che agisce a livello di conto - potenziale leva per il problema    |
+//| "serie di giorni consecutivi in perdita" di FVG_CONT, mai discusso |
+//| con l'utente) - NON riattivare senza aggiungere gli input mancanti |
+//| e agganciare NXS_ConsecLossBrake_Blocked()/_OnClose() nei punti    |
+//| giusti (vedi nota storica sotto).                                  |
+//|                                                                    |
 //| 31/08 - freno alle perdite consecutive per strategia, agganciato   |
 //| nel POSTO GIUSTO stavolta.                                         |
 //|                                                                    |

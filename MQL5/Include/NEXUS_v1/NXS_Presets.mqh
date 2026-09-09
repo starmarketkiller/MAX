@@ -30,6 +30,19 @@ void NXS_ApplyPreset(){
       return;
    }
 
+   // 08/09 - AUDIT ESTERNO (A1 extra): il preset sovrascriveva questi 6
+   // parametri in silenzio - solo una riga Print(), facile da non notare in
+   // un log lungo, distingueva "preset applicato" da "i tuoi valori custom
+   // sono stati scartati". Catturiamo il valore PRIMA della sovrascrittura
+   // (riflette gli input .ini/.set reali, letti da NXS_Runtime_Init) per
+   // poter avvisare con un Alert() - visibile anche senza aprire il log -
+   // se qualcuno aveva davvero impostato un valore diverso da quello che il
+   // preset sta per imporre.
+   double preRisk = g_run_RiskPercent, preMaxLot = g_run_MaxLot;
+   int    preMaxTrades = g_run_MaxTradesPerDay, preMaxConc = g_run_MaxConcurrent;
+   double preDailyDD = g_run_MaxDailyDDPct;
+   int    preMinScore = g_run_MinEntryScore;
+
    string name = "";
    switch(InpRiskProfile){
       case PRESET_CONSERVATIVE:
@@ -77,6 +90,23 @@ void NXS_ApplyPreset(){
          g_run_AfterNYScoreMin = 78;
          g_mvp_profile_active  = true;
          break;
+   }
+
+   // Avviso esplicito se il preset sta per scartare un valore che l'.ini/.set
+   // aveva impostato diversamente - non un errore (il comportamento e' voluto:
+   // un preset != Custom sovrascrive sempre), ma chi lo vede per la prima
+   // volta deve saperlo SUBITO, non scoprirlo confrontando due backtest a
+   // distanza di giorni come successo con FVG_CONT voto75.
+   string discarded = "";
+   if(preRisk      != g_run_RiskPercent)     discarded += StringFormat(" InpRiskPercent(%.2f->%.2f)", preRisk, g_run_RiskPercent);
+   if(preMaxLot     != g_run_MaxLot)          discarded += StringFormat(" InpMaxLot(%.2f->%.2f)", preMaxLot, g_run_MaxLot);
+   if(preMaxTrades  != g_run_MaxTradesPerDay) discarded += StringFormat(" InpMaxTradesPerDay(%d->%d)", preMaxTrades, g_run_MaxTradesPerDay);
+   if(preMaxConc    != g_run_MaxConcurrent)   discarded += StringFormat(" InpMaxConcurrent(%d->%d)", preMaxConc, g_run_MaxConcurrent);
+   if(preDailyDD    != g_run_MaxDailyDDPct)   discarded += StringFormat(" InpMaxDailyDDPct(%.2f->%.2f)", preDailyDD, g_run_MaxDailyDDPct);
+   if(preMinScore   != g_run_MinEntryScore)   discarded += StringFormat(" InpMinEntryScore(%d->%d)", preMinScore, g_run_MinEntryScore);
+   if(StringLen(discarded) > 0){
+      Alert(StringFormat("[NEXUS PRESET] %s sta scartando valori custom impostati esplicitamente:%s - "
+                         "usa InpRiskProfile=0 (Custom) se questi valori erano intenzionali.", name, discarded));
    }
 
    // Account-size auto scaling (defensive for small accounts)

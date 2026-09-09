@@ -77,6 +77,22 @@ bool NXS_License_Verify(){
    int code = WebRequest("POST", url, headers, 5000, post, result, headersOut);
 
    if(code != 200){
+      // 09/09 - AUDIT ESTERNO (A5): qualunque codice diverso da 200 -
+      // incluso un rifiuto ESPLICITO 4xx (chiave revocata, account non
+      // autorizzato) - veniva trattato come "backend irraggiungibile",
+      // finendo nel periodo di grazia (fino a 3 giorni) o nel fallback
+      // TRIAL. Una chiave revocata continuava quindi a tradare per giorni,
+      // o per sempre se non c'era mai stata una verifica OK precedente.
+      // Un 4xx significa che il backend E' STATO RAGGIUNTO e ha risposto
+      // con un diniego vero - non e' un problema di rete, va bloccato
+      // subito, non trattato come se il server fosse irraggiungibile.
+      if(code >= 400 && code < 500){
+         string respRej = CharArrayToString(result, 0, -1, CP_UTF8);
+         string reasonRej = _NXS_LicJsonStr(respRej, "reason");
+         PrintFormat("[NEXUS LIC] REJECTED (HTTP %d) reason=%s - rifiuto esplicito del backend, blocco immediato", code, reasonRej);
+         g_licOK = false;
+         return false;
+      }
       // grace period: if we had a valid license recently, allow offline
       if(g_licLastOK > 0 && TimeCurrent() - g_licLastOK < g_licGracePeriod){
          PrintFormat("[NEXUS LIC] verify offline code=%d - using grace period", code);

@@ -153,6 +153,14 @@ datetime g_ruinFrozenDay  = 0;
 // rende la persistenza indipendente dall'ordine di include (AUD0-MQL-001).
 bool     g_eslHit              = false;
 bool     g_dptHit              = false;
+// 09/09 - protezione DD-dal-picco (NXS_Protections.mqh): picco storico di
+// equity e flag "gia' scattato". Deliberatamente NON incluso nel reset
+// giornaliero (NXS_Prot_OnNewDay) - un vero max-drawdown non si azzera a
+// mezzanotte, altrimenti si ricade nello stesso problema che questa
+// protezione doveva risolvere. Resettabile solo dal comando dashboard
+// "reset_protections" (intervento umano esplicito).
+double   g_maxDDPeakEquity     = 0.0;
+bool     g_maxDDHit            = false;
 // AUD0-PROT-003 — il nome dice "in pausa fino alla prossima apertura", ma il
 // comportamento e' piu' forte: quando e' attivo NXS_Prot_OnTick esce PRIMA di
 // ogni altro controllo (max-hold, perdita per posizione, ESL, DPT, auto-close),

@@ -4,6 +4,45 @@
 #ifndef __NXS_PYRAMID_MQH__
 #define __NXS_PYRAMID_MQH__
 
+// 09/09 - BUG TROVATO (test isolato su FVG_CONT): NXS_ManagePyramid()
+// non aveva alcuna memoria di quante volte/a quale livello avesse gia'
+// aggiunto una gamba per una data posizione core - controllava solo
+// "profitto >= 1xATR" e "meno di MAX_PYRAMID gambe aperte in totale".
+// Una gamba piramide ha stop a 1xATR: appena veniva stoppata (spesso
+// in pochi minuti, rumore normale), se la core restava sopra 1xATR di
+// profitto ne apriva SUBITO un'altra - un ciclo apri-stop-riapri senza
+// freno, osservato fino a 25 gambe in un solo giorno, che ha portato
+// un backtest isolato da PF1.92/+$2635 a PF0.75/-$846 (DD 84.66%).
+// Fix: tracciare il livello di ATR gia' usato per ogni posizione core
+// (ulong ticket -> ultimo multiplo di ATR raggiunto) e richiedere che
+// il PROSSIMO add avvenga solo dopo che il profitto della core ha
+// raggiunto un livello INTERO successivo (2xATR dopo il primo add,
+// 3xATR dopo il secondo) - vero piramidare su nuovi massimi di
+// profitto, non ri-innesco sullo stesso livello dopo uno stop.
+#define NXS_PYR_TRACK_MAX 64
+ulong  g_pyrTrackTicket[NXS_PYR_TRACK_MAX];
+int    g_pyrTrackLevel[NXS_PYR_TRACK_MAX];
+int    g_pyrTrackCnt = 0;
+
+int _NXS_PyrTrackFindOrCreate(ulong ticket){
+   for(int i = 0; i < g_pyrTrackCnt; i++)
+      if(g_pyrTrackTicket[i] == ticket) return i;
+   if(g_pyrTrackCnt >= NXS_PYR_TRACK_MAX){
+      // scarta il piu' vecchio - conseguenza al piu' un add rifiutato
+      // in piu' per una posizione molto anziana, non un doppio add.
+      for(int i = 0; i < NXS_PYR_TRACK_MAX-1; i++){
+         g_pyrTrackTicket[i] = g_pyrTrackTicket[i+1];
+         g_pyrTrackLevel[i]  = g_pyrTrackLevel[i+1];
+      }
+      g_pyrTrackCnt = NXS_PYR_TRACK_MAX - 1;
+   }
+   g_pyrTrackTicket[g_pyrTrackCnt] = ticket;
+   g_pyrTrackLevel[g_pyrTrackCnt]  = 0;
+   int idx = g_pyrTrackCnt;
+   g_pyrTrackCnt++;
+   return idx;
+}
+
 int NXS_CountPyr(){
    int n = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){
@@ -32,6 +71,27 @@ void NXS_ManagePyramid(SNXSVel &vel){
                                                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
       if(prof < g_atr) continue;
+      // 09/09 - fix re-innesco: il livello ATR gia' sfruttato per QUESTA
+      // posizione core deve essere superato da un intero multiplo prima
+      // di poter aggiungere di nuovo (1xATR -> serve 2xATR per il prossimo,
+      // non basta ri-tornare sopra 1xATR dopo lo stop della gamba precedente).
+      int trackIdx = _NXS_PyrTrackFindOrCreate(t);
+      int profLevel = (int)MathFloor(prof / g_atr);
+      if(profLevel <= g_pyrTrackLevel[trackIdx]) continue;
+      // 09/09 - SECONDO BUG TROVATO (retest del fix sopra): il livello
+      // veniva segnato come "usato" solo dopo un invio RIUSCITO (piu' in
+      // basso, dentro if(sent)). Se il tentativo veniva bloccato da un gate
+      // (osservato: CLUSTER_CAP, il cap di esposizione) il livello non
+      // risultava mai tentato, quindi il codice ritentava lo STESSO livello
+      // ad OGNI TICK, all'infinito, finche' il gate restava pieno - 9945
+      // tentativi bloccati + telemetria in soli 20MB di log durante il
+      // retest. Fix: segnare il livello come tentato SUBITO, appena si
+      // decide di provare - un tentativo bloccato non viene piu' ripetuto
+      // ad ogni tick, riuscito o no si passa oltre fino al livello
+      // successivo (stessa logica gia' applicata al freno di re-innesco,
+      // estesa anche al caso "bloccato dal gate" oltre a "stoppato dal
+      // prezzo").
+      g_pyrTrackLevel[trackIdx] = profLevel;
       // 28/08 - il velocity gate e' spento di default a livello globale
       // (InpUseVelocity=false, NXS_Inputs.mqh - disattivato in passato perche'
       // troppo restrittivo sull'ingresso primario). Con il gate spento
@@ -109,11 +169,31 @@ void NXS_ManagePyramid(SNXSVel &vel){
       }
 
       NXS_TradeSetMagic(InpMagic + MAGIC_PYRAMID + NXS_CountPyr() + 1);
+      // 09/09 - BUG TROVATO (secondo, indipendente dal freno di re-innesco):
+      // il commento era la stringa fissa "NEXUS_PYR", senza il separatore
+      // '|' che _NXS_StateParseComment() (NXS_State.mqh) richiede per
+      // riconoscere la strategia (split su '|', secondo campo = nome). Senza
+      // match, ogni gamba piramide finiva classificata "UNKNOWN" nel
+      // circuit-breaker Sharpe per-strategia (NXS_RS_Breaker_Update) - un
+      // contenitore fittizio che, una volta sotto soglia, non si riprendeva
+      // mai (rialimentato da altre gambe) e ri-loggava lo stesso avviso ogni
+      // 5 minuti simulati all'infinito, gonfiando il log fino a far
+      // crashare il terminale durante il retest del fix di re-innesco.
+      // In piu' il blocco di NUOVI ingressi cercava il bucket "PYRAMID"
+      // (la stringa passata a NXS_CommonExposurePreflight sopra) - mai
+      // popolato per il disallineamento, quindi il breaker non bloccava mai
+      // davvero le gambe piramide. Ora il commento segue lo stesso formato
+      // pipe-delimited di ogni altro percorso (InpComment|NOME|dettaglio),
+      // con "PYRAMID" come nome - allineato al bucket usato per il blocco,
+      // cosi' il breaker traccia e protegge il piramidale per davvero.
+      string pyrCmt = InpComment + "|PYRAMID|" + DoubleToString(profLevel, 1);
       // AUD0-ADD-007: l'esito dell'invio veniva ignorato.
       bool sent = (type == POSITION_TYPE_BUY)
-                  ? NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_PYR")
-                  : NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_PYR");
+                  ? NXS_SafeBuy(lots, g_sym, sl, tp, pyrCmt)
+                  : NXS_SafeSell(lots, g_sym, sl, tp, pyrCmt);
       if(sent){
+         // livello gia' segnato come tentato subito dopo il controllo di
+         // soglia, sopra - non ripetuto qui, l'assegnazione era duplicata.
          NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
                            NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
                            "pyramid", NXS_Intent_GroupOfTicket(t), g_atr, lots);

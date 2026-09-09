@@ -39,7 +39,7 @@ ENUM_TIMEFRAMES InpTFHigh    = PERIOD_H4;
 
 // input group "=== PRESET / SCALING ==="
 // 0=Custom, 1=Conservative, 2=Balanced, 3=Aggressive, 4=MVP_v206 (5 SMC MVP)
-int      InpRiskProfile      = 2;
+input int InpRiskProfile      = 2;
 // 25/08 - disattivato di default su richiesta esplicita dell'utente
 // (account demo 318337486, balance<1000): con true il rischio del
 // preset BALANCED (1.0%) veniva dimezzato a 0.5% effettivo, troppo
@@ -91,6 +91,21 @@ input int      InpMaxTradesPerDay  = 12;   // 30/08 - reso input vero (era plain
 input int      InpMaxConcurrent    = 4;
 input int      InpMaxPerDirTF      = 4;      // v2.4.8: HEDGE ON - corsie indipendenti, ogni strategia la sua (regolate dal gate margine)
 input double   InpMaxDailyDDPct    = 5.0;
+// 09/09 - protezione mancante gia' identificata piu' volte nel vault
+// (FVG_CONT: il DD reale del 15-27% non nasce da UN giorno sopra soglia, ma
+// da una SERIE di giorni consecutivi ognuno sotto il cap giornaliero - un
+// controllo che si azzera ogni giorno non puo' fermarlo per costruzione).
+// Questa e' la prima vera protezione "dal picco", non giornaliera: traccia
+// il massimo storico di equity raggiunto e blocca/appiattisce quando il
+// drawdown da quel picco supera la soglia, indipendentemente da quanti
+// giorni ci abbia messo ad accumularsi. Default ON e 10% perche' e' la
+// soglia tipica di una prop firm (FTMO e simili) - vedi ricerca web del
+// 08/09. NOTA: il picco e il flag "gia' scattato" vivono solo in memoria,
+// NON sono ancora inclusi nella persistenza di stato (NXS_State.mqh) - un
+// riavvio dell'EA li azzera. Accettabile per ora (i backtest non riavviano
+// a meta' test), da estendere alla persistenza prima di un uso live serio.
+input bool     InpUseMaxTotalDD    = true;
+input double   InpMaxTotalDDPct    = 10.0;
 // v2.4.1 — GATE SUL MARGINE: il conto stesso regola quante strategie possono
 // stare aperte insieme. Apri un nuovo trade solo se il margin level PROIETTATO
 // (equity / margine usato dopo il trade) resta sopra la soglia. Cosi' un trade
@@ -152,7 +167,7 @@ input double   InpSRisk_ScaleStep      = 1.3;
 // default sopra servono 9 perdite consecutive sulla stessa strategia per
 // arrivare al tetto (1.3^3 = 2.197, cappato a 2.0).
 input double   InpSRisk_MaxMult        = 2.0;
-double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
+input double   InpMinEntryScore    = 50.0;   // v2.2.8: abbassato, il backtest prende il segnale (i profili filtrano)
 double   InpMalaysianMinScore = 80.0;  // v2.0.14: MALAYSIAN_SNR richiede score >= 80
 int      InpMinMarginLevel   = 200;
 
