@@ -282,8 +282,31 @@ void NXS_RS_Breaker_Update(){
       double net = HistoryDealGetDouble(ticket, DEAL_PROFIT) +
                    HistoryDealGetDouble(ticket, DEAL_SWAP) +
                    HistoryDealGetDouble(ticket, DEAL_COMMISSION);
+      // 09/09 - BUG TROVATO (durante il retest del fix piramidale, crash del
+      // terminale per un loop di log infinito): questo leggeva il commento
+      // del deal DI CHIUSURA - ma MT5 lo SOVRASCRIVE sempre con "sl X.XX",
+      // "tp X.XX" o vuoto quando la posizione chiude per stop/target nativi,
+      // qualunque fosse il commento originale messo in apertura. Risultato:
+      // praticamente OGNI trade chiuso da stop/target (la stragrande
+      // maggioranza) finiva classificato "UNKNOWN", non solo le gambe
+      // piramide - il breaker per-strategia era di fatto inerte per tutto
+      // il progetto, non solo per il piramidale. Stesso bug gia' risolto
+      // altrove (NXS_State_ReconcileBroker, AUD0-STATE-002) usando il
+      // registro degli intenti invece del commento - qui non era stato
+      // applicato. Fix: risolvere la strategia dal registro intenti (che
+      // registra il nome vero al momento dell'apertura, indipendente da
+      // cosa il broker scrive alla chiusura), col commento come fallback
+      // solo se l'intento non e' piu' in memoria (retention 30gg, il
+      // lookback qui e' 90gg - copertura parziale ma correttezza vera sul
+      // periodo che conta davvero per la finestra mobile di N trade).
       string strat, group;
-      _NXS_StateParseComment(HistoryDealGetString(ticket, DEAL_COMMENT), strat, group);
+      SNxsIntent intent;
+      if(NXS_Intent_ByPosition(HistoryDealGetInteger(ticket, DEAL_POSITION_ID), intent) &&
+         StringLen(intent.strategy) > 0){
+         strat = intent.strategy; group = strat;
+      } else {
+         _NXS_StateParseComment(HistoryDealGetString(ticket, DEAL_COMMENT), strat, group);
+      }
       int k = ArraySize(allName);
       ArrayResize(allName, k + 1); ArrayResize(allRet, k + 1);
       allName[k] = strat; allRet[k] = net / riskMoney;
