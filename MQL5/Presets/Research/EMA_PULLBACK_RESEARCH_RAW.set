@@ -1,0 +1,19 @@
+; NEXUS_EA_v2 - Research Mode RAW: EMA_PULLBACK (10/09)
+; TF preso dal profilo (H4 - vedi NXS_StrategyProfiles.mqh NXS_Profile_TF).
+; RAW = niente BE/trailing (nemmeno di profilo) - per EMA_PULLBACK il profilo
+; ha comunque beR=0.0/trailATR=0.0, quindi RAW e RECIPE dovrebbero coincidere;
+; il flag e' esplicito qui per coerenza/documentazione, non perche' cambi
+; qualcosa in pratica per questa strategia. Confronta con nxs_emapb_extended_nuda
+; (84 trade, PF1.42, $698.88) e nxs_emapb_step32_clean_nuda (80 trade, PF1.41)
+; - baseline gia' verificate bit-per-bit sul report reale il 09/09.
+InpResearchMode=true
+InpStrategySelector=11
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

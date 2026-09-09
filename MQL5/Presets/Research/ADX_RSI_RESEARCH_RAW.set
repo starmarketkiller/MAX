@@ -1,0 +1,23 @@
+; NEXUS_EA_v2 - Research Mode RAW: ADX_RSI, ESL OFF (10/09)
+; RAW = trigger + SL/TP nativi del profilo, NIENTE BE/trailing (nemmeno di
+; profilo - vedi InpResearchUseProfileExit in NXS_Inputs.mqh, ADX_RSI ha
+; beR=1.5 nel profilo: senza questo flag esplicito a false si misurerebbe
+; trigger+BE insieme, non il trigger da solo). TF preso dal profilo (D1).
+; ESL OFF per isolare l'entry edge dal beneficio dell'Equity Stop Loss (vedi
+; audit 09/09: con ESL ON il naked ADX_RSI fa PF2.04, con ESL OFF PF1.26 sullo
+; stesso campione). Confronta con nxs_adxrsi_step1_nuda_3y (ESL ON, PF2.04,
+; ma con BE1.5R di profilo attivo) e nxs_adxrsi_step3_noesl_3y (ESL OFF,
+; PF1.26, stesso BE attivo) - QUESTO preset e' piu' nudo di entrambi.
+; Livello successivo: ADX_RSI_RESEARCH_RECIPE.set (stesso trigger, BE/trail
+; di profilo riammessi).
+InpResearchMode=true
+InpStrategySelector=1
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

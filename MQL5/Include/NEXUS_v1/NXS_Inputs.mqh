@@ -190,6 +190,40 @@ input bool     InpDataCollectionMode   = false;  // OFF: si usa il grouping isti
 input double   InpDataCollectionLot    = 0.01;   // lotto fisso per trade (piccolo)
 input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte contemporanee (sicurezza)
 
+// input group "=== RESEARCH MODE (10/09) ==="
+// Master switch unico per rendere un backtest di una singola strategia
+// isolato e ripetibile, SENZA toccare il comportamento LIVE di default
+// (InpResearchMode=false -> zero cambiamenti). Scope volutamente piccolo
+// rispetto al Reference Engine completo discusso e NON implementato (vedi
+// vault "NEXUS Audit Forense" Fasi 1-4): qui non si tocca router, gate di
+// ingresso, score transform o telemetria estesa - solo gli overlay di
+// gestione post-apertura, il lotto e il multi-TF, con log esplicito per
+// tutto cio' che resta acceso (niente silenzi come ESL/DailyDD prima).
+input bool     InpResearchMode         = false;
+// 10/09 - RAW vs RECIPE (correzione richiesta dopo la prima verifica):
+// InpUseStrategyProfiles/InpProfileMultiTF (richiesti true da Research)
+// decidono SOLO quale TF/SL/TP nativi usare - NON implicano il BE/trailing
+// del profilo, che e' gestione post-apertura a tutti gli effetti (es. ADX_RSI
+// ha beR=1.5 nel profilo: senza questo flag un test "Research" misurerebbe
+// gia' trigger+BE insieme, non il trigger puro). Default false = RAW (entry+
+// SL+TP nativi, nessun BE/trailing nemmeno di profilo). true = RECIPE (stesso
+// trigger/SL/TP, ma BE/trailing di profilo riammessi) - un secondo livello
+// esplicito, non un modo diverso di essere "naked".
+input bool     InpResearchUseProfileExit = false;
+// ESL/protezioni conto NON sono forzate OFF di default in Research: sono
+// gia' un fattore di contaminazione noto (vedi audit 09/09 - il PF2.04 di
+// ADX_RSI dipende dall'ESL, senza scende a 1.26). Di default restano OFF
+// (edge puro), ma ON e' una scelta esplicita e SEMPRE loggata, mai un
+// comportamento implicito ereditato dal .set.
+input bool     InpResearchUseESL       = false;
+input bool     InpResearchUseDailyDD   = false;
+input bool     InpResearchUseTotalDD   = false;
+// Lotto fisso dedicato - NON riusa InpDataCollectionMode (percorso diverso,
+// salta gate diversi - vedi commento sopra). Sostituisce qualunque sizing a
+// rischio% E qualunque moltiplicatore residuo (streak/counter-HTF/chain):
+// il punto e' misurare l'edge del trigger, non il money management.
+input double   InpResearchFixedLot     = 0.01;
+
 // input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // Master switch del modello istituzionale: lettura unica del mercato ->
 // raggruppamento dei segnali per direzione -> 1 posizione per direzione con

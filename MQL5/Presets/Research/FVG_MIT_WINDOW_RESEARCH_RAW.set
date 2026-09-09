@@ -1,0 +1,19 @@
+; NEXUS_EA_v2 - Research Mode: FVG_MIT_WINDOW (10/09)
+; TF preso dal profilo (H4). Nessun test isolato storico esiste per questa
+; strategia (verificato 09/09 - vedi audit): questo sara' il primo baseline
+; reale. ATTENZIONE: NXS_Profile_Enabled("FVG_MIT_WINDOW") ritorna false
+; (disattivata dal 14/08 - PF0.98 realistico, DD 21.4%, contro PF1.64 senza
+; costi) - si applica solo se InpUseStrategyProfiles=true (qui richiesto per
+; il multi-TF), quindi la strategia sara' bloccata a valle del segnale finche'
+; non si decide di rimuovere/aggiornare quel gate.
+InpResearchMode=true
+InpStrategySelector=39
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

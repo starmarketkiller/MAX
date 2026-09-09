@@ -12,6 +12,13 @@ bool NXS_SelectorAllows(int idx){
    return (InpStrategySelector == 0 || InpStrategySelector == idx);
 }
 
+// 10/09 - Research Mode: definita qui (non in NXS_ResearchMode.mqh, incluso
+// molto piu' tardi) perche' NXS_Risk.mqh/NXS_Protections.mqh la consultano
+// prima che quel file sia raggiunto nella catena di include. Il resto del
+// modulo (preflight/lotto fisso/log) resta in NXS_ResearchMode.mqh, incluso
+// dopo NXS_Strategies.mqh perche' usa NXS_StrategySourceTF.
+bool NXS_IsResearchMode(){ return InpResearchMode; }
+
 // ----- Trade state (replaces CTrade) -----
 long                       g_tradeMagic   = 0;
 ENUM_ORDER_TYPE_FILLING    g_tradeFilling = ORDER_FILLING_FOK;

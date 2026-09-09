@@ -1,0 +1,19 @@
+; NEXUS_EA_v2 - Research Mode: TURTLE_SOUP (10/09)
+; TF preso dal profilo (H1). ATTENZIONE prima di lanciare: NXS_Profile_Enabled
+; ("TURTLE_SOUP") ritorna false (disattivata dal 14/08 - PF0.55/DD62.7% con
+; costi realistici Dukascopy, n=250 OOS) - quel gate si applica pero' solo
+; all'ESECUZIONE se InpUseStrategyProfiles=true, quindi con questo preset
+; (che lo richiede true per il multi-TF) la strategia continuera' a essere
+; bloccata a valle del segnale. Serve prima decidere se rimuovere/aggiornare
+; quel gate per ottenere un vero baseline Research - vedi audit 09/09.
+InpResearchMode=true
+InpStrategySelector=17
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

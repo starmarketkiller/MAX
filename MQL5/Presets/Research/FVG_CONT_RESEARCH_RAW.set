@@ -1,0 +1,21 @@
+; NEXUS_EA_v2 - Research Mode RAW: FVG_CONT, Split OFF (10/09)
+; TF preso dal profilo (H4). RAW = niente BE/trailing, nemmeno di profilo -
+; per FVG_CONT il profilo ha beR=InpFvgContBeR (non zero di default), quindi
+; qui conta davvero, a differenza di EMA_PULLBACK. InpEnableSplit=false
+; esplicitato per documentare l'intento (Research Mode lo spegne comunque a
+; runtime) - i test storici "nuda" (nxs_fvgcont_step1_nuda_3y,
+; step2_propcompliant) avevano INVECE InpEnableSplit=true nonostante il nome
+; "nuda": qui si isola quanto dell'edge da PF~1.92-1.93 viene dal trigger
+; puro contro quanto da parziale+BE.
+InpResearchMode=true
+InpStrategySelector=8
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpEnableSplit=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

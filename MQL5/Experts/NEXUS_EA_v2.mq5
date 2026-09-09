@@ -53,6 +53,7 @@
 #include <NEXUS_v1\NXS_MarketContext.mqh>
 #include <NEXUS_v1\NXS_FibonacciContext.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
+#include <NEXUS_v1\NXS_ResearchMode.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
@@ -649,6 +650,15 @@ int OnInit(){
       Alert("NEXUS: conto non hedging — EA non avviato");
       return INIT_FAILED;
    }
+
+   // 10/09 - Research Mode: fail-fast su configurazioni ambigue PRIMA di
+   // qualunque altro lavoro di init (vedi NXS_ResearchMode.mqh). No-op se
+   // InpResearchMode=false.
+   if(!NXS_ResearchPreflight()){
+      Alert("NEXUS: Research Mode - configurazione non valida, EA non avviato (vedi log)");
+      return INIT_FAILED;
+   }
+
    // AUD0-SEC-001: prima di QUALSIASI chiamata al backend (il fetch del profilo
    // qui sotto e' la prima) si verifica che il token del bridge non sia il
    // segnaposto pubblico e che l'URL sia HTTPS. Altrimenti la WebSync si spegne.
@@ -778,7 +788,14 @@ int OnInit(){
    // AUD0-MQL-011: il profilo bloccato si applica QUI, dopo che whitelist,
    // handle, preset, licenza e stato persistito esistono gia'. La precedenza
    // e' dichiarata: il remoto sovrascrive il locale, mai il contrario.
-   NXS_LockedProfile_Fetch();
+   // 10/09 - Research Mode: nessun runtime remoto puo' mutare la config del
+   // test, il .set caricato all'avvio e' l'unica autorita' (vedi NXS_ResearchMode.mqh).
+   if(NXS_IsResearchMode())
+      Print("[RESEARCH] LockedProfile remoto NON interrogato - il .set caricato e' l'unica fonte di configurazione");
+   else
+      NXS_LockedProfile_Fetch();
+
+   NXS_ResearchLogInit();   // no-op se InpResearchMode=false
 
    // Initial dashboard render
    if(InpShowDashboard) NXS_Dashboard_Render();
@@ -1023,24 +1040,39 @@ void OnTick(){
    // ogni tick a prescindere da InpStatePersistInTester.
    NXS_State_ReconcileBroker();
    // Management on every tick
-   NXS_ManageFixedBE();
-   NXS_ManageBreakevenAndTrail();
-   NXS_TrailATR();                // NEW: ATR-based trailing overlay
+   // 10/09 - Research Mode: overlay GLOBALI di gestione post-apertura spenti
+   // (Grid/Pyramid/Split/FixedPartial/VolumePartial/ATRTrail globale/FixedBE
+   // globale/SLReclaim/ProfitReclaim/PipSequence/InstitutionalCore). Resta
+   // sempre attiva la gestione dedicata WEEKLY_EXP (scoped a quella sola
+   // strategia, non un overlay generico). Nessun cambio per InpResearchMode=false.
+   //
+   // 10/09 (correzione RAW/RECIPE) - NXS_ManageBreakevenAndTrail() legge
+   // beR/trailATR dal profilo della strategia (es. ADX_RSI beR=1.5): NON e'
+   // "il trigger", e' management post-apertura a tutti gli effetti. Un test
+   // "Research" che la lasciasse sempre accesa misurerebbe trigger+BE
+   // insieme, mai il trigger da solo. Ora e' dietro InpResearchUseProfileExit
+   // (default false = RAW: solo entry+SL/TP nativi; true = RECIPE: stesso
+   // trigger, BE/trailing di profilo riammessi).
+   if(!NXS_IsResearchMode()) NXS_ManageFixedBE();
+   if(!NXS_IsResearchMode() || InpResearchUseProfileExit) NXS_ManageBreakevenAndTrail();
+   if(!NXS_IsResearchMode()) NXS_TrailATR();   // ATR-based trailing overlay (globale, non di profilo)
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
-   NXS_ManageSplit();
-   NXS_ManageFixedPipPartial();
-   NXS_ManageVolumePartial();
-   NXS_ManagePipSequence();
-   NXS_ManageSLReclaim();
-   NXS_ManageProfitReclaim();
-   if(InpUseInstitutionalCore){
-      // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
-      // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
-      // per non aggiungere due volte sulla stessa posizione.
-      NXS_InstManage_OnTick();
-   } else {
-      NXS_ManageGrid();
-      NXS_ManagePyramid(vel);
+   if(!NXS_IsResearchMode()){
+      NXS_ManageSplit();
+      NXS_ManageFixedPipPartial();
+      NXS_ManageVolumePartial();
+      NXS_ManagePipSequence();
+      NXS_ManageSLReclaim();
+      NXS_ManageProfitReclaim();
+      if(InpUseInstitutionalCore){
+         // Modello istituzionale: la sequenza (core+grid/recovery) e il trailing
+         // "training stop" + runner sono gestiti qui. Grid/pyramid classici OFF
+         // per non aggiungere due volte sulla stessa posizione.
+         NXS_InstManage_OnTick();
+      } else {
+         NXS_ManageGrid();
+         NXS_ManagePyramid(vel);
+      }
    }
    NXS_PM_ApplyCycle();
 
@@ -1480,6 +1512,7 @@ void OnTick(){
 //                  cooldown partito adesso per un SL di ieri bloccherebbe il
 //                  trading per un motivo gia' esaurito.
 void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
+   NXS_ResearchLogExit(tc.strategy, tc.close_reason, tc.pnl);   // no-op se InpResearchMode=false
    // Protezioni loss-streak (anti-revenge, anti-bleed, streak sizing):
    // ESATTAMENTE una volta per trade logico, con il PnL AGGREGATO
    // (docs/architecture: "consecutive-loss protections run exactly once per
@@ -1491,10 +1524,16 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
    // NXS_SLReclaim.mqh). tc.close_reason viene dal ledger, "trigger
    // dell'ultimo OUT" - un pareggio/trailing/max-loss non e' uno stop
    // nativo in senso stretto, solo "sl" (il broker) lo e'.
+   // 10/09 - FIX IDENTITA': prima non passava la strategia, la riapertura
+   // era sempre etichettata "SAR" indipendentemente da quale strategia
+   // fosse stata realmente stoppata (vedi NXS_SLReclaim.mqh). tc.strategy
+   // viene dal commento del primo deal IN della posizione appena chiusa -
+   // e' la strategia VERA, non un'assunzione.
    if(StringFind(tc.close_reason, "sl") == 0)
-      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1, tc.pnl);
+      NXS_SLReclaim_Arm(tc.vwap_out, (tc.side == "BUY") ? 1 : -1, tc.pnl,
+                        tc.strategy, NXS_StrategySourceTF(tc.strategy));
    else
-      NXS_SLReclaim_OnTradeClosed(tc.pnl);   // un TP o altra uscita in guadagno rompe comunque la catena
+      NXS_SLReclaim_OnTradeClosed(tc.pnl, tc.strategy);   // un TP o altra uscita in guadagno rompe comunque la catena
    // 12/08 — moltiplicatore da perdite consecutive PER-STRATEGIA: stesso
    // punto/stesso pnl AGGREGATO di NXS_OnTradeClosed sopra (esattamente una
    // volta per trade logico, non per deal parziale). No-op se
@@ -1538,8 +1577,13 @@ void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
                             tc.partial_count, tc.vol_out);
 
    // v2.0.13 — hook chain
-   int closeDir = (tc.side == "BUY") ? +1 : -1;
-   NXS_Chain_OnTradeClose(tc.strategy, closeDir, tc.vwap_out, tc.pnl);
+   // 10/09 - Research Mode: continuation/smart-reverse chain spenta (i due
+   // flag sono "input", non riassegnabili a runtime - si salta la chiamata
+   // invece di provare a forzarli).
+   if(!NXS_IsResearchMode()){
+      int closeDir = (tc.side == "BUY") ? +1 : -1;
+      NXS_Chain_OnTradeClose(tc.strategy, closeDir, tc.vwap_out, tc.pnl);
+   }
 
    // NXS-TX-003: non rigiocabile — nessuna notifica per chiusure avvenute
    // mentre l'EA era spento.

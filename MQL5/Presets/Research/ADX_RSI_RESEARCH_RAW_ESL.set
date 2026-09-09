@@ -1,0 +1,17 @@
+; NEXUS_EA_v2 - Research Mode RAW: ADX_RSI, ESL ON (10/09)
+; Identico a ADX_RSI_RESEARCH_RAW.set (nessun BE/trailing, nemmeno di
+; profilo) ma con l'Equity Stop Loss acceso esplicitamente. Confronto diretto
+; a 3 vie con ADX_RSI_RESEARCH_RAW.set (ESL off) e ADX_RSI_RESEARCH_RECIPE*.set
+; (BE riammesso): isola separatamente il contributo del trigger, del BE, e
+; dell'ESL al PF2.04 storico.
+InpResearchMode=true
+InpStrategySelector=1
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=true
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

@@ -432,32 +432,43 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // 01/09 - lotto fisso scoped a EMA_PULLBACK per rendere possibile un
    // parziale vero (vedi InpEMAPBFixedLot in NXS_Inputs.mqh).
    if(InpEMAPBFixedLot > 0 && sig.stratName == "EMA_PULLBACK") lots = InpEMAPBFixedLot;
+   // 10/09 - Research Mode: lotto fisso dedicato, vince su qualunque sizing a
+   // rischio% o override scoped sopra - il punto e' misurare l'edge del
+   // trigger, non il money management (vedi NXS_Inputs.mqh).
+   if(NXS_IsResearchMode()) lots = NXS_ResearchLot();
    if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
 
-   // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),
-   // capati da InpMaxTotalLotMult. Il rischio per-strategia NON e' piu' qui:
-   // e' gia' nel sizing base -> il cap non lo tocca.
-   double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
-   // AUD0-EXEC-008: qui un moltiplicatore a zero veniva RIPORTATO A 1.0, cioe'
-   // l'istruzione "non operare con questa strategia" diventava "opera a
-   // rischio pieno". Ora zero significa zero: nessuna apertura.
-   if(stratRisk <= 0.0){
-      g_nxsLastOpenFailure = "strategy_risk_disabled";
-      PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s ha moltiplicatore di rischio "
-                  "nullo dal piano di controllo", sig.stratName);
-      return OPEN_FAIL_PREFLIGHT;
+   if(NXS_IsResearchMode()){
+      // Nessun moltiplicatore residuo in Research: ne' counter-HTF/chain
+      // (lotMult), ne' rischio-per-strategia dal piano di controllo, ne'
+      // streak/adaptive sizing (gia' esclusi a monte perche' NXS_CalcLotRisk/
+      // NXS_AccountLotMult non vengono nemmeno chiamate sopra).
+   } else {
+      // Moltiplicatori residui (counter-HTF/chain via lotMult + auto-scaler runtime),
+      // capati da InpMaxTotalLotMult. Il rischio per-strategia NON e' piu' qui:
+      // e' gia' nel sizing base -> il cap non lo tocca.
+      double stratRisk = NXS_Runtime_StrategyLotMult(sig.stratName);
+      // AUD0-EXEC-008: qui un moltiplicatore a zero veniva RIPORTATO A 1.0, cioe'
+      // l'istruzione "non operare con questa strategia" diventava "opera a
+      // rischio pieno". Ora zero significa zero: nessuna apertura.
+      if(stratRisk <= 0.0){
+         g_nxsLastOpenFailure = "strategy_risk_disabled";
+         PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s ha moltiplicatore di rischio "
+                     "nullo dal piano di controllo", sig.stratName);
+         return OPEN_FAIL_PREFLIGHT;
+      }
+      double rawMult = MathMax(0.01, lotMult) * stratRisk;
+      double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
+      if(cappedMult < rawMult - 1e-9){
+         PrintFormat("[NEXUS RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",
+                     sig.stratName, rawMult, cappedMult, InpMaxTotalLotMult);
+      }
+      if(MathAbs(cappedMult - 1.0) > 1e-6){
+         PrintFormat("[NEXUS RISK] %s lot multiplier effettivo applicato: x%.2f (lots base %.4f -> %.4f)",
+                     sig.stratName, cappedMult, lots, lots * cappedMult);
+      }
+      lots *= cappedMult;
    }
-   double rawMult = MathMax(0.01, lotMult) * stratRisk;
-   double cappedMult = MathMin(rawMult, InpMaxTotalLotMult);
-   if(cappedMult < rawMult - 1e-9){
-      PrintFormat("[NEXUS RISK] %s lot multiplier capped x%.2f -> x%.2f (limite InpMaxTotalLotMult=%.2f)",
-                  sig.stratName, rawMult, cappedMult, InpMaxTotalLotMult);
-   }
-   if(MathAbs(cappedMult - 1.0) > 1e-6){
-      PrintFormat("[NEXUS RISK] %s lot multiplier effettivo applicato: x%.2f (lots base %.4f -> %.4f)",
-                  sig.stratName, cappedMult, lots, lots * cappedMult);
-   }
-   lots *= cappedMult;
 
    // Re-align volume after a Counter-HTF risk multiplier.
    double step = SymbolInfoDouble(g_sym, SYMBOL_VOLUME_STEP);
@@ -487,6 +498,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                                    otype, refPrice, sl, tp, pfReason)){
       g_nxsLastOpenFailure = pfReason;
       PrintFormat("[NEXUS] OPEN BLOCKED common gate: %s strat=%s", pfReason, sig.stratName);
+      NXS_ResearchLogBlock(sig.stratName, pfReason);
       return OPEN_FAIL_PREFLIGHT;
    }
 
@@ -589,10 +601,12 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       PrintFormat("[NEXUS] OPEN %s %s lots=%.4f sl=%.5f tp=%.5f score=%.1f reason=%s",
                   NXS_DirName(sig.dir), sig.stratName, lots, sl, tp, sig.score, sig.reason);
       NXS_Notify_TradeOpen(sig.stratName, NXS_DirName(sig.dir), lots, refPrice, sig.score);
+      NXS_ResearchLogOpen(sig.stratName, vdir, fillPx, sl, tp);
       return OPEN_OK;
    }
 
    g_nxsLastOpenFailure = StringFormat("order_send_retcode=%u", NXS_TradeRetcode());
+   NXS_ResearchLogBlock(sig.stratName, g_nxsLastOpenFailure);
    NXS_Diag_TradeFail(sig.stratName, (int)sig.dir, lots, refPrice, (int)NXS_TradeRetcode());
    return OPEN_FAIL_SEND;
 }

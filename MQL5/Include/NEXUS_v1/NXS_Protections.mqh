@@ -547,8 +547,13 @@ void NXS_Prot_OnTick(){
    if(g_pausedUntilNextOpen) return;
    NXS_Prot_CheckMaxHold();
    NXS_Prot_CheckMaxLossPerPos();
-   NXS_Prot_CheckESL();
-   NXS_Prot_CheckMaxTotalDD();
+   // 10/09 - Research Mode: ESL e Total DD chiudono posizioni (a differenza
+   // di Daily DD, che blocca solo nuovi ingressi - vedi NXS_CheckProtections
+   // in NXS_Risk.mqh), quindi qui sono dietro un opt-in esplicito e SEMPRE
+   // loggato (InpResearchUseESL/InpResearchUseTotalDD, default OFF - vedi
+   // NXS_Inputs.mqh). Fuori da Research Mode nessun cambiamento.
+   if(!NXS_IsResearchMode() || InpResearchUseESL) NXS_Prot_CheckESL();
+   if(!NXS_IsResearchMode() || InpResearchUseTotalDD) NXS_Prot_CheckMaxTotalDD();
    NXS_Prot_CheckDPT();
    NXS_Prot_CheckAutoClose();
 }

@@ -1,0 +1,18 @@
+; NEXUS_EA_v2 - Research Mode: MALAYSIAN_SNR (10/09)
+; TF preso dal profilo (M30). Tutti i test storici trovati (luglio, 3
+; settimane, Grid+Pyramid+Split+ATRTrail tutti simultaneamente attivi) sono
+; da considerare rumore (vedi audit 09/09): questo e' il primo baseline
+; pulito. Confermato codice: gira come legacy puro (NXR_Strat_MalaysianSNR
+; ricade sempre sulla funzione base, InpNXR_Enable e' hardcoded false e non
+; e' nemmeno un input) - nessuna ambiguita' NXR per questa strategia.
+InpResearchMode=true
+InpStrategySelector=26
+InpRiskProfile=0
+InpUseStrategyProfiles=true
+InpProfileMultiTF=true
+InpDataCollectionMode=false
+InpResearchFixedLot=0.01
+InpResearchUseProfileExit=false
+InpResearchUseESL=false
+InpResearchUseDailyDD=false
+InpResearchUseTotalDD=false

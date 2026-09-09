@@ -155,8 +155,10 @@ bool NXS_CheckProtections(string &reason){
    if(ml > 0 && ml < (double)InpMinMarginLevel){
       reason = "margin_low"; return false;
    }
-   // Daily DD
-   if(g_balanceDayStart > 0){
+   // Daily DD - 10/09: in Research Mode e' dietro InpResearchUseDailyDD
+   // (default OFF, mai silenzioso - vedi NXS_Inputs.mqh), fuori da Research
+   // resta come sempre.
+   if((!NXS_IsResearchMode() || InpResearchUseDailyDD) && g_balanceDayStart > 0){
       double eq = AccountInfoDouble(ACCOUNT_EQUITY);
       double ddPct = (g_balanceDayStart - eq) / g_balanceDayStart * 100.0;
       if(ddPct >= g_run_MaxDailyDDPct){ reason = "daily_dd"; return false; }
