@@ -3,7 +3,7 @@
 //| 30/08 - meccanismo richiesto dall'utente, esplicitamente PIU'      |
 //| sicuro di un grid (nessuna media in perdita, mai piu' esposizione  |
 //| nella direzione che sta perdendo):                                 |
-//|   1. Un trade SAR salta per stop nativo (es. buy, stop sotto)      |
+//|   1. Un trade salta per stop nativo (es. buy, stop sotto)          |
 //|   2. Si segna quel livello di prezzo (la linea dello stop)         |
 //|   3. Si aspetta che una candela M15 CHIUDA oltre quella linea       |
 //|      nella direzione ORIGINALE del trade (per un buy: close >      |
@@ -13,77 +13,138 @@
 //|      stoppato) - la logica: il crollo/rally che ha stoppato era     |
 //|      probabilmente un falso allarme se il prezzo torna a           |
 //|      riconquistare quel livello, non una vera inversione di trend. |
+//|                                                                     |
+//| 10/09 - FIX IDENTITA' E ATTRIBUZIONE (commit separato dal Research  |
+//| Mode, audit richiesto dall'utente):                                 |
+//|                                                                     |
+//| BUG TROVATO: la riapertura era hardcoded come se fosse SEMPRE un    |
+//| trade SAR ("|SAR|SLRECLAIM|", ATR H4, ricetta 1.0/6.0), qualunque   |
+//| fosse la strategia REALMENTE stoppata (chiamata da                  |
+//| NXS_EA_OnLogicalClose per OGNI chiusura "sl", non solo SAR). Nessuna|
+//| chiamata a NXS_Intent_Record: il trade riaperto non esisteva nel    |
+//| registro degli intenti, quindi ogni consumer (RiskShield breaker,   |
+//| ledger, stats) ricadeva sul parsing del commento e leggeva "SAR" -  |
+//| un trade FVG_CONT/TURTLE_SOUP/qualunque stoppato e poi riconquistato|
+//| finiva silenziosamente nelle statistiche di SAR, alterandole in modo|
+//| non distinguibile a posteriori. In piu' lo stato (g_slrPending/     |
+//| g_slrLevel/g_slrDir) era un singleton globale: due stop di strategie|
+//| diverse quasi simultanei si sovrascrivevano a vicenda senza log.    |
+//|                                                                     |
+//| FIX: lo stato pending diventa una coda (piu' stop in attesa insieme,|
+//| uno per strategia/livello), la catena di perdite consecutive e'     |
+//| tracciata PER STRATEGIA (prima era implicitamente "per SAR"), la    |
+//| riapertura porta il commento "InpComment|<STRATEGIA_ORIGINALE>|     |
+//| SL_RECLAIM|<TF_ORIGINE>" (es. "NEXUS_v2.50|FVG_CONT|SL_RECLAIM|     |
+//| PERIOD_H4") ed e' registrata in NXS_Intent_Record con la strategia  |
+//| originale come identita' e route="sl_reclaim" a marcarla come       |
+//| follow-up senza perdere il genitore. L'ATR usato per SL/TP del      |
+//| reclaim e' quello del TF DI ORIGINE della strategia stoppata (prima |
+//| sempre H4, sbagliato per TURTLE_SOUP=H1/MALAYSIAN_SNR=M30/ecc), ma  |
+//| il moltiplicatore resta una ricetta esplicita e dedicata al reclaim |
+//| (InpSLReclaimSLAtr/InpSLReclaimTPAtr, stessi default 1.0/6.0 di     |
+//| prima - NESSUN cambio di comportamento numerico per chi lo usava    |
+//| gia' solo su SAR), non la ricetta nativa della strategia originale. |
+//| Non toccata la logica di QUANDO il reclaim scatta (arm/conferma/    |
+//| scadenza/gate identici a prima).                                    |
 //+------------------------------------------------------------------+
 #ifndef __NXS_SLRECLAIM_MQH__
 #define __NXS_SLRECLAIM_MQH__
 
-bool     g_slrPending = false;
-double   g_slrLevel = 0;
-int      g_slrDir = 0;          // direzione ORIGINALE del trade stoppato (+1 buy, -1 sell)
-datetime g_slrArmedAt = 0;
-datetime g_slrLastM15Seen = 0;  // evita di ricontrollare la stessa barra M15 piu' volte
-int      g_slrChainLosses = 0;  // 30/08 - perdite CONSECUTIVE nella catena di riconquiste
+#define NXS_SLR_MAX 8   // riconquiste in attesa contemporaneamente (una per stop armato)
 
-// 30/08 - SICUREZZA aggiunta su segnalazione dell'utente: "e se l'EA
-// rientra e la direzione e' ancora sbagliata, o rompe e gira di nuovo?"
-// - senza un limite, una vera inversione di trend (non un falso allarme)
-// puo' far incatenare piu' stop pieni sulla stessa chiamata di direzione
-// sbagliata, ognuno riaperto dalla riconquista precedente. Dopo
-// InpSLReclaimMaxChain perdite consecutive nella catena, ci si arrende:
-// niente altra riconquista finche' non arriva un segnale SAR FRESCO
-// (che ricalcola la direzione da zero, non riusa quella vecchia) o un
-// trade della catena chiude in guadagno (resetta il contatore).
-//
-// Chiamata da NXS_EA_OnLogicalClose per OGNI chiusura di trade SAR (non
-// solo quelle che riarmano) - pnl>=0 rompe la catena di perdite anche se
-// il motivo di chiusura e' "sl" (uno stop trailing puo' chiudere in
-// guadagno, visto stanotte sui trade grezzi).
-void NXS_SLReclaim_OnTradeClosed(double pnl){
-   if(pnl >= 0) g_slrChainLosses = 0;
+struct SNxsSLRSlot {
+   double          level;         // linea dello stop originale
+   int             dir;           // direzione ORIGINALE del trade stoppato (+1 buy, -1 sell)
+   datetime        armedAt;
+   datetime        lastM15Seen;   // evita di ricontrollare la stessa barra M15 piu' volte
+   string          strategy;      // strategia REALMENTE stoppata (non piu' sempre "SAR")
+   ENUM_TIMEFRAMES sourceTF;      // TF di origine di quella strategia (NXS_StrategySourceTF)
+};
+SNxsSLRSlot g_slrSlots[];         // coda dinamica - vedi nota 10/09 sopra
+
+// Catena di perdite consecutive nella riconquista, PER STRATEGIA (prima era
+// un contatore globale unico, implicitamente "per SAR" - vedi nota 10/09).
+string g_slrChainStrat[];
+int    g_slrChainCount[];
+
+int _NXS_SLR_ChainIdx(const string strategy, bool createIfMissing){
+   for(int i = ArraySize(g_slrChainStrat) - 1; i >= 0; i--)
+      if(g_slrChainStrat[i] == strategy) return i;
+   if(!createIfMissing) return -1;
+   int n = ArraySize(g_slrChainStrat);
+   ArrayResize(g_slrChainStrat, n + 1);
+   ArrayResize(g_slrChainCount, n + 1);
+   g_slrChainStrat[n] = strategy;
+   g_slrChainCount[n] = 0;
+   return n;
 }
 
-// Chiamata quando una posizione SAR chiude per STOP nativo (non pareggio/
-// trailing/max-loss/altre protezioni) - arma l'attesa della riconquista,
-// a meno che la catena di perdite consecutive abbia gia' raggiunto il
-// limite.
-void NXS_SLReclaim_Arm(double slPrice, int dir, double pnl){
+void _NXS_SLR_RemoveSlot(int idx){
+   int n = ArraySize(g_slrSlots);
+   if(idx < 0 || idx >= n) return;
+   for(int i = idx; i < n - 1; i++) g_slrSlots[i] = g_slrSlots[i + 1];
+   ArrayResize(g_slrSlots, n - 1);
+}
+
+// Chiamata da NXS_EA_OnLogicalClose per OGNI chiusura di trade (non solo
+// quelle che riarmano) - pnl>=0 rompe la catena di perdite di QUELLA
+// strategia anche se il motivo di chiusura non e' "sl" (uno stop trailing
+// puo' chiudere in guadagno).
+void NXS_SLReclaim_OnTradeClosed(double pnl, const string strategy){
+   if(pnl < 0) return;
+   int ci = _NXS_SLR_ChainIdx(strategy, false);
+   if(ci >= 0) g_slrChainCount[ci] = 0;
+}
+
+// Chiamata quando una posizione chiude per STOP nativo (non pareggio/
+// trailing/max-loss/altre protezioni) - arma l'attesa della riconquista per
+// QUELLA strategia, a meno che la sua catena di perdite consecutive abbia
+// gia' raggiunto il limite.
+void NXS_SLReclaim_Arm(double slPrice, int dir, double pnl,
+                       string strategy, ENUM_TIMEFRAMES sourceTF){
    if(!InpUseSLReclaim) return;
    if(slPrice <= 0 || dir == 0) return;
+   if(StringLen(strategy) == 0) strategy = "UNKNOWN";
+
+   int ci = _NXS_SLR_ChainIdx(strategy, true);
    if(pnl >= 0){
-      g_slrChainLosses = 0;   // uno stop trailing in guadagno non e' una sconfitta - nessuna riconquista necessaria
+      g_slrChainCount[ci] = 0;   // uno stop trailing in guadagno non e' una sconfitta - nessuna riconquista necessaria
       return;
    }
-   g_slrChainLosses++;
-   if(InpSLReclaimMaxChain > 0 && g_slrChainLosses > InpSLReclaimMaxChain){
-      PrintFormat("[NEXUS SLRECLAIM] catena di %d perdite consecutive raggiunta (limite=%d) - "
-                  "NESSUNA riconquista, ci si arrende fino al prossimo segnale SAR fresco",
-                  g_slrChainLosses, InpSLReclaimMaxChain);
-      g_slrPending = false;
+   g_slrChainCount[ci]++;
+   if(InpSLReclaimMaxChain > 0 && g_slrChainCount[ci] > InpSLReclaimMaxChain){
+      PrintFormat("[NEXUS SLRECLAIM] %s: catena di %d perdite consecutive raggiunta (limite=%d) - "
+                  "NESSUNA riconquista, ci si arrende fino al prossimo stop fresco di %s",
+                  strategy, g_slrChainCount[ci], InpSLReclaimMaxChain, strategy);
       return;
    }
-   g_slrPending = true;
-   g_slrLevel = slPrice;
-   g_slrDir = dir;
-   g_slrArmedAt = TimeCurrent();
-   g_slrLastM15Seen = 0;
-   PrintFormat("[NEXUS SLRECLAIM] armato (catena=%d/%d): livello=%.2f dir=%d (in attesa di una chiusura M15 oltre la linea)",
-               g_slrChainLosses, InpSLReclaimMaxChain, slPrice, dir);
+   if(ArraySize(g_slrSlots) >= NXS_SLR_MAX){
+      PrintFormat("[NEXUS SLRECLAIM] coda piena (%d/%d) - riconquista per %s scartata",
+                  ArraySize(g_slrSlots), (int)NXS_SLR_MAX, strategy);
+      return;
+   }
+
+   int n = ArraySize(g_slrSlots);
+   ArrayResize(g_slrSlots, n + 1);
+   g_slrSlots[n].level       = slPrice;
+   g_slrSlots[n].dir         = dir;
+   g_slrSlots[n].armedAt     = TimeCurrent();
+   g_slrSlots[n].lastM15Seen = 0;
+   g_slrSlots[n].strategy    = strategy;
+   g_slrSlots[n].sourceTF    = sourceTF;
+   PrintFormat("[NEXUS SLRECLAIM] armato per %s (catena=%d/%d, TF origine=%s): livello=%.2f dir=%d "
+               "(in attesa di una chiusura M15 oltre la linea)",
+               strategy, g_slrChainCount[ci], InpSLReclaimMaxChain, EnumToString(sourceTF), slPrice, dir);
 }
 
 void NXS_ManageSLReclaim(){
-   if(!InpUseSLReclaim || !g_slrPending) return;
-
-   // scadenza: non aspettare all'infinito
-   if(InpSLReclaimExpireHours > 0 &&
-      TimeCurrent() - g_slrArmedAt > InpSLReclaimExpireHours * 3600){
-      PrintFormat("[NEXUS SLRECLAIM] scaduto senza conferma (livello=%.2f dir=%d)", g_slrLevel, g_slrDir);
-      g_slrPending = false;
-      return;
-   }
+   if(!InpUseSLReclaim || ArraySize(g_slrSlots) == 0) return;
 
    // se nel frattempo si e' gia' aperta una nuova posizione Nexus, non
-   // sovrapporsi - resta armato per la prossima occasione libera.
-   for(int i = PositionsTotal()-1; i >= 0; i--){
+   // sovrapporsi - stessa regola di prima (nessun cambiamento sul QUANDO
+   // scatta), estesa a valere per l'intera coda invece che per un solo stato
+   // globale: resta tutto armato, si ritenta al prossimo tick libero.
+   for(int i = PositionsTotal() - 1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
       if(t == 0) continue;
       if(PositionGetString(POSITION_SYMBOL) != g_sym) continue;
@@ -92,87 +153,90 @@ void NXS_ManageSLReclaim(){
 
    // valuta solo su una NUOVA barra M15 chiusa (shift=1), non ad ogni tick
    datetime m15Bar = iTime(g_sym, PERIOD_M15, 0);
-   if(m15Bar == g_slrLastM15Seen) return;
-   g_slrLastM15Seen = m15Bar;
 
-   double closeM15 = iClose(g_sym, PERIOD_M15, 1);
-   bool confirmed = (g_slrDir == 1) ? (closeM15 > g_slrLevel) : (closeM15 < g_slrLevel);
-   if(!confirmed) return;
+   for(int i = ArraySize(g_slrSlots) - 1; i >= 0; i--){
+      // scadenza: non aspettare all'infinito
+      if(InpSLReclaimExpireHours > 0 &&
+         TimeCurrent() - g_slrSlots[i].armedAt > InpSLReclaimExpireHours * 3600){
+         PrintFormat("[NEXUS SLRECLAIM] %s: scaduto senza conferma (livello=%.2f dir=%d)",
+                     g_slrSlots[i].strategy, g_slrSlots[i].level, g_slrSlots[i].dir);
+         _NXS_SLR_RemoveSlot(i);
+         continue;
+      }
 
-   // 07/09 - BUG TROVATO: fino a qui la riapertura chiamava NXS_SafeBuy/
-   // NXS_SafeSell direttamente, bypassando NXS_CheckProtections() - il gate
-   // usato da OGNI altro percorso di apertura (limite giornaliero, congelamento
-   // Ruin, margine). In pratica SLReclaim poteva riaprire posizioni anche a
-   // conto gia' congelato o oltre il limite di drawdown del giorno (osservato:
-   // 37 violazioni della soglia -5%/giorno invece di 1, con le stesse
-   // protezioni attive - vedi vault "FVG_CONT Prop-Compliant").
-   //
-   // 08/09 - AUDIT ESTERNO (A3), CORRETTO dopo test di regressione fallito:
-   // il primo giro sostituiva NXS_CheckProtections() con
-   // NXS_CommonExposurePreflight(), assumendo (come l'audit) che la seconda
-   // fosse un superset della prima. FALSO, verificato leggendo il percorso
-   // primario (NXS_TryExecuteRC, NXS_Execution.mqh:712+486): chiama
-   // ENTRAMBE in sequenza, non l'una al posto dell'altra. Sono complementari:
-   // NXS_CheckProtections copre DD giornaliero (g_run_MaxDailyDDPct),
-   // margine (InpMinMarginLevel), max-trade/giorno, max-concorrenti,
-   // anti-revenge, anti-bleed skip - NXS_CommonExposurePreflight copre
-   // licenza, ruin freeze, ESL/DPT/pausa, stato/indicatori degradati,
-   // RiskShield, cap esposizione direzionale, margine PROIETTATO
-   // (InpMinMarginLevelPct, diverso da InpMinMarginLevel), preflight broker
-   // spread/distanza minima stop. La prima versione di questo fix passava
-   // il test di compilazione ma un test di regressione mirato (SAR+SLReclaim,
-   // DD giornaliero forzato allo 0.5%) mostrava ZERO blocchi nonostante un
-   // DD totale del 25% - la sostituzione aveva silenziosamente eliminato
-   // proprio il controllo DD giornaliero che questo fix doveva rinforzare.
-   // Ora chiama entrambe, stesso ordine del percorso primario.
-   string protReason = "";
-   if(!NXS_CheckProtections(protReason)){
-      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata da protezione conto (%s)", protReason);
-      return;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
-   }
-   ENUM_NXS_DIR dir   = (g_slrDir == 1) ? DIR_BUY : DIR_SELL;
-   ENUM_ORDER_TYPE otype = (g_slrDir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
-   double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
-   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
-   double price = (g_slrDir == 1) ? ask : bid;
-   // stop/target nativi ricalcolati come un ingresso SAR normale (1xATR/6xATR
-   // H4) - nessuna indicazione diversa data dall'utente per questo caso.
-   double atrH4 = NXS_ATRv(PERIOD_H4, 1, InpATR_Period);
-   if(atrH4 <= 0) atrH4 = g_atr;
-   string cmt = InpComment + "|SAR|SLRECLAIM|" + EnumToString(PERIOD_H4);
-   double sl, tp;
-   if(g_slrDir == 1){
-      sl = NormPrice(ask - atrH4 * 1.0);
-      tp = NormPrice(ask + atrH4 * 6.0);
-   } else {
-      sl = NormPrice(bid + atrH4 * 1.0);
-      tp = NormPrice(bid - atrH4 * 6.0);
-   }
+      if(m15Bar == g_slrSlots[i].lastM15Seen) continue;
+      g_slrSlots[i].lastM15Seen = m15Bar;
 
-   string pfReason = "";
-   if(!NXS_CommonExposurePreflight("SLRECLAIM", "SAR", dir, InpSLReclaimLot,
-                                   otype, price, sl, tp, pfReason)){
-      PrintFormat("[NEXUS SLRECLAIM] riapertura bloccata dal gate comune (%s)", pfReason);
-      return;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
-   }
+      double closeM15 = iClose(g_sym, PERIOD_M15, 1);
+      bool confirmed = (g_slrSlots[i].dir == 1) ? (closeM15 > g_slrSlots[i].level)
+                                                 : (closeM15 < g_slrSlots[i].level);
+      if(!confirmed) continue;
 
-   // 08/09 - AUDIT ESTERNO (A4): nessuno dei due percorsi (SLReclaim/
-   // ProfitReclaim) chiamava NXS_TradeSetMagic() prima di riaprire - la
-   // posizione ereditava il magic number stantio dell'ultimo modulo che
-   // aveva aperto un ordine (grid/pyramid/entry primaria), corrompendo i
-   // conteggi di layer e disattivando il partial-close (che filtra su
-   // IsCoreMagic). La riapertura è un rientro "core", non un leg di
-   // grid/pyramid - tagga come tale.
-   NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
-   bool ok;
-   if(g_slrDir == 1){
-      ok = NXS_SafeBuy(InpSLReclaimLot, g_sym, sl, tp, cmt);
-   } else {
-      ok = NXS_SafeSell(InpSLReclaimLot, g_sym, sl, tp, cmt);
+      string          strategy = g_slrSlots[i].strategy;
+      ENUM_TIMEFRAMES srcTF    = g_slrSlots[i].sourceTF;
+
+      // stesso gate doppio di sempre (vedi storia in fondo al file) - non
+      // toccato dal fix identita'.
+      string protReason = "";
+      if(!NXS_CheckProtections(protReason)){
+         PrintFormat("[NEXUS SLRECLAIM] %s: riapertura bloccata da protezione conto (%s)",
+                     strategy, protReason);
+         continue;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
+      }
+
+      ENUM_NXS_DIR    dir   = (g_slrSlots[i].dir == 1) ? DIR_BUY : DIR_SELL;
+      ENUM_ORDER_TYPE otype = (g_slrSlots[i].dir == 1) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
+      double ask   = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+      double bid   = SymbolInfoDouble(g_sym, SYMBOL_BID);
+      double price = (g_slrSlots[i].dir == 1) ? ask : bid;
+
+      // SL/TP: ricetta ESPLICITA e dedicata al reclaim (InpSLReclaimSLAtr/
+      // InpSLReclaimTPAtr), calcolata pero' sull'ATR del TF DI ORIGINE della
+      // strategia stoppata - prima era sempre ATR H4 (la ricetta di SAR),
+      // sbagliato per qualunque strategia con un TF diverso.
+      double atrSrc = NXS_ATRv(srcTF, 1, InpATR_Period);
+      if(atrSrc <= 0) atrSrc = g_atr;
+      string cmt = InpComment + "|" + strategy + "|SL_RECLAIM|" + EnumToString(srcTF);
+      double sl, tp;
+      if(g_slrSlots[i].dir == 1){
+         sl = NormPrice(ask - atrSrc * InpSLReclaimSLAtr);
+         tp = NormPrice(ask + atrSrc * InpSLReclaimTPAtr);
+      } else {
+         sl = NormPrice(bid + atrSrc * InpSLReclaimSLAtr);
+         tp = NormPrice(bid - atrSrc * InpSLReclaimTPAtr);
+      }
+
+      // Gate comune di sempre, ma ora con la VERA strategia al posto di
+      // "SAR" hardcoded: eventuali gate per-strategia (es. RiskShield
+      // breaker) valutano lo stato della strategia realmente coinvolta.
+      string pfReason = "";
+      if(!NXS_CommonExposurePreflight("SLRECLAIM", strategy, dir, InpSLReclaimLot,
+                                      otype, price, sl, tp, pfReason)){
+         PrintFormat("[NEXUS SLRECLAIM] %s: riapertura bloccata dal gate comune (%s)",
+                     strategy, pfReason);
+         continue;   // resta armato, ritenta alla prossima barra M15 se ancora confermato
+      }
+
+      // Rientro "core", non un leg di grid/pyramid.
+      NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
+      bool ok = (g_slrSlots[i].dir == 1)
+                ? NXS_SafeBuy(InpSLReclaimLot, g_sym, sl, tp, cmt)
+                : NXS_SafeSell(InpSLReclaimLot, g_sym, sl, tp, cmt);
+      if(ok){
+         // Registro degli intenti con la strategia ORIGINALE come identita'
+         // statistica e route="sl_reclaim" a marcare il follow-up: RiskShield,
+         // ledger e stats non ricadono piu' sul parsing del commento e non
+         // vedono mai "SAR" per un trade che non lo era.
+         NXS_Intent_Record(NXS_TradeOrderTicket(), strategy, 0.0,
+                           NXS_Intent_RiskMoney(g_sym, price, sl, InpSLReclaimLot),
+                           "sl_reclaim");
+      }
+      PrintFormat("[NEXUS SLRECLAIM] %s confermato (M15 close=%.2f oltre linea=%.2f) - "
+                  "riapertura dir=%d lot=%.2f esito=%s",
+                  strategy, closeM15, g_slrSlots[i].level, g_slrSlots[i].dir,
+                  InpSLReclaimLot, (ok ? "OK" : "FALLITA"));
+      _NXS_SLR_RemoveSlot(i);
    }
-   PrintFormat("[NEXUS SLRECLAIM] confermato (M15 close=%.2f oltre linea=%.2f) - riapertura dir=%d lot=%.2f esito=%s",
-               closeM15, g_slrLevel, g_slrDir, InpSLReclaimLot, (ok ? "OK" : "FALLITA"));
-   g_slrPending = false;
 }
 
 #endif

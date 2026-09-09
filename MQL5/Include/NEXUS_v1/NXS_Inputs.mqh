@@ -558,20 +558,28 @@ input double   InpPipSeqPartialLot  = 0.01;
 input int      InpPipSeqMaxChain    = 2;      // 30/08 - cap perdite consecutive in catena di riaperture (vedi NXS_PipSequence.mqh)
 // 30/08 - "riconquista dello stop", richiesto dall'utente come alternativa
 // SICURA al grid (mai media in perdita, mai piu' esposizione nella
-// direzione che sta perdendo): se un trade SAR esce per stop nativo, si
-// segna quel livello di prezzo; se poi una candela M15 CHIUDE oltre quella
-// linea nella direzione ORIGINALE del trade (non quella della rottura che
-// aveva stoppato), si riapre nella stessa direzione - il crollo/rally che
-// ha stoppato era probabilmente un falso allarme se il prezzo torna a
-// riconquistare quel livello. Vedi NXS_SLReclaim.mqh.
+// direzione che sta perdendo): se un trade di QUALUNQUE strategia esce per
+// stop nativo, si segna quel livello di prezzo; se poi una candela M15
+// CHIUDE oltre quella linea nella direzione ORIGINALE del trade (non quella
+// della rottura che aveva stoppato), si riapre nella stessa direzione - il
+// crollo/rally che ha stoppato era probabilmente un falso allarme se il
+// prezzo torna a riconquistare quel livello. Vedi NXS_SLReclaim.mqh.
 input bool     InpUseSLReclaim         = false;
 input double   InpSLReclaimLot         = 0.05;
 input int      InpSLReclaimExpireHours = 168;   // 7 giorni - non aspettare all'infinito (0 = nessuna scadenza)
 // 30/08 - sicurezza aggiunta su segnalazione dell'utente ("e se rientra e
 // la direzione e' ancora sbagliata?"): dopo N perdite CONSECUTIVE nella
-// catena di riconquiste, ci si arrende invece di continuare a riaprire
-// sulla stessa chiamata di direzione - vedi NXS_SLReclaim.mqh.
+// catena di riconquiste PER STRATEGIA, ci si arrende invece di continuare a
+// riaprire sulla stessa chiamata di direzione - vedi NXS_SLReclaim.mqh.
 input int      InpSLReclaimMaxChain    = 2;
+// 10/09 - FIX IDENTITA': la riconquista usava sempre l'ATR H4 e la ricetta
+// numerica di SAR (1.0/6.0), indipendentemente dalla strategia realmente
+// stoppata (TURTLE_SOUP=H1, MALAYSIAN_SNR=M30, ecc). Ora il moltiplicatore
+// resta esplicito e dedicato al reclaim (stessi default 1.0/6.0, nessun
+// cambio di comportamento per chi lo usava con SAR), ma si applica
+// all'ATR del TF DI ORIGINE della strategia stoppata, non piu' fisso H4.
+input double   InpSLReclaimSLAtr       = 1.0;
+input double   InpSLReclaimTPAtr       = 6.0;
 input double   InpBE_TriggerATR    = 1.0;
 input double   InpTrailActivateATR = 1.5;
 input double   InpTrailDistanceATR = 1.0;
