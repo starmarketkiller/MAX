@@ -78,6 +78,20 @@ void NXS_ManagePyramid(SNXSVel &vel){
       int trackIdx = _NXS_PyrTrackFindOrCreate(t);
       int profLevel = (int)MathFloor(prof / g_atr);
       if(profLevel <= g_pyrTrackLevel[trackIdx]) continue;
+      // 09/09 - SECONDO BUG TROVATO (retest del fix sopra): il livello
+      // veniva segnato come "usato" solo dopo un invio RIUSCITO (piu' in
+      // basso, dentro if(sent)). Se il tentativo veniva bloccato da un gate
+      // (osservato: CLUSTER_CAP, il cap di esposizione) il livello non
+      // risultava mai tentato, quindi il codice ritentava lo STESSO livello
+      // ad OGNI TICK, all'infinito, finche' il gate restava pieno - 9945
+      // tentativi bloccati + telemetria in soli 20MB di log durante il
+      // retest. Fix: segnare il livello come tentato SUBITO, appena si
+      // decide di provare - un tentativo bloccato non viene piu' ripetuto
+      // ad ogni tick, riuscito o no si passa oltre fino al livello
+      // successivo (stessa logica gia' applicata al freno di re-innesco,
+      // estesa anche al caso "bloccato dal gate" oltre a "stoppato dal
+      // prezzo").
+      g_pyrTrackLevel[trackIdx] = profLevel;
       // 28/08 - il velocity gate e' spento di default a livello globale
       // (InpUseVelocity=false, NXS_Inputs.mqh - disattivato in passato perche'
       // troppo restrittivo sull'ingresso primario). Con il gate spento
@@ -178,7 +192,8 @@ void NXS_ManagePyramid(SNXSVel &vel){
                   ? NXS_SafeBuy(lots, g_sym, sl, tp, pyrCmt)
                   : NXS_SafeSell(lots, g_sym, sl, tp, pyrCmt);
       if(sent){
-         g_pyrTrackLevel[trackIdx] = profLevel;
+         // livello gia' segnato come tentato subito dopo il controllo di
+         // soglia, sopra - non ripetuto qui, l'assegnazione era duplicata.
          NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
                            NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
                            "pyramid", NXS_Intent_GroupOfTicket(t), g_atr, lots);
