@@ -715,8 +715,13 @@ void NXS_WebPoll(){
       g_dptHit = false;
       g_pausedUntilNextOpen = false;
       g_autoClosePending = false;
-      detail = "ESL/DPT/AutoClose pause azzerati";
-      Print("[NEXUS] protections reset (ESL/DPT/AutoClose pause cleared) via dashboard");
+      // 09/09 - la protezione DD-dal-picco NON si resetta mai da sola (ne'
+      // a mezzanotte ne' altrove) per progetto - solo qui, un intervento
+      // umano esplicito dalla dashboard. Il picco NON viene riportato a 0:
+      // resta il massimo storico vero, solo il flag "bloccato" si sblocca.
+      g_maxDDHit = false;
+      detail = "ESL/DPT/AutoClose/MaxTotalDD pause azzerati";
+      Print("[NEXUS] protections reset (ESL/DPT/AutoClose/MaxTotalDD pause cleared) via dashboard");
    }
    else if(action == "resync_trades"){
       // AUD0-BE-CMD-009: il backend accettava questa azione ma il parser MQL

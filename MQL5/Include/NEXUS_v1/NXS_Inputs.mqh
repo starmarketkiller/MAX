@@ -91,6 +91,21 @@ input int      InpMaxTradesPerDay  = 12;   // 30/08 - reso input vero (era plain
 input int      InpMaxConcurrent    = 4;
 input int      InpMaxPerDirTF      = 4;      // v2.4.8: HEDGE ON - corsie indipendenti, ogni strategia la sua (regolate dal gate margine)
 input double   InpMaxDailyDDPct    = 5.0;
+// 09/09 - protezione mancante gia' identificata piu' volte nel vault
+// (FVG_CONT: il DD reale del 15-27% non nasce da UN giorno sopra soglia, ma
+// da una SERIE di giorni consecutivi ognuno sotto il cap giornaliero - un
+// controllo che si azzera ogni giorno non puo' fermarlo per costruzione).
+// Questa e' la prima vera protezione "dal picco", non giornaliera: traccia
+// il massimo storico di equity raggiunto e blocca/appiattisce quando il
+// drawdown da quel picco supera la soglia, indipendentemente da quanti
+// giorni ci abbia messo ad accumularsi. Default ON e 10% perche' e' la
+// soglia tipica di una prop firm (FTMO e simili) - vedi ricerca web del
+// 08/09. NOTA: il picco e il flag "gia' scattato" vivono solo in memoria,
+// NON sono ancora inclusi nella persistenza di stato (NXS_State.mqh) - un
+// riavvio dell'EA li azzera. Accettabile per ora (i backtest non riavviano
+// a meta' test), da estendere alla persistenza prima di un uso live serio.
+input bool     InpUseMaxTotalDD    = true;
+input double   InpMaxTotalDDPct    = 10.0;
 // v2.4.1 — GATE SUL MARGINE: il conto stesso regola quante strategie possono
 // stare aperte insieme. Apri un nuovo trade solo se il margin level PROIETTATO
 // (equity / margine usato dopo il trade) resta sopra la soglia. Cosi' un trade
