@@ -155,10 +155,28 @@ void NXS_ManagePyramid(SNXSVel &vel){
       }
 
       NXS_TradeSetMagic(InpMagic + MAGIC_PYRAMID + NXS_CountPyr() + 1);
+      // 09/09 - BUG TROVATO (secondo, indipendente dal freno di re-innesco):
+      // il commento era la stringa fissa "NEXUS_PYR", senza il separatore
+      // '|' che _NXS_StateParseComment() (NXS_State.mqh) richiede per
+      // riconoscere la strategia (split su '|', secondo campo = nome). Senza
+      // match, ogni gamba piramide finiva classificata "UNKNOWN" nel
+      // circuit-breaker Sharpe per-strategia (NXS_RS_Breaker_Update) - un
+      // contenitore fittizio che, una volta sotto soglia, non si riprendeva
+      // mai (rialimentato da altre gambe) e ri-loggava lo stesso avviso ogni
+      // 5 minuti simulati all'infinito, gonfiando il log fino a far
+      // crashare il terminale durante il retest del fix di re-innesco.
+      // In piu' il blocco di NUOVI ingressi cercava il bucket "PYRAMID"
+      // (la stringa passata a NXS_CommonExposurePreflight sopra) - mai
+      // popolato per il disallineamento, quindi il breaker non bloccava mai
+      // davvero le gambe piramide. Ora il commento segue lo stesso formato
+      // pipe-delimited di ogni altro percorso (InpComment|NOME|dettaglio),
+      // con "PYRAMID" come nome - allineato al bucket usato per il blocco,
+      // cosi' il breaker traccia e protegge il piramidale per davvero.
+      string pyrCmt = InpComment + "|PYRAMID|" + DoubleToString(profLevel, 1);
       // AUD0-ADD-007: l'esito dell'invio veniva ignorato.
       bool sent = (type == POSITION_TYPE_BUY)
-                  ? NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_PYR")
-                  : NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_PYR");
+                  ? NXS_SafeBuy(lots, g_sym, sl, tp, pyrCmt)
+                  : NXS_SafeSell(lots, g_sym, sl, tp, pyrCmt);
       if(sent){
          g_pyrTrackLevel[trackIdx] = profLevel;
          NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
