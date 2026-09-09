@@ -246,7 +246,14 @@ void NXS_WebPush(SNXSHTF &htf, SNXSVel &vel, SNXSAMD &amd, SNXSSweep &sw){
    ArrayResize(post, ArraySize(post) - 1);
    char result[]; string headersOut;
    string headers = "Content-Type: application/json\r\nX-Nexus-Token: " + InpWebToken + "\r\n";
-   int code = WebRequest("POST", url, headers, 20000, post, result, headersOut);
+   // 09/09 - AUDIT ESTERNO (A6): timeout di 20s su una chiamata che poteva
+   // girare dentro OnTick (vedi NEXUS_EA_v2.mq5) - un backend lento/bloccato
+   // congelava il tick fino a 20s, finestra in cui trailing/breakeven/
+   // protezioni non venivano valutati durante un movimento vero. Abbassato
+   // a un valore che non blocca il tick per una frazione significativa di
+   // una barra M15, coerente con lo stesso motivo per cui NXS_PullSettings
+   // era gia' stata spostata fuori da OnTick in passato.
+   int code = WebRequest("POST", url, headers, 4000, post, result, headersOut);
    if(code < 0){
       // Print first 5 failures always (helps debug WebRequest whitelist), then only with DebugLog
       static int failCount = 0;

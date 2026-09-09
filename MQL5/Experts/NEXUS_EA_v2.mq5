@@ -1044,8 +1044,14 @@ void OnTick(){
    }
    NXS_PM_ApplyCycle();
 
-   // Web push (disabled in Strategy Tester)
-   if(!MQLInfoInteger(MQL_TESTER)) NXS_WebPush(htf, vel, amd, sweep);
+   // 09/09 - AUDIT ESTERNO (A6): rimossa la chiamata diretta a NXS_WebPush()
+   // da OnTick - un backend lento poteva bloccare il tick fino al timeout
+   // WebRequest (era 20s, ora comunque ridotto), congelando trailing/
+   // breakeven/protezioni durante un movimento vero. Il push periodico
+   // throttled in OnTimer (NXS_WebPushSafe(), gia' presente, usa lo stato
+   // cache g_cached invece dei parametri live) resta l'unico percorso -
+   // stesso motivo per cui NXS_PullSettings era gia' stata spostata fuori
+   // da OnTick in passato (vedi commento originale sopra in questo file).
 
    // Diagnostic summary
    NXS_Diag_OnTick(NXS_HTFName(htf.bias), NXS_VelName(vel.state),
