@@ -4,6 +4,45 @@
 #ifndef __NXS_PYRAMID_MQH__
 #define __NXS_PYRAMID_MQH__
 
+// 09/09 - BUG TROVATO (test isolato su FVG_CONT): NXS_ManagePyramid()
+// non aveva alcuna memoria di quante volte/a quale livello avesse gia'
+// aggiunto una gamba per una data posizione core - controllava solo
+// "profitto >= 1xATR" e "meno di MAX_PYRAMID gambe aperte in totale".
+// Una gamba piramide ha stop a 1xATR: appena veniva stoppata (spesso
+// in pochi minuti, rumore normale), se la core restava sopra 1xATR di
+// profitto ne apriva SUBITO un'altra - un ciclo apri-stop-riapri senza
+// freno, osservato fino a 25 gambe in un solo giorno, che ha portato
+// un backtest isolato da PF1.92/+$2635 a PF0.75/-$846 (DD 84.66%).
+// Fix: tracciare il livello di ATR gia' usato per ogni posizione core
+// (ulong ticket -> ultimo multiplo di ATR raggiunto) e richiedere che
+// il PROSSIMO add avvenga solo dopo che il profitto della core ha
+// raggiunto un livello INTERO successivo (2xATR dopo il primo add,
+// 3xATR dopo il secondo) - vero piramidare su nuovi massimi di
+// profitto, non ri-innesco sullo stesso livello dopo uno stop.
+#define NXS_PYR_TRACK_MAX 64
+ulong  g_pyrTrackTicket[NXS_PYR_TRACK_MAX];
+int    g_pyrTrackLevel[NXS_PYR_TRACK_MAX];
+int    g_pyrTrackCnt = 0;
+
+int _NXS_PyrTrackFindOrCreate(ulong ticket){
+   for(int i = 0; i < g_pyrTrackCnt; i++)
+      if(g_pyrTrackTicket[i] == ticket) return i;
+   if(g_pyrTrackCnt >= NXS_PYR_TRACK_MAX){
+      // scarta il piu' vecchio - conseguenza al piu' un add rifiutato
+      // in piu' per una posizione molto anziana, non un doppio add.
+      for(int i = 0; i < NXS_PYR_TRACK_MAX-1; i++){
+         g_pyrTrackTicket[i] = g_pyrTrackTicket[i+1];
+         g_pyrTrackLevel[i]  = g_pyrTrackLevel[i+1];
+      }
+      g_pyrTrackCnt = NXS_PYR_TRACK_MAX - 1;
+   }
+   g_pyrTrackTicket[g_pyrTrackCnt] = ticket;
+   g_pyrTrackLevel[g_pyrTrackCnt]  = 0;
+   int idx = g_pyrTrackCnt;
+   g_pyrTrackCnt++;
+   return idx;
+}
+
 int NXS_CountPyr(){
    int n = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){
@@ -32,6 +71,13 @@ void NXS_ManagePyramid(SNXSVel &vel){
                                                  : SymbolInfoDouble(g_sym, SYMBOL_ASK);
       double prof = (type == POSITION_TYPE_BUY) ? (now - open) : (open - now);
       if(prof < g_atr) continue;
+      // 09/09 - fix re-innesco: il livello ATR gia' sfruttato per QUESTA
+      // posizione core deve essere superato da un intero multiplo prima
+      // di poter aggiungere di nuovo (1xATR -> serve 2xATR per il prossimo,
+      // non basta ri-tornare sopra 1xATR dopo lo stop della gamba precedente).
+      int trackIdx = _NXS_PyrTrackFindOrCreate(t);
+      int profLevel = (int)MathFloor(prof / g_atr);
+      if(profLevel <= g_pyrTrackLevel[trackIdx]) continue;
       // 28/08 - il velocity gate e' spento di default a livello globale
       // (InpUseVelocity=false, NXS_Inputs.mqh - disattivato in passato perche'
       // troppo restrittivo sull'ingresso primario). Con il gate spento
@@ -114,6 +160,7 @@ void NXS_ManagePyramid(SNXSVel &vel){
                   ? NXS_SafeBuy(lots, g_sym, sl, tp, "NEXUS_PYR")
                   : NXS_SafeSell(lots, g_sym, sl, tp, "NEXUS_PYR");
       if(sent){
+         g_pyrTrackLevel[trackIdx] = profLevel;
          NXS_Intent_Record(NXS_TradeOrderTicket(), "PYRAMID", 0.0,
                            NXS_Intent_RiskMoney(g_sym, refPrice, sl, lots),
                            "pyramid", NXS_Intent_GroupOfTicket(t), g_atr, lots);
