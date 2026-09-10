@@ -251,6 +251,14 @@ int _NXS_RS_BreakerStratEnsure(string name){
 }
 
 void NXS_RS_Breaker_Update(){
+   // 10/09 - bypass Research Mode: se disattivato, questa funzione non deve
+   // ne' calcolare ne' scrivere alcuno stato di pausa (non solo "ignorarlo"
+   // a valle in NXS_RS_BlockEntry) - altrimenti g_NXSrsBreakerStratUntil
+   // resterebbe comunque scritto/rinnovato e la telemetria/dashboard
+   // mostrerebbe una strategia "in pausa" che in realta' non lo e'.
+   // Nessun cambio al comportamento live/normale (bypass solo se
+   // NXS_IsResearchMode() E l'opt-in e' spento).
+   if(NXS_IsResearchMode() && !InpResearchUseRiskShield) return;
    if(!InpBreaker_Enable) return;
    datetime now = TimeCurrent();
    if(now - g_NXSrsBreakerLastCalc < NXS_RS_BREAKER_CALC_SEC) return;
@@ -543,6 +551,11 @@ bool NXS_RS_NewsTier3_PartialCloseDue(int minutesUntilRedNews){
 // One single function that bundles all 4 protections.
 // =====================================================================
 bool NXS_RS_BlockEntry(string sym, string stratName, string &reason){
+   // 10/09 - bypass Research Mode (vedi InpResearchUseRiskShield, NXS_Inputs.mqh
+   // e NXS_RS_Breaker_Update sopra): con lo stato di pausa mai creato questo
+   // ritornerebbe comunque false, ma il check esplicito qui copre anche
+   // SpreadBurst/Cluster (stesso master gate) senza ambiguita'.
+   if(NXS_IsResearchMode() && !InpResearchUseRiskShield) return false;
    if(NXS_RS_Breaker_Active(stratName)){
       reason = StringFormat("EQUITY_BREAKER strat=%s sharpe=%.2f", stratName,
                             NXS_RS_Breaker_LastSharpe(stratName));

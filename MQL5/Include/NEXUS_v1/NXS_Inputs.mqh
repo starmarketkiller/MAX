@@ -238,6 +238,16 @@ input bool     InpResearchUseDailyDD   = false;
 input bool     InpResearchUseTotalDD   = false;
 input bool     InpResearchUseDPT       = false;
 input bool     InpResearchUseRuin      = false;
+// 10/09 - il breaker Sharpe/50-trade di NXS_RiskShield.mqh non era mai stato
+// considerato negli overlay esclusi da RAW (era fuori perimetro dall'audit
+// exit-authority, che guardava solo COME chiude una posizione, non se una
+// NUOVA puo' aprirne). Scoperto perche' auto-alimenta un lockout permanente:
+// ogni ricalcolo (ogni 5 min sim) su una finestra di 50 trade rimasta
+// negativa riproroga la pausa di altre 24h, quindi una volta scattato non si
+// libera mai piu' per il resto del test - vedi vault 10/09 (WICK_SWEEP_REV
+// troncato a 50 trade su 3 mesi). Stesso trattamento di ESL/TotalDD/DPT/Ruin:
+// opt-in esplicito, default OFF, nessun cambio al comportamento live/normale.
+input bool     InpResearchUseRiskShield = false;
 // Lotto fisso dedicato - NON riusa InpDataCollectionMode (percorso diverso,
 // salta gate diversi - vedi commento sopra). Sostituisce qualunque sizing a
 // rischio% E qualunque moltiplicatore residuo (streak/counter-HTF/chain):
