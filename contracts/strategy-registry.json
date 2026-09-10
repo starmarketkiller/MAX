@@ -8,8 +8,8 @@
   ],
   "note_family": "FAMILY_MAP e' una tassonomia provvisoria (domain judgment), non un dato estratto.",
   "counts": {
-    "total": 76,
-    "live": 46,
+    "total": 81,
+    "live": 51,
     "research_only": 30
   },
   "strategies": [
@@ -626,6 +626,94 @@
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "LEVEL_CONFLUENCE",
+      "display_name": "Level Confluence",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 50,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M15"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "LEVEL_CONFLUENCE_M5",
+      "display_name": "Level Confluence M5",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 51,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M5"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "LEVEL_REACTION",
+      "display_name": "Level Reaction",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 52,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M15"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "LEVEL_REACTION_M5",
+      "display_name": "Level Reaction M5",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "DISABLED",
+      "selector_index": 53,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "M5"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -1662,6 +1750,28 @@
       ],
       "default_enabled": true,
       "auto_disable_eligible": true,
+      "risk_class": "STANDARD",
+      "schema_version": 1
+    },
+    {
+      "strategy_id": "WICK_SWEEP_REV",
+      "display_name": "Wick Sweep Rev",
+      "aliases": [],
+      "family": "UNCLASSIFIED",
+      "status": "EXPERIMENTAL",
+      "selector_index": 54,
+      "live_implementation": true,
+      "research_implementation": false,
+      "research_parity": "NOT_IMPLEMENTED",
+      "proxy_for": null,
+      "supported_symbols": [
+        "*"
+      ],
+      "supported_timeframes": [
+        "H4"
+      ],
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },

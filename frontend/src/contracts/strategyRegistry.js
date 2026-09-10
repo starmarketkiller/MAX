@@ -28,6 +28,10 @@ export const STRATEGY_REGISTRY = [
   ["IFVG_CHOCH_WINDOW","Ifvg Choch Window","SCALP",false,true],
   ["JUDAS_SWING","Judas Swing","SESSION",true,true],
   ["LDN_REVERSAL","Ldn Reversal","SESSION",true,true],
+  ["LEVEL_CONFLUENCE","Level Confluence","UNCLASSIFIED",true,false],
+  ["LEVEL_CONFLUENCE_M5","Level Confluence M5","UNCLASSIFIED",true,false],
+  ["LEVEL_REACTION","Level Reaction","UNCLASSIFIED",true,false],
+  ["LEVEL_REACTION_M5","Level Reaction M5","UNCLASSIFIED",true,false],
   ["LIQ_SWEEP","Liq Sweep","LIQUIDITY",true,true],
   ["LIQ_VOID","Liq Void","SMC",true,true],
   ["LONDON_BO","London Bo","TREND",true,true],
@@ -75,6 +79,7 @@ export const STRATEGY_REGISTRY = [
   ["TURTLE_SOUP_CHOCH_DBLBODY","Turtle Soup Choch Dblbody","SCALP",false,true],
   ["TURTLE_SOUP_CHOCH_NEAR","Turtle Soup Choch Near","SCALP",false,true],
   ["WEEKLY_EXP","Weekly Exp","SESSION",true,true],
+  ["WICK_SWEEP_REV","Wick Sweep Rev","UNCLASSIFIED",true,false],
   ["Z_SCORE_BREAKOUT","Z Score Breakout","TREND",true,true],
 ].map(([strategy_id, display_name, family, live_implementation, research_implementation]) => ({
   strategy_id, display_name, family, live_implementation, research_implementation,
