@@ -1093,4 +1093,18 @@ bool     InpStatsPushToBackend   = false; // optional WebRequest upload
 // input group "=== SERVER TIME (v2.0.5b) ==="
 input int      InpServerGMTOffset      = 2;     // server-time offset to GMT (h). 2 = CEST broker. Set 0 if your broker is UTC.
 
+// input group "=== WICK SWEEP REVERSAL - SPERIMENTALE (10/09) ==="
+// Idea utente, H4, GOLD: una candela con wick lascia un livello; quando un
+// prezzo successivo lo supera di InpWickSweep_SweepPips pip, si entra SUBITO
+// (al tick) nella direzione opposta - vedi NXS_Strategies_Experimental.mqh
+// per la logica completa e le semplificazioni della prima versione.
+// Selettore vero 54. Convenzione pip: 1 pip = $0.10 su GOLD (confermata con
+// l'utente 10/09) - NON la stessa convenzione di g_profile.pipSize usata
+// altrove nel codice.
+input bool     InpStrat_WickSweep          = false;
+input double   InpWickSweep_MinWickPips    = 15.0;   // wick minima per registrare un livello
+input double   InpWickSweep_SweepPips      = 35.0;   // sfondamento richiesto prima di entrare (utente: 30-40)
+input double   InpWickSweep_SLPips         = 25.0;   // stop loss fisso (utente: 20-30)
+input double   InpWickSweep_TPPips         = 100.0;  // take profit fisso (utente: almeno 100)
+
 #endif

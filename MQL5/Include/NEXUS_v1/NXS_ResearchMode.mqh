@@ -103,6 +103,7 @@ string NXS_ResearchSelectorName(int sel){
       case 33: return "PO3";          case 34: return "LIQ_VOID";
       case 35: return "DISP_REBAL";   case 36: return "ELLIOTT";
       case 37: return "RANGE_FADE";   case 39: return "FVG_MIT_WINDOW";
+      case 54: return "WICK_SWEEP_REV";
       default: return StringFormat("selector_%d", sel);
    }
 }

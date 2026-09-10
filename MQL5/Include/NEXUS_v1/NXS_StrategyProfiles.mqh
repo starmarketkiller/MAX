@@ -293,6 +293,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "LEVEL_CONFLUENCE")  return PERIOD_M15;   // 06/09 - stesso TF di PIVOT_WICK, riusa lo stesso pool pivot
    if(name == "LEVEL_CONFLUENCE_M5") return PERIOD_M5;  // 06/09 - stessa logica, esecuzione su M5 invece di M15 (idea utente: livelli D1/H4/H1, ingresso M15 E M5)
    if(name == "LEVEL_REACTION")      return PERIOD_M15;
+   if(name == "WICK_SWEEP_REV")      return PERIOD_H4;   // 10/09 - hardcoded H4 anche nel trigger stesso, qui solo per telemetria/MaxHold
    if(name == "LEVEL_REACTION_M5")   return PERIOD_M5;
    // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
@@ -720,6 +721,13 @@ bool NXS_Profile_Enabled(const string name){
    if(name == "LEVEL_CONFLUENCE_M5")    return true;
    if(name == "LEVEL_REACTION")         return true;
    if(name == "LEVEL_REACTION_M5")      return true;
+   // 10/09 - stesso bug/trattamento delle righe sopra: senza questa riga il
+   // test isolato di WICK_SWEEP_REV verrebbe rifiutato in silenzio
+   // (profile_disabled) appena InpUseStrategyProfiles=true (richiesto da
+   // Research Mode), zero trade a prescindere da InpStrat_WickSweep/selector.
+   // InpStrat_WickSweep resta false di default - "abilitata al test" non e'
+   // "abilitata di default".
+   if(name == "WICK_SWEEP_REV")         return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 

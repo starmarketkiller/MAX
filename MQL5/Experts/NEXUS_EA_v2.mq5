@@ -57,6 +57,7 @@
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
+#include <NEXUS_v1\NXS_Strategies_Experimental.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
 #include <NEXUS_v1\NXS_InstitutionalCore.mqh>
@@ -530,6 +531,13 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // 06/09 — LEVEL_REACTION gemella su M5 (#53)
    if(InpStrat_LevelReactionM5 && NXS_SelectorAllows(53)) out[n++] = NXS_Strat_LevelReaction_M5();
 
+   // 10/09 — WICK_SWEEP_REV: idea sperimentale utente, H4, sweep di una
+   // wick di N pip -> entrata immediata in direzione opposta (#54). Tenuta
+   // separata dal nucleo (NXS_Strategies_Experimental.mqh) - vedi anche
+   // LEVEL_REACTION (#52) sopra, stessa famiglia concettuale (sweep+reversal
+   // con gate in pip sulla profondita' di sfondamento), da confrontare.
+   if(InpStrat_WickSweep && NXS_SelectorAllows(54)) out[n++] = NXS_Strat_WickSweepReversal();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).
@@ -815,6 +823,7 @@ void OnDeinit(const int reason){
    NXS_MTF_ReleaseHandles();
    NXS_HandlePool_Release();   // v2.0.9 Sprint 1
    if(InpShowDashboard) NXS_Dashboard_Cleanup();
+   if(InpStrat_WickSweep) NXS_WickSweep_PrintFunnel();   // 10/09 - funnel completo a fine test
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
@@ -1417,6 +1426,11 @@ void OnTick(){
 
          double finalScore = 0, thresh = 0;
          ENUM_NXS_EXEC_RC rc = NXS_TryExecuteRC(sig, amd, sweep, htf, vel, finalScore, thresh);
+         // 10/09 - funnel WICK_SWEEP_REV: esito VERO del tentativo (rc copre
+         // protections/news/HTF/velocity/score/stops/volume/preflight/order-send,
+         // non solo i cancelli di NXS_OpenTrade) - vedi NXS_WickSweep_OnExecuteResult.
+         if(sig.stratName == "WICK_SWEEP_REV")
+            NXS_WickSweep_OnExecuteResult(sig.dir, (rc == EXEC_OK), EnumToString(rc));
          lastRc = rc;
          string gates = mtfReason + "|" + velReason;
 
