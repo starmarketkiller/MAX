@@ -1339,6 +1339,14 @@ void OnTick(){
          g_nxsOpenCtxTag = EnumToString(sTF);  // TF della strategia nel comment
          ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(s, InpMagic + MAGIC_CORE, 1.0);
          g_nxsOpenCtxTag = "";
+         // 10/09 - funnel WICK_SWEEP_REV: QUESTO e' il percorso realmente
+         // usato quando InpUseStrategyProfiles=true (sempre vero in Research
+         // Mode) - il vecchio hook dopo NXS_TryExecuteRC (piu' sotto) era
+         // morto, quel loop non viene mai raggiunto da qui (return a fine
+         // blocco). Esito VERO: orc==OPEN_OK oppure g_nxsLastOpenFailure.
+         if(s.stratName == "WICK_SWEEP_REV")
+            NXS_WickSweep_OnExecuteResult(s.dir, (orc == OPEN_OK),
+               (orc == OPEN_OK) ? "" : (StringLen(g_nxsLastOpenFailure) > 0 ? g_nxsLastOpenFailure : EnumToString(orc)));
          if(orc == OPEN_OK){
             anyOpened = true;
             NXS_SetLastTfBar(s.stratName, sBar);   // marca la barra TF come gia' agita
@@ -1425,12 +1433,12 @@ void OnTick(){
          }
 
          double finalScore = 0, thresh = 0;
+         // 10/09 - hook funnel WICK_SWEEP_REV RIMOSSO da qui: questo loop non
+         // viene mai raggiunto quando InpUseStrategyProfiles=true (il blocco
+         // "PROFILI PER-STRATEGIA" sopra fa `return` prima) - sempre vero in
+         // Research Mode, quindi qui era morto. Vedi il hook vero sopra,
+         // subito dopo NXS_OpenTrade nel blocco profili.
          ENUM_NXS_EXEC_RC rc = NXS_TryExecuteRC(sig, amd, sweep, htf, vel, finalScore, thresh);
-         // 10/09 - funnel WICK_SWEEP_REV: esito VERO del tentativo (rc copre
-         // protections/news/HTF/velocity/score/stops/volume/preflight/order-send,
-         // non solo i cancelli di NXS_OpenTrade) - vedi NXS_WickSweep_OnExecuteResult.
-         if(sig.stratName == "WICK_SWEEP_REV")
-            NXS_WickSweep_OnExecuteResult(sig.dir, (rc == EXEC_OK), EnumToString(rc));
          lastRc = rc;
          string gates = mtfReason + "|" + velReason;
 
