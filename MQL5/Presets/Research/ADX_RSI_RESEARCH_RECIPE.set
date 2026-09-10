@@ -1,8 +1,9 @@
 ; NEXUS_EA_v2 - Research Mode RECIPE: ADX_RSI, ESL OFF (10/09)
 ; RECIPE = stesso identico trigger e SL/TP di ADX_RSI_RESEARCH_RAW.set, ma
-; con BE/trailing di profilo riammessi (InpResearchUseProfileExit=true - per
-; ADX_RSI significa BE 1.5R, vedi NXS_StrategyProfiles.mqh). NON ancora
-; lanciato: preparato per il secondo giro, dopo aver visto i risultati RAW.
+; con BE/trailing di profilo riammessi (InpResearchExitMode=1) - per ADX_RSI
+; significa BE 1.5R, vedi NXS_StrategyProfiles.mqh. NON ancora lanciato:
+; preparato per il secondo giro, dopo aver visto i risultati RAW corretti
+; (senza MaxHold/MaxLossPerPos/AutoClose - vedi commit 10/09).
 ; Confronto RAW vs RECIPE isola quanto vale il BE da solo.
 InpResearchMode=true
 InpStrategySelector=1
@@ -11,7 +12,9 @@ InpUseStrategyProfiles=true
 InpProfileMultiTF=true
 InpDataCollectionMode=false
 InpResearchFixedLot=0.01
-InpResearchUseProfileExit=true
+InpResearchExitMode=1
+InpResearchUseDPT=false
+InpResearchUseRuin=false
 InpResearchUseESL=false
 InpResearchUseDailyDD=false
 InpResearchUseTotalDD=false

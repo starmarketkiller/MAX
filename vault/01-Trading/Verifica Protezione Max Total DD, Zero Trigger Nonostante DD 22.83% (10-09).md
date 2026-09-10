@@ -32,16 +32,56 @@ scattata, nonostante il conto abbia sicuramente attraversato un calo del
 10%+ dal suo picco corrente in qualche momento della serie (è
 matematicamente necessario per arrivare a un max DD del 22.83%).
 
-Non ho investigato la causa esatta (fuori scope rispetto al lavoro di oggi
-su SLReclaim/Research Mode, che l'utente ha chiesto di chiudere prima di
-aggiungere altro). Ipotesi da verificare in un giro dedicato:
-- `g_maxDDPeakEquity` non aggiornato/resettato correttamente in qualche
-  percorso (es. dashboard `reset_protections`, riavvio stato);
-- `NXS_Prot_CheckMaxTotalDD()` non raggiunta per un `return` precoce in
-  `NXS_Prot_OnTick()` (es. `g_pausedUntilNextOpen` rimasto vero più a lungo
-  del previsto dopo un altro evento di protezione, saltando il controllo);
-- differenza tra equity calcolata internamente (`AccountInfoDouble
-  (ACCOUNT_EQUITY)`) e la curva equity riportata da MT5 a fine test.
+Non corretto ancora (l'utente ha chiesto esplicitamente di aprire solo una
+nota tecnica separata, commit distinto dal fix Research Mode). Approfondito
+un po' di più il 10/09 mentre cercavo tutte le exit authority per il fix
+RAW — non risolto, ma il quadro è più preciso:
+
+**Funzione coinvolta**: `NXS_Prot_CheckMaxTotalDD()` in `NXS_Protections.mqh`.
+
+**Stato/peak usato**: `g_maxDDPeakEquity` (double, globale, dichiarato in
+`NXS_Globals.mqh`, default 0.0) — aggiornato ad ogni tick con
+`if(eq > g_maxDDPeakEquity) g_maxDDPeakEquity = eq;` PRIMA del controllo
+soglia, quindi il picco è sempre il massimo storico osservato dentro
+questo stesso processo. **Non è persistito** (verificato: non compare in
+`NXS_State.mqh`, quindi non c'è rischio di uno stato "vecchio" caricato da
+un file lasciato da un test precedente — parte sempre da 0.0 ad ogni avvio
+del terminale/Tester).
+
+**Equity o balance**: usa `AccountInfoDouble(ACCOUNT_EQUITY)` (include il
+P&L flottante), non balance — corretto per l'intento dichiarato ("mai
+dimenticare un drawdown accumulato").
+
+**Possibile problema di ordine chiamate trovato ora (non confermato come
+causa, ma reale)**: `NXS_Prot_OnTick()` ha, PRIMA di arrivare a
+`CheckMaxTotalDD()`, `if(g_pausedUntilNextOpen) return;`. Questo flag viene
+messo a `true` da ESL/DPT/**AutoClose** (vedi nota collegata sulla
+scoperta AutoClose) e **si azzera SOLO una volta al giorno**, dentro
+`NXS_Prot_OnNewDay()` — nonostante il nome suggerisca "fino alla prossima
+apertura", in realtà è "fino alla mezzanotte successiva". Con
+`InpUseAutoClose=true` (default) che scatta ogni sera vicino alla chiusura
+di sessione, `g_pausedUntilNextOpen` resta vero per la finestra fra
+l'AutoClose serale e il rollover di mezzanotte (circa 15-20 minuti nel
+nostro caso, `InpAutoCloseMin=15`) — durante quella finestra
+`CheckMaxTotalDD()` non viene proprio chiamata. È una finestra breve, non
+sembra sufficiente da sola a spiegare uno zero trigger totale su 3 anni,
+ma è un candidato concreto da escludere prima di guardare altrove, ed è
+comunque una scoperta a parte (il nome della variabile è fuorviante
+rispetto al comportamento reale).
+
+**Altre ipotesi ancora da verificare**:
+- differenza tra equity calcolata tick-per-tick e la curva equity
+  aggregata che MT5 riporta a fine test (possibile disallineamento di
+  campionamento);
+- va anche verificato se il test `nxs_regtest_maxtotaldd_check` aveva
+  `InpUseAutoClose`/altre protezioni attive che avrebbero potuto interagire
+  nello stesso modo.
+
+Prossimo passo per chiudere davvero: instrumentare temporaneamente
+`NXS_Prot_CheckMaxTotalDD()` con un log ad ogni tick (o ogni N tick) di
+`eq`, `g_maxDDPeakEquity`, `ddPct` per individuare il momento esatto in cui
+il DD reale supera il 10% e verificare se la funzione viene raggiunta in
+quel momento o saltata.
 
 ## Verdetto
 

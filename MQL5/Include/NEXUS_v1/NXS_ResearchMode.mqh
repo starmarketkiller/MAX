@@ -116,15 +116,17 @@ void NXS_ResearchLogInit(){
    double slMult, tpMult, beR, trailATR; bool htf;
    bool hasProfile = NXS_Profile_Get(stratName, slMult, tpMult, htf, beR, trailATR);
    PrintFormat("[RESEARCH][INIT] strategy=%s selector=%d sourceTF=%s fixedLot=%.4f "
-               "exitMgmt=%s ESL=%s dailyDD=%s totalDD=%s SL=%s TP=%s%s",
+               "exitMgmt=%s ESL=%s dailyDD=%s totalDD=%s DPT=%s ruin=%s SL=%s TP=%s%s",
                stratName, InpStrategySelector, EnumToString(srcTF), NXS_ResearchLot(),
-               (InpResearchUseProfileExit ? "RECIPE(profilo BE/trail ON)" : "RAW(nessun BE/trail)"),
+               (InpResearchExitMode == NXS_RESEARCH_RECIPE ? "RECIPE(profilo BE/trail ON)" : "RAW(nessun BE/trail)"),
                (InpResearchUseESL ? "ON" : "OFF"),
                (InpResearchUseDailyDD ? "ON" : "OFF"),
                (InpResearchUseTotalDD ? "ON" : "OFF"),
+               (InpResearchUseDPT ? "ON" : "OFF"),
+               (InpResearchUseRuin ? "ON" : "OFF"),
                (hasProfile ? StringFormat("%.2fxATR(%s)", slMult, EnumToString(srcTF)) : "nativo/strutturale"),
                (hasProfile ? StringFormat("%.2fxATR(%s)", tpMult, EnumToString(srcTF)) : "nativo/strutturale"),
-               (hasProfile && InpResearchUseProfileExit ? StringFormat(" beR=%.2f trailATR=%.2f", beR, trailATR) : ""));
+               (hasProfile && InpResearchExitMode == NXS_RESEARCH_RECIPE ? StringFormat(" beR=%.2f trailATR=%.2f", beR, trailATR) : ""));
 }
 
 void NXS_ResearchLogOpen(const string strategy, int dir, double entry, double sl, double tp){
@@ -139,9 +141,47 @@ void NXS_ResearchLogBlock(const string strategy, const string reason){
    PrintFormat("[RESEARCH][BLOCK] strategy=%s reason=%s", strategy, reason);
 }
 
-void NXS_ResearchLogExit(const string strategy, const string reason, double pnl){
+// 10/09 - STEP 3 richiesto dall'utente: mappa il close_reason del ledger
+// (che a sua volta viene dal commento della deal OUT, o da "sl"/"tp" quando
+// il broker lo riscrive) sull'autorita' canonica che lo ha causato. NXS:DD e'
+// condiviso da ESL e Total DD (stesso tag storico, non cambiato per non
+// toccare il parsing lato backend live) - qui si disambigua guardando quale
+// dei due opt-in di Research era acceso, non perfetto se entrambi lo sono
+// insieme ma sufficiente per come i test vengono effettivamente configurati
+// (uno alla volta).
+string NXS_ResearchExitAuthority(const string closeReason){
+   if(StringFind(closeReason, "sl") == 0)          return "BROKER_SL";
+   if(StringFind(closeReason, "tp") == 0)          return "BROKER_TP";
+   if(closeReason == "NXS:RISK")                   return "MAX_LOSS_PER_POS";
+   if(closeReason == "NXS:TIME")                   return "MAX_HOLD";
+   if(closeReason == "NXS:AUTOCLOSE")               return "AUTO_CLOSE";
+   if(closeReason == "NXS:PROFIT")                 return "DPT";
+   if(closeReason == "NXS:DD"){
+      if(InpResearchUseTotalDD) return "TOTAL_DD";
+      if(InpResearchUseESL)     return "ESL";
+      return "ESL_OR_TOTAL_DD";   // entrambi spenti/ambiguo - non dovrebbe capitare in RAW
+   }
+   if(StringFind(closeReason, "end of test") >= 0) return "TESTER_END";
+   if(closeReason == "expert" || closeReason == "" ) return "OTHER";
+   return "OTHER";
+}
+
+void NXS_ResearchLogExit(const string strategy, ulong position, const string reason, double pnl){
    if(!NXS_IsResearchMode()) return;
-   PrintFormat("[RESEARCH][EXIT] strategy=%s reason=%s pnl=%.2f", strategy, reason, pnl);
+   string authority = NXS_ResearchExitAuthority(reason);
+   PrintFormat("[RESEARCH][EXIT] strategy=%s position=%I64u exit_authority=%s reason=%s pnl=%.2f",
+               strategy, position, authority, reason, pnl);
+   // Invariante RAW (contratto in NXS_Inputs.mqh): solo BROKER_SL/BROKER_TP/
+   // TESTER_END sono ammessi. Qualunque altra cosa in RAW significa che un
+   // terzo modulo nascosto sta ancora chiudendo posizioni fuori dal
+   // contratto - esattamente il tipo di scoperta che ha portato a questo
+   // fix (vedi MaxHold/MaxLossPerPos/AutoClose).
+   if(InpResearchExitMode == NXS_RESEARCH_RAW &&
+      authority != "BROKER_SL" && authority != "BROKER_TP" && authority != "TESTER_END"){
+      PrintFormat("[RESEARCH][INVARIANT_FAIL] strategy=%s position=%I64u exit_authority=%s "
+                  "reason=%s - RAW ha ricevuto un'uscita non prevista dal contratto",
+                  strategy, position, authority, reason);
+   }
 }
 
 #endif

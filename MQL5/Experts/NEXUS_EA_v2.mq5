@@ -1012,7 +1012,11 @@ void OnTick(){
       NXS_Prot_OnNewDay();
       if(InpNotifyDailySummary) NXS_Notify_DailySummary();
    }
-   NXS_Ruin_OnTick();
+   // 10/09 - Research Mode: lo scudo Risk-of-Ruin e' un layer di protezione
+   // conto (come ESL/DD), opt-in esplicito - InpRuinEnable e' un plain bool
+   // (non "input", sempre true a meno di ricompilare), quindi va spento qui
+   // al call site, non tramite .set.
+   if(!NXS_IsResearchMode() || InpResearchUseRuin) NXS_Ruin_OnTick();
    NXS_Prot_OnTick();
    if(!NXS_UpdateIndicators()) return;
 
@@ -1047,14 +1051,15 @@ void OnTick(){
    // strategia, non un overlay generico). Nessun cambio per InpResearchMode=false.
    //
    // 10/09 (correzione RAW/RECIPE) - NXS_ManageBreakevenAndTrail() legge
-   // beR/trailATR dal profilo della strategia (es. ADX_RSI beR=1.5): NON e'
-   // "il trigger", e' management post-apertura a tutti gli effetti. Un test
-   // "Research" che la lasciasse sempre accesa misurerebbe trigger+BE
-   // insieme, mai il trigger da solo. Ora e' dietro InpResearchUseProfileExit
-   // (default false = RAW: solo entry+SL/TP nativi; true = RECIPE: stesso
-   // trigger, BE/trailing di profilo riammessi).
+   // beR/trailATR dal profilo della strategia (es. ADX_RSI beR=1.5) E contiene
+   // CLASSIC_TIME_STOP (max-hold per posizioni "risolte" - vedi commento nella
+   // funzione): NON e' "il trigger", e' management post-apertura a tutti gli
+   // effetti. Dietro InpResearchExitMode: RAW (default) = solo entry+SL/TP
+   // nativi; RECIPE = stesso trigger, BE/trailing di profilo riammessi (il
+   // CLASSIC_TIME_STOP resta comunque escluso anche in RECIPE - vedi sotto,
+   // e' un'autorita' generica, non "propria della strategia").
    if(!NXS_IsResearchMode()) NXS_ManageFixedBE();
-   if(!NXS_IsResearchMode() || InpResearchUseProfileExit) NXS_ManageBreakevenAndTrail();
+   if(!NXS_IsResearchMode() || InpResearchExitMode == NXS_RESEARCH_RECIPE) NXS_ManageBreakevenAndTrail();
    if(!NXS_IsResearchMode()) NXS_TrailATR();   // ATR-based trailing overlay (globale, non di profilo)
    NXS_WeeklyExpManage();         // 26/08: breakeven+trailing strutturale dedicato a WEEKLY_EXP
    if(!NXS_IsResearchMode()){
@@ -1512,7 +1517,7 @@ void OnTick(){
 //                  cooldown partito adesso per un SL di ieri bloccherebbe il
 //                  trading per un motivo gia' esaurito.
 void NXS_EA_OnLogicalClose(SNxsLedgerTrade &tc){
-   NXS_ResearchLogExit(tc.strategy, tc.close_reason, tc.pnl);   // no-op se InpResearchMode=false
+   NXS_ResearchLogExit(tc.strategy, tc.position_id, tc.close_reason, tc.pnl);   // no-op se InpResearchMode=false
    // Protezioni loss-streak (anti-revenge, anti-bleed, streak sizing):
    // ESATTAMENTE una volta per trade logico, con il PnL AGGREGATO
    // (docs/architecture: "consecutive-loss protections run exactly once per

@@ -44,6 +44,12 @@ bool NXS_PostSLCooldownBlocks(ENUM_NXS_DIR dir){
 #define NXS_R_NEWS    "NXS:NEWS"
 #define NXS_R_BE      "NXS:BE"
 #define NXS_R_RISK    "NXS:RISK"
+// 10/09 - prima AutoClose riusava NXS_R_TIME (stesso tag di MaxHold),
+// rendendo i due indistinguibili a posteriori dal solo commento della deal -
+// scoperto analizzando perche' il RAW di ADX_RSI chiudeva praticamente ogni
+// posizione alla stessa ora del giorno (23:43) invece che a durate diverse:
+// non era MaxHold, era il flatten di fine sessione. Tag proprio da qui in poi.
+#define NXS_R_AUTOCLOSE "NXS:AUTOCLOSE"
 
 // ----- Push Trade Reason to backend (retries w/ backoff — cold-start safe) --
 // PR1: il payload dichiara ora il proprio "event" (close / resync /
@@ -462,7 +468,7 @@ void NXS_Prot_CheckAutoClose(){
       if(!g_autoClosePending){
          g_autoClosePending = true;
          g_pausedUntilNextOpen = true;
-         bool flat = NXS_Prot_FlattenAll(NXS_R_TIME);
+         bool flat = NXS_Prot_FlattenAll(NXS_R_AUTOCLOSE);
          PrintFormat("[NEXUS PROT] AutoClose %02d:%02d (chiusura %02d:%02d, fonte=%s) flat=%s",
                      dt.hour, dt.min, closeMin / 60, closeMin % 60,
                      (fromBroker ? "sessioni broker" : "InpMarketCloseGMT"),
@@ -545,17 +551,25 @@ void NXS_Prot_OnTick(){
    // va detto: max-hold, perdita per posizione, ESL, DPT e auto-close NON
    // girano finche' dura.
    if(g_pausedUntilNextOpen) return;
-   NXS_Prot_CheckMaxHold();
-   NXS_Prot_CheckMaxLossPerPos();
-   // 10/09 - Research Mode: ESL e Total DD chiudono posizioni (a differenza
-   // di Daily DD, che blocca solo nuovi ingressi - vedi NXS_CheckProtections
-   // in NXS_Risk.mqh), quindi qui sono dietro un opt-in esplicito e SEMPRE
-   // loggato (InpResearchUseESL/InpResearchUseTotalDD, default OFF - vedi
-   // NXS_Inputs.mqh). Fuori da Research Mode nessun cambiamento.
+   // 10/09 - Research Mode, contratto RAW (vedi NXS_Inputs.mqh): MaxHold e
+   // MaxLossPerPos sono autorita' di uscita GENERICHE (non "proprie della
+   // strategia" ne' "protezioni di conto" in senso stretto) - restano escluse
+   // sia in RAW che in RECIPE, sempre, indipendentemente dal .set.
+   if(!NXS_IsResearchMode()) NXS_Prot_CheckMaxHold();
+   if(!NXS_IsResearchMode()) NXS_Prot_CheckMaxLossPerPos();
+   // ESL/Total DD/DPT chiudono posizioni (a differenza di Daily DD, che
+   // blocca solo nuovi ingressi - vedi NXS_CheckProtections in NXS_Risk.mqh),
+   // quindi sono un layer SEPARATO con opt-in esplicito e SEMPRE loggato
+   // (default OFF - vedi NXS_Inputs.mqh), mai riattivato implicitamente da
+   // RECIPE. Fuori da Research Mode nessun cambiamento.
    if(!NXS_IsResearchMode() || InpResearchUseESL) NXS_Prot_CheckESL();
    if(!NXS_IsResearchMode() || InpResearchUseTotalDD) NXS_Prot_CheckMaxTotalDD();
-   NXS_Prot_CheckDPT();
-   NXS_Prot_CheckAutoClose();
+   if(!NXS_IsResearchMode() || InpResearchUseDPT) NXS_Prot_CheckDPT();
+   // AutoClose (SCOPERTA 10/09: era la vera causa dominante del gonfiamento
+   // trade-count nel primo giro RAW, non MaxHold come ipotizzato - flatten
+   // giornaliero a fine sessione) - autorita' generica, esclusa sempre come
+   // MaxHold/MaxLossPerPos, non un opt-in come ESL/DD/DPT.
+   if(!NXS_IsResearchMode()) NXS_Prot_CheckAutoClose();
 }
 
 #endif

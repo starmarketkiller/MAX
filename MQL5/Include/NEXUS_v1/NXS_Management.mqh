@@ -63,10 +63,17 @@ void NXS_ManageBreakevenAndTrail(){
       // modulo NON agisce: la competenza passa interamente a
       // NXS_Prot_CheckMaxHold(), che applica il limite conservativo. Prima
       // entrambi agivano con fallback diversi (4h qui, 12h x factor la').
+      // 10/09 - Research Mode: CLASSIC_TIME_STOP e' un'autorita' di uscita
+      // GENERICA (cap NEXUS-wide sulla durata), non qualcosa che una strategia
+      // "dichiara" nella sua ricetta - resta esclusa sia in RAW che in RECIPE
+      // (vedi contratto RAW in NXS_Inputs.mqh). Era la contro-parte di
+      // NXS_Prot_CheckMaxHold per le posizioni "risolte" da profilo: se non la
+      // si esclude qui, RECIPE misurerebbe trigger+BE+timeout invece di
+      // trigger+BE soltanto.
       bool holdResolved = false;
       long maxHoldSec = NXS_MaxHold_LimitSec(PositionGetString(POSITION_COMMENT),
                                              holdResolved);
-      if(holdResolved && maxHoldSec > 0){
+      if(!NXS_IsResearchMode() && holdResolved && maxHoldSec > 0){
          datetime openT = (datetime)PositionGetInteger(POSITION_TIME);
          if(openT > 0 && (TimeCurrent() - openT) > maxHoldSec){
             NXS_PM_ProposeClose(t, 80, "CLASSIC_TIME_STOP", "maximum hold time exceeded");

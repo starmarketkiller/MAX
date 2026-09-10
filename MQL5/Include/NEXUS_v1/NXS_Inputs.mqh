@@ -200,24 +200,44 @@ input int      InpDataCollectionMaxOpen= 40;     // tetto posizioni aperte conte
 // gestione post-apertura, il lotto e il multi-TF, con log esplicito per
 // tutto cio' che resta acceso (niente silenzi come ESL/DailyDD prima).
 input bool     InpResearchMode         = false;
-// 10/09 - RAW vs RECIPE (correzione richiesta dopo la prima verifica):
-// InpUseStrategyProfiles/InpProfileMultiTF (richiesti true da Research)
-// decidono SOLO quale TF/SL/TP nativi usare - NON implicano il BE/trailing
-// del profilo, che e' gestione post-apertura a tutti gli effetti (es. ADX_RSI
-// ha beR=1.5 nel profilo: senza questo flag un test "Research" misurerebbe
-// gia' trigger+BE insieme, non il trigger puro). Default false = RAW (entry+
-// SL+TP nativi, nessun BE/trailing nemmeno di profilo). true = RECIPE (stesso
-// trigger/SL/TP, ma BE/trailing di profilo riammessi) - un secondo livello
-// esplicito, non un modo diverso di essere "naked".
-input bool     InpResearchUseProfileExit = false;
-// ESL/protezioni conto NON sono forzate OFF di default in Research: sono
-// gia' un fattore di contaminazione noto (vedi audit 09/09 - il PF2.04 di
-// ADX_RSI dipende dall'ESL, senza scende a 1.26). Di default restano OFF
-// (edge puro), ma ON e' una scelta esplicita e SEMPRE loggata, mai un
-// comportamento implicito ereditato dal .set.
+// 10/09 - RAW vs RECIPE, ora un enum esplicito (richiesto dopo la scoperta
+// che il RAW iniziale non era davvero RAW - vedi audit MaxHold/MaxLossPerPos/
+// AutoClose sotto). InpUseStrategyProfiles/InpProfileMultiTF (richiesti true
+// da Research) decidono SOLO quale TF/SL/TP nativi usare - NON implicano
+// nessuna gestione post-apertura.
+enum ENUM_NXS_RESEARCH_EXIT_MODE {
+   NXS_RESEARCH_RAW    = 0,   // entry + SL/TP nativi, NESSUN'ALTRA gestione (vedi contratto sotto)
+   NXS_RESEARCH_RECIPE = 1    // stesso trigger/SL/TP, BE/trailing DI PROFILO riammessi (es. ADX_RSI beR=1.5)
+};
+input ENUM_NXS_RESEARCH_EXIT_MODE InpResearchExitMode = NXS_RESEARCH_RAW;
+// 10/09 - CONTRATTO RAW (verificato con ricerca globale di ogni percorso che
+// puo' chiudere/modificare una posizione - vedi tabella nel commit): in RAW
+// possono chiudere una posizione SOLO SL broker nativo, TP broker nativo, o
+// la chiusura forzata di fine test (TESTER_END). Percio' in RAW (e in RECIPE,
+// che non li dichiara come "propri della strategia") sono SEMPRE disattivati,
+// indipendentemente dal .set, questi moduli - NESSUNO dei quali era nella
+// prima versione di Research Mode:
+//   - NXS_Prot_CheckMaxHold      (chiudeva posizioni "risolte" via
+//     NXS_ManageBreakevenAndTrail/CLASSIC_TIME_STOP, gia' spento, ma anche
+//     posizioni "non risolte" via questo percorso - ora spento anch'esso)
+//   - NXS_Prot_CheckMaxLossPerPos
+//   - NXS_Prot_CheckAutoClose    (SCOPERTA 10/09: era la vera causa
+//     dominante del gonfiamento trade-count di ADX_RSI, non MaxHold come
+//     ipotizzato nel primo giro - flatten a fine giornata di sessione,
+//     "NXS:TIME" riusava lo stesso tag di MaxHold rendendoli indistinguibili
+//     a posteriori; ora ha un tag proprio, NXS:AUTOCLOSE)
+//   - Ruin-of-ruin shield (NXS_Ruin_OnTick/_nxs_ruin_flatten) - InpRuinEnable
+//     e' un plain bool (non input, sempre true), quindi va spento al call
+//     site, non via .set
+//   - Close & Reverse (NXS_SmartCloseOppositeIfBetter) - stesso problema,
+//     InpEnableCloseReverse e' plain bool sempre true
+// ESL/Daily DD/Total DD/DPT restano un LAYER SEPARATO e SEMPRE esplicito
+// (mai riattivato implicitamente da RECIPE), con opt-in dedicato e log:
 input bool     InpResearchUseESL       = false;
 input bool     InpResearchUseDailyDD   = false;
 input bool     InpResearchUseTotalDD   = false;
+input bool     InpResearchUseDPT       = false;
+input bool     InpResearchUseRuin      = false;
 // Lotto fisso dedicato - NON riusa InpDataCollectionMode (percorso diverso,
 // salta gate diversi - vedi commento sopra). Sostituisce qualunque sizing a
 // rischio% E qualunque moltiplicatore residuo (streak/counter-HTF/chain):

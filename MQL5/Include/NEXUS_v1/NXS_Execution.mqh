@@ -745,7 +745,14 @@ ENUM_NXS_EXEC_RC NXS_TryExecuteRC(SNXSSignal &sig, SNXSAMD &amd, SNXSSweep &sw,
    threshOut = thresh;
    if(finalScore < thresh) return EXEC_FAIL_SCORE_BELOW;
 
-   NXS_SmartCloseOppositeIfBetter(sig.dir, finalScore, htf);
+   // 10/09 - Research Mode: Close&Reverse chiude una posizione esistente
+   // fuori dal suo SL/TP nativo quando arriva un segnale migliore in
+   // direzione opposta - stessa famiglia di "continuation/reverse chain"
+   // (gia' esclusa in NXS_EA_OnLogicalClose), esclusa sempre qui per lo
+   // stesso motivo. InpEnableCloseReverse e' un plain bool (non "input",
+   // sempre true), quindi va spento al call site.
+   if(!NXS_IsResearchMode())
+      NXS_SmartCloseOppositeIfBetter(sig.dir, finalScore, htf);
    double lotMult = counterSoft ? MathMax(0.01, InpCounterHTF_LotMult) : 1.0;
    // v2.0.13 — apply chain continuation lot multiplier
    if(g_chainPendingLotMult > 0.0 && g_chainPendingLotMult < 1.0)
