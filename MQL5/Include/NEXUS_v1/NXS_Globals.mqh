@@ -182,8 +182,65 @@ bool     g_autoClosePending    = false;
 // Flatten d'emergenza non completato: resta esposizione da chiudere.
 bool     g_flattenPending      = false;
 string   g_flattenReason       = "";
+string   g_flattenCause        = "";   // 10/09 - causa semantica gia' disambiguata (vedi Exit Authority Registry sotto), a fianco del reason/comment condiviso
 int      g_flattenAttempts     = 0;
 datetime g_flattenSince        = 0;
+
+// ----- Exit Authority Registry (10/09) -----------------------------------
+// La sola stringa reason (NXS:DD ecc.) scritta nel commento del deal si perde
+// a valle: NXS_TradeLedger deriva close_reason dal campo NUMERICO MT5
+// DEAL_REASON (client/mobile/web/expert/sl/tp/stop_out), che non sa nulla del
+// commento - qualunque chiusura EA esplicita (ESL, TOTAL_DD, DPT, RUIN, ecc.)
+// risultava "expert", indistinguibile da un'anomalia vera. In piu' NXS_R_DD
+// era condiviso tra ESL e MAX_TOTAL_DD, disambiguato solo a posteriori dai
+// flag InpResearchUse* (fragile, mai verificato finche' non si e' eseguito un
+// run ESL=ON: vedi vault 10/09).
+//
+// Ora ogni chiusura di protezione registra qui la causa ESATTA, gia'
+// disambiguata alla FONTE (non dedotta dopo), chiave = position ticket
+// (l'MT5 "position id", stabile su tutta la vita della posizione).
+// NXS_ResearchExitAuthority() la consulta quando DEAL_REASON=expert per
+// sapere davvero cosa ha chiuso la posizione; se non trova nulla, la
+// chiusura resta "EXPERT_UNKNOWN" - una vera anomalia, sempre invariant fail
+// in RAW indipendentemente da qualunque opt-in.
+#define NXS_EXITREG_MAX 128
+ulong  g_exitRegPos[NXS_EXITREG_MAX];
+string g_exitRegCause[NXS_EXITREG_MAX];
+int    g_exitRegCount = 0;
+
+void NXS_ExitAuthority_Record(ulong positionId, string cause){
+   for(int i = 0; i < g_exitRegCount; i++){
+      if(g_exitRegPos[i] == positionId){ g_exitRegCause[i] = cause; return; }
+   }
+   if(g_exitRegCount < NXS_EXITREG_MAX){
+      g_exitRegPos[g_exitRegCount]   = positionId;
+      g_exitRegCause[g_exitRegCount] = cause;
+      g_exitRegCount++;
+   } else {
+      // buffer pieno (non dovrebbe succedere: si consuma a ogni chiusura vera) -
+      // sovrascrive la voce piu' vecchia piuttosto che perdere quella nuova.
+      for(int i = 0; i < NXS_EXITREG_MAX - 1; i++){
+         g_exitRegPos[i] = g_exitRegPos[i+1]; g_exitRegCause[i] = g_exitRegCause[i+1];
+      }
+      g_exitRegPos[NXS_EXITREG_MAX-1]   = positionId;
+      g_exitRegCause[NXS_EXITREG_MAX-1] = cause;
+   }
+}
+
+// Consuma (rimuove) la voce se presente - una chiusura reale la usa una volta sola.
+bool NXS_ExitAuthority_Consume(ulong positionId, string &cause){
+   for(int i = 0; i < g_exitRegCount; i++){
+      if(g_exitRegPos[i] == positionId){
+         cause = g_exitRegCause[i];
+         for(int j = i; j < g_exitRegCount - 1; j++){
+            g_exitRegPos[j] = g_exitRegPos[j+1]; g_exitRegCause[j] = g_exitRegCause[j+1];
+         }
+         g_exitRegCount--;
+         return true;
+      }
+   }
+   return false;
+}
 // Equity breaker del RiskShield.
 datetime g_NXSrsBreakerUntil   = 0;
 // AUD0-WEB-008: istante dell'ultimo evento di protezione scattato. Serve al

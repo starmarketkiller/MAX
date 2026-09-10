@@ -142,46 +142,64 @@ void NXS_ResearchLogBlock(const string strategy, const string reason){
    PrintFormat("[RESEARCH][BLOCK] strategy=%s reason=%s", strategy, reason);
 }
 
-// 10/09 - STEP 3 richiesto dall'utente: mappa il close_reason del ledger
-// (che a sua volta viene dal commento della deal OUT, o da "sl"/"tp" quando
-// il broker lo riscrive) sull'autorita' canonica che lo ha causato. NXS:DD e'
-// condiviso da ESL e Total DD (stesso tag storico, non cambiato per non
-// toccare il parsing lato backend live) - qui si disambigua guardando quale
-// dei due opt-in di Research era acceso, non perfetto se entrambi lo sono
-// insieme ma sufficiente per come i test vengono effettivamente configurati
-// (uno alla volta).
-string NXS_ResearchExitAuthority(const string closeReason){
+// 10/09 - STEP 3 originale (SBAGLIATO, corretto lo stesso giorno dopo il
+// primo run reale con ESL=ON): si credeva che `closeReason` portasse il
+// commento della deal ("NXS:DD" ecc.). In realta' NXS_TradeLedger lo deriva
+// SOLO dal campo numerico MT5 DEAL_REASON (NXS_HistorySync.mqh,
+// _NXS_HistTrigger: client/mobile/web/expert/sl/tp/stop_out) - qualunque
+// chiusura EA esplicita (ESL, TOTAL_DD, DPT, RUIN, MaxHold, ecc.) arriva qui
+// SEMPRE come "expert", mai come "NXS:DD"/"NXS:RISK"/ecc. I rami sotto che
+// confrontavano closeReason con quelle stringhe erano quindi codice morto,
+// mai raggiungibile - scoperto esaminando il primo run ADX_RSI RAW ESL=ON
+// (14/36 chiusure finivano in OTHER+INVARIANT_FAIL nonostante ESL fosse
+// esplicitamente opt-in per quel run, vedi vault 10/09).
+//
+// Ora `closeReason=="expert"` interroga l'Exit Authority Registry
+// (NXS_ExitAuthority_Consume, NXS_Globals.mqh), popolato ALLA FONTE da ogni
+// chiusura di protezione (NXS_Prot_ClosePositionWithReason/_nxs_ruin_flatten)
+// PRIMA di inviare la richiesta - li' la causa e' gia' disambiguata (ESL vs
+// TOTAL_DD non e' piu' dedotto a posteriori dai flag Inp, e' scritto dalla
+// funzione che ha davvero deciso di chiudere). Se il registry non ha nulla
+// per quella posizione, la chiusura resta EXPERT_UNKNOWN - un'anomalia vera,
+// sempre invariant fail in RAW indipendentemente da qualunque opt-in.
+string NXS_ResearchExitAuthority(const string closeReason, ulong position){
    if(StringFind(closeReason, "sl") == 0)          return "BROKER_SL";
    if(StringFind(closeReason, "tp") == 0)          return "BROKER_TP";
-   if(closeReason == "NXS:RISK")                   return "MAX_LOSS_PER_POS";
-   if(closeReason == "NXS:TIME")                   return "MAX_HOLD";
-   if(closeReason == "NXS:AUTOCLOSE")               return "AUTO_CLOSE";
-   if(closeReason == "NXS:PROFIT")                 return "DPT";
-   if(closeReason == "NXS:DD"){
-      if(InpResearchUseTotalDD) return "TOTAL_DD";
-      if(InpResearchUseESL)     return "ESL";
-      return "ESL_OR_TOTAL_DD";   // entrambi spenti/ambiguo - non dovrebbe capitare in RAW
-   }
    if(StringFind(closeReason, "end of test") >= 0) return "TESTER_END";
-   if(closeReason == "expert" || closeReason == "" ) return "OTHER";
-   return "OTHER";
+   if(closeReason == "expert"){
+      string cause;
+      if(NXS_ExitAuthority_Consume(position, cause)) return cause;   // ESL/TOTAL_DD/DPT/RUIN/MAX_HOLD/MAX_LOSS_PER_POS/AUTO_CLOSE
+      return "EXPERT_UNKNOWN";   // chiusura EA esplicita MAI registrata - vera anomalia
+   }
+   return "OTHER";   // client/mobile/web/stop_out/rollover/altro - non un OrderSend esplicito dell'EA
 }
 
 void NXS_ResearchLogExit(const string strategy, ulong position, const string reason, double pnl){
    if(!NXS_IsResearchMode()) return;
-   string authority = NXS_ResearchExitAuthority(reason);
+   string authority = NXS_ResearchExitAuthority(reason, position);
    PrintFormat("[RESEARCH][EXIT] strategy=%s position=%I64u exit_authority=%s reason=%s pnl=%.2f",
                strategy, position, authority, reason, pnl);
-   // Invariante RAW (contratto in NXS_Inputs.mqh): solo BROKER_SL/BROKER_TP/
-   // TESTER_END sono ammessi. Qualunque altra cosa in RAW significa che un
-   // terzo modulo nascosto sta ancora chiudendo posizioni fuori dal
-   // contratto - esattamente il tipo di scoperta che ha portato a questo
-   // fix (vedi MaxHold/MaxLossPerPos/AutoClose).
-   if(InpResearchExitMode == NXS_RESEARCH_RAW &&
-      authority != "BROKER_SL" && authority != "BROKER_TP" && authority != "TESTER_END"){
-      PrintFormat("[RESEARCH][INVARIANT_FAIL] strategy=%s position=%I64u exit_authority=%s "
-                  "reason=%s - RAW ha ricevuto un'uscita non prevista dal contratto",
-                  strategy, position, authority, reason);
+   // Invariante RAW (contratto in NXS_Inputs.mqh): BROKER_SL/BROKER_TP/
+   // TESTER_END sono sempre ammessi. ESL/TOTAL_DD/DPT/RUIN sono ammessi SOLO
+   // se il rispettivo opt-in e' acceso per QUESTO run (se scattano con
+   // l'opt-in spento e' comunque un bug - NXS_Prot_OnTick dovrebbe averli
+   // gia' esclusi in Research Mode). MAX_HOLD/MAX_LOSS_PER_POS/AUTO_CLOSE non
+   // hanno mai un opt-in in Research Mode (esclusi incondizionatamente da
+   // NXS_Prot_OnTick quando NXS_IsResearchMode()) - se compaiono comunque e'
+   // un leak, non un caso ammesso. EXPERT_UNKNOWN e' sempre vietato: e'
+   // esattamente il tipo di scoperta che ha portato a questo fix (vedi
+   // MaxHold/MaxLossPerPos/AutoClose scoperti nel commit precedente).
+   if(InpResearchExitMode == NXS_RESEARCH_RAW){
+      bool allowed = (authority == "BROKER_SL" || authority == "BROKER_TP" || authority == "TESTER_END");
+      if(!allowed && authority == "ESL")       allowed = InpResearchUseESL;
+      if(!allowed && authority == "TOTAL_DD")  allowed = InpResearchUseTotalDD;
+      if(!allowed && authority == "DPT")       allowed = InpResearchUseDPT;
+      if(!allowed && authority == "RUIN")      allowed = InpResearchUseRuin;
+      if(!allowed){
+         PrintFormat("[RESEARCH][INVARIANT_FAIL] strategy=%s position=%I64u exit_authority=%s "
+                     "reason=%s - RAW ha ricevuto un'uscita non prevista dal contratto",
+                     strategy, position, authority, reason);
+      }
    }
 }
 

@@ -120,8 +120,12 @@ void NXS_Prot_PushTradeReason(ulong ticket, long magic, string strategy,
 }
 
 // ----- Close one position w/ reason in comment + push to backend -----
-bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason){
+bool NXS_Prot_ClosePositionWithReason(ulong ticket, string reason, string cause=""){
    if(!PositionSelectByTicket(ticket)) return false;
+   // 10/09 - registra la causa semantica PRIMA di chiedere la chiusura (vedi
+   // Exit Authority Registry in NXS_Globals.mqh) - il DEAL_REASON numerico che
+   // NXS_TradeLedger legge poi non sa nulla di `reason` (il commento).
+   if(StringLen(cause) > 0) NXS_ExitAuthority_Record(ticket, cause);
    long mg = (long)PositionGetInteger(POSITION_MAGIC);
    if(!IsNexusMagic(mg)) return false;
    string sym = PositionGetString(POSITION_SYMBOL);
@@ -214,7 +218,7 @@ int NXS_Prot_OpenNexusCount(){
    return n;
 }
 
-int NXS_Prot_CloseAllWithReason(string reason){
+int NXS_Prot_CloseAllWithReason(string reason, string cause=""){
    int closed = 0;
    for(int i = PositionsTotal()-1; i >= 0; i--){
       ulong t = PositionGetTicket(i);
@@ -223,23 +227,24 @@ int NXS_Prot_CloseAllWithReason(string reason){
       // la protezione (di conto, non di simbolo).
       if(!_nxs_prot_inScope(PositionGetString(POSITION_SYMBOL))) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
-      if(NXS_Prot_ClosePositionWithReason(t, reason)) closed++;
+      if(NXS_Prot_ClosePositionWithReason(t, reason, cause)) closed++;
    }
    return closed;
 }
 
 //: Esegue un flatten e registra se e' rimasta esposizione.
 //: Ritorna true solo quando NON resta piu' nulla di aperto.
-bool NXS_Prot_FlattenAll(string reason){
+bool NXS_Prot_FlattenAll(string reason, string cause=""){
    // AUD0-WEB-008: da qui parte il raffreddamento che blocca i reset
    // remoti delle protezioni nei minuti successivi all'evento.
    g_lastProtectionEvent = TimeCurrent();
-   int closed    = NXS_Prot_CloseAllWithReason(reason);
+   int closed    = NXS_Prot_CloseAllWithReason(reason, cause);
    int remaining = NXS_Prot_OpenNexusCount();
    if(remaining > 0){
       if(!g_flattenPending){
          g_flattenPending = true;
          g_flattenReason  = reason;
+         g_flattenCause   = cause;
          g_flattenSince   = TimeCurrent();
          g_flattenAttempts = 0;
       }
@@ -254,6 +259,7 @@ bool NXS_Prot_FlattenAll(string reason){
                   g_flattenReason, g_flattenAttempts);
       g_flattenPending  = false;
       g_flattenReason   = "";
+      g_flattenCause    = "";
       g_flattenAttempts = 0;
       g_flattenSince    = 0;
    }
@@ -273,7 +279,7 @@ void NXS_Prot_CheckESL(){
       // dipende dall'esito delle chiusure.
       g_eslHit = true;
       g_pausedUntilNextOpen = true;
-      bool flat = NXS_Prot_FlattenAll(NXS_R_DD);
+      bool flat = NXS_Prot_FlattenAll(NXS_R_DD, "ESL");
       PrintFormat("[NEXUS PROT] ESL HIT: floatPnL=%.2f <= limit=%.2f. Flat=%s. Paused.",
                   floatL, limit, (flat ? "SI" : "NO - retry in corso"));
    }
@@ -299,7 +305,7 @@ void NXS_Prot_CheckMaxTotalDD(){
    if(ddPct >= InpMaxTotalDDPct){
       g_maxDDHit = true;
       g_pausedUntilNextOpen = true;
-      bool flat = NXS_Prot_FlattenAll(NXS_R_DD);
+      bool flat = NXS_Prot_FlattenAll(NXS_R_DD, "TOTAL_DD");
       PrintFormat("[NEXUS PROT] MAX_TOTAL_DD HIT: equity=%.2f picco=%.2f dd=%.2f%%>=%.2f%%. "
                   "Flat=%s. Bloccato fino a reset manuale (dashboard: reset_protections).",
                   eq, g_maxDDPeakEquity, ddPct, InpMaxTotalDDPct, (flat ? "SI" : "NO - retry in corso"));
@@ -318,7 +324,7 @@ void NXS_Prot_CheckDPT(){
    if(profit >= target){
       g_dptHit = true;
       g_pausedUntilNextOpen = true;
-      bool flat = NXS_Prot_FlattenAll(NXS_R_PROFIT);
+      bool flat = NXS_Prot_FlattenAll(NXS_R_PROFIT, "DPT");
       PrintFormat("[NEXUS PROT] DPT HIT: profit=%.2f >= target=%.2f. Flat=%s. Paused for day.",
                   profit, target, (flat ? "SI" : "NO - retry in corso"));
    }
@@ -347,7 +353,7 @@ void NXS_Prot_CheckMaxHold(){
       if(limit <= 0) continue;
       datetime opened = (datetime)PositionGetInteger(POSITION_TIME);
       if(now - opened >= limit){
-         NXS_Prot_ClosePositionWithReason(t, NXS_R_TIME);
+         NXS_Prot_ClosePositionWithReason(t, NXS_R_TIME, "MAX_HOLD");
          PrintFormat("[NEXUS PROT] MaxHold: closed ticket=%d (held %d s)", t, (int)(now - opened));
       }
    }
@@ -387,7 +393,7 @@ void NXS_Prot_CheckMaxLossPerPos(){
 
       if(!hardBreach && (now - opened) < minLife) continue;
       if(pl <= lim){
-         NXS_Prot_ClosePositionWithReason(t, NXS_R_RISK);
+         NXS_Prot_ClosePositionWithReason(t, NXS_R_RISK, "MAX_LOSS_PER_POS");
          PrintFormat("[NEXUS PROT] MaxLossPos: closed ticket=%d pl=%.2f <= lim=%.2f "
                      "age=%ds hard=%s",
                      t, pl, lim, (int)(now - opened), (hardBreach ? "SI" : "no"));
@@ -468,7 +474,7 @@ void NXS_Prot_CheckAutoClose(){
       if(!g_autoClosePending){
          g_autoClosePending = true;
          g_pausedUntilNextOpen = true;
-         bool flat = NXS_Prot_FlattenAll(NXS_R_AUTOCLOSE);
+         bool flat = NXS_Prot_FlattenAll(NXS_R_AUTOCLOSE, "AUTO_CLOSE");
          PrintFormat("[NEXUS PROT] AutoClose %02d:%02d (chiusura %02d:%02d, fonte=%s) flat=%s",
                      dt.hour, dt.min, closeMin / 60, closeMin % 60,
                      (fromBroker ? "sessioni broker" : "InpMarketCloseGMT"),
@@ -537,10 +543,10 @@ void NXS_Prot_OnTick(){
          static datetime lastRetry = 0;
          if(TimeCurrent() - lastRetry >= 5){
             lastRetry = TimeCurrent();
-            NXS_Prot_FlattenAll(g_flattenReason);
+            NXS_Prot_FlattenAll(g_flattenReason, g_flattenCause);
          }
       } else {
-         NXS_Prot_FlattenAll(g_flattenReason);   // chiude lo stato pendente
+         NXS_Prot_FlattenAll(g_flattenReason, g_flattenCause);   // chiude lo stato pendente
       }
       return;   // finche' resta esposizione da chiudere, nient'altro conta
    }

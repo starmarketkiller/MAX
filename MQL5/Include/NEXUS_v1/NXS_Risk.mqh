@@ -335,6 +335,10 @@ void _nxs_ruin_flatten(){
       string psym = PositionGetString(POSITION_SYMBOL);
       if(!InpProtScopeAccountWide && psym != g_sym) continue;
       if(!IsNexusMagic((long)PositionGetInteger(POSITION_MAGIC))) continue;
+      // 10/09 - registra la causa PRIMA della chiusura (Exit Authority Registry,
+      // NXS_Globals.mqh): questo path chiude via NXS_DoClose senza commento
+      // dedicato, quindi senza questa riga risulterebbe EXPERT_UNKNOWN in RAW.
+      NXS_ExitAuthority_Record(t, "RUIN");
       if(NXS_DoClose(t)) closed++; else failed++;
    }
    if(failed > 0)
