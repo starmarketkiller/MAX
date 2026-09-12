@@ -191,8 +191,9 @@ bool _nxs_inst_add(ENUM_NXS_DIR dir, double lots, double sl, double tp,
    // Invariante unica: licenza, ruin freeze, protezioni, stop obbligatorio,
    // RiskShield, cap direzionale, margine proiettato, broker preflight.
    string gateReason = "";
+   ENUM_NXS_GATE_REASON gateReasonEnum = GATE_NONE;   // 12/09 - Trace v1: add istituzionale non e' uno dei 4 path primari mappati, out-param solo per compilare
    if(!NXS_CommonExposurePreflight("INST:" + tag, "INST:" + tag, dir, lots, otype, refPrice,
-                                   useSL, useTP, gateReason)){
+                                   useSL, useTP, gateReason, gateReasonEnum)){
       PrintFormat("[NEXUS INST] ADD BLOCCATO dal preflight comune: %s", gateReason);
       return false;
    }

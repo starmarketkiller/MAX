@@ -54,27 +54,35 @@ void NXS_GateTelemetry(string route, string gateId, bool passed,
 //| Le verifiche non aggirabili sono state spostate QUI, così ogni     |
 //| chiamante le eredita per costruzione e non per convenzione.        |
 //+------------------------------------------------------------------+
+// 12/09 - Decision/Gate/Execution Trace v1: `gateOut` classifica
+// PRECISAMENTE quale dei gate interni ha bloccato, impostato dal CODICE a
+// ogni return false (non riletto dopo con string-matching sul messaggio -
+// scelta deliberata: NXS_RS_BlockEntry/EQUITY_BREAKER/CLUSTER_CAP formattano
+// `reason` con un case/wording che puo' cambiare, string-matching sarebbe
+// fragile esattamente dove serve piu' precisione, cioe' RISKSHIELD).
 bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR dir, double lots,
                                  ENUM_ORDER_TYPE otype, double price,
-                                 double &sl, double &tp, string &reason){
+                                 double &sl, double &tp, string &reason,
+                                 ENUM_NXS_GATE_REASON &gateOut){
+   gateOut = GATE_NONE;
    // --- (1) Licenza / entitlement -----------------------------------------
    // AUD0-ADD-001 / AUD0-EXEC-001: grid e pyramid giravano durante la gestione
    // posizioni, PRIMA che il router raggiungesse il gate di licenza esterno.
    bool licOK = NXS_License_Enforce();
    NXS_GateTelemetry(route, "LICENSE", licOK, 0, 0, licOK ? "" : "license_denied");
-   if(!licOK){ reason = "license_denied"; return false; }
+   if(!licOK){ reason = "license_denied"; gateOut = GATE_LICENSE; return false; }
 
    // --- (2) Kill switch di conto ------------------------------------------
    // AUD0-ADD-002: il freeze risk-of-ruin era verificato solo in NXS_OpenTrade,
    // quindi gli add potevano creare esposizione a conto congelato.
    bool ruinOK = !NXS_RuinFrozen();
    NXS_GateTelemetry(route, "RUIN_FREEZE", ruinOK, 0, 0, ruinOK ? "" : "ruin_frozen");
-   if(!ruinOK){ reason = "ruin_frozen"; return false; }
+   if(!ruinOK){ reason = "ruin_frozen"; gateOut = GATE_PROTECTIONS; return false; }
 
    // --- (3) Protezioni giornaliere / pausa --------------------------------
    bool protOK = !NXS_Prot_EntryBlocked();
    NXS_GateTelemetry(route, "PROTECTIONS", protOK, 0, 0, protOK ? "" : "protections_block");
-   if(!protOK){ reason = "protections_block"; return false; }
+   if(!protOK){ reason = "protections_block"; gateOut = GATE_PROTECTIONS; return false; }
 
    // --- (4) Stop di protezione obbligatorio -------------------------------
    // AUD0-ADD-005 / AUD0-INST-007 / NXS-EXP-002: grid, pyramid e add
@@ -85,6 +93,7 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
                      stopPresent ? "" : "missing_broker_stop");
    if(!stopPresent){
       reason = "missing_broker_stop: ogni ordine deve avere uno stop valido";
+      gateOut = GATE_INVALID_STOPS;
       return false;
    }
 
@@ -105,16 +114,19 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
       NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "ledger_degraded");
       reason = "ledger_degraded: stato anti-doppione non affidabile, "
                "nessuna nuova esposizione fino alla riconciliazione";
+      gateOut = GATE_STATE_UNCERTAIN;
       return false;
    }
    if(!NXS_State_EntryAllowed()){
       NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "state_restore_failed");
       reason = "state_restore_failed: snapshot operativo non ripristinato";
+      gateOut = GATE_STATE_UNCERTAIN;
       return false;
    }
    if(NXS_IndicatorsDegraded()){
       NXS_GateTelemetry(route, "STATE_UNCERTAIN", false, 0, 0, "indicators_degraded");
       reason = "indicators_degraded: letture di mercato non affidabili";
+      gateOut = GATE_STATE_UNCERTAIN;
       return false;
    }
 
@@ -128,6 +140,7 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
       NXS_GateTelemetry(route, "VSL_DURABILITY", false, 0, 0, "vsl_persist_unhealthy");
       reason = "vsl_persist_unhealthy: stato Virtual SL non persistibile, "
                "nessuna nuova esposizione";
+      gateOut = GATE_STATE_UNCERTAIN;
       return false;
    }
 
@@ -138,7 +151,7 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
    string rsReason = "";
    bool rsBlocked = NXS_RS_BlockEntry(g_sym, stratName, rsReason);
    NXS_GateTelemetry(route, "RISKSHIELD", !rsBlocked, 0, 0, rsReason);
-   if(rsBlocked){ reason = rsReason; return false; }
+   if(rsBlocked){ reason = rsReason; gateOut = GATE_RISKSHIELD; return false; }
 
    // --- (6) Cap di esposizione direzionale --------------------------------
    double existing = NXS_DirExposureLots(dir);
@@ -148,7 +161,11 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
       StringFormat("existing=%.2f+new=%.2f>cap=%.2f", existing, lots, cap);
    NXS_GateTelemetry(route, "DIR_EXPOSURE", exposureOK, existing + lots, cap,
                      exposureReason);
-   if(!exposureOK){ reason = "dir_exposure_cap " + exposureReason; return false; }
+   if(!exposureOK){
+      reason = "dir_exposure_cap " + exposureReason;
+      gateOut = GATE_EXPOSURE;
+      return false;
+   }
 
    // --- (7) Margine proiettato ---------------------------------------------
    // AUD0-ADD-003: il gate viveva in NXS_OpenTrade, quindi grid e pyramid lo
@@ -166,6 +183,7 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
          if(!marginOK){
             reason = StringFormat("margin_gate proj=%.0f<%.0f", projLevel,
                                   InpMinMarginLevelPct);
+            gateOut = GATE_MARGIN;
             return false;
          }
       }
@@ -175,16 +193,22 @@ bool NXS_CommonExposurePreflight(string route, string stratName, ENUM_NXS_DIR di
    string pfReason = "";
    bool preflightOK = NXS_PreFlight(otype, lots, price, sl, tp, pfReason);
    NXS_GateTelemetry(route, "BROKER_PREFLIGHT", preflightOK, lots, 0, pfReason);
-   if(!preflightOK){ reason = pfReason; return false; }
+   if(!preflightOK){
+      reason = pfReason;
+      gateOut = NXS_GateReasonFromFailure(pfReason);   // spread/margin/lot bounds/stops - vedi NXS_PreFlight
+      return false;
+   }
 
    // Post-condizione: il preflight non deve poter azzerare lo stop.
    if(sl <= 0.0){
       NXS_GateTelemetry(route, "HARD_STOP_POST", false, sl, 0, "stop_cleared_by_preflight");
       reason = "preflight_cleared_stop";
+      gateOut = GATE_INVALID_STOPS;
       return false;
    }
 
    reason = "";
+   gateOut = GATE_NONE;
    return true;
 }
 
@@ -281,20 +305,29 @@ void NXS_ApplyCounterHTFProfile(SNXSSignal &sig){
 
 ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    g_nxsLastOpenFailure = "";
+   // 12/09 - Decision/Gate/Execution Trace v1: NXS_OpenTrade e' la funzione
+   // che TUTTI e 3 i path a ordine reale (Institutional/StrategyProfiles/
+   // Legacy via NXS_TryExecuteRC) chiamano per aprire davvero - instrumentarla
+   // QUI copre tutti e 3 in un solo posto, allo stesso identico punto causale
+   // in cui la decisione reale viene presa.
+   NXS_Trace_OpenAttempt(sig, (ENUM_TIMEFRAMES)InpTFEntry);
    if(!NXS_StrategyKnown(sig.stratName)){
       g_nxsLastOpenFailure = "unknown_strategy:" + sig.stratName;
       PrintFormat("[NEXUS CONTRACT] OPEN BLOCCATO: strategy_id sconosciuto '%s'", sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_UNKNOWN_STRATEGY, sig.stratName);
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.2.6 - scudo risk-of-ruin: se congelato per la perdita del giorno, stop.
    if(NXS_RuinFrozen()){
       g_nxsLastOpenFailure = "ruin_frozen";
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROTECTIONS, "ruin_frozen");
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.2.8 - "come nel backtest": le strategie che nel backtest PERDONO o hanno
    // dati insufficienti non aprono (STRUCT_REACT/DISP_REBAL/BB_SQUEEZE).
    if(InpUseStrategyProfiles && !NXS_Profile_Enabled(sig.stratName)){
       g_nxsLastOpenFailure = "profile_disabled";
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROFILE_DISABLED, "");
       return OPEN_FAIL_PREFLIGHT;
    }
    // 02/09 - veto di regime (_nxs_regime_veto, NXS_SignalQuality.mqh): esisteva
@@ -305,6 +338,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // (InpProfileRegimeVeto) - stesso principio "abilitata al test, non di default".
    if(InpProfileRegimeVeto && _nxs_regime_veto(sig.stratName)){
       g_nxsLastOpenFailure = "regime_veto";
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROTECTIONS, "regime_veto");
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.3.0 — "ogni strategia sul suo TF": la strategia apre solo se il TF del
@@ -316,6 +350,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       ENUM_TIMEFRAMES pTF = NXS_Profile_TF(sig.stratName);
       if(pTF != PERIOD_CURRENT && (int)pTF != (int)InpTFEntry){
          g_nxsLastOpenFailure = "wrong_tf";
+         NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_TF_GATE, "wrong_tf");
          return OPEN_FAIL_PREFLIGHT;
       }
    }
@@ -324,6 +359,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "strategy_disabled_dashboard";
       PrintFormat("[NEXUS] OPEN BLOCCATO: strategia '%s' disattivata dalla dashboard",
                   sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROFILE_DISABLED, "disabled_dashboard");
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.0.26 — one fresh entry per direction per bar. Other agreeing signals
@@ -335,6 +371,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: gia' aperta %d posizione/i %s su questa barra (cap=%d) strat=%s",
                   (sig.dir == DIR_BUY ? g_newTradesThisBarBuy : g_newTradesThisBarSell),
                   NXS_DirName(sig.dir), InpMaxNewTradesPerBarDir, sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_EXPOSURE, "bar_dir_cap");
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.3.4 — SETUP MATRIX: cap di setup APERTI per direzione E PER TIMEFRAME
@@ -383,6 +420,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
          g_nxsLastOpenFailure = "setup_matrix_cap";
          PrintFormat("[NEXUS MATRIX] OPEN BLOCCATO: gia' %d setup %s su %s (cap/dir/TF=%d) strat=%s",
                      sameDirTF, NXS_DirName(sig.dir), EnumToString(sigTF), InpMaxPerDirTF, sig.stratName);
+         NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_EXPOSURE, "setup_matrix_cap");
          return OPEN_FAIL_PREFLIGHT;
       }
    }
@@ -393,6 +431,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "post_sl_cooldown";
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: cooldown post-SL attivo per direzione opposta a %s (cap=%d min) strat=%s",
                   NXS_DirName(sig.dir), InpPostSLCooldownMin, sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_COOLDOWN, "post_sl_cooldown");
       return OPEN_FAIL_PREFLIGHT;
    }
    // v2.0.34 (audit point 8): exhaustion/extension gate.
@@ -401,6 +440,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    if(!g_nxsBypassExhaustion && NXS_ExhaustionBlocks(sig.dir, sig.stratName, exhReason)){
       g_nxsLastOpenFailure = exhReason;
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s dir=%s strat=%s", exhReason, NXS_DirName(sig.dir), sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROTECTIONS, exhReason);
       return OPEN_FAIL_PREFLIGHT;
    }
    // 25/08 - filtro Elliott multi-timeframe (vedi NXS_ElliottFilter.mqh):
@@ -413,11 +453,16 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
       g_nxsLastOpenFailure = "elliott_wave_exhaustion";
       PrintFormat("[NEXUS RISK] OPEN BLOCCATO: elliott_wave_exhaustion dir=%s strat=%s",
                   NXS_DirName(sig.dir), sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROTECTIONS, "elliott_wave_exhaustion");
       return OPEN_FAIL_PREFLIGHT;
    }
    double sl = sig.slPrice, tp = sig.tpPrice;
    double slDist = MathAbs(sig.entryRef - sl);
-   if(slDist <= 0){ g_nxsLastOpenFailure = "invalid_sl_distance"; return OPEN_FAIL_INVALID_STOPS; }
+   if(slDist <= 0){
+      g_nxsLastOpenFailure = "invalid_sl_distance";
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_INVALID_STOPS, "invalid_sl_distance");
+      return OPEN_FAIL_INVALID_STOPS;
+   }
 
    // v2.3.6 — rischio PER-STRATEGIA DIRETTO: il lotto e' dimensionato al rischio%
    // del profilo (non piu' un moltiplicatore sul globale, che il cap
@@ -436,7 +481,11 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // rischio% o override scoped sopra - il punto e' misurare l'edge del
    // trigger, non il money management (vedi NXS_Inputs.mqh).
    if(NXS_IsResearchMode()) lots = NXS_ResearchLot();
-   if(lots <= 0){ g_nxsLastOpenFailure = "lot_calc_zero"; return OPEN_FAIL_INVALID_VOLUME; }
+   if(lots <= 0){
+      g_nxsLastOpenFailure = "lot_calc_zero";
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_MARGIN, "lot_calc_zero");
+      return OPEN_FAIL_INVALID_VOLUME;
+   }
 
    if(NXS_IsResearchMode()){
       // Nessun moltiplicatore residuo in Research: ne' counter-HTF/chain
@@ -455,6 +504,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
          g_nxsLastOpenFailure = "strategy_risk_disabled";
          PrintFormat("[NEXUS RISK] OPEN BLOCCATO: %s ha moltiplicatore di rischio "
                      "nullo dal piano di controllo", sig.stratName);
+         NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_MARGIN, "strategy_risk_disabled");
          return OPEN_FAIL_PREFLIGHT;
       }
       double rawMult = MathMax(0.01, lotMult) * stratRisk;
@@ -494,11 +544,13 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    // copriva solo l'entry primaria, mentre grid, pyramid e add istituzionali
    // lo saltavano (AUD0-ADD-003). La chiamata qui sotto lo eredita.
    string pfReason = "";
+   ENUM_NXS_GATE_REASON pfGate = GATE_NONE;
    if(!NXS_CommonExposurePreflight("PRIMARY:" + sig.stratName, sig.stratName, sig.dir, lots,
-                                   otype, refPrice, sl, tp, pfReason)){
+                                   otype, refPrice, sl, tp, pfReason, pfGate)){
       g_nxsLastOpenFailure = pfReason;
       PrintFormat("[NEXUS] OPEN BLOCKED common gate: %s strat=%s", pfReason, sig.stratName);
       NXS_ResearchLogBlock(sig.stratName, pfReason);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, pfGate, pfReason);
       return OPEN_FAIL_PREFLIGHT;
    }
 
@@ -521,6 +573,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
    if(!NXS_VSL_PrepareEntry(vdir, sig.entryRef, sl, g_atr, brokerSL)){
       g_nxsLastOpenFailure = "virtsl_hardSL_invalid";
       PrintFormat("[NEXUS] OPEN BLOCCATO: hard SL Virtual SL non valido strat=%s", sig.stratName);
+      NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_INVALID_STOPS, "virtsl_hardSL_invalid");
       return OPEN_FAIL_INVALID_STOPS;
    }
 
@@ -549,6 +602,7 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                      "%.2f (budget %.2f x %.2f) strat=%s",
                      brokerSL, worstCase, cap, budget, InpVSL_MaxOfflineRiskMult,
                      sig.stratName);
+         NXS_Trace_Blocked(sig, (ENUM_TIMEFRAMES)InpTFEntry, GATE_MARGIN, "virtsl_offline_risk_over_cap");
          return OPEN_FAIL_PREFLIGHT;
       }
       PrintFormat("[NEXUS RISK] stop broker piu' largo dello stop logico: caso "
@@ -602,12 +656,14 @@ ENUM_NXS_OPEN_RC NXS_OpenTrade(SNXSSignal &sig, long magic, double lotMult){
                   NXS_DirName(sig.dir), sig.stratName, lots, sl, tp, sig.score, sig.reason);
       NXS_Notify_TradeOpen(sig.stratName, NXS_DirName(sig.dir), lots, refPrice, sig.score);
       NXS_ResearchLogOpen(sig.stratName, vdir, fillPx, sl, tp);
+      NXS_Trace_Opened(sig, (ENUM_TIMEFRAMES)InpTFEntry, exec.order);
       return OPEN_OK;
    }
 
    g_nxsLastOpenFailure = StringFormat("order_send_retcode=%u", NXS_TradeRetcode());
    NXS_ResearchLogBlock(sig.stratName, g_nxsLastOpenFailure);
    NXS_Diag_TradeFail(sig.stratName, (int)sig.dir, lots, refPrice, (int)NXS_TradeRetcode());
+   NXS_Trace_BrokerReject(sig, (ENUM_TIMEFRAMES)InpTFEntry, g_nxsLastOpenFailure);
    return OPEN_FAIL_SEND;
 }
 

@@ -210,8 +210,9 @@ void NXS_ManageSLReclaim(){
       // "SAR" hardcoded: eventuali gate per-strategia (es. RiskShield
       // breaker) valutano lo stato della strategia realmente coinvolta.
       string pfReason = "";
+      ENUM_NXS_GATE_REASON pfGateEnum = GATE_NONE;   // 12/09 - Trace v1: SL reclaim non e' uno dei 4 path primari mappati, out-param solo per compilare
       if(!NXS_CommonExposurePreflight("SLRECLAIM", strategy, dir, InpSLReclaimLot,
-                                      otype, price, sl, tp, pfReason)){
+                                      otype, price, sl, tp, pfReason, pfGateEnum)){
          PrintFormat("[NEXUS SLRECLAIM] %s: riapertura bloccata dal gate comune (%s)",
                      strategy, pfReason);
          continue;   // resta armato, ritenta alla prossima barra M15 se ancora confermato

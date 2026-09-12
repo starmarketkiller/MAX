@@ -82,8 +82,9 @@ void NXS_ManageGrid(){
       }
 
       string gateReason = "";
+      ENUM_NXS_GATE_REASON gateReasonEnum = GATE_NONE;   // 12/09 - Trace v1: grid non e' uno dei 4 path primari mappati, out-param solo per compilare
       if(!NXS_CommonExposurePreflight("GRID", "GRID", gridDir, addLots, otype, refPrice,
-                                      sl, tp, gateReason)){
+                                      sl, tp, gateReason, gateReasonEnum)){
          PrintFormat("[NEXUS RISK] GRID BLOCCATO: %s", gateReason);
          break;
       }

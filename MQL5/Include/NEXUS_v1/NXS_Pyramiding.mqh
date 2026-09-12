@@ -162,8 +162,9 @@ void NXS_ManagePyramid(SNXSVel &vel){
       }
 
       string gateReason = "";
+      ENUM_NXS_GATE_REASON gateReasonEnum = GATE_NONE;   // 12/09 - Trace v1: pyramid non e' uno dei 4 path primari mappati, out-param solo per compilare
       if(!NXS_CommonExposurePreflight("PYRAMID", "PYRAMID", pyrDir, lots, otype, refPrice,
-                                      sl, tp, gateReason)){
+                                      sl, tp, gateReason, gateReasonEnum)){
          PrintFormat("[NEXUS RISK] PYRAMID BLOCCATO: %s", gateReason);
          break;
       }

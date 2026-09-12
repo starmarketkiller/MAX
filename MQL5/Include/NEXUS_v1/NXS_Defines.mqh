@@ -65,6 +65,13 @@ struct SNXSSignal {
    double          tpPrice;
    double          entryRef;
    ENUM_TIMEFRAMES sourceTF;   // v2.0.21: TF di origine del segnale (0=usa TF di esecuzione)
+   // 12/09 - Decision/Gate/Execution Trace v1: identita' stabile del segnale,
+   // assegnata UNA VOLTA subito dopo NXS_CollectAllSignals (mai da una
+   // strategia) e portata invariata attraverso qualunque path di esecuzione
+   // (DataCollection/Institutional/StrategyProfiles/Legacy) fino al suo
+   // stato terminale (BLOCKED/OPENED). 0 = non ancora assegnato. Vedi
+   // NXS_Trace.mqh.
+   long            trace_id;
 };
 
 #endif

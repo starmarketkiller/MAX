@@ -18,6 +18,10 @@
 //+------------------------------------------------------------------+
 
 #include <NEXUS_v1\NXS_Defines.mqh>
+// 12/09 - Decision/Gate/Execution Trace v1: incluso subito dopo Defines
+// (usa SNXSSignal) e prima di ogni file che apre trade, cosi' e' disponibile
+// ovunque un gate reale possa bloccare o aprire un segnale.
+#include <NEXUS_v1\NXS_Trace.mqh>
 #include <NEXUS_v1\NXS_Inputs.mqh>
 #include <NEXUS_v1\NXS_StrategyProfiles.mqh>
 #include <NEXUS_v1\NXS_Globals.mqh>
@@ -701,6 +705,15 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
 //+------------------------------------------------------------------+
 int OnInit(){
    g_testerPassStart = TimeCurrent();   // AUD0-MQL-014
+   // 12/09 - Decision/Gate/Execution Trace v1: run_id stabile per l'intera
+   // passata (timestamp d'avvio + simbolo), build = versione EA. Non e' un
+   // git commit (non leggibile da MQL5 a runtime) - NEXUS_VERSION e' il
+   // riferimento di build gia' esistente nel codice. Attivo SOLO in Research
+   // Mode ("Live Mode invariato" + "overhead minimo" - requisiti espliciti):
+   // NXS_IsResearchMode() e' gia' risolvibile qui, OnInit gira dopo tutti gli
+   // include.
+   NXS_Trace_Init(StringFormat("%s_%s", _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS)),
+                  NEXUS_VERSION, NXS_IsResearchMode());
    g_sym    = _Symbol;
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);
@@ -1230,6 +1243,20 @@ void OnTick(){
    int directionalSignals = 0;
    for(int ds = 0; ds < n; ds++) if(all[ds].dir != DIR_NONE) directionalSignals++;
 
+   // 12/09 - Decision/Gate/Execution Trace v1: GENERATED emesso QUI, un solo
+   // punto per TUTTI i 4 execution path (DataCollection/Institutional/
+   // StrategyProfiles/Legacy), perche' tutti e 4 consumano lo stesso array
+   // `all[]` prodotto da questa unica chiamata. trace_id assegnato una volta
+   // sola per segnale e portato invariato fino allo stato terminale
+   // (BLOCKED/OPENED) da qualunque path lo elabori. Garantisce "zero segnali
+   // spariti senza causa": ogni segnale con dir!=DIR_NONE ha gia' un
+   // trace_id e una riga GENERATED prima che qualunque gate venga valutato.
+   for(int tg = 0; tg < n; tg++){
+      if(all[tg].dir == DIR_NONE) continue;
+      all[tg].trace_id = NXS_Trace_NextId();
+      NXS_Trace_Generated(all[tg], (ENUM_TIMEFRAMES)InpTFEntry);
+   }
+
    // Confluence + score cap (only consider valid signals)
    NXS_ConfluenceReset();
    for(int i = 0; i < n; i++){
@@ -1264,7 +1291,19 @@ void OnTick(){
       int openedNow = 0;
       for(int i = 0; i < n; i++){
          if(all[i].dir == DIR_NONE) continue;
-         if(baseOpen + openedNow >= InpDataCollectionMaxOpen) break;   // tetto sicurezza
+         if(baseOpen + openedNow >= InpDataCollectionMaxOpen){
+            // 12/09 - Trace: il tetto sicurezza interrompe l'intero loop (break
+            // preesistente, comportamento invariato) - ma senza questo, ogni
+            // segnale da qui in poi avrebbe un GENERATED senza mai uno stato
+            // terminale ("segnale sparito"). Marcati tutti BLOCKED(EXPOSURE)
+            // prima di uscire, zero altro cambiamento.
+            for(int tj = i; tj < n; tj++){
+               if(all[tj].dir == DIR_NONE) continue;
+               NXS_Trace_Blocked(all[tj], (ENUM_TIMEFRAMES)InpTFEntry, GATE_EXPOSURE,
+                                 "data_collection_max_open");
+            }
+            break;   // tetto sicurezza
+         }
          SNXSSignal s = all[i];
          // 17/07 fix - trovato analizzando NEXUS_trades.csv di uno sweep reale:
          // a differenza del path standard (riga ~821, NXS_StrategyHasOpenPos),
@@ -1278,8 +1317,14 @@ void OnTick(){
          // posizioni) - il vero motivo per cui quasi nessun trade arrivava mai
          // a vedere il proprio TP (1 "tp" su quasi 4000 chiusure nel file
          // controllato), non il cap di durata gia' corretto in precedenza.
-         if(NXS_StrategyHasOpenPos(s.stratName)) continue;
-         if(s.slPrice <= 0 || s.tpPrice <= 0) continue;                 // serve SL/TP valido
+         if(NXS_StrategyHasOpenPos(s.stratName)){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_OPEN_POSITION, "");
+            continue;
+         }
+         if(s.slPrice <= 0 || s.tpPrice <= 0){                          // serve SL/TP valido
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_INVALID_STOPS, "no_sltp");
+            continue;
+         }
          // Contesto del segnale: tier (0=local..3=D1) e tipo (Cont/Rev) -> visibile nel trade
          int ddir  = (s.dir == DIR_BUY) ? +1 : -1;
          int dtier = _nxs_inst_tier(ddir);
@@ -1289,13 +1334,21 @@ void OnTick(){
                                           : SymbolInfoDouble(g_sym, SYMBOL_BID);
          double dsl = s.slPrice, dtp = s.tpPrice; string dpf = "";
          ENUM_ORDER_TYPE dot = (s.dir == DIR_BUY) ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
-         if(!NXS_PreFlight(dot, dlots, refP, dsl, dtp, dpf)) continue;   // sicurezza dura
+         if(!NXS_PreFlight(dot, dlots, refP, dsl, dtp, dpf)){            // sicurezza dura
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, NXS_GateReasonFromFailure(dpf), dpf);
+            continue;
+         }
          NXS_TradeSetMagic(InpMagic + MAGIC_CORE);
          // Comment: strategia resta il campo [1] (parsing sito invariato); il
          // contesto e' il campo [3] -> visibile in MT5 e sincronizzabile.
          string dcm = StringFormat("%s|%s|%.1f|%s", InpComment, s.stratName, s.score, dctx);
+         NXS_Trace_OpenAttempt(s, (ENUM_TIMEFRAMES)InpTFEntry);
          bool dok = (s.dir == DIR_BUY) ? NXS_SafeBuy(dlots, g_sym, dsl, dtp, dcm)
                                        : NXS_SafeSell(dlots, g_sym, dsl, dtp, dcm);
+         if(!dok){
+            NXS_Trace_BrokerReject(s, (ENUM_TIMEFRAMES)InpTFEntry,
+                                   StringFormat("retcode=%u", NXS_TradeRetcode()));
+         }
          if(dok){
             openedNow++;
             NXS_StrategyRegisterTrade(s.stratName);
@@ -1325,6 +1378,7 @@ void OnTick(){
                             s.reason + "|" + dctx, 0, 0, dResolvedTF);
             PrintFormat("[NEXUS DATA] OPEN %s %s %s lots=%.2f score=%.1f",
                         NXS_DirName(s.dir), s.stratName, dctx, dlots, s.score);
+            NXS_Trace_Opened(s, (ENUM_TIMEFRAMES)InpTFEntry, dticket);
          }
       }
       if(openedNow > 0) g_lastTradeTime = TimeCurrent();
@@ -1404,18 +1458,30 @@ void OnTick(){
          // ed e' bypassato di proposito qui (vedi commento sopra) - questo e'
          // un gate diretto, non collegato a quel sistema. Default false =
          // comportamento invariato.
-         if(InpProfileOverlapOnly && g_session != SESS_OVERLAP) continue;
+         if(InpProfileOverlapOnly && g_session != SESS_OVERLAP){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_PROTECTIONS, "overlap_only");
+            continue;
+         }
          // una posizione per strategia alla volta (come il backtest del sito):
          // niente nuova entrata se la strategia ha gia' un trade aperto.
-         if(NXS_StrategyHasOpenPos(s.stratName)) continue;
+         if(NXS_StrategyHasOpenPos(s.stratName)){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_OPEN_POSITION, "");
+            continue;
+         }
          // una decisione per barra del TF della strategia: niente segnali D1
          // duplicati a ogni barra M15.
          ENUM_TIMEFRAMES sTF = NXS_Profile_TF(s.stratName);
          if(sTF == PERIOD_CURRENT) sTF = (ENUM_TIMEFRAMES)InpTFEntry;
          datetime sBar = iTime(g_sym, sTF, 0);
-         if(sBar > 0 && NXS_GetLastTfBar(s.stratName) == sBar) continue;
+         if(sBar > 0 && NXS_GetLastTfBar(s.stratName) == sBar){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_TF_GATE, "one_decision_per_tf_bar");
+            continue;
+         }
          if(s.slPrice <= 0 || s.tpPrice <= 0) NXS_DefaultSLTP(s);   // assicura SL/TP del profilo
-         if(s.slPrice <= 0 || s.tpPrice <= 0) continue;
+         if(s.slPrice <= 0 || s.tpPrice <= 0){
+            NXS_Trace_Blocked(s, (ENUM_TIMEFRAMES)InpTFEntry, GATE_INVALID_STOPS, "no_sltp_after_default");
+            continue;
+         }
          g_nxsOpenCtxTag = EnumToString(sTF);  // TF della strategia nel comment
          ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(s, InpMagic + MAGIC_CORE, 1.0);
          g_nxsOpenCtxTag = "";

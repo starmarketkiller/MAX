@@ -101,10 +101,11 @@ void NXS_ManageProfitReclaim(){
             // esecuzione), non quando il gate blocca.
             string protReason = "";
             string pfReason = "";
+            ENUM_NXS_GATE_REASON pfGateEnum = GATE_NONE;   // 12/09 - Trace v1: profit reclaim non e' uno dei 4 path primari mappati, out-param solo per compilare
             if(!NXS_CheckProtections(protReason)){
                PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato da protezione conto (%s) - resta armato, ritenta", protReason);
             } else if(!NXS_CommonExposurePreflight("PROFITRECLAIM", "SAR", dir, g_prcReentryLot,
-                                            otype, price, sl, tp, pfReason)){
+                                            otype, price, sl, tp, pfReason, pfGateEnum)){
                PrintFormat("[NEXUS PROFITRECLAIM] rientro bloccato dal gate comune (%s) - resta armato, ritenta", pfReason);
             } else {
                // 08/09 - AUDIT ESTERNO (A4): stesso bug del magic number
