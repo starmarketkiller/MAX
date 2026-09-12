@@ -200,6 +200,7 @@ struct SNxsWickShadowEvent {
    double   virtual_tp;
    double   virtual_mae_pips;
    double   virtual_mfe_pips;
+   long     lastSweptLevelId;   // 12/09 - gate one-shot per livello (vedi fix parity FAIL sotto)
 };
 SNxsWickShadowEvent g_wickShadowHigh, g_wickShadowLow;
 long g_wickShadowIdCounter = 0;
@@ -216,8 +217,19 @@ void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, st
 
    if(!sh.active){
       if(side.level <= 0) return;
+      // 12/09 - FIX parity FAIL (prima corsa: shadow_sweeps=1100 vs
+      // sweepsDetected=182): senza questo gate, un evento risolto (virtual
+      // trade chiuso, sh.active=false) ripartiva IMMEDIATAMENTE se il prezzo
+      // era ancora oltre la soglia di sweep - garantito subito dopo un
+      // virtual SL (che sta 25 pip PIU' oltre il trigger, quindi ancora ben
+      // oltre i 35 pip di sweep) - creando una cascata di "nuovi" sweep sullo
+      // stesso livello a ogni tick. La logica canonica non ha questo bug
+      // perche' `triggered` e' one-shot per livello (mai resettato finche'
+      // il livello non cambia id) - replicato qui identico.
+      if(side.id == sh.lastSweptLevelId) return;
       bool swept = (fadeDir == DIR_SELL) ? (bid >= side.level + sweepDist) : (ask <= side.level - sweepDist);
       if(!swept) return;
+      sh.lastSweptLevelId = side.id;
       sh.active = true;
       sh.sweep_id = ++g_wickShadowIdCounter;
       g_wickShadowSweepCount++;
