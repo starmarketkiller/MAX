@@ -206,7 +206,7 @@ SNxsWickShadowEvent g_wickShadowHigh, g_wickShadowLow;
 long g_wickShadowIdCounter = 0;
 long g_wickShadowSweepCount = 0;   // per il controllo di parita' richiesto: deve combaciare con g_wickFunnel.sweepsDetected
 
-void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, string sideLabel, int fadeDir){
+void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, string sideLabel, int fadeDir, bool isNewCohortBar){
    double pip       = 10.0 * g_profile.pipSize;
    double sweepDist = InpWickSweep_SweepPips * pip;
    double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
@@ -217,16 +217,26 @@ void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, st
 
    if(!sh.active){
       if(side.level <= 0) return;
-      // 12/09 - FIX parity FAIL (prima corsa: shadow_sweeps=1100 vs
-      // sweepsDetected=182): senza questo gate, un evento risolto (virtual
-      // trade chiuso, sh.active=false) ripartiva IMMEDIATAMENTE se il prezzo
-      // era ancora oltre la soglia di sweep - garantito subito dopo un
-      // virtual SL (che sta 25 pip PIU' oltre il trigger, quindi ancora ben
-      // oltre i 35 pip di sweep) - creando una cascata di "nuovi" sweep sullo
-      // stesso livello a ogni tick. La logica canonica non ha questo bug
-      // perche' `triggered` e' one-shot per livello (mai resettato finche'
-      // il livello non cambia id) - replicato qui identico.
+      // 12/09 - FIX parity FAIL v1 (shadow_sweeps=1100 vs sweepsDetected=182):
+      // gate one-shot per livello, replica `triggered` canonico - un livello
+      // genera un evento shadow una sola volta, mai ripetuto finche' l'id non
+      // cambia (nuova wick).
       if(side.id == sh.lastSweptLevelId) return;
+      // 12/09 - FIX parity FAIL v2 (shadow_sweeps=258 vs sweepsDetected=182,
+      // trovato correlando i timestamp reali: le aperture WICK_SWEEP_REV
+      // cadono SEMPRE su un boundary InpTFEntry/M15 esatto, mai a meta' barra
+      // - scoperta del "New bar gate" globale in OnTick, NEXUS_EA_v2.mq5:
+      // `if(iTime(g_sym,InpTFEntry,0) == g_lastBarTime) return;` gia' a monte
+      // di NXS_CollectAllSignals - la strategia canonica NON e' davvero
+      // valutata a ogni tick nonostante il suo commento dica il contrario,
+      // solo una volta per barra InpTFEntry). La COORTE di rilevazione dello
+      // sweep deve quindi allinearsi alla stessa cadenza: si crea un nuovo
+      // evento shadow SOLO al primo tick di una nuova barra InpTFEntry,
+      // esattamente come il canonico - il follow-up (penetrazione/reclaim/
+      // virtual trade) resta invece tick-level su ogni tick successivo (vedi
+      // sotto, fuori da questo blocco). Vedi nota vault "NEXUS - Global
+      // New-Bar Gate / Signal Sampling Audit" (12/09) per l'analisi completa.
+      if(!isNewCohortBar) return;
       bool swept = (fadeDir == DIR_SELL) ? (bid >= side.level + sweepDist) : (ask <= side.level - sweepDist);
       if(!swept) return;
       sh.lastSweptLevelId = side.id;
@@ -237,11 +247,16 @@ void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, st
       sh.side = sideLabel;
       sh.dir = fadeDir;
       sh.level_price = side.level;
-      sh.trigger_price = (fadeDir == DIR_SELL) ? side.level + sweepDist : side.level - sweepDist;
+      // 12/09 - trigger_price = prezzo REALE osservato al momento della
+      // valutazione canonica (refPrice), non piu' il teorico level+sweepDist:
+      // il canonico entra a s.entryRef=bid/ask correnti, che puo' gia' aver
+      // superato la soglia (gap intrabarra InpTFEntry) - stesso identico
+      // riferimento della strategia reale, per un confronto fedele.
+      sh.trigger_price = refPrice;
       sh.sweep_time = TimeCurrent();
-      sh.max_penetration_pips = InpWickSweep_SweepPips;
+      sh.max_penetration_pips = MathAbs(refPrice - side.level) / pip;
       sh.reclaimed_trigger = false; sh.reclaimed_level = false; sh.virtual_open = false;
-      PrintFormat("[WICKSHADOW][SWEEP] sweep_id=%d level_id=%d side=%s level=%.2f trigger=%.2f time=%s",
+      PrintFormat("[WICKSHADOW][SWEEP] sweep_id=%d level_id=%d side=%s level=%.2f trigger=%.5f time=%s",
                   sh.sweep_id, sh.level_id, sh.side, sh.level_price, sh.trigger_price,
                   TimeToString(sh.sweep_time, TIME_DATE|TIME_SECONDS));
       return;
@@ -321,11 +336,23 @@ void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, st
 // effetto collaterale) per garantire che g_wickHigh/g_wickLow siano aggiornati
 // anche se questa funzione viene chiamata prima della strategia canonica nello
 // stesso tick.
+datetime g_wickShadowLastCohortBar = 0;
+
 void NXS_WickShadow_OnTick(){
    if(!InpResearchWickShadow || !InpStrat_WickSweep) return;
    _NXS_WickSweep_UpdateLevel();
-   _NXS_WickShadow_ProcessSide(g_wickShadowHigh, g_wickHigh, "HIGH", DIR_SELL);
-   _NXS_WickShadow_ProcessSide(g_wickShadowLow,  g_wickLow,  "LOW",  DIR_BUY);
+   // 12/09 - coorte di rilevazione allineata alla cadenza REALE del canonico
+   // (vedi commento dentro _NXS_WickShadow_ProcessSide): NXS_CollectAllSignals,
+   // e quindi anche NXS_Strat_WickSweepReversal, gira una sola volta per
+   // barra InpTFEntry (il "New bar gate" in OnTick, NEXUS_EA_v2.mq5) - non a
+   // ogni tick. Un nuovo evento shadow puo' nascere SOLO al primo tick di una
+   // nuova barra InpTFEntry; il follow-up (penetrazione/reclaim/virtual
+   // trade) resta tick-level su ogni chiamata successiva.
+   datetime cohortBar = iTime(g_sym, InpTFEntry, 0);
+   bool isNewCohortBar = (cohortBar != g_wickShadowLastCohortBar);
+   if(isNewCohortBar) g_wickShadowLastCohortBar = cohortBar;
+   _NXS_WickShadow_ProcessSide(g_wickShadowHigh, g_wickHigh, "HIGH", DIR_SELL, isNewCohortBar);
+   _NXS_WickShadow_ProcessSide(g_wickShadowLow,  g_wickLow,  "LOW",  DIR_BUY,  isNewCohortBar);
 }
 
 void NXS_WickShadow_PrintSummary(){
