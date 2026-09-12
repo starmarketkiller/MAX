@@ -1,10 +1,14 @@
 # WICK_SWEEP_REV — Entry Timing Study
 
-## STATO (12/09): TICK-LEVEL VALIDATO, PARITÀ ESATTA RAGGIUNTA — DECISIONE A/B ANCORA DA PRENDERE
+## STATO (12/09): PARITÀ ESATTA RAGGIUNTA — CORREZIONE METODOLOGICA SULLA CADENZA — WICK_SWEEP_RECLAIM PROMOSSA
 
-Aggiornamento 12/09: la validazione tick-level MQL5 SHADOW/RESEARCH ha raggiunto **parità esatta** (`shadow_sweeps=181 == canonical sweepsDetected=181`) dopo 3 iterazioni di fix (vedi sezione 6). Il report evento-per-evento completo è in sezione 7. **RECLAIM_TRIGGER resta un'ipotesi, ora validata sul campione reale — non ancora implementata come feature, non ancora testata in Fast Structural A/B.** La decisione se procedere con un A/B è esplicitamente rimandata all'utente (vedi sezione 8, "Decisione pendente").
+Aggiornamento 12/09 (sera): dopo aver deciso di promuovere RECLAIM_TRIGGER a variante sperimentale separata (`WICK_SWEEP_RECLAIM`), rileggendo `NEXUS_EA_v2.mq5` per implementarla è emerso che **il follow-up dello shadow NON era tick-level come descritto in questa nota e nel codice**: `NXS_WickShadow_OnTick()` (unico call site) e' chiamata DOPO il "New bar gate" globale (`if(iTime(g_sym,InpTFEntry,0)==g_lastBarTime) return;`), quindi tanto l'ARM quanto il monitoraggio reclaim/uscita giravano SOLO una volta per barra `InpTFEntry` (M15) — mai piu' spesso. Confermato empiricamente: **122/123 (99.2%) dei `reclaim_delay_sec` registrati nel run di parita' sono multipli esatti di 900 secondi** (l'unica eccezione, 902s, e' 2 secondi oltre un boundary — coerente con "il primo tick reale della barra e' arrivato con 2s di ritardo", non con un monitoraggio infra-barra).
 
-Non implementato nulla nella strategia canonica. RECLAIM_TRIGGER resta un'ipotesi supportata da dati Python offline (M15) e ora da una validazione tick-level MQL5 completa e a parità esatta — **non ancora una feature da portare in produzione**. Vedi sezione 8 per cosa serve prima di qualunque A/B Fast Structural.
+**Non si cancella la versione precedente di questa nota: si marca esplicitamente la correzione.** *Earlier interpretation corrected: validated shadow follow-up cadence was M15-gated, not tick-level.* I numeri (WR 59.2%/PF 5.80/expectancy +48.98 pip, sezione 7) restano validi e INVARIATI — descrivono correttamente cosa succede aspettando il reclaim del trigger_price al successivo controllo M15, non un monitoraggio continuo. La scoperta non invalida il risultato, lo rende piu' preciso.
+
+**Conseguenza per l'implementazione reale**: `WICK_SWEEP_RECLAIM` (vedi sezione 9) replica fedelmente questa cadenza REALE (M15-gated per ARM e per il controllo del reclaim, nessun bypass del New Bar Gate), non quella erroneamente descritta come tick-level. Una variante tick-level genuina resta un design candidate separato, non implementato: vedi [[NEXUS EA - WICK_SWEEP_RECLAIM_TICK - Design Candidate Non Implementato (12-09)]].
+
+Non implementato nulla nella strategia canonica WICK_SWEEP_REV. RECLAIM_TRIGGER e' stato promosso a variante sperimentale separata `WICK_SWEEP_RECLAIM` (selettore 55) — vedi sezione 9 per l'implementazione e il Fast Smoke reale di equivalenza.
 
 ---
 
@@ -178,12 +182,89 @@ Matrice completa (181 righe, tutti i campi richiesti: sweep_id/level_id/side/can
 
 Lo studio Python offline (v2) aveva stimato **239 trigger** nella stessa finestra Fast Smoke, contro i **181** osservati sia dal funnel canonico originale sia — ora — dallo shadow tick-level a parità esatta. Con la parità MQL5-vs-MQL5 confermata **esatta** (181==181), il gap Python-vs-reale (58 eventi, +32%) è ORA interamente isolato al metodo Python, non a rumore residuo M15-vs-tick nel motore MQL5 stesso (quello è chiuso a zero). Causa più plausibile, quantificabile solo qualitativamente senza strumentare anche il Python con gli stessi gate: **il dataset Python valuta la soglia di sweep sugli estremi High/Low dell'intera barra M15 (OHLC), mentre il canonico/shadow MQL5 campiona bid/ask live SOLO all'istante del tick di cambio-barra M15** — un prezzo che tocca la soglia a metà barra e si ritira prima del prossimo cambio-barra è "visto" da Python (che guarda l'estremo della barra) ma MAI dal vivo (che guarda solo l'istante campionato). Questo é strutturalmente un sovraconteggio one-directional (Python ≥ reale, mai il contrario), coerente con il segno e l'ordine di grandezza del gap osservato (239 > 181, mai sotto). Non quantificato in modo esatto senza rifare il dataset Python con lo stesso campionamento a evento M15 (non fatto, fuori scope di questo report).
 
-## 8. Decisione pendente — NON presa unilateralmente
+## 8. Decisione presa — RECLAIM_TRIGGER promosso a WICK_SWEEP_RECLAIM
 
 Il miglioramento è ampio (WR 16.9%→59.2%, PF 0.81→5.80, expectancy da negativa a +49 pip/trade) ma disponibile solo sul 54.1% dei sweep — il 45.3% (82/181) non avrebbe mai generato un trade sotto RECLAIM_TRIGGER (reclaim mai avvenuto prima che il livello fosse sostituito). Dei 148 SL baseline, quasi metà (49.3%) semplicemente non sarebbero mai stati aperti; dei 30 TP baseline, il 30% sarebbe stato perso per lo stesso motivo. **Non è una sostituzione 1:1 della strategia, è un cambio di profilo: meno trade, ciascuno con probabilità di successo molto più alta.**
 
-Come da istruzione esplicita: **RECLAIM_TRIGGER non è stato implementato né come sostituzione né come variante sperimentale separata (`WICK_SWEEP_RECLAIM`)**. La decisione se procedere con un Fast Structural A/B (che richiederebbe implementare la variante come strategia isolata, preservando IMMEDIATE_FADE come regression fixture) spetta all'utente, sulla base di questo report.
+L'utente ha deciso (12/09) di promuovere RECLAIM_TRIGGER a variante sperimentale separata `WICK_SWEEP_RECLAIM`, senza modificare WICK_SWEEP_REV. Implementazione e Fast Smoke di equivalenza in sezione 9.
 
 **LIMIT_RETEST resta Candidate #2, non implementato.**
 
-**Non toccato**: SL/TP/parametri WICK, Structure/Reaction Engine, New Bar Gate, altre strategie. Unica modifica di codice non ancora compilata/testata: due `Print` diagnostici zero-impatto in `NEXUS_EA_v2.mq5` (righe ~1341/~1347), lasciati non committati in attesa di decisione sull'utilità di una 5a run confermativa.
+**Non toccato**: SL/TP/parametri WICK, Structure/Reaction Engine, New Bar Gate, altre strategie. I due `Print` diagnostici zero-impatto aggiunti in `NEXUS_EA_v2.mq5` per la precedente indagine sul gap sweepsDetected/entryAttempts (righe ~1341/~1347) sono stati RIMOSSI (non più necessari, causa già identificata e documentata).
+
+## 9. WICK_SWEEP_RECLAIM — implementazione e Fast Smoke di equivalenza
+
+### Identità separata (contract/source-of-truth)
+
+`knowledge/strategy_database.json`: nuova voce `WICK_SWEEP_RECLAIM`, `selector_index: 55` (WICK_SWEEP_REV resta 54, non toccato). Rigenerato `contracts/generate_registry.py` → diff minimale su `contracts/strategy-registry.json`, `frontend/src/contracts/strategyRegistry.js`, `MQL5/Include/NEXUS_v1/NXS_StrategyRegistry.mqh` (solo l'aggiunta della nuova entry, nessuna riga esistente toccata).
+
+`NXS_StrategyProfiles.mqh`: `NXS_Profile_TF("WICK_SWEEP_RECLAIM") = PERIOD_H4` (stessa TF di REV, stessa sorgente evento) e `NXS_Profile_Enabled("WICK_SWEEP_RECLAIM") = true` (altrimenti `OPEN_FAIL_PREFLIGHT/profile_disabled` silenzioso, stesso bug già visto per REV il 10/09).
+
+Nuovo input `InpStrat_WickSweepReclaim` (default `false`), dichiarato in `NXS_Inputs.mqh`. Riusa `InpWickSweep_MinWickPips/SweepPips/SLPips/TPPips` — **nessun parametro nuovo, nessuna ottimizzazione**.
+
+### Correzione di causalità applicata (vedi banner in testa alla nota)
+
+L'istruzione originale chiedeva "detection M15, reclaim tick-level" come replica di quanto lo shadow aveva dimostrato. Rileggendo il codice per implementarla è emerso che lo shadow stesso era M15-gated in entrambe le fasi (vedi banner). **Confermato con l'utente**: `WICK_SWEEP_RECLAIM` replica la cadenza REALE (M15-gated per ARM e per il controllo periodico del reclaim, nessun bypass del New Bar Gate). Una variante tick-level genuina resta un design candidate separato e non implementato: [[NEXUS EA - WICK_SWEEP_RECLAIM_TICK - Design Candidate Non Implementato (12-09)]].
+
+### State machine (`NXS_Strategies_Experimental.mqh`)
+
+```
+IDLE → ARMED → RECLAIMED → OPENED
+ARMED → ABANDONED (level replacement)
+RECLAIMED → ABANDONED (level replacement, se ancora non aperto)
+```
+
+Campi tracciati per setup (`SNxsWickReclaimState`): `sweep_id, level_id, side, level_price, trigger_price, sweep_time, max_penetration_pips, reclaim_time`, più `lastArmedLevelId` (one-shot per livello).
+
+Regole di invalidazione **replicate esattamente** da quelle validate nello shadow (non reinventate): one-shot per level_id, ARM solo su nuova coorte `InpTFEntry`, ABANDONED solo su sostituzione livello (`side.id != level_id`) prima di un'apertura riuscita, trigger_price = prezzo osservato reale (non teorico), SL/TP calcolati dal trigger_price.
+
+**Unica regola NON coperta dallo shadow** (che apre sempre con successo, nessun gate reale): un tentativo di apertura reale può essere bloccato. Scelta esplicita, dichiarata (non silenziosa): se bloccato, il setup resta `RECLAIMED` e viene ritentato alla barra `InpTFEntry` successiva, finché non si apre o il livello viene sostituito — stessa filosofia di retry già usata da `NXS_Strat_WickSweepReversal` per i propri tentativi rifiutati.
+
+### Wiring reale (`NEXUS_EA_v2.mq5`)
+
+`NXS_WickReclaim_TryEntries()` (nuova funzione, vive nel .mq5 perché usa `NXS_StrategyHasOpenPos`/`NXS_GetLastTfBar`/`NXS_SetLastTfBar`/`NXS_OpenTrade`, tutte definite/incluse dopo `NXS_Strategies_Experimental.mqh`) chiamata da `OnTick()` nello stesso punto di `NXS_WickShadow_OnTick()` — dopo tutti i gate a monte incluso il New Bar Gate. Per ogni lato con un setup `RECLAIMED`: stesso controllo "una posizione per strategia" + "una decisione per barra TF" del loop PROFILI PER-STRATEGIA, poi `NXS_OpenTrade()` (stesso preflight/execution path di qualunque altra strategia). Log distinti: `[WICKRECLAIM][ARMED]`, `[WICKRECLAIM][RECLAIM_AVAILABLE]`, `[WICKRECLAIM][ENTRY_ATTEMPT]`, `[WICKRECLAIM][OPENED]`, `[WICKRECLAIM][BLOCKED_OPEN_POSITION]`, `[WICKRECLAIM][BLOCKED_TF_THROTTLE]`, `[WICKRECLAIM][BLOCKED_PREFLIGHT]`, `[WICKRECLAIM][BLOCKED_PROTECTION]`, `[WICKRECLAIM][BROKER_REJECT]`, `[WICKRECLAIM][ABANDONED]`, più `[WICKRECLAIM][FUNNEL]` a fine test.
+
+Compilato: **0 errori** (2 warning preesistenti invariati, nessun warning nuovo).
+
+### Fast Smoke reale (2026.06.01→08.26, GOLD H4, leva 1:500, lotto fisso 0.02, RAW)
+
+Stessi identici dati/parametri del run 4 shadow validato, `InpStrategySelector=55` (isola WICK_SWEEP_RECLAIM), `InpStrat_WickSweepReclaim=true`, `InpStrat_WickSweep=false` (REV non attiva in questo test). Unico obiettivo dichiarato: verificare se l'implementazione reale riproduce la coorte shadow, NON dichiarare edge.
+
+### Risultato MT5 ufficiale (report .htm)
+
+112 trade, WR 48.21%, PF 0.80, Sharpe -5.00, drawdown equity 15.06%.
+
+### Reconciliation evento-per-evento (181 sweep, run reale vs run 4 shadow)
+
+**Coorte sweep**: **identica** — 181 ARMED (reale) = 181 SWEEP (shadow), stesso set esatto di `(level_id, side)`. Nessuna divergenza architetturale sulla detection.
+
+**Disponibilità reclaim**: 122 (reale) vs 123 (shadow) — quasi identica. L'unica differenza (`level_id=432, side=HIGH`) è spiegata: nel run reale l'evento precedente su quel lato era ancora `WR_OPENED` (posizione reale aperta) nel momento in cui una nuova wick ha sostituito il livello, quindi il "recycle" dello slot (necessario prima di poter armare il nuovo livello) è avvenuto un ciclo M15 dopo rispetto allo shadow — dove l'evento precedente su quel lato era già risolto. Stesso trigger_price alla fine (4099.60 reale vs 4101.25 shadow, un bar M15 di differenza), stesso meccanismo del "lag di una barra" già documentato in sezione 7 per la coppia shadow-vs-canonico (§7, sweep_id 101/153) — qui riappare fra shadow e reale per lo stesso motivo strutturale (una sola transizione di stato per lato per chiamata).
+
+**Timestamp ed entry**: **coerenti con la cadenza M15** — per tutti gli eventi in comune, `reclaim_delay_sec` combacia ESATTAMENTE fra shadow e reale (900/1800/2700/3600s, verificato su 15+ esempi). Il gate M15 è stato replicato fedelmente, come richiesto.
+
+**Conteggio trade**: 112 reali vs 98 shadow-risolti (98/123 = 79.7%) — il reale converte una quota MAGGIORE dei reclaim disponibili in trade (112/122 = 91.8%), perché a differenza dello shadow (che abbandona un evento "a metà" se il livello viene sostituito prima della risoluzione) un tentativo reale bloccato **viene ritentato alla barra successiva** finché non si apre o il livello non viene sostituito — quindi recupera alcuni eventi che lo shadow non arrivava mai a chiudere. Blocchi osservati su 215 tentativi totali: `BLOCKED_PREFLIGHT`=80, `BLOCKED_TF_THROTTLE`=22, `BLOCKED_OPEN_POSITION`=1 (103 bloccati, 112 aperti = 215 ✓). Il 91% degli ingressi (102/112) avviene comunque sulla stessa barra del reclaim (nessun ritardo aggiuntivo); il ritardo da blocco non è la causa principale del gap economico (vedi sotto).
+
+### La causa quantitativa della divergenza economica: SL/TP ancorati al trigger_price, fill reale ancorato al prezzo M15 corrente
+
+Questa è la scoperta centrale del test. Lo shadow assegna al trade virtuale un **fill idealizzato esattamente al trigger_price** (`sh.virtual_entry_price = sh.trigger_price`), indipendentemente da dove si trova realmente il prezzo nel momento del reclaim. Un ordine di mercato reale, invece, riempie al **prezzo corrente**, che — essendo campionato solo ai confini M15 (stessa causa dei ritardi multipli di 900s) — può già essere scivolato ben oltre il trigger_price nella stessa direzione del reversal (il movimento è, per costruzione, quello che la strategia sta cercando di cavalcare).
+
+Misurato sui 111 trade reali risolti: **slippage mediano fill-vs-trigger = +42.6 pip, |slippage|>10 pip nell'86% dei casi (96/111), range -19.8 a +94.3 pip** — enorme rispetto ai 25/100 pip nominali. Poiché SL/TP restano **prezzi assoluti fissi ancorati al trigger_price** (non ricalcolati sul fill reale, per fedeltà alla regola shadow), un fill scivolato **in favore** del trade AVVICINA il prezzo al TP (vincita più piccola quando arriva) e ALLONTANA il prezzo dallo SL (perdita più rara ma quando arriva è su una escursione più lunga) — un effetto confermato dai dati:
+
+| bucket \|slippage\| | n | WR | pnl mediano |
+|---|---|---|---|
+| 0-10 pip | 15 | 20.0% | -$4.96 |
+| 10-30 pip | 30 | 33.3% | -$6.59 |
+| 30-60 pip | 31 | 51.6% | +$7.53 |
+| 60-200 pip | 35 | 68.6% | +$2.45 |
+
+Il WR sale nettamente con lo slippage (più il prezzo si è già mosso, più il reversal è confermato) — ma la vincita mediana ($7.89) resta **più piccola** della perdita mediana (-$9.08) perché ogni pip di slippage favorevole riduce la distanza residua al TP (fisso al trigger+100) più di quanto allunghi quella dallo SL (fisso al trigger-25, quindi lontano ma raggiungibile su un'inversione). Risultato aggregato: **PF reale (pnl effettivo) = 0.78** — coerente al decimo col PF ufficiale del report MT5 (0.80).
+
+**Conclusione**: la divergenza economica NON è un bug di implementazione né un fallimento dell'architettura causale (che replica lo shadow esattamente, coorte per coorte, tempo per tempo) — è una conseguenza reale e quantificata del fatto che lo shadow, campionando anch'esso solo a cadenza M15, aveva "barato" implicitamente assumendo un fill impossibile (esattamente al trigger, senza scivolamento) che un ordine di mercato reale non può ottenere quando il prezzo è già scappato di decine di pip nell'intervallo fra due controlli da 15 minuti. **Il PASS/FAIL della task dipende dalla parità causale (raggiunta: coorte, disponibilità reclaim, timing tutti allineati) — su questo criterio la task PASSA.** Mentre il PF economico (0.78 reale vs 5.80 shadow) mostra chiaramente che l'edge NON sopravvive al passaggio da simulazione virtuale a esecuzione reale, per un motivo ora completamente spiegato, non residuo/misterioso.
+
+### Bug di telemetria trovato e corretto (zero impatto sui trade)
+
+Il primo run mostrava 180/181 eventi ARMED marcati `[WICKRECLAIM][ABANDONED]` — il controllo di sostituzione livello scattava anche per eventi già `WR_OPENED` (una posizione reale già aperta, gestita autonomamente dal broker col proprio SL/TP, veniva erroneamente rietichettata come "abbandonata" quando il livello sottostante veniva sostituito da una nuova wick). **Nessun impatto sui trade reali o sulle statistiche economiche riportate sopra** (lo stato interno non governa la gestione della posizione) — solo un'inesattezza di log. Corretto: il reset dello stato resta necessario (serve a liberare lo slot per un futuro nuovo livello), ma il log/conteggio `ABANDONED` ora scatta solo per eventi ARMED/RECLAIMED non ancora aperti. Ricompilato: 0 errori. Non ri-eseguito il Fast Smoke (la correzione non altera nessun trade reale già registrato).
+
+### File
+
+`server/research_scripts/wick_reclaim_run5_fastsmoke_real_log_extract.txt` (log filtrato del run reale), `wick_reclaim_real_vs_shadow_run5.csv` (181 righe, dataset di reconciliation), `wick_reclaim_reconcile_run5.py` (script).

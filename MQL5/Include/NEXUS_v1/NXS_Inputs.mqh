@@ -1124,5 +1124,15 @@ input double   InpWickSweep_TPPips         = 100.0;  // take profit fisso (utent
 // ingresso simulato cambia. Default OFF, zero impatto sul comportamento
 // normale/live quando spento.
 input bool     InpResearchWickShadow       = false;
+// 12/09 - WICK_SWEEP_RECLAIM: variante sperimentale SEPARATA (selettore vero
+// 55, NON 54 - non tocca/sostituisce WICK_SWEEP_REV), promossa dopo che la
+// modalita' SHADOW sopra ha validato a livello tick che aspettare il reclaim
+// del trigger_price (invece di entrare subito) migliora WR/PF sullo stesso
+// campione reale. STESSA identica sorgente evento (InpWickSweep_MinWickPips/
+// SweepPips/SLPips/TPPips riusati, nessun parametro nuovo, nessuna
+// ottimizzazione) - vedi NXS_WickReclaim_OnTick in
+// NXS_Strategies_Experimental.mqh e la state machine li' documentata.
+// Default OFF, zero impatto quando spento.
+input bool     InpStrat_WickSweepReclaim   = false;
 
 #endif

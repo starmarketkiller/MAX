@@ -362,6 +362,270 @@ void NXS_WickShadow_PrintSummary(){
                (g_wickShadowSweepCount == g_wickFunnel.sweepsDetected ? "PASS" : "FAIL"));
 }
 
+// === WICK SWEEP RECLAIM (12/09) ==============================================
+// Variante sperimentale SEPARATA (selettore vero 55, NON 54 - non tocca/
+// sostituisce WICK_SWEEP_REV), promossa dopo la validazione shadow (vedi vault
+// "WICK_SWEEP Entry Timing Study"). STESSA identica sorgente evento di
+// WICK_SWEEP_REV: H4 wick, InpWickSweep_MinWickPips/SweepPips/SLPips/TPPips
+// (riusati, nessun parametro nuovo), stesso g_wickHigh/g_wickLow (level
+// replacement condiviso), stessa semantica one-shot per livello. Unica
+// differenza: non entra alla detection canonica, ARMA il setup e attende il
+// ritorno del prezzo al trigger_price osservato all'ARM, poi tenta
+// un'apertura REALE.
+//
+// *** CORREZIONE METODOLOGICA (12/09) ***: la nota vault e il primo commento
+// di questo blocco descrivevano il follow-up dello shadow come "tick-level".
+// Verificato FALSO rileggendo NEXUS_EA_v2.mq5: NXS_WickShadow_OnTick() (unico
+// call site) e' chiamata DOPO il "New bar gate" globale
+// (`if(iTime(g_sym,InpTFEntry,0)==g_lastBarTime) return;`), quindi anche il
+// suo monitoraggio reclaim/uscita gira SOLO una volta per barra InpTFEntry
+// (M15), mai piu' spesso - confermato empiricamente (122/123 = 99.2% dei
+// reclaim_delay_sec registrati sono multipli esatti di 900 secondi). "FOLLOW-
+// UP CADENCE = M15 GATED", non tick-level. Questa variante REPLICA fedelmente
+// questa cadenza reale (non quella erroneamente descritta in precedenza): la
+// funzione e' chiamata dal .mq5 nello STESSO punto di NXS_WickShadow_OnTick()
+// (dopo tutti i gate, incluso il New Bar Gate, che NON viene bypassato ne'
+// toccato) - ogni chiamata corrisponde gia' a una nuova barra InpTFEntry, sia
+// per l'ARM sia per il monitoraggio del reclaim. Una variante tick-level
+// genuina (WICK_SWEEP_RECLAIM_TICK) resta solo un design candidate separato,
+// NON implementata (vedi nota vault dedicata).
+//
+// Sequenza (tutta a cadenza M15/InpTFEntry, nessun bypass del New Bar Gate):
+//   barra M15 N   : sweep rilevato -> ARM
+//   barra M15 N+k : se il prezzo ha reclaimato il trigger -> tentativo reale
+//                   di apertura; altrimenti resta ARMED secondo le stesse
+//                   regole shadow (one-shot/replacement/abandonment sotto)
+//
+// Regole di invalidazione REPLICATE ESATTAMENTE da quelle validate nello
+// shadow (_NXS_WickShadow_ProcessSide sopra), NON reinventate:
+//   - one-shot per level_id: mirror di sh.lastSweptLevelId
+//   - ARM solo al primo tick (=alla chiamata) di una nuova barra InpTFEntry:
+//     mirror di isNewCohortBar (qui strutturalmente sempre vero dato il punto
+//     di aggancio, mantenuto come guardia esplicita per chiarezza/difesa)
+//   - ABANDONED quando side.id cambia (nuova wick sostituisce il livello)
+//     PRIMA che il setup sia stato aperto con successo: mirror ESATTO
+//     dell'unica condizione di abbandono usata dallo shadow
+//     (side.id != sh.level_id), verificata ad OGNI chiamata prima di
+//     qualunque altra elaborazione. Un evento gia' OPENED che perde il suo
+//     level_id per sostituzione NON viene loggato come abbandonato (mirror:
+//     lo shadow non "abbandona" mai un evento gia' risolto, la posizione
+//     reale vive di vita propria col suo SL/TP a mercato).
+//   - trigger_price = prezzo REALE osservato al momento dell'ARM (bid/ask
+//     live), non il teorico level+sweepDist: mirror di sh.trigger_price
+//   - SL/TP calcolati dal trigger_price (non dal prezzo di mercato al momento
+//     del reclaim, che puo' differire per spread/slippage reale): mirror di
+//     sh.virtual_sl/virtual_tp - permette un confronto fedele con lo shadow,
+//     lo scostamento fill-reale vs trigger_price va riportato come rumore di
+//     esecuzione, non nascosto.
+//
+// UNICA differenza NON coperta dallo shadow (che apre sempre con successo,
+// nessun gate reale sul virtuale): un tentativo di apertura reale puo' essere
+// bloccato (posizione strategia gia' aperta, throttle "una decisione per
+// barra TF", preflight, protezioni, reject broker). Scelta esplicita (non
+// nello shadow, quindi dichiarata qui, non silenziosa): se bloccato, si
+// ritenta alla barra InpTFEntry successiva finche' il setup resta RECLAIMED
+// (stessa filosofia di retry gia' usata da NXS_Strat_WickSweepReversal per i
+// propri tentativi rifiutati - vedi side.attempts/lastAttemptBar sopra -
+// stessa cadenza a barra, non inventata).
+enum ENUM_NXS_WICKRECLAIM_STATE {
+   WR_IDLE = 0,
+   WR_ARMED,
+   WR_RECLAIMED,
+   WR_OPENED
+};
+
+struct SNxsWickReclaimState {
+   ENUM_NXS_WICKRECLAIM_STATE state;
+   long     sweep_id;
+   long     level_id;
+   string   side;             // "HIGH" o "LOW"
+   int      dir;               // DIR_SELL (side=HIGH) o DIR_BUY (side=LOW)
+   double   level_price;
+   double   trigger_price;
+   datetime sweep_time;
+   double   max_penetration_pips;   // aggiornato tick per tick, congelato al reclaim (mirror shadow)
+   datetime reclaim_time;
+   long     lastArmedLevelId;  // one-shot per livello, mirror di sh.lastSweptLevelId
+};
+SNxsWickReclaimState g_wickReclaimHigh, g_wickReclaimLow;
+long g_wickReclaimIdCounter = 0;
+
+struct SNxsWickReclaimFunnel {
+   long armed;
+   long reclaimAvailable;
+   long entryAttempts;
+   long entryOpened;
+   long blockedOpenPosition;
+   long blockedTfThrottle;
+   long blockedPreflight;
+   long blockedProtection;
+   long brokerReject;
+   long abandoned;
+};
+SNxsWickReclaimFunnel g_wickReclaimFunnel;
+
+void _NXS_WickReclaim_ProcessSide(SNxsWickReclaimState &st, SNxsWickSide &side, string sideLabel, int fadeDir, bool isNewCohortBar){
+   double pip       = 10.0 * g_profile.pipSize;
+   double sweepDist = InpWickSweep_SweepPips * pip;
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+   double refPrice = (fadeDir == DIR_SELL) ? bid : ask;   // stesso riferimento della logica canonica/shadow
+
+   if(st.state == WR_IDLE){
+      if(side.level <= 0) return;
+      if(side.id == st.lastArmedLevelId) return;   // one-shot per livello
+      if(!isNewCohortBar) return;                  // stessa coorte canonica M15
+      bool swept = (fadeDir == DIR_SELL) ? (bid >= side.level + sweepDist) : (ask <= side.level - sweepDist);
+      if(!swept) return;
+      st.lastArmedLevelId = side.id;
+      st.state = WR_ARMED;
+      st.sweep_id = ++g_wickReclaimIdCounter;
+      g_wickReclaimFunnel.armed++;
+      st.level_id = side.id;
+      st.side = sideLabel;
+      st.dir = fadeDir;
+      st.level_price = side.level;
+      st.trigger_price = refPrice;   // prezzo reale osservato, non il teorico level+sweepDist
+      st.sweep_time = TimeCurrent();
+      st.max_penetration_pips = MathAbs(refPrice - side.level) / pip;
+      PrintFormat("[WICKRECLAIM][ARMED] sweep_id=%d level_id=%d side=%s level=%.2f trigger=%.5f time=%s",
+                  st.sweep_id, st.level_id, st.side, st.level_price, st.trigger_price,
+                  TimeToString(st.sweep_time, TIME_DATE|TIME_SECONDS));
+      return;
+   }
+
+   // il livello osservato e' stato sostituito: libera SEMPRE lo slot (serve
+   // perche' un futuro nuovo livello sullo stesso lato possa armarsi), ma
+   // logga/conta come ABANDONED solo se il setup non si era ancora aperto con
+   // successo - un evento gia' WR_OPENED che perde il suo level_id per
+   // sostituzione non e' un abbandono (la posizione reale vive di vita propria
+   // col suo SL/TP a mercato, mirror shadow: vedi commento di testa al blocco).
+   // 12/09 - BUG TROVATO nella prima Fast Smoke reale: questo controllo
+   // logava/contava ABANDONED anche per WR_OPENED (180/181 armed marcati
+   // abbandonati, quasi tutti dopo un'apertura riuscita) - telemetria
+   // fuorviante, MA nessun impatto sui trade reali (che restano gestiti dal
+   // broker indipendentemente da questo stato). Corretto qui.
+   if(side.id != st.level_id){
+      if(st.state != WR_OPENED){
+         PrintFormat("[WICKRECLAIM][ABANDONED] sweep_id=%d reason=level_replaced state=%d",
+                     st.sweep_id, (int)st.state);
+         g_wickReclaimFunnel.abandoned++;
+      }
+      st.state = WR_IDLE;
+      return;
+   }
+
+   if(st.state == WR_ARMED){
+      double breachPips = ((fadeDir == DIR_SELL) ? (refPrice - st.level_price) : (st.level_price - refPrice)) / pip;
+      if(breachPips > st.max_penetration_pips) st.max_penetration_pips = breachPips;
+
+      bool backToTrigger = (fadeDir == DIR_SELL) ? (refPrice <= st.trigger_price) : (refPrice >= st.trigger_price);
+      if(backToTrigger){
+         st.state = WR_RECLAIMED;
+         st.reclaim_time = TimeCurrent();
+         g_wickReclaimFunnel.reclaimAvailable++;
+         PrintFormat("[WICKRECLAIM][RECLAIM_AVAILABLE] sweep_id=%d time=%s price=%.5f "
+                     "time_sweep_to_reclaim_sec=%d max_penetration_before_reclaim_pips=%.2f",
+                     st.sweep_id, TimeToString(st.reclaim_time, TIME_DATE|TIME_SECONDS), refPrice,
+                     (int)(st.reclaim_time - st.sweep_time), st.max_penetration_pips);
+      }
+      return;
+   }
+   // WR_RECLAIMED: resta cosi' finche' NXS_WickReclaim_OnExecuteResult non lo
+   // porta a WR_OPENED (o l'inizio di questa funzione lo abbandona per
+   // sostituzione livello) - il tentativo di apertura vero e proprio vive nel
+   // .mq5 (serve NXS_StrategyHasOpenPos/NXS_GetLastTfBar/NXS_OpenTrade,
+   // dichiarate/incluse DOPO questo file).
+}
+
+datetime g_wickReclaimLastCohortBar = 0;
+
+// Chiamata da OnTick() in NEXUS_EA_v2.mq5, stesso punto di NXS_WickShadow_OnTick
+// (dopo tutti i gate a monte, prima di NXS_CollectAllSignals). Aggiorna SOLO lo
+// stato ARM/RECLAIM - il tentativo di apertura vero e proprio e' fatto dal
+// chiamante tramite NXS_WickReclaim_HasPendingEntry/OnExecuteResult sotto.
+void NXS_WickReclaim_Detect(){
+   if(!InpStrat_WickSweepReclaim || !NXS_SelectorAllows(55)) return;
+   _NXS_WickSweep_UpdateLevel();   // idempotente per barra H4, condiviso con REV/shadow
+   datetime cohortBar = iTime(g_sym, InpTFEntry, 0);
+   bool isNewCohortBar = (cohortBar != g_wickReclaimLastCohortBar);
+   if(isNewCohortBar) g_wickReclaimLastCohortBar = cohortBar;
+   _NXS_WickReclaim_ProcessSide(g_wickReclaimHigh, g_wickHigh, "HIGH", DIR_SELL, isNewCohortBar);
+   _NXS_WickReclaim_ProcessSide(g_wickReclaimLow,  g_wickLow,  "LOW",  DIR_BUY,  isNewCohortBar);
+}
+
+// fadeDir: DIR_SELL interroga il lato HIGH, DIR_BUY il lato LOW (stessa
+// convenzione di _NXS_WickReclaim_ProcessSide). Ritorna true e riempie outSig
+// se quel lato e' in WR_RECLAIMED (pronto per un tentativo di apertura reale,
+// eventualmente ripetuto su tick successivi se il precedente e' stato bloccato).
+bool NXS_WickReclaim_HasPendingEntry(int fadeDir, SNXSSignal &outSig){
+   SNxsWickReclaimState st;
+   if(fadeDir == DIR_SELL) st = g_wickReclaimHigh; else st = g_wickReclaimLow;
+   if(st.state != WR_RECLAIMED) return false;
+   double pip    = 10.0 * g_profile.pipSize;
+   double slDist = InpWickSweep_SLPips * pip;
+   double tpDist = InpWickSweep_TPPips * pip;
+   ZeroMemory(outSig);
+   outSig.dir       = (ENUM_NXS_DIR)fadeDir;
+   outSig.strat     = STRAT_STRUCT_REACT;
+   outSig.stratName = "WICK_SWEEP_RECLAIM";
+   outSig.entryRef  = st.trigger_price;   // ancorato al trigger, non al prezzo live al reclaim (mirror shadow)
+   outSig.sourceTF  = PERIOD_H4;
+   outSig.score     = 70.0;
+   if(fadeDir == DIR_SELL){
+      outSig.slPrice = NormPrice(st.trigger_price + slDist);
+      outSig.tpPrice = NormPrice(st.trigger_price - tpDist);
+   } else {
+      outSig.slPrice = NormPrice(st.trigger_price - slDist);
+      outSig.tpPrice = NormPrice(st.trigger_price + tpDist);
+   }
+   outSig.reason = StringFormat("WickReclaim %s: sweep_id=%d level=%.2f trigger=%.5f",
+                                 (fadeDir == DIR_SELL ? "SELL" : "BUY"), st.sweep_id, st.level_price, st.trigger_price);
+   return true;
+}
+
+// Chiamata dal chiamante (.mq5) subito dopo aver tentato l'apertura reale per
+// il lato indicato. reason (quando opened=false) e' una delle etichette
+// richieste: BLOCKED_OPEN_POSITION / BLOCKED_TF_THROTTLE / BLOCKED_PREFLIGHT /
+// BLOCKED_PROTECTION / BROKER_REJECT.
+void NXS_WickReclaim_OnExecuteResult(int fadeDir, bool opened, string reason){
+   SNxsWickReclaimState st;
+   if(fadeDir == DIR_SELL) st = g_wickReclaimHigh; else st = g_wickReclaimLow;
+   if(st.state != WR_RECLAIMED) return;   // difesa: nulla da finalizzare
+   g_wickReclaimFunnel.entryAttempts++;
+   PrintFormat("[WICKRECLAIM][ENTRY_ATTEMPT] sweep_id=%d dir=%d time=%s",
+               st.sweep_id, fadeDir, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
+   if(opened){
+      st.state = WR_OPENED;
+      g_wickReclaimFunnel.entryOpened++;
+      PrintFormat("[WICKRECLAIM][OPENED] sweep_id=%d dir=%d time=%s", st.sweep_id, fadeDir,
+                  TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
+   } else {
+      if(reason == "BLOCKED_OPEN_POSITION")      g_wickReclaimFunnel.blockedOpenPosition++;
+      else if(reason == "BLOCKED_TF_THROTTLE")   g_wickReclaimFunnel.blockedTfThrottle++;
+      else if(reason == "BLOCKED_PROTECTION")    g_wickReclaimFunnel.blockedProtection++;
+      else if(reason == "BROKER_REJECT")         g_wickReclaimFunnel.brokerReject++;
+      else                                        g_wickReclaimFunnel.blockedPreflight++;
+      PrintFormat("[WICKRECLAIM][%s] sweep_id=%d dir=%d time=%s", reason, st.sweep_id, fadeDir,
+                  TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
+      // resta WR_RECLAIMED: ritentato al prossimo tick finche' non si apre o
+      // il livello viene sostituito (ABANDONED, gestito in _NXS_WickReclaim_ProcessSide)
+   }
+   if(fadeDir == DIR_SELL) g_wickReclaimHigh = st; else g_wickReclaimLow = st;
+}
+
+void NXS_WickReclaim_PrintFunnel(){
+   if(!InpStrat_WickSweepReclaim) return;
+   PrintFormat("[WICKRECLAIM][FUNNEL] armed=%d reclaimAvailable=%d entryAttempts=%d entryOpened=%d "
+               "blockedOpenPosition=%d blockedTfThrottle=%d blockedPreflight=%d blockedProtection=%d "
+               "brokerReject=%d abandoned=%d",
+               g_wickReclaimFunnel.armed, g_wickReclaimFunnel.reclaimAvailable, g_wickReclaimFunnel.entryAttempts,
+               g_wickReclaimFunnel.entryOpened, g_wickReclaimFunnel.blockedOpenPosition,
+               g_wickReclaimFunnel.blockedTfThrottle, g_wickReclaimFunnel.blockedPreflight,
+               g_wickReclaimFunnel.blockedProtection, g_wickReclaimFunnel.brokerReject,
+               g_wickReclaimFunnel.abandoned);
+}
+
 SNXSSignal NXS_Strat_WickSweepReversal(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "WICK_SWEEP_REV";

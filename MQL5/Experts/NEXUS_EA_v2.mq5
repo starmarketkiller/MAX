@@ -281,6 +281,69 @@ void NXS_SetLastTfBar(const string name, datetime t){
    }
 }
 
+// 12/09 - WICK_SWEEP_RECLAIM: tentativo di apertura reale per un setup gia'
+// RECLAIMED (vedi NXS_WickReclaim_Detect/HasPendingEntry/OnExecuteResult in
+// NXS_Strategies_Experimental.mqh). Vive QUI (non nel .mqh, incluso PRIMA di
+// NXS_StrategyHasOpenPos/NXS_GetLastTfBar/NXS_OpenTrade) perche' usa proprio
+// queste tre funzioni - stesso identico controllo "una posizione per
+// strategia" + "una decisione per barra TF" del loop PROFILI PER-STRATEGIA
+// sotto. Chiamata da OnTick() nello STESSO punto di NXS_WickShadow_OnTick()
+// (dopo tutti i gate a monte, INCLUSO il New Bar Gate globale, prima di
+// NXS_CollectAllSignals) - il New Bar Gate NON viene bypassato ne' toccato:
+// ogni chiamata a questa funzione e' gia' al massimo una per barra InpTFEntry
+// (M15), sia per l'ARM sia per il controllo del reclaim. CORREZIONE
+// METODOLOGICA (12/09): un commento precedente descriveva questo come
+// "tick-level" - falso, verificato rileggendo il New Bar Gate e confermato
+// empiricamente sui dati shadow (122/123 reclaim_delay_sec = multipli esatti
+// di 900s). Questa funzione replica fedelmente la cadenza REALE dello shadow
+// (M15-gated), non quella erroneamente descritta in precedenza.
+void NXS_WickReclaim_TryEntries(){
+   if(!InpStrat_WickSweepReclaim) return;
+   NXS_WickReclaim_Detect();
+   int dirs[2] = {DIR_SELL, DIR_BUY};
+   for(int k = 0; k < 2; k++){
+      int fadeDir = dirs[k];
+      SNXSSignal sig;
+      if(!NXS_WickReclaim_HasPendingEntry(fadeDir, sig)) continue;
+      if(NXS_StrategyHasOpenPos(sig.stratName)){
+         NXS_WickReclaim_OnExecuteResult(fadeDir, false, "BLOCKED_OPEN_POSITION");
+         continue;
+      }
+      ENUM_TIMEFRAMES sTF = NXS_Profile_TF(sig.stratName);
+      if(sTF == PERIOD_CURRENT) sTF = (ENUM_TIMEFRAMES)InpTFEntry;
+      datetime sBar = iTime(g_sym, sTF, 0);
+      if(sBar > 0 && NXS_GetLastTfBar(sig.stratName) == sBar){
+         NXS_WickReclaim_OnExecuteResult(fadeDir, false, "BLOCKED_TF_THROTTLE");
+         continue;
+      }
+      g_nxsOpenCtxTag = EnumToString(sTF);
+      ENUM_NXS_OPEN_RC orc = NXS_OpenTrade(sig, InpMagic + MAGIC_CORE, 1.0);
+      g_nxsOpenCtxTag = "";
+      if(orc == OPEN_OK){
+         NXS_SetLastTfBar(sig.stratName, sBar);
+         NXS_StrategyRegisterTrade(sig.stratName);
+         double dSpread = (double)SymbolInfoInteger(g_sym, SYMBOL_SPREAD);
+         NXS_Stats_RecordExec(sig.stratName, sig.score, dSpread);
+         NXS_WickReclaim_OnExecuteResult(fadeDir, true, "");
+      } else if(orc == OPEN_FAIL_SEND){
+         NXS_WickReclaim_OnExecuteResult(fadeDir, false, "BROKER_REJECT");
+      } else {
+         // g_nxsLastOpenFailure classifica il motivo (vedi NXS_OpenTrade,
+         // NXS_Execution.mqh): protezioni/ruin/regime/cooldown/exhaustion/
+         // elliott finiscono in BLOCKED_PROTECTION, tutto il resto
+         // (spread/stops/volume/margin/wrong_tf/setup_matrix_cap/bar_dir_cap/
+         // profile_disabled/ecc.) in BLOCKED_PREFLIGHT.
+         string reason = "BLOCKED_PREFLIGHT";
+         string f = g_nxsLastOpenFailure;
+         if(f == "protections_block" || f == "ruin_frozen" || f == "regime_veto" ||
+            f == "post_sl_cooldown" || f == "elliott_wave_exhaustion" ||
+            StringFind(f, "exhaustion") >= 0 || StringFind(f, "cooldown") >= 0)
+            reason = "BLOCKED_PROTECTION";
+         NXS_WickReclaim_OnExecuteResult(fadeDir, false, reason);
+      }
+   }
+}
+
 // AUD0-MQL-010 — un fallimento di CopyBuffer faceva uscire la funzione con
 // `false` e OnTick tornava indietro in silenzio. L'EA poteva restare CIECO per
 // ore — nessuna decisione, nessun errore, nessuna traccia — e l'unico sintomo
@@ -825,6 +888,7 @@ void OnDeinit(const int reason){
    if(InpShowDashboard) NXS_Dashboard_Cleanup();
    if(InpStrat_WickSweep) NXS_WickSweep_PrintFunnel();   // 10/09 - funnel completo a fine test
    NXS_WickShadow_PrintSummary();   // 11/09 - no-op se InpResearchWickShadow=false
+   NXS_WickReclaim_PrintFunnel();   // 12/09 - no-op se InpStrat_WickSweepReclaim=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
@@ -1152,6 +1216,11 @@ void OnTick(){
    // davvero superato tutti gli stessi gate su questa barra InpTFEntry -
    // stesso identico "momento di valutazione reale" della strategia.
    NXS_WickShadow_OnTick();
+   // 12/09 - WICK_SWEEP_RECLAIM: stesso punto di aggancio dello shadow (dopo
+   // tutti i gate, incluso il New Bar Gate) - vedi commento su
+   // NXS_WickReclaim_TryEntries per la correzione sulla cadenza reale (M15
+   // gated, non tick-level).
+   NXS_WickReclaim_TryEntries();
 
    // ---- Phase 2 router with fallback ----
    SNXSSweepExt swExt = NXS_DetectSweepExt();

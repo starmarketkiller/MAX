@@ -3,7 +3,7 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 51
+#define NXS_LIVE_STRATEGY_COUNT 52
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -64,6 +64,7 @@ bool NXS_StrategyKnown(string strategyId){
           id=="TSI" ||
           id=="TURTLE_SOUP" ||
           id=="WEEKLY_EXP" ||
+          id=="WICK_SWEEP_RECLAIM" ||
           id=="WICK_SWEEP_REV" ||
           id=="Z_SCORE_BREAKOUT";
 }
@@ -121,8 +122,9 @@ string NXS_StrategyIdAt(int i){
    if(i==46) return "TSI";
    if(i==47) return "TURTLE_SOUP";
    if(i==48) return "WEEKLY_EXP";
-   if(i==49) return "WICK_SWEEP_REV";
-   if(i==50) return "Z_SCORE_BREAKOUT";
+   if(i==49) return "WICK_SWEEP_RECLAIM";
+   if(i==50) return "WICK_SWEEP_REV";
+   if(i==51) return "Z_SCORE_BREAKOUT";
    return "";
 }
 

@@ -1294,6 +1294,29 @@
       "affidabilita_dati": "nessun dato ancora raccolto",
       "decisione_corrente": "in attesa di backtest isolato MT5",
       "note": "Fast Smoke (10/09) in corso/ripetuto su Terminal3 - protocollo Fast Smoke -> Fast Structural -> Full Validation, NON ancora oltre il primo livello"
+    },
+    {
+      "nome": "WICK_SWEEP_RECLAIM",
+      "selector_index": 55,
+      "versione": "12/09 - variante sperimentale separata di WICK_SWEEP_REV, promossa dopo validazione shadow SHADOW/RESEARCH (parita' esatta 181==181, cadenza M15-gated corretta post-review, non tick-level come inizialmente descritto). Stessa identica sorgente evento (H4 wick, InpWickSweep_MinWickPips/SweepPips, stesso g_wickHigh/g_wickLow, stesso level replacement, stessa semantica one-shot): unica differenza, non entra alla detection canonica ma ARMA il setup e attende (a cadenza M15) il ritorno del prezzo al trigger_price, poi tenta apertura REALE (stesso preflight/execution path). SL/TP invariati (25/100 pip fissi), nessuna ottimizzazione.",
+      "stato": "sperimentale",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [
+        "Bug di telemetria (non di trading): il controllo di sostituzione livello marcava ABANDONED anche eventi gia' WR_OPENED (180/181 nel primo run) - nessun impatto sui trade reali, corretto 12/09"
+      ],
+      "fix_applicati": [
+        "12/09 - ABANDONED loggato/contato solo per eventi ARMED/RECLAIMED non ancora aperti, non per WR_OPENED"
+      ],
+      "ultimo_sweep": "2026-09-12",
+      "nota_sweep": "Primo Fast Smoke reale (2026.06.01-08.26, selector 55 isolato) completato: 112 trade, WR 48.21%, PF 0.80 (report MT5) / 0.78 (pnl reale ricalcolato). Coorte sweep e disponibilita' reclaim IDENTICHE allo shadow (181=181, 122~123) - parita' causale raggiunta. L'edge economico (shadow: WR 59.2%/PF 5.80) NON sopravvive all'esecuzione reale: causa quantificata in slippage fill-vs-trigger_price (mediana +42.6 pip, dovuto al campionamento M15 della detection) che distorce il rischio/rendimento nominale 25/100 fisso. Vedi vault WICK_SWEEP Entry Timing Study sezione 9.",
+      "trade": 112,
+      "PF": 0.80,
+      "WR_pct": 48.21,
+      "expectancy_R": null,
+      "affidabilita_dati": "un solo Fast Smoke (3 mesi, GOLD H4/M15). Parita' causale con lo shadow verificata evento-per-evento; risultato economico spiegato quantitativamente ma non ancora testato su altre finestre temporali",
+      "decisione_corrente": "Fast Smoke di equivalenza PASSATO su parita' causale, FALLITO su edge economico (causa nota: SL/TP ancorati a trigger_price vs slippage reale da campionamento M15) - NON promossa a Fast Structural A/B, decisione su come procedere lasciata all'utente",
+      "note": "Non modifica WICK_SWEEP_REV (selector 54, resta identica e non toccata). Identita' completamente separata: selector 55, strategy name WICK_SWEEP_RECLAIM, profilo/telemetria/statistiche proprie. Vedi vault 'NEXUS EA - WICK_SWEEP Entry Timing Study' per il razionale completo, la cronologia della validazione shadow, e il report di reconciliation reale-vs-shadow."
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

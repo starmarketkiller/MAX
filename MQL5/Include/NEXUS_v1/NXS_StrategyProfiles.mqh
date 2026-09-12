@@ -294,6 +294,7 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "LEVEL_CONFLUENCE_M5") return PERIOD_M5;  // 06/09 - stessa logica, esecuzione su M5 invece di M15 (idea utente: livelli D1/H4/H1, ingresso M15 E M5)
    if(name == "LEVEL_REACTION")      return PERIOD_M15;
    if(name == "WICK_SWEEP_REV")      return PERIOD_H4;   // 10/09 - hardcoded H4 anche nel trigger stesso, qui solo per telemetria/MaxHold
+   if(name == "WICK_SWEEP_RECLAIM")  return PERIOD_H4;   // 12/09 - stessa sorgente evento H4 di WICK_SWEEP_REV (variante separata, vedi NXS_Strategies_Experimental.mqh)
    if(name == "LEVEL_REACTION_M5")   return PERIOD_M5;
    // 28/08 - PMax (portata da Pine TradingView): stop-and-reverse, H1 per
    // avere abbastanza barre da far "agganciare" lo stop senza essere troppo
@@ -728,6 +729,11 @@ bool NXS_Profile_Enabled(const string name){
    // InpStrat_WickSweep resta false di default - "abilitata al test" non e'
    // "abilitata di default".
    if(name == "WICK_SWEEP_REV")         return true;
+   // 12/09 - stesso bug/trattamento: WICK_SWEEP_RECLAIM e' una variante
+   // separata (selector 55, vedi NXS_Strategies_Experimental.mqh) - senza
+   // questa riga il suo primo Fast Smoke reale verrebbe rifiutato in
+   // silenzio (profile_disabled) a prescindere da InpStrat_WickSweepReclaim.
+   if(name == "WICK_SWEEP_RECLAIM")     return true;
    return false;   // 10/08 - era true: tutte le altre spente per la fase demo
 }
 
