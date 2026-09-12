@@ -153,6 +153,63 @@ string _NXS_Cert_Sanitize(const string s){
    return out;
 }
 
+// 12/09 - fix "run identity": run_id NON deve MAI sovrascrivere un certificato
+// gia' presente, nemmeno stessa strategia + stesso periodo (scoperto testando
+// Certificate v2: TimeCurrent() in OnInit e' il tempo SIMULATO di inizio
+// periodo, identico per due passate diverse sullo stesso range date - anche
+// dopo aver aggiunto il selector al run_id, due passate della STESSA
+// strategia sullo STESSO periodo collidono ancora). MQL5 non offre una
+// wall-clock affidabile in Tester (TimeLocal()/TimeGMT() seguono anch'essi il
+// clock di sistema dell'agente, non il tempo simulato, ma non sono garantiti
+// univoci fra passate ravvicinate in batch/ottimizzazione) - collision
+// avoidance dichiarata ed esplicita invece: se il certificato per `base`
+// esiste gia' su disco, prova base_r001, base_r002, ... finche' non trova un
+// nome libero. Il primo run di un dato `base` resta pulito (nessun suffisso).
+//
+// SCOPERTO TESTANDO QUESTO STESSO FIX: la sandbox "Files" di un agente Tester
+// (MQL5\Files, quella di default di FileOpen/FileIsExist) viene ripulita ad
+// ogni nuovo avvio di terminal64.exe/nuova sessione di Tester - lanciare due
+// volte la STESSA passata (due processi separati) non fa mai vedere al
+// secondo run i file scritti dal primo, quindi il controllo di esistenza
+// fallirebbe sempre silenziosamente (nessun suffisso mai aggiunto, il file
+// finale sovrascriverebbe comunque). Fix: FILE_COMMON - la cartella
+// Common\Files (terminal/agente-indipendente, MAI ripulita dal Tester) e'
+// l'unico posto in cui l'esistenza di un certificato scritto da un run
+// precedente e' verificabile in modo affidabile da un run successivo.
+string NXS_Cert_MakeUniqueRunId(const string base){
+   string candidate = base;
+   for(int n = 0; n < 1000; n++){
+      if(n > 0) candidate = StringFormat("%s_r%03d", base, n);
+      string safe = _NXS_Cert_Sanitize(candidate);
+      if(!FileIsExist("NEXUS\\certificates\\" + safe + ".txt", FILE_COMMON) &&
+         !FileIsExist("NEXUS\\certificates\\" + safe + ".json", FILE_COMMON))
+         return candidate;
+   }
+   return candidate;   // 999 collisioni sullo stesso base: dichiaratamente improbabile, ultimo candidato usato cosi' com'e'
+}
+
+// 12/09 - fix "code provenance": config_fingerprint e' deterministico per
+// CONFIGURAZIONE riproducibile (stessa strategia/TF/exit-mode/lotto/leva/
+// opt-in/periodo), a differenza di run_id che e' univoco per ESECUZIONE.
+// Stringa leggibile, non un hash - "non serve crittografia forte, serve
+// stabilita' e leggibilita'" (richiesta esplicita). Periodo = quello
+// OSSERVATO dai tick (g_certPeriodStart/End, granularita' giorno - non
+// esiste in MQL5 un modo diretto di leggere FromDate/ToDate configurati nel
+// Tester dall'interno dell'EA), dichiarato come tale nel commento del campo
+// nel certificato stesso.
+string NXS_Cert_ConfigFingerprint(const string strategy, int selector,
+                                  ENUM_TIMEFRAMES sourceTF, ENUM_TIMEFRAMES entryTF,
+                                  bool raw, double fixedLot, long leverage,
+                                  bool esl, bool dailyDD, bool totalDD, bool dpt, bool ruin, bool riskShield,
+                                  datetime periodStart, datetime periodEnd){
+   return StringFormat("strat=%s|sel=%d|srcTF=%s|entryTF=%s|exit=%s|lot=%.4f|lev=%d|"
+                        "ESL=%d|DailyDD=%d|TotalDD=%d|DPT=%d|Ruin=%d|RiskShield=%d|period=%s_%s",
+                        strategy, selector, EnumToString(sourceTF), EnumToString(entryTF),
+                        (raw ? "RAW" : "RECIPE"), fixedLot, (int)leverage,
+                        (esl?1:0), (dailyDD?1:0), (totalDD?1:0), (dpt?1:0), (ruin?1:0), (riskShield?1:0),
+                        TimeToString(periodStart, TIME_DATE), TimeToString(periodEnd, TIME_DATE));
+}
+
 void NXS_Cert_Generate(){
    if(!NXS_IsResearchMode()) return;
 
@@ -183,9 +240,26 @@ void NXS_Cert_Generate(){
    long   leverage = AccountInfoInteger(ACCOUNT_LEVERAGE);
    string runIdSafe = _NXS_Cert_Sanitize(g_nxsTraceRunId);
 
+   // 12/09 - fix "run identity" + "code provenance": config_fingerprint e'
+   // deterministico per configurazione (vedi commento sulla funzione),
+   // git_commit e' quello che il processo di build ha dichiarato o
+   // "UNKNOWN" - MAI dedotto/inventato a runtime (non confuso con
+   // g_nxsTraceBuild/NEXUS_VERSION, che e' un numero di build applicativo).
+   string configFingerprint = NXS_Cert_ConfigFingerprint(
+      declaredStrategy, InpStrategySelector, srcTF, (ENUM_TIMEFRAMES)InpTFEntry,
+      in.researchModeRaw, NXS_ResearchLot(), leverage,
+      InpResearchUseESL, InpResearchUseDailyDD, InpResearchUseTotalDD, InpResearchUseDPT,
+      InpResearchUseRuin, InpResearchUseRiskShield, g_certPeriodStart, g_certPeriodEnd);
+   string gitCommit = InpBuildGitCommit;
+   bool   gitCommitUnknown = (gitCommit == "UNKNOWN" || StringLen(gitCommit) == 0);
+   if(gitCommitUnknown) gitCommit = "UNKNOWN";
+
    // --- file leggibile per l'utente -----------------------------------
+   // FILE_COMMON: stessa cartella (Common\Files) usata da NXS_Cert_MakeUniqueRunId
+   // per il controllo di esistenza - deve essere lo stesso posto o la
+   // collision avoidance e la scrittura reale divergerebbero silenziosamente.
    string txtPath = "NEXUS\\certificates\\" + runIdSafe + ".txt";
-   int hTxt = FileOpen(txtPath, FILE_WRITE|FILE_TXT|FILE_ANSI);
+   int hTxt = FileOpen(txtPath, FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(hTxt != INVALID_HANDLE){
       FileWrite(hTxt, "=== NEXUS Test Validity Certificate v2 ===");
       FileWrite(hTxt, "run_id=" + g_nxsTraceRunId);
@@ -201,7 +275,10 @@ void NXS_Cert_Generate(){
                        (InpResearchUseRiskShield ? "ON" : "OFF"), (InpResearchUseESL ? "ON" : "OFF"),
                        (InpResearchUseDailyDD ? "ON" : "OFF"), (InpResearchUseTotalDD ? "ON" : "OFF"),
                        (InpResearchUseRuin ? "ON" : "OFF"), (InpResearchUseDPT ? "ON" : "OFF")));
-      FileWrite(hTxt, "code_build=" + g_nxsTraceBuild);
+      FileWrite(hTxt, "code_build=" + g_nxsTraceBuild + " (numero di build applicativo, NON un commit git)");
+      FileWrite(hTxt, "git_commit=" + gitCommit +
+                       (gitCommitUnknown ? " (provenance non disponibile a runtime - nessun processo di build stampa lo SHA in questo .mq5, vedi InpBuildGitCommit)" : ""));
+      FileWrite(hTxt, "config_fingerprint=" + configFingerprint);
       FileWrite(hTxt, "broker_time_offset_to_GMT_h=" + IntegerToString(InpServerGMTOffset) +
                        " (InpServerGMTOffset, sempre dichiarato - vedi NXS_Inputs.mqh)");
       FileWrite(hTxt, "");
@@ -230,7 +307,7 @@ void NXS_Cert_Generate(){
 
    // --- file machine-readable -------------------------------------------
    string jsonPath = "NEXUS\\certificates\\" + runIdSafe + ".json";
-   int hJson = FileOpen(jsonPath, FILE_WRITE|FILE_TXT|FILE_ANSI);
+   int hJson = FileOpen(jsonPath, FILE_WRITE|FILE_TXT|FILE_ANSI|FILE_COMMON);
    if(hJson != INVALID_HANDLE){
       string gates = "";
       for(int g = 0; g < 20; g++){
@@ -243,7 +320,8 @@ void NXS_Cert_Generate(){
          "\"period_start\":\"%s\",\"period_end\":\"%s\",\"research_mode\":%s,\"exit_mode\":\"%s\","
          "\"leverage\":%d,\"lot_mode\":\"FIXED_LOT\",\"fixed_lot\":%.4f,"
          "\"opt_in\":{\"risk_shield\":%s,\"esl\":%s,\"daily_dd\":%s,\"total_dd\":%s,\"ruin\":%s,\"dpt\":%s},"
-         "\"code_build\":\"%s\",\"broker_time_offset_h\":%d,"
+         "\"code_build\":\"%s\",\"git_commit\":\"%s\",\"git_commit_provenance\":\"%s\","
+         "\"config_fingerprint\":\"%s\",\"broker_time_offset_h\":%d,"
          "\"funnel\":{\"generated\":%d,\"blocked\":%d,\"open_attempt\":%d,\"opened\":%d,\"broker_reject\":%d},"
          "\"gate_reason_counts\":{%s},"
          "\"anomalies\":{\"opened_missing_position_id\":%d,\"broker_reject_missing_reason\":%d,"
@@ -257,7 +335,9 @@ void NXS_Cert_Generate(){
          (InpResearchUseRiskShield ? "true" : "false"), (InpResearchUseESL ? "true" : "false"),
          (InpResearchUseDailyDD ? "true" : "false"), (InpResearchUseTotalDD ? "true" : "false"),
          (InpResearchUseRuin ? "true" : "false"), (InpResearchUseDPT ? "true" : "false"),
-         g_nxsTraceBuild, InpServerGMTOffset,
+         g_nxsTraceBuild, gitCommit,
+         (gitCommitUnknown ? "unavailable_at_runtime_no_build_stamping" : "declared_via_InpBuildGitCommit"),
+         configFingerprint, InpServerGMTOffset,
          in.generated, in.blocked, in.openAttempt, in.opened, in.brokerReject,
          gates,
          in.openedMissingPositionId, in.brokerRejectMissingReason,

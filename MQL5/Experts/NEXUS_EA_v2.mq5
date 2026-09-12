@@ -715,15 +715,21 @@ int OnInit(){
    // include.
    // 12/09 - TimeCurrent() in OnInit e' il tempo SIMULATO (inizio periodo di
    // test), non wall-clock: due run diversi con lo stesso FromDate/Symbol
-   // altrimenti generano lo STESSO run_id e il certificato del secondo
-   // sovrascrive il file del primo (scoperto testando Certificate v2 su
-   // ADX_RSI+MACD, stesso range 2026.06.01-06.15 -> stesso file). Il selector
-   // e' sempre univoco per run in Research Mode (>0 obbligatorio), aggiunto
-   // per rendere run_id univoco senza introdurre wall-clock (che romperebbe
-   // la riproducibilita' del run_id fra passate identiche dello stesso test).
-   NXS_Trace_Init(StringFormat("%s_%s_sel%d", _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
-                               InpStrategySelector),
-                  NEXUS_VERSION, NXS_IsResearchMode());
+   // generano lo stesso "base" anche dopo aver aggiunto il selector (due
+   // passate della STESSA strategia sullo STESSO periodo collidono ancora -
+   // scoperto ripetendo lo stesso test ADX_RSI due volte per la regression di
+   // questo fix). run_id deve essere univoco per OGNI esecuzione, mai
+   // sovrascrivere un certificato precedente: NXS_Cert_MakeUniqueRunId
+   // verifica se un certificato per questo "base" esiste gia' su disco e, se
+   // si', aggiunge un suffisso incrementale _r001/_r002/... (collision
+   // avoidance dichiarata - MQL5 non offre una wall-clock affidabile per
+   // distinguere passate ravvicinate in Tester). config_fingerprint (separato,
+   // calcolato in NXS_Cert_Generate) resta invece identico per la stessa
+   // configurazione, a prescindere da quante volte la esegui.
+   string nxsRunIdBase = StringFormat("%s_%s_sel%d", _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
+                                      InpStrategySelector);
+   string nxsRunId = NXS_IsResearchMode() ? NXS_Cert_MakeUniqueRunId(nxsRunIdBase) : nxsRunIdBase;
+   NXS_Trace_Init(nxsRunId, NEXUS_VERSION, NXS_IsResearchMode());
    g_sym    = _Symbol;
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
    g_digits = (int)SymbolInfoInteger(g_sym, SYMBOL_DIGITS);

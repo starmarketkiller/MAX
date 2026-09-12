@@ -2,7 +2,34 @@
 
 Roadmap 95/99, QUANTITATIVE INTEGRITY. Obiettivo: ogni run di Research Mode produce automaticamente un certificato che dichiara se il test è affidabile o no.
 
-## Stato: implementato e testato — 2 PASS reali (ADX_RSI, MACD) + 1 FAIL sintetico dimostrato
+## Stato: implementato, testato, e corretto con patch identità/provenienza (12/09) — 2 PASS reali (ADX_RSI, MACD) + 1 FAIL sintetico + regression 2x ADX_RSI
+
+## Patch 12/09: run identity + code provenance (approvata dopo il primo giro)
+
+Il classificatore/funnel/logica trading **non sono stati toccati** — solo identità del run e provenienza codice, su richiesta esplicita.
+
+**1. `run_id` vs `config_fingerprint` separati.** Prima: `run_id = Symbol_TimeCurrent(OnInit)_selN` poteva ancora collidere fra due esecuzioni della STESSA strategia sullo STESSO periodo (scoperto rilanciando lo stesso test ADX_RSI due volte per la regression di questo stesso fix). Ora:
+- `run_id`: univoco per OGNI esecuzione. `NXS_Cert_MakeUniqueRunId(base)` verifica se un certificato per `base` esiste già su disco e, se sì, prova `base_r001`, `base_r002`, ... finché non trova un nome libero (collision avoidance dichiarata — MQL5 non offre una wall-clock affidabile in Tester per distinguere passate ravvicinate).
+- `config_fingerprint`: deterministico per CONFIGURAZIONE riproducibile, non per esecuzione. Stringa leggibile (non un hash — "non serve crittografia forte, serve stabilità e leggibilità", richiesta esplicita): `strat|sel|srcTF|entryTF|exit|lot|lev|ESL|DailyDD|TotalDD|DPT|Ruin|RiskShield|period`. Il componente periodo usa `g_certPeriodStart/End` (range osservato dai tick, granularità giorno) perché MQL5 non espone un modo diretto di leggere FromDate/ToDate configurati nel Tester dall'interno dell'EA — dichiarato come tale nel codice.
+
+**Bug scoperto TESTANDO il fix stesso**: la sandbox `MQL5\Files` di un agente Tester viene ripulita ad ogni nuovo avvio di `terminal64.exe` — lanciare due volte la stessa passata (due processi separati) non faceva mai vedere al secondo run i certificati scritti dal primo, quindi `FileIsExist` falliva sempre silenziosamente (nessun suffisso mai aggiunto). Fix: entrambi il controllo di esistenza e la scrittura usano `FILE_COMMON` (`Common\Files`, terminal/agente-indipendente — su questa macchina risolve in `%APPDATA%\MetaQuotes\Terminal\Common\Files`, **non** ridiretto dentro la cartella portable nonostante `/portable`), l'unico posto in cui un run successivo può vedere davvero i certificati di un run precedente.
+
+**2. Code provenance.** Aggiunto `InpBuildGitCommit` (input string, default `"UNKNOWN"`) — nessun processo di build in questo repo stampa automaticamente lo SHA git dentro il `.mq5` a compile-time, quindi niente da leggere a runtime. Approccio scelto fra i due proposti: **campo esplicito UNKNOWN con nota di provenienza** (non un build-constant popolato a mano, che diventerebbe stantio esattamente come il problema che questo task vuole risolvere). Mai confuso con `NEXUS_VERSION`/`code_build` (quello resta un numero di build applicativo). La nota di provenienza è puramente informativa nel testo/JSON del certificato — **non** passa per `NXS_Cert_Classify` e non altera mai PASS/FAIL/WARNINGS (vincolo esplicito "non cambiare classificatore").
+
+**3. Output.** TXT e JSON ora includono `run_id`, `config_fingerprint`, `code_build`, `git_commit` (+ `git_commit_provenance` nel JSON: `"declared_via_InpBuildGitCommit"` o `"unavailable_at_runtime_no_build_stamping"`).
+
+**4. Regression — due run identici ADX_RSI, stesso `.ini`, stesso periodo:**
+
+| run | run_id | config_fingerprint | verdict |
+|---|---|---|---|
+| 1 | `GOLD_2026.06.01 00:00:00_sel1` | `strat=ADX_RSI\|sel=1\|srcTF=PERIOD_D1\|entryTF=PERIOD_M15\|exit=RAW\|lot=0.0200\|lev=100\|ESL=0\|DailyDD=0\|TotalDD=0\|DPT=0\|Ruin=0\|RiskShield=0\|period=2026.06.01_2026.06.12` | PASS |
+| 2 | `GOLD_2026.06.01 00:00:00_sel1_r001` | *identico al run 1* | PASS |
+
+Due `run_id` diversi ✓, `config_fingerprint` identico ✓, entrambi i certificati presenti su disco ✓, nessuna sovrascrittura ✓, entrambi PASS ✓. MACD non ri-testato (nessuna modifica alla classificazione, come da istruzione).
+
+Compilato dopo la patch: **0 errori**, 2 warning preesistenti invariati. Live Mode invariato.
+
+## Stato precedente alla patch (per riferimento storico)
 
 **Fonte primaria: [[NEXUS - Decision-Gate-Execution Trace v1 (12-09)]]** — non ri-analizza il Journal (MQL5 non può farlo in modo affidabile a runtime): `NXS_Trace_Emit` aggiorna i contatori del certificato (`g_cert*`, in `NXS_Trace.mqh`) nello stesso momento causale in cui stampa la riga di trace. Stessa fonte, nessuna seconda verità che possa divergere (vedi CAUSAL_HOOK_MISMATCH, Failure Memory 12/09).
 
@@ -77,10 +104,16 @@ Tutti e 5 i trigger di FAIL innescati correttamente dal funnel deliberatamente r
 
 ## File
 
-`MQL5/Include/NEXUS_v1/NXS_TestValidityCertificate.mqh` (nuovo), `NXS_Trace.mqh` (+contatori certificato, `NXS_Trace_TouchPeriod`), `NXS_ResearchMode.mqh` (+`g_certInvariantFailCount++` nel ramo INVARIANT_FAIL esistente), `NXS_Inputs.mqh` (+`InpCertRunSyntheticTest`), `NEXUS_EA_v2.mq5` (include, `NXS_Trace_TouchPeriod()` in testa a `OnTick`, `NXS_Cert_Generate()`+`NXS_Cert_RunSyntheticTest()` in `OnDeinit`, fix run_id con selector).
+`MQL5/Include/NEXUS_v1/NXS_TestValidityCertificate.mqh` (nuovo — anche `NXS_Cert_MakeUniqueRunId`, `NXS_Cert_ConfigFingerprint`, output FILE_COMMON), `NXS_Trace.mqh` (+contatori certificato, `NXS_Trace_TouchPeriod`), `NXS_ResearchMode.mqh` (+`g_certInvariantFailCount++` nel ramo INVARIANT_FAIL esistente), `NXS_Inputs.mqh` (+`InpCertRunSyntheticTest`, +`InpBuildGitCommit`), `NEXUS_EA_v2.mq5` (include, `NXS_Trace_TouchPeriod()` in testa a `OnTick`, `NXS_Cert_Generate()`+`NXS_Cert_RunSyntheticTest()` in `OnDeinit`, run_id reso univoco via `NXS_Cert_MakeUniqueRunId` in `OnInit`).
+
+## Nota operativa: dove trovare i certificati adesso
+
+Dalla patch 12/09 i certificati vivono in `Common\Files\NEXUS\certificates\` (FILE_COMMON), **non** più nella sandbox per-agente `MQL5\Files\NEXUS\certificates\` di prima — su questa macchina risolve in `%APPDATA%\MetaQuotes\Terminal\Common\Files\NEXUS\certificates\`, condivisa da tutti i terminal/agenti, sopravvive a un riavvio di `terminal64.exe` e non viene mai ripulita dal Tester. Necessario per far funzionare la collision avoidance del run_id fra esecuzioni separate (vedi sopra).
 
 ## Non coperto (dichiarato esplicitamente)
 
 - **Institutional/Legacy pre-check tracing**: esplicitamente fuori scope per questo task (come da istruzione), certificato copre solo ciò che Trace v1 copre.
 - **POSSIBLE_TEST_TRUNCATION** è un WARNING euristico (BLK_PAUSED), non una prova diretta di troncamento reale della passata — MQL5 non espone un segnale affidabile per questo caso specifico.
 - Il certificato usa `AccountInfoInteger(ACCOUNT_LEVERAGE)` per il campo leverage, non il valore dichiarato nell'ini del Tester — può divergere se il broker/conto applica una leva diversa da quella richiesta (vedi nota PASS reali sopra).
+- `git_commit` resta `UNKNOWN` finché nessun processo di build valorizza `InpBuildGitCommit` — nessuna automazione di questo tipo esiste oggi nel repo (compilazione manuale via MetaEditor CLI).
+- `Common\Files` è condiviso fra TUTTI gli EA/script che girano su questo terminal, non isolato per NEXUS — collisione di nome con un altro strumento che scrivesse sotto `NEXUS\certificates\` non è protetta (rischio dichiarato, ritenuto trascurabile dato il prefisso `NEXUS\`).

@@ -259,6 +259,15 @@ input double   InpResearchFixedLot     = 0.01;
 // dimostrare che il classificatore marca FAIL i casi che deve marcare FAIL -
 // senza toccare la logica di trading reale ne' il certificato del run vero.
 input bool     InpCertRunSyntheticTest = false;
+// 12/09 - Test Validity Certificate v2, fix "code provenance": NESSUN
+// meccanismo di build in questo repo stampa automaticamente lo SHA git dentro
+// il .mq5 a compile-time (MetaEditor CLI non lo fa da solo) - inventarlo
+// sarebbe peggio di dichiararlo mancante. Default "UNKNOWN": il certificato lo
+// riporta cosi' com'e', con una nota di provenienza, MAI confuso con
+// NEXUS_VERSION (quello e' un numero di build applicativo, non un commit).
+// Se in futuro un processo di build automatico vorra' stampare lo SHA reale,
+// puo' valorizzare questo input via .set/.ini senza toccare altro codice.
+input string   InpBuildGitCommit       = "UNKNOWN";
 
 // input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // Master switch del modello istituzionale: lettura unica del mercato ->
