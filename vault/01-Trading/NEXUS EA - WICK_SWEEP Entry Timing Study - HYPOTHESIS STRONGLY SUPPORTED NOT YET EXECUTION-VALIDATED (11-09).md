@@ -268,3 +268,79 @@ Il primo run mostrava 180/181 eventi ARMED marcati `[WICKRECLAIM][ABANDONED]` �
 ### File
 
 `server/research_scripts/wick_reclaim_run5_fastsmoke_real_log_extract.txt` (log filtrato del run reale), `wick_reclaim_real_vs_shadow_run5.csv` (181 righe, dataset di reconciliation), `wick_reclaim_reconcile_run5.py` (script).
+
+## 10. Audit NXS_OpenTrade/preflight/SafeBuy-SafeSell — quali prezzi sono realmente in gioco
+
+Richiesto prima di qualunque modifica a SL/TP. Nessun codice toccato in questa sezione, solo lettura.
+
+**Quale prezzo viene usato oggi per costruire SL/TP**: quello del SEGNALE, pre-calcolato PRIMA dell'invio dell'ordine. Per `WICK_SWEEP_RECLAIM`, `sig.slPrice`/`sig.tpPrice` sono impostati in `NXS_WickReclaim_HasPendingEntry` come `trigger_price ∓ 25/100 pip` — prezzi assoluti fissi, invariati da lì fino all'invio (`NXS_Execution.mqh:560-561`, `NXS_SafeBuy(lots, g_sym, brokerSL, tp, cm)` dove `brokerSL`/`tp` derivano da `sig.slPrice`/`sig.tpPrice` via `NXS_VSL_PrepareEntry`).
+
+**Quale prezzo viene realmente ottenuto dal tester**: `NXS_DoBuy`/`NXS_DoSell` (`NXS_Globals.mqh:348-382`) costruiscono una `MqlTradeRequest` con `req.price = SymbolInfoDouble(sym, SYMBOL_ASK/BID)` **al momento dell'invio** (ordine di mercato, non pending) — il fill effettivo (`res.price`, catturato in `g_lastExec` da `_NXS_CaptureExec`) è quello che viene loggato come `fillPx` in `[RESEARCH][OPEN] entry=...` (`NXS_Execution.mqh:579,604`). **Il campo `entry=` già usato in tutta questa analisi è quindi il fill reale, non un'approssimazione.** Nel tester "ogni tick" questo fill coincide, tick per tick, col prezzo usato per rilevare il reclaim (stesso tick, nessun tempo trascorso) — la discrepanza di 42+ pip misurata NON è slippage di esecuzione broker, è interamente il prezzo che si è mosso fra il momento in cui `trigger_price` fu fissato (all'ARM, potenzialmente barre M15 prima) e il momento in cui il reclaim viene confermato (anch'esso solo a cadenza M15).
+
+**Se possiamo costruire SL/TP usando BID/ASK live al momento dell'entry attempt**: sì, tecnicamente immediato — `_NXS_WickReclaim_ProcessSide` legge già `bid`/`ask` live nello stesso tick in cui viene tentata l'apertura; basterebbe ancorare `outSig.entryRef`/SL/TP a quel prezzo invece che a `st.trigger_price`. Sarebbe quasi-identico al fill reale (stesso tick, nessun ordine pending in mezzo) ma non è testato in questa sessione (vedi sezione 11: il counterfactual mostra che comunque non basterebbe).
+
+**Se per ancorarli all'esatto fill servirebbe una modifica post-fill**: sì, per essere ESATTI al pip. Un ordine di mercato non garantisce il prezzo di fill prima dell'invio (anche se nel tester "ogni tick" lo scarto è tipicamente minimo) — l'unico modo per essere certi al 100% è: (1) inviare l'ordine, (2) leggere `res.price`/`g_lastExec` col fill reale, (3) `PositionModify`/`OrderModify` per impostare SL/TP esattamente su quel prezzo.
+
+**Rischio di una finestra senza SL aprendo prima e modificando dopo**: reale in modalità LIVE (latenza di rete fra invio e modifica — durante quella finestra la posizione è esposta senza stop protettivo, o con uno stop provvisorio potenzialmente sbagliato; un movimento avverso in quella finestra, per quanto breve, non sarebbe capato). Nel tester MT5 l'invio e la modifica avvengono sincroni nello stesso frame (nessuna latenza di rete simulata di default), quindi il rischio pratico in backtest è trascurabile — ma questo NON si estende alla modalità reale/demo, dove servirebbe una mitigazione esplicita (es. uno stop di sicurezza ampio ma sempre presente inviato CON l'ordine, stretto poi via modifica appena noto il fill reale — mai zero protezione).
+
+## 11. Counterfactual FILL_ANCHORED sui 112 trade reali — ipotesi REFUTATA
+
+Richiesto dall'utente dopo la sezione 9: isolare SE l'ancoraggio SL/TP al `trigger_price` (invece che al fill reale) spiega da solo la perdita di edge. **Nessun nuovo ingresso, nessuna nuova detection/reclaim, nessun rilancio MT5** — replay puro sui 111 trade reali risolti (112 aperti, 1 ancora aperto a fine test), stessi timestamp/fill reali, stesso stream di prezzo successivo. Risoluzione del counterfactual: OHLC M15 (`nxs_m15_gold_extended.csv`, stessa serie GOLD usata in tutta questa ricerca) — **downgrade di risoluzione rispetto al tick-level del backtest reale**: l'esito ATTUALE resta quello vero (noto con certezza dal backtest), solo l'esito CONTROFATTUALE è approssimato a barra M15 (7/111 casi con ambiguità stesso-bar, risolti assegnando l'esito alla soglia più vicina all'open della barra — approssimazione dichiarata, non verificata a livello tick).
+
+**Costruzione**: per ogni trade, `SL_cf`/`TP_cf` = `actual_fill ∓ 25/± 100 pip` (stesso identico RR nominale 25/100, ancorato al fill invece che al trigger).
+
+### Classificazione (111 trade)
+
+| Categoria | n |
+|---|---|
+| LOSS_SAVED | 0 |
+| WIN_PRESERVED | 17 |
+| WIN_LOST | 36 |
+| BOTH_LOSS | 58 |
+| BOTH_WIN | 0 |
+
+**Zero LOSS_SAVED**: nessuna delle 58 perdite reali sarebbe diventata una vincita ancorando al fill. Al contrario, **36 vincite reali sarebbero diventate perdite** sotto FILL_ANCHORED.
+
+### Metriche aggregate
+
+| Metrica | TRIGGER_ANCHORED (reale) | FILL_ANCHORED (counterfactual) |
+|---|---|---|
+| n | 111 | 111 |
+| WR | 47.7% | **15.3%** |
+| PF (pip, distanza reale) | 0.76 | 0.72 |
+| Expectancy | -6.97 pip | -5.86 pip |
+| Avg win | 47.5 pip | 100.0 pip (fisso, per costruzione) |
+| Avg loss | -56.8 pip | -25.0 pip (fisso, per costruzione) |
+| Realized RR | 0.84 | 4.00 |
+| Max DD sequenziale | 873.8 pip | 750.0 pip |
+| Max losing streak | 4 | 14 |
+
+(Il PF pip-based 0.76 per TRIGGER_ANCHORED è coerente con il PF $ reale 0.78 già stabilito in sezione 9 — cross-check superato.)
+
+### Segmentazione per |slippage trigger→fill|
+
+| bucket | n | ACTUAL WR / PF | FILL_ANCHORED WR / PF |
+|---|---|---|---|
+| <10 pip | 15 | 20.0% / 0.83 | 13.3% / 0.62 |
+| 10-25 pip | 20 | 30.0% / 0.99 | 20.0% / 1.00 |
+| 25-50 pip | 28 | 46.4% / 0.90 | 10.7% / 0.48 |
+| 50-75 pip | 35 | 57.1% / 0.59 | 17.1% / 0.83 |
+| 75-100 pip | 13 | 84.6% / 0.62 | 15.4% / 0.73 |
+
+**Nessuna monotonicità**: né l'ACTUAL né il FILL_ANCHORED degradano in modo monotono con la distanza trigger→fill. Il PF resta ≤1 (o marginale) in QUASI ogni bucket per entrambi i modelli.
+
+### Perché FILL_ANCHORED non salva nessuna perdita (e ne crea di nuove)
+
+Il meccanismo è l'opposto di quanto ipotizzato: il trigger-anchoring **beneficia** dello scivolamento, non ne è vittima. Quando il prezzo ha già percorso 40-90 pip in direzione favorevole prima che il reclaim venga confermato (a cadenza M15), il TP fisso al `trigger+100` è già "quasi raggiunto" — serve solo il resto del movimento, che spesso arriva (WR 84.6% nel bucket 75-100pip). Ancorare invece SL/TP al fill sposta il traguardo un ulteriore, intero 100 pip più lontano PROPRIO nei casi dove il prezzo aveva già confermato di più — vanificando esattamente la conferma che rendeva quei trade i più affidabili. Lo SL, viceversa, diventa più vicino in termini assoluti rispetto a un prezzo già esteso, più incline a un pull-back.
+
+### Decisione (per istruzione esplicita)
+
+**PF resta ≤1 in entrambi i modelli — SL/TP NON toccati.** L'ipotesi "l'anchor spiega da solo la perdita di edge" è **REFUTATA dai dati**: ancorare al fill reale non migliora l'economia (PF 0.72 vs 0.76, marginalmente PEGGIORE) e distrugge selettivamente le vincite più forti (36 WIN_LOST, 0 LOSS_SAVED). La perdita di edge di WICK_SWEEP_RECLAIM rispetto allo shadow non è quindi (solo) un problema di geometria SL/TP — resta da capire se sia strutturale al modello RECLAIM stesso (il vantaggio "virtuale" dello shadow potrebbe dipendere in modo più fondamentale dal fill idealizzato esattamente al trigger, non correggibile spostando semplicemente l'ancora altrove) o se richieda un'indagine diversa. **Nessuna modifica a SL/TP, nessun tuning, nessun tick-reclaim, nessun Fast Structural, nessuna modifica a WICK_SWEEP_REV o al New Bar Gate** — come da istruzione.
+
+### Nota per la roadmap 95/99 (proposta dall'utente, non ancora aperta come task)
+
+Il meccanismo trovato qui (SL/TP calcolati su un prezzo "teorico" di segnale che può risalire a diverse barre prima dell'ingresso reale) non è specifico di WICK_SWEEP_RECLAIM — è potenzialmente presente in qualunque strategia che calcola SL/TP relativi ad `entryRef` nel momento della GENERAZIONE del segnale piuttosto che dell'ESECUZIONE. Un audit generale "SIGNAL PRICE vs EXECUTION PRICE vs RISK GEOMETRY" su tutte le strategie del router è stato proposto dall'utente come possibile voce futura della roadmap — non aperto come task in questa sessione.
+
+### File
+
+`server/research_scripts/wick_reclaim_counterfactual_fill_anchored.py` (script), `wick_reclaim_counterfactual_fill_anchored.csv` (111 righe, tutti i campi richiesti: sweep_id/side/trigger_price/actual_fill/slippage/actual_SL/actual_TP/counterfactual_SL/counterfactual_TP/actual_outcome/counterfactual_outcome/actual_pnl_pips/counterfactual_pnl_pips/categoria).

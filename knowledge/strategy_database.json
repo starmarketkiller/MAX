@@ -1315,7 +1315,7 @@
       "WR_pct": 48.21,
       "expectancy_R": null,
       "affidabilita_dati": "un solo Fast Smoke (3 mesi, GOLD H4/M15). Parita' causale con lo shadow verificata evento-per-evento; risultato economico spiegato quantitativamente ma non ancora testato su altre finestre temporali",
-      "decisione_corrente": "Fast Smoke di equivalenza PASSATO su parita' causale, FALLITO su edge economico (causa nota: SL/TP ancorati a trigger_price vs slippage reale da campionamento M15) - NON promossa a Fast Structural A/B, decisione su come procedere lasciata all'utente",
+      "decisione_corrente": "Fast Smoke di equivalenza PASSATO su parita' causale, FALLITO su edge economico. Counterfactual FILL_ANCHORED (12/09, replay sui 112 trade reali, nessun nuovo run) ha REFUTATO l'ipotesi che l'anchor SL/TP al trigger_price fosse la causa: ancorare al fill reale non migliora l'economia (PF 0.72 vs 0.76, marginalmente peggiore) e converte 36 vincite reali in perdite senza salvarne nessuna (0 LOSS_SAVED). SL/TP NON modificati. NON promossa a Fast Structural A/B - causa della perdita di edge resta da approfondire oltre la geometria SL/TP",
       "note": "Non modifica WICK_SWEEP_REV (selector 54, resta identica e non toccata). Identita' completamente separata: selector 55, strategy name WICK_SWEEP_RECLAIM, profilo/telemetria/statistiche proprie. Vedi vault 'NEXUS EA - WICK_SWEEP Entry Timing Study' per il razionale completo, la cronologia della validazione shadow, e il report di reconciliation reale-vs-shadow."
     }
   ],
