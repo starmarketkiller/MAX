@@ -253,6 +253,12 @@ input bool     InpResearchUseRiskShield = false;
 // rischio% E qualunque moltiplicatore residuo (streak/counter-HTF/chain):
 // il punto e' misurare l'edge del trigger, non il money management.
 input double   InpResearchFixedLot     = 0.01;
+// 12/09 - Test Validity Certificate v2: debug-only, default OFF. Quando ON,
+// OnDeinit fa passare un funnel SINTETICO E DELIBERATAMENTE ROTTO (non i
+// contatori reali del run) attraverso lo stesso NXS_Cert_Classify puro, per
+// dimostrare che il classificatore marca FAIL i casi che deve marcare FAIL -
+// senza toccare la logica di trading reale ne' il certificato del run vero.
+input bool     InpCertRunSyntheticTest = false;
 
 // input group "=== INSTITUTIONAL CORE (v2.1.0) ==="
 // Master switch del modello istituzionale: lettura unica del mercato ->

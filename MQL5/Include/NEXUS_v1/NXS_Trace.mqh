@@ -108,16 +108,67 @@ long     g_nxsTraceSeq     = 0;    // contatore signal_id/decision_id, monotono 
 // non richiamato da dentro questo file.
 bool     g_nxsTraceActive  = false;
 
+void NXS_Trace_ResetCert();   // forward decl - definita sotto, chiamata da Init prima della propria definizione testuale
+
 void NXS_Trace_Init(string runId, string buildInfo, bool active){
    g_nxsTraceRunId = runId;
    g_nxsTraceBuild = buildInfo;
    g_nxsTraceSeq = 0;
    g_nxsTraceActive = active;
+   NXS_Trace_ResetCert();
 }
 
 long NXS_Trace_NextId(){
    if(!g_nxsTraceActive) return 0;
    return ++g_nxsTraceSeq;
+}
+
+// --- Aggregazione in memoria per il Test Validity Certificate v2 -----------
+// Il certificato usa il trace come FONTE PRIMARIA: invece di rileggere il
+// Journal (MQL5 non può farlo in modo affidabile durante l'esecuzione), ogni
+// NXS_Trace_Emit aggiorna QUESTI contatori nello stesso momento in cui
+// stampa la riga - stesso punto causale, nessuna doppia fonte di verità.
+long g_certGenerated = 0, g_certBlocked = 0, g_certOpenAttempt = 0,
+     g_certOpened = 0, g_certBrokerReject = 0;
+long g_certGateCount[20];   // indicizzato da ENUM_NXS_GATE_REASON
+long g_certOpenedMissingPositionId = 0;   // invariante: ogni OPENED deve avere position_id
+long g_certBrokerRejectMissingReason = 0; // invariante: ogni broker reject deve avere reason
+// per il controllo "source TF mismatch": prima strategia/TF visti in GENERATED,
+// e se una successiva GENERATED della STESSA strategia dichiara un TF diverso.
+string   g_certFirstStrategy = "";
+ENUM_TIMEFRAMES g_certFirstSourceTF = PERIOD_CURRENT;
+bool     g_certSourceTFSeen = false;
+bool     g_certSourceTFMismatch = false;
+// Incrementato da NXS_ResearchMode.mqh (NXS_ResearchLogExit) ogni volta che
+// stampa [RESEARCH][INVARIANT_FAIL] - EXPERT_UNKNOWN o un'autorita' di uscita
+// non prevista dal contratto RAW/opt-in corrente. Dichiarato qui (incluso
+// prima di NXS_ResearchMode.mqh) perche' il certificato lo usa come fonte
+// primaria invece di ri-analizzare il Journal.
+long     g_certInvariantFailCount = 0;
+// period_start/period_end richiesti dal certificato: non e' l'orario di
+// lancio del run (quello e' g_testerPassStart, identita' del run) ma il
+// range dati EFFETTIVAMENTE attraversato dai tick - primo e ultimo
+// TimeCurrent() osservato in OnTick. Aggiornato da NXS_Trace_TouchPeriod(),
+// chiamata in testa a OnTick() SOLO quando il trace e' attivo.
+datetime g_certPeriodStart = 0;
+datetime g_certPeriodEnd   = 0;
+
+void NXS_Trace_ResetCert(){
+   g_certGenerated = 0; g_certBlocked = 0; g_certOpenAttempt = 0;
+   g_certOpened = 0; g_certBrokerReject = 0;
+   for(int i = 0; i < 20; i++) g_certGateCount[i] = 0;
+   g_certOpenedMissingPositionId = 0;
+   g_certBrokerRejectMissingReason = 0;
+   g_certFirstStrategy = ""; g_certSourceTFSeen = false; g_certSourceTFMismatch = false;
+   g_certInvariantFailCount = 0;
+   g_certPeriodStart = 0; g_certPeriodEnd = 0;
+}
+
+void NXS_Trace_TouchPeriod(){
+   if(!g_nxsTraceActive) return;
+   datetime t = TimeCurrent();
+   if(g_certPeriodStart == 0) g_certPeriodStart = t;
+   g_certPeriodEnd = t;
 }
 
 // Emissione centralizzata - UNA riga strutturata per ogni transizione di
@@ -139,6 +190,35 @@ void NXS_Trace_Emit(long decisionId, long signalId, string strategy,
                TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
                NXS_TraceStageName(stage), NXS_GateReasonName(gate),
                detail, g_nxsTraceBuild);
+
+   // --- aggiornamento contatori certificato (stesso punto causale) ---------
+   switch(stage){
+      case TRACE_GENERATED:
+         g_certGenerated++;
+         if(!g_certSourceTFSeen){
+            g_certFirstStrategy = strategy; g_certFirstSourceTF = sourceTF;
+            g_certSourceTFSeen = true;
+         } else if(strategy == g_certFirstStrategy && sourceTF != g_certFirstSourceTF){
+            g_certSourceTFMismatch = true;
+         }
+         break;
+      case TRACE_BLOCKED:
+         g_certBlocked++;
+         if((int)gate >= 0 && (int)gate < 20) g_certGateCount[(int)gate]++;
+         break;
+      case TRACE_OPEN_ATTEMPT:
+         g_certOpenAttempt++;
+         break;
+      case TRACE_OPENED:
+         g_certOpened++;
+         if(positionId == 0) g_certOpenedMissingPositionId++;
+         break;
+      case TRACE_BROKER_REJECT:
+         g_certBrokerReject++;
+         if((int)gate >= 0 && (int)gate < 20) g_certGateCount[(int)gate]++;
+         if(StringLen(detail) == 0) g_certBrokerRejectMissingReason++;
+         break;
+   }
 }
 
 // Helper per il caso comune (segnale 1:1, entry_tf = InpTFEntry corrente).

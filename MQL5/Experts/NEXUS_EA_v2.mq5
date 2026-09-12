@@ -59,6 +59,7 @@
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_ResearchMode.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
+#include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 #include <NEXUS_v1\NXS_Strategies_Experimental.mqh>
@@ -712,7 +713,16 @@ int OnInit(){
    // Mode ("Live Mode invariato" + "overhead minimo" - requisiti espliciti):
    // NXS_IsResearchMode() e' gia' risolvibile qui, OnInit gira dopo tutti gli
    // include.
-   NXS_Trace_Init(StringFormat("%s_%s", _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS)),
+   // 12/09 - TimeCurrent() in OnInit e' il tempo SIMULATO (inizio periodo di
+   // test), non wall-clock: due run diversi con lo stesso FromDate/Symbol
+   // altrimenti generano lo STESSO run_id e il certificato del secondo
+   // sovrascrive il file del primo (scoperto testando Certificate v2 su
+   // ADX_RSI+MACD, stesso range 2026.06.01-06.15 -> stesso file). Il selector
+   // e' sempre univoco per run in Research Mode (>0 obbligatorio), aggiunto
+   // per rendere run_id univoco senza introdurre wall-clock (che romperebbe
+   // la riproducibilita' del run_id fra passate identiche dello stesso test).
+   NXS_Trace_Init(StringFormat("%s_%s_sel%d", _Symbol, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
+                               InpStrategySelector),
                   NEXUS_VERSION, NXS_IsResearchMode());
    g_sym    = _Symbol;
    g_point  = SymbolInfoDouble(g_sym, SYMBOL_POINT);
@@ -902,6 +912,8 @@ void OnDeinit(const int reason){
    if(InpStrat_WickSweep) NXS_WickSweep_PrintFunnel();   // 10/09 - funnel completo a fine test
    NXS_WickShadow_PrintSummary();   // 11/09 - no-op se InpResearchWickShadow=false
    NXS_WickReclaim_PrintFunnel();   // 12/09 - no-op se InpStrat_WickSweepReclaim=false
+   NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
+   NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
@@ -1083,6 +1095,7 @@ void OnTimer(){
 }
 
 void OnTick(){
+   NXS_Trace_TouchPeriod();   // 12/09 - Test Validity Certificate v2: period_start/period_end
    // v2.0.9 Sprint 1 — skid protection: drop stale ticks (>InpMaxTickAgeMs)
    if(!NXS_IsFreshTick()) return;
    // v2.0.9 Sprint 2 — keep spread rolling window fresh + virt SL check

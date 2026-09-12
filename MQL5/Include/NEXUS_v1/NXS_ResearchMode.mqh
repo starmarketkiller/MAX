@@ -199,6 +199,7 @@ void NXS_ResearchLogExit(const string strategy, ulong position, const string rea
          PrintFormat("[RESEARCH][INVARIANT_FAIL] strategy=%s position=%I64u exit_authority=%s "
                      "reason=%s - RAW ha ricevuto un'uscita non prevista dal contratto",
                      strategy, position, authority, reason);
+         g_certInvariantFailCount++;   // Test Validity Certificate v2 - vedi NXS_Trace.mqh
       }
    }
 }
