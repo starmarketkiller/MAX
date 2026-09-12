@@ -27,8 +27,19 @@ CONFIG FILE (nexus_worker.config.json) — same dir as this script:
   "metaeditor":    "C:/Program Files/MetaTrader 5/metaeditor64.exe",
   "mql5_include":  "C:/Users/<NAME>/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Include/NEXUS_v1",
   "mql5_experts":  "C:/Users/<NAME>/AppData/Roaming/MetaQuotes/Terminal/<HASH>/MQL5/Experts",
-  "poll_sec":      3
+  "poll_sec":      3,
+  "certificates_dir":      "",
+  "certificates_scan_sec": 30
 }
+("certificates_dir" vuoto = auto-derivato da %APPDATA%/MetaQuotes/Terminal/Common/Files/NEXUS/certificates)
+
+QUANTITATIVE INTEGRITY WEB BRIDGE v1
+-------------------------------------
+Oltre ai comandi backend->worker, questo loop spinge periodicamente al
+backend i Test Validity Certificate v2 che l'EA scrive in Common/Files/
+NEXUS/certificates/*.json (FILE_COMMON — MT5 non puo' fare WebRequest
+durante il Tester, questo worker si' perche' gira fuori dal Tester). Vedi
+scan_and_push_certificates() / /api/local_bridge/certificates/ingest.
 
 REMEDIAZIONI APPLICATE (audit master, stream RP0-05)
 ----------------------------------------------------
@@ -93,6 +104,11 @@ CONFIG_TEMPLATE = {
     "mql5_experts":  "",
     "poll_sec":      3,
     "version":       "2.1.0",
+    # Quantitative Integrity Web Bridge v1 — vuoto = auto-derivato da %APPDATA%
+    # (vedi _default_certificates_dir); valorizzalo esplicitamente solo se il
+    # terminal scrive altrove.
+    "certificates_dir":      "",
+    "certificates_scan_sec": 30,
 }
 
 #: Numero massimo di record conservati nel journal di idempotenza.
@@ -228,6 +244,134 @@ def http_get(cfg: Dict[str, Any], path: str, params: Optional[Dict] = None) -> O
     except Exception as e:
         print(f"[NEXUS Worker] HTTP GET {path} failed: {e}")
         return None
+
+
+# ---------------------------------------------------------------------------
+# Quantitative Integrity Web Bridge v1 — Test Validity Certificate v2 push
+# ---------------------------------------------------------------------------
+# L'EA scrive i certificati in Common\Files\NEXUS\certificates (FILE_COMMON,
+# vedi NXS_TestValidityCertificate.mqh) perche' MT5 non puo' fare WebRequest
+# durante il Tester/Research Mode (NXS_WebBridge.mqh disattiva ogni push
+# quando MQLInfoInteger(MQL_TESTER)). Questo worker gira FUORI dal Tester,
+# sulla stessa macchina, e ha gia' un canale token-autenticato verso il
+# backend (heartbeat/poll/ack): nessun nuovo trasporto, nessun polling
+# filesystem lato backend — il worker legge in locale e spinge via HTTP.
+CERT_JOURNAL_PATH = Path(__file__).resolve().parent / "nexus_worker.certificates_journal.json"
+CERT_JOURNAL_MAX = 2000
+
+
+def _default_certificates_dir() -> str:
+    """Common\\Files di MetaTrader — default se `certificates_dir` e' vuoto.
+
+    FILE_COMMON in MQL5 risolve in %APPDATA%\\MetaQuotes\\Terminal\\Common\\
+    Files su Windows, indipendentemente dal terminal (anche quelli /portable
+    — vedi Test Validity Certificate v2, nota "dove trovare i certificati").
+    Se %APPDATA% non e' definita (non-Windows) resta vuoto: la config deve
+    allora dichiarare `certificates_dir` esplicitamente.
+    """
+    appdata = os.environ.get("APPDATA", "")
+    if not appdata:
+        return ""
+    return str(Path(appdata) / "MetaQuotes" / "Terminal" / "Common" / "Files" /
+              "NEXUS" / "certificates")
+
+
+def load_cert_journal() -> Dict[str, Any]:
+    if not CERT_JOURNAL_PATH.exists():
+        return {}
+    try:
+        with open(CERT_JOURNAL_PATH) as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        print("[NEXUS Worker] ATTENZIONE: certificates journal illeggibile, verrà ricreato")
+        return {}
+
+
+def cert_journal_record(journal: Dict[str, Any], filename: str, status: str,
+                        run_id: Optional[str] = None) -> None:
+    journal[filename] = {"status": status, "ts": time.time(), "run_id": run_id}
+    if len(journal) > CERT_JOURNAL_MAX:
+        for key in sorted(journal, key=lambda k: journal[k]["ts"])[:len(journal) - CERT_JOURNAL_MAX]:
+            journal.pop(key, None)
+    tmp = CERT_JOURNAL_PATH.with_suffix(".tmp")
+    try:
+        with open(tmp, "w") as f:
+            json.dump(journal, f)
+        tmp.replace(CERT_JOURNAL_PATH)
+    except Exception as exc:  # pragma: no cover
+        print(f"[NEXUS Worker] ATTENZIONE: certificates journal non scritto: {exc}")
+
+
+def _post_certificate(cfg: Dict[str, Any], cert: Dict[str, Any],
+                      source_file: str) -> Tuple[int, Optional[Dict]]:
+    """POST dedicato (non riusa http_post): serve distinguere 200/403/422/altro
+    per decidere se ritentare al prossimo scan o scartare in modo definitivo -
+    http_post collassa ogni fallimento a None, qui serve lo status code."""
+    try:
+        r = requests.post(
+            f"{cfg['backend_url'].rstrip('/')}/api/local_bridge/certificates/ingest",
+            json={"host_id": cfg["host_id"], "certificate": cert, "source_file": source_file},
+            headers={"X-Nexus-Token": cfg["bridge_token"], "Content-Type": "application/json"},
+            timeout=15,
+        )
+        try:
+            body = r.json()
+        except Exception:
+            body = None
+        return r.status_code, body
+    except Exception as e:
+        print(f"[NEXUS Worker] HTTP POST certificates/ingest failed: {e}")
+        return 0, None
+
+
+def scan_and_push_certificates(cfg: Dict[str, Any], cert_journal: Dict[str, Any]) -> None:
+    """Legge Common\\Files\\NEXUS\\certificates\\*.json e spinge quelli non
+    ancora inviati con successo al backend.
+
+    Idempotenza a due livelli: il journal locale evita di ri-inviare un file
+    gia' andato a buon fine ad ogni scan; il backend e' comunque idempotente
+    per run_id (INSERT solo se assente, mai un UPDATE — vedi
+    /api/local_bridge/certificates/ingest), quindi un doppio invio dopo un
+    journal perso/corrotto non crea mai un duplicato ne' altera un
+    certificato gia' ingerito.
+    """
+    cert_dir_str = cfg.get("certificates_dir") or _default_certificates_dir()
+    if not cert_dir_str:
+        return
+    cert_dir = Path(cert_dir_str)
+    if not cert_dir.is_dir():
+        return
+    for path in sorted(cert_dir.glob("*.json")):
+        name = path.name
+        prior = cert_journal.get(name)
+        if prior and prior.get("status") in ("ingested", "already_ingested", "rejected"):
+            continue
+        try:
+            cert = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"[NEXUS Worker] certificato illeggibile {name}: {e} (verrà ritentato)")
+            continue
+        if not isinstance(cert, dict) or not cert.get("run_id"):
+            print(f"[NEXUS Worker] certificato senza run_id, scartato: {name}")
+            cert_journal_record(cert_journal, name, "rejected")
+            continue
+
+        status_code, body = _post_certificate(cfg, cert, name)
+        if status_code == 200 and body:
+            result_status = body.get("status", "ingested")
+            cert_journal_record(cert_journal, name, result_status, run_id=cert.get("run_id"))
+            print(f"[NEXUS Worker] ✓ certificato {name} -> {result_status} "
+                  f"(run_id={cert.get('run_id')})")
+        elif status_code == 422:
+            print(f"[NEXUS Worker] ✗ certificato {name} rifiutato dal backend (422): {body}")
+            cert_journal_record(cert_journal, name, "rejected", run_id=cert.get("run_id"))
+        elif status_code == 403:
+            print(f"[NEXUS Worker] certificato {name}: host non registrato/enrolled (403) "
+                  f"— ritentato ai prossimi scan")
+        else:
+            print(f"[NEXUS Worker] certificato {name}: invio fallito (status={status_code}), "
+                  f"verrà ritentato")
 
 
 def send_heartbeat(cfg: Dict[str, Any]):
@@ -593,14 +737,18 @@ def _payload_summary(action: str, payload: Dict[str, Any]) -> str:
 def main():
     cfg = load_config()
     journal = load_journal()
+    cert_journal = load_cert_journal()
     print(f"[NEXUS Worker] v{cfg['version']} started")
     print(f"[NEXUS Worker] backend: {cfg['backend_url']}")
     print(f"[NEXUS Worker] host_id: {cfg['host_id']}")
     print(f"[NEXUS Worker] OS:      {platform.platform()}")
     print(f"[NEXUS Worker] journal: {len(journal)} comandi noti")
+    cert_dir_effective = cfg.get("certificates_dir") or _default_certificates_dir()
+    print(f"[NEXUS Worker] certificates_dir: {cert_dir_effective or '(non risolvibile — %APPDATA% assente)'}")
 
     send_heartbeat(cfg)
     last_heartbeat = time.time()
+    last_cert_scan = 0.0
 
     while True:
         try:
@@ -608,6 +756,15 @@ def main():
             if time.time() - last_heartbeat > 30:
                 send_heartbeat(cfg)
                 last_heartbeat = time.time()
+
+            # Quantitative Integrity Web Bridge v1 — scan periodico, non ad
+            # ogni giro di poll (poll_sec e' spesso 3s, i certificati cambiano
+            # solo a fine passata di Tester: uno scan cosi' frequente sarebbe
+            # solo I/O sprecato).
+            scan_interval = max(5, int(cfg.get("certificates_scan_sec", 30)))
+            if time.time() - last_cert_scan > scan_interval:
+                scan_and_push_certificates(cfg, cert_journal)
+                last_cert_scan = time.time()
 
             resp = http_get(cfg, "/api/local_bridge/poll",
                             {"host_id": cfg["host_id"]})

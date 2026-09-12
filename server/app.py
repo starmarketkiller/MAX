@@ -421,10 +421,84 @@ def init_db() -> None:
         _record_migration(c, "014_command_envelope")
         _migrate_license_lifecycle(c)
         _record_migration(c, "015_license_lifecycle")
+        _migrate_research_certificates(c)
+        _record_migration(c, "016_research_certificates")
         # seed kv defaults
         _kv_set_if_absent(c, "settings", json.dumps(DEFAULT_SETTINGS))
         _kv_set_if_absent(c, "chain_config", json.dumps(DEFAULT_CHAIN_CONFIG))
         _kv_set_if_absent(c, "locked_profiles", json.dumps({}))
+
+
+def _migrate_research_certificates(c: sqlite3.Connection) -> None:
+    """Storage per i Test Validity Certificate v2 (Quantitative Integrity).
+
+    Un certificato è generato dall'EA in Research Mode (MQL5, vedi
+    NXS_TestValidityCertificate.mqh) e scritto su Common\\Files\\NEXUS\\
+    certificates\\<run_id>.json — un LocalBridge worker già arruolato legge
+    quei file e li spinge qui via /api/local_bridge/certificates/ingest,
+    stesso canale usato per comandi/heartbeat (nessun nuovo meccanismo di
+    trasporto: MT5 non può fare WebRequest durante il Tester, vedi
+    NXS_WebBridge.mqh — il worker locale gira fuori dal Tester ed è l'unico
+    percorso già esistente da Windows al backend).
+
+    `run_id` è la PRIMARY KEY: un'esecuzione = un certificato = una riga,
+    MAI mutata dopo il primo ingest (vedi lb_certificates_ingest — un
+    run_id già presente torna 200 "already_ingested" senza toccare la riga
+    esistente). `config_fingerprint` resta un campo separato, deliberatamente
+    NON unico: run diversi della stessa configurazione condividono lo stesso
+    fingerprint (vedi Certificate v2, patch 12/09).
+
+    `raw_json` conserva il documento esattamente come ricevuto — nessun
+    campo qui sotto viene mai inventato: se il certificato originale non lo
+    aveva, resta NULL, mai un default silenzioso (es. git_commit=UNKNOWN
+    resta la stringa "UNKNOWN" cosi' com'e', mai NULL ne' un altro valore).
+    """
+    c.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS research_certificates (
+            run_id                        TEXT PRIMARY KEY,
+            config_fingerprint            TEXT,
+            strategy                      TEXT,
+            selector                      INTEGER,
+            source_tf                     TEXT,
+            entry_tf                      TEXT,
+            period_start                  TEXT,
+            period_end                    TEXT,
+            research_mode                 INTEGER,
+            exit_mode                     TEXT,
+            leverage                      INTEGER,
+            lot_mode                      TEXT,
+            fixed_lot                     REAL,
+            opt_in                        TEXT,
+            code_build                    TEXT,
+            git_commit                    TEXT,
+            git_commit_provenance         TEXT,
+            broker_time_offset_h          INTEGER,
+            generated                     INTEGER,
+            blocked                       INTEGER,
+            open_attempt                  INTEGER,
+            opened                        INTEGER,
+            broker_reject                 INTEGER,
+            gate_reason_counts            TEXT,
+            opened_missing_position_id    INTEGER,
+            broker_reject_missing_reason  INTEGER,
+            source_tf_mismatch            INTEGER,
+            invariant_fail_count          INTEGER,
+            blk_paused_count              INTEGER,
+            verdict                       TEXT,
+            fail_reasons                  TEXT,
+            warnings                      TEXT,
+            raw_json                      TEXT,
+            host_id                       TEXT,
+            source_file                   TEXT,
+            ingested_at                   REAL
+        );
+        CREATE INDEX IF NOT EXISTS idx_research_certificates_ingested
+            ON research_certificates(ingested_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_research_certificates_strategy
+            ON research_certificates(strategy, selector);
+        """
+    )
 
 
 def _migrate_trade_ledger(c: sqlite3.Connection) -> None:
@@ -2753,6 +2827,246 @@ def lb_deployment_manifest(user: str = Depends(require_user)):
     if not path.exists():
         raise HTTPException(status_code=404, detail="deployment manifest missing")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+# =============== QUANTITATIVE INTEGRITY WEB BRIDGE v1 ==================== #
+# Trasporto: MT5 non puo' fare WebRequest durante il Tester (NXS_WebBridge.mqh
+# disattiva il push in MQL_TESTER) - il LocalBridge worker gira invece FUORI
+# dal Tester, sulla stessa macchina Windows, e ha gia' un canale
+# token-autenticato verso questo backend (heartbeat/poll/ack). Riusa quello:
+# nessun nuovo trasporto, nessun polling filesystem lato backend.
+def _bool_or_none(v: Any) -> Optional[int]:
+    """True/False -> 1/0, ma None resta None: mai inventare un booleano assente."""
+    return None if v is None else (1 if v else 0)
+
+
+def _cert_extract_row(cert: dict) -> dict:
+    """Estrae le colonne note da un certificato Test Validity v2.
+
+    Ogni campo assente nel certificato originale resta None qui - MAI un
+    default fabbricato (0, "", false). Il documento intero e' comunque
+    conservato verbatim in `raw_json` da chi chiama, per provenance completa
+    anche di campi che questa funzione non conosce ancora.
+    """
+    funnel = cert.get("funnel") if isinstance(cert.get("funnel"), dict) else {}
+    anomalies = cert.get("anomalies") if isinstance(cert.get("anomalies"), dict) else {}
+    opt_in = cert.get("opt_in")
+    gate_counts = cert.get("gate_reason_counts")
+    return {
+        "run_id": cert.get("run_id"),
+        "config_fingerprint": cert.get("config_fingerprint"),
+        "strategy": cert.get("strategy"),
+        "selector": cert.get("selector"),
+        "source_tf": cert.get("source_tf"),
+        "entry_tf": cert.get("entry_tf"),
+        "period_start": cert.get("period_start"),
+        "period_end": cert.get("period_end"),
+        "research_mode": _bool_or_none(cert.get("research_mode")),
+        "exit_mode": cert.get("exit_mode"),
+        "leverage": cert.get("leverage"),
+        "lot_mode": cert.get("lot_mode"),
+        "fixed_lot": cert.get("fixed_lot"),
+        "opt_in": json.dumps(opt_in) if isinstance(opt_in, dict) else None,
+        "code_build": cert.get("code_build"),
+        "git_commit": cert.get("git_commit"),
+        "git_commit_provenance": cert.get("git_commit_provenance"),
+        "broker_time_offset_h": cert.get("broker_time_offset_h"),
+        "generated": funnel.get("generated"),
+        "blocked": funnel.get("blocked"),
+        "open_attempt": funnel.get("open_attempt"),
+        "opened": funnel.get("opened"),
+        "broker_reject": funnel.get("broker_reject"),
+        "gate_reason_counts": json.dumps(gate_counts) if isinstance(gate_counts, dict) else None,
+        "opened_missing_position_id": anomalies.get("opened_missing_position_id"),
+        "broker_reject_missing_reason": anomalies.get("broker_reject_missing_reason"),
+        "source_tf_mismatch": _bool_or_none(anomalies.get("source_tf_mismatch")),
+        "invariant_fail_count": anomalies.get("invariant_fail_count"),
+        "blk_paused_count": anomalies.get("blk_paused_count"),
+        "verdict": cert.get("verdict"),
+        "fail_reasons": cert.get("fail_reasons"),
+        "warnings": cert.get("warnings"),
+    }
+
+
+def _cert_row_to_public(row: dict) -> dict:
+    def _jsonload(s):
+        if not s:
+            return None
+        try:
+            return json.loads(s)
+        except Exception:
+            return None
+    return {
+        "run_id": row["run_id"],
+        "config_fingerprint": row["config_fingerprint"],
+        "strategy": row["strategy"],
+        "selector": row["selector"],
+        "source_tf": row["source_tf"],
+        "entry_tf": row["entry_tf"],
+        "period_start": row["period_start"],
+        "period_end": row["period_end"],
+        "research_mode": bool(row["research_mode"]) if row["research_mode"] is not None else None,
+        "exit_mode": row["exit_mode"],
+        "leverage": row["leverage"],
+        "lot_mode": row["lot_mode"],
+        "fixed_lot": row["fixed_lot"],
+        "opt_in": _jsonload(row["opt_in"]),
+        "code_build": row["code_build"],
+        "git_commit": row["git_commit"],
+        "git_commit_provenance": row["git_commit_provenance"],
+        "broker_time_offset_h": row["broker_time_offset_h"],
+        "funnel": {
+            "generated": row["generated"], "blocked": row["blocked"],
+            "open_attempt": row["open_attempt"], "opened": row["opened"],
+            "broker_reject": row["broker_reject"],
+        },
+        "gate_reason_counts": _jsonload(row["gate_reason_counts"]) or {},
+        "anomalies": {
+            "opened_missing_position_id": row["opened_missing_position_id"],
+            "broker_reject_missing_reason": row["broker_reject_missing_reason"],
+            "source_tf_mismatch": (bool(row["source_tf_mismatch"])
+                                   if row["source_tf_mismatch"] is not None else None),
+            "invariant_fail_count": row["invariant_fail_count"],
+            "blk_paused_count": row["blk_paused_count"],
+        },
+        "verdict": row["verdict"],
+        "fail_reasons": row["fail_reasons"],
+        "warnings": row["warnings"],
+        "host_id": row["host_id"],
+        "source_file": row["source_file"],
+        "ingested_at": command_contract.iso_timestamp(row["ingested_at"]) if row["ingested_at"] else None,
+    }
+
+
+@app.post("/api/local_bridge/certificates/ingest")
+async def lb_certificates_ingest(request: Request, x_nexus_token: Optional[str] = Header(None)):
+    """Ingest idempotente di un Test Validity Certificate v2.
+
+    Chiamato dal LocalBridge worker (nexus_local_worker.py), che legge i file
+    scritti dall'EA in Common\\Files\\NEXUS\\certificates\\*.json e li spinge
+    qui cosi' come sono. Stessa auth/registrazione di /api/local_bridge/poll
+    (token + host_id gia' noto a bridge_hosts - non richiede enrolled=1
+    perche' qui non si esegue nulla sull'host, si riceve solo un file che
+    l'host ha gia' scritto in locale per conto proprio).
+
+    Idempotenza: run_id e' la PRIMARY KEY. Un run_id gia' presente NON viene
+    mai sovrascritto (un certificato e' un verdetto immutabile una volta
+    emesso) - un secondo ingest dello stesso run_id torna "already_ingested"
+    senza toccare la riga esistente. Nessun campo del certificato viene
+    validato/ricalcolato qui: verdict e funnel restano esattamente quelli
+    ricevuti (nessuna re-classificazione lato backend).
+    """
+    check_token(x_nexus_token)
+    data = await read_json_body(request)
+    host_id = str(data.get("host_id") or "").strip()
+    cert = data.get("certificate")
+    if not host_id:
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "message": "host_id mancante"})
+    if not isinstance(cert, dict) or not cert.get("run_id"):
+        raise HTTPException(status_code=422, detail={
+            "code": "VALIDATION_FAILED", "message": "certificate.run_id mancante"})
+    run_id = str(cert["run_id"])
+
+    with _conn() as c:
+        if not c.execute("SELECT 1 FROM bridge_hosts WHERE host_id=?", (host_id,)).fetchone():
+            raise HTTPException(status_code=403, detail="host not registered")
+        if c.execute("SELECT 1 FROM research_certificates WHERE run_id=?", (run_id,)).fetchone():
+            return {"ok": True, "status": "already_ingested", "run_id": run_id}
+        row = _cert_extract_row(cert)
+        row["raw_json"] = json.dumps(cert)
+        row["host_id"] = host_id
+        row["source_file"] = (str(data.get("source_file"))[:500]
+                              if data.get("source_file") else None)
+        row["ingested_at"] = now()
+        cols = list(row.keys())
+        c.execute(
+            f"INSERT INTO research_certificates ({','.join(cols)}) "
+            f"VALUES ({','.join('?' for _ in cols)})",
+            [row[k] for k in cols])
+
+    audit_log("research_certificate.ingested", actor=f"host:{host_id}", actor_type="machine",
+              decision="APPLIED",
+              detail={"run_id": run_id, "strategy": cert.get("strategy"),
+                      "selector": cert.get("selector"), "verdict": cert.get("verdict")})
+    return {"ok": True, "status": "ingested", "run_id": run_id}
+
+
+@app.get("/api/research/certificates")
+def research_certificates_list(user: str = Depends(require_user),
+                                strategy: Optional[str] = None,
+                                verdict: Optional[str] = None,
+                                limit: int = 100):
+    limit = max(1, min(int(limit), 500))
+    query = "SELECT * FROM research_certificates WHERE 1=1"
+    params: list = []
+    if strategy:
+        query += " AND strategy=?"
+        params.append(strategy)
+    if verdict:
+        query += " AND verdict=?"
+        params.append(verdict.upper())
+    query += " ORDER BY ingested_at DESC LIMIT ?"
+    params.append(limit)
+    with _conn() as c:
+        rows = [dict(r) for r in c.execute(query, params)]
+    return {"certificates": [_cert_row_to_public(r) for r in rows], "count": len(rows)}
+
+
+# NB: "/latest" DEVE restare registrato prima di "/{run_id}" - FastAPI/
+# Starlette risolvono le rotte nell'ordine di dichiarazione, non per
+# specificita': se "/{run_id}" venisse prima, una richiesta a "/latest"
+# la catturerebbe come run_id="latest".
+@app.get("/api/research/certificates/latest")
+def research_certificates_latest(user: str = Depends(require_user),
+                                  valid_only: bool = False,
+                                  strategy: Optional[str] = None):
+    query = "SELECT * FROM research_certificates WHERE 1=1"
+    params: list = []
+    if valid_only:
+        query += " AND verdict != 'FAIL'"
+    if strategy:
+        query += " AND strategy=?"
+        params.append(strategy)
+    query += " ORDER BY ingested_at DESC LIMIT 1"
+    with _conn() as c:
+        row = c.execute(query, params).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="no matching certificate")
+    return _cert_row_to_public(dict(row))
+
+
+@app.get("/api/research/certificates/{run_id}")
+def research_certificate_detail(run_id: str, user: str = Depends(require_user)):
+    with _conn() as c:
+        row = c.execute("SELECT * FROM research_certificates WHERE run_id=?",
+                        (run_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="certificate not found")
+    d = dict(row)
+    out = _cert_row_to_public(d)
+    out["raw"] = json.loads(d["raw_json"]) if d.get("raw_json") else None
+    return out
+
+
+@app.get("/api/research/certificates/{run_id}/funnel")
+def research_certificate_funnel(run_id: str, user: str = Depends(require_user)):
+    with _conn() as c:
+        row = c.execute(
+            "SELECT run_id, generated, blocked, open_attempt, opened, broker_reject, "
+            "gate_reason_counts, verdict FROM research_certificates WHERE run_id=?",
+            (run_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="certificate not found")
+    d = dict(row)
+    return {
+        "run_id": d["run_id"],
+        "funnel": {"generated": d["generated"], "blocked": d["blocked"],
+                   "open_attempt": d["open_attempt"], "opened": d["opened"],
+                   "broker_reject": d["broker_reject"]},
+        "gate_reason_counts": json.loads(d["gate_reason_counts"]) if d.get("gate_reason_counts") else {},
+        "verdict": d["verdict"],
+    }
 
 
 # ======================= DASHBOARD READ/WRITE (JWT) ====================== #
