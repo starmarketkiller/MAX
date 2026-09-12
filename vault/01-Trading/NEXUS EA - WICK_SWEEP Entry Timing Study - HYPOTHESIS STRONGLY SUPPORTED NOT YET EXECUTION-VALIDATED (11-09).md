@@ -1,8 +1,10 @@
 # WICK_SWEEP_REV — Entry Timing Study
 
-## STATO: WICK_SWEEP ENTRY TIMING STUDY — HYPOTHESIS STRONGLY SUPPORTED, NOT YET EXECUTION-VALIDATED
+## STATO (12/09): TICK-LEVEL VALIDATO, PARITÀ ESATTA RAGGIUNTA — DECISIONE A/B ANCORA DA PRENDERE
 
-Non implementato nulla nella strategia canonica. RECLAIM_TRIGGER resta un'ipotesi supportata da dati Python offline (M15) e da una prima corsa MQL5 SHADOW/RESEARCH (tick-level, in corso/da eseguire) — **non ancora una feature da portare in produzione**. Vedi sezione "Prossimi passi" per cosa serve prima di qualunque A/B Fast Structural.
+Aggiornamento 12/09: la validazione tick-level MQL5 SHADOW/RESEARCH ha raggiunto **parità esatta** (`shadow_sweeps=181 == canonical sweepsDetected=181`) dopo 3 iterazioni di fix (vedi sezione 6). Il report evento-per-evento completo è in sezione 7. **RECLAIM_TRIGGER resta un'ipotesi, ora validata sul campione reale — non ancora implementata come feature, non ancora testata in Fast Structural A/B.** La decisione se procedere con un A/B è esplicitamente rimandata all'utente (vedi sezione 8, "Decisione pendente").
+
+Non implementato nulla nella strategia canonica. RECLAIM_TRIGGER resta un'ipotesi supportata da dati Python offline (M15) e ora da una validazione tick-level MQL5 completa e a parità esatta — **non ancora una feature da portare in produzione**. Vedi sezione 8 per cosa serve prima di qualunque A/B Fast Structural.
 
 ---
 
@@ -101,16 +103,87 @@ Instrumentazione aggiuntiva **a impatto zero sul comportamento canonico**: campo
 
 Compilato 0 errori (2 warning preesistenti invariati). **Nessun ordine reale RECLAIM_TRIGGER è mai inviato da questo codice** — la strategia canonica continua a fare esattamente quello che faceva (IMMEDIATE_FADE reale), lo shadow gira in parallelo sugli stessi sweep osservati dal vivo.
 
-## Prossimi passi (nessuno eseguito ancora)
+## 6. Validazione tick-level MQL5 SHADOW/RESEARCH — cronologia dei fix (audit trail completo)
 
-1. Lanciare un test con `InpResearchWickShadow=true` sulla stessa finestra Fast Smoke (H4/GOLD/2026.06.01-08.26, stessi parametri) su Terminal3.
-2. Verificare `shadow_sweeps == sweepsDetected` (parità) — se FAIL, investigare PRIMA di guardare qualunque altro numero.
-3. Estrarre dal log: % reclaim/non-reclaim, distribuzione tempo al reclaim, penetrazione aggiuntiva pre-reclaim, virtual WR/PF/expectancy, MAE/MFE, BUY/SELL, prima/seconda metà del periodo.
-4. Costruire la matrice evento-per-evento BASELINE_IMMEDIATE vs SHADOW_RECLAIM_TRIGGER (via sweep_id + matching temporale con i log `[RESEARCH][OPEN]`/`[RESEARCH][EXIT]` reali), classificando ogni sweep come BASELINE_SL_AVOIDED / BASELINE_TP_PRESERVED / BASELINE_TP_LOST / BOTH_SL / BOTH_TP / RECLAIM_NOT_AVAILABLE.
-5. Identificare eventuali casi intrabar che il Python M15 aveva classificato erroneamente (ordine sweep→reclaim→SL/TP non risolvibile da OHLC M15).
-6. **Solo se il tick-level conferma un miglioramento significativo sullo stesso campione di sweep reali**: creare una variante sperimentale separata (`WICK_SWEEP_RECLAIM` o un research-only entry mode distinto), preservando IMMEDIATE_FADE come regression fixture — MAI sostituire la strategia canonica direttamente.
-7. Solo a quel punto: Fast Structural A/B.
+Tre run sono FALLITI sulla verifica di parità prima di raggiungere il PASS. **Nessuno dei tre è stato cancellato**: i log estratti (solo righe `[WICKSHADOW]`/`[RESEARCH][OPEN]`/`[RESEARCH][EXIT]`/`[WICKSWEEP][FUNNEL]`, isolate per finestra wall-clock del run specifico) sono committati in `server/research_scripts/`, ciascuno accanto al commit del fix corrispondente:
 
-**LIMIT_RETEST resta Candidate #2, non implementato.** Motivazione della priorità a RECLAIM_TRIGGER: campione molto più ampio (1684 vs 358 eventi disponibili sui 3 anni), sacrifica quasi zero TP (1.7% vs 80.3%), non introduce parametri nuovi (usa lo stesso trigger price già calcolato dalla strategia canonica), rischio di overfitting più basso.
+| Run | Risultato | File archiviato | Motivazione FAIL | Commit fix |
+|---|---|---|---|---|
+| 1 | shadow_sweeps=1100 vs canonical=182 | `wick_shadow_INVALID_run1_parity_fail_log_extract.txt` | **shadow one-shot mismatch**: mancava un gate one-shot per livello nello shadow — dopo un'uscita virtuale oltre soglia, il prezzo restava sopra/sotto il trigger e ogni tick generava un "nuovo" sweep sullo stesso livello, a cascata. | `d89c2e9` |
+| 2 | shadow_sweeps=258 vs canonical=182 | `wick_shadow_INVALID_run2_parity_fail_258vs182_log_extract.txt` | **shadow before New Bar gate**: lo shadow leggeva bid/ask ad OGNI tick, mentre il canonico (e con esso TUTTE le strategie del router) viene valutato una sola volta per barra `InpTFEntry`=M15 a causa del "New bar gate" globale in `OnTick()` — scoperta architetturale documentata separatamente in [[NEXUS - Global New-Bar Gate - Signal Sampling Audit (12-09)]]. | `9a31620` |
+| 3 | shadow_sweeps=213 vs canonical=182 | `wick_shadow_INVALID_run3_parity_fail_213vs182_log_extract.txt` | **shadow before canonical upstream gates**: l'hook shadow era posizionato PRIMA dei gate `paused/entryAllowed/license/protections/spread/news` in `OnTick()` — se uno di questi bloccava il tick, `NXS_CollectAllSignals()` (e quindi la strategia canonica) non veniva mai chiamata quella barra, ma lo shadow (eseguito prima) vedeva comunque lo sweep e lo tradava virtualmente: un evento shadow su una barra che il canonico non aveva mai effettivamente valutato. | `0550f4a` |
+| **4** | **shadow_sweeps=181 == canonical=181** | `wick_shadow_VALID_run4_parity_pass_181eq181_log_extract.txt` | **PASS** — hook riallineato subito prima di `NXS_CollectAllSignals()`, dopo TUTTI i gate a monte. | (nessun fix necessario) |
 
-**Non toccato**: SL/TP/parametri WICK, Structure/Reaction Engine, altre strategie.
+Ogni run è stato ri-eseguito con la STESSA finestra Fast Smoke, gli STESSI parametri (SL25/TP100/sweep35/MinWick15), la STESSA leva 1:500 — cambiava solo il codice dello shadow (mai la strategia canonica, mai SL/TP/parametri WICK).
+
+**Scoperta collegata marcata come requisito futuro** (per l'utente, non ancora implementata): ogni futuro shadow/diagnostic path deve dichiarare esplicitamente a quale punto esatto della pipeline OnTick() si aggancia (prima/dopo quali gate) — la causa del FAIL run 3 è stata proprio un hook che si agganciava a un punto diverso, non dichiarato, rispetto al percorso realmente eseguito dalla strategia canonica.
+
+## 7. Report evento-per-evento (run 4, parità esatta)
+
+**Verifica di parità estesa** (oltre al conteggio aggregato 181==181): è stato fatto un join esatto (stesso secondo, stesso prezzo, stesso side/dir) fra ogni evento `[WICKSHADOW][SWEEP]` e il corrispondente `[RESEARCH][OPEN]` reale. Risultato: **176/181 (97.2%) match esatti**. I restanti 5 sono stati investigati singolarmente e sono interamente spiegati da meccanismi noti, senza alcun impatto sul conteggio di parità:
+
+- **2 eventi (sweep_id 101, 153)**: lo shadow rileva il livello un bar M15 dopo il canonico. Causa: `_NXS_WickShadow_ProcessSide` processa una sola transizione di stato per lato per tick (o chiude il vecchio evento, o ne apre uno nuovo, mai entrambi), mentre il canonico ri-valuta la condizione di sweep sul livello appena sostituito nello STESSO tick — se il prezzo ha già superato la soglia al momento stesso della creazione del nuovo livello ("gap-through"), il canonico entra subito, lo shadow lo rileva un bar dopo. Puramente un artefatto di strumentazione dello shadow, zero effetto sulla strategia reale.
+- **3 eventi (sweep_id 45, 147, 180)**: contati da `sweepsDetected` ma mai arrivati a `NXS_WickSweep_OnExecuteResult` (né aperti né rifiutati — coerente con `entryRejected=0` sull'intero test e con `sweepsDetected(181) − entryOpened(178) = 3`). Causa isolata nel loop "PROFILI PER-STRATEGIA" di `NEXUS_EA_v2.mq5`: due gate (riga ~1341 `NXS_StrategyHasOpenPos`, riga ~1347 throttle "una decisione per barra del TF della strategia", quest'ultimo condiviso fra i lati alto/basso di WICK_SWEEP_REV perché chiavato solo sul nome strategia) stanno A MONTE dell'hook, quindi invisibili al funnel. Un diagnostico Print mirato è stato aggiunto in questi due punti (guardato su `stratName=="WICK_SWEEP_REV"`, zero impatto comportamentale) ma **non ancora compilato/eseguito** — non necessario per il report richiesto, dato che questi 3 eventi non hanno comunque un trade reale con cui confrontare l'esito virtuale (finiscono in `NO_BASELINE_ENTRY`, escluso dalle 6 categorie causali).
+
+Matrice completa (181 righe, tutti i campi richiesti: sweep_id/level_id/side/canonical_entry_time/canonical_entry_price/canonical_outcome/reclaim_available/reclaim_time/reclaim_delay_sec/reclaim_entry_price/virtual_outcome/virtual_MAE/virtual_MFE/max_penetration_before_reclaim/categoria) in `server/research_scripts/wick_reclaim_event_matrix.csv`, generata da `server/research_scripts/wick_reclaim_final_report.py`.
+
+### Classificazione causale (181 eventi)
+
+| Categoria | n | % |
+|---|---|---|
+| BASELINE_SL_AVOIDED | 35 | 19.3% |
+| BOTH_SL | 40 | 22.1% |
+| BASELINE_TP_PRESERVED (= BOTH_TP) | 21 | 11.6% |
+| BASELINE_TP_LOST | 0 | 0.0% |
+| RECLAIM_NOT_AVAILABLE | 82 | 45.3% |
+| NO_BASELINE_ENTRY (i 3 eventi di cui sopra, nessun trade reale da confrontare) | 3 | 1.7% |
+
+*Nota terminologica*: le etichette richieste `BASELINE_TP_PRESERVED` e `BOTH_TP` descrivono lo stesso esito (baseline TP, reclaim anche TP) — presentate come un'unica riga.
+
+### Destino dei 148 SL baseline
+
+| Esito sotto RECLAIM_TRIGGER | n | % dei 148 |
+|---|---|---|
+| NO TRADE (reclaim mai disponibile — il prezzo non è mai tornato al trigger prima che il livello fosse sostituito) | 73 | 49.3% |
+| Resta SL (BOTH_SL) | 40 | 27.0% |
+| Diventa TP (BASELINE_SL_AVOIDED) | 35 | 23.6% |
+
+### Destino dei 30 TP baseline
+
+| Esito sotto RECLAIM_TRIGGER | n | % dei 30 |
+|---|---|---|
+| Preservato (TP→TP) | 21 | 70.0% |
+| Perso per non-trade (reclaim mai disponibile) | 9 | 30.0% |
+| Cambia esito in SL (BASELINE_TP_LOST) | 0 | 0.0% |
+
+**Nessun TP baseline si trasforma in SL sotto RECLAIM_TRIGGER quando il reclaim è disponibile** — le mosse abbastanza forti da colpire TP nell'immediato restano vincenti anche aspettando la conferma del reclaim.
+
+### Metriche aggregate
+
+| Metrica | BASELINE (IMMEDIATE_FADE, reale) | RECLAIM_TRIGGER (virtuale, tick-level) |
+|---|---|---|
+| n | 178 | 98 (disponibilità 54.1% su 181 sweep) |
+| WR | 16.9% (30/178) | 59.2% (58/98) |
+| PF (pip, 25/100 fissi) | 0.81 | 5.80 |
+| Expectancy | -3.93 pip/trade | +48.98 pip/trade |
+
+- **Median MAE (reclaim)**: 0.00 pip — la maggioranza dei trade reclaim sono vincenti con drawdown iniziale nullo (il reclaim stesso funge da conferma, il movimento successivo è spesso immediato e favorevole).
+- **Median MFE (reclaim)**: 114.50 pip.
+- **Median reclaim delay**: 900 sec (15 min = 1 barra M15). Distribuzione: ≤15min 68 (69%), 15-30min 17 (17%), 30-60min 8 (8%), 1-2h 3 (3%), >2h 2 (2%) — la stragrande maggioranza del reclaim avviene già alla barra M15 successiva.
+- **BUY/SELL split (reclaim disponibile)**: BUY(low side) n=50 WR=64.0%; SELL(high side) n=48 WR=54.2% — leggero edge sul lato BUY, campione non enorme per concludere un'asimmetria strutturale.
+- **Prima metà vs seconda metà periodo**: 1a metà n=49 WR=63.3%; 2a metà n=49 WR=55.1% — leggero calo ma il miglioramento vs baseline (16.9%) resta ampio e stabile in entrambe le metà.
+- **Distribuzione penetrazione aggiuntiva pre-reclaim (pip)**: min 36.6, p25 63.1, mediana 86.4, p75 146.2, max 588.5. Bucket: ≤50pip 15, 50-100pip 42, 100-200pip 25, 200-500pip 14, >500pip 2 — la maggior parte dei reclaim avviene dopo una penetrazione aggiuntiva moderata (50-200 pip), coerente con MAE virtuale spesso nullo (il trade entra già vicino all'estremo del movimento).
+
+### Confronto quantitativo Python (offline M15) vs tick-level MQL5
+
+Lo studio Python offline (v2) aveva stimato **239 trigger** nella stessa finestra Fast Smoke, contro i **181** osservati sia dal funnel canonico originale sia — ora — dallo shadow tick-level a parità esatta. Con la parità MQL5-vs-MQL5 confermata **esatta** (181==181), il gap Python-vs-reale (58 eventi, +32%) è ORA interamente isolato al metodo Python, non a rumore residuo M15-vs-tick nel motore MQL5 stesso (quello è chiuso a zero). Causa più plausibile, quantificabile solo qualitativamente senza strumentare anche il Python con gli stessi gate: **il dataset Python valuta la soglia di sweep sugli estremi High/Low dell'intera barra M15 (OHLC), mentre il canonico/shadow MQL5 campiona bid/ask live SOLO all'istante del tick di cambio-barra M15** — un prezzo che tocca la soglia a metà barra e si ritira prima del prossimo cambio-barra è "visto" da Python (che guarda l'estremo della barra) ma MAI dal vivo (che guarda solo l'istante campionato). Questo é strutturalmente un sovraconteggio one-directional (Python ≥ reale, mai il contrario), coerente con il segno e l'ordine di grandezza del gap osservato (239 > 181, mai sotto). Non quantificato in modo esatto senza rifare il dataset Python con lo stesso campionamento a evento M15 (non fatto, fuori scope di questo report).
+
+## 8. Decisione pendente — NON presa unilateralmente
+
+Il miglioramento è ampio (WR 16.9%→59.2%, PF 0.81→5.80, expectancy da negativa a +49 pip/trade) ma disponibile solo sul 54.1% dei sweep — il 45.3% (82/181) non avrebbe mai generato un trade sotto RECLAIM_TRIGGER (reclaim mai avvenuto prima che il livello fosse sostituito). Dei 148 SL baseline, quasi metà (49.3%) semplicemente non sarebbero mai stati aperti; dei 30 TP baseline, il 30% sarebbe stato perso per lo stesso motivo. **Non è una sostituzione 1:1 della strategia, è un cambio di profilo: meno trade, ciascuno con probabilità di successo molto più alta.**
+
+Come da istruzione esplicita: **RECLAIM_TRIGGER non è stato implementato né come sostituzione né come variante sperimentale separata (`WICK_SWEEP_RECLAIM`)**. La decisione se procedere con un Fast Structural A/B (che richiederebbe implementare la variante come strategia isolata, preservando IMMEDIATE_FADE come regression fixture) spetta all'utente, sulla base di questo report.
+
+**LIMIT_RETEST resta Candidate #2, non implementato.**
+
+**Non toccato**: SL/TP/parametri WICK, Structure/Reaction Engine, New Bar Gate, altre strategie. Unica modifica di codice non ancora compilata/testata: due `Print` diagnostici zero-impatto in `NEXUS_EA_v2.mq5` (righe ~1341/~1347), lasciati non committati in attesa di decisione sull'utilità di una 5a run confermativa.
