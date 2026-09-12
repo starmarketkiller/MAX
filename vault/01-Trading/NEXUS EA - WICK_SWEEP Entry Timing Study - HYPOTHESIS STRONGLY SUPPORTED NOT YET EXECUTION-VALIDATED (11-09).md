@@ -1,6 +1,24 @@
 # WICK_SWEEP_REV — Entry Timing Study
 
-## STATO (12/09): PARITÀ ESATTA RAGGIUNTA — CORREZIONE METODOLOGICA SULLA CADENZA — WICK_SWEEP_RECLAIM PROMOSSA
+## STATO FINALE (12/09, chiusura): FILONE WICK_SWEEP_RECLAIM CHIUSO — IPOTESI REFUTATA
+
+**Chiusura definitiva del filone di ricerca RECLAIM_TRIGGER/WICK_SWEEP_RECLAIM.** Nessun altro test WICK, nessun tuning, nessuna nuova variante da questo momento. Riepilogo dello stato di ciascun elemento (dettaglio completo nelle sezioni sotto, non riscritto qui):
+
+| Elemento | Stato finale |
+|---|---|
+| `WICK_SWEEP_REV` (selector 54, IMMEDIATE_FADE) | **Baseline negativa** — WR 16.9%, PF 0.81, invariata, mai toccata in tutto questo filone |
+| `WICK_SWEEP_RECLAIM` (selector 55, M15-gated) | **Execution-valid ma senza edge** — parità causale con lo shadow raggiunta (coorte/timing identici), ma WR 48.21%/PF 0.78-0.80 reale: nessun miglioramento pratico sopravvive all'esecuzione reale |
+| `RECLAIM_TICK` (dopo ARM M15, follow-up tick-level, replay non implementato) | **Refutata** — WR 16.8%, PF 0.75 su replay tick-level reale (sezione 12), peggio della baseline già debole |
+| `RECLAIM_LIMIT_RETEST` (limit esatto al trigger dopo conferma M15) | **Refutata** — WR 14.4%, PF 0.67, disponibile solo sul 57.5% dei setup, converte quasi tutte le vincite reali in perdite |
+| PF 5.80 dello shadow (sezione 7) | **Non valido come stima di performance eseguibile** — descrive correttamente un fill idealizzato esattamente al trigger_price, mai ottenibile da un ordine di mercato reale (sezioni 9/11/12) |
+
+**Nessuna delle quattro varianti testate (REV, RECLAIM M15, RECLAIM_TICK, RECLAIM_LIMIT_RETEST) mostra un'economia utilizzabile.** Il filone si chiude qui. `WICK_SWEEP_RECLAIM` **non viene rimossa dal codice** — resta disponibile come strategia sperimentale/non-promossa (selector 55, `InpStrat_WickSweepReclaim=false` di default, zero impatto se spenta). Vedi sezione 13 per la Failure Memory estratta da questo filone e la sezione 14 per il candidate di backlog non implementato (`WICK_TICK_NATIVE`).
+
+---
+
+## Cronologia (stato storico, non riscritto — solo annotato)
+
+### STATO (12/09): PARITÀ ESATTA RAGGIUNTA — CORREZIONE METODOLOGICA SULLA CADENZA — WICK_SWEEP_RECLAIM PROMOSSA
 
 Aggiornamento 12/09 (sera): dopo aver deciso di promuovere RECLAIM_TRIGGER a variante sperimentale separata (`WICK_SWEEP_RECLAIM`), rileggendo `NEXUS_EA_v2.mq5` per implementarla è emerso che **il follow-up dello shadow NON era tick-level come descritto in questa nota e nel codice**: `NXS_WickShadow_OnTick()` (unico call site) e' chiamata DOPO il "New bar gate" globale (`if(iTime(g_sym,InpTFEntry,0)==g_lastBarTime) return;`), quindi tanto l'ARM quanto il monitoraggio reclaim/uscita giravano SOLO una volta per barra `InpTFEntry` (M15) — mai piu' spesso. Confermato empiricamente: **122/123 (99.2%) dei `reclaim_delay_sec` registrati nel run di parita' sono multipli esatti di 900 secondi** (l'unica eccezione, 902s, e' 2 secondi oltre un boundary — coerente con "il primo tick reale della barra e' arrivato con 2s di ritardo", non con un monitoraggio infra-barra).
 
@@ -423,3 +441,27 @@ ARM M15, reclaim confermato secondo la logica M15 attuale (riusato, non ricalcol
 ### File
 
 `server/research_scripts/wick_reclaim_tick_replay_modelA_modelB.py` (script, include la correzione UTC+3 documentata nel modulo), `wick_reclaim_modelA_tick.csv`, `wick_reclaim_modelB_limitretest.csv` (181 righe ciascuno, tutti i campi richiesti + `data_gap_suspect`/`gap_before_entry_sec`). I CSV grezzi dei tick Dukascopy (~16.5M righe) non sono committati per dimensione — riproducibili con `server/export_dukascopy_ticks_mt5.py` sullo stesso intervallo (2026-06-01→2026-08-30).
+
+## 13. Scoperta timezone — regola per ogni futuro replay esterno
+
+Documentata qui perché scoperta durante questo filone (sezione 12) ma **generale**, non specifica di WICK_SWEEP: riguarda chiunque combini dati MT5 con una fonte tick esterna.
+
+- **Timestamp MT5**: nel dataset verificato in questo filone (`run5_dataset.json`, generato dal Fast Smoke reale WICK_SWEEP_RECLAIM su Terminal3), i timestamp sono in **ora broker = UTC+3**, non UTC.
+- **Dukascopy**: la fonte tick esterna usata (`server/export_dukascopy_ticks_mt5.py`) restituisce timestamp in **UTC**.
+- **Offset verificato su prezzo/timestamp reale, non assunto**: il `trigger_price` dello sweep_id=7 (4427.26, armato alle 2026-06-03 16:45:00 ora broker secondo MT5) compare nel flusso tick Dukascopy alle **13:44:58 UTC** — esattamente 3h00m02s prima. Confermato su un secondo esempio indipendente (sweep_id=14, offset identico). Non è un'assunzione da manuale broker: è una misura diretta.
+- **Regola per il futuro**: ogni replay che combina timestamp MT5 con una fonte tick/candela esterna (Dukascopy o altro) **deve dichiarare esplicitamente il `broker_time_offset` usato e validarlo su almeno un esempio concreto prezzo↔timestamp** prima di fidarsi di qualunque risultato — esattamente come fatto qui. Senza questa verifica, il primo tentativo di questo stesso filone ha prodotto slippage "impossibili" (100-400+ pip) ed esiti TP con pnl negativo, entrambi matematicamente incoerenti ma non ovvi a uno sguardo superficiale del solo risultato aggregato.
+
+## 14. Failure Memory — pattern metodologici da questo filone
+
+Estratti come registro riutilizzabile per futura ricerca su NEXUS (non specifici di WICK_SWEEP). Vedi nota dedicata [[NEXUS - Failure Memory (Registro Pattern di Fallimento Metodologico) (12-09)]] per la versione completa e futura estensione con pattern da altri filoni.
+
+| Codice | Pattern | Dove trovato qui |
+|---|---|---|
+| `SHADOW_EXECUTION_ASSUMPTION` | Una simulazione "shadow"/virtuale che assume un fill idealizzato (es. esattamente al prezzo di trigger) non è una stima di performance eseguibile finché non validata contro un'esecuzione reale | Shadow PF 5.80 (sezione 7) — mai riproducibile da un ordine di mercato reale (sezioni 9/11/12) |
+| `TIMEZONE_MISMATCH` | Combinare timestamp da fonti diverse senza verificare/dichiarare l'offset produce risultati sistematicamente sbagliati che possono sembrare plausibili in aggregato | Vedi sezione 13 |
+| `DATA_COVERAGE_GAP` | Un fetch di dati esterni può avere buchi di copertura silenziosi e ampi (qui: ~53% delle ore feriali al primo tentativo, ~21% residuo dopo gap-fill) — vanno misurati e flaggati, mai assunti completi | Fetch Dukascopy, sezione 12 |
+| `CAUSAL_HOOK_MISMATCH` | Un hook diagnostico/shadow agganciato a un punto diverso della pipeline di esecuzione reale rispetto a quello che intende specchiare diverge, anche se la logica interna è identica | New Bar Gate / posizionamento hook shadow (vedi [[NEXUS - Global New-Bar Gate - Signal Sampling Audit (12-09)]] e la cronologia dei 3 fix di parità nella sezione 6 di questa nota) |
+
+## 15. Backlog — non implementato
+
+**`WICK_TICK_NATIVE`** — candidate per una strategia completamente nuova (non una variante di WICK_SWEEP_REV/RECLAIM): sia la detection dello sweep SIA il reclaim sarebbero tick-level nativi fin dall'origine (nessun'eredità dal disegno M15-gated attuale). Aggiunto in backlog su richiesta esplicita, **non implementato, non progettato oltre il nome e l'idea**. Nessuna relazione di codice con `WICK_SWEEP_REV` (selector 54) o `WICK_SWEEP_RECLAIM` (selector 55) — un'eventuale implementazione futura richiederebbe un selector e un'identità propri, e prima ancora una validazione shadow dedicata (stesso protocollo già rodato in questo filone: shadow → parità → Fast Smoke reale → counterfactual → replay tick → decisione), non un porting di codice esistente.
