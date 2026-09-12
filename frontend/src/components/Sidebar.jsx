@@ -14,41 +14,41 @@ function cls(...c) { return c.filter(Boolean).join(" "); }
 
 const SIDEBAR_GROUPS = [
   {
-    label: "Live Ops",
+    label: "Control",
     items: [
       { to: "/", label: "Overview", icon: LayoutDashboard },
       { to: "/chart", label: "Live Chart", icon: CandlestickChart },
       { to: "/risk", label: "Risk", icon: ShieldAlert },
       { to: "/local-bridge", label: "MT5 Bridge", icon: Cpu },
-      { to: "/calendar", label: "Calendar", icon: CalendarDays },
     ],
   },
   {
-    label: "Strategy Hub",
+    label: "Research",
     items: [
-      { to: "/strategies", label: "Strategies", icon: SlidersHorizontal },
+      { to: "/backtest", label: "Backtest", icon: FlaskConical },
       { to: "/optimizer", label: "Optimizer", icon: Gauge },
       { to: "/strategy-analytics", label: "Strat Diag", icon: Microscope },
-      { to: "/backtest", label: "Backtest", icon: FlaskConical },
+      { to: "/whatif", label: "What-if", icon: Sparkles },
       { to: "/chain", label: "Chain", icon: Link2 },
     ],
   },
   {
-    label: "Performance",
+    label: "Intelligence",
     items: [
+      { to: "/strategies", label: "Strategies", icon: SlidersHorizontal },
       { to: "/analytics", label: "Analytics", icon: LineChartIcon },
-      { to: "/journal", label: "Journal", icon: BookOpen },
-      { to: "/whatif", label: "What-if", icon: Sparkles },
-    ],
-  },
-  {
-    label: "Assistant",
-    items: [
       { to: "/coach", label: "AI Coach", icon: MessageSquare },
     ],
   },
   {
-    label: "Admin",
+    label: "Knowledge",
+    items: [
+      { to: "/journal", label: "Journal", icon: BookOpen },
+      { to: "/calendar", label: "Calendar", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "System",
     items: [
       { to: "/risk-calc", label: "Calculator", icon: Calculator },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
@@ -222,7 +222,7 @@ export default function Sidebar({ status, mobileOpen, setMobileOpen }) {
           <div>
             <div className="font-bold text-lg tracking-tight leading-none">NEXUS</div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mt-1.5">
-              EA Control Center
+              Quant Control Center
             </div>
           </div>
         </div>
