@@ -344,3 +344,82 @@ Il meccanismo trovato qui (SL/TP calcolati su un prezzo "teorico" di segnale che
 ### File
 
 `server/research_scripts/wick_reclaim_counterfactual_fill_anchored.py` (script), `wick_reclaim_counterfactual_fill_anchored.csv` (111 righe, tutti i campi richiesti: sweep_id/side/trigger_price/actual_fill/slippage/actual_SL/actual_TP/counterfactual_SL/counterfactual_TP/actual_outcome/counterfactual_outcome/actual_pnl_pips/counterfactual_pnl_pips/categoria).
+
+## 12. Replay tick-level: RECLAIM_TICK vs RECLAIM_LIMIT_RETEST sui 181 sweep canonici
+
+Richiesto per capire se l'edge shadow (a) non era semplicemente eseguibile, (b) è recuperabile con detection più veloce, o (c) è recuperabile aspettando un retest reale del trigger. Nessun nuovo ingresso reale, nessuna nuova detection/ARM — replay puro sugli stessi 181 sweep, stesso `trigger_price`/`level_id`/`side` già noti da `run5_dataset.json`.
+
+### Fonte dei tick e correzione critica trovata durante il lavoro
+
+Dato tick-level non ottenibile senza rilanciare MT5 (esplicitamente fuori scope) → usato il fetcher Dukascopy già esistente nel progetto (`server/export_dukascopy_ticks_mt5.py`, la stessa fonte usata dal motore Python "del sito"). Due problemi trovati e risolti prima di fidarsi di qualunque numero:
+
+1. **Buco di copertura Dukascopy (~53% delle ore feriali mancanti)** al primo fetch massivo (6 fetch paralleli × 12 connessioni ciascuno, quasi certamente rate-limit lato server). Gap-fill dedicato a bassa concorrenza (6 worker): recuperate 486/808 ore, **322/1521 ore feriali (21.2%) restano mancanti** anche dopo il retry. Aggiunto un flag `data_gap_suspect` (gap >20 min immediatamente prima del tick di ingresso trovato) — questi eventi sono **esclusi dalle statistiche aggregate**, non silenziosamente inclusi: 12/173 per MODEL A, 5/109 per MODEL B.
+2. **Bug di fuso orario (la scoperta più importante di questa fase)**: i timestamp MT5 in `run5_dataset.json` sono in ora broker, **UTC+3**, non UTC. Verificato direttamente sui tick (non assunto): il `trigger_price` dello sweep_id=7 (4427.26, armato 2026-06-03 16:45:00 ora broker) compare nel flusso tick Dukascopy (UTC) alle 13:44:58 — esattamente 3h00m02s prima. Senza questa correzione, ogni lookup tick per ogni sweep cadeva sulla finestra oraria SBAGLIATA di 3 ore, producendo "slippage" impossibili di 100-400+ pip e persino esiti TP con pnl negativo (matematicamente impossibile) nella prima passata dello script. Corretto applicando `-timedelta(hours=3)` a tutti i timestamp MT5 prima di ogni lookup tick.
+
+### MODEL A — RECLAIM_TICK
+
+Detection/ARM resta M15 (riusata). Dopo l'ARM, osservato ogni tick per il primo attraversamento di `trigger_price` in direzione di reclaim; `virtual_entry` = bid/ask realmente disponibile in quel tick (non il trigger teorico). SL/TP inizialmente ancorati al trigger (stessa baseline comparativa), scostamento reale registrato a parte.
+
+| Metrica | Valore |
+|---|---|
+| Availability (pulita, esclusi data_gap_suspect) | 161/181 (89.0%) |
+| N entries | 161 |
+| WR | 16.8% |
+| PF | 0.75 |
+| Expectancy | -5.52 pip |
+| Median MAE | 27.2 pip |
+| Median MFE | 16.5 pip |
+| Median entry delay | 0 sec (84% degli ingressi hanno delay=0-pochi secondi: il reclaim tick-level avviene spesso quasi subito dopo l'ARM, coerente con lo slippage enorme già osservato nel modello reale — vedi sezione 9/11) |
+| Max losing streak | 17 |
+| 1a metà periodo | n=80, WR=17.5% |
+| 2a metà periodo | n=81, WR=16.0% |
+| BUY | n=79, WR=22.8% |
+| SELL | n=82, WR=11.0% |
+
+### MODEL B — RECLAIM_LIMIT_RETEST
+
+ARM M15, reclaim confermato secondo la logica M15 attuale (riusato, non ricalcolato). Dopo la conferma, limit virtuale al trigger_price esatto — nessuna tolleranza arbitraria: entra SOLO se il tick stream tocca realmente quel prezzo (BUY: `ask<=trigger`; SELL: `bid>=trigger`, convenzione standard di fill lato opposto del libro).
+
+| Metrica | Valore |
+|---|---|
+| Availability (pulita) | 104/181 (57.5%) |
+| N entries | 104 |
+| WR | 14.4% |
+| PF | 0.67 |
+| Expectancy | -6.97 pip |
+| Median MAE | 25.6 pip |
+| Median MFE | 8.2 pip |
+| Median entry delay (da ARM) | 2735 sec (~46 min) |
+| Max losing streak | 16 |
+| 1a metà periodo | n=52, WR=15.4% |
+| 2a metà periodo | n=52, WR=13.5% |
+| BUY | n=58, WR=12.1% |
+| SELL | n=46, WR=17.4% |
+
+### Matrice vs BASELINE (WICK_SWEEP_RECLAIM reale, run5)
+
+| Categoria | MODEL A | MODEL B |
+|---|---|---|
+| BASELINE_LOSS → MODEL_WIN | 3 | 0 |
+| BASELINE_LOSS → NO_TRADE | 3 | 4 |
+| BASELINE_WIN → MODEL_WIN | 16 | 14 |
+| BASELINE_WIN → MODEL_LOSS | 28 | 28 |
+| BASELINE_WIN → NO_TRADE | 9 | 11 |
+| BOTH_LOSS | 52 | 54 |
+| BOTH_NO_TRADE | 8 | 62 |
+| NO_TRADE(baseline) → MODEL_SL | 54 | 7 |
+| NO_TRADE(baseline) → MODEL_TP | 8 | 1 |
+
+**Nessuno dei due modelli salva sistematicamente le perdite baseline** (solo 3 e 0 `BASELINE_LOSS→MODEL_WIN` su 148 SL reali) — anzi, entrambi **convertono molte vincite baseline in perdite** (28 `BASELINE_WIN→MODEL_LOSS` per entrambi, su appena 30 TP reali totali: quasi tutte le vincite reali diventano perdite sotto entrambi i modelli).
+
+### Risposta alle 3 domande dell'obiettivo
+
+1. **L'edge shadow era semplicemente non eseguibile?** In parte sì: nessuna delle due implementazioni realistiche (tick genuino, retest esatto) riproduce l'economia dello shadow (WR 59.2%/PF 5.80) — entrambe restano sotto PF 1.
+2. **Recuperabile con detection più veloce (MODEL A)?** No: PF 0.75, WR 16.8% — peggiore della baseline reale già debole (WR 47.7%/PF 0.78-0.80).
+3. **Recuperabile aspettando un retest reale (MODEL B)?** No, anzi peggio: PF 0.67, WR 14.4%, e disponibile solo sul 57.5% dei setup.
+
+**Nessuna variante è stata implementata.** Come da istruzione: solo replay comparativo, nessuna modifica a WICK_SWEEP_REV/RECLAIM, nessun Fast Structural.
+
+### File
+
+`server/research_scripts/wick_reclaim_tick_replay_modelA_modelB.py` (script, include la correzione UTC+3 documentata nel modulo), `wick_reclaim_modelA_tick.csv`, `wick_reclaim_modelB_limitretest.csv` (181 righe ciascuno, tutti i campi richiesti + `data_gap_suspect`/`gap_before_entry_sec`). I CSV grezzi dei tick Dukascopy (~16.5M righe) non sono committati per dimensione — riproducibili con `server/export_dukascopy_ticks_mt5.py` sullo stesso intervallo (2026-06-01→2026-08-30).
