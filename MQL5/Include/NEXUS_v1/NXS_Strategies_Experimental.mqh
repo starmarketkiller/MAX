@@ -60,9 +60,14 @@ struct SNxsWickSide {
    bool     consumed;          // trade REALMENTE aperto per questo livello (stato terminale)
    datetime lastAttemptBar;    // throttle: barra H4 dell'ultimo tentativo di apertura tentato
    int      attempts;          // quante volte NXS_TryExecuteRC e' stato chiamato per questo livello
+   long     id;                // 11/09 - identita' stabile del livello (vedi NXS_WickShadow sotto): SOLO
+                                // per instrumentazione/logging, non usata da nessuna decisione di trading -
+                                // incrementata a ogni sostituzione in _NXS_WickSweep_UpdateLevel, zero impatto
+                                // sul comportamento della strategia canonica.
 };
 SNxsWickSide g_wickHigh, g_wickLow;
 datetime     g_wickLastBar = 0;
+long         g_wickLevelIdCounter = 0;
 
 // Funnel completo richiesto dall'utente (10/09) per capire ESATTAMENTE dove
 // nella pipeline i segnali si perdono, invece di dedurlo indirettamente dai
@@ -102,6 +107,7 @@ void _NXS_WickSweep_UpdateLevel(){
       if(g_wickHigh.level > 0 && !g_wickHigh.consumed) g_wickFunnel.levelsReplacedUnused++;
       SNxsWickSide nl; ZeroMemory(nl);
       nl.level = h1; nl.createdAt = iTime(g_sym, PERIOD_H4, 1);
+      nl.id = ++g_wickLevelIdCounter;
       g_wickHigh = nl;
       g_wickFunnel.levelsCreated++;
    }
@@ -109,6 +115,7 @@ void _NXS_WickSweep_UpdateLevel(){
       if(g_wickLow.level > 0 && !g_wickLow.consumed) g_wickFunnel.levelsReplacedUnused++;
       SNxsWickSide nl; ZeroMemory(nl);
       nl.level = l1; nl.createdAt = iTime(g_sym, PERIOD_H4, 1);
+      nl.id = ++g_wickLevelIdCounter;
       g_wickLow = nl;
       g_wickFunnel.levelsCreated++;
    }
@@ -153,6 +160,167 @@ void NXS_WickSweep_PrintFunnel(){
                g_wickFunnel.entryRejected, g_wickFunnel.entryOpened, g_wickFunnel.buyOpened,
                g_wickFunnel.sellOpened, g_wickFunnel.levelsInvalidatedByPrice,
                g_wickFunnel.levelsReplacedUnused);
+}
+
+// === WICK SWEEP SHADOW/RESEARCH (11/09) =====================================
+// Richiesto dall'utente per validare RECLAIM_TRIGGER (emerso dallo studio
+// Python offline) a livello tick, PRIMA di introdurlo in qualunque forma nella
+// strategia canonica. Puramente osservazionale: NESSUN ordine reale viene
+// inviato da questo blocco - legge solo g_wickHigh/g_wickLow (gia' aggiornati
+// dalla logica canonica) e simula un trade VIRTUALE con SL/TP identici
+// (25/100 pip), nessun BE, nessun trailing, nessun filtro nuovo. Attivo SOLO
+// se InpResearchWickShadow=true (default false, zero impatto altrimenti) E
+// InpStrat_WickSweep=true (serve la logica canonica viva per avere livelli).
+//
+// Uno shadow event per lato alla volta (stessa semantica "un livello attivo"
+// della strategia reale) - se il livello viene sostituito da una nuova wick
+// prima che l'evento si risolva (reclaim + virtual trade chiuso), l'evento
+// viene abbandonato e loggato come tale, non forzato a una risoluzione
+// artificiale. Input InpResearchWickShadow dichiarato in NXS_Inputs.mqh.
+
+struct SNxsWickShadowEvent {
+   bool     active;
+   long     sweep_id;
+   long     level_id;
+   string   side;              // "HIGH" o "LOW"
+   int      dir;                // DIR_SELL (side=HIGH) o DIR_BUY (side=LOW) - direzione del fade
+   double   level_price;
+   double   trigger_price;
+   datetime sweep_time;
+   double   max_penetration_pips;   // aggiornato tick per tick, SOLO fino al reclaim del trigger (poi congelato)
+   bool     reclaimed_trigger;
+   datetime reclaim_trigger_time;
+   double   price_at_reclaim_trigger;
+   bool     reclaimed_level;
+   datetime reclaim_level_time;
+   bool     virtual_open;
+   double   virtual_entry_price;
+   datetime virtual_entry_time;
+   double   virtual_sl;
+   double   virtual_tp;
+   double   virtual_mae_pips;
+   double   virtual_mfe_pips;
+};
+SNxsWickShadowEvent g_wickShadowHigh, g_wickShadowLow;
+long g_wickShadowIdCounter = 0;
+long g_wickShadowSweepCount = 0;   // per il controllo di parita' richiesto: deve combaciare con g_wickFunnel.sweepsDetected
+
+void _NXS_WickShadow_ProcessSide(SNxsWickShadowEvent &sh, SNxsWickSide &side, string sideLabel, int fadeDir){
+   double pip       = 10.0 * g_profile.pipSize;
+   double sweepDist = InpWickSweep_SweepPips * pip;
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+   // stesso riferimento di prezzo usato dalla logica canonica per rilevare lo sweep
+   // (bid per il lato alto/SELL, ask per il lato basso/BUY - vedi NXS_Strat_WickSweepReversal)
+   double refPrice = (fadeDir == DIR_SELL) ? bid : ask;
+
+   if(!sh.active){
+      if(side.level <= 0) return;
+      bool swept = (fadeDir == DIR_SELL) ? (bid >= side.level + sweepDist) : (ask <= side.level - sweepDist);
+      if(!swept) return;
+      sh.active = true;
+      sh.sweep_id = ++g_wickShadowIdCounter;
+      g_wickShadowSweepCount++;
+      sh.level_id = side.id;
+      sh.side = sideLabel;
+      sh.dir = fadeDir;
+      sh.level_price = side.level;
+      sh.trigger_price = (fadeDir == DIR_SELL) ? side.level + sweepDist : side.level - sweepDist;
+      sh.sweep_time = TimeCurrent();
+      sh.max_penetration_pips = InpWickSweep_SweepPips;
+      sh.reclaimed_trigger = false; sh.reclaimed_level = false; sh.virtual_open = false;
+      PrintFormat("[WICKSHADOW][SWEEP] sweep_id=%d level_id=%d side=%s level=%.2f trigger=%.2f time=%s",
+                  sh.sweep_id, sh.level_id, sh.side, sh.level_price, sh.trigger_price,
+                  TimeToString(sh.sweep_time, TIME_DATE|TIME_SECONDS));
+      return;
+   }
+
+   // il livello osservato e' stato sostituito prima che l'evento si risolvesse - abbandona, non forzare
+   if(side.id != sh.level_id){
+      PrintFormat("[WICKSHADOW][ABANDONED] sweep_id=%d reason=level_replaced reclaimed_trigger=%s virtual_open=%s",
+                  sh.sweep_id, (sh.reclaimed_trigger?"true":"false"), (sh.virtual_open?"true":"false"));
+      sh.active = false;
+      return;
+   }
+
+   double breachPips = ((fadeDir == DIR_SELL) ? (refPrice - sh.level_price) : (sh.level_price - refPrice)) / pip;
+   if(!sh.reclaimed_trigger && breachPips > sh.max_penetration_pips) sh.max_penetration_pips = breachPips;
+
+   if(!sh.reclaimed_trigger){
+      bool backToTrigger = (fadeDir == DIR_SELL) ? (refPrice <= sh.trigger_price) : (refPrice >= sh.trigger_price);
+      if(backToTrigger){
+         sh.reclaimed_trigger = true;
+         sh.reclaim_trigger_time = TimeCurrent();
+         sh.price_at_reclaim_trigger = refPrice;
+         sh.virtual_open = true;
+         sh.virtual_entry_price = sh.trigger_price;
+         sh.virtual_entry_time = TimeCurrent();
+         double slDist = InpWickSweep_SLPips * pip;
+         double tpDist = InpWickSweep_TPPips * pip;
+         if(fadeDir == DIR_SELL){
+            sh.virtual_sl = sh.virtual_entry_price + slDist;
+            sh.virtual_tp = sh.virtual_entry_price - tpDist;
+         } else {
+            sh.virtual_sl = sh.virtual_entry_price - slDist;
+            sh.virtual_tp = sh.virtual_entry_price + tpDist;
+         }
+         sh.virtual_mae_pips = 0; sh.virtual_mfe_pips = 0;
+         PrintFormat("[WICKSHADOW][RECLAIM_TRIGGER] sweep_id=%d time=%s price=%.5f "
+                     "time_sweep_to_reclaim_sec=%d max_penetration_before_reclaim_pips=%.2f "
+                     "virtual_entry=%.5f virtual_sl=%.5f virtual_tp=%.5f",
+                     sh.sweep_id, TimeToString(sh.reclaim_trigger_time, TIME_DATE|TIME_SECONDS),
+                     sh.price_at_reclaim_trigger, (int)(sh.reclaim_trigger_time - sh.sweep_time),
+                     sh.max_penetration_pips, sh.virtual_entry_price, sh.virtual_sl, sh.virtual_tp);
+      }
+   }
+   if(!sh.reclaimed_level){
+      bool backToLevel = (fadeDir == DIR_SELL) ? (refPrice <= sh.level_price) : (refPrice >= sh.level_price);
+      if(backToLevel){
+         sh.reclaimed_level = true;
+         sh.reclaim_level_time = TimeCurrent();
+         PrintFormat("[WICKSHADOW][RECLAIM_LEVEL] sweep_id=%d time=%s time_sweep_to_reclaim_level_sec=%d",
+                     sh.sweep_id, TimeToString(sh.reclaim_level_time, TIME_DATE|TIME_SECONDS),
+                     (int)(sh.reclaim_level_time - sh.sweep_time));
+      }
+   }
+
+   if(sh.virtual_open){
+      double favorable = (fadeDir == DIR_SELL) ? (sh.virtual_entry_price - refPrice) : (refPrice - sh.virtual_entry_price);
+      double adverse   = (fadeDir == DIR_SELL) ? (refPrice - sh.virtual_entry_price) : (sh.virtual_entry_price - refPrice);
+      if(favorable / pip > sh.virtual_mfe_pips) sh.virtual_mfe_pips = favorable / pip;
+      if(adverse   / pip > sh.virtual_mae_pips) sh.virtual_mae_pips = adverse / pip;
+
+      bool hitSL = (fadeDir == DIR_SELL) ? (refPrice >= sh.virtual_sl) : (refPrice <= sh.virtual_sl);
+      bool hitTP = (fadeDir == DIR_SELL) ? (refPrice <= sh.virtual_tp) : (refPrice >= sh.virtual_tp);
+      if(hitSL || hitTP){
+         string outcome = hitSL ? "SL" : "TP";
+         PrintFormat("[WICKSHADOW][EXIT] sweep_id=%d outcome=%s exit_price=%.5f exit_time=%s "
+                     "virtual_MAE_pips=%.2f virtual_MFE_pips=%.2f hold_sec=%d",
+                     sh.sweep_id, outcome, refPrice, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
+                     sh.virtual_mae_pips, sh.virtual_mfe_pips, (int)(TimeCurrent() - sh.virtual_entry_time));
+         sh.virtual_open = false;
+         sh.active = false;
+      }
+   }
+}
+
+// Chiamata da OnTick() in NEXUS_EA_v2.mq5, guardata da InpResearchWickShadow.
+// Richiama _NXS_WickSweep_UpdateLevel() (idempotente per barra H4, nessun
+// effetto collaterale) per garantire che g_wickHigh/g_wickLow siano aggiornati
+// anche se questa funzione viene chiamata prima della strategia canonica nello
+// stesso tick.
+void NXS_WickShadow_OnTick(){
+   if(!InpResearchWickShadow || !InpStrat_WickSweep) return;
+   _NXS_WickSweep_UpdateLevel();
+   _NXS_WickShadow_ProcessSide(g_wickShadowHigh, g_wickHigh, "HIGH", DIR_SELL);
+   _NXS_WickShadow_ProcessSide(g_wickShadowLow,  g_wickLow,  "LOW",  DIR_BUY);
+}
+
+void NXS_WickShadow_PrintSummary(){
+   if(!InpResearchWickShadow) return;
+   PrintFormat("[WICKSHADOW][SUMMARY] shadow_sweeps=%d canonical_sweepsDetected=%d parity=%s",
+               g_wickShadowSweepCount, g_wickFunnel.sweepsDetected,
+               (g_wickShadowSweepCount == g_wickFunnel.sweepsDetected ? "PASS" : "FAIL"));
 }
 
 SNXSSignal NXS_Strat_WickSweepReversal(){

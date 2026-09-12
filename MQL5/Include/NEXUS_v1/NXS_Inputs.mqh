@@ -1116,5 +1116,13 @@ input double   InpWickSweep_MinWickPips    = 15.0;   // wick minima per registra
 input double   InpWickSweep_SweepPips      = 35.0;   // sfondamento richiesto prima di entrare (utente: 30-40)
 input double   InpWickSweep_SLPips         = 25.0;   // stop loss fisso (utente: 20-30)
 input double   InpWickSweep_TPPips         = 100.0;  // take profit fisso (utente: almeno 100)
+// 11/09 - modalita' SHADOW/RESEARCH tick-level per validare RECLAIM_TRIGGER
+// (emerso dallo studio Python offline) PRIMA di introdurlo nella strategia
+// canonica. Puramente osservazionale: NESSUN ordine reale inviato da questo
+// blocco (vedi NXS_WickShadow_OnTick, NXS_Strategies_Experimental.mqh) -
+// stessi SL/TP/no-BE/no-trailing della strategia canonica, solo il timing di
+// ingresso simulato cambia. Default OFF, zero impatto sul comportamento
+// normale/live quando spento.
+input bool     InpResearchWickShadow       = false;
 
 #endif

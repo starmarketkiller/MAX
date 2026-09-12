@@ -824,6 +824,7 @@ void OnDeinit(const int reason){
    NXS_HandlePool_Release();   // v2.0.9 Sprint 1
    if(InpShowDashboard) NXS_Dashboard_Cleanup();
    if(InpStrat_WickSweep) NXS_WickSweep_PrintFunnel();   // 10/09 - funnel completo a fine test
+   NXS_WickShadow_PrintSummary();   // 11/09 - no-op se InpResearchWickShadow=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
@@ -1028,6 +1029,7 @@ void OnTick(){
    if(!NXS_IsResearchMode() || InpResearchUseRuin) NXS_Ruin_OnTick();
    NXS_Prot_OnTick();
    if(!NXS_UpdateIndicators()) return;
+   NXS_WickShadow_OnTick();   // 11/09 - no-op se InpResearchWickShadow=false, nessun ordine reale
 
    g_regime  = NXS_DetectRegime();
    g_session = NXS_GetSession();
