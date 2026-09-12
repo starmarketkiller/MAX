@@ -1029,7 +1029,6 @@ void OnTick(){
    if(!NXS_IsResearchMode() || InpResearchUseRuin) NXS_Ruin_OnTick();
    NXS_Prot_OnTick();
    if(!NXS_UpdateIndicators()) return;
-   NXS_WickShadow_OnTick();   // 11/09 - no-op se InpResearchWickShadow=false, nessun ordine reale
 
    g_regime  = NXS_DetectRegime();
    g_session = NXS_GetSession();
@@ -1143,6 +1142,16 @@ void OnTick(){
    if(NXS_NewsBlocking()){ NXS_Blk_Bump(BLK_NEWS); NXS_Blk_MaybeReport(); return; }
 
    NXS_ML_RefreshAll();
+
+   // 12/09 - spostato qui (era subito dopo NXS_UpdateIndicators, PRIMA del
+   // New bar gate e di paused/entryAllowed/license/protections/spread/news):
+   // la prima posizione faceva scattare falsi "sweep shadow" su bar dove il
+   // canonico non arriva MAI a valutare NXS_CollectAllSignals perche' uno di
+   // questi gate blocca prima - lo shadow vedeva il sweep, il canonico no,
+   // parity FAIL (213 vs 182). Qui l'hook gira SOLO se il canonico ha
+   // davvero superato tutti gli stessi gate su questa barra InpTFEntry -
+   // stesso identico "momento di valutazione reale" della strategia.
+   NXS_WickShadow_OnTick();
 
    // ---- Phase 2 router with fallback ----
    SNXSSweepExt swExt = NXS_DetectSweepExt();
