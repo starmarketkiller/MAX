@@ -17,7 +17,7 @@ import LockedProfileBanner from "@/components/LockedProfileBanner";
 import { DEFAULT_SETTINGS } from "@/contracts/settingsContract";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 import {
-  Card, KpiCard, Pill, SectionHeader,
+  Card, Pill, SectionHeader,
   cls, fmtMoney, fmtSign, fmtPct, fmtPrice,
   POS_TEXT, NEG_TEXT,
   pnlTone, pnlTextClass, biasTone, velocityTone, bspTone, trendTone,
@@ -42,6 +42,111 @@ function reactionContainerTone(detected, isBull) {
   if (!detected) return "bg-secondary/40 border-border";
   if (isBull)    return "bg-emerald-500/10 border-emerald-500/30";
   return "bg-rose-500/10 border-rose-500/30";
+}
+
+const hasValue = (value) => value !== null && value !== undefined && value !== "";
+const terminalValue = (value, formatter = (item) => String(item)) => hasValue(value) ? formatter(value) : "—";
+const moneyValue = (value, signed = false) => terminalValue(value, (item) => signed ? fmtSign(item) : fmtMoney(item));
+
+function SourceBadge({ status, health }) {
+  let label = null;
+  let toneClass = "border-border text-muted-foreground";
+  if (health?.demo === true || status?.demo === true) {
+    label = "DEMO";
+    toneClass = "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400";
+  } else if (status?.online === true || health?.online === true) {
+    label = "LIVE";
+    toneClass = "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
+  } else if (status || health) {
+    label = "CACHED";
+    toneClass = "border-cyan-500/25 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300";
+  }
+  return label ? <span className={cls("rounded-full border px-2 py-1 font-mono text-[9px] font-bold tracking-wider", toneClass)}>{label}</span> : null;
+}
+
+function SystemStatusStrip({ status, health }) {
+  const eaState = status?.eaPaused === true
+    ? "PAUSED"
+    : status?.online === true || health?.online === true
+      ? "RUNNING"
+      : status?.online === false || health?.online === false
+        ? "OFFLINE"
+        : null;
+  const age = hasValue(health?.last_update_sec)
+    ? `${Math.max(0, Math.round(Number(health.last_update_sec)))}s ago`
+    : hasValue(status?._updated_ago)
+      ? `${Math.max(0, Math.round(Number(status._updated_ago)))}s ago`
+      : null;
+  const fields = [
+    ["EA", eaState], ["MT5 Bridge", status?.bridgeState], ["Symbol", status?.symbol],
+    ["Session", status?.session], ["Regime", status?.regime], ["Updated", age],
+  ];
+
+  return (
+    <Card className="p-3 sm:p-4" testId="system-status-strip">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2"><Radio size={14} className="text-cyan-400" /><span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">System status</span></div>
+        <SourceBadge status={status} health={health} />
+      </div>
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3 xl:grid-cols-6">
+        {fields.map(([label, value]) => (
+          <div key={label} className="min-w-0 bg-background/90 px-3 py-2.5">
+            <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+            <div className="mt-1 truncate font-mono text-xs font-semibold text-foreground" title={hasValue(value) ? String(value) : "Unavailable"}>{terminalValue(value)}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function CompactMetric({ label, value, tone = "neutral", icon: Icon }) {
+  const toneClass = tone === "positive" ? "text-emerald-600 dark:text-emerald-400" : tone === "negative" ? "text-rose-600 dark:text-rose-400" : tone === "warning" ? "text-amber-600 dark:text-amber-400" : "text-foreground";
+  return (
+    <Card className="min-w-0 p-3.5">
+      <div className="flex items-center justify-between gap-2"><span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</span>{Icon ? <Icon size={13} className="shrink-0 text-muted-foreground" /> : null}</div>
+      <div className={cls("mt-2 truncate font-mono text-lg font-semibold tracking-tight", toneClass)} title={value === "—" ? "Unavailable" : value}>{value}</div>
+    </Card>
+  );
+}
+
+function CoreMetrics({ status }) {
+  const signedTone = (value) => !hasValue(value) ? "neutral" : Number(value) < 0 ? "negative" : Number(value) > 0 ? "positive" : "neutral";
+  return (
+    <section>
+      <SectionHeader title="Core metrics" subtitle="Live account state" />
+      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-6">
+        <CompactMetric label="Equity" value={moneyValue(status?.equity)} icon={TrendingUp} />
+        <CompactMetric label="Balance" value={moneyValue(status?.balance)} icon={Gauge} />
+        <CompactMetric label="Floating PnL" value={moneyValue(status?.floatPnL, true)} tone={signedTone(status?.floatPnL)} icon={Waves} />
+        <CompactMetric label="Daily PnL" value={moneyValue(status?.dailyPnL, true)} tone={signedTone(status?.dailyPnL)} icon={Activity} />
+        <CompactMetric label="Drawdown" value={terminalValue(status?.drawdownPct, fmtPct)} tone={hasValue(status?.drawdownPct) && Number(status.drawdownPct) > 0 ? "warning" : "neutral"} icon={ShieldAlert} />
+        <CompactMetric label="Trades today" value={terminalValue(status?.tradesToday)} icon={Target} />
+      </div>
+    </section>
+  );
+}
+
+function ExecutionPipeline({ status }) {
+  const reactionAvailable = typeof status?.reactionDetected === "boolean";
+  const positionsAvailable = Array.isArray(status?.positions);
+  const gateState = status?.eaPaused === true ? "EA paused" : status?.newsBlock === true ? "News guard active" : null;
+  const steps = [
+    ["SCAN", "Telemetry unavailable"],
+    ["SIGNAL", reactionAvailable ? (status.reactionDetected ? "Reaction detected" : "No active reaction") : "Telemetry unavailable"],
+    ["GATE", gateState || "Telemetry unavailable"],
+    ["EXECUTE", "Telemetry unavailable"],
+    ["POSITION", positionsAvailable ? `${status.positions.length} active` : "Telemetry unavailable"],
+    ["EXIT", "Telemetry unavailable"],
+  ];
+  return (
+    <section>
+      <SectionHeader title="Execution pipeline" subtitle="SCAN → SIGNAL → GATE → EXECUTE → POSITION → EXIT" />
+      <Card className="p-3 sm:p-4"><div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+        {steps.map(([name, detail], index) => <div key={name} className="min-w-0 rounded-lg border border-border bg-secondary/30 px-3 py-3"><div className="flex items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">{String(index + 1).padStart(2, "0")}</span><span className="font-mono text-[10px] font-bold tracking-[0.12em] text-primary">{name}</span></div><div className="mt-2 min-h-8 text-[10px] leading-4 text-muted-foreground">{detail}</div></div>)}
+      </div></Card>
+    </section>
+  );
 }
 
 // ========================================================================
@@ -71,7 +176,7 @@ function CommandCenter({ status, onCmd }) {
         <div className="text-xs text-muted-foreground md:text-right">
           <div>Bridge poll every 1s</div>
           <div className="font-mono mt-0.5">
-            {status?.symbol || "—"} · {status?.tradesToday ?? 0} trades today
+            {status?.symbol || "—"} · {terminalValue(status?.tradesToday)} trades today
           </div>
         </div>
       </div>
@@ -141,8 +246,11 @@ function CommandCenter({ status, onCmd }) {
 // MARKET / STRUCTURE / REACTION
 // ========================================================================
 function MarketIntelligence({ status }) {
+  const newsKnown = typeof status?.newsBlock === "boolean";
+  const eslKnown = typeof status?.eslHit === "boolean";
+  const dptKnown = typeof status?.dptHit === "boolean";
   return (
-    <Card className="p-6 lg:p-8" testId="market-intelligence">
+    <Card className="p-4" testId="market-intelligence">
       <SectionHeader
         eyebrow="Market intelligence"
         title="Live read on regime + flow"
@@ -158,18 +266,18 @@ function MarketIntelligence({ status }) {
               tone={status?.amdPhase && status.amdPhase !== "NONE" ? "info" : "neutral"} icon={Waves} />
         <Pill label="BSP" value={status?.bspPct != null ? `${Number(status.bspPct).toFixed(0)}%` : "—"}
               tone={bspTone(status?.bspPct)} icon={Gauge} />
-        <Pill label="News" value={status?.newsBlock ? "BLOCK" : "OPEN"}
-              tone={status?.newsBlock ? "neg" : "pos"} icon={Newspaper} />
+        <Pill label="News" value={!newsKnown ? "—" : status.newsBlock ? "BLOCK" : "OPEN"}
+              tone={!newsKnown ? "neutral" : status.newsBlock ? "neg" : "pos"} icon={Newspaper} />
         <Pill label="Vol regime" value={status?.volRegime || "—"}
               tone={volRegimeTone(status?.volRegime)}
               icon={Waves} />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-3" data-testid="protection-pills">
-        <Pill label="ESL" value={status?.eslHit ? "HIT" : "OK"}
-              tone={status?.eslHit ? "neg" : "pos"} icon={ShieldAlert} />
-        <Pill label="DPT" value={status?.dptHit ? "HIT" : "OK"}
-              tone={status?.dptHit ? "warn" : "pos"} icon={Target} />
+        <Pill label="ESL" value={!eslKnown ? "—" : status.eslHit ? "HIT" : "OK"}
+              tone={!eslKnown ? "neutral" : status.eslHit ? "neg" : "pos"} icon={ShieldAlert} />
+        <Pill label="DPT" value={!dptKnown ? "—" : status.dptHit ? "HIT" : "OK"}
+              tone={!dptKnown ? "neutral" : status.dptHit ? "warn" : "pos"} icon={Target} />
         <Pill label="Auto-close" value={status?.autoClosePending ? "PENDING" : "—"}
               tone={status?.autoClosePending ? "warn" : "neutral"} icon={Clock} />
         <Pill label="Float %" value={status?.floatPnLPct != null ? `${Number(status.floatPnLPct).toFixed(2)}%` : "—"}
@@ -184,12 +292,12 @@ function StructureSection({ status }) {
   const bos = bosLabel(status);
   const choch = chochLabel(status);
   return (
-    <Card className="p-6 lg:p-8" testId="structure-section">
+    <Card className="p-4" testId="structure-section">
       <SectionHeader
         eyebrow="Structure engine"
         title="BOS · CHOCH · swings · OB · FVG"
         icon={GitBranch}
-        right={<span className="font-mono">{status?.activeLevels ?? 0} active levels</span>}
+        right={<span className="font-mono">{terminalValue(status?.activeLevels)} active levels</span>}
       />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
         <Pill label="Trend" value={trend || "—"} tone={trendTone(trend)} />
@@ -197,7 +305,7 @@ function StructureSection({ status }) {
         <Pill label="CHOCH" value={choch} tone={status?.chochUp || status?.chochDown ? "warn" : "neutral"} />
         <Pill label="Swing H" value={status?.lastSwingHigh ? fmtPrice(status.lastSwingHigh) : "—"} />
         <Pill label="Swing L" value={status?.lastSwingLow ? fmtPrice(status.lastSwingLow) : "—"} />
-        <Pill label="Levels" value={status?.activeLevels ?? 0} />
+        <Pill label="Levels" value={terminalValue(status?.activeLevels)} />
       </div>
     </Card>
   );
@@ -205,13 +313,14 @@ function StructureSection({ status }) {
 
 function ReactionSection({ status }) {
   const r = status;
-  const detected = !!r?.reactionDetected;
+  const detectionKnown = typeof r?.reactionDetected === "boolean";
+  const detected = r?.reactionDetected === true;
   const dir = r?.reactionDir;
-  const quality = r?.reactionQuality ?? 0;
+  const quality = r?.reactionQuality;
   const isBull = dir === 1;
   const containerTone = reactionContainerTone(detected, isBull);
   return (
-    <Card className="p-6 lg:p-8" testId="reaction-section">
+    <Card className="p-4" testId="reaction-section">
       <SectionHeader
         eyebrow="Reaction engine"
         title={`Trigger source · ${LIVE_STRATEGY_COUNT} strategies`}
@@ -239,16 +348,18 @@ function ReactionSection({ status }) {
                 "font-mono font-bold text-4xl tabular leading-none mt-1",
                 qualityToneClass(quality)
               )}>
-                {Math.round(quality)}
-                <span className="text-base font-medium opacity-50">/100</span>
+                {hasValue(quality) ? Math.round(quality) : "—"}
+                {hasValue(quality) ? <span className="text-base font-medium opacity-50">/100</span> : null}
               </div>
             </div>
           </div>
-        ) : (
+        ) : detectionKnown ? (
           <div className="text-sm text-muted-foreground flex items-center gap-2 py-2">
             <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
-            No reaction at current price. Scanning {r?.activeLevels ?? 0} levels…
+            No reaction at current price. Scanning {terminalValue(r?.activeLevels)} levels…
           </div>
+        ) : (
+          <div className="text-sm text-muted-foreground py-2">Reaction telemetry unavailable</div>
         )}
       </div>
     </Card>
@@ -259,8 +370,11 @@ function ReactionSection({ status }) {
 // POSITIONS
 // ========================================================================
 function PositionsSection({ status, onClosePosition, onPartialClose }) {
-  const positions = status?.positions || [];
-  const totalPnl = positions.reduce((a, p) => a + (p.pnl || 0), 0);
+  const positionsAvailable = Array.isArray(status?.positions);
+  const positions = positionsAvailable ? status.positions : [];
+  const totalPnl = positionsAvailable && positions.every((position) => hasValue(position.pnl))
+    ? positions.reduce((sum, position) => sum + Number(position.pnl), 0)
+    : null;
 
   return (
     <Card testId="positions-panel">
@@ -270,10 +384,10 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
             <Activity className="h-3.5 w-3.5" /> Open positions
           </div>
           <h3 className="font-semibold text-lg tracking-tight mt-1">
-            {positions.length} active
+            {positionsAvailable ? positions.length : "—"} active
             <span className="font-normal text-muted-foreground ml-2">· floating</span>{" "}
-            <span className={cls("ml-1 font-mono", pnlTextClass(totalPnl))}>
-              ${fmtSign(totalPnl)}
+            <span className={cls("ml-1 font-mono", hasValue(totalPnl) ? pnlTextClass(totalPnl) : "text-muted-foreground")}>
+              {hasValue(totalPnl) ? `$${fmtSign(totalPnl)}` : "—"}
             </span>
           </h3>
         </div>
@@ -297,8 +411,8 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
             {positions.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-6 py-16 text-center text-muted-foreground">
-                  <div className="font-semibold text-base text-foreground">No open positions</div>
-                  <div className="text-xs mt-1.5">The EA opens trades when a strategy score ≥ session threshold</div>
+                  <div className="font-semibold text-base text-foreground">{positionsAvailable ? "No open positions" : "Positions unavailable"}</div>
+                  <div className="text-xs mt-1.5">{positionsAvailable ? "The EA opens trades when a strategy score ≥ session threshold" : "Waiting for position data from the EA"}</div>
                 </td>
               </tr>
             ) : positions.map((p) => (
@@ -319,7 +433,7 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
                     {p.side}
                   </span>
                 </td>
-                <td className="px-3 py-4 text-right font-mono">{p.lots?.toFixed(2)}</td>
+                <td className="px-3 py-4 text-right font-mono">{hasValue(p.lots) ? Number(p.lots).toFixed(2) : "—"}</td>
                 <td className="px-3 py-4 text-right font-mono text-xs">
                   <div>{fmtPrice(p.openPrice)}</div>
                   <div className="text-muted-foreground">→ {fmtPrice(p.currentPrice)}</div>
@@ -330,8 +444,8 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
                 </td>
                 <td className="px-3 py-4 text-xs text-muted-foreground font-mono">{p.strategy || "—"}</td>
                 <td className={cls("px-3 py-4 text-right font-mono font-bold",
-                  pnlTextClass(p.pnl))}>
-                  {(p.pnl ?? 0) >= 0 ? "+" : ""}${fmtMoney(p.pnl)}
+                  hasValue(p.pnl) ? pnlTextClass(p.pnl) : "text-muted-foreground")}>
+                  {hasValue(p.pnl) ? `${Number(p.pnl) >= 0 ? "+" : ""}$${fmtMoney(p.pnl)}` : "—"}
                 </td>
                 <td className="px-6 lg:px-8 py-4 text-right">
                   <div className="inline-flex gap-1.5">
@@ -374,9 +488,9 @@ function EquityChartSection({ status, history }) {
     }));
   }, [history]);
 
-  const fpnl = status?.floatPnL ?? 0;
-  const dpnl = status?.dailyPnL ?? 0;
-  const dd = status?.drawdownPct ?? 0;
+  const fpnl = status?.floatPnL;
+  const dpnl = status?.dailyPnL;
+  const dd = status?.drawdownPct;
 
   const colors = CHART_COLORS[theme] || CHART_COLORS.dark;
   const tooltipStyle = useMemo(() => ({
@@ -402,20 +516,20 @@ function EquityChartSection({ status, history }) {
         <div className="flex gap-6 text-right">
           <div>
             <div className="eyebrow">Float</div>
-            <div className={cls("font-mono font-bold text-base tabular mt-1", pnlTextClass(fpnl))}>
-              ${fmtSign(fpnl)}
+            <div className={cls("font-mono font-bold text-base tabular mt-1", hasValue(fpnl) ? pnlTextClass(fpnl) : "text-muted-foreground")}>
+              {hasValue(fpnl) ? `$${fmtSign(fpnl)}` : "—"}
             </div>
           </div>
           <div>
             <div className="eyebrow">Daily</div>
-            <div className={cls("font-mono font-bold text-base tabular mt-1", pnlTextClass(dpnl))}>
-              ${fmtSign(dpnl)}
+            <div className={cls("font-mono font-bold text-base tabular mt-1", hasValue(dpnl) ? pnlTextClass(dpnl) : "text-muted-foreground")}>
+              {hasValue(dpnl) ? `$${fmtSign(dpnl)}` : "—"}
             </div>
           </div>
           <div>
             <div className="eyebrow">DD</div>
-            <div className={cls("font-mono font-bold text-base tabular mt-1", dd >= 3 ? NEG_TEXT : "text-foreground")}>
-              {fmtPct(dd)}
+            <div className={cls("font-mono font-bold text-base tabular mt-1", hasValue(dd) && Number(dd) >= 3 ? NEG_TEXT : "text-foreground")}>
+              {terminalValue(dd, fmtPct)}
             </div>
           </div>
         </div>
@@ -603,12 +717,15 @@ function checkVelocity(status, reactDir, wantBuy, wantSell) {
   return {
     name: "Velocity",
     ok,
-    detail: `Velocity=${v || "NEUTRAL"}`,
+    detail: `Velocity=${v || "—"}`,
     hint: v === "NEUTRAL" ? "ZLEMA slope inside ±0.5×ATR band — no momentum confirmation" : null,
   };
 }
 
 function checkNews(status) {
+  if (typeof status.newsBlock !== "boolean") {
+    return { name: "News filter", ok: null, detail: "Unavailable", hint: null };
+  }
   return {
     name: "News filter",
     ok: !status.newsBlock,
@@ -618,6 +735,9 @@ function checkNews(status) {
 }
 
 function checkPaused(status) {
+  if (typeof status.eaPaused !== "boolean") {
+    return { name: "EA paused", ok: null, detail: "Unavailable", hint: null };
+  }
   return {
     name: "EA paused",
     ok: !status.eaPaused,
@@ -627,25 +747,24 @@ function checkPaused(status) {
 }
 
 function checkConcurrent(status, settings) {
-  const cur = status.positions?.length ?? 0;
+  const cur = Array.isArray(status.positions) ? status.positions.length : null;
   const max = settings?.MaxConcurrent ?? DEFAULT_SETTINGS.MaxConcurrent;
-  return { name: "Max concurrent", ok: cur < max, detail: `${cur} / ${max}`, hint: null };
+  return { name: "Max concurrent", ok: hasValue(cur) ? cur < max : null, detail: `${terminalValue(cur)} / ${max}`, hint: null };
 }
 
 function checkDailyTrades(status, settings) {
-  const cur = status.tradesToday ?? 0;
+  const cur = status.tradesToday;
   const max = settings?.MaxTradesPerDay ?? DEFAULT_SETTINGS.MaxTradesPerDay;
-  return { name: "Daily trades", ok: cur < max, detail: `${cur} / ${max}`, hint: null };
+  return { name: "Daily trades", ok: hasValue(cur) ? cur < max : null, detail: `${terminalValue(cur)} / ${max}`, hint: null };
 }
 
 function checkScore(status, sessionMinScore) {
   if (status.reactionDetected) {
-    const q = Math.round(status.reactionQuality ?? 0);
-    const projected = Math.min(100, Math.round(55 + (status.reactionQuality ?? 0) * 0.35 + 30));
+    const q = hasValue(status.reactionQuality) ? Math.round(status.reactionQuality) : null;
     return {
       name: `Score ≥ ${sessionMinScore} (${status.session || "—"})`,
       ok: null,
-      detail: `Reaction Q=${q} → likely score ≈ ${projected}`,
+      detail: hasValue(q) ? `Reaction Q=${q} · final score telemetry unavailable` : "Score telemetry unavailable",
       hint: null,
     };
   }
@@ -745,13 +864,35 @@ function WhyNoTrade({ status, settings }) {
   );
 }
 
+function ResearchSnapshot() {
+  const links = [
+    ["Backtest", "/backtest", LineChartIcon],
+    ["Strategy Analytics", "/strategy-analytics", Layers],
+    ["Optimizer", "/optimizer", Gauge],
+    ["What-if", "/whatif", GitBranch],
+  ];
+  return (
+    <section>
+      <SectionHeader title="Research" subtitle="Experiments & validation" />
+      <Card className="p-3 sm:p-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {links.map(([label, to, Icon]) => (
+            <Link key={to} to={to} className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-3 transition-colors hover:border-primary/40 hover:bg-secondary">
+              <span className="flex min-w-0 items-center gap-2.5"><Icon size={14} className="shrink-0 text-primary" /><span className="truncate text-xs font-semibold text-foreground">{label}</span></span>
+              <ChevronRight size={13} className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          ))}
+        </div>
+      </Card>
+    </section>
+  );
+}
+
 // ========================================================================
 // HOME PAGE (default export)
 // ========================================================================
 export default function HomePage({ status, history, settings, health, onCmd, onSaveSettings }) {
-  const positions = status?.positions || [];
-  const totalPnl = positions.reduce((a, p) => a + (p.pnl || 0), 0);
-  const isDemo = !status?.online;
+  const isDemo = status?.demo === true || health?.demo === true;
 
   return (
     <div className="space-y-6 fade-in">
@@ -765,59 +906,18 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
         </div>
       )}
 
-      <HealthScoreCard health={health} compact />
+      <SystemStatusStrip status={status} health={health} />
+      <CoreMetrics status={status} />
+      <ExecutionPipeline status={status} />
 
-      <LockedProfileBanner />
-
-      <CommandCenter status={status} onCmd={onCmd} />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-        <KpiCard
-          label="Balance"
-          icon={Activity}
-          value={`$${fmtMoney(status?.balance)}`}
-          sub={`Equity $${fmtMoney(status?.equity)}`}
-          testId="kpi-balance"
-        />
-        <KpiCard
-          label="Floating P&L"
-          icon={TrendingUp}
-          value={`${(status?.floatPnL ?? 0) >= 0 ? "+" : ""}$${fmtMoney(status?.floatPnL)}`}
-          tone={pnlTone(status?.floatPnL)}
-          sub={`${positions.length} open · sum $${fmtSign(totalPnl)}`}
-          testId="kpi-float-pnl"
-        />
-        <KpiCard
-          label="Daily P&L"
-          icon={Calendar}
-          value={`${(status?.dailyPnL ?? 0) >= 0 ? "+" : ""}$${fmtMoney(status?.dailyPnL)}`}
-          tone={pnlTone(status?.dailyPnL)}
-          sub={`${status?.tradesToday ?? 0} trades · ${status?.consecLosses ?? 0} losses streak`}
-          testId="kpi-daily-pnl"
-        />
-        <KpiCard
-          label="Drawdown"
-          icon={Gauge}
-          value={fmtPct(status?.drawdownPct)}
-          tone={(status?.drawdownPct ?? 0) >= 3 ? "neg" : "pos"}
-          sub={`Margin lvl ${status?.marginLevel ? fmtMoney(status.marginLevel, 1) : "—"}%`}
-          testId="kpi-drawdown"
-        />
-      </div>
-
-      <EquityChartSection status={status} history={history} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <MarketIntelligence status={status} />
-        <ReactionSection status={status} />
-      </div>
-
-      <WhyNoTrade status={status} settings={settings} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <StructureSection status={status} />
-        <QuickStrategies settings={settings} onSave={onSaveSettings} />
-      </div>
+      <section>
+        <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" />
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <MarketIntelligence status={status} />
+          <StructureSection status={status} />
+          <ReactionSection status={status} />
+        </div>
+      </section>
 
       <PositionsSection
         status={status}
@@ -832,6 +932,24 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
           confirmLabel: "Close 50%",
         })}
       />
+
+      <ResearchSnapshot />
+
+      <section>
+        <SectionHeader title="System health" subtitle="Backend and bridge diagnostics" />
+        <HealthScoreCard health={health} compact />
+      </section>
+
+      <section>
+        <SectionHeader title="Operational controls" subtitle="Existing account controls and diagnostics" />
+        <div className="space-y-4">
+          <LockedProfileBanner />
+          <CommandCenter status={status} onCmd={onCmd} />
+          <EquityChartSection status={status} history={history} />
+          <WhyNoTrade status={status} settings={settings} />
+          <QuickStrategies settings={settings} onSave={onSaveSettings} />
+        </div>
+      </section>
     </div>
   );
 }

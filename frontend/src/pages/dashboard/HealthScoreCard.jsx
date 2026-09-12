@@ -11,19 +11,35 @@ const HEALTH_LEVEL = {
 };
 
 export default function HealthScoreCard({ health, compact = false }) {
-  if (!health) return null;
+  if (!health) {
+    return (
+      <Card className={compact ? "p-4" : "p-6 lg:p-8"} testId="health-score-card">
+        <div className="flex items-center justify-between gap-3">
+          <div><div className="eyebrow">EA health</div><div className="mt-1 font-mono text-sm text-muted-foreground">Unavailable</div></div>
+          <span className="rounded-full border border-border px-2 py-1 text-[9px] font-bold tracking-wider text-muted-foreground">UNKNOWN</span>
+        </div>
+      </Card>
+    );
+  }
   const lvl = HEALTH_LEVEL[health.level] || HEALTH_LEVEL.warning;
-  const score = health.score ?? 0;
+  const scoreAvailable = health.score !== null && health.score !== undefined;
+  const score = scoreAvailable ? Number(health.score) : null;
   const circumference = 2 * Math.PI * 42;
-  const dash = (score / 100) * circumference;
+  const dash = scoreAvailable ? (score / 100) * circumference : 0;
   const checks = health.checks || [];
   const anomalies = health.anomaly || [];
+  const provenance = health.demo === true ? "DEMO" : health.online === true ? "LIVE" : "CACHED";
+  const provenanceClass = provenance === "LIVE"
+    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+    : provenance === "DEMO"
+      ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+      : "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400";
 
   return (
-    <Card className="p-6 lg:p-8" testId="health-score-card">
-      <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
+    <Card className={compact ? "p-4" : "p-6 lg:p-8"} testId="health-score-card">
+      <div className={cls("flex flex-col lg:flex-row lg:items-center", compact ? "gap-4" : "gap-6")}>
         <div className="flex items-center gap-5 lg:flex-shrink-0">
-          <div className="relative w-[110px] h-[110px]" data-testid="health-ring">
+          <div className={cls("relative shrink-0", compact ? "h-[76px] w-[76px]" : "h-[110px] w-[110px]")} data-testid="health-ring">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
               <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="8"
                       fill="none" className="text-border" />
@@ -33,20 +49,21 @@ export default function HealthScoreCard({ health, compact = false }) {
                       className={cls("transition-all duration-700", lvl.ring)} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className={cls("font-bold text-3xl tabular leading-none", lvl.text)}>{score}</div>
+              <div className={cls("font-mono font-bold tabular leading-none", compact ? "text-xl" : "text-3xl", scoreAvailable ? lvl.text : "text-muted-foreground")}>{scoreAvailable ? score : "—"}</div>
               <div className="text-[9px] text-muted-foreground uppercase tracking-[0.15em] mt-1">score</div>
             </div>
           </div>
 
           <div>
             <div className="eyebrow">EA health</div>
-            <h3 className="font-semibold text-xl tracking-tight mt-1 flex items-center gap-2 flex-wrap">
-              <span className={lvl.text}>{lvl.label}</span>
+            <h3 className={cls("font-semibold tracking-tight mt-1 flex items-center gap-2 flex-wrap", compact ? "text-base" : "text-xl")}>
+              <span className={scoreAvailable ? lvl.text : "text-muted-foreground"}>{scoreAvailable ? lvl.label : "Unavailable"}</span>
               <span className={cls("px-2 py-0.5 rounded-full text-[10px] font-bold border", lvl.badge)}>
-                {checks.filter((c) => c.ok === true).length}/{checks.length} checks
+                {checks.length ? `${checks.filter((c) => c.ok === true).length}/${checks.length} checks` : "— checks"}
               </span>
+              <span className={cls("px-2 py-0.5 rounded-full text-[9px] font-bold border tracking-wider", provenanceClass)}>{provenance}</span>
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cls("text-xs text-muted-foreground mt-1", compact && "hidden sm:block")}>
               Composite of bridge, protections, drawdown, activity, revenge, news, vol, profit factor.
             </p>
           </div>
