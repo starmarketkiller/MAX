@@ -40,50 +40,21 @@ def test_registry_validates_and_reconciles():
     assert drift == []
 
 
-def test_counts_are_37_live_plus_4_research():
-    assert sr.count_live() == 37
-    assert len(sr.research_only_ids()) == 4
-    # 51, non 42: + SH_BMS_RTO_V2/SILVER_BULLET_V2/OTE_CONT_V2/ORDER_BLOCK_V2/
-    # FVG_CONT_V2 (08/08, status EXPERIMENTAL - varianti "_v2" pastate
-    # dall'utente per il brief Decomposizione Edge, nessuna controparte MQL5
-    # nel repo - stesso trattamento di MALAYSIAN_SNR_BREAKOUT) +
-    # MALAYSIAN_SNR_V2_STAGE1, MALAYSIAN_SNR_V2_STAGE3 (10/08),
-    # MALAYSIAN_SNR_V2_RETEST (11/08, break-and-retest richiesta
-    # esplicitamente dall'utente) e CRT (11/08, Candle Range Theory dal
-    # PDF caricato dall'utente - forte e coerente su XAUUSD 4h/1h/30m,
-    # walk-forward 5/5 su 4h e 30m, non confermata su BTC) - tutte status
-    # EXPERIMENTAL, vedi vault "MALAYSIAN_SNR Porting Tier 1".
-    # research_only_ids() resta a 4 perche' filtra su
-    # status=="RESEARCH_ONLY", non su EXPERIMENTAL.
-    # 54, non 51: + CISD_TRUE (11/08, versione "vera" di CISD -
-    # displacement+delivery+sweep+reclaim - scartata sia sul sito che in
-    # MQL5 perche' non scattava mai su un test live corto, ma spara
-    # regolarmente sullo storico ampliato 2019-2026 - vedi vault
-    # "NEXUS EA - CISD_TRUE") + TURTLE_SOUP_CHOCH (11/08, CHoCH fractal
-    # entro una finestra di N barre dopo il sweep invece che sulla stessa
-    # barra - idea gia' diagnosticata ma mai testata nella nota vault
-    # "Strategie/Turtle Soup") + MALAYSIAN_SNR_V2_RETEST_OUTRANGE (11/08,
-    # riverifica del gate fuori-range attraverso run_backtest col vero
-    # SL/TP strutturale, mai fatta prima - il test originale usava un
-    # motore standalone con SL/TP fisso) + TSI_EXTREME (11/08, cross
-    # TSI/signal richiesto da zona estrema invece che ovunque - non e'
-    # un'ipotesi di fedelta' MQL5, il port attuale e' gia' fedele al
-    # 100%, e' una variante sperimentale nuova per l'unico problema
-    # aperto senza soluzione nel nucleo) + FVG_MIT_WINDOW (11/08, registro
-    # di zone attive fino a 15 barre invece di un solo istante fisso -
-    # stessa architettura di SH_BMS_RTO_V2/TURTLE_SOUP_CHOCH, per il
-    # secondo problema aperto del nucleo).
-    # 58, non 56: + IFVG_CHOCH_WINDOW e SMS_BMS_RTO_CHOCH_WINDOW (11/08,
-    # stessa idea CHoCH-entro-finestra-di-N-barre invece che sulla stessa
-    # barra di un altro trigger, gia' provata su TURTLE_SOUP_CHOCH - la
-    # nota vault di IFVG generalizzava gia' questo insight ("vero anche
-    # per TURTLE_SOUP, non solo qui") ma non era mai stata applicata a se
-    # stessa; SMS_BMS_RTO condivide la stessa struttura a 4 condizioni
-    # sulla stessa barra).
-    # 59, non 58: + NY_REVERSAL_CHOCH_WINDOW (11/08, stessa idea CHoCH-
-    # entro-finestra applicata a un quarto caso - il trigger richiedeva
-    # sweep+reclaim della sessione Londra E CHoCH sulla stessa barra).
-    assert len(sr.all_records()) == 59
+def test_counts_are_52_live_plus_30_research():
+    # Storico dei conteggi precedenti (37 live/4 research/59 totali) nella
+    # cronologia git di questo file. Il registry e' cresciuto in modo
+    # tracciabile fra 11/08 e dd22384 (WICK_SWEEP_RECLAIM e altre strategie
+    # aggiunte a knowledge/strategy_database.json e ai backtest research-only
+    # in server/backtest.py). Non e' drift: `test_registry_validates_and_reconciles`
+    # sopra continua a passare (nessun errore, nessun drift) e
+    # `python3 contracts/generate_registry.py` e' idempotente su questi dati
+    # (nessuna differenza col file committato). I conteggi qui sotto sono
+    # solo l'ultima istantanea verificata; se il registry cresce ancora,
+    # vanno riaggiornati qui con la stessa evidenza (generator idempotente +
+    # validator pulito), non ipotizzati.
+    assert sr.count_live() == 52
+    assert len(sr.research_only_ids()) == 30
+    assert len(sr.all_records()) == 82
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -123,9 +94,10 @@ def test_selector_index_unique_among_live():
 
 
 def test_strat_list_derives_from_registry_not_hardcoded():
-    # il backend non usa piu' i 36 hardcoded
+    # il backend non usa piu' i 36 hardcoded; il conteggio segue il registry
+    # (vedi test_counts_are_52_live_plus_30_research per la provenienza).
     assert backend.STRAT_LIST == sr.live_ids()
-    assert len(backend.STRAT_LIST) == 37
+    assert len(backend.STRAT_LIST) == 52
     assert "ELLIOTT" in backend.STRAT_LIST
     assert "CISD" not in backend.STRAT_LIST   # alias, non id canonico
 
@@ -136,15 +108,15 @@ def test_backtest_strategies_endpoint_uses_registry(client):
     r = client.get("/api/backtest/strategies", headers=h)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["total_ea"] == 37
-    assert len(body["research_only"]) == 4
+    assert body["total_ea"] == 52
+    assert len(body["research_only"]) == 30
 
 
 def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 59
+    assert r.json()["counts"]["total"] == 82
 
 
 def test_resolve_endpoint_404_on_unknown(client):
@@ -156,12 +128,17 @@ def test_resolve_endpoint_404_on_unknown(client):
 def test_generated_frontend_adapter_matches_registry():
     path = os.path.join(ROOT, "frontend", "src", "contracts", "strategyRegistry.js")
     adapter = open(path, encoding="utf-8").read()
-    ids = re.findall(r'^  \["([A-Z][A-Z0-9_]*)",', adapter, re.M)
+    # [A-Z] iniziale escludeva id come "3COMMAS_BOT" (aggiunto dopo la
+    # scrittura di questo test): l'adapter era gia' corretto, era la regex a
+    # non estrarlo. Verificato rigenerando con
+    # `python3 contracts/generate_registry.py` (idempotente, nessun diff).
+    ids = re.findall(r'^  \["([A-Z0-9][A-Z0-9_]*)",', adapter, re.M)
     assert ids == [record["strategy_id"] for record in sr.all_records()]
 
 
 def test_generated_mql_adapter_matches_live_registry():
     path = os.path.join(ROOT, "MQL5", "Include", "NEXUS_v1", "NXS_StrategyRegistry.mqh")
     adapter = open(path, encoding="utf-8").read().split("bool NXS_StrategyKnown", 1)[1]
-    ids = re.findall(r'id=="([A-Z][A-Z0-9_]*)"', adapter)
+    # stesso bug di regex del test sopra ("3COMMAS_BOT" iniziava con cifra).
+    ids = re.findall(r'id=="([A-Z0-9][A-Z0-9_]*)"', adapter)
     assert ids == sr.live_ids()

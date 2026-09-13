@@ -4,13 +4,13 @@
   "files": [
     {
       "path": "MQL5/Experts/NEXUS_EA_v2.mq5",
-      "sha256": "0eb991e45d8a8d1a2e015a15cf6ab16e1e543d6f748adfe60cac544ea46f91e5"
+      "sha256": "59839646642312123c68ff2cd2402e0b432a0d12aca9e83302604ee0c4903fc9"
     },
     {
       "path": "LocalBridge/nexus_local_worker.py",
-      "sha256": "84cf19166666e6c152977071285cfdea00c7ec7abf4d9505cb5f7ffcdef2c798"
+      "sha256": "10ecac89fcc52a0fc462a997c2385618f185a7e792e43db85c2b58d2d0c09560"
     }
   ],
   "minimum_worker_version": "2.0.0",
-  "sha256": "cce3858c453768bd1471346f335d59dadef11b5bc9dfb712e567337696323dc4"
+  "sha256": "8c74699edf362ab22c20214a1564aa72766d16003960c32ede2ec8264c84921b"
 }
