@@ -30,6 +30,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 COPY frontend/ ./
+RUN npm test -- --watchAll=false
 RUN npm run build
 
 
@@ -68,6 +69,7 @@ RUN rm -rf /app/static/app
 COPY --from=frontend-builder /frontend/build /app/static/app
 RUN test -f /app/static/app/index.html \
  && grep -F -q 'src="/app/static/js/main.' /app/static/app/index.html \
+ && ! grep -R -F -q 'undefined/api' /app/static/app/static/js \
  && grep -R -F -q 'Latest Research Funnel' /app/static/app/static/js
 
 # Artefatti serviti dal backend ma originati fuori dal build context di server/.

@@ -1,7 +1,12 @@
 import axios from "axios";
 
+export function buildApiBase(backendUrl) {
+  const normalizedBackendUrl = (backendUrl || "").replace(/\/+$/, "");
+  return `${normalizedBackendUrl}/api`;
+}
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-export const API = `${BACKEND_URL}/api`;
+export const API = buildApiBase(BACKEND_URL);
 
 // Auth uses httpOnly cookies set by the backend on /auth/login. The browser
 // includes them automatically when withCredentials is true. No tokens are
