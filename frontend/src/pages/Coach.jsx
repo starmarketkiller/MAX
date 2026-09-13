@@ -108,7 +108,7 @@ export default function CoachPage() {
   }, [chartContext, messages.length, input]);
 
   const reset = async () => {
-    if (!confirm("Azzerare la conversazione con il Coach?")) return;
+    if (!window.confirm("Azzerare la conversazione con il Coach?")) return;
     await api.delete(`/coach/session/${sessionId}`);
     setMessages([]);
   };
