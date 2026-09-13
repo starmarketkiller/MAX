@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # NEXUS backend — immagine di produzione.
 #
 # Il build context è la ROOT del repository (non ./server): il backend serve
@@ -19,6 +20,19 @@
 # NOTA: il digest qui sotto va sostituito con quello effettivamente verificato
 # nel proprio ambiente prima del rilascio; finche' resta il tag, la build NON e'
 # riproducibile e questo e' un difetto aperto, non una scelta.
+FROM node:24-bookworm-slim AS frontend-builder
+
+WORKDIR /frontend
+
+# Manifest prima dei sorgenti: Render/BuildKit puo' riusare il layer npm ci
+# finche' le dipendenze frontend non cambiano.
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+
 FROM python:3.12-slim
 
 # AUD0-DEP-008 / AUD0-DEPLOY-DOCKER-003: il container girava come root.
@@ -45,6 +59,13 @@ RUN if [ -f requirements.lock.txt ]; then \
 # settings_schema, command_contract, ledger_analytics), quindi un'immagine
 # pulita falliva all'import. Si copia l'intero package applicativo.
 COPY server/ ./
+
+# La build React viene sempre prodotta dai sorgenti dello stesso commit che
+# sta costruendo l'immagine. Rimuovere prima la build committata evita che
+# asset hashati obsoleti restino nella directory finale per effetto del merge
+# semantico di COPY tra directory.
+RUN rm -rf /app/static/app
+COPY --from=frontend-builder /frontend/build /app/static/app
 
 # Artefatti serviti dal backend ma originati fuori dal build context di server/.
 COPY LocalBridge/nexus_local_worker.py /app/protected/nexus_local_worker.py
