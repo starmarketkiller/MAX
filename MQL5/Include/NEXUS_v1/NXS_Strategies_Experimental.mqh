@@ -663,7 +663,16 @@ void NXS_WickReclaim_PrintFunnel(){
                g_wickReclaimFunnel.abandoned);
 }
 
-SNXSSignal NXS_Strat_WickSweepReversal(){
+// === Fase C - Unified Level Engine, WICK read-path =========================
+// NXS_Strat_WickSweepReversal() sotto e' rinominata _NXS_WickSweepReversal_Legacy():
+// stessa identica logica di prima (nessuna riga di comportamento cambiata,
+// solo 2 hook aggiunti per popolare SNXSUnifiedLevel.last_attempt_bar nello
+// STESSO punto in cui side.lastAttemptBar veniva gia' scritto). Il vecchio
+// nome esterno NXS_Strat_WickSweepReversal() e' ora il wrapper alla fine di
+// questo blocco, che calcola SEMPRE anche la decisione letta dal registro
+// e la confronta (NXS_WickReadPath_Compare, NXS_ReactionEngine.mqh) prima
+// di scegliere quale restituire al chiamante.
+SNXSSignal _NXS_WickSweepReversal_Legacy(){
    SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
    s.strat = STRAT_STRUCT_REACT; s.stratName = "WICK_SWEEP_REV";
    if(!InpStrat_WickSweep || !NXS_SelectorAllows(54)) return s;
@@ -704,6 +713,9 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
             g_wickFunnel.duplicateRetrigger++;   // gia' tentato su questa barra H4, throttle
          } else {
             g_wickHigh.lastAttemptBar = g_wickLastBar;
+            // Fase C - hook causale: mirror di lastAttemptBar nel registro (throttle read-path).
+            if(InpLevelRegistry_WickTelemetry)
+               NXS_LevelReg_SetLastAttemptBar(g_wickHigh.id, g_wickLastBar);
             s.dir      = DIR_SELL;
             s.entryRef = bid;
             s.slPrice  = NormPrice(bid + slDist);
@@ -747,6 +759,9 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
             g_wickFunnel.duplicateRetrigger++;
          } else {
             g_wickLow.lastAttemptBar = g_wickLastBar;
+            // Fase C - hook causale: mirror di lastAttemptBar nel registro (throttle read-path).
+            if(InpLevelRegistry_WickTelemetry)
+               NXS_LevelReg_SetLastAttemptBar(g_wickLow.id, g_wickLastBar);
             s.dir      = DIR_BUY;
             s.entryRef = ask;
             s.slPrice  = NormPrice(ask - slDist);
@@ -766,6 +781,125 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
       }
    }
    return s;
+}
+
+// --- Fase C - lettura PURA dal registro (nessun side effect, nessun hook,
+// nessuna mutazione di stato legacy o nuovo) - stessa identica formula del
+// legacy (stesso InpWickSweep_SweepPips/SLPips/TPPips, stesso bid/ask
+// snapshot del chiamante, stesso NormPrice), l'unica differenza e' la
+// FONTE del prezzo del livello (registro invece di g_wickHigh/g_wickLow
+// direttamente) e dello stato di idoneita' (lifecycle SWEPT/consumed/
+// invalidated invece dei flag legacy) - nessuna nuova logica di trading.
+bool _NXS_WickReadPath_EvaluateSide(long level_id, ENUM_NXS_DIR fadeDir, double refPrice,
+                                     double sweepDist, double slDist, double tpDist,
+                                     datetime currentBar, int attemptsSoFar, SNXSSignal &outSig){
+   int idx = _NXS_LevelReg_Find(level_id);
+   if(idx < 0) return false;
+   if(g_nxsLevelReg[idx].consumed) return false;
+   if(g_nxsLevelReg[idx].invalidated) return false;
+   if(g_nxsLevelReg[idx].last_attempt_bar == currentBar) return false;   // mirror throttle per-barra H4
+   double price = g_nxsLevelReg[idx].price;
+   bool swept = (fadeDir == DIR_SELL) ? (refPrice >= price + sweepDist) : (refPrice <= price - sweepDist);
+   if(!swept) return false;
+   ZeroMemory(outSig);
+   outSig.dir       = fadeDir;
+   outSig.strat     = STRAT_STRUCT_REACT;
+   outSig.stratName = "WICK_SWEEP_REV";
+   outSig.entryRef  = refPrice;
+   outSig.sourceTF  = PERIOD_H4;
+   outSig.score     = 70.0;
+   if(fadeDir == DIR_SELL){
+      outSig.slPrice = NormPrice(refPrice + slDist);
+      outSig.tpPrice = NormPrice(refPrice - tpDist);
+      // Fedele al formato legacy (stesso testo, stesso "attempts") cosi' il
+      // CSV di log resta bit-identico quando le decisioni combaciano - il
+      // campo reason e' solo diagnostico, non decisionale, ma la parita'
+      // richiesta e' bit-a-bit sull'intero trade, non solo sui prezzi.
+      outSig.reason = StringFormat("WickSweep SELL: high=%.2f swept+%.1fpip attempt#%d",
+                                    price, InpWickSweep_SweepPips, attemptsSoFar + 1);
+   } else {
+      outSig.slPrice = NormPrice(refPrice - slDist);
+      outSig.tpPrice = NormPrice(refPrice + tpDist);
+      outSig.reason = StringFormat("WickSweep BUY: low=%.2f swept-%.1fpip attempt#%d",
+                                    price, InpWickSweep_SweepPips, attemptsSoFar + 1);
+   }
+   return true;
+}
+
+// side alto controllato per primo, poi il basso - stessa priorita' del legacy
+// (che ritorna immediatamente al primo lato valido, mai entrambi nella
+// stessa chiamata).
+bool NXS_WickReadPath_Evaluate(SNXSSignal &outSig, long &outLevelId){
+   double pip       = 10.0 * g_profile.pipSize;
+   double sweepDist = InpWickSweep_SweepPips * pip;
+   double slDist    = InpWickSweep_SLPips   * pip;
+   double tpDist    = InpWickSweep_TPPips   * pip;
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   double ask = SymbolInfoDouble(g_sym, SYMBOL_ASK);
+
+   if(_NXS_WickReadPath_EvaluateSide(g_wickHigh.id, DIR_SELL, bid, sweepDist, slDist, tpDist,
+                                      g_wickLastBar, g_wickHigh.attempts, outSig)){
+      outLevelId = g_wickHigh.id;
+      return true;
+   }
+   if(_NXS_WickReadPath_EvaluateSide(g_wickLow.id, DIR_BUY, ask, sweepDist, slDist, tpDist,
+                                      g_wickLastBar, g_wickLow.attempts, outSig)){
+      outLevelId = g_wickLow.id;
+      return true;
+   }
+   outLevelId = 0;
+   ZeroMemory(outSig); outSig.dir = DIR_NONE;
+   return false;
+}
+
+// --- Wrapper esterno: nome invariato, chiamato da NEXUS_EA_v2.mq5 esattamente
+// come prima. Calcola SEMPRE la decisione legacy (write path sempre ON,
+// tutti gli hook di Fase A/B restano attivi) e, se il registro e' popolato,
+// SEMPRE anche la decisione letta dal nuovo motore, per il comparator -
+// indipendentemente da InpLevelRegistry_WickReadPath, cosi' il mismatch e'
+// visibile anche PRIMA di attivare il flag.
+SNXSSignal NXS_Strat_WickSweepReversal(){
+   // Stessa identica guardia di _NXS_WickSweepReversal_Legacy() (righe sopra),
+   // replicata qui SOLO per decidere se vale la pena calcolare/confrontare -
+   // non e' nuova logica di trading, e' la STESSA condizione. Senza questa
+   // guardia il comparator confrontava anche i passaggi multi-TF non-H4 (dove
+   // il legacy declina correttamente mentre il read-path, senza il vincolo di
+   // TF, valutava comunque g_wickHigh/g_wickLow persistenti) - falsi mismatch
+   // trovati e corretti durante il test di Fase C (vedi report).
+   if(!InpStrat_WickSweep || !NXS_SelectorAllows(54)) return _NXS_WickSweepReversal_Legacy();
+   if(g_activeTF != PERIOD_CURRENT && g_activeTF != PERIOD_H4) return _NXS_WickSweepReversal_Legacy();
+   if(!InpLevelRegistry_WickTelemetry) return _NXS_WickSweepReversal_Legacy();   // registro non popolato: nulla da confrontare
+
+   // _NXS_WickSweep_UpdateLevel() e' idempotente per barra H4 (gia' chiamata
+   // cosi' da 3 punti diversi nel file) - la richiamiamo qui PRIMA di leggere
+   // il registro cosi' g_wickHigh/g_wickLow/g_wickLastBar riflettono gia' la
+   // barra corrente. La decisione new-engine va letta ORA, PRIMA di chiamare
+   // il legacy: il legacy scrive last_attempt_bar nel registro (hook Fase C)
+   // nello STESSO momento in cui emette un segnale, quindi leggere il
+   // registro DOPO il legacy vedrebbe il proprio tentativo gia' marcato come
+   // "gia' tentato questa barra" e si auto-negherebbe (bug trovato e corretto
+   // durante il test di Fase C, vedi report).
+   _NXS_WickSweep_UpdateLevel();
+   SNXSSignal newDecision; long newLevelId = 0;
+   bool newHasSignal = NXS_WickReadPath_Evaluate(newDecision, newLevelId);
+
+   SNXSSignal legacyDecision = _NXS_WickSweepReversal_Legacy();   // richiama UpdateLevel (no-op, stessa barra), poi valuta/muta come sempre
+
+   long legacyLevelId = 0;
+   if(legacyDecision.dir == DIR_SELL) legacyLevelId = g_wickHigh.id;
+   else if(legacyDecision.dir == DIR_BUY) legacyLevelId = g_wickLow.id;
+   bool legacyHasSignal = (legacyDecision.dir != DIR_NONE);
+
+   bool match = NXS_WickReadPath_Compare(legacyHasSignal, legacyDecision, legacyLevelId,
+                                          newHasSignal, newDecision, newLevelId);
+
+   // Fail-safe: SOLO quando il read-path e' attivo E il comparator conferma
+   // equivalenza la decisione new-engine diventa autoritativa (identica per
+   // costruzione al legacy in quel caso). Qualunque mismatch, o read-path
+   // spento, -> legacy resta autoritativo. Nessun trade da una decisione
+   // divergente non riconciliata.
+   if(InpLevelRegistry_WickReadPath && match) return newDecision;
+   return legacyDecision;
 }
 
 #endif

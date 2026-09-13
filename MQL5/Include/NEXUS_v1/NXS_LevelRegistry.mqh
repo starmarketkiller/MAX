@@ -69,6 +69,14 @@ struct SNXSUnifiedLevel {
    datetime                   reclaim_time;
    bool                       invalidated;
    bool                       consumed;
+   // Fase C - Unified Level Engine, WICK read-path (NXS_Strat_WickSweepReversal).
+   // Campo minimo aggiunto perche' mancava nello schema Fase A/B: il legacy
+   // limita a un tentativo di apertura per livello per barra H4 tramite
+   // SNxsWickSide.lastAttemptBar - senza l'equivalente qui il read-path
+   // riaprirebbe piu' volte per barra (comportamento diverso dal legacy).
+   // Popolato SOLO dall'hook causale nello stesso punto in cui il legacy
+   // gia' scrive side.lastAttemptBar (mai ricostruito ex-post).
+   datetime                   last_attempt_bar;
 };
 
 // Storage dinamico (ArrayResize a raddoppio) - un test Full Validation
@@ -119,8 +127,18 @@ void NXS_LevelReg_Create(long level_id, string side, ENUM_NXS_DIR direction,
    lv.reclaim_time = 0;
    lv.invalidated = false;
    lv.consumed = false;
+   lv.last_attempt_bar = 0;
    g_nxsLevelReg[g_nxsLevelRegCount] = lv;
    g_nxsLevelRegCount++;
+}
+
+// Fase C - mirror di SNxsWickSide.lastAttemptBar. Chiamata SOLO dal punto
+// esatto in cui il legacy gia' scrive side.lastAttemptBar = g_wickLastBar
+// (subito prima di emettere il segnale), mai altrove.
+void NXS_LevelReg_SetLastAttemptBar(long level_id, datetime bar){
+   int idx = _NXS_LevelReg_Find(level_id);
+   if(idx < 0) return;
+   g_nxsLevelReg[idx].last_attempt_bar = bar;
 }
 
 void NXS_LevelReg_SetTouched(long level_id, datetime t){

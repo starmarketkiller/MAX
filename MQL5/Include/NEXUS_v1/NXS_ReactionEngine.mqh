@@ -222,4 +222,50 @@ void NXS_LevelEngine_PrintWickParity(){
          "seconda implementazione indipendente che potrebbe divergere per prezzo/tempo).");
 }
 
+// === Fase C - Dual-decision comparator (WICK_SWEEP_REV read-path) ==========
+// Confronta la decisione legacy (SEMPRE calcolata, write path sempre ON)
+// con quella derivata leggendo il nuovo registro. Non decide nulla da
+// solo: il chiamante (NXS_Strategies_Experimental.mqh) decide quale
+// decisione restituire in base a InpLevelRegistry_WickReadPath e
+// all'esito di questo confronto (fail-safe: mismatch -> legacy sempre).
+long g_nxsWickReadPathChecks = 0;
+long g_nxsWickReadPathMismatches = 0;
+
+bool NXS_WickReadPath_Compare(bool legacyHasSignal, const SNXSSignal &legacyDecision, long legacyLevelId,
+                               bool newHasSignal, const SNXSSignal &newDecision, long newLevelId){
+   g_nxsWickReadPathChecks++;
+   double tol = 10 * _Point;   // tolleranza difensiva; a parita' di bid/ask/formula il valore atteso e' 0
+   bool match = true;
+   string field = "";
+
+   if(legacyHasSignal != newHasSignal){ match = false; field = "should_trade"; }
+   else if(legacyHasSignal && newHasSignal){
+      if(legacyDecision.dir != newDecision.dir){ match = false; field = "direction"; }
+      else if(legacyLevelId != newLevelId){ match = false; field = "level_id"; }
+      else if(MathAbs(legacyDecision.entryRef - newDecision.entryRef) > tol){ match = false; field = "trigger_price"; }
+      else if(MathAbs(legacyDecision.slPrice - newDecision.slPrice) > tol){ match = false; field = "sl"; }
+      else if(MathAbs(legacyDecision.tpPrice - newDecision.tpPrice) > tol){ match = false; field = "tp"; }
+   }
+
+   if(!match){
+      g_nxsWickReadPathMismatches++;
+      PrintFormat("[LEVELENGINE][DECISION_MISMATCH] field=%s time=%s | "
+                  "legacy(should_trade=%s dir=%d level_id=%d trigger=%.5f sl=%.5f tp=%.5f) | "
+                  "new(should_trade=%s dir=%d level_id=%d trigger=%.5f sl=%.5f tp=%.5f)",
+                  field, TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS),
+                  (legacyHasSignal?"true":"false"), (int)legacyDecision.dir, (int)legacyLevelId,
+                  legacyDecision.entryRef, legacyDecision.slPrice, legacyDecision.tpPrice,
+                  (newHasSignal?"true":"false"), (int)newDecision.dir, (int)newLevelId,
+                  newDecision.entryRef, newDecision.slPrice, newDecision.tpPrice);
+   }
+   return match;
+}
+
+void NXS_LevelEngine_PrintReadPathSummary(){
+   if(!InpLevelRegistry_WickTelemetry || !InpStrat_WickSweep) return;
+   PrintFormat("[LEVELENGINE][READPATH] enabled=%s checks=%d mismatches=%d",
+               (InpLevelRegistry_WickReadPath?"true":"false"),
+               g_nxsWickReadPathChecks, g_nxsWickReadPathMismatches);
+}
+
 #endif

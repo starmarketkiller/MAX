@@ -1166,5 +1166,20 @@ input bool     InpLevelRegistry_WickTelemetry = true;
 // nessuno dei due stati (e' un Print aggiuntivo, non legge ne' scrive stato
 // del vecchio motore).
 input bool     InpLevelRegistry_WickEventLog  = false;
+// 13/09 - Phase C (WICK read-path migration with legacy shadow fallback).
+// Default OFF: comportamento legacy invariato al 100%. Quando true, il
+// SOLO selettore 54 (WICK_SWEEP_REV) legge la decisione dal nuovo
+// registry invece che dal vecchio SNxsWickSide - MA solo se il
+// comparator (vedi NXS_Strategies_Experimental.mqh) verifica che la
+// decisione del nuovo motore sia identica a quella legacy; in caso di
+// divergenza il fallback e' SEMPRE al legacy per quel segnale (fail-safe,
+// nessun trade da una decisione non riconciliata). Il legacy continua a
+// scrivere il proprio stato in ogni caso (write path sempre ON), quindi
+// questo flag non cambia MAI cosa viene calcolato, solo quale delle due
+// decisioni (identiche per costruzione quando non c'e' mismatch) viene
+// restituita al chiamante. Richiede InpLevelRegistry_WickTelemetry=true
+// (se false, il registro non e' popolato e il read-path si comporta come
+// se fosse spento, restando sul legacy).
+input bool     InpLevelRegistry_WickReadPath  = false;
 
 #endif
