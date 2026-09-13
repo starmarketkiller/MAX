@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Layers, Cpu, Lock, Filter, Sparkles } from "lucide-react";
 import { Card, cls, STRAT_LIST, STRAT_FAMILIES, STRAT_FAMILY_COLOR } from "@/pages/dashboard/shared";
 import { useStrategyHub } from "@/lib/strategyHub";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 
 const READY_FOR_BACKTEST = new Set([
   "CISD", "AMD_CONT", "JUDAS_SWING", "LDN_REVERSAL", "NY_REVERSAL",
@@ -80,7 +81,7 @@ export default function StrategiesPage({ settings, onSave, status }) {
       <Card className="p-6 lg:p-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
           <div className="eyebrow flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5" /> Strategies
+            <Layers className="h-3.5 w-3.5" /> Strategies <DataProvenanceBadge source={settingsUnavailable ? "UNAVAILABLE" : status?.online ? "LIVE" : "CACHED"} />
           </div>
           <h2 className="text-2xl font-semibold tracking-tight mt-1">
             <span className="font-normal text-muted-foreground">{total} engines · </span>

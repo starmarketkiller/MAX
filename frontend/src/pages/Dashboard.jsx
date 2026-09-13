@@ -26,6 +26,7 @@ import CoachLiveWidget from "@/components/CoachLiveWidget";
 import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import CommandPalette from "@/components/CommandPalette";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 import HomePage from "@/pages/dashboard/HomePage";
 import StrategiesPage from "@/pages/dashboard/StrategiesPage";
 import OptimizerPage from "@/pages/dashboard/OptimizerPage";
@@ -50,8 +51,7 @@ function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
   const { theme, toggle } = useTheme();
   const paused = !!status?.eaPaused;
   const online = !!status?.online;
-  const equity = status?.equity ?? 0;
-  const balance = status?.balance ?? 0;
+  const metric = (value) => value === null || value === undefined ? "—" : `$${fmtMoney(value)}`;
 
   return (
     <header
@@ -71,35 +71,19 @@ function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
 
           <div className="min-w-0">
             <div className="eyebrow font-mono tabular">
-              {status?.symbol || "XAUUSD"} · MAGIC {status?.magic ?? "—"}
+              {status?.symbol || "—"} · MAGIC {status?.magic ?? "—"}
             </div>
             <div className="flex items-center gap-3 mt-1">
               <span className="font-semibold text-xl tracking-tight">
-                {paused
+                {!status
+                  ? <span className="text-muted-foreground">Unavailable</span>
+                  : paused
                   ? <span className="text-amber-400">Paused</span>
-                  : <span className="text-foreground">Running</span>
+                  : online ? <span className="text-foreground">Running</span>
+                    : <span className="text-muted-foreground">Offline</span>
                 }
               </span>
-              <span
-                data-testid="online-badge"
-                className={cls(
-                  "px-2.5 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 font-mono tracking-wider",
-                  online
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                )}
-              >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className={cls(
-                    "relative inline-flex h-1.5 w-1.5 rounded-full",
-                    online ? "bg-emerald-400 glow-success" : "bg-amber-400 glow-warning"
-                  )} />
-                  {online && (
-                    <span className="absolute inline-flex h-1.5 w-1.5 rounded-full pulse-ring text-emerald-400" />
-                  )}
-                </span>
-                {online ? "LIVE" : "DEMO"}
-              </span>
+              <DataProvenanceBadge source={status?.demo ? "DEMO" : online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} testId="online-badge" />
             </div>
           </div>
         </div>
@@ -107,13 +91,13 @@ function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
         <div className="hidden md:flex items-center gap-6 px-5 py-2.5 rounded-xl bg-secondary/40 border border-border backdrop-blur-sm">
           <div>
             <div className="eyebrow">Equity</div>
-            <div className="font-mono font-bold text-lg tabular leading-none mt-1 text-foreground">${fmtMoney(equity)}</div>
+            <div className="font-mono font-bold text-lg tabular leading-none mt-1 text-foreground">{metric(status?.equity)}</div>
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
             <div className="eyebrow">Balance</div>
             <div className="font-mono font-bold text-lg tabular leading-none mt-1 text-muted-foreground">
-              ${fmtMoney(balance)}
+              {metric(status?.balance)}
             </div>
           </div>
         </div>
@@ -184,12 +168,13 @@ function ProgressBar({ value, max, tone = "neutral" }) {
 }
 
 function RiskBudgetRow({ label, used, limit, fmt, hint, testId }) {
-  const usedFmt = fmt ? fmt(used) : used;
+  const available = used !== null && used !== undefined;
+  const usedFmt = available ? (fmt ? fmt(used) : used) : "—";
   const limitFmt = fmt ? fmt(limit) : limit;
-  const pct = limit > 0 ? (Math.abs(used) / Math.abs(limit)) * 100 : 0;
+  const pct = available && limit > 0 ? (Math.abs(used) / Math.abs(limit)) * 100 : null;
   let tone = "pos";
-  if (pct >= 90) tone = "neg";
-  else if (pct >= 70) tone = "warn";
+  if (pct !== null && pct >= 90) tone = "neg";
+  else if (pct !== null && pct >= 70) tone = "warn";
   let valueColor = POS_TEXT;
   if (tone === "neg") valueColor = NEG_TEXT;
   else if (tone === "warn") valueColor = "text-amber-600 dark:text-amber-400";
@@ -203,10 +188,10 @@ function RiskBudgetRow({ label, used, limit, fmt, hint, testId }) {
         <div className="text-right font-mono text-xs">
           <span className={cls("font-bold text-base", valueColor)}>{usedFmt}</span>
           <span className="text-muted-foreground"> / {limitFmt}</span>
-          <div className="text-[10px] text-muted-foreground mt-0.5">{Math.round(pct)}% used</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">{pct === null ? "UNAVAILABLE" : `${Math.round(pct)}% used`}</div>
         </div>
       </div>
-      <ProgressBar value={Math.abs(used)} max={Math.abs(limit)} tone={tone} />
+      {available ? <ProgressBar value={Math.abs(used)} max={Math.abs(limit)} tone={tone} /> : <div className="h-2 rounded-full bg-secondary" />}
     </div>
   );
 }
@@ -222,7 +207,7 @@ function RiskCenterPage({ status, settings, health }) {
   const eslLimitPct = settings.ESL_IsPercent ? settings.ESL_Value : 5;
   const dptTargetPct = settings.DPT_IsPercent ? settings.DPT_Value : 3;
   const antiRevLosses = settings.AntiRevengeLosses ?? 3;
-  const consecLosses = status.consecLosses ?? 0;
+  const consecLosses = status.consecLosses;
   const maxHold = settings.MaxHoldHours ?? 12;
   const positionsHeld = positions.map((p) => {
     if (!p.openTime) return 0;
@@ -262,15 +247,15 @@ function RiskCenterPage({ status, settings, health }) {
       <Card className="p-6 lg:p-8" testId="risk-budgets">
         <SectionHeader eyebrow="Budgets vs limits" title="How close are we to a hard stop?" icon={Gauge} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
-          <RiskBudgetRow label="Daily drawdown" used={status.drawdownPct ?? 0} limit={maxDD}
+          <RiskBudgetRow label="Daily drawdown" used={status.drawdownPct} limit={maxDD}
             fmt={(v) => `${Number(v).toFixed(2)}%`}
             hint="EA pauses when daily DD reaches MaxDailyDDPct"
             testId="rb-daily-dd" />
-          <RiskBudgetRow label="Equity Stop Loss (ESL)" used={Math.abs(status.floatPnLPct ?? 0)} limit={eslLimitPct}
+          <RiskBudgetRow label="Equity Stop Loss (ESL)" used={status.floatPnLPct == null ? null : Math.abs(status.floatPnLPct)} limit={eslLimitPct}
             fmt={(v) => `${Number(v).toFixed(2)}%`}
             hint="Closes all positions when floating loss hits"
             testId="rb-esl" />
-          <RiskBudgetRow label="Daily Profit Target (DPT)" used={status.dailyPnLPct ?? 0} limit={dptTargetPct}
+          <RiskBudgetRow label="Daily Profit Target (DPT)" used={status.dailyPnLPct} limit={dptTargetPct}
             fmt={(v) => `${Number(v).toFixed(2)}%`}
             hint="Closes & pauses for the day when reached"
             testId="rb-dpt" />
@@ -278,7 +263,7 @@ function RiskCenterPage({ status, settings, health }) {
             fmt={(v) => `${v}`}
             hint="Hard cap to control margin exposure"
             testId="rb-concurrent" />
-          <RiskBudgetRow label="Trades today" used={status.tradesToday ?? 0} limit={maxTrades}
+          <RiskBudgetRow label="Trades today" used={status.tradesToday} limit={maxTrades}
             fmt={(v) => `${v}`}
             hint="EA stops opening new entries after this"
             testId="rb-trades-today" />
@@ -321,7 +306,7 @@ function RiskCenterPage({ status, settings, health }) {
                      )}>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs">{name}</span>
-                    <span className="text-[10px] text-muted-foreground">consec={info.consec ?? 0}</span>
+                    <span className="text-[10px] text-muted-foreground">consec={info.consec ?? "—"}</span>
                   </div>
                   <span className={cls("font-mono text-xs",
                     active ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground")}>
@@ -686,13 +671,13 @@ export default function Dashboard({ section = "home" }) {
                     onOpenCmd={() => setCmdOpen(true)} />
         <div className="px-5 lg:px-8 pt-4 max-w-[1600px] w-full mx-auto space-y-2">
           <div className="flex flex-wrap gap-2 text-[10px] font-mono">
-            {status && <span className="rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-sky-500">OBSERVED_LIVE · EA</span>}
+            <DataProvenanceBadge source={status?.demo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} label={status?.online ? "LIVE · EA" : undefined} />
             {["analytics", "whatif", "journal", "strategy-analytics"].includes(section) &&
-              <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-emerald-500">DERIVED_ANALYTICS · LEDGER</span>}
+              <DataProvenanceBadge source="DERIVED" label="DERIVED · LEDGER" />}
             {trades.some((t) => t.source_provenance === "RECONSTRUCTED_HISTORY") &&
-              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-500">RECONSTRUCTED_HISTORY</span>}
+              <DataProvenanceBadge source="DERIVED" label="DERIVED · RECONSTRUCTED" />}
             {section === "backtest" &&
-              <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-500">RESEARCH</span>}
+              <DataProvenanceBadge source="RESEARCH" />}
           </div>
           {lastCommand && (
             /* Verde SOLO quando il broker ha confermato l'esecuzione; rosso

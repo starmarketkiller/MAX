@@ -4,6 +4,12 @@ import { Activity, Upload, FileDown, RefreshCw, AlertTriangle, CheckCircle2,
 import api, { API, formatApiError } from "@/lib/api";
 import { Card, cls } from "@/pages/dashboard/shared";
 import { useStrategyHub } from "@/lib/strategyHub";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
+
+const hasMetric = (value) => value !== null && value !== undefined && value !== "";
+const metric = (value, digits) => hasMetric(value)
+  ? (digits === undefined ? Number(value).toLocaleString() : Number(value).toFixed(digits))
+  : "—";
 
 // =====================================================================
 // HEATMAP HELPERS — value-driven row/cell tinting (Bloomberg-style)
@@ -210,13 +216,13 @@ function ShadowSkippedTable({ symbol }) {
               <td className="px-3 py-2 text-right tabular-nums">{r.blocked}</td>
               <td className="px-3 py-2 text-right tabular-nums text-emerald-600">{r.would_win}</td>
               <td className="px-3 py-2 text-right tabular-nums text-rose-600">{r.would_loss}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{(r.win_rate || 0).toFixed(1)}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{(r.avg_r || 0).toFixed(2)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{metric(r.win_rate, 1)}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{metric(r.avg_r, 2)}</td>
               <td className={cls(
                 "px-3 py-2 text-right tabular-nums font-semibold",
                 sumRTextClass(r.sum_r)
               )}>
-                {r.sum_r > 0 ? "+" : ""}{(r.sum_r || 0).toFixed(2)}
+                {hasMetric(r.sum_r) ? `${r.sum_r > 0 ? "+" : ""}${metric(r.sum_r, 2)}` : "—"}
               </td>
               <td className="px-3 py-2 text-muted-foreground">{r.dominant_blocker}</td>
             </tr>
@@ -407,7 +413,7 @@ function HealthTable({ rows }) {
                 <td className="px-3 py-2.5 text-right tabular-nums font-mono">{r.executed?.toLocaleString()}</td>
                 <HeatCell
                   tone={pft}
-                  value={<span className="font-mono">{(r.profit_factor || 0).toFixed(2)}</span>}
+                  value={<span className="font-mono">{metric(r.profit_factor, 2)}</span>}
                 />
                 <td className="px-3 py-2.5 text-muted-foreground font-mono text-[11px]">{r.dominant_blocker}</td>
                 <td className="px-3 py-2.5 text-muted-foreground italic text-[11px]">{r.action}</td>
@@ -484,15 +490,15 @@ function PerfTable({ rows }) {
               <tr key={r.name || i}
                   className="border-t border-border/60 hover:bg-primary/[0.04] transition-colors">
                 <td className="px-3 py-2.5 font-mono font-semibold">{r.name}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-emerald-400">{r.wins || 0}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-rose-400">{r.losses || 0}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-muted-foreground">{r.breakeven || 0}</td>
-                <HeatCell tone={wrt} value={<span className="font-mono">{(r.winrate_pct || 0).toFixed(1)}%</span>} />
-                <HeatCell tone={ext} value={<span className="font-mono">{(r.expectancy_R || 0).toFixed(2)}</span>} />
-                <HeatCell tone={pft} value={<span className="font-mono">{(r.profit_factor || 0).toFixed(2)}</span>} />
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-emerald-400/80">{(r.avg_R_win || 0).toFixed(2)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-rose-400/80">{(r.avg_R_loss || 0).toFixed(2)}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-muted-foreground">{Math.round(r.avg_holding_sec || 0).toLocaleString()}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-emerald-400">{metric(r.wins)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-rose-400">{metric(r.losses)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-muted-foreground">{metric(r.breakeven)}</td>
+                <HeatCell tone={wrt} value={<span className="font-mono">{hasMetric(r.winrate_pct) ? `${metric(r.winrate_pct, 1)}%` : "—"}</span>} />
+                <HeatCell tone={ext} value={<span className="font-mono">{metric(r.expectancy_R, 2)}</span>} />
+                <HeatCell tone={pft} value={<span className="font-mono">{metric(r.profit_factor, 2)}</span>} />
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-emerald-400/80">{metric(r.avg_R_win, 2)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-rose-400/80">{metric(r.avg_R_loss, 2)}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums font-mono text-muted-foreground">{hasMetric(r.avg_holding_sec) ? Math.round(r.avg_holding_sec).toLocaleString() : "—"}</td>
               </tr>
             );
           })}
@@ -513,15 +519,15 @@ const DETECTION_COLS = [
   { key: "name", label: "Strategy" },
   { key: "enabled", label: "Enabled", render: (v) => v ? "✓" : "—" },
   { key: "called", label: "Called", align: "right",
-    render: (v) => (v || 0).toLocaleString() },
+    render: (v) => metric(v) },
   { key: "setup", label: "Setup", align: "right",
-    render: (v) => (v || 0).toLocaleString() },
+    render: (v) => metric(v) },
   { key: "signals", label: "Signals", align: "right",
-    render: (v) => (v || 0).toLocaleString() },
+    render: (v) => metric(v) },
   { key: "setup_rate_pct", label: "Setup rate %", align: "right",
-    render: (v) => `${(v || 0).toFixed(1)}%` },
+    render: (v) => hasMetric(v) ? `${metric(v, 1)}%` : "—" },
   { key: "avg_score_base", label: "Avg score base", align: "right",
-    render: (v) => (v || 0).toFixed(1) },
+    render: (v) => metric(v, 1) },
 ];
 
 const GATE_COLS = [
@@ -545,11 +551,11 @@ const EXEC_COLS = [
   { key: "sltp_invalid", label: "SL/TP invalid", align: "right" },
   { key: "order_fail", label: "Order send fail", align: "right" },
   { key: "avg_spread_pts", label: "Avg spread pts", align: "right",
-    render: (v) => (v || 0).toFixed(1) },
+    render: (v) => metric(v, 1) },
   { key: "avg_score_final", label: "Avg score @entry", align: "right",
-    render: (v) => (v || 0).toFixed(1) },
+    render: (v) => metric(v, 1) },
   { key: "avg_threshold", label: "Avg threshold", align: "right",
-    render: (v) => (v || 0).toFixed(1) },
+    render: (v) => metric(v, 1) },
 ];
 
 const PERF_COLS = [
@@ -558,17 +564,17 @@ const PERF_COLS = [
   { key: "losses", label: "L", align: "right" },
   { key: "breakeven", label: "BE", align: "right" },
   { key: "winrate_pct", label: "Win %", align: "right",
-    render: (v) => `${(v || 0).toFixed(1)}%` },
+    render: (v) => hasMetric(v) ? `${metric(v, 1)}%` : "—" },
   { key: "expectancy_R", label: "Expe (R)", align: "right",
-    render: (v) => (v || 0).toFixed(2) },
+    render: (v) => metric(v, 2) },
   { key: "profit_factor", label: "PF", align: "right",
-    render: (v) => (v || 0).toFixed(2) },
+    render: (v) => metric(v, 2) },
   { key: "avg_R_win", label: "Avg W (R)", align: "right",
-    render: (v) => (v || 0).toFixed(2) },
+    render: (v) => metric(v, 2) },
   { key: "avg_R_loss", label: "Avg L (R)", align: "right",
-    render: (v) => (v || 0).toFixed(2) },
+    render: (v) => metric(v, 2) },
   { key: "avg_holding_sec", label: "Hold (s)", align: "right",
-    render: (v) => Math.round(v || 0).toLocaleString() },
+    render: (v) => hasMetric(v) ? Math.round(v).toLocaleString() : "—" },
 ];
 
 const VERDICT_STYLE = {
@@ -609,8 +615,8 @@ function RealTradePerformance() {
     <Card className="p-5 lg:p-6" testId="strat-real-perf">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div>
-          <div className="eyebrow flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Trade reali (dall'EA)</div>
-          <h3 className="font-semibold text-lg tracking-tight mt-0.5">Performance per strategia · live</h3>
+          <div className="eyebrow flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" /> Trade reali (dall'EA) <DataProvenanceBadge source={data?.demo === false ? "DERIVED" : data ? "UNAVAILABLE" : "UNAVAILABLE"} /></div>
+          <h3 className="font-semibold text-lg tracking-tight mt-0.5">Performance per strategia</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Calcolata dai trade che l'EA ha realmente eseguito (tabella Journal), non da backtest.
           </p>
@@ -618,10 +624,10 @@ function RealTradePerformance() {
         <div className="text-right">
           <div className="text-xs text-muted-foreground">Net totale</div>
           <div className={cls("font-mono font-bold text-xl tabular",
-            (data?.total_net ?? 0) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
-            {(data?.total_net ?? 0) >= 0 ? "+" : ""}{data?.total_net ?? 0}€
+            !hasMetric(data?.total_net) ? "text-muted-foreground" : data.total_net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400")}>
+            {hasMetric(data?.total_net) ? `${data.total_net >= 0 ? "+" : ""}${data.total_net}€` : "—"}
           </div>
-          <div className="text-[10px] text-muted-foreground">{data?.total_trades ?? 0} trade</div>
+          <div className="text-[10px] text-muted-foreground">{hasMetric(data?.total_trades) ? `${data.total_trades} trade` : "—"}</div>
         </div>
       </div>
 
@@ -847,6 +853,7 @@ export default function StrategyAnalyticsPage() {
 
       {data && !data.empty && (
         <div className="rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs flex flex-wrap items-center gap-x-4 gap-y-1">
+          <DataProvenanceBadge source={data.source === "ea_push" ? "LIVE" : data.source ? "CACHED" : "UNAVAILABLE"} />
           <span className="font-semibold text-sky-700 dark:text-sky-400">Snapshot:</span>
           <span><b>Symbol:</b> {data.symbol}</span>
           <span><b>TF:</b> {data.timeframe}</span>
@@ -885,13 +892,13 @@ export default function StrategyAnalyticsPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <StatTile label="Called" value={(data.total_called || 0).toLocaleString()} />
-            <StatTile label="Setup" value={(data.total_setup || 0).toLocaleString()}
-              hint={`${data.total_called ? ((data.total_setup / data.total_called) * 100).toFixed(1) : 0}% rate`} />
-            <StatTile label="Executed" value={(data.total_executed || 0).toLocaleString()}
-              hint={`${data.total_setup ? ((data.total_executed / data.total_setup) * 100).toFixed(1) : 0}% of setup`} />
-            <StatTile label="Wins" value={data.total_wins || 0} color="text-emerald-600" />
-            <StatTile label="Losses" value={data.total_losses || 0} color="text-rose-600" />
+            <StatTile label="Called" value={metric(data.total_called)} />
+            <StatTile label="Setup" value={metric(data.total_setup)}
+              hint={data.total_called && hasMetric(data.total_setup) ? `${((data.total_setup / data.total_called) * 100).toFixed(1)}% rate` : "—"} />
+            <StatTile label="Executed" value={metric(data.total_executed)}
+              hint={data.total_setup && hasMetric(data.total_executed) ? `${((data.total_executed / data.total_setup) * 100).toFixed(1)}% of setup` : "—"} />
+            <StatTile label="Wins" value={metric(data.total_wins)} color="text-emerald-600" />
+            <StatTile label="Losses" value={metric(data.total_losses)} color="text-rose-600" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

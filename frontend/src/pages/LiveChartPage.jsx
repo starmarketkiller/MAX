@@ -7,6 +7,7 @@ import {
 import api from "@/lib/api";
 import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import CoachLiveWidget from "@/components/CoachLiveWidget";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 
 const TF_OPTIONS = ["M1", "M5", "M15", "M30", "H1", "H4", "D1"];
 const SYM_OPTIONS = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "BTCUSD", "US30", "NAS100"];
@@ -102,7 +103,7 @@ function ContextPopover({ data, onClose }) {
 function TopBar({ symbol, setSymbol, tf, setTf, layers, setLayers, refreshing, onRefresh, lastPrice, ohlcSource }) {
   const [openLayers, setOpenLayers] = useState(false);
   return (
-    <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-white sticky top-0 z-30">
+    <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-slate-200 bg-white sticky top-0 z-30">
       {/* Symbol */}
       <select
         value={symbol}
@@ -130,18 +131,17 @@ function TopBar({ symbol, setSymbol, tf, setTf, layers, setLayers, refreshing, o
       </div>
 
       {/* Last price */}
-      {lastPrice && (
+      {lastPrice != null && (
         <div className="hidden sm:flex items-center gap-1 ml-2 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
           <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Last</span>
           <span className="text-sm font-mono font-bold text-slate-800 tabular-nums">{lastPrice.toFixed(2)}</span>
         </div>
       )}
 
-      {ohlcSource === "synthetic" && (
-        <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
-          DEMO
-        </span>
-      )}
+      <DataProvenanceBadge
+        source={String(ohlcSource).toUpperCase().includes("SYNTHETIC") ? "DEMO" : ohlcSource || "UNAVAILABLE"}
+        title={ohlcSource ? `OHLC source: ${ohlcSource}` : "OHLC source unavailable"}
+      />
 
       <div className="flex-1" />
 
@@ -243,6 +243,10 @@ export default function LiveChartPage() {
         setBars(o.bars || []);
         setOhlcSource(o.source || o.provenance || "");
         if (o.bars?.length) setLastPrice(o.bars[o.bars.length - 1].close);
+      } else {
+        setBars([]);
+        setLastPrice(null);
+        setOhlcSource("UNAVAILABLE");
       }
       if (markerData.status === "fulfilled") {
         const m = markerData.value.data;
@@ -283,13 +287,14 @@ export default function LiveChartPage() {
       markers.trades.forEach((t) => {
         if (!t.closeTime) return;
         const ts = Math.floor(new Date(t.closeTime).getTime() / 1000);
-        const won = (t.pnl ?? 0) >= 0;
+        const pnlKnown = t.pnl !== null && t.pnl !== undefined;
+        const won = pnlKnown ? Number(t.pnl) >= 0 : null;
         arr.push({
           time: ts,
-          position: won ? "belowBar" : "aboveBar",
-          color: won ? "#16a34a" : "#dc2626",
-          shape: won ? "arrowUp" : "arrowDown",
-          text: `${t.strategy || "?"} · ${won ? "+" : ""}${(t.pnl || 0).toFixed(0)}`,
+          position: won === true ? "belowBar" : "aboveBar",
+          color: won === null ? "#64748b" : won ? "#16a34a" : "#dc2626",
+          shape: won === true ? "arrowUp" : won === false ? "arrowDown" : "circle",
+          text: `${t.strategy || "?"} · ${pnlKnown ? `${won ? "+" : ""}${Number(t.pnl).toFixed(0)}` : "—"}`,
           _payload: { kind: "trade", trade: t },
         });
       });
@@ -349,15 +354,16 @@ export default function LiveChartPage() {
       const payload = candidate._payload || {};
       if (payload.kind === "trade") {
         const t2 = payload.trade;
-        const won = (t2.pnl ?? 0) >= 0;
+        const pnlKnown = t2.pnl !== null && t2.pnl !== undefined;
+        const won = pnlKnown ? Number(t2.pnl) >= 0 : null;
         setPopover({
           x: px, y: py,
           kind: "Closed trade",
           title: `${t2.strategy || "?"} · ${t2.side || "?"}`,
           rows: [
-            { label: "P&L",     value: `${won ? "+" : ""}$${(t2.pnl || 0).toFixed(2)}`, tone: won ? "pos" : "neg" },
+            { label: "P&L",     value: pnlKnown ? `${won ? "+" : ""}$${Number(t2.pnl).toFixed(2)}` : "—", tone: won === null ? undefined : won ? "pos" : "neg" },
             { label: "Score",   value: t2.score ?? "—" },
-            { label: "Lots",    value: (t2.lots ?? 0).toFixed(2) },
+            { label: "Lots",    value: t2.lots == null ? "—" : Number(t2.lots).toFixed(2) },
             { label: "Reason",  value: t2.reason || "—" },
             { label: "Session", value: t2.session || "—" },
           ],
@@ -371,7 +377,7 @@ export default function LiveChartPage() {
           rows: [
             { label: "Blocker",   value: s.blocker || "—" },
             { label: "Hypoth. R", value: s.would_have_r != null ? s.would_have_r.toFixed(2) : "—",
-              tone: (s.would_have_r ?? 0) > 0 ? "pos" : "neg" },
+              tone: s.would_have_r == null ? undefined : s.would_have_r > 0 ? "pos" : "neg" },
             { label: "Score",     value: s.score ?? "—" },
             { label: "HTF",       value: s.htf_bias || "—" },
           ],
@@ -444,7 +450,7 @@ export default function LiveChartPage() {
         <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1.5 pointer-events-none">
           {layers.trades && (
             <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur border border-emerald-300 text-[10px] font-bold text-emerald-700">
-              ▲ {markers.trades.filter(t => (t.pnl ?? 0) >= 0).length} wins · ▼ {markers.trades.filter(t => (t.pnl ?? 0) < 0).length} losses
+              ▲ {markers.trades.filter(t => t.pnl != null && t.pnl >= 0).length} wins · ▼ {markers.trades.filter(t => t.pnl != null && t.pnl < 0).length} losses
             </span>
           )}
           {layers.shadows && markers.shadows.length > 0 && (

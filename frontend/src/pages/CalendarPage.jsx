@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Calendar, RefreshCcw, AlertCircle, TrendingUp } from "lucide-react";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 
 function classNames(...c) { return c.filter(Boolean).join(" "); }
 
@@ -38,14 +39,23 @@ export default function CalendarPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [days, setDays] = useState(14);
+  const [provenance, setProvenance] = useState("UNAVAILABLE");
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError("");
     try {
       const { data } = await api.get("/calendar/upcoming",
         { params: { days, include_earnings: true } });
       setEvents(data.events || []);
-    } catch (e) { console.error(e); }
+      setProvenance(data.demo === true || String(data.provenance || "").includes("DEMO") ? "DEMO" : data.provenance || "UNAVAILABLE");
+    } catch (e) {
+      console.error(e);
+      setEvents([]);
+      setProvenance("UNAVAILABLE");
+      setError("Calendar data unavailable");
+    }
     finally { setLoading(false); }
   }, [days]);
   useEffect(() => { load(); }, [load]);
@@ -62,11 +72,11 @@ export default function CalendarPage() {
     <div className="space-y-6" data-testid="calendar-page">
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-sky-500"/> Calendario Economico
+          <h1 className="text-2xl font-bold tracking-tight flex flex-wrap items-center gap-2">
+            <Calendar className="h-6 w-6 text-sky-500"/> Calendario Economico <DataProvenanceBadge source={provenance} />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Eventi macro ad alto impatto su Forex, Gold e indici. Schedule ricorrenti + earnings real-time.
+            Eventi macro dimostrativi generati dal backend. Non sono un feed real-time e non vanno usati per decisioni operative.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -86,6 +96,8 @@ export default function CalendarPage() {
           </button>
         </div>
       </div>
+
+      {error && <div className="rounded-lg border border-border bg-secondary/30 px-4 py-3 text-sm text-muted-foreground">{error}</div>}
 
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-start gap-3">
         <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0"/>

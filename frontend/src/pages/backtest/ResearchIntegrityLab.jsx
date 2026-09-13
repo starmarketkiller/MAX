@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import { Card, SectionHeader, cls } from "@/pages/dashboard/shared";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 
 const STAGES = ["generated", "blocked", "open_attempt", "opened", "broker_reject"];
 const STAGE_LABELS = {
@@ -25,7 +26,7 @@ const ratio = (value, generated) => {
 };
 
 function ResearchBadge() {
-  return <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 font-mono text-[9px] font-bold tracking-wider text-violet-600 dark:text-violet-300">RESEARCH</span>;
+  return <DataProvenanceBadge source="RESEARCH" />;
 }
 
 function VerdictBadge({ verdict }) {

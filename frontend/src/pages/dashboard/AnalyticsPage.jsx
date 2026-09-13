@@ -5,6 +5,7 @@ import {
   BarChart, Bar, Cell,
 } from "recharts";
 import { useTheme } from "@/lib/theme";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 import {
   Card, KpiCard, SectionHeader,
   cls, fmtMoney, fmtSign, fmtPrice,
@@ -14,6 +15,8 @@ import {
 } from "@/pages/dashboard/shared";
 
 const DOW_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const hasValue = (value) => value !== null && value !== undefined && value !== "";
+const show = (value, formatter = (item) => String(item)) => hasValue(value) ? formatter(value) : "—";
 
 const REASON_COLORS = {
   "NXS:PROFIT": "text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
@@ -139,7 +142,7 @@ function ByReasonTable({ byReason }) {
           <ShieldAlert className="h-3.5 w-3.5" /> Close reason breakdown
         </div>
         <h3 className="font-semibold text-lg tracking-tight mt-1">
-          {byReason?.total ?? 0} <span className="font-normal text-muted-foreground">total closures</span>
+          {show(byReason?.total)} <span className="font-normal text-muted-foreground">total closures</span>
         </h3>
       </div>
       <div className="overflow-x-auto">
@@ -225,7 +228,7 @@ function RiskMetricsStrip({ risk }) {
             <div key={k} className="space-y-1.5" data-testid={`risk-${k}`}>
               <div className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground font-semibold">{label}</div>
               <div className={cls("font-mono font-bold text-2xl tabular leading-none", toneClass)}>
-                {fmt(r[k] ?? 0)}
+                {hasValue(r[k]) ? fmt(r[k]) : "—"}
               </div>
               <div className="text-[10px] text-muted-foreground/80 italic">{hint}</div>
             </div>
@@ -273,9 +276,10 @@ function CalendarHeatmap({ calendar }) {
         <div>
           <div className="eyebrow flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" /> Daily performance calendar
+            <DataProvenanceBadge source={calendar?.days ? "DERIVED" : "UNAVAILABLE"} />
           </div>
           <h3 className="font-semibold text-lg tracking-tight mt-1">
-            {calendar?.from && calendar?.to ? `${calendar.from} → ${calendar.to}` : "Loading…"}
+            {calendar?.from && calendar?.to ? `${calendar.from} → ${calendar.to}` : days.length ? "Ledger history" : "Unavailable"}
           </h3>
         </div>
         <div className="flex gap-6 text-right text-xs">
@@ -330,9 +334,9 @@ function CorrelationMatrix({ correlation }) {
   if (strats.length === 0) {
     return (
       <Card className="p-6 lg:p-8" testId="correlation-matrix-empty">
-        <SectionHeader eyebrow="Strategy correlation" title="Need more data" icon={Layers} />
+        <SectionHeader eyebrow="Strategy correlation" title="Correlation unavailable" icon={Layers} right={<DataProvenanceBadge source="UNAVAILABLE" />} />
         <p className="text-sm text-muted-foreground">
-          Correlation needs at least 3 trading days. Currently {correlation?.days ?? 0} days.
+          {correlation?.note || "The backend has not provided a calculated correlation matrix."}
         </p>
       </Card>
     );
@@ -361,7 +365,7 @@ function CorrelationMatrix({ correlation }) {
           </>
         }
         icon={Layers}
-        right={<span className="font-mono">{correlation?.days ?? 0} days of data</span>}
+        right={<div className="flex items-center gap-2"><DataProvenanceBadge source="DERIVED" /><span className="font-mono">{show(correlation?.days)} days of data</span></div>}
       />
 
       <div className="overflow-x-auto">
@@ -453,9 +457,7 @@ export default function AnalyticsPage({ summary, trades, heatmap, byReason, cale
           Realised P&amp;L <span className="font-normal text-muted-foreground">by strategy</span>
         </h2>
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-400">
-            {summary?.provenance?.metric || "DERIVED_ANALYTICS"} · trade_events
-          </span>
+          <DataProvenanceBadge source={summary ? summary?.provenance?.metric || "DERIVED" : "UNAVAILABLE"} label={summary ? "DERIVED" : "UNAVAILABLE"} title={summary?.provenance?.metric || "Analytics unavailable"} />
           {(summary?.provenance?.legacy?.trade_rows ?? 0) > 0 && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-amber-400">
               LEGACY_UNVERIFIED: {summary.provenance.legacy.trade_rows} esclusi
@@ -465,11 +467,11 @@ export default function AnalyticsPage({ summary, trades, heatmap, byReason, cale
       </Card>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-        <KpiCard label="Total trades" value={summary?.total_trades ?? 0} testId="an-total" />
+        <KpiCard label="Total trades" value={show(summary?.total_trades)} testId="an-total" />
         <KpiCard
           label="Win rate"
-          value={`${summary?.win_rate ?? 0}%`}
-          tone={(summary?.win_rate ?? 0) >= 50 ? "pos" : "neg"}
+          value={show(summary?.win_rate, (value) => `${value}%`)}
+          tone={!hasValue(summary?.win_rate) ? "neutral" : summary.win_rate >= 50 ? "pos" : "neg"}
           testId="an-wr"
         />
         <KpiCard
@@ -480,8 +482,8 @@ export default function AnalyticsPage({ summary, trades, heatmap, byReason, cale
         />
         <KpiCard
           label="Profit factor"
-          value={(summary?.profit_factor ?? 0).toFixed(2)}
-          tone={(summary?.profit_factor ?? 0) >= 1 ? "pos" : "neg"}
+          value={show(summary?.profit_factor, (value) => Number(value).toFixed(2))}
+          tone={!hasValue(summary?.profit_factor) ? "neutral" : summary.profit_factor >= 1 ? "pos" : "neg"}
           testId="an-pf"
         />
       </div>
@@ -562,7 +564,7 @@ export default function AnalyticsPage({ summary, trades, heatmap, byReason, cale
                     "px-6 lg:px-8 py-3 text-right font-mono font-bold",
                     pnlTextClass(t.pnl)
                   )}>
-                    {(t.pnl ?? 0) >= 0 ? "+" : ""}${fmtMoney(t.pnl)}
+                    {t.pnl == null ? "—" : `${t.pnl >= 0 ? "+" : ""}$${fmtMoney(t.pnl)}`}
                   </td>
                 </tr>
               ))}

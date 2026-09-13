@@ -16,6 +16,8 @@ import api from "@/lib/api";
 import HealthScoreCard from "@/pages/dashboard/HealthScoreCard";
 import { ResearchFunnel } from "@/pages/backtest/ResearchIntegrityLab";
 import LockedProfileBanner from "@/components/LockedProfileBanner";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
+import SystemObservabilityPanel from "@/components/SystemObservabilityPanel";
 import { DEFAULT_SETTINGS } from "@/contracts/settingsContract";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 import {
@@ -51,19 +53,10 @@ const terminalValue = (value, formatter = (item) => String(item)) => hasValue(va
 const moneyValue = (value, signed = false) => terminalValue(value, (item) => signed ? fmtSign(item) : fmtMoney(item));
 
 function SourceBadge({ status, health }) {
-  let label = null;
-  let toneClass = "border-border text-muted-foreground";
-  if (health?.demo === true || status?.demo === true) {
-    label = "DEMO";
-    toneClass = "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400";
-  } else if (status?.online === true || health?.online === true) {
-    label = "LIVE";
-    toneClass = "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400";
-  } else if (status || health) {
-    label = "CACHED";
-    toneClass = "border-cyan-500/25 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300";
-  }
-  return label ? <span className={cls("rounded-full border px-2 py-1 font-mono text-[9px] font-bold tracking-wider", toneClass)}>{label}</span> : null;
+  const source = health?.demo === true || status?.demo === true ? "DEMO"
+    : status?.online === true || health?.online === true ? "LIVE"
+      : status || health ? "CACHED" : "UNAVAILABLE";
+  return <DataProvenanceBadge source={source} />;
 }
 
 function SystemStatusStrip({ status, health }) {
@@ -135,7 +128,7 @@ function ExecutionPipeline({ certificate, loading, error }) {
       <SectionHeader title="Latest Research Funnel" subtitle="GENERATED → BLOCKED → OPEN ATTEMPT → OPENED → BROKER REJECT" />
       <Card className="p-3 sm:p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="flex items-center gap-2"><span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 font-mono text-[9px] font-bold tracking-wider text-violet-600 dark:text-violet-300">RESEARCH</span><span className="text-[10px] text-muted-foreground">Latest completed research run · not live execution telemetry</span></div>
+          <div className="flex items-center gap-2"><DataProvenanceBadge source="RESEARCH" /><span className="text-[10px] text-muted-foreground">Latest completed research run · not live execution telemetry</span></div>
           {certificate?.run_id ? <span className="max-w-full truncate font-mono text-[10px] text-muted-foreground" title={certificate.run_id}>{certificate.run_id}</span> : null}
         </div>
         {loading ? <div className="py-6 text-center text-xs text-muted-foreground">Loading latest research funnel…</div>
@@ -929,7 +922,7 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
       <ExecutionPipeline certificate={latestResearch} loading={researchLoading} error={researchError} />
 
       <section>
-        <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" />
+        <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" right={<DataProvenanceBadge source={isDemo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} />} />
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
           <MarketIntelligence status={status} />
           <StructureSection status={status} />
@@ -953,8 +946,10 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
 
       <ResearchSnapshot />
 
+      <SystemObservabilityPanel status={status} health={health} latestResearch={latestResearch} />
+
       <section>
-        <SectionHeader title="System health" subtitle="Backend and bridge diagnostics" />
+        <SectionHeader title="EA telemetry health" subtitle="Derived score from reported EA telemetry" right={<DataProvenanceBadge source={health?.demo ? "DEMO" : health?.online ? "LIVE" : health ? "CACHED" : "UNAVAILABLE"} />} />
         <HealthScoreCard health={health} compact />
       </section>
 

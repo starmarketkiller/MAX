@@ -2,6 +2,7 @@ import { AlertOctagon } from "lucide-react";
 import {
   Card, cls, POS_TEXT, NEG_TEXT, gateStyleFor,
 } from "@/pages/dashboard/shared";
+import DataProvenanceBadge from "@/components/DataProvenanceBadge";
 
 const HEALTH_LEVEL = {
   excellent: { ring: "stroke-emerald-500", text: POS_TEXT, badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30", label: "Excellent" },
@@ -16,7 +17,7 @@ export default function HealthScoreCard({ health, compact = false }) {
       <Card className={compact ? "p-4" : "p-6 lg:p-8"} testId="health-score-card">
         <div className="flex items-center justify-between gap-3">
           <div><div className="eyebrow">EA health</div><div className="mt-1 font-mono text-sm text-muted-foreground">Unavailable</div></div>
-          <span className="rounded-full border border-border px-2 py-1 text-[9px] font-bold tracking-wider text-muted-foreground">UNKNOWN</span>
+          <DataProvenanceBadge source="UNAVAILABLE" />
         </div>
       </Card>
     );
@@ -29,11 +30,6 @@ export default function HealthScoreCard({ health, compact = false }) {
   const checks = health.checks || [];
   const anomalies = health.anomaly || [];
   const provenance = health.demo === true ? "DEMO" : health.online === true ? "LIVE" : "CACHED";
-  const provenanceClass = provenance === "LIVE"
-    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-    : provenance === "DEMO"
-      ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-      : "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400";
 
   return (
     <Card className={compact ? "p-4" : "p-6 lg:p-8"} testId="health-score-card">
@@ -61,7 +57,7 @@ export default function HealthScoreCard({ health, compact = false }) {
               <span className={cls("px-2 py-0.5 rounded-full text-[10px] font-bold border", lvl.badge)}>
                 {checks.length ? `${checks.filter((c) => c.ok === true).length}/${checks.length} checks` : "— checks"}
               </span>
-              <span className={cls("px-2 py-0.5 rounded-full text-[9px] font-bold border tracking-wider", provenanceClass)}>{provenance}</span>
+              <DataProvenanceBadge source={provenance} className="px-2 py-0.5" />
             </h3>
             <p className={cls("text-xs text-muted-foreground mt-1", compact && "hidden sm:block")}>
               Composite of bridge, protections, drawdown, activity, revenge, news, vol, profit factor.
