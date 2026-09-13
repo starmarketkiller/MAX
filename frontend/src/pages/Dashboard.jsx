@@ -692,7 +692,7 @@ export default function Dashboard({ section = "home" }) {
             {trades.some((t) => t.source_provenance === "RECONSTRUCTED_HISTORY") &&
               <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-amber-500">RECONSTRUCTED_HISTORY</span>}
             {section === "backtest" &&
-              <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-500">SIMULATED_RESEARCH</span>}
+              <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-violet-500">RESEARCH</span>}
           </div>
           {lastCommand && (
             /* Verde SOLO quando il broker ha confermato l'esecuzione; rosso

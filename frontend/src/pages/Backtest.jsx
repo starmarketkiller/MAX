@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "@/lib/api";
-import { Loader2, TrendingUp, Sparkles, Wand2, Brain, Library, FileText } from "lucide-react";
+import { Loader2, TrendingUp, Sparkles, Wand2, Brain, Library, FileText, ShieldCheck } from "lucide-react";
 import BacktestForm from "@/pages/backtest/BacktestForm";
 import BacktestMetrics from "@/pages/backtest/BacktestMetrics";
 import BacktestCharts from "@/pages/backtest/BacktestCharts";
@@ -9,6 +9,7 @@ import BacktestManagementReport from "@/pages/backtest/BacktestManagementReport"
 import BacktestStrategyLibrary from "@/pages/backtest/BacktestStrategyLibrary";
 import BacktestRealAnalysis from "@/pages/backtest/BacktestRealAnalysis";
 import BacktestCreator from "@/pages/backtest/BacktestCreator";
+import ResearchIntegrityLab from "@/pages/backtest/ResearchIntegrityLab";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
 
 const DEFAULT_CFG = {
@@ -55,7 +56,7 @@ export default function BacktestPage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState("run");          // 'run' | 'optimize' | 'mgmt'
+  const [tab, setTab] = useState("integrity");
 
   useEffect(() => {
     (async () => {
@@ -188,7 +189,15 @@ export default function BacktestPage() {
             <TrendingUp className="h-3.5 w-3.5" /> Carica settaggi live (rischio, ATR SL/TP, score)
           </button>
         </div>
-        <div className="flex items-center gap-1 p-1 bg-secondary/40 rounded-lg" data-testid="bt-tabs">
+        <div className="flex flex-wrap items-center gap-1 p-1 bg-secondary/40 rounded-lg" data-testid="bt-tabs">
+          <button
+            onClick={() => setTab("integrity")}
+            data-testid="bt-tab-integrity"
+            className={`px-3 py-1.5 rounded-md text-xs font-mono uppercase tracking-wider transition-all ${
+              tab === "integrity" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}>
+            <ShieldCheck className="h-3.5 w-3.5 inline mr-1.5"/>Integrity
+          </button>
           <button
             onClick={() => setTab("run")}
             data-testid="bt-tab-run"
@@ -240,7 +249,9 @@ export default function BacktestPage() {
         </div>
       </div>
 
-      {tab === "run" ? (
+      {tab === "integrity" ? (
+        <ResearchIntegrityLab />
+      ) : tab === "run" ? (
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <div className="xl:col-span-4 space-y-4">
             {autoLoadedPreset && (

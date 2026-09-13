@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity, Pause, Play, AlertOctagon,
@@ -12,7 +12,9 @@ import {
   Area, AreaChart,
 } from "recharts";
 import { useTheme } from "@/lib/theme";
+import api from "@/lib/api";
 import HealthScoreCard from "@/pages/dashboard/HealthScoreCard";
+import { ResearchFunnel } from "@/pages/backtest/ResearchIntegrityLab";
 import LockedProfileBanner from "@/components/LockedProfileBanner";
 import { DEFAULT_SETTINGS } from "@/contracts/settingsContract";
 import { LIVE_STRATEGY_COUNT } from "@/contracts/strategyRegistry";
@@ -127,24 +129,20 @@ function CoreMetrics({ status }) {
   );
 }
 
-function ExecutionPipeline({ status }) {
-  const reactionAvailable = typeof status?.reactionDetected === "boolean";
-  const positionsAvailable = Array.isArray(status?.positions);
-  const gateState = status?.eaPaused === true ? "EA paused" : status?.newsBlock === true ? "News guard active" : null;
-  const steps = [
-    ["SCAN", "Telemetry unavailable"],
-    ["SIGNAL", reactionAvailable ? (status.reactionDetected ? "Reaction detected" : "No active reaction") : "Telemetry unavailable"],
-    ["GATE", gateState || "Telemetry unavailable"],
-    ["EXECUTE", "Telemetry unavailable"],
-    ["POSITION", positionsAvailable ? `${status.positions.length} active` : "Telemetry unavailable"],
-    ["EXIT", "Telemetry unavailable"],
-  ];
+function ExecutionPipeline({ certificate, loading, error }) {
   return (
     <section>
-      <SectionHeader title="Execution pipeline" subtitle="SCAN → SIGNAL → GATE → EXECUTE → POSITION → EXIT" />
-      <Card className="p-3 sm:p-4"><div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-        {steps.map(([name, detail], index) => <div key={name} className="min-w-0 rounded-lg border border-border bg-secondary/30 px-3 py-3"><div className="flex items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">{String(index + 1).padStart(2, "0")}</span><span className="font-mono text-[10px] font-bold tracking-[0.12em] text-primary">{name}</span></div><div className="mt-2 min-h-8 text-[10px] leading-4 text-muted-foreground">{detail}</div></div>)}
-      </div></Card>
+      <SectionHeader title="Latest Research Funnel" subtitle="GENERATED → BLOCKED → OPEN ATTEMPT → OPENED → BROKER REJECT" />
+      <Card className="p-3 sm:p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+          <div className="flex items-center gap-2"><span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-1 font-mono text-[9px] font-bold tracking-wider text-violet-600 dark:text-violet-300">RESEARCH</span><span className="text-[10px] text-muted-foreground">Latest completed research run · not live execution telemetry</span></div>
+          {certificate?.run_id ? <span className="max-w-full truncate font-mono text-[10px] text-muted-foreground" title={certificate.run_id}>{certificate.run_id}</span> : null}
+        </div>
+        {loading ? <div className="py-6 text-center text-xs text-muted-foreground">Loading latest research funnel…</div>
+          : error ? <div className="py-6 text-center text-xs text-rose-600 dark:text-rose-400">{error}</div>
+            : certificate ? <ResearchFunnel funnel={certificate.funnel} gateReasons={certificate.gate_reason_counts} />
+              : <div className="py-6 text-center text-xs text-muted-foreground">No research certificate available</div>}
+      </Card>
     </section>
   );
 }
@@ -893,6 +891,26 @@ function ResearchSnapshot() {
 // ========================================================================
 export default function HomePage({ status, history, settings, health, onCmd, onSaveSettings }) {
   const isDemo = status?.demo === true || health?.demo === true;
+  const [latestResearch, setLatestResearch] = useState(null);
+  const [researchLoading, setResearchLoading] = useState(true);
+  const [researchError, setResearchError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await api.get("/research/certificates/latest");
+        if (active) setLatestResearch(data || null);
+      } catch (requestError) {
+        if (!active) return;
+        setLatestResearch(null);
+        if (requestError?.response?.status !== 404) setResearchError("Latest research funnel unavailable");
+      } finally {
+        if (active) setResearchLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="space-y-6 fade-in">
@@ -908,7 +926,7 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
 
       <SystemStatusStrip status={status} health={health} />
       <CoreMetrics status={status} />
-      <ExecutionPipeline status={status} />
+      <ExecutionPipeline certificate={latestResearch} loading={researchLoading} error={researchError} />
 
       <section>
         <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" />
