@@ -1149,5 +1149,14 @@ input bool     InpResearchWickShadow       = false;
 // NXS_Strategies_Experimental.mqh e la state machine li' documentata.
 // Default OFF, zero impatto quando spento.
 input bool     InpStrat_WickSweepReclaim   = false;
+// 13/09 - Unified Level/Reaction Engine, Fase A (telemetry-only, vedi vault
+// "NEXUS - Unified Level Engine Phase A WICK Telemetry Shadow"). Osserva gli
+// stessi eventi gia' calcolati da WICK_SWEEP_REV/RECLAIM e li registra in
+// SNXSUnifiedLevel/SNXSReactionEvent (NXS_LevelRegistry.mqh/
+// NXS_ReactionEngine.mqh) SENZA generare segnali, aprire trade o modificare
+// lo stato canonico. Default ON (zero impatto sul trading anche attivo: e'
+// puro logging in parallelo) cosi' da poter sempre calcolare il parity
+// report old-vs-new quando WICK_SWEEP_REV/RECLAIM sono in test.
+input bool     InpLevelRegistry_WickTelemetry = true;
 
 #endif

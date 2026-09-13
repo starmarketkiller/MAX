@@ -259,9 +259,21 @@ Note di raccordo con lo stato attuale:
 Motivazione (dettagliata anche in risposta finale):
 1. **Isomorfismo quasi diretto**: `SNxsWickSide`/`SNxsWickReclaimState`/`SNxsWickShadowEvent` coprono già ~80% dei campi di `SNXSUnifiedLevel`/`SNXSReactionEvent` proposti sopra. Il porting è in gran parte un rename/riorganizzazione di uno schema già esistente e già testato, non un design da zero.
 2. **Isolamento**: questo file non fa `#include`/non legge `g_struct`, `g_levels[]`, `g_reaction`, Fibonacci o `SNXSSweepExt`. Migrarlo non può toccare, nemmeno indirettamente, le altre 51 strategie live o gli stati condivisi (`g_struct`/`g_reaction`) usati da SMC/Institutional.
-3. **Rischio live nullo oggi**: per il bug indipendente "terzo cancello silenzioso" (`NXS_StrategyKnown`, già documentato in [[NEXUS EA - Audit Structure-Reaction-LEVEL_REACTION e WICK_SWEEP Bloccato dal Terzo Cancello (10-09)]], NON in scope qui e da NON toccare in questo task), WICK_SWEEP_REVERSAL produce oggi **zero trade reali** (165 sweep rilevati, 0 aperture). Si può iterare sul nuovo engine senza nessun rischio di alterare un comportamento di trading realmente in produzione.
+3. **Rischio basso per costruzione, non per assenza di storico**: *(corretto 13/09 — vedi nota sotto)* Phase A è puro logging in parallelo (nessun segnale/trade/stato modificato), quindi il rischio è strutturalmente nullo indipendentemente dallo stato del registry strategie. Il bug indipendente "terzo cancello silenzioso" (`NXS_StrategyKnown`, documentato in [[NEXUS EA - Audit Structure-Reaction-LEVEL_REACTION e WICK_SWEEP Bloccato dal Terzo Cancello (10-09)]], NON in scope qui) descriveva uno stato TEMPORANEO in cui WICK_SWEEP_REV non era ancora registrato nel contract generato — **non l'unico stato osservato**: esiste una fixture storica successiva con 178 trade reali (vedi correzione sotto), quindi il rischio "zero trade oggi" non va assunto senza verificare lo stato corrente del registry.
 4. **Metodologia già pronta**: esiste già in codice un meccanismo di shadow-vs-canonico con parity check (`NXS_WickShadow_PrintSummary`, confronto `shadow_sweeps` vs `canonical_sweepsDetected`) — la Fase B (shadow old-vs-new) di questo piano può letteralmente estendere quel meccanismo invece di costruirne uno nuovo.
-5. **Fixture esplicita**: l'utente ha indicato "WICK baseline/failure history" tra le regression fixture da preservare — segnale che la baseline attuale (165 sweep/0 trade, causa nota) è già il riferimento su cui il nuovo engine dovrà essere confrontato.
+5. **Fixture storica validata**: `WICK_SWEEP_REV RAW Fast Smoke` (2026-06-01→2026-08-26, 178 trade, PF 0.78, WR 16.85%, 148 SL/30 TP, net -151.39, zero invariant fail) è la baseline reale su cui il nuovo engine va confrontato in Fase D — vedi correzione metodologica sotto.
+
+> **CORREZIONE METODOLOGICA (13/09, richiesta dall'utente in sede di approvazione dell'audit)**: la frase originale di questa sezione trattava "165 sweep rilevati, 0 aperture" come SE fosse la regression fixture WICK. Questo è sbagliato: quello è solo lo **stato corrente del codice**, etichettato `CURRENT_CODE_GATED_STATE` — una condizione temporanea (probabilmente dovuta al gate di registry) osservata in una sessione, non un risultato storico validato. La fixture storica VERA, da preservare come riferimento per la parity di Fase D, è:
+>
+> **`WICK_SWEEP_REV RAW Fast Smoke`** — 2026-06-01 → 2026-08-26, **178 trade**, **PF 0.78**, **WR 16.85%**, **148 SL / 30 TP**, **net -151.39**, **zero invariant fail**.
+>
+> Da preservare separatamente come **failure history** (varianti già testate e refutate, NON da riproporre né da confondere con un edge valido):
+> - WICK_SWEEP_RECLAIM M15: nessun edge;
+> - RECLAIM_TICK dopo ARM M15: refutato;
+> - RECLAIM_LIMIT_RETEST: refutato;
+> - shadow PF 5.80: **non valido come performance eseguibile** (è un PF virtuale su trade simulati con timing tick-level mai davvero disponibile alla strategia canonica — vedi correzione metodologica del 12/09 già presente in questo file, blocco "WICK SWEEP RECLAIM").
+>
+> `CURRENT_CODE_GATED_STATE` (165 sweep/0 trade) resta un dato utile come istantanea dello stato corrente del gate, ma NON sostituisce né invalida la fixture storica dei 178 trade — sono due cose distinte, verificabili separatamente.
 
 File coinvolti per questa migrazione (quando si passerà all'implementazione, NON ora): `NXS_Strategies_Experimental.mqh` (sorgente esistente), nuovo modulo `NXS_LevelEngine.mqh`/`NXS_ReactionEngine.mqh` (Phase A, telemetry-only, accanto al vecchio) — nomi indicativi, da confermare in fase di design del file-by-file plan.
 
@@ -287,7 +299,7 @@ Per qualunque famiglia migrata (a partire dalla prima), la Fase D (parity test) 
 1. **Conteggio eventi identico**: n. livelli creati, n. sweep, n. reclaim, n. invalidazioni prodotti dal nuovo engine == quelli del motore legacy corrispondente (tolleranza zero sugli eventi discreti, non solo sui trade).
 2. **Timestamp identici** (±0 barre) per ogni evento corrispondente — non solo lo stesso conteggio ma lo stesso momento.
 3. **Prezzo/zona identici** (tolleranza = 1 point, per arrotondamenti) per ogni livello corrispondente.
-4. **Nessuna variazione nei trade reali** delle strategie NON migrate (ADX_RSI RAW, EMA_PULLBACK RAW, FVG_CONT RAW invariati bit-per-bit nei risultati RAW; WICK baseline/failure history invariata finché il vecchio motore resta quello attivo).
+4. **Nessuna variazione nei trade reali** delle strategie NON migrate (ADX_RSI RAW, EMA_PULLBACK RAW, FVG_CONT RAW invariati bit-per-bit nei risultati RAW; fixture storica `WICK_SWEEP_REV RAW Fast Smoke` — 178 trade, PF 0.78 — invariata finché il vecchio motore resta quello attivo; `CURRENT_CODE_GATED_STATE` non è la fixture, vedi correzione §4).
 5. **Zero nuovi trade** generati dal nuovo engine durante Phase A/B (telemetry-only per definizione — se anche un solo ordine reale nasce dal nuovo path prima di Phase C, è una violazione di scope, non solo un bug).
 6. Per la famiglia migrata in Phase C: il conteggio di trade REALI (dopo lo switch) deve combaciare 1:1 col vecchio motore sullo stesso storico, prima di poter dichiarare la migrazione conclusa e passare a Phase E.
 7. Report di parity scritto (tabella vecchia-vs-nuovo, come già lo stile usato in `NXS_WickShadow_PrintSummary`), non solo "0 differenze" affermato a parole.
@@ -317,7 +329,7 @@ Solo indicazione di dove ogni fase toccherebbe codice — nessuna di queste modi
 ## 8. Cosa NON toccare (in questo task e nelle prime fasi)
 
 - **Nessuna logica live**: nessuna strategia, SL/TP, execution, TF viene modificato in questo task (audit-only, come richiesto).
-- **Regression fixture congelate**: ADX_RSI RAW, EMA_PULLBACK RAW, FVG_CONT RAW, WICK baseline/failure history (165 sweep/0 trade) — i loro risultati non devono cambiare per NESSUN motivo finché non c'è un parity test esplicito che le riguarda direttamente.
+- **Regression fixture congelate**: ADX_RSI RAW, EMA_PULLBACK RAW, FVG_CONT RAW, `WICK_SWEEP_REV RAW Fast Smoke` (178 trade, PF 0.78, WR 16.85%, 148 SL/30 TP, net -151.39, zero invariant fail, 2026-06-01→2026-08-26) — i loro risultati non devono cambiare per NESSUN motivo finché non c'è un parity test esplicito che le riguarda direttamente. `CURRENT_CODE_GATED_STATE` (165 sweep/0 trade) è una fotografia dello stato corrente del gate, non una fixture da preservare bit-per-bit — vedi correzione §4. Failure history da preservare separatamente (varianti refutate, non fixture di riferimento): WICK_SWEEP_RECLAIM M15 no edge, RECLAIM_TICK dopo ARM M15 refutato, RECLAIM_LIMIT_RETEST refutato, shadow PF 5.80 non valido come performance eseguibile.
 - **`NXS_Structure.mqh`/`NXS_Reaction.mqh`**: sono condivisi da troppi consumer (STRUCT_REACT + tutta la famiglia SMC/Institutional che legge `g_struct`) per essere toccati prima che la Fase E sia raggiunta con successo sulle famiglie più isolate.
 - **Il bug "terzo cancello silenzioso"** (`NXS_StrategyKnown`/registry strategie) — fuori scope per questo piano, documentato altrove, da NON correggere qui anche se rilevante per il rischio nullo della prima migrazione.
 - **`knowledge/strategy_database.json` / `contracts/generate_registry.py`** — nessuna nuova strategia da registrare in questa fase (Phase A/B sono telemetry-only, non richiedono un id di strategia registrato).

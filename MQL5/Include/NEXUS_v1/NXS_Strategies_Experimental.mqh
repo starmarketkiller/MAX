@@ -104,20 +104,36 @@ void _NXS_WickSweep_UpdateLevel(){
    double minWick = InpWickSweep_MinWickPips * pip;
 
    if(upperWick >= minWick){
-      if(g_wickHigh.level > 0 && !g_wickHigh.consumed) g_wickFunnel.levelsReplacedUnused++;
+      if(g_wickHigh.level > 0 && !g_wickHigh.consumed){
+         g_wickFunnel.levelsReplacedUnused++;
+         // Fase A - Unified Level/Reaction Engine (telemetry-only): il vecchio
+         // livello viene sostituito PRIMA di essere consumato. Hook causale
+         // nello stesso punto in cui il vecchio contatore viene incrementato.
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnLevelReplaced(g_wickHigh.id, DIR_SELL, PERIOD_H4, iTime(g_sym, PERIOD_H4, 1));
+      }
       SNxsWickSide nl; ZeroMemory(nl);
       nl.level = h1; nl.createdAt = iTime(g_sym, PERIOD_H4, 1);
       nl.id = ++g_wickLevelIdCounter;
       g_wickHigh = nl;
       g_wickFunnel.levelsCreated++;
+      // Fase A - hook causale: livello appena creato, stesso id canonico (nl.id).
+      if(InpLevelRegistry_WickTelemetry)
+         NXS_Reaction_OnLevelCreated(nl.id, "HIGH", DIR_SELL, nl.level, nl.createdAt, PERIOD_H4);
    }
    if(lowerWick >= minWick){
-      if(g_wickLow.level > 0 && !g_wickLow.consumed) g_wickFunnel.levelsReplacedUnused++;
+      if(g_wickLow.level > 0 && !g_wickLow.consumed){
+         g_wickFunnel.levelsReplacedUnused++;
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnLevelReplaced(g_wickLow.id, DIR_BUY, PERIOD_H4, iTime(g_sym, PERIOD_H4, 1));
+      }
       SNxsWickSide nl; ZeroMemory(nl);
       nl.level = l1; nl.createdAt = iTime(g_sym, PERIOD_H4, 1);
       nl.id = ++g_wickLevelIdCounter;
       g_wickLow = nl;
       g_wickFunnel.levelsCreated++;
+      if(InpLevelRegistry_WickTelemetry)
+         NXS_Reaction_OnLevelCreated(nl.id, "LOW", DIR_BUY, nl.level, nl.createdAt, PERIOD_H4);
    }
 }
 
@@ -127,12 +143,15 @@ void _NXS_WickSweep_UpdateLevel(){
 // preflight/order-send, cioe' tutti i cancelli possibili, non solo quelli di
 // NXS_OpenTrade). Finalizza `consumed` SOLO se opened=true - questo e' il
 // fix richiesto: il livello non e' piu' "bruciato" da un tentativo fallito.
-void _NXS_WickSweep_FinalizeSide(SNxsWickSide &side, bool opened, string reason){
+void _NXS_WickSweep_FinalizeSide(SNxsWickSide &side, int dir, bool opened, string reason){
    g_wickFunnel.entryAttempts++;
    side.attempts++;
    if(opened){
       side.consumed = true;
       g_wickFunnel.entryOpened++;
+      // Fase A - hook causale: trade REALMENTE aperto, stato terminale CONSUMED.
+      if(InpLevelRegistry_WickTelemetry)
+         NXS_Reaction_OnConsumed(side.id, (ENUM_NXS_DIR)dir, PERIOD_H4, TimeCurrent(), "WICK_SWEEP_REV");
    } else {
       g_wickFunnel.entryRejected++;
       if(InpDebugLog)
@@ -142,8 +161,8 @@ void _NXS_WickSweep_FinalizeSide(SNxsWickSide &side, bool opened, string reason)
 }
 
 void NXS_WickSweep_OnExecuteResult(int dir, bool opened, string reason){
-   if(dir == DIR_SELL)      _NXS_WickSweep_FinalizeSide(g_wickHigh, opened, reason);
-   else if(dir == DIR_BUY)  _NXS_WickSweep_FinalizeSide(g_wickLow,  opened, reason);
+   if(dir == DIR_SELL)      _NXS_WickSweep_FinalizeSide(g_wickHigh, dir, opened, reason);
+   else if(dir == DIR_BUY)  _NXS_WickSweep_FinalizeSide(g_wickLow,  dir, opened, reason);
    else return;
    if(opened){
       if(dir == DIR_BUY) g_wickFunnel.buyOpened++; else g_wickFunnel.sellOpened++;
@@ -488,6 +507,11 @@ void _NXS_WickReclaim_ProcessSide(SNxsWickReclaimState &st, SNxsWickSide &side, 
       st.trigger_price = refPrice;   // prezzo reale osservato, non il teorico level+sweepDist
       st.sweep_time = TimeCurrent();
       st.max_penetration_pips = MathAbs(refPrice - side.level) / pip;
+      // Fase A - hook causale: sweep osservato dal path RECLAIM (stesso
+      // livello del path REV, source_strategy distinto per il parity report).
+      if(InpLevelRegistry_WickTelemetry)
+         NXS_Reaction_OnSweep(st.level_id, (ENUM_NXS_DIR)fadeDir, st.max_penetration_pips,
+                               PERIOD_H4, st.sweep_time, "WICK_SWEEP_RECLAIM");
       PrintFormat("[WICKRECLAIM][ARMED] sweep_id=%d level_id=%d side=%s level=%.2f trigger=%.5f time=%s",
                   st.sweep_id, st.level_id, st.side, st.level_price, st.trigger_price,
                   TimeToString(st.sweep_time, TIME_DATE|TIME_SECONDS));
@@ -510,6 +534,13 @@ void _NXS_WickReclaim_ProcessSide(SNxsWickReclaimState &st, SNxsWickSide &side, 
          PrintFormat("[WICKRECLAIM][ABANDONED] sweep_id=%d reason=level_replaced state=%d",
                      st.sweep_id, (int)st.state);
          g_wickReclaimFunnel.abandoned++;
+         // Fase A - hook causale: livello sostituito prima della risoluzione
+         // del setup RECLAIM (INVALIDATED). Mirror esatto della guardia
+         // state!=WR_OPENED gia' presente nel vecchio codice (vedi commento
+         // di testa al blocco WICK SWEEP RECLAIM).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnInvalidated(st.level_id, (ENUM_NXS_DIR)fadeDir, PERIOD_H4, TimeCurrent(),
+                                        "WICK_SWEEP_RECLAIM", "level_replaced_while_armed_or_reclaimed");
       }
       st.state = WR_IDLE;
       return;
@@ -524,6 +555,9 @@ void _NXS_WickReclaim_ProcessSide(SNxsWickReclaimState &st, SNxsWickSide &side, 
          st.state = WR_RECLAIMED;
          st.reclaim_time = TimeCurrent();
          g_wickReclaimFunnel.reclaimAvailable++;
+         // Fase A - hook causale: reclaim del trigger osservato (RECLAIMED).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnReclaim(st.level_id, (ENUM_NXS_DIR)fadeDir, PERIOD_H4, st.reclaim_time, "WICK_SWEEP_RECLAIM");
          PrintFormat("[WICKRECLAIM][RECLAIM_AVAILABLE] sweep_id=%d time=%s price=%.5f "
                      "time_sweep_to_reclaim_sec=%d max_penetration_before_reclaim_pips=%.2f",
                      st.sweep_id, TimeToString(st.reclaim_time, TIME_DATE|TIME_SECONDS), refPrice,
@@ -598,6 +632,9 @@ void NXS_WickReclaim_OnExecuteResult(int fadeDir, bool opened, string reason){
    if(opened){
       st.state = WR_OPENED;
       g_wickReclaimFunnel.entryOpened++;
+      // Fase A - hook causale: trade REALMENTE aperto dal path RECLAIM (CONSUMED).
+      if(InpLevelRegistry_WickTelemetry)
+         NXS_Reaction_OnConsumed(st.level_id, (ENUM_NXS_DIR)fadeDir, PERIOD_H4, TimeCurrent(), "WICK_SWEEP_RECLAIM");
       PrintFormat("[WICKRECLAIM][OPENED] sweep_id=%d dir=%d time=%s", st.sweep_id, fadeDir,
                   TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS));
    } else {
@@ -649,11 +686,20 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
       if(!g_wickHigh.revisited && bid >= g_wickHigh.level){
          g_wickHigh.revisited = true;
          g_wickFunnel.levelsRevisited++;
+         // Fase A - hook causale: primo tocco del livello grezzo (TOUCHED).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnTouch(g_wickHigh.id, DIR_SELL, PERIOD_H4, TimeCurrent());
       }
       if(bid >= g_wickHigh.level + sweepDist){
          bool firstTrigger = !g_wickHigh.triggered;
          g_wickHigh.triggered = true;
-         if(firstTrigger) g_wickFunnel.sweepsDetected++;
+         if(firstTrigger){
+            g_wickFunnel.sweepsDetected++;
+            // Fase A - hook causale: primo sweep osservato dal path REV (SWEPT).
+            if(InpLevelRegistry_WickTelemetry)
+               NXS_Reaction_OnSweep(g_wickHigh.id, DIR_SELL, (bid - g_wickHigh.level) / pip,
+                                     PERIOD_H4, TimeCurrent(), "WICK_SWEEP_REV");
+         }
          if(g_wickHigh.lastAttemptBar == g_wickLastBar){
             g_wickFunnel.duplicateRetrigger++;   // gia' tentato su questa barra H4, throttle
          } else {
@@ -670,6 +716,10 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
       } else if(g_wickHigh.triggered && bid < g_wickHigh.level){
          // il prezzo e' rientrato sotto il livello originale prima di essere consumato: tesi invalidata
          g_wickFunnel.levelsInvalidatedByPrice++;
+         // Fase A - hook causale: invalidazione per rientro di prezzo (INVALIDATED).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnInvalidated(g_wickHigh.id, DIR_SELL, PERIOD_H4, TimeCurrent(),
+                                        "WICK_SWEEP_REV", "price_returned_before_consumption");
          g_wickHigh.level = 0;
       }
    }
@@ -679,11 +729,20 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
       if(!g_wickLow.revisited && ask <= g_wickLow.level){
          g_wickLow.revisited = true;
          g_wickFunnel.levelsRevisited++;
+         // Fase A - hook causale: primo tocco del livello grezzo (TOUCHED).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnTouch(g_wickLow.id, DIR_BUY, PERIOD_H4, TimeCurrent());
       }
       if(ask <= g_wickLow.level - sweepDist){
          bool firstTrigger = !g_wickLow.triggered;
          g_wickLow.triggered = true;
-         if(firstTrigger) g_wickFunnel.sweepsDetected++;
+         if(firstTrigger){
+            g_wickFunnel.sweepsDetected++;
+            // Fase A - hook causale: primo sweep osservato dal path REV (SWEPT).
+            if(InpLevelRegistry_WickTelemetry)
+               NXS_Reaction_OnSweep(g_wickLow.id, DIR_BUY, (g_wickLow.level - ask) / pip,
+                                     PERIOD_H4, TimeCurrent(), "WICK_SWEEP_REV");
+         }
          if(g_wickLow.lastAttemptBar == g_wickLastBar){
             g_wickFunnel.duplicateRetrigger++;
          } else {
@@ -699,6 +758,10 @@ SNXSSignal NXS_Strat_WickSweepReversal(){
          }
       } else if(g_wickLow.triggered && ask > g_wickLow.level){
          g_wickFunnel.levelsInvalidatedByPrice++;
+         // Fase A - hook causale: invalidazione per rientro di prezzo (INVALIDATED).
+         if(InpLevelRegistry_WickTelemetry)
+            NXS_Reaction_OnInvalidated(g_wickLow.id, DIR_BUY, PERIOD_H4, TimeCurrent(),
+                                        "WICK_SWEEP_REV", "price_returned_before_consumption");
          g_wickLow.level = 0;
       }
    }

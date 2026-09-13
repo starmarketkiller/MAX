@@ -62,6 +62,12 @@
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
+// 13/09 - Unified Level/Reaction Engine, Fase A (telemetry-only). Devono
+// stare PRIMA di NXS_Strategies_Experimental.mqh perche' i suoi hook WICK
+// chiamano NXS_Reaction_On*/NXS_LevelReg_* definite qui. Non generano
+// segnali, non aprono trade, non sono lette da nessuna strategia.
+#include <NEXUS_v1\NXS_LevelRegistry.mqh>
+#include <NEXUS_v1\NXS_ReactionEngine.mqh>
 #include <NEXUS_v1\NXS_Strategies_Experimental.mqh>
 #include <NEXUS_v1\NXS_Strategies_Institutional.mqh>
 #include <NEXUS_v1\NXS_Strategies_Elliott.mqh>
@@ -918,6 +924,7 @@ void OnDeinit(const int reason){
    if(InpStrat_WickSweep) NXS_WickSweep_PrintFunnel();   // 10/09 - funnel completo a fine test
    NXS_WickShadow_PrintSummary();   // 11/09 - no-op se InpResearchWickShadow=false
    NXS_WickReclaim_PrintFunnel();   // 12/09 - no-op se InpStrat_WickSweepReclaim=false
+   NXS_LevelEngine_PrintWickParity();   // 13/09 - Fase A, parity old-vs-new (telemetry-only, vedi NXS_ReactionEngine.mqh)
    NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
    NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
