@@ -926,6 +926,7 @@ void OnDeinit(const int reason){
    NXS_WickReclaim_PrintFunnel();   // 12/09 - no-op se InpStrat_WickSweepReclaim=false
    NXS_LevelEngine_PrintWickParity();   // 13/09 - Fase A, parity old-vs-new (telemetry-only, vedi NXS_ReactionEngine.mqh)
    NXS_LevelEngine_PrintReadPathSummary();   // 13/09 - Fase C, riepilogo comparator read-path (vedi NXS_ReactionEngine.mqh)
+   NXS_LevelEngine_PrintStateConsistency();   // 13/09 - Fase D, confronto stato legacy vs unified a fine run (vedi NXS_ReactionEngine.mqh)
    NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
    NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);

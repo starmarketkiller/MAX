@@ -268,4 +268,87 @@ void NXS_LevelEngine_PrintReadPathSummary(){
                g_nxsWickReadPathChecks, g_nxsWickReadPathMismatches);
 }
 
+// === Fase D - State-consistency check =======================================
+// Diagnostica pura (solo Print, nessuna mutazione, nessuna decisione): a fine
+// run confronta lo stato FINALE legacy (g_wickHigh/g_wickLow) con la voce
+// corrispondente nel registro per lo stesso level_id, e scansiona l'intero
+// registro per verificare che nessun livello "vecchio" (sostituito) sia
+// rimasto in uno stato non-terminale (cioe' apparentemente ancora attivo pur
+// non essendo piu' il livello corrente per quel lato).
+void NXS_LevelEngine_PrintStateConsistency(){
+   if(!InpLevelRegistry_WickTelemetry || !InpStrat_WickSweep) return;
+
+   int fieldMismatches = 0;
+
+   long highId = g_wickHigh.id;
+   int idxHigh = _NXS_LevelReg_Find(highId);
+   bool legacyHighInvalidated = (g_wickHigh.level <= 0);
+   if(highId != 0){
+      if(idxHigh < 0){
+         fieldMismatches++;
+         PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=HIGH level_id=%d field=existence legacy=present unified=absent", highId);
+      } else {
+         if(g_nxsLevelReg[idxHigh].consumed != g_wickHigh.consumed){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=HIGH level_id=%d field=consumed legacy=%s unified=%s",
+                        highId, (g_wickHigh.consumed?"true":"false"), (g_nxsLevelReg[idxHigh].consumed?"true":"false"));
+         }
+         if(g_nxsLevelReg[idxHigh].invalidated != legacyHighInvalidated){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=HIGH level_id=%d field=invalidated legacy=%s unified=%s",
+                        highId, (legacyHighInvalidated?"true":"false"), (g_nxsLevelReg[idxHigh].invalidated?"true":"false"));
+         }
+         if(g_nxsLevelReg[idxHigh].last_attempt_bar != g_wickHigh.lastAttemptBar){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=HIGH level_id=%d field=last_attempt_bar legacy=%s unified=%s",
+                        highId, TimeToString(g_wickHigh.lastAttemptBar), TimeToString(g_nxsLevelReg[idxHigh].last_attempt_bar));
+         }
+      }
+   }
+
+   long lowId = g_wickLow.id;
+   int idxLow = _NXS_LevelReg_Find(lowId);
+   bool legacyLowInvalidated = (g_wickLow.level <= 0);
+   if(lowId != 0){
+      if(idxLow < 0){
+         fieldMismatches++;
+         PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=LOW level_id=%d field=existence legacy=present unified=absent", lowId);
+      } else {
+         if(g_nxsLevelReg[idxLow].consumed != g_wickLow.consumed){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=LOW level_id=%d field=consumed legacy=%s unified=%s",
+                        lowId, (g_wickLow.consumed?"true":"false"), (g_nxsLevelReg[idxLow].consumed?"true":"false"));
+         }
+         if(g_nxsLevelReg[idxLow].invalidated != legacyLowInvalidated){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=LOW level_id=%d field=invalidated legacy=%s unified=%s",
+                        lowId, (legacyLowInvalidated?"true":"false"), (g_nxsLevelReg[idxLow].invalidated?"true":"false"));
+         }
+         if(g_nxsLevelReg[idxLow].last_attempt_bar != g_wickLow.lastAttemptBar){
+            fieldMismatches++;
+            PrintFormat("[LEVELENGINE][STATE_CHECK] MISMATCH side=LOW level_id=%d field=last_attempt_bar legacy=%s unified=%s",
+                        lowId, TimeToString(g_wickLow.lastAttemptBar), TimeToString(g_nxsLevelReg[idxLow].last_attempt_bar));
+         }
+      }
+   }
+
+   // Nessun livello "vecchio" (sostituito) deve restare non-terminale: ogni
+   // voce del registro che non e' l'id corrente del proprio lato deve essere
+   // invalidated o consumed (il replacement lifecycle lo garantisce via
+   // NXS_Reaction_OnLevelReplaced - qui lo si verifica, non lo si impone).
+   int staleActive = 0;
+   for(int i = 0; i < g_nxsLevelRegCount; i++){
+      bool isCurrent = (g_nxsLevelReg[i].level_id == highId) || (g_nxsLevelReg[i].level_id == lowId);
+      if(isCurrent) continue;
+      if(!g_nxsLevelReg[i].invalidated && !g_nxsLevelReg[i].consumed){
+         staleActive++;
+         PrintFormat("[LEVELENGINE][STATE_CHECK] STALE level_id=%d side=%s state_non_terminal=true (sostituito ma non invalidato/consumato)",
+                     g_nxsLevelReg[i].level_id, g_nxsLevelReg[i].side);
+      }
+   }
+
+   PrintFormat("[LEVELENGINE][STATE_CHECK] summary field_mismatches=%d stale_active_levels=%d total_levels=%d",
+               fieldMismatches, staleActive, g_nxsLevelRegCount);
+}
+
 #endif
