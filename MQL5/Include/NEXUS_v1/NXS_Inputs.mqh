@@ -1158,5 +1158,13 @@ input bool     InpStrat_WickSweepReclaim   = false;
 // puro logging in parallelo) cosi' da poter sempre calcolare il parity
 // report old-vs-new quando WICK_SWEEP_REV/RECLAIM sono in test.
 input bool     InpLevelRegistry_WickTelemetry = true;
+// 13/09 - Phase B (Causal Non-Interference + Extended Shadow Validation):
+// log strutturato UN EVENTO PER RIGA ([LEVELENGINE][EVENT]), usato SOLO per
+// costruire il confronto old-vs-new evento-per-evento richiesto in Phase B.
+// Default OFF: non pensato per girare sempre (volume di log su run lunghe),
+// solo durante le sessioni di validazione. Nessun effetto sul trading in
+// nessuno dei due stati (e' un Print aggiuntivo, non legge ne' scrive stato
+// del vecchio motore).
+input bool     InpLevelRegistry_WickEventLog  = false;
 
 #endif

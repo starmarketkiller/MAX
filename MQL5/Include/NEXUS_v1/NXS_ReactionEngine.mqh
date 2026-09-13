@@ -19,7 +19,8 @@
 #define __NXS_REACTION_ENGINE_MQH__
 
 enum ENUM_NXS_REACTION_TYPE_A {
-   NXS_REACT_TOUCH_A = 0,
+   NXS_REACT_CREATE_A = 0,   // Phase B - aggiunto per completare il log evento-per-evento su levels_created
+   NXS_REACT_TOUCH_A,
    NXS_REACT_SWEEP_A,
    NXS_REACT_RECLAIM_A,
    NXS_REACT_INVALIDATE_A,
@@ -72,6 +73,18 @@ void _NXS_LevelReg_EnsureReactionCapacity(){
    }
 }
 
+string _NXS_ReactionTypeStr(ENUM_NXS_REACTION_TYPE_A t){
+   switch(t){
+      case NXS_REACT_CREATE_A:     return "CREATE";
+      case NXS_REACT_TOUCH_A:      return "TOUCH";
+      case NXS_REACT_SWEEP_A:      return "SWEEP";
+      case NXS_REACT_RECLAIM_A:    return "RECLAIM";
+      case NXS_REACT_INVALIDATE_A: return "INVALIDATE";
+      case NXS_REACT_CONSUME_A:    return "CONSUME";
+   }
+   return "UNKNOWN";
+}
+
 void _NXS_Reaction_Emit(long level_id, ENUM_NXS_REACTION_TYPE_A rtype, ENUM_NXS_DIR direction,
                          double penetration, bool reclaim, datetime t,
                          ENUM_TIMEFRAMES source_tf, string source_strategy, string reason){
@@ -87,6 +100,20 @@ void _NXS_Reaction_Emit(long level_id, ENUM_NXS_REACTION_TYPE_A rtype, ENUM_NXS_
    ev.source_tf = source_tf;
    ev.source_strategy = source_strategy;
    ev.reason = reason;
+   // Phase B - log per-evento per il confronto old-vs-new evento-per-evento
+   // (mai letto da nessuna strategia, solo diagnostica). Gate dedicato,
+   // default OFF: non e' pensato per girare sempre (volume di log), solo
+   // durante le run di validazione.
+   if(InpLevelRegistry_WickEventLog){
+      int side = 0;
+      int idx = _NXS_LevelReg_Find(level_id);
+      string sideLbl = (idx >= 0) ? g_nxsLevelReg[idx].side : "?";
+      PrintFormat("[LEVELENGINE][EVENT] event_id=%d level_id=%d type=%s side=%s dir=%d pen=%.2f reclaim=%s "
+                  "tf=%s strat=%s time=%s reason=%s",
+                  ev.event_id, ev.level_id, _NXS_ReactionTypeStr(ev.type), sideLbl, (int)ev.direction,
+                  ev.penetration, (ev.reclaim ? "true" : "false"), EnumToString(ev.source_tf),
+                  ev.source_strategy, TimeToString(ev.timestamp, TIME_DATE|TIME_SECONDS), ev.reason);
+   }
    g_nxsReactionLog[g_nxsReactionLogCount] = ev;
    g_nxsReactionLogCount++;
 }
@@ -101,6 +128,7 @@ void NXS_Reaction_OnLevelCreated(long level_id, string side, ENUM_NXS_DIR direct
                                   double price, datetime created_time, ENUM_TIMEFRAMES source_tf){
    NXS_LevelReg_Create(level_id, side, direction, price, created_time, source_tf);
    g_nxsWickParity.levelsCreated++;
+   _NXS_Reaction_Emit(level_id, NXS_REACT_CREATE_A, direction, 0, false, created_time, source_tf, "", "");
 }
 
 void NXS_Reaction_OnLevelReplaced(long old_level_id, ENUM_NXS_DIR direction, ENUM_TIMEFRAMES source_tf, datetime t){
