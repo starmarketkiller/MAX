@@ -66,6 +66,9 @@ COPY server/ ./
 # semantico di COPY tra directory.
 RUN rm -rf /app/static/app
 COPY --from=frontend-builder /frontend/build /app/static/app
+RUN test -f /app/static/app/index.html \
+ && grep -F -q 'src="/app/static/js/main.' /app/static/app/index.html \
+ && grep -R -F -q 'Latest Research Funnel' /app/static/app/static/js
 
 # Artefatti serviti dal backend ma originati fuori dal build context di server/.
 COPY LocalBridge/nexus_local_worker.py /app/protected/nexus_local_worker.py
