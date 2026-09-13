@@ -202,6 +202,22 @@ def test_ea_command_status_migration_is_additive(tmp_path, monkeypatch):
     assert "003_ea_command_lifecycle" in applied
 
 
+def _tracked_bytes(root, relative):
+    """Byte del blob committato in HEAD, non del working tree.
+
+    `core.autocrlf=true` (comune su Windows) riscrive LF in CRLF al
+    checkout: leggere il file da disco farebbe dipendere lo sha256 dal
+    sistema operativo di chi esegue il test, non dal contenuto committato
+    che il manifest deve certificare. Stessa fonte usata dal generatore
+    canonico (`contracts/generate_deployment_manifest.py`).
+    """
+    import subprocess
+    return subprocess.run(
+        ["git", "show", f"HEAD:{relative}"],
+        cwd=root, check=True, capture_output=True,
+    ).stdout
+
+
 def test_single_worker_source_and_manifest_checksums():
     root = Path(__file__).resolve().parents[2]
     assert (root / "LocalBridge" / "nexus_local_worker.py").exists()
@@ -209,4 +225,4 @@ def test_single_worker_source_and_manifest_checksums():
     manifest = json.loads((root / "deploy" / "deployment-manifest.json").read_text(encoding="utf-8"))
     assert manifest["schema_version"] == 1 and manifest["release_id"] == "nexus-3.60"
     for record in manifest["files"]:
-        assert hashlib.sha256((root / record["path"]).read_bytes()).hexdigest() == record["sha256"]
+        assert hashlib.sha256(_tracked_bytes(root, record["path"])).hexdigest() == record["sha256"]
