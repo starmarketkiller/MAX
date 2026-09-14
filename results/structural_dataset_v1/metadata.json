@@ -1,6 +1,6 @@
 {
   "schema_version": "structural_dataset_v1",
-  "generated_at": "2026-09-14T14:29:40.751614",
+  "generated_at": "2026-09-14T14:53:16.276941",
   "windows": [
     {
       "id": "w1",
@@ -32,11 +32,22 @@
     "RETEST": 63
   },
   "unique_structural_levels": 1989,
+  "unique_structural_episodes": 2411,
+  "episodes_with_lifecycle_events": 1136,
+  "episode_linkage_rule": "Un SWEEP apre un nuovo structural_episode_id SOLO se 'SH_BMS_RTO' e' in observed_by (prova diretta che il suo stato era IDLE in quel momento). TRUE_BREAK/RETEST/INVALIDATE si agganciano SEMPRE all'ultimo episodio aperto in ordine di event_id (mai per timestamp piu' vicino). Un nuovo SWEEP SH_BMS_RTO chiude implicitamente l'episodio precedente se ancora aperto. Vedi vault 'NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit'.",
+  "time_to_true_break_removed_reason": "Il campo timestamp di ogni evento e' il bar-open del TF che ha innescato quella transizione (architettura multi-TF-pass) - non un orologio uniforme fra eventi dello stesso episodio triggerati da pass diversi. Sottrarre due timestamp puo' invertire l'ordine reale (osservato empiricamente). event_id stabilisce l'ordine causale corretto ma non rappresenta secondi - nessuna conversione event_id->tempo eseguita.",
   "data_quality": {
     "duplicate_event_keys": 0,
-    "orphan_lifecycle_events": 0,
-    "temporal_ordering_violations": 48,
+    "orphan_true_break": 0,
+    "orphan_retest": 0,
+    "orphan_invalidate_no_open_episode": 0,
     "impossible_transitions": 0,
+    "episodes_total": 2411,
+    "episodes_closed_explicit": 1968,
+    "episodes_closed_implicit_next_sweep": 410,
+    "episodes_open_at_window_end": 33,
+    "lifecycle_redundant_after_close": 1934,
+    "true_break_after_close": 98,
     "malformed_rows": 0,
     "counts_by_window_and_type": {
       "w1": {
@@ -65,250 +76,561 @@
     }
   },
   "data_quality_detail": {
-    "orphan_lifecycle_detail": [],
-    "temporal_ordering_detail": [
-      [
-        "w1",
-        "Equal-High_2026.01.06 19:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.21 16:40",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.21 21:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Asia-High_2026.01.23",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.23 21:45",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Asia-High_2026.01.28",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.28 15:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.28 18:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.29 16:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.01.29 16:40",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Weekly-Low_2026.01.25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-Low_2026.02.02 20:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-Low_2026.02.02 22:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Daily-High_2026.02.03",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.02.04 09:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w1",
-        "Equal-High_2026.02.04 15:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-High_2026.03.02 23:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-High_2026.03.04 09:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-High_2026.03.04 11:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Asia-High_2026.03.04",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Weekly-Low_2026.03.15",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-High_2026.04.22 04:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-High_2026.04.22 16:45",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w2",
-        "Equal-Low_2026.04.28 17:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 08:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 10:40",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Asia-High_2026.05.05",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 16:00",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 17:00",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 17:40",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.05 21:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Weekly-High_2026.04.26",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.07 23:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Daily-Low_2026.05.19",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.05.28 18:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-Low_2026.06.05 23:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-High_2026.06.11 11:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-Low_2026.06.12 08:10",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-Low_2026.06.12 10:30",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Equal-Low_2026.06.12 17:55",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w3",
-        "Asia-High_2026.06.30",
-        "RETEST before TRUE_BREAK"
-      ],
-      [
-        "w4",
-        "Daily-High_2026.07.13",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w4",
-        "Equal-High_2026.07.17 12:25",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w4",
-        "Daily-High_2026.08.05",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w4",
-        "Equal-High_2026.08.06 11:00",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w4",
-        "Asia-Low_2026.08.13",
-        "RETEST before TRUE_BREAK"
-      ],
-      [
-        "w4",
-        "Equal-High_2026.08.24 13:40",
-        "TRUE_BREAK before SWEEP"
-      ],
-      [
-        "w4",
-        "Equal-High_2026.08.24 17:10",
-        "TRUE_BREAK before SWEEP"
-      ]
+    "orphan_detail": [],
+    "lifecycle_redundant_after_close_detail": [
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "3"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2025.12.31",
+        "event_type": "INVALIDATE",
+        "event_id": "13"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2025.12.31",
+        "event_type": "INVALIDATE",
+        "event_id": "22"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "54"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "66"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "67"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "68"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "69"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "70"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "71"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "72"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "73"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "74"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "75"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "76"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "35"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "36"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "37"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "42"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "45"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "47"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "58"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.02",
+        "event_type": "INVALIDATE",
+        "event_id": "59"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Equal-High_2026.01.05 06:00",
+        "event_type": "INVALIDATE",
+        "event_id": "46"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "92"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "95"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "99"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "100"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "101"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "102"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "103"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "104"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "105"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "106"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "107"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "108"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "111"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "112"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "113"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "114"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "115"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "116"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "117"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "119"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "125"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "132"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "133"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "134"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "135"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.05",
+        "event_type": "INVALIDATE",
+        "event_id": "136"
+      }
     ],
-    "impossible_transitions_detail": []
+    "true_break_after_close_detail": [
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "314"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "318"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "321"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "330"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "345"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "352"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "355"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "358"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.13",
+        "event_id": "367"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-High_2026.01.16",
+        "event_id": "566"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-Low_2026.01.15",
+        "event_id": "594"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.20",
+        "event_id": "626"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.21",
+        "event_id": "650"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.21",
+        "event_id": "657"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "687"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "689"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "692"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "695"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "699"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.22",
+        "event_id": "704"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.01.22",
+        "event_id": "715"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.23",
+        "event_id": "735"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.23",
+        "event_id": "761"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "862"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "866"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "871"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "873"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "887"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "894"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.28",
+        "event_id": "899"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.29",
+        "event_id": "907"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.01.29",
+        "event_id": "911"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-Low_2026.01.29",
+        "event_id": "954"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Weekly-High_2026.01.18",
+        "event_id": "975"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Daily-High_2026.02.03",
+        "event_id": "1164"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Equal-High_2026.02.10 17:00",
+        "event_id": "1367"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1786"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1790"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1795"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1801"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1804"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1819"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1822"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1824"
+      },
+      {
+        "window_id": "w1",
+        "structural_level_id": "Asia-Low_2026.02.24",
+        "event_id": "1850"
+      },
+      {
+        "window_id": "w2",
+        "structural_level_id": "Asia-Low_2026.03.03",
+        "event_id": "39"
+      },
+      {
+        "window_id": "w2",
+        "structural_level_id": "Asia-Low_2026.03.03",
+        "event_id": "42"
+      },
+      {
+        "window_id": "w2",
+        "structural_level_id": "Asia-Low_2026.03.03",
+        "event_id": "44"
+      },
+      {
+        "window_id": "w2",
+        "structural_level_id": "Monthly-High_2026.02.01",
+        "event_id": "50"
+      },
+      {
+        "window_id": "w2",
+        "structural_level_id": "Asia-High_2026.03.16",
+        "event_id": "620"
+      }
+    ]
   },
   "m1_coverage": {
     "w1": {
@@ -339,18 +661,18 @@
   "label_coverage": {
     "at_sweep": {
       "n_rows": 4045,
-      "true_break_occurred_rate": 0.1950556242274413,
-      "retest_occurred_rate": 0.020519159456118666,
-      "reclaim_or_false_break_counts": {
-        "NO_LIFECYCLE": 1314,
-        "RECLAIM": 1942,
-        "TRUE_BREAK": 789
+      "true_break_occurred_rate": 0.01161928306551298,
+      "retest_occurred_rate": 0.00173053152039555,
+      "lifecycle_outcome_counts": {
+        "NO_LIFECYCLE_OBSERVED": 3467,
+        "INVALIDATED_NO_BREAK": 531,
+        "TRUE_BREAK_OBSERVED": 47
       },
       "retest_hold_or_fail_counts": {
-        "N/A_NO_RETEST": 3962,
-        "FAIL": 38,
-        "HOLD": 26,
-        "AMBIGUOUS": 19
+        "N/A_NO_RETEST": 4038,
+        "FAIL": 2,
+        "AMBIGUOUS": 3,
+        "HOLD": 2
       },
       "plus1r_before_minus1r_counts": {
         "AMBIGUOUS_SAME_BAR": 1411,
@@ -366,12 +688,12 @@
     },
     "at_true_break": {
       "n_rows": 269,
-      "retest_occurred_rate": 0.27137546468401486,
+      "retest_occurred_rate": 0.08921933085501858,
       "retest_hold_or_fail_counts": {
-        "N/A_NO_RETEST": 196,
-        "FAIL": 26,
-        "HOLD": 28,
-        "AMBIGUOUS": 19
+        "N/A_NO_RETEST": 245,
+        "FAIL": 3,
+        "AMBIGUOUS": 17,
+        "HOLD": 4
       },
       "plus1r_before_minus1r_counts": {
         "MINUS_1R_FIRST": 98,
