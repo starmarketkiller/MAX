@@ -105,13 +105,21 @@ void _NXS_Reaction_Emit(long level_id, ENUM_NXS_REACTION_TYPE_A rtype, ENUM_NXS_
    // default OFF: non e' pensato per girare sempre (volume di log), solo
    // durante le run di validazione.
    if(InpLevelRegistry_WickEventLog){
-      int side = 0;
       int idx = _NXS_LevelReg_Find(level_id);
       string sideLbl = (idx >= 0) ? g_nxsLevelReg[idx].side : "?";
-      PrintFormat("[LEVELENGINE][EVENT] event_id=%d level_id=%d type=%s side=%s dir=%d pen=%.2f reclaim=%s "
-                  "tf=%s strat=%s time=%s reason=%s",
+      // Causal Experiment 1 (14/09) - aggiunto "price" (prezzo del livello,
+      // gia' presente nel registro, mai stato stampato) e "touch_count"
+      // (gia' presente nel registro): servono a ricostruire entry_ref e
+      // touch_count_before_sweep nel dataset di ricerca senza ricalcolare
+      // nulla ex-post - sono valori GIA' scritti da hook causali esistenti,
+      // qui solo esposti in stampa. Nessuna nuova decisione, nessun nuovo
+      // hook di scrittura.
+      double lvlPrice = (idx >= 0) ? g_nxsLevelReg[idx].price : 0.0;
+      int touchCount = (idx >= 0) ? g_nxsLevelReg[idx].touch_count : 0;
+      PrintFormat("[LEVELENGINE][EVENT] event_id=%d level_id=%d type=%s side=%s dir=%d price=%.2f pen=%.2f "
+                  "touch_count=%d reclaim=%s tf=%s strat=%s time=%s reason=%s",
                   ev.event_id, ev.level_id, _NXS_ReactionTypeStr(ev.type), sideLbl, (int)ev.direction,
-                  ev.penetration, (ev.reclaim ? "true" : "false"), EnumToString(ev.source_tf),
+                  lvlPrice, ev.penetration, touchCount, (ev.reclaim ? "true" : "false"), EnumToString(ev.source_tf),
                   ev.source_strategy, TimeToString(ev.timestamp, TIME_DATE|TIME_SECONDS), ev.reason);
    }
    g_nxsReactionLog[g_nxsReactionLogCount] = ev;
