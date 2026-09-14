@@ -1,0 +1,154 @@
+{
+  "generated_at": "2026-09-14T20:12:02.035247",
+  "period": {
+    "id": "wA",
+    "from": "2025.05.01",
+    "to": "2025.09.01"
+  },
+  "population": {
+    "total_episodes": 907,
+    "no_lifecycle_observed": 179,
+    "excluded_redundant_outcome": 11,
+    "orphan_events": 0,
+    "malformed_rows": 0,
+    "valid_population": 717
+  },
+  "structural_replication": {
+    "hint": "penetration_per_atr_Q4_REPLICATION",
+    "n_total": 717,
+    "n_group": 194,
+    "base_rate": 0.0794979079497908,
+    "group_rate": 0.14432989690721648,
+    "ci95_group": [
+      0.10178171275842926,
+      0.20069056809655778
+    ],
+    "uplift_absolute": 0.06483198895742569,
+    "uplift_relative": 0.8155181768855126,
+    "diff_vs_rest": 0.08888056612327766,
+    "z": 3.9084872880580903,
+    "p_value": 9.287583324724125e-05,
+    "first_half": {
+      "n": 94,
+      "rate": 0.1702127659574468,
+      "base": 0.09217877094972067,
+      "uplift": 0.07803399500772613
+    },
+    "second_half": {
+      "n": 100,
+      "rate": 0.12,
+      "base": 0.06685236768802229,
+      "uplift": 0.05314763231197771
+    },
+    "buy": {
+      "n": 85,
+      "rate": 0.15294117647058825,
+      "base": 0.0782122905027933,
+      "uplift": 0.07472888596779495
+    },
+    "sell": {
+      "n": 109,
+      "rate": 0.13761467889908258,
+      "base": 0.0807799442896936,
+      "uplift": 0.05683473460938898
+    },
+    "classification": "REFUTED",
+    "reason": "effetto sotto soglia materiale (+0.065 < 0.1)"
+  },
+  "economic_bridge": {
+    "n_true_break_total_reliable": 57,
+    "n_resolved": 31,
+    "n_ambiguous_same_bar": 26,
+    "n_censored": 0,
+    "ambiguous_rate": 0.45614035087719296,
+    "censored_rate": 0.0,
+    "group_A_baseline": {
+      "k": 15,
+      "n": 31,
+      "rate": 0.4838709677419355,
+      "ci95": [
+        0.3196998603127883,
+        0.6515988171302682
+      ]
+    },
+    "group_B_filtered": {
+      "k": 9,
+      "n": 13,
+      "rate": 0.6923076923076923,
+      "ci95": [
+        0.4236888781333764,
+        0.873195028383819
+      ]
+    },
+    "uplift_B_vs_A": 0.2084367245657568,
+    "z": 1.9735429549092147,
+    "p_value": 0.04843373566969422,
+    "buy": {
+      "n": 6,
+      "rate": 0.8333333333333334
+    },
+    "sell": {
+      "n": 7,
+      "rate": 0.5714285714285714
+    },
+    "first_half": {
+      "n": 6,
+      "rate": 0.5
+    },
+    "second_half": {
+      "n": 7,
+      "rate": 0.8571428571428571
+    }
+  },
+  "secondary_bridge_retest": {
+    "n": 1,
+    "breakdown": {
+      "HOLD": 1
+    }
+  },
+  "concentration": {
+    "unique_structural_episode_id_group_B": 13,
+    "unique_structural_level_id_group_B": 13,
+    "top5_days_group_B": [
+      [
+        "2025-06-03",
+        3
+      ],
+      [
+        "2025-05-06",
+        1
+      ],
+      [
+        "2025-05-07",
+        1
+      ],
+      [
+        "2025-05-08",
+        1
+      ],
+      [
+        "2025-05-14",
+        1
+      ]
+    ],
+    "by_levelTag_group_B": {
+      "Equal-High": 4,
+      "Daily-High": 2,
+      "Weekly-High": 1,
+      "Equal-Low": 2,
+      "Asia-Low": 2,
+      "Daily-Low": 2
+    },
+    "cluster_bootstrap_ci95_by_day": [
+      0.45454545454545453,
+      0.9090909090909091
+    ],
+    "cluster_bootstrap_note": "11 giorni distinti, 2000 resample",
+    "naive_ci95": [
+      0.4236888781333764,
+      0.873195028383819
+    ]
+  },
+  "verdict": "STRUCTURAL_HYPOTHESIS_REFUTED_FINAL",
+  "verdict_reason": "la replicazione strutturale su questo terzo periodo indipendente non conferma il predittore (vedi \u00a73)"
+}
