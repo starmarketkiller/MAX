@@ -1,0 +1,388 @@
+{
+  "schema_version": "structural_dataset_v1",
+  "generated_at": "2026-09-14T14:29:40.751614",
+  "windows": [
+    {
+      "id": "w1",
+      "from": "2026.01.01",
+      "to": "2026.03.01"
+    },
+    {
+      "id": "w2",
+      "from": "2026.03.01",
+      "to": "2026.05.01"
+    },
+    {
+      "id": "w3",
+      "from": "2026.05.01",
+      "to": "2026.07.01"
+    },
+    {
+      "id": "w4",
+      "from": "2026.07.01",
+      "to": "2026.08.25"
+    }
+  ],
+  "r_pips": 25.0,
+  "horizon_days": 5,
+  "event_counts_total": {
+    "SWEEP": 4045,
+    "INVALIDATE": 3741,
+    "TRUE_BREAK": 269,
+    "RETEST": 63
+  },
+  "unique_structural_levels": 1989,
+  "data_quality": {
+    "duplicate_event_keys": 0,
+    "orphan_lifecycle_events": 0,
+    "temporal_ordering_violations": 48,
+    "impossible_transitions": 0,
+    "malformed_rows": 0,
+    "counts_by_window_and_type": {
+      "w1": {
+        "SWEEP": 1040,
+        "INVALIDATE": 834,
+        "TRUE_BREAK": 87,
+        "RETEST": 30
+      },
+      "w2": {
+        "SWEEP": 1181,
+        "INVALIDATE": 1145,
+        "TRUE_BREAK": 56
+      },
+      "w3": {
+        "SWEEP": 1041,
+        "INVALIDATE": 979,
+        "TRUE_BREAK": 64,
+        "RETEST": 24
+      },
+      "w4": {
+        "SWEEP": 783,
+        "INVALIDATE": 783,
+        "TRUE_BREAK": 62,
+        "RETEST": 9
+      }
+    }
+  },
+  "data_quality_detail": {
+    "orphan_lifecycle_detail": [],
+    "temporal_ordering_detail": [
+      [
+        "w1",
+        "Equal-High_2026.01.06 19:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.21 16:40",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.21 21:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Asia-High_2026.01.23",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.23 21:45",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Asia-High_2026.01.28",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.28 15:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.28 18:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.29 16:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.01.29 16:40",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Weekly-Low_2026.01.25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-Low_2026.02.02 20:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-Low_2026.02.02 22:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Daily-High_2026.02.03",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.02.04 09:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w1",
+        "Equal-High_2026.02.04 15:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-High_2026.03.02 23:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-High_2026.03.04 09:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-High_2026.03.04 11:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Asia-High_2026.03.04",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Weekly-Low_2026.03.15",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-High_2026.04.22 04:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-High_2026.04.22 16:45",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w2",
+        "Equal-Low_2026.04.28 17:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 08:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 10:40",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Asia-High_2026.05.05",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 16:00",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 17:00",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 17:40",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.05 21:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Weekly-High_2026.04.26",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.07 23:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Daily-Low_2026.05.19",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.05.28 18:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-Low_2026.06.05 23:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-High_2026.06.11 11:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-Low_2026.06.12 08:10",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-Low_2026.06.12 10:30",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Equal-Low_2026.06.12 17:55",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w3",
+        "Asia-High_2026.06.30",
+        "RETEST before TRUE_BREAK"
+      ],
+      [
+        "w4",
+        "Daily-High_2026.07.13",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w4",
+        "Equal-High_2026.07.17 12:25",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w4",
+        "Daily-High_2026.08.05",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w4",
+        "Equal-High_2026.08.06 11:00",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w4",
+        "Asia-Low_2026.08.13",
+        "RETEST before TRUE_BREAK"
+      ],
+      [
+        "w4",
+        "Equal-High_2026.08.24 13:40",
+        "TRUE_BREAK before SWEEP"
+      ],
+      [
+        "w4",
+        "Equal-High_2026.08.24 17:10",
+        "TRUE_BREAK before SWEEP"
+      ]
+    ],
+    "impossible_transitions_detail": []
+  },
+  "m1_coverage": {
+    "w1": {
+      "rows": 55801,
+      "first": "2026-01-02 08:00:00",
+      "last": "2026-02-27 23:57:00",
+      "gaps_over_5min": 40
+    },
+    "w2": {
+      "rows": 59287,
+      "first": "2026-03-02 01:00:00",
+      "last": "2026-04-30 23:58:00",
+      "gaps_over_5min": 42
+    },
+    "w3": {
+      "rows": 58890,
+      "first": "2026-05-01 01:00:00",
+      "last": "2026-06-30 23:58:00",
+      "gaps_over_5min": 42
+    },
+    "w4": {
+      "rows": 53530,
+      "first": "2026-07-01 01:00:00",
+      "last": "2026-08-24 23:58:00",
+      "gaps_over_5min": 38
+    }
+  },
+  "label_coverage": {
+    "at_sweep": {
+      "n_rows": 4045,
+      "true_break_occurred_rate": 0.1950556242274413,
+      "retest_occurred_rate": 0.020519159456118666,
+      "reclaim_or_false_break_counts": {
+        "NO_LIFECYCLE": 1314,
+        "RECLAIM": 1942,
+        "TRUE_BREAK": 789
+      },
+      "retest_hold_or_fail_counts": {
+        "N/A_NO_RETEST": 3962,
+        "FAIL": 38,
+        "HOLD": 26,
+        "AMBIGUOUS": 19
+      },
+      "plus1r_before_minus1r_counts": {
+        "AMBIGUOUS_SAME_BAR": 1411,
+        "MINUS_1R_FIRST": 1292,
+        "PLUS_1R_FIRST": 1342
+      },
+      "continuation_1atr_before_failure_counts": {
+        "FAILURE_FIRST": 3735,
+        "CONTINUATION_FIRST": 303,
+        "AMBIGUOUS_SAME_BAR": 6,
+        "CENSORED": 1
+      }
+    },
+    "at_true_break": {
+      "n_rows": 269,
+      "retest_occurred_rate": 0.27137546468401486,
+      "retest_hold_or_fail_counts": {
+        "N/A_NO_RETEST": 196,
+        "FAIL": 26,
+        "HOLD": 28,
+        "AMBIGUOUS": 19
+      },
+      "plus1r_before_minus1r_counts": {
+        "MINUS_1R_FIRST": 98,
+        "AMBIGUOUS_SAME_BAR": 91,
+        "PLUS_1R_FIRST": 80
+      },
+      "continuation_1atr_before_failure_counts": {
+        "FAILURE_FIRST": 243,
+        "CONTINUATION_FIRST": 25,
+        "AMBIGUOUS_SAME_BAR": 1
+      }
+    }
+  }
+}

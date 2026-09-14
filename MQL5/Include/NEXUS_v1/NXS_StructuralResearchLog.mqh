@@ -43,8 +43,12 @@ struct SNXSStructuralEvent {
    string          state_after;
    string          regime_at_event;     // NXS_DetectRegime(), read-only
    string          structure_trend_at_event;   // g_struct.trend, read-only
+   double          atr_at_event;        // 14/09 - Fase B: g_atr read-only, snapshot per label ATR-based
    string          consumer;            // primo osservatore (solo SWEEP: sorgente canonica)
-   string          observed_by;         // SOLO SWEEP: lista ",Nome1,Nome2," dei consumer osservanti
+   string          observed_by;         // SOLO SWEEP: lista "|Nome1|Nome2|" dei consumer osservanti -
+                                         // delimitatore "|" (non ",") perche' FileWrite(FILE_CSV) non
+                                         // quota i campi contenenti il delimitatore CSV stesso (14/09,
+                                         // Fase B - bug scoperto nel parsing del primo export)
    int             observation_count;   // SOLO SWEEP: quante volte e' stato osservato in totale
 };
 
@@ -159,8 +163,9 @@ void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_
    ev.state_after = stateAfter;
    ev.regime_at_event = _NXS_Structural_RegimeSnapshot();
    ev.structure_trend_at_event = _NXS_Structural_TrendSnapshot();
+   ev.atr_at_event = g_atr;
    ev.consumer = consumer;
-   ev.observed_by = "," + consumer + ",";
+   ev.observed_by = "|" + consumer + "|";
    ev.observation_count = 1;
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
@@ -232,13 +237,13 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    datetime obsTime = iTime(g_sym, tf, 0);   // bar in formazione del tf attivo al momento dell'osservazione
    int idx = _NXS_Struct_FindSweepEvent(outLevelId, obsTime);
    if(idx >= 0){
-      string tok = "," + consumer + ",";
+      string tok = "|" + consumer + "|";
       bool alreadySeen = (StringFind(g_nxsStructEvents[idx].observed_by, tok) >= 0);
       g_nxsStructEvents[idx].observation_count++;
       if(alreadySeen){
          g_nxsSweepMultipassDup++;
       } else {
-         g_nxsStructEvents[idx].observed_by += consumer + ",";
+         g_nxsStructEvents[idx].observed_by += consumer + "|";
          g_nxsSweepCrossConsumerDup++;
       }
       return;
@@ -266,8 +271,9 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    ev.state_after = "SWEPT";
    ev.regime_at_event = _NXS_Structural_RegimeSnapshot();
    ev.structure_trend_at_event = _NXS_Structural_TrendSnapshot();
+   ev.atr_at_event = g_atr;
    ev.consumer = consumer;         // primo osservatore = sorgente canonica di questo evento
-   ev.observed_by = "," + consumer + ",";
+   ev.observed_by = "|" + consumer + "|";
    ev.observation_count = 1;
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
@@ -326,6 +332,42 @@ void NXS_Structural_PrintSummary(){
                "multipass_duplicate=%d cross_consumer_duplicate=%d malformed_skipped=%d",
                g_nxsSweepRawObservations, g_nxsSweepUniqueEvents,
                g_nxsSweepMultipassDup, g_nxsSweepCrossConsumerDup, g_nxsSweepMalformedSkipped);
+}
+
+// 14/09 - Fase B (Structural Dataset v1). Dump dell'intero stato finale di
+// g_nxsStructEvents[] su CSV in un colpo solo, chiamato da OnDeinit DOPO che
+// tutti gli eventi del run sono gia' stati osservati (osserved_by/
+// observation_count riflettono quindi lo stato FINALE, non quello al momento
+// della creazione). FILE_WRITE senza FILE_READ tronca sempre il file
+// esistente all'apertura - ogni run produce un dump pulito e completo,
+// senza dipendere dal meccanismo di reset-per-TimeLocal() gia' noto come
+// inaffidabile nel Tester (vedi NEXUS_trades.csv). SOLO lettura/scrittura di
+// un file diagnostico: nessun impatto su trading/execution/risk.
+void NXS_Structural_ExportCSV(string filename = "nxs_structural_events.csv"){
+   if(!InpStructuralResearchEventLog) return;
+   int h = FileOpen(filename, FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+   if(h == INVALID_HANDLE) return;
+   FileWrite(h, "event_id","structural_level_id","timestamp","event_type","source","source_tf",
+              "side","direction","level_price","price_at_event","penetration_pips",
+              "created_time","age_seconds","state_before","state_after","regime_at_event",
+              "structure_trend_at_event","atr_at_event","consumer","observed_by","observation_count");
+   for(int i = 0; i < g_nxsStructEventCount; i++){
+      SNXSStructuralEvent ev = g_nxsStructEvents[i];
+      FileWrite(h, ev.event_id, ev.structural_level_id,
+                TimeToString(ev.timestamp, TIME_DATE|TIME_SECONDS),
+                ev.event_type, ev.source, EnumToString(ev.source_tf), ev.side,
+                NXS_DirName(ev.direction),
+                DoubleToString(ev.level_price, g_digits),
+                DoubleToString(ev.price_at_event, g_digits),
+                DoubleToString(ev.penetration_pips, 2),
+                (ev.created_time > 0) ? TimeToString(ev.created_time, TIME_DATE|TIME_SECONDS) : "",
+                DoubleToString(ev.age_seconds, 0),
+                ev.state_before, ev.state_after, ev.regime_at_event, ev.structure_trend_at_event,
+                DoubleToString(ev.atr_at_event, 5),
+                ev.consumer, ev.observed_by, ev.observation_count);
+   }
+   FileClose(h);
+   PrintFormat("[STRUCTLOG][EXPORT] %d righe scritte su %s (FILE_COMMON)", g_nxsStructEventCount, filename);
 }
 
 #endif

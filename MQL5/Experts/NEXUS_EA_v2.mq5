@@ -948,6 +948,7 @@ void OnDeinit(const int reason){
    NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
    NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
    NXS_Structural_PrintSummary();   // 14/09 - Thread 2 Fase A, no-op se InpStructuralResearchEventLog=false
+   NXS_Structural_ExportCSV();      // 14/09 - Thread 2 Fase B, no-op se InpStructuralResearchEventLog=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 
