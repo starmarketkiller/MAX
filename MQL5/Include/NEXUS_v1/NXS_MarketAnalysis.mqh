@@ -139,10 +139,40 @@ SNXSSweepExt NXS_DetectSweepExt(){
    // 17/07 notte - niente piu' ZeroMemory: da quando lo struct contiene un
    // campo string (levelTag), ZeroMemory scriverebbe zeri grezzi sopra
    // l'handle stringa senza rilasciarlo correttamente (comportamento non
-   // sicuro per struct con string/array dinamici/oggetti in MQL5). I campi
-   // di SNXSSweepExt sono gia' inizializzati puliti alla dichiarazione
-   // (numerici/bool a 0/false, string a "").
-   SNXSSweepExt s; s.dir = DIR_NONE;
+   // sicuro per struct con string/array dinamici/oggetti in MQL5). QUESTA
+   // PARTE RESTA VALIDA - vedi pero' la nota del 14/09 subito sotto: la premessa
+   // che seguiva ("i campi sono gia' inizializzati puliti alla dichiarazione")
+   // era SBAGLIATA ed e' stata rimossa.
+   // 14/09 - FIX (Detector Integrity): verificato empiricamente con un test
+   // diagnostico minimo (vedi vault "NEXUS - SNXSSweepExt Detector Integrity
+   // Fix") che una SNXSSweepExt locale NON parte pulita in questo contesto -
+   // s.confirmed/s.level/s.levelTag contenevano stato residuo di stack
+   // (level con valori astronomici, levelTag un handle stringa nullo, non
+   // vuoto) in circa 1 chiamata su 7. Il commento precedente ("i campi sono
+   // gia' inizializzati puliti alla dichiarazione") era una premessa errata:
+   // ZeroMemory(s) era stato rimosso il 17/07 perche' corrompe l'handle
+   // stringa di levelTag (motivo tuttora valido, NON reintrodotta), ma senza
+   // sostituirlo con un'inizializzazione esplicita di TUTTI i campi non-dir.
+   // Nessun ramo di sweep sotto e' stato toccato: solo lo stato iniziale di s
+   // e' ora esplicito e completo, come gia' faceva NXS_DetectSweep() (sopra)
+   // per il suo struct piu' semplice.
+   SNXSSweepExt s;
+   s.dir = DIR_NONE;
+   s.level = 0;
+   s.refHigh = 0;
+   s.refLow = 0;
+   s.confirmed = false;
+   s.sweptPDH = false;
+   s.sweptPDL = false;
+   s.sweptPWH = false;
+   s.sweptPWL = false;
+   s.sweptPMH = false;
+   s.sweptPML = false;
+   s.sweptAsiaHigh = false;
+   s.sweptAsiaLow = false;
+   s.sweptEQH = false;
+   s.sweptEQL = false;
+   s.levelTag = "";
    // Yesterday's daily H/L (PDH/PDL)
    double pdh = iHigh(g_sym, PERIOD_D1, 1);
    double pdl = iLow (g_sym, PERIOD_D1, 1);
