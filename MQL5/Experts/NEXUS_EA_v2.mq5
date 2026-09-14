@@ -61,6 +61,15 @@
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
+// 14/09 - Causal Research Thread 2, Phase A (structural lifecycle
+// instrumentation). Deve stare PRIMA di NXS_Strategies_SMC.mqh perche' gli
+// hook dentro NXS_SHBMS_UpdateSide chiamano NXS_Structural_On*() definite
+// qui. Dipende da g_sym/g_profile (NXS_Globals/NXS_SymbolProfile, gia'
+// inclusi sopra), g_struct (NXS_Structure.mqh, incluso sopra) e
+// NXS_DetectRegime/NXS_RegimeName (NXS_MarketAnalysis.mqh, incluso sopra).
+// Modulo SOLO diagnostico: non genera SNXSSignal, non e' letto da nessuna
+// strategia o gate.
+#include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 // 13/09 - Unified Level/Reaction Engine, Fase A (telemetry-only). Devono
 // stare PRIMA di NXS_Strategies_Experimental.mqh perche' i suoi hook WICK
@@ -929,6 +938,7 @@ void OnDeinit(const int reason){
    NXS_LevelEngine_PrintStateConsistency();   // 13/09 - Fase D, confronto stato legacy vs unified a fine run (vedi NXS_ReactionEngine.mqh)
    NXS_Cert_Generate();   // 12/09 - Test Validity Certificate v2, no-op se non Research Mode
    NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
+   NXS_Structural_PrintSummary();   // 14/09 - Thread 2 Fase A, no-op se InpStructuralResearchEventLog=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 

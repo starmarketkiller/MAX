@@ -1182,4 +1182,16 @@ input bool     InpLevelRegistry_WickEventLog  = false;
 // se fosse spento, restando sul legacy).
 input bool     InpLevelRegistry_WickReadPath  = false;
 
+// 14/09 - Causal Research Thread 2, Phase A (structural lifecycle
+// instrumentation). Gate unico per tutto il logging diagnostico read-only
+// in NXS_StructuralResearchLog.mqh (eventi SWEEP/TRUE_BREAK/RETEST/
+// INVALIDATE osservati da SNXSSweepExt + SH_BMS_RTO). Default OFF: nessun
+// evento viene loggato, nessuna struttura dati popolata oltre l'id
+// strutturale (calcolato comunque, campo dati inerte mai letto da alcuna
+// condizione di trading). Non e' un motore, non produce SNXSSignal, non
+// tocca risk/execution: e' un canale di sola osservazione per costruire un
+// dataset di ricerca causale. Vedi vault "NEXUS - Causal Research Thread 2
+// Phase A Structural Instrumentation".
+input bool     InpStructuralResearchEventLog  = false;
+
 #endif

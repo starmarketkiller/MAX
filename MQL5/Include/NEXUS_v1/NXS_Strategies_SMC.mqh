@@ -391,12 +391,18 @@ struct SNXSSHBmsState {
    double   swingRef;      // swing di riferimento che l'MSS deve rompere
    int      barsWaited;    // barre trascorse nello stato corrente
    double   originLo, originHi;   // zona d'origine (ultima candela opposta prima del displacement)
+   string       structLevelId;  // [Thread2 PhaseA] id causale del livello sweepato allo SWEPT - SOLO
+                                 // diagnostico, non letto da nessuna condizione di trading
+   string       structSide;     // [Thread2 PhaseA] sw.levelTag congelato allo SWEPT (sw e' rivalutato
+                                 // ad ogni chiamata successiva e NON rappresenta piu' il livello originale)
+   ENUM_NXS_DIR structDir;      // [Thread2 PhaseA] sw.dir congelato allo SWEPT, stesso motivo
 };
 SNXSSHBmsState g_shbmsBuy, g_shbmsSell;
 
 void NXS_SHBMS_Reset(SNXSSHBmsState &st){
    st.state = SHBMS_IDLE; st.barsWaited = 0;
    st.sweepLevel = 0; st.swingRef = 0; st.originLo = 0; st.originHi = 0;
+   st.structLevelId = ""; st.structSide = ""; st.structDir = DIR_NONE;
 }
 
 SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
@@ -414,6 +420,9 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
          int loIdx = iLowest (g_sym, tf, MODE_LOW,  InpSHBMS_SwingLookback, 2);
          st.swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
                                     : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
+         st.structSide = sw.levelTag; st.structDir = sw.dir;
+         // [Thread2 PhaseA] osservazione read-only dell'evento gia' deciso sopra - nessun impatto sulla decisione.
+         NXS_Structural_OnSweepObserved(sw, tf, curBar0, "SH_BMS_RTO", st.structLevelId);
       }
       return s;
    }
@@ -422,11 +431,15 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
       // Invalidation: chiusura oltre il livello sweepato nel verso sbagliato.
       double c1 = iClose(g_sym, tf, 1);
       if(newBar && ((dir == +1 && c1 < st.sweepLevel) || (dir == -1 && c1 > st.sweepLevel))){
+         NXS_Structural_OnInvalidate(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, "SWEPT", "SH_BMS_RTO");
          NXS_SHBMS_Reset(st); st.lastBarTime = curBar0; return s;
       }
       if(!newBar) return s;
       st.barsWaited++;
-      if(st.barsWaited > InpSHBMS_MaxMSSBars){ NXS_SHBMS_Reset(st); st.lastBarTime = curBar0; return s; }
+      if(st.barsWaited > InpSHBMS_MaxMSSBars){
+         NXS_Structural_OnInvalidate(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, "SWEPT", "SH_BMS_RTO");
+         NXS_SHBMS_Reset(st); st.lastBarTime = curBar0; return s;
+      }
       double o1 = iOpen(g_sym, tf, 1);
       double body1 = MathAbs(c1 - o1);
       bool mss = (dir == +1) ? (st.swingRef > 0 && c1 > st.swingRef && body1 >= atr * InpSHBMS_DispBodyATR)
@@ -443,6 +456,7 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
       st.originLo = MathMin(originA, originB);
       st.originHi = MathMax(originA, originB);
       st.state = SHBMS_WAITING_RETURN; st.barsWaited = 0;
+      NXS_Structural_OnTrueBreak(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, "SH_BMS_RTO");
       return s;
    }
 
@@ -450,9 +464,13 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
    if(newBar){
       st.barsWaited++;
       st.lastBarTime = curBar0;
-      if(st.barsWaited > InpSHBMS_MaxWaitBars){ NXS_SHBMS_Reset(st); return s; }
+      if(st.barsWaited > InpSHBMS_MaxWaitBars){
+         NXS_Structural_OnInvalidate(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, "WAITING_RETURN", "SH_BMS_RTO");
+         NXS_SHBMS_Reset(st); return s;
+      }
       double c1 = iClose(g_sym, tf, 1);
       if((dir == +1 && c1 < st.sweepLevel) || (dir == -1 && c1 > st.sweepLevel)){
+         NXS_Structural_OnInvalidate(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, "WAITING_RETURN", "SH_BMS_RTO");
          NXS_SHBMS_Reset(st); return s;   // invalidazione profonda
       }
    }
@@ -471,6 +489,7 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
       s.tpPrice = _smc_tp(s.entryRef, DIR_SELL, 2.6);
    }
    s.score = 74.0; s.reason = "SH+BMS+RTO " + (string)((dir == +1) ? "bull" : "bear") + ":origin_return";
+   NXS_Structural_OnRetest(st.structLevelId, tf, curBar0, st.structSide, st.structDir, st.sweepLevel, s.entryRef, "SH_BMS_RTO");
    NXS_SHBMS_Reset(st);
    return s;
 }
