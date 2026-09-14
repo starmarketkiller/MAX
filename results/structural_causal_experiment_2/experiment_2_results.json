@@ -1,0 +1,184 @@
+{
+  "generated_at": "2026-09-14T16:22:36.592366",
+  "independent_period": {
+    "id": "w0",
+    "from": "2025.09.01",
+    "to": "2026.01.01"
+  },
+  "population": {
+    "total_episodes": 1157,
+    "no_lifecycle_observed": 198,
+    "excluded_redundant_outcome": 18,
+    "orphan_events": 0,
+    "valid_population": 941
+  },
+  "base_rate": {
+    "k": 94,
+    "n": 941,
+    "rate": 0.09989373007438895,
+    "ci95": [
+      0.0823312226855596,
+      0.1207097949834338
+    ]
+  },
+  "frozen_thresholds": {
+    "penetration_per_atr_q4": 0.058713928652578955,
+    "age_seconds": 3600.0,
+    "source_tf": "PERIOD_D1"
+  },
+  "results": [
+    {
+      "hint": "penetration_per_atr_Q4",
+      "n_total": 941,
+      "n_group": 221,
+      "base_rate": 0.09989373007438895,
+      "group_rate": 0.21266968325791855,
+      "ci95_group": [
+        0.1638670334026812,
+        0.27129087331920665
+      ],
+      "uplift_absolute": 0.11277595318352959,
+      "uplift_relative": 1.1289592760180993,
+      "diff_vs_rest": 0.14739190548014075,
+      "z": 6.391829742177176,
+      "p_value": 1.639124391772384e-10,
+      "first_half": {
+        "n": 123,
+        "rate": 0.25203252032520324,
+        "base": 0.1276595744680851,
+        "uplift": 0.12437294585711814
+      },
+      "second_half": {
+        "n": 98,
+        "rate": 0.16326530612244897,
+        "base": 0.07218683651804671,
+        "uplift": 0.09107846960440226
+      },
+      "buy": {
+        "n": 111,
+        "rate": 0.25225225225225223,
+        "base": 0.12440191387559808,
+        "uplift": 0.12785033837665416
+      },
+      "sell": {
+        "n": 110,
+        "rate": 0.17272727272727273,
+        "base": 0.08030592734225621,
+        "uplift": 0.09242134538501652
+      },
+      "classification": "CONFIRMED",
+      "reason": "uplift materiale, stessa direzione di Experiment 1, coerente fra meta' temporali, nessuna inversione distruttiva BUY/SELL, campione adeguato"
+    },
+    {
+      "hint": "age_seconds_lt_1h",
+      "n_total": 941,
+      "n_group": 95,
+      "base_rate": 0.09989373007438895,
+      "group_rate": 0.28421052631578947,
+      "ci95_group": [
+        0.2032829065703279,
+        0.38191199112456986
+      ],
+      "uplift_absolute": 0.18431679624140052,
+      "uplift_relative": 1.8451287793952966,
+      "diff_vs_rest": 0.20501430882169963,
+      "z": 6.318592349148298,
+      "p_value": 2.6395641228305067e-10,
+      "first_half": {
+        "n": 52,
+        "rate": 0.40384615384615385,
+        "base": 0.1276595744680851,
+        "uplift": 0.2761865793780688
+      },
+      "second_half": {
+        "n": 43,
+        "rate": 0.13953488372093023,
+        "base": 0.07218683651804671,
+        "uplift": 0.06734804720288352
+      },
+      "buy": {
+        "n": 64,
+        "rate": 0.421875,
+        "base": 0.12440191387559808,
+        "uplift": 0.29747308612440193
+      },
+      "sell": {
+        "n": 31,
+        "rate": 0.0,
+        "base": 0.08030592734225621,
+        "uplift": -0.08030592734225621
+      },
+      "classification": "CONFIRMED",
+      "reason": "uplift materiale, stessa direzione di Experiment 1, coerente fra meta' temporali, nessuna inversione distruttiva BUY/SELL, campione adeguato"
+    },
+    {
+      "hint": "source_tf_D1",
+      "n_total": 941,
+      "n_group": 100,
+      "base_rate": 0.09989373007438895,
+      "group_rate": 0.28,
+      "ci95_group": [
+        0.20139559167598364,
+        0.37488212361345724
+      ],
+      "uplift_absolute": 0.18010626992561107,
+      "uplift_relative": 1.8029787234042554,
+      "diff_vs_rest": 0.20152199762187872,
+      "z": 6.353450302705271,
+      "p_value": 2.1053825349781619e-10,
+      "first_half": {
+        "n": 55,
+        "rate": 0.4,
+        "base": 0.1276595744680851,
+        "uplift": 0.27234042553191495
+      },
+      "second_half": {
+        "n": 45,
+        "rate": 0.13333333333333333,
+        "base": 0.07218683651804671,
+        "uplift": 0.061146496815286625
+      },
+      "buy": {
+        "n": 65,
+        "rate": 0.4307692307692308,
+        "base": 0.12440191387559808,
+        "uplift": 0.3063673168936327
+      },
+      "sell": {
+        "n": 35,
+        "rate": 0.0,
+        "base": 0.08030592734225621,
+        "uplift": -0.08030592734225621
+      },
+      "classification": "CONFIRMED",
+      "reason": "uplift materiale, stessa direzione di Experiment 1, coerente fra meta' temporali, nessuna inversione distruttiva BUY/SELL, campione adeguato"
+    }
+  ],
+  "n_confirmed": 3,
+  "verdict": "STRUCTURAL_HYPOTHESIS_CONFIRMED",
+  "manual_review": {
+    "note": "Il gate meccanico dello script classifica tutti e 3 gli hint CONFIRMED. Una revisione sostanziale (overlap fra gruppi + composizione per levelTag/direction, richiesta dal controllo BUY/SELL del task) ha rivelato un confondimento reale per 2 dei 3 hint - vedi vault 'NEXUS - Structural Causal Experiment 2 Confirmatory' sezione 5.",
+    "age_seconds_lt_1h_and_source_tf_D1": {
+      "overlap_episodes": 87,
+      "overlap_pct_of_age_group": 0.916,
+      "overlap_pct_of_tf_group": 0.87,
+      "age_group_side_composition": {
+        "Asia-Low": 64,
+        "Asia-High": 31
+      },
+      "root_cause": "created_time per i livelli Asia e' ancorato a iTime(D1,0) (mezzanotte di oggi); un'osservazione durante un pass D1 produce quasi sempre age~0 per costruzione della formula, non per una reale 'freschezza' del livello.",
+      "asia_high_sell_true_break_rate": "0/31 (0.0%)",
+      "asia_low_buy_true_break_rate": "27/64 (42.2%)",
+      "final_classification": "INCONCLUSIVE_FINAL (declassato da CONFIRMED meccanico)"
+    },
+    "penetration_per_atr_q4": {
+      "distinct_levelTags": 9,
+      "buy_n": 111,
+      "sell_n": 110,
+      "buy_uplift": 0.128,
+      "sell_uplift": 0.092,
+      "final_classification": "CONFIRMED (nessun confondimento trovato)"
+    },
+    "verdict_unchanged": "STRUCTURAL_HYPOTHESIS_CONFIRMED (penetration_per_atr Q4 da solo e' sufficiente)"
+  }
+}
