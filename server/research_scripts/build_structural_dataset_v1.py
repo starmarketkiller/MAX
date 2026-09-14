@@ -226,7 +226,13 @@ def assign_episodes(all_events):
                 if last_episode is None:
                     true_orphans.append(e)
                     continue
-                lifecycle_link[e["event_id"]] = last_episode
+                # CRITICO: chiave (window_id, event_id), MAI event_id da solo - event_id e'
+                # assegnato da g_nxsStructEventIdSeq che riparte da 1 ad OGNI run separata del
+                # Tester (una per finestra). Un dict indicizzato solo su event_id collide fra
+                # finestre diverse (verificato: 2108/2382 event_id condivisi da tutte e 4 le
+                # finestre) - scoperto durante Structural Causal Experiment 1, corregge un bug
+                # che aveva corrotto il lookup lifecycle del rebuild precedente (ea3fb14).
+                lifecycle_link[(win, e["event_id"])] = last_episode
                 e["structural_episode_id"] = last_episode
                 if not is_open:
                     redundant_after_close.append(e)
@@ -386,11 +392,14 @@ RETEST_LABEL_MAP = {
 def build_episode_lifecycle_index(all_events, lifecycle_link):
     """episode_id -> lista di eventi lifecycle (TRUE_BREAK/RETEST/INVALIDATE) agganciati,
     SOLO tramite lifecycle_link (mai per livello intero) - un episodio vede solo
-    i propri eventi, mai quelli di un episodio diverso sullo stesso livello."""
+    i propri eventi, mai quelli di un episodio diverso sullo stesso livello.
+
+    Chiave (window_id, event_id): event_id da solo NON e' univoco fra finestre
+    diverse (ogni run del Tester riparte da 1) - vedi nota in assign_episodes."""
     idx = defaultdict(list)
-    ev_by_id = {e["event_id"]: e for e in all_events}
-    for evid, ep_id in lifecycle_link.items():
-        idx[ep_id].append(ev_by_id[evid])
+    ev_by_id = {(e["window_id"], e["event_id"]): e for e in all_events}
+    for key, ep_id in lifecycle_link.items():
+        idx[ep_id].append(ev_by_id[key])
     return idx
 
 

@@ -1,6 +1,6 @@
 {
   "schema_version": "structural_dataset_v1",
-  "generated_at": "2026-09-14T14:53:16.276941",
+  "generated_at": "2026-09-14T15:10:54.024484",
   "windows": [
     {
       "id": "w1",
@@ -33,7 +33,7 @@
   },
   "unique_structural_levels": 1989,
   "unique_structural_episodes": 2411,
-  "episodes_with_lifecycle_events": 1136,
+  "episodes_with_lifecycle_events": 1991,
   "episode_linkage_rule": "Un SWEEP apre un nuovo structural_episode_id SOLO se 'SH_BMS_RTO' e' in observed_by (prova diretta che il suo stato era IDLE in quel momento). TRUE_BREAK/RETEST/INVALIDATE si agganciano SEMPRE all'ultimo episodio aperto in ordine di event_id (mai per timestamp piu' vicino). Un nuovo SWEEP SH_BMS_RTO chiude implicitamente l'episodio precedente se ancora aperto. Vedi vault 'NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit'.",
   "time_to_true_break_removed_reason": "Il campo timestamp di ogni evento e' il bar-open del TF che ha innescato quella transizione (architettura multi-TF-pass) - non un orologio uniforme fra eventi dello stesso episodio triggerati da pass diversi. Sottrarre due timestamp puo' invertire l'ordine reale (osservato empiricamente). event_id stabilisce l'ordine causale corretto ma non rappresenta secondi - nessuna conversione event_id->tempo eseguita.",
   "data_quality": {
@@ -661,18 +661,18 @@
   "label_coverage": {
     "at_sweep": {
       "n_rows": 4045,
-      "true_break_occurred_rate": 0.01161928306551298,
-      "retest_occurred_rate": 0.00173053152039555,
+      "true_break_occurred_rate": 0.04351050679851669,
+      "retest_occurred_rate": 0.007911001236093944,
       "lifecycle_outcome_counts": {
-        "NO_LIFECYCLE_OBSERVED": 3467,
-        "INVALIDATED_NO_BREAK": 531,
-        "TRUE_BREAK_OBSERVED": 47
+        "INVALIDATED_NO_BREAK": 1809,
+        "NO_LIFECYCLE_OBSERVED": 2060,
+        "TRUE_BREAK_OBSERVED": 176
       },
       "retest_hold_or_fail_counts": {
-        "N/A_NO_RETEST": 4038,
-        "FAIL": 2,
-        "AMBIGUOUS": 3,
-        "HOLD": 2
+        "N/A_NO_RETEST": 4013,
+        "FAIL": 14,
+        "HOLD": 10,
+        "AMBIGUOUS": 8
       },
       "plus1r_before_minus1r_counts": {
         "AMBIGUOUS_SAME_BAR": 1411,
@@ -688,12 +688,12 @@
     },
     "at_true_break": {
       "n_rows": 269,
-      "retest_occurred_rate": 0.08921933085501858,
+      "retest_occurred_rate": 0.3420074349442379,
       "retest_hold_or_fail_counts": {
-        "N/A_NO_RETEST": 245,
-        "FAIL": 3,
-        "AMBIGUOUS": 17,
-        "HOLD": 4
+        "N/A_NO_RETEST": 177,
+        "FAIL": 43,
+        "HOLD": 27,
+        "AMBIGUOUS": 22
       },
       "plus1r_before_minus1r_counts": {
         "MINUS_1R_FIRST": 98,
