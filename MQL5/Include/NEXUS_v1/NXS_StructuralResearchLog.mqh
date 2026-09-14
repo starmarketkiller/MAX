@@ -50,6 +50,12 @@ struct SNXSStructuralEvent {
                                          // quota i campi contenenti il delimitatore CSV stesso (14/09,
                                          // Fase B - bug scoperto nel parsing del primo export)
    int             observation_count;   // SOLO SWEEP: quante volte e' stato osservato in totale
+   int             sh_bms_episode_seq;  // [Phase C - Sample Recovery] SNXSSHBmsState.episodeSeq quando
+                                         // il chiamante e' SH_BMS_RTO - 0 = non applicabile/non ancora
+                                         // osservato da SH_BMS_RTO. Identita' REALE dell'episodio dal
+                                         // punto di vista della macchina a stati (mai ricostruita a
+                                         // posteriori da event_id/observed_by). Vedi vault "NEXUS -
+                                         // Structural Lifecycle Sample Recovery".
 };
 
 SNXSStructuralEvent g_nxsStructEvents[];
@@ -137,7 +143,8 @@ bool _NXS_Struct_IsDuplicate(string level_id, string event_type, datetime ts){
 
 void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_TIMEFRAMES tf,
                            string side, ENUM_NXS_DIR dir, double levelPrice, double priceAtEvent,
-                           datetime createdTime, string stateBefore, string stateAfter, string consumer){
+                           datetime createdTime, string stateBefore, string stateAfter, string consumer,
+                           int episodeSeq){
    if(!InpStructuralResearchEventLog) return;
    if(_NXS_Struct_IsDuplicate(level_id, event_type, ts)){
       g_nxsLifecycleDuplicatesSuppressed++;
@@ -167,6 +174,7 @@ void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_
    ev.consumer = consumer;
    ev.observed_by = "|" + consumer + "|";
    ev.observation_count = 1;
+   ev.sh_bms_episode_seq = episodeSeq;
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
    PrintFormat("[STRUCTLOG][EVENT] event_id=%d level_id=%s type=%s side=%s dir=%d level=%.2f price=%.2f "
@@ -215,7 +223,7 @@ int _NXS_Struct_FindSweepEvent(string level_id, datetime ts){
 // stabile per i propri hook di lifecycle (TRUE_BREAK/RETEST/INVALIDATE),
 // invariati rispetto alla Fase A.
 void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string consumer,
-                                  string &outLevelId){
+                                  string &outLevelId, int episodeSeq = 0){
    outLevelId = _NXS_Structural_ComputeLevelId(sw, tf);
    if(!InpStructuralResearchEventLog) return;
    if(!sw.confirmed) return;   // nessuna decisione nuova: solo se il detector ha gia' confermato
@@ -240,6 +248,11 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
       string tok = "|" + consumer + "|";
       bool alreadySeen = (StringFind(g_nxsStructEvents[idx].observed_by, tok) >= 0);
       g_nxsStructEvents[idx].observation_count++;
+      // Se questa chiamata porta un episodeSeq reale (SH_BMS_RTO) e la riga non ne aveva ancora
+      // uno (es. creata prima da DETECTOR, sh_bms_episode_seq=0), lo attacca ora - stesso evento
+      // canonico, nessuna riga aggiuntiva, solo metadata arricchito.
+      if(episodeSeq != 0 && g_nxsStructEvents[idx].sh_bms_episode_seq == 0)
+         g_nxsStructEvents[idx].sh_bms_episode_seq = episodeSeq;
       if(alreadySeen){
          g_nxsSweepMultipassDup++;
       } else {
@@ -275,6 +288,7 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    ev.consumer = consumer;         // primo osservatore = sorgente canonica di questo evento
    ev.observed_by = "|" + consumer + "|";
    ev.observation_count = 1;
+   ev.sh_bms_episode_seq = episodeSeq;
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
    g_nxsSweepUniqueEvents++;
@@ -287,23 +301,23 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
 }
 
 void NXS_Structural_OnTrueBreak(string level_id, ENUM_TIMEFRAMES tf, datetime barTs, string side,
-                                 ENUM_NXS_DIR dir, double levelPrice, string consumer){
+                                 ENUM_NXS_DIR dir, double levelPrice, string consumer, int episodeSeq){
    double c1 = iClose(g_sym, tf, 1);
    _NXS_Struct_LogEvent(level_id, barTs, "TRUE_BREAK", tf, side, dir, levelPrice, c1,
-                        0, "SWEPT", "WAITING_RETURN", consumer);
+                        0, "SWEPT", "WAITING_RETURN", consumer, episodeSeq);
 }
 
 void NXS_Structural_OnRetest(string level_id, ENUM_TIMEFRAMES tf, datetime barTs, string side,
-                              ENUM_NXS_DIR dir, double levelPrice, double priceAtEvent, string consumer){
+                              ENUM_NXS_DIR dir, double levelPrice, double priceAtEvent, string consumer, int episodeSeq){
    _NXS_Struct_LogEvent(level_id, barTs, "RETEST", tf, side, dir, levelPrice, priceAtEvent,
-                        0, "WAITING_RETURN", "CONSUMED", consumer);
+                        0, "WAITING_RETURN", "CONSUMED", consumer, episodeSeq);
 }
 
 void NXS_Structural_OnInvalidate(string level_id, ENUM_TIMEFRAMES tf, datetime barTs, string side,
-                                  ENUM_NXS_DIR dir, double levelPrice, string stateBefore, string consumer){
+                                  ENUM_NXS_DIR dir, double levelPrice, string stateBefore, string consumer, int episodeSeq){
    double c1 = iClose(g_sym, tf, 1);
    _NXS_Struct_LogEvent(level_id, barTs, "INVALIDATE", tf, side, dir, levelPrice, c1,
-                        0, stateBefore, "IDLE", consumer);
+                        0, stateBefore, "IDLE", consumer, episodeSeq);
 }
 
 void NXS_Structural_PrintSummary(){
@@ -350,7 +364,8 @@ void NXS_Structural_ExportCSV(string filename = "nxs_structural_events.csv"){
    FileWrite(h, "event_id","structural_level_id","timestamp","event_type","source","source_tf",
               "side","direction","level_price","price_at_event","penetration_pips",
               "created_time","age_seconds","state_before","state_after","regime_at_event",
-              "structure_trend_at_event","atr_at_event","consumer","observed_by","observation_count");
+              "structure_trend_at_event","atr_at_event","consumer","observed_by","observation_count",
+              "sh_bms_episode_seq");
    for(int i = 0; i < g_nxsStructEventCount; i++){
       SNXSStructuralEvent ev = g_nxsStructEvents[i];
       FileWrite(h, ev.event_id, ev.structural_level_id,
@@ -364,7 +379,7 @@ void NXS_Structural_ExportCSV(string filename = "nxs_structural_events.csv"){
                 DoubleToString(ev.age_seconds, 0),
                 ev.state_before, ev.state_after, ev.regime_at_event, ev.structure_trend_at_event,
                 DoubleToString(ev.atr_at_event, 5),
-                ev.consumer, ev.observed_by, ev.observation_count);
+                ev.consumer, ev.observed_by, ev.observation_count, ev.sh_bms_episode_seq);
    }
    FileClose(h);
    PrintFormat("[STRUCTLOG][EXPORT] %d righe scritte su %s (FILE_COMMON)", g_nxsStructEventCount, filename);

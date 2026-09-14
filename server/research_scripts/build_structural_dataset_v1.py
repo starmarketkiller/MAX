@@ -64,7 +64,8 @@ def parse_float(s, default=0.0):
 _STRUCT_COLS = ["event_id", "structural_level_id", "timestamp", "event_type", "source", "source_tf",
                 "side", "direction", "level_price", "price_at_event", "penetration_pips",
                 "created_time", "age_seconds", "state_before", "state_after", "regime_at_event",
-                "structure_trend_at_event", "atr_at_event", "consumer", "observed_by", "observation_count"]
+                "structure_trend_at_event", "atr_at_event", "consumer", "observed_by", "observation_count",
+                "sh_bms_episode_seq"]
 # indice (0-based) dell'ultimo campo FISSO prima di observed_by (consumer), e del campo dopo (observation_count)
 _IDX_CONSUMER = _STRUCT_COLS.index("consumer")          # 18
 _IDX_OBSERVED_BY = _STRUCT_COLS.index("observed_by")    # 19
@@ -92,9 +93,14 @@ def read_structural_csv(path):
             if n < len(_STRUCT_COLS):
                 continue  # riga tronca/vuota, scartata (nessuna attesa in pratica)
             prefix = fields[:_IDX_CONSUMER + 1]
-            observed_by = ",".join(fields[_IDX_OBSERVED_BY:n - 1])
-            obs_count = fields[n - 1]
-            values = prefix + [observed_by, obs_count]
+            # sh_bms_episode_seq (Phase C - Sample Recovery) e' l'ULTIMA colonna,
+            # aggiunta DOPO observation_count - observed_by resta il pezzo fra
+            # _IDX_OBSERVED_BY e n-2 (non piu' n-1), observation_count e' n-2,
+            # sh_bms_episode_seq e' n-1.
+            observed_by = ",".join(fields[_IDX_OBSERVED_BY:n - 2])
+            obs_count = fields[n - 2]
+            episode_seq = fields[n - 1]
+            values = prefix + [observed_by, obs_count, episode_seq]
             r = dict(zip(_STRUCT_COLS, values))
             r["timestamp"] = parse_dt(r["timestamp"])
             r["created_time"] = parse_dt(r.get("created_time"))
@@ -104,6 +110,7 @@ def read_structural_csv(path):
             r["age_seconds"] = parse_float(r.get("age_seconds"), -1)
             r["atr_at_event"] = parse_float(r.get("atr_at_event"))
             r["observation_count"] = int(parse_float(r.get("observation_count"), 0))
+            r["sh_bms_episode_seq"] = int(parse_float(r.get("sh_bms_episode_seq"), 0))
             rows.append(r)
     return rows
 
@@ -144,56 +151,79 @@ def load_all():
 
 def assign_episodes(all_events):
     """
-    Linkage rule deterministica (Fase B - Causal Linkage Integrity Audit).
+    Linkage rule v2 (Phase C - Structural Lifecycle Sample Recovery).
 
-    Causa dei 48 casi (Fase B v1) e degli 11 non risolti da event_id: un
-    singolo structural_level_id (es. "Asia-High_2026.01.23") puo' avere PIU'
-    episodi SWEEP->TRUE_BREAK->RETEST/INVALIDATE nella stessa finestra (stesso
-    livello, sweepato/invalidato/risweepato piu' volte), e la fonte SWEEP
-    condivisa (Fase A.1) puo' emettere PIU' righe SWEEP consecutive per lo
-    STESSO episodio quando la condizione sw.confirmed persiste su bar
-    successive (osservate da "DETECTOR" ma non da SH_BMS_RTO, che e' gia'
-    uscito da IDLE). Il vecchio builder linkava per (level_id, window) intero,
-    ignorando quale SWEEP appartenesse a quale episodio - da qui sia i
-    "sweep_event_id vuoto" (timestamp bar-anchor incomparabile) sia il
-    linkage potenzialmente errato quando piu' episodi condividono il livello.
+    Root cause dimostrata con trace minimo (vedi vault 'NEXUS - Structural
+    Lifecycle Sample Recovery'): NXS_CollectAllSignals esegue fino a 6 pass
+    multi-TF distinti (H1/D1/M30/M15/H4/M5, confermato empiricamente) nello
+    STESSO tick reale; NXS_SHBMS_UpdateSide riceve tf=pass-attivo ma legge/
+    scrive uno stato CONDIVISO (g_shbmsBuy/g_shbmsSell), quindi piu' pass
+    possono innescare transizioni nello stesso tick usando OHLC di TF diversi.
+    La v1 di questa funzione ricostruiva l'identita' di episodio a posteriori
+    (replay in ordine di event_id + euristica "SH_BMS_RTO in observed_by" per
+    riconoscere una nuova apertura) - un'approssimazione che poteva agganciare
+    un TRUE_BREAK/RETEST/INVALIDATE all'episodio Python SBAGLIATO quando la
+    riga SWEEP reale non veniva riconosciuta come nuova apertura in quel preciso
+    evento (osservata prima da "DETECTOR" con "SH_BMS_RTO" aggiunto solo in un
+    evento successivo). Questo produceva contaminazione CROSS-episodio, non solo
+    rumore intra-episodio, ed e' la causa principale del 69.3% di esclusione
+    trovato in Thread 3.
 
-    Regola qui implementata, SOLO in ordine di event_id (mai timestamp,
-    mai nearest-match post-hoc):
-      - Una riga SWEEP apre un NUOVO episodio (structural_episode_id univoco)
-        SOLO se "SH_BMS_RTO" compare nel suo observed_by - e' la prova diretta
-        che, in quel preciso momento di elaborazione, lo stato di SH_BMS_RTO
-        era IDLE (precondizione hardcoded nel suo stesso codice per osservare
-        un nuovo sweep). Una riga SWEEP canonica osservata SOLO da DETECTOR
-        (persistenza della condizione, non un nuovo episodio per SH_BMS_RTO)
-        riceve comunque un proprio structural_episode_id (per restare
-        popolazione valida in AT_SWEEP), ma non diventa mai il bersaglio di
-        un TRUE_BREAK/RETEST/INVALIDATE.
-      - TRUE_BREAK/RETEST/INVALIDATE (prodotti SOLO da SH_BMS_RTO) si
-        agganciano SEMPRE all'ultimo episodio SH_BMS_RTO aperto in ordine di
-        event_id fino a quel punto ("last_episode"). Se last_episode e' None
-        (nessun episodio mai aperto prima), l'evento e' un vero ORPHAN
-        (riportato esplicitamente, MAI agganciato per timestamp piu' vicino).
-      - RETEST/INVALIDATE chiudono l'episodio (is_open=False). TRUE_BREAK non
-        chiude. Un secondo INVALIDATE/RETEST dopo la chiusura (osservato
-        empiricamente: doppio INVALIDATE consecutivo sullo stesso episodio,
-        artefatto del loop multi-TF-pass che rivaluta lo stesso stato
-        condiviso da pass diversi nello stesso tick) resta agganciato
-        all'ultimo episodio ma viene marcato "redundant_after_close" - MAI
-        silenziosamente ignorato o riassegnato altrove.
-      - Un nuovo SWEEP con SH_BMS_RTO in observed_by chiude SEMPRE
-        implicitamente l'episodio precedente (se ancora aperto) - la sola
-        esistenza di una nuova osservazione IDLE->SWEPT e' prova che
-        l'episodio precedente e' terminato nella realta', con o senza una
-        riga di chiusura esplicita nel log (marcato "implicit_close").
+    Fix alla fonte (MQL5, campo additivo 'episodeSeq' in SNXSSHBmsState,
+    incrementato UNA VOLTA sola esattamente alla transizione reale IDLE->SWEPT
+    - mai letto da alcuna decisione di trading, mai toccato da NXS_SHBMS_Reset):
+    ogni riga TRUE_BREAK/RETEST/INVALIDATE porta ora 'sh_bms_episode_seq',
+    l'identita' REALE dell'episodio dal punto di vista della macchina a stati
+    stessa - nessuna ricostruzione euristica necessaria per questi eventi.
 
-    Ritorna: (all_events con 'structural_episode_id' assegnato ad ogni riga
-    SWEEP; lifecycle_link: dict event_id(lifecycle) -> episode_id; episodes:
-    dict episode_id -> info; true_orphans: lista di eventi mai agganciabili).
+    Regola qui implementata:
+      - episode_key = (window_id, direction, sh_bms_episode_seq) per ogni
+        evento con sh_bms_episode_seq != 0 (SWEEP osservato da SH_BMS_RTO, o
+        qualunque TRUE_BREAK/RETEST/INVALIDATE, che esistono SOLO se prodotti
+        da SH_BMS_RTO e quindi hanno sempre seq != 0). 'direction' seleziona
+        quale delle due macchine a stati indipendenti (g_shbmsBuy/g_shbmsSell,
+        contatori NON coordinati fra loro - lo stesso valore numerico puo'
+        comparire su entrambi i lati nella stessa finestra per episodi diversi).
+      - Sanity check hard-fail (mai silenzioso): tutte le righe con lo stesso
+        episode_key devono condividere lo stesso structural_level_id - per
+        costruzione della macchina a stati questo e' sempre vero; una
+        violazione indicherebbe che l'assunzione e' falsa e interrompe il
+        build invece di linkare in modo scorretto.
+      - Righe SWEEP con sh_bms_episode_seq==0 (mai osservate da SH_BMS_RTO in
+        IDLE, es. persistenza della condizione osservata solo da DETECTOR
+        mentre SH_BMS_RTO era gia' in uno stato diverso) ricevono un proprio
+        structural_episode_id a se stanti (invariato da v1) - non possono mai
+        essere bersaglio di un evento lifecycle.
+      - "redundant_after_close"/"true_break_after_close" ora significano SOLO
+        rumore genuino DENTRO lo stesso episodio reale (es. doppio INVALIDATE
+        nello stesso tick da pass diversi che rivalutano lo stesso stato
+        condiviso) - mai piu' contaminazione cross-episodio, perche' l'identita'
+        e' quella vera della macchina a stati. Definizione invariata da v1: il
+        PRIMO RETEST/INVALIDATE (in ordine di event_id) chiude l'episodio;
+        qualunque evento lifecycle successivo (event_id maggiore) e' marcato
+        redundant (e true_break_after_close se e' un TRUE_BREAK).
+      - Un vero ORPHAN resta possibile solo se manca del tutto la riga SWEEP
+        canonica per un dato episode_key (non dovrebbe accadere per
+        costruzione) - riportato esplicitamente, mai agganciato altrove.
+
+    Ritorna la stessa struttura di v1 (lifecycle_link, episodes, true_orphans,
+    redundant_after_close, true_break_after_close) - nessuna modifica richiesta
+    ai chiamanti (causal_thread3_true_break_quality.py incluso).
     """
-    groups = defaultdict(list)
+    real_groups = defaultdict(list)
+    seqless_sweeps = []
+
     for e in all_events:
-        groups[(e["structural_level_id"], e["window_id"])].append(e)
+        seq = int(e.get("sh_bms_episode_seq") or 0)
+        if seq != 0:
+            real_groups[(e["window_id"], e["direction"], seq)].append(e)
+        elif e["event_type"] == "SWEEP":
+            seqless_sweeps.append(e)
+        else:
+            # Un evento lifecycle con seq==0 e' impossibile per costruzione
+            # (SH_BMS_RTO passa sempre il proprio episodeSeq, gia' != 0 dopo la
+            # prima transizione reale) - se compare comunque, e' un vero orphan.
+            real_groups[("__NO_SEQ__", e["window_id"], e["event_id"])] = [e]
 
     lifecycle_link = {}
     episodes = {}
@@ -201,48 +231,72 @@ def assign_episodes(all_events):
     redundant_after_close = []
     true_break_after_close = []
 
-    for (lvl, win), grp in groups.items():
+    for key, grp in real_groups.items():
+        if key[0] == "__NO_SEQ__":
+            true_orphans.extend(grp)
+            continue
+        win, direction, seq = key
+        levels = set(e["structural_level_id"] for e in grp)
+        if len(levels) != 1:
+            raise ValueError(
+                f"Violazione assunzione episodeSeq: episode_key={key} ha "
+                f"structural_level_id multipli {sorted(levels)} - identita' "
+                f"non univoca come atteso, STOP (nessun linkage silenzioso)."
+            )
+        lvl = levels.pop()
+        ep_id = f"{win}__{direction}__seq{seq}"
         grp_sorted = sorted(grp, key=lambda x: int(x["event_id"]))
-        last_episode = None
-        is_open = False
-        ep_counter = 0
         for e in grp_sorted:
-            if e["event_type"] == "SWEEP":
-                ep_counter += 1
-                ep_id = f"{lvl}__ep{ep_counter}"
-                e["structural_episode_id"] = ep_id
-                if "SH_BMS_RTO" in e.get("observed_by", ""):
-                    if last_episode is not None and is_open:
-                        episodes[last_episode]["closed_by"] = "IMPLICIT_NEXT_SWEEP"
-                        episodes[last_episode]["is_open_at_window_end"] = False
-                    last_episode = ep_id
-                    is_open = True
-                    episodes[ep_id] = {
-                        "window_id": win, "structural_level_id": lvl,
-                        "sweep_event_id": e["event_id"], "sweep_timestamp": str(e["timestamp"]),
-                        "closed_by": None, "is_open_at_window_end": True,
-                    }
-            else:
-                if last_episode is None:
-                    true_orphans.append(e)
-                    continue
-                # CRITICO: chiave (window_id, event_id), MAI event_id da solo - event_id e'
-                # assegnato da g_nxsStructEventIdSeq che riparte da 1 ad OGNI run separata del
-                # Tester (una per finestra). Un dict indicizzato solo su event_id collide fra
-                # finestre diverse (verificato: 2108/2382 event_id condivisi da tutte e 4 le
-                # finestre) - scoperto durante Structural Causal Experiment 1, corregge un bug
-                # che aveva corrotto il lookup lifecycle del rebuild precedente (ea3fb14).
-                lifecycle_link[(win, e["event_id"])] = last_episode
-                e["structural_episode_id"] = last_episode
-                if not is_open:
-                    redundant_after_close.append(e)
-                    if e["event_type"] == "TRUE_BREAK":
-                        true_break_after_close.append(e)
-                if e["event_type"] in ("RETEST", "INVALIDATE"):
-                    if is_open:
-                        episodes[last_episode]["closed_by"] = e["event_type"]
-                        episodes[last_episode]["is_open_at_window_end"] = False
-                    is_open = False
+            e["structural_episode_id"] = ep_id
+
+        sweep_rows = [e for e in grp_sorted if e["event_type"] == "SWEEP"]
+        lifecycle_rows = [e for e in grp_sorted if e["event_type"] != "SWEEP"]
+
+        if not sweep_rows:
+            # Nessuna riga SWEEP canonica per questo episode_key: non dovrebbe
+            # accadere per costruzione (ogni IDLE->SWEPT produce sempre un
+            # evento SWEEP prima di qualunque lifecycle) - vero orphan.
+            true_orphans.extend(lifecycle_rows)
+            continue
+
+        sweep_ev = sweep_rows[0]
+        episodes[ep_id] = {
+            "window_id": win, "structural_level_id": lvl,
+            "sweep_event_id": sweep_ev["event_id"], "sweep_timestamp": str(sweep_ev["timestamp"]),
+            "closed_by": None, "is_open_at_window_end": True,
+        }
+
+        first_close_id = None
+        for e in lifecycle_rows:
+            if e["event_type"] in ("RETEST", "INVALIDATE") and first_close_id is None:
+                first_close_id = int(e["event_id"])
+                episodes[ep_id]["closed_by"] = e["event_type"]
+                episodes[ep_id]["is_open_at_window_end"] = False
+
+        for e in lifecycle_rows:
+            # CRITICO: chiave (window_id, event_id), MAI event_id da solo - event_id e'
+            # assegnato da g_nxsStructEventIdSeq che riparte da 1 ad OGNI run separata del
+            # Tester (una per finestra) - vedi Structural Causal Experiment 1.
+            lifecycle_link[(win, e["event_id"])] = ep_id
+            if first_close_id is not None and int(e["event_id"]) > first_close_id:
+                redundant_after_close.append(e)
+                if e["event_type"] == "TRUE_BREAK":
+                    true_break_after_close.append(e)
+
+    # SWEEP mai osservate da SH_BMS_RTO in IDLE (seq==0): episodio a se stante,
+    # mai bersaglio di lifecycle - invariato rispetto a v1.
+    seqless_counter = defaultdict(int)
+    for e in seqless_sweeps:
+        lvlkey = (e["structural_level_id"], e["window_id"])
+        seqless_counter[lvlkey] += 1
+        ep_id = f"{lvlkey[0]}__{lvlkey[1]}__nolifecycle{seqless_counter[lvlkey]}"
+        e["structural_episode_id"] = ep_id
+        episodes[ep_id] = {
+            "window_id": e["window_id"], "structural_level_id": e["structural_level_id"],
+            "sweep_event_id": e["event_id"], "sweep_timestamp": str(e["timestamp"]),
+            "closed_by": None, "is_open_at_window_end": True,
+        }
+
     return lifecycle_link, episodes, true_orphans, redundant_after_close, true_break_after_close
 
 
@@ -533,7 +587,7 @@ def main():
                  "source", "source_tf", "side", "direction", "level_price", "price_at_event", "penetration_pips",
                  "created_time", "age_seconds", "state_before", "state_after", "regime_at_event",
                  "structure_trend_at_event", "atr_at_event", "consumer", "observed_by",
-                 "observation_count", "window_id"]
+                 "observation_count", "sh_bms_episode_seq", "window_id"]
     write_csv(os.path.join(OUT_DIR, "structural_events.csv"), all_events, ev_fields)
 
     sweep_fields = ["window_id", "structural_level_id", "structural_episode_id", "event_id", "timestamp",
@@ -591,11 +645,13 @@ def main():
         "unique_structural_episodes": unique_episodes,
         "episodes_with_lifecycle_events": episodes_with_sh_bms_rto_lifecycle,
         "episode_linkage_rule": (
-            "Un SWEEP apre un nuovo structural_episode_id SOLO se 'SH_BMS_RTO' e' in observed_by "
-            "(prova diretta che il suo stato era IDLE in quel momento). TRUE_BREAK/RETEST/INVALIDATE "
-            "si agganciano SEMPRE all'ultimo episodio aperto in ordine di event_id (mai per timestamp "
-            "piu' vicino). Un nuovo SWEEP SH_BMS_RTO chiude implicitamente l'episodio precedente se "
-            "ancora aperto. Vedi vault 'NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit'."
+            "[v2, Phase C] episode_key=(window_id, direction, sh_bms_episode_seq) - identita' "
+            "REALE scritta dalla macchina a stati di SH_BMS_RTO (campo additivo episodeSeq, mai "
+            "letto da alcuna decisione di trading), non piu' ricostruita a posteriori da "
+            "event_id-order-replay + euristica observed_by (v1). Il PRIMO RETEST/INVALIDATE in "
+            "ordine di event_id chiude l'episodio; eventi lifecycle successivi sono redundant. "
+            "Vedi vault 'NEXUS - Structural Lifecycle Sample Recovery' e "
+            "'NEXUS - Structural Dataset v1 Causal Linkage Integrity Audit' (v1, superata)."
         ),
         "time_to_true_break_removed_reason": (
             "Il campo timestamp di ogni evento e' il bar-open del TF che ha innescato quella "
