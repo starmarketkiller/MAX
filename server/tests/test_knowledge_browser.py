@@ -73,3 +73,63 @@ def test_arbitrary_paths_and_invalid_ids_are_rejected(client, entry_id):
 
 def test_direct_lookup_never_accepts_a_path(corpus):
     assert knowledge_browser.get_entry("../../etc/passwd") is None
+
+
+def test_strategy_sweep_shapes_are_isolated_per_record(tmp_path):
+    knowledge = tmp_path / "knowledge"
+    knowledge.mkdir()
+    (knowledge / "strategy_database.json").write_text(json.dumps({
+        "generato": "2026-09-14",
+        "strategie": [
+            {"nome": "DICT_SWEEP", "ultimo_sweep": {"profit_factor": 1.7, "trade_eseguiti": 12}},
+            {"nome": "STRING_SWEEP", "ultimo_sweep": "2026-09-12"},
+            {"nome": "NULL_SWEEP", "ultimo_sweep": None},
+            {"nome": "LIST_SWEEP", "ultimo_sweep": [{"profit_factor": 9.9}]},
+            {"nome": "PARTIAL_RECORD", "ultimo_sweep": 42, "PF": None},
+            "not-a-strategy-record",
+        ],
+    }), encoding="utf-8")
+
+    payload, rows = knowledge_browser._load_strategy_database(tmp_path)
+
+    assert payload["generato"] == "2026-09-14"
+    assert len(rows) == 5
+    by_name = {row["strategy"]: row for row in rows}
+    assert by_name["DICT_SWEEP"]["metrics"]["profit_factor"] == 1.7
+    assert by_name["DICT_SWEEP"]["metrics"]["trades"] == 12
+    for name in ("STRING_SWEEP", "NULL_SWEEP", "LIST_SWEEP", "PARTIAL_RECORD"):
+        assert by_name[name]["metrics"]["profit_factor"] is None
+        assert by_name[name]["metrics"]["trades"] is None
+
+
+def test_index_continues_after_malformed_strategy_records(tmp_path, monkeypatch):
+    knowledge = tmp_path / "knowledge"
+    knowledge.mkdir()
+    (knowledge / "strategy_database.json").write_text(json.dumps({
+        "strategie": ["broken", None, [], {"ultimo_sweep": "bad"}, {"nome": "VALID", "ultimo_sweep": []}],
+    }), encoding="utf-8")
+    monkeypatch.setenv("NEXUS_KNOWLEDGE_ROOT", str(tmp_path))
+    knowledge_browser.build_index.cache_clear()
+    try:
+        index = knowledge_browser.list_entries()
+        assert index["count"] == 1
+        assert index["documents"][0]["strategy"] == "VALID"
+        assert index["documents"][0]["metrics"]["profit_factor"] is None
+    finally:
+        knowledge_browser.build_index.cache_clear()
+
+
+def test_repository_corpus_endpoint_returns_documents(tmp_path, monkeypatch):
+    monkeypatch.delenv("NEXUS_KNOWLEDGE_ROOT", raising=False)
+    monkeypatch.setattr(backend, "DB_PATH", str(tmp_path / "repo-corpus.db"))
+    knowledge_browser.build_index.cache_clear()
+    backend.init_db()
+    try:
+        with TestClient(backend.app) as value:
+            login = value.post("/api/auth/login", json={"username": "admin", "password": "admin"})
+            response = value.get("/api/knowledge", headers={"Authorization": f"Bearer {login.json()['token']}"})
+        assert response.status_code == 200
+        assert response.json()["count"] > 0
+        assert len(response.json()["documents"]) == response.json()["count"]
+    finally:
+        knowledge_browser.build_index.cache_clear()

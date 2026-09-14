@@ -105,7 +105,10 @@ def _strategy_names(base: Path) -> list[str]:
     path = base / "knowledge" / "strategy_database.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return [str(row["nome"]) for row in data.get("strategie", []) if row.get("nome")]
+        records = data.get("strategie", []) if isinstance(data, dict) else []
+        if not isinstance(records, list):
+            return []
+        return [str(row["nome"]) for row in records if isinstance(row, dict) and row.get("nome")]
     except (OSError, ValueError, TypeError):
         return []
 
@@ -148,13 +151,21 @@ def _load_strategy_database(base: Path) -> tuple[dict[str, Any], list[dict[str, 
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return {}, []
+    if not isinstance(payload, dict):
+        return {}, []
+    records = payload.get("strategie", [])
+    if not isinstance(records, list):
+        records = []
     rows = []
-    for item in payload.get("strategie", []):
+    for item in records:
+        if not isinstance(item, dict):
+            continue
         name = item.get("nome")
         if not name:
             continue
         source = f"knowledge/strategy_database.json#{name}"
-        sweep = item.get("ultimo_sweep") or {}
+        raw_sweep = item.get("ultimo_sweep")
+        sweep = raw_sweep if isinstance(raw_sweep, dict) else {}
         rows.append({
             "id": _logical_id("strategy", source), "kind": "strategy", "title": name,
             "source": source, "source_path": "knowledge/strategy_database.json",
