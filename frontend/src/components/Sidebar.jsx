@@ -5,7 +5,7 @@ import {
   LayoutDashboard, SlidersHorizontal, LineChart as LineChartIcon,
   Settings as SettingsIcon, ShieldAlert, Sparkles, BookOpen, MessageSquare,
   FlaskConical, CalendarDays, Calculator, KeyRound, Microscope, CandlestickChart,
-  Link2, Cpu, Gauge,
+  Link2, Cpu, Gauge, Library,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -43,6 +43,7 @@ const SIDEBAR_GROUPS = [
   {
     label: "Knowledge",
     items: [
+      { to: "/knowledge", label: "Knowledge", icon: Library },
       { to: "/journal", label: "Journal", icon: BookOpen },
       { to: "/calendar", label: "Calendar", icon: CalendarDays },
     ],

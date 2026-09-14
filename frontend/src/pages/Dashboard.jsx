@@ -18,6 +18,7 @@ import RiskCalcPage from "@/pages/RiskCalc";
 import BacktestPage from "@/pages/Backtest";
 import CalendarPage from "@/pages/CalendarPage";
 import LocalBridgePage from "@/pages/LocalBridgePage";
+import KnowledgePage from "@/pages/KnowledgePage";
 import StrategyChainPage from "@/pages/StrategyChainPage";
 import SetupWizard, { shouldShowWizard, resetWizard } from "@/components/SetupWizard";
 import NotificationBell from "@/components/NotificationBell";
@@ -764,6 +765,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "risk-calc" && <RiskCalcPage />}
           {section === "backtest" && <BacktestPage />}
           {section === "calendar" && <CalendarPage />}
+          {section === "knowledge" && <KnowledgePage />}
           {section === "strategy-analytics" && <StrategyAnalyticsPage />}
           {section === "chain" && <StrategyChainPage />}
           {section === "local-bridge" && <LocalBridgePage />}

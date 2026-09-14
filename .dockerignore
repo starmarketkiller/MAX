@@ -37,14 +37,25 @@ frontend/.cache/
 # artefatti MQL5 compilati e log del tester
 **/*.ex5
 results/
-vault/
-knowledge/
+vault/*
+knowledge/*
 marketing/
 
 # documentazione e materiale non necessario a runtime
-docs/
+docs/*
 *.md
 !README.md
+
+# corpus read-only incluso esplicitamente dal Knowledge Browser
+!vault/01-Trading/
+!vault/01-Trading/**
+!knowledge/*.json
+!knowledge/*.md
+!knowledge/schema/
+!knowledge/schema/*.md
+!docs/*.md
+!docs/architecture/
+!docs/architecture/*.md
 
 # editor / OS
 .idea/

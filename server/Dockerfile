@@ -70,16 +70,26 @@ COPY --from=frontend-builder /frontend/build /app/static/app
 RUN test -f /app/static/app/index.html \
  && grep -F -q 'src="/app/static/js/main.' /app/static/app/index.html \
  && ! grep -R -F -q 'undefined/api' /app/static/app/static/js \
- && grep -R -F -q 'Latest Research Funnel' /app/static/app/static/js
+ && grep -R -F -q 'Latest Research Funnel' /app/static/app/static/js \
+ && grep -R -F -q 'Research Knowledge' /app/static/app/static/js
 
 # Artefatti serviti dal backend ma originati fuori dal build context di server/.
 COPY LocalBridge/nexus_local_worker.py /app/protected/nexus_local_worker.py
 COPY deploy/deployment-manifest.json /app/protected/deployment-manifest.json
 COPY contracts/ /app/contracts/
 
+# Corpus read-only del Knowledge Browser. Solo Markdown e database JSON
+# versionati entrano nell'immagine; script, vault non-trading e risultati raw
+# restano esclusi dal build context.
+COPY vault/01-Trading/ /app/knowledge_sources/vault/01-Trading/
+COPY docs/ /app/knowledge_sources/docs/
+COPY knowledge/*.json knowledge/*.md /app/knowledge_sources/knowledge/
+COPY knowledge/schema/*.md /app/knowledge_sources/knowledge/schema/
+
 ENV NEXUS_DB_PATH=/data/nexus.db \
     NEXUS_WORKER_FILE=/app/protected/nexus_local_worker.py \
     NEXUS_DEPLOY_MANIFEST=/app/protected/deployment-manifest.json \
+    NEXUS_KNOWLEDGE_ROOT=/app/knowledge_sources \
     NEXUS_DOWNLOADS_DIR=/app/protected/downloads \
     PYTHONUNBUFFERED=1
 

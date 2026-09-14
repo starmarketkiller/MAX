@@ -80,6 +80,7 @@ export default function App() {
                 <Route path="/risk-calc" element={<Protected><Dashboard section="risk-calc" /></Protected>} />
                 <Route path="/backtest" element={<Protected><Dashboard section="backtest" /></Protected>} />
                 <Route path="/calendar" element={<Protected><Dashboard section="calendar" /></Protected>} />
+                <Route path="/knowledge" element={<Protected><Dashboard section="knowledge" /></Protected>} />
                 <Route path="/strategy-analytics" element={<Protected><Dashboard section="strategy-analytics" /></Protected>} />
                 <Route path="/chain" element={<Protected><Dashboard section="chain" /></Protected>} />
                 <Route path="/local-bridge" element={<Protected><Dashboard section="local-bridge" /></Protected>} />

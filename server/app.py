@@ -47,6 +47,7 @@ import nexus_policy
 import nexus_retention
 import nexus_security
 import nexus_validation
+import knowledge_browser
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3067,6 +3068,24 @@ def research_certificate_funnel(run_id: str, user: str = Depends(require_user)):
         "gate_reason_counts": json.loads(d["gate_reason_counts"]) if d.get("gate_reason_counts") else {},
         "verdict": d["verdict"],
     }
+
+
+# ======================= KNOWLEDGE BROWSER (READ-ONLY) =================== #
+@app.get("/api/knowledge")
+def knowledge_list(user: str = Depends(require_user)):
+    """Lightweight cached metadata index for whitelisted NEXUS sources."""
+    return knowledge_browser.list_entries()
+
+
+@app.get("/api/knowledge/{entry_id}")
+def knowledge_detail(entry_id: str, user: str = Depends(require_user)):
+    """Load one entry by opaque ID; client paths are never accepted."""
+    if not re.fullmatch(r"(?:doc|strategy)-[0-9a-f]{20}", entry_id):
+        raise HTTPException(status_code=404, detail="knowledge entry not found")
+    entry = knowledge_browser.get_entry(entry_id)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="knowledge entry not found")
+    return entry
 
 
 # ======================= DASHBOARD READ/WRITE (JWT) ====================== #
