@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-09-14T20:24:40.854150",
+  "population": {
+    "n_total_true_break": 107,
+    "n_resolved": 60,
+    "n_ambiguous": 47,
+    "n_censored": 0,
+    "n_buy": 54,
+    "n_sell": 53
+  },
+  "verdict": "HOLD_INSUFFICIENT_TRUE_BREAK_SAMPLE"
+}
