@@ -1455,6 +1455,12 @@ SNXSSignal NXS_Strat_LiqSweep(SNXSSweepExt &sw){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_LIQ_SWEEP; s.stratName = "LIQ_SWEEP";
    if(!InpStrat_LIQ_SWEEP || !NXS_SelectorAllows(7)) return s;
    if(!sw.confirmed) return s;
+   // [Thread2 PhaseA.1] osservazione read-only dello stesso sweep gia' confermato
+   // sopra - dimostra la dedup cross-consumer contro il punto centrale/SH_BMS_RTO.
+   // Nessun impatto sulla decisione: sw non viene modificato, il ritorno resta lo
+   // stesso di prima.
+   string _liqSweepObsId;
+   NXS_Structural_ObserveSweep(sw, NXS_EffTF(), "LIQ_SWEEP", _liqSweepObsId);
    double c1 = iClose(g_sym, NXS_EffTF(), 1);
    double o1 = iOpen (g_sym, NXS_EffTF(), 1);
    if(MathAbs(c1 - o1) < 0.7 * g_atr) return s;   // candela "delivery"/OB, non un rimbalzo qualsiasi

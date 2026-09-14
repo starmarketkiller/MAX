@@ -421,8 +421,9 @@ SNXSSignal NXS_SHBMS_UpdateSide(int dir, SNXSSHBmsState &st, SNXSSweepExt &sw,
          st.swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
                                     : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
          st.structSide = sw.levelTag; st.structDir = sw.dir;
-         // [Thread2 PhaseA] osservazione read-only dell'evento gia' deciso sopra - nessun impatto sulla decisione.
-         NXS_Structural_OnSweepObserved(sw, tf, curBar0, "SH_BMS_RTO", st.structLevelId);
+         // [Thread2 PhaseA.1] SWEEP canonicalizzato: stesso punto causale di prima,
+         // ma passa ora dalla fonte condivisa (dedup cross-consumer inclusa).
+         NXS_Structural_ObserveSweep(sw, tf, "SH_BMS_RTO", st.structLevelId);
       }
       return s;
    }

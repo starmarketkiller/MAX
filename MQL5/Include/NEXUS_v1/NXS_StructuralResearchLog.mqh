@@ -1,8 +1,12 @@
 //+------------------------------------------------------------------+
 //| NXS_StructuralResearchLog.mqh                                     |
 //| 14/09 - Causal Research Thread 2, Phase A (instrumentation only). |
-//| Vedi vault "NEXUS - Causal Research Thread 2 Phase A Structural   |
-//| Instrumentation" e "...Reclaim False Break Feasibility".          |
+//| 14/09 - Fase A.1: SWEEP canonicalizzato come sorgente condivisa    |
+//| indipendente dal consumer (vedi vault "...Phase A1 Shared Sweep   |
+//| Instrumentation"). TRUE_BREAK/RETEST/INVALIDATE restano invariati  |
+//| e legati a SH_BMS_RTO (lifecycle-specific, non un source event).   |
+//| Vedi anche vault "...Phase A Structural Instrumentation" e         |
+//| "...Reclaim False Break Feasibility".                              |
 //|                                                                    |
 //| Modulo SOLO diagnostico (Print/log strutturato), completamente     |
 //| separato dalla logica di trading: NON genera SNXSSignal, NON apre  |
@@ -17,8 +21,10 @@
 #define __NXS_STRUCTURAL_RESEARCH_LOG_MQH__
 
 // Campi minimi richiesti dal task. "source" resta sempre "SNXSSweepExt" in
-// questa fase: e' l'unico detector strutturale strumentato (SH_BMS_RTO ne
-// e' un CONSUMER, non una fonte di livello indipendente).
+// questa fase: e' l'unico detector strutturale strumentato. "consumer" per
+// un evento SWEEP e' ora il PRIMO osservatore che lo ha reso canonico
+// (spesso il punto centrale in NXS_CollectAllSignals); "observed_by" elenca
+// TUTTI i consumer che lo hanno successivamente osservato senza duplicarlo.
 struct SNXSStructuralEvent {
    long            event_id;
    string          structural_level_id;
@@ -37,13 +43,23 @@ struct SNXSStructuralEvent {
    string          state_after;
    string          regime_at_event;     // NXS_DetectRegime(), read-only
    string          structure_trend_at_event;   // g_struct.trend, read-only
-   string          consumer;            // "SH_BMS_RTO" in questa fase
+   string          consumer;            // primo osservatore (solo SWEEP: sorgente canonica)
+   string          observed_by;         // SOLO SWEEP: lista ",Nome1,Nome2," dei consumer osservanti
+   int             observation_count;   // SOLO SWEEP: quante volte e' stato osservato in totale
 };
 
 SNXSStructuralEvent g_nxsStructEvents[];
 int                 g_nxsStructEventCount = 0;
 long                g_nxsStructEventIdSeq = 0;
-long                g_nxsStructDuplicatesSuppressed = 0;
+// Lifecycle (TRUE_BREAK/RETEST/INVALIDATE): un solo scrittore (SH_BMS_RTO),
+// dedup identico alla Fase A, nessun concetto di cross-consumer necessario qui.
+long                g_nxsLifecycleDuplicatesSuppressed = 0;
+// SWEEP (fonte condivisa): tre contatori distinti richiesti dalla Fase A.1.
+long                g_nxsSweepRawObservations   = 0;   // ogni chiamata con sw.confirmed, ON
+long                g_nxsSweepUniqueEvents      = 0;   // nuovi eventi canonici scritti
+long                g_nxsSweepMultipassDup      = 0;   // stesso consumer, stesso (level,bar) gia' visto
+long                g_nxsSweepCrossConsumerDup  = 0;   // consumer DIVERSO sullo stesso (level,bar) gia' visto
+long                g_nxsSweepMalformedSkipped  = 0;   // confirmed=true ma dir/level/levelTag incoerenti - scartato
 
 void _NXS_Struct_EnsureCapacity(){
    int cap = ArraySize(g_nxsStructEvents);
@@ -98,15 +114,13 @@ string _NXS_Structural_TrendSnapshot(){
    return "RANGE";
 }
 
-// Deduplicazione: un evento (structural_level_id, event_type, timestamp di
-// barra) gia' presente nel log NON viene riscritto. Questo copre sia il
+// Deduplicazione LIFECYCLE (TRUE_BREAK/RETEST/INVALIDATE): un evento
+// (structural_level_id, event_type, timestamp di barra) gia' presente nel
+// log NON viene riscritto. Un solo scrittore (SH_BMS_RTO) in questa fase,
+// quindi nessuna distinzione cross-consumer necessaria qui - vedi invece
+// _NXS_Struct_FindSweepEvent per la fonte SWEEP condivisa. Copre sia il
 // caso "stesso detector richiamato piu' volte nello stesso bar/tick" sia il
-// caso "piu' passaggi multi-TF rivalutano la stessa barra chiusa" - nessuna
-// assunzione su QUALE meccanismo produce la ripetizione, solo sul fatto che
-// (id, tipo, timestamp) identico = stesso evento reale, mai un secondo
-// evento genuino. Occorrenze successive dello STESSO id in un momento
-// diverso (es. lo stesso Daily-High swept di nuovo su una barra successiva)
-// restano invece eventi distinti e vengono loggate normalmente.
+// caso "piu' passaggi multi-TF rivalutano la stessa barra chiusa".
 bool _NXS_Struct_IsDuplicate(string level_id, string event_type, datetime ts){
    for(int i = g_nxsStructEventCount - 1; i >= 0; i--){
       if(g_nxsStructEvents[i].timestamp != ts) continue;
@@ -122,7 +136,7 @@ void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_
                            datetime createdTime, string stateBefore, string stateAfter, string consumer){
    if(!InpStructuralResearchEventLog) return;
    if(_NXS_Struct_IsDuplicate(level_id, event_type, ts)){
-      g_nxsStructDuplicatesSuppressed++;
+      g_nxsLifecycleDuplicatesSuppressed++;
       return;
    }
    _NXS_Struct_EnsureCapacity();
@@ -146,6 +160,8 @@ void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_
    ev.regime_at_event = _NXS_Structural_RegimeSnapshot();
    ev.structure_trend_at_event = _NXS_Structural_TrendSnapshot();
    ev.consumer = consumer;
+   ev.observed_by = "," + consumer + ",";
+   ev.observation_count = 1;
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
    PrintFormat("[STRUCTLOG][EVENT] event_id=%d level_id=%s type=%s side=%s dir=%d level=%.2f price=%.2f "
@@ -156,18 +172,112 @@ void _NXS_Struct_LogEvent(string level_id, datetime ts, string event_type, ENUM_
                ev.consumer, TimeToString(ev.timestamp, TIME_DATE|TIME_SECONDS));
 }
 
-// Chiamata dal punto causale esatto in cui SH_BMS_RTO osserva `sw.confirmed`
-// per la prima volta (transizione IDLE->SWEPT, NXS_Strategies_SMC.mqh) - MAI
-// una decisione nuova, solo l'osservazione di un dato gia' calcolato da
-// NXS_DetectSweepExt() (chiamata dal chiamante, non qui).
-void NXS_Structural_OnSweepObserved(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, datetime barTs,
-                                     string consumer, string &outLevelId){
+// ============================================================
+// Fase A.1 — SWEEP come fonte strutturale condivisa (canonicalizzata).
+// ============================================================
+// Trova un evento SWEEP gia' registrato per (level_id, timestamp di barra).
+// Ritorna l'indice in g_nxsStructEvents[], o -1 se non esiste ancora.
+int _NXS_Struct_FindSweepEvent(string level_id, datetime ts){
+   for(int i = g_nxsStructEventCount - 1; i >= 0; i--){
+      if(g_nxsStructEvents[i].event_type != "SWEEP") continue;
+      if(g_nxsStructEvents[i].timestamp != ts) continue;
+      if(g_nxsStructEvents[i].structural_level_id != level_id) continue;
+      return i;
+   }
+   return -1;
+}
+
+// Punto di osservazione condiviso per un risultato VALIDO di
+// NXS_DetectSweepExt() (sw.confirmed=true), indipendente da quale consumer
+// lo chiama. Non ridefinisce cosa sia uno sweep (riusa sw.confirmed/dir/
+// level/levelTag cosi' come li ha calcolati il detector) e non decide nulla
+// per il trading: registra al piu' UN evento SWEEP per (structural_level_id,
+// bar del tf attivo), qualunque sia il numero di consumer/pass che lo
+// osservano nello stesso bar.
+//
+// Classificazione della duplicazione quando l'evento esiste gia':
+//   - MULTIPASS_DUPLICATE: il consumer che chiama ora e' GIA' nell'elenco
+//     observed_by di questo evento (stesso consumer, ri-osservato per via
+//     di piu' tick/pass sullo stesso bar - es. SH_BMS_RTO richiamato piu'
+//     volte per via del loop multi-TF-pass di NXS_CollectAllSignals).
+//   - CROSS_CONSUMER_DUPLICATE: il consumer che chiama ora NON e' ancora
+//     nell'elenco (es. LIQ_SWEEP osserva un evento gia' scritto dal punto
+//     centrale o da SH_BMS_RTO sullo stesso identico livello+barra) - viene
+//     AGGIUNTO a observed_by (metadata) ma NON crea una seconda riga.
+//
+// outLevelId e' sempre calcolato e restituito anche con il flag OFF, cosi'
+// i chiamanti (es. lo stato SH_BMS_RTO) possono continuare a portare un id
+// stabile per i propri hook di lifecycle (TRUE_BREAK/RETEST/INVALIDATE),
+// invariati rispetto alla Fase A.
+void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string consumer,
+                                  string &outLevelId){
    outLevelId = _NXS_Structural_ComputeLevelId(sw, tf);
    if(!InpStructuralResearchEventLog) return;
+   if(!sw.confirmed) return;   // nessuna decisione nuova: solo se il detector ha gia' confermato
+   // Controllo di coerenza difensivo: per costruzione NXS_DetectSweepExt() imposta
+   // sempre confirmed insieme a dir/level/levelTag nello stesso ramo (mai confirmed
+   // da solo). Osservato pero' un caso isolato, solo dal punto di osservazione
+   // centrale multi-TF-pass e solo nei primissimi tick di un run fresco, in cui
+   // sw arriva con confirmed=true ma dir/level/levelTag ancora ai valori di
+   // default - probabile artefatto di dati non ancora sincronizzati per il TF di
+   // quel pass specifico a freddo (vedi vault Fase A.1, sezione "anomalia
+   // osservata"). Per non registrare mai un evento strutturale internamente
+   // incoerente, uno scarto silenzioso (solo contato) e' piu' sicuro di un fix
+   // speculativo sul detector, che e' esplicitamente fuori scope qui.
+   if(sw.dir == DIR_NONE || sw.levelTag == "" || sw.level <= 0){
+      g_nxsSweepMalformedSkipped++;
+      return;
+   }
+   g_nxsSweepRawObservations++;
+   datetime obsTime = iTime(g_sym, tf, 0);   // bar in formazione del tf attivo al momento dell'osservazione
+   int idx = _NXS_Struct_FindSweepEvent(outLevelId, obsTime);
+   if(idx >= 0){
+      string tok = "," + consumer + ",";
+      bool alreadySeen = (StringFind(g_nxsStructEvents[idx].observed_by, tok) >= 0);
+      g_nxsStructEvents[idx].observation_count++;
+      if(alreadySeen){
+         g_nxsSweepMultipassDup++;
+      } else {
+         g_nxsStructEvents[idx].observed_by += consumer + ",";
+         g_nxsSweepCrossConsumerDup++;
+      }
+      return;
+   }
+   // Nuovo evento canonico: nessun writer precedente per questo (level_id, bar).
+   _NXS_Struct_EnsureCapacity();
+   double pip = 10.0 * g_profile.pipSize;
    double c1 = iClose(g_sym, tf, 1);
    datetime created = _NXS_Structural_CreatedTime(sw, tf);
-   _NXS_Struct_LogEvent(outLevelId, barTs, "SWEEP", tf, sw.levelTag, sw.dir, sw.level, c1,
-                        created, "IDLE", "SWEPT", consumer);
+   SNXSStructuralEvent ev;
+   ev.event_id = ++g_nxsStructEventIdSeq;
+   ev.structural_level_id = outLevelId;
+   ev.timestamp = obsTime;
+   ev.event_type = "SWEEP";
+   ev.source = "SNXSSweepExt";
+   ev.source_tf = tf;
+   ev.side = sw.levelTag;
+   ev.direction = sw.dir;
+   ev.level_price = sw.level;
+   ev.price_at_event = c1;
+   ev.penetration_pips = (pip > 0) ? MathAbs(c1 - sw.level) / pip : 0;
+   ev.created_time = created;
+   ev.age_seconds = (created > 0 && created <= obsTime) ? (double)(obsTime - created) : -1;
+   ev.state_before = "IDLE";
+   ev.state_after = "SWEPT";
+   ev.regime_at_event = _NXS_Structural_RegimeSnapshot();
+   ev.structure_trend_at_event = _NXS_Structural_TrendSnapshot();
+   ev.consumer = consumer;         // primo osservatore = sorgente canonica di questo evento
+   ev.observed_by = "," + consumer + ",";
+   ev.observation_count = 1;
+   g_nxsStructEvents[g_nxsStructEventCount] = ev;
+   g_nxsStructEventCount++;
+   g_nxsSweepUniqueEvents++;
+   PrintFormat("[STRUCTLOG][EVENT] event_id=%d level_id=%s type=SWEEP side=%s dir=%d level=%.2f price=%.2f "
+               "pen_pips=%.2f age_s=%.0f state=IDLE->SWEPT regime=%s trend=%s consumer=%s time=%s",
+               ev.event_id, ev.structural_level_id, ev.side, (int)ev.direction,
+               ev.level_price, ev.price_at_event, ev.penetration_pips, ev.age_seconds,
+               ev.regime_at_event, ev.structure_trend_at_event, ev.consumer,
+               TimeToString(ev.timestamp, TIME_DATE|TIME_SECONDS));
 }
 
 void NXS_Structural_OnTrueBreak(string level_id, ENUM_TIMEFRAMES tf, datetime barTs, string side,
@@ -209,9 +319,13 @@ void NXS_Structural_PrintSummary(){
       if(!dup){ seen[seenCount++] = g_nxsStructEvents[i].structural_level_id; }
    }
    PrintFormat("[STRUCTLOG][SUMMARY] total_events=%d sweeps=%d true_breaks=%d retests=%d invalidations=%d "
-               "unique_structural_levels=%d duplicates_suppressed=%d",
+               "unique_structural_levels=%d lifecycle_duplicates_suppressed=%d",
                g_nxsStructEventCount, sweeps, breaks, retests, invalidations, seenCount,
-               g_nxsStructDuplicatesSuppressed);
+               g_nxsLifecycleDuplicatesSuppressed);
+   PrintFormat("[STRUCTLOG][SWEEP_SUMMARY] raw_observations=%d unique_events=%d "
+               "multipass_duplicate=%d cross_consumer_duplicate=%d malformed_skipped=%d",
+               g_nxsSweepRawObservations, g_nxsSweepUniqueEvents,
+               g_nxsSweepMultipassDup, g_nxsSweepCrossConsumerDup, g_nxsSweepMalformedSkipped);
 }
 
 #endif

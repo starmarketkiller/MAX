@@ -56,20 +56,20 @@
 #include <NEXUS_v1\NXS_Reaction.mqh>
 #include <NEXUS_v1\NXS_MarketContext.mqh>
 #include <NEXUS_v1\NXS_FibonacciContext.mqh>
+// 14/09 - Causal Research Thread 2, Phase A/A.1 (structural lifecycle
+// instrumentation). Deve stare PRIMA di NXS_Strategies.mqh (LIQ_SWEEP,
+// Fase A.1, osserva la fonte SWEEP condivisa) e di NXS_Strategies_SMC.mqh
+// (hook dentro NXS_SHBMS_UpdateSide). Dipende da g_sym/g_profile
+// (NXS_Globals/NXS_SymbolProfile, gia' inclusi sopra), g_struct
+// (NXS_Structure.mqh, incluso sopra) e NXS_DetectRegime/NXS_RegimeName
+// (NXS_MarketAnalysis.mqh, incluso sopra). Modulo SOLO diagnostico: non
+// genera SNXSSignal, non e' letto da nessuna strategia o gate.
+#include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
 #include <NEXUS_v1\NXS_Strategies.mqh>
 #include <NEXUS_v1\NXS_ResearchMode.mqh>
 #include <NEXUS_v1\NXS_BlockerDiagnostics.mqh>
 #include <NEXUS_v1\NXS_TestValidityCertificate.mqh>   // 12/09 - dipende da NXS_ResearchMode.mqh + NXS_BlockerDiagnostics.mqh
 #include <NEXUS_v1\NXS_ElliottFilter.mqh>
-// 14/09 - Causal Research Thread 2, Phase A (structural lifecycle
-// instrumentation). Deve stare PRIMA di NXS_Strategies_SMC.mqh perche' gli
-// hook dentro NXS_SHBMS_UpdateSide chiamano NXS_Structural_On*() definite
-// qui. Dipende da g_sym/g_profile (NXS_Globals/NXS_SymbolProfile, gia'
-// inclusi sopra), g_struct (NXS_Structure.mqh, incluso sopra) e
-// NXS_DetectRegime/NXS_RegimeName (NXS_MarketAnalysis.mqh, incluso sopra).
-// Modulo SOLO diagnostico: non genera SNXSSignal, non e' letto da nessuna
-// strategia o gate.
-#include <NEXUS_v1\NXS_StructuralResearchLog.mqh>
 #include <NEXUS_v1\NXS_Strategies_SMC.mqh>
 // 13/09 - Unified Level/Reaction Engine, Fase A (telemetry-only). Devono
 // stare PRIMA di NXS_Strategies_Experimental.mqh perche' i suoi hook WICK
@@ -692,6 +692,11 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
          g_reaction = NXS_DetectReaction(g_sym, passes[p]); // v2.4.2: reazione sul TF del passaggio (per le SMC)
          SNXSSweep    swP  = NXS_DetectSweep();
          SNXSSweepExt swxP = NXS_DetectSweepExt();
+         // [Thread2 PhaseA.1] osservazione canonica, condivisa fra TUTTI i
+         // consumer di swxP in questo pass - PRIMA che NXS_CollectRaw() li
+         // valuti. Read-only: non decide nulla, non tocca swxP/out/tmp.
+         string _structObsId;
+         NXS_Structural_ObserveSweep(swxP, passes[p], "DETECTOR", _structObsId);
          SNXSSignal tmp[NXS_MAX_SIGNALS];
          int m = NXS_CollectRaw(swP, swxP, amd, tmp);
          for(int k = 0; k < m && n < ArraySize(out); k++){
@@ -703,6 +708,10 @@ int NXS_CollectAllSignals(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
       NXS_UpdateStructure(g_sym, InpTFEntry); // ripristina la struttura al TF di ingresso
       g_reaction = NXS_DetectReaction(g_sym, InpTFEntry); // ripristina la reazione al TF di ingresso
    } else {
+      // [Thread2 PhaseA.1] stesso hook canonico del ramo multi-TF, per il
+      // percorso single-TF (un solo pass, tf = NXS_EffTF()).
+      string _structObsIdSingle;
+      NXS_Structural_ObserveSweep(swExt, NXS_EffTF(), "DETECTOR", _structObsIdSingle);
       n = NXS_CollectRaw(sw, swExt, amd, out);
    }
 
