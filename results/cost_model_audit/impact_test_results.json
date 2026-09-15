@@ -1,0 +1,188 @@
+{
+  "profiles_definition": {
+    "OLD_COST_MODEL": {
+      "spread_price": 2.5,
+      "commission_r": 0.0,
+      "slippage_price": 0.5
+    },
+    "BROKER_BASELINE": {
+      "spread_price": 0.54,
+      "commission_r": 0.0,
+      "slippage_price": 0.1
+    },
+    "CONSERVATIVE": {
+      "spread_price": 0.81,
+      "commission_r": 0.0,
+      "slippage_price": 0.15000000000000002
+    },
+    "STRESS": {
+      "spread_price": 1.08,
+      "commission_r": 0.0,
+      "slippage_price": 0.2
+    }
+  },
+  "results": {
+    "BREAKOUT_ACC": {
+      "tf": "1d",
+      "label": "positiva",
+      "profiles": {
+        "OLD_COST_MODEL": {
+          "n": 40,
+          "pf": 2.18,
+          "gross_pf": 2.39,
+          "net": 2585.4,
+          "gross": 2860.15,
+          "total_cost": 274.75,
+          "avg_cost": 6.87,
+          "expectancy_r": 0.587,
+          "dd": 3.2,
+          "cost_drag_pct": 9.6
+        },
+        "BROKER_BASELINE": {
+          "n": 40,
+          "pf": 2.34,
+          "gross_pf": 2.39,
+          "net": 2833.67,
+          "gross": 2892.58,
+          "total_cost": 58.91,
+          "avg_cost": 1.47,
+          "expectancy_r": 0.636,
+          "dd": 3.02,
+          "cost_drag_pct": 2.1
+        },
+        "CONSERVATIVE": {
+          "n": 40,
+          "pf": 2.32,
+          "gross_pf": 2.39,
+          "net": 2799.92,
+          "gross": 2888.17,
+          "total_cost": 88.25,
+          "avg_cost": 2.21,
+          "expectancy_r": 0.63,
+          "dd": 3.04,
+          "cost_drag_pct": 3.1
+        },
+        "STRESS": {
+          "n": 40,
+          "pf": 2.3,
+          "gross_pf": 2.39,
+          "net": 2766.2,
+          "gross": 2883.78,
+          "total_cost": 117.58,
+          "avg_cost": 2.94,
+          "expectancy_r": 0.623,
+          "dd": 3.07,
+          "cost_drag_pct": 4.1
+        }
+      }
+    },
+    "EMA_PULLBACK": {
+      "tf": "1h",
+      "label": "borderline",
+      "profiles": {
+        "OLD_COST_MODEL": {
+          "n": 240,
+          "pf": 0.93,
+          "gross_pf": 1.4,
+          "net": -1119.2,
+          "gross": 4795.32,
+          "total_cost": 5914.52,
+          "avg_cost": 24.64,
+          "expectancy_r": -0.039,
+          "dd": 25.8,
+          "cost_drag_pct": 123.3
+        },
+        "BROKER_BASELINE": {
+          "n": 240,
+          "pf": 1.28,
+          "gross_pf": 1.39,
+          "net": 5023.91,
+          "gross": 6656.41,
+          "total_cost": 1632.5,
+          "avg_cost": 6.8,
+          "expectancy_r": 0.18,
+          "dd": 11.49,
+          "cost_drag_pct": 34.0
+        },
+        "CONSERVATIVE": {
+          "n": 240,
+          "pf": 1.23,
+          "gross_pf": 1.39,
+          "net": 3998.53,
+          "gross": 6358.86,
+          "total_cost": 2360.33,
+          "avg_cost": 9.83,
+          "expectancy_r": 0.151,
+          "dd": 12.4,
+          "cost_drag_pct": 49.2
+        },
+        "STRESS": {
+          "n": 240,
+          "pf": 1.18,
+          "gross_pf": 1.39,
+          "net": 3042.81,
+          "gross": 6077.44,
+          "total_cost": 3034.63,
+          "avg_cost": 12.64,
+          "expectancy_r": 0.122,
+          "dd": 13.31,
+          "cost_drag_pct": 63.3
+        }
+      }
+    },
+    "THREE_BAR_DELIVERY_BREAK": {
+      "tf": "4h",
+      "label": "negativa",
+      "profiles": {
+        "OLD_COST_MODEL": {
+          "n": 28,
+          "pf": 0.66,
+          "gross_pf": 0.82,
+          "net": -732.87,
+          "gross": -334.1,
+          "total_cost": 398.77,
+          "avg_cost": 14.24,
+          "expectancy_r": -0.263,
+          "dd": 10.83,
+          "cost_drag_pct": -119.4
+        },
+        "BROKER_BASELINE": {
+          "n": 28,
+          "pf": 0.78,
+          "gross_pf": 0.82,
+          "net": -421.41,
+          "gross": -335.59,
+          "total_cost": 85.82,
+          "avg_cost": 3.06,
+          "expectancy_r": -0.145,
+          "dd": 7.91,
+          "cost_drag_pct": -25.7
+        },
+        "CONSERVATIVE": {
+          "n": 28,
+          "pf": 0.76,
+          "gross_pf": 0.82,
+          "net": -463.8,
+          "gross": -335.39,
+          "total_cost": 128.41,
+          "avg_cost": 4.59,
+          "expectancy_r": -0.161,
+          "dd": 8.31,
+          "cost_drag_pct": -38.4
+        },
+        "STRESS": {
+          "n": 28,
+          "pf": 0.74,
+          "gross_pf": 0.82,
+          "net": -506.06,
+          "gross": -335.19,
+          "total_cost": 170.87,
+          "avg_cost": 6.1,
+          "expectancy_r": -0.177,
+          "dd": 8.71,
+          "cost_drag_pct": -51.1
+        }
+      }
+    }
+  }
+}

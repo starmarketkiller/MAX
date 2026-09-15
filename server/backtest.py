@@ -5125,7 +5125,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
                         "side": "BUY" if pos["dir"] == 1 else "SELL",
                         "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                        "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
+                        "pnl": pnl, "pnl_gross": round(total_gross_pnl, 2),
+                        "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
                         "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
                         "reason": reason, "legs": len(pos["legs"]),
                         "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
@@ -5269,7 +5270,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         "ticket": len(trades) + 1, "symbol": symbol, "strategy": pos["strat"],
                         "side": "BUY" if pos["dir"] == 1 else "SELL",
                         "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
-                        "pnl": pnl, "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
+                        "pnl": pnl, "pnl_gross": round(total_gross_pnl, 2),
+                        "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
                         "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
                         "reason": reason, "legs": len(pos["legs"]),
                         "openTime": candles[pos["open_i"]]["time"], "closeTime": candles[i]["time"],
@@ -5307,6 +5309,16 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
     losses = [t for t in trades if t["pnl"] < 0]
     gw = sum(t["pnl"] for t in wins)
     gl = abs(sum(t["pnl"] for t in losses))
+    # Broker Cost Model Audit - SOLO diagnostico, additivo: pnl_gross e' gia'
+    # calcolato per ogni trade (pre-costo) ma mai sommato/esposto prima. Non
+    # tocca pnl/r/net_pnl/profit_factor esistenti, nessun impatto su
+    # trades/equity/gate. Usa TUTTI i trade (non il trade_list troncato a 200).
+    gross_wins = [t for t in trades if t.get("pnl_gross", t["pnl"]) > 0]
+    gross_losses = [t for t in trades if t.get("pnl_gross", t["pnl"]) < 0]
+    ggw = sum(t.get("pnl_gross", t["pnl"]) for t in gross_wins)
+    ggl = abs(sum(t.get("pnl_gross", t["pnl"]) for t in gross_losses))
+    total_gross_pnl = sum(t.get("pnl_gross", t["pnl"]) for t in trades)
+    total_cost = round(total_gross_pnl - (equity - start_equity), 2)
     # max drawdown sulla equity curve
     peak, maxdd = start_equity, 0.0
     for p in curve:
@@ -5352,6 +5364,11 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         "near_miss_loss_pct": round(near_miss_losses / len(losses) * 100, 1) if losses else None,
         "equity_curve": curve,
         "trade_list": trades[-200:],
+        # Broker Cost Model Audit - campi additivi, mai usati da alcun gate esistente:
+        "gross_pnl": round(total_gross_pnl, 2),
+        "gross_profit_factor": round(ggw / ggl, 2) if ggl else None,
+        "total_cost": total_cost,
+        "avg_cost_per_trade": round(total_cost / n, 2) if n else 0,
     }
 
 
