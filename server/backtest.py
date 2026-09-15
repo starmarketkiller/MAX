@@ -5102,6 +5102,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     total_pnl = 0.0
                     total_gross_pnl = 0.0
                     total_risk_money = 0.0
+                    total_spread_cost = 0.0
+                    total_slip_cost = 0.0
+                    total_comm_cost = 0.0
                     for leg in pos["legs"]:
                         rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
                         r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
@@ -5112,11 +5115,21 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                             slip_r = slippage_price / rd
                             if reason in ("SL", "TIME", "FLIP"):
                                 slip_r += slippage_price / rd
-                        cost_r = min(spread_r + commission_r + slip_r, MAX_COST_R_PER_TRADE)
+                        # Cost Calibration Final - decomposizione additiva raw/spread/slippage/
+                        # commission: se il tetto MAX_COST_R_PER_TRADE scatta, ogni componente e'
+                        # scalata PROPORZIONALMENTE cosi' che spread_cost+slip_cost+comm_cost
+                        # torni esattamente uguale al costo totale applicato (identita' contabile
+                        # mai violata, anche sotto cap).
+                        raw_cost_r = spread_r + commission_r + slip_r
+                        cost_r = min(raw_cost_r, MAX_COST_R_PER_TRADE)
+                        cap_scale = (cost_r / raw_cost_r) if raw_cost_r > 0 else 1.0
                         r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
                         total_gross_pnl += r_mult * leg["risk_money"]
                         total_risk_money += leg["risk_money"]
+                        total_spread_cost += spread_r * cap_scale * leg["risk_money"]
+                        total_slip_cost += slip_r * cap_scale * leg["risk_money"]
+                        total_comm_cost += commission_r * cap_scale * leg["risk_money"]
                     pnl = round(total_pnl, 2)
                     equity += pnl
                     r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
@@ -5126,6 +5139,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         "side": "BUY" if pos["dir"] == 1 else "SELL",
                         "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
                         "pnl": pnl, "pnl_gross": round(total_gross_pnl, 2),
+                        "spread_cost": round(total_spread_cost, 4), "slippage_cost": round(total_slip_cost, 4),
+                        "commission_cost": round(total_comm_cost, 4),
                         "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
                         "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
                         "reason": reason, "legs": len(pos["legs"]),
@@ -5247,6 +5262,9 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                     total_pnl = 0.0
                     total_gross_pnl = 0.0
                     total_risk_money = 0.0
+                    total_spread_cost = 0.0
+                    total_slip_cost = 0.0
+                    total_comm_cost = 0.0
                     for leg in pos["legs"]:
                         rd = leg["risk_dist"] if leg["risk_dist"] > 0 else 1e-9
                         r_mult = ((exitpx - leg["entry"]) / rd) if pos["dir"] == 1 \
@@ -5257,11 +5275,16 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                             slip_r = slippage_price / rd
                             if reason in ("SL", "TIME"):
                                 slip_r += slippage_price / rd
-                        cost_r = min(spread_r + commission_r + slip_r, MAX_COST_R_PER_TRADE)
+                        raw_cost_r = spread_r + commission_r + slip_r
+                        cost_r = min(raw_cost_r, MAX_COST_R_PER_TRADE)
+                        cap_scale = (cost_r / raw_cost_r) if raw_cost_r > 0 else 1.0
                         r_mult_net = r_mult - cost_r
                         total_pnl += r_mult_net * leg["risk_money"]
                         total_gross_pnl += r_mult * leg["risk_money"]
                         total_risk_money += leg["risk_money"]
+                        total_spread_cost += spread_r * cap_scale * leg["risk_money"]
+                        total_slip_cost += slip_r * cap_scale * leg["risk_money"]
+                        total_comm_cost += commission_r * cap_scale * leg["risk_money"]
                     pnl = round(total_pnl, 2)
                     equity += pnl
                     r_blended = (total_pnl / total_risk_money) if total_risk_money > 0 else 0.0
@@ -5271,6 +5294,8 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                         "side": "BUY" if pos["dir"] == 1 else "SELL",
                         "openPrice": round(pos["entry"], 5), "closePrice": round(exitpx, 5),
                         "pnl": pnl, "pnl_gross": round(total_gross_pnl, 2),
+                        "spread_cost": round(total_spread_cost, 4), "slippage_cost": round(total_slip_cost, 4),
+                        "commission_cost": round(total_comm_cost, 4),
                         "r": round(r_blended, 2), "r_gross": round(r_gross_blended, 2),
                         "mae_r": round(pos["mae_r"], 2), "mfe_r": round(pos["mfe_r"], 2),
                         "reason": reason, "legs": len(pos["legs"]),
@@ -5319,6 +5344,9 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
     ggl = abs(sum(t.get("pnl_gross", t["pnl"]) for t in gross_losses))
     total_gross_pnl = sum(t.get("pnl_gross", t["pnl"]) for t in trades)
     total_cost = round(total_gross_pnl - (equity - start_equity), 2)
+    total_spread_cost = round(sum(t.get("spread_cost", 0.0) for t in trades), 2)
+    total_slippage_cost = round(sum(t.get("slippage_cost", 0.0) for t in trades), 2)
+    total_commission_cost = round(sum(t.get("commission_cost", 0.0) for t in trades), 2)
     # max drawdown sulla equity curve
     peak, maxdd = start_equity, 0.0
     for p in curve:
@@ -5369,6 +5397,9 @@ def _metrics(symbol, tf, strat_list, start_equity, equity, trades, curve, src):
         "gross_profit_factor": round(ggw / ggl, 2) if ggl else None,
         "total_cost": total_cost,
         "avg_cost_per_trade": round(total_cost / n, 2) if n else 0,
+        "total_spread_cost": total_spread_cost,
+        "total_slippage_cost": total_slippage_cost,
+        "total_commission_cost": total_commission_cost,
     }
 
 

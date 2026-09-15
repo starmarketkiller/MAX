@@ -1,0 +1,113 @@
+{
+  "false_negatives": [
+    {
+      "strategy": "NY_REVERSAL",
+      "tf": "15m",
+      "old_pf": 0.69,
+      "baseline_pf": 1.06,
+      "n_old": 55,
+      "n_base": 55
+    },
+    {
+      "strategy": "NY_REVERSAL_CHOCH_WINDOW",
+      "tf": "15m",
+      "old_pf": 0.65,
+      "baseline_pf": 1.05,
+      "n_old": 168,
+      "n_base": 168
+    },
+    {
+      "strategy": "LONDON_BO",
+      "tf": "1h",
+      "old_pf": 0.68,
+      "baseline_pf": 1.02,
+      "n_old": 252,
+      "n_base": 252
+    },
+    {
+      "strategy": "SH_BMS_RTO_V2",
+      "tf": "1h",
+      "old_pf": 0.73,
+      "baseline_pf": 1.05,
+      "n_old": 273,
+      "n_base": 273
+    },
+    {
+      "strategy": "Z_SCORE_BREAKOUT",
+      "tf": "1h",
+      "old_pf": 0.84,
+      "baseline_pf": 1.23,
+      "n_old": 460,
+      "n_base": 460
+    },
+    {
+      "strategy": "AMD_CONT",
+      "tf": "30m",
+      "old_pf": 0.71,
+      "baseline_pf": 1.1,
+      "n_old": 340,
+      "n_base": 340
+    },
+    {
+      "strategy": "MALAYSIAN_SNR",
+      "tf": "30m",
+      "old_pf": 0.73,
+      "baseline_pf": 1.18,
+      "n_old": 53,
+      "n_base": 53
+    },
+    {
+      "strategy": "MALAYSIAN_SNR_V2_RETEST",
+      "tf": "30m",
+      "old_pf": 0.6,
+      "baseline_pf": 1.02,
+      "n_old": 278,
+      "n_base": 278
+    },
+    {
+      "strategy": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+      "tf": "30m",
+      "old_pf": 0.68,
+      "baseline_pf": 1.08,
+      "n_old": 130,
+      "n_base": 130
+    },
+    {
+      "strategy": "MALAYSIAN_SNR_V2_STAGE3",
+      "tf": "30m",
+      "old_pf": 0.65,
+      "baseline_pf": 1.39,
+      "n_old": 126,
+      "n_base": 126
+    },
+    {
+      "strategy": "FVG_CONT_V2",
+      "tf": "4h",
+      "old_pf": 0.84,
+      "baseline_pf": 1.01,
+      "n_old": 48,
+      "n_base": 48
+    },
+    {
+      "strategy": "FVG_MIT_WINDOW",
+      "tf": "4h",
+      "old_pf": 0.74,
+      "baseline_pf": 1.29,
+      "n_old": 244,
+      "n_base": 244
+    },
+    {
+      "strategy": "ICHIMOKU",
+      "tf": "4h",
+      "old_pf": 0.93,
+      "baseline_pf": 1.08,
+      "n_old": 79,
+      "n_base": 79
+    }
+  ],
+  "confirmed_fails_count": 28,
+  "reverse_overturn": [],
+  "n_positive_baseline": 36,
+  "n_positive_conservative": 33,
+  "n_positive_stress": 27
+}

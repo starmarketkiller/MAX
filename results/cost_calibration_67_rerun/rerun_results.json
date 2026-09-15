@@ -1,0 +1,3914 @@
+{
+  "profiles_definition": {
+    "ZERO_COST": {
+      "spread_price": 0.0,
+      "commission_r": 0.0,
+      "slippage_price": 0.0
+    },
+    "BROKER_BASELINE": {
+      "spread_price": 0.55,
+      "commission_r": 0.0,
+      "slippage_price": 0.1
+    },
+    "CONSERVATIVE": {
+      "spread_price": 0.7,
+      "commission_r": 0.0,
+      "slippage_price": 0.15
+    },
+    "STRESS": {
+      "spread_price": 1.3,
+      "commission_r": 0.0,
+      "slippage_price": 0.25
+    }
+  },
+  "strategy_tf": {
+    "ADX_RSI": "1d",
+    "BB_SQUEEZE": "1d",
+    "BJORGUM": "4h",
+    "BREAKOUT_ACC": "1d",
+    "THREE_BAR_DELIVERY_BREAK": "4h",
+    "DISP_REBAL": "4h",
+    "EMA_PULLBACK": "4h",
+    "FVG_CONT": "4h",
+    "FVG_MIT": "4h",
+    "FVG_MIT_WINDOW": "4h",
+    "ICHIMOKU": "4h",
+    "IFVG": "4h",
+    "LIQ_SWEEP": "1d",
+    "LIQ_VOID": "4h",
+    "MACD": "4h",
+    "AMD_CONT": "30m",
+    "LDN_REVERSAL": "15m",
+    "AMD_REVERSAL": "15m",
+    "MALAYSIAN_SNR": "30m",
+    "OB_MIT": "1d",
+    "ORDER_BLOCK": "1d",
+    "OTE_CONT": "1d",
+    "RANGE_FADE": "1d",
+    "RSI_DIV": "1h",
+    "SAR": "4h",
+    "SH_BMS_RTO": "1d",
+    "SH_BMS_RTO_V2": "1h",
+    "SMS_BMS_RTO": "1d",
+    "STRUCT_REACT": "4h",
+    "TSI": "1d",
+    "TURTLE_SOUP": "1h",
+    "Z_SCORE_BREAKOUT": "1h",
+    "CRT": "30m",
+    "BOLLINGER": "1d",
+    "LONDON_BO": "1h",
+    "WEEKLY_EXP": "4h",
+    "CISD_TRUE": "4h",
+    "CRT_MINSTOP_FILTER": "30m",
+    "DARVAS_BOX": "1d",
+    "DONCHIAN_TURTLE": "1d",
+    "EMA_CROSS_BENCHMARK": "1d",
+    "FVG_CONT_V2": "4h",
+    "IFVG_CHOCH_WINDOW": "4h",
+    "JUDAS_SWING": "15m",
+    "MALAYSIAN_SNR_BREAKOUT": "30m",
+    "MALAYSIAN_SNR_V2_RETEST": "30m",
+    "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": "30m",
+    "MALAYSIAN_SNR_V2_STAGE1": "30m",
+    "MALAYSIAN_SNR_V2_STAGE3": "30m",
+    "NY_REVERSAL": "15m",
+    "NY_REVERSAL_CHOCH_WINDOW": "15m",
+    "ORDER_BLOCK_V2": "1d",
+    "OTE_CONT_V2": "1d",
+    "PO3": "1d",
+    "SAR_ADX20": "4h",
+    "SAR_FLIP": "4h",
+    "SCALP_BB_FADE": "15m",
+    "SCALP_EMA": "15m",
+    "SCALP_RANGE_BRK": "15m",
+    "SCALP_RSI_SNAP": "15m",
+    "SILVER_BULLET": "15m",
+    "SILVER_BULLET_V2": "15m",
+    "SMS_BMS_RTO_CHOCH_WINDOW": "1d",
+    "TSI_EXTREME": "1d",
+    "TURTLE_SOUP_CHOCH": "1h",
+    "TURTLE_SOUP_CHOCH_DBLBODY": "1h",
+    "TURTLE_SOUP_CHOCH_NEAR": "1h"
+  },
+  "results": {
+    "AMD_REVERSAL": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 118,
+          "pf": 1.18,
+          "gross_pf": 1.18,
+          "net": 1435.03,
+          "gross": 1435.03,
+          "total_cost": 0.0,
+          "expectancy_r": 0.127,
+          "dd": 17.39,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 118,
+          "pf": 0.98,
+          "gross_pf": 1.17,
+          "net": -200.37,
+          "gross": 1224.41,
+          "total_cost": 1424.78,
+          "expectancy_r": -0.004,
+          "dd": 23.6,
+          "spread_cost": 1087.02,
+          "slippage_cost": 337.79,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 118,
+          "pf": 0.92,
+          "gross_pf": 1.17,
+          "net": -682.86,
+          "gross": 1160.48,
+          "total_cost": 1843.34,
+          "expectancy_r": -0.046,
+          "dd": 25.55,
+          "spread_cost": 1348.96,
+          "slippage_cost": 494.34,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 118,
+          "pf": 0.76,
+          "gross_pf": 1.15,
+          "net": -2103.43,
+          "gross": 968.22,
+          "total_cost": 3071.65,
+          "expectancy_r": -0.186,
+          "dd": 31.62,
+          "spread_cost": 2310.35,
+          "slippage_cost": 761.33,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "JUDAS_SWING": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 37,
+          "pf": 1.55,
+          "gross_pf": 1.55,
+          "net": 934.52,
+          "gross": 934.52,
+          "total_cost": 0.0,
+          "expectancy_r": 0.25,
+          "dd": 3.94,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 37,
+          "pf": 1.42,
+          "gross_pf": 1.55,
+          "net": 756.73,
+          "gross": 927.94,
+          "total_cost": 171.21,
+          "expectancy_r": 0.205,
+          "dd": 4.29,
+          "spread_cost": 129.01,
+          "slippage_cost": 42.24,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 37,
+          "pf": 1.38,
+          "gross_pf": 1.55,
+          "net": 698.88,
+          "gross": 925.81,
+          "total_cost": 226.93,
+          "expectancy_r": 0.192,
+          "dd": 4.41,
+          "spread_cost": 163.77,
+          "slippage_cost": 63.19,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 37,
+          "pf": 1.27,
+          "gross_pf": 1.55,
+          "net": 512.99,
+          "gross": 918.95,
+          "total_cost": 405.96,
+          "expectancy_r": 0.144,
+          "dd": 4.78,
+          "spread_cost": 301.56,
+          "slippage_cost": 104.41,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "LDN_REVERSAL": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 149,
+          "pf": 1.05,
+          "gross_pf": 1.05,
+          "net": 600.67,
+          "gross": 600.67,
+          "total_cost": -0.0,
+          "expectancy_r": 0.054,
+          "dd": 19.45,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 149,
+          "pf": 0.88,
+          "gross_pf": 1.06,
+          "net": -1366.47,
+          "gross": 637.67,
+          "total_cost": 2004.14,
+          "expectancy_r": -0.083,
+          "dd": 22.45,
+          "spread_cost": 1516.76,
+          "slippage_cost": 487.36,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 149,
+          "pf": 0.83,
+          "gross_pf": 1.07,
+          "net": -1929.48,
+          "gross": 645.21,
+          "total_cost": 2574.69,
+          "expectancy_r": -0.128,
+          "dd": 23.42,
+          "spread_cost": 1867.58,
+          "slippage_cost": 707.1,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 149,
+          "pf": 0.69,
+          "gross_pf": 1.08,
+          "net": -3523.1,
+          "gross": 657.91,
+          "total_cost": 4181.01,
+          "expectancy_r": -0.275,
+          "dd": 35.23,
+          "spread_cost": 3121.25,
+          "slippage_cost": 1059.84,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "NY_REVERSAL": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 55,
+          "pf": 1.21,
+          "gross_pf": 1.21,
+          "net": 683.52,
+          "gross": 683.52,
+          "total_cost": -0.0,
+          "expectancy_r": 0.131,
+          "dd": 7.94,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 55,
+          "pf": 1.06,
+          "gross_pf": 1.21,
+          "net": 218.31,
+          "gross": 669.04,
+          "total_cost": 450.73,
+          "expectancy_r": 0.05,
+          "dd": 8.54,
+          "spread_cost": 343.02,
+          "slippage_cost": 107.73,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 55,
+          "pf": 1.02,
+          "gross_pf": 1.21,
+          "net": 70.4,
+          "gross": 664.33,
+          "total_cost": 593.93,
+          "expectancy_r": 0.024,
+          "dd": 8.74,
+          "spread_cost": 433.42,
+          "slippage_cost": 160.45,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 55,
+          "pf": 0.89,
+          "gross_pf": 1.21,
+          "net": -398.48,
+          "gross": 649.04,
+          "total_cost": 1047.52,
+          "expectancy_r": -0.063,
+          "dd": 9.91,
+          "spread_cost": 786.23,
+          "slippage_cost": 261.31,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "NY_REVERSAL_CHOCH_WINDOW": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 168,
+          "pf": 1.21,
+          "gross_pf": 1.21,
+          "net": 2154.23,
+          "gross": 2154.23,
+          "total_cost": -0.0,
+          "expectancy_r": 0.127,
+          "dd": 12.34,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 168,
+          "pf": 1.05,
+          "gross_pf": 1.2,
+          "net": 550.08,
+          "gross": 1935.16,
+          "total_cost": 1385.08,
+          "expectancy_r": 0.043,
+          "dd": 16.79,
+          "spread_cost": 1054.65,
+          "slippage_cost": 330.46,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 168,
+          "pf": 1.01,
+          "gross_pf": 1.2,
+          "net": 72.43,
+          "gross": 1868.43,
+          "total_cost": 1796.0,
+          "expectancy_r": 0.015,
+          "dd": 19.13,
+          "spread_cost": 1311.56,
+          "slippage_cost": 484.43,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 168,
+          "pf": 0.87,
+          "gross_pf": 1.2,
+          "net": -1344.42,
+          "gross": 1666.71,
+          "total_cost": 3011.13,
+          "expectancy_r": -0.075,
+          "dd": 26.29,
+          "spread_cost": 2261.12,
+          "slippage_cost": 749.98,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SCALP_BB_FADE": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 1318,
+          "pf": 0.93,
+          "gross_pf": 0.93,
+          "net": -4793.1,
+          "gross": -4793.1,
+          "total_cost": -0.0,
+          "expectancy_r": -0.04,
+          "dd": 63.66,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 1318,
+          "pf": 0.77,
+          "gross_pf": 0.92,
+          "net": -8683.64,
+          "gross": -2517.71,
+          "total_cost": 6165.93,
+          "expectancy_r": -0.144,
+          "dd": 89.28,
+          "spread_cost": 4707.26,
+          "slippage_cost": 1458.8,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 1318,
+          "pf": 0.71,
+          "gross_pf": 0.92,
+          "net": -9160.27,
+          "gross": -2188.09,
+          "total_cost": 6972.18,
+          "expectancy_r": -0.178,
+          "dd": 92.92,
+          "spread_cost": 5106.06,
+          "slippage_cost": 1866.11,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 1318,
+          "pf": 0.56,
+          "gross_pf": 0.9,
+          "net": -9807.57,
+          "gross": -1631.1,
+          "total_cost": 8176.47,
+          "expectancy_r": -0.29,
+          "dd": 98.28,
+          "spread_cost": 6153.47,
+          "slippage_cost": 2022.89,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SCALP_EMA": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 1546,
+          "pf": 0.94,
+          "gross_pf": 0.94,
+          "net": -5062.06,
+          "gross": -5062.06,
+          "total_cost": -0.0,
+          "expectancy_r": -0.036,
+          "dd": 65.19,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 1546,
+          "pf": 0.78,
+          "gross_pf": 0.95,
+          "net": -9078.24,
+          "gross": -1626.53,
+          "total_cost": 7451.71,
+          "expectancy_r": -0.145,
+          "dd": 92.87,
+          "spread_cost": 5694.46,
+          "slippage_cost": 1757.26,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 1546,
+          "pf": 0.73,
+          "gross_pf": 0.96,
+          "net": -9467.36,
+          "gross": -1127.07,
+          "total_cost": 8340.29,
+          "expectancy_r": -0.18,
+          "dd": 95.76,
+          "spread_cost": 6117.38,
+          "slippage_cost": 2222.86,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 1546,
+          "pf": 0.58,
+          "gross_pf": 0.99,
+          "net": -9911.8,
+          "gross": -242.65,
+          "total_cost": 9669.15,
+          "expectancy_r": -0.296,
+          "dd": 99.25,
+          "spread_cost": 7297.51,
+          "slippage_cost": 2371.71,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SCALP_RANGE_BRK": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 2169,
+          "pf": 1.02,
+          "gross_pf": 1.02,
+          "net": 3415.76,
+          "gross": 3415.76,
+          "total_cost": 0.0,
+          "expectancy_r": 0.023,
+          "dd": 45.24,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 2169,
+          "pf": 0.84,
+          "gross_pf": 1.03,
+          "net": -8655.61,
+          "gross": 1683.85,
+          "total_cost": 10339.46,
+          "expectancy_r": -0.083,
+          "dd": 89.85,
+          "spread_cost": 7918.96,
+          "slippage_cost": 2420.48,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 2169,
+          "pf": 0.79,
+          "gross_pf": 1.05,
+          "net": -9365.46,
+          "gross": 1702.88,
+          "total_cost": 11068.34,
+          "expectancy_r": -0.117,
+          "dd": 94.87,
+          "spread_cost": 8140.49,
+          "slippage_cost": 2928.05,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 2169,
+          "pf": 0.65,
+          "gross_pf": 1.09,
+          "net": -9946.19,
+          "gross": 1881.85,
+          "total_cost": 11828.04,
+          "expectancy_r": -0.23,
+          "dd": 99.54,
+          "spread_cost": 8954.88,
+          "slippage_cost": 2872.95,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SCALP_RSI_SNAP": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 1316,
+          "pf": 0.9,
+          "gross_pf": 0.9,
+          "net": -6073.86,
+          "gross": -6073.86,
+          "total_cost": -0.0,
+          "expectancy_r": -0.062,
+          "dd": 67.17,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 1316,
+          "pf": 0.75,
+          "gross_pf": 0.9,
+          "net": -8964.61,
+          "gross": -3146.95,
+          "total_cost": 5817.66,
+          "expectancy_r": -0.163,
+          "dd": 90.82,
+          "spread_cost": 4439.96,
+          "slippage_cost": 1377.69,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 1316,
+          "pf": 0.7,
+          "gross_pf": 0.9,
+          "net": -9330.3,
+          "gross": -2636.04,
+          "total_cost": 6694.26,
+          "expectancy_r": -0.196,
+          "dd": 93.99,
+          "spread_cost": 4901.3,
+          "slippage_cost": 1792.88,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 1316,
+          "pf": 0.56,
+          "gross_pf": 0.9,
+          "net": -9839.32,
+          "gross": -1632.11,
+          "total_cost": 8207.21,
+          "expectancy_r": -0.304,
+          "dd": 98.52,
+          "spread_cost": 6177.74,
+          "slippage_cost": 2029.64,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SILVER_BULLET": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 123,
+          "pf": 1.12,
+          "gross_pf": 1.12,
+          "net": 649.34,
+          "gross": 649.34,
+          "total_cost": -0.0,
+          "expectancy_r": 0.057,
+          "dd": 9.98,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 123,
+          "pf": 0.96,
+          "gross_pf": 1.12,
+          "net": -217.05,
+          "gross": 628.82,
+          "total_cost": 845.87,
+          "expectancy_r": -0.012,
+          "dd": 15.15,
+          "spread_cost": 649.63,
+          "slippage_cost": 196.27,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 123,
+          "pf": 0.92,
+          "gross_pf": 1.12,
+          "net": -483.8,
+          "gross": 622.49,
+          "total_cost": 1106.29,
+          "expectancy_r": -0.034,
+          "dd": 16.77,
+          "spread_cost": 815.87,
+          "slippage_cost": 290.45,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 123,
+          "pf": 0.79,
+          "gross_pf": 1.12,
+          "net": -1310.91,
+          "gross": 603.16,
+          "total_cost": 1914.07,
+          "expectancy_r": -0.108,
+          "dd": 21.87,
+          "spread_cost": 1450.86,
+          "slippage_cost": 463.22,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SILVER_BULLET_V2": {
+      "tf": "15m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 7,
+          "pf": 0.52,
+          "gross_pf": 0.52,
+          "net": -143.22,
+          "gross": -143.22,
+          "total_cost": -0.0,
+          "expectancy_r": -0.203,
+          "dd": 2.57,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 7,
+          "pf": 0.47,
+          "gross_pf": 0.52,
+          "net": -171.63,
+          "gross": -143.13,
+          "total_cost": 28.5,
+          "expectancy_r": -0.243,
+          "dd": 2.83,
+          "spread_cost": 20.92,
+          "slippage_cost": 7.61,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 7,
+          "pf": 0.45,
+          "gross_pf": 0.52,
+          "net": -181.09,
+          "gross": -143.09,
+          "total_cost": 38.0,
+          "expectancy_r": -0.259,
+          "dd": 2.91,
+          "spread_cost": 26.61,
+          "slippage_cost": 11.4,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 7,
+          "pf": 0.4,
+          "gross_pf": 0.52,
+          "net": -211.33,
+          "gross": -142.97,
+          "total_cost": 68.36,
+          "expectancy_r": -0.301,
+          "dd": 3.19,
+          "spread_cost": 49.37,
+          "slippage_cost": 18.99,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "ADX_RSI": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 38,
+          "pf": 1.41,
+          "gross_pf": 1.41,
+          "net": 900.32,
+          "gross": 900.32,
+          "total_cost": 0.0,
+          "expectancy_r": 0.237,
+          "dd": 4.9,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 38,
+          "pf": 1.39,
+          "gross_pf": 1.41,
+          "net": 849.93,
+          "gross": 897.13,
+          "total_cost": 47.2,
+          "expectancy_r": 0.225,
+          "dd": 4.97,
+          "spread_cost": 36.37,
+          "slippage_cost": 10.82,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 38,
+          "pf": 1.38,
+          "gross_pf": 1.41,
+          "net": 833.59,
+          "gross": 896.07,
+          "total_cost": 62.48,
+          "expectancy_r": 0.221,
+          "dd": 5.0,
+          "spread_cost": 46.26,
+          "slippage_cost": 16.22,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 38,
+          "pf": 1.35,
+          "gross_pf": 1.41,
+          "net": 780.06,
+          "gross": 892.73,
+          "total_cost": 112.67,
+          "expectancy_r": 0.208,
+          "dd": 5.08,
+          "spread_cost": 85.7,
+          "slippage_cost": 26.96,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "BB_SQUEEZE": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 2,
+          "pf": 1.98,
+          "gross_pf": 1.98,
+          "net": 98.0,
+          "gross": 98.0,
+          "total_cost": 0.0,
+          "expectancy_r": 0.5,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 2,
+          "pf": 1.94,
+          "gross_pf": 1.98,
+          "net": 95.77,
+          "gross": 97.97,
+          "total_cost": 2.2,
+          "expectancy_r": 0.49,
+          "dd": 1.01,
+          "spread_cost": 1.7,
+          "slippage_cost": 0.5,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 2,
+          "pf": 1.93,
+          "gross_pf": 1.98,
+          "net": 95.05,
+          "gross": 97.96,
+          "total_cost": 2.91,
+          "expectancy_r": 0.485,
+          "dd": 1.02,
+          "spread_cost": 2.16,
+          "slippage_cost": 0.75,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 2,
+          "pf": 1.9,
+          "gross_pf": 1.98,
+          "net": 92.67,
+          "gross": 97.93,
+          "total_cost": 5.26,
+          "expectancy_r": 0.475,
+          "dd": 1.03,
+          "spread_cost": 4.02,
+          "slippage_cost": 1.25,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "BOLLINGER": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 43,
+          "pf": 0.63,
+          "gross_pf": 0.63,
+          "net": -1110.68,
+          "gross": -1110.68,
+          "total_cost": -0.0,
+          "expectancy_r": -0.265,
+          "dd": 14.2,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 43,
+          "pf": 0.62,
+          "gross_pf": 0.63,
+          "net": -1164.94,
+          "gross": -1106.45,
+          "total_cost": 58.49,
+          "expectancy_r": -0.28,
+          "dd": 14.69,
+          "spread_cost": 44.21,
+          "slippage_cost": 14.23,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 43,
+          "pf": 0.62,
+          "gross_pf": 0.63,
+          "net": -1182.65,
+          "gross": -1105.11,
+          "total_cost": 77.54,
+          "expectancy_r": -0.284,
+          "dd": 14.86,
+          "spread_cost": 56.22,
+          "slippage_cost": 21.33,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 43,
+          "pf": 0.6,
+          "gross_pf": 0.63,
+          "net": -1240.15,
+          "gross": -1100.59,
+          "total_cost": 139.56,
+          "expectancy_r": -0.3,
+          "dd": 15.38,
+          "spread_cost": 104.08,
+          "slippage_cost": 35.43,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "BREAKOUT_ACC": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 40,
+          "pf": 2.39,
+          "gross_pf": 2.39,
+          "net": 2901.41,
+          "gross": 2901.41,
+          "total_cost": -0.0,
+          "expectancy_r": 0.65,
+          "dd": 2.97,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 40,
+          "pf": 2.34,
+          "gross_pf": 2.39,
+          "net": 2832.6,
+          "gross": 2892.44,
+          "total_cost": 59.84,
+          "expectancy_r": 0.636,
+          "dd": 3.02,
+          "spread_cost": 47.52,
+          "slippage_cost": 12.29,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 40,
+          "pf": 2.33,
+          "gross_pf": 2.39,
+          "net": 2810.75,
+          "gross": 2889.58,
+          "total_cost": 78.83,
+          "expectancy_r": 0.632,
+          "dd": 3.03,
+          "spread_cost": 60.42,
+          "slippage_cost": 18.42,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 40,
+          "pf": 2.28,
+          "gross_pf": 2.39,
+          "net": 2737.55,
+          "gross": 2880.05,
+          "total_cost": 142.5,
+          "expectancy_r": 0.618,
+          "dd": 3.09,
+          "spread_cost": 111.9,
+          "slippage_cost": 30.61,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "DARVAS_BOX": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 40,
+          "pf": 1.82,
+          "gross_pf": 1.82,
+          "net": 1796.2,
+          "gross": 1796.2,
+          "total_cost": 0.0,
+          "expectancy_r": 0.425,
+          "dd": 4.96,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 40,
+          "pf": 1.78,
+          "gross_pf": 1.82,
+          "net": 1725.74,
+          "gross": 1787.9,
+          "total_cost": 62.16,
+          "expectancy_r": 0.41,
+          "dd": 5.13,
+          "spread_cost": 48.54,
+          "slippage_cost": 13.59,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 40,
+          "pf": 1.76,
+          "gross_pf": 1.82,
+          "net": 1703.15,
+          "gross": 1785.17,
+          "total_cost": 82.02,
+          "expectancy_r": 0.405,
+          "dd": 5.19,
+          "spread_cost": 61.72,
+          "slippage_cost": 20.36,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 40,
+          "pf": 1.72,
+          "gross_pf": 1.81,
+          "net": 1628.26,
+          "gross": 1776.36,
+          "total_cost": 148.1,
+          "expectancy_r": 0.388,
+          "dd": 5.38,
+          "spread_cost": 114.27,
+          "slippage_cost": 33.84,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "DONCHIAN_TURTLE": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 45,
+          "pf": 1.75,
+          "gross_pf": 1.75,
+          "net": 1908.23,
+          "gross": 1908.23,
+          "total_cost": 0.0,
+          "expectancy_r": 0.4,
+          "dd": 4.96,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 45,
+          "pf": 1.71,
+          "gross_pf": 1.75,
+          "net": 1834.12,
+          "gross": 1899.3,
+          "total_cost": 65.18,
+          "expectancy_r": 0.386,
+          "dd": 5.13,
+          "spread_cost": 50.93,
+          "slippage_cost": 14.22,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 45,
+          "pf": 1.7,
+          "gross_pf": 1.75,
+          "net": 1810.35,
+          "gross": 1896.36,
+          "total_cost": 86.01,
+          "expectancy_r": 0.382,
+          "dd": 5.19,
+          "spread_cost": 64.76,
+          "slippage_cost": 21.31,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 45,
+          "pf": 1.66,
+          "gross_pf": 1.74,
+          "net": 1731.56,
+          "gross": 1886.82,
+          "total_cost": 155.26,
+          "expectancy_r": 0.366,
+          "dd": 5.38,
+          "spread_cost": 119.87,
+          "slippage_cost": 35.39,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "EMA_CROSS_BENCHMARK": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 1,
+          "pf": 0.0,
+          "gross_pf": 0.0,
+          "net": -100.0,
+          "gross": -100.0,
+          "total_cost": 0.0,
+          "expectancy_r": -1.0,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 1,
+          "pf": 0.0,
+          "gross_pf": 0.0,
+          "net": -100.53,
+          "gross": -100.0,
+          "total_cost": 0.53,
+          "expectancy_r": -1.01,
+          "dd": 1.01,
+          "spread_cost": 0.39,
+          "slippage_cost": 0.14,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 1,
+          "pf": 0.0,
+          "gross_pf": 0.0,
+          "net": -100.71,
+          "gross": -100.0,
+          "total_cost": 0.71,
+          "expectancy_r": -1.01,
+          "dd": 1.01,
+          "spread_cost": 0.5,
+          "slippage_cost": 0.21,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 1,
+          "pf": 0.0,
+          "gross_pf": 0.0,
+          "net": -101.28,
+          "gross": -100.0,
+          "total_cost": 1.28,
+          "expectancy_r": -1.01,
+          "dd": 1.01,
+          "spread_cost": 0.92,
+          "slippage_cost": 0.35,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "LIQ_SWEEP": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 42,
+          "pf": 1.88,
+          "gross_pf": 1.88,
+          "net": 2080.63,
+          "gross": 2080.63,
+          "total_cost": 0.0,
+          "expectancy_r": 0.462,
+          "dd": 3.94,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 42,
+          "pf": 1.85,
+          "gross_pf": 1.88,
+          "net": 2012.68,
+          "gross": 2073.9,
+          "total_cost": 61.22,
+          "expectancy_r": 0.448,
+          "dd": 4.0,
+          "spread_cost": 48.02,
+          "slippage_cost": 13.24,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 42,
+          "pf": 1.83,
+          "gross_pf": 1.88,
+          "net": 1990.92,
+          "gross": 2071.78,
+          "total_cost": 80.86,
+          "expectancy_r": 0.444,
+          "dd": 4.02,
+          "spread_cost": 61.06,
+          "slippage_cost": 19.84,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 42,
+          "pf": 1.79,
+          "gross_pf": 1.88,
+          "net": 1918.66,
+          "gross": 2064.65,
+          "total_cost": 145.99,
+          "expectancy_r": 0.43,
+          "dd": 4.09,
+          "spread_cost": 113.06,
+          "slippage_cost": 32.96,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "OB_MIT": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 4,
+          "pf": 4.53,
+          "gross_pf": 4.53,
+          "net": 367.36,
+          "gross": 367.36,
+          "total_cost": 0.0,
+          "expectancy_r": 0.912,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 4,
+          "pf": 4.4,
+          "gross_pf": 4.53,
+          "net": 361.06,
+          "gross": 367.32,
+          "total_cost": 6.26,
+          "expectancy_r": 0.9,
+          "dd": 1.02,
+          "spread_cost": 4.97,
+          "slippage_cost": 1.3,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 4,
+          "pf": 4.36,
+          "gross_pf": 4.53,
+          "net": 359.03,
+          "gross": 367.3,
+          "total_cost": 8.27,
+          "expectancy_r": 0.892,
+          "dd": 1.03,
+          "spread_cost": 6.33,
+          "slippage_cost": 1.95,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 4,
+          "pf": 4.23,
+          "gross_pf": 4.53,
+          "net": 352.28,
+          "gross": 367.27,
+          "total_cost": 14.99,
+          "expectancy_r": 0.877,
+          "dd": 1.05,
+          "spread_cost": 11.75,
+          "slippage_cost": 3.25,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "ORDER_BLOCK": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 4,
+          "pf": 4.53,
+          "gross_pf": 4.53,
+          "net": 367.36,
+          "gross": 367.36,
+          "total_cost": 0.0,
+          "expectancy_r": 0.912,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 4,
+          "pf": 4.4,
+          "gross_pf": 4.53,
+          "net": 361.06,
+          "gross": 367.32,
+          "total_cost": 6.26,
+          "expectancy_r": 0.9,
+          "dd": 1.02,
+          "spread_cost": 4.97,
+          "slippage_cost": 1.3,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 4,
+          "pf": 4.36,
+          "gross_pf": 4.53,
+          "net": 359.03,
+          "gross": 367.3,
+          "total_cost": 8.27,
+          "expectancy_r": 0.892,
+          "dd": 1.03,
+          "spread_cost": 6.33,
+          "slippage_cost": 1.95,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 4,
+          "pf": 4.23,
+          "gross_pf": 4.53,
+          "net": 352.28,
+          "gross": 367.27,
+          "total_cost": 14.99,
+          "expectancy_r": 0.877,
+          "dd": 1.05,
+          "spread_cost": 11.75,
+          "slippage_cost": 3.25,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "ORDER_BLOCK_V2": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 3,
+          "pf": 2.99,
+          "gross_pf": 2.99,
+          "net": 198.98,
+          "gross": 198.98,
+          "total_cost": 0.0,
+          "expectancy_r": 0.667,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 3,
+          "pf": 2.76,
+          "gross_pf": 2.99,
+          "net": 180.4,
+          "gross": 198.9,
+          "total_cost": 18.5,
+          "expectancy_r": 0.607,
+          "dd": 1.02,
+          "spread_cost": 13.68,
+          "slippage_cost": 4.82,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 3,
+          "pf": 2.69,
+          "gross_pf": 2.99,
+          "net": 174.22,
+          "gross": 198.88,
+          "total_cost": 24.66,
+          "expectancy_r": 0.587,
+          "dd": 1.03,
+          "spread_cost": 17.41,
+          "slippage_cost": 7.24,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 3,
+          "pf": 2.46,
+          "gross_pf": 2.99,
+          "net": 154.41,
+          "gross": 198.79,
+          "total_cost": 44.38,
+          "expectancy_r": 0.52,
+          "dd": 1.06,
+          "spread_cost": 32.33,
+          "slippage_cost": 12.06,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "OTE_CONT": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 14,
+          "pf": 6.3,
+          "gross_pf": 6.3,
+          "net": 1702.11,
+          "gross": 1702.11,
+          "total_cost": 0.0,
+          "expectancy_r": 1.136,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 14,
+          "pf": 6.17,
+          "gross_pf": 6.3,
+          "net": 1683.35,
+          "gross": 1700.45,
+          "total_cost": 17.1,
+          "expectancy_r": 1.125,
+          "dd": 1.02,
+          "spread_cost": 13.45,
+          "slippage_cost": 3.64,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 14,
+          "pf": 6.13,
+          "gross_pf": 6.3,
+          "net": 1677.35,
+          "gross": 1699.91,
+          "total_cost": 22.56,
+          "expectancy_r": 1.121,
+          "dd": 1.03,
+          "spread_cost": 17.11,
+          "slippage_cost": 5.46,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 14,
+          "pf": 5.99,
+          "gross_pf": 6.3,
+          "net": 1657.28,
+          "gross": 1698.13,
+          "total_cost": 40.85,
+          "expectancy_r": 1.108,
+          "dd": 1.06,
+          "spread_cost": 31.75,
+          "slippage_cost": 9.09,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "OTE_CONT_V2": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "BROKER_BASELINE": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "CONSERVATIVE": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "STRESS": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        }
+      }
+    },
+    "PO3": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 6,
+          "pf": 1.28,
+          "gross_pf": 1.28,
+          "net": 111.97,
+          "gross": 111.97,
+          "total_cost": -0.0,
+          "expectancy_r": 0.2,
+          "dd": 2.97,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 6,
+          "pf": 1.25,
+          "gross_pf": 1.28,
+          "net": 99.29,
+          "gross": 111.69,
+          "total_cost": 12.4,
+          "expectancy_r": 0.178,
+          "dd": 3.03,
+          "spread_cost": 9.66,
+          "slippage_cost": 2.74,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 6,
+          "pf": 1.23,
+          "gross_pf": 1.28,
+          "net": 95.18,
+          "gross": 111.59,
+          "total_cost": 16.41,
+          "expectancy_r": 0.173,
+          "dd": 3.05,
+          "spread_cost": 12.29,
+          "slippage_cost": 4.11,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 6,
+          "pf": 1.2,
+          "gross_pf": 1.28,
+          "net": 81.63,
+          "gross": 111.28,
+          "total_cost": 29.65,
+          "expectancy_r": 0.15,
+          "dd": 3.11,
+          "spread_cost": 22.81,
+          "slippage_cost": 6.85,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "RANGE_FADE": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 43,
+          "pf": 0.63,
+          "gross_pf": 0.63,
+          "net": -1110.68,
+          "gross": -1110.68,
+          "total_cost": -0.0,
+          "expectancy_r": -0.265,
+          "dd": 14.2,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 43,
+          "pf": 0.62,
+          "gross_pf": 0.63,
+          "net": -1164.94,
+          "gross": -1106.45,
+          "total_cost": 58.49,
+          "expectancy_r": -0.28,
+          "dd": 14.69,
+          "spread_cost": 44.21,
+          "slippage_cost": 14.23,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 43,
+          "pf": 0.62,
+          "gross_pf": 0.63,
+          "net": -1182.65,
+          "gross": -1105.11,
+          "total_cost": 77.54,
+          "expectancy_r": -0.284,
+          "dd": 14.86,
+          "spread_cost": 56.22,
+          "slippage_cost": 21.33,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 43,
+          "pf": 0.6,
+          "gross_pf": 0.63,
+          "net": -1240.15,
+          "gross": -1100.59,
+          "total_cost": 139.56,
+          "expectancy_r": -0.3,
+          "dd": 15.38,
+          "spread_cost": 104.08,
+          "slippage_cost": 35.43,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SH_BMS_RTO": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 7,
+          "pf": 3.47,
+          "gross_pf": 3.47,
+          "net": 550.3,
+          "gross": 550.3,
+          "total_cost": -0.0,
+          "expectancy_r": 0.781,
+          "dd": 1.16,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 7,
+          "pf": 3.38,
+          "gross_pf": 3.47,
+          "net": 539.86,
+          "gross": 550.0,
+          "total_cost": 10.14,
+          "expectancy_r": 0.769,
+          "dd": 1.2,
+          "spread_cost": 8.08,
+          "slippage_cost": 2.05,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 7,
+          "pf": 3.35,
+          "gross_pf": 3.47,
+          "net": 536.54,
+          "gross": 549.9,
+          "total_cost": 13.36,
+          "expectancy_r": 0.763,
+          "dd": 1.21,
+          "spread_cost": 10.28,
+          "slippage_cost": 3.08,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 7,
+          "pf": 3.26,
+          "gross_pf": 3.47,
+          "net": 525.33,
+          "gross": 549.56,
+          "total_cost": 24.23,
+          "expectancy_r": 0.747,
+          "dd": 1.25,
+          "spread_cost": 19.09,
+          "slippage_cost": 5.13,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SMS_BMS_RTO": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "BROKER_BASELINE": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "CONSERVATIVE": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        },
+        "STRESS": {
+          "n": 0,
+          "pf": null,
+          "gross_pf": null,
+          "net": 0.0,
+          "gross": 0,
+          "total_cost": 0.0,
+          "expectancy_r": 0,
+          "dd": 0.0,
+          "spread_cost": 0,
+          "slippage_cost": 0,
+          "commission_cost": 0
+        }
+      }
+    },
+    "SMS_BMS_RTO_CHOCH_WINDOW": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 2,
+          "pf": 0.8,
+          "gross_pf": 0.8,
+          "net": -20.12,
+          "gross": -20.12,
+          "total_cost": -0.0,
+          "expectancy_r": -0.095,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 2,
+          "pf": 0.8,
+          "gross_pf": 0.8,
+          "net": -20.49,
+          "gross": -20.11,
+          "total_cost": 0.38,
+          "expectancy_r": -0.1,
+          "dd": 1.0,
+          "spread_cost": 0.31,
+          "slippage_cost": 0.07,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 2,
+          "pf": 0.8,
+          "gross_pf": 0.8,
+          "net": -20.61,
+          "gross": -20.11,
+          "total_cost": 0.5,
+          "expectancy_r": -0.1,
+          "dd": 1.0,
+          "spread_cost": 0.39,
+          "slippage_cost": 0.11,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 2,
+          "pf": 0.79,
+          "gross_pf": 0.8,
+          "net": -21.01,
+          "gross": -20.11,
+          "total_cost": 0.9,
+          "expectancy_r": -0.1,
+          "dd": 1.0,
+          "spread_cost": 0.72,
+          "slippage_cost": 0.18,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TSI": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 44,
+          "pf": 0.98,
+          "gross_pf": 0.98,
+          "net": -61.82,
+          "gross": -61.82,
+          "total_cost": 0.0,
+          "expectancy_r": -0.004,
+          "dd": 8.76,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 44,
+          "pf": 0.96,
+          "gross_pf": 0.98,
+          "net": -114.41,
+          "gross": -59.07,
+          "total_cost": 55.34,
+          "expectancy_r": -0.017,
+          "dd": 8.9,
+          "spread_cost": 42.74,
+          "slippage_cost": 12.58,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 44,
+          "pf": 0.96,
+          "gross_pf": 0.98,
+          "net": -131.39,
+          "gross": -58.18,
+          "total_cost": 73.21,
+          "expectancy_r": -0.02,
+          "dd": 8.95,
+          "spread_cost": 54.35,
+          "slippage_cost": 18.86,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 44,
+          "pf": 0.94,
+          "gross_pf": 0.98,
+          "net": -187.25,
+          "gross": -55.25,
+          "total_cost": 132.0,
+          "expectancy_r": -0.034,
+          "dd": 9.1,
+          "spread_cost": 100.66,
+          "slippage_cost": 31.34,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TSI_EXTREME": {
+      "tf": "1d",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 24,
+          "pf": 0.45,
+          "gross_pf": 0.45,
+          "net": -985.26,
+          "gross": -985.26,
+          "total_cost": -0.0,
+          "expectancy_r": -0.425,
+          "dd": 11.62,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 24,
+          "pf": 0.44,
+          "gross_pf": 0.45,
+          "net": -1011.87,
+          "gross": -983.83,
+          "total_cost": 28.04,
+          "expectancy_r": -0.438,
+          "dd": 11.88,
+          "spread_cost": 20.86,
+          "slippage_cost": 7.15,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 24,
+          "pf": 0.44,
+          "gross_pf": 0.45,
+          "net": -1020.62,
+          "gross": -983.36,
+          "total_cost": 37.26,
+          "expectancy_r": -0.441,
+          "dd": 11.96,
+          "spread_cost": 26.53,
+          "slippage_cost": 10.72,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 24,
+          "pf": 0.43,
+          "gross_pf": 0.45,
+          "net": -1048.9,
+          "gross": -981.87,
+          "total_cost": 67.03,
+          "expectancy_r": -0.455,
+          "dd": 12.23,
+          "spread_cost": 49.2,
+          "slippage_cost": 17.83,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "LONDON_BO": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 252,
+          "pf": 1.14,
+          "gross_pf": 1.14,
+          "net": 2430.78,
+          "gross": 2430.78,
+          "total_cost": 0.0,
+          "expectancy_r": 0.097,
+          "dd": 18.31,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 252,
+          "pf": 1.02,
+          "gross_pf": 1.14,
+          "net": 402.72,
+          "gross": 2144.9,
+          "total_cost": 1742.18,
+          "expectancy_r": 0.026,
+          "dd": 24.12,
+          "spread_cost": 1338.96,
+          "slippage_cost": 403.2,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 252,
+          "pf": 0.99,
+          "gross_pf": 1.14,
+          "net": -183.43,
+          "gross": 2061.08,
+          "total_cost": 2244.51,
+          "expectancy_r": 0.003,
+          "dd": 25.93,
+          "spread_cost": 1656.65,
+          "slippage_cost": 587.9,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 252,
+          "pf": 0.88,
+          "gross_pf": 1.14,
+          "net": -1888.55,
+          "gross": 1814.64,
+          "total_cost": 3703.19,
+          "expectancy_r": -0.073,
+          "dd": 35.15,
+          "spread_cost": 2808.86,
+          "slippage_cost": 894.31,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "RSI_DIV": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 421,
+          "pf": 0.9,
+          "gross_pf": 0.9,
+          "net": -2371.19,
+          "gross": -2371.19,
+          "total_cost": -0.0,
+          "expectancy_r": -0.055,
+          "dd": 35.49,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 421,
+          "pf": 0.82,
+          "gross_pf": 0.9,
+          "net": -3983.13,
+          "gross": -2072.91,
+          "total_cost": 1910.22,
+          "expectancy_r": -0.111,
+          "dd": 46.96,
+          "spread_cost": 1455.2,
+          "slippage_cost": 454.81,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 421,
+          "pf": 0.8,
+          "gross_pf": 0.9,
+          "net": -4432.51,
+          "gross": -1986.76,
+          "total_cost": 2445.75,
+          "expectancy_r": -0.13,
+          "dd": 50.68,
+          "spread_cost": 1787.15,
+          "slippage_cost": 658.46,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 421,
+          "pf": 0.72,
+          "gross_pf": 0.9,
+          "net": -5681.44,
+          "gross": -1737.63,
+          "total_cost": 3943.81,
+          "expectancy_r": -0.19,
+          "dd": 61.12,
+          "spread_cost": 2963.29,
+          "slippage_cost": 980.6,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SH_BMS_RTO_V2": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 273,
+          "pf": 1.16,
+          "gross_pf": 1.16,
+          "net": 2835.53,
+          "gross": 2835.53,
+          "total_cost": 0.0,
+          "expectancy_r": 0.101,
+          "dd": 13.36,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 273,
+          "pf": 1.05,
+          "gross_pf": 1.16,
+          "net": 910.26,
+          "gross": 2497.57,
+          "total_cost": 1587.31,
+          "expectancy_r": 0.042,
+          "dd": 14.98,
+          "spread_cost": 1216.67,
+          "slippage_cost": 370.61,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 273,
+          "pf": 1.02,
+          "gross_pf": 1.16,
+          "net": 347.09,
+          "gross": 2396.73,
+          "total_cost": 2049.64,
+          "expectancy_r": 0.022,
+          "dd": 16.73,
+          "spread_cost": 1508.24,
+          "slippage_cost": 541.45,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 273,
+          "pf": 0.92,
+          "gross_pf": 1.15,
+          "net": -1306.18,
+          "gross": 2095.93,
+          "total_cost": 3402.11,
+          "expectancy_r": -0.042,
+          "dd": 27.5,
+          "spread_cost": 2573.1,
+          "slippage_cost": 828.87,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TURTLE_SOUP": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 492,
+          "pf": 0.92,
+          "gross_pf": 0.92,
+          "net": -2385.54,
+          "gross": -2385.54,
+          "total_cost": 0.0,
+          "expectancy_r": -0.046,
+          "dd": 41.43,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 492,
+          "pf": 0.8,
+          "gross_pf": 0.93,
+          "net": -5142.19,
+          "gross": -1595.55,
+          "total_cost": 3546.64,
+          "expectancy_r": -0.137,
+          "dd": 56.64,
+          "spread_cost": 2713.87,
+          "slippage_cost": 832.65,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 492,
+          "pf": 0.77,
+          "gross_pf": 0.94,
+          "net": -5805.33,
+          "gross": -1397.7,
+          "total_cost": 4407.63,
+          "expectancy_r": -0.167,
+          "dd": 62.17,
+          "spread_cost": 3237.31,
+          "slippage_cost": 1170.26,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 492,
+          "pf": 0.65,
+          "gross_pf": 0.95,
+          "net": -7408.67,
+          "gross": -899.86,
+          "total_cost": 6508.81,
+          "expectancy_r": -0.264,
+          "dd": 76.1,
+          "spread_cost": 4915.52,
+          "slippage_cost": 1593.16,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TURTLE_SOUP_CHOCH": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 134,
+          "pf": 0.98,
+          "gross_pf": 0.98,
+          "net": -116.53,
+          "gross": -116.53,
+          "total_cost": 0.0,
+          "expectancy_r": -0.001,
+          "dd": 12.85,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 134,
+          "pf": 0.9,
+          "gross_pf": 0.98,
+          "net": -707.86,
+          "gross": -124.19,
+          "total_cost": 583.67,
+          "expectancy_r": -0.047,
+          "dd": 16.76,
+          "spread_cost": 441.57,
+          "slippage_cost": 142.01,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 134,
+          "pf": 0.88,
+          "gross_pf": 0.98,
+          "net": -894.09,
+          "gross": -126.65,
+          "total_cost": 767.44,
+          "expectancy_r": -0.062,
+          "dd": 18.18,
+          "spread_cost": 556.54,
+          "slippage_cost": 210.95,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 134,
+          "pf": 0.8,
+          "gross_pf": 0.98,
+          "net": -1475.73,
+          "gross": -133.57,
+          "total_cost": 1342.16,
+          "expectancy_r": -0.111,
+          "dd": 22.87,
+          "spread_cost": 1001.46,
+          "slippage_cost": 340.66,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TURTLE_SOUP_CHOCH_DBLBODY": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 114,
+          "pf": 1.02,
+          "gross_pf": 1.02,
+          "net": 109.38,
+          "gross": 109.38,
+          "total_cost": 0.0,
+          "expectancy_r": 0.017,
+          "dd": 12.23,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 114,
+          "pf": 0.94,
+          "gross_pf": 1.02,
+          "net": -411.09,
+          "gross": 103.62,
+          "total_cost": 514.71,
+          "expectancy_r": -0.029,
+          "dd": 14.55,
+          "spread_cost": 390.67,
+          "slippage_cost": 124.06,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 114,
+          "pf": 0.91,
+          "gross_pf": 1.02,
+          "net": -575.77,
+          "gross": 101.78,
+          "total_cost": 677.55,
+          "expectancy_r": -0.044,
+          "dd": 15.3,
+          "spread_cost": 493.06,
+          "slippage_cost": 184.53,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 114,
+          "pf": 0.84,
+          "gross_pf": 1.02,
+          "net": -1094.07,
+          "gross": 96.15,
+          "total_cost": 1190.22,
+          "expectancy_r": -0.093,
+          "dd": 17.68,
+          "spread_cost": 891.02,
+          "slippage_cost": 299.26,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "TURTLE_SOUP_CHOCH_NEAR": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 37,
+          "pf": 0.92,
+          "gross_pf": 0.92,
+          "net": -208.34,
+          "gross": -208.34,
+          "total_cost": -0.0,
+          "expectancy_r": -0.048,
+          "dd": 7.57,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 37,
+          "pf": 0.81,
+          "gross_pf": 0.92,
+          "net": -529.2,
+          "gross": -197.62,
+          "total_cost": 331.58,
+          "expectancy_r": -0.137,
+          "dd": 8.34,
+          "spread_cost": 253.75,
+          "slippage_cost": 77.82,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 37,
+          "pf": 0.77,
+          "gross_pf": 0.92,
+          "net": -631.66,
+          "gross": -194.29,
+          "total_cost": 437.37,
+          "expectancy_r": -0.166,
+          "dd": 8.67,
+          "spread_cost": 321.27,
+          "slippage_cost": 116.12,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 37,
+          "pf": 0.68,
+          "gross_pf": 0.92,
+          "net": -960.13,
+          "gross": -183.35,
+          "total_cost": 776.78,
+          "expectancy_r": -0.262,
+          "dd": 10.21,
+          "spread_cost": 586.52,
+          "slippage_cost": 190.25,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "Z_SCORE_BREAKOUT": {
+      "tf": "1h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 460,
+          "pf": 1.35,
+          "gross_pf": 1.35,
+          "net": 12644.06,
+          "gross": 12644.06,
+          "total_cost": -0.0,
+          "expectancy_r": 0.188,
+          "dd": 22.23,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 460,
+          "pf": 1.23,
+          "gross_pf": 1.33,
+          "net": 7363.3,
+          "gross": 10162.63,
+          "total_cost": 2799.33,
+          "expectancy_r": 0.13,
+          "dd": 24.44,
+          "spread_cost": 2158.8,
+          "slippage_cost": 640.54,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 460,
+          "pf": 1.19,
+          "gross_pf": 1.33,
+          "net": 5927.27,
+          "gross": 9471.01,
+          "total_cost": 3543.74,
+          "expectancy_r": 0.112,
+          "dd": 25.16,
+          "spread_cost": 2625.3,
+          "slippage_cost": 918.52,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 460,
+          "pf": 1.07,
+          "gross_pf": 1.31,
+          "net": 1984.26,
+          "gross": 7527.89,
+          "total_cost": 5543.63,
+          "expectancy_r": 0.05,
+          "dd": 34.53,
+          "spread_cost": 4217.45,
+          "slippage_cost": 1326.38,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "AMD_CONT": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 340,
+          "pf": 1.23,
+          "gross_pf": 1.23,
+          "net": 5876.72,
+          "gross": 5876.72,
+          "total_cost": -0.0,
+          "expectancy_r": 0.146,
+          "dd": 13.08,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 340,
+          "pf": 1.1,
+          "gross_pf": 1.23,
+          "net": 2379.46,
+          "gross": 4993.03,
+          "total_cost": 2613.57,
+          "expectancy_r": 0.074,
+          "dd": 18.84,
+          "spread_cost": 1987.83,
+          "slippage_cost": 625.78,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 340,
+          "pf": 1.06,
+          "gross_pf": 1.23,
+          "net": 1410.76,
+          "gross": 4739.09,
+          "total_cost": 3328.33,
+          "expectancy_r": 0.05,
+          "dd": 20.84,
+          "spread_cost": 2427.8,
+          "slippage_cost": 900.44,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 340,
+          "pf": 0.94,
+          "gross_pf": 1.24,
+          "net": -1258.6,
+          "gross": 4011.57,
+          "total_cost": 5270.17,
+          "expectancy_r": -0.029,
+          "dd": 27.01,
+          "spread_cost": 3955.17,
+          "slippage_cost": 1314.96,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "CRT": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 5597,
+          "pf": 0.95,
+          "gross_pf": 0.95,
+          "net": -8047.01,
+          "gross": -8047.01,
+          "total_cost": -0.0,
+          "expectancy_r": -0.022,
+          "dd": 89.93,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 5597,
+          "pf": 0.41,
+          "gross_pf": 1.02,
+          "net": -9999.59,
+          "gross": 178.02,
+          "total_cost": 10177.61,
+          "expectancy_r": -0.265,
+          "dd": 100.0,
+          "spread_cost": 7872.15,
+          "slippage_cost": 2303.36,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 5597,
+          "pf": 0.3,
+          "gross_pf": 0.98,
+          "net": -9999.62,
+          "gross": -184.33,
+          "total_cost": 9815.29,
+          "expectancy_r": -0.343,
+          "dd": 100.0,
+          "spread_cost": 7294.89,
+          "slippage_cost": 2519.14,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 5597,
+          "pf": 0.1,
+          "gross_pf": 0.86,
+          "net": -9999.68,
+          "gross": -589.65,
+          "total_cost": 9410.03,
+          "expectancy_r": -0.602,
+          "dd": 100.0,
+          "spread_cost": 7179.07,
+          "slippage_cost": 2232.68,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "CRT_MINSTOP_FILTER": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 4879,
+          "pf": 0.96,
+          "gross_pf": 0.96,
+          "net": -6713.02,
+          "gross": -6713.02,
+          "total_cost": -0.0,
+          "expectancy_r": -0.019,
+          "dd": 80.76,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 4879,
+          "pf": 0.43,
+          "gross_pf": 1.04,
+          "net": -9999.48,
+          "gross": 502.07,
+          "total_cost": 10501.55,
+          "expectancy_r": -0.202,
+          "dd": 99.99,
+          "spread_cost": 8252.78,
+          "slippage_cost": 2248.86,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 4879,
+          "pf": 0.31,
+          "gross_pf": 1.02,
+          "net": -9999.6,
+          "gross": 170.45,
+          "total_cost": 10170.05,
+          "expectancy_r": -0.261,
+          "dd": 100.0,
+          "spread_cost": 7695.41,
+          "slippage_cost": 2474.45,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 4879,
+          "pf": 0.1,
+          "gross_pf": 0.93,
+          "net": -9999.66,
+          "gross": -339.17,
+          "total_cost": 9660.49,
+          "expectancy_r": -0.455,
+          "dd": 100.0,
+          "spread_cost": 7489.67,
+          "slippage_cost": 2172.31,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 53,
+          "pf": 1.34,
+          "gross_pf": 1.34,
+          "net": 742.25,
+          "gross": 742.25,
+          "total_cost": 0.0,
+          "expectancy_r": 0.14,
+          "dd": 2.97,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 53,
+          "pf": 1.18,
+          "gross_pf": 1.34,
+          "net": 408.89,
+          "gross": 723.04,
+          "total_cost": 314.15,
+          "expectancy_r": 0.08,
+          "dd": 3.7,
+          "spread_cost": 248.03,
+          "slippage_cost": 66.11,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 53,
+          "pf": 1.13,
+          "gross_pf": 1.34,
+          "net": 304.12,
+          "gross": 716.99,
+          "total_cost": 412.87,
+          "expectancy_r": 0.061,
+          "dd": 4.04,
+          "spread_cost": 314.11,
+          "slippage_cost": 98.69,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 53,
+          "pf": 0.98,
+          "gross_pf": 1.34,
+          "net": -38.53,
+          "gross": 697.12,
+          "total_cost": 735.65,
+          "expectancy_r": -0.003,
+          "dd": 5.98,
+          "spread_cost": 573.82,
+          "slippage_cost": 161.8,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR_BREAKOUT": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 560,
+          "pf": 1.1,
+          "gross_pf": 1.1,
+          "net": 3253.37,
+          "gross": 3253.37,
+          "total_cost": 0.0,
+          "expectancy_r": 0.058,
+          "dd": 19.11,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 560,
+          "pf": 0.95,
+          "gross_pf": 1.09,
+          "net": -1372.14,
+          "gross": 2168.23,
+          "total_cost": 3540.37,
+          "expectancy_r": -0.019,
+          "dd": 36.09,
+          "spread_cost": 2745.08,
+          "slippage_cost": 795.22,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 560,
+          "pf": 0.9,
+          "gross_pf": 1.08,
+          "net": -2492.72,
+          "gross": 1896.05,
+          "total_cost": 4388.77,
+          "expectancy_r": -0.044,
+          "dd": 43.5,
+          "spread_cost": 3271.46,
+          "slippage_cost": 1117.24,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 560,
+          "pf": 0.76,
+          "gross_pf": 1.07,
+          "net": -5261.8,
+          "gross": 1201.74,
+          "total_cost": 6463.54,
+          "expectancy_r": -0.126,
+          "dd": 62.42,
+          "spread_cost": 4946.26,
+          "slippage_cost": 1517.2,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR_V2_RETEST": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 278,
+          "pf": 1.16,
+          "gross_pf": 1.16,
+          "net": 2064.06,
+          "gross": 2064.06,
+          "total_cost": 0.0,
+          "expectancy_r": 0.072,
+          "dd": 10.14,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 278,
+          "pf": 1.02,
+          "gross_pf": 1.16,
+          "net": 196.77,
+          "gross": 1790.14,
+          "total_cost": 1593.37,
+          "expectancy_r": 0.012,
+          "dd": 15.6,
+          "spread_cost": 1254.8,
+          "slippage_cost": 338.55,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 278,
+          "pf": 0.97,
+          "gross_pf": 1.15,
+          "net": -339.32,
+          "gross": 1710.02,
+          "total_cost": 2049.34,
+          "expectancy_r": -0.007,
+          "dd": 18.52,
+          "spread_cost": 1554.98,
+          "slippage_cost": 494.48,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 278,
+          "pf": 0.84,
+          "gross_pf": 1.15,
+          "net": -1933.58,
+          "gross": 1468.25,
+          "total_cost": 3401.83,
+          "expectancy_r": -0.073,
+          "dd": 27.6,
+          "spread_cost": 2646.49,
+          "slippage_cost": 755.38,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR_V2_RETEST_OUTRANGE": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 130,
+          "pf": 1.22,
+          "gross_pf": 1.22,
+          "net": 1274.65,
+          "gross": 1274.65,
+          "total_cost": -0.0,
+          "expectancy_r": 0.097,
+          "dd": 10.14,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 130,
+          "pf": 1.08,
+          "gross_pf": 1.22,
+          "net": 474.06,
+          "gross": 1200.59,
+          "total_cost": 726.53,
+          "expectancy_r": 0.04,
+          "dd": 11.76,
+          "spread_cost": 572.99,
+          "slippage_cost": 153.58,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 130,
+          "pf": 1.04,
+          "gross_pf": 1.22,
+          "net": 229.28,
+          "gross": 1177.74,
+          "total_cost": 948.46,
+          "expectancy_r": 0.022,
+          "dd": 12.28,
+          "spread_cost": 720.76,
+          "slippage_cost": 227.7,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 130,
+          "pf": 0.91,
+          "gross_pf": 1.21,
+          "net": -547.78,
+          "gross": 1104.89,
+          "total_cost": 1652.67,
+          "expectancy_r": -0.039,
+          "dd": 15.56,
+          "spread_cost": 1287.62,
+          "slippage_cost": 365.07,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR_V2_STAGE1": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 244,
+          "pf": 0.97,
+          "gross_pf": 0.97,
+          "net": -403.25,
+          "gross": -403.25,
+          "total_cost": 0.0,
+          "expectancy_r": -0.012,
+          "dd": 19.73,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 244,
+          "pf": 0.85,
+          "gross_pf": 0.96,
+          "net": -1706.64,
+          "gross": -426.67,
+          "total_cost": 1279.97,
+          "expectancy_r": -0.071,
+          "dd": 24.26,
+          "spread_cost": 997.37,
+          "slippage_cost": 282.47,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 244,
+          "pf": 0.81,
+          "gross_pf": 0.96,
+          "net": -2088.56,
+          "gross": -433.27,
+          "total_cost": 1655.29,
+          "expectancy_r": -0.09,
+          "dd": 25.83,
+          "spread_cost": 1240.96,
+          "slippage_cost": 414.33,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 244,
+          "pf": 0.7,
+          "gross_pf": 0.95,
+          "net": -3234.58,
+          "gross": -451.48,
+          "total_cost": 2783.1,
+          "expectancy_r": -0.155,
+          "dd": 33.73,
+          "spread_cost": 2140.99,
+          "slippage_cost": 642.06,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MALAYSIAN_SNR_V2_STAGE3": {
+      "tf": "30m",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 126,
+          "pf": 1.73,
+          "gross_pf": 1.73,
+          "net": 9453.03,
+          "gross": 9453.03,
+          "total_cost": 0.0,
+          "expectancy_r": 0.553,
+          "dd": 9.56,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 126,
+          "pf": 1.39,
+          "gross_pf": 1.76,
+          "net": 5045.56,
+          "gross": 8184.53,
+          "total_cost": 3138.97,
+          "expectancy_r": 0.348,
+          "dd": 12.03,
+          "spread_cost": 2423.75,
+          "slippage_cost": 715.34,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 126,
+          "pf": 1.3,
+          "gross_pf": 1.76,
+          "net": 3839.83,
+          "gross": 7820.17,
+          "total_cost": 3980.34,
+          "expectancy_r": 0.282,
+          "dd": 12.84,
+          "spread_cost": 2953.81,
+          "slippage_cost": 1026.53,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 126,
+          "pf": 1.04,
+          "gross_pf": 1.79,
+          "net": 501.72,
+          "gross": 6755.83,
+          "total_cost": 6254.11,
+          "expectancy_r": 0.062,
+          "dd": 15.38,
+          "spread_cost": 4770.72,
+          "slippage_cost": 1483.45,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "BJORGUM": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 197,
+          "pf": 0.73,
+          "gross_pf": 0.73,
+          "net": -3270.78,
+          "gross": -3270.78,
+          "total_cost": 0.0,
+          "expectancy_r": -0.192,
+          "dd": 34.03,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 197,
+          "pf": 0.7,
+          "gross_pf": 0.73,
+          "net": -3661.84,
+          "gross": -3143.42,
+          "total_cost": 518.42,
+          "expectancy_r": -0.222,
+          "dd": 37.85,
+          "spread_cost": 394.26,
+          "slippage_cost": 124.13,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 197,
+          "pf": 0.69,
+          "gross_pf": 0.73,
+          "net": -3784.87,
+          "gross": -3103.21,
+          "total_cost": 681.66,
+          "expectancy_r": -0.232,
+          "dd": 39.06,
+          "spread_cost": 497.15,
+          "slippage_cost": 184.47,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 197,
+          "pf": 0.65,
+          "gross_pf": 0.73,
+          "net": -4170.34,
+          "gross": -2976.14,
+          "total_cost": 1194.2,
+          "expectancy_r": -0.265,
+          "dd": 42.83,
+          "spread_cost": 895.88,
+          "slippage_cost": 298.36,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "CISD_TRUE": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 92,
+          "pf": 1.64,
+          "gross_pf": 1.64,
+          "net": 3822.29,
+          "gross": 3822.29,
+          "total_cost": -0.0,
+          "expectancy_r": 0.366,
+          "dd": 7.73,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 92,
+          "pf": 1.54,
+          "gross_pf": 1.64,
+          "net": 3274.12,
+          "gross": 3713.02,
+          "total_cost": 438.9,
+          "expectancy_r": 0.322,
+          "dd": 7.9,
+          "spread_cost": 338.89,
+          "slippage_cost": 99.98,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 92,
+          "pf": 1.5,
+          "gross_pf": 1.63,
+          "net": 3100.81,
+          "gross": 3678.26,
+          "total_cost": 577.45,
+          "expectancy_r": 0.307,
+          "dd": 7.96,
+          "spread_cost": 428.46,
+          "slippage_cost": 148.97,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 92,
+          "pf": 1.41,
+          "gross_pf": 1.63,
+          "net": 2544.84,
+          "gross": 3566.31,
+          "total_cost": 1021.47,
+          "expectancy_r": 0.26,
+          "dd": 8.14,
+          "spread_cost": 778.56,
+          "slippage_cost": 242.91,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "DISP_REBAL": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 6,
+          "pf": 1.97,
+          "gross_pf": 1.97,
+          "net": 296.89,
+          "gross": 296.89,
+          "total_cost": 0.0,
+          "expectancy_r": 0.5,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 6,
+          "pf": 1.92,
+          "gross_pf": 1.97,
+          "net": 286.32,
+          "gross": 296.73,
+          "total_cost": 10.41,
+          "expectancy_r": 0.485,
+          "dd": 1.02,
+          "spread_cost": 8.13,
+          "slippage_cost": 2.28,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 6,
+          "pf": 1.9,
+          "gross_pf": 1.97,
+          "net": 282.92,
+          "gross": 296.66,
+          "total_cost": 13.74,
+          "expectancy_r": 0.477,
+          "dd": 1.03,
+          "spread_cost": 10.34,
+          "slippage_cost": 3.41,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 6,
+          "pf": 1.85,
+          "gross_pf": 1.97,
+          "net": 271.59,
+          "gross": 296.49,
+          "total_cost": 24.9,
+          "expectancy_r": 0.46,
+          "dd": 1.06,
+          "spread_cost": 19.2,
+          "slippage_cost": 5.69,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "EMA_PULLBACK": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 75,
+          "pf": 1.43,
+          "gross_pf": 1.43,
+          "net": 2112.45,
+          "gross": 2112.45,
+          "total_cost": -0.0,
+          "expectancy_r": 0.267,
+          "dd": 6.85,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 75,
+          "pf": 1.37,
+          "gross_pf": 1.44,
+          "net": 1819.29,
+          "gross": 2087.03,
+          "total_cost": 267.74,
+          "expectancy_r": 0.234,
+          "dd": 7.47,
+          "spread_cost": 208.91,
+          "slippage_cost": 58.88,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 75,
+          "pf": 1.35,
+          "gross_pf": 1.44,
+          "net": 1726.14,
+          "gross": 2078.97,
+          "total_cost": 352.83,
+          "expectancy_r": 0.224,
+          "dd": 7.89,
+          "spread_cost": 264.85,
+          "slippage_cost": 87.97,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 75,
+          "pf": 1.28,
+          "gross_pf": 1.44,
+          "net": 1422.3,
+          "gross": 2052.52,
+          "total_cost": 630.22,
+          "expectancy_r": 0.189,
+          "dd": 9.26,
+          "spread_cost": 485.57,
+          "slippage_cost": 144.68,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "FVG_CONT": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 212,
+          "pf": 1.24,
+          "gross_pf": 1.24,
+          "net": 3905.58,
+          "gross": 3905.58,
+          "total_cost": 0.0,
+          "expectancy_r": 0.166,
+          "dd": 12.51,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 212,
+          "pf": 1.19,
+          "gross_pf": 1.24,
+          "net": 3060.13,
+          "gross": 3791.11,
+          "total_cost": 730.98,
+          "expectancy_r": 0.137,
+          "dd": 12.69,
+          "spread_cost": 565.06,
+          "slippage_cost": 165.89,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 212,
+          "pf": 1.17,
+          "gross_pf": 1.24,
+          "net": 2797.1,
+          "gross": 3754.88,
+          "total_cost": 957.78,
+          "expectancy_r": 0.127,
+          "dd": 12.75,
+          "spread_cost": 711.64,
+          "slippage_cost": 246.21,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 212,
+          "pf": 1.12,
+          "gross_pf": 1.25,
+          "net": 1965.79,
+          "gross": 3638.86,
+          "total_cost": 1673.07,
+          "expectancy_r": 0.095,
+          "dd": 12.94,
+          "spread_cost": 1276.75,
+          "slippage_cost": 396.3,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "FVG_CONT_V2": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 48,
+          "pf": 1.06,
+          "gross_pf": 1.06,
+          "net": 165.02,
+          "gross": 165.02,
+          "total_cost": 0.0,
+          "expectancy_r": 0.042,
+          "dd": 8.21,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 48,
+          "pf": 1.01,
+          "gross_pf": 1.06,
+          "net": 19.18,
+          "gross": 162.97,
+          "total_cost": 143.79,
+          "expectancy_r": 0.011,
+          "dd": 8.77,
+          "spread_cost": 110.62,
+          "slippage_cost": 33.16,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 48,
+          "pf": 0.99,
+          "gross_pf": 1.06,
+          "net": -27.83,
+          "gross": 162.28,
+          "total_cost": 190.11,
+          "expectancy_r": 0.002,
+          "dd": 8.96,
+          "spread_cost": 140.47,
+          "slippage_cost": 49.63,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 48,
+          "pf": 0.94,
+          "gross_pf": 1.06,
+          "net": -180.9,
+          "gross": 160.14,
+          "total_cost": 341.04,
+          "expectancy_r": -0.031,
+          "dd": 9.56,
+          "spread_cost": 258.94,
+          "slippage_cost": 82.11,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "FVG_MIT": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 78,
+          "pf": 0.88,
+          "gross_pf": 0.88,
+          "net": -665.12,
+          "gross": -665.12,
+          "total_cost": 0.0,
+          "expectancy_r": -0.074,
+          "dd": 11.85,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 78,
+          "pf": 0.8,
+          "gross_pf": 0.88,
+          "net": -1153.22,
+          "gross": -650.13,
+          "total_cost": 503.09,
+          "expectancy_r": -0.143,
+          "dd": 15.27,
+          "spread_cost": 377.34,
+          "slippage_cost": 125.75,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 78,
+          "pf": 0.77,
+          "gross_pf": 0.88,
+          "net": -1308.59,
+          "gross": -645.39,
+          "total_cost": 663.2,
+          "expectancy_r": -0.165,
+          "dd": 16.66,
+          "spread_cost": 476.18,
+          "slippage_cost": 187.06,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 78,
+          "pf": 0.7,
+          "gross_pf": 0.88,
+          "net": -1794.17,
+          "gross": -630.26,
+          "total_cost": 1163.91,
+          "expectancy_r": -0.239,
+          "dd": 21.01,
+          "spread_cost": 860.43,
+          "slippage_cost": 303.52,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "FVG_MIT_WINDOW": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 244,
+          "pf": 1.6,
+          "gross_pf": 1.6,
+          "net": 12054.07,
+          "gross": 12054.07,
+          "total_cost": 0.0,
+          "expectancy_r": 0.338,
+          "dd": 11.86,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 244,
+          "pf": 1.29,
+          "gross_pf": 1.58,
+          "net": 5458.77,
+          "gross": 9305.05,
+          "total_cost": 3846.28,
+          "expectancy_r": 0.193,
+          "dd": 17.83,
+          "spread_cost": 2906.97,
+          "slippage_cost": 939.32,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 244,
+          "pf": 1.23,
+          "gross_pf": 1.57,
+          "net": 4228.04,
+          "gross": 8755.98,
+          "total_cost": 4527.94,
+          "expectancy_r": 0.159,
+          "dd": 19.58,
+          "spread_cost": 3288.16,
+          "slippage_cost": 1239.7,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 244,
+          "pf": 1.05,
+          "gross_pf": 1.56,
+          "net": 832.05,
+          "gross": 7187.66,
+          "total_cost": 6355.61,
+          "expectancy_r": 0.048,
+          "dd": 27.94,
+          "spread_cost": 4769.2,
+          "slippage_cost": 1586.5,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "ICHIMOKU": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 79,
+          "pf": 1.12,
+          "gross_pf": 1.12,
+          "net": 650.89,
+          "gross": 650.89,
+          "total_cost": -0.0,
+          "expectancy_r": 0.09,
+          "dd": 9.41,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 79,
+          "pf": 1.08,
+          "gross_pf": 1.12,
+          "net": 418.78,
+          "gross": 655.37,
+          "total_cost": 236.59,
+          "expectancy_r": 0.062,
+          "dd": 9.93,
+          "spread_cost": 183.63,
+          "slippage_cost": 52.99,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 79,
+          "pf": 1.06,
+          "gross_pf": 1.12,
+          "net": 344.66,
+          "gross": 656.81,
+          "total_cost": 312.15,
+          "expectancy_r": 0.053,
+          "dd": 10.14,
+          "spread_cost": 232.89,
+          "slippage_cost": 79.19,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 79,
+          "pf": 1.02,
+          "gross_pf": 1.13,
+          "net": 103.44,
+          "gross": 661.31,
+          "total_cost": 557.87,
+          "expectancy_r": 0.023,
+          "dd": 10.86,
+          "spread_cost": 427.49,
+          "slippage_cost": 130.41,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "IFVG": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 3,
+          "pf": null,
+          "gross_pf": null,
+          "net": 428.37,
+          "gross": 428.37,
+          "total_cost": -0.0,
+          "expectancy_r": 1.407,
+          "dd": 0.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 3,
+          "pf": null,
+          "gross_pf": null,
+          "net": 423.12,
+          "gross": 428.27,
+          "total_cost": 5.15,
+          "expectancy_r": 1.393,
+          "dd": 0.0,
+          "spread_cost": 4.36,
+          "slippage_cost": 0.79,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 3,
+          "pf": null,
+          "gross_pf": null,
+          "net": 421.52,
+          "gross": 428.25,
+          "total_cost": 6.73,
+          "expectancy_r": 1.387,
+          "dd": 0.0,
+          "spread_cost": 5.55,
+          "slippage_cost": 1.19,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 3,
+          "pf": null,
+          "gross_pf": null,
+          "net": 415.86,
+          "gross": 428.14,
+          "total_cost": 12.28,
+          "expectancy_r": 1.367,
+          "dd": 0.0,
+          "spread_cost": 10.3,
+          "slippage_cost": 1.98,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "IFVG_CHOCH_WINDOW": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 9,
+          "pf": 11.32,
+          "gross_pf": 11.32,
+          "net": 1085.48,
+          "gross": 1085.48,
+          "total_cost": -0.0,
+          "expectancy_r": 1.156,
+          "dd": 1.0,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 9,
+          "pf": 9.8,
+          "gross_pf": 11.31,
+          "net": 1048.41,
+          "gross": 1083.85,
+          "total_cost": 35.44,
+          "expectancy_r": 1.119,
+          "dd": 1.13,
+          "spread_cost": 27.41,
+          "slippage_cost": 8.01,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 9,
+          "pf": 9.37,
+          "gross_pf": 11.31,
+          "net": 1036.43,
+          "gross": 1083.33,
+          "total_cost": 46.9,
+          "expectancy_r": 1.106,
+          "dd": 1.18,
+          "spread_cost": 34.87,
+          "slippage_cost": 12.02,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 9,
+          "pf": 8.19,
+          "gross_pf": 11.3,
+          "net": 996.88,
+          "gross": 1081.56,
+          "total_cost": 84.68,
+          "expectancy_r": 1.064,
+          "dd": 1.32,
+          "spread_cost": 64.67,
+          "slippage_cost": 20.0,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "LIQ_VOID": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 212,
+          "pf": 1.24,
+          "gross_pf": 1.24,
+          "net": 3905.58,
+          "gross": 3905.58,
+          "total_cost": 0.0,
+          "expectancy_r": 0.166,
+          "dd": 12.51,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 212,
+          "pf": 1.19,
+          "gross_pf": 1.24,
+          "net": 3060.13,
+          "gross": 3791.11,
+          "total_cost": 730.98,
+          "expectancy_r": 0.137,
+          "dd": 12.69,
+          "spread_cost": 565.06,
+          "slippage_cost": 165.89,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 212,
+          "pf": 1.17,
+          "gross_pf": 1.24,
+          "net": 2797.1,
+          "gross": 3754.88,
+          "total_cost": 957.78,
+          "expectancy_r": 0.127,
+          "dd": 12.75,
+          "spread_cost": 711.64,
+          "slippage_cost": 246.21,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 212,
+          "pf": 1.12,
+          "gross_pf": 1.25,
+          "net": 1965.79,
+          "gross": 3638.86,
+          "total_cost": 1673.07,
+          "expectancy_r": 0.095,
+          "dd": 12.94,
+          "spread_cost": 1276.75,
+          "slippage_cost": 396.3,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "MACD": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 231,
+          "pf": 1.53,
+          "gross_pf": 1.53,
+          "net": 9114.68,
+          "gross": 9114.68,
+          "total_cost": 0.0,
+          "expectancy_r": 0.292,
+          "dd": 9.64,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 231,
+          "pf": 1.46,
+          "gross_pf": 1.52,
+          "net": 7842.88,
+          "gross": 8645.68,
+          "total_cost": 802.8,
+          "expectancy_r": 0.262,
+          "dd": 10.13,
+          "spread_cost": 623.98,
+          "slippage_cost": 178.84,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 231,
+          "pf": 1.44,
+          "gross_pf": 1.52,
+          "net": 7449.74,
+          "gross": 8499.51,
+          "total_cost": 1049.77,
+          "expectancy_r": 0.252,
+          "dd": 10.29,
+          "spread_cost": 784.67,
+          "slippage_cost": 265.09,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 231,
+          "pf": 1.37,
+          "gross_pf": 1.52,
+          "net": 6209.36,
+          "gross": 8035.07,
+          "total_cost": 1825.71,
+          "expectancy_r": 0.221,
+          "dd": 10.8,
+          "spread_cost": 1401.0,
+          "slippage_cost": 424.95,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SAR": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 305,
+          "pf": 1.51,
+          "gross_pf": 1.51,
+          "net": 13421.35,
+          "gross": 13421.35,
+          "total_cost": 0.0,
+          "expectancy_r": 0.29,
+          "dd": 7.97,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 305,
+          "pf": 1.45,
+          "gross_pf": 1.51,
+          "net": 11308.12,
+          "gross": 12503.89,
+          "total_cost": 1195.77,
+          "expectancy_r": 0.259,
+          "dd": 9.32,
+          "spread_cost": 930.43,
+          "slippage_cost": 265.22,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 305,
+          "pf": 1.43,
+          "gross_pf": 1.51,
+          "net": 10666.57,
+          "gross": 12222.22,
+          "total_cost": 1555.65,
+          "expectancy_r": 0.249,
+          "dd": 9.76,
+          "spread_cost": 1164.45,
+          "slippage_cost": 391.22,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 305,
+          "pf": 1.36,
+          "gross_pf": 1.51,
+          "net": 8675.79,
+          "gross": 11339.55,
+          "total_cost": 2663.76,
+          "expectancy_r": 0.216,
+          "dd": 11.17,
+          "spread_cost": 2046.64,
+          "slippage_cost": 617.23,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SAR_ADX20": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 248,
+          "pf": 1.39,
+          "gross_pf": 1.39,
+          "net": 8131.71,
+          "gross": 8131.71,
+          "total_cost": 0.0,
+          "expectancy_r": 0.251,
+          "dd": 9.7,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 248,
+          "pf": 1.34,
+          "gross_pf": 1.4,
+          "net": 6818.27,
+          "gross": 7773.44,
+          "total_cost": 955.17,
+          "expectancy_r": 0.221,
+          "dd": 10.65,
+          "spread_cost": 742.46,
+          "slippage_cost": 212.6,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 248,
+          "pf": 1.32,
+          "gross_pf": 1.4,
+          "net": 6414.27,
+          "gross": 7661.99,
+          "total_cost": 1247.72,
+          "expectancy_r": 0.211,
+          "dd": 10.96,
+          "spread_cost": 932.95,
+          "slippage_cost": 314.79,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 248,
+          "pf": 1.26,
+          "gross_pf": 1.4,
+          "net": 5143.91,
+          "gross": 7307.71,
+          "total_cost": 2163.8,
+          "expectancy_r": 0.178,
+          "dd": 11.97,
+          "spread_cost": 1661.23,
+          "slippage_cost": 502.7,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "SAR_FLIP": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 111,
+          "pf": 1.69,
+          "gross_pf": 1.69,
+          "net": 5021.7,
+          "gross": 5021.7,
+          "total_cost": -0.0,
+          "expectancy_r": 0.378,
+          "dd": 4.99,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 111,
+          "pf": 1.61,
+          "gross_pf": 1.69,
+          "net": 4481.71,
+          "gross": 4889.37,
+          "total_cost": 407.66,
+          "expectancy_r": 0.346,
+          "dd": 5.81,
+          "spread_cost": 318.37,
+          "slippage_cost": 89.35,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 111,
+          "pf": 1.59,
+          "gross_pf": 1.69,
+          "net": 4311.51,
+          "gross": 4847.47,
+          "total_cost": 535.96,
+          "expectancy_r": 0.335,
+          "dd": 6.08,
+          "spread_cost": 402.71,
+          "slippage_cost": 133.21,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 111,
+          "pf": 1.51,
+          "gross_pf": 1.69,
+          "net": 3760.86,
+          "gross": 4711.33,
+          "total_cost": 950.47,
+          "expectancy_r": 0.3,
+          "dd": 6.96,
+          "spread_cost": 732.83,
+          "slippage_cost": 217.6,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "STRUCT_REACT": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 134,
+          "pf": 0.94,
+          "gross_pf": 0.94,
+          "net": -502.6,
+          "gross": -502.6,
+          "total_cost": -0.0,
+          "expectancy_r": -0.029,
+          "dd": 14.89,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 134,
+          "pf": 0.9,
+          "gross_pf": 0.94,
+          "net": -911.79,
+          "gross": -487.14,
+          "total_cost": 424.65,
+          "expectancy_r": -0.061,
+          "dd": 16.52,
+          "spread_cost": 325.31,
+          "slippage_cost": 99.32,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 134,
+          "pf": 0.88,
+          "gross_pf": 0.94,
+          "net": -1041.34,
+          "gross": -482.22,
+          "total_cost": 559.12,
+          "expectancy_r": -0.073,
+          "dd": 17.05,
+          "spread_cost": 411.12,
+          "slippage_cost": 147.94,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 134,
+          "pf": 0.84,
+          "gross_pf": 0.94,
+          "net": -1453.79,
+          "gross": -466.77,
+          "total_cost": 987.02,
+          "expectancy_r": -0.108,
+          "dd": 18.75,
+          "spread_cost": 746.11,
+          "slippage_cost": 240.97,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "THREE_BAR_DELIVERY_BREAK": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 28,
+          "pf": 0.82,
+          "gross_pf": 0.82,
+          "net": -336.0,
+          "gross": -336.0,
+          "total_cost": 0.0,
+          "expectancy_r": -0.113,
+          "dd": 7.11,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 28,
+          "pf": 0.78,
+          "gross_pf": 0.82,
+          "net": -422.59,
+          "gross": -335.61,
+          "total_cost": 86.98,
+          "expectancy_r": -0.145,
+          "dd": 7.92,
+          "spread_cost": 65.95,
+          "slippage_cost": 21.04,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 28,
+          "pf": 0.77,
+          "gross_pf": 0.82,
+          "net": -450.78,
+          "gross": -335.47,
+          "total_cost": 115.31,
+          "expectancy_r": -0.155,
+          "dd": 8.19,
+          "spread_cost": 83.82,
+          "slippage_cost": 31.51,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 28,
+          "pf": 0.73,
+          "gross_pf": 0.82,
+          "net": -542.3,
+          "gross": -335.02,
+          "total_cost": 207.28,
+          "expectancy_r": -0.19,
+          "dd": 9.05,
+          "spread_cost": 154.96,
+          "slippage_cost": 52.29,
+          "commission_cost": 0.0
+        }
+      }
+    },
+    "WEEKLY_EXP": {
+      "tf": "4h",
+      "profiles": {
+        "ZERO_COST": {
+          "n": 10,
+          "pf": 0.83,
+          "gross_pf": 0.83,
+          "net": -113.27,
+          "gross": -113.27,
+          "total_cost": 0.0,
+          "expectancy_r": -0.103,
+          "dd": 5.47,
+          "spread_cost": 0.0,
+          "slippage_cost": 0.0,
+          "commission_cost": 0.0
+        },
+        "BROKER_BASELINE": {
+          "n": 10,
+          "pf": 0.8,
+          "gross_pf": 0.83,
+          "net": -132.25,
+          "gross": -113.38,
+          "total_cost": 18.87,
+          "expectancy_r": -0.122,
+          "dd": 5.59,
+          "spread_cost": 13.85,
+          "slippage_cost": 5.04,
+          "commission_cost": 0.0
+        },
+        "CONSERVATIVE": {
+          "n": 10,
+          "pf": 0.79,
+          "gross_pf": 0.83,
+          "net": -138.6,
+          "gross": -113.41,
+          "total_cost": 25.19,
+          "expectancy_r": -0.129,
+          "dd": 5.64,
+          "spread_cost": 17.63,
+          "slippage_cost": 7.55,
+          "commission_cost": 0.0
+        },
+        "STRESS": {
+          "n": 10,
+          "pf": 0.77,
+          "gross_pf": 0.82,
+          "net": -158.8,
+          "gross": -113.52,
+          "total_cost": 45.28,
+          "expectancy_r": -0.148,
+          "dd": 5.77,
+          "spread_cost": 32.7,
+          "slippage_cost": 12.58,
+          "commission_cost": 0.0
+        }
+      }
+    }
+  }
+}
