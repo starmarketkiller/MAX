@@ -112,4 +112,4 @@ Criteri: `SEMANTIC_PARITY_CONFIRMED` o differenza minore spiegata + trade parity
 - Trade-level parity: 0 `STRONG`, 3 `ACCEPTABLE` (MACD, SAR, FVG_CONT), 2 `FAIL` (BREAKOUT_ACC, LIQ_SWEEP).
 - **FAST_STRUCTURAL_CANDIDATE: 1 (SAR)**, con caveat espliciti su DD e filtri opzionali.
 
-**Commit**: `[da assegnare]`
+**Commit**: `6deb188` (pushato su `origin/main`)
