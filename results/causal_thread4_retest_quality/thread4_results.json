@@ -1,0 +1,1246 @@
+{
+  "generated_at": "2026-09-15T18:05:25.914754",
+  "linkage": "v3 (episode_sweep_link, causale)",
+  "population": {
+    "n_retest_total": 88,
+    "n_hold": 30,
+    "n_fail": 34,
+    "n_ambiguous": 24,
+    "n_censored": 0,
+    "n_resolved": 64,
+    "n_discovery_resolved": 32,
+    "n_validation_resolved": 32,
+    "orphan_any_type": 0,
+    "unexplained_orphan": 0,
+    "excluded_reasons": {
+      "missing_true_break_or_retest": 60
+    }
+  },
+  "hold_fail_definition": "HOLD=PLUS_1R_FIRST, FAIL=MINUS_1R_FIRST via scan_forward_labels su retest.timestamp/price_at_event, R=25pip, invariata dal dataset esistente",
+  "economic_target_identical_to_primary": true,
+  "base_rate": {
+    "all": 0.46875,
+    "discovery": 0.46875,
+    "validation": 0.46875,
+    "ci95_all": [
+      0.3517578764404486,
+      0.5892812499952488
+    ]
+  },
+  "n_hypotheses_tested": 57,
+  "classification_summary": {
+    "NO_SIGNAL": 50,
+    "WEAK_HINT": 7,
+    "PROMISING_HYPOTHESIS": 0
+  },
+  "univariate_results": [
+    {
+      "feature": "direction",
+      "bucket": "BUY",
+      "n_train": 25,
+      "rate_train": 0.44,
+      "ci95_train": [
+        0.2666537494700257,
+        0.6293298298043556
+      ],
+      "uplift_train": -0.028749999999999998,
+      "n_oos": 20,
+      "rate_oos": 0.45,
+      "uplift_oos": -0.01874999999999999,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.96,
+      "top_month_frac_train": 0.4,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "direction",
+      "bucket": "SELL",
+      "n_train": 7,
+      "rate_train": 0.5714285714285714,
+      "ci95_train": [
+        0.2504542304090258,
+        0.8417830777373732
+      ],
+      "uplift_train": 0.1026785714285714,
+      "n_oos": 12,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.5714285714285714,
+      "top_month_frac_train": 0.2857142857142857,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=12)"
+    },
+    {
+      "feature": "side",
+      "bucket": "Asia-High",
+      "n_train": 3,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.061490315276160515,
+        0.7923450448735121
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 5,
+      "rate_oos": 0.4,
+      "uplift_oos": -0.06874999999999998,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.6666666666666666,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=3, oos=5)"
+    },
+    {
+      "feature": "side",
+      "bucket": "Asia-Low",
+      "n_train": 24,
+      "rate_train": 0.4166666666666667,
+      "ci95_train": [
+        0.24467347246538232,
+        0.6116566235061137
+      ],
+      "uplift_train": -0.052083333333333315,
+      "n_oos": 16,
+      "rate_oos": 0.4375,
+      "uplift_oos": -0.03125,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.4166666666666667,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "side",
+      "bucket": "Equal-High",
+      "n_train": 4,
+      "rate_train": 0.75,
+      "ci95_train": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "uplift_train": 0.28125,
+      "n_oos": 6,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=4, oos=6)"
+    },
+    {
+      "feature": "side",
+      "bucket": "Equal-Low",
+      "n_train": 1,
+      "rate_train": 1.0,
+      "ci95_train": [
+        0.20654329147389294,
+        1.0
+      ],
+      "uplift_train": 0.53125,
+      "n_oos": 3,
+      "rate_oos": 0.3333333333333333,
+      "uplift_oos": -0.13541666666666669,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 1.0,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=1, oos=3)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_D1",
+      "n_train": 3,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.061490315276160515,
+        0.7923450448735121
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 0,
+      "rate_oos": NaN,
+      "uplift_oos": NaN,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.6666666666666666,
+      "top_month_frac_train": 0.3333333333333333,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=3, oos=0)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_H1",
+      "n_train": 15,
+      "rate_train": 0.7333333333333333,
+      "ci95_train": [
+        0.48049110342313245,
+        0.8910272389681717
+      ],
+      "uplift_train": 0.2645833333333333,
+      "n_oos": 16,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.6,
+      "top_month_frac_train": 0.3333333333333333,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=15, oos=16)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_H4",
+      "n_train": 2,
+      "rate_train": 0.0,
+      "ci95_train": [
+        0.0,
+        0.6576280471103807
+      ],
+      "uplift_train": -0.46875,
+      "n_oos": 3,
+      "rate_oos": 0.0,
+      "uplift_oos": -0.46875,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=2, oos=3)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_M15",
+      "n_train": 9,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.12058159868274292,
+        0.6458026525009103
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 4,
+      "rate_oos": 0.75,
+      "uplift_oos": 0.28125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.4444444444444444,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=9, oos=4)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_M30",
+      "n_train": 1,
+      "rate_train": 0.0,
+      "ci95_train": [
+        0.0,
+        0.7934567085261071
+      ],
+      "uplift_train": -0.46875,
+      "n_oos": 6,
+      "rate_oos": 0.3333333333333333,
+      "uplift_oos": -0.13541666666666669,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 1.0,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=1, oos=6)"
+    },
+    {
+      "feature": "retest_source_tf",
+      "bucket": "PERIOD_M5",
+      "n_train": 2,
+      "rate_train": 0.0,
+      "ci95_train": [
+        0.0,
+        0.6576280471103807
+      ],
+      "uplift_train": -0.46875,
+      "n_oos": 3,
+      "rate_oos": 0.6666666666666666,
+      "uplift_oos": 0.19791666666666663,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=2, oos=3)"
+    },
+    {
+      "feature": "retest_regime_at_event",
+      "bucket": "RANGING",
+      "n_train": 4,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.15003570882017145,
+        0.8499642911798285
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 3,
+      "rate_oos": 0.6666666666666666,
+      "uplift_oos": 0.19791666666666663,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.5,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=4, oos=3)"
+    },
+    {
+      "feature": "retest_regime_at_event",
+      "bucket": "STRONG_TREND",
+      "n_train": 17,
+      "rate_train": 0.5294117647058824,
+      "ci95_train": [
+        0.3096289731154949,
+        0.738351988039119
+      ],
+      "uplift_train": 0.06066176470588236,
+      "n_oos": 13,
+      "rate_oos": 0.46153846153846156,
+      "uplift_oos": -0.007211538461538436,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.7647058823529411,
+      "top_month_frac_train": 0.4117647058823529,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=17, oos=13)"
+    },
+    {
+      "feature": "retest_regime_at_event",
+      "bucket": "VOLATILE",
+      "n_train": 3,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.061490315276160515,
+        0.7923450448735121
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 2,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.6666666666666666,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=3, oos=2)"
+    },
+    {
+      "feature": "retest_regime_at_event",
+      "bucket": "WEAK_TREND",
+      "n_train": 8,
+      "rate_train": 0.375,
+      "ci95_train": [
+        0.13684175946152105,
+        0.6942621454161982
+      ],
+      "uplift_train": -0.09375,
+      "n_oos": 14,
+      "rate_oos": 0.42857142857142855,
+      "uplift_oos": -0.04017857142857145,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.75,
+      "top_month_frac_train": 0.375,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=14)"
+    },
+    {
+      "feature": "retest_structure_trend_at_event",
+      "bucket": "DOWN",
+      "n_train": 6,
+      "rate_train": 0.6666666666666666,
+      "ci95_train": [
+        0.2999883213415286,
+        0.903230667440783
+      ],
+      "uplift_train": 0.19791666666666663,
+      "n_oos": 16,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.5,
+      "top_month_frac_train": 0.3333333333333333,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=6, oos=16)"
+    },
+    {
+      "feature": "retest_structure_trend_at_event",
+      "bucket": "UP",
+      "n_train": 26,
+      "rate_train": 0.4230769230769231,
+      "ci95_train": [
+        0.255441899027294,
+        0.6105170307888017
+      ],
+      "uplift_train": -0.04567307692307693,
+      "n_oos": 16,
+      "rate_oos": 0.4375,
+      "uplift_oos": -0.03125,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.8076923076923077,
+      "top_month_frac_train": 0.4230769230769231,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "retest_trend_aligned",
+      "bucket": "False",
+      "n_train": 7,
+      "rate_train": 0.5714285714285714,
+      "ci95_train": [
+        0.2504542304090258,
+        0.8417830777373732
+      ],
+      "uplift_train": 0.1026785714285714,
+      "n_oos": 18,
+      "rate_oos": 0.4444444444444444,
+      "uplift_oos": -0.02430555555555558,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.42857142857142855,
+      "top_month_frac_train": 0.42857142857142855,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=18)"
+    },
+    {
+      "feature": "retest_trend_aligned",
+      "bucket": "True",
+      "n_train": 25,
+      "rate_train": 0.44,
+      "ci95_train": [
+        0.2666537494700257,
+        0.6293298298043556
+      ],
+      "uplift_train": -0.028749999999999998,
+      "n_oos": 14,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.84,
+      "top_month_frac_train": 0.36,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=25, oos=14)"
+    },
+    {
+      "feature": "retest_dist_per_atr_quartile",
+      "bucket": "Q1",
+      "n_train": 9,
+      "rate_train": 0.5555555555555556,
+      "ci95_train": [
+        0.26664734574402965,
+        0.8112245705280859
+      ],
+      "uplift_train": 0.08680555555555558,
+      "n_oos": 12,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.4444444444444444,
+      "top_month_frac_train": 0.3333333333333333,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=9, oos=12)"
+    },
+    {
+      "feature": "retest_dist_per_atr_quartile",
+      "bucket": "Q2",
+      "n_train": 8,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.2152125268244419,
+        0.7847874731755581
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 12,
+      "rate_oos": 0.3333333333333333,
+      "uplift_oos": -0.13541666666666669,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.625,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=12)"
+    },
+    {
+      "feature": "retest_dist_per_atr_quartile",
+      "bucket": "Q3",
+      "n_train": 8,
+      "rate_train": 0.625,
+      "ci95_train": [
+        0.3057378545838018,
+        0.863158240538479
+      ],
+      "uplift_train": 0.15625,
+      "n_oos": 5,
+      "rate_oos": 0.6,
+      "uplift_oos": 0.13124999999999998,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.75,
+      "top_month_frac_train": 0.375,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=5)"
+    },
+    {
+      "feature": "retest_dist_per_atr_quartile",
+      "bucket": "Q4",
+      "n_train": 7,
+      "rate_train": 0.14285714285714285,
+      "ci95_train": [
+        0.02567895594897479,
+        0.5131345033190299
+      ],
+      "uplift_train": -0.32589285714285715,
+      "n_oos": 3,
+      "rate_oos": 0.6666666666666666,
+      "uplift_oos": 0.19791666666666663,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.42857142857142855,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=3)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_D1",
+      "n_train": 1,
+      "rate_train": 0.0,
+      "ci95_train": [
+        0.0,
+        0.7934567085261071
+      ],
+      "uplift_train": -0.46875,
+      "n_oos": 8,
+      "rate_oos": 0.375,
+      "uplift_oos": -0.09375,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 1.0,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=1, oos=8)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_H1",
+      "n_train": 4,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.15003570882017145,
+        0.8499642911798285
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 0,
+      "rate_oos": NaN,
+      "uplift_oos": NaN,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.75,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=4, oos=0)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_H4",
+      "n_train": 4,
+      "rate_train": 0.25,
+      "ci95_train": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "uplift_train": -0.21875,
+      "n_oos": 3,
+      "rate_oos": 0.6666666666666666,
+      "uplift_oos": 0.19791666666666663,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.75,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=4, oos=3)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_M15",
+      "n_train": 8,
+      "rate_train": 0.625,
+      "ci95_train": [
+        0.3057378545838018,
+        0.863158240538479
+      ],
+      "uplift_train": 0.15625,
+      "n_oos": 8,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.5,
+      "top_month_frac_train": 0.375,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=8)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_M30",
+      "n_train": 9,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.12058159868274292,
+        0.6458026525009103
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 7,
+      "rate_oos": 0.7142857142857143,
+      "uplift_oos": 0.2455357142857143,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.4444444444444444,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=9, oos=7)"
+    },
+    {
+      "feature": "tb_source_tf",
+      "bucket": "PERIOD_M5",
+      "n_train": 6,
+      "rate_train": 0.6666666666666666,
+      "ci95_train": [
+        0.2999883213415286,
+        0.903230667440783
+      ],
+      "uplift_train": 0.19791666666666663,
+      "n_oos": 6,
+      "rate_oos": 0.16666666666666666,
+      "uplift_oos": -0.30208333333333337,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.6666666666666666,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=6, oos=6)"
+    },
+    {
+      "feature": "tb_regime_at_event",
+      "bucket": "RANGING",
+      "n_train": 2,
+      "rate_train": 1.0,
+      "ci95_train": [
+        0.3423719528896193,
+        1.0
+      ],
+      "uplift_train": 0.53125,
+      "n_oos": 1,
+      "rate_oos": 1.0,
+      "uplift_oos": 0.53125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=2, oos=1)"
+    },
+    {
+      "feature": "tb_regime_at_event",
+      "bucket": "STRONG_TREND",
+      "n_train": 15,
+      "rate_train": 0.4,
+      "ci95_train": [
+        0.19824228082594664,
+        0.6425355724349229
+      ],
+      "uplift_train": -0.06874999999999998,
+      "n_oos": 12,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.8666666666666667,
+      "top_month_frac_train": 0.4666666666666667,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=15, oos=12)"
+    },
+    {
+      "feature": "tb_regime_at_event",
+      "bucket": "VOLATILE",
+      "n_train": 3,
+      "rate_train": 0.3333333333333333,
+      "ci95_train": [
+        0.061490315276160515,
+        0.7923450448735121
+      ],
+      "uplift_train": -0.13541666666666669,
+      "n_oos": 2,
+      "rate_oos": 0.0,
+      "uplift_oos": -0.46875,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.6666666666666666,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=3, oos=2)"
+    },
+    {
+      "feature": "tb_regime_at_event",
+      "bucket": "WEAK_TREND",
+      "n_train": 12,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.2537781703934222,
+        0.7462218296065778
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 17,
+      "rate_oos": 0.47058823529411764,
+      "uplift_oos": 0.0018382352941176405,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.6666666666666666,
+      "top_month_frac_train": 0.3333333333333333,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=12, oos=17)"
+    },
+    {
+      "feature": "tb_structure_trend_at_event",
+      "bucket": "DOWN",
+      "n_train": 7,
+      "rate_train": 0.7142857142857143,
+      "ci95_train": [
+        0.35892909014821267,
+        0.9177828342909845
+      ],
+      "uplift_train": 0.2455357142857143,
+      "n_oos": 9,
+      "rate_oos": 0.5555555555555556,
+      "uplift_oos": 0.08680555555555558,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.5714285714285714,
+      "top_month_frac_train": 0.2857142857142857,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=9)"
+    },
+    {
+      "feature": "tb_structure_trend_at_event",
+      "bucket": "UP",
+      "n_train": 25,
+      "rate_train": 0.4,
+      "ci95_train": [
+        0.23403057664190918,
+        0.5926087221487266
+      ],
+      "uplift_train": -0.06874999999999998,
+      "n_oos": 23,
+      "rate_oos": 0.43478260869565216,
+      "uplift_oos": -0.03396739130434784,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.8,
+      "top_month_frac_train": 0.4,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "tb_penetration_per_atr_quartile",
+      "bucket": "Q1",
+      "n_train": 9,
+      "rate_train": 0.4444444444444444,
+      "ci95_train": [
+        0.188775429471914,
+        0.7333526542559703
+      ],
+      "uplift_train": -0.02430555555555558,
+      "n_oos": 11,
+      "rate_oos": 0.45454545454545453,
+      "uplift_oos": -0.01420454545454547,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.6666666666666666,
+      "top_month_frac_train": 0.6666666666666666,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=9, oos=11)"
+    },
+    {
+      "feature": "tb_penetration_per_atr_quartile",
+      "bucket": "Q2",
+      "n_train": 8,
+      "rate_train": 0.625,
+      "ci95_train": [
+        0.3057378545838018,
+        0.863158240538479
+      ],
+      "uplift_train": 0.15625,
+      "n_oos": 6,
+      "rate_oos": 0.8333333333333334,
+      "uplift_oos": 0.36458333333333337,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.625,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=6)"
+    },
+    {
+      "feature": "tb_penetration_per_atr_quartile",
+      "bucket": "Q3",
+      "n_train": 8,
+      "rate_train": 0.25,
+      "ci95_train": [
+        0.07147768885802765,
+        0.5907301208974108
+      ],
+      "uplift_train": -0.21875,
+      "n_oos": 10,
+      "rate_oos": 0.3,
+      "uplift_oos": -0.16875,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=10)"
+    },
+    {
+      "feature": "tb_penetration_per_atr_quartile",
+      "bucket": "Q4",
+      "n_train": 7,
+      "rate_train": 0.5714285714285714,
+      "ci95_train": [
+        0.2504542304090258,
+        0.8417830777373732
+      ],
+      "uplift_train": 0.1026785714285714,
+      "n_oos": 5,
+      "rate_oos": 0.4,
+      "uplift_oos": -0.06874999999999998,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.7142857142857143,
+      "top_month_frac_train": 0.2857142857142857,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=5)"
+    },
+    {
+      "feature": "sweep_source_tf",
+      "bucket": "PERIOD_D1",
+      "n_train": 26,
+      "rate_train": 0.4230769230769231,
+      "ci95_train": [
+        0.255441899027294,
+        0.6105170307888017
+      ],
+      "uplift_train": -0.04567307692307693,
+      "n_oos": 20,
+      "rate_oos": 0.45,
+      "uplift_oos": -0.01874999999999999,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.9230769230769231,
+      "top_month_frac_train": 0.38461538461538464,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "sweep_source_tf",
+      "bucket": "PERIOD_H4",
+      "n_train": 1,
+      "rate_train": 1.0,
+      "ci95_train": [
+        0.20654329147389294,
+        1.0
+      ],
+      "uplift_train": 0.53125,
+      "n_oos": 1,
+      "rate_oos": 0.0,
+      "uplift_oos": -0.46875,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 1.0,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=1, oos=1)"
+    },
+    {
+      "feature": "sweep_source_tf",
+      "bucket": "PERIOD_M15",
+      "n_train": 3,
+      "rate_train": 0.6666666666666666,
+      "ci95_train": [
+        0.20765495512648788,
+        0.9385096847238393
+      ],
+      "uplift_train": 0.19791666666666663,
+      "n_oos": 1,
+      "rate_oos": 1.0,
+      "uplift_oos": 0.53125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.3333333333333333,
+      "top_month_frac_train": 0.6666666666666666,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=3, oos=1)"
+    },
+    {
+      "feature": "sweep_source_tf",
+      "bucket": "PERIOD_M5",
+      "n_train": 2,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.09452865480086611,
+        0.905471345199134
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 6,
+      "rate_oos": 0.3333333333333333,
+      "uplift_oos": -0.13541666666666669,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=2, oos=6)"
+    },
+    {
+      "feature": "sweep_regime_at_event",
+      "bucket": "RANGING",
+      "n_train": 2,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.09452865480086611,
+        0.905471345199134
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 4,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 1.0,
+      "top_month_frac_train": 1.0,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=2, oos=4)"
+    },
+    {
+      "feature": "sweep_regime_at_event",
+      "bucket": "STRONG_TREND",
+      "n_train": 25,
+      "rate_train": 0.44,
+      "ci95_train": [
+        0.2666537494700257,
+        0.6293298298043556
+      ],
+      "uplift_train": -0.028749999999999998,
+      "n_oos": 21,
+      "rate_oos": 0.42857142857142855,
+      "uplift_oos": -0.04017857142857145,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.84,
+      "top_month_frac_train": 0.44,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "sweep_regime_at_event",
+      "bucket": "WEAK_TREND",
+      "n_train": 5,
+      "rate_train": 0.6,
+      "ci95_train": [
+        0.23071993220883702,
+        0.8823817688407467
+      ],
+      "uplift_train": 0.13124999999999998,
+      "n_oos": 7,
+      "rate_oos": 0.5714285714285714,
+      "uplift_oos": 0.1026785714285714,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.4,
+      "top_month_frac_train": 0.4,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=5, oos=7)"
+    },
+    {
+      "feature": "sweep_structure_trend_at_event",
+      "bucket": "DOWN",
+      "n_train": 5,
+      "rate_train": 0.6,
+      "ci95_train": [
+        0.23071993220883702,
+        0.8823817688407467
+      ],
+      "uplift_train": 0.13124999999999998,
+      "n_oos": 10,
+      "rate_oos": 0.5,
+      "uplift_oos": 0.03125,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.6,
+      "top_month_frac_train": 0.4,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=5, oos=10)"
+    },
+    {
+      "feature": "sweep_structure_trend_at_event",
+      "bucket": "UP",
+      "n_train": 27,
+      "rate_train": 0.4444444444444444,
+      "ci95_train": [
+        0.27585597670072826,
+        0.6268728052042312
+      ],
+      "uplift_train": -0.02430555555555558,
+      "n_oos": 22,
+      "rate_oos": 0.45454545454545453,
+      "uplift_oos": -0.01420454545454547,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.8888888888888888,
+      "top_month_frac_train": 0.4074074074074074,
+      "classification": "WEAK_HINT",
+      "reason": "direzione coerente ma effetto sotto soglia in almeno un set"
+    },
+    {
+      "feature": "sweep_penetration_per_atr_quartile",
+      "bucket": "Q1",
+      "n_train": 9,
+      "rate_train": 0.6666666666666666,
+      "ci95_train": [
+        0.35419734749908977,
+        0.8794184013172571
+      ],
+      "uplift_train": 0.19791666666666663,
+      "n_oos": 6,
+      "rate_oos": 0.3333333333333333,
+      "uplift_oos": -0.13541666666666669,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.5555555555555556,
+      "top_month_frac_train": 0.4444444444444444,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=9, oos=6)"
+    },
+    {
+      "feature": "sweep_penetration_per_atr_quartile",
+      "bucket": "Q2",
+      "n_train": 8,
+      "rate_train": 0.375,
+      "ci95_train": [
+        0.13684175946152105,
+        0.6942621454161982
+      ],
+      "uplift_train": -0.09375,
+      "n_oos": 8,
+      "rate_oos": 0.375,
+      "uplift_oos": -0.09375,
+      "same_direction": "SI",
+      "top_levelTag_frac_train": 0.875,
+      "top_month_frac_train": 0.5,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=8)"
+    },
+    {
+      "feature": "sweep_penetration_per_atr_quartile",
+      "bucket": "Q3",
+      "n_train": 8,
+      "rate_train": 0.625,
+      "ci95_train": [
+        0.3057378545838018,
+        0.863158240538479
+      ],
+      "uplift_train": 0.15625,
+      "n_oos": 5,
+      "rate_oos": 0.2,
+      "uplift_oos": -0.26875,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.75,
+      "top_month_frac_train": 0.625,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=8, oos=5)"
+    },
+    {
+      "feature": "sweep_penetration_per_atr_quartile",
+      "bucket": "Q4",
+      "n_train": 7,
+      "rate_train": 0.14285714285714285,
+      "ci95_train": [
+        0.02567895594897479,
+        0.5131345033190299
+      ],
+      "uplift_train": -0.32589285714285715,
+      "n_oos": 13,
+      "rate_oos": 0.6923076923076923,
+      "uplift_oos": 0.2235576923076923,
+      "same_direction": "N/A",
+      "top_levelTag_frac_train": 0.8571428571428571,
+      "top_month_frac_train": 0.42857142857142855,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=7, oos=13)"
+    },
+    {
+      "feature": "regime_changed_sweep_to_break",
+      "bucket": "False",
+      "n_train": 18,
+      "rate_train": 0.3888888888888889,
+      "ci95_train": [
+        0.2030499192693116,
+        0.6138133141934383
+      ],
+      "uplift_train": -0.0798611111111111,
+      "n_oos": 16,
+      "rate_oos": 0.5625,
+      "uplift_oos": 0.09375,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.7777777777777778,
+      "top_month_frac_train": 0.4444444444444444,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=18, oos=16)"
+    },
+    {
+      "feature": "regime_changed_sweep_to_break",
+      "bucket": "True",
+      "n_train": 14,
+      "rate_train": 0.5714285714285714,
+      "ci95_train": [
+        0.3259026690286935,
+        0.7861949006959947
+      ],
+      "uplift_train": 0.1026785714285714,
+      "n_oos": 16,
+      "rate_oos": 0.375,
+      "uplift_oos": -0.09375,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.7142857142857143,
+      "top_month_frac_train": 0.2857142857142857,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=14, oos=16)"
+    },
+    {
+      "feature": "regime_changed_break_to_retest",
+      "bucket": "False",
+      "n_train": 16,
+      "rate_train": 0.4375,
+      "ci95_train": [
+        0.2309836333518552,
+        0.6682180439322348
+      ],
+      "uplift_train": -0.03125,
+      "n_oos": 17,
+      "rate_oos": 0.5294117647058824,
+      "uplift_oos": 0.06066176470588236,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.875,
+      "top_month_frac_train": 0.4375,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=16, oos=17)"
+    },
+    {
+      "feature": "regime_changed_break_to_retest",
+      "bucket": "True",
+      "n_train": 16,
+      "rate_train": 0.5,
+      "ci95_train": [
+        0.2799923761135083,
+        0.7200076238864918
+      ],
+      "uplift_train": 0.03125,
+      "n_oos": 15,
+      "rate_oos": 0.4,
+      "uplift_oos": -0.06874999999999998,
+      "same_direction": "NO",
+      "top_levelTag_frac_train": 0.625,
+      "top_month_frac_train": 0.3125,
+      "classification": "NO_SIGNAL",
+      "reason": "campione insufficiente (train=16, oos=15)"
+    }
+  ],
+  "top3_robustness": [
+    {
+      "feature": "tb_structure_trend_at_event",
+      "bucket": "UP",
+      "classification": "WEAK_HINT",
+      "n_total": 48,
+      "discovery_rate": 0.4,
+      "discovery_uplift": -0.06874999999999998,
+      "validation_rate": 0.43478260869565216,
+      "validation_uplift": -0.03396739130434784,
+      "first_half_n": 25,
+      "first_half_rate": 0.4,
+      "second_half_n": 23,
+      "second_half_rate": 0.43478260869565216,
+      "buy_n": 34,
+      "buy_rate": 0.38235294117647056,
+      "sell_n": 14,
+      "sell_rate": 0.5,
+      "top_month_frac": 0.20833333333333334,
+      "top_tag_frac": 0.6875,
+      "single_factor_dominated": true,
+      "economic_rate_plus1r": 0.4166666666666667,
+      "structural_only_hint": false,
+      "final_after_robustness": "WEAK_HINT"
+    },
+    {
+      "feature": "side",
+      "bucket": "Asia-Low",
+      "classification": "WEAK_HINT",
+      "n_total": 40,
+      "discovery_rate": 0.4166666666666667,
+      "discovery_uplift": -0.052083333333333315,
+      "validation_rate": 0.4375,
+      "validation_uplift": -0.03125,
+      "first_half_n": 24,
+      "first_half_rate": 0.4166666666666667,
+      "second_half_n": 16,
+      "second_half_rate": 0.4375,
+      "buy_n": 40,
+      "buy_rate": 0.425,
+      "sell_n": 0,
+      "sell_rate": NaN,
+      "top_month_frac": 0.25,
+      "top_tag_frac": 1.0,
+      "single_factor_dominated": true,
+      "economic_rate_plus1r": 0.425,
+      "structural_only_hint": false,
+      "final_after_robustness": "WEAK_HINT"
+    },
+    {
+      "feature": "retest_structure_trend_at_event",
+      "bucket": "UP",
+      "classification": "WEAK_HINT",
+      "n_total": 42,
+      "discovery_rate": 0.4230769230769231,
+      "discovery_uplift": -0.04567307692307693,
+      "validation_rate": 0.4375,
+      "validation_uplift": -0.03125,
+      "first_half_n": 26,
+      "first_half_rate": 0.4230769230769231,
+      "second_half_n": 16,
+      "second_half_rate": 0.4375,
+      "buy_n": 31,
+      "buy_rate": 0.41935483870967744,
+      "sell_n": 11,
+      "sell_rate": 0.45454545454545453,
+      "top_month_frac": 0.2619047619047619,
+      "top_tag_frac": 0.7142857142857143,
+      "single_factor_dominated": true,
+      "economic_rate_plus1r": 0.42857142857142855,
+      "structural_only_hint": false,
+      "final_after_robustness": "WEAK_HINT"
+    }
+  ],
+  "n_promising_after_robustness": 0,
+  "logistic_regression": {
+    "features": [
+      "retest_dist_per_atr",
+      "tb_penetration_per_atr",
+      "retest_trend_aligned",
+      "regime_changed_break_to_retest"
+    ],
+    "weights": [
+      -0.6110678333490572,
+      0.14322588406191658,
+      -0.10429306177378453,
+      -0.0419436231204735
+    ],
+    "bias": -0.14803000045982292,
+    "accuracy_discovery": 0.5,
+    "accuracy_validation": 0.40625,
+    "majority_baseline_validation": 0.53125
+  },
+  "decision_tree": {
+    "feature_names": [
+      "retest_dist_per_atr",
+      "tb_penetration_per_atr",
+      "retest_trend_aligned",
+      "regime_changed_break_to_retest"
+    ],
+    "structure_text": [
+      "IF retest_dist_per_atr <= 6.066 (n=32, rate=0.469):",
+      "  IF regime_changed_break_to_retest <= 0.500 (n=22, rate=0.545):",
+      "    LEAF n=10 rate=0.400",
+      "  ELSE:",
+      "    LEAF n=12 rate=0.667",
+      "ELSE:",
+      "  LEAF n=10 rate=0.300"
+    ],
+    "validation_leaf_check": {
+      "0.3": {
+        "n": 5,
+        "rate": 0.4
+      },
+      "0.4": {
+        "n": 13,
+        "rate": 0.5384615384615384
+      },
+      "0.667": {
+        "n": 14,
+        "rate": 0.42857142857142855
+      }
+    }
+  },
+  "verdict": "NO_PROMISING_HYPOTHESIS"
+}
