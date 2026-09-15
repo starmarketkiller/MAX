@@ -73,16 +73,23 @@ long                g_nxsSweepMalformedSkipped  = 0;   // confirmed=true ma dir/
 
 // [Phase C.1 - Orphan TRUE_BREAK Root-Cause Audit] episode_sweep_link.
 //
-// Causa dominante (247/288 = 85.8%, dimostrata su dato reale) degli orphan
-// TRUE_BREAK di Phase C: la dedup canonica di NXS_Structural_ObserveSweep
-// e' per (structural_level_id, bar) - un SOLO campo sh_bms_episode_seq per
-// riga - mentre SH_BMS_RTO puo' generare PIU' episodeSeq distinti che
-// ingaggiano lo STESSO bar canonico (cascata multi-pass sullo stesso tick):
-// il primo episodeSeq che arriva "vince" l'attach, i successivi trovano il
-// campo gia' non-zero e la loro identita' non viene mai scritta da nessuna
-// parte -> orphan. Causa residua (41/288 = 14.2%): il guard di validita'
-// (sw.level<=0 o sw.levelTag=="") scarta la chiamata PRIMA di attach/create -
-// nessuna riga, di nessun tipo, viene mai prodotta per quell'episodio.
+// Causa dei 288 orphan TRUE_BREAK di Phase C, verificata sul dato reale
+// (episode_sweep_link, 12.219 osservazioni su 6 finestre): la dedup canonica
+// di NXS_Structural_ObserveSweep e' per (structural_level_id, bar) - un SOLO
+// campo sh_bms_episode_seq per riga - mentre SH_BMS_RTO puo' generare PIU'
+// episodeSeq distinti che ingaggiano lo STESSO bar canonico (cascata
+// multi-pass sullo stesso tick): il primo episodeSeq che arriva "vince"
+// l'attach, i successivi trovano il campo gia' non-zero e la loro identita'
+// non viene mai scritta da nessuna parte -> orphan. Verita' causale finale
+// (Phase C.1 audit): 288/288 = 100% CANONICAL_DEDUP_EPISODE_COLLISION,
+// 0 MALFORMED_SKIPPED osservato in pratica - il guard di validita' esiste nel
+// codice (sw.level<=0 o sw.levelTag=="") ma non e' mai la causa qui, perche'
+// il hook canonico "DETECTOR" osserva lo stesso sw PRIMA di SH_BMS_RTO nello
+// stesso pass: se sw fosse malformato, DETECTOR lo scarterebbe gia' prima che
+// SH_BMS_RTO possa ingaggiarlo. (Una stima euristica preliminare, basata su
+// ricostruzione a posteriori invece che sulla verita' causale, aveva
+// inizialmente suggerito 85.8%/14.2% - superata da questo risultato, vedi
+// vault "NEXUS - Phase C1 Orphan TRUE_BREAK Audit".)
 //
 // Fix: NON tocca la canonicalizzazione (un solo evento SWEEP per bar resta
 // invariato). Aggiunge una mappa SEPARATA, research-only, che permette la
@@ -313,8 +320,10 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    if(sw.dir == DIR_NONE || sw.levelTag == "" || sw.level <= 0){
       g_nxsSweepMalformedSkipped++;
       // [Phase C.1] nessuna riga (ne' nuova ne' esistente) viene prodotta per questo
-      // ingaggio - canonical_event_id=0 registra esplicitamente il caso MALFORMED_SKIPPED,
-      // causa del 14.2% degli orphan TRUE_BREAK (vedi audit).
+      // ingaggio - canonical_event_id=0 registra esplicitamente il caso MALFORMED_SKIPPED.
+      // Verificato sul dato reale: 0 occorrenze su 12.219 osservazioni SH_BMS_RTO (6 finestre) -
+      // il ramo esiste per completezza/robustezza futura, non e' mai stato la causa degli
+      // orphan osservati (100% e' CANONICAL_DEDUP_EPISODE_COLLISION, vedi audit).
       if(episodeSeq != 0)
          _NXS_EpisodeLink_Record(NXS_DirName(sw.dir), episodeSeq, outLevelId, 0, "MALFORMED_SKIPPED", iTime(g_sym, tf, 0));
       return;
@@ -333,8 +342,9 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
          g_nxsStructEvents[idx].sh_bms_episode_seq = episodeSeq;
       // [Phase C.1] registra SEMPRE il link vero, indipendentemente dal fatto che
       // l'attach su sh_bms_episode_seq sia riuscito o meno (campo singolo, puo' gia'
-      // essere occupato da un episodio diverso - causa dell'85.8% degli orphan
-      // TRUE_BREAK, vedi audit) - qui la relazione e' molti-a-uno, nessuna identita' persa.
+      // essere occupato da un episodio diverso - causa VERIFICATA del 100% degli
+      // orphan TRUE_BREAK di Phase C, 288/288, vedi audit) - qui la relazione e'
+      // molti-a-uno, nessuna identita' persa.
       if(episodeSeq != 0)
          _NXS_EpisodeLink_Record(NXS_DirName(sw.dir), episodeSeq, outLevelId,
                                   g_nxsStructEvents[idx].event_id, "ATTACHED_EXISTING", obsTime);
