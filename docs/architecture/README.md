@@ -27,6 +27,7 @@ This folder documents the architecture reconstructed from the repository snapsho
 14. [Observability and audit](14_OBSERVABILITY_AND_AUDIT.md)
 15. [Deployment and security](15_DEPLOYMENT_AND_SECURITY.md)
 16. [Migration roadmap and Claude execution plan](16_MIGRATION_ROADMAP.md)
+17. [TREND_GATE + Nucleo 9 — MQL5 implementation spec](17_TREND_GATE_NUCLEO9_SPEC.md)
 
 ## Governing rule
 
