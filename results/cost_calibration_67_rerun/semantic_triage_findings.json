@@ -1,0 +1,58 @@
+{
+  "task": "Serious Backtest Candidate Triage & Python-MQL5 Parity",
+  "generated_from": "18 SERIOUS_BACKTEST_CANDIDATE strategies (commit ff9f0e5)",
+  "duplicate_function_found": {
+    "LIQ_VOID": "alias of FVG_CONT's sig_fvg_cont_ext (same function object) - never tested its own logic",
+    "verified_via": "bt.STRATEGIES['FVG_CONT'] is bt.STRATEGIES['LIQ_VOID'] -> True"
+  },
+  "systemic_gap_1_generic_sltp": {
+    "finding": "strategy_profiles never passed to run_backtest() in any script this session, including the original nucleus_cost_reverify_14-08.py",
+    "generic_used": {"atr_sl": 1.5, "atr_tp": 3.0},
+    "native_from_NXS_StrategyProfiles_mqh": {
+      "BREAKOUT_ACC": {"atr_sl": 1.0, "atr_tp": 4.5},
+      "LIQ_SWEEP": {"atr_sl": 1.5, "atr_tp": 3.0},
+      "MACD": {"atr_sl": 2.0, "atr_tp": 8.0},
+      "SAR": {"atr_sl": 1.0, "atr_tp": 6.0},
+      "FVG_CONT": {"atr_sl": 1.5, "atr_tp": 6.0}
+    },
+    "corrected_retest_results": {
+      "BREAKOUT_ACC": {"n": 36, "pf_base": 2.79, "dd": 6.00, "expectancy_r": 1.118},
+      "LIQ_SWEEP": {"n": 42, "pf_base": 1.85, "dd": 4.00, "expectancy_r": 0.448},
+      "MACD": {"n": 130, "pf_base": 1.60, "dd": 11.27, "expectancy_r": 0.403},
+      "SAR": {"n": 271, "pf_base": 1.35, "dd": 15.80, "expectancy_r": 0.313},
+      "FVG_CONT": {"n": 157, "pf_base": 1.49, "dd": 13.64, "expectancy_r": 0.383}
+    }
+  },
+  "systemic_gap_2_htf_filter": {
+    "finding": "htf_filter param exists in run_backtest() but was never passed in any script this session",
+    "native_htf_flag_from_NXS_Profile_Get": {
+      "BREAKOUT_ACC": true, "LIQ_SWEEP": true, "MACD": true, "FVG_CONT": true, "SAR": false
+    },
+    "consequence": "4 of 5 semifinalists tested without a real, native MQL5 gate -> MATERIAL_DIFFERENCE"
+  },
+  "semantic_parity_verdicts": {
+    "BREAKOUT_ACC": "MATERIAL_DIFFERENCE",
+    "LIQ_SWEEP": "MATERIAL_DIFFERENCE",
+    "MACD": "MATERIAL_DIFFERENCE",
+    "SAR": "MINOR_DIFFERENCE",
+    "FVG_CONT": "MATERIAL_DIFFERENCE"
+  },
+  "trade_level_parity_window": {"symbol": "GOLD", "from": "2026-06-01", "to": "2026-09-01"},
+  "trade_level_parity_results": {
+    "BREAKOUT_ACC": {"mt5_trades": 0, "python_engine_trades": 3, "classification": "TRADE_PARITY_FAIL"},
+    "LIQ_SWEEP": {"mt5_trades": 2, "python_engine_trades": 2, "classification": "TRADE_PARITY_FAIL",
+                  "note": "same count, dates off by >1 month - sweep detection timing diverges substantially, root cause not diagnosed"},
+    "MACD": {"mt5_trades": 5, "python_engine_trades": 4, "classification": "TRADE_PARITY_ACCEPTABLE"},
+    "SAR": {"mt5_trades": 37, "python_engine_trades": 25, "classification": "TRADE_PARITY_ACCEPTABLE",
+            "note": "first trade near-identical timing/direction/price; count divergence explained by tick-driven intrabar re-entry in MT5 vs once-per-closed-bar in Python"},
+    "FVG_CONT": {"mt5_trades": 6, "python_engine_trades": 8, "classification": "TRADE_PARITY_ACCEPTABLE"}
+  },
+  "fast_structural_candidates": ["SAR"],
+  "fast_structural_candidate_caveats": {
+    "SAR": [
+      "native SL/TP (1.0/6.0) yields materially worse DD (15.80%) than the generic config tested earlier (9.32%)",
+      "optional InpSAR_RequireCandleAlign/InpSAR_RequirePressureContrary filters (both default false) not verified against actual live deployment config"
+    ]
+  },
+  "not_promoted_reason": "MATERIAL_DIFFERENCE due to missing native HTF filter (BREAKOUT_ACC, LIQ_SWEEP, MACD, FVG_CONT) - not a rejection of the strategy, a parity gap to close before a fair test"
+}
