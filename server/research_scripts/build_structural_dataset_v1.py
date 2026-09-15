@@ -115,6 +115,37 @@ def read_structural_csv(path):
     return rows
 
 
+def read_episode_link_csv(path):
+    """
+    [Phase C.1 - Orphan TRUE_BREAK Root-Cause Audit] Legge nxs_episode_sweep_link.csv:
+    mappa CAUSALE (scritta nell'istante stesso della transizione IDLE->SWEPT, mai
+    ricostruita a posteriori) (direction, episode_seq) -> canonical_event_id.
+
+    Relazione MOLTI-a-uno per costruzione: piu' episode_seq possono puntare allo
+    stesso canonical_event_id (collisione dedup - causa dell'85.8% degli orphan
+    TRUE_BREAK di Phase C, vedi 'NEXUS - Phase C1 Orphan TRUE_BREAK Audit').
+    attach_result == "MALFORMED_SKIPPED" (canonical_event_id==0) significa che
+    NESSUNA riga SWEEP e' mai stata prodotta per quell'episodio (guard di
+    validita' di NXS_Structural_ObserveSweep) - resta orphan per costruzione,
+    correttamente, non un difetto del linkage.
+    """
+    rows = []
+    with open(path, encoding="utf-16", newline="") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            if not r.get("direction"):
+                continue
+            rows.append({
+                "direction": r["direction"],
+                "episode_seq": int(parse_float(r.get("episode_seq"), 0)),
+                "structural_level_id": r["structural_level_id"],
+                "canonical_event_id": r.get("canonical_event_id", "0"),
+                "attach_result": r["attach_result"],
+                "timestamp": parse_dt(r.get("timestamp")),
+            })
+    return rows
+
+
 def read_m1_csv(path):
     """Ritorna liste parallele ordinate per tempo: times (datetime), highs, lows (float)."""
     times, highs, lows = [], [], []
@@ -298,6 +329,149 @@ def assign_episodes(all_events):
         }
 
     return lifecycle_link, episodes, true_orphans, redundant_after_close, true_break_after_close
+
+
+def assign_episodes_v3(all_events, episode_links):
+    """
+    Linkage rule v3 (Phase C.1 - Orphan TRUE_BREAK Root-Cause Audit).
+
+    v2 (assign_episodes) richiedeva che la riga SWEEP canonica portasse essa
+    stessa sh_bms_episode_seq==seq per essere trovata nello stesso gruppo
+    dell'episodio - ma quel campo puo' contenere UN SOLO valore per riga,
+    mentre la dedup canonica e' per (level, bar): quando PIU' episodi (seq
+    diversi) ingaggiano lo STESSO bar canonico (cascata multi-pass), solo il
+    PRIMO vince l'attach - gli altri restavano orphan. Dimostrato su dato
+    reale (6 finestre, v2): 288 orphan TRUE_BREAK totali, di cui 247 (85.8%)
+    per questa esatta collisione e 41 (14.2%) perche' il guard di validita' di
+    NXS_Structural_ObserveSweep scarta la chiamata prima di attach/create (nessuna
+    riga di alcun tipo prodotta). Vedi vault 'NEXUS - Phase C1 Orphan TRUE_BREAK
+    Audit'.
+
+    Fix: usa episode_sweep_link (scritto in MQL5 CAUSALMENTE nell'istante stesso
+    della transizione IDLE->SWEPT, MAI ricostruito a posteriori - vedi
+    NXS_Structural_ObserveSweep, i 3 punti di uscita) come fonte autorevole per
+    risolvere quale riga SWEEP canonica appartiene a quale episodio - relazione
+    MOLTI episodeSeq -> UN canonical_event_id, quindi nessuna collisione lato
+    Python: ogni episodio mantiene la propria identita' anche quando condivide
+    il bar canonico con altri episodi.
+
+    episode_links: lista di righe con 'window_id' gia' assegnato dal chiamante
+    (stesso pattern di all_events), campi direction/episode_seq/
+    canonical_event_id/attach_result/timestamp (vedi read_episode_link_csv).
+
+    Ritorna la stessa struttura di v2 PIU' un dict aggiuntivo orphan_reasons:
+    (window_id, event_id) -> stringa di causa, per l'attribution completa
+    richiesta dall'audit (mai un evento orphan senza una causa attribuita).
+    """
+    link_by_key = {}
+    for lk in episode_links:
+        key = (lk["window_id"], lk["direction"], lk["episode_seq"])
+        if key in link_by_key:
+            raise ValueError(f"Violazione assunzione episode_sweep_link: chiave duplicata {key} - "
+                              f"un solo link atteso per episodio (scritto una volta sola in MQL5).")
+        link_by_key[key] = lk
+
+    ev_by_id = {}
+    for e in all_events:
+        if e["event_type"] == "SWEEP":
+            ev_by_id[(e["window_id"], e["event_id"])] = e
+
+    real_groups = defaultdict(list)
+    seqless_sweeps = []
+    for e in all_events:
+        seq = int(e.get("sh_bms_episode_seq") or 0)
+        if seq != 0:
+            real_groups[(e["window_id"], e["direction"], seq)].append(e)
+        elif e["event_type"] == "SWEEP":
+            seqless_sweeps.append(e)
+        else:
+            real_groups[("__NO_SEQ__", e["window_id"], e["event_id"])] = [e]
+
+    lifecycle_link = {}
+    episodes = {}
+    true_orphans = []
+    redundant_after_close = []
+    true_break_after_close = []
+    orphan_reasons = {}
+
+    for key, grp in real_groups.items():
+        if key[0] == "__NO_SEQ__":
+            for e in grp:
+                orphan_reasons[(e["window_id"], e["event_id"])] = "NO_SEQ_IMPOSSIBLE"
+            true_orphans.extend(grp)
+            continue
+        win, direction, seq = key
+        levels = set(e["structural_level_id"] for e in grp)
+        if len(levels) != 1:
+            raise ValueError(
+                f"Violazione assunzione episodeSeq: episode_key={key} ha "
+                f"structural_level_id multipli {sorted(levels)}."
+            )
+        lvl = levels.pop()
+        ep_id = f"{win}__{direction}__seq{seq}"
+        grp_sorted = sorted(grp, key=lambda x: int(x["event_id"]))
+        for e in grp_sorted:
+            e["structural_episode_id"] = ep_id
+
+        lifecycle_rows = [e for e in grp_sorted if e["event_type"] != "SWEEP"]
+        own_sweep_rows = [e for e in grp_sorted if e["event_type"] == "SWEEP"]
+
+        link = link_by_key.get((win, direction, seq))
+        sweep_ev = None
+        link_attach_result = link["attach_result"] if link is not None else None
+        if link is not None:
+            cid = link["canonical_event_id"]
+            if str(cid) not in ("0", "", "None") :
+                sweep_ev = ev_by_id.get((win, str(int(cid))))
+        if sweep_ev is None and own_sweep_rows:
+            sweep_ev = own_sweep_rows[0]   # fallback equivalente a v2, mai unica fonte di verita'
+
+        if sweep_ev is None:
+            if link_attach_result == "MALFORMED_SKIPPED":
+                reason = "MALFORMED_SWEEP_NOT_LOGGED"
+            elif link is None:
+                reason = "MISSING_OBSERVER_CALL"   # nessuna entry di link per questo episodio - non dovrebbe accadere
+            else:
+                reason = "UNEXPLAINED"
+            for e in lifecycle_rows:
+                orphan_reasons[(win, e["event_id"])] = reason
+            true_orphans.extend(lifecycle_rows)
+            continue
+
+        episodes[ep_id] = {
+            "window_id": win, "structural_level_id": lvl,
+            "sweep_event_id": sweep_ev["event_id"], "sweep_timestamp": str(sweep_ev["timestamp"]),
+            "closed_by": None, "is_open_at_window_end": True,
+            "link_attach_result": link_attach_result,
+        }
+
+        first_close_id = None
+        for e in lifecycle_rows:
+            if e["event_type"] in ("RETEST", "INVALIDATE") and first_close_id is None:
+                first_close_id = int(e["event_id"])
+                episodes[ep_id]["closed_by"] = e["event_type"]
+                episodes[ep_id]["is_open_at_window_end"] = False
+
+        for e in lifecycle_rows:
+            lifecycle_link[(win, e["event_id"])] = ep_id
+            if first_close_id is not None and int(e["event_id"]) > first_close_id:
+                redundant_after_close.append(e)
+                if e["event_type"] == "TRUE_BREAK":
+                    true_break_after_close.append(e)
+
+    seqless_counter = defaultdict(int)
+    for e in seqless_sweeps:
+        lvlkey = (e["structural_level_id"], e["window_id"])
+        seqless_counter[lvlkey] += 1
+        ep_id = f"{lvlkey[0]}__{lvlkey[1]}__nolifecycle{seqless_counter[lvlkey]}"
+        e["structural_episode_id"] = ep_id
+        episodes[ep_id] = {
+            "window_id": e["window_id"], "structural_level_id": e["structural_level_id"],
+            "sweep_event_id": e["event_id"], "sweep_timestamp": str(e["timestamp"]),
+            "closed_by": None, "is_open_at_window_end": True, "link_attach_result": None,
+        }
+
+    return lifecycle_link, episodes, true_orphans, redundant_after_close, true_break_after_close, orphan_reasons
 
 
 def data_quality_checks(all_events, lifecycle_link, episodes, true_orphans, redundant_after_close, true_break_after_close):

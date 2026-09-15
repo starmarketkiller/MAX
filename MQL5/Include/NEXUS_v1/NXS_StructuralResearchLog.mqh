@@ -71,6 +71,79 @@ long                g_nxsSweepMultipassDup      = 0;   // stesso consumer, stess
 long                g_nxsSweepCrossConsumerDup  = 0;   // consumer DIVERSO sullo stesso (level,bar) gia' visto
 long                g_nxsSweepMalformedSkipped  = 0;   // confirmed=true ma dir/level/levelTag incoerenti - scartato
 
+// [Phase C.1 - Orphan TRUE_BREAK Root-Cause Audit] episode_sweep_link.
+//
+// Causa dominante (247/288 = 85.8%, dimostrata su dato reale) degli orphan
+// TRUE_BREAK di Phase C: la dedup canonica di NXS_Structural_ObserveSweep
+// e' per (structural_level_id, bar) - un SOLO campo sh_bms_episode_seq per
+// riga - mentre SH_BMS_RTO puo' generare PIU' episodeSeq distinti che
+// ingaggiano lo STESSO bar canonico (cascata multi-pass sullo stesso tick):
+// il primo episodeSeq che arriva "vince" l'attach, i successivi trovano il
+// campo gia' non-zero e la loro identita' non viene mai scritta da nessuna
+// parte -> orphan. Causa residua (41/288 = 14.2%): il guard di validita'
+// (sw.level<=0 o sw.levelTag=="") scarta la chiamata PRIMA di attach/create -
+// nessuna riga, di nessun tipo, viene mai prodotta per quell'episodio.
+//
+// Fix: NON tocca la canonicalizzazione (un solo evento SWEEP per bar resta
+// invariato). Aggiunge una mappa SEPARATA, research-only, che permette la
+// relazione MOLTI episodeSeq -> UN canonical_event_id, scritta SOLO nei 3
+// punti di uscita di NXS_Structural_ObserveSweep gia' esistenti (nessuna
+// ricostruzione a posteriori, nessun nearest-timestamp/nearest-level -
+// causalmente nota nell'istante stesso della transizione IDLE->SWEPT, dato
+// che ObserveSweep e' chiamato in modo sincrono da quel ramo).
+struct SNXSEpisodeSweepLink {
+   string   direction;             // NXS_DirName(sw.dir) - sw.dir e' SEMPRE valido (BUY/SELL) per un
+                                    // chiamante SH_BMS_RTO, anche nel ramo MALFORMED_SKIPPED (il guard
+                                    // di validita' scarta per level/levelTag, mai per dir - UpdateSide
+                                    // richiede gia' sw.dir==wantSweep prima di chiamare questa funzione)
+   int      episode_seq;           // SNXSSHBmsState.episodeSeq del chiamante (sempre != 0 qui)
+   string   structural_level_id;
+   long     canonical_event_id;    // event_id della riga SWEEP canonica associata; 0 = nessuna riga
+                                    // prodotta (MALFORMED_SKIPPED)
+   string   attach_result;         // "NEW_CANONICAL" | "ATTACHED_EXISTING" | "MALFORMED_SKIPPED"
+   datetime timestamp;             // bar-open (obsTime) del pass che ha innescato la transizione
+};
+SNXSEpisodeSweepLink g_nxsEpisodeLinks[];
+int                  g_nxsEpisodeLinkCount = 0;
+
+void _NXS_EpisodeLink_EnsureCapacity(){
+   int cap = ArraySize(g_nxsEpisodeLinks);
+   if(g_nxsEpisodeLinkCount >= cap){
+      int newCap = (cap == 0) ? 128 : cap * 2;
+      ArrayResize(g_nxsEpisodeLinks, newCap);
+   }
+}
+
+// Chiamata SOLO dai 3 punti di uscita di NXS_Structural_ObserveSweep dove
+// episodeSeq != 0 (chiamante SH_BMS_RTO) - mai altrove, mai a posteriori.
+void _NXS_EpisodeLink_Record(string direction, int episodeSeq, string levelId,
+                              long canonicalEventId, string attachResult, datetime ts){
+   _NXS_EpisodeLink_EnsureCapacity();
+   SNXSEpisodeSweepLink lk;
+   lk.direction = direction;
+   lk.episode_seq = episodeSeq;
+   lk.structural_level_id = levelId;
+   lk.canonical_event_id = canonicalEventId;
+   lk.attach_result = attachResult;
+   lk.timestamp = ts;
+   g_nxsEpisodeLinks[g_nxsEpisodeLinkCount] = lk;
+   g_nxsEpisodeLinkCount++;
+}
+
+void NXS_EpisodeLink_ExportCSV(string filename = "nxs_episode_sweep_link.csv"){
+   if(!InpStructuralResearchEventLog) return;
+   int h = FileOpen(filename, FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+   if(h == INVALID_HANDLE) return;
+   FileWrite(h, "direction", "episode_seq", "structural_level_id", "canonical_event_id", "attach_result", "timestamp");
+   for(int i = 0; i < g_nxsEpisodeLinkCount; i++){
+      SNXSEpisodeSweepLink lk = g_nxsEpisodeLinks[i];
+      FileWrite(h, lk.direction, lk.episode_seq, lk.structural_level_id, lk.canonical_event_id, lk.attach_result,
+                TimeToString(lk.timestamp, TIME_DATE|TIME_SECONDS));
+   }
+   FileClose(h);
+   PrintFormat("[STRUCTLOG][EPISODE_LINK][EXPORT] %d righe scritte su %s (FILE_COMMON)", g_nxsEpisodeLinkCount, filename);
+}
+
 void _NXS_Struct_EnsureCapacity(){
    int cap = ArraySize(g_nxsStructEvents);
    if(g_nxsStructEventCount >= cap){
@@ -239,6 +312,11 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    // speculativo sul detector, che e' esplicitamente fuori scope qui.
    if(sw.dir == DIR_NONE || sw.levelTag == "" || sw.level <= 0){
       g_nxsSweepMalformedSkipped++;
+      // [Phase C.1] nessuna riga (ne' nuova ne' esistente) viene prodotta per questo
+      // ingaggio - canonical_event_id=0 registra esplicitamente il caso MALFORMED_SKIPPED,
+      // causa del 14.2% degli orphan TRUE_BREAK (vedi audit).
+      if(episodeSeq != 0)
+         _NXS_EpisodeLink_Record(NXS_DirName(sw.dir), episodeSeq, outLevelId, 0, "MALFORMED_SKIPPED", iTime(g_sym, tf, 0));
       return;
    }
    g_nxsSweepRawObservations++;
@@ -253,6 +331,13 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
       // canonico, nessuna riga aggiuntiva, solo metadata arricchito.
       if(episodeSeq != 0 && g_nxsStructEvents[idx].sh_bms_episode_seq == 0)
          g_nxsStructEvents[idx].sh_bms_episode_seq = episodeSeq;
+      // [Phase C.1] registra SEMPRE il link vero, indipendentemente dal fatto che
+      // l'attach su sh_bms_episode_seq sia riuscito o meno (campo singolo, puo' gia'
+      // essere occupato da un episodio diverso - causa dell'85.8% degli orphan
+      // TRUE_BREAK, vedi audit) - qui la relazione e' molti-a-uno, nessuna identita' persa.
+      if(episodeSeq != 0)
+         _NXS_EpisodeLink_Record(NXS_DirName(sw.dir), episodeSeq, outLevelId,
+                                  g_nxsStructEvents[idx].event_id, "ATTACHED_EXISTING", obsTime);
       if(alreadySeen){
          g_nxsSweepMultipassDup++;
       } else {
@@ -292,6 +377,8 @@ void NXS_Structural_ObserveSweep(SNXSSweepExt &sw, ENUM_TIMEFRAMES tf, string co
    g_nxsStructEvents[g_nxsStructEventCount] = ev;
    g_nxsStructEventCount++;
    g_nxsSweepUniqueEvents++;
+   if(episodeSeq != 0)
+      _NXS_EpisodeLink_Record(NXS_DirName(sw.dir), episodeSeq, outLevelId, ev.event_id, "NEW_CANONICAL", obsTime);
    PrintFormat("[STRUCTLOG][EVENT] event_id=%d level_id=%s type=SWEEP side=%s dir=%d level=%.2f price=%.2f "
                "pen_pips=%.2f age_s=%.0f state=IDLE->SWEPT regime=%s trend=%s consumer=%s time=%s",
                ev.event_id, ev.structural_level_id, ev.side, (int)ev.direction,

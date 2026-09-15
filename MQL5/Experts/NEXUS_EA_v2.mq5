@@ -949,6 +949,7 @@ void OnDeinit(const int reason){
    NXS_Cert_RunSyntheticTest();   // 12/09 - no-op se InpCertRunSyntheticTest=false
    NXS_Structural_PrintSummary();   // 14/09 - Thread 2 Fase A, no-op se InpStructuralResearchEventLog=false
    NXS_Structural_ExportCSV();      // 14/09 - Thread 2 Fase B, no-op se InpStructuralResearchEventLog=false
+   NXS_EpisodeLink_ExportCSV();     // 15/09 - Phase C.1 Orphan Audit, no-op se InpStructuralResearchEventLog=false
    PrintFormat("[NEXUS] Deinit reason=%d", reason);
 }
 

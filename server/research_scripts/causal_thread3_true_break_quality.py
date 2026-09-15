@@ -92,7 +92,11 @@ def main():
     sweeps_by_episode = {e["structural_episode_id"]: e for e in all_events if e["event_type"] == "SWEEP"}
     malformed = [e for e in all_events if e["direction"] == "NONE" or not e.get("side") or e["level_price"] <= 0]
 
-    orphan_true_break_ids = set(e["event_id"] for e in true_orphans if e["event_type"] == "TRUE_BREAK")
+    # [Phase C.1 fix] chiave (window_id, event_id), MAI event_id da solo - event_id
+    # riparte da 1 ad ogni run/finestra (vedi Structural Causal Experiment 1); un
+    # set sul solo event_id qui sottostimava il conteggio orphan di 5 unita' su 288
+    # per collisione cross-window (bug scoperto in Phase C.1 Orphan TRUE_BREAK Audit).
+    orphan_true_break_ids = set((e["window_id"], e["event_id"]) for e in true_orphans if e["event_type"] == "TRUE_BREAK")
 
     # ============================================================
     # 1. Population: AT_TRUE_BREAK, episodio valido, esito non post-close, non orphan
