@@ -1,0 +1,278 @@
+{
+  "pre_repair_generic_sltp_no_htf": {
+    "BREAKOUT_ACC": {
+      "ZERO_COST": {
+        "n": 36,
+        "pf": 2.86,
+        "gross_pf": 2.86,
+        "net": 4845.76,
+        "dd": 5.85,
+        "exp_r": 1.139
+      },
+      "BROKER_BASELINE": {
+        "n": 36,
+        "pf": 2.79,
+        "gross_pf": 2.86,
+        "net": 4735.94,
+        "dd": 6.0,
+        "exp_r": 1.118
+      },
+      "CONSERVATIVE": {
+        "n": 36,
+        "pf": 2.77,
+        "gross_pf": 2.86,
+        "net": 4700.52,
+        "dd": 6.05,
+        "exp_r": 1.111
+      },
+      "STRESS": {
+        "n": 36,
+        "pf": 2.7,
+        "gross_pf": 2.86,
+        "net": 4584.11,
+        "dd": 6.21,
+        "exp_r": 1.09
+      }
+    },
+    "LIQ_SWEEP": {
+      "ZERO_COST": {
+        "n": 42,
+        "pf": 1.88,
+        "gross_pf": 1.88,
+        "net": 2080.63,
+        "dd": 3.94,
+        "exp_r": 0.462
+      },
+      "BROKER_BASELINE": {
+        "n": 42,
+        "pf": 1.85,
+        "gross_pf": 1.88,
+        "net": 2012.68,
+        "dd": 4.0,
+        "exp_r": 0.448
+      },
+      "CONSERVATIVE": {
+        "n": 42,
+        "pf": 1.83,
+        "gross_pf": 1.88,
+        "net": 1990.92,
+        "dd": 4.02,
+        "exp_r": 0.444
+      },
+      "STRESS": {
+        "n": 42,
+        "pf": 1.79,
+        "gross_pf": 1.88,
+        "net": 1918.66,
+        "dd": 4.09,
+        "exp_r": 0.43
+      }
+    },
+    "MACD": {
+      "ZERO_COST": {
+        "n": 130,
+        "pf": 1.64,
+        "gross_pf": 1.64,
+        "net": 6899.49,
+        "dd": 11.01,
+        "exp_r": 0.425
+      },
+      "BROKER_BASELINE": {
+        "n": 130,
+        "pf": 1.6,
+        "gross_pf": 1.64,
+        "net": 6418.21,
+        "dd": 11.27,
+        "exp_r": 0.403
+      },
+      "CONSERVATIVE": {
+        "n": 130,
+        "pf": 1.58,
+        "gross_pf": 1.64,
+        "net": 6262.78,
+        "dd": 11.36,
+        "exp_r": 0.396
+      },
+      "STRESS": {
+        "n": 130,
+        "pf": 1.54,
+        "gross_pf": 1.64,
+        "net": 5768.21,
+        "dd": 11.64,
+        "exp_r": 0.372
+      }
+    },
+    "FVG_CONT": {
+      "ZERO_COST": {
+        "n": 157,
+        "pf": 1.54,
+        "gross_pf": 1.54,
+        "net": 8436.71,
+        "dd": 13.19,
+        "exp_r": 0.412
+      },
+      "BROKER_BASELINE": {
+        "n": 157,
+        "pf": 1.49,
+        "gross_pf": 1.55,
+        "net": 7593.87,
+        "dd": 13.64,
+        "exp_r": 0.383
+      },
+      "CONSERVATIVE": {
+        "n": 157,
+        "pf": 1.47,
+        "gross_pf": 1.55,
+        "net": 7325.57,
+        "dd": 13.79,
+        "exp_r": 0.372
+      },
+      "STRESS": {
+        "n": 157,
+        "pf": 1.42,
+        "gross_pf": 1.55,
+        "net": 6479.95,
+        "dd": 14.33,
+        "exp_r": 0.34
+      }
+    }
+  },
+  "post_repair_native_sltp_plus_htf": {
+    "BREAKOUT_ACC": {
+      "ZERO_COST": {
+        "n": 31,
+        "pf": 3.72,
+        "gross_pf": 3.72,
+        "net": 5610.84,
+        "dd": 4.9,
+        "exp_r": 1.484
+      },
+      "BROKER_BASELINE": {
+        "n": 31,
+        "pf": 3.63,
+        "gross_pf": 3.72,
+        "net": 5509.17,
+        "dd": 5.03,
+        "exp_r": 1.462
+      },
+      "CONSERVATIVE": {
+        "n": 31,
+        "pf": 3.6,
+        "gross_pf": 3.72,
+        "net": 5476.43,
+        "dd": 5.07,
+        "exp_r": 1.456
+      },
+      "STRESS": {
+        "n": 31,
+        "pf": 3.5,
+        "gross_pf": 3.72,
+        "net": 5368.45,
+        "dd": 5.21,
+        "exp_r": 1.434
+      }
+    },
+    "LIQ_SWEEP": {
+      "ZERO_COST": {
+        "n": 33,
+        "pf": 2.88,
+        "gross_pf": 2.88,
+        "net": 2835.35,
+        "dd": 2.97,
+        "exp_r": 0.77
+      },
+      "BROKER_BASELINE": {
+        "n": 33,
+        "pf": 2.82,
+        "gross_pf": 2.88,
+        "net": 2777.73,
+        "dd": 3.04,
+        "exp_r": 0.755
+      },
+      "CONSERVATIVE": {
+        "n": 33,
+        "pf": 2.8,
+        "gross_pf": 2.88,
+        "net": 2759.4,
+        "dd": 3.06,
+        "exp_r": 0.752
+      },
+      "STRESS": {
+        "n": 33,
+        "pf": 2.74,
+        "gross_pf": 2.88,
+        "net": 2697.94,
+        "dd": 3.13,
+        "exp_r": 0.737
+      }
+    },
+    "MACD": {
+      "ZERO_COST": {
+        "n": 130,
+        "pf": 1.64,
+        "gross_pf": 1.64,
+        "net": 6899.49,
+        "dd": 11.01,
+        "exp_r": 0.425
+      },
+      "BROKER_BASELINE": {
+        "n": 130,
+        "pf": 1.6,
+        "gross_pf": 1.64,
+        "net": 6418.21,
+        "dd": 11.27,
+        "exp_r": 0.403
+      },
+      "CONSERVATIVE": {
+        "n": 130,
+        "pf": 1.58,
+        "gross_pf": 1.64,
+        "net": 6262.78,
+        "dd": 11.36,
+        "exp_r": 0.396
+      },
+      "STRESS": {
+        "n": 130,
+        "pf": 1.54,
+        "gross_pf": 1.64,
+        "net": 5768.21,
+        "dd": 11.64,
+        "exp_r": 0.372
+      }
+    },
+    "FVG_CONT": {
+      "ZERO_COST": {
+        "n": 123,
+        "pf": 1.74,
+        "gross_pf": 1.74,
+        "net": 8257.65,
+        "dd": 10.14,
+        "exp_r": 0.514
+      },
+      "BROKER_BASELINE": {
+        "n": 123,
+        "pf": 1.68,
+        "gross_pf": 1.74,
+        "net": 7615.36,
+        "dd": 10.88,
+        "exp_r": 0.485
+      },
+      "CONSERVATIVE": {
+        "n": 123,
+        "pf": 1.66,
+        "gross_pf": 1.74,
+        "net": 7410.0,
+        "dd": 11.13,
+        "exp_r": 0.475
+      },
+      "STRESS": {
+        "n": 123,
+        "pf": 1.6,
+        "gross_pf": 1.74,
+        "net": 6755.46,
+        "dd": 11.92,
+        "exp_r": 0.444
+      }
+    }
+  }
+}

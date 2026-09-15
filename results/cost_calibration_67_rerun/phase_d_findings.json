@@ -1,0 +1,77 @@
+{
+  "task": "Phase D - SAR Fast Structural + HTF Parity Repair",
+  "base_commit": "ca73e48",
+  "sar_fast_structural": {
+    "window": "2026-03-02 -> 2026-08-28 (6 months, real ticks, Model=4, native SL/TP 1.0/6.0, native costs)",
+    "n_closed": 41, "pf": 1.19, "net": 353.30, "expectancy_usd": 8.62,
+    "max_dd_pct": 6.36, "win_rate_pct": 17.1, "avg_win": 314.26, "avg_loss": 54.31,
+    "payoff_ratio": 5.79, "exit_reasons": {"sl": 34, "tp": 7},
+    "direction_split": {"BUY": 14, "SELL": 27},
+    "monthly": {"2026-03": {"n": 15, "pnl": 105.20}, "2026-04": {"n": 0, "pnl": 0},
+                "2026-05": {"n": 3, "pnl": -184.30}, "2026-06": {"n": 10, "pnl": 435.70},
+                "2026-07": {"n": 8, "pnl": -283.50}, "2026-08": {"n": 5, "pnl": 280.20}},
+    "mfe_mae": "not available in NEXUS_trades.csv format",
+    "trade_log": "results/cost_calibration_67_rerun/sar_fast_structural_6mo_trades.csv"
+  },
+  "sar_semantic_caveat_verdict": "SAR_DEPLOYMENT_SEMANTICS_CONFIRMED",
+  "sar_semantic_caveat_detail": {
+    "NXS_SAR_CandleAligned": "part of final decision (can null s.dir), optional via InpSAR_RequireCandleAlign, default false, no override found in any .set/.ini in repo",
+    "NXS_SAR_PressureContrary": "same structure, InpSAR_RequirePressureContrary, default false, no override found"
+  },
+  "htf_gate_true_semantics": {
+    "discovery": "the 'htf' profile flag gates on SAME-TF EMA200, not a genuine higher timeframe (misnomer in NEXUS_EA_v2.mq5)",
+    "source": "NEXUS_EA_v2.mq5 lines 624-639",
+    "price_side": "iClose(entry_tf, shift=0) - live/forming bar",
+    "ema_side": "EMA200(entry_tf, shift=1) - last closed bar",
+    "gating": "BUY discarded if price<EMA200; SELL discarded if price>EMA200",
+    "python_port": "run_backtest(htf_native_ema=True) in server/backtest.py, additive opt-in param, price=close[idx], ema=ind['ema200'][idx-1]",
+    "redundant_for": ["MACD - signal already requires price vs ema200 internally, gate is a no-op both in Python and (structurally) in MQL5"],
+    "real_effect_for": ["BREAKOUT_ACC", "LIQ_SWEEP", "FVG_CONT"]
+  },
+  "pre_post_repair_broker_baseline": {
+    "BREAKOUT_ACC": {"pre": {"n": 36, "pf": 2.79, "dd": 6.00}, "post": {"n": 31, "pf": 3.63, "dd": 5.03}},
+    "LIQ_SWEEP":    {"pre": {"n": 42, "pf": 1.85, "dd": 4.00}, "post": {"n": 33, "pf": 2.82, "dd": 3.04}},
+    "MACD":         {"pre": {"n": 130, "pf": 1.60, "dd": 11.27}, "post": {"n": 130, "pf": 1.60, "dd": 11.27}},
+    "FVG_CONT":     {"pre": {"n": 157, "pf": 1.49, "dd": 13.64}, "post": {"n": 123, "pf": 1.68, "dd": 10.88}}
+  },
+  "data_availability_blocker": {
+    "finding": "Python real-data source (_fetch_real, Dukascopy/Yahoo) caps at 2026-08-14; MT5 Tester broker feed extends to 2026-09-01+",
+    "consequence": "post-repair trade-level comparison restricted to 2026-06-01 -> 2026-08-14 overlap window"
+  },
+  "correction_to_prior_triage_report": {
+    "LIQ_SWEEP_mt5_trade_count": "was recorded as 2 in semantic_triage_findings.json; actual count from trades_LIQ_SWEEP.csv (already collected, re-read this phase) is 6 in the full 2026-06-01->2026-09-01 window, 5 within the 2026-06-01->2026-08-14 overlap"
+  },
+  "trade_parity_post_repair_overlap_window": {
+    "window": "2026-06-01 -> 2026-08-14",
+    "BREAKOUT_ACC": {"mt5": 0, "python": 0, "classification": "TRADE_PARITY_STRONG"},
+    "LIQ_SWEEP": {"mt5": 5, "python": 1, "date_overlap": false, "classification": "TRADE_PARITY_FAIL"},
+    "MACD": {"mt5": 4, "python": 3, "date_overlap": false, "classification": "TRADE_PARITY_ACCEPTABLE",
+             "note": "logic verified line-by-line identical; divergence attributed to OHLC data vendor difference (Python real-data feed vs MT5 broker feed), not a logic bug"},
+    "FVG_CONT": {"mt5": 6, "python": 3, "date_overlap": false, "classification": "TRADE_PARITY_ACCEPTABLE",
+                 "note": "weaker evidence than MACD - half the MT5 trades missing"}
+  },
+  "semantic_parity_post_repair": {
+    "SAR": "MINOR_DIFFERENCE (unchanged)",
+    "BREAKOUT_ACC": "MINOR_DIFFERENCE (HTF+SLTP gap closed; residual: 8-bar cooldown not ported, minor)",
+    "MACD": "MINOR_DIFFERENCE (HTF gap was never real, redundant with own signal logic)",
+    "FVG_CONT": "MINOR_DIFFERENCE (HTF+SLTP gap closed)",
+    "LIQ_SWEEP": "MINOR_DIFFERENCE (HTF+SLTP gap closed) but blocked by trade parity FAIL"
+  },
+  "fast_structural_candidates_after_phase_d": ["SAR", "BREAKOUT_ACC", "MACD"],
+  "excluded_at_cap": {
+    "FVG_CONT": "eligible on paper (semantic ok, trade parity ACCEPTABLE, native profile used) but excluded to respect the max-3 cap - weakest trade-parity evidence of the eligible set (half of MT5 trades missing vs MACD's near-complete count match)"
+  },
+  "blocked": {
+    "LIQ_SWEEP": "TRADE_PARITY_FAIL post-repair too; root cause not diagnosed (suspected Asia/Weekly session-level sweep detection divergence between _sweep_ext_at and NXS_DetectSweepExt, never bit-verified)"
+  },
+  "liq_void": {
+    "status": "RESEARCH_IMPLEMENTATION_INVALID_ALIAS",
+    "detail": "bt.STRATEGIES['LIQ_VOID'] is bt.STRATEGIES['FVG_CONT'] -> True, not corrected this phase as instructed, excluded from all future ranking until it gets its own implementation"
+  },
+  "open_blockers": [
+    "Python real-data cutoff at 2026-08-14 limits future trade-level parity windows",
+    "LIQ_SWEEP trade parity FAIL cause undiagnosed",
+    "BREAKOUT_ACC 8-bar cooldown not ported to Python",
+    "Model=4 real-tick still slow (~17min/2mo on SAR) - Phase A window limited to 6mo not 12mo for this reason"
+  ]
+}

@@ -4610,7 +4610,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
                  track_floating_dd=False, regime_filter=None, master_bias=None,
-                trailing_activate_atr=0.0):
+                trailing_activate_atr=0.0, htf_native_ema=False):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4874,6 +4874,26 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                 sma = _sma(idx, int(trend_period))
                 if sma is not None and ((sig == 1 and price < sma) or (sig == -1 and price > sma)):
                     sig = 0
+        # 16/09 - htf_native_ema: gate "HTF" PER-STRATEGIA reale come in
+        # NEXUS_EA_v2.mq5 riga ~634 (NXS_Profile_HTF + confronto px200 vs
+        # g_ema200), NON il proxy SMA(trend_period) sopra e NON una vera
+        # candela di TF superiore (htf_factor) - la scoperta di Phase D e'
+        # che questo gate "HTF" nel motore reale confronta prezzo vs
+        # EMA200 sullo STESSO TF di esecuzione della strategia, non su un
+        # timeframe più alto. Semantica esatta portata 1:1:
+        #   prezzo = close della barra segnale (idx), proxy dello shift0
+        #   "candela in formazione" tick-driven del vivo;
+        #   EMA200 = ind["ema200"][idx-1], cioe' l'EMA200(200) calcolata
+        #   SENZA includere la barra segnale (shift1/"barra chiusa" nel
+        #   codice MQL5, CopyBuffer(...,1,1,a)).
+        # Indipendente e sommabile a htf_filter/htf_factor sopra (nel vero
+        # EA sono due filtri concettualmente diversi che possono coesistere).
+        if sig != 0 and htf_native_ema:
+            if idx - 1 >= 0:
+                e200_closed = ind["ema200"][idx - 1]
+                if e200_closed and e200_closed > 0:
+                    if (sig == 1 and price < e200_closed) or (sig == -1 and price > e200_closed):
+                        sig = 0
         if sig != 0 and session_filter is not None:
             cur_sess = ind["sess"]["session"][idx]
             if cur_sess not in session_filter:
