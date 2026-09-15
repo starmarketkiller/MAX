@@ -182,4 +182,4 @@ Non corretto in questa fase, come richiesto. Documentato:
 
 ## Commit
 
-<!-- COMMIT_PLACEHOLDER -->
+`c3b0bf3`
