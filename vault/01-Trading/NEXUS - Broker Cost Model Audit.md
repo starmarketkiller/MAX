@@ -146,4 +146,4 @@ Nessun bug di scaling, nessun double-counting (§3, dimostrato con verifica indi
 
 **Nessuna delle 37 strategie è stata ri-eseguita automaticamente** oltre ai 3 casi rappresentativi richiesti.
 
-**Commit**: `[da assegnare dopo il commit]` — modifiche: `server/backtest.py` (campi diagnostici additivi), `server/research_scripts/cost_model_audit_impact.py` (nuovo), `results/cost_model_audit/impact_test_results.json` (nuovo), questo report.
+**Commit**: `7547bde` (pushato su `origin/main`) — modifiche: `server/backtest.py` (campi diagnostici additivi), `server/research_scripts/cost_model_audit_impact.py` (nuovo), `results/cost_model_audit/impact_test_results.json` (nuovo), questo report.
