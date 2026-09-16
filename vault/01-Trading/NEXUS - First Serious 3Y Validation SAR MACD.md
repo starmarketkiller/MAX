@@ -196,4 +196,4 @@ SAR ha un campione più ampio (240 vs 115 trade), un PF più alto, una DD più c
 
 ## Commit
 
-`[da assegnare]`
+`e557b22`
