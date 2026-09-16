@@ -1,0 +1,360 @@
+{
+  "label": "MACD",
+  "window": "2023-09-06 18:15:00 -> 2026-08-26 18:02:52",
+  "results": {
+    "TOTALE 3Y": {
+      "n": 115,
+      "pf": 1.122,
+      "net": 548.8,
+      "expectancy": 4.77,
+      "max_dd_pct": 9.52,
+      "max_dd_abs": 1042.0,
+      "win_rate": 25.2,
+      "avg_win": 174.02,
+      "avg_loss": 52.3,
+      "payoff": 3.33,
+      "buy_n": 79,
+      "sell_n": 36,
+      "buy_pf": 1.5,
+      "sell_pf": 0.61,
+      "max_consec_losses": 17,
+      "longest_flat_days": 499
+    },
+    "Year 1": {
+      "n": 40,
+      "pf": 0.7905,
+      "net": -165.1,
+      "expectancy": -4.13,
+      "max_dd_pct": 3.04,
+      "max_dd_abs": 305.0,
+      "win_rate": 20.0,
+      "avg_win": 77.88,
+      "avg_loss": 24.63,
+      "payoff": 3.16,
+      "buy_n": 29,
+      "sell_n": 11,
+      "buy_pf": 1.16,
+      "sell_pf": 0.0,
+      "max_consec_losses": 11,
+      "longest_flat_days": 44
+    },
+    "Year 2": {
+      "n": 42,
+      "pf": 0.9617,
+      "net": -49.0,
+      "expectancy": -1.17,
+      "max_dd_pct": 7.05,
+      "max_dd_abs": 730.5,
+      "win_rate": 23.8,
+      "avg_win": 123.05,
+      "avg_loss": 39.98,
+      "payoff": 3.08,
+      "buy_n": 28,
+      "sell_n": 14,
+      "buy_pf": 1.45,
+      "sell_pf": 0.23,
+      "max_consec_losses": 17,
+      "longest_flat_days": 139
+    },
+    "Year 3": {
+      "n": 33,
+      "pf": 1.3139,
+      "net": 762.9,
+      "expectancy": 23.12,
+      "max_dd_pct": 9.34,
+      "max_dd_abs": 1042.0,
+      "win_rate": 33.3,
+      "avg_win": 290.27,
+      "avg_loss": 110.46,
+      "payoff": 2.63,
+      "buy_n": 22,
+      "sell_n": 11,
+      "buy_pf": 1.67,
+      "sell_pf": 0.91,
+      "max_consec_losses": 4,
+      "longest_flat_days": 104
+    },
+    "First half": {
+      "n": 57,
+      "pf": 0.849,
+      "net": -182.8,
+      "expectancy": -3.21,
+      "max_dd_pct": 3.04,
+      "max_dd_abs": 305.0,
+      "win_rate": 21.1,
+      "avg_win": 85.62,
+      "avg_loss": 26.89,
+      "payoff": 3.18,
+      "buy_n": 40,
+      "sell_n": 17,
+      "buy_pf": 1.14,
+      "sell_pf": 0.29,
+      "max_consec_losses": 11,
+      "longest_flat_days": 44
+    },
+    "Second half": {
+      "n": 58,
+      "pf": 1.2225,
+      "net": 731.6,
+      "expectancy": 12.61,
+      "max_dd_pct": 9.37,
+      "max_dd_abs": 1042.0,
+      "win_rate": 29.3,
+      "avg_win": 236.42,
+      "avg_loss": 80.18,
+      "payoff": 2.95,
+      "buy_n": 39,
+      "sell_n": 19,
+      "buy_pf": 1.65,
+      "sell_pf": 0.7,
+      "max_consec_losses": 17,
+      "longest_flat_days": 279
+    },
+    "IS (in-sample, first ~77.5%)": {
+      "n": 95,
+      "pf": 0.9677,
+      "net": -85.4,
+      "expectancy": -0.9,
+      "max_dd_pct": 7.16,
+      "max_dd_abs": 730.5,
+      "win_rate": 23.2,
+      "avg_win": 116.45,
+      "avg_loss": 36.26,
+      "payoff": 3.21,
+      "buy_n": 68,
+      "sell_n": 27,
+      "buy_pf": 1.42,
+      "sell_pf": 0.13,
+      "max_consec_losses": 17,
+      "longest_flat_days": 499
+    },
+    "OOS (last ~22.5%)": {
+      "n": 20,
+      "pf": 1.3427,
+      "net": 634.2,
+      "expectancy": 31.71,
+      "max_dd_pct": 9.45,
+      "max_dd_abs": 1042.0,
+      "win_rate": 35.0,
+      "avg_win": 354.96,
+      "avg_loss": 142.35,
+      "payoff": 2.49,
+      "buy_n": 11,
+      "sell_n": 9,
+      "buy_pf": 1.65,
+      "sell_pf": 1.07,
+      "max_consec_losses": 4,
+      "longest_flat_days": 4
+    },
+    "NATIVE": {
+      "n": 115,
+      "pf": 1.122,
+      "net": 548.8,
+      "expectancy": 4.77,
+      "max_dd_pct": 9.52,
+      "max_dd_abs": 1042.0,
+      "win_rate": 25.2,
+      "avg_win": 174.02,
+      "avg_loss": 52.3,
+      "payoff": 3.33,
+      "buy_n": 79,
+      "sell_n": 36,
+      "buy_pf": 1.5,
+      "sell_pf": 0.61,
+      "max_consec_losses": 17,
+      "longest_flat_days": 499
+    },
+    "CONSERVATIVE": {
+      "n": 115,
+      "pf": 1.1216,
+      "net": 547.08,
+      "expectancy": 4.76,
+      "max_dd_pct": 9.53,
+      "max_dd_abs": 1042.14,
+      "win_rate": 25.2,
+      "avg_win": 174.0,
+      "avg_loss": 52.31,
+      "payoff": 3.33,
+      "buy_n": 79,
+      "sell_n": 36,
+      "buy_pf": 1.5,
+      "sell_pf": 0.61,
+      "max_consec_losses": 17,
+      "longest_flat_days": 499
+    },
+    "STRESS": {
+      "n": 115,
+      "pf": 1.1199,
+      "net": 540.17,
+      "expectancy": 4.7,
+      "max_dd_pct": 9.54,
+      "max_dd_abs": 1042.67,
+      "win_rate": 25.2,
+      "avg_win": 173.94,
+      "avg_loss": 52.37,
+      "payoff": 3.32,
+      "buy_n": 79,
+      "sell_n": 36,
+      "buy_pf": 1.5,
+      "sell_pf": 0.61,
+      "max_consec_losses": 17,
+      "longest_flat_days": 499
+    }
+  },
+  "monthly": {
+    "2023-09": {
+      "n": 2,
+      "pnl": -17.3
+    },
+    "2023-10": {
+      "n": 3,
+      "pnl": 17.900000000000006
+    },
+    "2023-11": {
+      "n": 2,
+      "pnl": -34.7
+    },
+    "2023-12": {
+      "n": 7,
+      "pnl": -86.60000000000001
+    },
+    "2024-01": {
+      "n": 3,
+      "pnl": -59.10000000000001
+    },
+    "2024-02": {
+      "n": 2,
+      "pnl": -35.8
+    },
+    "2024-03": {
+      "n": 2,
+      "pnl": 137.2
+    },
+    "2024-04": {
+      "n": 2,
+      "pnl": 48.0
+    },
+    "2024-05": {
+      "n": 4,
+      "pnl": 12.600000000000001
+    },
+    "2024-06": {
+      "n": 5,
+      "pnl": -130.79999999999998
+    },
+    "2024-07": {
+      "n": 4,
+      "pnl": -3.5000000000000036
+    },
+    "2024-08": {
+      "n": 3,
+      "pnl": -111.5
+    },
+    "2024-09": {
+      "n": 1,
+      "pnl": 98.5
+    },
+    "2024-10": {
+      "n": 1,
+      "pnl": 105.7
+    },
+    "2024-11": {
+      "n": 6,
+      "pnl": -48.60000000000001
+    },
+    "2024-12": {
+      "n": 2,
+      "pnl": -76.2
+    },
+    "2025-01": {
+      "n": 3,
+      "pnl": 53.7
+    },
+    "2025-02": {
+      "n": 5,
+      "pnl": -52.3
+    },
+    "2025-03": {
+      "n": 1,
+      "pnl": 129.0
+    },
+    "2025-04": {
+      "n": 5,
+      "pnl": 156.09999999999997
+    },
+    "2025-05": {
+      "n": 4,
+      "pnl": -212.1
+    },
+    "2025-06": {
+      "n": 2,
+      "pnl": -106.5
+    },
+    "2025-07": {
+      "n": 6,
+      "pnl": -208.60000000000002
+    },
+    "2025-08": {
+      "n": 3,
+      "pnl": -106.7
+    },
+    "2025-09": {
+      "n": 7,
+      "pnl": 381.4
+    },
+    "2025-10": {
+      "n": 4,
+      "pnl": -77.8
+    },
+    "2025-11": {
+      "n": 4,
+      "pnl": -12.300000000000004
+    },
+    "2025-12": {
+      "n": 2,
+      "pnl": 154.9
+    },
+    "2026-01": {
+      "n": 6,
+      "pnl": 726.6000000000001
+    },
+    "2026-02": {
+      "n": 1,
+      "pnl": -421.8
+    },
+    "2026-03": {
+      "n": 3,
+      "pnl": 32.29999999999998
+    },
+    "2026-04": {
+      "n": 3,
+      "pnl": -351.20000000000005
+    },
+    "2026-06": {
+      "n": 4,
+      "pnl": 454.2999999999999
+    },
+    "2026-08": {
+      "n": 3,
+      "pnl": 193.99999999999997
+    }
+  },
+  "yearly": {
+    "2023": {
+      "n": 14,
+      "pnl": -120.7
+    },
+    "2024": {
+      "n": 35,
+      "pnl": -63.500000000000014
+    },
+    "2025": {
+      "n": 46,
+      "pnl": 98.8000000000001
+    },
+    "2026": {
+      "n": 20,
+      "pnl": 634.1999999999999
+    }
+  }
+}
