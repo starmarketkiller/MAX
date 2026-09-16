@@ -199,4 +199,4 @@ BREAKOUT_ACC resta in `HOLD` fino a quando non sarà disponibile più storico MT
 
 ## Commit
 
-`[da assegnare]`
+`d6b067c`
