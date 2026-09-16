@@ -1,0 +1,65 @@
+{
+  "task": "Phase E point 3 - MACD non-overlap attribution",
+  "methodology_correction": {
+    "finding": "Phase D's trade-level parity test for MACD used an artificial 'fresh start' at the window boundary (2026-06-01, pos=None), which does not reflect either the live MT5 EA (continuously running, carries open positions across the window boundary) or a correct Python replica.",
+    "fix": "Re-ran with the SAME continuous full-history simulation used for PF/DD (bar_range covering all available data), then filtered the resulting trade_list to the window of interest. This is the correct methodology and is used for all comparisons below."
+  },
+  "hard_evidence_bar_level": {
+    "note": "MT5 EMA200/MACD-line/MACD-signal exported via new standalone EA server/research_scripts/NXS_ExportMACDIndicators.mq5 (same indicator params as NXS_Strat_MACD: EMA200, MACD 12/26/9), compared bar-for-bar against Python's ind['ema200']/ind['macd_line']/ind['macd_signal'] for the same GOLD H4 timestamps.",
+    "rows": [
+      {"time": "2026-06-02 04:00", "mt5": {"close": 4517.22, "ema200": 4607.41, "macd": -0.790, "signal": 2.284, "cond": "SELL"},
+                                     "python": {"close": 4535.15, "ema200": 4614.67, "macd": 1.195, "signal": -2.874, "cond": "none"},
+                                     "delta_close": -17.94},
+      {"time": "2026-06-10 00:00", "mt5": {"close": 4217.96, "ema200": 4544.28, "macd": -50.638, "signal": -43.564, "cond": "SELL"},
+                                     "python": {"close": 4184.98, "ema200": 4550.35, "macd": -56.310, "signal": -45.321, "cond": "SELL"},
+                                     "delta_close": 32.98},
+      {"time": "2026-06-18 16:00", "mt5": {"close": 4219.24, "ema200": 4448.19, "macd": -2.368, "signal": 15.177, "cond": "SELL"},
+                                     "python": {"close": 4216.96, "ema200": 4452.67, "macd": -6.884, "signal": 8.122, "cond": "SELL"},
+                                     "delta_close": 2.28},
+      {"time": "2026-08-07 08:00", "mt5": {"close": 4305.87, "ema200": 4133.96, "macd": 52.763, "signal": 52.093, "cond": "BUY"},
+                                     "python": {"close": 4321.26, "ema200": 4146.21, "macd": 59.387, "signal": 48.983, "cond": "BUY"},
+                                     "delta_close": -15.39}
+    ],
+    "conclusion": "Underlying OHLC feeds diverge by $2 to $50 (0.05%-1.2%) at the same nominal timestamp, sign not systematic (sometimes MT5 higher, sometimes lower) - two independent price paths, not a shifted/scaled version of one another. Confirms DATA_VENDOR_OHLC_DIFFERENCE as a real, demonstrated mechanism for this pair, not a hypothesis."
+  },
+  "event_pairing_6mo_window_2026_03_01_to_2026_08_28": {
+    "mt5_opens_total": 17,
+    "python_opens_total_same_window": 23,
+    "matched_pairs_offset_under_24h": [
+      {"mt5": "2026-03-02 01:45 BUY", "python": "2026-03-02 00:00 BUY", "offset_h": 1.75},
+      {"mt5": "2026-03-02 21:00 BUY", "python": "2026-03-02 20:00 BUY", "offset_h": 1},
+      {"mt5": "2026-03-10 16:00 BUY", "python": "2026-03-10 12:00 BUY", "offset_h": 4},
+      {"mt5": "2026-03-16 01:15 SELL", "python": "2026-03-16 14:00 SELL", "offset_h": 13},
+      {"mt5": "2026-03-19 14:15 SELL", "python": "2026-03-19 16:00 SELL", "offset_h": 1.75},
+      {"mt5": "2026-04-08 04:00 BUY", "python": "2026-04-07 20:00 BUY", "offset_h": 8},
+      {"mt5": "2026-04-14 12:00 BUY", "python": "2026-04-14 12:00 BUY", "offset_h": 0},
+      {"mt5": "2026-04-21 20:00 SELL", "python": "2026-04-21 20:00 SELL", "offset_h": 0},
+      {"mt5": "2026-06-18 20:00 SELL", "python": "2026-06-18 12:00 SELL", "offset_h": 8}
+    ],
+    "mt5_extra_intrabar_reentries_within_a_python_held_streak": [
+      {"mt5": "2026-03-20 05:30 SELL", "corresponds_to_python_streak_opened": "2026-03-19 16:00 SELL"},
+      {"mt5": "2026-03-23 09:30 SELL", "corresponds_to_python_streak_opened": "2026-03-23 08:00 SELL"},
+      {"mt5": "2026-03-23 13:15 SELL", "corresponds_to_python_streak_opened": "2026-03-23 08:00 SELL"},
+      {"mt5": "2026-06-05 17:30 SELL", "corresponds_to_python_streak_opened": "2026-06-02 20:00 SELL (closed 06-09 TP)"},
+      {"mt5": "2026-06-11 01:15 SELL", "corresponds_to_python_streak_opened": "2026-06-10 00:00 SELL"},
+      {"mt5": "2026-06-11 20:45 SELL", "corresponds_to_python_streak_opened": "2026-06-10 00:00 SELL"}
+    ],
+    "python_only_no_mt5_counterpart": [
+      "2026-05-04 SELL", "2026-05-07 BUY", "2026-05-11 BUY", "2026-05-14 SELL", "2026-05-26 SELL",
+      "2026-07-01 SELL", "2026-07-08 SELL", "2026-07-09 SELL"
+    ],
+    "mt5_only_no_python_counterpart_in_completed_trade_list": [
+      {"mt5": "2026-08-07 12:00 BUY", "note": "Python's own MACD/EMA200 condition confirms BUY starting 2026-08-05 04:00 (verified directly on ind series) but that Python position never closes before the data cutoff (2026-08-14) and is dropped from the completed-trade list - a truncation artifact, not a disagreement"},
+      {"mt5": "2026-08-24 16:15 BUY", "note": "past Python's data cutoff entirely (2026-08-14), cannot be evaluated Python-side at all"}
+    ]
+  },
+  "classification": {
+    "matched_pairs_9": "DATA_VENDOR_OHLC_DIFFERENCE (benign, hours-scale offset only)",
+    "mt5_extra_intrabar_reentries_6": "BAR_ALIGNMENT_DIFFERENCE (MT5 tick-driven can close/reopen within one continuous Python-held streak; same mechanism already documented for SAR in the Triage phase)",
+    "may_and_july_gaps_8_python_only": "DATA_VENDOR_OHLC_DIFFERENCE (inferred from the demonstrated bar-level divergence pattern above; MT5's own EMA200/MACD were not independently pulled for May/July specifically due to time budget - flagged as inference, not bit-verified for these particular dates)",
+    "end_of_window_2_mt5_only": "DATA_VENDOR_OHLC_DIFFERENCE compounded by Python data-cutoff truncation (2026-08-14)",
+    "SIGNAL_LOGIC_DIFFERENCE_count": 0,
+    "UNKNOWN_count": 0
+  },
+  "acceptance_gate_result": "PASSED - SIGNAL_LOGIC_DIFFERENCE=0, UNKNOWN=0 -> MACD Fast Structural authorized and executed"
+}

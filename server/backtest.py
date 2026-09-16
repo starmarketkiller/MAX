@@ -671,6 +671,12 @@ def _prep(candles, intraday_ref=None, snr_ref=None):
         "ob_v2_signal": ob_v2_sig, "ob_v2_sl": ob_v2_sl, "ob_v2_tp": ob_v2_tp,
         "fvg_v2_signal": fvg_v2_sig, "fvg_v2_sl": fvg_v2_sl, "fvg_v2_tp": fvg_v2_tp,
         "fvgmitw_signal": fvgmitw_sig, "fvgmitw_sl": fvgmitw_sl, "fvgmitw_tp": fvgmitw_tp,
+        # 16/09 - Phase E, vedi _breakout_acc_cooldown_series: porting del
+        # raffreddamento 8-barre per-direzione di NXS_Strat_BreakoutAcc,
+        # opt-in via run_backtest(breakout_acc_cooldown=True) - sig_breakout_acc
+        # da sola (usata di default da tutte le altre 66 strategie/chiamate
+        # esistenti) resta invariata.
+        "breakout_acc_cd": _breakout_acc_cooldown_series(candles, None),
     }
 
 
@@ -937,6 +943,31 @@ def sig_breakout_acc(c, ind, i, n=20):
     if c1 < ll and c2 < ll:
         return -1
     return 0
+
+
+def _breakout_acc_cooldown_series(candles, ind, n=20, cooldown_bars=8):
+    # 16/09 - Phase E: porting ESATTO del raffreddamento per-direzione di
+    # NXS_Strat_BreakoutAcc (NXS_Strategies.mqh riga ~1530-1561,
+    # g_breakoutAccState/InpBreakoutAccCooldownBars, default 8 barre): una
+    # volta che una direzione spara, quella STESSA direzione resta bloccata
+    # finche' non sono passate almeno cooldown_bars barre dal suo ultimo
+    # fire - l'altra direzione non e' toccata. Precalcolato come serie
+    # (non stateful dentro sig_breakout_acc) per lo stesso motivo di
+    # sb_signal/ob_signal/shbms_signal: sig_breakout_acc puo' essere
+    # richiamata piu' volte fuori ordine (confirm_bars/flip) e un contatore
+    # mutabile dentro la funzione si corromperebbe.
+    out = [0] * len(candles)
+    last_fire = {1: None, -1: None}
+    for i in range(len(candles)):
+        v = sig_breakout_acc(candles, ind, i, n=n)
+        if v == 0:
+            continue
+        lf = last_fire[v]
+        ok = (lf is None) or ((i - lf) >= cooldown_bars)
+        if ok:
+            out[i] = v
+            last_fire[v] = i
+    return out
 
 
 def sig_adx_rsi(c, ind, i):
@@ -4610,7 +4641,7 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
                  grid_regime_filter=True, max_per_dir=None, adx_min=None,
                  direction_lock=None, htf_factor=None, htf_fresh_bars=None,
                  track_floating_dd=False, regime_filter=None, master_bias=None,
-                trailing_activate_atr=0.0, htf_native_ema=False):
+                trailing_activate_atr=0.0, htf_native_ema=False, breakout_acc_cooldown=False):
     # Dati reali via Yahoo per il timeframe scelto (fallback su get_ohlc).
     # GATE applicati (coerenza col backtest): htf_filter (solo nel senso del trend
     # su SMA trend_period), breakeven_r (SL a BE dopo N x rischio), trailing_atr
@@ -4840,13 +4871,20 @@ def run_backtest(symbol="XAUUSD", timeframe="D1", strategy="ADX_RSI",
             return 0, None, atr_i
         sig, who = 0, None
         for s in strat_list:
-            v = STRATEGIES[s](candles, ind, idx)
+            if s == "BREAKOUT_ACC" and breakout_acc_cooldown:
+                v = ind["breakout_acc_cd"][idx]
+            else:
+                v = STRATEGIES[s](candles, ind, idx)
             if v == 0:
                 continue
             if confirm_bars > 0:
                 ok = True
                 for k in range(1, confirm_bars + 1):
-                    if idx - k < 0 or STRATEGIES[s](candles, ind, idx - k) != v:
+                    if s == "BREAKOUT_ACC" and breakout_acc_cooldown:
+                        vk = ind["breakout_acc_cd"][idx - k] if idx - k >= 0 else None
+                    else:
+                        vk = STRATEGIES[s](candles, ind, idx - k) if idx - k >= 0 else None
+                    if idx - k < 0 or vk != v:
                         ok = False
                         break
                 if not ok:

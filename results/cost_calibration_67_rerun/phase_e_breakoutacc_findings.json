@@ -1,0 +1,43 @@
+{
+  "task": "Phase E points 1-2 - BREAKOUT_ACC parity correction + cooldown port",
+  "reclassification": {
+    "old_verdict_phase_d": "TRADE_PARITY_STRONG (MT5=0, Python=0 in the 2026-06-01/09-01 window)",
+    "new_verdict": "TRADE_PARITY_UNINFORMATIVE_ZERO_EVENTS was the Phase D case; corrected per Phase E instructions - a 0=0 match with real events on neither side proves nothing about parity",
+    "why": "0 events on both sides cannot distinguish agreement from two unrelated engines that simply never fire together"
+  },
+  "cooldown_port": {
+    "source": "NXS_Strat_BreakoutAcc, NXS_Strategies.mqh ~line 1530-1561: g_breakoutAccState, per-direction (BUY/SELL independent) cooldown of InpBreakoutAccCooldownBars (default 8) bars since that direction's last fire; the other direction is unaffected",
+    "python_port": "server/backtest.py: _breakout_acc_cooldown_series(candles, ind, n=20, cooldown_bars=8) precomputes a cooldown-gated series (stateless-safe, computed once forward in time, avoiding corruption from out-of-order confirm_bars/flip re-evaluation calls); stored in ind['breakout_acc_cd']; consumed only when run_backtest(breakout_acc_cooldown=True) - default False, zero behavior change for the other 66 strategies (verified: SAR full-history n=271 pf=1.35 unchanged after the code change)",
+    "effect_verified": {"n_before_cooldown": 31, "n_after_cooldown": 27, "pf_before": 3.63, "pf_after": 3.55, "dd_before": 5.03, "dd_after": 5.77}
+  },
+  "parity_test_window_1_predefined_12mo": {
+    "rule_declared_before_running": "most recent full 12 months ending at Python data cutoff: 2025-09-01 to 2026-09-01, chosen for being the most recent complete year rather than any outcome-based selection",
+    "mt5_config": "selector=9, Period=D1 (native, InpProfileMultiTF overrides per-strategy regardless), Model=1 (1-min OHLC - D1 low-frequency strategy does not need real-tick precision for this parity check; Model=4 real-tick reserved for the Fast Structural run), native SL/TP 1.0/4.5, RAW protections off",
+    "mt5_result": {"n_trades": 1, "trade": {"open": "2025-09-01 01:45", "side": "BUY", "close": "2025-09-08 10:11", "reason": "tp", "pnl": 147.7}},
+    "python_result_same_window_correct_methodology": {"n_trades": 7, "note": "continuous full-history simulation (position state carried naturally, NOT a fresh-start-at-window-boundary as Phase D incorrectly did), trade_list filtered to opens in 2025-09/2026-08 (Python data cutoff 2026-08-14)"},
+    "verdict": "1 MT5 event < 5 required -> still TRADE_PARITY_UNINFORMATIVE_LOW_SAMPLE, escalated to maximum historical intersection per task preference order"
+  },
+  "parity_test_window_2_max_historical_intersection": {
+    "range": "2019-02-03 to 2026-08-14 (bounded by Python's Dukascopy data range, the tighter of the two sources)",
+    "mt5_config": "same as window 1 but Model=1 over the full ~7.5y span (Model=4 real-tick was infeasible for a span this long - declared explicitly, same environmental limit already documented for SAR/other phases this session)",
+    "runtime": "~3h40m real time (D1/Model=1 processes roughly 1 simulated year per ~26 real minutes in this environment)",
+    "mt5_result": {
+      "n_trades_total": 4,
+      "trades": [
+        {"open": "2019-06-05 17:30", "side": "BUY", "close": "2019-06-11 10:52", "reason": "sl", "pnl": -15.9},
+        {"open": "2020-01-06 01:45", "side": "BUY", "close": "2020-01-07 03:47", "reason": "sl", "pnl": -11.7},
+        {"open": "2020-02-21 18:00", "side": "BUY", "close": "2020-02-25 22:60", "reason": "sl", "pnl": -17.0},
+        {"open": "2023-09-28 18:15", "side": "SELL", "close": "2023-09-29 16:02", "reason": "sl", "pnl": -15.1}
+      ],
+      "all_losses": true,
+      "note": "2019-2020 open prices (~$1333-1644) are genuine historical XAUUSD levels, confirming this is real broker market data for that period, not a synthetic feed"
+    },
+    "event_rate": "4 events / 7.5 years = 0.53/year, far below any threshold that would let a 6-24 month window be informative by chance",
+    "verdict": "TRADE_PARITY_UNINFORMATIVE_ZERO_EVENTS reclassified more precisely as TRADE_PARITY_UNINFORMATIVE_LOW_SAMPLE - genuinely irreducible given the maximum available common history, not a cherry-picking artifact. No further window choice can fix this without more MT5 history than exists in the intersection with Python's data range."
+  },
+  "gate_consequence": {
+    "rule": "Phase E point 7 requires 'parity informativa + cooldown corretto' before BREAKOUT_ACC Fast Structural",
+    "result": "Parity remains uninformative even under maximal, non-cherry-picked historical search -> BREAKOUT_ACC Fast Structural NOT executed, gate not met",
+    "verdict": "HOLD_NEEDS_MORE_EVIDENCE - not a rejection of the strategy's logic (semantic parity was already MINOR_DIFFERENCE post Phase-D HTF repair, PF/DD strong on Python's own data: n=27, PF=3.55, DD=5.77% with cooldown), purely a sample-size/data-availability limitation on the MT5 side"
+  }
+}
