@@ -185,4 +185,4 @@ Tutte le detection usano solo barre strettamente precedenti alla barra di valuta
 
 ## Commit
 
-`[da assegnare]`
+`b05d6c4`
