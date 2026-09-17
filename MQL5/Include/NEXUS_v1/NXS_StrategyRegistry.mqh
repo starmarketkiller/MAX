@@ -4,14 +4,6 @@
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
 #define NXS_LIVE_STRATEGY_COUNT 53
-// 17/09 - AGGIUNTA MANUALE (Strategy Foundry Phase 3): VOLATILITY_BREAKOUT_
-// CONFIRMED aggiunta qui e in contracts/strategy-registry.json ma NON ancora
-// in knowledge/strategy_database.json (fonte reale del generatore per
-// live/selector) - rigenerare questo file con
-// contracts/generate_registry.py PRIMA di questa correzione lo avrebbe
-// sovrascritto/rimosso. Finche' knowledge/strategy_database.json non viene
-// aggiornato, NON rieseguire il generatore senza prima verificare che
-// includa ancora questa strategia.
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -71,11 +63,11 @@ bool NXS_StrategyKnown(string strategyId){
           id=="THREE_BAR_DELIVERY_BREAK" ||
           id=="TSI" ||
           id=="TURTLE_SOUP" ||
+          id=="VOLATILITY_BREAKOUT_CONFIRMED" ||
           id=="WEEKLY_EXP" ||
           id=="WICK_SWEEP_RECLAIM" ||
           id=="WICK_SWEEP_REV" ||
-          id=="Z_SCORE_BREAKOUT" ||
-          id=="VOLATILITY_BREAKOUT_CONFIRMED";
+          id=="Z_SCORE_BREAKOUT";
 }
 
 // AUD0-WEB-013: elenco canonico indicizzato (0..NXS_LIVE_STRATEGY_COUNT-1).
@@ -130,11 +122,11 @@ string NXS_StrategyIdAt(int i){
    if(i==45) return "THREE_BAR_DELIVERY_BREAK";
    if(i==46) return "TSI";
    if(i==47) return "TURTLE_SOUP";
-   if(i==48) return "WEEKLY_EXP";
-   if(i==49) return "WICK_SWEEP_RECLAIM";
-   if(i==50) return "WICK_SWEEP_REV";
-   if(i==51) return "Z_SCORE_BREAKOUT";
-   if(i==52) return "VOLATILITY_BREAKOUT_CONFIRMED";
+   if(i==48) return "VOLATILITY_BREAKOUT_CONFIRMED";
+   if(i==49) return "WEEKLY_EXP";
+   if(i==50) return "WICK_SWEEP_RECLAIM";
+   if(i==51) return "WICK_SWEEP_REV";
+   if(i==52) return "Z_SCORE_BREAKOUT";
    return "";
 }
 

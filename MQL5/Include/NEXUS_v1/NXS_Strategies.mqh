@@ -1599,7 +1599,21 @@ SNXSSignal NXS_Strat_VolatilityBreakoutConfirmed(){
    else return s;
    if(tr1 <= 1.0 * atr) return s;   // non confermato - il braccio "fade" era NO_EDGE in Phase 2, non implementato
    s.dir = (brkDir == 1) ? DIR_BUY : DIR_SELL;
-   s.entryRef = (brkDir == 1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   // 18/09 - CORREZIONE Phase 3 Semantic Audit: FROZEN_SIGNAL_SPEC_V1 dice
+   // "entry = signal-bar close", non "prezzo live ASK/BID al momento della
+   // valutazione". La prima versione usava SymbolInfoDouble(...ASK/BID)
+   // (stesso pattern di NXS_DefaultSLTP/AMD_CONT), ma quella e' la
+   // convenzione GENERICA del motore per strategie SENZA una specifica
+   // congelata esterna - qui la specifica ESISTE ed e' vincolante. entryRef
+   // ora e' c1 (la stessa chiusura barra segnale gia' usata per rilevare la
+   // rottura), cosi' R e TP sono calcolati esattamente come nel motore
+   // Python (server/backtest.py sig_volatility_breakout_confirmed). Il
+   // riempimento REALE dell'ordine avviene comunque al prezzo live
+   // (NXS_DoBuy/NXS_DoSell usano SYMBOL_ASK/BID al momento dell'invio,
+   // invariato e non modificabile da qui - e' cosi' per ogni strategia in
+   // questo motore) - lo scarto residuo fra c1 ed il fill reale e' slippage
+   // di esecuzione ordinario, non un errore di specifica.
+   s.entryRef = c1;
    s.slPrice = (brkDir == 1) ? ll : hh;
    double risk = MathAbs(s.entryRef - s.slPrice);
    if(risk <= 0){ s.dir = DIR_NONE; return s; }

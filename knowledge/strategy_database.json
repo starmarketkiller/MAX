@@ -2,7 +2,7 @@
   "generato": "2026-07-19",
   "fonte_sweep": "results/reports/sweep37 (file stats piu' recente per passata)",
   "baseline": "e6ce816 / branch baseline-post-infra-audit",
-  "totale_strategie": 51,
+  "totale_strategie": 53,
   "avvertenza": "PF/WR/expectancy del round corrente: strategia ISOLATA, lotto fisso 0.01, DataCollectionMode - misurano il comportamento del trigger, non il P&L di portafoglio",
   "strategie": [
     {
@@ -1311,12 +1311,25 @@
       "ultimo_sweep": "2026-09-12",
       "nota_sweep": "Primo Fast Smoke reale (2026.06.01-08.26, selector 55 isolato) completato: 112 trade, WR 48.21%, PF 0.80 (report MT5) / 0.78 (pnl reale ricalcolato). Coorte sweep e disponibilita' reclaim IDENTICHE allo shadow (181=181, 122~123) - parita' causale raggiunta. L'edge economico (shadow: WR 59.2%/PF 5.80) NON sopravvive all'esecuzione reale: causa quantificata in slippage fill-vs-trigger_price (mediana +42.6 pip, dovuto al campionamento M15 della detection) che distorce il rischio/rendimento nominale 25/100 fisso. Vedi vault WICK_SWEEP Entry Timing Study sezione 9.",
       "trade": 112,
-      "PF": 0.80,
+      "PF": 0.8,
       "WR_pct": 48.21,
       "expectancy_R": null,
       "affidabilita_dati": "un solo Fast Smoke (3 mesi, GOLD H4/M15). Parita' causale con lo shadow verificata evento-per-evento; risultato economico spiegato quantitativamente ma non ancora testato su altre finestre temporali",
       "decisione_corrente": "FILONE CHIUSO (12/09) - ipotesi refutata su tutte le varianti testate. Fast Smoke di equivalenza: parita' causale PASSATA, edge economico FALLITO (WR 48.21%/PF 0.78-0.80). Counterfactual FILL_ANCHORED: REFUTATO (ancorare al fill reale non migliora, PF 0.72 vs 0.76). Replay tick-level RECLAIM_TICK: REFUTATO (WR 16.8%/PF 0.75). Replay tick-level RECLAIM_LIMIT_RETEST: REFUTATO (WR 14.4%/PF 0.67, disponibile solo 57.5%). PF 5.80 dello shadow non e' una stima di performance eseguibile (SHADOW_EXECUTION_ASSUMPTION, vedi Failure Memory). Nessun altro test WICK, nessun tuning, nessuna nuova variante. NON rimossa dal codice - resta disponibile come strategia sperimentale/non-promossa (selector 55, default OFF). Candidate di backlog non implementato: WICK_TICK_NATIVE (sweep detection + reclaim entrambi tick-level nativi, nessuna eredita' dal disegno M15-gated attuale)",
       "note": "Non modifica WICK_SWEEP_REV (selector 54, resta identica e non toccata). Identita' completamente separata: selector 55, strategy name WICK_SWEEP_RECLAIM, profilo/telemetria/statistiche proprie. Vedi vault 'NEXUS EA - WICK_SWEEP Entry Timing Study' (stato finale in testa alla nota) per il resoconto completo, e 'NEXUS - Failure Memory (Registro Pattern di Fallimento Metodologico)' per i 4 pattern metodologici estratti da questo filone (SHADOW_EXECUTION_ASSUMPTION, TIMEZONE_MISMATCH, DATA_COVERAGE_GAP, CAUSAL_HOOK_MISMATCH)."
+    },
+    {
+      "nome": "VOLATILITY_BREAKOUT_CONFIRMED",
+      "selector_index": 56,
+      "versione": "Strategy Foundry Phase 3 (18/09), FROZEN_SIGNAL_SPEC_V1",
+      "stato": "attiva",
+      "implementata": "si",
+      "redesign_effettuati": [],
+      "bug_storici": [],
+      "fix_applicati": [
+        "18/09 - Phase 3 Semantic Correction: entryRef corretto da ASK/BID live a iClose(tf,1) (chiusura barra segnale) per aderire a FROZEN_SIGNAL_SPEC_V1 (entry=signal-bar close)"
+      ],
+      "ultimo_sweep": null
     }
   ],
   "aggiornato_da_importer": "2026-07-20T21:33:30Z"

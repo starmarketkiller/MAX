@@ -78,6 +78,7 @@ export const STRATEGY_REGISTRY = [
   ["TURTLE_SOUP_CHOCH","Turtle Soup Choch","SCALP",false,true],
   ["TURTLE_SOUP_CHOCH_DBLBODY","Turtle Soup Choch Dblbody","SCALP",false,true],
   ["TURTLE_SOUP_CHOCH_NEAR","Turtle Soup Choch Near","SCALP",false,true],
+  ["VOLATILITY_BREAKOUT_CONFIRMED","Volatility Breakout Confirmed","TREND",true,true],
   ["WEEKLY_EXP","Weekly Exp","SESSION",true,true],
   ["WICK_SWEEP_RECLAIM","Wick Sweep Reclaim","UNCLASSIFIED",true,false],
   ["WICK_SWEEP_REV","Wick Sweep Rev","UNCLASSIFIED",true,false],
