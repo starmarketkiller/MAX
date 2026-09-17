@@ -1563,6 +1563,52 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
    return s;
 }
 
+//------------------------------------ Volatility Breakout Confirmed (17/09 -
+// Strategy Foundry Phase 3. Porting ESATTO del braccio "confermato" di
+// server/backtest.py sig_volatility_breakout_confirmed, gia' verificato
+// identico bit-per-bit contro l'event dataset di Phase 2 (927/927 eventi,
+// vedi "NEXUS - Strategy Foundry Phase 3 Volatility Breakout
+// Implementation.md", FROZEN_SIGNAL_SPEC_V1). NON aggiungere filtri: nessun
+// HTF, nessuna sessione, nessun trailing/BE - il segnale e' congelato cosi'
+// com'e' stato sottoposto a screening causale.
+// Range N=20 barre, offset [shift2..shift21] (= Python candles[i-N-1:i-1]
+// relativo alla barra segnale shift1); conferma = true range della barra
+// segnale > 1.0xATR(14); entry alla rottura, SL sul lato opposto dello
+// stesso range, TP = 1R (simmetrico, e' esattamente il livello +1R il cui
+// primo raggiungimento definiva "vinto" nello screening Phase 2).
+SNXSSignal NXS_Strat_VolatilityBreakoutConfirmed(){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_BREAKOUT_ACC; s.stratName = "VOLATILITY_BREAKOUT_CONFIRMED";
+   if(!InpStrat_VolBreakoutConfirmed || !NXS_SelectorAllows(56)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   int N = 20;
+   double hh = -DBL_MAX, ll = DBL_MAX;
+   for(int k = 2; k <= N + 1; k++){
+      double h = iHigh(g_sym, tf, k), l = iLow(g_sym, tf, k);
+      hh = MathMax(hh, h);
+      ll = MathMin(ll, l);
+   }
+   double atr = g_atr;
+   if(atr <= 0) return s;
+   double c1 = iClose(g_sym, tf, 1);
+   double h1 = iHigh(g_sym, tf, 1), l1 = iLow(g_sym, tf, 1);
+   double tr1 = h1 - l1;
+   int brkDir = 0;
+   if(c1 > hh) brkDir = 1;
+   else if(c1 < ll) brkDir = -1;
+   else return s;
+   if(tr1 <= 1.0 * atr) return s;   // non confermato - il braccio "fade" era NO_EDGE in Phase 2, non implementato
+   s.dir = (brkDir == 1) ? DIR_BUY : DIR_SELL;
+   s.entryRef = (brkDir == 1) ? SymbolInfoDouble(g_sym, SYMBOL_ASK) : SymbolInfoDouble(g_sym, SYMBOL_BID);
+   s.slPrice = (brkDir == 1) ? ll : hh;
+   double risk = MathAbs(s.entryRef - s.slPrice);
+   if(risk <= 0){ s.dir = DIR_NONE; return s; }
+   s.tpPrice = s.entryRef + brkDir * risk;   // TP = 1R, vedi nota FROZEN_SIGNAL_SPEC_V1 sopra
+   s.score = 65.0;
+   s.reason = "VolBreakout_confirmed";
+   return s;
+}
+
 //------------------------------------ Z-Score Breakout (24/08 - porting da server/backtest.py sig_z_score_breakout)
 // Ipotesi "quant" (Z-Score + regime SMA200): interpretazione BREAKOUT
 // (scommette sulla continuazione) delle bande a 2 deviazioni standard,

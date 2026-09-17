@@ -621,6 +621,13 @@ int NXS_CollectRaw(SNXSSweep &sw, SNXSSweepExt &swExt, SNXSAMD &amd,
    // con gate in pip sulla profondita' di sfondamento), da confrontare.
    if(InpStrat_WickSweep && NXS_SelectorAllows(54)) out[n++] = NXS_Strat_WickSweepReversal();
 
+   // 17/09 — VOLATILITY_BREAKOUT_CONFIRMED (#56): Strategy Foundry Phase 3,
+   // porting congelato del braccio "confermato" gia' promosso dallo
+   // screening causale Phase 2 (server/backtest.py sig_volatility_breakout_confirmed,
+   // verificato identico 927/927 eventi). Nessun filtro extra per istruzione
+   // esplicita del task.
+   if(InpStrat_VolBreakoutConfirmed && NXS_SelectorAllows(56)) out[n++] = NXS_Strat_VolatilityBreakoutConfirmed();
+
    // v2.2.8 — gate HTF PER-STRATEGIA (come nel backtest): se il profilo della
    // strategia richiede l'allineamento HTF, il segnale sopravvive solo se e' nel
    // senso del trend (prezzo vs EMA200 sul TF di entrata, proxy del filtro trend).

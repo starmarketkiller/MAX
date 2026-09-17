@@ -541,6 +541,7 @@ input bool     InpStrat_BJORGUM      = false;
 input bool     InpStrat_LIQ_SWEEP    = true;
 input bool     InpStrat_FVG_CONT     = true;
 input bool     InpStrat_BREAKOUT_ACC = true;
+input bool     InpStrat_VolBreakoutConfirmed = false;  // 17/09 - Strategy Foundry Phase 3, mai verificata su MT5 - default OFF
 input bool     InpStrat_LONDON_BO    = true;
 input bool     InpStrat_EMA_PULLBACK = true;
 input bool     InpStrat_BB_SQUEEZE   = true;

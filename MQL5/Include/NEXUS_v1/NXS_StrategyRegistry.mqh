@@ -3,7 +3,15 @@
 #define __NXS_STRATEGY_REGISTRY_MQH__
 
 #define NXS_STRATEGY_REGISTRY_SCHEMA 1
-#define NXS_LIVE_STRATEGY_COUNT 52
+#define NXS_LIVE_STRATEGY_COUNT 53
+// 17/09 - AGGIUNTA MANUALE (Strategy Foundry Phase 3): VOLATILITY_BREAKOUT_
+// CONFIRMED aggiunta qui e in contracts/strategy-registry.json ma NON ancora
+// in knowledge/strategy_database.json (fonte reale del generatore per
+// live/selector) - rigenerare questo file con
+// contracts/generate_registry.py PRIMA di questa correzione lo avrebbe
+// sovrascritto/rimosso. Finche' knowledge/strategy_database.json non viene
+// aggiornato, NON rieseguire il generatore senza prima verificare che
+// includa ancora questa strategia.
 
 string NXS_StrategyCanonicalId(string strategyId){
    string id=strategyId;
@@ -66,7 +74,8 @@ bool NXS_StrategyKnown(string strategyId){
           id=="WEEKLY_EXP" ||
           id=="WICK_SWEEP_RECLAIM" ||
           id=="WICK_SWEEP_REV" ||
-          id=="Z_SCORE_BREAKOUT";
+          id=="Z_SCORE_BREAKOUT" ||
+          id=="VOLATILITY_BREAKOUT_CONFIRMED";
 }
 
 // AUD0-WEB-013: elenco canonico indicizzato (0..NXS_LIVE_STRATEGY_COUNT-1).
@@ -125,6 +134,7 @@ string NXS_StrategyIdAt(int i){
    if(i==49) return "WICK_SWEEP_RECLAIM";
    if(i==50) return "WICK_SWEEP_REV";
    if(i==51) return "Z_SCORE_BREAKOUT";
+   if(i==52) return "VOLATILITY_BREAKOUT_CONFIRMED";
    return "";
 }
 

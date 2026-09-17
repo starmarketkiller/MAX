@@ -970,6 +970,58 @@ def _breakout_acc_cooldown_series(candles, ind, n=20, cooldown_bars=8):
     return out
 
 
+# --------------------------------------------------------------------------- #
+# VOLATILITY_BREAKOUT_CONFIRMED - Strategy Foundry Phase 3, 17/09.
+# FROZEN_SIGNAL_SPEC_V1 (vedi "NEXUS - Strategy Foundry Phase 3 Volatility
+# Breakout Implementation.md") - porting ESATTO del braccio "confermato"
+# gia' sottoposto a screening causale in Phase 2
+# (server/research_scripts/phase2_run.py, blocco G2_volbreakout_confirmed):
+# discovery expectancy +0.037R, validation +0.133R, n=927, promosso.
+# Nessuna semantica cambiata rispetto a quel test - stessa finestra di
+# range (N=20 barre, offset [i-N-1:i-1]), stessa soglia di conferma
+# (TR barra segnale > 1.0xATR), stesso entry (close della barra segnale),
+# stesso R (ampiezza del range, SL sul lato opposto). TP=1R (non testato in
+# Phase 2 come TP esplicito, ma e' esattamente il livello +1R il cui primo
+# raggiungimento definiva "vinto" nello screening - usare qualsiasi altro
+# multiplo sarebbe una modifica del segnale, vietata da questa fase).
+# --------------------------------------------------------------------------- #
+def sig_volatility_breakout_confirmed(c, ind, i, N=20, CONFIRM_MULT=1.0):
+    if i < N + 3:
+        return 0
+    hh = max(x["high"] for x in c[i - N - 1:i - 1])
+    ll = min(x["low"] for x in c[i - N - 1:i - 1])
+    atr_i = ind["atr"][i]
+    if not atr_i:
+        return 0
+    c_i = c[i]["close"]
+    tr_i = c[i]["high"] - c[i]["low"]
+    if c_i > hh:
+        brk_dir = 1
+    elif c_i < ll:
+        brk_dir = -1
+    else:
+        return 0
+    if tr_i <= CONFIRM_MULT * atr_i:
+        return 0  # non confermato - fuori scope di questa strategia (era il braccio "fade", NO_EDGE, non implementato)
+    return brk_dir
+
+
+def _volatility_breakout_confirmed_sl_tp(c, ind, i, direction, entry, atr, N=20):
+    # Stessa identica finestra di range della funzione segnale sopra -
+    # ricalcolata qui per restare una funzione pura senza stato condiviso
+    # (stesso pattern di sig_breakout_acc/NXS_DefaultSLTP in questo file).
+    if i < N + 3:
+        return None
+    hh = max(x["high"] for x in c[i - N - 1:i - 1])
+    ll = min(x["low"] for x in c[i - N - 1:i - 1])
+    sl = ll if direction == 1 else hh
+    risk = entry - sl if direction == 1 else sl - entry
+    if risk <= 0:
+        return None
+    tp = entry + direction * risk  # TP = 1R, vedi nota FROZEN_SIGNAL_SPEC_V1 sopra
+    return sl, tp
+
+
 def sig_adx_rsi(c, ind, i):
     # v2.5.1 - aggiunto filtro ADX reale (prima non veniva mai calcolato,
     # nonostante il nome: bug trovato e corretto il 15/07, vedi vault NEXUS
@@ -4472,6 +4524,7 @@ def sig_scalp_range_brk(c, ind, i, n=12):
 # (bypassa completamente sl/tp generico), non opt-in: e' cosi' che la
 # strategia funziona davvero, non un'ipotesi da testare.
 STRATEGY_SLTP_ALWAYS = {
+    "VOLATILITY_BREAKOUT_CONFIRMED": _volatility_breakout_confirmed_sl_tp,  # Strategy Foundry Phase 3
     "AMD_CONT": _amd_cont_sl_tp,
     "SILVER_BULLET": _silver_bullet_sl_tp,
     "WEEKLY_EXP": _weekly_exp_sl_tp,
@@ -4535,6 +4588,7 @@ STRATEGIES = {
     "MACD": sig_macd,
     "RSI_DIV": sig_rsi_div,
     "BREAKOUT_ACC": sig_breakout_acc,
+    "VOLATILITY_BREAKOUT_CONFIRMED": sig_volatility_breakout_confirmed,  # Strategy Foundry Phase 3, vedi FROZEN_SIGNAL_SPEC_V1
     "ADX_RSI": sig_adx_rsi,
     "BOLLINGER": sig_bollinger,
     "BB_SQUEEZE": sig_bb_squeeze,

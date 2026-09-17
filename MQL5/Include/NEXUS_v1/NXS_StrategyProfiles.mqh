@@ -205,6 +205,12 @@ bool NXS_Profile_Get(const string name, double &slMult, double &tpMult,
    // tpMult sotto restano inerti (stop nativo dalla candela M15 di
    // reazione, uscita gestita da NXS_WeeklyExpManage.mqh).
    if(name == "WEEKLY_EXP")        { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }
+   // 17/09 - VOLATILITY_BREAKOUT_CONFIRMED: SL/TP strutturali (range N=20
+   // barre, TP=1R), calcolati inline in NXS_Strat_VolatilityBreakoutConfirmed
+   // - slMult/tpMult INERTI qui (stesso pattern di CRT/SH_BMS_RTO_V2/
+   // TURTLE_SOUP/Z_SCORE_BREAKOUT sopra), htf=false perche' Phase 3 vieta
+   // esplicitamente filtri extra rispetto al segnale congelato in Phase 2.
+   if(name == "VOLATILITY_BREAKOUT_CONFIRMED") { slMult=0.0; tpMult=0.0; htf=false; beR=0.0; trailATR=0.0; return true; }
    // Le session/Elliott (SILVER_BULLET, AMD_*, JUDAS, LDN/NY_REVERSAL, PO3,
    // ELLIOTT): da ottimizzare su MT5/intraday -> nessun profilo, usano i globali.
    return false;
@@ -279,6 +285,9 @@ ENUM_TIMEFRAMES NXS_Profile_TF(const string name){
    if(name == "SWING_FALSEBREAK")  return PERIOD_H1;
    if(name == "Z_SCORE_BREAKOUT")  return PERIOD_H1;
    if(name == "WEEKLY_EXP")        return PERIOD_D1;
+   // 17/09 - Strategy Foundry Phase 3: FROZEN_SIGNAL_SPEC_V1, TF nativo del
+   // segnale gia' sottoposto a screening causale in Phase 2 (H4, XAUUSD).
+   if(name == "VOLATILITY_BREAKOUT_CONFIRMED") return PERIOD_H4;
    // 11/08 - CRT: 30m e' il TF con il campione piu' ampio E il walk-forward
    // piu' pulito dopo la riverifica sullo storico ampliato (5/5 su tutti e
    // tre i TF provati - 4h/1h/30m - ma 30m ha quasi 12.000 trade totali
@@ -435,6 +444,7 @@ double NXS_Profile_Risk(const string name){
    if(name == "WEEKLY_EXP")        return 0.5;
    if(name == "BAR_UPDN")          return 0.5;   // 28/08 - nuova, mai verificata su MT5, tier cauto
    if(name == "PIVOT_WICK")        return 0.5;   // 02/09 - nuova, mai verificata su MT5, tier cauto
+   if(name == "VOLATILITY_BREAKOUT_CONFIRMED") return 0.5;  // 17/09 - nuova, mai verificata su MT5, tier cauto
    if(name == "LEVEL_CONFLUENCE")  return InpLevelConfRiskPct;   // 06/09 - tunabile via ini, vedi NXS_Inputs.mqh
    if(name == "LEVEL_CONFLUENCE_M5") return InpLevelConfRiskPct;
    if(name == "LEVEL_REACTION")      return InpLevelReactRiskPct;
@@ -705,6 +715,11 @@ bool NXS_Profile_Enabled(const string name){
    // indagine, mai verificata sul vero motore. InpUseStructReact resta
    // false di default - "abilitata al test" non e' "abilitata di default".
    if(name == "STRUCT_REACT")           return true;
+   // 17/09 - VOLATILITY_BREAKOUT_CONFIRMED: prima verifica su MT5 reale
+   // (Strategy Foundry Phase 3) - "abilitata al test" non e' "abilitata di
+   // default", stessa regola delle righe sopra (InpStrat_VolBreakoutConfirmed
+   // resta false di default).
+   if(name == "VOLATILITY_BREAKOUT_CONFIRMED") return true;
    // 05/09 - stesso bug: audit proattivo di tutta la coda prioritaria del
    // piano master dopo aver trovato STRUCT_REACT bloccata qui. Queste 6
    // hanno un profilo (SL/TP/TF) gia' definito sopra ma NON erano in
