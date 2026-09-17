@@ -1,0 +1,922 @@
+{
+  "schema_version": 1,
+  "n_hypotheses_tested": 14,
+  "n_metrics_per_hypothesis": {
+    "BREAKOUT": 8,
+    "FAILED_BREAKOUT": 7,
+    "SWEEP": 8,
+    "RECLAIM": 8,
+    "RETEST": 8,
+    "DISPLACEMENT": 7,
+    "COMPRESSION_RELEASE": 7,
+    "VOLATILITY_EXPANSION": 8,
+    "PULLBACK": 8,
+    "BREAKOUT_x_VOLATILITY_EXPANSION": 8,
+    "BREAKOUT_x_TREND_PERSISTENCE": 8,
+    "SWEEP_RECLAIM_x_LOCATION": 8,
+    "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY": 7,
+    "DISPLACEMENT_x_VOLATILITY_STATE": 7
+  },
+  "n_total_statistical_comparisons": 107,
+  "n_subgroup_direction_tests": 28,
+  "n_subgroup_year_tests": 51,
+  "n_variants_interactions_predefinite": 5,
+  "pre_registered_analyses": [
+    "9 event-alone detectors (ex-ante, sec.C Phase5)",
+    "5 interazioni predefinite (ex-ante, sec.F Phase5)",
+    "soglia primaria di classificazione 1.0xATR (ex-ante)",
+    "split 70/30 discovery/validation (ex-ante, dichiarato prima di ogni risultato)"
+  ],
+  "added_after_seeing_data": [
+    "la PROMOZIONE di RECLAIM a headline/EDGE_COMPONENT (post_hoc_selection_from_batch=true nel Hypothesis Registry, sec.1)",
+    "la lettura qualitativa 'SWEEP+RECLAIM' come narrativa (SWEEP e RECLAIM erano gia' 2 dei 14 test pre-registrati, ma la LORO RELAZIONE come 'storia' e' stata notata dopo, non ipotizzata prima)"
+  ],
+  "benjamini_hochberg_q": 0.1,
+  "families": {
+    "FAMILY_DISCOVERY": {
+      "FAILED_BREAKOUT": {
+        "raw_p": 2.1281505668288053e-17,
+        "rank": 1,
+        "m_family": 14,
+        "bh_critical_value_q": 0.007142857142857143,
+        "adjusted_p_bh": 2.9794107935603275e-16,
+        "significant_at_q": true
+      },
+      "RECLAIM": {
+        "raw_p": 2.9611670640556686e-12,
+        "rank": 2,
+        "m_family": 14,
+        "bh_critical_value_q": 0.014285714285714285,
+        "adjusted_p_bh": 2.072816944838968e-11,
+        "significant_at_q": true
+      },
+      "PULLBACK": {
+        "raw_p": 0.14909978282712957,
+        "rank": 3,
+        "m_family": 14,
+        "bh_critical_value_q": 0.02142857142857143,
+        "adjusted_p_bh": 0.4950419217831108,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE": {
+        "raw_p": 0.21271867472069172,
+        "rank": 4,
+        "m_family": 14,
+        "bh_critical_value_q": 0.02857142857142857,
+        "adjusted_p_bh": 0.4950419217831108,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION": {
+        "raw_p": 0.22477811493079458,
+        "rank": 5,
+        "m_family": 14,
+        "bh_critical_value_q": 0.03571428571428572,
+        "adjusted_p_bh": 0.4950419217831108,
+        "significant_at_q": false
+      },
+      "BREAKOUT": {
+        "raw_p": 0.2475209608915554,
+        "rank": 6,
+        "m_family": 14,
+        "bh_critical_value_q": 0.04285714285714286,
+        "adjusted_p_bh": 0.4950419217831108,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE": {
+        "raw_p": 0.2475209608915554,
+        "rank": 7,
+        "m_family": 14,
+        "bh_critical_value_q": 0.05,
+        "adjusted_p_bh": 0.4950419217831108,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION": {
+        "raw_p": 0.2915929695042432,
+        "rank": 8,
+        "m_family": 14,
+        "bh_critical_value_q": 0.05714285714285714,
+        "adjusted_p_bh": 0.5102876966324256,
+        "significant_at_q": false
+      },
+      "RETEST": {
+        "raw_p": 0.3328404783562797,
+        "rank": 9,
+        "m_family": 14,
+        "bh_critical_value_q": 0.0642857142857143,
+        "adjusted_p_bh": 0.5177518552208795,
+        "significant_at_q": false
+      },
+      "SWEEP": {
+        "raw_p": 0.46028097098750775,
+        "rank": 10,
+        "m_family": 14,
+        "bh_critical_value_q": 0.07142857142857144,
+        "adjusted_p_bh": 0.6062197531681922,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT": {
+        "raw_p": 0.47631552034643676,
+        "rank": 11,
+        "m_family": 14,
+        "bh_critical_value_q": 0.07857142857142857,
+        "adjusted_p_bh": 0.6062197531681922,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE": {
+        "raw_p": 0.5388821658985747,
+        "rank": 12,
+        "m_family": 14,
+        "bh_critical_value_q": 0.08571428571428572,
+        "adjusted_p_bh": 0.6286958602150038,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION": {
+        "raw_p": 0.7100702769102706,
+        "rank": 13,
+        "m_family": 14,
+        "bh_critical_value_q": 0.09285714285714286,
+        "adjusted_p_bh": 0.7646910674418298,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY": {
+        "raw_p": 0.8308898639081672,
+        "rank": 14,
+        "m_family": 14,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 0.8308898639081672,
+        "significant_at_q": false
+      }
+    },
+    "FAMILY_VALIDATION": {
+      "RECLAIM": {
+        "raw_p": 4.0278131864491227e-08,
+        "rank": 1,
+        "m_family": 14,
+        "bh_critical_value_q": 0.007142857142857143,
+        "adjusted_p_bh": 4.2296415835229283e-07,
+        "significant_at_q": true
+      },
+      "FAILED_BREAKOUT": {
+        "raw_p": 6.042345119318469e-08,
+        "rank": 2,
+        "m_family": 14,
+        "bh_critical_value_q": 0.014285714285714285,
+        "adjusted_p_bh": 4.2296415835229283e-07,
+        "significant_at_q": true
+      },
+      "VOLATILITY_EXPANSION": {
+        "raw_p": 0.059110355689716995,
+        "rank": 3,
+        "m_family": 14,
+        "bh_critical_value_q": 0.02142857142857143,
+        "adjusted_p_bh": 0.27584832655201263,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE": {
+        "raw_p": 0.08610177136859283,
+        "rank": 4,
+        "m_family": 14,
+        "bh_critical_value_q": 0.02857142857142857,
+        "adjusted_p_bh": 0.3013561997900749,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY": {
+        "raw_p": 0.21190457980797384,
+        "rank": 5,
+        "m_family": 14,
+        "bh_critical_value_q": 0.03571428571428572,
+        "adjusted_p_bh": 0.45987976802173175,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT": {
+        "raw_p": 0.21937128402290484,
+        "rank": 6,
+        "m_family": 14,
+        "bh_critical_value_q": 0.04285714285714286,
+        "adjusted_p_bh": 0.45987976802173175,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION": {
+        "raw_p": 0.22993988401086585,
+        "rank": 7,
+        "m_family": 14,
+        "bh_critical_value_q": 0.05,
+        "adjusted_p_bh": 0.45987976802173175,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE": {
+        "raw_p": 0.3630221438949657,
+        "rank": 8,
+        "m_family": 14,
+        "bh_critical_value_q": 0.05714285714285714,
+        "adjusted_p_bh": 0.6352887518161899,
+        "significant_at_q": false
+      },
+      "SWEEP": {
+        "raw_p": 0.584815009272931,
+        "rank": 9,
+        "m_family": 14,
+        "bh_critical_value_q": 0.0642857142857143,
+        "adjusted_p_bh": 0.9097122366467816,
+        "significant_at_q": false
+      },
+      "PULLBACK": {
+        "raw_p": 0.7245751728947019,
+        "rank": 10,
+        "m_family": 14,
+        "bh_critical_value_q": 0.07142857142857144,
+        "adjusted_p_bh": 0.9875679954641636,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION": {
+        "raw_p": 0.9509647861073155,
+        "rank": 11,
+        "m_family": 14,
+        "bh_critical_value_q": 0.07857142857142857,
+        "adjusted_p_bh": 0.9875679954641636,
+        "significant_at_q": false
+      },
+      "RETEST": {
+        "raw_p": 0.9786844588107108,
+        "rank": 12,
+        "m_family": 14,
+        "bh_critical_value_q": 0.08571428571428572,
+        "adjusted_p_bh": 0.9875679954641636,
+        "significant_at_q": false
+      },
+      "BREAKOUT": {
+        "raw_p": 0.9875679954641636,
+        "rank": 13,
+        "m_family": 14,
+        "bh_critical_value_q": 0.09285714285714286,
+        "adjusted_p_bh": 0.9875679954641636,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE": {
+        "raw_p": 0.9875679954641636,
+        "rank": 14,
+        "m_family": 14,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 0.9875679954641636,
+        "significant_at_q": false
+      }
+    },
+    "FAMILY_SUBGROUP_DIRECTION": {
+      "FAILED_BREAKOUT__buy": {
+        "raw_p": 1.38813518155915e-18,
+        "rank": 1,
+        "m_family": 28,
+        "bh_critical_value_q": 0.0035714285714285713,
+        "adjusted_p_bh": 3.88677850836562e-17,
+        "significant_at_q": true
+      },
+      "RECLAIM__buy": {
+        "raw_p": 4.77170878343046e-11,
+        "rank": 2,
+        "m_family": 28,
+        "bh_critical_value_q": 0.007142857142857143,
+        "adjusted_p_bh": 6.680392296802644e-10,
+        "significant_at_q": true
+      },
+      "FAILED_BREAKOUT__sell": {
+        "raw_p": 2.5844030004126883e-08,
+        "rank": 3,
+        "m_family": 28,
+        "bh_critical_value_q": 0.010714285714285714,
+        "adjusted_p_bh": 2.412109467051842e-07,
+        "significant_at_q": true
+      },
+      "RECLAIM__sell": {
+        "raw_p": 4.920509170547886e-08,
+        "rank": 4,
+        "m_family": 28,
+        "bh_critical_value_q": 0.014285714285714285,
+        "adjusted_p_bh": 3.4443564193835204e-07,
+        "significant_at_q": true
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE__sell": {
+        "raw_p": 0.08297317976325272,
+        "rank": 5,
+        "m_family": 28,
+        "bh_critical_value_q": 0.01785714285714286,
+        "adjusted_p_bh": 0.46464980667421524,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE__buy": {
+        "raw_p": 0.1372234408369325,
+        "rank": 6,
+        "m_family": 28,
+        "bh_critical_value_q": 0.02142857142857143,
+        "adjusted_p_bh": 0.6403760572390184,
+        "significant_at_q": false
+      },
+      "PULLBACK__buy": {
+        "raw_p": 0.20387460344747876,
+        "rank": 7,
+        "m_family": 28,
+        "bh_critical_value_q": 0.025,
+        "adjusted_p_bh": 0.7384022347858078,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__sell": {
+        "raw_p": 0.2504160504032812,
+        "rank": 8,
+        "m_family": 28,
+        "bh_critical_value_q": 0.02857142857142857,
+        "adjusted_p_bh": 0.7384022347858078,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE__sell": {
+        "raw_p": 0.26576515094483777,
+        "rank": 9,
+        "m_family": 28,
+        "bh_critical_value_q": 0.03214285714285715,
+        "adjusted_p_bh": 0.7384022347858078,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT__buy": {
+        "raw_p": 0.2747211498845694,
+        "rank": 10,
+        "m_family": 28,
+        "bh_critical_value_q": 0.03571428571428572,
+        "adjusted_p_bh": 0.7384022347858078,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__sell": {
+        "raw_p": 0.2900865922372816,
+        "rank": 11,
+        "m_family": 28,
+        "bh_critical_value_q": 0.039285714285714285,
+        "adjusted_p_bh": 0.7384022347858078,
+        "significant_at_q": false
+      },
+      "SWEEP__sell": {
+        "raw_p": 0.3389902694544302,
+        "rank": 12,
+        "m_family": 28,
+        "bh_critical_value_q": 0.04285714285714286,
+        "adjusted_p_bh": 0.7909772953936706,
+        "significant_at_q": false
+      },
+      "SWEEP__buy": {
+        "raw_p": 0.37460994602468645,
+        "rank": 13,
+        "m_family": 28,
+        "bh_critical_value_q": 0.04642857142857143,
+        "adjusted_p_bh": 0.8068521914377862,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT__sell": {
+        "raw_p": 0.4737498832511461,
+        "rank": 14,
+        "m_family": 28,
+        "bh_critical_value_q": 0.05,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "BREAKOUT__sell": {
+        "raw_p": 0.5294533369560577,
+        "rank": 15,
+        "m_family": 28,
+        "bh_critical_value_q": 0.053571428571428575,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__sell": {
+        "raw_p": 0.5294533369560577,
+        "rank": 16,
+        "m_family": 28,
+        "bh_critical_value_q": 0.05714285714285714,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY__buy": {
+        "raw_p": 0.5313672201411331,
+        "rank": 17,
+        "m_family": 28,
+        "bh_critical_value_q": 0.060714285714285714,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__sell": {
+        "raw_p": 0.5665387047239632,
+        "rank": 18,
+        "m_family": 28,
+        "bh_critical_value_q": 0.0642857142857143,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__buy": {
+        "raw_p": 0.5704116518899494,
+        "rank": 19,
+        "m_family": 28,
+        "bh_critical_value_q": 0.06785714285714287,
+        "adjusted_p_bh": 0.8406066448904518,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE__buy": {
+        "raw_p": 0.6180964070052204,
+        "rank": 20,
+        "m_family": 28,
+        "bh_critical_value_q": 0.07142857142857144,
+        "adjusted_p_bh": 0.8653349698073086,
+        "significant_at_q": false
+      },
+      "RETEST__buy": {
+        "raw_p": 0.6583150957734979,
+        "rank": 21,
+        "m_family": 28,
+        "bh_critical_value_q": 0.07500000000000001,
+        "adjusted_p_bh": 0.8777534610313306,
+        "significant_at_q": false
+      },
+      "PULLBACK__sell": {
+        "raw_p": 0.6897481715918381,
+        "rank": 22,
+        "m_family": 28,
+        "bh_critical_value_q": 0.07857142857142857,
+        "adjusted_p_bh": 0.877861309298703,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY__sell": {
+        "raw_p": 0.725096114222745,
+        "rank": 23,
+        "m_family": 28,
+        "bh_critical_value_q": 0.08214285714285714,
+        "adjusted_p_bh": 0.8827257042711679,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__buy": {
+        "raw_p": 0.7835154061366162,
+        "rank": 24,
+        "m_family": 28,
+        "bh_critical_value_q": 0.08571428571428572,
+        "adjusted_p_bh": 0.9141013071593855,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__buy": {
+        "raw_p": 0.8340635957933288,
+        "rank": 25,
+        "m_family": 28,
+        "bh_critical_value_q": 0.0892857142857143,
+        "adjusted_p_bh": 0.9341512272885282,
+        "significant_at_q": false
+      },
+      "BREAKOUT__buy": {
+        "raw_p": 0.9312525278695412,
+        "rank": 26,
+        "m_family": 28,
+        "bh_critical_value_q": 0.09285714285714286,
+        "adjusted_p_bh": 0.9408346337519468,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__buy": {
+        "raw_p": 0.9312525278695412,
+        "rank": 27,
+        "m_family": 28,
+        "bh_critical_value_q": 0.09642857142857143,
+        "adjusted_p_bh": 0.9408346337519468,
+        "significant_at_q": false
+      },
+      "RETEST__sell": {
+        "raw_p": 0.9408346337519468,
+        "rank": 28,
+        "m_family": 28,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 0.9408346337519468,
+        "significant_at_q": false
+      }
+    },
+    "FAMILY_SUBGROUP_YEAR": {
+      "FAILED_BREAKOUT__2020": {
+        "raw_p": 7.735188597691304e-10,
+        "rank": 1,
+        "m_family": 51,
+        "bh_critical_value_q": 0.00196078431372549,
+        "adjusted_p_bh": 3.944946184822565e-08,
+        "significant_at_q": true
+      },
+      "FAILED_BREAKOUT__2021": {
+        "raw_p": 2.0162020034173916e-09,
+        "rank": 2,
+        "m_family": 51,
+        "bh_critical_value_q": 0.00392156862745098,
+        "adjusted_p_bh": 5.141315108714349e-08,
+        "significant_at_q": true
+      },
+      "RECLAIM__2020": {
+        "raw_p": 6.575618686835266e-09,
+        "rank": 3,
+        "m_family": 51,
+        "bh_critical_value_q": 0.0058823529411764705,
+        "adjusted_p_bh": 1.1178551767619953e-07,
+        "significant_at_q": true
+      },
+      "RECLAIM__2021": {
+        "raw_p": 1.445811963992322e-07,
+        "rank": 4,
+        "m_family": 51,
+        "bh_critical_value_q": 0.00784313725490196,
+        "adjusted_p_bh": 1.8434102540902106e-06,
+        "significant_at_q": true
+      },
+      "FAILED_BREAKOUT__2019": {
+        "raw_p": 2.1641040022679647e-07,
+        "rank": 5,
+        "m_family": 51,
+        "bh_critical_value_q": 0.00980392156862745,
+        "adjusted_p_bh": 2.207386082313324e-06,
+        "significant_at_q": true
+      },
+      "RECLAIM__2019": {
+        "raw_p": 0.0002189853961516758,
+        "rank": 6,
+        "m_family": 51,
+        "bh_critical_value_q": 0.011764705882352941,
+        "adjusted_p_bh": 0.0018613758672892443,
+        "significant_at_q": true
+      },
+      "RECLAIM__2022": {
+        "raw_p": 0.024044374481273233,
+        "rank": 7,
+        "m_family": 51,
+        "bh_critical_value_q": 0.013725490196078433,
+        "adjusted_p_bh": 0.17518044264927643,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__2020": {
+        "raw_p": 0.03090236507027676,
+        "rank": 8,
+        "m_family": 51,
+        "bh_critical_value_q": 0.01568627450980392,
+        "adjusted_p_bh": 0.1777176084659431,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__2021": {
+        "raw_p": 0.03136193090575466,
+        "rank": 9,
+        "m_family": 51,
+        "bh_critical_value_q": 0.017647058823529415,
+        "adjusted_p_bh": 0.1777176084659431,
+        "significant_at_q": false
+      },
+      "BREAKOUT__2019": {
+        "raw_p": 0.0909071666786254,
+        "rank": 10,
+        "m_family": 51,
+        "bh_critical_value_q": 0.0196078431372549,
+        "adjusted_p_bh": 0.39351582424150483,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__2019": {
+        "raw_p": 0.0909071666786254,
+        "rank": 11,
+        "m_family": 51,
+        "bh_critical_value_q": 0.021568627450980395,
+        "adjusted_p_bh": 0.39351582424150483,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE__2021": {
+        "raw_p": 0.09413901665388023,
+        "rank": 12,
+        "m_family": 51,
+        "bh_critical_value_q": 0.023529411764705882,
+        "adjusted_p_bh": 0.39351582424150483,
+        "significant_at_q": false
+      },
+      "SWEEP__2020": {
+        "raw_p": 0.10288725306958366,
+        "rank": 13,
+        "m_family": 51,
+        "bh_critical_value_q": 0.025490196078431372,
+        "adjusted_p_bh": 0.39351582424150483,
+        "significant_at_q": false
+      },
+      "RETEST__2019": {
+        "raw_p": 0.10802395175256996,
+        "rank": 14,
+        "m_family": 51,
+        "bh_critical_value_q": 0.027450980392156866,
+        "adjusted_p_bh": 0.39351582424150483,
+        "significant_at_q": false
+      },
+      "PULLBACK__2022": {
+        "raw_p": 0.1249635406868156,
+        "rank": 15,
+        "m_family": 51,
+        "bh_critical_value_q": 0.029411764705882356,
+        "adjusted_p_bh": 0.424876038335173,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__2021": {
+        "raw_p": 0.1584935586515771,
+        "rank": 16,
+        "m_family": 51,
+        "bh_critical_value_q": 0.03137254901960784,
+        "adjusted_p_bh": 0.505198218201902,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT__2020": {
+        "raw_p": 0.19748838922078793,
+        "rank": 17,
+        "m_family": 51,
+        "bh_critical_value_q": 0.03333333333333333,
+        "adjusted_p_bh": 0.5908956257860144,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY__2021": {
+        "raw_p": 0.2085513973362404,
+        "rank": 18,
+        "m_family": 51,
+        "bh_critical_value_q": 0.03529411764705883,
+        "adjusted_p_bh": 0.5908956257860144,
+        "significant_at_q": false
+      },
+      "RETEST__2022": {
+        "raw_p": 0.22018197137539497,
+        "rank": 19,
+        "m_family": 51,
+        "bh_critical_value_q": 0.03725490196078431,
+        "adjusted_p_bh": 0.591014765270797,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE__2019": {
+        "raw_p": 0.29381864087136467,
+        "rank": 20,
+        "m_family": 51,
+        "bh_critical_value_q": 0.0392156862745098,
+        "adjusted_p_bh": 0.7492375342219799,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__2019": {
+        "raw_p": 0.3513886182999464,
+        "rank": 21,
+        "m_family": 51,
+        "bh_critical_value_q": 0.041176470588235294,
+        "adjusted_p_bh": 0.8049621451584023,
+        "significant_at_q": false
+      },
+      "PULLBACK__2020": {
+        "raw_p": 0.36280034245646886,
+        "rank": 22,
+        "m_family": 51,
+        "bh_critical_value_q": 0.04313725490196079,
+        "adjusted_p_bh": 0.8049621451584023,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE__2021": {
+        "raw_p": 0.3630221438949657,
+        "rank": 23,
+        "m_family": 51,
+        "bh_critical_value_q": 0.04509803921568628,
+        "adjusted_p_bh": 0.8049621451584023,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY__2019": {
+        "raw_p": 0.40249964591695697,
+        "rank": 24,
+        "m_family": 51,
+        "bh_critical_value_q": 0.047058823529411764,
+        "adjusted_p_bh": 0.8260476654535369,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE__2020": {
+        "raw_p": 0.4179283811962774,
+        "rank": 25,
+        "m_family": 51,
+        "bh_critical_value_q": 0.049019607843137254,
+        "adjusted_p_bh": 0.8260476654535369,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__2019": {
+        "raw_p": 0.42112233925082276,
+        "rank": 26,
+        "m_family": 51,
+        "bh_critical_value_q": 0.050980392156862744,
+        "adjusted_p_bh": 0.8260476654535369,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT_x_VOLATILITY_STATE__2020": {
+        "raw_p": 0.46947566714510147,
+        "rank": 27,
+        "m_family": 51,
+        "bh_critical_value_q": 0.05294117647058824,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "SWEEP__2019": {
+        "raw_p": 0.5288382380363842,
+        "rank": 28,
+        "m_family": 51,
+        "bh_critical_value_q": 0.05490196078431373,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__2022": {
+        "raw_p": 0.5355930152926602,
+        "rank": 29,
+        "m_family": 51,
+        "bh_critical_value_q": 0.056862745098039215,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT__2021": {
+        "raw_p": 0.5441570765918808,
+        "rank": 30,
+        "m_family": 51,
+        "bh_critical_value_q": 0.05882352941176471,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "RETEST__2020": {
+        "raw_p": 0.5481009473210203,
+        "rank": 31,
+        "m_family": 51,
+        "bh_critical_value_q": 0.060784313725490195,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_VOLATILITY_EXPANSION__2020": {
+        "raw_p": 0.5503445163544294,
+        "rank": 32,
+        "m_family": 51,
+        "bh_critical_value_q": 0.06274509803921569,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "SWEEP__2022": {
+        "raw_p": 0.5658664442068434,
+        "rank": 33,
+        "m_family": 51,
+        "bh_critical_value_q": 0.06470588235294118,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "BREAKOUT__2020": {
+        "raw_p": 0.5714328300298488,
+        "rank": 34,
+        "m_family": 51,
+        "bh_critical_value_q": 0.06666666666666667,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__2020": {
+        "raw_p": 0.5714328300298488,
+        "rank": 35,
+        "m_family": 51,
+        "bh_critical_value_q": 0.06862745098039216,
+        "adjusted_p_bh": 0.8326592666149225,
+        "significant_at_q": false
+      },
+      "PULLBACK__2019": {
+        "raw_p": 0.5885295824779654,
+        "rank": 36,
+        "m_family": 51,
+        "bh_critical_value_q": 0.07058823529411766,
+        "adjusted_p_bh": 0.8337502418437843,
+        "significant_at_q": false
+      },
+      "BREAKOUT__2021": {
+        "raw_p": 0.6609425514150145,
+        "rank": 37,
+        "m_family": 51,
+        "bh_critical_value_q": 0.07254901960784314,
+        "adjusted_p_bh": 0.8715218922067155,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__2021": {
+        "raw_p": 0.6609425514150145,
+        "rank": 38,
+        "m_family": 51,
+        "bh_critical_value_q": 0.07450980392156863,
+        "adjusted_p_bh": 0.8715218922067155,
+        "significant_at_q": false
+      },
+      "PULLBACK__2021": {
+        "raw_p": 0.6673280449727105,
+        "rank": 39,
+        "m_family": 51,
+        "bh_critical_value_q": 0.07647058823529412,
+        "adjusted_p_bh": 0.8715218922067155,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__2022": {
+        "raw_p": 0.6835465821229141,
+        "rank": 40,
+        "m_family": 51,
+        "bh_critical_value_q": 0.0784313725490196,
+        "adjusted_p_bh": 0.8715218922067155,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__2019": {
+        "raw_p": 0.7133345343903513,
+        "rank": 41,
+        "m_family": 51,
+        "bh_critical_value_q": 0.0803921568627451,
+        "adjusted_p_bh": 0.8873185671684858,
+        "significant_at_q": false
+      },
+      "SWEEP__2021": {
+        "raw_p": 0.7397964981634011,
+        "rank": 42,
+        "m_family": 51,
+        "bh_critical_value_q": 0.08235294117647059,
+        "adjusted_p_bh": 0.8983243191984156,
+        "significant_at_q": false
+      },
+      "RETEST__2021": {
+        "raw_p": 0.7589953297373492,
+        "rank": 43,
+        "m_family": 51,
+        "bh_critical_value_q": 0.08431372549019608,
+        "adjusted_p_bh": 0.9002037631768559,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY__2020": {
+        "raw_p": 0.8214476912709966,
+        "rank": 44,
+        "m_family": 51,
+        "bh_critical_value_q": 0.08627450980392158,
+        "adjusted_p_bh": 0.9521325512459279,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__2020": {
+        "raw_p": 0.8751225067042346,
+        "rank": 45,
+        "m_family": 51,
+        "bh_critical_value_q": 0.08823529411764706,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "COMPRESSION_RELEASE__2019": {
+        "raw_p": 0.8835239867247223,
+        "rank": 46,
+        "m_family": 51,
+        "bh_critical_value_q": 0.09019607843137256,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "BREAKOUT__2022": {
+        "raw_p": 0.9242918106769574,
+        "rank": 47,
+        "m_family": 51,
+        "bh_critical_value_q": 0.09215686274509804,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "BREAKOUT_x_TREND_PERSISTENCE__2022": {
+        "raw_p": 0.9242918106769574,
+        "rank": 48,
+        "m_family": 51,
+        "bh_critical_value_q": 0.09411764705882353,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "SWEEP_RECLAIM_x_LOCATION__2021": {
+        "raw_p": 0.9314609149127957,
+        "rank": 49,
+        "m_family": 51,
+        "bh_critical_value_q": 0.09607843137254903,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "VOLATILITY_EXPANSION__2022": {
+        "raw_p": 0.9551566578921002,
+        "rank": 50,
+        "m_family": 51,
+        "bh_critical_value_q": 0.09803921568627451,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      },
+      "DISPLACEMENT__2019": {
+        "raw_p": 0.9656337623165707,
+        "rank": 51,
+        "m_family": 51,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 0.9656337623165707,
+        "significant_at_q": false
+      }
+    }
+  },
+  "reclaim_discovery_and_validation_pvalues": {
+    "discovery_raw_p": 2.9611670640556686e-12,
+    "validation_raw_p": 4.0278131864491227e-08,
+    "discovery_bh": {
+      "raw_p": 2.9611670640556686e-12,
+      "rank": 2,
+      "m_family": 14,
+      "bh_critical_value_q": 0.014285714285714285,
+      "adjusted_p_bh": 2.072816944838968e-11,
+      "significant_at_q": true
+    },
+    "validation_bh": {
+      "raw_p": 4.0278131864491227e-08,
+      "rank": 1,
+      "m_family": 14,
+      "bh_critical_value_q": 0.007142857142857143,
+      "adjusted_p_bh": 4.2296415835229283e-07,
+      "significant_at_q": true
+    }
+  },
+  "guardrail_statement": "Questo ledger e' un controllo AGGIUNTIVO, non un sostituto della validazione indipendente. Un'ipotesi con adjusted_p significativo ma proveniente da un dataset di scoperta/selezione post-hoc resta POST_HOC_CANDIDATE finche' non superi una validazione indipendente vera (vedi Independent Validation Integrity, sec.4)."
+}

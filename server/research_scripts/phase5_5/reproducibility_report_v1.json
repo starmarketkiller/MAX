@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "purpose": "Test di riproducibilita' infrastrutturale (non una ri-validazione dell'edge)",
+  "tolerance_numeric": 1e-06,
+  "results_by_hypothesis": {
+    "BREAKOUT": {
+      "label": "negative_result",
+      "original_classification": "NO_EDGE",
+      "rerun_classification": "NO_EDGE",
+      "classification_matches": true,
+      "n_diffs_found": 0,
+      "diffs": []
+    },
+    "RECLAIM": {
+      "label": "sweep_reclaim",
+      "original_classification": "SUPPORTED_EDGE",
+      "rerun_classification": "SUPPORTED_EDGE",
+      "classification_matches": true,
+      "n_diffs_found": 0,
+      "diffs": []
+    }
+  },
+  "file_level_comparison": {
+    "xauusd_h4_bars.csv": {
+      "orig_lines": 4810,
+      "rerun_lines": 4810,
+      "line_count_matches": true,
+      "byte_identical": true,
+      "orig_sha256": "4f4a248ddfab4f0dafcab5274633e3001c9b6adcb922b71c733069668cf7ebcb",
+      "rerun_sha256": "4f4a248ddfab4f0dafcab5274633e3001c9b6adcb922b71c733069668cf7ebcb"
+    },
+    "market_state_dataset_v1.csv": {
+      "orig_lines": 4810,
+      "rerun_lines": 4810,
+      "line_count_matches": true,
+      "byte_identical": true,
+      "orig_sha256": "886c48342a0b29e6cd4aef7154e1b0cf9ba18acd8826e14eaad206dc1bb1df17",
+      "rerun_sha256": "886c48342a0b29e6cd4aef7154e1b0cf9ba18acd8826e14eaad206dc1bb1df17"
+    },
+    "events_v1.csv": {
+      "orig_lines": 8619,
+      "rerun_lines": 8619,
+      "line_count_matches": true,
+      "byte_identical": true,
+      "orig_sha256": "0662c7bf47edee64f31e812df932689e97648285917c3cbc4d3dcef9c90128d5",
+      "rerun_sha256": "0662c7bf47edee64f31e812df932689e97648285917c3cbc4d3dcef9c90128d5"
+    },
+    "outcomes_v1.csv": {
+      "orig_lines": 8618,
+      "rerun_lines": 8618,
+      "line_count_matches": true,
+      "byte_identical": true,
+      "orig_sha256": "9516cce315ec5c7d7668af83c1d786c71799534c219430228c1c9b6b07d5eb40",
+      "rerun_sha256": "9516cce315ec5c7d7668af83c1d786c71799534c219430228c1c9b6b07d5eb40"
+    }
+  },
+  "overall_verdict": "REPRODUCIBLE",
+  "note": "Byte-identical atteso per file deterministici senza dipendenze di sistema. Se byte_identical=false ma line_count_matches=true e i diff numerici sono entro tolleranza, la causa piu' probabile e' un ordine di iterazione/dict non garantito (irrilevante per la correttezza) - controllare i diff dettagliati prima di considerarlo un problema reale."
+}

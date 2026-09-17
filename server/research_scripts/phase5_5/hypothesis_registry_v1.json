@@ -1,0 +1,597 @@
+[
+  {
+    "hypothesis_id": "H001_EVENT_BREAKOUT",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 546,
+      "n_validation": 178,
+      "delta_p_discovery": 0.025987695314947268,
+      "delta_p_validation": 0.0005936137410904596,
+      "delta_e_validation": -0.47319906314540416
+    },
+    "family_or_name": "BREAKOUT",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H002_EVENT_FAILED_BREAKOUT",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 239,
+      "n_validation": 76,
+      "delta_p_discovery": -0.2799045672582602,
+      "delta_p_validation": -0.3126616692181809,
+      "delta_e_validation": -1.0998792981003893
+    },
+    "family_or_name": "FAILED_BREAKOUT",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H003_EVENT_SWEEP",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 343,
+      "n_validation": 157,
+      "delta_p_discovery": -0.020325979984261888,
+      "delta_p_validation": 0.02199449688710542,
+      "delta_e_validation": -0.10960463355827432
+    },
+    "family_or_name": "SWEEP",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H004_EVENT_RECLAIM",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "POST_HOC_CANDIDATE",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": false,
+    "post_hoc_selection_from_batch": true,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "SUPPORTED_EDGE",
+      "n_discovery": 215,
+      "n_validation": 85,
+      "delta_p_discovery": 0.2407321078561212,
+      "delta_p_validation": 0.29900844164545093,
+      "delta_e_validation": 0.6936103933855677
+    },
+    "family_or_name": "RECLAIM",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H005_EVENT_RETEST",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 253,
+      "n_validation": 84,
+      "delta_p_discovery": 0.03106460053905813,
+      "delta_p_validation": 0.001467386159235029,
+      "delta_e_validation": -0.1644398504482849
+    },
+    "family_or_name": "RETEST",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H006_EVENT_DISPLACEMENT",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 138,
+      "n_validation": 50,
+      "delta_p_discovery": 0.030555555555555558,
+      "delta_p_validation": 0.08707729468599035,
+      "delta_e_validation": -0.836034321179536
+    },
+    "family_or_name": "DISPLACEMENT",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H007_EVENT_COMPRESSION_RELEASE",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "OPPOSITE_EDGE",
+      "n_discovery": 346,
+      "n_validation": 136,
+      "delta_p_discovery": -0.016896156548832697,
+      "delta_p_validation": 0.07422931097921903,
+      "delta_e_validation": 0.737529688355012
+    },
+    "family_or_name": "COMPRESSION_RELEASE",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H008_EVENT_VOLATILITY_EXPANSION",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 1259,
+      "n_validation": 522,
+      "delta_p_discovery": -0.005761122520455353,
+      "delta_p_validation": 0.04304304304304307,
+      "delta_e_validation": -0.10358996922408847
+    },
+    "family_or_name": "VOLATILITY_EXPANSION",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H009_EVENT_PULLBACK",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.event_alone",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 2757,
+      "n_validation": 1228,
+      "delta_p_discovery": -0.022661417515374593,
+      "delta_p_validation": 0.006679354390074277,
+      "delta_e_validation": -0.8121950818691146
+    },
+    "family_or_name": "PULLBACK",
+    "condition_desc": null,
+    "base_family": null
+  },
+  {
+    "hypothesis_id": "H010_INTERACTION_BREAKOUT_x_VOLATILITY_EXPANSION",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.interaction",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 342,
+      "n_validation": 107,
+      "delta_p_discovery": 0.029483729774333667,
+      "delta_p_validation": 0.058641515203638916,
+      "delta_e_validation": -0.4692697451072321
+    },
+    "family_or_name": "BREAKOUT_x_VOLATILITY_EXPANSION",
+    "condition_desc": "la barra di breakout e' anche una barra di VOLATILITY_EXPANSION (true range > 1.0xATR)",
+    "base_family": "BREAKOUT"
+  },
+  {
+    "hypothesis_id": "H011_INTERACTION_BREAKOUT_x_TREND_PERSISTENCE",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.interaction",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 546,
+      "n_validation": 178,
+      "delta_p_discovery": 0.025987695314947268,
+      "delta_p_validation": 0.0005936137410904596,
+      "delta_e_validation": -0.47319906314540416
+    },
+    "family_or_name": "BREAKOUT_x_TREND_PERSISTENCE",
+    "condition_desc": "trend EMA gia' allineato alla direzione del breakout E persistenza di trend >= mediana del dataset",
+    "base_family": "BREAKOUT"
+  },
+  {
+    "hypothesis_id": "H012_INTERACTION_SWEEP_RECLAIM_x_LOCATION",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.interaction",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "NO_EDGE",
+      "n_discovery": 262,
+      "n_validation": 116,
+      "delta_p_discovery": -0.03821695988034324,
+      "delta_p_validation": -0.002878712973262476,
+      "delta_e_validation": -0.23725392996627104
+    },
+    "family_or_name": "SWEEP_RECLAIM_x_LOCATION",
+    "condition_desc": "lo sweep avviene a un estremo di location del range rolling (>=0.8 per sweep di high, <=0.2 per sweep di low)",
+    "base_family": "SWEEP"
+  },
+  {
+    "hypothesis_id": "H013_INTERACTION_COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.interaction",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "OPPOSITE_EDGE",
+      "n_discovery": 115,
+      "n_validation": 32,
+      "delta_p_discovery": -0.010053297903208636,
+      "delta_p_validation": 0.11059887600983487,
+      "delta_e_validation": 0.5860805716836914
+    },
+    "family_or_name": "COMPRESSION_RELEASE_x_DIRECTIONAL_EFFICIENCY",
+    "condition_desc": "directional_efficiency alla barra di release nel terzile piu' alto del dataset",
+    "base_family": "COMPRESSION_RELEASE"
+  },
+  {
+    "hypothesis_id": "H014_INTERACTION_DISPLACEMENT_x_VOLATILITY_STATE",
+    "created_at": "2026-09-17T18:00:00Z",
+    "source": "Phase5.interaction",
+    "status": "INSUFFICIENT_SAMPLE",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": "PHASE5_EDGE_DISCOVERY_BATCH_1",
+    "batch_size": 14,
+    "discovery_dataset": "market_state_dataset_v1 + events_v1, righe [0,3366) (2019-02-03..2021-03-12)",
+    "validation_dataset": "market_state_dataset_v1 + events_v1, righe [3366,4809) (2021-03-12..2022-02-03)",
+    "primary_outcome": "P(+1xATR before -1xATR) dalla chiusura/conferma evento, orizzonte 40 barre H4",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)",
+      "soglie 0.25/0.5/1.5/2/3xATR (outcomes_v1.csv)"
+    ],
+    "baseline_definition": "barre non-evento matched per (terzile volatilita, terzile trend, anno), stessa direzione - vedi phase5_event_dataset_and_baseline_methodology.md",
+    "direction_of_expected_effect": "positivo (P(evento)>P(baseline)) per ogni famiglia/interazione testata, dichiarato uniformemente prima dei risultati - nessuna direzione specifica per famiglia scelta ad-hoc",
+    "minimum_material_effect": "CI95 Wilson non sovrapposte fra evento e baseline (criterio SUPPORTED_EDGE, edge_discovery.py:classify())",
+    "allowed_subgroup_analyses": [
+      "discovery",
+      "validation",
+      "BUY",
+      "SELL",
+      "per anno (2019-2022)"
+    ],
+    "stop_condition": "n_discovery<15 o n_validation<15 -> INSUFFICIENT_SAMPLE, nessuna estensione del campione dopo il fatto",
+    "result": {
+      "classification_original": "INSUFFICIENT_SAMPLE",
+      "n_discovery": 25,
+      "n_validation": 9,
+      "delta_p_discovery": 0.12511256354393607,
+      "delta_p_validation": 0.1517792302106027,
+      "delta_e_validation": -1.3162325216388733
+    },
+    "family_or_name": "DISPLACEMENT_x_VOLATILITY_STATE",
+    "condition_desc": "displacement mentre atr_percentile e' nel terzile piu' basso (sorpresa di volatilita' in contesto quieto)",
+    "base_family": "DISPLACEMENT"
+  },
+  {
+    "hypothesis_id": "H015_SAR_EXTERNAL_VALIDATION",
+    "created_at": "2026-09-17T21:00:00Z",
+    "source": "Phase5.L",
+    "status": "REFUTED",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": null,
+    "batch_size": 1,
+    "discovery_dataset": "N/A (segnale SAR gia' congelato da fasi precedenti, non scoperto in Phase 5)",
+    "validation_dataset": "XAUUSD_DSC custom symbol, tick Dukascopy 2019-02-03..2022-02-03, MT5 Model=4",
+    "primary_outcome": "Profit Factor del segnale SAR congelato (H4, SL1xATR/TP6xATR, RAW)",
+    "secondary_outcomes": [
+      "BUY/SELL split",
+      "win rate",
+      "Sharpe"
+    ],
+    "baseline_definition": "N/A - confronto diretto contro 2 risultati precedenti indipendenti (broker XM PF1.281; Python pre-2023 Dukascopy PF0.93/0.97), non un baseline matched",
+    "direction_of_expected_effect": "PF>=1.15 per confermare l'edge visto sul broker XM",
+    "minimum_material_effect": "soglie dichiarate ex-ante: PASS>=1.15, BORDERLINE 0.95-1.15, FAIL<0.95 (vedi sar_dukascopy_independent_validation.md sec.6)",
+    "allowed_subgroup_analyses": [
+      "BUY",
+      "SELL"
+    ],
+    "stop_condition": "nessun rescue/filtro dopo aver visto il risultato",
+    "result": {
+      "classification_original": "SAR_EXTERNAL_CONFIRMATION_FAIL",
+      "PF": 0.61,
+      "n": 237
+    },
+    "family_or_name": "SAR_PSAR_EMA_TREND_SIGNAL",
+    "condition_desc": null,
+    "base_family": null
+  }
+]

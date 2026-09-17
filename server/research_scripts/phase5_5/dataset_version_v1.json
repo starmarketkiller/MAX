@@ -1,0 +1,36 @@
+{
+  "dataset_id": "MARKET_STATE_V1_436265d450475aaa",
+  "schema_version": 1,
+  "source_hashes": {
+    "dukascopy_tick_manifest_summary_sha256": "f84a12c7cdde4fc59b754040a462974c9040eb4801811a8199f03803fdc13e7e",
+    "dukascopy_manifest_n_days": 1097,
+    "data_file_sha256": {
+      "xauusd_h4_bars.csv": "4f4a248ddfab4f0dafcab5274633e3001c9b6adcb922b71c733069668cf7ebcb",
+      "market_state_dataset_v1.csv": "886c48342a0b29e6cd4aef7154e1b0cf9ba18acd8826e14eaad206dc1bb1df17",
+      "events_v1.csv": "0662c7bf47edee64f31e812df932689e97648285917c3cbc4d3dcef9c90128d5",
+      "outcomes_v1.csv": "9516cce315ec5c7d7668af83c1d786c71799534c219430228c1c9b6b07d5eb40"
+    },
+    "code_file_sha256": {
+      "build_h4_bars.py": "1bab02296edc3effa138b97af30cfc7c7fbcfbdb0e15fea2906540cfd8783158",
+      "build_market_state.py": "484bcbf500e12b47d69db38c0fa2177a02c986f155260de95e730ae724ef9943",
+      "build_events.py": "5afc9078a3bfbc84605fb1dcfac365839d7a6f162d05e7733ad05b1e5f0e6c3b",
+      "build_outcomes.py": "fa93266d1a5cafbfd21c59169fb7df92f05d82a450136e848ba566e0f5fdc70e",
+      "edge_discovery.py": "f6a18f0cee7423d47877632e9f9db07c852f2365e91441c1f6bdc7d0498f5e47"
+    }
+  },
+  "time_range": {
+    "start": "2019-02-03T00:00:00Z",
+    "end": "2022-02-03T00:00:00Z"
+  },
+  "symbols": [
+    "XAUUSD"
+  ],
+  "timezone": "UTC (bar boundary fisso 00/04/08/12/16/20, NON server-time del broker)",
+  "bar_construction": "H4 da tick Dukascopy, OHLC su BID, spread medio tracciato separatamente",
+  "feature_version": "MARKET_STATE_V1 (vedi feature_provenance_registry_v1.json)",
+  "event_detector_version": "EVENT_DETECTORS_V1 (vedi build_events.py CFG dict)",
+  "exclusions": "nessuna barra esclusa; NaN di warmup lasciati espliciti (vedi missing_data_policy_v1.md)",
+  "missingness_summary": "vedi missing_data_policy_v1.md - max 75/4809 righe (1.56%) per la colonna piu' colpita (atr_percentile), tutte confinate al warmup iniziale",
+  "rule": "Se cambia una componente che puo' modificare i risultati (bar construction, feature formula/parametri, detector eventi, orizzonte outcome), il dataset_id_hash cambia perche' cambia almeno uno degli hash sorgente sopra - non serve incrementare un numero di versione a mano e sperare di ricordarsene.",
+  "built_at": "2026-09-17T22:26:06.187484+00:00"
+}

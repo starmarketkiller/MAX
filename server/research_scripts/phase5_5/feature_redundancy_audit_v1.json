@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "n_features_analyzed": 25,
+  "correlation_threshold": 0.9,
+  "high_correlation_pairs": [
+    {
+      "feature_a": "lag1_autocorr_rolling",
+      "feature_b": "mean_reversion_score",
+      "pearson": -1.0,
+      "spearman": -1.0
+    },
+    {
+      "feature_a": "ema_slope_raw",
+      "feature_b": "ema_slope_atr_norm",
+      "pearson": 0.8994,
+      "spearman": 0.9757
+    },
+    {
+      "feature_a": "dist_from_rolling_high_atr",
+      "feature_b": "position_in_rolling_range",
+      "pearson": 0.8838,
+      "spearman": 0.9498
+    },
+    {
+      "feature_a": "ema_slope_atr_norm",
+      "feature_b": "position_in_rolling_range",
+      "pearson": 0.8963,
+      "spearman": 0.938
+    },
+    {
+      "feature_a": "dist_from_rolling_low_atr",
+      "feature_b": "position_in_rolling_range",
+      "pearson": 0.8726,
+      "spearman": 0.9334
+    },
+    {
+      "feature_a": "ema_slope_raw",
+      "feature_b": "position_in_rolling_range",
+      "pearson": 0.7956,
+      "spearman": 0.9142
+    }
+  ],
+  "known_derived_relationships": [
+    {
+      "derived": "mean_reversion_score",
+      "from": "lag1_autocorr_rolling",
+      "note": "mean_reversion_score = -lag1_autocorr_rolling per costruzione"
+    },
+    {
+      "derived": "ema_slope_atr_norm",
+      "from": "ema_slope_raw",
+      "note": "ema_slope_atr_norm = ema_slope_raw / ATR, stessa quantita' solo riscalata"
+    },
+    {
+      "derived": "dist_from_rolling_high_atr",
+      "from": "dist_from_rolling_low_atr",
+      "note": "stessa finestra rolling (N=20), lati opposti dello stesso range"
+    },
+    {
+      "derived": "dist_from_prev_day_high_atr",
+      "from": "dist_from_prev_day_low_atr",
+      "note": "stesso giorno precedente, lati opposti"
+    },
+    {
+      "derived": "dist_from_prev_week_high_atr",
+      "from": "dist_from_prev_week_low_atr",
+      "note": "stessa settimana precedente, lati opposti"
+    }
+  ],
+  "variance_report": {
+    "atr": {
+      "std": 4.108215,
+      "n_unique": 4796,
+      "near_constant": false
+    },
+    "return_direction": {
+      "std": 0.999454,
+      "n_unique": 3,
+      "near_constant": true
+    },
+    "ema_slope_raw": {
+      "std": 1.482003,
+      "n_unique": 4789,
+      "near_constant": false
+    },
+    "ema_slope_atr_norm": {
+      "std": 0.148408,
+      "n_unique": 4789,
+      "near_constant": false
+    },
+    "directional_efficiency": {
+      "std": 0.183372,
+      "n_unique": 4789,
+      "near_constant": false
+    },
+    "trend_persistence_bars": {
+      "std": 1.25371,
+      "n_unique": 10,
+      "near_constant": false
+    },
+    "atr_percentile": {
+      "std": 32.231333,
+      "n_unique": 416,
+      "near_constant": false
+    },
+    "realized_vol": {
+      "std": 0.001907,
+      "n_unique": 4789,
+      "near_constant": false
+    },
+    "vol_acceleration": {
+      "std": 1.074935,
+      "n_unique": 4791,
+      "near_constant": false
+    },
+    "compression_percentile": {
+      "std": 33.469288,
+      "n_unique": 181,
+      "near_constant": false
+    },
+    "dist_from_rolling_high_atr": {
+      "std": 1.693078,
+      "n_unique": 4788,
+      "near_constant": false
+    },
+    "dist_from_rolling_low_atr": {
+      "std": 1.820994,
+      "n_unique": 4790,
+      "near_constant": false
+    },
+    "position_in_rolling_range": {
+      "std": 0.287086,
+      "n_unique": 4782,
+      "near_constant": false
+    },
+    "dist_from_prev_day_high_atr": {
+      "std": 1.55229,
+      "n_unique": 4796,
+      "near_constant": false
+    },
+    "dist_from_prev_day_low_atr": {
+      "std": 1.584024,
+      "n_unique": 4796,
+      "near_constant": false
+    },
+    "dist_from_prev_week_high_atr": {
+      "std": 3.361453,
+      "n_unique": 4796,
+      "near_constant": false
+    },
+    "dist_from_prev_week_low_atr": {
+      "std": 3.214512,
+      "n_unique": 4796,
+      "near_constant": false
+    },
+    "roc": {
+      "std": 0.012235,
+      "n_unique": 4798,
+      "near_constant": false
+    },
+    "momentum_acceleration": {
+      "std": 0.005475,
+      "n_unique": 4798,
+      "near_constant": false
+    },
+    "momentum_persistence_bars": {
+      "std": 1.408489,
+      "n_unique": 11,
+      "near_constant": false
+    },
+    "lag1_autocorr_rolling": {
+      "std": 0.12978,
+      "n_unique": 4780,
+      "near_constant": false
+    },
+    "variance_ratio_proxy": {
+      "std": 0.215975,
+      "n_unique": 4746,
+      "near_constant": false
+    },
+    "mean_reversion_score": {
+      "std": 0.12978,
+      "n_unique": 4780,
+      "near_constant": false
+    },
+    "hour_utc": {
+      "std": 6.947827,
+      "n_unique": 6,
+      "near_constant": false
+    },
+    "day_of_week": {
+      "std": 1.559034,
+      "n_unique": 6,
+      "near_constant": false
+    }
+  },
+  "classification": {
+    "atr": "UNIQUE",
+    "return_direction": "KEEP_FOR_INTERPRETABILITY",
+    "ema_slope_raw": "HIGHLY_CORRELATED",
+    "ema_slope_atr_norm": "REDUNDANT",
+    "directional_efficiency": "UNIQUE",
+    "trend_persistence_bars": "UNIQUE",
+    "atr_percentile": "UNIQUE",
+    "realized_vol": "UNIQUE",
+    "vol_acceleration": "UNIQUE",
+    "compression_percentile": "UNIQUE",
+    "dist_from_rolling_high_atr": "REDUNDANT",
+    "dist_from_rolling_low_atr": "HIGHLY_CORRELATED",
+    "position_in_rolling_range": "HIGHLY_CORRELATED",
+    "dist_from_prev_day_high_atr": "REDUNDANT",
+    "dist_from_prev_day_low_atr": "UNIQUE",
+    "dist_from_prev_week_high_atr": "REDUNDANT",
+    "dist_from_prev_week_low_atr": "UNIQUE",
+    "roc": "UNIQUE",
+    "momentum_acceleration": "UNIQUE",
+    "momentum_persistence_bars": "UNIQUE",
+    "lag1_autocorr_rolling": "HIGHLY_CORRELATED",
+    "variance_ratio_proxy": "UNIQUE",
+    "mean_reversion_score": "REDUNDANT",
+    "hour_utc": "KEEP_FOR_INTERPRETABILITY",
+    "day_of_week": "KEEP_FOR_INTERPRETABILITY"
+  },
+  "classification_counts": {
+    "UNIQUE": 13,
+    "REDUNDANT": 5,
+    "HIGHLY_CORRELATED": 4,
+    "KEEP_FOR_INTERPRETABILITY": 3
+  },
+  "no_automatic_removal": true,
+  "note": "Nessuna feature rimossa automaticamente, come richiesto. La classificazione informa scelte future di modellazione (es. evitare di usare due feature HIGHLY_CORRELATED come predittori indipendenti in una regressione logistica), non e' un'azione sul dataset esistente."
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "regime_definition": {
+    "states": [
+      "HIGH_VOL",
+      "LOW_VOL",
+      "TRANSITION",
+      "TRENDING",
+      "RANGING"
+    ],
+    "priority_order": [
+      "HIGH_VOL",
+      "LOW_VOL",
+      "TRANSITION",
+      "TRENDING",
+      "RANGING"
+    ],
+    "priority_rationale": "vol estrema domina la descrizione qualitativa; poi la freschezza del trend (TRANSITION) prima di dichiarare un trend stabilito; infine TRENDING vs RANGING per esclusione"
+  },
+  "feature_inputs": [
+    "atr_percentile",
+    "directional_efficiency",
+    "trend_persistence_bars"
+  ],
+  "thresholds": {
+    "vol_tercile_33_67": [
+      24.853976126141532,
+      66.66666666666666
+    ],
+    "directional_efficiency_tercile_33_67": [
+      0.1460914341369487,
+      0.3241978172025521
+    ],
+    "transition_freshness_bars_leq": 2,
+    "thresholds_calibration_window": "discovery only, righe [0,3366)"
+  },
+  "observation_point": "bar_close (stesse garanzie causali di market_state_dataset_v1)",
+  "is_a_trading_signal": false,
+  "intended_use": "stratificazione descrittiva per regime_breakdown nel Probability Engine e per audit di stabilita' di un edge component - MAI come trigger di entrata",
+  "distribution_all": {
+    "LOW_VOL": 1612,
+    "HIGH_VOL": 1498,
+    "TRANSITION": 1260,
+    "RANGING": 242,
+    "TRENDING": 122,
+    "NaN": 75
+  },
+  "distribution_discovery": {
+    "LOW_VOL": 1097,
+    "HIGH_VOL": 1090,
+    "TRANSITION": 862,
+    "RANGING": 157,
+    "TRENDING": 85,
+    "NaN": 75
+  },
+  "distribution_validation": {
+    "LOW_VOL": 515,
+    "HIGH_VOL": 408,
+    "TRANSITION": 398,
+    "RANGING": 85,
+    "TRENDING": 37
+  },
+  "built_at": "2026-09-17T22:17:18.682181+00:00",
+  "script": "server/research_scripts/phase5_5/build_regime_layer.py"
+}
