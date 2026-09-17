@@ -62,7 +62,7 @@
       "display_name": "Amd Cont",
       "aliases": [],
       "family": "AMD",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": null,
       "live_implementation": true,
       "research_implementation": true,
@@ -74,8 +74,8 @@
       "supported_timeframes": [
         "M30"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -150,7 +150,7 @@
       "display_name": "Bjorgum",
       "aliases": [],
       "family": "LIQUIDITY",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 6,
       "live_implementation": true,
       "research_implementation": true,
@@ -162,8 +162,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -458,7 +458,7 @@
       "display_name": "Fvg Mit",
       "aliases": [],
       "family": "SMC",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 19,
       "live_implementation": true,
       "research_implementation": true,
@@ -470,8 +470,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -546,7 +546,7 @@
       "display_name": "Ifvg",
       "aliases": [],
       "family": "SMC",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 18,
       "live_implementation": true,
       "research_implementation": true,
@@ -558,8 +558,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -612,7 +612,7 @@
       "display_name": "Ldn Reversal",
       "aliases": [],
       "family": "SESSION",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": null,
       "live_implementation": true,
       "research_implementation": true,
@@ -624,8 +624,8 @@
       "supported_timeframes": [
         "M15"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -744,7 +744,7 @@
       "display_name": "Liq Void",
       "aliases": [],
       "family": "SMC",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": null,
       "live_implementation": true,
       "research_implementation": true,
@@ -756,8 +756,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -1008,7 +1008,7 @@
       "display_name": "Ob Mit",
       "aliases": [],
       "family": "SMC",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 20,
       "live_implementation": true,
       "research_implementation": true,
@@ -1020,8 +1020,8 @@
       "supported_timeframes": [
         "D1"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -1184,7 +1184,7 @@
       "display_name": "Range Fade",
       "aliases": [],
       "family": "VOLATILITY",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 37,
       "live_implementation": true,
       "research_implementation": true,
@@ -1196,8 +1196,8 @@
       "supported_timeframes": [
         "D1"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -1582,7 +1582,7 @@
         "CISD"
       ],
       "family": "LIQUIDITY",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": null,
       "live_implementation": true,
       "research_implementation": true,
@@ -1594,8 +1594,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },
@@ -1648,7 +1648,7 @@
       "display_name": "Turtle Soup",
       "aliases": [],
       "family": "LIQUIDITY",
-      "status": "ACTIVE",
+      "status": "DISABLED",
       "selector_index": 17,
       "live_implementation": true,
       "research_implementation": true,
@@ -1660,8 +1660,8 @@
       "supported_timeframes": [
         "H1"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },

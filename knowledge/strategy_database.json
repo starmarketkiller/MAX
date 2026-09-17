@@ -195,11 +195,13 @@
       "nome": "BJORGUM",
       "selector_index": 6,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "si",
       "redesign_effettuati": [],
       "bug_storici": [],
-      "fix_applicati": [],
+      "fix_applicati": [
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
+      ],
       "ultimo_sweep": {
         "run_id": "sweep37-baseline-e6ce816__S06__BJORGUM__20260719_052449",
         "round": "sweep37-baseline-e6ce816",
@@ -220,7 +222,7 @@
       "WR_pct": 49.02,
       "expectancy_R": -0.071,
       "affidabilita_dati": "run baseline completa (round corrente, leva effettiva 1:100, impatto leva nullo su sweep isolato)",
-      "decisione_corrente": "PF 2.14 storico su 5 trade = rumore statistico (Principio 4)",
+      "decisione_corrente": "disabilitata in produzione reale (backtest reale MT5 -8.6R, 5 anni su 6 negativi; bug di proxy corretto e ri-testato, verdetto negativo confermato)",
       "note": null
     },
     {
@@ -509,11 +511,13 @@
       "nome": "TURTLE_SOUP",
       "selector_index": 17,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "si",
       "redesign_effettuati": [],
       "bug_storici": [],
-      "fix_applicati": [],
+      "fix_applicati": [
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
+      ],
       "ultimo_sweep": null,
       "nota_sweep": null,
       "trade": null,
@@ -521,14 +525,14 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": "verificata 17/07: nessun bug reale (sweep/rejection stessa barra per costruzione)",
+      "decisione_corrente": "disabilitata in produzione reale (segnale live mai robustamente profittevole, PF massimo 0.94 su vari split TF/direzione)",
       "note": "MT5 2.12 vs sito 0.77 storici: Principio 5"
     },
     {
       "nome": "IFVG",
       "selector_index": 18,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "consolidata su NXR",
       "redesign_effettuati": [
         "17/07: motore NXR (zone persistenti) unica fonte, legacy escluso"
@@ -539,7 +543,8 @@
       ],
       "fix_applicati": [
         "375c29e",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -548,14 +553,14 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": null,
+      "decisione_corrente": "disabilitata in produzione reale E strutturalmente irraggiungibile indipendentemente dal toggle: NXS_Strat_IFVG_Reversal e' rediretta via #define a NXR_Strat_IFVG_Reversal, gated da InpNXR_Enable=false hardcoded - codice morto per costruzione, non solo disattivato",
       "note": null
     },
     {
       "nome": "FVG_MIT",
       "selector_index": 19,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "consolidata su NXR",
       "redesign_effettuati": [
         "17/07: idem IFVG"
@@ -565,7 +570,8 @@
       ],
       "fix_applicati": [
         "375c29e",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -574,14 +580,14 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": null,
+      "decisione_corrente": "disabilitata in produzione reale E strutturalmente irraggiungibile indipendentemente dal toggle: stesso redirect NXR di IFVG (InpNXR_Enable=false hardcoded) - codice morto per costruzione",
       "note": null
     },
     {
       "nome": "OB_MIT",
       "selector_index": 20,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "consolidata su NXR",
       "redesign_effettuati": [
         "17/07: idem + separato dal concetto breaker"
@@ -592,7 +598,8 @@
       ],
       "fix_applicati": [
         "375c29e",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -601,7 +608,7 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": "disabilitata di fatto nel router legacy; breaker = strategia futura separata",
+      "decisione_corrente": "disabilitata in produzione reale E strutturalmente irraggiungibile indipendentemente dal toggle: stesso redirect NXR (InpNXR_Enable=false hardcoded); inoltre, come scritto, e' un wrapper letterale di ORDER_BLOCK (duplicato vero), non una vera mitigazione",
       "note": null
     },
     {
@@ -730,7 +737,7 @@
       "nome": "THREE_BAR_DELIVERY_BREAK",
       "selector_index": null,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "rinominata (ex CISD)",
       "redesign_effettuati": [
         "17/07: rename onesto, logica invariata"
@@ -740,7 +747,8 @@
       ],
       "fix_applicati": [
         "1bb167a",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -749,14 +757,14 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": "versione 'vera' provata in passato: 0 setup su 1067 - tenuta la logica funzionante",
+      "decisione_corrente": "disabilitata in produzione reale (segnale live PF 0.51-0.65 sulla ricetta esatta; rinominato onestamente da CISD il 17/07, logica di trading invariata dal rename)",
       "note": "toggle input resta InpUseStrat_CISD per compatibilita' .set"
     },
     {
       "nome": "AMD_CONT",
       "selector_index": null,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "si",
       "redesign_effettuati": [
         "17/07: tutto su barra chiusa (era mix close[1]+bid live)"
@@ -766,7 +774,8 @@
       ],
       "fix_applicati": [
         "9db13f9",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -775,7 +784,7 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": null,
+      "decisione_corrente": "disabilitata in produzione reale (segnale live mai profittevole, PF 0.53-0.71 su piu' split TF/direzione; fix 17/07 su timing barra chiusa non ha cambiato il verdetto)",
       "note": null
     },
     {
@@ -803,7 +812,7 @@
       "nome": "LDN_REVERSAL",
       "selector_index": null,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "si",
       "redesign_effettuati": [
         "beneficia del fix refHigh/refLow (9db13f9)"
@@ -812,7 +821,8 @@
         "stesso problema CHOCH di JUDAS_SWING"
       ],
       "fix_applicati": [
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -821,7 +831,7 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": "spec timestamp CHOCH pronta",
+      "decisione_corrente": "disabilitata in produzione reale (segnale live mai profittevole, PF 0.36-0.78; beneficia del fix refHigh/refLow ma il verdetto resta negativo)",
       "note": null
     },
     {
@@ -901,7 +911,7 @@
       "nome": "LIQ_VOID",
       "selector_index": null,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "riscritta",
       "redesign_effettuati": [
         "17/07: vera geometria FVG a 3 candele (Low[c3]>High[c1])"
@@ -911,7 +921,8 @@
       ],
       "fix_applicati": [
         "375c29e",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -920,7 +931,7 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": null,
+      "decisione_corrente": "disabilitata in produzione reale E irraggiungibile nella configurazione di default: richiede htf.bias!=NEUTRAL ma InpUseHTFBias=false di default rende NXS_GetHTFBias() sempre NEUTRAL - raggiungibile solo se un operatore attiva manualmente InpUseHTFBias, a differenza di IFVG/FVG_MIT/OB_MIT che sono morti incondizionatamente",
       "note": null
     },
     {
@@ -953,7 +964,7 @@
       "nome": "RANGE_FADE",
       "selector_index": 37,
       "versione": "baseline e6ce816 (EA 2.50)",
-      "stato": "attiva",
+      "stato": "attiva nel codice, disabilitata in produzione reale",
       "implementata": "riscritta",
       "redesign_effettuati": [
         "17/07: range CONFIRMED solo con persistenza ADX>=70% barre + ampiezza stabile + 2 tocchi/lato + occupazione bilanciata + no breakout recente; entry su barra chiusa"
@@ -965,7 +976,8 @@
       ],
       "fix_applicati": [
         "383a27a",
-        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)"
+        "2026-07-17/18 (sessione fix notturna, commit 3cba036..e6ce816)",
+        "18/09 (Phase 5 sec.A registry semantic cleanup) - stato corretto da 'attiva' a 'attiva nel codice, disabilitata in produzione reale' per allineare default_enabled della registry generata al vero InpStrat_*/InpUseStrat_*=false compilato; nessuna modifica alla logica di trading."
       ],
       "ultimo_sweep": null,
       "nota_sweep": null,
@@ -974,7 +986,7 @@
       "WR_pct": null,
       "expectancy_R": null,
       "affidabilita_dati": "in attesa della passata del round corrente; dati pre-fix solo indicativi, non conclusivi",
-      "decisione_corrente": null,
+      "decisione_corrente": "disabilitata in produzione reale (dopo il redesign 17/07 il gate di conferma range - persistenza ADX>=70% + ampiezza stabile + 2 tocchi/lato - si attiva solo 6 volte in 10 anni, tutte in perdita: campione troppo piccolo per concludere, ma nessuna evidenza di edge)",
       "note": null
     },
     {
