@@ -1736,7 +1736,7 @@
       "display_name": "Volatility Breakout Confirmed",
       "aliases": [],
       "family": "TREND",
-      "status": "ACTIVE",
+      "status": "EXPERIMENTAL",
       "selector_index": 56,
       "live_implementation": true,
       "research_implementation": true,
@@ -1748,8 +1748,8 @@
       "supported_timeframes": [
         "H4"
       ],
-      "default_enabled": true,
-      "auto_disable_eligible": true,
+      "default_enabled": false,
+      "auto_disable_eligible": false,
       "risk_class": "STANDARD",
       "schema_version": 1
     },

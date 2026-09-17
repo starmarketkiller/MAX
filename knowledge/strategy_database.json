@@ -1322,12 +1322,13 @@
       "nome": "VOLATILITY_BREAKOUT_CONFIRMED",
       "selector_index": 56,
       "versione": "Strategy Foundry Phase 3 (18/09), FROZEN_SIGNAL_SPEC_V1",
-      "stato": "attiva",
+      "stato": "sperimentale",
       "implementata": "si",
       "redesign_effettuati": [],
       "bug_storici": [],
       "fix_applicati": [
-        "18/09 - Phase 3 Semantic Correction: entryRef corretto da ASK/BID live a iClose(tf,1) (chiusura barra segnale) per aderire a FROZEN_SIGNAL_SPEC_V1 (entry=signal-bar close)"
+        "18/09 - Phase 3 Semantic Correction: entryRef corretto da ASK/BID live a iClose(tf,1) (chiusura barra segnale) per aderire a FROZEN_SIGNAL_SPEC_V1 (entry=signal-bar close)",
+        "17/09 (Phase 4 sec.0 preflight) - stato corretto da 'attiva' a 'sperimentale': InpStrat_VolBreakoutConfirmed=false nel codice EA (mai verificata su MT5, default OFF), ma stato=attiva faceva calcolare default_enabled=true/research_parity=APPROXIMATE nella registry - mismatch fra metadata e comportamento reale. Verdetto resta HOLD_NEEDS_MORE_EVIDENCE."
       ],
       "ultimo_sweep": null
     }
