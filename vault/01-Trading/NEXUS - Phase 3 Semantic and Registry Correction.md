@@ -91,4 +91,4 @@ L'unica modifica ai valori economici della strategia è la sostituzione del prez
 
 ## Commit SHA
 
-`<inserire dopo commit>`
+`8c24cd4`
