@@ -148,4 +148,4 @@ Nessun blocker residuo per Volatility_Breakout stesso. Blocker tecnico documenta
 
 ## Commit
 
-`[da assegnare]`
+`f035d30`
