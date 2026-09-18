@@ -88,7 +88,7 @@ def static_checks():
             # uno slice esplicito (.iloc[:SPLIT... o .loc[:SPLIT...) nella stessa riga - euristica,
             # richiede poi verifica dinamica sotto (i falsi positivi sono attesi e filtrati a mano).
             if re.search(r"nanpercentile|\.median\(\)|\.mean\(\)|\.std\(\)", line) and re.search(r"state\[|state\.loc|state\.iloc", line):
-                if not re.search(r"iloc\[:?\s*SPLIT|disc_mask|disc\[", line):
+                if not re.search(r"iloc\[:?\s*SPLIT|disc_mask|disc\[|disc_state", line):
                     flag("THRESHOLD_FIT_SCOPE_UNVERIFIED", "REVIEW", rel, i, line,
                          "Calcolo di soglia/statistica su 'state' senza uno slice esplicito di discovery visibile in questa riga - verificare manualmente se include la validation.",
                          "MANUAL_REVIEW_REQUIRED")

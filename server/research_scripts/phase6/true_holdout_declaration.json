@@ -1,0 +1,26 @@
+{
+  "declared_at": "2026-09-18T00:00:00Z",
+  "declared_before_fetching": true,
+  "data_source": "Dukascopy XAUUSD tick archive (stessa API/formato gia' validata in Phase 4 - datafeed.dukascopy.com, downloader v2), simbolo/fonte IDENTICI a Phase 5 - la differenza e' ESCLUSIVAMENTE il periodo temporale",
+  "period": {
+    "holdout_start": "2022-02-04T00:00:00Z",
+    "holdout_end": "2023-02-03T23:59:59Z",
+    "buffer_lookback_start": "2021-11-01T00:00:00Z (dati GIA' presenti in cache da Phase 4/5, riusati SOLO per il warmup delle feature rolling - es. ATR percentile a 252 barre - MAI usati come osservazioni valutate per il verdetto)",
+    "rationale_boundary": "Il periodo di holdout inizia il giorno IMMEDIATAMENTE successivo alla fine della finestra usata in Phase 5 (che terminava 2022-02-03 incluso), senza gap ne' sovrapposizione, e copre esattamente un anno - stessa durata di un 'epoch' del dataset originale, non scelta per ottimizzare il campione atteso"
+  },
+  "why_uncontaminated": [
+    "Questo intervallo di date NON e' mai stato scaricato prima di questa dichiarazione (verificabile: il manifest di Phase 4 (server/data_cache/dukascopy_phaseH/manifest.json) copre solo 2019-02-03..2022-02-03, zero giorni di questo nuovo intervallo)",
+    "Nessuna statistica aggregata, percentile, soglia o parametro calcolato su questo intervallo e' mai stato calcolato prima d'ora - il fetch avviene DOPO il freeze di H006_frozen_spec.json e di frozen_baseline_parameters.json",
+    "Il detector (SWEEP/RECLAIM) non e' stato scelto guardando questo periodo - e' lo stesso codice, immutato, che ha generato il finding originale in Phase 5",
+    "Il baseline non e' stato scelto/calibrato su questo periodo - le soglie di coarsening e la standardizzazione NN sono importate da frozen_baseline_parameters.json, calcolate SOLO sulla discovery originale (2019-2021)",
+    "L'outcome primario (P(+1xATR before -1xATR), orizzonte 40 barre) e' lo stesso identico usato in Phase 5, non scelto guardando questo periodo"
+  ],
+  "sample_expected_roughly": "60-120 eventi RECLAIM (basato su ~100/anno osservato in Phase 5 su 3 anni)",
+  "known_limitations": [
+    "Stessa fonte dati (Dukascopy) di Phase 5 - questo NON e' un CROSS_FEED_VALIDATION (E4), solo un TEMPORAL_HOLDOUT pulito (potenziale E3). Un vero E4 richiedera' una fonte indipendente in una fase successiva.",
+    "Un solo anno di mercato: potrebbe non coprire tutti i regimi (es. se il 2022-2023 fosse anomalo per l'oro - da verificare con il Market Regime Layer come diagnostica, non come giustificazione per scartare il risultato)",
+    "Il buffer di lookback (2021-11-01..2022-02-03) e' dati GIA' visti in Phase 5 - usato solo per calcolare feature rolling all'inizio della finestra di holdout, non come osservazioni valutate; dichiarato esplicitamente per trasparenza anche se non e' leakage nel senso del divieto (nessuna barra di lookback e' mai contata come evento/outcome del test)",
+    "Nessun controllo ancora possibile su eventuali revisioni/correzioni retroattive della fonte Dukascopy stessa (fuori dal controllo di questo progetto)"
+  ],
+  "verdict_if_unavailable": "TRUE_HOLDOUT_NOT_AVAILABLE - non applicabile: il periodo esiste ed e' scaricabile, procediamo con il fetch."
+}

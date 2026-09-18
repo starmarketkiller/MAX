@@ -1,0 +1,67 @@
+{
+  "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+  "parent_hypothesis": "H004_EVENT_RECLAIM (Phase 5, POST_HOC_CANDIDATE, E2)",
+  "frozen_at": "2026-09-18T00:00:00Z",
+  "frozen_before_holdout_data_seen": true,
+  "purpose": "Verificare se EC-LIQUIDITY_SWEEP_RECLAIM passa da E2 (INTERNAL_VALIDATION / POST_HOC_CANDIDATE) a E3 (TRUE_HOLDOUT_VALIDATION), su un periodo mai toccato da discovery/selection/validation contaminata/scelta del detector/baseline/outcome.",
+
+  "detector_definition_FROZEN_IDENTICAL_TO_PHASE5": {
+    "source_of_truth": "server/research_scripts/phase5/build_events.py, funzioni SWEEP e RECLAIM, CFG dict - NESSUNA modifica, stesso codice, stessi parametri",
+    "sweep_rule": "high[i] > max(high[i-20:i]) AND close[i] < max(high[i-20:i]) => SWEEP direction=-1 (swept_side=HIGH); simmetrico su low[i] < min(low[i-20:i]) AND close[i] > min(low[i-20:i]) => SWEEP direction=1 (swept_side=LOW). sweep_lookback_n=20 (esclude la barra corrente).",
+    "reclaim_rule": "dopo un evento SWEEP alla barra j (livello=level, swept_side), un RECLAIM e' confermato alla prima barra i in (j, j+10] con close[i] > level (se swept_side=HIGH, direzione risultante=+1) o close[i] < level (se swept_side=LOW, direzione risultante=-1). reclaim_horizon=10.",
+    "observation_point": "chiusura della barra di CONFERMA del reclaim (confirmed_at_row_index), non la barra dello sweep originale - identico a Phase 5",
+    "direction_convention": "direction = +1 se il reclaim e' al rialzo (sweep di un LOW poi ripresa sopra il livello), -1 se al ribasso (sweep di un HIGH poi ripresa sotto il livello) - identico a Phase 5",
+    "no_semantic_drift_check": "il codice build_events.py NON viene copiato/riscritto per questa fase - viene IMPORTATO/RIUSATO letteralmente sui nuovi dati H4, per garantire zero drift semantico"
+  },
+
+  "primary_outcome": {
+    "definition": "P(+1.0xATR before -1.0xATR) dalla chiusura della barra di conferma reclaim, orizzonte 40 barre H4, nessuna gestione dinamica - IDENTICO alla soglia primaria di Phase 5 (PRIMARY_THRESHOLD=1.0, edge_discovery.py)",
+    "outcome_basis": "ATR_NORMALIZED (stessa valuta comune usata in Phase 5 per il confronto evento-vs-baseline)"
+  },
+  "secondary_outcomes": [
+    "mfe_ATR medio (DeltaE) sullo stesso orizzonte",
+    "soglie aggiuntive 0.25/0.5/1.5/2/3xATR, per completezza descrittiva (non usate per il verdetto primario)"
+  ],
+
+  "baseline_definition_FROZEN": {
+    "method": "Baseline Engine v2 (Phase 5.5): coarsened matching (terzile volatilita x terzile trend x anno) + nearest-neighbour su feature standardizzate (atr_percentile, ema_slope_atr_norm, directional_efficiency, position_in_rolling_range, roc)",
+    "critical_freeze": "le SOGLIE di coarsening (terzili vol/trend) e i parametri di STANDARDIZZAZIONE (media/std delle feature NN) sono presi DAL CALCOLO ORIGINALE DI PHASE 5 SULLA SOLA FINESTRA DI DISCOVERY (righe [0,3366) del dataset 2019-2021), NON ricalcolati sul periodo di holdout - vedi frozen_baseline_parameters.json per i valori numerici esatti, salvati PRIMA di guardare il holdout",
+    "baseline_population": "barre non-SWEEP/non-RECLAIM ALL'INTERNO del periodo di holdout stesso (per confrontare RECLAIM con barre contemporanee comparabili, non con barre di 3 anni prima), filtrate per cella usando le soglie frozen sopra",
+    "match_quality_thresholds": "GOOD<0.5, FAIR<1.0, POOR>=1.0 (distanza euclidea media sulle feature standardizzate) - identico a Phase 5.5"
+  },
+
+  "minimum_material_effect": {
+    "delta_p_minimum": 0.15,
+    "rationale": "circa la meta' del DeltaP osservato in validation Phase 5 (~0.30) - un effetto dimezzato sarebbe ancora economicamente non banale; un effetto sotto questa soglia non giustifica da solo la promozione a E3 anche se il segno resta positivo"
+  },
+  "minimum_sample": {
+    "n_minimum": 30,
+    "n_expected_roughly": "60-120 (basato sul tasso di ~100 RECLAIM/anno osservato in Phase 5 su 3 anni, ~300 eventi totali)"
+  },
+  "required_direction_consistency": "sia BUY (direction=+1) sia SELL (direction=-1) devono mostrare DeltaP con lo STESSO segno del risultato aggregato (nessun collasso a zero/negativo su un lato che spieghi da solo l'intero effetto aggregato)",
+
+  "pass_fail_criteria_FROZEN": {
+    "PASS": "DeltaP_holdout > 0 AND DeltaP_holdout >= 0.15 AND CI95 Wilson (evento) non sovrapposta a CI95 Wilson (baseline) AND n_holdout >= 30 AND required_direction_consistency soddisfatta",
+    "BORDERLINE": "DeltaP_holdout > 0 MA (DeltaP_holdout < 0.15 OR n_holdout < 30 OR CI95 sovrapposte OR un lato BUY/SELL mostra un segno opposto pur restando l'aggregato positivo)",
+    "FAIL": "DeltaP_holdout <= 0, OR inversione rispetto a Phase 5 (segno negativo forte), OR n_holdout < minimum_sample con effetto comunque non chiaramente positivo, OR dipendenza unidirezionale forte non prevista (es. un lato fortemente negativo che l'altro compensa)"
+  },
+  "no_rescue_clause": "questi criteri NON verranno modificati dopo aver visto il risultato del holdout, indipendentemente da quanto vicino al limite cada il numero effettivo",
+
+  "allowed_subgroup_analyses_PRE_REGISTERED": [
+    "BUY vs SELL (diagnostico, non nuova ipotesi)",
+    "regime (Market Regime Layer v1, Phase 5.5 - HIGH_VOL/LOW_VOL/TRANSITION/TRENDING/RANGING, soglie frozen da discovery originale)",
+    "subperiod (trimestri del periodo di holdout)",
+    "outlier trimming (rimozione 10% migliori MFE singoli, stesso metodo di Phase 5)",
+    "bootstrap stability (resampling del set di eventi holdout)",
+    "event clustering / dipendenza fra eventi vicini (gap in barre fra eventi consecutivi)"
+  ],
+  "family_size": 1,
+  "family_size_note": "UNA sola ipotesi primaria testata in questa fase (H006). I subgroup sopra sono diagnostici pre-registrati, non nuove ipotesi - nessuna correzione multiple-testing aggiuntiva necessaria oltre a quella gia' applicata a H004 in Phase 5.5.",
+
+  "execution_status_ceiling": "NOT_TESTED o al massimo PLAUSIBLE anche se PASS - nessuna implementazione MT5, nessuna dichiarazione di deployability",
+
+  "evidence_grade_mapping": {
+    "if_FAIL_or_BORDERLINE": "resta E2",
+    "if_PASS": "diventa E3 - E4/E5 NON assegnati in questa fase anche se PASS"
+  }
+}

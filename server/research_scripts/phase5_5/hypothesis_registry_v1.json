@@ -593,5 +593,51 @@
     "family_or_name": "SAR_PSAR_EMA_TREND_SIGNAL",
     "condition_desc": null,
     "base_family": null
+  },
+  {
+    "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+    "created_at": "2026-09-18T00:00:00Z",
+    "source": "Phase6.true_holdout_test",
+    "status": "WEAK",
+    "pre_registered_detector": true,
+    "pre_registered_as_primary_hypothesis": true,
+    "post_hoc_selection_from_batch": false,
+    "batch_id": null,
+    "batch_size": 1,
+    "discovery_dataset": "N/A - ipotesi derivata da H004 (Phase 5), non scoperta su questo dataset",
+    "validation_dataset": "Dukascopy XAUUSD tick, 2022-02-04..2023-02-03 (TRUE HOLDOUT, mai visto prima), n=115 RECLAIM confermati",
+    "primary_outcome": "P(+1.0xATR before -1.0xATR) dalla chiusura barra di conferma reclaim, identico a H004",
+    "secondary_outcomes": [
+      "mfe_ATR medio (DeltaE)"
+    ],
+    "baseline_definition": "Baseline Engine v2, soglie/standardizzazione CONGELATE dalla discovery originale di Phase 5 (mai ricalcolate sull holdout)",
+    "direction_of_expected_effect": "positivo, stesso segno di H004",
+    "minimum_material_effect": 0.15,
+    "allowed_subgroup_analyses": [
+      "BUY",
+      "SELL",
+      "regime",
+      "subperiod trimestrale",
+      "outlier trim",
+      "bootstrap",
+      "event clustering"
+    ],
+    "stop_condition": "criteri PASS/BORDERLINE/FAIL congelati in H006_frozen_spec.json PRIMA di vedere il dataset, non modificati dopo",
+    "result": {
+      "classification_original": "BORDERLINE",
+      "n_holdout": 115,
+      "delta_p_holdout": 0.0572,
+      "delta_e_holdout_mfe_atr": 0.277,
+      "ci95_non_overlapping": false,
+      "buy_delta_p": -0.0103,
+      "sell_delta_p": 0.1389,
+      "bootstrap_ci95": [
+        -0.049,
+        0.156
+      ]
+    },
+    "family_or_name": "H006_TRUE_HOLDOUT",
+    "condition_desc": null,
+    "base_family": "H004_EVENT_RECLAIM"
   }
 ]

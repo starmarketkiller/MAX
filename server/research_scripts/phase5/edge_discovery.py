@@ -249,13 +249,17 @@ def main():
     split_time = df["bar_time_utc"].iloc[split_idx]
     print(f"[H] discovery=[0,{split_idx}) validation=[{split_idx},{n}) split_time={split_time}")
 
-    # --- terzili globali (calcolati una volta, sull'intero dataset) ---
-    vol_valid = state["atr_percentile"].dropna()
-    trend_valid = state["ema_slope_atr_norm"].dropna()
-    eff_valid = state["directional_efficiency"].dropna()
+    # --- FIX Phase 6 sec.1 (leakage confermato da Leakage Guard, Phase 5.5 sec.8):
+    # i terzili/soglie DEVONO essere calcolati SOLO sulla finestra di discovery
+    # (righe [0, split_idx)), MAI sull'intero dataset (che includeva la
+    # validation). Prima di questo fix venivano calcolati su 'state' intero. ---
+    disc_state = state.iloc[:split_idx]
+    vol_valid = disc_state["atr_percentile"].dropna()
+    trend_valid = disc_state["ema_slope_atr_norm"].dropna()
+    eff_valid = disc_state["directional_efficiency"].dropna()
     vol_terc = np.nanpercentile(vol_valid, [33.33, 66.67])
     trend_terc = np.nanpercentile(trend_valid, [33.33, 66.67])
-    TREND_PERSISTENCE_MEDIAN = float(state["trend_persistence_bars"].median())
+    TREND_PERSISTENCE_MEDIAN = float(disc_state["trend_persistence_bars"].median())
     EFFICIENCY_TOP_TERCILE = float(np.nanpercentile(eff_valid, 66.67))
     VOL_BOTTOM_TERCILE = float(np.nanpercentile(vol_valid, 33.33))
 

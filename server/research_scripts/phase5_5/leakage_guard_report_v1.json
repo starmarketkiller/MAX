@@ -6,27 +6,15 @@
     "FEATURE_SEES_OUTCOME",
     "THRESHOLD_FIT_SCOPE (static heuristic + dynamic verification)"
   ],
-  "n_critical_confirmed": 1,
-  "n_review_needed": 1,
-  "overall_verdict": "LEAKAGE_GUARD_FAIL",
-  "critical_findings": [
-    {
-      "check_id": "BASELINE_TERCILES_FIT_ON_FULL_DATASET",
-      "severity": "CONFIRMED_LEAKAGE",
-      "file": "server/research_scripts/phase5/edge_discovery.py",
-      "line": null,
-      "snippet": "vol_terc = np.nanpercentile(vol_valid, [33.33, 66.67])  # vol_valid = state['atr_percentile'].dropna(), stato COMPLETO",
-      "explanation": "Le soglie di cella per il baseline matching (vol_terc, trend_terc) e per 3 delle 5 interazioni predefinite (EFFICIENCY_TOP_TERCILE, VOL_BOTTOM_TERCILE, TREND_PERSISTENCE_MEDIAN) sono state calcolate sull'INTERO dataset (discovery+validation), non solo su discovery. Verificato dinamicamente: soglia usata realmente 63.8889 == soglia full-dataset 63.8889, mentre la soglia solo-discovery sarebbe stata 66.6667 (scarto 4.2%). Impatto valutato: PICCOLO in magnitudine (discovery e' gia' il 70% del campione) - non rifatto il test per policy di questa fase (nessuna ri-validazione di edge), ma e' un difetto metodologico REALE da correggere prima del prossimo ciclo di discovery/validation.",
-      "verdict": "LEAKAGE_GUARD_FAIL (retroattivo su Phase 5 - non blocca questo report, documentato come difetto noto)"
-    }
-  ],
-  "review_findings_deduplicated_files": [
-    "server\\research_scripts\\phase5\\edge_discovery.py"
-  ],
+  "n_critical_confirmed": 0,
+  "n_review_needed": 0,
+  "overall_verdict": "LEAKAGE_GUARD_PASS",
+  "critical_findings": [],
+  "review_findings_deduplicated_files": [],
   "dynamic_check_detail": {
     "used_vol_terc": [
-      24.20634920634921,
-      63.888888888888886
+      24.853976126141532,
+      66.66666666666666
     ],
     "full_vol_terc": [
       24.20634920634921,

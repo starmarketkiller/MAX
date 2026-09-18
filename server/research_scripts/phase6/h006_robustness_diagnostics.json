@@ -1,0 +1,70 @@
+{
+  "note": "Diagnostici POST-verdetto - non hanno cambiato ne' possono cambiare il VERDICT gia' bloccato in h006_primary_result.json",
+  "regime_breakdown": {
+    "counts": {
+      "RANGING": 3,
+      "TRENDING": 8,
+      "LOW_VOL": 32,
+      "HIGH_VOL": 53,
+      "TRANSITION": 19
+    },
+    "outcome_summary": {
+      "RANGING": {
+        "n": 3,
+        "observed_p": 0.6666666666666666
+      },
+      "TRENDING": {
+        "n": 8,
+        "observed_p": 0.75
+      },
+      "LOW_VOL": {
+        "n": 32,
+        "observed_p": 0.5625
+      },
+      "HIGH_VOL": {
+        "n": 53,
+        "observed_p": 0.5849056603773585
+      },
+      "TRANSITION": {
+        "n": 19,
+        "observed_p": 0.5789473684210527
+      }
+    }
+  },
+  "quarterly_subperiod_stability": {
+    "Q1_2022-02-04_2022-05-03": {
+      "n": 36,
+      "observed_p": 0.5833333333333334
+    },
+    "Q2_2022-05-04_2022-08-03": {
+      "n": 30,
+      "observed_p": 0.7
+    },
+    "Q3_2022-08-04_2022-11-03": {
+      "n": 29,
+      "observed_p": 0.5517241379310345
+    },
+    "Q4_2022-11-04_2023-02-03": {
+      "n": 20,
+      "observed_p": 0.5
+    }
+  },
+  "outlier_trim_10pct": {
+    "n_after_trim": 104,
+    "p_after_trim": 0.5769230769230769
+  },
+  "bootstrap_delta_p": {
+    "n_boot": 2000,
+    "mean": 0.05746484428538796,
+    "ci95_low": -0.04900936571994208,
+    "ci95_high": 0.1564303662529506,
+    "pct_positive": 0.872
+  },
+  "event_clustering": {
+    "n_events": 115,
+    "median_gap_bars": 6.0,
+    "min_gap_bars": 0,
+    "pct_gap_leq_3_bars": 0.3684210526315789,
+    "pct_gap_leq_10_bars": 0.6052631578947368
+  }
+}

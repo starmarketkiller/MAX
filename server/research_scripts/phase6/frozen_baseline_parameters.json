@@ -1,0 +1,47 @@
+{
+  "frozen_from": "Phase 5 ORIGINAL discovery window only, rows [0,3366) of market_state_dataset_v1 (2019-02-03 to 2021-03-12), post leakage-fix (Phase 6 sec.1)",
+  "frozen_at": "2026-09-18T00:00:00Z, BEFORE any holdout data acquired",
+  "vol_tercile_33_67": [
+    24.853976126141532,
+    66.66666666666666
+  ],
+  "trend_tercile_33_67": [
+    -0.03905094651384193,
+    0.08088507924679145
+  ],
+  "efficiency_top_tercile_66_67": 0.3241978172025521,
+  "vol_bottom_tercile_33_33": 24.853976126141532,
+  "trend_persistence_median": 1.0,
+  "nn_match_features": [
+    "atr_percentile",
+    "ema_slope_atr_norm",
+    "directional_efficiency",
+    "position_in_rolling_range",
+    "roc"
+  ],
+  "nn_standardization_means": {
+    "atr_percentile": 46.77412765211367,
+    "ema_slope_atr_norm": 0.022577124979500072,
+    "directional_efficiency": 0.26020701958711634,
+    "position_in_rolling_range": 0.5443527508062945,
+    "roc": 0.0008994434634711735
+  },
+  "nn_standardization_stds": {
+    "atr_percentile": 32.7226184057671,
+    "ema_slope_atr_norm": 0.15049027446287144,
+    "directional_efficiency": 0.18623808130203545,
+    "position_in_rolling_range": 0.2904014004812412,
+    "roc": 0.013056709663620415
+  },
+  "regime_layer_thresholds": {
+    "vol_tercile_33_67": [
+      24.853976126141532,
+      66.66666666666666
+    ],
+    "directional_efficiency_tercile_33_67": [
+      0.1460914341369487,
+      0.3241978172025521
+    ],
+    "transition_freshness_bars_leq": 2
+  }
+}

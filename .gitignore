@@ -35,6 +35,7 @@ data/
 # (fino a 10y di tick XAUUSD, ricostruibile da zero - non e' codice, non va versionato)
 server/data_cache/
 server/data_cache_m5/
+server/research_scripts/phase6/data_cache_holdout/
 
 # output generati dagli script di ricerca in server/research_scripts/ (dati di
 # corsa, riproducibili rilanciando lo script - non e' codice, non va versionato)

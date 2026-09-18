@@ -50,3 +50,7 @@ Non E3: la validazione non è "pulita" — vedi `independent_validation_integrit
 ```
 
 Questa card è l'output sintetico che ogni futura conclusione deve produrre — un lettore che legge SOLO questa card (senza aprire nessun altro artifact) ha già l'informazione sufficiente per non fidarsi ciecamente del numero di PF/ΔP.
+
+## Aggiornamento (Phase 6 — True Holdout Test eseguito)
+
+Il vero holdout richiesto sopra è stato eseguito (Dukascopy 2022-02-04→2023-02-03, mai visto prima, detector/baseline congelati). **Risultato: BORDERLINE, non PASS** — ΔP holdout +0.057 (vs +0.24/+0.30 in Phase 5), CI95 sovrapposte, effetto interamente concentrato sul lato SELL (BUY ΔP=-0.010, SELL ΔP=+0.139). **EC-LIQUIDITY_SWEEP_RECLAIM resta E2** — nessuna promozione a E3. Dettaglio completo: `vault/01-Trading/NEXUS - Phase 6 True Holdout Validation Sweep Reclaim.md`.
