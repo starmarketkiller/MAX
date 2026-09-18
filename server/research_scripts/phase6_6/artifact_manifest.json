@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-09-18T15:23:18.039030+00:00",
+  "generation_script": "server/research_scripts/phase6_6/build_artifact_manifest.py",
+  "canonical_sha256": "1d1adbbe1618995a41d0597599854ad35a341750bab57593965684005d432ff9",
+  "payload": {
+    "schema_version": 1,
+    "phase": "Phase6.6",
+    "entries": [
+      {
+        "relative_path": "server/research_scripts/phase6_6/evidence_record_v2.schema.json",
+        "sha256": "4f557536e0043d8ffe1d860e7515c20ec120fea0b5068c7e14cb7c75ce131c07",
+        "schema_version": 2,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/h006_evidence_v2.json",
+        "sha256": "8858b49db837743aa9847748cd8e7f14ae9faee2b50c8554e10b9a3cc8134298",
+        "schema_version": 2,
+        "generated_from": [
+          "server/research_scripts/phase6/h006_primary_result.json",
+          "server/research_scripts/phase6_5/h006_dependence_audit.json",
+          "server/research_scripts/phase6_5/h006_block_bootstrap_audit.json",
+          "server/research_scripts/phase6_5/h006_directional_baseline_v3.json"
+        ],
+        "generator_script": "build_h006_evidence_v2.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/h006_decision_card_v2.json",
+        "sha256": "589f18f40bc9cd307b486dd57138afa4b25cfb138009dc63c06333334702757f",
+        "schema_version": 1,
+        "generated_from": [
+          "server/research_scripts/phase6/h006_primary_result.json",
+          "server/research_scripts/phase6_5/h006_dependence_audit.json"
+        ],
+        "generator_script": "build_h006_decision_card_v2.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/post_hoc_observations_v1.json",
+        "sha256": "8c7baca6f3893eda4079c13f84f4232dc61ca2900273aa155283d86a9ad50120",
+        "schema_version": 1,
+        "generated_from": [
+          "server/research_scripts/phase6_5/h006_directional_baseline_v3.json",
+          "server/research_scripts/phase6_5/directional_diagnostics_policy.json"
+        ],
+        "generator_script": "build_post_hoc_observations.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/research_evidence_ledger_v1.json",
+        "sha256": "3e3728eb60ad52f39109b7fad5e48e36a954dde134dd70ebb1ad093b41503f5b",
+        "schema_version": 1,
+        "generated_from": [
+          "Phase5/5.5/6/6.5 reports and artifacts (manually curated transition history)"
+        ],
+        "generator_script": "build_research_ledger.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/research_relations_v1.json",
+        "sha256": "d2ebdcec41fd5938feb66c713307ccd057aca8a38cd1f5074ea2fc88dcd8de3a",
+        "schema_version": 1,
+        "generated_from": [
+          "h006_evidence_v2.json",
+          "post_hoc_observations_v1.json",
+          "dependence_audit_gate_result_H006.json (Phase6.5)"
+        ],
+        "generator_script": "build_research_relations.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/integrity_test_report.json",
+        "sha256": "3609937e865cd67213e394d96bd72efdf5e4e07829a3514bcd6773561892a093",
+        "schema_version": 1,
+        "generated_from": [
+          "h006_evidence_v2.json",
+          "h006_decision_card_v2.json",
+          "post_hoc_observations_v1.json",
+          "research_evidence_ledger_v1.json",
+          "research_relations_v1.json"
+        ],
+        "generator_script": "validate_integrity.py"
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/canonical_utils.py",
+        "sha256": "46d565a251b69569e6f9e66d71ddcda3d1524b61b6fc9b820e525e4f30bc3bf2",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/build_h006_evidence_v2.py",
+        "sha256": "f5e77ea291ffe1000380d86ac4bbd6b3c4d91ffcbc62ebab9a53b10007909073",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/build_h006_decision_card_v2.py",
+        "sha256": "d66670623bf0d90bcf48d9c69ba9fc357df20f50e1f22188eac4a75daabab5c1",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/build_post_hoc_observations.py",
+        "sha256": "f8b925ed186b1a3f5fcbb1c7417d7cdc0f130ddad2bb4ad5ab19013e2cf2e732",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/build_research_ledger.py",
+        "sha256": "f7edbea80343c8ce916884e37eb6f59714468231e3e209f97e86c03ae599b573",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/build_research_relations.py",
+        "sha256": "ce3ad1703dc893e4ffccb5dcfeab71e94e832692dc0829f1c95d6666b08eb1bd",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      },
+      {
+        "relative_path": "server/research_scripts/phase6_6/validate_integrity.py",
+        "sha256": "7d2afbb41024069092d5e0e45295f844039ed18fa8b2a09a1855182e6333bc6d",
+        "schema_version": null,
+        "generated_from": null,
+        "generator_script": null
+      }
+    ],
+    "n_artifacts": 14,
+    "rule": "Nessun path locale assoluto - tutti i relative_path sono relativi alla root del repository."
+  }
+}

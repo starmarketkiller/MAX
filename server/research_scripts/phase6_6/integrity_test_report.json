@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-09-18T15:22:42.898461+00:00",
+  "generation_script": "server/research_scripts/phase6_6/validate_integrity.py",
+  "canonical_sha256": "6b2db432c0d9cffcb6beed4e08c980650e82816ae97ddb4587d095cdd680f705",
+  "payload": {
+    "schema_version": 1,
+    "overall": "INTEGRITY_SUITE_PASS",
+    "n_checks": 12,
+    "n_pass": 12,
+    "n_fail": 0,
+    "checks": [
+      {
+        "check": "no_duplicate_evidence_id",
+        "result": "PASS",
+        "detail": "ids=['EVD-H006-PRIMARY-001', 'EVD-H006-AUDIT-001']"
+      },
+      {
+        "check": "hypothesis_id_present_and_consistent",
+        "result": "PASS",
+        "detail": "primary=H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT audit=H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT card=H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT"
+      },
+      {
+        "check": "no_broken_relation_endpoints",
+        "result": "PASS",
+        "detail": "unresolved=[]"
+      },
+      {
+        "check": "no_absolute_source_paths",
+        "result": "PASS",
+        "detail": "bad=[]"
+      },
+      {
+        "check": "no_hash_mismatch",
+        "result": "PASS",
+        "detail": "mismatches=[]"
+      },
+      {
+        "check": "h006_grade_not_promoted",
+        "result": "PASS",
+        "detail": "grade=E2"
+      },
+      {
+        "check": "audit_record_has_no_own_grade",
+        "result": "PASS",
+        "detail": "audit_grade=None"
+      },
+      {
+        "check": "post_hoc_observation_not_marked_as_edge",
+        "result": "PASS",
+        "detail": "is_edge=False is_validated=False"
+      },
+      {
+        "check": "post_hoc_observation_requires_new_work",
+        "result": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "h006_not_at_e3",
+        "result": "PASS",
+        "detail": "current_grade=E2 decision=RETAIN_E2"
+      },
+      {
+        "check": "e4_e5_not_authorized",
+        "result": "PASS",
+        "detail": "promotion_allowed=False next_stage_allowed=False"
+      },
+      {
+        "check": "deterministic_regeneration",
+        "result": "PASS",
+        "detail": "failures=[]"
+      }
+    ]
+  }
+}

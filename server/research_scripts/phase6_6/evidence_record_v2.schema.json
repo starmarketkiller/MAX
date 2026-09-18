@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexus://schemas/evidence_record_v2.schema.json",
+  "title": "NEXUS Canonical Evidence Record v2",
+  "type": "object",
+  "schema_version": 2,
+  "description": "Schema canonico e riutilizzabile per qualunque futuro evidence record. Compatibile per nome-campo con il Canonical Research Model (Hypothesis/Experiment/Dataset/Evidence/EdgeComponent/DecisionCard). Un campo mancante e' SEMPRE null, mai un valore inventato (es. 0).",
+  "required": ["identity", "evidence_classification", "effect", "sample", "uncertainty", "baseline", "integrity", "provenance"],
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["evidence_id", "schema_version", "hypothesis_id", "experiment_id", "dataset_id", "created_at", "source_phase"],
+      "properties": {
+        "evidence_id": {"type": "string", "description": "Identificatore univoco, stabile, dell'evidence record"},
+        "schema_version": {"type": "integer", "const": 2},
+        "hypothesis_id": {"type": ["string", "null"]},
+        "experiment_id": {"type": ["string", "null"]},
+        "dataset_id": {"type": ["string", "null"]},
+        "created_at": {"type": "string", "format": "date-time"},
+        "source_phase": {"type": "string", "description": "es. Phase6, Phase6.5"}
+      }
+    },
+    "evidence_classification": {
+      "type": "object",
+      "required": ["evidence_grade", "evidence_type", "validation_integrity", "conclusion", "grade_cap_reason"],
+      "properties": {
+        "evidence_grade": {"type": "string", "enum": ["E0", "E1", "E2", "E3", "E4", "E5", "E6"]},
+        "evidence_type": {"type": "string", "enum": ["PRIMARY_EVIDENCE", "RETROACTIVE_METHODOLOGICAL_AUDIT", "POST_HOC_OBSERVATION"]},
+        "validation_integrity": {"type": "string", "enum": ["TRUE_HOLDOUT", "TEMPORAL_HOLDOUT", "CROSS_FEED_VALIDATION", "CROSS_ENGINE_VALIDATION", "CONTAMINATED_VALIDATION", "DISCOVERY_REUSE", "NOT_APPLICABLE"]},
+        "conclusion": {"type": "string", "enum": ["PASS", "BORDERLINE", "FAIL", "AUDIT_ONLY", "OBSERVATION_ONLY"]},
+        "grade_cap_reason": {"type": ["string", "null"], "description": "Obbligatoriamente non-null se dependence_flag != LOW o se la promozione di grade e' bloccata per qualunque motivo"}
+      }
+    },
+    "effect": {
+      "type": "object",
+      "required": ["primary_outcome", "event_probability", "baseline_probability", "delta_p", "delta_e", "materiality_threshold"],
+      "properties": {
+        "primary_outcome": {"type": ["string", "null"]},
+        "event_probability": {"type": ["object", "null"]},
+        "baseline_probability": {"type": ["object", "null"]},
+        "delta_p": {"type": ["number", "null"]},
+        "delta_e": {"type": ["number", "null"]},
+        "materiality_threshold": {"type": ["number", "null"]}
+      }
+    },
+    "sample": {
+      "type": "object",
+      "required": ["n_nominal", "n_effective", "n_clusters", "largest_cluster", "overlap_rate", "dependence_flag"],
+      "properties": {
+        "n_nominal": {"type": ["integer", "null"]},
+        "n_effective": {"type": ["object", "null"], "description": "multi-metodo: {cluster_count_approximation, autocorrelation_based, block_bootstrap_variance_based, methods_agree}"},
+        "n_clusters": {"type": ["integer", "null"]},
+        "largest_cluster": {"type": ["integer", "null"]},
+        "overlap_rate": {"type": ["number", "null"]},
+        "dependence_flag": {"type": ["string", "null"], "enum": ["LOW", "MODERATE", "HIGH", null]}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["wilson_ci", "posterior_interval", "iid_bootstrap_ci", "dependence_aware_ci", "bootstrap_method", "block_length"],
+      "properties": {
+        "wilson_ci": {"type": ["object", "null"]},
+        "posterior_interval": {"type": ["object", "null"]},
+        "iid_bootstrap_ci": {"type": ["object", "null"]},
+        "dependence_aware_ci": {"type": ["object", "null"]},
+        "bootstrap_method": {"type": ["string", "null"]},
+        "block_length": {"type": ["integer", "null"]}
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "required": ["baseline_engine_version", "matching_method", "direction_aware", "match_quality"],
+      "properties": {
+        "baseline_engine_version": {"type": ["string", "null"]},
+        "matching_method": {"type": ["string", "null"]},
+        "direction_aware": {"type": ["boolean", "null"]},
+        "match_quality": {"type": ["object", "null"], "description": "distribuzione GOOD/FAIR/POOR"}
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["leakage_guard", "dependence_audit", "multiple_testing_status", "preregistration_status", "detector_frozen"],
+      "properties": {
+        "leakage_guard": {"type": ["string", "null"], "enum": ["LEAKAGE_GUARD_PASS", "LEAKAGE_GUARD_FAIL", null]},
+        "dependence_audit": {"type": ["string", "null"], "enum": ["DEPENDENCE_AUDIT_PASS", "DEPENDENCE_AUDIT_FAIL", null]},
+        "multiple_testing_status": {"type": ["string", "null"]},
+        "preregistration_status": {"type": ["string", "null"]},
+        "detector_frozen": {"type": ["boolean", "null"]}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source_files", "source_hashes", "code_commit", "limitations", "conflicts"],
+      "properties": {
+        "source_files": {"type": "array", "items": {"type": "string"}, "description": "path relativi alla root del repo, mai assoluti"},
+        "source_hashes": {"type": ["object", "null"]},
+        "code_commit": {"type": ["string", "null"]},
+        "limitations": {"type": "array", "items": {"type": "string"}},
+        "conflicts": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

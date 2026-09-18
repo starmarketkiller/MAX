@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-09-18T15:22:42.366911+00:00",
+  "generation_script": "server/research_scripts/phase6_6/build_h006_decision_card_v2.py",
+  "canonical_sha256": "88a863aaeb8e866b5624ba2b3ca93aac7df31c2a4d41143b5a9dbe07fd00f072",
+  "payload": {
+    "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+    "current_grade": "E2",
+    "decision": "RETAIN_E2",
+    "promotion_allowed": false,
+    "next_stage_allowed": false,
+    "next_stages_explicitly_not_authorized": [
+      "E3",
+      "E4",
+      "E5"
+    ],
+    "primary_reason": "DeltaP osservato nel true holdout (0.0572) e' sotto la soglia minima di materialita' pre-registrata (0.15), con CI95 Wilson sovrapposte fra evento e baseline (ci95_non_overlapping=False). Verdetto pre-registrato: BORDERLINE.",
+    "secondary_reasons": [
+      "Consistenza di direzione BUY/SELL fallita nel test primario (Phase 6): l'intero effetto aggregato era concentrato sul lato SELL.",
+      "Audit di dipendenza (Phase 6.5): dependence_flag=HIGH, overlap_rate=0.991 - il campione nominale di 115 eventi osserva un numero di movimenti di mercato indipendenti stimato fra 46 e 115 a seconda del metodo.",
+      "Anche correggendo il baseline per direzione (Phase 6.5, Directional Baseline v3), nessuno dei due lati (BUY o SELL) supera da solo la soglia di non-sovrapposizione CI95."
+    ],
+    "failed_gates": [
+      {
+        "gate": "H006_PASS_CRITERIA",
+        "phase": "Phase6",
+        "result": "NOT_MET",
+        "detail": "DeltaP=0.0572<0.15; CI95 sovrapposte; direzione BUY/SELL non pienamente consistente"
+      }
+    ],
+    "passed_gates": [
+      {
+        "gate": "LEAKAGE_GUARD_PASS",
+        "phase": "Phase6",
+        "result": "PASS"
+      },
+      {
+        "gate": "DEPENDENCE_AUDIT_PASS",
+        "phase": "Phase6.5",
+        "result": "DEPENDENCE_AUDIT_PASS"
+      }
+    ],
+    "unresolved_questions": [
+      "L'asimmetria SELL_SWEEP_RECLAIM_ASYMMETRY e' un artefatto di regime (periodo 2022-2023) o una proprieta' strutturale del fenomeno? Non determinabile senza un nuovo holdout indipendente dedicato.",
+      "I tre metodi di n_effective (46/91/115) divergono sostanzialmente - quale (se uno solo) e' piu' rappresentativo per QUESTO tipo di evento resta una domanda aperta di metodologia, non solo di questo caso.",
+      "Un vero CROSS_FEED_VALIDATION (E4, fonte dati diversa da Dukascopy) non e' stato tentato - non e' chiaro se varrebbe la pena investirci prima di risolvere l'asimmetria direzionale."
+    ],
+    "evidence_record_reference": "server/research_scripts/phase6_6/h006_evidence_v2.json",
+    "post_hoc_observations_reference": "server/research_scripts/phase6_6/post_hoc_observations_v1.json"
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "generated_at": "2026-09-18T15:22:42.193586+00:00",
+  "generation_script": "server/research_scripts/phase6_6/build_h006_evidence_v2.py",
+  "canonical_sha256": "554f44aea57169b9e8ea61f97c4cdd0256f56250db0d12bdb185c429d324beae",
+  "payload": {
+    "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+    "authoritative_grade_source": "primary_evidence",
+    "authoritative_statement": "Il grade E2 e il verdetto BORDERLINE di H006 sono determinati ESCLUSIVAMENTE da primary_evidence. retroactive_methodological_audit non ha autorita' di modificarli (nessuna fusione epistemica, per costruzione dello schema).",
+    "primary_evidence": {
+      "identity": {
+        "evidence_id": "EVD-H006-PRIMARY-001",
+        "schema_version": 2,
+        "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+        "experiment_id": "EXP-P6-001-H006-TRUE-HOLDOUT",
+        "dataset_id": "DUKASCOPY_HOLDOUT_2022H2_2023H1_V1",
+        "created_at": "2026-09-18T00:00:00Z",
+        "source_phase": "Phase6"
+      },
+      "evidence_classification": {
+        "evidence_grade": "E2",
+        "evidence_type": "PRIMARY_EVIDENCE",
+        "validation_integrity": "TEMPORAL_HOLDOUT",
+        "conclusion": "BORDERLINE",
+        "grade_cap_reason": null
+      },
+      "effect": {
+        "primary_outcome": "P(+1.0xATR before -1.0xATR) dalla chiusura della barra di conferma reclaim, orizzonte 40 barre H4, nessuna gestione dinamica - IDENTICO alla soglia primaria di Phase 5 (PRIMARY_THRESHOLD=1.0, edge_discovery.py)",
+        "event_probability": {
+          "n": 115,
+          "wins": 68,
+          "losses": 47,
+          "censored": 0,
+          "observed_p": 0.591304347826087,
+          "wilson_ci95_low": 0.49992055700149574,
+          "wilson_ci95_high": 0.6767854529077602,
+          "beta_binomial": {
+            "prior_alpha": 1.0,
+            "prior_beta": 1.0,
+            "posterior_alpha": 69.0,
+            "posterior_beta": 48.0,
+            "posterior_mean": 0.5897435897435898,
+            "posterior_ci95_low": 0.4997118395237607,
+            "posterior_ci95_high": 0.6768682933558476
+          }
+        },
+        "baseline_probability": {
+          "n": 571,
+          "wins": 305,
+          "losses": 266,
+          "censored": 0,
+          "observed_p": 0.5341506129597198,
+          "wilson_ci95_low": 0.4931434991427875,
+          "wilson_ci95_high": 0.5747012942373033,
+          "beta_binomial": {
+            "prior_alpha": 1.0,
+            "prior_beta": 1.0,
+            "posterior_alpha": 306.0,
+            "posterior_beta": 267.0,
+            "posterior_mean": 0.5340314136125655,
+            "posterior_ci95_low": 0.4931252503535018,
+            "posterior_ci95_high": 0.5747125430296341
+          }
+        },
+        "delta_p": 0.05715373486636721,
+        "delta_e": 0.2774284528645534,
+        "materiality_threshold": 0.15
+      },
+      "sample": {
+        "n_nominal": 115,
+        "n_effective": null,
+        "n_clusters": null,
+        "largest_cluster": null,
+        "overlap_rate": null,
+        "dependence_flag": null
+      },
+      "uncertainty": {
+        "wilson_ci": {
+          "event": [
+            0.49992055700149574,
+            0.6767854529077602
+          ],
+          "baseline": [
+            0.4931434991427875,
+            0.5747012942373033
+          ],
+          "non_overlapping": false
+        },
+        "posterior_interval": {
+          "event": [
+            0.4997118395237607,
+            0.6768682933558476
+          ],
+          "baseline": [
+            0.4931252503535018,
+            0.5747125430296341
+          ]
+        },
+        "iid_bootstrap_ci": null,
+        "dependence_aware_ci": null,
+        "bootstrap_method": null,
+        "block_length": null
+      },
+      "baseline": {
+        "baseline_engine_version": "v2 (coarsened + nearest-neighbour standardized, frozen normalization from Phase 5 discovery)",
+        "matching_method": "coarsened(vol,trend,year) + NN standardized, direction-conditioned per-event",
+        "direction_aware": true,
+        "match_quality": {
+          "FAIR": 72,
+          "GOOD": 40,
+          "POOR": 3
+        }
+      },
+      "integrity": {
+        "leakage_guard": null,
+        "dependence_audit": null,
+        "multiple_testing_status": "family_size=1 (unica ipotesi primaria, sec.7 Phase6)",
+        "preregistration_status": "H006_frozen_spec.json congelata prima di acquisire il dataset di holdout",
+        "detector_frozen": true
+      },
+      "provenance": {
+        "source_files": [
+          "server/research_scripts/phase6/h006_primary_result.json",
+          "server/research_scripts/phase6/H006_frozen_spec.json",
+          "server/research_scripts/phase6/true_holdout_declaration.json"
+        ],
+        "source_hashes": {
+          "server/research_scripts/phase6/h006_primary_result.json": "2f9bf35ff493420f8baf85f96ac151052fd6d11e7e51781a42903ad590a845e4",
+          "server/research_scripts/phase6/H006_frozen_spec.json": "98afce0722b057daf43bdf1261674ba10d7a536ffb202687b8560b2549d76125",
+          "server/research_scripts/phase6/true_holdout_declaration.json": "9c79e95c1a224c2148c2b4593f081a194e617c3623dee82b94cecb4e48bef98c"
+        },
+        "code_commit": "b9414e6",
+        "limitations": [
+          "Holdout dalla stessa fonte dati di Phase 5 (Dukascopy) - TEMPORAL_HOLDOUT, non CROSS_FEED (E4)",
+          "n_effective/dependence non calcolati al momento di questo record - vedi retroactive_methodological_audit"
+        ],
+        "conflicts": []
+      }
+    },
+    "retroactive_methodological_audit": {
+      "identity": {
+        "evidence_id": "EVD-H006-AUDIT-001",
+        "schema_version": 2,
+        "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+        "experiment_id": "EXP-P6.5-001-H006-DEPENDENCE-AUDIT",
+        "dataset_id": "DUKASCOPY_HOLDOUT_2022H2_2023H1_V1",
+        "created_at": "2026-09-18T00:00:00Z",
+        "source_phase": "Phase6.5"
+      },
+      "evidence_classification": {
+        "evidence_grade": null,
+        "evidence_type": "RETROACTIVE_METHODOLOGICAL_AUDIT",
+        "validation_integrity": "NOT_APPLICABLE",
+        "conclusion": "AUDIT_ONLY",
+        "grade_cap_reason": "dependence_flag=HIGH (overlap_rate=0.991, largest_cluster=8): anche se il DeltaP nominale fosse stato sopra soglia, questo audit avrebbe comunque richiesto un grade_cap_reason esplicito prima di qualunque promozione - non applicabile qui perche' H006 NON e' stato promosso (resta E2 per decisione di Phase 6, non per questo audit)."
+      },
+      "effect": {
+        "primary_outcome": null,
+        "event_probability": null,
+        "baseline_probability": null,
+        "delta_p": null,
+        "delta_e": null,
+        "materiality_threshold": null
+      },
+      "sample": {
+        "n_nominal": 115,
+        "n_effective": {
+          "cluster_count_approximation": 46,
+          "autocorrelation_based": 115.0,
+          "block_bootstrap_variance_based": 91.12936323272228,
+          "methods_agree": false
+        },
+        "n_clusters": 46,
+        "largest_cluster": 8,
+        "overlap_rate": 0.991304347826087,
+        "dependence_flag": "HIGH"
+      },
+      "uncertainty": {
+        "wilson_ci": null,
+        "posterior_interval": null,
+        "iid_bootstrap_ci": [
+          0.5043478260869565,
+          0.6869565217391305
+        ],
+        "dependence_aware_ci": [
+          0.4956521739130435,
+          0.6956521739130435
+        ],
+        "bootstrap_method": "moving block bootstrap",
+        "block_length": 5
+      },
+      "baseline": {
+        "baseline_engine_version": "v3 (directional - BUY-vs-BUY, SELL-vs-SELL, frozen normalization)",
+        "matching_method": "direzione parte del contratto di matching - ogni evento confrontato SOLO con baseline valutata nella sua stessa direzione",
+        "direction_aware": true,
+        "match_quality": {
+          "FAIR": 72,
+          "GOOD": 40,
+          "POOR": 3
+        }
+      },
+      "integrity": {
+        "leakage_guard": "LEAKAGE_GUARD_PASS",
+        "dependence_audit": "DEPENDENCE_AUDIT_PASS",
+        "multiple_testing_status": "N/A - audit retroattivo, non un nuovo test di ipotesi",
+        "preregistration_status": "N/A - audit metodologico eseguito dopo il fatto per costruzione (e' un audit, non un test)",
+        "detector_frozen": true
+      },
+      "provenance": {
+        "source_files": [
+          "server/research_scripts/phase6_5/h006_dependence_audit.json",
+          "server/research_scripts/phase6_5/h006_block_bootstrap_audit.json",
+          "server/research_scripts/phase6_5/h006_directional_baseline_v3.json",
+          "server/research_scripts/phase6_5/dependence_audit_gate_result_H006.json",
+          "server/research_scripts/phase5_5/leakage_guard_report_v1.json"
+        ],
+        "source_hashes": {
+          "server/research_scripts/phase6_5/h006_dependence_audit.json": "e9fef1d401061d5c2558cfbbb699d2b39e7cdfee0909507e046d37a0d234e435",
+          "server/research_scripts/phase6_5/h006_block_bootstrap_audit.json": "1464106a8efd9e31355b680ff9ccc62c277e42b25100a4cd74685fe1ff1320fb",
+          "server/research_scripts/phase6_5/h006_directional_baseline_v3.json": "e1c33f3d89ddebe0397c4a056661ae99608f3e551ace2517ebd7a112f1fe4957",
+          "server/research_scripts/phase6_5/dependence_audit_gate_result_H006.json": "efe4155c00dcdf4fbb801880a59160c1b7d4c1594e677498c408ee97447fad13",
+          "server/research_scripts/phase5_5/leakage_guard_report_v1.json": "4906f92bf4f7e8e45b9bcc604b50df4d914658cf4f8322184b2daea3c371845c"
+        },
+        "code_commit": "0e78972",
+        "limitations": [
+          "I tre metodi di n_effective divergono sostanzialmente (46/115/91.1) - nessuno e' trattato come definitivo",
+          "Il block bootstrap e' applicato alla sola sequenza di eventi, non al pool di baseline (limite dichiarato in Phase 6.5)",
+          "Questo record NON PUO' essere usato per cambiare evidence_classification.evidence_grade di primary_evidence"
+        ],
+        "conflicts": []
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-09-18T15:22:42.545596+00:00",
+  "generation_script": "server/research_scripts/phase6_6/build_post_hoc_observations.py",
+  "canonical_sha256": "41ae856cbe940c44be974072848bc982ca68e98db09f79f08c77594418a41798",
+  "payload": {
+    "schema_version": 1,
+    "description": "Osservazioni notate durante analisi/audit ma MAI promosse a ipotesi o edge senza un freeze + holdout indipendente dedicato.",
+    "observations": [
+      {
+        "observation_id": "SELL_SWEEP_RECLAIM_ASYMMETRY",
+        "status": "POST_HOC_OBSERVATION",
+        "derived_from_hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+        "source_phase": "Phase6.5",
+        "buy": {
+          "event_probability": 0.5238095238095238,
+          "baseline_probability": 0.5048231511254019,
+          "delta_p": 0.018986372684121955,
+          "n_events": 63
+        },
+        "sell": {
+          "event_probability": 0.6730769230769231,
+          "baseline_probability": 0.5692307692307692,
+          "delta_p": 0.10384615384615392,
+          "n_events": 52
+        },
+        "is_edge": false,
+        "is_validated": false,
+        "requires_new_hypothesis": true,
+        "requires_new_holdout": true,
+        "explicit_non_actions": [
+          "NON e' stato eseguito nessun test H007",
+          "NON e' stata promossa la componente SELL",
+          "NON e' stato assegnato E3 a nessuna ipotesi",
+          "NON e' stato modificato il verdetto BORDERLINE di Phase 6 (H006 resta cosi' com'era)"
+        ],
+        "policy_reference": "server/research_scripts/phase6_5/directional_diagnostics_policy.json",
+        "what_would_be_required": [
+          "Congelare una nuova ipotesi (es. H007, esplicitamente NON eseguita in questa fase) con detector/baseline/outcome identici a H006 ma limitato a direction=SELL",
+          "Un nuovo periodo di holdout indipendente, mai usato per notare l'asimmetria (questo esclude qualunque parte del periodo 2022-02-04..2023-02-03 gia' usato qui)",
+          "Criteri pass/fail pre-registrati specificamente per l'ipotesi SELL-only, non riciclati da H006"
+        ]
+      }
+    ]
+  },
+  "source_hashes": {
+    "server/research_scripts/phase6_5/h006_directional_baseline_v3.json": "e1c33f3d89ddebe0397c4a056661ae99608f3e551ace2517ebd7a112f1fe4957",
+    "server/research_scripts/phase6_5/directional_diagnostics_policy.json": "8b41a55c867f52d562a79db5af1289eec548eb579b1a53936647fb1450984baa"
+  }
+}
