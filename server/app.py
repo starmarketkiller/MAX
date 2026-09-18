@@ -49,7 +49,8 @@ import nexus_security
 import nexus_validation
 import knowledge_browser
 import research_read_model
-from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
+import market_read_model
+from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -3163,6 +3164,72 @@ def research_decision_cards(status: Optional[str] = None,
 @app.get("/api/research/decision-cards/{entity_id}")
 def research_decision_card_detail(entity_id: str, user: str = Depends(require_user)):
     return _research_catalog_detail("decision_cards", entity_id)
+
+
+# ================= CANONICAL MARKET READ MODEL V1 (READ-ONLY) =========== #
+def _market_filtered(items: list[dict], symbol: Optional[str], timeframe: Optional[str],
+                     from_: Optional[str], to: Optional[str]) -> list[dict]:
+    def keep(item: dict) -> bool:
+        stamp = item.get("timestamp") or ""
+        return (not symbol or item.get("symbol") == symbol) and \
+            (not timeframe or item.get("timeframe") == timeframe) and \
+            (not from_ or stamp >= from_) and (not to or stamp <= to)
+    return [item for item in items if keep(item)]
+
+
+@app.get("/api/market/state/latest")
+def market_state_latest(symbol: Optional[str] = None, timeframe: Optional[str] = None,
+                        user: str = Depends(require_user)):
+    states, warnings = market_read_model.CATALOG.states(limit=500)
+    states = _market_filtered(states, symbol, timeframe, None, None)
+    primary, _ = _primary_ea()
+    operational = market_read_model.operational_snapshot(primary)
+    if operational and ((symbol and operational.get("symbol") not in (None, symbol)) or
+                        (timeframe and operational.get("timeframe") not in (None, timeframe))):
+        operational = None
+    research = states[-1] if states else None
+    parity = "PARTIAL" if research and operational else "NONE"
+    return {"schema_version": market_read_model.SCHEMA_VERSION,
+            "research": research, "operational": operational,
+            "semantic_parity": parity,
+            "parity_explanation": "EA runtime telemetry does not expose the complete canonical research schema.",
+            "warnings": warnings}
+
+
+@app.get("/api/market/state")
+def market_states(symbol: Optional[str] = None, timeframe: Optional[str] = None,
+                  from_: Optional[str] = Query(None, alias="from"), to: Optional[str] = None,
+                  limit: int = 500, user: str = Depends(require_user)):
+    safe_limit = min(max(limit, 1), market_read_model.MAX_ROWS)
+    states, warnings = market_read_model.CATALOG.states(limit=safe_limit)
+    states = _market_filtered(states, symbol, timeframe, from_, to)
+    return {"items": states[-safe_limit:], "count": len(states[-safe_limit:]),
+            "limit": safe_limit, "static_history": True, "warnings": warnings}
+
+
+@app.get("/api/market/events")
+def market_events(symbol: Optional[str] = None, timeframe: Optional[str] = None,
+                  from_: Optional[str] = Query(None, alias="from"), to: Optional[str] = None,
+                  event_family: Optional[str] = None, direction: Optional[str] = None,
+                  limit: int = 250, user: str = Depends(require_user)):
+    safe_limit = min(max(limit, 1), 1000)
+    events, warnings = market_read_model.CATALOG.events(limit=market_read_model.MAX_ROWS)
+    events = _market_filtered(events, symbol, timeframe, from_, to)
+    if event_family:
+        events = [e for e in events if e.get("family") == event_family]
+    if direction is not None:
+        events = [e for e in events if str(e.get("direction")) == str(direction)]
+    return {"items": events[:safe_limit], "count": len(events[:safe_limit]),
+            "limit": safe_limit, "static_history": True, "warnings": warnings}
+
+
+@app.get("/api/market/events/{event_id}")
+def market_event_detail(event_id: str, user: str = Depends(require_user)):
+    events, _ = market_read_model.CATALOG.events(limit=market_read_model.MAX_ROWS)
+    item = next((event for event in events if event.get("event_id") == event_id), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="market event not found")
+    return item
 
 
 # ======================= KNOWLEDGE BROWSER (READ-ONLY) =================== #

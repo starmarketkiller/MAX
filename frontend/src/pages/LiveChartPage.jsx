@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { useVisiblePolling } from "@/lib/useVisiblePolling";
 import CoachLiveWidget from "@/components/CoachLiveWidget";
 import DataProvenanceBadge from "@/components/DataProvenanceBadge";
+import { useTheme } from "@/lib/theme";
 
 const TF_OPTIONS = ["M1", "M5", "M15", "M30", "H1", "H4", "D1"];
 const SYM_OPTIONS = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "BTCUSD", "US30", "NAS100"];
@@ -45,6 +46,14 @@ const CHART_LIGHT = {
     },
   },
 };
+const CHART_DARK = {
+  ...CHART_LIGHT,
+  layout: { background: { type: "solid", color: "#0b0f17" }, textColor: "#94a3b8" },
+  grid: { vertLines: { color: "rgba(148,163,184,.08)" }, horzLines: { color: "rgba(148,163,184,.08)" } },
+  rightPriceScale: { borderColor: "#273244" },
+  timeScale: { ...CHART_LIGHT.timeScale, borderColor: "#273244" },
+};
+export const chartThemeFor = (theme) => theme === "dark" ? CHART_DARK : CHART_LIGHT;
 const CANDLE_STYLE = {
   upColor:        "#16a34a",
   downColor:      "#dc2626",
@@ -70,7 +79,7 @@ function ContextPopover({ data, onClose }) {
   if (!data) return null;
   return (
     <div
-      className="absolute z-50 bg-white shadow-2xl rounded-xl border border-slate-200 p-4 max-w-xs"
+      className="absolute z-50 bg-card shadow-2xl rounded-xl border border-border p-4 max-w-xs"
       style={{ left: data.x, top: data.y, transform: "translate(-50%, -110%)" }}
       onClick={(e) => e.stopPropagation()}
       data-testid="chart-context-popover"
@@ -80,7 +89,7 @@ function ContextPopover({ data, onClose }) {
           <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500 font-bold">
             {data.kind}
           </div>
-          <div className="text-sm font-bold text-slate-800 mt-0.5">{data.title}</div>
+          <div className="text-sm font-bold text-foreground mt-0.5">{data.title}</div>
         </div>
         <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
           <X className="h-4 w-4" />
@@ -90,7 +99,7 @@ function ContextPopover({ data, onClose }) {
         {data.rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-3">
             <span className="text-slate-500">{r.label}</span>
-            <span className={`font-mono font-semibold ${r.tone === "pos" ? "text-emerald-600" : r.tone === "neg" ? "text-rose-600" : "text-slate-800"}`}>
+            <span className={`font-mono font-semibold ${r.tone === "pos" ? "text-emerald-600" : r.tone === "neg" ? "text-rose-600" : "text-foreground"}`}>
               {r.value}
             </span>
           </div>
@@ -103,26 +112,26 @@ function ContextPopover({ data, onClose }) {
 function TopBar({ symbol, setSymbol, tf, setTf, layers, setLayers, refreshing, onRefresh, lastPrice, ohlcSource }) {
   const [openLayers, setOpenLayers] = useState(false);
   return (
-    <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-slate-200 bg-white sticky top-0 z-30">
+    <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-border bg-card sticky top-0 z-30">
       {/* Symbol */}
       <select
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
-        className="h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-sm font-mono font-bold tracking-tight focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        className="h-9 px-2.5 rounded-lg border border-border bg-background text-sm font-mono font-bold tracking-tight focus:outline-none focus:ring-2 focus:ring-cyan-400"
         data-testid="chart-symbol-select"
       >
         {SYM_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
 
       {/* Timeframe pills */}
-      <div className="flex gap-0.5 bg-slate-100 rounded-lg p-0.5">
+      <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
         {TF_OPTIONS.map((t) => (
           <button
             key={t}
             onClick={() => setTf(t)}
             data-testid={`chart-tf-${t}`}
             className={`h-7 px-2 rounded-md text-[11px] font-mono font-bold transition-all ${
-              tf === t ? "bg-slate-900 text-white" : "text-slate-500 hover:text-slate-800"
+              tf === t ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {t}
@@ -132,9 +141,9 @@ function TopBar({ symbol, setSymbol, tf, setTf, layers, setLayers, refreshing, o
 
       {/* Last price */}
       {lastPrice != null && (
-        <div className="hidden sm:flex items-center gap-1 ml-2 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
+        <div className="hidden sm:flex items-center gap-1 ml-2 px-2.5 py-1 rounded-md bg-secondary border border-border">
           <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Last</span>
-          <span className="text-sm font-mono font-bold text-slate-800 tabular-nums">{lastPrice.toFixed(2)}</span>
+          <span className="text-sm font-mono font-bold text-foreground tabular-nums">{lastPrice.toFixed(2)}</span>
         </div>
       )}
 
@@ -192,7 +201,8 @@ function TopBar({ symbol, setSymbol, tf, setTf, layers, setLayers, refreshing, o
   );
 }
 
-export default function LiveChartPage() {
+export default function LiveChartPage({ embedded = false }) {
+  const { theme } = useTheme();
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const candleSeriesRef = useRef(null);
@@ -212,7 +222,7 @@ export default function LiveChartPage() {
     const chart = createChart(containerRef.current, {
       width:  containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
-      ...CHART_LIGHT,
+      ...chartThemeFor(theme),
     });
     const candleSeries = chart.addSeries(CandlestickSeries, CANDLE_STYLE);
     chartRef.current = chart;
@@ -228,7 +238,7 @@ export default function LiveChartPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
-  }, []);
+  }, [theme]);
 
   // -------- Load data --------
   const load = useCallback(async () => {
@@ -433,7 +443,7 @@ export default function LiveChartPage() {
   }, [markers.visuals, layers.visuals, bars]);
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col" data-testid="live-chart-page" onClick={() => setPopover(null)}>
+    <div className={embedded ? "h-[430px] min-h-[360px] bg-card flex flex-col" : "fixed inset-0 bg-card flex flex-col"} data-testid="live-chart-page" onClick={() => setPopover(null)}>
       <TopBar
         symbol={symbol} setSymbol={setSymbol}
         tf={tf} setTf={setTf}
@@ -449,17 +459,17 @@ export default function LiveChartPage() {
         {/* Bottom legend strip */}
         <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1.5 pointer-events-none">
           {layers.trades && (
-            <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur border border-emerald-300 text-[10px] font-bold text-emerald-700">
+            <span className="px-2 py-0.5 rounded-md bg-card/90 border border-emerald-500/30 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
               ▲ {markers.trades.filter(t => t.pnl != null && t.pnl >= 0).length} wins · ▼ {markers.trades.filter(t => t.pnl != null && t.pnl < 0).length} losses
             </span>
           )}
           {layers.shadows && markers.shadows.length > 0 && (
-            <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur border border-purple-300 text-[10px] font-bold text-purple-700">
+            <span className="px-2 py-0.5 rounded-md bg-card/90 border border-purple-500/30 text-[10px] font-bold text-purple-700 dark:text-purple-400">
               ● {markers.shadows.length} shadow
             </span>
           )}
           {layers.visuals && markers.visuals.length > 0 && (
-            <span className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur border border-amber-300 text-[10px] font-bold text-amber-700">
+            <span className="px-2 py-0.5 rounded-md bg-card/90 border border-amber-500/30 text-[10px] font-bold text-amber-700 dark:text-amber-400">
               ▭ {markers.visuals.length} zones
             </span>
           )}
@@ -473,7 +483,7 @@ export default function LiveChartPage() {
           </div>
         )}
       </div>
-      <CoachLiveWidget />
+      {!embedded && <CoachLiveWidget />}
     </div>
   );
 }
