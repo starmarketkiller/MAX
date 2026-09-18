@@ -20,10 +20,10 @@ import CalendarPage from "@/pages/CalendarPage";
 import LocalBridgePage from "@/pages/LocalBridgePage";
 import KnowledgePage from "@/pages/KnowledgePage";
 import ResearchPage from "@/pages/ResearchPage";
-import WorkspaceIndexPage from "@/pages/WorkspaceIndexPage";
 import SystemStatusPage from "@/pages/SystemStatusPage";
 import MarketPage from "@/pages/MarketPage";
 import ExecutionPage from "@/pages/ExecutionPage";
+import LibraryPage from "@/pages/LibraryPage";
 import StrategyChainPage from "@/pages/StrategyChainPage";
 import SetupWizard, { shouldShowWizard, resetWizard } from "@/components/SetupWizard";
 import NotificationBell from "@/components/NotificationBell";
@@ -751,7 +751,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "research" && <ResearchPage />}
           {section === "market" && <MarketPage />}
           {section === "execution" && <ExecutionPage onCmd={onCmd} onSelectTrade={setSelectedTrade} />}
-          {section === "library" && <WorkspaceIndexPage workspaceId="library" />}
+          {section === "library" && <LibraryPage />}
           {section === "system" && <SystemStatusPage status={status} health={health} />}
           {section === "calendar" && <CalendarPage />}
           {section === "knowledge" && <KnowledgePage />}

@@ -51,6 +51,7 @@ import knowledge_browser
 import research_read_model
 import market_read_model
 import execution_read_model
+import library_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3271,6 +3272,42 @@ def knowledge_detail(entry_id: str, user: str = Depends(require_user)):
     if entry is None:
         raise HTTPException(status_code=404, detail="knowledge entry not found")
     return entry
+
+
+# ================= CANONICAL LIBRARY READ MODEL V1 (READ-ONLY) ========= #
+@app.get("/api/library/entities")
+def library_entities(type: Optional[str] = None, status: Optional[str] = None,
+                     evidence_grade: Optional[str] = None, phase: Optional[str] = None,
+                     relation_type: Optional[str] = None, q: Optional[str] = None,
+                     user: str = Depends(require_user)):
+    return library_read_model.CATALOG.list_entities({
+        "type": type, "status": status, "evidence_grade": evidence_grade,
+        "phase": phase, "relation_type": relation_type, "q": q,
+    })
+
+
+@app.get("/api/library/entities/{entity_id}")
+def library_entity_detail(entity_id: str, user: str = Depends(require_user)):
+    item = library_read_model.CATALOG.detail(entity_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="canonical library entity not found")
+    return item
+
+
+@app.get("/api/library/relations")
+def library_relations(relation_type: Optional[str] = None,
+                      user: str = Depends(require_user)):
+    if relation_type and relation_type not in library_read_model.RELATION_TYPES:
+        raise HTTPException(status_code=422, detail="unsupported relation type")
+    return library_read_model.CATALOG.list_relations(relation_type)
+
+
+@app.get("/api/library/explain/{entity_id}")
+def library_explain(entity_id: str, user: str = Depends(require_user)):
+    result = library_read_model.CATALOG.explain(entity_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="canonical library entity not found")
+    return result
 
 
 # ======================= DASHBOARD READ/WRITE (JWT) ====================== #
