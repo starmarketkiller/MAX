@@ -25,6 +25,7 @@ const SIDEBAR_GROUPS = [
   {
     label: "Research",
     items: [
+      { to: "/research", label: "Research Lab", icon: Microscope },
       { to: "/backtest", label: "Backtest", icon: FlaskConical },
       { to: "/optimizer", label: "Optimizer", icon: Gauge },
       { to: "/strategy-analytics", label: "Strat Diag", icon: Microscope },

@@ -48,6 +48,7 @@ import nexus_retention
 import nexus_security
 import nexus_validation
 import knowledge_browser
+import research_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3068,6 +3069,100 @@ def research_certificate_funnel(run_id: str, user: str = Depends(require_user)):
         "gate_reason_counts": json.loads(d["gate_reason_counts"]) if d.get("gate_reason_counts") else {},
         "verdict": d["verdict"],
     }
+
+
+# ================= CANONICAL RESEARCH READ MODEL V1 (READ-ONLY) ========== #
+def _research_catalog_list(kind: str, status: Optional[str] = None,
+                           evidence_grade: Optional[str] = None,
+                           hypothesis_id: Optional[str] = None,
+                           dataset_id: Optional[str] = None):
+    return research_read_model.CATALOG.list(kind, {
+        "status": status,
+        "evidence_grade": evidence_grade,
+        "hypothesis_id": hypothesis_id,
+        "dataset_id": dataset_id,
+    })
+
+
+def _research_catalog_detail(kind: str, entity_id: str):
+    item = research_read_model.CATALOG.detail(kind, entity_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="canonical research entity not found")
+    return item
+
+
+@app.get("/api/research/hypotheses")
+def research_hypotheses(status: Optional[str] = None,
+                        evidence_grade: Optional[str] = None,
+                        user: str = Depends(require_user)):
+    return _research_catalog_list("hypotheses", status, evidence_grade)
+
+
+@app.get("/api/research/hypotheses/{entity_id}")
+def research_hypothesis_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("hypotheses", entity_id)
+
+
+@app.get("/api/research/experiments")
+def research_experiments(status: Optional[str] = None,
+                         hypothesis_id: Optional[str] = None,
+                         dataset_id: Optional[str] = None,
+                         user: str = Depends(require_user)):
+    return _research_catalog_list("experiments", status, None, hypothesis_id, dataset_id)
+
+
+@app.get("/api/research/experiments/{entity_id}")
+def research_experiment_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("experiments", entity_id)
+
+
+@app.get("/api/research/datasets")
+def research_datasets(status: Optional[str] = None,
+                      user: str = Depends(require_user)):
+    return _research_catalog_list("datasets", status)
+
+
+@app.get("/api/research/datasets/{entity_id}")
+def research_dataset_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("datasets", entity_id)
+
+
+@app.get("/api/research/evidence")
+def research_evidence(status: Optional[str] = None,
+                      evidence_grade: Optional[str] = None,
+                      hypothesis_id: Optional[str] = None,
+                      user: str = Depends(require_user)):
+    return _research_catalog_list("evidence", status, evidence_grade, hypothesis_id)
+
+
+@app.get("/api/research/evidence/{entity_id}")
+def research_evidence_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("evidence", entity_id)
+
+
+@app.get("/api/research/edge-components")
+def research_edge_components(status: Optional[str] = None,
+                             evidence_grade: Optional[str] = None,
+                             hypothesis_id: Optional[str] = None,
+                             user: str = Depends(require_user)):
+    return _research_catalog_list("edge_components", status, evidence_grade, hypothesis_id)
+
+
+@app.get("/api/research/edge-components/{entity_id}")
+def research_edge_component_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("edge_components", entity_id)
+
+
+@app.get("/api/research/decision-cards")
+def research_decision_cards(status: Optional[str] = None,
+                            hypothesis_id: Optional[str] = None,
+                            user: str = Depends(require_user)):
+    return _research_catalog_list("decision_cards", status, None, hypothesis_id)
+
+
+@app.get("/api/research/decision-cards/{entity_id}")
+def research_decision_card_detail(entity_id: str, user: str = Depends(require_user)):
+    return _research_catalog_detail("decision_cards", entity_id)
 
 
 # ======================= KNOWLEDGE BROWSER (READ-ONLY) =================== #
