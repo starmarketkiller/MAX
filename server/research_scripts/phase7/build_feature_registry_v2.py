@@ -20,7 +20,11 @@ mai per default true.
 import json
 import os
 
-ROOT = r"C:\Users\User\ClaudeWork\MAX"
+# Integrity Patch (post-review, 2026-09-18): ROOT era un path assoluto
+# machine-specific hardcoded (profilo utente Windows locale). Derivato
+# ora da __file__ - questo script vive in <repo>/server/research_scripts/
+# phase7/, quindi la repo root e' tre livelli sopra.
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 PHASE55_DIR = os.path.join(ROOT, "server", "research_scripts", "phase5_5")
 PHASE7_DIR = os.path.join(ROOT, "server", "research_scripts", "phase7")
 

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-18T16:45:39.596573+00:00",
+  "generated_at": "2026-09-18T17:28:33.261585+00:00",
   "generation_script": "phase7/preflight_simulation.py",
-  "canonical_sha256": "f5cb09f73a906d28b435ce447d26d0a706b55198d4daa3950095df7b3d8845cb",
+  "canonical_sha256": "eaec68682e2b227983f8b41721f2b77d08a5ccce7e256afa28d27f14177ba884",
   "payload": {
     "SYNTHETIC_FIXTURE_ONLY": true,
     "run_id": "PREFLIGHT-RUN-001",
@@ -29,9 +29,9 @@
     "n_synthetic_events": 128,
     "n_synthetic_controls_pool": 734,
     "checks_summary": {
-      "n_pass": 14,
+      "n_pass": 23,
       "n_fail": 0,
-      "n_total": 14
+      "n_total": 23
     },
     "checks_detail": [
       {
@@ -103,6 +103,51 @@
         "check": "lifecycle_illegal_skip_blocked",
         "status": "PASS",
         "detail": ""
+      },
+      {
+        "check": "signature_numeric_threshold_normalization",
+        "status": "PASS",
+        "detail": "1 / 1.0 / '1.000' / ' 1 ' devono collassare alla stessa firma"
+      },
+      {
+        "check": "signature_distinct_numeric_thresholds_not_collapsed",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "signature_casing_and_order_normalization",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "cost_sensitive_is_terminal",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "terminal_states_invariant_holds_for_all_states",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "no_machine_specific_absolute_paths_under_phase7",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "absolute_path_pattern_detects_synthetic_bad_paths",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "absolute_path_pattern_no_false_positive_on_relative_paths",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "uncertainty_gate_correctly_classified",
+        "status": "PASS",
+        "detail": "status attuale=POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE"
       }
     ]
   }

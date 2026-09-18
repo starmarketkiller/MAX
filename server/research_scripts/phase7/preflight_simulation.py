@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """Phase 7 sec.26 - Preflight simulation. Dry-run END-TO-END su dati
 SINTETICI (synthetic_fixtures.py) per dimostrare che ogni gate del motore
-funziona MECCANICAMENTE, non solo sulla carta. Otto controlli, ciascuno
-con un caso valido E un caso deliberatamente rotto (dove ha senso).
+funziona MECCANICAMENTE, non solo sulla carta. Ogni gruppo di controlli
+ha un caso valido E, dove ha senso, un caso deliberatamente rotto.
 
 Questo script NON e' una discovery run (nessun dato di mercato reale,
 nessun H007, nessun nuovo edge). Produce 4 artifact di output, tutti
 etichettati SYNTHETIC_FIXTURE_ONLY, dentro preflight_output/.
+
+Integrity Patch (post-review, 2026-09-18): aggiunti i controlli 9-13
+(normalizzazione numerica/casing della signature, coerenza terminale di
+COST_SENSITIVE, assenza di path assoluti machine-specific sotto
+phase7/, classificazione epistemica del gate di uncertainty) - vedi
+vault/01-Trading/NEXUS - Phase 7.0 Integrity Patch.md per il dettaglio
+dei bug corretti.
 """
+import json
 import os
+import re
 import sys
 
 PHASE7_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +25,7 @@ sys.path.insert(0, os.path.join(PHASE7_DIR, "engine"))
 sys.path.insert(0, os.path.join(PHASE7_DIR, "..", "phase6_6"))
 
 from canonical_utils import wrap_with_provenance, save_json  # noqa: E402
-from candidate_lifecycle import Candidate, InvalidTransitionError  # noqa: E402
+from candidate_lifecycle import Candidate, InvalidTransitionError, TERMINAL_STATES  # noqa: E402
 from candidate_signature import canonical_signature, signature_hash, is_duplicate  # noqa: E402
 from dependence_diagnostics_v2 import compare_event_vs_episode_view  # noqa: E402
 from multiple_testing_v2 import run_family  # noqa: E402
@@ -163,6 +172,91 @@ def main():
         check("lifecycle_illegal_skip_blocked", False, "salto NON bloccato!")
     except InvalidTransitionError:
         check("lifecycle_illegal_skip_blocked", True)
+
+    # ------------------------------------------------------------------
+    # Check 9 (Integrity Patch): normalizzazione NUMERICA della signature
+    # - 1 / 1.0 / "1.000" / " 1 " devono produrre la stessa firma.
+    # ------------------------------------------------------------------
+    sig_num_variants = [
+        canonical_signature("SYNTH_SWEEP", "BUY", [{"feature_id": "trend", "operator": "=", "threshold": t}], "OUT")
+        for t in (1, 1.0, "1.000", " 1 ")
+    ]
+    check("signature_numeric_threshold_normalization", len(set(sig_num_variants)) == 1,
+          "1 / 1.0 / '1.000' / ' 1 ' devono collassare alla stessa firma")
+    sig_num_diff = canonical_signature("SYNTH_SWEEP", "BUY", [{"feature_id": "trend", "operator": "=", "threshold": 1.5}], "OUT")
+    check("signature_distinct_numeric_thresholds_not_collapsed", sig_num_diff not in set(sig_num_variants))
+
+    # ------------------------------------------------------------------
+    # Check 10 (Integrity Patch): normalizzazione CASING/ORDINE della
+    # signature - feature_id/operator/threshold categorico con casing e
+    # whitespace diversi devono comunque collassare alla stessa firma.
+    # ------------------------------------------------------------------
+    sig_case_1 = canonical_signature("sweep", "sell",
+                                      [{"feature_id": "Volatility", "operator": "==", "threshold": " high "},
+                                       {"feature_id": "TREND", "operator": "eq", "threshold": "down"}],
+                                      "OUT")
+    sig_case_2 = canonical_signature("SWEEP", "SELL",
+                                      [{"feature_id": "trend", "operator": "=", "threshold": "DOWN"},
+                                       {"feature_id": "volatility", "operator": "=", "threshold": "HIGH"}],
+                                      "OUT")
+    check("signature_casing_and_order_normalization", sig_case_1 == sig_case_2)
+
+    # ------------------------------------------------------------------
+    # Check 11 (Integrity Patch): COST_SENSITIVE non ha transizioni in
+    # uscita -> deve essere strutturalmente terminale.
+    # ------------------------------------------------------------------
+    c_cost = Candidate("SYNTH-CAND-COST-001", initial_state="COST_SENSITIVE")
+    check("cost_sensitive_is_terminal", c_cost.is_terminal() is True)
+    check("terminal_states_invariant_holds_for_all_states",
+          all(Candidate(f"INV-{s}", initial_state=s).is_terminal() == (s in TERMINAL_STATES)
+              for s in ("COST_SENSITIVE", "SUPPORTED", "BORDERLINE", "GENERATED")))
+
+    # ------------------------------------------------------------------
+    # Check 12 (Integrity Patch): nessun path assoluto machine-specific
+    # sotto phase7/ (source tree, esclusi output generati/pycache).
+    # ------------------------------------------------------------------
+    absolute_path_pattern = re.compile(r"[A-Za-z]:\\Users\\[^\"'\s]+|/Users/[^\"'\s]+|/home/[^/\"'\s]+/[^\"'\s]*")
+    self_file = os.path.abspath(__file__)
+    offenders = []
+    for dirpath, dirnames, filenames in os.walk(PHASE7_DIR):
+        dirnames[:] = [d for d in dirnames if d not in ("__pycache__", "preflight_output")]
+        for fname in filenames:
+            if not fname.endswith((".py", ".json")):
+                continue
+            fpath = os.path.join(dirpath, fname)
+            if os.path.abspath(fpath) == self_file:
+                # Questo stesso file contiene, come stringa letterale, il
+                # pattern usato per RILEVARE path assoluti - non e' un path
+                # assoluto reale, e' il detector - escluso per costruzione,
+                # non per nascondere un problema.
+                continue
+            with open(fpath, encoding="utf-8") as fh:
+                for lineno, line in enumerate(fh, start=1):
+                    if absolute_path_pattern.search(line):
+                        offenders.append(f"{os.path.relpath(fpath, PHASE7_DIR)}:{lineno}")
+    check("no_machine_specific_absolute_paths_under_phase7", len(offenders) == 0,
+          f"offenders={offenders}" if offenders else "")
+    # Caso deliberatamente rotto (senza scrivere file reali su disco): il
+    # pattern deve individuare stringhe di path assoluti sintetiche e non
+    # segnalare falsi positivi su path relativi legittimi.
+    check("absolute_path_pattern_detects_synthetic_bad_paths",
+          bool(absolute_path_pattern.search(r'ROOT = "C:\Users\SomeOtherUser\ClaudeWork\MAX"'))
+          and bool(absolute_path_pattern.search('path = "/Users/someone/repo/file.py"'))
+          and bool(absolute_path_pattern.search('path = "/home/someone/repo/file.py"')))
+    check("absolute_path_pattern_no_false_positive_on_relative_paths",
+          not absolute_path_pattern.search('PHASE55_DIR = os.path.join(ROOT, "server", "research_scripts", "phase5_5")'))
+
+    # ------------------------------------------------------------------
+    # Check 13 (Integrity Patch): il gate di uncertainty resta
+    # classificato POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE, non
+    # STATISTICALLY_JUSTIFIED - invariante anti-regressione.
+    # ------------------------------------------------------------------
+    with open(os.path.join(PHASE7_DIR, "policies", "minimum_evidence_gates.json"), encoding="utf-8") as fh:
+        gates_policy = json.load(fh)
+    uncertainty_status = gates_policy["gates"]["uncertainty_requirement"]["status"]
+    check("uncertainty_gate_correctly_classified",
+          uncertainty_status == "POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE",
+          f"status attuale={uncertainty_status}")
 
     n_pass = sum(1 for r in RESULTS if r["status"] == "PASS")
     n_fail = sum(1 for r in RESULTS if r["status"] == "FAIL")

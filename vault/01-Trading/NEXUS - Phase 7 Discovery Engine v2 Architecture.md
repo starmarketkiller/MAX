@@ -2,7 +2,9 @@
 
 **Tipo di fase:** ARCHITETTURA + PREFLIGHT + RESEARCH CONTRACT. Non e' stata eseguita alcuna discovery run reale, nessun H007, nessun nuovo edge, nessun backtest su dati di mercato. Tutti i controlli sono stati verificati su dati sintetici (`synthetic_fixtures.py`), esplicitamente etichettati `SYNTHETIC_FIXTURE_ONLY` in ogni artifact prodotto.
 
-**Baseline di riferimento (non modificato):** Phase 5 (`b9414e6`), Phase 6 True Holdout (`0e78972`), Phase 6.6 Integrity Patch (`2fe489e`). Nessun risultato storico, nessuna decision card, nessun evidence record esistente e' stato alterato in questa fase.
+**Baseline di riferimento (non modificato):** Phase 6 True Holdout (`b9414e6`), Phase 6.5 Dependent Evidence & Directional Baseline Hardening (`0e78972`), Phase 6.6 Integrity Patch (`2fe489e`). Nessun risultato storico, nessuna decision card, nessun evidence record esistente e' stato alterato in questa fase.
+
+> **Correzione (Phase 7.0 Integrity Patch, post-review):** la prima stesura di questo report attribuiva erroneamente `b9414e6` a "Phase 5" e ometteva Phase 6.5 come fase a se' stante per `0e78972` - entrambi verificati con `git log --oneline -1 <sha>` e corretti qui. Nessun risultato o verdetto e' stato modificato da questa correzione, solo l'attribuzione di lineage nel testo.
 
 ---
 
@@ -106,7 +108,7 @@ Fino ad allora, Phase 7 resta esattamente cio' che l'utente ha richiesto: un'arc
 
 **Preflight (sec.26 - sintetico, nessun dato di mercato):**
 - `server/research_scripts/phase7/synthetic_fixtures.py`
-- `server/research_scripts/phase7/preflight_simulation.py` (14/14 check PASS)
+- `server/research_scripts/phase7/preflight_simulation.py` (23/23 check PASS dopo l'Integrity Patch - vedi sezione dedicata sotto)
 - `server/research_scripts/phase7/preflight_output/discovery_run_manifest_v2.json`
 - `server/research_scripts/phase7/preflight_output/candidate_registry_v2.json`
 - `server/research_scripts/phase7/preflight_output/multiple_testing_report_v2.json`
@@ -114,6 +116,25 @@ Fino ad allora, Phase 7 resta esattamente cio' che l'utente ha richiesto: un'arc
 
 ---
 
+## Integrity Patch (post-review, 2026-09-18)
+
+Una revisione diretta di `d0e4de5` (commit della stesura originale di Phase 7.0) ha trovato 4 problemi, di cui 2 veri bug di research-engineering, corretti come segue - nessuna nuova discovery, nessun H007, nessun dato nuovo, nessun backtest.
+
+1. **Bug - `candidate_signature.py` non canonicalizzava i VALORI, solo l'ordine.** Due candidati semanticamente identici scritti come `threshold=1` vs `threshold=1.0`, o con casing/whitespace diversi su feature_id/operator/soglie categoriche, potevano produrre firme diverse e sfuggire alla deduplicazione. Corretto con `canonicalize_threshold` (parsing numerico -> stringa canonica, es. `1`/`1.0`/`"1.000"`/`" 1 "` collassano tutti a `"1"`), `canonicalize_operator` (`"="`/`"=="`/`"eq"` -> `"=="`) e `canonicalize_feature_id` (strip+lower) - nessuna componente semantica/AI, solo normalizzazione deterministica. Verificato con test positivi (collasso corretto) e negativi (`1.0` vs `1.5` restano distinti).
+2. **Bug - `candidate_lifecycle.py`: `COST_SENSITIVE` non era in `TERMINAL_STATES`** nonostante avesse un insieme vuoto di transizioni in uscita, rendendo `is_terminal()` incoerente con il grafo reale. Corretto rendendo `TERMINAL_STATES` una proiezione CALCOLATA dal grafo stesso (`{stato: transizioni vuote}`), con un'asserzione a import-time che verifica l'invariante "nessuna uscita <=> terminale" per costruzione - non piu' una lista scritta a mano che puo' disallinearsi. `SUPPORTED` resta correttamente NON terminale per questa definizione (ha uscite laterali indipendenti verso `COST_SENSITIVE`/`NON_TRANSFERABLE`, sec.20) - comportamento intenzionale, non un bug residuo.
+3. **Riclassificazione epistemica - gate di uncertainty.** Il requisito "Wilson CI95(evento) e Wilson CI95(baseline) non sovrapposte" era marcato `STATISTICALLY_JUSTIFIED` in `minimum_evidence_gates.json`. Riclassificato a `POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE`: la non-sovrapposizione di due CI95 costruiti separatamente e' un criterio CONSERVATIVO (piu' severo di un test diretto sulla differenza, non equivalente ad esso), motivato da un principio statistico reale ma non identico al test canonico su DeltaP. Documentato esplicitamente nel file: perche' e' conservativo, che non sostituisce un test/CI diretto su DeltaP, e la direzione futura preferibile (Newcombe CI o block bootstrap dependence-aware). Nessuna soglia numerica e' stata modificata per favorire candidati esistenti (non ce ne sono - questa e' policy, non risultati).
+4. **Portabilita' - path assoluto machine-specific.** `build_feature_registry_v2.py` conteneva `ROOT = r"C:\Users\User\ClaudeWork\MAX"`. Sostituito con una derivazione da `__file__` (la repo root e' tre livelli sopra lo script). Rieseguito il generatore: `feature_registry_v2.json` prodotto e' byte-identico a quello precedente (`git diff` vuoto) - la correzione e' puramente di portabilita', nessun effetto sul contenuto.
+
+**Nessun altro bug ulteriore trovato** durante l'implementazione della patch, oltre ai 4 segnalati.
+
+**Lineage del report corretto** (vedi nota in cima a questo documento): `b9414e6` = Phase 6 True Holdout (non Phase 5), `0e78972` = Phase 6.5 Dependent Evidence & Directional Baseline Hardening (non genericamente "Phase 6") - verificati con `git log --oneline -1 <sha>`.
+
+**Preflight esteso** da 14 a 23 check, aggiungendo: normalizzazione numerica della signature (positivo + negativo), normalizzazione casing/ordine, coerenza terminale di `COST_SENSITIVE` (incluso un controllo d'invariante su tutti gli stati), assenza di path assoluti machine-specific sotto `phase7/` (con verifica che il detector stesso funzioni su path sintetici cattivi, senza scrivere file reali), e l'invariante anti-regressione sulla classificazione del gate di uncertainty. **23/23 PASS.**
+
+**Verdetto di readiness - invariato:** `NOT_READY_FOR_PHASE_7_1`. Nessuna delle correzioni sopra tocca i motivi originali del verdetto (dataset non acquisito oltre il 2023-02-03, Baseline Engine v4 non implementata, gap EVENT_FIRING_RATE/VALIDATION_REUSE/DATASET_VERSION_DRIFT ancora aperti). Questa patch non autorizza Phase 7.1.
+
+---
+
 ## Nota di chiusura
 
-Ogni gate descritta in questo documento e' stata dimostrata su dati sintetici, non solo dichiarata: `preflight_simulation.py` produce 14 controlli PASS/FAIL veri, inclusi almeno un caso deliberatamente rotto per ciascun meccanismo critico (split isolation, leakage guard, deduplicazione, quarantena post-hoc, FDR, baseline cross-split, dipendenza, lifecycle). Questo e' il punto centrale della richiesta originale: trasformare gli errori scoperti in Phase 5/6/6.5/6.6 in vincoli strutturali verificabili meccanicamente, non in promemoria da ricordare a mano nella prossima run.
+Ogni gate descritta in questo documento e' stata dimostrata su dati sintetici, non solo dichiarata: `preflight_simulation.py` produce 23 controlli PASS/FAIL veri (14 originali + 9 aggiunti dall'Integrity Patch), inclusi almeno un caso deliberatamente rotto per ciascun meccanismo critico (split isolation, leakage guard, deduplicazione, quarantena post-hoc, FDR, baseline cross-split, dipendenza, lifecycle, normalizzazione signature, coerenza terminale, path assoluti). Questo e' il punto centrale della richiesta originale: trasformare gli errori scoperti in Phase 5/6/6.5/6.6 - e ora anche nella prima stesura di Phase 7.0 stessa - in vincoli strutturali verificabili meccanicamente, non in promemoria da ricordare a mano nella prossima run.

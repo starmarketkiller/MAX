@@ -12,15 +12,26 @@ Stati laterali (raggiungibili da piu' punti, MAI bypassabili in uscita
 verso uno stato "migliore" nella stessa run):
 INSUFFICIENT_SAMPLE, DEPENDENCE_SENSITIVE, COST_SENSITIVE,
 NON_TRANSFERABLE, CONTAMINATED
+
+Integrity Patch (post-review, 2026-09-18): TERMINAL_STATES era una
+lista scritta a mano che poteva disallinearsi dal grafo reale in
+ALLOWED_TRANSITIONS - infatti COST_SENSITIVE aveva transizioni in
+uscita vuote (set()) ma NON compariva nella lista, rendendo
+is_terminal() incoerente (restituiva False per uno stato che non puo'
+piu' muoversi). Corretto rendendo TERMINAL_STATES una proiezione
+CALCOLATA del grafo stesso (ogni stato con transizioni in uscita
+vuote), cosi' l'invariante "nessuna transizione in uscita => terminale"
+vale per costruzione e non puo' piu' disallinearsi. SUPPORTED non e'
+strutturalmente terminale con questa definizione (ha uscite laterali
+indipendenti verso COST_SENSITIVE/NON_TRANSFERABLE, sec.20) - e' un
+verdetto di ricerca raggiunto, non uno stato senza ulteriori assi da
+esplorare; la distinzione e' intenzionale, non un bug.
 """
 
 
 class InvalidTransitionError(Exception):
     pass
 
-
-TERMINAL_STATES = {"SUPPORTED", "BORDERLINE", "REFUTED", "INSUFFICIENT_SAMPLE",
-                    "DEPENDENCE_SENSITIVE", "CONTAMINATED", "NON_TRANSFERABLE"}
 
 # Stato corrente -> insieme di stati raggiungibili in UNA transizione.
 # Ogni riga e' stata scelta per riflettere esattamente il percorso
@@ -49,6 +60,15 @@ ALLOWED_TRANSITIONS = {
 
 ALL_STATES = set(ALLOWED_TRANSITIONS.keys())
 
+# Terminale = nessuna transizione in uscita possibile - calcolato dal
+# grafo, mai mantenuto a mano (vedi nota Integrity Patch sopra).
+TERMINAL_STATES = frozenset(state for state, exits in ALLOWED_TRANSITIONS.items() if not exits)
+
+# Invariante strutturale verificata a import-time: per costruzione deve
+# sempre valere "nessuna uscita <=> terminale" - se questo assert fallisce
+# un domani, il grafo stesso e' incoerente, non solo la sua proiezione.
+assert TERMINAL_STATES == {s for s in ALL_STATES if not ALLOWED_TRANSITIONS[s]}
+
 
 class Candidate:
     def __init__(self, setup_id: str, initial_state: str = "GENERATED"):
@@ -72,7 +92,7 @@ class Candidate:
         return self
 
     def is_terminal(self) -> bool:
-        return self.state in TERMINAL_STATES and not ALLOWED_TRANSITIONS.get(self.state)
+        return self.state in TERMINAL_STATES
 
 
 if __name__ == "__main__":
@@ -99,3 +119,22 @@ if __name__ == "__main__":
         print("ERRORE: la resurrezione da REFUTED avrebbe dovuto essere rifiutata!")
     except InvalidTransitionError as e:
         print(f"Transizione da stato terminale correttamente rifiutata: {e}")
+
+    # Dimostrazione 4 (Integrity Patch): COST_SENSITIVE non ha uscite
+    # -> is_terminal() DEVE restituire True, per costruzione del grafo.
+    c4 = Candidate("DEMO-SETUP-004", initial_state="COST_SENSITIVE")
+    print(f"COST_SENSITIVE is_terminal(): {c4.is_terminal()}")
+    assert c4.is_terminal() is True
+
+    # Dimostrazione 5: SUPPORTED ha uscite laterali (COST_SENSITIVE/
+    # NON_TRANSFERABLE) -> NON e' strutturalmente terminale, per design.
+    c5 = Candidate("DEMO-SETUP-005", initial_state="SUPPORTED")
+    print(f"SUPPORTED is_terminal(): {c5.is_terminal()} (atteso False - ha uscite laterali indipendenti)")
+    assert c5.is_terminal() is False
+
+    # Invariante generale su TUTTI gli stati: nessuna uscita <=> terminale.
+    for state in ALL_STATES:
+        expected = not ALLOWED_TRANSITIONS[state]
+        actual = Candidate(f"INVARIANT-CHECK-{state}", initial_state=state).is_terminal()
+        assert actual == expected, f"Invariante violata per {state}: is_terminal()={actual}, atteso={expected}"
+    print("Invariante 'nessuna transizione in uscita <=> is_terminal()==True' verificata su tutti gli stati.")

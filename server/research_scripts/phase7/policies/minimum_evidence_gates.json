@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "policy_id": "MINIMUM_EVIDENCE_GATES_V1",
-  "disclaimer": "Questi numeri NON sono stati scelti per far passare o fallire un candidato specifico (incluso H006, che resta E2 indipendentemente da questo documento - vedi Phase 6.6). Ogni soglia e' etichettata STATISTICALLY_JUSTIFIED solo se esiste un principio statistico reale dietro al CONCETTO (non al numero esatto); altrimenti e' POLICY_THRESHOLD.",
+  "disclaimer": "Questi numeri NON sono stati scelti per far passare o fallire un candidato specifico (incluso H006, che resta E2 indipendentemente da questo documento - vedi Phase 6.6). Tre classificazioni possibili, in ordine decrescente di rigore: STATISTICALLY_JUSTIFIED (il criterio stesso, non solo il numero, e' uno standard statistico diretto e non ambiguo - es. un test/CI costruito direttamente sulla quantita' di interesse); POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE (un principio statistico reale motiva la scelta, ma il criterio e' una prossima/approssimazione conservativa, non il test canonico diretto - vedi uncertainty_requirement, corretto in questo senso durante l'Integrity Patch del 2026-09-18); POLICY_THRESHOLD (il valore numerico e' una decisione di progetto senza derivazione statistica diretta).",
 
   "gates": {
     "n_nominal_minimum": {
@@ -31,8 +31,11 @@
     },
     "uncertainty_requirement": {
       "rule": "Wilson CI95(evento) e Wilson CI95(baseline) non sovrapposte",
-      "status": "STATISTICALLY_JUSTIFIED",
-      "rationale": "Il CONCETTO di richiedere intervalli di confidenza non sovrapposti come criterio di separazione e' una pratica statistica riconosciuta (piu' conservativa di un semplice test di significativita' puntuale) - il livello di confidenza 95% e' una convenzione standard, non arbitraria in senso stretto."
+      "status": "POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE",
+      "rationale": "Integrity Patch (post-review, 2026-09-18): riclassificato da STATISTICALLY_JUSTIFIED. La non-sovrapposizione di due CI95 costruiti separatamente e' una regola CONSERVATIVA (un CI95 su evento che non tocca un CI95 su baseline implica un test a un livello di significativita' effettivo piu' severo di alfa=0.05 sulla differenza, non equivalente ad esso) - NON e' la stessa cosa di un test diretto sulla differenza (es. two_proportion_p su DeltaP con il proprio CI95, gia' disponibile in multiple_testing_v2.py). E' una scelta di policy motivata da un principio statistico reale (da qui la classificazione ibrida), non un requisito canonico che qualunque statistico riconoscerebbe come l'unico modo corretto di testare DeltaP.",
+      "why_conservative": "Due eventi indipendenti A e B possono avere CI95 individuali che si sovrappongono anche quando la loro differenza A-B e' statisticamente significativa al 5% - la regola 'non sovrapposizione' e' quindi un criterio piu' severo (falsi negativi piu' probabili) di un test diretto sulla differenza.",
+      "does_not_replace": "Un CI/test costruito direttamente su DeltaP (vedi two_proportion_p in multiple_testing_v2.py) resta il confronto statistico primario per significativita' - questo requisito e' un controllo ADDIZIONALE e piu' prudente, non un sostituto.",
+      "future_direction": "Preferibile, in una futura iterazione, stimare direttamente l'incertezza di DeltaP (es. CI di Newcombe per la differenza di due proporzioni, o l'intervallo del moving block bootstrap quando il candidato e' DEPENDENCE_SENSITIVE - vedi statistical_methods_policy.json) invece di dedurla dal confronto fra due CI separati."
     },
     "stability_requirement": {
       "rule": "Il segno dell'effetto deve restare coerente: (1) sia in EVENT VIEW sia in EPISODE VIEW (sec.11); (2) sia per BUY sia per SELL, salvo che la direzione stessa sia parte esplicita del setup testato",
