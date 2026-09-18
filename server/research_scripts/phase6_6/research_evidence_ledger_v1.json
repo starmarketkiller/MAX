@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-18T15:22:42.715674+00:00",
+  "generated_at": "2026-09-18T15:26:03.374150+00:00",
   "generation_script": "server/research_scripts/phase6_6/build_research_ledger.py",
-  "canonical_sha256": "ac78dd0c62a65962683842aad9f03f325a52068b22f4cac7891f8d1fc66e4b80",
+  "canonical_sha256": "4ef6f33022719d99a791d0ec71caad8f4b9c8b332e127b30bedc84e40a38fc13",
   "payload": {
     "schema_version": 1,
     "description": "Ledger logicamente append-only delle transizioni di stato per l'idea sweep+reclaim (H004->H006). Ogni voce e' immutabile una volta scritta - correzioni future si aggiungono come nuove voci con seq incrementale, non sovrascrivono voci esistenti.",
@@ -125,7 +125,7 @@
         "to_status": "E2 (RETAIN_E2, decision card strutturata)",
         "reason": "Normalizzazione in Canonical Evidence Record v2, con primary_evidence e retroactive_methodological_audit tenuti separati. Nessuna ri-validazione, nessuna promozione.",
         "source_artifact": "server/research_scripts/phase6_6/h006_evidence_v2.json",
-        "commit": "PENDING (questo commit)"
+        "commit": "d246bc7"
       }
     ],
     "current_state_summary": {

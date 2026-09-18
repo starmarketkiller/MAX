@@ -133,7 +133,7 @@ TRANSITIONS = [
         "to_status": "E2 (RETAIN_E2, decision card strutturata)",
         "reason": "Normalizzazione in Canonical Evidence Record v2, con primary_evidence e retroactive_methodological_audit tenuti separati. Nessuna ri-validazione, nessuna promozione.",
         "source_artifact": "server/research_scripts/phase6_6/h006_evidence_v2.json",
-        "commit": "PENDING (questo commit)",
+        "commit": "d246bc7",
     },
 ]
 
