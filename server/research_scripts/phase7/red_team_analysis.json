@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "analysis_id": "RED_TEAM_ANALYSIS_V1",
+  "principle": "A differenza di failure_memory_registry_v1.json (incidenti REALMENTE osservati), questo documento e' PROSPETTIVO: elenca vettori di errore ANTICIPATI, alcuni mai ancora accaduti nel progetto, ciascuno con triple failure_mode -> detection -> prevention. Include esplicitamente gli 11 vettori nominati dall'utente nella specifica Phase 7.0.",
+
+  "vectors": [
+    {
+      "failure_mode": "THRESHOLD_MINING",
+      "description": "Provare molte soglie su una feature finche' una risulta significativa, poi presentare solo quella come 'la' soglia del setup.",
+      "detection": "threshold_policy.json richiede allowed_threshold_sources dichiarati PRIMA di vedere risultati; una soglia scelta da grid search e' esplicitamente in explicitly_forbidden.",
+      "prevention": "candidate_generation_policy.json vieta threshold grids in generazione; ogni soglia deve avere provenance tracciabile (DOMAIN_DEFINED / PREDECLARED_QUANTILE / DISCOVERY_ONLY_LEARNED_SPLIT / SHALLOW_TREE_PROPOSAL) registrata nel setup_candidate PRIMA del test.",
+      "residual_risk": "Un umano potrebbe ancora 'provare a mente' diverse soglie informalmente prima di scrivere la threshold_source dichiarata - non completamente bloccabile senza log completo di ogni ispezione visiva dei dati (fuori scope tecnico)."
+    },
+    {
+      "failure_mode": "CORRELATED_HYPOTHESES_COUNTED_AS_INDEPENDENT",
+      "description": "Testare N varianti quasi identiche dello stesso setup (es. soglia ATR 1.0/1.1/1.2/...) e trattarle come N ipotesi indipendenti ai fini del multiple-testing.",
+      "detection": "candidate_signature.py: signature quasi identiche (stesso event_family/direction/outcome, soglie vicine) sono raggruppabili per famiglia; multiple_testing_v2.run_family richiede un family_id esplicito.",
+      "prevention": "candidate_generation_policy.json Level 0/1/2 limita il numero di varianti generabili per famiglia; family_id deve raggruppare varianti della stessa idea prima del BH-FDR, non dopo.",
+      "residual_risk": "La definizione di 'quasi identiche' resta in parte euristica - due setup con feature diverse ma economicamente equivalenti potrebbero sfuggire al raggruppamento automatico."
+    },
+    {
+      "failure_mode": "OVERLAPPING_EVENTS_INFLATE_SAMPLE_SIZE",
+      "description": "Eventi che condividono la stessa finestra di outcome (outcome-window overlap quasi totale) vengono contati come osservazioni indipendenti.",
+      "detection": "dependence_diagnostics_v2.py: EVENT VIEW vs EPISODE VIEW, clustering_rate, outcome_autocorrelation, ess_autocorrelation.",
+      "prevention": "minimum_evidence_gates.json effective_n_minimum applicato al piu' basso fra i metodi ESS calcolati, non al n_nominal.",
+      "residual_risk": "La soglia di clustering (cluster_gap_threshold) e' un parametro scelto (POLICY_THRESHOLD) - un valore troppo permissivo potrebbe ancora sotto-rilevare dipendenza reale con una struttura temporale insolita."
+    },
+    {
+      "failure_mode": "REGIME_LABELING_LEAKAGE",
+      "description": "Un'etichetta di regime (es. volatility_state=HIGH) e' calcolata usando informazione che include il periodo di outcome stesso, non solo il passato all'observation_point.",
+      "detection": "feature_registry_v2.json: leakage_risk_from_status per ogni feature usata come state_condition deve essere LOW.",
+      "prevention": "Tutte le feature ammesse in discovery/baseline_matching sono gia' filtrate CAUSAL_SAFE dall'audit Phase 5.5 (nessuna nuova feature introdotta in Phase 7.0) - qualunque feature futura richiede lo stesso audit prima di essere aggiunta al registry.",
+      "residual_risk": "L'audit CAUSAL_SAFE di Phase 5.5 e' stato fatto per le feature esistenti - una feature NUOVA proposta in una futura Phase 7.1 richiedera' lo stesso processo, non ancora automatizzato end-to-end."
+    },
+    {
+      "failure_mode": "BASELINE_LEAKAGE",
+      "description": "Il baseline matching usa parametri (normalizzazione, soglie di stato) fittati includendo dati oltre la finestra di discovery, o attinge controlli da split diversi da quello dell'evento.",
+      "detection": "cross_split_safety.py (violazione tecnica, non solo di policy) + baseline_contract_v4.json discovery_fitted_only.",
+      "prevention": "Ogni Baseline Engine v4 istanza deve passare validate_baseline_matches() prima di essere accettata in un candidate_result.",
+      "residual_risk": "Nessuno identificato oltre la corretta implementazione del gate stesso - questo e' il vettore gia' meglio coperto tecnicamente in Phase 7."
+    },
+    {
+      "failure_mode": "CALENDAR_LEAKAGE",
+      "description": "Una feature o un baseline match usa informazione di calendario che indirettamente rivela il futuro (es. sapere che 'oggi e' l'ultimo giorno di un trend regime' richiede aver visto il cambio di regime).",
+      "detection": "NON ancora coperto da un check meccanico dedicato in Phase 7 - solo dal generico leakage_risk_from_status ereditato da Phase 5.5's leakage_guard.py.",
+      "prevention": "hour_utc/day_of_week/session sono TIME_FEATURES marcate solo 'diagnostic' (mai discovery/baseline_matching) in feature_registry_v2.json - riduce ma non elimina il rischio se una feature derivata combina calendario con trend/regime in modo implicito.",
+      "residual_risk": "GAP APERTO: nessun test automatico specifico per calendar leakage indiretto (es. una feature di regime che cambia esattamente ai confini di sessione/settimana in modo sospetto) - da chiudere prima di Phase 7.1 reale."
+    },
+    {
+      "failure_mode": "CANDIDATE_SURVIVORSHIP",
+      "description": "Solo i candidati 'sopravvissuti' a un filtro informale (es. 'sembravano promettenti') vengono formalmente registrati - quelli scartati prima non entrano mai nel multiple-testing ledger, sottostimando il numero reale di ipotesi tentate.",
+      "detection": "Nessun controllo tecnico puo' rilevare un candidato mai registrato - questo e' un rischio strutturale di processo, non di codice.",
+      "prevention": "candidate_generation_policy.json impone che OGNI candidato generato (anche a Level 0) riceva un candidate_id e una signature PRIMA di essere testato, non dopo aver visto un risultato preliminare informale - research_journal.schema.json richiede una entry per ogni GENERATED.",
+      "residual_risk": "GAP APERTO: nessun modo tecnico di verificare che un umano non abbia scartato mentalmente idee prima di formalizzarle - mitigabile solo con disciplina di processo, non con codice."
+    },
+    {
+      "failure_mode": "METRIC_CHERRY_PICKING",
+      "description": "Riportare la metrica (fra le tante possibili: P(+0.5R), P(+1R), MFE medio, ecc.) che mostra il risultato piu' favorevole, invece della metrica pre-registrata.",
+      "detection": "outcome_surface_v2.schema.json: primary_outcome e' frozen_before_test=true; secondary_outcomes sono dichiarati ma non promuovibili a primary post-hoc.",
+      "prevention": "cherry_pick_policy.rule (outcome_surface_v2) reindirizza qualunque secondary outcome piu' forte del primario a un ciclo POST_HOC_OBSERVATION separato (post_hoc_quarantine.py).",
+      "residual_risk": "Nessuno identificato oltre la disciplina di rispettare frozen_before_test in fase di reporting."
+    },
+    {
+      "failure_mode": "DIRECTION_CHERRY_PICKING",
+      "description": "Testare un setup su entrambe le direzioni, poi riportare solo quella che ha funzionato come 'il setup', senza dichiarare che l'altra direzione e' stata provata e ha fallito.",
+      "detection": "stability_matrix_policy.json axis 'direction' + minimum_evidence_gates.json stability_requirement (segno coerente BUY/SELL salvo che la direzione sia parte esplicita e dichiarata del setup).",
+      "prevention": "Questo e' esattamente il pattern FAIL-005 (SELL_SWEEP_RECLAIM_ASYMMETRY) - post_hoc_quarantine.py blocca la promozione nella stessa run se la direzione vincente e' stata scoperta via direction_split dopo il test primario BOTH.",
+      "residual_risk": "Nessuno aggiuntivo - gia' coperto sia da un incidente reale (FAIL-005) sia da due gate indipendenti."
+    },
+    {
+      "failure_mode": "VALIDATION_REUSE",
+      "description": "Lo stesso segmento di dati (es. locked_validation) viene 'guardato' piu' volte per iterazioni successive di uno stesso candidato, erodendo silenziosamente la sua indipendenza statistica.",
+      "detection": "Nessun contatore automatico di 'quante volte questo split e' stato ispezionato' esiste ancora in Phase 7 - GAP APERTO.",
+      "prevention": "partition_contract_v2.json dichiara locked_validation e final_holdout come usabili idealmente UNA SOLA VOLTA per famiglia di candidati - ma l'enforcement e' oggi solo documentale, non tecnico (nessun 'seal' o log di accesso implementato).",
+      "residual_risk": "GAP APERTO ESPLICITO: da chiudere prima di Phase 7.1 con un vero log di accesso ai segmenti locked/holdout (es. hash del candidate_id + timestamp di ogni lettura, append-only)."
+    },
+    {
+      "failure_mode": "DATASET_VERSION_DRIFT",
+      "description": "Una ri-esecuzione dello stesso candidato in un momento diverso produce risultati diversi perche' il dataset sottostante (es. dati Dukascopy ri-scaricati, feature ricalcolate con codice cambiato) e' cambiato senza che questo venga notato.",
+      "detection": "Nessun hash di versione dataset e' ancora collegato meccanicamente a candidate_result_v2 in Phase 7 - il pattern esiste gia' (dataset_versioning_v1.json, Phase 5.5) ma non e' stato re-integrato qui.",
+      "prevention": "GAP APERTO: candidate_result_v2.schema.json (da produrre) dovra' includere un campo dataset_version_hash obbligatorio, verificato contro dataset_versioning_v1.json/manifest.json ad ogni run.",
+      "residual_risk": "Fino alla chiusura di questo gap, una discrepanza fra due run dello stesso candidato non sarebbe automaticamente distinguibile fra 'rumore statistico' e 'dataset cambiato'."
+    }
+  ],
+
+  "open_gaps_summary": [
+    "CALENDAR_LEAKAGE: nessun check meccanico dedicato oltre il leakage guard generico.",
+    "CANDIDATE_SURVIVORSHIP: rischio di processo, non chiudibile con solo codice.",
+    "VALIDATION_REUSE: nessun log di accesso tecnico ai segmenti locked/holdout.",
+    "DATASET_VERSION_DRIFT: nessun hash di versione dataset ancora collegato ai risultati di candidato.",
+    "EVENT_FIRING_RATE (FAIL-004, da failure_memory_registry_v1.json): nessun check automatico sul tasso di attivazione di un event_family."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "policy_id": "CROSS_MARKET_READINESS_V1",
+  "principle": "Tre forme di generalizzazione sono state storicamente confuse nel progetto (in nessuna fase precedente si e' distinto esplicitamente 'funziona ancora nel tempo' da 'funziona ancora con altri dati della stessa fonte' da 'funziona su un altro mercato'). Phase 7 le tratta come TRE GATE SEPARATE, ciascuna con il proprio stato, mai fuse in un singolo 'e' robusto/non e' robusto'.",
+
+  "gates": {
+    "temporal_robustness": {
+      "question": "L'effetto regge su un periodo di tempo successivo, stessa fonte dati, stesso simbolo (XAUUSD via Dukascopy)?",
+      "tested_via": "LOCKED_VALIDATION e FINAL_HOLDOUT segments - vedi partition_contract_v2.json",
+      "status_values": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"],
+      "note": "Questa e' l'UNICA delle tre gate che Phase 7.1 (quando eseguita) potra' effettivamente valutare, dato che al momento esiste un solo simbolo e un solo feed nel dataset disponibile."
+    },
+    "feed_robustness": {
+      "question": "L'effetto regge se i dati provengono da un feed/broker diverso (stesso simbolo, stesso periodo)?",
+      "tested_via": "Richiede un secondo feed indipendente (es. un broker MT5 diverso da Dukascopy) - NON disponibile oggi nel progetto.",
+      "status_values": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"],
+      "current_status": "UNTESTED - nessun secondo feed acquisito. Dichiarato esplicitamente per evitare che un candidato PASS su temporal_robustness venga letto implicitamente come 'robusto in generale'."
+    },
+    "market_transferability": {
+      "question": "L'effetto (o un effetto analogo dello stesso event_family/state_conditions) esiste anche su un simbolo diverso (es. altro metallo, forex major, indice)?",
+      "tested_via": "Richiede dati storici per il simbolo target, con lo stesso pipeline di feature/evento causal-safe.",
+      "status_values": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"],
+      "current_status": "UNTESTED - il progetto ad oggi ha lavorato solo su XAUUSD. Nessun claim di transferability e' ammesso senza questo test."
+    }
+  },
+
+  "composite_rule": "Un candidato puo' essere STRUCTURALLY_SUPPORTED (vedi cost_model_integration.json) avendo superato SOLO temporal_robustness. Questo NON autorizza alcuna affermazione su feed_robustness o market_transferability - ciascuna resta UNTESTED finche' non specificamente valutata, e va riportata come tale in ogni evidence record derivato (Evidence Record v2 - vedi Phase 6.6).",
+
+  "reporting_requirement": "Ogni output di candidate_result_v2 deve includere un blocco 'generalization_status' con tutte e tre le gate esplicite, anche quando due sono UNTESTED - un campo mancante non e' equivalente a UNTESTED dichiarato."
+}

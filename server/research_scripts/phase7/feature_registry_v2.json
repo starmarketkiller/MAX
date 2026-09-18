@@ -1,0 +1,550 @@
+{
+  "schema_version": 2,
+  "source_provenance": "server/research_scripts/phase5_5/feature_provenance_registry_v1.json",
+  "source_redundancy": "server/research_scripts/phase5_5/feature_redundancy_audit_v1.json",
+  "n_features": 26,
+  "n_allowed_for_discovery": 26,
+  "rule": "allowed_for_discovery=false per costruzione se causal_safety_status != CAUSAL_SAFE. Nessuna eccezione manuale.",
+  "features": [
+    {
+      "feature_id": "return_direction",
+      "definition": "sign(close[i]/close[i-1] - 1)",
+      "source": "close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "KEEP_FOR_INTERPRETABILITY",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "ema_slope_raw",
+      "definition": "EMA(20)[i]-EMA(20)[i-1], normalizzato /ATR[i]",
+      "source": "close, ATR(14)",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "HIGHLY_CORRELATED",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "ema_slope_atr_norm",
+      "definition": "EMA(20)[i]-EMA(20)[i-1], normalizzato /ATR[i]",
+      "source": "close, ATR(14)",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "REDUNDANT",
+      "redundant_of": "ema_slope_raw",
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "directional_efficiency",
+      "definition": "|close[i]-close[i-20]| / sum(|close.diff()|, 20 barre) - Kaufman Efficiency Ratio",
+      "source": "close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "trend_persistence_bars",
+      "definition": "conteggio barre consecutive (fino alla corrente) con lo stesso segno di ritorno 1-barra, finestra trailing 20",
+      "source": "close returns",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "atr",
+      "definition": "Wilder ATR(14) = EWM(alpha=1/14) del True Range",
+      "source": "high, low, close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "atr_percentile",
+      "definition": "percentile causale (rolling 252, valore corrente incluso) dell'ATR",
+      "source": "atr",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "realized_vol",
+      "definition": "std(log-return, 20 barre)",
+      "source": "close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "vol_acceleration",
+      "definition": "ATR[i]-ATR[i-5]",
+      "source": "atr",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "compression_percentile",
+      "definition": "percentile causale (rolling 120) della media mobile a 10 barre dell'ATR",
+      "source": "atr",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_rolling_high_atr",
+      "definition": "(close[i]-max(high,20))/ATR[i], simmetrico per low",
+      "source": "high, low, close, atr",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "REDUNDANT",
+      "redundant_of": "dist_from_rolling_low_atr",
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_rolling_low_atr",
+      "definition": "(close[i]-max(high,20))/ATR[i], simmetrico per low",
+      "source": "high, low, close, atr",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "HIGHLY_CORRELATED",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "position_in_rolling_range",
+      "definition": "(close[i]-min(low,20)) / (max(high,20)-min(low,20))",
+      "source": "high, low, close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "HIGHLY_CORRELATED",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_prev_day_high_atr",
+      "definition": "(close[i]-prev_day_high)/ATR[i] - prev_day_high/low = max/min del giorno COMPLETO precedente (shift(1) esplicito sull'aggregazione giornaliera prima del merge)",
+      "source": "high, low, date",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "REDUNDANT",
+      "redundant_of": "dist_from_prev_day_low_atr",
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_prev_day_low_atr",
+      "definition": "(close[i]-prev_day_high)/ATR[i] - prev_day_high/low = max/min del giorno COMPLETO precedente (shift(1) esplicito sull'aggregazione giornaliera prima del merge)",
+      "source": "high, low, date",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_prev_week_high_atr",
+      "definition": "come sopra, su settimana ISO completa precedente",
+      "source": "high, low, iso_year, iso_week",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "REDUNDANT",
+      "redundant_of": "dist_from_prev_week_low_atr",
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "dist_from_prev_week_low_atr",
+      "definition": "come sopra, su settimana ISO completa precedente",
+      "source": "high, low, iso_year, iso_week",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "roc",
+      "definition": "close.pct_change(10)",
+      "source": "close",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "momentum_acceleration",
+      "definition": "roc.diff()",
+      "source": "roc",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "momentum_persistence_bars",
+      "definition": "conteggio barre consecutive con stesso segno di \u0394roc, finestra trailing 20",
+      "source": "roc",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "lag1_autocorr_rolling",
+      "definition": "autocorrelazione lag-1 dei ritorni su finestra trailing 60 (fillna(0) sui ritorni PRIMA del rolling - riempie solo il valore mancante della propria riga, non guarda avanti)",
+      "source": "close returns",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "HIGHLY_CORRELATED",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "variance_ratio_proxy",
+      "definition": "Var(ritorno 4 barre, 60 barre trailing) / (4*Var(ritorno 1 barra, 60 barre trailing))",
+      "source": "close returns",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "UNIQUE",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "mean_reversion_score",
+      "definition": "-lag1_autocorr_rolling",
+      "source": "lag1_autocorr_rolling",
+      "observation_time": "bar_close",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "WARMUP_ONLY (vedi missing_data_policy_v1.md, Phase 5.5 - max 75/4809 righe, 1.56%, tutte a inizio serie)",
+      "redundancy_group": "REDUNDANT",
+      "redundant_of": "lag1_autocorr_rolling",
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "discovery",
+        "baseline_matching",
+        "diagnostic"
+      ],
+      "double_use_risk": "Se usata SIA per selezionare la condizione di stato di un candidato SIA per il matching del baseline, una feature puo' rendere baseline ed evento artificialmente simili proprio sulla dimensione che il candidato sta testando (il baseline 'assorbe' l'effetto). Regola: una feature usata come STATE_CONDITION di un candidato (discovery role) non deve essere anche l'UNICA dimensione di matching del baseline per quello stesso candidato - vedi baseline_contract_v4.json.",
+      "version": 1
+    },
+    {
+      "feature_id": "hour_utc",
+      "definition": "estratti direttamente dal timestamp della barra; session = mappa fissa hour->etichetta sessione",
+      "source": "bar_time_utc",
+      "observation_time": "bar_open/close (istantaneo, nessuna finestra)",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "NEVER_MISSING (derivata direttamente dal timestamp della barra)",
+      "redundancy_group": "KEEP_FOR_INTERPRETABILITY",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "diagnostic"
+      ],
+      "double_use_risk": null,
+      "version": 1
+    },
+    {
+      "feature_id": "session",
+      "definition": "estratti direttamente dal timestamp della barra; session = mappa fissa hour->etichetta sessione",
+      "source": "bar_time_utc",
+      "observation_time": "bar_open/close (istantaneo, nessuna finestra)",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "NEVER_MISSING (derivata direttamente dal timestamp della barra)",
+      "redundancy_group": "UNKNOWN",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "diagnostic"
+      ],
+      "double_use_risk": null,
+      "version": 1
+    },
+    {
+      "feature_id": "day_of_week",
+      "definition": "estratti direttamente dal timestamp della barra; session = mappa fissa hour->etichetta sessione",
+      "source": "bar_time_utc",
+      "observation_time": "bar_open/close (istantaneo, nessuna finestra)",
+      "causal_safe": true,
+      "causal_safety_status": "CAUSAL_SAFE",
+      "leakage_risk": "LOW",
+      "missingness": "NEVER_MISSING (derivata direttamente dal timestamp della barra)",
+      "redundancy_group": "KEEP_FOR_INTERPRETABILITY",
+      "redundant_of": null,
+      "allowed_for_discovery": true,
+      "allowed_for_baseline": true,
+      "role": [
+        "diagnostic"
+      ],
+      "double_use_risk": null,
+      "version": 1
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "registry_id": "FAILURE_MEMORY_REGISTRY_V1",
+  "principle": "Questo registro contiene SOLO incidenti realmente osservati nella storia di questo progetto (Phase 4-6.6) - non scenari ipotetici (quelli sono in red_team_analysis.json, prospettici). Ogni voce ha una signature normalizzata checkabile meccanicamente su un nuovo candidato/run, cosi' NEXUS non dipende dalla memoria umana per non ripetere un errore gia' commesso.",
+
+  "patterns": [
+    {
+      "pattern_id": "FAIL-001",
+      "title": "Selezione post-hoc da un batch presentato come conferma indipendente",
+      "first_observed_in": "Phase 5.5 - SWEEP+RECLAIM, selezionato fra 14 candidati equivalenti dopo aver visto i risultati di validazione di tutti",
+      "description": "Un pattern viene scelto come 'il migliore' fra N ipotesi equivalenti DOPO aver visto i risultati di validazione di tutte - il che rende quella validazione CONTAMINATED_VALIDATION anche se il singolo test sembrava corretto isolatamente.",
+      "signature": "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE",
+      "detection_mechanism": "candidate_lifecycle.py + post_hoc_quarantine.py: qualunque candidato la cui selezione fra alternative e' avvenuta dopo INTERNAL_VALIDATION di quel batch non puo' saltare a PRE_REGISTERED_CANDIDATE nella stessa run.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-002",
+      "title": "Soglie di normalizzazione/matching calibrate sull'intero dataset invece che solo su discovery",
+      "first_observed_in": "Phase 5.5 - trovato realmente dal Leakage Guard, corretto in Baseline Engine v2",
+      "description": "I parametri di standardizzazione (media/std) usati per il nearest-neighbour matching venivano calcolati includendo dati di validazione/holdout, non solo la finestra di discovery dichiarata.",
+      "signature": "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW",
+      "detection_mechanism": "baseline_contract_v4.json: discovery_fitted_only=required + cross_split_safety.py valida che nessun parametro derivi da righe fuori dallo split di discovery.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-003",
+      "title": "Fenomeno statisticamente reale ma non eseguibile, scambiato per edge deployabile",
+      "first_observed_in": "Phase 5.5 - WICK_SWEEP_RECLAIM, refutato esattamente su SIGNAL_TO_FILL_GAP",
+      "description": "Un pattern supera i test statistici ma non e' mai stato testato con un modello di esecuzione realistico (fill al prezzo giusto, nel momento giusto) - risulta un artefatto della definizione dell'evento sui dati storici, non un'opportunita' reale.",
+      "signature": "NO_EXECUTION_FEASIBILITY_TEST_BEFORE_DEPLOY_CLAIM",
+      "detection_mechanism": "cost_model_integration.json: nessun candidato puo' essere chiamato EXECUTABLE_EDGE_AFTER_COST senza aver attraversato tutti e 4 gli scenari di costo dichiarati.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-004",
+      "title": "Event detector mal calibrato che si attiva quasi sempre",
+      "first_observed_in": "Phase 5.5 - PULLBACK, attivo sull'83% delle barre, risultati 'NO_EDGE' non informativi ma dall'aspetto di un test valido",
+      "description": "Un evento definito troppo permissivamente perde significato come 'evento raro/informativo' - il test risultante confronta essenzialmente il dataset con se stesso.",
+      "signature": "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD",
+      "detection_mechanism": "Nessun controllo automatico ancora implementato in Phase 7 per il firing-rate di un event_family - GAP APERTO, da chiudere prima di una vera Phase 7.1 (vedi report finale, sec. gap list).",
+      "status": "NOT_YET_MECHANICALLY_BLOCKABLE"
+    },
+    {
+      "pattern_id": "FAIL-005",
+      "title": "Baseline aggregata (non direction-aware) che assorbe un effetto direzionale reale",
+      "first_observed_in": "Phase 6/6.5/6.6 - H006 SELL_SWEEP_RECLAIM_ASYMMETRY: la baseline aggregata BUY+SELL di Phase 6 nascondeva un'asimmetria visibile solo separando le direzioni (Baseline Engine v3, Phase 6.5)",
+      "description": "Quando una baseline unica viene condivisa fra osservazioni BUY e SELL, un effetto forte ma concentrato su un solo lato direzionale puo' risultare diluito/invisibile nel confronto aggregato.",
+      "signature": "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS",
+      "detection_mechanism": "baseline_contract_v4.json: direction_aware=required nativamente (non piu' retroattivo) + stability_matrix_policy.json axis 'direction'.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-006",
+      "title": "n_nominal alto ma effective_n/cluster_count basso per eventi fortemente dipendenti",
+      "first_observed_in": "Phase 6.5 - H006: n_nominal=115 ma solo ~46 cluster indipendenti (dependence_diagnostics.py)",
+      "description": "Eventi vicini temporalmente e derivati dallo stesso movimento di mercato vengono contati come osservazioni indipendenti, gonfiando artificialmente la potenza statistica apparente.",
+      "signature": "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT",
+      "detection_mechanism": "dependence_diagnostics_v2.py (EVENT VIEW vs EPISODE VIEW) + minimum_evidence_gates.json effective_n_minimum.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-007",
+      "title": "Evidence record primario che assorbe proprieta' di un audit retroattivo",
+      "first_observed_in": "Phase 6.6 Integrity Patch - h006_evidence_v2.json.primary_evidence.baseline aveva erroneamente direction_aware=true, una proprieta' introdotta solo in Phase 6.5 (Baseline Engine v3), non esistente al momento del verdetto primario Phase 6",
+      "description": "Durante la normalizzazione di un evidence record, campi appartenenti a un audit metodologico successivo vengono copiati per errore nella sezione 'primary_evidence', falsificando la cronologia reale di cosa si sapeva al momento del verdetto.",
+      "signature": "PRIMARY_EVIDENCE_FIELD_CONTAMINATED_BY_RETROACTIVE_AUDIT",
+      "detection_mechanism": "validate_integrity.py checks 6b: primary_evidence_direction_aware_must_be_false + retroactive_audit_direction_aware_must_be_true (asserzione incrociata, non solo presenza del campo).",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-008",
+      "title": "Leakage causale via center=True, shift negativo o feature che vede l'outcome",
+      "first_observed_in": "Phase 5.5 - Leakage Guard, audit retroattivo delle feature esistenti",
+      "description": "Una feature calcolata con una finestra rolling centrata, o con uno shift che guarda avanti nel tempo, o che include direttamente informazione sull'outcome che si vuole predire, produce un edge apparente che non esisterebbe in esecuzione reale (l'informazione non seria disponibile al momento della decisione).",
+      "signature": "CAUSAL_UNSAFE_FEATURE_USED_AS_STATE_CONDITION",
+      "detection_mechanism": "feature_registry_v2.json: leakage_risk_from_status deve essere LOW (CAUSAL_SAFE) per ogni feature usata in state_conditions - HIGH/CAUSAL_UNSAFE bloccato meccanicamente a livello di candidate_generation_policy.json.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    }
+  ],
+
+  "usage_contract": "Prima di generare un nuovo candidato (candidate_generation_policy.json) o di accettare un evidence record, il motore deve verificare la signature del nuovo oggetto contro OGNI pattern_id qui elencato con status=MECHANICALLY_BLOCKABLE_NOW - un match non e' un rifiuto automatico assoluto, ma richiede una research_journal entry di tipo GATE_OVERRIDE_REQUEST con rationale esplicito prima di procedere."
+}

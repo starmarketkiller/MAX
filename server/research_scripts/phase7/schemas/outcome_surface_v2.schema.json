@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexus://schemas/outcome_surface_v2.schema.json",
+  "title": "NEXUS Outcome Surface v2",
+  "schema_version": 2,
+  "description": "Non riduce tutto a +1R/-1R. Un primary_outcome e' SEMPRE predefinito e congelato prima di guardare qualunque risultato; tutti gli altri sono secondary/diagnostic. Vietato scegliere a posteriori quale soglia 'ha funzionato meglio'.",
+  "type": "object",
+  "required": ["primary_outcome", "secondary_outcomes", "diagnostic_outcomes", "cherry_pick_policy"],
+  "properties": {
+    "primary_outcome": {
+      "type": "object",
+      "required": ["definition", "threshold_r_or_atr", "horizon_bars", "frozen_before_test"],
+      "properties": {
+        "definition": {"type": "string", "enum": ["P(+0.25R before -1R)", "P(+0.5R before -1R)", "P(+1R before -1R)", "P(+1.5R before -1R)", "P(+2R before -1R)"]},
+        "threshold_r_or_atr": {"type": "number"},
+        "horizon_bars": {"type": "integer"},
+        "frozen_before_test": {"type": "boolean", "const": true}
+      }
+    },
+    "secondary_outcomes": {
+      "type": "array",
+      "description": "Le altre soglie R/ATR della stessa griglia - riportate sempre, mai usate per il verdetto principale",
+      "items": {"type": "string"}
+    },
+    "diagnostic_outcomes": {
+      "type": "array",
+      "description": "MFE, MAE, time-to-target, time-to-invalidation - descrittivi, mai usati per promuovere un candidato",
+      "items": {"type": "string", "enum": ["MFE", "MAE", "time_to_target", "time_to_invalidation"]}
+    },
+    "cherry_pick_policy": {
+      "type": "object",
+      "required": ["rule"],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "const": "Il primary_outcome e' scelto e congelato PRIMA di calcolare qualunque risultato. Se un secondary_outcome mostra un effetto piu' forte del primary DOPO il test, questo NON promuove il candidato ne' cambia il verdetto - puo' al massimo generare una nuova POST_HOC_OBSERVATION con un proprio futuro test dedicato (stesso standard di sec.15, Post-hoc quarantine)."
+        }
+      }
+    }
+  }
+}

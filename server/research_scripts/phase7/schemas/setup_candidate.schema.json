@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nexus://schemas/setup_candidate.schema.json",
+  "title": "NEXUS Setup Candidate v2 - unit of discovery",
+  "schema_version": 2,
+  "description": "Formalizza EdgeCandidate = Setup x MarketState x Direction x Outcome, confrontato con MatchedBaseline(State, Direction, Time). Nessuna descrizione libera puo' essere la fonte primaria di un candidato - deve sempre esistere questo record strutturato.",
+  "type": "object",
+  "required": [
+    "setup_id", "event_family", "state_conditions", "direction",
+    "observation_point", "outcome_definition", "baseline_contract_ref",
+    "discovery_origin", "feature_set_version", "complexity_level", "signature"
+  ],
+  "properties": {
+    "setup_id": {"type": "string", "description": "Identificatore stabile, mai riassegnato"},
+    "event_family": {"type": "string", "description": "Famiglia di evento dal Event Registry (es. SWEEP, RECLAIM, BREAKOUT) - MAI il nome di una strategia"},
+    "state_conditions": {
+      "type": "array",
+      "maxItems": 2,
+      "description": "Precondizioni di stato AGGIUNTIVE oltre l'evento nudo. Max 2 per la Candidate-Generation Policy (Level 2) salvo eccezione esplicita documentata.",
+      "items": {
+        "type": "object",
+        "required": ["feature_id", "operator", "threshold", "threshold_source"],
+        "properties": {
+          "feature_id": {"type": "string", "description": "Deve esistere in feature_registry_v2.json con allowed_for_discovery=true"},
+          "operator": {"type": "string", "enum": [">", ">=", "<", "<=", "==", "in_range"]},
+          "threshold": {},
+          "threshold_source": {"type": "string", "enum": ["DOMAIN_DEFINED", "PREDECLARED_QUANTILE", "DISCOVERY_ONLY_LEARNED_SPLIT", "SHALLOW_TREE_PROPOSAL"]}
+        }
+      }
+    },
+    "direction": {"type": "string", "enum": ["BUY", "SELL", "BOTH"]},
+    "observation_point": {"type": "string", "description": "Istante causale esatto di osservazione (es. bar_close, confirmation_bar_close)"},
+    "outcome_definition": {"type": "object", "description": "Vedi outcome_surface_v2.schema.json - deve dichiarare un primary_outcome univoco"},
+    "baseline_contract_ref": {"type": "string", "description": "Riferimento a baseline_contract_v4.json"},
+    "discovery_origin": {"type": "string", "enum": ["PRE_REGISTERED", "SHALLOW_TREE_PROPOSAL", "DOMAIN_HYPOTHESIS"], "description": "Come e' nato il candidato - mai 'osservato guardando i risultati'"},
+    "feature_set_version": {"type": "string", "description": "Versione congelata di feature_registry_v2.json usata"},
+    "complexity_level": {"type": "integer", "enum": [0, 1, 2], "description": "0=evento nudo, 1=evento+1 condizione, 2=evento+2 condizioni - vedi candidate_generation_policy.json"},
+    "signature": {"type": "string", "description": "Firma canonica normalizzata - vedi candidate_signature.py"},
+    "lifecycle_state": {"type": "string", "description": "Vedi candidate_lifecycle.py per gli stati ammessi"},
+    "family_id": {"type": ["string", "null"], "description": "Famiglia di multiple-testing a cui appartiene - vedi multiple_testing_v2.py"}
+  }
+}

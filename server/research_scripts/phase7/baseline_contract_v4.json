@@ -1,0 +1,61 @@
+{
+  "schema_version": 4,
+  "contract_id": "BASELINE_ENGINE_V4_CONTRACT",
+  "lineage": "v1 (Phase 5, pool intero di cella, nessuna distanza) -> v2 (Phase 5.5, nearest-neighbour standardizzato, ma aggregato fra direzioni) -> v3 (Phase 6.5, direction-aware ma audit retroattivo) -> v4 (qui, nativo fin dal design)",
+
+  "required_properties": {
+    "direction_aware": {
+      "required": true,
+      "rule": "Il matching contract include la direzione FIN DALL'INIZIO (non un confronto post-hoc). Un evento BUY riceve SOLO controlli valutati come ipotetico BUY; un evento SELL SOLO controlli SELL. Nessun baseline_probability aggregato che fonda le due direzioni puo' essere il numero primario di un candidato."
+    },
+    "temporally_safe": {
+      "required": true,
+      "rule": "Il pool di controllo per un evento in un dato split e' campionato ESCLUSIVAMENTE da barre dello STESSO split (vedi cross_split_safety.py) - mai da un altro split, nemmeno se 'vicino nel tempo'."
+    },
+    "state_matched": {
+      "required": true,
+      "dimensions_evaluated_only_if_justified": ["volatility_state", "trend_state", "year_or_broad_time_regime"],
+      "rule": "Ogni dimensione di matching deve essere giustificata per il candidato specifico - non e' un pacchetto fisso di 3 dimensioni sempre applicate a prescindere (vedi overmatching/undermatching sotto)."
+    },
+    "discovery_fitted_only": {
+      "required": true,
+      "rule": "Soglie di coarsening (terzili ecc.) e parametri di standardizzazione (media/std delle feature NN) sono fit SOLO sulla finestra DEVELOPMENT.discovery (mai su internal_validation/locked_validation/final_holdout) - fix diretto del leakage confermato in Phase 5/Phase 6 (vedi failure_memory_registry_v1.json, FM-025/FM-LEAK-TERCILES)."
+    },
+    "split_safe": {
+      "required": true,
+      "rule": "Un evento in validation/holdout non puo' MAI ricevere controlli derivati dal discovery split o da un altro split - enforcement tecnico in cross_split_safety.py, non solo convenzione documentale."
+    },
+    "auditable": {
+      "required": true,
+      "rule": "Ogni singolo match (evento<->controllo) registra: event direction, baseline direction, match distance, match quality (GOOD/FAIR/POOR) - mai un pool aggregato senza tracciabilita' per-osservazione."
+    }
+  },
+
+  "overmatching_vs_undermatching": {
+    "too_little_matching": {
+      "risk": "CONFOUNDING",
+      "explanation": "Se si eguagliano troppo poche dimensioni (es. solo la direzione), il baseline puo' includere barre in regimi di mercato molto diversi dall'evento - un ΔP positivo puo' riflettere solo 'il periodo generale era favorevole', non l'evento in se' (esattamente il rischio gia' visto con TREND_DRIVEN_EDGE_CONFOUND, Phase 4)."
+    },
+    "too_much_matching": {
+      "risk": "NO_USABLE_BASELINE / VARIANCE_EXPLOSION",
+      "explanation": "Se si eguagliano troppe dimensioni contemporaneamente (es. volatilita' + trend + anno + sessione + 3 feature NN), il pool di controlli compatibili puo' diventare troppo piccolo o vuoto per molti eventi, producendo stime ad altissima varianza o match_quality sistematicamente POOR - un baseline 'perfetto' ma inutilizzabile."
+    },
+    "resolution_rule": "Iniziare con il set minimo di dimensioni giustificate per il candidato (spesso: direzione + 1 asse di stato). Aggiungere una dimensione in piu' SOLO se il match_quality resta prevalentemente GOOD/FAIR con quella dimensione aggiuntiva - se la distribuzione di qualita' peggiora sensibilmente (piu' POOR), la dimensione extra va scartata, non forzata."
+  },
+
+  "minimum_control_count": {
+    "value": 20,
+    "unit": "numero minimo di barre di controllo disponibili per cella/direzione prima di considerare valido un match",
+    "status": "POLICY_THRESHOLD",
+    "rationale": "Non derivato da una formula statistica - scelto per coerenza con l'esperienza Phase 6 (baseline pool nell'ordine delle centinaia per ~115 eventi, quindi ~5-8 controlli/evento in media anche con pool ampi) e con il numero di nearest-neighbour gia' usato (k=5) in Phase 5.5/6 - un pool sotto 20 renderebbe anche k=5 vicini quasi tutto il pool disponibile, quindi poco selettivo."
+  },
+  "match_quality_thresholds": {
+    "GOOD": "< 0.5 (distanza euclidea media sulle feature NN standardizzate)",
+    "FAIR": "< 1.0",
+    "POOR": ">= 1.0",
+    "status": "POLICY_THRESHOLD",
+    "rationale": "Stesse soglie gia' impiegate in Phase 5.5/6.5 - non ri-derivate qui, riutilizzate per continuita' e confrontabilita' storica, non perche' siano un ottimo statisticamente dimostrato."
+  },
+
+  "double_use_warning": "Vedi feature_registry_v2.json, campo double_use_risk - una feature usata come STATE_CONDITION del candidato (discovery role) non deve essere l'unica/principale dimensione di matching del suo stesso baseline, altrimenti il baseline 'assorbe' l'effetto che si sta testando."
+}

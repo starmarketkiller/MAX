@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "policy_id": "MINIMUM_EVIDENCE_GATES_V1",
+  "disclaimer": "Questi numeri NON sono stati scelti per far passare o fallire un candidato specifico (incluso H006, che resta E2 indipendentemente da questo documento - vedi Phase 6.6). Ogni soglia e' etichettata STATISTICALLY_JUSTIFIED solo se esiste un principio statistico reale dietro al CONCETTO (non al numero esatto); altrimenti e' POLICY_THRESHOLD.",
+
+  "gates": {
+    "n_nominal_minimum": {
+      "value": 30,
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Stesso valore gia' usato in H006_frozen_spec.json (Phase 6). Non derivato da una formula - scelto per continuita' con l'esperienza pregressa del progetto."
+    },
+    "cluster_count_minimum": {
+      "value": 20,
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Motivazione statistica PARZIALE: con n_clusters=20 osservazioni indipendenti a p=0.5, l'errore standard binomiale e' ~1/(2*sqrt(20))=11%, un livello di rumore giudicato accettabile per una prima lettura - ma la scelta di 20 (invece di 15 o 25) resta una decisione di policy, non un valore unico derivabile."
+    },
+    "effective_n_minimum": {
+      "value": 20,
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Stesso principio di cluster_count_minimum, applicato a QUALUNQUE metodo di ESS usato (vedi dependence_diagnostics_v2.py) - se il piu' basso dei metodi calcolati scende sotto 20, il candidato non puo' procedere oltre INTERNAL_VALIDATION indipendentemente da n_nominal."
+    },
+    "minimum_controls_per_match": {
+      "value": 20,
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Vedi baseline_contract_v4.json - stesso valore, stessa motivazione (coerenza con k=5 nearest-neighbour gia' in uso)."
+    },
+    "minimum_material_delta_p_default": {
+      "value": 0.10,
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Floor di default, non un valore fisso per ogni candidato - un candidato puo' pre-registrare una soglia diversa (piu' alta o piu' bassa) PRIMA di vedere risultati, purche' giustificata (vedi Effect-size-first Policy, sec.17). Il floor esiste per impedire che un effetto trascurabile (es. ΔP=0.01) venga chiamato 'materiale' solo perche' statisticamente distinguibile da zero su un campione enorme."
+    },
+    "uncertainty_requirement": {
+      "rule": "Wilson CI95(evento) e Wilson CI95(baseline) non sovrapposte",
+      "status": "STATISTICALLY_JUSTIFIED",
+      "rationale": "Il CONCETTO di richiedere intervalli di confidenza non sovrapposti come criterio di separazione e' una pratica statistica riconosciuta (piu' conservativa di un semplice test di significativita' puntuale) - il livello di confidenza 95% e' una convenzione standard, non arbitraria in senso stretto."
+    },
+    "stability_requirement": {
+      "rule": "Il segno dell'effetto deve restare coerente: (1) sia in EVENT VIEW sia in EPISODE VIEW (sec.11); (2) sia per BUY sia per SELL, salvo che la direzione stessa sia parte esplicita del setup testato",
+      "status": "POLICY_THRESHOLD",
+      "rationale": "Il PRINCIPIO (un effetto vero non dovrebbe dipendere da come si contano gli eventi dipendenti, ne' collassare completamente su un lato direzionale non testato esplicitamente) e' solido e motivato da Phase 6/6.5 - ma la scelta di ESATTAMENTE quali split includere nella stability matrix (sec.18) e' una decisione di policy, non una legge statistica."
+    }
+  },
+
+  "composite_rule": "Un candidato NON puo' avanzare da INTERNAL_VALIDATION a PRE_REGISTERED_CANDIDATE (vedi candidate_lifecycle.py) se anche UNA SOLA delle gate sopra fallisce - non esiste una media pesata che compensi una gate fallita con un'altra forte."
+}

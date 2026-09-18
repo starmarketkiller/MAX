@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-18T16:45:39.605006+00:00",
+  "generation_script": "phase7/preflight_simulation.py",
+  "canonical_sha256": "4b226e8471c4a86c5f34908baf2773ab99890d03d90b29da6719940ebb0ffd8c",
+  "payload": {
+    "event_view": {
+      "n": 128,
+      "observed_p": 0.6015625,
+      "baseline_p": 0.5,
+      "delta_p": 0.1015625
+    },
+    "episode_view": {
+      "n": 79,
+      "observed_p": 0.569620253164557,
+      "baseline_p": 0.5,
+      "delta_p": 0.069620253164557,
+      "n_episodes": 79,
+      "representative_rule": "first event in cluster (temporal), not best-outcome"
+    },
+    "dependence_sensitive": true,
+    "materiality_threshold_used": 0.1,
+    "SYNTHETIC_FIXTURE_ONLY": true,
+    "note": "Prodotto da dependence_diagnostics_v2.compare_event_vs_episode_view su synthetic_fixtures.py - nessun dato di mercato."
+  }
+}

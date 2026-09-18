@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "contract_id": "PARTITION_CONTRACT_V2",
+  "principle": "Non sacrificare l'indipendenza per avere piu' sample. Se i dati disponibili OGGI non permettono tre segmenti statisticamente sensati e realmente indipendenti, va dichiarato esplicitamente - non si inventa un terzo segmento riciclando dati gia' usati.",
+
+  "structure": {
+    "DEVELOPMENT": {
+      "sub_segments": ["discovery", "internal_validation"],
+      "purpose": "Generazione candidati (Candidate Generation Policy), screening con Benjamini-Hochberg FDR, prima lettura di stabilita' - QUI e' permesso iterare, guardare, aggiustare la policy (ma non le soglie di un candidato gia' congelato).",
+      "estimable_statistics": [
+        "tutte le statistiche descrittive (Outcome Surface v2 completa)",
+        "fitting di soglie DISCOVERY_ONLY_LEARNED_SPLIT",
+        "fitting dei parametri di normalizzazione del Baseline Engine v4",
+        "screening con FDR (family_size dichiarata)",
+        "prima lettura di ΔP/ΔE (NON e' ancora evidenza indipendente)"
+      ]
+    },
+    "LOCKED_VALIDATION": {
+      "purpose": "UN SOLO passaggio confirmatorio per ogni candidato che ha superato lo screening di discovery. Nessuna iterazione, nessun aggiustamento di soglia dopo aver visto il risultato.",
+      "estimable_statistics": [
+        "ΔP/ΔE con lo stesso outcome primario congelato in discovery",
+        "dependence diagnostics (n_effective, overlap, cluster)",
+        "verdetto INTERNAL_VALIDATION (vedi candidate_lifecycle.py)"
+      ],
+      "rule": "Un candidato puo' essere valutato qui UNA SOLA VOLTA. Un secondo tentativo sullo stesso candidato dopo un fallimento richiede una nuova hypothesis ID (stesso principio di H004->H006)."
+    },
+    "FINAL_HOLDOUT": {
+      "purpose": "Equivalente E3 (True Holdout) - UN SOLO passaggio, solo per candidati gia' PRE_REGISTERED_CANDIDATE dopo LOCKED_VALIDATION.",
+      "estimable_statistics": [
+        "ΔP/ΔE finale, stesso outcome primario, nessuna modifica di criteri",
+        "verdetto SUPPORTED/BORDERLINE/REFUTED"
+      ],
+      "rule": "Nessun candidato puo' essere testato qui piu' di una volta. Nessuna promozione basata su un ri-tentativo."
+    }
+  },
+
+  "current_data_availability_ASSESSMENT": {
+    "as_of": "2026-09-18",
+    "verified_by": "ispezione diretta dei manifest Dukascopy esistenti (server/data_cache/dukascopy_phaseH/manifest.json, server/research_scripts/phase6/data_cache_holdout/manifest.json) - nessun fetch eseguito in questa fase",
+    "already_consumed_windows": [
+      {"window": "2019-02-03..2022-02-03", "used_by": "Phase 5 (discovery+validation contaminata, H004)", "status": "SPESA - non riutilizzabile come discovery/validation/holdout indipendente per un futuro candidato senza rischio DISCOVERY_REUSE"},
+      {"window": "2022-02-04..2023-02-03", "used_by": "Phase 6 (H006 true holdout)", "status": "SPESA - stesso motivo"}
+    ],
+    "untouched_window": {
+      "window": "2023-02-04..presente (2026-09-18)",
+      "status": "MAI SCARICATO NE' TOCCATO da nessuna fase precedente (verificato: nessun manifest lo copre)",
+      "approx_calendar_span": "~3.5 anni"
+    },
+    "verdict": "TRUE_HOLDOUT_STRUCTURE_DESIGNABLE_BUT_NOT_YET_ACQUIRED",
+    "explanation": "Un vero split a 3 segmenti indipendenti E' possibile in linea di principio usando SOLO la finestra 2023-02-04->presente (mai toccata) - ma NESSUN dato di questa finestra e' stato scaricato/validato in questa fase (Phase 7.0 e' architettura, non acquisizione dati). Dichiarato esplicitamente per non dare la falsa impressione che il partizionamento sia gia' pronto all'uso."
+  },
+
+  "proposed_future_split_NOT_YET_EXECUTED": {
+    "note": "Proposta di design, NON eseguita. Nessun fetch, nessun calcolo su questi dati in questa fase.",
+    "development_discovery": {"start": "2023-02-04", "end": "approx 2024-08-03", "approx_months": 18},
+    "development_internal_validation": {"start": "approx 2024-08-04", "end": "approx 2025-05-03", "approx_months": 9},
+    "locked_validation": {"start": "approx 2025-05-04", "end": "approx 2026-02-03", "approx_months": 9},
+    "final_holdout": {"start": "approx 2026-02-04", "end": "presente al momento del run", "approx_months": "variabile, >=6-7 al momento di questa fase"},
+    "rationale": "Proporzioni simili a quelle gia' impiegate con successo in Phase 5 (70/30 discovery/validation) e Phase 6 (holdout di 1 anno) - non ottimizzate per massimizzare il campione, scelte per mantenere ogni segmento di durata comparabile a quelli gia' usati, cosi' i risultati restano confrontabili in ordine di grandezza di campione."
+  },
+
+  "cross_feed_and_cross_market_note": "Questo contratto riguarda SOLO il partizionamento temporale sulla stessa fonte dati (Dukascopy). Non sostituisce un futuro CROSS_FEED_VALIDATION (E4) o test di trasferibilita' cross-market (sec.19) - quelli richiedono una fonte dati indipendente, non solo un nuovo intervallo di tempo."
+}

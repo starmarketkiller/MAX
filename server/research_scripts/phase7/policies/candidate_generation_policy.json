@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "policy_id": "CANDIDATE_GENERATION_POLICY_V1",
+  "principle": "Evitare l'esplosione combinatoria che ha reso Phase 5 vulnerabile al multiple-testing incontrollato (14 ipotesi testate in un solo batch, nessuna disciplina di crescita della complessita').",
+  "levels": {
+    "LEVEL_0": {
+      "definition": "event family da sola (nessuna precondizione di stato aggiuntiva)",
+      "max_state_conditions": 0,
+      "example": "SWEEP (qualunque contesto)"
+    },
+    "LEVEL_1": {
+      "definition": "event + una condizione di stato",
+      "max_state_conditions": 1,
+      "example": "SWEEP + volatility=HIGH"
+    },
+    "LEVEL_2": {
+      "definition": "event + al massimo due condizioni di stato GIUSTIFICATE",
+      "max_state_conditions": 2,
+      "example": "SWEEP + volatility=HIGH + trend=DOWN",
+      "requirement": "ogni condizione deve avere una motivazione economica scritta PRIMA di testare il candidato (stesso principio gia' richiesto per le interazioni predefinite di Phase 5)"
+    }
+  },
+  "explicitly_forbidden_at_generation_time": [
+    "3+ state conditions per candidato",
+    "grid di soglie arbitrarie (es. RSI 51, 52, 53, ...)",
+    "prodotto cartesiano di tutte le feature disponibili",
+    "ottimizzazione genetica dei candidati",
+    "ricerca casuale (random search) di combinazioni",
+    "generazione di candidati tramite modelli ML black-box"
+  ],
+  "escalation_rule": {
+    "rule": "Un aumento di complessita' (LEVEL_0 -> LEVEL_1 -> LEVEL_2) e' ammesso SOLO se esiste evidenza che il livello precedente NON spiega da solo l'effetto osservato.",
+    "evidence_required": "un test esplicito, pre-registrato, che confronta il candidato al livello N contro lo stesso evento al livello N-1 (senza la condizione aggiuntiva) - se il livello N-1 spiega gia' l'effetto (ΔP comparabile), il livello N non aggiunge informazione e non va promosso solo perche' 'sembra piu' specifico'.",
+    "example_from_history": "Phase 6.6/6.5 hanno mostrato che una baseline aggregata (senza segmentazione per direzione) puo' nascondere un'asimmetria reale - ma questo NON giustifica automaticamente di aggiungere 'direction' come condizione di stato extra a ogni candidato: la direzione e' gia' un asse nativo del setup (vedi setup_candidate.schema.json), non una condizione di stato aggiuntiva da consumare nel budget dei 2 livelli."
+  },
+  "allowed_proposal_generators": [
+    "shallow decision tree (profondita' 2-3) come GENERATORE DI IPOTESI DA CONGELARE - il tree non e' mai la prova finale, solo un modo per proporre una soglia/condizione plausibile da poi testare con la disciplina normale (vedi threshold_policy.json)"
+  ]
+}

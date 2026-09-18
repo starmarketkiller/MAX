@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "policy_id": "THRESHOLD_POLICY_V1",
+  "principle": "Nessuna ricerca libera di soglie (vietato: provare RSI 51, 52, 53... finche' una 'funziona'). Ogni soglia usata in un candidato deve dichiarare la propria origine.",
+  "allowed_threshold_sources": {
+    "DOMAIN_DEFINED": {
+      "definition": "soglia scelta per motivazione economica/di dominio, indipendente dai dati (es. '1.0xATR', gia' usata e frozen per VOLATILITY_BREAKOUT_CONFIRMED)",
+      "provenance_required": "citare la motivazione scritta PRIMA di guardare risultati"
+    },
+    "PREDECLARED_QUANTILE": {
+      "definition": "percentile/quantile dichiarato PRIMA di calcolarlo sui dati (es. 'terzile 33/67', gia' usato in Baseline Engine v2/v3)",
+      "provenance_required": "il quantile esatto (33.33/66.67, mediana, ecc.) va dichiarato per iscritto prima del calcolo, e la FINESTRA su cui e' calcolato deve essere dichiarata (vedi partition_contract_v2.json - mai la validation/holdout)"
+    },
+    "DISCOVERY_ONLY_LEARNED_SPLIT": {
+      "definition": "soglia stimata sui dati, ma SOLO sulla finestra di discovery, MAI ricalcolata o aggiustata dopo aver visto validation/holdout",
+      "provenance_required": "congelare il valore esatto appreso PRIMA di toccare la validation - un valore che cambia se ri-calcolato e' un segnale di leakage (vedi Leakage Guard, Phase 5.5)"
+    },
+    "SHALLOW_TREE_PROPOSAL": {
+      "definition": "uno split proposto da un albero decisionale poco profondo (max depth 2-3), usato SOLO come generatore di ipotesi",
+      "provenance_required": "lo split del tree diventa una soglia DISCOVERY_ONLY_LEARNED_SPLIT una volta congelato - il tree stesso non e' mai citato come prova, solo come origine della proposta"
+    }
+  },
+  "explicitly_forbidden": [
+    "grid search di soglie (es. provare ogni valore intero da 50 a 60 e tenere il migliore)",
+    "una soglia scelta guardando la validation o l'holdout",
+    "una soglia 'aggiustata leggermente' dopo aver visto un risultato borderline"
+  ],
+  "rule": "Ogni threshold appresa (DISCOVERY_ONLY_LEARNED_SPLIT o SHALLOW_TREE_PROPOSAL) deve essere: (1) fit solo su discovery; (2) congelata (salvata con il suo valore esatto) prima di calcolare qualunque statistica su validation; (3) accompagnata dal campo threshold_source nel setup_candidate record - mai un numero senza provenance."
+}

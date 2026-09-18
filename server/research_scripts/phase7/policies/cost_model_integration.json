@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "policy_id": "COST_MODEL_INTEGRATION_V1",
+  "principle": "Un candidato con ΔP/ΔE statisticamente e strutturalmente valido (tutte le gate di minimum_evidence_gates.json superate) NON e' automaticamente un edge eseguibile. Phase 7 separa esplicitamente due stati, mai fusi in un singolo verdetto:",
+
+  "reference_source": {
+    "file": "server/research_scripts/cost_model_audit_impact.py (Phase 4)",
+    "note": "Fonte gia' esistente nel progetto - riusata qui per riferimento, non ricalcolata. Contiene BROKER_BASELINE misurato su dati live reali (spread_price=0.54 = 5.4 pip mediana su 900 campioni live GOLD, commission_r=0.0 confermato da 79 deal reali, slippage_price=0.10 pip stimato) con varianti CONSERVATIVE (x1.5) e STRESS (x2.0, escluso commission)."
+  },
+
+  "states": {
+    "STRUCTURAL_EDGE": {
+      "definition": "L'effetto (ΔP o ΔE) e' statisticamente e metodologicamente valido a costo ZERO. Rappresenta un pattern reale nei dati di mercato, indipendentemente da come verrebbe eseguito.",
+      "gate": "Tutte le gate di minimum_evidence_gates.json superate, valutate su outcome/target SENZA sottrazione di costo."
+    },
+    "EXECUTABLE_EDGE_AFTER_COST": {
+      "definition": "L'effetto sopravvive dopo aver sottratto il costo di esecuzione stimato (spread + slippage + commissione) dal target/outcome, usando ALMENO lo scenario BROKER_BASELINE di Phase 4.",
+      "gate": "Le stesse gate di minimum_evidence_gates.json, ma applicate a ΔP/ΔE ricalcolato DOPO cost. Un candidato che perde significativita' qui resta STRUCTURAL_EDGE ma non e' EXECUTABLE."
+    }
+  },
+
+  "required_cost_scenarios_for_reporting": [
+    "ZERO_COST (diagnostico - misura l'effetto puro)",
+    "BROKER_BASELINE (Phase 4 - scenario di riferimento primario per il verdetto EXECUTABLE)",
+    "CONSERVATIVE (x1.5 - stress leggero)",
+    "STRESS (x2.0 - stress alto, salvo commission che resta 0.0 come misurato)"
+  ],
+
+  "reporting_rule": "Ogni candidate_result_v2 con esito diverso da REFUTED deve riportare ΔP/ΔE per TUTTI e 4 gli scenari sopra, non solo il migliore. Riportare solo lo scenario piu' favorevole e' esplicitamente vietato (equivalente a metric cherry-picking - vedi red_team_analysis.json).",
+
+  "note_on_generalization": "Questo modello di costo e' calibrato su un solo broker/feed (vedi cross_market_readiness_policy.json, feed_robustness=UNTESTED altrove) - un EXECUTABLE_EDGE_AFTER_COST qui e' condizionato a quel broker specifico, non e' un claim di eseguibilita' universale."
+}

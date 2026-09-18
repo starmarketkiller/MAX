@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research_journal.schema.json",
+  "title": "NEXUS Phase 7 - Research Journal Entry",
+  "description": "Ogni decisione, deviazione dal protocollo, osservazione o incidente rilevante durante una discovery run va registrata QUI, in tempo reale (non ricostruita a posteriori) - a differenza di experiment_registry_v1.json (Phase 5.5), che registra COSA e' stato eseguito, questo registra PERCHE' sono state prese certe decisioni nel processo.",
+  "type": "object",
+  "required": ["entry_id", "timestamp", "phase", "author", "entry_type", "summary"],
+  "properties": {
+    "entry_id": {"type": "string", "pattern": "^JRNL-[0-9]{8}-[0-9]{3}$"},
+    "timestamp": {"type": "string", "format": "date-time", "description": "Data/ora reale di scrittura della entry, non data del dato di mercato analizzato."},
+    "phase": {"type": "string", "description": "es. 'phase7', 'phase7.1'"},
+    "run_id": {"type": ["string", "null"], "description": "discovery_run_manifest_v2.run_id a cui questa entry si riferisce, se applicabile."},
+    "author": {"type": "string", "description": "'human:<email o nome ruolo>' oppure 'NEXUS_AUTOMATED_PIPELINE:<script>'"},
+    "entry_type": {
+      "type": "string",
+      "enum": ["DECISION", "DEVIATION_FROM_PROTOCOL", "OBSERVATION", "POST_HOC_NOTE", "GATE_OVERRIDE_REQUEST", "INCIDENT"]
+    },
+    "related_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "candidate_id / hypothesis_id / experiment_id / observation_id coinvolti."
+    },
+    "summary": {"type": "string", "minLength": 1},
+    "rationale": {
+      "type": ["string", "null"],
+      "description": "OBBLIGATORIO (non null) se entry_type e' DECISION, DEVIATION_FROM_PROTOCOL o GATE_OVERRIDE_REQUEST - validato a livello applicativo, non solo di schema."
+    },
+    "protocol_reference": {
+      "type": ["string", "null"],
+      "description": "Path del file di policy/contract Phase 7 rilevante (es. 'phase7/policies/threshold_policy.json') - obbligatorio per DEVIATION_FROM_PROTOCOL."
+    },
+    "reversible": {
+      "type": "boolean",
+      "description": "true se la decisione puo' essere rivista senza invalidare evidenza gia' raccolta (es. una nota diagnostica); false se comporta un uso di dati che non puo' essere 'disfatto' (es. guardare risultati di locked_validation)."
+    },
+    "requires_human_signoff": {"type": "boolean"},
+    "signed_off_by": {"type": ["string", "null"]},
+    "signed_off_at": {"type": ["string", "null"], "format": "date-time"}
+  },
+  "additionalProperties": false
+}

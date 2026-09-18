@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-09-18T16:45:39.598141+00:00",
+  "generation_script": "phase7/preflight_simulation.py",
+  "canonical_sha256": "596bda2b2ea007e2fe4a57709b332749eeccc5e3f89d3d17f477e38d6dd4957b",
+  "payload": {
+    "SYNTHETIC_FIXTURE_ONLY": true,
+    "run_id": "PREFLIGHT-RUN-001",
+    "candidates": [
+      {
+        "candidate_id": "SYNTH-CAND-001",
+        "signature": "5cf8b646ea1c51c2cd6c482c8debc80d04f8bd53d49158c77551a940366e131d",
+        "lifecycle_state": "GENERATED",
+        "complexity_level": 2,
+        "note": "Candidato valido di riferimento (BUY, HIGH vol, UP trend)."
+      },
+      {
+        "candidate_id": "SYNTH-CAND-001-DUP",
+        "signature": "5cf8b646ea1c51c2cd6c482c8debc80d04f8bd53d49158c77551a940366e131d",
+        "lifecycle_state": "REJECTED_DUPLICATE",
+        "duplicate_of": "SYNTH-CAND-001",
+        "note": "Stesse condizioni di SYNTH-CAND-001 in ordine diverso - rifiutato come duplicato (Check 3)."
+      },
+      {
+        "candidate_id": "SYNTH-CAND-002",
+        "signature": "dff633a67bf915aa9bd7ab3bd3096f9677f6388c4b28851fe559e7ced12d8570",
+        "lifecycle_state": "GENERATED",
+        "complexity_level": 2,
+        "note": "Stesse condizioni ma direzione SELL - NON un duplicato (Check 3)."
+      },
+      {
+        "candidate_id": "SYNTH-CAND-REJECTED-LEAKY",
+        "signature": null,
+        "lifecycle_state": "REJECTED_LEAKAGE",
+        "rejected_feature": "SYNTH_FUTURE_PEEK_v1",
+        "note": "Generazione rifiutata: feature con leakage_risk=HIGH (Check 2)."
+      },
+      {
+        "candidate_id": "SYNTH-CAND-LIFECYCLE-001",
+        "signature": null,
+        "lifecycle_state": "INTERNAL_VALIDATION",
+        "note": "Usato per dimostrare il blocco di transizione illegale (Check 8)."
+      }
+    ]
+  }
+}

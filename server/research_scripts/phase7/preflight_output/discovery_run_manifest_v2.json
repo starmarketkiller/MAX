@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-09-18T16:45:39.596573+00:00",
+  "generation_script": "phase7/preflight_simulation.py",
+  "canonical_sha256": "f5cb09f73a906d28b435ce447d26d0a706b55198d4daa3950095df7b3d8845cb",
+  "payload": {
+    "SYNTHETIC_FIXTURE_ONLY": true,
+    "run_id": "PREFLIGHT-RUN-001",
+    "phase": "phase7_preflight",
+    "purpose": "Dry-run di verifica gate - NON una discovery run reale (nessun dato di mercato).",
+    "dataset_id": "SYNTHETIC_FIXTURE_V1 (synthetic_fixtures.py, seed=42)",
+    "split_boundaries": {
+      "discovery": [
+        0,
+        1000
+      ],
+      "internal_validation": [
+        1000,
+        1400
+      ],
+      "locked_validation": [
+        1400,
+        1800
+      ],
+      "final_holdout": [
+        1800,
+        2200
+      ]
+    },
+    "n_synthetic_events": 128,
+    "n_synthetic_controls_pool": 734,
+    "checks_summary": {
+      "n_pass": 14,
+      "n_fail": 0,
+      "n_total": 14
+    },
+    "checks_detail": [
+      {
+        "check": "split_isolation_valid_case_passes",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "split_isolation_negative_case_blocked",
+        "status": "PASS",
+        "detail": "CrossSplitViolation sollevata correttamente"
+      },
+      {
+        "check": "leakage_guard_allows_safe_feature",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "leakage_guard_blocks_unsafe_feature",
+        "status": "PASS",
+        "detail": "Feature 'SYNTH_FUTURE_PEEK_v1' rifiutata: leakage_risk=HIGH (richiesto LOW/CAUSAL_SAFE)."
+      },
+      {
+        "check": "duplicate_signature_detected_regardless_of_order",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "distinct_direction_not_flagged_as_duplicate",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "post_hoc_promotion_blocked_same_run",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "fdr_family_size_matches_comparisons",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "fdr_results_cover_all_ids",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_full_pass_no_violations_when_correct",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_corrupted_case_detected",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "dependence_metrics_produced",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "lifecycle_valid_path_succeeds",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "lifecycle_illegal_skip_blocked",
+        "status": "PASS",
+        "detail": ""
+      }
+    ]
+  }
+}

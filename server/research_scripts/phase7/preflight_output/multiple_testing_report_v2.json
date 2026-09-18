@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-09-18T16:45:39.599158+00:00",
+  "generation_script": "phase7/preflight_simulation.py",
+  "canonical_sha256": "090b22d0978fd98c6c597da669cd1aa13e59079e6717cc95c8706c6c0bd75674",
+  "payload": {
+    "family_id": "SYNTH_FAMILY_1",
+    "family_size": 3,
+    "q": 0.1,
+    "results": {
+      "SYNTH-CAND-001": {
+        "raw_p": 0.02833296278481028,
+        "rank": 1,
+        "m_family": 3,
+        "bh_critical_value_q": 0.03333333333333333,
+        "adjusted_p_bh": 0.08499888835443084,
+        "significant_at_q": true
+      },
+      "SYNTH-CAND-002": {
+        "raw_p": 0.36124372846096975,
+        "rank": 2,
+        "m_family": 3,
+        "bh_critical_value_q": 0.06666666666666667,
+        "adjusted_p_bh": 0.5418655926914546,
+        "significant_at_q": false
+      },
+      "SYNTH-CAND-003": {
+        "raw_p": 0.7149945976851568,
+        "rank": 3,
+        "m_family": 3,
+        "bh_critical_value_q": 0.1,
+        "adjusted_p_bh": 0.7149945976851568,
+        "significant_at_q": false
+      }
+    },
+    "guardrail_statement": "FDR correction != independent validation. Un adjusted_p significativo qui NON autorizza una transizione di lifecycle oltre INTERNAL_VALIDATION - vedi candidate_lifecycle.py e partition_contract_v2.json.",
+    "SYNTHETIC_FIXTURE_ONLY": true
+  }
+}

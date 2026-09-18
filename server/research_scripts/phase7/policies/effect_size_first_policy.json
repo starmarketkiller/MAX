@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "policy_id": "EFFECT_SIZE_FIRST_V1",
+  "principle": "Un p-value piccolo non e' evidenza di un edge utile - e' evidenza che un effetto (di QUALUNQUE dimensione) e' distinguibile dal rumore su quel campione. Phase 7 impone che l'ampiezza dell'effetto (ΔP o ΔE) sia dichiarata, valutata e giudicata materiale PRIMA di guardare il p-value, non dopo.",
+
+  "reporting_order_enforced": [
+    "1. ΔP (o ΔE) osservato, con CI95 Wilson - riportato SEMPRE, indipendentemente dal risultato del test di significativita'.",
+    "2. Confronto con minimum_material_delta_p_default (o soglia pre-registrata specifica del candidato) - vedi minimum_evidence_gates.json.",
+    "3. SOLO DOPO, il p-value / adjusted_p_bh (vedi multiple_testing_v2.py) come secondo filtro, non come primo."
+  ],
+
+  "rule": "Un candidato con ΔP statisticamente significativo (dopo correzione BH) ma sotto la soglia di materialita' pre-registrata NON puo' essere marcato SUPPORTED - va marcato STATISTICALLY_DETECTABLE_BUT_NOT_MATERIAL, uno stato distinto che non compare nel lifecycle grafo di candidate_lifecycle.py come stato promuovibile (equivalente, ai fini pratici, a BORDERLINE).",
+
+  "rationale": "Storicamente nel progetto (Phase 5) un effetto piccolo ma statisticamente significativo su un campione grande e' stato inizialmente letto come 'edge confermato' - questa regola impedisce meccanicamente la ripetizione di quell'errore, rendendo la dimensione dell'effetto un cancello a se stante, non un dettaglio secondario del report.",
+
+  "pre_registration_requirement": "La soglia di materialita' specifica di un candidato (se diversa dal default 0.10) deve essere scritta nel setup_candidate al momento della generazione (discovery_origin), PRIMA di calcolare ΔP osservato - una soglia scelta dopo aver visto il risultato e' scoperta post-hoc e va trattata secondo post_hoc_quarantine.py."
+}

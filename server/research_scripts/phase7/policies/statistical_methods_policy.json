@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "policy_id": "STATISTICAL_METHODS_ALLOWLIST_V1",
+  "principle": "Ogni metodo usato come EVIDENZA PRIMARIA in Phase 7 deve essere ispezionabile: un umano deve poter ricostruire a mano, da soli input e formula, perche' un candidato ha ricevuto un certo verdetto. Metodi opachi possono essere usati SOLO come generatori di proposte (da sottoporre poi ai metodi ammessi), mai come fonte del verdetto finale.",
+
+  "allowed_as_primary_evidence": {
+    "wilson_score_interval": {
+      "use": "Intervallo di confidenza per proporzioni (evento e baseline) - vedi minimum_evidence_gates.json uncertainty_requirement.",
+      "why_allowed": "Formula chiusa, nessun parametro nascosto, comportamento noto anche a n piccolo (a differenza dell'intervallo normale/Wald)."
+    },
+    "beta_binomial": {
+      "use": "Alternativa bayesiana a Wilson per proporzioni, utile quando si vuole un posterior esplicito invece di un solo CI frequentista.",
+      "why_allowed": "Prior dichiarato esplicitamente nel codice (mai stimato dai dati stessi), conjugacy analitica - nessuna black-box."
+    },
+    "two_proportion_z_test": {
+      "use": "Test di significativita' evento vs baseline - vedi multiple_testing_v2.two_proportion_p (gia' in uso da Phase 5.5).",
+      "why_allowed": "Formula chiusa, gia' validata nel progetto."
+    },
+    "benjamini_hochberg_fdr": {
+      "use": "Controllo multiple-testing per famiglia di candidati - vedi multiple_testing_v2.run_family.",
+      "why_allowed": "Procedura deterministica, gia' in uso da Phase 5.5, comportamento matematicamente noto."
+    },
+    "moving_block_bootstrap": {
+      "use": "Stima di incertezza sotto dipendenza seriale (blocco L=ceil(n^(1/3))) - vedi phase6_5/block_bootstrap.py, da riusare in Phase 7 per candidati DEPENDENCE_SENSITIVE.",
+      "why_allowed": "Metodo non parametrico ma completamente ispezionabile passo-passo (resampling di blocchi contigui, nessun modello nascosto)."
+    },
+    "logistic_regression": {
+      "use": "SOLO per quantificare un effetto condizionato a covariate dichiarate esplicitamente (max 2-3 covariate, coerente con candidate_generation_policy.json Level 2) - mai con piu' di ~5 feature nello stesso modello.",
+      "why_allowed": "Coefficienti interpretabili singolarmente, nessuna interazione nascosta non dichiarata."
+    },
+    "shallow_decision_tree_depth_2_3": {
+      "use": "SOLO come PROPOSAL GENERATOR (vedi candidate_generation_policy.json allowed_proposal_generators) - non come fonte di verdetto. Ogni split proposto da un albero deve essere ri-testato con i metodi sopra come ipotesi indipendente.",
+      "why_allowed_only_as_proposer": "Un albero a profondita' 2-3 e' ancora leggibile a mano (max 4-8 foglie), ma il processo di split-selection stesso e' una forma di ricerca implicita su molte soglie - da qui l'obbligo di non trattare l'output come verdetto gia' validato."
+    },
+    "gam_generalized_additive_model": {
+      "use": "SOLO per esplorare la forma funzionale di una relazione continua (es. come varia ΔP al variare continuo di una feature) in fase diagnostica/stability, non come verdetto di un candidato discreto.",
+      "why_allowed_with_restriction": "Le smooth functions di un GAM sono visualizzabili e ispezionabili singolarmente, ma la selezione automatica del grado di smoothing introduce comunque un grado di opacita' che ne limita l'uso a diagnostica."
+    }
+  },
+
+  "explicitly_forbidden_as_primary_evidence": {
+    "deep_learning_any_architecture": "Nessuna rete neurale (MLP, CNN, RNN, transformer) puo' produrre un verdetto di evidenza primaria - non ispezionabile a mano, rischio altissimo di overfitting silenzioso su feature correlate, nessuna garanzia di causal-safety verificabile a occhio.",
+    "opaque_ensembles": "Random forest, gradient boosting (XGBoost/LightGBM/CatBoost) e qualunque ensemble con decine/centinaia di alberi - stesso motivo: nessun essere umano puo' ricostruire a mano perche' il modello ha deciso X, e il rischio di leakage tramite migliaia di split impliciti e' incontrollabile con gli strumenti di audit attuali (leakage_guard.py ispeziona feature, non milioni di split).",
+    "genetic_algorithms_and_random_search_as_verdict": "Gia' vietati in candidate_generation_policy.json come generatori di candidati - qui si ribadisce che sono vietati anche come metodo di STIMA del verdetto finale.",
+    "any_model_used_as_black_box_for_threshold_selection": "Vedi threshold_policy.json - nessun modello puo' scegliere una soglia che poi diventa parte della definizione del candidato senza passare per una delle fonti dichiarate li'."
+  },
+
+  "escalation_rule": "Se un metodo NON in questa lista sembra necessario per un caso specifico, il caso va sospeso (candidato marcato BLOCKED_METHOD_GAP nel research journal - vedi research_journal.schema.json) e la lista va aggiornata ESPLICITAMENTE con una nuova voce giustificata, prima di procedere - mai usato ad-hoc senza aggiornare questo documento."
+}

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidate_result_v2.schema.json",
+  "title": "NEXUS Phase 7 - Candidate Result v2",
+  "description": "Output di un test di candidato. Compatibile con Evidence Record v2 (Phase 6.6, h006_evidence_v2.json.payload.primary_evidence) - stesse sezioni identity/evidence_classification/effect/sample/uncertainty - esteso con i campi nativi Phase 7 (generalization_status, cost_scenarios, lifecycle_state, signature, dataset_version_hash). Ogni istanza va salvata dentro l'involucro canonico {generated_at, generation_script, canonical_sha256, payload} - vedi canonical_utils.py (Phase 6.6).",
+  "type": "object",
+  "required": ["identity", "evidence_classification", "effect", "sample", "uncertainty",
+               "generalization_status", "cost_scenarios", "lifecycle_state", "signature", "dataset_version_hash"],
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["evidence_id", "schema_version", "candidate_id", "family_id", "experiment_id", "dataset_id", "created_at"],
+      "properties": {
+        "evidence_id": {"type": "string"},
+        "schema_version": {"const": 2},
+        "candidate_id": {"type": "string"},
+        "family_id": {"type": "string", "description": "Raggruppamento per multiple_testing_v2.run_family - vedi red_team_analysis.json CORRELATED_HYPOTHESES_COUNTED_AS_INDEPENDENT."},
+        "experiment_id": {"type": "string"},
+        "dataset_id": {"type": "string"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "evidence_classification": {
+      "type": "object",
+      "required": ["evidence_grade", "evidence_type", "validation_integrity", "conclusion", "grade_cap_reason"],
+      "properties": {
+        "evidence_grade": {"type": "string", "enum": ["E0", "E1", "E2", "E3", "E4", "E5", "E6"]},
+        "evidence_type": {"type": "string", "enum": ["PRIMARY_EVIDENCE", "RETROACTIVE_METHODOLOGICAL_AUDIT", "SYNTHETIC_FIXTURE_ONLY"]},
+        "validation_integrity": {"type": "string", "enum": ["CONTAMINATED_VALIDATION", "INTERNAL_VALIDATION", "TEMPORAL_HOLDOUT", "SYNTHETIC"]},
+        "conclusion": {"type": "string", "enum": ["FAIL", "BORDERLINE", "SUPPORTED", "STATISTICALLY_DETECTABLE_BUT_NOT_MATERIAL", "DEPENDENCE_SENSITIVE"]},
+        "grade_cap_reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "effect": {
+      "type": "object",
+      "required": ["primary_outcome", "event_probability", "baseline_probability", "delta_p", "materiality_threshold"],
+      "properties": {
+        "primary_outcome": {"type": "string"},
+        "event_probability": {"type": "object"},
+        "baseline_probability": {"type": "object"},
+        "delta_p": {"type": "number"},
+        "delta_e": {"type": ["number", "null"]},
+        "materiality_threshold": {"type": "number"}
+      }
+    },
+    "sample": {
+      "type": "object",
+      "required": ["n_nominal", "n_effective", "n_clusters", "dependence_flag"],
+      "properties": {
+        "n_nominal": {"type": "integer"},
+        "n_effective": {"type": ["integer", "null"]},
+        "n_clusters": {"type": ["integer", "null"]},
+        "largest_cluster": {"type": ["integer", "null"]},
+        "overlap_rate": {"type": ["number", "null"]},
+        "dependence_flag": {"type": ["string", "null"]}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["wilson_ci"],
+      "properties": {
+        "wilson_ci": {
+          "type": "object",
+          "required": ["event", "baseline", "non_overlapping"],
+          "properties": {
+            "event": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+            "baseline": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+            "non_overlapping": {"type": "boolean"}
+          }
+        },
+        "posterior_interval": {"type": ["object", "null"]},
+        "block_bootstrap_ci": {"type": ["object", "null"], "description": "Obbligatorio (non null) se sample.dependence_flag indica DEPENDENCE_SENSITIVE - vedi statistical_methods_policy.json moving_block_bootstrap."}
+      }
+    },
+    "generalization_status": {
+      "type": "object",
+      "required": ["temporal_robustness", "feed_robustness", "market_transferability"],
+      "description": "Vedi cross_market_readiness_policy.json - le tre gate SEMPRE dichiarate esplicitamente, anche se UNTESTED.",
+      "properties": {
+        "temporal_robustness": {"type": "string", "enum": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"]},
+        "feed_robustness": {"type": "string", "enum": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"]},
+        "market_transferability": {"type": "string", "enum": ["UNTESTED", "TESTED_FAIL", "TESTED_BORDERLINE", "TESTED_PASS"]}
+      }
+    },
+    "cost_scenarios": {
+      "type": "object",
+      "required": ["ZERO_COST", "BROKER_BASELINE", "CONSERVATIVE", "STRESS"],
+      "description": "Vedi cost_model_integration.json required_cost_scenarios_for_reporting - tutti e 4 sempre presenti, mai solo il migliore.",
+      "properties": {
+        "ZERO_COST": {"type": "object"},
+        "BROKER_BASELINE": {"type": "object"},
+        "CONSERVATIVE": {"type": "object"},
+        "STRESS": {"type": "object"}
+      }
+    },
+    "lifecycle_state": {"type": "string", "description": "Vedi candidate_lifecycle.py ALLOWED_TRANSITIONS - stato corrente al momento di questo result."},
+    "signature": {"type": "string", "description": "sha256 da candidate_signature.py - per dedup contro failure_memory_registry_v1.json e candidati gia' testati."},
+    "dataset_version_hash": {"type": "string", "description": "Vedi red_team_analysis.json DATASET_VERSION_DRIFT (gap aperto) - campo gia' previsto nello schema anche se l'enforcement automatico non e' ancora implementato."}
+  },
+  "additionalProperties": false
+}

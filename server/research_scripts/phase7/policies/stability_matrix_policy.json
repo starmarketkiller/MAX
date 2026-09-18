@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "policy_id": "STABILITY_MATRIX_V1",
+  "principle": "La stability matrix e' DIAGNOSTICA. Non genera mai automaticamente una nuova ipotesi, un nuovo candidato o una promozione di lifecycle - vedi post_hoc_quarantine.py. Serve solo a decidere se un effetto gia' testato sul suo outcome primario pre-registrato e' un pattern robusto o fragile.",
+
+  "axes": {
+    "direction": {
+      "values": ["BUY", "SELL", "BOTH_IF_APPLICABLE"],
+      "purpose": "Verifica se l'effetto e' un artefatto di un solo lato direzionale non dichiarato esplicitamente nel setup - vedi il caso storico SELL_SWEEP_RECLAIM_ASYMMETRY (Phase 6/6.5)."
+    },
+    "year_or_broad_time_regime": {
+      "values": "derivato dai confini reali del dataset in partition_contract_v2.json (es. per anno solare o per meta' del periodo di discovery)",
+      "purpose": "Verifica se l'effetto e' concentrato in un singolo regime macro/di mercato non rappresentativo del periodo intero."
+    },
+    "volatility_state": {
+      "values": ["LOW", "MEDIUM", "HIGH"],
+      "purpose": "Verifica se l'effetto dipende da un regime di volatilita' specifico, cosa che di per se' non e' un problema se DICHIARATA nel setup - ma e' un problema se emerge solo qui, post-hoc."
+    },
+    "trend_state": {
+      "values": ["UP", "DOWN", "RANGE"],
+      "purpose": "Come volatility_state, applicato al regime di trend."
+    },
+    "clustering_view": {
+      "values": ["EVENT_VIEW", "EPISODE_VIEW"],
+      "purpose": "Vedi dependence_diagnostics_v2.py - un effetto che esiste solo in EVENT VIEW e collassa in EPISODE VIEW e' marcato DEPENDENCE_SENSITIVE (gia' una gate a se', non solo diagnostica - vedi minimum_evidence_gates.json)."
+    },
+    "cost_scenario": {
+      "values": ["ZERO_COST", "REALISTIC_COST (da Phase 4 cost audit)", "STRESSED_COST"],
+      "purpose": "Verifica se l'effetto sopravvive ai costi di esecuzione reali - vedi cost_model_integration.json. Un effetto STRUCTURAL che muore a REALISTIC_COST resta comunque un effetto reale, ma non e' un edge eseguibile."
+    }
+  },
+
+  "output_contract": {
+    "one_row_per_axis_value": true,
+    "fields_per_row": ["axis", "value", "n", "delta_p_or_delta_e", "ci95_wilson", "sign_consistent_with_primary"],
+    "no_new_hypothesis_field": "Il record di output NON contiene un campo 'promote_to' o 'new_hypothesis_id' - qualunque osservazione interessante che emerga da qui deve passare per post_hoc_quarantine.register_post_hoc_observation()."
+  },
+
+  "reading_rule": "Un candidato con effetto concentrato in 1 sola cella di 1 solo asse (es. solo HIGH volatility, solo 2023) e' probabilisticamente meno affidabile di uno con segno coerente su piu' celle - ma questa e' una euristica di lettura umana in fase di review, non una gate automatica numerica (a differenza di stability_requirement in minimum_evidence_gates.json, che riguarda solo EVENT/EPISODE view e direzione)."
+}
