@@ -25,7 +25,7 @@ export const PRIMARY_WORKSPACES = Object.freeze([
     id: "execution", label: "Execution", to: "/execution", icon: Radio,
     summary: "EA, MT5 bridge, positions, risk and signal-to-fill operations.",
     routes: ["/execution", "/strategies", "/optimizer", "/risk", "/local-bridge", "/chain", "/analytics"],
-    tabs: [{ label: "Workspace", to: "/execution" }, { label: "Strategies", to: "/strategies" }, { label: "Optimizer", to: "/optimizer" }, { label: "Risk", to: "/risk" }, { label: "MT5", to: "/local-bridge" }, { label: "Chain", to: "/chain" }, { label: "Analytics", to: "/analytics" }],
+    tabs: [{ label: "Workspace", to: "/execution" }, { label: "Engines", to: "/strategies" }, { label: "Allocation", to: "/optimizer" }, { label: "Risk", to: "/risk" }, { label: "MT5", to: "/local-bridge" }, { label: "Chain", to: "/chain" }, { label: "Analytics", to: "/analytics" }],
   },
   {
     id: "library", label: "Library", to: "/library", icon: BookOpen,

@@ -23,6 +23,7 @@ import ResearchPage from "@/pages/ResearchPage";
 import WorkspaceIndexPage from "@/pages/WorkspaceIndexPage";
 import SystemStatusPage from "@/pages/SystemStatusPage";
 import MarketPage from "@/pages/MarketPage";
+import ExecutionPage from "@/pages/ExecutionPage";
 import StrategyChainPage from "@/pages/StrategyChainPage";
 import SetupWizard, { shouldShowWizard, resetWizard } from "@/components/SetupWizard";
 import NotificationBell from "@/components/NotificationBell";
@@ -749,7 +750,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "backtest" && <BacktestPage />}
           {section === "research" && <ResearchPage />}
           {section === "market" && <MarketPage />}
-          {section === "execution" && <WorkspaceIndexPage workspaceId="execution" />}
+          {section === "execution" && <ExecutionPage onCmd={onCmd} onSelectTrade={setSelectedTrade} />}
           {section === "library" && <WorkspaceIndexPage workspaceId="library" />}
           {section === "system" && <SystemStatusPage status={status} health={health} />}
           {section === "calendar" && <CalendarPage />}

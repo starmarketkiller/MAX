@@ -27,6 +27,7 @@ function TimelineStep({ icon: Icon, title, detail, status, idx, isLast }) {
     done:    "bg-emerald-500/15 text-emerald-400 ring-emerald-500/40 shadow-[0_0_12px_hsl(var(--success)/0.45)]",
     neutral: "bg-primary/10 text-primary ring-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.35)]",
     fail:    "bg-rose-500/15 text-rose-400 ring-rose-500/40 shadow-[0_0_10px_hsl(var(--destructive)/0.4)]",
+    unavailable: "bg-secondary text-muted-foreground ring-border",
   };
   const dotCls = dotClasses[status] || dotClasses.neutral;
   return (
@@ -64,8 +65,8 @@ function closeStatus(won, isStopout) {
   return "neutral";
 }
 
-function buildTimeline(trade) {
-  const won = (trade.pnl ?? 0) >= 0;
+export function buildTimeline(trade) {
+  const won = trade.pnl == null ? null : Number(trade.pnl) >= 0;
   const reason = trade.reason || "—";
   // Determine if the trade was a clean win, a stop-out, or another close type
   const isStopout = reason && /SL|STOP/i.test(reason);
@@ -75,8 +76,8 @@ function buildTimeline(trade) {
     {
       icon: Activity,
       title: "Signal detected",
-      detail: `${trade.strategy || "—"} · ${trade.side || "—"} @ ${trade.session || "?"}`,
-      status: "done",
+      detail: trade.signalTime ? new Date(trade.signalTime).toLocaleString() : "Signal timestamp unavailable",
+      status: trade.signalTime ? "done" : "unavailable",
     },
     {
       icon: Gauge,
@@ -84,37 +85,37 @@ function buildTimeline(trade) {
       detail: trade.score != null
         ? `Final score ${trade.score} · regime ${trade.regime || "—"}`
         : "Score not recorded",
-      status: "done",
+      status: trade.score != null ? "done" : "unavailable",
     },
     {
       icon: ShieldCheck,
-      title: "Gates passed",
-      detail: "HTF · velocity · news · concurrent · daily — all clear",
-      status: "done",
+      title: "Gate decision",
+      detail: trade.gateReason || "Gate decision telemetry unavailable",
+      status: trade.gateReason ? "done" : "unavailable",
     },
     {
       icon: Send,
       title: "Order sent",
-      detail: `${trade.side || "—"} ${trade.lots?.toFixed(2) || "?"} lots @ ${fmtPrice(trade.openPrice)}`,
-      status: "done",
+      detail: trade.orderSentTime ? new Date(trade.orderSentTime).toLocaleString() : "Order-sent timestamp unavailable",
+      status: trade.orderSentTime ? "done" : "unavailable",
     },
     {
       icon: CheckCircle2,
       title: "Filled & live",
       detail: trade.openTime ? new Date(trade.openTime).toLocaleString() : "—",
-      status: "done",
+      status: trade.openTime ? "done" : "unavailable",
     },
     {
       icon: Cog,
       title: "Position managed",
       detail: `SL ${fmtPrice(trade.sl)} · TP ${fmtPrice(trade.tp)}`,
-      status: "done",
+      status: trade.sl != null || trade.tp != null ? "done" : "unavailable",
     },
     {
       icon: won ? Flag : Flag,
-      title: won ? "Closed in profit" : "Closed in loss",
+      title: won === null ? "Exit" : won ? "Closed in profit" : "Closed in loss",
       detail: `${reason} · ${trade.closeTime ? new Date(trade.closeTime).toLocaleString() : "—"}`,
-      status: won ? "done" : isStopout ? "fail" : "neutral",
+      status: trade.closeTime ? (won ? "done" : isStopout ? "fail" : "neutral") : "unavailable",
     },
   ];
 }
@@ -123,8 +124,8 @@ export default function TradeLifecycleDrawer({ trade, onClose }) {
   const steps = useMemo(() => (trade ? buildTimeline(trade) : []), [trade]);
   // buildTimeline is a stable module-level function; intentionally not in deps.
   if (!trade) return null;
-  const pnl = trade.pnl ?? 0;
-  const won = pnl >= 0;
+  const pnl = trade.pnl;
+  const won = pnl == null ? null : Number(pnl) >= 0;
   return (
     <div
       className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
@@ -183,22 +184,22 @@ export default function TradeLifecycleDrawer({ trade, onClose }) {
           {/* P&L Hero */}
           <div className={cls(
             "rounded-2xl border p-5 text-center relative overflow-hidden",
-            won
+            won === true
               ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_30px_-10px_hsl(var(--success)/0.5)]"
               : "bg-rose-500/10 border-rose-500/30 shadow-[0_0_30px_-10px_hsl(var(--destructive)/0.5)]"
           )}>
             <div className="eyebrow">Realised P&amp;L</div>
             <div className={cls(
               "font-mono font-bold text-4xl tabular mt-2 leading-none",
-              won ? POS_TEXT : NEG_TEXT
+              won === null ? "text-muted-foreground" : won ? POS_TEXT : NEG_TEXT
             )}>
-              {won ? "+" : ""}${fmtMoney(pnl)}
+              {pnl == null ? "—" : `${won ? "+" : ""}$${fmtMoney(pnl)}`}
             </div>
             <div className={cls(
               "mt-2 text-xs font-semibold uppercase tracking-[0.18em] font-mono",
-              won ? POS_TEXT : NEG_TEXT
+              won === null ? "text-muted-foreground" : won ? POS_TEXT : NEG_TEXT
             )}>
-              {won ? "◉ Winning trade" : "◯ Losing trade"}
+              {won === null ? "Outcome unavailable" : won ? "◉ Winning trade" : "◯ Losing trade"}
             </div>
           </div>
 

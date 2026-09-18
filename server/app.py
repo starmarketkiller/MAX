@@ -50,6 +50,7 @@ import nexus_validation
 import knowledge_browser
 import research_read_model
 import market_read_model
+import execution_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3230,6 +3231,28 @@ def market_event_detail(event_id: str, user: str = Depends(require_user)):
     if item is None:
         raise HTTPException(status_code=404, detail="market event not found")
     return item
+
+
+# ================= CANONICAL EXECUTION READ MODEL V1 (READ-ONLY) ======== #
+@app.get("/api/execution/snapshot")
+def execution_snapshot(user: str = Depends(require_user)):
+    primary, _ = _primary_ea()
+    health = None
+    if primary:
+        score, level, checks, anomaly = _compute_ea_health(primary)
+        health = {"score": score, "level": level, "checks": checks, "anomaly": anomaly,
+                  "provenance": "OBSERVED_EA_TELEMETRY"}
+    bridge = lb_status(user)
+    board, allocation_config, _ = _strategy_leaderboard()
+    return execution_read_model.build_snapshot(
+        primary=primary,
+        settings=_current_settings(),
+        health=health,
+        bridge=bridge,
+        leaderboard=board,
+        allocation_config=allocation_config,
+        recent_trades=_ledger_trades_with_meta(30),
+    )
 
 
 # ======================= KNOWLEDGE BROWSER (READ-ONLY) =================== #

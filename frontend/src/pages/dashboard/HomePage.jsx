@@ -360,7 +360,7 @@ function ReactionSection({ status }) {
 // ========================================================================
 // POSITIONS
 // ========================================================================
-function PositionsSection({ status, onClosePosition, onPartialClose }) {
+export function PositionsSection({ status, onClosePosition, onPartialClose }) {
   const positionsAvailable = Array.isArray(status?.positions);
   const positions = positionsAvailable ? status.positions : [];
   const totalPnl = positionsAvailable && positions.every((position) => hasValue(position.pnl))
@@ -412,7 +412,7 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
                 data-testid={`position-row-${p.ticket}`}
                 className="border-b border-border last:border-0 hover:bg-secondary/40 transition-colors"
               >
-                <td className="px-6 lg:px-8 py-4 font-mono text-xs text-muted-foreground">{p.ticket}</td>
+                <td className="px-6 lg:px-8 py-4 font-mono text-xs text-muted-foreground"><div>{p.ticket}</div><div className="mt-1 text-[10px]">{p.symbol || "—"}</div></td>
                 <td className="px-3 py-4">
                   <span className={cls(
                     "px-2.5 py-1 rounded-md text-[11px] font-bold border inline-flex items-center gap-1",
@@ -433,7 +433,7 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
                   <div className={NEG_TEXT}>SL {fmtPrice(p.sl)}</div>
                   <div className={POS_TEXT}>TP {fmtPrice(p.tp)}</div>
                 </td>
-                <td className="px-3 py-4 text-xs text-muted-foreground font-mono">{p.strategy || "—"}</td>
+                <td className="px-3 py-4 text-xs text-muted-foreground font-mono"><div>{p.strategy || "—"}</div><div className="mt-1 text-[10px]">{p.openTime ? `${Math.max(0, Math.floor((Date.now() - new Date(p.openTime).getTime()) / 60000))}m open` : "duration —"}</div></td>
                 <td className={cls("px-3 py-4 text-right font-mono font-bold",
                   hasValue(p.pnl) ? pnlTextClass(p.pnl) : "text-muted-foreground")}>
                   {hasValue(p.pnl) ? `${Number(p.pnl) >= 0 ? "+" : ""}$${fmtMoney(p.pnl)}` : "—"}
@@ -443,7 +443,8 @@ function PositionsSection({ status, onClosePosition, onPartialClose }) {
                     <button
                       data-testid={`partial-close-${p.ticket}`}
                       onClick={() => onPartialClose(p)}
-                      className="h-8 w-8 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center justify-center transition-colors"
+                      disabled={!hasValue(p.lots)}
+                      className="h-8 w-8 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                       title="Partial close 50%"
                     >
                       <Scissors className="h-3.5 w-3.5" />
