@@ -39,6 +39,10 @@ export default function CommandPalette({ open, onClose, onEaCmd }) {
   const commands = useMemo(() => [
     // Navigation
     { id: "nav-home", group: "Navigate", label: "Overview", hint: "Home dashboard", icon: LayoutDashboard, action: () => nav("/") },
+    { id: "nav-market", group: "Workspaces", label: "Market", hint: "Chart, operational context and calendar", icon: LineChart, action: () => nav("/market") },
+    { id: "nav-research", group: "Workspaces", label: "Research", hint: "Hypotheses, evidence and experiments", icon: FlaskConical, action: () => nav("/research") },
+    { id: "nav-execution", group: "Workspaces", label: "Execution", hint: "EA, risk, bridge and analytics", icon: ShieldAlert, action: () => nav("/execution") },
+    { id: "nav-library", group: "Workspaces", label: "Library", hint: "Knowledge and journal", icon: BookOpen, action: () => nav("/library") },
     { id: "nav-strategies", group: "Navigate", label: "Strategies", hint: "Manage the 35 strategies", icon: SlidersHorizontal, action: () => nav("/strategies") },
     { id: "nav-optimizer", group: "Navigate", label: "Optimizer", hint: "Live per-strategy risk & leaderboard", icon: Gauge, action: () => nav("/optimizer") },
     { id: "nav-analytics", group: "Navigate", label: "Analytics", hint: "Trade analytics & heatmaps", icon: LineChart, action: () => nav("/analytics") },

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import {
   Settings as SettingsIcon,
   ShieldAlert, Clock, Target,
   Menu, FileDown, HelpCircle,
-  Gauge, Command as CommandIcon,
+  Gauge, Command as CommandIcon, Bot, Server,
   Sun, Moon,
 } from "lucide-react";
 import api, { formatApiError } from "@/lib/api";
@@ -20,6 +20,8 @@ import CalendarPage from "@/pages/CalendarPage";
 import LocalBridgePage from "@/pages/LocalBridgePage";
 import KnowledgePage from "@/pages/KnowledgePage";
 import ResearchPage from "@/pages/ResearchPage";
+import WorkspaceIndexPage from "@/pages/WorkspaceIndexPage";
+import SystemStatusPage from "@/pages/SystemStatusPage";
 import StrategyChainPage from "@/pages/StrategyChainPage";
 import SetupWizard, { shouldShowWizard, resetWizard } from "@/components/SetupWizard";
 import NotificationBell from "@/components/NotificationBell";
@@ -40,6 +42,7 @@ import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import WhatIfPage from "@/pages/dashboard/WhatIfPage";
 import HealthScoreCard from "@/pages/dashboard/HealthScoreCard";
 import TradeLifecycleDrawer from "@/pages/dashboard/TradeLifecycleDrawer";
+import { workspaceForSection } from "@/lib/workspaces";
 import {
   Card, ConfirmDialog, SectionHeader,
   cls, fmtMoney, fmtSign,
@@ -49,75 +52,52 @@ import {
 // ========================================================================
 // PAGE HEADER
 // ========================================================================
-function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
+function PageHeader({ section, status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
   const { theme, toggle } = useTheme();
-  const paused = !!status?.eaPaused;
+  const location = useLocation();
+  const workspace = workspaceForSection(section);
   const online = !!status?.online;
-  const metric = (value) => value === null || value === undefined ? "—" : `$${fmtMoney(value)}`;
+  const utilityTitles = { settings: "Settings", licenses: "Licenses / Admin", "risk-calc": "Calculator", system: "System status", coach: "AI Coach" };
+  const title = workspace?.label || utilityTitles[section] || "NEXUS";
+  const summary = workspace?.summary || "NEXUS terminal utility.";
 
   return (
     <header
       data-testid="page-header"
-      className="bg-card/70 backdrop-blur-xl border-b border-border px-4 lg:px-8 py-4 sticky top-0 z-30"
+      className="sticky top-0 z-30 border-b border-border bg-card px-4 py-3 lg:px-8"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onMenu}
             data-testid="menu-toggle"
             aria-label="Open navigation"
-            className="lg:hidden h-10 w-10 rounded-lg border border-border flex items-center justify-center hover:bg-secondary active:scale-95 transition-transform"
+            className="flex h-9 w-9 items-center justify-center rounded-md border border-border hover:bg-secondary lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>
 
           <div className="min-w-0">
-            <div className="eyebrow font-mono tabular">
-              {status?.symbol || "—"} · MAGIC {status?.magic ?? "—"}
-            </div>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="font-semibold text-xl tracking-tight">
-                {!status
-                  ? <span className="text-muted-foreground">Unavailable</span>
-                  : paused
-                  ? <span className="text-amber-400">Paused</span>
-                  : online ? <span className="text-foreground">Running</span>
-                    : <span className="text-muted-foreground">Offline</span>
-                }
-              </span>
-              <DataProvenanceBadge source={status?.demo ? "DEMO" : online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} testId="online-badge" />
-            </div>
+            <div className="flex flex-wrap items-center gap-2"><h1 className="text-lg font-semibold tracking-tight">{title}</h1><DataProvenanceBadge source={status?.demo ? "DEMO" : online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} testId="online-badge" /></div>
+            <p className="mt-0.5 hidden max-w-xl truncate text-xs text-muted-foreground sm:block">{summary}</p>
           </div>
         </div>
-
-        <div className="hidden md:flex items-center gap-6 px-5 py-2.5 rounded-xl bg-secondary/40 border border-border backdrop-blur-sm">
-          <div>
-            <div className="eyebrow">Equity</div>
-            <div className="font-mono font-bold text-lg tabular leading-none mt-1 text-foreground">{metric(status?.equity)}</div>
-          </div>
-          <div className="h-8 w-px bg-border" />
-          <div>
-            <div className="eyebrow">Balance</div>
-            <div className="font-mono font-bold text-lg tabular leading-none mt-1 text-muted-foreground">
-              {metric(status?.balance)}
-            </div>
-          </div>
-        </div>
-
         <div className="flex items-center gap-1.5">
           <LicenseBanner />
+          <Link to="/system" title="System status" className="hidden h-9 items-center gap-2 rounded-md border border-border px-2.5 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground sm:flex"><span className={cls("h-1.5 w-1.5 rounded-full", online ? "bg-emerald-500" : status ? "bg-amber-500" : "bg-zinc-500")}/><Server className="h-3.5 w-3.5"/></Link>
           {onOpenCmd && (
             <button
               onClick={onOpenCmd}
               title="Command palette (⌘K)"
               data-testid="header-cmdk-btn"
-              className="hidden md:inline-flex h-9 px-3 rounded-lg border border-border hover:border-primary/40 hover:bg-secondary/60 text-xs items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+              className="hidden h-9 items-center gap-2 rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-secondary hover:text-foreground md:inline-flex"
             >
-              <CommandIcon className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
+              <CommandIcon className="h-3.5 w-3.5" />
               <span className="font-mono">Search</span>
               <kbd className="ml-1 px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono group-hover:border-primary/40">⌘K</kbd>
             </button>
           )}
+          <Link to="/coach" title="Contextual AI (workspace context integration pending)" data-testid="header-ai-btn" className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-secondary hover:text-foreground"><Bot className="h-4 w-4"/></Link>
           <button onClick={toggle}
                   title={theme === "dark" ? "Tema chiaro" : "Tema scuro"}
                   aria-label="Cambia tema"
@@ -143,6 +123,7 @@ function PageHeader({ status, onMenu, onExportPdf, onShowHelp, onOpenCmd }) {
           )}
         </div>
       </div>
+      {workspace?.tabs?.length > 1 ? <nav aria-label={`${workspace.label} views`} className="mt-3 flex gap-1 overflow-x-auto border-t border-border pt-2">{workspace.tabs.map((tab) => { const active = location.pathname === tab.to; return <Link key={tab.to} to={tab.to} className={cls("whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs", active ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:text-foreground")}>{tab.label}</Link>; })}</nav> : null}
     </header>
   );
 }
@@ -667,7 +648,7 @@ export default function Dashboard({ section = "home" }) {
     <div className="min-h-screen flex bg-background text-foreground">
       <Sidebar status={status} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <main className="flex-1 min-w-0 flex flex-col">
-        <PageHeader status={status} onMenu={() => setMobileOpen(true)}
+        <PageHeader section={section} status={status} onMenu={() => setMobileOpen(true)}
                     onExportPdf={downloadTearsheet}
                     onShowHelp={() => { resetWizard(); setWizardOpen(true); }}
                     onOpenCmd={() => setCmdOpen(true)} />
@@ -678,7 +659,7 @@ export default function Dashboard({ section = "home" }) {
               <DataProvenanceBadge source="DERIVED" label="DERIVED · LEDGER" />}
             {trades.some((t) => t.source_provenance === "RECONSTRUCTED_HISTORY") &&
               <DataProvenanceBadge source="DERIVED" label="DERIVED · RECONSTRUCTED" />}
-            {section === "backtest" &&
+            {["backtest", "research"].includes(section) &&
               <DataProvenanceBadge source="RESEARCH" />}
           </div>
           {lastCommand && (
@@ -766,6 +747,10 @@ export default function Dashboard({ section = "home" }) {
           {section === "risk-calc" && <RiskCalcPage />}
           {section === "backtest" && <BacktestPage />}
           {section === "research" && <ResearchPage />}
+          {section === "market" && <WorkspaceIndexPage workspaceId="market" />}
+          {section === "execution" && <WorkspaceIndexPage workspaceId="execution" />}
+          {section === "library" && <WorkspaceIndexPage workspaceId="library" />}
+          {section === "system" && <SystemStatusPage status={status} health={health} />}
           {section === "calendar" && <CalendarPage />}
           {section === "knowledge" && <KnowledgePage />}
           {section === "strategy-analytics" && <StrategyAnalyticsPage />}

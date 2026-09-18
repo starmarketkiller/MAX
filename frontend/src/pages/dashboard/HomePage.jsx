@@ -879,6 +879,48 @@ function ResearchSnapshot() {
   );
 }
 
+function DomainMetric({ label, value, tone }) {
+  return <div className="min-w-0"><div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div><div className={cls("mt-1 truncate font-mono text-sm font-semibold tabular-nums", tone || "text-foreground")} title={showDomainValue(value)}>{showDomainValue(value)}</div></div>;
+}
+
+const showDomainValue = (value) => hasValue(value) ? String(value) : "—";
+
+function DomainCard({ title, provenance, to, children, testId }) {
+  return <Card className="min-w-0 p-4" testId={testId}><div className="mb-4 flex items-center justify-between gap-3"><h2 className="font-mono text-[10px] font-bold uppercase tracking-[0.18em]">{title}</h2><DataProvenanceBadge source={provenance}/></div><div className="grid grid-cols-2 gap-x-4 gap-y-3">{children}</div><Link to={to} className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs font-medium text-muted-foreground hover:text-foreground"><span>Open {title.toLowerCase()}</span><ChevronRight className="h-3.5 w-3.5"/></Link></Card>;
+}
+
+export function OverviewDomains({ status, health, settings, hypothesis, researchError }) {
+  const marketSource = status?.demo || health?.demo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE";
+  const executionSource = status?.demo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE";
+  const eaState = status?.eaPaused === true ? "PAUSED" : status?.online === true ? "RUNNING" : status?.online === false ? "OFFLINE" : null;
+  const positions = Array.isArray(status?.positions) ? status.positions.length : null;
+  const riskBlocked = status?.eslHit === true || status?.dptHit === true;
+  return <section data-testid="overview-domains"><div className="mb-3"><h1 className="text-xl font-semibold tracking-tight">Terminal overview</h1><p className="mt-1 text-sm text-muted-foreground">Current state and exceptions across the four NEXUS domains.</p></div><div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
+    <DomainCard title="Market" provenance={marketSource} to="/market" testId="overview-market"><DomainMetric label="Symbol" value={status?.symbol}/><DomainMetric label="Regime" value={status?.regime}/><DomainMetric label="Session" value={status?.session}/><DomainMetric label="Market state" value={status?.online ? "Operational telemetry" : null}/></DomainCard>
+    <DomainCard title="Research" provenance={hypothesis ? "RESEARCH" : "UNAVAILABLE"} to="/research" testId="overview-research"><DomainMetric label="Hypothesis" value={hypothesis?.id}/><DomainMetric label="Status" value={hypothesis?.status} tone={hypothesis?.status === "BORDERLINE" ? "text-amber-600 dark:text-amber-400" : undefined}/><DomainMetric label="Evidence" value={hypothesis?.evidence_grade}/><DomainMetric label="E3 promotion" value={hypothesis?.promoted_to_e3 === false ? "NOT PROMOTED" : hypothesis?.promoted_to_e3 === true ? "PROMOTED" : null}/>{researchError ? <div className="col-span-2 text-xs text-muted-foreground">Research API unavailable</div> : hypothesis?.grade_cap_reason ? <div className="col-span-2 border-t border-border pt-2 text-[10px] text-amber-600 dark:text-amber-400">{hypothesis.grade_cap_reason}</div> : null}</DomainCard>
+    <DomainCard title="Execution" provenance={executionSource} to="/execution" testId="overview-execution"><DomainMetric label="EA" value={eaState}/><DomainMetric label="Bridge" value={status?.bridgeState}/><DomainMetric label="Positions" value={positions}/><DomainMetric label="Equity / Balance" value={hasValue(status?.equity) || hasValue(status?.balance) ? `${moneyValue(status?.equity)} / ${moneyValue(status?.balance)}` : null}/></DomainCard>
+    <DomainCard title="Risk" provenance={executionSource} to="/risk" testId="overview-risk"><DomainMetric label="Drawdown" value={terminalValue(status?.drawdownPct, fmtPct)}/><DomainMetric label="Limit" value={terminalValue(settings?.MaxDailyDDPct ?? DEFAULT_SETTINGS.MaxDailyDDPct, fmtPct)}/><DomainMetric label="Protection" value={riskBlocked ? "BLOCKED" : typeof status?.eslHit === "boolean" || typeof status?.dptHit === "boolean" ? "CLEAR" : null} tone={riskBlocked ? "text-rose-600 dark:text-rose-400" : undefined}/><DomainMetric label="Risk state" value={riskBlocked ? "ATTENTION" : status ? "MONITORING" : null}/></DomainCard>
+  </div></section>;
+}
+
+export function buildAttentionItems({ status, health, settings, hypothesis, researchError }) {
+  const items = [];
+  if (researchError) items.push({ id: "research-unavailable", label: "Research API unavailable", to: "/research" });
+  else if (hypothesis?.grade_cap_reason) items.push({ id: "research-cap", label: `Research grade capped: ${hypothesis.grade_cap_reason}`, to: "/research" });
+  if (status?.bridgeState && status.bridgeState !== "LIVE") items.push({ id: "bridge", label: `MT5 Bridge ${status.bridgeState}`, to: "/local-bridge" });
+  const maxDD = settings?.MaxDailyDDPct ?? DEFAULT_SETTINGS.MaxDailyDDPct;
+  if (hasValue(status?.drawdownPct) && hasValue(maxDD) && Number(maxDD) > 0 && Number(status.drawdownPct) / Number(maxDD) >= 0.8) items.push({ id: "drawdown", label: `Drawdown near limit: ${fmtPct(status.drawdownPct)} / ${fmtPct(maxDD)}`, to: "/risk" });
+  if (status?.eslHit === true || status?.dptHit === true) items.push({ id: "protection", label: "Risk protection is actively blocking execution", to: "/risk" });
+  if (status?.demo === true || health?.demo === true) items.push({ id: "demo", label: "Operational data source is DEMO", to: "/system" });
+  if (!status && !health) items.push({ id: "backend", label: "Backend operational state unavailable", to: "/system" });
+  return items;
+}
+
+function NeedsAttention({ items }) {
+  if (!items.length) return null;
+  return <section data-testid="needs-attention"><div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Needs attention</div><div className="divide-y divide-border rounded-lg border border-border bg-card">{items.map((item) => <Link key={item.id} to={item.to} className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-secondary/50"><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-amber-500"/>{item.label}</span><ChevronRight className="h-4 w-4 text-muted-foreground"/></Link>)}</div></section>;
+}
+
 // ========================================================================
 // HOME PAGE (default export)
 // ========================================================================
@@ -887,6 +929,8 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
   const [latestResearch, setLatestResearch] = useState(null);
   const [researchLoading, setResearchLoading] = useState(true);
   const [researchError, setResearchError] = useState("");
+  const [funnelError, setFunnelError] = useState("");
+  const [canonicalHypothesis, setCanonicalHypothesis] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -897,7 +941,7 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
       } catch (requestError) {
         if (!active) return;
         setLatestResearch(null);
-        if (requestError?.response?.status !== 404) setResearchError("Latest research funnel unavailable");
+        if (requestError?.response?.status !== 404) setFunnelError("Latest research funnel unavailable");
       } finally {
         if (active) setResearchLoading(false);
       }
@@ -905,8 +949,20 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    api.get("/research/hypotheses/H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT")
+      .then(({ data }) => { if (active) { setCanonicalHypothesis(data || null); setResearchError(""); } })
+      .catch(() => { if (active) { setCanonicalHypothesis(null); setResearchError("Canonical Research API unavailable"); } });
+    return () => { active = false; };
+  }, []);
+
+  const attentionItems = buildAttentionItems({ status, health, settings, hypothesis: canonicalHypothesis, researchError });
+
   return (
     <div className="space-y-6 fade-in">
+      <OverviewDomains status={status} health={health} settings={settings} hypothesis={canonicalHypothesis} researchError={researchError} />
+      <NeedsAttention items={attentionItems} />
       {isDemo && (
         <div
           data-testid="demo-banner"
@@ -917,19 +973,6 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
         </div>
       )}
 
-      <SystemStatusStrip status={status} health={health} />
-      <CoreMetrics status={status} />
-      <ExecutionPipeline certificate={latestResearch} loading={researchLoading} error={researchError} />
-
-      <section>
-        <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" right={<DataProvenanceBadge source={isDemo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} />} />
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
-          <MarketIntelligence status={status} />
-          <StructureSection status={status} />
-          <ReactionSection status={status} />
-        </div>
-      </section>
-
       <PositionsSection
         status={status}
         onClosePosition={(p) => onCmd("close_position", { ticket: p.ticket }, true, {
@@ -937,12 +980,22 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
           body: `Sells/buys the position at market. Side: ${p.side}, lots: ${p.lots}, current P&L: $${fmtSign(p.pnl)}.`,
         })}
         onPartialClose={(p) => onCmd("partial_close", { ticket: p.ticket, volume: +(p.lots * 0.5).toFixed(2) }, true, {
-          title: `Partial close 50% of #${p.ticket}?`,
-          body: `Closes ${+(p.lots * 0.5).toFixed(2)} lots (of ${p.lots}). The remaining position keeps its SL/TP.`,
-          danger: false,
-          confirmLabel: "Close 50%",
+          title: `Partial close 50% of #${p.ticket}?`, body: `Closes ${+(p.lots * 0.5).toFixed(2)} lots (of ${p.lots}). The remaining position keeps its SL/TP.`, danger: false, confirmLabel: "Close 50%",
         })}
       />
+
+      <details className="rounded-lg border border-border bg-card" data-testid="overview-operational-detail"><summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Operational detail and controls</summary><div className="space-y-6 border-t border-border p-4">
+        <SystemStatusStrip status={status} health={health} />
+        <CoreMetrics status={status} />
+        <ExecutionPipeline certificate={latestResearch} loading={researchLoading} error={funnelError} />
+        <section>
+        <SectionHeader title="Market intelligence" subtitle="Regime, structure and reaction state" right={<DataProvenanceBadge source={isDemo ? "DEMO" : status?.online ? "LIVE" : status ? "CACHED" : "UNAVAILABLE"} />} />
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          <MarketIntelligence status={status} />
+          <StructureSection status={status} />
+          <ReactionSection status={status} />
+        </div>
+        </section>
 
       <ResearchSnapshot />
 
@@ -963,6 +1016,7 @@ export default function HomePage({ status, history, settings, health, onCmd, onS
           <QuickStrategies settings={settings} onSave={onSaveSettings} />
         </div>
       </section>
+      </div></details>
     </div>
   );
 }
