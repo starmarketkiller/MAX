@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "extends": "evidence_grading_and_decision_card_v1.md (Phase 5.5)",
+  "new_required_fields": {
+    "n_nominal": "conteggio grezzo di osservazioni, come sempre riportato",
+    "n_effective": {
+      "cluster_count_approximation": "int",
+      "autocorrelation_based": "float o null",
+      "block_bootstrap_variance_based": "float o null",
+      "methods_agree": "bool - false se i metodi divergono per piu' del 30% relativo, che DEVE essere segnalato esplicitamente, non silenziato scegliendone uno"
+    },
+    "event_clusters": {"n_clusters": "int", "largest_cluster": "int", "cluster_gap_threshold_bars": "int (dichiarato)"},
+    "overlap_rate": "frazione di eventi con overlap parziale o pesante della finestra di outcome con un altro evento",
+    "iid_uncertainty": {"ci_low": "float", "ci_high": "float", "method": "iid bootstrap o Wilson"},
+    "dependence_aware_uncertainty": {"ci_low": "float", "ci_high": "float", "method": "block/stationary bootstrap", "block_length": "int (dichiarato)"},
+    "baseline_method": "AGGREGATE | DIRECTIONAL_V3 - quale dei due e' stato usato per il ΔP riportato come principale",
+    "direction_specific_baseline_status": "NOT_APPLICABLE | COMPUTED_AGGREGATE_ONLY | COMPUTED_DIRECTIONAL",
+    "grade_cap_reason": "stringa o null - OBBLIGATORIA (non null) se dependence_flag=HIGH, spiega perche' il grade non puo' salire oltre un certo livello indipendentemente da quanto appaia forte il DeltaP nominale"
+  },
+  "rule": "Se dependence_flag (da Event Dependence Model, Phase 6.5 sec.1) e' HIGH, il campo grade_cap_reason e' obbligatorio e deve essere popolato con una spiegazione concreta - un record con dependence HIGH e grade_cap_reason=null e' considerato uno schema non valido.",
+
+  "worked_example_H006": {
+    "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+    "n_nominal": 115,
+    "n_effective": {
+      "cluster_count_approximation": 46,
+      "autocorrelation_based": 115.0,
+      "block_bootstrap_variance_based": 91.1,
+      "methods_agree": false
+    },
+    "event_clusters": {"n_clusters": 46, "largest_cluster": 8, "cluster_gap_threshold_bars": 10},
+    "overlap_rate": 0.991,
+    "iid_uncertainty": {"ci_low": 0.5043, "ci_high": 0.6870, "method": "iid bootstrap (Phase 6 originale)"},
+    "dependence_aware_uncertainty": {"ci_low": 0.4957, "ci_high": 0.6957, "method": "moving block bootstrap", "block_length": 5},
+    "baseline_method": "AGGREGATE (Phase 6 originale) - vedi anche DIRECTIONAL_V3 nell'audit Phase 6.5 (sec.4)",
+    "direction_specific_baseline_status": "COMPUTED_DIRECTIONAL (Phase 6.5, retroattivo)",
+    "grade_cap_reason": "dependence_flag=HIGH (overlap_rate 99.1%, clustering_rate@3bars 57%): il campione nominale di 115 eventi osserva un numero MOLTO minore di movimenti di mercato realmente indipendenti (stima fra 46 e 91 a seconda del metodo) - questo da solo impedirebbe una promozione a E3 anche se il DeltaP nominale fosse stato sopra soglia, perche' l'incertezza vera e' piu' ampia di quella che un conteggio naive di n=115 suggerisce",
+    "note": "Questo record NON cambia il verdetto BORDERLINE di Phase 6 ne' il grade E2 - e' l'applicazione dello schema v2 come CASO DI TEST, etichettata METHODOLOGICAL_AUDIT_ONLY."
+  }
+}

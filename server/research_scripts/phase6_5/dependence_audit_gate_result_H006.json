@@ -1,0 +1,5 @@
+{
+  "tested_record": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
+  "verdict": "DEPENDENCE_AUDIT_PASS",
+  "missing_or_invalid": []
+}

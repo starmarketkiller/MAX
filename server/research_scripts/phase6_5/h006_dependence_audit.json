@@ -1,0 +1,571 @@
+{
+  "label": "H006_RECLAIM_HOLDOUT_AUDIT",
+  "n_nominal": 115,
+  "gaps_bars": {
+    "median": 6.0,
+    "min": 0,
+    "max": 89
+  },
+  "clustering_rate_within_k_bars": {
+    "1": 0.3739130434782609,
+    "2": 0.48695652173913045,
+    "3": 0.5739130434782609,
+    "5": 0.7043478260869566,
+    "10": 0.8347826086956521
+  },
+  "n_clusters": 46,
+  "largest_cluster": 8,
+  "cluster_size_distribution": [
+    8,
+    6,
+    6,
+    6,
+    5,
+    5,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    2,
+    2
+  ],
+  "cluster_gap_threshold_bars": 10,
+  "outcome_autocorrelation": {
+    "n": 115,
+    "lags": {
+      "1": 0.1612240080802758,
+      "2": 0.02502298226765761,
+      "3": -0.002771321294475223,
+      "4": 0.02825604077168534,
+      "5": -0.015388553874160866,
+      "6": -0.23413441113318256,
+      "7": -0.1277580772261623,
+      "8": 0.08956288818967638,
+      "9": -0.040354098283231374,
+      "10": -0.031214613504976438
+    }
+  },
+  "overlap_classification_counts": {
+    "heavily_overlapping": 92,
+    "independent": 1,
+    "partially_overlapping": 6
+  },
+  "overlap_rate": 0.991304347826087,
+  "dependence_flag": "HIGH",
+  "n_effective": {
+    "cluster_count_approximation": 46,
+    "autocorrelation_based": 115.0,
+    "note": {
+      "cluster_count": "n_effective = numero di cluster (non di eventi). Assunzione: eventi nello stesso cluster sono trattati come UNA sola osservazione indipendente, il caso piu' conservativo possibile - sottostima l'informazione se gli eventi in cluster non sono perfettamente ridondanti, ma non la sovrastima mai.",
+      "autocorrelation_based": "n_effective = n / (1 + 2*sum_{k=1}^{K} rho_k), rho_k = autocorrelazione lag-k della serie binaria di outcome ORDINATA per tempo. K troncato al primo lag k per cui |rho_k| scende sotto 1.96/sqrt(n) (non piu' distinguibile da rumore) o a un tetto di 10 lag, quale che venga prima. Assunzione: la dipendenza e' descritta adeguatamente da un processo stazionario a corto raggio - puo' sottostimare la dipendenza se ci sono correlazioni a lungo raggio non catturate entro il tetto di 10 lag.",
+      "block_bootstrap_variance": "n_effective = p(1-p) / Var_block_bootstrap(p_hat). Assunzione: il block bootstrap cattura correttamente la struttura di dipendenza locale (vedi block_bootstrap.py per il criterio di lunghezza blocco) - la stima e' sensibile alla scelta della lunghezza blocco, per questo il criterio di scelta e' dichiarato separatamente e non ottimizzato per nessun risultato."
+    }
+  },
+  "per_event_overlap": {
+    "422": {
+      "max_overlap_fraction": 0.8,
+      "classification": "heavily_overlapping"
+    },
+    "430": {
+      "max_overlap_fraction": 0.8,
+      "classification": "heavily_overlapping"
+    },
+    "442": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "443": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "454": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "455": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "461": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "464": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "488": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "494": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "533": {
+      "max_overlap_fraction": 0.65,
+      "classification": "heavily_overlapping"
+    },
+    "547": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "550": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "552": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "558": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "584": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "585": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "586": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "592": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "633": {
+      "max_overlap_fraction": 0.0,
+      "classification": "independent"
+    },
+    "704": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "708": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "715": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "721": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "730": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "732": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "751": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "757": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "760": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "777": {
+      "max_overlap_fraction": 0.575,
+      "classification": "heavily_overlapping"
+    },
+    "833": {
+      "max_overlap_fraction": 0.675,
+      "classification": "heavily_overlapping"
+    },
+    "846": {
+      "max_overlap_fraction": 0.675,
+      "classification": "heavily_overlapping"
+    },
+    "886": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "888": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "927": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "930": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "931": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "940": {
+      "max_overlap_fraction": 0.775,
+      "classification": "heavily_overlapping"
+    },
+    "982": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "983": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "987": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1033": {
+      "max_overlap_fraction": 0.325,
+      "classification": "partially_overlapping"
+    },
+    "1060": {
+      "max_overlap_fraction": 0.875,
+      "classification": "heavily_overlapping"
+    },
+    "1065": {
+      "max_overlap_fraction": 0.875,
+      "classification": "heavily_overlapping"
+    },
+    "1086": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "1087": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "1113": {
+      "max_overlap_fraction": 0.775,
+      "classification": "heavily_overlapping"
+    },
+    "1122": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "1128": {
+      "max_overlap_fraction": 0.85,
+      "classification": "heavily_overlapping"
+    },
+    "1160": {
+      "max_overlap_fraction": 0.4,
+      "classification": "partially_overlapping"
+    },
+    "1184": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1186": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1189": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "1204": {
+      "max_overlap_fraction": 0.65,
+      "classification": "heavily_overlapping"
+    },
+    "1218": {
+      "max_overlap_fraction": 0.65,
+      "classification": "heavily_overlapping"
+    },
+    "1272": {
+      "max_overlap_fraction": 0.825,
+      "classification": "heavily_overlapping"
+    },
+    "1279": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "1282": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1284": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "1285": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "1288": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1290": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1320": {
+      "max_overlap_fraction": 0.65,
+      "classification": "heavily_overlapping"
+    },
+    "1334": {
+      "max_overlap_fraction": 0.65,
+      "classification": "heavily_overlapping"
+    },
+    "1376": {
+      "max_overlap_fraction": 0.8,
+      "classification": "heavily_overlapping"
+    },
+    "1384": {
+      "max_overlap_fraction": 0.8,
+      "classification": "heavily_overlapping"
+    },
+    "1403": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1405": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1439": {
+      "max_overlap_fraction": 0.875,
+      "classification": "heavily_overlapping"
+    },
+    "1444": {
+      "max_overlap_fraction": 0.875,
+      "classification": "heavily_overlapping"
+    },
+    "1467": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1469": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1478": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1482": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1484": {
+      "max_overlap_fraction": 0.95,
+      "classification": "heavily_overlapping"
+    },
+    "1503": {
+      "max_overlap_fraction": 0.525,
+      "classification": "heavily_overlapping"
+    },
+    "1532": {
+      "max_overlap_fraction": 0.525,
+      "classification": "heavily_overlapping"
+    },
+    "1551": {
+      "max_overlap_fraction": 0.525,
+      "classification": "heavily_overlapping"
+    },
+    "1603": {
+      "max_overlap_fraction": 0.1,
+      "classification": "partially_overlapping"
+    },
+    "1639": {
+      "max_overlap_fraction": 0.7,
+      "classification": "heavily_overlapping"
+    },
+    "1651": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1655": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "1658": {
+      "max_overlap_fraction": 0.925,
+      "classification": "heavily_overlapping"
+    },
+    "1665": {
+      "max_overlap_fraction": 0.825,
+      "classification": "heavily_overlapping"
+    },
+    "1689": {
+      "max_overlap_fraction": 0.425,
+      "classification": "partially_overlapping"
+    },
+    "1712": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1716": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1738": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1742": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1753": {
+      "max_overlap_fraction": 0.725,
+      "classification": "heavily_overlapping"
+    },
+    "1779": {
+      "max_overlap_fraction": 0.35,
+      "classification": "partially_overlapping"
+    },
+    "1807": {
+      "max_overlap_fraction": 0.3,
+      "classification": "partially_overlapping"
+    },
+    "1896": {
+      "max_overlap_fraction": 0.675,
+      "classification": "heavily_overlapping"
+    },
+    "1909": {
+      "max_overlap_fraction": 0.825,
+      "classification": "heavily_overlapping"
+    },
+    "1916": {
+      "max_overlap_fraction": 0.825,
+      "classification": "heavily_overlapping"
+    },
+    "1923": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1927": {
+      "max_overlap_fraction": 0.9,
+      "classification": "heavily_overlapping"
+    },
+    "1974": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    },
+    "1975": {
+      "max_overlap_fraction": 0.975,
+      "classification": "heavily_overlapping"
+    }
+  },
+  "per_event_cluster": {
+    "422": 0,
+    "430": 0,
+    "442": 1,
+    "443": 1,
+    "454": 2,
+    "455": 2,
+    "461": 2,
+    "464": 2,
+    "488": 3,
+    "494": 3,
+    "533": 4,
+    "547": 5,
+    "550": 5,
+    "552": 5,
+    "558": 5,
+    "584": 6,
+    "585": 6,
+    "586": 6,
+    "592": 6,
+    "633": 7,
+    "704": 8,
+    "708": 8,
+    "715": 8,
+    "721": 8,
+    "730": 8,
+    "732": 8,
+    "751": 9,
+    "757": 9,
+    "760": 9,
+    "777": 10,
+    "833": 11,
+    "846": 12,
+    "886": 13,
+    "888": 13,
+    "927": 14,
+    "930": 14,
+    "931": 14,
+    "940": 14,
+    "982": 15,
+    "983": 15,
+    "987": 15,
+    "1033": 16,
+    "1060": 17,
+    "1065": 17,
+    "1086": 18,
+    "1087": 18,
+    "1113": 19,
+    "1122": 19,
+    "1128": 19,
+    "1160": 20,
+    "1184": 21,
+    "1186": 21,
+    "1189": 21,
+    "1204": 22,
+    "1218": 23,
+    "1272": 24,
+    "1279": 24,
+    "1282": 24,
+    "1284": 24,
+    "1285": 24,
+    "1288": 24,
+    "1290": 24,
+    "1320": 25,
+    "1334": 26,
+    "1376": 27,
+    "1384": 27,
+    "1403": 28,
+    "1405": 28,
+    "1439": 29,
+    "1444": 29,
+    "1467": 30,
+    "1469": 30,
+    "1478": 30,
+    "1482": 30,
+    "1484": 30,
+    "1503": 31,
+    "1532": 32,
+    "1551": 33,
+    "1603": 34,
+    "1639": 35,
+    "1651": 36,
+    "1655": 36,
+    "1658": 36,
+    "1665": 36,
+    "1689": 37,
+    "1712": 38,
+    "1716": 38,
+    "1738": 39,
+    "1742": 39,
+    "1753": 40,
+    "1779": 41,
+    "1807": 42,
+    "1896": 43,
+    "1909": 44,
+    "1916": 44,
+    "1923": 44,
+    "1927": 44,
+    "1974": 45,
+    "1975": 45
+  }
+}

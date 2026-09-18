@@ -1,0 +1,24 @@
+{
+  "iid_bootstrap": {
+    "n": 115,
+    "n_boot": 2000,
+    "mean": 0.5916608695652174,
+    "ci_low": 0.5043478260869565,
+    "ci_high": 0.6869565217391305,
+    "std": 0.046798703389532056
+  },
+  "block_bootstrap": {
+    "n": 115,
+    "block_length": 5,
+    "n_blocks_needed": 23,
+    "n_boot": 2000,
+    "mean": 0.601695652173913,
+    "ci_low": 0.4956521739130435,
+    "ci_high": 0.6956521739130435,
+    "std": 0.05128221703962354
+  },
+  "ci_width_iid": 0.18260869565217397,
+  "ci_width_block": 0.19999999999999996,
+  "ci_widening_pct_block_vs_iid": 9.523809523809469,
+  "ess_from_block_bootstrap_variance": 91.12936323272228
+}

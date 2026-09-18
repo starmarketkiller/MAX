@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "policy_id": "DIRECTIONAL_DIAGNOSTICS_POLICY_V1",
+  "rule": [
+    "Se un risultato aggregato mostra forte asimmetria BUY/SELL, il lato che appare positivo NON viene promosso automaticamente.",
+    "Un'asimmetria BUY/SELL osservata post-hoc (cioe' notata guardando i dati, non prevista da una ipotesi congelata in anticipo) puo' al massimo generare una NUOVA ipotesi candidata, mai una conclusione diretta.",
+    "Qualunque nuova ipotesi derivata da un'asimmetria osservata richiede: freeze esplicito della nuova ipotesi PRIMA di guardare altri dati, PIU' un nuovo holdout indipendente - esattamente lo stesso standard applicato a H004->H006.",
+    "Questa fase (Phase 6.5) NON esegue quel nuovo test - lo status POST_HOC_OBSERVATION significa 'osservato, registrato, non testato', non 'in corso di validazione'."
+  ],
+  "observation_registered": {
+    "observation_id": "SELL_SWEEP_RECLAIM_ASYMMETRY",
+    "status": "POST_HOC_OBSERVATION",
+    "NOT_an_edge": true,
+    "source": "Phase 6 (h006_primary_result.json) + Phase 6.5 audit direzionale (h006_directional_baseline_v3.json)",
+    "description": "Nel true holdout di H006, l'effetto RECLAIM aggregato (DeltaP=+0.057) risultava interamente concentrato sul lato SELL (DeltaP=+0.139 vs baseline aggregato). Ri-testato con baseline direzionale coerente (Phase 6.5 sec.4): l'asimmetria persiste ma si riduce (BUY +0.019, SELL +0.104) - il baseline aggregato di Phase 6 aveva parzialmente distorto la lettura (la baseline BUY-only aveva probabilita' di base piu' bassa della baseline SELL-only, gonfiando artificialmente il contrasto SELL-vs-aggregato).",
+    "evidence_grade": "N/A - non e' un'ipotesi con proprio grade, e' un'osservazione su H006. H006 stesso resta E2.",
+    "what_would_be_required_to_test_this_as_its_own_hypothesis": [
+      "Congelare una nuova ipotesi (es. H007, esplicitamente NON eseguita in questa fase) con detector/baseline/outcome identici a H006 ma limitato a direction=SELL",
+      "Un nuovo periodo di holdout indipendente, mai usato per notare l'asimmetria (questo esclude qualunque parte del periodo 2022-02-04..2023-02-03 gia' usato qui)",
+      "Criteri pass/fail pre-registrati specificamente per l'ipotesi SELL-only, non riciclati da H006"
+    ]
+  },
+  "explicit_non_actions_this_phase": [
+    "NON e' stato eseguito nessun test H007",
+    "NON e' stata promossa la componente SELL",
+    "NON e' stato assegnato E3 a nessuna ipotesi",
+    "NON e' stato modificato il verdetto BORDERLINE di Phase 6 (H006 resta cosi' com'era)"
+  ]
+}

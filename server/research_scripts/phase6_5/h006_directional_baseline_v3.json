@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "scope": "METHODOLOGICAL_AUDIT_ONLY - retroactive audit of H006, does NOT change Phase 6 verdict, does NOT promote SELL, does NOT assign E3",
+  "methodology": "direzione parte del contratto di matching - ogni evento confrontato SOLO con baseline valutata nella sua stessa direzione",
+  "buy_directional": {
+    "direction": "BUY",
+    "n_events": 63,
+    "n_baseline_pool": 311,
+    "event_probability": {
+      "n": 63,
+      "wins": 33,
+      "losses": 30,
+      "censored": 0,
+      "observed_p": 0.5238095238095238,
+      "wilson_ci95_low": 0.4027035643673724,
+      "wilson_ci95_high": 0.6421787594617299,
+      "beta_binomial": {
+        "prior_alpha": 1.0,
+        "prior_beta": 1.0,
+        "posterior_alpha": 34.0,
+        "posterior_beta": 31.0,
+        "posterior_mean": 0.5230769230769231,
+        "posterior_ci95_low": 0.4023098445983511,
+        "posterior_ci95_high": 0.6424980032802374
+      }
+    },
+    "baseline_probability": {
+      "n": 311,
+      "wins": 157,
+      "losses": 154,
+      "censored": 0,
+      "observed_p": 0.5048231511254019,
+      "wilson_ci95_low": 0.449537210502582,
+      "wilson_ci95_high": 0.5599913948190841,
+      "beta_binomial": {
+        "prior_alpha": 1.0,
+        "prior_beta": 1.0,
+        "posterior_alpha": 158.0,
+        "posterior_beta": 155.0,
+        "posterior_mean": 0.5047923322683706,
+        "posterior_ci95_low": 0.4494997239374483,
+        "posterior_ci95_high": 0.5600269229186849
+      }
+    },
+    "delta_p_directional": 0.018986372684121955,
+    "ci95_non_overlapping": false
+  },
+  "sell_directional": {
+    "direction": "SELL",
+    "n_events": 52,
+    "n_baseline_pool": 260,
+    "event_probability": {
+      "n": 52,
+      "wins": 35,
+      "losses": 17,
+      "censored": 0,
+      "observed_p": 0.6730769230769231,
+      "wilson_ci95_low": 0.5375618936197395,
+      "wilson_ci95_high": 0.7847792554143083,
+      "beta_binomial": {
+        "prior_alpha": 1.0,
+        "prior_beta": 1.0,
+        "posterior_alpha": 36.0,
+        "posterior_beta": 18.0,
+        "posterior_mean": 0.6666666666666666,
+        "posterior_ci95_low": 0.5368387712284394,
+        "posterior_ci95_high": 0.784800362052537
+      }
+    },
+    "baseline_probability": {
+      "n": 260,
+      "wins": 148,
+      "losses": 112,
+      "censored": 0,
+      "observed_p": 0.5692307692307692,
+      "wilson_ci95_low": 0.5084635737065517,
+      "wilson_ci95_high": 0.6279820029701051,
+      "beta_binomial": {
+        "prior_alpha": 1.0,
+        "prior_beta": 1.0,
+        "posterior_alpha": 149.0,
+        "posterior_beta": 113.0,
+        "posterior_mean": 0.5687022900763359,
+        "posterior_ci95_low": 0.5084003568722258,
+        "posterior_ci95_high": 0.6280105749811095
+      }
+    },
+    "delta_p_directional": 0.10384615384615392,
+    "ci95_non_overlapping": false
+  },
+  "match_quality_distribution": {
+    "FAIR": 72,
+    "GOOD": 40,
+    "POOR": 3
+  },
+  "n_match_log_entries": 115,
+  "comparison_vs_phase6_aggregate_baseline_diagnostic": {
+    "phase6_buy_delta_p_vs_aggregate_baseline": -0.0103,
+    "phase6_sell_delta_p_vs_aggregate_baseline": 0.1389,
+    "phase6_5_buy_delta_p_vs_directional_baseline": 0.018986372684121955,
+    "phase6_5_sell_delta_p_vs_directional_baseline": 0.10384615384615392,
+    "note": "se i baseline direzionali BUY e SELL hanno probabilita' di base diverse fra loro, il confronto Phase 6 (contro un baseline aggregato unico) puo' aver distorto la lettura dell'asimmetria - vedi report principale sec.5 per l'interpretazione"
+  }
+}
