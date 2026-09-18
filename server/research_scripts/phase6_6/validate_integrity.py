@@ -89,6 +89,18 @@ def main():
     check("audit_record_has_no_own_grade", evidence["retroactive_methodological_audit"]["evidence_classification"]["evidence_grade"] is None,
           f"audit_grade={evidence['retroactive_methodological_audit']['evidence_classification']['evidence_grade']}")
 
+    # 6b. Integrity Patch (baseline semantics): la baseline PRIMARIA (Phase 6,
+    # aggregata) non deve MAI risultare direction-aware - solo l'audit
+    # retroattivo (Phase 6.5, Baseline Engine v3) puo' esserlo. Impedisce la
+    # regressione esatta corretta in questa patch (primary_evidence.baseline
+    # che si appropriava di proprieta' introdotte solo in Phase 6.5).
+    pe_dir_aware = evidence["primary_evidence"]["baseline"]["direction_aware"]
+    check("primary_evidence_direction_aware_must_be_false", pe_dir_aware is False,
+          f"primary_evidence.baseline.direction_aware={pe_dir_aware}")
+    ra_dir_aware = evidence["retroactive_methodological_audit"]["baseline"]["direction_aware"]
+    check("retroactive_audit_direction_aware_must_be_true", ra_dir_aware is True,
+          f"retroactive_methodological_audit.baseline.direction_aware={ra_dir_aware}")
+
     # 7. post-hoc observation erroneamente marcata come edge
     o = obs["observations"][0]
     check("post_hoc_observation_not_marked_as_edge", o["is_edge"] is False and o["is_validated"] is False,

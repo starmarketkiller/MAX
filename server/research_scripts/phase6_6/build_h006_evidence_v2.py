@@ -61,7 +61,13 @@ def build():
             "evidence_type": "PRIMARY_EVIDENCE",
             "validation_integrity": "TEMPORAL_HOLDOUT",
             "conclusion": p6["VERDICT"],
-            "grade_cap_reason": None,
+            "grade_cap_reason": (
+                "True holdout eseguito su H006: risultato BORDERLINE (DeltaP sotto la soglia minima "
+                "di materialita' pre-registrata, CI95 Wilson sovrapposte fra evento e baseline, "
+                "consistenza di direzione BUY/SELL non soddisfatta). Nessuna promozione a E3 "
+                "consentita dalla regola congelata in H006_frozen_spec.json "
+                "(if_FAIL_or_BORDERLINE: resta E2)."
+            ),
         },
         "effect": {
             "primary_outcome": spec["primary_outcome"]["definition"],
@@ -95,29 +101,40 @@ def build():
             "block_length": None,
         },
         "baseline": {
-            "baseline_engine_version": "v2 (coarsened + nearest-neighbour standardized, frozen normalization from Phase 5 discovery)",
-            "matching_method": "coarsened(vol,trend,year) + NN standardized, direction-conditioned per-event",
-            "direction_aware": True,
+            "baseline_engine_version": "Phase 6 / Baseline Engine v2 (coarsened vol/trend/year + nearest-neighbour standardized, frozen normalization from Phase 5 discovery)",
+            "matching_method": (
+                "coarsened(vol,trend,year) + NN standardized su un pool di baseline UNICO E AGGREGATO "
+                "(non segmentato per direzione). Nota tecnica: ogni singola barra di controllo era "
+                "valutata usando la direzione dell'evento che la matchava, ma i risultati venivano poi "
+                "fusi in UN SOLO baseline_probability aggregato, condiviso da eventi BUY e SELL - questo "
+                "e' esattamente cio' che la baseline aggregata di Phase 6 fece al momento del verdetto. "
+                "Il confronto BUY-vs-BUY / SELL-vs-SELL separato (Baseline Engine v3) NON esisteva ancora "
+                "ed e' stato introdotto solo retroattivamente in Phase 6.5 - vedi "
+                "retroactive_methodological_audit.baseline."
+            ),
+            "direction_aware": False,
             "match_quality": p6["match_quality_distribution"],
         },
         "integrity": {
-            "leakage_guard": None,
+            "leakage_guard": leakage["overall_verdict"],
             "dependence_audit": None,
             "multiple_testing_status": "family_size=1 (unica ipotesi primaria, sec.7 Phase6)",
             "preregistration_status": "H006_frozen_spec.json congelata prima di acquisire il dataset di holdout",
             "detector_frozen": True,
         },
         "provenance": {
-            "source_files": [rel_path(p6_file), rel_path(spec_file), rel_path(holdout_decl_file)],
+            "source_files": [rel_path(p6_file), rel_path(spec_file), rel_path(holdout_decl_file), rel_path(leakage_file)],
             "source_hashes": {
                 rel_path(p6_file): file_sha256(p6_file),
                 rel_path(spec_file): file_sha256(spec_file),
                 rel_path(holdout_decl_file): file_sha256(holdout_decl_file),
+                rel_path(leakage_file): file_sha256(leakage_file),
             },
             "code_commit": "b9414e6",
             "limitations": [
                 "Holdout dalla stessa fonte dati di Phase 5 (Dukascopy) - TEMPORAL_HOLDOUT, non CROSS_FEED (E4)",
                 "n_effective/dependence non calcolati al momento di questo record - vedi retroactive_methodological_audit",
+                "Baseline aggregata (non direction-aware) - la versione direction-aware (v3) e' un audit retroattivo di Phase 6.5, non parte del verdetto originale",
             ],
             "conflicts": [],
         },

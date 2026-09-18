@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-18T15:26:03.551317+00:00",
+  "generated_at": "2026-09-18T15:38:29.568951+00:00",
   "generation_script": "server/research_scripts/phase6_6/validate_integrity.py",
-  "canonical_sha256": "6b2db432c0d9cffcb6beed4e08c980650e82816ae97ddb4587d095cdd680f705",
+  "canonical_sha256": "fb00f56551e732d98539fe6ccc1b4a97dc5449d7f68dda943a6cfee8458a0d64",
   "payload": {
     "schema_version": 1,
     "overall": "INTEGRITY_SUITE_PASS",
-    "n_checks": 12,
-    "n_pass": 12,
+    "n_checks": 14,
+    "n_pass": 14,
     "n_fail": 0,
     "checks": [
       {
@@ -43,6 +43,16 @@
         "check": "audit_record_has_no_own_grade",
         "result": "PASS",
         "detail": "audit_grade=None"
+      },
+      {
+        "check": "primary_evidence_direction_aware_must_be_false",
+        "result": "PASS",
+        "detail": "primary_evidence.baseline.direction_aware=False"
+      },
+      {
+        "check": "retroactive_audit_direction_aware_must_be_true",
+        "result": "PASS",
+        "detail": "retroactive_methodological_audit.baseline.direction_aware=True"
       },
       {
         "check": "post_hoc_observation_not_marked_as_edge",

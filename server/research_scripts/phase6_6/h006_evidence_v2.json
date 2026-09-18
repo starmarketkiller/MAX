@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-18T15:26:02.871178+00:00",
+  "generated_at": "2026-09-18T15:38:28.909242+00:00",
   "generation_script": "server/research_scripts/phase6_6/build_h006_evidence_v2.py",
-  "canonical_sha256": "554f44aea57169b9e8ea61f97c4cdd0256f56250db0d12bdb185c429d324beae",
+  "canonical_sha256": "631511fd72448f087d530d720fa8b00db3847b7421f4a6990f672a92ab13ae7b",
   "payload": {
     "hypothesis_id": "H006_LIQUIDITY_SWEEP_RECLAIM_TRUE_HOLDOUT",
     "authoritative_grade_source": "primary_evidence",
@@ -21,7 +21,7 @@
         "evidence_type": "PRIMARY_EVIDENCE",
         "validation_integrity": "TEMPORAL_HOLDOUT",
         "conclusion": "BORDERLINE",
-        "grade_cap_reason": null
+        "grade_cap_reason": "True holdout eseguito su H006: risultato BORDERLINE (DeltaP sotto la soglia minima di materialita' pre-registrata, CI95 Wilson sovrapposte fra evento e baseline, consistenza di direzione BUY/SELL non soddisfatta). Nessuna promozione a E3 consentita dalla regola congelata in H006_frozen_spec.json (if_FAIL_or_BORDERLINE: resta E2)."
       },
       "effect": {
         "primary_outcome": "P(+1.0xATR before -1.0xATR) dalla chiusura della barra di conferma reclaim, orizzonte 40 barre H4, nessuna gestione dinamica - IDENTICO alla soglia primaria di Phase 5 (PRIMARY_THRESHOLD=1.0, edge_discovery.py)",
@@ -101,9 +101,9 @@
         "block_length": null
       },
       "baseline": {
-        "baseline_engine_version": "v2 (coarsened + nearest-neighbour standardized, frozen normalization from Phase 5 discovery)",
-        "matching_method": "coarsened(vol,trend,year) + NN standardized, direction-conditioned per-event",
-        "direction_aware": true,
+        "baseline_engine_version": "Phase 6 / Baseline Engine v2 (coarsened vol/trend/year + nearest-neighbour standardized, frozen normalization from Phase 5 discovery)",
+        "matching_method": "coarsened(vol,trend,year) + NN standardized su un pool di baseline UNICO E AGGREGATO (non segmentato per direzione). Nota tecnica: ogni singola barra di controllo era valutata usando la direzione dell'evento che la matchava, ma i risultati venivano poi fusi in UN SOLO baseline_probability aggregato, condiviso da eventi BUY e SELL - questo e' esattamente cio' che la baseline aggregata di Phase 6 fece al momento del verdetto. Il confronto BUY-vs-BUY / SELL-vs-SELL separato (Baseline Engine v3) NON esisteva ancora ed e' stato introdotto solo retroattivamente in Phase 6.5 - vedi retroactive_methodological_audit.baseline.",
+        "direction_aware": false,
         "match_quality": {
           "FAIR": 72,
           "GOOD": 40,
@@ -111,7 +111,7 @@
         }
       },
       "integrity": {
-        "leakage_guard": null,
+        "leakage_guard": "LEAKAGE_GUARD_PASS",
         "dependence_audit": null,
         "multiple_testing_status": "family_size=1 (unica ipotesi primaria, sec.7 Phase6)",
         "preregistration_status": "H006_frozen_spec.json congelata prima di acquisire il dataset di holdout",
@@ -121,17 +121,20 @@
         "source_files": [
           "server/research_scripts/phase6/h006_primary_result.json",
           "server/research_scripts/phase6/H006_frozen_spec.json",
-          "server/research_scripts/phase6/true_holdout_declaration.json"
+          "server/research_scripts/phase6/true_holdout_declaration.json",
+          "server/research_scripts/phase5_5/leakage_guard_report_v1.json"
         ],
         "source_hashes": {
           "server/research_scripts/phase6/h006_primary_result.json": "2f9bf35ff493420f8baf85f96ac151052fd6d11e7e51781a42903ad590a845e4",
           "server/research_scripts/phase6/H006_frozen_spec.json": "98afce0722b057daf43bdf1261674ba10d7a536ffb202687b8560b2549d76125",
-          "server/research_scripts/phase6/true_holdout_declaration.json": "9c79e95c1a224c2148c2b4593f081a194e617c3623dee82b94cecb4e48bef98c"
+          "server/research_scripts/phase6/true_holdout_declaration.json": "9c79e95c1a224c2148c2b4593f081a194e617c3623dee82b94cecb4e48bef98c",
+          "server/research_scripts/phase5_5/leakage_guard_report_v1.json": "4906f92bf4f7e8e45b9bcc604b50df4d914658cf4f8322184b2daea3c371845c"
         },
         "code_commit": "b9414e6",
         "limitations": [
           "Holdout dalla stessa fonte dati di Phase 5 (Dukascopy) - TEMPORAL_HOLDOUT, non CROSS_FEED (E4)",
-          "n_effective/dependence non calcolati al momento di questo record - vedi retroactive_methodological_audit"
+          "n_effective/dependence non calcolati al momento di questo record - vedi retroactive_methodological_audit",
+          "Baseline aggregata (non direction-aware) - la versione direction-aware (v3) e' un audit retroattivo di Phase 6.5, non parte del verdetto originale"
         ],
         "conflicts": []
       }

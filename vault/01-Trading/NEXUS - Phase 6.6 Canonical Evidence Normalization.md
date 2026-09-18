@@ -92,3 +92,18 @@ Le altre 13 ipotesi del batch Phase 5 (H001-H003, H005, H007[Phase5]-H014, più 
 ## Artifact prodotti
 
 `server/research_scripts/phase6_6/`: `evidence_record_v2.schema.json`, `h006_evidence_v2.json`, `h006_decision_card_v2.json`, `post_hoc_observations_v1.json`, `research_evidence_ledger_v1.json`, `research_relations_v1.json`, `artifact_manifest.json`, `integrity_test_report.json`, `canonical_utils.py` + 5 script generatori + `validate_integrity.py`.
+
+---
+
+## Integrity Patch (post-review) — semantica della baseline primaria corretta
+
+Revisione degli artifact ha trovato una violazione reale della separazione dichiarata: `primary_evidence.baseline` in `h006_evidence_v2.json` attribuiva a Phase 6 (`direction_aware=true`, linguaggio "direction-conditioned per-event" nel `matching_method`) una proprietà introdotta solo retroattivamente in Phase 6.5 (Directional Baseline v3). Corretto senza alcuna nuova analisi e senza cambiare `DeltaP`, `verdict`, `E2`, `sample`, l'osservazione SELL, l'esito della decision card o la cronologia del ledger:
+
+- `primary_evidence.baseline.direction_aware`: `true` → **`false`**.
+- `primary_evidence.baseline.baseline_engine_version`: chiarito esplicitamente come "Phase 6 / Baseline Engine v2", nessun riferimento a v3.
+- `primary_evidence.baseline.matching_method`: riformulato per riflettere fedelmente cosa Phase 6 usò davvero — un baseline **aggregato**, non segmentato per direzione (nota tecnica preservata: le singole barre di controllo erano valutate nella direzione dell'evento matchato, ma il `baseline_probability` finale fondeva comunque osservazioni BUY e SELL in un solo numero).
+- `primary_evidence.evidence_classification.grade_cap_reason`: popolato (era `null`) con una spiegazione equivalente a "true holdout BORDERLINE, nessuna promozione a E3".
+- `primary_evidence.integrity.leakage_guard`: popolato con `LEAKAGE_GUARD_PASS`, direttamente supportato da `server/research_scripts/phase5_5/leakage_guard_report_v1.json` (stato raggiunto in Phase 6 stessa, commit `b9414e6`, mai più toccato) — aggiunto anche alle `source_hashes` di `primary_evidence` per provenance corretta.
+- Le informazioni BUY-vs-BUY / SELL-vs-SELL / Baseline Engine v3 restano **esclusivamente** sotto `retroactive_methodological_audit.baseline` (`direction_aware=true`, invariato).
+
+**2 nuovi test di integrità aggiunti** (`validate_integrity.py`, ora 14/14 PASS): `primary_evidence_direction_aware_must_be_false` e `retroactive_audit_direction_aware_must_be_true` — dimostrati funzionanti anche in negativo (forzando `primary_evidence.baseline.direction_aware=true` su una copia, il primo check fallisce correttamente). Determinismo ri-verificato: rigenerazione doppia di ogni generatore produce lo stesso `canonical_sha256`. `artifact_manifest.json` rigenerato con gli hash aggiornati.

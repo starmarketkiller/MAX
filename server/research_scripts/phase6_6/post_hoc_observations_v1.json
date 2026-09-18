@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T15:26:03.203455+00:00",
+  "generated_at": "2026-09-18T15:38:29.231453+00:00",
   "generation_script": "server/research_scripts/phase6_6/build_post_hoc_observations.py",
   "canonical_sha256": "41ae856cbe940c44be974072848bc982ca68e98db09f79f08c77594418a41798",
   "payload": {
