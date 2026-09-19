@@ -26,6 +26,22 @@ strutturalmente terminale con questa definizione (ha uscite laterali
 indipendenti verso COST_SENSITIVE/NON_TRANSFERABLE, sec.20) - e' un
 verdetto di ricerca raggiunto, non uno stato senza ulteriori assi da
 esplorare; la distinzione e' intenzionale, non un bug.
+
+Integrity & Provenance Patch (post-review, 2026-09-19): DISCOVERY_SIGNAL
+ammetteva in uscita solo INTERNAL_VALIDATION/INSUFFICIENT_SAMPLE/
+CONTAMINATED - un candidato che falliva a livello di discovery per
+DeltaP<=0 o per dependence-sensitivity veniva quindi forzato su
+INSUFFICIENT_SAMPLE anche con campione adeguato (bug semantico, trovato
+nella prima vera discovery run, Phase 7.1). Aggiunte le uscite dirette
+REFUTED, DEPENDENCE_SENSITIVE e BORDERLINE da DISCOVERY_SIGNAL (e
+BORDERLINE anche da INTERNAL_VALIDATION, per lo stesso motivo - un
+risultato positivo ma sotto la soglia di materialita' o con CI
+sovrapposte a quello stadio non e' ne' un successo ne' un fallimento
+netto) - la regola di PRECEDENZA che decide quale delle possibili
+uscite si applica quando piu' gate falliscono insieme vive in
+engine/discovery_gate_precedence.py (non qui: questo modulo impone SOLO
+quali transizioni sono strutturalmente ammesse, non la logica che
+sceglie fra esse).
 """
 
 
@@ -38,9 +54,10 @@ class InvalidTransitionError(Exception):
 # dichiarato in sec.14, piu' le uscite laterali ammesse da quel punto.
 ALLOWED_TRANSITIONS = {
     "GENERATED": {"DISCOVERY_SIGNAL", "INSUFFICIENT_SAMPLE", "CONTAMINATED"},
-    "DISCOVERY_SIGNAL": {"INTERNAL_VALIDATION", "INSUFFICIENT_SAMPLE", "CONTAMINATED"},
+    "DISCOVERY_SIGNAL": {"INTERNAL_VALIDATION", "INSUFFICIENT_SAMPLE", "CONTAMINATED",
+                          "REFUTED", "DEPENDENCE_SENSITIVE", "BORDERLINE"},
     "INTERNAL_VALIDATION": {"PRE_REGISTERED_CANDIDATE", "INSUFFICIENT_SAMPLE",
-                             "DEPENDENCE_SENSITIVE", "CONTAMINATED", "REFUTED"},
+                             "DEPENDENCE_SENSITIVE", "CONTAMINATED", "REFUTED", "BORDERLINE"},
     "PRE_REGISTERED_CANDIDATE": {"INDEPENDENT_VALIDATION", "CONTAMINATED"},
     "INDEPENDENT_VALIDATION": {"SUPPORTED", "BORDERLINE", "REFUTED",
                                 "INSUFFICIENT_SAMPLE", "DEPENDENCE_SENSITIVE", "CONTAMINATED"},
@@ -131,6 +148,21 @@ if __name__ == "__main__":
     c5 = Candidate("DEMO-SETUP-005", initial_state="SUPPORTED")
     print(f"SUPPORTED is_terminal(): {c5.is_terminal()} (atteso False - ha uscite laterali indipendenti)")
     assert c5.is_terminal() is False
+
+    # Dimostrazione 6 (Integrity & Provenance Patch): un candidato con
+    # DeltaP<=0 gia' a livello di discovery deve poter raggiungere REFUTED
+    # DIRETTAMENTE da DISCOVERY_SIGNAL, senza passare per INSUFFICIENT_SAMPLE.
+    c6 = Candidate("DEMO-SETUP-006")
+    c6.transition("DISCOVERY_SIGNAL")
+    c6.transition("REFUTED", "DeltaP<=0 in discovery")
+    print(f"DISCOVERY_SIGNAL -> REFUTED diretto: {' -> '.join(c6.history)}")
+    assert c6.state == "REFUTED"
+
+    c7 = Candidate("DEMO-SETUP-007")
+    c7.transition("DISCOVERY_SIGNAL")
+    c7.transition("DEPENDENCE_SENSITIVE", "dependence-sensitive gia' in discovery")
+    assert c7.state == "DEPENDENCE_SENSITIVE"
+    print(f"DISCOVERY_SIGNAL -> DEPENDENCE_SENSITIVE diretto: {' -> '.join(c7.history)}")
 
     # Invariante generale su TUTTI gli stati: nessuna uscita <=> terminale.
     for state in ALL_STATES:

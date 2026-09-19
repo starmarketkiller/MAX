@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-19T14:27:06.357041+00:00",
-  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py",
-  "canonical_sha256": "19d7cb76a3ef7109577204de3494726324a31e5300bfc7562df1bc92dbf0c357",
+  "generated_at": "2026-09-19T14:59:53.832579+00:00",
+  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py + apply_lifecycle_correction_p71.py",
+  "canonical_sha256": "50b753d64961912025c9a672c00ab493ba09fa11c786f260d48d5ad9655d0adb",
   "payload": {
     "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
     "family_id": "RECLAIM_FAMILY_P71",
@@ -22,7 +22,7 @@
           "evidence_type": "PRIMARY_EVIDENCE",
           "validation_integrity": "DISCOVERY_ONLY",
           "conclusion": "REFUTED_AT_DISCOVERY",
-          "grade_cap_reason": "Testato statisticamente su development.discovery (n=179, \u0394P=-0.0682) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=179, \u0394P=-0.0682) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE. [Integrity Patch 2026-09-19: stato lifecycle corretto da 'INSUFFICIENT_SAMPLE' a 'REFUTED' (NON_POSITIVE_DELTA_P) - DeltaP=-0.06815642458100557 <= 0 o non calcolabile - l'effetto primario non c'e' o e' invertito. Nessun numero (\u0394P, CI, n, dependence) e' stato modificato, solo l'etichetta di stato e la sua motivazione, secondo la regola di precedenza in engine/discovery_gate_precedence.py.]"
         },
         "effect": {
           "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
@@ -100,11 +100,11 @@
           "CONSERVATIVE": null,
           "STRESS": null
         },
-        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_state": "REFUTED",
         "lifecycle_history": [
           "GENERATED",
           "DISCOVERY_SIGNAL",
-          "INSUFFICIENT_SAMPLE"
+          "REFUTED"
         ],
         "signature": "f6b1625019b8d1f6944d846aa27c78105be87a2a294d4a525f0567b299184945",
         "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
@@ -125,7 +125,10 @@
             "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
             "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
           }
-        }
+        },
+        "declared_frozen_before_outcomes": true,
+        "git_independently_proves_pre_registration_order": false,
+        "provenance_note": "phase7_1_frozen_spec_v1.json e phase7_1_evidence_records_v1.json sono stati committati nello STESSO commit (f9bfd68) - Git da solo non puo' dimostrare indipendentemente che il frozen spec sia stato scritto prima di calcolare gli outcome. La dichiarazione di pre-registrazione resta valida (contenuto del frozen spec e sequenza di esecuzione reale), ma la provenance NON e' verificabile crittograficamente da questo commit da solo. Per le run future e' obbligatoria la regola PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT, enforced tecnicamente da engine/preregistration_provenance_guard.py (assert_frozen_spec_committed_before_run) - una futura run viene bloccata se il proprio frozen spec non e' gia' un file tracciato e pulito in un commit separato e precedente."
       },
       {
         "identity": {
@@ -142,7 +145,7 @@
           "evidence_type": "PRIMARY_EVIDENCE",
           "validation_integrity": "DISCOVERY_ONLY",
           "conclusion": "REFUTED_AT_DISCOVERY",
-          "grade_cap_reason": "Testato statisticamente su development.discovery (n=102, \u0394P=-0.0706) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=102, \u0394P=-0.0706) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE. [Integrity Patch 2026-09-19: stato lifecycle corretto da 'INSUFFICIENT_SAMPLE' a 'REFUTED' (NON_POSITIVE_DELTA_P) - DeltaP=-0.07058823529411762 <= 0 o non calcolabile - l'effetto primario non c'e' o e' invertito. Nessun numero (\u0394P, CI, n, dependence) e' stato modificato, solo l'etichetta di stato e la sua motivazione, secondo la regola di precedenza in engine/discovery_gate_precedence.py.]"
         },
         "effect": {
           "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
@@ -220,11 +223,11 @@
           "CONSERVATIVE": null,
           "STRESS": null
         },
-        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_state": "REFUTED",
         "lifecycle_history": [
           "GENERATED",
           "DISCOVERY_SIGNAL",
-          "INSUFFICIENT_SAMPLE"
+          "REFUTED"
         ],
         "signature": "30677ab3ae26530e639b759bb9867c24329f0bbd40f5694013a1e99f34bcd4b9",
         "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
@@ -245,7 +248,10 @@
             "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
             "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
           }
-        }
+        },
+        "declared_frozen_before_outcomes": true,
+        "git_independently_proves_pre_registration_order": false,
+        "provenance_note": "phase7_1_frozen_spec_v1.json e phase7_1_evidence_records_v1.json sono stati committati nello STESSO commit (f9bfd68) - Git da solo non puo' dimostrare indipendentemente che il frozen spec sia stato scritto prima di calcolare gli outcome. La dichiarazione di pre-registrazione resta valida (contenuto del frozen spec e sequenza di esecuzione reale), ma la provenance NON e' verificabile crittograficamente da questo commit da solo. Per le run future e' obbligatoria la regola PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT, enforced tecnicamente da engine/preregistration_provenance_guard.py (assert_frozen_spec_committed_before_run) - una futura run viene bloccata se il proprio frozen spec non e' gia' un file tracciato e pulito in un commit separato e precedente."
       },
       {
         "identity": {
@@ -262,7 +268,7 @@
           "evidence_type": "PRIMARY_EVIDENCE",
           "validation_integrity": "DISCOVERY_ONLY",
           "conclusion": "REFUTED_AT_DISCOVERY",
-          "grade_cap_reason": "Testato statisticamente su development.discovery (n=77, \u0394P=-0.0649) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=77, \u0394P=-0.0649) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE. [Integrity Patch 2026-09-19: stato lifecycle corretto da 'INSUFFICIENT_SAMPLE' a 'REFUTED' (NON_POSITIVE_DELTA_P) - DeltaP=-0.0649350649350649 <= 0 o non calcolabile - l'effetto primario non c'e' o e' invertito. Nessun numero (\u0394P, CI, n, dependence) e' stato modificato, solo l'etichetta di stato e la sua motivazione, secondo la regola di precedenza in engine/discovery_gate_precedence.py.]"
         },
         "effect": {
           "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
@@ -340,11 +346,11 @@
           "CONSERVATIVE": null,
           "STRESS": null
         },
-        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_state": "REFUTED",
         "lifecycle_history": [
           "GENERATED",
           "DISCOVERY_SIGNAL",
-          "INSUFFICIENT_SAMPLE"
+          "REFUTED"
         ],
         "signature": "9e9095fe1f5d0b8e7d3689a0f8a9cb99fb4eeea395e2753365d5f12ba1f6e186",
         "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
@@ -365,8 +371,68 @@
             "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
             "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
           }
-        }
+        },
+        "declared_frozen_before_outcomes": true,
+        "git_independently_proves_pre_registration_order": false,
+        "provenance_note": "phase7_1_frozen_spec_v1.json e phase7_1_evidence_records_v1.json sono stati committati nello STESSO commit (f9bfd68) - Git da solo non puo' dimostrare indipendentemente che il frozen spec sia stato scritto prima di calcolare gli outcome. La dichiarazione di pre-registrazione resta valida (contenuto del frozen spec e sequenza di esecuzione reale), ma la provenance NON e' verificabile crittograficamente da questo commit da solo. Per le run future e' obbligatoria la regola PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT, enforced tecnicamente da engine/preregistration_provenance_guard.py (assert_frozen_spec_committed_before_run) - una futura run viene bloccata se il proprio frozen spec non e' gia' un file tracciato e pulito in un commit separato e precedente."
       }
-    ]
+    ],
+    "integrity_patch_2026_09_19": {
+      "corrections_applied": [
+        {
+          "candidate_id": "CAND-P71-RECLAIM-BOTH",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED",
+          "reason_code": "NON_POSITIVE_DELTA_P",
+          "old_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "INSUFFICIENT_SAMPLE"
+          ],
+          "new_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "REFUTED"
+          ]
+        },
+        {
+          "candidate_id": "CAND-P71-RECLAIM-BUY",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED",
+          "reason_code": "NON_POSITIVE_DELTA_P",
+          "old_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "INSUFFICIENT_SAMPLE"
+          ],
+          "new_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "REFUTED"
+          ]
+        },
+        {
+          "candidate_id": "CAND-P71-RECLAIM-SELL",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED",
+          "reason_code": "NON_POSITIVE_DELTA_P",
+          "old_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "INSUFFICIENT_SAMPLE"
+          ],
+          "new_history": [
+            "GENERATED",
+            "DISCOVERY_SIGNAL",
+            "REFUTED"
+          ]
+        }
+      ],
+      "numbers_unchanged": true,
+      "overall_verdict_unchanged": "NO_SUPPORTED_CANDIDATE"
+    },
+    "declared_frozen_before_outcomes": true,
+    "git_independently_proves_pre_registration_order": false,
+    "provenance_note": "phase7_1_frozen_spec_v1.json e phase7_1_evidence_records_v1.json sono stati committati nello STESSO commit (f9bfd68) - Git da solo non puo' dimostrare indipendentemente che il frozen spec sia stato scritto prima di calcolare gli outcome. La dichiarazione di pre-registrazione resta valida (contenuto del frozen spec e sequenza di esecuzione reale), ma la provenance NON e' verificabile crittograficamente da questo commit da solo. Per le run future e' obbligatoria la regola PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT, enforced tecnicamente da engine/preregistration_provenance_guard.py (assert_frozen_spec_committed_before_run) - una futura run viene bloccata se il proprio frozen spec non e' gia' un file tracciato e pulito in un commit separato e precedente."
   }
 }

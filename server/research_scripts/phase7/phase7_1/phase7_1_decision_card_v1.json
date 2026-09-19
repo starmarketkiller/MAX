@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-19T14:27:06.358549+00:00",
-  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py",
-  "canonical_sha256": "55d13272a2361ed05bf1176e38e315ee62e90c42e1d73b14853ef9accfaaf3d8",
+  "generated_at": "2026-09-19T14:59:53.835599+00:00",
+  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py + apply_lifecycle_correction_p71.py",
+  "canonical_sha256": "b89f7e1a5af002966731028fb407c4c945922bdb6aeb8563ce0800510a1d07a6",
   "payload": {
     "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
     "family_id": "RECLAIM_FAMILY_P71",
@@ -17,24 +17,50 @@
         "n_discovery": 179,
         "delta_p_discovery": -0.06815642458100557,
         "dependence_sensitive": true,
-        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+        "final_lifecycle_state": "REFUTED",
+        "lifecycle_correction_reason_code": "NON_POSITIVE_DELTA_P"
       },
       "CAND-P71-RECLAIM-BUY": {
         "n_discovery": 102,
         "delta_p_discovery": -0.07058823529411762,
         "dependence_sensitive": true,
-        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+        "final_lifecycle_state": "REFUTED",
+        "lifecycle_correction_reason_code": "NON_POSITIVE_DELTA_P"
       },
       "CAND-P71-RECLAIM-SELL": {
         "n_discovery": 77,
         "delta_p_discovery": -0.0649350649350649,
         "dependence_sensitive": true,
-        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+        "final_lifecycle_state": "REFUTED",
+        "lifecycle_correction_reason_code": "NON_POSITIVE_DELTA_P"
       }
     },
     "final_holdout_accessed": false,
     "no_rescue_clause_respected": true,
     "no_post_hoc_promotion": true,
-    "generated_at": "2026-09-19T14:27:06.358549+00:00"
+    "generated_at": "2026-09-19T14:27:06.358549+00:00",
+    "integrity_patch_2026_09_19": {
+      "corrections_applied": [
+        {
+          "candidate_id": "CAND-P71-RECLAIM-BOTH",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED"
+        },
+        {
+          "candidate_id": "CAND-P71-RECLAIM-BUY",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED"
+        },
+        {
+          "candidate_id": "CAND-P71-RECLAIM-SELL",
+          "old_state": "INSUFFICIENT_SAMPLE",
+          "new_state": "REFUTED"
+        }
+      ],
+      "numbers_and_overall_verdict_unchanged": true
+    },
+    "declared_frozen_before_outcomes": true,
+    "git_independently_proves_pre_registration_order": false,
+    "provenance_note": "phase7_1_frozen_spec_v1.json e phase7_1_evidence_records_v1.json sono stati committati nello STESSO commit (f9bfd68) - Git da solo non puo' dimostrare indipendentemente che il frozen spec sia stato scritto prima di calcolare gli outcome. La dichiarazione di pre-registrazione resta valida (contenuto del frozen spec e sequenza di esecuzione reale), ma la provenance NON e' verificabile crittograficamente da questo commit da solo. Per le run future e' obbligatoria la regola PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT, enforced tecnicamente da engine/preregistration_provenance_guard.py (assert_frozen_spec_committed_before_run) - una futura run viene bloccata se il proprio frozen spec non e' gia' un file tracciato e pulito in un commit separato e precedente."
   }
 }

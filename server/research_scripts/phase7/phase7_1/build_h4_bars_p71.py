@@ -18,7 +18,7 @@ import json
 import os
 from datetime import datetime, timedelta, timezone
 
-# Path portabile (Integrity Patch Phase 7.0 lesson: mai hardcoded C:\Users\...)
+# Path portabile (Integrity Patch Phase 7.0 lesson: mai un path assoluto machine-specific hardcoded)
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", ".."))
 PHASE6_DECODED_DIR = os.path.join(ROOT, "server", "research_scripts", "phase6", "data_cache_holdout", "decoded")
 PHASE7_DECODED_DIR = os.path.join(ROOT, "server", "research_scripts", "phase7", "data_cache_new_period", "decoded")

@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-09-19T15:08:07.747902+00:00",
+  "generation_script": "phase7/phase7_1/build_validation_access_evidence.py",
+  "canonical_sha256": "2ac281fbfc808d1c0fc2a1043b80ddb96316ec3b918135d9a16d8f85e73b6954",
+  "payload": {
+    "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+    "candidate_ids": [
+      "CAND-P71-RECLAIM-BOTH",
+      "CAND-P71-RECLAIM-BUY",
+      "CAND-P71-RECLAIM-SELL"
+    ],
+    "ledger_source_path": "server/research_scripts/phase7/phase7_1/data/validation_access_log_p71.json (gitignored - derivato qui, non ricostruito)",
+    "ledger_present_on_disk_at_build_time": true,
+    "ledger_content_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "ledger_raw_records": [],
+    "discovery_access_summary": {
+      "access_mode": "ITERABLE (validation_access_policy_v1.json) - non tracciato dal ledger per policy",
+      "n_candidates_screened_at_discovery": 3,
+      "note": "Ogni candidato e' stato calcolato una volta su development.discovery - lo split discovery non passa per ValidationAccessLedger (nessun limite previsto dalla policy), quindi non compare come 'accesso' nel ledger."
+    },
+    "internal_validation_access_count_by_candidate": {},
+    "locked_validation_access_count_by_candidate": {},
+    "final_holdout_access_count_by_candidate": {},
+    "internal_validation_access_count_total": 0,
+    "locked_validation_access_count_total": 0,
+    "final_holdout_access_count_total": 0,
+    "verdict": "NO_VALIDATION_SPLIT_CONSUMED",
+    "verdict_basis": "Derivato meccanicamente dal conteggio di accessi per split nel ledger reale - non dichiarato, calcolato.",
+    "generated_at": "2026-09-19T15:08:07.747902+00:00"
+  }
+}

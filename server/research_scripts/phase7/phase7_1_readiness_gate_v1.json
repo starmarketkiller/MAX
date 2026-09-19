@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T01:14:50.339639+00:00",
+  "generated_at": "2026-09-19T15:09:10.213220+00:00",
   "generation_script": "phase7/build_readiness_gate.py",
   "canonical_sha256": "f23578f9a41b03d3f331bdca0d4ae7cbc1c7cbd054d9c95fa44abee4612979c5",
   "payload": {

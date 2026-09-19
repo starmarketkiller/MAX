@@ -12,6 +12,18 @@ questo script venisse rieseguito DOPO aver gia' letto locked_validation/
 final_holdout per un candidato, un secondo tentativo verrebbe bloccato
 meccanicamente da ValidationAccessViolation, non silenziosamente
 ripetuto.
+
+Integrity & Provenance Patch (post-review, 2026-09-19): la classificazione
+del motivo di fallimento ad ogni fase ora usa SEMPRE
+engine/discovery_gate_precedence.classify_discovery_outcome (precedenza
+esplicita: pool insufficiente > n basso > DeltaP<=0 > dependence-sensitive
+> CI sovrapposte) invece di if/elif ad hoc per fase - la Fase 1 di questa
+prima run etichettava erroneamente su INSUFFICIENT_SAMPLE candidati con
+campione adeguato che fallivano per DeltaP<=0 (corretto retroattivamente
+sugli evidence record esistenti da apply_lifecycle_correction_p71.py,
+senza ricalcolare alcun numero). Questo file e' stato corretto per le
+run FUTURE - non e' stato ri-eseguito su dati reali per produrre questa
+patch.
 """
 import json
 import os
@@ -33,6 +45,7 @@ from validation_access_ledger import ValidationAccessLedger, ValidationAccessVio
 from cross_split_safety import assign_split  # noqa: E402
 from candidate_stats_p71 import compute_candidate_stats  # noqa: E402
 from splits_p71 import assign_split_p71, SPLIT_BOUNDARIES_DATES  # noqa: E402
+from discovery_gate_precedence import classify_discovery_outcome  # noqa: E402
 
 FROZEN_SPEC_PATH = os.path.join(PHASE7_DIR, "phase7_1", "phase7_1_frozen_spec_v1.json")
 FROZEN_PARAMS_PATH = os.path.join(DATA_DIR, "frozen_baseline_parameters_p71.json")
@@ -78,6 +91,12 @@ def build_index_boundaries(state: pd.DataFrame) -> dict:
 
 
 def gates_check(stats, family_direction):
+    """Ritorna (ok, reasons, dep_sensitive) - 'reasons' resta una lista
+    DESCRITTIVA completa di tutte le gate fallite (per il log/print), ma
+    la decisione di QUALE stato lifecycle assegnare in caso di fallimento
+    e' demandata a discovery_gate_precedence.classify_discovery_outcome
+    (unica fonte di verita' sulla precedenza - vedi Integrity &
+    Provenance Patch, 2026-09-19)."""
     reasons = []
     ok = True
     if stats["n_events"] < MIN_N:
@@ -100,6 +119,19 @@ def gates_check(stats, family_direction):
         ok = False
         reasons.append("DEPENDENCE_SENSITIVE=true (effetto non stabile fra EVENT e EPISODE view)")
     return ok, reasons, dep_sensitive
+
+
+def failure_state_for(stats, dep_sensitive):
+    """Wrapper che chiama classify_discovery_outcome con i campi di
+    'stats' gia' calcolati - unico punto in cui questo script decide lo
+    stato lifecycle di un fallimento, per ogni fase (discovery/internal_
+    validation/locked_validation)."""
+    return classify_discovery_outcome(
+        n_nominal=stats["n_events"], min_n=MIN_N, delta_p=stats["delta_p"],
+        ci_non_overlapping=stats["ci95_non_overlapping"], dependence_sensitive=bool(dep_sensitive),
+        n_rejected_insufficient_pool=stats["n_rejected_insufficient_pool"],
+        materiality_threshold=MIN_MATERIAL_DELTA_P,
+    )
 
 
 def run_phase_for_candidate(candidate_id, direction, split_name, events_df, state_df, df, atr_col,
@@ -153,16 +185,13 @@ def main():
         if ok:
             lifecycles[cid].transition("INTERNAL_VALIDATION", "gate di discovery superate")
         else:
-            # Nota di processo (Phase 7.1): DISCOVERY_SIGNAL nel grafo di
-            # candidate_lifecycle.py ammette solo INSUFFICIENT_SAMPLE/
-            # CONTAMINATED/INTERNAL_VALIDATION come uscite - DEPENDENCE_SENSITIVE
-            # non e' raggiungibile da qui (lo e' solo da INTERNAL_VALIDATION/
-            # INDEPENDENT_VALIDATION). Un fallimento per dipendenza a livello
-            # di discovery viene quindi registrato come INSUFFICIENT_SAMPLE,
-            # con il motivo esplicito conservato in reasons - limite di
-            # granularita' del grafo osservato qui per la prima volta su
-            # dati reali, riportato nel report finale, non nascosto.
-            lifecycles[cid].transition("INSUFFICIENT_SAMPLE", "; ".join(reasons))
+            # Integrity & Provenance Patch (2026-09-19): DISCOVERY_SIGNAL
+            # ora ammette direttamente REFUTED/DEPENDENCE_SENSITIVE/BORDERLINE
+            # oltre a INSUFFICIENT_SAMPLE/CONTAMINATED - la scelta fra questi
+            # segue SEMPRE la precedenza di discovery_gate_precedence.py,
+            # mai un default unico su INSUFFICIENT_SAMPLE.
+            target_state, reason_code, human_reason = failure_state_for(stats, dep_sensitive)
+            lifecycles[cid].transition(target_state, f"[{reason_code}] {human_reason}")
 
     mt_report_discovery = run_family(FAMILY_ID, discovery_comparisons, q=0.10)
     print(f"\nMultiple testing (discovery, famiglia={FAMILY_ID}): {json.dumps(mt_report_discovery['results'], indent=2, default=str)}")
@@ -184,12 +213,9 @@ def main():
               f"ci_non_overlap={stats['ci95_non_overlapping']} dependence_sensitive={dep_sensitive} gates_ok={ok} reasons={reasons}")
         if ok:
             lifecycles[cid].transition("PRE_REGISTERED_CANDIDATE", "gate di internal_validation superate")
-        elif dep_sensitive:
-            lifecycles[cid].transition("DEPENDENCE_SENSITIVE", "; ".join(reasons))
-        elif stats["delta_p"] is not None and stats["delta_p"] <= 0:
-            lifecycles[cid].transition("REFUTED", "; ".join(reasons))
         else:
-            lifecycles[cid].transition("INSUFFICIENT_SAMPLE", "; ".join(reasons))
+            target_state, reason_code, human_reason = failure_state_for(stats, dep_sensitive)
+            lifecycles[cid].transition(target_state, f"[{reason_code}] {human_reason}")
     save_ledger(ledger)
 
     pre_registered = [cid for cid in DIRECTIONS if lifecycles[cid].state == "PRE_REGISTERED_CANDIDATE"]
@@ -211,12 +237,14 @@ def main():
               f"ci_non_overlap={stats['ci95_non_overlapping']} dependence_sensitive={dep_sensitive} gates_ok={ok} reasons={reasons}")
         if ok:
             lifecycles[cid].transition("SUPPORTED", "gate di locked_validation (PASS) superate - tutte le gate soddisfatte")
-        elif stats["delta_p"] is not None and stats["delta_p"] <= 0:
-            lifecycles[cid].transition("REFUTED", "; ".join(reasons))
-        elif dep_sensitive:
-            lifecycles[cid].transition("BORDERLINE", "DEPENDENCE_SENSITIVE su locked_validation - " + "; ".join(reasons))
         else:
-            lifecycles[cid].transition("BORDERLINE", "; ".join(reasons))
+            # INDEPENDENT_VALIDATION ammette gia' tutti gli stati che
+            # classify_discovery_outcome puo' restituire (REFUTED,
+            # DEPENDENCE_SENSITIVE, INSUFFICIENT_SAMPLE, BORDERLINE) -
+            # nessuna eccezione di grafo qui, a differenza di discovery/
+            # internal_validation.
+            target_state, reason_code, human_reason = failure_state_for(stats, dep_sensitive)
+            lifecycles[cid].transition(target_state, f"[{reason_code}] {human_reason}")
     save_ledger(ledger)
 
     supported = [cid for cid in DIRECTIONS if lifecycles[cid].state == "SUPPORTED"]
