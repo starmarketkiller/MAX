@@ -71,6 +71,8 @@ jobs:
       - name: Le credenziali di default devono bloccare l'avvio LIVE
         working-directory: server
         env:
+          # CI_NEGATIVE_SECURITY_FIXTURE: valore pubblico intenzionale; questo
+          # step verifica che il preflight hardened lo rifiuti.
           NEXUS_ENV: LIVE
           NEXUS_BRIDGE_TOKEN: NEXUS_BRIDGE_TOKEN_2026
           NEXUS_ADMIN_USER: admin
@@ -91,16 +93,10 @@ jobs:
           PY
 
       - name: Nessun segreto di esempio nel codice sorgente
-        run: |
-          # Il token di esempio può comparire solo in documentazione e nei
-          # commenti che spiegano la remediazione, mai come valore attivo.
-          if git grep -n "NEXUS_BRIDGE_TOKEN_2026" -- \
-               ':!*.md' ':!.github/**' ':!server/nexus_security.py' \
-               ':!LocalBridge/nexus_local_worker.py' ':!server/app.py'; then
-            echo "::error::token di esempio ancora presente in codice attivo"
-            exit 1
-          fi
-          echo "OK: nessun token di esempio in codice attivo"
+        run: python scripts/check_no_active_example_secrets.py
+
+      - name: Test classificazione segreti di esempio
+        run: python -m pytest scripts/tests/test_check_no_active_example_secrets.py -q
 
   docker-smoke:
     name: Build immagine e smoke test di avvio

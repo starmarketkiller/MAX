@@ -88,7 +88,7 @@ SEED_ON_START  = _env_flag("NEXUS_SEED_ON_START", not HARDENED)
 #: e scrive su disco per ore va chiesta esplicitamente, non assunta.
 DUKASCOPY_AUTOFETCH = _env_flag("NEXUS_DUKASCOPY_AUTOFETCH", False)
 
-BRIDGE_TOKEN   = os.environ.get("NEXUS_BRIDGE_TOKEN", "NEXUS_BRIDGE_TOKEN_2026")
+BRIDGE_TOKEN   = os.environ.get("NEXUS_BRIDGE_TOKEN", "")
 ADMIN_USER     = os.environ.get("NEXUS_ADMIN_USER", "admin")
 ADMIN_PASSWORD = os.environ.get("NEXUS_ADMIN_PASSWORD", "admin")
 _JWT_SECRET_ENV = os.environ.get("NEXUS_JWT_SECRET")

@@ -40,7 +40,7 @@ def test_registry_validates_and_reconciles():
     assert drift == []
 
 
-def test_counts_are_52_live_plus_30_research():
+def test_counts_are_53_live_plus_30_research():
     # Storico dei conteggi precedenti (37 live/4 research/59 totali) nella
     # cronologia git di questo file. Il registry e' cresciuto in modo
     # tracciabile fra 11/08 e dd22384 (WICK_SWEEP_RECLAIM e altre strategie
@@ -52,9 +52,11 @@ def test_counts_are_52_live_plus_30_research():
     # solo l'ultima istantanea verificata; se il registry cresce ancora,
     # vanno riaggiornati qui con la stessa evidenza (generator idempotente +
     # validator pulito), non ipotizzati.
-    assert sr.count_live() == 52
+    # VOLATILITY_BREAKOUT_CONFIRMED (#56) ha portato il registry validato
+    # da 52 a 53 implementazioni live (commit f035d30).
+    assert sr.count_live() == 53
     assert len(sr.research_only_ids()) == 30
-    assert len(sr.all_records()) == 82
+    assert len(sr.all_records()) == 83
 
 
 def test_cisd_is_alias_of_three_bar():
@@ -95,9 +97,9 @@ def test_selector_index_unique_among_live():
 
 def test_strat_list_derives_from_registry_not_hardcoded():
     # il backend non usa piu' i 36 hardcoded; il conteggio segue il registry
-    # (vedi test_counts_are_52_live_plus_30_research per la provenienza).
+    # (vedi test_counts_are_53_live_plus_30_research per la provenienza).
     assert backend.STRAT_LIST == sr.live_ids()
-    assert len(backend.STRAT_LIST) == 52
+    assert len(backend.STRAT_LIST) == 53
     assert "ELLIOTT" in backend.STRAT_LIST
     assert "CISD" not in backend.STRAT_LIST   # alias, non id canonico
 
@@ -108,7 +110,7 @@ def test_backtest_strategies_endpoint_uses_registry(client):
     r = client.get("/api/backtest/strategies", headers=h)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["total_ea"] == 52
+    assert body["total_ea"] == 53
     assert len(body["research_only"]) == 30
 
 
@@ -116,7 +118,7 @@ def test_registry_endpoint_exposes_artifact(client):
     h = _auth(client)
     r = client.get("/api/strategies/registry", headers=h)
     assert r.status_code == 200
-    assert r.json()["counts"]["total"] == 82
+    assert r.json()["counts"]["total"] == 83
 
 
 def test_resolve_endpoint_404_on_unknown(client):
