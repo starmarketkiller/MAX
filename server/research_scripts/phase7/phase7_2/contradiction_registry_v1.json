@@ -1,32 +1,37 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "registry_id": "CONTRADICTION_REGISTRY_V1",
   "principle": "Phase 7.2 sec.18-19 - le contraddizioni NON vengono risolte scegliendo un 'vincitore' per opinione. Vengono conservate come informazione (una variabile di stato mancante puo' rendere ENTRAMBI i claim condizionalmente veri) e formalizzate come domanda esplicita, non come conclusione.",
 
-  "contradiction_groups": [
+  "integrity_patch_2026_09_20": {
+    "summary": "Review Phase 7.2B (sec.1): i 2 gruppi originariamente registrati qui come CONTRADICTION non soddisfano la definizione rigorosa (stesso information set ex-ante, stesso observation time, stessa definizione di setup, esiti opposti) - in entrambi i casi le due posizioni divergono perche' osservano una TRANSITION diversa DOPO lo stesso EVENT_A, non perche' fanno affermazioni opposte sullo stesso stato osservato allo stesso istante. Riclassificati come CONDITIONAL_BRANCH - vedi conditional_branch_registry_v1.json (CBG-0001, CBG-0002).",
+    "old_contradiction_groups_now_superseded": ["CG-0001", "CG-0002"],
+    "verified_contradiction_groups_remaining": 0,
+    "note": "Nessuna vera CONTRADICTION (secondo la definizione rigorosa) e' stata identificata nel corpus di Phase 7.2 al momento di questa patch. Questo registro resta come traccia storica della classificazione originale (superseded) - non cancellata, per trasparenza del processo."
+  },
+
+  "contradiction_groups": [],
+
+  "superseded_groups_historical_record": [
     {
       "contradiction_group_id": "CG-0001",
+      "status": "SUPERSEDED - riclassificato come CBG-0001 (conditional_branch_registry_v1.json)",
       "claim_ids_side_a": ["CLAIM-0035", "CLAIM-0050", "CLAIM-0052", "CLAIM-0108", "CLAIM-0109", "CLAIM-0110", "CLAIM-0111"],
       "position_a": "Dopo un LIQUIDITY_SWEEP, il reclaim del livello nella direzione opposta anticipa un'inversione (SEQ-0010/SEQ-0011).",
       "claim_ids_side_b": ["CLAIM-0051", "CLAIM-0056", "CLAIM-0059", "CLAIM-0114"],
       "position_b": "Dopo un LIQUIDITY_SWEEP, l'ASSENZA di reclaim (il prezzo continua nella direzione dello sweep) e' il segnale informativo, non l'inversione (SEQ-0012).",
-      "same_visible_event": "LIQUIDITY_SWEEP di un livello di riferimento (swing/sessione/giorno precedente) - identico evento osservabile in entrambe le posizioni.",
-      "missing_state_question": "Quale variabile di stato mancante renderebbe entrambe le posizioni condizionalmente vere? Ipotesi formalizzata (non testata): la genuinita' del displacement/partecipazione PRIMA dello sweep - uno sweep preceduto da un movimento di allontanamento genuino e volume elevato potrebbe tendere al reclaim/inversione (posizione A), mentre uno sweep 'rumoroso' senza displacement genuino (semplice rumore che tocca il livello) potrebbe tendere alla continuazione (posizione B). Questa e' esattamente la logica dietro SEQ-0011 (variante filtrata di RECLAIM).",
-      "importance": "ALTA - la posizione A (SEQ-0010, forma generica) e' gia' stata REFUTED_AT_DISCOVERY in Phase 7.1. Questa contraddizione suggerisce che la forma generica fosse sbagliata non perche' 'i reclaim non funzionano mai', ma perche' mancava la distinzione fra sweep genuino e sweep rumoroso - la posizione B potrebbe spiegare PARZIALMENTE perche' Phase 7.1 ha trovato un effetto nullo/negativo (se la maggioranza dei RECLAIM osservati erano 'sweep rumorosi' senza vera informazione).",
-      "resolution_status": "NON RISOLTA - nessun numero calcolato in Phase 7.2. La domanda e' formalizzata per una futura Phase 7.3, non risposta qui."
+      "why_superseded": "Le due posizioni non condividono lo stesso information set al medesimo observation time - divergono in base a una TRANSITION osservata dopo l'evento comune (sweep), non in base a un disaccordo sullo stesso stato. Vedi CBG-0001 per il dettaglio e il leakage_risk associato."
     },
     {
       "contradiction_group_id": "CG-0002",
+      "status": "SUPERSEDED - riclassificato come CBG-0002 (conditional_branch_registry_v1.json)",
       "claim_ids_side_a": ["CLAIM-0007", "CLAIM-0009", "CLAIM-0027", "CLAIM-0031", "CLAIM-0036", "CLAIM-0042", "CLAIM-0048", "CLAIM-0068", "CLAIM-0070", "CLAIM-0071", "CLAIM-0083", "CLAIM-0085", "CLAIM-0086", "CLAIM-0090", "CLAIM-0106", "CLAIM-0107", "CLAIM-0112", "CLAIM-0113"],
       "position_a": "Un breakout di un livello/range viene accettato e il movimento continua nella direzione della rottura (SEQ-0003).",
       "claim_ids_side_b": ["CLAIM-0023", "CLAIM-0033", "CLAIM-0044", "CLAIM-0045", "CLAIM-0064"],
       "position_b": "Un breakout di un livello/range fallisce a mantenersi e il prezzo rientra nel range precedente (SEQ-0004).",
-      "same_visible_event": "Chiusura oltre l'estremo di un range di consolidamento - identico evento osservabile in entrambe le posizioni. Questo e' esattamente l'esempio dato nella specifica della fase (breakout->continuation vs breakout->mean reversion).",
-      "missing_state_question": "Quale variabile di stato mancante renderebbe entrambe le posizioni condizionalmente vere? Ipotesi gia' presente nel corpus stesso (non inventata qui): MECH-07 (BREAKOUT_CONDITIONAL_ON_PARTICIPATION) propone che la conferma di volume/volatilita' concorrente distingua i due casi - breakout CON espansione di volatilita' confermante tende ad accettazione (posizione A), breakout SENZA tale conferma tende a fallire (posizione B). MECH-23 (TREND_CHOP_REGIME_CLASSIFICATION) e MECH-27 (HTF_TREND_FILTER_ALIGNMENT) offrono una seconda ipotesi complementare: un breakout allineato con un trend HTF genuino (efficiency alta) tende ad accettazione, un breakout in un regime choppy/range maturo tende a fallire.",
-      "importance": "MEDIA-ALTA - questa e' probabilmente la contraddizione piu' 'classica' e gia' parzialmente esplorata nel corpus stesso (i claim di posizione A e B spesso vengono dalla STESSA fonte con la qualificazione esplicita 'solo se confermato da volume/trend' - non sono fonti diverse che si ignorano, ma la stessa comprensione pratica gia' condizionata).",
-      "resolution_status": "NON RISOLTA - nessun numero calcolato in Phase 7.2. Le variabili di stato candidate (MECH-07, MECH-23, MECH-27) sono gia' registrate come mechanism separati, pronte per essere formalizzate come initial_state_conditions in una futura sequence combinata."
+      "why_superseded": "Come CG-0001: le due posizioni descrivono due sotto-popolazioni disgiunte (breakout accettati vs falliti), distinte da una transition osservata DOPO l'evento comune, non un disaccordo sullo stesso stato al medesimo istante. Vedi CBG-0002."
     }
   ],
 
-  "note_on_scope": "Solo le contraddizioni piu' nette (stesso evento visibile, esiti opposti dichiarati da claim distinti) sono state formalizzate come CONTRADICTION_GROUP. Altre tensioni piu' sfumate (es. mean-reversion al tocco di banda di volatilita' vs momentum burst continuation, MECH-26 vs MECH-25) esistono nel corpus ma sono gia' risolte esplicitamente dalle fonti stesse tramite condizionamento di regime (CONTEXT_DEPENDENT) - non trattate come contraddizioni aperte qui."
+  "note_on_scope": "La ricerca di vere CONTRADICTION (definizione rigorosa) resta aperta per una futura iterazione del corpus - non trovarne nessuna in questo passaggio non e' un fallimento, e' un risultato onesto della revisione metodologica richiesta."
 }

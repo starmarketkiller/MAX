@@ -2,13 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "market_sequence_schema_v1.json",
   "title": "NEXUS Phase 7.2 - Market Sequence",
-  "description": "Primitiva ontologica centrale di Phase 7.2 (sec.8-9). Passa da EVENT->OUTCOME (Phase 5-7.1) a STATE->EVENT_A->TRANSITION->EVENT_B->NEW_STATE->OUTCOME_FAMILY. Una sequence NON e' un candidato testato - e' una struttura ipotetica derivata da uno o piu' external claim, pronta per essere formalizzata come EdgeCandidate in una FUTURA Phase 7.3+. Nessun campo qui contiene un valore di outcome calcolato su dati NEXUS.",
+  "description": "Primitiva ontologica centrale di Phase 7.2 (sec.8-9). Passa da EVENT->OUTCOME (Phase 5-7.1) a STATE->EVENT_A->TRANSITION->EVENT_B->NEW_STATE->OUTCOME_FAMILY. Una sequence NON e' un candidato testato - e' una struttura ipotetica derivata da uno o piu' external claim, pronta per essere formalizzata come EdgeCandidate in una FUTURA Phase 7.3+. Nessun campo qui contiene un valore di outcome calcolato su dati NEXUS. Integrity Patch Phase 7.2B (sec.2/6): aggiunti i campi observation_cutoff/transition_completion_time/prediction_start/outcome_window/branch_group_id - una sequence deve essere causalmente interpretabile (nessuna sovrapposizione fra la risoluzione della transition e la finestra di misura dell'outcome, verificato da sequence_semantic_leakage_guard.py) prima di essere ammessa a Phase 7.3.",
   "type": "object",
   "required": [
     "sequence_id", "mechanism_id", "initial_state_conditions", "event_a", "transition_conditions",
     "terminal_state_conditions", "direction", "timeframe_context", "observation_clock",
     "expected_outcome_family", "causal_observability_status", "implementation_status",
-    "source_claim_ids", "falsification_definition"
+    "source_claim_ids", "falsification_definition",
+    "observation_cutoff", "transition_completion_time", "prediction_start", "outcome_window",
+    "branch_group_id", "semantic_leakage_status_original", "semantic_leakage_status_after_correction"
   ],
   "properties": {
     "sequence_id": {"type": "string", "pattern": "^SEQ-[0-9]{4}$"},
@@ -69,7 +71,15 @@
     },
     "failure_memory_relation_note": {"type": ["string", "null"], "description": "Obbligatorio se failure_memory_relation != NOVEL - motivazione di perche' si procede comunque o di come differisce."},
     "falsification_definition": {"type": "string", "description": "Cosa osserveremmo, in linea di principio su dati NEXUS futuri, se questa sequenza NON descrivesse un fenomeno reale."},
-    "research_priority_score_ref": {"type": ["string", "null"], "description": "riferimento a research_priority_queue_v1.json se la sequenza e' stata scorata"}
+    "research_priority_score_ref": {"type": ["string", "null"], "description": "riferimento a research_priority_queue_v1.json se la sequenza e' stata scorata"},
+    "observation_cutoff": {"type": "string", "description": "Ultima informazione nota quando si valuta se il setup (initial_state+event_a) esiste - tipicamente 'event_a bar close (t=0)'."},
+    "transition_completion_time": {"type": "string", "description": "Istante (offset simbolico relativo a event_a) in cui transition_conditions/event_b_optional si risolve - puo' richiedere N barre dopo event_a."},
+    "prediction_start": {"type": "string", "description": "Primo istante da cui si comincia a misurare l'outcome - DEVE essere >= transition_completion_time (verificato da sequence_semantic_leakage_guard.py)."},
+    "outcome_window": {"type": "string", "description": "Descrizione della finestra di misura dell'outcome - deve iniziare strettamente dopo prediction_start, nessuna sovrapposizione."},
+    "branch_group_id": {"type": ["string", "null"], "description": "riferimento a conditional_branch_registry_v1.json se questa sequence e' uno dei rami di un CONDITIONAL_BRANCH (Integrity Patch Phase 7.2B, sec.1)."},
+    "semantic_leakage_status_original": {"type": "string", "enum": ["PASS", "NEEDS_REFORMULATION", "FAIL"], "description": "Verdetto del leakage guard sulla formulazione ORIGINALE (prima di eventuale correzione)."},
+    "semantic_leakage_status_after_correction": {"type": "string", "enum": ["PASS", "NEEDS_REFORMULATION", "FAIL"], "description": "Verdetto dopo l'eventuale correzione applicata ai campi di timing - deve essere PASS perche' la sequence sia ammissibile a Phase 7.3."},
+    "reformulation_note": {"type": "string", "description": "Presente solo se semantic_leakage_status_original != PASS - spiega la correzione applicata."}
   },
   "additionalProperties": false
 }

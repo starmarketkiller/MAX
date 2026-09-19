@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "rule_id": "RESEARCH_PRIORITY_SCORING_RULE_V2",
+  "declared_before_shortlist": true,
+  "supersedes": "research_priority_scoring_rule_v1.json",
+  "anti_selection_rule": "Invariata da v1 (sec.22 Phase 7.2): questa regola e' scritta e congelata PRIMA di rigenerare la priority queue. Nessun risultato NEXUS e' un input di questo punteggio.",
+
+  "changes_from_v1": [
+    "external_evidence_transparency: NON piu' 'almeno una fonte Q3/Q4 esiste' (booleano) - ora conta gli INDEPENDENT_EVIDENCE_CLUSTERS a Q3/Q4 (evidence_cluster_registry_v1.json), cosi' lo stesso studio citato 2 volte (es. paper+blog dello stesso autore) non gonfia il punteggio.",
+    "Aggiunto un DECIMO componente: hindsight_awareness - penalizza le sequence supportate prevalentemente da claim con hindsight_risk=HIGH (chart examples, setup narrati dopo il movimento, screenshot). Non esclude la sequence - la fa solo scendere in coda alle risorse di discovery.",
+    "Range totale esteso da 0-18 (9 componenti) a 0-20 (10 componenti) - soglie di tier ridichiarate esplicitamente, non semplicemente riscalate."
+  ],
+
+  "components": {
+    "falsifiability": {"scale": "0-2", "unchanged_from_v1": true},
+    "causal_measurability": {"scale": "0-2", "unchanged_from_v1": true},
+    "implementation_clarity": {"scale": "0-2", "unchanged_from_v1": true,
+      "note": "Ora riflette anche l'esito del semantic leakage guard - una sequence con implementation_status degradato a NEEDS_ADDITIONAL_SPECIFICATION per un reformulation_note di leakage riceve lo stesso punteggio di qualunque altra sequence in quello stato, nessun trattamento speciale."},
+    "sample_availability_estimate": {"scale": "0-2", "unchanged_from_v1": true},
+    "distinctiveness_from_failed_mechanisms": {"scale": "0-2", "unchanged_from_v1": true},
+    "source_diversity": {"scale": "0-2", "unchanged_from_v1": true},
+    "external_evidence_transparency_v2": {
+      "scale": "0-2",
+      "0": "0 independent_evidence_cluster a Q3/Q4 fra le fonti di supporto",
+      "1": "esattamente 1 independent_evidence_cluster a Q3/Q4 (un solo studio indipendente di alta qualita', anche se citato piu' volte)",
+      "2": ">=2 independent_evidence_cluster DISTINTI a Q3/Q4 (piu' di uno studio indipendente di alta qualita')",
+      "rationale": "Conta CLUSTER (evidence_cluster_registry_v1.json), non source_id grezzi ne' claim grezzi - un paper + il suo riassunto sul blog dello stesso autore contano come 1 solo cluster."
+    },
+    "parameter_count_penalty": {"scale": "0-2", "unchanged_from_v1": true},
+    "execution_feasibility": {"scale": "0-2", "unchanged_from_v1": true},
+    "hindsight_awareness": {
+      "scale": "0-2",
+      "2": "0% dei claim di supporto con hindsight_risk=HIGH",
+      "1": "meno del 50% dei claim di supporto con hindsight_risk=HIGH",
+      "0": ">=50% dei claim di supporto con hindsight_risk=HIGH",
+      "rationale": "Una sequence sostenuta prevalentemente da esempi post-hoc (chart singoli, narrativa discrezionale) non e' scartata, ma consuma le risorse di discovery piu' tardi - penalita' ex-ante esplicita, non piu' solo un campo diagnostico non pesato (correzione diretta del rischio residuo dichiarato in phase7_2_red_team_v1.json)."
+    }
+  },
+
+  "total_score_range": "0-20 (10 componenti x 0-2)",
+  "tiers": {
+    "HIGH_RESEARCH_PRIORITY": ">=15",
+    "MEDIUM_RESEARCH_PRIORITY": "9-14",
+    "LOW_RESEARCH_PRIORITY": "<9"
+  },
+  "tie_break_rule": "Invariato da v1: source_diversity piu' alta, poi distinctiveness_from_failed_mechanisms piu' alta, poi ordine alfabetico di sequence_id.",
+
+  "explicit_ceiling": "Invariato da v1 - nessuna sequence scorata con questa regola puo' ricevere l'etichetta 'PROMISING_EDGE'. HIGH_RESEARCH_PRIORITY significa solo 'proprieta' ex-ante favorevoli alla ricerca'."
+}

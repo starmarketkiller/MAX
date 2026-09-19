@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "registry_id": "CONDITIONAL_BRANCH_REGISTRY_V1",
+  "principle": "Phase 7.2B sec.1 - una CONTRADICTION reale richiede: STESSO information set ex-ante, STESSO observation time, STESSA definizione di setup, esiti futuri OPPOSTI. Se invece due claim concordano fino a un certo punto e poi divergono perche' osservano una TRANSITION diversa dopo EVENT_A, non sono in contraddizione - sono due rami condizionali (CONDITIONAL_BRANCH) dello stesso processo. Questo registro CORREGGE la classificazione errata di contradiction_registry_v1.json (Phase 7.2): entrambi i gruppi li' registrati come CONTRADICTION sono in realta' CONDITIONAL_BRANCH.",
+
+  "branches": [
+    {
+      "branch_group_id": "CBG-0001",
+      "reclassified_from": "CG-0001 (contradiction_registry_v1.json, Phase 7.2)",
+      "common_antecedent": "Prezzo eccede brevemente un livello di riferimento noto (swing high/low, prev day/week high/low, sessione) - evento LIQUIDITY_SWEEP osservato.",
+      "observation_time": "Chiusura della barra di sweep (t=0 relativo all'evento).",
+      "branch_a_condition": "Entro l'orizzonte dichiarato (es. reclaim_horizon), il prezzo richiude oltre il livello nella direzione OPPOSTA allo sweep (RECLAIM osservato) - questa informazione e' disponibile SOLO a t=reclaim_confirmation > 0, non a t=0.",
+      "branch_b_condition": "Entro lo stesso orizzonte, il prezzo NON richiude mai oltre il livello nella direzione opposta - questa informazione e' disponibile SOLO a t=orizzonte_scaduto > 0, non a t=0.",
+      "expected_outcome_a": "Reversal (SEQ-0010/SEQ-0011)",
+      "expected_outcome_b": "Continuazione nella direzione dello sweep (SEQ-0012)",
+      "source_claim_ids": ["CLAIM-0035", "CLAIM-0050", "CLAIM-0052", "CLAIM-0108", "CLAIM-0109", "CLAIM-0110", "CLAIM-0111", "CLAIM-0051", "CLAIM-0056", "CLAIM-0059", "CLAIM-0114"],
+      "leakage_risk": "ALTO - a t=0 (sweep) l'informazione che discrimina i due rami (reclaim si verifica o no) NON e' ancora disponibile. Nessuna delle due posizioni e' falsificabile guardando SOLO lo stato a t=0: entrambe richiedono di attendere la risoluzione della transition prima di sapere in quale ramo ci si trova. Vedi sequence_semantic_leakage_guard_v1.json per la verifica formale su SEQ-0010/0011/0012.",
+      "why_not_contradiction": "Le due posizioni non fanno affermazioni opposte sullo STESSO evento osservabile al medesimo istante - fanno affermazioni COERENTI su due sotto-popolazioni disgiunte di sweep (quelli seguiti da reclaim vs quelli non seguiti da reclaim), che insieme costituiscono una partizione completa dell'insieme 'sweep osservato'. Non c'e' nulla da 'risolvere' fra le due posizioni: potrebbero essere ENTRAMBE vere simultaneamente, ciascuna sul proprio ramo."
+    },
+    {
+      "branch_group_id": "CBG-0002",
+      "reclassified_from": "CG-0002 (contradiction_registry_v1.json, Phase 7.2)",
+      "common_antecedent": "Chiusura oltre l'estremo di un range di consolidamento - evento BREAKOUT osservato.",
+      "observation_time": "Chiusura della barra di breakout (t=0 relativo all'evento).",
+      "branch_a_condition": "Nelle barre successive, almeno una chiusura mantiene la rottura (ACCETTAZIONE) - informazione disponibile solo a t>=1.",
+      "branch_b_condition": "Nelle barre successive, il prezzo rientra nel range e/o non mostra conferma di volatilita' (FALLIMENTO) - informazione disponibile solo a t>=1.",
+      "expected_outcome_a": "Continuazione (SEQ-0003)",
+      "expected_outcome_b": "Reversione/rientro nel range (SEQ-0004)",
+      "source_claim_ids": ["CLAIM-0007", "CLAIM-0009", "CLAIM-0027", "CLAIM-0031", "CLAIM-0036", "CLAIM-0042", "CLAIM-0048", "CLAIM-0068", "CLAIM-0070", "CLAIM-0071", "CLAIM-0083", "CLAIM-0085", "CLAIM-0086", "CLAIM-0090", "CLAIM-0106", "CLAIM-0107", "CLAIM-0112", "CLAIM-0113", "CLAIM-0023", "CLAIM-0033", "CLAIM-0044", "CLAIM-0045", "CLAIM-0064"],
+      "leakage_risk": "MODERATO - a t=0 (breakout) non si sa ancora se si sara' nel ramo accettazione o fallimento; diversi claim di supporto DICHIARANO ESSI STESSI la condizione di stato che distingue i due rami (conferma di volume/volatilita', allineamento con trend HTF - vedi MECH-07/MECH-27), il che rende questo un caso di CONDITIONAL_BRANCH gia' parzialmente riconosciuto dalle fonti stesse, non una vera contraddizione fra fonti ignare l'una dell'altra.",
+      "why_not_contradiction": "Esattamente come CBG-0001: le due posizioni descrivono due sotto-popolazioni disgiunte di breakout (quelli accettati vs quelli falliti), non un disaccordo sullo stesso evento visto allo stesso modo."
+    }
+  ],
+
+  "note": "Con questa riclassificazione, contradiction_registry_v1.json (Phase 7.2) resta con 0 contradiction group verificati come realmente tali - entrambi i candidati originali erano CONDITIONAL_BRANCH. Questo NON significa che il corpus non contenga contraddizioni reali - significa che le 2 piu' salienti trovate finora non lo erano, secondo la definizione rigorosa richiesta. Una vera CONTRADICTION (stesso information set, stesso istante, esiti opposti) non e' ancora stata identificata nel corpus attuale."
+}

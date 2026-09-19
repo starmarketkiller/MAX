@@ -39,7 +39,14 @@
       ],
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
-      "falsification_definition": "Se la probabilita' di continuazione dopo un trend gia' sostenuto non fosse superiore al baseline matched, il claim sarebbe falso."
+      "falsification_definition": "Se la probabilita' di continuazione dopo un trend gia' sostenuto non fosse superiore al baseline matched, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0002",
@@ -76,7 +83,14 @@
       ],
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
-      "falsification_definition": "Se dopo la decelerazione del momentum il trend continuasse comunque ad accelerare piu' spesso di quanto reverta, il claim sarebbe falso."
+      "falsification_definition": "Se dopo la decelerazione del momentum il trend continuasse comunque ad accelerare piu' spesso di quanto reverta, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0003",
@@ -108,7 +122,7 @@
       "is_failed_event_family": false,
       "is_no_trade_information": false,
       "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
-      "implementation_status": "READY_FOR_FORMALIZATION",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
       "source_claim_ids": [
         "CLAIM-0007",
         "CLAIM-0009",
@@ -132,7 +146,15 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": "Corrisponde concettualmente al detector BREAKOUT gia' esistente in Phase 5 (build_events.py) - non ancora testato in una discovery run v2 (Phase 5's edge_discovery non ha mai promosso BREAKOUT generico a un evidence grade). NOVEL rispetto a failure_memory_registry_v1.json (nessun pattern FAIL-001..008 lo riguarda direttamente), ma va verificato non sia una ripetizione implicita di un test gia' fatto informalmente in Phase 5 prima di procedere in Phase 7.3.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se il tasso di accettazione (chiusure che mantengono la rottura) non fosse superiore al baseline matched su barre non precedute da un range di consolidamento, il claim sarebbe falso."
+      "falsification_definition": "Se il tasso di accettazione (chiusure che mantengono la rottura) non fosse superiore al baseline matched su barre non precedute da un range di consolidamento, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=1",
+      "prediction_start": "t=1 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=2",
+      "branch_group_id": "CBG-0002",
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=1 - corretto esplicitamente a prediction_start=t=1, outcome_window da t=2. "
     },
     {
       "sequence_id": "SEQ-0004",
@@ -163,7 +185,7 @@
       "is_failed_event_family": true,
       "is_no_trade_information": false,
       "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
-      "implementation_status": "READY_FOR_FORMALIZATION",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
       "source_claim_ids": [
         "CLAIM-0023",
         "CLAIM-0033",
@@ -174,7 +196,15 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": "Corrisponde al detector FAILED_BREAKOUT gia' esistente in Phase 5 (build_events.py) - famiglia FAILED_EVENT propria (sec.14), l'informazione del fallimento e' l'oggetto di studio stesso, non uno scarto.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se il tasso di rientro nel range dopo un breakout senza conferma di volatilita' non fosse superiore al baseline matched, il claim sarebbe falso."
+      "falsification_definition": "Se il tasso di rientro nel range dopo un breakout senza conferma di volatilita' non fosse superiore al baseline matched, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=1",
+      "prediction_start": "t=1 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=2",
+      "branch_group_id": "CBG-0002",
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=1 - corretto esplicitamente a prediction_start=t=1, outcome_window da t=2. "
     },
     {
       "sequence_id": "SEQ-0005",
@@ -205,7 +235,7 @@
       "is_failed_event_family": false,
       "is_no_trade_information": false,
       "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
-      "implementation_status": "READY_FOR_FORMALIZATION",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
       "source_claim_ids": [
         "CLAIM-0025",
         "CLAIM-0072",
@@ -215,7 +245,15 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
-      "falsification_definition": "Se l'espansione di volatilita' dopo compressione non fosse piu' frequente/ampia del baseline matched su barre non precedute da compressione, il claim sarebbe falso."
+      "falsification_definition": "Se l'espansione di volatilita' dopo compressione non fosse piu' frequente/ampia del baseline matched su barre non precedute da compressione, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=1",
+      "prediction_start": "t=1 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=2",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=1 - corretto esplicitamente a prediction_start=t=1, outcome_window da t=2. "
     },
     {
       "sequence_id": "SEQ-0006",
@@ -254,7 +292,14 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se la deriva pre-evento non fosse statisticamente distinguibile da finestre di controllo della stessa durata scelte casualmente, il claim sarebbe falso.",
-      "note_gap": "richiede un calendario macro esterno (date FOMC storiche) non ancora integrato in NEXUS - dipendenza dati dichiarata."
+      "note_gap": "richiede un calendario macro esterno (date FOMC storiche) non ancora integrato in NEXUS - dipendenza dati dichiarata.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0007",
@@ -290,7 +335,14 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se il rendimento nella finestra pre-festivita' non differisse dal rendimento medio su finestre di controllo della stessa lunghezza, il claim sarebbe falso.",
-      "note_gap": "richiede calendario di festivita' culturali esterno (es. India/Cina) non ancora integrato in NEXUS."
+      "note_gap": "richiede calendario di festivita' culturali esterno (es. India/Cina) non ancora integrato in NEXUS.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0008",
@@ -328,7 +380,14 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se la direzione della sessione successiva non mostrasse un tasso di inversione superiore al 50%/baseline, il claim sarebbe falso.",
-      "note_gap": "richiede la formalizzazione timezone-safe del session_clock_model (gap dichiarato in Phase 7.0B/7.2)."
+      "note_gap": "richiede la formalizzazione timezone-safe del session_clock_model (gap dichiarato in Phase 7.0B/7.2).",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0009",
@@ -372,7 +431,14 @@
       "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
       "failure_memory_relation_note": "Corrisponde al detector SWEEP gia' esistente in Phase 5 (mai testato da solo come edge - solo come prerequisito di RECLAIM, che e' stato REFUTED_AT_DISCOVERY in Phase 7.1). Il SWEEP isolato (senza assumere reclaim) NON e' lo stesso claim gia' refutato - qui l'outcome atteso e' generico (DIRECTIONAL_PROBABILITY dopo il solo sweep), non specificamente 'reclaim poi +1ATR'. Relazione dichiarata per trasparenza, non un blocco.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se il comportamento del prezzo dopo un sweep isolato non differisse dal baseline matched, il claim sarebbe falso."
+      "falsification_definition": "Se il comportamento del prezzo dopo un sweep isolato non differisse dal baseline matched, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0010",
@@ -416,7 +482,15 @@
       "failure_memory_relation": "DIRECT_REPEAT_OF_FAILED_IDEA",
       "failure_memory_relation_note": "QUESTO E' STRUTTURALMENTE IL MECHANISM GENERICO RECLAIM (sweep+reclaim -> P(+1xATR before -1xATR)) GIA' TESTATO CON RIGORE COMPLETO (Baseline Engine v4, dependence diagnostics, multiple testing) E REFUTED_AT_DISCOVERY IN PHASE 7.1 (\u0394P negativo su BOTH/BUY/SELL, tutti REFUTED). Per la regola esplicita dell'utente (sec.24 Phase 7.2), questa forma GENERICA non puo' procedere a Phase 7.3 senza una motivazione meccanicistica indipendente e pre-registrabile - marcata NOT_IMPLEMENTABLE_AS_DESCRIBED qui appositamente. Vedi SEQ-0011 per la variante filtrata che AGGIUNGE una motivazione indipendente (non un semplice filtro post-hoc).",
       "research_priority_score_ref": null,
-      "falsification_definition": "Gia' falsificato su questo dataset per la forma generica - vedi Phase 7.1."
+      "falsification_definition": "Gia' falsificato su questo dataset per la forma generica - vedi Phase 7.1.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=10 (variabile, entro l'orizzonte dichiarato)",
+      "prediction_start": "t=10 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=11",
+      "branch_group_id": "CBG-0001",
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=10 - corretto esplicitamente a prediction_start=t=10, outcome_window da t=11. "
     },
     {
       "sequence_id": "SEQ-0011",
@@ -457,7 +531,15 @@
       "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
       "failure_memory_relation_note": "Variante FILTRATA di RECLAIM (SEQ-0010, DIRECT_REPEAT gia' refutato) - aggiunge DUE condizioni di stato indipendenti (displacement pre-sweep, partecipazione/volume) che il test generico di Phase 7.1 NON conteneva (Phase 7.1 ha testato solo direzione, nessun filtro di stato aggiuntivo - complexity_level=0). Questa e' esattamente il tipo di motivazione meccanicistica indipendente richiesta dalla regola sec.24 - NON e' un 'filtro casuale sul RECLAIM per salvarlo' ma un'ipotesi diversa su QUANDO il reclaim genererebbe informazione (sweep con displacement genuino vs sweep 'rumoroso'). Resta comunque un candidato ad alto rischio di essere solo un tentativo di far rivivere un'idea gia' fallita - da trattare con scetticismo proporzionale in Phase 7.3, non da promuovere automaticamente per il solo fatto di avere due condizioni aggiuntive.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se il reclaim filtrato da displacement+volume non mostrasse un DeltaP materialmente diverso (e di segno opposto/superiore) rispetto al reclaim generico gia' refutato, il claim aggiuntivo sarebbe falso."
+      "falsification_definition": "Se il reclaim filtrato da displacement+volume non mostrasse un DeltaP materialmente diverso (e di segno opposto/superiore) rispetto al reclaim generico gia' refutato, il claim aggiuntivo sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=10 (variabile, entro l'orizzonte dichiarato)",
+      "prediction_start": "t=10 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=11",
+      "branch_group_id": "CBG-0001",
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=10 - corretto esplicitamente a prediction_start=t=10, outcome_window da t=11. "
     },
     {
       "sequence_id": "SEQ-0012",
@@ -487,7 +569,7 @@
       "is_failed_event_family": true,
       "is_no_trade_information": false,
       "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
-      "implementation_status": "READY_FOR_FORMALIZATION",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
       "source_claim_ids": [
         "CLAIM-0051",
         "CLAIM-0056",
@@ -497,7 +579,15 @@
       "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
       "failure_memory_relation_note": "Non e' RECLAIM (l'assenza di reclaim e' proprio la condizione che definisce questa sequence) - e' l'IPOTESI OPPOSTA (sweep senza reclaim -> continuazione, non inversione). Vedi CONTRADICTION_GROUP con SEQ-0010/SEQ-0011 in contradiction_registry_v1.json: lo stesso evento visibile (sweep) porta a predizioni opposte a seconda di cosa succede DOPO (reclaim vs non-reclaim) - questo suggerisce che la variabile di stato mancante e' precisamente 'reclaim si verifica o no', che qui e' trattata come parte della sequenza stessa (event_b), non come rumore.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se dopo un sweep senza reclaim il prezzo non mostrasse continuazione superiore al baseline matched, il claim sarebbe falso."
+      "falsification_definition": "Se dopo un sweep senza reclaim il prezzo non mostrasse continuazione superiore al baseline matched, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=10 (variabile, entro l'orizzonte dichiarato)",
+      "prediction_start": "t=10 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=11",
+      "branch_group_id": "CBG-0001",
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=10 - corretto esplicitamente a prediction_start=t=10, outcome_window da t=11. Il ramo e' definito dall'ASSENZA di reclaim entro l'intero orizzonte - non confermabile prima che l'orizzonte sia scaduto."
     },
     {
       "sequence_id": "SEQ-0013",
@@ -536,7 +626,15 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
-      "falsification_definition": "Se la probabilita' di riempimento del gap non variasse sistematicamente con le condizioni di stato dichiarate dalla fonte (e fosse indistinguibile da un modello costante), il claim sarebbe falso."
+      "falsification_definition": "Se la probabilita' di riempimento del gap non variasse sistematicamente con le condizioni di stato dichiarate dalla fonte (e fosse indistinguibile da un modello costante), il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=10 (variabile, entro l'orizzonte dichiarato)",
+      "prediction_start": "t=10 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=11",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=10 - corretto esplicitamente a prediction_start=t=10, outcome_window da t=11. "
     },
     {
       "sequence_id": "SEQ-0014",
@@ -574,7 +672,14 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": "Non un candidato direzionale - famiglia LOW_INFORMATION_STATE/HIGH_CHOP_RISK (sec.15), l'obiettivo e' identificare QUANDO NON tradare, non un edge direzionale.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se i setup direzionali generati durante lo stato 'choppy' non mostrassero un tasso di fallimento/rumore superiore rispetto a quelli generati in stato 'trending', il claim sarebbe falso."
+      "falsification_definition": "Se i setup direzionali generati durante lo stato 'choppy' non mostrassero un tasso di fallimento/rumore superiore rispetto a quelli generati in stato 'trending', il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0015",
@@ -610,7 +715,14 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
-      "falsification_definition": "Se dopo una barra a range ampio la direzione stabilita non continuasse piu' spesso del baseline matched, il claim sarebbe falso."
+      "falsification_definition": "Se dopo una barra a range ampio la direzione stabilita non continuasse piu' spesso del baseline matched, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0016",
@@ -651,7 +763,14 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
-      "falsification_definition": "Se la probabilita' di reversione dopo il tocco della banda non differisse per regime (trending vs choppy), la componente 'regime-dipendente' del claim sarebbe falsa."
+      "falsification_definition": "Se la probabilita' di reversione dopo il tocco della banda non differisse per regime (trending vs choppy), la componente 'regime-dipendente' del claim sarebbe falsa.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0017",
@@ -690,7 +809,15 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se il rigetto/accettazione della value area non predicesse la direzione successiva meglio del baseline, il claim sarebbe falso.",
-      "note_gap": "Il calcolo del profilo di volume/value area richiede dati di volume intrabar non disponibili nella pipeline H4 attuale di NEXUS - causal_observability_status marcato REQUIRES_LOOKAHEAD_TO_DEFINE in modo cautelativo finche' non verificato come costruibile causalmente con i dati disponibili."
+      "note_gap": "Il calcolo del profilo di volume/value area richiede dati di volume intrabar non disponibili nella pipeline H4 attuale di NEXUS - causal_observability_status marcato REQUIRES_LOOKAHEAD_TO_DEFINE in modo cautelativo finche' non verificato come costruibile causalmente con i dati disponibili.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=1",
+      "prediction_start": "t=1 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=2",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=1 - corretto esplicitamente a prediction_start=t=1, outcome_window da t=2. Gia' NOT_IMPLEMENTABLE_AS_DESCRIBED per gap dati (value area) - leakage secondario."
     },
     {
       "sequence_id": "SEQ-0018",
@@ -732,7 +859,15 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se il comportamento del prezzo al tocco del VWAP non differisse per regime di trend, il claim sarebbe falso.",
-      "note_gap": "VWAP di sessione non calcolato oggi in NEXUS (richiede dati di volume e aggregazione per sessione) - gap dichiarato, vedi mechanism_proxy_registry_v1.json."
+      "note_gap": "VWAP di sessione non calcolato oggi in NEXUS (richiede dati di volume e aggregazione per sessione) - gap dichiarato, vedi mechanism_proxy_registry_v1.json.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=1",
+      "prediction_start": "t=1 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=2",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "NEEDS_REFORMULATION",
+      "semantic_leakage_status_after_correction": "PASS",
+      "reformulation_note": "Integrity Patch Phase 7.2B: la formulazione originale implicava prediction_start=t=0, ma la transition/terminal_state si risolve solo a t=1 - corretto esplicitamente a prediction_start=t=1, outcome_window da t=2. Gia' NOT_IMPLEMENTABLE_AS_DESCRIBED per gap dati (VWAP) - leakage secondario."
     },
     {
       "sequence_id": "SEQ-0019",
@@ -769,7 +904,14 @@
       "failure_memory_relation_note": null,
       "research_priority_score_ref": null,
       "falsification_definition": "Se lo spread deviato non mostrasse una tendenza a rientrare superiore a quella di una coppia non cointegrata di controllo, il claim sarebbe falso.",
-      "note_gap": "Richiede un secondo strumento cointegrato con XAUUSD (non identificato/testato) - NEXUS oggi lavora su un singolo strumento."
+      "note_gap": "Richiede un secondo strumento cointegrato con XAUUSD (non identificato/testato) - NEXUS oggi lavora su un singolo strumento.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     },
     {
       "sequence_id": "SEQ-0020",
@@ -803,7 +945,14 @@
       "failure_memory_relation": "NOVEL",
       "failure_memory_relation_note": "Vicino concettualmente a ema_slope_atr_norm gia' in feature_registry_v2.json - possibile ridondanza con feature esistenti, da verificare in Phase 7.3 prima di trattarlo come nuovo.",
       "research_priority_score_ref": null,
-      "falsification_definition": "Se la divergenza delle medie non predicesse la direzione meglio del baseline, il claim sarebbe falso."
+      "falsification_definition": "Se la divergenza delle medie non predicesse la direzione meglio del baseline, il claim sarebbe falso.",
+      "observation_cutoff": "event_a bar close (t=0)",
+      "transition_completion_time": "t=0",
+      "prediction_start": "t=0 (corretto per essere >= transition_completion_time)",
+      "outcome_window": "da t=1",
+      "branch_group_id": null,
+      "semantic_leakage_status_original": "PASS",
+      "semantic_leakage_status_after_correction": "PASS"
     }
   ]
 }

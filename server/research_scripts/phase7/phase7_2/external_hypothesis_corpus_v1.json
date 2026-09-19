@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-19T21:39:37.875694+00:00",
-  "generation_script": "phase7/phase7_2/build_corpus_and_source_registry.py + contradiction tagging",
-  "canonical_sha256": "eaa690079bc609ee266c980c30c37af5d53a2450ef58a0784212de695b4f8a10",
+  "generated_at": "2026-09-19T22:30:23.005608+00:00",
+  "generation_script": "phase7/phase7_2/build_corpus_and_source_registry.py + Phase 7.2B branch reclassification",
+  "canonical_sha256": "b59d532daf6ca7c4bcf22154fe065cb3dca1334b34e15b6853153748572a4b47",
   "payload": {
     "claims": [
       {
@@ -42,7 +42,8 @@
           "MECH-01"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0001",
@@ -82,7 +83,8 @@
           "MECH-02"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0002",
@@ -122,7 +124,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0002",
@@ -162,7 +165,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0003",
@@ -202,7 +206,8 @@
           "MECH-04"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0003",
@@ -242,7 +247,8 @@
           "MECH-05"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0004",
@@ -281,8 +287,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0005",
@@ -322,7 +329,8 @@
           "MECH-07"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0006",
@@ -361,8 +369,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0006",
@@ -402,7 +411,8 @@
           "MECH-07"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0007",
@@ -442,7 +452,8 @@
           "MECH-12"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0008",
@@ -482,7 +493,8 @@
           "MECH-12"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0009",
@@ -522,7 +534,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0010",
@@ -562,7 +575,8 @@
           "MECH-15"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0010",
@@ -602,7 +616,8 @@
           "MECH-16"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0011",
@@ -642,7 +657,8 @@
           "MECH-17"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0011",
@@ -682,7 +698,8 @@
           "MECH-17"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0012",
@@ -722,7 +739,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0013",
@@ -762,7 +780,8 @@
           "MECH-14"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0013",
@@ -802,7 +821,8 @@
           "MECH-14"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0014",
@@ -842,7 +862,8 @@
           "MECH-13"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0015",
@@ -882,7 +903,8 @@
           "MECH-13"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0016",
@@ -921,8 +943,9 @@
         "candidate_mechanism_ids": [
           "MECH-08"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0016",
@@ -962,7 +985,8 @@
           "MECH-09"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0017",
@@ -1003,7 +1027,8 @@
           "MECH-10"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0018",
@@ -1043,7 +1068,8 @@
           "MECH-11"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0019",
@@ -1082,8 +1108,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0019",
@@ -1124,7 +1151,8 @@
           "MECH-07"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0020",
@@ -1164,7 +1192,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0020",
@@ -1204,7 +1233,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0020",
@@ -1244,8 +1274,9 @@
           "MECH-06",
           "MECH-27"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0021",
@@ -1285,7 +1316,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0021",
@@ -1326,8 +1358,9 @@
           "MECH-08",
           "MECH-18"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0021",
@@ -1368,7 +1401,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0022",
@@ -1407,8 +1441,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0022",
@@ -1447,8 +1482,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0023",
@@ -1488,7 +1524,8 @@
           "MECH-22"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0023",
@@ -1529,7 +1566,8 @@
           "MECH-22"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0024",
@@ -1569,7 +1607,8 @@
           "MECH-23"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0024",
@@ -1609,7 +1648,8 @@
           "MECH-23"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0024",
@@ -1649,7 +1689,8 @@
           "MECH-24"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0025",
@@ -1690,8 +1731,9 @@
           "MECH-06",
           "MECH-25"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0025",
@@ -1732,7 +1774,8 @@
           "MECH-25"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0026",
@@ -1771,8 +1814,9 @@
         "candidate_mechanism_ids": [
           "MECH-08"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0026",
@@ -1811,8 +1855,9 @@
         "candidate_mechanism_ids": [
           "MECH-08"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0027",
@@ -1852,7 +1897,8 @@
           "MECH-26"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0027",
@@ -1892,7 +1938,8 @@
           "MECH-26"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0028",
@@ -1936,8 +1983,9 @@
           "MECH-06",
           "MECH-27"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0028",
@@ -1981,7 +2029,8 @@
           "MECH-07"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0029",
@@ -2021,8 +2070,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0029",
@@ -2062,8 +2112,9 @@
         "candidate_mechanism_ids": [
           "MECH-20"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0030",
@@ -2102,8 +2153,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0031",
@@ -2143,7 +2195,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0032",
@@ -2183,7 +2236,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0033",
@@ -2224,7 +2278,8 @@
           "MECH-27"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0033",
@@ -2264,8 +2319,9 @@
         "candidate_mechanism_ids": [
           "MECH-20"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0033",
@@ -2306,7 +2362,8 @@
           "MECH-21"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0034",
@@ -2348,7 +2405,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0035",
@@ -2387,8 +2445,9 @@
         "candidate_mechanism_ids": [
           "MECH-20"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0035",
@@ -2428,7 +2487,8 @@
           "MECH-07"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0036",
@@ -2470,7 +2530,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0036",
@@ -2511,7 +2572,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0037",
@@ -2555,7 +2617,8 @@
           "MECH-26"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0038",
@@ -2596,8 +2659,9 @@
         "candidate_mechanism_ids": [
           "MECH-08"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0039",
@@ -2637,7 +2701,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0040",
@@ -2679,7 +2744,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0041",
@@ -2719,7 +2785,8 @@
           "MECH-27"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0042",
@@ -2759,8 +2826,9 @@
           "MECH-06",
           "MECH-09"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0042",
@@ -2800,7 +2868,8 @@
           "MECH-27"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0043",
@@ -2839,8 +2908,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0044",
@@ -2880,8 +2950,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0045",
@@ -2922,7 +2993,8 @@
           "MECH-10"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0045",
@@ -2964,7 +3036,8 @@
           "MECH-10"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0046",
@@ -3005,7 +3078,8 @@
           "MECH-29"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0046",
@@ -3047,7 +3121,8 @@
           "MECH-29"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0047",
@@ -3087,7 +3162,8 @@
           "MECH-23"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0047",
@@ -3128,7 +3204,8 @@
           "MECH-23"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0048",
@@ -3170,7 +3247,8 @@
           "MECH-28"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0048",
@@ -3210,7 +3288,8 @@
           "MECH-28"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0049",
@@ -3251,7 +3330,8 @@
           "MECH-21"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0049",
@@ -3293,7 +3373,8 @@
           "MECH-21"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0050",
@@ -3333,7 +3414,8 @@
           "MECH-10"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0051",
@@ -3373,8 +3455,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0051",
@@ -3415,7 +3498,8 @@
           "MECH-24"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0052",
@@ -3456,8 +3540,9 @@
           "MECH-06",
           "MECH-30"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0052",
@@ -3497,8 +3582,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0052",
@@ -3539,7 +3625,8 @@
           "MECH-32"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0052",
@@ -3580,7 +3667,8 @@
           "MECH-33"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0053",
@@ -3620,7 +3708,8 @@
           "MECH-27"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0053",
@@ -3660,8 +3749,9 @@
           "MECH-06",
           "MECH-09"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0054",
@@ -3702,7 +3792,8 @@
           "MECH-01"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0055",
@@ -3742,7 +3833,8 @@
           "MECH-29"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0055",
@@ -3783,7 +3875,8 @@
           "MECH-29"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0056",
@@ -3823,7 +3916,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0056",
@@ -3863,7 +3957,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0057",
@@ -3903,7 +3998,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0057",
@@ -3943,7 +4039,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0057",
@@ -3983,7 +4080,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0057",
@@ -4023,7 +4121,8 @@
           "MECH-03"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0058",
@@ -4063,7 +4162,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0058",
@@ -4103,7 +4203,8 @@
           "MECH-30"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0059",
@@ -4143,7 +4244,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0059",
@@ -4183,7 +4285,8 @@
           "MECH-18"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0060",
@@ -4224,7 +4327,8 @@
           "MECH-31"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0060",
@@ -4264,7 +4368,8 @@
           "MECH-31"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       },
       {
         "source_id": "SRC-0061",
@@ -4304,8 +4409,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0062",
@@ -4345,8 +4451,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0063",
@@ -4386,8 +4493,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0063",
@@ -4426,8 +4534,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0064",
@@ -4467,8 +4576,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0064",
@@ -4507,8 +4617,9 @@
         "candidate_mechanism_ids": [
           "MECH-19"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0036",
@@ -4547,8 +4658,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0065",
@@ -4587,8 +4699,9 @@
         "candidate_mechanism_ids": [
           "MECH-06"
         ],
-        "contradiction_group_id": "CG-0002",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0002"
       },
       {
         "source_id": "SRC-0066",
@@ -4627,8 +4740,9 @@
         "candidate_mechanism_ids": [
           "MECH-20"
         ],
-        "contradiction_group_id": "CG-0001",
-        "exclusion_reason": null
+        "contradiction_group_id": null,
+        "exclusion_reason": null,
+        "branch_group_id": "CBG-0001"
       },
       {
         "source_id": "SRC-0066",
@@ -4668,7 +4782,8 @@
           "MECH-26"
         ],
         "contradiction_group_id": null,
-        "exclusion_reason": null
+        "exclusion_reason": null,
+        "branch_group_id": null
       }
     ],
     "coverage_report": {

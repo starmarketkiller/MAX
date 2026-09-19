@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "registry_id": "EVIDENCE_CLUSTER_REGISTRY_V1",
+  "principle": "Phase 7.2B sec.3 - un independent_evidence_cluster raggruppa fonti (source_id) che riportano LO STESSO studio/ricerca sottostante, anche se pubblicate con URL/titolo/venue diversi (es. paper originale + blog dello stesso autore che lo riassume). Il conteggio di 'quante fonti indipendenti' supportano un mechanism/sequence deve usare il numero di CLUSTER, non il numero grezzo di source_id, altrimenti lo stesso studio citato due volte sembra 'doppia evidenza indipendente'.",
+
+  "detection_method": "Verifica manuale mirata: stesso autore + titolo identico o quasi-identico (probabile paper+riassunto della stessa fonte) O stesso arXiv/DOI id con URL diversi (es. /abs/ vs /pdf/). NON un clustering semantico automatico su tutto il corpus (fuori scope di questa patch) - solo i casi con medesimo autore rilevati e verificati individualmente.",
+
+  "merged_clusters": [
+    {
+      "cluster_id": "ECLU-0001",
+      "member_source_ids": ["SRC-0014", "SRC-0015"],
+      "representative_title": "Cultural Calendars and the Gold Drift: Are Holidays Moving GLD ETF?",
+      "authors": "Radovan Vojtko, Cyril Dujava",
+      "evidence": "SRC-0014 (SSRN preprint) e SRC-0015 (Quantpedia blog) hanno titolo IDENTICO - lo stesso studio pubblicato su 2 venue.",
+      "affected_claims": ["CLAIM-0021", "CLAIM-0022"], "affected_sequences": ["SEQ-0007"]
+    },
+    {
+      "cluster_id": "ECLU-0002",
+      "member_source_ids": ["SRC-0016", "SRC-0066"],
+      "representative_title": "Structural Limits of OHLCV-Based Intraday (Momentum) Signals in MNQ Futures: A Systematic Falsification Study",
+      "authors": "Mathias Mesfin",
+      "evidence": "SRC-0016 (arxiv.org/abs/2605.04004) e SRC-0066 (arxiv.org/pdf/2605.04004) sono lo STESSO arXiv ID - abstract page vs PDF dello stesso paper, raccolti indipendentemente da 2 agenti di ricerca diversi (batch academic e batch gold/SMC) senza rendersi conto che fosse duplicato.",
+      "affected_claims": ["CLAIM-0023", "CLAIM-0024", "CLAIM-0114", "CLAIM-0115"], "affected_sequences": ["SEQ-0004", "SEQ-0012", "SEQ-0016"]
+    }
+  ],
+
+  "explicitly_not_merged": [
+    {
+      "author": "Allan Munene Mutiiria",
+      "source_ids": ["SRC-0019", "SRC-0020", "SRC-0021", "SRC-0022"],
+      "reason": "4 articoli MQL5 DISTINTI (Part 24 London session, Part 9 EA building, Part 50 Turtle Soup, Part 46 Liquidity Sweep) - stesso autore/serie editoriale, ma argomenti/studi diversi. Stesso autore NON implica stesso studio."
+    },
+    {
+      "author": "tiptoptrade", "source_ids": ["SRC-0033", "SRC-0036"],
+      "reason": "2 articoli distinti (institutional gold trading vs NY open range breakout scalping) - argomenti diversi."
+    },
+    {
+      "author": "tflab", "source_ids": ["SRC-0034", "SRC-0035"],
+      "reason": "2 articoli distinti (ICT Silver Bullet vs ICT Liquidity Sweep/Run) - argomenti diversi."
+    }
+  ],
+
+  "data_quality_note": "ECLU-0002 rivela anche un difetto minore nella deduplicazione per URL di Phase 7.2 (build_corpus_and_source_registry.py): /abs/ e /pdf/ dello stesso arXiv ID non vengono riconosciuti come lo stesso documento da un confronto URL esatto. Non corretto retroattivamente nel corpus (i source_id SRC-0016/SRC-0066 restano distinti per tracciabilita' storica) - la correzione e' applicata SOLO a livello di conteggio dei cluster per lo scoring (sec.3), non riscrivendo la storia del corpus."
+}
