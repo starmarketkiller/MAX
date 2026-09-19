@@ -52,6 +52,7 @@ import research_read_model
 import market_read_model
 import execution_read_model
 import library_read_model
+import sequence_research_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3166,6 +3167,49 @@ def research_decision_cards(status: Optional[str] = None,
 @app.get("/api/research/decision-cards/{entity_id}")
 def research_decision_card_detail(entity_id: str, user: str = Depends(require_user)):
     return _research_catalog_detail("decision_cards", entity_id)
+
+
+# ================ SEQUENCE RESEARCH READ MODEL (READ-ONLY) ============= #
+@app.get("/api/research/sequences")
+def research_sequences(priority: Optional[str] = None,
+                       implementation_status: Optional[str] = None,
+                       failure_memory_relation: Optional[str] = None,
+                       causal_observability_status: Optional[str] = None,
+                       branch_group_id: Optional[str] = None,
+                       mechanism_id: Optional[str] = None,
+                       leakage_status: Optional[str] = None,
+                       q: Optional[str] = None,
+                       user: str = Depends(require_user)):
+    return sequence_research_read_model.CATALOG.list_sequences({
+        "priority": priority, "implementation_status": implementation_status,
+        "failure_memory_relation": failure_memory_relation,
+        "causal_observability_status": causal_observability_status,
+        "branch_group_id": branch_group_id, "mechanism_id": mechanism_id,
+        "leakage_status": leakage_status, "q": q,
+    })
+
+
+@app.get("/api/research/sequences/{sequence_id}")
+def research_sequence_detail(sequence_id: str, user: str = Depends(require_user)):
+    item = sequence_research_read_model.CATALOG.detail(sequence_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="research sequence not found")
+    return item
+
+
+@app.get("/api/research/mechanisms")
+def research_mechanisms(user: str = Depends(require_user)):
+    return sequence_research_read_model.CATALOG.list_mechanisms()
+
+
+@app.get("/api/research/branches")
+def research_branches(user: str = Depends(require_user)):
+    return sequence_research_read_model.CATALOG.list_branches()
+
+
+@app.get("/api/research/sequence-readiness")
+def research_sequence_readiness(user: str = Depends(require_user)):
+    return sequence_research_read_model.CATALOG.readiness_summary()
 
 
 # ================= CANONICAL MARKET READ MODEL V1 (READ-ONLY) =========== #
