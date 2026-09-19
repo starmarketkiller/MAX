@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-09-19T01:14:41.449916+00:00",
+  "generation_script": "phase7/build_operational_run_manifest.py",
+  "canonical_sha256": "904671a7fb34bef1bda41f5a4c50aed2eedfbec9deab5c1a06d8debecd591856",
+  "payload": {
+    "run_id": "PHASE7_0B-OPERATIONAL-READINESS-001",
+    "mode": "OPERATIONAL_READINESS_ONLY",
+    "readiness_only_no_discovery_flag": true,
+    "purpose": "Assemblare/verificare le versioni dei componenti dell'infrastruttura di discovery - NON esegue alcuna discovery, nessun H007, nessun edge, nessun backtest.",
+    "code_commit": "a2eb10e97e8b4d094d8d942d23fc70e8bb847889",
+    "dataset_version": {
+      "dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+      "hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
+      "registry_file": "server/research_scripts/phase7/dataset_version_registry_v2.json"
+    },
+    "feature_registry_version": {
+      "hash": "7146032a403e79a2ab554f03f98729de1cec4e30c016bce50b3bdbc47d3d5c16",
+      "file": "server/research_scripts/phase7/feature_registry_v2.json"
+    },
+    "baseline_contract_version": {
+      "contract_id": "BASELINE_ENGINE_V4_CONTRACT",
+      "schema_version": 4,
+      "file": "server/research_scripts/phase7/baseline_contract_v4.json"
+    },
+    "partition_contract_version": {
+      "contract_id": "PARTITION_CONTRACT_V2",
+      "file": "server/research_scripts/phase7/partition_contract_v2.json"
+    },
+    "detector_health_version": {
+      "hash": "3562ddb2ad78a57827f05c4f877a6cb8e33ebc0101a312c1a0d78dc90bb7547b",
+      "file": "server/research_scripts/phase7/event_detector_health_v1.json"
+    },
+    "candidate_generation_policy_version": {
+      "hash": "f8b094325b99e2729c5778d0b7ebb18d84cb7dfa5a19ab4b8b251c2c04178c8b",
+      "file": "server/research_scripts/phase7/policies/candidate_generation_policy.json"
+    },
+    "threshold_policy_version": {
+      "file": "server/research_scripts/phase7/policies/threshold_policy.json"
+    },
+    "multiple_testing_family_policy_reference": "server/research_scripts/phase7/engine/multiple_testing_v2.py (run_family)",
+    "access_ledger_reference": "server/research_scripts/phase7/engine/validation_access_ledger.py + policies/validation_access_policy_v1.json",
+    "holdout_sealed_status": "SEALED",
+    "partition_materialized": true,
+    "generated_at_declared": "2026-09-19T01:14:41.449916+00:00"
+  }
+}

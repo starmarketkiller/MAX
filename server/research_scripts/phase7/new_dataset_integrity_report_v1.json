@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-09-19T01:12:43.280265+00:00",
+  "generation_script": "phase7/check_new_dataset_integrity.py",
+  "canonical_sha256": "6d8d206e0736232745b568374edbb60f12bd1ee689914617f6c370c8bbffb04e",
+  "payload": {
+    "period_checked": {
+      "start": "2023-02-04T00:00:00+00:00",
+      "end": "2026-09-16T00:00:00+00:00"
+    },
+    "date_coverage": {
+      "expected_days": 1321,
+      "days_in_manifest": 1321,
+      "missing_dates": [],
+      "incomplete_dates_after_retry": [],
+      "zero_tick_weekdays": [
+        "2023-04-07",
+        "2024-03-29",
+        "2025-04-18",
+        "2026-04-03"
+      ]
+    },
+    "tick_level_checks": {
+      "days_scanned": 1321,
+      "days_missing_decoded_file": [],
+      "total_ticks": 226482290,
+      "total_non_monotonic_timestamps": 0,
+      "total_duplicate_ticks": 0,
+      "total_impossible_prices": 0,
+      "total_spread_anomalies": 0,
+      "tick_count_per_day_min": 0,
+      "tick_count_per_day_max": 846229,
+      "tick_count_per_day_mean": 171447.60787282363
+    },
+    "timezone_consistency": "UTC per costruzione (ogni timestamp e' derivato da datetime UTC espliciti nel downloader, mai da orario locale) - verificato strutturalmente, non da scansione.",
+    "symbol_consistency": "XAUUSD per costruzione (unico simbolo richiesto dal downloader) - verificato strutturalmente.",
+    "provenance": {
+      "manifest_path": "server/research_scripts/phase7/data_cache_new_period/manifest.json",
+      "manifest_content_hash": "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde",
+      "downloader_script": "server/research_scripts/phase7/phase7_dukascopy_downloader.py"
+    },
+    "hard_failures": [],
+    "soft_concerns": [
+      "4 giorni feriali con zero tick (possibili festivita' di mercato o gap reali, da revisione umana): ['2023-04-07', '2024-03-29', '2025-04-18', '2026-04-03']"
+    ],
+    "verdict": "PASS_WITH_NOTES"
+  }
+}

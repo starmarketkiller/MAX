@@ -85,6 +85,24 @@ def is_duplicate(sig_a: str, sig_b: str) -> bool:
     return sig_a == sig_b
 
 
+class DuplicateCandidateSignature(Exception):
+    pass
+
+
+def assert_not_duplicate(existing_signatures: list, new_signature: str):
+    """Enforcement REALE per la registrazione di un candidato - non solo
+    'la funzione is_duplicate esiste', ma un punto che una futura pipeline
+    di generazione candidati deve chiamare prima di registrare un nuovo
+    candidate_id, cosi' un duplicato con rappresentazione diversa (casing/
+    ordine/numerico) viene rifiutato meccanicamente, non solo rilevabile."""
+    for existing in existing_signatures:
+        if is_duplicate(existing, new_signature):
+            raise DuplicateCandidateSignature(
+                f"Signature duplicata rilevata (rappresentazione diversa ammessa): "
+                f"nuova firma normalizza alla stessa firma gia' registrata."
+            )
+
+
 if __name__ == "__main__":
     # Esempio dalla richiesta (sec.25)
     sig1 = canonical_signature(

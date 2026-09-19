@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "policy_id": "VALIDATION_ACCESS_POLICY_V1",
+  "principle": "Phase 7.0B sec.7 - policy machine-readable, unica fonte di verita' letta da engine/validation_access_ledger.py (mai duplicata a mano nel codice - vedi Integrity Patch Phase 7.0, dove un disallineamento fra codice e dichiarazione produsse un bug). 'Non basta loggare: deve esistere enforcement' - vedi validation_access_ledger.py.",
+
+  "splits": {
+    "discovery": {
+      "access_mode": "ITERABLE",
+      "max_reads_per_candidate": null,
+      "rule": "Nessun limite di accesso - e' lo split su cui si itera per generare/affinare ipotesi. Non e' mai la fonte di un verdetto finale."
+    },
+    "internal_validation": {
+      "access_mode": "LIMITED",
+      "max_reads_per_candidate": 3,
+      "rule": "Limitato ma non one-shot: un candidato puo' essere internamente validato piu' volte durante l'affinamento (es. dopo una correzione di bug nel codice del candidato stesso), ma non illimitatamente - oltre 3 letture richiede la stessa procedura di eccezione di locked/final."
+    },
+    "locked_validation": {
+      "access_mode": "ONE_SHOT",
+      "max_reads_per_candidate": 1,
+      "rule": "Una sola lettura per candidate_id. Un secondo accesso senza nuova hypothesis/candidate identity + motivazione esplicita + stato precedente marcato CONTAMINATED/REUSED e' un errore, non un'eccezione silenziosa."
+    },
+    "final_holdout": {
+      "access_mode": "ONE_SHOT",
+      "max_reads_per_candidate": 1,
+      "rule": "Come locked_validation, ma con conseguenze piu' severe: FINAL_HOLDOUT e' l'ultimo segmento disponibile - un secondo accesso invalida strutturalmente qualunque verdetto futuro su quel candidato (vedi holdout sealing, sec.13)."
+    }
+  },
+
+  "violation_rule": "Un tentativo di accesso oltre max_reads_per_candidate per lo stesso (candidate_id, split) solleva ValidationAccessViolation - salvo allow_contaminated_reentry=True ESPLICITO, con prior_state gia' marcato CONTAMINATED o REUSED e una motivazione scritta (mai un default silenzioso).",
+
+  "not_a_scoring_policy": "Questa policy non assegna un punteggio o una penalita' - e' un cancello binario (accesso consentito o rifiutato). Non esiste un modo di 'pagare' per un accesso extra senza il percorso di eccezione esplicito sopra."
+}

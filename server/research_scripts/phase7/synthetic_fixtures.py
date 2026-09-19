@@ -40,6 +40,16 @@ def generate_fixture(seed: int = 42):
     # split diversi dall'evento (vedi caso negativo in preflight_simulation.py).
     control_pool = list(range(0, 2200, 3))
 
+    # Feature di stato categoriche sintetiche per OGNI riga rilevante
+    # (eventi + pool di controllo) - usate da Baseline Engine v4 per il
+    # coarsened matching (Phase 7.0B sec.2). Deterministiche dal seed,
+    # nessun dato di mercato reale.
+    relevant_rows = set(event_rows) | set(control_pool)
+    feature_by_row = {
+        row: {"volatility_state": rng.choice(["HIGH", "LOW"]), "trend_state": rng.choice(["UP", "DOWN", "RANGE"])}
+        for row in relevant_rows
+    }
+
     # Feature sintetica CAUSAL_UNSAFE (leakage deliberato: guarda
     # avanti nel tempo) - usata SOLO per dimostrare che il gate la blocca,
     # mai per calcolare un vero effetto.
@@ -56,6 +66,7 @@ def generate_fixture(seed: int = 42):
         "direction_by_row": direction_by_row,
         "outcome_by_row": outcome_by_row,
         "control_pool": control_pool,
+        "feature_by_row": feature_by_row,
         "fake_leaky_feature": fake_leaky_feature_registry_entry,
     }
 

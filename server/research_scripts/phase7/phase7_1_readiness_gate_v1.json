@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-09-19T01:14:50.339639+00:00",
+  "generation_script": "phase7/build_readiness_gate.py",
+  "canonical_sha256": "f23578f9a41b03d3f331bdca0d4ae7cbc1c7cbd054d9c95fa44abee4612979c5",
+  "payload": {
+    "baseline_engine_v4_implemented": true,
+    "baseline_split_safe": true,
+    "baseline_direction_aware": true,
+    "event_firing_rate_guard_pass": true,
+    "validation_access_guard_pass": true,
+    "holdout_one_shot_enforced": true,
+    "dataset_version_guard_pass": true,
+    "dataset_drift_guard_pass": true,
+    "new_dataset_integrity_pass": true,
+    "partition_materialized": true,
+    "final_holdout_sealed": true,
+    "fit_isolation_pass": true,
+    "preflight_pass": true,
+    "preflight_n_fail": 0,
+    "unresolved_blockers": [],
+    "known_declared_gaps_not_counted_as_hard_blockers": [
+      "CANDIDATE_SURVIVORSHIP (rischio di processo, non chiudibile con solo codice)",
+      "feed_robustness/market_transferability restano UNTESTED (singolo feed/mercato - vedi cross_market_readiness_policy.json)"
+    ],
+    "ready_for_phase_7_1": true,
+    "rule": "ready_for_phase_7_1=true SOLO se tutti i blocker hard sopra sono chiusi - nessuna media pesata, nessun punteggio."
+  }
+}

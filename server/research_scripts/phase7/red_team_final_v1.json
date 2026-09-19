@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-09-19T01:15:16.772435+00:00",
+  "generation_script": "phase7/red_team_final.py",
+  "canonical_sha256": "9aed085501791046667685e2c1357c6b91c72a3ecc458038a27fae0d8815782f",
+  "payload": {
+    "attacks": [
+      {
+        "attack": "cross_split_baseline_match",
+        "result": "BLOCKED",
+        "note": "CrossSplitViolation: Evento alla riga 1500 (split=locked_validation) ha ricevuto 1 controlli da split diversi: [{'control_row': 500, 'control_split': 'discovery'}]. Matching within-split-only violato senza eccezione dichiarata."
+      },
+      {
+        "attack": "holdout_second_read",
+        "result": "BLOCKED",
+        "note": "ValidationAccessViolation: [RT-CAND-001] accesso a 'final_holdout' rifiutato: gia' 1/1 letture consentite esaurite. Serve nuova hypothesis/candidate identity, oppure allow_contaminated_reentry=True con prior_state in {CONTAMINATED,REUSED} e una reentry_reason esplicita (mai un'eccezione silenziosa)."
+      },
+      {
+        "attack": "validation_reuse_beyond_limit",
+        "result": "BLOCKED",
+        "note": "ValidationAccessViolation: [RT-CAND-002] accesso a 'internal_validation' rifiutato: gia' 3/3 letture consentite esaurite. Serve nuova hypothesis/candidate identity, oppure allow_contaminated_reentry=True con prior_state in {CONTAMINATED,REUSED} e una reentry_reason esplicita (mai un'eccezione silenziosa)."
+      },
+      {
+        "attack": "dataset_file_modification_undetected",
+        "result": "BLOCKED",
+        "note": "DatasetVersionDriftError: DATASET_VERSION_DRIFT per 'RT_DATASET': hash precedente=8fcaf8a5b5a76f9f... hash nuovo=442072d83b39cc39... componenti cambiati={'source_manifest_hash': ('rt1', 'rt2_MODIFIED')}"
+      },
+      {
+        "attack": "scaler_fit_on_validation",
+        "result": "BLOCKED",
+        "note": "FitIsolationViolation: Tentativo di fit della normalizzazione su riga 1002 (split=internal_validation) - ammesso SOLO discovery_fitted_only='discovery'."
+      },
+      {
+        "attack": "pathological_detector_used_for_discovery",
+        "result": "BLOCKED",
+        "note": "DetectorNotAllowedForDiscovery: Detector 'PULLBACK' non ammesso per discovery: status=PATHOLOGICAL - firing_rate=0.829 >= 0.4 (soglia PATHOLOGICAL) - il detector si attiva su una quota patologica delle barre, non autorizzato per discovery senza revisione umana esplicita del detector stesso."
+      },
+      {
+        "attack": "duplicate_candidate_different_representation",
+        "result": "BLOCKED",
+        "note": "DuplicateCandidateSignature: Signature duplicata rilevata (rappresentazione diversa ammessa): nuova firma normalizza alla stessa firma gia' registrata."
+      },
+      {
+        "attack": "baseline_insufficient_pool_forced_match",
+        "result": "BLOCKED",
+        "note": "match() ha correttamente restituito REJECTED_INSUFFICIENT_POOL con zero match, mai un match forzato."
+      }
+    ],
+    "n_attacks": 8,
+    "n_blocked": 8,
+    "n_residual_blockers": 0
+  }
+}

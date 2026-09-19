@@ -1,0 +1,144 @@
+{
+  "generated_at": "2026-09-18T17:41:40.888687+00:00",
+  "generation_script": "phase7/build_event_detector_health_v1.py",
+  "canonical_sha256": "3562ddb2ad78a57827f05c4f877a6cb8e33ebc0101a312c1a0d78dc90bb7547b",
+  "payload": {
+    "source_events_file": "server/research_scripts/phase5/data/events_v1.csv",
+    "source_events_meta": "server/research_scripts/phase5/data/events_v1.meta.json",
+    "source_bars_file": "server/research_scripts/phase5/data/market_state_dataset_v1.csv",
+    "note": "Health strutturale (firing rate/clustering) dei detector REALI di Phase 5 - nessun outcome/\u0394P calcolato qui (sec.19 Phase 7.0B: no edge evaluation). Nessun detector nuovo, nessuna ricalibrazione.",
+    "n_bars_total": 4809,
+    "n_families": 9,
+    "n_pathological": 1,
+    "n_high": 2,
+    "families": [
+      {
+        "event_family": "BREAKOUT",
+        "firing_rate": 0.1505510501143689,
+        "n_events": 724,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 1,
+          "clustering_rate": 0.7911479944674965,
+          "cluster_gap_threshold": 10
+        },
+        "status": "HIGH",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.151 nella fascia HIGH - ammesso per discovery ma segnalato per revisione, non bloccato automaticamente."
+      },
+      {
+        "event_family": "COMPRESSION_RELEASE",
+        "firing_rate": 0.10022873778332293,
+        "n_events": 482,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 2,
+          "clustering_rate": 0.893970893970894,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.100 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "DISPLACEMENT",
+        "firing_rate": 0.039093366604283634,
+        "n_events": 188,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 19,
+          "clustering_rate": 0.2994652406417112,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.039 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "FAILED_BREAKOUT",
+        "firing_rate": 0.06550218340611354,
+        "n_events": 315,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 9.0,
+          "clustering_rate": 0.5254777070063694,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.066 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "PULLBACK",
+        "firing_rate": 0.8292784362653358,
+        "n_events": 3988,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 1,
+          "clustering_rate": 0.99899673940306,
+          "cluster_gap_threshold": 10
+        },
+        "status": "PATHOLOGICAL",
+        "allowed_for_discovery": false,
+        "reason": "firing_rate=0.829 >= 0.4 (soglia PATHOLOGICAL) - il detector si attiva su una quota patologica delle barre, non autorizzato per discovery senza revisione umana esplicita del detector stesso."
+      },
+      {
+        "event_family": "RECLAIM",
+        "firing_rate": 0.06238303181534623,
+        "n_events": 300,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 7,
+          "clustering_rate": 0.5652173913043478,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.062 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "RETEST",
+        "firing_rate": 0.07007693907257226,
+        "n_events": 337,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 4.0,
+          "clustering_rate": 0.625,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.070 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "SWEEP",
+        "firing_rate": 0.10397171969224371,
+        "n_events": 500,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 6,
+          "clustering_rate": 0.6392785571142284,
+          "cluster_gap_threshold": 10
+        },
+        "status": "NORMAL",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.104 nella fascia NORMAL - nessuna preoccupazione strutturale."
+      },
+      {
+        "event_family": "VOLATILITY_EXPANSION",
+        "firing_rate": 0.37097109586192556,
+        "n_events": 1784,
+        "n_bars": 4809,
+        "clustering_metrics": {
+          "median_gap_bars": 2,
+          "clustering_rate": 0.9960740325294447,
+          "cluster_gap_threshold": 10
+        },
+        "status": "HIGH",
+        "allowed_for_discovery": true,
+        "reason": "firing_rate=0.371 nella fascia HIGH - ammesso per discovery ma segnalato per revisione, non bloccato automaticamente."
+      }
+    ],
+    "default_policy": "Nessun detector e' ammesso per default in una futura discovery run senza questo health assessment - un detector assente da questo file non e' 'implicitamente ammesso', e' 'non ancora valutato' (allowed_for_discovery deve essere letto esplicitamente da qui)."
+  }
+}

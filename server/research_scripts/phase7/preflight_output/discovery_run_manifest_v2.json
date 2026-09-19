@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-18T17:28:33.261585+00:00",
+  "generated_at": "2026-09-19T01:13:22.280120+00:00",
   "generation_script": "phase7/preflight_simulation.py",
-  "canonical_sha256": "eaec68682e2b227983f8b41721f2b77d08a5ccce7e256afa28d27f14177ba884",
+  "canonical_sha256": "56e84d4f1bb4ca20391f5371d9fcb068f8b8aea9d98cd23afff37a0dc58d06df",
   "payload": {
     "SYNTHETIC_FIXTURE_ONLY": true,
     "run_id": "PREFLIGHT-RUN-001",
@@ -29,9 +29,9 @@
     "n_synthetic_events": 128,
     "n_synthetic_controls_pool": 734,
     "checks_summary": {
-      "n_pass": 23,
+      "n_pass": 38,
       "n_fail": 0,
-      "n_total": 23
+      "n_total": 38
     },
     "checks_detail": [
       {
@@ -148,6 +148,81 @@
         "check": "uncertainty_gate_correctly_classified",
         "status": "PASS",
         "detail": "status attuale=POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE"
+      },
+      {
+        "check": "baseline_v4_valid_matching",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_v4_direction_mismatch_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_v4_cross_split_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_v4_insufficient_controls_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "baseline_v4_poor_match_overload_flagged",
+        "status": "PASS",
+        "detail": "poor_share=0.80"
+      },
+      {
+        "check": "fit_on_validation_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "event_firing_rate_pathological_detector_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "event_firing_rate_normal_detector_allowed",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "firing_rate_classifier_consistent",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "second_locked_validation_access_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "second_final_holdout_access_blocked",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "dataset_identical_rebuild_same_hash",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "dataset_drift_detected",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "holdout_sealed",
+        "status": "PASS",
+        "detail": ""
+      },
+      {
+        "check": "candidate_end_to_end_serialization",
+        "status": "PASS",
+        "detail": ""
       }
     ]
   }

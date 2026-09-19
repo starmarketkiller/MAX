@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "declared_at": "2026-09-18T00:00:00Z",
+  "declared_before_fetching": true,
+  "principle": "Phase 7.0B sec.10: 'prima del download: freeze il partition contract, freeze run-purpose, freeze dataset identity rules. Non guardare risultati di edge durante acquisizione/preprocessing.' Questo file e' scritto e committato PRIMA di lanciare il downloader - nessun campo qui e' stato scelto guardando i dati scaricati (non ancora esistenti al momento della scrittura).",
+
+  "data_source": "Dukascopy XAUUSD tick archive (stessa API/formato gia' validata in Phase 4/5/6 - datafeed.dukascopy.com, downloader v2), simbolo/fonte IDENTICI alle fasi precedenti - la differenza e' ESCLUSIVAMENTE il periodo temporale.",
+
+  "period": {
+    "acquisition_start": "2023-02-04T00:00:00Z",
+    "acquisition_end": "PROVVISORIO - fino all'ultimo giorno pienamente disponibile al momento del download (buffer di sicurezza di alcuni giorni rispetto a 'oggi', per evitare di richiedere dati non ancora pubblicati da Dukascopy). Il valore ESATTO usato e' registrato nel manifest del downloader (server/research_scripts/phase7/data_cache_new_period/manifest.json) e in dataset_version_registry_v2.json a fetch completato - MAI deciso guardando l'effetto di un edge su una data specifica.",
+    "rationale_boundary": "2023-02-04 e' il giorno immediatamente successivo alla fine del periodo di True Holdout di Phase 6 (che copriva 2022-02-04..2023-02-03) - nessun gap, nessuna sovrapposizione, nessun giorno di questo intervallo e' mai stato scaricato prima (verificato: manifest Phase 4 copre 2019-02-03..2022-02-03, manifest Phase 6 copre 2022-02-04..2023-02-03, zero overlap con questo intervallo)."
+  },
+
+  "frozen_partition_contract_version": {
+    "file": "server/research_scripts/phase7/partition_contract_v2.json",
+    "note": "Il contratto a 3 segmenti (DEVELOPMENT.discovery+internal_validation / LOCKED_VALIDATION / FINAL_HOLDOUT) e' gia' scritto e committato (Phase 7.0). Questa acquisizione NON modifica la struttura del contratto - lo popola. Se il periodo effettivamente disponibile a fine fetch non consente split sensati secondo quel contratto, la materializzazione (sec.12) NON forza uno split artificiale - dichiara NOT_READY_FOR_PHASE_7_1 con il motivo esplicito."
+  },
+
+  "frozen_run_purpose": "OPERATIONAL_READINESS_ONLY - questa acquisizione serve SOLO a rendere disponibili e validare i dati per i gate di Phase 7.0B (Baseline Engine v4, event firing rate guard, access ledger, dataset version guard, partition materialization, holdout sealing). NON e' una discovery run. Nessun H007, nessun nuovo edge, nessun backtest, nessuna parameter optimization durante o dopo questa acquisizione all'interno di questa fase.",
+
+  "frozen_dataset_identity_rules": {
+    "dataset_id_prefix": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+    "instrument": "XAUUSD",
+    "timeframe_raw": "TICK (BID/ASK, stesso formato bi5 di Phase 4/5/6)",
+    "source_manifest_path": "server/research_scripts/phase7/data_cache_new_period/manifest.json",
+    "hashing_policy_reference": "server/research_scripts/phase7/engine/dataset_version_guard.py - l'hash del dataset e' calcolato SOLO dopo il fetch, da manifest+date range+strumento+timeframe+versione di build, mai deciso a priori né modificabile post-hoc senza produrre un dataset_id/hash diverso."
+  },
+
+  "why_uncontaminated": [
+    "Questo intervallo di date non e' mai stato scaricato prima di questa dichiarazione - verificato per ispezione diretta dei manifest esistenti (Phase 4: 2019-02-03..2022-02-03; Phase 6: 2022-02-04..2023-02-03).",
+    "Il detector di eventi (SWEEP/RECLAIM e altri) non viene scelto o ricalibrato guardando questo periodo - riuso del codice esistente, immutato.",
+    "La Baseline Engine v4 e i suoi parametri di matching non vengono fittati su questo periodo in questa fase - questa fase acquisisce e valida solo l'infrastruttura dati, non esegue discovery.",
+    "Nessuna metrica di outcome/edge viene calcolata o osservata su questo periodo durante l'acquisizione - solo controlli di integrita' strutturale del dato grezzo (sec.11: copertura date, tick duplicati, timestamp non monotoni, prezzi impossibili, ecc.)."
+  ],
+
+  "known_limitations": [
+    "Stessa fonte dati (Dukascopy) delle fasi precedenti - non introduce feed_robustness o market_transferability (vedi cross_market_readiness_policy.json), resta condizionato allo stesso broker/feed.",
+    "Nessun controllo possibile su eventuali revisioni/correzioni retroattive della fonte Dukascopy stessa (fuori dal controllo di questo progetto).",
+    "La dimensione del periodo (~3.5 anni) rende il fetch un'operazione di rete lunga - questa dichiarazione non garantisce che il fetch completi entro questa sessione; lo stato di completamento reale e' riportato onestamente in new_dataset_integrity_report_v1.json e nel report finale, non assunto."
+  ]
+}

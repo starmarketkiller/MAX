@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-09-19T01:13:12.674963+00:00",
+  "generation_script": "phase7/materialize_partitions.py",
+  "canonical_sha256": "1fca26d55c2f0ec4d8b53679b48ad4c192ec3b161e1ff924c8d65936099a533f",
+  "payload": {
+    "sealed_at": "2026-09-19T01:13:12.674963+00:00",
+    "date_range": {
+      "start": "2026-02-04",
+      "end": "2026-09-16"
+    },
+    "n_days": 225,
+    "frozen_manifest_subset_hash": "c24fb59f7a53d6e0bf0ada984079d7cc348d0a70b80dd28afc56a91ca0c7a408",
+    "rules": [
+      "Nessun fit di scaler/soglia/normalizzazione e' ammesso su questo intervallo - vedi engine/baseline_engine_v4.py FitIsolationViolation.",
+      "Accesso one-shot per candidate_id - vedi engine/validation_access_ledger.py e policies/validation_access_policy_v1.json.",
+      "Qualunque lettura di questo intervallo DEVE passare da ValidationAccessLedger.record_access() - nessun accesso diretto al manifest/decoded e' un percorso legittimo per una discovery run futura."
+    ],
+    "sealed_status": "SEALED"
+  }
+}

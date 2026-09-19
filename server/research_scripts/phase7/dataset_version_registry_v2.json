@@ -1,0 +1,17 @@
+{
+  "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1": {
+    "dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+    "hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
+    "components": {
+      "source_manifest_hash": "605249c671178c92c7a2a3e91a670f17c12ca4bea10576407292ccd99e64fbde",
+      "date_range": [
+        "2023-02-04",
+        "2026-09-16"
+      ],
+      "instrument": "XAUUSD",
+      "timeframe": "TICK",
+      "transform_version": "phase7_dukascopy_downloader_v1 (identico al downloader Phase 4/6, solo START/END/ROOT diversi)"
+    },
+    "first_registered_at": "2026-09-19T00:54:54.452904+00:00"
+  }
+}

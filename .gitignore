@@ -36,6 +36,7 @@ data/
 server/data_cache/
 server/data_cache_m5/
 server/research_scripts/phase6/data_cache_holdout/
+server/research_scripts/phase7/data_cache_new_period/
 
 # output generati dagli script di ricerca in server/research_scripts/ (dati di
 # corsa, riproducibili rilanciando lo script - non e' codice, non va versionato)
