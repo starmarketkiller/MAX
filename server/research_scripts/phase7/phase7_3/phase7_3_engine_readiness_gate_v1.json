@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-09-19T23:25:01.251629+00:00",
+  "generation_script": "phase7/phase7_3/build_phase7_3_engine_readiness_gate.py",
+  "canonical_sha256": "05750a34d5787cfee2c0a3c312389447361aab5f7e1ba543d86b6a1a4c617703",
+  "payload": {
+    "eligible_sequence_inventory_built": true,
+    "detector_contract_pass": true,
+    "temporal_causality_guard_pass": true,
+    "episode_first_architecture_pass": true,
+    "baseline_v4_adapter_pass": true,
+    "outcome_surface_v3_contract_pass": true,
+    "preregistration_guard_integrated": true,
+    "lifecycle_integrated": true,
+    "failure_memory_integrated": true,
+    "synthetic_e2e_pass": true,
+    "red_team_pass": true,
+    "no_real_outcome_edge_discovery_performed": true,
+    "n_eligible_sequences": 6,
+    "eligible_sequence_ids": [
+      "SEQ-0001",
+      "SEQ-0009",
+      "SEQ-0014",
+      "SEQ-0015",
+      "SEQ-0016",
+      "SEQ-0020"
+    ],
+    "nexus_data_scan_offenders": [],
+    "unresolved_blockers": [],
+    "READY_FOR_FIRST_SEQUENCE_DISCOVERY": true,
+    "rule": "READY_FOR_FIRST_SEQUENCE_DISCOVERY=true SOLO se tutte le 12 gate sopra sono vere - nessuna media pesata, nessun punteggio.",
+    "explicit_confirmation": "NO REAL NEXUS EDGE DISCOVERY PERFORMED IN PHASE 7.3"
+  }
+}

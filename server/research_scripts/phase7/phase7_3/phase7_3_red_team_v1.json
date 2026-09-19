@@ -1,0 +1,61 @@
+{
+  "_provenance": {
+    "generated_by": "phase7/phase7_3/phase7_3_red_team.py",
+    "note": "10 attacchi sec.17 eseguiti contro i moduli REALI del Sequence Discovery Engine v1, nessun dato NEXUS coinvolto."
+  },
+  "attacks": [
+    {
+      "attack": "sequence_uses_future_bar",
+      "result": "BLOCKED",
+      "note": "SequenceCausalityViolation: [RT-1] SEQUENCE_CAUSALITY_VIOLATION: una feature dello state_snapshot usa informazione fino a t=9, oltre observation_cutoff_index=5 - lookahead nel setup stesso."
+    },
+    {
+      "attack": "outcome_used_as_trigger",
+      "result": "BLOCKED",
+      "note": "sequence_semantic_leakage_guard.check_sequence_leakage ha classificato FAIL: L'outcome misura praticamente lo stesso evento usato come trigger (nessuna informazione nuova fra setup e outcome) - richiede una diversa definizione di outcome, non solo uno spostamento temporale."
+    },
+    {
+      "attack": "duplicate_events_same_episode_double_counted",
+      "result": "BLOCKED",
+      "note": "l'EPISODE VIEW collassa correttamente eventi duplicati/ravvicinati in un solo episodio."
+    },
+    {
+      "attack": "baseline_fishes_from_next_split",
+      "result": "BLOCKED",
+      "note": "CrossSplitViolation: Evento alla riga 10 (split=discovery) ha ricevuto 1 controlli da split diversi: [{'control_row': 120, 'control_split': 'internal_validation'}]. Matching within-split-only violato senza eccezione dichiarata."
+    },
+    {
+      "attack": "direction_mismatch_control_used",
+      "result": "BLOCKED",
+      "note": "nessun controllo di direzione diversa e' comparso nei match finali (filtro direction-aware)."
+    },
+    {
+      "attack": "detector_changed_after_outcome",
+      "result": "BLOCKED",
+      "note": "DetectorVersionMismatchError: [RT-6] detector_version dell'evento ('toy-v2-hotfix') non corrisponde alla versione congelata nel frozen spec ('toy-v1') - il detector e' cambiato durante la run, rifiutato."
+    },
+    {
+      "attack": "outcome_shopping",
+      "result": "BLOCKED",
+      "note": "OutcomeShoppingBlocked: Outcome 'CONTINUATION_PROBABILITY' non era pre-registrato (ne' primary ne' secondary ne' diagnostic) e i risultati sono gia' stati osservati - aggiunta post-hoc bloccata. Se genuinamente interessante, va registrato come POST_HOC_OBSERVATION (post_hoc_quarantine.py), mai come outcome di questa run."
+    },
+    {
+      "attack": "repeated_validation_access",
+      "result": "BLOCKED",
+      "note": "ValidationAccessViolation: [RT-SEQFAM-1] accesso a 'locked_validation' rifiutato: gia' 1/1 letture consentite esaurite. Serve nuova hypothesis/candidate identity, oppure allow_contaminated_reentry=True con prior_state in {CONTAMINATED,REUSED} e una reentry_reason esplicita (mai un'eccezione silenziosa)."
+    },
+    {
+      "attack": "post_hoc_parameter_change_uncommitted_spec",
+      "result": "BLOCKED",
+      "note": "PreRegistrationProvenanceError: Frozen spec 'server/research_scripts/phase7/phase7_3/schemas/sequence_family_frozen_spec_v1.schema.json' non e' pronto per una nuova discovery run: file non tracciato da git (mai committato). Regola obbligatoria: PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT. Committa il frozen spec in un commit dedicato PRIMA di eseguire questa run."
+    },
+    {
+      "attack": "failed_idea_renamed",
+      "result": "BLOCKED",
+      "note": "DirectRepeatBlockedError: failure_memory_relation=DIRECT_REPEAT_OF_FAILED_IDEA (prior_failure_ids=['SEQ-0010']) - bloccato. Serve un direct_repeat_override documentato e pre-registrato nel frozen spec stesso."
+    }
+  ],
+  "n_attacks": 10,
+  "n_blocked": 10,
+  "n_residual_blockers": 0
+}

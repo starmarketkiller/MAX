@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sequence_evidence_record_v3.schema.json",
+  "title": "NEXUS Phase 7.3 - Sequence Evidence Record v3",
+  "description": "Evoluzione di candidate_result_v2.schema.json (Phase 7.0) per il Sequence Discovery Engine - aggiunge EVENT/EPISODE view native, dependence_status, e la separazione PRIMARY/SECONDARY/DIAGNOSTIC di outcome_surface_v3. Fase 7.3: SOLO schema + esempio sintetico (sequence_evidence_record_v3_synthetic_example.json) - nessun'istanza reale, nessun dato NEXUS.",
+  "type": "object",
+  "required": [
+    "event_view_n", "episode_view_n", "episode_cluster_count", "dependence_status", "delta_p", "delta_e",
+    "baseline_quality", "uncertainty", "effect_size", "primary_outcome_result", "secondary_outcomes",
+    "diagnostic_outcomes", "validation_access_state", "provenance"
+  ],
+  "properties": {
+    "event_view_n": {"type": "integer"},
+    "episode_view_n": {"type": "integer"},
+    "episode_cluster_count": {"type": "integer"},
+    "dependence_status": {"type": "string", "enum": ["NOT_SENSITIVE", "DEPENDENCE_SENSITIVE"]},
+    "delta_p": {"type": ["number", "null"]},
+    "delta_e": {"type": ["number", "null"]},
+    "baseline_quality": {
+      "type": "object",
+      "properties": {
+        "match_quality_counts": {"type": "object"},
+        "n_rejected_insufficient_pool": {"type": "integer"},
+        "match_dimensions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "properties": {
+        "method": {"type": "string"},
+        "wilson_ci": {"type": "object"},
+        "block_bootstrap_ci": {"type": ["object", "null"]}
+      }
+    },
+    "effect_size": {
+      "type": "object",
+      "properties": {
+        "materiality_threshold": {"type": "number"},
+        "above_materiality": {"type": "boolean"}
+      }
+    },
+    "primary_outcome_result": {
+      "type": "object",
+      "properties": {
+        "outcome_id": {"type": "string"},
+        "event_probability": {"type": "object"},
+        "baseline_probability": {"type": "object"}
+      }
+    },
+    "secondary_outcomes": {"type": "array", "items": {"type": "object"}},
+    "diagnostic_outcomes": {"type": "array", "items": {"type": "object"}},
+    "validation_access_state": {
+      "type": "object",
+      "properties": {
+        "split_evaluated": {"type": "string", "enum": ["discovery", "internal_validation", "locked_validation", "final_holdout"]},
+        "access_id": {"type": ["string", "null"]},
+        "access_count_for_candidate_split": {"type": "integer"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "sequence_family_id": {"type": "string"},
+        "detector_version": {"type": "string"},
+        "frozen_spec_commit_sha": {"type": ["string", "null"], "description": "popolato da preregistration_provenance_guard.py"},
+        "dataset_version_hash": {"type": ["string", "null"]},
+        "lifecycle_state": {"type": "string", "description": "riferimento a candidate_lifecycle.py - stesso lifecycle di Phase 7.0/7.1, nessun lifecycle parallelo."}
+      }
+    }
+  },
+  "additionalProperties": false
+}

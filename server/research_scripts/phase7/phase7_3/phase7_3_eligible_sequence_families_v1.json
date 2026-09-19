@@ -1,0 +1,375 @@
+{
+  "generated_at": "2026-09-19T23:07:49.711945+00:00",
+  "generation_script": "phase7/phase7_3/build_eligible_sequence_families.py",
+  "canonical_sha256": "4fc0f8644d1e53e0d0212c7a06156581b1b5de36faf6a29c54d826b8106709a3",
+  "payload": {
+    "criteria": [
+      "READY_FOR_FORMALIZATION",
+      "causal_observability_status=OBSERVABLE_AT_DECISION_TIME",
+      "nessun TRIGGER_TF piu' fine di H4",
+      "nessun note_gap (VWAP/session/calendar/multi-asset)",
+      "failure_memory_relation != DIRECT_REPEAT_OF_FAILED_IDEA",
+      "semantic_leakage_status_after_correction == PASS"
+    ],
+    "n_sequences_total": 20,
+    "n_eligible": 6,
+    "eligible_sequence_ids": [
+      "SEQ-0001",
+      "SEQ-0009",
+      "SEQ-0014",
+      "SEQ-0015",
+      "SEQ-0016",
+      "SEQ-0020"
+    ],
+    "all_sequences": [
+      {
+        "sequence_id": "SEQ-0001",
+        "mechanism_id": "MECH-01",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "directional_efficiency"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0002",
+        "mechanism_id": "MECH-02",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION"
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0003",
+        "mechanism_id": "MECH-06",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION",
+          "richiede TRIGGER_TF piu' fine di H4: H1/M15 se disponibile - gap dichiarato"
+        ],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "BREAKOUT (build_events.py, esistente)",
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0004",
+        "mechanism_id": "MECH-08",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION"
+        ],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "FAILED_BREAKOUT (build_events.py, esistente)",
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0005",
+        "mechanism_id": "MECH-10",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION"
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0006",
+        "mechanism_id": "MECH-12",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION",
+          "note_gap: richiede un calendario macro esterno (date FOMC storiche) non ancora integrato in NEXUS - dipendenza dati dichiarata."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0007",
+        "mechanism_id": "MECH-13",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION",
+          "note_gap: richiede calendario di festivita' culturali esterno (es. India/Cina) non ancora integrato in NEXUS."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0008",
+        "mechanism_id": "MECH-17",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION",
+          "note_gap: richiede la formalizzazione timezone-safe del session_clock_model (gap dichiarato in Phase 7.0B/7.2)."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0009",
+        "mechanism_id": "MECH-18",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "SWEEP (build_events.py, esistente)",
+        "feature_dependencies": [
+          "atr",
+          "dist_from_rolling_high_atr",
+          "dist_from_rolling_low_atr",
+          "dist_from_prev_day_high_atr",
+          "dist_from_prev_day_low_atr",
+          "dist_from_prev_week_high_atr",
+          "dist_from_prev_week_low_atr"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE"
+      },
+      {
+        "sequence_id": "SEQ-0010",
+        "mechanism_id": "MECH-19",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+        "blocking_gaps": [
+          "implementation_status=NOT_IMPLEMENTABLE_AS_DESCRIBED",
+          "failure_memory_relation=DIRECT_REPEAT_OF_FAILED_IDEA"
+        ],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "SWEEP+RECLAIM (build_events.py, esistente)",
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "DIRECT_REPEAT_OF_FAILED_IDEA"
+      },
+      {
+        "sequence_id": "SEQ-0011",
+        "mechanism_id": "MECH-19",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION",
+          "richiede TRIGGER_TF piu' fine di H4: M15/M5 per il displacement pre-sweep - gap dichiarato"
+        ],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "SWEEP+RECLAIM (build_events.py, esistente)",
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE"
+      },
+      {
+        "sequence_id": "SEQ-0012",
+        "mechanism_id": "MECH-20",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION"
+        ],
+        "detector_feasibility": "HIGH (detector Phase 5 gia' esistente)",
+        "existing_detector_reference": "SWEEP (build_events.py, esistente, assenza di RECLAIM)",
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE"
+      },
+      {
+        "sequence_id": "SEQ-0013",
+        "mechanism_id": "MECH-21",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+        "blocking_gaps": [
+          "implementation_status=NEEDS_ADDITIONAL_SPECIFICATION"
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0014",
+        "mechanism_id": "MECH-23",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "directional_efficiency",
+          "atr_percentile o variance_ratio_proxy (rapporto vol/deriva)"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0015",
+        "mechanism_id": "MECH-25",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "atr",
+          "close/open/high/low (true range barra)"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0016",
+        "mechanism_id": "MECH-26",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "atr (banda di volatilita' - proxy da definire, es. multiplo di ATR)",
+          "trend_state derivato"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0017",
+        "mechanism_id": "MECH-28",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+        "blocking_gaps": [
+          "implementation_status=NOT_IMPLEMENTABLE_AS_DESCRIBED",
+          "causal_observability_status=REQUIRES_LOOKAHEAD_TO_DEFINE",
+          "note_gap: Il calcolo del profilo di volume/value area richiede dati di volume intrabar non disponibili nella pipeline H4 attuale di NEXUS - causal_observability_status marcato REQUIRES_LOOKAHEAD_TO_DEFINE in modo cautelativo finche' non verificato come costruibile causalmente con i dati disponibili."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "REQUIRES_LOOKAHEAD_TO_DEFINE",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0018",
+        "mechanism_id": "MECH-29",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+        "blocking_gaps": [
+          "implementation_status=NOT_IMPLEMENTABLE_AS_DESCRIBED",
+          "note_gap: VWAP di sessione non calcolato oggi in NEXUS (richiede dati di volume e aggregazione per sessione) - gap dichiarato, vedi mechanism_proxy_registry_v1.json."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0019",
+        "mechanism_id": "MECH-32",
+        "eligible_for_first_technical_family": false,
+        "readiness_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+        "blocking_gaps": [
+          "implementation_status=NOT_IMPLEMENTABLE_AS_DESCRIBED",
+          "note_gap: Richiede un secondo strumento cointegrato con XAUUSD (non identificato/testato) - NEXUS oggi lavora su un singolo strumento."
+        ],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "da determinare in fase di formalizzazione"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      },
+      {
+        "sequence_id": "SEQ-0020",
+        "mechanism_id": "MECH-33",
+        "eligible_for_first_technical_family": true,
+        "readiness_status": "READY_FOR_FORMALIZATION",
+        "blocking_gaps": [],
+        "detector_feasibility": "MEDIUM (derivabile da feature/OHLC esistenti, nuovo detector da scrivere)",
+        "existing_detector_reference": null,
+        "feature_dependencies": [
+          "ema_slope_raw o feature equivalenti a media mobile corta/lunga sul midpoint"
+        ],
+        "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
+        "leakage_status": "PASS",
+        "failure_memory_relation": "NOVEL"
+      }
+    ],
+    "note": "Inventario, non selezione - nessuna sequence e' scelta come 'la prima family' in questo artifact. SEQ-0009 e' eligible per i criteri LETTERALI sopra ma ha failure_memory_relation=RELATED_TO_PREVIOUS_FAILURE (componente della famiglia SWEEP/RECLAIM) - inclusa con questa relazione visibile, non esclusa arbitrariamente."
+  }
+}

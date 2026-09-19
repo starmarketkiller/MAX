@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sequence_detector_contract_v1.json",
+  "title": "NEXUS Phase 7.3 - Sequence Detector Contract",
+  "description": "Interfaccia STANDARD che ogni detector di sequence deve rispettare (sec.2). Un detector e' una funzione detect_sequence(bars, market_state, frozen_params) -> lista di sequence_event conformi a questo schema. Nessuna informazione successiva a observation_cutoff_index puo' entrare nelle feature del setup (enforcement runtime in sequence_causality_guard.py, non solo dichiarazione).",
+
+  "function_signature": {
+    "name": "detect_sequence",
+    "parameters": {
+      "bars": "DataFrame/array di barre OHLC H4 (o timeframe dichiarato), SOLO lettura - il detector non modifica mai i dati sorgente.",
+      "market_state": "DataFrame/array di feature causali gia' calcolate (feature_registry_v2.json), stesso indice di bars.",
+      "frozen_params": "dict di parametri CONGELATI PRIMA della run (soglie, finestre, k) - MAI modificati durante la detection stessa (sec.8, no post-hoc parameter change)."
+    },
+    "returns": "Lista di oggetti sequence_event, ciascuno conforme allo schema 'properties' sotto."
+  },
+
+  "type": "object",
+  "required": [
+    "sequence_event_id", "sequence_id", "direction", "event_a_index", "transition_complete_index",
+    "observation_cutoff_index", "prediction_start_index", "state_snapshot", "detector_version"
+  ],
+  "properties": {
+    "sequence_event_id": {"type": "string", "description": "ID univoco e DETERMINISTICO dell'occorrenza (es. hash di sequence_id+event_a_index+detector_version) - due run identiche sugli stessi dati devono produrre lo stesso id, mai un id casuale/basato sul tempo di esecuzione."},
+    "sequence_id": {"type": "string", "description": "riferimento a market_sequence_registry_v1.json"},
+    "direction": {"type": "string", "enum": ["BUY", "SELL"], "description": "Direzione RISOLTA per questa specifica occorrenza (non l'enum generico BOTH/CONTEXT_DEPENDENT della sequence astratta)."},
+    "event_a_index": {"type": "integer", "description": "Indice di barra dell'evento A."},
+    "transition_complete_index": {"type": "integer", "description": "Indice di barra in cui la transition si risolve (>= event_a_index)."},
+    "event_b_index_optional": {"type": ["integer", "null"]},
+    "observation_cutoff_index": {"type": "integer", "description": "Ultimo indice di barra la cui informazione puo' essere usata per costruire lo state_snapshot - DEVE essere <= transition_complete_index."},
+    "prediction_start_index": {"type": "integer", "description": "Primo indice da cui si misura l'outcome - DEVE essere >= transition_complete_index."},
+    "state_snapshot": {
+      "type": "object",
+      "description": "Snapshot CAUSALE delle feature al momento del trigger (sec.5) - SOLO feature con leakage_risk=LOW/CAUSAL_SAFE in feature_registry_v2.json, congelate a observation_cutoff_index. Mai una feature calcolata guardando barre dopo observation_cutoff_index.",
+      "properties": {
+        "volatility_state": {"type": ["string", "null"]},
+        "trend_state": {"type": ["string", "null"]},
+        "directional_efficiency": {"type": ["number", "null"]},
+        "position_in_rolling_range": {"type": ["number", "null"]},
+        "roc": {"type": ["number", "null"]},
+        "session_bucket_if_available": {"type": ["string", "null"]},
+        "sequence_specific_state": {"type": "object", "description": "Feature aggiuntive specifiche della sequence, dichiarate nel frozen spec - MAI aggiunte dopo aver visto l'outcome (sec.5, sec.8)."}
+      }
+    },
+    "detector_version": {"type": "string", "description": "Versione del codice detector (es. hash del file o tag esplicito) - per riproducibilita' e per rilevare 'detector cambia dopo outcome' (red-team sec.17)."}
+  },
+  "additionalProperties": false,
+
+  "hard_requirements": [
+    "observation_cutoff_index <= transition_complete_index (enforcement: sequence_causality_guard.py)",
+    "transition_complete_index <= prediction_start_index",
+    "prediction_start_index < outcome_window_start_index (verificato a valle, non da questo contratto - il detector non conosce l'outcome)",
+    "state_snapshot non contiene MAI una feature con leakage_risk diverso da LOW (feature_registry_v2.json)",
+    "sequence_event_id e' deterministico - la stessa run sugli stessi dati produce sempre lo stesso id"
+  ]
+}

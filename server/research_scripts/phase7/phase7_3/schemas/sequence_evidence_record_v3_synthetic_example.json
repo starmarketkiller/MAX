@@ -1,0 +1,49 @@
+{
+  "_SYNTHETIC_FIXTURE_ONLY": true,
+  "_note": "Esempio sintetico per validare sequence_evidence_record_v3.schema.json - nessun dato NEXUS, nessun ΔP reale.",
+  "event_view_n": 84,
+  "episode_view_n": 37,
+  "episode_cluster_count": 37,
+  "dependence_status": "NOT_SENSITIVE",
+  "delta_p": 0.081,
+  "delta_e": 0.14,
+  "baseline_quality": {
+    "match_quality_counts": {"GOOD": 150, "FAIR": 20, "POOR": 5},
+    "n_rejected_insufficient_pool": 0,
+    "match_dimensions": ["volatility_state", "directional_efficiency"]
+  },
+  "uncertainty": {
+    "method": "WILSON_CI95",
+    "wilson_ci": {"event": [0.42, 0.61], "baseline": [0.38, 0.50], "non_overlapping": false},
+    "block_bootstrap_ci": null
+  },
+  "effect_size": {
+    "materiality_threshold": 0.10,
+    "above_materiality": false
+  },
+  "primary_outcome_result": {
+    "outcome_id": "P_PLUS_1ATR_BEFORE_MINUS_1ATR",
+    "event_probability": {"n": 84, "wins": 43, "losses": 41, "observed_p": 0.512},
+    "baseline_probability": {"n": 175, "wins": 76, "losses": 99, "observed_p": 0.434}
+  },
+  "secondary_outcomes": [
+    {"outcome_id": "MFE", "event_mean": 0.71, "baseline_mean": 0.58},
+    {"outcome_id": "TIME_TO_TARGET", "event_mean_bars": 6.2, "baseline_mean_bars": 7.9}
+  ],
+  "diagnostic_outcomes": [
+    {"outcome_id": "MAE", "event_mean": 0.63},
+    {"outcome_id": "PATH_EFFICIENCY", "event_mean": 0.29}
+  ],
+  "validation_access_state": {
+    "split_evaluated": "discovery",
+    "access_id": null,
+    "access_count_for_candidate_split": 1
+  },
+  "provenance": {
+    "sequence_family_id": "SEQFAM-DEMO-SYNTHETIC",
+    "detector_version": "sequence_episode_engine.py@synthetic-demo-v1",
+    "frozen_spec_commit_sha": null,
+    "dataset_version_hash": null,
+    "lifecycle_state": "DISCOVERY_SIGNAL"
+  }
+}

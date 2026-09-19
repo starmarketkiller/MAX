@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sequence_family_frozen_spec_v1.schema.json",
+  "title": "NEXUS Phase 7.3 - Sequence Family Frozen Spec",
+  "description": "Documento di pre-registrazione per UNA sequence family, da committare (engine/preregistration_provenance_guard.py, riusato da Phase 7.1) PRIMA di qualunque run reale. Analogo a phase7_1_frozen_spec_v1.json ma generalizzato al Sequence Discovery Engine v1 - copre 1+ sequence_id correlate della stessa family, non solo un singolo candidato.",
+  "type": "object",
+  "required": [
+    "sequence_family_id", "sequence_ids", "detector_version", "frozen_parameters",
+    "state_prerequisites", "observation_cutoff_definition", "prediction_start_definition",
+    "episode_gap_rule", "baseline_match_dimensions", "primary_outcome", "secondary_outcomes",
+    "diagnostic_outcomes", "minimum_sample_gate", "effect_size_gate", "uncertainty_method",
+    "multiple_testing_family", "failure_memory_links", "no_rescue_clause"
+  ],
+  "properties": {
+    "sequence_family_id": {"type": "string", "pattern": "^SEQFAM-[A-Z0-9_]+$"},
+    "sequence_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "riferimenti a market_sequence_registry_v1.json"},
+    "detector_version": {"type": "string", "description": "versione/hash del codice detector congelato per questa run."},
+    "frozen_parameters": {"type": "object", "description": "TUTTI i parametri numerici (soglie, finestre, k) - nessuno modificabile durante la run (sec.8, no post-hoc parameter change)."},
+    "state_prerequisites": {"type": "array", "items": {"type": "string"}, "description": "initial_state_conditions della/e sequence, SOLO feature CAUSAL_SAFE."},
+    "observation_cutoff_definition": {"type": "string", "description": "Definizione operativa di observation_cutoff_index per questa family."},
+    "prediction_start_definition": {"type": "string", "description": "Definizione operativa di prediction_start_index - DEVE essere >= transition_complete_index per costruzione."},
+    "episode_gap_rule": {"type": "integer", "description": "Soglia di gap (in barre) per il clustering EPISODE VIEW - dichiarata ex-ante (sec.4)."},
+    "natural_horizon": {"type": ["integer", "null"], "description": "Orizzonte naturale dell'evento, se rilevante per overlap_policy."},
+    "overlap_policy": {"type": "string", "enum": ["COLLAPSE_TO_FIRST", "COLLAPSE_TO_LAST", "NO_COLLAPSE_INDEPENDENT_HORIZON"]},
+    "baseline_match_dimensions": {"type": "array", "items": {"type": "string"}, "minItems": 1, "description": "Dichiarate per QUESTA family - mai ereditate automaticamente da un'altra family (sec.6)."},
+    "baseline_k": {"type": "integer", "minimum": 1},
+    "primary_outcome": {"type": "string", "description": "Congelato - riferimento a outcome_surface_v3.ALL_OUTCOME_DEFINITIONS."},
+    "secondary_outcomes": {"type": "array", "items": {"type": "string"}},
+    "diagnostic_outcomes": {"type": "array", "items": {"type": "string"}},
+    "minimum_sample_gate": {"type": "object", "description": "n_nominal_minimum, cluster_count_minimum, effective_n_minimum - riferimento a minimum_evidence_gates.json (Phase 7.0)."},
+    "effect_size_gate": {"type": "object", "description": "minimum_material_delta_p e relativo status (POLICY_THRESHOLD/altro) - riferimento a effect_size_first_policy.json."},
+    "uncertainty_method": {"type": "string", "enum": ["WILSON_CI95", "BETA_BINOMIAL", "BLOCK_BOOTSTRAP"], "description": "riferimento a statistical_methods_policy.json (Phase 7.0) - allow-list, non un metodo nuovo inventato qui."},
+    "multiple_testing_family": {
+      "type": "object",
+      "properties": {
+        "family_id": {"type": "string"},
+        "family_size": {"type": "integer", "description": "= OutcomeSurfaceV3.inferential_family_size() x numero di candidati (es. direzioni) - MAI solo il conteggio dei candidati senza gli outcome secondary."}
+      }
+    },
+    "failure_memory_links": {
+      "type": "object",
+      "properties": {
+        "failure_memory_relation": {"type": "string", "enum": ["NOVEL", "RELATED_TO_PREVIOUS_FAILURE", "DIRECT_REPEAT_OF_FAILED_IDEA"]},
+        "prior_failure_ids": {"type": "array", "items": {"type": "string"}},
+        "direct_repeat_flag": {"type": "boolean"},
+        "related_failure_flag": {"type": "boolean"},
+        "novelty_note": {"type": ["string", "null"]}
+      },
+      "required": ["failure_memory_relation", "prior_failure_ids", "direct_repeat_flag", "related_failure_flag", "novelty_note"]
+    },
+    "no_rescue_clause": {"type": "string", "description": "Dichiarazione esplicita che le gate/soglie sopra non verranno modificate dopo aver visto un risultato di una qualunque fase (stesso principio di H006/Phase 7.1)."},
+    "direct_repeat_override": {
+      "type": ["object", "null"],
+      "description": "Obbligatorio (non null) SOLO se failure_memory_links.direct_repeat_flag=true - un DIRECT_REPEAT_OF_FAILED_IDEA e' bloccato salvo override DOCUMENTATO e PRE-REGISTRATO (sec.14).",
+      "properties": {
+        "override_reason": {"type": "string"},
+        "independent_mechanistic_justification": {"type": "string"},
+        "approved_by": {"type": "string"}
+      }
+    }
+  },
+  "additionalProperties": false
+}
