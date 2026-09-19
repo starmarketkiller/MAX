@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-09-19T14:27:06.358549+00:00",
+  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py",
+  "canonical_sha256": "55d13272a2361ed05bf1176e38e315ee62e90c42e1d73b14853ef9accfaaf3d8",
+  "payload": {
+    "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+    "family_id": "RECLAIM_FAMILY_P71",
+    "candidates_tested": [
+      "CAND-P71-RECLAIM-BOTH",
+      "CAND-P71-RECLAIM-BUY",
+      "CAND-P71-RECLAIM-SELL"
+    ],
+    "overall_verdict": "NO_SUPPORTED_CANDIDATE",
+    "verdict_meaning": "Nessun candidato della famiglia RECLAIM_FAMILY_P71 ha superato le gate minime gia' allo stadio di discovery screening su development.discovery - nessuna lettura di internal_validation/locked_validation/final_holdout e' stata consumata.",
+    "per_candidate_summary": {
+      "CAND-P71-RECLAIM-BOTH": {
+        "n_discovery": 179,
+        "delta_p_discovery": -0.06815642458100557,
+        "dependence_sensitive": true,
+        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+      },
+      "CAND-P71-RECLAIM-BUY": {
+        "n_discovery": 102,
+        "delta_p_discovery": -0.07058823529411762,
+        "dependence_sensitive": true,
+        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+      },
+      "CAND-P71-RECLAIM-SELL": {
+        "n_discovery": 77,
+        "delta_p_discovery": -0.0649350649350649,
+        "dependence_sensitive": true,
+        "final_lifecycle_state": "INSUFFICIENT_SAMPLE"
+      }
+    },
+    "final_holdout_accessed": false,
+    "no_rescue_clause_respected": true,
+    "no_post_hoc_promotion": true,
+    "generated_at": "2026-09-19T14:27:06.358549+00:00"
+  }
+}

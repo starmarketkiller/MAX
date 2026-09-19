@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+  "frozen_at_declared": "2026-09-19T00:00:00Z",
+  "frozen_before_any_outcome_computed_on_new_period": true,
+  "purpose": "Prima vera discovery run del Discovery Engine v2 - validare il PROCESSO su dati reali (2023-02-04..2026-09-16, mai toccati prima), non massimizzare il numero di edge trovati. Se nessun candidato supera i gate, il risultato corretto e' NO_SUPPORTED_CANDIDATE.",
+  "authorization": "Autorizzata esplicitamente dall'utente dopo verifica di Phase 7.0B (READY_FOR_PHASE_7_1=true, commit 5e3f726).",
+
+  "declared_limitation_carried_over_from_review": "Il dataset_version_hash protegge manifest/versioni/provenance, non e' un hash crittografico diretto di ogni file tick grezzo; il FINAL_HOLDOUT e' sigillato logicamente/proceduralmente, non a livello filesystem - non blocca questa run, riportato come limitazione dichiarata (vedi report finale).",
+
+  "event_family_FROZEN": {
+    "family": "RECLAIM",
+    "detector_source_of_truth": "server/research_scripts/phase5/build_events.py, funzioni SWEEP+RECLAIM, CFG dict - NESSUNA modifica, stesso codice, stessi parametri, IMPORTATO/RIUSATO letteralmente (zero drift semantico), identico al pattern gia' usato in H006_frozen_spec.json (Phase 6)",
+    "sweep_lookback_n": 20,
+    "reclaim_horizon": 10,
+    "observation_point": "chiusura della barra di CONFERMA del reclaim (confirmed_at_row_index)",
+    "firing_rate_status": "NORMAL (6.2% delle barre H4 su Phase 5 - vedi event_detector_health_v1.json) - non PATHOLOGICAL, ammesso per discovery",
+    "why_this_family": "Unica famiglia scelta PRIMA di guardare il nuovo periodo - continuita' metodologica con Phase 5/6 (stesso detector, mai modificato), firing rate gia' verificato NORMAL, nessuna nuova famiglia inventata per questa fase."
+  },
+
+  "primary_outcome_FROZEN": {
+    "definition": "P(+1.0xATR before -1.0xATR) dalla chiusura della barra di conferma reclaim, orizzonte 40 barre H4, nessuna gestione dinamica - IDENTICO alla soglia primaria di Phase 5/H006 (PRIMARY_THRESHOLD=1.0)",
+    "outcome_basis": "ATR_NORMALIZED",
+    "implementation_reused": "server/research_scripts/phase5/edge_discovery.py:atr_outcome_for_bar (importato, non riscritto) - stessa formula usata da H006",
+    "horizon_bars": 40,
+    "secondary_outcomes_diagnostic_only": ["mfe_ATR medio (DeltaE)", "soglie 0.25/0.5/1.5/2/3xATR - non usate per il verdetto primario"]
+  },
+
+  "candidate_family_FROZEN": {
+    "family_id": "RECLAIM_FAMILY_P71",
+    "family_size": 3,
+    "candidates": [
+      {"candidate_id": "CAND-P71-RECLAIM-BOTH", "direction": "BOTH", "complexity_level": 0},
+      {"candidate_id": "CAND-P71-RECLAIM-BUY", "direction": "BUY", "complexity_level": 0},
+      {"candidate_id": "CAND-P71-RECLAIM-SELL", "direction": "SELL", "complexity_level": 0}
+    ],
+    "note_no_sell_asymmetry_rescue": "Le tre varianti (BOTH/BUY/SELL) sono pre-registrate TUTTE INSIEME ora, prima di guardare il nuovo periodo - non sono scelte dopo aver visto che BOTH e' debole. Nessuna delle tre puo' essere promossa individualmente senza passare per la stessa sequenza completa discovery->internal_validation->locked_validation. Multiple testing (BH-FDR) applicato sull'intera famiglia di 3, non solo al candidato che dovesse apparire piu' forte.",
+    "no_new_h007": "Questa run NON crea un nuovo hypothesis_id in stile 'H007' - usa esclusivamente la nomenclatura nativa v2 (candidate_id/family_id), come richiesto esplicitamente."
+  },
+
+  "baseline_v4_FROZEN": {
+    "engine": "server/research_scripts/phase7/engine/baseline_engine_v4.py",
+    "match_dimensions": ["volatility_state", "trend_state", "directional_efficiency", "position_in_rolling_range", "roc"],
+    "match_dimensions_rationale": "2 dimensioni categoriche coarsened (volatility_state da atr_percentile, trend_state da ema_slope_atr_norm, terzili) + 3 dimensioni numeriche NN standardizzate (directional_efficiency, position_in_rolling_range, roc) - stesso set di feature NN gia' usato in H006 (Phase 6), 'anno' escluso deliberatamente perche' il solo development.discovery copre ~1.5 anni (2023-02..2024-08), troppo poco per una terza dimensione temporale senza frammentare il pool - decisione presa PRIMA di calcolare qualunque effetto, per ragioni di dimensione del pool, non di risultato.",
+    "k": 5,
+    "k_frozen_no_optimization": true,
+    "coarsening_method": "terzili 33/67 di atr_percentile (volatility_state: LOW/MED/HIGH) e ema_slope_atr_norm (trend_state: DOWN/FLAT/UP), calcolati SOLO su development.discovery - stesso schema di frozen_baseline_parameters.json (Phase 6/H006)",
+    "discovery_fitted_only": "Tutti i parametri (terzili + media/std delle 3 feature NN) sono calcolati ESCLUSIVAMENTE su development.discovery e poi RIUSATI CONGELATI su internal_validation/locked_validation/final_holdout - enforcement tecnico via BaselineEngineV4.fit_normalization (FitIsolationViolation).",
+    "baseline_population": "Barre non-SWEEP/non-RECLAIM ALL'INTERNO dello stesso split dell'evento (mai cross-split - enforcement cross_split_safety.py), stessa regola di H006.",
+    "match_quality_thresholds": "GOOD<0.5, FAIR<1.0, POOR>=1.0 (baseline_contract_v4.json, invariato)"
+  },
+
+  "minimum_evidence_gates_FROZEN": {
+    "reference": "server/research_scripts/phase7/policies/minimum_evidence_gates.json, con UN override esplicito dichiarato qui prima di vedere risultati",
+    "n_nominal_minimum": 30,
+    "cluster_count_minimum": 20,
+    "effective_n_minimum": 20,
+    "minimum_controls_per_match": 20,
+    "minimum_material_delta_p_OVERRIDE": {
+      "value": 0.15,
+      "status": "POLICY_THRESHOLD (override pre-registrato)",
+      "rationale": "Non il default 0.10 di minimum_evidence_gates.json - usato invece lo stesso valore di H006_frozen_spec.json (0.15, circa meta' del DeltaP osservato in validation Phase 5 ~0.30) per continuita' diretta con la famiglia RECLAIM gia' testata storicamente - dichiarato ORA, non dopo aver visto l'effetto sul nuovo periodo."
+    },
+    "uncertainty_requirement": "Wilson CI95(evento) e Wilson CI95(baseline) non sovrapposte - POLICY_THRESHOLD_WITH_STATISTICAL_RATIONALE (invariato da minimum_evidence_gates.json)",
+    "stability_requirement": "Segno dell'effetto coerente in EVENT VIEW e EPISODE VIEW (dependence_diagnostics_v2.py) - un candidato DEPENDENCE_SENSITIVE non puo' essere promosso oltre INTERNAL_VALIDATION basandosi solo sulla EVENT VIEW."
+  },
+
+  "multiple_testing_FROZEN": {
+    "family_id": "RECLAIM_FAMILY_P71",
+    "family_size": 3,
+    "method": "Benjamini-Hochberg FDR, q=0.10 (multiple_testing_v2.run_family)",
+    "guardrail": "FDR correction != independent validation - un adjusted_p significativo NON autorizza da solo alcuna promozione oltre INTERNAL_VALIDATION."
+  },
+
+  "phase_by_phase_procedure_FROZEN": {
+    "1_discovery_screening": "Calcolare ΔP/CI/dependence/gates SOLO su development.discovery per ciascuno dei 3 candidati. Se un candidato non supera anche una sola gate hard (n_nominal, ΔP>0, controlli sufficienti) -> lifecycle a INSUFFICIENT_SAMPLE o CONTAMINATED, NESSUNA lettura di internal_validation spesa per quel candidato.",
+    "2_internal_validation": "Per i candidati con DISCOVERY_SIGNAL: UNA lettura di development.internal_validation via ValidationAccessLedger (LIMITED, max 3 - qui ne useremo UNA). Ricalcolo IDENTICO (stessi parametri baseline congelati). Se le gate reggono -> PRE_REGISTERED_CANDIDATE, altrimenti -> REFUTED.",
+    "3_locked_validation": "Per i PRE_REGISTERED_CANDIDATE: UNA lettura ONE-SHOT di locked_validation via ValidationAccessLedger. Applicare i criteri PASS/BORDERLINE/FAIL congelati sotto. Nessuna seconda lettura possibile per lo stesso candidate_id (enforcement tecnico, non solo promessa).",
+    "4_final_holdout_conditional": "FINAL_HOLDOUT viene letto (ONE-SHOT) SOLO SE almeno un candidato della famiglia raggiunge un verdetto PASS su locked_validation. Se NESSUN candidato raggiunge PASS su locked_validation, il FINAL_HOLDOUT NON viene toccato in questa run - il risultato finale e' riportato cosi' com'e' (eventualmente NO_SUPPORTED_CANDIDATE)."
+  },
+
+  "pass_fail_criteria_FROZEN_per_phase": {
+    "PASS": "DeltaP > 0 AND DeltaP >= 0.15 AND CI95 Wilson (evento) non sovrapposta a CI95 Wilson (baseline) AND n >= 30 AND (per BOTH) direction_consistency_ok (BUY e SELL individualmente con lo stesso segno dell'aggregato)",
+    "BORDERLINE": "DeltaP > 0 MA (DeltaP < 0.15 OR n < 30 OR CI95 sovrapposte OR direction_consistency non soddisfatta per BOTH OR DEPENDENCE_SENSITIVE=true)",
+    "FAIL_o_REFUTED": "DeltaP <= 0, OR n sotto il minimo con effetto non chiaramente positivo, OR inversione di segno rispetto a un'aspettativa dichiarata"
+  },
+  "no_rescue_clause": "Questi criteri NON verranno modificati dopo aver visto un risultato di una qualunque fase (discovery/internal_validation/locked_validation/final_holdout), indipendentemente da quanto vicino al limite cada il numero effettivo.",
+
+  "post_hoc_discipline": "Qualunque pattern interessante notato FUORI da questa sequenza pre-registrata (es. un sottogruppo, un quarto, un regime specifico che sembra promettente) viene registrato come POST_HOC_OBSERVATION (engine/post_hoc_quarantine.py) - MAI promosso a candidato valido in questa stessa run.",
+  "no_parameter_optimization": "k=5, soglie di outcome, terzili di coarsening: tutti fissati PRIMA di questa run, nessuna ricerca a griglia, nessun tentativo di 'migliorare' un risultato debole cambiando un parametro dopo averlo visto.",
+
+  "failure_memory_check": "Prima di qualunque promozione, la signature del candidato viene verificata contro failure_memory_registry_v1.json (candidate_signature.py + controlli manuali sui pattern FAIL-001..FAIL-008) - un match richiede una research_journal entry GATE_OVERRIDE_REQUEST prima di procedere, mai un bypass silenzioso."
+}

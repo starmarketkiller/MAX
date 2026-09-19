@@ -1,0 +1,372 @@
+{
+  "generated_at": "2026-09-19T14:27:06.357041+00:00",
+  "generation_script": "phase7/phase7_1/build_phase7_1_evidence.py",
+  "canonical_sha256": "19d7cb76a3ef7109577204de3494726324a31e5300bfc7562df1bc92dbf0c357",
+  "payload": {
+    "run_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+    "family_id": "RECLAIM_FAMILY_P71",
+    "overall_verdict": "NO_SUPPORTED_CANDIDATE",
+    "candidates": [
+      {
+        "identity": {
+          "evidence_id": "EVD-P71-BOTH-001",
+          "schema_version": 2,
+          "candidate_id": "CAND-P71-RECLAIM-BOTH",
+          "family_id": "RECLAIM_FAMILY_P71",
+          "experiment_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+          "dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+          "created_at": "2026-09-19T14:24:10.770762+00:00"
+        },
+        "evidence_classification": {
+          "evidence_grade": "E1",
+          "evidence_type": "PRIMARY_EVIDENCE",
+          "validation_integrity": "DISCOVERY_ONLY",
+          "conclusion": "REFUTED_AT_DISCOVERY",
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=179, \u0394P=-0.0682) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+        },
+        "effect": {
+          "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
+          "event_probability": {
+            "n": 179,
+            "wins": 83,
+            "losses": 96,
+            "censored": 0,
+            "observed_p": 0.46368715083798884,
+            "wilson_ci95_low": 0.3921636796504506,
+            "wilson_ci95_high": 0.5367364719680692,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 84.0,
+              "posterior_beta": 97.0,
+              "posterior_mean": 0.46408839779005523,
+              "posterior_ci95_low": 0.3920968415492222,
+              "posterior_ci95_high": 0.5368318578356592
+            }
+          },
+          "baseline_probability": {
+            "n": 895,
+            "wins": 476,
+            "losses": 419,
+            "censored": 0,
+            "observed_p": 0.5318435754189944,
+            "wilson_ci95_low": 0.4990864447754788,
+            "wilson_ci95_high": 0.564328520612061,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 477.0,
+              "posterior_beta": 420.0,
+              "posterior_mean": 0.5317725752508361,
+              "posterior_ci95_low": 0.49907686806136087,
+              "posterior_ci95_high": 0.5643340778150989
+            }
+          },
+          "delta_p": -0.06815642458100557,
+          "delta_e": -1.3577052627519004,
+          "materiality_threshold": 0.15
+        },
+        "sample": {
+          "n_nominal": 179,
+          "n_effective": 72,
+          "n_clusters": 72,
+          "largest_cluster": null,
+          "overlap_rate": null,
+          "dependence_flag": "DEPENDENCE_SENSITIVE"
+        },
+        "uncertainty": {
+          "wilson_ci": {
+            "event": [
+              0.3921636796504506,
+              0.5367364719680692
+            ],
+            "baseline": [
+              0.4990864447754788,
+              0.564328520612061
+            ],
+            "non_overlapping": false
+          },
+          "posterior_interval": null,
+          "block_bootstrap_ci": null
+        },
+        "generalization_status": {
+          "temporal_robustness": "UNTESTED",
+          "feed_robustness": "UNTESTED",
+          "market_transferability": "UNTESTED"
+        },
+        "cost_scenarios": {
+          "ZERO_COST": null,
+          "BROKER_BASELINE": null,
+          "CONSERVATIVE": null,
+          "STRESS": null
+        },
+        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_history": [
+          "GENERATED",
+          "DISCOVERY_SIGNAL",
+          "INSUFFICIENT_SAMPLE"
+        ],
+        "signature": "f6b1625019b8d1f6944d846aa27c78105be87a2a294d4a525f0567b299184945",
+        "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
+        "failure_memory_check": {
+          "candidate_id": "CAND-P71-RECLAIM-BOTH",
+          "checked_patterns": [
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD"
+          ],
+          "matches_found": [],
+          "detail": {
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE": "Non applicabile - candidato pre-registrato PRIMA di guardare il periodo, nessuna selezione fra alternative dopo risultati.",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW": "Non applicabile - fit_frozen_baseline_params_p71.py verificato con test negativo (FitIsolationViolation) su internal_validation.",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT": "Verificato dependence diagnostics: n_nominal vs n_episodes riportato esplicitamente (vedi dependence.episode_view.n_episodes) - 179 eventi nominali vs 72 episodi, gate DEPENDENCE_SENSITIVE gia' applicato.",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
+          }
+        }
+      },
+      {
+        "identity": {
+          "evidence_id": "EVD-P71-BUY-001",
+          "schema_version": 2,
+          "candidate_id": "CAND-P71-RECLAIM-BUY",
+          "family_id": "RECLAIM_FAMILY_P71",
+          "experiment_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+          "dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+          "created_at": "2026-09-19T14:24:10.770762+00:00"
+        },
+        "evidence_classification": {
+          "evidence_grade": "E1",
+          "evidence_type": "PRIMARY_EVIDENCE",
+          "validation_integrity": "DISCOVERY_ONLY",
+          "conclusion": "REFUTED_AT_DISCOVERY",
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=102, \u0394P=-0.0706) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+        },
+        "effect": {
+          "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
+          "event_probability": {
+            "n": 102,
+            "wins": 48,
+            "losses": 54,
+            "censored": 0,
+            "observed_p": 0.47058823529411764,
+            "wilson_ci95_low": 0.376559145059517,
+            "wilson_ci95_high": 0.5667522938902748,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 49.0,
+              "posterior_beta": 55.0,
+              "posterior_mean": 0.47115384615384615,
+              "posterior_ci95_low": 0.37640073707297844,
+              "posterior_ci95_high": 0.5669582910812292
+            }
+          },
+          "baseline_probability": {
+            "n": 510,
+            "wins": 276,
+            "losses": 234,
+            "censored": 0,
+            "observed_p": 0.5411764705882353,
+            "wilson_ci95_low": 0.49778256533584686,
+            "wilson_ci95_high": 0.5839547084458235,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 277.0,
+              "posterior_beta": 235.0,
+              "posterior_mean": 0.541015625,
+              "posterior_ci95_low": 0.4977604132485369,
+              "posterior_ci95_high": 0.5839673035404702
+            }
+          },
+          "delta_p": -0.07058823529411762,
+          "delta_e": -1.5865570462816097,
+          "materiality_threshold": 0.15
+        },
+        "sample": {
+          "n_nominal": 102,
+          "n_effective": 40,
+          "n_clusters": 40,
+          "largest_cluster": null,
+          "overlap_rate": null,
+          "dependence_flag": "DEPENDENCE_SENSITIVE"
+        },
+        "uncertainty": {
+          "wilson_ci": {
+            "event": [
+              0.376559145059517,
+              0.5667522938902748
+            ],
+            "baseline": [
+              0.49778256533584686,
+              0.5839547084458235
+            ],
+            "non_overlapping": false
+          },
+          "posterior_interval": null,
+          "block_bootstrap_ci": null
+        },
+        "generalization_status": {
+          "temporal_robustness": "UNTESTED",
+          "feed_robustness": "UNTESTED",
+          "market_transferability": "UNTESTED"
+        },
+        "cost_scenarios": {
+          "ZERO_COST": null,
+          "BROKER_BASELINE": null,
+          "CONSERVATIVE": null,
+          "STRESS": null
+        },
+        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_history": [
+          "GENERATED",
+          "DISCOVERY_SIGNAL",
+          "INSUFFICIENT_SAMPLE"
+        ],
+        "signature": "30677ab3ae26530e639b759bb9867c24329f0bbd40f5694013a1e99f34bcd4b9",
+        "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
+        "failure_memory_check": {
+          "candidate_id": "CAND-P71-RECLAIM-BUY",
+          "checked_patterns": [
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD"
+          ],
+          "matches_found": [],
+          "detail": {
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE": "Non applicabile - candidato pre-registrato PRIMA di guardare il periodo, nessuna selezione fra alternative dopo risultati.",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW": "Non applicabile - fit_frozen_baseline_params_p71.py verificato con test negativo (FitIsolationViolation) su internal_validation.",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT": "Verificato dependence diagnostics: n_nominal vs n_episodes riportato esplicitamente (vedi dependence.episode_view.n_episodes) - 102 eventi nominali vs 40 episodi, gate DEPENDENCE_SENSITIVE gia' applicato.",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
+          }
+        }
+      },
+      {
+        "identity": {
+          "evidence_id": "EVD-P71-SELL-001",
+          "schema_version": 2,
+          "candidate_id": "CAND-P71-RECLAIM-SELL",
+          "family_id": "RECLAIM_FAMILY_P71",
+          "experiment_id": "PHASE7_1-FIRST-REAL-DISCOVERY-001",
+          "dataset_id": "DUKASCOPY_NEWPERIOD_2023H1_ONWARD_V1",
+          "created_at": "2026-09-19T14:24:10.770762+00:00"
+        },
+        "evidence_classification": {
+          "evidence_grade": "E1",
+          "evidence_type": "PRIMARY_EVIDENCE",
+          "validation_integrity": "DISCOVERY_ONLY",
+          "conclusion": "REFUTED_AT_DISCOVERY",
+          "grade_cap_reason": "Testato statisticamente su development.discovery (n=77, \u0394P=-0.0649) con Baseline Engine v4 (matched, direction-aware, k=5), dependence diagnostics v2 (EVENT vs EPISODE view) e multiple testing BH-FDR (famiglia di 3) - ma NON ha superato le gate minime di discovery (\u0394P<=0 e/o CI95 sovrapposte e/o dependence-sensitive), quindi NESSUNA lettura di internal_validation/locked_validation/final_holdout e' stata consumata per questo candidato. Storia lifecycle: GENERATED -> DISCOVERY_SIGNAL -> INSUFFICIENT_SAMPLE."
+        },
+        "effect": {
+          "primary_outcome": "P(+1.0xATR before -1.0xATR), horizon=40 H4, ATR_NORMALIZED",
+          "event_probability": {
+            "n": 77,
+            "wins": 35,
+            "losses": 42,
+            "censored": 0,
+            "observed_p": 0.45454545454545453,
+            "wilson_ci95_low": 0.3481416088677176,
+            "wilson_ci95_high": 0.5652691570670489,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 36.0,
+              "posterior_beta": 43.0,
+              "posterior_mean": 0.45569620253164556,
+              "posterior_ci95_low": 0.34792744438155065,
+              "posterior_ci95_high": 0.5655908672103909
+            }
+          },
+          "baseline_probability": {
+            "n": 385,
+            "wins": 200,
+            "losses": 185,
+            "censored": 0,
+            "observed_p": 0.5194805194805194,
+            "wilson_ci95_low": 0.4696282396359404,
+            "wilson_ci95_high": 0.5689478937977039,
+            "beta_binomial": {
+              "prior_alpha": 1.0,
+              "prior_beta": 1.0,
+              "posterior_alpha": 201.0,
+              "posterior_beta": 186.0,
+              "posterior_mean": 0.5193798449612403,
+              "posterior_ci95_low": 0.46959855669688366,
+              "posterior_ci95_high": 0.5689713829640837
+            }
+          },
+          "delta_p": -0.0649350649350649,
+          "delta_e": -1.0545509521021557,
+          "materiality_threshold": 0.15
+        },
+        "sample": {
+          "n_nominal": 77,
+          "n_effective": 34,
+          "n_clusters": 34,
+          "largest_cluster": null,
+          "overlap_rate": null,
+          "dependence_flag": "DEPENDENCE_SENSITIVE"
+        },
+        "uncertainty": {
+          "wilson_ci": {
+            "event": [
+              0.3481416088677176,
+              0.5652691570670489
+            ],
+            "baseline": [
+              0.4696282396359404,
+              0.5689478937977039
+            ],
+            "non_overlapping": false
+          },
+          "posterior_interval": null,
+          "block_bootstrap_ci": null
+        },
+        "generalization_status": {
+          "temporal_robustness": "UNTESTED",
+          "feed_robustness": "UNTESTED",
+          "market_transferability": "UNTESTED"
+        },
+        "cost_scenarios": {
+          "ZERO_COST": null,
+          "BROKER_BASELINE": null,
+          "CONSERVATIVE": null,
+          "STRESS": null
+        },
+        "lifecycle_state": "INSUFFICIENT_SAMPLE",
+        "lifecycle_history": [
+          "GENERATED",
+          "DISCOVERY_SIGNAL",
+          "INSUFFICIENT_SAMPLE"
+        ],
+        "signature": "9e9095fe1f5d0b8e7d3689a0f8a9cb99fb4eeea395e2753365d5f12ba1f6e186",
+        "dataset_version_hash": "78566884c3304c3d09286558548d446874a576bf607ca38cd86d62771472a18a",
+        "failure_memory_check": {
+          "candidate_id": "CAND-P71-RECLAIM-SELL",
+          "checked_patterns": [
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD"
+          ],
+          "matches_found": [],
+          "detail": {
+            "SELECTION_AFTER_VALIDATION_RESULTS_VISIBLE": "Non applicabile - candidato pre-registrato PRIMA di guardare il periodo, nessuna selezione fra alternative dopo risultati.",
+            "NORMALIZATION_FITTED_OUTSIDE_DISCOVERY_WINDOW": "Non applicabile - fit_frozen_baseline_params_p71.py verificato con test negativo (FitIsolationViolation) su internal_validation.",
+            "N_NOMINAL_FAR_ABOVE_CLUSTER_COUNT": "Verificato dependence diagnostics: n_nominal vs n_episodes riportato esplicitamente (vedi dependence.episode_view.n_episodes) - 77 eventi nominali vs 34 episodi, gate DEPENDENCE_SENSITIVE gia' applicato.",
+            "BASELINE_NOT_DIRECTION_SEGMENTED_WHEN_DIRECTION_MATTERS": "Non applicabile - Baseline Engine v4 direction-aware nativamente, ogni controllo valutato come ipotetico nella direzione dell'evento.",
+            "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD": "Non applicabile - RECLAIM classificato NORMAL in event_detector_health_v1.json (Phase 7.0B), non PATHOLOGICAL."
+          }
+        }
+      }
+    ]
+  }
+}
