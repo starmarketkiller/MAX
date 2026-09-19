@@ -1,0 +1,2975 @@
+{
+  "generated_at": "2026-09-19T21:40:30.473522+00:00",
+  "generation_script": "phase7/phase7_2/build_graph_and_diversity.py",
+  "canonical_sha256": "87539ba41a8352cd1fe06ce9a36f8169acb78cf5ed7dd029535674c959c7f98f",
+  "payload": {
+    "n_edges": 593,
+    "edges": [
+      {
+        "from": "SRC-0001",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0001"
+      },
+      {
+        "from": "CLAIM-0001",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-01"
+      },
+      {
+        "from": "SRC-0001",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0002"
+      },
+      {
+        "from": "CLAIM-0002",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-02"
+      },
+      {
+        "from": "SRC-0002",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0003"
+      },
+      {
+        "from": "CLAIM-0003",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0002",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0004"
+      },
+      {
+        "from": "CLAIM-0004",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0003",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0005"
+      },
+      {
+        "from": "CLAIM-0005",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-04"
+      },
+      {
+        "from": "SRC-0003",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0006"
+      },
+      {
+        "from": "CLAIM-0006",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-05"
+      },
+      {
+        "from": "SRC-0004",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0007"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0005",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0008"
+      },
+      {
+        "from": "CLAIM-0008",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "SRC-0006",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0009"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0006",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0010"
+      },
+      {
+        "from": "CLAIM-0010",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "SRC-0007",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0011"
+      },
+      {
+        "from": "CLAIM-0011",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-12"
+      },
+      {
+        "from": "SRC-0008",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0012"
+      },
+      {
+        "from": "CLAIM-0012",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-12"
+      },
+      {
+        "from": "SRC-0009",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0013"
+      },
+      {
+        "from": "CLAIM-0013",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0010",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0014"
+      },
+      {
+        "from": "CLAIM-0014",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-15"
+      },
+      {
+        "from": "SRC-0010",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0015"
+      },
+      {
+        "from": "CLAIM-0015",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-16"
+      },
+      {
+        "from": "SRC-0011",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0016"
+      },
+      {
+        "from": "CLAIM-0016",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-17"
+      },
+      {
+        "from": "SRC-0011",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0017"
+      },
+      {
+        "from": "CLAIM-0017",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-17"
+      },
+      {
+        "from": "SRC-0012",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0018"
+      },
+      {
+        "from": "CLAIM-0018",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0013",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0019"
+      },
+      {
+        "from": "CLAIM-0019",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-14"
+      },
+      {
+        "from": "SRC-0013",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0020"
+      },
+      {
+        "from": "CLAIM-0020",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-14"
+      },
+      {
+        "from": "SRC-0014",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0021"
+      },
+      {
+        "from": "CLAIM-0021",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-13"
+      },
+      {
+        "from": "SRC-0015",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0022"
+      },
+      {
+        "from": "CLAIM-0022",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-13"
+      },
+      {
+        "from": "SRC-0016",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0023",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-08"
+      },
+      {
+        "from": "CLAIM-0023",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0016",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0024"
+      },
+      {
+        "from": "CLAIM-0024",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-09"
+      },
+      {
+        "from": "SRC-0017",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0025"
+      },
+      {
+        "from": "CLAIM-0025",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-10"
+      },
+      {
+        "from": "SRC-0018",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0026"
+      },
+      {
+        "from": "CLAIM-0026",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-11"
+      },
+      {
+        "from": "SRC-0019",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0027"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0019",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0028"
+      },
+      {
+        "from": "CLAIM-0028",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "SRC-0020",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0029"
+      },
+      {
+        "from": "CLAIM-0029",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0020",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0030"
+      },
+      {
+        "from": "CLAIM-0030",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0020",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0031"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0021",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0032"
+      },
+      {
+        "from": "CLAIM-0032",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0021",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0033",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-08"
+      },
+      {
+        "from": "CLAIM-0033",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "CLAIM-0033",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0021",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0034"
+      },
+      {
+        "from": "CLAIM-0034",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0022",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0035"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0022",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0036"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0023",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0037"
+      },
+      {
+        "from": "CLAIM-0037",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-22"
+      },
+      {
+        "from": "SRC-0023",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0038"
+      },
+      {
+        "from": "CLAIM-0038",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-09"
+      },
+      {
+        "from": "CLAIM-0038",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-22"
+      },
+      {
+        "from": "SRC-0024",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0039"
+      },
+      {
+        "from": "CLAIM-0039",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-23"
+      },
+      {
+        "from": "SRC-0024",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0040"
+      },
+      {
+        "from": "CLAIM-0040",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-23"
+      },
+      {
+        "from": "SRC-0024",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0041"
+      },
+      {
+        "from": "CLAIM-0041",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-24"
+      },
+      {
+        "from": "SRC-0025",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0042"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-25"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0025",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0043"
+      },
+      {
+        "from": "CLAIM-0043",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-25"
+      },
+      {
+        "from": "SRC-0026",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0044",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-08"
+      },
+      {
+        "from": "CLAIM-0044",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0026",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0045",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-08"
+      },
+      {
+        "from": "CLAIM-0045",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0027",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0046"
+      },
+      {
+        "from": "CLAIM-0046",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-26"
+      },
+      {
+        "from": "SRC-0027",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0047"
+      },
+      {
+        "from": "CLAIM-0047",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-26"
+      },
+      {
+        "from": "SRC-0028",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0048"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0028",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0049"
+      },
+      {
+        "from": "CLAIM-0049",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "SRC-0029",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0050"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0029",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0051",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-20"
+      },
+      {
+        "from": "CLAIM-0051",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0030",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0052"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0031",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0053"
+      },
+      {
+        "from": "CLAIM-0053",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0032",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0054"
+      },
+      {
+        "from": "CLAIM-0054",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0033",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0055"
+      },
+      {
+        "from": "CLAIM-0055",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "SRC-0033",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0056",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-20"
+      },
+      {
+        "from": "CLAIM-0056",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0033",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0057"
+      },
+      {
+        "from": "CLAIM-0057",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-21"
+      },
+      {
+        "from": "SRC-0034",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0058"
+      },
+      {
+        "from": "CLAIM-0058",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0035",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0059",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-20"
+      },
+      {
+        "from": "CLAIM-0059",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0035",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0060"
+      },
+      {
+        "from": "CLAIM-0060",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "SRC-0036",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0061"
+      },
+      {
+        "from": "CLAIM-0061",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0036",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0062"
+      },
+      {
+        "from": "CLAIM-0062",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0037",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0063"
+      },
+      {
+        "from": "CLAIM-0063",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-26"
+      },
+      {
+        "from": "SRC-0038",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0064",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-08"
+      },
+      {
+        "from": "CLAIM-0064",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0039",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0065"
+      },
+      {
+        "from": "CLAIM-0065",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0040",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0066"
+      },
+      {
+        "from": "CLAIM-0066",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0041",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0067"
+      },
+      {
+        "from": "CLAIM-0067",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "SRC-0042",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0068"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-09"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0042",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0069"
+      },
+      {
+        "from": "CLAIM-0069",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "SRC-0043",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0070"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0044",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0071"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0045",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0072"
+      },
+      {
+        "from": "CLAIM-0072",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-10"
+      },
+      {
+        "from": "SRC-0045",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0073"
+      },
+      {
+        "from": "CLAIM-0073",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-07"
+      },
+      {
+        "from": "CLAIM-0073",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-10"
+      },
+      {
+        "from": "SRC-0046",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0074"
+      },
+      {
+        "from": "CLAIM-0074",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-29"
+      },
+      {
+        "from": "SRC-0046",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0075"
+      },
+      {
+        "from": "CLAIM-0075",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "CLAIM-0075",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-29"
+      },
+      {
+        "from": "SRC-0047",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0076"
+      },
+      {
+        "from": "CLAIM-0076",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-23"
+      },
+      {
+        "from": "SRC-0047",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0077"
+      },
+      {
+        "from": "CLAIM-0077",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-23"
+      },
+      {
+        "from": "SRC-0048",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0078"
+      },
+      {
+        "from": "CLAIM-0078",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-28"
+      },
+      {
+        "from": "SRC-0048",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0079"
+      },
+      {
+        "from": "CLAIM-0079",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-28"
+      },
+      {
+        "from": "SRC-0049",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0080"
+      },
+      {
+        "from": "CLAIM-0080",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-21"
+      },
+      {
+        "from": "SRC-0049",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0081"
+      },
+      {
+        "from": "CLAIM-0081",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-21"
+      },
+      {
+        "from": "SRC-0050",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0082"
+      },
+      {
+        "from": "CLAIM-0082",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-10"
+      },
+      {
+        "from": "SRC-0051",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0083"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0051",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0084"
+      },
+      {
+        "from": "CLAIM-0084",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-24"
+      },
+      {
+        "from": "SRC-0052",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0085"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0052",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0086"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0052",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0087"
+      },
+      {
+        "from": "CLAIM-0087",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-32"
+      },
+      {
+        "from": "SRC-0052",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0088"
+      },
+      {
+        "from": "CLAIM-0088",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-33"
+      },
+      {
+        "from": "SRC-0053",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0089"
+      },
+      {
+        "from": "CLAIM-0089",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "SRC-0053",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0090"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-09"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0054",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0091"
+      },
+      {
+        "from": "CLAIM-0091",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-01"
+      },
+      {
+        "from": "SRC-0055",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0092"
+      },
+      {
+        "from": "CLAIM-0092",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-29"
+      },
+      {
+        "from": "SRC-0055",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0093"
+      },
+      {
+        "from": "CLAIM-0093",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-26"
+      },
+      {
+        "from": "CLAIM-0093",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-29"
+      },
+      {
+        "from": "SRC-0056",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0094"
+      },
+      {
+        "from": "CLAIM-0094",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0056",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0095"
+      },
+      {
+        "from": "CLAIM-0095",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0057",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0096"
+      },
+      {
+        "from": "CLAIM-0096",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0057",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0097"
+      },
+      {
+        "from": "CLAIM-0097",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0057",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0098"
+      },
+      {
+        "from": "CLAIM-0098",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0057",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0099"
+      },
+      {
+        "from": "CLAIM-0099",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-03"
+      },
+      {
+        "from": "SRC-0058",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0100"
+      },
+      {
+        "from": "CLAIM-0100",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0058",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0101"
+      },
+      {
+        "from": "CLAIM-0101",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-30"
+      },
+      {
+        "from": "SRC-0059",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0102"
+      },
+      {
+        "from": "CLAIM-0102",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0059",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0103"
+      },
+      {
+        "from": "CLAIM-0103",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-18"
+      },
+      {
+        "from": "SRC-0060",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0104"
+      },
+      {
+        "from": "CLAIM-0104",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-27"
+      },
+      {
+        "from": "CLAIM-0104",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-31"
+      },
+      {
+        "from": "SRC-0060",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0105"
+      },
+      {
+        "from": "CLAIM-0105",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-31"
+      },
+      {
+        "from": "SRC-0061",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0106"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0062",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0107"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0063",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0108"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0063",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0109"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0064",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0110"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0064",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0111"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-19"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0036",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0112"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0065",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0113"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-06"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0002"
+      },
+      {
+        "from": "SRC-0066",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0114",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-20"
+      },
+      {
+        "from": "CLAIM-0114",
+        "relation": "PART_OF_CONTRADICTION_GROUP",
+        "to": "CG-0001"
+      },
+      {
+        "from": "SRC-0066",
+        "relation": "SUPPORTS_CLAIM",
+        "to": "CLAIM-0115"
+      },
+      {
+        "from": "CLAIM-0115",
+        "relation": "DESCRIBES_MECHANISM",
+        "to": "MECH-26"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0051"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0056"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0059"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0114"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0023"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0033"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0044"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0045"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "CONTRADICTS",
+        "to": "CLAIM-0064"
+      },
+      {
+        "from": "CLAIM-0001",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0001"
+      },
+      {
+        "from": "CLAIM-0091",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0001"
+      },
+      {
+        "from": "SEQ-0001",
+        "relation": "USES_STATE",
+        "to": "directional_efficiency alta su finestra multi-mese/annuale (proxy: MECH-01 in feature_registry_v2.json)"
+      },
+      {
+        "from": "SEQ-0001",
+        "relation": "USES_STATE",
+        "to": "il trend rimane intatto all'orizzonte di valutazione"
+      },
+      {
+        "from": "SEQ-0001",
+        "relation": "CONTAINS_EVENT",
+        "to": "movimento direzionale sostenuto osservato su una finestra lunga (mesi)"
+      },
+      {
+        "from": "CLAIM-0002",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0002"
+      },
+      {
+        "from": "SEQ-0002",
+        "relation": "USES_STATE",
+        "to": "trend direzionale in corso da N barre"
+      },
+      {
+        "from": "SEQ-0002",
+        "relation": "USES_STATE",
+        "to": "momentum in fase di decelerazione (proxy: momentum_persistence_bars in calo)"
+      },
+      {
+        "from": "SEQ-0002",
+        "relation": "USES_STATE",
+        "to": "prezzo in fase di reversione parziale rispetto al trend"
+      },
+      {
+        "from": "SEQ-0002",
+        "relation": "CONTAINS_EVENT",
+        "to": "prima evidenza di decelerazione del momentum dopo una fase trend-following"
+      },
+      {
+        "from": "SEQ-0002",
+        "relation": "CONTAINS_EVENT",
+        "to": "eventuale inversione parziale"
+      },
+      {
+        "from": "CLAIM-0007",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0009",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0027",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0031",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0036",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0048",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0068",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0070",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0071",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0083",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0085",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0086",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0090",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0106",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0107",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0112",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "CLAIM-0113",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0003"
+      },
+      {
+        "from": "SEQ-0003",
+        "relation": "USES_STATE",
+        "to": "range di consolidamento pre-evento con ampiezza non anomala (non troppo piccola - vedi MECH-07)"
+      },
+      {
+        "from": "SEQ-0003",
+        "relation": "USES_STATE",
+        "to": "sessione ad alta partecipazione in apertura (es. London/NY open)"
+      },
+      {
+        "from": "SEQ-0003",
+        "relation": "USES_STATE",
+        "to": "prezzo accettato oltre il livello, nuovo range/trend in formazione nella direzione della rottura"
+      },
+      {
+        "from": "SEQ-0003",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura oltre l'estremo del range di consolidamento"
+      },
+      {
+        "from": "SEQ-0003",
+        "relation": "CONTAINS_EVENT",
+        "to": "eventuale retest del livello rotto con tenuta"
+      },
+      {
+        "from": "CLAIM-0023",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0004"
+      },
+      {
+        "from": "CLAIM-0033",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0004"
+      },
+      {
+        "from": "CLAIM-0044",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0004"
+      },
+      {
+        "from": "CLAIM-0045",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0004"
+      },
+      {
+        "from": "CLAIM-0064",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0004"
+      },
+      {
+        "from": "SEQ-0004",
+        "relation": "USES_STATE",
+        "to": "chiusura oltre l'estremo di un range di consolidamento (stesso evento iniziale di SEQ-0003)"
+      },
+      {
+        "from": "SEQ-0004",
+        "relation": "USES_STATE",
+        "to": "prezzo rientrato nel range, breakout non accettato"
+      },
+      {
+        "from": "SEQ-0004",
+        "relation": "CONTAINS_EVENT",
+        "to": "breakout (chiusura oltre range)"
+      },
+      {
+        "from": "SEQ-0004",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura di rientro nel range precedente"
+      },
+      {
+        "from": "CLAIM-0025",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0005"
+      },
+      {
+        "from": "CLAIM-0072",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0005"
+      },
+      {
+        "from": "CLAIM-0073",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0005"
+      },
+      {
+        "from": "CLAIM-0082",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0005"
+      },
+      {
+        "from": "SEQ-0005",
+        "relation": "USES_STATE",
+        "to": "volatilita' realizzata/ATR percentile in calo sostenuto su una finestra recente (compressione)"
+      },
+      {
+        "from": "SEQ-0005",
+        "relation": "USES_STATE",
+        "to": "nuovo regime di volatilita' piu' elevato stabilito"
+      },
+      {
+        "from": "SEQ-0005",
+        "relation": "CONTAINS_EVENT",
+        "to": "prima barra con true range/ATR in espansione significativa rispetto al regime compresso"
+      },
+      {
+        "from": "CLAIM-0011",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0006"
+      },
+      {
+        "from": "CLAIM-0012",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0006"
+      },
+      {
+        "from": "SEQ-0006",
+        "relation": "USES_STATE",
+        "to": "prossimita' temporale dichiarata a un evento macro schedulato e dateable (es. FOMC)"
+      },
+      {
+        "from": "SEQ-0006",
+        "relation": "USES_STATE",
+        "to": "prezzo alla chiusura della finestra pre-evento"
+      },
+      {
+        "from": "SEQ-0006",
+        "relation": "CONTAINS_EVENT",
+        "to": "apertura della finestra temporale pre-evento (es. N ore prima dell'annuncio)"
+      },
+      {
+        "from": "SEQ-0006",
+        "relation": "CONTAINS_EVENT",
+        "to": "l'annuncio stesso"
+      },
+      {
+        "from": "CLAIM-0021",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0007"
+      },
+      {
+        "from": "CLAIM-0022",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0007"
+      },
+      {
+        "from": "SEQ-0007",
+        "relation": "USES_STATE",
+        "to": "prossimita' a una data calendariale ricorrente nota per domanda culturale dell'oro (es. festivita' specifiche)"
+      },
+      {
+        "from": "SEQ-0007",
+        "relation": "USES_STATE",
+        "to": "prezzo alla chiusura della finestra"
+      },
+      {
+        "from": "SEQ-0007",
+        "relation": "CONTAINS_EVENT",
+        "to": "apertura della finestra pre-evento calendariale"
+      },
+      {
+        "from": "CLAIM-0016",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0008"
+      },
+      {
+        "from": "CLAIM-0017",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0008"
+      },
+      {
+        "from": "SEQ-0008",
+        "relation": "USES_STATE",
+        "to": "una sessione ha realizzato un ritorno netto in una direzione"
+      },
+      {
+        "from": "SEQ-0008",
+        "relation": "USES_STATE",
+        "to": "direzione della sessione successiva"
+      },
+      {
+        "from": "SEQ-0008",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura della sessione con segno di ritorno definito"
+      },
+      {
+        "from": "SEQ-0008",
+        "relation": "CONTAINS_EVENT",
+        "to": "apertura della sessione successiva"
+      },
+      {
+        "from": "CLAIM-0032",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0033",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0034",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0054",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0058",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0062",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0065",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0102",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "CLAIM-0103",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0009"
+      },
+      {
+        "from": "SEQ-0009",
+        "relation": "USES_STATE",
+        "to": "livello di riferimento noto (swing high/low, prev day/week high/low, sessione precedente)"
+      },
+      {
+        "from": "SEQ-0009",
+        "relation": "USES_STATE",
+        "to": "prezzo richiuso all'interno del livello originale"
+      },
+      {
+        "from": "SEQ-0009",
+        "relation": "CONTAINS_EVENT",
+        "to": "prezzo eccede brevemente il livello (wick) senza chiudere oltre"
+      },
+      {
+        "from": "CLAIM-0035",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0050",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0052",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0110",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "CLAIM-0111",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0010"
+      },
+      {
+        "from": "SEQ-0010",
+        "relation": "USES_STATE",
+        "to": "evento SWEEP di un livello di riferimento (vedi SEQ-0009)"
+      },
+      {
+        "from": "SEQ-0010",
+        "relation": "USES_STATE",
+        "to": "prezzo richiuso oltre il livello, nella direzione opposta allo sweep iniziale"
+      },
+      {
+        "from": "SEQ-0010",
+        "relation": "CONTAINS_EVENT",
+        "to": "sweep del livello (event_a = SWEEP)"
+      },
+      {
+        "from": "SEQ-0010",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura oltre il livello originale nella direzione OPPOSTA allo sweep (RECLAIM)"
+      },
+      {
+        "from": "CLAIM-0108",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0011"
+      },
+      {
+        "from": "CLAIM-0109",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0011"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "USES_STATE",
+        "to": "evento SWEEP di un livello di riferimento"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "USES_STATE",
+        "to": "il movimento di allontanamento PRIMA dello sweep mostra displacement significativo (non un drift lento)"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "USES_STATE",
+        "to": "volume/partecipazione elevata al momento dello sweep (proxy da definire - gap dichiarato)"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "USES_STATE",
+        "to": "prezzo richiuso oltre il livello con doppia conferma"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "CONTAINS_EVENT",
+        "to": "sweep del livello CON le due condizioni di stato aggiuntive sopra"
+      },
+      {
+        "from": "SEQ-0011",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura oltre il livello originale nella direzione opposta allo sweep (RECLAIM), confermata da una seconda chiusura di tenuta"
+      },
+      {
+        "from": "CLAIM-0051",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0012"
+      },
+      {
+        "from": "CLAIM-0056",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0012"
+      },
+      {
+        "from": "CLAIM-0059",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0012"
+      },
+      {
+        "from": "CLAIM-0114",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0012"
+      },
+      {
+        "from": "SEQ-0012",
+        "relation": "USES_STATE",
+        "to": "evento SWEEP di un livello di riferimento"
+      },
+      {
+        "from": "SEQ-0012",
+        "relation": "USES_STATE",
+        "to": "prezzo continua nella direzione dello sweep (nessuna inversione)"
+      },
+      {
+        "from": "SEQ-0012",
+        "relation": "CONTAINS_EVENT",
+        "to": "sweep del livello (event_a = SWEEP)"
+      },
+      {
+        "from": "SEQ-0012",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura di continuazione nella STESSA direzione dello sweep"
+      },
+      {
+        "from": "CLAIM-0057",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0013"
+      },
+      {
+        "from": "CLAIM-0080",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0013"
+      },
+      {
+        "from": "CLAIM-0081",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0013"
+      },
+      {
+        "from": "SEQ-0013",
+        "relation": "USES_STATE",
+        "to": "movimento impulsivo che lascia un gap fra wick di candele consecutive (imbalance)"
+      },
+      {
+        "from": "SEQ-0013",
+        "relation": "USES_STATE",
+        "to": "gap riempito (chiusura dentro la zona) oppure gap scaduto/non riempito entro l'orizzonte"
+      },
+      {
+        "from": "SEQ-0013",
+        "relation": "CONTAINS_EVENT",
+        "to": "formazione del gap/imbalance"
+      },
+      {
+        "from": "SEQ-0013",
+        "relation": "CONTAINS_EVENT",
+        "to": "prezzo rientra nella zona del gap"
+      },
+      {
+        "from": "CLAIM-0039",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0014"
+      },
+      {
+        "from": "CLAIM-0040",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0014"
+      },
+      {
+        "from": "CLAIM-0076",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0014"
+      },
+      {
+        "from": "CLAIM-0077",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0014"
+      },
+      {
+        "from": "SEQ-0014",
+        "relation": "USES_STATE",
+        "to": "rapporto volatilita'/deriva direzionale (o efficiency ratio) sotto una soglia bassa su una finestra recente"
+      },
+      {
+        "from": "SEQ-0014",
+        "relation": "USES_STATE",
+        "to": "nessuna direzione affidabile identificabile"
+      },
+      {
+        "from": "SEQ-0014",
+        "relation": "CONTAINS_EVENT",
+        "to": "classificazione dello stato corrente come 'choppy/laterale a bassa informazione'"
+      },
+      {
+        "from": "CLAIM-0042",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0015"
+      },
+      {
+        "from": "CLAIM-0043",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0015"
+      },
+      {
+        "from": "SEQ-0015",
+        "relation": "USES_STATE",
+        "to": "range della barra/giorno precedente ampio rispetto alla propria storia recente"
+      },
+      {
+        "from": "SEQ-0015",
+        "relation": "USES_STATE",
+        "to": "direzione stabilita dalla barra ampia"
+      },
+      {
+        "from": "SEQ-0015",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura di una barra con true range anomalamente ampio"
+      },
+      {
+        "from": "CLAIM-0046",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0016"
+      },
+      {
+        "from": "CLAIM-0047",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0016"
+      },
+      {
+        "from": "CLAIM-0063",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0016"
+      },
+      {
+        "from": "CLAIM-0093",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0016"
+      },
+      {
+        "from": "CLAIM-0115",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0016"
+      },
+      {
+        "from": "SEQ-0016",
+        "relation": "USES_STATE",
+        "to": "prezzo estende oltre una banda di volatilita' (es. Bollinger esterna) dopo un movimento rapido"
+      },
+      {
+        "from": "SEQ-0016",
+        "relation": "USES_STATE",
+        "to": "prezzo rientrato verso la banda mediana oppure continuazione oltre la banda"
+      },
+      {
+        "from": "SEQ-0016",
+        "relation": "CONTAINS_EVENT",
+        "to": "tocco/superamento della banda esterna"
+      },
+      {
+        "from": "SEQ-0016",
+        "relation": "CONTAINS_EVENT",
+        "to": "reversione verso la media della banda"
+      },
+      {
+        "from": "CLAIM-0078",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0017"
+      },
+      {
+        "from": "CLAIM-0079",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0017"
+      },
+      {
+        "from": "SEQ-0017",
+        "relation": "USES_STATE",
+        "to": "apertura della sessione fuori dalla value area del profilo di volume del giorno precedente"
+      },
+      {
+        "from": "SEQ-0017",
+        "relation": "USES_STATE",
+        "to": "accettazione confermata dentro la value area"
+      },
+      {
+        "from": "SEQ-0017",
+        "relation": "CONTAINS_EVENT",
+        "to": "prezzo rientra nella value area"
+      },
+      {
+        "from": "CLAIM-0074",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0018"
+      },
+      {
+        "from": "CLAIM-0075",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0018"
+      },
+      {
+        "from": "CLAIM-0092",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0018"
+      },
+      {
+        "from": "CLAIM-0093",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0018"
+      },
+      {
+        "from": "SEQ-0018",
+        "relation": "USES_STATE",
+        "to": "trend H4 in corso"
+      },
+      {
+        "from": "SEQ-0018",
+        "relation": "USES_STATE",
+        "to": "prezzo si allontana dal VWAP di sessione"
+      },
+      {
+        "from": "SEQ-0018",
+        "relation": "USES_STATE",
+        "to": "prezzo riprende la direzione del trend (rigetto) oppure attraversa il VWAP (accettazione/possibile inversione)"
+      },
+      {
+        "from": "SEQ-0018",
+        "relation": "CONTAINS_EVENT",
+        "to": "prezzo torna a testare il VWAP di sessione"
+      },
+      {
+        "from": "SEQ-0018",
+        "relation": "CONTAINS_EVENT",
+        "to": "chiusura che confirma rigetto o accettazione"
+      },
+      {
+        "from": "CLAIM-0087",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0019"
+      },
+      {
+        "from": "SEQ-0019",
+        "relation": "USES_STATE",
+        "to": "due strumenti storicamente cointegrati (test di Engle-Granger)"
+      },
+      {
+        "from": "SEQ-0019",
+        "relation": "USES_STATE",
+        "to": "spread corrente deviato oltre una soglia in unita' di deviazione standard"
+      },
+      {
+        "from": "SEQ-0019",
+        "relation": "USES_STATE",
+        "to": "spread rientrato verso l'equilibrio storico"
+      },
+      {
+        "from": "SEQ-0019",
+        "relation": "CONTAINS_EVENT",
+        "to": "deviazione dello spread oltre soglia"
+      },
+      {
+        "from": "CLAIM-0088",
+        "relation": "MAPS_TO_SEQUENCE",
+        "to": "SEQ-0020"
+      },
+      {
+        "from": "SEQ-0020",
+        "relation": "USES_STATE",
+        "to": "nessuna - la media mobile corta e lunga sono sempre calcolabili"
+      },
+      {
+        "from": "SEQ-0020",
+        "relation": "USES_STATE",
+        "to": "direzione stabilita dalla divergenza"
+      },
+      {
+        "from": "SEQ-0020",
+        "relation": "CONTAINS_EVENT",
+        "to": "incrocio o divergenza fra media mobile corta e lunga del midpoint di barra"
+      },
+      {
+        "from": "VOLATILITY_COMPRESSION",
+        "relation": "HAS_PROXY",
+        "to": "ATR percentile (rolling)"
+      },
+      {
+        "from": "VOLATILITY_COMPRESSION",
+        "relation": "HAS_PROXY",
+        "to": "compression percentile (media ATR corta vs finestra lunga)"
+      },
+      {
+        "from": "VOLATILITY_COMPRESSION",
+        "relation": "HAS_PROXY",
+        "to": "Bollinger Bandwidth"
+      },
+      {
+        "from": "VOLATILITY_COMPRESSION",
+        "relation": "HAS_PROXY",
+        "to": "true-range contraction (n barre consecutive sotto soglia)"
+      },
+      {
+        "from": "VOLATILITY_COMPRESSION",
+        "relation": "HAS_PROXY",
+        "to": "realized volatility percentile"
+      },
+      {
+        "from": "VOLATILITY_EXPANSION",
+        "relation": "HAS_PROXY",
+        "to": "vol_acceleration (ATR - ATR shiftato)"
+      },
+      {
+        "from": "VOLATILITY_EXPANSION",
+        "relation": "HAS_PROXY",
+        "to": "true range > k*ATR sulla barra corrente"
+      },
+      {
+        "from": "VOLATILITY_EXPANSION",
+        "relation": "HAS_PROXY",
+        "to": "ATR percentile in salita rapida"
+      },
+      {
+        "from": "TREND_STRENGTH_PERSISTENCE",
+        "relation": "HAS_PROXY",
+        "to": "directional efficiency (net change / path length)"
+      },
+      {
+        "from": "TREND_STRENGTH_PERSISTENCE",
+        "relation": "HAS_PROXY",
+        "to": "EMA slope normalizzata su ATR"
+      },
+      {
+        "from": "TREND_STRENGTH_PERSISTENCE",
+        "relation": "HAS_PROXY",
+        "to": "trend persistence (barre consecutive stesso segno di ritorno)"
+      },
+      {
+        "from": "TREND_STRENGTH_PERSISTENCE",
+        "relation": "HAS_PROXY",
+        "to": "ADX"
+      },
+      {
+        "from": "TREND_STRENGTH_PERSISTENCE",
+        "relation": "HAS_PROXY",
+        "to": "rolling regression slope / R^2"
+      },
+      {
+        "from": "TREND_EXHAUSTION",
+        "relation": "HAS_PROXY",
+        "to": "momentum_persistence_bars in calo/segno che si inverte"
+      },
+      {
+        "from": "TREND_EXHAUSTION",
+        "relation": "HAS_PROXY",
+        "to": "momentum_acceleration negativa dopo run direzionale"
+      },
+      {
+        "from": "TREND_EXHAUSTION",
+        "relation": "HAS_PROXY",
+        "to": "divergenza prezzo/momentum (indicatore-based, es. RSI/MACD divergence)"
+      },
+      {
+        "from": "TREND_EXHAUSTION",
+        "relation": "HAS_PROXY",
+        "to": "directional_efficiency in calo su finestra recente"
+      },
+      {
+        "from": "RANGE_REJECTION",
+        "relation": "HAS_PROXY",
+        "to": "dist_from_rolling_high/low_atr con successiva chiusura opposta"
+      },
+      {
+        "from": "RANGE_REJECTION",
+        "relation": "HAS_PROXY",
+        "to": "position_in_rolling_range vicino a 0 o 1 seguito da reversione"
+      },
+      {
+        "from": "RANGE_REJECTION",
+        "relation": "HAS_PROXY",
+        "to": "wick ratio (coda/rango barra) su barra di rigetto"
+      },
+      {
+        "from": "BREAKOUT_ACCEPTANCE",
+        "relation": "HAS_PROXY",
+        "to": "chiusura oltre range_n high/low gia' rilevata in Phase 5 (evento BREAKOUT)"
+      },
+      {
+        "from": "BREAKOUT_ACCEPTANCE",
+        "relation": "HAS_PROXY",
+        "to": "retest del livello rotto con tenuta (RETEST event gia' rilevato in Phase 5)"
+      },
+      {
+        "from": "BREAKOUT_FAILURE",
+        "relation": "HAS_PROXY",
+        "to": "FAILED_BREAKOUT event (Phase 5 build_events.py, gia' rilevato)"
+      },
+      {
+        "from": "BREAKOUT_FAILURE",
+        "relation": "HAS_PROXY",
+        "to": "chiusura che rientra nel range entro N barre dal breakout"
+      },
+      {
+        "from": "LIQUIDITY_SWEEP",
+        "relation": "HAS_PROXY",
+        "to": "SWEEP event (Phase 5 build_events.py, gia' rilevato - alta/bassa N barre)"
+      },
+      {
+        "from": "LIQUIDITY_SWEEP",
+        "relation": "HAS_PROXY",
+        "to": "dist_from_prev_day/week_high/low_atr con wick oltre e chiusura dentro"
+      },
+      {
+        "from": "LEVEL_RECLAIM",
+        "relation": "HAS_PROXY",
+        "to": "RECLAIM event (Phase 5 build_events.py - GIA' TESTATO, REFUTED_AT_DISCOVERY in Phase 7.1, generico BOTH/BUY/SELL)"
+      },
+      {
+        "from": "MOMENTUM_ACCELERATION",
+        "relation": "HAS_PROXY",
+        "to": "momentum_acceleration (derivata seconda del ROC)"
+      },
+      {
+        "from": "MOMENTUM_ACCELERATION",
+        "relation": "HAS_PROXY",
+        "to": "roc in aumento su finestre successive"
+      },
+      {
+        "from": "MOMENTUM_DECAY",
+        "relation": "HAS_PROXY",
+        "to": "momentum_persistence_bars in calo"
+      },
+      {
+        "from": "MOMENTUM_DECAY",
+        "relation": "HAS_PROXY",
+        "to": "roc in calo ma ancora positivo/negativo coerente col trend"
+      },
+      {
+        "from": "SESSION_RANGE_EXPANSION",
+        "relation": "HAS_PROXY",
+        "to": "range della sessione corrente vs percentile storico dello stesso session-slot"
+      },
+      {
+        "from": "SESSION_REVERSAL",
+        "relation": "HAS_PROXY",
+        "to": "direzione netta sessione corrente vs sessione precedente (return_direction aggregato per session)"
+      },
+      {
+        "from": "MEAN_REVERSION",
+        "relation": "HAS_PROXY",
+        "to": "mean_reversion_score (= -lag1_autocorr_rolling)"
+      },
+      {
+        "from": "MEAN_REVERSION",
+        "relation": "HAS_PROXY",
+        "to": "lag1_autocorr_rolling negativa"
+      },
+      {
+        "from": "MEAN_REVERSION",
+        "relation": "HAS_PROXY",
+        "to": "variance_ratio_proxy < 1 (sotto-diffusivo, coerente con mean-reversion)"
+      },
+      {
+        "from": "HTF_LTF_ALIGNMENT",
+        "relation": "HAS_PROXY",
+        "to": "ema_slope_atr_norm su H4 (contesto) incrociato con evento su M15/H1 (nessuna feature multi-TF nativa in NEXUS oggi)"
+      },
+      {
+        "from": "GAP_IMBALANCE_RESPONSE",
+        "relation": "HAS_PROXY",
+        "to": "gap fra chiusura/apertura di barre consecutive (non calcolato oggi in NEXUS su H4 continuo)"
+      },
+      {
+        "from": "VWAP_ACCEPTANCE",
+        "relation": "HAS_PROXY",
+        "to": "VWAP di sessione (non calcolato oggi in NEXUS)"
+      },
+      {
+        "from": "VWAP_REJECTION",
+        "relation": "HAS_PROXY",
+        "to": "VWAP di sessione (non calcolato oggi in NEXUS)"
+      },
+      {
+        "from": "EXECUTION_UNFRIENDLY_STATE",
+        "relation": "HAS_PROXY",
+        "to": "compression_percentile molto bassa + directional_efficiency molto bassa insieme"
+      },
+      {
+        "from": "EXECUTION_UNFRIENDLY_STATE",
+        "relation": "HAS_PROXY",
+        "to": "variance_ratio_proxy vicino a 1 (random-walk-like, ne' trending ne' mean-reverting)"
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "market_sequence_schema_v1.json",
+  "title": "NEXUS Phase 7.2 - Market Sequence",
+  "description": "Primitiva ontologica centrale di Phase 7.2 (sec.8-9). Passa da EVENT->OUTCOME (Phase 5-7.1) a STATE->EVENT_A->TRANSITION->EVENT_B->NEW_STATE->OUTCOME_FAMILY. Una sequence NON e' un candidato testato - e' una struttura ipotetica derivata da uno o piu' external claim, pronta per essere formalizzata come EdgeCandidate in una FUTURA Phase 7.3+. Nessun campo qui contiene un valore di outcome calcolato su dati NEXUS.",
+  "type": "object",
+  "required": [
+    "sequence_id", "mechanism_id", "initial_state_conditions", "event_a", "transition_conditions",
+    "terminal_state_conditions", "direction", "timeframe_context", "observation_clock",
+    "expected_outcome_family", "causal_observability_status", "implementation_status",
+    "source_claim_ids", "falsification_definition"
+  ],
+  "properties": {
+    "sequence_id": {"type": "string", "pattern": "^SEQ-[0-9]{4}$"},
+    "mechanism_id": {"type": "string", "description": "riferimento a market_mechanism_registry_v1.json"},
+    "initial_state_conditions": {
+      "type": "array", "items": {"type": "string"},
+      "description": "Condizioni di MarketState richieste PRIMA che event_a sia significativo (es. 'sessione londinese aperta', 'HTF trend up efficiency alta')."
+    },
+    "event_a": {"type": "string", "description": "Primo evento osservabile della sequenza (in linguaggio di fenomeno, non nome indicatore)."},
+    "transition_conditions": {
+      "type": "array", "items": {"type": "string"},
+      "description": "Cosa deve accadere/non accadere fra event_a e event_b perche' la sequenza resti valida (es. 'nessuna chiusura oltre il livello opposto entro N barre')."
+    },
+    "event_b_optional": {"type": ["string", "null"], "description": "Secondo evento, se la sequenza lo richiede (molte sequenze sono a 1 solo evento + esito)."},
+    "terminal_state_conditions": {
+      "type": "array", "items": {"type": "string"},
+      "description": "Stato di mercato al termine della sequenza, prima di misurare l'outcome family (diagnostico, non un valore misurato)."
+    },
+    "direction": {"type": "string", "enum": ["BUY", "SELL", "BOTH", "CONTEXT_DEPENDENT", "NON_DIRECTIONAL"]},
+    "timeframe_context": {
+      "type": "object",
+      "properties": {
+        "CONTEXT_TF": {"type": ["string", "null"]},
+        "SETUP_TF": {"type": ["string", "null"]},
+        "TRIGGER_TF": {"type": ["string", "null"]}
+      },
+      "description": "Modello multi-timeframe (sec.12) - popolato solo se la fonte lo specifica o lo implica chiaramente, mai assunto come 'migliore'."
+    },
+    "observation_clock": {
+      "type": "string",
+      "description": "Riferimento al modello sessione/clock (sec.13) - es. 'da apertura sessione Londra, timezone-safe/DST-aware' - MAI un'ora UTC fissa hardcoded."
+    },
+    "expected_outcome_family": {
+      "type": "array",
+      "items": {"type": "string", "enum": [
+        "DIRECTIONAL_PROBABILITY", "MFE", "MAE", "TIME_TO_MFE", "TIME_TO_TARGET",
+        "CONTINUATION_PROBABILITY", "REVERSAL_PROBABILITY", "REALIZED_VOLATILITY_AFTER_SETUP",
+        "TAIL_EXCURSION", "PATH_EFFICIENCY", "EXECUTION_FRIENDLINESS"
+      ]},
+      "description": "Tassonomia futura SOLO dichiarata (sec.16) - nessun valore calcolato in Phase 7.2."
+    },
+    "is_failed_event_family": {"type": "boolean", "description": "true se la sequenza descrive il FALLIMENTO di un evento atteso (sec.14) - famiglia propria, non un caso speciale."},
+    "is_no_trade_information": {"type": "boolean", "description": "true se la sequenza identifica uno stato a bassa informazione/alto rischio di esecuzione (sec.15: LOW_INFORMATION_STATE/HIGH_CHOP_RISK/FALSE_BREAKOUT_RISK/EXECUTION_UNFRIENDLY_STATE) invece di una direzione."},
+    "causal_observability_status": {
+      "type": "string",
+      "enum": ["OBSERVABLE_AT_DECISION_TIME", "REQUIRES_LOOKAHEAD_TO_DEFINE", "UNCERTAIN"],
+      "description": "Se la sequenza, cosi' come descritta dalla fonte, e' definibile solo con informazione futura (leakage strutturale nella definizione stessa) - flag preventivo, non un test di leakage sui dati (quello arrivera' in Phase 7.3+)."
+    },
+    "implementation_status": {
+      "type": "string",
+      "enum": ["READY_FOR_FORMALIZATION", "NEEDS_ADDITIONAL_SPECIFICATION", "NOT_IMPLEMENTABLE_AS_DESCRIBED"]
+    },
+    "source_claim_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "failure_memory_relation": {
+      "type": "string",
+      "enum": ["NOVEL", "RELATED_TO_PREVIOUS_FAILURE", "DIRECT_REPEAT_OF_FAILED_IDEA"],
+      "description": "Confronto con failure_memory_registry_v1.json e con i risultati canonici di Phase 5/6/7.1 (sec.23-24)."
+    },
+    "failure_memory_relation_note": {"type": ["string", "null"], "description": "Obbligatorio se failure_memory_relation != NOVEL - motivazione di perche' si procede comunque o di come differisce."},
+    "falsification_definition": {"type": "string", "description": "Cosa osserveremmo, in linea di principio su dati NEXUS futuri, se questa sequenza NON descrivesse un fenomeno reale."},
+    "research_priority_score_ref": {"type": ["string", "null"], "description": "riferimento a research_priority_queue_v1.json se la sequenza e' stata scorata"}
+  },
+  "additionalProperties": false
+}

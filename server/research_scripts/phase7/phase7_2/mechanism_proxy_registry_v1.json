@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "registry_id": "MECHANISM_PROXY_REGISTRY_V1",
+  "principle": "Phase 7.2 sec.11 - separazione netta CONCETTO != PROXY DI MISURA. Un mechanism e' un fenomeno di mercato reale (o presunto); un proxy e' UNO dei modi possibili per misurarlo con dati/feature disponibili. Nessun proxy qui e' stato validato su dati NEXUS in questa fase - sono candidati di misura, non feature gia' scelte per una discovery run.",
+  "nexus_existing_features_reference": "server/research_scripts/phase7/feature_registry_v2.json (26 feature, CAUSAL_SAFE) - alcuni proxy sotto coincidono con feature GIA' implementate in NEXUS (marcate nexus_feature_available=true); altri sono proxy noti in letteratura/pratica ma NON ancora implementati in NEXUS (nexus_feature_available=false) - un gap di implementazione, non un giudizio di merito.",
+
+  "concepts": {
+    "VOLATILITY_COMPRESSION": {
+      "definition": "Riduzione sostenuta del range/della volatilita' realizzata rispetto alla propria storia recente.",
+      "proxies": [
+        {"name": "ATR percentile (rolling)", "nexus_feature_available": true, "nexus_feature_id": "atr_percentile"},
+        {"name": "compression percentile (media ATR corta vs finestra lunga)", "nexus_feature_available": true, "nexus_feature_id": "compression_percentile"},
+        {"name": "Bollinger Bandwidth", "nexus_feature_available": false},
+        {"name": "true-range contraction (n barre consecutive sotto soglia)", "nexus_feature_available": false},
+        {"name": "realized volatility percentile", "nexus_feature_available": true, "nexus_feature_id": "realized_vol"}
+      ]
+    },
+    "VOLATILITY_EXPANSION": {
+      "definition": "Aumento improvviso del true range/della volatilita' realizzata rispetto al regime immediatamente precedente.",
+      "proxies": [
+        {"name": "vol_acceleration (ATR - ATR shiftato)", "nexus_feature_available": true, "nexus_feature_id": "vol_acceleration"},
+        {"name": "true range > k*ATR sulla barra corrente", "nexus_feature_available": false, "note": "gia' usato come detector in Phase 5 build_events.py (VOLATILITY_EXPANSION event), non ancora esposto come feature continua"},
+        {"name": "ATR percentile in salita rapida", "nexus_feature_available": true, "nexus_feature_id": "atr_percentile"}
+      ]
+    },
+    "TREND_STRENGTH_PERSISTENCE": {
+      "definition": "Grado in cui il movimento recente e' direzionale e continua a esserlo.",
+      "proxies": [
+        {"name": "directional efficiency (net change / path length)", "nexus_feature_available": true, "nexus_feature_id": "directional_efficiency"},
+        {"name": "EMA slope normalizzata su ATR", "nexus_feature_available": true, "nexus_feature_id": "ema_slope_atr_norm"},
+        {"name": "trend persistence (barre consecutive stesso segno di ritorno)", "nexus_feature_available": true, "nexus_feature_id": "trend_persistence_bars"},
+        {"name": "ADX", "nexus_feature_available": false},
+        {"name": "rolling regression slope / R^2", "nexus_feature_available": false}
+      ]
+    },
+    "TREND_EXHAUSTION": {
+      "definition": "Segnali che un trend direzionale sta perdendo capacita' di proseguire nella stessa direzione.",
+      "proxies": [
+        {"name": "momentum_persistence_bars in calo/segno che si inverte", "nexus_feature_available": true, "nexus_feature_id": "momentum_persistence_bars"},
+        {"name": "momentum_acceleration negativa dopo run direzionale", "nexus_feature_available": true, "nexus_feature_id": "momentum_acceleration"},
+        {"name": "divergenza prezzo/momentum (indicatore-based, es. RSI/MACD divergence)", "nexus_feature_available": false},
+        {"name": "directional_efficiency in calo su finestra recente", "nexus_feature_available": true, "nexus_feature_id": "directional_efficiency"}
+      ]
+    },
+    "RANGE_REJECTION": {
+      "definition": "Prezzo respinto da un estremo di range recente, tornando verso l'interno del range.",
+      "proxies": [
+        {"name": "dist_from_rolling_high/low_atr con successiva chiusura opposta", "nexus_feature_available": true, "nexus_feature_id": "dist_from_rolling_high_atr / dist_from_rolling_low_atr"},
+        {"name": "position_in_rolling_range vicino a 0 o 1 seguito da reversione", "nexus_feature_available": true, "nexus_feature_id": "position_in_rolling_range"},
+        {"name": "wick ratio (coda/rango barra) su barra di rigetto", "nexus_feature_available": false}
+      ]
+    },
+    "BREAKOUT_ACCEPTANCE": {
+      "definition": "Prezzo rompe un livello e la chiusura successiva (o le successive) confermano/mantengono la rottura.",
+      "proxies": [
+        {"name": "chiusura oltre range_n high/low gia' rilevata in Phase 5 (evento BREAKOUT)", "nexus_feature_available": false, "note": "detector esiste (build_events.py), non e' una feature continua"},
+        {"name": "retest del livello rotto con tenuta (RETEST event gia' rilevato in Phase 5)", "nexus_feature_available": false}
+      ]
+    },
+    "BREAKOUT_FAILURE": {
+      "definition": "Prezzo rompe un livello ma torna rapidamente all'interno del range precedente.",
+      "proxies": [
+        {"name": "FAILED_BREAKOUT event (Phase 5 build_events.py, gia' rilevato)", "nexus_feature_available": false},
+        {"name": "chiusura che rientra nel range entro N barre dal breakout", "nexus_feature_available": false}
+      ]
+    },
+    "LIQUIDITY_SWEEP": {
+      "definition": "Prezzo eccede brevemente un estremo (swing high/low, livello di sessione/giorno) senza chiudere oltre.",
+      "proxies": [
+        {"name": "SWEEP event (Phase 5 build_events.py, gia' rilevato - alta/bassa N barre)", "nexus_feature_available": false},
+        {"name": "dist_from_prev_day/week_high/low_atr con wick oltre e chiusura dentro", "nexus_feature_available": true, "nexus_feature_id": "dist_from_prev_day_high_atr / dist_from_prev_week_high_atr (e simmetrici low)"}
+      ]
+    },
+    "LEVEL_RECLAIM": {
+      "definition": "Dopo un LIQUIDITY_SWEEP, il prezzo richiude oltre il livello nella direzione opposta allo sweep.",
+      "proxies": [
+        {"name": "RECLAIM event (Phase 5 build_events.py - GIA' TESTATO, REFUTED_AT_DISCOVERY in Phase 7.1, generico BOTH/BUY/SELL)", "nexus_feature_available": false, "warning": "vedi failure_memory_registry_v1.json e Phase 7.1 - qualunque sequence che usi questo mechanism deve avere una motivazione meccanicistica indipendente, non un semplice filtro aggiuntivo sullo stesso RECLAIM generico gia' refutato"}
+      ]
+    },
+    "MOMENTUM_ACCELERATION": {
+      "definition": "Il tasso di cambiamento del prezzo sta aumentando nella direzione del movimento in corso.",
+      "proxies": [
+        {"name": "momentum_acceleration (derivata seconda del ROC)", "nexus_feature_available": true, "nexus_feature_id": "momentum_acceleration"},
+        {"name": "roc in aumento su finestre successive", "nexus_feature_available": true, "nexus_feature_id": "roc"}
+      ]
+    },
+    "MOMENTUM_DECAY": {
+      "definition": "Il tasso di cambiamento del prezzo sta rallentando pur restando nella stessa direzione.",
+      "proxies": [
+        {"name": "momentum_persistence_bars in calo", "nexus_feature_available": true, "nexus_feature_id": "momentum_persistence_bars"},
+        {"name": "roc in calo ma ancora positivo/negativo coerente col trend", "nexus_feature_available": true, "nexus_feature_id": "roc"}
+      ]
+    },
+    "SESSION_RANGE_EXPANSION": {
+      "definition": "Il range di una sessione (Asia/Londra/NY) supera significativamente il range tipico della stessa sessione.",
+      "proxies": [
+        {"name": "range della sessione corrente vs percentile storico dello stesso session-slot", "nexus_feature_available": false, "note": "richiede aggregazione per 'session' (gia' feature categorica NEXUS) - non ancora calcolato come percentile"}
+      ]
+    },
+    "SESSION_REVERSAL": {
+      "definition": "Una sessione inverte la direzione stabilita dalla sessione precedente.",
+      "proxies": [
+        {"name": "direzione netta sessione corrente vs sessione precedente (return_direction aggregato per session)", "nexus_feature_available": true, "nexus_feature_id": "return_direction + session (da aggregare)"}
+      ]
+    },
+    "MEAN_REVERSION": {
+      "definition": "Dopo un'estensione di prezzo, tendenza a tornare verso un livello di riferimento (media, VWAP, range).",
+      "proxies": [
+        {"name": "mean_reversion_score (= -lag1_autocorr_rolling)", "nexus_feature_available": true, "nexus_feature_id": "mean_reversion_score"},
+        {"name": "lag1_autocorr_rolling negativa", "nexus_feature_available": true, "nexus_feature_id": "lag1_autocorr_rolling"},
+        {"name": "variance_ratio_proxy < 1 (sotto-diffusivo, coerente con mean-reversion)", "nexus_feature_available": true, "nexus_feature_id": "variance_ratio_proxy"}
+      ]
+    },
+    "HTF_LTF_ALIGNMENT": {
+      "definition": "Lo stato di trend/direzione su un timeframe piu' alto e' concorde con l'evento osservato su un timeframe piu' basso.",
+      "proxies": [
+        {"name": "ema_slope_atr_norm su H4 (contesto) incrociato con evento su M15/H1 (nessuna feature multi-TF nativa in NEXUS oggi)", "nexus_feature_available": false, "warning": "NEXUS oggi lavora solo su barre H4 - un mechanism HTF/LTF richiede dati a timeframe piu' fine, non disponibili nella pipeline attuale (gap dichiarato, vedi phase7_3_sequence_engine_input_contract_v1.json)"}
+      ]
+    },
+    "GAP_IMBALANCE_RESPONSE": {
+      "definition": "Comportamento del prezzo nel tornare (o non tornare) a riempire un gap/imbalance lasciato da un movimento impulsivo.",
+      "proxies": [
+        {"name": "gap fra chiusura/apertura di barre consecutive (non calcolato oggi in NEXUS su H4 continuo)", "nexus_feature_available": false}
+      ]
+    },
+    "VWAP_ACCEPTANCE": {
+      "definition": "Prezzo si mantiene sopra/sotto il VWAP di sessione dopo un test.",
+      "proxies": [
+        {"name": "VWAP di sessione (non calcolato oggi in NEXUS)", "nexus_feature_available": false}
+      ]
+    },
+    "VWAP_REJECTION": {
+      "definition": "Prezzo testa il VWAP di sessione e viene respinto, riprendendo la direzione precedente.",
+      "proxies": [
+        {"name": "VWAP di sessione (non calcolato oggi in NEXUS)", "nexus_feature_available": false}
+      ]
+    },
+    "EXECUTION_UNFRIENDLY_STATE": {
+      "definition": "Condizioni di mercato in cui l'informazione direzionale e' bassa e/o il rischio di falso segnale e' alto (sec.15 Phase 7.2).",
+      "proxies": [
+        {"name": "compression_percentile molto bassa + directional_efficiency molto bassa insieme", "nexus_feature_available": true, "nexus_feature_id": "compression_percentile + directional_efficiency (combinazione, non ancora una feature singola)"},
+        {"name": "variance_ratio_proxy vicino a 1 (random-walk-like, ne' trending ne' mean-reverting)", "nexus_feature_available": true, "nexus_feature_id": "variance_ratio_proxy"}
+      ]
+    }
+  },
+
+  "note_on_gaps": "Diversi concept-proxy sopra richiedono dati/feature NON ancora disponibili in NEXUS (multi-timeframe intrabar, VWAP di sessione, gap fra barre) - questi gap sono dichiarati esplicitamente qui e ripresi in phase7_3_sequence_engine_input_contract_v1.json come precondizioni di implementazione, non risolti in questa fase (sec.16: nessun numero calcolato su dati NEXUS in Phase 7.2)."
+}

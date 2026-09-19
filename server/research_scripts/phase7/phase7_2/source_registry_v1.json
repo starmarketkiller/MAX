@@ -1,0 +1,603 @@
+{
+  "generated_at": "2026-09-19T21:31:51.493397+00:00",
+  "generation_script": "phase7/phase7_2/build_corpus_and_source_registry.py",
+  "canonical_sha256": "76e29740e81dc68ccb61d5dbb3abeb6cbc746609f7c22e748e7ac61f3ca07694",
+  "payload": {
+    "sources": [
+      {
+        "source_id": "SRC-0001",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2089463",
+        "source_title": "Time Series Momentum",
+        "author_if_known": "Tobias J. Moskowitz, Yao Hua Ooi, Lasse Heje Pedersen",
+        "publication_date_if_known": "2012",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0002",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.1985.tb04967.x",
+        "source_title": "An Investigation of Transactions Data for NYSE Stocks",
+        "author_if_known": "Robert A. Wood, Thomas H. McInish, J. Keith Ord",
+        "publication_date_if_known": "1985",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0003",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://www.cis.upenn.edu/~mkearns/finread/amihud.pdf",
+        "source_title": "Illiquidity and Stock Returns: Cross-Section and Time-Series Effects",
+        "author_if_known": "Yakov Amihud",
+        "publication_date_if_known": "2002",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0004",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://papers.ssrn.com/sol3/Delivery.cfm/4729284.pdf?abstractid=4729284&mirid=1",
+        "source_title": "A Profitable Day Trading Strategy For The U.S. Equity Market",
+        "author_if_known": "Carlo Zarattini, Andrea Barbon, Andrew Aziz",
+        "publication_date_if_known": "2024",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0005",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4416622",
+        "source_title": "Can Day Trading Really Be Profitable? Evidence of Sustainable Long-Term Profits from Opening Range Breakout (ORB) Day Trading Strategy vs. Benchmark in the US Stock Market",
+        "author_if_known": "Andrew Aziz, Carlo Zarattini",
+        "publication_date_if_known": "2023",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0006",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://www.sciencedirect.com/science/article/pii/S0304405X18301351",
+        "source_title": "Market Intraday Momentum",
+        "author_if_known": "Lei Gao, Yufeng Han, Sophia Zhengzi Li, Guofu Zhou",
+        "publication_date_if_known": "2018",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0007",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/jofi.12196",
+        "source_title": "The Pre-FOMC Announcement Drift",
+        "author_if_known": "David O. Lucca, Emanuel Moench",
+        "publication_date_if_known": "2015",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0008",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://onlinelibrary.wiley.com/doi/10.1111/jofi.12818",
+        "source_title": "Stock Returns over the FOMC Cycle",
+        "author_if_known": "Anna Cieslak, Adair Morse, Annette Vissing-Jorgensen",
+        "publication_date_if_known": "2019",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0009",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://www.jstor.org/stable/2962113",
+        "source_title": "Stock Market Prices Do Not Follow Random Walks: Evidence from a Simple Specification Test",
+        "author_if_known": "Andrew W. Lo, A. Craig MacKinlay",
+        "publication_date_if_known": "1988",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0010",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "http://rama.cont.perso.math.cnrs.fr/pdf/clustering.pdf",
+        "source_title": "Empirical Properties of Asset Returns: Stylized Facts and Statistical Issues",
+        "author_if_known": "Rama Cont",
+        "publication_date_if_known": "2001",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0011",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X19300650",
+        "source_title": "A Tug of War: Overnight versus Intraday Expected Returns",
+        "author_if_known": "Dong Lou, Christopher Polk, Spyros Skouras",
+        "publication_date_if_known": "2019",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0012",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://academic.oup.com/rfs/article-abstract/1/1/3/1601212",
+        "source_title": "A Theory of Intraday Patterns: Volume and Price Variability",
+        "author_if_known": "Anat R. Admati, Paul Pfleiderer",
+        "publication_date_if_known": "1988",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0013",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://www.nber.org/system/files/working_papers/w11222/w11222.pdf",
+        "source_title": "The Tactical and Strategic Value of Commodity Futures",
+        "author_if_known": "Claude B. Erb, Campbell R. Harvey",
+        "publication_date_if_known": "2006",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0014",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5384405",
+        "source_title": "Cultural Calendars and the Gold Drift: Are Holidays Moving GLD ETF?",
+        "author_if_known": "Radovan Vojtko, Cyril Dujava",
+        "publication_date_if_known": "2025-08-08",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0015",
+        "source_type": "QUANT_BLOG",
+        "source_url": "https://quantpedia.com/cultural-calendars-and-the-gold-drift-are-holidays-moving-gld-etf/",
+        "source_title": "Cultural Calendars and the Gold Drift: Are Holidays Moving GLD ETF?",
+        "author_if_known": "Radovan Vojtko, Cyril Dujava",
+        "publication_date_if_known": "2025-08-08",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0016",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://arxiv.org/abs/2605.04004",
+        "source_title": "Structural Limits of OHLCV-Based Intraday Signals in MNQ Futures: A Systematic Falsification Study",
+        "author_if_known": "Mathias Mesfin",
+        "publication_date_if_known": "2026-05-05",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0017",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5288827",
+        "source_title": "Quantifying Volatility Compression and Expansion: A Predictive Model for Momentum-Driven Market Dislocations",
+        "author_if_known": "Sanjay Manamala",
+        "publication_date_if_known": "2025-04-24",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0018",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://ssrn.com/abstract=5978355",
+        "source_title": "Volatility Regime Transitions and Equity Return Decoupling: Empirical Evidence from VIX Compression-to-Expansion Dynamics",
+        "author_if_known": "Fabio La Manna",
+        "publication_date_if_known": "2026-01-13",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0019",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/18867",
+        "source_title": "Automating Trading Strategies in MQL5 (Part 24): London Session Breakout System with Risk Management and Trailing Stops",
+        "author_if_known": "Allan Munene Mutiiria",
+        "publication_date_if_known": "2025-07-23",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0020",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/17239",
+        "source_title": "Automating Trading Strategies in MQL5 (Part 9): Building an Expert Advisor for the Asian Breakout Strategy",
+        "author_if_known": "Allan Munene Mutiiria",
+        "publication_date_if_known": "2025-02-25",
+        "n_claims_from_source": 3
+      },
+      {
+        "source_id": "SRC-0021",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/23155",
+        "source_title": "Automating Trading Strategies in MQL5 (Part 50): Turtle Soup Liquidity Sweeps",
+        "author_if_known": "Allan Munene Mutiiria",
+        "publication_date_if_known": "2026-07-10",
+        "n_claims_from_source": 3
+      },
+      {
+        "source_id": "SRC-0022",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/20569",
+        "source_title": "Automating Trading Strategies in MQL5 (Part 46): Liquidity Sweep on Break of Structure (BoS)",
+        "author_if_known": "Allan Munene Mutiiria",
+        "publication_date_if_known": "2025-12-12",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0023",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/8390",
+        "source_title": "Grid and martingale: what are they and how to use them?",
+        "author_if_known": "Evgeniy Ilin",
+        "publication_date_if_known": "2020-12-17",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0024",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/21833",
+        "source_title": "Building a Research-Grounded Grid EA in MQL5: Why Most Grid EAs Fail and What Taranto Proved",
+        "author_if_known": "Muhammad Minhas Qamar",
+        "publication_date_if_known": "2026-03-27",
+        "n_claims_from_source": 3
+      },
+      {
+        "source_id": "SRC-0025",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/20745",
+        "source_title": "Larry Williams Market Secrets (Part 5): Automating the Volatility Breakout Strategy in MQL5",
+        "author_if_known": "Chacha Ian Maroa",
+        "publication_date_if_known": "2026-01-16",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0026",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/19459",
+        "source_title": "Developing a Volatility Based Breakout System",
+        "author_if_known": "Hlomohang John Borotho",
+        "publication_date_if_known": "2025-09-22",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0027",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/articles/22755",
+        "source_title": "Meta-Labeling the Classics (Part 3): Filtering and Sizing Bollinger Band Trades",
+        "author_if_known": "Patrick Murimi Njoroge",
+        "publication_date_if_known": "2026-08-28",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0028",
+        "source_type": "EA_PUBLIC",
+        "source_url": "https://www.mql5.com/en/market/product/166774",
+        "source_title": "Gold Asian Breakout | Buy Trading Robot (Expert Advisor) for MetaTrader 5",
+        "author_if_known": "Wojciech Jerzy Magda",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0029",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1349219-eurusd-london-session-manipulation-amd",
+        "source_title": "EURUSD London Session Manipulation (AMD)",
+        "author_if_known": "warsawtrader",
+        "publication_date_if_known": "2025-07-01",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0030",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/liquidity-sweep/1211541",
+        "source_title": "Liquidity Sweep",
+        "author_if_known": "icebear2",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0031",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/trading-the-asian-session/76979",
+        "source_title": "Trading the Asian Session",
+        "author_if_known": "Austerlitzer",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0032",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/stop-hunting/43137",
+        "source_title": "Stop Hunting",
+        "author_if_known": "bobmaninc",
+        "publication_date_if_known": "2012-03-01",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0033",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1350216-gold-trading-an-institutional-way",
+        "source_title": "Gold Trading \u2013 An institutional Way",
+        "author_if_known": "tiptoptrade",
+        "publication_date_if_known": "2025-07-08",
+        "n_claims_from_source": 3
+      },
+      {
+        "source_id": "SRC-0034",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/post/15258143",
+        "source_title": "ICT Silver Bullet Strategy Explained - [TFlab]",
+        "author_if_known": "tflab",
+        "publication_date_if_known": "2025-05-27",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0035",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/post/15263823",
+        "source_title": "ICT Liquidity Sweep and Liquidity Run Strategy-TFlab",
+        "author_if_known": "tflab",
+        "publication_date_if_known": "2025-06-02",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0036",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1385208-gold-trading-strategy-new-york-open-range",
+        "source_title": "Gold Trading Strategy \u2013 New York Open Range Breakout Scalping",
+        "author_if_known": "tiptoptrade",
+        "publication_date_if_known": "2026-02-23",
+        "n_claims_from_source": 3
+      },
+      {
+        "source_id": "SRC-0037",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1229749-m5-mean-reversion-strategy",
+        "source_title": "M5 Mean Reversion Strategy",
+        "author_if_known": "encryptedehs",
+        "publication_date_if_known": "2023-07-08",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0038",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/296776-eurusd-session-breakout-and-reverse-strategy",
+        "source_title": "EURUSD Session Breakout and Reverse Strategy",
+        "author_if_known": "rewand",
+        "publication_date_if_known": "2011-06-01",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0039",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/5m-tf-price-action-strategy/65776",
+        "source_title": "5m TF Price Action Strategy",
+        "author_if_known": "jalapenoninja",
+        "publication_date_if_known": "2014-06-23",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0040",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/statistical-london-breakout-strategy/46146",
+        "source_title": "$* Statistical London Breakout Strategy *$",
+        "author_if_known": "pipcompounder",
+        "publication_date_if_known": "2012-09-04",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0041",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://forums.babypips.com/t/understanding-order-blocks-in-forex-trading/1230324",
+        "source_title": "Understanding Order Blocks in Forex Trading",
+        "author_if_known": "sami223",
+        "publication_date_if_known": "2024-02-02",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0042",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1040588-simple-easy-lopen-strategy-eurusd",
+        "source_title": "Simple easy LOPEN strategy (eurusd)",
+        "author_if_known": "ryuryu",
+        "publication_date_if_known": "2020-11-15",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0043",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/580892-volatility-breakout-system",
+        "source_title": "Volatility breakout system",
+        "author_if_known": "Kunay9",
+        "publication_date_if_known": "2016-02-29",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0044",
+        "source_type": "FOREXFACTORY",
+        "source_url": "https://www.forexfactory.com/thread/1339071-london-breakout-strategy-indicator-most-volatile-session",
+        "source_title": "London Breakout Strategy Indicator \u2013 Most Volatile Session!",
+        "author_if_known": "TradeWhiz",
+        "publication_date_if_known": "2025-04-24",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0045",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/4fyLTL2I-BB-Squeeze-Breakout/",
+        "source_title": "BB Squeeze Breakout \u2014 Indicator by Alpha_Wizard",
+        "author_if_known": "Alpha_Wizard",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0046",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/ro6IUd3b-Apollo-VWAP-Rejection-Indicator/",
+        "source_title": "Apollo: VWAP Rejection Indicator by InvestiShare",
+        "author_if_known": "InvestiShare",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0047",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/2Ghnhfqg-Kaufman-Efficiency-Ratio-Gate-NovaLens/",
+        "source_title": "Kaufman Efficiency Ratio Gate [NovaLens] \u2014 Indicator by NovaLens",
+        "author_if_known": "NovaLens",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0048",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/JsUCuuAa-Advanced-Market-Profile-Automated-Volume-Profile-Indicator/",
+        "source_title": "Advanced Market Profile - Automated Volume Profile Indicator by iMetaX",
+        "author_if_known": "iMetaX",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0049",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/cP0fYaeZ-Fair-Value-Gap-Fill-Probability-PickMyTrade/",
+        "source_title": "Fair Value Gap Fill Probability [PickMyTrade] \u2014 Indicator by PickMyTrade_Official",
+        "author_if_known": "PickMyTrade_Official",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0050",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/script/Lc8WH9UF-Volatility-Compression-Breakout/",
+        "source_title": "Volatility Compression Breakout \u2014 Indicator by LeafAlgo",
+        "author_if_known": "LeafAlgo",
+        "publication_date_if_known": "2023-05-23",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0051",
+        "source_type": "GITHUB_OPENSOURCE",
+        "source_url": "https://github.com/SC4RECOIN/simple-crypto-breakout-strategy",
+        "source_title": "simple-crypto-breakout-strategy",
+        "author_if_known": "SC4RECOIN",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0052",
+        "source_type": "GITHUB_OPENSOURCE",
+        "source_url": "https://github.com/je-suis-tm/quant-trading",
+        "source_title": "quant-trading (je-suis-tm) \u2014 London Breakout strategy",
+        "author_if_known": "je-suis-tm",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 4
+      },
+      {
+        "source_id": "SRC-0053",
+        "source_type": "GITHUB_OPENSOURCE",
+        "source_url": "https://github.com/arrabyte/freqtrade-strategies",
+        "source_title": "freqtrade-strategies (SilvanStrategy) \u2014 Alessandro Arrabito",
+        "author_if_known": "Alessandro Arrabito (arrabyte)",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0054",
+        "source_type": "GITHUB_OPENSOURCE",
+        "source_url": "https://github.com/HYC1102/ATR-breakout-strategy",
+        "source_title": "ATR-breakout-strategy",
+        "author_if_known": "HYC1102",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0055",
+        "source_type": "GITHUB_OPENSOURCE",
+        "source_url": "https://github.com/cutemarkets/cute-intraday-option-strats",
+        "source_title": "cute-intraday-option-strats (c36_vwap_mr_option_native_quality_v1)",
+        "author_if_known": "CuteMarkets",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0056",
+        "source_type": "BROKER_EXCHANGE_DOC",
+        "source_url": "https://tradefundrr.com/blog/comex-hours",
+        "source_title": "COMEX Hours: When Gold, Silver, and Copper Futures Trade",
+        "author_if_known": "Marcus Hale",
+        "publication_date_if_known": "2024-07-10",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0057",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5407636/",
+        "source_title": "Stylized facts of intraday precious metals",
+        "author_if_known": "Batten, Lucey, McGroarty, Peat, Urquhart",
+        "publication_date_if_known": "2017-04-27",
+        "n_claims_from_source": 4
+      },
+      {
+        "source_id": "SRC-0058",
+        "source_type": "ACADEMIC_PAPER",
+        "source_url": "https://ideas.repec.org/p/koe/wpaper/1722.html",
+        "source_title": "Intraday Seasonality in Efficiency, Liquidity, Volatility and Volume: Platinum and Gold Futures in Tokyo and New York",
+        "author_if_known": "Kentaro Iwatsubo, Clinton Watkins, Tao Xu",
+        "publication_date_if_known": "2017-01-01",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0059",
+        "source_type": "BROKER_EXCHANGE_DOC",
+        "source_url": "https://www.equiti.com/sc-en/news/trading-ideas/xauusd-liquidity-mapping-path-of-liquidity/",
+        "source_title": "How XAUUSD liquidity mapping works",
+        "author_if_known": "Ahmed Azzam",
+        "publication_date_if_known": null,
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0060",
+        "source_type": "MQL5",
+        "source_url": "https://www.mql5.com/en/blogs/post/768725",
+        "source_title": "Why the Gold-Dollar Rule Fails \u2014 and What Works Instead",
+        "author_if_known": "Mauricio Vellasquez",
+        "publication_date_if_known": "2026-04-06",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0061",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/chart/XAUUSD/M14vRELP-Best-Liquidity-Grab-Sweep-Strategy-For-Trading-Forex-Gold/",
+        "source_title": "Best Liquidity Grab/Sweep Strategy For Trading Forex Gold",
+        "author_if_known": "VasilyTrader",
+        "publication_date_if_known": "2026-08-15",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0062",
+        "source_type": "TRADINGVIEW",
+        "source_url": "https://www.tradingview.com/chart/XAUUSD/FJVqrI4l-CRT-Strict-Three-Candle-Framework/",
+        "source_title": "CRT: Strict Three-Candle Framework",
+        "author_if_known": "Pako Phutietsile (currencynerd)",
+        "publication_date_if_known": "2026-08-06",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0063",
+        "source_type": "QUANT_BLOG",
+        "source_url": "https://fxnx.com/en/blog/ict-breaker-blocks-master-art-trading-failed-order-blocks",
+        "source_title": "ICT Breaker Blocks: A Guide to Trading Failed Order Blocks",
+        "author_if_known": "Sofia Petrov",
+        "publication_date_if_known": "2026-02-17",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0064",
+        "source_type": "OTHER_FORUM",
+        "source_url": "https://innercircletrader.net/tutorials/ict-liquidity-sweep-vs-liquidity-run/",
+        "source_title": "Liquidity Sweep vs Liquidity Run",
+        "author_if_known": "Ayub Rana",
+        "publication_date_if_known": "2024-05-28",
+        "n_claims_from_source": 2
+      },
+      {
+        "source_id": "SRC-0065",
+        "source_type": "QUANT_BLOG",
+        "source_url": "https://tobycrabel.substack.com/p/opening-range-breakout-a-century",
+        "source_title": "Opening Range Breakout - A Century of Evidence",
+        "author_if_known": "Toby Crabel",
+        "publication_date_if_known": "2026-08-31",
+        "n_claims_from_source": 1
+      },
+      {
+        "source_id": "SRC-0066",
+        "source_type": "PREPRINT_SSRN_ARXIV",
+        "source_url": "https://arxiv.org/pdf/2605.04004",
+        "source_title": "Structural Limits of OHLCV-Based Intraday Momentum Signals in MNQ Futures: A Systematic Falsification Study",
+        "author_if_known": "Mathias Mesfin",
+        "publication_date_if_known": "2026-05-01",
+        "n_claims_from_source": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "rule_id": "RESEARCH_PRIORITY_SCORING_RULE_V1",
+  "declared_before_shortlist": true,
+  "anti_selection_rule": "Phase 7.2 sec.22 - questa regola e' scritta e congelata PRIMA di leggere l'elenco finale di mechanism/sequence candidate e prima di formare la shortlist. Se una sequenza sembra 'molto promettente' dopo aver letto una fonte, questo NON le da' priorita' automatica - solo i punteggi qui definiti contano. Nessun risultato NEXUS (DeltaP, backtest, PF) e' un input di questo punteggio (sec.21).",
+
+  "components": {
+    "falsifiability": {
+      "scale": "0-2", "0": "condizione di falsificazione assente/vaga", "1": "condizione di falsificazione dichiarata ma imprecisa", "2": "condizione di falsificazione precisa e osservabile"
+    },
+    "causal_measurability": {
+      "scale": "0-2", "0": "richiede dati/feature non disponibili e non facilmente derivabili (es. book di liquidita' reale)", "1": "richiede una feature NON ancora implementata ma derivabile da OHLC/tick gia' disponibili", "2": "misurabile con feature GIA' presenti in feature_registry_v2.json o direttamente da OHLC"
+    },
+    "implementation_clarity": {
+      "scale": "0-2", "0": "VAGUE_NOT_IMPLEMENTABLE su almeno un claim sorgente chiave", "1": "PARTIAL_RULES", "2": "CLEAR_RULES su tutti i claim sorgente principali"
+    },
+    "sample_availability_estimate": {
+      "scale": "0-2", "0": "fenomeno atteso raro/PATHOLOGICAL-equivalente (troppo raro o troppo frequente per essere informativo) sulla base della sola stima concettuale", "1": "frequenza incerta, richiede verifica", "2": "fenomeno strutturalmente analogo a un event_family gia' osservato con firing-rate NORMAL in event_detector_health_v1.json (Phase 7.0B)"
+    },
+    "distinctiveness_from_failed_mechanisms": {
+      "scale": "0-2", "0": "DIRECT_REPEAT_OF_FAILED_IDEA (failure_memory_relation)", "1": "RELATED_TO_PREVIOUS_FAILURE con motivazione di differenza dichiarata", "2": "NOVEL"
+    },
+    "source_diversity": {
+      "scale": "0-2", "0": "1 sola fonte/categoria", "1": "2 categorie di fonte", "2": ">=3 categorie di fonte indipendenti (vedi source_diversity_matrix)"
+    },
+    "external_evidence_transparency": {
+      "scale": "0-2", "0": "tutte le fonti Q0-Q1", "1": "almeno una fonte Q2", "2": "almeno una fonte Q3-Q4"
+    },
+    "parameter_count_penalty": {
+      "scale": "0-2 (INVERTITO: punteggio alto = pochi parametri)", "0": "molti parametri liberi (parameter_overfit_risk=HIGH su piu' claim sorgente)", "1": "alcuni parametri", "2": "pochi/nessun parametro libero oltre a soglie di dominio (parameter_overfit_risk=LOW)"
+    },
+    "execution_feasibility": {
+      "scale": "0-2", "0": "richiede esecuzione intrabar/latenza non compatibile con l'infrastruttura NEXUS attuale (solo H4)", "1": "richiede dati a timeframe piu' fine non ancora nella pipeline (gap dichiarato)", "2": "eseguibile in linea di principio con la pipeline H4 attuale"
+    }
+  },
+
+  "total_score_range": "0-18 (9 componenti x 0-2)",
+  "tiers": {
+    "HIGH_RESEARCH_PRIORITY": ">=13",
+    "MEDIUM_RESEARCH_PRIORITY": "8-12",
+    "LOW_RESEARCH_PRIORITY": "<8"
+  },
+  "tie_break_rule": "A parita' di punteggio totale, priorita' a: (1) source_diversity piu' alta, poi (2) distinctiveness_from_failed_mechanisms piu' alta, poi (3) ordine alfabetico di sequence_family_id (deterministico, mai una preferenza soggettiva).",
+
+  "explicit_ceiling": "Nessuna sequenza scorata con questa regola puo' ricevere l'etichetta 'PROMISING_EDGE' - l'etichetta massima ammessa in Phase 7.2 e' HIGH_RESEARCH_PRIORITY, che significa SOLO 'proprieta' ex-ante favorevoli alla ricerca', mai un giudizio su probabilita' di successo (sec.34)."
+}

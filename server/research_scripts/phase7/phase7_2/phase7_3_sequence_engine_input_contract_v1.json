@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "contract_id": "PHASE7_3_SEQUENCE_ENGINE_INPUT_CONTRACT_V1",
+  "principle": "Phase 7.2 sec.35 - definisce COME una sequence family (market_sequence_registry_v1.json) POTRA' essere trasformata in una futura Phase 7.3 in un candidato testabile con la macchina v2 gia' esistente (Phase 7.0/7.0B: BaselineEngineV4, dependence_diagnostics_v2, multiple_testing_v2, candidate_lifecycle, validation_access_ledger). Questo contratto NON implementa il Sequence Discovery Engine - e' la specifica di interfaccia, scritta PRIMA di costruirlo.",
+
+  "transformation_pipeline": {
+    "step_1_detector": {
+      "input": "market_sequence_registry_v1.json entry (initial_state_conditions, event_a, transition_conditions, event_b_optional, terminal_state_conditions)",
+      "output": "una funzione detector deterministica, dichiarata EX-ANTE (stesso principio di build_events.py Phase 5) che identifica le barre in cui la sequenza si verifica",
+      "requirement": "ogni condizione in initial_state_conditions/transition_conditions/terminal_state_conditions deve mappare a UNA feature CAUSAL_SAFE gia' in feature_registry_v2.json O a un gap dichiarato esplicitamente (vedi mechanism_proxy_registry_v1.json, campo nexus_feature_available=false) - un gap non implementato blocca la formalizzazione del detector finche' non colmato, non viene aggirato con un proxy improvvisato in corsa."
+    },
+    "step_2_state_prerequisites": {
+      "input": "initial_state_conditions",
+      "output": "predicati booleani valutabili SOLO con informazione disponibile al momento della barra (causal_observability_status=OBSERVABLE_AT_DECISION_TIME obbligatorio - un sequence con REQUIRES_LOOKAHEAD_TO_DEFINE o UNCERTAIN non puo' procedere allo step successivo senza prima essere riformulata)"
+    },
+    "step_3_episode_segmentation": {
+      "input": "occorrenze del detector su una serie storica",
+      "output": "EVENT VIEW e EPISODE VIEW (riuso diretto di dependence_diagnostics_v2.py, gia' costruito in Phase 7.0 - non ricostruito da zero)",
+      "requirement": "cluster_gap_threshold dichiarato PRIMA di guardare i risultati, coerente con l'orizzonte naturale della sequenza (es. una sequenza a risoluzione 'stessa sessione' usa un gap threshold diverso da una a risoluzione multi-giorno)"
+    },
+    "step_4_matched_baseline": {
+      "input": "eventi segmentati + terminal_state_conditions",
+      "output": "baseline matchata (riuso diretto di BaselineEngineV4, Phase 7.0B) - match_dimensions dichiarate PRIMA di vedere risultati, seguendo baseline_contract_v4.json (minimo giustificato, mai un pacchetto fisso)"
+    },
+    "step_5_outcome_surface": {
+      "input": "expected_outcome_family dichiarato nella sequence",
+      "output": "definizione operativa dell'outcome (soglie ATR/R, orizzonte in barre) - CONGELATA prima di calcolare qualunque numero, seguendo lo stesso schema outcome_surface_v2.schema.json (Phase 7.0)",
+      "requirement": "se expected_outcome_family include CONTINUATION_PROBABILITY/REVERSAL_PROBABILITY, la definizione operativa di 'continuazione' vs 'reversal' deve essere dichiarata come soglia osservabile (es. 'chiusura oltre X ATR nella direzione di event_a entro N barre'), non lasciata implicita"
+    },
+    "step_6_dependence_diagnostics": {
+      "note": "gia' incluso nello step 3 (EVENT/EPISODE view) - qui si aggiunge il controllo di stabilita' del segno richiesto da minimum_evidence_gates.json, non ricalcolato ex-novo"
+    }
+  },
+
+  "hard_preconditions_before_any_phase7_3_run": [
+    "Tutti i gap dichiarati in mechanism_proxy_registry_v1.json per le sequence della shortlist devono essere colmati (feature implementata e CAUSAL_SAFE) O la sequence va esclusa dalla run.",
+    "Multi-timeframe (CONTEXT_TF/SETUP_TF/TRIGGER_TF): NEXUS oggi produce solo barre H4 - qualunque sequence che dichiari SETUP_TF/TRIGGER_TF diversi da H4 richiede una nuova pipeline di costruzione barre a timeframe piu' fine PRIMA di essere formalizzabile (gap strutturale, non risolvibile con un proxy).",
+    "Session/clock model (session_clock_model_v1.json): i bucket di sessione UTC fissi attualmente in feature_registry_v2.json NON sono DST-aware - qualunque sequence che dipenda da un preciso 'from session open' richiede la formalizzazione timezone-safe dichiarata in quel documento prima di essere testabile con precisione.",
+    "Una sola discovery family per run (vincolo gia' rispettato in Phase 7.1, da mantenere)."
+  ],
+
+  "explicit_non_goal": "Questo contratto non assegna alcun ordine di esecuzione alle sequence della shortlist - quello e' deciso da research_priority_queue_v1.json, con criteri ex-ante, non da questo documento."
+}

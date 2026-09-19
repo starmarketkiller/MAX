@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "external_claim_schema_v1.json",
+  "title": "NEXUS Phase 7.2 - External Claim",
+  "description": "Un claim grezzo estratto da una fonte esterna (paper, forum, EA, blog). Rappresenta un'AFFERMAZIONE su un fenomeno di mercato, non un'ipotesi gia' testata e non un candidato NEXUS. Nessun campo qui contiene o implica un outcome calcolato sui dati NEXUS (sec.33-34 Phase 7.2).",
+  "type": "object",
+  "required": [
+    "claim_id", "source_id", "source_type", "source_url", "source_title", "accessed_at",
+    "market", "instrument", "original_claim_summary", "claimed_mechanism", "context",
+    "event_sequence", "claimed_outcome", "claimed_direction", "evidence_type", "evidence_quality",
+    "reproducibility", "implementation_clarity", "commercial_conflict_risk", "survivorship_risk",
+    "hindsight_risk", "parameter_overfit_risk", "transferability_status", "falsification_condition"
+  ],
+  "properties": {
+    "claim_id": {"type": "string", "pattern": "^CLAIM-[0-9]{4}$"},
+    "source_id": {"type": "string", "description": "riferimento a source_registry_v1.json"},
+    "source_type": {
+      "type": "string",
+      "enum": ["ACADEMIC_PAPER", "PREPRINT_SSRN_ARXIV", "MQL5", "REDDIT", "FOREXFACTORY",
+               "TRADINGVIEW", "GITHUB_OPENSOURCE", "QUANT_BLOG", "BROKER_EXCHANGE_DOC",
+               "EA_PUBLIC", "OTHER_FORUM"]
+    },
+    "source_url": {"type": "string"},
+    "source_title": {"type": "string"},
+    "publication_date_if_known": {"type": ["string", "null"]},
+    "accessed_at": {"type": "string", "format": "date"},
+    "author_if_known": {"type": ["string", "null"]},
+    "market": {"type": "string", "enum": ["FX", "XAUUSD_GOLD", "FUTURES", "EQUITY_INDEX", "CRYPTO", "MULTI_ASSET_GENERIC"]},
+    "instrument": {"type": "string"},
+    "timeframe": {"type": ["string", "null"]},
+    "original_claim_summary": {"type": "string", "description": "Parafrasi, MAI testo lungo copiato dalla fonte."},
+    "claimed_mechanism": {"type": "string", "description": "Il fenomeno di mercato affermato, in linguaggio osservabile (non nome di indicatore)."},
+    "context": {"type": "string", "description": "Regime/condizione in cui il claim si applicherebbe (es. trending, session specifica)."},
+    "prerequisite_state": {"type": ["string", "null"]},
+    "event_sequence": {"type": "string", "description": "Sequenza EVENTO A -> (transizione) -> EVENTO B descritta dalla fonte, in prosa strutturata."},
+    "trigger": {"type": ["string", "null"]},
+    "invalidation": {"type": ["string", "null"]},
+    "claimed_outcome": {"type": "string"},
+    "claimed_direction": {"type": "string", "enum": ["BUY", "SELL", "BOTH", "CONTEXT_DEPENDENT", "NON_DIRECTIONAL"]},
+    "claimed_horizon": {"type": ["string", "null"]},
+    "evidence_type": {"type": "string", "enum": ["NONE_STATED", "ANECDOTAL_EXAMPLES", "BACKTEST_SCREENSHOT", "BACKTEST_DESCRIBED", "TRANSPARENT_REPRODUCIBLE_TEST", "PEER_REVIEWED_STUDY", "MULTI_SAMPLE_INDEPENDENT_STUDY"]},
+    "evidence_quality": {"type": "string", "enum": ["Q0", "Q1", "Q2", "Q3", "Q4"], "description": "Q0 unsupported assertion .. Q4 independent/peer-reviewed/robust multi-sample - vedi evidence_quality_scale.md, indipendente dalla plausibilita' del claim."},
+    "reproducibility": {"type": "string", "enum": ["NOT_REPRODUCIBLE", "PARTIALLY_SPECIFIED", "FULLY_SPECIFIED"]},
+    "implementation_clarity": {"type": "string", "enum": ["VAGUE_NOT_IMPLEMENTABLE", "PARTIAL_RULES", "CLEAR_RULES"]},
+    "commercial_conflict_risk": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["COURSE_SALE", "EA_SALE", "AFFILIATE_LINK", "PROP_FIRM_MARKETING",
+                                            "UNAUDITED_RESULTS", "SCREENSHOT_ONLY", "CHERRY_PICKED_EXAMPLES",
+                                            "BACKTEST_NO_COSTS", "NO_OOS", "MANY_PARAMETERS", "NONE_DETECTED"]}
+    },
+    "survivorship_risk": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+    "hindsight_risk": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+    "parameter_overfit_risk": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+    "transferability_status": {"type": "string", "enum": ["NATIVE_XAUUSD", "TRANSFERABILITY_UNTESTED"]},
+    "falsification_condition": {"type": "string", "description": "Cosa osserveremmo se il claim fosse falso - obbligatorio, un claim senza questo campo compilabile e' UNFALSIFIABLE."},
+    "candidate_mechanism_ids": {"type": "array", "items": {"type": "string"}, "description": "riempito in fase di normalizzazione (sec.7), non dalla raccolta iniziale"},
+    "contradiction_group_id": {"type": ["string", "null"]},
+    "exclusion_reason": {
+      "type": ["string", "null"],
+      "enum": [null, "UNFALSIFIABLE", "PURE_MARKETING", "INSUFFICIENT_RULE_DEFINITION", "REQUIRES_UNAVAILABLE_DATA",
+                "NON_CAUSAL_INPUT", "DUPLICATE_MECHANISM", "PROPRIETARY_BLACK_BOX"]
+    },
+    "notes": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

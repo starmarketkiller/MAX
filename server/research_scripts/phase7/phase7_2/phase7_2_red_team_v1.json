@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "report_id": "PHASE7_2_RED_TEAM_V1",
+  "principle": "Attacco esplicito al corpus/ontologia PRIMA di chiudere la fase, sui 10 vettori nominati dall'utente (sec.37). Ogni attacco riporta un verdetto verificato sui dati reali del corpus, non un'affermazione generica.",
+
+  "attacks": [
+    {
+      "attack": "STESSA_IDEA_CONTATA_10_VOLTE_DA_FONTI_DIVERSE",
+      "verified_check": "Fonti deduplicate per source_url (build_corpus_and_source_registry.py) prima di qualunque conteggio - un articolo/thread con piu' claim viene contato come 1 sola fonte. Verificato sul mechanism con piu' supporto (MECH-06, BREAKOUT_ACCEPTANCE_CONTINUATION): 18 claim da 17 fonti DISTINTE (max 2 claim dalla stessa fonte). MECH-19 (RECLAIM): 7 claim da 5 fonti distinte.",
+      "verdict": "MITIGATO", "residual_risk": "La deduplicazione e' per URL, non semantica fra fonti diverse che descrivono la stessa idea con parole diverse - possibile un margine di sovraconteggio semantico non rilevato automaticamente, mitigato dal fatto che 17/18 fonti di MECH-06 sono comunque distinte per URL e categoria."
+    },
+    {
+      "attack": "MARKETING_TRATTATO_COME_EVIDENZA",
+      "verified_check": "commercial_conflict_risk popolato per ogni claim (58/115 claim con almeno un flag non-NONE_DETECTED); evidence_quality assegnata indipendentemente dalla plausibilita' (istruzione esplicita agli agenti di ricerca). L'EA commerciale piu' vistoso nel corpus (Gold Asian Breakout Pro, batch MQL5) e' flaggato EA_SALE+UNAUDITED_RESULTS+BACKTEST_NO_COSTS+SCREENSHOT_ONLY+MANY_PARAMETERS e survivorship_risk=HIGH.",
+      "verdict": "MITIGATO", "residual_risk": "Nessuno strutturale - il rischio residuo e' la qualita' del giudizio umano/agente nell'assegnare evidence_quality, non un difetto di processo."
+    },
+    {
+      "attack": "INDICATOR_NAMES_TRATTATI_COME_MECCANISMI_DISTINTI",
+      "verified_check": "Scan automatico di claimed_mechanism per gergo SMC/ICT grezzo (order block, fair value gap, liquidity sweep, smart money, ict, smc, breaker block): 13 hit grezzi, di cui la maggioranza falsi positivi (substring 'ict' dentro parole come 'predict'/'district'/'conflict'). I 3 hit genuini (CLAIM-0036, CLAIM-0080, CLAIM-0081) usano il termine ACCANTO a una definizione osservabile esplicita (es. 'three-candle price imbalance - a gap where consecutive candle wicks do not overlap'), non come sostituto del meccanismo - conforme all'istruzione esplicita data agli agenti di tradurre il gergo.",
+      "verdict": "MITIGATO", "residual_risk": "Nessun mechanism nel registry finale (33 voci) e' nominato con un termine ICT/SMC grezzo - tutti i nomi sono in linguaggio osservabile (es. LIQUIDITY_SWEEP, LEVEL_RECLAIM_REVERSAL, GAP_IMBALANCE_FVG_RESPONSE)."
+    },
+    {
+      "attack": "SOURCE_POPULARITY_USATA_COME_PROOF",
+      "verified_check": "research_priority_scoring_rule_v1.json (9 componenti) non include alcuna misura di popolarita' (upvote, numero di repliche, follower) - source_diversity conta CATEGORIE indipendenti, non popolarita' entro una categoria.",
+      "verdict": "MITIGATO", "residual_risk": "Nessuno - la regola di scoring e' stata scritta e congelata prima di leggere i risultati (research_priority_scoring_rule_v1.json)."
+    },
+    {
+      "attack": "CLAIM_NON_FALSIFICABILE",
+      "verified_check": "falsification_condition e' un campo obbligatorio nello schema; scan automatico: 0 claim su 115 con falsification_condition mancante o triviale (<15 caratteri). Gli agenti di ricerca hanno riportato di aver SCARTATO claim vaghi durante la raccolta (es. 4 claim scartati dall'agente community, diversi scartati dall'agente Gold/SMC per gergo ICT senza regola osservabile) - questi scarti non sono nel corpus finale, per costruzione.",
+      "verdict": "MITIGATO", "residual_risk": "La qualita' della condizione di falsificazione dichiarata non e' stata validata semanticamente (solo la presenza del campo) - un claim potrebbe avere una falsification_condition presente ma debole; mitigato parzialmente dal fatto che il campo e' parte dello stesso record scritto dall'agente insieme al resto, non aggiunto meccanicamente a posteriori."
+    },
+    {
+      "attack": "HINDSIGHT_SETUP",
+      "verified_check": "hindsight_risk tracciato per ogni claim: 20 HIGH, 63 MEDIUM, 32 LOW. Nessuna componente della regola di priorita' PREMIA un hindsight_risk alto - i claim HIGH-hindsight (tipicamente esempi da chart singoli SMC/ICT/forum) non ricevono un bonus, e i loro mechanism associati (es. MECH-19 RECLAIM) sono comunque penalizzati da altri fattori (distinctiveness).",
+      "verdict": "MITIGATO", "residual_risk": "hindsight_risk non e' esso stesso una componente NEGATIVA esplicita nella formula di scoring (non sottrae punti direttamente) - e' un campo diagnostico riportato ma non pesato aritmeticamente. Da considerare come possibile estensione futura della regola di scoring."
+    },
+    {
+      "attack": "PARAMETER_RICH_SETUP",
+      "verified_check": "parameter_overfit_risk tracciato per ogni claim (20 HIGH, 55 MEDIUM, 31 LOW, 9 UNKNOWN) ed E' una componente esplicita e PENALIZZANTE della regola di priorita' (parameter_count_penalty, derivato dal rischio migliore fra le fonti di supporto - un mechanism supportato SOLO da fonti ad alto rischio di overfitting riceve 0/2 su questa componente).",
+      "verdict": "MITIGATO", "residual_risk": "Il conteggio non e' un vero 'numero di parametri' misurato, e' una valutazione qualitativa per claim - accettabile per una fase che non calcola alcun numero sui dati NEXUS."
+    },
+    {
+      "attack": "CONTRADICTORY_CLAIMS_ARBITRARIAMENTE_RISOLTI",
+      "verified_check": "contradiction_registry_v1.json conserva ESPLICITAMENTE 2 gruppi di contraddizione (CG-0001: sweep+reclaim->reversal vs sweep senza reclaim->continuazione; CG-0002: breakout->accettazione vs breakout->fallimento) con entrambe le posizioni e le rispettive fonti, senza dichiarare un vincitore - solo una domanda formalizzata sulla variabile di stato mancante (missing_state_question).",
+      "verdict": "MITIGATO", "residual_risk": "Nessuno strutturale per i 2 gruppi identificati; potrebbero esistere contraddizioni piu' sottili nel corpus non ancora formalizzate come CONTRADICTION_GROUP (dichiarato esplicitamente in contradiction_registry_v1.json, campo note_on_scope)."
+    },
+    {
+      "attack": "FAILED_HISTORICAL_IDEA_RICICLATA_CON_NUOVO_NOME",
+      "verified_check": "Ogni sequence derivata da un mechanism strutturalmente vicino a RECLAIM (Phase 7.1, REFUTED_AT_DISCOVERY) e' stata esplicitamente identificata e marcata: SEQ-0010 (forma generica) = DIRECT_REPEAT_OF_FAILED_IDEA, implementation_status=NOT_IMPLEMENTABLE_AS_DESCRIBED (bloccata esplicitamente); SEQ-0011 (variante con 2 filtri di stato indipendenti da CLAIM-0108/0109) = RELATED_TO_PREVIOUS_FAILURE, motivazione dichiarata (non un filtro casuale). Punteggio di priorita' risultante: SEQ-0010=7 (LOW), SEQ-0011=12 (MEDIO) - la penalizzazione avviene MECCANICAMENTE tramite la componente distinctiveness_from_failed_mechanisms, non per giudizio soggettivo a posteriori.",
+      "verdict": "MITIGATO",
+      "residual_risk": "Verificato anche che nessun altro mechanism del registry sia una riformulazione non dichiarata di PULLBACK (FAIL-004, Phase 5.5, PATHOLOGICAL) - il mechanism piu' vicino concettualmente (MECH-25 MOMENTUM_BURST_CONTINUATION, MECH-01 TREND_PERSISTENCE) descrive l'ESPANSIONE dopo un movimento ampio, non il pattern di pullback-in-trend di PULLBACK - relazione dichiarata NOVEL, ma da mantenere sotto osservazione in Phase 7.3."
+    },
+    {
+      "attack": "XAU_SPECIFIC_CLAIM_CONFUSO_CON_CROSS_MARKET_CLAIM",
+      "verified_check": "transferability_status obbligatorio per ogni claim: 29/115 NATIVE_XAUUSD, 86/115 TRANSFERABILITY_UNTESTED. Distribuzione per mercato: XAUUSD_GOLD=30, MULTI_ASSET_GENERIC=42, EQUITY_INDEX=20, FX=15, FUTURES=4, CRYPTO=4 - nessun claim non-gold e' stato silenziosamente trattato come gold-nativo. Il bug di compilazione trovato durante l'assemblaggio (6 claim con market='TRANSFERABILITY_UNTESTED' invece di un mercato valido) e' stato corretto esplicitamente (vedi phase7_2_research_journal_v1.jsonl, JRNL-P72-005) prima di questo report.",
+      "verdict": "MITIGATO", "residual_risk": "Nessuno strutturale - il campo e' distinto e verificato."
+    }
+  ],
+
+  "overall_verdict": "Nessun attacco ha trovato un difetto strutturale non gia' mitigato dal design del corpus/schema. Due rischi residui dichiarati esplicitamente (dedup semantica fra fonti con URL diversi ma stessa idea; hindsight_risk non pesato aritmeticamente nella formula di priorita') - non bloccano la chiusura di Phase 7.2, ma sono candidati per un affinamento futuro della metodologia."
+}

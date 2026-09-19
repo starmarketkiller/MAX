@@ -1,0 +1,347 @@
+{
+  "generated_at": "2026-09-19T21:40:30.481530+00:00",
+  "generation_script": "phase7/phase7_2/build_graph_and_diversity.py",
+  "canonical_sha256": "132d5a6d43c42f670f91b20b893765766665a4af9fcf7f99f5fd6accf9c3f589",
+  "payload": {
+    "categories": [
+      "ACADEMIC",
+      "COMMUNITY",
+      "MARKET_STRUCTURE_DOC",
+      "MQL5_EA",
+      "OPEN_SOURCE_SCRIPTS"
+    ],
+    "rows": [
+      {
+        "mechanism_id": "MECH-30",
+        "name": "SESSION_TRANSITION_LIQUIDITY_SHIFT",
+        "ACADEMIC": 2,
+        "COMMUNITY": 3,
+        "MARKET_STRUCTURE_DOC": 2,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 5
+      },
+      {
+        "mechanism_id": "MECH-06",
+        "name": "BREAKOUT_ACCEPTANCE_CONTINUATION",
+        "ACADEMIC": 3,
+        "COMMUNITY": 4,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 5,
+        "OPEN_SOURCE_SCRIPTS": 6,
+        "n_categories_with_support": 4
+      },
+      {
+        "mechanism_id": "MECH-07",
+        "name": "BREAKOUT_CONDITIONAL_ON_PARTICIPATION",
+        "ACADEMIC": 2,
+        "COMMUNITY": 1,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 4
+      },
+      {
+        "mechanism_id": "MECH-09",
+        "name": "SIGNAL_OVERFITTING_METHODOLOGICAL_CAUTION",
+        "ACADEMIC": 1,
+        "COMMUNITY": 1,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 1,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 4
+      },
+      {
+        "mechanism_id": "MECH-26",
+        "name": "MEAN_REVERSION_BAND_TOUCH_REGIME_DEPENDENT",
+        "ACADEMIC": 1,
+        "COMMUNITY": 1,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 4
+      },
+      {
+        "mechanism_id": "MECH-08",
+        "name": "BREAKOUT_FAILURE",
+        "ACADEMIC": 1,
+        "COMMUNITY": 1,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 3,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 3
+      },
+      {
+        "mechanism_id": "MECH-18",
+        "name": "LIQUIDITY_SWEEP",
+        "ACADEMIC": 0,
+        "COMMUNITY": 4,
+        "MARKET_STRUCTURE_DOC": 2,
+        "MQL5_EA": 3,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 3
+      },
+      {
+        "mechanism_id": "MECH-19",
+        "name": "LEVEL_RECLAIM_REVERSAL",
+        "ACADEMIC": 2,
+        "COMMUNITY": 4,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 1,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 3
+      },
+      {
+        "mechanism_id": "MECH-27",
+        "name": "HTF_TREND_FILTER_ALIGNMENT",
+        "ACADEMIC": 0,
+        "COMMUNITY": 3,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 3,
+        "OPEN_SOURCE_SCRIPTS": 2,
+        "n_categories_with_support": 3
+      },
+      {
+        "mechanism_id": "MECH-01",
+        "name": "TREND_PERSISTENCE",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-10",
+        "name": "VOLATILITY_COMPRESSION_TO_EXPANSION",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 3,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-20",
+        "name": "SWEEP_WITHOUT_RECLAIM_CONTINUATION",
+        "ACADEMIC": 1,
+        "COMMUNITY": 3,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-21",
+        "name": "GAP_IMBALANCE_FVG_RESPONSE",
+        "ACADEMIC": 0,
+        "COMMUNITY": 1,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 2,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-23",
+        "name": "TREND_CHOP_REGIME_CLASSIFICATION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 2,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-24",
+        "name": "POSITION_HOLDING_TIME_RISK_GROWTH",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 1,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 2
+      },
+      {
+        "mechanism_id": "MECH-02",
+        "name": "MOMENTUM_DECAY_TO_MEAN_REVERSION",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-03",
+        "name": "SESSION_TIME_OF_DAY_SEASONALITY",
+        "ACADEMIC": 8,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-04",
+        "name": "ILLIQUIDITY_RISK_PREMIUM",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-05",
+        "name": "LIQUIDITY_SHOCK_VOLATILITY_FEEDBACK",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-11",
+        "name": "VOLATILITY_REGIME_DIRECTION_DECOUPLING",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-12",
+        "name": "CALENDAR_SCHEDULED_EVENT_DRIFT",
+        "ACADEMIC": 2,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-13",
+        "name": "GOLD_CALENDAR_DEMAND_SHOCK",
+        "ACADEMIC": 2,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-14",
+        "name": "TERM_STRUCTURE_ROLL_YIELD",
+        "ACADEMIC": 2,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-15",
+        "name": "VOLATILITY_CLUSTERING",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-16",
+        "name": "FAT_TAIL_VOL_RETURN_ASYMMETRY",
+        "ACADEMIC": 1,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-17",
+        "name": "SESSION_SIGN_REVERSAL",
+        "ACADEMIC": 2,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-22",
+        "name": "GRID_MARTINGALE_MEAN_REVERSION_ASSUMPTION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-25",
+        "name": "MOMENTUM_BURST_CONTINUATION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-28",
+        "name": "VALUE_AREA_ACCEPTANCE_REJECTION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 2,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-29",
+        "name": "VWAP_ACCEPTANCE_REJECTION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 4,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-31",
+        "name": "DXY_REAL_YIELDS_GOLD_VALUATION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 2,
+        "OPEN_SOURCE_SCRIPTS": 0,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-32",
+        "name": "PAIRS_COINTEGRATION_MEAN_REVERSION",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 1
+      },
+      {
+        "mechanism_id": "MECH-33",
+        "name": "DUAL_MOVING_AVERAGE_MOMENTUM",
+        "ACADEMIC": 0,
+        "COMMUNITY": 0,
+        "MARKET_STRUCTURE_DOC": 0,
+        "MQL5_EA": 0,
+        "OPEN_SOURCE_SCRIPTS": 1,
+        "n_categories_with_support": 1
+      }
+    ],
+    "note": "Convergenza di fonti indipendenti NON prova un edge - aumenta solo l'interesse epistemico (sec.25)."
+  }
+}

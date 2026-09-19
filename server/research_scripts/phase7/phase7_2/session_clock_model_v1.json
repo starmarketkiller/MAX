@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "model_id": "SESSION_CLOCK_MODEL_V1",
+  "principle": "Phase 7.2 sec.13 - primitive di sessione/clock DICHIARATE come specifica, non calcolate su dati NEXUS in questa fase. Requisito esplicito dell'utente: gli orari NON vanno codificati come UTC fisso (es. 'Londra apre alle 8:00 UTC') perche' cambio ora legale (DST) di Londra/New York non coincide con quello UTC - un'ora fissa in UTC sposta silenziosamente la sessione reale di un'ora per meta' dell'anno.",
+
+  "timezone_safety_rule": {
+    "rule": "Ogni sessione e' definita nel PROPRIO fuso orario locale con le proprie regole DST (Europe/London per Londra, America/New_York per New York, Asia/Tokyo o generico 'sessione asiatica' spesso ancorata a Tokyo/Sydney) - la conversione a UTC per allineare ai dati H4 di NEXUS va fatta bar-by-bar usando una libreria timezone-aware (es. Python zoneinfo/pytz), MAI una costante UTC calcolata una volta e riusata tutto l'anno.",
+    "known_risk_if_violated": "Un errore comune (osservato in molte fonti retail raccolte in questo corpus) e' definire 'London open = 08:00 UTC' - vero solo quando Londra e' su BST (ora legale, marzo-ottobre); il resto dell'anno Londra apre alle 08:00 GMT = 08:00 UTC comunque (Londra e UTC condividono l'offset in inverno), MA New York (EST/EDT) si sposta di un'ora rispetto a Londra durante le finestre di transizione DST non allineate (le date di cambio ora legale USA/UK non coincidono esattamente) - l'overlap Londra-NY si sposta di un'ora per alcune settimane l'anno se non gestito correttamente."
+  },
+
+  "sessions": {
+    "ASIA": {
+      "reference_timezone": "Asia/Tokyo (convenzione comune per 'sessione asiatica' FX/Gold, anche se il volume e' distribuito su piu' centri APAC)",
+      "typical_local_hours": "09:00-18:00 JST (indicativo, non usato come costante UTC)",
+      "already_in_nexus": "feature categorica 'session' con bucket ASIA/ASIA_LATE_LONDON_PRE/LONDON/LONDON_NY_OVERLAP/NY/NY_LATE, oggi definiti su bucket orari UTC FISSI (0/4/8/12/16/20) - vedi feature_registry_v2.json e build_market_state.py. QUESTO E' UN GAP rispetto alla regola timezone-safe sopra, dichiarato esplicitamente qui, non silenziosamente ereditato: i bucket attuali sono un'approssimazione utile per una prima segmentazione H4, ma NON sono DST-aware."
+    },
+    "LONDON": {"reference_timezone": "Europe/London", "typical_local_hours": "08:00-16:30 local (indicativo)"},
+    "NEW_YORK": {"reference_timezone": "America/New_York", "typical_local_hours": "08:00-17:00 local (indicativo)"},
+    "LONDON_NY_OVERLAP": {"definition": "Intersezione delle finestre attive di Europe/London e America/New_York, ricalcolata correttamente nei periodi di transizione DST non allineata (fine marzo/fine ottobre UK vs seconda domenica marzo/prima di novembre US)."}
+  },
+
+  "primitives_to_formalize_in_phase7_3": [
+    "previous_session_high_low(session_name, as_of_bar)",
+    "previous_day_high_low(as_of_bar) - GIA' disponibile in NEXUS (dist_from_prev_day_high_atr/low_atr)",
+    "previous_week_high_low(as_of_bar) - GIA' disponibile in NEXUS (dist_from_prev_week_high_atr/low_atr)",
+    "session_range(session_name, session_date)",
+    "session_expansion_percentile(session_name, session_date) - richiede storicizzare session_range per session-slot, non ancora calcolato",
+    "session_sweep(session_name, reference_level) - un evento SWEEP (gia' rilevato in Phase 5) filtrato per essere avvenuto entro una finestra di sessione specifica",
+    "time_since_session_open(as_of_bar, session_name) - richiede timestamp di sessione timezone-aware, non solo bucket orario UTC"
+  ],
+
+  "gap_declared": "NEXUS oggi (Phase 5-7.1) usa bucket di sessione UTC fissi, non DST-aware. Formalizzare correttamente le primitive sopra e' un prerequisito di implementazione per qualunque sequence family che dipenda da 'apertura sessione' precisa - riportato in phase7_3_sequence_engine_input_contract_v1.json, NON risolto qui (nessun ricalcolo di feature in Phase 7.2)."
+}

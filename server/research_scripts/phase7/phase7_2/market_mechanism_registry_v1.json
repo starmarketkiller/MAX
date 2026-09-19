@@ -1,0 +1,580 @@
+{
+  "generated_at": "2026-09-19T21:35:34.043037+00:00",
+  "generation_script": "phase7/phase7_2/build_mechanism_registry.py",
+  "canonical_sha256": "916d1a001a1c9af3049dd5b9e26ba78aa10ac01caf74d1ddb8984a74fab606d0",
+  "payload": {
+    "n_mechanisms": 33,
+    "n_claims_mapped": 115,
+    "n_claims_unmapped": 0,
+    "unmapped_claim_ids": [],
+    "mechanisms": [
+      {
+        "mechanism_id": "MECH-01",
+        "name": "TREND_PERSISTENCE",
+        "definition": "Un movimento direzionale sostenuto tende a continuare nel breve/medio termine.",
+        "supporting_claim_ids": [
+          "CLAIM-0001",
+          "CLAIM-0091"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "GITHUB_OPENSOURCE",
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-02",
+        "name": "MOMENTUM_DECAY_TO_MEAN_REVERSION",
+        "definition": "Dopo una fase iniziale trend-following, il momentum decade e parte dell'effetto si inverte a orizzonti piu' lunghi.",
+        "supporting_claim_ids": [
+          "CLAIM-0002"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-03",
+        "name": "SESSION_TIME_OF_DAY_SEASONALITY",
+        "definition": "Ritorni realizzati, volatilita' e spread mostrano pattern ricorrenti legati all'ora del giorno/apertura-chiusura sessione.",
+        "supporting_claim_ids": [
+          "CLAIM-0003",
+          "CLAIM-0004",
+          "CLAIM-0013",
+          "CLAIM-0018",
+          "CLAIM-0096",
+          "CLAIM-0097",
+          "CLAIM-0098",
+          "CLAIM-0099"
+        ],
+        "n_supporting_claims": 8,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-04",
+        "name": "ILLIQUIDITY_RISK_PREMIUM",
+        "definition": "Premio di rischio richiesto per il costo di impatto di prezzo in condizioni meno liquide - fattore strutturale, non un sequence di trading.",
+        "supporting_claim_ids": [
+          "CLAIM-0005"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-05",
+        "name": "LIQUIDITY_SHOCK_VOLATILITY_FEEDBACK",
+        "definition": "Uno shock di liquidita' deprime il prezzo in tempo reale e coincide con volatilita' elevata.",
+        "supporting_claim_ids": [
+          "CLAIM-0006"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-06",
+        "name": "BREAKOUT_ACCEPTANCE_CONTINUATION",
+        "definition": "Un breakout di un livello/range viene accettato (chiusure successive lo confermano) e il movimento continua nella direzione della rottura.",
+        "supporting_claim_ids": [
+          "CLAIM-0007",
+          "CLAIM-0009",
+          "CLAIM-0027",
+          "CLAIM-0031",
+          "CLAIM-0036",
+          "CLAIM-0042",
+          "CLAIM-0048",
+          "CLAIM-0068",
+          "CLAIM-0070",
+          "CLAIM-0071",
+          "CLAIM-0083",
+          "CLAIM-0085",
+          "CLAIM-0086",
+          "CLAIM-0090",
+          "CLAIM-0106",
+          "CLAIM-0107",
+          "CLAIM-0112",
+          "CLAIM-0113"
+        ],
+        "n_supporting_claims": 18,
+        "n_distinct_source_types": 8,
+        "source_types": [
+          "ACADEMIC_PAPER",
+          "EA_PUBLIC",
+          "FOREXFACTORY",
+          "GITHUB_OPENSOURCE",
+          "MQL5",
+          "PREPRINT_SSRN_ARXIV",
+          "QUANT_BLOG",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-07",
+        "name": "BREAKOUT_CONDITIONAL_ON_PARTICIPATION",
+        "definition": "La continuazione di un breakout e' condizionata a liquidita'/partecipazione/volume concorrenti, non e' universale.",
+        "supporting_claim_ids": [
+          "CLAIM-0008",
+          "CLAIM-0010",
+          "CLAIM-0028",
+          "CLAIM-0049",
+          "CLAIM-0060",
+          "CLAIM-0073"
+        ],
+        "n_supporting_claims": 6,
+        "n_distinct_source_types": 6,
+        "source_types": [
+          "ACADEMIC_PAPER",
+          "EA_PUBLIC",
+          "FOREXFACTORY",
+          "MQL5",
+          "PREPRINT_SSRN_ARXIV",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-08",
+        "name": "BREAKOUT_FAILURE",
+        "definition": "Un breakout di un livello/range fallisce a mantenersi, il prezzo rientra nel range precedente.",
+        "supporting_claim_ids": [
+          "CLAIM-0023",
+          "CLAIM-0033",
+          "CLAIM-0044",
+          "CLAIM-0045",
+          "CLAIM-0064"
+        ],
+        "n_supporting_claims": 5,
+        "n_distinct_source_types": 3,
+        "source_types": [
+          "FOREXFACTORY",
+          "MQL5",
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-09",
+        "name": "SIGNAL_OVERFITTING_METHODOLOGICAL_CAUTION",
+        "definition": "Segnali OHLCV semplici, backtest senza costi/OOS, e liste di asset scelte con survivorship bias sovrastimano sistematicamente l'edge apparente - non un fenomeno di mercato, ma un avvertimento metodologico ricorrente nel corpus.",
+        "supporting_claim_ids": [
+          "CLAIM-0024",
+          "CLAIM-0038",
+          "CLAIM-0068",
+          "CLAIM-0090"
+        ],
+        "n_supporting_claims": 4,
+        "n_distinct_source_types": 4,
+        "source_types": [
+          "FOREXFACTORY",
+          "GITHUB_OPENSOURCE",
+          "MQL5",
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-10",
+        "name": "VOLATILITY_COMPRESSION_TO_EXPANSION",
+        "definition": "Una contrazione misurabile della volatilita' rispetto alla propria storia recente precede una fase di espansione.",
+        "supporting_claim_ids": [
+          "CLAIM-0025",
+          "CLAIM-0072",
+          "CLAIM-0073",
+          "CLAIM-0082"
+        ],
+        "n_supporting_claims": 4,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "PREPRINT_SSRN_ARXIV",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-11",
+        "name": "VOLATILITY_REGIME_DIRECTION_DECOUPLING",
+        "definition": "Le transizioni di regime di volatilita' possono essere scollegate dalla direzione dei ritorni.",
+        "supporting_claim_ids": [
+          "CLAIM-0026"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-12",
+        "name": "CALENDAR_SCHEDULED_EVENT_DRIFT",
+        "definition": "Il prezzo deriva in una direzione prima di un evento macro schedulato e dateable (es. riunione di politica monetaria), indipendentemente dall'esito atteso.",
+        "supporting_claim_ids": [
+          "CLAIM-0011",
+          "CLAIM-0012"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-13",
+        "name": "GOLD_CALENDAR_DEMAND_SHOCK",
+        "definition": "Eventi culturali/calendariali ricorrenti generano una pressione di acquisto anticipata specifica per l'oro.",
+        "supporting_claim_ids": [
+          "CLAIM-0021",
+          "CLAIM-0022"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "PREPRINT_SSRN_ARXIV",
+          "QUANT_BLOG"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-14",
+        "name": "TERM_STRUCTURE_ROLL_YIELD",
+        "definition": "La forma della curva future condiziona il ritorno di rollover atteso - fattore strutturale sui futures, indipendente dal timing intraday.",
+        "supporting_claim_ids": [
+          "CLAIM-0019",
+          "CLAIM-0020"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-15",
+        "name": "VOLATILITY_CLUSTERING",
+        "definition": "L'ampiezza delle variazioni di prezzo e' persistente anche quando il segno non lo e'.",
+        "supporting_claim_ids": [
+          "CLAIM-0014"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-16",
+        "name": "FAT_TAIL_VOL_RETURN_ASYMMETRY",
+        "definition": "Codate spesse e correlazione negativa ritorno-volatilita': i drawdown ampi coincidono con impennate di volatilita'.",
+        "supporting_claim_ids": [
+          "CLAIM-0015"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-17",
+        "name": "SESSION_SIGN_REVERSAL",
+        "definition": "Il segno di un premio/anomalia guadagnato in una sessione tende a invertirsi nella sessione successiva.",
+        "supporting_claim_ids": [
+          "CLAIM-0016",
+          "CLAIM-0017"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "ACADEMIC_PAPER"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-18",
+        "name": "LIQUIDITY_SWEEP",
+        "definition": "Il prezzo eccede brevemente un livello di riferimento (swing, sessione, giorno/settimana precedente) senza necessariamente chiudere oltre - evento base, agnostico rispetto all'esito successivo.",
+        "supporting_claim_ids": [
+          "CLAIM-0032",
+          "CLAIM-0033",
+          "CLAIM-0034",
+          "CLAIM-0054",
+          "CLAIM-0058",
+          "CLAIM-0062",
+          "CLAIM-0065",
+          "CLAIM-0102",
+          "CLAIM-0103"
+        ],
+        "n_supporting_claims": 9,
+        "n_distinct_source_types": 4,
+        "source_types": [
+          "BROKER_EXCHANGE_DOC",
+          "FOREXFACTORY",
+          "MQL5",
+          "OTHER_FORUM"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-19",
+        "name": "LEVEL_RECLAIM_REVERSAL",
+        "definition": "Dopo un LIQUIDITY_SWEEP, il prezzo richiude oltre il livello nella direzione opposta allo sweep e questo viene interpretato come inversione - ATTENZIONE: questo e' strutturalmente il mechanism generico gia' testato e REFUTED_AT_DISCOVERY in Phase 7.1 (RECLAIM). Vedi failure_memory_relation per ogni claim/sequence che usa questo mechanism.",
+        "supporting_claim_ids": [
+          "CLAIM-0035",
+          "CLAIM-0050",
+          "CLAIM-0052",
+          "CLAIM-0108",
+          "CLAIM-0109",
+          "CLAIM-0110",
+          "CLAIM-0111"
+        ],
+        "n_supporting_claims": 7,
+        "n_distinct_source_types": 4,
+        "source_types": [
+          "FOREXFACTORY",
+          "MQL5",
+          "OTHER_FORUM",
+          "QUANT_BLOG"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-20",
+        "name": "SWEEP_WITHOUT_RECLAIM_CONTINUATION",
+        "definition": "Il prezzo eccede un livello (sweep) MA NON richiude oltre nella direzione opposta ('run', non reversal) - la continuazione nella direzione dello sweep viene interpretata come il vero movimento. CONTRADDICE direttamente MECH-19 sullo stesso evento visibile - vedi contradiction_registry_v1.json.",
+        "supporting_claim_ids": [
+          "CLAIM-0051",
+          "CLAIM-0056",
+          "CLAIM-0059",
+          "CLAIM-0114"
+        ],
+        "n_supporting_claims": 4,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "FOREXFACTORY",
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-21",
+        "name": "GAP_IMBALANCE_FVG_RESPONSE",
+        "definition": "Un gap fra candele consecutive (imbalance/fair value gap) viene rivisitato e la probabilita' di essere riempito prima della scadenza varia sistematicamente.",
+        "supporting_claim_ids": [
+          "CLAIM-0057",
+          "CLAIM-0080",
+          "CLAIM-0081"
+        ],
+        "n_supporting_claims": 3,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "FOREXFACTORY",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-22",
+        "name": "GRID_MARTINGALE_MEAN_REVERSION_ASSUMPTION",
+        "definition": "La redditivita' di un sistema a griglia dipende dall'assunzione implicita che il prezzo rivisiti entrambi i lati del punto di partenza (mean-reversion strutturale) - logica di money-management che nasconde un'assunzione di mercato, non un mechanism di prezzo puro.",
+        "supporting_claim_ids": [
+          "CLAIM-0037",
+          "CLAIM-0038"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "MQL5"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-23",
+        "name": "TREND_CHOP_REGIME_CLASSIFICATION",
+        "definition": "Il rapporto fra volatilita' e deriva direzionale (o misure equivalenti come l'efficiency ratio) distingue un regime di trend pulito da uno choppy/laterale.",
+        "supporting_claim_ids": [
+          "CLAIM-0039",
+          "CLAIM-0040",
+          "CLAIM-0076",
+          "CLAIM-0077"
+        ],
+        "n_supporting_claims": 4,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "MQL5",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-24",
+        "name": "POSITION_HOLDING_TIME_RISK_GROWTH",
+        "definition": "La varianza di equity in condizioni drift-dominant cresce con il tempo trascorso in posizione, motivando un limite di tempo fisso - principio di risk management derivato da un'assunzione di mercato, non un mechanism osservabile di per se'.",
+        "supporting_claim_ids": [
+          "CLAIM-0041",
+          "CLAIM-0084"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "GITHUB_OPENSOURCE",
+          "MQL5"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-25",
+        "name": "MOMENTUM_BURST_CONTINUATION",
+        "definition": "Un range giornaliero ampio riflette uno spostamento genuino di partecipazione/momentum che tende a proseguire.",
+        "supporting_claim_ids": [
+          "CLAIM-0042",
+          "CLAIM-0043"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "MQL5"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-26",
+        "name": "MEAN_REVERSION_BAND_TOUCH_REGIME_DEPENDENT",
+        "definition": "Il tocco di una banda di volatilita' (es. Bollinger) implica un'aspettativa di reversione verso la media, ma l'affidabilita' e' regime-dipendente e sistematicamente instabile.",
+        "supporting_claim_ids": [
+          "CLAIM-0046",
+          "CLAIM-0047",
+          "CLAIM-0063",
+          "CLAIM-0093",
+          "CLAIM-0115"
+        ],
+        "n_supporting_claims": 5,
+        "n_distinct_source_types": 4,
+        "source_types": [
+          "FOREXFACTORY",
+          "GITHUB_OPENSOURCE",
+          "MQL5",
+          "PREPRINT_SSRN_ARXIV"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-27",
+        "name": "HTF_TREND_FILTER_ALIGNMENT",
+        "definition": "Lo stato di trend/direzione su un timeframe o mercato di riferimento piu' ampio (HTF, indice cross-asset) e' usato come filtro per un evento osservato su un timeframe/mercato piu' locale.",
+        "supporting_claim_ids": [
+          "CLAIM-0031",
+          "CLAIM-0048",
+          "CLAIM-0055",
+          "CLAIM-0067",
+          "CLAIM-0069",
+          "CLAIM-0075",
+          "CLAIM-0089",
+          "CLAIM-0104"
+        ],
+        "n_supporting_claims": 8,
+        "n_distinct_source_types": 6,
+        "source_types": [
+          "EA_PUBLIC",
+          "FOREXFACTORY",
+          "GITHUB_OPENSOURCE",
+          "MQL5",
+          "OTHER_FORUM",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-28",
+        "name": "VALUE_AREA_ACCEPTANCE_REJECTION",
+        "definition": "Il prezzo che rientra ed e' accettato (chiusure, non solo wick) dentro/fuori la value area di un profilo di volume definisce continuazione vs rigetto.",
+        "supporting_claim_ids": [
+          "CLAIM-0078",
+          "CLAIM-0079"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-29",
+        "name": "VWAP_ACCEPTANCE_REJECTION",
+        "definition": "Il prezzo che torna al VWAP di sessione durante un trend attrae flusso difensivo istituzionale (accettazione) oppure viene respinto, mantenendo la direzione precedente.",
+        "supporting_claim_ids": [
+          "CLAIM-0074",
+          "CLAIM-0075",
+          "CLAIM-0092",
+          "CLAIM-0093"
+        ],
+        "n_supporting_claims": 4,
+        "n_distinct_source_types": 2,
+        "source_types": [
+          "GITHUB_OPENSOURCE",
+          "TRADINGVIEW"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-30",
+        "name": "SESSION_TRANSITION_LIQUIDITY_SHIFT",
+        "definition": "La transizione fra sessioni (Tokyo->Londra->NY) sposta la composizione di partecipanti e liquidita', cambiando il comportamento strutturale del prezzo.",
+        "supporting_claim_ids": [
+          "CLAIM-0029",
+          "CLAIM-0030",
+          "CLAIM-0053",
+          "CLAIM-0061",
+          "CLAIM-0066",
+          "CLAIM-0085",
+          "CLAIM-0094",
+          "CLAIM-0095",
+          "CLAIM-0100",
+          "CLAIM-0101"
+        ],
+        "n_supporting_claims": 10,
+        "n_distinct_source_types": 6,
+        "source_types": [
+          "ACADEMIC_PAPER",
+          "BROKER_EXCHANGE_DOC",
+          "FOREXFACTORY",
+          "GITHUB_OPENSOURCE",
+          "MQL5",
+          "OTHER_FORUM"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-31",
+        "name": "DXY_REAL_YIELDS_GOLD_VALUATION",
+        "definition": "Il prezzo dell'oro e' influenzato da relazioni cross-asset (DXY, tassi reali) come driver di valutazione di medio periodo, con possibili rotture temporanee in fasi di flight-to-safety.",
+        "supporting_claim_ids": [
+          "CLAIM-0104",
+          "CLAIM-0105"
+        ],
+        "n_supporting_claims": 2,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "MQL5"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-32",
+        "name": "PAIRS_COINTEGRATION_MEAN_REVERSION",
+        "definition": "Due strumenti cointegrati condividono un equilibrio di lungo periodo; deviazioni dello spread tendono a rientrare.",
+        "supporting_claim_ids": [
+          "CLAIM-0087"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "GITHUB_OPENSOURCE"
+        ]
+      },
+      {
+        "mechanism_id": "MECH-33",
+        "name": "DUAL_MOVING_AVERAGE_MOMENTUM",
+        "definition": "Il momentum derivato dalla differenza fra una media mobile corta e una lunga del midpoint di barra segnala continuazione.",
+        "supporting_claim_ids": [
+          "CLAIM-0088"
+        ],
+        "n_supporting_claims": 1,
+        "n_distinct_source_types": 1,
+        "source_types": [
+          "GITHUB_OPENSOURCE"
+        ]
+      }
+    ]
+  }
+}

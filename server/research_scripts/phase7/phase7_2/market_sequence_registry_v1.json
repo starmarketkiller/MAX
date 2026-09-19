@@ -1,0 +1,809 @@
+{
+  "schema_version": 1,
+  "registry_id": "MARKET_SEQUENCE_REGISTRY_V1",
+  "conforms_to": "market_sequence_schema_v1.json",
+  "principle": "Ogni sequence e' derivata da uno o piu' mechanism di market_mechanism_registry_v1.json - nessun outcome calcolato, nessun candidato testato. Alcuni mechanism (fattori strutturali come illiquidity risk premium, term structure roll yield, volatility clustering, fat tails, session-seasonality statistica pura) NON sono stati trasformati in sequence: descrivono proprieta' statistiche generali, non una struttura STATE->EVENT_A->TRANSITION->EVENT_B osservabile e falsificabile a livello di singolo episodio - restano nel mechanism registry come contesto, non qui.",
+  "sequences": [
+    {
+      "sequence_id": "SEQ-0001",
+      "mechanism_id": "MECH-01",
+      "initial_state_conditions": [
+        "directional_efficiency alta su finestra multi-mese/annuale (proxy: MECH-01 in feature_registry_v2.json)"
+      ],
+      "event_a": "movimento direzionale sostenuto osservato su una finestra lunga (mesi)",
+      "transition_conditions": [
+        "nessuna inversione di trend confermata nel breve periodo successivo"
+      ],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "il trend rimane intatto all'orizzonte di valutazione"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "mensile/H4 aggregato",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico - orizzonte multi-settimanale",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "DIRECTIONAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0001",
+        "CLAIM-0091"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "falsification_definition": "Se la probabilita' di continuazione dopo un trend gia' sostenuto non fosse superiore al baseline matched, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0002",
+      "mechanism_id": "MECH-02",
+      "initial_state_conditions": [
+        "trend direzionale in corso da N barre",
+        "momentum in fase di decelerazione (proxy: momentum_persistence_bars in calo)"
+      ],
+      "event_a": "prima evidenza di decelerazione del momentum dopo una fase trend-following",
+      "transition_conditions": [
+        "nessuna nuova accelerazione nella direzione del trend entro un orizzonte breve"
+      ],
+      "event_b_optional": "eventuale inversione parziale",
+      "terminal_state_conditions": [
+        "prezzo in fase di reversione parziale rispetto al trend"
+      ],
+      "direction": "CONTEXT_DEPENDENT",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY",
+        "TIME_TO_MFE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0002"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "falsification_definition": "Se dopo la decelerazione del momentum il trend continuasse comunque ad accelerare piu' spesso di quanto reverta, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0003",
+      "mechanism_id": "MECH-06",
+      "initial_state_conditions": [
+        "range di consolidamento pre-evento con ampiezza non anomala (non troppo piccola - vedi MECH-07)",
+        "sessione ad alta partecipazione in apertura (es. London/NY open)"
+      ],
+      "event_a": "chiusura oltre l'estremo del range di consolidamento",
+      "transition_conditions": [
+        "almeno una chiusura successiva mantiene la rottura (nessun rientro immediato nel range)"
+      ],
+      "event_b_optional": "eventuale retest del livello rotto con tenuta",
+      "terminal_state_conditions": [
+        "prezzo accettato oltre il livello, nuovo range/trend in formazione nella direzione della rottura"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1 (range precedente)",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": "H1/M15 se disponibile - gap dichiarato"
+      },
+      "observation_clock": "spesso ancorato all'apertura di una sessione specifica (Asia/Londra/NY) - vedi session_clock_model_v1.json",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "MFE",
+        "PATH_EFFICIENCY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0007",
+        "CLAIM-0009",
+        "CLAIM-0027",
+        "CLAIM-0031",
+        "CLAIM-0036",
+        "CLAIM-0042",
+        "CLAIM-0048",
+        "CLAIM-0068",
+        "CLAIM-0070",
+        "CLAIM-0071",
+        "CLAIM-0083",
+        "CLAIM-0085",
+        "CLAIM-0086",
+        "CLAIM-0090",
+        "CLAIM-0106",
+        "CLAIM-0107",
+        "CLAIM-0112",
+        "CLAIM-0113"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": "Corrisponde concettualmente al detector BREAKOUT gia' esistente in Phase 5 (build_events.py) - non ancora testato in una discovery run v2 (Phase 5's edge_discovery non ha mai promosso BREAKOUT generico a un evidence grade). NOVEL rispetto a failure_memory_registry_v1.json (nessun pattern FAIL-001..008 lo riguarda direttamente), ma va verificato non sia una ripetizione implicita di un test gia' fatto informalmente in Phase 5 prima di procedere in Phase 7.3.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il tasso di accettazione (chiusure che mantengono la rottura) non fosse superiore al baseline matched su barre non precedute da un range di consolidamento, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0004",
+      "mechanism_id": "MECH-08",
+      "initial_state_conditions": [
+        "chiusura oltre l'estremo di un range di consolidamento (stesso evento iniziale di SEQ-0003)"
+      ],
+      "event_a": "breakout (chiusura oltre range)",
+      "transition_conditions": [
+        "assenza di volatilita'/momentum di conferma (es. true range della barra di breakout non superiore a k*ATR)",
+        "OPPURE rientro nel range entro N barre"
+      ],
+      "event_b_optional": "chiusura di rientro nel range precedente",
+      "terminal_state_conditions": [
+        "prezzo rientrato nel range, breakout non accettato"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "spesso session-specifico",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY",
+        "TAIL_EXCURSION"
+      ],
+      "is_failed_event_family": true,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0023",
+        "CLAIM-0033",
+        "CLAIM-0044",
+        "CLAIM-0045",
+        "CLAIM-0064"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": "Corrisponde al detector FAILED_BREAKOUT gia' esistente in Phase 5 (build_events.py) - famiglia FAILED_EVENT propria (sec.14), l'informazione del fallimento e' l'oggetto di studio stesso, non uno scarto.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il tasso di rientro nel range dopo un breakout senza conferma di volatilita' non fosse superiore al baseline matched, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0005",
+      "mechanism_id": "MECH-10",
+      "initial_state_conditions": [
+        "volatilita' realizzata/ATR percentile in calo sostenuto su una finestra recente (compressione)"
+      ],
+      "event_a": "prima barra con true range/ATR in espansione significativa rispetto al regime compresso",
+      "transition_conditions": [
+        "l'espansione e' confermata da almeno una barra successiva nella stessa direzione (non un singolo spike isolato)"
+      ],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "nuovo regime di volatilita' piu' elevato stabilito"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non necessariamente session-specifico, ma spesso coincide con l'apertura di una sessione attiva",
+      "expected_outcome_family": [
+        "REALIZED_VOLATILITY_AFTER_SETUP",
+        "DIRECTIONAL_PROBABILITY",
+        "PATH_EFFICIENCY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0025",
+        "CLAIM-0072",
+        "CLAIM-0073",
+        "CLAIM-0082"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se l'espansione di volatilita' dopo compressione non fosse piu' frequente/ampia del baseline matched su barre non precedute da compressione, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0006",
+      "mechanism_id": "MECH-12",
+      "initial_state_conditions": [
+        "prossimita' temporale dichiarata a un evento macro schedulato e dateable (es. FOMC)"
+      ],
+      "event_a": "apertura della finestra temporale pre-evento (es. N ore prima dell'annuncio)",
+      "transition_conditions": [
+        "nessun evento macro concorrente non schedulato nella stessa finestra"
+      ],
+      "event_b_optional": "l'annuncio stesso",
+      "terminal_state_conditions": [
+        "prezzo alla chiusura della finestra pre-evento"
+      ],
+      "direction": "BUY",
+      "timeframe_context": {
+        "CONTEXT_TF": "calendario macro",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "ancorato a un calendario di eventi esterno (date FOMC), non alla sessione di trading",
+      "expected_outcome_family": [
+        "DIRECTIONAL_PROBABILITY",
+        "MFE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0011",
+        "CLAIM-0012"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se la deriva pre-evento non fosse statisticamente distinguibile da finestre di controllo della stessa durata scelte casualmente, il claim sarebbe falso.",
+      "note_gap": "richiede un calendario macro esterno (date FOMC storiche) non ancora integrato in NEXUS - dipendenza dati dichiarata."
+    },
+    {
+      "sequence_id": "SEQ-0007",
+      "mechanism_id": "MECH-13",
+      "initial_state_conditions": [
+        "prossimita' a una data calendariale ricorrente nota per domanda culturale dell'oro (es. festivita' specifiche)"
+      ],
+      "event_a": "apertura della finestra pre-evento calendariale",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "prezzo alla chiusura della finestra"
+      ],
+      "direction": "BUY",
+      "timeframe_context": {
+        "CONTEXT_TF": "calendario",
+        "SETUP_TF": "D1",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "ancorato a calendario culturale/festivo esterno",
+      "expected_outcome_family": [
+        "DIRECTIONAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0021",
+        "CLAIM-0022"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il rendimento nella finestra pre-festivita' non differisse dal rendimento medio su finestre di controllo della stessa lunghezza, il claim sarebbe falso.",
+      "note_gap": "richiede calendario di festivita' culturali esterno (es. India/Cina) non ancora integrato in NEXUS."
+    },
+    {
+      "sequence_id": "SEQ-0008",
+      "mechanism_id": "MECH-17",
+      "initial_state_conditions": [
+        "una sessione ha realizzato un ritorno netto in una direzione"
+      ],
+      "event_a": "chiusura della sessione con segno di ritorno definito",
+      "transition_conditions": [
+        "passaggio alla sessione successiva"
+      ],
+      "event_b_optional": "apertura della sessione successiva",
+      "terminal_state_conditions": [
+        "direzione della sessione successiva"
+      ],
+      "direction": "CONTEXT_DEPENDENT",
+      "timeframe_context": {
+        "CONTEXT_TF": "sessione",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "session_clock_model_v1.json - confini di sessione timezone-aware",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0016",
+        "CLAIM-0017"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se la direzione della sessione successiva non mostrasse un tasso di inversione superiore al 50%/baseline, il claim sarebbe falso.",
+      "note_gap": "richiede la formalizzazione timezone-safe del session_clock_model (gap dichiarato in Phase 7.0B/7.2)."
+    },
+    {
+      "sequence_id": "SEQ-0009",
+      "mechanism_id": "MECH-18",
+      "initial_state_conditions": [
+        "livello di riferimento noto (swing high/low, prev day/week high/low, sessione precedente)"
+      ],
+      "event_a": "prezzo eccede brevemente il livello (wick) senza chiudere oltre",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "prezzo richiuso all'interno del livello originale"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "spesso session-specifico (sweep di sessione) o D1/W1 (prev day/week level)",
+      "expected_outcome_family": [
+        "DIRECTIONAL_PROBABILITY",
+        "MFE",
+        "MAE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0032",
+        "CLAIM-0033",
+        "CLAIM-0034",
+        "CLAIM-0054",
+        "CLAIM-0058",
+        "CLAIM-0062",
+        "CLAIM-0065",
+        "CLAIM-0102",
+        "CLAIM-0103"
+      ],
+      "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
+      "failure_memory_relation_note": "Corrisponde al detector SWEEP gia' esistente in Phase 5 (mai testato da solo come edge - solo come prerequisito di RECLAIM, che e' stato REFUTED_AT_DISCOVERY in Phase 7.1). Il SWEEP isolato (senza assumere reclaim) NON e' lo stesso claim gia' refutato - qui l'outcome atteso e' generico (DIRECTIONAL_PROBABILITY dopo il solo sweep), non specificamente 'reclaim poi +1ATR'. Relazione dichiarata per trasparenza, non un blocco.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il comportamento del prezzo dopo un sweep isolato non differisse dal baseline matched, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0010",
+      "mechanism_id": "MECH-19",
+      "initial_state_conditions": [
+        "evento SWEEP di un livello di riferimento (vedi SEQ-0009)"
+      ],
+      "event_a": "sweep del livello (event_a = SWEEP)",
+      "transition_conditions": [
+        "nessuna nuova estensione oltre l'estremo dello sweep prima della barra di reclaim"
+      ],
+      "event_b_optional": "chiusura oltre il livello originale nella direzione OPPOSTA allo sweep (RECLAIM)",
+      "terminal_state_conditions": [
+        "prezzo richiuso oltre il livello, nella direzione opposta allo sweep iniziale"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "eredita quello dell'evento SWEEP sottostante",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY",
+        "MFE",
+        "MAE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+      "source_claim_ids": [
+        "CLAIM-0035",
+        "CLAIM-0050",
+        "CLAIM-0052",
+        "CLAIM-0108",
+        "CLAIM-0109",
+        "CLAIM-0110",
+        "CLAIM-0111"
+      ],
+      "failure_memory_relation": "DIRECT_REPEAT_OF_FAILED_IDEA",
+      "failure_memory_relation_note": "QUESTO E' STRUTTURALMENTE IL MECHANISM GENERICO RECLAIM (sweep+reclaim -> P(+1xATR before -1xATR)) GIA' TESTATO CON RIGORE COMPLETO (Baseline Engine v4, dependence diagnostics, multiple testing) E REFUTED_AT_DISCOVERY IN PHASE 7.1 (\u0394P negativo su BOTH/BUY/SELL, tutti REFUTED). Per la regola esplicita dell'utente (sec.24 Phase 7.2), questa forma GENERICA non puo' procedere a Phase 7.3 senza una motivazione meccanicistica indipendente e pre-registrabile - marcata NOT_IMPLEMENTABLE_AS_DESCRIBED qui appositamente. Vedi SEQ-0011 per la variante filtrata che AGGIUNGE una motivazione indipendente (non un semplice filtro post-hoc).",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Gia' falsificato su questo dataset per la forma generica - vedi Phase 7.1."
+    },
+    {
+      "sequence_id": "SEQ-0011",
+      "mechanism_id": "MECH-19",
+      "initial_state_conditions": [
+        "evento SWEEP di un livello di riferimento",
+        "il movimento di allontanamento PRIMA dello sweep mostra displacement significativo (non un drift lento)",
+        "volume/partecipazione elevata al momento dello sweep (proxy da definire - gap dichiarato)"
+      ],
+      "event_a": "sweep del livello CON le due condizioni di stato aggiuntive sopra",
+      "transition_conditions": [
+        "nessuna nuova estensione oltre l'estremo dello sweep prima della barra di reclaim"
+      ],
+      "event_b_optional": "chiusura oltre il livello originale nella direzione opposta allo sweep (RECLAIM), confermata da una seconda chiusura di tenuta",
+      "terminal_state_conditions": [
+        "prezzo richiuso oltre il livello con doppia conferma"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": "M15/M5 per il displacement pre-sweep - gap dichiarato"
+      },
+      "observation_clock": "eredita quello dell'evento SWEEP sottostante",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY",
+        "MFE",
+        "MAE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0108",
+        "CLAIM-0109"
+      ],
+      "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
+      "failure_memory_relation_note": "Variante FILTRATA di RECLAIM (SEQ-0010, DIRECT_REPEAT gia' refutato) - aggiunge DUE condizioni di stato indipendenti (displacement pre-sweep, partecipazione/volume) che il test generico di Phase 7.1 NON conteneva (Phase 7.1 ha testato solo direzione, nessun filtro di stato aggiuntivo - complexity_level=0). Questa e' esattamente il tipo di motivazione meccanicistica indipendente richiesta dalla regola sec.24 - NON e' un 'filtro casuale sul RECLAIM per salvarlo' ma un'ipotesi diversa su QUANDO il reclaim genererebbe informazione (sweep con displacement genuino vs sweep 'rumoroso'). Resta comunque un candidato ad alto rischio di essere solo un tentativo di far rivivere un'idea gia' fallita - da trattare con scetticismo proporzionale in Phase 7.3, non da promuovere automaticamente per il solo fatto di avere due condizioni aggiuntive.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il reclaim filtrato da displacement+volume non mostrasse un DeltaP materialmente diverso (e di segno opposto/superiore) rispetto al reclaim generico gia' refutato, il claim aggiuntivo sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0012",
+      "mechanism_id": "MECH-20",
+      "initial_state_conditions": [
+        "evento SWEEP di un livello di riferimento"
+      ],
+      "event_a": "sweep del livello (event_a = SWEEP)",
+      "transition_conditions": [
+        "NESSUNA chiusura di reclaim oltre il livello nella direzione opposta entro l'orizzonte dichiarato"
+      ],
+      "event_b_optional": "chiusura di continuazione nella STESSA direzione dello sweep",
+      "terminal_state_conditions": [
+        "prezzo continua nella direzione dello sweep (nessuna inversione)"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4/D1",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "eredita quello dell'evento SWEEP sottostante",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "MFE"
+      ],
+      "is_failed_event_family": true,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0051",
+        "CLAIM-0056",
+        "CLAIM-0059",
+        "CLAIM-0114"
+      ],
+      "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
+      "failure_memory_relation_note": "Non e' RECLAIM (l'assenza di reclaim e' proprio la condizione che definisce questa sequence) - e' l'IPOTESI OPPOSTA (sweep senza reclaim -> continuazione, non inversione). Vedi CONTRADICTION_GROUP con SEQ-0010/SEQ-0011 in contradiction_registry_v1.json: lo stesso evento visibile (sweep) porta a predizioni opposte a seconda di cosa succede DOPO (reclaim vs non-reclaim) - questo suggerisce che la variabile di stato mancante e' precisamente 'reclaim si verifica o no', che qui e' trattata come parte della sequenza stessa (event_b), non come rumore.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se dopo un sweep senza reclaim il prezzo non mostrasse continuazione superiore al baseline matched, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0013",
+      "mechanism_id": "MECH-21",
+      "initial_state_conditions": [
+        "movimento impulsivo che lascia un gap fra wick di candele consecutive (imbalance)"
+      ],
+      "event_a": "formazione del gap/imbalance",
+      "transition_conditions": [
+        "il prezzo si allontana dal gap senza rivisitarlo immediatamente"
+      ],
+      "event_b_optional": "prezzo rientra nella zona del gap",
+      "terminal_state_conditions": [
+        "gap riempito (chiusura dentro la zona) oppure gap scaduto/non riempito entro l'orizzonte"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non necessariamente session-specifico",
+      "expected_outcome_family": [
+        "TIME_TO_TARGET",
+        "DIRECTIONAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NEEDS_ADDITIONAL_SPECIFICATION",
+      "source_claim_ids": [
+        "CLAIM-0057",
+        "CLAIM-0080",
+        "CLAIM-0081"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se la probabilita' di riempimento del gap non variasse sistematicamente con le condizioni di stato dichiarate dalla fonte (e fosse indistinguibile da un modello costante), il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0014",
+      "mechanism_id": "MECH-23",
+      "initial_state_conditions": [
+        "rapporto volatilita'/deriva direzionale (o efficiency ratio) sotto una soglia bassa su una finestra recente"
+      ],
+      "event_a": "classificazione dello stato corrente come 'choppy/laterale a bassa informazione'",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "nessuna direzione affidabile identificabile"
+      ],
+      "direction": "NON_DIRECTIONAL",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "EXECUTION_FRIENDLINESS",
+        "REALIZED_VOLATILITY_AFTER_SETUP"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": true,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0039",
+        "CLAIM-0040",
+        "CLAIM-0076",
+        "CLAIM-0077"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": "Non un candidato direzionale - famiglia LOW_INFORMATION_STATE/HIGH_CHOP_RISK (sec.15), l'obiettivo e' identificare QUANDO NON tradare, non un edge direzionale.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se i setup direzionali generati durante lo stato 'choppy' non mostrassero un tasso di fallimento/rumore superiore rispetto a quelli generati in stato 'trending', il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0015",
+      "mechanism_id": "MECH-25",
+      "initial_state_conditions": [
+        "range della barra/giorno precedente ampio rispetto alla propria storia recente"
+      ],
+      "event_a": "chiusura di una barra con true range anomalamente ampio",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "direzione stabilita dalla barra ampia"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "D1/H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "MFE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0042",
+        "CLAIM-0043"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se dopo una barra a range ampio la direzione stabilita non continuasse piu' spesso del baseline matched, il claim sarebbe falso."
+    },
+    {
+      "sequence_id": "SEQ-0016",
+      "mechanism_id": "MECH-26",
+      "initial_state_conditions": [
+        "prezzo estende oltre una banda di volatilita' (es. Bollinger esterna) dopo un movimento rapido"
+      ],
+      "event_a": "tocco/superamento della banda esterna",
+      "transition_conditions": [
+        "classificazione del regime corrente (trending vs choppy) al momento del tocco"
+      ],
+      "event_b_optional": "reversione verso la media della banda",
+      "terminal_state_conditions": [
+        "prezzo rientrato verso la banda mediana oppure continuazione oltre la banda"
+      ],
+      "direction": "CONTEXT_DEPENDENT",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "REVERSAL_PROBABILITY",
+        "MAE"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0046",
+        "CLAIM-0047",
+        "CLAIM-0063",
+        "CLAIM-0093",
+        "CLAIM-0115"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se la probabilita' di reversione dopo il tocco della banda non differisse per regime (trending vs choppy), la componente 'regime-dipendente' del claim sarebbe falsa."
+    },
+    {
+      "sequence_id": "SEQ-0017",
+      "mechanism_id": "MECH-28",
+      "initial_state_conditions": [
+        "apertura della sessione fuori dalla value area del profilo di volume del giorno precedente"
+      ],
+      "event_a": "prezzo rientra nella value area",
+      "transition_conditions": [
+        "la chiusura (non solo il wick) e' dentro la value area"
+      ],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "accettazione confermata dentro la value area"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "D1 (profilo del giorno precedente)",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "ancorato all'apertura di sessione/giorno",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "PATH_EFFICIENCY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "REQUIRES_LOOKAHEAD_TO_DEFINE",
+      "implementation_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+      "source_claim_ids": [
+        "CLAIM-0078",
+        "CLAIM-0079"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il rigetto/accettazione della value area non predicesse la direzione successiva meglio del baseline, il claim sarebbe falso.",
+      "note_gap": "Il calcolo del profilo di volume/value area richiede dati di volume intrabar non disponibili nella pipeline H4 attuale di NEXUS - causal_observability_status marcato REQUIRES_LOOKAHEAD_TO_DEFINE in modo cautelativo finche' non verificato come costruibile causalmente con i dati disponibili."
+    },
+    {
+      "sequence_id": "SEQ-0018",
+      "mechanism_id": "MECH-29",
+      "initial_state_conditions": [
+        "trend H4 in corso",
+        "prezzo si allontana dal VWAP di sessione"
+      ],
+      "event_a": "prezzo torna a testare il VWAP di sessione",
+      "transition_conditions": [
+        "reazione al tocco (rigetto vs attraversamento)"
+      ],
+      "event_b_optional": "chiusura che confirma rigetto o accettazione",
+      "terminal_state_conditions": [
+        "prezzo riprende la direzione del trend (rigetto) oppure attraversa il VWAP (accettazione/possibile inversione)"
+      ],
+      "direction": "CONTEXT_DEPENDENT",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "VWAP di sessione - richiede session_clock_model_v1.json",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY",
+        "REVERSAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+      "source_claim_ids": [
+        "CLAIM-0074",
+        "CLAIM-0075",
+        "CLAIM-0092",
+        "CLAIM-0093"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se il comportamento del prezzo al tocco del VWAP non differisse per regime di trend, il claim sarebbe falso.",
+      "note_gap": "VWAP di sessione non calcolato oggi in NEXUS (richiede dati di volume e aggregazione per sessione) - gap dichiarato, vedi mechanism_proxy_registry_v1.json."
+    },
+    {
+      "sequence_id": "SEQ-0019",
+      "mechanism_id": "MECH-32",
+      "initial_state_conditions": [
+        "due strumenti storicamente cointegrati (test di Engle-Granger)",
+        "spread corrente deviato oltre una soglia in unita' di deviazione standard"
+      ],
+      "event_a": "deviazione dello spread oltre soglia",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "spread rientrato verso l'equilibrio storico"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "D1 (test di cointegrazione)",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "TIME_TO_MFE",
+        "REVERSAL_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "NOT_IMPLEMENTABLE_AS_DESCRIBED",
+      "source_claim_ids": [
+        "CLAIM-0087"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": null,
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se lo spread deviato non mostrasse una tendenza a rientrare superiore a quella di una coppia non cointegrata di controllo, il claim sarebbe falso.",
+      "note_gap": "Richiede un secondo strumento cointegrato con XAUUSD (non identificato/testato) - NEXUS oggi lavora su un singolo strumento."
+    },
+    {
+      "sequence_id": "SEQ-0020",
+      "mechanism_id": "MECH-33",
+      "initial_state_conditions": [
+        "nessuna - la media mobile corta e lunga sono sempre calcolabili"
+      ],
+      "event_a": "incrocio o divergenza fra media mobile corta e lunga del midpoint di barra",
+      "transition_conditions": [],
+      "event_b_optional": null,
+      "terminal_state_conditions": [
+        "direzione stabilita dalla divergenza"
+      ],
+      "direction": "BOTH",
+      "timeframe_context": {
+        "CONTEXT_TF": "H4",
+        "SETUP_TF": "H4",
+        "TRIGGER_TF": null
+      },
+      "observation_clock": "non session-specifico",
+      "expected_outcome_family": [
+        "CONTINUATION_PROBABILITY"
+      ],
+      "is_failed_event_family": false,
+      "is_no_trade_information": false,
+      "causal_observability_status": "OBSERVABLE_AT_DECISION_TIME",
+      "implementation_status": "READY_FOR_FORMALIZATION",
+      "source_claim_ids": [
+        "CLAIM-0088"
+      ],
+      "failure_memory_relation": "NOVEL",
+      "failure_memory_relation_note": "Vicino concettualmente a ema_slope_atr_norm gia' in feature_registry_v2.json - possibile ridondanza con feature esistenti, da verificare in Phase 7.3 prima di trattarlo come nuovo.",
+      "research_priority_score_ref": null,
+      "falsification_definition": "Se la divergenza delle medie non predicesse la direzione meglio del baseline, il claim sarebbe falso."
+    }
+  ]
+}
