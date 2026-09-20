@@ -25,7 +25,8 @@ sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "e
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
 
 from sequence_structural_feasibility_gate import (  # noqa: E402
-    evaluate_family_structural_feasibility, REQUIRED_SPEC_FIELDS, ENGINE_VERSION, GATE_POLICY_VERSION,
+    evaluate_family_structural_feasibility, REQUIRED_SPEC_FIELDS, REQUIRED_MATCHING_SPEC_FIELDS,
+    ENGINE_VERSION, GATE_POLICY_VERSION,
 )
 from canonical_utils import wrap_with_provenance, save_json, load_json  # noqa: E402
 
@@ -226,25 +227,33 @@ def main():
     payload = {
         "gate_engine_version": ENGINE_VERSION,
         "gate_policy_version": GATE_POLICY_VERSION,
-        "baseline_commit_ref": "7b9d64b (Phase 7.4A Structural Verdict Semantics Patch - SEQ-0015 CLOSED)",
+        "baseline_commit_ref": "fbfab21 (Phase 7.5A Sequence Structural Feasibility Gate - prima dell'integrazione "
+                                "matching, ora corretta da questa stessa run) - SEQ-0015 CLOSED",
         "seq0015_status": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE - vedi failure_memory_registry_v1.json FAIL-009",
         "no_nexus_outcome_data_accessed": True,
         "no_edge_discovery_performed": True,
-        "required_spec_fields_reference": list(REQUIRED_SPEC_FIELDS),
+        "required_detector_geometry_fields_reference": list(REQUIRED_SPEC_FIELDS),
+        "required_matching_spec_fields_reference": list(REQUIRED_MATCHING_SPEC_FIELDS),
         "families_evaluated": per_family_results,
         "summary": {
             "n_families_evaluated": len(per_family_results),
             "n_ready_for_preregistration": sum(1 for r in per_family_results if r["gate_verdict"] == "FEASIBLE"),
             "n_needs_detector_formalization": sum(1 for r in per_family_results
                                                    if r["gate_verdict"] == "NEEDS_DETECTOR_FORMALIZATION"),
+            "n_needs_matching_formalization": sum(1 for r in per_family_results
+                                                   if r["gate_verdict"] == "NEEDS_MATCHING_FORMALIZATION"),
+            "n_matching_structurally_infeasible": sum(1 for r in per_family_results
+                                                        if r["gate_verdict"] == "MATCHING_STRUCTURALLY_INFEASIBLE"),
             "n_structurally_blocked": sum(1 for r in per_family_results
                                            if r["gate_verdict"] == "NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY"),
             "note": "Tutte e 5 le family rimaste sono NEEDS_DETECTOR_FORMALIZATION in questa run - nessuna "
                     "di esse ha ancora un detector abbastanza formalizzato (formula/soglia congelata, "
-                    "episode_gap_rule, natural_horizon proposto, outcome_overlap_embargo proposto) perche' il "
-                    "gate possa calcolare una geometria reale. Questo e' il risultato ATTESO e CORRETTO di "
-                    "eseguire il preflight PRIMA della formalizzazione (sec.15 della richiesta Phase 7.5A) - "
-                    "non un fallimento del gate.",
+                    "episode_gap_rule, natural_horizon proposto, outcome_overlap_embargo proposto), quindi "
+                    "il gate si ferma al LIVELLO 1 (geometria) e non arriva nemmeno a valutare il livello 2 "
+                    "(matching_spec) per nessuna delle 5 - non c'e' ancora nulla su cui applicare "
+                    "NEEDS_MATCHING_FORMALIZATION/MATCHING_STRUCTURALLY_INFEASIBLE in questa run. Questo e' il "
+                    "risultato ATTESO e CORRETTO di eseguire il preflight PRIMA della formalizzazione - non "
+                    "un fallimento del gate.",
         },
     }
     out_path = os.path.join(PHASE75_DIR, "phase7_5_structural_feasibility_results_v1.json")
@@ -266,6 +275,10 @@ def main():
         "READY_FOR_PREREGISTRATION": [r["sequence_id"] for r in per_family_results if r["gate_verdict"] == "FEASIBLE"],
         "STRUCTURALLY_BLOCKED_ON_CURRENT_PARTITION": [r["sequence_id"] for r in per_family_results
                                                        if r["gate_verdict"] == "NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY"],
+        "NEEDS_MATCHING_FORMALIZATION": [r["sequence_id"] for r in per_family_results
+                                         if r["gate_verdict"] == "NEEDS_MATCHING_FORMALIZATION"],
+        "MATCHING_STRUCTURALLY_INFEASIBLE": [r["sequence_id"] for r in per_family_results
+                                              if r["gate_verdict"] == "MATCHING_STRUCTURALLY_INFEASIBLE"],
         "NEEDS_DETECTOR_FORMALIZATION_ORDERED_BY_STRUCTURAL_COMPLETENESS": [
             {
                 "sequence_id": r["sequence_id"],

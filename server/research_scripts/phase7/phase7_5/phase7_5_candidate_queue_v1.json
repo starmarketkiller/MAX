@@ -1,11 +1,13 @@
 {
-  "generated_at": "2026-09-20T20:53:56.945502+00:00",
+  "generated_at": "2026-09-20T21:14:08.497512+00:00",
   "generation_script": "phase7/phase7_5/build_phase7_5_structural_feasibility_results.py",
-  "canonical_sha256": "0613417f21f52243ae77d3363fa72c948600751cfe4f082a206441b4fab222ee",
+  "canonical_sha256": "ac1feb37ca4425bda17a8c091a59b3c6bb3f9fc3f5dbc4fd87a8506d0b26b0a9",
   "payload": {
     "ranking_policy": "ESCLUSIVAMENTE strutturale (testabilita', completezza detector, chiarezza implementativa) - MAI probabilita' di edge/expected profitability/likelihood of success (sec.10 della richiesta Phase 7.5A).",
     "READY_FOR_PREREGISTRATION": [],
     "STRUCTURALLY_BLOCKED_ON_CURRENT_PARTITION": [],
+    "NEEDS_MATCHING_FORMALIZATION": [],
+    "MATCHING_STRUCTURALLY_INFEASIBLE": [],
     "NEEDS_DETECTOR_FORMALIZATION_ORDERED_BY_STRUCTURAL_COMPLETENESS": [
       {
         "sequence_id": "SEQ-0009",

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Phase 7.5A - Sequence Structural Feasibility Gate.
+"""Phase 7.5A - Sequence Structural Feasibility Gate (Integration &
+Geometry Semantics Patch).
 
 Lezione generalizzata da SEQ-0015 (Phase 7.4A): un design di detector
 formalmente corretto puo' comunque essere ESEGUIBILE SOLO SULLA CARTA -
@@ -13,37 +14,90 @@ contract, validation access) per quella family specifica - lavoro
 sprecato se il design non e' testabile per costruzione.
 
 Questo modulo sposta il controllo PRIMA: da eseguire subito dopo la
-formalizzazione minima del detector (frozen: formula, parametri,
-observation timing, direction policy, episode_gap_rule, natural_horizon
-proposto, outcome_overlap_embargo proposto) e PRIMA di qualunque
-outcome contract / statistical test selection / BH family / validation
-access.
+formalizzazione minima del detector e PRIMA di qualunque outcome
+contract / statistical test selection / BH family / validation access.
 
-Principi non negoziabili (stessi del resto di Phase 7):
+Patch di integrazione (post-review, 2026-09-20): la prima versione di
+questo gate calcolava la geometria dell'evento (EVENT/EPISODE/
+INDEPENDENT_VIEW) ma NON integrava mai `run_matching_preflight()` nel
+verdetto finale - una family poteva ricevere FEASIBLE basandosi
+solo sulla geometria, anche se il matching reale (BaselineEngineV4)
+avrebbe respinto meta' degli eventi per pool insufficiente. Corretto
+qui: il verdetto finale e' ORA un composito di DUE livelli distinti,
+ciascuno con i propri gradi di liberta' richiesti:
+
+  DETECTOR_GEOMETRY_READY   - detector formula/parametri/timing/direction
+                              congelati + episode_gap_rule/natural_horizon/
+                              outcome_overlap_embargo proposti (livello
+                              gia' presente nella prima versione).
+  MATCHING_PREFLIGHT_READY  - IN PIU': baseline_match_dimensions/k/
+                              minimum_control_count/max_control_reuse_per_run/
+                              state_feature_definitions/control_pool_
+                              construction_policy/split_boundaries
+                              dichiarati (matching_spec) E feature di
+                              stato REALI disponibili per eseguirlo
+                              (matching_runtime_data) - mai simulato con
+                              dati inventati.
+
+Una family con SOLO il primo livello ottiene NEEDS_MATCHING_FORMALIZATION
+(mai FEASIBLE) - il verdetto FEASIBLE/BORDERLINE_FEASIBILITY richiede
+ENTRAMBI i livelli passati. Il campione minimo indipendente e' inoltre
+ricalcolato sulle sole osservazioni INDEPENDENT_VIEW che hanno
+REALMENTE ottenuto un match valido (MATCHED/MATCHED_K_SHORTFALL, non
+REJECTED_INSUFFICIENT_POOL) quando il matching e' stato eseguito - un
+evento strutturalmente indipendente ma senza baseline valida non entra
+nell'esperimento.
+
+Patch di semantica geometrica (stesso commit): il firing-rate guard
+originale dichiarava `median_gap_bars <= embargo => PATHOLOGICAL_FOR_
+HORIZON`, un'implicazione NON matematicamente sufficiente - un detector
+puo' avere gap mediano sotto l'embargo e comunque produrre >minimo
+osservazioni indipendenti se abbastanza gap GRANDI spezzano la catena
+transitiva (es. 60 gap piccoli + 40 gap grandi su 100 totali: la
+mediana e' sotto l'embargo ma i 40 gap grandi possono generare 41+
+cluster indipendenti). L'AUTORITA' primaria resta SEMPRE la geometria
+REALE dei cluster (`assign_clusters`/INDEPENDENT_VIEW, gia' calcolata):
+`classify_firing_geometry_risk_flag()` produce ora un `risk_flag`
+booleano DIAGNOSTICO (rinominato da un verdetto pseudo-autorevole),
+mai l'autorita' che classifica una family PATHOLOGICAL - quella
+classificazione deriva ESCLUSIVAMENTE da independent_units (calcolato
+sui cluster reali) confrontato con minimum_required_n.
+
+Principi non negoziabili (invariati):
 - OUTCOME-BLIND: nessuna funzione qui accetta o richiede outcome. Solo
-  posizione temporale (row/bar index) degli eventi grezzi.
+  posizione temporale (row/bar index) e feature di STATO (mai di
+  outcome) per il matching preflight.
 - DETERMINISTICO: stesso input -> stesso output, nessuna casualita'.
-- FAIL-CLOSED, NESSUN DEFAULT INVENTATO: se un campo richiesto del
-  family spec manca, il gate NON inventa un valore per farlo comunque
-  girare - restituisce NEEDS_DETECTOR_FORMALIZATION con l'elenco esatto
-  dei gradi di liberta' mancanti (sec.9 della richiesta).
-- Riusa la meccanica di clustering/episode/independent-view gia'
-  esistente e testata (sequence_episode_engine.py, che a sua volta
-  riusa dependence_diagnostics.assign_clusters) - non reimplementata.
+- FAIL-CLOSED, NESSUN DEFAULT INVENTATO: campi/feature mancanti non
+  vengono mai sostituiti da un placeholder - la classificazione
+  corrispondente (NEEDS_DETECTOR_FORMALIZATION / NEEDS_MATCHING_
+  FORMALIZATION) e' la risposta corretta, non un errore da nascondere.
+- Riusa la meccanica gia' esistente e testata (sequence_episode_engine.py,
+  dependence_diagnostics.assign_clusters, BaselineEngineV4,
+  ControlReuseLedger) - non reimplementata.
 - Nessun claim di edge/probabilita' di successo: il verdetto e'
-  ESCLUSIVAMENTE strutturale (testabilita', geometria del campione,
-  completezza del detector, fattibilita' del matching, chiarezza
-  implementativa) - MAI una stima di profittabilita' attesa.
+  ESCLUSIVAMENTE strutturale.
 
-Tre stati di verdetto finale (fail-closed, nessun claim universale):
-  FEASIBLE                        - geometria comoda rispetto al minimo richiesto.
-  BORDERLINE_FEASIBILITY          - sopra il minimo ma con margine fragile.
-  NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY - sotto il minimo SULLA partition
-                                     proposta. Esclusivamente scoped a quella
-                                     partition (vedi FAIL-009/SEQ-0015) - MAI
-                                     un'affermazione che il design sia
-                                     impossibile per qualunque quantita' futura
-                                     di dati.
+Stati di verdetto finale (fail-closed, nessun claim universale):
+  FEASIBLE                                - geometria E matching entrambi feasible.
+  BORDERLINE_FEASIBILITY                   - geometria borderline, matching feasible.
+  NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY  - geometria sotto il minimo SULLA
+                                              partition proposta (il matching
+                                              non viene nemmeno valutato in
+                                              questo caso - non c'e' nulla da
+                                              matchare). Scoped a quella
+                                              partition (vedi FAIL-009).
+  NEEDS_DETECTOR_FORMALIZATION             - campi geometrici (livello 1) mancanti.
+  NEEDS_MATCHING_FORMALIZATION             - geometria ok, matching_spec/dati
+                                              di matching reali mancanti o
+                                              incompleti (livello 2).
+  MATCHING_STRUCTURALLY_INFEASIBLE         - matching_spec completo e preflight
+                                              eseguito REALMENTE, ma fallisce
+                                              una condizione fail-closed
+                                              (reuse oltre il tetto, tie-break
+                                              non deterministico, o unita'
+                                              indipendenti con match valido
+                                              sotto il minimo richiesto).
 """
 import os
 import statistics
@@ -60,16 +114,16 @@ from canonical_utils import canonical_sha256  # noqa: E402
 from sequence_episode_engine import (  # noqa: E402
     build_event_and_episode_views, build_outcome_independent_view, EpisodeRuleNotDeclaredError,
 )
-from baseline_engine_v4 import BaselineEngineV4, build_quality_report  # noqa: E402
+from baseline_engine_v4 import BaselineEngineV4, build_quality_report, CONTRACT_VERSION as BASELINE_ENGINE_CONTRACT_VERSION  # noqa: E402
 
 GATE_POLICY_VERSION = "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1"
-ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v1"
+ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v2"
 
+# ---- Livello 1: geometria del detector (sec.2 Phase 7.5A originale) ----
 # Campi che un family spec DEVE dichiarare esplicitamente prima che il
-# gate possa girare - sec.2 della richiesta. Nessuno di questi ha un
-# default silenzioso in questo modulo (stessa filosofia di
-# sequence_episode_engine.EpisodeRuleNotDeclaredError).
-REQUIRED_SPEC_FIELDS = (
+# gate possa calcolare QUALUNQUE geometria. Nessuno di questi ha un
+# default silenzioso in questo modulo.
+REQUIRED_DETECTOR_GEOMETRY_FIELDS = (
     "sequence_family_id",
     "detector_frozen",
     "detector_source_ref",
@@ -84,34 +138,52 @@ REQUIRED_SPEC_FIELDS = (
     "minimum_evidence_gates",
     "event_row_indices",
 )
+REQUIRED_SPEC_FIELDS = REQUIRED_DETECTOR_GEOMETRY_FIELDS  # alias retro-compatibile, stessa tupla
+
+# ---- Livello 2: matching preflight (sec.2-3 di questa patch) ----
+# Nomi canonici allineati ai parametri REALI gia' usati da BaselineEngineV4
+# (match_dimensions, k, minimum_control_count, max_control_reuse_per_run,
+# split_boundaries) invece di reinventarne di nuovi - solo
+# state_feature_definitions e control_pool_construction_policy sono
+# concetti nuovi (dichiarazione, non nuova logica).
+REQUIRED_MATCHING_SPEC_FIELDS = (
+    "match_dimensions",
+    "k",
+    "minimum_control_count",
+    "max_control_reuse_per_run",
+    "state_feature_definitions",
+    "control_pool_construction_policy",
+    "split_boundaries",
+)
+
+FORMALIZATION_LEVEL_NONE = "NONE"
+FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY = "DETECTOR_GEOMETRY_READY"
+FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY = "MATCHING_PREFLIGHT_READY"
+
+MATCHING_STATUS_NOT_DECLARED = "NOT_DECLARED"
+MATCHING_STATUS_DECLARED_AWAITING_DATA = "DECLARED_AWAITING_DATA"
+MATCHING_STATUS_EXECUTED_FEASIBLE = "EXECUTED_FEASIBLE"
+MATCHING_STATUS_EXECUTED_INFEASIBLE = "EXECUTED_INFEASIBLE"
 
 VERDICT_FEASIBLE = "FEASIBLE"
 VERDICT_BORDERLINE = "BORDERLINE_FEASIBILITY"
 VERDICT_NOT_TESTABLE = "NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY"
 VERDICT_NEEDS_DETECTOR_FORMALIZATION = "NEEDS_DETECTOR_FORMALIZATION"
+VERDICT_NEEDS_MATCHING_FORMALIZATION = "NEEDS_MATCHING_FORMALIZATION"
+VERDICT_MATCHING_STRUCTURALLY_INFEASIBLE = "MATCHING_STRUCTURALLY_INFEASIBLE"
 
 DEFAULT_POLICY = {
     # POLICY_THRESHOLD - margine minimo sopra il gate di campione minimo
-    # perche' un candidato conti FEASIBLE invece che BORDERLINE (sec.6:
-    # "nessun claim universale" - un candidato appena sopra la soglia e'
-    # strutturalmente fragile a piccole differenze di embargo/partition,
-    # non e' lo stesso di un margine ampio). Scelto ORA, prima di
-    # applicarlo a qualunque family reale.
+    # perche' un candidato conti FEASIBLE invece che BORDERLINE (nessun
+    # claim universale - un candidato appena sopra la soglia e'
+    # strutturalmente fragile a piccole differenze di embargo/partition).
     "feasible_margin_multiplier": 1.5,
     # POLICY_THRESHOLD - sotto questa frazione di episodi che sopravvivono
     # alla seconda passata di declustering (embargo), il candidato e'
-    # segnalato BORDERLINE anche se n nominale supera il minimo, perche'
-    # la maggioranza dell'informazione episodica e' comunque collassata.
+    # segnalato BORDERLINE anche se n nominale supera il minimo.
     "independence_retention_borderline_floor": 0.30,
     # POLICY_THRESHOLD - stessa logica per la prima passata (event->episode).
     "episode_retention_borderline_floor": 0.30,
-    # POLICY_THRESHOLD - guard di firing-rate basato sulla GEOMETRIA
-    # risultante (sec.7), non su una percentuale fissa di barre: se la
-    # mediana del gap fra eventi grezzi e' sotto l'embargo proposto, il
-    # clustering transitivo comprimera' quasi certamente l'INDEPENDENT_VIEW
-    # (stesso meccanismo di FAIL-009/SEQ-0015) - segnalato esplicitamente
-    # come causa, non solo osservato nel risultato finale.
-    "median_gap_below_embargo_is_structural_risk_flag": True,
 }
 
 
@@ -119,19 +191,38 @@ class StructuralInputNotDeclaredError(Exception):
     pass
 
 
+class MatchingRuntimeDataIncompleteError(Exception):
+    """sec.9 - sollevata se matching_runtime_data e' dichiarato ma manca
+    la feature di stato per anche una sola osservazione INDEPENDENT_VIEW.
+    MAI riempita con un valore inventato - il chiamante deve fornire
+    feature reali per OGNI osservazione indipendente o non dichiarare
+    affatto matching_runtime_data (in tal caso il gate risponde
+    correttamente DECLARED_AWAITING_DATA, non un errore)."""
+    pass
+
+
 def missing_spec_fields(spec: dict) -> list:
-    """Non solleva mai un'eccezione - usato per CLASSIFICARE (mai per
-    bloccare l'intero script), sec.9: una family senza detector
-    sufficientemente formalizzato deve poter essere marcata
-    NEEDS_DETECTOR_FORMALIZATION con i gradi di liberta' mancanti
-    elencati, non con uno stack trace."""
+    """Livello 1 (geometria) - non solleva mai un'eccezione, usato per
+    CLASSIFICARE: una family senza detector sufficientemente formalizzato
+    e' NEEDS_DETECTOR_FORMALIZATION con i gradi di liberta' mancanti
+    elencati, non uno stack trace."""
     missing = []
-    for field in REQUIRED_SPEC_FIELDS:
+    for field in REQUIRED_DETECTOR_GEOMETRY_FIELDS:
         if field not in spec or spec[field] is None:
             missing.append(field)
         elif field == "event_row_indices" and len(spec[field]) == 0:
             missing.append(field)
         elif field == "detector_frozen" and spec[field] is not True:
+            missing.append(field)
+    return missing
+
+
+def missing_matching_spec_fields(matching_spec: dict) -> list:
+    """Livello 2 (matching) - stessa filosofia fail-closed di
+    missing_spec_fields(), applicata a spec["matching_spec"]."""
+    missing = []
+    for field in REQUIRED_MATCHING_SPEC_FIELDS:
+        if field not in matching_spec or matching_spec[field] is None:
             missing.append(field)
     return missing
 
@@ -160,7 +251,12 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
                               natural_horizon: int, overlap_policy: str,
                               outcome_overlap_embargo_bars: int, direction_by_row: dict = None) -> dict:
     """EVENT_VIEW -> EPISODE_VIEW -> INDEPENDENT_VIEW, senza alcun
-    outcome - sec.3. Riusa sequence_episode_engine.py senza modifiche."""
+    outcome. Riusa sequence_episode_engine.py senza modifiche.
+    INDEPENDENT_VIEW.representative_rows e' esposto esplicitamente (non
+    solo il conteggio) - necessario al matching preflight (sec.4: il
+    sample gate va ricalcolato sulle unita' indipendenti CON match
+    valido, quindi serve sapere ESATTAMENTE quali row sono le
+    rappresentanti indipendenti da passare al matcher)."""
     sorted_rows = sorted(set(event_row_indices))
     n_raw_events = len(sorted_rows)
     firing_rate = (n_raw_events / n_bars) if n_bars else 0.0
@@ -179,6 +275,7 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
     independent_view = build_outcome_independent_view(
         episode_view["events"], outcome_overlap_embargo_bars=outcome_overlap_embargo_bars,
     )
+    representative_rows = [e["event_a_index"] for e in independent_view["events"]]
     return {
         "n_bars": n_bars,
         "n_raw_events": n_raw_events,
@@ -187,7 +284,9 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
         "EVENT_VIEW": {"n": event_view["n"]},
         "EPISODE_VIEW": {"n": episode_view["n"], "n_episodes": episode_view["n_episodes"]},
         "INDEPENDENT_VIEW": {"n": independent_view["n"],
-                              "n_independent_observations": independent_view["n_independent_observations"]},
+                              "n_independent_observations": independent_view["n_independent_observations"],
+                              "representative_rows": representative_rows,
+                              "direction_by_row": {r: direction_by_row.get(r, "BOTH") for r in representative_rows}},
         "episode_gap_rule": episode_gap_rule,
         "natural_horizon": natural_horizon,
         "overlap_policy": overlap_policy,
@@ -197,12 +296,14 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
 
 def compute_cluster_geometry(event_row_indices: list, episode_gap_rule: int,
                               outcome_overlap_embargo_bars: int) -> dict:
-    """Geometria dei cluster a DUE soglie distinte (sec.4) - stessa
-    distinzione concettuale di sequence_episode_engine.py:
-    event_cluster_rule (espansione fisica locale) vs outcome_overlap
-    embargo (indipendenza statistica dell'outcome). Calcolata sui
-    cluster di INDIPENDENZA (embargo) - la geometria decisiva per il
-    gate di campione minimo."""
+    """Geometria dei cluster a DUE soglie distinte - stessa distinzione
+    concettuale di sequence_episode_engine.py: event_cluster_rule
+    (espansione fisica locale) vs outcome_overlap embargo (indipendenza
+    statistica dell'outcome). Calcolata sui cluster di INDIPENDENZA
+    (embargo) - la geometria decisiva per il gate di campione minimo,
+    e l'AUTORITA' primaria per qualunque classificazione di
+    incompatibilita' strutturale (mai un proxy come il gap mediano da
+    solo - vedi classify_firing_geometry_risk_flag)."""
     sorted_rows = sorted(set(event_row_indices))
     if len(sorted_rows) < 1:
         return {
@@ -231,7 +332,7 @@ def compute_cluster_geometry(event_row_indices: list, episode_gap_rule: int,
 
 
 def compute_feasibility_ratios(funnel: dict, minimum_evidence_gates: dict, bars_per_year: float = None) -> dict:
-    """sec.5 - rapporti semplici, nessuna formula statistica nuova."""
+    """Rapporti semplici, nessuna formula statistica nuova."""
     ev_n = funnel["EVENT_VIEW"]["n"]
     ep_n = funnel["EPISODE_VIEW"]["n"]
     indep_n = funnel["INDEPENDENT_VIEW"]["n"]
@@ -252,38 +353,41 @@ def compute_feasibility_ratios(funnel: dict, minimum_evidence_gates: dict, bars_
     }
 
 
-def classify_geometry_firing_rate_guard(funnel: dict, ratios: dict) -> dict:
-    """sec.7 - chiude FAIL-004 CORRETTAMENTE: il problema non e' "il
-    detector spara su una percentuale X delle barre" (guard fisso gia'
-    esistente in event_firing_rate_guard.py, FIRING_RATE_THRESHOLDS -
-    mantenuto per uso diagnostico, MAI l'autorita' finale) ma "il tasso
-    di innesco, combinato con l'orizzonte/embargo dichiarati, produce
-    una geometria che non puo' soddisfare il requisito di unita'
-    indipendenti". Un detector puo' avere firing_rate bassissimo (es.
-    0.01) e comunque essere PATHOLOGICAL_FOR_HORIZON se i pochi eventi
-    che genera sono comunque tutti ravvicinati rispetto all'embargo
-    (es. concentrati in un singolo periodo di regime)."""
+def classify_firing_geometry_risk_flag(funnel: dict) -> dict:
+    """Diagnostica SECONDARIA (correzione di semantica, post-review
+    2026-09-20): `median_gap_bars <= embargo` e' un segnale di RISCHIO,
+    non una prova di incompatibilita' strutturale - un detector con gap
+    mediano sotto l'embargo puo' comunque produrre abbastanza unita'
+    indipendenti se un numero sufficiente di gap GRANDI spezza la
+    catena transitiva (es. 60 gap piccoli + 40 gap grandi su 100: la
+    mediana e' sotto embargo ma i 40 gap grandi possono generare 41+
+    cluster indipendenti - controesempio verificato in
+    test_phase7_5_structural_feasibility_gate.py, caso A). L'AUTORITA'
+    che decide incompatibilita' strutturale resta ESCLUSIVAMENTE
+    independent_units (dai cluster REALI, assign_clusters) confrontato
+    con minimum_required_n - MAI questo flag da solo."""
     gap_stats = funnel["gap_stats"]
     median_gap = gap_stats["median_gap_bars"]
     embargo = funnel["outcome_overlap_embargo_bars"]
-    structurally_incompatible = (median_gap is not None) and (median_gap <= embargo)
-    verdict = "PATHOLOGICAL_FOR_HORIZON" if structurally_incompatible else "COMPATIBLE_WITH_HORIZON"
+    risk_flag = (median_gap is not None) and (median_gap <= embargo)
     reason = (
-        f"median_gap_bars={median_gap} <= outcome_overlap_embargo_bars={embargo}: il clustering "
-        f"transitivo dell'INDEPENDENT_VIEW comprimera' la maggioranza degli episodi indipendentemente "
-        f"dal numero grezzo di eventi (stesso meccanismo di FAIL-009/SEQ-0015)."
-        if structurally_incompatible else
-        f"median_gap_bars={median_gap} > outcome_overlap_embargo_bars={embargo}: nessuna "
-        f"incompatibilita' strutturale rilevata fra tasso di innesco e orizzonte/embargo dichiarati."
+        f"median_gap_bars={median_gap} <= outcome_overlap_embargo_bars={embargo}: segnale di RISCHIO "
+        f"che il clustering transitivo possa comprimere l'INDEPENDENT_VIEW - NON una prova da sola "
+        f"(gap grandi intermedi possono comunque produrre abbastanza cluster indipendenti). "
+        f"Verificare SEMPRE independent_units nel funnel/geometry reale, non fermarsi a questo flag."
+        if risk_flag else
+        f"median_gap_bars={median_gap} > outcome_overlap_embargo_bars={embargo}: nessun segnale di "
+        f"rischio dal proxy del gap mediano (comunque non l'unica fonte di verita' - vedi cluster_geometry)."
     )
     return {
         "signature": "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD",
-        "verdict": verdict,
+        "risk_flag": risk_flag,
         "median_gap_bars": median_gap,
         "outcome_overlap_embargo_bars": embargo,
         "firing_rate": funnel["firing_rate"],
         "reason": reason,
-        "basis": "GEOMETRY_OF_INDEPENDENT_UNIT_YIELD_VS_HORIZON_EMBARGO - non una percentuale fissa di firing.",
+        "authority": "DIAGNOSTIC_ONLY - l'autorita' strutturale e' independent_units (assign_clusters/"
+                     "INDEPENDENT_VIEW) vs minimum_required_n, mai questo proxy da solo.",
     }
 
 
@@ -293,11 +397,11 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
                             discovery_features_by_row: dict, minimum_control_count: int,
                             max_control_reuse_per_run: int, discovery_split_name: str = "discovery",
                             feature_version: str = "feature_registry_v2") -> dict:
-    """sec.8 - simula il matching STRUTTURALE senza alcun outcome,
-    riusando BaselineEngineV4/ControlReuseLedger senza modifiche. Va
-    invocato SOLO quando esistono gia' feature di stato reali (evento e
-    pool di controllo) - MAI con feature inventate per far girare il
-    preflight su una family non ancora formalizzata (sec.9)."""
+    """Simula il matching STRUTTURALE senza alcun outcome, riusando
+    BaselineEngineV4/ControlReuseLedger senza modifiche. Va invocato
+    SOLO quando esistono gia' feature di stato reali (evento e pool di
+    controllo) - MAI con feature inventate per far girare il preflight
+    su una family non ancora formalizzata."""
     engine = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
                                discovery_split_name=discovery_split_name, feature_version=feature_version,
                                minimum_control_count=minimum_control_count,
@@ -314,8 +418,7 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
     reuse_report = engine.reuse_usage_report()
 
     # Determinismo del tie-break: stesso input rigirato due volte deve
-    # produrre esattamente le stesse scelte di controllo per ogni evento
-    # (sec.8: "verificare... che il tie-break sia deterministico").
+    # produrre esattamente le stesse scelte di controllo per ogni evento.
     engine_repeat = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
                                       discovery_split_name=discovery_split_name, feature_version=feature_version,
                                       minimum_control_count=minimum_control_count,
@@ -341,13 +444,92 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
         "n_rejected_insufficient_pool": quality_report["n_rejected_insufficient_pool"],
         "match_quality_counts": quality_report["match_quality_counts"],
         "poor_match_share": quality_report["poor_match_share"],
+        "excessive_poor_matches_flag": quality_report["excessive_poor_matches_flag"],
         "reuse_report": reuse_report,
         "max_reuse_within_declared_cap": max_reuse_within_cap,
         "tie_break_deterministic": tie_break_deterministic,
     }
 
 
-def _classify_verdict(ratios: dict, policy: dict) -> str:
+def evaluate_matching_feasibility(funnel: dict, spec: dict, minimum_evidence_gates: dict) -> dict:
+    """Livello 2 del gate (sec.1-4 della patch) - il matching preflight
+    partecipa ORA al verdetto composito. Fail-closed a 4 stati:
+      NOT_DECLARED           - matching_spec assente o incompleto.
+      DECLARED_AWAITING_DATA - matching_spec completo ma nessuna feature
+                                REALE ancora disponibile (mai simulato).
+      EXECUTED_FEASIBLE      - preflight eseguito, condizioni fail-closed
+                                soddisfatte (sec.4: reuse<=tetto, tie-break
+                                deterministico, independent_units CON match
+                                valido >= minimum_required_n - ricalcolato
+                                sulle sole osservazioni REALMENTE matchate,
+                                non sul conteggio grezzo di INDEPENDENT_VIEW).
+      EXECUTED_INFEASIBLE    - preflight eseguito, almeno una condizione
+                                fail-closed violata."""
+    matching_spec = spec.get("matching_spec")
+    if not matching_spec:
+        return {"status": MATCHING_STATUS_NOT_DECLARED,
+                "missing_matching_degrees_of_freedom": list(REQUIRED_MATCHING_SPEC_FIELDS)}
+    missing = missing_matching_spec_fields(matching_spec)
+    if missing:
+        return {"status": MATCHING_STATUS_NOT_DECLARED, "missing_matching_degrees_of_freedom": missing}
+
+    runtime = spec.get("matching_runtime_data")
+    if not runtime:
+        return {"status": MATCHING_STATUS_DECLARED_AWAITING_DATA, "missing_matching_degrees_of_freedom": []}
+
+    representative_rows = funnel["INDEPENDENT_VIEW"]["representative_rows"]
+    event_features_by_row = runtime.get("event_features_by_row", {})
+    event_direction_by_row = funnel["INDEPENDENT_VIEW"]["direction_by_row"]
+    missing_features = [r for r in representative_rows if r not in event_features_by_row]
+    if missing_features:
+        raise MatchingRuntimeDataIncompleteError(
+            f"matching_runtime_data dichiarato ma event_features_by_row manca per "
+            f"{len(missing_features)}/{len(representative_rows)} osservazioni INDEPENDENT_VIEW "
+            f"(prime mancanti: {missing_features[:5]}) - nessuna feature inventata per completare il preflight."
+        )
+    events = [
+        {"event_id": f"INDEP-{r}", "event_row": r, "direction": event_direction_by_row.get(r, "BOTH"),
+         "features": event_features_by_row[r]}
+        for r in representative_rows
+    ]
+    preflight = run_matching_preflight(
+        match_dimensions=matching_spec["match_dimensions"], k=matching_spec["k"],
+        split_boundaries=matching_spec["split_boundaries"], events=events,
+        control_pool=runtime["control_pool"], control_row_by_id=runtime["control_row_by_id"],
+        control_direction_by_id=runtime["control_direction_by_id"],
+        control_features_by_id=runtime["control_features_by_id"],
+        discovery_features_by_row=runtime["discovery_features_by_row"],
+        minimum_control_count=matching_spec["minimum_control_count"],
+        max_control_reuse_per_run=matching_spec["max_control_reuse_per_run"],
+    )
+    minimum_required_n = minimum_evidence_gates["n_nominal_minimum"]
+    independent_units_with_valid_match = preflight["n_matched"]
+    fail_reasons = []
+    if not preflight["tie_break_deterministic"]:
+        fail_reasons.append("TIE_BREAK_NOT_DETERMINISTIC")
+    if not preflight["max_reuse_within_declared_cap"]:
+        fail_reasons.append("MAX_CONTROL_REUSE_EXCEEDS_DECLARED_CAP")
+    if independent_units_with_valid_match < minimum_required_n:
+        fail_reasons.append(
+            f"INDEPENDENT_UNITS_WITH_VALID_MATCH({independent_units_with_valid_match})_BELOW_"
+            f"MINIMUM_REQUIRED_N({minimum_required_n})"
+        )
+    status = MATCHING_STATUS_EXECUTED_INFEASIBLE if fail_reasons else MATCHING_STATUS_EXECUTED_FEASIBLE
+    return {
+        "status": status,
+        "missing_matching_degrees_of_freedom": [],
+        "preflight": preflight,
+        "independent_units_with_valid_match": independent_units_with_valid_match,
+        "minimum_required_n": minimum_required_n,
+        "fail_reasons": fail_reasons,
+    }
+
+
+def _classify_geometry_verdict(ratios: dict, policy: dict) -> str:
+    """Verdetto del SOLO livello 1 (geometria) - invariato nella logica
+    rispetto alla prima versione del gate, isolato in una funzione
+    propria perche' ora e' solo UNA delle due componenti del verdetto
+    composito finale."""
     indep_n = ratios["independent_units"]
     minimum_required_n = ratios["minimum_required_n"]
     if indep_n < minimum_required_n:
@@ -362,13 +544,29 @@ def _classify_verdict(ratios: dict, policy: dict) -> str:
     return VERDICT_BORDERLINE
 
 
+def _compose_final_verdict(geometry_verdict: str, matching_result: dict) -> str:
+    """sec.3 della patch - il verdetto finale richiede ENTRAMBI i
+    livelli. Se la geometria da sola e' gia' NOT_TESTABLE, il matching
+    non viene nemmeno valutato (non c'e' nulla di indipendente da
+    matchare)."""
+    if geometry_verdict == VERDICT_NOT_TESTABLE:
+        return VERDICT_NOT_TESTABLE
+    status = matching_result["status"]
+    if status in (MATCHING_STATUS_NOT_DECLARED, MATCHING_STATUS_DECLARED_AWAITING_DATA):
+        return VERDICT_NEEDS_MATCHING_FORMALIZATION
+    if status == MATCHING_STATUS_EXECUTED_INFEASIBLE:
+        return VERDICT_MATCHING_STRUCTURALLY_INFEASIBLE
+    return geometry_verdict  # EXECUTED_FEASIBLE: eredita FEASIBLE o BORDERLINE_FEASIBILITY dalla geometria
+
+
 def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
                                             bars_per_year: float = None,
                                             direction_by_row: dict = None) -> dict:
-    """Punto di ingresso principale del gate (sec.1-6). Ritorna sempre un
-    dict con almeno 'sequence_family_id' e 'verdict' - MAI un'eccezione
-    per una family incompleta (quella e' una classificazione valida,
-    NEEDS_DETECTOR_FORMALIZATION, non un errore di programma)."""
+    """Punto di ingresso principale del gate. Ritorna sempre un dict con
+    almeno 'sequence_family_id' e 'verdict' - MAI un'eccezione per una
+    family incompleta (quella e' una classificazione valida, non un
+    errore di programma). Ora integra ENTRAMBI i livelli (geometria +
+    matching preflight) nel verdetto finale - vedi docstring di modulo."""
     policy = policy or DEFAULT_POLICY
     family_id = spec.get("sequence_family_id", "UNKNOWN_FAMILY")
     missing = missing_spec_fields(spec)
@@ -376,8 +574,9 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         return {
             "sequence_family_id": family_id,
             "verdict": VERDICT_NEEDS_DETECTOR_FORMALIZATION,
+            "formalization_level": FORMALIZATION_LEVEL_NONE,
             "missing_degrees_of_freedom": missing,
-            "note": "Nessun parametro inventato per far girare il gate - sec.9. Formalizzare il detector "
+            "note": "Nessun parametro inventato per far girare il gate. Formalizzare il detector "
                     "(frozen formula/parametri, episode_gap_rule, natural_horizon proposto, "
                     "outcome_overlap_embargo proposto) prima di rieseguire questo gate su questa family.",
             "engine_version": ENGINE_VERSION,
@@ -396,6 +595,7 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         return {
             "sequence_family_id": family_id,
             "verdict": VERDICT_NEEDS_DETECTOR_FORMALIZATION,
+            "formalization_level": FORMALIZATION_LEVEL_NONE,
             "missing_degrees_of_freedom": [str(e)],
             "engine_version": ENGINE_VERSION,
             "policy_version": GATE_POLICY_VERSION,
@@ -406,114 +606,147 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         outcome_overlap_embargo_bars=spec["proposed_outcome_overlap_embargo_bars"],
     )
     ratios = compute_feasibility_ratios(funnel, spec["minimum_evidence_gates"], bars_per_year=bars_per_year)
-    firing_guard = classify_geometry_firing_rate_guard(funnel, ratios)
-    verdict = _classify_verdict(ratios, policy)
+    firing_flag = classify_firing_geometry_risk_flag(funnel)
+    geometry_verdict = _classify_geometry_verdict(ratios, policy)
+
+    matching_result = (
+        {"status": MATCHING_STATUS_NOT_DECLARED, "missing_matching_degrees_of_freedom": None}
+        if geometry_verdict == VERDICT_NOT_TESTABLE
+        else evaluate_matching_feasibility(funnel, spec, spec["minimum_evidence_gates"])
+    )
+    final_verdict = _compose_final_verdict(geometry_verdict, matching_result)
+    formalization_level = (FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY
+                            if matching_result["status"] == MATCHING_STATUS_NOT_DECLARED
+                            else FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY)
 
     provenance = {
         "detector_source_ref": spec["detector_source_ref"],
         "detector_parameters_hash": canonical_sha256(spec["detector_parameters"]),
-        "spec_hash": canonical_sha256({k: v for k, v in spec.items() if k != "event_row_indices"}),
+        "spec_hash": canonical_sha256({k: v for k, v in spec.items()
+                                       if k not in ("event_row_indices", "matching_runtime_data")}),
         "discovery_partition": spec["discovery_partition"],
         "engine_version": ENGINE_VERSION,
         "policy_version": GATE_POLICY_VERSION,
         "outcome_blind": True,
         "deterministic": True,
     }
+    if matching_result["status"] in (MATCHING_STATUS_EXECUTED_FEASIBLE, MATCHING_STATUS_EXECUTED_INFEASIBLE):
+        provenance["matching"] = {
+            "baseline_engine_version": BASELINE_ENGINE_CONTRACT_VERSION,
+            "matching_spec_hash": canonical_sha256(spec["matching_spec"]),
+            "max_control_reuse_per_run": spec["matching_spec"]["max_control_reuse_per_run"],
+            "matching_result_hash": canonical_sha256(matching_result["preflight"]),
+        }
 
     return {
         "sequence_family_id": family_id,
-        "verdict": verdict,
+        "verdict": final_verdict,
+        "formalization_level": formalization_level,
+        "geometry_verdict": geometry_verdict,
         "detection_funnel": funnel,
         "cluster_geometry": geometry,
         "feasibility_ratios": ratios,
-        "firing_rate_guard": firing_guard,
+        "firing_geometry_risk_flag": firing_flag,
+        "matching": matching_result,
         "provenance": provenance,
     }
 
 
 if __name__ == "__main__":
     # ---- Demo/self-test su dati sintetici (nessun dato NEXUS) ----
+    import random as _random
+
+    def _base_spec(event_row_indices, **overrides):
+        s = {
+            "sequence_family_id": "SEQFAM-DEMO", "detector_frozen": True, "detector_source_ref": "SYNTHETIC_DEMO",
+            "detector_parameters": {"threshold": 1.0}, "observation_timing": {"observation_cutoff": "close(t)"},
+            "event_direction_policy": "BUY", "episode_gap_rule": 3, "overlap_policy": "COLLAPSE_TO_FIRST",
+            "proposed_natural_horizon": 40, "proposed_outcome_overlap_embargo_bars": 39,
+            "discovery_partition": {"partition_id": "SYNTHETIC_DEMO", "n_bars": max(event_row_indices) + 100},
+            "minimum_evidence_gates": {"n_nominal_minimum": 30},
+            "event_row_indices": event_row_indices,
+        }
+        s.update(overrides)
+        return s
 
     # Caso 1: spec incompleto -> NEEDS_DETECTOR_FORMALIZATION, nessun default inventato.
-    incomplete_spec = {"sequence_family_id": "SEQFAM-DEMO-INCOMPLETE"}
-    r1 = evaluate_family_structural_feasibility(incomplete_spec)
+    r1 = evaluate_family_structural_feasibility({"sequence_family_id": "SEQFAM-DEMO-INCOMPLETE"})
     assert r1["verdict"] == VERDICT_NEEDS_DETECTOR_FORMALIZATION
-    assert set(REQUIRED_SPEC_FIELDS) <= set(r1["missing_degrees_of_freedom"]) or len(r1["missing_degrees_of_freedom"]) > 0
+    assert r1["formalization_level"] == FORMALIZATION_LEVEL_NONE
     print(f"Caso 1 OK: spec incompleto -> {r1['verdict']} ({len(r1['missing_degrees_of_freedom'])} campi mancanti)")
 
-    # Caso 2 (replay sintetico, di sola validazione del gate - NON un
-    # nuovo dato SEQ-0015, NESSUN outcome, solo la geometria GIA'
-    # PUBBLICATA event->episode->independent 249->210->1 per verificare
-    # che il gate l'avrebbe segnalata immediatamente come previsto da
-    # FAIL-009/sec.4 della richiesta Phase 7.5A).
-    import random as _random
+    # Caso 2 (replay strutturale SEQ-0015, sintetico - solo geometria GIA' pubblicata, nessun outcome).
     _random.seed(0)
     rows = []
     r = 100
-    for _ in range(210):  # 210 episodi sintetici
-        cluster_size = _random.choice([1, 1, 1, 2, 2, 3])  # media ~249/210 eventi grezzi per episodio
+    for _ in range(210):
+        cluster_size = _random.choice([1, 1, 1, 2, 2, 3])
         for _ in range(cluster_size):
             rows.append(r)
             r += _random.randint(1, 3)
-        r += _random.randint(4, 7)  # gap fra episodi sempre << embargo=39 per costruzione (replay del caso reale)
+        r += _random.randint(4, 7)
         if len(rows) >= 249:
             break
     rows = rows[:249]
-    seq0015_replay_spec = {
-        "sequence_family_id": "SEQFAM-REPLAY-SEQ0015-STRUCTURAL-ONLY",
-        "detector_frozen": True, "detector_source_ref": "SYNTHETIC_REPLAY_NOT_REAL_DETECTOR",
-        "detector_parameters": {"note": "replay sintetico della sola geometria pubblicata, non un nuovo dato"},
-        "observation_timing": {"observation_cutoff": "close(t)"}, "event_direction_policy": "BOTH",
-        "episode_gap_rule": 3, "overlap_policy": "COLLAPSE_TO_FIRST",
-        "proposed_natural_horizon": 40, "proposed_outcome_overlap_embargo_bars": 39,
-        "discovery_partition": {"partition_id": "SYNTHETIC_REPLAY", "n_bars": 2393},
-        "minimum_evidence_gates": {"n_nominal_minimum": 30},
-        "event_row_indices": rows,
-    }
-    r2 = evaluate_family_structural_feasibility(seq0015_replay_spec)
-    print(f"Caso 2 (replay strutturale SEQ-0015, sintetico): EVENT_VIEW={r2['detection_funnel']['EVENT_VIEW']['n']} "
-          f"-> EPISODE_VIEW={r2['detection_funnel']['EPISODE_VIEW']['n']} "
-          f"-> INDEPENDENT_VIEW={r2['detection_funnel']['INDEPENDENT_VIEW']['n']} -> verdict={r2['verdict']}")
+    r2 = evaluate_family_structural_feasibility(_base_spec(rows))
+    print(f"Caso 2 (replay strutturale SEQ-0015): INDEPENDENT_VIEW={r2['detection_funnel']['INDEPENDENT_VIEW']['n']} "
+          f"-> verdict={r2['verdict']}")
     assert r2["verdict"] == VERDICT_NOT_TESTABLE
-    assert r2["firing_rate_guard"]["verdict"] == "PATHOLOGICAL_FOR_HORIZON"
+    assert r2["matching"]["status"] == MATCHING_STATUS_NOT_DECLARED  # geometria gia' NOT_TESTABLE, matching non valutato
 
-    # Caso 3 (positivo): eventi ben distanziati, ampiamente sopra il minimo -> FEASIBLE.
-    rows3 = list(range(0, 60 * 60, 60))  # gap=60 > embargo=39, 60 osservazioni indipendenti (>=1.5x minimo=30)
-    feasible_spec = {
-        "sequence_family_id": "SEQFAM-DEMO-FEASIBLE",
-        "detector_frozen": True, "detector_source_ref": "SYNTHETIC_DEMO",
-        "detector_parameters": {"threshold": 1.0}, "observation_timing": {"observation_cutoff": "close(t)"},
-        "event_direction_policy": "BOTH", "episode_gap_rule": 3, "overlap_policy": "COLLAPSE_TO_FIRST",
-        "proposed_natural_horizon": 40, "proposed_outcome_overlap_embargo_bars": 39,
-        "discovery_partition": {"partition_id": "SYNTHETIC_DEMO", "n_bars": max(rows3) + 100},
-        "minimum_evidence_gates": {"n_nominal_minimum": 30},
-        "event_row_indices": rows3,
-    }
-    r3 = evaluate_family_structural_feasibility(feasible_spec)
-    print(f"Caso 3 (demo ben distanziata): INDEPENDENT_VIEW={r3['detection_funnel']['INDEPENDENT_VIEW']['n']} "
-          f"-> verdict={r3['verdict']}")
-    assert r3["verdict"] == VERDICT_FEASIBLE
-    assert r3["firing_rate_guard"]["verdict"] == "COMPATIBLE_WITH_HORIZON"
+    # Caso 3: geometria ampiamente sopra il minimo MA nessun matching_spec -> NEEDS_MATCHING_FORMALIZATION (non FEASIBLE!).
+    rows3 = list(range(0, 60 * 60, 60))
+    r3 = evaluate_family_structural_feasibility(_base_spec(rows3))
+    print(f"Caso 3 (geometria ampia, NESSUN matching_spec): geometry_verdict={r3['geometry_verdict']} "
+          f"-> verdict finale={r3['verdict']}")
+    assert r3["geometry_verdict"] == VERDICT_FEASIBLE
+    assert r3["verdict"] == VERDICT_NEEDS_MATCHING_FORMALIZATION, (
+        "questa e' esattamente la correzione della patch: geometria FEASIBLE da sola non basta piu'"
+    )
+    assert r3["formalization_level"] == FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY
 
-    # Caso 4 (borderline): appena sopra il minimo ma con bassa independence_retention.
-    rows4 = []
-    r = 0
-    for i in range(32):  # 32 episodi "veri" ma quasi tutti troppo vicini fra loro per l'embargo
-        rows4.append(r)
-        r += 20 if i % 3 == 0 else 5  # solo 1 gap su 3 supera l'embargo=39... nessuno lo supera qui (5,20<39)
-    borderline_spec = dict(feasible_spec)
-    borderline_spec["sequence_family_id"] = "SEQFAM-DEMO-BORDERLINE"
-    borderline_spec["event_row_indices"] = rows4
-    borderline_spec["discovery_partition"] = {"partition_id": "SYNTHETIC_DEMO", "n_bars": max(rows4) + 100}
-    r4 = evaluate_family_structural_feasibility(borderline_spec)
-    print(f"Caso 4 (demo borderline): EPISODE_VIEW={r4['detection_funnel']['EPISODE_VIEW']['n']} "
-          f"-> INDEPENDENT_VIEW={r4['detection_funnel']['INDEPENDENT_VIEW']['n']} -> verdict={r4['verdict']}")
-    assert r4["verdict"] in (VERDICT_BORDERLINE, VERDICT_NOT_TESTABLE)
+    # Caso 4: stesso spec MA con matching_spec completo e matching_runtime_data reale con pool AMPIO -> FEASIBLE.
+    boundaries = {"discovery": (0, 1_000_000)}
+    control_pool = list(range(500_000, 500_040))
+    control_row_by_id = {c: c for c in control_pool}
+    control_direction_by_id = {c: "BOTH" for c in control_pool}  # default direction_by_row is "BOTH" per riga
+    control_features_by_id = {c: {"state": "A"} for c in control_pool}
+    discovery_feats = {c: {"state": "A"} for c in control_pool}
+    event_features_by_row = {row: {"state": "A"} for row in rows3}
+    spec4 = _base_spec(
+        rows3,
+        matching_spec={"match_dimensions": ["state"], "k": 3, "minimum_control_count": 5,
+                        "max_control_reuse_per_run": 10, "state_feature_definitions": {"state": {"source": "TEST"}},
+                        "control_pool_construction_policy": "TEST_SAME_SPLIT_SAME_DIRECTION",
+                        "split_boundaries": boundaries},
+        matching_runtime_data={"control_pool": control_pool, "control_row_by_id": control_row_by_id,
+                                "control_direction_by_id": control_direction_by_id,
+                                "control_features_by_id": control_features_by_id,
+                                "discovery_features_by_row": discovery_feats,
+                                "event_features_by_row": event_features_by_row},
+    )
+    r4 = evaluate_family_structural_feasibility(spec4)
+    print(f"Caso 4 (geometria + matching entrambi validi): matching.status={r4['matching']['status']} "
+          f"-> verdict finale={r4['verdict']}")
+    assert r4["verdict"] == VERDICT_FEASIBLE
+    assert r4["formalization_level"] == FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY
+    assert r4["matching"]["status"] == MATCHING_STATUS_EXECUTED_FEASIBLE
+    assert "matching" in r4["provenance"]
 
-    # Caso 5: determinismo - stesso spec rigirato due volte -> stesso risultato bit-per-bit (hash canonico).
-    r2_again = evaluate_family_structural_feasibility(seq0015_replay_spec)
+    # Caso 5: stessa geometria MA pool di controllo insufficiente -> MATCHING_STRUCTURALLY_INFEASIBLE.
+    tiny_pool = control_pool[:2]  # sotto minimum_control_count=5
+    spec5 = dict(spec4)
+    spec5["matching_runtime_data"] = dict(spec4["matching_runtime_data"])
+    spec5["matching_runtime_data"]["control_pool"] = tiny_pool
+    r5 = evaluate_family_structural_feasibility(spec5)
+    print(f"Caso 5 (geometria valida, pool insufficiente): matching.status={r5['matching']['status']} "
+          f"-> verdict finale={r5['verdict']}")
+    assert r5["verdict"] == VERDICT_MATCHING_STRUCTURALLY_INFEASIBLE
+    assert r5["matching"]["status"] == MATCHING_STATUS_EXECUTED_INFEASIBLE
+
+    # Caso 6: determinismo - stesso spec rigirato due volte -> stesso hash.
+    r2_again = evaluate_family_structural_feasibility(_base_spec(rows))
     assert canonical_sha256(r2["detection_funnel"]) == canonical_sha256(r2_again["detection_funnel"])
-    assert r2["provenance"]["spec_hash"] == r2_again["provenance"]["spec_hash"]
-    print("Caso 5 OK: stesso spec -> stesso hash di funnel/provenance (deterministico).")
+    print("Caso 6 OK: stesso spec -> stesso hash di funnel (deterministico).")
 
-    print("\nTutti i casi del Sequence Structural Feasibility Gate verificati.")
+    print("\nTutti i casi del Sequence Structural Feasibility Gate (v2, integrato) verificati.")

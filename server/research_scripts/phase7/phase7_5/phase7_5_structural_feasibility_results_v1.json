@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-09-20T20:53:56.944472+00:00",
+  "generated_at": "2026-09-20T21:14:08.497512+00:00",
   "generation_script": "phase7/phase7_5/build_phase7_5_structural_feasibility_results.py",
-  "canonical_sha256": "bf548a51858eb84463c499b80c3f6088ecbb65b883f7e043d0b4ec53f9773186",
+  "canonical_sha256": "a96afe2d1b6e51e6b23da93d8bca114778f695890341a6feae2692f94f470ec2",
   "payload": {
-    "gate_engine_version": "sequence_structural_feasibility_gate.py@v1",
+    "gate_engine_version": "sequence_structural_feasibility_gate.py@v2",
     "gate_policy_version": "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1",
-    "baseline_commit_ref": "7b9d64b (Phase 7.4A Structural Verdict Semantics Patch - SEQ-0015 CLOSED)",
+    "baseline_commit_ref": "fbfab21 (Phase 7.5A Sequence Structural Feasibility Gate - prima dell'integrazione matching, ora corretta da questa stessa run) - SEQ-0015 CLOSED",
     "seq0015_status": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE - vedi failure_memory_registry_v1.json FAIL-009",
     "no_nexus_outcome_data_accessed": true,
     "no_edge_discovery_performed": true,
-    "required_spec_fields_reference": [
+    "required_detector_geometry_fields_reference": [
       "sequence_family_id",
       "detector_frozen",
       "detector_source_ref",
@@ -23,6 +23,15 @@
       "discovery_partition",
       "minimum_evidence_gates",
       "event_row_indices"
+    ],
+    "required_matching_spec_fields_reference": [
+      "match_dimensions",
+      "k",
+      "minimum_control_count",
+      "max_control_reuse_per_run",
+      "state_feature_definitions",
+      "control_pool_construction_policy",
+      "split_boundaries"
     ],
     "families_evaluated": [
       {
@@ -164,8 +173,10 @@
       "n_families_evaluated": 5,
       "n_ready_for_preregistration": 0,
       "n_needs_detector_formalization": 5,
+      "n_needs_matching_formalization": 0,
+      "n_matching_structurally_infeasible": 0,
       "n_structurally_blocked": 0,
-      "note": "Tutte e 5 le family rimaste sono NEEDS_DETECTOR_FORMALIZATION in questa run - nessuna di esse ha ancora un detector abbastanza formalizzato (formula/soglia congelata, episode_gap_rule, natural_horizon proposto, outcome_overlap_embargo proposto) perche' il gate possa calcolare una geometria reale. Questo e' il risultato ATTESO e CORRETTO di eseguire il preflight PRIMA della formalizzazione (sec.15 della richiesta Phase 7.5A) - non un fallimento del gate."
+      "note": "Tutte e 5 le family rimaste sono NEEDS_DETECTOR_FORMALIZATION in questa run - nessuna di esse ha ancora un detector abbastanza formalizzato (formula/soglia congelata, episode_gap_rule, natural_horizon proposto, outcome_overlap_embargo proposto), quindi il gate si ferma al LIVELLO 1 (geometria) e non arriva nemmeno a valutare il livello 2 (matching_spec) per nessuna delle 5 - non c'e' ancora nulla su cui applicare NEEDS_MATCHING_FORMALIZATION/MATCHING_STRUCTURALLY_INFEASIBLE in questa run. Questo e' il risultato ATTESO e CORRETTO di eseguire il preflight PRIMA della formalizzazione - non un fallimento del gate."
     }
   }
 }
