@@ -1,0 +1,115 @@
+{
+  "principle": "Simulazione interamente sintetica sotto H0 VERA - nessun dato NEXUS. Un metodo ben calibrato deve avere empirical_rejection_rate ~= alpha (o piu' conservativo, mai marcatamente superiore).",
+  "alphas_tested": [
+    0.01,
+    0.05,
+    0.1
+  ],
+  "n_reps_per_scenario": 1000,
+  "n_boot_per_replicate": 1000,
+  "old_method_two_sample_block_bootstrap_percentile_p": {
+    "gaussian_iid": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 42.5,
+      "empirical_rejection_rate": {
+        "0.01": 0.026,
+        "0.05": 0.071,
+        "0.1": 0.123
+      }
+    },
+    "skewed": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 42.8,
+      "empirical_rejection_rate": {
+        "0.01": 0.043,
+        "0.05": 0.107,
+        "0.1": 0.184
+      }
+    },
+    "autocorrelated_event": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 44.7,
+      "empirical_rejection_rate": {
+        "0.01": 0.142,
+        "0.05": 0.234,
+        "0.1": 0.33
+      }
+    },
+    "unequal_n_30_vs_300": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 49.1,
+      "empirical_rejection_rate": {
+        "0.01": 0.039,
+        "0.05": 0.092,
+        "0.1": 0.153
+      }
+    }
+  },
+  "new_method_block_sign_flip_permutation": {
+    "gaussian_iid": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 27.8,
+      "empirical_rejection_rate": {
+        "0.01": 0.004,
+        "0.05": 0.049,
+        "0.1": 0.097
+      }
+    },
+    "skewed": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 27.8,
+      "empirical_rejection_rate": {
+        "0.01": 0.015,
+        "0.05": 0.063,
+        "0.1": 0.118
+      }
+    },
+    "autocorrelated_d": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 28.3,
+      "empirical_rejection_rate": {
+        "0.01": 0.041,
+        "0.05": 0.182,
+        "0.1": 0.274
+      }
+    },
+    "few_controls_high_noise_n_controls_2": {
+      "n_reps": 1000,
+      "n_boot": 1000,
+      "elapsed_sec": 29.0,
+      "empirical_rejection_rate": {
+        "0.01": 0.012,
+        "0.05": 0.051,
+        "0.1": 0.109
+      }
+    }
+  },
+  "shared_regime_demo_old_vs_new": {
+    "description": "H0 esatta: outcome_event_i = r_i + eps_event_i, outcome_control_ij = r_i + eps_control_ij (shock di regime r_i~N(0,tau=1.0) condiviso da evento e i suoi 5 controlli matched, rumore idiosincratico eps~N(0,sigma=0.3)). Nessuna vera differenza (E[d_i]=0 per costruzione).",
+    "n_reps": 1000,
+    "n_boot": 1000,
+    "elapsed_sec": 77.2,
+    "OLD_pooled_flattened_controls": {
+      "empirical_rejection_rate": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      }
+    },
+    "NEW_matched_pair_per_event": {
+      "empirical_rejection_rate": {
+        "0.01": 0.003,
+        "0.05": 0.042,
+        "0.1": 0.091
+      }
+    },
+    "interpretation": "OLD appiattisce 150 controlli come se fossero i.i.d., ma gruppi di 5 condividono lo stesso r_i - la varianza vera del pool di baseline e' sottostimata (n effettivo ~30 cluster, non 150 draw indipendenti), il che puo' rendere il test anti-conservativo. NEW cancella r_i esattamente nella differenza per-evento (d_i = eps_event_i - mean(eps_control_i)), eliminando il fattore condiviso e restando calibrato per costruzione."
+  }
+}

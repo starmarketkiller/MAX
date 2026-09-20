@@ -29,7 +29,7 @@
     "diagnostic_outcomes": {"type": "array", "items": {"type": "string"}},
     "minimum_sample_gate": {"type": "object", "description": "n_nominal_minimum, cluster_count_minimum, effective_n_minimum - riferimento a minimum_evidence_gates.json (Phase 7.0)."},
     "effect_size_gate": {"type": "object", "description": "minimum_material_delta_p e relativo status (POLICY_THRESHOLD/altro) - riferimento a effect_size_first_policy.json."},
-    "uncertainty_method": {"type": "string", "enum": ["WILSON_CI95", "BETA_BINOMIAL", "BLOCK_BOOTSTRAP"], "description": "riferimento a statistical_methods_policy.json (Phase 7.0) - allow-list, non un metodo nuovo inventato qui."},
+    "uncertainty_method": {"type": "string", "enum": ["WILSON_CI95", "BETA_BINOMIAL", "BLOCK_BOOTSTRAP", "BLOCK_SIGN_FLIP_PERMUTATION"], "description": "riferimento a statistical_methods_policy.json (Phase 7.0) - allow-list, non un metodo nuovo inventato qui. BLOCK_SIGN_FLIP_PERMUTATION aggiunto in Phase 7.4A Final Statistical Integrity Patch (matched-pair, impone H0 esplicitamente, calibrazione verificata per simulazione)."},
     "multiple_testing_family": {
       "type": "object",
       "properties": {
