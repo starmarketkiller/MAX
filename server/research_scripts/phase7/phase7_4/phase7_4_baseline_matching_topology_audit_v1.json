@@ -1,0 +1,570 @@
+{
+  "major_structural_finding_independent_view_collapse": {
+    "n_independent_view_eligible": 1,
+    "n_episode_view": 210,
+    "median_episode_gap_bars": 7.0,
+    "outcome_overlap_embargo_bars": 39,
+    "finding": "La INDEPENDENT_VIEW collassa a <=1 osservazione sull'intero periodo development_discovery sotto i parametri frozen attuali (P90/252, embargo=39) - il tasso di innesco reale del detector produce episodi con gap mediano molto inferiore a 39 barre, quindi il clustering transitivo dell'embargo fonde l'INTERO periodo in una sola osservazione indipendente. Questo E' UN FATTO STRUTTURALE PURO (conteggio eventi/episodi/indici, mai un outcome) e costituirebbe un blocker INDIPENDENTE per Phase 7.4B (nessun n>1 possibile per SEQ-0015 sotto questi parametri), a prescindere dal problema di dipendenza seriale (phi=0.7) o di control-reuse gia' identificati.",
+    "topology_analysis_below_uses": "EPISODE_VIEW (non INDEPENDENT_VIEW) per rendere osservabile la topologia di riuso/geometria fra eventi diversi - dichiarato esplicitamente, analisi esplorativa del comportamento del matcher, non l'insieme che verrebbe usato per un'inferenza reale."
+  },
+  "provenance": {
+    "detector_version": "seq0015_momentum_burst_detector.py@v1",
+    "frozen_parameters_hash_matches_v4": true,
+    "discovery_row_bounds": [
+      396,
+      2788
+    ],
+    "n_discovery_bars": 2393,
+    "volatility_terciles_fitted_on_discovery": [
+      20.370370370370342,
+      64.1534391534391
+    ],
+    "trend_terciles_fitted_on_discovery": [
+      -0.05369716205158993,
+      0.08303668258950585
+    ]
+  },
+  "detection_funnel": {
+    "n_events_full_series_with_buffer": 605,
+    "n_events_in_discovery": 249,
+    "n_event_view": 249,
+    "n_episode_view": 210,
+    "n_independent_view_eligible": 1,
+    "n_events_matched": 210,
+    "n_events_rejected_insufficient_pool": 0
+  },
+  "control_reuse_topology": {
+    "n_control_assignments": 1050,
+    "n_unique_controls": 83,
+    "max_reuse": 37,
+    "mean_reuse": 12.650602409638553,
+    "median_reuse": 3.0,
+    "reuse_histogram": {
+      "1": 22,
+      "22": 2,
+      "2": 13,
+      "3": 8,
+      "37": 2,
+      "31": 10,
+      "35": 3,
+      "18": 8,
+      "17": 5,
+      "21": 3,
+      "19": 2,
+      "23": 5
+    },
+    "fraction_controls_reused_2plus": 0.7349397590361446,
+    "fraction_controls_reused_3plus": 0.5783132530120482,
+    "fraction_controls_reused_4plus": 0.4819277108433735,
+    "fraction_controls_reused_5plus": 0.4819277108433735,
+    "n_controls_hitting_cap_5": 40,
+    "max_reuse_exceeds_frozen_cap_5": true
+  },
+  "temporal_geometry_cross_event_control_gaps": {
+    "1": 0.0,
+    "5": 2.0,
+    "10": 4.0,
+    "25": 25.0,
+    "50": 50.0,
+    "75": 93.0,
+    "90": 160.0,
+    "95": 201.0,
+    "99": 292.0
+  },
+  "outcome_window_overlap_proxy": {
+    "horizon_bars": 40,
+    "n_cross_event_control_pairs": 548625,
+    "fraction_pairs_overlapping": 0.3992563226247437,
+    "n_event_pairs_total": 21945,
+    "fraction_event_pairs_sharing_overlapping_control": 0.5242652084757348
+  },
+  "reuse_vs_temporal_geometry_table": [
+    {
+      "reuse_count": 1,
+      "n_controls_at_this_level": 22,
+      "median_gap_between_using_events": null,
+      "p10_gap": null,
+      "p90_gap": null,
+      "fraction_gaps_within_horizon": null
+    },
+    {
+      "reuse_count": 2,
+      "n_controls_at_this_level": 13,
+      "median_gap_between_using_events": 6.0,
+      "p10_gap": 5.0,
+      "p90_gap": 18.0,
+      "fraction_gaps_within_horizon": 1.0
+    },
+    {
+      "reuse_count": 3,
+      "n_controls_at_this_level": 8,
+      "median_gap_between_using_events": 31.0,
+      "p10_gap": 12.0,
+      "p90_gap": 859.0,
+      "fraction_gaps_within_horizon": 0.6875
+    },
+    {
+      "reuse_count": 17,
+      "n_controls_at_this_level": 5,
+      "median_gap_between_using_events": 56.5,
+      "p10_gap": 7.0,
+      "p90_gap": 416.0,
+      "fraction_gaps_within_horizon": 0.4375
+    },
+    {
+      "reuse_count": 18,
+      "n_controls_at_this_level": 8,
+      "median_gap_between_using_events": 82.0,
+      "p10_gap": 6.0,
+      "p90_gap": 275.5,
+      "fraction_gaps_within_horizon": 0.3014705882352941
+    },
+    {
+      "reuse_count": 19,
+      "n_controls_at_this_level": 2,
+      "median_gap_between_using_events": 37.5,
+      "p10_gap": 6.0,
+      "p90_gap": 374.0,
+      "fraction_gaps_within_horizon": 0.5
+    },
+    {
+      "reuse_count": 21,
+      "n_controls_at_this_level": 3,
+      "median_gap_between_using_events": 44.0,
+      "p10_gap": 9.9,
+      "p90_gap": 144.80000000000052,
+      "fraction_gaps_within_horizon": 0.5
+    },
+    {
+      "reuse_count": 22,
+      "n_controls_at_this_level": 2,
+      "median_gap_between_using_events": 50.0,
+      "p10_gap": 10.0,
+      "p90_gap": 226.0,
+      "fraction_gaps_within_horizon": 0.47619047619047616
+    },
+    {
+      "reuse_count": 23,
+      "n_controls_at_this_level": 5,
+      "median_gap_between_using_events": 12.0,
+      "p10_gap": 5.0,
+      "p90_gap": 230.0,
+      "fraction_gaps_within_horizon": 0.7272727272727273
+    },
+    {
+      "reuse_count": 31,
+      "n_controls_at_this_level": 10,
+      "median_gap_between_using_events": 31.0,
+      "p10_gap": 6.0,
+      "p90_gap": 196.00000000000068,
+      "fraction_gaps_within_horizon": 0.6166666666666667
+    },
+    {
+      "reuse_count": 35,
+      "n_controls_at_this_level": 3,
+      "median_gap_between_using_events": 18.5,
+      "p10_gap": 6.0,
+      "p90_gap": 155.0,
+      "fraction_gaps_within_horizon": 0.7058823529411765
+    },
+    {
+      "reuse_count": 37,
+      "n_controls_at_this_level": 2,
+      "median_gap_between_using_events": 19.0,
+      "p10_gap": 6.0,
+      "p90_gap": 147.5999999999999,
+      "fraction_gaps_within_horizon": 0.7222222222222222
+    }
+  ],
+  "bipartite_graph_diagnostics": {
+    "n_event_nodes": 210,
+    "n_control_nodes": 83,
+    "event_degree_distribution": {
+      "5": 210
+    },
+    "control_degree_distribution": {
+      "1": 22,
+      "22": 2,
+      "2": 13,
+      "3": 8,
+      "37": 2,
+      "31": 10,
+      "35": 3,
+      "18": 8,
+      "17": 5,
+      "21": 3,
+      "19": 2,
+      "23": 5
+    },
+    "n_connected_components": 14,
+    "component_sizes": [
+      48,
+      36,
+      36,
+      30,
+      30,
+      28,
+      23,
+      22,
+      8,
+      7,
+      7,
+      6,
+      6,
+      6
+    ],
+    "largest_component_fraction": 0.16382252559726962
+  },
+  "raw_match_records_sample": [
+    {
+      "event_id": "bb9a40d8f997065f",
+      "event_index": 407,
+      "control_id": 593,
+      "control_index": 593,
+      "match_distance": null
+    },
+    {
+      "event_id": "bb9a40d8f997065f",
+      "event_index": 407,
+      "control_id": 594,
+      "control_index": 594,
+      "match_distance": null
+    },
+    {
+      "event_id": "bb9a40d8f997065f",
+      "event_index": 407,
+      "control_id": 595,
+      "control_index": 595,
+      "match_distance": null
+    },
+    {
+      "event_id": "bb9a40d8f997065f",
+      "event_index": 407,
+      "control_id": 596,
+      "control_index": 596,
+      "match_distance": null
+    },
+    {
+      "event_id": "bb9a40d8f997065f",
+      "event_index": 407,
+      "control_id": 597,
+      "control_index": 597,
+      "match_distance": null
+    },
+    {
+      "event_id": "b28dfa7129a32b9b",
+      "event_index": 418,
+      "control_id": 459,
+      "control_index": 459,
+      "match_distance": null
+    },
+    {
+      "event_id": "b28dfa7129a32b9b",
+      "event_index": 418,
+      "control_id": 460,
+      "control_index": 460,
+      "match_distance": null
+    },
+    {
+      "event_id": "b28dfa7129a32b9b",
+      "event_index": 418,
+      "control_id": 543,
+      "control_index": 543,
+      "match_distance": null
+    },
+    {
+      "event_id": "b28dfa7129a32b9b",
+      "event_index": 418,
+      "control_id": 544,
+      "control_index": 544,
+      "match_distance": null
+    },
+    {
+      "event_id": "b28dfa7129a32b9b",
+      "event_index": 418,
+      "control_id": 545,
+      "control_index": 545,
+      "match_distance": null
+    },
+    {
+      "event_id": "2a7637d1374eaefc",
+      "event_index": 437,
+      "control_id": 531,
+      "control_index": 531,
+      "match_distance": null
+    },
+    {
+      "event_id": "2a7637d1374eaefc",
+      "event_index": 437,
+      "control_id": 532,
+      "control_index": 532,
+      "match_distance": null
+    },
+    {
+      "event_id": "2a7637d1374eaefc",
+      "event_index": 437,
+      "control_id": 533,
+      "control_index": 533,
+      "match_distance": null
+    },
+    {
+      "event_id": "2a7637d1374eaefc",
+      "event_index": 437,
+      "control_id": 534,
+      "control_index": 534,
+      "match_distance": null
+    },
+    {
+      "event_id": "2a7637d1374eaefc",
+      "event_index": 437,
+      "control_id": 535,
+      "control_index": 535,
+      "match_distance": null
+    },
+    {
+      "event_id": "3bf9764eab85d3ee",
+      "event_index": 455,
+      "control_id": 531,
+      "control_index": 531,
+      "match_distance": null
+    },
+    {
+      "event_id": "3bf9764eab85d3ee",
+      "event_index": 455,
+      "control_id": 532,
+      "control_index": 532,
+      "match_distance": null
+    },
+    {
+      "event_id": "3bf9764eab85d3ee",
+      "event_index": 455,
+      "control_id": 533,
+      "control_index": 533,
+      "match_distance": null
+    },
+    {
+      "event_id": "3bf9764eab85d3ee",
+      "event_index": 455,
+      "control_id": 534,
+      "control_index": 534,
+      "match_distance": null
+    },
+    {
+      "event_id": "3bf9764eab85d3ee",
+      "event_index": 455,
+      "control_id": 535,
+      "control_index": 535,
+      "match_distance": null
+    },
+    {
+      "event_id": "7ff394a0f3bbe73e",
+      "event_index": 468,
+      "control_id": 540,
+      "control_index": 540,
+      "match_distance": null
+    },
+    {
+      "event_id": "7ff394a0f3bbe73e",
+      "event_index": 468,
+      "control_id": 541,
+      "control_index": 541,
+      "match_distance": null
+    },
+    {
+      "event_id": "7ff394a0f3bbe73e",
+      "event_index": 468,
+      "control_id": 764,
+      "control_index": 764,
+      "match_distance": null
+    },
+    {
+      "event_id": "7ff394a0f3bbe73e",
+      "event_index": 468,
+      "control_id": 765,
+      "control_index": 765,
+      "match_distance": null
+    },
+    {
+      "event_id": "7ff394a0f3bbe73e",
+      "event_index": 468,
+      "control_id": 769,
+      "control_index": 769,
+      "match_distance": null
+    },
+    {
+      "event_id": "4bee7dbec3ba18ac",
+      "event_index": 474,
+      "control_id": 524,
+      "control_index": 524,
+      "match_distance": null
+    },
+    {
+      "event_id": "4bee7dbec3ba18ac",
+      "event_index": 474,
+      "control_id": 526,
+      "control_index": 526,
+      "match_distance": null
+    },
+    {
+      "event_id": "4bee7dbec3ba18ac",
+      "event_index": 474,
+      "control_id": 527,
+      "control_index": 527,
+      "match_distance": null
+    },
+    {
+      "event_id": "4bee7dbec3ba18ac",
+      "event_index": 474,
+      "control_id": 528,
+      "control_index": 528,
+      "match_distance": null
+    },
+    {
+      "event_id": "4bee7dbec3ba18ac",
+      "event_index": 474,
+      "control_id": 529,
+      "control_index": 529,
+      "match_distance": null
+    },
+    {
+      "event_id": "de995bc86eb42213",
+      "event_index": 480,
+      "control_id": 435,
+      "control_index": 435,
+      "match_distance": null
+    },
+    {
+      "event_id": "de995bc86eb42213",
+      "event_index": 480,
+      "control_id": 436,
+      "control_index": 436,
+      "match_distance": null
+    },
+    {
+      "event_id": "de995bc86eb42213",
+      "event_index": 480,
+      "control_id": 540,
+      "control_index": 540,
+      "match_distance": null
+    },
+    {
+      "event_id": "de995bc86eb42213",
+      "event_index": 480,
+      "control_id": 541,
+      "control_index": 541,
+      "match_distance": null
+    },
+    {
+      "event_id": "de995bc86eb42213",
+      "event_index": 480,
+      "control_id": 764,
+      "control_index": 764,
+      "match_distance": null
+    },
+    {
+      "event_id": "8e52714e3d22a83a",
+      "event_index": 499,
+      "control_id": 435,
+      "control_index": 435,
+      "match_distance": null
+    },
+    {
+      "event_id": "8e52714e3d22a83a",
+      "event_index": 499,
+      "control_id": 436,
+      "control_index": 436,
+      "match_distance": null
+    },
+    {
+      "event_id": "8e52714e3d22a83a",
+      "event_index": 499,
+      "control_id": 540,
+      "control_index": 540,
+      "match_distance": null
+    },
+    {
+      "event_id": "8e52714e3d22a83a",
+      "event_index": 499,
+      "control_id": 541,
+      "control_index": 541,
+      "match_distance": null
+    },
+    {
+      "event_id": "8e52714e3d22a83a",
+      "event_index": 499,
+      "control_id": 764,
+      "control_index": 764,
+      "match_distance": null
+    },
+    {
+      "event_id": "3a84015e08ba0a56",
+      "event_index": 530,
+      "control_id": 461,
+      "control_index": 461,
+      "match_distance": null
+    },
+    {
+      "event_id": "3a84015e08ba0a56",
+      "event_index": 530,
+      "control_id": 462,
+      "control_index": 462,
+      "match_distance": null
+    },
+    {
+      "event_id": "3a84015e08ba0a56",
+      "event_index": 530,
+      "control_id": 463,
+      "control_index": 463,
+      "match_distance": null
+    },
+    {
+      "event_id": "3a84015e08ba0a56",
+      "event_index": 530,
+      "control_id": 464,
+      "control_index": 464,
+      "match_distance": null
+    },
+    {
+      "event_id": "3a84015e08ba0a56",
+      "event_index": 530,
+      "control_id": 465,
+      "control_index": 465,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 435,
+      "control_index": 435,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 436,
+      "control_index": 436,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 467,
+      "control_index": 467,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 470,
+      "control_index": 470,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 476,
+      "control_index": 476,
+      "match_distance": null
+    }
+  ]
+}
