@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-19T23:07:49.711945+00:00",
+  "generated_at": "2026-09-20T11:42:18.537702+00:00",
   "generation_script": "phase7/phase7_3/build_eligible_sequence_families.py",
-  "canonical_sha256": "4fc0f8644d1e53e0d0212c7a06156581b1b5de36faf6a29c54d826b8106709a3",
+  "canonical_sha256": "9d2340af15bb7606e73c32291590cd778b9ee383b6e16ffbbda50be83b517a16",
   "payload": {
     "criteria": [
       "READY_FOR_FORMALIZATION",
@@ -281,7 +281,7 @@
         ],
         "causal_safety": "OBSERVABLE_AT_DECISION_TIME",
         "leakage_status": "PASS",
-        "failure_memory_relation": "NOVEL"
+        "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE"
       },
       {
         "sequence_id": "SEQ-0016",

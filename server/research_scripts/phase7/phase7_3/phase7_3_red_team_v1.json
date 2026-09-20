@@ -47,7 +47,7 @@
     {
       "attack": "post_hoc_parameter_change_uncommitted_spec",
       "result": "BLOCKED",
-      "note": "PreRegistrationProvenanceError: Frozen spec 'server/research_scripts/phase7/phase7_3/schemas/sequence_family_frozen_spec_v1.schema.json' non e' pronto per una nuova discovery run: file non tracciato da git (mai committato). Regola obbligatoria: PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT. Committa il frozen spec in un commit dedicato PRIMA di eseguire questa run."
+      "note": "PreRegistrationProvenanceError: Frozen spec 'server/research_scripts/phase7/phase7_3/schemas/sequence_family_frozen_spec_v1.schema.json' non e' pronto per una nuova discovery run: file tracciato ma con modifiche non committate rispetto a HEAD. Regola obbligatoria: PRE-REGISTRATION COMMIT -> RUN -> RESULT COMMIT. Committa il frozen spec in un commit dedicato PRIMA di eseguire questa run."
     },
     {
       "attack": "failed_idea_renamed",

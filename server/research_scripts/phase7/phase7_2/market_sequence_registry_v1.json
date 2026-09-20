@@ -712,8 +712,8 @@
         "CLAIM-0042",
         "CLAIM-0043"
       ],
-      "failure_memory_relation": "NOVEL",
-      "failure_memory_relation_note": null,
+      "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
+      "failure_memory_relation_note": "CORREZIONE Phase 7.4A (2026-09-20, verifica esplicita richiesta prima della pre-registrazione di SEQ-0015 come prima sequence family): il valore originale NOVEL era errato. H008_EVENT_VOLATILITY_EXPANSION (Phase 5, hypothesis_registry_v1.json, REFUTED/NO_EDGE) testava lo stesso concetto di base (barra con true range anomalo rispetto ad ATR, soglia tr>1.0xATR_t - build_events.py riga 99) usando pero' ATR same-bar (non causale rispetto alla propria anomalia). Dettaglio completo della relazione/differenze in server/research_scripts/phase7/phase7_4/phase7_4_seq0015_frozen_spec_v1.json:failure_memory_links.novelty_note. Non e' un DIRECT_REPEAT (denominatore ATR, metodo soglia, dimensioni di baseline ed episode-first architecture sono tutti diversi e motivati indipendentemente) ma la parentela concettuale va dichiarata esplicitamente, non nascosta dietro un nome diverso.",
       "research_priority_score_ref": null,
       "falsification_definition": "Se dopo una barra a range ampio la direzione stabilita non continuasse piu' spesso del baseline matched, il claim sarebbe falso.",
       "observation_cutoff": "event_a bar close (t=0)",
