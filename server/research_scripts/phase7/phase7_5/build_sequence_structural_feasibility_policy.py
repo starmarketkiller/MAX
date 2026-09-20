@@ -33,6 +33,32 @@ PAYLOAD = {
         "enforcement": "server/research_scripts/phase7/engine/sequence_structural_feasibility_gate.py:"
                         "missing_spec_fields()",
     },
+    "direction_derivation_contract": {
+        "description": "CORREZIONE (Directional Matching Fidelity Final Patch, 2026-09-20): "
+                        "event_direction_policy NON e' piu' una stringa narrativa libera (i vecchi valori "
+                        "\"BOTH\"/\"CONTEXT_DEPENDENT\" ereditati da market_sequence_registry_v1.json non sono "
+                        "piu' ammessi per QUESTO gate) - deve essere uno dei 4 valori canonici sotto. La "
+                        "versione precedente accettava direction_by_row come parametro OPZIONALE di "
+                        "evaluate_family_structural_feasibility() con fallback silenzioso a {r: 'BOTH' ...} - "
+                        "una family con event_direction_policy=BUY poteva quindi essere testata come "
+                        "non-direzionale senza alcun errore. Il parametro e' stato RIMOSSO: la direzione per "
+                        "riga e' ORA sempre e solo derivata meccanicamente da spec['event_direction_policy'] "
+                        "(+ spec['direction_by_row'] se PER_EVENT_DIRECTION).",
+        "canonical_values": {
+            "FIXED_BUY": "ogni riga grezza riceve direzione 'BUY'.",
+            "FIXED_SELL": "ogni riga grezza riceve direzione 'SELL'.",
+            "NON_DIRECTIONAL": "nessun asse di direzione per questa sequence (es. classificatore di stato "
+                               "choppy/laterale) - ogni riga riceve 'BOTH', ma dichiarato esplicitamente, mai "
+                               "un default silenzioso. NON equivalente al vecchio valore narrativo 'BOTH' del "
+                               "registry Phase 7.2 (che significava 'sia BUY sia SELL testati come candidati "
+                               "separati', un concetto diverso - quasi sempre PER_EVENT_DIRECTION per questo gate).",
+            "PER_EVENT_DIRECTION": "la direzione varia per evento (es. SWEEP: HIGH vs LOW; MOMENTUM_BURST: "
+                                   "close vs open) - richiede spec['direction_by_row'] COMPLETO per ogni riga "
+                                   "grezza, nessun fallback per righe mancanti (fail-closed).",
+        },
+        "enforcement": "sequence_structural_feasibility_gate.py:resolve_direction_by_row(), "
+                        "missing_spec_fields() (valida l'enum + presenza di direction_by_row quando richiesto)",
+    },
     "required_matching_spec_inputs": {
         "description": "INTEGRAZIONE (Structural Gate Integration & Geometry Semantics Patch, 2026-09-20): "
                         "campi che un family spec DEVE dichiarare in spec['matching_spec'] prima che il gate "
@@ -51,11 +77,20 @@ PAYLOAD = {
                         "missing_matching_spec_fields(), evaluate_matching_feasibility()",
     },
     "formalization_levels": {
+        "description": "CORREZIONE (Directional Matching Fidelity Final Patch): il bug precedente classificava "
+                        "DECLARED_AWAITING_DATA (matching_spec completo ma nessun dato reale) come "
+                        "MATCHING_PREFLIGHT_READY - come se il preflight fosse gia' stato eseguito. Introdotto "
+                        "un terzo livello esplicito.",
         "NONE": "campi geometrici (livello 1) mancanti - nessuna geometria calcolata.",
-        "DETECTOR_GEOMETRY_READY": "geometria calcolabile, ma matching_spec assente/incompleto o "
-                                    "matching_runtime_data non ancora disponibile.",
-        "MATCHING_PREFLIGHT_READY": "geometria E matching_spec completi, matching_runtime_data disponibile - "
-                                     "il preflight e' stato eseguito per davvero (feasibile o meno).",
+        "DETECTOR_GEOMETRY_READY": "geometria calcolabile, ma matching_spec assente/incompleto (matching."
+                                    "status=NOT_DECLARED).",
+        "MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA": "matching_spec completo, ma matching_runtime_data "
+                                                      "(feature di stato REALI) non ancora disponibile - il "
+                                                      "preflight NON e' ancora stato eseguito (matching."
+                                                      "status=DECLARED_AWAITING_DATA).",
+        "MATCHING_PREFLIGHT_READY": "il preflight e' stato REALMENTE eseguito (matching.status="
+                                     "EXECUTED_FEASIBLE o EXECUTED_INFEASIBLE) - MAI solo perche' matching_spec "
+                                     "e' dichiarato.",
     },
     "verdict_states": {
         "FEASIBLE": "geometry_verdict=FEASIBLE E matching eseguito con esito EXECUTED_FEASIBLE (o matching non "
@@ -184,6 +219,37 @@ PAYLOAD = {
                    "reuse_report (max_reuse_observed, mean_reuse, n_controls_at_cap)",
                    "max_reuse_within_declared_cap (<= max_control_reuse_per_run dichiarato dal family spec)",
                    "tie_break_deterministic (stesso input rigirato -> stesse scelte di controllo)"],
+        "direction_fidelity_fix": {
+            "description": "CORREZIONE (Directional Matching Fidelity Final Patch, 2026-09-20): la versione "
+                           "precedente accettava un control_direction_by_id GLOBALE, unico per l'intero run - "
+                           "ma la pipeline reale (sequence_baseline_adapter_v1.py:SequenceBaselineAdapter."
+                           "match_sequence_event) costruisce una baseline controfattuale condizionata alla "
+                           "direzione DI OGNI SINGOLO EVENTO ({cid: event_direction for cid in pool}, "
+                           "ricostruita ad ogni chiamata) - per una family con eventi sia BUY sia SELL, lo "
+                           "STESSO control bar deve poter essere valutato come ipotetico BUY per un evento e "
+                           "ipotetico SELL per un altro, impossibile con una mappa statica.",
+            "fix": "run_matching_preflight() non accetta piu' control_direction_by_id - lo costruisce "
+                   "internamente per ogni evento (_match_one_event()), replicando esattamente la regola "
+                   "dell'adapter reale.",
+            "verification": "test_matching_preflight_replicates_sequence_baseline_adapter_direction_semantics "
+                            "- parita' diretta (stessi status/control-picks) contro un'istanza REALE di "
+                            "SequenceBaselineAdapter su uno scenario misto BUY/SELL, piu' una dimostrazione "
+                            "forzata (pool==k) che lo stesso control bar riceve control_direction diverse per "
+                            "eventi diversi.",
+        },
+        "matched_k_shortfall_semantics": {
+            "description": "AUDIT ESPLICITO (sez.8 della review, congelato non cambiato automaticamente): "
+                           "n_matched (quality_report, riusato senza modifiche) conta MATCHED + "
+                           "MATCHED_K_SHORTFALL insieme - stessa definizione gia' in uso in TUTTO il resto di "
+                           "Phase 7. DECISIONE: k e' un obiettivo di ricchezza/riduzione-varianza del "
+                           "baseline, non un requisito di correttezza stretto - un evento matchato con meno "
+                           "di k controlli (ma comunque >= minimum_control_count disponibili nel pool) ha "
+                           "comunque un baseline statisticamente valido, solo a varianza piu' alta. "
+                           "independent_units_with_valid_match INCLUDE quindi le unita' K_SHORTFALL.",
+            "transparency": "n_matched_full_k e n_matched_k_shortfall riportati SEPARATAMENTE nel risultato "
+                            "del preflight per audit - mai nascosti nell'aggregato n_matched.",
+            "not_changed_automatically": True,
+        },
     },
     "provenance_requirements": {
         "description": "Ogni esecuzione del gate deve registrare, oltre al verdetto:",
@@ -191,7 +257,9 @@ PAYLOAD = {
                    "spec_hash (sha256 canonico dello spec, esclusi event_row_indices grezzi e "
                    "matching_runtime_data)",
                    "discovery_partition (partition_id, n_bars)", "engine_version", "policy_version",
-                   "outcome_blind=true", "deterministic=true"],
+                   "outcome_blind=true", "deterministic=true",
+                   "direction_derivation (event_direction_policy, direction_map_hash - sempre presente, "
+                   "Directional Matching Fidelity Final Patch)"],
         "matching_fields_when_executed": {
             "description": "INTEGRAZIONE - quando il matching preflight viene REALMENTE eseguito "
                             "(matching.status in EXECUTED_FEASIBLE/EXECUTED_INFEASIBLE), provenance['matching'] "
@@ -199,7 +267,12 @@ PAYLOAD = {
             "fields": ["baseline_engine_version (BaselineEngineV4.CONTRACT_VERSION)",
                        "matching_spec_hash (sha256 canonico di spec['matching_spec'])",
                        "max_control_reuse_per_run (dichiarato dal family spec)",
-                       "matching_result_hash (sha256 canonico del risultato completo del preflight)"],
+                       "matching_result_hash (sha256 canonico del risultato completo del preflight)",
+                       "event_direction_policy (Directional Matching Fidelity Final Patch)",
+                       "direction_source (== event_direction_policy - come la direzione e' stata derivata)",
+                       "direction_map_hash (sha256 canonico della mappa row->direction risolta)",
+                       "counterfactual_direction_semantics=true (conferma esplicita che il matching ha usato "
+                       "la semantica direction-conditioned counterfactual per-evento, mai una mappa globale)"],
         },
         "enforcement": "sequence_structural_feasibility_gate.py:evaluate_family_structural_feasibility() - "
                         "sempre incluso nell'output, mai un campo opzionale omesso silenziosamente.",

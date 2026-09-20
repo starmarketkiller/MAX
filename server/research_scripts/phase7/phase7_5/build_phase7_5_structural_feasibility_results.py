@@ -67,7 +67,11 @@ FAMILY_KNOWN_STATE = {
             "'movimento direzionale sostenuto' non ha ancora una soglia numerica congelata su "
             "directional_efficiency (quale valore/percentile conta come 'sostenuto'?), ne' una finestra "
             "di osservazione in barre H4 dichiarata (oggi descritta solo come 'mesi'). episode_gap_rule, "
-            "natural_horizon e outcome_overlap_embargo non hanno alcuna proposta, nemmeno preliminare."
+            "natural_horizon e outcome_overlap_embargo non hanno alcuna proposta, nemmeno preliminare. "
+            "Inoltre (Directional Matching Fidelity Final Patch): event_direction_policy deve diventare uno dei "
+            "4 valori canonici del gate (FIXED_BUY/FIXED_SELL/NON_DIRECTIONAL/PER_EVENT_DIRECTION) - il "
+            "meccanismo (continuazione di un trend gia' in corso) e' quasi certamente PER_EVENT_DIRECTION "
+            "(la direzione segue il segno del trend), da dichiarare esplicitamente in fase di formalizzazione."
         ),
     },
     "SEQ-0009": {
@@ -95,7 +99,10 @@ FAMILY_KNOWN_STATE = {
             "standalone: mancano episode_gap_rule/natural_horizon/outcome_overlap_embargo proposti per SEQ-0009 "
             "come tale (i valori usati per SEQ-0015 non sono automaticamente validi qui - meccanismo diverso, "
             "livello di riferimento diverso), e le dimensioni di stato pre-evento per il baseline matching "
-            "(quali terzili/feature categoriche?) non sono ancora dichiarate."
+            "(quali terzili/feature categoriche?) non sono ancora dichiarate. Inoltre (Directional Matching "
+            "Fidelity Final Patch): event_direction_policy deve diventare uno dei 4 valori canonici del gate - "
+            "SWEEP e' quasi certamente PER_EVENT_DIRECTION (direzione derivata da swept_side HIGH/LOW in "
+            "build_events.py, non un'unica direzione fissa per tutta la family)."
         ),
     },
     "SEQ-0014": {
@@ -118,7 +125,9 @@ FAMILY_KNOWN_STATE = {
             "definire 'choppy' (quale percentile? quale finestra?). Trattandosi di uno STATO (non un evento "
             "puntuale), 'event_a_index' stesso deve ancora essere definito operativamente (prima barra in cui lo "
             "stato viene rilevato? richiede N barre consecutive?) prima che episode_gap_rule/natural_horizon/"
-            "embargo abbiano senso."
+            "embargo abbiano senso. event_direction_policy=NON_DIRECTIONAL e' gia' il valore canonico corretto "
+            "del gate (Directional Matching Fidelity Final Patch) per questo meccanismo - nessun cambiamento "
+            "necessario su questo punto specifico."
         ),
     },
     "SEQ-0016": {
@@ -142,7 +151,9 @@ FAMILY_KNOWN_STATE = {
             "trend_state derivato non esiste come feature nominata in feature_registry_v2.json (da costruire, "
             "come gia' fatto ad-hoc per SEQ-0015 con trend_state_pre_burst, ma non riusabile automaticamente "
             "senza ridichiarare i propri terzili su questa family). direction e' CONTEXT_DEPENDENT (non ancora "
-            "un policy operativo BUY/SELL/NO_EVENT come richiesto dal gate)."
+            "un policy operativo BUY/SELL/NO_EVENT come richiesto dal gate) - 'CONTEXT_DEPENDENT' non e' uno "
+            "dei 4 valori canonici del gate (Directional Matching Fidelity Final Patch: FIXED_BUY/FIXED_SELL/"
+            "NON_DIRECTIONAL/PER_EVENT_DIRECTION) e deve essere risolto in uno di questi prima della formalizzazione."
         ),
     },
     "SEQ-0020": {
@@ -165,7 +176,10 @@ FAMILY_KNOWN_STATE = {
             "minima per contare come evento (altrimenti il detector spara quasi su ogni barra - stesso rischio "
             "gia' descritto per FAIL-004, da verificare ESPLICITAMENTE con questo stesso gate una volta che le "
             "finestre siano proposte, non assunto ora). La nota di possibile ridondanza con ema_slope_atr_norm "
-            "andrebbe risolta PRIMA di scrivere un nuovo detector (potrebbe non essere una sequence distinta)."
+            "andrebbe risolta PRIMA di scrivere un nuovo detector (potrebbe non essere una sequence distinta). "
+            "Inoltre (Directional Matching Fidelity Final Patch): event_direction_policy deve diventare uno dei "
+            "4 valori canonici del gate - l'incrocio EMA e' quasi certamente PER_EVENT_DIRECTION (direzione dal "
+            "segno della divergenza, non fissa)."
         ),
     },
 }

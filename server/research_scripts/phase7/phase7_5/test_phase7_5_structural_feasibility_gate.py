@@ -25,21 +25,25 @@ import sys
 PHASE75_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(PHASE75_DIR, "..", "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "engine"))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "phase7_3"))
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
 
 from sequence_structural_feasibility_gate import (  # noqa: E402
     evaluate_family_structural_feasibility, missing_spec_fields, missing_matching_spec_fields,
     compute_detection_funnel, compute_cluster_geometry, compute_feasibility_ratios,
-    classify_firing_geometry_risk_flag, run_matching_preflight,
+    classify_firing_geometry_risk_flag, run_matching_preflight, resolve_direction_by_row,
     REQUIRED_DETECTOR_GEOMETRY_FIELDS, REQUIRED_MATCHING_SPEC_FIELDS, DEFAULT_POLICY,
     VERDICT_FEASIBLE, VERDICT_BORDERLINE, VERDICT_NOT_TESTABLE, VERDICT_NEEDS_DETECTOR_FORMALIZATION,
     VERDICT_NEEDS_MATCHING_FORMALIZATION, VERDICT_MATCHING_STRUCTURALLY_INFEASIBLE,
     FORMALIZATION_LEVEL_NONE, FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY,
-    FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY,
+    FORMALIZATION_LEVEL_MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA, FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY,
     MATCHING_STATUS_NOT_DECLARED, MATCHING_STATUS_DECLARED_AWAITING_DATA,
     MATCHING_STATUS_EXECUTED_FEASIBLE, MATCHING_STATUS_EXECUTED_INFEASIBLE,
+    DIRECTION_POLICY_FIXED_BUY, DIRECTION_POLICY_FIXED_SELL, DIRECTION_POLICY_NON_DIRECTIONAL,
+    DIRECTION_POLICY_PER_EVENT, VALID_EVENT_DIRECTION_POLICIES, DirectionDerivationError,
 )
 from canonical_utils import canonical_sha256  # noqa: E402
+from sequence_baseline_adapter_v1 import SequenceBaselineAdapter  # noqa: E402
 
 RESULTS = []
 
@@ -58,7 +62,7 @@ def _minimal_spec(**overrides):
         "detector_source_ref": "TEST_ONLY",
         "detector_parameters": {"threshold": 1.0},
         "observation_timing": {"observation_cutoff": "close(t)"},
-        "event_direction_policy": "BOTH",
+        "event_direction_policy": DIRECTION_POLICY_FIXED_BUY,
         "episode_gap_rule": 3,
         "overlap_policy": "COLLAPSE_TO_FIRST",
         "proposed_natural_horizon": 40,
@@ -83,10 +87,13 @@ def _matching_spec(**overrides):
 
 
 def _matching_runtime(event_rows, control_pool):
+    # NOTA (Directional Matching Fidelity Final Patch): control_direction_by_id
+    # NON e' piu' un campo di matching_runtime_data - run_matching_preflight lo
+    # costruisce internamente PER OGNI evento (direction-conditioned counterfactual,
+    # replica esatta di SequenceBaselineAdapter), mai una mappa globale unica.
     return {
         "control_pool": control_pool,
         "control_row_by_id": {c: c for c in control_pool},
-        "control_direction_by_id": {c: "BOTH" for c in control_pool},
         "control_features_by_id": {c: {"state": "A"} for c in control_pool},
         "discovery_features_by_row": {c: {"state": "A"} for c in control_pool},
         "event_features_by_row": {r: {"state": "A"} for r in event_rows},
@@ -329,7 +336,6 @@ def test_matching_preflight_determinism_and_reuse_cap():
                   "locked_validation": (280, 360), "final_holdout": (360, 440)}
     pool = [100, 102, 104, 106, 108, 110]
     row_by_id = {c: c for c in pool}
-    dir_by_id = {c: "BUY" for c in pool}
     feat_by_id = {c: {"volatility_state": "HIGH"} for c in pool}
     discovery_feats = {i: {"volatility_state": "HIGH" if i % 2 == 0 else "LOW"} for i in range(0, 200, 2)}
     events = [{"event_id": f"EVT-{i}", "event_row": 10 + i, "direction": "BUY",
@@ -337,13 +343,225 @@ def test_matching_preflight_determinism_and_reuse_cap():
 
     preflight = run_matching_preflight(
         match_dimensions=["volatility_state"], k=2, split_boundaries=boundaries, events=events,
-        control_pool=pool, control_row_by_id=row_by_id, control_direction_by_id=dir_by_id,
+        control_pool=pool, control_row_by_id=row_by_id,
         control_features_by_id=feat_by_id, discovery_features_by_row=discovery_feats,
         minimum_control_count=2, max_control_reuse_per_run=2,
     )
     check("preflight_tie_break_deterministic", preflight["tie_break_deterministic"] is True)
     check("preflight_reuse_within_declared_cap", preflight["max_reuse_within_declared_cap"] is True)
     check("preflight_reports_n_matched", preflight["n_matched"] + preflight["n_rejected_insufficient_pool"] == 4)
+
+
+def test_shuffled_control_pool_order_still_deterministic():
+    """sec.10 - stesso pool, ordine shuffled -> stessi risultati (nessuna
+    dipendenza implicita dall'ordine del control_pool passato)."""
+    boundaries = {"discovery": (0, 1_000_000)}
+    pool = list(range(500_000, 500_010))
+    row_by_id = {c: c for c in pool}
+    feat_by_id = {c: {"state": "A"} for c in pool}
+    discovery_feats = {c: {"state": "A"} for c in pool}
+    events = [{"event_id": "E1", "event_row": 0, "direction": "BUY", "features": {"state": "A"}}]
+
+    ordered = run_matching_preflight(match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events,
+                                      control_pool=list(pool), control_row_by_id=row_by_id,
+                                      control_features_by_id=feat_by_id, discovery_features_by_row=discovery_feats,
+                                      minimum_control_count=2, max_control_reuse_per_run=5)
+    shuffled_pool = list(pool)
+    random.Random(11).shuffle(shuffled_pool)
+    shuffled = run_matching_preflight(match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events,
+                                       control_pool=shuffled_pool, control_row_by_id=row_by_id,
+                                       control_features_by_id=feat_by_id, discovery_features_by_row=discovery_feats,
+                                       minimum_control_count=2, max_control_reuse_per_run=5)
+    ordered_picks = sorted(m["control_id"] for m in ordered["event_match_results"][0]["matches"])
+    shuffled_picks = sorted(m["control_id"] for m in shuffled["event_match_results"][0]["matches"])
+    check("shuffled_control_pool_same_picks", ordered_picks == shuffled_picks, f"{ordered_picks} vs {shuffled_picks}")
+
+
+def test_direction_fixed_buy_never_becomes_both():
+    """sec.5 - event_direction_policy=FIXED_BUY: TUTTE le righe indipendenti
+    devono ricevere direzione 'BUY', mai il vecchio fallback silenzioso 'BOTH'."""
+    rows = list(range(0, 60 * 60, 60))
+    resolved = resolve_direction_by_row(DIRECTION_POLICY_FIXED_BUY, None, rows)
+    check("fixed_buy_all_rows_are_buy", all(v == "BUY" for v in resolved.values()))
+    check("fixed_buy_no_row_is_both", all(v != "BOTH" for v in resolved.values()))
+
+    spec = _minimal_spec(event_direction_policy=DIRECTION_POLICY_FIXED_BUY, event_row_indices=rows)
+    result = evaluate_family_structural_feasibility(spec)
+    check("fixed_buy_funnel_direction_by_row_all_buy",
+          all(v == "BUY" for v in result["detection_funnel"]["INDEPENDENT_VIEW"]["direction_by_row"].values()))
+
+
+def test_direction_fixed_sell():
+    rows = list(range(0, 60 * 60, 60))
+    resolved = resolve_direction_by_row(DIRECTION_POLICY_FIXED_SELL, None, rows)
+    check("fixed_sell_all_rows_are_sell", all(v == "SELL" for v in resolved.values()))
+
+
+def test_direction_non_directional_explicit():
+    """event_direction_policy=NON_DIRECTIONAL e' un valore ESPLICITAMENTE
+    dichiarato (non un default silenzioso) - risultato identico (BOTH per
+    riga) ma per una ragione dichiarata, verificabile via missing_spec_fields."""
+    rows = list(range(0, 60 * 60, 60))
+    resolved = resolve_direction_by_row(DIRECTION_POLICY_NON_DIRECTIONAL, None, rows)
+    check("non_directional_all_rows_are_both", all(v == "BOTH" for v in resolved.values()))
+    spec = _minimal_spec(event_direction_policy=DIRECTION_POLICY_NON_DIRECTIONAL, event_row_indices=rows)
+    check("non_directional_is_valid_canonical_policy", missing_spec_fields(spec) == [])
+
+
+def test_per_event_direction_missing_row_fails_closed():
+    """sec.6 - 50 righe indipendenti, direction_by_row ne contiene 49 ->
+    fail-closed (NEEDS_DETECTOR_FORMALIZATION), nessun default per la 50-esima."""
+    rows = list(range(0, 50 * 60, 60))
+    incomplete_map = {r: ("BUY" if i % 2 == 0 else "SELL") for i, r in enumerate(rows[:-1])}  # manca l'ultima
+    check("per_event_missing_row_raises",
+          _raises(DirectionDerivationError, resolve_direction_by_row, DIRECTION_POLICY_PER_EVENT,
+                  incomplete_map, rows))
+    spec = _minimal_spec(event_direction_policy=DIRECTION_POLICY_PER_EVENT, direction_by_row=incomplete_map,
+                          event_row_indices=rows,
+                          discovery_partition={"partition_id": "TEST", "n_bars": max(rows) + 100})
+    result = evaluate_family_structural_feasibility(spec)
+    check("per_event_missing_row_verdict_needs_formalization",
+          result["verdict"] == VERDICT_NEEDS_DETECTOR_FORMALIZATION, f"verdict={result['verdict']}")
+
+
+def _raises(exc_type, fn, *args, **kwargs):
+    try:
+        fn(*args, **kwargs)
+        return False
+    except exc_type:
+        return True
+
+
+def test_invalid_event_direction_policy_rejected():
+    """Vecchi valori narrativi ("BOTH"/"CONTEXT_DEPENDENT" dal registry
+    Phase 7.2) non sono piu' ammessi come event_direction_policy per
+    QUESTO gate - devono essere sostituiti da uno dei 4 valori canonici."""
+    spec = _minimal_spec(event_direction_policy="BOTH")
+    missing = missing_spec_fields(spec)
+    check("legacy_both_value_rejected", any("event_direction_policy" in m for m in missing), f"missing={missing}")
+    spec2 = _minimal_spec(event_direction_policy="CONTEXT_DEPENDENT")
+    missing2 = missing_spec_fields(spec2)
+    check("legacy_context_dependent_value_rejected", any("event_direction_policy" in m for m in missing2))
+
+    def _valid_for_policy(policy):
+        rows = list(range(0, 60 * 60, 60))
+        extra = {"direction_by_row": {r: "BUY" for r in rows}} if policy == DIRECTION_POLICY_PER_EVENT else {}
+        return missing_spec_fields(_minimal_spec(event_direction_policy=policy, event_row_indices=rows, **extra)) == []
+
+    check("all_four_canonical_values_are_valid", all(_valid_for_policy(p) for p in VALID_EVENT_DIRECTION_POLICIES))
+
+
+def test_matching_preflight_replicates_sequence_baseline_adapter_direction_semantics():
+    """CONTROESEMPIO OBBLIGATORIO (sec.3-4 della review): E1=BUY, E2=SELL
+    sullo STESSO pool di controlli - verifica PARITA' DIRETTA contro la
+    pipeline reale (SequenceBaselineAdapter), non solo auto-consistenza
+    interna del preflight.
+
+    minimum_control_count=20 (il default di classe di BaselineEngineV4,
+    l'UNICO che SequenceBaselineAdapter puo' usare - non lo espone come
+    parametro) e pool>=20: la parita' qui verificata riguarda SOLO la
+    semantica direzionale (control_direction_by_id per-evento), non il
+    diverso minimum_control_count che matching_spec puo' dichiarare
+    altrove (motivo per cui il preflight usa BaselineEngineV4
+    direttamente invece di instradare sempre attraverso l'adapter)."""
+    boundaries = {"discovery": (0, 1_000_000)}
+    pool = list(range(500_000, 500_025))
+    row_by_id = {c: c for c in pool}
+    feat_by_id = {c: {"state": "A"} for c in pool}
+    discovery_feats = {c: {"state": "A"} for c in pool}
+
+    events_raw = [
+        {"sequence_event_id": "E1", "event_a_index": 0, "direction": "BUY", "state_snapshot": {"state": "A"}},
+        {"sequence_event_id": "E2", "event_a_index": 60, "direction": "SELL", "state_snapshot": {"state": "A"}},
+    ]
+    adapter = SequenceBaselineAdapter(match_dimensions=["state"], k=3, split_boundaries=boundaries,
+                                       max_control_reuse_per_run=10)
+    adapter.fit_on_discovery_only(discovery_feats)
+    adapter_results = [adapter.match_sequence_event(ev, pool, row_by_id, feat_by_id) for ev in events_raw]
+
+    events_for_preflight = [
+        {"event_id": ev["sequence_event_id"], "event_row": ev["event_a_index"], "direction": ev["direction"],
+         "features": ev["state_snapshot"]} for ev in events_raw
+    ]
+    preflight = run_matching_preflight(
+        match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events_for_preflight,
+        control_pool=pool, control_row_by_id=row_by_id, control_features_by_id=feat_by_id,
+        discovery_features_by_row=discovery_feats, minimum_control_count=20, max_control_reuse_per_run=10,
+    )
+    preflight_results = preflight["event_match_results"]
+    check("parity_same_number_of_events", len(preflight_results) == len(adapter_results) == 2)
+    for i, (ar, pr) in enumerate(zip(adapter_results, preflight_results)):
+        check(f"parity_event_{i}_same_status", ar["status"] == pr["status"])
+        check(f"parity_event_{i}_same_control_picks",
+              sorted(m["control_id"] for m in ar["matches"]) == sorted(m["control_id"] for m in pr["matches"]))
+
+    e1_control_directions = {m["control_id"]: m["control_direction"] for m in preflight_results[0]["matches"]}
+    e2_control_directions = {m["control_id"]: m["control_direction"] for m in preflight_results[1]["matches"]}
+    check("parity_e1_controls_evaluated_as_buy", all(d == "BUY" for d in e1_control_directions.values()))
+    check("parity_e2_controls_evaluated_as_sell", all(d == "SELL" for d in e2_control_directions.values()))
+
+    # Prova decisiva, isolata su un pool minuscolo (== k) che FORZA
+    # entrambi gli eventi a condividere esattamente gli stessi control
+    # bar (nessuna scelta di tie-break possibile): lo STESSO control bar
+    # deve risultare "BUY" per E1 e "SELL" per E2 - impossibile con una
+    # control_direction_by_id globale unica (il bug originale).
+    tiny_pool = pool[:3]
+    tiny_preflight = run_matching_preflight(
+        match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events_for_preflight,
+        control_pool=tiny_pool, control_row_by_id=row_by_id, control_features_by_id=feat_by_id,
+        discovery_features_by_row=discovery_feats, minimum_control_count=3, max_control_reuse_per_run=10,
+    )
+    tiny_e1, tiny_e2 = tiny_preflight["event_match_results"]
+    tiny_e1_dirs = {m["control_id"]: m["control_direction"] for m in tiny_e1["matches"]}
+    tiny_e2_dirs = {m["control_id"]: m["control_direction"] for m in tiny_e2["matches"]}
+    shared_controls = set(tiny_e1_dirs) & set(tiny_e2_dirs)
+    check("parity_shared_control_bar_gets_different_hypothetical_direction",
+          len(shared_controls) == 3 and all(tiny_e1_dirs[c] == "BUY" for c in shared_controls)
+          and all(tiny_e2_dirs[c] == "SELL" for c in shared_controls),
+          f"controlli condivisi (forzati) fra E1/E2: {shared_controls} - E1={tiny_e1_dirs}, E2={tiny_e2_dirs} - "
+          f"dimostra che lo STESSO control bar e' valutato ipotetico BUY per E1 e ipotetico SELL per E2")
+
+
+def test_declared_awaiting_data_is_not_matching_preflight_ready():
+    """sec.7 - bug corretto: matching_spec completo ma matching_runtime_data
+    assente NON deve mai essere MATCHING_PREFLIGHT_READY."""
+    spec = _minimal_spec(matching_spec=_matching_spec())
+    result = evaluate_family_structural_feasibility(spec)
+    check("declared_awaiting_data_status", result["matching"]["status"] == MATCHING_STATUS_DECLARED_AWAITING_DATA)
+    check("declared_awaiting_data_formalization_level_is_intermediate",
+          result["formalization_level"] == FORMALIZATION_LEVEL_MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA)
+    check("declared_awaiting_data_is_not_preflight_ready",
+          result["formalization_level"] != FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY)
+
+
+def test_executed_feasible_is_matching_preflight_ready():
+    rows = list(range(0, 60 * 60, 60))
+    ample_pool = list(range(500_000, 500_040))
+    spec = _minimal_spec(event_row_indices=rows,
+                          discovery_partition={"partition_id": "TEST", "n_bars": max(rows) + 100},
+                          matching_spec=_matching_spec(), matching_runtime_data=_matching_runtime(rows, ample_pool))
+    result = evaluate_family_structural_feasibility(spec)
+    check("executed_feasible_formalization_level_is_preflight_ready",
+          result["formalization_level"] == FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY)
+    check("executed_feasible_status", result["matching"]["status"] == MATCHING_STATUS_EXECUTED_FEASIBLE)
+
+
+def test_provenance_direction_fields():
+    rows = list(range(0, 60 * 60, 60))
+    ample_pool = list(range(500_000, 500_040))
+    spec = _minimal_spec(event_direction_policy=DIRECTION_POLICY_FIXED_SELL, event_row_indices=rows,
+                          discovery_partition={"partition_id": "TEST", "n_bars": max(rows) + 100},
+                          matching_spec=_matching_spec(), matching_runtime_data=_matching_runtime(rows, ample_pool))
+    result = evaluate_family_structural_feasibility(spec)
+    check("provenance_has_direction_derivation", "direction_derivation" in result["provenance"])
+    check("provenance_direction_policy_matches_spec",
+          result["provenance"]["direction_derivation"]["event_direction_policy"] == DIRECTION_POLICY_FIXED_SELL)
+    check("provenance_has_direction_map_hash", "direction_map_hash" in result["provenance"]["direction_derivation"])
+    matching_prov = result["provenance"]["matching"]
+    for field in ("event_direction_policy", "direction_source", "direction_map_hash",
+                  "counterfactual_direction_semantics"):
+        check(f"matching_provenance_has_{field}", field in matching_prov)
+    check("matching_provenance_counterfactual_flag_true", matching_prov["counterfactual_direction_semantics"] is True)
 
 
 def test_provenance_and_determinism():
@@ -424,6 +642,16 @@ def main():
     test_borderline_thin_margin()
     test_cluster_geometry_fields_present()
     test_matching_preflight_determinism_and_reuse_cap()
+    test_shuffled_control_pool_order_still_deterministic()
+    test_direction_fixed_buy_never_becomes_both()
+    test_direction_fixed_sell()
+    test_direction_non_directional_explicit()
+    test_per_event_direction_missing_row_fails_closed()
+    test_invalid_event_direction_policy_rejected()
+    test_matching_preflight_replicates_sequence_baseline_adapter_direction_semantics()
+    test_declared_awaiting_data_is_not_matching_preflight_ready()
+    test_executed_feasible_is_matching_preflight_ready()
+    test_provenance_direction_fields()
     test_provenance_and_determinism()
     test_ranking_is_structural_only_no_edge_fields()
     test_policy_artifact_matches_code_defaults()

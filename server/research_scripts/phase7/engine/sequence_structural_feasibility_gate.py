@@ -63,6 +63,38 @@ mai l'autorita' che classifica una family PATHOLOGICAL - quella
 classificazione deriva ESCLUSIVAMENTE da independent_units (calcolato
 sui cluster reali) confrontato con minimum_required_n.
 
+Patch di fedelta' direzionale (Directional Matching Fidelity Final
+Patch, post-review, 2026-09-20): due problemi trovati in review dopo
+l'integrazione del matching:
+(1) `compute_detection_funnel` accettava un `direction_by_row`
+    OPZIONALE con fallback silenzioso a `{r: "BOTH" ...}` - una family
+    con `event_direction_policy=BUY` poteva quindi essere testata come
+    se fosse non-direzionale senza alcun errore, violando fail-closed.
+    Corretto: `event_direction_policy` e' ora vincolato a un enum
+    canonico (FIXED_BUY/FIXED_SELL/NON_DIRECTIONAL/PER_EVENT_DIRECTION)
+    e la direzione per riga e' SEMPRE derivata meccanicamente da esso
+    (`resolve_direction_by_row`) - nessun parametro esterno puo' piu'
+    scavalcare la policy dichiarata (il parametro `direction_by_row` e'
+    stato RIMOSSO da `evaluate_family_structural_feasibility`).
+(2) `run_matching_preflight` accettava una mappa `control_direction_by_id`
+    GLOBALE unica per l'intero run - ma la pipeline reale
+    (`sequence_baseline_adapter_v1.py:SequenceBaselineAdapter.
+    match_sequence_event`) costruisce una baseline controfattuale
+    condizionata alla direzione DI OGNI SINGOLO EVENTO
+    (`{cid: event_direction for cid in pool}`, ricostruita ad ogni
+    chiamata) - per una family con eventi sia BUY sia SELL, lo STESSO
+    control bar deve poter essere valutato come ipotetico BUY per un
+    evento e ipotetico SELL per un altro. Corretto: `control_direction_
+    by_id` e' ora costruito internamente PER OGNI evento, replicando
+    esattamente la regola dell'adapter reale (verificato da un test di
+    parita' diretto contro `SequenceBaselineAdapter`).
+Bug minore corretto nello stesso commit: `DECLARED_AWAITING_DATA`
+(matching_spec completo ma nessuna feature reale ancora disponibile)
+veniva erroneamente classificato `MATCHING_PREFLIGHT_READY` - introdotto
+uno stato intermedio esplicito, `MATCHING_SPEC_READY_AWAITING_RUNTIME_
+DATA`; `MATCHING_PREFLIGHT_READY` ora significa ESCLUSIVAMENTE "il
+preflight e' stato REALMENTE eseguito" (EXECUTED_FEASIBLE/INFEASIBLE).
+
 Principi non negoziabili (invariati):
 - OUTCOME-BLIND: nessuna funzione qui accetta o richiede outcome. Solo
   posizione temporale (row/bar index) e feature di STATO (mai di
@@ -117,7 +149,7 @@ from sequence_episode_engine import (  # noqa: E402
 from baseline_engine_v4 import BaselineEngineV4, build_quality_report, CONTRACT_VERSION as BASELINE_ENGINE_CONTRACT_VERSION  # noqa: E402
 
 GATE_POLICY_VERSION = "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1"
-ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v2"
+ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v3"
 
 # ---- Livello 1: geometria del detector (sec.2 Phase 7.5A originale) ----
 # Campi che un family spec DEVE dichiarare esplicitamente prima che il
@@ -156,8 +188,24 @@ REQUIRED_MATCHING_SPEC_FIELDS = (
     "split_boundaries",
 )
 
+# ---- Direction derivation (Directional Matching Fidelity Final Patch) ----
+# event_direction_policy DEVE essere uno di questi 4 valori canonici -
+# nessun altro valore (incluso il vecchio "BOTH"/"CONTEXT_DEPENDENT"
+# narrativo ereditato da market_sequence_registry_v1.json) e' ammesso
+# per QUESTO gate: la direzione per-riga deve essere meccanicamente
+# derivabile, mai lasciata ambigua.
+DIRECTION_POLICY_FIXED_BUY = "FIXED_BUY"
+DIRECTION_POLICY_FIXED_SELL = "FIXED_SELL"
+DIRECTION_POLICY_NON_DIRECTIONAL = "NON_DIRECTIONAL"
+DIRECTION_POLICY_PER_EVENT = "PER_EVENT_DIRECTION"
+VALID_EVENT_DIRECTION_POLICIES = (
+    DIRECTION_POLICY_FIXED_BUY, DIRECTION_POLICY_FIXED_SELL,
+    DIRECTION_POLICY_NON_DIRECTIONAL, DIRECTION_POLICY_PER_EVENT,
+)
+
 FORMALIZATION_LEVEL_NONE = "NONE"
 FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY = "DETECTOR_GEOMETRY_READY"
+FORMALIZATION_LEVEL_MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA = "MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA"
 FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY = "MATCHING_PREFLIGHT_READY"
 
 MATCHING_STATUS_NOT_DECLARED = "NOT_DECLARED"
@@ -191,6 +239,15 @@ class StructuralInputNotDeclaredError(Exception):
     pass
 
 
+class DirectionDerivationError(Exception):
+    """Sollevata quando event_direction_policy non e' un valore canonico,
+    o quando event_direction_policy=PER_EVENT_DIRECTION ma direction_by_row
+    e' assente/incompleto per una o piu' righe grezze. MAI risolta con un
+    fallback silenzioso a BOTH/FIXED - questa e' esattamente la classe di
+    bug corretta dalla Directional Matching Fidelity Final Patch."""
+    pass
+
+
 class MatchingRuntimeDataIncompleteError(Exception):
     """sec.9 - sollevata se matching_runtime_data e' dichiarato ma manca
     la feature di stato per anche una sola osservazione INDEPENDENT_VIEW.
@@ -214,7 +271,46 @@ def missing_spec_fields(spec: dict) -> list:
             missing.append(field)
         elif field == "detector_frozen" and spec[field] is not True:
             missing.append(field)
+        elif field == "event_direction_policy" and spec[field] not in VALID_EVENT_DIRECTION_POLICIES:
+            missing.append(
+                f"event_direction_policy (valore non canonico: {spec[field]!r}, atteso uno di "
+                f"{VALID_EVENT_DIRECTION_POLICIES})"
+            )
+    if spec.get("event_direction_policy") == DIRECTION_POLICY_PER_EVENT and not spec.get("direction_by_row"):
+        missing.append("direction_by_row (richiesto quando event_direction_policy=PER_EVENT_DIRECTION)")
     return missing
+
+
+def resolve_direction_by_row(event_direction_policy: str, direction_by_row: dict, sorted_rows: list) -> dict:
+    """Deriva MECCANICAMENTE la direzione per ogni riga grezza dalla
+    policy dichiarata - nessun fallback silenzioso (Directional Matching
+    Fidelity Final Patch). Sempre chiamata dal gate stesso, mai lasciata
+    a un parametro opzionale del chiamante."""
+    if event_direction_policy == DIRECTION_POLICY_FIXED_BUY:
+        return {r: "BUY" for r in sorted_rows}
+    if event_direction_policy == DIRECTION_POLICY_FIXED_SELL:
+        return {r: "SELL" for r in sorted_rows}
+    if event_direction_policy == DIRECTION_POLICY_NON_DIRECTIONAL:
+        # "BOTH" qui significa letteralmente "nessun asse di direzione per
+        # questa sequence" (es. classificatore di stato choppy/laterale) -
+        # NON "sia BUY sia SELL vengono testati separatamente", significato
+        # diverso attribuito in passato al valore narrativo "BOTH" nel
+        # registry Phase 7.2 (mai usato per il matching direzionale).
+        return {r: "BOTH" for r in sorted_rows}
+    if event_direction_policy == DIRECTION_POLICY_PER_EVENT:
+        mapping = direction_by_row or {}
+        missing_rows = [r for r in sorted_rows if r not in mapping]
+        if missing_rows:
+            raise DirectionDerivationError(
+                f"event_direction_policy=PER_EVENT_DIRECTION ma direction_by_row manca per "
+                f"{len(missing_rows)}/{len(sorted_rows)} righe grezze (prime mancanti: {missing_rows[:5]}) - "
+                f"nessun fallback silenzioso a BOTH/FIXED ammesso."
+            )
+        return {r: mapping[r] for r in sorted_rows}
+    raise DirectionDerivationError(
+        f"event_direction_policy={event_direction_policy!r} non e' un valore canonico ammesso "
+        f"({VALID_EVENT_DIRECTION_POLICIES}) - nessuna direzione derivata senza una policy esplicita e valida."
+    )
 
 
 def missing_matching_spec_fields(matching_spec: dict) -> list:
@@ -249,22 +345,38 @@ def _gap_percentiles(sorted_rows: list) -> dict:
 
 def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_rule: int,
                               natural_horizon: int, overlap_policy: str,
-                              outcome_overlap_embargo_bars: int, direction_by_row: dict = None) -> dict:
+                              outcome_overlap_embargo_bars: int, direction_by_row: dict) -> dict:
     """EVENT_VIEW -> EPISODE_VIEW -> INDEPENDENT_VIEW, senza alcun
     outcome. Riusa sequence_episode_engine.py senza modifiche.
     INDEPENDENT_VIEW.representative_rows e' esposto esplicitamente (non
     solo il conteggio) - necessario al matching preflight (sec.4: il
     sample gate va ricalcolato sulle unita' indipendenti CON match
     valido, quindi serve sapere ESATTAMENTE quali row sono le
-    rappresentanti indipendenti da passare al matcher)."""
+    rappresentanti indipendenti da passare al matcher).
+
+    direction_by_row e' OBBLIGATORIO (Directional Matching Fidelity Final
+    Patch) - deve essere gia' risolto dal chiamante via
+    resolve_direction_by_row(), MAI un default silenzioso a BOTH. Questa
+    funzione lo ri-verifica comunque (difesa in profondita', stesso stile
+    di cross_split_safety.validate_baseline_matches)."""
     sorted_rows = sorted(set(event_row_indices))
     n_raw_events = len(sorted_rows)
     firing_rate = (n_raw_events / n_bars) if n_bars else 0.0
     gap_stats = _gap_percentiles(sorted_rows)
 
-    direction_by_row = direction_by_row or {r: "BOTH" for r in sorted_rows}
+    if not direction_by_row:
+        raise DirectionDerivationError(
+            "direction_by_row deve essere risolto esplicitamente dal chiamante (resolve_direction_by_row) - "
+            "nessun fallback silenzioso a BOTH."
+        )
+    missing_direction_rows = [r for r in sorted_rows if r not in direction_by_row]
+    if missing_direction_rows:
+        raise DirectionDerivationError(
+            f"direction_by_row incompleto: mancano {len(missing_direction_rows)}/{len(sorted_rows)} righe "
+            f"grezze (prime mancanti: {missing_direction_rows[:5]})."
+        )
     synthetic_events = [
-        {"sequence_event_id": f"ROW-{r}", "sequence_id": "STRUCTURAL_PREFLIGHT", "direction": direction_by_row.get(r, "BOTH"),
+        {"sequence_event_id": f"ROW-{r}", "sequence_id": "STRUCTURAL_PREFLIGHT", "direction": direction_by_row[r],
          "event_a_index": r, "transition_complete_index": r, "prediction_start_index": r}
         for r in sorted_rows
     ]
@@ -286,7 +398,7 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
         "INDEPENDENT_VIEW": {"n": independent_view["n"],
                               "n_independent_observations": independent_view["n_independent_observations"],
                               "representative_rows": representative_rows,
-                              "direction_by_row": {r: direction_by_row.get(r, "BOTH") for r in representative_rows}},
+                              "direction_by_row": {r: direction_by_row[r] for r in representative_rows}},
         "episode_gap_rule": episode_gap_rule,
         "natural_horizon": natural_horizon,
         "overlap_policy": overlap_policy,
@@ -391,29 +503,48 @@ def classify_firing_geometry_risk_flag(funnel: dict) -> dict:
     }
 
 
+def _match_one_event(engine: BaselineEngineV4, ev: dict, control_pool: list, control_row_by_id: dict,
+                      control_features_by_id: dict) -> dict:
+    """Costruisce control_direction_by_id PER QUESTO evento - replica
+    ESATTA di SequenceBaselineAdapter.match_sequence_event()
+    (sequence_baseline_adapter_v1.py: `control_direction_by_id = {cid:
+    direction for cid in control_pool_same_split}`, ricostruita ad ogni
+    chiamata, MAI una mappa globale unica per l'intero run). Questa e'
+    la correzione centrale della Directional Matching Fidelity Final
+    Patch: per una family con eventi sia BUY sia SELL, lo STESSO control
+    bar deve poter essere valutato come ipotetico BUY per un evento e
+    ipotetico SELL per un altro - impossibile con una mappa unica."""
+    control_direction_by_id = {cid: ev["direction"] for cid in control_pool}
+    return engine.match(event_id=ev["event_id"], event_row=ev["event_row"], event_direction=ev["direction"],
+                         event_features=ev["features"], control_pool=control_pool,
+                         control_row_by_id=control_row_by_id, control_direction_by_id=control_direction_by_id,
+                         control_features_by_id=control_features_by_id)
+
+
 def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dict,
                             events: list, control_pool: list, control_row_by_id: dict,
-                            control_direction_by_id: dict, control_features_by_id: dict,
-                            discovery_features_by_row: dict, minimum_control_count: int,
-                            max_control_reuse_per_run: int, discovery_split_name: str = "discovery",
+                            control_features_by_id: dict, discovery_features_by_row: dict,
+                            minimum_control_count: int, max_control_reuse_per_run: int,
+                            discovery_split_name: str = "discovery",
                             feature_version: str = "feature_registry_v2") -> dict:
     """Simula il matching STRUTTURALE senza alcun outcome, riusando
     BaselineEngineV4/ControlReuseLedger senza modifiche. Va invocato
     SOLO quando esistono gia' feature di stato reali (evento e pool di
     controllo) - MAI con feature inventate per far girare il preflight
-    su una family non ancora formalizzata."""
+    su una family non ancora formalizzata.
+
+    NOTA (Directional Matching Fidelity Final Patch): NON accetta piu'
+    un `control_direction_by_id` globale - ogni evento riceve la propria
+    baseline direction-conditioned counterfactual, costruita da
+    _match_one_event() esattamente come fa SequenceBaselineAdapter nella
+    pipeline reale (verificato da un test di parita' diretto)."""
     engine = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
                                discovery_split_name=discovery_split_name, feature_version=feature_version,
                                minimum_control_count=minimum_control_count,
                                max_control_reuse_per_run=max_control_reuse_per_run)
     engine.fit_normalization(discovery_features_by_row)
-    results = []
-    for ev in events:
-        r = engine.match(event_id=ev["event_id"], event_row=ev["event_row"], event_direction=ev["direction"],
-                          event_features=ev["features"], control_pool=control_pool,
-                          control_row_by_id=control_row_by_id, control_direction_by_id=control_direction_by_id,
-                          control_features_by_id=control_features_by_id)
-        results.append(r)
+    results = [_match_one_event(engine, ev, control_pool, control_row_by_id, control_features_by_id)
+               for ev in events]
     quality_report = build_quality_report(results)
     reuse_report = engine.reuse_usage_report()
 
@@ -424,13 +555,9 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
                                       minimum_control_count=minimum_control_count,
                                       max_control_reuse_per_run=max_control_reuse_per_run)
     engine_repeat.fit_normalization(discovery_features_by_row)
-    repeat_picks = []
-    for ev in events:
-        r = engine_repeat.match(event_id=ev["event_id"], event_row=ev["event_row"], event_direction=ev["direction"],
-                                 event_features=ev["features"], control_pool=control_pool,
-                                 control_row_by_id=control_row_by_id, control_direction_by_id=control_direction_by_id,
-                                 control_features_by_id=control_features_by_id)
-        repeat_picks.append(sorted(m["control_id"] for m in r["matches"]))
+    repeat_results = [_match_one_event(engine_repeat, ev, control_pool, control_row_by_id, control_features_by_id)
+                       for ev in events]
+    repeat_picks = [sorted(m["control_id"] for m in r["matches"]) for r in repeat_results]
     original_picks = [sorted(m["control_id"] for m in r["matches"]) for r in results]
     tie_break_deterministic = original_picks == repeat_picks
 
@@ -438,9 +565,27 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
     if reuse_report and max_control_reuse_per_run:
         max_reuse_within_cap = reuse_report["max_reuse_observed"] <= max_control_reuse_per_run
 
+    # Audit MATCHED_K_SHORTFALL (sec.8 della patch): n_matched (quality_report,
+    # riusato senza modifiche) conta MATCHED + MATCHED_K_SHORTFALL insieme -
+    # stessa definizione gia' in uso in TUTTO il resto di Phase 7
+    # (build_quality_report non e' mai stato modificato). DECISIONE
+    # CONGELATA ESPLICITAMENTE qui (non cambiata automaticamente): k e' un
+    # obiettivo di ricchezza/riduzione-varianza del baseline, non un
+    # requisito di correttezza stretto - un evento matchato con meno di k
+    # controlli (ma comunque >= minimum_control_count disponibili nel pool)
+    # ha comunque un baseline statisticamente valido, solo a varianza piu'
+    # alta. Riportato SEPARATAMENTE per trasparenza/audit, mai usato per
+    # escludere silenziosamente le unita' K_SHORTFALL da
+    # independent_units_with_valid_match.
+    n_matched_full_k = sum(1 for r in results if r["status"] == "MATCHED")
+    n_matched_k_shortfall = sum(1 for r in results if r["status"] == "MATCHED_K_SHORTFALL")
+
     return {
         "n_events": len(events),
         "n_matched": quality_report["n_matched"],
+        "n_matched_full_k": n_matched_full_k,
+        "n_matched_k_shortfall": n_matched_k_shortfall,
+        "k_shortfall_counted_as_valid_match": True,
         "n_rejected_insufficient_pool": quality_report["n_rejected_insufficient_pool"],
         "match_quality_counts": quality_report["match_quality_counts"],
         "poor_match_share": quality_report["poor_match_share"],
@@ -448,6 +593,7 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
         "reuse_report": reuse_report,
         "max_reuse_within_declared_cap": max_reuse_within_cap,
         "tie_break_deterministic": tie_break_deterministic,
+        "event_match_results": results,
     }
 
 
@@ -488,7 +634,7 @@ def evaluate_matching_feasibility(funnel: dict, spec: dict, minimum_evidence_gat
             f"(prime mancanti: {missing_features[:5]}) - nessuna feature inventata per completare il preflight."
         )
     events = [
-        {"event_id": f"INDEP-{r}", "event_row": r, "direction": event_direction_by_row.get(r, "BOTH"),
+        {"event_id": f"INDEP-{r}", "event_row": r, "direction": event_direction_by_row[r],
          "features": event_features_by_row[r]}
         for r in representative_rows
     ]
@@ -496,7 +642,6 @@ def evaluate_matching_feasibility(funnel: dict, spec: dict, minimum_evidence_gat
         match_dimensions=matching_spec["match_dimensions"], k=matching_spec["k"],
         split_boundaries=matching_spec["split_boundaries"], events=events,
         control_pool=runtime["control_pool"], control_row_by_id=runtime["control_row_by_id"],
-        control_direction_by_id=runtime["control_direction_by_id"],
         control_features_by_id=runtime["control_features_by_id"],
         discovery_features_by_row=runtime["discovery_features_by_row"],
         minimum_control_count=matching_spec["minimum_control_count"],
@@ -560,13 +705,21 @@ def _compose_final_verdict(geometry_verdict: str, matching_result: dict) -> str:
 
 
 def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
-                                            bars_per_year: float = None,
-                                            direction_by_row: dict = None) -> dict:
+                                            bars_per_year: float = None) -> dict:
     """Punto di ingresso principale del gate. Ritorna sempre un dict con
     almeno 'sequence_family_id' e 'verdict' - MAI un'eccezione per una
     family incompleta (quella e' una classificazione valida, non un
     errore di programma). Ora integra ENTRAMBI i livelli (geometria +
-    matching preflight) nel verdetto finale - vedi docstring di modulo."""
+    matching preflight) nel verdetto finale - vedi docstring di modulo.
+
+    NOTA (Directional Matching Fidelity Final Patch): il parametro
+    `direction_by_row` che esisteva qui in precedenza e' stato RIMOSSO -
+    permetteva a un chiamante di scavalcare silenziosamente la policy
+    dichiarata dallo spec (`event_direction_policy`), che e' esattamente
+    il bug corretto da questa patch. La direzione per riga e' ORA sempre
+    e solo derivata da `spec['event_direction_policy']`
+    (+ `spec['direction_by_row']` se PER_EVENT_DIRECTION) via
+    `resolve_direction_by_row()` - nessuna altra via d'ingresso."""
     policy = policy or DEFAULT_POLICY
     family_id = spec.get("sequence_family_id", "UNKNOWN_FAMILY")
     missing = missing_spec_fields(spec)
@@ -584,6 +737,10 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         }
 
     try:
+        sorted_rows = sorted(set(spec["event_row_indices"]))
+        direction_by_row = resolve_direction_by_row(
+            spec["event_direction_policy"], spec.get("direction_by_row"), sorted_rows,
+        )
         funnel = compute_detection_funnel(
             event_row_indices=spec["event_row_indices"], n_bars=spec["discovery_partition"]["n_bars"],
             episode_gap_rule=spec["episode_gap_rule"], natural_horizon=spec["proposed_natural_horizon"],
@@ -591,7 +748,7 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
             outcome_overlap_embargo_bars=spec["proposed_outcome_overlap_embargo_bars"],
             direction_by_row=direction_by_row,
         )
-    except EpisodeRuleNotDeclaredError as e:
+    except (EpisodeRuleNotDeclaredError, DirectionDerivationError) as e:
         return {
             "sequence_family_id": family_id,
             "verdict": VERDICT_NEEDS_DETECTOR_FORMALIZATION,
@@ -615,9 +772,18 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         else evaluate_matching_feasibility(funnel, spec, spec["minimum_evidence_gates"])
     )
     final_verdict = _compose_final_verdict(geometry_verdict, matching_result)
-    formalization_level = (FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY
-                            if matching_result["status"] == MATCHING_STATUS_NOT_DECLARED
-                            else FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY)
+    # Bug corretto (Directional Matching Fidelity Final Patch): DECLARED_AWAITING_DATA
+    # (matching_spec completo ma nessuna feature reale ancora disponibile) veniva
+    # erroneamente classificato MATCHING_PREFLIGHT_READY, come se il preflight fosse
+    # gia' stato eseguito. Ora e' un terzo livello esplicito e distinto -
+    # MATCHING_PREFLIGHT_READY significa ESCLUSIVAMENTE "eseguito per davvero"
+    # (EXECUTED_FEASIBLE o EXECUTED_INFEASIBLE).
+    if matching_result["status"] == MATCHING_STATUS_NOT_DECLARED:
+        formalization_level = FORMALIZATION_LEVEL_DETECTOR_GEOMETRY_READY
+    elif matching_result["status"] == MATCHING_STATUS_DECLARED_AWAITING_DATA:
+        formalization_level = FORMALIZATION_LEVEL_MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA
+    else:  # EXECUTED_FEASIBLE o EXECUTED_INFEASIBLE
+        formalization_level = FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY
 
     provenance = {
         "detector_source_ref": spec["detector_source_ref"],
@@ -629,6 +795,13 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         "policy_version": GATE_POLICY_VERSION,
         "outcome_blind": True,
         "deterministic": True,
+        # Directional Matching Fidelity Final Patch - sempre registrato,
+        # a prescindere da quale livello del gate sia stato raggiunto,
+        # perche' la direzione e' ORA sempre risolta meccanicamente.
+        "direction_derivation": {
+            "event_direction_policy": spec["event_direction_policy"],
+            "direction_map_hash": canonical_sha256(funnel["INDEPENDENT_VIEW"]["direction_by_row"]),
+        },
     }
     if matching_result["status"] in (MATCHING_STATUS_EXECUTED_FEASIBLE, MATCHING_STATUS_EXECUTED_INFEASIBLE):
         provenance["matching"] = {
@@ -636,6 +809,11 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
             "matching_spec_hash": canonical_sha256(spec["matching_spec"]),
             "max_control_reuse_per_run": spec["matching_spec"]["max_control_reuse_per_run"],
             "matching_result_hash": canonical_sha256(matching_result["preflight"]),
+            # sec.9 della richiesta di review - fedelta' direzionale esplicita nel provenance.
+            "event_direction_policy": spec["event_direction_policy"],
+            "direction_source": spec["event_direction_policy"],
+            "direction_map_hash": canonical_sha256(funnel["INDEPENDENT_VIEW"]["direction_by_row"]),
+            "counterfactual_direction_semantics": True,
         }
 
     return {
@@ -660,7 +838,8 @@ if __name__ == "__main__":
         s = {
             "sequence_family_id": "SEQFAM-DEMO", "detector_frozen": True, "detector_source_ref": "SYNTHETIC_DEMO",
             "detector_parameters": {"threshold": 1.0}, "observation_timing": {"observation_cutoff": "close(t)"},
-            "event_direction_policy": "BUY", "episode_gap_rule": 3, "overlap_policy": "COLLAPSE_TO_FIRST",
+            "event_direction_policy": DIRECTION_POLICY_FIXED_BUY, "episode_gap_rule": 3,
+            "overlap_policy": "COLLAPSE_TO_FIRST",
             "proposed_natural_horizon": 40, "proposed_outcome_overlap_embargo_bars": 39,
             "discovery_partition": {"partition_id": "SYNTHETIC_DEMO", "n_bars": max(event_row_indices) + 100},
             "minimum_evidence_gates": {"n_nominal_minimum": 30},
@@ -709,7 +888,6 @@ if __name__ == "__main__":
     boundaries = {"discovery": (0, 1_000_000)}
     control_pool = list(range(500_000, 500_040))
     control_row_by_id = {c: c for c in control_pool}
-    control_direction_by_id = {c: "BOTH" for c in control_pool}  # default direction_by_row is "BOTH" per riga
     control_features_by_id = {c: {"state": "A"} for c in control_pool}
     discovery_feats = {c: {"state": "A"} for c in control_pool}
     event_features_by_row = {row: {"state": "A"} for row in rows3}
@@ -720,7 +898,6 @@ if __name__ == "__main__":
                         "control_pool_construction_policy": "TEST_SAME_SPLIT_SAME_DIRECTION",
                         "split_boundaries": boundaries},
         matching_runtime_data={"control_pool": control_pool, "control_row_by_id": control_row_by_id,
-                                "control_direction_by_id": control_direction_by_id,
                                 "control_features_by_id": control_features_by_id,
                                 "discovery_features_by_row": discovery_feats,
                                 "event_features_by_row": event_features_by_row},
@@ -749,4 +926,31 @@ if __name__ == "__main__":
     assert canonical_sha256(r2["detection_funnel"]) == canonical_sha256(r2_again["detection_funnel"])
     print("Caso 6 OK: stesso spec -> stesso hash di funnel (deterministico).")
 
-    print("\nTutti i casi del Sequence Structural Feasibility Gate (v2, integrato) verificati.")
+    # ---- Directional Matching Fidelity Final Patch: casi aggiuntivi ----
+
+    # Caso 7: matching_spec dichiarato ma NESSUN matching_runtime_data ->
+    # DECLARED_AWAITING_DATA, formalization_level DEVE essere il livello
+    # intermedio, MAI MATCHING_PREFLIGHT_READY (bug corretto in questa patch).
+    spec7 = dict(spec4)
+    del spec7["matching_runtime_data"]
+    r7 = evaluate_family_structural_feasibility(spec7)
+    print(f"Caso 7 (matching_spec dichiarato, nessun dato reale): matching.status={r7['matching']['status']} "
+          f"formalization_level={r7['formalization_level']}")
+    assert r7["matching"]["status"] == MATCHING_STATUS_DECLARED_AWAITING_DATA
+    assert r7["formalization_level"] == FORMALIZATION_LEVEL_MATCHING_SPEC_READY_AWAITING_RUNTIME_DATA
+    assert r7["formalization_level"] != FORMALIZATION_LEVEL_MATCHING_PREFLIGHT_READY
+
+    # Caso 8: event_direction_policy=FIXED_BUY -> ogni riga indipendente
+    # deve essere "BUY", MAI "BOTH" (era esattamente il bug del fallback silenzioso).
+    assert all(d == "BUY" for d in r4["detection_funnel"]["INDEPENDENT_VIEW"]["direction_by_row"].values())
+    print("Caso 8 OK: FIXED_BUY -> tutte le righe indipendenti sono 'BUY', mai 'BOTH'.")
+
+    # Caso 9: event_direction_policy=PER_EVENT_DIRECTION con direction_by_row
+    # incompleto -> fail-closed (NEEDS_DETECTOR_FORMALIZATION), nessun fallback.
+    spec9 = _base_spec(rows3, event_direction_policy=DIRECTION_POLICY_PER_EVENT,
+                        direction_by_row={r: "BUY" for r in rows3[:-1]})  # manca l'ultima riga
+    r9 = evaluate_family_structural_feasibility(spec9)
+    print(f"Caso 9 (PER_EVENT_DIRECTION incompleto): verdict={r9['verdict']}")
+    assert r9["verdict"] == VERDICT_NEEDS_DETECTOR_FORMALIZATION
+
+    print("\nTutti i casi del Sequence Structural Feasibility Gate (v3, fedelta' direzionale) verificati.")

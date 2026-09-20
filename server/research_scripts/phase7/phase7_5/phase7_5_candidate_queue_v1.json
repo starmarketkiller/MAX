@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-20T21:14:08.497512+00:00",
+  "generated_at": "2026-09-20T21:40:19.438619+00:00",
   "generation_script": "phase7/phase7_5/build_phase7_5_structural_feasibility_results.py",
-  "canonical_sha256": "ac1feb37ca4425bda17a8c091a59b3c6bb3f9fc3f5dbc4fd87a8506d0b26b0a9",
+  "canonical_sha256": "e13e860d8fef85eb4ca47d0f144df0073d4f158d0d7a105d084c5fd84e200245",
   "payload": {
     "ranking_policy": "ESCLUSIVAMENTE strutturale (testabilita', completezza detector, chiarezza implementativa) - MAI probabilita' di edge/expected profitability/likelihood of success (sec.10 della richiesta Phase 7.5A).",
     "READY_FOR_PREREGISTRATION": [],
@@ -12,24 +12,10 @@
       {
         "sequence_id": "SEQ-0009",
         "detector_status": "EXISTING_RAW_EVENT_DETECTOR_NOT_YET_FRAMED_AS_SEQUENCE",
-        "n_missing_degrees_of_freedom": 6,
+        "n_missing_degrees_of_freedom": 7,
         "missing_degrees_of_freedom": [
           "detector_frozen",
-          "episode_gap_rule",
-          "overlap_policy",
-          "proposed_natural_horizon",
-          "proposed_outcome_overlap_embargo_bars",
-          "event_row_indices"
-        ]
-      },
-      {
-        "sequence_id": "SEQ-0001",
-        "detector_status": "NO_DETECTOR_CODE_YET",
-        "n_missing_degrees_of_freedom": 8,
-        "missing_degrees_of_freedom": [
-          "detector_frozen",
-          "detector_source_ref",
-          "detector_parameters",
+          "event_direction_policy (valore non canonico: 'BOTH', atteso uno di ('FIXED_BUY', 'FIXED_SELL', 'NON_DIRECTIONAL', 'PER_EVENT_DIRECTION'))",
           "episode_gap_rule",
           "overlap_policy",
           "proposed_natural_horizon",
@@ -53,13 +39,30 @@
         ]
       },
       {
-        "sequence_id": "SEQ-0016",
+        "sequence_id": "SEQ-0001",
         "detector_status": "NO_DETECTOR_CODE_YET",
-        "n_missing_degrees_of_freedom": 8,
+        "n_missing_degrees_of_freedom": 9,
         "missing_degrees_of_freedom": [
           "detector_frozen",
           "detector_source_ref",
           "detector_parameters",
+          "event_direction_policy (valore non canonico: 'BOTH', atteso uno di ('FIXED_BUY', 'FIXED_SELL', 'NON_DIRECTIONAL', 'PER_EVENT_DIRECTION'))",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      },
+      {
+        "sequence_id": "SEQ-0016",
+        "detector_status": "NO_DETECTOR_CODE_YET",
+        "n_missing_degrees_of_freedom": 9,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "detector_source_ref",
+          "detector_parameters",
+          "event_direction_policy (valore non canonico: 'CONTEXT_DEPENDENT', atteso uno di ('FIXED_BUY', 'FIXED_SELL', 'NON_DIRECTIONAL', 'PER_EVENT_DIRECTION'))",
           "episode_gap_rule",
           "overlap_policy",
           "proposed_natural_horizon",
@@ -70,11 +73,12 @@
       {
         "sequence_id": "SEQ-0020",
         "detector_status": "NO_DETECTOR_CODE_YET",
-        "n_missing_degrees_of_freedom": 8,
+        "n_missing_degrees_of_freedom": 9,
         "missing_degrees_of_freedom": [
           "detector_frozen",
           "detector_source_ref",
           "detector_parameters",
+          "event_direction_policy (valore non canonico: 'BOTH', atteso uno di ('FIXED_BUY', 'FIXED_SELL', 'NON_DIRECTIONAL', 'PER_EVENT_DIRECTION'))",
           "episode_gap_rule",
           "overlap_policy",
           "proposed_natural_horizon",
