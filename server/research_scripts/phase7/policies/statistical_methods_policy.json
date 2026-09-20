@@ -24,6 +24,12 @@
       "use": "Stima di incertezza sotto dipendenza seriale (blocco L=ceil(n^(1/3))) - vedi phase6_5/block_bootstrap.py, da riusare in Phase 7 per candidati DEPENDENCE_SENSITIVE.",
       "why_allowed": "Metodo non parametrico ma completamente ispezionabile passo-passo (resampling di blocchi contigui, nessun modello nascosto)."
     },
+    "two_sample_block_bootstrap_percentile_p": {
+      "use": "Estensione ESPLICITA (Phase 7.4A Integrity Patch, sec.2) di moving_block_bootstrap per outcome CONTINUI (es. MFE/MAE/TIME_TO_MFE/PATH_EFFICIENCY) dove Wilson CI95 non e' applicabile (non e' una proporzione). Composizione di due primitive gia' ammesse: la serie evento e' ricampionata con moving_block_bootstrap_ci (phase6_5/block_bootstrap.py, L=ceil(n^(1/3))), il pool di baseline con iid_bootstrap_ci (stesso modulo, stesso limite dichiarato per il baseline - dipendenza seriale nel baseline non modellata, dichiarato esplicitamente come in block_bootstrap.py). La differenza delle medie ricampionate produce una distribuzione bootstrap di Delta_E; p = 2*min(P(Delta_E_boot<=0), P(Delta_E_boot>=0)), troncato a 1.0 (test bootstrap percentile a due code, standard e completamente ispezionabile).",
+      "why_allowed": "Nessuna nuova primitiva black-box: compone due metodi gia' in questa lista (moving_block_bootstrap + il bootstrap i.i.d. gia' implementato nello stesso modulo per il baseline) in un test di differenza a due campioni, un pattern standard e completamente ricostruibile a mano guardando la distribuzione ricampionata.",
+      "declared_limit": "Il baseline e' ricampionato i.i.d. (non a blocchi) - stesso limite gia' dichiarato in block_bootstrap.py per la sua applicazione originale (H006). Se in futuro il pool di baseline mostrasse dipendenza seriale rilevante, andra' esteso anche li' a moving block, non solo lato evento.",
+      "added_by": "Phase 7.4A Integrity Patch (2026-09-20), prima di qualunque discovery reale su SEQ-0015 - nessun outcome reale osservato al momento di questa estensione."
+    },
     "logistic_regression": {
       "use": "SOLO per quantificare un effetto condizionato a covariate dichiarate esplicitamente (max 2-3 covariate, coerente con candidate_generation_policy.json Level 2) - mai con piu' di ~5 feature nello stesso modello.",
       "why_allowed": "Coefficienti interpretabili singolarmente, nessuna interazione nascosta non dichiarata."

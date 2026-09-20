@@ -20,6 +20,51 @@ class EpisodeRuleNotDeclaredError(Exception):
     pass
 
 
+def build_outcome_independent_view(episode_view_events: list, outcome_overlap_embargo_bars: int) -> dict:
+    """Phase 7.4A Integrity Patch sec.1 - event_cluster_rule (episode_gap_rule)
+    e outcome_overlap_rule sono DUE concetti distinti, non lo stesso:
+
+    - event_cluster_rule risponde 'e' la stessa espansione fisica locale?'
+      (usato per costruire EPISODE_VIEW).
+    - outcome_overlap_rule risponde 'le finestre di misura dell'outcome si
+      sovrappongono, anche se le espansioni fisiche sono diverse?' - due
+      episodi a gap>event_cluster_rule ma con outcome_window sovrapposte
+      NON sono osservazioni indipendenti solo perche' superano il gap
+      dell'episode clustering.
+
+    Seconda passata di clustering (stesso meccanismo assign_clusters, MAI
+    reimplementato) APPLICATA ai rappresentanti di EPISODE_VIEW (non ai
+    raw event), con soglia = outcome_overlap_embargo_bars. Per una
+    outcome window di larghezza natural_horizon barre che inizia a t+1,
+    due eventi a t e t+d hanno finestre sovrapposte se e solo se d <
+    natural_horizon, quindi l'embargo corretto e' natural_horizon-1 (MAI
+    lo stesso valore numerico di event_cluster_rule - dichiararli uguali
+    per errore vanificherebbe la distinzione concettuale).
+
+    Ritorna INDEPENDENT_VIEW: il conteggio realmente usato per Wilson
+    CI/two-proportion-test/bootstrap - MAI EPISODE_VIEW direttamente
+    quando outcome_overlap_embargo_bars > event_cluster_rule (il caso
+    normale, perche' natural_horizon >> event_cluster_rule per
+    costruzione in ogni family finora formalizzata)."""
+    if outcome_overlap_embargo_bars is None:
+        raise EpisodeRuleNotDeclaredError(
+            "outcome_overlap_embargo_bars deve essere dichiarato ex-ante (Phase 7.4A Integrity Patch sec.1) - "
+            "nessun default silenzioso."
+        )
+    rows = sorted(e["event_a_index"] for e in episode_view_events)
+    event_by_row = {e["event_a_index"]: e for e in episode_view_events}
+    clusters, gaps = assign_clusters(rows, outcome_overlap_embargo_bars)
+    representative_rows = [c[0] for c in clusters]  # COLLAPSE_TO_FIRST, stessa regola anti-cherry-pick
+    independent_events = [event_by_row[r] for r in representative_rows]
+    return {
+        "n": len(representative_rows), "n_independent_observations": len(clusters),
+        "events": independent_events,
+        "representative_rule": "primo evento del cluster (embargo outcome-overlap, anti-cherry-pick, mai il migliore)",
+        "outcome_overlap_embargo_bars": outcome_overlap_embargo_bars,
+        "source_view": "EPISODE_VIEW (gia' collassata per event_cluster_rule) - seconda passata, non sui raw event",
+    }
+
+
 def build_event_and_episode_views(sequence_events: list, episode_gap_rule: int, natural_horizon: int,
                                    overlap_policy: str):
     """sequence_events: lista di dict conformi a sequence_detector_contract_v1.json
@@ -101,4 +146,54 @@ if __name__ == "__main__":
     assert ep2["n_episodes"] == ev2["n"] == 7
     print(f"Caso 3 (NO_COLLAPSE_INDEPENDENT_HORIZON): EPISODE_VIEW n_episodes={ep2['n_episodes']} == EVENT_VIEW n={ev2['n']}")
 
-    print("\nTutti i casi dell'episode engine verificati.")
+    # ---- Phase 7.4A Integrity Patch sec.1: event_cluster_rule vs outcome_overlap_rule ----
+    # natural_horizon=40 -> outcome_overlap_embargo_bars = natural_horizon-1 = 39
+    # (due eventi a distanza d hanno outcome window sovrapposte se e solo se d<40).
+
+    # Caso 4: t=100, t=102 -> STESSO episodio locale (event_cluster_rule=3, |102-100|=2<=3).
+    ev4, ep4 = build_event_and_episode_views(
+        [{"sequence_event_id": "A", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 100,
+          "transition_complete_index": 100, "prediction_start_index": 100},
+         {"sequence_event_id": "B", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 102,
+          "transition_complete_index": 102, "prediction_start_index": 102}],
+        episode_gap_rule=3, natural_horizon=40, overlap_policy="COLLAPSE_TO_FIRST")
+    assert ep4["n_episodes"] == 1, "t=100,t=102 devono collassare nello stesso episodio locale (gap=3)"
+    print(f"Caso 4 (t=100,t=102 - stesso episodio locale): EPISODE_VIEW n_episodes={ep4['n_episodes']}")
+
+    # Caso 5: t=100, t=105 -> episodio locale DIVERSO (gap=3, |105-100|=5>3) MA outcome fortemente
+    # overlap (5<39) -> devono ricongiungersi in INDEPENDENT_VIEW (embargo=39).
+    ev5, ep5 = build_event_and_episode_views(
+        [{"sequence_event_id": "A", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 100,
+          "transition_complete_index": 100, "prediction_start_index": 100},
+         {"sequence_event_id": "B", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 105,
+          "transition_complete_index": 105, "prediction_start_index": 105}],
+        episode_gap_rule=3, natural_horizon=40, overlap_policy="COLLAPSE_TO_FIRST")
+    assert ep5["n_episodes"] == 2, "t=100,t=105 devono essere 2 episodi locali DIVERSI (gap=3)"
+    indep5 = build_outcome_independent_view(ep5["events"], outcome_overlap_embargo_bars=39)
+    assert indep5["n_independent_observations"] == 1, (
+        "t=100,t=105 sono 2 episodi locali ma outcome window sovrapposte (d=5<39) - "
+        "devono contare come 1 SOLA osservazione indipendente, mai 2 solo perche' superano gap=3"
+    )
+    print(f"Caso 5 (t=100,t=105 - episodi locali diversi ma outcome overlap): "
+          f"EPISODE_VIEW n_episodes={ep5['n_episodes']} -> INDEPENDENT_VIEW n={indep5['n_independent_observations']}")
+
+    # Caso 6: t=100, t=141 -> episodio locale diverso E outcome NON overlap (d=41>=40) ->
+    # restano 2 osservazioni indipendenti anche dopo l'embargo.
+    ev6, ep6 = build_event_and_episode_views(
+        [{"sequence_event_id": "A", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 100,
+          "transition_complete_index": 100, "prediction_start_index": 100},
+         {"sequence_event_id": "B", "sequence_id": "SEQ-DEMO", "direction": "BUY", "event_a_index": 141,
+          "transition_complete_index": 141, "prediction_start_index": 141}],
+        episode_gap_rule=3, natural_horizon=40, overlap_policy="COLLAPSE_TO_FIRST")
+    indep6 = build_outcome_independent_view(ep6["events"], outcome_overlap_embargo_bars=39)
+    assert indep6["n_independent_observations"] == 2, "t=100,t=141 hanno outcome window NON sovrapposte (d=41) - devono restare 2 osservazioni indipendenti"
+    print(f"Caso 6 (t=100,t=141 - outcome non overlap): INDEPENDENT_VIEW n={indep6['n_independent_observations']} (nessun collasso indebito)")
+
+    # Caso 7 (negativo): embargo non dichiarato -> rifiutato, nessun default silenzioso.
+    try:
+        build_outcome_independent_view(ep5["events"], outcome_overlap_embargo_bars=None)
+        print("ERRORE: embargo mancante avrebbe dovuto essere rifiutato!")
+    except EpisodeRuleNotDeclaredError as e:
+        print(f"Caso 7 (embargo non dichiarato) correttamente rifiutato: {type(e).__name__}")
+
+    print("\nTutti i casi dell'episode engine verificati (incl. Phase 7.4A Integrity Patch: event_cluster_rule vs outcome_overlap_rule).")

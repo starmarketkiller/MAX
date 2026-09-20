@@ -31,7 +31,16 @@ Per la NORMALIZZAZIONE DELL'OUTCOME (non del detector) si usa invece
 ATR_t: e' gia' interamente noto a prediction_start=close(t) e non c'e'
 alcun incentivo ad attenuare un effetto che a quel punto e' gia' un
 fatto (vedi frozen_parameters.outcome_atr_normalization nella frozen
-spec)."""
+spec).
+
+NOTA TERMINOLOGICA (Phase 7.4A Integrity Patch sec.4, solo commenti/doc
+- formula/soglia/direction INVARIATI rispetto a v1): ATR_t non e' "non
+causale" - e' regolarmente noto a close(t), nessun dato futuro coinvolto.
+La formulazione corretta e' "causale al momento della decisione ma
+self-normalized/endogeno rispetto alla propria anomalia" (TR_t
+contribuisce ad ATR_t e ne attenua meccanicamente burst_ratio). Vedi
+frozen_parameters.detector_formula.burst_ratio_denominator_justification
+per il testo aggiornato."""
 import hashlib
 import os
 import sys
@@ -63,9 +72,15 @@ FROZEN_PARAMETERS = {
             "ATR_{t-1} usa esclusivamente informazione fino a t-1. ATR_t (come verificato leggendo "
             "wilder_atr() e il suo uso reale in server/research_scripts/phase5/build_events.py:99 per "
             "VOLATILITY_EXPANSION/H008_EVENT_VOLATILITY_EXPANSION, REFUTED) include TR_t nella propria "
-            "media mobile EMA - la barra anomala attenuerebbe meccanicamente il proprio rapporto di "
-            "anomalia proprio nei casi piu' estremi. Verificato esplicitamente come richiesto (sec.1), "
-            "non solo assunto."
+            "media mobile EMA. Correzione terminologica (Phase 7.4A Integrity Patch sec.4): ATR_t NON e' "
+            "'non causale' - il suo valore e' regolarmente disponibile a close(t) e non guarda alcun dato "
+            "futuro. La formulazione corretta e': causale al momento della decisione ma "
+            "self-normalized/endogeno rispetto alla propria anomalia (TR_t contribuisce ad ATR_t e ne "
+            "attenua meccanicamente il rapporto burst_ratio proprio nei casi piu' estremi). E' per questo "
+            "motivo endogeno/di auto-diluizione - non per un problema di causalita' temporale - che si "
+            "preferisce ATR_{t-1} come denominatore della SOGLIA (mai per la normalizzazione dell'outcome, "
+            "dove ATR_t resta corretto - vedi outcome_atr_normalization). Verificato esplicitamente come "
+            "richiesto (sec.1/sec.4), non solo assunto."
         ),
         "threshold_method": "CAUSAL_ROLLING_PERCENTILE",
         "threshold_percentile": 90,

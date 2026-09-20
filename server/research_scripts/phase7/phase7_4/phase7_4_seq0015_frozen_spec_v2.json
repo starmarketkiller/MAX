@@ -1,0 +1,195 @@
+{
+  "sequence_family_id": "SEQFAM-SEQ0015_MOMENTUM_BURST_CONTINUATION_V1",
+  "sequence_ids": [
+    "SEQ-0015"
+  ],
+  "detector_version": "seq0015_momentum_burst_detector.py@v1",
+  "frozen_parameters": {
+    "detector_formula": {
+      "true_range_formula": "TR_t = max(high_t-low_t, abs(high_t-close_{t-1}), abs(low_t-close_{t-1}))",
+      "atr_method": "Wilder EMA(alpha=1/14), causale, riusata identica da server/research_scripts/phase5/build_market_state.py:wilder_atr",
+      "atr_period": 14,
+      "burst_ratio_formula": "burst_ratio_t = TR_t / ATR_{t-1}",
+      "burst_ratio_denominator_justification": "ATR_{t-1} usa esclusivamente informazione fino a t-1. ATR_t (come verificato leggendo wilder_atr() e il suo uso reale in server/research_scripts/phase5/build_events.py:99 per VOLATILITY_EXPANSION/H008_EVENT_VOLATILITY_EXPANSION, REFUTED) include TR_t nella propria media mobile EMA. Correzione terminologica (Phase 7.4A Integrity Patch sec.4): ATR_t NON e' 'non causale' - il suo valore e' regolarmente disponibile a close(t) e non guarda alcun dato futuro. La formulazione corretta e': causale al momento della decisione ma self-normalized/endogeno rispetto alla propria anomalia (TR_t contribuisce ad ATR_t e ne attenua meccanicamente il rapporto burst_ratio proprio nei casi piu' estremi). E' per questo motivo endogeno/di auto-diluizione - non per un problema di causalita' temporale - che si preferisce ATR_{t-1} come denominatore della SOGLIA (mai per la normalizzazione dell'outcome, dove ATR_t resta corretto - vedi outcome_atr_normalization). Verificato esplicitamente come richiesto (sec.1/sec.4), non solo assunto.",
+      "threshold_method": "CAUSAL_ROLLING_PERCENTILE",
+      "threshold_percentile": 90,
+      "threshold_window_bars": 252,
+      "threshold_minimum_warmup_bars": 252,
+      "threshold_rationale": "CLAIM-0042/CLAIM-0043 (fonte esterna di SEQ-0015) descrivono un meccanismo di soglia scalata alla volatilita' ma NON forniscono un moltiplicatore ATR unico e canonico per 'range anomalo'. Non essendo disponibile un ancoraggio esterno univoco, si usa una regola distribuzionale calcolata SOLO sul passato: percentile 90 su una finestra rolling causale di 252 barre H4, esclusa la barra corrente (shift di 1). 252 e' la stessa finestra gia' usata come convenzione di progetto per atr_percentile in server/research_scripts/phase5/build_market_state.py:P['atr_percentile_window'] - non scelta ad-hoc per questa sequence. Percentile 90 e finestra 252 sono FISSATI ORA.",
+      "not_tried_alternative_thresholds": "Nessun test di soglie alternative (es. percentili 85/95 o moltiplicatori fissi 1.2/1.5/1.8/2.0xATR) e' stato eseguito su dati NEXUS prima di congelare questa scelta."
+    },
+    "direction_policy": {
+      "rule": "BUY se close_t>open_t, SELL se close_t<open_t, NO_EVENT se close_t==open_t (doji/zero-body)",
+      "no_event_handling": "Una barra doji che supera la soglia di burst_ratio NON genera alcun sequence_event - conta come evento scartato, mai incluso in un pool con direzione arbitraria.",
+      "dependency_on_future_bars": "NESSUNA - dipende esclusivamente da open_t/close_t, gia' noti a observation_cutoff=close(t)."
+    },
+    "observation_timing": {
+      "event_a_index": "t (barra H4 con burst_ratio_t sopra soglia)",
+      "observation_cutoff_index": "close(t)",
+      "transition_complete_index": "close(t) - MOMENTUM_BURST non ha transition_conditions separate (market_sequence_registry_v1.json:SEQ-0015)",
+      "prediction_start_index": "close(t), verificato >= transition_complete_index da sequence_causality_guard.py",
+      "outcome_window_start_index": "t+1 - nessun prezzo con indice <= t entra nel calcolo dell'outcome."
+    },
+    "state_snapshot_pre_burst": {
+      "principle": "Tutte le feature di stato per il baseline matching sono calcolate a t-1, mai a t - la barra t e' essa stessa l'evento anomalo, includerla nel proprio stato di matching sarebbe circolare.",
+      "volatility_state_pre_burst": "Terzile (LOW/MED/HIGH) di atr_percentile a t-1, terzili fissati SOLO su development_discovery (convenzione H006/Phase7.1).",
+      "trend_state_pre_burst": "Terzile (DOWN/FLAT/UP) di ema_slope_atr_norm a t-1, stessa convenzione di terzili fissati solo su discovery.",
+      "directional_efficiency_excluded": "NON incluso come dimensione di matching separata: il meccanismo causale dichiarato (CLAIM-0042/0043) riguarda l'espansione di volatilita', non l'efficienza del movimento pregresso; trend_state_pre_burst copre gia' la componente direzionale rilevante. Aggiungere directional_efficiency aumenterebbe i gradi di liberta' del matching senza una giustificazione causale distinta, in contrasto con la scelta di questa family per 'poche dimensioni, pochi gradi di liberta''."
+    },
+    "episode_rule": {
+      "natural_horizon_bars": 40,
+      "overlap_policy": "COLLAPSE_TO_FIRST",
+      "rationale": "I burst possono comparire su barre H4 consecutive o quasi-consecutive durante la stessa espansione direzionale - non sono letture indipendenti dello stesso fenomeno. episode_gap_rule=3 barre (12h): due burst a non piu' di 3 barre di distanza sono trattati come la stessa espansione; un gap piu' ampio senza ulteriori burst e' trattato come espansione conclusa. COLLAPSE_TO_FIRST usa la prima barra dell'espansione come rappresentante (anti-cherry-pick, gia' incorporato in sequence_episode_engine.py). natural_horizon=40 barre H4, identico all'orizzonte dell'outcome primario - stessa convenzione di H006/Phase7.1, non scelto per questa sequence specifica.",
+      "event_cluster_rule_bars": 3,
+      "outcome_overlap_rule": {
+        "concept_distinction": "event_cluster_rule (3 barre) risponde 'e' la stessa espansione fisica locale?' - usato per EPISODE_VIEW. outcome_overlap_rule risponde 'le finestre di misura dell'outcome si sovrappongono, anche se le espansioni fisiche sono diverse?' - due episodi a gap>3 ma con outcome window sovrapposte NON sono osservazioni indipendenti solo perche' superano gap=3.",
+        "outcome_overlap_embargo_bars": 39,
+        "embargo_derivation": "natural_horizon-1 = 40-1 = 39: due eventi a distanza d hanno outcome window sovrapposte se e solo se d<natural_horizon (finestra [t+1,t+natural_horizon]), quindi l'ultimo d che sovrappone e' natural_horizon-1.",
+        "method_chosen": "D - combinazione predefinita: (1) declustering per embargo (embargo=39) sui rappresentanti di EPISODE_VIEW per ottenere INDEPENDENT_VIEW (sequence_episode_engine.build_outcome_independent_view), usata come n per Wilson/two-proportion/bootstrap su TUTTI i 7 outcome; (2) moving block bootstrap come diagnostica di dipendenza residua quando il candidato risulta DEPENDENCE_SENSITIVE anche dopo l'embargo.",
+        "alternatives_considered": {
+          "A_episode_clustering_overlap_aware": "Scartata come UNICA soluzione: ridefinire event_cluster_rule stesso in funzione dell'overlap dell'outcome confonderebbe due concetti distinti (espansione fisica locale vs indipendenza statistica dell'outcome) nello stesso parametro, perdendo la possibilita' di diagnosticare separatamente 'quante espansioni fisiche' vs 'quante osservazioni indipendenti'.",
+          "B_embargo_only": "Insufficiente da sola: un embargo a larghezza fissa=natural_horizon-1 elimina la pseudo-indipendenza pairwise ma non cattura dipendenza seriale residua su catene piu' lunghe (es. una sequenza di burst ciascuno a 38 barre dall'altro, che coprirebbe centinaia di barre pur essendo ogni singola coppia sotto l'embargo).",
+          "C_bootstrap_only": "Insufficiente da sola: senza prima correggere l'n nominale con l'embargo, il bootstrap a blocchi verrebbe applicato a un campione gia' contaminato da pseudo-indipendenza pairwise ovvia (esattamente il caso t=100/t=105 dell'esempio) - il bootstrap correggerebbe la STIMA di incertezza ma non l'inflazione grossolana del conteggio n stesso.",
+          "D_chosen": "Scelta: l'embargo risolve la pseudo-indipendenza pairwise ESATTA e ovvia (il problema descritto esplicitamente dall'utente), il bootstrap resta come rete di sicurezza per dipendenza residua piu' sottile - nessuna delle due soluzioni da sola e' sufficiente, la combinazione si allinea anche alla 'future_direction' gia' dichiarata in policies/minimum_evidence_gates.json (stimare direttamente l'incertezza con block bootstrap quando DEPENDENCE_SENSITIVE)."
+        },
+        "synthetic_tests_ref": "server/research_scripts/phase7/phase7_3/engine/sequence_episode_engine.py (Caso 4/5/6/7 nel __main__) + server/research_scripts/phase7/phase7_4/test_phase7_4a_integrity_patch.py"
+      }
+    },
+    "control_exclusion_window": {
+      "exclusion_buffer_bars": 40,
+      "rule": "Per un evento a event_a_index=t sono esclusi dal SUO pool di controllo: (1) la barra t stessa; (2) qualunque barra r con |r-t|<=40 barre (evita che un controllo condivida il tratto di prezzo usato per l'outcome dell'evento); (3) qualunque altra barra MOMENTUM_BURST dello stesso episode_id; (4) qualunque barra di split diverso (enforcement strutturale gia' esistente - BaselineEngineV4.match() + cross_split_safety.py, riusati senza modifiche)."
+    },
+    "candidate_family": {
+      "family_id": "SEQFAM-SEQ0015_MOMENTUM_BURST-CANDIDATES-V1",
+      "candidates": [
+        {
+          "candidate_id": "CAND-P74-SEQ0015-BOTH",
+          "direction": "BOTH",
+          "role": "PRIMARY_INFERENTIAL"
+        },
+        {
+          "candidate_id": "CAND-P74-SEQ0015-BUY",
+          "direction": "BUY",
+          "role": "PRIMARY_INFERENTIAL"
+        },
+        {
+          "candidate_id": "CAND-P74-SEQ0015-SELL",
+          "direction": "SELL",
+          "role": "PRIMARY_INFERENTIAL"
+        }
+      ],
+      "decision": "BOTH/BUY/SELL pre-registrati TUTTI E TRE ORA come famiglia inferenziale unica (stessa convenzione di Phase 7.1/RECLAIM) - non 'BOTH primary, BUY/SELL diagnostic'. Nessuno dei tre puo' essere promosso individualmente senza passare per l'intera sequenza discovery->internal_validation->locked_validation. La sequenza 'BOTH fallisce -> guardiamo BUY -> promuoviamo BUY' e' impossibile per costruzione: tutti e 3 sono valutati insieme sotto la stessa correzione FDR (vedi multiple_testing_full_family)."
+    },
+    "baseline_k": 5,
+    "baseline_minimum_control_count": 20,
+    "outcome_atr_normalization": {
+      "rule": "L'ATR per normalizzare l'outcome primario/secondario e' ATR_t (Wilder ATR(14) fino e incluso il bar t) - NON ATR_{t-1}.",
+      "why_this_differs_from_detection_denominator": "Per la soglia di rilevazione, ATR_t attenuerebbe meccanicamente l'anomalia misurata (auto-diluizione). Per la normalizzazione dell'outcome, ATR_t e' gia' interamente noto a prediction_start=close(t) (nessuna barra futura richiesta) e non c'e' alcun incentivo ad attenuare un effetto che a quel punto e' gia' un fatto: e' l'unita' di misura piu' recente e causalmente valida disponibile quando il clock dell'outcome parte. Le due scelte (ATR_{t-1} per la soglia, ATR_t per l'outcome) sono entrambe corrette e non contraddittorie - verificato esplicitamente come richiesto al punto 7."
+    },
+    "multiple_testing_full_family": {
+      "family_id": "SEQFAM-SEQ0015_MOMENTUM_BURST-FULL-COMPARISON-FAMILY-V1",
+      "members_description": "3 candidati (BOTH/BUY/SELL) x 7 outcome (1 primary + 6 secondary, OutcomeSurfaceV3.inferential_family_size()=7) = 21 confronti.",
+      "n_comparisons": 21,
+      "method": "Benjamini-Hochberg FDR, q=0.10 (multiple_testing_v2.benjamini_hochberg, riusato senza modifiche).",
+      "diagnostic_exclusion": "I 6 outcome DIAGNOSTIC_ONLY non entrano MAI in questa famiglia di confronto.",
+      "p_values_defined_for_all_21_members": true,
+      "verification_method": "build_seq0015_statistical_test_contract.py - ogni entry del contratto ha hypothesis_test/p_value_method non nulli, verificato programmaticamente (non solo dichiarato) prima di congelare questo spec."
+    },
+    "statistical_test_contract_ref": "server/research_scripts/phase7/phase7_4/seq0015_statistical_test_contract_v1.json",
+    "statistical_test_contract_summary": {
+      "binary_outcomes": [
+        "P_PLUS_1ATR_BEFORE_MINUS_1ATR",
+        "P_PLUS_0_5ATR_BEFORE_MINUS_1ATR",
+        "P_PLUS_1_5ATR_BEFORE_MINUS_1ATR"
+      ],
+      "binary_method": "WILSON_CI95 + two_proportion_z_test (invariato, gia' coerente - sec.2)",
+      "continuous_outcomes": [
+        "MFE",
+        "MAE",
+        "TIME_TO_MFE",
+        "PATH_EFFICIENCY"
+      ],
+      "continuous_method": "two_sample_block_bootstrap_percentile_p (nuovo, estensione esplicita di statistical_methods_policy.json sec.2 - Wilson NON applicabile a variabili continue)",
+      "n_inferential_outcomes_with_frozen_pvalue_method": 7,
+      "n_outcomes_moved_to_diagnostic": 0,
+      "note": "Tutti i 6 secondary avevano gia' un test inferenziale definibile con metodi ammessi dal progetto - nessuna demotion a DIAGNOSTIC_ONLY necessaria (verificato programmaticamente da build_seq0015_statistical_test_contract.py, non assunto)."
+    },
+    "failure_memory_terminology_correction_note": "Corretto (sec.4): H008_EVENT_VOLATILITY_EXPANSION usava ATR_t, che e' causale al momento della decisione (disponibile a close(t), nessun dato futuro) ma self-normalized/endogeno rispetto alla propria anomalia (TR_t contribuisce ad ATR_t e ne attenua meccanicamente burst_ratio) - MAI descritto come 'non causale' in questo documento o nei successivi.",
+    "provenance": {
+      "detector_source_hash": "7ed4f8e9443f1a8b77f0455a421fbbcb513b694655aa4d0278378feb7ec4b2bf",
+      "detector_source_file": "server/research_scripts/phase7/phase7_4/seq0015_momentum_burst_detector.py",
+      "frozen_parameters_hash": "6c7c15c8c1756483d3ed3d237e5695c3cdfb5b89e3fbdf538c79db343b4fda33",
+      "supersedes": "phase7_4_seq0015_frozen_spec_v1.json",
+      "v1_detector_source_hash": "7715fd01f2063a521d8988ee9c46ffa3f98d21c577423f71c2ae710dc88d84f4",
+      "v1_frozen_parameters_hash": "6310c1cfc24182d3e9138bb1354363b6254fa3595cda63808f3cfb4d2e1ee2ac",
+      "detector_source_hash_changed_from_v1": true,
+      "detector_source_hash_change_reason": "SOLO commenti/docstring (correzione terminologica sec.4 + nota Integrity Patch) - formula/soglia/direction verificati invariati programmaticamente, vedi 'formula_threshold_direction_diffs_vs_v1' (deve essere lista vuota).",
+      "formula_threshold_direction_diffs_vs_v1": [],
+      "supersession_reason": "Phase 7.4A Integrity Patch (2026-09-20): (1) event_cluster_rule vs outcome_overlap_rule non distinti in v1 - rischio di pseudo-indipendenza per episodi separati da >event_cluster_rule ma <natural_horizon; (2) uncertainty_method=WILSON_CI95 dichiarato genericamente in v1 non e' applicabile ai 4 outcome continui; (3) terminologia 'non causale' applicata impropriamente ad ATR_t nel novelty_note di v1."
+    }
+  },
+  "state_prerequisites": [
+    "volatility_state_pre_burst (terzile di atr_percentile a t-1, terzili fitted SOLO su development_discovery)",
+    "trend_state_pre_burst (terzile di ema_slope_atr_norm a t-1, terzili fitted SOLO su development_discovery)",
+    "direction (BUY/SELL da close_t vs open_t, NO_EVENT se doji)"
+  ],
+  "observation_cutoff_definition": "close(t) - nessun prezzo con indice > t puo' entrare nella feature di stato o nella soglia di rilevazione (burst_ratio_t e la sua soglia usano solo dati fino a t-1 per il denominatore/soglia, e fino a t per TR_t stesso).",
+  "prediction_start_definition": "close(t), coincide con transition_complete_index per costruzione (MOMENTUM_BURST non ha una fase di transizione separata) - verificato >= transition_complete_index da sequence_causality_guard.enforce_temporal_causality.",
+  "episode_gap_rule": 3,
+  "natural_horizon": 40,
+  "overlap_policy": "COLLAPSE_TO_FIRST",
+  "baseline_match_dimensions": [
+    "direction",
+    "volatility_state_pre_burst",
+    "trend_state_pre_burst"
+  ],
+  "baseline_k": 5,
+  "primary_outcome": "P_PLUS_1ATR_BEFORE_MINUS_1ATR",
+  "secondary_outcomes": [
+    "MFE",
+    "MAE",
+    "TIME_TO_MFE",
+    "PATH_EFFICIENCY",
+    "P_PLUS_0_5ATR_BEFORE_MINUS_1ATR",
+    "P_PLUS_1_5ATR_BEFORE_MINUS_1ATR"
+  ],
+  "diagnostic_outcomes": [
+    "P_PLUS_0_25ATR_BEFORE_MINUS_1ATR",
+    "P_PLUS_2ATR_BEFORE_MINUS_1ATR",
+    "TIME_TO_TARGET",
+    "CONTINUATION_PROBABILITY",
+    "REVERSAL_PROBABILITY",
+    "REALIZED_VOLATILITY_AFTER_SETUP"
+  ],
+  "minimum_sample_gate": {
+    "n_nominal_minimum": 30,
+    "cluster_count_minimum": 20,
+    "effective_n_minimum": 20,
+    "minimum_controls_per_match": 20,
+    "reference": "server/research_scripts/phase7/policies/minimum_evidence_gates.json - riusati senza override (nessuna continuita' diretta con RECLAIM/H006 che giustifichi un valore diverso per questa sequence, meccanismo indipendente)."
+  },
+  "effect_size_gate": {
+    "minimum_material_delta_p": 0.1,
+    "status": "POLICY_THRESHOLD (default di minimum_evidence_gates.json, NON l'override 0.15 usato in Phase 7.1)",
+    "rationale": "L'override 0.15 di Phase 7.1 era motivato dalla continuita' diretta con la famiglia RECLAIM/H006 gia' testata storicamente. Questa motivazione non si applica a MOMENTUM_BURST_CONTINUATION (meccanismo indipendente, mai testato prima con questa esatta formalizzazione causale, seppur RELATED_TO_PREVIOUS_FAILURE - vedi failure_memory_links). Si usa quindi il floor di default 0.10, deciso ORA prima di vedere qualunque risultato."
+  },
+  "uncertainty_method": "WILSON_CI95",
+  "multiple_testing_family": {
+    "family_id": "SEQFAM-SEQ0015_MOMENTUM_BURST-FULL-COMPARISON-FAMILY-V1",
+    "family_size": 21,
+    "members_description": "3 candidati (BOTH/BUY/SELL) x 7 outcome (1 primary + 6 secondary, OutcomeSurfaceV3.inferential_family_size()=7) = 21 - i 6 outcome DIAGNOSTIC_ONLY sono esclusi per costruzione.",
+    "method": "Benjamini-Hochberg FDR, q=0.10 (multiple_testing_v2.benjamini_hochberg, riusato senza modifiche)."
+  },
+  "failure_memory_links": {
+    "failure_memory_relation": "RELATED_TO_PREVIOUS_FAILURE",
+    "prior_failure_ids": [
+      "H008_EVENT_VOLATILITY_EXPANSION",
+      "H010_INTERACTION_BREAKOUT_x_VOLATILITY_EXPANSION"
+    ],
+    "direct_repeat_flag": false,
+    "related_failure_flag": true,
+    "novelty_note": "H008_EVENT_VOLATILITY_EXPANSION (Phase 5, REFUTED, NO_EDGE) testava lo stesso concetto di base - barra con true range anomalo rispetto ad ATR - con soglia tr>1.0xATR_t (server/research_scripts/phase5/build_events.py riga 99), USANDO ATR SAME-BAR (ATR_t - causale al momento della decisione, disponibile a close(t), ma self-normalized/endogeno rispetto alla propria anomalia: TR_t contribuisce ad ATR_t e ne attenua meccanicamente il rapporto di anomalia, verificato leggendo wilder_atr()). SEQ-0015 MOMENTUM_BURST_CONTINUATION NON e' un rename: (1) usa ATR_{t-1} come denominatore della soglia, non ATR_t (differenza metodologica verificata e motivata esplicitamente in frozen_parameters.detector_formula); (2) la soglia e' una regola distribuzionale causale (P90 rolling 252 barre) invece di un moltiplicatore fisso 1.0x mai giustificato esternamente; (3) il baseline matcha su stato PRE-BURST (t-1) con dimensioni dichiarate ORA (direction/volatility_state_pre_burst/trend_state_pre_burst), non sui terzili generici di H008; (4) usa l'architettura Episode-first (Phase 7.3) per non contare burst consecutivi della stessa espansione come osservazioni indipendenti, cosa che H008 non faceva affatto. Detto questo, il CONCETTO DI FONDO (barra a range anomalo -> continuazione) e' lo stesso gia' REFUTED in H008/H010 - dichiarato qui con piena trasparenza (RELATED_TO_PREVIOUS_FAILURE, non NOVEL) perche' 'NOVEL non deve significare nome diverso'. SEQ-0015 e' stata scelta come engine qualification family per motivi tecnici (poche dimensioni, H4 nativo, nessun gap dati), non perche' attesa piu' profittevole - un secondo REFUTED su questo meccanismo con l'engine v2 sarebbe comunque un risultato valido e atteso, non un fallimento della fase."
+  },
+  "no_rescue_clause": "Nessuna soglia, gate, dimensione di matching, orizzonte o outcome primario/secondario dichiarati in questo documento sara' modificato dopo aver visto un risultato di QUALUNQUE fase (discovery, internal_validation, locked_validation, final_holdout) di una futura Phase 7.4B - stesso principio di H006/Phase7.1. Un fallimento del candidato BOTH non autorizza una nuova ispezione isolata di BUY o SELL al di fuori della famiglia di confronto gia' congelata qui (candidate_family in frozen_parameters, sec.13).",
+  "direct_repeat_override": null
+}
