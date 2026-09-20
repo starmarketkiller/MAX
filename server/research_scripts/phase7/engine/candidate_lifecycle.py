@@ -11,7 +11,7 @@ SUPPORTED | BORDERLINE | REFUTED
 Stati laterali (raggiungibili da piu' punti, MAI bypassabili in uscita
 verso uno stato "migliore" nella stessa run):
 INSUFFICIENT_SAMPLE, DEPENDENCE_SENSITIVE, COST_SENSITIVE,
-NON_TRANSFERABLE, CONTAMINATED
+NON_TRANSFERABLE, CONTAMINATED, STRUCTURALLY_NON_VIABLE
 
 Integrity Patch (post-review, 2026-09-18): TERMINAL_STATES era una
 lista scritta a mano che poteva disallinearsi dal grafo reale in
@@ -42,6 +42,21 @@ uscite si applica quando piu' gate falliscono insieme vive in
 engine/discovery_gate_precedence.py (non qui: questo modulo impone SOLO
 quali transizioni sono strutturalmente ammesse, non la logica che
 sceglie fra esse).
+
+Structural Closure (Phase 7.4A, 2026-09-20): aggiunto lo stato
+STRUCTURALLY_NON_VIABLE, DISTINTO da INSUFFICIENT_SAMPLE. Quest'ultimo
+significa "il campione osservato in QUESTA run e' troppo piccolo"
+(potenzialmente risolvibile con piu' dati o un periodo piu' lungo);
+STRUCTURALLY_NON_VIABLE significa "il DESIGN stesso (detector+
+episode_gap+embargo) non puo' MAI produrre un numero sufficiente di
+osservazioni indipendenti sotto la frozen spec attuale, indipendentemente
+dalla quantita' di dati disponibili" - es. SEQ-0015: 249 eventi grezzi
+-> 210 episodi -> 1 sola osservazione INDEPENDENT_VIEW sull'intero
+periodo discovery (tasso di innesco troppo alto rispetto a
+natural_horizon/embargo). Raggiungibile SOLO da GENERATED (la scoperta
+avviene prima di qualunque accesso a outcome, quindi prima che un
+candidato possa mai raggiungere DISCOVERY_SIGNAL) - MAI da REFUTED (non
+e' un giudizio sull'effetto, nessun outcome e' stato letto).
 """
 
 
@@ -53,7 +68,7 @@ class InvalidTransitionError(Exception):
 # Ogni riga e' stata scelta per riflettere esattamente il percorso
 # dichiarato in sec.14, piu' le uscite laterali ammesse da quel punto.
 ALLOWED_TRANSITIONS = {
-    "GENERATED": {"DISCOVERY_SIGNAL", "INSUFFICIENT_SAMPLE", "CONTAMINATED"},
+    "GENERATED": {"DISCOVERY_SIGNAL", "INSUFFICIENT_SAMPLE", "CONTAMINATED", "STRUCTURALLY_NON_VIABLE"},
     "DISCOVERY_SIGNAL": {"INTERNAL_VALIDATION", "INSUFFICIENT_SAMPLE", "CONTAMINATED",
                           "REFUTED", "DEPENDENCE_SENSITIVE", "BORDERLINE"},
     "INTERNAL_VALIDATION": {"PRE_REGISTERED_CANDIDATE", "INSUFFICIENT_SAMPLE",
@@ -73,6 +88,7 @@ ALLOWED_TRANSITIONS = {
     "CONTAMINATED": set(),
     "NON_TRANSFERABLE": set(),
     "COST_SENSITIVE": set(),
+    "STRUCTURALLY_NON_VIABLE": set(),
 }
 
 ALL_STATES = set(ALLOWED_TRANSITIONS.keys())
@@ -163,6 +179,19 @@ if __name__ == "__main__":
     c7.transition("DEPENDENCE_SENSITIVE", "dependence-sensitive gia' in discovery")
     assert c7.state == "DEPENDENCE_SENSITIVE"
     print(f"DISCOVERY_SIGNAL -> DEPENDENCE_SENSITIVE diretto: {' -> '.join(c7.history)}")
+
+    # Dimostrazione 8 (Structural Closure, Phase 7.4A): STRUCTURALLY_NON_VIABLE
+    # e' raggiungibile SOLO da GENERATED, mai da REFUTED (non e' un giudizio
+    # sull'effetto - nessun outcome viene mai letto per raggiungere questo stato).
+    c8 = Candidate("DEMO-SETUP-008-SEQ0015")
+    c8.transition("STRUCTURALLY_NON_VIABLE", "INDEPENDENT_VIEW collassa a <=1 sotto la frozen spec - nessun outcome letto")
+    assert c8.state == "STRUCTURALLY_NON_VIABLE" and c8.is_terminal()
+    print(f"GENERATED -> STRUCTURALLY_NON_VIABLE diretto: {' -> '.join(c8.history)} (terminale: {c8.is_terminal()})")
+    try:
+        c6.transition("STRUCTURALLY_NON_VIABLE", "tentativo scorretto da REFUTED")
+        print("ERRORE: REFUTED -> STRUCTURALLY_NON_VIABLE avrebbe dovuto essere vietato!")
+    except InvalidTransitionError:
+        print("Caso OK: REFUTED -> STRUCTURALLY_NON_VIABLE correttamente vietato (non e' un giudizio sull'effetto).")
 
     # Invariante generale su TUTTI gli stati: nessuna uscita <=> terminale.
     for state in ALL_STATES:

@@ -75,6 +75,24 @@
       "signature": "CAUSAL_UNSAFE_FEATURE_USED_AS_STATE_CONDITION",
       "detection_mechanism": "feature_registry_v2.json: leakage_risk_from_status deve essere LOW (CAUSAL_SAFE) per ogni feature usata in state_conditions - HIGH/CAUSAL_UNSAFE bloccato meccanicamente a livello di candidate_generation_policy.json.",
       "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-009",
+      "title": "Design strutturalmente non-viabile: tasso di innesco del detector incompatibile con episode_gap/embargo",
+      "first_observed_in": "Phase 7.4A Baseline Matching Topology Audit - SEQ-0015 MOMENTUM_BURST_CONTINUATION, detector frozen P90/252 applicato a development_discovery reale",
+      "description": "Un detector con tasso di innesco locale (gap mediano fra eventi) sistematicamente inferiore a outcome_overlap_embargo_bars produce, per costruzione transitiva del clustering (assign_clusters), il collasso dell'INTERA finestra di osservazione in una SOLA osservazione indipendente (INDEPENDENT_VIEW<=1) - indipendentemente da quanti dati grezzi siano disponibili. Caso reale: SEQ-0015, 249 eventi grezzi -> 210 episodi (gap mediano ~7 barre, 100%<=embargo=39) -> 1 sola osservazione indipendente sull'intero periodo discovery. DISTINTO da INSUFFICIENT_SAMPLE (che presume che piu' dati risolverebbero il problema): qui e' il DESIGN (detector+episode_gap+embargo) stesso a essere incompatibile con l'orizzonte scelto, non la quantita' di dati.",
+      "signature": "INDEPENDENT_VIEW_COLLAPSE_UNDER_FROZEN_DESIGN",
+      "detection_mechanism": "Prima di autorizzare qualunque accesso a outcome per una nuova sequence family, calcolare INDEPENDENT_VIEW (build_outcome_independent_view) su development_discovery e verificare n>=minimum_sample_gate.n_nominal_minimum (es. 30) - se il conteggio e' insufficiente, il candidato deve transitare a STRUCTURALLY_NON_VIABLE (candidate_lifecycle.py, stato aggiunto in Phase 7.4A Structural Closure) PRIMA di ogni accesso a outcome, non dopo.",
+      "status": "MECHANICALLY_BLOCKABLE_NOW"
+    },
+    {
+      "pattern_id": "FAIL-010",
+      "title": "Policy di reuse dichiarata nel frozen spec ma non collegata alla catena di chiamata reale del motore",
+      "first_observed_in": "Phase 7.4A Baseline Matching Topology Audit - ControlReuseLedger (Phase 7.4A Final Statistical Integrity Patch) mai invocato da BaselineEngineV4.match()/SequenceBaselineAdapter",
+      "description": "Un modulo di enforcement (es. ControlReuseLedger, max_control_reuse_per_run=5) puo' essere scritto, testato in isolamento e persino referenziato in un frozen spec come se fosse attivo, senza essere REALMENTE integrato nella catena di chiamata del motore che dovrebbe applicarlo - producendo una falsa sensazione di sicurezza (la policy 'esiste' ma non protegge nulla). Nel caso reale, l'assenza di enforcement + l'assenza di un tie-break deterministico per dimensioni di match tutte categoriche ha prodotto un riuso reale di controlli fino a 37x (7x il tetto dichiarato) su dati discovery reali.",
+      "signature": "BASELINE_MATCHING_INTEGRITY_BUG",
+      "detection_mechanism": "Test di integrazione end-to-end (non solo unit test del modulo isolato) che verifichi che un modulo di enforcement dichiarato in un frozen spec sia REALMENTE esercitato dal path di chiamata usato in produzione - vedi test_phase7_4a_baseline_matching_integrity_patch.py.",
+      "status": "FIXED_IN_PHASE_7_4A - ControlReuseLedger ora integrato in BaselineEngineV4 (max_control_reuse_per_run, tie-break deterministico distance->reuse->id), SequenceBaselineAdapter lo richiede obbligatoriamente per ogni nuova sequence family."
     }
   ],
 

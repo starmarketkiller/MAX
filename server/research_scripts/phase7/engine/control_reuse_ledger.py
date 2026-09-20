@@ -34,6 +34,14 @@ class ControlReuseLedger:
         for cid in control_ids_used:
             self._usage_count[cid] = self._usage_count.get(cid, 0) + 1
 
+    def usage_count(self, control_id) -> int:
+        """Phase 7.4A Baseline Matching Integrity Patch - accessor pubblico
+        per il conteggio di riuso di UN controllo, usato da BaselineEngineV4
+        come tie-break deterministico (least-used) fra candidati a pari
+        distanza - additivo, non cambia il comportamento di nessun metodo
+        esistente."""
+        return self._usage_count.get(control_id, 0)
+
     def usage_report(self) -> dict:
         if not self._usage_count:
             return {"n_controls_used": 0, "max_reuse_observed": 0, "n_controls_at_cap": 0}
@@ -73,5 +81,10 @@ if __name__ == "__main__":
         print("ERRORE: tetto invalido non rifiutato!")
     except ValueError:
         print("Caso 4 OK: max_control_reuse_per_run<1 correttamente rifiutato.")
+
+    # Caso 5: usage_count() - accessor pubblico per il conteggio di UN controllo.
+    assert ledger.usage_count("C1") == 4 and ledger.usage_count("C2") == 1 and ledger.usage_count("C-NEVER-USED") == 0
+    print(f"Caso 5 OK: usage_count('C1')={ledger.usage_count('C1')}, usage_count('C2')={ledger.usage_count('C2')}, "
+          f"usage_count(mai usato)={ledger.usage_count('C-NEVER-USED')}")
 
     print("\nSelf-test control_reuse_ledger completato su dati SINTETICI.")

@@ -130,7 +130,7 @@ def main():
     # ---- Caso 5/6: baseline same-split enforcement + cross-split control rejected ----
     boundaries = {"discovery": (0, 100), "internal_validation": (100, 150),
                   "locked_validation": (150, 200), "final_holdout": (200, 250)}
-    adapter = SequenceBaselineAdapter(match_dimensions=["toy_state"], k=5, split_boundaries=boundaries)
+    adapter = SequenceBaselineAdapter(match_dimensions=["toy_state"], k=5, split_boundaries=boundaries, max_control_reuse_per_run=5)
     discovery_snaps = {i: {"toy_state": 1.0 if i % 2 == 0 else 0.0} for i in range(0, 100, 2)}
     adapter.fit_on_discovery_only(discovery_snaps)
     same_split_pool = list(range(0, 40, 2))
@@ -179,7 +179,7 @@ def main():
                                 outcome_window_start_index=11, sequence_event_id=e2e_event["sequence_event_id"])
     ev_view2, ep_view2 = build_event_and_episode_views([e2e_event], episode_gap_rule=10, natural_horizon=40,
                                                          overlap_policy="COLLAPSE_TO_FIRST")
-    e2e_adapter = SequenceBaselineAdapter(match_dimensions=["directional_efficiency"], k=5, split_boundaries=boundaries)
+    e2e_adapter = SequenceBaselineAdapter(match_dimensions=["directional_efficiency"], k=5, split_boundaries=boundaries, max_control_reuse_per_run=5)
     e2e_adapter.fit_on_discovery_only({i: {"directional_efficiency": 0.4 + 0.01 * i} for i in range(0, 100, 2)})
     e2e_pool = list(range(0, 40, 2))
     e2e_result = e2e_adapter.match_sequence_event(

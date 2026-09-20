@@ -20,14 +20,26 @@ class SequenceBaselineAdapter:
     Discovery Engine."""
 
     def __init__(self, match_dimensions: list, k: int, split_boundaries: dict,
-                 discovery_split_name: str = "discovery", feature_version: str = "feature_registry_v2"):
+                 max_control_reuse_per_run: int, discovery_split_name: str = "discovery",
+                 feature_version: str = "feature_registry_v2"):
+        """max_control_reuse_per_run (Phase 7.4A Baseline Matching Integrity
+        Patch) - OBBLIGATORIO, nessun default implicito: ogni NUOVA sequence
+        family che usa questo adapter deve dichiararlo esplicitamente nel
+        proprio frozen spec, esattamente come match_dimensions - mai
+        ereditato silenziosamente."""
         if not match_dimensions:
             raise ValueError("match_dimensions deve essere dichiarato esplicitamente dalla sequence family - "
                               "nessun default implicito ammesso (sec.6: 'non usare un pacchetto fisso').")
+        if not max_control_reuse_per_run or max_control_reuse_per_run < 1:
+            raise ValueError("max_control_reuse_per_run deve essere dichiarato esplicitamente (>=1) dalla sequence "
+                              "family - stesso principio di match_dimensions, nessun default implicito (Phase 7.4A "
+                              "Baseline Matching Integrity Patch).")
         self.engine = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
-                                        discovery_split_name=discovery_split_name, feature_version=feature_version)
+                                        discovery_split_name=discovery_split_name, feature_version=feature_version,
+                                        max_control_reuse_per_run=max_control_reuse_per_run)
         self.split_boundaries = split_boundaries
         self.match_dimensions = match_dimensions
+        self.max_control_reuse_per_run = max_control_reuse_per_run
 
     def fit_on_discovery_only(self, discovery_state_snapshots_by_row: dict):
         """discovery_state_snapshots_by_row: {row_index: state_snapshot} -
@@ -56,12 +68,27 @@ class SequenceBaselineAdapter:
     def audit_report(self, match_results: list):
         return build_quality_report(match_results)
 
+    def reuse_usage_report(self):
+        """Phase 7.4A Baseline Matching Integrity Patch - passthrough al
+        report del ledger reale dell'engine sottostante (mai None per una
+        sequence family, dato che max_control_reuse_per_run e' obbligatorio)."""
+        return self.engine.reuse_usage_report()
+
 
 if __name__ == "__main__":
     # Demo sintetica (nessun dato NEXUS) - dimostra il ciclo fit-discovery-only -> match -> audit.
     boundaries = {"discovery": (0, 200), "internal_validation": (200, 280),
                   "locked_validation": (280, 360), "final_holdout": (360, 440)}
-    adapter = SequenceBaselineAdapter(match_dimensions=["volatility_state"], k=5, split_boundaries=boundaries)
+
+    # Test negativo: max_control_reuse_per_run non dichiarato -> rifiutato (Phase 7.4A Integrity Patch).
+    try:
+        SequenceBaselineAdapter(match_dimensions=["volatility_state"], k=5, split_boundaries=boundaries, max_control_reuse_per_run=None)
+        print("ERRORE: max_control_reuse_per_run mancante avrebbe dovuto essere rifiutato!")
+    except ValueError:
+        print("max_control_reuse_per_run mancante correttamente rifiutato (obbligatorio, nessun default implicito).")
+
+    adapter = SequenceBaselineAdapter(match_dimensions=["volatility_state"], k=5, split_boundaries=boundaries,
+                                       max_control_reuse_per_run=5)
 
     discovery_snapshots = {i: {"volatility_state": "HIGH" if i % 2 == 0 else "LOW"} for i in range(0, 200, 2)}
     adapter.fit_on_discovery_only(discovery_snapshots)
@@ -85,4 +112,9 @@ if __name__ == "__main__":
 
     report = adapter.audit_report([result])
     print("audit_report:", report["match_quality_counts"])
-    print("\nSequenceBaselineAdapter verificato (nessuna logica di matching duplicata, solo adattamento).")
+
+    usage = adapter.reuse_usage_report()
+    assert usage is not None and usage["max_reuse_observed"] <= 5
+    print(f"reuse_usage_report: {usage} (mai None per una sequence family, tetto rispettato).")
+
+    print("\nSequenceBaselineAdapter verificato (nessuna logica di matching duplicata, solo adattamento; reuse enforcement Phase 7.4A attivo).")

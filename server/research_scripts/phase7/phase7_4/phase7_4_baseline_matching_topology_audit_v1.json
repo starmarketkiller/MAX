@@ -35,185 +35,81 @@
   },
   "control_reuse_topology": {
     "n_control_assignments": 1050,
-    "n_unique_controls": 83,
-    "max_reuse": 37,
-    "mean_reuse": 12.650602409638553,
-    "median_reuse": 3.0,
+    "n_unique_controls": 1050,
+    "max_reuse": 1,
+    "mean_reuse": 1.0,
+    "median_reuse": 1.0,
     "reuse_histogram": {
-      "1": 22,
-      "22": 2,
-      "2": 13,
-      "3": 8,
-      "37": 2,
-      "31": 10,
-      "35": 3,
-      "18": 8,
-      "17": 5,
-      "21": 3,
-      "19": 2,
-      "23": 5
+      "1": 1050
     },
-    "fraction_controls_reused_2plus": 0.7349397590361446,
-    "fraction_controls_reused_3plus": 0.5783132530120482,
-    "fraction_controls_reused_4plus": 0.4819277108433735,
-    "fraction_controls_reused_5plus": 0.4819277108433735,
-    "n_controls_hitting_cap_5": 40,
-    "max_reuse_exceeds_frozen_cap_5": true
+    "fraction_controls_reused_2plus": 0.0,
+    "fraction_controls_reused_3plus": 0.0,
+    "fraction_controls_reused_4plus": 0.0,
+    "fraction_controls_reused_5plus": 0.0,
+    "n_controls_hitting_cap_5": 0,
+    "max_reuse_exceeds_frozen_cap_5": false
   },
   "temporal_geometry_cross_event_control_gaps": {
-    "1": 0.0,
-    "5": 2.0,
-    "10": 4.0,
-    "25": 25.0,
-    "50": 50.0,
-    "75": 93.0,
-    "90": 160.0,
-    "95": 201.0,
-    "99": 292.0
+    "1": 9.0,
+    "5": 38.0,
+    "10": 75.0,
+    "25": 194.0,
+    "50": 414.0,
+    "75": 708.0,
+    "90": 1018.0,
+    "95": 1221.0,
+    "99": 1644.0
   },
   "outcome_window_overlap_proxy": {
     "horizon_bars": 40,
     "n_cross_event_control_pairs": 548625,
-    "fraction_pairs_overlapping": 0.3992563226247437,
+    "fraction_pairs_overlapping": 0.05272636135794031,
     "n_event_pairs_total": 21945,
-    "fraction_event_pairs_sharing_overlapping_control": 0.5242652084757348
+    "fraction_event_pairs_sharing_overlapping_control": 0.10243791296422876
   },
   "reuse_vs_temporal_geometry_table": [
     {
       "reuse_count": 1,
-      "n_controls_at_this_level": 22,
+      "n_controls_at_this_level": 1050,
       "median_gap_between_using_events": null,
       "p10_gap": null,
       "p90_gap": null,
       "fraction_gaps_within_horizon": null
-    },
-    {
-      "reuse_count": 2,
-      "n_controls_at_this_level": 13,
-      "median_gap_between_using_events": 6.0,
-      "p10_gap": 5.0,
-      "p90_gap": 18.0,
-      "fraction_gaps_within_horizon": 1.0
-    },
-    {
-      "reuse_count": 3,
-      "n_controls_at_this_level": 8,
-      "median_gap_between_using_events": 31.0,
-      "p10_gap": 12.0,
-      "p90_gap": 859.0,
-      "fraction_gaps_within_horizon": 0.6875
-    },
-    {
-      "reuse_count": 17,
-      "n_controls_at_this_level": 5,
-      "median_gap_between_using_events": 56.5,
-      "p10_gap": 7.0,
-      "p90_gap": 416.0,
-      "fraction_gaps_within_horizon": 0.4375
-    },
-    {
-      "reuse_count": 18,
-      "n_controls_at_this_level": 8,
-      "median_gap_between_using_events": 82.0,
-      "p10_gap": 6.0,
-      "p90_gap": 275.5,
-      "fraction_gaps_within_horizon": 0.3014705882352941
-    },
-    {
-      "reuse_count": 19,
-      "n_controls_at_this_level": 2,
-      "median_gap_between_using_events": 37.5,
-      "p10_gap": 6.0,
-      "p90_gap": 374.0,
-      "fraction_gaps_within_horizon": 0.5
-    },
-    {
-      "reuse_count": 21,
-      "n_controls_at_this_level": 3,
-      "median_gap_between_using_events": 44.0,
-      "p10_gap": 9.9,
-      "p90_gap": 144.80000000000052,
-      "fraction_gaps_within_horizon": 0.5
-    },
-    {
-      "reuse_count": 22,
-      "n_controls_at_this_level": 2,
-      "median_gap_between_using_events": 50.0,
-      "p10_gap": 10.0,
-      "p90_gap": 226.0,
-      "fraction_gaps_within_horizon": 0.47619047619047616
-    },
-    {
-      "reuse_count": 23,
-      "n_controls_at_this_level": 5,
-      "median_gap_between_using_events": 12.0,
-      "p10_gap": 5.0,
-      "p90_gap": 230.0,
-      "fraction_gaps_within_horizon": 0.7272727272727273
-    },
-    {
-      "reuse_count": 31,
-      "n_controls_at_this_level": 10,
-      "median_gap_between_using_events": 31.0,
-      "p10_gap": 6.0,
-      "p90_gap": 196.00000000000068,
-      "fraction_gaps_within_horizon": 0.6166666666666667
-    },
-    {
-      "reuse_count": 35,
-      "n_controls_at_this_level": 3,
-      "median_gap_between_using_events": 18.5,
-      "p10_gap": 6.0,
-      "p90_gap": 155.0,
-      "fraction_gaps_within_horizon": 0.7058823529411765
-    },
-    {
-      "reuse_count": 37,
-      "n_controls_at_this_level": 2,
-      "median_gap_between_using_events": 19.0,
-      "p10_gap": 6.0,
-      "p90_gap": 147.5999999999999,
-      "fraction_gaps_within_horizon": 0.7222222222222222
     }
   ],
   "bipartite_graph_diagnostics": {
     "n_event_nodes": 210,
-    "n_control_nodes": 83,
+    "n_control_nodes": 1050,
     "event_degree_distribution": {
       "5": 210
     },
     "control_degree_distribution": {
-      "1": 22,
-      "22": 2,
-      "2": 13,
-      "3": 8,
-      "37": 2,
-      "31": 10,
-      "35": 3,
-      "18": 8,
-      "17": 5,
-      "21": 3,
-      "19": 2,
-      "23": 5
+      "1": 1050
     },
-    "n_connected_components": 14,
+    "n_connected_components": 210,
     "component_sizes": [
-      48,
-      36,
-      36,
-      30,
-      30,
-      28,
-      23,
-      22,
-      8,
-      7,
-      7,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
+      6,
       6,
       6,
       6
     ],
-    "largest_component_fraction": 0.16382252559726962
+    "largest_component_fraction": 0.004761904761904762
   },
   "raw_match_records_sample": [
     {
@@ -324,36 +220,36 @@
     {
       "event_id": "3bf9764eab85d3ee",
       "event_index": 455,
-      "control_id": 531,
-      "control_index": 531,
+      "control_id": 537,
+      "control_index": 537,
       "match_distance": null
     },
     {
       "event_id": "3bf9764eab85d3ee",
       "event_index": 455,
-      "control_id": 532,
-      "control_index": 532,
+      "control_id": 538,
+      "control_index": 538,
       "match_distance": null
     },
     {
       "event_id": "3bf9764eab85d3ee",
       "event_index": 455,
-      "control_id": 533,
-      "control_index": 533,
+      "control_id": 539,
+      "control_index": 539,
       "match_distance": null
     },
     {
       "event_id": "3bf9764eab85d3ee",
       "event_index": 455,
-      "control_id": 534,
-      "control_index": 534,
+      "control_id": 633,
+      "control_index": 633,
       "match_distance": null
     },
     {
       "event_id": "3bf9764eab85d3ee",
       "event_index": 455,
-      "control_id": 535,
-      "control_index": 535,
+      "control_id": 645,
+      "control_index": 645,
       "match_distance": null
     },
     {
@@ -443,57 +339,57 @@
     {
       "event_id": "de995bc86eb42213",
       "event_index": 480,
-      "control_id": 540,
-      "control_index": 540,
+      "control_id": 825,
+      "control_index": 825,
       "match_distance": null
     },
     {
       "event_id": "de995bc86eb42213",
       "event_index": 480,
-      "control_id": 541,
-      "control_index": 541,
+      "control_id": 833,
+      "control_index": 833,
       "match_distance": null
     },
     {
       "event_id": "de995bc86eb42213",
       "event_index": 480,
-      "control_id": 764,
-      "control_index": 764,
+      "control_id": 835,
+      "control_index": 835,
       "match_distance": null
     },
     {
       "event_id": "8e52714e3d22a83a",
       "event_index": 499,
-      "control_id": 435,
-      "control_index": 435,
+      "control_id": 837,
+      "control_index": 837,
       "match_distance": null
     },
     {
       "event_id": "8e52714e3d22a83a",
       "event_index": 499,
-      "control_id": 436,
-      "control_index": 436,
+      "control_id": 838,
+      "control_index": 838,
       "match_distance": null
     },
     {
       "event_id": "8e52714e3d22a83a",
       "event_index": 499,
-      "control_id": 540,
-      "control_index": 540,
+      "control_id": 839,
+      "control_index": 839,
       "match_distance": null
     },
     {
       "event_id": "8e52714e3d22a83a",
       "event_index": 499,
-      "control_id": 541,
-      "control_index": 541,
+      "control_id": 840,
+      "control_index": 840,
       "match_distance": null
     },
     {
       "event_id": "8e52714e3d22a83a",
       "event_index": 499,
-      "control_id": 764,
-      "control_index": 764,
+      "control_id": 841,
+      "control_index": 841,
       "match_distance": null
     },
     {
@@ -534,20 +430,6 @@
     {
       "event_id": "2dd421136e79f7e5",
       "event_index": 536,
-      "control_id": 435,
-      "control_index": 435,
-      "match_distance": null
-    },
-    {
-      "event_id": "2dd421136e79f7e5",
-      "event_index": 536,
-      "control_id": 436,
-      "control_index": 436,
-      "match_distance": null
-    },
-    {
-      "event_id": "2dd421136e79f7e5",
-      "event_index": 536,
       "control_id": 467,
       "control_index": 467,
       "match_distance": null
@@ -565,6 +447,69 @@
       "control_id": 476,
       "control_index": 476,
       "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 477,
+      "control_index": 477,
+      "match_distance": null
+    },
+    {
+      "event_id": "2dd421136e79f7e5",
+      "event_index": 536,
+      "control_id": 478,
+      "control_index": 478,
+      "match_distance": null
     }
-  ]
+  ],
+  "before_after_comparison": {
+    "engine_config": {
+      "before": "max_control_reuse_per_run=None (pre-Integrity-Patch)",
+      "after": "max_control_reuse_per_run=5 (frozen SEQ-0015 policy, ledger attivo)"
+    },
+    "max_reuse": {
+      "before": 37,
+      "after": 1
+    },
+    "mean_reuse": {
+      "before": 12.650602409638553,
+      "after": 1.0
+    },
+    "n_unique_controls": {
+      "before": 83,
+      "after": 1050
+    },
+    "n_events_rejected_insufficient_pool": {
+      "before": 0,
+      "after": 0
+    },
+    "fraction_event_pairs_sharing_overlapping_control": {
+      "before": 0.5242652084757348,
+      "after": 0.10243791296422876
+    },
+    "n_connected_components": {
+      "before": 14,
+      "after": 210
+    },
+    "exact_pool_counterfactual_least_used_first": {
+      "n_pools_used": 210,
+      "n_unique_controls": 1050,
+      "max_reuse": 1,
+      "mean_reuse": 1.0,
+      "median_reuse": 1.0
+    },
+    "counterfactual_validity_check": {
+      "n_pools_captured": 210,
+      "candidate_pools_changed": 0,
+      "note": "Il counterfactual opera sugli STESSI pool esatti (eligible_candidate_pool) restituiti da BaselineEngineV4.match() nella run BEFORE - mai ricostruiti a mano, mai rigenerati - l'unica variabile che cambia e' la regola di selezione (ordine grezzo vs least-used-first)."
+    },
+    "reuse_report_before": null,
+    "reuse_report_after": {
+      "n_controls_used": 1050,
+      "max_reuse_observed": 1,
+      "n_controls_at_cap": 0,
+      "mean_reuse": 1.0
+    }
+  }
 }

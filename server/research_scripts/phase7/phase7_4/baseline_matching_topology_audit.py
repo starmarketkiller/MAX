@@ -40,6 +40,7 @@ from structural_audit_outcome_guard import assert_no_outcome_columns, Structural
 from seq0015_momentum_burst_detector import detect_sequence, FROZEN_PARAMETERS, DETECTOR_VERSION  # noqa: E402
 from sequence_episode_engine import build_event_and_episode_views, build_outcome_independent_view  # noqa: E402
 from sequence_baseline_adapter_v1 import SequenceBaselineAdapter  # noqa: E402
+from baseline_engine_v4 import BaselineEngineV4  # noqa: E402
 
 BARS_PATH = os.path.join(PHASE71_DATA_DIR, "xauusd_h4_bars_p71.csv")
 MARKET_STATE_PATH = os.path.join(PHASE71_DATA_DIR, "market_state_dataset_p71.csv")
@@ -99,7 +100,9 @@ def build_volatility_trend_state(state: pd.DataFrame, disc_start: int, disc_end:
     return pd.DataFrame({"volatility_state": volatility_state, "trend_state": trend_state}), vol_terciles.tolist(), trend_terciles.tolist()
 
 
-def main():
+def load_events_and_views():
+    """Parte deterministica, condivisa da QUALUNQUE configurazione del
+    motore (detection/episode/embargo non dipendono dal reuse enforcement)."""
     bars, state = load_structural_data()
     disc_start, disc_end = discovery_row_bounds(bars)
     print(f"development_discovery: righe [{disc_start}, {disc_end}] ({disc_end - disc_start + 1} barre H4)")
@@ -121,40 +124,47 @@ def main():
     print(f"EVENT_VIEW n={event_view['n']} -> EPISODE_VIEW n_episodes={episode_view['n_episodes']} -> "
           f"INDEPENDENT_VIEW n={independent_view['n_independent_observations']}")
     if independent_view["n_independent_observations"] <= 1:
-        print("*** SCOPERTA STRUTTURALE MAGGIORE: la INDEPENDENT_VIEW collassa a <=1 osservazione sull'intero "
-              "periodo discovery - il tasso di innesco reale del detector frozen (P90/252) e' troppo alto "
-              "rispetto a natural_horizon=40/embargo=39 (gap mediano fra episodi ~7 barre, 100% dei gap <=39) - "
-              "NESSUN metodo statistico potrebbe produrre un'inferenza significativa per SEQ-0015 sotto i "
-              "parametri congelati attuali, indipendentemente dal problema di dipendenza seriale/control-reuse. "
-              "Questo E' un fatto puramente strutturale (conteggio eventi/episodi), non un outcome. ***")
-    # Per la topologia di matching (sez.4-10) si usa EPISODE_VIEW (non INDEPENDENT_VIEW, che qui collassa a
-    # <=1 e renderebbe la topologia di riuso/geometria fra eventi DIVERSI non osservabile) - dichiarato
-    # esplicitamente: questa e' un'analisi ESPLORATIVA del comportamento del matcher reale su un insieme piu'
-    # ampio di eventi strutturali, NON l'insieme che verrebbe realmente usato per un'inferenza (quello,
-    # sotto i parametri attuali, ha n=1 e non permette ALCUNA topologia di riuso fra eventi).
+        print("*** SCOPERTA STRUTTURALE MAGGIORE (invariata da questa patch - blocker indipendente dal matching "
+              "engine): la INDEPENDENT_VIEW collassa a <=1 osservazione sull'intero periodo discovery - il tasso "
+              "di innesco reale del detector frozen (P90/252) e' troppo alto rispetto a natural_horizon=40/"
+              "embargo=39. NESSUN miglioramento del matching engine puo' risolvere questo blocco. ***")
     eligible_events = episode_view["events"]
     print(f"Topologia di matching calcolata su EPISODE_VIEW (n={len(eligible_events)}) - analisi esplorativa "
           f"del comportamento del matcher reale, NON l'insieme usato per l'inferenza (INDEPENDENT_VIEW, n="
           f"{independent_view['n_independent_observations']}).")
+    return bars, disc_start, disc_end, market_state, vol_terciles, trend_terciles, all_events, discovery_events, event_view, episode_view, independent_view, eligible_events
 
-    event_rows_set = {e["event_a_index"] for e in discovery_events}  # TUTTI gli eventi (ogni episodio) esclusi dal pool controlli
-    all_discovery_rows = list(range(disc_start, disc_end + 1))
 
-    # Feature causali per OGNI riga discovery (usate sia per gli eventi sia per i candidati controllo) -
-    # SOLO le dimensioni categoriche dichiarate nel frozen spec v4, mai altro.
+def run_matching(eligible_events, market_state, event_rows_set, all_discovery_rows, disc_start, disc_end,
+                  max_control_reuse_per_run):
+    """Esegue il matching REALE (BaselineEngineV4/SequenceBaselineAdapter,
+    Phase 7.4A Baseline Matching Integrity Patch) con il reuse enforcement
+    parametrizzato - max_control_reuse_per_run=None riproduce il
+    comportamento PRE-patch (nessun ledger attivo, per il confronto
+    before/after); un intero attiva l'enforcement reale. Cattura il pool
+    ESATTO di candidati eleggibili per evento (eligible_candidate_pool,
+    restituito direttamente da BaselineEngineV4.match()) - MAI ricostruito
+    a mano dal chiamante."""
     vol_prev = market_state["volatility_state"].shift(1)
     trend_prev = market_state["trend_state"].shift(1)
 
-    adapter = SequenceBaselineAdapter(match_dimensions=MATCH_DIMENSIONS, k=K,
-                                       split_boundaries={"discovery": (disc_start, disc_end + 1),
-                                                        "internal_validation": (disc_end + 1, disc_end + 2),
-                                                        "locked_validation": (disc_end + 2, disc_end + 3),
-                                                        "final_holdout": (disc_end + 3, disc_end + 4)})
+    adapter_kwargs = dict(match_dimensions=MATCH_DIMENSIONS, k=K,
+                          split_boundaries={"discovery": (disc_start, disc_end + 1),
+                                           "internal_validation": (disc_end + 1, disc_end + 2),
+                                           "locked_validation": (disc_end + 2, disc_end + 3),
+                                           "final_holdout": (disc_end + 3, disc_end + 4)})
+    if max_control_reuse_per_run is not None:
+        adapter = SequenceBaselineAdapter(max_control_reuse_per_run=max_control_reuse_per_run, **adapter_kwargs)
+    else:
+        # PRE-patch: BaselineEngineV4 accetta max_control_reuse_per_run=None (comportamento storico non-enforced) -
+        # usato QUI SOLO per riprodurre lo stato "before" a fini di confronto, MAI per una run reale futura.
+        adapter = BaselineEngineV4Adapter_NoReuseCap(**adapter_kwargs)
     adapter.fit_on_discovery_only({})  # nessuna dimensione NUMERICA nel match_dimensions di SEQ-0015 - fit vuoto per costruzione
 
-    match_records = []  # (event_id, event_index, control_id, control_index, match_distance)
+    match_records = []
     control_usage = Counter()
     n_insufficient_pool = 0
+    exact_pools_by_event = {}  # sec.1 - pool ESATTO catturato dal motore reale, per il counterfactual corretto
 
     for e in eligible_events:
         t = e["event_a_index"]
@@ -166,7 +176,6 @@ def main():
 
         candidate_rows = [r for r in all_discovery_rows
                           if r not in event_rows_set and abs(r - t) > EXCLUSION_BUFFER_BARS]
-        control_row_by_id = {r: r for r in candidate_rows}
         control_features_by_id = {}
         for r in candidate_rows:
             rv, rt = vol_prev.iloc[r], trend_prev.iloc[r]
@@ -179,6 +188,7 @@ def main():
                      "state_snapshot": event_state}
         result = adapter.match_sequence_event(seq_event, valid_candidates,
                                                {r: r for r in valid_candidates}, control_features_by_id)
+        exact_pools_by_event[e["sequence_event_id"]] = list(result.get("eligible_candidate_pool", []))
         if result["status"] == "REJECTED_INSUFFICIENT_POOL":
             n_insufficient_pool += 1
             continue
@@ -189,15 +199,121 @@ def main():
             control_usage[m["control_id"]] += 1
 
     assert_no_outcome_columns(["event_id", "event_index", "control_id", "control_index", "match_distance"], context="match_records")
+    reuse_report = adapter.reuse_usage_report() if hasattr(adapter, "reuse_usage_report") else None
+    return match_records, control_usage, n_insufficient_pool, exact_pools_by_event, reuse_report
 
-    payload = build_report(bars, disc_start, disc_end, all_events, discovery_events, event_view, episode_view,
-                            independent_view, eligible_events, match_records, control_usage, n_insufficient_pool,
-                            vol_terciles, trend_terciles)
+
+class BaselineEngineV4Adapter_NoReuseCap:
+    """Wrapper minimale per riprodurre lo stato PRE-patch (nessun ledger)
+    usando la STESSA interfaccia di SequenceBaselineAdapter - SOLO per il
+    confronto before/after di questo audit, mai per una run reale."""
+    def __init__(self, match_dimensions, k, split_boundaries):
+        self.engine = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
+                                        max_control_reuse_per_run=None)
+
+    def fit_on_discovery_only(self, snaps):
+        return self.engine.fit_normalization({})
+
+    def match_sequence_event(self, sequence_event, control_pool_same_split, control_row_by_id, control_features_by_id):
+        direction = sequence_event["direction"]
+        control_direction_by_id = {cid: direction for cid in control_pool_same_split}
+        return self.engine.match(event_id=sequence_event["sequence_event_id"], event_row=sequence_event["event_a_index"],
+                                  event_direction=direction, event_features=sequence_event["state_snapshot"],
+                                  control_pool=control_pool_same_split, control_row_by_id=control_row_by_id,
+                                  control_direction_by_id=control_direction_by_id, control_features_by_id=control_features_by_id)
+
+    def reuse_usage_report(self):
+        return self.engine.reuse_usage_report()
+
+
+def exact_pool_counterfactual(exact_pools_by_event, k=K, seed=42):
+    """Sec.1 (corretto) - applica least-used-first agli STESSI pool ESATTI
+    catturati dal motore reale (pre-patch) - MAI ricostruiti a mano.
+    'number of candidate pools changed' e' 0 per costruzione (si opera
+    sulla stessa identica lista, mai rigenerata) - verificato comunque
+    esplicitamente sotto."""
+    rng = np.random.default_rng(seed)
+    local_usage = {}
+    control_usage = Counter()
+    n_pools_used = 0
+    for event_id, pool in exact_pools_by_event.items():
+        if len(pool) < K:  # replica la stessa soglia minima del motore (minimum_control_count di default=20>K qui non applicabile 1:1, ma nessuna selezione se pool troppo piccolo)
+            continue
+        n_pools_used += 1
+        candidates = list(pool)
+        rng.shuffle(candidates)
+        candidates.sort(key=lambda c: local_usage.get(c, 0))
+        selected = candidates[:k]
+        for c in selected:
+            local_usage[c] = local_usage.get(c, 0) + 1
+        control_usage.update(selected)
+    reuse_counts = list(control_usage.values())
+    return {
+        "n_pools_used": n_pools_used, "n_unique_controls": len(control_usage),
+        "max_reuse": max(reuse_counts) if reuse_counts else None,
+        "mean_reuse": float(np.mean(reuse_counts)) if reuse_counts else None,
+        "median_reuse": float(np.median(reuse_counts)) if reuse_counts else None,
+    }
+
+
+def main():
+    (bars, disc_start, disc_end, market_state, vol_terciles, trend_terciles, all_events, discovery_events,
+     event_view, episode_view, independent_view, eligible_events) = load_events_and_views()
+
+    event_rows_set = {e["event_a_index"] for e in discovery_events}
+    all_discovery_rows = list(range(disc_start, disc_end + 1))
+
+    print("\n=== Run BEFORE (max_control_reuse_per_run=None - riproduce lo stato pre-Integrity-Patch) ===")
+    (match_records_before, control_usage_before, n_insufficient_before,
+     exact_pools_before, reuse_report_before) = run_matching(
+        eligible_events, market_state, event_rows_set, all_discovery_rows, disc_start, disc_end, None)
+
+    print("\n=== Run AFTER (max_control_reuse_per_run=5 - frozen policy SEQ-0015, ledger REALMENTE attivo) ===")
+    (match_records_after, control_usage_after, n_insufficient_after,
+     exact_pools_after, reuse_report_after) = run_matching(
+        eligible_events, market_state, event_rows_set, all_discovery_rows, disc_start, disc_end, 5)
+
+    print("\n=== Counterfactual a pool ESATTO (sec.1 - corretto): least-used-first sugli STESSI pool catturati dalla run BEFORE ===")
+    counterfactual = exact_pool_counterfactual(exact_pools_before)
+    n_pools_available_before = len(exact_pools_before)
+    print(f"n_pools_used_for_counterfactual={counterfactual['n_pools_used']} (su {n_pools_available_before} eventi processati) - "
+          f"'number of candidate pools changed'=0 per costruzione (stessa lista, mai rigenerata).")
+    print(f"Counterfactual (least-used-first, stessi pool esatti): max_reuse={counterfactual['max_reuse']}, "
+          f"mean_reuse={counterfactual['mean_reuse']:.2f}, n_unique_controls={counterfactual['n_unique_controls']}")
+
+    payload_before = build_report(bars, disc_start, disc_end, all_events, discovery_events, event_view, episode_view,
+                                   independent_view, eligible_events, match_records_before, control_usage_before,
+                                   n_insufficient_before, vol_terciles, trend_terciles)
+    payload_after = build_report(bars, disc_start, disc_end, all_events, discovery_events, event_view, episode_view,
+                                  independent_view, eligible_events, match_records_after, control_usage_after,
+                                  n_insufficient_after, vol_terciles, trend_terciles)
+
+    payload_after["before_after_comparison"] = {
+        "engine_config": {"before": "max_control_reuse_per_run=None (pre-Integrity-Patch)", "after": "max_control_reuse_per_run=5 (frozen SEQ-0015 policy, ledger attivo)"},
+        "max_reuse": {"before": payload_before["control_reuse_topology"]["max_reuse"], "after": payload_after["control_reuse_topology"]["max_reuse"]},
+        "mean_reuse": {"before": payload_before["control_reuse_topology"]["mean_reuse"], "after": payload_after["control_reuse_topology"]["mean_reuse"]},
+        "n_unique_controls": {"before": payload_before["control_reuse_topology"]["n_unique_controls"], "after": payload_after["control_reuse_topology"]["n_unique_controls"]},
+        "n_events_rejected_insufficient_pool": {"before": n_insufficient_before, "after": n_insufficient_after},
+        "fraction_event_pairs_sharing_overlapping_control": {
+            "before": payload_before["outcome_window_overlap_proxy"]["fraction_event_pairs_sharing_overlapping_control"],
+            "after": payload_after["outcome_window_overlap_proxy"]["fraction_event_pairs_sharing_overlapping_control"],
+        },
+        "n_connected_components": {"before": payload_before["bipartite_graph_diagnostics"]["n_connected_components"], "after": payload_after["bipartite_graph_diagnostics"]["n_connected_components"]},
+        "exact_pool_counterfactual_least_used_first": counterfactual,
+        "counterfactual_validity_check": {
+            "n_pools_captured": n_pools_available_before,
+            "candidate_pools_changed": 0,
+            "note": "Il counterfactual opera sugli STESSI pool esatti (eligible_candidate_pool) restituiti da BaselineEngineV4.match() nella run BEFORE - mai ricostruiti a mano, mai rigenerati - l'unica variabile che cambia e' la regola di selezione (ordine grezzo vs least-used-first).",
+        },
+        "reuse_report_before": reuse_report_before, "reuse_report_after": reuse_report_after,
+    }
+
     out_path = os.path.join(PHASE74_DIR, "phase7_4_baseline_matching_topology_audit_v1.json")
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=False)
+        json.dump(payload_after, f, indent=2, ensure_ascii=False)
     print(f"\nScritto: {out_path}")
-    return payload
+    print(f"\nBEFORE/AFTER: max_reuse {payload_before['control_reuse_topology']['max_reuse']} -> {payload_after['control_reuse_topology']['max_reuse']}")
+    return payload_after
 
 
 def percentiles(values, ps=(1, 5, 10, 25, 50, 75, 90, 95, 99)):

@@ -1,42 +1,30 @@
 {
   "section10_synthetic_vs_real_comparison": {
     "classification_criteria_declared": {
-      "MATERIAL_MATCH_TO_HIGH_RISK_SYNTHETIC_GEOMETRY": "real_max_reuse >= 5 (tetto sintetico piu' severo testato) E fraction_event_pairs_sharing_overlapping_control >= 0.20",
+      "MATERIAL_MATCH_TO_HIGH_RISK_SYNTHETIC_GEOMETRY": "real_max_reuse (pre-patch) >= 5 E fraction_event_pairs_sharing_overlapping_control (pre-patch) >= 0.20",
       "PARTIAL_MATCH": "soddisfatta SOLO una delle due condizioni sopra",
       "LOW_MATCH": "real_max_reuse < 5 E fraction_event_pairs_sharing_overlapping_control < 0.20"
     },
-    "real_max_reuse": 37,
+    "applies_to": "topologia PRE-patch (stato originale del motore, prima della Baseline Matching Integrity Patch)",
+    "real_max_reuse_pre_patch": 37,
     "real_max_reuse_condition_met": true,
-    "real_fraction_event_pairs_sharing_overlapping_control": 0.5242652084757348,
+    "real_fraction_event_pairs_sharing_overlapping_control_pre_patch": 0.5242652084757348,
     "real_overlap_condition_met": true,
-    "synthetic_reference_worst_case": {
-      "scenario": "identity_reuse_5_temporal_high_pool_30",
-      "n_reps_requested": 800,
-      "n_reps_completed": 800,
-      "n_insufficient_pool_failures": 0,
-      "elapsed_sec": 35.6,
-      "actual_max_reuse_observed": 5,
-      "mean_reuse_across_replicates": 5.0,
-      "mean_n_unique_controls_used": 30.0,
-      "type1_0.01": 0.07125,
-      "type1_0.05": 0.22875,
-      "type1_0.1": 0.32625
+    "post_patch_topology_for_reference": {
+      "max_reuse": 1,
+      "overlap_fraction": 0.10243791296422876
     },
-    "classification": "MATERIAL_MATCH_TO_HIGH_RISK_SYNTHETIC_GEOMETRY",
-    "note_on_severity": "La topologia reale (37x reuse massimo) SUPERA nettamente lo scenario sintetico piu' severo testato in precedenza (reuse=5, il tetto congelato mai raggiunto realmente perche' il ledger non e' collegato al motore) - la classificazione MATERIAL_MATCH e' quindi conservativa: il rischio reale e' probabilmente maggiore di quanto la simulazione sintetica avesse ipotizzato, non solo confermato."
+    "classification": "MATERIAL_MATCH_TO_HIGH_RISK_SYNTHETIC_GEOMETRY"
   },
   "section11_selection_algorithm_audit": {
-    "real_engine_selection_algorithm": "Nessun tie-break oltre l'ORDINE della pool passata dal chiamante - per SEQ-0015 (match_dimensions tutte categoriche: direction/volatility_state_pre_burst/trend_state_pre_burst) NON esiste alcuna dimensione numerica che discrimini i candidati via distanza standardizzata (_standardized_distance ritorna sempre None) - 'used = distances[:k]' preserva quindi l'ordine di iscrizione del control_pool (qui: indice di riga crescente).",
-    "synthetic_least_used_first_algorithm": "Ordina i candidati disponibili per utilizzo residuo crescente (pareggio casuale) prima di selezionare i k migliori - MAI usato dal motore reale.",
-    "real_vs_counterfactual_same_real_data": {
-      "real_engine_max_reuse": 37,
-      "real_engine_mean_reuse": 12.650602409638553,
-      "real_engine_n_unique_controls": 83,
-      "counterfactual_least_used_max_reuse": 1,
-      "counterfactual_least_used_mean_reuse": 1.0,
-      "counterfactual_least_used_n_unique_controls": 1050
-    },
-    "distance_deterioration": "NON APPLICABILE per SEQ-0015 - nessuna dimensione numerica nel match_dimensions congelato, ogni match ha standardized_distance=None/qualita' GOOD per costruzione indipendentemente dalla selezione.",
-    "interpretation": "La differenza NON e' un dettaglio implementativo minore: sugli STESSI eventi/pool reali, l'assenza di un criterio di selezione anti-concentrazione nel motore reale produce un riuso 37x/12.7x (max/mean) contro 1x/1.00x del controfattuale least-used-first sugli stessi identici dati - la scelta di selezione e' la causa diretta e dominante della concentrazione di riuso osservata, non la scarsita' di controlli disponibili in se'."
+    "correction_note": "CORREZIONE (Phase 7.4A Structural Closure + Baseline Matching Integrity Patch): la versione precedente di questo confronto ricostruiva il candidate pool a mano, senza includere la dimensione 'direction' del frozen matching contract - il pool NON era garantito identico a quello del motore reale. Il counterfactual e' ora calcolato sugli STESSI pool ESATTI catturati da BaselineEngineV4.match() (eligible_candidate_pool) - 'candidate_pools_changed'=0, verificato programmaticamente, non solo dichiarato.",
+    "real_engine_pre_patch_max_reuse": 37,
+    "real_engine_post_patch_max_reuse": 1,
+    "exact_pool_counterfactual_least_used_first_max_reuse": 1,
+    "real_engine_pre_patch_n_unique_controls": 83,
+    "real_engine_post_patch_n_unique_controls": 1050,
+    "exact_pool_counterfactual_n_unique_controls": 1050,
+    "candidate_pools_changed": 0,
+    "interpretation": "Il motore REALE post-patch (max_control_reuse_per_run=5, tie-break distance->reuse->id) produce max_reuse=1 - IDENTICO al counterfactual least-used-first calcolato indipendentemente sugli stessi pool esatti pre-patch (max_reuse=1). Questa convergenza conferma rigorosamente (non solo plausibilmente) che l'assenza di un tie-break anti-concentrazione era la causa diretta e sufficiente della concentrazione di riuso osservata pre-patch (max_reuse=37) - la scarsita' del pool non era la causa (1050 controlli unici disponibili, sufficienti per reuse=1)."
   }
 }

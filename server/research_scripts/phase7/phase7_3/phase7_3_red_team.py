@@ -90,7 +90,7 @@ def main():
 
     # 5. direction mismatch - un controllo di direzione diversa non deve mai comparire nei match
     def a5():
-        adapter = SequenceBaselineAdapter(match_dimensions=["toy_state"], k=5, split_boundaries=boundaries)
+        adapter = SequenceBaselineAdapter(match_dimensions=["toy_state"], k=5, split_boundaries=boundaries, max_control_reuse_per_run=5)
         adapter.fit_on_discovery_only({i: {"toy_state": 1.0} for i in range(0, 100, 2)})
         pool = list(range(0, 40, 2))
         result = adapter.engine.match(

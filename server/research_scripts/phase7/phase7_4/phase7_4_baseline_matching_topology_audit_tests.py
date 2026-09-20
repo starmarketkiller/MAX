@@ -53,8 +53,18 @@ def test_topology_audit_artifact_structure():
           f"EVENT_VIEW={funnel['n_event_view']} EPISODE_VIEW={funnel['n_episode_view']} INDEPENDENT_VIEW={funnel['n_independent_view_eligible']}")
 
     reuse = audit["control_reuse_topology"]
-    check("real_engine_max_reuse_exceeds_frozen_cap_5", reuse["max_reuse_exceeds_frozen_cap_5"] is True,
-          f"max_reuse={reuse['max_reuse']}")
+    # L'artifact principale rappresenta ORA lo stato POST-Integrity-Patch (max_control_reuse_per_run=5,
+    # ledger REALMENTE attivo) - il tetto non deve MAI essere superato (era il bug pre-patch, corretto qui).
+    check("post_patch_engine_never_exceeds_frozen_cap_5", reuse["max_reuse_exceeds_frozen_cap_5"] is False,
+          f"max_reuse={reuse['max_reuse']} (atteso <=5 dopo la Baseline Matching Integrity Patch)")
+    check("before_after_comparison_present", "before_after_comparison" in audit)
+    if "before_after_comparison" in audit:
+        comp = audit["before_after_comparison"]
+        check("before_pre_patch_max_reuse_exceeded_cap_confirming_original_bug", comp["max_reuse"]["before"] > 5,
+              f"max_reuse_before={comp['max_reuse']['before']} (atteso >5, a conferma del bug originale)")
+        check("after_post_patch_max_reuse_within_cap", comp["max_reuse"]["after"] <= 5,
+              f"max_reuse_after={comp['max_reuse']['after']}")
+        check("counterfactual_validity_pools_unchanged", comp["counterfactual_validity_check"]["candidate_pools_changed"] == 0)
     check("reuse_histogram_sums_to_unique_controls",
           sum(reuse["reuse_histogram"].values()) == reuse["n_unique_controls"])
     check("control_assignments_equals_events_matched_times_k",
@@ -85,12 +95,17 @@ def test_no_outcome_leakage_in_raw_match_records():
 def test_counterfactual_selection_comparison():
     comparison = load("phase7_4_topology_vs_synthetic_comparison_v1.json")
     sec11 = comparison["section11_selection_algorithm_audit"]
-    real_max = sec11["real_vs_counterfactual_same_real_data"]["real_engine_max_reuse"]
-    cf_max = sec11["real_vs_counterfactual_same_real_data"]["counterfactual_least_used_max_reuse"]
-    check("counterfactual_least_used_reduces_reuse_dramatically", cf_max < real_max,
-          f"real_engine_max_reuse={real_max}, counterfactual_max_reuse={cf_max}")
+    check("candidate_pools_changed_is_zero_ie_valid_comparison", sec11["candidate_pools_changed"] == 0,
+          "il counterfactual deve operare sugli stessi pool esatti - se non e' 0 il confronto non e' valido (fix richiesto dall'utente)")
+    real_max_pre = sec11["real_engine_pre_patch_max_reuse"]
+    cf_max = sec11["exact_pool_counterfactual_least_used_first_max_reuse"]
+    real_max_post = sec11["real_engine_post_patch_max_reuse"]
+    check("counterfactual_reduces_reuse_dramatically_vs_pre_patch", cf_max < real_max_pre,
+          f"real_engine_pre_patch_max_reuse={real_max_pre}, counterfactual_max_reuse={cf_max}")
     check("counterfactual_confirms_pool_not_scarce", cf_max <= 2,
           f"counterfactual_max_reuse={cf_max} (atteso ~1, confermando che la scarsita' non e' la causa)")
+    check("post_patch_real_engine_matches_counterfactual_exactly", real_max_post == cf_max,
+          f"post_patch={real_max_post}, counterfactual={cf_max} - il motore reale patchato e il counterfactual indipendente devono convergere sullo stesso risultato")
 
 
 def test_classification_verdict_matches_declared_criteria():

@@ -1,0 +1,33 @@
+{
+  "sequence_family_id": "SEQFAM-SEQ0015_MOMENTUM_BURST_CONTINUATION_V1",
+  "SEQ0015_STATUS": "STRUCTURALLY_NON_VIABLE_UNDER_FROZEN_SPEC",
+  "lifecycle_transition": {
+    "history": [
+      "GENERATED",
+      "STRUCTURALLY_NON_VIABLE"
+    ],
+    "is_terminal": true
+  },
+  "distinction_from_other_categories": {
+    "NOT_REFUTED_EDGE": "REFUTED implica che un effetto e' stato misurato e trovato nullo/contrario - QUI nessun outcome e' mai stato letto o calcolato.",
+    "NOT_INSUFFICIENT_SAMPLE": "INSUFFICIENT_SAMPLE implica che il campione di QUESTA run e' troppo piccolo, potenzialmente risolvibile con piu' dati o un periodo piu' lungo di discovery.",
+    "NOT_NO_EDGE": "NO_EDGE (o NO_SUPPORTED_CANDIDATE, Phase 7.1) implica che l'inferenza e' stata eseguita e non ha superato i gate - QUI l'inferenza non ha mai potuto iniziare.",
+    "IS_STRUCTURALLY_NON_VIABLE": "Il DESIGN stesso (detector P90/252 + episode_gap=3 + natural_horizon=40 + embargo=39) applicato a development_discovery reale produce un numero di osservazioni indipendenti insufficiente per QUALUNQUE metodo statistico, indipendentemente dalla quantita' di dati disponibili nella finestra data."
+  },
+  "evidence": {
+    "n_event_view": 249,
+    "n_episode_view": 210,
+    "n_independent_view": 1,
+    "median_episode_gap_bars": 7.0,
+    "episode_gap_rule_bars": 3,
+    "natural_horizon_bars": 40,
+    "outcome_overlap_embargo_bars": 39,
+    "minimum_sample_gate_n_nominal_minimum": 30,
+    "shortfall": "n_independent_view=1 << minimum_sample_gate.n_nominal_minimum=30"
+  },
+  "no_rescue_applied": "NON sono stati modificati P90/252/natural_horizon=40/embargo=39 per rendere SEQ-0015 testabile - questo sarebbe un redesign post-preregistration informato dalla firing topology, esplicitamente vietato. Se in futuro si vorra' studiare una variante con parametri diversi, dovra' diventare una NUOVA sequence spec/hypothesis con nuova identita' e nuova preregistrazione - MAI una modifica silenziosa di SEQ-0015.",
+  "failure_memory_pattern_ref": "FAIL-009 (failure_memory_registry_v1.json) - INDEPENDENT_VIEW_COLLAPSE_UNDER_FROZEN_DESIGN",
+  "no_outcome_data_accessed": true,
+  "no_edge_discovery_performed": true,
+  "negative_check_refuted_cannot_reach_structurally_non_viable": true
+}
