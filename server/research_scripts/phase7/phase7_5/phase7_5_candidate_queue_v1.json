@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-09-20T20:53:56.945502+00:00",
+  "generation_script": "phase7/phase7_5/build_phase7_5_structural_feasibility_results.py",
+  "canonical_sha256": "0613417f21f52243ae77d3363fa72c948600751cfe4f082a206441b4fab222ee",
+  "payload": {
+    "ranking_policy": "ESCLUSIVAMENTE strutturale (testabilita', completezza detector, chiarezza implementativa) - MAI probabilita' di edge/expected profitability/likelihood of success (sec.10 della richiesta Phase 7.5A).",
+    "READY_FOR_PREREGISTRATION": [],
+    "STRUCTURALLY_BLOCKED_ON_CURRENT_PARTITION": [],
+    "NEEDS_DETECTOR_FORMALIZATION_ORDERED_BY_STRUCTURAL_COMPLETENESS": [
+      {
+        "sequence_id": "SEQ-0009",
+        "detector_status": "EXISTING_RAW_EVENT_DETECTOR_NOT_YET_FRAMED_AS_SEQUENCE",
+        "n_missing_degrees_of_freedom": 6,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      },
+      {
+        "sequence_id": "SEQ-0001",
+        "detector_status": "NO_DETECTOR_CODE_YET",
+        "n_missing_degrees_of_freedom": 8,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "detector_source_ref",
+          "detector_parameters",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      },
+      {
+        "sequence_id": "SEQ-0014",
+        "detector_status": "NO_DETECTOR_CODE_YET",
+        "n_missing_degrees_of_freedom": 8,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "detector_source_ref",
+          "detector_parameters",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      },
+      {
+        "sequence_id": "SEQ-0016",
+        "detector_status": "NO_DETECTOR_CODE_YET",
+        "n_missing_degrees_of_freedom": 8,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "detector_source_ref",
+          "detector_parameters",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      },
+      {
+        "sequence_id": "SEQ-0020",
+        "detector_status": "NO_DETECTOR_CODE_YET",
+        "n_missing_degrees_of_freedom": 8,
+        "missing_degrees_of_freedom": [
+          "detector_frozen",
+          "detector_source_ref",
+          "detector_parameters",
+          "episode_gap_rule",
+          "overlap_policy",
+          "proposed_natural_horizon",
+          "proposed_outcome_overlap_embargo_bars",
+          "event_row_indices"
+        ]
+      }
+    ],
+    "seq0015_status": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "no_edge_score_field": true
+  }
+}
