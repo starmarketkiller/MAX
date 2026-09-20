@@ -1,0 +1,206 @@
+{
+  "section3_pool_size_sweep_max_reuse5": {
+    "minimum_feasible_pool_size": 30,
+    "rows": [
+      {
+        "scenario": "pool_size_minimum_feasible_30",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 31.5,
+        "actual_max_reuse_observed": 5,
+        "mean_reuse_across_replicates": 5.0,
+        "mean_n_unique_controls_used": 30.0,
+        "type1_0.01": 0.0125,
+        "type1_0.05": 0.0775,
+        "type1_0.1": 0.15375
+      },
+      {
+        "scenario": "pool_size_1_5x_minimum_45",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 33.2,
+        "actual_max_reuse_observed": 4,
+        "mean_reuse_across_replicates": 3.333333333333334,
+        "mean_n_unique_controls_used": 45.0,
+        "type1_0.01": 0.02,
+        "type1_0.05": 0.07125,
+        "type1_0.1": 0.13875
+      },
+      {
+        "scenario": "pool_size_2x_minimum_60",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 34.0,
+        "actual_max_reuse_observed": 3,
+        "mean_reuse_across_replicates": 2.5,
+        "mean_n_unique_controls_used": 60.0,
+        "type1_0.01": 0.00875,
+        "type1_0.05": 0.05125,
+        "type1_0.1": 0.09875
+      },
+      {
+        "scenario": "pool_size_large_pool_150",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 35.0,
+        "actual_max_reuse_observed": 1,
+        "mean_reuse_across_replicates": 1.0,
+        "mean_n_unique_controls_used": 150.0,
+        "type1_0.01": 0.0025,
+        "type1_0.05": 0.0325,
+        "type1_0.1": 0.07125
+      }
+    ]
+  },
+  "section4_max_reuse_sweep_minimum_pool_per_level": {
+    "rows": [
+      {
+        "scenario": "max_reuse_1_at_own_minimum_pool_150",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 34.4,
+        "actual_max_reuse_observed": 1,
+        "mean_reuse_across_replicates": 1.0,
+        "mean_n_unique_controls_used": 150.0,
+        "type1_0.01": 0.00375,
+        "type1_0.05": 0.02625,
+        "type1_0.1": 0.08375
+      },
+      {
+        "scenario": "max_reuse_2_at_own_minimum_pool_75",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 34.9,
+        "actual_max_reuse_observed": 2,
+        "mean_reuse_across_replicates": 2.0,
+        "mean_n_unique_controls_used": 75.0,
+        "type1_0.01": 0.0075,
+        "type1_0.05": 0.05,
+        "type1_0.1": 0.1025
+      },
+      {
+        "scenario": "max_reuse_3_at_own_minimum_pool_50",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 34.5,
+        "actual_max_reuse_observed": 3,
+        "mean_reuse_across_replicates": 3.0,
+        "mean_n_unique_controls_used": 50.0,
+        "type1_0.01": 0.02,
+        "type1_0.05": 0.0625,
+        "type1_0.1": 0.12375
+      },
+      {
+        "scenario": "max_reuse_5_at_own_minimum_pool_30",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 34.3,
+        "actual_max_reuse_observed": 5,
+        "mean_reuse_across_replicates": 5.0,
+        "mean_n_unique_controls_used": 30.0,
+        "type1_0.01": 0.01625,
+        "type1_0.05": 0.09375,
+        "type1_0.1": 0.17
+      }
+    ]
+  },
+  "section5_overlapping_control_sets": {
+    "old_off_policy_generator_audit": {
+      "description": "Misura (non esecuzione statistica) di quante volte un indice-controllo della timeline compare fra i selezionati nel VECCHIO generatore overlapping_control_sets (nessun ledger, nessun tracciamento di identita').",
+      "max_reuse_observed_old_generator": 8,
+      "n_indices_exceeding_frozen_cap_of_5": 11,
+      "frozen_cap": 5,
+      "violates_frozen_policy": true
+    },
+    "on_policy_reconstruction_max_reuse5": {
+      "scenario": "overlapping_on_policy_max_reuse5",
+      "n_reps_requested": 800,
+      "n_reps_completed": 800,
+      "n_insufficient_pool_failures": 0,
+      "elapsed_sec": 34.2,
+      "actual_max_reuse_observed": 5,
+      "mean_reuse_across_replicates": 3.9029605263157894,
+      "mean_n_unique_controls_used": 38.43875,
+      "type1_0.01": 0.02,
+      "type1_0.05": 0.095,
+      "type1_0.1": 0.1575
+    }
+  },
+  "section6_temporal_overlap_matrix": {
+    "rows": [
+      {
+        "scenario": "identity_reuse_1_temporal_low_pool_150",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 37.0,
+        "actual_max_reuse_observed": 1,
+        "mean_reuse_across_replicates": 1.0,
+        "mean_n_unique_controls_used": 150.0,
+        "type1_0.01": 0.0125,
+        "type1_0.05": 0.03875,
+        "type1_0.1": 0.08375
+      },
+      {
+        "scenario": "identity_reuse_1_temporal_high_pool_150",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 40.7,
+        "actual_max_reuse_observed": 1,
+        "mean_reuse_across_replicates": 1.0,
+        "mean_n_unique_controls_used": 150.0,
+        "type1_0.01": 0.01,
+        "type1_0.05": 0.06,
+        "type1_0.1": 0.1225
+      },
+      {
+        "scenario": "identity_reuse_5_temporal_low_pool_30",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 44.8,
+        "actual_max_reuse_observed": 5,
+        "mean_reuse_across_replicates": 5.0,
+        "mean_n_unique_controls_used": 30.0,
+        "type1_0.01": 0.02125,
+        "type1_0.05": 0.0925,
+        "type1_0.1": 0.2025
+      },
+      {
+        "scenario": "identity_reuse_5_temporal_high_pool_30",
+        "n_reps_requested": 800,
+        "n_reps_completed": 800,
+        "n_insufficient_pool_failures": 0,
+        "elapsed_sec": 35.6,
+        "actual_max_reuse_observed": 5,
+        "mean_reuse_across_replicates": 5.0,
+        "mean_n_unique_controls_used": 30.0,
+        "type1_0.01": 0.07125,
+        "type1_0.05": 0.22875,
+        "type1_0.1": 0.32625
+      }
+    ]
+  },
+  "decision": {
+    "old_off_policy_type1_at_05": 0.223,
+    "old_off_policy_status": "OFF_POLICY_STRESS - NON rappresenta la pipeline reale (reuse_pool_size=10 con 30x5=150 assegnazioni, ~15 usi/controllo medio, viola max_control_reuse_per_run=5 enforced da ControlReuseLedger)",
+    "on_policy_isolated_reuse_max_reuse5_type1_at_05": 0.09375,
+    "on_policy_isolated_reuse_verdict": "sotto soglia di esplosione 2x, ma borderline (~1.5-1.9x nominale a seconda della replica)",
+    "on_policy_worst_case_scenario": "identity_reuse_5_temporal_high_pool_30",
+    "on_policy_worst_case_type1_at_05": 0.22875,
+    "explosion_threshold_2x_nominal": 0.1,
+    "control_reuse_verdict": "ON_POLICY_CONTROL_REUSE_RISK_CONFIRMED",
+    "control_reuse_nuance": "Il riuso di identita entro il tetto congelato (max_control_reuse_per_run=5) DA SOLO, con controlli temporalmente dispersi, resta sotto la soglia di esplosione (T1@.05 ~0.08-0.09, ~1.5-1.9x nominale - borderline ma non un esplosione). Il rischio genuino emerge dall INTERAZIONE fra riuso al tetto consentito E sovrapposizione temporale dei controlli riusati (T1@.05=0.229, 4.6x nominale) - una combinazione che la sola policy max_control_reuse_per_run=5 NON esclude (il ledger limita QUANTE volte un controllo e riusato, non SE i controlli riusati sono anche vicini nel tempo/regime).",
+    "phi07_serial_dependence_blocker_status": "CONFERMATO INDIPENDENTE - invariato da questa patch (Type-I@.05 Metodo B a phi=0.7: .112-.136 su n=20..100, vedi phase7_4_dependence_aware_method_selection_v1.json)",
+    "overall_verdict_unchanged": "PRIMARY INFERENCE METHOD NOT YET VALIDATED"
+  }
+}
