@@ -176,11 +176,28 @@ def run_shared_regime_demo():
         "OLD_pooled_flattened_controls": {"empirical_rejection_rate": rejection_rates(pvals_old)},
         "NEW_matched_pair_per_event": {"empirical_rejection_rate": rejection_rates(pvals_new)},
         "interpretation": (
-            "OLD appiattisce 150 controlli come se fossero i.i.d., ma gruppi di 5 condividono lo stesso r_i - "
-            "la varianza vera del pool di baseline e' sottostimata (n effettivo ~30 cluster, non 150 draw "
-            "indipendenti), il che puo' rendere il test anti-conservativo. NEW cancella r_i esattamente nella "
-            "differenza per-evento (d_i = eps_event_i - mean(eps_control_i)), eliminando il fattore condiviso "
-            "e restando calibrato per costruzione."
+            "CORREZIONE (Phase 7.4A Dependence Validity Gate, sec.8 - l'interpretazione precedente era "
+            "ERRATA): il risultato empirico e' rejection_rate=0% per OLD a TUTTI gli alpha - questo e' "
+            "FORTEMENTE CONSERVATIVO/POWERLESS (troppo poco potente, non rigetta praticamente mai, nemmeno "
+            "quando dovrebbe), NON anti-conservativo. Il meccanismo corretto: sullo STESSO replicato, evento "
+            "e i suoi 5 controlli condividono ESATTAMENTE lo stesso r_i, quindi nel delta OSSERVATO r_i si "
+            "cancella quasi del tutto (la vera variabilita' di delta_e_observed e' piccola, dominata solo "
+            "dal rumore idiosincratico eps, non da tau). OLD pero' ricampiona evento e baseline "
+            "SEPARATAMENTE E INDIPENDENTEMENTE (block bootstrap sull'evento, iid bootstrap sul pool di "
+            "baseline): il bootstrap dell'evento (30 valori con varianza dominata da tau=1.0, alta) tratta "
+            "quella variabilita' come se riflettesse vera incertezza campionaria del delta, quando invece "
+            "quella stessa componente di varianza e' CONDIVISA con la baseline sullo stesso replicato e "
+            "dovrebbe cancellarsi - il bootstrap, non sapendolo, produce un intervallo di confidenza molto "
+            "PIU' AMPIO del necessario, da cui 0% di rigetto. NEW invece calcola d_i = eps_event_i - "
+            "mean(eps_control_i) DIRETTAMENTE sui dati reali (non nel bootstrap): r_i si cancella gia' "
+            "nell'osservazione stessa, non solo nella sua attesa, quindi la distribuzione di permutazione "
+            "riflette correttamente la vera (piccola) variabilita' residua - risultato correttamente "
+            "calibrato (vedi tabella sopra). La conclusione valida, in ENTRAMBE le direzioni di errore "
+            "possibili (anti-conservativo nei 4 scenari base, fortemente conservativo/powerless qui): "
+            "appiattire la struttura matched (flattening) distrugge l'informazione di accoppiamento e "
+            "produce un'inferenza mal calibrata - a volte nella direzione pericolosa (falsi positivi), a "
+            "volte in quella che nasconde un effetto vero (falsi negativi) - non e' prevedibile a priori in "
+            "quale direzione sbagliera', il che la rende inaffidabile in entrambi i casi."
         ),
     }
 

@@ -11,41 +11,41 @@
     "gaussian_iid": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 42.5,
+      "elapsed_sec": 43.5,
       "empirical_rejection_rate": {
-        "0.01": 0.026,
-        "0.05": 0.071,
-        "0.1": 0.123
+        "0.01": 0.035,
+        "0.05": 0.089,
+        "0.1": 0.147
       }
     },
     "skewed": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 42.8,
+      "elapsed_sec": 44.8,
       "empirical_rejection_rate": {
-        "0.01": 0.043,
-        "0.05": 0.107,
-        "0.1": 0.184
+        "0.01": 0.04,
+        "0.05": 0.103,
+        "0.1": 0.155
       }
     },
     "autocorrelated_event": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 44.7,
+      "elapsed_sec": 47.0,
       "empirical_rejection_rate": {
-        "0.01": 0.142,
-        "0.05": 0.234,
-        "0.1": 0.33
+        "0.01": 0.181,
+        "0.05": 0.269,
+        "0.1": 0.321
       }
     },
     "unequal_n_30_vs_300": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 49.1,
+      "elapsed_sec": 51.3,
       "empirical_rejection_rate": {
-        "0.01": 0.039,
-        "0.05": 0.092,
-        "0.1": 0.153
+        "0.01": 0.043,
+        "0.05": 0.117,
+        "0.1": 0.169
       }
     }
   },
@@ -53,41 +53,41 @@
     "gaussian_iid": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 27.8,
+      "elapsed_sec": 29.0,
       "empirical_rejection_rate": {
-        "0.01": 0.004,
-        "0.05": 0.049,
-        "0.1": 0.097
+        "0.01": 0.007,
+        "0.05": 0.04,
+        "0.1": 0.1
       }
     },
     "skewed": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 27.8,
+      "elapsed_sec": 29.4,
       "empirical_rejection_rate": {
-        "0.01": 0.015,
-        "0.05": 0.063,
-        "0.1": 0.118
+        "0.01": 0.012,
+        "0.05": 0.066,
+        "0.1": 0.116
       }
     },
     "autocorrelated_d": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 28.3,
+      "elapsed_sec": 29.8,
       "empirical_rejection_rate": {
-        "0.01": 0.041,
-        "0.05": 0.182,
-        "0.1": 0.274
+        "0.01": 0.039,
+        "0.05": 0.166,
+        "0.1": 0.248
       }
     },
     "few_controls_high_noise_n_controls_2": {
       "n_reps": 1000,
       "n_boot": 1000,
-      "elapsed_sec": 29.0,
+      "elapsed_sec": 29.4,
       "empirical_rejection_rate": {
-        "0.01": 0.012,
-        "0.05": 0.051,
-        "0.1": 0.109
+        "0.01": 0.007,
+        "0.05": 0.032,
+        "0.1": 0.076
       }
     }
   },
@@ -95,7 +95,7 @@
     "description": "H0 esatta: outcome_event_i = r_i + eps_event_i, outcome_control_ij = r_i + eps_control_ij (shock di regime r_i~N(0,tau=1.0) condiviso da evento e i suoi 5 controlli matched, rumore idiosincratico eps~N(0,sigma=0.3)). Nessuna vera differenza (E[d_i]=0 per costruzione).",
     "n_reps": 1000,
     "n_boot": 1000,
-    "elapsed_sec": 77.2,
+    "elapsed_sec": 80.2,
     "OLD_pooled_flattened_controls": {
       "empirical_rejection_rate": {
         "0.01": 0.0,
@@ -110,6 +110,6 @@
         "0.1": 0.091
       }
     },
-    "interpretation": "OLD appiattisce 150 controlli come se fossero i.i.d., ma gruppi di 5 condividono lo stesso r_i - la varianza vera del pool di baseline e' sottostimata (n effettivo ~30 cluster, non 150 draw indipendenti), il che puo' rendere il test anti-conservativo. NEW cancella r_i esattamente nella differenza per-evento (d_i = eps_event_i - mean(eps_control_i)), eliminando il fattore condiviso e restando calibrato per costruzione."
+    "interpretation": "CORREZIONE (Phase 7.4A Dependence Validity Gate, sec.8 - l'interpretazione precedente era ERRATA): il risultato empirico e' rejection_rate=0% per OLD a TUTTI gli alpha - questo e' FORTEMENTE CONSERVATIVO/POWERLESS (troppo poco potente, non rigetta praticamente mai, nemmeno quando dovrebbe), NON anti-conservativo. Il meccanismo corretto: sullo STESSO replicato, evento e i suoi 5 controlli condividono ESATTAMENTE lo stesso r_i, quindi nel delta OSSERVATO r_i si cancella quasi del tutto (la vera variabilita' di delta_e_observed e' piccola, dominata solo dal rumore idiosincratico eps, non da tau). OLD pero' ricampiona evento e baseline SEPARATAMENTE E INDIPENDENTEMENTE (block bootstrap sull'evento, iid bootstrap sul pool di baseline): il bootstrap dell'evento (30 valori con varianza dominata da tau=1.0, alta) tratta quella variabilita' come se riflettesse vera incertezza campionaria del delta, quando invece quella stessa componente di varianza e' CONDIVISA con la baseline sullo stesso replicato e dovrebbe cancellarsi - il bootstrap, non sapendolo, produce un intervallo di confidenza molto PIU' AMPIO del necessario, da cui 0% di rigetto. NEW invece calcola d_i = eps_event_i - mean(eps_control_i) DIRETTAMENTE sui dati reali (non nel bootstrap): r_i si cancella gia' nell'osservazione stessa, non solo nella sua attesa, quindi la distribuzione di permutazione riflette correttamente la vera (piccola) variabilita' residua - risultato correttamente calibrato (vedi tabella sopra). La conclusione valida, in ENTRAMBE le direzioni di errore possibili (anti-conservativo nei 4 scenari base, fortemente conservativo/powerless qui): appiattire la struttura matched (flattening) distrugge l'informazione di accoppiamento e produce un'inferenza mal calibrata - a volte nella direzione pericolosa (falsi positivi), a volte in quella che nasconde un effetto vero (falsi negativi) - non e' prevedibile a priori in quale direzione sbagliera', il che la rende inaffidabile in entrambi i casi."
   }
 }
