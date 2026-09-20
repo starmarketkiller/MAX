@@ -1,0 +1,1265 @@
+{
+  "decision_rule_frozen_before_final_interpretation": {
+    "criterion_1_core_null_calibration": "Type-I@.05 <= .075 in TUTTI gli scenari 'core' = griglia 6-phi a n=30 (il sample size primario di SEQ-0015, n_nominal_minimum=30).",
+    "criterion_2_no_explosion": "Nessun Type-I a NESSUN alpha (.01/.05/.10) supera 2x il valore nominale, su TUTTA la griglia 6phi x 4n, su TUTTI gli 8 scenari di distribution stress, e su TUTTI i 5 scenari di matched-control stress.",
+    "criterion_3_stability_across_n": "Il comportamento (Type-I@.05) non deve mostrare instabilita' catastrofica al variare di n=20..100 per phi=0.5 (nessun peggioramento sistematico con n crescente).",
+    "criterion_4_21cell_fdr": "Empirical FDR (21 celle, global null iid E global null dipendenza mista) <= q + tolleranza MC (3 sigma binomiale sul numero di repliche di famiglia usate).",
+    "criterion_5_power_not_catastrophic": "Power a delta=0.80 non deve essere <50% della power del miglior metodo valido allo stesso delta (qui valutato descrittivamente, non come criterio di squalifica se nessun metodo passa 1-4).",
+    "overall_rule": "Un metodo e' DEPENDENCE-AWARE INFERENCE METHOD VALIDATED solo se soddisfa TUTTI i criteri 1-4. Se NESSUN metodo soddisfa tutti e 4 i criteri: PRIMARY INFERENCE METHOD NOT YET VALIDATED - nessuna patch immediata, nessuna frozen_spec_v5."
+  },
+  "screening_note": "Screening preliminare (6 phi, n=30, N_reps=800) ha mostrato B nettamente piu' calibrato di A e C - budget di calcolo allocato asimmetricamente (piu' repliche/precisione per B), dichiarato esplicitamente in dependence_aware_inference_calibration.py. A e C restano comunque testati sull'intera griglia richiesta, a precisione ridotta ma sufficiente per la squalifica (gia' evidente sotto iid pura).",
+  "method_findings": {
+    "A_null_centered_block_bootstrap": {
+      "criterion_1_core_null_calibration": {
+        "pass": false,
+        "detail": [
+          {
+            "phi": 0.0,
+            "type1_0.05": 0.07166666666666667,
+            "pass": true
+          },
+          {
+            "phi": 0.1,
+            "type1_0.05": 0.09,
+            "pass": false
+          },
+          {
+            "phi": 0.2,
+            "type1_0.05": 0.1,
+            "pass": false
+          },
+          {
+            "phi": 0.3,
+            "type1_0.05": 0.115,
+            "pass": false
+          },
+          {
+            "phi": 0.5,
+            "type1_0.05": 0.175,
+            "pass": false
+          },
+          {
+            "phi": 0.7,
+            "type1_0.05": 0.295,
+            "pass": false
+          }
+        ]
+      },
+      "criterion_2_no_explosion": {
+        "pass": false,
+        "explosions_found": [
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.0,
+            "alpha": 0.01,
+            "value": 0.03916666666666667,
+            "ratio": 3.92
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.05416666666666667,
+            "ratio": 5.42
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.1,
+            "alpha": 0.05,
+            "value": 0.115,
+            "ratio": 2.3
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.03916666666666667,
+            "ratio": 3.92
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.2,
+            "alpha": 0.05,
+            "value": 0.10916666666666666,
+            "ratio": 2.18
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.0625,
+            "ratio": 6.25
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.13416666666666666,
+            "ratio": 2.68
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.1225,
+            "ratio": 12.25
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.21,
+            "ratio": 4.2
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.2816666666666667,
+            "ratio": 2.82
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.2075,
+            "ratio": 20.75
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.31083333333333335,
+            "ratio": 6.22
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.3983333333333333,
+            "ratio": 3.98
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.035,
+            "ratio": 3.5
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.045,
+            "ratio": 4.5
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.05,
+            "ratio": 5.0
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.115,
+            "ratio": 2.3
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.09666666666666666,
+            "ratio": 9.67
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.175,
+            "ratio": 3.5
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.24166666666666667,
+            "ratio": 2.42
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.18166666666666667,
+            "ratio": 18.17
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.295,
+            "ratio": 5.9
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.3725,
+            "ratio": 3.72
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.0,
+            "alpha": 0.01,
+            "value": 0.025,
+            "ratio": 2.5
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.02666666666666667,
+            "ratio": 2.67
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.034166666666666665,
+            "ratio": 3.42
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.10916666666666666,
+            "ratio": 2.18
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.055,
+            "ratio": 5.5
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.13666666666666666,
+            "ratio": 2.73
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.20833333333333334,
+            "ratio": 2.08
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.11666666666666667,
+            "ratio": 11.67
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.205,
+            "ratio": 4.1
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.2833333333333333,
+            "ratio": 2.83
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.024166666666666666,
+            "ratio": 2.42
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.029166666666666667,
+            "ratio": 2.92
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.0275,
+            "ratio": 2.75
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.10083333333333333,
+            "ratio": 2.02
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.03666666666666667,
+            "ratio": 3.67
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.12166666666666667,
+            "ratio": 2.43
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.08666666666666667,
+            "ratio": 8.67
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.18416666666666667,
+            "ratio": 3.68
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.25583333333333336,
+            "ratio": 2.56
+          },
+          {
+            "source": "dist_stress",
+            "scenario": "gaussian",
+            "alpha": 0.05,
+            "value": 0.10833333333333334,
+            "ratio": 2.17
+          },
+          {
+            "source": "dist_stress",
+            "scenario": "ar1_phi04",
+            "alpha": 0.05,
+            "value": 0.14583333333333334,
+            "ratio": 2.92
+          },
+          {
+            "source": "dist_stress",
+            "scenario": "arma11_persistent",
+            "alpha": 0.05,
+            "value": 0.18333333333333332,
+            "ratio": 3.67
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "control_reuse_small_pool",
+            "alpha": 0.05,
+            "value": 0.34833333333333333,
+            "ratio": 6.97
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "overlapping_control_sets",
+            "alpha": 0.05,
+            "value": 0.14583333333333334,
+            "ratio": 2.92
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "occasional_missing_controls",
+            "alpha": 0.05,
+            "value": 0.10416666666666667,
+            "ratio": 2.08
+          }
+        ]
+      },
+      "criterion_3_stability_across_n": {
+        "pass": false,
+        "detail": [
+          {
+            "n": 20,
+            "type1_0.05": 0.21
+          },
+          {
+            "n": 30,
+            "type1_0.05": 0.175
+          },
+          {
+            "n": 50,
+            "type1_0.05": 0.13666666666666666
+          },
+          {
+            "n": 100,
+            "type1_0.05": 0.12166666666666667
+          }
+        ]
+      },
+      "criterion_4_21cell_fdr": {
+        "pass": false,
+        "detail": [
+          {
+            "scenario": "global_null_iid_21_cells",
+            "empirical_fdr": 0.33666666666666667,
+            "limit": 0.152,
+            "pass": false
+          },
+          {
+            "scenario": "global_null_mixed_dependence_21_cells",
+            "empirical_fdr": 0.6966666666666667,
+            "limit": 0.152,
+            "pass": false
+          }
+        ]
+      },
+      "descriptive_power_mixed_family": 0.9914285714285714,
+      "descriptive_power_curve": [
+        {
+          "method": "A_null_centered_block_bootstrap",
+          "delta": 0.0,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 21.7,
+          "power_at_05": 0.08083333333333333
+        },
+        {
+          "method": "A_null_centered_block_bootstrap",
+          "delta": 0.1,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 19.9,
+          "power_at_05": 0.12083333333333333
+        },
+        {
+          "method": "A_null_centered_block_bootstrap",
+          "delta": 0.2,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 19.9,
+          "power_at_05": 0.25166666666666665
+        },
+        {
+          "method": "A_null_centered_block_bootstrap",
+          "delta": 0.4,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 20.0,
+          "power_at_05": 0.6158333333333333
+        },
+        {
+          "method": "A_null_centered_block_bootstrap",
+          "delta": 0.8,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 20.0,
+          "power_at_05": 0.995
+        }
+      ],
+      "overall_pass_all_4_criteria": false
+    },
+    "B_studentized_block_bootstrap": {
+      "criterion_1_core_null_calibration": {
+        "pass": false,
+        "detail": [
+          {
+            "phi": 0.0,
+            "type1_0.05": 0.029166666666666667,
+            "pass": true
+          },
+          {
+            "phi": 0.1,
+            "type1_0.05": 0.03833333333333333,
+            "pass": true
+          },
+          {
+            "phi": 0.2,
+            "type1_0.05": 0.0425,
+            "pass": true
+          },
+          {
+            "phi": 0.3,
+            "type1_0.05": 0.04083333333333333,
+            "pass": true
+          },
+          {
+            "phi": 0.5,
+            "type1_0.05": 0.07,
+            "pass": true
+          },
+          {
+            "phi": 0.7,
+            "type1_0.05": 0.11166666666666666,
+            "pass": false
+          }
+        ]
+      },
+      "criterion_2_no_explosion": {
+        "pass": false,
+        "explosions_found": [
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.028333333333333332,
+            "ratio": 2.83
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.13,
+            "ratio": 2.6
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.2325,
+            "ratio": 2.33
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.0225,
+            "ratio": 2.25
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.11166666666666666,
+            "ratio": 2.23
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.04,
+            "ratio": 4.0
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.13583333333333333,
+            "ratio": 2.72
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.23,
+            "ratio": 2.3
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.04083333333333333,
+            "ratio": 4.08
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.12416666666666666,
+            "ratio": 2.48
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.20416666666666666,
+            "ratio": 2.04
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "control_reuse_small_pool",
+            "alpha": 0.05,
+            "value": 0.2225,
+            "ratio": 4.45
+          }
+        ]
+      },
+      "criterion_3_stability_across_n": {
+        "pass": false,
+        "detail": [
+          {
+            "n": 20,
+            "type1_0.05": 0.07166666666666667
+          },
+          {
+            "n": 30,
+            "type1_0.05": 0.07
+          },
+          {
+            "n": 50,
+            "type1_0.05": 0.09666666666666666
+          },
+          {
+            "n": 100,
+            "type1_0.05": 0.06333333333333334
+          }
+        ]
+      },
+      "criterion_4_21cell_fdr": {
+        "pass": true,
+        "detail": [
+          {
+            "scenario": "global_null_iid_21_cells",
+            "empirical_fdr": 0.06,
+            "limit": 0.152,
+            "pass": true
+          },
+          {
+            "scenario": "global_null_mixed_dependence_21_cells",
+            "empirical_fdr": 0.13,
+            "limit": 0.152,
+            "pass": true
+          }
+        ]
+      },
+      "descriptive_power_mixed_family": 0.7609523809523809,
+      "descriptive_power_curve": [
+        {
+          "method": "B_studentized_block_bootstrap",
+          "delta": 0.0,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 49.3,
+          "power_at_05": 0.025833333333333333
+        },
+        {
+          "method": "B_studentized_block_bootstrap",
+          "delta": 0.1,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 51.8,
+          "power_at_05": 0.0525
+        },
+        {
+          "method": "B_studentized_block_bootstrap",
+          "delta": 0.2,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 51.4,
+          "power_at_05": 0.12166666666666667
+        },
+        {
+          "method": "B_studentized_block_bootstrap",
+          "delta": 0.4,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 51.9,
+          "power_at_05": 0.35
+        },
+        {
+          "method": "B_studentized_block_bootstrap",
+          "delta": 0.8,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 1200,
+          "elapsed_sec": 51.6,
+          "power_at_05": 0.8933333333333333
+        }
+      ],
+      "overall_pass_all_4_criteria": false
+    },
+    "C_hac_newey_west": {
+      "criterion_1_core_null_calibration": {
+        "pass": false,
+        "detail": [
+          {
+            "phi": 0.0,
+            "type1_0.05": 0.095,
+            "pass": false
+          },
+          {
+            "phi": 0.1,
+            "type1_0.05": 0.096,
+            "pass": false
+          },
+          {
+            "phi": 0.2,
+            "type1_0.05": 0.108,
+            "pass": false
+          },
+          {
+            "phi": 0.3,
+            "type1_0.05": 0.13033333333333333,
+            "pass": false
+          },
+          {
+            "phi": 0.5,
+            "type1_0.05": 0.16733333333333333,
+            "pass": false
+          },
+          {
+            "phi": 0.7,
+            "type1_0.05": 0.23866666666666667,
+            "pass": false
+          }
+        ]
+      },
+      "criterion_2_no_explosion": {
+        "pass": false,
+        "explosions_found": [
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.0,
+            "alpha": 0.01,
+            "value": 0.034333333333333334,
+            "ratio": 3.43
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.035666666666666666,
+            "ratio": 3.57
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.1,
+            "alpha": 0.05,
+            "value": 0.10266666666666667,
+            "ratio": 2.05
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.049666666666666665,
+            "ratio": 4.97
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.2,
+            "alpha": 0.05,
+            "value": 0.122,
+            "ratio": 2.44
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.05533333333333333,
+            "ratio": 5.53
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.138,
+            "ratio": 2.76
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.3,
+            "alpha": 0.1,
+            "value": 0.207,
+            "ratio": 2.07
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.10233333333333333,
+            "ratio": 10.23
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.205,
+            "ratio": 4.1
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.2836666666666667,
+            "ratio": 2.84
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.17366666666666666,
+            "ratio": 17.37
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.30133333333333334,
+            "ratio": 6.03
+          },
+          {
+            "source": "null_cal",
+            "n": 20,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.379,
+            "ratio": 3.79
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.0,
+            "alpha": 0.01,
+            "value": 0.03333333333333333,
+            "ratio": 3.33
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.034333333333333334,
+            "ratio": 3.43
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.042,
+            "ratio": 4.2
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.2,
+            "alpha": 0.05,
+            "value": 0.108,
+            "ratio": 2.16
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.050666666666666665,
+            "ratio": 5.07
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.13033333333333333,
+            "ratio": 2.61
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.07866666666666666,
+            "ratio": 7.87
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.16733333333333333,
+            "ratio": 3.35
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.24233333333333335,
+            "ratio": 2.42
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.135,
+            "ratio": 13.5
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.23866666666666667,
+            "ratio": 4.77
+          },
+          {
+            "source": "null_cal",
+            "n": 30,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.325,
+            "ratio": 3.25
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.0,
+            "alpha": 0.01,
+            "value": 0.026,
+            "ratio": 2.6
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.027,
+            "ratio": 2.7
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.025666666666666667,
+            "ratio": 2.57
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.037,
+            "ratio": 3.7
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.3,
+            "alpha": 0.05,
+            "value": 0.10866666666666666,
+            "ratio": 2.17
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.053,
+            "ratio": 5.3
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.13366666666666666,
+            "ratio": 2.67
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.5,
+            "alpha": 0.1,
+            "value": 0.20866666666666667,
+            "ratio": 2.09
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.10966666666666666,
+            "ratio": 10.97
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.21133333333333335,
+            "ratio": 4.23
+          },
+          {
+            "source": "null_cal",
+            "n": 50,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.293,
+            "ratio": 2.93
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.1,
+            "alpha": 0.01,
+            "value": 0.023666666666666666,
+            "ratio": 2.37
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.2,
+            "alpha": 0.01,
+            "value": 0.02266666666666667,
+            "ratio": 2.27
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.3,
+            "alpha": 0.01,
+            "value": 0.025333333333333333,
+            "ratio": 2.53
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.5,
+            "alpha": 0.01,
+            "value": 0.037333333333333336,
+            "ratio": 3.73
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.5,
+            "alpha": 0.05,
+            "value": 0.10633333333333334,
+            "ratio": 2.13
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.01,
+            "value": 0.07033333333333333,
+            "ratio": 7.03
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.05,
+            "value": 0.15633333333333332,
+            "ratio": 3.13
+          },
+          {
+            "source": "null_cal",
+            "n": 100,
+            "phi": 0.7,
+            "alpha": 0.1,
+            "value": 0.23733333333333334,
+            "ratio": 2.37
+          },
+          {
+            "source": "dist_stress",
+            "scenario": "ar1_phi04",
+            "alpha": 0.05,
+            "value": 0.141,
+            "ratio": 2.82
+          },
+          {
+            "source": "dist_stress",
+            "scenario": "arma11_persistent",
+            "alpha": 0.05,
+            "value": 0.171,
+            "ratio": 3.42
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "control_reuse_small_pool",
+            "alpha": 0.05,
+            "value": 0.362,
+            "ratio": 7.24
+          },
+          {
+            "source": "matched_control_stress",
+            "scenario": "overlapping_control_sets",
+            "alpha": 0.05,
+            "value": 0.15733333333333333,
+            "ratio": 3.15
+          }
+        ]
+      },
+      "criterion_3_stability_across_n": {
+        "pass": false,
+        "detail": [
+          {
+            "n": 20,
+            "type1_0.05": 0.205
+          },
+          {
+            "n": 30,
+            "type1_0.05": 0.16733333333333333
+          },
+          {
+            "n": 50,
+            "type1_0.05": 0.13366666666666666
+          },
+          {
+            "n": 100,
+            "type1_0.05": 0.10633333333333334
+          }
+        ]
+      },
+      "criterion_4_21cell_fdr": {
+        "pass": false,
+        "detail": [
+          {
+            "scenario": "global_null_iid_21_cells",
+            "empirical_fdr": 0.2733333333333333,
+            "limit": 0.152,
+            "pass": false
+          },
+          {
+            "scenario": "global_null_mixed_dependence_21_cells",
+            "empirical_fdr": 0.7433333333333333,
+            "limit": 0.152,
+            "pass": false
+          }
+        ]
+      },
+      "descriptive_power_mixed_family": 0.9857142857142858,
+      "descriptive_power_curve": [
+        {
+          "method": "C_hac_newey_west",
+          "delta": 0.0,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 3000,
+          "elapsed_sec": 1.0,
+          "power_at_05": 0.09733333333333333
+        },
+        {
+          "method": "C_hac_newey_west",
+          "delta": 0.1,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 3000,
+          "elapsed_sec": 0.9,
+          "power_at_05": 0.133
+        },
+        {
+          "method": "C_hac_newey_west",
+          "delta": 0.2,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 3000,
+          "elapsed_sec": 0.9,
+          "power_at_05": 0.25633333333333336
+        },
+        {
+          "method": "C_hac_newey_west",
+          "delta": 0.4,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 3000,
+          "elapsed_sec": 1.0,
+          "power_at_05": 0.637
+        },
+        {
+          "method": "C_hac_newey_west",
+          "delta": 0.8,
+          "phi": 0.0,
+          "n": 30,
+          "n_reps": 3000,
+          "elapsed_sec": 0.9,
+          "power_at_05": 0.9906666666666667
+        }
+      ],
+      "overall_pass_all_4_criteria": false
+    }
+  },
+  "verdict": "PRIMARY INFERENCE METHOD NOT YET VALIDATED",
+  "selected_method": null,
+  "most_promising_method_if_none_validated": "B_studentized_block_bootstrap",
+  "key_additional_finding": "Il fallimento decisivo di B non e' (solo) l'esplosione a phi=0.7 (Type-I@.05 ~2.2-2.7x il nominale, gia' di per se' una violazione del criterio 2), ma il fallimento CATASTROFICO e distinto sotto lo scenario 'control_reuse_small_pool' (Type-I@.05=0.223, ~4.46x il nominale) - una struttura di dipendenza COMBINATORIA/di pool condiviso, non temporale. Tutti e 3 i metodi (A/B/C) sono costruiti attorno alla dipendenza SERIALE/temporale (blocchi contigui nel tempo, lag HAC) - nessuno modella la correlazione che nasce quando piu' eventi condividono LO STESSO controllo nel pool matched, indipendentemente dalla loro posizione temporale. Questa e' una lacuna strutturale distinta dal problema di autocorrelazione, e va indirizzata esplicitamente in un futuro redesign (es. varianza cluster-robust clusterizzata per IDENTITA' del controllo condiviso, non solo per tempo)."
+}
