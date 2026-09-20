@@ -46,17 +46,31 @@ sceglie fra esse).
 Structural Closure (Phase 7.4A, 2026-09-20): aggiunto lo stato
 STRUCTURALLY_NON_VIABLE, DISTINTO da INSUFFICIENT_SAMPLE. Quest'ultimo
 significa "il campione osservato in QUESTA run e' troppo piccolo"
-(potenzialmente risolvibile con piu' dati o un periodo piu' lungo);
-STRUCTURALLY_NON_VIABLE significa "il DESIGN stesso (detector+
-episode_gap+embargo) non puo' MAI produrre un numero sufficiente di
-osservazioni indipendenti sotto la frozen spec attuale, indipendentemente
-dalla quantita' di dati disponibili" - es. SEQ-0015: 249 eventi grezzi
--> 210 episodi -> 1 sola osservazione INDEPENDENT_VIEW sull'intero
-periodo discovery (tasso di innesco troppo alto rispetto a
-natural_horizon/embargo). Raggiungibile SOLO da GENERATED (la scoperta
-avviene prima di qualunque accesso a outcome, quindi prima che un
-candidato possa mai raggiungere DISCOVERY_SIGNAL) - MAI da REFUTED (non
-e' un giudizio sull'effetto, nessun outcome e' stato letto).
+(potenzialmente risolvibile con piu' dati o un periodo piu' lungo, senza
+toccare il design dell'esperimento). STRUCTURALLY_NON_VIABLE significa
+"il design congelato (detector+episode_gap+embargo) non soddisfa il gate
+di campione minimo indipendente SULLA PARTITION development_discovery
+GIA' PREREGISTRATA E CONGELATA" - es. SEQ-0015: 249 eventi grezzi -> 210
+episodi -> 1 sola osservazione INDEPENDENT_VIEW su quella specifica
+partition (tasso di innesco troppo alto rispetto a natural_horizon/
+embargo, SU QUELLA finestra dati).
+
+Correzione esplicita (Phase 7.4A Structural Verdict Semantics Patch,
+2026-09-20): questo stato NON dimostra e NON deve essere letto come
+un'affermazione di impossibilita' universale del design per qualunque
+quantita' futura di dati - un periodo di osservazione piu' lungo o
+diverso potrebbe contenere intervalli senza eventi piu' ampi
+dell'embargo e produrre piu' di un'osservazione indipendente. La
+conclusione dimostrata e' scoperta rispetto alla partition PREREGISTRATA
+attuale, non rispetto al meccanismo in astratto. Una futura estensione
+temporale non e' un "salvataggio" della stessa run pre-registrata - deve
+essere un NUOVO esperimento pre-registrato, con nuova partition e nuova
+provenance, mai una modifica silenziosa di questa.
+
+Raggiungibile SOLO da GENERATED (la scoperta avviene prima di qualunque
+accesso a outcome, quindi prima che un candidato possa mai raggiungere
+DISCOVERY_SIGNAL) - MAI da REFUTED (non e' un giudizio sull'effetto,
+nessun outcome e' stato letto).
 """
 
 
@@ -184,7 +198,7 @@ if __name__ == "__main__":
     # e' raggiungibile SOLO da GENERATED, mai da REFUTED (non e' un giudizio
     # sull'effetto - nessun outcome viene mai letto per raggiungere questo stato).
     c8 = Candidate("DEMO-SETUP-008-SEQ0015")
-    c8.transition("STRUCTURALLY_NON_VIABLE", "INDEPENDENT_VIEW collassa a <=1 sotto la frozen spec - nessun outcome letto")
+    c8.transition("STRUCTURALLY_NON_VIABLE", "INDEPENDENT_VIEW=1 sulla partition development_discovery preregistrata - nessun outcome letto, nessuna affermazione oltre quella partition")
     assert c8.state == "STRUCTURALLY_NON_VIABLE" and c8.is_terminal()
     print(f"GENERATED -> STRUCTURALLY_NON_VIABLE diretto: {' -> '.join(c8.history)} (terminale: {c8.is_terminal()})")
     try:

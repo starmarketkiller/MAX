@@ -55,9 +55,22 @@ class SequenceBaselineAdapter:
         """Il pool di controllo DEVE essere gia' filtrato allo stesso split
         dell'evento dal chiamante (episode/discovery pipeline) - questo
         metodo comunque ri-verifica via BaselineEngineV4.match() (difesa in
-        profondita', cross_split_safety chiamata internamente)."""
+        profondita', cross_split_safety chiamata internamente).
+
+        NOTA SEMANTICA (Phase 7.4A Structural Verdict Semantics Patch,
+        2026-09-20 - terminologia, nessuna modifica di comportamento):
+        control_direction_by_id assegna a OGNI candidato la STESSA
+        direzione dell'evento - questa e' una DIRECTION-CONDITIONED
+        COUNTERFACTUAL BASELINE ("valutati come ipotetico BUY/SELL",
+        baseline_contract_v4.json:direction_aware.rule), NON la direzione
+        osservata indipendentemente della barra di controllo stessa. Il
+        controllo risponde alla domanda 'rispetto a una barra nello stesso
+        stato, COSA SAREBBE SUCCESSO SE fosse stata negoziata nella stessa
+        direzione dell'evento?' - non 'qual era la direzione naturale di
+        quella barra?'. Coerente con il contratto v4, verificato
+        esplicitamente in questa patch - comportamento invariato."""
         direction = sequence_event["direction"]
-        control_direction_by_id = {cid: direction for cid in control_pool_same_split}  # ipotetico, vedi baseline_contract_v4
+        control_direction_by_id = {cid: direction for cid in control_pool_same_split}  # direction-conditioned counterfactual, vedi nota sopra
         return self.engine.match(
             event_id=sequence_event["sequence_event_id"], event_row=sequence_event["event_a_index"],
             event_direction=direction, event_features=sequence_event["state_snapshot"],
