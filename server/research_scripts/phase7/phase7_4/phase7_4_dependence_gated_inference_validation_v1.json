@@ -1,0 +1,509 @@
+{
+  "definition_of_pass_frozen_before_interpretation": {
+    "criterion_1_global_null_fdr_controlled": {
+      "rule": "empirical_fdr <= q + mc_tolerance(q, n_family_reps) per OGNI scenario 'global_null_*'",
+      "q": 0.1
+    },
+    "criterion_2_conditional_type1_not_materially_anticonservative": {
+      "rule": "rejection_rate_among_INFERENCE_VALID(alpha=.05) <= max(1.5*alpha, alpha + 3*SE(alpha, n_valid)) per OGNI phi testato (n=30)",
+      "alpha": 0.05,
+      "multiplier": 1.5,
+      "n_sigma": 3
+    },
+    "criterion_3_no_catastrophic_sample_size_instability": {
+      "rule": "Il criterio 2 (stessa soglia, stesso alpha=.05) deve valere anche a n=20/50/100 per phi=0.5 - se fallisce a n=30 e NON migliora sostanzialmente con n crescente, l'instabilita' e' strutturale, non risolvibile aumentando il campione."
+    },
+    "criterion_4_skew_not_materially_anticonservative": {
+      "rule": "conditional_type1_among_INFERENCE_VALID(alpha=.05) <= max(1.5*alpha, alpha+3*SE) per OGNI scenario di skew/heavy-tail, OPPURE (se viola) asymmetry_sensitive_rate deve essere materialmente elevato (>=0.5) su quello scenario (la diagnostica compensa anche se non filtra)."
+    },
+    "overall_verdict_rule": "DEPENDENCE-GATED INFERENCE VALIDATED solo se TUTTI i criteri 1-4 passano. Altrimenti BLOCKED - GATE REQUIRES REDESIGN."
+  },
+  "section1_conditional_calibration": [
+    {
+      "phi": 0.0,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 54.9,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 1321,
+      "n_DEPENDENCE_SENSITIVE": 639,
+      "n_INVALID": 40,
+      "raw_rejection_rate_0.01": 0.005,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.003785011355034065,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.0025,
+      "mc_tolerance_0.01": 0.00821272806969201,
+      "raw_rejection_rate_0.05": 0.0455,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.03406510219530658,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.0225,
+      "mc_tolerance_0.05": 0.017989398846415424,
+      "raw_rejection_rate_0.1": 0.089,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.08024224072672217,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.053,
+      "mc_tolerance_0.1": 0.024762306829443793
+    },
+    {
+      "phi": 0.1,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 57.6,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 1298,
+      "n_DEPENDENCE_SENSITIVE": 666,
+      "n_INVALID": 36,
+      "raw_rejection_rate_0.01": 0.0065,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.006933744221879815,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.0045,
+      "mc_tolerance_0.01": 0.00828517156108491,
+      "raw_rejection_rate_0.05": 0.0545,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.05701078582434515,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.037,
+      "mc_tolerance_0.05": 0.018148081180645273,
+      "raw_rejection_rate_0.1": 0.108,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.11093990755007704,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.072,
+      "mc_tolerance_0.1": 0.024980732174401606
+    },
+    {
+      "phi": 0.2,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 60.0,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 1038,
+      "n_DEPENDENCE_SENSITIVE": 862,
+      "n_INVALID": 100,
+      "raw_rejection_rate_0.01": 0.012,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.014450867052023121,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.0075,
+      "mc_tolerance_0.01": 0.009264888034348679,
+      "raw_rejection_rate_0.05": 0.065,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.07996146435452794,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.0415,
+      "mc_tolerance_0.05": 0.020294080688285906,
+      "raw_rejection_rate_0.1": 0.114,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.14450867052023122,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.075,
+      "mc_tolerance_0.1": 0.02793468848598904
+    },
+    {
+      "phi": 0.3,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 61.5,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 690,
+      "n_DEPENDENCE_SENSITIVE": 1087,
+      "n_INVALID": 223,
+      "raw_rejection_rate_0.01": 0.01,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.01884057971014493,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.0065,
+      "mc_tolerance_0.01": 0.011363557311978002,
+      "raw_rejection_rate_0.05": 0.065,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.09710144927536232,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.0335,
+      "mc_tolerance_0.05": 0.024891067019943206,
+      "raw_rejection_rate_0.1": 0.1325,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.19130434782608696,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.066,
+      "mc_tolerance_0.1": 0.03426241444320965
+    },
+    {
+      "phi": 0.5,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 62.6,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 205,
+      "n_DEPENDENCE_SENSITIVE": 934,
+      "n_INVALID": 861,
+      "raw_rejection_rate_0.01": 0.0165,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.04878048780487805,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.005,
+      "mc_tolerance_0.01": 0.020847881099561736,
+      "raw_rejection_rate_0.05": 0.0905,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.23902439024390243,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.0245,
+      "mc_tolerance_0.05": 0.04566580617550222,
+      "raw_rejection_rate_0.1": 0.161,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.3073170731707317,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.0315,
+      "mc_tolerance_0.1": 0.06285872661926205
+    },
+    {
+      "phi": 0.7,
+      "n": 30,
+      "n_reps": 2000,
+      "elapsed_sec": 62.4,
+      "n_total": 2000,
+      "n_INFERENCE_VALID": 32,
+      "n_DEPENDENCE_SENSITIVE": 372,
+      "n_INVALID": 1596,
+      "raw_rejection_rate_0.01": 0.032,
+      "rejection_rate_among_INFERENCE_VALID_0.01": 0.0625,
+      "false_positive_rate_after_gate_over_all_replicates_0.01": 0.001,
+      "mc_tolerance_0.01": 0.052767177298013584,
+      "raw_rejection_rate_0.05": 0.1565,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.4375,
+      "false_positive_rate_after_gate_over_all_replicates_0.05": 0.007,
+      "mc_tolerance_0.05": 0.11558276255566831,
+      "raw_rejection_rate_0.1": 0.254,
+      "rejection_rate_among_INFERENCE_VALID_0.1": 0.46875,
+      "false_positive_rate_after_gate_over_all_replicates_0.1": 0.0075,
+      "mc_tolerance_0.1": 0.1590990257669732
+    }
+  ],
+  "section3_bh_family_simulation": [
+    {
+      "scenario": "global_null_iid_21_cells",
+      "n_family_reps": 300,
+      "family_size": 21,
+      "n_true_effects": 0,
+      "elapsed_sec": 192.1,
+      "probability_any_rejection": 0.006666666666666667,
+      "empirical_fdr": 0.006666666666666667,
+      "mean_n_gated_to_p1": 7.136666666666667,
+      "mc_tolerance_fdr": 0.05196152422706632
+    },
+    {
+      "scenario": "global_null_mixed_dependence_21_cells",
+      "n_family_reps": 300,
+      "family_size": 21,
+      "n_true_effects": 0,
+      "elapsed_sec": 201.3,
+      "probability_any_rejection": 0.01,
+      "empirical_fdr": 0.01,
+      "mean_n_gated_to_p1": 13.983333333333333,
+      "mc_tolerance_fdr": 0.05196152422706632
+    },
+    {
+      "scenario": "mixed_14null_7effect_iid",
+      "n_family_reps": 300,
+      "family_size": 21,
+      "n_true_effects": 7,
+      "elapsed_sec": 198.2,
+      "probability_any_rejection": 0.7133333333333334,
+      "empirical_fdr": 0.025249999999999998,
+      "mean_n_gated_to_p1": 7.276666666666666,
+      "mc_tolerance_fdr": 0.05196152422706632,
+      "power": 0.39428571428571424
+    }
+  ],
+  "section5_sample_size_sensitivity": [
+    {
+      "n": 20,
+      "phi": 0.0,
+      "n_reps": 1000,
+      "elapsed_sec": 27.5,
+      "pct_INFERENCE_VALID": 0.593,
+      "raw_rejection_rate_0.05": 0.04,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.023608768971332208
+    },
+    {
+      "n": 20,
+      "phi": 0.5,
+      "n_reps": 1000,
+      "elapsed_sec": 28.7,
+      "pct_INFERENCE_VALID": 0.193,
+      "raw_rejection_rate_0.05": 0.094,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.19689119170984457
+    },
+    {
+      "n": 30,
+      "phi": 0.0,
+      "n_reps": 1000,
+      "elapsed_sec": 29.9,
+      "pct_INFERENCE_VALID": 0.692,
+      "raw_rejection_rate_0.05": 0.051,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.05057803468208093
+    },
+    {
+      "n": 30,
+      "phi": 0.5,
+      "n_reps": 1000,
+      "elapsed_sec": 29.9,
+      "pct_INFERENCE_VALID": 0.087,
+      "raw_rejection_rate_0.05": 0.098,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.3103448275862069
+    },
+    {
+      "n": 50,
+      "phi": 0.0,
+      "n_reps": 1000,
+      "elapsed_sec": 31.7,
+      "pct_INFERENCE_VALID": 0.782,
+      "raw_rejection_rate_0.05": 0.043,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.04475703324808184
+    },
+    {
+      "n": 50,
+      "phi": 0.5,
+      "n_reps": 1000,
+      "elapsed_sec": 31.7,
+      "pct_INFERENCE_VALID": 0.045,
+      "raw_rejection_rate_0.05": 0.091,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.2222222222222222
+    },
+    {
+      "n": 100,
+      "phi": 0.0,
+      "n_reps": 1000,
+      "elapsed_sec": 34.2,
+      "pct_INFERENCE_VALID": 0.847,
+      "raw_rejection_rate_0.05": 0.047,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.0448642266824085
+    },
+    {
+      "n": 100,
+      "phi": 0.5,
+      "n_reps": 1000,
+      "elapsed_sec": 33.9,
+      "pct_INFERENCE_VALID": 0.004,
+      "raw_rejection_rate_0.05": 0.089,
+      "rejection_rate_among_INFERENCE_VALID_0.05": 0.25
+    }
+  ],
+  "section6_asymmetry_sensitivity": [
+    {
+      "scenario": "symmetric_gaussian",
+      "n": 30,
+      "n_reps": 1500,
+      "elapsed_sec": 42.7,
+      "asymmetry_sensitive_rate": 0.056,
+      "pct_INFERENCE_VALID": 0.644,
+      "conditional_type1_among_INFERENCE_VALID": {
+        "0.01": 0.005175983436853002,
+        "0.05": 0.044513457556935816,
+        "0.1": 0.09316770186335403
+      },
+      "gated_type1_overall": {
+        "0.01": 0.0033333333333333335,
+        "0.05": 0.028666666666666667,
+        "0.1": 0.06
+      }
+    },
+    {
+      "scenario": "mild_skew_gamma",
+      "n": 30,
+      "n_reps": 1500,
+      "elapsed_sec": 45.1,
+      "asymmetry_sensitive_rate": 0.37266666666666665,
+      "pct_INFERENCE_VALID": 0.682,
+      "conditional_type1_among_INFERENCE_VALID": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      },
+      "gated_type1_overall": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      }
+    },
+    {
+      "scenario": "strong_skew_exponential",
+      "n": 30,
+      "n_reps": 1500,
+      "elapsed_sec": 44.5,
+      "asymmetry_sensitive_rate": 0.896,
+      "pct_INFERENCE_VALID": 0.7093333333333334,
+      "conditional_type1_among_INFERENCE_VALID": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      },
+      "gated_type1_overall": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      }
+    },
+    {
+      "scenario": "heavy_tail_symmetric_t3",
+      "n": 30,
+      "n_reps": 1500,
+      "elapsed_sec": 44.7,
+      "asymmetry_sensitive_rate": 0.43533333333333335,
+      "pct_INFERENCE_VALID": 0.7313333333333333,
+      "conditional_type1_among_INFERENCE_VALID": {
+        "0.01": 0.0036463081130355514,
+        "0.05": 0.05195989061075661,
+        "0.1": 0.08842297174111212
+      },
+      "gated_type1_overall": {
+        "0.01": 0.0026666666666666666,
+        "0.05": 0.038,
+        "0.1": 0.06466666666666666
+      }
+    },
+    {
+      "scenario": "heavy_tail_skewed_t3",
+      "n": 30,
+      "n_reps": 1500,
+      "elapsed_sec": 45.4,
+      "asymmetry_sensitive_rate": 0.568,
+      "pct_INFERENCE_VALID": 0.7066666666666667,
+      "conditional_type1_among_INFERENCE_VALID": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      },
+      "gated_type1_overall": {
+        "0.01": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      }
+    }
+  ],
+  "findings": {
+    "criterion_1": {
+      "pass": true,
+      "detail": [
+        {
+          "scenario": "global_null_iid_21_cells",
+          "empirical_fdr": 0.006666666666666667,
+          "limit": 0.15196152422706632,
+          "pass": true
+        },
+        {
+          "scenario": "global_null_mixed_dependence_21_cells",
+          "empirical_fdr": 0.01,
+          "limit": 0.15196152422706632,
+          "pass": true
+        }
+      ]
+    },
+    "criterion_2_DECISIVE": {
+      "pass": false,
+      "detail": [
+        {
+          "phi": 0.0,
+          "conditional_type1": 0.03406510219530658,
+          "n_valid": 1321,
+          "limit": 0.075,
+          "pass": true
+        },
+        {
+          "phi": 0.1,
+          "conditional_type1": 0.05701078582434515,
+          "n_valid": 1298,
+          "limit": 0.075,
+          "pass": true
+        },
+        {
+          "phi": 0.2,
+          "conditional_type1": 0.07996146435452794,
+          "n_valid": 1038,
+          "limit": 0.075,
+          "pass": false
+        },
+        {
+          "phi": 0.3,
+          "conditional_type1": 0.09710144927536232,
+          "n_valid": 690,
+          "limit": 0.075,
+          "pass": false
+        },
+        {
+          "phi": 0.5,
+          "conditional_type1": 0.23902439024390243,
+          "n_valid": 205,
+          "limit": 0.0957,
+          "pass": false
+        },
+        {
+          "phi": 0.7,
+          "conditional_type1": 0.4375,
+          "n_valid": 32,
+          "limit": 0.1656,
+          "pass": false
+        }
+      ]
+    },
+    "criterion_3": {
+      "pass": false,
+      "detail": [
+        {
+          "n": 20,
+          "phi": 0.5,
+          "conditional_type1": 0.19689119170984457,
+          "limit": 0.0971,
+          "pass": false
+        },
+        {
+          "n": 30,
+          "phi": 0.5,
+          "conditional_type1": 0.3103448275862069,
+          "limit": 0.1201,
+          "pass": false
+        },
+        {
+          "n": 50,
+          "phi": 0.5,
+          "conditional_type1": 0.2222222222222222,
+          "limit": 0.1475,
+          "pass": false
+        },
+        {
+          "n": 100,
+          "phi": 0.5,
+          "conditional_type1": 0.25,
+          "limit": 0.2568,
+          "pass": true
+        }
+      ],
+      "structural_or_transient": "STRUTTURALE - il problema non migliora con n crescente (vedi detail): non e' un artefatto di campione piccolo."
+    },
+    "criterion_4": {
+      "pass": true,
+      "detail": [
+        {
+          "scenario": "symmetric_gaussian",
+          "conditional_type1": 0.044513457556935816,
+          "limit": 0.075,
+          "asymmetry_sensitive_rate": 0.056,
+          "direct_pass": true,
+          "compensated_by_flag": false,
+          "pass": true
+        },
+        {
+          "scenario": "mild_skew_gamma",
+          "conditional_type1": 0.0,
+          "limit": 0.075,
+          "asymmetry_sensitive_rate": 0.37266666666666665,
+          "direct_pass": true,
+          "compensated_by_flag": false,
+          "pass": true
+        },
+        {
+          "scenario": "strong_skew_exponential",
+          "conditional_type1": 0.0,
+          "limit": 0.075,
+          "asymmetry_sensitive_rate": 0.896,
+          "direct_pass": true,
+          "compensated_by_flag": true,
+          "pass": true
+        },
+        {
+          "scenario": "heavy_tail_symmetric_t3",
+          "conditional_type1": 0.05195989061075661,
+          "limit": 0.075,
+          "asymmetry_sensitive_rate": 0.43533333333333335,
+          "direct_pass": true,
+          "compensated_by_flag": false,
+          "pass": true
+        },
+        {
+          "scenario": "heavy_tail_skewed_t3",
+          "conditional_type1": 0.0,
+          "limit": 0.075,
+          "asymmetry_sensitive_rate": 0.568,
+          "direct_pass": true,
+          "compensated_by_flag": true,
+          "pass": true
+        }
+      ]
+    }
+  },
+  "root_cause_if_blocked": "Il Dependence Validity Gate seleziona le celle da ammettere a BH-FDR usando una diagnostica (ACF/Ljung-Box/ESS) calcolata SULLO STESSO campione d_i usato dal test. Condizionare sulla diagnostica distorce la distribuzione campionaria del p-value tra le repliche SOPRAVVISSUTE: sotto AR(1) con phi>=0.3, il sottoinsieme che il gate classifica INFERENCE_VALID mostra un tasso di rigetto condizionato PEGGIORE del tasso grezzo non condizionato (es. phi=0.5: raw~0.10 vs condizionato~0.24-0.31), non migliore - il meccanismo di selezione premia esattamente le realizzazioni in cui una forte deviazione campionaria coincide, per caso, con una stima locale di autocorrelazione bassa. Il problema E' STRUTTURALE, non un artefatto di n piccolo: persiste sostanzialmente invariato da n=20 a n=100 (sec.5). La 'protezione' osservata a livello di intera famiglia BH a 21 celle (empirical FDR molto sotto q) e' dovuta quasi interamente al fatto che il gate scarta la GRANDE MAGGIORANZA delle celle problematiche (fino al 98%+ a phi=0.7), non al fatto che le celle superstiti siano affidabili - le rare volte che una cella fortemente dipendente sopravvive al gate in una run reale, il suo p-value non e' degno di fiducia quanto promesso dalla policy attuale.",
+  "verdict": "BLOCKED - GATE REQUIRES REDESIGN"
+}
