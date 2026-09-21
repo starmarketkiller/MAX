@@ -1,0 +1,203 @@
+{
+  "generated_at": "2026-09-21T18:34:39.183725+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_6d/build_seq0014b_outcome_horizon_contract.py",
+  "canonical_sha256": "9a36ce4648ff8e5d9b3fcad0864aa226b3998f164aced35c1dbb08ae50c5f1e6",
+  "payload": {
+    "phase": "7.6D",
+    "artifact_role": "OUTCOME_HORIZON_CONTRACT",
+    "scope_note": "Formalizzazione concettuale ex-ante per un eventuale DESIGN_V2 - NESSUNA geometria eseguita, NESSUN outcome letto, NESSUN orizzonte alternativo ispezionato sui dati, NESSUN structural preflight rieseguito, NESSUNA configurazione scelta per massimizzare n.",
+    "baseline_commit": "f6b085984db1ce96dc120d0740aa23f42d1cd124",
+    "claim_formalization": {
+      "claim_verbatim": "Se i setup direzionali generati durante lo stato 'choppy' non mostrassero un tasso di fallimento/rumore superiore rispetto a quelli generati in stato 'trending', il claim sarebbe falso.",
+      "source": "market_sequence_registry_v1.json, citato verbatim in seq0014_estimand_identity_audit_v1.json (Phase 7.6A) - non riparafrasato liberamente qui.",
+      "UNIT": "Un setup direzionale di una delle 6 famiglie eleggibili (VOLATILITY_EXPANSION, DISPLACEMENT, BREAKOUT, SWEEP, COMPRESSION_RELEASE, PULLBACK) - unita' FAMILY-EVENT, decisione gia' congelata in 6c0d3f6 (Phase 7.6C), non riaperta qui.",
+      "EXPOSURE": "regime_at_t_minus_1 = CHOPPY (directional_efficiency[t-1] in terzile LOW) - contratto gia' congelato in fb52168 (Phase 7.6B), non riaperto qui.",
+      "COMPARATOR": "Stesso setup_family_id, regime_at_t_minus_1 = TRENDING (terzile HIGH) - contrasto SEMPRE stessa famiglia, mai cross-family (vincolo gia' congelato in 6c0d3f6).",
+      "OUTCOME": "NON ANCORA OPERAZIONALIZZATO - il claim usa il testo 'tasso di fallimento/rumore', un concetto semantico che deve ancora essere tradotto in una definizione di outcome precisa (sezione 3-4 sotto). Questo e' l'anello mancante che questa fase affronta.",
+      "CENSORING": "NON ANCORA DEFINITO - dipende dalla scelta dell'outcome (sezione 6 sotto: un outcome a barriera richiede un trattamento esplicito del caso 'nessuna barriera raggiunta entro l'horizon').",
+      "TIME_SCALE": "NON ANCORA DEFINITO - deve derivare dall'outcome scelto (sezione 5), MAI essere fissato prima (questo e' esattamente l'errore di sequencing gia' trovato in 6c0d3f6 e corretto in f6b0859)."
+    },
+    "primary_estimand": {
+      "candidate_estimand": "Delta = E[Failure(setup) | family=F, regime=CHOPPY] - E[Failure(setup) | family=F, regime=TRENDING], stimato SEPARATAMENTE per ciascuna delle 6 famiglie F (mai in un pooling naive cross-family per il contrasto stesso - resta 'stessa famiglia' per costruzione).",
+      "answers_filter_utility_not_generic_profitability": true,
+      "rationale": "Il claim MECH-23 (verbatim) e' esplicitamente su 'tasso di fallimento/rumore' del SETUP, condizionato sul regime al momento del suo innesco - non su una redditivita' generica del sistema ne' sul comportamento generico del prezzo (quella e' la domanda di SEQ-0014A, gia' distinta come RELATED_BUT_DISTINCT in Phase 7.6A - seq0014_estimand_identity_audit_v1.json). Un estimand di tipo 'tasso/probabilita' di fallimento' e' l'unico che si mappa direttamente su una decisione di filtro binaria (vedi sezione 8): un tasso di redditivita' generico o un comportamento di prezzo generico non risponderebbero alla domanda posta dal claim.",
+      "not_this_other_estimand": "Non-scelto esplicitamente: un estimand di 'volatilita' realizzata dopo il setup' o di 'efficienza del percorso' (PATH_EFFICIENCY-style) - questi misurano il comportamento del PREZZO dopo un evento, il dominio proprio di SEQ-0014A, non il fallimento del SETUP stesso.",
+      "single_estimand_enforced": true
+    },
+    "candidate_outcome_audit": {
+      "P_PLUS_1ATR_BEFORE_MINUS_1ATR": {
+        "what_it_measures": "P(il prezzo tocca +1 ATR nella direzione del setup PRIMA di toccare -1 ATR contro di esso) - un outcome a DOPPIA BARRIERA (first-touch), simmetrico sul lato downside (-1 ATR fisso) fra tutte e 5 le varianti del vocabolario (0.25/0.5/1/1.5/2 ATR sul lato upside).",
+        "represents": "SUCCESS/FAILURE diretto - il complemento (1-P) e' letteralmente una probabilita' di fallimento del setup, la traduzione piu' diretta del testo del claim ('tasso di fallimento').",
+        "uniform_across_6_families": true,
+        "uniform_rationale": "ATR-normalizzato, quindi la SCALA della barriera e' gia' omogenea fra famiglie con velocita'/ampiezza diverse (a differenza di un numero fisso di barre, che avrebbe significato diverso per famiglie diverse).",
+        "needs_horizon": true,
+        "needs_barrier": "GIA' INTRINSECO alla definizione (e' precisamente cosa la definisce) - ma l'orizzonte MASSIMO entro cui le barriere devono risolversi resta un parametro SEPARATO, non incluso nel nome.",
+        "needs_censoring": true,
+        "censoring_note": "Se ne' +1 ATR ne' -1 ATR viene toccato entro l'horizon, il caso e' CENSORED - il trattamento (fallimento di default / neutro escluso / categoria terza) deve essere dichiarato ex-ante (sezione 6).",
+        "open_free_parameter": "Quale dei 5 multipli ATR (0.25/0.5/1/1.5/2) sul lato upside - NON derivabile dal solo testo del claim, che parla genericamente di 'fallimento/rumore' senza specificare una magnitudo. Vedi sezione 4."
+      },
+      "MAE": {
+        "what_it_measures": "Maximum Adverse Excursion - la massima escursione avversa (contro la direzione del setup) osservata entro una finestra.",
+        "represents": "NOISE/rischio, una quantita' CONTINUA (magnitudo), non un evento binario successo/fallimento - piu' vicino a 'rumore' che a 'fallimento' nel testo del claim.",
+        "uniform_across_6_families": true,
+        "uniform_rationale": "ATR-normalizzato (assunto, coerente con le altre feature gia' congelate nel progetto), quindi omogeneo fra famiglie.",
+        "needs_horizon": true,
+        "needs_barrier": false,
+        "barrier_note": "NON e' un outcome a barriera - non si ferma al primo tocco di un livello, misura semplicemente l'estremo raggiunto entro una finestra FISSA. MAE cresce monotonicamente con l'orizzonte scelto (piu' barre osservate, MAE piu' grande o uguale) - a differenza di un outcome a barriera, qui l'orizzonte non e' un tetto di sicurezza ma un parametro che CAMBIA IL VALORE STESSO della metrica, una dipendenza ancora piu' diretta e delicata.",
+        "needs_censoring": false,
+        "censoring_note": "Nessun censoring in senso barriera - ma la dipendenza monotona dall'orizzonte rende la scelta dell'orizzonte ANCORA PIU' critica che per un outcome a barriera.",
+        "open_free_parameter": "La finestra di misura stessa (5/12/20/40 barre - vedi testo del reviewer) cambia il valore della metrica in modo diretto, non solo la sua rilevanza/censoring."
+      },
+      "REVERSAL_PROBABILITY": {
+        "what_it_measures": "P(il prezzo inverte rispetto alla direzione del setup).",
+        "represents": "FAILURE (concettualmente vicino a P_PLUS/MINUS ATR), ma 'inversione' non e' definita senza una magnitudo di soglia (quanto movimento contrario conta come 'inversione'?) - la definizione stessa e' sotto-specificata nel vocabolario attuale (outcome_surface_v3.py la elenca solo come nome, senza soglia).",
+        "uniform_across_6_families": "Indeterminato - dipende dalla soglia di inversione non ancora definita.",
+        "needs_horizon": true,
+        "needs_barrier": "Implicitamente si' (una soglia di magnitudo e' necessaria per definire 'inversione'), ma non e' dichiarata nel nome dell'outcome - rischio di essere una ridenominazione non specificata dello stesso concetto di P_PLUS_*ATR_BEFORE_MINUS_1ATR senza aggiungere informazione.",
+        "needs_censoring": true,
+        "open_free_parameter": "Sia la soglia di magnitudo dell'inversione SIA l'orizzonte - due gradi di liberta' non specificati, non uno solo."
+      },
+      "TIME_TO_TARGET": {
+        "what_it_measures": "Barre fino al raggiungimento del target primario.",
+        "represents": "NE' fallimento ne' rumore direttamente - e' una metrica di TIMING CONDIZIONALE, definita SOLO per i setup che raggiungono gia' un target (che deve essere definito altrove, es. da P_PLUS_*ATR).",
+        "uniform_across_6_families": "N/A - dipende da un target non ancora definito.",
+        "needs_horizon": true,
+        "needs_barrier": "Presuppone un target/barriera GIA' definito da un altro outcome - non puo' essere un outcome primario indipendente per questo claim.",
+        "needs_censoring": true,
+        "suitability_as_primary": "NON ADATTO come primary outcome per un claim di fallimento/rumore - e' derivato/secondario per costruzione (misura 'quanto velocemente', non 'se fallisce'). Utilizzabile solo come SECONDARY/DIAGNOSTIC outcome una volta scelto un primary a barriera."
+      },
+      "PATH_EFFICIENCY": {
+        "what_it_measures": "Rapporto fra movimento netto e percorso totale entro un orizzonte.",
+        "represents": "Qualita'/pulizia del PERCORSO di prezzo, non il fallimento del SETUP - misura il comportamento del prezzo dopo l'evento, non se il setup specifico ha avuto successo.",
+        "uniform_across_6_families": true,
+        "needs_horizon": true,
+        "needs_barrier": false,
+        "needs_censoring": false,
+        "suitability_as_primary": "RISCHIO DI CONTAMINAZIONE DI DOMINIO: questa metrica e' concettualmente piu' vicina al dominio di SEQ-0014A (comportamento del prezzo dopo l'ingresso in uno stato), gia' distinto come RELATED_BUT_DISTINCT da SEQ-0014B (fallimento del setup) in Phase 7.6A. Usarla come primary per SEQ-0014B rischierebbe di ri-confondere i due esperimenti esplicitamente separati in quella fase."
+      },
+      "audit_method": "Valutazione puramente SEMANTICA delle definizioni gia' congelate in outcome_surface_v3.py (nessun dato numerico ispezionato, nessuna geometria nota usata per orientare la scelta).",
+      "outcome_surface_source_sha256": "b67dde3f118cc913776302cb93bee5d43e5843ffbbb4f2748f69ec8d99da3ca3"
+    },
+    "primary_outcome_decision": {
+      "primary_outcome_class": "DOUBLE_BARRIER_SUCCESS_FAILURE_PROBABILITY (famiglia P_PLUS_*ATR_BEFORE_MINUS_1ATR)",
+      "class_is_mechanically_defensible_from_claim": true,
+      "class_rationale": "E' l'unico candidato fra i 5 che rappresenta DIRETTAMENTE un evento binario successo/fallimento (non una magnitudo continua come MAE, non un timing condizionale come TIME_TO_TARGET, non una proprieta' del percorso di prezzo come PATH_EFFICIENCY che rischia contaminazione di dominio con SEQ-0014A), ATR-normalizzato quindi omogeneo fra le 6 famiglie eterogenee, e gia' presente nel vocabolario congelato (nessuna nuova definizione inventata).",
+      "exact_vocabulary_id_status": "NON ANCORA GIUSTIFICATO - il vocabolario offre 5 varianti (P_PLUS_0_25/0_5/1/1_5/2ATR_BEFORE_MINUS_1ATR), tutte con lo stesso downside fisso (-1 ATR) ma upside diverso. Il testo verbatim del claim MECH-23 ('tasso di fallimento/rumore superiore') NON specifica alcuna magnitudo di profitto/target - scegliere UNA delle 5 varianti ora, senza un riferimento indipendente dal claim, ripeterebbe ESATTAMENTE l'errore gia' trovato per l'horizon in f6b0859 (un parametro numerico scelto per convenzione/comodita' invece che derivato).",
+      "why_not_just_pick_the_symmetric_1atr_variant": "Sarebbe la scelta piu' 'naturale' per simmetria superficiale, ma 'naturale-per-simmetria' e' esattamente il tipo di giustificazione debole (convenzione, non derivazione) che questo audit esiste per intercettare - nessun riferimento indipendente (es. una distanza di stop/target gia' usata da una strategia viva basata su queste 6 famiglie come setup indipendenti) e' stato trovato in questo progetto per giustificarla.",
+      "verdict": "PRIMARY_OUTCOME_CLASS_IDENTIFIED_EXACT_PARAMETERIZATION_NOT_YET_JUSTIFIED",
+      "blocker": "La magnitudo esatta della barriera di profitto (quale dei 5 multipli ATR) resta un grado di liberta' APERTO, non risolvibile dal solo testo del claim - richiede o (a) un riferimento indipendente e gia' causal-safe (es. una distanza di rischio/target effettivamente utilizzata in esecuzione per queste famiglie, non ancora identificata in questo progetto), oppure (b) una giustificazione meccanica separata e specifica per MECH-23 (non ancora formulata). Nessuna delle due esiste oggi."
+    },
+    "horizon_derivation_process": {
+      "rule": "L'orizzonte NON deve mai essere assunto dal nome dell'outcome. Deve rispondere a: quale processo dovrebbe essersi risolto, entro quale scala temporale, e perche' - derivato da setup lifecycle / meccanismo di mercato / definizione della barriera / orizzonte decisionale reale, MAI da sample size, n indipendente, matching feasibility o dal risultato di DESIGN_V1 (quest'ultimo vincolo e' gia' stato imposto esplicitamente dall'utente ed e' qui riportato come regola vincolante, non riderivato).",
+      "why_not_yet_resolvable_here": "La derivazione dell'orizzonte per un outcome a doppia barriera dipende dalla magnitudo esatta della barriera stessa (una barriera piu' stretta si risolve tipicamente piu' in fretta di una piu' ampia, a parita' di volatilita' del meccanismo sottostante) - poiche' la sezione 4 lascia la magnitudo APERTA (PRIMARY_OUTCOME_CLASS_IDENTIFIED_EXACT_PARAMETERIZATION_NOT_YET_JUSTIFIED), l'orizzonte non puo' essere derivato in modo meccanicamente fondato in questa fase - dipende da un input che manca ancora.",
+      "what_the_derivation_would_need_once_unblocked": [
+        "Il lifecycle atteso del meccanismo specifico di ciascuna famiglia (es. un evento istantaneo come VOLATILITY_EXPANSION/DISPLACEMENT potrebbe avere un lifecycle di risoluzione piu' breve di un evento di continuazione di trend come BREAKOUT/PULLBACK - vedi anche sezione 7).",
+        "La magnitudo esatta della barriera scelta (sezione 4) - una barriera piu' stretta implica tipicamente un orizzonte di risoluzione atteso piu' corto.",
+        "Un riferimento indipendente dal risultato di DESIGN_V1 - VIETATO ESPLICITAMENTE usare i counts 210/11/26/29/etc. di 80e7cbc per orientare la scelta."
+      ],
+      "explicitly_forbidden_derivation_sources": [
+        "sample size",
+        "n indipendente",
+        "matching feasibility",
+        "risultato di DESIGN_V1 (80e7cbc)",
+        "ispezione di orizzonti alternativi sui dati reali"
+      ]
+    },
+    "barrier_vs_censoring": {
+      "distinction": "PRICE BARRIER (un livello di prezzo che, se toccato, risolve l'evento immediatamente - es. +1 ATR o -1 ATR) e' concettualmente DISTINTA da TIME CENSORING (cosa succede se NESSUNA barriera viene toccata entro l'orizzonte massimo dichiarato).",
+      "example": "'+1 ATR before -1 ATR' non e' completamente definito finche' non sappiamo 'entro quanto tempo?' - senza un orizzonte massimo dichiarato, l'outcome e' formalmente un tempo di attesa potenzialmente illimitato, non un evento binario ben definito su un campione finito.",
+      "censoring_treatment_options_not_yet_chosen": {
+        "TREAT_AS_FAILURE": "Il caso non risolto entro l'horizon conta come fallimento (conservativo - coerente con l'idea che un setup che non raggiunge il target in tempo utile e' operativamente un fallimento per un filtro di trading reale).",
+        "TREAT_AS_NEUTRAL_EXCLUDED": "Il caso non risolto viene escluso dal denominatore (rischio: selection bias se la frequenza di censoring differisce fra CHOPPY e TRENDING - un rischio REALE dato che il claim stesso postula che CHOPPY genera piu' rumore/indecisione).",
+        "THIRD_CATEGORY_REPORTED_SEPARATELY": "Riportato come categoria propria (NEITHER_BARRIER_REACHED), mai collassato ne' in successo ne' in fallimento - piu' trasparente, ma richiede un test statistico a 3 categorie anziche' un test binario semplice."
+      },
+      "decision": "NON SCELTO in questa fase (dipende dalla magnitudo di barriera ancora aperta, sezione 4, e dall'orizzonte ancora non derivato, sezione 5) - dichiarato qui come grado di liberta' esplicito da risolvere in un futuro DESIGN_V2 spec commit, non un default silenzioso.",
+      "rejected_note": "TREAT_AS_NEUTRAL_EXCLUDED e' segnalato come il piu' rischioso dei tre (rischio di selection bias asimmetrico fra i due bracci di regime, che e' esattamente il fenomeno che il claim intende misurare) - una preferenza preliminare, non una decisione congelata."
+    },
+    "common_horizon_requirement": {
+      "question": "Dato il disegno pooled su 6 famiglie eterogenee, un orizzonte comune e' scientificamente giustificabile (A), oppure ciascuna famiglia possiede un proprio orizzonte naturale (B)?",
+      "evidence_from_project_history": "Gia' osservato in f6b0859 (Phase 7.6C audit): all'interno dello STESSO progetto, esperimenti diversi sullo stesso substrato di regime hanno usato orizzonti diversi (SEQ-0014A=20 barre per un fenomeno di state-entry, SEQ-0009=40 barre per un meccanismo di sweep-reversal) - suggerendo che l'orizzonte naturale dipende dal MECCANISMO specifico, non e' universale.",
+      "mechanism_heterogeneity_within_seq0014b": "Le 6 famiglie eleggibili non sono meccanicamente omogenee: VOLATILITY_EXPANSION/DISPLACEMENT sono eventi istantanei a singola barra (nessun livello di riferimento persistente - vedi 6c0d3f6, episode_gap_rule=1 per entrambe); BREAKOUT/PULLBACK sono setup di continuazione di trend basati su un livello rolling a 20 barre; SWEEP e' un meccanismo di rigetto/inversione gia' indipendentemente derivato a 40 barre PER UN CLAIM DIVERSO (SEQ-0009); COMPRESSION_RELEASE e' un evento di rilascio con una propria precondizione a 5 barre. Non c'e' una ragione meccanica ovvia per cui tutte e 6 dovrebbero risolversi sulla STESSA scala temporale.",
+      "preliminary_leaning": "OPTION_B_FAMILY_SPECIFIC_HORIZON e' PIU' DIFENDIBILE IN PRINCIPIO della convenzione A gia' usata in DESIGN_V1 - ma questo introduce un problema NUOVO, non ancora risolto: se le famiglie hanno orizzonti diversi, quale soglia di embargo si usa per il declustering CROSS-FAMILY (Phase 7.6C) fra una coppia di famiglie con orizzonti diversi (es. VOLATILITY_EXPANSION all'orizzonte X e PULLBACK all'orizzonte Y)? Non esiste ancora una risposta - e non viene inventata qui.",
+      "pooled_estimand_interpretability_if_B": "Se ogni famiglia ha un proprio orizzonte, l'estimand pooled (sezione 2) resta interpretabile SOLO se il contrasto e' sempre stimato PER FAMIGLIA (mai un delta_p aggregato attraverso famiglie con outcome misurati su scale temporali diverse) - coerente con il vincolo gia' esistente 'mai cross-family per il contrasto statistico' (sezione 1). L'aggregazione pooled resta a livello di REPORTING/verdetto composito (come gia' fatto in 80e7cbc), non a livello di stima puntuale del delta_p.",
+      "decision": "NON DECISO in questa fase - richiede prima la magnitudo di barriera (sezione 4) per ciascuna famiglia. Segnalato esplicitamente come domanda APERTA per un futuro DESIGN_V2, non risolta per comodita' di declustering (vietato esplicitamente: 'non imporre horizon comune soltanto per rendere semplice il declustering')."
+    },
+    "filter_decision_utility": {
+      "question": "Se CHOPPY peggiora l'outcome scelto, il sistema farebbe realmente NO_TRADE?",
+      "answer_for_the_chosen_class": "SI - una probabilita' di fallimento (1 - P(+X ATR before -1 ATR)) si mappa DIRETTAMENTE su una decisione binaria: se P(fallimento | CHOPPY, famiglia F) e' materialmente piu' alta di P(fallimento | TRENDING, famiglia F), il sistema puo' applicare un filtro NO_TRADE (o size ridotta) per la famiglia F quando il regime al momento del setup e' CHOPPY - una regola operativa concreta, non un'osservazione statistica astratta.",
+      "why_the_rejected_candidates_would_be_weaker_here": "MAE (magnitudo continua) informerebbe piu' naturalmente il position sizing/stop placement che una decisione binaria di ingresso; PATH_EFFICIENCY misura il prezzo, non il setup, quindi non si traduce in una decisione di filtro sul setup stesso senza un passaggio interpretativo aggiuntivo; TIME_TO_TARGET presuppone gia' un target/barriera definito altrove.",
+      "conclusion": "La classe di outcome scelta (sezione 4) supera il test di utilita' decisionale reale - questo rafforza (senza risolverla) la scelta della CLASSE, ma non giustifica da solo la magnitudo esatta di barriera (quella resta il blocker)."
+    },
+    "material_effect": {
+      "question": "Cosa rappresenterebbe una differenza economicamente/praticamente rilevante fra P(fallimento | CHOPPY) e P(fallimento | TRENDING)?",
+      "existing_project_default_floor": {
+        "value": 0.1,
+        "source": "minimum_evidence_gates.json - policy floor generale di progetto, NON scelto guardando i dati di SEQ-0014B, gia' riusato altrove nel progetto senza modifiche.",
+        "status": "POLICY_THRESHOLD",
+        "applicability_here": "Applicabile come floor di DEFAULT per MECH-23 in assenza di una derivazione piu' specifica - un riuso legittimo di una soglia GIA' esistente (non inventata per questa fase), non una scelta post-hoc sui dati di questo esperimento."
+      },
+      "mech23_specific_derivation": "NON ANCORA FATTA - una derivazione piu' specifica (es. costo di un trade perso vs costo di un trade cattivo, per queste 6 famiglie come setup potenzialmente eseguibili) rafforzerebbe la soglia ma non e' stata ancora formulata in questo progetto.",
+      "decision": "Il floor di progetto (minimum_material_delta_p_default) resta il candidato di default riusabile senza inventare nulla di nuovo; una soglia MECH-23-specifica e' segnalata come miglioramento possibile ma non bloccante di per se' (a differenza della magnitudo di barriera, sezione 4, che E' bloccante)."
+    },
+    "design_v2_eligibility": {
+      "required_for_ready": [
+        "primary estimand",
+        "primary outcome",
+        "horizon",
+        "censoring",
+        "direction of expected effect",
+        "materiality definition"
+      ],
+      "status_of_each": {
+        "primary_estimand": "CONGELABILE (sezione 2) - delta di failure-probability, stessa famiglia, CHOPPY vs TRENDING.",
+        "primary_outcome": "NON CONGELABILE - classe identificata (doppia barriera), magnitudo esatta NON giustificata (sezione 4, blocker).",
+        "horizon": "NON CONGELABILE - dipende dalla magnitudo di barriera (sezione 5) e dalla decisione comune-vs-per-famiglia (sezione 7), nessuna delle due risolta.",
+        "censoring": "NON CONGELABILE - tre opzioni identificate (sezione 6), nessuna scelta senza prima risolvere magnitudo/orizzonte.",
+        "direction_of_expected_effect": "CONGELABILE - il claim stesso postula P(fallimento|CHOPPY) > P(fallimento|TRENDING), direzione dell'effetto atteso gia' univoca dal testo verbatim del claim.",
+        "materiality_definition": "PARZIALMENTE CONGELABILE - floor di default di progetto riusabile (sezione 9), una derivazione MECH-23-specifica resterebbe un miglioramento futuro non bloccante."
+      },
+      "verdict": "DESIGN_V2_BLOCKED_ON_OUTCOME_HORIZON_CONTRACT",
+      "blocking_items": [
+        "primary_outcome (magnitudo esatta di barriera)",
+        "horizon (dipendente dal precedente)",
+        "censoring (dipendente da entrambi)"
+      ],
+      "non_blocking_items_already_resolvable": [
+        "primary_estimand",
+        "direction_of_expected_effect",
+        "materiality_definition (default floor)"
+      ]
+    },
+    "no_geometry_confirmation": {
+      "no_event_counts_computed": true,
+      "no_independent_counts_computed": true,
+      "no_matching_counts_computed": true,
+      "no_cross_family_collapse_computed": true,
+      "no_structural_preflight_executed": true,
+      "no_alternate_horizon_inspected_on_data": true,
+      "note": "Questo documento e' interamente concettuale/testuale - nessun file di eventi, stato di mercato o outcome e' stato letto; nessuna funzione di geometria (compute_detection_funnel, assign_clusters, run_matching_preflight, ecc.) e' stata invocata."
+    },
+    "framework_rule": {
+      "chain": [
+        "CLAIM",
+        "ESTIMAND",
+        "OUTCOME DEFINITION",
+        "RESOLUTION WINDOW / CENSORING",
+        "NATURAL HORIZON",
+        "EMBARGO",
+        "STRUCTURAL FEASIBILITY",
+        "INFERENCE"
+      ],
+      "supersedes_prior_partial_rule": "Affina la regola proposta nell'audit precedente (f6b0859: 'outcome class + natural horizon must be frozen before final structural feasibility verdict') - quella regola era corretta ma INCOMPLETA: implicava che 'scegliere un nome di outcome' bastasse a determinare l'horizon. Questa fase mostra che serve un anello ESPLICITO in piu' (RESOLUTION WINDOW / CENSORING) fra la definizione dell'outcome e l'orizzonte naturale - la definizione dell'outcome da sola (es. 'MAE' o 'P_PLUS_1ATR_BEFORE_MINUS_1ATR') non specifica ancora la finestra di risoluzione.",
+      "no_new_infrastructure_built": true,
+      "scope": "Regola proposta per futuri structural preflight e outcome contract - nessun nuovo modulo di enforcement e' stato scritto in questa fase (per istruzione esplicita)."
+    },
+    "no_frozen_design_v1_artifacts_modified": true,
+    "no_nexus_outcome_data_accessed": true,
+    "no_structural_preflight_executed": true,
+    "no_edge_discovery_performed": true,
+    "no_primary_outcome_selected": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
