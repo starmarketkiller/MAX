@@ -1,0 +1,22 @@
+Estratto reale da logs\20260922.log (terminale C:\MT5-Tester, cartella dati
+7F8EC41F011085EB9C65165AE426B5A6), decodificato UTF-16-LE.
+
+Primo tentativo di lancio del probe con Expert=Experts\NXS_VolBrkTesterWindowProbe
+(stesso formato usato in volatility_breakout_final_data_freeze_v1.json,
+tester_execution_config_frozen_not_launched.raw_text, campo
+"Expert=Experts\\NEXUS_EA_v2"):
+
+CI	2	01:14:16.847	Tester	Experts\Experts\NXS_VolBrkTesterWindowProbe.ex5 not found
+QJ	2	01:14:16.847	Terminal	tester didn't start
+NG	0	01:14:18.024	Terminal	shutdown with -1000012355 (tester EX5 not found)
+
+Secondo tentativo, corretto a Expert=NXS_VolBrkTesterWindowProbe (senza prefisso
+di cartella - MT5 lo aggiunge da solo):
+
+OK	0	01:20:52.369	Tester	automatic testing started
+
+-> Conferma diretta ed empirica: il campo "Expert=" nella sezione [Tester]
+dell'.ini vuole SOLO il nome del programma, MAI il prefisso "Experts\".
+Il tester config congelato in 7.8E ("Expert=Experts\\NEXUS_EA_v2") avrebbe
+fatto fallire l'avvio del futuro Serious validation con lo stesso identico
+errore. Corretto in questa fase (7.8F) a "Expert=NEXUS_EA_v2".

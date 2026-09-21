@@ -1,0 +1,191 @@
+{
+  "generated_at": "2026-09-21T23:30:11.327712+00:00",
+  "generation_script": "build_volatility_breakout_execution_config_audit.py",
+  "canonical_sha256": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae",
+  "payload": {
+    "baseline_commit": "9b75ceeee1e49ef1e3efd2e5127bdc5bc50e7f1a",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "prior_seal_status": "FINAL_PRE_RUN_SEAL_VERIFIED_READY_TO_EXECUTE",
+    "source_artifact_untouched": {
+      "path": "server/research_scripts/phase7/phase7_8e/volatility_breakout_final_data_freeze_v1.json",
+      "canonical_sha256": "259df4fbd46489a6bc04ae8e76e2d0f82dd4d9d7e8c25f8989121da0fd256d22",
+      "modified_in_this_phase": false
+    },
+    "leverage_audit": {
+      "frozen_value_in_7_8e": 100,
+      "sources_examined": [
+        {
+          "source": "vault/01-Trading/NEXUS EA - STRUCT_LEVEL_SWEEP, Audit Structure Engine e Design Nuovo Filone (10-09).md, sezione 'Verifica leva 1:500'",
+          "date": "2026-09-12 (contenuto datato 10-09)",
+          "finding": "Richiesta esplicita dell'utente di standardizzare a Leverage=500. I 4 file RAW ufficiali con Leverage=100 sono segnalati esplicitamente come ERRORE ('NON 1:500'). I template .ini in tmp/strategy_validation sono stati aggiornati a Leverage=500 'per qualunque futuro rilancio'.",
+          "authoritative": true
+        },
+        {
+          "source": "vault/01-Trading/_phase4_artifacts/sar_dukascopy_independent_validation.md, sezione 5 'Frozen SAR backtest'",
+          "date": "2026-09-17",
+          "finding": "Deposit 10000 USD, Currency USD, Leverage 1:100 'matches sar_serious_3y.ini/volbrk_fs_6mo.ini conventions' - un valore ereditato da una convenzione preesistente (probabilmente creata prima del 10-09), MAI riallineata alla direttiva esplicita del 10-09. Questo e' il precedente da cui 7.8B/C/D/E hanno ereditato Leverage=100.",
+          "authoritative": false,
+          "note": "Non e' una fonte piu' autorevole del 10-09 - e' un retaggio non riallineato, citato qui per chiarire la catena di provenienza dell'errore, non per giustificarlo."
+        },
+        {
+          "source": "knowledge/bug_database.json, BUG-024",
+          "finding": "'Leva effettiva 1:100 nonostante Leverage=500 nell'.ini del runner (sospetto formato chiave)' - stato APERTO, impatto dichiarato 'nullo su sweep isolati (verificato nel codice), critico per portafoglio'. VOLBRK Serious 3Y e' uno sweep isolato (singola strategia), non un test di portafoglio."
+        }
+      ],
+      "code_verification": {
+        "file": "MQL5/Include/NEXUS_v1/NXS_ResearchMode.mqh",
+        "finding": "NXS_ResearchLot() ritorna 'lots = InpResearchFixedLot' (0.01, NXS_Inputs.mqh:255), clampato solo a SYMBOL_VOLUME_MIN/MAX - NON derivato da margine/leva. In Research Mode (NXS_Execution.mqh:483, NXS_IsResearchMode()) il lot sizing e' fisso, indipendente dalla leva.",
+        "fixed_lot_confirmed_in_source": true,
+        "margin_check": "GOLD, contract_size=100, prezzo ~4000: margine per 0.01 lotto a 1:100 = ~40 USD, a 1:500 = ~8 USD - entrambi trascurabili rispetto al deposito 10000 USD frozen. Nessun vincolo di margine puo' diventare attivo in nessuno dei due casi.",
+        "conclusion": "L'esito del backtest sarebbe verificabilmente IDENTICO con Leverage=100 o 500 (lot fisso, margine mai vincolante) - questo conferma BUG-024 ('impatto nullo su sweep isolati') per questo caso specifico, ma NON e' il criterio di scelta: si segue comunque la fonte canonica piu' autorevole."
+      },
+      "corrected_value": 500,
+      "correction_rationale": "La fonte piu' autorevole e piu' recente sulla convenzione di leva per i test ufficiali di questo progetto e' l'istruzione esplicita dell'utente del 10-09 (Leverage=500), non il precedente SAR Dukascopy del 17-09 che ha ereditato per errore un valore pre-standardizzazione mai aggiornato. 'Nessuna scelta per comodita'': anche se l'esito sarebbe identico dato il lot fisso, si applica comunque il valore canonico corretto, non quello che gia' 'combacia' col precedente."
+    },
+    "expert_path_bug_discovery": {
+      "discovered_during": "esecuzione dei probe empirici per il punto 2 (timestamp semantics) - non richiesta esplicitamente, scoperta mentre si verificava altro.",
+      "frozen_config_7_8e_value": "Expert=Experts\\\\NEXUS_EA_v2",
+      "empirical_failure_observed": "Primo tentativo di lancio del probe con lo stesso formato (Expert=Experts\\\\NXS_VolBrkTesterWindowProbe) ha prodotto 'Experts\\\\Experts\\\\NXS_VolBrkTesterWindowProbe.ex5 not found' e 'tester didn't start' nel log reale del terminale.",
+      "log_evidence_file": "server/research_scripts/phase7/phase7_8f/raw_probes/nxs_expert_path_bug_log_excerpt.txt",
+      "log_evidence_sha256": "df990121904286e1970cd4fbc1d22e671dc13baca2a1de097ef6567f50fb0e4e",
+      "corrected_value": "Expert=NEXUS_EA_v2",
+      "verified_working": "Secondo tentativo con 'Expert=NXS_VolBrkTesterWindowProbe' (senza prefisso di cartella) ha prodotto 'automatic testing started' nel log reale e ha completato normalmente.",
+      "impact_if_uncorrected": "Il futuro Serious validation, lanciato con il tester config congelato in 7.8E cosi' com'era, avrebbe fallito all'avvio con lo stesso errore - MAI avrebbe prodotto un trade. Questa e' una scoperta di sicurezza del protocollo, non un'invenzione di parametro: verificata empiricamente due volte (fallimento poi successo) nel terminale reale."
+    },
+    "timestamp_semantics": {
+      "probe_A_fromdate_boundary": {
+        "purpose": "Misurare se FromDate include l'intera giornata da 00:00:00.",
+        "ini_config": "FromDate=2023.12.20, ToDate=2023.12.25 (Symbol=GOLD, Period=H4, Model=4)",
+        "raw_output_file": "server/research_scripts/phase7/phase7_8f/raw_probes/nxs_volbrk_tester_window_probe_A_fromdate.txt",
+        "raw_output_sha256": "9e1000b551006321b4471719d540c987b48c66636ac9db62923d532009714d63",
+        "first_bar_time": "2023.12.20 00:00:00",
+        "finding": "first_bar_time=2023.12.20 00:00:00 - FromDate e' INCLUSIVO, il Tester copre l'intera giornata indicata a partire da mezzanotte."
+      },
+      "probe_B_todate_boundary": {
+        "purpose": "Misurare se ToDate e' inclusivo o esclusivo, su una coppia di giorni feriali puri (lunedi'/martedi', nessun weekend) per isolare la regola dal calendario di mercato.",
+        "ini_config": "FromDate=2024.01.08 (lunedi'), ToDate=2024.01.10 (mercoledi') (Symbol=GOLD, Period=H4, Model=4)",
+        "raw_output_file": "server/research_scripts/phase7/phase7_8f/raw_probes/nxs_volbrk_tester_window_probe_B_todate.txt",
+        "raw_output_sha256": "6c58c995c1a4b5bd08b92bf1d24b3e3ac2860fc1b029745d4d83161a36936848",
+        "last_bar_time": "2024.01.09 20:00:00",
+        "last_tick_time": "2024.01.09 23:58:56",
+        "finding": "last_bar_time=2024.01.09 20:00:00, last_tick_time=2024.01.09 23:58:56 - nessun dato del giorno 'ToDate' (10 gennaio) e' stato processato. ToDate e' ESCLUSIVO: il Tester si ferma esattamente a 00:00:00 del giorno ToDate."
+      },
+      "rule_determined": {
+        "from_date_inclusive_from_00_00_00": true,
+        "to_date_exclusive_at_00_00_00": true,
+        "measured_not_assumed": true
+      },
+      "applied_to_frozen_boundaries": {
+        "end_boundary": {
+          "frozen_value": "2026-03-01T00:00:00",
+          "tester_todate_field": "2026.03.01",
+          "coincides_exactly": true,
+          "reasoning": "Il confine frozen END e' gia' esattamente 00:00:00 di un giorno civile - la semantica ESCLUSIVA di ToDate misurata sopra coincide perfettamente col confine dichiarato. Nessun filtro post-run necessario per questo lato.",
+          "handling_rule": "EXACT_TESTER_WINDOW"
+        },
+        "start_boundary": {
+          "frozen_value": "2023-12-20T12:06:50",
+          "tester_fromdate_field": "2023.12.20",
+          "coincides_exactly": false,
+          "gap": "Il Tester (FromDate=2023.12.20) copre l'intera giornata da 00:00:00, ma il confine frozen dichiara l'inizio della finestra 'fresh' solo da 12:06:50 dello stesso giorno (~12h06m di potenziale superset).",
+          "handling_rule": "RUN_SUPERSET_AND_FILTER_EXACT_WINDOW",
+          "filter_rule_frozen_now_before_seeing_results": "Il futuro Serious validation DEVE girare con FromDate=2023.12.20 (il Tester non accetta un'ora specifica in FromDate). Il verdetto primario dovra' escludere/classificare separatamente QUALUNQUE trade con timestamp di apertura < 2023-12-20 12:06:50 (il confine frozen esatto, invariato da 7.8D). Questa regola e' congelata QUI, PRIMA di vedere qualunque risultato del backtest."
+        }
+      },
+      "data_drift_side_observation": {
+        "finding": "Il probe A mostra ticks reali GOLD gia' disponibili dalle 2023.12.20 01:00:00 - un'ora prima delle 12:06:50 rilevate nell'audit di copertura di 7.8D (21 settembre). Coerente con la volatilita' dei dati gia' documentata in 7.8E (history/GOLD/2026.hcc cambiato tra 7.8D e 7.8E).",
+        "action_taken": "NESSUNA modifica al confine frozen in questa fase (esplicitamente vietato dall'istruzione: 're-check, MAI ricalcolare'). Annotato solo come ulteriore conferma empirica del rischio di data-drift gia' coperto da 'reverification_required_before_run' (7.8E, riportato invariato sotto).",
+        "not_a_boundary_change": true
+      }
+    },
+    "hidden_time_dependency_check": {
+      "signal_code_check": {
+        "file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+        "function": "NXS_Strat_VolatilityBreakoutConfirmed()",
+        "uses_only_price_and_atr": true,
+        "has_time_or_session_dependency": false,
+        "verified_not_assumed": true
+      },
+      "execution_gate_check": {
+        "legacy_session_gate_exists": {
+          "file": "MQL5/Include/NEXUS_v1/NXS_Execution.mqh",
+          "finding": "NXS_ResolvedEntryThreshold() esiste e dipende da InpUseSessions (default true) e da InpServerGMTOffset (via g_session) - se raggiunto, con lo score fisso di VOLBRK (65.0) e le soglie di sessione default (Asian 65/London 60/Overlap 58/NY 60/AfterNY 70), il segnale sarebbe bloccato nella sessione AFTERNY (20-24 GMT) e al limite esatto in ASIAN."
+        },
+        "real_execution_path_used": {
+          "file": "MQL5/Experts/NEXUS_EA_v2.mq5",
+          "finding": "Con InpUseStrategyProfiles=true (default, dichiarato nel codice stesso 'sempre vero in Research Mode'), il percorso 'PROFILI PER-STRATEGIA' chiama NXS_OpenTrade() DIRETTAMENTE (riga con 'return; // percorso profili: sostituisce best-per-bar e istituzionale'), SALTANDO il gate legacy NXS_ResolvedEntryThreshold()/sessione - confermato dal commento esplicito 'il vecchio hook dopo NXS_TryExecuteRC... era morto, quel loop non viene mai raggiunto da qui'.",
+          "profile_path_calls_open_trade_directly": true,
+          "profile_path_skips_session_gate": true,
+          "profile_path_skips_counter_htf_session_gate": true
+        }
+      },
+      "conclusion": "NO_TIMEZONE_DEPENDENT_SIGNAL_LOGIC",
+      "conclusion_scope": "Confermato sia per il segnale sia per il percorso di ESECUZIONE realmente attivo (profili per-strategia). Il sistema di soglie per sessione esiste nel codice ma appartiene a un percorso mai raggiunto in questa configurazione.",
+      "additional_freeze_recommendation": "InpUseStrategyProfiles=true e' correntemente un default implicito (non dichiarato esplicitamente nel tester config). Per non dipendere da un default silenzioso che potrebbe cambiare, viene congelato ESPLICITAMENTE nel tester config finale qui sotto."
+    },
+    "tester_execution_config_final": {
+      "not_launched": true,
+      "raw_text": "[Tester]\nExpert=NEXUS_EA_v2\nSymbol=GOLD\nPeriod=H4\nOptimization=0\nModel=4\nFromDate=2023.12.20\nToDate=2026.03.01\nForwardMode=0\nDeposit=10000\nCurrency=USD\nLeverage=500\nExecutionMode=0\nOptimizationCriterion=0\nVisual=0\nShutdownTerminal=1\nReplaceReport=1\n[TesterInputs]\nInpStrategySelector=56\nInpProfileTF=H4\nInpUseStrategyProfiles=true\nInpResearchUseDPT=false\nInpResearchUseRuin=false\nInpResearchUseESL=false\nInpResearchUseDailyDD=false\nInpResearchUseTotalDD=false",
+      "sha256": "86d1974f0ac61ed388261c24cc8b8021cf42d767c6db565eb04482ea07ec97a1",
+      "changes_vs_7_8e_frozen_config": [
+        "Expert: 'Experts\\\\NEXUS_EA_v2' -> 'NEXUS_EA_v2' (bug di path raddoppiato corretto, verificato empiricamente - vedi expert_path_bug_discovery)",
+        "Leverage: 100 -> 500 (allineato alla fonte canonica piu' autorevole - vedi leverage_audit)",
+        "InpUseStrategyProfiles=true aggiunto esplicitamente (era default implicito, ora congelato - vedi hidden_time_dependency_check.additional_freeze_recommendation)"
+      ],
+      "exact_window_handling_rule": {
+        "start": "RUN_SUPERSET_AND_FILTER_EXACT_WINDOW - filtrare trade con apertura < 2023-12-20T12:06:50 dal verdetto primario, deciso prima del run.",
+        "end": "EXACT_TESTER_WINDOW - ToDate coincide gia' esattamente col confine frozen."
+      }
+    },
+    "data_gate_observed_now": {
+      "purpose": "Non richiesto esplicitamente dai 5 punti dell'istruzione, ma osservato mentre si rieseguiva la regressione Phase 7 dopo i probe empirici di questa fase.",
+      "independent_78e_verifier_rerun_exit_code": 1,
+      "independent_78e_verifier_rerun_verdict": "FINAL_PRE_RUN_SEAL_BLOCKED",
+      "finding": "history/GOLD/2026.hcc e' cambiato (size sigillato 15651363 -> size attuale 15827739) rispetto al manifest hashato in 7.8E. Causa piu' probabile: i probe Tester A/B lanciati in QUESTA fase (stesso simbolo GOLD/H4) hanno indotto un resync della cache storica del terminale - il mtime del file coincide con l'orario dell'ultimo probe eseguito qui.",
+      "action_taken": "NESSUNA modifica ai dati o al manifest 7.8E in questa fase (esplicitamente vietato dal punto 5 dell'istruzione: 'NON risincronizzare/modificare dati in questa fase se non necessario').",
+      "implication_for_the_run": "Questo E' esattamente lo scenario per cui 'reverification_required_before_run' esisteva: la riverifica immediatamente-prima-del-RUN (obbligatoria, mai skippabile) trovera' quasi certamente questo stesso mismatch e BLOCCHERA' - servira' un breve RESEAL (ri-eseguire l'hash del manifest a 31 file, non un nuovo Data Freeze completo) subito prima di lanciare il Serious validation, non dopo.",
+      "scope_note": "Questo stato riguarda il gate-dati (7.8E), non i due punti di execution-config richiesti in questa fase (leverage, timestamp semantics) - il final_verdict sotto risponde solo all'ambito richiesto; questa sezione e' un'osservazione aggiuntiva riportata per completezza, non un'espansione dello scope."
+    },
+    "final_seal": {
+      "leverage_corrected_hash": "191c56f5cb09b0c4ff8931ce8282353228b9a032f1b7f9e992a5d668e4f56cfa",
+      "expert_path_bug_hash": "fcf519112f5300bca4dbcce6867dc2586cf8c135db6244aba1a2045f75d46ca9",
+      "timestamp_semantics_hash": "29172ee544aa5cc139205363310e795a768d6173cdbb6af8ef64f33959161688",
+      "hidden_time_dependency_check_hash": "20b210ee9559a15217638fb5d767aa2f3851be1aea0ad8ad4d60dc5617eb6ead",
+      "tester_config_sha256": "86d1974f0ac61ed388261c24cc8b8021cf42d767c6db565eb04482ea07ec97a1",
+      "strategy_frozen_commit": "f035d30",
+      "prereg_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "previous_manifest_hash_7_8e": "259df4fbd46489a6bc04ae8e76e2d0f82dd4d9d7e8c25f8989121da0fd256d22",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71",
+      "selector_index_verified_against_real_registry": true,
+      "data_reverification_required_before_run": {
+        "required": true,
+        "reason": "history/GOLD/2026.hcc gia' osservato cambiare fra due run ravvicinati in questa stessa sessione - il data_manifest_canonical_sha256 pinnato qui DEVE essere ricalcolato immediatamente prima del run reale; se non coincide, il seal e' invalidato e va ri-emesso (fail-closed), MAI ignorato."
+      }
+    },
+    "seal_verification": {
+      "leverage_corrected_with_documented_provenance": true,
+      "expert_path_bug_documented_and_fixed": true,
+      "timestamp_semantics_measured_empirically_twice": true,
+      "exact_window_handling_rule_frozen_before_any_run": true,
+      "hidden_time_dependency_verified_in_code_not_assumed": true,
+      "tester_config_not_launched": true,
+      "previous_manifest_hash_matches_real_7_8e_file": true,
+      "no_outcome_fields_present": true
+    },
+    "final_verdict": {
+      "value": "EXECUTION_CONFIG_VERIFIED_READY_FOR_RUN",
+      "serious_validation_still_not_executed": true,
+      "note": "RICALCOLATO/riverificato solo cio' che l'istruzione ha chiesto (leverage, semantica timestamp, dipendenza temporale nascosta) + una scoperta empirica collaterale (bug path Expert=). Nessun confine temporale e' stato ricalcolato. La riverifica dati immediatamente prima del RUN resta un requisito obbligatorio, invariato da 7.8E.",
+      "attenzione_prima_di_autorizzare_il_run": "Questo E' esattamente lo scenario per cui 'reverification_required_before_run' esisteva: la riverifica immediatamente-prima-del-RUN (obbligatoria, mai skippabile) trovera' quasi certamente questo stesso mismatch e BLOCCHERA' - servira' un breve RESEAL (ri-eseguire l'hash del manifest a 31 file, non un nuovo Data Freeze completo) subito prima di lanciare il Serious validation, non dopo."
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_trade_results_generated": true,
+    "no_pf_expectancy_or_winrate_computed": true,
+    "no_edge_discovery_performed": true,
+    "no_retroactive_modification_of_frozen_artifacts": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
