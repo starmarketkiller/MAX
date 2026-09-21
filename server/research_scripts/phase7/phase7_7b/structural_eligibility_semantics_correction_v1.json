@@ -1,0 +1,182 @@
+{
+  "generated_at": "2026-09-21T19:23:12.017444+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7b/build_structural_eligibility_semantics_correction.py",
+  "canonical_sha256": "5e2c93f4a9d8faca5284dd3341234c7c8b22682504c9a58ed8b948fc24c63822",
+  "payload": {
+    "phase": "7.7B-CORRECTION",
+    "artifact_role": "STRUCTURAL_ELIGIBILITY_SEMANTICS_CORRECTION",
+    "scope_note": "Corregge una conflazione semantica trovata in strategy_meta_filter_gate_v1.json (72bcbf2): campi lifecycle null per limite di audit erano stati trattati come assenza strutturale verificata. Nessun nuovo deep-dive del codice, nessun backtest, nessuna applicazione di MECH-23 - solo rilettura del testo gia' scritto in Phase 7.7A.",
+    "baseline_commit": "72bcbf299dc2bab52fb435f0b0d3320a52ff99a2",
+    "source_lifecycle_registry_untouched": {
+      "file": "server/research_scripts/phase7/phase7_7a/strategy_lifecycle_registry_v1.json",
+      "canonical_sha256": "270088329416d23cef2d5675b8da21690d6e542d4b3493142c3e0fa15c628bf1",
+      "modified_in_this_phase": false
+    },
+    "source_gate_untouched": {
+      "file": "server/research_scripts/phase7/phase7_7b/strategy_meta_filter_gate_v1.json",
+      "canonical_sha256": "c3be76cb15c2bf479ccd4caa3e6c7193a0b1103feb5de49e6553574c39f9cb60",
+      "modified_in_this_phase": false
+    },
+    "structural_eligibility_values": [
+      "STRUCTURALLY_ELIGIBLE",
+      "STRUCTURALLY_INELIGIBLE",
+      "STRUCTURAL_STATUS_UNVERIFIED"
+    ],
+    "missing_field_taxonomy": {
+      "source-null": "Il campo e' genuinamente assente nella fonte perche' quel componente non esiste per costruzione nel design reale (es. H006 non ha un invalidation_stop separato perche' il suo outcome e' definito interamente da una barriera - un fatto verificato, non un limite di audit).",
+      "audit-not-extracted": "Il campo e' null perche' l'audit che ha prodotto l'artifact non ha approfondito quella parte del codice/documento sorgente - il componente PUO' esistere realmente, semplicemente non e' stato letto. Implica sempre STRUCTURAL_STATUS_UNVERIFIED, MAI STRUCTURALLY_INELIGIBLE.",
+      "explicitly-absent": "La fonte contiene una dichiarazione ESPLICITA e positiva che il componente non esiste (es. Phase 7.6E per le 4 famiglie DIRECTIONAL_EVENT_ONLY: 'nessun blocco downstream nel detector gia' congelato' - verificato leggendo il codice, non assunto). Solo questo caso giustifica STRUCTURALLY_INELIGIBLE."
+    },
+    "general_rule": "MISSING_FIELD != VERIFIED_ABSENCE. Un campo null implica STRUCTURAL_STATUS_UNVERIFIED per default (fail-closed verso 'non sappiamo', mai verso 'sappiamo che manca') - STRUCTURALLY_INELIGIBLE richiede una dichiarazione ESPLICITA e positiva di assenza nella fonte, mai dedotta dal solo valore null.",
+    "corrected_structural_status_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "old_7_7b_structural_status": "ELIGIBLE",
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "missing_field_taxonomy_class": null,
+        "evidence_quote_from_7_7a_rationale": null,
+        "correction_applied": false
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "old_7_7b_structural_status": "ELIGIBLE",
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "missing_field_taxonomy_class": null,
+        "evidence_quote_from_7_7a_rationale": null,
+        "correction_applied": false
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "old_7_7b_structural_status": "NOT_ELIGIBLE",
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "missing_field_taxonomy_class": "audit-not-extracted",
+        "evidence_quote_from_7_7a_rationale": "Campi del lifecycle non estratti in dettaglio da questo audit (fuori scope: la fonte primaria e' un registro di pattern di fallimento METODOLOGICO, non uno strategy spec) - classificato PARTIAL non per assenza di formalizzazione ma perche' questo audit non ha approfondito il contratto completo.",
+        "correction_applied": true
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "old_7_7b_structural_status": "ELIGIBLE",
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "missing_field_taxonomy_class": null,
+        "evidence_quote_from_7_7a_rationale": null,
+        "correction_applied": false
+      },
+      "SAR_LIVE": {
+        "old_7_7b_structural_status": "NOT_ELIGIBLE",
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "missing_field_taxonomy_class": "audit-not-extracted",
+        "evidence_quote_from_7_7a_rationale": "live_implementation=true nel registro canonico implica un modulo MQL5 reale con SL/TP/gestione (stesso framework NXS_StrategyProfiles.mqh gia' verificato per VOLATILITY_BREAKOUT_CONFIRMED) - campi esatti non individualmente riverificati in questo audit (STRUCTURALLY_IMPLEMENTED, non VERIFIED riga per riga).",
+        "correction_applied": true
+      },
+      "ADX_RSI": {
+        "old_7_7b_structural_status": "NOT_ELIGIBLE",
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "missing_field_taxonomy_class": "audit-not-extracted",
+        "evidence_quote_from_7_7a_rationale": "live_implementation=true (STRUCTURALLY_IMPLEMENTED, non individualmente riverificato riga per riga in questo audit).",
+        "correction_applied": true
+      },
+      "BREAKOUT_ACC": {
+        "old_7_7b_structural_status": "NOT_ELIGIBLE",
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "missing_field_taxonomy_class": "audit-not-extracted",
+        "evidence_quote_from_7_7a_rationale": "live_implementation=true (STRUCTURALLY_IMPLEMENTED, non individualmente riverificato riga per riga in questo audit).",
+        "correction_applied": true
+      }
+    },
+    "verified_positive_absence_cases": {},
+    "verified_positive_absence_count": 0,
+    "research_readiness_by_candidate_unchanged": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "meta_filter_research_readiness": "NEEDS_MORE_EVIDENCE",
+        "next_required_evidence": "Serious 3Y backtest (o campione multi-anno equivalente) - il fast structural attuale (n=14/6 mesi) e' troppo piccolo/concentrato per un verdetto forte (vedi Strategy Foundry Phase 3 sec.6)."
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "meta_filter_research_readiness": "BORDERLINE_LOW_PRIORITY",
+        "next_required_evidence": "CROSS_FEED_VALIDATION indipendente (E4, fonte dati diversa) o un nuovo true holdout dedicato - priorita' BASSA data la natura gia' borderline del risultato (delta_p sotto soglia di materialita', CI95 sovrapposte) - investire in piu' evidenza qui ha basso valore atteso rispetto a un candidato non ancora borderline."
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "meta_filter_research_readiness": "EXECUTION_FAILED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna evidenza aggiuntiva sullo STESSO design di esecuzione la salverebbe - richiederebbe un fill model dimostrabilmente piu' realistico (non tentato), non piu' campione."
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto)."
+      },
+      "SAR_LIVE": {
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto)."
+      },
+      "ADX_RSI": {
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto)."
+      },
+      "BREAKOUT_ACC": {
+        "meta_filter_research_readiness": "NOT_READY",
+        "next_required_evidence": "Trattamento statistico rigoroso (Wilson CI, dependence-aware audit, separazione discovery/holdout dichiarata) - oggi l'evidenza e' solo R-multiple/PF grezzo su backtest informale, non sufficiente per un giudizio di maturita' anche se il segno e' positivo."
+      }
+    },
+    "research_readiness_unchanged_confirmed": true,
+    "corrected_gate_results_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "NEEDS_MORE_EVIDENCE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "BORDERLINE_LOW_PRIORITY",
+        "meta_filter_ready_gate_passed": false
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "EXECUTION_FAILED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "corrected_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "SAR_LIVE": {
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "ADX_RSI": {
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "BREAKOUT_ACC": {
+        "corrected_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "NOT_READY",
+        "meta_filter_ready_gate_passed": false
+      }
+    },
+    "gate_counts": {
+      "meta_filter_ready_count_before_correction": 0,
+      "meta_filter_ready_count_after_correction": 0,
+      "gate_count_unchanged": true
+    },
+    "structural_counts_before_correction": {
+      "structurally_eligible": 3,
+      "structurally_ineligible_or_not_eligible": 4,
+      "unverified": 0
+    },
+    "structural_counts_after_correction": {
+      "structurally_eligible": 3,
+      "structurally_ineligible": 0,
+      "unverified": 4
+    },
+    "no_candidate_promoted_by_this_correction": true,
+    "future_axis_proposal": {
+      "proposed_axis": "META_FILTER_EXECUTION_READINESS",
+      "rationale": "WICK_SWEEP_RECLAIM ha gia' dimostrato che structural=eligible (in futuro, dopo un deep-dive) + research_readiness alta NON implica che l'edge sopravviva all'esecuzione reale (shadow PF=5.80 -> reale PF=0.78-0.80). Una pipeline completa avrebbe bisogno di un terzo asse INDIPENDENTE: STRUCTURE -> RESEARCH EVIDENCE -> EXECUTION REALISM -> DEPLOYABILITY, con gate distinti META_FILTER_READY / EXECUTION_READY / DEPLOYABLE.",
+      "not_implemented_here": true,
+      "no_new_infrastructure_built": true
+    },
+    "no_new_backtest_executed": true,
+    "no_mech23_applied": true,
+    "no_new_outcome_data_accessed": true,
+    "no_edge_discovery_performed": true,
+    "no_retroactive_modification_of_7_7a_or_7_7b": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
