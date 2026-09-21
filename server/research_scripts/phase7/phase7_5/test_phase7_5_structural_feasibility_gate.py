@@ -331,6 +331,43 @@ def test_cluster_geometry_fields_present():
     check("longest_gap_reflects_the_isolated_tail", geo["longest_no_event_gap_bars"] >= 9800)
 
 
+def test_matching_preflight_per_event_control_pool():
+    """Phase 7.5B - control_pool_by_event_row (bug concreto trovato
+    applicando il gate a SEQ-0009): l'esclusione per sovrapposizione
+    outcome e' PER-EVENTO (dipende dalla riga t di quell'evento), non
+    globale - due eventi devono poter ricevere pool di controllo
+    DIVERSI nella stessa run. Retro-compatibilita' verificata: senza
+    l'argomento, il comportamento resta quello di un pool condiviso."""
+    boundaries = {"discovery": (0, 1_000_000)}
+    pool_e1 = [500_000, 500_001, 500_002]
+    pool_e2 = [600_000, 600_001, 600_002]
+    row_by_id = {c: c for c in pool_e1 + pool_e2}
+    feat_by_id = {c: {"state": "A"} for c in pool_e1 + pool_e2}
+    discovery_feats = {c: {"state": "A"} for c in pool_e1 + pool_e2}
+    events = [{"event_id": "E1", "event_row": 0, "direction": "BUY", "features": {"state": "A"}},
+              {"event_id": "E2", "event_row": 100, "direction": "BUY", "features": {"state": "A"}}]
+
+    preflight = run_matching_preflight(
+        match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events,
+        control_pool=pool_e1 + pool_e2, control_row_by_id=row_by_id, control_features_by_id=feat_by_id,
+        discovery_features_by_row=discovery_feats, minimum_control_count=3, max_control_reuse_per_run=10,
+        control_pool_by_event_row={0: pool_e1, 100: pool_e2},
+    )
+    e1_picks = set(m["control_id"] for m in preflight["event_match_results"][0]["matches"])
+    e2_picks = set(m["control_id"] for m in preflight["event_match_results"][1]["matches"])
+    check("per_event_pool_e1_only_from_its_own_pool", e1_picks <= set(pool_e1), f"{e1_picks}")
+    check("per_event_pool_e2_only_from_its_own_pool", e2_picks <= set(pool_e2), f"{e2_picks}")
+    check("per_event_pool_no_cross_contamination", e1_picks.isdisjoint(pool_e2) and e2_picks.isdisjoint(pool_e1))
+
+    # Retro-compatibilita': senza control_pool_by_event_row, comportamento invariato (pool condiviso).
+    shared_preflight = run_matching_preflight(
+        match_dimensions=["state"], k=3, split_boundaries=boundaries, events=events,
+        control_pool=pool_e1, control_row_by_id={c: c for c in pool_e1}, control_features_by_id=feat_by_id,
+        discovery_features_by_row=discovery_feats, minimum_control_count=3, max_control_reuse_per_run=10,
+    )
+    check("shared_pool_backward_compatible", shared_preflight["n_events"] == 2)
+
+
 def test_matching_preflight_determinism_and_reuse_cap():
     boundaries = {"discovery": (0, 200), "internal_validation": (200, 280),
                   "locked_validation": (280, 360), "final_holdout": (360, 440)}
@@ -642,6 +679,7 @@ def main():
     test_borderline_thin_margin()
     test_cluster_geometry_fields_present()
     test_matching_preflight_determinism_and_reuse_cap()
+    test_matching_preflight_per_event_control_pool()
     test_shuffled_control_pool_order_still_deterministic()
     test_direction_fixed_buy_never_becomes_both()
     test_direction_fixed_sell()

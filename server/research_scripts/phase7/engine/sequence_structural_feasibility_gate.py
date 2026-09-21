@@ -149,7 +149,7 @@ from sequence_episode_engine import (  # noqa: E402
 from baseline_engine_v4 import BaselineEngineV4, build_quality_report, CONTRACT_VERSION as BASELINE_ENGINE_CONTRACT_VERSION  # noqa: E402
 
 GATE_POLICY_VERSION = "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1"
-ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v3"
+ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v4"
 
 # ---- Livello 1: geometria del detector (sec.2 Phase 7.5A originale) ----
 # Campi che un family spec DEVE dichiarare esplicitamente prima che il
@@ -526,7 +526,8 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
                             control_features_by_id: dict, discovery_features_by_row: dict,
                             minimum_control_count: int, max_control_reuse_per_run: int,
                             discovery_split_name: str = "discovery",
-                            feature_version: str = "feature_registry_v2") -> dict:
+                            feature_version: str = "feature_registry_v2",
+                            control_pool_by_event_row: dict = None) -> dict:
     """Simula il matching STRUTTURALE senza alcun outcome, riusando
     BaselineEngineV4/ControlReuseLedger senza modifiche. Va invocato
     SOLO quando esistono gia' feature di stato reali (evento e pool di
@@ -537,13 +538,30 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
     un `control_direction_by_id` globale - ogni evento riceve la propria
     baseline direction-conditioned counterfactual, costruita da
     _match_one_event() esattamente come fa SequenceBaselineAdapter nella
-    pipeline reale (verificato da un test di parita' diretto)."""
+    pipeline reale (verificato da un test di parita' diretto).
+
+    control_pool_by_event_row (opzionale, Phase 7.5B - bug concreto
+    trovato applicando il gate a SEQ-0009): {event_row: [control_id, ...]}
+    - quando fornito, ogni evento usa il PROPRIO pool gia' filtrato
+    (es. per control_pool_construction_policy: escludere |r-t|<=
+    exclusion_buffer_bars e lo stesso episode_id, come SequenceBaseline
+    Adapter richiede sia gia' fatto dal chiamante) invece dell'unico
+    `control_pool` condiviso - necessario perche' l'esclusione per
+    finestra di sovrapposizione outcome e' intrinsecamente PER-EVENTO
+    (dipende dalla riga t di quello specifico evento), non globale.
+    Retro-compatibile: se assente, si comporta come prima (`control_pool`
+    condiviso per tutti gli eventi)."""
+    def _pool_for(ev):
+        if control_pool_by_event_row is not None:
+            return control_pool_by_event_row[ev["event_row"]]
+        return control_pool
+
     engine = BaselineEngineV4(match_dimensions=match_dimensions, k=k, split_boundaries=split_boundaries,
                                discovery_split_name=discovery_split_name, feature_version=feature_version,
                                minimum_control_count=minimum_control_count,
                                max_control_reuse_per_run=max_control_reuse_per_run)
     engine.fit_normalization(discovery_features_by_row)
-    results = [_match_one_event(engine, ev, control_pool, control_row_by_id, control_features_by_id)
+    results = [_match_one_event(engine, ev, _pool_for(ev), control_row_by_id, control_features_by_id)
                for ev in events]
     quality_report = build_quality_report(results)
     reuse_report = engine.reuse_usage_report()
@@ -555,7 +573,7 @@ def run_matching_preflight(match_dimensions: list, k: int, split_boundaries: dic
                                       minimum_control_count=minimum_control_count,
                                       max_control_reuse_per_run=max_control_reuse_per_run)
     engine_repeat.fit_normalization(discovery_features_by_row)
-    repeat_results = [_match_one_event(engine_repeat, ev, control_pool, control_row_by_id, control_features_by_id)
+    repeat_results = [_match_one_event(engine_repeat, ev, _pool_for(ev), control_row_by_id, control_features_by_id)
                        for ev in events]
     repeat_picks = [sorted(m["control_id"] for m in r["matches"]) for r in repeat_results]
     original_picks = [sorted(m["control_id"] for m in r["matches"]) for r in results]
@@ -646,6 +664,7 @@ def evaluate_matching_feasibility(funnel: dict, spec: dict, minimum_evidence_gat
         discovery_features_by_row=runtime["discovery_features_by_row"],
         minimum_control_count=matching_spec["minimum_control_count"],
         max_control_reuse_per_run=matching_spec["max_control_reuse_per_run"],
+        control_pool_by_event_row=runtime.get("control_pool_by_event_row"),
     )
     minimum_required_n = minimum_evidence_gates["n_nominal_minimum"]
     independent_units_with_valid_match = preflight["n_matched"]

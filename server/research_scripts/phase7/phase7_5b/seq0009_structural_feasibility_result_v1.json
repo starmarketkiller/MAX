@@ -1,0 +1,148 @@
+{
+  "generated_at": "2026-09-21T06:52:35.072008+00:00",
+  "generation_script": "phase7/phase7_5b/run_seq0009_structural_feasibility.py",
+  "canonical_sha256": "eb6212358b4734e4ffe382e7ac163f936c7d13485b20dc1731e077842ba63eb0",
+  "payload": {
+    "sequence_family_id": "SEQFAM-SEQ0009-SWEEP-STRUCTURAL-V1",
+    "sequence_ids": [
+      "SEQ-0009"
+    ],
+    "frozen_spec_ref": "server/research_scripts/phase7/phase7_5b/seq0009_frozen_structural_spec_v1.json",
+    "engine_version": "sequence_structural_feasibility_gate.py@v4",
+    "no_nexus_outcome_data_accessed": true,
+    "no_edge_discovery_performed": true,
+    "no_parameter_adjusted_after_seeing_this_result": true,
+    "data_provenance": {
+      "bars_file": "server/research_scripts/phase7/phase7_1/data/xauusd_h4_bars_p71.csv",
+      "state_file": "server/research_scripts/phase7/phase7_1/data/market_state_dataset_p71.csv",
+      "events_file": "server/research_scripts/phase7/phase7_1/data/events_p71.csv",
+      "discovery_row_range": [
+        396,
+        2789
+      ]
+    },
+    "raw_sweep_events_in_discovery": {
+      "n_total_raw_including_ambiguous": 248,
+      "n_ambiguous_double_sweep_excluded": 2,
+      "n_used": 246,
+      "n_high_swept_sell": 129,
+      "n_low_swept_buy": 117
+    },
+    "gate_result": {
+      "sequence_family_id": "SEQFAM-SEQ0009-SWEEP-STRUCTURAL-V1",
+      "verdict": "NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY",
+      "formalization_level": "DETECTOR_GEOMETRY_READY",
+      "geometry_verdict": "NOT_TESTABLE_ON_PREREGISTERED_DISCOVERY",
+      "detection_funnel": {
+        "n_bars": 2393,
+        "n_raw_events": 246,
+        "firing_rate": 0.10279983284580026,
+        "gap_stats": {
+          "median_gap_bars": 6,
+          "p10": 1.0,
+          "p25": 2.0,
+          "p50": 6.0,
+          "p75": 14.0,
+          "p90": 24.0
+        },
+        "EVENT_VIEW": {
+          "n": 246
+        },
+        "EPISODE_VIEW": {
+          "n": 169,
+          "n_episodes": 169
+        },
+        "INDEPENDENT_VIEW": {
+          "n": 10,
+          "n_independent_observations": 10,
+          "representative_rows": [
+            396,
+            568,
+            639,
+            747,
+            1812,
+            1949,
+            2123,
+            2226,
+            2591,
+            2701
+          ],
+          "direction_by_row": {
+            "396": "BUY",
+            "568": "SELL",
+            "639": "SELL",
+            "747": "SELL",
+            "1812": "SELL",
+            "1949": "BUY",
+            "2123": "SELL",
+            "2226": "SELL",
+            "2591": "SELL",
+            "2701": "SELL"
+          }
+        },
+        "episode_gap_rule": 2,
+        "natural_horizon": 40,
+        "overlap_policy": "COLLAPSE_TO_FIRST",
+        "outcome_overlap_embargo_bars": 39
+      },
+      "cluster_geometry": {
+        "n_independent_clusters": 8,
+        "n_episode_clusters": 169,
+        "cluster_size_distribution": [
+          145,
+          37,
+          21,
+          14,
+          12,
+          9,
+          6,
+          2
+        ],
+        "max_cluster_size": 145,
+        "median_cluster_size": 13.0,
+        "fraction_events_in_largest_cluster": 0.5894308943089431,
+        "fraction_gaps_below_embargo": 0.9714285714285714,
+        "fraction_gaps_below_episode_gap_rule": 0.3142857142857143,
+        "longest_no_event_gap_bars": 84
+      },
+      "feasibility_ratios": {
+        "episode_retention": 0.6869918699186992,
+        "independence_retention": 0.05917159763313609,
+        "independent_units_per_year": null,
+        "independent_units": 10,
+        "minimum_required_n": 30,
+        "independent_units_over_minimum_required": 0.3333333333333333
+      },
+      "firing_geometry_risk_flag": {
+        "signature": "EVENT_FIRING_RATE_ABOVE_INFORMATIVE_THRESHOLD",
+        "risk_flag": true,
+        "median_gap_bars": 6,
+        "outcome_overlap_embargo_bars": 39,
+        "firing_rate": 0.10279983284580026,
+        "reason": "median_gap_bars=6 <= outcome_overlap_embargo_bars=39: segnale di RISCHIO che il clustering transitivo possa comprimere l'INDEPENDENT_VIEW - NON una prova da sola (gap grandi intermedi possono comunque produrre abbastanza cluster indipendenti). Verificare SEMPRE independent_units nel funnel/geometry reale, non fermarsi a questo flag.",
+        "authority": "DIAGNOSTIC_ONLY - l'autorita' strutturale e' independent_units (assign_clusters/INDEPENDENT_VIEW) vs minimum_required_n, mai questo proxy da solo."
+      },
+      "matching": {
+        "status": "NOT_DECLARED",
+        "missing_matching_degrees_of_freedom": null
+      },
+      "provenance": {
+        "detector_source_ref": "server/research_scripts/phase7/phase7_1/build_events_p71.py:SWEEP (sweep_v1_range20)",
+        "detector_parameters_hash": "044c97b8b013d6beeaa00c897caf53626273166359d7d8ee82a3883fb20ca057",
+        "spec_hash": "341c68053b9c132580cc77f82317641c0dfb5db1012595d24a6159d98cdb0814",
+        "discovery_partition": {
+          "partition_id": "development_discovery",
+          "n_bars": 2393
+        },
+        "engine_version": "sequence_structural_feasibility_gate.py@v4",
+        "policy_version": "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1",
+        "outcome_blind": true,
+        "deterministic": true,
+        "direction_derivation": {
+          "event_direction_policy": "PER_EVENT_DIRECTION",
+          "direction_map_hash": "7a2c724150e5ab8a51418ae3e63eb8623fba926515ce734ed9a465ced1b332f7"
+        }
+      }
+    }
+  }
+}
