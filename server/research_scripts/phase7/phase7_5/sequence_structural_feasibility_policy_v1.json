@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-20T21:41:29.263148+00:00",
+  "generated_at": "2026-09-21T10:12:53.576491+00:00",
   "generation_script": "phase7/phase7_5/build_sequence_structural_feasibility_policy.py",
-  "canonical_sha256": "f05e4a86aa0681bbe6d732dccb7065995d0855f8272f9d6fd40ce838c799c11f",
+  "canonical_sha256": "6bebf7282b2f1e3822f7e070ff2b748dd82c5eb77c9b2a6ce344d791bfec0572",
   "payload": {
     "policy_id": "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1",
     "disclaimer": "Gate STRUTTURALE, non statistico e non di edge. Nessuna soglia qui stima probabilita' di successo/profittabilita' - tutte rispondono esclusivamente a 'questa geometria di campione e' eseguibile sulla partition preregistrata proposta?'. Applicabile a QUALUNQUE sequence family futura, non specifico a SEQ-0015 (chiusa, vedi failure_memory_registry_v1.json FAIL-009).",
@@ -161,6 +161,12 @@
         "likelihood of success",
         "qualunque metrica derivata da outcome"
       ]
+    },
+    "cluster_geometry_consistency": {
+      "description": "CORREZIONE (Cluster Geometry Consistency Patch, post-review su SEQ-0009, 2026-09-21): compute_cluster_geometry applicava l'embargo DIRETTAMENTE ai raw event row (assign_clusters(raw_rows, embargo)), producendo un n_independent_clusters diverso da detection_funnel.INDEPENDENT_VIEW.n (calcolato correttamente da build_outcome_independent_view come raw events -> episode representatives -> embargo clustering, DUE passate distinte). Caso reale: SEQ-0009, raw-event-embargo=8 vs INDEPENDENT_VIEW=10 - stesso dato, due geometrie diverse scambiate per la stessa.",
+      "fix": "cluster_geometry ha ora DUE blocchi esplicitamente separati e mai confondibili: raw_event_embargo_geometry (diagnostica sui raw event, embargo diretto, MAI l'autorita') e inferential_independent_geometry (embargo sui rappresentanti di EPISODE_VIEW - stessa identica costruzione di INDEPENDENT_VIEW).",
+      "invariant": "inferential_independent_geometry.n_independent_clusters == detection_funnel.INDEPENDENT_VIEW.n, verificato meccanicamente (ClusterGeometryInconsistencyError, fail-closed) ad ogni esecuzione del gate - non solo dichiarato, imposto.",
+      "verified_by": "test_cluster_geometry_invariant_matches_independent_view (su ogni spec valido) + test_cluster_geometry_raw_and_inferential_can_genuinely_differ (controesempio sintetico che riproduce il meccanismo del bug: raw=1 cluster, inferential=3 cluster, stessi dati, stesso embargo)."
     }
   }
 }

@@ -26,6 +26,7 @@ PHASE75_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(PHASE75_DIR, "..", "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "engine"))
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "phase7_3"))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_5"))
 sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
 
 from sequence_structural_feasibility_gate import (  # noqa: E402
@@ -44,6 +45,7 @@ from sequence_structural_feasibility_gate import (  # noqa: E402
 )
 from canonical_utils import canonical_sha256  # noqa: E402
 from sequence_baseline_adapter_v1 import SequenceBaselineAdapter  # noqa: E402
+from dependence_diagnostics import assign_clusters  # noqa: E402
 
 RESULTS = []
 
@@ -324,11 +326,86 @@ def test_cluster_geometry_fields_present():
     spec = _minimal_spec(event_row_indices=list(range(0, 20 * 5, 5)) + [10000, 10100, 10200])
     result = evaluate_family_structural_feasibility(spec)
     geo = result["cluster_geometry"]
+    check("cluster_geometry_has_n_episode_clusters", "n_episode_clusters" in geo)
+    check("cluster_geometry_has_raw_block", "raw_event_embargo_geometry" in geo)
+    check("cluster_geometry_has_inferential_block", "inferential_independent_geometry" in geo)
+
+    raw = geo["raw_event_embargo_geometry"]
+    for field in ("n_clusters", "cluster_size_distribution", "max_cluster_size", "median_cluster_size",
+                  "fraction_events_in_largest_cluster", "fraction_gaps_below_embargo",
+                  "longest_no_event_gap_bars"):
+        check(f"raw_geometry_has_{field}", field in raw)
+    check("longest_gap_reflects_the_isolated_tail", raw["longest_no_event_gap_bars"] >= 9800)
+
+    inf = geo["inferential_independent_geometry"]
     for field in ("n_independent_clusters", "cluster_size_distribution", "max_cluster_size",
-                  "median_cluster_size", "fraction_events_in_largest_cluster",
-                  "fraction_gaps_below_embargo", "longest_no_event_gap_bars"):
-        check(f"cluster_geometry_has_{field}", field in geo)
-    check("longest_gap_reflects_the_isolated_tail", geo["longest_no_event_gap_bars"] >= 9800)
+                  "median_cluster_size", "fraction_episode_representatives_in_largest_cluster",
+                  "fraction_gaps_below_embargo", "longest_no_episode_gap"):
+        check(f"inferential_geometry_has_{field}", field in inf)
+
+
+def test_cluster_geometry_invariant_matches_independent_view():
+    """CORREZIONE (Cluster Geometry Consistency Patch, post-review): il
+    bug originale confondeva la geometria raw-event-embargo con quella
+    inferenziale (episode representatives). Verifica l'invariant
+    esplicito ORA imposto meccanicamente in evaluate_family_structural_
+    feasibility - deve valere per costruzione su QUALUNQUE spec valido."""
+    spec = _minimal_spec(event_row_indices=list(range(0, 60 * 60, 60)))
+    result = evaluate_family_structural_feasibility(spec)
+    inf_n = result["cluster_geometry"]["inferential_independent_geometry"]["n_independent_clusters"]
+    check("inferential_n_matches_independent_view_n", inf_n == result["detection_funnel"]["INDEPENDENT_VIEW"]["n"],
+          f"inferential={inf_n}, INDEPENDENT_VIEW.n={result['detection_funnel']['INDEPENDENT_VIEW']['n']}")
+
+
+def test_cluster_geometry_raw_and_inferential_can_genuinely_differ():
+    """CONTROESEMPIO OBBLIGATORIO (sec.6 della review): costruire eventi
+    dove il clustering diretto dei raw event con embargo produce un
+    conteggio DIVERSO dal clustering dei rappresentanti di EPISODE_VIEW
+    con lo stesso embargo - riproduce lo stesso meccanismo del bug reale
+    (SEQ-0009: 8 raw vs 10 inferential) su un caso piccolo, verificato
+    per costruzione (non a mano).
+
+    Costruzione: 3 mini-episodi di 2 eventi ravvicinati (gap interno=1),
+    separati da gap=3 fra un mini-episodio e il successivo -> raw_rows=
+    [100,101, 104,105, 108,109]. episode_gap_rule=1 (solo eventi
+    CONSECUTIVI, gap<=1, nello stesso episodio) -> 3 episodi, uno per
+    mini-cluster, rappresentanti (COLLAPSE_TO_FIRST) = [100, 104, 108].
+    embargo=3:
+      - raw-event embargo clustering (soglia 3 sui 6 raw row): i gap
+        alternano 1,3,1,3,1 - TUTTI <=3, quindi transitivamente
+        collassano in 1 SOLO cluster (esattamente il meccanismo del bug:
+        i micro-gap=1 'ponteggiano' i gap=3 in un'unica catena).
+      - inferential embargo clustering (soglia 3 sui 3 rappresentanti
+        [100,104,108]): gap=4 fra ciascuno, 4>3 -> NESSUNO si unisce,
+        3 cluster distinti (i micro-gap che 'ponteggiavano' la catena
+        raw sono stati gia' rimossi dalla rappresentazione episodica)."""
+    raw_rows = []
+    r = 100
+    for _ in range(3):
+        raw_rows.append(r)
+        raw_rows.append(r + 1)
+        r += 4  # gap fra mini-cluster = 4-1 = 3 (fra l'ultimo evento di uno e il primo del successivo)
+    episode_gap_rule = 1
+    embargo = 3  # < gap fra rappresentanti (che e' 4), ma i raw-event singoli hanno gap=1 o 3 fra loro
+
+    episode_clusters, _ = assign_clusters(sorted(raw_rows), episode_gap_rule)
+    episode_representatives = sorted(c[0] for c in episode_clusters)
+    raw_clusters, _ = assign_clusters(sorted(raw_rows), embargo)
+    inferential_clusters, _ = assign_clusters(episode_representatives, embargo)
+
+    check("counterexample_setup_produces_divergence", len(raw_clusters) != len(inferential_clusters),
+          f"raw_rows={raw_rows}, episode_representatives={episode_representatives}, "
+          f"n_raw_clusters={len(raw_clusters)}, n_inferential_clusters={len(inferential_clusters)} - "
+          f"se questo fallisce, il caso sintetico va aggiustato, non il gate")
+
+    geometry = compute_cluster_geometry(raw_rows, episode_representatives, episode_gap_rule, embargo)
+    check("bug_reproduced_raw_differs_from_inferential",
+          geometry["raw_event_embargo_geometry"]["n_clusters"] !=
+          geometry["inferential_independent_geometry"]["n_independent_clusters"],
+          f"raw={geometry['raw_event_embargo_geometry']['n_clusters']}, "
+          f"inferential={geometry['inferential_independent_geometry']['n_independent_clusters']}")
+    check("inferential_matches_direct_recomputation",
+          geometry["inferential_independent_geometry"]["n_independent_clusters"] == len(inferential_clusters))
 
 
 def test_matching_preflight_per_event_control_pool():
@@ -678,6 +755,8 @@ def main():
     test_matching_runtime_missing_event_features_fail_closed()
     test_borderline_thin_margin()
     test_cluster_geometry_fields_present()
+    test_cluster_geometry_invariant_matches_independent_view()
+    test_cluster_geometry_raw_and_inferential_can_genuinely_differ()
     test_matching_preflight_determinism_and_reuse_cap()
     test_matching_preflight_per_event_control_pool()
     test_shuffled_control_pool_order_still_deterministic()

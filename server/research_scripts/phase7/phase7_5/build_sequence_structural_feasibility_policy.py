@@ -285,6 +285,26 @@ PAYLOAD = {
         "forbidden_inputs": ["probabilita' di edge", "expected profitability", "likelihood of success",
                              "qualunque metrica derivata da outcome"],
     },
+    "cluster_geometry_consistency": {
+        "description": "CORREZIONE (Cluster Geometry Consistency Patch, post-review su SEQ-0009, 2026-09-21): "
+                        "compute_cluster_geometry applicava l'embargo DIRETTAMENTE ai raw event row "
+                        "(assign_clusters(raw_rows, embargo)), producendo un n_independent_clusters diverso "
+                        "da detection_funnel.INDEPENDENT_VIEW.n (calcolato correttamente da "
+                        "build_outcome_independent_view come raw events -> episode representatives -> embargo "
+                        "clustering, DUE passate distinte). Caso reale: SEQ-0009, raw-event-embargo=8 vs "
+                        "INDEPENDENT_VIEW=10 - stesso dato, due geometrie diverse scambiate per la stessa.",
+        "fix": "cluster_geometry ha ora DUE blocchi esplicitamente separati e mai confondibili: "
+               "raw_event_embargo_geometry (diagnostica sui raw event, embargo diretto, MAI l'autorita') e "
+               "inferential_independent_geometry (embargo sui rappresentanti di EPISODE_VIEW - stessa identica "
+               "costruzione di INDEPENDENT_VIEW).",
+        "invariant": "inferential_independent_geometry.n_independent_clusters == detection_funnel."
+                     "INDEPENDENT_VIEW.n, verificato meccanicamente (ClusterGeometryInconsistencyError, "
+                     "fail-closed) ad ogni esecuzione del gate - non solo dichiarato, imposto.",
+        "verified_by": "test_cluster_geometry_invariant_matches_independent_view (su ogni spec valido) + "
+                       "test_cluster_geometry_raw_and_inferential_can_genuinely_differ (controesempio "
+                       "sintetico che riproduce il meccanismo del bug: raw=1 cluster, inferential=3 cluster, "
+                       "stessi dati, stesso embargo).",
+    },
 }
 
 if __name__ == "__main__":

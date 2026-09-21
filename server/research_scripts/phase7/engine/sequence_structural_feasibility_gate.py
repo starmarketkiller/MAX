@@ -248,6 +248,18 @@ class DirectionDerivationError(Exception):
     pass
 
 
+class ClusterGeometryInconsistencyError(Exception):
+    """Sollevata (Cluster Geometry Consistency Patch, post-review) se
+    inferential_independent_geometry.n_independent_clusters non
+    coincide con detection_funnel.INDEPENDENT_VIEW.n - le due DEVONO
+    essere identiche per costruzione (stessi episode_representative_rows,
+    stesso embargo). Un'inconsistenza qui indicherebbe un bug di
+    geometria silenzioso (esattamente la classe di errore gia' trovata
+    una volta - raw event embargo clustering scambiato per la geometria
+    inferenziale) - fail-closed, mai un report silenziosamente errato."""
+    pass
+
+
 class MatchingRuntimeDataIncompleteError(Exception):
     """sec.9 - sollevata se matching_runtime_data e' dichiarato ma manca
     la feature di stato per anche una sola osservazione INDEPENDENT_VIEW.
@@ -388,13 +400,15 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
         episode_view["events"], outcome_overlap_embargo_bars=outcome_overlap_embargo_bars,
     )
     representative_rows = [e["event_a_index"] for e in independent_view["events"]]
+    episode_representative_rows = [e["event_a_index"] for e in episode_view["events"]]
     return {
         "n_bars": n_bars,
         "n_raw_events": n_raw_events,
         "firing_rate": firing_rate,
         "gap_stats": gap_stats,
         "EVENT_VIEW": {"n": event_view["n"]},
-        "EPISODE_VIEW": {"n": episode_view["n"], "n_episodes": episode_view["n_episodes"]},
+        "EPISODE_VIEW": {"n": episode_view["n"], "n_episodes": episode_view["n_episodes"],
+                          "representative_rows": episode_representative_rows},
         "INDEPENDENT_VIEW": {"n": independent_view["n"],
                               "n_independent_observations": independent_view["n_independent_observations"],
                               "representative_rows": representative_rows,
@@ -406,40 +420,89 @@ def compute_detection_funnel(event_row_indices: list, n_bars: int, episode_gap_r
     }
 
 
-def compute_cluster_geometry(event_row_indices: list, episode_gap_rule: int,
-                              outcome_overlap_embargo_bars: int) -> dict:
-    """Geometria dei cluster a DUE soglie distinte - stessa distinzione
-    concettuale di sequence_episode_engine.py: event_cluster_rule
-    (espansione fisica locale) vs outcome_overlap embargo (indipendenza
-    statistica dell'outcome). Calcolata sui cluster di INDIPENDENZA
-    (embargo) - la geometria decisiva per il gate di campione minimo,
-    e l'AUTORITA' primaria per qualunque classificazione di
-    incompatibilita' strutturale (mai un proxy come il gap mediano da
-    solo - vedi classify_firing_geometry_risk_flag)."""
-    sorted_rows = sorted(set(event_row_indices))
+def _cluster_block(rows: list, threshold: int, size_fraction_key: str, longest_gap_key: str) -> dict:
+    """Blocco di metriche di cluster generico su una lista di row
+    ordinabile qualunque (raw events O episode representatives) con una
+    data soglia - fattorizzato per evitare di duplicare la stessa logica
+    fra raw_event_embargo_geometry e inferential_independent_geometry
+    (sec.3-4 della Cluster Geometry Consistency Patch)."""
+    sorted_rows = sorted(set(rows))
     if len(sorted_rows) < 1:
         return {
-            "n_independent_clusters": 0, "cluster_size_distribution": [], "max_cluster_size": None,
-            "median_cluster_size": None, "fraction_events_in_largest_cluster": None,
-            "fraction_gaps_below_embargo": None, "longest_no_event_gap_bars": None,
-            "fraction_gaps_below_episode_gap_rule": None,
+            "n_clusters": 0, "cluster_size_distribution": [], "max_cluster_size": None,
+            "median_cluster_size": None, size_fraction_key: None,
+            "fraction_gaps_below_embargo": None, longest_gap_key: None,
         }
-    episode_clusters, _ = assign_clusters(sorted_rows, episode_gap_rule)
-    indep_clusters, _ = assign_clusters(sorted_rows, outcome_overlap_embargo_bars)
-    sizes = sorted((len(c) for c in indep_clusters), reverse=True)
+    clusters, _ = assign_clusters(sorted_rows, threshold)
+    sizes = sorted((len(c) for c in clusters), reverse=True)
     gaps = [sorted_rows[i + 1] - sorted_rows[i] for i in range(len(sorted_rows) - 1)]
-    n_below_embargo = sum(1 for g in gaps if g <= outcome_overlap_embargo_bars)
-    n_below_episode_gap = sum(1 for g in gaps if g <= episode_gap_rule)
+    n_below = sum(1 for g in gaps if g <= threshold)
     return {
-        "n_independent_clusters": len(indep_clusters),
-        "n_episode_clusters": len(episode_clusters),
+        "n_clusters": len(clusters),
         "cluster_size_distribution": sizes,
         "max_cluster_size": sizes[0] if sizes else None,
         "median_cluster_size": statistics.median(sizes) if sizes else None,
-        "fraction_events_in_largest_cluster": (sizes[0] / len(sorted_rows)) if sizes else None,
-        "fraction_gaps_below_embargo": (n_below_embargo / len(gaps)) if gaps else None,
-        "fraction_gaps_below_episode_gap_rule": (n_below_episode_gap / len(gaps)) if gaps else None,
-        "longest_no_event_gap_bars": max(gaps) if gaps else None,
+        size_fraction_key: (sizes[0] / len(sorted_rows)) if sizes else None,
+        "fraction_gaps_below_embargo": (n_below / len(gaps)) if gaps else None,
+        longest_gap_key: max(gaps) if gaps else None,
+    }
+
+
+def compute_cluster_geometry(event_row_indices: list, episode_representative_rows: list,
+                              episode_gap_rule: int, outcome_overlap_embargo_bars: int) -> dict:
+    """CORREZIONE (Cluster Geometry Consistency Patch, post-review):
+    la versione precedente applicava l'embargo DIRETTAMENTE ai raw event
+    row (assign_clusters(raw_rows, embargo)), producendo un
+    n_independent_clusters che NON corrispondeva a INDEPENDENT_VIEW.n
+    (calcolato correttamente da build_outcome_independent_view come
+    raw events -> episode representatives -> embargo clustering, DUE
+    passate distinte - vedi sequence_episode_engine.py). Le due
+    geometrie misurano cose diverse e non vanno mai chiamate con lo
+    stesso nome.
+
+    Produce ORA due blocchi ESPLICITAMENTE separati e mai confondibili:
+      raw_event_embargo_geometry     - DIAGNOSTICA SOLO: embargo applicato
+                                        direttamente ai raw event row,
+                                        MAI la geometria usata dal gate
+                                        per il verdetto.
+      inferential_independent_geometry - AUTORITA': embargo applicato ai
+                                        rappresentanti di EPISODE_VIEW
+                                        (episode_representative_rows, gia'
+                                        calcolati da build_event_and_
+                                        episode_views nel detection funnel)
+                                        - stessa identica costruzione di
+                                        INDEPENDENT_VIEW, il suo
+                                        n_clusters DEVE essere uguale a
+                                        detection_funnel.INDEPENDENT_VIEW.n
+                                        per costruzione (invariant
+                                        verificato meccanicamente in
+                                        evaluate_family_structural_
+                                        feasibility)."""
+    sorted_raw_rows = sorted(set(event_row_indices))
+    episode_clusters, _ = assign_clusters(sorted_raw_rows, episode_gap_rule) if sorted_raw_rows else ([], {})
+    gaps_raw = [sorted_raw_rows[i + 1] - sorted_raw_rows[i] for i in range(len(sorted_raw_rows) - 1)]
+    n_below_episode_gap = sum(1 for g in gaps_raw if g <= episode_gap_rule)
+
+    raw_geometry = _cluster_block(sorted_raw_rows, outcome_overlap_embargo_bars,
+                                   "fraction_events_in_largest_cluster", "longest_no_event_gap_bars")
+    raw_geometry["description"] = ("DIAGNOSTICA SUI RAW EVENTS - embargo applicato direttamente ai raw event "
+                                    "row, SALTANDO la costruzione EPISODE_VIEW. NON e' la geometria usata da "
+                                    "INDEPENDENT_VIEW per il verdetto - vedi inferential_independent_geometry "
+                                    "per quella. Utile come confronto strutturale, mai come sostituto.")
+
+    inferential_geometry = _cluster_block(episode_representative_rows, outcome_overlap_embargo_bars,
+                                           "fraction_episode_representatives_in_largest_cluster",
+                                           "longest_no_episode_gap")
+    inferential_geometry["description"] = ("AUTORITA' - stessa identica costruzione di INDEPENDENT_VIEW "
+                                            "(episode representatives di EPISODE_VIEW, poi embargo clustering) "
+                                            "- n_clusters deve essere uguale a detection_funnel.INDEPENDENT_VIEW.n.")
+    inferential_geometry["n_independent_clusters"] = inferential_geometry.pop("n_clusters")
+
+    return {
+        "n_episode_clusters": len(episode_clusters),
+        "fraction_gaps_below_episode_gap_rule": (n_below_episode_gap / len(gaps_raw)) if gaps_raw else None,
+        "raw_event_embargo_geometry": raw_geometry,
+        "inferential_independent_geometry": inferential_geometry,
     }
 
 
@@ -778,9 +841,19 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
         }
 
     geometry = compute_cluster_geometry(
-        event_row_indices=spec["event_row_indices"], episode_gap_rule=spec["episode_gap_rule"],
+        event_row_indices=spec["event_row_indices"],
+        episode_representative_rows=funnel["EPISODE_VIEW"]["representative_rows"],
+        episode_gap_rule=spec["episode_gap_rule"],
         outcome_overlap_embargo_bars=spec["proposed_outcome_overlap_embargo_bars"],
     )
+    inferential_n = geometry["inferential_independent_geometry"]["n_independent_clusters"]
+    if inferential_n != funnel["INDEPENDENT_VIEW"]["n"]:
+        raise ClusterGeometryInconsistencyError(
+            f"inferential_independent_geometry.n_independent_clusters ({inferential_n}) != "
+            f"detection_funnel.INDEPENDENT_VIEW.n ({funnel['INDEPENDENT_VIEW']['n']}) - le due devono "
+            f"coincidere per costruzione (stessa episode_representative_rows, stesso embargo). Fail-closed: "
+            f"un bug di geometria non deve mai produrre un report silenziosamente inconsistente."
+        )
     ratios = compute_feasibility_ratios(funnel, spec["minimum_evidence_gates"], bars_per_year=bars_per_year)
     firing_flag = classify_firing_geometry_risk_flag(funnel)
     geometry_verdict = _classify_geometry_verdict(ratios, policy)
