@@ -142,14 +142,27 @@ sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "p
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dependence_diagnostics import assign_clusters  # noqa: E402
-from canonical_utils import canonical_sha256  # noqa: E402
+from canonical_utils import canonical_sha256, file_sha256  # noqa: E402
 from sequence_episode_engine import (  # noqa: E402
     build_event_and_episode_views, build_outcome_independent_view, EpisodeRuleNotDeclaredError,
 )
 from baseline_engine_v4 import BaselineEngineV4, build_quality_report, CONTRACT_VERSION as BASELINE_ENGINE_CONTRACT_VERSION  # noqa: E402
 
 GATE_POLICY_VERSION = "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1"
-ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v4"
+ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v5"
+# Engine Provenance Version Patch (post-review, 2026-09-21): hash del
+# sorgente di QUESTO modulo, calcolato una volta all'import e incluso in
+# OGNI provenance emessa (anche i rami NEEDS_DETECTOR_FORMALIZATION) -
+# rende impossibile che due artifact dichiarino lo stesso ENGINE_VERSION
+# pur essendo stati prodotti da codice diverso (bug reale: la Cluster
+# Geometry Consistency Patch aveva cambiato la semantica di
+# compute_cluster_geometry senza incrementare ENGINE_VERSION). Un
+# test dedicato (test_phase7_5_structural_feasibility_gate.py) fissa la
+# coppia (ENGINE_VERSION, hash) attesa - se il file cambia senza un
+# bump di versione, o la versione cambia senza aggiornare l'hash
+# registrato, il test fallisce esplicitamente invece di lasciare
+# l'incoerenza silenziosa.
+ENGINE_SOURCE_SHA256 = file_sha256(os.path.abspath(__file__))
 
 # ---- Livello 1: geometria del detector (sec.2 Phase 7.5A originale) ----
 # Campi che un family spec DEVE dichiarare esplicitamente prima che il
@@ -815,6 +828,7 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
                     "(frozen formula/parametri, episode_gap_rule, natural_horizon proposto, "
                     "outcome_overlap_embargo proposto) prima di rieseguire questo gate su questa family.",
             "engine_version": ENGINE_VERSION,
+            "engine_source_sha256": ENGINE_SOURCE_SHA256,
             "policy_version": GATE_POLICY_VERSION,
         }
 
@@ -837,6 +851,7 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
             "formalization_level": FORMALIZATION_LEVEL_NONE,
             "missing_degrees_of_freedom": [str(e)],
             "engine_version": ENGINE_VERSION,
+            "engine_source_sha256": ENGINE_SOURCE_SHA256,
             "policy_version": GATE_POLICY_VERSION,
         }
 
@@ -884,6 +899,7 @@ def evaluate_family_structural_feasibility(spec: dict, policy: dict = None,
                                        if k not in ("event_row_indices", "matching_runtime_data")}),
         "discovery_partition": spec["discovery_partition"],
         "engine_version": ENGINE_VERSION,
+        "engine_source_sha256": ENGINE_SOURCE_SHA256,
         "policy_version": GATE_POLICY_VERSION,
         "outcome_blind": True,
         "deterministic": True,

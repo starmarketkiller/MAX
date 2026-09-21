@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-09-21T10:13:02.947251+00:00",
+  "generated_at": "2026-09-21T10:26:17.783378+00:00",
   "generation_script": "phase7/phase7_5b/run_seq0009_structural_feasibility.py",
-  "canonical_sha256": "8213d7134fc5175b82b6322a2fe8d381edd11e05f7b9a35b76d8a8f75efd39c1",
+  "canonical_sha256": "bf1894025b3ce65b06644a91ab9ba5dcb940777955e1013ab6d30f9c28bc9f3b",
   "payload": {
     "sequence_family_id": "SEQFAM-SEQ0009-SWEEP-STRUCTURAL-V1",
     "sequence_ids": [
       "SEQ-0009"
     ],
     "frozen_spec_ref": "server/research_scripts/phase7/phase7_5b/seq0009_frozen_structural_spec_v1.json",
-    "engine_version": "sequence_structural_feasibility_gate.py@v4",
+    "engine_version": "sequence_structural_feasibility_gate.py@v5",
     "no_nexus_outcome_data_accessed": true,
     "no_edge_discovery_performed": true,
     "no_parameter_adjusted_after_seeing_this_result": true,
@@ -329,7 +329,8 @@
           "partition_id": "development_discovery",
           "n_bars": 2393
         },
-        "engine_version": "sequence_structural_feasibility_gate.py@v4",
+        "engine_version": "sequence_structural_feasibility_gate.py@v5",
+        "engine_source_sha256": "111ab15bf2587af5a63638fd44a64c4cba7188edcd8feacfa6f7d04706691ae5",
         "policy_version": "SEQUENCE_STRUCTURAL_FEASIBILITY_POLICY_V1",
         "outcome_blind": true,
         "deterministic": true,

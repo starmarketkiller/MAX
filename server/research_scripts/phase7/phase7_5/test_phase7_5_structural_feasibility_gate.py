@@ -42,8 +42,9 @@ from sequence_structural_feasibility_gate import (  # noqa: E402
     MATCHING_STATUS_EXECUTED_FEASIBLE, MATCHING_STATUS_EXECUTED_INFEASIBLE,
     DIRECTION_POLICY_FIXED_BUY, DIRECTION_POLICY_FIXED_SELL, DIRECTION_POLICY_NON_DIRECTIONAL,
     DIRECTION_POLICY_PER_EVENT, VALID_EVENT_DIRECTION_POLICIES, DirectionDerivationError,
+    ENGINE_VERSION, ENGINE_SOURCE_SHA256,
 )
-from canonical_utils import canonical_sha256  # noqa: E402
+from canonical_utils import canonical_sha256, file_sha256  # noqa: E402
 from sequence_baseline_adapter_v1 import SequenceBaselineAdapter  # noqa: E402
 from dependence_diagnostics import assign_clusters  # noqa: E402
 
@@ -718,6 +719,36 @@ def test_policy_artifact_matches_code_defaults():
           set(payload["required_matching_spec_inputs"]["fields"]) == set(REQUIRED_MATCHING_SPEC_FIELDS))
 
 
+# Engine Provenance Version Patch (post-review, 2026-09-21): coppia
+# (ENGINE_VERSION, hash del sorgente) fissata QUI - se qualcuno modifica
+# sequence_structural_feasibility_gate.py senza incrementare ENGINE_VERSION,
+# l'hash calcolato a runtime non coincidera' piu' con quello registrato
+# qui e questo test fallira' esplicitamente. Se ENGINE_VERSION viene
+# incrementata, questa costante va ricalcolata (file_sha256 del modulo)
+# e aggiornata insieme - mai l'una senza l'altra. Bug reale che ha
+# motivato questo test: la Cluster Geometry Consistency Patch aveva
+# cambiato la semantica di compute_cluster_geometry senza bump di
+# ENGINE_VERSION (rimasta @v4 sia prima sia dopo).
+EXPECTED_ENGINE_VERSION = "sequence_structural_feasibility_gate.py@v5"
+EXPECTED_ENGINE_SOURCE_SHA256 = "111ab15bf2587af5a63638fd44a64c4cba7188edcd8feacfa6f7d04706691ae5"
+
+
+def test_engine_version_matches_recorded_source_hash():
+    gate_path = os.path.join(ROOT, "server", "research_scripts", "phase7", "engine",
+                              "sequence_structural_feasibility_gate.py")
+    actual_hash = file_sha256(gate_path)
+    check("engine_version_matches_expected", ENGINE_VERSION == EXPECTED_ENGINE_VERSION,
+          f"ENGINE_VERSION={ENGINE_VERSION}, atteso={EXPECTED_ENGINE_VERSION}")
+    check("engine_source_hash_matches_recorded_value_for_this_version",
+          actual_hash == EXPECTED_ENGINE_SOURCE_SHA256,
+          "se questo fallisce perche' il file e' stato modificato, ENGINE_VERSION deve essere "
+          "incrementata E questa costante ricalcolata - mai l'una senza l'altra")
+    check("module_constant_engine_source_sha256_matches_file",
+          ENGINE_SOURCE_SHA256 == actual_hash,
+          "il modulo calcola il proprio hash a runtime (file_sha256(__file__)) - deve sempre coincidere "
+          "con l'hash del file su disco")
+
+
 def test_gate_module_never_imports_outcome_data():
     gate_path = os.path.join(ROOT, "server", "research_scripts", "phase7", "engine",
                               "sequence_structural_feasibility_gate.py")
@@ -773,6 +804,7 @@ def main():
     test_ranking_is_structural_only_no_edge_fields()
     test_policy_artifact_matches_code_defaults()
     test_gate_module_never_imports_outcome_data()
+    test_engine_version_matches_recorded_source_hash()
     test_no_pathological_verdict_word_survives_in_risk_flag()
 
     n_pass = sum(1 for r in RESULTS if r["status"] == "PASS")
