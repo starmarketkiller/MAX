@@ -1,0 +1,4 @@
+done=1
+server=XMGlobal-MT5 10
+login=345277936
+n_candidates=6

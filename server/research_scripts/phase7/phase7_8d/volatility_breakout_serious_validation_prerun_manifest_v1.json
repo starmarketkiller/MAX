@@ -1,0 +1,381 @@
+{
+  "generated_at": "2026-09-21T21:52:49.776071+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_8d/build_volatility_breakout_prerun_manifest.py",
+  "canonical_sha256": "9c0105b984c0296bb2663f0c30d655b7ce521b99047194af3a9a6311ca208a19",
+  "payload": {
+    "phase": "7.8D-MANIFEST",
+    "artifact_role": "PRE_RUN_MANIFEST",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "scope_note": "PRE-RUN MANIFEST REALE con dati/hash/date/copertura VERIFICATI (non fabbricati) - corregge la conclusione PRE_RUN_SEAL_BLOCKED_NO_DATA_ACCESS della fase precedente (verifica ambientale incompleta: controllato il broker sub-account sbagliato). NESSUN Serious validation eseguito, nessun outcome letto, nessun trade generato - solo identita'/provenienza/date/hash/copertura.",
+    "correction_of_prior_blocked_status": {
+      "target_artifact": "server/research_scripts/phase7/phase7_8d/volatility_breakout_prerun_seal_status_v1.json",
+      "target_artifact_canonical_sha256_unchanged": "9f68eea0ef20999a8e6d3025ea9237831cac6f1c3fff68e43ea6efe4381c1702",
+      "modified_in_this_phase": false,
+      "issue": "Quella verifica aveva controllato le sotto-cartelle broker 'XMGlobal-MT5 7'/'9' invece dell'account REALMENTE connesso di default da questo terminale ('XMGlobal-MT5 10', login 345277936) - il cui storico GOLD risultava sincronizzato fino a pochi giorni prima, non ~2 mesi come concluso allora. L'utente ha confermato l'accesso reale al terminale; verificato qui concretamente con un run reale."
+    },
+    "how_this_manifest_was_produced": {
+      "step_1": "Scritto/compilato MQL5 Script read-only NXS_VolBrkPrerunCoverageAudit.mq5 (0 errori di compilazione).",
+      "step_2": "Deployato in MQL5/Scripts del terminale di ricerca, lanciato via terminal64.exe /config:<ini> con [StartUp] Script=..., atteso il completamento via marker file (non un poll a iterazioni fisse).",
+      "step_3": "Processo terminal64.exe chiuso dopo la conferma di completamento.",
+      "step_4": "File di output reali copiati in server/research_scripts/phase7/phase7_8d/raw_coverage_audit/ per provenienza - mai riscritti a mano.",
+      "no_ea_or_strategy_touched": true,
+      "no_trade_placed": true
+    },
+    "baseline_commit": "92ec007f677ac1b8269cefccb7c02da2e748f5ca",
+    "temporal_windows": {
+      "TOTAL_TEST_WINDOW": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2026-09-21T23:58:59",
+        "duration_days": 1006,
+        "bounded_by": "Inizio = primo tick reale disponibile per GOLD (verificato empiricamente, non un nominale '3 anni fa') - vedi real_tick_coverage_finding sotto. Fine = ultimo tick disponibile al momento del sync (ora corrente broker)."
+      },
+      "PRIMARY_FRESH_VERDICT_WINDOW": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2026-03-01T00:00:00",
+        "duration_days": 801,
+        "note": "Blocco contiguo piu' ampio di dati MAI osservati per questo candidato - alimenta il verdetto PASS/BORDERLINE/FAIL primario."
+      },
+      "PREVIOUSLY_OBSERVED_DIAGNOSTIC_WINDOW": {
+        "start": "2026-03-01T00:00:00",
+        "end": "2026-09-01T00:00:00",
+        "duration_days": 184,
+        "note": "Identica alla finestra gia' usata per il fast-structural test (Strategy Foundry Phase 3) - fissa, non ricalcolata rispetto a 'oggi'. MAI usata per il verdetto primario."
+      },
+      "NEWLY_ELAPSED_TAIL_SEGMENT": {
+        "start": "2026-09-01T00:00:00",
+        "end": "2026-09-21T23:58:59",
+        "duration_days": 20,
+        "note": "SCOPERTA IN QUESTA FASE (non prevista da 7.8B/7.8C): poiche' il tempo reale e' avanzato da quando la finestra PREVIOUSLY_OBSERVED fu fissata, esiste ora un piccolo segmento genuinamente MAI osservato dopo di essa. Troppo corto per un tercile T1/T2/T3 affidabile da solo - riportato come diagnostica di replica separata, MAI fuso silenziosamente nel verdetto primario ne' scartato senza dichiararlo.",
+        "excluded_from_primary_verdict": true
+      },
+      "T1": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2024-09-12T16:04:33"
+      },
+      "T2": {
+        "start": "2024-09-12T16:04:33",
+        "end": "2025-06-06T20:02:16"
+      },
+      "T3": {
+        "start": "2025-06-06T20:02:16",
+        "end": "2026-03-01T00:00:00"
+      },
+      "t1_t2_t3_partition_check": {
+        "union_equals_primary_fresh_window": true,
+        "no_gaps": true,
+        "no_overlap": true,
+        "durations_approximately_equal_days": [
+          267,
+          267,
+          267
+        ]
+      }
+    },
+    "real_tick_coverage_finding": {
+      "declared_before_this_finding": "7.8B/7.8C avevano nominalmente ipotizzato TOTAL_TEST_WINDOW ~ ultimi 3 anni continui - MAI verificato contro la copertura reale fino a questa fase.",
+      "verified_finding": "Copertura tick REALE per GOLD inizia 2023.12.20 12:06:50 (verificato via CopyTicksRange wide-range, 191824954 tick trovati, err=0) - circa 2 anni e 9 mesi prima di oggi, NON 3 anni pieni.",
+      "h4_bar_history_extends_further_but_without_real_ticks": "Le barre H4 storiche risalgono a 2023.09.08 04:00:00 (4684 barre totali) - PIU' indietro della copertura tick reale (2023.12.20 12:06:50). Questo e' atteso (le barre OHLC possono essere cachate/costruite indipendentemente dai tick grezzi) - MA significa che qualunque porzione prima di 2023.12.20 12:06:50 NON potrebbe soddisfare REAL_TICK_REQUIRED_FOR_PRIMARY_VERDICT (Phase 7.8C sez.4) e resta correttamente ESCLUSA da TOTAL_TEST_WINDOW.",
+      "monthly_probe_note": "Il probe mensile (nxs_volbrk_prerun_coverage.csv) mostra 0 tick per le finestre di settembre/ottobre/novembre/dicembre 2023 (7 giorni ciascuna, non coprono l'intero mese) - il primo tick REALE (query wide-range, autorevole) e' 2023-12-20 12:06:50, in un intervallo non coperto dai probe mensili discreti (nessuna contraddizione, solo granularita' piu' fine della query wide rispetto ai probe mensili)."
+    },
+    "tick_model_correction": {
+      "declared_in_7_8b": "Model=1 (real ticks quando disponibili)",
+      "actual_established_project_convention": "Model=4 (Every tick based on real ticks) - verificato contro il precedente REALE gia' eseguito in questo progetto per lo stesso tipo di test (sar_serious_3y.ini, vault 'NEXUS - First Serious 3Y Validation SAR MACD.md'; e la validazione Dukascopy indipendente, 'History Quality: 99% real ticks', anch'essa Model=4).",
+      "correction": "Il futuro Serious 3Y di VOLATILITY_BREAKOUT_CONFIRMED deve usare Model=4, non Model=1 come genericamente scritto in 7.8B - annotato qui, 7.8B non modificato retroattivamente.",
+      "target_artifact_7_8b_canonical_sha256_unchanged": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8"
+    },
+    "dataset_identity": {
+      "symbol": "GOLD",
+      "symbol_note": "Simbolo nativo del broker (non XAUUSD.s ne' il custom XAUUSD_DSC usato solo per la validazione Dukascopy indipendente di SAR) - stesso simbolo gia' dichiarato in 7.8B/Strategy Foundry Phase 3.",
+      "timeframe": "H4 nativo",
+      "broker_server": "XMGlobal-MT5 10",
+      "account_login": "345277936",
+      "account_trade_mode": "DEMO",
+      "broker_timezone_offset_convention": "InpServerGMTOffset=2 (CEST broker) - costante di progetto gia' riusata ovunque nel codice (NXS_Inputs.mqh:1120), riusata qui identica, non ri-derivata.",
+      "tester_model": "Model=4 (Every tick based on real ticks) - vedi tick_model_correction sopra.",
+      "history_synchronization_timestamp_server": "2026.09.22 00:44:29",
+      "history_synchronization_method": "Script MQL5 read-only (NXS_VolBrkPrerunCoverageAudit.mq5) lanciato live-attached su questo account/server, con query wide-range che forza il terminal a richiedere/sincronizzare dal server qualunque tick mancante nella finestra richiesta.",
+      "first_available_timestamp_ticks": "2023.12.20 12:06:50",
+      "last_available_timestamp_ticks": "2026.09.21 23:58:59",
+      "first_available_timestamp_h4_bars": "2023.09.08 04:00:00",
+      "last_available_timestamp_h4_bars": "2026.09.21 20:00:00"
+    },
+    "real_tick_coverage_by_subperiod": [
+      {
+        "probe_window_start": "2023.09.08",
+        "probe_window_end_plus7d": "2023.09.15",
+        "ticks_found": 0,
+        "classification": "EXECUTION_ORDER_POTENTIALLY_UNRESOLVED"
+      },
+      {
+        "probe_window_start": "2023.10.08",
+        "probe_window_end_plus7d": "2023.10.15",
+        "ticks_found": 0,
+        "classification": "EXECUTION_ORDER_POTENTIALLY_UNRESOLVED"
+      },
+      {
+        "probe_window_start": "2023.11.07",
+        "probe_window_end_plus7d": "2023.11.14",
+        "ticks_found": 0,
+        "classification": "EXECUTION_ORDER_POTENTIALLY_UNRESOLVED"
+      },
+      {
+        "probe_window_start": "2023.12.07",
+        "probe_window_end_plus7d": "2023.12.14",
+        "ticks_found": 0,
+        "classification": "EXECUTION_ORDER_POTENTIALLY_UNRESOLVED"
+      },
+      {
+        "probe_window_start": "2024.01.06",
+        "probe_window_end_plus7d": "2024.01.13",
+        "ticks_found": 756050,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.02.05",
+        "probe_window_end_plus7d": "2024.02.12",
+        "ticks_found": 591336,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.03.06",
+        "probe_window_end_plus7d": "2024.03.13",
+        "ticks_found": 922480,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.04.05",
+        "probe_window_end_plus7d": "2024.04.12",
+        "ticks_found": 1236291,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.05.05",
+        "probe_window_end_plus7d": "2024.05.12",
+        "ticks_found": 806241,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.06.04",
+        "probe_window_end_plus7d": "2024.06.11",
+        "ticks_found": 1046579,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.07.04",
+        "probe_window_end_plus7d": "2024.07.11",
+        "ticks_found": 819992,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.08.03",
+        "probe_window_end_plus7d": "2024.08.10",
+        "ticks_found": 1599639,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.09.02",
+        "probe_window_end_plus7d": "2024.09.09",
+        "ticks_found": 1063317,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.10.02",
+        "probe_window_end_plus7d": "2024.10.09",
+        "ticks_found": 1274488,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.11.01",
+        "probe_window_end_plus7d": "2024.11.08",
+        "ticks_found": 1432075,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.12.01",
+        "probe_window_end_plus7d": "2024.12.08",
+        "ticks_found": 1232256,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2024.12.31",
+        "probe_window_end_plus7d": "2025.01.07",
+        "ticks_found": 773786,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.01.30",
+        "probe_window_end_plus7d": "2025.02.06",
+        "ticks_found": 1178801,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.03.01",
+        "probe_window_end_plus7d": "2025.03.08",
+        "ticks_found": 1139070,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.03.31",
+        "probe_window_end_plus7d": "2025.04.07",
+        "ticks_found": 1312944,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.04.30",
+        "probe_window_end_plus7d": "2025.05.07",
+        "ticks_found": 1157072,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.05.30",
+        "probe_window_end_plus7d": "2025.06.06",
+        "ticks_found": 1337865,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.06.29",
+        "probe_window_end_plus7d": "2025.07.06",
+        "ticks_found": 1006316,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.07.29",
+        "probe_window_end_plus7d": "2025.08.05",
+        "ticks_found": 1168182,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.08.28",
+        "probe_window_end_plus7d": "2025.09.04",
+        "ticks_found": 1161309,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.09.27",
+        "probe_window_end_plus7d": "2025.10.04",
+        "ticks_found": 1489420,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.10.27",
+        "probe_window_end_plus7d": "2025.11.03",
+        "ticks_found": 1853554,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.11.26",
+        "probe_window_end_plus7d": "2025.12.03",
+        "ticks_found": 1365330,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2025.12.26",
+        "probe_window_end_plus7d": "2026.01.02",
+        "ticks_found": 1414780,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.01.25",
+        "probe_window_end_plus7d": "2026.02.01",
+        "ticks_found": 2596682,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.02.24",
+        "probe_window_end_plus7d": "2026.03.03",
+        "ticks_found": 1741007,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.03.26",
+        "probe_window_end_plus7d": "2026.04.02",
+        "ticks_found": 2129622,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.04.25",
+        "probe_window_end_plus7d": "2026.05.02",
+        "ticks_found": 1732813,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.05.25",
+        "probe_window_end_plus7d": "2026.06.01",
+        "ticks_found": 1542840,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.06.24",
+        "probe_window_end_plus7d": "2026.07.01",
+        "ticks_found": 2293159,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.07.24",
+        "probe_window_end_plus7d": "2026.07.31",
+        "ticks_found": 2133154,
+        "classification": "REAL_TICK_RESOLVABLE"
+      },
+      {
+        "probe_window_start": "2026.08.23",
+        "probe_window_end_plus7d": "2026.08.30",
+        "ticks_found": 1743292,
+        "classification": "REAL_TICK_RESOLVABLE"
+      }
+    ],
+    "real_tick_coverage_summary": {
+      "n_monthly_probes": 37,
+      "n_real_tick_resolvable": 33,
+      "n_execution_order_potentially_unresolved": 4,
+      "unresolved_probes_fall_before_total_test_window_start": true,
+      "note": "I probe con 0 tick trovati cadono TUTTI prima dell'inizio di TOTAL_TEST_WINDOW (gia' vincolato all'inizio della copertura reale, sez. real_tick_coverage_finding) - nessun trade nella finestra effettivamente usata dal verdetto primario ricade quindi in una porzione EXECUTION_ORDER_POTENTIALLY_UNRESOLVED su base mensile grossolana. La risoluzione ESATTA per-trade (bracket worst/best-case, Phase 7.8C sez.4) resta comunque necessaria per eventuali singole barre con tick radi, non sostituita da questo controllo mensile."
+    },
+    "dataset_hash_representation": {
+      "what_is_hashed": "Il coverage audit report generato da questa fase (CSV + summary txt), NON i file binari .hcc/.tkc del broker (multi-GB, in continua crescita, non praticamente hashabili come singolo valore stabile).",
+      "why_this_representation": "Il report e' un fingerprint deterministico e riproducibile di 'quali dati erano disponibili al momento del sealing' - esattamente cio' che il manifest deve pinnare, senza dover hashare l'intero archivio storico del broker.",
+      "coverage_csv_sha256": "17d8387b0ebe06bf1d97eadda1c7b144d8324f9b571d987d6ef6352e5f3ccb86",
+      "coverage_summary_sha256": "ad549086708301aae2ff5a58322ada6e0c515503a23071f288c42eed6090e181",
+      "coverage_done_marker_sha256": "2594f6157cf6bc1cb56366a41c25c65336dccc828baf713c308844e2c5f5e25b",
+      "audit_script_source_sha256": "88cff04e37190cb1dae6e657c1ba14a39c923f783d5c80c3a8b957a577352036"
+    },
+    "protocol_identity_pins": {
+      "strategy_frozen_commit": "f035d30",
+      "prereg_canonical_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_canonical_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71",
+      "prior_blocked_status_7_8d_canonical_hash": "9f68eea0ef20999a8e6d3025ea9237831cac6f1c3fff68e43ea6efe4381c1702"
+    },
+    "seal_verification": {
+      "all_required_fields_populated": true,
+      "date_ordering_valid": true,
+      "fresh_and_observed_non_overlapping": true,
+      "t1_t2_t3_exactly_partition_fresh_window": true,
+      "protocol_hashes_correspond_to_frozen_artifacts": true,
+      "no_outcome_fields_present": true,
+      "all_checks_passed": true
+    },
+    "final_status": {
+      "value": "PRE_RUN_SEAL_VERIFIED_READY_TO_RUN",
+      "serious_validation_still_not_executed": true,
+      "note": "Il seal verificato NON autorizza l'esecuzione automatica del Serious validation - resta un passo SEPARATO e successivo, da autorizzare esplicitamente."
+    },
+    "manifest_purity_check": {
+      "trade_count_present": false,
+      "pf_present": false,
+      "expectancy_present": false,
+      "win_rate_present": false,
+      "drawdown_present": false,
+      "buy_sell_performance_present": false,
+      "yearly_performance_present": false,
+      "any_strategy_outcome_present": false
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_trade_results_generated": true,
+    "no_pf_expectancy_or_winrate_computed": true,
+    "no_edge_discovery_performed": true,
+    "no_retroactive_modification_of_frozen_artifacts": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}

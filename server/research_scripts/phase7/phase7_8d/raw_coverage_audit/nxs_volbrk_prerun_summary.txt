@@ -1,0 +1,24 @@
+server=XMGlobal-MT5 10
+login=345277936
+trade_mode=DEMO
+server_time_now=2026.09.22 00:44:29
+trade_server_time_now=2026.09.22 00:44:29
+n_candidate_symbols=6
+candidate_symbol=GOLD
+candidate_symbol=XAUEUR
+candidate_symbol=XAUCNH
+candidate_symbol=XAUJPY
+candidate_symbol=GOLD24-7
+candidate_symbol=XAUUSD_DSC
+symbol=GOLD wide_ticks=191824954 wide_first=2023.12.20 12:06:50 wide_last=2026.09.21 23:58:59 wide_err=0
+symbol=GOLD h4_bars=4684 h4_first_bar=2023.09.08 04:00:00 h4_last_bar=2026.09.21 20:00:00 h4_err=0
+symbol=XAUEUR wide_ticks=154211519 wide_first=2023.12.20 12:06:50 wide_last=2026.09.21 23:58:59 wide_err=0
+symbol=XAUEUR h4_bars=4660 h4_first_bar=2023.09.08 04:00:00 h4_last_bar=2026.09.21 20:00:00 h4_err=0
+symbol=XAUCNH wide_ticks=93532447 wide_first=2025.09.17 11:04:43 wide_last=2026.09.21 23:58:59 wide_err=0
+symbol=XAUCNH h4_bars=1556 h4_first_bar=2025.09.17 08:00:00 h4_last_bar=2026.09.21 20:00:00 h4_err=0
+symbol=XAUJPY wide_ticks=106861998 wide_first=2025.09.17 11:12:12 wide_last=2026.09.21 23:58:58 wide_err=0
+symbol=XAUJPY h4_bars=1556 h4_first_bar=2025.09.17 08:00:00 h4_last_bar=2026.09.21 20:00:00 h4_err=0
+symbol=GOLD24-7 wide_ticks=20364552 wide_first=2026.07.23 14:36:39 wide_last=2026.09.21 23:58:59 wide_err=0
+symbol=GOLD24-7 h4_bars=498 h4_first_bar=2026.07.01 00:00:00 h4_last_bar=2026.09.21 20:00:00 h4_err=0
+symbol=XAUUSD_DSC wide_ticks=0 wide_first=- wide_last=- wide_err=0
+symbol=XAUUSD_DSC h4_bars=0 h4_first_bar=- h4_last_bar=- h4_err=0
