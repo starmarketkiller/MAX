@@ -15,6 +15,9 @@ def test_department_slots_and_real_vs_skeleton():
     assert departments["EXECUTION"]["skeleton"] is True
     assert departments["EXECUTION"]["message"] == "no operational pipeline yet"
     assert departments["SCIENTIFIC_QA"]["operational_state"]["holdout_access_status"] is not None
+    assert departments["QUANT_RESEARCH"]["operational_state"]["strategy_count"] == 7
+    assert departments["EXECUTION"]["operational_state"]["state"] == "WAITING_FOR_QUANT_GATE"
+    assert departments["RISK_PORTFOLIO"]["operational_state"]["state"] == "WAITING_FOR_DEPLOYABLE_STRATEGIES"
 
 
 def test_status_mapping_preserves_raw_status():

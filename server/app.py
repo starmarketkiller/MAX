@@ -54,6 +54,7 @@ import execution_read_model
 import library_read_model
 import sequence_research_read_model
 import company_control_plane
+import strategy_pipeline_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3257,6 +3258,19 @@ def company_artifacts(department_id: str | None = None, user: str = Depends(requ
 def company_dependencies(user: str = Depends(require_user)):
     items = company_control_plane.CONTROL_PLANE.build()["dependencies"]
     return {"items": items, "count": len(items)}
+
+
+@app.get("/api/company/strategies")
+def company_strategies(user: str = Depends(require_user)):
+    return strategy_pipeline_read_model.CATALOG.build()
+
+
+@app.get("/api/company/strategies/{strategy_id}")
+def company_strategy_detail(strategy_id: str, user: str = Depends(require_user)):
+    item = strategy_pipeline_read_model.CATALOG.get(strategy_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+    return item
 
 
 # ================= CANONICAL MARKET READ MODEL V1 (READ-ONLY) =========== #
