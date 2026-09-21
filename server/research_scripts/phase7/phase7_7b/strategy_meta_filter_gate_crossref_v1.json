@@ -1,0 +1,59 @@
+{
+  "generated_at": "2026-09-21T19:16:40.086404+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7b/build_strategy_meta_filter_gate.py",
+  "canonical_sha256": "41e705a8d9c0b4f26bc76ba999467ca78561d71fdc65f5ca390be0021afb3638",
+  "payload": {
+    "phase": "7.7B",
+    "artifact_role": "STRATEGY_META_FILTER_GATE_CROSSREF",
+    "baseline_commit": "6ac26cc0ee8ee088a94e2cee038c12c1d1195316",
+    "scope_note": "Mappa esplicita: come l'etichetta unica strategy_meta_filter_eligibility_v1.json (Phase 7.7A) si decompone nei due nuovi assi indipendenti di questa fase. Il file originale NON e' stato modificato.",
+    "crossref_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "old_single_label_phase_7_7a": "META_FILTER_ELIGIBLE",
+        "new_structural_eligibility": "ELIGIBLE",
+        "new_research_readiness": "NEEDS_MORE_EVIDENCE",
+        "semantic_correction": "L'etichetta unica precedente 'META_FILTER_ELIGIBLE' mescolava eligibility strutturale e maturita' di ricerca - qui separate esplicitamente. Un dashboard futuro NON deve piu' leggere 'ELIGIBLE' come 'pronto a testare' - solo meta_filter_ready_gate_passed=True lo e', e nessun candidato lo e' oggi."
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "old_single_label_phase_7_7a": "META_FILTER_ELIGIBLE",
+        "new_structural_eligibility": "ELIGIBLE",
+        "new_research_readiness": "BORDERLINE_LOW_PRIORITY",
+        "semantic_correction": "L'etichetta unica precedente 'META_FILTER_ELIGIBLE' mescolava eligibility strutturale e maturita' di ricerca - qui separate esplicitamente. Un dashboard futuro NON deve piu' leggere 'ELIGIBLE' come 'pronto a testare' - solo meta_filter_ready_gate_passed=True lo e', e nessun candidato lo e' oggi."
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "old_single_label_phase_7_7a": "META_FILTER_INAPPROPRIATE",
+        "new_structural_eligibility": "NOT_ELIGIBLE",
+        "new_research_readiness": "EXECUTION_FAILED_INAPPROPRIATE",
+        "semantic_correction": "Etichetta precedente gia' non-ambigua (META_FILTER_NOT_READY/META_FILTER_INAPPROPRIATE) - la decomposizione qui e' comunque fornita per coerenza di formato, non perche' l'etichetta originale fosse fuorviante."
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "old_single_label_phase_7_7a": "META_FILTER_INAPPROPRIATE",
+        "new_structural_eligibility": "ELIGIBLE",
+        "new_research_readiness": "REFUTED_INAPPROPRIATE",
+        "semantic_correction": "Etichetta precedente gia' non-ambigua (META_FILTER_NOT_READY/META_FILTER_INAPPROPRIATE) - la decomposizione qui e' comunque fornita per coerenza di formato, non perche' l'etichetta originale fosse fuorviante."
+      },
+      "SAR_LIVE": {
+        "old_single_label_phase_7_7a": "META_FILTER_INAPPROPRIATE",
+        "new_structural_eligibility": "NOT_ELIGIBLE",
+        "new_research_readiness": "REFUTED_INAPPROPRIATE",
+        "semantic_correction": "Etichetta precedente gia' non-ambigua (META_FILTER_NOT_READY/META_FILTER_INAPPROPRIATE) - la decomposizione qui e' comunque fornita per coerenza di formato, non perche' l'etichetta originale fosse fuorviante."
+      },
+      "ADX_RSI": {
+        "old_single_label_phase_7_7a": "META_FILTER_INAPPROPRIATE",
+        "new_structural_eligibility": "NOT_ELIGIBLE",
+        "new_research_readiness": "REFUTED_INAPPROPRIATE",
+        "semantic_correction": "Etichetta precedente gia' non-ambigua (META_FILTER_NOT_READY/META_FILTER_INAPPROPRIATE) - la decomposizione qui e' comunque fornita per coerenza di formato, non perche' l'etichetta originale fosse fuorviante."
+      },
+      "BREAKOUT_ACC": {
+        "old_single_label_phase_7_7a": "META_FILTER_NOT_READY",
+        "new_structural_eligibility": "NOT_ELIGIBLE",
+        "new_research_readiness": "NOT_READY",
+        "semantic_correction": "Etichetta precedente gia' non-ambigua (META_FILTER_NOT_READY/META_FILTER_INAPPROPRIATE) - la decomposizione qui e' comunque fornita per coerenza di formato, non perche' l'etichetta originale fosse fuorviante."
+      }
+    },
+    "old_artifact_reference": {
+      "file": "server/research_scripts/phase7/phase7_7a/strategy_meta_filter_eligibility_v1.json",
+      "canonical_sha256": "7fe6d96c0a0e1380ba16f3707f84a152d61a6dbd22322ac01e6cb2b71059b493"
+    }
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "generated_at": "2026-09-21T19:16:40.086404+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7b/build_strategy_meta_filter_gate.py",
+  "canonical_sha256": "c3be76cb15c2bf479ccd4caa3e6c7193a0b1103feb5de49e6553574c39f9cb60",
+  "payload": {
+    "phase": "7.7B",
+    "artifact_role": "STRATEGY_META_FILTER_GATE",
+    "scope_note": "Separa formalmente META_FILTER_STRUCTURAL_ELIGIBILITY da META_FILTER_RESEARCH_READINESS per l'uso futuro di strategie in META_FILTER_RESEARCH - nessun nuovo backtest, nessuna applicazione di MECH-23, nessuna modifica ai risultati storici (stessi dati sorgente di Phase 7.7A).",
+    "baseline_commit": "6ac26cc0ee8ee088a94e2cee038c12c1d1195316",
+    "source_lifecycle_registry": {
+      "file": "server/research_scripts/phase7/phase7_7a/strategy_lifecycle_registry_v1.json",
+      "canonical_sha256": "270088329416d23cef2d5675b8da21690d6e542d4b3493142c3e0fa15c628bf1"
+    },
+    "source_old_meta_filter_artifact_untouched": {
+      "file": "server/research_scripts/phase7/phase7_7a/strategy_meta_filter_eligibility_v1.json",
+      "canonical_sha256": "7fe6d96c0a0e1380ba16f3707f84a152d61a6dbd22322ac01e6cb2b71059b493",
+      "modified_in_this_phase": false
+    },
+    "gate_definition": {
+      "stages": [
+        "STRATEGY_VALIDATION",
+        "META_FILTER_READY?"
+      ],
+      "requirement": "meta_filter_structural_eligibility == ELIGIBLE AND meta_filter_research_readiness == READY",
+      "explicit_non_automatic_promotion": "Una strategia FULL_STRATEGY_SPEC (eligibility strutturale) NON diventa automaticamente META_FILTER_READY - deve anche superare l'asse di maturita' di ricerca, indipendente."
+    },
+    "structural_eligibility_values": [
+      "ELIGIBLE",
+      "NOT_ELIGIBLE"
+    ],
+    "research_readiness_values": [
+      "READY",
+      "NEEDS_MORE_EVIDENCE",
+      "BORDERLINE_LOW_PRIORITY",
+      "REFUTED_INAPPROPRIATE",
+      "EXECUTION_FAILED_INAPPROPRIATE",
+      "NOT_READY"
+    ],
+    "gate_results_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "meta_filter_structural_eligibility": "ELIGIBLE",
+        "structural_blocker": null,
+        "meta_filter_research_readiness": "NEEDS_MORE_EVIDENCE",
+        "next_required_evidence": "Serious 3Y backtest (o campione multi-anno equivalente) - il fast structural attuale (n=14/6 mesi) e' troppo piccolo/concentrato per un verdetto forte (vedi Strategy Foundry Phase 3 sec.6).",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_ELIGIBLE",
+        "evidence_verdict_unchanged_from_7_7a": "HOLD_NEEDS_MORE_EVIDENCE",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "meta_filter_structural_eligibility": "ELIGIBLE",
+        "structural_blocker": null,
+        "meta_filter_research_readiness": "BORDERLINE_LOW_PRIORITY",
+        "next_required_evidence": "CROSS_FEED_VALIDATION indipendente (E4, fonte dati diversa) o un nuovo true holdout dedicato - priorita' BASSA data la natura gia' borderline del risultato (delta_p sotto soglia di materialita', CI95 sovrapposte) - investire in piu' evidenza qui ha basso valore atteso rispetto a un candidato non ancora borderline.",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_ELIGIBLE",
+        "evidence_verdict_unchanged_from_7_7a": "RETAIN_E2 (BORDERLINE, non promosso)",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "meta_filter_structural_eligibility": "NOT_ELIGIBLE",
+        "structural_blocker": "Classificazione lifecycle Phase 7.7A = PARTIAL_STRATEGY (non FULL_STRATEGY_SPEC) - manca un componente reale del lifecycle (es. direzione/invalidazione/target), non solo un limite di questo o quell'audit.",
+        "meta_filter_research_readiness": "EXECUTION_FAILED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna evidenza aggiuntiva sullo STESSO design di esecuzione la salverebbe - richiederebbe un fill model dimostrabilmente piu' realistico (non tentato), non piu' campione.",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_INAPPROPRIATE",
+        "evidence_verdict_unchanged_from_7_7a": "REFUTED_AT_EXECUTION_VALIDATION",
+        "classification_unchanged_from_7_7a": "PARTIAL_STRATEGY"
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "meta_filter_structural_eligibility": "ELIGIBLE",
+        "structural_blocker": null,
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto).",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_INAPPROPRIATE",
+        "evidence_verdict_unchanged_from_7_7a": "REFUTED",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      },
+      "SAR_LIVE": {
+        "meta_filter_structural_eligibility": "NOT_ELIGIBLE",
+        "structural_blocker": "Lifecycle_contract NON interamente estratto in Phase 7.7A (limite di SCOPE di quell'audit, NON necessariamente assenza di struttura reale nel codice sorgente) - campi mancanti: ['direction', 'invalidation_stop_or_target_exit']. Richiede un deep-dive dedicato del codice reale (NXS_Strategies.mqh/NXS_StrategyProfiles.mqh o server/backtest.py) prima di poter dichiarare ELIGIBLE.",
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto).",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_INAPPROPRIATE",
+        "evidence_verdict_unchanged_from_7_7a": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      },
+      "ADX_RSI": {
+        "meta_filter_structural_eligibility": "NOT_ELIGIBLE",
+        "structural_blocker": "Lifecycle_contract NON interamente estratto in Phase 7.7A (limite di SCOPE di quell'audit, NON necessariamente assenza di struttura reale nel codice sorgente) - campi mancanti: ['direction', 'invalidation_stop_or_target_exit']. Richiede un deep-dive dedicato del codice reale (NXS_Strategies.mqh/NXS_StrategyProfiles.mqh o server/backtest.py) prima di poter dichiarare ELIGIBLE.",
+        "meta_filter_research_readiness": "REFUTED_INAPPROPRIATE",
+        "next_required_evidence": "Nessuna - la strategia e' stata refutata su evidenza sufficiente e pre-registrata; richiederebbe una nuova ipotesi/design con una nuova identita', non piu' evidenza sullo stesso design (stessa disciplina di FAIL-002/sec.24 gia' applicata altrove nel progetto).",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_INAPPROPRIATE",
+        "evidence_verdict_unchanged_from_7_7a": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      },
+      "BREAKOUT_ACC": {
+        "meta_filter_structural_eligibility": "NOT_ELIGIBLE",
+        "structural_blocker": "Lifecycle_contract NON interamente estratto in Phase 7.7A (limite di SCOPE di quell'audit, NON necessariamente assenza di struttura reale nel codice sorgente) - campi mancanti: ['direction', 'invalidation_stop_or_target_exit']. Richiede un deep-dive dedicato del codice reale (NXS_Strategies.mqh/NXS_StrategyProfiles.mqh o server/backtest.py) prima di poter dichiarare ELIGIBLE.",
+        "meta_filter_research_readiness": "NOT_READY",
+        "next_required_evidence": "Trattamento statistico rigoroso (Wilson CI, dependence-aware audit, separazione discovery/holdout dichiarata) - oggi l'evidenza e' solo R-multiple/PF grezzo su backtest informale, non sufficiente per un giudizio di maturita' anche se il segno e' positivo.",
+        "meta_filter_ready_gate_passed": false,
+        "old_phase_7_7a_label": "META_FILTER_NOT_READY",
+        "evidence_verdict_unchanged_from_7_7a": "DISCOVERY_SUPPORTED (informale - nessun Wilson CI/dependence-audit applicato)",
+        "classification_unchanged_from_7_7a": "FULL_STRATEGY_SPEC"
+      }
+    },
+    "counts": {
+      "total_candidates_evaluated": 7,
+      "structural_eligible_count": 3,
+      "research_ready_count": 0,
+      "meta_filter_ready_count": 0,
+      "blocked_count": 7
+    },
+    "governance_inconsistencies": [
+      {
+        "type": "SEMANTIC_CONFLATION_CORRECTED_THIS_PHASE",
+        "description": "strategy_meta_filter_eligibility_v1.json (Phase 7.7A) mescolava eligibility strutturale e maturita' di ricerca sotto un'unica etichetta - corretto QUI con un nuovo artifact separato, il vecchio file NON e' stato modificato."
+      },
+      {
+        "type": "ACTIVE_STATUS_VS_REFUTED_EVIDENCE",
+        "description": "Gia' documentato in Phase 7.7A: SAR/MACD/RSI_DIV/ADX_RSI/TSI hanno status=ACTIVE nel registro canonico nonostante evidenza confermata negativa - riferito qui, non ri-derivato.",
+        "reference": "server/research_scripts/phase7/phase7_7a/strategy_evidence_matrix_v1.json#registry_status_vs_evidence_conflicts"
+      },
+      {
+        "type": "H006_VOCABULARY_DRIFT",
+        "description": "Gia' documentato in Phase 7.7A: stesso risultato H006 etichettato WEAK/BORDERLINE/RETAIN_E2 in tre artifact diversi - riferito qui, non ri-derivato.",
+        "reference": "server/research_scripts/phase7/phase7_7a/strategy_lifecycle_registry_v1.json#deep_dive_candidates.H006_LIQUIDITY_SWEEP_RECLAIM.registry_vocabulary_drift_found"
+      },
+      {
+        "type": "STRUCTURAL_ELIGIBILITY_AUDIT_DEPTH_GAP",
+        "description": "NUOVO in questa fase: 3 dei 6 candidati esplicitamente richiesti dal reviewer (SAR_LIVE, ADX_RSI, BREAKOUT_ACC) risultano NOT_ELIGIBLE non perche' privi di struttura reale, ma perche' Phase 7.7A non ne ha estratto il lifecycle_contract completo (limite di scope di quell'audit, dichiarato esplicitamente allora) - un futuro deep-dive del codice MQL5 reale potrebbe promuoverli a ELIGIBLE senza cambiare l'evidenza empirica sottostante."
+      }
+    ],
+    "no_new_backtest_executed": true,
+    "no_mech23_applied": true,
+    "no_historical_results_modified": true,
+    "no_edge_discovery_performed": true,
+    "no_new_outcome_data_accessed": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
