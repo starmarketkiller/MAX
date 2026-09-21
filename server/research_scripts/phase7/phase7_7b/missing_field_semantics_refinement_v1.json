@@ -1,0 +1,297 @@
+{
+  "generated_at": "2026-09-21T20:11:22.772855+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7b/build_missing_field_semantics_refinement.py",
+  "canonical_sha256": "e5c535b70e5e698c6c9167181473a3946d1ee5eae0c685479bc870e2bc8a1804",
+  "payload": {
+    "phase": "7.7B-REFINEMENT",
+    "artifact_role": "MISSING_FIELD_SEMANTICS_REFINEMENT",
+    "scope_note": "Separa FIELD_KNOWLEDGE (perche' un campo e' vuoto) da REQUIREMENT_ROLE (se quel campo era necessario) - la correzione precedente (4743ce0) aveva gia' distinto audit-depth da assenza verificata, ma mescolava ANCORA 'assenza verificata' con 'quindi ineligible'. Nessun backtest, nessuna modifica retroattiva agli artifact frozen.",
+    "baseline_commit": "4743ce0a29310a411afb5bd656179ee43ed76e5f",
+    "sources_untouched": {
+      "lifecycle_registry": {
+        "file": "server/research_scripts/phase7/phase7_7a/strategy_lifecycle_registry_v1.json",
+        "canonical_sha256": "270088329416d23cef2d5675b8da21690d6e542d4b3493142c3e0fa15c628bf1"
+      },
+      "gate": {
+        "file": "server/research_scripts/phase7/phase7_7b/strategy_meta_filter_gate_v1.json",
+        "canonical_sha256": "c3be76cb15c2bf479ccd4caa3e6c7193a0b1103feb5de49e6553574c39f9cb60"
+      },
+      "prior_correction": {
+        "file": "server/research_scripts/phase7/phase7_7b/structural_eligibility_semantics_correction_v1.json",
+        "canonical_sha256": "5e2c93f4a9d8faca5284dd3341234c7c8b22682504c9a58ed8b948fc24c63822"
+      },
+      "modified_in_this_phase": false
+    },
+    "field_knowledge_values": [
+      "VERIFIED_VALUE",
+      "VERIFIED_ABSENCE",
+      "NOT_EXTRACTED"
+    ],
+    "requirement_role_values": [
+      "REQUIRED",
+      "NOT_REQUIRED_BY_DESIGN",
+      "SATISFIED_BY_EQUIVALENT_MECHANISM"
+    ],
+    "rule": {
+      "VERIFIED_ABSENCE_plus_REQUIRED": "STRUCTURALLY_INELIGIBLE (unico caso)",
+      "VERIFIED_ABSENCE_plus_NOT_REQUIRED_BY_DESIGN": "non implica ineligibility",
+      "VERIFIED_ABSENCE_plus_SATISFIED_BY_EQUIVALENT_MECHANISM": "non implica ineligibility",
+      "NOT_EXTRACTED_any_role": "STRUCTURAL_STATUS_UNVERIFIED (non possiamo giudicare il ruolo di un campo non letto)"
+    },
+    "h006_test_case": {
+      "field": "invalidation_stop",
+      "candidate": "H006_LIQUIDITY_SWEEP_RECLAIM",
+      "field_knowledge": "VERIFIED_ABSENCE",
+      "requirement_role": "SATISFIED_BY_EQUIVALENT_MECHANISM",
+      "does_this_imply_ineligibility": false,
+      "verified_against_real_source_file": "server/research_scripts/phase6/H006_frozen_spec.json",
+      "verified_against_real_source_file_sha256": "98afce0722b057daf43bdf1261674ba10d7a536ffb202687b8560b2549d76125",
+      "explanation": "VERIFICATO direttamente contro H006_frozen_spec.json: nessuna chiave 'invalidation'/'stop' esiste nello schema (chiavi reali: ['hypothesis_id', 'parent_hypothesis', 'frozen_at', 'frozen_before_holdout_data_seen', 'purpose', 'detector_definition_FROZEN_IDENTICAL_TO_PHASE5', 'primary_outcome', 'secondary_outcomes', 'baseline_definition_FROZEN', 'minimum_material_effect', 'minimum_sample', 'required_direction_consistency', 'pass_fail_criteria_FROZEN', 'no_rescue_clause', 'allowed_subgroup_analyses_PRE_REGISTERED', 'family_size', 'family_size_note', 'execution_status_ceiling', 'evidence_grade_mapping']), primary_outcome.definition dichiara esplicitamente 'nessuna gestione dinamica' - l'assenza e' REALE, non un limite di audit. MA il ruolo e' SATISFIED_BY_EQUIVALENT_MECHANISM: il lato -1.0xATR della barriera P(+1.0xATR before -1.0xATR) e' funzionalmente l'invalidazione - il design di H006 definisce l'uscita interamente tramite la barriera a due lati, senza bisogno di un campo separato. has_no_invalidation_key=True"
+    },
+    "per_candidate_field_classifications": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "target_exit": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          }
+        },
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "prior_correction_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "status_changed_by_this_refinement": false
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "VERIFIED_ABSENCE",
+            "requirement_role": "SATISFIED_BY_EQUIVALENT_MECHANISM",
+            "note": "VERIFICATO direttamente contro H006_frozen_spec.json: nessuna chiave 'invalidation'/'stop' esiste nello schema (chiavi reali: ['hypothesis_id', 'parent_hypothesis', 'frozen_at', 'frozen_before_holdout_data_seen', 'purpose', 'detector_definition_FROZEN_IDENTICAL_TO_PHASE5', 'primary_outcome', 'secondary_outcomes', 'baseline_definition_FROZEN', 'minimum_material_effect', 'minimum_sample', 'required_direction_consistency', 'pass_fail_criteria_FROZEN', 'no_rescue_clause', 'allowed_subgroup_analyses_PRE_REGISTERED', 'family_size', 'family_size_note', 'execution_status_ceiling', 'evidence_grade_mapping']), primary_outcome.definition dichiara esplicitamente 'nessuna gestione dinamica' - l'assenza e' REALE, non un limite di audit. MA il ruolo e' SATISFIED_BY_EQUIVALENT_MECHANISM: il lato -1.0xATR della barriera P(+1.0xATR before -1.0xATR) e' funzionalmente l'invalidazione - il design di H006 definisce l'uscita interamente tramite la barriera a due lati, senza bisogno di un campo separato. has_no_invalidation_key=True"
+          },
+          "target_exit": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          }
+        },
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "prior_correction_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "status_changed_by_this_refinement": false
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "target_exit": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          }
+        },
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "prior_correction_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "status_changed_by_this_refinement": false
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "target_exit": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          }
+        },
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "prior_correction_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "status_changed_by_this_refinement": false
+      },
+      "SAR_LIVE": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "target_exit": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          }
+        },
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "prior_correction_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "status_changed_by_this_refinement": false
+      },
+      "ADX_RSI": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "target_exit": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          }
+        },
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "prior_correction_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "status_changed_by_this_refinement": false
+      },
+      "BREAKOUT_ACC": {
+        "field_classifications": {
+          "entry": {
+            "field_knowledge": "VERIFIED_VALUE",
+            "requirement_role": "REQUIRED",
+            "note": "Valore realmente estratto dalla fonte - il requisito e' per costruzione soddisfatto (non c'e' nulla da giudicare oltre alla presenza del valore)."
+          },
+          "direction": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "invalidation_stop": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          },
+          "target_exit": {
+            "field_knowledge": "NOT_EXTRACTED",
+            "requirement_role": "REQUIRED",
+            "note": "Rationale di Phase 7.7A indica esplicitamente un limite di audit (non un'assenza verificata) - il ruolo resta REQUIRED per default (entry/direction sono sempre necessari per una strategia direzionale) ma non possiamo giudicare se sarebbe soddisfatto perche' non l'abbiamo letto."
+          }
+        },
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "prior_correction_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "status_changed_by_this_refinement": false
+      }
+    },
+    "ineligible_cases_found": {},
+    "ineligible_cases_count": 0,
+    "status_changes_vs_prior_correction": {},
+    "status_changes_count": 0,
+    "refined_gate_results_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "NEEDS_MORE_EVIDENCE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "BORDERLINE_LOW_PRIORITY",
+        "meta_filter_ready_gate_passed": false
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "EXECUTION_FAILED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "refined_structural_status": "STRUCTURALLY_ELIGIBLE",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "SAR_LIVE": {
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "ADX_RSI": {
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "REFUTED_INAPPROPRIATE",
+        "meta_filter_ready_gate_passed": false
+      },
+      "BREAKOUT_ACC": {
+        "refined_structural_status": "STRUCTURAL_STATUS_UNVERIFIED",
+        "research_readiness_unchanged": "NOT_READY",
+        "meta_filter_ready_gate_passed": false
+      }
+    },
+    "research_readiness_unchanged_confirmed": true,
+    "gate_counts": {
+      "meta_filter_ready_count_before_this_refinement": 0,
+      "meta_filter_ready_count_after_this_refinement": 0,
+      "gate_count_unchanged": true
+    },
+    "no_new_backtest_executed": true,
+    "no_new_research_performed": true,
+    "no_mech23_applied": true,
+    "no_retroactive_modification_of_frozen_artifacts": true,
+    "no_edge_discovery_performed": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
