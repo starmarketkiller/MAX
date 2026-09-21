@@ -1,0 +1,217 @@
+{
+  "generated_at": "2026-09-21T18:44:06.839084+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_6e/build_seq0014b_native_setup_failure_audit.py",
+  "canonical_sha256": "d5585fe2f5ed25564a4515b244c088644d9d4a2f8cb8a16e65c57917cb4efabd",
+  "payload": {
+    "phase": "7.6E",
+    "artifact_role": "NATIVE_SETUP_FAILURE_AUDIT",
+    "scope_note": "Audit semantico - verifica se le 6 famiglie SEQ-0014B rappresentano setup/trade con semantica nativa di successo/fallimento, o solo eventi direzionali raw. NESSUN outcome letto, NESSUNA barrier magnitude/horizon scelti, NESSUNA geometry/preflight eseguita, NESSUN DESIGN_V2 creato.",
+    "baseline_commit": "67282deb8d6808d9d1977a810463fe07393496b1",
+    "family_lifecycle_audit": {
+      "VOLATILITY_EXPANSION": {
+        "detector_formula": "tr[i] > vol_expansion_atr_mult(1.0) * atr[i]",
+        "direction": "SI - +1/-1 da close vs open, 0/NO_EVENT se doji",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": null,
+        "native_stop": null,
+        "native_target": null,
+        "native_timeout": null,
+        "native_success_definition": null,
+        "native_failure_definition": null,
+        "downstream_outcome_label_family_in_build_events": null,
+        "evidence": "build_events_p71.py: nessun blocco downstream (FAILED_*/RETEST/RECLAIM-style) fa riferimento a VOLATILITY_EXPANSION - l'evento non alimenta alcuna logica di esito successiva nel detector gia' congelato. detector_inventory (fb52168) non ha un campo 'role' per questa famiglia (a differenza di FAILED_BREAKOUT/RETEST/RECLAIM)."
+      },
+      "DISPLACEMENT": {
+        "detector_formula": "abs(body[i]) > displacement_atr_mult(1.5) * atr[i]",
+        "direction": "SI - +1/-1 da segno del corpo (body=close-open)",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": null,
+        "native_stop": null,
+        "native_target": null,
+        "native_timeout": null,
+        "native_success_definition": null,
+        "native_failure_definition": null,
+        "downstream_outcome_label_family_in_build_events": null,
+        "evidence": "Stessa situazione di VOLATILITY_EXPANSION - nessun blocco downstream nel detector gia' congelato, nessun campo 'role' in detector_inventory."
+      },
+      "BREAKOUT": {
+        "detector_formula": "close[i] > max(high[i-21:i-1]) oppure close[i] < min(low[i-21:i-1])",
+        "direction": "SI - +1 se close>rolling_high_20, -1 se close<rolling_low_20",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": "FAILED_BREAKOUT (build_events_p71.py): confirmed_at j in (i, i+5] dove close[j] richiude oltre il livello rotto (close[j]<level per BUY, close[j]>level per SELL) - GIA' etichettato in detector_inventory (fb52168) come: \"NON un setup indipendente - e' un'ETICHETTA DI ESITO (failure) su un BREAKOUT gia' avvenuto a riga i, confermata SOLO a una riga j successiva. La sua stessa esistenza non e' nota al momento del setup (riga i) - includerla come unita' di popolazione separata duplicherebbe la stessa entrata di BREAKOUT E violerebbe il requisito di timing causale immediato (sec.2). Candidato per l'outcome 'failure' di BREAKOUT (sec.9), non per la popolazione di setup (sec.1).\"",
+        "native_stop": null,
+        "native_target": null,
+        "native_confirmation_diagnostic": "RETEST (build_events_p71.py): confirmed_at j in (i, i+10] dove il prezzo ritocca il livello (tolleranza 0.15 ATR) SENZA richiudere oltre - GIA' etichettato in detector_inventory: 'Stesso ruolo di FAILED_BREAKOUT - etichetta di esito delayed su BREAKOUT, non setup indipendente.' - un diagnostico di 'il livello ha tenuto', non un target di profitto.",
+        "native_timeout": "Implicito nell'orizzonte di rilevamento di FAILED_BREAKOUT (5 barre) / RETEST (10 barre) - MA questi sono orizzonti di RILEVAMENTO del detector, non dichiarati altrove come timeout di una decisione di trading.",
+        "native_success_definition": null,
+        "native_failure_definition": "Assenza di FAILED_BREAKOUT entro 5 barre (per esclusione) - PARZIALE: definisce solo il lato dell'invalidazione, non un successo/target positivo.",
+        "downstream_outcome_label_family_in_build_events": [
+          "FAILED_BREAKOUT",
+          "RETEST"
+        ],
+        "evidence": "detector_inventory (fb52168) etichetta ESPLICITAMENTE FAILED_BREAKOUT come 'Candidato per l'outcome failure di BREAKOUT' - un fatto GIA' congelato in Phase 7.6B, non derivato ora."
+      },
+      "SWEEP": {
+        "detector_formula": "high[i]>rolling_high_20 & close[i]<rolling_high_20 (HIGH) / speculare per LOW",
+        "direction": "SI - HIGH swept->-1(SELL), LOW swept->+1(BUY)",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": "RECLAIM (build_events_p71.py): confirmed_at j in (i, i+10] dove close[j] richiude oltre il livello swept (close[j]>level se swept_side=HIGH, close[j]<level se swept_side=LOW) - GIA' etichettato in detector_inventory come: \"Stesso ruolo di FAILED_BREAKOUT/RETEST ma per SWEEP - etichetta di esito delayed (il reclaim si verifica o no), non setup indipendente. Candidato per l'outcome 'failure/non-risoluzione' di SWEEP (sec.9).\"",
+        "native_invalidation_caveat": "AMBIGUO/DOPPIO USO: lo stesso trigger che invaliderebbe la tesi di rigetto/inversione dello SWEEP viene ANCHE emesso come un evento RECLAIM con propria direzione (una possibile nuova opportunita' di trading) - il codice non lo tratta esclusivamente come 'fallimento', lo riusa anche come segnale distinto. Va riportato onestamente come ambiguo, non forzato in una sola interpretazione.",
+        "native_stop": null,
+        "native_target": null,
+        "native_timeout": "Implicito nell'orizzonte di rilevamento RECLAIM (10 barre) - stesso caveat di BREAKOUT (orizzonte di rilevamento, non timeout di trading dichiarato).",
+        "native_success_definition": null,
+        "native_failure_definition": "PARZIALE - assenza di RECLAIM entro 10 barre, con l'ambiguita' sopra.",
+        "downstream_outcome_label_family_in_build_events": [
+          "RECLAIM"
+        ],
+        "evidence": "detector_inventory (fb52168) etichetta ESPLICITAMENTE RECLAIM come 'Candidato per l'outcome failure/non-risoluzione di SWEEP'."
+      },
+      "COMPRESSION_RELEASE": {
+        "detector_formula": "compressione sostenuta (>=5 barre sotto 20o percentile) poi tr[i]>1.0xATR[i]",
+        "direction": "SI - +1/-1 da close vs open, 0/NO_EVENT se doji",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": null,
+        "native_stop": null,
+        "native_target": null,
+        "native_timeout": null,
+        "native_success_definition": null,
+        "native_failure_definition": null,
+        "downstream_outcome_label_family_in_build_events": null,
+        "evidence": "Nessun blocco downstream nel detector gia' congelato, nessun campo 'role' in detector_inventory."
+      },
+      "PULLBACK": {
+        "detector_formula": "trend stabilito (20 barre) + ritracciamento>=0.5xATR contro il trend",
+        "direction": "SI - trend_sign +1/-1 (mai 0, guardia esplicita nel codice)",
+        "entry_timing": "bar_close (immediato)",
+        "native_invalidation": null,
+        "native_stop": null,
+        "native_target": null,
+        "native_timeout": null,
+        "native_success_definition": null,
+        "native_failure_definition": null,
+        "downstream_outcome_label_family_in_build_events": null,
+        "evidence": "Nessun blocco downstream nel detector gia' congelato, nessun campo 'role' in detector_inventory."
+      },
+      "method": "Solo definizioni GIA' PRESENTI in detector_inventory (fb52168, Phase 7.6B) e nella logica gia' congelata di build_events_p71.py - nessuno stop/target/invalidation inventato dove manca.",
+      "build_events_source_sha256": "b7c5bd8ffd090a470c0880f978c5897797e6be5b763c3b6d62a88ba430984759"
+    },
+    "family_classification": {
+      "VOLATILITY_EXPANSION": {
+        "classification": "DIRECTIONAL_EVENT_ONLY",
+        "rationale": "Entry+direzione esistono, ma nessuna semantica di invalidazione/target/timeout - un evento istantaneo puro, mai collegato a un esito nel detector gia' congelato."
+      },
+      "DISPLACEMENT": {
+        "classification": "DIRECTIONAL_EVENT_ONLY",
+        "rationale": "Identica a VOLATILITY_EXPANSION."
+      },
+      "BREAKOUT": {
+        "classification": "PARTIAL_SETUP",
+        "rationale": "Entry+direzione+invalidazione nativa (FAILED_BREAKOUT, gia' riconosciuta come outcome-label in Phase 7.6B) esistono - MA nessun target/successo nativo e' definito (RETEST e' un diagnostico di tenuta del livello, non un target di profitto). 'Successo' non e' completamente definito."
+      },
+      "SWEEP": {
+        "classification": "PARTIAL_SETUP",
+        "rationale": "Entry+direzione+un segnale di invalidazione/non-risoluzione (RECLAIM, gia' riconosciuto come outcome-label in Phase 7.6B, ma con l'ambiguita' di doppio uso sopra) esistono - nessun target/successo nativo definito."
+      },
+      "COMPRESSION_RELEASE": {
+        "classification": "DIRECTIONAL_EVENT_ONLY",
+        "rationale": "Entry+direzione esistono, nessuna semantica di invalidazione/target/timeout."
+      },
+      "PULLBACK": {
+        "classification": "DIRECTIONAL_EVENT_ONLY",
+        "rationale": "Identica a VOLATILITY_EXPANSION/DISPLACEMENT/COMPRESSION_RELEASE."
+      },
+      "summary": {
+        "FULL_NATIVE_SETUP_count": 0,
+        "PARTIAL_SETUP_count": 2,
+        "DIRECTIONAL_EVENT_ONLY_count": 4,
+        "conclusion": "NESSUNA delle 6 famiglie congelate possiede una definizione nativa COMPLETA di successo/fallimento di un trade (entry+invalidazione+target+timeout tutti presenti). 2 (BREAKOUT, SWEEP) hanno solo il lato dell'invalidazione gia' codificato; le altre 4 sono puri eventi direzionali senza alcun lifecycle di trade."
+      }
+    },
+    "double_barrier_semantic_status": {
+      "VOLATILITY_EXPANSION": {
+        "status": "COMPATIBLE_BUT_SYNTHETIC",
+        "reason": "Nessuna definizione nativa esiste con cui la barriera ATR possa entrare in conflitto - la barriera sarebbe l'UNICA definizione di esito disponibile, interamente sintetica (non derivata da alcun meccanismo di questa famiglia)."
+      },
+      "DISPLACEMENT": {
+        "status": "COMPATIBLE_BUT_SYNTHETIC",
+        "reason": "Identico a VOLATILITY_EXPANSION."
+      },
+      "BREAKOUT": {
+        "status": "SEMANTICALLY_MISALIGNED",
+        "reason": "Esiste GIA' un'invalidazione nativa strutturale (FAILED_BREAKOUT: chiusura oltre il livello rotto) - una barriera ATR sintetica la IGNORA completamente e puo' scattare prima o dopo l'invalidazione strutturale reale a seconda di quanto il livello rotto e' distante dal prezzo di innesco. Sostituire silenziosamente un'invalidazione strutturale gia' codificata con una barriera di distanza fissa cambia la domanda scientifica posta, non solo la sua implementazione."
+      },
+      "SWEEP": {
+        "status": "SEMANTICALLY_MISALIGNED",
+        "reason": "Stessa logica di BREAKOUT - RECLAIM (chiusura oltre il livello swept) e' gia' un'invalidazione/non-risoluzione strutturale nativa, ignorata da una barriera ATR sintetica."
+      },
+      "COMPRESSION_RELEASE": {
+        "status": "COMPATIBLE_BUT_SYNTHETIC",
+        "reason": "Nessuna definizione nativa con cui confliggere - sintetica per necessita'."
+      },
+      "PULLBACK": {
+        "status": "COMPATIBLE_BUT_SYNTHETIC",
+        "reason": "Identico a VOLATILITY_EXPANSION/DISPLACEMENT/COMPRESSION_RELEASE."
+      },
+      "none_classified_as_native": true,
+      "referenced_contract": "seq0014b_outcome_horizon_contract_v1.json (Phase 7.6D, 67282de) - classe DOUBLE_BARRIER_SUCCESS_FAILURE_PROBABILITY, non modificata qui."
+    },
+    "false_equivalence_guard": {
+      "rejected_assumption_1": "detector direzionale raw == setup tradabile completo - RESPINTA. Solo 2 delle 6 famiglie hanno anche solo un componente di invalidazione nativa; 0 hanno un lifecycle di trade completo.",
+      "rejected_assumption_2": "mancato raggiungimento di +X ATR == fallimento del setup - RESPINTA senza una definizione INDIPENDENTE di fallimento per confrontare. Per BREAKOUT/SWEEP esiste gia' un'invalidazione nativa DIVERSA (strutturale, non ATR-distanza) - i due criteri non sono stati verificati equivalenti.",
+      "enforcement": "Nessuna delle due equivalenze e' stata assunta nella classificazione sopra - verificate esplicitamente contro le definizioni pre-esistenti, non postulate."
+    },
+    "censoring_correction": {
+      "original_statement_in_phase_7_6d": "seq0014b_outcome_horizon_contract_v1.json, primary_outcome_decision.primary_outcome_class: 'il complemento (1-P) e\\' letteralmente una probabilita\\' di fallimento del setup' - questa frase e' IMPRECISA se esiste uno stato non risolto (censored).",
+      "correction": "1 - P(success) e' una probabilita' di fallimento SOLO SE il caso non risolto entro l'horizon (ne' +X ATR ne' -1 ATR raggiunto) e' stato ESPLICITAMENTE collassato in FAILURE da una policy ex-ante. Senza quella policy, la formulazione corretta e' una PARTIZIONE A TRE STATI: P(SUCCESS) + P(FAILURE) + P(UNRESOLVED/CENSORED) = 1, oppure un modello di tipo competing-risks/time-to-event - MAI un collasso automatico a due stati.",
+      "relationship_to_7_6d_censoring_section": "Phase 7.6D (barrier_vs_censoring) aveva GIA' identificato le tre opzioni di trattamento del caso censored (TREAT_AS_FAILURE / TREAT_AS_NEUTRAL_EXCLUDED / THIRD_CATEGORY_REPORTED_SEPARATELY) SENZA sceglierne una - questa correzione e' quindi coerente con quella sezione (non contraddice il lavoro precedente), ma corregge una frase DIVERSA dello stesso documento (primary_outcome_decision) che aveva trattato prematuramente il complemento come se il collasso a due stati fosse gia' implicito.",
+      "modification_to_frozen_artifact": false,
+      "note": "Il file seq0014b_outcome_horizon_contract_v1.json (67282de) NON viene modificato - questa e' un'annotazione/correzione in un audit separato, stessa disciplina gia' applicata in f6b0859 verso 6c0d3f6/80e7cbc."
+    },
+    "claim_identity": {
+      "description_A": "CHOPPY peggiora la performance di setup/trade realmente definiti (entry+invalidazione+target+timeout completi).",
+      "description_B": "CHOPPY modifica il comportamento direzionale futuro del prezzo dopo eventi detector raw (nessun lifecycle di trade completo).",
+      "which_is_currently_operationalized": "B",
+      "rationale": "Data la classificazione della sezione 2 (0 FULL_NATIVE_SETUP, 2 PARTIAL_SETUP, 4 DIRECTIONAL_EVENT_ONLY), la descrizione A NON e' ancora operazionalizzata sulla popolazione congelata in fb52168 - non esiste, per la maggioranza delle famiglie, un trade realmente definito il cui successo/fallimento si possa misurare. Il design strutturale gia' testato in DESIGN_V1 (6c0d3f6/80e7cbc), e la classe di outcome proposta in Phase 7.6D, stavano di fatto costruendo la descrizione B vestita con il linguaggio di A ('filter utility', 'fallimento del setup').",
+      "explicit_non_silent_conversion": "Questo audit dichiara la trasformazione A->B ESPLICITAMENTE - non la lascia implicita. E' lo stesso tipo di errore gia' trovato e corretto fra SEQ-0014A e SEQ-0014B in Phase 7.6A (RELATED_BUT_DISTINCT), qui riemerso ad un livello piu' fine (dentro SEQ-0014B stesso, fra il claim originale e la sua operazionalizzazione candidata)."
+    },
+    "pooled_outcome_compatibility": {
+      "question": "Ha senso un unico primary outcome comune sulle 6 famiglie?",
+      "family_native_failure_as_common_variable_concept": "Concettualmente, failure_F in {0,1} per famiglia F (con meccanismi di fallimento DIVERSI per famiglia) sarebbe piu' fedele alla semantica nativa di ciascuna - MA non e' implementabile OGGI in modo uniforme: solo 2 delle 6 famiglie (BREAKOUT, SWEEP) hanno ANCHE SOLO un lato (invalidazione) gia' definito, e nemmeno per quelle due esiste un lato di successo/target nativo. Le altre 4 non hanno nulla.",
+      "not_implemented_here": true,
+      "conclusion": "Un contratto di outcome pooled unico e uniforme sulle 6 famiglie, con lo stato attuale della loro formalizzazione, sarebbe prematuro indipendentemente dalla magnitudo di barriera scelta - il problema precede la scelta dei parametri (sezione 4 di Phase 7.6D) ed e' piu' fondamentale."
+    },
+    "decision": {
+      "verdict": "PARTIALLY_AVAILABLE_REQUIRES_SETUP_FORMALIZATION",
+      "verdict_rationale": "Non e' il caso piu' severo (MECH23_NOT_OPERATIONALIZABLE_ON_RAW_EVENT_FAMILIES) perche' 2 delle 6 famiglie (BREAKOUT, SWEEP) possiedono GIA' un componente nativo (invalidazione) su cui costruire - ma non e' nemmeno NATIVE_FAILURE_CONTRACT_AVAILABLE, perche' quel componente e' incompleto (manca il lato successo/target) e le altre 4 famiglie non hanno nulla.",
+      "not_full_native_for_any_family": true
+    },
+    "next_requirement": {
+      "no_stop_or_target_invented": true,
+      "recommended_next_step": "Formalizzare strategie direzionali REALI (entry+invalidazione+target+timeout espliciti) PRIMA di testare un regime filter su di esse - non costruire una execution rule sintetica sopra un detector raw solo per rendere MECH-23 testabile.",
+      "proposed_pipeline_reorg": {
+        "stages": [
+          "EVENT_RESEARCH (trova fenomeni/eventi - fase gia' esistente, es. build_events_p71.py)",
+          "STRATEGY_FORMALIZATION (entry + invalidazione + exit espliciti)",
+          "STRATEGY_VALIDATION (stabilisce se esiste un edge - stesso gate rigoroso gia' usato per SEQ-0009/SEQ-0015/RECLAIM)",
+          "META_FILTER_RESEARCH (MECH-23: quando NON usare una strategia gia' validata)"
+        ],
+        "not_implemented_here": true,
+        "rationale": "Questa gerarchia separerebbe nettamente 'scoprire un fenomeno' da 'costruire una strategia tradabile da esso' da 'sapere se funziona' da 'sapere quando NON usarla' - un regime filter (MECH-23) testato su un detector raw invece che su una strategia GIA' validata rischia di testare un filtro su idee gia' refutate o incomplete, con il rischio di trovare per caso una combinazione che sembra salvarne una (data mining involontario su 3 hypothesis sovrapposte: detector + execution rule sintetica + regime filter)."
+      },
+      "mech23_as_meta_filter": "Sotto questa riorganizzazione, MECH-23 andrebbe applicato SOLO a strategie che hanno gia' superato il proprio gate di validazione - non alle 6 famiglie raw congelate in fb52168 nella loro forma attuale."
+    },
+    "no_stop_target_invalidation_invented": true,
+    "no_barrier_magnitude_chosen": true,
+    "no_horizon_chosen": true,
+    "no_geometry_or_preflight_executed": true,
+    "no_design_v2_created": true,
+    "no_frozen_prior_artifacts_modified": true,
+    "no_nexus_outcome_data_accessed": true,
+    "no_structural_preflight_executed": true,
+    "no_edge_discovery_performed": true,
+    "no_primary_outcome_selected": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
