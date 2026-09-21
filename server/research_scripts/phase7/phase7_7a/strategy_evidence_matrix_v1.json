@@ -1,0 +1,266 @@
+{
+  "generated_at": "2026-09-21T18:59:13.443430+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7a/build_strategy_lifecycle_registry.py",
+  "canonical_sha256": "f6843060c58609dcea0932e8462b4ada29ea810082fea11539f28aae1d612e33",
+  "payload": {
+    "phase": "7.7A",
+    "artifact_role": "STRATEGY_EVIDENCE_MATRIX",
+    "baseline_commit": "082a456360b9206bceb32b182dcf175e7e84fc63",
+    "scope_note": "Separazione esplicita fra completezza del lifecycle ed evidenza empirica (sec.4/8 della richiesta) - una strategia puo' essere FULL_STRATEGY_SPEC e REFUTED contemporaneamente, senza contraddizione.",
+    "evidence_ladders_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "discovery": {
+          "status": "PASS",
+          "detail": "Phase 2 screening: delta_p discovery=+0.037R"
+        },
+        "internal_validation": {
+          "status": "PASS",
+          "detail": "Phase 2 screening: delta_p validation=+0.133R, n~927 eventi grezzi"
+        },
+        "full_backtest_engine": {
+          "status": "PASS",
+          "detail": "run_backtest() completo (gestione one-at-a-time): 243 trade, PF=1.20, expectancy=0.068R a costo zero"
+        },
+        "signal_parity_python_vs_mql5": {
+          "status": "PASS",
+          "detail": "927/927 eventi raw identici; SIGNAL_LOGIC_DIFFERENCE=0 su finestra comune 2026-03-01/2026-09-01"
+        },
+        "fast_structural_real_ticks_6mo": {
+          "status": "BORDERLINE",
+          "detail": "n=14, PF=1.165, win rate=50%, concentrazione temporale forte (2 mesi su 5 attivi spiegano quasi tutto il profitto), asimmetria BUY/SELL (PF 0.734 vs 2.236) non distinguibile da rumore su campione cosi' piccolo"
+        },
+        "serious_3y_backtest": {
+          "status": "NOT_RUN",
+          "detail": "Verdetto esplicito: HOLD_NEEDS_MORE_EVIDENCE - non promossa"
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "discovery": {
+          "status": "PASS",
+          "detail": "H004 (Phase 5, event_alone): n_discovery=215, delta_p=0.2407"
+        },
+        "internal_validation": {
+          "status": "PASS",
+          "detail": "H004: n_validation=85, delta_p=0.2990, classificazione originale=SUPPORTED_EDGE (POST_HOC_CANDIDATE - selezionato da un batch di 14, non pre-registrato come primario)"
+        },
+        "true_holdout": {
+          "status": "BORDERLINE",
+          "detail": "H006 (Phase 6, mai visto prima): n=115, delta_p=0.0572 < soglia materialita' 0.15, CI95 sovrapposte, direzione BUY(0.524) vs SELL(0.673) non consistente"
+        },
+        "dependence_audit": {
+          "status": "PASS_BUT_HIGH_DEPENDENCE",
+          "detail": "Phase 6.5: dependence_flag=HIGH, overlap_rate=0.991 - n effettivo indipendente stimato fra 46 e 115 a seconda del metodo"
+        },
+        "external_replication": {
+          "status": "NOT_RUN",
+          "detail": "CROSS_FEED_VALIDATION (E4, fonte dati diversa da Dukascopy) mai tentato"
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "shadow_hypothesis_test": {
+          "status": "PASS",
+          "detail": "PF shadow=5.80 (assumendo fill esatto al trigger_price) - titolo del report collegato: 'HYPOTHESIS STRONGLY SUPPORTED'"
+        },
+        "fast_smoke_real_execution": {
+          "status": "FAIL",
+          "detail": "PF reale=0.78-0.80, stesso campione, stessa cadenza - l'edge shadow non sopravvive a NESSUNA forma di esecuzione realistica testata (ne' FILL_ANCHORED ne' replay tick-level RECLAIM_TICK/RECLAIM_LIMIT_RETEST)"
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "prior_broker_result": {
+          "status": "PASS",
+          "detail": "Broker XM: PF=1.281 (risultato precedente usato come riferimento, non ri-derivato qui)"
+        },
+        "prior_python_dukascopy_pre2023": {
+          "status": "BORDERLINE",
+          "detail": "PF=0.93/0.97 (due run precedenti citate come riferimento)"
+        },
+        "external_validation_dukascopy": {
+          "status": "FAIL",
+          "detail": "PF=0.61, n=237 - sotto la soglia FAIL<0.95 pre-registrata (PASS>=1.15/BORDERLINE 0.95-1.15/FAIL<0.95)"
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "SAR_LIVE": {
+        "backtest_6y_segmented_2019_2024": {
+          "status": "FAIL",
+          "detail": "MOC - Strategie.md: -34.3R su 6 anni, 0/6 anni positivi - LA PEGGIORE fra le 37 strategie tracciate. Fix testato (vero Parabolic SAR nel proxy sito): PF 1.17->1.28, non ancora validato su MT5."
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "ADX_RSI": {
+        "backtest_6y_segmented_2019_2024": {
+          "status": "FAIL",
+          "detail": "MOC - Strategie.md: -15.3R su 6 anni, 1/6 anni positivi. Fix applicato: aggiunto vero filtro ADX>20 (mai calcolato prima nonostante il nome) - non ancora validato su MT5."
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      },
+      "BREAKOUT_ACC": {
+        "backtest_6y_segmented_2019_2024": {
+          "status": "BORDERLINE_POSITIVE",
+          "detail": "MOC - Strategie.md: +4.3R su 6 anni, 5/6 anni positivi - la piu' stabile del 'nucleo hedge candidato' (mai un anno chiaramente negativo)."
+        },
+        "demo": {
+          "status": "NOT_RUN",
+          "detail": null
+        },
+        "live": {
+          "status": "NOT_RUN",
+          "detail": null
+        }
+      }
+    },
+    "evidence_verdicts_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "verdict": "HOLD_NEEDS_MORE_EVIDENCE",
+        "is_refuted": false,
+        "note": "Esplicitamente NON un REJECTED_FAST_STRUCTURAL - nessuna rottura strutturale (parita' confermata, expectancy positiva, nessun leakage) - semplicemente campione ancora troppo piccolo/concentrato per un impegno a un serious 3Y."
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "verdict": "RETAIN_E2 (BORDERLINE, non promosso)",
+        "is_refuted": false,
+        "note": "DeltaP osservato nel true holdout (0.0572) e' sotto la soglia minima di materialita' pre-registrata (0.15), con CI95 Wilson sovrapposte fra evento e baseline (ci95_non_overlapping=False). Verdetto pre-registrato: BORDERLINE."
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "verdict": "REFUTED_AT_EXECUTION_VALIDATION",
+        "is_refuted": true,
+        "note": "Distinto esplicitamente da un REFUTED statistico: l'ipotesi era 'STRONGLY SUPPORTED' a livello di outcome shadow - il fallimento e' emerso ESCLUSIVAMENTE al livello di esecuzione reale (assunzione di fill idealizzato), il pattern SHADOW_EXECUTION_ASSUMPTION gia' registrato nella Failure Memory di progetto."
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "verdict": "REFUTED",
+        "is_refuted": true,
+        "note": "SAR_EXTERNAL_CONFIRMATION_FAIL - nessun rescue/filtro applicato dopo aver visto il risultato (stop_condition pre-registrata)."
+      },
+      "SAR_LIVE": {
+        "verdict": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "is_refuted": true,
+        "note": "Convergenza indipendente: DUE pipeline di evidenza separate (H015 Python esterno E il backtest MQL5 6-anni) concordano entrambe su un verdetto negativo per il concetto SAR - un segnale di refutazione robusto, non dipendente da un solo metodo."
+      },
+      "ADX_RSI": {
+        "verdict": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "is_refuted": true,
+        "note": null
+      },
+      "BREAKOUT_ACC": {
+        "verdict": "DISCOVERY_SUPPORTED (informale - nessun Wilson CI/dependence-audit applicato)",
+        "is_refuted": false,
+        "note": "IMPORTANTE (sec.8 della richiesta): 'promettente' su R-multiple/PF grezzo NON equivale a 'validata' nel senso rigoroso di H006/VOLATILITY_BREAKOUT_CONFIRMED (nessun Wilson CI, nessun dependence audit, nessuna separazione discovery/holdout dichiarata per questa metrica) - classificato qui come il miglior candidato INFORMALE del portafoglio EA, non come strategia statisticamente validata."
+      }
+    },
+    "registry_status_vs_evidence_conflicts": [
+      {
+        "moc_name": "Sar",
+        "registry_strategy_id": "SAR",
+        "moc_evidence": "-34.3R, 0/6 anni positivi - la peggiore in assoluto",
+        "registry_status": "ACTIVE",
+        "conflict": "Il registro canonico di codice dichiara la strategia ACTIVE nonostante l'evidenza empirica di progetto (MOC, backtest 6 anni multi-centinaia di trade) la classifichi come confermata fallita.",
+        "not_verified_here": "Il flag runtime NXS_Profile_Enabled (che potrebbe gia' avere disattivato la strategia a prescindere da questo status) NON e' stato letto in questo audit - nessuna affermazione fatta su rischio di capitale reale attuale."
+      },
+      {
+        "moc_name": "Macd",
+        "registry_strategy_id": "MACD",
+        "moc_evidence": "-21.1R - era validata su v2.4.8 (PF1.11), il 'raffinamento' v2.5.0 l'ha peggiorata",
+        "registry_status": "ACTIVE",
+        "conflict": "Il registro canonico di codice dichiara la strategia ACTIVE nonostante l'evidenza empirica di progetto (MOC, backtest 6 anni multi-centinaia di trade) la classifichi come confermata fallita.",
+        "not_verified_here": "Il flag runtime NXS_Profile_Enabled (che potrebbe gia' avere disattivato la strategia a prescindere da questo status) NON e' stato letto in questo audit - nessuna affermazione fatta su rischio di capitale reale attuale."
+      },
+      {
+        "moc_name": "Rsi Div",
+        "registry_strategy_id": "RSI_DIV",
+        "moc_evidence": "-17.5R - sale in questo gruppo col segmento 9 (2024=-10.1, il peggiore in assoluto)",
+        "registry_status": "ACTIVE",
+        "conflict": "Il registro canonico di codice dichiara la strategia ACTIVE nonostante l'evidenza empirica di progetto (MOC, backtest 6 anni multi-centinaia di trade) la classifichi come confermata fallita.",
+        "not_verified_here": "Il flag runtime NXS_Profile_Enabled (che potrebbe gia' avere disattivato la strategia a prescindere da questo status) NON e' stato letto in questo audit - nessuna affermazione fatta su rischio di capitale reale attuale."
+      },
+      {
+        "moc_name": "Adx Rsi",
+        "registry_strategy_id": "ADX_RSI",
+        "moc_evidence": "-15.3R, 1/6 anni positivi",
+        "registry_status": "ACTIVE",
+        "conflict": "Il registro canonico di codice dichiara la strategia ACTIVE nonostante l'evidenza empirica di progetto (MOC, backtest 6 anni multi-centinaia di trade) la classifichi come confermata fallita.",
+        "not_verified_here": "Il flag runtime NXS_Profile_Enabled (che potrebbe gia' avere disattivato la strategia a prescindere da questo status) NON e' stato letto in questo audit - nessuna affermazione fatta su rischio di capitale reale attuale."
+      },
+      {
+        "moc_name": "Tsi",
+        "registry_strategy_id": "TSI",
+        "moc_evidence": "-7.9R su 721 trade (campione enorme) - PF 0.82 troppo stabilmente negativo per essere ambiguo",
+        "registry_status": "ACTIVE",
+        "conflict": "Il registro canonico di codice dichiara la strategia ACTIVE nonostante l'evidenza empirica di progetto (MOC, backtest 6 anni multi-centinaia di trade) la classifichi come confermata fallita.",
+        "not_verified_here": "Il flag runtime NXS_Profile_Enabled (che potrebbe gia' avere disattivato la strategia a prescindere da questo status) NON e' stato letto in questo audit - nessuna affermazione fatta su rischio di capitale reale attuale."
+      }
+    ],
+    "prefix_match_implementation_ambiguities": [
+      {
+        "moc_name": "Cisd",
+        "registry_strategy_id": "CISD_TRUE",
+        "bucket": "PROMETTENTI_NUCLEO_HEDGE",
+        "issue": "MOC descrive risultati di backtest/trade reali su piu' anni per questa strategia, ma il registro canonico associato (match solo per prefisso, non nome esatto) ha live_implementation=False (research_only) - possibile disallineamento fra il nome storico usato in MOC e l'attuale strategy_id nel registro (es. rinominazione/refactoring non riflesso in questo cross-reference), oppure la MOC potrebbe riferirsi a una versione precedente/diversa della strategia. Non disambiguato qui."
+      }
+    ],
+    "registry_vocabulary_drift_examples": [
+      {
+        "description": "TRE etichette diverse per LO STESSO risultato in tre artifact diversi dello stesso hypothesis: hypothesis_registry_v1.json (Phase 5.5) usa status='WEAK'; h006_primary_result.json (Phase 6) usa VERDICT='BORDERLINE'; h006_decision_card_v2.json (Phase 6.6) usa current_grade='E2'/decision='RETAIN_E2'. Nessuna contraddizione SOSTANZIALE (stesso delta_p=0.0572 citato ovunque), ma un drift di VOCABOLARIO fra fasi che rende piu' difficile un confronto automatico fra hypothesis - segnalato qui come incoerenza di registro (sec.12 della richiesta), non corretto (fuori scope)."
+      }
+    ],
+    "failure_memory_reference": {
+      "note": "Registro di pattern di fallimento METODOLOGICO (non specifico di una strategia) gia' esistente e riusato, non duplicato qui.",
+      "reference_artifact": "vault/01-Trading/NEXUS - Failure Memory (Registro Pattern di Fallimento Metodologico) (12-09).md",
+      "patterns_cataloged": [
+        "SHADOW_EXECUTION_ASSUMPTION",
+        "TIMEZONE_MISMATCH",
+        "DATA_COVERAGE_GAP",
+        "CAUSAL_HOOK_MISMATCH"
+      ]
+    },
+    "convergent_evidence_examples": [
+      "SAR: due pipeline di evidenza indipendenti (H015 Python esterno PF=0.61; MOC MQL5 6-anni -34.3R) concordano su REFUTED - segnale di refutazione robusto."
+    ],
+    "no_new_outcome_data_accessed": true,
+    "no_new_backtest_executed": true
+  }
+}

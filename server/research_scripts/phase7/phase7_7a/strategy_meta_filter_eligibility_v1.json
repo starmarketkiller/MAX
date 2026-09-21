@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-09-21T18:59:13.443430+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7a/build_strategy_lifecycle_registry.py",
+  "canonical_sha256": "7fe6d96c0a0e1380ba16f3707f84a152d61a6dbd22322ac01e6cb2b71059b493",
+  "payload": {
+    "phase": "7.7A",
+    "artifact_role": "STRATEGY_META_FILTER_ELIGIBILITY",
+    "baseline_commit": "082a456360b9206bceb32b182dcf175e7e84fc63",
+    "scope_note": "Eleggibilita' CONCETTUALE (sec.7 della richiesta) - il filtro MECH-23 non e' applicato qui, solo classificato quali candidati sarebbero strutturalmente appropriati in futuro.",
+    "requisiti_minimi": [
+      "FULL_STRATEGY_SPEC",
+      "lifecycle deterministico",
+      "success/failure definiti",
+      "execution semantics definite",
+      "evidenza almeno sufficiente per non essere un raw detector"
+    ],
+    "eligibility_by_candidate": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "eligibility": "META_FILTER_ELIGIBLE",
+        "rationale": "FULL_STRATEGY_SPEC verificato, lifecycle deterministico, success/failure gia' definiti (barriera R nativa, non sintetica), evidenza sufficiente (non un raw detector) - il candidato piu' maturo del progetto per un futuro test di regime filter, SE/QUANDO accumulera' piu' campione."
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "eligibility": "META_FILTER_ELIGIBLE",
+        "rationale": "FULL_STRATEGY_SPEC, lifecycle deterministico, evidenza sufficiente per non essere un raw detector (n=115 true holdout, gia' oltre il minimo nominale) - MA il risultato di validazione e' esso stesso BORDERLINE/non promosso: testare un meta-filter regime su una strategia gia' 'RETAIN_E2' avrebbe basso valore atteso (non c'e' un edge chiaro da filtrare) - eleggibile strutturalmente, ma bassa priorita' pratica."
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "eligibility": "META_FILTER_INAPPROPRIATE",
+        "rationale": "Gia' refutato a livello di esecuzione - non ha senso applicare un meta-filter di regime su una strategia la cui base esecutiva e' gia' dimostrata non sopravvivere."
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "eligibility": "META_FILTER_INAPPROPRIATE",
+        "rationale": "Gia' refutato - stesso principio di WICK_SWEEP_RECLAIM (non testare un meta-filter su una strategia gia' respinta)."
+      },
+      "SAR_LIVE": {
+        "eligibility": "META_FILTER_INAPPROPRIATE",
+        "rationale": "Refutata su doppia evidenza indipendente."
+      },
+      "ADX_RSI": {
+        "eligibility": "META_FILTER_INAPPROPRIATE",
+        "rationale": "Refutata su evidenza wide-sample."
+      },
+      "BREAKOUT_ACC": {
+        "eligibility": "META_FILTER_NOT_READY",
+        "rationale": "FULL_STRATEGY_SPEC e il miglior performer del portafoglio live, ma l'evidenza non e' ancora al livello di rigore statistico (Wilson CI/dependence-aware) richiesto per considerarla un candidato meta-filter pienamente maturo - servirebbe prima lo stesso trattamento statistico gia' applicato a H006/VOLATILITY_BREAKOUT_CONFIRMED."
+      }
+    },
+    "pooled_across_strategies_note": "Concettualmente, un 'failure_F' comune per STRATEGIA (analogo a 'failure_F' per FAMIGLIA gia' discusso in Phase 7.6E) sarebbe piu' fedele di un pooling ingenuo - MA non implementato qui (nessuna inferenza pooled costruita, per istruzione esplicita).",
+    "pipeline_formalization": {
+      "stages": [
+        "EVENT_RESEARCH",
+        "STRATEGY_FORMALIZATION",
+        "STRATEGY_VALIDATION",
+        "META_FILTER_RESEARCH",
+        "EXECUTION_VALIDATION",
+        "PORTFOLIO_RISK"
+      ],
+      "stage_definitions": {
+        "EVENT_RESEARCH": "Trova fenomeni/eventi (es. build_events.py/build_events_p71.py, i 9 raw event families di Phase 5/7) - NESSUN lifecycle di trade richiesto a questo livello.",
+        "STRATEGY_FORMALIZATION": "entry+invalidazione+target+timeout espliciti, deterministici (es. VOLATILITY_BREAKOUT_CONFIRMED, H006, i moduli MQL5 live).",
+        "STRATEGY_VALIDATION": "Stabilisce se esiste un edge - stesso gate rigoroso gia' usato per H006/SEQ-0009/SEQ-0015 (Wilson CI, dependence audit, true holdout) o, quantomeno, un backtest a campione ampio su piu' anni (MOC).",
+        "META_FILTER_RESEARCH": "MECH-23-style: quando NON usare una strategia GIA' validata (o quantomeno gia' FULL_STRATEGY_SPEC con evidenza sufficiente) - MAI applicato a un raw event o a una strategia gia' refutata.",
+        "EXECUTION_VALIDATION": "Verifica che l'edge sopravviva a un'esecuzione REALE (fill/slippage/gate) - scoperta diretta in WICK_SWEEP_RECLAIM (PF shadow 5.80 -> PF reale 0.78-0.80, pattern SHADOW_EXECUTION_ASSUMPTION).",
+        "PORTFOLIO_RISK": "Sizing/rischio di portafoglio - non trattato in questo registro."
+      },
+      "contract_only_not_new_infrastructure": true,
+      "company_control_plane_note": "Il futuro Company Control Plane dovrebbe consumare questo registro come output ufficiale del reparto Quant Research (VALIDATED_STRATEGY_SPEC) e input del reparto Execution - contratto fra reparti, non implementato qui."
+    },
+    "not_applying_filter_yet": true
+  }
+}

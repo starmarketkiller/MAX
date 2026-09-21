@@ -1,0 +1,1562 @@
+{
+  "generated_at": "2026-09-21T18:59:13.442431+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_7a/build_strategy_lifecycle_registry.py",
+  "canonical_sha256": "270088329416d23cef2d5675b8da21690d6e542d4b3493142c3e0fa15c628bf1",
+  "payload": {
+    "phase": "7.7A",
+    "artifact_role": "STRATEGY_LIFECYCLE_REGISTRY",
+    "scope_note": "Primo inventario canonico delle strategie realmente formalizzate, separato dai raw event. Nessuna strategia nuova inventata, nessuna modifica a MECH-23, nessun nuovo outcome letto, nessun backtest rieseguito.",
+    "baseline_commit": "082a456360b9206bceb32b182dcf175e7e84fc63",
+    "raw_event_reference": {
+      "note": "Le 6 famiglie SEQ-0014B (0 FULL_NATIVE_SETUP, 2 PARTIAL_SETUP, 4 DIRECTIONAL_EVENT_ONLY) restano classificate come in Phase 7.6E - non riclassificate qui.",
+      "reference_artifact": "server/research_scripts/phase7/phase7_6e/seq0014b_native_setup_failure_audit_v1.json",
+      "reference_hash": "26dd2c453520af4ec7a68cd3069ec258b05b3aafbcb9a03ba25b4411c24d43c6",
+      "family_classification_summary": {
+        "FULL_NATIVE_SETUP_count": 0,
+        "PARTIAL_SETUP_count": 2,
+        "DIRECTIONAL_EVENT_ONLY_count": 4,
+        "conclusion": "NESSUNA delle 6 famiglie congelate possiede una definizione nativa COMPLETA di successo/fallimento di un trade (entry+invalidazione+target+timeout tutti presenti). 2 (BREAKOUT, SWEEP) hanno solo il lato dell'invalidazione gia' codificato; le altre 4 sono puri eventi direzionali senza alcun lifecycle di trade."
+      }
+    },
+    "deep_dive_candidates": {
+      "VOLATILITY_BREAKOUT_CONFIRMED": {
+        "strategy_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+        "source_artifact": "vault/01-Trading/NEXUS - Strategy Foundry Phase 3 Volatility Breakout Implementation.md (commit f035d30); registrata in contracts/strategy-registry.json (family=TREND, status=EXPERIMENTAL, selector_index=56)",
+        "not_the_same_as": "Phase 7's raw 'BREAKOUT' o 'VOLATILITY_EXPANSION' detector (build_events_p71.py) - nome simile, DEFINIZIONE ed identita' diverse. VOLATILITY_BREAKOUT_CONFIRMED combina strutturalmente la logica di ENTRAMBI (rottura di un range 20-barre + conferma tramite true range>1.0xATR sulla stessa barra) IN UN'UNICA strategia COMPLETA con SL/TP/timeout propri - non va confuso con nessuno dei due raw event presi singolarmente.",
+        "lifecycle_contract": {
+          "entry": "Chiusura della barra segnale close[i], al superamento del massimo/minimo delle 20 barre [i-21,i-2] (offset 2), confermata da true_range[i] > 1.0 x ATR(14)[i]",
+          "direction": "BUY se rottura sopra il range, SELL se sotto",
+          "invalidation_stop": "Lato opposto dello stesso range N=20 (minimo per BUY, massimo per SELL)",
+          "target_exit": "entry \u00b1 1R, dove R = |entry - invalidation| (ampiezza del range)",
+          "timeout": "40 barre H4 (~6.7 giorni), uscita a tempo (TIME) oltre questo limite",
+          "management": "Nessun trailing/BE/filtro di sessione o regime aggiunto (dichiarato esplicitamente fuori scope in Fase 3)",
+          "risk_sizing": null,
+          "trading_costs": "Costi/broker nativi non alterati nell'audit di parita' (dettaglio specifico non estratto qui)",
+          "timeframe": "H4",
+          "instrument": "XAUUSD (GOLD)"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "Unica strategia del progetto con OGNI campo del lifecycle esplicitamente dichiarato E verificata bit-per-bit identica fra implementazione Python (927/927 eventi grezzi) e MQL5 live (0 SIGNAL_LOGIC_DIFFERENCE su audit di parita' dedicato).",
+        "evidence_ladder": {
+          "discovery": {
+            "status": "PASS",
+            "detail": "Phase 2 screening: delta_p discovery=+0.037R"
+          },
+          "internal_validation": {
+            "status": "PASS",
+            "detail": "Phase 2 screening: delta_p validation=+0.133R, n~927 eventi grezzi"
+          },
+          "full_backtest_engine": {
+            "status": "PASS",
+            "detail": "run_backtest() completo (gestione one-at-a-time): 243 trade, PF=1.20, expectancy=0.068R a costo zero"
+          },
+          "signal_parity_python_vs_mql5": {
+            "status": "PASS",
+            "detail": "927/927 eventi raw identici; SIGNAL_LOGIC_DIFFERENCE=0 su finestra comune 2026-03-01/2026-09-01"
+          },
+          "fast_structural_real_ticks_6mo": {
+            "status": "BORDERLINE",
+            "detail": "n=14, PF=1.165, win rate=50%, concentrazione temporale forte (2 mesi su 5 attivi spiegano quasi tutto il profitto), asimmetria BUY/SELL (PF 0.734 vs 2.236) non distinguibile da rumore su campione cosi' piccolo"
+          },
+          "serious_3y_backtest": {
+            "status": "NOT_RUN",
+            "detail": "Verdetto esplicito: HOLD_NEEDS_MORE_EVIDENCE - non promossa"
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "HOLD_NEEDS_MORE_EVIDENCE",
+        "evidence_verdict_is_not_refuted": true,
+        "evidence_verdict_note": "Esplicitamente NON un REJECTED_FAST_STRUCTURAL - nessuna rottura strutturale (parita' confermata, expectancy positiva, nessun leakage) - semplicemente campione ancora troppo piccolo/concentrato per un impegno a un serious 3Y.",
+        "failure_memory_links": [],
+        "meta_filter_eligibility": "META_FILTER_ELIGIBLE",
+        "meta_filter_eligibility_rationale": "FULL_STRATEGY_SPEC verificato, lifecycle deterministico, success/failure gia' definiti (barriera R nativa, non sintetica), evidenza sufficiente (non un raw detector) - il candidato piu' maturo del progetto per un futuro test di regime filter, SE/QUANDO accumulera' piu' campione."
+      },
+      "H006_LIQUIDITY_SWEEP_RECLAIM": {
+        "strategy_id": "H006_LIQUIDITY_SWEEP_RECLAIM",
+        "source_artifact": "server/research_scripts/phase6/H006_frozen_spec.json + h006_primary_result.json + phase6_6/h006_decision_card_v2.json (parent: phase5_5 H004_EVENT_RECLAIM)",
+        "not_the_same_as": "SEQ-0014B's SWEEP/RECLAIM raw events (build_events_p71.py, Phase 7) - stesso meccanismo di base (sweep poi reclaim) ma H006 e' un DISEGNO COMPLETO con entry alla barra di CONFERMA reclaim, baseline matched, outcome primario ATR-barrier - non un raw event isolato.",
+        "lifecycle_contract": {
+          "entry": "Chiusura della prima barra di conferma reclaim (close oltre il livello swept), non la barra dello sweep originale",
+          "direction": "+1 se reclaim al rialzo (sweep di un LOW poi ripresa sopra), -1 se al ribasso",
+          "invalidation_stop": null,
+          "target_exit": "Barriera P(+1.0xATR before -1.0xATR) dalla chiusura di conferma, orizzonte 40 barre H4",
+          "timeout": "40 barre H4 (implicito nella definizione della barriera)",
+          "management": null,
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": "H4",
+          "instrument": "XAUUSD (GOLD)"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "Entry/direzione/outcome (success/failure via barriera ATR) tutti dichiarati esplicitamente e pre-registrati in H006_frozen_spec.json PRIMA di vedere l'holdout - manca solo un'invalidazione/stop nativa esplicita (l'outcome e' definito come probabilita' di barriera, non come trade con SL separato).",
+        "evidence_ladder": {
+          "discovery": {
+            "status": "PASS",
+            "detail": "H004 (Phase 5, event_alone): n_discovery=215, delta_p=0.2407"
+          },
+          "internal_validation": {
+            "status": "PASS",
+            "detail": "H004: n_validation=85, delta_p=0.2990, classificazione originale=SUPPORTED_EDGE (POST_HOC_CANDIDATE - selezionato da un batch di 14, non pre-registrato come primario)"
+          },
+          "true_holdout": {
+            "status": "BORDERLINE",
+            "detail": "H006 (Phase 6, mai visto prima): n=115, delta_p=0.0572 < soglia materialita' 0.15, CI95 sovrapposte, direzione BUY(0.524) vs SELL(0.673) non consistente"
+          },
+          "dependence_audit": {
+            "status": "PASS_BUT_HIGH_DEPENDENCE",
+            "detail": "Phase 6.5: dependence_flag=HIGH, overlap_rate=0.991 - n effettivo indipendente stimato fra 46 e 115 a seconda del metodo"
+          },
+          "external_replication": {
+            "status": "NOT_RUN",
+            "detail": "CROSS_FEED_VALIDATION (E4, fonte dati diversa da Dukascopy) mai tentato"
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "RETAIN_E2 (BORDERLINE, non promosso)",
+        "evidence_verdict_is_not_refuted": true,
+        "evidence_verdict_note": "DeltaP osservato nel true holdout (0.0572) e' sotto la soglia minima di materialita' pre-registrata (0.15), con CI95 Wilson sovrapposte fra evento e baseline (ci95_non_overlapping=False). Verdetto pre-registrato: BORDERLINE.",
+        "registry_vocabulary_drift_found": {
+          "description": "TRE etichette diverse per LO STESSO risultato in tre artifact diversi dello stesso hypothesis: hypothesis_registry_v1.json (Phase 5.5) usa status='WEAK'; h006_primary_result.json (Phase 6) usa VERDICT='BORDERLINE'; h006_decision_card_v2.json (Phase 6.6) usa current_grade='E2'/decision='RETAIN_E2'. Nessuna contraddizione SOSTANZIALE (stesso delta_p=0.0572 citato ovunque), ma un drift di VOCABOLARIO fra fasi che rende piu' difficile un confronto automatico fra hypothesis - segnalato qui come incoerenza di registro (sec.12 della richiesta), non corretto (fuori scope)."
+        },
+        "failure_memory_links": [
+          "registry_vocabulary_drift (questo stesso record)"
+        ],
+        "meta_filter_eligibility": "META_FILTER_ELIGIBLE",
+        "meta_filter_eligibility_rationale": "FULL_STRATEGY_SPEC, lifecycle deterministico, evidenza sufficiente per non essere un raw detector (n=115 true holdout, gia' oltre il minimo nominale) - MA il risultato di validazione e' esso stesso BORDERLINE/non promosso: testare un meta-filter regime su una strategia gia' 'RETAIN_E2' avrebbe basso valore atteso (non c'e' un edge chiaro da filtrare) - eleggibile strutturalmente, ma bassa priorita' pratica."
+      },
+      "WICK_SWEEP_RECLAIM": {
+        "strategy_id": "WICK_SWEEP_RECLAIM",
+        "source_artifact": "vault/01-Trading/NEXUS - Failure Memory (Registro Pattern di Fallimento Metodologico) (12-09).md; contracts/strategy-registry.json (status=EXPERIMENTAL, live_implementation=true, research_parity=NOT_IMPLEMENTED)",
+        "not_the_same_as": "H006_LIQUIDITY_SWEEP_RECLAIM (Phase 5-6.6) - stesso concetto di base (sweep poi reclaim) ma lineage/implementazione SEPARATA (causal_experiment_*.py, non build_events.py), con un design di entry/timing diverso (vedi 'NEXUS EA - WICK_SWEEP Entry Timing Study').",
+        "lifecycle_contract": {
+          "entry": "Non estratto in dettaglio qui (fuori scope della Failure Memory) - riferito come 'trigger_price' in un design a due varianti (FILL_ANCHORED / tick-level RECLAIM_TICK / RECLAIM_LIMIT_RETEST)",
+          "direction": null,
+          "invalidation_stop": null,
+          "target_exit": null,
+          "timeout": null,
+          "management": null,
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": null,
+          "instrument": null
+        },
+        "classification": "PARTIAL_STRATEGY",
+        "classification_rationale": "Campi del lifecycle non estratti in dettaglio da questo audit (fuori scope: la fonte primaria e' un registro di pattern di fallimento METODOLOGICO, non uno strategy spec) - classificato PARTIAL non per assenza di formalizzazione ma perche' questo audit non ha approfondito il contratto completo.",
+        "evidence_ladder": {
+          "shadow_hypothesis_test": {
+            "status": "PASS",
+            "detail": "PF shadow=5.80 (assumendo fill esatto al trigger_price) - titolo del report collegato: 'HYPOTHESIS STRONGLY SUPPORTED'"
+          },
+          "fast_smoke_real_execution": {
+            "status": "FAIL",
+            "detail": "PF reale=0.78-0.80, stesso campione, stessa cadenza - l'edge shadow non sopravvive a NESSUNA forma di esecuzione realistica testata (ne' FILL_ANCHORED ne' replay tick-level RECLAIM_TICK/RECLAIM_LIMIT_RETEST)"
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "REFUTED_AT_EXECUTION_VALIDATION",
+        "evidence_verdict_is_not_refuted": false,
+        "evidence_verdict_note": "Distinto esplicitamente da un REFUTED statistico: l'ipotesi era 'STRONGLY SUPPORTED' a livello di outcome shadow - il fallimento e' emerso ESCLUSIVAMENTE al livello di esecuzione reale (assunzione di fill idealizzato), il pattern SHADOW_EXECUTION_ASSUMPTION gia' registrato nella Failure Memory di progetto.",
+        "failure_memory_links": [
+          "SHADOW_EXECUTION_ASSUMPTION",
+          "TIMEZONE_MISMATCH",
+          "DATA_COVERAGE_GAP",
+          "CAUSAL_HOOK_MISMATCH"
+        ],
+        "meta_filter_eligibility": "META_FILTER_INAPPROPRIATE",
+        "meta_filter_eligibility_rationale": "Gia' refutato a livello di esecuzione - non ha senso applicare un meta-filter di regime su una strategia la cui base esecutiva e' gia' dimostrata non sopravvivere."
+      },
+      "H015_SAR_EXTERNAL_VALIDATION": {
+        "strategy_id": "H015_SAR_EXTERNAL_VALIDATION (SAR_PSAR_EMA_TREND_SIGNAL)",
+        "source_artifact": "server/research_scripts/phase5_5/hypothesis_registry_v1.json (H015)",
+        "not_the_same_as": "La strategia live MQL5 'SAR' (contracts/strategy-registry.json) - stesso segnale concettuale ma un test di validazione ESTERNO e INDIPENDENTE (dataset Dukascopy via simbolo custom XAUUSD_DSC, non il motore MQL5 in produzione).",
+        "lifecycle_contract": {
+          "entry": "Segnale SAR (Parabolic SAR + EMA trend), gia' congelato da fasi precedenti",
+          "direction": "BUY/SELL secondo il segnale SAR/EMA",
+          "invalidation_stop": "1x ATR (SL1xATR)",
+          "target_exit": "6x ATR (TP6xATR)",
+          "timeout": null,
+          "management": "RAW (nessuna gestione dinamica dichiarata)",
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": "H4",
+          "instrument": "XAUUSD (custom symbol XAUUSD_DSC)"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "Entry/direzione/SL/TP tutti dichiarati esplicitamente e pre-registrati (sar_dukascopy_independent_validation.md sec.6) PRIMA di vedere il risultato.",
+        "evidence_ladder": {
+          "prior_broker_result": {
+            "status": "PASS",
+            "detail": "Broker XM: PF=1.281 (risultato precedente usato come riferimento, non ri-derivato qui)"
+          },
+          "prior_python_dukascopy_pre2023": {
+            "status": "BORDERLINE",
+            "detail": "PF=0.93/0.97 (due run precedenti citate come riferimento)"
+          },
+          "external_validation_dukascopy": {
+            "status": "FAIL",
+            "detail": "PF=0.61, n=237 - sotto la soglia FAIL<0.95 pre-registrata (PASS>=1.15/BORDERLINE 0.95-1.15/FAIL<0.95)"
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "REFUTED",
+        "evidence_verdict_is_not_refuted": false,
+        "evidence_verdict_note": "SAR_EXTERNAL_CONFIRMATION_FAIL - nessun rescue/filtro applicato dopo aver visto il risultato (stop_condition pre-registrata).",
+        "failure_memory_links": [],
+        "meta_filter_eligibility": "META_FILTER_INAPPROPRIATE",
+        "meta_filter_eligibility_rationale": "Gia' refutato - stesso principio di WICK_SWEEP_RECLAIM (non testare un meta-filter su una strategia gia' respinta)."
+      },
+      "SAR_LIVE": {
+        "strategy_id": "SAR (live MQL5, contracts/strategy-registry.json)",
+        "source_artifact": "contracts/strategy-registry.json (family=MOMENTUM, status=ACTIVE, live_implementation=true, research_implementation=true, research_parity=APPROXIMATE); vault MOC - Strategie.md",
+        "not_the_same_as": "H015 (validazione Python esterna sopra) - stesso concetto di segnale, implementazione/pipeline di evidenza SEPARATA.",
+        "lifecycle_contract": {
+          "entry": "Segnale SAR/EMA nel motore MQL5 live (dettaglio esatto non estratto da questo audit - vedi NXS_Strategies.mqh)",
+          "direction": null,
+          "invalidation_stop": null,
+          "target_exit": null,
+          "timeout": null,
+          "management": null,
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": null,
+          "instrument": "XAUUSD (GOLD), live account"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "live_implementation=true nel registro canonico implica un modulo MQL5 reale con SL/TP/gestione (stesso framework NXS_StrategyProfiles.mqh gia' verificato per VOLATILITY_BREAKOUT_CONFIRMED) - campi esatti non individualmente riverificati in questo audit (STRUCTURALLY_IMPLEMENTED, non VERIFIED riga per riga).",
+        "evidence_ladder": {
+          "backtest_6y_segmented_2019_2024": {
+            "status": "FAIL",
+            "detail": "MOC - Strategie.md: -34.3R su 6 anni, 0/6 anni positivi - LA PEGGIORE fra le 37 strategie tracciate. Fix testato (vero Parabolic SAR nel proxy sito): PF 1.17->1.28, non ancora validato su MT5."
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "evidence_verdict_is_not_refuted": false,
+        "evidence_verdict_note": "Convergenza indipendente: DUE pipeline di evidenza separate (H015 Python esterno E il backtest MQL5 6-anni) concordano entrambe su un verdetto negativo per il concetto SAR - un segnale di refutazione robusto, non dipendente da un solo metodo.",
+        "registry_status_conflict_found": {
+          "description": "contracts/strategy-registry.json riporta status='ACTIVE' per SAR nonostante l'evidenza empirica (MOC + H015) sia negativa su campione ampio e convergente. 'ACTIVE' in questo registro descrive la disponibilita'/wiring nel codice, NON necessariamente se la strategia sta rischiando capitale reale in questo momento (quel controllo separato e' NXS_Profile_Enabled a runtime, MAI verificato in questo audit) - ma la giustapposizione merita un flag esplicito, non un silenzio.",
+          "verified_not_confirmed": "Il flag di runtime NXS_Profile_Enabled per SAR NON e' stato letto in questo audit - non si afferma che capitale reale sia attualmente a rischio, solo che il registro di codice e l'evidenza empirica sono disallineati."
+        },
+        "failure_memory_links": [],
+        "meta_filter_eligibility": "META_FILTER_INAPPROPRIATE",
+        "meta_filter_eligibility_rationale": "Refutata su doppia evidenza indipendente."
+      },
+      "ADX_RSI": {
+        "strategy_id": "ADX_RSI",
+        "source_artifact": "contracts/strategy-registry.json (family=MOMENTUM, status=ACTIVE, live_implementation=true, research_implementation=true, research_parity=APPROXIMATE); vault MOC - Strategie.md; MQL5/Presets/Research/ADX_RSI_RESEARCH_RAW.set",
+        "not_the_same_as": null,
+        "lifecycle_contract": {
+          "entry": "Segnale ADX+RSI nel motore MQL5 live (dettaglio esatto non estratto - vedi NXS_Strategies.mqh/preset RESEARCH_RAW vs RESEARCH_RECIPE)",
+          "direction": null,
+          "invalidation_stop": null,
+          "target_exit": null,
+          "timeout": null,
+          "management": null,
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": null,
+          "instrument": "XAUUSD (GOLD)"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "live_implementation=true (STRUCTURALLY_IMPLEMENTED, non individualmente riverificato riga per riga in questo audit).",
+        "evidence_ladder": {
+          "backtest_6y_segmented_2019_2024": {
+            "status": "FAIL",
+            "detail": "MOC - Strategie.md: -15.3R su 6 anni, 1/6 anni positivi. Fix applicato: aggiunto vero filtro ADX>20 (mai calcolato prima nonostante il nome) - non ancora validato su MT5."
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "REFUTED (per evidenza MOC, wide-sample multi-anno)",
+        "evidence_verdict_is_not_refuted": false,
+        "evidence_verdict_note": null,
+        "registry_status_conflict_found": {
+          "description": "Stesso pattern di SAR: status='ACTIVE' nel registro canonico nonostante evidenza MOC negativa su campione ampio.",
+          "verified_not_confirmed": "NXS_Profile_Enabled non verificato in questo audit."
+        },
+        "failure_memory_links": [],
+        "meta_filter_eligibility": "META_FILTER_INAPPROPRIATE",
+        "meta_filter_eligibility_rationale": "Refutata su evidenza wide-sample."
+      },
+      "BREAKOUT_ACC": {
+        "strategy_id": "BREAKOUT_ACC",
+        "source_artifact": "contracts/strategy-registry.json (family=TREND, status=ACTIVE, live_implementation=true, research_implementation=true, research_parity=APPROXIMATE); vault MOC - Strategie.md",
+        "not_the_same_as": "Ne' il raw event 'BREAKOUT' di Phase 7 (build_events_p71.py), ne' 'VOLATILITY_BREAKOUT_CONFIRMED' (Strategy Foundry) - tre identita' distinte che condividono solo la parola 'breakout' nel nome. Nessuna delle tre va assunta equivalente alle altre senza verifica diretta del codice (stesso principio guardia gia' applicato in Phase 7.6E).",
+        "lifecycle_contract": {
+          "entry": "Segnale di accelerazione di breakout nel motore MQL5 live (dettaglio esatto non estratto - vedi NXS_Strategies.mqh)",
+          "direction": null,
+          "invalidation_stop": null,
+          "target_exit": null,
+          "timeout": null,
+          "management": null,
+          "risk_sizing": null,
+          "trading_costs": null,
+          "timeframe": null,
+          "instrument": "XAUUSD (GOLD)"
+        },
+        "classification": "FULL_STRATEGY_SPEC",
+        "classification_rationale": "live_implementation=true (STRUCTURALLY_IMPLEMENTED, non individualmente riverificato riga per riga in questo audit).",
+        "evidence_ladder": {
+          "backtest_6y_segmented_2019_2024": {
+            "status": "BORDERLINE_POSITIVE",
+            "detail": "MOC - Strategie.md: +4.3R su 6 anni, 5/6 anni positivi - la piu' stabile del 'nucleo hedge candidato' (mai un anno chiaramente negativo)."
+          },
+          "demo": {
+            "status": "NOT_RUN",
+            "detail": null
+          },
+          "live": {
+            "status": "NOT_RUN",
+            "detail": null
+          }
+        },
+        "evidence_verdict": "DISCOVERY_SUPPORTED (informale - nessun Wilson CI/dependence-audit applicato)",
+        "evidence_verdict_is_not_refuted": true,
+        "evidence_verdict_note": "IMPORTANTE (sec.8 della richiesta): 'promettente' su R-multiple/PF grezzo NON equivale a 'validata' nel senso rigoroso di H006/VOLATILITY_BREAKOUT_CONFIRMED (nessun Wilson CI, nessun dependence audit, nessuna separazione discovery/holdout dichiarata per questa metrica) - classificato qui come il miglior candidato INFORMALE del portafoglio EA, non come strategia statisticamente validata.",
+        "failure_memory_links": [],
+        "meta_filter_eligibility": "META_FILTER_NOT_READY",
+        "meta_filter_eligibility_rationale": "FULL_STRATEGY_SPEC e il miglior performer del portafoglio live, ma l'evidenza non e' ancora al livello di rigore statistico (Wilson CI/dependence-aware) richiesto per considerarla un candidato meta-filter pienamente maturo - servirebbe prima lo stesso trattamento statistico gia' applicato a H006/VOLATILITY_BREAKOUT_CONFIRMED."
+      }
+    },
+    "full_registry_survey": {
+      "source_file": "contracts/strategy-registry.json",
+      "source_file_sha256": "0bd410ab58daec9aadd4336f0dbea3d588bae2c5a3d5ea2be92bf34bc84cc7cf",
+      "source_counts": {
+        "total": 83,
+        "live": 53,
+        "research_only": 30
+      },
+      "classification_method": "RULE_BASED da campi gia' presenti nel registro (live_implementation OR research_implementation => FULL_STRATEGY_SPEC strutturale, coerente col framework NXS_StrategyProfiles.mqh/STRAT_MAP gia' verificato per i deep-dive candidates sopra) - NESSUN campo individuale (entry/SL/TP esatti) riverificato per le strategie non incluse nei deep-dive candidates.",
+      "per_family_status_counts": {
+        "UNCLASSIFIED/DISABLED": 11,
+        "MOMENTUM/ACTIVE": 5,
+        "AMD/DISABLED": 1,
+        "AMD/ACTIVE": 2,
+        "VOLATILITY/ACTIVE": 2,
+        "LIQUIDITY/DISABLED": 3,
+        "TREND/ACTIVE": 5,
+        "SCALP/RESEARCH_ONLY": 30,
+        "SMC/DISABLED": 5,
+        "PATTERN/ACTIVE": 1,
+        "SMC/ACTIVE": 3,
+        "SESSION/ACTIVE": 4,
+        "SESSION/DISABLED": 1,
+        "LIQUIDITY/ACTIVE": 6,
+        "VOLATILITY/DISABLED": 1,
+        "TREND/EXPERIMENTAL": 1,
+        "UNCLASSIFIED/EXPERIMENTAL": 2
+      },
+      "strategies": [
+        {
+          "strategy_id": "3COMMAS_BOT",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ADX_RSI",
+          "family": "MOMENTUM",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "AMD_CONT",
+          "family": "AMD",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "AMD_REVERSAL",
+          "family": "AMD",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "BAR_UPDN",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "BB_SQUEEZE",
+          "family": "VOLATILITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "BJORGUM",
+          "family": "LIQUIDITY",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "BOLLINGER",
+          "family": "VOLATILITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "BREAKOUT_ACC",
+          "family": "TREND",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "CISD_TRUE",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "CRT",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "CRT_MINSTOP_FILTER",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "DARVAS_BOX",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "DISP_REBAL",
+          "family": "SMC",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "DONCHIAN_TURTLE",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ELLIOTT",
+          "family": "PATTERN",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "EMA_CROSS_BENCHMARK",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "EMA_PULLBACK",
+          "family": "TREND",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "FVG_CONT",
+          "family": "SMC",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "FVG_CONT_V2",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "FVG_MIT",
+          "family": "SMC",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "FVG_MIT_WINDOW",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ICHIMOKU",
+          "family": "TREND",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ICHIMOKU_HULL_MACD",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "IFVG",
+          "family": "SMC",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "IFVG_CHOCH_WINDOW",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "JUDAS_SWING",
+          "family": "SESSION",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LDN_REVERSAL",
+          "family": "SESSION",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LEVEL_CONFLUENCE",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LEVEL_CONFLUENCE_M5",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LEVEL_REACTION",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LEVEL_REACTION_M5",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LIQ_SWEEP",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LIQ_VOID",
+          "family": "SMC",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "LONDON_BO",
+          "family": "TREND",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MACD",
+          "family": "MOMENTUM",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MACD_SMA200",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR_BREAKOUT",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR_V2_RETEST",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR_V2_STAGE1",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "MALAYSIAN_SNR_V2_STAGE3",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "NY_REVERSAL",
+          "family": "SESSION",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "NY_REVERSAL_CHOCH_WINDOW",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "OB_MIT",
+          "family": "SMC",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ORDER_BLOCK",
+          "family": "SMC",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "ORDER_BLOCK_V2",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "OTE_CONT",
+          "family": "SMC",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "OTE_CONT_V2",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "PIVOT_WICK",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "PMAX",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "PO3",
+          "family": "AMD",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "RANGE_FADE",
+          "family": "VOLATILITY",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "RSI_DIV",
+          "family": "MOMENTUM",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "RSI_DIV_PINE",
+          "family": "UNCLASSIFIED",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SAR",
+          "family": "MOMENTUM",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SAR_ADX20",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SAR_FLIP",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SCALP_BB_FADE",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SCALP_EMA",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SCALP_RANGE_BRK",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SCALP_RSI_SNAP",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SH_BMS_RTO",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SH_BMS_RTO_V2",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SILVER_BULLET",
+          "family": "SESSION",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SILVER_BULLET_V2",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SMS_BMS_RTO",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SMS_BMS_RTO_CHOCH_WINDOW",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "STRUCT_REACT",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "SWING_FALSEBREAK",
+          "family": "LIQUIDITY",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "THREE_BAR_DELIVERY_BREAK",
+          "family": "LIQUIDITY",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TSI",
+          "family": "MOMENTUM",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TSI_EXTREME",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TURTLE_SOUP",
+          "family": "LIQUIDITY",
+          "status": "DISABLED",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TURTLE_SOUP_CHOCH",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TURTLE_SOUP_CHOCH_DBLBODY",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "TURTLE_SOUP_CHOCH_NEAR",
+          "family": "SCALP",
+          "status": "RESEARCH_ONLY",
+          "live_implementation": false,
+          "research_implementation": true,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+          "family": "TREND",
+          "status": "EXPERIMENTAL",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "WEEKLY_EXP",
+          "family": "SESSION",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "PROXY",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "WICK_SWEEP_RECLAIM",
+          "family": "UNCLASSIFIED",
+          "status": "EXPERIMENTAL",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "WICK_SWEEP_REV",
+          "family": "UNCLASSIFIED",
+          "status": "EXPERIMENTAL",
+          "live_implementation": true,
+          "research_implementation": false,
+          "research_parity": "NOT_IMPLEMENTED",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        },
+        {
+          "strategy_id": "Z_SCORE_BREAKOUT",
+          "family": "TREND",
+          "status": "ACTIVE",
+          "live_implementation": true,
+          "research_implementation": true,
+          "research_parity": "APPROXIMATE",
+          "classification": "FULL_STRATEGY_SPEC",
+          "confidence": "STRUCTURALLY_IMPLEMENTED_NOT_INDIVIDUALLY_VERIFIED"
+        }
+      ],
+      "not_individually_verified_count": 83
+    },
+    "moc_evidence_buckets": {
+      "PROMETTENTI_NUCLEO_HEDGE": {
+        "note": "+7.6R combinato su 6 anni (era +14.7R su 5 - il 2024 ha tolto quasi meta' del guadagno)",
+        "strategies": {
+          "Breakout Acc": "+4.3R/6y, 5/6 anni positivi - la piu' stabile",
+          "Cisd": "+3.2R/6y, primo anno negativo nel 2024 (-0.3, marginale)",
+          "Turtle Soup": "RIDIMENSIONATA: +0.1R/6y (era +7.3R/5y) - il 2024 (-7.2R) ha quasi azzerato tutto"
+        }
+      },
+      "FALLITE_CAMPIONE_AMPIO": {
+        "note": "400-1150 trade su 6 anni (aggregato sul gruppo) - confermate su campione ampio, priorita' di intervento",
+        "strategies": {
+          "Sar": "-34.3R, 0/6 anni positivi - la peggiore in assoluto",
+          "Macd": "-21.1R - era validata su v2.4.8 (PF1.11), il 'raffinamento' v2.5.0 l'ha peggiorata",
+          "Rsi Div": "-17.5R - sale in questo gruppo col segmento 9 (2024=-10.1, il peggiore in assoluto)",
+          "Adx Rsi": "-15.3R, 1/6 anni positivi",
+          "Tsi": "-7.9R su 721 trade (campione enorme) - PF 0.82 troppo stabilmente negativo per essere ambiguo"
+        }
+      },
+      "IN_ATTESA": {
+        "note": "config v2.5.0, dato ancora ambiguo o negativo minore",
+        "strategies": {
+          "Fvg Cont": "-9.3R/6y, 2024 pessimo (-7.0) dopo 3 anni di ripresa",
+          "Bjorgum": "-8.6R/6y (96 trade), 5/6 negativi",
+          "Ema Pullback": "-5.5R, volatile, nessun trend chiaro"
+        }
+      },
+      "NON_VALIDATE_MARGINALI": {
+        "note": "PF sotto 1.0, negativa ma non fra le priorita' peggiori",
+        "strategies": {
+          "Ob Mit": "-4.1R/6y, ma 2024 positivo (+0.4) - potrebbe essere in ripresa"
+        }
+      },
+      "CAMPIONE_TROPPO_PICCOLO": {
+        "note": "<15 trade sui 3 anni - PF puo' sembrare buono ma non e' statisticamente affidabile",
+        "strategies": {
+          "Bollinger": null,
+          "Liq Sweep": null,
+          "London Bo": null,
+          "Order Block": null,
+          "Sh Bms Rto": null,
+          "Malaysian Snr": "10 trade in 5 anni (+0.4R)",
+          "Fvg Mit": "3 trade in 5 anni",
+          "Sms Bms Rto": "3 trade in 5 anni"
+        }
+      },
+      "NESSUN_TRADE": {
+        "note": "0 setup rilevati o segnali sempre bloccati nei 5 anni 2019-2023",
+        "strategies": {
+          "Ifvg": null,
+          "Liq Void": null,
+          "Range Fade": null,
+          "Weekly Exp": null
+        }
+      },
+      "DISABILITATE": {
+        "note": "Spente esplicitamente in NXS_Profile_Enabled dopo test reali negativi",
+        "strategies": {
+          "Bb Squeeze": null,
+          "Disp Rebal": null,
+          "Ichimoku": null,
+          "Ote Cont": null,
+          "Struct React": null
+        }
+      },
+      "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5": {
+        "note": "Dati preliminari (sito intraday, ~2 anni Yahoo, non 10) - da validare su MT5 isolato prima di qualunque conclusione",
+        "strategies": {
+          "Amd Cont": "PF2.07 su 4h (62 trade, DD5.85%) - il piu' promettente",
+          "Po3": "PF1.51 su 4h con TP dinamico reale (45 trade, DD6.79%)",
+          "Silver Bullet": "PF1.52 su 4h (68 trade) ma negativo su 1h",
+          "Amd Reversal": "quasi breakeven su 4h (PF1.10, 57 trade)",
+          "Ldn Reversal": "quasi breakeven su 4h (PF1.08, 108 trade) ma DD alto",
+          "Ny Reversal": "PF1.42 su 1h ma solo 20 trade, troppo pochi per giudicare",
+          "Judas Swing": "PF1.4 su 4h con TP dinamico reale (59 trade, DD4.9%)"
+        }
+      },
+      "MAI_TRACCIATA": {
+        "note": "Scoperta il 15/07 durante l'audit di fedelta' - mancava dall'indice",
+        "strategies": {
+          "Elliott": "nessun dato ancora raccolto, non e' nel motore sito"
+        }
+      }
+    },
+    "moc_to_registry_crossref_confirmed": {
+      "Breakout Acc": {
+        "registry_strategy_id": "BREAKOUT_ACC",
+        "bucket": "PROMETTENTI_NUCLEO_HEDGE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Cisd": {
+        "registry_strategy_id": "CISD_TRUE",
+        "bucket": "PROMETTENTI_NUCLEO_HEDGE",
+        "registry_status": "RESEARCH_ONLY",
+        "registry_live_implementation": false,
+        "note": "match per prefisso, non esatto"
+      },
+      "Turtle Soup": {
+        "registry_strategy_id": "TURTLE_SOUP",
+        "bucket": "PROMETTENTI_NUCLEO_HEDGE",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Sar": {
+        "registry_strategy_id": "SAR",
+        "bucket": "FALLITE_CAMPIONE_AMPIO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Macd": {
+        "registry_strategy_id": "MACD",
+        "bucket": "FALLITE_CAMPIONE_AMPIO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Rsi Div": {
+        "registry_strategy_id": "RSI_DIV",
+        "bucket": "FALLITE_CAMPIONE_AMPIO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Adx Rsi": {
+        "registry_strategy_id": "ADX_RSI",
+        "bucket": "FALLITE_CAMPIONE_AMPIO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Tsi": {
+        "registry_strategy_id": "TSI",
+        "bucket": "FALLITE_CAMPIONE_AMPIO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Fvg Cont": {
+        "registry_strategy_id": "FVG_CONT",
+        "bucket": "IN_ATTESA",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Bjorgum": {
+        "registry_strategy_id": "BJORGUM",
+        "bucket": "IN_ATTESA",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Ema Pullback": {
+        "registry_strategy_id": "EMA_PULLBACK",
+        "bucket": "IN_ATTESA",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Ob Mit": {
+        "registry_strategy_id": "OB_MIT",
+        "bucket": "NON_VALIDATE_MARGINALI",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Bollinger": {
+        "registry_strategy_id": "BOLLINGER",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Liq Sweep": {
+        "registry_strategy_id": "LIQ_SWEEP",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "London Bo": {
+        "registry_strategy_id": "LONDON_BO",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Order Block": {
+        "registry_strategy_id": "ORDER_BLOCK",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Sh Bms Rto": {
+        "registry_strategy_id": "SH_BMS_RTO",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Malaysian Snr": {
+        "registry_strategy_id": "MALAYSIAN_SNR",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Fvg Mit": {
+        "registry_strategy_id": "FVG_MIT",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Sms Bms Rto": {
+        "registry_strategy_id": "SMS_BMS_RTO",
+        "bucket": "CAMPIONE_TROPPO_PICCOLO",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Ifvg": {
+        "registry_strategy_id": "IFVG",
+        "bucket": "NESSUN_TRADE",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Liq Void": {
+        "registry_strategy_id": "LIQ_VOID",
+        "bucket": "NESSUN_TRADE",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Range Fade": {
+        "registry_strategy_id": "RANGE_FADE",
+        "bucket": "NESSUN_TRADE",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Weekly Exp": {
+        "registry_strategy_id": "WEEKLY_EXP",
+        "bucket": "NESSUN_TRADE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Bb Squeeze": {
+        "registry_strategy_id": "BB_SQUEEZE",
+        "bucket": "DISABILITATE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Disp Rebal": {
+        "registry_strategy_id": "DISP_REBAL",
+        "bucket": "DISABILITATE",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Ichimoku": {
+        "registry_strategy_id": "ICHIMOKU",
+        "bucket": "DISABILITATE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Ote Cont": {
+        "registry_strategy_id": "OTE_CONT",
+        "bucket": "DISABILITATE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Struct React": {
+        "registry_strategy_id": "STRUCT_REACT",
+        "bucket": "DISABILITATE",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Amd Cont": {
+        "registry_strategy_id": "AMD_CONT",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Po3": {
+        "registry_strategy_id": "PO3",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Silver Bullet": {
+        "registry_strategy_id": "SILVER_BULLET",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Amd Reversal": {
+        "registry_strategy_id": "AMD_REVERSAL",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Ldn Reversal": {
+        "registry_strategy_id": "LDN_REVERSAL",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "DISABLED",
+        "registry_live_implementation": true
+      },
+      "Ny Reversal": {
+        "registry_strategy_id": "NY_REVERSAL",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Judas Swing": {
+        "registry_strategy_id": "JUDAS_SWING",
+        "bucket": "PRIMA_CONNESSIONE_SITO_MAI_VALIDATE_MT5",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      },
+      "Elliott": {
+        "registry_strategy_id": "ELLIOTT",
+        "bucket": "MAI_TRACCIATA",
+        "registry_status": "ACTIVE",
+        "registry_live_implementation": true
+      }
+    },
+    "moc_to_registry_crossref_unresolved": [],
+    "pipeline_formalization": {
+      "stages": [
+        "EVENT_RESEARCH",
+        "STRATEGY_FORMALIZATION",
+        "STRATEGY_VALIDATION",
+        "META_FILTER_RESEARCH",
+        "EXECUTION_VALIDATION",
+        "PORTFOLIO_RISK"
+      ],
+      "stage_definitions": {
+        "EVENT_RESEARCH": "Trova fenomeni/eventi (es. build_events.py/build_events_p71.py, i 9 raw event families di Phase 5/7) - NESSUN lifecycle di trade richiesto a questo livello.",
+        "STRATEGY_FORMALIZATION": "entry+invalidazione+target+timeout espliciti, deterministici (es. VOLATILITY_BREAKOUT_CONFIRMED, H006, i moduli MQL5 live).",
+        "STRATEGY_VALIDATION": "Stabilisce se esiste un edge - stesso gate rigoroso gia' usato per H006/SEQ-0009/SEQ-0015 (Wilson CI, dependence audit, true holdout) o, quantomeno, un backtest a campione ampio su piu' anni (MOC).",
+        "META_FILTER_RESEARCH": "MECH-23-style: quando NON usare una strategia GIA' validata (o quantomeno gia' FULL_STRATEGY_SPEC con evidenza sufficiente) - MAI applicato a un raw event o a una strategia gia' refutata.",
+        "EXECUTION_VALIDATION": "Verifica che l'edge sopravviva a un'esecuzione REALE (fill/slippage/gate) - scoperta diretta in WICK_SWEEP_RECLAIM (PF shadow 5.80 -> PF reale 0.78-0.80, pattern SHADOW_EXECUTION_ASSUMPTION).",
+        "PORTFOLIO_RISK": "Sizing/rischio di portafoglio - non trattato in questo registro."
+      },
+      "contract_only_not_new_infrastructure": true,
+      "company_control_plane_note": "Il futuro Company Control Plane dovrebbe consumare questo registro come output ufficiale del reparto Quant Research (VALIDATED_STRATEGY_SPEC) e input del reparto Execution - contratto fra reparti, non implementato qui."
+    },
+    "no_new_strategy_invented": true,
+    "no_mech23_modified": true,
+    "no_new_outcome_data_accessed": true,
+    "no_new_backtest_executed": true,
+    "no_edge_discovery_performed": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
