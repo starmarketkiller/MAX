@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import sequence_research_read_model
+import strategy_pipeline_read_model
 
 ROOT = Path(__file__).resolve().parent
 P7 = ROOT / "research_scripts" / "phase7"
@@ -41,6 +42,11 @@ SOURCES = {
     "seq0014b_audit": P7 / "phase7_6c" / "seq0014b_outcome_horizon_ordering_audit_v1.json",
     "seq0014b_horizon_contract": P7 / "phase7_6d" / "seq0014b_outcome_horizon_contract_v1.json",
     "seq0014b_native_setup_audit": P7 / "phase7_6e" / "seq0014b_native_setup_failure_audit_v1.json",
+    "strategy_lifecycle": P7 / "phase7_7a" / "strategy_lifecycle_registry_v1.json",
+    "strategy_evidence": P7 / "phase7_7a" / "strategy_evidence_matrix_v1.json",
+    "strategy_meta_filter": P7 / "phase7_7a" / "strategy_meta_filter_eligibility_v1.json",
+    "strategy_meta_filter_gate": P7 / "phase7_7b" / "strategy_meta_filter_gate_v1.json",
+    "strategy_structural_semantics": P7 / "phase7_7b" / "structural_eligibility_semantics_correction_v1.json",
 }
 
 STATUS_MAP = {
@@ -92,7 +98,9 @@ class CompanyControlPlane:
         warnings: list[dict] = []
         docs = {key: _load(path, warnings) for key, path in SOURCES.items()}
         seq_catalog = sequence_research_read_model.CATALOG.build()
+        strategy_catalog = strategy_pipeline_read_model.CATALOG.build()
         warnings.extend(seq_catalog.get("warnings", []))
+        warnings.extend(strategy_catalog.get("warnings", []))
         now = datetime.now(timezone.utc).isoformat()
 
         artifacts = []
@@ -166,6 +174,8 @@ class CompanyControlPlane:
             "blocker_count": sum(g["normalized_status"] == "BLOCKED" for g in gates),
         }
 
+        strategies = strategy_catalog["items"]
+
         departments = []
         for dept_id, name, raw_status in DEPARTMENT_SLOTS:
             related_work = [w for w in work_items if w["department_id"] == dept_id]
@@ -182,13 +192,18 @@ class CompanyControlPlane:
                 "skeleton": skeleton, "message": "no operational pipeline yet" if skeleton else None,
                 "created_at": None, "updated_at": now,
                 "provenance": {"mode": "DERIVED", "direct": False, "sources": sorted({a["source_path"] for a in related_artifacts})},
-                "operational_state": qa_state if dept_id == "SCIENTIFIC_QA" else ({"dataset_count": len(datasets)} if dept_id == "DATA" else None),
+                "operational_state": qa_state if dept_id == "SCIENTIFIC_QA" else (
+                    {"dataset_count": len(datasets)} if dept_id == "DATA" else (
+                    {"strategy_count": len(strategies), "governance_conflict_count": strategy_catalog["governance_conflict_count"],
+                     "meta_filter_ready_count": strategy_catalog["meta_filter_ready_count"]} if dept_id == "QUANT_RESEARCH" else (
+                    {"state": "WAITING_FOR_QUANT_GATE", "execution_candidate_count": strategy_catalog["execution_candidate_count"]} if dept_id == "EXECUTION" else (
+                    {"state": "WAITING_FOR_DEPLOYABLE_STRATEGIES", "deployable_strategy_count": 0} if dept_id == "RISK_PORTFOLIO" else None)))),
             })
 
         return {"company": {"id": "NEXUS", "name": "NEXUS", "status": "ACTIVE", "owner_type": "PRIVATE",
                               "created_at": None, "updated_at": now, "provenance": {"mode": "DERIVED", "direct": False}},
                 "departments": departments, "work_items": work_items, "artifacts": artifacts, "gates": gates,
-                "dependencies": dependencies, "datasets": datasets, "warnings": warnings}
+                "dependencies": dependencies, "datasets": datasets, "strategies": strategies, "warnings": warnings}
 
     @staticmethod
     def _purpose(dept):
@@ -207,10 +222,10 @@ class CompanyControlPlane:
     @staticmethod
     def _contracts(dept):
         return {"DATA":(["source_data"],["dataset_version", "provenance"],[]),
-                "QUANT_RESEARCH":(["dataset_version", "hypothesis"],["research_artifact", "research_gate_status"],["DATA"]),
+                "QUANT_RESEARCH":(["dataset_version", "hypothesis"],["research_artifact", "strategy_evidence_status", "research_gate_status"],["DATA"]),
                 "SCIENTIFIC_QA":(["research_artifact"],["review_status", "gate_status"],["QUANT_RESEARCH"]),
                 "COMPUTE_INFRA":(["source_code", "configuration"],["application_build", "ci_result"],[]),
-                "EXECUTION":(["runtime_configuration"],["execution_telemetry"],["COMPUTE_INFRA"]),
+                "EXECUTION":(["quant_gate_passed", "runtime_configuration"],["execution_telemetry"],["QUANT_RESEARCH", "COMPUTE_INFRA"]),
                 "RISK_PORTFOLIO":(["execution_telemetry"],["risk_state"],["EXECUTION"]),
                 "KNOWLEDGE_INTELLIGENCE":(["research_artifact", "review_status"],["canonical_knowledge"],["QUANT_RESEARCH", "SCIENTIFIC_QA"])}[dept]
 
@@ -221,7 +236,8 @@ class CompanyControlPlane:
                 "recent_artifacts": [a for a in model["artifacts"] if a["owner_id"] == department_id],
                 "gates": [g for g in model["gates"] if g["department_id"] == department_id or (department_id == "QUANT_RESEARCH" and g["work_item_id"].startswith("WI-"))],
                 "datasets": model["datasets"] if department_id == "DATA" else [],
-                "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")]}
+                "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")],
+                "strategies": model["strategies"] if department_id == "QUANT_RESEARCH" else []}
 
     def overview(self):
         model = self.build()
