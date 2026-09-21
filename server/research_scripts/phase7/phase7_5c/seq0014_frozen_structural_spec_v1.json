@@ -1,0 +1,160 @@
+{
+  "generated_at": "2026-09-21T10:50:27.233396+00:00",
+  "generation_script": "phase7/phase7_5c/build_seq0014_frozen_spec.py",
+  "canonical_sha256": "37fd6b9b32cfb829c1ac2bc94b33b86031e7f98105d8de724364ac6df803c177",
+  "payload": {
+    "sequence_family_id": "SEQFAM-SEQ0014-LOWINFO-STATE-STRUCTURAL-V1",
+    "sequence_ids": [
+      "SEQ-0014"
+    ],
+    "mechanism_id": "MECH-23",
+    "phase": "Phase 7.5C - SEQ-0014 Minimal State-to-Event Formalization",
+    "scope_note": "SOLO formalizzazione strutturale per il Sequence Structural Feasibility Gate - NESSUN contratto statistico/outcome surface/BH in questa fase.",
+    "central_problem_note": "SEQ-0014 non e' un evento puntuale ma uno STATO (classificazione continua di regime, per-barra). Se ogni barra con directional_efficiency in tercile LOW venisse trattata come un evento indipendente, N barre consecutive nello stesso regime produrrebbero N osservazioni false - non N osservazioni indipendenti. Questo spec formalizza esplicitamente la trasformazione STATE -> STATE-ENTRY EVENT (sec.1 della richiesta Phase 7.5C) PRIMA di qualunque conteggio.",
+    "feature_inspection": {
+      "directional_efficiency": {
+        "role": "STATE-DEFINING (detector feature) - MAI usata anche come dimensione di matching per questo stesso candidato (vedi matching_spec.tautology_avoidance_note sotto).",
+        "definition": "|close[i]-close[i-20]| / sum(|close.diff()|, 20 barre) - Kaufman Efficiency Ratio (feature_registry_v2.json).",
+        "lookback_bars": 20,
+        "observation_time": "bar_close",
+        "causal_safety_status": "CAUSAL_SAFE",
+        "leakage_risk": "LOW",
+        "allowed_for_discovery": true,
+        "allowed_for_baseline": true,
+        "missingness_in_discovery": 0,
+        "source": "server/research_scripts/phase7/phase7_1/data/market_state_dataset_p71.csv"
+      },
+      "atr_percentile": {
+        "role": "MATCHING/CONTEXT feature (baseline_matching) - asse DISTINTO (livello di volatilita', non efficienza direzionale) usato SOLO per il matching, MAI per definire lo stato.",
+        "definition": "percentile causale (rolling 252, valore corrente incluso) dell'ATR (feature_registry_v2.json).",
+        "observation_time": "bar_close",
+        "causal_safety_status": "CAUSAL_SAFE",
+        "leakage_risk": "LOW",
+        "allowed_for_discovery": true,
+        "allowed_for_baseline": true,
+        "missingness_in_discovery_t_minus_1": 0
+      },
+      "variance_ratio_proxy": {
+        "role": "CONSIDERATA ma NON USATA come feature aggiuntiva di stato - proxy concettualmente sovrapposto a directional_efficiency (entrambi misurano 'quanto il prezzo si muove in modo persistente vs rumoroso'). Impilare due filtri di choppiness senza una giustificazione causale distinta stringerebbe arbitrariamente la definizione di stato ('poche dimensioni, pochi gradi di liberta'' - stesso principio gia' applicato in SEQ-0015/SEQ-0009). Nessuna feature nuova inventata.",
+        "definition": "Var(ritorno 4 barre, 60 barre trailing) / (4*Var(ritorno 1 barra, 60 barre trailing)) (feature_registry_v2.json).",
+        "causal_safety_status": "CAUSAL_SAFE",
+        "leakage_risk": "LOW"
+      }
+    },
+    "state_definition": {
+      "state_id": "LOW_INFORMATION_STATE",
+      "condition": "directional_efficiency[t] nel terzile LOW della propria distribuzione, terzili fittati ESCLUSIVAMENTE su development_discovery.",
+      "tercile_cutpoints_fit_on_discovery_only": {
+        "q1_low_med": 0.15995821129807328,
+        "q2_med_high": 0.3348016109076874
+      },
+      "n_discovery_rows_used_for_fit": 2393,
+      "rationale": "Il terzile (non una soglia fissa arbitraria come 0.2/0.3) e' la stessa convenzione gia' in uso nel progetto per bucket di regime (es. volatility_state_pre_burst di SEQ-0015) - relativo alla distribuzione REALE della feature su questo mercato/timeframe, non un numero scelto guardando il risultato. Corrisponde direttamente alla descrizione MECH-23 in market_sequence_registry_v1.json: 'rapporto volatilita'/deriva direzionale (o efficiency ratio) sotto una soglia bassa'.",
+      "not_tuned_on": "Nessuna soglia scelta guardando future return, conteggio eventi o independent-unit yield - SOLO la distribuzione di directional_efficiency su development_discovery, calcolata PRIMA di costruire qualunque evento."
+    },
+    "state_entry_event_definition": {
+      "event_a": "prima barra t della transizione in_state[t-1]=False -> in_state[t]=True (0->1). MAI ogni barra con in_state=True - una corsa di N barre consecutive nello stesso regime produce UN SOLO evento (la prima barra della corsa), non N.",
+      "exit_definition": "in_state[t]=True -> in_state[t]=False (1->0) - transizione implicita, MAI contata come un evento proprio (solo l'ENTRATA e' un sequence_event).",
+      "re_entry_and_minimum_reset_rule": "NESSUNA finestra di reset separata e inventata qui - una ri-entrata dopo una breve uscita (flicker vicino al confine del terzile) e' gestita ESCLUSIVAMENTE dal secondo livello gia' esistente (episode_gap_rule/build_event_and_episode_views, riusato senza modifiche) - due eventi di entrata a distanza <=episode_gap_rule sono collassati nello stesso episodio. Decisione esplicita (sec.4 della richiesta): NON costruire un meccanismo di reset indipendente che duplicherebbe la stessa funzione gia' svolta da episode_gap_rule.",
+      "observation_cutoff_index": "close(t) - directional_efficiency[t] e' interamente noto a close(t).",
+      "prediction_start_index": "close(t)",
+      "outcome_window_start_index": "t+1 - nessun prezzo con indice <=t entrera' nel calcolo dell'outcome (outcome NON calcolato in questa fase)."
+    },
+    "event_direction_policy": "NON_DIRECTIONAL",
+    "direction_rationale": "MECH-23 non e' un candidato direzionale (market_sequence_registry_v1.json: 'Non un candidato direzionale - famiglia LOW_INFORMATION_STATE/HIGH_CHOP_RISK, l'obiettivo e' identificare QUANDO NON tradare, non un edge direzionale'). Nessuna direzione BUY/SELL creata artificialmente - ogni riga riceve 'BOTH' per costruzione (DIRECTION_POLICY_NON_DIRECTIONAL, dichiarata esplicitamente, mai un default silenzioso).",
+    "episode_gap_rule": 5,
+    "episode_rule_rationale": "MECCANICO e SPECIFICO a questo meccanismo - NON copiato da SEQ-0009 (gap=2, rolling reference shift) ne' da SEQ-0015 (gap=3, burst pluri-barra). directional_efficiency ha un lookback di 20 barre - due barre a distanza <=5 (25% del lookback) condividono ANCORA piu' del 75% della stessa finestra di 20 barre sottostante, quindi un breve flicker sotto/sopra il confine del terzile a quella distanza e' quasi certamente rumore di misura sulla STESSA porzione di prezzo, non un cambio di regime genuino. Un gap piu' ampio implica che la finestra si e' gia' rinnovata per piu' di un quarto, riflettendo una storia di prezzo materialmente diversa.",
+    "overlap_policy": "COLLAPSE_TO_FIRST",
+    "overlap_policy_rationale": "Stessa convenzione anti-cherry-pick gia' in uso in sequence_episode_engine.py (riusata senza modifiche) - la prima barra dell'espansione rappresenta l'episodio (qui: la prima barra della RI-entrata piu' antica nel cluster).",
+    "proposed_natural_horizon": 20,
+    "natural_horizon_rationale": "Derivato dalla scala temporale del MECCANISMO stesso, non da una convenzione di progetto generica: directional_efficiency e' calcolata su un lookback di 20 barre - la domanda scientifica (\"cosa succede DOPO l'ingresso in un regime low-information/choppy?\") e' valutata su una finestra futura della STESSA ampiezza della finestra usata per rilevare il regime (simmetria diagnostica: confrontare 20 barre passate 'choppy' con 20 barre future). Deliberatamente DIVERSO dal default di 40 barre usato per SEQ-0009/SEQ-0015 (meccanismi di rigetto/rottura con propria scala temporale multi-giorno, non applicabile qui) - non ottimizzato guardando alcun conteggio di eventi SEQ-0014.",
+    "proposed_outcome_overlap_embargo_bars": 19,
+    "embargo_derivation": "natural_horizon - 1 = 20 - 1 = 19 (stessa formula matematica di SEQ-0009/SEQ-0015: outcome window [t+1, t+natural_horizon], due eventi a distanza d hanno outcome window sovrapposte se e solo se d<natural_horizon). Vincolato dalla formula, non una scelta indipendente.",
+    "matching_spec": {
+      "match_dimensions": [
+        "volatility_state_pre_entry"
+      ],
+      "tautology_avoidance_note": "sec.8 della richiesta - VERIFICATO ESPLICITAMENTE: la feature che DEFINISCE lo stato (directional_efficiency) e' DIVERSA dalla feature usata per il matching (atr_percentile) - un asse misura l'efficienza/persistenza direzionale, l'altro il LIVELLO di volatilita' (concettualmente distinti, redundancy_group=UNIQUE per entrambi in feature_registry_v2.json - non ridondanti). Se avessimo matchato su directional_efficiency stesso (o un suo derivato), evento e controlli sarebbero stati tautologicamente simili proprio sulla dimensione che il candidato sta testando (double_use_risk, gia' segnalato esplicitamente in feature_registry_v2.json per ENTRAMBE le feature).",
+      "match_dimensions_rationale": "Dimensione minima giustificata (baseline_contract_v4.json: 'iniziare con il set minimo di dimensioni giustificate'). volatility_state_pre_entry (terzile di atr_percentile a T-1, fit solo su discovery) e' l'asse di contesto standard gia' utilizzato per SEQ-0009/SEQ-0015, qui riusato perche' rappresenta un contesto di mercato genuinamente ORTOGONALE alla definizione dello stato (non perche' 'gia' usato altrove').",
+      "k": 5,
+      "k_rationale": "Convenzione generale di progetto (baseline_contract_v4.json: 'il numero di nearest-neighbour gia' usato (k=5) in Phase 5.5/6') - non una scelta specifica per SEQ-0014.",
+      "minimum_control_count": 20,
+      "minimum_control_count_rationale": "Default di baseline_contract_v4.json/BaselineEngineV4.MINIMUM_CONTROL_COUNT - riusato senza modifica.",
+      "max_control_reuse_per_run": 5,
+      "max_control_reuse_per_run_rationale": "Stesso valore di k (5), stessa regola simmetrica generale gia' congelata per SEQ-0009/SEQ-0015 - non ottimizzata sui dati di questa family.",
+      "state_feature_definitions": {
+        "volatility_state_pre_entry": {
+          "source_feature": "atr_percentile (feature_registry_v2.json: CAUSAL_SAFE, LOW leakage_risk, allowed_for_baseline=true)",
+          "definition": "terzile (LOW/MED/HIGH) di atr_percentile A T-1 (mai a t - stessa motivazione causale gia' usata per SEQ-0009/SEQ-0015: la barra t e' la barra dell'entrata nello stato, includerla nel proprio contesto di matching sarebbe parzialmente circolare), terzili fittati ESCLUSIVAMENTE su development_discovery.",
+          "tercile_cutpoints_fit_on_discovery_only": {
+            "q1_low_med": 20.370370370370342,
+            "q2_med_high": 64.1534391534391
+          },
+          "labels": [
+            "LOW",
+            "MED",
+            "HIGH"
+          ],
+          "n_discovery_rows_used_for_fit": 2393
+        }
+      },
+      "control_pool_construction_policy": "Per un evento SEQ-0014 (state-entry) alla riga t: pool di controllo = tutte le barre nello STESSO split (discovery) ESCLUSE (1) la barra t stessa; (2) qualunque barra r con |r-t|<=exclusion_buffer_bars (=proposed_natural_horizon=20, stessa formula/motivazione gia' usata per SEQ-0009: evita che un controllo condivida il tratto di prezzo usato per l'outcome dell'evento); (3) qualunque altra barra SEQ-0014 (state-entry) dello STESSO episode_id. Altre entrate di episodi DIVERSI (fuori dalla finestra di esclusione) SONO ammesse come controlli - stessa policy gia' usata per SEQ-0009.",
+      "split_boundaries": {
+        "discovery": [
+          396,
+          2789
+        ],
+        "internal_validation": [
+          2789,
+          3980
+        ],
+        "locked_validation": [
+          3980,
+          5189
+        ],
+        "final_holdout": [
+          5189,
+          6179
+        ]
+      },
+      "split_boundaries_source": "server/research_scripts/phase7/phase7_1/splits_p71.py:SPLIT_BOUNDARIES_DATES (date) - tradotte in row-index sullo stesso dataset xauusd_h4_bars_p71.csv."
+    },
+    "discovery_partition": {
+      "partition_id": "development_discovery",
+      "n_bars": 2393
+    },
+    "n_bars_total_dataset": 6179,
+    "minimum_evidence_gates": {
+      "n_nominal_minimum": 30
+    },
+    "minimum_evidence_gates_source": "server/research_scripts/phase7/policies/minimum_evidence_gates.json - riusato senza modifica.",
+    "detector_frozen": true,
+    "detector_source_ref": "server/research_scripts/phase7/phase7_5c/seq0014_state_entry_detector.py (nuovo - nessun detector MECH-23/SEQ-0014 preesisteva in Phase 5/7.1)",
+    "detector_provenance": {
+      "detector_version": "seq0014_state_entry_detector.py@v1",
+      "parameters": {
+        "directional_efficiency_lookback_bars": 20,
+        "state_tercile": "LOW",
+        "tercile_cutpoints_fit_on_discovery_only": {
+          "q1_low_med": 0.15995821129807328,
+          "q2_med_high": 0.3348016109076874
+        }
+      },
+      "parameters_hash": "caffb58c4c3f173fe87d9cf14c7b5b7669be44b5d91356a4c131a96bb7fe74f0",
+      "source_file": "server/research_scripts/phase7/phase7_5c/seq0014_state_entry_detector.py",
+      "source_sha256": "ccde4dc3063c0110d8889a5b3488963ebafe6634059742889f64f23add8f934f",
+      "freeze_decision": "NUOVO DETECTOR MINIMALE - nessun detector MECH-23/SEQ-0014 esisteva in Phase 5/7.1 da riusare (confermato: nessun file corrispondente trovato). Scritto ORA come il minimo indispensabile (tercile fit + regola di transizione 0->1), congelato PRIMA del gate."
+    },
+    "observation_timing": {
+      "observation_cutoff": "close(t)",
+      "prediction_start": "close(t)",
+      "outcome_window_start": "t+1"
+    },
+    "no_rescue_clause": "Nessuna soglia, gate, dimensione di matching, episode_gap_rule, natural_horizon o outcome_overlap_embargo dichiarati in questo documento sara' modificata dopo aver visto il risultato del Sequence Structural Feasibility Gate. Un verdetto non-FEASIBLE su SEQ-0014 con questi parametri non autorizza un secondo tentativo con parametri diversi sotto la stessa identita' - una variante richiederebbe una nuova sequence_family_id e una nuova preregistrazione.",
+    "no_nexus_outcome_data_accessed": true,
+    "no_edge_discovery_performed": true,
+    "no_statistical_contract_built": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
