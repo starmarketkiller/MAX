@@ -1,0 +1,340 @@
+{
+  "generated_at": "2026-09-21T22:05:30.630692+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_8e/build_volatility_breakout_final_data_freeze.py",
+  "canonical_sha256": "259df4fbd46489a6bc04ae8e76e2d0f82dd4d9d7e8c25f8989121da0fd256d22",
+  "payload": {
+    "phase": "7.8E",
+    "artifact_role": "FINAL_DATA_FREEZE",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "scope_note": "Corregge le due ultime ambiguita' del PRE-RUN MANIFEST (7.8D): timezone MISURATO (non da costante) e dataset hash REALE (non il solo coverage report). Nessuna strategia eseguita, nessun outcome calcolato.",
+    "baseline_commit": "a5a79723bd13543e179b506abbd91d04fa4a356c",
+    "source_artifact_untouched": {
+      "file": "server/research_scripts/phase7/phase7_8d/volatility_breakout_serious_validation_prerun_manifest_v1.json",
+      "canonical_sha256": "9c0105b984c0296bb2663f0c30d655b7ce521b99047194af3a9a6311ca208a19",
+      "modified_in_this_phase": false
+    },
+    "timezone_measurement": {
+      "method": "Script MQL5 read-only (NXS_VolBrkTimezoneMeasure.mq5) - TimeCurrent(), TimeTradeServer(), TimeGMT(), TimeLocal() letti nello stesso istante, offset calcolato come differenza in secondi, MAI dedotto da una costante di progetto.",
+      "server": "XMGlobal-MT5 10",
+      "login": "345277936",
+      "measured_at_TimeCurrent": "2026.09.22 01:03:05",
+      "measured_at_TimeTradeServer": "2026.09.22 01:03:04",
+      "measured_at_TimeGMT": "2026.09.21 22:03:04",
+      "measured_at_TimeLocal": "2026.09.22 00:03:04",
+      "broker_utc_offset_seconds": 10800,
+      "broker_utc_offset_hours": 3.0,
+      "local_pc_utc_offset_seconds": 7200,
+      "local_pc_utc_offset_hours": 2.0,
+      "discrepancy_found": {
+        "declared_in_7_8b_and_7_8d": "InpServerGMTOffset=2 (CEST, +2h) - costante di progetto, MAI misurata direttamente prima di questa fase.",
+        "actually_measured": "+3h (10800s) - UTC+3, NON UTC+2.",
+        "likely_root_cause": "TimeLocal()-TimeGMT() = 7200s = +2h - il fuso orario del PC LOCALE (CEST) coincide con la costante di progetto - probabile origine storica: il fuso del PC e' stato scambiato per il fuso del server broker, mai verificato empiricamente prima d'ora.",
+        "correction": "Il futuro Serious validation e qualunque calcolo di timestamp relativo a questo broker/account DEVE usare +3h (10800s), non InpServerGMTOffset=2 - annotato qui, nessun codice/costante di progetto modificato retroattivamente (fuori scope di questa fase)."
+      },
+      "dst_caveat": "Misura a istante singolo (2026-09-22, fine estate boreale) - riflette lo stato DST corrente del broker in QUESTO momento. Se il Serious validation venisse eseguito in una stagione con DST diverso (es. inverno), l'offset andrebbe RI-MISURATO, mai assunto costante da questa singola osservazione. Nessuna funzione MQL5 nativa espone direttamente lo stato DST del server broker (TimeDaylightSavings() non esiste in MQL5) - la mitigazione e' ri-misurare a ridosso del run reale, non calcolare/inferire il DST da qui.",
+      "measurement_script_source_sha256": "6c83b61da2d453fd23db30cc8a1832d94b3dd6b26e2fee3a56663acc701b42d5",
+      "measurement_raw_output_sha256": "b881cb5dcdda0df8857e2b6c12c799d22c93ce61985bce787eb5285a3483f854"
+    },
+    "data_manifest": {
+      "root_reference": "bases/<broker-account-folder>/ del terminale MT5 di ricerca (path assoluto NON incluso per portabilita' - la struttura relativa e' cio' che conta)",
+      "relevant_window": "PRIMARY_FRESH_VERDICT_WINDOW [2023-12-20T12:06:50, 2026-03-01T00:00:00) - invariata da 7.8D, non ricalcolata qui.",
+      "file_types_included": [
+        "ticks/GOLD/<YYYYMM>.tkc (tick grezzi mensili)",
+        "history/GOLD/<YYYY>.hcc (barre H4/cache annuale)"
+      ],
+      "n_tick_files": 27,
+      "n_bar_files": 4,
+      "n_missing_files": 0,
+      "missing_files": [],
+      "total_size_bytes": 760586807,
+      "entries": [
+        {
+          "relative_path": "history/GOLD/2023.hcc",
+          "size_bytes": 21247017,
+          "mtime_utc": "2026-07-11T18:17:49Z",
+          "sha256": "2f09542581cb237b3cf7177380ff3d6291b735ef18a5a11c3f256edf506c8de0"
+        },
+        {
+          "relative_path": "history/GOLD/2024.hcc",
+          "size_bytes": 21362895,
+          "mtime_utc": "2026-07-11T17:47:39Z",
+          "sha256": "79152eec38a175226b675bebfe4d5567185d8e2bbf3685015f19ed4c03e62bb4"
+        },
+        {
+          "relative_path": "history/GOLD/2025.hcc",
+          "size_bytes": 21248046,
+          "mtime_utc": "2026-07-03T19:29:12Z",
+          "sha256": "b8aeb1c376aa00e62d38b000a87599a8d6597c11d20a4c6c57b9e3a082be355c"
+        },
+        {
+          "relative_path": "history/GOLD/2026.hcc",
+          "size_bytes": 15651363,
+          "mtime_utc": "2026-09-21T22:03:04Z",
+          "sha256": "3bce451b627f7ead32df4d910501662c012d7c0c133dd3e521fac6a24bb1fa27"
+        },
+        {
+          "relative_path": "ticks/GOLD/202312.tkc",
+          "size_bytes": 4154521,
+          "mtime_utc": "2026-07-11T17:49:12Z",
+          "sha256": "d6fb647f3ae471ab819b5a325e568e1782d9c0886cde3d78c3575841f154fece"
+        },
+        {
+          "relative_path": "ticks/GOLD/202401.tkc",
+          "size_bytes": 16177854,
+          "mtime_utc": "2026-07-11T17:49:11Z",
+          "sha256": "a4c2ab31fab0cf79f361ce61c455fbd7fce7f91b3db08314e4b83ad1b757e9fb"
+        },
+        {
+          "relative_path": "ticks/GOLD/202402.tkc",
+          "size_bytes": 11997607,
+          "mtime_utc": "2026-07-11T17:49:09Z",
+          "sha256": "6e51dc0927c2561ad6c393d24f58d13e2fc8c250bf66f90230363c0209c3317c"
+        },
+        {
+          "relative_path": "ticks/GOLD/202403.tkc",
+          "size_bytes": 17989061,
+          "mtime_utc": "2026-07-11T17:49:08Z",
+          "sha256": "bb74a2b084bf7be697bd7b77ff95f109f8a6053f9b314d0202d1db1d957967d1"
+        },
+        {
+          "relative_path": "ticks/GOLD/202404.tkc",
+          "size_bytes": 27961579,
+          "mtime_utc": "2026-07-11T17:49:06Z",
+          "sha256": "5bb597e41ff5354cdece915becdb0a06733a9d0eea933ce792f67112e2d07bfb"
+        },
+        {
+          "relative_path": "ticks/GOLD/202405.tkc",
+          "size_bytes": 22744101,
+          "mtime_utc": "2026-07-11T17:49:02Z",
+          "sha256": "ccda6cdb4a559c04209594d1ee53b8795fba2780b243afa9d45fff364c6748b5"
+        },
+        {
+          "relative_path": "ticks/GOLD/202406.tkc",
+          "size_bytes": 20224492,
+          "mtime_utc": "2026-07-11T17:48:59Z",
+          "sha256": "10bdacdb160dcd7e249675426dbaf0013ade5c13a5f8dc6f4e6adad24865038f"
+        },
+        {
+          "relative_path": "ticks/GOLD/202407.tkc",
+          "size_bytes": 26086254,
+          "mtime_utc": "2026-07-11T17:48:57Z",
+          "sha256": "6cbfeec4987beaaf2726a87a7e9f74e637abca2535f950d63d526677b492cc70"
+        },
+        {
+          "relative_path": "ticks/GOLD/202408.tkc",
+          "size_bytes": 28806056,
+          "mtime_utc": "2026-07-11T17:48:53Z",
+          "sha256": "f7509f286f995c8ca842ccc20417fe048a4551aac85f04f1c5185db2871f2e02"
+        },
+        {
+          "relative_path": "ticks/GOLD/202409.tkc",
+          "size_bytes": 25008400,
+          "mtime_utc": "2026-07-11T17:48:50Z",
+          "sha256": "23f0d0f94e4d628252e6cb629042a88a158b261976c288d76f584e91c1458287"
+        },
+        {
+          "relative_path": "ticks/GOLD/202410.tkc",
+          "size_bytes": 26955038,
+          "mtime_utc": "2026-07-11T17:48:47Z",
+          "sha256": "a1ec448b82b29ca57f407451e06f358de270545659b36bdcda85e76674feb714"
+        },
+        {
+          "relative_path": "ticks/GOLD/202411.tkc",
+          "size_bytes": 27794189,
+          "mtime_utc": "2026-07-11T17:48:44Z",
+          "sha256": "4a33559aa993c52249de0a6854aa466b0a40460abc14d462e288915de5cf9676"
+        },
+        {
+          "relative_path": "ticks/GOLD/202412.tkc",
+          "size_bytes": 22465057,
+          "mtime_utc": "2026-07-11T17:48:40Z",
+          "sha256": "c524c453de16fa10d2f3dd80d4a309c49cf0d4a0ff4fc1e5723142b765d3963f"
+        },
+        {
+          "relative_path": "ticks/GOLD/202501.tkc",
+          "size_bytes": 23336951,
+          "mtime_utc": "2026-07-11T17:48:37Z",
+          "sha256": "9d81cca5355bf942db0f61f40e5629ab11e6ef90b57d46b86060a8cf140dae67"
+        },
+        {
+          "relative_path": "ticks/GOLD/202502.tkc",
+          "size_bytes": 22307201,
+          "mtime_utc": "2026-07-11T17:48:34Z",
+          "sha256": "001e60da3a4f95489d05c8dc133db9bf084989c46e125ba15fd3c1a1bef81454"
+        },
+        {
+          "relative_path": "ticks/GOLD/202503.tkc",
+          "size_bytes": 22674772,
+          "mtime_utc": "2026-07-11T17:48:32Z",
+          "sha256": "b43069ce86b1378077f53da9848f2bfcf9af3d813cd8ef6c9a52a6f79b4ea012"
+        },
+        {
+          "relative_path": "ticks/GOLD/202504.tkc",
+          "size_bytes": 31682640,
+          "mtime_utc": "2026-07-11T17:48:29Z",
+          "sha256": "a08cb0028ec69ce09f0ba60e80b01fb206632bef008f350de873e4ab9de4c870"
+        },
+        {
+          "relative_path": "ticks/GOLD/202505.tkc",
+          "size_bytes": 29583382,
+          "mtime_utc": "2026-07-11T17:48:25Z",
+          "sha256": "4518e30f5e86e6e86f15491c39a6bac730541fb5d126aa30cf87a7951c2b1cd1"
+        },
+        {
+          "relative_path": "ticks/GOLD/202506.tkc",
+          "size_bytes": 25861978,
+          "mtime_utc": "2026-07-11T17:48:21Z",
+          "sha256": "606a6d2418fe26171992d46cf74d29c9d24c6d5aaf56adddffc095b7019b5795"
+        },
+        {
+          "relative_path": "ticks/GOLD/202507.tkc",
+          "size_bytes": 22610076,
+          "mtime_utc": "2026-07-11T17:48:19Z",
+          "sha256": "70528ae5eb30eaaa879a89715b8d20da7acf6bbd47350b853cc617e11a773e68"
+        },
+        {
+          "relative_path": "ticks/GOLD/202508.tkc",
+          "size_bytes": 19158298,
+          "mtime_utc": "2026-07-11T17:48:16Z",
+          "sha256": "787e299ac291b89bc7ea68cb3cdb3d784adf07b4324364aba0d6f88848e7d0e2"
+        },
+        {
+          "relative_path": "ticks/GOLD/202509.tkc",
+          "size_bytes": 26389086,
+          "mtime_utc": "2026-07-11T17:48:14Z",
+          "sha256": "27010f9ad09984d4ecd919049f2020d97e133171e931fbdcdeb3168a1b5ef07b"
+        },
+        {
+          "relative_path": "ticks/GOLD/202510.tkc",
+          "size_bytes": 40737386,
+          "mtime_utc": "2026-07-11T17:48:10Z",
+          "sha256": "33d58c976ba8a89107ba2a7f166bd072ae864ffc87e63ff6ef9278598df5b4f4"
+        },
+        {
+          "relative_path": "ticks/GOLD/202511.tkc",
+          "size_bytes": 29089898,
+          "mtime_utc": "2026-07-11T17:48:05Z",
+          "sha256": "625954ae522be20752223db195148cbad52fc1c2afa01dd0cc66f23195d88d64"
+        },
+        {
+          "relative_path": "ticks/GOLD/202512.tkc",
+          "size_bytes": 33697952,
+          "mtime_utc": "2026-07-11T17:48:02Z",
+          "sha256": "c74a05ca377ae8cf5a6e7de7f953013238e130c2fba283111ae480a530723db9"
+        },
+        {
+          "relative_path": "ticks/GOLD/202601.tkc",
+          "size_bytes": 38964403,
+          "mtime_utc": "2026-07-11T17:47:58Z",
+          "sha256": "8afbef60dfbfd235eebc7fd2c21a19a01b10230c173f2c0ba76785bfd7b9d7b0"
+        },
+        {
+          "relative_path": "ticks/GOLD/202602.tkc",
+          "size_bytes": 36619254,
+          "mtime_utc": "2026-07-11T17:47:53Z",
+          "sha256": "707e7e6bccbd9b7d3ed295a80013d08b82e61a7e5f02c94ed511812fc2dce17e"
+        }
+      ],
+      "hashing_method": "SHA256 streaming (chunk 1MB, canonical_utils.file_sha256) - MAI saltato per dimensione file (il piu' grande e' ~41MB).",
+      "boundary_note": "I file .tkc sono mensili (non tagliati esattamente ai bordi della finestra: es. ticks/GOLD/202312.tkc contiene l'intero dicembre 2023, non solo dal giorno 20) - limite dichiarato esplicitamente, non nascosto: la granularita' di hashing e' quella del filesystem MT5, non un taglio esatto al secondo.",
+      "volatility_note": "Il file history/GOLD/2026.hcc e' gia' stato osservato CAMBIARE fra il run di Phase 7.8D (2026-09-21 23:44) e la scrittura di questo manifest - CONFERMA diretta del rischio segnalato dal reviewer (MT5 puo' risincronizzare/correggere la cache). Per questo il seal richiede una RI-VERIFICA immediatamente PRIMA del run reale (vedi final_seal.reverification_required), non un hash 'eterno' calcolato oggi."
+    },
+    "dataset_hash_correction": {
+      "declared_in_7_8d": "dataset_hash_representation hashava il coverage AUDIT REPORT (CSV/summary prodotti dallo script di probe), non i dati storici reali usati dal Tester.",
+      "target_artifact_7_8d_canonical_sha256_unchanged": "9c0105b984c0296bb2663f0c30d655b7ce521b99047194af3a9a6311ca208a19",
+      "modified_in_this_phase": false,
+      "correction": "Sostituito qui (nuovo artifact, 7.8D non modificato) con l'hash dei file dati REALI (.tkc/.hcc) che intersecano PRIMARY_FRESH_VERDICT_WINDOW, tramite un manifest ordinato (path/size/mtime/sha256) e l'hash del manifest stesso.",
+      "data_manifest_canonical_sha256": "f5969621790c153155755f6920383d7cca5447a7a2e570b8c6b3a28f5de01c85"
+    },
+    "temporal_identity_recheck": {
+      "source": "server/research_scripts/phase7/phase7_8d/volatility_breakout_serious_validation_prerun_manifest_v1.json (7.8D, non modificato)",
+      "TOTAL_TEST_WINDOW": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2026-09-21T23:58:59",
+        "duration_days": 1006,
+        "bounded_by": "Inizio = primo tick reale disponibile per GOLD (verificato empiricamente, non un nominale '3 anni fa') - vedi real_tick_coverage_finding sotto. Fine = ultimo tick disponibile al momento del sync (ora corrente broker)."
+      },
+      "PRIMARY_FRESH_VERDICT_WINDOW": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2026-03-01T00:00:00",
+        "duration_days": 801,
+        "note": "Blocco contiguo piu' ampio di dati MAI osservati per questo candidato - alimenta il verdetto PASS/BORDERLINE/FAIL primario."
+      },
+      "PREVIOUSLY_OBSERVED_DIAGNOSTIC_WINDOW": {
+        "start": "2026-03-01T00:00:00",
+        "end": "2026-09-01T00:00:00",
+        "duration_days": 184,
+        "note": "Identica alla finestra gia' usata per il fast-structural test (Strategy Foundry Phase 3) - fissa, non ricalcolata rispetto a 'oggi'. MAI usata per il verdetto primario."
+      },
+      "NEWLY_ELAPSED_TAIL_SEGMENT": {
+        "start": "2026-09-01T00:00:00",
+        "end": "2026-09-21T23:58:59",
+        "duration_days": 20,
+        "note": "SCOPERTA IN QUESTA FASE (non prevista da 7.8B/7.8C): poiche' il tempo reale e' avanzato da quando la finestra PREVIOUSLY_OBSERVED fu fissata, esiste ora un piccolo segmento genuinamente MAI osservato dopo di essa. Troppo corto per un tercile T1/T2/T3 affidabile da solo - riportato come diagnostica di replica separata, MAI fuso silenziosamente nel verdetto primario ne' scartato senza dichiararlo.",
+        "excluded_from_primary_verdict": true
+      },
+      "T1": {
+        "start": "2023-12-20T12:06:50",
+        "end": "2024-09-12T16:04:33"
+      },
+      "T2": {
+        "start": "2024-09-12T16:04:33",
+        "end": "2025-06-06T20:02:16"
+      },
+      "T3": {
+        "start": "2025-06-06T20:02:16",
+        "end": "2026-03-01T00:00:00"
+      },
+      "no_boundary_changed": true,
+      "no_recalculation_based_on_outcomes": true
+    },
+    "tester_execution_config_frozen_not_launched": {
+      "not_launched": true,
+      "purpose": "Congela ESATTAMENTE la config che il futuro Serious validation dovra' usare - scritta e hashata qui, MAI eseguita in questa fase.",
+      "selector_source": "InpStrategySelector=56 - verificato contro contracts/strategy-registry.json (VOLATILITY_BREAKOUT_CONFIRMED.selector_index), non inventato.",
+      "model_source": "Model=4 - corretto in 7.8D (annotazione) rispetto al 'Model=1' genericamente scritto in 7.8B - riusato identico qui.",
+      "dates_source": "FromDate/ToDate = PRIMARY_FRESH_VERDICT_WINDOW esatta, gia' congelata in 7.8D - non ricalcolata.",
+      "raw_text": "[Tester]\nExpert=Experts\\NEXUS_EA_v2\nSymbol=GOLD\nPeriod=H4\nOptimization=0\nModel=4\nFromDate=2023.12.20\nToDate=2026.03.01\nForwardMode=0\nDeposit=10000\nCurrency=USD\nLeverage=100\nExecutionMode=0\nOptimization=0\nOptimizationCriterion=0\nVisual=0\nShutdownTerminal=1\nReplaceReport=1\n[TesterInputs]\nInpStrategySelector=56\nInpProfileTF=H4\nInpResearchUseDPT=false\nInpResearchUseRuin=false\nInpResearchUseESL=false\nInpResearchUseDailyDD=false\nInpResearchUseTotalDD=false",
+      "sha256": "3a400b548f195286bb87b996a321b78db97636e35004abf7c3a105d81d4cc21b"
+    },
+    "final_seal": {
+      "measured_broker_utc_offset_seconds": 10800,
+      "data_manifest_canonical_sha256": "f5969621790c153155755f6920383d7cca5447a7a2e570b8c6b3a28f5de01c85",
+      "tester_config_sha256": "3a400b548f195286bb87b996a321b78db97636e35004abf7c3a105d81d4cc21b",
+      "strategy_frozen_commit": "f035d30",
+      "prereg_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "previous_manifest_hash_7_8d": "9c0105b984c0296bb2663f0c30d655b7ce521b99047194af3a9a6311ca208a19",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71",
+      "code_commit_sha_baseline": "a5a79723bd13543e179b506abbd91d04fa4a356c",
+      "selector_index_verified_against_real_registry": true,
+      "reverification_required_before_run": {
+        "required": true,
+        "reason": "history/GOLD/2026.hcc gia' osservato cambiare fra due run ravvicinati in questa stessa sessione - il data_manifest_canonical_sha256 pinnato qui DEVE essere ricalcolato immediatamente prima del run reale; se non coincide, il seal e' invalidato e va ri-emesso (fail-closed), MAI ignorato."
+      }
+    },
+    "seal_verification": {
+      "timezone_measured_not_assumed": true,
+      "data_manifest_has_31_entries_0_missing": true,
+      "data_manifest_hash_matches_recomputed": true,
+      "temporal_boundaries_unchanged_from_7_8d": true,
+      "tester_config_frozen_not_launched": true,
+      "selector_index_correct": true,
+      "protocol_hashes_reference_real_7_8d_artifact": true,
+      "no_outcome_fields_present": true
+    },
+    "final_verdict": {
+      "value": "FINAL_PRE_RUN_SEAL_VERIFIED_READY_TO_EXECUTE",
+      "serious_validation_still_not_executed": true,
+      "note": "Questo verdetto NON autorizza un'esecuzione automatica - resta un passo separato, esplicito, successivo. Il data_manifest_canonical_sha256 va RICALCOLATO immediatamente prima del run reale (vedi final_seal.reverification_required_before_run) - un mismatch a quel punto blocca il run, non lo autorizza comunque."
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_trade_results_generated": true,
+    "no_pf_expectancy_or_winrate_computed": true,
+    "no_edge_discovery_performed": true,
+    "no_retroactive_modification_of_frozen_artifacts": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}

@@ -1,0 +1,14 @@
+server=XMGlobal-MT5 10
+login=345277936
+measured_at_TimeCurrent=2026.09.22 01:03:05
+measured_at_TimeTradeServer=2026.09.22 01:03:04
+measured_at_TimeGMT=2026.09.21 22:03:04
+measured_at_TimeLocal=2026.09.22 00:03:04
+TimeCurrent_raw=1790038985
+TimeTradeServer_raw=1790038984
+TimeGMT_raw=1790028184
+TimeLocal_raw=1790035384
+broker_utc_offset_seconds_TradeServer_minus_GMT=10800
+offset_seconds_Current_minus_GMT=10801
+offset_seconds_Local_minus_GMT=7200
+note=misura singola istante - riflette lo stato DST corrente al momento della misura, va ri-misurato se il RUN avviene in una stagione con DST diverso
