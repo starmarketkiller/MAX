@@ -53,6 +53,7 @@ import market_read_model
 import execution_read_model
 import library_read_model
 import sequence_research_read_model
+import company_control_plane
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3210,6 +3211,52 @@ def research_branches(user: str = Depends(require_user)):
 @app.get("/api/research/sequence-readiness")
 def research_sequence_readiness(user: str = Depends(require_user)):
     return sequence_research_read_model.CATALOG.readiness_summary()
+
+
+@app.get("/api/company")
+def company_root(user: str = Depends(require_user)):
+    return company_control_plane.CONTROL_PLANE.build()["company"]
+
+
+@app.get("/api/company/overview")
+def company_overview(user: str = Depends(require_user)):
+    return company_control_plane.CONTROL_PLANE.overview()
+
+
+@app.get("/api/company/departments")
+def company_departments(user: str = Depends(require_user)):
+    model = company_control_plane.CONTROL_PLANE.build()
+    return {"items": model["departments"], "count": len(model["departments"]), "warnings": model["warnings"]}
+
+
+@app.get("/api/company/departments/{department_id}")
+def company_department_detail(department_id: str, user: str = Depends(require_user)):
+    item = company_control_plane.CONTROL_PLANE.department(department_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return item
+
+
+@app.get("/api/company/work-items")
+def company_work_items(status: str | None = None, department_id: str | None = None,
+                       user: str = Depends(require_user)):
+    items = company_control_plane.CONTROL_PLANE.build()["work_items"]
+    if status: items = [item for item in items if item["normalized_status"] == status.upper()]
+    if department_id: items = [item for item in items if item["department_id"] == department_id.upper()]
+    return {"items": items, "count": len(items)}
+
+
+@app.get("/api/company/artifacts")
+def company_artifacts(department_id: str | None = None, user: str = Depends(require_user)):
+    items = company_control_plane.CONTROL_PLANE.build()["artifacts"]
+    if department_id: items = [item for item in items if item["owner_id"] == department_id.upper()]
+    return {"items": items, "count": len(items)}
+
+
+@app.get("/api/company/dependencies")
+def company_dependencies(user: str = Depends(require_user)):
+    items = company_control_plane.CONTROL_PLANE.build()["dependencies"]
+    return {"items": items, "count": len(items)}
 
 
 # ================= CANONICAL MARKET READ MODEL V1 (READ-ONLY) =========== #

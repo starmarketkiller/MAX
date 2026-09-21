@@ -21,6 +21,7 @@ import LocalBridgePage from "@/pages/LocalBridgePage";
 import KnowledgePage from "@/pages/KnowledgePage";
 import ResearchPage from "@/pages/ResearchPage";
 import SequenceExplorerPage from "@/pages/SequenceExplorerPage";
+import CompanyPage from "@/pages/CompanyPage";
 import SystemStatusPage from "@/pages/SystemStatusPage";
 import MarketPage from "@/pages/MarketPage";
 import ExecutionPage from "@/pages/ExecutionPage";
@@ -751,6 +752,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "backtest" && <BacktestPage />}
           {section === "research" && <ResearchPage />}
           {section === "research-sequences" && <SequenceExplorerPage />}
+          {section === "company" && <CompanyPage />}
           {section === "market" && <MarketPage />}
           {section === "execution" && <ExecutionPage onCmd={onCmd} onSelectTrade={setSelectedTrade} />}
           {section === "library" && <LibraryPage />}

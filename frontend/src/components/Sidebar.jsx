@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, Calculator, KeyRound, LogOut, Moon, Server, Settings, Sun } from "lucide-react";
+import { Activity, Building2, Calculator, KeyRound, LogOut, Moon, Server, Settings, Sun } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { PRIMARY_WORKSPACES, UTILITY_ROUTES, workspaceForPath } from "@/lib/workspaces";
 
-const utilityIcons = { "/risk-calc": Calculator, "/settings": Settings, "/licenses": KeyRound, "/system": Server };
+const utilityIcons = { "/company": Building2, "/risk-calc": Calculator, "/settings": Settings, "/licenses": KeyRound, "/system": Server };
 const cls = (...values) => values.filter(Boolean).join(" ");
 
 function WorkspaceNav({ pathname, onNavigate }) {

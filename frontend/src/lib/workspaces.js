@@ -36,6 +36,7 @@ export const PRIMARY_WORKSPACES = Object.freeze([
 ]);
 
 export const UTILITY_ROUTES = Object.freeze([
+  { label: "Company", to: "/company" },
   { label: "Calculator", to: "/risk-calc" },
   { label: "Settings", to: "/settings" },
   { label: "Licenses / Admin", to: "/licenses" },
@@ -50,6 +51,7 @@ export const LEGACY_ROUTES = Object.freeze([
 ]);
 
 export function workspaceForPath(pathname) {
+  if (pathname === "/company") return { id: "company", label: "Company", to: "/company", summary: "Departments, work, artifacts, gates and operational dependencies.", routes: ["/company"], tabs: [{ label: "Control Plane", to: "/company" }] };
   return PRIMARY_WORKSPACES.find((workspace) => workspace.routes.includes(pathname)) || null;
 }
 
