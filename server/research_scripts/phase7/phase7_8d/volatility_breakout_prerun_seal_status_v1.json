@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-09-21T21:31:00.896487+00:00",
+  "generation_script": "server/research_scripts/phase7/phase7_8d/build_volatility_breakout_prerun_seal_status.py",
+  "canonical_sha256": "9f68eea0ef20999a8e6d3025ea9237831cac6f1c3fff68e43ea6efe4381c1702",
+  "payload": {
+    "phase": "7.8D",
+    "artifact_role": "PRE_RUN_SEAL_STATUS",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "scope_note": "Corregge la segmentazione temporale di 7.8C (T1/T2/T3 cronologici, non 'Year 1/2/3') e verifica ONESTAMENTE l'accesso ai dati storici reali richiesti dal PRE-RUN MANIFEST - nessun Serious validation eseguito, nessun outcome letto, nessun valore fabbricato.",
+    "baseline_commit": "a0fe99eb88ff8b21d26bacbaae69003c49eeec32",
+    "source_artifact_untouched": {
+      "file": "server/research_scripts/phase7/phase7_8c/volatility_breakout_serious_3y_run_authorization_v1.json",
+      "canonical_sha256": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "modified_in_this_phase": false
+    },
+    "temporal_segmentation_correction": {
+      "target_artifact": "server/research_scripts/phase7/phase7_8c/volatility_breakout_serious_3y_run_authorization_v1.json",
+      "target_artifact_canonical_sha256_unchanged": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "modified_in_this_phase": false,
+      "issue": "7.8C usa implicitamente 'Year 1/2/3' per il criterio di stabilita' temporale (ereditato dal precedente SAR/MACD Serious 3Y, che aveva una finestra di 3 anni solari pieni). PRIMARY_FRESH_VERDICT_WINDOW (~2.5 anni) NON garantisce tre segmenti annuali completi e comparabili - userebbe implicitamente segmenti di durata diseguale (es. due anni pieni + una porzione), rendendo il criterio '2 dei 3 segmenti non negativi' dipendente dalla posizione calendariale delle date, non dalla struttura del test.",
+      "correction_rule": {
+        "definition": "T1/T2/T3 = split cronologico della PRIMARY_FRESH_VERDICT_WINDOW in TRE blocchi contigui di durata il piu' possibile uguale (tercile temporale, NON anni solari nominali).",
+        "constraints": [
+          "T1 unione T2 unione T3 = l'intera PRIMARY_FRESH_VERDICT_WINDOW",
+          "nessuna sovrapposizione (no overlap)",
+          "nessun buco (no gaps)",
+          "durate approssimativamente uguali (tercile cronologico, non calendariale)"
+        ],
+        "boundaries_frozen_before_outcomes": true,
+        "no_outcome_read_to_construct_segments": true
+      },
+      "criteria_unchanged_in_substance": {
+        "criterion_1": "Almeno 2 dei 3 segmenti (T1/T2/T3, non piu' 'Year 1/2/3') con expectancy_R >= 0.",
+        "criterion_2": "Nessun singolo segmento (T1, T2 o T3) spiega piu' del 100% del risultato netto aggregato mentre gli altri due combinati sono negativi.",
+        "same_T1_T2_T3_used_for_concentration_rule": true
+      },
+      "status": "RESOLVED"
+    },
+    "data_access_verification": {
+      "verification_method": "Controlli eseguiti DAVVERO al momento del build di questo artifact (non assunti) - vedi funzioni check_mt5_process_running/check_local_bridge_whitelist/check_existing_gold_history_cache nello script sorgente.",
+      "mt5_process_check": {
+        "method": "PowerShell Get-Process -Name terminal64,terminal",
+        "result": "NESSUN processo MT5 in esecuzione al momento del build",
+        "running_pids_found": []
+      },
+      "local_bridge_capability_check": {
+        "file_checked": "LocalBridge/nexus_local_worker.py",
+        "file_sha256": "10ecac89fcc52a0fc462a997c2385618f185a7e792e43db85c2b58d2d0c09560",
+        "handlers_found_in_source": [
+          "apply_template",
+          "compile_ea",
+          "deploy_files",
+          "open_chart",
+          "ping",
+          "restart_mt5"
+        ],
+        "has_history_sync_or_backtest_action": false,
+        "conclusion": "L'UNICO ponte di automation MT5 esistente nel progetto NON espone alcuna azione di sincronizzazione storico o esecuzione Strategy Tester - solo ping/compile_ea/restart_mt5/deploy_files/open_chart/apply_template."
+      },
+      "existing_gold_history_cache_found": [
+        {
+          "directory": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\bases\\XMGlobal-MT5 7\\history\\GOLD",
+          "n_year_files": 13,
+          "latest_file": "2026.hcc",
+          "latest_file_mtime_utc": "2026-07-20T22:00:01Z"
+        },
+        {
+          "directory": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\bases\\XMGlobal-MT5 9\\history\\GOLD",
+          "n_year_files": 1,
+          "latest_file": "2026.hcc",
+          "latest_file_mtime_utc": "2026-04-27T10:38:54Z"
+        }
+      ],
+      "existing_cache_does_not_satisfy_requirement": {
+        "reason": "La cache storica GOLD preesistente su disco e' STALE rispetto alla data dichiarata di questa sessione (2026-09-21) - l'ultimo file annuale risulta modificato prima di tale data, e la sua provenienza/coerenza con un vero run di Strategy Tester NON e' verificabile da questa sessione (nessun accesso al terminale che l'ha generata, nessuna garanzia che rifletta lo stesso feed/simbolo/broker gia' usato per l'evidenza pregressa di questo candidato). Usarla per costruire il manifest equivarrebbe a dichiarare un 'sync' mai realmente avvenuto in questa fase - esplicitamente vietato."
+      },
+      "no_dates_hashes_or_tick_coverage_fabricated": true
+    },
+    "blocked_sections_pending_real_data_access": {
+      "exact_windows": "NON risolvibile - richiede la data di sincronizzazione storica reale, non disponibile in questa sessione.",
+      "dataset_identity": "NON registrabile - symbol/timeframe/broker/timezone/tester_model/history sync timestamp/dataset hash richiedono un run MT5 reale.",
+      "real_tick_coverage": "NON verificabile - richiede l'esecuzione (o quantomeno l'ispezione tramite Strategy Tester) dello storico reale per il periodo FRESH.",
+      "protocol_identity_pins": "Gli hash dei protocolli GIA' congelati (prereg, 7.8C authorization, cost model, commit di codice) SONO disponibili e riportati sotto (sez. pinnable_protocol_hashes) - solo gli elementi che richiedono dati storici reali restano bloccati."
+    },
+    "pinnable_protocol_hashes": {
+      "strategy_frozen_commit": "f035d30",
+      "prereg_canonical_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_canonical_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71",
+      "code_commit_sha_baseline": "a0fe99eb88ff8b21d26bacbaae69003c49eeec32",
+      "note": "Questi hash sono gia' pinnabili ORA (non richiedono dati storici) - andranno riportati nel PRE-RUN MANIFEST reale quando i dati saranno sincronizzabili, insieme ai campi bloccati sopra."
+    },
+    "final_status": {
+      "value": "PRE_RUN_SEAL_BLOCKED",
+      "reason": "PRE_RUN_SEAL_BLOCKED_NO_DATA_ACCESS - questa sessione di ricerca non ha un terminale MT5 in esecuzione, ne' uno strumento (LocalBridge o altro) capace di sincronizzare storico reale o eseguire lo Strategy Tester. La cache storica preesistente su disco e' stale e la sua provenienza non e' verificabile da qui - usarla equivarrebbe a fabbricare un sync mai avvenuto.",
+      "not_a_conceptual_blocker": "Diversamente dai 3 blocker di Phase 7.8B/7.8C (gia' tutti RESOLVED), questo e' un blocco di ACCESSO/AMBIENTE, non metodologico - il protocollo stesso resta interamente valido e pronto (vedi pinnable_protocol_hashes).",
+      "what_would_unblock_this": "L'esecuzione di questa fase da una sessione/ambiente con accesso reale a un terminale MT5 collegato al broker (sincronizzazione storico dal vivo), oppure un'estensione del LocalBridge worker con un'azione dedicata di sync/tester - nessuna delle due disponibile qui."
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_trade_results_generated": true,
+    "no_pf_expectancy_or_winrate_computed": true,
+    "no_edge_discovery_performed": true,
+    "no_retroactive_modification_of_frozen_artifacts": true,
+    "seq0015_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE",
+    "seq0009_status_unchanged": "CLOSED_NOT_REEXAMINED_AS_CANDIDATE"
+  }
+}
