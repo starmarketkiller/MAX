@@ -14,6 +14,7 @@ def test_department_slots_and_real_vs_skeleton():
     assert departments["QUANT_RESEARCH"]["work_item_count"] > 0
     assert departments["EXECUTION"]["skeleton"] is True
     assert departments["EXECUTION"]["message"] == "no operational pipeline yet"
+    assert departments["SCIENTIFIC_QA"]["operational_state"]["holdout_access_status"] is not None
 
 
 def test_status_mapping_preserves_raw_status():
@@ -30,6 +31,7 @@ def test_provenance_and_dependencies_are_explicit():
     assert all(item["provenance"]["direct"] for item in model["artifacts"])
     assert all(item["relation"] == "REVIEWED_BY" for item in model["dependencies"])
     assert not any("profit" in json.dumps(item).lower() for item in model["work_items"])
+    assert cp.CompanyControlPlane().department("DATA")["datasets"]
 
 
 def test_missing_artifact_is_fault_isolated(monkeypatch, tmp_path):

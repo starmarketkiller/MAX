@@ -151,6 +151,21 @@ class CompanyControlPlane:
                              "provenance": {"mode": "RESEARCH", "direct": True, "source_artifact": _repo_path(SOURCES["dataset_registry"])},
                              "created_at": record.get("created_at"), "updated_at": record.get("updated_at")})
 
+        leakage_counts: dict[str, int] = {}
+        for item in seq_catalog.get("sequences", {}).values():
+            label = item.get("semantic_leakage_status_after_correction") or "UNAVAILABLE"
+            leakage_counts[label] = leakage_counts.get(label, 0) + 1
+        holdout = _payload(docs.get("holdout_seal"))
+        prereg = _payload(docs.get("seq0014_prereg"))
+        qa_state = {
+            "regression_status": None,
+            "frozen_artifact_integrity": "AVAILABLE" if all(a.get("sha") for a in artifacts if a["owner_id"] == "QUANT_RESEARCH") else "PARTIAL",
+            "leakage_status_counts": leakage_counts,
+            "preregistration_status": prereg.get("preregistration_status"),
+            "holdout_access_status": holdout.get("sealed_status"),
+            "blocker_count": sum(g["normalized_status"] == "BLOCKED" for g in gates),
+        }
+
         departments = []
         for dept_id, name, raw_status in DEPARTMENT_SLOTS:
             related_work = [w for w in work_items if w["department_id"] == dept_id]
@@ -167,6 +182,7 @@ class CompanyControlPlane:
                 "skeleton": skeleton, "message": "no operational pipeline yet" if skeleton else None,
                 "created_at": None, "updated_at": now,
                 "provenance": {"mode": "DERIVED", "direct": False, "sources": sorted({a["source_path"] for a in related_artifacts})},
+                "operational_state": qa_state if dept_id == "SCIENTIFIC_QA" else ({"dataset_count": len(datasets)} if dept_id == "DATA" else None),
             })
 
         return {"company": {"id": "NEXUS", "name": "NEXUS", "status": "ACTIVE", "owner_type": "PRIVATE",
@@ -203,7 +219,8 @@ class CompanyControlPlane:
         if not dept: return None
         return {**dept, "active_work_items": [w for w in model["work_items"] if w["department_id"] == department_id],
                 "recent_artifacts": [a for a in model["artifacts"] if a["owner_id"] == department_id],
-                "gates": [g for g in model["gates"] if g["department_id"] == department_id],
+                "gates": [g for g in model["gates"] if g["department_id"] == department_id or (department_id == "QUANT_RESEARCH" and g["work_item_id"].startswith("WI-"))],
+                "datasets": model["datasets"] if department_id == "DATA" else [],
                 "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")]}
 
     def overview(self):
