@@ -5,7 +5,7 @@ import {
   Microscope, BookOpen, MessageSquare, Sparkles, FlaskConical,
   CalendarDays, ShieldAlert, Calculator, Settings, KeyRound, Gauge,
   Play, Pause, AlertOctagon, RotateCcw, Calendar,
-  Command as CommandIcon,
+  Command as CommandIcon, Building2,
 } from "lucide-react";
 
 function cls(...c) { return c.filter(Boolean).join(" "); }
@@ -39,6 +39,7 @@ export default function CommandPalette({ open, onClose, onEaCmd }) {
   const commands = useMemo(() => [
     // Navigation
     { id: "nav-home", group: "Navigate", label: "Overview", hint: "Home dashboard", icon: LayoutDashboard, action: () => nav("/") },
+    { id: "nav-company", group: "Workspaces", label: "Company", hint: "Departments, work, artifacts and gates", icon: Building2, action: () => nav("/company") },
     { id: "nav-market", group: "Workspaces", label: "Market", hint: "Chart, operational context and calendar", icon: LineChart, action: () => nav("/market") },
     { id: "nav-research", group: "Workspaces", label: "Research", hint: "Hypotheses, evidence and experiments", icon: FlaskConical, action: () => nav("/research") },
     { id: "nav-execution", group: "Workspaces", label: "Execution", hint: "EA, risk, bridge and analytics", icon: ShieldAlert, action: () => nav("/execution") },
