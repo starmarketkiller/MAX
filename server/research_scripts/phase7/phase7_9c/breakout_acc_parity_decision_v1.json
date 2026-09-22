@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-09-22T16:33:26.526646+00:00",
+  "generation_script": "build_breakoutacc_parity_decomposition.py",
+  "canonical_sha256": "08f839024fa9dcbf8e3a191dfbc57626dd7a20e924c03f9d0d4034af1a80bf60",
+  "payload": {
+    "phase": "7.9C",
+    "candidate": "BREAKOUT_ACC",
+    "final_verdict": "EXECUTION_GAP_DOMINANT",
+    "next_decision": "FIX_PARITY_BEFORE_STATISTICS",
+    "next_decision_rationale": "Signal parity ragionevolmente buona (73-78%, scala quasi identica 83 vs 80, residuo spiegato da FEED_BAR_DIFFERENCE) - MA questo NON basta a giustificare REANALYZE_EXISTING_RAW_RESULTS: ne' il dataset Python (n=74-85 signal, n=27 mai riprodotto in questa fase) ne' i 4 trade MT5 di Phase E rappresentano fedelmente 'quanti trade la strategia oggi formalizzata produrrebbe realmente in esecuzione'. Il gate di esecuzione reale (che riduce 80 segnali a soli 4 trade, un fattore ~20x, ben oltre quanto spiega un semplice one-position-at-a-time) e' esso stesso NON CARATTERIZZATO. Fare statistica su un campione la cui provenienza (quanti segnali diventano davvero trade, e perche') non e' capita produrrebbe un numero preciso ma privo di significato.",
+    "signal_parity_assessment": "SIGNAL_PARITY_PARTIAL - scala quasi identica (83 Python vs 80 MT5, entrambi con cooldown+HTF applicati simmetricamente), 73-78% di match diretto entro 3 giorni. La DEFINIZIONE del segnale (setup/trigger/cooldown/HTF) NON e' la causa del gap verso i 4 trade osservati da Phase E - se lo fosse, i due conteggi indipendenti (83 vs 80, motori/feed diversi) non sarebbero cosi' vicini in scala.",
+    "execution_parity_assessment": "EXECUTION_GAP_DOMINANT - il problema e' chiaramente DOPO il segnale (signal parity buona, execution parity pessima). La causa esatta del gap residuo (~40->4) resta UNKNOWN: richiederebbe telemetria del vero Tester (i log del run originale di Phase E del 16/09 non sono piu' disponibili nel terminale, verificato - solo 20260917.log e 20260922.log presenti) o un nuovo run diagnostico strumentato nel Tester (fuori scope di un audit statico/bar-based). Possibili cause NON verificate qui: RiskShield/preflight di sicurezza in NXS_OpenTrade, margine, o un problema di history-quality specifico del vero Model=1 su 7,5 anni.",
+    "parity_matrix_canonical_sha256": "c5ede27723b3369a79ce96489f484209f70e42ff1a8d38c06c3f0f07df2ab720",
+    "next_step_not_executed": true
+  }
+}

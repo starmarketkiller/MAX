@@ -1,0 +1,372 @@
+[
+  {
+    "openTime": "2019-04-17 03:00",
+    "side": "SELL",
+    "openPrice": 1274.2735
+  },
+  {
+    "openTime": "2019-05-14 00:00",
+    "side": "BUY",
+    "openPrice": 1297.1515
+  },
+  {
+    "openTime": "2019-06-03 00:00",
+    "side": "BUY",
+    "openPrice": 1325.255
+  },
+  {
+    "openTime": "2019-06-23 22:00",
+    "side": "BUY",
+    "openPrice": 1406.9415
+  },
+  {
+    "openTime": "2019-08-06 00:00",
+    "side": "BUY",
+    "openPrice": 1476.905
+  },
+  {
+    "openTime": "2019-10-01 02:00",
+    "side": "SELL",
+    "openPrice": 1481.687
+  },
+  {
+    "openTime": "2019-11-11 01:00",
+    "side": "SELL",
+    "openPrice": 1455.6815
+  },
+  {
+    "openTime": "2019-12-25 23:00",
+    "side": "BUY",
+    "openPrice": 1499.52
+  },
+  {
+    "openTime": "2020-01-06 00:00",
+    "side": "BUY",
+    "openPrice": 1563.8065
+  },
+  {
+    "openTime": "2020-02-20 13:00",
+    "side": "BUY",
+    "openPrice": 1619.475
+  },
+  {
+    "openTime": "2020-04-12 22:00",
+    "side": "BUY",
+    "openPrice": 1687.005
+  },
+  {
+    "openTime": "2020-06-22 00:00",
+    "side": "BUY",
+    "openPrice": 1755.5165
+  },
+  {
+    "openTime": "2020-07-24 00:00",
+    "side": "BUY",
+    "openPrice": 1901.655
+  },
+  {
+    "openTime": "2020-08-05 00:00",
+    "side": "BUY",
+    "openPrice": 2036.6265
+  },
+  {
+    "openTime": "2020-11-06 00:00",
+    "side": "BUY",
+    "openPrice": 1951.15
+  },
+  {
+    "openTime": "2020-12-18 18:00",
+    "side": "BUY",
+    "openPrice": 1881.555
+  },
+  {
+    "openTime": "2021-01-04 12:00",
+    "side": "BUY",
+    "openPrice": 1942.89
+  },
+  {
+    "openTime": "2021-02-17 00:00",
+    "side": "SELL",
+    "openPrice": 1776.1335
+  },
+  {
+    "openTime": "2021-02-28 23:00",
+    "side": "SELL",
+    "openPrice": 1739.33
+  },
+  {
+    "openTime": "2021-05-07 00:00",
+    "side": "BUY",
+    "openPrice": 1831.265
+  },
+  {
+    "openTime": "2021-05-18 12:00",
+    "side": "BUY",
+    "openPrice": 1870.215
+  },
+  {
+    "openTime": "2021-06-18 00:00",
+    "side": "SELL",
+    "openPrice": 1763.99
+  },
+  {
+    "openTime": "2021-07-15 00:00",
+    "side": "BUY",
+    "openPrice": 1829.615
+  },
+  {
+    "openTime": "2021-08-08 22:00",
+    "side": "SELL",
+    "openPrice": 1719.2135
+  },
+  {
+    "openTime": "2021-09-05 22:00",
+    "side": "BUY",
+    "openPrice": 1827.695
+  },
+  {
+    "openTime": "2021-09-17 00:00",
+    "side": "SELL",
+    "openPrice": 1754.5
+  },
+  {
+    "openTime": "2021-09-29 00:00",
+    "side": "SELL",
+    "openPrice": 1728.905
+  },
+  {
+    "openTime": "2021-10-14 00:00",
+    "side": "BUY",
+    "openPrice": 1795.46
+  },
+  {
+    "openTime": "2021-11-08 00:00",
+    "side": "BUY",
+    "openPrice": 1824.655
+  },
+  {
+    "openTime": "2022-01-02 23:00",
+    "side": "BUY",
+    "openPrice": 1828.563
+  },
+  {
+    "openTime": "2022-01-20 00:00",
+    "side": "BUY",
+    "openPrice": 1839.01
+  },
+  {
+    "openTime": "2022-02-13 23:00",
+    "side": "BUY",
+    "openPrice": 1859.623
+  },
+  {
+    "openTime": "2022-03-07 00:00",
+    "side": "BUY",
+    "openPrice": 1998.095
+  },
+  {
+    "openTime": "2022-05-13 00:00",
+    "side": "SELL",
+    "openPrice": 1811.505
+  },
+  {
+    "openTime": "2022-07-06 00:00",
+    "side": "SELL",
+    "openPrice": 1765.3865
+  },
+  {
+    "openTime": "2022-09-02 18:00",
+    "side": "SELL",
+    "openPrice": 1709.7235
+  },
+  {
+    "openTime": "2022-09-16 17:00",
+    "side": "SELL",
+    "openPrice": 1674.95
+  },
+  {
+    "openTime": "2022-12-02 00:00",
+    "side": "BUY",
+    "openPrice": 1797.675
+  },
+  {
+    "openTime": "2022-12-14 00:00",
+    "side": "BUY",
+    "openPrice": 1807.735
+  },
+  {
+    "openTime": "2023-01-04 00:00",
+    "side": "BUY",
+    "openPrice": 1854.8365
+  },
+  {
+    "openTime": "2023-01-13 00:00",
+    "side": "BUY",
+    "openPrice": 1920.35
+  },
+  {
+    "openTime": "2023-03-12 22:00",
+    "side": "BUY",
+    "openPrice": 1877.84
+  },
+  {
+    "openTime": "2023-04-05 02:00",
+    "side": "BUY",
+    "openPrice": 2023.1295
+  },
+  {
+    "openTime": "2023-05-04 00:00",
+    "side": "BUY",
+    "openPrice": 2049.168
+  },
+  {
+    "openTime": "2023-07-20 00:00",
+    "side": "BUY",
+    "openPrice": 1972.28
+  },
+  {
+    "openTime": "2023-08-10 00:00",
+    "side": "SELL",
+    "openPrice": 1912.46
+  },
+  {
+    "openTime": "2023-09-27 00:00",
+    "side": "SELL",
+    "openPrice": 1877.65
+  },
+  {
+    "openTime": "2023-10-19 00:00",
+    "side": "BUY",
+    "openPrice": 1977.27
+  },
+  {
+    "openTime": "2023-11-28 15:00",
+    "side": "BUY",
+    "openPrice": 2044.47
+  },
+  {
+    "openTime": "2024-03-03 23:00",
+    "side": "BUY",
+    "openPrice": 2083.6435
+  },
+  {
+    "openTime": "2024-03-31 22:00",
+    "side": "BUY",
+    "openPrice": 2246.07
+  },
+  {
+    "openTime": "2024-04-09 00:00",
+    "side": "BUY",
+    "openPrice": 2354.92
+  },
+  {
+    "openTime": "2024-05-19 22:00",
+    "side": "BUY",
+    "openPrice": 2420.3685
+  },
+  {
+    "openTime": "2024-07-07 22:00",
+    "side": "BUY",
+    "openPrice": 2386.155
+  },
+  {
+    "openTime": "2024-07-17 00:00",
+    "side": "BUY",
+    "openPrice": 2461.3985
+  },
+  {
+    "openTime": "2024-08-18 22:00",
+    "side": "BUY",
+    "openPrice": 2506.5135
+  },
+  {
+    "openTime": "2024-09-13 00:00",
+    "side": "BUY",
+    "openPrice": 2567.3885
+  },
+  {
+    "openTime": "2024-10-18 01:00",
+    "side": "BUY",
+    "openPrice": 2719.75
+  },
+  {
+    "openTime": "2025-01-10 01:00",
+    "side": "BUY",
+    "openPrice": 2690.45
+  },
+  {
+    "openTime": "2025-01-22 00:00",
+    "side": "BUY",
+    "openPrice": 2756.29
+  },
+  {
+    "openTime": "2025-01-31 00:00",
+    "side": "BUY",
+    "openPrice": 2799.05
+  },
+  {
+    "openTime": "2025-02-11 00:00",
+    "side": "BUY",
+    "openPrice": 2898.685
+  },
+  {
+    "openTime": "2025-03-14 00:00",
+    "side": "BUY",
+    "openPrice": 2984.72
+  },
+  {
+    "openTime": "2025-04-11 04:00",
+    "side": "BUY",
+    "openPrice": 3240.58
+  },
+  {
+    "openTime": "2025-06-15 22:00",
+    "side": "BUY",
+    "openPrice": 3444.2835
+  },
+  {
+    "openTime": "2025-07-22 14:00",
+    "side": "BUY",
+    "openPrice": 3428.0
+  },
+  {
+    "openTime": "2025-08-29 00:00",
+    "side": "BUY",
+    "openPrice": 3447.63
+  },
+  {
+    "openTime": "2025-09-09 13:00",
+    "side": "BUY",
+    "openPrice": 3633.635
+  },
+  {
+    "openTime": "2025-10-06 00:00",
+    "side": "BUY",
+    "openPrice": 3969.6165
+  },
+  {
+    "openTime": "2025-12-12 00:00",
+    "side": "BUY",
+    "openPrice": 4299.865
+  },
+  {
+    "openTime": "2026-01-13 00:00",
+    "side": "BUY",
+    "openPrice": 4597.115
+  },
+  {
+    "openTime": "2026-03-01 23:00",
+    "side": "BUY",
+    "openPrice": 5387.095
+  },
+  {
+    "openTime": "2026-06-07 22:00",
+    "side": "SELL",
+    "openPrice": 4344.1
+  },
+  {
+    "openTime": "2026-06-25 04:00",
+    "side": "SELL",
+    "openPrice": 4014.605
+  }
+]

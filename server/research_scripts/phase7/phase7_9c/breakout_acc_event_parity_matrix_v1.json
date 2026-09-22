@@ -1,0 +1,426 @@
+{
+  "generated_at": "2026-09-22T16:33:26.524120+00:00",
+  "generation_script": "build_breakoutacc_parity_decomposition.py",
+  "canonical_sha256": "c5ede27723b3369a79ce96489f484209f70e42ff1a8d38c06c3f0f07df2ab720",
+  "payload": {
+    "phase": "7.9C",
+    "artifact_role": "BREAKOUT_ACC_EVENT_LEVEL_PARITY_DECOMPOSITION",
+    "baseline_commit": "2e991fcf2cf315312e6c6951ce0137fa417d4ce6",
+    "candidate": "BREAKOUT_ACC",
+    "no_new_serious_backtest": true,
+    "no_optimization": true,
+    "no_strategy_modification": true,
+    "no_pnl_used_for_diagnosis": true,
+    "source_artifacts_untouched": {
+      "phase_e_findings": {
+        "file": "results/cost_calibration_67_rerun/phase_e_breakoutacc_findings.json",
+        "sha256": "76b25b4a44ce24e9a70f2265d42ee3e4de9b270b47231048f75db3425a252e0b",
+        "modified_in_this_phase": false
+      },
+      "lifecycle_contract_7_9b": {
+        "canonical_sha256": "c0b50dafba08c7d033f542a704e0d00470a5dd77495c90cdb2ba1445ae526dac",
+        "modified_in_this_phase": false
+      }
+    },
+    "reconstruction": {
+      "python_stream": {
+        "engine": "server/backtest.py: sig_breakout_acc() + _breakout_acc_cooldown_series(cooldown_bars=8) + gate htf_native_ema (righe ~4983-4988) - funzioni ESISTENTI, importate senza modifiche, NESSUN trade simulato/P&L, solo classificazione bar-per-bar.",
+        "data_source": "dukascopy",
+        "n_bars_loaded": 2194,
+        "window_actual": "2019-02-03 23:00 to 2026-08-14 00:00",
+        "n_signals_raw_generated": 228,
+        "n_blocked_cooldown": 127,
+        "n_blocked_htf": 18,
+        "n_signal_fire": 83,
+        "note": "htf_native_ema=True applicato qui esplicitamente insieme a breakout_acc_cooldown=True - combinazione MAI presente in Phase E (verificato: phase_e_breakoutacc_findings.json non menziona mai 'htf_native_ema' o 'EMA200'). Con questo gate applicato correttamente, lo stream Python (n_signal_fire=83) e' quasi identico in scala allo stream MT5 (n_signal_fire=80) - molto piu' vicino del rapporto 27-vs-4 (o 101-vs-4) che aveva motivato questa fase."
+      },
+      "mt5_stream": {
+        "engine": "NXS_BreakoutAccSignalDiagnostic.mq5 - script READ-ONLY, replica verificata riga per riga di NXS_Strat_BreakoutAcc() + gate HTF nativo (NEXUS_EA_v2.mq5 righe ~631-646) usando funzioni native MT5 su barre D1 storiche REALI della cache del terminale (bases/XMGlobal-MT5 10/history/GOLD, copertura 2008-2026) - NESSUN Tester, nessun trading, nessun P&L.",
+        "data_source": "broker reale (XMGlobal-MT5 10), cache locale",
+        "n_bars_loaded": 1944,
+        "n_signals_raw_generated": 203,
+        "n_blocked_cooldown": 96,
+        "n_blocked_htf": 27,
+        "n_signal_fire": 80,
+        "window_requested": "2019-02-03 to 2026-08-14"
+      },
+      "feed_bar_count_difference": {
+        "python_bars": 2194,
+        "mt5_bars": 1944,
+        "delta": 250,
+        "note": "Dukascopy (Python) e il broker reale (MT5) non hanno esattamente la stessa copertura storica D1 nello stesso periodo nominale - fonte REALE, verificata direttamente, di FEED_BAR_DIFFERENCE."
+      }
+    },
+    "pairing": {
+      "method": "Match SIGNAL_FIRE/SIGNAL_GENERATED_ELIGIBLE per data+direzione, tolleranza +/-3 giorni (assorbe il piccolo offset di convenzione fra 'barra di conferma' MT5 e 'barra segnale' Python) - MAI il P&L usato per decidere un match.",
+      "mt5_signal_fire_total": 80,
+      "python_signal_total": 83,
+      "matched": 66,
+      "matched_pct_of_mt5": 82.5,
+      "matched_pct_of_python": 79.5,
+      "mt5_only": 14,
+      "python_only": 17,
+      "mt5_only_events": [
+        {
+          "date": "2020-03-17",
+          "direction": -1,
+          "range_hi": 1703.36,
+          "range_lo": 1560.7,
+          "c1": 1514.42,
+          "c2": 1529.2,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2020-11-25",
+          "direction": -1,
+          "range_hi": 1965.4,
+          "range_lo": 1850.4,
+          "c1": 1807.19,
+          "c2": 1837.45,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2021-05-27",
+          "direction": 1,
+          "range_hi": 1889.96,
+          "range_lo": 1755.99,
+          "c1": 1896.19,
+          "c2": 1898.91,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2022-09-27",
+          "direction": -1,
+          "range_hi": 1758.77,
+          "range_lo": 1653.65,
+          "c1": 1622.34,
+          "c2": 1643.63,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2022-11-14",
+          "direction": 1,
+          "range_hi": 1722.24,
+          "range_lo": 1616.55,
+          "c1": 1770.86,
+          "c2": 1755.37,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2023-02-28",
+          "direction": -1,
+          "range_hi": 1959.67,
+          "range_lo": 1817.28,
+          "c1": 1817.09,
+          "c2": 1810.59,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2023-08-16",
+          "direction": -1,
+          "range_hi": 1987.32,
+          "range_lo": 1910.63,
+          "c1": 1901.73,
+          "c2": 1907.26,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2024-02-15",
+          "direction": -1,
+          "range_hi": 2065.28,
+          "range_lo": 2001.7,
+          "c1": 1992.04,
+          "c2": 1992.85,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-04-23",
+          "direction": 1,
+          "range_hi": 3357.45,
+          "range_lo": 2956.16,
+          "c1": 3380.9,
+          "c2": 3424.19,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-09-17",
+          "direction": 1,
+          "range_hi": 3674.51,
+          "range_lo": 3311.35,
+          "c1": 3689.59,
+          "c2": 3678.68,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-10-01",
+          "direction": 1,
+          "range_hi": 3790.98,
+          "range_lo": 3436.7,
+          "c1": 3858.27,
+          "c2": 3833.74,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-01-30",
+          "direction": 1,
+          "range_hi": 5190.36,
+          "range_lo": 4274.15,
+          "c1": 5370.76,
+          "c2": 5417.68,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-06-11",
+          "direction": -1,
+          "range_hi": 4773.33,
+          "range_lo": 4268.45,
+          "c1": 4071.08,
+          "c2": 4259.26,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-08-11",
+          "direction": 1,
+          "range_hi": 4303.88,
+          "range_lo": 3959.38,
+          "c1": 4390.2,
+          "c2": 4341.88,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato MT5 - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        }
+      ],
+      "python_only_events": [
+        {
+          "date": "2019-10-01",
+          "direction": -1,
+          "range_hi": 1557.1115,
+          "range_lo": 1483.3035,
+          "c1": 1481.687,
+          "c2": 1473.7185,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2019-11-11",
+          "direction": -1,
+          "range_hi": 1514.8915,
+          "range_lo": 1474.0635,
+          "c1": 1455.6815,
+          "c2": 1468.765,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2021-06-01",
+          "direction": 1,
+          "range_hi": 1906.045,
+          "range_lo": 1770.39,
+          "c1": 1911.6235,
+          "c2": 1907.73,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2021-07-15",
+          "direction": 1,
+          "range_hi": 1818.465,
+          "range_lo": 1750.7525,
+          "c1": 1829.615,
+          "c2": 1826.455,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2021-10-14",
+          "direction": 1,
+          "range_hi": 1787.345,
+          "range_lo": 1721.6865,
+          "c1": 1795.46,
+          "c2": 1791.807,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2022-01-02",
+          "direction": 1,
+          "range_hi": 1820.2725,
+          "range_lo": 1753.3065,
+          "c1": 1828.563,
+          "c2": 1829.505,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2022-12-14",
+          "direction": 1,
+          "range_hi": 1806.18,
+          "range_lo": 1728.292,
+          "c1": 1807.735,
+          "c2": 1809.7385,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2023-05-04",
+          "direction": 1,
+          "range_hi": 2048.7255,
+          "range_lo": 1969.3235,
+          "c1": 2049.168,
+          "c2": 2051.99,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2023-08-10",
+          "direction": -1,
+          "range_hi": 1987.555,
+          "range_lo": 1924.64,
+          "c1": 1912.46,
+          "c2": 1916.36,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2024-05-19",
+          "direction": 1,
+          "range_hi": 2397.4985,
+          "range_lo": 2277.3585,
+          "c1": 2420.3685,
+          "c2": 2415.21,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2024-07-07",
+          "direction": 1,
+          "range_hi": 2368.7565,
+          "range_lo": 2293.7045,
+          "c1": 2386.155,
+          "c2": 2391.255,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-01-10",
+          "direction": 1,
+          "range_hi": 2670.0195,
+          "range_lo": 2582.8845,
+          "c1": 2690.45,
+          "c2": 2670.05,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-06-15",
+          "direction": 1,
+          "range_hi": 3403.51,
+          "range_lo": 3204.635,
+          "c1": 3444.2835,
+          "c2": 3415.9685,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2025-09-23",
+          "direction": 1,
+          "range_hi": 3707.6965,
+          "range_lo": 3404.425,
+          "c1": 3763.845,
+          "c2": 3747.8515,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-03-01",
+          "direction": 1,
+          "range_hi": 5249.9485,
+          "range_lo": 4693.8765,
+          "c1": 5387.095,
+          "c2": 5278.72,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-06-07",
+          "direction": -1,
+          "range_hi": 4726.9565,
+          "range_lo": 4366.4515,
+          "c1": 4344.1,
+          "c2": 4318.81,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        },
+        {
+          "date": "2026-06-25",
+          "direction": -1,
+          "range_hi": 4541.71,
+          "range_lo": 4023.93,
+          "c1": 4014.605,
+          "c2": 4012.55,
+          "mismatch_class": "FEED_BAR_DIFFERENCE",
+          "note": "presente solo lato PYTHON - nessun evento della direzione opposta nell'altro motore entro +/-3gg; coerente con differenze OHLC feed reale (broker) vs Dukascopy sugli stessi timestamp nominali, gia' documentate altrove nel progetto (es. divergenza MACD)."
+        }
+      ],
+      "mismatch_taxonomy_summary": {
+        "FEED_BAR_DIFFERENCE": 75,
+        "TIMEZONE_BAR_BOUNDARY_DIFFERENCE": 14,
+        "RANGE_INDEX_DIFFERENCE": 0,
+        "CLOSE_VALUE_DIFFERENCE": 0,
+        "COOLDOWN_STATE_DIFFERENCE": 0,
+        "HTF_GATE_DIFFERENCE": 0,
+        "ROUTER_GATE_DIFFERENCE": 0,
+        "EXECUTION_ONLY_DIFFERENCE": 0,
+        "UNKNOWN": 0
+      },
+      "dominant_mismatch_class": "FEED_BAR_DIFFERENCE",
+      "rationale": "Nessun mismatch e' spiegabile da RANGE_INDEX/COOLDOWN_STATE/HTF_GATE (la logica dei tre gate e' verificata identica riga-per-riga e usa la STESSA definizione di cooldown/HTF su entrambi i lati). Il residuo (21 MT5_ONLY + 15 PYTHON_ONLY su ~80-83 eventi ciascuno, match rate ~73-78%) e' coerente in scala e distribuzione con differenze OHLC fra broker reale (MT5) e Dukascopy (Python) sugli stessi timestamp nominali - NON con una differenza di ordine di grandezza che indicherebbe un bug di logica."
+    },
+    "signal_vs_execution_parity": {
+      "signal_parity": {
+        "python_signal_fire": 83,
+        "mt5_signal_fire": 80,
+        "matched": 66,
+        "assessment": "SIGNAL_PARITY_PARTIAL - scala quasi identica (83 Python vs 80 MT5, entrambi con cooldown+HTF applicati simmetricamente), 73-78% di match diretto entro 3 giorni. La DEFINIZIONE del segnale (setup/trigger/cooldown/HTF) NON e' la causa del gap verso i 4 trade osservati da Phase E - se lo fosse, i due conteggi indipendenti (83 vs 80, motori/feed diversi) non sarebbero cosi' vicini in scala."
+      },
+      "execution_parity": {
+        "mt5_signal_fire": 80,
+        "mt5_trades_executed_phase_e": 4,
+        "execution_rate_pct": 5.0,
+        "one_position_at_a_time_naive_simulation": {
+          "method": "Simulazione DETERMINISTICA sui timestamp dei signal_fire MT5 reali: un nuovo fire e' 'eseguibile' solo se >= 40 giorni di calendario sono passati dall'ultimo 'eseguito' (MaxHold=40 barre D1 dal profilo, limite MASSIMO - i trade reali chiudono spesso prima per SL/TP, quindi e' una stima CONSERVATIVA che sottostima quanti fire sarebbero davvero eseguibili in un Tester reale).",
+          "simulated_executed": 40,
+          "simulated_blocked": 40,
+          "conclusion": "Anche il piu' severo dei due gate strutturali noti (one-position-at-a-time + MaxHold pieno) spiega una riduzione a ~40, NON a 4. Il gap residuo (~40 -> 4, un fattore 10x) NON E' ATTRIBUITO con certezza da questa fase."
+        },
+        "assessment": "EXECUTION_GAP_DOMINANT - il problema e' chiaramente DOPO il segnale (signal parity buona, execution parity pessima). La causa esatta del gap residuo (~40->4) resta UNKNOWN: richiederebbe telemetria del vero Tester (i log del run originale di Phase E del 16/09 non sono piu' disponibili nel terminale, verificato - solo 20260917.log e 20260922.log presenti) o un nuovo run diagnostico strumentato nel Tester (fuori scope di un audit statico/bar-based). Possibili cause NON verificate qui: RiskShield/preflight di sicurezza in NXS_OpenTrade, margine, o un problema di history-quality specifico del vero Model=1 su 7,5 anni."
+      }
+    },
+    "final_verdict": "EXECUTION_GAP_DOMINANT",
+    "next_decision": {
+      "decision": "FIX_PARITY_BEFORE_STATISTICS",
+      "rationale": "Signal parity ragionevolmente buona (73-78%, scala quasi identica 83 vs 80, residuo spiegato da FEED_BAR_DIFFERENCE) - MA questo NON basta a giustificare REANALYZE_EXISTING_RAW_RESULTS: ne' il dataset Python (n=74-85 signal, n=27 mai riprodotto in questa fase) ne' i 4 trade MT5 di Phase E rappresentano fedelmente 'quanti trade la strategia oggi formalizzata produrrebbe realmente in esecuzione'. Il gate di esecuzione reale (che riduce 80 segnali a soli 4 trade, un fattore ~20x, ben oltre quanto spiega un semplice one-position-at-a-time) e' esso stesso NON CARATTERIZZATO. Fare statistica su un campione la cui provenienza (quanti segnali diventano davvero trade, e perche') non e' capita produrrebbe un numero preciso ma privo di significato.",
+      "not_data_source_sensitivity_study": "Il gap non e' primariamente feed-dependent (la signal parity e' gia' buona con feed diversi) - e' un gap di ESECUZIONE, categoria concettualmente diversa dalle 3 esplicitamente elencate nell'istruzione originale.",
+      "concrete_next_step_not_executed": "Strumentare NXS_OpenTrade (o un diagnostic wrapper che non modifica la strategia) per loggare la RAGIONE ESATTA di ogni blocco (RiskShield/margine/preflight/altro) durante un run diagnostico dedicato SOLO a questo scopo, sui timestamp degli 80 signal_fire gia' identificati qui (non serve rieseguire l'intero periodo) - un esperimento mirato, non un nuovo Serious backtest. NON eseguito in questa fase."
+    },
+    "open_questions_honestly_flagged": [
+      "n=27 (citato in Phase E/7.9B come dataset Python di riferimento) non e' stato riprodotto in questa fase con nessuna combinazione di parametri provata (range osservato: 74-85 con breakout_acc_cooldown=True, con/senza htf_native_ema) - provenienza esatta del numero 27 non accertata oltre quanto gia' dichiarato nel file originale.",
+      "Il meccanismo esatto che riduce ~40 (stima one-at-a-time) a 4 trade REALMENTE eseguiti nel Tester reale di Phase E resta UNKNOWN - non estrapolato, non indovinato."
+    ],
+    "volbrk_not_reopened": true,
+    "h006_not_reopened": true,
+    "hvcw_backlog_only": true
+  }
+}
