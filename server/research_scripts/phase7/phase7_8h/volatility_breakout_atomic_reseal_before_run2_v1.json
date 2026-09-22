@@ -1,0 +1,229 @@
+{
+  "generated_at": "2026-09-22T06:41:06.619349+00:00",
+  "generation_script": "build_atomic_reseal_before_run2.py",
+  "canonical_sha256": "848457eb64167f92d8903a38b4dd946b4b02437a7acbf4a05d4490f627fcd15b",
+  "payload": {
+    "phase": "7.8H",
+    "artifact_role": "ATOMIC_RESEAL_BEFORE_RUN2",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "source_artifacts_untouched": {
+      "7_8f": {
+        "canonical_sha256": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae",
+        "modified_in_this_phase": false
+      },
+      "7_8g_root_cause": {
+        "canonical_sha256": "98599f1025637163e7ac294ead7dc6b573555d5b28351256c0846fb584cdcb81",
+        "modified_in_this_phase": false
+      },
+      "corrected_config": {
+        "canonical_sha256": "30e0277a68e1f342d73881c7e42ae1c869218129b76a97217c73285a86178c02",
+        "modified_in_this_phase": false
+      }
+    },
+    "data_drift_reevaluation": {
+      "n_bars_inside_fresh_now": 244,
+      "n_bars_inside_fresh_at_7_8g": 244,
+      "inside_fresh_unchanged_since_7_8g": true,
+      "n_bars_outside_fresh_now": 870,
+      "last_bar_in_2026_hcc": "2026.09.22 04:00:00",
+      "conclusion": "IRRELEVANT_POST_WINDOW_CACHE_DRIFT",
+      "evidence": "Il conteggio barre DENTRO FRESH e' identico a quello misurato in 7.8G (244 == 244) - nessuna variazione nel range storico gia' concluso. La crescita e' interamente fuori FRESH (ultima barra: 2026.09.22 04:00:00)."
+    },
+    "window_aware_fingerprint": {
+      "tick_files": {
+        "n_files": 27,
+        "entries": [
+          {
+            "relative_path": "ticks/GOLD/202312.tkc",
+            "size_bytes": 4154521,
+            "sha256": "d6fb647f3ae471ab819b5a325e568e1782d9c0886cde3d78c3575841f154fece",
+            "boundary_note": "mese di confine - puo' contenere tick fuori da PRIMARY_FRESH_VERDICT_WINDOW"
+          },
+          {
+            "relative_path": "ticks/GOLD/202401.tkc",
+            "size_bytes": 16177854,
+            "sha256": "a4c2ab31fab0cf79f361ce61c455fbd7fce7f91b3db08314e4b83ad1b757e9fb"
+          },
+          {
+            "relative_path": "ticks/GOLD/202402.tkc",
+            "size_bytes": 11997607,
+            "sha256": "6e51dc0927c2561ad6c393d24f58d13e2fc8c250bf66f90230363c0209c3317c"
+          },
+          {
+            "relative_path": "ticks/GOLD/202403.tkc",
+            "size_bytes": 17989061,
+            "sha256": "bb74a2b084bf7be697bd7b77ff95f109f8a6053f9b314d0202d1db1d957967d1"
+          },
+          {
+            "relative_path": "ticks/GOLD/202404.tkc",
+            "size_bytes": 27961579,
+            "sha256": "5bb597e41ff5354cdece915becdb0a06733a9d0eea933ce792f67112e2d07bfb"
+          },
+          {
+            "relative_path": "ticks/GOLD/202405.tkc",
+            "size_bytes": 22744101,
+            "sha256": "ccda6cdb4a559c04209594d1ee53b8795fba2780b243afa9d45fff364c6748b5"
+          },
+          {
+            "relative_path": "ticks/GOLD/202406.tkc",
+            "size_bytes": 20224492,
+            "sha256": "10bdacdb160dcd7e249675426dbaf0013ade5c13a5f8dc6f4e6adad24865038f"
+          },
+          {
+            "relative_path": "ticks/GOLD/202407.tkc",
+            "size_bytes": 26086254,
+            "sha256": "6cbfeec4987beaaf2726a87a7e9f74e637abca2535f950d63d526677b492cc70"
+          },
+          {
+            "relative_path": "ticks/GOLD/202408.tkc",
+            "size_bytes": 28806056,
+            "sha256": "f7509f286f995c8ca842ccc20417fe048a4551aac85f04f1c5185db2871f2e02"
+          },
+          {
+            "relative_path": "ticks/GOLD/202409.tkc",
+            "size_bytes": 25008400,
+            "sha256": "23f0d0f94e4d628252e6cb629042a88a158b261976c288d76f584e91c1458287"
+          },
+          {
+            "relative_path": "ticks/GOLD/202410.tkc",
+            "size_bytes": 26955038,
+            "sha256": "a1ec448b82b29ca57f407451e06f358de270545659b36bdcda85e76674feb714"
+          },
+          {
+            "relative_path": "ticks/GOLD/202411.tkc",
+            "size_bytes": 27794189,
+            "sha256": "4a33559aa993c52249de0a6854aa466b0a40460abc14d462e288915de5cf9676"
+          },
+          {
+            "relative_path": "ticks/GOLD/202412.tkc",
+            "size_bytes": 22465057,
+            "sha256": "c524c453de16fa10d2f3dd80d4a309c49cf0d4a0ff4fc1e5723142b765d3963f"
+          },
+          {
+            "relative_path": "ticks/GOLD/202501.tkc",
+            "size_bytes": 23336951,
+            "sha256": "9d81cca5355bf942db0f61f40e5629ab11e6ef90b57d46b86060a8cf140dae67"
+          },
+          {
+            "relative_path": "ticks/GOLD/202502.tkc",
+            "size_bytes": 22307201,
+            "sha256": "001e60da3a4f95489d05c8dc133db9bf084989c46e125ba15fd3c1a1bef81454"
+          },
+          {
+            "relative_path": "ticks/GOLD/202503.tkc",
+            "size_bytes": 22674772,
+            "sha256": "b43069ce86b1378077f53da9848f2bfcf9af3d813cd8ef6c9a52a6f79b4ea012"
+          },
+          {
+            "relative_path": "ticks/GOLD/202504.tkc",
+            "size_bytes": 31682640,
+            "sha256": "a08cb0028ec69ce09f0ba60e80b01fb206632bef008f350de873e4ab9de4c870"
+          },
+          {
+            "relative_path": "ticks/GOLD/202505.tkc",
+            "size_bytes": 29583382,
+            "sha256": "4518e30f5e86e6e86f15491c39a6bac730541fb5d126aa30cf87a7951c2b1cd1"
+          },
+          {
+            "relative_path": "ticks/GOLD/202506.tkc",
+            "size_bytes": 25861978,
+            "sha256": "606a6d2418fe26171992d46cf74d29c9d24c6d5aaf56adddffc095b7019b5795"
+          },
+          {
+            "relative_path": "ticks/GOLD/202507.tkc",
+            "size_bytes": 22610076,
+            "sha256": "70528ae5eb30eaaa879a89715b8d20da7acf6bbd47350b853cc617e11a773e68"
+          },
+          {
+            "relative_path": "ticks/GOLD/202508.tkc",
+            "size_bytes": 19158298,
+            "sha256": "787e299ac291b89bc7ea68cb3cdb3d784adf07b4324364aba0d6f88848e7d0e2"
+          },
+          {
+            "relative_path": "ticks/GOLD/202509.tkc",
+            "size_bytes": 26389086,
+            "sha256": "27010f9ad09984d4ecd919049f2020d97e133171e931fbdcdeb3168a1b5ef07b"
+          },
+          {
+            "relative_path": "ticks/GOLD/202510.tkc",
+            "size_bytes": 40737386,
+            "sha256": "33d58c976ba8a89107ba2a7f166bd072ae864ffc87e63ff6ef9278598df5b4f4"
+          },
+          {
+            "relative_path": "ticks/GOLD/202511.tkc",
+            "size_bytes": 29089898,
+            "sha256": "625954ae522be20752223db195148cbad52fc1c2afa01dd0cc66f23195d88d64"
+          },
+          {
+            "relative_path": "ticks/GOLD/202512.tkc",
+            "size_bytes": 33697952,
+            "sha256": "c74a05ca377ae8cf5a6e7de7f953013238e130c2fba283111ae480a530723db9"
+          },
+          {
+            "relative_path": "ticks/GOLD/202601.tkc",
+            "size_bytes": 38964403,
+            "sha256": "8afbef60dfbfd235eebc7fd2c21a19a01b10230c173f2c0ba76785bfd7b9d7b0"
+          },
+          {
+            "relative_path": "ticks/GOLD/202602.tkc",
+            "size_bytes": 36619254,
+            "sha256": "707e7e6bccbd9b7d3ed295a80013d08b82e61a7e5f02c94ed511812fc2dce17e",
+            "boundary_note": "mese di confine - puo' contenere tick fuori da PRIMARY_FRESH_VERDICT_WINDOW"
+          }
+        ]
+      },
+      "h4_bars_window_aware_snapshot": {
+        "method": "CopyRates(GOLD, H4, 2023.12.20 00:00:00, 2026.03.01 00:00:00) - esatto superset Tester, ricostruito fresco immediatamente prima di QUESTO run.",
+        "file": "server/research_scripts/phase7/phase7_8h/raw_data_audit/nxs_volbrk_window_snapshot.csv",
+        "sha256": "8f0ea71a3dc963f3b354cb31daad2e0e37abd031145884940123df8ca4ac17b4",
+        "bar_count": 3379,
+        "first_bar": "2023.12.20 00:00:00",
+        "last_bar": "2026.02.27 20:00:00",
+        "bar_count_unchanged_since_7_8g": true
+      },
+      "combined_hash": "4c8a2a4d0c4393999212880d6868ea1c5c5ea589ffdcbddd8e3eac64f7932c7e"
+    },
+    "environment_identity": {
+      "broker_server": "XMGlobal-MT5 10",
+      "login": "345277936",
+      "broker_utc_offset_seconds": 10800,
+      "broker_utc_offset_matches_7_8e_7_8g_frozen": true,
+      "ea_ex5_sha256": "30efb700878dc56b3479378d2ec3971db75fdf8f4b631b87e4da8510a8c7388a",
+      "ea_ex5_mtime": 1789031867.960265,
+      "ea_source_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a",
+      "tz_raw_file": "server/research_scripts/phase7/phase7_8h/raw_data_audit/nxs_volbrk_timezone_measure_immediately_before_run2.txt",
+      "tz_raw_file_sha256": "1254d824805b1b3c17d7d36380e3832772f593542b8207151b34a36fd6dcccb6"
+    },
+    "final_seal": {
+      "data_drift_conclusion": "IRRELEVANT_POST_WINDOW_CACHE_DRIFT",
+      "window_aware_fingerprint_hash": "4c8a2a4d0c4393999212880d6868ea1c5c5ea589ffdcbddd8e3eac64f7932c7e",
+      "environment_identity_hash": "be4eccda78c4396e8d4439c221a44db2500bc11d62d0f37d64853fd9eb7aa10f",
+      "corrected_tester_config_hash": "1757a44262ac8e66cf2225307fe2a56311ce1c909dca499eced67139fe4b182b",
+      "corrected_config_artifact_hash": "30e0277a68e1f342d73881c7e42ae1c869218129b76a97217c73285a86178c02",
+      "strategy_frozen_commit": "f035d30",
+      "prereg_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "execution_config_7_8f_hash": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71"
+    },
+    "seal_verification": {
+      "data_drift_correctly_classified": true,
+      "inside_fresh_bars_unchanged": true,
+      "tick_files_all_27_present": true,
+      "environment_measured_fresh_not_assumed": true,
+      "broker_offset_matches_frozen": true,
+      "ea_ex5_present": true,
+      "corrected_config_has_exactly_one_field_diff": true,
+      "correction_type_is_technical_enablement": true,
+      "no_outcome_fields_present": true,
+      "serious_validation_not_yet_executed_at_seal_time": true
+    },
+    "final_verdict": {
+      "value": "ATOMIC_RESEAL_VERIFIED",
+      "serious_validation_still_not_executed": true
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_data_modified_or_resynced_in_this_phase": true
+  }
+}

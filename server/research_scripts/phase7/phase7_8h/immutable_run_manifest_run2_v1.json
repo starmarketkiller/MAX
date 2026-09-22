@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-09-22T08:42:11.007130+00:00",
+  "generation_script": "collect_immutable_run_manifest.py",
+  "canonical_sha256": "e48800dea4aaa575cbb2a47c821c41d3059fce287471e1073a294aebc1c5ccd4",
+  "payload": {
+    "phase": "7.8H",
+    "artifact_role": "IMMUTABLE_RUN_MANIFEST_RUN2",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "collected_before_any_interpretation": true,
+    "collected_files": {
+      "report_htm": {
+        "dest_path": "server/research_scripts/phase7/phase7_8h/immutable_run_output/volbrk_serious_3y_run2.htm",
+        "sha256": "fbac913b4908f57942d763ea8361da6809b3c4954d94a8ecf17cfd6f722a4e57",
+        "size_bytes": 108330
+      },
+      "tester_journal_logs": [
+        {
+          "dest_path": "server/research_scripts/phase7/phase7_8h/immutable_run_output/tester_journal_20260917.log",
+          "sha256": "2de993bc27aac69024ab2c714abe6799f9ca1842f582639a8fc461887d675b55",
+          "size_bytes": 73967716
+        },
+        {
+          "dest_path": "server/research_scripts/phase7/phase7_8h/immutable_run_output/tester_journal_20260922.log",
+          "sha256": "29b013b4a926ac92d02636cf32d3152f609253dac2637150c4ccfe08d8b6e0f6",
+          "size_bytes": 95990162
+        }
+      ],
+      "tester_ini_used": {
+        "dest_path": "server/research_scripts/phase7/phase7_8h/immutable_run_output/volbrk_serious_3y_run2.ini",
+        "sha256": "6f3235ddf1d8dca0594c14ea6a04fe43b6e8bbe91d0e24f2d6255c6009cfb338"
+      },
+      "ea_build_identity": {
+        "ex5_sha256": "30efb700878dc56b3479378d2ec3971db75fdf8f4b631b87e4da8510a8c7388a",
+        "ex5_mtime": 1789031867.960265,
+        "source_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a"
+      },
+      "atomic_reseal_before_run2_hash": "848457eb64167f92d8903a38b4dd946b4b02437a7acbf4a05d4490f627fcd15b"
+    },
+    "prior_run1_archived_reference": {
+      "canonical_sha256": "d7e22938b5b9aeb70ca6d9d15e864155c1539d191f90a933542054cab33dfa7a",
+      "classification": "TECHNICALLY_INVALID_ZERO_TRADE_RUN",
+      "archived_and_unmodified": true
+    },
+    "no_verdict_computed_here": true
+  }
+}

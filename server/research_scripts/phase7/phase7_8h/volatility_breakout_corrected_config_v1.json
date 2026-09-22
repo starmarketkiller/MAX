@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-09-22T06:39:15.492192+00:00",
+  "generation_script": "build_corrected_config_and_classification.py",
+  "canonical_sha256": "30e0277a68e1f342d73881c7e42ae1c869218129b76a97217c73285a86178c02",
+  "payload": {
+    "phase": "7.8H",
+    "artifact_role": "CORRECTED_CONFIG_AND_CLASSIFICATION",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "tester_execution_config_corrected": {
+      "base": "server/research_scripts/phase7/phase7_8f/volatility_breakout_execution_config_audit_v1.json (tester_execution_config_final.raw_text, invariato)",
+      "base_sha256": "86d1974f0ac61ed388261c24cc8b8021cf42d767c6db565eb04482ea07ec97a1",
+      "raw_text": "[Tester]\nExpert=NEXUS_EA_v2\nSymbol=GOLD\nPeriod=H4\nOptimization=0\nModel=4\nFromDate=2023.12.20\nToDate=2026.03.01\nForwardMode=0\nDeposit=10000\nCurrency=USD\nLeverage=500\nExecutionMode=0\nOptimizationCriterion=0\nVisual=0\nShutdownTerminal=1\nReplaceReport=1\n[TesterInputs]\nInpStrategySelector=56\nInpProfileTF=H4\nInpUseStrategyProfiles=true\nInpStrat_VolBreakoutConfirmed=true\nInpResearchUseDPT=false\nInpResearchUseRuin=false\nInpResearchUseESL=false\nInpResearchUseDailyDD=false\nInpResearchUseTotalDD=false",
+      "sha256": "1757a44262ac8e66cf2225307fe2a56311ce1c909dca499eced67139fe4b182b",
+      "single_field_added": "InpStrat_VolBreakoutConfirmed=true",
+      "fields_added": [
+        "InpStrat_VolBreakoutConfirmed=true"
+      ],
+      "fields_removed": [],
+      "not_launched_yet_at_build_time": true
+    },
+    "correction_classification": {
+      "correction_type": "TECHNICAL_ENABLEMENT_FIX",
+      "changes_strategy_identity": false,
+      "changes_strategy_parameters": false,
+      "changes_verdict_rules": false,
+      "changes_data_window": false,
+      "rationale": "InpStrategySelector=56 indicava gia' VOLATILITY_BREAKOUT_CONFIRMED come strategia da testare (verificato in tutte le fasi 7.8B-7.8F). Il master-switch dimenticato (InpStrat_VolBreakoutConfirmed, default false) impediva SOLO al codice di raggiungere la funzione del segnale (return immediato di DIR_NONE) - non introduce, modifica o rimuove alcuna logica di rilevazione/rischio/uscita della strategia.",
+      "prior_run_classification": {
+        "run_id": "7.8G_run1",
+        "classification": "TECHNICALLY_INVALID_ZERO_TRADE_RUN",
+        "not_reinterpreted_as": [
+          "FAIL",
+          "INSUFFICIENT_SAMPLE",
+          "BORDERLINE",
+          "PASS"
+        ],
+        "source_root_cause_artifact_sha256": "98599f1025637163e7ac294ead7dc6b573555d5b28351256c0846fb584cdcb81",
+        "archived_separately_and_unmodified": true
+      },
+      "single_field_diff": {
+        "added": [
+          "InpStrat_VolBreakoutConfirmed=true"
+        ],
+        "removed": [],
+        "is_exactly_one_field": true
+      }
+    },
+    "serious_validation_not_executed_at_this_step": true
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-09-22T08:42:28.222648+00:00",
+  "generation_script": "compute_serious_validation_verdict.py",
+  "canonical_sha256": "2bcf5217186a03e469db909266c6c03769d0093a0257e829c4a325809aa69883",
+  "payload": {
+    "phase": "7.8H",
+    "artifact_role": "SERIOUS_VALIDATION_RESULT",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "sanity_gate": {
+      "master_switch_true_in_ini_used": true,
+      "selector_56_in_ini_used": true,
+      "total_trades_per_official_report": "0",
+      "strategy_init_found_in_journal": false,
+      "gate_status": "TECHNICAL_EXECUTION_FAILURE_STRATEGY_NEVER_INITIALIZED"
+    },
+    "sample": {
+      "n_nominal_fresh": 0
+    },
+    "final_classification": "TECHNICAL_EXECUTION_FAILURE_STRATEGY_NEVER_INITIALIZED",
+    "no_statistical_verdict_computed": true,
+    "note": "n=0 anche nel run corretto - il sanity gate ha classificato la causa (vedi sanity_gate.gate_status) invece di applicare automaticamente INSUFFICIENT_SAMPLE."
+  }
+}
