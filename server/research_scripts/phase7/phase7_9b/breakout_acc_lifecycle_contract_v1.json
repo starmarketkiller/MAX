@@ -1,0 +1,166 @@
+{
+  "generated_at": "2026-09-22T15:10:14.334422+00:00",
+  "generation_script": "build_breakout_acc_lifecycle_formalization.py",
+  "canonical_sha256": "c0b50dafba08c7d033f542a704e0d00470a5dd77495c90cdb2ba1445ae526dac",
+  "payload": {
+    "phase": "7.9B",
+    "artifact_role": "BREAKOUT_ACC_LIFECYCLE_CONTRACT",
+    "baseline_commit": "ea0013e090ae2776fe61565392d19991c6dbecc4",
+    "candidate": "BREAKOUT_ACC",
+    "no_backtest_executed": true,
+    "no_optimization_performed": true,
+    "no_new_outcome_read": true,
+    "no_strategy_modified": true,
+    "identity": {
+      "strategy_id": "BREAKOUT_ACC",
+      "registry_entry_verified": {
+        "strategy_id": "BREAKOUT_ACC",
+        "display_name": "Breakout Acc",
+        "aliases": [],
+        "family": "TREND",
+        "status": "ACTIVE",
+        "selector_index": 9,
+        "live_implementation": true,
+        "research_implementation": true,
+        "research_parity": "APPROXIMATE",
+        "proxy_for": null,
+        "supported_symbols": [
+          "*"
+        ],
+        "supported_timeframes": [
+          "D1"
+        ],
+        "default_enabled": true,
+        "auto_disable_eligible": true,
+        "risk_class": "STANDARD",
+        "schema_version": 1
+      },
+      "selector_index_confirmed": true,
+      "master_switch": {
+        "name": "InpStrat_BREAKOUT_ACC",
+        "default_verified_in_source": true,
+        "guard_line_source": "if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;"
+      },
+      "signal_function": {
+        "name": "NXS_Strat_BreakoutAcc()",
+        "present_in_source": true,
+        "source_file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh"
+      },
+      "router_path": {
+        "call_site": "out[n++] = NXS_Strat_BreakoutAcc();",
+        "source_file": "MQL5/Experts/NEXUS_EA_v2.mq5",
+        "path_type": "PROFILI_PER_STRATEGIA (stesso percorso gia' verificato per VOLATILITY_BREAKOUT_CONFIRMED in 7.8G-I)"
+      },
+      "profile_enabled": {
+        "line": "if(name == \"BREAKOUT_ACC\")      { slMult=1.0; tpMult=4.5; htf=true ; beR=0.0; trailATR=0.0; return true; }  // 1d FORTE PF1.86 R0.63",
+        "verified_true": true
+      },
+      "profile_timeframe": {
+        "declared": "PERIOD_D1",
+        "matches_registry_supported_timeframes": true
+      },
+      "live_research_implementation_status": {
+        "live_implementation": true,
+        "research_implementation": true,
+        "research_parity": "APPROXIMATE"
+      },
+      "shared_enum_disambiguation": {
+        "enum": "STRAT_BREAKOUT_ACC",
+        "shared_by_stratName": [
+          "BREAKOUT_ACC",
+          "VOLATILITY_BREAKOUT_CONFIRMED",
+          "Z_SCORE_BREAKOUT"
+        ],
+        "warning": "L'enum condiviso NON e' l'identita' reale - la vera chiave univoca e' s.stratName (verificato distinto per ciascuna delle tre: 'BREAKOUT_ACC', 'VOLATILITY_BREAKOUT_CONFIRMED', 'Z_SCORE_BREAKOUT'). MAI confondere le tre sulla base dell'enum condiviso da solo.",
+        "not_confused_with": [
+          "raw BREAKOUT event (build_events_p71.py, Phase 7) - identita' completamente diversa",
+          "VOLATILITY_BREAKOUT_CONFIRMED (selector 56) - stesso enum, stratName diverso, gia' archiviata REFUTED in Phase 7.9A",
+          "Z_SCORE_BREAKOUT - stesso enum, terza strategia distinta, fuori scope qui"
+        ]
+      }
+    },
+    "lifecycle_contract": {
+      "source_function_hash": "aa20ba6ed752633305ccba671c38fba7b91720848cb072629f6884008a80ace2",
+      "source_function_file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh (NXS_Strat_BreakoutAcc, righe ~1534-1564)",
+      "fields": {
+        "SETUP": {
+          "status": "VERIFIED_VALUE",
+          "value": "Range di 20 barre (n=20): massimo/minimo con offset shift [3..22] (iHighest/iLowest(..., n, 3)) - esclude le 2 barre piu' recenti dal calcolo del range, coerente col nome 'Acceptance' (accettazione oltre un range gia' formato prima delle barre di conferma).",
+          "requirement": "REQUIRED"
+        },
+        "TRIGGER": {
+          "status": "VERIFIED_VALUE",
+          "value": "Doppia chiusura CONSECUTIVA oltre il range (c1 E c2, shift1 e shift2 entrambe > range_hi per BUY o < range_lo per SELL) - 'Acceptance', non un singolo tocco. Cooldown esplicito per direzione (InpBreakoutAccCooldownBars, default 8 barre) per evitare l'inseguimento ripetuto dello stesso movimento (fix del 02/09, bug trovato dall'utente: 106/201 trade nudi erano cluster sullo stesso movimento).",
+          "requirement": "REQUIRED"
+        },
+        "ENTRY": {
+          "status": "VERIFIED_VALUE",
+          "value": "A mercato (SYMBOL_ASK per BUY, SYMBOL_BID per SELL) tramite NXS_DefaultSLTP generico - NON un prezzo di chiusura barra come VOLATILITY_BREAKOUT_CONFIRMED.",
+          "requirement": "REQUIRED"
+        },
+        "DIRECTION": {
+          "status": "VERIFIED_VALUE",
+          "value": "BUY se accettazione sopra il range, SELL se sotto.",
+          "requirement": "REQUIRED"
+        },
+        "INVALIDATION_STOP": {
+          "status": "VERIFIED_VALUE",
+          "value": "NON nativo alla struttura del setup (a differenza di VOLBRK, che usa il lato opposto del range) - SL = ATR(14) corrente * slMult(1.0, dal profilo NXS_Profile_SLTP('BREAKOUT_ACC')), tramite l'overlay generico NXS_DefaultSLTP.",
+          "requirement": "SATISFIED_BY_EQUIVALENT_MECHANISM",
+          "requirement_note": "Il meccanismo e' generico-framework, ma il moltiplicatore (1.0) e' dedicato a questa strategia via profilo - risultato deterministico e ripetibile, equivalente in pratica a una dichiarazione nativa."
+        },
+        "TARGET": {
+          "status": "VERIFIED_VALUE",
+          "value": "TP = ATR(14) corrente * tpMult(4.5, dal profilo) - stesso overlay generico.",
+          "requirement": "SATISFIED_BY_EQUIVALENT_MECHANISM"
+        },
+        "TIMEOUT": {
+          "status": "VERIFIED_ABSENCE",
+          "value": "Nessun timeout nativo dichiarato nella funzione segnale. Esiste un overlay generico di framework (InpProt_MaxHoldHours=12h di default) ma e' gated da 'if(!NXS_IsResearchMode())' (verificato: True) - quindi NON si applica affatto in Research Mode (il contesto di un futuro test scientifico). In produzione (Research Mode=false) si applicherebbe un MaxHold generico di 12h, notevolmente piu' corto di una barra D1 intera - flaggato come dettaglio potenzialmente anomalo, MAI nativo alla strategia.",
+          "requirement": "NOT_REQUIRED_BY_DESIGN",
+          "requirement_note": "La strategia si affida esclusivamente a SL/TP/trailing per l'uscita - nessun timeout mai dichiarato per BREAKOUT_ACC in nessuna fonte esaminata."
+        },
+        "MANAGEMENT": {
+          "status": "VERIFIED_VALUE",
+          "value": "Filtro HTF attivo (htf=true dal profilo), trailing LARGO (NXS_Profile_TrailK =2.5xATR, 'trend/continuazione: lascia correre'), nessun breakeven esplicito (beR=0.0).",
+          "requirement": "SATISFIED_BY_EQUIVALENT_MECHANISM"
+        },
+        "POSITION_SIZING": {
+          "status": "VERIFIED_VALUE",
+          "value": "Rischio 0.5%/trade dal profilo (NXS_StrategyProfiles.mqh riga 404) - 'Tier C' (rischio basso), commento nel codice: 'Python DEBOLE, OOS2.71 smentito da WF reale 1/5 (rumore D1)' - vedi evidence_lineage per l'analisi di questa affermazione.",
+          "requirement": "SATISFIED_BY_EQUIVALENT_MECHANISM"
+        },
+        "COST_ASSUMPTIONS": {
+          "status": "NOT_EXTRACTED",
+          "value": "Nessuna dichiarazione esplicita di scenario di costo nella strategia stessa - presumibilmente costi Tester nativi come da convenzione generale del progetto, MAI verificato esplicitamente per BREAKOUT_ACC in questo audit.",
+          "requirement": "NOT_REQUIRED_BY_DESIGN"
+        },
+        "TIMEFRAME": {
+          "status": "VERIFIED_VALUE",
+          "value": "D1 (PERIOD_D1 esplicito nel profilo, coerente col registro)",
+          "requirement": "REQUIRED"
+        },
+        "INSTRUMENT": {
+          "status": "VERIFIED_VALUE",
+          "value": "GOLD/XAUUSD (registry supported_symbols=['*'], ma tutta l'evidenza storica esaminata e' specificamente su XAUUSD/GOLD).",
+          "requirement": "REQUIRED"
+        }
+      },
+      "cooldown_mechanism_source": "input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddamento per NXS_Strat_BreakoutAcc",
+      "maxhold_generic_overlay_source": "input int      InpProt_MaxHoldHours= 12;"
+    },
+    "static_reachability": {
+      "checks": {
+        "master_switch_default_true": true,
+        "selector_matches_registry": true,
+        "router_calls_function": true,
+        "function_present_in_source": true,
+        "profile_enabled_true": true,
+        "profile_timeframe_matches_registry": true
+      },
+      "verdict": "STATIC_REACHABILITY_PASS",
+      "blockers": [],
+      "method": "Verifica statica pura (lettura di codice sorgente) - NESSUNA esecuzione MT5."
+    }
+  }
+}

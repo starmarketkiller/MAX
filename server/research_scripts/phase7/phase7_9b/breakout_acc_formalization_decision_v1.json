@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-09-22T15:10:14.336947+00:00",
+  "generation_script": "build_breakout_acc_lifecycle_formalization.py",
+  "canonical_sha256": "d2b42e4763767a1305fa92ac91c252e0142fb1237e21b6868e0f186a762880dc",
+  "payload": {
+    "phase": "7.9B",
+    "artifact_role": "BREAKOUT_ACC_FORMALIZATION_DECISION",
+    "baseline_commit": "ea0013e090ae2776fe61565392d19991c6dbecc4",
+    "candidate": "BREAKOUT_ACC",
+    "no_backtest_executed": true,
+    "decision": {
+      "formalization_verdict": "FULL_STRATEGY_SPEC_VERIFIED",
+      "formalization_verdict_note": "Separato esplicitamente dalla qualita' dell'evidenza (vedi evidence_quality_audit, prevalentemente LOW/UNKNOWN) - la formalizzazione del lifecycle e' completa e verificata indipendentemente da quanto sia solido il segnale.",
+      "static_reachability": "STATIC_REACHABILITY_PASS",
+      "next_admissible_experiment": {
+        "category": "REANALYZE_EXISTING_RAW_RESULTS",
+        "target": "Il dataset Python n=27 (storico Dukascopy completo, cooldown+HTF gia' applicati, PF=3.55/DD=5.77%, prodotto in Phase E tramite server/backtest.py::run_backtest(breakout_acc_cooldown=True)) - il meccanismo esiste gia' nel motore condiviso, ma i 27 trade individuali non risultano salvati come file recuperabile (solo l'aggregato in phase_e_breakoutacc_findings.json) - andrebbero rigenerati (deterministico, riproducibile, NESSUN nuovo esperimento MT5) e poi sottoposti a un trattamento statistico rigoroso mai applicato finora (Wilson CI, dependence audit, separazione discovery/holdout dichiarata PRIMA di vedere il risultato).",
+        "rationale": "Il vero gate limitante per BREAKOUT_ACC (dichiarato esplicitamente da Phase E) e' un limite STRUTTURALE di campione sul lato MT5 (evento raro, 0.53/anno, irriducibile con lo storico oggi disponibile) - non un problema di qualita' del dataset Python, che e' gia' il piu' pulito fra le candidate esaminate. Un nuovo RUN_FAST_STRUCTURAL_VALIDATION su MT5 ripeterebbe esattamente il gate gia' dichiarato non soddisfatto da Phase E, sprecando tempo di calcolo per lo stesso esito. BUILD_CLEAN_DISCOVERY_DATASET non risolverebbe il limite (il problema non e' la pulizia del dataset ma la scarsita' di eventi nella storia MT5 disponibile). RUN_CAUSAL_DISCOVERY sarebbe eccessivo per un candidato gia' ben formalizzato. BLOCKED_NEEDS_IMPLEMENTATION_FIX non si applica (STATIC_REACHABILITY_PASS, nessun bug trovato). REANALYZE_EXISTING_RAW_RESULTS e' l'unica categoria a costo quasi zero (nessun nuovo esperimento MT5, riuso di un dataset gia' calcolato una volta) con potenziale informativo reale (determinerebbe se il segnale Python regge anche sotto un trattamento statistico rigoroso, prima di considerare l'investimento necessario per procurarsi piu' storico MT5).",
+        "not_executed_in_this_phase": true
+      },
+      "updated_research_readiness": "HOLD_NEEDS_MORE_EVIDENCE (invariato da Phase E, confermato e rafforzato da questo audit - non promosso, non refutato)",
+      "not_a_promotion": "Questo audit NON promuove BREAKOUT_ACC a candidato validato - conferma solo che e' ben formalizzato staticamente. Resta 'il candidato aperto con il prossimo passo piu' economico e informativo', non una strategia gia' comprovata."
+    },
+    "constraints_preserved": {
+      "volatility_breakout_confirmed_not_reopened": true,
+      "h006_not_reopened": true,
+      "historical_volume_contract_walls_remains_backlog_only": true
+    }
+  }
+}

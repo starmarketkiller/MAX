@@ -1,0 +1,83 @@
+{
+  "generated_at": "2026-09-22T15:10:14.335936+00:00",
+  "generation_script": "build_breakout_acc_lifecycle_formalization.py",
+  "canonical_sha256": "ef05f52fbc4125017fccbd8584039a0335591b1695d9974568b03ee563693b5c",
+  "payload": {
+    "phase": "7.9B",
+    "artifact_role": "BREAKOUT_ACC_EVIDENCE_LINEAGE",
+    "baseline_commit": "ea0013e090ae2776fe61565392d19991c6dbecc4",
+    "candidate": "BREAKOUT_ACC",
+    "no_backtest_executed": true,
+    "no_new_outcome_read": true,
+    "evidence_lineage": {
+      "sources_examined": {
+        "source_A_breakout_acc_md_july": {
+          "file": "vault/01-Trading/Strategie/Breakout Acc.md",
+          "date": "created 2026-07-12, updated 2026-07-15",
+          "claim": "Backtest '10y segmentato v2.5.0', 6 anni affidabili 2019-2024, 101 trade totali, +4.3R, 5/6 anni positivi (2019+1.2/2020+0.7/2021-0.5/2022+2.0/2023+0.5/2024+0.4).",
+          "engine_dataset_declared": "Non specificato con precisione (ne' l'engine esatto ne' la fonte dati sono dichiarati esplicitamente nel documento).",
+          "parameters_match_current_profile": "Sezione 'Configurazione attuale (v2.5.0)' del documento combacia esattamente col profilo oggi nel codice (D1, SL1.0/TP4.5, HTF=true, risk 0.5%) - MA questo NON garantisce che il BACKTEST citato (sezione separata 'Risultati') abbia usato davvero questi stessi parametri nell'engine reale.",
+          "status": "EVIDENCE_IDENTITY_UNVERIFIED - vedi contraddizione con Fonte D sotto."
+        },
+        "source_B_screening_sito_10y_july": {
+          "file": "vault/01-Trading/NEXUS EA - Screening Strategie (sito 10y).md",
+          "date": "created 2026-07-12, updated 2026-07-15",
+          "claim": "Motore Python (server/backtest.py), dati Yahoo daily ~10 anni (~3000 barre). PF 1.32->1.86 dopo un fix del filtro HTF, n=128 trade. Parametri SL1.0/TP4.5/HTF dichiarati esplicitamente, combacianti col profilo attuale.",
+          "engine_dataset_declared": "server/backtest.py, dati Yahoo Finance daily.",
+          "caveat": "PRECEDENTE al porting del cooldown (introdotto solo il 02/09, vedi commento nel codice sorgente) - questo dataset NON include il cooldown per-direzione oggi presente nella strategia.",
+          "status": "PARTIAL_IDENTITY_MATCH - parametri di profilo confermati, ma manca il cooldown introdotto successivamente."
+        },
+        "source_C_walkforward_5windows_august": {
+          "file": "server/research_scripts/big3_1d_walkforward.py (13/08) + citato in vault/01-Trading/NEXUS EA - Riverifica via Sito su Storico Esteso 2016-2026 (12-08).md riga 115 e vault/01-Trading/_phase4_artifacts/semantic_strategy_audit.md riga 179",
+          "claim": "Walk-forward a 5 finestre, PF aggregato citato altrove come 2.71 (n=38, 2019-2026) o 2.01 (n=54, sito 2016-2026), ma SOLO 1/5 finestre vincenti - citato nel codice sorgente (NXS_StrategyProfiles.mqh:404) come 'smentita' dell'edge Python.",
+          "engine_dataset_declared": "server/backtest.py, XAUUSD, bars=60000.",
+          "parameters_found_in_script": "ATR_SL=1.5, ATR_TP=3.0 (fissi, uniformi per MACD/TURTLE_SOUP/BREAKOUT_ACC insieme) - DIVERSI dal profilo dedicato attuale (SL1.0/TP4.5). Nessun filtro HTF esplicito nello script.",
+          "status": "EVIDENCE_IDENTITY_UNVERIFIED - parametri concreti trovati (SL1.5/TP3.0, no HTF) NON corrispondono al profilo attuale (SL1.0/TP4.5/HTF=true). Il commento nel codice sorgente che tratta questo risultato come 'il verdetto vero' del profilo attuale NON e' supportato da un'identita' di parametri verificata - annotato qui, non corretto nel codice (fuori scope di questa fase).",
+          "exact_source_of_cited_numbers_2_71_38": "NON rintracciato con certezza assoluta (nessun file di log/output salvato trovato con questi esatti numeri) - probabilmente un'esecuzione ad-hoc di big3_1d_walkforward.py o script imparentato mai salvata, o un aggregato calcolato a mano dalle 5 finestre stampate a schermo. Dichiarato onestamente UNKNOWN piuttosto che assunto."
+        },
+        "source_D_phase_e_september": {
+          "files": [
+            "vault/01-Trading/NEXUS - Phase E Candidate Evidence Completion.md (16/09, commit d6b067c/f3272b5)",
+            "results/cost_calibration_67_rerun/phase_e_breakoutacc_findings.json"
+          ],
+          "phase_e_json_sha256": "76b25b4a44ce24e9a70f2265d42ee3e4de9b270b47231048f75db3425a252e0b",
+          "date": "2026-09-16 - PIU' RECENTE di tutte le fonti A/B/C, PRECEDENTE al registro lifecycle 7.7A (2026-09-21).",
+          "claim": "Audit di parity dedicato e rigoroso fra il motore MQL5 reale e il motore Python (stesso codice-logica, cooldown incluso, gia' portato e verificato). Semantic parity: MINOR_DIFFERENCE (post-repair Fase D). Trade parity: eseguita su DUE finestre - 12 mesi predefiniti (1 solo trade MT5, insufficiente) e MASSIMA INTERSEZIONE STORICA disponibile (2019-02-03/2026-08-14, ~7.5 anni, runtime reale ~3h40m): **SOLO 4 TRADE MT5 REALI IN TUTTO IL PERIODO, TUTTI IN PERDITA** (-15.9/-11.7/-17.0/-15.1). Prezzi di apertura 2019-2020 (~$1333-1644) confermati storicamente genuini (dati broker reali, non sintetici).",
+          "python_same_logic_result": "n=27 (storico Dukascopy completo, CON cooldown+HTF gia' applicati), PF=3.55, DD=5.77% - 'semanticamente la piu' pulita delle 4 candidate esaminate in Fase D' (SAR/MACD/BREAKOUT_ACC/altra).",
+          "official_verdict": "HOLD_NEEDS_MORE_EVIDENCE",
+          "official_verdict_reason": "Fast Structural NON eseguito - gate esplicito ('parity informativa + cooldown corretto' prima di procedere) NON soddisfatto: 4 eventi/7.5 anni = 0.53/anno, tasso troppo raro per rendere qualunque finestra 6-24 mesi informativa per caso. Dichiarato esplicitamente 'irriducibile dato lo storico massimo disponibile nell'intersezione con Python' - non un artefatto di cherry-picking, non un rigetto della logica.",
+          "status": "EVIDENCE_IDENTITY_CONFIRMED - l'unica fonte che ha verificato esplicitamente la parity fra Python e MQL5 REALE con la logica oggi in vigore (cooldown incluso). La fonte con la massima confidenza di identita' col codice oggi formalizzato."
+        }
+      },
+      "critical_contradiction_found": {
+        "description": "Fonte A (luglio) dichiara 101 trade/+4.3R/5-6anni-positivi sullo stesso arco temporale (~6-7.5 anni) in cui Fonte D (settembre, verifica dedicata e rigorosa) trova SOLO 4 trade MT5 reali, TUTTI in perdita. Le due cifre (101 vs 4 trade) sono INCOMPATIBILI sullo stesso periodo e sulla stessa logica - non e' possibile che entrambe descrivano correttamente lo stesso esperimento.",
+        "resolution": "Fonte D e' trattata come autorevole: e' cronologicamente successiva, metodologicamente piu' rigorosa (parity Python/MT5 esplicitamente verificata, runtime reale documentato ~3h40m, finestra dichiarata PRIMA di vedere il risultato), e usa dati confermati genuini. Fonte A resta di provenienza NON verificabile con precisione (engine/dataset non dichiarati) e viene quindi RETROCESSA a EVIDENCE_IDENTITY_UNVERIFIED, non trattata come discovery evidence canonica per il codice oggi formalizzato - esattamente come richiesto dal punto 7 dell'istruzione.",
+        "not_corrected_retroactively": "Nessun file precedente (Breakout Acc.md, 7.7A) e' stato modificato - questa e' un'annotazione di questa fase, non una correzione retroattiva."
+      },
+      "governance_gap_found": {
+        "description": "Il registro lifecycle 7.7A (2026-09-21) cita SOLO la fonte ottimistica (A, MOC-Strategie.md/+4.3R) come base per la classificazione 'DISCOVERY_SUPPORTED... la piu' stabile del nucleo hedge' - senza mai menzionare Phase E (2026-09-16), CRONOLOGICAMENTE PRECEDENTE a 7.7A stesso, che aveva gia' stabilito un verdetto esplicito e diverso (HOLD_NEEDS_MORE_EVIDENCE, causa: campione MT5 insufficiente).",
+        "same_pattern_as": "Analogo ai 'registry_vocabulary_drift'/'registry_status_conflict' gia' documentati in 7.7A stesso per H006/SAR_LIVE/ADX_RSI - un pattern ricorrente di evidenza piu' recente/rigorosa non propagata ai registri sommario.",
+        "not_corrected_here": "Segnalato, non corretto retroattivamente in 7.7A (fuori scope di questa fase) - la correzione appropriata e' che QUESTO artifact (7.9B) diventi ora la fonte di riferimento aggiornata per BREAKOUT_ACC."
+      }
+    },
+    "evidence_quality_audit": {
+      "scale": "LOW / MEDIUM / HIGH / UNKNOWN - nessuno score numerico.",
+      "strategy_formalization_completeness": "HIGH",
+      "strategy_formalization_completeness_note": "Ogni campo del lifecycle ha una risposta esplicita (VERIFIED_VALUE/VERIFIED_ABSENCE) dopo questo audit - nessun campo NOT_EXTRACTED tranne COST_ASSUMPTIONS (esplicitamente NOT_REQUIRED_BY_DESIGN).",
+      "signal_identity_confidence": "HIGH",
+      "signal_identity_confidence_note": "Semantic parity Python/MQL5 verificata esplicitamente in Phase E: MINOR_DIFFERENCE (post-repair) - la logica di doppia chiusura + cooldown e' confermata identica fra i due motori.",
+      "execution_identity_confidence": "LOW",
+      "execution_identity_confidence_note": "Solo 4 trade MT5 reali osservati su 7.5 anni - insufficiente per qualunque giudizio affidabile sull'esecuzione reale.",
+      "sample_quality": "LOW",
+      "sample_quality_note": "n=4 su esecuzione MT5 reale (irriducibile con lo storico oggi disponibile); n=27 solo sul motore di ricerca Python, non sull'esecuzione reale.",
+      "cost_realism": "MEDIUM",
+      "cost_realism_note": "MT5 usa costi Tester nativi (realistici) ma su un campione troppo piccolo per essere conclusivo; Python (n=27) non dichiara esplicitamente uno scenario di costo in Phase E - non verificato se idealizzato o calibrato.",
+      "independence": "UNKNOWN",
+      "independence_note": "Nessun dependence audit mai applicato a nessuna delle fonti esaminate per questo candidato.",
+      "discovery_validation_separation": "UNKNOWN",
+      "discovery_validation_separation_note": "Nessuna fonte dichiara esplicitamente una separazione discovery/holdout per BREAKOUT_ACC.",
+      "statistical_rigor": "LOW",
+      "statistical_rigor_note": "Nessun Wilson CI, nessun CI95 bootstrap, nessun trattamento statistico rigoroso mai applicato a questo candidato in nessuna fase precedente."
+    }
+  }
+}
