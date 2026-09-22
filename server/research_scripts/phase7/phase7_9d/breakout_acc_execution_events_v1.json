@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-09-22T21:12:12.535826+00:00",
+  "generation_script": "build_execution_events_and_gate_counts.py",
+  "canonical_sha256": "83d3da553ef8725130c2a16a17e095feb55e00d729d7c35fdf46cd377ade7266",
+  "payload": {
+    "phase": "7.9D",
+    "candidate": "BREAKOUT_ACC",
+    "source": "Journal Tester reale (NXS_TRACE lines), run_id marker=GOLD_2019.02.03",
+    "n_events": 4,
+    "events": [
+      {
+        "signal_id": "1",
+        "timestamp": "2019.06.05 17:30:00",
+        "direction_strategy": "BREAKOUT_ACC",
+        "generated_detail": "Acceptance_above_range",
+        "terminal_stage": "OPENED",
+        "gate_reason": "OPENED",
+        "detail": "",
+        "position_id": "2"
+      },
+      {
+        "signal_id": "2",
+        "timestamp": "2020.01.06 01:45:00",
+        "direction_strategy": "BREAKOUT_ACC",
+        "generated_detail": "Acceptance_above_range",
+        "terminal_stage": "OPENED",
+        "gate_reason": "OPENED",
+        "detail": "",
+        "position_id": "4"
+      },
+      {
+        "signal_id": "3",
+        "timestamp": "2020.02.21 18:00:00",
+        "direction_strategy": "BREAKOUT_ACC",
+        "generated_detail": "Acceptance_above_range",
+        "terminal_stage": "OPENED",
+        "gate_reason": "OPENED",
+        "detail": "",
+        "position_id": "6"
+      },
+      {
+        "signal_id": "4",
+        "timestamp": "2023.09.28 18:15:00",
+        "direction_strategy": "BREAKOUT_ACC",
+        "generated_detail": "Acceptance_below_range",
+        "terminal_stage": "OPENED",
+        "gate_reason": "OPENED",
+        "detail": "",
+        "position_id": "8"
+      }
+    ]
+  }
+}

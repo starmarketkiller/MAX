@@ -1,0 +1,5 @@
+signal_id,timestamp,strategy,generated_detail,terminal_stage,gate_reason,detail,position_id
+1,2019.06.05 17:30:00,BREAKOUT_ACC,Acceptance_above_range,OPENED,OPENED,,2
+2,2020.01.06 01:45:00,BREAKOUT_ACC,Acceptance_above_range,OPENED,OPENED,,4
+3,2020.02.21 18:00:00,BREAKOUT_ACC,Acceptance_above_range,OPENED,OPENED,,6
+4,2023.09.28 18:15:00,BREAKOUT_ACC,Acceptance_below_range,OPENED,OPENED,,8

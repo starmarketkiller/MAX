@@ -1,0 +1,153 @@
+{
+  "generated_at": "2026-09-22T21:12:38.296181+00:00",
+  "generation_script": "build_execution_parity_decision.py",
+  "canonical_sha256": "a2307135c89a9ccb03b0f37e6a7c2b8fd60d1a181e4deaab84674d37b1e38008",
+  "payload": {
+    "phase": "7.9D",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "6b16c09c9bc8d5184cef35e2e2d100161a6d4c00",
+    "inherited_result": {
+      "signal_parity_7_9c": "SIGNAL_PARITY_PARTIAL",
+      "mt5_signal_fire_7_9c": 80,
+      "python_signal_fire_7_9c": 83,
+      "execution_gap_dominant_7_9c": true,
+      "phase_e_real_mt5_trades": 4,
+      "next_decision_7_9c": "FIX_PARITY_BEFORE_STATISTICS"
+    },
+    "central_finding": "Il run diagnostico reale (EA vivo, Research Mode, stesso identico codice/finestra di Phase E) mostra generated=4, blocked=0, opened=4 - un funnel di esecuzione PERFETTAMENTE PULITO. Non esiste alcun gap di esecuzione da spiegare. Il divario 80-vs-4 ipotizzato dalla 7.9C non era MAI stato un problema di gating post-segnale: era gia' un problema di sovra-stima nel conteggio dei segnali attesi, nello strumento read-only stesso.",
+    "funnel_accounting": {
+      "total_generated": 4,
+      "opened": 4,
+      "blocked": 0,
+      "broker_reject": 0,
+      "invariant_holds": true,
+      "gate_reason_counts": {}
+    },
+    "certificate_cross_check": {
+      "certificate_path": "../../AppData/Roaming/MetaQuotes/Terminal/Common/Files/NEXUS/certificates/GOLD_2019.02.03_00-00-00_sel9.json",
+      "certificate_generated": 4,
+      "certificate_blocked": 0,
+      "certificate_opened": 4,
+      "certificate_broker_reject": 0,
+      "certificate_gate_reason_counts": {},
+      "certificate_verdict": "PASS",
+      "matches_journal_recomputation": true
+    },
+    "reproducibility_check_vs_phase_e": {
+      "phase_e_known_trades": [
+        {
+          "open": "2019-06-05 17:30",
+          "side": "BUY"
+        },
+        {
+          "open": "2020-01-06 01:45",
+          "side": "BUY"
+        },
+        {
+          "open": "2020-02-21 18:00",
+          "side": "BUY"
+        },
+        {
+          "open": "2023-09-28 18:15",
+          "side": "SELL"
+        }
+      ],
+      "diagnostic_run_opened_trades": [
+        {
+          "timestamp": "2019.06.05 17:30:00",
+          "direction_detail": "Acceptance_above_range",
+          "position_id": "2"
+        },
+        {
+          "timestamp": "2020.01.06 01:45:00",
+          "direction_detail": "Acceptance_above_range",
+          "position_id": "4"
+        },
+        {
+          "timestamp": "2020.02.21 18:00:00",
+          "direction_detail": "Acceptance_above_range",
+          "position_id": "6"
+        },
+        {
+          "timestamp": "2023.09.28 18:15:00",
+          "direction_detail": "Acceptance_below_range",
+          "position_id": "8"
+        }
+      ],
+      "count_matches_phase_e": true,
+      "timestamps_match_phase_e_exactly": true,
+      "note": "I 4 trade del run diagnostico coincidono con i 4 trade di Phase E (results/cost_calibration_67_rerun/phase_e_breakoutacc_findings.json) allo stesso minuto e stessa direzione per tutti e 4 - l'EA e' deterministico e pienamente riproducibile su questa configurazione/finestra."
+    },
+    "signal_reconstruction_vs_real_ea_pairing": {
+      "expected_signal_fire_from_7_9c_readonly_reconstruction": 80,
+      "observed_generated_by_actual_ea_in_diagnostic_run": 4,
+      "matched": 4,
+      "missing_in_diagnostic_run": 76,
+      "extra_in_diagnostic_run": 0,
+      "missing_sample_first10": [
+        "2019-04-18",
+        "2019-05-15",
+        "2019-06-21",
+        "2019-08-07",
+        "2019-12-27",
+        "2020-03-17",
+        "2020-04-14",
+        "2020-06-24",
+        "2020-07-09",
+        "2020-07-23"
+      ],
+      "extra_sample": [],
+      "interpretation": "76 degli 80 SIGNAL_FIRE stimati dallo script read-only 7.9C NON hanno alcuna controparte nell'EA reale (missing_in_diagnostic_run=76, 95% del totale stimato) - questo distingue nettamente signal reconstruction parity (7.9C, lettura statica bar-per-bar, ora rivelata NON affidabile su scala) da downstream execution gating (7.9D, EA reale in Research Mode, verificato PULITO: 0 blocchi, 4/4 aperti). Il gap non e' MAI stato nell'esecuzione - era gia' nella stima del numero di segnali attesi."
+    },
+    "date_offset_diagnostic_note": {
+      "findings": [
+        {
+          "real_date": "2019-06-05",
+          "offset_days": -1,
+          "7_9c_row_date": "2019.06.04",
+          "7_9c_event_type": "SIGNAL_EXECUTED_ELIGIBLE"
+        },
+        {
+          "real_date": "2020-01-06",
+          "offset_days": 0,
+          "7_9c_row_date": "2020.01.06",
+          "7_9c_event_type": "SIGNAL_EXECUTED_ELIGIBLE"
+        },
+        {
+          "real_date": "2020-02-21",
+          "offset_days": -1,
+          "7_9c_row_date": "2020.02.20",
+          "7_9c_event_type": "SIGNAL_EXECUTED_ELIGIBLE"
+        },
+        {
+          "real_date": "2023-09-28",
+          "offset_days": 0,
+          "7_9c_row_date": "2023.09.28",
+          "7_9c_event_type": "SIGNAL_EXECUTED_ELIGIBLE"
+        }
+      ],
+      "caveat": "Osservazione preliminare (i 4 eventi reali compaiono nello stream 7.9C con un offset di 1 giorno) - utile come indizio per una futura indagine, NON una spiegazione completa del fattore ~20x sul totale, e NON ulteriormente investigata in questa fase (fuori mandato di 7.9D)."
+    },
+    "one_position_hypothesis_measured_directly": {
+      "gate_open_position_count_real": 0,
+      "note": "La stima NAIVE ~40/80 della 7.9C (simulazione offline conservativa one-position-at-a-time) e' risultata NON PERTINENTE: con soli 4 segnali generati in 7,5 anni, il gate one-position-per-strategia non e' mai stato anche solo sfiorato (0 occorrenze osservate)."
+    },
+    "final_verdict": "EXECUTION_GAP_RESOLVED_OTHER",
+    "final_verdict_detail": {
+      "reason": "Funnel di esecuzione PULITO: 0 blocchi, 0 broker reject, 4/4 segnali generati diventano trade aperti (execution_rate=100%). Il gap ipotizzato da 7.9C (80 segnali attesi contro 4 trade Phase E) non esiste a livello di esecuzione - esisteva GIA' a livello di conteggio dei segnali attesi (vedi signal_reconstruction_vs_real_ea_pairing).",
+      "gate_bucket_totals": {},
+      "dominant_bucket": null
+    },
+    "next_decision": "FIX_EXECUTION_IMPLEMENTATION_BEFORE_RESEARCH",
+    "next_decision_rationale": "L'EA live e' verificato CORRETTO e deterministico (4/4 trade riprodotti identici a Phase E, minuto per minuto) - non serve alcuna correzione al motore di trading. L'implementazione che necessita una correzione PRIMA di qualunque ricerca statistica e' invece lo script read-only di ricostruzione segnale della fase 7.9C (NXS_BreakoutAccSignalDiagnostic.mq5) e, per estensione, va rivalutata la funzione Python pre-esistente (server/backtest.py:sig_breakout_acc) che produce conteggi dello stesso ordine di grandezza gonfiato (74-85) - nessuna delle due e' stata dimostrata fedele al comportamento dell'EA live su scala. REBUILD_CANONICAL_BREAKOUT_ACC_DATASET sarebbe prematuro: costruire un dataset su una stima di frequenza del segnale che diverge di un fattore ~20x dal comportamento osservato del motore reale produrrebbe un numero preciso ma privo di significato. BLOCKED_EXECUTION_IDENTITY_UNRESOLVED non si applica: l'IDENTITA' DI ESECUZIONE e' invece perfettamente risolta e riproducibile.",
+    "next_decision_scope_note": "La diagnosi PRECISA del perche' lo strumento 7.9C sovra-conta (osservato: i 4 eventi reali compaiono nello stream 7.9C con un apparente offset di label di 1 giorno - vedi date_offset_check - ma questo NON spiega da solo un fattore ~20x sul totale) e' ESPLICITAMENTE fuori scope per la fase 7.9D, il cui mandato era il funnel di ESECUZIONE (ora chiuso, risultato negativo/pulito) - non la fedelta' della ricostruzione del segnale, che e' materia della 7.9C/7.9E, non riaperta qui.",
+    "next_step_not_executed": true,
+    "mismatch_semantics_correction_applied": {
+      "7_9c_feed_bar_difference_relabeled": "FEED_BAR_DIFFERENCE_COMPATIBLE",
+      "rationale": "Per richiesta esplicita dell'utente: i 14 MT5_ONLY + 17 PYTHON_ONLY della 7.9C erano compatibili con differenze di feed, ma non dimostrati evento-per-evento - annotazione preservata qui; superata in rilevanza dalla scoperta piu' ampia di questa fase (il problema non e' il feed, e' la sovra-stima strutturale del conteggio segnali). L'artifact frozen 7.9C NON e' stato modificato retroattivamente."
+    },
+    "volbrk_not_reopened": true,
+    "h006_not_reopened": true,
+    "hvcw_backlog_only": true
+  }
+}
