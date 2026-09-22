@@ -1,0 +1,73 @@
+{
+  "generated_at": "2026-09-22T14:50:55.507034+00:00",
+  "generation_script": "build_postmortem_and_reprioritization.py (section_5, estratto standalone)",
+  "canonical_sha256": "f848147548db6dade54565ca84f00179df10dc3fdce8cdea9494f70ab0699790",
+  "payload": {
+    "name": "NEXUS_SERIOUS_VALIDATION_PREFLIGHT_CHECKLIST_V1",
+    "rule": "Un futuro Serious validation NON deve partire senza aver verificato, in ordine, TUTTI i punti seguenti - ciascuno verificato EMPIRICAMENTE (misurato/ricalcolato dai file reali), mai assunto da un valore storico o da un default silenzioso.",
+    "checklist": [
+      {
+        "id": 1,
+        "item": "EX5 compilato dal sorgente inteso",
+        "verify": "mtime EX5 >= data dell'ultimo commit che tocca il file .mq5 della strategia; se piu' vecchio, ricompilare da HEAD prima di procedere."
+      },
+      {
+        "id": 2,
+        "item": "Hash source/EX5 registrati",
+        "verify": "sha256 di entrambi calcolato e congelato nell'atomic reseal, non assunto."
+      },
+      {
+        "id": 3,
+        "item": "L'input della strategia richiesta esiste davvero nell'EX5",
+        "verify": "cercare il nome esatto del parametro nel dump automatico dei parametri generato da MT5 all'avvio (journal) - se assente vicino ai parametri adiacenti nel sorgente, l'EX5 non lo conosce."
+      },
+      {
+        "id": 4,
+        "item": "Master switch della strategia ON",
+        "verify": "InpStrat_<Nome>=true esplicito nel tester config, mai un default assunto."
+      },
+      {
+        "id": 5,
+        "item": "Selector corretto",
+        "verify": "InpStrategySelector verificato contro contracts/strategy-registry.json."
+      },
+      {
+        "id": 6,
+        "item": "Research Mode ON (se e' un test di ricerca)",
+        "verify": "InpResearchMode=true esplicito - verificare NXS_ResearchPreflight() nel sorgente per i prerequisiti (InpUseStrategyProfiles=true, InpProfileMultiTF=true, InpDataCollectionMode=false, InpUseInstitutionalCore=false)."
+      },
+      {
+        "id": 7,
+        "item": "Research preflight PASS",
+        "verify": "0 righe [RESEARCH][FATAL] nel journal del mini-run di preflight."
+      },
+      {
+        "id": 8,
+        "item": "Un mini-run tecnico breve raggiunge davvero il codice della strategia",
+        "verify": "eseguire un run di 1 mese PRIMA del run completo; confermare almeno un trade con strategy=<NOME_REALE> nel trade log (non solo il log di init, che puo' usare un nome fallback se la lookup di osservabilita' non e' aggiornata) - MAI usato come evidenza scientifica, solo come prova tecnica."
+      },
+      {
+        "id": 9,
+        "item": "Fingerprint dati window-aware corrente",
+        "verify": "hash dei file tick rilevanti + snapshot deterministico delle barre nell'esatto superset FromDate->ToDate, ricostruito FRESCO immediatamente prima del run - MAI l'hash dell'intero file storico annuale."
+      },
+      {
+        "id": 10,
+        "item": "Semantica esatta della finestra",
+        "verify": "FromDate inclusivo da mezzanotte, ToDate esclusivo (misurato empiricamente una volta per l'ambiente, riusabile) - la regola di filtro post-run per i boundary non allineati a mezzanotte congelata PRIMA di vedere risultati."
+      },
+      {
+        "id": 11,
+        "item": "Timezone broker misurato",
+        "verify": "TimeTradeServer()-TimeGMT() misurato direttamente, immediatamente prima del run - mai una costante di progetto."
+      },
+      {
+        "id": 12,
+        "item": "Percorso di raccolta raw output verificato",
+        "verify": "sapere ESATTAMENTE dove il report/trade-log/journal finiranno prima di lanciare il run lungo - verificato nel mini-run di preflight (punto 8)."
+      }
+    ],
+    "reusable_as": "server/research_scripts/phase7/phase7_9a/serious_validation_preflight_checklist_v1.json (file standalone, stesso contenuto, hash indipendente incrociato nel payload principale)",
+    "applies_to": "Qualunque futuro Serious validation su qualunque candidato di questo progetto, non solo VOLATILITY_BREAKOUT_CONFIRMED."
+  }
+}

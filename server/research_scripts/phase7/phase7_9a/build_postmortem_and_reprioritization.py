@@ -1,0 +1,474 @@
+#!/usr/bin/env python3
+"""Phase 7.9A - Postmortem & Candidate Reprioritization.
+
+NESSUN nuovo backtest, NESSUNA modifica a strategie, NESSUN rescue. Solo
+riconciliazione documentale, aggiornamento del lifecycle/evidence layer
+(nuovo artifact, mai una modifica retroattiva dei precedenti), postmortem
+del processo, checklist di preflight permanente, inventario dei
+candidati rimasti, e una decisione qualitativa sul prossimo esperimento.
+"""
+import os
+import sys
+
+PHASE79A_DIR = os.path.dirname(os.path.abspath(__file__))
+PHASE7_DIR = os.path.abspath(os.path.join(PHASE79A_DIR, ".."))
+ROOT = os.path.abspath(os.path.join(PHASE79A_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import canonical_sha256, load_json, save_json, wrap_with_provenance  # noqa: E402
+
+BASELINE_COMMIT = "f9550050f853c7dd4fefa3ef5c4315aa8ac3fcd7"
+
+RESULT_78I_PATH = os.path.join(PHASE7_DIR, "phase7_8i", "volatility_breakout_serious_3y_result_v1.json")
+RESEAL_78I_PATH = os.path.join(PHASE7_DIR, "phase7_8i", "volatility_breakout_atomic_reseal_before_run3_v1.json")
+STRUCT_ELIGIBILITY_78B_PATH = os.path.join(PHASE7_DIR, "phase7_7b", "structural_eligibility_semantics_correction_v1.json")
+LIFECYCLE_REGISTRY_77A_PATH = os.path.join(PHASE7_DIR, "phase7_7a", "strategy_lifecycle_registry_v1.json")
+
+
+def section_1_reconciliation():
+    result_doc = load_json(RESULT_78I_PATH)
+    p = result_doc["payload"]
+    da = p["direction_asymmetry"]["per_direction"]
+
+    return {
+        "canonical_source": {
+            "file": "server/research_scripts/phase7/phase7_8i/volatility_breakout_serious_3y_result_v1.json",
+            "canonical_sha256": result_doc["canonical_sha256"],
+            "treated_as_sole_authority": True,
+            "modified_in_this_phase": False,
+        },
+        "narrative_discrepancy_found": {
+            "where": "vault/01-Trading/NEXUS - Phase 7.8I ....md (sezione Risultato) e il riepilogo "
+                     "conversazionale finale di quella fase - MAI nell'artifact json.",
+            "wrong_values_previously_reported": {
+                "BUY": {"n": 63, "expectancy_R": -0.081, "pf": 0.842},
+                "SELL": {"n": 120, "expectancy_R": -0.060, "pf": 0.881},
+            },
+            "correct_values_canonical": {
+                "BUY": {"n": da["BUY"]["n"], "expectancy_R": da["BUY"]["expectancy_R"], "pf": da["BUY"]["pf"]},
+                "SELL": {"n": da["SELL"]["n"], "expectancy_R": da["SELL"]["expectancy_R"], "pf": da["SELL"]["pf"]},
+            },
+            "root_cause": "Errore di trascrizione manuale nel report narrativo - il verificatore "
+                         "indipendente di 7.8I (verify_serious_validation_result.py) NON controllava "
+                         "esplicitamente i numeri di direction_asymmetry (solo l'endpoint primario "
+                         "aggregato, PF, CI95, e la classificazione finale) - un gap del verificatore "
+                         "che ha permesso all'errore di trascrizione di non essere intercettato.",
+            "corrected_in": "vault/01-Trading/NEXUS - Phase 7.8I ....md, nota di correzione datata "
+                           "2026-09-22 (Phase 7.9A) - il testo narrativo e' stato corretto in-place "
+                           "(non e' un artifact di dati canonico, la correzione preserva la "
+                           "trasparenza storica invece di lasciare un errore permanente).",
+        },
+        "aggregate_verdict_unchanged": {
+            "expectancy_R_broker_baseline": p["primary_endpoint"]["value"],
+            "ci95": p["primary_endpoint"]["ci95_moving_block_bootstrap"],
+            "profit_factor": p["secondary_diagnostics"]["profit_factor_broker_baseline"],
+            "final_classification": p["final_classification"],
+            "no_rescue_no_sell_only_created": True,
+        },
+        "directional_asymmetry_note": "SELL-positive/BUY-negative e' un'osservazione POST-VALIDAZIONE "
+            "(vedi sezione 3) - non cambia il verdetto aggregato FAIL, non giustifica alcun rescue "
+            "(one_side_materially_negative_while_saving_aggregate=false, dato che l'aggregato stesso "
+            "e' negativo - SELL non 'salva' un aggregato che resta comunque in perdita).",
+    }
+
+
+def section_2_archive_lifecycle(prior_struct_doc, prior_lifecycle_doc):
+    prior_state = prior_struct_doc["payload"]["corrected_gate_results_by_candidate"]["VOLATILITY_BREAKOUT_CONFIRMED"]
+    prior_readiness = prior_struct_doc["payload"]["research_readiness_by_candidate_unchanged"]["VOLATILITY_BREAKOUT_CONFIRMED"]
+
+    return {
+        "candidate": "VOLATILITY_BREAKOUT_CONFIRMED",
+        "source_artifacts_untouched": {
+            "lifecycle_registry_7_7a": {
+                "file": "server/research_scripts/phase7/phase7_7a/strategy_lifecycle_registry_v1.json",
+                "canonical_sha256": prior_lifecycle_doc["canonical_sha256"], "modified_in_this_phase": False,
+            },
+            "structural_eligibility_7_7b": {
+                "file": "server/research_scripts/phase7/phase7_7b/structural_eligibility_semantics_correction_v1.json",
+                "canonical_sha256": prior_struct_doc["canonical_sha256"], "modified_in_this_phase": False,
+            },
+        },
+        "prior_state_as_of_7_7b": {
+            "structural_status": prior_state["corrected_structural_status"],
+            "research_readiness": prior_readiness["meta_filter_research_readiness"],
+            "meta_filter_ready_gate_passed": prior_state["meta_filter_ready_gate_passed"],
+            "next_required_evidence_as_stated_in_7_7b": prior_readiness["next_required_evidence"],
+        },
+        "new_state_as_of_7_9a": {
+            "research_readiness": "REFUTED_ARCHIVED",
+            "serious_validation": "FAIL",
+            "execution_candidate": False,
+            "meta_filter_ready": False,
+            "deployable": False,
+            "lifecycle_stage": "ARCHIVE_CURRENT_DESIGN",
+        },
+        "transition_rationale": "Il 'next_required_evidence' dichiarato in 7.7B ('Serious 3Y backtest') e' "
+            "stato esattamente prodotto in 7.8B-7.8I - risultato FAIL, confermato indipendentemente due "
+            "volte (builder + reimplementazione separata del matching). Questo chiude il ciclo di "
+            "evidenza aperto in 7.7B, non lo contraddice: il candidato NON era mai stato promosso "
+            "(era NEEDS_MORE_EVIDENCE, non un edge confermato) - ora l'evidenza mancante e' arrivata "
+            "ed e' negativa.",
+        "full_evidence_chain_hashes": {
+            "7_8b_prereg": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+            "7_8c_authorization": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+            "7_8i_result": None,  # popolato sotto dal chiamante
+        },
+        "preserve_all_provenance": True,
+        "this_artifact_modifies_no_prior_frozen_artifact": True,
+    }
+
+
+def section_3_directional_observation():
+    return {
+        "observation": "SELL n=127 expectancy_R=+0.223 PF=1.625 positivo; BUY n=56 expectancy_R=-0.726 "
+                       "PF=0.146 fortemente negativo - asimmetria direzionale marcata.",
+        "classification": "POST_VALIDATION_OBSERVATION",
+        "explicitly_not": "RESCUED_STRATEGY",
+        "why_not_a_rescue": "L'asimmetria era gia' pre-registrata come diagnostico (7.8B, direction_"
+            "asymmetry_diagnostic) - osservata DOPO il verdetto FAIL, non usata per cambiarlo o per "
+            "costruire una nuova strategia SELL-only nello stesso esperimento. Nessuna direzione e' "
+            "stata eliminata dal campione (forbidden_action_taken=false in 7.8I).",
+        "no_automatic_sell_only_variant_created": True,
+        "future_rule_if_sell_only_variant_proposed": {
+            "name_example": "VOLATILITY_BREAKOUT_SELL_ONLY",
+            "must_be": "NEW_HYPOTHESIS_IDENTITY",
+            "requires": ["NEW_DISCOVERY", "NEW_PREREGISTRATION"],
+            "forbidden": "Riusare il risultato SELL di 7.8I come se fosse gia' una validazione della "
+                        "nuova ipotesi - il campione SELL qui e' un sottoinsieme post-hoc di un "
+                        "esperimento pre-registrato per l'aggregato, non un test indipendente della "
+                        "direzione isolata.",
+        },
+    }
+
+
+def section_4_postmortem():
+    return {
+        "strategy_failure": {
+            "negative_aggregate_expectancy": True,
+            "pf_below_1": True,
+            "ci95_includes_zero": True,
+            "stress_scenario_negative": True,
+            "temporal_instability": "Solo 1/3 segmenti (T3) non-negativo, criterio richiede >=2/3.",
+            "conclusion": "Fallimento statistico netto, non borderline - sign_criterion fallisce "
+                         "chiaramente (PF=0.867<1.0 AND expectancy_R=-0.067<0).",
+        },
+        "execution_pipeline_failures_discovered_during_validation": [
+            {"lesson": "STALE_EX5_DETECTION", "detail": "L'EX5 deployato puo' precedere il commit "
+             "sorgente che introduce la strategia da testare - MAI assunto che 'Expert=X' nel tester "
+             "config usi automaticamente il codice atteso. Verificare SEMPRE mtime EX5 vs data commit "
+             "sorgente prima di un Serious run."},
+            {"lesson": "MASTER_STRATEGY_SWITCH", "detail": "InpStrategySelector=N non basta - esiste un "
+             "secondo master-switch per-strategia (InpStrat_<Nome>) che puo' avere default=false. "
+             "Verificare ENTRAMBI prima di un run."},
+            {"lesson": "RESEARCH_MODE_ACTIVATION", "detail": "InpResearchMode=false (default) attiva "
+             "un percorso di produzione con protezioni/lot-sizing diversi da quelli attesi per un test "
+             "di ricerca - un secondo master-switch OLTRE al selector e al flag per-strategia. Verificare "
+             "esplicitamente prima di ogni Serious run di ricerca."},
+            {"lesson": "EXPERT_PATH_SEMANTICS", "detail": "Il campo Expert= nel tester .ini vuole SOLO "
+             "il nome, MAI un prefisso di cartella (Experts\\\\) - MT5 lo ignora silenziosamente o fallisce "
+             "con path raddoppiato."},
+            {"lesson": "MT5_DATE_SEMANTICS", "detail": "FromDate e' inclusivo da mezzanotte, ToDate e' "
+             "ESCLUSIVO - misurato empiricamente con probe dedicati, mai assunto."},
+            {"lesson": "WINDOW_AWARE_DATA_FINGERPRINT", "detail": "L'hash dell'intero file storico "
+             "annuale (.hcc) NON e' un gate valido - contiene dati oltre la finestra testata che "
+             "crescono ogni giorno. Serve un fingerprint ristretto all'esatto superset che il Tester "
+             "carichera'."},
+            {"lesson": "EXACT_BROKER_TIMEZONE_MEASUREMENT", "detail": "L'offset broker-UTC dichiarato "
+             "da una costante di progetto puo' essere sbagliato - va sempre misurato direttamente "
+             "(TimeTradeServer()-TimeGMT()) immediatamente prima del run, mai assunto da un valore "
+             "storico."},
+            {"lesson": "TECHNICAL_PREFLIGHT_BEFORE_LONG_RUNS", "detail": "Un mini-run breve (es. 1 mese) "
+             "PRIMA di un run da ore verifica a basso costo che l'intera catena di configurazione "
+             "(EX5/flag/selector/ResearchMode) funzioni davvero - avrebbe intercettato il problema del "
+             "7.8G/7.8H prima di spendere ~4 ore complessive."},
+        ],
+        "tooling_logging_failures_discovered": [
+            {"lesson": "OPEN_TICKET_ALWAYS_ZERO", "detail": "NXS_LogTradeCSV logga sempre ticket=0 per "
+             "le righe OPEN nel percorso 'profili per-strategia' - il matching OPEN/CLOSE per ticket e' "
+             "strutturalmente impossibile in questo percorso, solo le CLOSE hanno un ticket reale."},
+            {"lesson": "MISSING_CSV_HEADER", "detail": "Il trade log CSV non porta sempre la riga di "
+             "intestazione (causa non verificata con certezza) - un parser robusto deve rilevarla "
+             "dinamicamente e usare l'header autorevole dal sorgente (NXS_Logging.mqh) come fallback, "
+             "mai assumerla dalla prima riga."},
+            {"lesson": "HEDGING_MODE_MATCHING_AMBIGUITY", "detail": "Il conto e' in hedging mode - "
+             "multiple posizioni della stessa strategia possono restare aperte simultaneamente "
+             "(osservato fino a 5). Un semplice FIFO ordine-di-apertura non e' affidabile; serve un "
+             "matching evidence-based (SL/TP/timeout piu' vicino) con un bracket worst/best esplicito "
+             "per i casi ambigui, MAI un'assunzione silenziosa."},
+        ],
+        "additional_lesson_this_phase": {
+            "lesson": "INDEPENDENT_VERIFIER_COVERAGE_GAP", "detail": "Il verificatore indipendente di "
+             "7.8I non controllava esplicitamente i valori di direction_asymmetry (solo l'endpoint "
+             "primario aggregato) - un errore di trascrizione manuale nel report narrativo non e' "
+             "stato intercettato. Verificatori futuri dovrebbero ricalcolare/confrontare OGNI numero "
+             "citato nel report narrativo, non solo l'endpoint primario e il verdetto finale.",
+        },
+        "classification_rule_applied": "Le tre categorie (strategy/pipeline/tooling) sono tenute "
+            "esplicitamente separate: un fallimento di pipeline o di tooling NON e' evidenza contro la "
+            "strategia stessa (ne' a favore), e un fallimento di strategia non implica un difetto di "
+            "pipeline.",
+    }
+
+
+def section_5_preflight_checklist():
+    return {
+        "name": "NEXUS_SERIOUS_VALIDATION_PREFLIGHT_CHECKLIST_V1",
+        "rule": "Un futuro Serious validation NON deve partire senza aver verificato, in ordine, TUTTI "
+               "i punti seguenti - ciascuno verificato EMPIRICAMENTE (misurato/ricalcolato dai file "
+               "reali), mai assunto da un valore storico o da un default silenzioso.",
+        "checklist": [
+            {"id": 1, "item": "EX5 compilato dal sorgente inteso",
+             "verify": "mtime EX5 >= data dell'ultimo commit che tocca il file .mq5 della strategia; "
+                       "se piu' vecchio, ricompilare da HEAD prima di procedere."},
+            {"id": 2, "item": "Hash source/EX5 registrati",
+             "verify": "sha256 di entrambi calcolato e congelato nell'atomic reseal, non assunto."},
+            {"id": 3, "item": "L'input della strategia richiesta esiste davvero nell'EX5",
+             "verify": "cercare il nome esatto del parametro nel dump automatico dei parametri "
+                       "generato da MT5 all'avvio (journal) - se assente vicino ai parametri "
+                       "adiacenti nel sorgente, l'EX5 non lo conosce."},
+            {"id": 4, "item": "Master switch della strategia ON",
+             "verify": "InpStrat_<Nome>=true esplicito nel tester config, mai un default assunto."},
+            {"id": 5, "item": "Selector corretto",
+             "verify": "InpStrategySelector verificato contro contracts/strategy-registry.json."},
+            {"id": 6, "item": "Research Mode ON (se e' un test di ricerca)",
+             "verify": "InpResearchMode=true esplicito - verificare NXS_ResearchPreflight() nel "
+                       "sorgente per i prerequisiti (InpUseStrategyProfiles=true, "
+                       "InpProfileMultiTF=true, InpDataCollectionMode=false, "
+                       "InpUseInstitutionalCore=false)."},
+            {"id": 7, "item": "Research preflight PASS",
+             "verify": "0 righe [RESEARCH][FATAL] nel journal del mini-run di preflight."},
+            {"id": 8, "item": "Un mini-run tecnico breve raggiunge davvero il codice della strategia",
+             "verify": "eseguire un run di 1 mese PRIMA del run completo; confermare almeno un trade "
+                       "con strategy=<NOME_REALE> nel trade log (non solo il log di init, che puo' "
+                       "usare un nome fallback se la lookup di osservabilita' non e' aggiornata) - "
+                       "MAI usato come evidenza scientifica, solo come prova tecnica."},
+            {"id": 9, "item": "Fingerprint dati window-aware corrente",
+             "verify": "hash dei file tick rilevanti + snapshot deterministico delle barre nell'esatto "
+                       "superset FromDate->ToDate, ricostruito FRESCO immediatamente prima del run - "
+                       "MAI l'hash dell'intero file storico annuale."},
+            {"id": 10, "item": "Semantica esatta della finestra",
+             "verify": "FromDate inclusivo da mezzanotte, ToDate esclusivo (misurato empiricamente una "
+                       "volta per l'ambiente, riusabile) - la regola di filtro post-run per i boundary "
+                       "non allineati a mezzanotte congelata PRIMA di vedere risultati."},
+            {"id": 11, "item": "Timezone broker misurato",
+             "verify": "TimeTradeServer()-TimeGMT() misurato direttamente, immediatamente prima del "
+                       "run - mai una costante di progetto."},
+            {"id": 12, "item": "Percorso di raccolta raw output verificato",
+             "verify": "sapere ESATTAMENTE dove il report/trade-log/journal finiranno prima di "
+                       "lanciare il run lungo - verificato nel mini-run di preflight (punto 8)."},
+        ],
+        "reusable_as": "server/research_scripts/phase7/phase7_9a/serious_validation_preflight_checklist_v1.json"
+                      " (file standalone, stesso contenuto, hash indipendente incrociato nel payload principale)",
+        "applies_to": "Qualunque futuro Serious validation su qualunque candidato di questo progetto, "
+                     "non solo VOLATILITY_BREAKOUT_CONFIRMED.",
+    }
+
+
+def section_6_candidate_inventory(struct_doc, lifecycle_doc):
+    dc = lifecycle_doc["payload"]["deep_dive_candidates"]
+    gate = struct_doc["payload"]["corrected_gate_results_by_candidate"]
+    readiness = struct_doc["payload"]["research_readiness_by_candidate_unchanged"]
+
+    def build_entry(cid):
+        c = dc[cid]
+        return {
+            "strategy_id": cid,
+            "strategy_formalization_completeness": {
+                "classification": c["classification"],
+                "lifecycle_contract_fields_populated": sum(
+                    1 for v in c["lifecycle_contract"].values() if v not in (None, "")),
+                "lifecycle_contract_fields_total": len(c["lifecycle_contract"]),
+                "note": c["classification_rationale"],
+            },
+            "discovery_evidence": c["evidence_ladder"].get("discovery") or c["evidence_ladder"].get(
+                "backtest_6y_segmented_2019_2024"),
+            "validation_evidence": c["evidence_ladder"].get("internal_validation") or
+                c["evidence_ladder"].get("true_holdout"),
+            "execution_evidence": c["evidence_ladder"].get("demo"),
+            "sample_quality": c["evidence_ladder"].get("dependence_audit") or
+                "Non misurata (nessun dependence audit riportato per questo candidato).",
+            "independence": c["evidence_ladder"].get("external_replication") or
+                "Non testata con un feed dati indipendente.",
+            "structural_status": gate[cid]["corrected_structural_status"],
+            "research_readiness": readiness[cid]["meta_filter_research_readiness"],
+            "unresolved_blockers": readiness[cid]["next_required_evidence"],
+            "next_admissible_experiment": readiness[cid]["next_required_evidence"],
+            "evidence_verdict": c["evidence_verdict"],
+            "already_refuted": not c["evidence_verdict_is_not_refuted"],
+        }
+
+    return {
+        "source_untouched": {
+            "lifecycle_registry_7_7a_sha256": lifecycle_doc["canonical_sha256"],
+            "structural_eligibility_7_7b_sha256": struct_doc["canonical_sha256"],
+        },
+        "excluded_as_already_refuted": ["WICK_SWEEP_RECLAIM", "H015_SAR_EXTERNAL_VALIDATION",
+                                        "SAR_LIVE", "ADX_RSI", "VOLATILITY_BREAKOUT_CONFIRMED"],
+        "excluded_rationale": "REFUTED_INAPPROPRIATE / EXECUTION_FAILED_INAPPROPRIATE nel gate 7.7B, "
+                             "o (per VOLATILITY_BREAKOUT_CONFIRMED) archiviato in questa stessa fase "
+                             "(sezione 2) - non trattati come concorrenti ancora aperti.",
+        "remaining_open_candidates": {
+            "H006_LIQUIDITY_SWEEP_RECLAIM": build_entry("H006_LIQUIDITY_SWEEP_RECLAIM"),
+            "BREAKOUT_ACC": build_entry("BREAKOUT_ACC"),
+        },
+    }
+
+
+def section_7_reprioritization():
+    return {
+        "scale": "LOW / MEDIUM / HIGH - nessuno score numerico arbitrario, come richiesto.",
+        "H006_LIQUIDITY_SWEEP_RECLAIM": {
+            "evidence_strength": "MEDIUM",
+            "evidence_strength_note": "PASS su discovery e internal validation, ma il VERO holdout "
+                "(mai visto prima) e' BORDERLINE - delta_p=0.0572 sotto la soglia di materialita' "
+                "pre-registrata (0.15), CI95 Wilson sovrapposte.",
+            "uncertainty_remaining": "MEDIUM",
+            "uncertainty_remaining_note": "Il segno dell'effetto resta incerto piu' che la sua "
+                "esistenza - il segnale osservato e' gia' debole, non solo poco preciso.",
+            "independence": "LOW",
+            "independence_note": "dependence_audit: overlap_rate=0.991 (HIGH) - n effettivo "
+                "indipendente stimato fra 46 e 115 a seconda del metodo, contro un n nominale di 115.",
+            "expected_information_gain": "LOW",
+            "expected_information_gain_note": "L'effect size e' gia' sotto soglia di materialita' - "
+                "improbabile che un nuovo test esterno ribalti la conclusione in modo netto, anche se "
+                "riducesse l'incertezza.",
+            "engineering_cost": "HIGH",
+            "engineering_cost_note": "Richiede una CROSS_FEED_VALIDATION con una fonte dati DIVERSA "
+                "(mai fatto prima per questo candidato) - infrastruttura nuova, non riuso di quella "
+                "gia' costruita per VOLBRK.",
+            "compute_cost": "MEDIUM",
+            "contamination_risk": "LOW",
+            "contamination_risk_note": "Test esterno indipendente, basso rischio di riusare dati gia' "
+                "visti.",
+            "distance_to_execution_validation": "FAR",
+            "distance_note": "Anche con un cross-feed positivo, servirebbe poi lo stesso ciclo Serious "
+                "validation completo appena rifatto per VOLBRK.",
+        },
+        "BREAKOUT_ACC": {
+            "evidence_strength": "LOW",
+            "evidence_strength_note": "Solo R-multiple/PF grezzo su un backtest informale a 6 anni "
+                "(+4.3R, 5/6 anni positivi) - nessun Wilson CI, nessun dependence audit, nessuna "
+                "separazione discovery/holdout dichiarata.",
+            "uncertainty_remaining": "HIGH",
+            "uncertainty_remaining_note": "Il lifecycle_contract stesso non e' ancora estratto in "
+                "dettaglio (entry/direction/SL/TP/timeout tutti non documentati esplicitamente, a "
+                "differenza di VOLBRK/H006) - l'incertezza e' prima di formalizzazione, poi di segnale.",
+            "independence": "UNKNOWN",
+            "independence_note": "Mai misurata - nessun dependence audit esiste per questo candidato.",
+            "expected_information_gain": "HIGH",
+            "expected_information_gain_note": "E' il performer informale piu' stabile del 'nucleo "
+                "hedge candidato' (mai un anno chiaramente negativo su 6) - formalizzarlo (basso costo) "
+                "sbloccherebbe la possibilita' di applicare lo stesso trattamento statistico rigoroso "
+                "gia' rodato su VOLBRK/H006.",
+            "engineering_cost": "LOW",
+            "engineering_cost_note": "Nessun nuovo esperimento - solo audit/estrazione del lifecycle "
+                "reale dal codice MQL5 gia' esistente (NXS_Strategies.mqh), lo stesso tipo di lavoro "
+                "gia' fatto per VOLBRK in Strategy Foundry Phase 3.",
+            "compute_cost": "LOW",
+            "compute_cost_note": "La formalizzazione non richiede alcun backtest - solo lettura/"
+                "documentazione di codice esistente.",
+            "contamination_risk": "LOW",
+            "contamination_risk_note": "Nessun accesso a outcome nuovo - puro audit statico di codice "
+                "e definizione, esattamente come l'audit di parita' gia' fatto per VOLBRK.",
+            "distance_to_execution_validation": "FAR_BUT_FIRST_STEP_IS_CHEAP",
+            "distance_note": "La distanza complessiva e' lunga (formalizzazione -> validazione "
+                "statistica -> Serious 3Y), ma il PRIMO passo ammissibile ha costo quasi nullo e "
+                "nessun rischio di contaminazione.",
+        },
+    }
+
+
+def section_8_next_decision():
+    return {
+        "decision_class": "FORMALIZE_EXISTING_CANDIDATE",
+        "target": "BREAKOUT_ACC",
+        "rationale": "Fra i due candidati non refutati rimasti, BREAKOUT_ACC ha il miglior rapporto "
+            "costo/informazione per il prossimo passo AMMISSIBILE: la sua formalizzazione (estrazione "
+            "del lifecycle_contract completo dal codice MQL5 reale - entry/direzione/invalidation/"
+            "target/timeout/management, lo stesso lavoro gia' fatto per VOLBRK in Strategy Foundry "
+            "Phase 3) ha costo di ricerca BASSO (nessun backtest, nessun nuovo esperimento, nessun "
+            "rischio di contaminazione da outcome) e potenziale ALTO (e' gia' il performer informale "
+            "piu' stabile del portafoglio live - mai un anno chiaramente negativo su 6). H006, al "
+            "contrario, richiederebbe un impegno di ricerca costoso (una cross-feed validation con "
+            "infrastruttura dati nuova) per un guadagno informativo atteso BASSO, dato che il suo "
+            "effect size e' gia' sotto la soglia di materialita' pre-registrata - investire li' ora "
+            "avrebbe basso valore atteso rispetto a formalizzare BREAKOUT_ACC.",
+        "explicitly_not_executed": "Nessun test lanciato in questa fase - solo la scelta della "
+                                   "categoria e del bersaglio, come richiesto esplicitamente.",
+        "next_concrete_step_when_authorized": "Estrarre il lifecycle_contract completo di BREAKOUT_ACC "
+            "da NXS_Strategies.mqh (stesso metodo di Strategy Foundry Phase 3 per VOLBRK) - "
+            "entry/direzione/invalidation/target/timeout/management/risk_sizing - PRIMA di qualunque "
+            "trattamento statistico rigoroso (Wilson CI, dependence audit).",
+    }
+
+
+def section_9_backlog_item():
+    return {
+        "id": "HISTORICAL_VOLUME_CONTRACT_WALLS",
+        "backlog_status": "NON_PRIORITIZED",
+        "added_in_phase": "7.9A",
+        "not_automatically_scheduled": True,
+        "concept": "Concentrazione storica di volume + posizionamento futures/opzioni + distanza dal "
+                  "prezzo -> comportamento condizionale futuro del prezzo.",
+        "possible_outcomes_to_measure": [
+            "rejection probability", "breakout continuation", "breakout failure",
+            "MFE/MAE", "realized volatility", "time-at-level",
+        ],
+        "explicit_caveat": "NON assumere che alto volume/OI equivalga a support/resistance - questa e' "
+            "esattamente il tipo di assunzione a priori che il protocollo Phase 7 esiste per evitare.",
+        "initial_treatment": "MARKET_EVENT / STATE_RESEARCH",
+        "initial_treatment_not": "STRATEGIA - nessuna logica di entry/exit/SL/TP finche' non esiste "
+            "prima una caratterizzazione statistica del fenomeno stesso (stesso principio gia' "
+            "applicato a LEVEL_REACTION/STRUCT_REACT in fasi precedenti).",
+    }
+
+
+def main():
+    struct_doc = load_json(STRUCT_ELIGIBILITY_78B_PATH)
+    lifecycle_doc = load_json(LIFECYCLE_REGISTRY_77A_PATH)
+    result_doc = load_json(RESULT_78I_PATH)
+    reseal_doc = load_json(RESEAL_78I_PATH)
+
+    sec2 = section_2_archive_lifecycle(struct_doc, lifecycle_doc)
+    sec2["full_evidence_chain_hashes"]["7_8i_result"] = result_doc["canonical_sha256"]
+    sec2["full_evidence_chain_hashes"]["7_8i_atomic_reseal"] = reseal_doc["canonical_sha256"]
+
+    payload = {
+        "phase": "7.9A",
+        "artifact_role": "POSTMORTEM_AND_REPRIORITIZATION",
+        "candidate_closed": "VOLATILITY_BREAKOUT_CONFIRMED",
+        "baseline_commit": BASELINE_COMMIT,
+        "no_new_backtest_executed": True,
+        "no_strategy_modified": True,
+        "no_rescue_performed": True,
+        "section_1_canonical_result_reconciliation": section_1_reconciliation(),
+        "section_2_archive_lifecycle": sec2,
+        "section_3_directional_observation": section_3_directional_observation(),
+        "section_4_failure_postmortem": section_4_postmortem(),
+        "section_5_permanent_preflight_checklist": section_5_preflight_checklist(),
+        "section_6_remaining_candidate_inventory": section_6_candidate_inventory(struct_doc, lifecycle_doc),
+        "section_7_reprioritization": section_7_reprioritization(),
+        "section_8_next_research_decision": section_8_next_decision(),
+        "section_9_new_backlog_item": section_9_backlog_item(),
+    }
+    return payload
+
+
+if __name__ == "__main__":
+    payload = main()
+
+    # Checklist standalone riusabile, estratta e scritta con provenienza propria PRIMA
+    # dell'artifact principale, cosi' quest'ultimo puo' incrociarne l'hash reale.
+    checklist_doc = wrap_with_provenance(
+        payload["section_5_permanent_preflight_checklist"],
+        os.path.basename(__file__) + " (section_5, estratto standalone)")
+    checklist_path = os.path.join(PHASE79A_DIR, "serious_validation_preflight_checklist_v1.json")
+    save_json(checklist_path, checklist_doc)
+    payload["section_5_permanent_preflight_checklist"]["standalone_file_canonical_sha256"] = checklist_doc["canonical_sha256"]
+
+    doc = wrap_with_provenance(payload, os.path.basename(__file__))
+    out_path = os.path.join(PHASE79A_DIR, "phase7_9a_postmortem_and_reprioritization_v1.json")
+    save_json(out_path, doc)
+    print(f"canonical_sha256={doc['canonical_sha256']}")
+    print(f"checklist_standalone_sha256={checklist_doc['canonical_sha256']}")
+    print(f"next_decision={payload['section_8_next_research_decision']['decision_class']} -> "
+          f"{payload['section_8_next_research_decision']['target']}")

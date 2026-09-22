@@ -44,7 +44,7 @@ Il trade log di questo run **non porta la riga di intestazione** (la prima riga 
 - **CONSERVATIVE = -0,105 / STRESS = -0,142** (entrambi negativi)
 - **Win rate = 50,3%** (Wilson CI95 [43,1%, 57,4%]), payoff ratio 0,858, max consecutive losses 13
 - **T1 = -0,205 / T2 = -0,247 / T3 = +0,311** — solo 1/3 segmenti non-negativo (serve ≥2/3)
-- **BUY: n=63, expectancy=-0,081, PF=0,842 / SELL: n=120, expectancy=-0,060, PF=0,881** — entrambe le direzioni negative, nessuna asimmetria che salva l'aggregato
+- **BUY: n=56, expectancy_R=-0,726, PF=0,146 / SELL: n=127, expectancy_R=+0,223, PF=1,625** — asimmetria direzionale marcata (SELL positivo, BUY fortemente negativo), diagnostica pre-registrata, non usata per salvare il verdetto aggregato (`one_side_materially_negative_while_saving_aggregate=false`, dato che l'aggregato stesso è negativo — SELL non "salva" nulla, il verdetto resta FAIL). **Correzione 2026-09-22 (Phase 7.9A):** questa riga riportava in precedenza numeri sbagliati (BUY -0,081/PF 0,842, SELL -0,060/PF 0,881) per un errore di trascrizione — mai presenti nell'artifact canonico `volatility_breakout_serious_3y_result_v1.json` (`canonical_sha256=df2508752c8d53a71d40b140bc1b2416e717f146150a15d83deab8284ed1cd3c`, mai modificato), che ha sempre riportato i valori corretti sopra. Il verificatore indipendente di 7.8I non controllava esplicitamente i numeri di `direction_asymmetry` — gap colmato in 7.9A.
 - **0 trade `EXECUTION_ORDER_UNRESOLVED`** per ambiguità SL/TP intrabarra (Model=4 risolve meccanicamente)
 
 **`sign_criterion` (PF>1 AND expectancy_R>0) fallisce nettamente** — non borderline. Nessun rescue applicato: nessun parametro toccato, nessuna direzione eliminata, nessuna soglia aggiustata dopo aver visto il risultato.
