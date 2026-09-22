@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-09-22T12:44:10.825726+00:00",
+  "generation_script": "collect_immutable_run_manifest.py",
+  "canonical_sha256": "838246d0984401cfe0e20e494b04c8b471ded035dd8c0bb9458b9f6a563c3ee2",
+  "payload": {
+    "phase": "7.8I",
+    "artifact_role": "IMMUTABLE_RUN_MANIFEST_RUN3",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "collected_before_any_interpretation": true,
+    "collected_files": {
+      "report_htm": {
+        "dest_path": "server/research_scripts/phase7/phase7_8i/immutable_run_output/volbrk_serious_3y_run3.htm",
+        "sha256": "5e059f3b283eb0e528851edb3238ba9aed409acbb1fdc35e0929395eecc6e1c4",
+        "size_bytes": 535372
+      },
+      "trade_log_csv": {
+        "dest_path": "server/research_scripts/phase7/phase7_8i/immutable_run_output/NEXUS_trades_serious_3y_run3.csv",
+        "sha256": "1e56074ee35ae2413a4f6d3801ea111a40a773b30425d536778cf677982d2586",
+        "size_bytes": 97186
+      },
+      "tester_journal_logs": [
+        {
+          "dest_path": "server/research_scripts/phase7/phase7_8i/immutable_run_output/tester_journal_20260917.log",
+          "sha256": "2de993bc27aac69024ab2c714abe6799f9ca1842f582639a8fc461887d675b55",
+          "size_bytes": 73967716
+        },
+        {
+          "dest_path": "server/research_scripts/phase7/phase7_8i/immutable_run_output/tester_journal_20260922.log",
+          "sha256": "42e600f72f2c6f1d4c7542aef2254592c229f0062f36a6575c431f8ecfaaf4c7",
+          "size_bytes": 150888736
+        }
+      ],
+      "tester_ini_used": {
+        "dest_path": "server/research_scripts/phase7/phase7_8i/immutable_run_output/volbrk_serious_3y_run3.ini",
+        "sha256": "8bb16b673e353869ab57a6e646d4c7bfcba144cb22116a09dec5d6fbd94c72a1"
+      },
+      "ea_build_identity": {
+        "ex5_sha256": "8149e05291914926b7fa82ba01d6cac49e510cf405b87d3274524606fd0b43bd",
+        "ex5_mtime": 1790073037.3475318,
+        "source_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a"
+      },
+      "atomic_reseal_before_run3_hash": "4b4f0ed688c0e330fd818c3d384bfefac3592f3080943e28191fe2877d0c8533"
+    },
+    "prior_runs_archived_reference": {
+      "run1_7_8g": {
+        "canonical_sha256": "d7e22938b5b9aeb70ca6d9d15e864155c1539d191f90a933542054cab33dfa7a",
+        "classification": "TECHNICALLY_INVALID_ZERO_TRADE_RUN",
+        "archived_and_unmodified": true
+      },
+      "run2_7_8h": {
+        "canonical_sha256": "e48800dea4aaa575cbb2a47c821c41d3059fce287471e1073a294aebc1c5ccd4",
+        "classification": "TECHNICAL_EXECUTION_FAILURE_STRATEGY_NEVER_INITIALIZED",
+        "archived_and_unmodified": true
+      }
+    },
+    "no_verdict_computed_here": true
+  }
+}

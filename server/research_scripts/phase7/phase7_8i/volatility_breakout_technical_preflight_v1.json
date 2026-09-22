@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-09-22T10:37:00.774738+00:00",
+  "generation_script": "build_technical_preflight.py",
+  "canonical_sha256": "c095cbcde27672df2a7af0c6ea1373b02dfdf2640ac94fccfcf6a8d9ad1ed4f9",
+  "payload": {
+    "phase": "7.8I",
+    "artifact_role": "TECHNICAL_EXECUTION_PREFLIGHT",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "scope_note": "Mini-run BREVE (1 mese) - verifica SOLO fatti tecnici, NON un risultato di mercato e NON usato come evidenza scientifica per il verdetto preregistrato.",
+    "preflight_window": {
+      "from": "2024.06.01",
+      "to": "2024.07.01"
+    },
+    "observed": {
+      "total_trades_in_preflight_report": "3",
+      "history_quality": "100% ticks reali",
+      "research_init_line_from_journal": "[RESEARCH][INIT] strategy=selector_56 selector=56 sourceTF=PERIOD_M15 fixedLot=0.0100 exitMgmt=RAW(nessun BE/trail) ESL=OFF dailyDD=OFF totalDD=OFF DPT=OFF ruin=OFF SL=nativo/strutturale TP=nativo/strutturale\nII\t0\t12:32:17.754\tCore 1\tGOLD : real ticks begin fr",
+      "fatal_research_errors_count": 0
+    },
+    "checks": {
+      "new_ex5_actually_loaded": true,
+      "research_mode_recognized": true,
+      "strat_volbreakout_flag_recognized": true,
+      "selector_56_recognized": true,
+      "research_preflight_passed_no_fatal": true,
+      "strategy_router_reached_volbrk_code_path": true,
+      "history_quality_100pct": true
+    },
+    "verdict": "TECHNICAL_EXECUTION_PREFLIGHT_PASS",
+    "note_on_selector_name_fallback": "Il log [RESEARCH][INIT] stampa 'strategy=selector_56' (fallback di NXS_ResearchSelectorName, che non mappa ancora il case 56) - non trattato come fallimento: i trade REALI nel log CSV mostrano esplicitamente strategy=VOLATILITY_BREAKOUT_CONFIRMED (impostato direttamente nella funzione segnale, non tramite quella lookup) e reason=VolBreakout_confirmed, provando che il vero codice della strategia e' stato raggiunto.",
+    "not_used_as_scientific_evidence": true,
+    "not_the_full_serious_validation": true
+  }
+}

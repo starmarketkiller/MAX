@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-09-22T12:51:31.796955+00:00",
+  "generation_script": "compute_serious_validation_verdict.py",
+  "canonical_sha256": "df2508752c8d53a71d40b140bc1b2416e717f146150a15d83deab8284ed1cd3c",
+  "payload": {
+    "phase": "7.8I",
+    "artifact_role": "SERIOUS_VALIDATION_RESULT",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "sanity_gate": {
+      "research_mode_true_in_ini": true,
+      "selector_56_in_ini": true,
+      "master_switch_true_in_ini": true,
+      "total_trades_per_official_report": "206",
+      "fatal_research_errors_count": 0,
+      "research_init_line_found": true,
+      "gate_status": "PASS_TRADES_PRESENT"
+    },
+    "trade_matching_diagnostics": {
+      "n_open_rows": 206,
+      "n_close_rows": 183,
+      "n_matched_trades": 183,
+      "n_unmatched_opens_at_end": 23,
+      "n_unmatched_closes": 0,
+      "n_ambiguous_matches": 12,
+      "ambiguous_match_tickets": [
+        "23",
+        "29",
+        "27",
+        "43",
+        "87",
+        "78",
+        "199",
+        "206",
+        "231",
+        "234",
+        "251",
+        "366"
+      ],
+      "sl_tp_confidence_threshold_usd": 50.0,
+      "time_confidence_threshold_sec": 28800
+    },
+    "preregistration_source": {
+      "prereg_7_8b_sha256": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_sha256": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78"
+    },
+    "sample": {
+      "n_nominal_fresh": 183,
+      "n_excluded_pre_fresh_window": 0,
+      "excluded_pre_fresh_tickets": [],
+      "effective_sample_size": "DEPENDENCE_ADJUSTMENT_NOT_APPLIED",
+      "effective_sample_size_note": "fallback esplicitamente autorizzato dal prereg 7.8B - solo n nominale come gate, nessun ESS inventato."
+    },
+    "primary_endpoint": {
+      "metric": "expectancy_R",
+      "scenario": "BROKER_BASELINE",
+      "window": "PRIMARY_FRESH_VERDICT_WINDOW",
+      "value": -0.0672568306010929,
+      "ci95_moving_block_bootstrap": {
+        "lower": -0.28149726775956285,
+        "upper": 0.15160109289617485,
+        "block_length_L": 6,
+        "n_bootstrap": 10000,
+        "seed": 20260922
+      }
+    },
+    "cost_scenarios": {
+      "ZERO_COST": "NOT_DIRECTLY_ESTIMABLE_FROM_REAL_TESTER_EXECUTION",
+      "BROKER_BASELINE": {
+        "expectancy_R": -0.0672568306010929,
+        "role": "PRIMARY_FOR_VERDICT",
+        "note": "Letto direttamente dal CSV (P&L reale/rischio reale) - NON dipende dal matching OPEN/CLOSE, quindi immune all'ambiguita' di matching sotto."
+      },
+      "CONSERVATIVE": {
+        "expectancy_R": -0.07096739219740747,
+        "role": "STRESS_DIAGNOSTIC",
+        "bracket_alt_matching": -0.0709502921700657
+      },
+      "STRESS": {
+        "expectancy_R": -0.07467795379372207,
+        "role": "STRESS_DIAGNOSTIC",
+        "bracket_alt_matching": -0.0746437537390385
+      }
+    },
+    "secondary_diagnostics": {
+      "profit_factor_broker_baseline": 0.8674692308520604,
+      "win_rate": 0.5027322404371585,
+      "win_rate_wilson_ci95": {
+        "lower": 0.4309833353643906,
+        "upper": 0.5743687958291454
+      },
+      "payoff_ratio": 0.8580402174732334,
+      "max_consecutive_losses": 11,
+      "max_drawdown_pct": "vedi report_htm ufficiale (metrica nativa Tester, non ricalcolata)"
+    },
+    "temporal_stability": {
+      "segments": {
+        "T1": {
+          "n": 47,
+          "expectancy_R": -0.2029787234042553,
+          "sum_R": -9.54
+        },
+        "T2": {
+          "n": 69,
+          "expectancy_R": -0.1463768115942029,
+          "sum_R": -10.1
+        },
+        "T3": {
+          "n": 67,
+          "expectancy_R": 0.10943283582089552,
+          "sum_R": 7.332
+        }
+      },
+      "criterion_1_at_least_2_of_3_nonneg": false,
+      "criterion_2_no_single_segment_over_100pct_with_others_negative": true,
+      "both_satisfied": false,
+      "both_violated": false
+    },
+    "direction_asymmetry": {
+      "per_direction": {
+        "BUY": {
+          "n": 56,
+          "expectancy_R": -0.7257678571428572,
+          "pf": 0.1455631004688124
+        },
+        "SELL": {
+          "n": 127,
+          "expectancy_R": 0.22311023622047244,
+          "pf": 1.625469074213059
+        }
+      },
+      "aggregate_expectancy_positive": false,
+      "one_side_materially_negative_while_saving_aggregate": false,
+      "forbidden_action_taken": false,
+      "note": "Nessuna direzione eliminata, in nessun caso."
+    },
+    "same_bar_execution_order": {
+      "tick_model": "Model=4 (every tick based on real ticks) per l'intero periodo FRESH",
+      "trades_flagged_execution_order_unresolved": 0,
+      "note": "Nessuna ambiguita' SL/TP intrabarra - Model=4 con tick reali risolve l'ordine meccanicamente. L'ambiguita' rilevante in questo run e' di matching OPEN/CLOSE (vedi trade_matching_ambiguity_bracket sotto), causa diversa ma stesso principio di gestione (bracket worst/best, mai un'assunzione silenziosa)."
+    },
+    "trade_matching_ambiguity_bracket": {
+      "cause": "Conto in hedging mode (log terminale: 'hedging mode') - multiple posizioni della stessa strategia possono restare aperte simultaneamente; le righe OPEN nel CSV hanno sempre ticket=0 (non distinguibili), quindi il matching OPEN/CLOSE per i trade con 2+ posizioni pendenti simultanee e' evidence-based (SL/TP/timeout piu' vicino), non certo.",
+      "n_trades_ambiguous": 12,
+      "n_trades_total": 183,
+      "pct_ambiguous": 6.56,
+      "primary_endpoint_unaffected": true,
+      "primary_endpoint_unaffected_reason": "r_multiple_broker_baseline e' letto direttamente dal CSV, indipendente da quale OPEN e' abbinata dal matching - SOLO gli extra-costi CONSERVATIVE/STRESS e la direzione BUY/SELL dipendono dal matching.",
+      "cost_robustness_scenario_A_matched_leg": false,
+      "cost_robustness_scenario_B_alt_leg": false,
+      "verdict_scenario_A": "FAIL",
+      "verdict_scenario_B": "FAIL",
+      "matching_ambiguity_changes_verdict": false
+    },
+    "gates": {
+      "insufficient_sample": false,
+      "sign_criterion": false,
+      "uncertainty_requirement_ci95_lower_gt_0": false,
+      "cost_robustness_stress_gt_0": false
+    },
+    "final_classification": "FAIL",
+    "no_rescue_applied": true,
+    "no_parameter_changed_after_seeing_results": true,
+    "next_lifecycle_state": "ARCHIVE_CURRENT_DESIGN"
+  }
+}

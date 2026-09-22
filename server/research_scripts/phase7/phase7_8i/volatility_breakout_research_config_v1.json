@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-09-22T10:31:35.314439+00:00",
+  "generation_script": "build_research_config_and_classification.py",
+  "canonical_sha256": "64d6feb1783f8458beeed335243b78db7f31267137c0195d77774855bf6693cd",
+  "payload": {
+    "phase": "7.8I",
+    "artifact_role": "RESEARCH_CONFIG_RECOMPILE_AND_CLASSIFICATION",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "recompile_evidence": {
+      "old_ex5_sha256": "30efb700878dc56b3479378d2ec3971db75fdf8f4b631b87e4da8510a8c7388a",
+      "old_ex5_sha256_matches_documented_stale_binary": true,
+      "old_ex5_preserved_at": "server/research_scripts/phase7/phase7_8i/compile_evidence/NEXUS_EA_v2_OLD_ex5_pre_recompile_2026-09-10.ex5",
+      "new_ex5_sha256": "8149e05291914926b7fa82ba01d6cac49e510cf405b87d3274524606fd0b43bd",
+      "new_ex5_differs_from_old": true,
+      "new_ex5_mtime_iso": "2026-09-22T10:30:37.347532+00:00",
+      "new_ex5_postdates_commit_f035d30_2026_09_17": true,
+      "compile_result_line": "Result: 0 errors, 2 warnings, 28962 ms elapsed, cpu='X64 Regular'",
+      "compile_errors_count": 0,
+      "compile_warnings": [
+        "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\MQL5\\Experts\\NEXUS_EA_v2.mq5(282,9) : warning 30: macro 'NXS_MAX_SIGNALS' redefinition",
+        "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\MQL5\\Experts\\NEXUS_EA_v2.mq5(1021,9) : warning 43: possible loss of data due to type conversion from 'ulong' to 'long'"
+      ],
+      "compile_warnings_reviewed": "Entrambi i warning sono innocui e non toccano la logica VOLATILITY_BREAKOUT_CONFIRMED: 'macro NXS_MAX_SIGNALS redefinition' (macro duplicata, innocua) e 'possible loss of data ulong->long' (conversione di tipo altrove nel file, non nella funzione segnale/execution di questa strategia).",
+      "new_source_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a"
+    },
+    "tester_execution_config_research": {
+      "base": "server/research_scripts/phase7/phase7_8h/volatility_breakout_corrected_config_v1.json (tester_execution_config_corrected.raw_text, invariato)",
+      "base_sha256": "1757a44262ac8e66cf2225307fe2a56311ce1c909dca499eced67139fe4b182b",
+      "raw_text": "[Tester]\nExpert=NEXUS_EA_v2\nSymbol=GOLD\nPeriod=H4\nOptimization=0\nModel=4\nFromDate=2023.12.20\nToDate=2026.03.01\nForwardMode=0\nDeposit=10000\nCurrency=USD\nLeverage=500\nExecutionMode=0\nOptimizationCriterion=0\nVisual=0\nShutdownTerminal=1\nReplaceReport=1\n[TesterInputs]\nInpStrategySelector=56\nInpProfileTF=H4\nInpUseStrategyProfiles=true\nInpStrat_VolBreakoutConfirmed=true\nInpResearchMode=true\nInpResearchExitMode=0\nInpResearchFixedLot=0.01\nInpProfileMultiTF=true\nInpResearchUseDPT=false\nInpResearchUseRuin=false\nInpResearchUseESL=false\nInpResearchUseDailyDD=false\nInpResearchUseTotalDD=false",
+      "sha256": "a4e2afc06fb7275f3bf821107c807d090441fc5a327b6523975062610b068f3a",
+      "fields_added": [
+        "InpResearchMode=true",
+        "InpResearchExitMode=0",
+        "InpResearchFixedLot=0.01",
+        "InpProfileMultiTF=true"
+      ],
+      "fields_removed": [],
+      "fields_added_count": 4,
+      "research_preflight_requirements_verified_in_code": {
+        "InpStrategySelector_gt_0": "56 > 0 - OK",
+        "InpDataCollectionMode_false": "default false, non toccato - OK (NXS_Inputs.mqh:189)",
+        "InpUseInstitutionalCore_false": "plain bool sempre false, non un input esposto al Tester - OK",
+        "InpUseStrategyProfiles_true": "gia' presente dal config 7.8H - OK",
+        "InpProfileMultiTF_true": "default gia' true (NXS_Inputs.mqh:291), ora congelato ESPLICITAMENTE per non dipendere da un default silenzioso - richiesto da NXS_ResearchPreflight() (NXS_ResearchMode.mqh:63)"
+      },
+      "not_launched_yet_at_build_time": true
+    },
+    "correction_classification": {
+      "correction_type": "RESEARCH_EXECUTION_ENABLEMENT_FIX",
+      "strategy_parameters_unchanged": true,
+      "entry_logic_unchanged": true,
+      "sl_tp_unchanged": true,
+      "timeout_unchanged": true,
+      "verdict_rules_unchanged": true,
+      "data_window_unchanged": true,
+      "rationale": "InpResearchMode=true attiva il protocollo di ricerca isolato (lotto fisso, preflight research, esclusione delle protezioni di produzione non ammesse, logging [RESEARCH]) che era GIA' la base metodologica implicita del Serious validation dichiarata in 7.8B (execution_contract: 'RAW... nessuna idealizzazione shadow', management: 'Nessun trailing/BE/filtro di sessione o regime') - non introduce una logica nuova, attiva esplicitamente quella gia' presupposta e mai attivata per oversight.",
+      "prior_runs_classification": {
+        "run1_7_8g": "TECHNICALLY_INVALID_ZERO_TRADE_RUN",
+        "run2_7_8h": "TECHNICAL_EXECUTION_FAILURE_STRATEGY_NEVER_INITIALIZED",
+        "not_reinterpreted_as_market_result": true,
+        "archived_and_unmodified": true
+      }
+    },
+    "serious_validation_not_executed_at_this_step": true
+  }
+}
