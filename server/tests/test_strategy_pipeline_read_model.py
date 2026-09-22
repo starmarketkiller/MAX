@@ -20,6 +20,25 @@ def test_strategy_projection_separates_code_and_evidence():
     assert sar["structural_status_correction_applied"] is True
     assert by_id["H006_LIQUIDITY_SWEEP_RECLAIM"]["evidence_verdict"].startswith("RETAIN_E2")
     assert by_id["BREAKOUT_ACC"]["meta_filter_ready"] is False
+    h006 = by_id["H006_LIQUIDITY_SWEEP_RECLAIM"]
+    invalidation = next(item for item in h006["field_semantics"] if item["field"] == "invalidation_stop")
+    assert invalidation["field_knowledge"] == "VERIFIED_ABSENCE"
+    assert invalidation["requirement_role"] == "SATISFIED_BY_EQUIVALENT_MECHANISM"
+    assert h006["meta_filter_structural_eligibility"] == "STRUCTURALLY_ELIGIBLE"
+    assert not h006["structural_limitation"]
+
+
+def test_not_extracted_is_not_treated_as_absent_or_status_change():
+    model = sp.StrategyPipelineCatalog().build()
+    by_id = {item["strategy_id"]: item for item in model["items"]}
+    for strategy_id in ("WICK_SWEEP_RECLAIM", "SAR_LIVE", "ADX_RSI", "BREAKOUT_ACC"):
+        item = by_id[strategy_id]
+        assert any(field["field_knowledge"] == "NOT_EXTRACTED" for field in item["field_semantics"])
+        assert item["field_semantics_status_changed"] is False
+    assert model["meta_filter_ready_count"] == 0
+    assert model["execution_candidate_count"] == 0
+    assert model["deployable_count"] == 0
+    assert all(item["deployable"] is None for item in model["items"])
 
 
 def test_pipeline_and_provenance_are_artifact_backed():
@@ -40,6 +59,19 @@ def test_fault_isolation_keeps_other_sources_available(monkeypatch, tmp_path):
     model = sp.StrategyPipelineCatalog().build()
     assert model["count"] == 7
     assert any(item["error"] == "JSONDecodeError" for item in model["warnings"])
+
+
+def test_missing_field_refinement_is_fault_isolated(monkeypatch, tmp_path):
+    baseline = {item["strategy_id"]: item["meta_filter_structural_eligibility"] for item in sp.StrategyPipelineCatalog().build()["items"]}
+    sources = dict(sp.SOURCES)
+    sources["missing_field_semantics"] = tmp_path / "missing.json"
+    monkeypatch.setattr(sp, "SOURCES", sources)
+    model = sp.StrategyPipelineCatalog().build()
+    assert model["count"] == 7
+    assert all(item["field_semantics"] == [] for item in model["items"])
+    assert {item["strategy_id"]: item["meta_filter_structural_eligibility"] for item in model["items"]} == baseline
+    assert model["meta_filter_ready_count"] == 0
+    assert any(item["source"].endswith("missing.json") for item in model["warnings"])
 
 
 def test_malformed_strategy_isolated(monkeypatch, tmp_path):

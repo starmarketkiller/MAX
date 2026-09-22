@@ -19,6 +19,7 @@ SOURCES = {
     "meta_filter_eligibility": P77A / "strategy_meta_filter_eligibility_v1.json",
     "meta_filter_gate": P77B / "strategy_meta_filter_gate_v1.json",
     "structural_semantics_correction": P77B / "structural_eligibility_semantics_correction_v1.json",
+    "missing_field_semantics": P77B / "missing_field_semantics_refinement_v1.json",
 }
 
 PIPELINE_STAGES = [
@@ -66,6 +67,7 @@ class StrategyPipelineCatalog:
         eligibility = _payload(docs["meta_filter_eligibility"])
         gate = _payload(docs["meta_filter_gate"])
         correction = _payload(docs["structural_semantics_correction"])
+        field_refinement = _payload(docs["missing_field_semantics"])
 
         deep = _dict(lifecycle.get("deep_dive_candidates"))
         survey_rows = _list(_dict(lifecycle.get("full_registry_survey")).get("strategies"))
@@ -83,6 +85,7 @@ class StrategyPipelineCatalog:
         eligibility_by_id = _dict(eligibility.get("eligibility_by_candidate"))
         gate_by_id = _dict(gate.get("gate_results_by_candidate"))
         correction_by_id = _dict(correction.get("corrected_structural_status_by_candidate"))
+        fields_by_id = _dict(field_refinement.get("per_candidate_field_classifications"))
         verdict_by_id = _dict(evidence.get("evidence_verdicts_by_candidate"))
         strategies = []
         for key in sorted(deep):
@@ -106,6 +109,17 @@ class StrategyPipelineCatalog:
                 is_refuted = False if marker is True else None
             gate_record = _dict(gate_by_id.get(strategy_id))
             correction_record = _dict(correction_by_id.get(strategy_id))
+            field_record = _dict(fields_by_id.get(strategy_id))
+            field_semantics = []
+            for field_name, semantics in _dict(field_record.get("field_classifications")).items():
+                if not isinstance(semantics, dict):
+                    continue
+                field_semantics.append({
+                    "field": field_name,
+                    "field_knowledge": semantics.get("field_knowledge"),
+                    "requirement_role": semantics.get("requirement_role"),
+                    "note": semantics.get("note"),
+                })
             old_eligibility = _dict(eligibility_by_id.get(strategy_id))
             code_status = code.get("status")
             governance_status = "GOVERNANCE_CONFLICT" if code_status == "ACTIVE" and is_refuted is True else None
@@ -146,6 +160,9 @@ class StrategyPipelineCatalog:
                 "structural_status_correction_applied": correction_record.get("correction_applied"),
                 "structural_missing_field_taxonomy": correction_record.get("missing_field_taxonomy_class"),
                 "structural_limitation": structural_limitation,
+                "field_semantics": field_semantics,
+                "field_semantics_refined_status": field_record.get("refined_structural_status"),
+                "field_semantics_status_changed": field_record.get("status_changed_by_this_refinement"),
                 "meta_filter_research_readiness": readiness,
                 "meta_filter_ready": gate_passed,
                 "meta_filter_blocker": structural_limitation or gate_record.get("structural_blocker"),
@@ -172,6 +189,7 @@ class StrategyPipelineCatalog:
             "governance_conflict_count": sum(item["governance_status"] == "GOVERNANCE_CONFLICT" for item in strategies),
             "meta_filter_ready_count": sum(item["meta_filter_ready"] is True for item in strategies),
             "execution_candidate_count": 0,
+            "deployable_count": 0,
             "pipeline_stages": PIPELINE_STAGES,
             "warnings": warnings,
         }

@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { DepartmentCard, DepartmentInspector, StrategyInspector, StrategyPipeline } from "./CompanyPage";
+import { DepartmentCard, DepartmentInspector, LifecycleFieldSemantics, StrategyInspector, StrategyPipeline } from "./CompanyPage";
 
 let container, root;
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
@@ -29,7 +29,7 @@ test("inspector is a full-screen accessible sheet on mobile", () => {
   expect(container.querySelector('[aria-label="Close department inspector"]')).not.toBeNull();
 });
 
-const strategy = { strategy_id: "SAR_LIVE", lifecycle_class: "FULL_STRATEGY_SPEC", code_registry_status: "ACTIVE", evidence_verdict: "REFUTED", evidence_is_refuted: true, governance_status: "GOVERNANCE_CONFLICT", current_stage: "STRATEGY_VALIDATION", blocked_stage: "META_FILTER_RESEARCH", next_required_stage: "STRATEGY_VALIDATION", meta_filter_structural_eligibility: "NOT_ELIGIBLE", meta_filter_research_readiness: "REFUTED_INAPPROPRIATE", blockers: ["Refuted strategy"], evidence_ladder: { wide_sample: { status: "FAIL", detail: "Negative evidence" } }, provenance: { sources: ["server/research_scripts/phase7/phase7_7a/strategy_evidence_matrix_v1.json"] } };
+const strategy = { strategy_id: "SAR_LIVE", lifecycle_class: "FULL_STRATEGY_SPEC", code_registry_status: "ACTIVE", evidence_verdict: "REFUTED", evidence_is_refuted: true, governance_status: "GOVERNANCE_CONFLICT", current_stage: "STRATEGY_VALIDATION", blocked_stage: "META_FILTER_RESEARCH", next_required_stage: "STRATEGY_VALIDATION", meta_filter_structural_eligibility: "STRUCTURAL_STATUS_UNVERIFIED", meta_filter_research_readiness: "REFUTED_INAPPROPRIATE", blockers: ["Refuted strategy"], evidence_ladder: { wide_sample: { status: "FAIL", detail: "Negative evidence" } }, field_semantics: [{ field: "direction", field_knowledge: "NOT_EXTRACTED", requirement_role: "REQUIRED", note: "Audit did not extract this field." }], provenance: { sources: ["server/research_scripts/phase7/phase7_7a/strategy_evidence_matrix_v1.json", "server/research_scripts/phase7/phase7_7b/missing_field_semantics_refinement_v1.json"] } };
 
 test("strategy inventory renders refuted evidence separately from active code", () => {
   act(() => root.render(<StrategyPipeline strategies={[strategy]} onOpen={() => {}} />));
@@ -45,6 +45,17 @@ test("strategy inspector exposes evidence ladder, blocker and provenance", () =>
   expect(container.textContent).toContain("Negative evidence");
   expect(container.textContent).toContain("Refuted strategy");
   expect(container.querySelector('[aria-label="Strategy inspector"]')).not.toBeNull();
+  expect(container.textContent).toContain("Lifecycle field semantics");
+  expect(container.textContent).toContain("UNVERIFIED / NOT EXTRACTED");
+  expect(container.textContent).toContain("NOT_EXTRACTED ≠ VERIFIED_ABSENCE");
+});
+
+test("H006 equivalent invalidation mechanism renders without implying missing data", () => {
+  const fields = [{ field: "invalidation_stop", field_knowledge: "VERIFIED_ABSENCE", requirement_role: "SATISFIED_BY_EQUIVALENT_MECHANISM", note: "Two-sided barrier is the equivalent mechanism." }];
+  act(() => root.render(<LifecycleFieldSemantics fields={fields} />));
+  expect(container.textContent).toContain("VERIFIED_ABSENCE");
+  expect(container.textContent).toContain("SATISFIED_BY_EQUIVALENT_MECHANISM");
+  expect(container.textContent).not.toContain("UNVERIFIED / NOT EXTRACTED");
 });
 
 test("execution and risk skeleton states remain conservative", () => {
