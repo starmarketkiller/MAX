@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-09-22T23:28:48.368904+00:00",
+  "generation_script": "build_reconstruction_parity_and_decision.py",
+  "canonical_sha256": "b5fcd793d4e85ed07760a6e93908d995f9dcee1dcc35f85b80cac94209867bb0",
+  "payload": {
+    "phase": "7.9E",
+    "candidate": "BREAKOUT_ACC",
+    "final_verdict": "STATE_SEMANTICS_MISMATCH",
+    "final_verdict_detail": {
+      "primary_cause": "g_breakoutAccState (NXS_Strategies.mqh:1531-1532) e' un unico struct GLOBALE, non scoped per-timeframe, condiviso da ogni chiamata a NXS_Strat_BreakoutAcc() indipendentemente dal timeframe attivo (g_activeTF) al momento della chiamata - la funzione viene invocata una volta per OGNI pass multi-TF del router (M5/M15/M30/H1/H4/D1), non solo durante il pass D1, perche' il suo gate di selettore non dipende dal TF attivo.",
+      "secondary_contributing_cause": "HTF_TIMING_MISMATCH (px200=shift0 vs il proxy shift1 usato dagli script offline) - reale ma minore (95->75, -21%), non sufficiente da solo a spiegare il gap.",
+      "ruled_out_with_direct_experiments": [
+        "EVALUATION_CADENCE_DIFFERENCE (1944/1944 barre D1 rilevate correttamente)",
+        "indicator activation/readiness gating (0 fallimenti su 177808 tentativi)",
+        "BAR_SHIFT_SEMANTICS_DIFFERENCE (verificato algebricamente: nessun bug di indicizzazione nello script 7.9C, contrariamente al sospetto iniziale)"
+      ],
+      "experimental_evidence": "breakout_acc_live_vs_offline_semantics_diff_v1.json, sezione 6 (Esperimenti A e B, entrambi eseguiti nel vero Tester, zero rischio)"
+    },
+    "next_decision": "BLOCK_RESEARCH_UNTIL_RECONSTRUCTION_PARITY",
+    "next_decision_rationale": "Il meccanismo causale e' identificato con prove dirette e sperimentali (non solo un'ipotesi), ma NESSUNA replica offline e' stata corretta e verificata a produrre esattamente i 4 eventi reali con date/direzioni esatte - il target di parity dichiarato al punto 9 non e' raggiunto. REBUILD_CANONICAL_BREAKOUT_ACC_DATASET sarebbe prematuro per la stessa ragione identificata dalla 7.9D: costruire un dataset prima che la replica sia dimostrata fedele produrrebbe un numero preciso ma di provenienza incerta - questa volta pero' con una spiegazione MOLTO piu' solida del perche', pronta per essere implementata in una fase dedicata.",
+    "concrete_next_step_not_executed": "Correggere la replica Python (server/backtest.py: sig_breakout_acc / _breakout_acc_cooldown_series) per condividere lo stato di cooldown fra TUTTI i timeframe usati da QUALUNQUE strategia nel motore di backtest (replicando fedelmente il bug/comportamento reale, non 'correggendolo' - l'obiettivo e' la fedelta' al motore live, non un miglioramento della strategia), producendo un artifact before/after congelato con evidenza di parity esatta (4/4, stesse date/direzioni) prima di qualunque nuova statistica. NON eseguito in questa fase.",
+    "next_step_not_executed": true,
+    "supersedes_note": {
+      "7_9c_assumption": "EXECUTION_GAP_DOMINANT (assumeva che 80 SIGNAL_FIRE offline fossero equivalenti ai segnali GENERATED reali dell'EA)",
+      "7_9d_finding": "il funnel di ESECUZIONE e' pulito (0 blocchi, 4/4 aperti) - l'assunzione 7.9C era nel posto sbagliato",
+      "7_9e_finding": "il vero gap e' nella GENERAZIONE del segnale stesso, causato da contaminazione di stato cross-timeframe nel router live (STATE_SEMANTICS_MISMATCH) - non un problema di esecuzione ne' (principalmente) di feed/gate HTF",
+      "frozen_artifacts_not_modified": [
+        "7.9C: breakout_acc_event_parity_matrix_v1.json",
+        "7.9D: breakout_acc_execution_parity_decision_v1.json"
+      ]
+    },
+    "volbrk_not_reopened": true,
+    "h006_not_reopened": true,
+    "hvcw_backlog_only": true,
+    "live_ea_strategy_logic_unchanged": true
+  }
+}

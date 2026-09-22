@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-09-22T23:28:09.218446+00:00",
+  "generation_script": "build_missing_event_forensics.py",
+  "canonical_sha256": "ecd8a0dcb2309b80a3e8ddb8d079a1c0818b488c284979ae5c107d0974e826df",
+  "payload": {
+    "phase": "7.9E",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "ee469d4fa62a6c6aba8b228c16a422540e05c189",
+    "method": "Per ciascuna data, letta la riga esatta del run diagnostico cadenza-fedele (Esperimento A - stato ISOLATO, replica esatta di setup/trigger/cooldown/HTF reali) e confrontata con l'assenza dell'evento nel run reale (7.9D, 4 signal_id totali, nessuno in queste 3 date) - nessuna ipotesi, solo dati osservati da run reali nel Tester.",
+    "events": [
+      {
+        "date": "2019.04.18",
+        "isolated_D1_evaluation": {
+          "range_hi": "1324.38",
+          "range_lo": "1280.83",
+          "c1": "1273.84",
+          "c2": "1276.65",
+          "accept_up": false,
+          "accept_dn": true,
+          "raw_dir": -1,
+          "cooldown_ok": true,
+          "px200_shift0": "1273.06",
+          "ema200_shift1": "1276.23",
+          "htf_ok": true,
+          "event": "FINAL_SIGNAL_FIRE"
+        },
+        "would_fire_in_isolation": true,
+        "real_ea_actual_outcome": "NON GENERATO (non compare fra i 4 signal_id del run diagnostico 7.9D reale - assente sia dal certificato che dal Journal trace)",
+        "causal_explanation": [
+          "Setup/trigger/cooldown/HTF sono TUTTI soddisfatti in isolamento (accept=DOWN, cooldown_ok=True, htf_ok=True) - la logica di BREAKOUT_ACC stessa NON e' la causa dell'assenza. La spiegazione causale (dimostrata dall'Esperimento B, stato condiviso - vedi breakout_acc_live_vs_offline_semantics_diff_v1.json sezione 6) e' che, nel router reale, g_breakoutAccState.lastFireTime e' stato quasi certamente sovrascritto da una valutazione su un timeframe PIU' VELOCE (M5/M15/M30/H1/H4) nello stesso periodo di calendario, prima che il pass D1 potesse registrare la propria Acceptance come 'fresca' - il cooldown condiviso, non la logica D1, ha soppresso il segnale. Non e' stato isolato il singolo evento specifico che ha sporcato lo stato in QUESTA data esatta (richiederebbe replicare l'ordine ESATTO dei pass del registro reale, fuori scope di questa fase) - la spiegazione resta a livello di MECCANISMO dimostrato, non di evento-specifico-esatto."
+        ],
+        "classification": "STATE_ADVANCEMENT_DIFFERENCE"
+      },
+      {
+        "date": "2019.05.15",
+        "isolated_D1_evaluation": {
+          "range_hi": "1295.68",
+          "range_lo": "1266.18",
+          "c1": "1296.78",
+          "c2": "1299.65",
+          "accept_up": true,
+          "accept_dn": false,
+          "raw_dir": 1,
+          "cooldown_ok": true,
+          "px200_shift0": "1296.54",
+          "ema200_shift1": "1277.08",
+          "htf_ok": true,
+          "event": "FINAL_SIGNAL_FIRE"
+        },
+        "would_fire_in_isolation": true,
+        "real_ea_actual_outcome": "NON GENERATO (non compare fra i 4 signal_id del run diagnostico 7.9D reale - assente sia dal certificato che dal Journal trace)",
+        "causal_explanation": [
+          "Setup/trigger/cooldown/HTF sono TUTTI soddisfatti in isolamento (accept=UP, cooldown_ok=True, htf_ok=True) - la logica di BREAKOUT_ACC stessa NON e' la causa dell'assenza. La spiegazione causale (dimostrata dall'Esperimento B, stato condiviso - vedi breakout_acc_live_vs_offline_semantics_diff_v1.json sezione 6) e' che, nel router reale, g_breakoutAccState.lastFireTime e' stato quasi certamente sovrascritto da una valutazione su un timeframe PIU' VELOCE (M5/M15/M30/H1/H4) nello stesso periodo di calendario, prima che il pass D1 potesse registrare la propria Acceptance come 'fresca' - il cooldown condiviso, non la logica D1, ha soppresso il segnale. Non e' stato isolato il singolo evento specifico che ha sporcato lo stato in QUESTA data esatta (richiederebbe replicare l'ordine ESATTO dei pass del registro reale, fuori scope di questa fase) - la spiegazione resta a livello di MECCANISMO dimostrato, non di evento-specifico-esatto."
+        ],
+        "classification": "STATE_ADVANCEMENT_DIFFERENCE"
+      },
+      {
+        "date": "2019.06.21",
+        "isolated_D1_evaluation": {
+          "range_hi": "1358.07",
+          "range_lo": "1272.38",
+          "c1": "1388.18",
+          "c2": "1360.18",
+          "accept_up": true,
+          "accept_dn": false,
+          "raw_dir": 1,
+          "cooldown_ok": true,
+          "px200_shift0": "1387.14",
+          "ema200_shift1": "1286.11",
+          "htf_ok": true,
+          "event": "FINAL_SIGNAL_FIRE"
+        },
+        "would_fire_in_isolation": true,
+        "real_ea_actual_outcome": "NON GENERATO (non compare fra i 4 signal_id del run diagnostico 7.9D reale - assente sia dal certificato che dal Journal trace)",
+        "causal_explanation": [
+          "Setup/trigger/cooldown/HTF sono TUTTI soddisfatti in isolamento (accept=UP, cooldown_ok=True, htf_ok=True) - la logica di BREAKOUT_ACC stessa NON e' la causa dell'assenza. La spiegazione causale (dimostrata dall'Esperimento B, stato condiviso - vedi breakout_acc_live_vs_offline_semantics_diff_v1.json sezione 6) e' che, nel router reale, g_breakoutAccState.lastFireTime e' stato quasi certamente sovrascritto da una valutazione su un timeframe PIU' VELOCE (M5/M15/M30/H1/H4) nello stesso periodo di calendario, prima che il pass D1 potesse registrare la propria Acceptance come 'fresca' - il cooldown condiviso, non la logica D1, ha soppresso il segnale. Non e' stato isolato il singolo evento specifico che ha sporcato lo stato in QUESTA data esatta (richiederebbe replicare l'ordine ESATTO dei pass del registro reale, fuori scope di questa fase) - la spiegazione resta a livello di MECCANISMO dimostrato, non di evento-specifico-esatto."
+        ],
+        "classification": "STATE_ADVANCEMENT_DIFFERENCE"
+      }
+    ],
+    "aggregate_note": "Tutti e 3 gli eventi richiesti mostrano lo STESSO pattern: piena validita' in isolamento, assenza nel motore reale - coerente al 100% con la spiegazione strutturale (stato condiviso multi-TF) e NON con un problema di definizione del segnale o con differenze di feed.",
+    "no_strategy_modification": true,
+    "no_live_ea_modification": true
+  }
+}

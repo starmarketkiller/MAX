@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-09-22T23:28:48.367903+00:00",
+  "generation_script": "build_reconstruction_parity_and_decision.py",
+  "canonical_sha256": "e6dd194772f651740d5fab25c6f906acce0e1e82823692e33f9772ead5343eb1",
+  "payload": {
+    "target_declared": "actual EA GENERATED = 4, offline reconstructed GENERATED = 4, timestamp/direzione esatti 4/4",
+    "achieved": false,
+    "reason_not_achieved": "Nessun fix e' stato applicato alla replica offline in questa fase (per istruzione esplicita: 'Fix only the diagnostic/research replica... Do not execute the next step'). Il MECCANISMO causale e' stato identificato e dimostrato sperimentalmente con alta confidenza (STATE_SEMANTICS_MISMATCH, collasso 95->0 in un esperimento controllato con stato condiviso multi-TF), ma NON e' stata costruita una replica corretta che riproduca esattamente 4/4.",
+    "current_best_replica_result": {
+      "isolated_D1_only_no_cross_tf_state": 75,
+      "with_cross_tf_shared_state_simplified_pass_order": 0,
+      "real_ea": 4,
+      "note": "La direzione e l'ordine di grandezza del collasso sono confermati (75->~0, reale=4) - la cifra ESATTA (4) non e' stata riprodotta, perche' l'ordine esatto dei pass multi-TF nel registro reale (NXS_StrategyIdAt) non e' stato replicato bit-per-bit in questa fase - dichiarato onestamente come limite, non forzato a coincidere."
+    }
+  }
+}
