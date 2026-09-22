@@ -1,0 +1,247 @@
+{
+  "generated_at": "2026-09-21T23:50:04.405328+00:00",
+  "generation_script": "build_atomic_reseal.py",
+  "canonical_sha256": "82be04eece445f368872a356a5d757ecf49e5cf3e068017706dc369b7f1c393c",
+  "payload": {
+    "baseline_commit": "3528f495c86af1f1ba140073a13cbad31f84b481",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "source_artifacts_untouched": {
+      "7_8e": {
+        "path": "server/research_scripts/phase7/phase7_8e/volatility_breakout_final_data_freeze_v1.json",
+        "canonical_sha256": "259df4fbd46489a6bc04ae8e76e2d0f82dd4d9d7e8c25f8989121da0fd256d22",
+        "modified_in_this_phase": false
+      },
+      "7_8f": {
+        "path": "server/research_scripts/phase7/phase7_8f/volatility_breakout_execution_config_audit_v1.json",
+        "canonical_sha256": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae",
+        "modified_in_this_phase": false
+      }
+    },
+    "data_drift_reevaluation": {
+      "prior_seal_2026_hcc": {
+        "sha256": "3bce451b627f7ead32df4d910501662c012d7c0c133dd3e521fac6a24bb1fa27",
+        "size_bytes": 15651363
+      },
+      "current_2026_hcc": {
+        "sha256": "afa1e750cdf5119e321682a9163bc2193964b480854d709b8b4cf37178b659ad",
+        "size_bytes": 15829119
+      },
+      "whole_file_changed": true,
+      "size_delta_bytes": 177756,
+      "year2026_audit_raw": {
+        "symbol": "GOLD",
+        "measured_at_TimeCurrent": "2026.09.22 02:24:10",
+        "year2026_bar_count": "1113",
+        "year2026_first_bar_time": "2026.01.02 08:00:00",
+        "year2026_last_bar_time": "2026.09.22 00:00:00",
+        "year2026_bars_inside_fresh_before_20260301": "244",
+        "year2026_bars_outside_fresh_from_20260301": "869",
+        "superset_snapshot_bar_count": "3379",
+        "superset_snapshot_first_bar": "2023.12.20 00:00:00",
+        "superset_snapshot_last_bar": "2026.02.27 20:00:00"
+      },
+      "evidence": [
+        "year2026_last_bar_time=2026.09.22 00:00:00 - la barra piu' recente nel file e' essenzialmente 'oggi' (misurato il 2026-09-22), ben oltre il confine FRESH (2026-03-01) - il file cresce in coda verso il presente, non nel mezzo.",
+        "Barre 2026 dentro FRESH (< 2026-03-01): 244 - un range storico gia' concluso, che non ha motivo strutturale di crescere nel tempo.",
+        "Barre 2026 fuori FRESH (>= 2026-03-01, fino a oggi): 869 - un range che cresce ogni giorno per costruzione, essendo l'intervallo fino ad 'ora'.",
+        "Il conteggio interno a FRESH (244 barre H4 per ~2 mesi, weekend esclusi) e' plausibile e coerente con un range storico stabile."
+      ],
+      "caveat_onesto": "7.8D/7.8E non presero uno snapshot per-barra di gennaio-febbraio 2026 (solo l'hash dell'intero file annuale) - quindi un confronto byte-per-byte diretto 'prima vs ora' per la sola sotto-finestra FRESH non e' possibile a ritroso. La conclusione sotto si basa sull'evidenza diretta disponibile (dove cresce il file ORA), non su un diff storico che non esiste.",
+      "conclusion": "IRRELEVANT_POST_WINDOW_CACHE_DRIFT",
+      "conclusion_confidence": "Alta, basata su evidenza diretta (crescita in coda verso 'ora', non nel mezzo) - non un'assunzione."
+    },
+    "window_aware_fingerprint": {
+      "tick_files": {
+        "n_files": 27,
+        "entries": [
+          {
+            "relative_path": "ticks/GOLD/202312.tkc",
+            "size_bytes": 4154521,
+            "sha256": "d6fb647f3ae471ab819b5a325e568e1782d9c0886cde3d78c3575841f154fece",
+            "boundary_note": "mese di confine - il file puo' contenere tick fuori da PRIMARY_FRESH_VERDICT_WINDOW"
+          },
+          {
+            "relative_path": "ticks/GOLD/202401.tkc",
+            "size_bytes": 16177854,
+            "sha256": "a4c2ab31fab0cf79f361ce61c455fbd7fce7f91b3db08314e4b83ad1b757e9fb"
+          },
+          {
+            "relative_path": "ticks/GOLD/202402.tkc",
+            "size_bytes": 11997607,
+            "sha256": "6e51dc0927c2561ad6c393d24f58d13e2fc8c250bf66f90230363c0209c3317c"
+          },
+          {
+            "relative_path": "ticks/GOLD/202403.tkc",
+            "size_bytes": 17989061,
+            "sha256": "bb74a2b084bf7be697bd7b77ff95f109f8a6053f9b314d0202d1db1d957967d1"
+          },
+          {
+            "relative_path": "ticks/GOLD/202404.tkc",
+            "size_bytes": 27961579,
+            "sha256": "5bb597e41ff5354cdece915becdb0a06733a9d0eea933ce792f67112e2d07bfb"
+          },
+          {
+            "relative_path": "ticks/GOLD/202405.tkc",
+            "size_bytes": 22744101,
+            "sha256": "ccda6cdb4a559c04209594d1ee53b8795fba2780b243afa9d45fff364c6748b5"
+          },
+          {
+            "relative_path": "ticks/GOLD/202406.tkc",
+            "size_bytes": 20224492,
+            "sha256": "10bdacdb160dcd7e249675426dbaf0013ade5c13a5f8dc6f4e6adad24865038f"
+          },
+          {
+            "relative_path": "ticks/GOLD/202407.tkc",
+            "size_bytes": 26086254,
+            "sha256": "6cbfeec4987beaaf2726a87a7e9f74e637abca2535f950d63d526677b492cc70"
+          },
+          {
+            "relative_path": "ticks/GOLD/202408.tkc",
+            "size_bytes": 28806056,
+            "sha256": "f7509f286f995c8ca842ccc20417fe048a4551aac85f04f1c5185db2871f2e02"
+          },
+          {
+            "relative_path": "ticks/GOLD/202409.tkc",
+            "size_bytes": 25008400,
+            "sha256": "23f0d0f94e4d628252e6cb629042a88a158b261976c288d76f584e91c1458287"
+          },
+          {
+            "relative_path": "ticks/GOLD/202410.tkc",
+            "size_bytes": 26955038,
+            "sha256": "a1ec448b82b29ca57f407451e06f358de270545659b36bdcda85e76674feb714"
+          },
+          {
+            "relative_path": "ticks/GOLD/202411.tkc",
+            "size_bytes": 27794189,
+            "sha256": "4a33559aa993c52249de0a6854aa466b0a40460abc14d462e288915de5cf9676"
+          },
+          {
+            "relative_path": "ticks/GOLD/202412.tkc",
+            "size_bytes": 22465057,
+            "sha256": "c524c453de16fa10d2f3dd80d4a309c49cf0d4a0ff4fc1e5723142b765d3963f"
+          },
+          {
+            "relative_path": "ticks/GOLD/202501.tkc",
+            "size_bytes": 23336951,
+            "sha256": "9d81cca5355bf942db0f61f40e5629ab11e6ef90b57d46b86060a8cf140dae67"
+          },
+          {
+            "relative_path": "ticks/GOLD/202502.tkc",
+            "size_bytes": 22307201,
+            "sha256": "001e60da3a4f95489d05c8dc133db9bf084989c46e125ba15fd3c1a1bef81454"
+          },
+          {
+            "relative_path": "ticks/GOLD/202503.tkc",
+            "size_bytes": 22674772,
+            "sha256": "b43069ce86b1378077f53da9848f2bfcf9af3d813cd8ef6c9a52a6f79b4ea012"
+          },
+          {
+            "relative_path": "ticks/GOLD/202504.tkc",
+            "size_bytes": 31682640,
+            "sha256": "a08cb0028ec69ce09f0ba60e80b01fb206632bef008f350de873e4ab9de4c870"
+          },
+          {
+            "relative_path": "ticks/GOLD/202505.tkc",
+            "size_bytes": 29583382,
+            "sha256": "4518e30f5e86e6e86f15491c39a6bac730541fb5d126aa30cf87a7951c2b1cd1"
+          },
+          {
+            "relative_path": "ticks/GOLD/202506.tkc",
+            "size_bytes": 25861978,
+            "sha256": "606a6d2418fe26171992d46cf74d29c9d24c6d5aaf56adddffc095b7019b5795"
+          },
+          {
+            "relative_path": "ticks/GOLD/202507.tkc",
+            "size_bytes": 22610076,
+            "sha256": "70528ae5eb30eaaa879a89715b8d20da7acf6bbd47350b853cc617e11a773e68"
+          },
+          {
+            "relative_path": "ticks/GOLD/202508.tkc",
+            "size_bytes": 19158298,
+            "sha256": "787e299ac291b89bc7ea68cb3cdb3d784adf07b4324364aba0d6f88848e7d0e2"
+          },
+          {
+            "relative_path": "ticks/GOLD/202509.tkc",
+            "size_bytes": 26389086,
+            "sha256": "27010f9ad09984d4ecd919049f2020d97e133171e931fbdcdeb3168a1b5ef07b"
+          },
+          {
+            "relative_path": "ticks/GOLD/202510.tkc",
+            "size_bytes": 40737386,
+            "sha256": "33d58c976ba8a89107ba2a7f166bd072ae864ffc87e63ff6ef9278598df5b4f4"
+          },
+          {
+            "relative_path": "ticks/GOLD/202511.tkc",
+            "size_bytes": 29089898,
+            "sha256": "625954ae522be20752223db195148cbad52fc1c2afa01dd0cc66f23195d88d64"
+          },
+          {
+            "relative_path": "ticks/GOLD/202512.tkc",
+            "size_bytes": 33697952,
+            "sha256": "c74a05ca377ae8cf5a6e7de7f953013238e130c2fba283111ae480a530723db9"
+          },
+          {
+            "relative_path": "ticks/GOLD/202601.tkc",
+            "size_bytes": 38964403,
+            "sha256": "8afbef60dfbfd235eebc7fd2c21a19a01b10230c173f2c0ba76785bfd7b9d7b0"
+          },
+          {
+            "relative_path": "ticks/GOLD/202602.tkc",
+            "size_bytes": 36619254,
+            "sha256": "707e7e6bccbd9b7d3ed295a80013d08b82e61a7e5f02c94ed511812fc2dce17e",
+            "boundary_note": "mese di confine - il file puo' contenere tick fuori da PRIMARY_FRESH_VERDICT_WINDOW"
+          }
+        ],
+        "note": "invariato nel metodo rispetto a 7.8E (hash file intero) - ricalcolato ORA, immediatamente prima del reseal. I mesi di confine possono contenere tick fuori da PRIMARY_FRESH_VERDICT_WINDOW (dichiarato, non filtrato)."
+      },
+      "h4_bars_window_aware_snapshot": {
+        "method": "CopyRates(GOLD, H4, FromDate=2023.12.20 00:00:00, ToDate=2026.03.01 00:00:00) - esporta ESATTAMENTE il superset che il Tester carichera' con Model=4 (stessi confini FromDate/ToDate del tester config congelato), non una sotto-finestra arbitraria - e' il dato piu' direttamente collegato a cio' che il backtest usera' davvero.",
+        "fields": "timestamp,open,high,low,close,tick_volume,spread,real_volume",
+        "ordering": "ascendente per timestamp (ordine nativo di CopyRates)",
+        "file": "server/research_scripts/phase7/phase7_8g/raw_data_audit/nxs_volbrk_window_snapshot.csv",
+        "sha256": "8f0ea71a3dc963f3b354cb31daad2e0e37abd031145884940123df8ca4ac17b4",
+        "bar_count": 3379,
+        "first_bar": "2023.12.20 00:00:00",
+        "last_bar": "2026.02.27 20:00:00"
+      },
+      "replaces": "L'hash dell'intero history/GOLD/2026.hcc (7.8D/7.8E) NON e' piu' usato come gate per le barre - sostituito dallo snapshot window-aware sopra, che non include dati oltre ToDate e quindi non puo' piu' bloccarsi per drift irrilevante fuori finestra.",
+      "combined_hash": "d2584b110522e2a74eda912f4ce9d425a1a4552dd034ca37345163151fd74a71"
+    },
+    "timezone_remeasurement": {
+      "measured_immediately_before_run_seconds": 10800,
+      "frozen_in_7_8e_seconds": 10800,
+      "matches": true,
+      "raw_file": "server/research_scripts/phase7/phase7_8g/raw_data_audit/nxs_volbrk_timezone_measure_immediately_before_run.txt",
+      "raw_file_sha256": "11f28717c2c0c3bffea8e362c32e09b874948bbc99855a0a4eb90949f88a746e",
+      "note": "La strategy non ha logica session/timezone-dependent (verificato in 7.8F) - un eventuale scostamento non altererebbe i segnali, ma la provenance deve essere esatta comunque."
+    },
+    "final_seal": {
+      "data_drift_conclusion": "IRRELEVANT_POST_WINDOW_CACHE_DRIFT",
+      "window_aware_fingerprint_hash": "d2584b110522e2a74eda912f4ce9d425a1a4552dd034ca37345163151fd74a71",
+      "broker_utc_offset_seconds": 10800,
+      "final_tester_config_hash": "86d1974f0ac61ed388261c24cc8b8021cf42d767c6db565eb04482ea07ec97a1",
+      "strategy_frozen_commit": "f035d30",
+      "prereg_hash": "4eadc5fd9c529e1bb8722add4dcb5784ae85327e991c6c1c6712c163f4d827e8",
+      "authorization_7_8c_hash": "239ad329967ac0668965f89e3fe217f8b4dec7826b23593a510eba118f6eda78",
+      "execution_config_7_8f_hash": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae",
+      "cost_model_hash": "369573b07ebfe3ccb0c3686a96cca0cd9d29c73c4886aade34c787cca1045d71",
+      "previous_manifest_hash_7_8f": "016eee03aa6ea790b1e7500e017a46bce311d1a1d804175014fe290bd8423fae"
+    },
+    "seal_verification": {
+      "data_drift_correctly_classified": true,
+      "window_aware_fingerprint_excludes_post_window_growth": true,
+      "tick_files_all_27_present": true,
+      "timezone_remeasured_immediately_before_run": true,
+      "execution_config_hash_matches_real_7_8f_file": true,
+      "no_outcome_fields_present": true,
+      "serious_validation_not_yet_executed_at_seal_time": true
+    },
+    "final_verdict": {
+      "value": "ATOMIC_RESEAL_VERIFIED",
+      "note": "Se VERIFIED, il Serious validation congelato in 7.8F viene eseguito SUBITO DOPO (script separato eseguito immediatamente da questa stessa sessione), senza un ulteriore giro di preparazione - esattamente come richiesto."
+    },
+    "serious_validation_not_executed": true,
+    "no_strategy_outcome_accessed": true,
+    "no_data_modified_or_resynced_in_this_phase": true
+  }
+}

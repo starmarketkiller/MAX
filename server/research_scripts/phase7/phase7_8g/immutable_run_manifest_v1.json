@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-09-22T01:53:22.953218+00:00",
+  "generation_script": "collect_immutable_run_manifest.py",
+  "canonical_sha256": "d7e22938b5b9aeb70ca6d9d15e864155c1539d191f90a933542054cab33dfa7a",
+  "payload": {
+    "phase": "7.8G",
+    "artifact_role": "IMMUTABLE_RUN_MANIFEST",
+    "candidate_id": "VOLATILITY_BREAKOUT_CONFIRMED",
+    "collected_before_any_interpretation": true,
+    "collected_files": {
+      "report_htm": {
+        "source_path": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\volbrk_serious_3y_run1.htm",
+        "dest_path": "server/research_scripts/phase7/phase7_8g/immutable_run_output/volbrk_serious_3y_run1.htm",
+        "sha256": "104e0bca552b42f9f33b5d90270f3e2da901fc21c6067d74e207115e4f0e6fce",
+        "size_bytes": 108330
+      },
+      "tester_journal_logs": [
+        {
+          "source_path": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\Tester\\logs\\20260917.log",
+          "dest_path": "server/research_scripts/phase7/phase7_8g/immutable_run_output/tester_journal_20260917.log",
+          "sha256": "2de993bc27aac69024ab2c714abe6799f9ca1842f582639a8fc461887d675b55",
+          "size_bytes": 73967716
+        },
+        {
+          "source_path": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\Tester\\logs\\20260922.log",
+          "dest_path": "server/research_scripts/phase7/phase7_8g/immutable_run_output/tester_journal_20260922.log",
+          "sha256": "54a12f72bcc8dcf96ba2fc0c4515d788e50b28b3a7913f044da960405e16fcf5",
+          "size_bytes": 48014318
+        }
+      ],
+      "tester_ini_used": {
+        "source_path": "C:\\Users\\User\\.claude\\jobs\\703d44b4\\tmp\\volbrk_serious_3y_run.ini",
+        "dest_path": "server/research_scripts/phase7/phase7_8g/immutable_run_output/volbrk_serious_3y_run.ini",
+        "sha256": "c8019de6aeacc6879e4357e4f4eb565ef95e73c798717ae928806c2956696c4a"
+      },
+      "ea_build_identity": {
+        "ex5_sha256": "30efb700878dc56b3479378d2ec3971db75fdf8f4b631b87e4da8510a8c7388a",
+        "ex5_mtime": 1789031867.960265,
+        "source_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a"
+      }
+    },
+    "no_verdict_computed_here": true
+  }
+}
