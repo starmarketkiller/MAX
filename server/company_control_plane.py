@@ -48,6 +48,11 @@ SOURCES = {
     "strategy_meta_filter_gate": P7 / "phase7_7b" / "strategy_meta_filter_gate_v1.json",
     "strategy_structural_semantics": P7 / "phase7_7b" / "structural_eligibility_semantics_correction_v1.json",
     "strategy_missing_field_semantics": P7 / "phase7_7b" / "missing_field_semantics_refinement_v1.json",
+    "strategy_7_9a_postmortem": P7 / "phase7_9a" / "phase7_9a_postmortem_and_reprioritization_v1.json",
+    "serious_validation_preflight": P7 / "phase7_9a" / "serious_validation_preflight_checklist_v1.json",
+    "breakout_acc_lifecycle": P7 / "phase7_9b" / "breakout_acc_lifecycle_contract_v1.json",
+    "breakout_acc_lineage": P7 / "phase7_9b" / "breakout_acc_evidence_lineage_v1.json",
+    "breakout_acc_decision": P7 / "phase7_9b" / "breakout_acc_formalization_decision_v1.json",
 }
 
 STATUS_MAP = {
@@ -111,7 +116,8 @@ class CompanyControlPlane:
             artifacts.append({
                 "id": f"ART-{key.upper()}", "name": path.name, "type": "RESEARCH_ARTIFACT",
                 "status": "AVAILABLE", "raw_status": "AVAILABLE", "normalized_status": "PASSED",
-                "owner_type": "DEPARTMENT", "owner_id": "QUANT_RESEARCH" if key not in {"dataset_registry", "dataset_integrity"} else "DATA",
+                "owner_type": "DEPARTMENT", "owner_id": ("DATA" if key in {"dataset_registry", "dataset_integrity"}
+                    else "SCIENTIFIC_QA" if key == "serious_validation_preflight" else "QUANT_RESEARCH"),
                 "source_path": _repo_path(path), "sha": doc.get("canonical_sha256"),
                 "created_at": doc.get("generated_at"), "updated_at": doc.get("generated_at"),
                 "provenance": {"mode": "RESEARCH", "direct": True, "source_artifact": _repo_path(path)},
@@ -176,6 +182,7 @@ class CompanyControlPlane:
         }
 
         strategies = strategy_catalog["items"]
+        serious_validation_preflight = strategy_catalog.get("serious_validation_preflight") or {}
 
         departments = []
         for dept_id, name, raw_status in DEPARTMENT_SLOTS:
@@ -204,7 +211,8 @@ class CompanyControlPlane:
         return {"company": {"id": "NEXUS", "name": "NEXUS", "status": "ACTIVE", "owner_type": "PRIVATE",
                               "created_at": None, "updated_at": now, "provenance": {"mode": "DERIVED", "direct": False}},
                 "departments": departments, "work_items": work_items, "artifacts": artifacts, "gates": gates,
-                "dependencies": dependencies, "datasets": datasets, "strategies": strategies, "warnings": warnings}
+                "dependencies": dependencies, "datasets": datasets, "strategies": strategies,
+                "serious_validation_preflight": serious_validation_preflight, "warnings": warnings}
 
     @staticmethod
     def _purpose(dept):
@@ -238,7 +246,8 @@ class CompanyControlPlane:
                 "gates": [g for g in model["gates"] if g["department_id"] == department_id or (department_id == "QUANT_RESEARCH" and g["work_item_id"].startswith("WI-"))],
                 "datasets": model["datasets"] if department_id == "DATA" else [],
                 "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")],
-                "strategies": model["strategies"] if department_id == "QUANT_RESEARCH" else []}
+                "strategies": model["strategies"] if department_id == "QUANT_RESEARCH" else [],
+                "serious_validation_preflight": model["serious_validation_preflight"] if department_id in {"QUANT_RESEARCH", "SCIENTIFIC_QA"} else None}
 
     def overview(self):
         model = self.build()

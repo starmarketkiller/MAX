@@ -1,6 +1,6 @@
 """Canonical, read-only strategy pipeline projection for the Company Control Plane.
 
-Only explicit Phase 7.7A/7.7B facts are projected.  Code registry status,
+Only explicit Phase 7.7A/7.7B/7.9A/7.9B facts are projected.  Code registry status,
 scientific evidence and meta-filter readiness deliberately remain separate.
 """
 from __future__ import annotations
@@ -12,6 +12,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 P77A = ROOT / "research_scripts" / "phase7" / "phase7_7a"
 P77B = ROOT / "research_scripts" / "phase7" / "phase7_7b"
+P79A = ROOT / "research_scripts" / "phase7" / "phase7_9a"
+P79B = ROOT / "research_scripts" / "phase7" / "phase7_9b"
 
 SOURCES = {
     "lifecycle": P77A / "strategy_lifecycle_registry_v1.json",
@@ -20,6 +22,11 @@ SOURCES = {
     "meta_filter_gate": P77B / "strategy_meta_filter_gate_v1.json",
     "structural_semantics_correction": P77B / "structural_eligibility_semantics_correction_v1.json",
     "missing_field_semantics": P77B / "missing_field_semantics_refinement_v1.json",
+    "phase7_9a_postmortem": P79A / "phase7_9a_postmortem_and_reprioritization_v1.json",
+    "serious_validation_preflight": P79A / "serious_validation_preflight_checklist_v1.json",
+    "breakout_acc_lifecycle": P79B / "breakout_acc_lifecycle_contract_v1.json",
+    "breakout_acc_lineage": P79B / "breakout_acc_evidence_lineage_v1.json",
+    "breakout_acc_decision": P79B / "breakout_acc_formalization_decision_v1.json",
 }
 
 PIPELINE_STAGES = [
@@ -68,6 +75,11 @@ class StrategyPipelineCatalog:
         gate = _payload(docs["meta_filter_gate"])
         correction = _payload(docs["structural_semantics_correction"])
         field_refinement = _payload(docs["missing_field_semantics"])
+        postmortem = _payload(docs["phase7_9a_postmortem"])
+        preflight = _payload(docs["serious_validation_preflight"])
+        breakout_contract = _payload(docs["breakout_acc_lifecycle"])
+        breakout_lineage = _payload(docs["breakout_acc_lineage"])
+        breakout_decision = _payload(docs["breakout_acc_decision"])
 
         deep = _dict(lifecycle.get("deep_dive_candidates"))
         survey_rows = _list(_dict(lifecycle.get("full_registry_survey")).get("strategies"))
@@ -139,7 +151,7 @@ class StrategyPipelineCatalog:
                 None if readiness in {"REFUTED_INAPPROPRIATE", "EXECUTION_FAILED_INAPPROPRIATE"}
                 else "STRATEGY_VALIDATION"
             )
-            strategies.append({
+            item = {
                 "strategy_id": strategy_id,
                 "source_strategy_id": source_strategy_id,
                 "lifecycle_class": classification,
@@ -164,6 +176,7 @@ class StrategyPipelineCatalog:
                 "field_semantics_refined_status": field_record.get("refined_structural_status"),
                 "field_semantics_status_changed": field_record.get("status_changed_by_this_refinement"),
                 "meta_filter_research_readiness": readiness,
+                "research_readiness": readiness,
                 "meta_filter_ready": gate_passed,
                 "meta_filter_blocker": structural_limitation or gate_record.get("structural_blocker"),
                 "blockers": [value for value in [structural_limitation or gate_record.get("structural_blocker"), gate_record.get("next_required_evidence")] if value],
@@ -175,13 +188,114 @@ class StrategyPipelineCatalog:
                 "next_required_evidence": gate_record.get("next_required_evidence"),
                 "deployable": None,
                 "execution_candidate": False,
+                "producer_department": "QUANT_RESEARCH",
+                "validation_owner_department": "SCIENTIFIC_QA",
                 "source_artifact": raw.get("source_artifact"),
                 "provenance": {
                     "mode": "RESEARCH", "direct": False,
                     "sources": [_repo_path(path) for name, path in SOURCES.items() if docs[name] is not None],
                     "canonical_sha256": {name: docs[name].get("canonical_sha256") for name in SOURCES if docs[name] is not None},
                 },
-            })
+            }
+
+            if strategy_id == "VOLATILITY_BREAKOUT_CONFIRMED" and postmortem:
+                archive = _dict(postmortem.get("section_2_archive_lifecycle"))
+                prior = _dict(archive.get("prior_state_as_of_7_7b"))
+                current = _dict(archive.get("new_state_as_of_7_9a"))
+                directional = _dict(postmortem.get("section_3_directional_observation"))
+                reconciliation = _dict(postmortem.get("section_1_canonical_result_reconciliation"))
+                corrected = _dict(_dict(reconciliation.get("narrative_discrepancy_found")).get("correct_values_canonical"))
+                item.update({
+                    "research_readiness": current.get("research_readiness"),
+                    "serious_validation": current.get("serious_validation"),
+                    "lifecycle_stage": current.get("lifecycle_stage"),
+                    "execution_candidate": current.get("execution_candidate"),
+                    "meta_filter_ready": current.get("meta_filter_ready"),
+                    "deployable": current.get("deployable"),
+                    "state_transition": {
+                        "previous": prior.get("research_readiness"),
+                        "current": current.get("research_readiness"),
+                        "rationale": archive.get("transition_rationale"),
+                        "provenance": [
+                            _repo_path(SOURCES["phase7_9a_postmortem"]),
+                            _dict(reconciliation.get("canonical_source")).get("file"),
+                        ],
+                    },
+                    "post_validation_observations": {
+                        "classification": directional.get("classification"),
+                        "BUY": _dict(corrected.get("BUY")),
+                        "SELL": _dict(corrected.get("SELL")),
+                        "explicitly_not": directional.get("explicitly_not"),
+                        "caveat": "Not a rescued strategy. SELL-only would require a new hypothesis identity and new validation.",
+                        "source_note": directional.get("why_not_a_rescue"),
+                    },
+                    "blockers": [archive.get("transition_rationale")] if archive.get("transition_rationale") else [],
+                })
+                item["provenance"]["sources"] = [source for source in item["provenance"]["sources"] if "phase7_9b" not in source]
+
+            if strategy_id == "BREAKOUT_ACC":
+                identity = _dict(breakout_contract.get("identity"))
+                registry_identity = _dict(identity.get("registry_entry_verified"))
+                master_switch = _dict(identity.get("master_switch"))
+                signal_function = _dict(identity.get("signal_function"))
+                profile_tf = _dict(identity.get("profile_timeframe"))
+                lifecycle_fields = _dict(_dict(breakout_contract.get("lifecycle_contract")).get("fields"))
+                if lifecycle_fields:
+                    item["field_semantics"] = []
+                    for field_name, semantics in lifecycle_fields.items():
+                        if not isinstance(semantics, dict):
+                            continue
+                        knowledge = semantics.get("status")
+                        role = semantics.get("requirement")
+                        origin = ("NOT_EXTRACTED" if knowledge == "NOT_EXTRACTED" else
+                                  "VERIFIED_ABSENCE" if knowledge == "VERIFIED_ABSENCE" else
+                                  "FRAMEWORK_EQUIVALENT" if role == "SATISFIED_BY_EQUIVALENT_MECHANISM" else
+                                  "STRATEGY_NATIVE")
+                        item["field_semantics"].append({
+                            "field": field_name.lower(), "field_knowledge": knowledge,
+                            "requirement_role": role, "note": semantics.get("requirement_note"),
+                            "value": semantics.get("value"), "mechanism_origin": origin,
+                        })
+                static_reachability = _dict(breakout_contract.get("static_reachability"))
+                lineage = _dict(breakout_lineage.get("evidence_lineage"))
+                lineage_sources = []
+                for source_id, source in _dict(lineage.get("sources_examined")).items():
+                    if not isinstance(source, dict):
+                        continue
+                    raw_status = source.get("status")
+                    lineage_sources.append({
+                        "source_id": source_id, "identity_status": raw_status.split(" -", 1)[0] if isinstance(raw_status, str) else None,
+                        "raw_status": raw_status, "file": source.get("file") or source.get("files"),
+                        "claim": source.get("claim"), "official_verdict": source.get("official_verdict"),
+                        "python_same_logic_result": source.get("python_same_logic_result"),
+                    })
+                decision = _dict(breakout_decision.get("decision"))
+                readiness_raw = decision.get("updated_research_readiness")
+                readiness = readiness_raw.split(" (", 1)[0] if isinstance(readiness_raw, str) else readiness_raw
+                next_experiment = _dict(decision.get("next_admissible_experiment"))
+                item.update({
+                    "formalization_verdict": decision.get("formalization_verdict"),
+                    "static_reachability": static_reachability.get("verdict"),
+                    "research_readiness": readiness,
+                    "strategy_identity": {
+                        "selector": registry_identity.get("selector_index"),
+                        "master_switch": master_switch.get("name"),
+                        "signal_function": signal_function.get("name"),
+                        "timeframe": profile_tf.get("declared", "").replace("PERIOD_", "") or None,
+                    },
+                    "evidence_lineage": lineage_sources,
+                    "evidence_contradiction": _dict(lineage.get("critical_contradiction_found")),
+                    "evidence_quality_audit": _dict(breakout_lineage.get("evidence_quality_audit")),
+                    "next_admissible_experiment": {
+                        "category": next_experiment.get("category"),
+                        "target": next_experiment.get("target"),
+                        "rationale": next_experiment.get("rationale"),
+                        "executed": False if next_experiment.get("not_executed_in_this_phase") is True else None,
+                    },
+                    "execution_candidate": False, "meta_filter_ready": False, "deployable": False,
+                })
+                item["provenance"]["sources"] = [source for source in item["provenance"]["sources"] if "phase7_9a" not in source]
+            strategies.append(item)
 
         return {
             "items": strategies,
@@ -191,6 +305,11 @@ class StrategyPipelineCatalog:
             "execution_candidate_count": 0,
             "deployable_count": 0,
             "pipeline_stages": PIPELINE_STAGES,
+            "serious_validation_preflight": {
+                "name": preflight.get("name"), "rule": preflight.get("rule"),
+                "items": _list(preflight.get("checklist")), "applies_to": preflight.get("applies_to"),
+                "provenance": _repo_path(SOURCES["serious_validation_preflight"]) if docs["serious_validation_preflight"] else None,
+            },
             "warnings": warnings,
         }
 

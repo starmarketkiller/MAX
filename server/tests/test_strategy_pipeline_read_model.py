@@ -38,7 +38,60 @@ def test_not_extracted_is_not_treated_as_absent_or_status_change():
     assert model["meta_filter_ready_count"] == 0
     assert model["execution_candidate_count"] == 0
     assert model["deployable_count"] == 0
-    assert all(item["deployable"] is None for item in model["items"])
+    assert all(item["deployable"] is not True for item in model["items"])
+
+
+def test_phase_7_9a_precedes_stale_volbrk_state_without_rescue():
+    model = sp.StrategyPipelineCatalog().build()
+    item = next(row for row in model["items"] if row["strategy_id"] == "VOLATILITY_BREAKOUT_CONFIRMED")
+    assert item["state_transition"]["previous"] == "NEEDS_MORE_EVIDENCE"
+    assert item["research_readiness"] == "REFUTED_ARCHIVED"
+    assert item["serious_validation"] == "FAIL"
+    assert item["lifecycle_stage"] == "ARCHIVE_CURRENT_DESIGN"
+    assert item["execution_candidate"] is False
+    assert item["meta_filter_ready"] is False
+    assert item["deployable"] is False
+    assert item["evidence_ladder"]  # The historical ladder remains available.
+    observation = item["post_validation_observations"]
+    assert observation["classification"] == "POST_VALIDATION_OBSERVATION"
+    assert observation["BUY"]["n"] == 56
+    assert observation["SELL"]["n"] == 127
+    assert observation["SELL"]["pf"] == 1.625469074213059
+    assert observation["explicitly_not"] == "RESCUED_STRATEGY"
+
+
+def test_phase_7_9b_breakout_projection_and_lineage_are_canonical():
+    model = sp.StrategyPipelineCatalog().build()
+    item = next(row for row in model["items"] if row["strategy_id"] == "BREAKOUT_ACC")
+    assert item["formalization_verdict"] == "FULL_STRATEGY_SPEC_VERIFIED"
+    assert item["static_reachability"] == "STATIC_REACHABILITY_PASS"
+    assert item["research_readiness"] == "HOLD_NEEDS_MORE_EVIDENCE"
+    assert item["strategy_identity"] == {"selector": 9, "master_switch": "InpStrat_BREAKOUT_ACC", "signal_function": "NXS_Strat_BreakoutAcc()", "timeframe": "D1"}
+    assert [source["identity_status"] for source in item["evidence_lineage"]] == [
+        "EVIDENCE_IDENTITY_UNVERIFIED", "PARTIAL_IDENTITY_MATCH",
+        "EVIDENCE_IDENTITY_UNVERIFIED", "EVIDENCE_IDENTITY_CONFIRMED",
+    ]
+    assert item["next_admissible_experiment"]["category"] == "REANALYZE_EXISTING_RAW_RESULTS"
+    assert item["next_admissible_experiment"]["executed"] is False
+    assert item["execution_candidate"] is False and item["deployable"] is False and item["meta_filter_ready"] is False
+
+
+def test_serious_validation_preflight_is_a_twelve_item_protocol():
+    protocol = sp.StrategyPipelineCatalog().build()["serious_validation_preflight"]
+    assert protocol["name"] == "NEXUS_SERIOUS_VALIDATION_PREFLIGHT_CHECKLIST_V1"
+    assert [item["id"] for item in protocol["items"]] == list(range(1, 13))
+
+
+def test_each_phase_7_9_source_is_fault_isolated(monkeypatch, tmp_path):
+    new_sources = ("phase7_9a_postmortem", "serious_validation_preflight", "breakout_acc_lifecycle", "breakout_acc_lineage", "breakout_acc_decision")
+    original_sources = dict(sp.SOURCES)
+    for source_name in new_sources:
+        sources = dict(original_sources)
+        sources[source_name] = tmp_path / f"missing-{source_name}.json"
+        monkeypatch.setattr(sp, "SOURCES", sources)
+        model = sp.StrategyPipelineCatalog().build()
+        assert model["count"] == 7
+        assert any(source_name in warning["source"] for warning in model["warnings"])
 
 
 def test_pipeline_and_provenance_are_artifact_backed():
@@ -68,7 +121,8 @@ def test_missing_field_refinement_is_fault_isolated(monkeypatch, tmp_path):
     monkeypatch.setattr(sp, "SOURCES", sources)
     model = sp.StrategyPipelineCatalog().build()
     assert model["count"] == 7
-    assert all(item["field_semantics"] == [] for item in model["items"])
+    assert all(item["field_semantics"] == [] for item in model["items"] if item["strategy_id"] != "BREAKOUT_ACC")
+    assert next(item for item in model["items"] if item["strategy_id"] == "BREAKOUT_ACC")["field_semantics"]
     assert {item["strategy_id"]: item["meta_filter_structural_eligibility"] for item in model["items"]} == baseline
     assert model["meta_filter_ready_count"] == 0
     assert any(item["source"].endswith("missing.json") for item in model["warnings"])

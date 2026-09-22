@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { DepartmentCard, DepartmentInspector, LifecycleFieldSemantics, StrategyInspector, StrategyPipeline } from "./CompanyPage";
+import { DepartmentCard, DepartmentInspector, LifecycleFieldSemantics, SeriousValidationPreflight, StrategyInspector, StrategyPipeline } from "./CompanyPage";
 
 let container, root;
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
@@ -64,4 +64,33 @@ test("execution and risk skeleton states remain conservative", () => {
   expect(container.textContent).toContain("WAITING_FOR_QUANT_GATE");
   act(() => root.render(<DepartmentInspector department={{ ...skeleton, id: "RISK_PORTFOLIO", operational_state: { state: "WAITING_FOR_DEPLOYABLE_STRATEGIES", deployable_strategy_count: 0 } }} onClose={() => {}} />));
   expect(container.textContent).toContain("WAITING_FOR_DEPLOYABLE_STRATEGIES");
+});
+
+test("archived VOLBRK renders the post-validation observation without rescue", () => {
+  const archived = { ...strategy, strategy_id: "VOLATILITY_BREAKOUT_CONFIRMED", research_readiness: "REFUTED_ARCHIVED", serious_validation: "FAIL", lifecycle_stage: "ARCHIVE_CURRENT_DESIGN", state_transition: { previous: "NEEDS_MORE_EVIDENCE", current: "REFUTED_ARCHIVED", rationale: "Serious validation supplied negative evidence." }, post_validation_observations: { classification: "POST_VALIDATION_OBSERVATION", BUY: { n: 56, expectancy_R: -0.7257678571, pf: 0.1455631005 }, SELL: { n: 127, expectancy_R: 0.2231102362, pf: 1.6254690742 }, caveat: "Not a rescued strategy. SELL-only would require a new hypothesis identity and new validation." } };
+  act(() => root.render(<StrategyInspector strategy={archived} onClose={() => {}} />));
+  expect(container.textContent).toContain("REFUTED_ARCHIVED");
+  expect(container.textContent).toContain("ARCHIVE_CURRENT_DESIGN");
+  expect(container.textContent).toContain("POST_VALIDATION_OBSERVATION");
+  expect(container.textContent).toContain("Not a rescued strategy");
+});
+
+test("BREAKOUT_ACC inspector exposes lifecycle identity, lineage and pending experiment", () => {
+  const breakout = { ...strategy, strategy_id: "BREAKOUT_ACC", formalization_verdict: "FULL_STRATEGY_SPEC_VERIFIED", static_reachability: "STATIC_REACHABILITY_PASS", research_readiness: "HOLD_NEEDS_MORE_EVIDENCE", strategy_identity: { selector: 9, master_switch: "InpStrat_BREAKOUT_ACC", signal_function: "NXS_Strat_BreakoutAcc()", timeframe: "D1" }, field_semantics: [{ field: "invalidation_stop", field_knowledge: "VERIFIED_VALUE", mechanism_origin: "FRAMEWORK_EQUIVALENT", requirement_role: "SATISFIED_BY_EQUIVALENT_MECHANISM", value: "ATR framework stop" }, { field: "cost_assumptions", field_knowledge: "NOT_EXTRACTED", mechanism_origin: "NOT_EXTRACTED", requirement_role: "NOT_REQUIRED_BY_DESIGN" }], evidence_lineage: [{ source_id: "A", identity_status: "EVIDENCE_IDENTITY_UNVERIFIED", claim: "101 trades / +4.3R" }, { source_id: "B", identity_status: "PARTIAL_IDENTITY_MATCH", claim: "Earlier Python screening" }, { source_id: "C", identity_status: "EVIDENCE_IDENTITY_UNVERIFIED", claim: "Walk-forward mismatch" }, { source_id: "D", identity_status: "EVIDENCE_IDENTITY_CONFIRMED", claim: "MT5 4 trades over 7.5 years; Python 27 trades" }], evidence_contradiction: { description: "101 trades conflicts with 4 MT5 trades." }, next_admissible_experiment: { category: "REANALYZE_EXISTING_RAW_RESULTS", executed: false, target: "Existing Python raw results" } };
+  act(() => root.render(<StrategyInspector strategy={breakout} onClose={() => {}} />));
+  expect(container.textContent).toContain("FULL_STRATEGY_SPEC_VERIFIED");
+  expect(container.textContent).toContain("STATIC_REACHABILITY_PASS");
+  expect(container.textContent).toContain("FRAMEWORK_EQUIVALENT");
+  expect(container.textContent).toContain("Evidence lineage");
+  expect(container.textContent).toContain("EVIDENCE_IDENTITY_CONFIRMED");
+  expect(container.textContent).toContain("REANALYZE_EXISTING_RAW_RESULTS");
+  expect(container.textContent).toContain("It has not been executed yet");
+});
+
+test("Serious Validation Preflight is rendered as a read-only twelve item protocol", () => {
+  const protocol = { name: "NEXUS_SERIOUS_VALIDATION_PREFLIGHT_CHECKLIST_V1", provenance: "server/research_scripts/phase7/phase7_9a/serious_validation_preflight_checklist_v1.json", items: Array.from({ length: 12 }, (_, index) => ({ id: index + 1, item: `Check ${index + 1}`, verify: `Verify ${index + 1}` })) };
+  act(() => root.render(<SeriousValidationPreflight protocol={protocol} />));
+  expect(container.textContent).toContain("Protocol / checklist · read-only · not completion state");
+  expect(container.textContent).toContain("Check 12");
+  expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(0);
 });
