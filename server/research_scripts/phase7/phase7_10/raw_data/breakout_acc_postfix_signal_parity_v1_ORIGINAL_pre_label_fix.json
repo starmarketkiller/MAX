@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T13:55:46.416256+00:00",
+  "generated_at": "2026-09-23T10:45:54.259876+00:00",
   "generation_script": "build_postfix_signal_parity.py",
-  "canonical_sha256": "efa84b705e68dc36b9c9d30d566e37b31244c5a9957561fe12d2d2cc7c6f3de5",
+  "canonical_sha256": "72d3fea4fb2be5162fcd2453a863d12f8d5f152a5379693f2c1bc7c55b53ea06",
   "payload": {
     "phase": "7.9G",
     "candidate": "BREAKOUT_ACC",
@@ -951,10 +951,9 @@
         "description": "A (EA live, dati broker reale) vs B (script offline MQL5, STESSO feed broker/cache) - stesso feed, quindi le differenze qui sono attribuibili SOLO a logica/timing, mai a differenze di dati.",
         "pairing": {
           "matched": 67,
-          "only_a": 0,
-          "only_b": 8,
-          "only_a_dates": [],
-          "only_b_dates": [
+          "only_a": 8,
+          "only_b": 0,
+          "only_a_dates": [
             "2019-02-21 dir=1",
             "2019-04-18 dir=-1",
             "2019-05-15 dir=1",
@@ -963,7 +962,8 @@
             "2021-09-20 dir=-1",
             "2022-01-21 dir=1",
             "2023-08-21 dir=-1"
-          ]
+          ],
+          "only_b_dates": []
         },
         "exact_match": false
       },
@@ -971,18 +971,9 @@
         "description": "A (EA live, feed broker) vs C (Python, feed Dukascopy) - feed DIVERSI, differenze qui possono includere anche scostamenti OHLC reali fra fonti dati, non solo logica.",
         "pairing": {
           "matched": 60,
-          "only_a": 7,
-          "only_b": 23,
+          "only_a": 23,
+          "only_b": 7,
           "only_a_dates": [
-            "2021-05-27 dir=1",
-            "2022-09-27 dir=-1",
-            "2023-01-17 dir=1",
-            "2025-04-23 dir=1",
-            "2025-09-17 dir=1",
-            "2025-10-01 dir=1",
-            "2026-01-30 dir=1"
-          ],
-          "only_b_dates": [
             "2019-04-17 dir=-1",
             "2019-05-14 dir=1",
             "2019-10-01 dir=-1",
@@ -1006,6 +997,15 @@
             "2025-09-23 dir=1",
             "2026-03-01 dir=1",
             "2026-06-25 dir=-1"
+          ],
+          "only_b_dates": [
+            "2021-05-27 dir=1",
+            "2022-09-27 dir=-1",
+            "2023-01-17 dir=1",
+            "2025-04-23 dir=1",
+            "2025-09-17 dir=1",
+            "2025-10-01 dir=1",
+            "2026-01-30 dir=1"
           ]
         }
       },
@@ -1013,19 +1013,9 @@
         "description": "B (MQL5 offline, feed broker) vs C (Python, feed Dukascopy) - isola l'effetto del solo feed, a parita' di logica (entrambi D1-only post-fix/gia'-corretti).",
         "pairing": {
           "matched": 67,
-          "only_a": 8,
-          "only_b": 16,
+          "only_a": 16,
+          "only_b": 8,
           "only_a_dates": [
-            "2019-02-21 dir=1",
-            "2021-05-27 dir=1",
-            "2022-09-27 dir=-1",
-            "2023-08-21 dir=-1",
-            "2025-04-23 dir=1",
-            "2025-09-17 dir=1",
-            "2025-10-01 dir=1",
-            "2026-01-30 dir=1"
-          ],
-          "only_b_dates": [
             "2019-10-01 dir=-1",
             "2019-11-11 dir=-1",
             "2021-06-01 dir=1",
@@ -1042,6 +1032,16 @@
             "2025-09-23 dir=1",
             "2026-03-01 dir=1",
             "2026-06-25 dir=-1"
+          ],
+          "only_b_dates": [
+            "2019-02-21 dir=1",
+            "2021-05-27 dir=1",
+            "2022-09-27 dir=-1",
+            "2023-08-21 dir=-1",
+            "2025-04-23 dir=1",
+            "2025-09-17 dir=1",
+            "2025-10-01 dir=1",
+            "2026-01-30 dir=1"
           ]
         }
       }

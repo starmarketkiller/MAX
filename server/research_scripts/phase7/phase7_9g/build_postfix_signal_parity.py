@@ -123,6 +123,22 @@ def parse_python_reconstruction():
 
 def pair_dates(events_a, events_b, tolerance_days=3):
     # Pairing per DATA + DIREZIONE (stessa convenzione di 7.9C/7.9D/7.9E) - mai solo la data.
+    #
+    # 23/09 - CORREZIONE Phase 7.10 (label inversion trovata nell'audit di integrita'
+    # retroattivo): questa funzione e' POSIZIONALE - "only_a" nel dict di ritorno e'
+    # SEMPRE il residuo del PRIMO argomento passato, "only_b" del SECONDO,
+    # indipendentemente da quale stream logico (A/B/C del report) venga passato per
+    # primo. La versione originale di questa fase chiamava pair_dates(stream_B, stream_A)
+    # per la sezione "same_feed_parity_A_vs_B" - un'INVERSIONE reale (only_a conteneva il
+    # residuo di B, only_b il residuo di A). I NUMERI sostanziali (matched/opened/verdetto)
+    # non erano mai stati sbagliati (venivano letti correttamente nel codice di decisione,
+    # che compensava lo scambio) - solo le ETICHETTE nell'artifact erano fuorvianti
+    # rispetto alla convenzione A/B usata nel resto del report. Fix: OGNI chiamata qui sotto
+    # passa ora gli argomenti nello STESSO ordine del nome della sezione (A_vs_B -> (A,B),
+    # A_vs_C -> (A,C), B_vs_C -> (B,C)), cosi' only_a/only_b coincidono SEMPRE con la prima/
+    # seconda lettera del nome della sezione che li contiene. Vedi
+    # server/research_scripts/phase7/phase7_10/breakout_acc_7_9g_label_correction_v1.json
+    # per l'audit before/after completo (hash, valori originali preservati).
     items_a = sorted(((datetime.strptime(e["date"], "%Y.%m.%d"), int(e["dir"])) for e in events_a),
                       key=lambda t: t[0])
     items_b = sorted(((datetime.strptime(e["date"], "%Y.%m.%d"), int(e["dir"])) for e in events_b),
@@ -168,9 +184,9 @@ def build():
                         "gia' D1-only per costruzione, mai esposto alla contaminazione cross-TF)",
                 **python_recon}
 
-    same_feed_pairing = pair_dates(stream_B["final_events"], stream_A["events"])
-    cross_feed_pairing_A_vs_C = pair_dates(stream_C["final_events"], stream_A["events"])
-    cross_feed_pairing_B_vs_C = pair_dates(stream_C["final_events"], stream_B["final_events"])
+    same_feed_pairing = pair_dates(stream_A["events"], stream_B["final_events"])
+    cross_feed_pairing_A_vs_C = pair_dates(stream_A["events"], stream_C["final_events"])
+    cross_feed_pairing_B_vs_C = pair_dates(stream_B["final_events"], stream_C["final_events"])
 
     exact_target = {
         "declared_target": "live EA GENERATED == MQL5 offline reconstructed == Python "

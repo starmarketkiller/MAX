@@ -1,5 +1,7 @@
 # NEXUS - Phase 7.9G BREAKOUT_ACC Live Fix + Parity Re-Establishment
 
+> **Correzione (23/09, Phase 7.10)**: l'audit di integrità retroattivo ha trovato un'inversione di **etichette** (non di sostanza) nei campi `only_a`/`only_b` degli artifact di pairing di questa fase — la funzione `pair_dates()` è posizionale e le chiamate originali passavano lo stream offline come primo argomento e quello live come secondo, quindi `only_a` conteneva in realtà il residuo di B e `only_b` il residuo di A. I NUMERI e il VERDETTO qui sotto erano già corretti nella sostanza (il codice di decisione compensava correttamente lo scambio) — solo i nomi dei campi nell'artifact JSON erano fuorvianti. Corretto alla fonte, artifact rigenerati con gli stessi conteggi. Vedi `server/research_scripts/phase7/phase7_10/breakout_acc_7_9g_label_correction_v1.json` per l'audit completo before/after.
+
 **Baseline:** `8d2cde76f4233aa0da3ffa83778eee421a60093c` (Phase 7.9F). **Prima modifica all'EA live in questa serie di fasi, esplicitamente autorizzata dall'utente** per correggere il difetto implementativo confermato (`IMPLEMENTATION_DEFECT_CONFIRMED`, Phase 7.9F). Nessuna optimization, nessun parameter tuning, nessun cambio di design performance-driven.
 
 ---
@@ -46,7 +48,7 @@ generated=67  blocked=11  opened=47  broker_reject=9
 | **B** — MQL5 offline isolato a D1 | Script 7.9E, già D1-only per costruzione, nessuna modifica necessaria | **75** |
 | **C** — Python | `server/backtest.py:sig_breakout_acc`, invariato, mai esposto alla contaminazione cross-TF | **83** |
 
-**Same-feed parity (A vs B, stesso feed broker/cache)**, pairing per data+direzione (tolleranza 3gg): **matched=67, only_b=0 (0%), only_a=8 (10.7% di B)**. **Tutti e 67 gli eventi generati dal vero EA hanno una controparte identica nella ricostruzione offline** — il fix spiega il 100% del comportamento reale osservato. Residuo: 8 eventi che la ricostruzione idealizzata prevede ma il vero Tester non genera (date esatte nell'artifact) — dichiarato onestamente come **residuo aperto**, non nascosto, non ulteriormente diagnosticato in questa fase.
+**Same-feed parity (A vs B, stesso feed broker/cache)**, pairing per data+direzione (tolleranza 3gg): **matched=67, only_a=0 (0% di A, dopo la correzione di etichetta del 23/09), only_b=8 (10.7% di B)**. **Tutti e 67 gli eventi generati dal vero EA hanno una controparte identica nella ricostruzione offline** — il fix spiega il 100% del comportamento reale osservato. Residuo: 8 eventi che la ricostruzione idealizzata prevede ma il vero Tester non genera (date esatte nell'artifact) — dichiarato onestamente come **residuo aperto**, non nascosto, non ulteriormente diagnosticato in questa fase.
 
 Confronto con il pre-fix: il gap era 95% inspiegato (76/80); ora è un residuo del 10.7%, e — criticamente — **asimmetrico nella direzione giusta**: zero eventi reali senza spiegazione offline, solo eventi offline "in eccesso" rispetto alla realtà (friction realistica del vero Tester, non ancora isolata nel dettaglio).
 

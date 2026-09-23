@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T13:55:46.526752+00:00",
+  "generated_at": "2026-09-23T10:46:36.475507+00:00",
   "generation_script": "build_phase7_9g_decision.py",
-  "canonical_sha256": "cfbb8b673dedd2b27ed96259a268ecb4ec1554ad4c22996857d447a944c40fe6",
+  "canonical_sha256": "2167c14b9b8612be9923d41da761bc8da8ee5323be45a43fd99052b4b1cb8655",
   "payload": {
     "phase": "7.9G",
     "candidate": "BREAKOUT_ACC",
@@ -25,10 +25,9 @@
       "description": "A (EA live, dati broker reale) vs B (script offline MQL5, STESSO feed broker/cache) - stesso feed, quindi le differenze qui sono attribuibili SOLO a logica/timing, mai a differenze di dati.",
       "pairing": {
         "matched": 67,
-        "only_a": 0,
-        "only_b": 8,
-        "only_a_dates": [],
-        "only_b_dates": [
+        "only_a": 8,
+        "only_b": 0,
+        "only_a_dates": [
           "2019-02-21 dir=1",
           "2019-04-18 dir=-1",
           "2019-05-15 dir=1",
@@ -37,7 +36,8 @@
           "2021-09-20 dir=-1",
           "2022-01-21 dir=1",
           "2023-08-21 dir=-1"
-        ]
+        ],
+        "only_b_dates": []
       },
       "exact_match": false
     },
@@ -59,7 +59,7 @@
       }
     },
     "next_decision": "BUILD_CANONICAL_BREAKOUT_ACC_DATASET",
-    "next_decision_rationale": "La parity same-feed (A: EA live post-fix, B: ricostruzione MQL5 offline isolata a D1, stesso feed broker) e' QUASI-esatta, non esatta (67 vs 75). Criterio dichiarato soddisfatto: TUTTI e 67 gli eventi GENERATED del vero EA post-fix hanno una controparte (data+direzione, tolleranza 3gg) nella ricostruzione offline (only_a=0, 0%) - il fix spiega il 100% del comportamento reale osservato. Residuo SOLO lato offline: 8/75 eventi (10.7%) che la ricostruzione idealizzata prevede ma che il vero Tester (con friction realistica gia' a monte del funnel di esecuzione, non ancora diagnosticata nel dettaglio) non genera - dichiarato onestamente come RESIDUO APERTO, non nascosto: date esatte in same_feed_parity_result.pairing.only_b_dates. Non e' un fattore ~20x come pre-fix (95% inspiegato) - e' un residuo del 10-11%, sufficientemente piccolo da non bloccare il passo successivo, ma da tenere presente nella costruzione del dataset canonico. La strategia canonica per il prossimo dataset e' BREAKOUT_ACC_INTENDED_D1_V1.",
+    "next_decision_rationale": "La parity same-feed (A: EA live post-fix, B: ricostruzione MQL5 offline isolata a D1, stesso feed broker) e' QUASI-esatta, non esatta (67 vs 75). Criterio dichiarato soddisfatto: TUTTI e 67 gli eventi GENERATED del vero EA post-fix hanno una controparte (data+direzione, tolleranza 3gg) nella ricostruzione offline (only_b=0, 0%) - il fix spiega il 100% del comportamento reale osservato. Residuo SOLO lato offline: 8/75 eventi (10.7%) che la ricostruzione idealizzata prevede ma che il vero Tester (con friction realistica gia' a monte del funnel di esecuzione, non ancora diagnosticata nel dettaglio) non genera - dichiarato onestamente come RESIDUO APERTO, non nascosto: date esatte in same_feed_parity_result.pairing.only_a_dates. Non e' un fattore ~20x come pre-fix (95% inspiegato) - e' un residuo del 10-11%, sufficientemente piccolo da non bloccare il passo successivo, ma da tenere presente nella costruzione del dataset canonico. La strategia canonica per il prossimo dataset e' BREAKOUT_ACC_INTENDED_D1_V1.",
     "next_step_not_executed": true,
     "no_pnl_used_for_decision": true,
     "volbrk_not_reopened": true,

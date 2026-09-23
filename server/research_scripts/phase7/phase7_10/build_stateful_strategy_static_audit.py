@@ -1,0 +1,391 @@
+#!/usr/bin/env python3
+"""Phase 7.10 - punto 3: audit statico di TUTTE le strategie con stato
+persistente/globale/statico trovate scansionando NXS_CollectAllSignals
+-> activation TF -> strategy function -> state mutation -> profile TF
+filtering. Nessuna correzione applicata - solo classificazione.
+
+Metodo: per ciascuna strategia identificata con stato persistente
+(struct globale o variabile 'static' function-local), verificato a
+codice (letto direttamente, non assunto):
+  (a) il TF usato per la mutazione di stato e' NXS_EffTF() (dinamico,
+      cambia ad ogni pass) o un valore hardcoded (fisso, immune)?
+  (b) il gate di ingresso della funzione dipende dal TF attivo, o solo
+      dal selettore (quindi la funzione gira ad OGNI pass)?
+  (c) la NATURA dello stato (bare lastBarTime / cooldown timedelta /
+      valore ricorsivo / macchina a stati) determina la gravita' della
+      conseguenza se lo stato viene contaminato.
+"""
+import os
+import sys
+
+PHASE710_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE710_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import save_json, wrap_with_provenance  # noqa: E402
+
+BASELINE_COMMIT = "651d3a2a10e5c58acfc22ba820f518810356a73c"
+
+CANDIDATES = [
+    {
+        "strategy": "BREAKOUT_ACC", "state_var": "g_breakoutAccState",
+        "file": "NXS_Strategies.mqh", "lines": "1531-1571",
+        "profile_tf": "D1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "cooldown timedelta (lastFireTime[2])",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "Meccanismo isolato ed empiricamente dimostrato (Phase 7.9E/F/G: "
+            "esperimento controllato con ordine reale dei pass, collasso 95->0 con stato "
+            "condiviso). GIA' CORRETTO in Phase 7.9G (guardia precoce aggiunta) - "
+            "riportato qui per completezza della mappa, non piu' un difetto attivo.",
+        "status": "FIXED_IN_7_9G",
+    },
+    {
+        "strategy": "BAR_UPDN", "state_var": "g_barUpDnState",
+        "file": "NXS_Strategies.mqh", "lines": "447-477",
+        "profile_tf": "M15", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "cooldown timedelta (lastFireTime[2]) - IDENTICO pattern a "
+            "BREAKOUT_ACC, introdotto nello STESSO commit (7871e96, 02/09)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "Struttura del codice VERIFICATA identica a BREAKOUT_ACC pre-fix "
+            "riga-per-riga (stesso ordine: tf=NXS_EffTF(), curBar0, check/set lastBarTime, "
+            "poi cooldownSec=N*PeriodSeconds(tf), poi check/set lastFireTime[dir]) - nessuna "
+            "guardia TF presente. NESSUN esperimento diagnostico dedicato eseguito in questa "
+            "fase (non richiesto, non autorizzato) - la confidenza e' STRUTTURALE (stesso "
+            "meccanismo gia' provato per BREAKOUT_ACC), non ancora misurata empiricamente "
+            "per BAR_UPDN specificamente.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "PIVOT_WICK", "state_var": "g_pivotWickState (lastBarTime + lastFireTime[2] "
+            "al livello TOP - il pool pivHi/pivLo/pivHiUsed/pivLoUsed e' invece correttamente "
+            "indicizzato per-TF, SAFE)",
+        "file": "NXS_Strategies.mqh", "lines": "745-754, 801-827",
+        "profile_tf": "M15", "tf_source_in_function": "NXS_EffTF() (dinamico, via execTF)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "cooldown timedelta (lastFireTime[2]) al livello top della funzione - "
+            "il pool multi-TF sottostante (usato anche da LEVEL_CONFLUENCE/LEVEL_REACTION) e' "
+            "correttamente scoped per indice TF e NON e' a rischio",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "lastBarTime/lastFireTime[2] a livello top letti/scritti con curBar0 "
+            "derivato da execTF=NXS_EffTF() - stesso pattern di BAR_UPDN/BREAKOUT_ACC per "
+            "QUESTA parte specifica dello stato (non per il pool pivot, che e' verificato "
+            "SAFE separatamente).",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "PMAX", "state_var": "g_pmaxState",
+        "file": "NXS_Strategies.mqh", "lines": "489-540",
+        "profile_tf": "H1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "valore ricorsivo (longStop/shortStop/dir - stop-and-reverse "
+            "ATR-adattivo, ogni aggiornamento dipende dal precedente)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "tf=NXS_EffTF() usato per calcolare atr/ma correnti E per leggere lo stato "
+            "precedente - un pass su un TF diverso da H1 corrompe longStop/shortStop/dir con "
+            "valori calcolati su OHLC di un altro timeframe, che il pass H1 successivo "
+            "erediterebbe come base per il proprio calcolo ricorsivo.",
+        "severity_note": "Conseguenza potenzialmente PEGGIORE del caso cooldown: puo' produrre "
+            "sia falsi negativi CHE falsi positivi (flip di direzione spuri), non solo "
+            "soppressione.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "TSI", "state_var": "g_tsiState",
+        "file": "NXS_Strategies.mqh", "lines": "1354-1398+",
+        "profile_tf": "D1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "valore ricorsivo a doppio smoothing EMA (sm1/sm2/sm1Abs/sm2Abs/"
+            "signal/prevClose/barsSeen) - il PIU' complesso fra tutti i candidati: ogni "
+            "aggiornamento di barra dipende matematicamente dal valore calcolato alla "
+            "chiamata precedente",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "tf=NXS_EffTF() usato sia per leggere c1=iClose(tf,1) sia per il gate "
+            "'nuova barra' (g_tsiState.lastBarTime != curBar0) - un pass su un TF diverso da "
+            "D1 calcolerebbe pc=c1(TF_sbagliato)-prevClose e aggiornerebbe RICORSIVAMENTE "
+            "sm1/sm2/sm1Abs/sm2Abs/signal mescolando dati di TF incompatibili nella stessa "
+            "catena di smoothing - la CONTAMINAZIONE PIU' SEVERA identificata in questo "
+            "audit: non solo timing o una singola zona di prezzo, ma l'intera base "
+            "matematica ricorsiva dell'indicatore.",
+        "severity_note": "Rischio BOTH (falsi negativi E falsi positivi) piu' pronunciato "
+            "di PMAX - la catena di smoothing a doppio EMA amplifica l'effetto di "
+            "un singolo valore contaminato su TUTTE le barre successive, non solo sulla "
+            "barra immediatamente seguente.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "MACD_SMA200", "state_var": "g_macdSmaState",
+        "file": "NXS_Strategies.mqh", "lines": "552-573",
+        "profile_tf": "H4", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "bare lastBarTime (nessun cooldown timedelta, nessun valore ricorsivo "
+            "accumulato fra barre - macd/hist/SMA sono ricalcolati da zero ad ogni chiamata "
+            "da CopyBuffer/NXS_SMAv, non letti dallo stato)",
+        "classification": "SUSPECT",
+        "evidence": "Stesso pattern architetturale (nessuna guardia TF) MA la conseguenza "
+            "pratica e' probabilmente trascurabile: il gate 'lastBarTime==curBar0' richiede "
+            "una COINCIDENZA ESATTA fra il bar-time di due timeframe diversi per bloccare "
+            "erroneamente una valutazione - un evento estremamente raro per TF con "
+            "granularita' diverse (M5/M15/M30/H1/H4 quasi mai coincidono esattamente con "
+            "l'apertura di una barra H4). Nessun cooldown-timedelta ne' valore ricorsivo da "
+            "corrompere.",
+        "status": "NOT_FIXED_LOW_PRACTICAL_RISK",
+    },
+    {
+        "strategy": "ICHIMOKU_HULL_MACD", "state_var": "g_icHullState",
+        "file": "NXS_Strategies.mqh", "lines": "620-660",
+        "profile_tf": "H4", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "bare lastBarTime (nessun cooldown, nessun valore ricorsivo - HMA/MACD "
+            "ricalcolati da zero ogni chiamata)",
+        "classification": "SUSPECT",
+        "evidence": "Stesso ragionamento di MACD_SMA200 - solo bare lastBarTime, rischio "
+            "pratico basso per coincidenza di bar-time cross-TF.",
+        "status": "NOT_FIXED_LOW_PRACTICAL_RISK",
+    },
+    {
+        "strategy": "3COMMAS_BOT", "state_var": "g_3commasState",
+        "file": "NXS_Strategies.mqh", "lines": "673-700+",
+        "profile_tf": "H1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "bare lastBarTime (EMA/swing ricalcolati da zero ogni chiamata)",
+        "classification": "SUSPECT",
+        "evidence": "Stesso ragionamento di MACD_SMA200/ICHIMOKU_HULL_MACD.",
+        "status": "NOT_FIXED_LOW_PRACTICAL_RISK",
+    },
+    {
+        "strategy": "RSI_DIV_PINE", "state_var": "g_rsiDivPineState",
+        "file": "NXS_Strategies.mqh", "lines": "1962-1984",
+        "profile_tf": "H1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "bare lastBarTime (pivot RSI ricalcolati da zero ogni chiamata via "
+            "CopyBuffer)",
+        "classification": "SUSPECT",
+        "evidence": "Stesso ragionamento della famiglia 'bare lastBarTime'.",
+        "status": "NOT_FIXED_LOW_PRACTICAL_RISK",
+    },
+    {
+        "strategy": "BOLLINGER", "state_var": "static datetime lastEvalBar (function-local, "
+            "stesso comportamento di una globale ai fini di questo audit)",
+        "file": "NXS_Strategies.mqh", "lines": "285-308",
+        "profile_tf": "D1 (default, salvo InpScalpTFOverride)", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "bare lastEvalBar (nessun cooldown, nessun valore ricorsivo - bande "
+            "BB/RSI lette da CopyBuffer ogni chiamata)",
+        "classification": "SUSPECT",
+        "evidence": "Stesso ragionamento della famiglia 'bare lastBarTime'. Nota storica: il "
+            "commento del 03/09 su questa riga cita ESPLICITAMENTE 'lastFireTime di "
+            "NXS_Strat_PivotWick (bug di inseguimento gia' trovato su BAR_UPDN/BREAKOUT_ACC "
+            "il 02/09)' come precedente concettuale per questo stesso gate - prova che "
+            "l'autore era consapevole del bug di 'inseguimento' (assenza di cooldown) ma NON "
+            "della contaminazione cross-TF specificamente.",
+        "status": "NOT_FIXED_LOW_PRACTICAL_RISK",
+    },
+    {
+        "strategy": "BB_SQUEEZE", "state_var": "g_bbsqState",
+        "file": "NXS_Strategies.mqh", "lines": "1863-1876+",
+        "profile_tf": "D1 (default, salvo InpScalpTFOverride)", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "valore accumulato (squeezeBars: contatore di barre consecutive in "
+            "squeeze; consumed: flag one-shot)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "squeezeBars e' un CONTATORE che si accumula attraverso chiamate multiple "
+            "- un pass su un TF diverso incrementerebbe/resetterebbe questo contatore usando "
+            "le bande di Bollinger di QUEL TF, corrompendo il conteggio di persistenza dello "
+            "squeeze rilevante per D1.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "ORDER_BLOCK", "state_var": "g_obBuy, g_obSell (SNXSOBState: "
+            "active/obLo/obHi/lastBarTime/barsWaited)",
+        "file": "NXS_Strategies.mqh", "lines": "2069-2148",
+        "profile_tf": "D1", "tf_source_in_function": "NXS_EffTF() (dinamico, passato come "
+            "parametro tf a NXS_OB_UpdateSide)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "macchina a stati con zona di prezzo persistente (obLo/obHi) - un "
+            "pass su un TF diverso puo' CREARE una zona Order Block usando OHLC di quel TF, "
+            "o INVALIDARE/RETESTARE una zona D1 esistente usando prezzi di un TF diverso",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "tf=NXS_EffTF() letto in NXS_Strat_OrderBlock() e passato direttamente a "
+            "NXS_OB_UpdateSide(), che legge/scrive obLo/obHi/active/barsWaited SENZA alcun "
+            "controllo sul TF. Conseguenza potenzialmente severa: zone di prezzo e "
+            "invalidazioni calcolate sul TF sbagliato.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "SH_BMS_RTO", "state_var": "g_shbmsBuy, g_shbmsSell (SNXSSHBmsState: "
+            "state/sweepLevel/swingRef/barsWaited/origin*)",
+        "file": "NXS_Strategies_SMC.mqh", "lines": "387-518",
+        "profile_tf": "D1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "macchina a stati multi-fase (IDLE->SWEPT->MSS->RTO) con livelli di "
+            "riferimento persistenti (sweepLevel, swingRef)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "NXS_Strat_SH_BMS_RTO() legge tf=NXS_EffTF() e lo passa a "
+            "NXS_SHBMS_UpdateSide() senza alcun controllo - un pass su un TF diverso puo' far "
+            "avanzare la macchina a stati (es. verso SWEPT) usando uno sweepLevel calcolato "
+            "sul TF sbagliato.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "SH_BMS_RTO_V2", "state_var": "g_shbmsV2Buy, g_shbmsV2Sell + g_shbmsV2LastBar",
+        "file": "NXS_Strategies_SMC.mqh", "lines": "535-610",
+        "profile_tf": "H1", "tf_source_in_function": "NXS_EffTF() (dinamico, 4 chiamate dirette "
+            "a iTime/iClose/iOpen/iLow/iHigh con NXS_EffTF())",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "macchina a stati (sweepLevel/mssLevel)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "Stesso pattern di SH_BMS_RTO v1 - nessun controllo TF prima delle letture "
+            "OHLC dinamiche ne' della mutazione di stato.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "SILVER_BULLET", "state_var": "g_sbBuy, g_sbSell (SNXSSBState: "
+            "state/sweepLevel/fvgLo/fvgHi/barsWaited)",
+        "file": "NXS_Strategies_SMC.mqh", "lines": "684-773",
+        "profile_tf": "M15 (sessione-vincolata, killzone London/NY)",
+        "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": True,
+        "state_nature": "macchina a stati (sweepLevel/fvgLo/fvgHi)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "NXS_Strat_SilverBullet() legge tf=NXS_EffTF() e lo passa a "
+            "NXS_SB_UpdateSide() senza controllo - stesso pattern delle altre macchine a "
+            "stati SMC.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "RANGE_FADE", "state_var": "g_rangeFadeState",
+        "file": "NXS_Strategies_Institutional.mqh", "lines": "638-660+",
+        "profile_tf": "D1", "tf_source_in_function": "NXS_EffTF() (dinamico)",
+        "gate_depends_on_selector_only": False,
+        "gate_note": "gate primario e' InpUseStrat_RangeFade (flag semplice), non "
+            "NXS_SelectorAllows - stesso effetto pratico: nessuna dipendenza dal TF attivo",
+        "state_nature": "valore persistente (confirmed/rngHi/rngLo/rngMid - range di "
+            "riferimento per il fade)",
+        "classification": "DEFECT_CONFIRMED",
+        "evidence": "tf=NXS_EffTF() usato per calcolare ADX/range - un pass su un TF diverso "
+            "da D1 puo' sovrascrivere rngHi/rngLo/rngMid/confirmed con valori calcolati su "
+            "quel TF.",
+        "status": "NOT_FIXED_CONFIRMED_STRUCTURALLY",
+    },
+    {
+        "strategy": "LEVEL_CONFLUENCE / LEVEL_CONFLUENCE_M5",
+        "state_var": "g_levelConfState (M15), g_levelConfState5 (M5)",
+        "file": "NXS_Strategies.mqh", "lines": "756-766, 923-1092",
+        "profile_tf": "M15 / M5 rispettivamente",
+        "tf_source_in_function": "HARDCODED - _nxs_levelconf_core() riceve execTF come "
+            "PARAMETRO, chiamato con PERIOD_M15/PERIOD_M5 letterali (righe 1081, 1092), MAI "
+            "NXS_EffTF()",
+        "gate_depends_on_selector_only": "N/A - execTF fisso rende la domanda irrilevante",
+        "state_nature": "pending* (livello/direzione/barre di conferma)",
+        "classification": "SAFE",
+        "evidence": "Verificato direttamente: la funzione core NON chiama MAI NXS_EffTF() al "
+            "proprio interno - riceve sempre lo stesso execTF hardcoded indipendentemente da "
+            "quale pass del router la invoca. Essere chiamata durante un pass 'sbagliato' e' "
+            "ridondante/innocuo, non corruttivo.",
+        "status": "SAFE_BY_DESIGN_VERIFIED",
+    },
+    {
+        "strategy": "LEVEL_REACTION / LEVEL_REACTION_M5",
+        "state_var": "g_levelReactState (M15), g_levelReactState5 (M5)",
+        "file": "NXS_Strategies.mqh", "lines": "1130-1143, 1179-1341",
+        "profile_tf": "M15 / M5 rispettivamente",
+        "tf_source_in_function": "HARDCODED - stesso pattern di LEVEL_CONFLUENCE (righe 1331, "
+            "1341 chiamano con PERIOD_M15/PERIOD_M5 letterali)",
+        "gate_depends_on_selector_only": "N/A",
+        "state_nature": "pending* (livello/direzione/barre di conferma)",
+        "classification": "SAFE",
+        "evidence": "Stesso pattern verificato di LEVEL_CONFLUENCE.",
+        "note_related_but_different_issue": "L'audit precedente 'Global New-Bar Gate / Signal "
+            "Sampling Audit (12-09)' ha gia' segnalato LEVEL_REACTION_M5 come 'UNKNOWN/NEEDS "
+            "REVIEW' per un problema DIVERSO (degrado di cadenza: la sua cadenza dichiarata "
+            "M5 viene silenziosamente degradata a M15 dal gate globale di OnTick) - non "
+            "riguarda la contaminazione cross-TF di questo audit, e resta un problema aperto "
+            "separato, non affrontato qui.",
+        "status": "SAFE_BY_DESIGN_VERIFIED_FOR_THIS_PATTERN",
+    },
+    {
+        "strategy": "WEEKLY_EXP", "state_var": "g_wexpState",
+        "file": "NXS_Strategies_Institutional.mqh", "lines": "340-434+",
+        "profile_tf": "D1 (dichiarato nel registro)",
+        "tf_source_in_function": "HARDCODED - verificato che la funzione usa SOLO "
+            "PERIOD_M15/PERIOD_W1 espliciti in ogni accesso a iTime/iOpen/iClose/iHigh/iLow "
+            "(9 occorrenze controllate) - MAI NXS_EffTF()",
+        "gate_depends_on_selector_only": False,
+        "gate_note": "gate primario e' InpUseStrat_WeeklyExp",
+        "state_nature": "macchina a stati (armedAtH4Bar/pwh/pwl/barsWaited)",
+        "classification": "SAFE",
+        "evidence": "Nessuna occorrenza di NXS_EffTF() in tutta la funzione - il "
+            "disallineamento fra il TF di PROFILO dichiarato (D1) e i TF INTERNAMENTE usati "
+            "(M15/W1 hardcoded) e' una caratteristica di design pre-esistente, non introduce "
+            "vulnerabilita' a questo pattern.",
+        "status": "SAFE_BY_DESIGN_VERIFIED",
+    },
+    {
+        "strategy": "WICK_SWEEP_RECLAIM / WICK_SWEEP_REV",
+        "state_var": "g_wickReclaimHigh, g_wickReclaimLow (+ stato dedicato WICK_SWEEP_REV)",
+        "file": "NXS_Strategies_Experimental.mqh", "lines": "456+",
+        "profile_tf": "H4",
+        "tf_source_in_function": "HARDCODED H4 - dichiarato ESPLICITAMENTE nel commento del "
+            "file (riga 51: 'H4 e' hardcoded (non NXS_EffTF()) - la strategia gira SEMPRE "
+            "sulla...') - una scelta di design GIA' documentata dall'autore originale",
+        "gate_depends_on_selector_only": "N/A",
+        "state_nature": "vari (wick reclaim state)",
+        "classification": "SAFE",
+        "evidence": "Design deliberato e documentato, non richiede ulteriore verifica oltre "
+            "la conferma del commento esistente nel codice.",
+        "status": "SAFE_BY_DESIGN_DOCUMENTED",
+    },
+]
+
+
+def summarize(candidates):
+    from collections import Counter
+    c = Counter(x["classification"] for x in candidates)
+    return dict(c)
+
+
+def build():
+    return {
+        "phase": "7.10", "task": 3, "baseline_commit": BASELINE_COMMIT,
+        "scope": "Tutte le strategie con stato persistente/globale/statico trovate "
+            "scansionando NXS_Strategies.mqh, NXS_Strategies_SMC.mqh, "
+            "NXS_Strategies_Institutional.mqh, NXS_Strategies_Experimental.mqh - metodo: "
+            "grep esaustivo di struct 'State' globali + variabili 'static' function-local "
+            "usate dentro funzioni NXS_Strat_*, seguito da lettura diretta del codice per "
+            "ciascun candidato.",
+        "method_note": "Nessuna correzione applicata in questa fase - SOLO classificazione. "
+            "Nessun nuovo Serious backtest, nessuna optimization.",
+        "candidates": CANDIDATES,
+        "classification_summary": summarize(CANDIDATES),
+        "no_corrections_applied": True,
+        "bar_updn_explicit_answer": {
+            "question": "BAR_UPDN e' realmente affetta oppure solo strutturalmente sospetta?",
+            "answer": "REALMENTE AFFETTA, a livello di evidenza STRUTTURALE (non ancora "
+                "misurata empiricamente in questa fase). Il codice di BAR_UPDN e' "
+                "STRUTTURALMENTE IDENTICO a BREAKOUT_ACC pre-fix - stesso pattern esatto "
+                "(tf=NXS_EffTF() dinamico, lastFireTime[2] cooldown per-direzione, gate solo "
+                "da selettore, nessuna guardia TF, introdotto nello STESSO commit del 02/09 "
+                "con lo stesso autore/stesso momento). La classificazione DEFECT_CONFIRMED "
+                "(non SUSPECT) e' giustificata dal fatto che il MECCANISMO stesso e' gia' "
+                "stato dimostrato empiricamente per un caso IDENTICO (BREAKOUT_ACC) - non "
+                "richiede un nuovo esperimento per essere strutturalmente certo, ma "
+                "l'ENTITA' esatta dell'impatto su BAR_UPDN specificamente (quanti segnali "
+                "reali vs quanti l'EA genera oggi) NON e' stata misurata in questa fase "
+                "(nessun esperimento diagnostico dedicato eseguito, coerente con l'istruzione "
+                "esplicita di non correggere/testare altre strategie in questa fase).",
+        },
+    }
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, os.path.basename(__file__))
+    save_json(os.path.join(PHASE710_DIR, "stateful_strategy_static_audit_v1.json"), doc)
+    print(f"canonical_sha256={doc['canonical_sha256']}")
+    print("classification_summary:", payload["classification_summary"])
+    return doc
+
+
+if __name__ == "__main__":
+    main()

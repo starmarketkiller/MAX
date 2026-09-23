@@ -94,14 +94,16 @@ class TestPostfixSignalParity(unittest.TestCase):
         self.assertGreater(counts["A_live_ea"], 40)   # pre-fix era 4
 
     def test_same_feed_pairing_arithmetic(self):
+        # 23/09 - Phase 7.10: only_a/only_b corretti per corrispondere sempre a stream A/B
+        # (vedi la correzione di label inversion in build_postfix_signal_parity.py).
         pairing = self.doc["payload"]["exact_parity_target"]["same_feed_parity_A_vs_B"]["pairing"]
         counts = self.doc["payload"]["exact_parity_target"]["counts"]
-        self.assertEqual(pairing["matched"] + pairing["only_b"], counts["A_live_ea"])
-        self.assertEqual(pairing["matched"] + pairing["only_a"], counts["B_mql5_offline"])
+        self.assertEqual(pairing["matched"] + pairing["only_a"], counts["A_live_ea"])
+        self.assertEqual(pairing["matched"] + pairing["only_b"], counts["B_mql5_offline"])
 
     def test_all_live_events_explained_by_offline_reconstruction(self):
         pairing = self.doc["payload"]["exact_parity_target"]["same_feed_parity_A_vs_B"]["pairing"]
-        self.assertEqual(pairing["only_b"], 0)
+        self.assertEqual(pairing["only_a"], 0)
 
     def test_diagnostic_only_flag(self):
         p = self.doc["payload"]

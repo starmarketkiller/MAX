@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+"""Phase 7.10 - punto 2: formalizza il bug BREAKOUT_ACC (Phase 7.9F/G)
+come pattern metodologico/architetturale generale - Failure Memory
+CROSS_TIMEFRAME_STATE_CONTAMINATION."""
+import os
+import sys
+
+PHASE710_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE710_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import save_json, wrap_with_provenance  # noqa: E402
+
+BASELINE_COMMIT = "651d3a2a10e5c58acfc22ba820f518810356a73c"
+
+
+def build():
+    return {
+        "phase": "7.10", "task": 2,
+        "pattern_id": "CROSS_TIMEFRAME_STATE_CONTAMINATION",
+        "baseline_commit": BASELINE_COMMIT,
+
+        "definition": (
+            "Una strategia STATEFUL (con stato persistente globale/statico fra chiamate: "
+            "cooldown timestamp, contatore, macchina a stati, valore ricorsivo) viene "
+            "invocata dal router durante passaggi multi-timeframe che NON appartengono al "
+            "proprio timeframe di profilo dichiarato. Il RISULTATO di quella chiamata "
+            "(il segnale) viene correttamente scartato piu' avanti nel router (filtro "
+            "NXS_Profile_TF(strat)==passes[p]) - MA gli EFFETTI COLLATERALI sullo stato "
+            "persistente, gia' avvenuti PRIMA di quel filtro, sopravvivono e modificano il "
+            "comportamento futuro della strategia sul suo timeframe canonico."
+        ),
+
+        "mechanism": {
+            "structural_precondition": "Il gate della funzione strategia dipende SOLO dal "
+                "selettore (NXS_SelectorAllows(N)), MAI dal timeframe attivo (NXS_EffTF()/"
+                "g_activeTF) - quindi la funzione viene chiamata ad OGNI pass del collector "
+                "multi-TF (NXS_CollectAllSignals), non solo durante il pass del proprio TF.",
+            "causal_sequence": [
+                "1. NXS_ActivateTF(pass_tf) - il router attiva gli handle indicatori e imposta "
+                "g_activeTF=pass_tf per QUESTO pass",
+                "2. NXS_CollectRaw() chiama la funzione strategia INCONDIZIONATAMENTE",
+                "3. dentro la funzione, tf=NXS_EffTF()=pass_tf (qualunque esso sia in questo "
+                "momento) - la funzione legge/scrive il proprio stato persistente USANDO "
+                "pass_tf (non il proprio TF dichiarato)",
+                "4. la funzione ritorna un segnale (magari valido per pass_tf, ma calcolato con "
+                "un TF che non e' quello canonico della strategia)",
+                "5. SOLO ORA, nel chiamante, il filtro NXS_Profile_TF(strat)==passes[p] SCARTA "
+                "il segnale se pass_tf non e' il TF canonico - MA lo stato mutato al passo 3 "
+                "NON viene ripristinato/annullato insieme allo scarto",
+                "6. quando arriva (nello stesso tick o in un tick successivo) il pass del TF "
+                "canonico, la funzione legge uno stato GIA' CONTAMINATO da un pass precedente "
+                "su un TF diverso",
+            ],
+            "why_it_is_invisible_to_normal_output_filtering": "Il filtro TF del router opera "
+                "SOLO sull'OUTPUT (il segnale ritornato) - non ha visibilita' sugli effetti "
+                "collaterali di stato che la funzione ha gia' prodotto durante la sua "
+                "esecuzione. E' un caso classico di 'discard output, keep side effect'.",
+        },
+
+        "breakout_acc_case": {
+            "state_variable": "g_breakoutAccState (lastBarTime + lastFireTime[2] per direzione)",
+            "canonical_tf": "D1",
+            "contaminating_passes": "M5, M15, M30, H1, H4 (tutti i TF distinti usati da "
+                "QUALUNQUE altra strategia nel registro, non solo quelle abilitate dal "
+                "selettore - il router costruisce l'insieme dei pass da TUTTO il registro)",
+            "empirical_proof": "Esperimento controllato (Phase 7.9E/F): stato isolato a D1 -> "
+                "95 segnali post-cooldown; stesso meccanismo con stato condiviso fra i 6 pass "
+                "reali (ordine esatto calcolato dal registro) -> 0 segnali D1 sopravvivono, "
+                "12234+ 'spari' su altri TF hanno toccato/sporcato lo stato condiviso. EA "
+                "reale storicamente: 4 trade in 7,5 anni (stesso ordine di grandezza del "
+                "collasso osservato nell'esperimento).",
+            "fix_applied": "Guardia precoce nella funzione strategia: if(tf != NXS_Profile_TF("
+                "\"BREAKOUT_ACC\")) return s; - PRIMA di qualunque lettura/scrittura dello "
+                "stato. Dopo il fix: da 4 a 47 trade reali, 100% degli eventi live spiegati "
+                "dalla ricostruzione offline isolata a D1 (Phase 7.9G).",
+        },
+
+        "why_normal_signal_parity_can_miss_it": (
+            "Un confronto di signal parity tradizionale (offline vs live, conteggio segnali "
+            "generati) confronta TIPICAMENTE una ricostruzione offline che e' GIA' isolata a "
+            "un solo timeframe (come lo era lo script 7.9C per BREAKOUT_ACC) contro il "
+            "conteggio finale del motore live - se entrambi i lati del confronto ignorano "
+            "l'esistenza di pass multipli su altri TF, la contaminazione resta invisibile: "
+            "sembra semplicemente che 'il motore live generi meno segnali del previsto', "
+            "un sintomo facilmente MAL-attribuito a differenze di feed/dati (come e' successo "
+            "inizialmente in Phase 7.9C, che ha classificato il gap come "
+            "EXECUTION_GAP_DOMINANT prima di scoprire, in 7.9D, che il funnel di esecuzione "
+            "era in realta' pulito). La causa vera emerge SOLO replicando la cadenza REALE "
+            "multi-pass del router (non solo la logica del segnale in isolamento) - la "
+            "differenza fra un 'signal parity check' che testa la FORMULA e uno che testa "
+            "l'INTERO PERCORSO DI CHIAMATA (incluso quante volte/in quali contesti la "
+            "funzione viene davvero invocata)."
+        ),
+
+        "prevention_and_detection_method": {
+            "prevention": [
+                "Ogni funzione strategia STATEFUL deve verificare esplicitamente "
+                "'tf == NXS_Profile_TF(nome_strategia)' (o equivalente) PRIMA di qualunque "
+                "lettura/scrittura del proprio stato persistente - non solo prima di "
+                "produrre un segnale.",
+                "Regola di design generale: 'un side-effect su stato condiviso non deve MAI "
+                "precedere la verifica che il contesto corrente (TF/sessione/altro) sia "
+                "quello per cui lo stato e' stato progettato'.",
+            ],
+            "detection": [
+                "Audit statico: cercare funzioni che (a) hanno un accesso a uno stato "
+                "globale/statico persistente, (b) usano NXS_EffTF()/g_activeTF invece di un "
+                "TF hardcoded, (c) il loro gate di ingresso dipende solo dal selettore, non "
+                "dal TF attivo, (d) la mutazione di stato avviene PRIMA di qualunque "
+                "confronto esplicito col proprio profilo TF.",
+                "Esperimento diagnostico dedicato (a rischio zero, nessuna modifica alla "
+                "strategia): script standalone che replica la cadenza REALE multi-pass del "
+                "router (stesso ordine calcolato dal registro) con lo stato ISOLATO al "
+                "proprio TF vs CONDIVISO fra tutti i pass - un crollo drastico nel secondo "
+                "caso e' la firma diagnostica di questo pattern.",
+            ],
+        },
+
+        "severity_classes_identified": {
+            "COOLDOWN_STATE_CONTAMINATION": "Lo stato contaminato e' un timestamp di cooldown "
+                "(lastFireTime) - l'effetto e' quasi sempre SOPPRESSIONE di segnali validi "
+                "(falso negativo), raramente produzione di segnali falsi. Caso: BREAKOUT_ACC "
+                "(fixato), BAR_UPDN, PIVOT_WICK.",
+            "RECURSIVE_VALUE_STATE_CONTAMINATION": "Lo stato contaminato e' un valore "
+                "calcolato ricorsivamente (medie mobili smussate, livelli di trailing stop, "
+                "contatori accumulati) - l'effetto puo' produrre sia falsi negativi CHE falsi "
+                "positivi, perche' il VALORE stesso usato per la decisione e' corrotto, non "
+                "solo il TIMING. Caso: TSI (doppio smoothing EMA), PMAX (longStop/shortStop/"
+                "dir), BB_SQUEEZE (squeezeBars).",
+            "STATE_MACHINE_CONTAMINATION": "Lo stato contaminato e' la fase di una macchina a "
+                "stati multi-step (es. SWEPT -> MSS -> RTO) - un pass su un TF sbagliato puo' "
+                "far avanzare la macchina usando livelli/riferimenti calcolati sul TF "
+                "sbagliato, producendo transizioni di stato premature o corrotte. Caso: "
+                "ORDER_BLOCK, SH_BMS_RTO, SH_BMS_RTO_V2, SILVER_BULLET, RANGE_FADE.",
+        },
+
+        "not_the_same_as": {
+            "EVALUATION_CADENCE_DIFFERENCE": "Riguarda QUANDO una funzione viene chiamata "
+                "(gia' escluso come causa in Phase 7.9E per BREAKOUT_ACC, cadenza verificata "
+                "perfetta) - CROSS_TIMEFRAME_STATE_CONTAMINATION riguarda COSA SUCCEDE quando "
+                "viene chiamata nel contesto SBAGLIATO, non se viene chiamata troppo poco/"
+                "troppo spesso.",
+                "HTF_TIMING_MISMATCH": "Riguarda la semantica di UN gate specifico (shift0 vs "
+                "shift1) - un problema di dettaglio locale, non strutturale come la "
+                "condivisione di stato fra pass.",
+        },
+    }
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, os.path.basename(__file__))
+    save_json(os.path.join(PHASE710_DIR, "cross_timeframe_state_contamination_failure_memory_v1.json"), doc)
+    print(f"canonical_sha256={doc['canonical_sha256']}")
+    return doc
+
+
+if __name__ == "__main__":
+    main()

@@ -25,14 +25,15 @@ def build():
     # Criterio "quasi-esatta" dichiarato ESPLICITAMENTE (non una soglia arbitraria nascosta):
     # ogni singolo evento GENERATED dal vero EA post-fix deve avere una controparte
     # (data+direzione, tolleranza 3gg) nella ricostruzione offline isolata a D1 - zero
-    # residuo lato EA reale (only_b=0) - e il residuo SOLO lato offline (segnali che la
-    # ricostruzione idealizzata prevede ma che il vero Tester, con friction realistica
-    # anche a monte del funnel di esecuzione, non genera) deve restare una minoranza netta
-    # del totale offline (< 15%, qui 8/75 = 10.7%).
+    # residuo lato EA reale (only_a=0, dopo la correzione Phase 7.10 dell'inversione di
+    # etichetta - vedi commento in build_postfix_signal_parity.py:pair_dates) - e il
+    # residuo SOLO lato offline (segnali che la ricostruzione idealizzata prevede ma che
+    # il vero Tester, con friction realistica anche a monte del funnel di esecuzione, non
+    # genera) deve restare una minoranza netta del totale offline (< 15%, qui 8/75 = 10.7%).
     same_feed_close = (
-        not same_feed_exact and pairing["only_b"] == 0
+        not same_feed_exact and pairing["only_a"] == 0
         and pairing["matched"] > 0
-        and (pairing["only_a"] / (pairing["matched"] + pairing["only_a"])) < 0.15
+        and (pairing["only_b"] / (pairing["matched"] + pairing["only_b"])) < 0.15
     )
 
     parity_passed = same_feed_exact or same_feed_close
@@ -60,13 +61,13 @@ def build():
             f"({counts['A_live_ea']} vs {counts['B_mql5_offline']}). Criterio dichiarato "
             f"soddisfatto: TUTTI e 67 gli eventi GENERATED del vero EA post-fix hanno una "
             f"controparte (data+direzione, tolleranza 3gg) nella ricostruzione offline "
-            f"(only_b={pairing['only_b']}, 0%) - il fix spiega il 100% del comportamento reale "
-            f"osservato. Residuo SOLO lato offline: {pairing['only_a']}/"
-            f"{pairing['matched']+pairing['only_a']} eventi ({100*pairing['only_a']/(pairing['matched']+pairing['only_a']):.1f}%) "
+            f"(only_a={pairing['only_a']}, 0%) - il fix spiega il 100% del comportamento reale "
+            f"osservato. Residuo SOLO lato offline: {pairing['only_b']}/"
+            f"{pairing['matched']+pairing['only_b']} eventi ({100*pairing['only_b']/(pairing['matched']+pairing['only_b']):.1f}%) "
             "che la ricostruzione idealizzata prevede ma che il vero Tester (con friction "
             "realistica gia' a monte del funnel di esecuzione, non ancora diagnosticata nel "
             "dettaglio) non genera - dichiarato onestamente come RESIDUO APERTO, non "
-            "nascosto: date esatte in same_feed_parity_result.pairing.only_a_dates. Non e' "
+            "nascosto: date esatte in same_feed_parity_result.pairing.only_b_dates. Non e' "
             "un fattore ~20x come pre-fix (95% inspiegato) - e' un residuo del 10-11%, "
             "sufficientemente piccolo da non bloccare il passo successivo, ma da tenere "
             "presente nella costruzione del dataset canonico. La strategia canonica per il "
