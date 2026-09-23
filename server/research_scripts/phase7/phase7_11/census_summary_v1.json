@@ -1,0 +1,688 @@
+{
+  "generated_at": "2026-09-23T15:24:13.988063+00:00",
+  "generation_script": "build_census_summary.py",
+  "canonical_sha256": "5948a88c13194372e5dfc0d70e2911fd534f4bbb2ce0421e07cdfb96eee2e915",
+  "payload": {
+    "phase": "7.11",
+    "baseline_commit": "cddf8a929f3bfc259fd1a56ee454d9c8f6508798",
+    "no_corrections_or_retests_applied": true,
+    "output_1_total_unique_identities": 83,
+    "output_2_counts_by_category": {
+      "live": 55,
+      "research": 68,
+      "legacy_deprecated": 22,
+      "alias": 6,
+      "partial": 43,
+      "never_fully_implemented": 3,
+      "never_fully_implemented_list": [
+        "CRT",
+        "FVG_MIT_WINDOW",
+        "sig_breakout (Python, mai una propria identita' - vedi orphaned_python_functions)"
+      ]
+    },
+    "output_3_lineage_variant_map": {
+      "LIQ_VOID": "FVG_CONT",
+      "LONDON_BO": "BREAKOUT_ACC",
+      "RANGE_FADE": "BOLLINGER",
+      "SH_BMS_RTO": "OB_MIT",
+      "SMS_BMS_RTO": "OB_MIT",
+      "WEEKLY_EXP": "BREAKOUT_ACC",
+      "FVG_MIT_NXR": "FVG_MIT",
+      "IFVG_NXR": "IFVG",
+      "MALAYSIAN_SNR_NXR": "MALAYSIAN_SNR",
+      "OB_MIT_NXR": "OB_MIT",
+      "STRUCT_REACT_NXR": "STRUCT_REACT",
+      "CISD": "THREE_BAR_DELIVERY_BREAK"
+    },
+    "output_4_source_presence_discrepancies": [
+      {
+        "strategy": "3COMMAS_BOT",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "BAR_UPDN",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "CISD_TRUE",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "CRT",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": true
+      },
+      {
+        "strategy": "CRT_MINSTOP_FILTER",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "DARVAS_BOX",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "DONCHIAN_TURTLE",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "EMA_CROSS_BENCHMARK",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "FVG_CONT_V2",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "FVG_MIT_WINDOW",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": true
+      },
+      {
+        "strategy": "ICHIMOKU_HULL_MACD",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "IFVG_CHOCH_WINDOW",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "LEVEL_CONFLUENCE",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "LEVEL_CONFLUENCE_M5",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "LEVEL_REACTION",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "LEVEL_REACTION_M5",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MACD_SMA200",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MALAYSIAN_SNR_BREAKOUT",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MALAYSIAN_SNR_V2_RETEST",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MALAYSIAN_SNR_V2_RETEST_OUTRANGE",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MALAYSIAN_SNR_V2_STAGE1",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "MALAYSIAN_SNR_V2_STAGE3",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "NY_REVERSAL_CHOCH_WINDOW",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "ORDER_BLOCK_V2",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "OTE_CONT_V2",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "PIVOT_WICK",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "PMAX",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "RSI_DIV_PINE",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SAR_ADX20",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SAR_FLIP",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SCALP_BB_FADE",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SCALP_EMA",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SCALP_RANGE_BRK",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SCALP_RSI_SNAP",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SH_BMS_RTO_V2",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SILVER_BULLET_V2",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SMS_BMS_RTO_CHOCH_WINDOW",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "SWING_FALSEBREAK",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "THREE_BAR_DELIVERY_BREAK",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "TSI_EXTREME",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "TURTLE_SOUP_CHOCH",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "TURTLE_SOUP_CHOCH_DBLBODY",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "TURTLE_SOUP_CHOCH_NEAR",
+        "present_in": [
+          "contracts_strategy_registry_json"
+        ],
+        "absent_from": [
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh",
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "VOLATILITY_BREAKOUT_CONFIRMED",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "WICK_SWEEP_RECLAIM",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "WICK_SWEEP_REV",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      },
+      {
+        "strategy": "Z_SCORE_BREAKOUT",
+        "present_in": [
+          "contracts_strategy_registry_json",
+          "knowledge_strategy_database_json",
+          "nxs_strategy_id_at_mqh",
+          "nxs_strategy_known_mqh"
+        ],
+        "absent_from": [
+          "vault_docs"
+        ],
+        "notable": false
+      }
+    ],
+    "output_5_possibly_excluded_from_prior_audits": [
+      {
+        "strategy": "CRT",
+        "reason": "Assente da NXS_StrategyKnown() - un audit basato sul registro (come Phase 7.10, che ha scansionato NXS_Strategies*.mqh direttamente quindi NON escluso li', ma un audit basato SOLO sulla lista dei 53 nomi noti l'avrebbe saltata)."
+      },
+      {
+        "strategy": "FVG_MIT_WINDOW",
+        "reason": "Stesso motivo di CRT - inoltre default ENABLED, quindi il rischio pratico e' piu' alto."
+      },
+      {
+        "strategy": "IFVG / FVG_MIT / OB_MIT / MALAYSIAN_SNR (motore NXR)",
+        "reason": "Il motore NXR (NXS_ReusePerformancePack.mqh) non e' mai stato scansionato da Phase 7.10 (che ha guardato solo NXS_Strategies*.mqh) - se le funzioni NXR_Strat_* fossero davvero raggiungibili (non confermato, 0 call site trovati in questo census), sarebbero un candidato NON ancora auditato per CROSS_TIMEFRAME_STATE_CONTAMINATION o pattern simili."
+      },
+      {
+        "strategy": "OB_MIT",
+        "reason": "Condivide codice con ORDER_BLOCK (gia' DEFECT_CONFIRMED in Phase 7.10) - MAI auditato separatamente perche' assunto 'stessa cosa di ORDER_BLOCK', ma ha un proprio stratName/selettore/stato derivato indipendentemente a runtime (NXS_OB_UpdateSide chiamata con g_obBuy/g_obSell CONDIVISI fra le due identita' - un potenziale canale di contaminazione INCROCIATA fra ORDER_BLOCK e OB_MIT stesso, mai verificato)."
+      }
+    ],
+    "output_6_additional_cross_tf_or_new_pattern_candidates": [
+      {
+        "strategy": "OB_MIT",
+        "pattern": "CROSS_STRATEGY_STATE_SHARING (nuovo, distinto da CROSS_TIMEFRAME_STATE_CONTAMINATION)",
+        "note": "ORDER_BLOCK e OB_MIT chiamano ENTRAMBI NXS_OB_UpdateSide() sugli STESSI g_obBuy/g_obSell globali (verificato: nessuna istanza separata per OB_MIT) - se entrambe abilitate simultaneamente, potrebbero corrompersi a vicenda lo stato indipendentemente da qualunque problema di timeframe. NOT_ENOUGH_EVIDENCE per confermare l'impatto pratico - richiederebbe la stessa metodologia sperimentale di 7.9E/F, non eseguita qui."
+      },
+      {
+        "strategy": "CRT, FVG_MIT_WINDOW",
+        "pattern": "UNKNOWN_STRATEGY_REGISTRY_GAP (nuovo)",
+        "note": "Non e' cross-TF contamination, ma un pattern di rischio strutturale distinto e altrettanto silenzioso: un segnale generato correttamente viene SEMPRE rifiutato da un gate di sicurezza indipendente (NXS_StrategyKnown()) perche' il registro non lo riconosce - zero trade garantiti a prescindere dalla qualita' del segnale, indistinguibile da 'nessun edge' senza ispezionare il codice."
+      }
+    ],
+    "count_discrepancy_explanations": {
+      "knowledge_strategy_database_json_says_53": "Copre SOLO le strategie live (live_implementation=true) - e' la fonte primaria da cui contracts/strategy-registry.json deriva i 53 'live', poi arricchita con i 30 research-only trovati in backtest.py per arrivare a 83 totali.",
+      "nxs_strategy_known_mqh_says_53_but_2_live_functions_absent": "NXS_StrategyKnown() e NXS_StrategyIdAt() sono generati/mantenuti insieme (stesso file, probabilmente stesso processo di generazione) e concordano fra loro (53=53) - ma NON con la realta' del codice: CRT e FVG_MIT_WINDOW hanno funzioni NXS_Strat_* reali e raggiungibili (verificato) ma non sono in QUESTA lista - il file NXS_StrategyRegistry.mqh stesso (dichiarato 'Generated by contracts/generate_registry.py. Do not edit.') non e' stato rigenerato dopo l'aggiunta di queste due strategie, o il generatore non le include per un motivo non verificato in questo census.",
+      "contracts_strategy_registry_json_live_implementation_false_for_CRT_FVG_MIT_WINDOW": "Il generatore (contracts/generate_registry.py) deriva live_implementation presumibilmente dalla stessa fonte di NXS_StrategyKnown()/NXS_StrategyIdAt() (entrambe non le includono) invece di scansionare direttamente NXS_Strat_CRT()/NXS_Strat_FVG_Mitigation_Window() nel codice sorgente - stessa causa radice del punto precedente, verificata separatamente su questo file."
+    },
+    "no_strategies_merged_by_name_similarity": true,
+    "no_identities_split_without_code_evidence": true
+  }
+}
