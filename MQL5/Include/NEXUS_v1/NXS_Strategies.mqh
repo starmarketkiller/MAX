@@ -1535,6 +1535,17 @@ SNXSSignal NXS_Strat_BreakoutAcc(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_BREAKOUT_ACC; s.stratName = "BREAKOUT_ACC";
    if(!InpStrat_BREAKOUT_ACC || !NXS_SelectorAllows(9)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // 23/09 - FIX Phase 7.9F/7.9G (IMPLEMENTATION_DEFECT_CONFIRMED): g_breakoutAccState e' uno
+   // stato GLOBALE condiviso da tutte le chiamate a questa funzione, ma nel collector multi-TF
+   // (NXS_CollectAllSignals) la funzione viene invocata una volta per OGNI pass timeframe
+   // (M5/M15/M30/H1/H4/D1), non solo durante il pass del proprio timeframe dichiarato - un
+   // "Acceptance" trovato su un TF piu' veloce sporcava lastFireTime, bloccando per cooldown
+   // l'Acceptance D1 genuina (dimostrato: 95 segnali D1 isolati -> 0 con stato condiviso,
+   // EA reale storicamente 4/7,5 anni). Guardia precoce: nessuna lettura/scrittura dello stato
+   // se il pass corrente non e' il timeframe dichiarato della strategia (NXS_Profile_TF,
+   // rispetta anche InpScalpTFOverride se mai attivato) - nessun'altra logica toccata (range,
+   // shift, trigger, cooldown in barre, HTF, SL/TP restano identici).
+   if(tf != NXS_Profile_TF("BREAKOUT_ACC")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
    if(g_breakoutAccState.lastBarTime == curBar0) return s;   // gia' valutata questa barra
    g_breakoutAccState.lastBarTime = curBar0;

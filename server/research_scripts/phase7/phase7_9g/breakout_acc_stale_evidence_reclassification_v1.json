@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-09-23T07:12:03.280130+00:00",
+  "generation_script": "build_stale_evidence_reclassification.py",
+  "canonical_sha256": "1990e84dabdd07353c6779cf926f1377b97a3a2850a06ee7a4b72ff5ba15a6a9",
+  "payload": {
+    "phase": "7.9G",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+    "principle": "Nessun artifact storico viene cancellato o modificato retroattivamente. Ogni risultato generato con l'implementazione pre-fix (cross-TF contaminata) e' marcato esplicitamente come HISTORICAL_IMPLEMENTATION_EVIDENCE / NOT_EVIDENCE_FOR_CANONICAL_D1 - una nota di governance, non una cancellazione.",
+    "reclassified_entries": [
+      {
+        "artifact": "results/cost_calibration_67_rerun/phase_e_breakoutacc_findings.json",
+        "claim": "4 trade MT5 reali in 7,5 anni, tutti in perdita",
+        "reclassification": "HISTORICAL_IMPLEMENTATION_EVIDENCE",
+        "applies_to_canonical_d1": "NOT_EVIDENCE_FOR_CANONICAL_D1",
+        "reason": "Generato con l'EA pre-fix (state cross-TF condiviso, IMPLEMENTATION_DEFECT_CONFIRMED - Phase 7.9F) - il numero di trade riflette il comportamento contaminato, non la strategia D1 intesa.",
+        "modified_in_this_phase": false,
+        "sha256_at_reclassification_time": "76b25b4a44ce24e9a70f2265d42ee3e4de9b270b47231048f75db3425a252e0b"
+      },
+      {
+        "artifact": "server/research_scripts/phase7/phase7_9d/breakout_acc_execution_parity_decision_v1.json",
+        "claim": "funnel di esecuzione pulito, 4/4 trade riprodotti identici a Phase E",
+        "reclassification": "HISTORICAL_IMPLEMENTATION_EVIDENCE",
+        "applies_to_canonical_d1": "NOT_EVIDENCE_FOR_CANONICAL_D1",
+        "reason": "La riproducibilita' del funnel e' un fatto tecnico valido (dimostra che l'EA pre-fix era deterministico) ma il conteggio di 4 trade stesso e' il prodotto del difetto ora corretto - il verdetto tecnico (EXECUTION_GAP_RESOLVED_OTHER) resta valido, il NUMERO 4 non e' piu' rappresentativo della strategia D1 intesa.",
+        "modified_in_this_phase": false,
+        "sha256_at_reclassification_time": "a5d6dc76b2249c40be681622271a6a40c4204fb93b8764cb04de634a5e8862b6"
+      },
+      {
+        "artifact": "server/research_scripts/phase7/phase7_9c/breakout_acc_event_parity_matrix_v1.json",
+        "claim": "80 SIGNAL_FIRE stimati offline (read-only), execution gap ipotizzato",
+        "reclassification": "HISTORICAL_IMPLEMENTATION_EVIDENCE",
+        "applies_to_canonical_d1": "PARTIALLY_APPLICABLE",
+        "reason": "Lo stream MT5 di 7.9C era GIA' una ricostruzione read-only isolata a D1 (nessuna contaminazione cross-TF, essendo uno script standalone che legge solo barre D1) - quindi il suo conteggio (80) e' concettualmente PIU' vicino alla semantica D1 intesa che ai 4 trade dell'EA pre-fix. Non e' pero' dichiarato 'evidenza valida' senza una nuova verifica di parity col fix reale (vedi breakout_acc_postfix_signal_parity_v1.json).",
+        "modified_in_this_phase": false,
+        "sha256_at_reclassification_time": "442eed3923f6d37bf7d37fd41634afb7d27eef1c7e97c74d2e16ae9f13a2ce19"
+      },
+      {
+        "artifact": "server/research_scripts/phase7/phase7_9e/*",
+        "claim": "scoperta del meccanismo di contaminazione cross-TF",
+        "reclassification": "METHODOLOGICAL_FINDING_NOT_STRATEGY_EVIDENCE",
+        "applies_to_canonical_d1": "N/A - non e' evidenza sulla strategia, e' evidenza sul MOTORE - resta interamente valida e non riclassificata.",
+        "reason": "Questo artifact non fa affermazioni sulla strategia stessa, solo sul meccanismo del bug - non richiede riclassificazione.",
+        "modified_in_this_phase": false
+      },
+      {
+        "artifact": "server/research_scripts/phase7/phase7_9f/*",
+        "claim": "adjudication IMPLEMENTATION_DEFECT_CONFIRMED",
+        "reclassification": "GOVERNANCE_DECISION_STILL_AUTHORITATIVE",
+        "applies_to_canonical_d1": "N/A - questo e' il documento che AUTORIZZA la riclassificazione stessa, non un dato da riclassificare.",
+        "reason": "Verdetto di governance, non dato empirico sulla strategia - resta l'autorita' di riferimento per questa fase.",
+        "modified_in_this_phase": false
+      }
+    ],
+    "no_artifacts_modified": true
+  }
+}

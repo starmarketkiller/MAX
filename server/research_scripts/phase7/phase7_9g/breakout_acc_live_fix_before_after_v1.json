@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-09-23T07:10:49.518157+00:00",
+  "generation_script": "build_fixed_identity_and_static_verification.py",
+  "canonical_sha256": "b233e78dde4540ed20e671c7c4542274c2d19c4d3f1f7576ff0bd4b1259f5b58",
+  "payload": {
+    "phase": "7.9G",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+    "before": {
+      "phase": "7.9G",
+      "candidate": "BREAKOUT_ACC",
+      "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+      "stage": "before",
+      "source_hashes": {
+        "label": "before",
+        "NEXUS_EA_v2.mq5_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a",
+        "NXS_Strategies.mqh_sha256": "eb7888db0eda937466bc4e826dc3666c69b7f495e39c7a2e651c3ee91efb1d47",
+        "backtest.py_sha256": "0c8893fb582c752cfbe356bef0c1d4af2f7764041e0372ee151c598b8d6eb068",
+        "deployed_ex5": {
+          "sha256": "8149e05291914926b7fa82ba01d6cac49e510cf405b87d3274524606fd0b43bd",
+          "mtime_utc": null,
+          "size_bytes": 789230
+        }
+      },
+      "identified_defect": {
+        "defect_mechanism": "g_breakoutAccState (NXS_Strategies.mqh, struct globale unico lastBarTime+lastFireTime[2]) viene letto/scritto da NXS_Strat_BreakoutAcc() ad OGNI pass multi-TF del router (M5/M15/M30/H1/H4/D1), non solo durante il pass D1 - il gate della funzione (NXS_SelectorAllows(9)) non dipende dal timeframe attivo (NXS_EffTF()/g_activeTF).",
+        "affected_state_variables": [
+          "g_breakoutAccState.lastBarTime",
+          "g_breakoutAccState.lastFireTime[0] (BUY)",
+          "g_breakoutAccState.lastFireTime[1] (SELL)"
+        ],
+        "affected_code_path": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh: NXS_Strat_BreakoutAcc() (righe ~1534-1564), chiamata da NXS_CollectRaw() dentro il loop multi-TF di NXS_CollectAllSignals() (NEXUS_EA_v2.mq5:683-713)",
+        "verdict_reference": "Phase 7.9F: IMPLEMENTATION_DEFECT_CONFIRMED - vedi server/research_scripts/phase7/phase7_9f/breakout_acc_identity_adjudication_v1.json",
+        "BREAKOUT_ACC_IMPLEMENTED_V1": "semantica live pre-fix: cooldown condiviso cross-TF - risultato empirico riproducibile: 4 trade in 7,5 anni (Phase 7.9D/E)",
+        "BREAKOUT_ACC_INTENDED_D1_V1": "semantica documentata da 6 fonti indipendenti (Phase 7.9F): cooldown isolato a D1 - mai eseguita come Serious backtest, solo come esperimento diagnostico (95 post-cooldown / 75 post-HTF, Phase 7.9E Esperimento A)"
+      },
+      "authorization": "Modifica dell'EA live esplicitamente autorizzata dall'utente per questo obiettivo specifico (Phase 7.9G), con vincoli: fix minimale, nessuna optimization, nessun parameter tuning, nessun cambio design performance-driven."
+    },
+    "after": {
+      "phase": "7.9G",
+      "candidate": "BREAKOUT_ACC",
+      "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+      "stage": "after",
+      "source_hashes": {
+        "label": "after",
+        "NEXUS_EA_v2.mq5_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a",
+        "NXS_Strategies.mqh_sha256": "9f7bb47a1cbadde526c3af95bbbc35ccf7df28c162127aa30a7cfaf5023c80b1",
+        "backtest.py_sha256": "0c8893fb582c752cfbe356bef0c1d4af2f7764041e0372ee151c598b8d6eb068",
+        "deployed_ex5": {
+          "sha256": "a891ae8763f0470156cc600505b2a2627c27eabdc85d4ac12bddd2575826a6e2",
+          "mtime_utc": null,
+          "size_bytes": 789108
+        }
+      },
+      "identified_defect": {
+        "defect_mechanism": "g_breakoutAccState (NXS_Strategies.mqh, struct globale unico lastBarTime+lastFireTime[2]) viene letto/scritto da NXS_Strat_BreakoutAcc() ad OGNI pass multi-TF del router (M5/M15/M30/H1/H4/D1), non solo durante il pass D1 - il gate della funzione (NXS_SelectorAllows(9)) non dipende dal timeframe attivo (NXS_EffTF()/g_activeTF).",
+        "affected_state_variables": [
+          "g_breakoutAccState.lastBarTime",
+          "g_breakoutAccState.lastFireTime[0] (BUY)",
+          "g_breakoutAccState.lastFireTime[1] (SELL)"
+        ],
+        "affected_code_path": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh: NXS_Strat_BreakoutAcc() (righe ~1534-1564), chiamata da NXS_CollectRaw() dentro il loop multi-TF di NXS_CollectAllSignals() (NEXUS_EA_v2.mq5:683-713)",
+        "verdict_reference": "Phase 7.9F: IMPLEMENTATION_DEFECT_CONFIRMED - vedi server/research_scripts/phase7/phase7_9f/breakout_acc_identity_adjudication_v1.json",
+        "BREAKOUT_ACC_IMPLEMENTED_V1": "semantica live pre-fix: cooldown condiviso cross-TF - risultato empirico riproducibile: 4 trade in 7,5 anni (Phase 7.9D/E)",
+        "BREAKOUT_ACC_INTENDED_D1_V1": "semantica documentata da 6 fonti indipendenti (Phase 7.9F): cooldown isolato a D1 - mai eseguita come Serious backtest, solo come esperimento diagnostico (95 post-cooldown / 75 post-HTF, Phase 7.9E Esperimento A)"
+      },
+      "authorization": "Modifica dell'EA live esplicitamente autorizzata dall'utente per questo obiettivo specifico (Phase 7.9G), con vincoli: fix minimale, nessuna optimization, nessun parameter tuning, nessun cambio design performance-driven."
+    },
+    "diff_summary": {
+      "NEXUS_EA_v2.mq5_changed": false,
+      "NXS_Strategies.mqh_changed": true,
+      "backtest.py_changed": false
+    },
+    "fix_applied": {
+      "file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+      "function": "NXS_Strat_BreakoutAcc()",
+      "change": "Aggiunta una guardia precoce: if(tf != NXS_Profile_TF(\"BREAKOUT_ACC\")) return s; - subito dopo tf=NXS_EffTF(), PRIMA di qualunque lettura/scrittura di g_breakoutAccState.",
+      "unchanged": [
+        "range length (n=20)",
+        "shift semantics (shift[3..22] range, c1=shift1, c2=shift2)",
+        "double-close trigger logic",
+        "cooldown length (InpBreakoutAccCooldownBars=8, invariato)",
+        "SL/TP profile (NXS_DefaultSLTP)",
+        "HTF profile flag (NXS_Profile_HTF)",
+        "trailing",
+        "risk sizing",
+        "architettura del router oltre il minimo necessario"
+      ]
+    },
+    "compile_result": {
+      "errors": 0,
+      "warnings": 2,
+      "warnings_detail": [
+        "macro 'NXS_MAX_SIGNALS' redefinition (preesistente, non correlato)",
+        "possible loss of data ulong->long (preesistente, non correlato)"
+      ]
+    },
+    "deployed_ex5_sha256_postfix": "a891ae8763f0470156cc600505b2a2627c27eabdc85d4ac12bddd2575826a6e2",
+    "static_verification": {
+      "guard_present": true,
+      "guard_exact_line": "if\\(tf != NXS_Profile_TF\\(\"BREAKOUT_ACC\"\\)\\) return s;",
+      "guard_position_in_function_body": 1110,
+      "state_touch_positions": [
+        1210,
+        1298,
+        1816,
+        1872,
+        1943,
+        1999,
+        2160,
+        2321
+      ],
+      "all_state_touches_occur_after_guard": true,
+      "conclusion": "Il guard 'if(tf != NXS_Profile_TF(\"BREAKOUT_ACC\")) return s;' e' posizionato PRIMA di ogni occorrenza di 'g_breakoutAccState.' nel corpo della funzione (verificato per posizione testuale, non assunto) - nessuna lettura o scrittura dello stato puo' avvenire se tf (NXS_EffTF(), il TF del pass corrente) non coincide col timeframe dichiarato della strategia."
+    },
+    "static_verification_per_timeframe": {
+      "PERIOD_H1": "NON TOCCATO - PERIOD_H1 != PERIOD_D1 (NXS_Profile_TF(\"BREAKOUT_ACC\")), il guard ritorna 's' immediatamente, prima di qualunque lettura/scrittura di g_breakoutAccState.",
+      "PERIOD_D1": "CONSENTITO - NXS_Profile_TF(\"BREAKOUT_ACC\")==PERIOD_D1 (dichiarazione di profilo, invariata), il guard lascia proseguire la funzione: lettura/scrittura di g_breakoutAccState permessa.",
+      "PERIOD_M30": "NON TOCCATO - PERIOD_M30 != PERIOD_D1 (NXS_Profile_TF(\"BREAKOUT_ACC\")), il guard ritorna 's' immediatamente, prima di qualunque lettura/scrittura di g_breakoutAccState.",
+      "PERIOD_M15": "NON TOCCATO - PERIOD_M15 != PERIOD_D1 (NXS_Profile_TF(\"BREAKOUT_ACC\")), il guard ritorna 's' immediatamente, prima di qualunque lettura/scrittura di g_breakoutAccState.",
+      "PERIOD_H4": "NON TOCCATO - PERIOD_H4 != PERIOD_D1 (NXS_Profile_TF(\"BREAKOUT_ACC\")), il guard ritorna 's' immediatamente, prima di qualunque lettura/scrittura di g_breakoutAccState.",
+      "PERIOD_M5": "NON TOCCATO - PERIOD_M5 != PERIOD_D1 (NXS_Profile_TF(\"BREAKOUT_ACC\")), il guard ritorna 's' immediatamente, prima di qualunque lettura/scrittura di g_breakoutAccState."
+    },
+    "bar_updn_not_touched": true,
+    "no_optimization": true,
+    "no_parameter_tuning": true,
+    "no_performance_driven_design_change": true
+  }
+}

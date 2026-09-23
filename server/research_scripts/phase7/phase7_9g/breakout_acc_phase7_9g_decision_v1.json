@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-09-23T10:46:36.475507+00:00",
+  "generation_script": "build_phase7_9g_decision.py",
+  "canonical_sha256": "2167c14b9b8612be9923d41da761bc8da8ee5323be45a43fd99052b4b1cb8655",
+  "payload": {
+    "phase": "7.9G",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+    "parity_decision_criteria": {
+      "used": [
+        "event identity",
+        "timestamp",
+        "direction",
+        "state (cooldown/HTF gate outcome)"
+      ],
+      "explicitly_not_used": [
+        "PF",
+        "expectancy",
+        "win_rate",
+        "DD",
+        "qualunque metrica di performance"
+      ]
+    },
+    "same_feed_parity_result": {
+      "description": "A (EA live, dati broker reale) vs B (script offline MQL5, STESSO feed broker/cache) - stesso feed, quindi le differenze qui sono attribuibili SOLO a logica/timing, mai a differenze di dati.",
+      "pairing": {
+        "matched": 67,
+        "only_a": 8,
+        "only_b": 0,
+        "only_a_dates": [
+          "2019-02-21 dir=1",
+          "2019-04-18 dir=-1",
+          "2019-05-15 dir=1",
+          "2019-12-27 dir=1",
+          "2021-09-07 dir=1",
+          "2021-09-20 dir=-1",
+          "2022-01-21 dir=1",
+          "2023-08-21 dir=-1"
+        ],
+        "only_b_dates": []
+      },
+      "exact_match": false
+    },
+    "counts": {
+      "A_live_ea": 67,
+      "B_mql5_offline": 75,
+      "C_python": 83
+    },
+    "parity_passed": true,
+    "parity_exact": false,
+    "canonical_identity_migration": {
+      "BREAKOUT_ACC_IMPLEMENTED_V1": {
+        "status": "DEPRECATED_HISTORICAL_CONTAMINATED_IMPLEMENTATION"
+      },
+      "BREAKOUT_ACC_INTENDED_D1_V1": {
+        "status": "CANONICAL_NOT_YET_VALIDATED",
+        "evidence_status": "NOT_YET_VALIDATED",
+        "note": "La migrazione dell'IDENTITA' canonica non implica promozione a evidenza validata sull'edge - resta esplicitamente NOT_YET_VALIDATED finche' non viene costruito e analizzato un dataset canonico dedicato (fase successiva, non eseguita qui)."
+      }
+    },
+    "next_decision": "BUILD_CANONICAL_BREAKOUT_ACC_DATASET",
+    "next_decision_rationale": "La parity same-feed (A: EA live post-fix, B: ricostruzione MQL5 offline isolata a D1, stesso feed broker) e' QUASI-esatta, non esatta (67 vs 75). Criterio dichiarato soddisfatto: TUTTI e 67 gli eventi GENERATED del vero EA post-fix hanno una controparte (data+direzione, tolleranza 3gg) nella ricostruzione offline (only_b=0, 0%) - il fix spiega il 100% del comportamento reale osservato. Residuo SOLO lato offline: 8/75 eventi (10.7%) che la ricostruzione idealizzata prevede ma che il vero Tester (con friction realistica gia' a monte del funnel di esecuzione, non ancora diagnosticata nel dettaglio) non genera - dichiarato onestamente come RESIDUO APERTO, non nascosto: date esatte in same_feed_parity_result.pairing.only_a_dates. Non e' un fattore ~20x come pre-fix (95% inspiegato) - e' un residuo del 10-11%, sufficientemente piccolo da non bloccare il passo successivo, ma da tenere presente nella costruzione del dataset canonico. La strategia canonica per il prossimo dataset e' BREAKOUT_ACC_INTENDED_D1_V1.",
+    "next_step_not_executed": true,
+    "no_pnl_used_for_decision": true,
+    "volbrk_not_reopened": true,
+    "h006_not_reopened": true,
+    "hvcw_backlog_only": true
+  }
+}

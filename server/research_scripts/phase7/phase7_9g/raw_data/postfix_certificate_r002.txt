@@ -1,0 +1,23 @@
+=== NEXUS Test Validity Certificate v2 ===
+run_id=GOLD_2019.02.03 00:00:00_sel9_r002
+strategy=BREAKOUT_ACC selector=9
+source_tf=PERIOD_D1 entry_tf=PERIOD_M15
+period_start=2019.02.04 01:00:00 period_end=2026.08.14 23:57:59
+research_mode=true exit_mode=RAW
+leverage=1:100 lot_mode=FIXED_LOT fixed_lot=0.0100
+opt_in: RiskShield=OFF ESL=OFF DailyDD=OFF TotalDD=OFF Ruin=OFF DPT=OFF
+code_build=3.0.0 (numero di build applicativo, NON un commit git)
+git_commit=8d2cde76f4233aa0da3ffa83778eee421a60093c_FIXED_7_9G
+config_fingerprint=strat=BREAKOUT_ACC|sel=9|srcTF=PERIOD_D1|entryTF=PERIOD_M15|exit=RAW|lot=0.0100|lev=100|ESL=0|DailyDD=0|TotalDD=0|DPT=0|Ruin=0|RiskShield=0|period=2019.02.04_2026.08.14
+broker_time_offset_to_GMT_h=2 (InpServerGMTOffset, sempre dichiarato - vedi NXS_Inputs.mqh)
+
+--- Funnel ---
+GENERATED=67 BLOCKED=11 OPEN_ATTEMPT=57 OPENED=47 BROKER_REJECT=9
+  gate_reason=OPEN_POSITION count=10
+  gate_reason=PROTECTIONS count=1
+  gate_reason=BROKER_REJECT count=9
+
+--- Anomalie ---
+opened_missing_position_id=0 broker_reject_missing_reason=0 source_tf_mismatch=false invariant_fail_count=0 blk_paused_count=0
+
+VERDICT=PASS

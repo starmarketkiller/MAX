@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-09-23T07:10:10.229930+00:00",
+  "generation_script": "build_live_fix_before_after.py",
+  "canonical_sha256": "420b5b04ba9217da73a39a8cb0a7a78c7d4e20fbd2cabc6f37a31acd75b8d45a",
+  "payload": {
+    "phase": "7.9G",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "8d2cde76f4233aa0da3ffa83778eee421a60093c",
+    "stage": "after",
+    "source_hashes": {
+      "label": "after",
+      "NEXUS_EA_v2.mq5_sha256": "eef541e2c8977132c97ebb8e01cd9dede94e080dfab9e3922f2833b36786e48a",
+      "NXS_Strategies.mqh_sha256": "9f7bb47a1cbadde526c3af95bbbc35ccf7df28c162127aa30a7cfaf5023c80b1",
+      "backtest.py_sha256": "0c8893fb582c752cfbe356bef0c1d4af2f7764041e0372ee151c598b8d6eb068",
+      "deployed_ex5": {
+        "sha256": "a891ae8763f0470156cc600505b2a2627c27eabdc85d4ac12bddd2575826a6e2",
+        "mtime_utc": null,
+        "size_bytes": 789108
+      }
+    },
+    "identified_defect": {
+      "defect_mechanism": "g_breakoutAccState (NXS_Strategies.mqh, struct globale unico lastBarTime+lastFireTime[2]) viene letto/scritto da NXS_Strat_BreakoutAcc() ad OGNI pass multi-TF del router (M5/M15/M30/H1/H4/D1), non solo durante il pass D1 - il gate della funzione (NXS_SelectorAllows(9)) non dipende dal timeframe attivo (NXS_EffTF()/g_activeTF).",
+      "affected_state_variables": [
+        "g_breakoutAccState.lastBarTime",
+        "g_breakoutAccState.lastFireTime[0] (BUY)",
+        "g_breakoutAccState.lastFireTime[1] (SELL)"
+      ],
+      "affected_code_path": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh: NXS_Strat_BreakoutAcc() (righe ~1534-1564), chiamata da NXS_CollectRaw() dentro il loop multi-TF di NXS_CollectAllSignals() (NEXUS_EA_v2.mq5:683-713)",
+      "verdict_reference": "Phase 7.9F: IMPLEMENTATION_DEFECT_CONFIRMED - vedi server/research_scripts/phase7/phase7_9f/breakout_acc_identity_adjudication_v1.json",
+      "BREAKOUT_ACC_IMPLEMENTED_V1": "semantica live pre-fix: cooldown condiviso cross-TF - risultato empirico riproducibile: 4 trade in 7,5 anni (Phase 7.9D/E)",
+      "BREAKOUT_ACC_INTENDED_D1_V1": "semantica documentata da 6 fonti indipendenti (Phase 7.9F): cooldown isolato a D1 - mai eseguita come Serious backtest, solo come esperimento diagnostico (95 post-cooldown / 75 post-HTF, Phase 7.9E Esperimento A)"
+    },
+    "authorization": "Modifica dell'EA live esplicitamente autorizzata dall'utente per questo obiettivo specifico (Phase 7.9G), con vincoli: fix minimale, nessuna optimization, nessun parameter tuning, nessun cambio design performance-driven."
+  }
+}
