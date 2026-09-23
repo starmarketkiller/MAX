@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import projection_freshness
+
 ROOT = Path(__file__).resolve().parent
 P77A = ROOT / "research_scripts" / "phase7" / "phase7_7a"
 P77B = ROOT / "research_scripts" / "phase7" / "phase7_7b"
@@ -190,6 +192,10 @@ class StrategyPipelineCatalog:
                 "execution_candidate": False,
                 "producer_department": "QUANT_RESEARCH",
                 "validation_owner_department": "SCIENTIFIC_QA",
+                "projection_metadata": {
+                    "latest_phase": "7.7B",
+                    "latest_source": _repo_path(SOURCES["missing_field_semantics"]),
+                },
                 "source_artifact": raw.get("source_artifact"),
                 "provenance": {
                     "mode": "RESEARCH", "direct": False,
@@ -230,6 +236,10 @@ class StrategyPipelineCatalog:
                         "source_note": directional.get("why_not_a_rescue"),
                     },
                     "blockers": [archive.get("transition_rationale")] if archive.get("transition_rationale") else [],
+                    "projection_metadata": {
+                        "latest_phase": "7.9A",
+                        "latest_source": _repo_path(SOURCES["phase7_9a_postmortem"]),
+                    },
                 })
                 item["provenance"]["sources"] = [source for source in item["provenance"]["sources"] if "phase7_9b" not in source]
 
@@ -293,9 +303,19 @@ class StrategyPipelineCatalog:
                         "executed": False if next_experiment.get("not_executed_in_this_phase") is True else None,
                     },
                     "execution_candidate": False, "meta_filter_ready": False, "deployable": False,
+                    "projection_metadata": {
+                        "latest_phase": "7.9B",
+                        "latest_source": _repo_path(SOURCES["breakout_acc_decision"]),
+                    },
                 })
                 item["provenance"]["sources"] = [source for source in item["provenance"]["sources"] if "phase7_9a" not in source]
             strategies.append(item)
+
+        freshness = projection_freshness.CATALOG.build(strategies)
+        warnings.extend(freshness.get("warnings", []))
+        freshness_by_id = {record["entity_id"]: record for record in freshness["items"]}
+        for item in strategies:
+            item["projection_freshness"] = freshness_by_id.get(item["strategy_id"])
 
         return {
             "items": strategies,
@@ -310,6 +330,7 @@ class StrategyPipelineCatalog:
                 "items": _list(preflight.get("checklist")), "applies_to": preflight.get("applies_to"),
                 "provenance": _repo_path(SOURCES["serious_validation_preflight"]) if docs["serious_validation_preflight"] else None,
             },
+            "freshness": freshness,
             "warnings": warnings,
         }
 

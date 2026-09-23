@@ -22,6 +22,7 @@ DEPARTMENT_SLOTS = (
     ("QUANT_RESEARCH", "Quant Research", "ACTIVE"),
     ("SCIENTIFIC_QA", "Scientific QA", "PARTIAL"),
     ("COMPUTE_INFRA", "Compute / Infra", "PARTIAL"),
+    ("PRODUCT_PLATFORM", "Product / Control Plane", "ACTIVE"),
     ("EXECUTION", "Execution", "SKELETON"),
     ("RISK_PORTFOLIO", "Risk / Portfolio", "SKELETON"),
     ("KNOWLEDGE_INTELLIGENCE", "Knowledge / Intelligence", "PARTIAL"),
@@ -183,12 +184,36 @@ class CompanyControlPlane:
 
         strategies = strategy_catalog["items"]
         serious_validation_preflight = strategy_catalog.get("serious_validation_preflight") or {}
+        freshness = strategy_catalog.get("freshness") or {"items": [], "count": 0, "counts": {}}
+        freshness_counts = freshness.get("counts") or {}
 
         departments = []
         for dept_id, name, raw_status in DEPARTMENT_SLOTS:
             related_work = [w for w in work_items if w["department_id"] == dept_id]
             related_artifacts = [a for a in artifacts if a["owner_id"] == dept_id]
             skeleton = raw_status == "SKELETON"
+            operational_state = qa_state if dept_id == "SCIENTIFIC_QA" else (
+                {"dataset_count": len(datasets)} if dept_id == "DATA" else (
+                {"strategy_count": len(strategies), "governance_conflict_count": strategy_catalog["governance_conflict_count"],
+                 "meta_filter_ready_count": strategy_catalog["meta_filter_ready_count"]} if dept_id == "QUANT_RESEARCH" else (
+                {"projected_entity_count": freshness.get("count", 0),
+                 "current_count": freshness_counts.get("CURRENT", 0), "stale_count": freshness_counts.get("STALE", 0),
+                 "partial_count": freshness_counts.get("PARTIAL", 0), "unknown_count": freshness_counts.get("UNKNOWN", 0),
+                 "latest_projection_phase": freshness.get("latest_projection_phase"),
+                 "latest_canonical_phase": freshness.get("latest_canonical_phase"),
+                 "freshness_status": (
+                     "STALE" if freshness_counts.get("STALE", 0)
+                     else "UNKNOWN" if freshness_counts.get("UNKNOWN", 0)
+                     else "PARTIAL" if freshness_counts.get("PARTIAL", 0)
+                     else "CURRENT"
+                 ),
+                 "truth_authority": "CANONICAL_INPUTS_ONLY"} if dept_id == "PRODUCT_PLATFORM" else (
+                {"state": "WAITING_FOR_QUANT_GATE", "execution_candidate_count": strategy_catalog["execution_candidate_count"]} if dept_id == "EXECUTION" else (
+                {"state": "WAITING_FOR_DEPLOYABLE_STRATEGIES", "deployable_strategy_count": 0} if dept_id == "RISK_PORTFOLIO" else None)))))
+            provenance_sources = sorted({a["source_path"] for a in related_artifacts})
+            if dept_id == "PRODUCT_PLATFORM":
+                provenance_sources = sorted({source for record in freshness.get("items", []) for source in (
+                    record.get("canonical_latest_source"), record.get("projected_latest_source")) if source})
             departments.append({
                 "id": dept_id, "name": name, "status": raw_status, "raw_status": raw_status,
                 "normalized_status": "ACTIVE" if raw_status == "ACTIVE" else normalize_status(raw_status),
@@ -199,25 +224,42 @@ class CompanyControlPlane:
                 "blocked_count": sum(w["normalized_status"] == "BLOCKED" for w in related_work),
                 "skeleton": skeleton, "message": "no operational pipeline yet" if skeleton else None,
                 "created_at": None, "updated_at": now,
-                "provenance": {"mode": "DERIVED", "direct": False, "sources": sorted({a["source_path"] for a in related_artifacts})},
-                "operational_state": qa_state if dept_id == "SCIENTIFIC_QA" else (
-                    {"dataset_count": len(datasets)} if dept_id == "DATA" else (
-                    {"strategy_count": len(strategies), "governance_conflict_count": strategy_catalog["governance_conflict_count"],
-                     "meta_filter_ready_count": strategy_catalog["meta_filter_ready_count"]} if dept_id == "QUANT_RESEARCH" else (
-                    {"state": "WAITING_FOR_QUANT_GATE", "execution_candidate_count": strategy_catalog["execution_candidate_count"]} if dept_id == "EXECUTION" else (
-                    {"state": "WAITING_FOR_DEPLOYABLE_STRATEGIES", "deployable_strategy_count": 0} if dept_id == "RISK_PORTFOLIO" else None)))),
+                "provenance": {"mode": "DERIVED", "direct": False, "sources": provenance_sources},
+                "operational_state": operational_state,
             })
+
+        department_by_id = {department["id"]: department for department in departments}
+        product_state = department_by_id["PRODUCT_PLATFORM"]["operational_state"]
+        company_health = [
+            {"department_id": "QUANT_RESEARCH", "status": department_by_id["QUANT_RESEARCH"]["status"], "status_dimension": "DEPARTMENT", "reason": "Canonical research artifacts and strategy projections are available."},
+            {"department_id": "SCIENTIFIC_QA", "status": department_by_id["SCIENTIFIC_QA"]["status"], "status_dimension": "DEPARTMENT", "reason": "Read-only validation gates and integrity projections are available with partial coverage."},
+            {
+                "department_id": "PRODUCT_PLATFORM",
+                "status": product_state["freshness_status"],
+                "status_dimension": "FRESHNESS",
+                "reason": {
+                    "STALE": "Strategy projection behind canonical research.",
+                    "UNKNOWN": "Projection freshness could not be established from canonical metadata.",
+                    "PARTIAL": "Only part of the canonical research chain is represented by the projection.",
+                    "CURRENT": "Product projection matches the latest known canonical research metadata.",
+                }[product_state["freshness_status"]],
+            },
+            {"department_id": "EXECUTION", "status": department_by_id["EXECUTION"]["operational_state"]["state"], "status_dimension": "OPERATIONAL", "reason": "Execution remains gated by canonical Quant Research state."},
+            {"department_id": "RISK_PORTFOLIO", "status": department_by_id["RISK_PORTFOLIO"]["operational_state"]["state"], "status_dimension": "OPERATIONAL", "reason": "Portfolio risk waits for canonically deployable strategies."},
+        ]
 
         return {"company": {"id": "NEXUS", "name": "NEXUS", "status": "ACTIVE", "owner_type": "PRIVATE",
                               "created_at": None, "updated_at": now, "provenance": {"mode": "DERIVED", "direct": False}},
                 "departments": departments, "work_items": work_items, "artifacts": artifacts, "gates": gates,
                 "dependencies": dependencies, "datasets": datasets, "strategies": strategies,
+                "freshness": freshness, "company_health": company_health,
                 "serious_validation_preflight": serious_validation_preflight, "warnings": warnings}
 
     @staticmethod
     def _purpose(dept):
         return {"DATA":"Versioned datasets and integrity evidence.", "QUANT_RESEARCH":"Canonical sequence research and formalization.",
-                "SCIENTIFIC_QA":"Read-only scientific gates and integrity review.", "COMPUTE_INFRA":"Existing application, scripts and delivery infrastructure.",
+                "SCIENTIFIC_QA":"Read-only scientific gates and integrity review.", "COMPUTE_INFRA":"Backend runtime, deployment, CI, build pipeline and storage plumbing.",
+                "PRODUCT_PLATFORM":"Transform canonical company/research state into a human-readable, operational interface without inventing scientific conclusions.",
                 "EXECUTION":"Runtime execution domain.", "RISK_PORTFOLIO":"Risk and portfolio governance.",
                 "KNOWLEDGE_INTELLIGENCE":"Canonical research memory and provenance."}[dept]
 
@@ -225,7 +267,9 @@ class CompanyControlPlane:
     def _capabilities(dept):
         return {"DATA":["dataset_registry", "integrity_projection"], "QUANT_RESEARCH":["sequence_registry", "research_read_model"],
                 "SCIENTIFIC_QA":["leakage_projection", "readiness_gates", "holdout_status"],
-                "COMPUTE_INFRA":["backend", "frontend", "research_scripts", "ci"], "EXECUTION":[], "RISK_PORTFOLIO":[],
+                "COMPUTE_INFRA":["backend_runtime", "deployment", "ci", "render_infrastructure", "build_pipeline", "storage_runtime"],
+                "PRODUCT_PLATFORM":["company_dashboard", "department_interfaces", "strategy_inspector", "research_projection", "freshness_tracking", "provenance_display", "operational_visibility"],
+                "EXECUTION":[], "RISK_PORTFOLIO":[],
                 "KNOWLEDGE_INTELLIGENCE":["library", "knowledge_browser"]}[dept]
 
     @staticmethod
@@ -234,6 +278,7 @@ class CompanyControlPlane:
                 "QUANT_RESEARCH":(["dataset_version", "hypothesis"],["research_artifact", "strategy_evidence_status", "research_gate_status"],["DATA"]),
                 "SCIENTIFIC_QA":(["research_artifact"],["review_status", "gate_status"],["QUANT_RESEARCH"]),
                 "COMPUTE_INFRA":(["source_code", "configuration"],["application_build", "ci_result"],[]),
+                "PRODUCT_PLATFORM":(["canonical_artifacts", "department_read_models", "scientific_gate_status", "execution_telemetry", "provenance"],["operational_ui_projection", "freshness_state", "stale_projection_warning", "human_readable_company_state"],["QUANT_RESEARCH", "SCIENTIFIC_QA", "DATA", "COMPUTE_INFRA"]),
                 "EXECUTION":(["quant_gate_passed", "runtime_configuration"],["execution_telemetry"],["QUANT_RESEARCH", "COMPUTE_INFRA"]),
                 "RISK_PORTFOLIO":(["execution_telemetry"],["risk_state"],["EXECUTION"]),
                 "KNOWLEDGE_INTELLIGENCE":(["research_artifact", "review_status"],["canonical_knowledge"],["QUANT_RESEARCH", "SCIENTIFIC_QA"])}[dept]
@@ -247,6 +292,7 @@ class CompanyControlPlane:
                 "datasets": model["datasets"] if department_id == "DATA" else [],
                 "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")],
                 "strategies": model["strategies"] if department_id == "QUANT_RESEARCH" else [],
+                "freshness_records": model["freshness"]["items"] if department_id == "PRODUCT_PLATFORM" else [],
                 "serious_validation_preflight": model["serious_validation_preflight"] if department_id in {"QUANT_RESEARCH", "SCIENTIFIC_QA"} else None}
 
     def overview(self):
@@ -256,6 +302,8 @@ class CompanyControlPlane:
                 "blockers": [w for w in model["work_items"] if w["normalized_status"] == "BLOCKED"],
                 "pending_gates": [g for g in model["gates"] if g["normalized_status"] not in {"PASSED", "ARCHIVED"}],
                 "recent_artifacts": model["artifacts"][-8:], "dependencies": model["dependencies"],
+                "freshness_alerts": [record for record in model["freshness"]["items"] if record["freshness_status"] == "STALE"],
+                "company_health": model["company_health"],
                 "warnings": model["warnings"]}
 
 

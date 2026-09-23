@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { DepartmentCard, DepartmentInspector, LifecycleFieldSemantics, SeriousValidationPreflight, StrategyInspector, StrategyPipeline } from "./CompanyPage";
+import { CompanyHealth, DepartmentCard, DepartmentInspector, FreshnessWarning, LifecycleFieldSemantics, ProjectionFreshness, SeriousValidationPreflight, StrategyInspector, StrategyPipeline } from "./CompanyPage";
 
 let container, root;
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
@@ -29,7 +29,7 @@ test("inspector is a full-screen accessible sheet on mobile", () => {
   expect(container.querySelector('[aria-label="Close department inspector"]')).not.toBeNull();
 });
 
-const strategy = { strategy_id: "SAR_LIVE", lifecycle_class: "FULL_STRATEGY_SPEC", code_registry_status: "ACTIVE", evidence_verdict: "REFUTED", evidence_is_refuted: true, governance_status: "GOVERNANCE_CONFLICT", current_stage: "STRATEGY_VALIDATION", blocked_stage: "META_FILTER_RESEARCH", next_required_stage: "STRATEGY_VALIDATION", meta_filter_structural_eligibility: "STRUCTURAL_STATUS_UNVERIFIED", meta_filter_research_readiness: "REFUTED_INAPPROPRIATE", blockers: ["Refuted strategy"], evidence_ladder: { wide_sample: { status: "FAIL", detail: "Negative evidence" } }, field_semantics: [{ field: "direction", field_knowledge: "NOT_EXTRACTED", requirement_role: "REQUIRED", note: "Audit did not extract this field." }], provenance: { sources: ["server/research_scripts/phase7/phase7_7a/strategy_evidence_matrix_v1.json", "server/research_scripts/phase7/phase7_7b/missing_field_semantics_refinement_v1.json"] } };
+const strategy = { strategy_id: "SAR_LIVE", lifecycle_class: "FULL_STRATEGY_SPEC", code_registry_status: "ACTIVE", evidence_verdict: "REFUTED", evidence_is_refuted: true, governance_status: "GOVERNANCE_CONFLICT", current_stage: "STRATEGY_VALIDATION", blocked_stage: "META_FILTER_RESEARCH", next_required_stage: "STRATEGY_VALIDATION", meta_filter_structural_eligibility: "STRUCTURAL_STATUS_UNVERIFIED", meta_filter_research_readiness: "REFUTED_INAPPROPRIATE", blockers: ["Refuted strategy"], evidence_ladder: { wide_sample: { status: "FAIL", detail: "Negative evidence" } }, field_semantics: [{ field: "direction", field_knowledge: "NOT_EXTRACTED", requirement_role: "REQUIRED", note: "Audit did not extract this field." }], projection_freshness: { freshness_status: "STALE", canonical_latest_phase: "7.9A", projected_latest_phase: "7.7B", lag_description: "Newer canonical research exists.", canonical_latest_source: "server/research/7.9a.json", projected_latest_source: "server/research/7.7b.json", provenance: { canonical_sha256: "abc123" } }, provenance: { sources: ["server/research_scripts/phase7/phase7_7a/strategy_evidence_matrix_v1.json", "server/research_scripts/phase7/phase7_7b/missing_field_semantics_refinement_v1.json"] } };
 
 test("strategy inventory renders refuted evidence separately from active code", () => {
   act(() => root.render(<StrategyPipeline strategies={[strategy]} onOpen={() => {}} />));
@@ -93,4 +93,38 @@ test("Serious Validation Preflight is rendered as a read-only twelve item protoc
   expect(container.textContent).toContain("Protocol / checklist · read-only · not completion state");
   expect(container.textContent).toContain("Check 12");
   expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(0);
+});
+
+test("Product Platform card and inspector expose distinct ownership and freshness", () => {
+  const product = { id: "PRODUCT_PLATFORM", name: "Product / Control Plane", status: "ACTIVE", purpose: "Project canonical state without deciding scientific truth.", skeleton: false, work_item_count: 0, artifact_count: 0, blocked_count: 0, capabilities: ["company_dashboard", "freshness_tracking"], accepted_inputs: ["canonical_artifacts"], emitted_outputs: ["freshness_state"], required_dependencies: ["QUANT_RESEARCH", "SCIENTIFIC_QA", "DATA", "COMPUTE_INFRA"], operational_state: { freshness_status: "STALE", current_count: 1, stale_count: 1, partial_count: 5, unknown_count: 0 }, freshness_records: [strategy.projection_freshness && { ...strategy.projection_freshness, entity_id: "BREAKOUT_ACC" }] };
+  act(() => root.render(<DepartmentCard department={product} onOpen={() => {}} />));
+  expect(container.textContent).toContain("Product / Control Plane");
+  expect(container.textContent).toContain("STALE");
+  act(() => root.render(<DepartmentInspector department={product} onClose={() => {}} />));
+  expect(container.textContent).toContain("freshness_tracking");
+  expect(container.textContent).toContain("Operational freshness summary");
+  expect(container.textContent).toContain("QUANT_RESEARCH");
+});
+
+test("global warning and Company Health show artifact-backed dimensions", () => {
+  act(() => root.render(<><FreshnessWarning records={[strategy.projection_freshness]} /><CompanyHealth items={[{ department_id: "PRODUCT_PLATFORM", status: "STALE", status_dimension: "FRESHNESS", reason: "Strategy projection behind canonical research." }, { department_id: "EXECUTION", status: "WAITING_FOR_QUANT_GATE", status_dimension: "OPERATIONAL", reason: "Execution remains gated." }]} /></>));
+  expect(container.textContent).toContain("Research projection stale");
+  expect(container.textContent).toContain("Company Health");
+  expect(container.textContent).toContain("WAITING_FOR_QUANT_GATE");
+});
+
+test("strategy freshness is independent from scientific readiness and shows provenance", () => {
+  const breakout = { ...strategy, strategy_id: "BREAKOUT_ACC", research_readiness: "HOLD_NEEDS_MORE_EVIDENCE", projection_freshness: { ...strategy.projection_freshness, canonical_latest_phase: "7.9F", projected_latest_phase: "7.9B", canonical_latest_source: "server/research_scripts/phase7/phase7_9f/breakout_acc_identity_adjudication_v1.json", projected_latest_source: "server/research_scripts/phase7/phase7_9b/breakout_acc_formalization_decision_v1.json" } };
+  act(() => root.render(<StrategyInspector strategy={breakout} onClose={() => {}} />));
+  expect(container.textContent).toContain("HOLD_NEEDS_MORE_EVIDENCE");
+  expect(container.textContent).toContain("Projection freshness");
+  expect(container.textContent).toContain("7.9F");
+  expect(container.textContent).toContain("7.9B");
+  expect(container.textContent).toContain("STALE");
+  expect(container.textContent).not.toContain("identity adjudication verdict");
+});
+
+test("projection freshness handles unavailable records explicitly", () => {
+  act(() => root.render(<ProjectionFreshness record={null} />));
+  expect(container.textContent).toContain("UNKNOWN");
 });

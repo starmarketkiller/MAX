@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 def test_department_slots_and_real_vs_skeleton():
     model = cp.CompanyControlPlane().build()
     departments = {item["id"]: item for item in model["departments"]}
-    assert len(departments) == 7
+    assert len(departments) == 8
     assert departments["QUANT_RESEARCH"]["status"] == "ACTIVE"
     assert departments["QUANT_RESEARCH"]["work_item_count"] > 0
     assert departments["EXECUTION"]["skeleton"] is True
@@ -18,6 +18,12 @@ def test_department_slots_and_real_vs_skeleton():
     assert departments["QUANT_RESEARCH"]["operational_state"]["strategy_count"] == 7
     assert departments["EXECUTION"]["operational_state"]["state"] == "WAITING_FOR_QUANT_GATE"
     assert departments["RISK_PORTFOLIO"]["operational_state"]["state"] == "WAITING_FOR_DEPLOYABLE_STRATEGIES"
+    product = departments["PRODUCT_PLATFORM"]
+    assert product["status"] == "ACTIVE"
+    assert product["operational_state"]["freshness_status"] == "STALE"
+    assert "frontend" not in departments["COMPUTE_INFRA"]["capabilities"]
+    assert "company_dashboard" in product["capabilities"]
+    assert product["required_dependencies"] == ["QUANT_RESEARCH", "SCIENTIFIC_QA", "DATA", "COMPUTE_INFRA"]
 
 
 def test_status_mapping_preserves_raw_status():
@@ -42,7 +48,7 @@ def test_missing_artifact_is_fault_isolated(monkeypatch, tmp_path):
     sources["dataset_integrity"] = tmp_path / "missing.json"
     monkeypatch.setattr(cp, "SOURCES", sources)
     model = cp.CompanyControlPlane().build()
-    assert len(model["departments"]) == 7
+    assert len(model["departments"]) == 8
     assert any(item["source"].endswith("missing.json") for item in model["warnings"])
 
 
@@ -55,6 +61,7 @@ def test_company_routes_are_authenticated(tmp_path, monkeypatch):
         headers = {"Authorization": f"Bearer {login.json()['token']}"}
         overview = client.get("/api/company/overview", headers=headers)
         assert overview.status_code == 200
-        assert len(overview.json()["departments"]) == 7
+        assert len(overview.json()["departments"]) == 8
         assert client.get("/api/company/departments/QUANT_RESEARCH", headers=headers).status_code == 200
+        assert client.get("/api/company/departments/PRODUCT_PLATFORM", headers=headers).status_code == 200
         assert client.get("/api/company/departments/UNKNOWN", headers=headers).status_code == 404
