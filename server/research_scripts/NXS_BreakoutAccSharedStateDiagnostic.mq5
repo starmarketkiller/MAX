@@ -27,14 +27,13 @@ string g_sym = "GOLD";
 ENUM_TIMEFRAMES g_tfEntry = PERIOD_M15;
 datetime g_lastM15Bar = 0;
 
-// Ordine dei pass multi-TF: stesso insieme di timeframe distinti presenti nel
-// registro reale (NXS_Profile_TF, verificato via grep su NXS_StrategyProfiles.mqh:
-// M5/M15/M30/H1/H4/D1) - l'ordine ESATTO dipende dall'ordine di iscrizione nel
-// registro (NXS_StrategyIdAt), non riprodotto qui bit-per-bit; l'ipotesi da
-// verificare (inquinamento di stato condiviso fra QUALUNQUE coppia di TF) non
-// dipende dall'ordine specifico, solo dal fatto che piu' TF condividano lo
-// stesso struct nella stessa finestra di tick.
-ENUM_TIMEFRAMES g_passes[6] = {PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1};
+// Ordine dei pass multi-TF: ESATTO, bit-per-bit, calcolato programmaticamente
+// (Phase 7.9F) dal registro reale - NXS_StrategyIdAt(0..52) (NXS_StrategyRegistry.mqh)
+// attraversato in ordine, NXS_Profile_TF(id) per ciascuno (NXS_StrategyProfiles.mqh),
+// dedup al primo TF distinto incontrato (stessa logica del router reale,
+// NEXUS_EA_v2.mq5:683-689). Risultato verificato: H1 (3COMMAS_BOT) -> D1 (ADX_RSI)
+// -> M30 (AMD_CONT) -> M15 (AMD_REVERSAL) -> H4 (BJORGUM) -> M5 (LEVEL_CONFLUENCE_M5).
+ENUM_TIMEFRAMES g_passes[6] = {PERIOD_H1, PERIOD_D1, PERIOD_M30, PERIOD_M15, PERIOD_H4, PERIOD_M5};
 
 // --- stato CONDIVISO fra tutti i pass, esattamente come g_breakoutAccState reale ---
 datetime g_sharedLastBarTime = 0;
@@ -45,6 +44,7 @@ long     g_cooldownSecD1 = 8 * 86400;        // cooldown_bars=8 * PeriodSeconds(
 
 long g_nD1RawAccept = 0, g_nD1CooldownPass_isolated = 0, g_nD1CooldownPass_sharedState = 0;
 long g_nOtherTfFires = 0;   // quante volte un pass NON-D1 ha "sparato" e sporcato lo stato condiviso
+int hAllFires = INVALID_HANDLE;   // log di OGNI sparo (qualunque TF) per l'esempio causale minimo
 
 // stato ISOLATO (solo D1, nessun altro TF tocca questo) - baseline di controllo,
 // deve riprodurre il risultato gia' noto (~75-95) se il meccanismo di
@@ -85,8 +85,14 @@ int EvalSharedState(ENUM_TIMEFRAMES tf){
    if(cooldownOk){
       g_sharedLastFireTime[dirIdx] = curBar0;
       if(tf != PERIOD_D1) g_nOtherTfFires++;
+      if(hAllFires != INVALID_HANDLE)
+         FileWrite(hAllFires, EnumToString(tf), TimeToString(curBar0, TIME_DATE|TIME_MINUTES),
+                   IntegerToString(rawDir), "FIRED_UPDATED_SHARED_STATE");
       return rawDir;
    }
+   if(hAllFires != INVALID_HANDLE)
+      FileWrite(hAllFires, EnumToString(tf), TimeToString(curBar0, TIME_DATE|TIME_MINUTES),
+                IntegerToString(rawDir), "RAW_ACCEPT_BLOCKED_BY_SHARED_COOLDOWN");
    return 0;   // bloccato da cooldown (che puo' essere stato appena aggiornato da un ALTRO TF)
 }
 
@@ -126,6 +132,9 @@ int OnInit(){
    hOut = FileOpen("nxs_breakoutacc_sharedstate_diag.csv", FILE_WRITE|FILE_CSV|FILE_COMMON|FILE_ANSI, ',');
    if(hOut != INVALID_HANDLE)
       FileWrite(hOut, "d1_bar_time,raw_dir,fired_with_shared_state,event");
+   hAllFires = FileOpen("nxs_breakoutacc_sharedstate_allfires.csv", FILE_WRITE|FILE_CSV|FILE_COMMON|FILE_ANSI, ',');
+   if(hAllFires != INVALID_HANDLE)
+      FileWrite(hAllFires, "tf,bar_time,raw_dir,event");
    return INIT_SUCCEEDED;
 }
 
@@ -161,6 +170,7 @@ void OnTick(){
 
 void OnDeinit(const int reason){
    if(hOut != INVALID_HANDLE) FileClose(hOut);
+   if(hAllFires != INVALID_HANDLE) FileClose(hAllFires);
    int hSum = FileOpen("nxs_breakoutacc_sharedstate_diag_summary.txt", FILE_WRITE|FILE_TXT|FILE_COMMON);
    if(hSum != INVALID_HANDLE){
       FileWrite(hSum, "n_d1_raw_accept_isolated=" + IntegerToString(g_nD1RawAccept));

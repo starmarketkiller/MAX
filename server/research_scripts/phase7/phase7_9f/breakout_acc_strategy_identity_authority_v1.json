@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-09-23T06:49:44.803161+00:00",
+  "generation_script": "build_strategy_identity_authority.py",
+  "canonical_sha256": "970055bbc3757becafc9a6dc5faefa73084dd11e4de6910df406b2313e75279a",
+  "payload": {
+    "phase": "7.9F",
+    "candidate": "BREAKOUT_ACC",
+    "baseline_commit": "e78a17e4c738586c4c16805ae8915c6e29874354",
+    "sources_chronological": [
+      {
+        "order": 1,
+        "source": "Commento di implementazione NXS_Strat_BreakoutAcc (NXS_Strategies.mqh, sezione '------------------------------------ H3 Breakout Acceptance')",
+        "date": "originale, precedente al 02/09 (data esatta di introduzione della funzione base non isolata separatamente in questa fase - il fix del cooldown la trova gia' esistente)",
+        "says_about_timeframe": "Nessuna menzione esplicita di multi-timeframe - la funzione usa NXS_EffTF() come qualunque altra strategia del file, senza commento specifico sul comportamento cross-TF.",
+        "says_about_cooldown_scope": "N/A - il cooldown non esisteva ancora in questa versione."
+      },
+      {
+        "order": 2,
+        "source": "Commit 7871e96c6 (introduzione del cooldown, 2026-09-02 18:20:20 +0200)",
+        "date": "2026-09-02 18:20:20 +0200",
+        "commit_message_excerpt": "'BAR_UPDN e BREAKOUT_ACC (sbloccate su M15 scalp stanotte): trovato un bug di \"inseguimento\" - nessuno stato \"gia' tradato questo pattern\", il motore riapriva ripetutamente sullo stesso trend (134/210 e 106/201 trade rispettivamente in gruppi ravvicinati)... corretto con un raffreddamento a N barre per direzione'",
+        "says_about_timeframe": "Il framing e' ESCLUSIVAMENTE in termini di 'stesso trend'/'stesso movimento' per UNA istanza della strategia - nessuna menzione di condivisione fra timeframe diversi. Il codice introdotto usa PeriodSeconds(tf) con tf=NXS_EffTF() (dinamico), ma il COMMENTO descrive l'intento in termini singolari ('dopo un ingresso... blocca lo stesso verso per N barre').",
+        "says_about_cooldown_scope": "'per direzione' (per-direzione), MAI 'per timeframe' o 'condiviso fra timeframe' - nessuna clausola di scope multi-TF in nessuna parte del messaggio di commit o dei commenti inline aggiunti.",
+        "critical_timing_fact": "Il collector multi-TF (NXS_CollectAllSignals con passes[] su TF distinti) era GIA' in produzione da QUASI 2 MESI PRIMA di questo fix (4603202 20 vs 2026-09-02) - l'architettura multi-TF non era una novita' introdotta insieme al cooldown, era gia' l'ambiente operativo standard. Questo rende meno plausibile che la condivisione cross-TF fosse una scelta deliberata mai documentata, e piu' plausibile una svista (lo stesso pattern di stato singolo e' stato copiato da BAR_UPDN, che ha lo STESSO difetto strutturale - vedi sotto)."
+      },
+      {
+        "order": 3,
+        "source": "Dichiarazione input InpBreakoutAccCooldownBars (NXS_Inputs.mqh)",
+        "date": "2026-09-02 18:20:20 +0200",
+        "exact_text": "input int      InpBreakoutAccCooldownBars = 8;   // 02/09 - stesso raffreddamento per NXS_Strat_BreakoutAcc",
+        "says_about_timeframe": "Nessuna menzione di scope multi-TF.",
+        "says_about_cooldown_scope": "'stesso raffreddamento per NXS_Strat_BreakoutAcc' - riferimento diretto e singolare alla funzione, non al 'sistema multi-TF'."
+      },
+      {
+        "order": 4,
+        "source": "Dichiarazione profilo NXS_Profile_TF('BREAKOUT_ACC') (NXS_StrategyProfiles.mqh)",
+        "date": "invariata da prima del fix del cooldown",
+        "exact_text": "PERIOD_D1 (nessun commento dedicato sulla riga stessa - dichiarazione diretta, immutata dalla sua introduzione)",
+        "says_about_timeframe": "PERIOD_D1 esplicito e MAI cambiato - unica dichiarazione autorevole del timeframe nativo della strategia in tutto il codice."
+      },
+      {
+        "order": 5,
+        "source": "Registro strategie / contracts (contracts/strategy-registry.json e NXS_StrategyRegistry.mqh, generato)",
+        "date": "corrente",
+        "says_about_timeframe": "Nessun campo dedicato a 'multi-TF cooldown sharing' esiste nello schema - la nozione stessa non e' rappresentata nel registro."
+      },
+      {
+        "order": 6,
+        "source": "Phase 7.9B Lifecycle Contract (l'audit di identita' piu' recente e rigoroso prima di questa fase, 21/09)",
+        "date": "2026-09-21",
+        "field_TRIGGER": "Doppia chiusura CONSECUTIVA oltre il range (c1 E c2, shift1 e shift2 entrambe > range_hi per BUY o < range_lo per SELL) - 'Acceptance', non un singolo tocco. Cooldown esplicito per direzione (InpBreakoutAccCooldownBars, default 8 barre) per evitare l'inseguimento ripetuto dello stesso movimento (fix del 02/09, bug trovato dall'utente: 106/201 trade nudi erano cluster sullo stesso movimento).",
+        "field_TIMEFRAME": "D1 (PERIOD_D1 esplicito nel profilo, coerente col registro)",
+        "field_SETUP": "Range di 20 barre (n=20): massimo/minimo con offset shift [3..22] (iHighest/iLowest(..., n, 3)) - esclude le 2 barre piu' recenti dal calcolo del range, coerente col nome 'Acceptance' (accettazione oltre un range gia' formato prima delle barre di conferma).",
+        "says_about_timeframe": "'D1 (PERIOD_D1 esplicito nel profilo, coerente col registro)' - affermazione INEQUIVOCABILE, nessuna ambiguita'.",
+        "says_about_cooldown_scope": "'Cooldown esplicito per direzione... per evitare l'inseguimento ripetuto DELLO STESSO MOVIMENTO' - descritto interamente in termini D1/singola-istanza, IDENTICO al framing del commit originale del 02/09 - nessuna menzione di condivisione multi-TF. Questa e' la fonte piu' recente e rigorosa, e conferma lo stesso framing di 19 giorni prima.",
+        "note": "Questo audit (7.9B) e' stato scritto DOPO che il codice con lo shared state era gia' in produzione da 19 giorni - eppure non menziona MAI la condivisione multi-TF, ne' come caratteristica ne' come rischio. Coerente con l'ipotesi che nessuno (ne' l'autore originale del fix, ne' l'audit successivo) fosse consapevole dell'interazione con l'architettura multi-TF."
+      }
+    ],
+    "bar_updn_structural_analogy": {
+      "same_structural_pattern": true,
+      "evidence": "g_barUpDnState (struct identico: lastBarTime + lastFireTime[2]) e' stato introdotto NELLO STESSO COMMIT, con lo STESSO pattern architetturale, per NXS_Strat_BarUpDn() - il cui profilo (NXS_Profile_TF('BAR_UPDN')) e' PERIOD_M15, diverso da BREAKOUT_ACC (D1) ma soggetto ESATTAMENTE alla stessa vulnerabilita' strutturale (stato globale, nessun controllo su NXS_EffTF() prima di leggere/scrivere).",
+      "implication": "Rafforza l'ipotesi di svista sistemica (lo stesso pattern di codice copiato/incollato per due strategie diverse nello stesso commit) piuttosto che una decisione deliberata specifica per BREAKOUT_ACC."
+    },
+    "multitf_architecture_predates_cooldown_fix": {
+      "multitf_introduction_commits": [
+        "4603202 2026-07-10 08:34:52 +0000 feat(ea): SINGLE-CHART MULTI-TF - un grafico, ogni strategia sul suo TF",
+        "79cddfe 2026-07-10 08:46:58 +0000 feat(ea): MULTI-TF Fase 2 - anche SMC/sweep/struttura sul TF di ogni strategia",
+        "3e756a3 2026-07-10 13:34:21 +0000 feat(ea): percorso PROFILI 'come nel backtest del sito' - ogni strategia apre indipendente"
+      ],
+      "cooldown_fix_commit": "7871e96c6 (2026-09-02 18:20:20 +0200)",
+      "gap_days_approx": 54
+    },
+    "summary": "Attraverso TUTTE le fonti disponibili (commento originale, messaggio del commit che introduce il cooldown, commento sull'input, dichiarazione di profilo, registro, e l'audit di identita' piu' recente e rigoroso - 7.9B) l'intento documentato per BREAKOUT_ACC e' UNIFORMEMENTE e SENZA ECCEZIONI: timeframe D1, cooldown per-direzione scoped alla singola istanza D1 della strategia. NESSUNA fonte, in nessun momento della storia del progetto, menziona o giustifica una condivisione dello stato di cooldown fra timeframe diversi."
+  }
+}

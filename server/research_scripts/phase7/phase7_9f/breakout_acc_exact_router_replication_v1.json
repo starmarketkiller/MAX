@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-09-23T06:50:38.150089+00:00",
+  "generation_script": "build_implemented_vs_intended_semantics.py",
+  "canonical_sha256": "9910520c51de70eee3be0db8ec0e48a58e0a1b9e636b1fc074564a7c049a61cf",
+  "payload": {
+    "method": "Calcolato PROGRAMMATICAMENTE (non a mano) attraversando NXS_StrategyIdAt(0..52) in ordine e NXS_Profile_TF(id) per ciascuno, deduplicando al primo TF distinto incontrato - IDENTICA logica del router reale (NEXUS_EA_v2.mq5:683-689).",
+    "exact_pass_order_verified": [
+      {
+        "tf": "PERIOD_H1",
+        "first_declared_by_strategy": "3COMMAS_BOT"
+      },
+      {
+        "tf": "PERIOD_D1",
+        "first_declared_by_strategy": "ADX_RSI"
+      },
+      {
+        "tf": "PERIOD_M30",
+        "first_declared_by_strategy": "AMD_CONT"
+      },
+      {
+        "tf": "PERIOD_M15",
+        "first_declared_by_strategy": "AMD_REVERSAL"
+      },
+      {
+        "tf": "PERIOD_H4",
+        "first_declared_by_strategy": "BJORGUM"
+      },
+      {
+        "tf": "PERIOD_M5",
+        "first_declared_by_strategy": "LEVEL_CONFLUENCE_M5"
+      }
+    ],
+    "diagnostic_rerun_with_exact_order": {
+      "script": "server/research_scripts/NXS_BreakoutAccSharedStateDiagnostic.mq5 (aggiornato in questa fase con l'ordine esatto: H1,D1,M30,M15,H4,M5)",
+      "n_d1_raw_accept_isolated": 205,
+      "n_d1_cooldown_pass_isolated": 95,
+      "n_d1_fired_with_shared_state_exact_order": 0,
+      "n_other_tf_fires": 12624
+    },
+    "target_declared": "actual EA GENERATED = 4, replica = 4, timestamp/direzione esatti 4/4",
+    "target_achieved": false,
+    "actual_result": "replica con ordine ESATTO produce 0 (non 4) - il meccanismo dominante e' confermato con l'ordine reale (collasso quasi totale, stessa direzione/ordine di grandezza), ma la cifra ESATTA non e' riprodotta. Cause plausibili non verificate in questa fase: tassi di successo dell'attivazione indicatori diversi da 100% sui TF non-D1 (mai testati individualmente, a differenza di D1 - vedi 7.9E Esperimento A), o altre differenze minori non isolate. Dichiarato onestamente come limite - NON forzato a coincidere.",
+    "diagnostic_only_disclaimer": "Questo esperimento NON stabilisce che il comportamento sia scientificamente corretto - stabilisce solo che il MECCANISMO (contaminazione cross-TF dello stato) e' la causa dominante e verificabile del collasso 80(/95/75)->4."
+  }
+}
