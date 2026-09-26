@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-09-26T11:40:03.496537+00:00",
+  "generation_script": "build_gate_diagnostic.py",
+  "canonical_sha256": "823cfcbad55c41f73bbe8987d7fcde31e3dc44f252129449f1298357fefb67ad",
+  "payload": {
+    "phase": "7.9I",
+    "purpose": "Diagnostica dei gate - NON proposta di modifica. Confronto fra il path REALE degli eventi OPENED e il path CONTROFATTUALE (proxy, mai eseguito) di BLOCKED e BROKER_REJECT.",
+    "method": "Per BLOCKED/BROKER_REJECT, il prezzo di chiusura della barra di breakout (c1, causalmente disponibile per costruzione, stessa fonte usata per la magnitudine del breakout in Edge Decomposition) e' usato come proxy di ingresso - MAI un fill reale, questi eventi non sono mai stati eseguiti. Stessa metodologia di path anatomy (MFE/MAE/forward return a 60 barre D1) usata per gli OPENED reali, per un confronto comparabile 1:1.",
+    "counterfactual_disclaimer": "Questi NON sono trade reali - nessuna decisione di modifica del gate deve basarsi su questi numeri da soli (N piccoli, nessuna esecuzione reale, nessuno slippage/costo simulato).",
+    "by_stage": {
+      "OPENED": {
+        "n": 47,
+        "path_method": "REALE (fill verificato)",
+        "mfe": {
+          "n": 47,
+          "mean": 214.9721,
+          "median": 133.24,
+          "stdev": 231.6803
+        },
+        "mae": {
+          "n": 47,
+          "mean": 89.7721,
+          "median": 74.61,
+          "stdev": 73.6392
+        },
+        "fwd_return_60d1": {
+          "n": 46,
+          "mean": 91.0746,
+          "median": 11.105,
+          "stdev": 244.0394
+        },
+        "n_continuation": 25,
+        "n_events": 47,
+        "pct_continuation": 53.2
+      },
+      "BLOCKED": {
+        "n": 11,
+        "path_method": "CONTROFATTUALE (prezzo di chiusura della barra di breakout come proxy - il segnale non e' mai stato eseguito)",
+        "mfe": {
+          "n": 11,
+          "mean": 263.9727,
+          "median": 155.15,
+          "stdev": 267.1457
+        },
+        "mae": {
+          "n": 11,
+          "mean": 119.6009,
+          "median": 155.16,
+          "stdev": 79.8746
+        },
+        "fwd_return_60d1": {
+          "n": 11,
+          "mean": 133.8618,
+          "median": 90.28,
+          "stdev": 271.0071
+        },
+        "n_continuation": 7,
+        "n_events": 11,
+        "pct_continuation": 63.6
+      },
+      "BROKER_REJECT": {
+        "n": 9,
+        "path_method": "CONTROFATTUALE (prezzo di chiusura della barra di breakout come proxy - il segnale non e' mai stato eseguito)",
+        "mfe": {
+          "n": 9,
+          "mean": 542.93,
+          "median": 316.84,
+          "stdev": 506.9533
+        },
+        "mae": {
+          "n": 9,
+          "mean": 442.7856,
+          "median": 386.02,
+          "stdev": 374.4989
+        },
+        "fwd_return_60d1": {
+          "n": 9,
+          "mean": 23.7944,
+          "median": -10.65,
+          "stdev": 413.7149
+        },
+        "n_continuation": 4,
+        "n_events": 9,
+        "pct_continuation": 44.4
+      }
+    },
+    "interpretation": [
+      "BLOCKED (cooldown) mostra un forward return mediano MIGLIORE di OPENED - possibile indicazione che il gate di cooldown elimina ANCHE eventi potenzialmente migliori (N=11, cautela richiesta).",
+      "BROKER_REJECT: forward return mediano controfattuale=-10.65 vs OPENED=11.105 (N=9) - questi eventi sono rifiutati dal broker (non da un gate strategico), quindi qualunque differenza qui riflette la geometria dei segnali che tendono a essere rifiutati (es. spread/margine), non un giudizio sulla qualita' del segnale."
+    ],
+    "sample_size_caveat": "BLOCKED n=11, BROKER_REJECT n=9 - entrambi troppo piccoli per una conclusione statisticamente forte; il campione e' compatibile con piu' di una delle tre ipotesi (filtro causale, filtro casuale, eliminazione di eventi migliori) - non decidibile con questi N."
+  }
+}

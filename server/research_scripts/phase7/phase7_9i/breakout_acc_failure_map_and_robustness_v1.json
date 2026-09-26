@@ -1,0 +1,175 @@
+{
+  "generated_at": "2026-09-26T11:41:42.289066+00:00",
+  "generation_script": "build_failure_map_and_robustness.py",
+  "canonical_sha256": "99f456d2a083773010d459102e3d0460588586ffa4ade34e532d99ab034c2869",
+  "payload": {
+    "phase": "7.9I",
+    "deliverable_7_buy_sell_year_regime_cross_decomposition": [
+      {
+        "direction": "BUY",
+        "year": 2019,
+        "n": 3,
+        "n_continuation": 3,
+        "atr_regime_median": 14.6345
+      },
+      {
+        "direction": "BUY",
+        "year": 2020,
+        "n": 7,
+        "n_continuation": 5,
+        "atr_regime_median": 25.18
+      },
+      {
+        "direction": "BUY",
+        "year": 2021,
+        "n": 4,
+        "n_continuation": 0,
+        "atr_regime_median": 22.94
+      },
+      {
+        "direction": "SELL",
+        "year": 2021,
+        "n": 5,
+        "n_continuation": 0,
+        "atr_regime_median": 25.7335
+      },
+      {
+        "direction": "BUY",
+        "year": 2022,
+        "n": 2,
+        "n_continuation": 1,
+        "atr_regime_median": 22.246
+      },
+      {
+        "direction": "SELL",
+        "year": 2022,
+        "n": 4,
+        "n_continuation": 1,
+        "atr_regime_median": 24.7365
+      },
+      {
+        "direction": "BUY",
+        "year": 2023,
+        "n": 6,
+        "n_continuation": 3,
+        "atr_regime_median": 22.83
+      },
+      {
+        "direction": "SELL",
+        "year": 2023,
+        "n": 1,
+        "n_continuation": 0,
+        "atr_regime_median": 14.27
+      },
+      {
+        "direction": "BUY",
+        "year": 2024,
+        "n": 7,
+        "n_continuation": 5,
+        "atr_regime_median": 29.726
+      },
+      {
+        "direction": "BUY",
+        "year": 2025,
+        "n": 7,
+        "n_continuation": 7,
+        "atr_regime_median": 39.98
+      },
+      {
+        "direction": "SELL",
+        "year": 2026,
+        "n": 1,
+        "n_continuation": 0,
+        "atr_regime_median": 102.099
+      }
+    ],
+    "deliverable_8_failure_map": {
+      "n_failures": 21,
+      "n_continuations": 25,
+      "failure_profile": {
+        "n": 21,
+        "pct_buy": 57.1,
+        "breakout_magnitude_price_units": {
+          "n": 21,
+          "mean": 23.6843,
+          "median": 22.76,
+          "stdev": 14.8746
+        },
+        "causal_atr20_d1": {
+          "n": 21,
+          "mean": 24.6767,
+          "median": 23.3335,
+          "stdev": 4.9055
+        },
+        "by_year": {
+          "2020": 2,
+          "2021": 9,
+          "2022": 4,
+          "2023": 4,
+          "2024": 2
+        }
+      },
+      "continuation_profile": {
+        "n": 25,
+        "pct_buy": 96.0,
+        "breakout_magnitude_price_units": {
+          "n": 25,
+          "mean": 30.9804,
+          "median": 28.56,
+          "stdev": 16.3312
+        },
+        "causal_atr20_d1": {
+          "n": 25,
+          "mean": 28.7572,
+          "median": 27.008,
+          "stdev": 11.5066
+        },
+        "by_year": {
+          "2019": 3,
+          "2020": 5,
+          "2022": 2,
+          "2023": 3,
+          "2024": 5,
+          "2025": 7
+        }
+      },
+      "failure_direction_split": {
+        "BUY": 12,
+        "SELL": 9
+      },
+      "primary_failure_mode": "SELL e' sovra-rappresentato fra i FAILURE: 9/11 di tutti i SELL finiscono in FAILURE a 60 barre D1 - il principale failure mode osservato e' 'segnale SELL in un mercato con trend rialzista strutturale', non un pattern di breakout geometricamente distinguibile (magnitudine/ATR non mostrano differenze nette fra FAILURE e CONTINUATION)."
+    },
+    "robustness_minimum_checks": {
+      "sample_size": {
+        "n_opened": 47,
+        "n_buy": 36,
+        "n_sell": 11,
+        "assessment": "PICCOLO - N=47 totali, SELL=11 in particolare non consente conclusioni forti a livello di singola direzione."
+      },
+      "concentration_by_year": {
+        "year_counts": {
+          "2019": 3,
+          "2020": 7,
+          "2021": 9,
+          "2022": 6,
+          "2023": 7,
+          "2024": 7,
+          "2025": 7,
+          "2026": 1
+        },
+        "max_single_year_share_pct": 19.1,
+        "assessment": "CONCENTRAZIONE MODERATA"
+      },
+      "buy_sell_dependence": {
+        "assessment": "FORTE - il risultato aggregato dipende quasi interamente dal sottogruppo BUY (vedi Mechanism Discovery); qualunque conclusione che non distingua BUY da SELL e' fuorviante."
+      },
+      "sensitivity_to_8_b_only": {
+        "assessment": "NULLA sulle analisi primarie (Population B esclude per costruzione i B-only) - vedi breakout_acc_sensitivity_67_vs_75_v1.json."
+      },
+      "sensitivity_to_non_opened": {
+        "assessment": "Il gate diagnostic (BLOCKED/BROKER_REJECT) usa path CONTROFATTUALI con N piccoli (11 e 9) - non altera Population B ma qualunque affermazione sui gate stessi resta a bassa confidence."
+      },
+      "overall_confidence_for_strong_conclusions": "BASSA-MODERATA - pattern direzionale ampio e convergente su piu' analisi, ma N complessivo piccolo, un solo regime di mercato rappresentato, nessuna correzione per test multipli nel Natural Horizon."
+    }
+  }
+}

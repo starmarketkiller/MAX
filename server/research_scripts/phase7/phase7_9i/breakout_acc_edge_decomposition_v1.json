@@ -1,0 +1,2146 @@
+{
+  "generated_at": "2026-09-26T11:32:55.206221+00:00",
+  "generation_script": "build_edge_decomposition.py",
+  "canonical_sha256": "1293b11579c0e4dd01c075685ffd22b685f75dbce194e55e8f348fd61b6d937b",
+  "payload": {
+    "phase": "7.9I",
+    "input_frozen_dataset": "breakout_acc_intended_d1_v1_dataset.json (sha256=530e471872c5e7caa93af87b653f6055cccd71897df11e3c1ad3055d4f2b3e3e)",
+    "no_optimization": true,
+    "no_pf_as_starting_point": true,
+    "method": "Statistiche descrittive (media/mediana/stdev/min/max) di MFE/MAE/forward return per sottogruppo. Terzili calcolati sulla distribuzione OSSERVATA (nessuna soglia scelta guardando l'esito). Population B (47 OPENED, uniche con path anatomy reale) usata per tutte le decomposizioni basate su MFE/MAE/forward return; Population completa (75) usata solo per la decomposizione strutturale per terminal_stage (punto 9), dove path anatomy non esiste per costruzione.",
+    "post_hoc_observation_min_n": 8,
+    "decomposition": {
+      "1_direction_buy_sell": {
+        "BUY": {
+          "group": "BUY",
+          "n": 36,
+          "mfe": {
+            "n": 36,
+            "mean": 249.3317,
+            "median": 172.195,
+            "stdev": 249.5211,
+            "min": 0.0,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 36,
+            "mean": 78.52,
+            "median": 58.08,
+            "stdev": 71.734,
+            "min": 0.0,
+            "max": 253.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 36,
+              "mean": 6.2394,
+              "median": 0.445,
+              "stdev": 40.8511,
+              "min": -89.39,
+              "max": 109.06
+            },
+            "fwd_return_3d1": {
+              "n": 36,
+              "mean": 14.6153,
+              "median": 4.925,
+              "stdev": 51.9266,
+              "min": -110.84,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 36,
+              "mean": 15.9714,
+              "median": 10.01,
+              "stdev": 59.5417,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 36,
+              "mean": 34.9956,
+              "median": 20.08,
+              "stdev": 108.6957,
+              "min": -206.87,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 36,
+              "mean": 49.3806,
+              "median": 38.485,
+              "stdev": 125.9761,
+              "min": -136.71,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 36,
+              "mean": 82.2972,
+              "median": 69.02,
+              "stdev": 148.0689,
+              "min": -233.07,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 36,
+              "mean": 134.4528,
+              "median": 59.49,
+              "stdev": 256.5743,
+              "min": -200.9,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 14
+        },
+        "SELL": {
+          "group": "SELL",
+          "n": 11,
+          "mfe": {
+            "n": 11,
+            "mean": 102.5227,
+            "median": 97.02,
+            "stdev": 104.098,
+            "min": 8.03,
+            "max": 393.05
+          },
+          "mae": {
+            "n": 11,
+            "mean": 126.5973,
+            "median": 88.41,
+            "stdev": 70.6178,
+            "min": 55.51,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 11,
+              "mean": 10.2127,
+              "median": 0.07,
+              "stdev": 43.3374,
+              "min": -33.94,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 11,
+              "mean": 6.0618,
+              "median": 10.91,
+              "stdev": 30.4719,
+              "min": -53.59,
+              "max": 41.97
+            },
+            "fwd_return_5d1": {
+              "n": 11,
+              "mean": 11.3118,
+              "median": 0.68,
+              "stdev": 43.8924,
+              "min": -73.64,
+              "max": 77.64
+            },
+            "fwd_return_10d1": {
+              "n": 11,
+              "mean": 20.8782,
+              "median": -13.57,
+              "stdev": 115.6518,
+              "min": -72.31,
+              "max": 336.21
+            },
+            "fwd_return_20d1": {
+              "n": 11,
+              "mean": 4.7882,
+              "median": -15.46,
+              "stdev": 98.0599,
+              "min": -146.05,
+              "max": 257.93
+            },
+            "fwd_return_40d1": {
+              "n": 11,
+              "mean": -6.8755,
+              "median": -8.47,
+              "stdev": 73.8415,
+              "min": -141.84,
+              "max": 88.59
+            },
+            "fwd_return_60d1": {
+              "n": 10,
+              "mean": -65.087,
+              "median": -51.89,
+              "stdev": 84.5374,
+              "min": -193.13,
+              "max": 85.19
+            }
+          },
+          "descriptive_only_pnl_positive_count": 0
+        }
+      },
+      "2_year": {
+        "2019": {
+          "group": 2019,
+          "n": 3,
+          "mfe": {
+            "n": 3,
+            "mean": 139.96,
+            "median": 149.59,
+            "stdev": 86.8464,
+            "min": 48.7,
+            "max": 221.59
+          },
+          "mae": {
+            "n": 3,
+            "mean": 29.5267,
+            "median": 25.61,
+            "stdev": 18.0761,
+            "min": 13.73,
+            "max": 49.24
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 3,
+              "mean": 3.77,
+              "median": 6.79,
+              "stdev": 13.751,
+              "min": -11.24,
+              "max": 15.76
+            },
+            "fwd_return_3d1": {
+              "n": 3,
+              "mean": -3.91,
+              "median": -6.93,
+              "stdev": 5.4663,
+              "min": -7.2,
+              "max": 2.4
+            },
+            "fwd_return_5d1": {
+              "n": 3,
+              "mean": -0.0267,
+              "median": 8.32,
+              "stdev": 20.3099,
+              "min": -23.18,
+              "max": 14.78
+            },
+            "fwd_return_10d1": {
+              "n": 3,
+              "mean": 10.6967,
+              "median": -10.3,
+              "stdev": 38.0949,
+              "min": -12.28,
+              "max": 54.67
+            },
+            "fwd_return_20d1": {
+              "n": 3,
+              "mean": 36.4967,
+              "median": 17.17,
+              "stdev": 39.2568,
+              "min": 10.65,
+              "max": 81.67
+            },
+            "fwd_return_40d1": {
+              "n": 3,
+              "mean": 65.1467,
+              "median": 88.48,
+              "stdev": 60.3628,
+              "min": -3.4,
+              "max": 110.36
+            },
+            "fwd_return_60d1": {
+              "n": 3,
+              "mean": 96.23,
+              "median": 90.7,
+              "stdev": 94.9159,
+              "min": 4.2,
+              "max": 193.79
+            }
+          },
+          "descriptive_only_pnl_positive_count": 0,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2020": {
+          "group": 2020,
+          "n": 7,
+          "mfe": {
+            "n": 7,
+            "mean": 139.2486,
+            "median": 121.52,
+            "stdev": 87.2687,
+            "min": 49.15,
+            "max": 307.03
+          },
+          "mae": {
+            "n": 7,
+            "mean": 111.5971,
+            "median": 119.05,
+            "stdev": 75.9258,
+            "min": 20.34,
+            "max": 210.09
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 7,
+              "mean": -3.1029,
+              "median": -8.96,
+              "stdev": 31.769,
+              "min": -45.04,
+              "max": 60.13
+            },
+            "fwd_return_3d1": {
+              "n": 7,
+              "mean": 4.79,
+              "median": -8.49,
+              "stdev": 39.1861,
+              "min": -25.42,
+              "max": 88.78
+            },
+            "fwd_return_5d1": {
+              "n": 7,
+              "mean": -1.0157,
+              "median": -6.16,
+              "stdev": 46.7106,
+              "min": -54.2,
+              "max": 92.35
+            },
+            "fwd_return_10d1": {
+              "n": 7,
+              "mean": 18.0814,
+              "median": 26.54,
+              "stdev": 76.5588,
+              "min": -102.98,
+              "max": 153.03
+            },
+            "fwd_return_20d1": {
+              "n": 7,
+              "mean": 1.26,
+              "median": -17.23,
+              "stdev": 68.3823,
+              "min": -90.35,
+              "max": 119.26
+            },
+            "fwd_return_40d1": {
+              "n": 7,
+              "mean": 38.6214,
+              "median": 43.37,
+              "stdev": 87.1487,
+              "min": -111.05,
+              "max": 178.68
+            },
+            "fwd_return_60d1": {
+              "n": 7,
+              "mean": 17.2371,
+              "median": 16.92,
+              "stdev": 117.8676,
+              "min": -150.34,
+              "max": 176.17
+            }
+          },
+          "descriptive_only_pnl_positive_count": 2,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2021": {
+          "group": 2021,
+          "n": 9,
+          "mfe": {
+            "n": 9,
+            "mean": 49.26,
+            "median": 48.54,
+            "stdev": 39.5973,
+            "min": 0.0,
+            "max": 109.86
+          },
+          "mae": {
+            "n": 9,
+            "mean": 129.8344,
+            "median": 105.35,
+            "stdev": 63.2804,
+            "min": 55.51,
+            "max": 253.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 9,
+              "mean": -12.9444,
+              "median": -15.42,
+              "stdev": 33.5272,
+              "min": -81.73,
+              "max": 27.79
+            },
+            "fwd_return_3d1": {
+              "n": 9,
+              "mean": -2.7444,
+              "median": 3.07,
+              "stdev": 37.5743,
+              "min": -75.99,
+              "max": 42.16
+            },
+            "fwd_return_5d1": {
+              "n": 9,
+              "mean": 1.0011,
+              "median": 0.68,
+              "stdev": 42.6432,
+              "min": -84.58,
+              "max": 62.07
+            },
+            "fwd_return_10d1": {
+              "n": 9,
+              "mean": -5.3244,
+              "median": -13.57,
+              "stdev": 56.3839,
+              "min": -69.5,
+              "max": 103.29
+            },
+            "fwd_return_20d1": {
+              "n": 9,
+              "mean": -33.0356,
+              "median": -33.95,
+              "stdev": 63.6861,
+              "min": -136.71,
+              "max": 52.08
+            },
+            "fwd_return_40d1": {
+              "n": 9,
+              "mean": -50.9989,
+              "median": -36.91,
+              "stdev": 71.657,
+              "min": -233.07,
+              "max": 7.9
+            },
+            "fwd_return_60d1": {
+              "n": 9,
+              "mean": -84.2267,
+              "median": -57.98,
+              "stdev": 63.8405,
+              "min": -200.9,
+              "max": -14.72
+            }
+          },
+          "descriptive_only_pnl_positive_count": 0
+        },
+        "2022": {
+          "group": 2022,
+          "n": 6,
+          "mfe": {
+            "n": 6,
+            "mean": 133.6233,
+            "median": 121.63,
+            "stdev": 59.8835,
+            "min": 56.16,
+            "max": 219.78
+          },
+          "mae": {
+            "n": 6,
+            "mean": 68.5017,
+            "median": 68.205,
+            "stdev": 51.1991,
+            "min": 5.57,
+            "max": 153.54
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 6,
+              "mean": 9.2383,
+              "median": 10.905,
+              "stdev": 23.3312,
+              "min": -23.7,
+              "max": 47.62
+            },
+            "fwd_return_3d1": {
+              "n": 6,
+              "mean": 10.6567,
+              "median": 16.795,
+              "stdev": 35.8424,
+              "min": -53.59,
+              "max": 53.35
+            },
+            "fwd_return_5d1": {
+              "n": 6,
+              "mean": 14.7717,
+              "median": 37.5,
+              "stdev": 49.4759,
+              "min": -73.64,
+              "max": 58.31
+            },
+            "fwd_return_10d1": {
+              "n": 6,
+              "mean": 12.73,
+              "median": 27.575,
+              "stdev": 52.3388,
+              "min": -55.39,
+              "max": 77.86
+            },
+            "fwd_return_20d1": {
+              "n": 6,
+              "mean": 20.1433,
+              "median": 15.63,
+              "stdev": 40.7756,
+              "min": -29.15,
+              "max": 75.51
+            },
+            "fwd_return_40d1": {
+              "n": 6,
+              "mean": 56.1467,
+              "median": 72.55,
+              "stdev": 89.191,
+              "min": -107.68,
+              "max": 138.36
+            },
+            "fwd_return_60d1": {
+              "n": 6,
+              "mean": -8.82,
+              "median": -15.15,
+              "stdev": 79.6566,
+              "min": -139.51,
+              "max": 85.19
+            }
+          },
+          "descriptive_only_pnl_positive_count": 2,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2023": {
+          "group": 2023,
+          "n": 7,
+          "mfe": {
+            "n": 7,
+            "mean": 102.7671,
+            "median": 110.9,
+            "stdev": 61.2645,
+            "min": 10.67,
+            "max": 182.03
+          },
+          "mae": {
+            "n": 7,
+            "mean": 111.98,
+            "median": 109.14,
+            "stdev": 91.8439,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 7,
+              "mean": 14.1029,
+              "median": -1.67,
+              "stdev": 37.0905,
+              "min": -16.7,
+              "max": 87.79
+            },
+            "fwd_return_3d1": {
+              "n": 7,
+              "mean": 17.6757,
+              "median": 17.04,
+              "stdev": 21.542,
+              "min": -8.53,
+              "max": 43.4
+            },
+            "fwd_return_5d1": {
+              "n": 7,
+              "mean": 16.2486,
+              "median": 8.81,
+              "stdev": 41.8721,
+              "min": -29.53,
+              "max": 96.63
+            },
+            "fwd_return_10d1": {
+              "n": 7,
+              "mean": -3.1857,
+              "median": -14.39,
+              "stdev": 49.6051,
+              "min": -72.31,
+              "max": 83.05
+            },
+            "fwd_return_20d1": {
+              "n": 7,
+              "mean": -23.91,
+              "median": -9.66,
+              "stdev": 84.2328,
+              "min": -146.05,
+              "max": 107.03
+            },
+            "fwd_return_40d1": {
+              "n": 7,
+              "mean": -10.3171,
+              "median": 3.04,
+              "stdev": 79.6742,
+              "min": -141.84,
+              "max": 113.69
+            },
+            "fwd_return_60d1": {
+              "n": 7,
+              "mean": -15.9129,
+              "median": -3.61,
+              "stdev": 103.5958,
+              "min": -193.13,
+              "max": 126.15
+            }
+          },
+          "descriptive_only_pnl_positive_count": 2,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2024": {
+          "group": 2024,
+          "n": 7,
+          "mfe": {
+            "n": 7,
+            "mean": 204.7186,
+            "median": 210.72,
+            "stdev": 98.8192,
+            "min": 16.15,
+            "max": 321.98
+          },
+          "mae": {
+            "n": 7,
+            "mean": 69.9443,
+            "median": 44.34,
+            "stdev": 79.8903,
+            "min": 0.0,
+            "max": 233.0
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 7,
+              "mean": 7.6,
+              "median": 26.71,
+              "stdev": 33.9467,
+              "min": -33.19,
+              "max": 44.59
+            },
+            "fwd_return_3d1": {
+              "n": 7,
+              "mean": 6.6671,
+              "median": 6.78,
+              "stdev": 64.0,
+              "min": -110.84,
+              "max": 82.02
+            },
+            "fwd_return_5d1": {
+              "n": 7,
+              "mean": 16.1929,
+              "median": 30.91,
+              "stdev": 59.2483,
+              "min": -85.21,
+              "max": 77.75
+            },
+            "fwd_return_10d1": {
+              "n": 7,
+              "mean": -3.0086,
+              "median": -19.6,
+              "stdev": 104.3145,
+              "min": -206.87,
+              "max": 104.32
+            },
+            "fwd_return_20d1": {
+              "n": 7,
+              "mean": 50.3814,
+              "median": 62.49,
+              "stdev": 86.4236,
+              "min": -120.55,
+              "max": 162.78
+            },
+            "fwd_return_40d1": {
+              "n": 7,
+              "mean": 53.8714,
+              "median": 81.23,
+              "stdev": 113.4044,
+              "min": -164.08,
+              "max": 175.46
+            },
+            "fwd_return_60d1": {
+              "n": 7,
+              "mean": 81.4214,
+              "median": 57.64,
+              "stdev": 96.4663,
+              "min": -42.1,
+              "max": 214.88
+            }
+          },
+          "descriptive_only_pnl_positive_count": 3,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2025": {
+          "group": 2025,
+          "n": 7,
+          "mfe": {
+            "n": 7,
+            "mean": 702.6486,
+            "median": 695.01,
+            "stdev": 167.0709,
+            "min": 508.46,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 7,
+            "mean": 43.9586,
+            "median": 35.28,
+            "stdev": 54.869,
+            "min": 0.0,
+            "max": 158.11
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 7,
+              "mean": 18.8343,
+              "median": 31.85,
+              "stdev": 63.8578,
+              "min": -89.39,
+              "max": 109.06
+            },
+            "fwd_return_3d1": {
+              "n": 7,
+              "mean": 47.8729,
+              "median": 41.24,
+              "stdev": 78.7549,
+              "min": -99.58,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 7,
+              "mean": 43.46,
+              "median": 45.19,
+              "stdev": 97.8052,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 7,
+              "mean": 144.2186,
+              "median": 122.54,
+              "stdev": 171.4044,
+              "min": -30.78,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 7,
+              "mean": 206.47,
+              "median": 229.94,
+              "stdev": 171.9435,
+              "min": -87.56,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 7,
+              "mean": 307.1314,
+              "median": 302.83,
+              "stdev": 102.1015,
+              "min": 185.89,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 7,
+              "mean": 590.3543,
+              "median": 554.44,
+              "stdev": 179.6404,
+              "min": 363.43,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 5,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        },
+        "2026": {
+          "group": 2026,
+          "n": 1,
+          "mfe": {
+            "n": 1,
+            "mean": 393.05,
+            "median": 393.05,
+            "min": 393.05,
+            "max": 393.05
+          },
+          "mae": {
+            "n": 1,
+            "mean": 188.83,
+            "median": 188.83,
+            "min": 188.83,
+            "max": 188.83
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 1,
+              "mean": 124.68,
+              "median": 124.68,
+              "min": 124.68,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 1,
+              "mean": 26.28,
+              "median": 26.28,
+              "min": 26.28,
+              "max": 26.28
+            },
+            "fwd_return_5d1": {
+              "n": 1,
+              "mean": 77.64,
+              "median": 77.64,
+              "min": 77.64,
+              "max": 77.64
+            },
+            "fwd_return_10d1": {
+              "n": 1,
+              "mean": 336.21,
+              "median": 336.21,
+              "min": 336.21,
+              "max": 336.21
+            },
+            "fwd_return_20d1": {
+              "n": 1,
+              "mean": 257.93,
+              "median": 257.93,
+              "min": 257.93,
+              "max": 257.93
+            },
+            "fwd_return_40d1": {
+              "n": 1,
+              "mean": 88.59,
+              "median": 88.59,
+              "min": 88.59,
+              "max": 88.59
+            },
+            "fwd_return_60d1": {
+              "n": 0
+            }
+          },
+          "descriptive_only_pnl_positive_count": 0,
+          "flag": "POST_HOC_OBSERVATION - n troppo piccolo per una conclusione, riportato solo a scopo descrittivo/esplorativo"
+        }
+      },
+      "3_trigger_geometry_breakout_magnitude_price_units_tercile": {
+        "tercile_cutpoints_price_units": [
+          18.389999999999873,
+          30.110000000000127
+        ],
+        "HIGH": {
+          "group": "HIGH",
+          "n": 15,
+          "mfe": {
+            "n": 15,
+            "mean": 334.4353,
+            "median": 193.31,
+            "stdev": 321.3447,
+            "min": 0.0,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 15,
+            "mean": 78.972,
+            "median": 55.51,
+            "stdev": 80.0985,
+            "min": 0.0,
+            "max": 253.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 15,
+              "mean": 16.7667,
+              "median": 12.53,
+              "stdev": 61.7902,
+              "min": -89.39,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 15,
+              "mean": 27.3953,
+              "median": 30.07,
+              "stdev": 64.6882,
+              "min": -99.58,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 15,
+              "mean": 35.9373,
+              "median": 38.77,
+              "stdev": 78.6536,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 15,
+              "mean": 97.104,
+              "median": 58.31,
+              "stdev": 148.4076,
+              "min": -60.96,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 15,
+              "mean": 94.5887,
+              "median": 58.82,
+              "stdev": 160.7663,
+              "min": -136.71,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 15,
+              "mean": 102.5827,
+              "median": 67.87,
+              "stdev": 181.2251,
+              "min": -233.07,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 14,
+              "mean": 212.7886,
+              "median": 86.965,
+              "stdev": 345.8554,
+              "min": -200.9,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 6
+        },
+        "LOW": {
+          "group": "LOW",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 167.6719,
+            "median": 115.69,
+            "stdev": 176.5267,
+            "min": 8.03,
+            "max": 606.0
+          },
+          "mae": {
+            "n": 16,
+            "mean": 99.3919,
+            "median": 107.245,
+            "stdev": 65.1012,
+            "min": 0.0,
+            "max": 210.09
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 2.1006,
+              "median": -2.25,
+              "stdev": 25.0048,
+              "min": -45.04,
+              "max": 50.92
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 11.9231,
+              "median": 8.595,
+              "stdev": 27.5882,
+              "min": -31.56,
+              "max": 65.75
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 13.6644,
+              "median": 7.935,
+              "stdev": 35.1351,
+              "min": -54.2,
+              "max": 62.07
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 11.8588,
+              "median": 6.485,
+              "stdev": 64.2265,
+              "min": -102.98,
+              "max": 136.72
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 14.7988,
+              "median": 17.58,
+              "stdev": 85.1328,
+              "min": -90.35,
+              "max": 229.94
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 45.0794,
+              "median": 6.09,
+              "stdev": 127.673,
+              "min": -111.05,
+              "max": 328.54
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 54.945,
+              "median": -34.015,
+              "stdev": 199.0949,
+              "min": -150.34,
+              "max": 524.06
+            }
+          },
+          "descriptive_only_pnl_positive_count": 3
+        },
+        "MID": {
+          "group": "MID",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 150.2756,
+            "median": 122.615,
+            "stdev": 126.2663,
+            "min": 16.15,
+            "max": 508.46
+          },
+          "mae": {
+            "n": 16,
+            "mean": 90.2775,
+            "median": 67.72,
+            "stdev": 78.6629,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 3.2406,
+              "median": -1.13,
+              "stdev": 28.8121,
+              "min": -33.94,
+              "max": 55.73
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": -0.5544,
+              "median": 2.58,
+              "stdev": 43.3704,
+              "min": -110.84,
+              "max": 82.02
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": -3.6431,
+              "median": -1.59,
+              "stdev": 41.8249,
+              "min": -85.21,
+              "max": 76.74
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": -9.8,
+              "median": -12.195,
+              "stdev": 73.3513,
+              "min": -206.87,
+              "max": 122.54
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 10.9225,
+              "median": 11.445,
+              "stdev": 92.9048,
+              "min": -146.05,
+              "max": 237.82
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 39.1912,
+              "median": 53.345,
+              "stdev": 98.989,
+              "min": -164.08,
+              "max": 185.89
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 20.7044,
+              "median": 1.345,
+              "stdev": 121.8961,
+              "min": -193.13,
+              "max": 363.43
+            }
+          },
+          "descriptive_only_pnl_positive_count": 5
+        }
+      },
+      "4_breakout_magnitude_atr_units_tercile": {
+        "tercile_cutpoints_atr_units": [
+          0.6980538398787947,
+          1.257848158227437
+        ],
+        "HIGH": {
+          "group": "HIGH",
+          "n": 15,
+          "mfe": {
+            "n": 15,
+            "mean": 220.39,
+            "median": 149.59,
+            "stdev": 214.8991,
+            "min": 0.0,
+            "max": 732.74
+          },
+          "mae": {
+            "n": 15,
+            "mean": 72.9193,
+            "median": 42.57,
+            "stdev": 86.1923,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 15,
+              "mean": 7.856,
+              "median": 6.79,
+              "stdev": 39.7164,
+              "min": -81.73,
+              "max": 87.79
+            },
+            "fwd_return_3d1": {
+              "n": 15,
+              "mean": 23.2253,
+              "median": 10.91,
+              "stdev": 47.6447,
+              "min": -75.99,
+              "max": 129.42
+            },
+            "fwd_return_5d1": {
+              "n": 15,
+              "mean": 25.8987,
+              "median": 28.05,
+              "stdev": 55.4781,
+              "min": -84.58,
+              "max": 121.12
+            },
+            "fwd_return_10d1": {
+              "n": 15,
+              "mean": 58.8993,
+              "median": 54.67,
+              "stdev": 129.439,
+              "min": -72.31,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 15,
+              "mean": 52.4567,
+              "median": 52.08,
+              "stdev": 131.6632,
+              "min": -146.05,
+              "max": 392.84
+            },
+            "fwd_return_40d1": {
+              "n": 15,
+              "mean": 59.1833,
+              "median": 67.87,
+              "stdev": 146.252,
+              "min": -233.07,
+              "max": 330.34
+            },
+            "fwd_return_60d1": {
+              "n": 15,
+              "mean": 104.924,
+              "median": 63.38,
+              "stdev": 238.5421,
+              "min": -200.9,
+              "max": 677.4
+            }
+          },
+          "descriptive_only_pnl_positive_count": 6
+        },
+        "LOW": {
+          "group": "LOW",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 181.2369,
+            "median": 110.925,
+            "stdev": 186.569,
+            "min": 8.03,
+            "max": 606.0
+          },
+          "mae": {
+            "n": 16,
+            "mean": 104.6163,
+            "median": 107.245,
+            "stdev": 59.6971,
+            "min": 0.0,
+            "max": 210.09
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 3.6625,
+              "median": -7.16,
+              "stdev": 39.8999,
+              "min": -45.04,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 7.4575,
+              "median": 9.665,
+              "stdev": 29.9745,
+              "min": -53.59,
+              "max": 65.75
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 12.4744,
+              "median": 4.185,
+              "stdev": 40.1425,
+              "min": -73.64,
+              "max": 77.64
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 18.3269,
+              "median": -16.615,
+              "stdev": 104.5044,
+              "min": -102.98,
+              "max": 336.21
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 28.5213,
+              "median": 17.58,
+              "stdev": 99.1173,
+              "min": -82.92,
+              "max": 257.93
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 47.1331,
+              "median": 6.09,
+              "stdev": 128.7481,
+              "min": -111.05,
+              "max": 328.54
+            },
+            "fwd_return_60d1": {
+              "n": 15,
+              "mean": 44.664,
+              "median": -39.24,
+              "stdev": 201.3961,
+              "min": -150.34,
+              "max": 524.06
+            }
+          },
+          "descriptive_only_pnl_positive_count": 2
+        },
+        "MID": {
+          "group": "MID",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 243.6281,
+            "median": 139.48,
+            "stdev": 290.819,
+            "min": 16.15,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 16,
+            "mean": 90.7275,
+            "median": 67.53,
+            "stdev": 74.9139,
+            "min": 0.0,
+            "max": 233.0
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 10.0325,
+              "median": 6.285,
+              "stdev": 45.4782,
+              "min": -89.39,
+              "max": 109.06
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 7.8206,
+              "median": 5.065,
+              "stdev": 61.3925,
+              "min": -110.84,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 6.9581,
+              "median": 8.12,
+              "stdev": 69.9296,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 19.5487,
+              "median": 2.46,
+              "stdev": 94.6038,
+              "min": -206.87,
+              "max": 239.7
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 36.6988,
+              "median": 11.445,
+              "stdev": 135.0917,
+              "min": -120.55,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 77.8244,
+              "median": 41.615,
+              "stdev": 149.0268,
+              "min": -164.08,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 121.6006,
+              "median": 11.54,
+              "stdev": 290.4494,
+              "min": -171.08,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 6
+        }
+      },
+      "5_distance_from_range_pct_tercile": {
+        "tercile_cutpoints_pct": [
+          0.18510317060895712,
+          0.30267268309614526
+        ],
+        "HIGH": {
+          "group": "HIGH",
+          "n": 15,
+          "mfe": {
+            "n": 15,
+            "mean": 125.9093,
+            "median": 131.27,
+            "stdev": 88.7972,
+            "min": 0.0,
+            "max": 321.98
+          },
+          "mae": {
+            "n": 15,
+            "mean": 87.0,
+            "median": 55.51,
+            "stdev": 88.7647,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 15,
+              "mean": 5.884,
+              "median": 6.79,
+              "stdev": 40.7804,
+              "min": -81.73,
+              "max": 87.79
+            },
+            "fwd_return_3d1": {
+              "n": 15,
+              "mean": 12.7967,
+              "median": 3.89,
+              "stdev": 40.6389,
+              "min": -75.99,
+              "max": 88.78
+            },
+            "fwd_return_5d1": {
+              "n": 15,
+              "mean": 17.67,
+              "median": 14.78,
+              "stdev": 49.4107,
+              "min": -84.58,
+              "max": 96.63
+            },
+            "fwd_return_10d1": {
+              "n": 15,
+              "mean": 17.5453,
+              "median": -10.3,
+              "stdev": 62.6468,
+              "min": -72.31,
+              "max": 153.03
+            },
+            "fwd_return_20d1": {
+              "n": 15,
+              "mean": 11.9793,
+              "median": 17.17,
+              "stdev": 84.9358,
+              "min": -146.05,
+              "max": 162.78
+            },
+            "fwd_return_40d1": {
+              "n": 15,
+              "mean": 12.8053,
+              "median": 18.77,
+              "stdev": 103.8418,
+              "min": -233.07,
+              "max": 175.46
+            },
+            "fwd_return_60d1": {
+              "n": 15,
+              "mean": 8.8633,
+              "median": 5.29,
+              "stdev": 126.9663,
+              "min": -200.9,
+              "max": 214.88
+            }
+          },
+          "descriptive_only_pnl_positive_count": 3
+        },
+        "LOW": {
+          "group": "LOW",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 179.0006,
+            "median": 110.925,
+            "stdev": 183.2773,
+            "min": 8.03,
+            "max": 606.0
+          },
+          "mae": {
+            "n": 16,
+            "mean": 104.4869,
+            "median": 98.775,
+            "stdev": 71.8801,
+            "min": 0.0,
+            "max": 233.0
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 7.8819,
+              "median": -2.75,
+              "stdev": 38.6163,
+              "min": -33.19,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 5.6731,
+              "median": 16.805,
+              "stdev": 46.9111,
+              "min": -110.84,
+              "max": 82.02
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 14.0587,
+              "median": 19.895,
+              "stdev": 48.759,
+              "min": -85.21,
+              "max": 77.64
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 23.3788,
+              "median": -11.135,
+              "stdev": 115.0017,
+              "min": -206.87,
+              "max": 336.21
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 29.57,
+              "median": 17.58,
+              "stdev": 101.4676,
+              "min": -120.55,
+              "max": 257.93
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 36.8181,
+              "median": 13.05,
+              "stdev": 133.5303,
+              "min": -164.08,
+              "max": 328.54
+            },
+            "fwd_return_60d1": {
+              "n": 15,
+              "mean": 60.18,
+              "median": -1.51,
+              "stdev": 195.241,
+              "min": -150.34,
+              "max": 524.06
+            }
+          },
+          "descriptive_only_pnl_positive_count": 3
+        },
+        "MID": {
+          "group": "MID",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 334.44,
+            "median": 191.07,
+            "stdev": 314.8323,
+            "min": 19.05,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 16,
+            "mean": 77.6562,
+            "median": 58.27,
+            "stdev": 60.9413,
+            "min": 0.0,
+            "max": 192.44
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 7.6619,
+              "median": 4.41,
+              "stdev": 45.9238,
+              "min": -89.39,
+              "max": 109.06
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 19.3819,
+              "median": 5.065,
+              "stdev": 55.7612,
+              "min": -99.58,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 13.0881,
+              "median": 8.12,
+              "stdev": 70.0049,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 53.2662,
+              "median": 24.215,
+              "stdev": 137.6151,
+              "min": -102.98,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 73.5975,
+              "median": 34.525,
+              "stdev": 159.4579,
+              "min": -90.35,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 131.6188,
+              "median": 102.815,
+              "stdev": 151.982,
+              "min": -61.25,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 197.1113,
+              "median": 38.26,
+              "stdev": 329.1439,
+              "min": -116.41,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 8
+        }
+      },
+      "6_htf_context_causal_proxy_trend_aligned": {
+        "True": {
+          "group": true,
+          "n": 47,
+          "mfe": {
+            "n": 47,
+            "mean": 214.9721,
+            "median": 133.24,
+            "stdev": 231.6803,
+            "min": 0.0,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 47,
+            "mean": 89.7721,
+            "median": 74.61,
+            "stdev": 73.6392,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 47,
+              "mean": 7.1694,
+              "median": 0.07,
+              "stdev": 40.9991,
+              "min": -89.39,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 47,
+              "mean": 12.6134,
+              "median": 6.78,
+              "stdev": 47.6114,
+              "min": -110.84,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 47,
+              "mean": 14.8809,
+              "median": 8.81,
+              "stdev": 55.8591,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 47,
+              "mean": 31.6915,
+              "median": -8.7,
+              "stdev": 109.2414,
+              "min": -206.87,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 47,
+              "mean": 38.944,
+              "median": 17.94,
+              "stdev": 120.5387,
+              "min": -146.05,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 47,
+              "mean": 61.427,
+              "median": 39.86,
+              "stdev": 139.0087,
+              "min": -233.07,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 46,
+              "mean": 91.0746,
+              "median": 11.105,
+              "stdev": 244.0394,
+              "min": -200.9,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 14
+        }
+      },
+      "7_volatility_regime_atr20_tercile": {
+        "tercile_cutpoints_price_units": [
+          22.839,
+          29.428499999999996
+        ],
+        "HIGH": {
+          "group": "HIGH",
+          "n": 15,
+          "mfe": {
+            "n": 15,
+            "mean": 394.1647,
+            "median": 274.89,
+            "stdev": 312.485,
+            "min": 16.15,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 15,
+            "mean": 77.7453,
+            "median": 60.45,
+            "stdev": 68.9658,
+            "min": 0.0,
+            "max": 233.0
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 15,
+              "mean": 11.4813,
+              "median": -2.67,
+              "stdev": 56.1176,
+              "min": -89.39,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 15,
+              "mean": 18.3273,
+              "median": 30.07,
+              "stdev": 70.817,
+              "min": -110.84,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 15,
+              "mean": 21.5607,
+              "median": 28.41,
+              "stdev": 81.12,
+              "min": -136.08,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 15,
+              "mean": 72.094,
+              "median": -8.7,
+              "stdev": 169.4756,
+              "min": -206.87,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 15,
+              "mean": 108.4393,
+              "median": 83.34,
+              "stdev": 157.7918,
+              "min": -120.55,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 15,
+              "mean": 137.894,
+              "median": 88.59,
+              "stdev": 169.8191,
+              "min": -164.08,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 14,
+              "mean": 269.7814,
+              "median": 101.68,
+              "stdev": 325.1685,
+              "min": -83.82,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 6
+        },
+        "LOW": {
+          "group": "LOW",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 124.6706,
+            "median": 116.21,
+            "stdev": 86.2246,
+            "min": 10.67,
+            "max": 321.98
+          },
+          "mae": {
+            "n": 16,
+            "mean": 92.4381,
+            "median": 67.72,
+            "stdev": 82.3804,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 16.5338,
+              "median": 8.4,
+              "stdev": 29.4708,
+              "min": -16.7,
+              "max": 87.79
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 19.79,
+              "median": 2.875,
+              "stdev": 30.2074,
+              "min": -8.53,
+              "max": 88.78
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 16.9262,
+              "median": 11.55,
+              "stdev": 43.5358,
+              "min": -54.2,
+              "max": 96.63
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 14.8244,
+              "median": 1.66,
+              "stdev": 61.4253,
+              "min": -72.31,
+              "max": 153.03
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 4.2131,
+              "median": 14.705,
+              "stdev": 83.8582,
+              "min": -146.05,
+              "max": 162.78
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 30.5381,
+              "median": 55.62,
+              "stdev": 89.845,
+              "min": -141.84,
+              "max": 175.46
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 6.3156,
+              "median": 0.295,
+              "stdev": 109.2799,
+              "min": -193.13,
+              "max": 214.88
+            }
+          },
+          "descriptive_only_pnl_positive_count": 5
+        },
+        "MID": {
+          "group": "MID",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 137.2806,
+            "median": 103.995,
+            "stdev": 137.068,
+            "min": 0.0,
+            "max": 540.33
+          },
+          "mae": {
+            "n": 16,
+            "mean": 98.3812,
+            "median": 88.37,
+            "stdev": 71.9215,
+            "min": 0.0,
+            "max": 253.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": -6.2375,
+              "median": -6.8,
+              "stdev": 32.2989,
+              "min": -81.73,
+              "max": 50.92
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 0.08,
+              "median": 3.48,
+              "stdev": 33.2164,
+              "min": -75.99,
+              "max": 65.75
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 6.5731,
+              "median": 7.49,
+              "stdev": 37.5353,
+              "min": -84.58,
+              "max": 62.07
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 10.6813,
+              "median": 4.74,
+              "stdev": 60.0804,
+              "min": -102.98,
+              "max": 136.72
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 8.5231,
+              "median": -13.445,
+              "stdev": 84.7553,
+              "min": -136.71,
+              "max": 229.94
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 20.6281,
+              "median": 3.695,
+              "stdev": 125.0198,
+              "min": -233.07,
+              "max": 328.54
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 19.465,
+              "median": -22.555,
+              "stdev": 179.2963,
+              "min": -200.9,
+              "max": 524.06
+            }
+          },
+          "descriptive_only_pnl_positive_count": 3
+        }
+      },
+      "8_cooldown_context_days_since_previous_raw_accept_tercile": {
+        "tercile_cutpoints_days": [
+          12,
+          42
+        ],
+        "HIGH": {
+          "group": "HIGH",
+          "n": 15,
+          "mfe": {
+            "n": 15,
+            "mean": 243.606,
+            "median": 157.44,
+            "stdev": 232.2488,
+            "min": 10.67,
+            "max": 904.54
+          },
+          "mae": {
+            "n": 15,
+            "mean": 76.628,
+            "median": 61.8,
+            "stdev": 61.7837,
+            "min": 0.0,
+            "max": 188.83
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 15,
+              "mean": 10.532,
+              "median": 2.56,
+              "stdev": 51.481,
+              "min": -89.39,
+              "max": 124.68
+            },
+            "fwd_return_3d1": {
+              "n": 15,
+              "mean": 3.874,
+              "median": 3.89,
+              "stdev": 39.8584,
+              "min": -99.58,
+              "max": 65.75
+            },
+            "fwd_return_5d1": {
+              "n": 15,
+              "mean": 11.7547,
+              "median": 7.43,
+              "stdev": 56.4241,
+              "min": -136.08,
+              "max": 96.63
+            },
+            "fwd_return_10d1": {
+              "n": 15,
+              "mean": 39.4787,
+              "median": 19.0,
+              "stdev": 101.894,
+              "min": -102.98,
+              "max": 336.21
+            },
+            "fwd_return_20d1": {
+              "n": 15,
+              "mean": 45.5613,
+              "median": 12.24,
+              "stdev": 107.5906,
+              "min": -87.56,
+              "max": 257.93
+            },
+            "fwd_return_40d1": {
+              "n": 15,
+              "mean": 87.5173,
+              "median": 78.27,
+              "stdev": 101.047,
+              "min": -47.78,
+              "max": 328.54
+            },
+            "fwd_return_60d1": {
+              "n": 14,
+              "mean": 141.3193,
+              "median": 74.285,
+              "stdev": 271.8462,
+              "min": -116.41,
+              "max": 899.91
+            }
+          },
+          "descriptive_only_pnl_positive_count": 4
+        },
+        "LOW": {
+          "group": "LOW",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 200.3688,
+            "median": 116.755,
+            "stdev": 245.3613,
+            "min": 8.03,
+            "max": 732.74
+          },
+          "mae": {
+            "n": 16,
+            "mean": 106.2594,
+            "median": 98.14,
+            "stdev": 64.2724,
+            "min": 13.73,
+            "max": 233.0
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": -0.0025,
+              "median": -6.89,
+              "stdev": 23.8293,
+              "min": -33.94,
+              "max": 44.59
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 4.0256,
+              "median": -3.225,
+              "stdev": 51.6855,
+              "min": -110.84,
+              "max": 129.42
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": -0.9525,
+              "median": -0.265,
+              "stdev": 50.7826,
+              "min": -85.21,
+              "max": 121.12
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 14.6669,
+              "median": -13.98,
+              "stdev": 137.8829,
+              "min": -206.87,
+              "max": 471.0
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 18.9312,
+              "median": -16.44,
+              "stdev": 128.5642,
+              "min": -120.55,
+              "max": 392.84
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 55.5756,
+              "median": 13.355,
+              "stdev": 138.9513,
+              "min": -164.08,
+              "max": 330.34
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 100.4375,
+              "median": -2.56,
+              "stdev": 245.6966,
+              "min": -171.08,
+              "max": 677.4
+            }
+          },
+          "descriptive_only_pnl_positive_count": 4
+        },
+        "MID": {
+          "group": "MID",
+          "n": 16,
+          "mfe": {
+            "n": 16,
+            "mean": 202.7312,
+            "median": 167.555,
+            "stdev": 229.8974,
+            "min": 0.0,
+            "max": 931.46
+          },
+          "mae": {
+            "n": 16,
+            "mean": 85.6075,
+            "median": 43.455,
+            "stdev": 91.95,
+            "min": 0.0,
+            "max": 284.82
+          },
+          "forward_returns": {
+            "fwd_return_1d1": {
+              "n": 16,
+              "mean": 11.1887,
+              "median": 5.065,
+              "stdev": 45.0555,
+              "min": -81.73,
+              "max": 109.06
+            },
+            "fwd_return_3d1": {
+              "n": 16,
+              "mean": 29.3944,
+              "median": 29.415,
+              "stdev": 48.395,
+              "min": -75.99,
+              "max": 136.62
+            },
+            "fwd_return_5d1": {
+              "n": 16,
+              "mean": 33.645,
+              "median": 28.505,
+              "stdev": 58.0144,
+              "min": -84.58,
+              "max": 176.3
+            },
+            "fwd_return_10d1": {
+              "n": 16,
+              "mean": 41.4156,
+              "median": 34.955,
+              "stdev": 86.1627,
+              "min": -72.31,
+              "max": 239.7
+            },
+            "fwd_return_20d1": {
+              "n": 16,
+              "mean": 52.7531,
+              "median": 48.0,
+              "stdev": 128.6476,
+              "min": -146.05,
+              "max": 408.38
+            },
+            "fwd_return_40d1": {
+              "n": 16,
+              "mean": 42.8188,
+              "median": 43.32,
+              "stdev": 171.2737,
+              "min": -233.07,
+              "max": 502.74
+            },
+            "fwd_return_60d1": {
+              "n": 16,
+              "mean": 37.7475,
+              "median": 10.56,
+              "stdev": 220.8368,
+              "min": -200.9,
+              "max": 680.65
+            }
+          },
+          "descriptive_only_pnl_positive_count": 6
+        }
+      },
+      "9_terminal_stage_all_75_structural_only": {
+        "OPENED": {
+          "n": 47,
+          "breakout_magnitude_price_units": {
+            "n": 47,
+            "mean": 27.8381,
+            "median": 26.16,
+            "stdev": 15.8186,
+            "min": 1.47,
+            "max": 71.86
+          }
+        },
+        "BLOCKED": {
+          "n": 11,
+          "breakout_magnitude_price_units": {
+            "n": 11,
+            "mean": 31.6536,
+            "median": 21.75,
+            "stdev": 21.3619,
+            "min": 6.23,
+            "max": 71.47
+          }
+        },
+        "BROKER_REJECT": {
+          "n": 9,
+          "breakout_magnitude_price_units": {
+            "n": 9,
+            "mean": 91.0322,
+            "median": 75.42,
+            "stdev": 56.0154,
+            "min": 23.45,
+            "max": 180.4
+          }
+        },
+        "NEVER_OBSERVED_IN_LIVE_TRACE": {
+          "n": 8,
+          "breakout_magnitude_price_units": {
+            "n": 8,
+            "mean": 9.16,
+            "median": 7.385,
+            "stdev": 8.911,
+            "min": 0.08,
+            "max": 24.25
+          }
+        }
+      }
+    },
+    "post_hoc_observation_flags_present": true
+  }
+}

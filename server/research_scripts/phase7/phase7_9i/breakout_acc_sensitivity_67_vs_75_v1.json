@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-09-26T11:39:29.122797+00:00",
+  "generation_script": "build_sensitivity_67_vs_75.py",
+  "canonical_sha256": "1e2612aad90ee6369bc48ed609d55204c6d88aeab7a83cffc1a7ef3fef82c464",
+  "payload": {
+    "phase": "7.9I",
+    "purpose": "Quantificare quanto gli 8 eventi B-only (Population C) alterebbero le statistiche strutturali SE fossero (erroneamente) inclusi insieme ai 67 live-observed (Population A) - per costruzione NON influenzano nessuna delle conclusioni di Edge Decomposition/Path Anatomy/Natural Horizon/Mechanism Discovery, che usano tutte esclusivamente Population B (47 OPENED, sottoinsieme di Population A).",
+    "population_A_67_live_observed": {
+      "label": "Population A (67, live-observed)",
+      "n": 67,
+      "n_buy": 55,
+      "n_sell": 12,
+      "pct_buy": 82.1,
+      "breakout_magnitude_price_units": {
+        "n": 67,
+        "mean": 36.9533,
+        "median": 28.25,
+        "stdev": 32.9624
+      },
+      "by_year": {
+        "2019": 3,
+        "2020": 9,
+        "2021": 10,
+        "2022": 8,
+        "2023": 8,
+        "2024": 9,
+        "2025": 16,
+        "2026": 4
+      }
+    },
+    "population_all_75": {
+      "label": "Tutti i 75 eventi (67 + 8 B-only)",
+      "n": 75,
+      "n_buy": 60,
+      "n_sell": 15,
+      "pct_buy": 80.0,
+      "breakout_magnitude_price_units": {
+        "n": 75,
+        "mean": 33.9887,
+        "median": 25.99,
+        "stdev": 32.4218
+      },
+      "by_year": {
+        "2019": 7,
+        "2020": 9,
+        "2021": 12,
+        "2022": 9,
+        "2023": 9,
+        "2024": 9,
+        "2025": 16,
+        "2026": 4
+      }
+    },
+    "population_C_8_b_only_alone": {
+      "label": "Gli 8 B-only da soli",
+      "n": 8,
+      "n_buy": 5,
+      "n_sell": 3,
+      "pct_buy": 62.5,
+      "breakout_magnitude_price_units": {
+        "n": 8,
+        "mean": 9.16,
+        "median": 7.385,
+        "stdev": 8.911
+      },
+      "by_year": {
+        "2019": 4,
+        "2021": 2,
+        "2022": 1,
+        "2023": 1
+      }
+    },
+    "delta_75_minus_67": {
+      "n_buy_delta": 5,
+      "n_sell_delta": 3,
+      "pct_buy_delta_points": -2.1,
+      "breakout_magnitude_median_delta": -2.26
+    },
+    "b_only_directions": [
+      "BUY",
+      "SELL",
+      "BUY",
+      "BUY",
+      "BUY",
+      "SELL",
+      "BUY",
+      "SELL"
+    ],
+    "b_only_years": [
+      2019,
+      2019,
+      2019,
+      2019,
+      2021,
+      2021,
+      2022,
+      2023
+    ],
+    "conclusion": "Gli 8 B-only non hanno alcun impatto sulle analisi primarie (Edge Decomposition/Path Anatomy/Natural Horizon/Mechanism Discovery), che usano esclusivamente i 47 eventi OPENED con fill reale - un sottoinsieme di Population A, disgiunto da Population C per costruzione. L'unico impatto misurabile e' strutturale/descrittivo (conteggi per direzione/anno/magnitudine), quantificato sopra: marginale (variazione %BUY: -2.1 punti percentuali)."
+  }
+}

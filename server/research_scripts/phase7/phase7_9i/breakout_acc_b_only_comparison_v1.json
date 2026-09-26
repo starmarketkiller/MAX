@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-09-26T11:41:02.142524+00:00",
+  "generation_script": "build_b_only_comparison.py",
+  "canonical_sha256": "24fb2752e147f1a5c35cc7924f40665fba630d43f514eced32f832aa54ddc8e4",
+  "payload": {
+    "phase": "7.9I",
+    "purpose": "Confronto distribuzionale fra gli 8 eventi B-only (mai osservati nel trace live) e i 67 eventi live-observed, su feature causalmente disponibili (direzione, anno, magnitudine del breakout, volatilita' causale, contesto HTF proxy, distanza dal precedente raw-accept). Non usati per migliorare il risultato primario, che li esclude per costruzione (Population B = solo OPENED, sottoinsieme di Population A).",
+    "comparison": {
+      "n": {
+        "A_67": 67,
+        "C_8": 8
+      },
+      "direction_split": {
+        "A_67": {
+          "BUY": 55,
+          "SELL": 12
+        },
+        "C_8": {
+          "BUY": 5,
+          "SELL": 3
+        }
+      },
+      "year_histogram": {
+        "A_67": {
+          "2019": 3,
+          "2020": 9,
+          "2021": 10,
+          "2022": 8,
+          "2023": 8,
+          "2024": 9,
+          "2025": 16,
+          "2026": 4
+        },
+        "C_8": {
+          "2019": 4,
+          "2021": 2,
+          "2022": 1,
+          "2023": 1
+        }
+      },
+      "breakout_magnitude_price_units": {
+        "A_67": {
+          "n": 67,
+          "mean": 36.9533,
+          "median": 28.25,
+          "stdev": 32.9624
+        },
+        "C_8": {
+          "n": 8,
+          "mean": 9.16,
+          "median": 7.385,
+          "stdev": 8.911
+        }
+      },
+      "breakout_magnitude_atr_units": {
+        "A_67": {
+          "n": 67,
+          "mean": 1.0914,
+          "median": 0.9735,
+          "stdev": 0.6322
+        },
+        "C_8": {
+          "n": 8,
+          "mean": 0.6583,
+          "median": 0.519,
+          "stdev": 0.6763
+        }
+      },
+      "causal_atr20_d1": {
+        "A_67": {
+          "n": 67,
+          "mean": 35.2613,
+          "median": 28.5185,
+          "stdev": 22.0081
+        },
+        "C_8": {
+          "n": 8,
+          "mean": 14.9842,
+          "median": 14.7012,
+          "stdev": 4.2523
+        }
+      },
+      "htf_proxy_trend_aligned": {
+        "A_67": 67,
+        "A_67_total_with_data": 67,
+        "C_8": 5,
+        "C_8_total_with_data": 5
+      },
+      "days_since_previous_raw_accept_same_direction": {
+        "A_67": {
+          "n": 67,
+          "mean": 28.8507,
+          "median": 16,
+          "stdev": 31.1605
+        },
+        "C_8": {
+          "n": 7,
+          "mean": 68.8571,
+          "median": 70,
+          "stdev": 45.2159
+        }
+      }
+    },
+    "year_concentration_note": "Gli 8 B-only cadono negli anni [2019, 2019, 2019, 2019, 2021, 2021, 2022, 2023] - concentrati in un sottoinsieme ristretto (4 anni distinti su 8 eventi).",
+    "magnitude_note": "Magnitudine di breakout mediana: A_67=28.25, C_8=7.385 - sostanzialmente diversa fra le due popolazioni.",
+    "new_observation_post_hoc": "OSSERVAZIONE NUOVA (Phase 7.9I, non presente in 7.9H): gli 8 B-only hanno una magnitudine di breakout mediana MOLTO piu' piccola (7.385) dei 67 live-observed (28.25) - marginali/borderline rispetto alla soglia di Acceptance. Questo e' COERENTE con il meccanismo candidato INTRADAY_BAR_TIMING_DIFFERENCE gia' ipotizzato in Phase 7.9H (un breakout marginale sulla barra D1 FINALE potrebbe non aver soddisfatto la soglia durante la valutazione intraday reale, per uno scarto di prezzo piccolo) - NON conferma il meccanismo (nessun nuovo esperimento eseguito qui), ma e' un elemento di evidenza indiretta a favore, da riportare come POST_HOC_OBSERVATION -> NEW HYPOTHESIS, non come conclusione.",
+    "reference_causal_classification": "server/research_scripts/phase7/phase7_9h/b_only_residual_classification_v1.json (Phase 7.9H) - meccanismo CROSS_TIMEFRAME_STATE_CONTAMINATION escluso strutturalmente per tutti e 8; 2 meccanismi candidati non confermati (timing intrabarra, gap di attivazione)."
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-09-26T11:42:38.936136+00:00",
+  "generation_script": "build_executive_summary_and_decision_card.py",
+  "canonical_sha256": "5367485105527f91a1b51cd208667a7779b251759478564b2921b878eef02ef1",
+  "payload": {
+    "phase": "7.9I",
+    "dataset_frozen_input": "breakout_acc_intended_d1_v1_dataset.json (Phase 7.9H, invariato)",
+    "no_optimization_no_rescue_no_promotion": true,
+    "executive_summary_max_10_lines": [
+      "BREAKOUT_ACC (D1, GOLD 2019-2026, N=47 OPENED) mostra un pattern favorevole convergente ma FORTEMENTE direzione-dipendente, non un breakout simmetrico.",
+      "BUY: 24/36 continuation a 60gg D1 (66.7%); SELL: 1/11 (9.1%).",
+      "100% degli eventi OPENED sono trend-aligned rispetto a un proxy EMA100 causale (nuovo, non un gate reale del codice) - nessun evento contro-trend nel campione.",
+      "Natural Horizon: il ritorno medio cresce quasi monotonicamente su 60 barre D1, senza plateau ne' decadimento visibile - nessun orizzonte 'naturale' netto.",
+      "CONTINUATION_SYMMETRIC_BREAKOUT e' contraddetta dalla scomposizione BUY/SELL; TREND_PERSISTENCE_DIRECTION_DEPENDENT e' la spiegazione piu' supportata.",
+      "Gli 8 eventi B-only non alterano queste conclusioni (esclusi per costruzione da Population B) - hanno pero' magnitudine di breakout molto piu' piccola dei 67 live-observed (osservazione nuova, non conclusiva).",
+      "BLOCKED (cooldown, N=11 controfattuale) mostra un esito mediano MIGLIORE di OPENED - possibile (non confermato) filtraggio di eventi anche buoni.",
+      "Confidence complessiva BASSA-MODERATA: N piccolo, un solo regime di mercato (bull GOLD) rappresentato, SELL n=11.",
+      "Nessuna optimization eseguita; nessuna soglia scelta guardando i risultati.",
+      "Decisione: MECHANISM_PARTIALLY_SUPPORTED (vedi Decision Card)."
+    ],
+    "decision_card": {
+      "esiste_evidenza_di_comportamento_non_casuale": {
+        "answer": "SI",
+        "detail": "Pattern convergente su 3 analisi indipendenti (continuation rate per direzione, MFE/MAE per direzione, HTF proxy causale 100% trend-aligned) - difficile da attribuire solo a rumore dato l'accordo fra piu' metodi indipendenti."
+      },
+      "il_meccanismo_e_comprensibile": {
+        "answer": "PARZIALMENTE",
+        "detail": "La spiegazione piu' parsimoniosa (allineamento con un trend gia' in corso) e' comprensibile, ma NON isolabile con certezza da un possibile confondimento con l'unico regime di mercato osservato (bull secolare GOLD)."
+      },
+      "e_stabile_nel_tempo": {
+        "answer": "NON VERIFICABILE CON QUESTO CAMPIONE",
+        "detail": "Tutto il periodo 2019-2026 e' stato un mercato GOLD prevalentemente rialzista - nessun regime bear/range rappresentato per testare la stabilita' del pattern in condizioni diverse."
+      },
+      "dipende_fortemente_da_pochi_anni_direzioni": {
+        "answer": "SI, FORTEMENTE (direzione)",
+        "detail": "La dipendenza dalla direzione e' schiacciante (BUY 66.7% vs SELL 9.1% continuation). La concentrazione per anno e' moderata (max 19.1% in un singolo anno), non estrema."
+      },
+      "il_natural_horizon_e_identificabile": {
+        "answer": "PARZIALMENTE",
+        "detail": "Il ritorno medio close-to-close esclude lo zero (CI95%) in modo continuativo dalla barra D1 18 alla 60 (43 barre consecutive) - un orizzonte naturale PARZIALMENTE identificabile in questa finestra, con la cautela che N=47 eventi e un CI95% descrittivo (non un test d'ipotesi formale/corretto per confronti multipli)."
+      },
+      "principale_failure_mode": {
+        "answer": "SELL e' sovra-rappresentato fra i FAILURE: 9/11 di tutti i SELL finiscono in FAILURE a 60 barre D1 - il principale failure mode osservato e' 'segnale SELL in un mercato con trend rialzista strutturale', non un pattern di breakout geometricamente distinguibile (magnitudine/ATR non mostrano differenze nette fra FAILURE e CONTINUATION)."
+      },
+      "confidence": {
+        "answer": "BASSA-MODERATA - pattern direzionale ampio e convergente su piu' analisi, ma N complessivo piccolo, un solo regime di mercato rappresentato, nessuna correzione per test multipli nel Natural Horizon."
+      },
+      "final_decision": "MECHANISM_PARTIALLY_SUPPORTED"
+    },
+    "final_decision": "MECHANISM_PARTIALLY_SUPPORTED",
+    "final_decision_allowed_values": [
+      "MECHANISM_SUPPORTED",
+      "MECHANISM_PARTIALLY_SUPPORTED",
+      "MECHANISM_NOT_SUPPORTED",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "next_hypothesis_not_implemented": {
+      "hypothesis": "TREND_ALIGNMENT_CONDITIONAL_EDGE",
+      "statement": "Il comportamento favorevole di BREAKOUT_ACC e' condizionato dall'allineamento con il trend di lungo periodo (proxy EMA100 causale), non dalla geometria del breakout in se'. Se falsa, segnali BUY in un regime NON rialzista (o segnali SELL in un regime NON ribassista) dovrebbero mostrare continuation/MFE/MAE paragonabili ai segnali attualmente trend-allineati; se vera, dovrebbero mostrare un comportamento sfavorevole simile a quello osservato qui per i SELL.",
+      "falsification_test_not_implemented": "Richiederebbe un campione con eventi BREAKOUT_ACC generati durante un regime di mercato diverso (bear o range prolungato) su GOLD o un altro strumento - NON implementato, NON eseguito, proposto solo come prossima domanda di ricerca.",
+      "explicitly_not_implemented": true
+    }
+  }
+}
