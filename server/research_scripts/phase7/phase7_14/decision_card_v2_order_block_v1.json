@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T22:25:49.946739+00:00",
+  "generated_at": "2026-09-26T22:56:24.284505+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_14\\build_decision_card_v2.py",
-  "canonical_sha256": "7463b71e3efdda9a0ddf0fa3facc2da6e5b3c2610c9f98ac264bea4ebc794002",
+  "canonical_sha256": "98968c5fcd77fb9df4eec66b12c330772edfc11d8441701b2b363ddb09e25b7e",
   "payload": {
     "candidate": "ORDER_BLOCK",
     "baseline_commit": "7b823b9",
@@ -38,7 +38,9 @@
       "B_post_fix_generated_d1": 8,
       "C_python_reconstruction_generated_d1": 7,
       "goal_was_not_b_equals_c_but_to_explain_residual": true,
-      "residual_explained": true
+      "residual_explained": false,
+      "residual_classification": "CANDIDATE_CAUSE_NOT_ISOLATED",
+      "correction_note_phase_7_15": "Corretto in Phase 7.15 (revisione tracciata): residual_explained era True qui su una base generica ('fonti diverse'), non su una ricostruzione causale - vedi phase7_15/ea_python_comparison_classification_v1.json. Non riguarda la validazione del fix (livello A/B, stessi tick reali), solo il confronto strutturale B/C fra fonti diverse."
     },
     "no_optimization_no_sltp_tuning_no_parameter_sweep_no_profitability_no_promotion": true,
     "next_step_not_decided_here": "Nessuna promozione live, nessuna ottimizzazione. Il fix resta un cambiamento di IMPLEMENTATION INTEGRITY - una valutazione di redditivita' post-fix e' un lavoro separato, non svolto e non presunto in questa fase."

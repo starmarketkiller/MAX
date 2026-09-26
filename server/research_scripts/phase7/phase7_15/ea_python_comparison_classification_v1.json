@@ -1,0 +1,294 @@
+{
+  "generated_at": "2026-09-26T22:55:17.694229+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_15\\build_ea_python_comparison_classification.py",
+  "canonical_sha256": "8500ccc000ead2577fced6824181b47cd134520b545215c21b080a2b7c13a502",
+  "payload": {
+    "three_levels_kept_distinct": {
+      "1_pre_post_fix_same_data": {
+        "source": "phase7_14/parity_comparison_v1.json, sezione a_vs_b_same_real_ticks_comparison",
+        "description": "A (pre-fix) vs B (post-fix), STESSI tick MT5 reali - unica variabile e' il codice - confronto diretto evento per evento gia' valido e non rivisto qui (nessuna ambiguita' di fonte dati)",
+        "reclassification_needed": false
+      },
+      "2_structural_different_sources": {
+        "source": "phase7_14/parity_comparison_v1.json, sezione b_vs_c_structural_comparison",
+        "description": "B (EA reale, tick MT5) vs C (ricostruzione Python 7.13, serie M15 ricampionata) - confronto di ORDINE DI GRANDEZZA (8 vs 7), MAI inteso come evento-per-evento nella stessa Phase 7.14",
+        "reclassification_needed": true,
+        "old_field_value": "residual_explained: true (Phase 7.14)",
+        "new_field_value": "CAUSE_UNCLEAR_NOT_EXPLAINED_BY_FEED_DIFFERENCES_ALONE",
+        "reason_for_reclassification": "Verificato in questa fase: SOLO 1 degli 8 eventi B e 7 eventi C condivide la STESSA data+direzione (2025-06-26 BUY) - gli altri 6/7 e 7/8 eventi cadono su date COMPLETAMENTE DIVERSE, non solo 'vicine in conteggio'. L'affermazione originale 'residuo spiegato dalla diversita' delle fonti' era un'asserzione GENERICA, non una ricostruzione causale - corretta qui con un confronto quantificato delle barre D1 sulle date contestate."
+      },
+      "3_event_by_event_parity": {
+        "description": "Applicabile in senso stretto SOLO quando la fonte dati e' la STESSA (vedi livello 1). Fra B e C (fonti diverse) una parity evento-per-evento non e' concettualmente ben posta - qui esplicitamente NON presentata come tale (a differenza di una possibile lettura fuorviante della tabella originale in Phase 7.14).",
+        "exact_date_direction_matches_b_c": [
+          [
+            "2025-06-26",
+            "BUY"
+          ]
+        ],
+        "n_exact_matches": 1,
+        "n_b_only_dates": 7,
+        "n_c_only_dates": 6
+      }
+    },
+    "feed_divergence_quantified_check": {
+      "method": "confronto diretto OHLC D1 fra due fonti GIA' ESISTENTI e indipendenti (nessun nuovo download/run): export MT5 reale (phase7_9h, usato per BREAKOUT_ACC) vs serie ricampionata da M15 (phase7_13) - sulle date in cui B e C divergono",
+      "disputed_dates_count": 13,
+      "samples": [
+        {
+          "date": "2023-10-13",
+          "independent_mt5_export_ohlc": {
+            "open": 1868.95,
+            "high": 1932.53,
+            "low": 1868.86,
+            "close": 1932.12
+          },
+          "m15_resampled_ohlc": {
+            "open": 1868.95,
+            "high": 1932.53,
+            "low": 1868.86,
+            "close": 1932.12
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-02-23",
+          "independent_mt5_export_ohlc": {
+            "open": 2023.73,
+            "high": 2041.22,
+            "low": 2015.95,
+            "close": 2035.3
+          },
+          "m15_resampled_ohlc": {
+            "open": 2023.73,
+            "high": 2041.22,
+            "low": 2015.95,
+            "close": 2035.3
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-02-27",
+          "independent_mt5_export_ohlc": {
+            "open": 2030.89,
+            "high": 2039.33,
+            "low": 2028.67,
+            "close": 2030.12
+          },
+          "m15_resampled_ohlc": {
+            "open": 2030.89,
+            "high": 2039.33,
+            "low": 2028.67,
+            "close": 2030.12
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-05-09",
+          "independent_mt5_export_ohlc": {
+            "open": 2308.51,
+            "high": 2347.12,
+            "low": 2306.53,
+            "close": 2345.85
+          },
+          "m15_resampled_ohlc": {
+            "open": 2308.51,
+            "high": 2347.12,
+            "low": 2306.53,
+            "close": 2345.85
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-05-14",
+          "independent_mt5_export_ohlc": {
+            "open": 2335.49,
+            "high": 2359.57,
+            "low": 2334.7,
+            "close": 2357.8
+          },
+          "m15_resampled_ohlc": {
+            "open": 2335.49,
+            "high": 2359.57,
+            "low": 2334.7,
+            "close": 2357.8
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-06-20",
+          "independent_mt5_export_ohlc": {
+            "open": 2328.3,
+            "high": 2365.33,
+            "low": 2327.63,
+            "close": 2359.87
+          },
+          "m15_resampled_ohlc": {
+            "open": 2328.3,
+            "high": 2365.33,
+            "low": 2327.63,
+            "close": 2359.87
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-06-24",
+          "independent_mt5_export_ohlc": {
+            "open": 2321.27,
+            "high": 2334.61,
+            "low": 2317.52,
+            "close": 2334.08
+          },
+          "m15_resampled_ohlc": {
+            "open": 2321.27,
+            "high": 2334.61,
+            "low": 2317.52,
+            "close": 2334.08
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-07-03",
+          "independent_mt5_export_ohlc": {
+            "open": 2329.27,
+            "high": 2364.8,
+            "low": 2326.74,
+            "close": 2355.82
+          },
+          "m15_resampled_ohlc": {
+            "open": 2329.27,
+            "high": 2364.8,
+            "low": 2326.74,
+            "close": 2355.82
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2024-07-29",
+          "independent_mt5_export_ohlc": {
+            "open": 2387.72,
+            "high": 2402.99,
+            "low": 2369.41,
+            "close": 2383.41
+          },
+          "m15_resampled_ohlc": {
+            "open": 2387.72,
+            "high": 2402.99,
+            "low": 2369.41,
+            "close": 2383.41
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2025-06-10",
+          "independent_mt5_export_ohlc": {
+            "open": 3325.39,
+            "high": 3349.06,
+            "low": 3301.76,
+            "close": 3322.42
+          },
+          "m15_resampled_ohlc": {
+            "open": 3325.39,
+            "high": 3349.06,
+            "low": 3301.76,
+            "close": 3322.42
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2025-06-12",
+          "independent_mt5_export_ohlc": {
+            "open": 3356.87,
+            "high": 3398.76,
+            "low": 3338.55,
+            "close": 3386.74
+          },
+          "m15_resampled_ohlc": {
+            "open": 3356.87,
+            "high": 3398.76,
+            "low": 3338.55,
+            "close": 3386.74
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2025-12-29",
+          "independent_mt5_export_ohlc": {
+            "open": 4539.6,
+            "high": 4549.57,
+            "low": 4302.89,
+            "close": 4331.68
+          },
+          "m15_resampled_ohlc": {
+            "open": 4539.6,
+            "high": 4549.57,
+            "low": 4302.89,
+            "close": 4331.68
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        },
+        {
+          "date": "2025-12-31",
+          "independent_mt5_export_ohlc": {
+            "open": 4340.65,
+            "high": 4373.18,
+            "low": 4274.15,
+            "close": 4321.74
+          },
+          "m15_resampled_ohlc": {
+            "open": 4340.65,
+            "high": 4373.18,
+            "low": 4274.15,
+            "close": 4321.74
+          },
+          "close_diff_abs": 0.0,
+          "high_diff_abs": 0.0,
+          "low_diff_abs": 0.0,
+          "bars_numerically_identical": true
+        }
+      ],
+      "n_dates_with_both_sources_available": 13,
+      "n_dates_numerically_identical": 13,
+      "n_dates_numerically_different": 0
+    },
+    "final_residual_classification": "CAUSE_UNCLEAR_NOT_EXPLAINED_BY_FEED_DIFFERENCES_ALONE",
+    "final_residual_explanation": "Le barre D1 delle due fonti indipendenti sulle date contestate risultano numericamente IDENTICHE (diff=0.0 su tutte e 13 le date verificate) - questo ESCLUDE che 'quel giorno specifico ha un prezzo diverso nelle due fonti' sia la spiegazione, contraddicendo l'asserzione generica di Phase 7.14 ('residuo spiegato dalla diversita' delle fonti'). Spiegazione alternativa PIU' PLAUSIBILE ma NON verificata in questa fase: la state machine di ORDER_BLOCK e' fortemente path-dependent (una zona creata su un giorno persiste fino a 20 barre, one-shot) - una divergenza anche minima in un punto QUALSIASI a monte nella storia pluriennale (es. arrotondamento ATR, un singolo tick di differenza su una barra precedente mai verificata qui) puo' cambiare quali barre successive soddisfano esattamente le soglie, propagandosi in cascata verso date di trigger completamente diverse pur partendo da barre identiche sul giorno contestato stesso. Verificare questa ipotesi richiederebbe una ricostruzione parallela identica-per-barra dell'intero percorso pluriennale su UNA sola fonte comune - fuori scope di questa chiusura (non e' una nuova campagna di backtest, sarebbe un lavoro di riconciliazione dati dedicato).",
+    "counts_not_forced_to_coincide": true,
+    "no_new_backtest_campaign": true
+  }
+}

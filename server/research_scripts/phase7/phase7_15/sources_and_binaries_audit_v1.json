@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-26T22:58:25.683274+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_15\\build_sources_and_binaries_audit.py",
+  "canonical_sha256": "d5b0a62980a726036e1a5f50f5a0c4b2b96b0b897784a3766c5d16524cd6b295",
+  "payload": {
+    "commit_documented": "4e29fd5 (Phase 7.14 + fix verificatore) - HEAD al momento di questa chiusura",
+    "current_source": {
+      "path": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+      "sha256": "7fe67058e28b2eb97b86cf8acad818a2d339c710921a3c94696fafdfeb56a2bc",
+      "contains_only_the_guard": true,
+      "verified_by": "phase7_14/verify_phase_7_14.py (NXS_OB_DIAG_TRACE assente, guardia presente in forma esatta, git diff vs baseline 7b823b9 limitato a questo file)"
+    },
+    "diagnostic_instrumentation_snapshot": {
+      "path": "server/research_scripts/phase7/phase7_14/nxs_ob_diag_instrumentation_snapshot.mqh.txt",
+      "sha256": "ee162457d4dbcc3bdbfba59e85623bfe0835f6962d522ab898aeec8ffae6202c",
+      "committed": true,
+      "purpose": "permette di ricostruire ESATTAMENTE il sorgente usato per le due compilazioni diagnostiche, dato che quel codice non e' mai stato committato nel sorgente canonico"
+    },
+    "compile_logs": {
+      "compile_diag.log": {
+        "source_state": "PRE-FIX (nessuna guardia) + istrumentazione diagnostica temporanea attiva (NXS_OB_DIAG_TRACE) - equivalente al blob git a 7b823b9 con nxs_ob_diag_instrumentation_snapshot.mqh.txt applicato SENZA la guardia",
+        "used_for": "run nxs_orderblock_realtrace_prefix.ini (baseline pre-fix)",
+        "resulting_ex5_hash_preserved": false,
+        "note": "il .ex5 risultante da questa compilazione e' stato SOVRASCRITTO dalla compilazione successiva (compile_postfix.log) - non ne e' stato conservato un hash separato. Il sorgente esatto usato resta pero' interamente ricostruibile: baseline git 7b823b9 + lo snapshot dell'istrumentazione committato in questa cartella, SENZA la riga della guardia.",
+        "log_path": "compile_diag.log",
+        "log_exists": true,
+        "log_mtime_utc": 1790441404.0809708,
+        "compile_result_line": "Result: 0 errors, 2 warnings, 22724 ms elapsed, cpu='X64 Regular'"
+      },
+      "compile_postfix.log": {
+        "source_state": "POST-FIX (guardia presente) + istrumentazione diagnostica temporanea attiva (stesso file istrumentazione, applicato SOPRA il fix)",
+        "used_for": "run nxs_orderblock_realtrace_postfix.ini (parity post-fix)",
+        "resulting_ex5_hash_preserved": false,
+        "note": "stesso caso di compile_diag.log - .ex5 sovrascritto dalla compilazione finale pulita successiva. Sorgente ricostruibile: commit del fix + lo snapshot dell'istrumentazione committato in questa cartella.",
+        "log_path": "compile_postfix.log",
+        "log_exists": true,
+        "log_mtime_utc": 1790450781.8693001,
+        "compile_result_line": "Result: 0 errors, 2 warnings, 25515 ms elapsed, cpu='X64 Regular'"
+      },
+      "compile_final_clean.log": {
+        "source_state": "POST-FIX, NESSUNA istrumentazione diagnostica - stato FINALE committato (identico byte-per-byte a MQL5/Include/NEXUS_v1/NXS_Strategies.mqh in questo repository)",
+        "used_for": "nessun run Tester - solo verifica che il sorgente finale compili senza errori",
+        "resulting_ex5_hash_preserved": true,
+        "log_path": "compile_final_clean.log",
+        "log_exists": true,
+        "log_mtime_utc": 1790461618.5540829,
+        "compile_result_line": "Result: 0 errors, 2 warnings, 23853 ms elapsed, cpu='X64 Regular'"
+      }
+    },
+    "deployed_binaries": {
+      "D0E8209F77C8CF37AD8BF550E51FF075": {
+        "role_observed": "usato ATTIVAMENTE in Phase 7.14 per compilare ed eseguire i run diagnostici pre-fix/post-fix (unico terminale toccato in questa sessione di lavoro)",
+        "known_account_context": "risultava collegato a un conto demo XMGlobal-MT5 (osservato nel titolo finestra durante Phase 7.14) - non verificato in questa fase se un EA sia attualmente ATTACCATO a un chart operativo (fuori scope: questa fase non interroga il terminale via automazione GUI)",
+        "ex5_path": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\D0E8209F77C8CF37AD8BF550E51FF075\\MQL5\\Experts\\NEXUS_EA_v2.ex5",
+        "ex5_sha256": "6f0b5d2c983295190dbb23d6865eac0c9365a72aff6f06b520c870df472486bb",
+        "ex5_mtime_utc": 1790461618.5531168,
+        "ex5_size_bytes": 789612
+      },
+      "7F8EC41F011085EB9C65165AE426B5A6": {
+        "role_observed": "MAI compilato ne' eseguito in nessuna fase di questo lavoro (Phase 7.12/7.13/7.14/7.15) - presente solo come secondo terminale con la stessa junction Include/NEXUS_v1 (per sincronia del sorgente condiviso, non per build/esecuzione)",
+        "known_account_context": "non osservato in questa sessione",
+        "ex5_path": "C:\\Users\\User\\AppData\\Roaming\\MetaQuotes\\Terminal\\7F8EC41F011085EB9C65165AE426B5A6\\MQL5\\Experts\\NEXUS_EA_v2.ex5",
+        "ex5_sha256": "a891ae8763f0470156cc600505b2a2627c27eabdc85d4ac12bddd2575826a6e2",
+        "ex5_mtime_utc": 1790147389.3469906,
+        "ex5_size_bytes": 789108
+      }
+    },
+    "cross_check_deployed_binary_vs_compile_log": {
+      "d0e8209f_ex5_mtime_utc": 1790461618.5531168,
+      "compile_final_clean_log_mtime_utc": 1790461618.5540829,
+      "compile_postfix_log_mtime_utc": 1790450781.8693001,
+      "deployed_binary_matches_final_clean_compile_by_timestamp": true,
+      "deployed_binary_predates_or_postdates_diagnostic_compile": true,
+      "conclusion": "Il .ex5 attualmente presente nel terminale D0E8209F e' stato compilato DOPO l'ultima compilazione diagnostica (compile_postfix.log) e il suo timestamp coincide (entro 2 minuti) con compile_final_clean.log - verificato incrociando timestamp del binario e del log, non assumendo che 'il sorgente attuale e' pulito' implichi 'il binario e' pulito'."
+    },
+    "no_compilation_or_execution_launched_this_phase": true,
+    "no_ea_replaced_or_started_on_operational_terminal": true
+  }
+}

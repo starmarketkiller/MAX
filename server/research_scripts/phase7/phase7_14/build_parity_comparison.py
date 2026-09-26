@@ -155,11 +155,28 @@ def build():
                 "B usa tick reali MT5 (Model=4) sullo storico effettivo del broker per il "
                 "simbolo GOLD; C usa una serie M15 derivata per resampling deterministico "
                 "(fonte diversa, granularita' diversa, convenzione di confine giorno dedotta "
-                "empiricamente - vedi phase7_13/build_multi_tf_dataset.py). Un residuo diverso "
-                "da zero fra B e C e' ATTESO e non invalida la correzione: entrambi confermano "
+                "empiricamente - vedi phase7_13/build_multi_tf_dataset.py). Entrambi confermano "
                 "STRUTTURALMENTE lo stesso meccanismo (guardia TF-scoped elimina la "
-                "contaminazione), non devono coincidere evento-per-evento perche' partono da "
-                "dati di prezzo diversi."
+                "contaminazione) - la vicinanza numerica (8 vs 7) resta un'osservazione valida."
+            ),
+            "residual_causally_isolated": False,
+            "correction_note_phase_7_15": (
+                "REVISIONE TRACCIATA (Phase 7.15, ea_python_comparison_classification_v1.json): "
+                "l'affermazione originale di questo campo ('un residuo diverso da zero e' atteso "
+                "e non invalida la correzione... non devono coincidere evento-per-evento') era "
+                "un'asserzione GENERICA sulla diversita' delle fonti, non una ricostruzione "
+                "causale. Verificato in Phase 7.15: SOLO 1 degli 8 eventi B e 7 eventi C "
+                "condivide la stessa data+direzione (2025-06-26 BUY) - gli altri cadono su date "
+                "COMPLETAMENTE diverse. Un confronto diretto delle barre D1 sulle date contestate "
+                "fra due fonti indipendenti (export MT5 reale phase7_9h vs serie M15 ricampionata "
+                "phase7_13) mostra barre NUMERICAMENTE IDENTICHE (diff=0.0 su tutte le 13 date "
+                "verificate) - ESCLUDE che 'quel giorno ha un prezzo diverso' sia la spiegazione. "
+                "Classificazione corretta: CANDIDATE_CAUSE_NOT_ISOLATED (path-dependence della "
+                "state machine su un punto imprecisato a monte nella storia pluriennale, mai "
+                "isolato) - non piu' 'residuo spiegato dalla diversita' delle fonti'. Il fix "
+                "resta comunque validato dal confronto A/B (livello 1, stessi tick reali, "
+                "MAI rimesso in discussione) - questa correzione riguarda SOLO il confronto "
+                "strutturale di livello 2 (B vs C, fonti diverse)."
             ),
         },
         "not_a_backtest_campaign": True,

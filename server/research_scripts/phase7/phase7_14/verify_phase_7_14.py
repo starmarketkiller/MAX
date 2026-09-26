@@ -26,7 +26,7 @@ import build_historical_evidence_migration as hist_builder  # noqa: E402
 RAW_ARTIFACTS = [
     ("real_trace_comparison_v1.json", "build_real_trace_comparison"),
     ("parity_comparison_v1.json", "build_parity_comparison"),
-    ("decision_card_v2_order_block_v1.json", "build_decision_card_v2"),
+    ("decision_card_v2_order_block_v1.json", "build_order_block_decision_card_v2"),
 ]
 # baseline_pre_fix_v1.json e' volutamente ESCLUSO dalla ri-derivazione per hash:
 # registra un hash di CATTURA (nxs_strategies_mqh_sha256_at_capture) del sorgente

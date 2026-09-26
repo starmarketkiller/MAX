@@ -1,0 +1,64 @@
+{
+  "generated_at": "2026-09-26T23:12:36.461594+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_15\\build_ob_mit_perimeter.py",
+  "canonical_sha256": "88250cf593c412f4b02a2220a0f512d81fc986e23eec11c8a75d42f80f008b8b",
+  "payload": {
+    "question": "Comportamento del collector quando ORDER_BLOCK e OB_MIT sono ENTRAMBE abilitate (richiede InpStrategySelector=0, dato che i due selettori 15/20 sono mutuamente esclusivi con un selettore isolato diverso da 0)",
+    "method": "analisi statica sul sorgente attuale (post fix Phase 7.14) + test deterministico breve in Python (modulo replica gia' validato contro il trace EA reale) - NESSUN nuovo run Tester (non necessario, meccanismo puramente logico)",
+    "static_findings": {
+      "1_call_order": {
+        "order_block_direct_call_line": 535,
+        "ob_mit_wrapper_call_line": 543,
+        "order_block_call_precedes_ob_mit_call": true,
+        "same_function_same_pass": "entrambe le chiamate avvengono dentro NXS_CollectRaw(), nello stesso pass multi-TF, sulla STESSA chiamata a OnTick - non in pass separati"
+      },
+      "2_zone_consumption_shared_state": {
+        "mechanism": "NXS_Strat_OrderBlock() e' chiamata DUE VOLTE nello stesso pass quando entrambe le strategie sono abilitate: la prima volta direttamente (riga sopra, per l'output 'ORDER_BLOCK'), la seconda volta indirettamente dentro NXS_Strat_OB_Mitigation_Structural() (per l'output 'OB_MIT'). g_obBuy/g_obSell sono le STESSE variabili globali in entrambe le chiamate - se la prima chiamata consuma la zona (st.active=false, one-shot su un retest), la seconda chiamata (OB_MIT) vede la zona GIA' consumata nello stesso tick.",
+        "implication": "Quando ORDER_BLOCK e OB_MIT sono ENTRAMBE abilitate, OB_MIT non puo' MAI produrre un segnale 'in piu'' rispetto a quanto gia' consumato dalla chiamata diretta di ORDER_BLOCK nello stesso tick - vede solo lo stato RESIDUO. Il 'raddoppio' del segnale (stesso evento riportato sia come ORDER_BLOCK che come OB_MIT) e' strutturalmente impossibile nello stesso tick per costruzione (one-shot + stato condiviso letto in sequenza).",
+        "classification": "COMPORTAMENTO_DEDOTTO_STATICAMENTE_E_CONFERMATO_DETERMINISTICAMENTE (vedi test Python sotto) - NON osservato in un run MT5 reale con entrambe abilitate simultaneamente in questa fase (nessun nuovo run Tester lanciato, per evitare una campagna non necessaria data la natura puramente logica/deterministica del meccanismo)"
+      },
+      "3_toggle_dependency": {
+        "guard_and_enable_check_location": "DENTRO NXS_Strat_OrderBlock(), non nel wrapper NXS_Strat_OB_Mitigation_Structural()",
+        "finding": "if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s; e' valutato ad OGNI chiamata, incluse quelle originate da OB_MIT - se InpStrat_ORDER_BLOCK=false, NXS_Strat_OB_Mitigation_Structural() riceve SEMPRE un segnale vuoto, INDIPENDENTEMENTE dal valore di InpStrat_OB_Mit.",
+        "implication": "OB_MIT dipende INTERAMENTE dal toggle di ORDER_BLOCK, non ha un proprio percorso di attivazione indipendente - disabilitare ORDER_BLOCK disabilita SILENZIOSAMENTE anche OB_MIT anche se il suo InpStrat_OB_Mit=true."
+      },
+      "4_selector_20_isolated": {
+        "finding": "Gia' stabilito in Phase 7.14 (ob_mit_dependency_map_v1.json): isolare OB_MIT da solo con InpStrategySelector=20 lo rende strutturalmente muto, perche' NXS_SelectorAllows(15) (il gate INTERNO di NXS_Strat_OrderBlock) restituisce false quando InpStrategySelector=20 (ne' 0 ne' 15). Riconfermato qui: nessuna modifica al codice sorgente tra Phase 7.14 e questa fase altera questo fatto."
+      },
+      "5_scalp_tf_override": {
+        "order_block_in_override_list": true,
+        "ob_mit_in_override_list": false,
+        "finding": "'ORDER_BLOCK' E' nell'elenco di override (BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC/BOLLINGER), 'OB_MIT' NON lo e'. Con InpScalpTFOverride diverso da PERIOD_CURRENT (default OFF - non attivo in produzione): NXS_Profile_TF('ORDER_BLOCK') restituirebbe l'override (es. M15), mentre NXS_Profile_TF('OB_MIT') continuerebbe a restituire PERIOD_D1 (fallback esplicito piu' sotto nella stessa funzione). MA la guardia dentro NXS_Strat_OrderBlock() confronta SEMPRE `tf` con NXS_Profile_TF('ORDER_BLOCK') (stringa letterale, non parametrizzata sul nome della strategia chiamante) - quindi se l'override fosse attivo, il meccanismo di trigger REALE sotto OB_MIT girerebbe sul TF di override di ORDER_BLOCK, NON sul PERIOD_D1 che il registro dichiara per OB_MIT (NXS_Profile_TF('OB_MIT'), usato altrove per rischio/hold-time/trailing di OB_MIT). Una DIVERGENZA reale fra 'il TF che il registro dichiara per OB_MIT' e 'il TF su cui il suo meccanismo di trigger gira davvero', ma SOLO se InpScalpTFOverride viene attivato (default OFF, non attivo in produzione oggi).",
+        "affects_current_production_default": false,
+        "scope_note": "Difetto CORRELATO trovato rispondendo al punto 5 della task - NON corretto in questa fase (nessuna modifica al registro/selettori autorizzata), documentato per un eventuale fix futuro."
+      }
+    },
+    "deterministic_test_result": {
+      "order_block_direct_call_result": {
+        "signal": "BUY",
+        "op": "RETEST_SIGNAL_FIRED",
+        "state_active_after": false
+      },
+      "ob_mit_wrapper_call_result": {
+        "signal": null,
+        "op": "NONE",
+        "state_active_after": false
+      },
+      "confirms_ob_mit_sees_consumed_zone": true,
+      "no_double_signal_same_tick": true
+    },
+    "guardia_ereditata_vs_comportamento_integrato_validato": {
+      "guardia_ereditata": "VERO e VERIFICATO STATICAMENTE - OB_MIT non ha una propria guardia/gate, eredita quella di NXS_Strat_OrderBlock() per costruzione (chiamata diretta, stesso codice).",
+      "comportamento_integrato_validato": "NON AFFERMATO - l'interazione dinamica reale (entrambe abilitate, stesso tick, stessi tick di mercato) non e' stata osservata in un run MT5 reale in questa fase. La conclusione sopra (nessun doppio segnale, OB_MIT vede solo lo stato residuo) e' dedotta da (a) lettura diretta del codice REALE non modificato per questa deduzione, e (b) un test deterministico con lo stesso modulo replica gia' validato contro il trace EA reale PER ORDER_BLOCK SOLO (Phase 7.14) - non e' stata ri-validata specificamente per l'interazione ORDER_BLOCK+OB_MIT su un trace reale con entrambe abilitate."
+    },
+    "additional_defect_found_not_fixed": {
+      "order_block_in_override_list": true,
+      "ob_mit_in_override_list": false,
+      "finding": "'ORDER_BLOCK' E' nell'elenco di override (BB_SQUEEZE/ORDER_BLOCK/BREAKOUT_ACC/BOLLINGER), 'OB_MIT' NON lo e'. Con InpScalpTFOverride diverso da PERIOD_CURRENT (default OFF - non attivo in produzione): NXS_Profile_TF('ORDER_BLOCK') restituirebbe l'override (es. M15), mentre NXS_Profile_TF('OB_MIT') continuerebbe a restituire PERIOD_D1 (fallback esplicito piu' sotto nella stessa funzione). MA la guardia dentro NXS_Strat_OrderBlock() confronta SEMPRE `tf` con NXS_Profile_TF('ORDER_BLOCK') (stringa letterale, non parametrizzata sul nome della strategia chiamante) - quindi se l'override fosse attivo, il meccanismo di trigger REALE sotto OB_MIT girerebbe sul TF di override di ORDER_BLOCK, NON sul PERIOD_D1 che il registro dichiara per OB_MIT (NXS_Profile_TF('OB_MIT'), usato altrove per rischio/hold-time/trailing di OB_MIT). Una DIVERGENZA reale fra 'il TF che il registro dichiara per OB_MIT' e 'il TF su cui il suo meccanismo di trigger gira davvero', ma SOLO se InpScalpTFOverride viene attivato (default OFF, non attivo in produzione oggi).",
+      "affects_current_production_default": false,
+      "scope_note": "Difetto CORRELATO trovato rispondendo al punto 5 della task - NON corretto in questa fase (nessuna modifica al registro/selettori autorizzata), documentato per un eventuale fix futuro."
+    },
+    "no_tester_run_launched_this_task": true,
+    "no_optimization_no_backtest_campaign": true
+  }
+}

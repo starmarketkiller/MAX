@@ -87,7 +87,16 @@ def build():
             "B_post_fix_generated_d1": parity["B_post_fix"]["n_signals_canonical_kept"],
             "C_python_reconstruction_generated_d1": parity["C_tf_scoped_reconstruction"]["n_signals_canonical_kept"],
             "goal_was_not_b_equals_c_but_to_explain_residual": True,
-            "residual_explained": True,
+            "residual_explained": False,
+            "residual_classification": "CANDIDATE_CAUSE_NOT_ISOLATED",
+            "correction_note_phase_7_15": "Corretto in Phase 7.15 (revisione tracciata): "
+                                          "residual_explained era True qui su una base "
+                                          "generica ('fonti diverse'), non su una "
+                                          "ricostruzione causale - vedi "
+                                          "phase7_15/ea_python_comparison_classification_v1.json. "
+                                          "Non riguarda la validazione del fix (livello A/B, "
+                                          "stessi tick reali), solo il confronto strutturale "
+                                          "B/C fra fonti diverse.",
         },
         "no_optimization_no_sltp_tuning_no_parameter_sweep_no_profitability_no_promotion": True,
         "next_step_not_decided_here": "Nessuna promozione live, nessuna ottimizzazione. Il fix "
