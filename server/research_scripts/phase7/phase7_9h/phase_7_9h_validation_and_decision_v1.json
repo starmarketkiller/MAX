@@ -1,0 +1,227 @@
+{
+  "generated_at": "2026-09-26T11:12:01.154574+00:00",
+  "generation_script": "build_dataset_validation_and_deliverables.py",
+  "canonical_sha256": "f182f1d4a16ae1185f506d078f13fe9b18e21ee85d68bbcee35a380c129bcaea",
+  "payload": {
+    "phase": "7.9H",
+    "dataset_name": "BREAKOUT_ACC_INTENDED_D1_V1",
+    "no_optimization_no_edge_search": true,
+    "no_profitability_verdict": true,
+    "validation_checks": [
+      {
+        "check": "event_id_uniqueness",
+        "pass": true,
+        "detail": "75 eventi, 75 id unici"
+      },
+      {
+        "check": "event_id_stability_deterministic_rebuild",
+        "pass": true,
+        "detail": "ogni event_id ricalcolato dalla stessa formula (strategia, direzione, data) coincide con quello salvato"
+      },
+      {
+        "check": "funnel_matches_frozen_certificate",
+        "pass": true,
+        "detail": "opened=47 blocked=11 broker_reject=9 (atteso 47/11/9 dal certificato Phase 7.9G/7.9H)"
+      },
+      {
+        "check": "b_only_residual_retained_not_eliminated",
+        "pass": true,
+        "detail": "8 eventi NEVER_OBSERVED_IN_LIVE_TRACE presenti (atteso 8)"
+      },
+      {
+        "check": "no_fabricated_fill_data_for_non_opened_events",
+        "pass": true,
+        "detail": "nessun evento BLOCKED/BROKER_REJECT/NEVER_OBSERVED ha campi di fill inventati"
+      },
+      {
+        "check": "all_opened_events_have_verified_fill",
+        "pass": true,
+        "detail": "47/47 eventi OPENED con fill reale verificato"
+      },
+      {
+        "check": "signal_price_and_fill_price_kept_as_distinct_fields",
+        "pass": true,
+        "detail": "ogni evento OPENED ha signal_price, entry_fill_price e signal_to_fill_slippage_price_units come campi separati (mai fusi in uno solo)"
+      },
+      {
+        "check": "post_entry_path_anatomy_present_for_all_opened",
+        "pass": true,
+        "detail": "47 eventi con path anatomy"
+      },
+      {
+        "check": "path_anatomy_uses_preregistered_horizons_not_tp_sl",
+        "pass": true,
+        "detail": "gli orizzonti di forward return sono esattamente quelli preregistrati, non derivati da TP/SL della strategia"
+      },
+      {
+        "check": "b_only_events_causally_classified_not_asserted_with_false_certainty",
+        "pass": true,
+        "detail": "tutti gli 8 eventi B-only hanno una classificazione causale onesta (non certezza fabbricata)"
+      }
+    ],
+    "all_checks_passed": true,
+    "deliverables": {
+      "1_canonical_event_level_dataset": "breakout_acc_intended_d1_v1_dataset.json (75 eventi)",
+      "2_event_id_uniqueness_and_stability_tests": "vedi validation_checks e test_phase_7_9h.py (TestEventId*)",
+      "3_provenance_completeness_per_event": "ogni evento ha *_source/provenance esplicito; UNKNOWN dove non ricostruibile, mai inventato",
+      "4_signal_vs_fill_price_distinction": "campi signal_price/entry_fill_price/signal_to_fill_slippage_price_units distinti per tutti i 47 eventi OPENED (slippage osservato: 0.0 su tutti - fill Research Mode a mercato, nessun modello di slippage broker applicato in questo run diagnostico)",
+      "5_post_entry_path_anatomy": "MFE/MAE/tempo-a-MFE-MAE/forward returns a [1, 3, 5, 10, 20, 40, 60] barre D1 preregistrate, per tutti i 47 eventi OPENED",
+      "6_b_only_residual_causal_classification": "b_only_residual_classification_v1.json (8 eventi, ritenuti non eliminati, meccanismo CROSS_TF_CONTAMINATION escluso per costruzione, 2 candidati non confermati proposti)",
+      "7_python_third_implementation_parity": {
+        "principle": "Python (server/backtest.py:sig_breakout_acc) e' trattato come terza implementazione indipendente, MAI come ground truth - le tre parity restano separate.",
+        "same_feed_parity_A_vs_B": {
+          "description": "A (EA live, dati broker reale) vs B (script offline MQL5, STESSO feed broker/cache) - stesso feed, quindi le differenze qui sono attribuibili SOLO a logica/timing, mai a differenze di dati.",
+          "matched": 67,
+          "only_a_live_ea_not_explained": 0,
+          "only_b_offline_residual": 8
+        },
+        "cross_feed_parity_A_vs_C_live_vs_python": {
+          "description": "A (EA live, feed broker) vs C (Python, feed Dukascopy) - feed DIVERSI, differenze qui possono includere anche scostamenti OHLC reali fra fonti dati, non solo logica.",
+          "pairing": {
+            "matched": 60,
+            "only_a": 7,
+            "only_b": 23,
+            "only_a_dates": [
+              "2021-05-27 dir=1",
+              "2022-09-27 dir=-1",
+              "2023-01-17 dir=1",
+              "2025-04-23 dir=1",
+              "2025-09-17 dir=1",
+              "2025-10-01 dir=1",
+              "2026-01-30 dir=1"
+            ],
+            "only_b_dates": [
+              "2019-04-17 dir=-1",
+              "2019-05-14 dir=1",
+              "2019-10-01 dir=-1",
+              "2019-11-11 dir=-1",
+              "2019-12-25 dir=1",
+              "2021-06-01 dir=1",
+              "2021-07-15 dir=1",
+              "2021-09-05 dir=1",
+              "2021-09-17 dir=-1",
+              "2021-10-14 dir=1",
+              "2022-01-02 dir=1",
+              "2022-01-20 dir=1",
+              "2022-12-14 dir=1",
+              "2023-01-13 dir=1",
+              "2023-05-04 dir=1",
+              "2023-08-10 dir=-1",
+              "2024-05-19 dir=1",
+              "2024-07-07 dir=1",
+              "2025-01-10 dir=1",
+              "2025-06-15 dir=1",
+              "2025-09-23 dir=1",
+              "2026-03-01 dir=1",
+              "2026-06-25 dir=-1"
+            ]
+          }
+        },
+        "cross_feed_parity_B_vs_C_offline_vs_python": {
+          "description": "B (MQL5 offline, feed broker) vs C (Python, feed Dukascopy) - isola l'effetto del solo feed, a parita' di logica (entrambi D1-only post-fix/gia'-corretti).",
+          "pairing": {
+            "matched": 67,
+            "only_a": 8,
+            "only_b": 16,
+            "only_a_dates": [
+              "2019-02-21 dir=1",
+              "2021-05-27 dir=1",
+              "2022-09-27 dir=-1",
+              "2023-08-21 dir=-1",
+              "2025-04-23 dir=1",
+              "2025-09-17 dir=1",
+              "2025-10-01 dir=1",
+              "2026-01-30 dir=1"
+            ],
+            "only_b_dates": [
+              "2019-10-01 dir=-1",
+              "2019-11-11 dir=-1",
+              "2021-06-01 dir=1",
+              "2021-07-15 dir=1",
+              "2021-10-14 dir=1",
+              "2022-01-02 dir=1",
+              "2022-12-14 dir=1",
+              "2023-05-04 dir=1",
+              "2023-08-10 dir=-1",
+              "2024-05-19 dir=1",
+              "2024-07-07 dir=1",
+              "2025-01-10 dir=1",
+              "2025-06-15 dir=1",
+              "2025-09-23 dir=1",
+              "2026-03-01 dir=1",
+              "2026-06-25 dir=-1"
+            ]
+          }
+        },
+        "note": "Il dataset event-level (fill/path anatomy) e' costruito SOLO dal trace/deal reale MQL5 (stream A) - Python resta un confronto di parity a livello di segnale, non fuso nei campi per-evento del dataset canonico (feed diverso, nessun fill reale disponibile lato Python)."
+      },
+      "8_dataset_validation_checks": [
+        {
+          "check": "event_id_uniqueness",
+          "pass": true,
+          "detail": "75 eventi, 75 id unici"
+        },
+        {
+          "check": "event_id_stability_deterministic_rebuild",
+          "pass": true,
+          "detail": "ogni event_id ricalcolato dalla stessa formula (strategia, direzione, data) coincide con quello salvato"
+        },
+        {
+          "check": "funnel_matches_frozen_certificate",
+          "pass": true,
+          "detail": "opened=47 blocked=11 broker_reject=9 (atteso 47/11/9 dal certificato Phase 7.9G/7.9H)"
+        },
+        {
+          "check": "b_only_residual_retained_not_eliminated",
+          "pass": true,
+          "detail": "8 eventi NEVER_OBSERVED_IN_LIVE_TRACE presenti (atteso 8)"
+        },
+        {
+          "check": "no_fabricated_fill_data_for_non_opened_events",
+          "pass": true,
+          "detail": "nessun evento BLOCKED/BROKER_REJECT/NEVER_OBSERVED ha campi di fill inventati"
+        },
+        {
+          "check": "all_opened_events_have_verified_fill",
+          "pass": true,
+          "detail": "47/47 eventi OPENED con fill reale verificato"
+        },
+        {
+          "check": "signal_price_and_fill_price_kept_as_distinct_fields",
+          "pass": true,
+          "detail": "ogni evento OPENED ha signal_price, entry_fill_price e signal_to_fill_slippage_price_units come campi separati (mai fusi in uno solo)"
+        },
+        {
+          "check": "post_entry_path_anatomy_present_for_all_opened",
+          "pass": true,
+          "detail": "47 eventi con path anatomy"
+        },
+        {
+          "check": "path_anatomy_uses_preregistered_horizons_not_tp_sl",
+          "pass": true,
+          "detail": "gli orizzonti di forward return sono esattamente quelli preregistrati, non derivati da TP/SL della strategia"
+        },
+        {
+          "check": "b_only_events_causally_classified_not_asserted_with_false_certainty",
+          "pass": true,
+          "detail": "tutti gli 8 eventi B-only hanno una classificazione causale onesta (non certezza fabbricata)"
+        }
+      ],
+      "9_forbidden_optimization_actions_respected": [
+        "Nessun parameter tuning su SL/TP/cooldown/soglie di BREAKOUT_ACC.",
+        "Nessuna selezione di orizzonti di path anatomy DOPO aver visto i risultati (i 7 orizzonti [1,3,5,10,20,40,60] barre D1 sono preregistrati nel builder, non derivati dai risultati).",
+        "Nessun filtro/esclusione di eventi basato sul loro P&L realizzato.",
+        "Nessuna nuova modifica al codice EA in questa fase (verificato: nessun file MQL5/Strategie modificato rispetto a HEAD).",
+        "Nessuna promozione del dataset a verdetto di profittabilita' - la decisione finale e' ristretta a READY/NOT_READY per la ricerca sul meccanismo.",
+        "Nessuna eliminazione degli 8 eventi B-only residui - ritenuti con classificazione causale esplicita."
+      ],
+      "10_final_decision": "CANONICAL_DATASET_READY_FOR_MECHANISM_RESEARCH"
+    },
+    "final_decision": "CANONICAL_DATASET_READY_FOR_MECHANISM_RESEARCH",
+    "final_decision_allowed_values": [
+      "CANONICAL_DATASET_READY_FOR_MECHANISM_RESEARCH",
+      "CANONICAL_DATASET_NOT_READY"
+    ],
+    "next_step_not_executed": "Edge Decomposition -> Path Anatomy aggregata -> Natural Horizon -> Mechanism Discovery - NON iniziato in questa fase, richiede una nuova istruzione dedicata."
+  }
+}
