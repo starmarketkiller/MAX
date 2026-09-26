@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Phase 7.13 punto 6 - confronto BREAKOUT_ACC (precedente
+architetturale, gia' corretto in Phase 7.9F/7.9G - guardia visibile in
+NXS_Strategies.mqh:1548) vs ORDER_BLOCK (sotto diagnosi in questa
+fase). Uso dichiarato: SOLO precedente architetturale - non si copia
+automaticamente il fix `if(tf != canonical_tf) return;` senza le
+verifiche fatte in questa fase.
+"""
+import os
+import sys
+
+PHASE713_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE713_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import wrap_with_provenance, save_json  # noqa: E402
+
+COMPARISON = [
+    {
+        "dimension": "Tipo di stato condiviso",
+        "breakout_acc": "SNXSBreakoutAccState { lastBarTime; lastFireTime[2] } - un TIMER di "
+                        "cooldown per direzione, nessuna memoria di prezzo/livello",
+        "order_block": "SNXSOBState duplicato (g_obBuy, g_obSell) { active; obLo; obHi; "
+                       "lastBarTime; barsWaited } - una ZONA DI PREZZO persistente con fasi "
+                       "(idle/attiva/consumata), non solo un timer",
+        "identico": False,
+    },
+    {
+        "dimension": "Cosa viene corrotto dal passaggio non canonico",
+        "breakout_acc": "SOLO il timer 'quando posso rifirare' (lastFireTime) - il trigger "
+                        "(prezzo vs range) e' sempre ricalcolato fresco, nessuna identita' di "
+                        "livello da corrompere",
+        "order_block": "L'IDENTITA' STESSA della zona (obLo/obHi, quali livelli di prezzo) e la "
+                       "sua fase di vita (creata/invalidata/consumata) - un difetto qualitativamente "
+                       "piu' profondo: non solo 'quando', ma 'quale zona'",
+        "identico": False,
+    },
+    {
+        "dimension": "Sotto-classe di CROSS_TIMEFRAME_STATE_CONTAMINATION (Phase 7.12)",
+        "breakout_acc": "COOLDOWN (gia' validata empiricamente)",
+        "order_block": "STATE_MACHINE_CONTAMINATION (mai testata empiricamente prima di questa "
+                       "fase - motivo esplicito della sua priorita' nella coda Phase 7.12)",
+        "identico": False,
+    },
+    {
+        "dimension": "Punto e forma del fix (gia' applicato per BREAKOUT_ACC)",
+        "breakout_acc": "Una SOLA guardia `if(tf != NXS_Profile_TF('BREAKOUT_ACC')) return s;` "
+                        "subito dopo enable/selector, PRIMA di ogni lettura/scrittura dello stato "
+                        "(NXS_Strategies.mqh:1548)",
+        "order_block": "La FORMA del fix e' strutturalmente trasferibile (stessa idea: una guardia "
+                       "precoce in cima a NXS_Strat_OrderBlock(), prima delle due chiamate a "
+                       "NXS_OB_UpdateSide) - ma NON APPLICATA in questa fase (solo proposta, "
+                       "vedi Decision Card)",
+        "identico": "forma si, applicazione no",
+    },
+    {
+        "dimension": "Propagazione ad altre identita'",
+        "breakout_acc": "Nessuna identita' nota che riusi direttamente il codice di BREAKOUT_ACC",
+        "order_block": "OB_MIT chiama DIRETTAMENTE NXS_Strat_OrderBlock() (NXS_Strategies_SMC.mqh) "
+                       "- qualunque fix o non-fix su ORDER_BLOCK si propaga automaticamente a OB_MIT, "
+                       "senza bisogno di una task separata (Phase 7.12, strategy_priority_queue_v1.json)",
+        "identico": False,
+    },
+    {
+        "dimension": "Validazione storica disponibile",
+        "breakout_acc": "Trace evento-per-evento della EA live reale disponibile "
+                        "(postfix_live_ea_trace_events.csv, Phase 7.9G) - la correzione e' stata "
+                        "incrociata con l'esecuzione reale osservata (95 segnali D1 isolati -> 0 "
+                        "con stato condiviso, storico EA reale 4/7.5 anni)",
+        "order_block": "NESSUN trace evento-per-evento della EA live reale trovato in questa fase per "
+                       "ORDER_BLOCK - solo due CSV di risultati aggregati non completamente "
+                       "documentati (results/phase2_baseline_20260705_v2.0.27.csv, "
+                       "results/phase_partB_silent_diagnostic_20260706.csv), classificati "
+                       "POSSIBLY_CONTAMINATED per configurazione non verificabile "
+                       "(historical_evidence_impact_map_v1.json) - DIPENDENZA/BLOCKER esplicito per "
+                       "un'eventuale validazione del fix equivalente a quella fatta per BREAKOUT_ACC",
+        "identico": False,
+    },
+    {
+        "dimension": "Adjudication documentale dell'intento single-TF",
+        "breakout_acc": "Adjudicato con 6 fonti indipendenti (Phase 7.9F) per risolvere "
+                        "un'ambiguita' genuina nel design",
+        "order_block": "Nessuna adjudication documentale dedicata svolta in questa fase - "
+                       "l'inferenza 'D1 e' il TF canonico' poggia sulla stessa dichiarazione di "
+                       "profilo (NXS_Profile_TF('ORDER_BLOCK')=PERIOD_D1) gia' usata ovunque nel "
+                       "codice per rischio/hold-time/trailing - una zona di prezzo disegnata da "
+                       "barre D1 non ha un significato ambiguo se valutata su barre H1/H4 (a "
+                       "differenza di un pattern 'flag' generico) - MA questo e' un giudizio di "
+                       "questa fase, non un'adjudication a fonti multiple come per BREAKOUT_ACC",
+        "identico": False,
+    },
+    {
+        "dimension": "Dipendenze esterne aggiuntive nel trigger",
+        "breakout_acc": "Nessuna - il trigger (acceptUp/acceptDn) dipende solo da prezzo/range sul "
+                        "TF del passaggio",
+        "order_block": "g_atr (ricalcolato per TF attivo) e g_structH1.trend (struttura H1 esterna, "
+                       "gate POST-trigger) - un'eventuale discrepanza osservata potrebbe originare "
+                       "da questi sottosistemi esterni, non solo dal meccanismo di zona - dichiarato "
+                       "gia' in diagnostic_protocol_order_block_v1.json (Phase 7.12) e qui confermato "
+                       "come NON replicato nella quantificazione ab_simulation_v1.json (raw trigger "
+                       "pre-gate)",
+        "identico": False,
+    },
+]
+
+NOT_TRANSFERABLE_ASSUMPTIONS = [
+    "Che il fix a una riga sia SUFFICIENTE: per BREAKOUT_ACC bastava proteggere UN timer; per "
+    "ORDER_BLOCK la stessa guardia protegge una zona di prezzo con fasi - la guardia e' comunque "
+    "la forma corretta (interrompe la mutazione, non la logica), ma la sua adeguatezza va "
+    "confermata con la stessa disciplina before/after usata qui, non assunta per analogia.",
+    "Che l'impatto misurato sara' della stessa entita': BREAKOUT_ACC mostrava un impatto totale "
+    "(95->0) sulla METRICA DI CONTEGGIO segnali isolati; ORDER_BLOCK mostra in questa fase un "
+    "impatto altrettanto totale (0 sovrapposizione fra Stream A e B, vedi ab_simulation_v1.json) "
+    "ma su un periodo/dataset DIVERSO (M15-derivato 2023-2026, non lo storico D1 2019-2026) - le "
+    "due cifre non sono direttamente comparabili come 'stesso ordine di gravita'.",
+    "Che la validazione post-fix possa riusare lo stesso trace: BREAKOUT_ACC aveva un trace EA "
+    "live reale gia' pronto; per ORDER_BLOCK questo trace non esiste ancora in questo repository - "
+    "va costruito PRIMA di poter fare un confronto pre/post fix equivalente.",
+    "Che l'assenza di adjudication documentale dedicata sia un problema: per ORDER_BLOCK "
+    "l'evidenza di design (profilo D1 dichiarato, zona di prezzo intrinsecamente TF-specifica) e' "
+    "piu' diretta che per BREAKOUT_ACC - MA questo resta un giudizio di questa fase, non "
+    "verificato con fonti multiple indipendenti come per BREAKOUT_ACC.",
+]
+
+
+def build():
+    return {
+        "purpose_declared": "BREAKOUT_ACC usato SOLO come precedente architetturale - nessuna copia "
+                            "automatica del fix, nessuna assunzione di impatto identico",
+        "comparison_table": COMPARISON,
+        "not_transferable_assumptions": NOT_TRANSFERABLE_ASSUMPTIONS,
+        "identical_dimensions_count": sum(1 for c in COMPARISON if c["identico"] is True),
+        "different_dimensions_count": sum(1 for c in COMPARISON if c["identico"] is False),
+    }
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, script=os.path.abspath(__file__))
+    out_path = os.path.join(PHASE713_DIR, "breakout_acc_comparison_v1.json")
+    save_json(out_path, doc)
+    print(f"Scritto {out_path} (sha256={doc['canonical_sha256'][:16]}...)")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,586 @@
+{
+  "generated_at": "2026-09-26T16:16:15.539918+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_13\\build_synthetic_causal_proof.py",
+  "canonical_sha256": "481a16a409158c660dbe5d5a1baa890142fc68e80ab9feb1569f94d9190738ec",
+  "payload": {
+    "scenario": "SYNTHETIC_MINIMAL_BUY_ZONE_D1_VS_H4_CONTAMINATION",
+    "initial_state": {
+      "active": true,
+      "ob_lo": 100.0,
+      "ob_hi": 105.0,
+      "bars_waited": 0,
+      "direction": "BUY"
+    },
+    "atr_used": 1.0,
+    "d1_bars": [
+      {
+        "open": 110.0,
+        "high": 112.0,
+        "low": 108.0,
+        "close": 111.0,
+        "open_time": "D1_1_OPEN",
+        "close_time": "D1_1_CLOSE"
+      },
+      {
+        "open": 106.0,
+        "high": 112.0,
+        "low": 101.0,
+        "close": 109.0,
+        "open_time": "D1_2_OPEN",
+        "close_time": "D1_2_CLOSE"
+      }
+    ],
+    "h4_bars": [
+      {
+        "open": 109.0,
+        "high": 110.0,
+        "low": 107.0,
+        "close": 108.0,
+        "open_time": "H4_1_OPEN",
+        "close_time": "H4_1_CLOSE"
+      },
+      {
+        "open": 109.0,
+        "high": 110.0,
+        "low": 106.0,
+        "close": 108.0,
+        "open_time": "H4_2_OPEN",
+        "close_time": "H4_2_CLOSE"
+      },
+      {
+        "open": 108.0,
+        "high": 109.0,
+        "low": 106.0,
+        "close": 107.0,
+        "open_time": "H4_3_OPEN",
+        "close_time": "H4_3_CLOSE"
+      },
+      {
+        "open": 107.0,
+        "high": 108.0,
+        "low": 106.0,
+        "close": 106.5,
+        "open_time": "H4_4_OPEN",
+        "close_time": "H4_4_CLOSE"
+      },
+      {
+        "open": 103.0,
+        "high": 104.5,
+        "low": 102.0,
+        "close": 104.0,
+        "open_time": "H4_5_OPEN",
+        "close_time": "H4_5_CLOSE"
+      },
+      {
+        "open": 106.0,
+        "high": 107.0,
+        "low": 105.5,
+        "close": 106.5,
+        "open_time": "H4_6_OPEN",
+        "close_time": "H4_6_CLOSE"
+      }
+    ],
+    "stream_a_as_implemented": [
+      {
+        "pass_tf": "D1",
+        "bar": "D1_1",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "INIT_SENTINEL_BEFORE_ANY_PASS",
+            "bars_waited": 0
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_1",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_2_OPEN",
+            "bars_waited": 2
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_2",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_2_OPEN",
+            "bars_waited": 2
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_3_OPEN",
+            "bars_waited": 3
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_3",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_3_OPEN",
+            "bars_waited": 3
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_4_OPEN",
+            "bars_waited": 4
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_4",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_4_OPEN",
+            "bars_waited": 4
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_5_OPEN",
+            "bars_waited": 5
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_5",
+        "signal": "BUY",
+        "reason": "OB_retest_bull",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_5_OPEN",
+            "bars_waited": 5
+          },
+          "new_bar": true,
+          "op": "RETEST_SIGNAL_FIRED",
+          "signal_dir": "BUY",
+          "signal_reason": "OB_retest_bull",
+          "post": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_6_OPEN",
+            "bars_waited": 6
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_6",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_6_OPEN",
+            "bars_waited": 6
+          },
+          "new_bar": true,
+          "op": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_6_CLOSE",
+            "bars_waited": 6
+          }
+        }
+      },
+      {
+        "pass_tf": "D1",
+        "bar": "D1_2",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "H4_6_CLOSE",
+            "bars_waited": 6
+          },
+          "new_bar": true,
+          "op": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_CLOSE",
+            "bars_waited": 6
+          }
+        }
+      }
+    ],
+    "stream_b_tf_scoped_diagnostic": [
+      {
+        "pass_tf": "D1",
+        "bar": "D1_1",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "INIT_SENTINEL_BEFORE_ANY_PASS",
+            "bars_waited": 0
+          },
+          "new_bar": true,
+          "op": "WAITING_NO_TOUCH",
+          "signal_dir": null,
+          "signal_reason": "",
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_1",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_2",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_3",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_4",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_5",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "H4",
+        "bar": "H4_6",
+        "signal": null,
+        "reason": "",
+        "mutation": {
+          "op": "SKIPPED_NON_CANONICAL_TF_GUARD",
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "post": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          }
+        }
+      },
+      {
+        "pass_tf": "D1",
+        "bar": "D1_2",
+        "signal": "BUY",
+        "reason": "OB_retest_bull",
+        "mutation": {
+          "pre": {
+            "active": true,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_OPEN",
+            "bars_waited": 1
+          },
+          "new_bar": true,
+          "op": "RETEST_SIGNAL_FIRED",
+          "signal_dir": "BUY",
+          "signal_reason": "OB_retest_bull",
+          "post": {
+            "active": false,
+            "ob_lo": 100.0,
+            "ob_hi": 105.0,
+            "last_bar_time": "D1_2_CLOSE",
+            "bars_waited": 2
+          }
+        }
+      }
+    ],
+    "final_state_stream_a": {
+      "active": false,
+      "ob_lo": 100.0,
+      "ob_hi": 105.0,
+      "last_bar_time": "D1_2_CLOSE",
+      "bars_waited": 6
+    },
+    "final_state_stream_b": {
+      "active": false,
+      "ob_lo": 100.0,
+      "ob_hi": 105.0,
+      "last_bar_time": "D1_2_CLOSE",
+      "bars_waited": 2
+    },
+    "causal_demonstration": {
+      "1_call_on_non_canonical_tf": "H4_5 (passaggio H4, TF non canonico per ORDER_BLOCK=D1)",
+      "2_state_mutation": "g_obBuy.active True->False al passaggio H4_5 (RETEST_SIGNAL_FIRED, one-shot)",
+      "3_output_discarded": "il segnale BUY prodotto a H4_5 verrebbe scartato dal router (NXS_Profile_TF('ORDER_BLOCK')==D1 != passaggio H4, NEXUS_EA_v2.mq5:710) - mai un segnale 'generated' della strategia",
+      "4_effect_on_future_canonical_event": "D1_2 (evento futuro sul TF canonico) non produce alcun segnale in Stream A (zona gia' consumata), mentre in Stream B (nessuna contaminazione H4) D1_2 produce un segnale BUY genuino e valido"
+    },
+    "defect_exists_vs_material_impact": {
+      "defect_exists": true,
+      "material_impact_on_this_scenario": true,
+      "note": "in questo scenario minimo il difetto non solo esiste strutturalmente ma CAMBIA l'esito (un segnale D1 genuino viene soppresso) - la quantificazione su dati reali (build_ab_simulation.py) stabilisce la frequenza di questo effetto nel periodo studiato, che puo' essere diversa da 'sempre'"
+    },
+    "expected_values_computed_by_hand_not_by_running_code": {
+      "stream_a_signals": [
+        [
+          "D1_1",
+          null
+        ],
+        [
+          "H4_1",
+          null
+        ],
+        [
+          "H4_2",
+          null
+        ],
+        [
+          "H4_3",
+          null
+        ],
+        [
+          "H4_4",
+          null
+        ],
+        [
+          "H4_5",
+          "BUY"
+        ],
+        [
+          "H4_6",
+          null
+        ],
+        [
+          "D1_2",
+          null
+        ]
+      ],
+      "stream_b_signals": [
+        [
+          "D1_1",
+          null
+        ],
+        [
+          "H4_1",
+          null
+        ],
+        [
+          "H4_2",
+          null
+        ],
+        [
+          "H4_3",
+          null
+        ],
+        [
+          "H4_4",
+          null
+        ],
+        [
+          "H4_5",
+          null
+        ],
+        [
+          "H4_6",
+          null
+        ],
+        [
+          "D1_2",
+          "BUY"
+        ]
+      ],
+      "h4_5_op": "RETEST_SIGNAL_FIRED",
+      "d1_2_op_stream_a": "SEARCH_DISPLACEMENT_NO_MATCH",
+      "d1_2_op_stream_b": "RETEST_SIGNAL_FIRED"
+    },
+    "no_ea_modification": true,
+    "no_guard_applied_to_real_source": true
+  }
+}

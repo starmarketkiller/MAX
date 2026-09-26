@@ -1,0 +1,853 @@
+{
+  "generated_at": "2026-09-26T16:19:27.161187+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_13\\build_ab_simulation.py",
+  "canonical_sha256": "b44d001e6c0d17aec21a9e6d725ed2a895e51b21ec701b6d829fe8a0949d3714",
+  "payload": {
+    "passes_modeled": [
+      "D1",
+      "H4",
+      "H1",
+      "M30",
+      "M15"
+    ],
+    "canonical_tf": "D1",
+    "excluded_passes_declared": [
+      "M5"
+    ],
+    "gates_not_modeled_declared": [
+      "g_structH1_trend_filter",
+      "InpUseSMCReactionGate/NXS_SMCReactionOK"
+    ],
+    "period_covered": [
+      "2023-10-02T01:00:00",
+      "2026-08-25T23:30:00"
+    ],
+    "n_events_total_all_passes": 124943,
+    "stream_a_raw_triggers_by_tf": {
+      "H1": {
+        "BUY": 326,
+        "SELL": 259
+      },
+      "M15": {
+        "BUY": 302,
+        "SELL": 327
+      },
+      "M30": {
+        "BUY": 156,
+        "SELL": 120
+      },
+      "H4": {
+        "BUY": 490,
+        "SELL": 414
+      },
+      "D1": {
+        "BUY": 34,
+        "SELL": 25
+      }
+    },
+    "stream_a_raw_triggers_total": 2453,
+    "stream_a_raw_triggers_non_canonical_total": 2394,
+    "stream_a_generated_d1_total": 59,
+    "stream_b_generated_d1_total": 7,
+    "stream_a_generated_d1_by_dir": {
+      "BUY": 34,
+      "SELL": 25
+    },
+    "stream_b_generated_d1_by_dir": {
+      "BUY": 3,
+      "SELL": 4
+    },
+    "n_d1_events_evaluated": 745,
+    "only_in_a_signal_suppressed_in_b_denominator_note": "eventi con segnale D1 in A ma NON in B: la contaminazione ha CREATO un segnale che la logica TF-scoped non avrebbe prodotto",
+    "only_in_a": [
+      {
+        "close_time": "2023-10-26T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-29T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-01T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-13T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-27T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-12-18T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-12-19T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-01-17T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-01-19T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-02-28T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-03-21T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-04-04T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-04-09T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-04-15T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-04-16T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-04-18T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-05-24T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-05-28T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-06-14T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2024-07-19T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-07-31T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "ZONE_INVALIDATED",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-08-13T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-09-09T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-09-25T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-10-23T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2024-11-25T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2024-12-19T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-01-02T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2025-01-29T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-02-14T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-03-11T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-03-20T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-04-02T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-04-16T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-05-09T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-05-22T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-05-30T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-06-09T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-07-10T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-07-16T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-08-28T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-08-29T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-09-02T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-09-22T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-09-23T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-11-11T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-11-14T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-11-18T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-12-04T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-12-24T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2025-12-26T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "ZONE_CREATED",
+        "op_buy_b": "ZONE_CREATED",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2026-01-14T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "WAITING_NO_TOUCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2026-03-19T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2026-03-22T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2026-04-01T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2026-04-15T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2026-04-24T01:00:00",
+        "sig_a": "SELL",
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "RETEST_SIGNAL_FIRED",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2026-06-12T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "WAITING_NO_TOUCH"
+      },
+      {
+        "close_time": "2026-07-30T01:00:00",
+        "sig_a": "BUY",
+        "sig_b": null,
+        "op_buy_a": "RETEST_SIGNAL_FIRED",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": null,
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      }
+    ],
+    "only_in_b_signal_suppressed_in_a_note": "eventi con segnale D1 in B ma NON in A: la contaminazione ha DISTRUTTO/impedito un segnale D1 genuino (il meccanismo dimostrato nella prova sintetica)",
+    "only_in_b": [
+      {
+        "close_time": "2024-02-23T01:00:00",
+        "sig_a": null,
+        "sig_b": "SELL",
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "RETEST_SIGNAL_FIRED"
+      },
+      {
+        "close_time": "2024-02-27T01:00:00",
+        "sig_a": null,
+        "sig_b": "SELL",
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "RETEST_SIGNAL_FIRED"
+      },
+      {
+        "close_time": "2024-05-14T01:00:00",
+        "sig_a": null,
+        "sig_b": "SELL",
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "RETEST_SIGNAL_FIRED"
+      },
+      {
+        "close_time": "2024-06-24T01:00:00",
+        "sig_a": null,
+        "sig_b": "SELL",
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "RETEST_SIGNAL_FIRED"
+      },
+      {
+        "close_time": "2024-07-29T01:00:00",
+        "sig_a": null,
+        "sig_b": "BUY",
+        "op_buy_a": "NONE",
+        "op_buy_b": "RETEST_SIGNAL_FIRED",
+        "op_sell_a": "NONE",
+        "op_sell_b": null
+      },
+      {
+        "close_time": "2025-06-12T01:00:00",
+        "sig_a": null,
+        "sig_b": "BUY",
+        "op_buy_a": "NONE",
+        "op_buy_b": "RETEST_SIGNAL_FIRED",
+        "op_sell_a": "NONE",
+        "op_sell_b": null
+      },
+      {
+        "close_time": "2025-06-26T01:00:00",
+        "sig_a": null,
+        "sig_b": "BUY",
+        "op_buy_a": "NONE",
+        "op_buy_b": "RETEST_SIGNAL_FIRED",
+        "op_sell_a": "NONE",
+        "op_sell_b": null
+      }
+    ],
+    "both_same_direction": 0,
+    "both_different_direction": [],
+    "same_origin_different_lifecycle_count": 674,
+    "same_origin_different_lifecycle_sample": [
+      {
+        "close_time": "2023-10-23T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-24T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-25T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "TOUCHED_NO_REJECTION",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-27T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-30T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-10-31T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-02T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-03T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-06T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-07T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-08T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-09T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-10T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-14T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-15T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-16T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-17T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-20T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-21T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "TOUCHED_NO_REJECTION",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      },
+      {
+        "close_time": "2023-11-22T01:00:00",
+        "sig_a": null,
+        "sig_b": null,
+        "op_buy_a": "NONE",
+        "op_buy_b": "SEARCH_DISPLACEMENT_NO_MATCH",
+        "op_sell_a": "NONE",
+        "op_sell_b": "SEARCH_DISPLACEMENT_NO_MATCH"
+      }
+    ],
+    "defect_exists": true,
+    "defect_materially_changes_behavior": true,
+    "generated_vs_blocked_vs_opened_note": "'generated' qui = raw trigger sul passaggio D1 (pre-gate H1/SMC, pre-esecuzione). BLOCKED e OPENED dipendono da sottosistemi non replicati in questa fase (g_structH1.trend, NXS_SMCReactionOK, esecuzione broker) - NOT_MODELED_THIS_PHASE, dichiarato esplicitamente, nessuna stima di redditivita' o di tasso di esecuzione",
+    "not_a_backtest_campaign": true,
+    "not_used_for_profitability": true,
+    "not_used_for_optimization": true
+  }
+}
