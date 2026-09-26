@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-09-26T12:15:38.586452+00:00",
+  "generation_script": "build_sensitivity_67_vs_75_path_reconstruction.py",
+  "canonical_sha256": "57862e52941a2d75871e7472ce7988717656bf22fd3f341d2746dbe076709330",
+  "payload": {
+    "phase": "7.9J",
+    "purpose": "Estensione del confronto 67 vs 75 (Phase 7.9I, solo strutturale) al PERCORSO post-segnale, dove ricostruibile - stessa metodologia del Gate Diagnostic (proxy c1 per eventi mai eseguiti, MAI un fill/P&L reale).",
+    "no_fill_or_pnl_attributed_to_non_opened_events": true,
+    "reconstructable_for_all_8_b_only": true,
+    "limitation_declared": null,
+    "population_A_67_path_profile": {
+      "label": "Population A (67 live-observed: 47 REAL_FILL + 20 COUNTERFACTUAL_PROXY_C1 per BLOCKED/BROKER_REJECT)",
+      "n_total_with_path": 67,
+      "n_real_fill": 47,
+      "n_counterfactual_proxy": 20,
+      "combined_mfe": {
+        "n": 67,
+        "mean": 267.071,
+        "median": 149.59,
+        "stdev": 302.7983
+      },
+      "combined_mae": {
+        "n": 67,
+        "mean": 142.0891,
+        "median": 88.41,
+        "stdev": 190.0243
+      },
+      "combined_fwd_return_60d1": {
+        "n": 66,
+        "mean": 89.0312,
+        "median": 11.105,
+        "stdev": 272.9981
+      },
+      "real_fill_only_mfe": {
+        "n": 47,
+        "mean": 214.9721,
+        "median": 133.24,
+        "stdev": 231.6803
+      },
+      "real_fill_only_fwd_return_60d1": {
+        "n": 46,
+        "mean": 91.0746,
+        "median": 11.105,
+        "stdev": 244.0394
+      },
+      "counterfactual_only_mfe": {
+        "n": 20,
+        "mean": 389.5035,
+        "median": 264.215,
+        "stdev": 407.4876
+      },
+      "counterfactual_only_fwd_return_60d1": {
+        "n": 20,
+        "mean": 84.3315,
+        "median": 40.055,
+        "stdev": 337.4594
+      }
+    },
+    "population_all_75_path_profile": {
+      "label": "Tutti i 75 (67 + 8 B-only, tutti COUNTERFACTUAL_PROXY_C1 tranne i 47 REAL_FILL)",
+      "n_total_with_path": 75,
+      "n_real_fill": 47,
+      "n_counterfactual_proxy": 28,
+      "combined_mfe": {
+        "n": 75,
+        "mean": 249.3865,
+        "median": 134.89,
+        "stdev": 292.0567
+      },
+      "combined_mae": {
+        "n": 75,
+        "mean": 136.6431,
+        "median": 88.41,
+        "stdev": 180.6786
+      },
+      "combined_fwd_return_60d1": {
+        "n": 74,
+        "mean": 80.7212,
+        "median": 4.775,
+        "stdev": 261.263
+      },
+      "real_fill_only_mfe": {
+        "n": 47,
+        "mean": 214.9721,
+        "median": 133.24,
+        "stdev": 231.6803
+      },
+      "real_fill_only_fwd_return_60d1": {
+        "n": 46,
+        "mean": 91.0746,
+        "median": 11.105,
+        "stdev": 244.0394
+      },
+      "counterfactual_only_mfe": {
+        "n": 28,
+        "mean": 307.1536,
+        "median": 173.81,
+        "stdev": 369.8748
+      },
+      "counterfactual_only_fwd_return_60d1": {
+        "n": 28,
+        "mean": 63.7121,
+        "median": -1.32,
+        "stdev": 291.2198
+      }
+    },
+    "delta_combined_fwd_return_60d1_median": -6.33,
+    "conclusion": "Il confronto di percorso e' ricostruibile per tutti gli 8 B-only (c1 disponibile per costruzione). La differenza fra Population A e tutti i 75 sul forward return mediano a 60 barre e' -6.33 unita' di prezzo - non trascurabile. IMPORTANTE: questo confronto usa percorsi CONTROFATTUALI (proxy) per 28 dei 75 eventi (20 BLOCKED/BROKER_REJECT + 8 B-only) - nessuno di questi e' un trade reale, e questo confronto NON sostituisce ne' altera le analisi primarie di Path Anatomy/Natural Horizon/Mechanism Discovery (Phase 7.9I), che restano basate ESCLUSIVAMENTE sui 47 eventi REAL_FILL (Population B)."
+  }
+}

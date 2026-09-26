@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-09-26T12:14:50.308740+00:00",
+  "generation_script": "build_temporal_causality_audit.py",
+  "canonical_sha256": "8ef1aafbae8872582348ee4ebee8bf8104f7ee21288e00e9c6867f6f44f7a542",
+  "payload": {
+    "phase": "7.9J",
+    "scope": "Audit di causalita' temporale su Phase 7.9I - punto 1 della revisione richiesta. Preserva Phase 7.9H e i raw data - nessuna modifica.",
+    "concrete_example_from_review_request": {
+      "d1_bar_date": "2019.06.05",
+      "entry_fill_time": "2019.06.05 17:30:00",
+      "old_causal_ema_window_le_close_of_last_bar": {
+        "bar_time": "2019-06-05 00:00:00",
+        "close": 1330.09,
+        "known_to_the_market_only_at": "2019.06.06 00:00 (chiusura finale della barra del giorno del segnale) - QUESTO E' NEL FUTURO rispetto al fill delle 17:30 dello stesso giorno."
+      },
+      "new_causal_ema_window_lt_close_of_last_bar": {
+        "bar_time": "2019-06-04 00:00:00",
+        "close": 1325.1,
+        "known_to_the_market_since": "2019.06.05 00:00 (chiusura della barra PRECEDENTE, gia' fissata all'inizio del giorno del segnale, ore PRIMA del fill delle 17:30)."
+      }
+    },
+    "bug_confirmed_and_fixed": {
+      "location": "server/research_scripts/phase7/phase7_9i/nxs_mechanism_context.py :: causal_ema()",
+      "before": "prior = [b for b in d1_bars if b['time'].date() <= as_of_date.date()]",
+      "after": "prior = [b for b in d1_bars if b['time'].date() < as_of_date.date()]",
+      "impact_measured": {
+        "events_with_ema_value_change": 72,
+        "ema100_value_diff_max_price_units": 15.9446,
+        "ema100_value_diff_mean_price_units": 3.5926,
+        "trend_aligned_flag_flips_out_of_75": 0,
+        "opened_trend_aligned_ema100_pre_fix": 47,
+        "opened_trend_aligned_ema100_post_fix": 47,
+        "opened_local_trend_aligned_ema20_new_metric": 47,
+        "conclusion": "Il bug era REALE (il valore EMA100 causale cambia fino a 15.94 unita' di prezzo dopo la correzione) ma NON MATERIALE per la conclusione booleana 'trend-aligned': 0 flip su 75 eventi, il 100% degli eventi OPENED resta trend-aligned sia con la vecchia sia con la nuova finestra causale, e resta trend-aligned ANCHE con un secondo proxy indipendente (EMA20, trend locale, mai usato nella versione originale). Il finding 'BUY/SELL dipendono dall'allineamento di trend' di Phase 7.9I e' quindi CONFERMATO come non dipendente dal bug di causalita' - ma il bug era comunque un difetto metodologico reale, ora corretto."
+      }
+    },
+    "causal_atr_checked_and_confirmed_correct_from_origin": {
+      "location": "nxs_mechanism_context.py :: causal_atr()",
+      "code": "prior = [b for b in d1_bars if b['time'].date() < as_of_date.date()]",
+      "verdict": "Gia' corretto (< stretto) fin dalla prima versione - nessuna modifica necessaria."
+    },
+    "breakout_magnitude_c1_checked_and_confirmed_correct": {
+      "location": "NXS_BreakoutAccSignalDiagnostic.mq5 (fonte di c1/c2 nella CSV isolata usata da tutte le feature di magnitudine)",
+      "verified": "c1 = rates[i].close (chiusura della barra PRECEDENTE quella corrente, 'shift 1' nella nomenclatura live) - gia' nota all'inizio del giorno del segnale (d1_bar_date = rates[i+1].time, la barra 'shift 0' ancora in formazione) - NESSUN leakage, verificato riga per riga sul sorgente MQL5."
+    },
+    "days_since_previous_raw_accept_checked": {
+      "verdict": "Basato solo su confronti fra etichette di data (datetime a mezzanotte), nessun valore di prezzo/chiusura coinvolto - nessun leakage possibile per costruzione."
+    },
+    "bar_offset_in_forward_path_confirmed_not_corrected": {
+      "status": "CONFIRMED_NOT_CORRECTED_UPSTREAM_IN_FROZEN_7_9H",
+      "description": "compute_path_anatomy() (Phase 7.9H, congelato) e full_path_curve() (Phase 7.9I, stessa logica) cercano la prima barra D1 con time >= entry_time. Per un ingresso INTRADAY (es. 17:30, il caso reale per tutti i 47 eventi OPENED, nessuno ha un fill esattamente a mezzanotte), questa ricerca SALTA la barra del giorno di ingresso stesso (il cui orario di apertura, 00:00, precede le 17:30) e trova invece la barra del giorno SUCCESSIVO come window[0]. Il codice poi enumera da window[1:] partendo da 'bar 1' - quindi 'bar 1' e' in realta' la chiusura di DUE giorni di calendario dopo l'ingresso, non uno. L'offset e' costante (+1 barra) e SIMMETRICO fra tutti gli eventi (OPENED reali e controfattuali BLOCKED/BROKER_REJECT/B-only, tutti con la stessa convenzione) - non introduce un bias BUY/SELL o fra popolazioni, ma significa che ogni 'barra N' nei risultati di Path Anatomy/Natural Horizon/Mechanism Discovery/Gate Diagnostic andrebbe letta come 'N+1 giorni di calendario dopo l'ingresso', non N.",
+      "why_not_corrected": "Per gli eventi OPENED, il campo post_entry_path_anatomy (mfe/mae/bars_to_mfe/bars_to_mae/horizons) e' GIA' CALCOLATO E CONGELATO dentro il dataset canonico breakout_acc_intended_d1_v1_dataset.json (Phase 7.9H) - questa fase non lo modifica (istruzione esplicita di preservare Phase 7.9H). Correggere SOLO full_path_curve() (usata da Natural Horizon e dal Gate Diagnostic controfattuale) senza correggere anche il dataset congelato creerebbe una convenzione INCOERENTE fra i due - peggio che lasciarle entrambe con lo stesso offset noto e documentato.",
+      "recommended_action_not_executed_here": "Una futura Phase dedicata dovrebbe ricalcolare post_entry_path_anatomy in Phase 7.9H con la ricerca dell'indice corretta (o esplicitamente ridefinire 'bar 0' = giorno di ingresso, 'bar 1' = primo giorno intero successivo), propagando la stessa convenzione a tutti gli artifact derivati."
+    },
+    "new_feature_added": "causal_ema20_d1_local_trend / local_trend_aligned (trend locale, EMA20, stessa correzione di causalita' applicata fin dall'origine) - vedi punto 3 della revisione (direzione x allineamento locale/regime x esito)."
+  }
+}

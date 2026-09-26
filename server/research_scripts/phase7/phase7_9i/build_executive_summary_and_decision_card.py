@@ -24,6 +24,12 @@ def build():
     fmap = load_json(os.path.join(PHASE79I_DIR, "breakout_acc_failure_map_and_robustness_v1.json"))["payload"]
     path = load_json(os.path.join(PHASE79I_DIR, "breakout_acc_path_anatomy_v1.json"))["payload"]
 
+    PHASE79J_DIR = os.path.abspath(os.path.join(PHASE79I_DIR, "..", "phase7_9j"))
+    horizon_reconciliation = load_json(os.path.join(
+        PHASE79J_DIR, "breakout_acc_natural_horizon_reconciliation_v1.json"))["payload"]
+    alignment_table = load_json(os.path.join(
+        PHASE79J_DIR, "breakout_acc_direction_alignment_outcome_v1.json"))["payload"]
+
     robustness = fmap["robustness_minimum_checks"]
     by_dir = path["aggregate"]["by_direction"]
 
@@ -32,19 +38,19 @@ def build():
             "convergente ma FORTEMENTE direzione-dipendente, non un breakout simmetrico.",
         f"BUY: {by_dir['BUY']['n_continuation']}/{by_dir['BUY']['n']} continuation a 60gg "
             f"D1 (66.7%); SELL: {by_dir['SELL']['n_continuation']}/{by_dir['SELL']['n']} (9.1%).",
-        "100% degli eventi OPENED sono trend-aligned rispetto a un proxy EMA100 causale "
-            "(nuovo, non un gate reale del codice) - nessun evento contro-trend nel campione.",
-        "Natural Horizon: il ritorno medio cresce quasi monotonicamente su 60 barre D1, "
-            "senza plateau ne' decadimento visibile - nessun orizzonte 'naturale' netto.",
+        "100% di TUTTI i 75 eventi (non solo OPENED) sono trend-aligned (EMA100/EMA20, "
+            "corretti per causalita' in Phase 7.9J) - direzione e allineamento sono "
+            "PERFETTAMENTE CONFUSI, non distinguibili con questo campione.",
+        "Natural Horizon (Phase 7.9J): il pattern di crescita resta solo DESCRITTIVO - "
+            "finestre sovrapposte e dipendenza entro-evento invalidano il CI originale.",
         "CONTINUATION_SYMMETRIC_BREAKOUT e' contraddetta dalla scomposizione BUY/SELL; "
-            "TREND_PERSISTENCE_DIRECTION_DEPENDENT e' la spiegazione piu' supportata.",
-        "Gli 8 eventi B-only non alterano queste conclusioni (esclusi per costruzione da "
-            "Population B) - hanno pero' magnitudine di breakout molto piu' piccola dei "
-            "67 live-observed (osservazione nuova, non conclusiva).",
+            "TREND_PERSISTENCE resta un'etichetta descrittiva candidata, non isolata.",
+        "Gli 8 eventi B-only non alterano le conclusioni primarie (Population B esclusa "
+            "per costruzione) - path controfattuale ricostruito, delta non trascurabile.",
         "BLOCKED (cooldown, N=11 controfattuale) mostra un esito mediano MIGLIORE di "
             "OPENED - possibile (non confermato) filtraggio di eventi anche buoni.",
-        "Confidence complessiva BASSA-MODERATA: N piccolo, un solo regime di mercato "
-            "(bull GOLD) rappresentato, SELL n=11.",
+        "Confidence BASSA: N piccolo, un solo regime di mercato, confondimento "
+            "direzione/trend totale, CI del Natural Horizon non validi statisticamente.",
         "Nessuna optimization eseguita; nessuna soglia scelta guardando i risultati.",
         "Decisione: MECHANISM_PARTIALLY_SUPPORTED (vedi Decision Card).",
     ]
@@ -53,32 +59,45 @@ def build():
 
     decision_card = {
         "esiste_evidenza_di_comportamento_non_casuale": {
-            "answer": "SI", "detail": "Pattern convergente su 3 analisi indipendenti "
-                "(continuation rate per direzione, MFE/MAE per direzione, HTF proxy "
-                "causale 100% trend-aligned) - difficile da attribuire solo a rumore dato "
-                "l'accordo fra piu' metodi indipendenti."},
+            "answer": "SI, COME PATTERN DESCRITTIVO", "detail": "Asimmetria BUY/SELL di "
+                "ampiezza sostanziale, osservata su piu' statistiche calcolate sugli "
+                "STESSI eventi (non conferme statisticamente indipendenti - nessun test "
+                "d'ipotesi formale eseguito). L'effect size e' ampio, ma 'non spiegabile "
+                "da rumore' sarebbe un'affermazione piu' forte di quanto i dati "
+                "permettano di sostenere senza un test formale."},
         "il_meccanismo_e_comprensibile": {
             "answer": "PARZIALMENTE", "detail": "La spiegazione piu' parsimoniosa "
-                "(allineamento con un trend gia' in corso) e' comprensibile, ma NON "
-                "isolabile con certezza da un possibile confondimento con l'unico regime "
-                "di mercato osservato (bull secolare GOLD)."},
+                "(allineamento con un trend gia' in corso) e' comprensibile come "
+                "etichetta descrittiva, ma Phase 7.9J ha verificato che direzione e "
+                "allineamento di trend sono PERFETTAMENTE CONFUSI su tutti i 75 eventi "
+                "(0 eccezioni) - non e' possibile distinguere osservazionalmente "
+                "'allineamento di trend' da 'essere BUY in questo periodo'."},
         "e_stabile_nel_tempo": {
             "answer": "NON VERIFICABILE CON QUESTO CAMPIONE", "detail": "Tutto il periodo "
                 "2019-2026 e' stato un mercato GOLD prevalentemente rialzista - nessun "
                 "regime bear/range rappresentato per testare la stabilita' del pattern in "
                 "condizioni diverse."},
         "dipende_fortemente_da_pochi_anni_direzioni": {
-            "answer": "SI, FORTEMENTE (direzione)", "detail": "La dipendenza dalla "
-                f"direzione e' schiacciante (BUY 66.7% vs SELL 9.1% continuation). La "
+            "answer": "SI, FORTEMENTE (direzione, e totalmente dal trend-alignment)", "detail":
+                "La dipendenza dalla direzione e' schiacciante (BUY 66.7% vs SELL 9.1% "
+                f"continuation) ed e' COLLINEARE al 100% con l'allineamento di trend "
+                f"(Phase 7.9J: {alignment_table['n_misaligned_ema100_regime_all75']} eventi "
+                "non-allineati su 75, su entrambi i proxy EMA100/EMA20). La "
                 f"concentrazione per anno e' moderata (max "
                 f"{robustness['concentration_by_year']['max_single_year_share_pct']}% in "
                 "un singolo anno), non estrema."},
         "il_natural_horizon_e_identificabile": {
-            "answer": "PARZIALMENTE", "detail": horizon["finding"]},
+            "answer": "NO - SOLO DESCRITTIVO", "detail": horizon_reconciliation["revised_finding"]},
         "principale_failure_mode": {
             "answer": fmap["deliverable_8_failure_map"]["primary_failure_mode"]},
         "confidence": {
-            "answer": robustness["overall_confidence_for_strong_conclusions"]},
+            "answer": "BASSA (declassata da 'bassa-moderata' in Phase 7.9J): le tre "
+                "statistiche originariamente presentate come convergenti condividono gli "
+                "stessi eventi, il proxy di trend e' totalmente confuso con la direzione, "
+                "e il Natural Horizon non e' statisticamente validato. Il pattern BUY/SELL "
+                "resta il singolo elemento di evidenza piu' solido (effect size ampio, "
+                "verificato su dati causalmente corretti), ma non e' isolabile come "
+                "meccanismo a se stante da questo campione."},
         "final_decision": None,
     }
 
@@ -106,6 +125,18 @@ def build():
     return {
         "phase": "7.9I", "dataset_frozen_input": "breakout_acc_intended_d1_v1_dataset.json "
             "(Phase 7.9H, invariato)",
+        "lineage_note": "Rivisto in Phase 7.9J dopo audit metodologico: (1) bug di "
+            "causalita' temporale in causal_ema() confermato e corretto (impatto "
+            "misurato: nullo sulla conclusione booleana di trend-alignment); (2) "
+            "confermato che direzione e allineamento di trend sono perfettamente confusi "
+            "su tutti i 75 eventi, non solo i 47 OPENED; (3) Natural Horizon declassato a "
+            "puramente descrittivo (finestre sovrapposte, dipendenza entro-evento); (4) "
+            "linguaggio di 'analisi indipendenti'/'non spiegabile da rumore' corretto. La "
+            "decisione finale (MECHANISM_PARTIALLY_SUPPORTED) NON cambia, ma la sua "
+            "giustificazione e il livello di confidence sono stati resi piu' conservativi "
+            "e precisi. Originale preservato in "
+            "phase7_9j/raw_data_pre_fix/breakout_acc_executive_summary_decision_card_v1_"
+            "ORIGINAL_pre_temporal_fix.json.",
         "no_optimization_no_rescue_no_promotion": True,
         "executive_summary_max_10_lines": executive_summary_lines,
         "decision_card": decision_card,

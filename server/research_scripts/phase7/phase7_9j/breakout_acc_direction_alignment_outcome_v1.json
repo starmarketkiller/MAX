@@ -1,0 +1,60 @@
+{
+  "generated_at": "2026-09-26T12:16:52.295565+00:00",
+  "generation_script": "build_direction_alignment_outcome_table.py",
+  "canonical_sha256": "cb5074a74beb99b5909b348f7feb59d5b1984adcef116dfd18200e31639d24d5",
+  "payload": {
+    "phase": "7.9J",
+    "population_used": "B_opened (47, per l'esito/path) - il controllo di variazione dell'allineamento usa TUTTI i 75 eventi (population-agnostic, la feature e' disponibile per ogni evento con dati di prezzo).",
+    "direction_x_alignment_x_outcome_table": [
+      {
+        "direction": "BUY",
+        "n": 36,
+        "n_regime_aligned_ema100": 36,
+        "n_regime_NOT_aligned_ema100": 0,
+        "n_local_aligned_ema20": 36,
+        "n_local_NOT_aligned_ema20": 0,
+        "n_continuation_60d1": 24,
+        "pct_continuation": 66.7,
+        "mfe": {
+          "n": 36,
+          "mean": 249.3317,
+          "median": 172.195,
+          "stdev": 249.5211
+        },
+        "mae": {
+          "n": 36,
+          "mean": 78.52,
+          "median": 58.08,
+          "stdev": 71.734
+        }
+      },
+      {
+        "direction": "SELL",
+        "n": 11,
+        "n_regime_aligned_ema100": 11,
+        "n_regime_NOT_aligned_ema100": 0,
+        "n_local_aligned_ema20": 11,
+        "n_local_NOT_aligned_ema20": 0,
+        "n_continuation_60d1": 1,
+        "pct_continuation": 9.1,
+        "mfe": {
+          "n": 11,
+          "mean": 102.5227,
+          "median": 97.02,
+          "stdev": 104.098
+        },
+        "mae": {
+          "n": 11,
+          "mean": 126.5973,
+          "median": 88.41,
+          "stdev": 70.6178
+        }
+      }
+    ],
+    "zero_variation_in_alignment_across_all_75_events": true,
+    "n_misaligned_ema100_regime_all75": 0,
+    "n_misaligned_ema20_local_all75": 0,
+    "confound_discussion": "PROBLEMA STRUTTURALE CONFERMATO: su TUTTI i 75 eventi (non solo i 47 OPENED), 72/72 sono allineati al regime EMA100 e 75/75 al trend locale EMA20 - CIOE' il 100% su ENTRAMBI i proxy, senza eccezioni, per l'intera storia 2019-2026 di eventi che hanno superato il gate di Acceptance. Non esiste un solo evento non-allineato con cui confrontare gli eventi allineati - l'allineamento di trend e la direzione del segnale sono PERFETTAMENTE CONFUSI (collineari) in questo campione: non e' possibile, con questi dati, distinguere se il comportamento favorevole osservato sui BUY dipenda (a) dall'essere allineati al trend, (b) dall'essere semplicemente BUY in un periodo di mercato rialzista, o (c) da qualche altra caratteristica correlata a entrambi. 'TREND_PERSISTENCE_DIRECTION_DEPENDENT' (Phase 7.9I) resta un'ETICHETTA descrittiva plausibile del pattern osservato, non un meccanismo causale isolato o testato - la distinzione fra 'trend-alignment' e 'direzione BUY in questo periodo' e' concettualmente diversa ma OSSERVAZIONALMENTE INDISTINGUIBILE qui. Nota aggiuntiva: l'allineamento al trend LOCALE (EMA20) potrebbe essere parzialmente TAUTOLOGICO rispetto alla definizione stessa di Acceptance (un prezzo che rompe un massimo/minimo di 20 barre e' quasi meccanicamente sopra/sotto la propria media a 20 periodi) - solo l'allineamento EMA100 (orizzonte indipendente dalla finestra di 20 barre del trigger) e' un test davvero indipendente, e anche quello risulta 100% allineato senza eccezioni.",
+    "new_hypothesis_not_implemented": true
+  }
+}

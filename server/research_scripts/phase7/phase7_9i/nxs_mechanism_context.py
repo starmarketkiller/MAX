@@ -72,10 +72,24 @@ def causal_atr(d1_bars, as_of_date, period=20):
 
 
 def causal_ema(d1_bars, as_of_date, period=100):
-    """EMA(period) calcolata SOLO su barre <= as_of_date (inclusa la barra
-    del segnale stesso, che e' gia' chiusa quando la strategia valuta -
-    iClose(tf,1) legge la barra precedente, non quella corrente)."""
-    prior = [b for b in d1_bars if b["time"].date() <= as_of_date.date()]
+    """EMA(period) calcolata SOLO su barre STRETTAMENTE precedenti
+    as_of_date (as_of_date = d1_bar_date = data della barra CORRENTE,
+    ancora in formazione al momento della decisione - vedi
+    NXS_BreakoutAccSignalDiagnostic.mq5: bar_time e' rates[i+1].time,
+    la barra 'shift 0' non ancora chiusa; c1/c2 usano invece rates[i]/
+    rates[i-1], gia' chiuse PRIMA dell'inizio di as_of_date).
+
+    CORREZIONE Phase 7.9J (bug confermato, presente dalla prima
+    versione Phase 7.9I): la versione precedente usava `<=`, includendo
+    la chiusura FINALE della barra di as_of_date - un valore non
+    disponibile fino alla mezzanotte SUCCESSIVA, quindi nel futuro
+    rispetto a qualunque decisione/fill intraday reale (es. entry_fill_
+    time='2019.06.05 17:30:00' con as_of_date='2019.06.05': la chiusura
+    finale della barra 2019.06.05 non e' nota fino al 2019.06.06 00:00).
+    Vedi server/research_scripts/phase7/phase7_9j/ per l'audit
+    before/after completo. causal_atr() usava gia' `<` stretto ed era
+    corretto fin dall'origine - nessuna modifica li'."""
+    prior = [b for b in d1_bars if b["time"].date() < as_of_date.date()]
     if len(prior) < period:
         return None
     closes = [b["close"] for b in prior]
@@ -172,6 +186,20 @@ def build_feature_table():
             row["htf_proxy_close_minus_ema100"] = None
             row["htf_proxy_trend_aligned"] = None
 
+        # Regime2 (Phase 7.9J): trend LOCALE (EMA20 causale) distinto dal regime di
+        # lungo periodo (EMA100) - per distinguere "allineato al trend che si sta
+        # formando ora" da "allineato al trend secolare pluriennale".
+        ema20 = causal_ema(d1_bars, dt, period=20)
+        row["causal_ema20_d1_local_trend"] = ema20
+        if ema20 is not None and row["breakout_close_c1"] is not None:
+            close_vs_ema20 = row["breakout_close_c1"] - ema20
+            row["local_trend_proxy_close_minus_ema20"] = close_vs_ema20
+            row["local_trend_aligned"] = (
+                (close_vs_ema20 > 0) == (e["direction"] == 1))
+        else:
+            row["local_trend_proxy_close_minus_ema20"] = None
+            row["local_trend_aligned"] = None
+
         row["days_since_previous_raw_accept_same_direction"] = days_since_previous_raw_accept(
             e["direction"], dt)
 
@@ -199,21 +227,37 @@ def build_feature_table():
         "source_canonical_dataset_path": "server/research_scripts/phase7/phase7_9h/"
             "breakout_acc_intended_d1_v1_dataset.json",
         "no_canonical_dataset_modification": True,
+        "lineage_note": "Phase 7.9J supersede la versione Phase 7.9I di questo artifact: "
+            "causal_ema() usava `<=` (includeva la chiusura FINALE della barra del giorno "
+            "del segnale, non disponibile al momento della decisione/fill intraday reale) - "
+            "corretto in `<` stretto, identico a causal_atr() (gia' corretto dall'origine). "
+            "Aggiunto anche un secondo proxy di trend LOCALE (EMA20) distinto dal regime di "
+            "lungo periodo (EMA100). Vedi server/research_scripts/phase7/phase7_9j/ per "
+            "l'audit before/after completo. Gli originali pre-fix sono preservati in "
+            "phase7_9j/raw_data_pre_fix/.",
         "feature_provenance": {
             "breakout_magnitude_*": "da nxs_breakoutacc_cadence_diag_prefix_isolated.csv "
                 "(c1/range_hi/range_lo), disponibile per TUTTI i 75 eventi in modo uniforme "
-                "(anche BLOCKED/BROKER_REJECT/B-only, che non hanno un fill reale)",
+                "(anche BLOCKED/BROKER_REJECT/B-only, che non hanno un fill reale) - "
+                "VERIFICATO causalmente pulito (c1=rates[i].close, chiusura della barra "
+                "PRECEDENTE quella corrente, gia' nota all'inizio del giorno del segnale).",
             "causal_atr20_d1_price_units": "media del true range sulle 20 barre D1 "
-                "STRETTAMENTE precedenti alla data del segnale - nessun leakage dal futuro",
-            "causal_ema100_d1 / htf_proxy_*": "EMA(100) causale (barre <= data segnale) - "
-                "proxy NUOVO di contesto HTF, DISTINTO dalla colonna 'htf_ok' vestigiale "
-                "dell'upstream (che non corrisponde a codice reale in NXS_Strat_BreakoutAcc, "
-                "vedi Phase 7.9H) - qui esplicitamente etichettato come proxy, non come gate "
-                "reale della strategia",
+                "STRETTAMENTE precedenti alla data del segnale - nessun leakage dal futuro "
+                "(corretto fin dall'origine, verificato in Phase 7.9J).",
+            "causal_ema100_d1 / htf_proxy_* (regime di lungo periodo)": "EMA(100) causale "
+                "(barre STRETTAMENTE precedenti la data del segnale, corretto in Phase "
+                "7.9J) - proxy NUOVO di contesto HTF, DISTINTO dalla colonna 'htf_ok' "
+                "vestigiale dell'upstream (che non corrisponde a codice reale in "
+                "NXS_Strat_BreakoutAcc, vedi Phase 7.9H) - qui esplicitamente etichettato "
+                "come proxy, non come gate reale della strategia.",
+            "causal_ema20_d1_local_trend / local_trend_* (trend locale, Phase 7.9J)": "EMA(20) "
+                "causale, stessa correzione di causalita' dell'EMA100 - distingue "
+                "l'allineamento al trend che si sta formando ORA dall'allineamento al "
+                "regime pluriennale.",
             "days_since_previous_raw_accept_same_direction": "distanza in giorni dal "
                 "precedente raw-accept (stesso raw_dir) nell'intera serie D1 isolata, "
                 "indipendentemente dal fatto che quel precedente abbia poi generato un "
-                "segnale finale",
+                "segnale finale - basata solo su etichette di data, nessun leakage.",
         },
         "rows": rows,
     }

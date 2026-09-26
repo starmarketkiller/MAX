@@ -1,10 +1,11 @@
 {
-  "generated_at": "2026-09-26T11:35:42.558075+00:00",
+  "generated_at": "2026-09-26T12:21:46.022714+00:00",
   "generation_script": "build_natural_horizon.py",
-  "canonical_sha256": "603db123b142cde657521fc12b3be0bf719ebbaa955ca8d0258b303eb06bdf86",
+  "canonical_sha256": "68996fa33aa8551a209ea693f149ed8d79bf09c67e40ccc2564a18fd9bd94be7",
   "payload": {
     "phase": "7.9I",
     "input_frozen_dataset": "breakout_acc_intended_d1_v1_dataset.json (sha256=530e471872c5e7caa93af87b653f6055cccd71897df11e3c1ad3055d4f2b3e3e)",
+    "superseded_by_note": "Phase 7.9J (breakout_acc_natural_horizon_reconciliation_v1.json) qualifica questo finding: 'stable_horizon_identified' e il testo di 'finding' qui sotto trattano il CI95% come se fosse inferenzialmente valido, ma le finestre forward degli eventi si sovrappongono nel tempo e i valori entro-evento sono fortemente autocorrelati (violando l'assunzione di indipendenza del CI). I VALORI NUMERICI (per_bar_curve, medie, CI mostrati) restano corretti come statistiche descrittive - leggere SEMPRE insieme alla riconciliazione di Phase 7.9J prima di trarre conclusioni su un 'orizzonte naturale'.",
     "shape_description": "La media del ritorno close-to-close cresce in modo pressoche' monotono da ~7.2 (barra 1) a ~91.1 (barra 60), SENZA un chiaro plateau ne' un decadimento visibile entro la finestra di 60 barre D1 osservata - il vantaggio informativo (se reale) non appare saturo entro questo orizzonte: potrebbe estendersi oltre 60 barre, oppure riflettere la coda di pochi eventi con movimenti tardivi molto ampi (dispersione CI ampia a barre lunghe - vedi ci95_high/ci95_low nel per_bar_curve).",
     "population_used": "B_opened (47 eventi con curva di percorso completa)",
     "no_optimization_horizon_not_chosen_by_best_return": true,

@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-09-26T12:18:08.821220+00:00",
+  "generation_script": "build_natural_horizon_reconciliation.py",
+  "canonical_sha256": "175e3de2e0375934c2a1232417d28b96c428cd27b76a3b215fbb31018e39750c",
+  "payload": {
+    "phase": "7.9J",
+    "supersedes_note": "Qualifica (non sostituisce i numeri di) breakout_acc_natural_horizon_v1.json (Phase 7.9I) - la curva per-barra e i valori numerici restano quelli originali (nessun ricalcolo necessario, il problema e' nell'INTERPRETAZIONE statistica del CI, non nel calcolo dei valori stessi, che sono corretti come statistiche descrittive).",
+    "window_overlap_analysis": {
+      "n_events": 47,
+      "total_event_pairs": 1081,
+      "pairs_with_overlapping_60d_windows": 41,
+      "pct_pairs_overlapping": 3.8,
+      "consecutive_event_gaps_days": {
+        "min": 7,
+        "median": 43.0,
+        "mean": 55.2,
+        "max": 251
+      },
+      "consecutive_gaps_leq_60d": 32,
+      "consecutive_gaps_total": 46,
+      "pct_consecutive_gaps_overlapping": 69.6
+    },
+    "within_event_serial_dependence_note": "La media aggregata cresce con incrementi medi di 1.42 unita' di prezzo per barra (stdev 3.8) - un andamento LISCIO, non rumoroso barra-per-barra, che e' la firma attesa di dati con forte dipendenza seriale entro-evento (ogni evento contribuisce una traiettoria continua, non un campione indipendente a ogni barra).",
+    "epistemic_downgrade": "DECLASSAMENTO ESPLICITO (Phase 7.9J): il finding originale di Phase 7.9I ('CI95% esclude lo zero in modo continuativo dalla barra 18 alla 60') era presentato come un 'orizzonte naturale PARZIALMENTE identificabile'. Questo NON e' corretto senza ulteriori qualifiche: (1) il 69.6% dei gap fra eventi consecutivi e' inferiore alla finestra di 60 barre - le finestre forward SI SOVRAPPONGONO nel tempo di calendario, quindi molte 'osservazioni' condividono segmenti dello stesso percorso di prezzo sottostante (non sono indipendenti); (2) entro il percorso di un SINGOLO evento, i valori a barre consecutive sono per costruzione fortemente autocorrelati (una traiettoria continua, non un nuovo campionamento). Il CI95% calcolato con mean+/-1.96*SE ASSUME osservazioni indipendenti - questa assunzione e' VIOLATA su entrambi i fronti. Il risultato pratico e' che gli intervalli di confidenza mostrati sono probabilmente PIU' STRETTI del reale (l'incertezza vera e' maggiore), e le '43 barre consecutive' NON vanno lette come 43 conferme indipendenti, ma come l'evoluzione continua di un numero molto piu' piccolo di traiettorie indipendenti (~47 eventi, con sovrapposizioni sostanziali che riducono ulteriormente il numero di 'informazioni indipendenti' effettive sotto 47). Conclusione corretta: la curva mostra un pattern DESCRITTIVO di crescita del ritorno medio su 60 barre, senza plateau visibile - ma questo NON costituisce una prova statisticamente valida di un 'natural horizon', ne' della sua assenza. I CI vanno letti come puramente descrittivi (dispersione del campione), non come intervalli di confidenza in senso inferenziale stretto.",
+    "revised_stable_horizon_identified": false,
+    "revised_finding": "Il ritorno medio close-to-close cresce in modo descrittivamente monotono su 60 barre D1, senza plateau visibile - ma con N effettivo molto minore di 47 a causa della sovrapposizione delle finestre e della dipendenza seriale entro-evento. Non si puo' concludere ne' l'esistenza ne' l'assenza di un vero natural horizon statisticamente validato con questo campione e questa metodologia - il finding resta un pattern descrittivo, non una conferma statistica."
+  }
+}

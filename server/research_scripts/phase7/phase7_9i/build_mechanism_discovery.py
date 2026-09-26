@@ -37,12 +37,21 @@ def build():
             f"BUY: {buy['n_continuation']}/{buy['n']} continuation a 60 barre D1 "
                 f"({round(100*buy['n_continuation']/buy['n'],1)}%) vs SELL: "
                 f"{sell['n_continuation']}/{sell['n']} ({round(100*sell['n_continuation']/sell['n'],1)}%) "
-                "- asimmetria molto ampia, non spiegabile da rumore campionario da sola.",
+                "- asimmetria di ampiezza sostanziale (effect size ampio); nessun test "
+                "statistico formale eseguito, N(SELL)=11 e' piccolo.",
             f"BUY MFE mediano={buy['mfe']['median']} vs SELL MFE mediano={sell['mfe']['median']} "
-                "- BUY sistematicamente piu' favorevole.",
-            f"HTF proxy (EMA100 causale): {htf.get('True',{}).get('n','?')}/47 eventi OPENED "
-                "sono trend-aligned (100%) - NESSUN evento e' stato eseguito contro il trend "
-                "EMA100 causale, un pattern perfettamente confuso con la direzione.",
+                "- stessa direzione dell'asimmetria di continuation (NOTA: calcolato sugli "
+                "STESSI 47 eventi, non una conferma statisticamente indipendente - una "
+                "seconda lente descrittiva sullo stesso dato, non un secondo campione).",
+            f"HTF proxy (EMA100 causale, corretto per causalita' in Phase 7.9J): "
+                f"{htf.get('True',{}).get('n','?')}/47 eventi OPENED sono trend-aligned "
+                "(100%) - NESSUN evento e' stato eseguito contro il trend EMA100 causale. "
+                "IMPORTANTE (Phase 7.9J): questo pattern e' verificato su TUTTI i 75 "
+                "eventi (non solo i 47 OPENED), sempre 100% - direzione e allineamento di "
+                "trend sono PERFETTAMENTE CONFUSI in questo campione (nessun evento "
+                "non-allineato esiste con cui confrontare), quindi questo NON e' una "
+                "conferma indipendente dell'asimmetria BUY/SELL - e' la STESSA asimmetria "
+                "vista da un'altra variabile perfettamente collineare con la direzione.",
         ],
         "evidence_against": [
             "Il codice di NXS_Strat_BreakoutAcc() non contiene alcun filtro di trend/EMA "
@@ -58,9 +67,15 @@ def build():
                 "rappresentato, quindi non si puo' escludere che il pattern si inverta in "
                 "condizioni di mercato diverse.",
         ],
-        "confidence": "MODERATE - pattern ampio e coerente su piu' analisi indipendenti "
-            "(continuation rate, MFE/MAE, HTF proxy), ma confuso con un singolo regime di "
-            "mercato osservato e con N(SELL)=11 piccolo.",
+        "confidence": "MODERATE COME PATTERN DESCRITTIVO, BASSA COME SPIEGAZIONE CAUSALE "
+            "ISOLATA - l'asimmetria BUY/SELL e' ampia e visibile su piu' angolazioni "
+            "descrittive (continuation rate, MFE/MAE, HTF proxy), ma queste angolazioni "
+            "condividono gli STESSI 47/36/11 eventi (non sono conferme statisticamente "
+            "indipendenti), l'allineamento di trend e' perfettamente confuso con la "
+            "direzione (Phase 7.9J: 0 eventi non-allineati su tutti i 75), e il campione "
+            "copre un solo regime di mercato. 'Trend persistence' resta un'etichetta "
+            "descrittiva candidata per il pattern osservato, non una spiegazione causale "
+            "isolata o testata.",
     })
 
     mechanisms.append({
@@ -72,8 +87,12 @@ def build():
                 f"/{path['aggregate']['n_events']} continuation a 60 barre - maggioranza, "
                 "ma non schiacciante.",
             "Natural Horizon: il ritorno medio close-to-close (aggregato, direction-"
-                "adjusted) cresce in modo pressoche' monotono da barra 1 a barra 60, CI95% "
-                "esclude lo zero per 43 barre consecutive (18-60).",
+                "adjusted) cresce in modo pressoche' monotono da barra 1 a barra 60 - "
+                "pattern PURAMENTE DESCRITTIVO (Phase 7.9J: le finestre forward degli "
+                "eventi si sovrappongono nel tempo per il 70% dei gap consecutivi e i "
+                "valori entro-evento sono fortemente autocorrelati, quindi il CI95% "
+                "mostrato NON e' un intervallo di confidenza statisticamente valido - "
+                "vedi breakout_acc_natural_horizon_reconciliation_v1.json).",
         ],
         "evidence_against": [
             "La sola vista aggregata NASCONDE l'asimmetria BUY/SELL massiccia (vedi "
@@ -125,13 +144,17 @@ def build():
         "description": "Il vantaggio informativo del segnale non si materializza "
             "immediatamente ma emerge con un ritardo (alcune barre dopo l'evento).",
         "evidence_for": [
-            "Natural Horizon: il CI95% del ritorno medio NON esclude lo zero in modo "
-                "stabile fino a circa barra 10-18, poi lo esclude establmente fino a barra "
-                "60 - suggestivo di un vantaggio che si consolida con un ritardo, non "
+            "Natural Horizon: la media descrittiva del ritorno resta vicina a zero fino "
+                "a circa barra 10-18, poi si allontana visibilmente da zero fino a barra "
+                "60 - PURAMENTE DESCRITTIVO (Phase 7.9J: il CI mostrato non e' "
+                "statisticamente valido per le sovrapposizioni/dipendenze gia' discusse), "
+                "ma suggestivo di un pattern che si consolida con un ritardo, non "
                 "immediato.",
             f"bars_to_mfe mediano (BUY)={buy['bars_to_mfe']['median']} barre D1 - il "
                 "massimo movimento favorevole tipicamente arriva MOLTE barre dopo "
-                "l'ingresso, non nell'immediato.",
+                "l'ingresso, non nell'immediato (nota: la numerazione delle barre ha un "
+                "offset di +1 giorno di calendario non corretto, vedi audit di causalita' "
+                "temporale Phase 7.9J).",
         ],
         "evidence_against": [
             f"MAE viene raggiunto PRIMA di MFE nel {path['aggregate']['mae_reached_before_mfe']['pct']}% "
@@ -142,8 +165,10 @@ def build():
         "alternative_explanations": ["Il ritardo osservato potrebbe semplicemente "
             "riflettere il tempo naturale di sviluppo di un trend gia' in corso "
             "(TREND_PERSISTENCE), non un meccanismo specifico di 'breakout ritardato'."],
-        "confidence": "LOW-MODERATE - alcuni elementi di supporto (CI95 tardivo, bars_to_mfe "
-            "alto) ma non distinguibile in modo netto da TREND_PERSISTENCE.",
+        "confidence": "LOW - alcuni elementi di supporto descrittivo (pattern tardivo non "
+            "statisticamente validato, bars_to_mfe alto) ma non distinguibile in modo "
+            "netto da TREND_PERSISTENCE, e il CI di supporto non e' inferenzialmente "
+            "valido (vedi Phase 7.9J).",
     })
 
     mechanisms.append({
@@ -199,16 +224,32 @@ def build():
 
     return {
         "phase": "7.9I",
+        "lineage_note": "Corretto in Phase 7.9J: il linguaggio 'analisi indipendenti' e "
+            "'non spiegabile da rumore' e' stato rivisto - continuation rate, MFE/MAE e "
+            "HTF proxy sono TRE STATISTICHE calcolate sugli STESSI 47/36/11 eventi, non "
+            "tre campioni indipendenti; nessun test d'ipotesi formale e' stato eseguito. "
+            "Il testo qui sotto e' stato riformulato per distinguere pattern descrittivo "
+            "(l'asimmetria BUY/SELL e' ampia e osservata su piu' angolazioni dello stesso "
+            "dato), spiegazione candidata (trend persistence) ed edge incrementale "
+            "rispetto a un benchmark (NON stimato in nessuna fase - non esiste un "
+            "confronto con un benchmark buy-and-hold o un modello nullo in questo lavoro).",
         "question": "Che cosa sta realmente catturando BREAKOUT_ACC?",
         "mechanisms_evaluated": mechanisms,
         "primary_finding": (
-            "L'evidenza piu' forte e convergente (da 3 analisi indipendenti - continuation "
-            "rate, MFE/MAE per direzione, HTF proxy causale) indica che il comportamento "
+            "Il pattern piu' ampio e visibile (misurato con 3 statistiche descrittive "
+            "diverse ma calcolate sugli STESSI eventi - continuation rate, MFE/MAE per "
+            "direzione, HTF proxy causale, quest'ultimo verificato 100% collineare con la "
+            "direzione su TUTTI i 75 eventi in Phase 7.9J) indica che il comportamento "
             "favorevole osservato e' fortemente DIREZIONE-DIPENDENTE (quasi tutto sui BUY) "
             "e coincide con un periodo di trend rialzista secolare di GOLD. Questo rende "
-            "TREND_PERSISTENCE_DIRECTION_DEPENDENT la spiegazione singola piu' supportata, "
-            "con CONTINUATION_SYMMETRIC_BREAKOUT esplicitamente CONTRADDETTA come "
-            "meccanismo simmetrico universale."
+            "TREND_PERSISTENCE_DIRECTION_DEPENDENT l'etichetta descrittiva candidata piu' "
+            "coerente con i dati (non una spiegazione causale isolata o statisticamente "
+            "confermata - direzione e allineamento di trend sono osservazionalmente "
+            "indistinguibili in questo campione), con CONTINUATION_SYMMETRIC_BREAKOUT "
+            "esplicitamente CONTRADDETTA come meccanismo simmetrico universale. Nessun "
+            "confronto con un benchmark (es. buy-and-hold sullo stesso periodo) e' stato "
+            "eseguito - non si puo' quantificare un 'edge incrementale', solo descrivere "
+            "il pattern."
         ),
         "no_optimization_no_rescue": True,
     }

@@ -131,6 +131,15 @@ def build():
     return {
         "phase": "7.9I", "input_frozen_dataset": "breakout_acc_intended_d1_v1_dataset.json "
             f"(sha256={feat_doc['payload']['source_canonical_dataset_sha256']})",
+        "superseded_by_note": "Phase 7.9J (breakout_acc_natural_horizon_reconciliation_v1.json) "
+            "qualifica questo finding: 'stable_horizon_identified' e il testo di 'finding' "
+            "qui sotto trattano il CI95% come se fosse inferenzialmente valido, ma le "
+            "finestre forward degli eventi si sovrappongono nel tempo e i valori "
+            "entro-evento sono fortemente autocorrelati (violando l'assunzione di "
+            "indipendenza del CI). I VALORI NUMERICI (per_bar_curve, medie, CI mostrati) "
+            "restano corretti come statistiche descrittive - leggere SEMPRE insieme alla "
+            "riconciliazione di Phase 7.9J prima di trarre conclusioni su un 'orizzonte "
+            "naturale'.",
         "shape_description": shape_description,
         "population_used": f"B_opened ({len(curves)} eventi con curva di percorso completa)",
         "no_optimization_horizon_not_chosen_by_best_return": True,
