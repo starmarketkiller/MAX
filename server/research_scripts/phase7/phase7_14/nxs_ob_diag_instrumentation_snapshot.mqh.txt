@@ -1,0 +1,163 @@
+// Phase 7.14 - snapshot ESATTO dell'istrumentazione diagnostica temporanea
+// (non comportamentale) usata per catturare nxs_orderblock_realtrace_diag_prefix.csv
+// (applicata su MQL5/Include/NEXUS_v1/NXS_Strategies.mqh @ commit 7b823b9, PRIMA
+// del fix) e nxs_orderblock_realtrace_diag_postfix.csv (stessa istrumentazione,
+// applicata SOPRA il fix di questa fase).
+//
+// COME RIPRODURRE: sostituire in NXS_Strategies.mqh il blocco che va da
+// "struct SNXSOBState {" fino alla chiusura di NXS_OB_UpdateSide() con il
+// contenuto sotto (per il pre-fix: applicare su NXS_Strat_OrderBlock() SENZA
+// la guardia `if(tf != NXS_Profile_TF("ORDER_BLOCK")) return s;`; per il
+// post-fix: applicare CON la guardia gia' presente). Compilare con
+// MetaEditor64.exe /compile, lanciare con terminal64.exe /config:<ini
+// corrispondente>, poi RIPRISTINARE il file con `git checkout` prima di
+// qualunque altro commit - questa istrumentazione non deve MAI restare nel
+// sorgente canonico.
+//
+// Nessuna condizione/valore di ritorno e' alterato da questo blocco - solo
+// FileWrite/FileFlush osservativi prima di ogni `return` gia' esistente.
+
+struct SNXSOBState {
+   bool     active;
+   double   obLo, obHi;
+   datetime lastBarTime;
+   int      barsWaited;
+};
+SNXSOBState g_obBuy, g_obSell;
+
+// ---- Phase 7.14 TEMP DIAG (NON-COMPORTAMENTALE, solo osservazione,
+// nessuna condizione/valore di ritorno alterato) - da RIMUOVERE dopo la
+// raccolta del trace reale. Vedi vault "NEXUS - Phase 7.14 ORDER_BLOCK
+// Live Trace e Fix Adjudication". ----
+#define NXS_OB_DIAG_TRACE
+#ifdef NXS_OB_DIAG_TRACE
+int NXS_OB_DiagHandle(){
+   static int h = INVALID_HANDLE;
+   static bool tried = false;
+   if(!tried){
+      tried = true;
+      // prefix: "nxs_orderblock_realtrace_diag.csv" (rinominato manualmente in
+      // _prefix.csv dopo la copia da Terminal/Common/Files/)
+      // postfix: "nxs_orderblock_realtrace_diag_postfix.csv"
+      h = FileOpen("nxs_orderblock_realtrace_diag.csv", FILE_WRITE|FILE_CSV|FILE_COMMON|FILE_ANSI, ',');
+      if(h != INVALID_HANDLE)
+         FileWrite(h, "close_time_srv","tf","canonical_tf","side","op",
+                   "pre_active","pre_lo","pre_hi","pre_bars_waited",
+                   "post_active","post_lo","post_hi","post_bars_waited",
+                   "signal_dir","would_be_kept_by_router");
+   }
+   return h;
+}
+void NXS_OB_DiagWrite(datetime tnow, ENUM_TIMEFRAMES tf, int dir, string op,
+                      const SNXSOBState &pre, const SNXSOBState &post, string sigDirStr){
+   int h = NXS_OB_DiagHandle();
+   if(h == INVALID_HANDLE) return;
+   bool kept = (tf == NXS_Profile_TF("ORDER_BLOCK"));
+   FileWrite(h, TimeToString(tnow, TIME_DATE|TIME_MINUTES|TIME_SECONDS), EnumToString(tf),
+             EnumToString(NXS_Profile_TF("ORDER_BLOCK")), (dir == +1 ? "BUY_SIDE" : "SELL_SIDE"), op,
+             (pre.active ? "1" : "0"), DoubleToString(pre.obLo, 2), DoubleToString(pre.obHi, 2), IntegerToString(pre.barsWaited),
+             (post.active ? "1" : "0"), DoubleToString(post.obLo, 2), DoubleToString(post.obHi, 2), IntegerToString(post.barsWaited),
+             sigDirStr, (kept ? "1" : "0"));
+   FileFlush(h);
+}
+#endif
+
+SNXSSignal NXS_OB_UpdateSide(int dir, SNXSOBState &st, ENUM_TIMEFRAMES tf, double atr, datetime curBar0){
+   SNXSSignal s; ZeroMemory(s); s.dir = DIR_NONE;
+   s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
+   bool newBar = (st.lastBarTime != curBar0);
+#ifdef NXS_OB_DIAG_TRACE
+   SNXSOBState _obDiagPre = st;
+#endif
+
+   if(!st.active){
+      if(!newBar){
+#ifdef NXS_OB_DIAG_TRACE
+         NXS_OB_DiagWrite(curBar0, tf, dir, "NONE_NOT_NEW_BAR", _obDiagPre, st, "NONE");
+#endif
+         return s;
+      }
+      st.lastBarTime = curBar0;
+      for(int i = 3; i <= 10; i++){
+         double o = iOpen (g_sym, tf, i), c = iClose(g_sym, tf, i);
+         double body = MathAbs(c - o);
+         if(body < 1.2 * atr) continue;
+         bool rightColor = (dir == +1) ? (c > o) : (c < o);
+         if(!rightColor) continue;
+         int hiIdx = iHighest(g_sym, tf, MODE_HIGH, InpOB_SwingLookback, i + 1);
+         int loIdx = iLowest (g_sym, tf, MODE_LOW,  InpOB_SwingLookback, i + 1);
+         double swingRef = (dir == +1) ? (hiIdx >= 0 ? iHigh(g_sym, tf, hiIdx) : 0)
+                                        : (loIdx >= 0 ? iLow (g_sym, tf, loIdx) : 0);
+         bool bos = (dir == +1) ? (swingRef > 0 && c > swingRef) : (swingRef > 0 && c < swingRef);
+         if(!bos) continue;
+         double originA = o, originB = c;
+         bool found = false;
+         for(int k = i + 1; k <= i + 6; k++){
+            double ok = iOpen(g_sym, tf, k), ck = iClose(g_sym, tf, k);
+            bool oppositeColor = (dir == +1) ? (ck < ok) : (ck > ok);
+            if(oppositeColor){ originA = ok; originB = ck; found = true; break; }
+         }
+         if(!found) continue;
+         st.obLo = MathMin(originA, originB);
+         st.obHi = MathMax(originA, originB);
+         st.active = true; st.barsWaited = 0;
+         break;
+      }
+#ifdef NXS_OB_DIAG_TRACE
+      NXS_OB_DiagWrite(curBar0, tf, dir, (st.active ? "ZONE_CREATED" : "SEARCH_DISPLACEMENT_NO_MATCH"), _obDiagPre, st, "NONE");
+#endif
+      return s;
+   }
+
+   if(newBar){
+      st.lastBarTime = curBar0;
+      st.barsWaited++;
+      if(st.barsWaited > InpOB_MaxWaitBars){
+         st.active = false;
+#ifdef NXS_OB_DIAG_TRACE
+         NXS_OB_DiagWrite(curBar0, tf, dir, "ZONE_EXPIRED", _obDiagPre, st, "NONE");
+#endif
+         return s;
+      }
+      double c1 = iClose(g_sym, tf, 1);
+      if((dir == +1 && c1 < st.obLo) || (dir == -1 && c1 > st.obHi)){
+         st.active = false;
+#ifdef NXS_OB_DIAG_TRACE
+         NXS_OB_DiagWrite(curBar0, tf, dir, "ZONE_INVALIDATED", _obDiagPre, st, "NONE");
+#endif
+         return s;
+      }
+   }
+   if(st.obHi <= st.obLo){
+#ifdef NXS_OB_DIAG_TRACE
+      NXS_OB_DiagWrite(curBar0, tf, dir, "DEGENERATE_ZONE_SKIP", _obDiagPre, st, "NONE");
+#endif
+      return s;
+   }
+   double bid = SymbolInfoDouble(g_sym, SYMBOL_BID);
+   bool touched = (bid >= st.obLo && bid <= st.obHi);
+   if(!touched){
+#ifdef NXS_OB_DIAG_TRACE
+      NXS_OB_DiagWrite(curBar0, tf, dir, "WAITING_NO_TOUCH", _obDiagPre, st, "NONE");
+#endif
+      return s;
+   }
+   double c1 = iClose(g_sym, tf, 1), o1 = iOpen(g_sym, tf, 1);
+   bool rejection = (dir == +1) ? (c1 > o1) : (c1 < o1);
+   if(!rejection){
+#ifdef NXS_OB_DIAG_TRACE
+      NXS_OB_DiagWrite(curBar0, tf, dir, "TOUCHED_NO_REJECTION", _obDiagPre, st, "NONE");
+#endif
+      return s;
+   }
+   if(dir == +1){
+      s.dir = DIR_BUY;  s.score = 70; s.reason = "OB_retest_bull";
+   } else {
+      s.dir = DIR_SELL; s.score = 70; s.reason = "OB_retest_bear";
+   }
+   st.active = false;
+#ifdef NXS_OB_DIAG_TRACE
+   NXS_OB_DiagWrite(curBar0, tf, dir, "RETEST_SIGNAL_FIRED", _obDiagPre, st, (dir == +1 ? "BUY" : "SELL"));
+#endif
+   return s;
+}

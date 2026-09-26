@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-09-26T17:01:47.773460+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_14\\build_ob_mit_dependency_map.py",
+  "canonical_sha256": "6affb76765940173f5ab606546c66f1b2389abfcc849e22d632cec8072e918bc",
+  "payload": {
+    "question": "Correggere NXS_Strat_OrderBlock() risolve automaticamente OB_MIT, o OB_MIT ha un percorso separato / side effect aggiuntivi?",
+    "verified_on_current_source": true,
+    "ob_mit_has_own_state": false,
+    "ob_mit_calls_order_block_directly": true,
+    "ob_mit_only_overrides_name_reason_score_floor": true,
+    "conclusion": "OB_MIT NON ha stato proprio ne' un percorso di calcolo separato - chiama NXS_Strat_OrderBlock() e ne copia il risultato (raw), sovrascrivendo solo stratName/reason e un floor sullo score. Qualunque correzione a NXS_Strat_OrderBlock() (inclusa la guardia TF proposta in Phase 7.13) si propaga automaticamente a OB_MIT, senza bisogno di una patch separata.",
+    "additional_finding_selector_gate_mismatch": {
+      "description": "La chiamata a NXS_Strat_OB_Mitigation_Structural() nel collector e' gated da InpStrat_OB_Mit + NXS_SelectorAllows(20) (selettore OB_MIT), ma NXS_Strat_OrderBlock() al suo interno ha il PROPRIO gate NXS_SelectorAllows(15) (selettore ORDER_BLOCK) - selettori DIVERSI e ANNIDATI.",
+      "implication": "Isolare OB_MIT da solo con InpStrategySelector=20 (come si farebbe per testarlo in isolamento, stessa tecnica usata per ORDER_BLOCK con selettore 15 in questa fase) lo rende STRUTTURALMENTE MUTO: NXS_SelectorAllows(15) restituisce false quando InpStrategySelector=20 (non e' ne' 0 ne' 15), quindi NXS_Strat_OrderBlock() ritorna sempre un segnale vuoto indipendentemente da InpStrat_ORDER_BLOCK. In produzione (InpStrategySelector=0, tutte abilitate) questo non ha alcun effetto - NXS_SelectorAllows(0) e' sempre vero.",
+      "selectors_differ": true,
+      "scope_note": "Finding CORRELATO trovato rispondendo alla domanda del punto 4 - NON richiesto dal task, NON corretto in questa fase (nessuna modifica a registry/selettori autorizzata), segnalato solo come osservazione."
+    },
+    "no_separate_fix_needed_for_ob_mit": true,
+    "no_additional_side_effects_found": true
+  }
+}

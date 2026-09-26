@@ -2142,6 +2142,17 @@ SNXSSignal NXS_Strat_OrderBlock(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_ORDER_BLOCK; s.stratName = "ORDER_BLOCK";
    if(!InpStrat_ORDER_BLOCK || !NXS_SelectorAllows(15)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   // 27/09 - FIX Phase 7.13/7.14 (DEFECT_CONFIRMED_MATERIAL_IMPACT, validato sul trace EA reale
+   // pre/post fix - vedi vault "NEXUS - Phase 7.14 ORDER_BLOCK Live Trace e Fix Adjudication"):
+   // g_obBuy/g_obSell sono stato GLOBALE condiviso da tutte le chiamate a questa funzione, ma nel
+   // collector multi-TF (NXS_CollectAllSignals) la funzione viene invocata una volta per OGNI pass
+   // timeframe (M5/M15/M30/H1/H4/D1), non solo durante il pass del proprio timeframe dichiarato -
+   // stesso pattern gia' corretto per BREAKOUT_ACC (NXS_Strategies.mqh:1548). Guardia precoce:
+   // nessuna lettura/scrittura dello stato se il pass corrente non e' il timeframe dichiarato
+   // della strategia (NXS_Profile_TF) - nessun'altra logica toccata (geometria zona, trigger,
+   // gate HTF/SMC, SL/TP restano identici). Si propaga automaticamente a OB_MIT (wrapper diretto
+   // di questa funzione, NXS_Strategies_SMC.mqh).
+   if(tf != NXS_Profile_TF("ORDER_BLOCK")) return s;
    double atr = g_atr;
    datetime curBar0 = iTime(g_sym, tf, 0);
    s = NXS_OB_UpdateSide(+1, g_obBuy, tf, atr, curBar0);

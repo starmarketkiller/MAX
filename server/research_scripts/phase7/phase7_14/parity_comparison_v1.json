@@ -1,0 +1,732 @@
+{
+  "generated_at": "2026-09-26T22:25:11.712608+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_14\\build_parity_comparison.py",
+  "canonical_sha256": "08e1a9fef8839f6a9ec5806e71fb8a984a172abaf6f2c10eecca40bfc3399f0c",
+  "payload": {
+    "A_pre_fix": {
+      "label": "A_EA_PRE_FIX",
+      "n_rows_total": 321655,
+      "rows_by_tf": {
+        "PERIOD_H1": 53563,
+        "PERIOD_D1": 53615,
+        "PERIOD_M30": 53622,
+        "PERIOD_M15": 53610,
+        "PERIOD_H4": 53611,
+        "PERIOD_M5": 53634
+      },
+      "canonical_tf": "PERIOD_D1",
+      "n_signals_canonical_kept": 123,
+      "n_signals_non_canonical_discarded": 673,
+      "canonical_events": [
+        {
+          "close_time_srv": "2024.04.08 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.04.15 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.04.18 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.04.23 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.04.24 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.15 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.06.20 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.08.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.08.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.09.04 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.10.02 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.10.04 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.12.02 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.12.02 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.12.02 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2024.12.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.12.12 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.01.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.01.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.02.11 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.03.19 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.03.20 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.03.20 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.04.09 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.04.21 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.04.24 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.04.30 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.08 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.05.20 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.05.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.06.10 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.06.10 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.06.10 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.06.10 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.06.16 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.09.04 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.10.10 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.23 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.10.29 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.11.12 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.11.14 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.11.14 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.12.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.12.18 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.18 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.18 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.18 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.31 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.31 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.31 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.01.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.01.09 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.01.09 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.01.13 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.01.14 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.01.14 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.06 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.13 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.02.18 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.04 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.12 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.12 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.12 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.12 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.13 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.16 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.16 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.03.30 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.07 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.04.17 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.04.20 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.05.08 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.05.19 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.06.01 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.06.01 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.06.02 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.06.26 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.07.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.07.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.07.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.07.15 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.07.23 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.07.23 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.07.23 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2026.07.24 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2026.08.17 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        }
+      ]
+    },
+    "B_post_fix": {
+      "label": "B_EA_POST_FIX",
+      "n_rows_total": 53658,
+      "rows_by_tf": {
+        "PERIOD_D1": 53658
+      },
+      "canonical_tf": "PERIOD_D1",
+      "n_signals_canonical_kept": 8,
+      "n_signals_non_canonical_discarded": 0,
+      "canonical_events": [
+        {
+          "close_time_srv": "2023.10.13 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.05.09 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.06.20 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2024.07.03 00:00:00",
+          "side": "SELL_SIDE",
+          "signal_dir": "SELL"
+        },
+        {
+          "close_time_srv": "2025.06.10 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.06.26 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.29 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        },
+        {
+          "close_time_srv": "2025.12.31 00:00:00",
+          "side": "BUY_SIDE",
+          "signal_dir": "BUY"
+        }
+      ]
+    },
+    "C_tf_scoped_reconstruction": {
+      "label": "C_TF_SCOPED_RECONSTRUCTION_PHASE_7_13",
+      "source": "server/research_scripts/phase7/phase7_13/ab_simulation_v1.json (Stream B)",
+      "n_signals_canonical_kept": 7,
+      "period_covered": [
+        "2023-10-02T01:00:00",
+        "2026-08-25T23:30:00"
+      ],
+      "data_basis": "serie M15 ricampionata deterministicamente (non gli stessi tick MT5 del Tester) - confronto STRUTTURALE, non evento-per-evento sugli stessi timestamp"
+    },
+    "guard_effectiveness_check": {
+      "non_canonical_rows_present_in_B": 0,
+      "guard_fully_effective_zero_non_canonical_mutations": true,
+      "note": "Verifica diretta e falsificabile: con la guardia applicata, il router non deve MAI raggiungere il punto di lettura/scrittura dello stato su un passaggio non canonico - quindi zero righe non-D1 nel trace post-fix."
+    },
+    "a_vs_b_same_real_ticks_comparison": {
+      "a_total_canonical_kept_raw_events": 123,
+      "b_total_canonical_kept_raw_events": 8,
+      "n_matched_same_date_side_direction_multiset": 4,
+      "n_only_in_a_suppressed_post_fix_multiset": 119,
+      "n_only_in_b_appeared_post_fix_multiset": 4,
+      "note": "Conteggio a multiset (Counter), non deduplicato per data - vedi 'repeated_fires_same_day_finding' per la spiegazione causale del perche' un singolo giorno D1 puo' comparire piu' volte pre-fix."
+    },
+    "repeated_fires_same_day_finding": {
+      "description": "Pre-fix, alcuni giorni D1 mostrano PIU' di un evento RETEST_SIGNAL_FIRED nello stesso giorno solare (fino a 17 volte) - post-fix questo fenomeno scompare completamente.",
+      "n_distinct_d1_days_with_multiple_fires_pre_fix": 19,
+      "max_fires_same_calendar_day_pre_fix": 17,
+      "n_distinct_d1_days_with_multiple_fires_post_fix": 0,
+      "causal_explanation": "lastBarTime e' un campo dello STESSO SNXSOBState condiviso da tutti i passaggi TF - un passaggio non canonico (H4/H1/M30/M15/M5) che tocca lo stato sovrascrive lastBarTime con il PROPRIO timestamp, disfacendo il gate 'nuova barra' del passaggio D1 stesso: alla chiamata D1 successiva, lastBarTime != curBar0 (sovrascritto da un TF piu' veloce) e D1 rientra nel ramo 'nuova barra' piu' volte nello stesso giorno solare - una manifestazione ANCORA PIU' severa della contaminazione di quanto descritto in Phase 7.13 (non solo 'una zona rubata da un TF veloce', ma 'il gate temporale di D1 stesso e' rotto').",
+      "confirms_guard_fixes_this_too": true
+    },
+    "b_vs_c_structural_comparison": {
+      "b_count": 8,
+      "c_count": 7,
+      "difference": 1,
+      "goal_is_not_b_equals_c": true,
+      "explanation_of_residual": "B usa tick reali MT5 (Model=4) sullo storico effettivo del broker per il simbolo GOLD; C usa una serie M15 derivata per resampling deterministico (fonte diversa, granularita' diversa, convenzione di confine giorno dedotta empiricamente - vedi phase7_13/build_multi_tf_dataset.py). Un residuo diverso da zero fra B e C e' ATTESO e non invalida la correzione: entrambi confermano STRUTTURALMENTE lo stesso meccanismo (guardia TF-scoped elimina la contaminazione), non devono coincidere evento-per-evento perche' partono da dati di prezzo diversi."
+    },
+    "not_a_backtest_campaign": true,
+    "not_used_for_profitability": true,
+    "not_used_for_optimization": true
+  }
+}
