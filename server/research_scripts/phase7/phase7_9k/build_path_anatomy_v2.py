@@ -30,8 +30,12 @@ def build():
     events = dataset["events"]
     opened = [e for e in events if e["funnel_terminal_stage"] == "OPENED"]
 
+    DETERMINATE = ("CONTINUATION", "FAILURE")
+
     per_event = []
-    n_reclassified = 0
+    n_outcome_flips = 0
+    n_coverage_status_changes = 0
+    n_comparable = 0
     for e in opened:
         v2 = e["measurement_B_post_fill_path"]
         v1 = e["post_entry_path_anatomy_V1_SUPERSEDED"]
@@ -42,9 +46,21 @@ def build():
         v2_cls = fp.classify_continuation_failure_v2(v2, 60)
         v1_cls = ("CONTINUATION" if v1_fwd60 and v1_fwd60 > 0 else
                  "FAILURE" if v1_fwd60 is not None else "UNKNOWN")
-        reclassified = v2_cls != v1_cls
-        if reclassified:
-            n_reclassified += 1
+
+        # CORREZIONE: separare un vero cambio di ESITO (continuation<->failure, solo
+        # fra eventi in cui ENTRAMBE le versioni producono una classificazione
+        # determinata) da un cambio di STATO DI COPERTURA (una delle due versioni non
+        # produce affatto un esito determinato - UNKNOWN in V1, UNKNOWN_CENSORED in
+        # V2). Le due cose NON sono la stessa correzione e vanno riportate separate.
+        comparable = v1_cls in DETERMINATE and v2_cls in DETERMINATE
+        outcome_flip = comparable and v1_cls != v2_cls
+        coverage_status_change = (not comparable) and (v1_cls != v2_cls)
+        if comparable:
+            n_comparable += 1
+        if outcome_flip:
+            n_outcome_flips += 1
+        if coverage_status_change:
+            n_coverage_status_changes += 1
 
         per_event.append({
             "event_id": e["event_id"], "direction_label": (
@@ -61,7 +77,9 @@ def build():
             "v1_fwd_return_60d1": v1_fwd60,
             "v2_fwd_return_60d1": v2_fwd60,
             "v1_classification": v1_cls, "v2_classification": v2_cls,
-            "reclassified": reclassified,
+            "comparable_v1_v2": comparable,
+            "outcome_flip": outcome_flip,
+            "coverage_status_change": coverage_status_change,
             "v2_status": v2.get("status"), "v2_coverage_bars": v2.get("coverage_bars"),
         })
 
@@ -73,7 +91,16 @@ def build():
     aggregate_before_after = {
         "n_events": len(per_event),
         "n_censored_at_60_bars": n_censored_60,
-        "n_reclassified_continuation_failure": n_reclassified,
+        "n_comparable_v1_v2_both_determinate": n_comparable,
+        "n_outcome_flips_continuation_vs_failure": n_outcome_flips,
+        "n_outcome_flips_denominator": n_comparable,
+        "n_coverage_status_changes": n_coverage_status_changes,
+        "outcome_flip_breakdown": {
+            "CONTINUATION_to_FAILURE": sum(1 for p in per_event if p["outcome_flip"]
+                                           and p["v1_classification"] == "CONTINUATION"),
+            "FAILURE_to_CONTINUATION": sum(1 for p in per_event if p["outcome_flip"]
+                                           and p["v1_classification"] == "FAILURE"),
+        },
         "mfe": agg(per_event, "v1_mfe", "v2_mfe"),
         "mae": agg(per_event, "v1_mae", "v2_mae"),
         "bars_to_mfe": agg(per_event, "v1_bars_to_mfe", "v2_bars_to_mfe"),
@@ -104,9 +131,32 @@ def build():
         "by_direction_continuation_before_after": by_direction,
         "censoring_note": (
             f"{n_censored_60} evento/i con copertura <60 barre al momento del calcolo "
-            "(vicino alla fine dello storico disponibile) - classificato UNKNOWN_CENSORED, "
-            "MAI FAILURE. Denominatori per le percentuali di continuation ESCLUDONO "
+            "(vicino alla fine dello storico disponibile) - classificato UNKNOWN_CENSORED "
+            "in V2. Denominatori per le percentuali di continuation ESCLUDONO "
             "esplicitamente i censurati."
+        ),
+        "outcome_flip_vs_coverage_status_change_note": (
+            "CORREZIONE (revisione post-commit f70500a): dei 5 eventi con "
+            "classificazione diversa fra V1 e V2, SOLO 4 sono veri cambi di ESITO "
+            "(CONTINUATION<->FAILURE, fra eventi in cui ENTRAMBE le versioni producono "
+            "una classificazione determinata) - 1 CONTINUATION->FAILURE, 3 "
+            "FAILURE->CONTINUATION. Il quinto evento (2026.06.09) NON e' un cambio di "
+            "esito: la sua classificazione V1 era GIA' 'UNKNOWN' (v1_fwd_return_60d1 = "
+            "None, verificato nell'artifact stesso) - V1 non lo classificava come "
+            "FAILURE, un'affermazione fatta erroneamente nel vault report originale di "
+            "questa fase e qui corretta. Il difetto REALE di V1 su questo evento non "
+            "era una classificazione sbagliata, ma l'ASSENZA di un campo di stato "
+            "esplicito (coverage_bars/status) che dichiarasse ESPLICITAMENTE che MFE/"
+            "MAE/bars_to_mfe/bars_to_mae per questo evento erano stati calcolati su una "
+            "finestra INCOMPLETA (i valori numerici v1_mfe/v1_mae esistono comunque, "
+            "calcolati silenziosamente su meno di 60 barre, senza segnalarlo) - V2 "
+            "rende questo esplicito con 'status': 'CENSORED_INSUFFICIENT_BARS' e "
+            "'coverage_bars': 51. Riportare questo come un 'quinto cambio di "
+            "classificazione continuation/failure' (fatto nella prima versione di "
+            "questo artifact) confondeva un cambio di STATO DI COPERTURA con un cambio "
+            "di ESITO - corretto qui: vedere 'n_outcome_flips_continuation_vs_failure' "
+            "(4, su un denominatore di 46 eventi comparabili) e "
+            "'n_coverage_status_changes' (1) come campi separati."
         ),
     }
 
@@ -116,7 +166,9 @@ def main():
     doc = wrap_with_provenance(payload, os.path.basename(__file__))
     save_json(os.path.join(PHASE79K_DIR, "breakout_acc_path_anatomy_v2.json"), doc)
     print(f"canonical_sha256={doc['canonical_sha256']}")
-    print(f"n_reclassified: {payload['aggregate_before_after']['n_reclassified_continuation_failure']}")
+    agg = payload['aggregate_before_after']
+    print(f"n_outcome_flips: {agg['n_outcome_flips_continuation_vs_failure']}/{agg['n_outcome_flips_denominator']}")
+    print(f"n_coverage_status_changes: {agg['n_coverage_status_changes']}")
     print(f"n_censored: {payload['aggregate_before_after']['n_censored_at_60_bars']}")
     return doc
 

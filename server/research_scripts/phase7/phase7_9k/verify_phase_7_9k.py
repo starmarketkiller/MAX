@@ -155,6 +155,47 @@ def verify():
         errors.append(f"attesi 72/3 per EMA100, trovato "
                       f"{prec['n_evaluable_for_ema100']}/{prec['n_not_evaluable_insufficient_warmup']}")
 
+    # --- 10) correzione outcome_flip vs coverage_status_change - ri-derivata
+    # INDIPENDENTEMENTE dal per_event_before_after salvato, non fidandosi del
+    # contatore aggregato del builder. ---
+    path_doc = load_json(os.path.join(PHASE79K_DIR, "breakout_acc_path_anatomy_v2.json"))
+    per_event = path_doc["payload"]["per_event_before_after"]
+    DETERMINATE = ("CONTINUATION", "FAILURE")
+    recomputed_flips = 0
+    recomputed_coverage_changes = 0
+    for p in per_event:
+        comparable = p["v1_classification"] in DETERMINATE and p["v2_classification"] in DETERMINATE
+        if comparable and p["v1_classification"] != p["v2_classification"]:
+            recomputed_flips += 1
+        if (not comparable) and p["v1_classification"] != p["v2_classification"]:
+            recomputed_coverage_changes += 1
+    if recomputed_flips != 4:
+        errors.append(f"ri-derivazione indipendente: attesi 4 outcome_flip, trovati "
+                      f"{recomputed_flips}")
+    if recomputed_coverage_changes != 1:
+        errors.append(f"ri-derivazione indipendente: attesi 1 coverage_status_change, "
+                      f"trovati {recomputed_coverage_changes}")
+
+    # --- 11) nessun evento con v1_fwd_return_60d1=None deve avere v1_classification
+    # diversa da 'UNKNOWN' (verifica diretta che V1 non classificasse mai un evento
+    # indeterminato come FAILURE, correggendo l'affermazione errata del vault report
+    # originale di questa fase). ---
+    for p in per_event:
+        if p["v1_fwd_return_60d1"] is None and p["v1_classification"] != "UNKNOWN":
+            errors.append(f"{p['event_id']}: v1_fwd_return_60d1=None ma "
+                          f"v1_classification={p['v1_classification']} (atteso UNKNOWN)")
+
+    # --- 12) linguaggio: la Decision Card non deve affermare che la persistenza del
+    # pattern dopo una correzione sugli stessi dati dimostri non-casualita', ne' usare
+    # "replica indipendente" o equivalenti. ---
+    decision_text_upper = full_text
+    if "NON DIMOSTRA DA SOLA NON-CASUALITA" not in decision_text_upper.replace("'", ""):
+        errors.append("la decision card non contiene la qualifica esplicita che la "
+                      "persistenza non dimostra da sola non-casualita'")
+    if "REPLICA INDIPENDENTE" in decision_text_upper:
+        errors.append("la decision card usa ancora la frase 'replica indipendente' o "
+                      "equivalente - da evitare per istruzione esplicita")
+
     return errors
 
 

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T12:50:37.440099+00:00",
+  "generated_at": "2026-09-26T13:06:23.955443+00:00",
   "generation_script": "build_path_anatomy_v2.py",
-  "canonical_sha256": "9b57380509aede9fc28fe5219ef3d6f384aee0e0f08ccdd68db3e00034a5f160",
+  "canonical_sha256": "f6a2df62775330ec3e4a5201eed19eb78c1f5716daddae081fee39830836e5dd",
   "payload": {
     "phase": "7.9K",
     "measurement": "B (post-fill, 47 OPENED, fill reale verificato)",
@@ -23,7 +23,9 @@
         "v2_fwd_return_60d1": 205.52,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -43,7 +45,9 @@
         "v2_fwd_return_60d1": 80.74,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -63,7 +67,9 @@
         "v2_fwd_return_60d1": -12.67,
         "v1_classification": "CONTINUATION",
         "v2_classification": "FAILURE",
-        "reclassified": true,
+        "comparable_v1_v2": true,
+        "outcome_flip": true,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -83,7 +89,9 @@
         "v2_fwd_return_60d1": 51.27,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -103,7 +111,9 @@
         "v2_fwd_return_60d1": 88.69,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -123,7 +133,9 @@
         "v2_fwd_return_60d1": 75.17,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -143,7 +155,9 @@
         "v2_fwd_return_60d1": 191.52,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -163,7 +177,9 @@
         "v2_fwd_return_60d1": 26.65,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -183,7 +199,9 @@
         "v2_fwd_return_60d1": -76.21,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -203,7 +221,9 @@
         "v2_fwd_return_60d1": -141.77,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -223,7 +243,9 @@
         "v2_fwd_return_60d1": -223.22,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -243,7 +265,9 @@
         "v2_fwd_return_60d1": -80.21,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -263,7 +287,9 @@
         "v2_fwd_return_60d1": -171.0,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -283,7 +309,9 @@
         "v2_fwd_return_60d1": -27.21,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -303,7 +331,9 @@
         "v2_fwd_return_60d1": -105.3,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -323,7 +353,9 @@
         "v2_fwd_return_60d1": -8.47,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -343,7 +375,9 @@
         "v2_fwd_return_60d1": -23.99,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -363,7 +397,9 @@
         "v2_fwd_return_60d1": -54.47,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -383,7 +419,9 @@
         "v2_fwd_return_60d1": -53.29,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -403,7 +441,9 @@
         "v2_fwd_return_60d1": 1.76,
         "v1_classification": "FAILURE",
         "v2_classification": "CONTINUATION",
-        "reclassified": true,
+        "comparable_v1_v2": true,
+        "outcome_flip": true,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -423,7 +463,9 @@
         "v2_fwd_return_60d1": 3.82,
         "v1_classification": "FAILURE",
         "v2_classification": "CONTINUATION",
-        "reclassified": true,
+        "comparable_v1_v2": true,
+        "outcome_flip": true,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -443,7 +485,9 @@
         "v2_fwd_return_60d1": 85.62,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -463,7 +507,9 @@
         "v2_fwd_return_60d1": -43.6,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -483,7 +529,9 @@
         "v2_fwd_return_60d1": -110.35,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -503,7 +551,9 @@
         "v2_fwd_return_60d1": 62.32,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -523,7 +573,9 @@
         "v2_fwd_return_60d1": 101.03,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -543,7 +595,9 @@
         "v2_fwd_return_60d1": 68.4,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -563,7 +617,9 @@
         "v2_fwd_return_60d1": -85.95,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -583,7 +639,9 @@
         "v2_fwd_return_60d1": -102.76,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -603,7 +661,9 @@
         "v2_fwd_return_60d1": -185.81,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -623,7 +683,9 @@
         "v2_fwd_return_60d1": 40.94,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -643,7 +705,9 @@
         "v2_fwd_return_60d1": -2.78,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -663,7 +727,9 @@
         "v2_fwd_return_60d1": 209.96,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -683,7 +749,9 @@
         "v2_fwd_return_60d1": 62.68,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -703,7 +771,9 @@
         "v2_fwd_return_60d1": 210.81,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -723,7 +793,9 @@
         "v2_fwd_return_60d1": 82.94,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -743,7 +815,9 @@
         "v2_fwd_return_60d1": 80.93,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -763,7 +837,9 @@
         "v2_fwd_return_60d1": 18.66,
         "v1_classification": "FAILURE",
         "v2_classification": "CONTINUATION",
-        "reclassified": true,
+        "comparable_v1_v2": true,
+        "outcome_flip": true,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -783,7 +859,9 @@
         "v2_fwd_return_60d1": -28.79,
         "v1_classification": "FAILURE",
         "v2_classification": "FAILURE",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -803,7 +881,9 @@
         "v2_fwd_return_60d1": 505.14,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -823,7 +903,9 @@
         "v2_fwd_return_60d1": 411.82,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -843,7 +925,9 @@
         "v2_fwd_return_60d1": 330.98,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -863,7 +947,9 @@
         "v2_fwd_return_60d1": 782.1,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -883,7 +969,9 @@
         "v2_fwd_return_60d1": 684.66,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -903,7 +991,9 @@
         "v2_fwd_return_60d1": 556.89,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -923,7 +1013,9 @@
         "v2_fwd_return_60d1": 625.57,
         "v1_classification": "CONTINUATION",
         "v2_classification": "CONTINUATION",
-        "reclassified": false,
+        "comparable_v1_v2": true,
+        "outcome_flip": false,
+        "coverage_status_change": false,
         "v2_status": "FULL_COVERAGE",
         "v2_coverage_bars": 60
       },
@@ -943,7 +1035,9 @@
         "v2_fwd_return_60d1": null,
         "v1_classification": "UNKNOWN",
         "v2_classification": "UNKNOWN_CENSORED",
-        "reclassified": true,
+        "comparable_v1_v2": false,
+        "outcome_flip": false,
+        "coverage_status_change": true,
         "v2_status": "CENSORED_INSUFFICIENT_BARS",
         "v2_coverage_bars": 51
       }
@@ -951,7 +1045,14 @@
     "aggregate_before_after": {
       "n_events": 47,
       "n_censored_at_60_bars": 1,
-      "n_reclassified_continuation_failure": 5,
+      "n_comparable_v1_v2_both_determinate": 46,
+      "n_outcome_flips_continuation_vs_failure": 4,
+      "n_outcome_flips_denominator": 46,
+      "n_coverage_status_changes": 1,
+      "outcome_flip_breakdown": {
+        "CONTINUATION_to_FAILURE": 1,
+        "FAILURE_to_CONTINUATION": 3
+      },
       "mfe": {
         "v1": {
           "n": 47,
@@ -1043,6 +1144,7 @@
         "denominator_v2_excludes_censored": 10
       }
     },
-    "censoring_note": "1 evento/i con copertura <60 barre al momento del calcolo (vicino alla fine dello storico disponibile) - classificato UNKNOWN_CENSORED, MAI FAILURE. Denominatori per le percentuali di continuation ESCLUDONO esplicitamente i censurati."
+    "censoring_note": "1 evento/i con copertura <60 barre al momento del calcolo (vicino alla fine dello storico disponibile) - classificato UNKNOWN_CENSORED in V2. Denominatori per le percentuali di continuation ESCLUDONO esplicitamente i censurati.",
+    "outcome_flip_vs_coverage_status_change_note": "CORREZIONE (revisione post-commit f70500a): dei 5 eventi con classificazione diversa fra V1 e V2, SOLO 4 sono veri cambi di ESITO (CONTINUATION<->FAILURE, fra eventi in cui ENTRAMBE le versioni producono una classificazione determinata) - 1 CONTINUATION->FAILURE, 3 FAILURE->CONTINUATION. Il quinto evento (2026.06.09) NON e' un cambio di esito: la sua classificazione V1 era GIA' 'UNKNOWN' (v1_fwd_return_60d1 = None, verificato nell'artifact stesso) - V1 non lo classificava come FAILURE, un'affermazione fatta erroneamente nel vault report originale di questa fase e qui corretta. Il difetto REALE di V1 su questo evento non era una classificazione sbagliata, ma l'ASSENZA di un campo di stato esplicito (coverage_bars/status) che dichiarasse ESPLICITAMENTE che MFE/MAE/bars_to_mfe/bars_to_mae per questo evento erano stati calcolati su una finestra INCOMPLETA (i valori numerici v1_mfe/v1_mae esistono comunque, calcolati silenziosamente su meno di 60 barre, senza segnalarlo) - V2 rende questo esplicito con 'status': 'CENSORED_INSUFFICIENT_BARS' e 'coverage_bars': 51. Riportare questo come un 'quinto cambio di classificazione continuation/failure' (fatto nella prima versione di questo artifact) confondeva un cambio di STATO DI COPERTURA con un cambio di ESITO - corretto qui: vedere 'n_outcome_flips_continuation_vs_failure' (4, su un denominatore di 46 eventi comparabili) e 'n_coverage_status_changes' (1) come campi separati."
   }
 }

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Phase 7.9K - Rivalutazione del verdetto dopo la correzione del path
 forward. Non mantiene automaticamente MECHANISM_PARTIALLY_SUPPORTED -
-lo ri-deriva dai numeri V2, distinguendo pattern descrittivo (replica
-in direzione, si attenua in ampiezza) da meccanismo dimostrato (mai
-stato affermato). EMA100: 72/75 valutabili, tutti allineati; 3 B-only
-non classificabili (UNKNOWN, non FALSE). Allineamento costante =
-effetto non identificabile, non prova di dipendenza.
+lo ri-deriva dai numeri V2, distinguendo pattern descrittivo (persiste
+in direzione, si attenua in ampiezza - MAI descritto come una conferma indipendente: e' una correzione sugli stessi dati, non un nuovo
+campione) da meccanismo dimostrato (mai stato affermato). La
+persistenza del pattern dopo la correzione non dimostra da sola
+non-casualita' ne' un edge incrementale - entrambi restano da
+verificare. EMA100: 72/75 valutabili, tutti allineati; 3 B-only non
+classificabili (UNKNOWN, non FALSE). Allineamento costante = effetto
+non identificabile, non prova di dipendenza.
 """
 import os
 import sys
@@ -28,6 +31,12 @@ def build():
     path_v2 = load_json(os.path.join(PHASE79K_DIR, "breakout_acc_path_anatomy_v2.json"))["payload"]
     fmap_v2 = load_json(os.path.join(PHASE79K_DIR, "breakout_acc_failure_map_v2.json"))["payload"]
     gate_v2 = load_json(os.path.join(PHASE79K_DIR, "breakout_acc_gate_diagnostic_v2.json"))["payload"]
+
+    agg = path_v2["aggregate_before_after"]
+    n_outcome_flips = agg["n_outcome_flips_continuation_vs_failure"]
+    n_outcome_denom = agg["n_outcome_flips_denominator"]
+    n_coverage_changes = agg["n_coverage_status_changes"]
+    outcome_flip_pct = round(100 * n_outcome_flips / n_outcome_denom, 1)
 
     by_dir = path_v2["by_direction_continuation_before_after"]
     feat_rows = ctx.build_feature_table()["rows"]
@@ -68,16 +77,24 @@ def build():
     sell_v1_pct = by_dir["SELL"]["pct_continuation_v1"]
 
     pattern_descriptive = {
-        "replicates_in_direction": True,
+        "persistent_in_direction_same_dataset_corrected_methodology": True,
         "statement": (
-            f"Il pattern direzionale REPLICA in direzione dopo la correzione "
-            f"metodologica: BUY continuation {buy_v1_pct}%->{buy_v2_pct}%, SELL "
+            f"Il pattern direzionale RESTA PRESENTE dopo una correzione metodologica "
+            "sugli STESSI dati (non un nuovo campione indipendente): BUY continuation "
+            f"{buy_v1_pct}%->{buy_v2_pct}%, SELL "
             f"{sell_v1_pct}%->{sell_v2_pct}% (denominatore V2 esclude 1 censurato). "
-            "La DIREZIONE dell'asimmetria e' quindi robusta alla correzione - ma "
+            "La DIREZIONE dell'asimmetria e' sopravvissuta alla correzione - ma "
             "l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che "
             "raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione "
-            "binaria continuation/failure a un singolo orizzonte e' sensibile a scelte "
-            "metodologiche - 5/47 eventi (10.6%) hanno cambiato classificazione."
+            f"binaria continuation/failure a un singolo orizzonte e' sensibile a scelte "
+            f"metodologiche - {n_outcome_flips}/{n_outcome_denom} eventi comparabili "
+            f"({outcome_flip_pct}%) hanno un vero cambio di ESITO (continuation<->"
+            f"failure), a cui si aggiunge separatamente {n_coverage_changes} evento con "
+            "un cambio di STATO DI COPERTURA (da UNKNOWN a UNKNOWN_CENSORED, non un "
+            "cambio di esito - vedi nota dedicata in breakout_acc_path_anatomy_v2.json). "
+            "Questa persistenza su dati corretti NON dimostra da sola non-casualita' ne' "
+            "un edge incrementale rispetto a un benchmark - nessuno dei due e' stato "
+            "testato in questa fase."
         ),
     }
 
@@ -94,24 +111,38 @@ def build():
     }
 
     fragility_signals = [
-        "5/47 eventi (10.6%) hanno cambiato classificazione continuation/failure a 60 "
-            "barre dopo la sola correzione dell'offset - una classificazione binaria a "
-            "singolo orizzonte e' quindi dimostrabilmente sensibile a dettagli "
-            "metodologici minori.",
+        f"{n_outcome_flips}/{n_outcome_denom} eventi comparabili ({outcome_flip_pct}%) "
+            "hanno un vero cambio di ESITO continuation/failure a 60 barre dopo la sola "
+            "correzione dell'offset - una classificazione binaria a singolo orizzonte e' "
+            "quindi dimostrabilmente sensibile a dettagli metodologici minori. "
+            f"(Separatamente, {n_coverage_changes} evento ha un cambio di STATO DI "
+            "COPERTURA, non di esito - la sua classificazione V1 era gia' UNKNOWN, non "
+            "FAILURE, e resta indeterminata in V2 - CENSORED_INSUFFICIENT_BARS.)",
         f"BROKER_REJECT (controfattuale, N={gate_v2['by_stage']['BROKER_REJECT']['n']}) ha "
             "CAMBIATO SEGNO del forward return mediano dopo la correzione (-10.65 -> "
             f"{gate_v2['by_stage']['BROKER_REJECT']['fwd_return_60d1']['median']}) - "
             "conferma che le analisi controfattuali su campioni piccoli non vanno lette "
             "come risultati stabili.",
-        "1 evento (2026.06.09, SELL) e' CENSURATO a 60 barre (dati insufficienti) - la "
-            "versione precedente lo classificava silenziosamente senza segnalare la "
-            "copertura incompleta.",
+        "1 evento (2026.06.09, SELL) ha copertura insufficiente (51/60 barre) - gia' "
+            "UNKNOWN in V1 (non FAILURE), ora esplicitamente CENSORED_INSUFFICIENT_BARS "
+            "in V2 con coverage_bars dichiarato - il miglioramento e' la ESPLICITAZIONE "
+            "della copertura incompleta (che in V1 valeva gia' per MFE/MAE, calcolati "
+            "silenziosamente su una finestra parziale senza dichiararlo), non una "
+            "correzione della classificazione finale a 60 barre, gia' corretta (UNKNOWN) "
+            "in V1.",
     ]
 
     decision_card = {
         "esiste_evidenza_di_comportamento_non_casuale": {
-            "answer": "SI, COME PATTERN DESCRITTIVO CHE REPLICA IN DIREZIONE",
-            "detail": pattern_descriptive["statement"]},
+            "answer": "PATTERN DESCRITTIVO PERSISTENTE - NON CASUALITA' ED EDGE "
+                "INCREMENTALE ANCORA DA VERIFICARE",
+            "detail": (
+                "La persistenza del pattern direzionale dopo una correzione "
+                "metodologica sugli STESSI dati (non un nuovo campione indipendente) "
+                "NON dimostra da sola non-casualita' - dimostra solo che il pattern non "
+                "era un artefatto puro del difetto di indicizzazione corretto in questa "
+                "fase. " + pattern_descriptive["statement"]
+            )},
         "il_meccanismo_e_comprensibile": {
             "answer": "PARZIALMENTE", "detail": mechanism_demonstrated["statement"]},
         "e_stabile_nel_tempo": {
@@ -127,9 +158,9 @@ def build():
         "principale_failure_mode": {
             "answer": fmap_v2["failure_map_v2"]["primary_failure_mode"]},
         "confidence": {
-            "answer": "BASSA - invariata da Phase 7.9J nella sostanza, RINFORZATA dalla "
-                "scoperta di fragilita' metodologica aggiuntiva (10.6% di "
-                "riclassificazioni da un singolo fix, sign-flip nel gate diagnostic "
+            "answer": f"BASSA - invariata da Phase 7.9J nella sostanza, RINFORZATA dalla "
+                f"scoperta di fragilita' metodologica aggiuntiva ({outcome_flip_pct}% di "
+                "veri cambi di esito da un singolo fix, sign-flip nel gate diagnostic "
                 "controfattuale)."},
         "final_decision": None,
     }
@@ -142,15 +173,18 @@ def build():
     decision_card["final_decision"] = final_decision
     reevaluation_note = (
         "RIVALUTATO esplicitamente (non ereditato automaticamente): il pattern "
-        "direzionale sopravvive qualitativamente alla correzione del difetto di "
-        "indicizzazione (evidenza CONTRO uno scarto puramente artefattuale), ma la "
-        "scoperta che il 10.6% delle classificazioni cambia con un fix minore, e che "
-        "un'analisi controfattuale secondaria (BROKER_REJECT) cambia segno, sono "
-        "segnali di fragilita' che IMPEDISCONO di alzare la decisione a "
-        "MECHANISM_SUPPORTED. Non emergono nemmeno elementi per abbassarla a "
-        "MECHANISM_NOT_SUPPORTED o INSUFFICIENT_EVIDENCE, dato che il pattern "
-        "direzionale principale (BUY vs SELL) e' sopravvissuto nella direzione, non "
-        "solo nella significativita' nominale."
+        "direzionale resta presente qualitativamente dopo la correzione del difetto di "
+        "indicizzazione (evidenza CONTRO uno scarto puramente artefattuale - MA questo "
+        "e' un controllo di robustezza su una correzione metodologica degli STESSI "
+        f"dati, non un secondo campione indipendente), ma la scoperta che "
+        f"il {outcome_flip_pct}% delle classificazioni comparabili ha un vero cambio di "
+        "esito con un fix minore, e che un'analisi controfattuale secondaria "
+        "(BROKER_REJECT) cambia segno, sono segnali di fragilita' che IMPEDISCONO di "
+        "alzare la decisione a MECHANISM_SUPPORTED. Non emergono nemmeno elementi per "
+        "abbassarla a MECHANISM_NOT_SUPPORTED o INSUFFICIENT_EVIDENCE, dato che il "
+        "pattern direzionale principale (BUY vs SELL) e' rimasto nella stessa "
+        "direzione. Non-casualita' ed edge incrementale rispetto a un benchmark "
+        "restano ENTRAMBI da verificare, non dimostrati da questa persistenza."
     )
 
     return {

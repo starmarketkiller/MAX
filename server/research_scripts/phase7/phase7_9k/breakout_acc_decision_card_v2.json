@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-26T12:54:29.664272+00:00",
+  "generated_at": "2026-09-26T13:08:58.300400+00:00",
   "generation_script": "build_decision_card_v2.py",
-  "canonical_sha256": "447eadfa0411a4bbfd44f524e7004b9fc94fd840ba902b74ca0b1e1259f31cfa",
+  "canonical_sha256": "8169d183d8b867d800c103b416d14dca6e0d0e386546fefb0da9222821f22d02",
   "payload": {
     "phase": "7.9K",
     "ema100_precision": {
@@ -15,8 +15,8 @@
     },
     "pattern_descriptive_vs_mechanism_demonstrated": {
       "pattern_descriptive": {
-        "replicates_in_direction": true,
-        "statement": "Il pattern direzionale REPLICA in direzione dopo la correzione metodologica: BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' quindi robusta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 5/47 eventi (10.6%) hanno cambiato classificazione."
+        "persistent_in_direction_same_dataset_corrected_methodology": true,
+        "statement": "Il pattern direzionale RESTA PRESENTE dopo una correzione metodologica sugli STESSI dati (non un nuovo campione indipendente): BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' sopravvissuta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 4/46 eventi comparabili (8.7%) hanno un vero cambio di ESITO (continuation<->failure), a cui si aggiunge separatamente 1 evento con un cambio di STATO DI COPERTURA (da UNKNOWN a UNKNOWN_CENSORED, non un cambio di esito - vedi nota dedicata in breakout_acc_path_anatomy_v2.json). Questa persistenza su dati corretti NON dimostra da sola non-casualita' ne' un edge incrementale rispetto a un benchmark - nessuno dei due e' stato testato in questa fase."
       },
       "mechanism_demonstrated": {
         "status": "MAI AFFERMATO",
@@ -24,14 +24,14 @@
       }
     },
     "fragility_signals_discovered_in_v2": [
-      "5/47 eventi (10.6%) hanno cambiato classificazione continuation/failure a 60 barre dopo la sola correzione dell'offset - una classificazione binaria a singolo orizzonte e' quindi dimostrabilmente sensibile a dettagli metodologici minori.",
+      "4/46 eventi comparabili (8.7%) hanno un vero cambio di ESITO continuation/failure a 60 barre dopo la sola correzione dell'offset - una classificazione binaria a singolo orizzonte e' quindi dimostrabilmente sensibile a dettagli metodologici minori. (Separatamente, 1 evento ha un cambio di STATO DI COPERTURA, non di esito - la sua classificazione V1 era gia' UNKNOWN, non FAILURE, e resta indeterminata in V2 - CENSORED_INSUFFICIENT_BARS.)",
       "BROKER_REJECT (controfattuale, N=9) ha CAMBIATO SEGNO del forward return mediano dopo la correzione (-10.65 -> 12.77) - conferma che le analisi controfattuali su campioni piccoli non vanno lette come risultati stabili.",
-      "1 evento (2026.06.09, SELL) e' CENSURATO a 60 barre (dati insufficienti) - la versione precedente lo classificava silenziosamente senza segnalare la copertura incompleta."
+      "1 evento (2026.06.09, SELL) ha copertura insufficiente (51/60 barre) - gia' UNKNOWN in V1 (non FAILURE), ora esplicitamente CENSORED_INSUFFICIENT_BARS in V2 con coverage_bars dichiarato - il miglioramento e' la ESPLICITAZIONE della copertura incompleta (che in V1 valeva gia' per MFE/MAE, calcolati silenziosamente su una finestra parziale senza dichiararlo), non una correzione della classificazione finale a 60 barre, gia' corretta (UNKNOWN) in V1."
     ],
     "decision_card": {
       "esiste_evidenza_di_comportamento_non_casuale": {
-        "answer": "SI, COME PATTERN DESCRITTIVO CHE REPLICA IN DIREZIONE",
-        "detail": "Il pattern direzionale REPLICA in direzione dopo la correzione metodologica: BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' quindi robusta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 5/47 eventi (10.6%) hanno cambiato classificazione."
+        "answer": "PATTERN DESCRITTIVO PERSISTENTE - NON CASUALITA' ED EDGE INCREMENTALE ANCORA DA VERIFICARE",
+        "detail": "La persistenza del pattern direzionale dopo una correzione metodologica sugli STESSI dati (non un nuovo campione indipendente) NON dimostra da sola non-casualita' - dimostra solo che il pattern non era un artefatto puro del difetto di indicizzazione corretto in questa fase. Il pattern direzionale RESTA PRESENTE dopo una correzione metodologica sugli STESSI dati (non un nuovo campione indipendente): BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' sopravvissuta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 4/46 eventi comparabili (8.7%) hanno un vero cambio di ESITO (continuation<->failure), a cui si aggiunge separatamente 1 evento con un cambio di STATO DI COPERTURA (da UNKNOWN a UNKNOWN_CENSORED, non un cambio di esito - vedi nota dedicata in breakout_acc_path_anatomy_v2.json). Questa persistenza su dati corretti NON dimostra da sola non-casualita' ne' un edge incrementale rispetto a un benchmark - nessuno dei due e' stato testato in questa fase."
       },
       "il_meccanismo_e_comprensibile": {
         "answer": "PARZIALMENTE",
@@ -52,7 +52,7 @@
         "answer": "SELL sovra-rappresentato fra i FAILURE: 8/10 di tutti i SELL (denominatore ESCLUDE i censurati) finiscono in FAILURE a 60 barre D1 (bar semantics corretta) - invariato qualitativamente rispetto a V1/7.9I/7.9J."
       },
       "confidence": {
-        "answer": "BASSA - invariata da Phase 7.9J nella sostanza, RINFORZATA dalla scoperta di fragilita' metodologica aggiuntiva (10.6% di riclassificazioni da un singolo fix, sign-flip nel gate diagnostic controfattuale)."
+        "answer": "BASSA - invariata da Phase 7.9J nella sostanza, RINFORZATA dalla scoperta di fragilita' metodologica aggiuntiva (8.7% di veri cambi di esito da un singolo fix, sign-flip nel gate diagnostic controfattuale)."
       },
       "final_decision": "MECHANISM_PARTIALLY_SUPPORTED"
     },
@@ -63,7 +63,7 @@
       "MECHANISM_NOT_SUPPORTED",
       "INSUFFICIENT_EVIDENCE"
     ],
-    "reevaluation_note": "RIVALUTATO esplicitamente (non ereditato automaticamente): il pattern direzionale sopravvive qualitativamente alla correzione del difetto di indicizzazione (evidenza CONTRO uno scarto puramente artefattuale), ma la scoperta che il 10.6% delle classificazioni cambia con un fix minore, e che un'analisi controfattuale secondaria (BROKER_REJECT) cambia segno, sono segnali di fragilita' che IMPEDISCONO di alzare la decisione a MECHANISM_SUPPORTED. Non emergono nemmeno elementi per abbassarla a MECHANISM_NOT_SUPPORTED o INSUFFICIENT_EVIDENCE, dato che il pattern direzionale principale (BUY vs SELL) e' sopravvissuto nella direzione, non solo nella significativita' nominale.",
+    "reevaluation_note": "RIVALUTATO esplicitamente (non ereditato automaticamente): il pattern direzionale resta presente qualitativamente dopo la correzione del difetto di indicizzazione (evidenza CONTRO uno scarto puramente artefattuale - MA questo e' un controllo di robustezza su una correzione metodologica degli STESSI dati, non un secondo campione indipendente), ma la scoperta che il 8.7% delle classificazioni comparabili ha un vero cambio di esito con un fix minore, e che un'analisi controfattuale secondaria (BROKER_REJECT) cambia segno, sono segnali di fragilita' che IMPEDISCONO di alzare la decisione a MECHANISM_SUPPORTED. Non emergono nemmeno elementi per abbassarla a MECHANISM_NOT_SUPPORTED o INSUFFICIENT_EVIDENCE, dato che il pattern direzionale principale (BUY vs SELL) e' rimasto nella stessa direzione. Non-casualita' ed edge incrementale rispetto a un benchmark restano ENTRAMBI da verificare, non dimostrati da questa persistenza.",
     "no_optimization_no_rescue_no_promotion": true
   }
 }

@@ -255,11 +255,48 @@ class TestBeforeAfterComparison(unittest.TestCase):
     def setUp(self):
         self.payload = path_v2_builder.build()
 
-    def test_reclassification_count_reported(self):
-        self.assertIn("n_reclassified_continuation_failure",
-                      self.payload["aggregate_before_after"])
-        self.assertGreaterEqual(
-            self.payload["aggregate_before_after"]["n_reclassified_continuation_failure"], 0)
+    def test_outcome_flip_and_coverage_status_change_reported_separately(self):
+        # CORREZIONE: un cambio di ESITO (continuation<->failure) e un cambio di STATO
+        # DI COPERTURA (UNKNOWN<->UNKNOWN_CENSORED) sono concetti diversi e NON vanno
+        # sommati in un unico contatore "reclassified".
+        agg = self.payload["aggregate_before_after"]
+        self.assertIn("n_outcome_flips_continuation_vs_failure", agg)
+        self.assertIn("n_outcome_flips_denominator", agg)
+        self.assertIn("n_coverage_status_changes", agg)
+        # Valori noti per il dataset attuale (verificati manualmente sull'artifact):
+        # 4 veri cambi di esito su 46 eventi comparabili, 1 cambio di stato di copertura.
+        self.assertEqual(agg["n_outcome_flips_continuation_vs_failure"], 4)
+        self.assertEqual(agg["n_outcome_flips_denominator"], 46)
+        self.assertEqual(agg["n_coverage_status_changes"], 1)
+
+    def test_outcome_flip_never_true_when_either_side_is_unknown(self):
+        # Un cambio di ESITO richiede che ENTRAMBE le versioni producano una
+        # classificazione determinata (CONTINUATION/FAILURE) - mai se una delle due
+        # e' UNKNOWN/UNKNOWN_CENSORED.
+        for p in self.payload["per_event_before_after"]:
+            if p["v1_classification"] not in ("CONTINUATION", "FAILURE") or \
+               p["v2_classification"] not in ("CONTINUATION", "FAILURE"):
+                self.assertFalse(p["outcome_flip"])
+
+    def test_coverage_status_change_flags_the_previously_unknown_event(self):
+        # L'evento 2026.06.09 era GIA' 'UNKNOWN' in V1 (non 'FAILURE') - deve essere
+        # marcato coverage_status_change, MAI outcome_flip.
+        event = next(p for p in self.payload["per_event_before_after"]
+                    if p["d1_bar_date"] == "2026.06.09")
+        self.assertEqual(event["v1_classification"], "UNKNOWN")
+        self.assertEqual(event["v2_classification"], "UNKNOWN_CENSORED")
+        self.assertFalse(event["outcome_flip"])
+        self.assertTrue(event["coverage_status_change"])
+        self.assertFalse(event["comparable_v1_v2"])
+
+    def test_no_v1_classification_was_ever_failure_when_actually_unknown(self):
+        # Verifica diretta contro il testo del vault report originale (corretto in
+        # questa revisione): nessun evento con v1_fwd_return_60d1=None deve avere
+        # v1_classification='FAILURE'.
+        for p in self.payload["per_event_before_after"]:
+            if p["v1_fwd_return_60d1"] is None:
+                self.assertNotEqual(p["v1_classification"], "FAILURE")
+                self.assertEqual(p["v1_classification"], "UNKNOWN")
 
     def test_censored_events_excluded_from_denominator(self):
         by_dir = self.payload["by_direction_continuation_before_after"]
