@@ -151,12 +151,16 @@ def verify():
     if "NXS_Strat_OrderBlock()" not in ob_mit_body:
         errors.append("OB_MIT non chiama piu' direttamente NXS_Strat_OrderBlock()")
 
-    # --- git diff: SOLO NXS_Strategies.mqh modificato in MQL5/, nessun altro file EA/registry. ---
-    result = subprocess.run(["git", "diff", "--name-only", "HEAD", "--", "MQL5/"],
+    # --- git diff rispetto alla baseline 7b823b9 (Phase 7.13, prima del fix):
+    # SOLO NXS_Strategies.mqh modificato in MQL5/, nessun altro file EA/registry.
+    # Confrontato contro la baseline, non contro HEAD - dopo il commit di questa
+    # fase, HEAD stesso include il fix, quindi un confronto vs HEAD sarebbe
+    # sempre vuoto (non informativo). ---
+    result = subprocess.run(["git", "diff", "--name-only", "7b823b9", "HEAD", "--", "MQL5/"],
                             cwd=ROOT, capture_output=True, text=True)
     changed = [l for l in result.stdout.strip().splitlines() if l]
     if changed != ["MQL5/Include/NEXUS_v1/NXS_Strategies.mqh"]:
-        errors.append(f"file MQL5 modificati oltre al previsto: {changed}")
+        errors.append(f"file MQL5 modificati oltre al previsto rispetto alla baseline 7b823b9: {changed}")
 
     # --- decisione ammessa. ---
     card_path = os.path.join(PHASE714_DIR, "decision_card_v2_order_block_v1.json")

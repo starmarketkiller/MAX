@@ -64,7 +64,10 @@ class TestGuardStaticProperties(unittest.TestCase):
             self.assertIn(token, self.text)
 
     def test_only_order_block_function_modified_in_mql5(self):
-        result = subprocess.run(["git", "diff", "--name-only", "HEAD", "--", "MQL5/"],
+        # confrontato contro la baseline 7b823b9 (Phase 7.13, prima del fix),
+        # non contro HEAD - dopo il commit di questa fase HEAD include gia'
+        # il fix, quindi un confronto vs HEAD sarebbe sempre vuoto.
+        result = subprocess.run(["git", "diff", "--name-only", "7b823b9", "HEAD", "--", "MQL5/"],
                                 cwd=ROOT, capture_output=True, text=True)
         changed = [l for l in result.stdout.strip().splitlines() if l]
         self.assertEqual(changed, ["MQL5/Include/NEXUS_v1/NXS_Strategies.mqh"])
