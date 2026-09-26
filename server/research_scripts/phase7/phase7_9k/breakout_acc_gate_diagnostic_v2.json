@@ -1,0 +1,91 @@
+{
+  "generated_at": "2026-09-26T12:52:06.453921+00:00",
+  "generation_script": "build_gate_diagnostic_v2.py",
+  "canonical_sha256": "f3122520219cd6d363f29bb4efc5ed413e8c6aa440d3b34e53d3506261cad896",
+  "payload": {
+    "phase": "7.9K",
+    "improvement_over_v1": "BLOCKED/BROKER_REJECT ora usano il timestamp REALE del segnale (dal trace live, disponibile per tutti i 67) invece di un placeholder sintetico a mezzogiorno (Phase 7.9I/7.9J) - stesso prezzo proxy (c1), timestamp piu' preciso.",
+    "counterfactual_disclaimer": "BLOCKED/BROKER_REJECT: MAI trade reali - nessuna decisione di modifica del gate deve basarsi su questi numeri da soli.",
+    "by_stage": {
+      "OPENED": {
+        "n": 47,
+        "n_censored": 1,
+        "denominator_excl_censored": 46,
+        "path_method": "REALE (fill verificato)",
+        "mfe": {
+          "n": 47,
+          "mean": 211.2726,
+          "median": 131.27,
+          "stdev": 224.1727
+        },
+        "mae": {
+          "n": 47,
+          "mean": 89.6721,
+          "median": 74.61,
+          "stdev": 73.0467
+        },
+        "fwd_return_60d1": {
+          "n": 46,
+          "mean": 89.3204,
+          "median": 33.795,
+          "stdev": 230.1098
+        },
+        "n_continuation": 27,
+        "pct_continuation": 58.7
+      },
+      "BLOCKED": {
+        "n": 11,
+        "n_censored": 0,
+        "denominator_excl_censored": 11,
+        "path_method": "Timestamp REALE del segnale (trace live) + prezzo c1 - MAI un fill reale, il segnale non e' mai stato eseguito",
+        "mfe": {
+          "n": 11,
+          "mean": 266.4164,
+          "median": 155.15,
+          "stdev": 264.7023
+        },
+        "mae": {
+          "n": 11,
+          "mean": 120.0045,
+          "median": 155.16,
+          "stdev": 79.5391
+        },
+        "fwd_return_60d1": {
+          "n": 11,
+          "mean": 126.6427,
+          "median": 97.18,
+          "stdev": 264.3064
+        },
+        "n_continuation": 7,
+        "pct_continuation": 63.6
+      },
+      "BROKER_REJECT": {
+        "n": 9,
+        "n_censored": 0,
+        "denominator_excl_censored": 9,
+        "path_method": "Timestamp REALE del segnale (trace live) + prezzo c1 - MAI un fill reale, il segnale non e' mai stato eseguito",
+        "mfe": {
+          "n": 9,
+          "mean": 542.0011,
+          "median": 308.48,
+          "stdev": 507.4268
+        },
+        "mae": {
+          "n": 9,
+          "mean": 423.6144,
+          "median": 262.98,
+          "stdev": 381.926
+        },
+        "fwd_return_60d1": {
+          "n": 9,
+          "mean": 54.2844,
+          "median": 12.77,
+          "stdev": 411.1303
+        },
+        "n_continuation": 6,
+        "pct_continuation": 66.7
+      }
+    },
+    "sample_size_caveat": "BLOCKED n=11, BROKER_REJECT n=9 - entrambi piccoli, non decidibile se il gate filtra causalmente, casualmente, o elimina eventi migliori."
+  }
+}

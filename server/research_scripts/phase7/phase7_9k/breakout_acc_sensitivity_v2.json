@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-09-26T12:52:32.170356+00:00",
+  "generation_script": "build_sensitivity_v2.py",
+  "canonical_sha256": "04891c044e0484c7fa50441c0365c76f81b2b7c90b59cf1debecaf64487a147f",
+  "payload": {
+    "phase": "7.9K",
+    "measurement": "A (post-segnale, uniforme, bar semantics corretta)",
+    "timestamp_disclaimer": "I 67 live-observed usano il timestamp REALE del segnale (dal trace live) - gli 8 B-only usano un timestamp SINTETICO (SYNTHETIC_NOT_OBSERVED_NOON_PLACEHOLDER, mai un tempo di esecuzione osservato).",
+    "population_A_67": {
+      "label": "Population A (67 live-observed, misurazione A)",
+      "n": 67,
+      "n_censored_at_60": 1,
+      "mfe": {
+        "n": 67,
+        "mean": 265.5673,
+        "median": 155.15,
+        "stdev": 299.4281
+      },
+      "fwd_return_60d1": {
+        "n": 66,
+        "mean": 91.0673,
+        "median": 37.72,
+        "stdev": 263.6662
+      }
+    },
+    "population_all_75": {
+      "label": "Tutti i 75 (misurazione A)",
+      "n": 75,
+      "n_censored_at_60": 1,
+      "mfe": {
+        "n": 75,
+        "mean": 248.0432,
+        "median": 151.43,
+        "stdev": 288.858
+      },
+      "fwd_return_60d1": {
+        "n": 74,
+        "mean": 81.8464,
+        "median": 29.55,
+        "stdev": 252.7521
+      }
+    },
+    "population_C_8_alone": {
+      "label": "Gli 8 B-only da soli (misurazione A, timestamp SINTETICO)",
+      "n": 8,
+      "n_censored_at_60": 0,
+      "mfe": {
+        "n": 8,
+        "mean": 101.2788,
+        "median": 66.455,
+        "stdev": 95.7795
+      },
+      "fwd_return_60d1": {
+        "n": 8,
+        "mean": 5.7737,
+        "median": -40.445,
+        "stdev": 115.1436
+      }
+    },
+    "delta_fwd_return_60d1_median": -8.17
+  }
+}

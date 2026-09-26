@@ -1,0 +1,675 @@
+{
+  "generated_at": "2026-09-26T12:51:12.756496+00:00",
+  "generation_script": "build_natural_horizon_v2.py",
+  "canonical_sha256": "19f57a737cccaf742f85823dab48ad51b38cd1cd41671cf29e5a3543646f0efe",
+  "payload": {
+    "phase": "7.9K",
+    "measurement": "B (post-fill, 47 OPENED)",
+    "bar_semantics": "CORRETTA (bar 1 = prima barra D1 completa, vedi nxs_forward_path_v2.py) - non piu' l'offset di +1 confermato in Phase 7.9J.",
+    "epistemic_caveats_still_apply": "Le cautele di Phase 7.9J (finestre forward sovrapposte fra eventi, dipendenza seriale entro-evento, CI95% non inferenzialmente valido) restano IDENTICHE - la correzione qui e' SOLO dell'offset di indicizzazione, non introduce indipendenza statistica che non esisteva. Vedi breakout_acc_natural_horizon_reconciliation_v1.json (Phase 7.9J) per l'analisi completa, ancora valida in V2.",
+    "n_of_47_used": 47,
+    "per_bar_curve": [
+      {
+        "bar_d1": 1,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 9.8311,
+          "se": 6.5797,
+          "ci95_low": -3.0651,
+          "ci95_high": 22.7272
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 2,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 7.1694,
+          "se": 5.9803,
+          "ci95_low": -4.5521,
+          "ci95_high": 18.8908
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 3,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 9.6945,
+          "se": 6.4824,
+          "ci95_low": -3.011,
+          "ci95_high": 22.4
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 4,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 12.6134,
+          "se": 6.9448,
+          "ci95_low": -0.9985,
+          "ci95_high": 26.2253
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 5,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 13.3504,
+          "se": 8.3641,
+          "ci95_low": -3.0432,
+          "ci95_high": 29.7441
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 6,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 14.8809,
+          "se": 8.1479,
+          "ci95_low": -1.089,
+          "ci95_high": 30.8507
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 7,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 17.1111,
+          "se": 8.7357,
+          "ci95_low": -0.011,
+          "ci95_high": 34.2331
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 8,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 19.7589,
+          "se": 10.7455,
+          "ci95_low": -1.3022,
+          "ci95_high": 40.8201
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 9,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 25.0547,
+          "se": 11.5004,
+          "ci95_low": 2.514,
+          "ci95_high": 47.5954
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 10,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 27.8728,
+          "se": 13.4624,
+          "ci95_low": 1.4865,
+          "ci95_high": 54.259
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 11,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 31.6915,
+          "se": 15.9345,
+          "ci95_low": 0.4599,
+          "ci95_high": 62.9231
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 12,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 29.4853,
+          "se": 14.5059,
+          "ci95_low": 1.0538,
+          "ci95_high": 57.9169
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 13,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 26.2702,
+          "se": 15.36,
+          "ci95_low": -3.8355,
+          "ci95_high": 56.3759
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 14,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 23.2977,
+          "se": 13.9108,
+          "ci95_low": -3.9676,
+          "ci95_high": 50.5629
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 15,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 26.1149,
+          "se": 15.1436,
+          "ci95_low": -3.5665,
+          "ci95_high": 55.7963
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 16,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 23.2502,
+          "se": 14.982,
+          "ci95_low": -6.1145,
+          "ci95_high": 52.615
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 17,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 24.8377,
+          "se": 14.3849,
+          "ci95_low": -3.3567,
+          "ci95_high": 53.0321
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 18,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 26.1838,
+          "se": 14.3046,
+          "ci95_low": -1.8533,
+          "ci95_high": 54.2209
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 19,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 30.4021,
+          "se": 15.3118,
+          "ci95_low": 0.391,
+          "ci95_high": 60.4133
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 20,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 36.2387,
+          "se": 16.1323,
+          "ci95_low": 4.6194,
+          "ci95_high": 67.858
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 21,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 38.944,
+          "se": 17.5824,
+          "ci95_low": 4.4826,
+          "ci95_high": 73.4055
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 22,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 41.344,
+          "se": 17.6154,
+          "ci95_low": 6.8178,
+          "ci95_high": 75.8703
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 23,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 45.5128,
+          "se": 17.8106,
+          "ci95_low": 10.604,
+          "ci95_high": 80.4215
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 24,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 55.2466,
+          "se": 20.4164,
+          "ci95_low": 15.2305,
+          "ci95_high": 95.2627
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 25,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 57.6957,
+          "se": 21.037,
+          "ci95_low": 16.4633,
+          "ci95_high": 98.9282
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 26,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 60.6596,
+          "se": 21.3691,
+          "ci95_low": 18.7762,
+          "ci95_high": 102.543
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 27,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 68.167,
+          "se": 23.9227,
+          "ci95_low": 21.2786,
+          "ci95_high": 115.0555
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 28,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 66.9051,
+          "se": 22.2278,
+          "ci95_low": 23.3385,
+          "ci95_high": 110.4717
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 29,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.1432,
+          "se": 24.1945,
+          "ci95_low": 22.722,
+          "ci95_high": 117.5644
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 30,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.7117,
+          "se": 22.9143,
+          "ci95_low": 25.7997,
+          "ci95_high": 115.6237
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 31,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.0998,
+          "se": 23.1818,
+          "ci95_low": 24.6635,
+          "ci95_high": 115.5361
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 32,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 73.4349,
+          "se": 23.8543,
+          "ci95_low": 26.6804,
+          "ci95_high": 120.1893
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 33,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 77.57,
+          "se": 25.0883,
+          "ci95_low": 28.3969,
+          "ci95_high": 126.7431
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 34,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.3904,
+          "se": 23.6101,
+          "ci95_low": 24.1146,
+          "ci95_high": 116.6662
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 35,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 74.3432,
+          "se": 25.9549,
+          "ci95_low": 23.4716,
+          "ci95_high": 125.2148
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 36,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 64.5557,
+          "se": 22.1526,
+          "ci95_low": 21.1367,
+          "ci95_high": 107.9748
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 37,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 61.6411,
+          "se": 21.581,
+          "ci95_low": 19.3423,
+          "ci95_high": 103.9398
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 38,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 69.0485,
+          "se": 23.0151,
+          "ci95_low": 23.939,
+          "ci95_high": 114.1581
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 39,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 67.1549,
+          "se": 21.9981,
+          "ci95_low": 24.0386,
+          "ci95_high": 110.2711
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 40,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 62.3396,
+          "se": 20.549,
+          "ci95_low": 22.0635,
+          "ci95_high": 102.6156
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 41,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 61.427,
+          "se": 20.2765,
+          "ci95_low": 21.6851,
+          "ci95_high": 101.169
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 42,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 63.8623,
+          "se": 21.2581,
+          "ci95_low": 22.1964,
+          "ci95_high": 105.5282
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 43,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.1145,
+          "se": 22.6008,
+          "ci95_low": 25.8168,
+          "ci95_high": 114.4121
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 44,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 70.2623,
+          "se": 23.0993,
+          "ci95_low": 24.9877,
+          "ci95_high": 115.537
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 45,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 73.5909,
+          "se": 24.0702,
+          "ci95_low": 26.4132,
+          "ci95_high": 120.7685
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 46,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 71.0604,
+          "se": 24.5952,
+          "ci95_low": 22.8538,
+          "ci95_high": 119.2671
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 47,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 76.4694,
+          "se": 25.4309,
+          "ci95_low": 26.6248,
+          "ci95_high": 126.3139
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 48,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 74.0262,
+          "se": 25.2778,
+          "ci95_low": 24.4817,
+          "ci95_high": 123.5707
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 49,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 71.4006,
+          "se": 25.2819,
+          "ci95_low": 21.848,
+          "ci95_high": 120.9533
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 50,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 76.6747,
+          "se": 27.1074,
+          "ci95_low": 23.5442,
+          "ci95_high": 129.8052
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 51,
+        "close_to_close_return": {
+          "n": 47,
+          "mean": 73.2777,
+          "se": 27.8763,
+          "ci95_low": 18.6401,
+          "ci95_high": 127.9152
+        },
+        "n_with_data_at_this_bar": 47
+      },
+      {
+        "bar_d1": 52,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 79.8209,
+          "se": 29.5685,
+          "ci95_low": 21.8665,
+          "ci95_high": 137.7752
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 53,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 77.2004,
+          "se": 29.815,
+          "ci95_low": 18.7631,
+          "ci95_high": 135.6378
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 54,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 75.0687,
+          "se": 29.4593,
+          "ci95_low": 17.3285,
+          "ci95_high": 132.8089
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 55,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 74.9604,
+          "se": 28.8671,
+          "ci95_low": 18.381,
+          "ci95_high": 131.5399
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 56,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 76.6893,
+          "se": 28.3732,
+          "ci95_low": 21.078,
+          "ci95_high": 132.3007
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 57,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 84.5574,
+          "se": 29.5432,
+          "ci95_low": 26.6528,
+          "ci95_high": 142.462
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 58,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 89.3876,
+          "se": 32.8493,
+          "ci95_low": 25.0029,
+          "ci95_high": 153.7723
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 59,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 88.9639,
+          "se": 33.6754,
+          "ci95_low": 22.96,
+          "ci95_high": 154.9678
+        },
+        "n_with_data_at_this_bar": 46
+      },
+      {
+        "bar_d1": 60,
+        "close_to_close_return": {
+          "n": 46,
+          "mean": 89.3204,
+          "se": 33.9278,
+          "ci95_low": 22.8219,
+          "ci95_high": 155.819
+        },
+        "n_with_data_at_this_bar": 46
+      }
+    ],
+    "shape_description": "Il ritorno medio close-to-close (misurazione B, semantica corretta) va da ~9.8 (bar 1, ora il giorno subito dopo il fill) a ~89.3 (bar 60)."
+  }
+}

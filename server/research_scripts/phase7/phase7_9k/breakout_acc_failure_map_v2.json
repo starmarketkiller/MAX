@@ -1,0 +1,136 @@
+{
+  "generated_at": "2026-09-26T12:53:11.619767+00:00",
+  "generation_script": "build_failure_map_v2.py",
+  "canonical_sha256": "00d929feea6cf44aae8f4d8b68bc7815b56cea41e03156493e37e61ee950ad95",
+  "payload": {
+    "phase": "7.9K",
+    "buy_sell_year_cross_v2": [
+      {
+        "direction": "BUY",
+        "year": 2019,
+        "n": 3,
+        "n_continuation": 2,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2020,
+        "n": 7,
+        "n_continuation": 5,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2021,
+        "n": 4,
+        "n_continuation": 0,
+        "n_censored": 0
+      },
+      {
+        "direction": "SELL",
+        "year": 2021,
+        "n": 5,
+        "n_continuation": 0,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2022,
+        "n": 2,
+        "n_continuation": 2,
+        "n_censored": 0
+      },
+      {
+        "direction": "SELL",
+        "year": 2022,
+        "n": 4,
+        "n_continuation": 2,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2023,
+        "n": 6,
+        "n_continuation": 3,
+        "n_censored": 0
+      },
+      {
+        "direction": "SELL",
+        "year": 2023,
+        "n": 1,
+        "n_continuation": 0,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2024,
+        "n": 7,
+        "n_continuation": 6,
+        "n_censored": 0
+      },
+      {
+        "direction": "BUY",
+        "year": 2025,
+        "n": 7,
+        "n_continuation": 7,
+        "n_censored": 0
+      },
+      {
+        "direction": "SELL",
+        "year": 2026,
+        "n": 1,
+        "n_continuation": 0,
+        "n_censored": 1
+      }
+    ],
+    "failure_map_v2": {
+      "n_failures": 19,
+      "n_continuations": 27,
+      "n_censored_excluded": 1,
+      "failure_profile": {
+        "n": 19,
+        "pct_buy": 57.9,
+        "breakout_magnitude_price_units": {
+          "n": 19,
+          "mean": 23.8105,
+          "median": 22.76,
+          "stdev": 15.5658
+        }
+      },
+      "continuation_profile": {
+        "n": 27,
+        "pct_buy": 92.6,
+        "breakout_magnitude_price_units": {
+          "n": 27,
+          "mean": 30.3511,
+          "median": 28.25,
+          "stdev": 15.9269
+        }
+      },
+      "primary_failure_mode": "SELL sovra-rappresentato fra i FAILURE: 8/10 di tutti i SELL (denominatore ESCLUDE i censurati) finiscono in FAILURE a 60 barre D1 (bar semantics corretta) - invariato qualitativamente rispetto a V1/7.9I/7.9J."
+    },
+    "robustness_v2": {
+      "sample_size": {
+        "n_opened": 47,
+        "n_buy": 36,
+        "n_sell": 11,
+        "n_censored_at_60": 1
+      },
+      "concentration_by_year": {
+        "year_counts": {
+          "2019": 3,
+          "2020": 7,
+          "2021": 9,
+          "2022": 6,
+          "2023": 7,
+          "2024": 7,
+          "2025": 7,
+          "2026": 1
+        },
+        "max_single_year_share_pct": 19.1
+      },
+      "buy_sell_dependence": "FORTE - invariata dopo la correzione (vedi confronto prima/dopo in breakout_acc_path_anatomy_v2.json).",
+      "overall_confidence": "BASSA - stesse ragioni di Phase 7.9J (N piccolo, un solo regime, confondimento trend/direzione) + ora esplicitamente 1 evento censurato a 60 barre."
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-09-26T12:54:29.664272+00:00",
+  "generation_script": "build_decision_card_v2.py",
+  "canonical_sha256": "447eadfa0411a4bbfd44f524e7004b9fc94fd840ba902b74ca0b1e1259f31cfa",
+  "payload": {
+    "phase": "7.9K",
+    "ema100_precision": {
+      "n_total_events": 75,
+      "n_evaluable_for_ema100": 72,
+      "n_not_evaluable_insufficient_warmup": 3,
+      "not_evaluable_are_all_in_b_only": true,
+      "n_misaligned_among_evaluable": 0,
+      "precise_statement": "72/75 eventi sono valutabili per l'allineamento EMA100 (i restanti 3 - tutti fra gli 8 B-only, warmup storico insufficiente a inizio 2019 - sono UNKNOWN, mai contati come allineati o non allineati). Fra i 72 valutabili, 72/72 sono allineati (100% degli evento valutabili, 0 eccezioni).",
+      "alignment_constant_interpretation": "IMPORTANTE: un allineamento costante (0 eccezioni su tutti i valutabili) significa che l'EFFETTO dell'allineamento di trend NON E' IDENTIFICABILE in questo campione - non esiste un gruppo di controllo (non-allineato) con cui confrontare. Questo NON dimostra che il comportamento favorevole osservato dipenda dall'allineamento - dimostra solo che, IN QUESTO CAMPIONE, direzione e allineamento coincidono sempre, rendendo la domanda stessa non testabile con questi dati. Trattare l'allineamento costante come 'evidenza a favore' di un meccanismo di trend (come faceva implicitamente Phase 7.9I) e' un errore di interpretazione - corretto qui."
+    },
+    "pattern_descriptive_vs_mechanism_demonstrated": {
+      "pattern_descriptive": {
+        "replicates_in_direction": true,
+        "statement": "Il pattern direzionale REPLICA in direzione dopo la correzione metodologica: BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' quindi robusta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 5/47 eventi (10.6%) hanno cambiato classificazione."
+      },
+      "mechanism_demonstrated": {
+        "status": "MAI AFFERMATO",
+        "statement": "Nessuna fase di questo lavoro (7.9I, 7.9J, 7.9K) ha mai affermato un meccanismo CAUSALMENTE dimostrato - solo un'etichetta descrittiva candidata (trend persistence / direction-dependent). Questo resta invariato: il pattern descrittivo e' ora piu' robusto (sopravvive a una correzione metodologica sostanziale) ma NON e' un meccanismo dimostrato - manca un test su un regime di mercato diverso, un confronto con un benchmark, e un gruppo di controllo per l'allineamento di trend."
+      }
+    },
+    "fragility_signals_discovered_in_v2": [
+      "5/47 eventi (10.6%) hanno cambiato classificazione continuation/failure a 60 barre dopo la sola correzione dell'offset - una classificazione binaria a singolo orizzonte e' quindi dimostrabilmente sensibile a dettagli metodologici minori.",
+      "BROKER_REJECT (controfattuale, N=9) ha CAMBIATO SEGNO del forward return mediano dopo la correzione (-10.65 -> 12.77) - conferma che le analisi controfattuali su campioni piccoli non vanno lette come risultati stabili.",
+      "1 evento (2026.06.09, SELL) e' CENSURATO a 60 barre (dati insufficienti) - la versione precedente lo classificava silenziosamente senza segnalare la copertura incompleta."
+    ],
+    "decision_card": {
+      "esiste_evidenza_di_comportamento_non_casuale": {
+        "answer": "SI, COME PATTERN DESCRITTIVO CHE REPLICA IN DIREZIONE",
+        "detail": "Il pattern direzionale REPLICA in direzione dopo la correzione metodologica: BUY continuation 66.7%->69.4%, SELL 9.1%->20.0% (denominatore V2 esclude 1 censurato). La DIREZIONE dell'asimmetria e' quindi robusta alla correzione - ma l'AMPIEZZA si e' attenuata in modo non trascurabile per SELL (piu' che raddoppiata, da 9.1% a 20.0%), a dimostrazione che la classificazione binaria continuation/failure a un singolo orizzonte e' sensibile a scelte metodologiche - 5/47 eventi (10.6%) hanno cambiato classificazione."
+      },
+      "il_meccanismo_e_comprensibile": {
+        "answer": "PARZIALMENTE",
+        "detail": "Nessuna fase di questo lavoro (7.9I, 7.9J, 7.9K) ha mai affermato un meccanismo CAUSALMENTE dimostrato - solo un'etichetta descrittiva candidata (trend persistence / direction-dependent). Questo resta invariato: il pattern descrittivo e' ora piu' robusto (sopravvive a una correzione metodologica sostanziale) ma NON e' un meccanismo dimostrato - manca un test su un regime di mercato diverso, un confronto con un benchmark, e un gruppo di controllo per l'allineamento di trend."
+      },
+      "e_stabile_nel_tempo": {
+        "answer": "NON VERIFICABILE CON QUESTO CAMPIONE",
+        "detail": "Invariato da Phase 7.9J - un solo regime di mercato rappresentato."
+      },
+      "dipende_fortemente_da_pochi_anni_direzioni": {
+        "answer": "SI, FORTEMENTE (direzione) - E L'ALLINEAMENTO NON E' TESTABILE",
+        "detail": "IMPORTANTE: un allineamento costante (0 eccezioni su tutti i valutabili) significa che l'EFFETTO dell'allineamento di trend NON E' IDENTIFICABILE in questo campione - non esiste un gruppo di controllo (non-allineato) con cui confrontare. Questo NON dimostra che il comportamento favorevole osservato dipenda dall'allineamento - dimostra solo che, IN QUESTO CAMPIONE, direzione e allineamento coincidono sempre, rendendo la domanda stessa non testabile con questi dati. Trattare l'allineamento costante come 'evidenza a favore' di un meccanismo di trend (come faceva implicitamente Phase 7.9I) e' un errore di interpretazione - corretto qui."
+      },
+      "il_natural_horizon_e_identificabile": {
+        "answer": "NO - SOLO DESCRITTIVO (invariato da Phase 7.9J, la correzione dell'offset non risolve la sovrapposizione delle finestre ne' la dipendenza entro-evento)."
+      },
+      "principale_failure_mode": {
+        "answer": "SELL sovra-rappresentato fra i FAILURE: 8/10 di tutti i SELL (denominatore ESCLUDE i censurati) finiscono in FAILURE a 60 barre D1 (bar semantics corretta) - invariato qualitativamente rispetto a V1/7.9I/7.9J."
+      },
+      "confidence": {
+        "answer": "BASSA - invariata da Phase 7.9J nella sostanza, RINFORZATA dalla scoperta di fragilita' metodologica aggiuntiva (10.6% di riclassificazioni da un singolo fix, sign-flip nel gate diagnostic controfattuale)."
+      },
+      "final_decision": "MECHANISM_PARTIALLY_SUPPORTED"
+    },
+    "final_decision": "MECHANISM_PARTIALLY_SUPPORTED",
+    "final_decision_allowed_values": [
+      "MECHANISM_SUPPORTED",
+      "MECHANISM_PARTIALLY_SUPPORTED",
+      "MECHANISM_NOT_SUPPORTED",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "reevaluation_note": "RIVALUTATO esplicitamente (non ereditato automaticamente): il pattern direzionale sopravvive qualitativamente alla correzione del difetto di indicizzazione (evidenza CONTRO uno scarto puramente artefattuale), ma la scoperta che il 10.6% delle classificazioni cambia con un fix minore, e che un'analisi controfattuale secondaria (BROKER_REJECT) cambia segno, sono segnali di fragilita' che IMPEDISCONO di alzare la decisione a MECHANISM_SUPPORTED. Non emergono nemmeno elementi per abbassarla a MECHANISM_NOT_SUPPORTED o INSUFFICIENT_EVIDENCE, dato che il pattern direzionale principale (BUY vs SELL) e' sopravvissuto nella direzione, non solo nella significativita' nominale.",
+    "no_optimization_no_rescue_no_promotion": true
+  }
+}
