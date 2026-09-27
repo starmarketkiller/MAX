@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-09-27T13:58:37.832558+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_17\\build_tsi_minimal_cases.py",
+  "canonical_sha256": "1a8453e5885bdbe80649136673c253a01a5f93fa46602665bc89a5c8b370bab6",
+  "payload": {
+    "method": "Reimplementazione INDIPENDENTE in aritmetica razionale esatta (fractions.Fraction) per i valori attesi, poi confrontata con tsi_update() (float, la funzione sotto verifica) entro tolleranza 1e-9 - NON e' la stessa funzione, elimina anche il rischio di mascheramento da arrotondamento float.",
+    "shared_initial_state": {
+      "sm1": 1.0,
+      "sm1abs": 3.0,
+      "sm2": 1.0,
+      "sm2abs": 3.0,
+      "signal": 33.333333333333336,
+      "prev_close": 2000.0
+    },
+    "step_0_shared_D1_1_close_2010": {
+      "sm1": "22/13",
+      "sm1abs": "46/13",
+      "sm2": "100/91",
+      "sm2abs": "40/13",
+      "tsi": "250/7",
+      "signal": "133700613937561607/3940649673949184"
+    },
+    "stream_A_contaminated": {
+      "description": "D1_1 (2010) -> H4_a (2008, NON canonico) -> H4_b (2015, NON canonico) -> D1_2 (2020)",
+      "step_h4a": {
+        "sm1": "238/169",
+        "sm1abs": "578/169",
+        "sm2": "9466/8281",
+        "sm2abs": "3698/1183",
+        "tsi": "473300/12943",
+        "signal": "1008081518465961203629/29145044988528164864"
+      },
+      "step_h4b": {
+        "sm1": "4039/2197",
+        "sm1abs": "8119/2197",
+        "sm2": "936259/753571",
+        "sm2abs": "345277/107653",
+        "tsi": "93625900/2416939",
+        "signal": "1434020811295749218193427499/40252454794016156718989312"
+      },
+      "step_d1_2": {
+        "sm1": "59453/28561",
+        "sm1abs": "108413/28561",
+        "sm2": "93420581/68574961",
+        "sm2abs": "32243843/9796423",
+        "tsi": "9342058100/225706901",
+        "signal": "192435135887790074277476792012205571/5191575330971417186841945979224064"
+      },
+      "pc_used_for_D1_2": "5"
+    },
+    "stream_B_tf_scoped": {
+      "description": "D1_1 (2010) -> D1_2 (2020) DIRETTAMENTE (i passaggi H4 non toccano mai lo stato)",
+      "step_d1_2": {
+        "sm1": "394/169",
+        "sm1abs": "682/169",
+        "sm2": "10558/8281",
+        "sm2abs": "3802/1183",
+        "tsi": "527900/13307",
+        "signal": "1059675881697024449521/29964700120709595136"
+      },
+      "pc_used_for_D1_2": "10"
+    },
+    "divergence_at_D1_2": {
+      "tsi_stream_A": 41.39021916746799,
+      "tsi_stream_B": 39.670849928609,
+      "signal_stream_A": 37.066809902531595,
+      "signal_stream_B": 35.36414105358082,
+      "tsi_difference": 1.719369238858987,
+      "note": "Sulla STESSA barra D1_2, con lo STESSO prezzo di chiusura (2020.0), le due ricostruzioni producono un TSI e una signal-line NUMERICAMENTE DIVERSI - non solo un segnale diverso, il VALORE DELL'INDICATORE stesso diverge (coerente con la formalizzazione del punto 2: un filtro ricorsivo continuo non puo' 'ripulirsi')."
+    },
+    "float_implementation_cross_check": {
+      "tsi_update_stream_A_matches_exact_reference": true,
+      "tsi_update_stream_B_matches_exact_reference": true,
+      "tolerance": 1e-09
+    },
+    "expected_values_computed_independently_not_from_function_under_test": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-09-27T13:56:58.949420+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_17\\build_tsi_mechanism_formalization.py",
+  "canonical_sha256": "9ccd3e88dce3ceec670d2ee5e0e73f3923347052f2c98920a9b8e99654b57df3",
+  "payload": {
+    "recursion_intended_single_tf": {
+      "description": "Per ogni chiusura VERA della barra D1 (indice k = 1,2,3... una per giorno di mercato), con aLong=2/(L+1), aShort=2/(S+1), aSig=2/(Sig+1):",
+      "equations": [
+        "pc_k = close_k - close_{k-1}   (priceChange, SOLO D1)",
+        "sm1_k = aLong*pc_k + (1-aLong)*sm1_{k-1}",
+        "sm1Abs_k = aLong*|pc_k| + (1-aLong)*sm1Abs_{k-1}",
+        "sm2_k = aShort*sm1_k + (1-aShort)*sm2_{k-1}",
+        "sm2Abs_k = aShort*sm1Abs_k + (1-aShort)*sm2Abs_{k-1}",
+        "TSI_k = 100 * sm2_k / sm2Abs_k",
+        "signal_k = aSig*TSI_k + (1-aSig)*signal_{k-1}"
+      ],
+      "memory_property": "Il peso di un evento passato j sull'indice corrente k decade come una combinazione di (1-aLong)^(k-j) e (1-aShort)^(k-j) - MAI zero, ma trascurabile oltre qualche multiplo del periodo. Con L=25/S=13, la 'memoria' effettiva e' dell'ordine di settimane/mesi di BARRE D1 REALI."
+    },
+    "recursion_actual_multi_tf_contaminated": {
+      "description": "L'EA reale applica la STESSA ricorsione ma ad OGNI evento di cambio-barra rilevato su QUALUNQUE passaggio TF del router multi-TF (D1, H4, H1, M30, M15, M5 - nessuna guardia TF, NXS_Strategies.mqh:1366-1414). L'indice k NON conta piu' i giorni di mercato, conta OGNI transizione di barra su OGNI TF:",
+      "equations": [
+        "pc_k = c1(tf_k) - prevClose_{k-1}   (c1 preso dal TF del passaggio k, QUALUNQUE esso sia)",
+        "... stesse formule di sm1/sm1Abs/sm2/sm2Abs/TSI/signal, MA applicate una volta per OGNI passaggio non canonico, non solo D1"
+      ],
+      "rate_amplification": "Nello stesso arco di UN giorno solare, il router genera circa 1 evento D1 + ~6 H4 + ~24 H1 + ~48 M30 + ~96 M15 + ~288 M5 = ORDINE DI GRANDEZZA ~450 eventi di mutazione, contro il singolo evento D1 'inteso'. Confermato empiricamente per ORDER_BLOCK in Phase 7.14 (18485 mutazioni non canoniche su 759 barre D1 = ~24x, coerente in ordine di grandezza data la diversa frequenza di 'newBar' vs 'touched' fra le due strategie).",
+      "consequence_on_effective_memory": "Poiche' il decadimento esponenziale e' funzione del NUMERO DI AGGIORNAMENTI, non del tempo di calendario, una 'memoria di 25 periodi' che dovrebbe coprire ~25 giorni di mercato copre invece, sotto contaminazione, ~25/450 di giorno - MENO DI UN'ORA. Il filtro smette di misurare 'momentum su settimane' e misura, di fatto, momentum su scala intraday/oraria - un indicatore QUALITATIVAMENTE DIVERSO da quello inteso, non solo quantitativamente perturbato."
+    },
+    "key_qualitative_difference_from_order_block": {
+      "order_block": "Stato DISCRETO a fasi (idle/attiva/consumata) - una contaminazione puo' 'consumare' o 'invalidare' una zona, ma una NUOVA zona pulita puo' ancora essere creata correttamente in seguito - l'impatto e' evento-per-evento (alcune date divergono, altre no, vedi Phase 7.13/7.14).",
+      "tsi": "Filtro CONTINUO/RICORSIVO - non esiste un modo per la ricorsione di 'ripulirsi': OGNI valore di sm1/sm2/TSI/signal ad OGNI istante D1 successivo alla prima contaminazione e' calcolato a partire da uno stato gia' alterato. L'aspettativa formale e' quindi che LA CONTAMINAZIONE SIA UNIVERSALE (ogni lettura D1 del TSI differisce, non solo alcune date) - un'ipotesi verificabile nei casi minimi (punto 3) e nel confronto quantitativo (punto 4)."
+    },
+    "does_the_trigger_change": {
+      "mechanism": "Il segnale dipende dal CROSS fra tsi e signal (tsiPrev<=signalPrev e tsi>signal, o viceversa) - poiche' sia tsi che signal sono funzioni continue dello stato contaminato, un cross puo' essere spostato in avanti/indietro nel tempo, invertito di verso, aggiunto (spurio) o rimosso (mancato) rispetto alla ricostruzione TF-scoped - dimostrato nei casi minimi."
+    }
+  }
+}

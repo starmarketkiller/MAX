@@ -1,0 +1,227 @@
+{
+  "generated_at": "2026-09-27T13:59:25.163105+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_17\\build_tsi_impact_comparison.py",
+  "canonical_sha256": "06f0eafae12094656907c86872f29889dba06578534d1a7e429802caf8fc6b0a",
+  "payload": {
+    "data_source": "server/research_scripts/phase7/phase7_13/multi_tf_dataset_v1.json (GIA' disponibile, nessun nuovo download/run)",
+    "period_covered": [
+      "2023-10-02T01:00:00",
+      "2026-08-25T23:30:00"
+    ],
+    "scope_decision_no_new_tester_run": "Il meccanismo TSI e' un filtro ricorsivo puramente matematico (nessun branching su soglie di prezzo nella mutazione dello stato) - gia' dimostrato esatto e deterministico nei casi minimi con aritmetica razionale (punto 3). Riusare i dati M15 locali reali gia' disponibili e' sufficiente per quantificare la materialita' - nessun nuovo run Tester necessario, a differenza di ORDER_BLOCK dove il branching su soglie ATR/BOS richiedeva conferma su tick reali.",
+    "canonical_tf": "D1",
+    "excluded_passes_declared": [
+      "M5"
+    ],
+    "n_d1_bars_evaluated": 759,
+    "n_mutations_total_stream_a": 124943,
+    "n_mutations_non_canonical_stream_a": 68407,
+    "n_mutations_canonical_only_stream_b": 759,
+    "raw_triggers_stream_a_by_tf": {
+      "M15": {
+        "BUY": 2942,
+        "SELL": 2941
+      },
+      "M30": {
+        "BUY": 1447,
+        "SELL": 1418
+      },
+      "H1": {
+        "BUY": 731,
+        "SELL": 686
+      },
+      "H4": {
+        "BUY": 207,
+        "SELL": 187
+      },
+      "D1": {
+        "BUY": 29,
+        "SELL": 31
+      }
+    },
+    "tsi_value_divergence": {
+      "n_d1_bars_with_tsi_computed_both_streams": 685,
+      "n_d1_bars_tsi_value_identical": 0,
+      "n_d1_bars_tsi_value_different": 685,
+      "pct_d1_bars_tsi_different": 100.0,
+      "max_absolute_tsi_difference": 95.25837936832818,
+      "mean_absolute_tsi_difference": 23.591027037041584,
+      "note": "Conferma la predizione della formalizzazione (punto 2): la contaminazione e' UNIVERSALE, non solo su alcune date - quasi ogni lettura D1 del TSI e' numericamente diversa fra Stream A e B, non solo quelle che producono un segnale."
+    },
+    "signal_level_comparison": {
+      "n_generated_a": 60,
+      "n_generated_b": 61,
+      "n_matched_same_date_direction": 3,
+      "n_only_in_a": 57,
+      "n_only_in_b": 58,
+      "only_in_a_sample": [
+        [
+          "2023-11-20T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-01-05T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-01-16T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-02-15T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-03-11T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-03-21T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-04-01T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-04-29T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-05-22T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-06-07T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-06-20T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-06-25T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-08-07T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-08-09T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-08-12T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-08-29T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-09-05T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-09-12T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-09-25T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-11-04T01:00:00",
+          "BUY"
+        ]
+      ],
+      "only_in_b_sample": [
+        [
+          "2024-02-01T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-02-12T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-02-22T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-03-18T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-04-02T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-05-16T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-05-24T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-06-21T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-06-26T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-07-02T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-07-24T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-08-02T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-08-07T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-08-13T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-09-03T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-09-13T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-10-07T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-10-21T01:00:00",
+          "BUY"
+        ],
+        [
+          "2024-11-01T01:00:00",
+          "SELL"
+        ],
+        [
+          "2024-11-25T01:00:00",
+          "BUY"
+        ]
+      ]
+    },
+    "defect_exists": true,
+    "defect_materially_changes_behavior": true,
+    "no_pf_or_return_used": true,
+    "no_new_tester_run_launched": true
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-09-27T14:02:19.235648+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_17\\build_tsi_decision_card.py",
+  "canonical_sha256": "1710df6817cf7c87154f7a6aeebe42b3252f7e88975fff87fd2fb9f10d38dd56",
+  "payload": {
+    "candidate": "TSI",
+    "baseline_commit": "9d674e6",
+    "decision": "DEFECT_CONFIRMED_MATERIAL_IMPACT",
+    "decision_basis": [
+      "Formalizzazione matematica (punto 2): TSI e' un filtro ricorsivo continuo (IIR, doppio EMA) senza guardia TF - a differenza di ORDER_BLOCK (stato discreto 'ricreabile'), la contaminazione non puo' mai autoripararsi, si prevede quindi UNIVERSALE (ogni lettura D1, non solo alcune date).",
+      "Caso minimo con aritmetica razionale ESATTA (punto 3): sulla STESSA barra D1 chiusura, Stream A produce TSI=41.390219 contro Stream B TSI=39.670850 - una divergenza del VALORE dell'indicatore, non solo del segnale finale, verificata indipendentemente dalla funzione sotto test.",
+      "Quantificazione su dati reali gia' disponibili (2023-10-02..2026-08-25, nessun nuovo run): 685/685 barre D1 (100%) mostrano un TSI numericamente diverso fra Stream A (contaminato) e Stream B (TF-scoped) - CONFERMA EMPIRICA della predizione teorica di universalita'.",
+      "A livello di segnale: 60 segnali A vs 61 B, solo 3 coincidono esattamente su 121 totali - divergenza MOLTO piu' estesa di quella osservata per ORDER_BLOCK (coerente con la natura continua/mai-autoriparante del filtro TSI contro la natura discreta/parzialmente-autoriparante della zona ORDER_BLOCK)."
+    ],
+    "historical_evidence_integrity": "PARTIALLY_COMPROMISED_FOR_MT5_REAL_TICK_RESULTS",
+    "historical_evidence_integrity_note": "Il motore Python e' UNAFFECTED dal difetto cross-TF per costruzione, ma non rappresentativo del comportamento live (identita' diversa, dimostrato materialmente diverso sopra). I tre riferimenti MT5 reali trovati (sweep37 S05, results/phase2_baseline, results/phase_partB) sono tutti POSSIBLY_CONTAMINATED - configurazione esatta non verificabile dagli artifact disponibili. Nessun PF/WR storico viene qui reinterpretato come prova a favore o contro la strategia canonica.",
+    "distortion_direction": "BOTH",
+    "distortion_direction_note": "La contaminazione sia sopprime segnali D1 genuini che si sarebbero verificati sotto la logica TF-scoped (58 casi) SIA crea segnali che non sarebbero mai esistiti senza la contaminazione (57 casi) - entrambe le direzioni sono dimostrate, con magnitudo quasi identica fra le due (a differenza di ORDER_BLOCK dove la creazione spuria dominava nettamente) - coerente con un meccanismo di corruzione CONTINUO e simmetrico piuttosto che un evento discreto a senso unico.",
+    "confidence": "HIGH",
+    "confidence_reasoning": "Il meccanismo e' interamente matematico/deterministico (nessun branching condizionale su soglie di prezzo nella mutazione dello stato, a differenza di ORDER_BLOCK) - la dimostrazione nei casi minimi usa aritmetica razionale esatta (non float, nessuna ambiguita' di arrotondamento), e la quantificazione su dati reali mostra un effetto universale (100% delle barre), non marginale o borderline. L'unica riserva e' l'assenza di un trace EA live reale (a differenza di ORDER_BLOCK, Phase 7.14) - la materialita' e' quindi confermata su dati REALI ma RICAMPIONATI (M15->D1/H4/H1/M30), non su tick nativi del broker.",
+    "defect_exists_vs_material_impact": {
+      "defect_exists": true,
+      "defect_materially_changes_behavior": true,
+      "note": "Come per ORDER_BLOCK, entrambe le domande hanno risposta affermativa - qui con un'universalita' (100% delle barre) ancora piu' netta, coerente con la natura di filtro ricorsivo continuo (mai autoriparante) invece che di stato a fasi discrete."
+    },
+    "scope_limits_declared": [
+      "Nessun trace EA live reale raccolto in questa fase (a differenza di ORDER_BLOCK) - la quantificazione usa dati M15 ricampionati gia' disponibili, scelta esplicita giustificata dalla natura puramente matematica/deterministica del meccanismo (verificato con aritmetica esatta nei casi minimi)",
+      "Periodo reale coperto: 2023-10-02 -> 2026-08-25 (fonte M15 disponibile), non l'intero storico 2019-2026 del sweep37",
+      "Passaggio M5 escluso dalla quantificazione - limite INFERIORE, non sovrastima"
+    ],
+    "fix_proposal": {
+      "proposed_only_not_applied": true,
+      "patch_proposta": {
+        "file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+        "funzione": "NXS_Strat_TSI() (righe 1366-1414)",
+        "punto_di_inserimento": "subito dopo `ENUM_TIMEFRAMES tf = NXS_EffTF();` (riga 1369), PRIMA di qualunque lettura/scrittura di g_tsiState",
+        "riga_proposta": "if(tf != NXS_Profile_TF(\"TSI\")) return s;",
+        "precedente_diretto": "identica forma alla guardia gia' applicata per BREAKOUT_ACC (NXS_Strategies.mqh:1548) e ORDER_BLOCK (NXS_Strategies.mqh, Phase 7.14) - vedi differenze di sostanza nel semantic/mechanism formalization di questa fase (filtro continuo vs stato discreto)",
+        "effetto_su_altre_identita'": "NESSUNO - grep esaustivo conferma che nessun'altra strategia riusa g_tsiState o chiama NXS_Strat_TSI() (a differenza di OB_MIT per ORDER_BLOCK)"
+      },
+      "invarianti_da_preservare": [
+        "Nessun cambiamento al comportamento sui passaggi D1 (la guardia agisce solo sui passaggi non-D1)",
+        "Formula del doppio EMA, periodi (25/13/7), soglia di warmup (75 aggiornamenti) invariati",
+        "SL/TP (NXS_DefaultSLTP) invariato"
+      ],
+      "test_necessari": [
+        "Unit test della sola condizione di guardia in isolamento",
+        "Trace diagnostico (stesso pattern non comportamentale di Phase 7.14) raccolto PRIMA e DOPO il fix su un ambiente demo/Tester, per confermare che post-fix nessuna mutazione di g_tsiState avviene su passaggi non-D1",
+        "Confronto della sequenza TSI/segnali D1 post-fix osservata dal vivo con la ricostruzione Stream B di questa fase, sulla porzione di periodo che si sovrappone"
+      ],
+      "piano_di_parity_pre_post": [
+        "Stesso schema gia' validato per ORDER_BLOCK (Phase 7.14): trace pre-fix (contaminato) + trace post-fix (atteso: solo mutazioni su passaggi D1) sullo STESSO periodo/stessi tick reali",
+        "Verificare causalmente (non per PF/WR) che i valori TSI post-fix corrispondano esattamente a cio' che la ricostruzione Stream B di questa fase produce sugli stessi dati"
+      ],
+      "rollback_criteria": [
+        "Se il trace post-fix mostra ANCORA mutazioni di stato su passaggi non-D1",
+        "Se il volume di segnali D1 post-fix diverge in modo non spiegabile dalla ricostruzione Stream B di questa fase sulla stessa finestra"
+      ],
+      "separazione_esplicita": {
+        "verifica_implementazione": "la guardia elimina strutturalmente la lettura/scrittura di stato sui passaggi non canonici - verificabile direttamente sul codice e col trace, INDIPENDENTEMENTE da qualunque esito economico",
+        "validita_evidenza": "qualunque PF/WR storico pre-fix (incluso sweep37 S05, PF 0.76) resta storico e classificato come in tsi_historical_evidence_map_v1.json - non viene 'corretto retroattivamente' dal fix",
+        "redditivita": "NON PRESUNTA - correggere il meccanismo di stato NON implica che la strategia diventi profittevole; elimina solo una fonte di rumore strutturale MOLTO piu' pervasiva di quella di ORDER_BLOCK (100% delle barre contro un sottoinsieme) - la profittabilita' resta una domanda separata e successiva, fuori scope di questa fase"
+      }
+    },
+    "no_optimization_no_sltp_tuning_no_parameter_sweep_no_profitability_no_promotion": true,
+    "no_ea_modification_this_phase": true,
+    "next_step_not_decided_here": "Nessuna promozione live, nessuna ottimizzazione. Se si decide di procedere: costruire il trace EA live reale mancante (stesso schema di Phase 7.14) prima di autorizzare la patch, oppure valutare se l'evidenza gia' raccolta qui (aritmetica esatta + dati reali ricampionati, 100% di universalita') sia gia' sufficiente per autorizzare direttamente il fix minimale - decisione dell'utente, non presa qui."
+  }
+}

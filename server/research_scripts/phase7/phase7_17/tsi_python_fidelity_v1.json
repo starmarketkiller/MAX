@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-09-27T14:00:52.592679+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_17\\build_tsi_python_fidelity.py",
+  "canonical_sha256": "e833db0faac930e1f9c40d14aaf949c17ea86db3d978c1fbad417592f1a3e758",
+  "payload": {
+    "rule_applied": "Phase 7.16: non presumere event-level parity - verificato prima cosa replica realmente, classificato come modello parziale. MT5 resta ground truth degli eventi reali (qui: la ricostruzione MQL5-fedele Stream B di questa fase, non un run EA live - vedi nota sotto).",
+    "important_caveat": "Questo confronto e' Python-vs-Python (motore backtest.py contro la ricostruzione MQL5-fedele di questa fase, ENTRAMBI single-TF) - NON e' un confronto con un trace EA live reale (non lanciato in questa fase, vedi scope_decision in tsi_impact_comparison_v1.json). Non e' quindi la 'ground truth MT5' in senso stretto, ma la migliore ricostruzione TF-scoped disponibile senza una nuova campagna.",
+    "n_python_signals": 67,
+    "n_mql5_faithful_tf_scoped_signals": 61,
+    "n_matched": 61,
+    "n_only_python": 6,
+    "n_only_mql5_faithful": 0,
+    "seeding_difference_declared": "Python inizializza l'EMA con il primo valore della serie; MQL5/questa ricostruzione inizializzano a zero (default struct) - differenza di warm-up che decade esponenzialmente ma non si annulla mai del tutto, gia' dichiarata nel semantic map (punto 1).",
+    "tsi_value_comparison": {
+      "n_bars_both_available": 685,
+      "n_bars_close_within_0_5": 685,
+      "pct_close": 100.0
+    },
+    "classification": "PARTIAL_STRUCTURAL_MODEL",
+    "classification_reasoning": "Il motore Python e' single-TF per costruzione, quindi UNAFFECTED dal difetto cross-TF specifico (come gia' trovato per ORDER_BLOCK). Il confronto leggero mostra un accordo FORTE con la ricostruzione MQL5-fedele TF-scoped: 685/685 barre D1 (100%) hanno un valore TSI numericamente vicino (entro 0.5), e TUTTI i 61 segnali della ricostruzione MQL5-fedele sono contenuti nei 67 segnali Python (6 extra in Python, verosimilmente casi limite sensibili alla differenza di seeding dichiarata). Classificato PARTIAL_STRUCTURAL_MODEL (non EVENT_LEVEL_PARITY_VALIDATED) perche' il confronto e' Python-vs-Python (motore backtest.py contro una ricostruzione Python di questa fase, non un trace EA live reale) - la regola metodologica di Phase 7.16 impone di non presumere parity con l'EA reale senza averla osservata direttamente.",
+    "valid_uses": {
+      "mechanism_research_and_intent_validation": "VALIDO - conferma che il calcolo del vero TSI (doppio EMA di Blau) e' implementato correttamente sia in MQL5 che in Python, indipendentemente dal difetto cross-TF.",
+      "event_level_parity_with_real_ea": "NON VERIFICATO in questa fase (nessun trace EA live reale raccolto per TSI) - non affermabile ne' negabile con l'evidenza disponibile.",
+      "profitability_or_pf_estimation": "MAI VALIDO - nessuno dei due engine replica esecuzione/slippage/broker, e nessuno dei due e' stato confrontato con un trace live reale."
+    },
+    "no_new_campaign_time_spent_on_perfect_parity": true
+  }
+}
