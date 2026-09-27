@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-09-27T20:51:30.162062+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_minimum_viable_capital.py",
+  "canonical_sha256": "8f4296dbb9fb76c956da1e111206d4962154ce6815c8bf79b5d372d13020b407",
+  "payload": {
+    "assumptions_declared": {
+      "contract_size_oz": 100,
+      "min_lot": 0.01,
+      "lot_step": 0.01,
+      "leverage": "1:500",
+      "avg_entry_price_gold_in_sample": 3342.3346153846155,
+      "avg_risk_price_units_sl_distance": 67.7115384615385,
+      "max_risk_price_units_sl_distance_seen": 182.77000000000044,
+      "min_risk_price_units_sl_distance_seen": 34.06999999999971
+    },
+    "capital_table": [
+      {
+        "capital_eur": 300,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.684669230769231,
+        "margin_usage_pct_of_capital": 2.228223076923077,
+        "free_margin_reserve_pct": 97.77177692307693,
+        "risk_usd_at_min_lot_avg_sl": 67.7115384615385,
+        "risk_pct_of_capital_avg_sl": 22.570512820512832,
+        "risk_usd_at_min_lot_worst_sl_seen": 182.77000000000044,
+        "risk_pct_of_capital_worst_sl_seen": 60.923333333333474,
+        "max_concurrent_positions_by_margin_only": 44,
+        "risk_profile_materially_altered_by_min_lot_floor": true
+      },
+      {
+        "capital_eur": 500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.684669230769231,
+        "margin_usage_pct_of_capital": 1.3369338461538463,
+        "free_margin_reserve_pct": 98.66306615384616,
+        "risk_usd_at_min_lot_avg_sl": 67.7115384615385,
+        "risk_pct_of_capital_avg_sl": 13.542307692307698,
+        "risk_usd_at_min_lot_worst_sl_seen": 182.77000000000044,
+        "risk_pct_of_capital_worst_sl_seen": 36.55400000000009,
+        "max_concurrent_positions_by_margin_only": 74,
+        "risk_profile_materially_altered_by_min_lot_floor": true
+      },
+      {
+        "capital_eur": 1000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.684669230769231,
+        "margin_usage_pct_of_capital": 0.6684669230769231,
+        "free_margin_reserve_pct": 99.33153307692308,
+        "risk_usd_at_min_lot_avg_sl": 67.7115384615385,
+        "risk_pct_of_capital_avg_sl": 6.771153846153849,
+        "risk_usd_at_min_lot_worst_sl_seen": 182.77000000000044,
+        "risk_pct_of_capital_worst_sl_seen": 18.277000000000044,
+        "max_concurrent_positions_by_margin_only": 149,
+        "risk_profile_materially_altered_by_min_lot_floor": true
+      },
+      {
+        "capital_eur": 2500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.684669230769231,
+        "margin_usage_pct_of_capital": 0.26738676923076926,
+        "free_margin_reserve_pct": 99.73261323076923,
+        "risk_usd_at_min_lot_avg_sl": 67.7115384615385,
+        "risk_pct_of_capital_avg_sl": 2.7084615384615396,
+        "risk_usd_at_min_lot_worst_sl_seen": 182.77000000000044,
+        "risk_pct_of_capital_worst_sl_seen": 7.310800000000017,
+        "max_concurrent_positions_by_margin_only": 373,
+        "risk_profile_materially_altered_by_min_lot_floor": false
+      },
+      {
+        "capital_eur": 10000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.684669230769231,
+        "margin_usage_pct_of_capital": 0.06684669230769232,
+        "free_margin_reserve_pct": 99.93315330769231,
+        "risk_usd_at_min_lot_avg_sl": 67.7115384615385,
+        "risk_pct_of_capital_avg_sl": 0.6771153846153849,
+        "risk_usd_at_min_lot_worst_sl_seen": 182.77000000000044,
+        "risk_pct_of_capital_worst_sl_seen": 1.8277000000000043,
+        "max_concurrent_positions_by_margin_only": 1495,
+        "risk_profile_materially_altered_by_min_lot_floor": false
+      }
+    ],
+    "minimum_viable_capital_definition": "Capitale minimo (fra i livelli testati) sotto cui il rischio medio a lotto minimo (0.01) supera il 5.0% del capitale.",
+    "MINIMUM_VIABLE_CAPITAL_EUR": 2500,
+    "no_optimization_no_sizing_proposed": true
+  }
+}

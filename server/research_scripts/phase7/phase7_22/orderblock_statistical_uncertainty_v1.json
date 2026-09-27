@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-09-27T20:38:02.879371+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_statistical_uncertainty.py",
+  "canonical_sha256": "04dd61bb598b1e1c3a5d720cd738d537c0affb4900f554d4b2dbdd4c601f9e5f",
+  "payload": {
+    "method": "Bootstrap per-trade, 10000 iterazioni, seed 79220 dichiarato e fisso.",
+    "iid_assumption_caveat": "Il bootstrap per-trade assume scambiabilita', non necessariamente indipendenza temporale stretta - vedi temporal_clustering per ogni gruppo.",
+    "results": {
+      "ALL": {
+        "n": 13,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": 38.261538461538464,
+          "bootstrap_ci_95_low": -42.39230769230768,
+          "bootstrap_ci_95_high": 118.82307692307693,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.46153846153846156,
+          "bootstrap_ci_95_low": 0.23076923076923078,
+          "bootstrap_ci_95_high": 0.6923076923076923,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "temporal_clustering": {
+          "n_pairs": 12,
+          "median_gap_days": 76.0,
+          "n_pairs_within_10_days": 0,
+          "pct_pairs_within_10_days": 0.0
+        }
+      },
+      "BUY": {
+        "n": 12,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": 48.64166666666667,
+          "bootstrap_ci_95_low": -38.041666666666664,
+          "bootstrap_ci_95_high": 131.85,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.5,
+          "bootstrap_ci_95_low": 0.25,
+          "bootstrap_ci_95_high": 0.75,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "temporal_clustering": {
+          "n_pairs": 11,
+          "median_gap_days": 82,
+          "n_pairs_within_10_days": 0,
+          "pct_pairs_within_10_days": 0.0
+        }
+      },
+      "SELL": {
+        "n": 1,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": -86.3,
+          "bootstrap_ci_95_low": -86.3,
+          "bootstrap_ci_95_high": -86.3,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.0,
+          "bootstrap_ci_95_low": 0.0,
+          "bootstrap_ci_95_high": 0.0,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "temporal_clustering": {
+          "n_pairs": 0
+        }
+      }
+    },
+    "iid_not_assumed_blindly": true,
+    "ci_includes_zero_means_no_edge_declared": true
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-09-27T20:37:44.153076+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_data_exposure_map.py",
+  "canonical_sha256": "5c4f26c7b2d0f695402813dac7d664bff509c0a3b060ad94fef58ba9b0cdf3e4",
+  "payload": {
+    "principle": "Un periodo e' UNTOUCHED per una data domanda solo se nessun essere umano o script di ricerca lo ha mai esaminato per QUELLA domanda specifica, prima d'ora. 'Esiste gia' nel log persistente' non equivale a 'e' stato analizzato'.",
+    "key_difference_from_breakout_acc_7_21": "ORDER_BLOCK V2 non ha MAI avuto un'ANALISI economica (nessun P&L mai calcolato) - Phase 7.13-7.16 hanno lavorato SOLO su segnali grezzi/zone lifecycle in Research Mode diagnostica. Questa fase costruisce la PRIMA analisi economica in assoluto per V2 - non c'e' una 'scoperta precedente su questi stessi dati economici' da cui guardarsi (a differenza di H2 in BREAKOUT_ACC).",
+    "data_provenance_correction": "Scoperto DURANTE questa fase (dichiarato, non nascosto): NEXUS_trades.csv e' un log CONDIVISO e MAI azzerato fra sessioni - conteneva GIA' 13 trade ORDER_BLOCK reali (2023-10-02 - 2026-08-24) prima ancora che questa fase lanciasse il proprio run, quasi certamente prodotti dal run diagnostico originale di Phase 7.14 (stessa finestra temporale, stesso meccanismo di logging attivo di default). Il certificato del run di QUESTA fase (GENERATED=2/OPENED=1) e' incoerente col contenuto del CSV (13 trade nella stessa finestra dichiarata dal certificato) - anomalia NON risolta in questa fase, il CSV resta la fonte di verita' (MT5 = ground truth per istruzione esplicita del task) perche' verificabile riga per riga, il certificato no.",
+    "periods": [
+      {
+        "period": "prima del 2023.10.02",
+        "used_for_development": "SCONOSCIUTO - non investigato in questa fase.",
+        "genuinely_untouched": "NON VERIFICATO",
+        "verdict": "NON USATO - stessa soglia gia' stabilita nel progetto (run r002/r003 di riferimento, sweep37) - nessuna evidenza di dati comparabili prima."
+      },
+      {
+        "period": "2023.10.02 - 2026.08.24 (13 trade reali gia' presenti nel log persistente, MAI analizzati economicamente prima d'ora)",
+        "used_for_development": "NO (mai un'analisi economica prima d'ora)",
+        "used_in_diagnosis_phase_7_13_16": "PARZIALMENTE - Phase 7.13/7.14/7.16 hanno guardato QUESTO INTERVALLO per una domanda DIVERSA (integrita' del fix via zone lifecycle/segnali, MAI P&L/expectancy/PF).",
+        "used_for_fix": "NO",
+        "used_for_parity": "SI (Phase 7.16, su segnali, non su P&L)",
+        "seen_in_reports": "SI per segnali/zone, MAI per P&L/expectancy/PF",
+        "genuinely_untouched_for_economic_baseline": true,
+        "genuinely_untouched_for_signal_level_integrity": false,
+        "verdict": "POPOLAZIONE PRIMARIA di questa fase - baseline economica DESCRITTIVA (13 trade, prima misurazione economica in assoluto per V2)."
+      },
+      {
+        "period": "2026.08.25 - 2026.09.27 (finestra FORWARD, genuinamente untouched)",
+        "used_for_development": false,
+        "used_in_diagnosis_phase_7_13_16": false,
+        "used_for_fix": false,
+        "used_for_parity": false,
+        "seen_in_reports": false,
+        "genuinely_untouched_for_economic_baseline": true,
+        "genuinely_untouched_for_signal_level_integrity": true,
+        "verdict": "VERO HOLDOUT - l'unica finestra residua mai attraversata da nessun run (i dati esistenti coprono gia' fino al 2026-08-24). Finestra molto corta (~1 mese) - atteso probabile INSUFFICIENT_OOS_SAMPLE, esito ammesso dal protocollo."
+      }
+    ],
+    "sufficient_data_already_existed_note": "Per una prossima fase simile: verificare NEXUS_trades.csv PRIMA di lanciare un nuovo run pluriennale - in questo caso i dati necessari erano gia' disponibili da un run precedente (Phase 7.14), rendendo il primo run lungo di questa fase (poi interrotto per lentezza) e il secondo run di ~2h22min non strettamente necessari per la baseline (sono comunque serviti a confermare il certificato ufficiale e la riproducibilita', non solo a produrre dati).",
+    "forward_window": [
+      "2026.08.25",
+      "2026.09.27"
+    ],
+    "conclusion": "Nessun vero holdout STORICO indipendente esiste all'interno dei 13 trade gia' disponibili - trattati come baseline, MAI come conferma indipendente. La finestra forward (molto corta, ~1 mese) e' l'unica genuinamente idonea a un test OOS."
+  }
+}

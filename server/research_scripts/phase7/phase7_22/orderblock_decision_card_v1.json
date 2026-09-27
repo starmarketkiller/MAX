@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-09-27T20:51:30.275487+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_decision_card.py",
+  "canonical_sha256": "5c54091612a3c920bf2ea60604478e7050a12cb215f2548b735d374c4c951d69",
+  "payload": {
+    "checks": {
+      "1_net_expectancy_positive_ALL": true,
+      "2_cost_survival_all_3_scenarios": true,
+      "3_execution_does_not_collapse_signal_to_zero": true,
+      "4_no_extreme_concentration": false,
+      "4_concentration_detail": "i primi 5 trade (su 13) spiegano il 196.8% del P&L netto totale",
+      "5_independent_evidence_available_and_supportive": false
+    },
+    "decision": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+    "decision_means_live_ready": false,
+    "supporting_evidence_summary": {
+      "ALL_net_expectancy_per_trade": 38.261538461538464,
+      "ALL_profit_factor": 1.8601072107902474,
+      "ALL_bootstrap_ci_95": [
+        -42.39230769230768,
+        118.82307692307693
+      ],
+      "ALL_ci_excludes_zero": false,
+      "BUY_net_expectancy_per_trade": 48.64166666666667,
+      "BUY_bootstrap_ci_95": [
+        -38.041666666666664,
+        131.85
+      ],
+      "SELL_net_expectancy_per_trade": -86.3,
+      "SELL_bootstrap_ci_95": [
+        -86.3,
+        -86.3
+      ],
+      "top_5_trades_pct_of_total_net": 196.76316847607558,
+      "oos_status": "INSUFFICIENT_OOS_SAMPLE"
+    },
+    "next_phase_if_this_passes": "CONDITIONAL_EDGE + EXIT/RISK OPTIMIZATION - non svolta in questa fase.",
+    "no_optimization_performed": true
+  }
+}

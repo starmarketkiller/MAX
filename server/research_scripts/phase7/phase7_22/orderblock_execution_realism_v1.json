@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-27T20:39:02.524964+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_execution_realism.py",
+  "canonical_sha256": "719b35afac0a103ae4d4b4a108329d1d969dec059f18d9280b2002e5544e9671",
+  "payload": {
+    "source": "Certificato BASE (run_id GOLD_2023.10.02 00:00:00_sel15, senza suffisso, period_end=2026.08.24, prodotto in una sessione precedente a questa fase, trovato in Common/Files/NEXUS/certificates/) - NON un certificato di questa fase.",
+    "reconciliation_note_declared": "Il certificato riporta OPENED=12, ma il dataset economico canonico di questa fase (canonical_economic_dataset_v1.json, costruito direttamente da NEXUS_trades.csv riga per riga) conta 13 trade OPEN->CLOSE distinti nella stessa finestra. Discrepanza di 1 trade NON risolta in questa fase (possibile edge-case al confine esatto del period_end, o un trade proveniente da un run leggermente diverso) - dichiarata esplicitamente, non nascosta. Il dataset economico (CSV riga per riga, verificabile) resta la fonte primaria per la baseline - il certificato e' usato SOLO per il contesto aggregato del funnel (blocked/reject), non per il conteggio dei trade.",
+    "granularity": "AGGREGATO (conteggi per stadio del funnel), NON per-evento - a differenza di BREAKOUT_ACC (Phase 7.21).",
+    "funnel_counts": {
+      "GENERATED": 25,
+      "BLOCKED": 13,
+      "OPEN_ATTEMPT": 12,
+      "OPENED": 12,
+      "BROKER_REJECT": 0
+    },
+    "funnel_counts_opened_vs_dataset_n13_discrepancy": -1,
+    "funnel_rates": {
+      "pct_generated_that_get_blocked": 52.0,
+      "pct_generated_that_get_rejected": 0.0,
+      "pct_generated_that_open_per_certificate": 48.0
+    },
+    "blocked_and_rejected_not_dropped": true,
+    "known_limitation": "Impossibile in questa fase distinguere se i segnali BLOCKED avessero, in media, una qualita' di segnale migliore o peggiore di quelli aperti (nessun proxy di movimento forward per-evento disponibile per questa strategia in questa fase, a differenza di BREAKOUT_ACC) - dichiarato come gap, non nascosto."
+  }
+}

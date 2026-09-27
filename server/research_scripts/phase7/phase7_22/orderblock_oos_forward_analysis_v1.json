@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-27T20:48:24.175273+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_oos_forward_analysis.py",
+  "canonical_sha256": "39258591ec8cb6a3383dd7aacd94af280133034f9b6c96bae3908bec9371e615",
+  "payload": {
+    "window": [
+      "2026.08.25",
+      "2026.09.27"
+    ],
+    "window_genuinely_untouched": true,
+    "run_config": "nxs_orderblock_forward_oos.ini (selettore 15 isolato, stessa identita' canonica del run di discovery, InpResearchMode=true, lotto fisso 0.01)",
+    "n_closed_trades_order_block": 0,
+    "closed_trades_net_pnl": [],
+    "net_pnl_total": 0.0,
+    "net_pnl_per_trade": null,
+    "win_rate": null,
+    "min_sample_threshold_declared_before_result": 5,
+    "decision": "INSUFFICIENT_OOS_SAMPLE",
+    "decision_meaning": "Campione troppo piccolo per QUALUNQUE conclusione - fallimento del CAMPIONE, non della strategia.",
+    "single_validation_run_only": true,
+    "looked_at_only_after_everything_else_frozen": true,
+    "certificate_note": "Il certificato del run forward (nxs_orderblock_forward_oos_certificate.txt) riporta VERDICT=FAIL / MISSING_TELEMETRY - un artefatto NOTO del meccanismo di certificazione quando zero eventi vengono generati nell'intera finestra (non distingue 'mercato silenzioso' da 'telemetria rotta'). Confermato indipendentemente dal CSV grezzo (nexus_trades_forward_oos.csv, 0 righe ORDER_BLOCK) che si tratta genuinamente di zero segnali, coerente con la cadenza storica bassa - non un errore del run.",
+    "certificate_period_note": "Il certificato riporta period_end=2026.09.25 (non 2026.09.27 come da ToDate dell'ini) - gap di 2 giorni plausibilmente dovuto a fine settimana/disponibilita' dati (oggi e' domenica 2026.09.27) - non investigato oltre."
+  }
+}

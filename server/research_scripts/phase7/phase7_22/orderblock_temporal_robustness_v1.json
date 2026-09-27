@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-09-27T20:38:02.488791+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_temporal_robustness.py",
+  "canonical_sha256": "a90f820e1bde53f6aa91c3a1efbf17552b6fa4f41796caff71b776f2ffda6ac8",
+  "payload": {
+    "by_year": {
+      "2024": {
+        "n_trades": 4,
+        "net_pnl_sum": -33.2,
+        "win_rate": 0.25
+      },
+      "2025": {
+        "n_trades": 5,
+        "net_pnl_sum": 317.20000000000005,
+        "win_rate": 0.6
+      },
+      "2026": {
+        "n_trades": 4,
+        "net_pnl_sum": 213.39999999999998,
+        "win_rate": 0.5
+      }
+    },
+    "years_with_positive_net": 2,
+    "years_total_with_at_least_1_trade": 3,
+    "concentration_of_profit": {
+      "top_1": {
+        "sum": 284.7,
+        "pct_of_total_net": 57.237635705669476
+      },
+      "top_3": {
+        "sum": 712.7,
+        "pct_of_total_net": 143.28508242862887
+      },
+      "top_5": {
+        "sum": 978.7,
+        "pct_of_total_net": 196.76316847607558
+      },
+      "top_10pct_n_trades": 1,
+      "top_10pct": {
+        "sum": 284.7,
+        "pct_of_total_net": 57.237635705669476
+      }
+    },
+    "edge_survives_without_top_trades": {
+      "without_top_1": {
+        "net_total_remaining": 212.70000000000005,
+        "still_positive": true
+      },
+      "without_top_3": {
+        "net_total_remaining": -215.3,
+        "still_positive": false
+      },
+      "without_top_5": {
+        "net_total_remaining": -481.3,
+        "still_positive": false
+      }
+    },
+    "rolling_window_10_trades_mean_net": [
+      {
+        "start_trade_idx": 0,
+        "end_trade_idx": 9,
+        "mean_net": 54.370000000000005
+      },
+      {
+        "start_trade_idx": 1,
+        "end_trade_idx": 10,
+        "mean_net": 20.200000000000003
+      },
+      {
+        "start_trade_idx": 2,
+        "end_trade_idx": 11,
+        "mean_net": 16.51
+      },
+      {
+        "start_trade_idx": 3,
+        "end_trade_idx": 12,
+        "mean_net": 49.0
+      }
+    ],
+    "direction_split_net_total": {
+      "ALL": {
+        "n": 13,
+        "net_total": 497.40000000000003
+      },
+      "BUY": {
+        "n": 12,
+        "net_total": 583.7
+      },
+      "SELL": {
+        "n": 1,
+        "net_total": -86.3
+      }
+    },
+    "single_regime_caveat": "Tutti gli eventi provengono da un UNICO run MT5 continuo (2019.02-2026.06, stesso broker/simbolo) - 'per anno' e' una suddivisione temporale dello STESSO campione, non regimi indipendenti verificati separatamente.",
+    "pattern_descriptive_vs_mechanism_validated": "Questa fase misura SOLO se il pattern descrittivo (zona Order Block + retest) produce P&L positivo nel campione - NON dimostra un meccanismo causale (stesso principio gia' applicato a BREAKOUT_ACC in Phase 7.21)."
+  }
+}

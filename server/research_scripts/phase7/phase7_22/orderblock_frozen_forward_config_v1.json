@@ -1,0 +1,30 @@
+{
+  "generated_at": "2026-09-27T20:48:24.396399+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_frozen_forward_config.py",
+  "canonical_sha256": "8e8df8423ced3d8c1337e3c897fb2d75b0a21294b89fe7fbe6f77af830361b3b",
+  "payload": {
+    "trigger": "orderblock_decision_card_v1.json: decisione richiede forward validation",
+    "frozen_as_of_commit": "d8f365e (Phase 7.21, HEAD al momento di questa fase)",
+    "frozen_source_sha256": "a0cf2f30915dcd55756c54cc4f19be87e116d348deea764775be57cb430c1a16",
+    "canonical_implementation": "NXS_Strat_OrderBlock() (guardia TF-scoped, Phase 7.14) - IDENTICA a quella usata per il run di discovery e forward gia' eseguiti in questa fase.",
+    "config_frozen": {
+      "selector": 15,
+      "canonical_tf": "PERIOD_D1",
+      "entry_tf": "PERIOD_M15",
+      "lot_mode": "FIXED_LOT",
+      "fixed_lot": 0.01,
+      "direction_scope": "ENTRAMBE (BUY e SELL) - nessun lato eliminato post-hoc.",
+      "ob_mit_scope": "DISABILITATO (selettore isolato 15) - nessuna promozione OB_MIT basata su questi risultati."
+    },
+    "rules_from_this_point_forward": [
+      "NESSUNA modifica alla strategia (geometria zona, gate, SL/TP, selettore) mentre il forward e' in corso.",
+      "NESSUN tuning osservando i risultati del forward mano a mano che arrivano.",
+      "OGNI evento va registrato con un Audit Packet (schema EVENT_AUDIT_PACKET_V1).",
+      "Nessuna promozione a capitale reale finche' il forward non produce un campione sufficiente (>=5 trade chiusi) per una nuova lettura del gate finale.",
+      "BREAKOUT_ACC resta congelata nella sua configurazione forward separata (Phase 7.21) - non toccata da questa fase."
+    ],
+    "minimum_sample_before_next_gate_reevaluation": 5,
+    "not_executed_only_frozen": true,
+    "no_live_deploy": true
+  }
+}

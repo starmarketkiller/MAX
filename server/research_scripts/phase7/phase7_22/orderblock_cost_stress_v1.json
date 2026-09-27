@@ -1,0 +1,95 @@
+{
+  "generated_at": "2026-09-27T20:38:02.252401+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_cost_stress.py",
+  "canonical_sha256": "a4a0972a3cbc74121a0972c60f34016b54a6fc4af53a675005654b61f03be9e1",
+  "payload": {
+    "principle": "COST_BASE usa i fill/swap/commissione REALI gia' registrati dal Tester - non e' 'senza costi'. COST_MODERATE/STRESS aggiungono un costo ASSUNTO, dichiarato.",
+    "scenarios": {
+      "COST_BASE": {
+        "extra_roundtrip_cost_assumed_price_units": 0.0,
+        "assumption_declared_not_measured": false,
+        "ALL": {
+          "n_trades": 13,
+          "net_expectancy_per_trade": 38.261538461538464,
+          "net_expectancy_total": 497.40000000000003,
+          "profit_factor": 1.8601072107902474,
+          "win_rate": 0.46153846153846156,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 12,
+          "net_expectancy_per_trade": 48.64166666666667,
+          "net_expectancy_total": 583.7,
+          "profit_factor": 2.1863821138211383,
+          "win_rate": 0.5,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 1,
+          "net_expectancy_per_trade": -86.3,
+          "net_expectancy_total": -86.3,
+          "profit_factor": 0.0,
+          "win_rate": 0.0,
+          "survives_positive": false
+        }
+      },
+      "COST_MODERATE": {
+        "extra_roundtrip_cost_assumed_price_units": 0.5,
+        "assumption_declared_not_measured": true,
+        "ALL": {
+          "n_trades": 13,
+          "net_expectancy_per_trade": 37.761538461538464,
+          "net_expectancy_total": 490.90000000000003,
+          "profit_factor": 1.843760742523204,
+          "win_rate": 0.46153846153846156,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 12,
+          "net_expectancy_per_trade": 48.14166666666667,
+          "net_expectancy_total": 577.7,
+          "profit_factor": 2.167070707070707,
+          "win_rate": 0.5,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 1,
+          "net_expectancy_per_trade": -86.8,
+          "net_expectancy_total": -86.8,
+          "profit_factor": 0.0,
+          "win_rate": 0.0,
+          "survives_positive": false
+        }
+      },
+      "COST_STRESS": {
+        "extra_roundtrip_cost_assumed_price_units": 2.0,
+        "assumption_declared_not_measured": true,
+        "ALL": {
+          "n_trades": 13,
+          "net_expectancy_per_trade": 36.261538461538464,
+          "net_expectancy_total": 471.40000000000003,
+          "profit_factor": 1.7958804659800778,
+          "win_rate": 0.46153846153846156,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 12,
+          "net_expectancy_per_trade": 46.64166666666667,
+          "net_expectancy_total": 559.7,
+          "profit_factor": 2.1105158730158733,
+          "win_rate": 0.5,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 1,
+          "net_expectancy_per_trade": -88.3,
+          "net_expectancy_total": -88.3,
+          "profit_factor": 0.0,
+          "win_rate": 0.0,
+          "survives_positive": false
+        }
+      }
+    },
+    "scenario_not_selected_to_preserve_edge": true
+  }
+}

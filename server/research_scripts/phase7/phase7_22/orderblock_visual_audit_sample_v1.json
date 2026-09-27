@@ -1,0 +1,237 @@
+{
+  "generated_at": "2026-09-27T20:38:03.026266+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_22\\build_orderblock_visual_audit_sample.py",
+  "canonical_sha256": "40fc1fa13c5cdbf22da609a365293ec43f2c9d35d16dcfaa9fae2b36ed7b7c17",
+  "payload": {
+    "protocol_used": "VISUAL_AUDIT_PROTOCOL_V1 (Phase 7.19), Stage A+B eseguiti - Stage C (decision_outcome_matrix) rimandato a una fase dedicata.",
+    "matched_non_event_note": "Nessun 'matched non-event' costruito in questa fase - richiederebbe eventi ZONE_CREATED-ma-mai-RETEST (dal trace diagnostico Phase 7.14, popolazione DIVERSA da questo dataset economico) - dichiarato come gap, non svolto per restare entro il perimetro del 'minimo necessario'.",
+    "sample_size": 6,
+    "blinding_method": "STRUTTURALE - l'oggetto passato alla review Stage A non contiene campi di esito (verificato dal verificatore indipendente).",
+    "blinding_limitation_declared": "Stesso limite dichiarato in Phase 7.21: mascheramento strutturale dei dati, non di memoria/operatore (sessione unica).",
+    "reviews": {
+      "winner": [
+        {
+          "event_id": "ob_evt_0012",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": 284.7,
+            "actual_exit_reason": "tp",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        },
+        {
+          "event_id": "ob_evt_0009",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": 259.7,
+            "actual_exit_reason": "tp",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        }
+      ],
+      "loser": [
+        {
+          "event_id": "ob_evt_0010",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": -244.7,
+            "actual_exit_reason": "sl",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        },
+        {
+          "event_id": "ob_evt_0011",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": -86.3,
+            "actual_exit_reason": "sl",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        }
+      ],
+      "random": [
+        {
+          "event_id": "ob_evt_0000",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": 97.0,
+            "actual_exit_reason": "tp",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        },
+        {
+          "event_id": "ob_evt_0001",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "entry_time",
+              "direction",
+              "entry_price",
+              "entry_sl",
+              "entry_tp"
+            ],
+            "data_explicitly_withheld": [
+              "net_pnl",
+              "exit_time",
+              "exit_price",
+              "exit_reason",
+              "hold_sec"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e SL/TP coerenti con un ingresso al retest di una zona Order Block (SL oltre la zona, TP proiettato).",
+              "sl_tp_coerenti": "R:R implicito = 3.00",
+              "elementi_insoliti": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/geometria della zona catturato per singolo evento in questa fase - gap gia' dichiarato in execution_realism_v1.json).",
+              "prezzo_plausibile": "Plausibile (entro range SL/TP dichiarati).",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA - protocollo vieta di provare a indovinare l'esito."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_net_pnl": -49.4,
+            "actual_exit_reason": "sl",
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno) - Stage B riporta solo l'esito reale."
+          }
+        }
+      ]
+    },
+    "no_operational_rule_derived_from_visual_observations": true
+  }
+}

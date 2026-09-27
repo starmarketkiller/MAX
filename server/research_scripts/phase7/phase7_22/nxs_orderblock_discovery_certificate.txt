@@ -1,0 +1,21 @@
+=== NEXUS Test Validity Certificate v2 ===
+run_id=GOLD_2023.10.02 00:00:00_sel15_r002
+strategy=ORDER_BLOCK selector=15
+source_tf=PERIOD_D1 entry_tf=PERIOD_M15
+period_start=2023.10.02 01:00:05 period_end=2026.06.29 23:58:58
+research_mode=true exit_mode=RAW
+leverage=1:500 lot_mode=FIXED_LOT fixed_lot=0.0100
+opt_in: RiskShield=OFF ESL=OFF DailyDD=OFF TotalDD=OFF Ruin=OFF DPT=OFF
+code_build=3.0.0 (numero di build applicativo, NON un commit git)
+git_commit=UNKNOWN (provenance non disponibile a runtime - nessun processo di build stampa lo SHA in questo .mq5, vedi InpBuildGitCommit)
+config_fingerprint=strat=ORDER_BLOCK|sel=15|srcTF=PERIOD_D1|entryTF=PERIOD_M15|exit=RAW|lot=0.0100|lev=500|ESL=0|DailyDD=0|TotalDD=0|DPT=0|Ruin=0|RiskShield=0|period=2023.10.02_2026.06.29
+broker_time_offset_to_GMT_h=2 (InpServerGMTOffset, sempre dichiarato - vedi NXS_Inputs.mqh)
+
+--- Funnel ---
+GENERATED=2 BLOCKED=1 OPEN_ATTEMPT=1 OPENED=1 BROKER_REJECT=0
+  gate_reason=OPEN_POSITION count=1
+
+--- Anomalie ---
+opened_missing_position_id=0 broker_reject_missing_reason=0 source_tf_mismatch=false invariant_fail_count=0 blk_paused_count=0
+
+VERDICT=PASS
