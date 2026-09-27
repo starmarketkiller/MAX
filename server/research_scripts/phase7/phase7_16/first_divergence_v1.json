@@ -1,0 +1,209 @@
+{
+  "generated_at": "2026-09-27T12:20:25.412379+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_16\\build_first_divergence.py",
+  "canonical_sha256": "b2373b4cac197b9b7ec8551d6f63ef2f5b81a79b25ae64de36437d5c143845ee",
+  "payload": {
+    "method": "Ri-derivazione in Python, sulla STESSA serie D1 locale gia' disponibile (phase7_13/multi_tf_dataset_v1.json, nessun nuovo run/download) - confronto fra la ricostruzione ORIGINALE (Phase 7.13, congelata) e una versione CORRETTA (questa fase, touched su bars[i+1] invece di bars[i]).",
+    "original_python_events": [
+      [
+        "2024-02-23",
+        "SELL"
+      ],
+      [
+        "2024-02-27",
+        "SELL"
+      ],
+      [
+        "2024-05-14",
+        "SELL"
+      ],
+      [
+        "2024-06-24",
+        "SELL"
+      ],
+      [
+        "2024-07-29",
+        "BUY"
+      ],
+      [
+        "2025-06-12",
+        "BUY"
+      ],
+      [
+        "2025-06-26",
+        "BUY"
+      ]
+    ],
+    "corrected_python_events": [
+      [
+        "2023-12-08",
+        "BUY"
+      ],
+      [
+        "2024-02-23",
+        "SELL"
+      ],
+      [
+        "2024-02-27",
+        "SELL"
+      ],
+      [
+        "2024-05-06",
+        "SELL"
+      ],
+      [
+        "2024-05-09",
+        "SELL"
+      ],
+      [
+        "2024-06-20",
+        "SELL"
+      ],
+      [
+        "2024-07-03",
+        "SELL"
+      ],
+      [
+        "2024-07-29",
+        "BUY"
+      ],
+      [
+        "2025-06-26",
+        "BUY"
+      ],
+      [
+        "2025-12-29",
+        "BUY"
+      ],
+      [
+        "2025-12-31",
+        "BUY"
+      ]
+    ],
+    "ea_real_events_postfix": [
+      [
+        "2023-10-13",
+        "SELL"
+      ],
+      [
+        "2024-05-09",
+        "SELL"
+      ],
+      [
+        "2024-06-20",
+        "SELL"
+      ],
+      [
+        "2024-07-03",
+        "SELL"
+      ],
+      [
+        "2025-06-10",
+        "BUY"
+      ],
+      [
+        "2025-06-26",
+        "BUY"
+      ],
+      [
+        "2025-12-29",
+        "BUY"
+      ],
+      [
+        "2025-12-31",
+        "BUY"
+      ]
+    ],
+    "n_original_python": 7,
+    "n_corrected_python": 11,
+    "n_ea_real": 8,
+    "n_matches_original_vs_ea": 1,
+    "n_matches_corrected_vs_ea": 6,
+    "matches_original_vs_ea": [
+      [
+        "2025-06-26",
+        "BUY"
+      ]
+    ],
+    "matches_corrected_vs_ea": [
+      [
+        "2024-05-09",
+        "SELL"
+      ],
+      [
+        "2024-06-20",
+        "SELL"
+      ],
+      [
+        "2024-07-03",
+        "SELL"
+      ],
+      [
+        "2025-06-26",
+        "BUY"
+      ],
+      [
+        "2025-12-29",
+        "BUY"
+      ],
+      [
+        "2025-12-31",
+        "BUY"
+      ]
+    ],
+    "correction_improves_match_rate": true,
+    "first_divergence_original_vs_corrected_on_same_local_series": {
+      "found": true,
+      "bar_index": 49,
+      "close_time": "2023-12-08T01:00:00",
+      "original_op_buy": "WAITING_NO_TOUCH",
+      "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+      "corrected_op_buy": "RETEST_SIGNAL_FIRED",
+      "corrected_op_sell": null,
+      "context_prior_5_bars": [
+        {
+          "bar_index": 44,
+          "close_time": "2023-12-01T01:00:00",
+          "original_op_buy": "ZONE_CREATED",
+          "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "corrected_op_buy": "ZONE_CREATED",
+          "corrected_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH"
+        },
+        {
+          "bar_index": 45,
+          "close_time": "2023-12-04T01:00:00",
+          "original_op_buy": "WAITING_NO_TOUCH",
+          "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "corrected_op_buy": "WAITING_NO_TOUCH",
+          "corrected_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH"
+        },
+        {
+          "bar_index": 46,
+          "close_time": "2023-12-05T01:00:00",
+          "original_op_buy": "WAITING_NO_TOUCH",
+          "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "corrected_op_buy": "WAITING_NO_TOUCH",
+          "corrected_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH"
+        },
+        {
+          "bar_index": 47,
+          "close_time": "2023-12-06T01:00:00",
+          "original_op_buy": "WAITING_NO_TOUCH",
+          "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "corrected_op_buy": "WAITING_NO_TOUCH",
+          "corrected_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH"
+        },
+        {
+          "bar_index": 48,
+          "close_time": "2023-12-07T01:00:00",
+          "original_op_buy": "WAITING_NO_TOUCH",
+          "original_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH",
+          "corrected_op_buy": "WAITING_NO_TOUCH",
+          "corrected_op_sell": "SEARCH_DISPLACEMENT_NO_MATCH"
+        }
+      ]
+    },
+    "blocker_for_direct_ea_vs_python_state_trace": "L'istrumentazione diagnostica di Phase 7.14 ha registrato SOLO lo stato della zona (active/obLo/obHi/barsWaited) e l'operazione (op), NON le barre D1 OHLC grezze effettivamente usate dall'EA in quel momento - quindi non e' possibile ricostruire un confronto input->stato->transizione campo-per-campo fra EA reale e Python sulla STESSA barra di prezzo: si puo' confrontare solo la SEQUENZA di operazioni per data (fatto sopra), non le barre OHLC sottostanti bar-per-bar. Campo mancante: OHLC D1 reali usate dall'EA durante il run Tester (non esportate in nessun artifact di Phase 7.14).",
+    "no_new_long_run_launched": true
+  }
+}

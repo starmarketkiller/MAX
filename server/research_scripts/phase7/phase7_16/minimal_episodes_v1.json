@@ -1,0 +1,176 @@
+{
+  "generated_at": "2026-09-27T12:24:05.213794+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_16\\build_minimal_episodes.py",
+  "canonical_sha256": "7acc715f13d8af5944ce1ba23be1a5ab552e77c9c19a7c67fae894cc63f43c7e",
+  "payload": {
+    "method": "1 episodio REALE (dati locali gia' disponibili) + 3 episodi SINTETICI minimi, calcolabili a mano, con valori attesi derivati indipendentemente (aritmetica sui numeri grezzi, non dalla stessa funzione sotto verifica) - vedi EP4 per l'unica eccezione dichiarata esplicitamente.",
+    "episodes": [
+      {
+        "id": "EP1_REAL_D1_GOLD_bar49_BUY",
+        "source": "Dati LOCALI reali gia' disponibili (phase7_13/multi_tf_dataset_v1.json, D1 indice 49-50) - nessun nuovo run/download",
+        "direction": "BUY",
+        "atr_at_this_point": 28.31355110210303,
+        "input_common": {
+          "ob_lo": 1989.72,
+          "ob_hi": 1998.38,
+          "bar_shift1_bars_i": {
+            "open": 2025.56,
+            "high": 2039.79,
+            "low": 2020.09,
+            "close": 2028.39,
+            "open_time": "2023-12-07T01:00:00",
+            "close_time": "2023-12-08T01:00:00"
+          },
+          "bar_shift0_bars_i_plus_1": {
+            "open": 2028.26,
+            "high": 2033.93,
+            "low": 1994.5,
+            "close": 2004.2,
+            "open_time": "2023-12-08T01:00:00",
+            "close_time": "2023-12-11T01:00:00"
+          }
+        },
+        "state_initial": {
+          "active": true,
+          "ob_lo": 1989.72,
+          "ob_hi": 1998.38,
+          "bars_waited": 4,
+          "last_bar_time": "2023-12-07T01:00:00"
+        },
+        "hand_derivation": {
+          "original_touched_check": "usa bar[i]=bar[49]: low=2020.09 > ob_hi=1998.38 -> NESSUNA sovrapposizione con [1989.72, 1998.38] -> touched=False",
+          "original_expected_op": "WAITING_NO_TOUCH",
+          "corrected_touched_check": "usa bar[i+1]=bar[50]: low=1994.5 <= ob_hi=1998.38 E high=2033.93 >= ob_lo=1989.72 -> sovrapposizione -> touched=True",
+          "rejection_check_shared": "c1(bar[49].close=2028.39) > o1(bar[49].open=2025.56) -> True (candela di rigetto rialzista) - INVARIATA in entrambe le versioni",
+          "corrected_expected_op": "RETEST_SIGNAL_FIRED, segnale BUY"
+        },
+        "ea_real_trace_confirms": "L'EA reale post-fix (Phase 7.14) NON ha un evento esattamente il 2023-12-08 nel trace curato - questo episodio dimostra il MECCANISMO della divergenza fra le due ricostruzioni Python, non un confronto diretto con l'EA su questa specifica data (vedi punto 2 per il confronto aggregato EA vs Python corretto)."
+      },
+      {
+        "id": "EP2_SYNTHETIC_original_fires_corrected_does_not_SELL",
+        "source": "Sintetico, minimo, calcolabile a mano",
+        "direction": "SELL",
+        "atr_at_this_point": 1.0,
+        "input_common": {
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bar_shift1_bars_i": {
+            "open": 106.0,
+            "high": 107.0,
+            "low": 99.0,
+            "close": 104.0,
+            "open_time": "T0",
+            "close_time": "T1"
+          },
+          "bar_shift0_bars_i_plus_1": {
+            "open": 110.0,
+            "high": 112.0,
+            "low": 108.0,
+            "close": 111.0,
+            "open_time": "T1",
+            "close_time": "T2"
+          }
+        },
+        "state_initial": {
+          "active": true,
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bars_waited": 0,
+          "last_bar_time": "PREV"
+        },
+        "hand_derivation": {
+          "original_touched_check": "usa bar[i]: low=99.0<=105.0 e high=107.0>=100.0 -> sovrapposizione -> touched=True",
+          "rejection_check_shared": "c1(104.0) < o1(106.0) -> True (candela di rigetto ribassista, SELL) - INVARIATA",
+          "original_expected_op": "RETEST_SIGNAL_FIRED, segnale SELL",
+          "corrected_touched_check": "usa bar[i+1]: low=108.0 > ob_hi=105.0 -> NESSUNA sovrapposizione -> touched=False",
+          "corrected_expected_op": "WAITING_NO_TOUCH (nessun segnale, zona resta attiva)"
+        },
+        "consequence": "L'ORIGINALE produce un segnale SPURIO (basato sul range di IERI, gia' superato) che il CORRETTO non produce - coerente con la scoperta che l'ORIGINALE produce piu' 'solo in Python' rispetto all'EA reale (Phase 7.14/7.15) rispetto al CORRETTO."
+      },
+      {
+        "id": "EP3_SYNTHETIC_corrected_fires_original_does_not_BUY",
+        "source": "Sintetico, minimo, calcolabile a mano",
+        "direction": "BUY",
+        "atr_at_this_point": 1.0,
+        "input_common": {
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bar_shift1_bars_i": {
+            "open": 106.0,
+            "high": 108.0,
+            "low": 105.5,
+            "close": 107.0,
+            "open_time": "T0",
+            "close_time": "T1"
+          },
+          "bar_shift0_bars_i_plus_1": {
+            "open": 103.0,
+            "high": 104.5,
+            "low": 102.0,
+            "close": 104.0,
+            "open_time": "T1",
+            "close_time": "T2"
+          }
+        },
+        "state_initial": {
+          "active": true,
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bars_waited": 0,
+          "last_bar_time": "PREV"
+        },
+        "hand_derivation": {
+          "newbar_invalidation_check_first": "c1(bar[i].close=107.0) < ob_lo(100.0)? NO -> zona NON invalidata (bar[i] e' sopra la zona, non sotto - scelto cosi' apposta per non far scattare l'invalidazione, che userebbe la stessa barra e maschererebbe l'effetto da isolare)",
+          "original_touched_check": "usa bar[i]: low=105.5 > ob_hi=105.0 -> NESSUNA sovrapposizione -> touched=False",
+          "original_expected_op": "WAITING_NO_TOUCH",
+          "corrected_touched_check": "usa bar[i+1]: low=102.0<=105.0 e high=104.5>=100.0 -> sovrapposizione -> touched=True",
+          "rejection_check_shared": "c1(bar[i].close=107.0) > o1(bar[i].open=106.0) -> True (candela di rigetto rialzista) - INVARIATA, usa sempre bar[i]",
+          "corrected_expected_op": "RETEST_SIGNAL_FIRED, segnale BUY"
+        },
+        "consequence": "Speculare all'Episodio 2: qui e' il CORRETTO a produrre un segnale che l'ORIGINALE perde - stessa forma dell'Episodio 1 (reale) con numeri tondi per una verifica a mano piu' agevole."
+      },
+      {
+        "id": "EP4_NEGATIVE_CONTROL_both_agree_BUY",
+        "source": "Sintetico, minimo, calcolabile a mano - CONTROLLO NEGATIVO",
+        "direction": "BUY",
+        "atr_at_this_point": 1.0,
+        "input_common": {
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bar_shift1_bars_i": {
+            "open": 103.0,
+            "high": 104.5,
+            "low": 102.0,
+            "close": 104.0,
+            "open_time": "T0",
+            "close_time": "T1"
+          },
+          "bar_shift0_bars_i_plus_1": {
+            "open": 102.0,
+            "high": 103.0,
+            "low": 101.0,
+            "close": 102.5,
+            "open_time": "T1",
+            "close_time": "T2"
+          }
+        },
+        "state_initial": {
+          "active": true,
+          "ob_lo": 100.0,
+          "ob_hi": 105.0,
+          "bars_waited": 0,
+          "last_bar_time": "PREV"
+        },
+        "hand_derivation": {
+          "original_touched_check": "usa bar[i]: low=102.0<=105.0 e high=104.5>=100.0 -> touched=True",
+          "corrected_touched_check": "usa bar[i+1]: low=101.0<=105.0 e high=103.0>=100.0 -> touched=True (STESSO esito di sovrapposizione, entrambe le barre sono dentro la zona)",
+          "rejection_check_shared": "c1(bar[i].close=104.0) > o1(bar[i].open=103.0) -> True (BUY) - INVARIATA",
+          "original_expected_op": "RETEST_SIGNAL_FIRED, segnale BUY",
+          "corrected_expected_op": "RETEST_SIGNAL_FIRED, segnale BUY (STESSO esito dell'originale)"
+        },
+        "consequence": "CONFERMA che la correzione non e' un cambiamento sistematico che altera SEMPRE l'esito - le due versioni concordano quando la barra di ieri e quella di oggi si trovano ENTRAMBE dentro la zona (il caso piu' comune quando il prezzo si muove poco da un giorno all'altro); divergono solo quando le due barre disaccordano sulla sovrapposizione con la zona (Episodi 1-3)."
+      }
+    ],
+    "n_episodes": 4
+  }
+}

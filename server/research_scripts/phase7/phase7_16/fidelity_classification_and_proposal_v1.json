@@ -1,0 +1,62 @@
+{
+  "generated_at": "2026-09-27T12:24:59.743368+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_16\\build_fidelity_classification_and_proposal.py",
+  "canonical_sha256": "9b3f78ea0b2725c3afacd9b4cd3b18a9dde42b26075bf4815792d9a8cffd6da0",
+  "payload": {
+    "classification": "APPROXIMATION_WITH_KNOWN_GAPS",
+    "classification_allowed_values": [
+      "EVENT_LEVEL_PARITY_VALIDATED",
+      "PARTIAL_STRUCTURAL_MODEL",
+      "APPROXIMATION_WITH_KNOWN_GAPS",
+      "NOT_SUITABLE_FOR_EVENT_PARITY",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "classification_reasoning": "Il porting STRUTTURALE (displacement, BOS, origine zona, invalidazione, scadenza, consumo one-shot) e' verificato fedele riga-per-riga (Phase 7.13/7.14) - non in discussione. Il difetto identificato e corretto in questa fase (touched su bar[i] invece di bar[i+1]) spiega la MAGGIOR PARTE della divergenza osservata: il tasso di corrispondenza con l'EA reale passa da 1/8 (versione originale Phase 7.13, congelata) a 6/8 (versione corretta di questa fase) - un miglioramento netto, ma NON una parita' perfetta (rimangono 2/8 eventi EA reali non spiegati anche dopo la correzione, ed entrambe le versioni Python restano su una serie D1 derivata per resampling M15, non sui tick/barre reali del broker, con un ATR calcolato su una storia locale piu' corta di quella reale). Non e' EVENT_LEVEL_PARITY_VALIDATED (nessuna parita' evento-per-evento dimostrata al 100%), ma nemmeno NOT_SUITABLE_FOR_EVENT_PARITY (il miglioramento e' troppo grande e troppo strutturalmente spiegato per liquidarla come inadatta) - la classificazione intermedia e' quella corretta.",
+    "valid_uses": {
+      "mechanism_research": "VALIDO - la logica di creazione/invalidazione/scadenza/consumo one-shot della zona e' strutturalmente identica all'EA (verificato riga per riga), quindi la ricostruzione Python resta uno strumento affidabile per studiare IL MECCANISMO (es. dimostrare la contaminazione cross-TF di Phase 7.13, dove il punto era 'lo stato viene mutato da passaggi non canonici', non 'il timing esatto del touched').",
+      "structural_defect_demonstration": "VALIDO - la dimostrazione causale del difetto cross-TF (Phase 7.13, sintetica) e la sua conferma sul trace EA reale (Phase 7.14) restano intatte: quel meccanismo non dipende dal dettaglio touched-bar, dipende dalla condivisione di lastBarTime/stato fra passaggi TF, verificato separatamente e direttamente sull'EA reale.",
+      "event_by_event_date_matching": "NON VALIDO SENZA LA CORREZIONE - la versione ORIGINALE di Phase 7.13 (congelata) non deve essere usata per affermare 'la strategia produce un segnale il giorno X' confrontandolo con una data EA reale specifica, perche' l'errore di allineamento touched sposta sistematicamente le date. La versione CORRETTA di questa fase migliora molto ma non elimina il gap (2/8 eventi EA ancora non spiegati).",
+      "profitability_or_pf_estimation": "MAI VALIDO (per nessuna delle due versioni) - nessuna delle due ricostruzioni replica i gate H1/SMC, l'esecuzione broker, lo slippage, o usa dati tick reali - qualunque stima di PF/WR da queste ricostruzioni sarebbe scientificamente indifendibile, indipendentemente dal fix di questa fase."
+    },
+    "old_comparisons_usability": {
+      "phase_7_13_ab_simulation": {
+        "artifact": "phase7_13/ab_simulation_v1.json",
+        "status": "RESTA VALIDO per il suo scopo originale (dimostrare l'ESISTENZA e l'IMPATTO STRUTTURALE del difetto cross-TF, confrontando Stream A implementato vs Stream B TF-scoped SULLA STESSA fonte dati Python) - quel confronto e' interno a Python (A vs B), non richiede di essere confrontato con l'EA reale per essere valido.",
+        "caveat": "NON deve essere letto come 'ecco le date esatte in cui l'EA reale genera segnali' - solo come dimostrazione del meccanismo di contaminazione."
+      },
+      "phase_7_14_parity_A_vs_B": {
+        "artifact": "phase7_14/parity_comparison_v1.json, sezione A_pre_fix/B_post_fix",
+        "status": "PIENAMENTE VALIDO, NON TOCCATO da questa fase - confronto EA-vs-EA (stessi tick reali, stesso codice tranne il fix) - non coinvolge la ricostruzione Python."
+      },
+      "phase_7_14_parity_B_vs_C": {
+        "artifact": "phase7_14/parity_comparison_v1.json, sezione b_vs_c_structural_comparison",
+        "status": "GIA' CORRETTO in Phase 7.15 da 'residuo spiegato' a CANDIDATE_CAUSE_NOT_ISOLATED - QUESTA fase (7.16) fornisce ora la spiegazione causale mancante: l'errore di allineamento touched. Il numero '8 vs 7' resta storicamente riportato ma va letto alla luce di questa fase."
+      },
+      "phase_7_15_ea_python_comparison_classification": {
+        "artifact": "phase7_15/ea_python_comparison_classification_v1.json",
+        "status": "CONFERMATO E RAFFORZATO - l'ipotesi 'path-dependence su un punto a monte mai isolato' formulata li' e' ESATTAMENTE il difetto isolato e corretto in questa fase."
+      }
+    },
+    "architectural_proposal": {
+      "model_evaluated": "MT5 = ground truth di segnali/esecuzione; Python = analisi statistica/strutturale degli eventi ESPORTATI dall'EA, non un clone eseguibile parallelo",
+      "assessment": "PIU' ROBUSTO per strategie STATEFUL come ORDER_BLOCK, con riserva esplicita sui casi in cui e' applicabile",
+      "reasoning": [
+        "Le strategie stateful con logica tick-sensibile (touch/rejection su prezzo live, non solo su chiusure di barra) hanno un contratto semantico che un motore bar-driven Python non puo' replicare esattamente senza dati tick reali completi per l'intero periodo - anche una correzione mirata (questa fase) riduce ma non elimina il gap.",
+        "Le strategie STATELESS o con trigger valutati solo su chiusure di barra (es. BREAKOUT_ACC dopo il fix Phase 7.9F/G, che usa solo c1/c2 su chiusure, nessun prezzo live) non hanno questo problema - un clone Python bar-driven puo' essere fedele al 100% in quei casi (gia' dimostrato per BREAKOUT_ACC).",
+        "Per ORDER_BLOCK, un ruolo Python come 'analisi statistica degli eventi esportati da MT5' (es. leggere il trace diagnostico o un futuro export strutturato degli eventi reali generati dall'EA, e farne mechanism research/aggregazione statistica su QUELLI) elimina il problema di fedelta' alla radice, perche' Python non deve piu' RIPRODURRE il trigger, solo ANALIZZARE eventi gia' avvenuti nell'EA."
+      ],
+      "scope_of_proposal": "PROPOSTA METODOLOGICA - non applicata globalmente in questa fase. Si applica bene a strategie stateful/tick-sensibili come ORDER_BLOCK; NON sostituisce il ruolo gia' validato di Python come motore di backtest fedele per strategie stateless/bar-driven pure (es. BREAKOUT_ACC post-fix), dove la ricostruzione e' gia' provata identica.",
+      "practical_recommendation_if_adopted": "Per ORDER_BLOCK specificamente: estendere l'istrumentazione diagnostica gia' esistente (NXS_OB_DiagWrite, Phase 7.14) - o una sua forma permanente e non invasiva - per esportare sistematicamente gli eventi di zona (creata/invalidata/scaduta/consumata) da qualunque run reale futuro, e trattare quell'export come la fonte primaria per qualunque analisi statistica successiva, invece di ricostruire il meccanismo da zero in Python su dati di prezzo derivati."
+    },
+    "next_action": {
+      "single_recommended_action": "NESSUNA ulteriore caccia alla parity perfetta per ORDER_BLOCK/Python - la classificazione APPROXIMATION_WITH_KNOWN_GAPS e' considerata sufficiente per gli usi validi elencati sopra. Procedere con la prossima voce della coda delle priorita' di Phase 7.12 (TSI, o la shortlist successiva) per la validazione dell'edge, come indicato dall'utente.",
+      "not_recommended_this_phase": [
+        "Non correggere ulteriormente la ricostruzione Python oltre il fix touched gia' isolato qui.",
+        "Non lanciare un nuovo run Tester pluriennale.",
+        "Non tentare un confronto PF/WR."
+      ]
+    },
+    "order_block_pre_post_fix_validation_preserved": true,
+    "order_block_pre_post_fix_validation_note": "Il confronto A(pre-fix)/B(post-fix) di Phase 7.14, sugli STESSI tick MT5 reali, NON e' toccato da questa fase - la decisione FIX_CAUSALLY_VALIDATED resta immutata. Questa fase riguarda ESCLUSIVAMENTE la fedelta' della ricostruzione Python (livello B-vs-C), un problema distinto e gia' segnalato come tale in Phase 7.14/7.15."
+  }
+}
