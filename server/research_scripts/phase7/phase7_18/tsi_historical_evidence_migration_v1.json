@@ -1,0 +1,58 @@
+{
+  "generated_at": "2026-09-27T16:10:58.838740+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_18\\build_tsi_historical_evidence_migration.py",
+  "canonical_sha256": "90abe7dd184a039e36cbf3e203bde97ac45e5b93a230e97d3058f3b856c3577b",
+  "payload": {
+    "implementations": {
+      "TSI_IMPL_V1_CONTAMINATED": {
+        "status": "HISTORICAL_CONTAMINATED",
+        "description": "NXS_Strat_TSI() SENZA guardia TF - g_tsiState (filtro ricorsivo IIR doppio EMA) mutato da ogni passaggio multi-TF (M5/M15/M30/H1/H4/D1), non solo D1. Contaminazione UNIVERSALE (100% delle barre D1, Phase 7.17) - a differenza di ORDER_BLOCK, mai autoriparante (memoria esponenziale del filtro non si azzera mai).",
+        "active_from_commit": "presente da prima di Phase 7.10 (data di introduzione non ricostruita - fuori scope, richiederebbe git blame dedicato)",
+        "active_until_commit": "8590f63 (Phase 7.17, ultimo commit prima del fix)",
+        "defect_confirmed_by": [
+          "phase7_17/tsi_decision_card_v1.json (formalizzazione matematica + dati reali gia' disponibili, DEFECT_CONFIRMED_MATERIAL_IMPACT)",
+          "phase7_18/tsi_parity_comparison_v1.json (EA reale, trace dinamico pre/post fix)"
+        ],
+        "artifacts_produced_under_this_implementation_not_deleted": [
+          "knowledge/backtest_database.json, sweep37 S05=TSI (839 trade, PF 0.76)",
+          "results/phase2_baseline_20260705_v2.0.27.csv, riga InpStrat_TSI (15 trade, PF 0.51)",
+          "results/phase_partB_silent_diagnostic_20260706.csv, riga TSI (pattern_fired=3874)",
+          "server/research_scripts/phase7/phase7_18/nxs_tsi_realtrace_diag_prefix.csv (baseline pre-fix di QUESTA fase)"
+        ],
+        "reuse_policy": "NON riutilizzare questi artifact come evidenza della nuova implementazione V2 - restano evidenza storica dell'implementazione V1 contaminata, preservati per tracciabilita'. Classificazione per-artifact gia' fatta in Phase 7.17 (vedi phase7_17/tsi_historical_evidence_map_v1.json) riportata invariata qui sotto.",
+        "prior_classification_from_phase_7_17": [
+          {
+            "artifact": "knowledge/backtest_database.json, campagna 'sweep37 ROUND CORRENTE (baseline)', passata S05 = TSI (commit e6ce816, 839 trade, PF 0.76, periodo 2019.07.11-2025.07.11, XM Global GOLD)",
+            "classification": "POSSIBLY_CONTAMINATED"
+          },
+          {
+            "artifact": "results/phase2_baseline_20260705_v2.0.27.csv, riga InpStrat_TSI (15 trade, PF 0.51, 'history_quality: 100% ticks reali')",
+            "classification": "POSSIBLY_CONTAMINATED"
+          },
+          {
+            "artifact": "results/phase_partB_silent_diagnostic_20260706.csv, riga TSI (pattern_fired_count=3874, dominant_block_stage=PREFLIGHT(10), note='blocked_by_gate:PREFLIGHT(ambiguous)')",
+            "classification": "POSSIBLY_CONTAMINATED"
+          },
+          {
+            "artifact": "server/backtest.py::sig_tsi/tsi_series (motore Python)",
+            "classification": "UNAFFECTED_BUT_NOT_REPRESENTATIVE_OF_LIVE"
+          }
+        ]
+      },
+      "TSI_IMPL_V2_TF_GUARDED": {
+        "status": "CANONICAL_CURRENT",
+        "description": "NXS_Strat_TSI() CON guardia `if(tf != NXS_Profile_TF(\"TSI\")) return s;` subito dopo la risoluzione del TF attivo, prima di qualunque lettura/mutazione di g_tsiState.",
+        "active_from_commit": "commit di Phase 7.18 (vedi vault report per l'hash finale)",
+        "validated_by": "server/research_scripts/phase7/phase7_18/tsi_parity_comparison_v1.json (trace EA reale pre/post fix, stessi tick, stessa finestra 2026.01.01-2026.08.25) + tsi_decision_card_v2.json (FIX_CAUSALLY_VALIDATED)",
+        "no_prior_evidence_available": "Nessun risultato MT5/Python precedente e' evidenza di QUESTA implementazione (non esisteva prima di questa fase) - qualunque valutazione futura (inclusa profittabilita') deve ripartire da run eseguiti DOPO questo commit. Il warm-up del filtro ricorsivo (g_tsiState) riparte da zero a ogni avvio del Tester/EA - un run futuro dovra' tenerne conto (gate barsSeen<75 sul TF canonico, non piu' inquinato da passaggi non canonici)."
+      }
+    },
+    "python_backtest_engine_status": {
+      "identity": "server/research_scripts/phase7/phase7_17/nxs_tsi_replica.py (porting fedele riga-per-riga di g_tsiState/tsi_update, single-TF per costruzione)",
+      "classification": "PARTIAL_STRUCTURAL_MODEL_NOT_EVENT_LEVEL_PARITY_VALIDATED",
+      "note": "Confermato in Phase 7.18: sulla finestra 2026.01.01-2026.08.25, la ricostruzione TF-scoped Python (C) concorda al 100% con l'EA reale post-fix (B) su tutti gli 8 segnali del periodo maturo comune - le 5 differenze residue sono interamente spiegate dalla profondita' diversa del warm-up (B riparte da barsSeen=0 all'avvio del run breve, C eredita un filtro maturo dalla storia locale piena). Questo eleva la fiducia nella fedelta' strutturale del motore Python MA non equivale a EVENT_LEVEL_PARITY_VALIDATED nel senso stretto (nessun trace EA pluriennale raccolto, stesso limite gia' dichiarato in Phase 7.17) - Python NON e' ground truth, MT5 post-fix resta la fonte canonica per qualunque decisione economica."
+    },
+    "no_artifact_deleted": true,
+    "no_old_mt5_result_reused_as_evidence_of_new_implementation": true
+  }
+}

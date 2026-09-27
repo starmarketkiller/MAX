@@ -1,0 +1,116 @@
+struct SNXSTSIState {
+   bool     init;
+   datetime lastBarTime;
+   double   sm1, sm2;        // doppio EMA di priceChange
+   double   sm1Abs, sm2Abs;  // doppio EMA di abs(priceChange)
+   double   signal;          // EMA(TSI, signalPeriod)
+   double   tsiPrev, signalPrev;   // valori PRIMA dell'aggiornamento di questa barra (per il cross)
+   double   prevClose;
+   int      barsSeen;
+};
+SNXSTSIState g_tsiState;
+
+// ---- Phase 7.18 TEMP DIAG (NON-COMPORTAMENTALE, solo osservazione,
+// nessuna condizione/valore di ritorno alterato) - da RIMUOVERE dopo la
+// raccolta del trace reale. Vedi vault "NEXUS - Phase 7.18 TSI Minimal
+// Fix e Short Live Validation". ----
+#define NXS_TSI_DIAG_TRACE
+#ifdef NXS_TSI_DIAG_TRACE
+int NXS_TSI_DiagHandle(){
+   static int h = INVALID_HANDLE;
+   static bool tried = false;
+   if(!tried){
+      tried = true;
+      h = FileOpen("nxs_tsi_realtrace_diag.csv", FILE_WRITE|FILE_CSV|FILE_COMMON|FILE_ANSI, ',');
+      if(h != INVALID_HANDLE)
+         FileWrite(h, "close_time_srv","tf","canonical_tf","mutated",
+                   "pre_sm2","pre_sm2Abs","pre_signal","pre_bars_seen",
+                   "post_sm2","post_sm2Abs","post_signal","post_bars_seen",
+                   "tsi","signal_line","signal_dir","would_be_kept_by_router");
+   }
+   return h;
+}
+void NXS_TSI_DiagWrite(datetime tnow, ENUM_TIMEFRAMES tf, bool mutated,
+                       double preSm2, double preSm2Abs, double preSignal, int preBarsSeen,
+                       double postSm2, double postSm2Abs, double postSignal, int postBarsSeen,
+                       double tsi, double signal, string sigDirStr){
+   int h = NXS_TSI_DiagHandle();
+   if(h == INVALID_HANDLE) return;
+   bool kept = (tf == NXS_Profile_TF("TSI"));
+   FileWrite(h, TimeToString(tnow, TIME_DATE|TIME_MINUTES|TIME_SECONDS), EnumToString(tf),
+             EnumToString(NXS_Profile_TF("TSI")), (mutated ? "1" : "0"),
+             DoubleToString(preSm2, 6), DoubleToString(preSm2Abs, 6), DoubleToString(preSignal, 6), IntegerToString(preBarsSeen),
+             DoubleToString(postSm2, 6), DoubleToString(postSm2Abs, 6), DoubleToString(postSignal, 6), IntegerToString(postBarsSeen),
+             DoubleToString(tsi, 6), DoubleToString(signal, 6), sigDirStr, (kept ? "1" : "0"));
+   FileFlush(h);
+}
+#endif
+
+SNXSSignal NXS_Strat_TSI(){
+   SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
+   if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
+   ENUM_TIMEFRAMES tf = NXS_EffTF();
+   if(tf != NXS_Profile_TF("TSI")) return s;
+#ifdef NXS_TSI_DIAG_TRACE
+   double _diagPreSm2 = g_tsiState.sm2, _diagPreSm2Abs = g_tsiState.sm2Abs;
+   double _diagPreSignal = g_tsiState.signal;
+   int _diagPreBarsSeen = g_tsiState.barsSeen;
+#endif
+   datetime curBar0 = iTime(g_sym, tf, 0);
+   double c1 = iClose(g_sym, tf, 1);
+
+   if(!g_tsiState.init){
+      g_tsiState.init = true; g_tsiState.prevClose = iClose(g_sym, tf, 2);
+      g_tsiState.lastBarTime = 0; g_tsiState.barsSeen = 0;
+   }
+   bool _diagMutated = (g_tsiState.lastBarTime != curBar0);
+   if(g_tsiState.lastBarTime != curBar0){
+      // Nuova barra chiusa: aggiorna il doppio smoothing una sola volta.
+      g_tsiState.tsiPrev = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+      g_tsiState.signalPrev = g_tsiState.signal;
+
+      double pc  = c1 - g_tsiState.prevClose;
+      double apc = MathAbs(pc);
+      double aLong  = 2.0 / (InpTSI_LongPeriod  + 1.0);
+      double aShort = 2.0 / (InpTSI_ShortPeriod + 1.0);
+      double aSig   = 2.0 / (InpTSI_SignalPeriod + 1.0);
+      g_tsiState.sm1    = pc  * aLong  + g_tsiState.sm1    * (1.0 - aLong);
+      g_tsiState.sm1Abs = apc * aLong  + g_tsiState.sm1Abs * (1.0 - aLong);
+      g_tsiState.sm2    = g_tsiState.sm1    * aShort + g_tsiState.sm2    * (1.0 - aShort);
+      g_tsiState.sm2Abs = g_tsiState.sm1Abs * aShort + g_tsiState.sm2Abs * (1.0 - aShort);
+      double tsiNow = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+      g_tsiState.signal = tsiNow * aSig + g_tsiState.signal * (1.0 - aSig);
+
+      g_tsiState.prevClose = c1;
+      g_tsiState.lastBarTime = curBar0;
+      g_tsiState.barsSeen++;
+   }
+   // Warmup: serve tempo perche' il doppio EMA converga (non e' inizializzato
+   // con la media storica reale, parte da 0) - stessa logica di cautela gia'
+   // usata altrove nel file per gli indicatori con stato iterativo.
+   if(g_tsiState.barsSeen < InpTSI_LongPeriod * 3){
+#ifdef NXS_TSI_DIAG_TRACE
+      NXS_TSI_DiagWrite(curBar0, tf, _diagMutated, _diagPreSm2, _diagPreSm2Abs, _diagPreSignal, _diagPreBarsSeen,
+                        g_tsiState.sm2, g_tsiState.sm2Abs, g_tsiState.signal, g_tsiState.barsSeen,
+                        0.0, 0.0, "WARMUP");
+#endif
+      return s;
+   }
+
+   double tsi    = (g_tsiState.sm2Abs > 0) ? 100.0 * g_tsiState.sm2 / g_tsiState.sm2Abs : 0.0;
+   double signal = g_tsiState.signal;
+   bool crossUp   = (g_tsiState.tsiPrev <= g_tsiState.signalPrev) && (tsi > signal);
+   bool crossDown = (g_tsiState.tsiPrev >= g_tsiState.signalPrev) && (tsi < signal);
+   if(crossUp){
+      s.dir = DIR_BUY;  s.score = 66; s.reason = "TSI_cross_up";
+   } else if(crossDown){
+      s.dir = DIR_SELL; s.score = 66; s.reason = "TSI_cross_down";
+   }
+   if(s.dir != DIR_NONE) NXS_DefaultSLTP(s);
+#ifdef NXS_TSI_DIAG_TRACE
+   NXS_TSI_DiagWrite(curBar0, tf, _diagMutated, _diagPreSm2, _diagPreSm2Abs, _diagPreSignal, _diagPreBarsSeen,
+                     g_tsiState.sm2, g_tsiState.sm2Abs, g_tsiState.signal, g_tsiState.barsSeen,
+                     tsi, signal, (s.dir == DIR_BUY ? "BUY" : (s.dir == DIR_SELL ? "SELL" : "NONE")));
+#endif
+   return s;
+}

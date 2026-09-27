@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-09-27T16:14:38.552039+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_18\\build_tsi_decision_card_v2.py",
+  "canonical_sha256": "65ab24c127bab90205a5efd2475d51a89bd5b3664e374a6310f5d51bf3deae0c",
+  "payload": {
+    "candidate": "TSI",
+    "baseline_commit": "8590f63",
+    "decision": "FIX_CAUSALLY_VALIDATED",
+    "decision_basis": [
+      "Run diagnostico corto MT5 pre-fix (2026.01.01-2026.08.25, GOLD H4/tick reali, InpStrategySelector=5, selettore isolato) e post-fix, stessi tick, stessa finestra: guardia TF-scoped verificata efficace al 100% - 0 righe non-D1 osservate post-fix (atteso: 0).",
+      "A(pre-fix)/B(post-fix) sugli STESSI tick reali: 1619 righe D1 'canoniche' grezze pre-fix (molte duplicate per tick nello stesso bar) collassano a pochissimi eventi distinti coincidenti col post-fix - 4 coppie (data,direzione) coincidono esattamente, 250 presenti SOLO pre-fix (spurie, eliminate dal fix), 4 presenti SOLO post-fix. La contaminazione pre-fix produce un numero di eventi 'canonici' ordini di grandezza superiore a quelli realmente generati post-fix - coerente con Phase 7.17 (contaminazione universale, 100% delle barre D1 alterate).",
+      "Confronto strutturale B (EA reale post-fix) vs C (ricostruzione Python TF-scoped Phase 7.17, storia locale piena 2023-10-02+ per il warm-up, poi ritagliata sulla finestra del run breve): 8 segnali coincidono su data+direzione, 0 presenti SOLO in B (atteso: 0 - confermato), 5 presenti SOLO in C - TUTTI antecedenti al primo segnale reale post-fix e spiegati dalla differenza di warm-up (B riparte da barsSeen=0 all'avvio del run Tester breve, quindi il gate 'barsSeen < 75' resta chiuso fino a meta' aprile 2026 circa; C eredita un filtro gia' maturo dalla storia locale piena 2023-10-02+) - non un residuo di contaminazione. Per il periodo maturo comune (dal primo segnale B in poi), B e C coincidono al 100%.",
+      "Valori TSI intermedi (B vs C) su 92 date comuni: differenza media assoluta 0.1093, massima 0.8751 - piccola e coerente con la differenza di profondita' del warm-up gia' dichiarata (non un errore strutturale), stesso principio metodologico di Phase 7.16/7.17: Python NON e' ground truth, MT5 post-fix resta la fonte canonica.",
+      "Nessun side-effect inatteso osservato: compilazione post-fix pulita (0 errori, stessi 2 warning della baseline pre-fix), nessuna modifica a formula/periodi/soglie/TF canonico/gate/SL-TP/selector, nessun'altra strategia toccata (TSI non ha wrapper ne' e' riusata da altre strategie, verificato in Phase 7.17)."
+    ],
+    "fix_applied": {
+      "file": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh",
+      "function": "NXS_Strat_TSI()",
+      "change": "if(tf != NXS_Profile_TF(\"TSI\")) return s;",
+      "position": "subito dopo `ENUM_TIMEFRAMES tf = NXS_EffTF();`, prima di qualunque lettura di curBar0/c1 e prima di ogni mutazione di g_tsiState (init/sm1/sm2/sm1Abs/sm2Abs/signal/prevClose/lastBarTime/barsSeen) - verificato staticamente: nessuna mutazione di stato avviene prima della guardia.",
+      "formula_periods_thresholds_canonical_tf_gate_sltp_selector_other_strategies_unchanged": true,
+      "no_wrapper_reuse_by_other_strategies": "confermato in Phase 7.17 (nessun wrapper trovato) - il fix non si propaga a nessuna altra strategia, a differenza di ORDER_BLOCK/OB_MIT"
+    },
+    "temporary_diagnostic_instrumentation": {
+      "added_and_reverted_before_fix_capture": true,
+      "added_again_and_reverted_after_postfix_capture": true,
+      "final_state_mql5_tree": "identico alla baseline 8590f63 + SOLO la riga della guardia sopra",
+      "logging_position_note": "a differenza di ORDER_BLOCK (Phase 7.14), TSI non ha rami 'silenziosi' a basso costo prima del punto di log - l'istrumentazione pre-fix logga OGNI tick che raggiunge la chiamata TSI nel router multi-TF (non solo le transizioni di barra), producendo un trace molto piu' pesante per unita' di tempo calendario del run (75.474 righe / ~50 min per la finestra pre-fix) - osservazione operativa, non un difetto del fix."
+    },
+    "parity_summary": {
+      "A_pre_fix_raw_canonical_rows": 1619,
+      "B_post_fix_raw_canonical_rows": 8,
+      "a_vs_b_matched_date_direction": 4,
+      "a_vs_b_only_in_a_spurious_eliminated": 250,
+      "a_vs_b_only_in_b": 4,
+      "b_vs_c_matched": 8,
+      "b_vs_c_only_in_b": 0,
+      "b_vs_c_only_in_c_explained_by_warmup_depth_difference": 5,
+      "guard_zero_non_canonical_mutations_confirmed": true
+    },
+    "distortion_direction_confirmed_vs_phase_7_17": "CREATION_DOMINANT_ON_THIS_WINDOW - coerente con la classificazione Phase 7.17 'BOTH' (soppressione+creazione quasi simmetriche sull'intera storia 2023-2026): su questa finestra corta 2026 la manifestazione osservata e' soprattutto creazione spuria (A >> B in eventi 'canonici').",
+    "run_type": "SHORT_DIAGNOSTIC_NOT_MULTI_YEAR_BACKTEST",
+    "no_optimization_no_sltp_tuning_no_parameter_sweep_no_profitability_no_promotion": true,
+    "next_step_not_decided_here": "Nessuna promozione live, nessuna ottimizzazione, nessuna ricerca di edge. Il fix resta un cambiamento di IMPLEMENTATION INTEGRITY - una valutazione di redditivita' post-fix e' un lavoro separato, non svolto e non presunto in questa fase."
+  }
+}

@@ -1367,6 +1367,7 @@ SNXSSignal NXS_Strat_TSI(){
    SNXSSignal s; ZeroMemory(s); s.strat = STRAT_TSI; s.stratName = "TSI";
    if(!InpStrat_TSI || !NXS_SelectorAllows(5)) return s;
    ENUM_TIMEFRAMES tf = NXS_EffTF();
+   if(tf != NXS_Profile_TF("TSI")) return s;
    datetime curBar0 = iTime(g_sym, tf, 0);
    double c1 = iClose(g_sym, tf, 1);
 
