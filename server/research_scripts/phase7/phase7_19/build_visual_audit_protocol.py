@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Phase 7.19 punto 8 - VISUAL_AUDIT_PROTOCOL_V1: definisce le tre fasi
+(blind review, future reveal, outcome review) con domande standard e
+regole di sequenza obbligatorie. SPECIFICA - nessuna infrastruttura
+implementata in questa fase."""
+import os
+import sys
+
+PHASE719_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE719_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import wrap_with_provenance, save_json  # noqa: E402
+
+
+def build():
+    payload = {
+        "protocol_name": "VISUAL_AUDIT_PROTOCOL_V1",
+        "purpose": "Standard per rivedere visivamente un EVENT_AUDIT_PACKET_V1 in modo "
+                  "anti-leakage, con separazione rigorosa fra cio' che era osservabile a "
+                  "decision-time e cio' che e' noto solo a posteriori.",
+        "stages": {
+            "stage_a_blind_review": {
+                "shown": ["grafico", "livelli", "indicatori", "stato strategia (state_before)",
+                         "entry/signal", "contesto multi-TF (solo previous_bars + current_bar)"],
+                "explicitly_withheld": ["PnL finale", "MFE futuro", "MAE futuro", "TP raggiunto",
+                                       "barre future (subsequent_bars)", "outcome/final_classification"],
+                "standard_questions": [
+                    "1. Il segnale e' coerente con la specifica?",
+                    "2. La strategia sembra aver identificato cio' che dichiara?",
+                    "3. L'ingresso e' temporalmente coerente?",
+                    "4. Esistono elementi visivi apparentemente non catturati dalla "
+                    "formalizzazione?",
+                    "5. Il contesto supporta o contraddice il meccanismo dichiarato?",
+                ],
+                "forbidden_questions": ["Vincera'?", "e qualunque domanda che presupponga la "
+                                       "conoscenza dell'esito"],
+                "lock_requirement": "Le risposte di Stage A devono essere REGISTRATE E "
+                                    "VERSIONATE (conclusions_versioned) PRIMA che Stage B "
+                                    "possa essere rivelato - un audit che rivela Stage B senza "
+                                    "aver bloccato Stage A non e' valido (blind_confirmed=false).",
+            },
+            "stage_b_future_reveal": {
+                "precondition": "stage_a deve essere gia' bloccato/versionato "
+                               "(revealed_after_stage_a_locked=true)",
+                "analyzed": ["reazione immediata", "continuation", "failure", "excursion",
+                            "reversal", "recovery", "tempo di sviluppo"],
+                "required_comparison": "Confronto ESPLICITO con le aspettative dichiarate in "
+                                       "Stage A (comparison_with_stage_a_expectation) - non "
+                                       "una nuova opinione indipendente formulata da zero.",
+            },
+            "stage_c_outcome_review": {
+                "precondition": "stage_b deve essere gia' bloccato",
+                "shown": ["MFE", "MAE", "PnL", "exit", "R multiple", "final classification"],
+                "decision_outcome_matrix": {
+                    "description": "Distinzione FORMALIZZATA e obbligatoria - qualita' della "
+                                  "decisione (giudicata SOLO su Stage A) vs qualita' "
+                                  "dell'esito (Stage C), mai confuse fra loro.",
+                    "categories": ["GOOD_DECISION_BAD_OUTCOME", "BAD_DECISION_GOOD_OUTCOME",
+                                  "GOOD_DECISION_GOOD_OUTCOME", "BAD_DECISION_BAD_OUTCOME"],
+                },
+            },
+        },
+        "sequence_enforcement": "Le tre fasi sono ORDINATE e NON POSSONO essere eseguite fuori "
+                               "ordine ne' in parallelo dallo stesso reviewer sullo stesso "
+                               "evento - uno strumento che implementera' questo protocollo "
+                               "deve impedire tecnicamente di vedere Stage B/C prima di aver "
+                               "salvato Stage A (vedi IMPLEMENTATION_ROADMAP_V1).",
+        "conclusion_taxonomy": {
+            "description": "Ogni conclusione di un audit deve dichiarare il proprio stato "
+                          "epistemico - vedi ANTI_BIAS_RULES_V1 punto 23.",
+            "values": ["OBSERVATION", "HYPOTHESIS", "VALIDATED_RESULT"],
+        },
+        "output_schema": "visual_audit_result_v1.schema.json",
+        "not_implemented_this_phase": True,
+    }
+    return payload
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, script=os.path.abspath(__file__))
+    out_path = os.path.join(PHASE719_DIR, "visual_audit_protocol_v1.json")
+    save_json(out_path, doc)
+    print(f"Scritto {out_path} (sha256={doc['canonical_sha256'][:16]}...)")
+
+
+if __name__ == "__main__":
+    main()

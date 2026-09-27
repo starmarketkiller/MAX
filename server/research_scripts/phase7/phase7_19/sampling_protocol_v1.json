@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-09-27T15:05:35.579760+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_19\\build_sampling_protocol.py",
+  "canonical_sha256": "d0b837eab03a119bac53cac189fb3bd80ee869654bd4fd9feae866552d2b00e9",
+  "payload": {
+    "protocol_name": "SAMPLING_PROTOCOL_V1",
+    "categories": {
+      "winners": "trade chiusi in profitto",
+      "losers": "trade chiusi in perdita",
+      "random": "campione casuale indipendente dall'esito, per evitare selection bias",
+      "blocked_or_near_miss": "segnali bloccati da un gate o quasi-triggerati (vedi NEAR_MISS_EVENT)",
+      "matched_non_events": "periodi con condizioni simili ma nessun segnale generato (vedi MATCHED_NON_EVENT)"
+    },
+    "default_sample_size_per_category": 20,
+    "default_is_not_mandatory": true,
+    "adaptive_rule": "Se il dataset ha MENO eventi disponibili del default per una categoria, usare TUTTI gli eventi di quella categoria (mai sovracampionare, mai inventare eventi). Se il dataset e' molto piccolo (es. i 60 raw trigger D1 di TSI su 2.9 anni, Phase 7.17), il campione = l'intera popolazione disponibile per quella categoria.",
+    "matched_non_event_protocol": {
+      "matching_criteria_allowed": [
+        "volatility",
+        "regime",
+        "direction",
+        "timeframe",
+        "session",
+        "level_proximity",
+        "trend",
+        "year_period"
+      ],
+      "matching_must_be_causal": "I criteri di matching devono essere calcolabili con informazione disponibile ALLA STESSA data del non-evento, mai con conoscenza retrospettiva del periodo (es. 'questo periodo era in trend' va determinato causalmente, non guardando il grafico completo a posteriori)",
+      "outcome_never_used_in_selection": "Il campionamento dei controlli NON deve MAI usare l'esito futuro per decidere quali periodi includere - MATCHED_NON_EVENT_V1.outcome_used_in_selection e' vincolato a false nello schema.",
+      "purpose": "Capire cosa distingue davvero un segnale da un mercato apparentemente simile senza segnale - non per stimare un edge, solo per caratterizzare la selettivita' del meccanismo."
+    },
+    "near_miss_protocol": {
+      "definition": "Un evento in cui mancava una sola condizione, il trigger era quasi raggiunto, un gate ha bloccato, era attivo un cooldown, o c'era disaccordo HTF.",
+      "purpose": "Supporto per una futura conditional edge discovery - QUI solo raccolta/classificazione, nessuna discovery eseguita.",
+      "schema": "matched_non_event_v1.schema.json (record_kind=NEAR_MISS_EVENT)"
+    },
+    "selection_disclosure_rule": "Qualunque selezione di 'casi interessanti' che usi il PnL o l'outcome per decidere quali eventi mostrare in un Visual Audit deve essere DICHIARATA ESPLICITAMENTE come tale (mai presentata come campione neutro) - vedi ANTI_BIAS_RULES_V1."
+  }
+}

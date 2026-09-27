@@ -1,0 +1,47 @@
+{
+  "generated_at": "2026-09-27T15:05:36.161505+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_19\\build_anti_bias_rules.py",
+  "canonical_sha256": "9fd9958e3930ddeb82b8c8ede3513977b6fff20952ba9bc20372bac387cc8ce8",
+  "payload": {
+    "rules_name": "ANTI_BIAS_RULES_V1",
+    "rules": [
+      {
+        "id": "AB01",
+        "rule": "No future bars nella blind review",
+        "enforcement": "multi_timeframe_context.bars_by_timeframe[tf].subsequent_bars deve essere assente/vuoto in qualunque packet usato per Stage A - vedi ANTI_LEAKAGE_SPECIFICATION_V1"
+      },
+      {
+        "id": "AB02",
+        "rule": "No outcome nel matched sampling",
+        "enforcement": "MATCHED_NON_EVENT_V1.outcome_used_in_selection vincolato a false nello schema - vedi SAMPLING_PROTOCOL_V1"
+      },
+      {
+        "id": "AB03",
+        "rule": "No selezione dei 'casi interessanti' usando PnL senza dichiararlo",
+        "enforcement": "Qualunque selezione informata dall'esito deve essere etichettata esplicitamente come tale (es. dataset_split_tag o una nota dedicata) - mai presentata come campione neutro/casuale"
+      },
+      {
+        "id": "AB04",
+        "rule": "No modifica delle feature dopo aver visto holdout",
+        "enforcement": "edge_discovery_compatibility.dataset_split_tag deve essere assegnato PRIMA di qualunque analisi - una feature aggiunta/modificata dopo aver osservato risultati su HOLDOUT invalida lo split (richiede un nuovo hypothesis_id e un nuovo split)"
+      },
+      {
+        "id": "AB05",
+        "rule": "Visual review blind PRIMA del reveal",
+        "enforcement": "VISUAL_AUDIT_PROTOCOL_V1: Stage A deve essere bloccato/versionato (conclusions_versioned) prima che Stage B sia accessibile - vedi stage_b_future_reveal.revealed_after_stage_a_locked"
+      },
+      {
+        "id": "AB06",
+        "rule": "Reviewer conclusions versionate",
+        "enforcement": "VISUAL_AUDIT_RESULT_V1.conclusions_versioned + superseded_by - una revisione successiva non sovrascrive mai silenziosamente, crea un nuovo record collegato"
+      },
+      {
+        "id": "AB07",
+        "rule": "Distinzione observation vs hypothesis vs validated result",
+        "enforcement": "VISUAL_AUDIT_RESULT_V1.observation_vs_hypothesis_vs_validated obbligatorio - un risultato a fidelity C/D non puo' mai dichiararsi VALIDATED_RESULT (vedi FIDELITY_FRAMEWORK_V1.downstream_constraint)"
+      }
+    ],
+    "n_rules": 7,
+    "principle": "Ogni regola ha un meccanismo di ENFORCEMENT verificabile in uno schema o in un controllo automatico dichiarato - non solo un principio astratto."
+  }
+}

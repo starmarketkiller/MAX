@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.internal/schemas/visual_audit_result_v1.schema.json",
+  "title": "VISUAL_AUDIT_RESULT_V1",
+  "description": "Esito di un audit visivo applicato a un EVENT_AUDIT_PACKET_V1 secondo VISUAL_AUDIT_PROTOCOL_V1 (Stage A blind review -> Stage B future reveal -> Stage C outcome review). Vedi punti 8-9 della specifica.",
+  "type": "object",
+  "properties": {
+    "schema_version": {"const": "VISUAL_AUDIT_RESULT_V1"},
+    "audit_id": {"type": "string"},
+    "event_id": {"type": "string", "description": "riferimento a EVENT_AUDIT_PACKET_V1.identity.event_id"},
+    "reviewer_id": {"type": "string"},
+    "reviewer_kind": {"type": "string", "enum": ["HUMAN", "CLAUDE", "JARVIS", "OTHER_MODEL"]},
+    "protocol_version": {"const": "VISUAL_AUDIT_PROTOCOL_V1"},
+    "conducted_at": {"type": "string", "format": "date-time"},
+    "conclusions_versioned": {"type": "string", "description": "identificatore di versione delle conclusioni - una revisione successiva NON sovrascrive, crea un nuovo audit_result collegato"},
+    "superseded_by": {"type": ["string", "null"]},
+
+    "stage_a_blind_review": {
+      "type": "object",
+      "description": "SOLO dati disponibili fino al decision_time - niente PnL/MFE/MAE/TP/barre future/outcome.",
+      "properties": {
+        "blind_confirmed": {"type": "boolean", "description": "true se il reviewer certifica di non aver visto alcuna informazione futura prima di rispondere"},
+        "data_shown": {"type": "array", "items": {"type": "string"}, "description": "elenco esplicito di cosa e' stato mostrato (grafico, livelli, indicatori, stato strategia, entry/signal, contesto multi-TF)"},
+        "data_explicitly_withheld": {"type": "array", "items": {"type": "string"}, "description": "conferma esplicita di cosa NON e' stato mostrato"},
+        "q1_signal_coherent_with_spec": {"type": "object", "properties": {"answer": {"type": "string"}, "confidence": {"type": "string"}}, "required": ["answer"]},
+        "q2_strategy_identified_what_it_declares": {"type": "object", "properties": {"answer": {"type": "string"}, "confidence": {"type": "string"}}, "required": ["answer"]},
+        "q3_entry_temporally_coherent": {"type": "object", "properties": {"answer": {"type": "string"}, "confidence": {"type": "string"}}, "required": ["answer"]},
+        "q4_visual_elements_not_captured_by_formalization": {"type": "object", "properties": {"answer": {"type": "string"}, "confidence": {"type": "string"}}, "required": ["answer"]},
+        "q5_context_supports_or_contradicts_mechanism": {"type": "object", "properties": {"answer": {"type": "string"}, "confidence": {"type": "string"}}, "required": ["answer"]},
+        "forbidden_question_asked": {"type": "boolean", "description": "deve essere sempre false - 'vincera'?' non e' una domanda ammessa in Stage A"}
+      },
+      "required": ["blind_confirmed", "data_shown", "data_explicitly_withheld",
+                  "q1_signal_coherent_with_spec", "q2_strategy_identified_what_it_declares",
+                  "q3_entry_temporally_coherent", "q4_visual_elements_not_captured_by_formalization",
+                  "q5_context_supports_or_contradicts_mechanism", "forbidden_question_asked"]
+    },
+
+    "stage_b_future_reveal": {
+      "type": "object",
+      "properties": {
+        "revealed_after_stage_a_locked": {"type": "boolean", "description": "deve essere true - Stage A va bloccato/versionato PRIMA di rivelare Stage B"},
+        "immediate_reaction": {"type": "string"},
+        "continuation_or_failure": {"type": "string", "enum": ["CONTINUATION", "FAILURE", "UNKNOWN_CENSORED"]},
+        "excursion_summary": {"type": "string"},
+        "reversal_observed": {"type": ["boolean", "null"]},
+        "recovery_observed": {"type": ["boolean", "null"]},
+        "time_to_development": {"type": "string"},
+        "comparison_with_stage_a_expectation": {"type": "string", "description": "confronto esplicito col dichiarato di Stage A - non una nuova opinione indipendente"}
+      },
+      "required": ["revealed_after_stage_a_locked", "continuation_or_failure", "comparison_with_stage_a_expectation"]
+    },
+
+    "stage_c_outcome_review": {
+      "type": "object",
+      "properties": {
+        "revealed_after_stage_b_locked": {"type": "boolean"},
+        "mfe": {"type": ["number", "null"]}, "mae": {"type": ["number", "null"]},
+        "pnl": {"type": ["number", "null"]}, "exit_description": {"type": "string"},
+        "r_multiple": {"type": ["number", "null"]},
+        "final_classification": {"type": "string", "enum": ["CONTINUATION", "FAILURE", "UNKNOWN_CENSORED"]},
+        "decision_outcome_matrix": {
+          "type": "string",
+          "enum": ["GOOD_DECISION_BAD_OUTCOME", "BAD_DECISION_GOOD_OUTCOME", "GOOD_DECISION_GOOD_OUTCOME", "BAD_DECISION_BAD_OUTCOME"],
+          "description": "formalizzazione obbligatoria - la qualita' della decisione (Stage A) e la qualita' dell'esito (Stage C) sono giudicate SEPARATAMENTE, mai confuse"
+        },
+        "decision_quality_basis": {"type": "string", "description": "su cosa si basa il giudizio di 'buona/cattiva decisione' - deve riferirsi SOLO a Stage A, mai contaminato dall'esito"}
+      },
+      "required": ["revealed_after_stage_b_locked", "final_classification", "decision_outcome_matrix", "decision_quality_basis"]
+    },
+
+    "observation_vs_hypothesis_vs_validated": {
+      "type": "string",
+      "enum": ["OBSERVATION", "HYPOTHESIS", "VALIDATED_RESULT"],
+      "description": "distinzione obbligatoria per ogni conclusione - vedi ANTI_BIAS_RULES, punto 23"
+    },
+
+    "fidelity_of_this_audit": {"type": "string", "enum": ["A", "B", "C", "D"], "description": "ereditata dal packet - un audit su fidelity bassa non puo' sostenere conclusioni forti"}
+  },
+  "required": ["schema_version", "audit_id", "event_id", "reviewer_kind", "protocol_version",
+              "conducted_at", "stage_a_blind_review", "observation_vs_hypothesis_vs_validated",
+              "fidelity_of_this_audit"]
+}

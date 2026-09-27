@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-09-27T15:05:35.981141+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_19\\build_source_of_truth_hierarchy.py",
+  "canonical_sha256": "7382a10b9c7c71c0b27b7fd1ba9db6d2af0532a6b076eaeb82827f5346c0ec39",
+  "payload": {
+    "hierarchy_name": "SOURCE_OF_TRUTH_HIERARCHY_V1",
+    "levels": [
+      {
+        "level": "execution",
+        "authority": "MT5 runtime trace / broker history",
+        "scope": "CIO' CHE E' REALMENTE ACCADUTO (fill, prezzo, timing reale) - nessun'altra fonte puo' sovrascriverla"
+      },
+      {
+        "level": "event_identity",
+        "authority": "MT5 canonical implementation (NXS_Strat_*() reale)",
+        "scope": "QUALE meccanismo ha generato l'evento - definito dal codice effettivamente eseguito, non dalla sua descrizione o dal suo intento"
+      },
+      {
+        "level": "statistical_analysis",
+        "authority": "Python",
+        "scope": "Aggregazione, mechanism research, feature engineering SU eventi gia' identificati - MAI la fonte primaria di 'questo evento e' successo cosi''"
+      },
+      {
+        "level": "reconstructed_visual_context",
+        "authority": "market data + EVENT_AUDIT_PACKET_V1",
+        "scope": "Il contesto grafico/multi-TF ricostruito per la revisione umana/modello - fedele quanto dichiarato dal proprio FIDELITY_FRAMEWORK_V1 tier, mai oltre"
+      },
+      {
+        "level": "narrative_interpretation",
+        "authority": "Claude/Jarvis/analista umano",
+        "scope": "Interpretazione e giudizio SUL packet gia' costruito - non puo' MAI modificare i livelli sottostanti, solo commentarli"
+      }
+    ],
+    "python_event_level_authority_rule": {
+      "default": "Python NON e' event-level authoritative per default",
+      "exception": "Python DIVENTA event-level authoritative per una specifica coppia (strategia, versione) SOLO dopo una parity dimostrata esplicitamente (es. EVENT_LEVEL_PARITY_VALIDATED nella classificazione di fedelta' Phase 7.16) - MAI per default, MAI per estensione automatica da un'altra strategia anche se strutturalmente simile",
+      "current_status_in_this_project": {
+        "BREAKOUT_ACC": "Python e' un clone fedele al 100% per la logica bar-driven post-fix (nessun elemento tick-sensibile residuo)",
+        "ORDER_BLOCK": "APPROXIMATION_WITH_KNOWN_GAPS (Phase 7.16) - Python NON e' event-level authoritative",
+        "TSI": "PARTIAL_STRUCTURAL_MODEL (Phase 7.17) - Python NON e' event-level authoritative, non validato contro un trace EA live reale"
+      }
+    },
+    "rule_of_thumb": "Per strategie STATEFUL o con dipendenza da prezzo LIVE/tick (non solo chiusure di barra), MT5 resta la fonte canonica degli eventi reali salvo parity esplicitamente dimostrata - lezione formalizzata in Phase 7.16 (ORDER_BLOCK) e riapplicata in Phase 7.17-7.18 (TSI).",
+    "conflict_resolution": "Se due livelli sono in disaccordo, vince SEMPRE il livello superiore nella lista (execution > event_identity > statistical_analysis > reconstructed_visual_context > narrative_interpretation) - un'interpretazione narrativa non puo' mai 'correggere' un fatto di esecuzione."
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.internal/schemas/matched_non_event_v1.schema.json",
+  "title": "MATCHED_NON_EVENT_V1",
+  "description": "Periodo di controllo in cui le condizioni di mercato erano simili a un evento reale ma la strategia NON ha generato segnale (MATCHED_NON_EVENT), oppure un evento in cui e' mancata una sola condizione (NEAR_MISS_EVENT). Vedi punti 11-12 della specifica. Il matching e' SEMPRE causale (mai basato su outcome futuri).",
+  "type": "object",
+  "properties": {
+    "schema_version": {"const": "MATCHED_NON_EVENT_V1"},
+    "record_id": {"type": "string"},
+    "record_kind": {"type": "string", "enum": ["MATCHED_NON_EVENT", "NEAR_MISS_EVENT", "BLOCKED_EVENT", "BROKER_REJECTED_EVENT", "RANDOM_CONTROL"]},
+    "reference_event_id": {"type": ["string", "null"], "description": "l'evento reale a cui questo record e' stato abbinato, se applicabile (MATCHED_NON_EVENT)"},
+    "strategy_id": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+
+    "matching_criteria_used": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["volatility", "regime", "direction", "timeframe", "session", "level_proximity", "trend", "year_period"]},
+      "description": "SOLO criteri causali (noti al momento, mai derivati da outcome futuro)"
+    },
+    "matching_causality_verified": {"type": "boolean"},
+    "outcome_used_in_selection": {"const": false, "description": "deve essere SEMPRE false - vedi ANTI_BIAS_RULES: no outcome nel matched sampling"},
+
+    "near_miss_detail": {
+      "type": "object",
+      "description": "presente solo se record_kind=NEAR_MISS_EVENT",
+      "properties": {
+        "missing_condition": {"type": "string", "description": "es. 'mancava una sola condizione', 'trigger quasi raggiunto'"},
+        "gate_blocked": {"type": "string"},
+        "cooldown_active": {"type": "boolean"},
+        "htf_disagreement": {"type": "boolean"},
+        "distance_from_trigger": {"type": ["number", "null"]}
+      }
+    },
+
+    "blocked_detail": {
+      "type": "object",
+      "description": "presente solo se record_kind=BLOCKED_EVENT o BROKER_REJECTED_EVENT",
+      "properties": {
+        "block_stage": {"type": "string"},
+        "block_reason": {"type": "string"},
+        "would_be_kept_by_router": {"type": ["boolean", "null"]}
+      }
+    },
+
+    "pre_entry_feature_snapshot_ref": {"type": "string", "description": "riferimento allo snapshot feature comparabile a EVENT_AUDIT_PACKET_V1.pre_entry_feature_snapshot"},
+    "multi_timeframe_context_ref": {"type": "string"},
+    "fidelity": {"type": "string", "enum": ["A", "B", "C", "D"]}
+  },
+  "required": ["schema_version", "record_id", "record_kind", "strategy_id", "timestamp",
+              "matching_criteria_used", "matching_causality_verified", "outcome_used_in_selection", "fidelity"]
+}

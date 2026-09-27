@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-09-27T15:08:56.876917+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_19\\build_decision.py",
+  "canonical_sha256": "0ae3bf862323aa2954c3df46f46a19ebff4ad737821155931bc63972a551f5c6",
+  "payload": {
+    "decision": "AUDIT_STANDARD_READY",
+    "checks": {
+      "schema_represents_3_structurally_different_strategies": true,
+      "missing_fields_never_use_bare_null": true,
+      "anti_leakage_separation_present_in_schema": true,
+      "fidelity_framework_has_precise_criteria_not_only_descriptive": true,
+      "visual_audit_stage_sequence_enforced_in_schema": true,
+      "source_of_truth_hierarchy_incorporates_phase_7_16_lesson": true,
+      "gap_analysis_completed_with_real_examples": true,
+      "roadmap_has_explicit_dependencies_and_order": true
+    },
+    "scope_of_this_decision": "Giudica SOLO la specifica (schemi, protocolli, coerenza interna, capacita' di rappresentare strategie diverse) - NON giudica se una qualunque strategia NEXUS ha edge, ne' sostituisce l'implementazione (vedi IMPLEMENTATION_ROADMAP_V1, dichiaratamente non eseguita in questa fase).",
+    "known_blockers_for_full_implementation_not_for_the_spec_itself": [
+      "RUNTIME_IDENTITY_MANIFEST_V1 (intero schema)",
+      "actual fill reale per eventi catturati da istrumentazione diagnostica (es. ORDER_BLOCK Phase 7.14/7.18)",
+      "state snapshot per strategie SENZA istrumentazione diagnostica temporanea attiva (es. SH_BMS_RTO, la maggioranza delle strategie del registro)"
+    ],
+    "residual_open_questions": [
+      "ex5_hash: da verificare se MQL5 puo' tecnicamente calcolare/esporre l'hash del proprio binario compilato a se stesso in runtime - non verificato in questa fase (richiederebbe test su MetaEditor/MQL5 reference, fuori scope di una fase di specifica)",
+      "Il meccanismo di enforcement TECNICO della sequenza Stage A->B->C (non solo specificato, ma IMPEDITO a livello di strumento) resta da progettare nel dettaglio al Livello 3 (Product Platform) - qui solo il VINCOLO e' specificato"
+    ],
+    "no_edge_claim_made": true
+  }
+}

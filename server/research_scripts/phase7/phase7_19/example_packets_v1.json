@@ -1,0 +1,843 @@
+{
+  "generated_at": "2026-09-27T15:07:37.539189+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_19\\build_example_packets.py",
+  "canonical_sha256": "7afa4c166ab0f548a4b0cb93f54aa8b555bf7a7b55d42df1e8cfb9d7779e975d",
+  "payload": {
+    "packets": {
+      "BREAKOUT_ACC": {
+        "schema_version": "EVENT_AUDIT_PACKET_V1",
+        "identity": {
+          "event_id": "evt_1209b7abca9456d1",
+          "strategy_id": "BREAKOUT_ACC",
+          "canonical_strategy_identity": "BREAKOUT_ACC_INTENDED_D1_V1",
+          "strategy_version": "post-fix Phase 7.9F/7.9G (guardia TF applicata)",
+          "implementation_identity": "MQL5_LIVE",
+          "code_commit_sha": "e6ce816 (periodo del trace live citato nel dataset)",
+          "build_id": "NOT_RECORDED - nessun RUNTIME_IDENTITY_MANIFEST_V1 emesso all'epoca",
+          "runtime_fingerprint": "NOT_AVAILABLE - manifest non ancora implementato (vedi IMPLEMENTATION_ROADMAP_V1)",
+          "dataset_version": "breakout_acc_intended_d1_v1_dataset.json (Phase 7.9H)",
+          "tenant_id": "NOT_APPLICABLE - architettura mono-cliente in questa fase",
+          "ea_instance_id": "NOT_APPLICABLE",
+          "account_scope_id": "NOT_APPLICABLE"
+        },
+        "environment": {
+          "symbol": "GOLD",
+          "broker": "NOT_RECORDED nel dataset (noto storicamente: XM Global)",
+          "server": "NOT_RECORDED",
+          "account_mode": "UNKNOWN",
+          "leverage": "NOT_RECORDED",
+          "contract_specification": {
+            "note": "NOT_RECORDED"
+          },
+          "minimum_lot": 0.01,
+          "lot_step": "NOT_RECORDED",
+          "terminal_build": "NOT_RECORDED",
+          "ea_name": "NEXUS_EA_v2",
+          "ea_version": "NOT_RECORDED",
+          "chart_symbol": "GOLD",
+          "chart_timeframe": "PERIOD_M15",
+          "strategy_canonical_timeframe": "PERIOD_D1",
+          "timezone": "BROKER_SERVER_TZ (non ulteriormente specificato nel dataset)",
+          "dst_convention": "UNKNOWN"
+        },
+        "timeline": {
+          "event_detection_time": {
+            "value": "2019.06.05",
+            "source": "MT5_BAR_CLOSE_D1",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "BAR_CLOSE",
+            "confidence": "VERIFIED"
+          },
+          "signal_time": {
+            "value": "2019.06.05 17:30:00",
+            "source": "NXS_LogTradeCSV_OPEN_row",
+            "timezone": "BROKER_SERVER_TZ - identico a fill_time per costruzione M15 (Phase 7.9K)",
+            "precision": "MINUTE",
+            "confidence": "VERIFIED"
+          },
+          "decision_time": {
+            "value": "2019.06.05 17:30:00",
+            "source": "NXS_LogTradeCSV_OPEN_row",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "MINUTE",
+            "confidence": "VERIFIED"
+          },
+          "order_request_time": {
+            "value": "2019.06.05 17:30:00",
+            "source": "inferito dal fill (signal_to_fill_slippage=0)",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "MINUTE",
+            "confidence": "PROBABLE"
+          },
+          "broker_acceptance_time": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "broker_accept_reject=ACCEPT ma senza timestamp dedicato nel dataset"
+          },
+          "broker_rejection_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE",
+            "note": "evento accettato, non rifiutato"
+          },
+          "fill_time": {
+            "value": "2019.06.05 17:30:00",
+            "source": "HistoryDealGetDouble(DEAL_TIME)",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "SECOND",
+            "confidence": "VERIFIED"
+          },
+          "exit_time": {
+            "value": "2019.06.11 10:51:40",
+            "source": "HistoryDealGetDouble(DEAL_TIME)",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "SECOND",
+            "confidence": "VERIFIED"
+          }
+        },
+        "prices": {
+          "market_reference_price": {
+            "value": 1306.87,
+            "source": "D1_bar_high_of_range",
+            "fidelity": "B",
+            "is_proxy": false
+          },
+          "bid": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "nessun tick BID isolato nel dataset D1"
+          },
+          "ask": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "last": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "signal_price": {
+            "value": 1333.51,
+            "source": "NXS_LogTradeCSV OPEN row (refP, prezzo di riferimento PRIMA dell'invio ordine) - NEXUS_trades.csv, join per time+sl+tp",
+            "fidelity": "A",
+            "is_proxy": false
+          },
+          "requested_price": {
+            "value": 1333.51,
+            "source": "coincide col signal_price (slippage=0 dichiarato)",
+            "fidelity": "A",
+            "is_proxy": false
+          },
+          "actual_fill_price": {
+            "value": 1333.51,
+            "source": "HistoryDealGetDouble(DEAL_PRICE) - deal reale, run diagnostico Phase 7.9H (nxs_diag_deals_export_r003.csv)",
+            "fidelity": "A",
+            "is_proxy": false
+          },
+          "exit_fill_price": {
+            "value": 1322.67,
+            "source": "HistoryDealGetDouble(DEAL_PRICE)",
+            "fidelity": "A",
+            "is_proxy": false
+          },
+          "spread": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "slippage": {
+            "value": 0.0,
+            "source": "differenza signal_price/fill_price",
+            "fidelity": "A",
+            "is_proxy": false
+          }
+        },
+        "strategy_state": {
+          "state_before": {
+            "strategy_state_kind": "COOLDOWN_TIMER",
+            "fields": {
+              "accept_up": "1",
+              "accept_dn": "0",
+              "range_hi": 1306.87,
+              "range_lo": 1269.37
+            },
+            "capture_method": "RECONSTRUCTED_OFFLINE"
+          },
+          "state_after": {
+            "strategy_state_kind": "COOLDOWN_TIMER",
+            "fields": {
+              "cooldown_started": true,
+              "direction": 1
+            },
+            "capture_method": "RECONSTRUCTED_OFFLINE"
+          }
+        },
+        "decision_time_features": {
+          "available_at_decision_time": [
+            {
+              "name": "accept_up",
+              "value": "1",
+              "available_at_decision_time": true,
+              "depends_on_future_data": false,
+              "causality_verified": true,
+              "causality_verification_method": "shift1/shift2 su barra D1 chiusa (post-fix Phase 7.9F)",
+              "uses_closed_bar_only": true
+            },
+            {
+              "name": "range_hi_20d1",
+              "value": 1306.87,
+              "available_at_decision_time": true,
+              "depends_on_future_data": false,
+              "causality_verified": true,
+              "causality_verification_method": "iHighest su 20 barre D1 chiuse",
+              "uses_closed_bar_only": true
+            }
+          ],
+          "future_information_excluded": [
+            "post_entry_path_anatomy.*",
+            "realized_pnl",
+            "exit_fill_price",
+            "exit_fill_time",
+            "exit_reason_comment"
+          ],
+          "anti_leakage_check_passed": true,
+          "anti_leakage_check_method": "Phase 7.9J/7.9K - causalita' EMA100/forward-path verificata e corretta"
+        },
+        "pre_entry_feature_snapshot": {
+          "trend": {
+            "name": "htf_filter_stage",
+            "value": "PASS",
+            "available_at_decision_time": true,
+            "depends_on_future_data": false,
+            "causality_verified": false,
+            "causality_verification_method": "discriminante empirico osservato, NON un gate causale verificato nel codice attuale (vedi upstream_context_provenance nel dataset)"
+          },
+          "volatility": null,
+          "atr": null,
+          "momentum": null,
+          "htf_context": null,
+          "market_structure": null,
+          "level_distance": null,
+          "breakout_magnitude": {
+            "name": "range_width",
+            "value": 37.5,
+            "available_at_decision_time": true,
+            "depends_on_future_data": false,
+            "causality_verified": true
+          },
+          "sweep_depth": null,
+          "session": null,
+          "spread_feature": null,
+          "volume": null,
+          "time_since_previous_event": null,
+          "distance_from_previous_event": null,
+          "current_exposure": null,
+          "margin_state": null,
+          "portfolio_overlap": null,
+          "regime_descriptors": null
+        },
+        "multi_timeframe_context": {
+          "required_timeframes": [
+            "D1"
+          ],
+          "available_timeframes": [
+            "D1"
+          ],
+          "bars_by_timeframe": {
+            "D1": {
+              "current_bar": {
+                "timeframe": "D1",
+                "open_time": "2019.06.05",
+                "close_time": null,
+                "open": null,
+                "high": 1306.87,
+                "low": 1269.37,
+                "close": null,
+                "status": "CLOSED",
+                "source": "nxs_breakoutacc_cadence_diag_prefix_isolated.csv"
+              }
+            }
+          }
+        },
+        "outcome_path": {
+          "signal_relative_path": {
+            "mfe": {
+              "status": "PRESENT",
+              "value": 221.59
+            },
+            "mae": {
+              "status": "PRESENT",
+              "value": 13.73
+            },
+            "time_to_mfe": {
+              "status": "PRESENT",
+              "value": 57
+            },
+            "time_to_mae": {
+              "status": "PRESENT",
+              "value": 3
+            },
+            "fixed_horizon_returns": {
+              "fwd_return_1d1_price_units": {
+                "status": "PRESENT",
+                "value": 6.79
+              },
+              "fwd_return_3d1_price_units": {
+                "status": "PRESENT",
+                "value": -6.93
+              },
+              "fwd_return_5d1_price_units": {
+                "status": "PRESENT",
+                "value": 8.32
+              },
+              "fwd_return_10d1_price_units": {
+                "status": "PRESENT",
+                "value": 54.67
+              },
+              "fwd_return_20d1_price_units": {
+                "status": "PRESENT",
+                "value": 81.67
+              },
+              "fwd_return_40d1_price_units": {
+                "status": "PRESENT",
+                "value": 110.36
+              },
+              "fwd_return_60d1_price_units": {
+                "status": "PRESENT",
+                "value": 193.79
+              }
+            },
+            "censored": false
+          },
+          "fill_relative_path": {
+            "note": {
+              "status": "ABSENT",
+              "reason": "NOT_RECORDED",
+              "note": "il dataset Phase 7.9H fornisce solo il path signal-relative"
+            }
+          },
+          "pnl": {
+            "status": "PRESENT",
+            "value": -10.84
+          },
+          "final_classification": "FAILURE"
+        },
+        "edge_discovery_compatibility": {
+          "eligible_as_feature": [
+            "accept_up",
+            "range_hi_20d1",
+            "breakout_magnitude"
+          ],
+          "excluded_for_leakage": [
+            "post_entry_path_anatomy.*",
+            "realized_pnl"
+          ],
+          "dataset_split_tag": "UNASSIGNED",
+          "experiment_provenance": "Phase 7.9H canonical dataset",
+          "hypothesis_id": "NOT_APPLICABLE - nessuna discovery eseguita in questa fase"
+        },
+        "source_of_truth": {
+          "execution_source": "MT5_RUNTIME_TRACE",
+          "event_identity_source": "MT5_CANONICAL_IMPLEMENTATION",
+          "statistical_analysis_source": "NOT_APPLICABLE",
+          "visual_context_source": "NOT_AVAILABLE",
+          "narrative_source": "NOT_APPLICABLE",
+          "python_is_event_level_authoritative": false
+        },
+        "fidelity": {
+          "tier": "B",
+          "criteria_met": [
+            "real_fill (entry_fill_price non proxy)",
+            "same_ohlc_feed"
+          ],
+          "criteria_missing": [
+            "tick_or_m1_available (solo D1)",
+            "runtime_identity_verified (nessun manifest)"
+          ],
+          "note": "Fill reale e path anatomy reali - manca solo il manifest di runtime identity (non ancora implementato) per Fidelity A."
+        }
+      },
+      "ORDER_BLOCK": {
+        "schema_version": "EVENT_AUDIT_PACKET_V1",
+        "identity": {
+          "event_id": "ob_realtrace_postfix_20231013_sell",
+          "strategy_id": "ORDER_BLOCK",
+          "canonical_strategy_identity": "ORDER_BLOCK_IMPL_V2_TF_GUARDED",
+          "strategy_version": "post-fix Phase 7.14 (commit 17da794)",
+          "implementation_identity": "MQL5_LIVE",
+          "code_commit_sha": "17da794",
+          "build_id": "compile_final_clean.log (Phase 7.14) - timestamp incrociato col binario deployato, non un vero build_id univoco",
+          "runtime_fingerprint": "NOT_AVAILABLE - manifest non ancora implementato",
+          "dataset_version": "nxs_orderblock_realtrace_diag_postfix_curated.csv (Phase 7.14)",
+          "tenant_id": "NOT_APPLICABLE",
+          "ea_instance_id": "NOT_APPLICABLE",
+          "account_scope_id": "NOT_APPLICABLE"
+        },
+        "environment": {
+          "symbol": "GOLD",
+          "broker": "NOT_RECORDED nel CSV (run Tester, non un conto live)",
+          "server": "NOT_RECORDED",
+          "account_mode": "TESTER",
+          "leverage": "500 (da nxs_orderblock_realtrace_postfix.ini)",
+          "contract_specification": {
+            "note": "NOT_RECORDED"
+          },
+          "minimum_lot": 0.01,
+          "lot_step": "NOT_RECORDED",
+          "terminal_build": "NOT_RECORDED",
+          "ea_name": "NEXUS_EA_v2",
+          "ea_version": "NOT_RECORDED",
+          "chart_symbol": "GOLD",
+          "chart_timeframe": "H4 (Period del Tester, non il TF di esecuzione strategia)",
+          "strategy_canonical_timeframe": "PERIOD_D1",
+          "timezone": "BROKER_SERVER_TZ",
+          "dst_convention": "UNKNOWN"
+        },
+        "timeline": {
+          "event_detection_time": {
+            "value": "2023.10.13 00:00:00",
+            "source": "NXS_OB_DiagWrite (Phase 7.14)",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "SECOND",
+            "confidence": "VERIFIED"
+          },
+          "signal_time": {
+            "value": "2023.10.13 00:00:00",
+            "source": "NXS_OB_DiagWrite",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "SECOND",
+            "confidence": "VERIFIED"
+          },
+          "decision_time": {
+            "value": "2023.10.13 00:00:00",
+            "source": "NXS_OB_DiagWrite",
+            "timezone": "BROKER_SERVER_TZ",
+            "precision": "SECOND",
+            "confidence": "VERIFIED"
+          },
+          "order_request_time": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "trace diagnostico cattura solo lo stato zona, non l'invio ordine (Research Mode)"
+          },
+          "broker_acceptance_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE",
+            "note": "nessun ordine reale inviato in questo run diagnostico"
+          },
+          "broker_rejection_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "fill_time": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "nessun fill tracciato dal trace diagnostico di stato"
+          },
+          "exit_time": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          }
+        },
+        "prices": {
+          "market_reference_price": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "il trace cattura obLo/obHi, non il prezzo di mercato al momento del retest"
+          },
+          "bid": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED",
+            "note": "usato internamente da MT5 (SymbolInfoDouble) ma non loggato in questo trace"
+          },
+          "ask": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "last": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "signal_price": {
+            "value": 1922.4,
+            "source": "centro della zona OB al momento del retest (proxy)",
+            "fidelity": "C",
+            "is_proxy": true,
+            "proxy_reason": "il trace diagnostico non ha loggato il prezzo esatto di tocco/rigetto, solo i bound della zona"
+          },
+          "requested_price": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE",
+            "note": "nessun ordine reale in questo run"
+          },
+          "actual_fill_price": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "exit_fill_price": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "spread": {
+            "status": "ABSENT",
+            "reason": "NOT_RECORDED"
+          },
+          "slippage": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          }
+        },
+        "strategy_state": {
+          "state_before": {
+            "strategy_state_kind": "DISCRETE_ZONE",
+            "fields": {
+              "active": true,
+              "obLo": 1919.63,
+              "obHi": 1925.17,
+              "barsWaited": 2
+            },
+            "captured_at": {
+              "value": "2023.10.13 00:00:00",
+              "source": "NXS_OB_DiagWrite",
+              "timezone": "BROKER_SERVER_TZ",
+              "precision": "SECOND",
+              "confidence": "VERIFIED"
+            },
+            "capture_method": "LIVE_EA_INSTRUMENTATION"
+          },
+          "state_after": {
+            "strategy_state_kind": "DISCRETE_ZONE",
+            "fields": {
+              "active": false,
+              "obLo": 1919.63,
+              "obHi": 1925.17,
+              "barsWaited": 2
+            },
+            "captured_at": {
+              "value": "2023.10.13 00:00:00",
+              "source": "NXS_OB_DiagWrite",
+              "timezone": "BROKER_SERVER_TZ",
+              "precision": "SECOND",
+              "confidence": "VERIFIED"
+            },
+            "capture_method": "LIVE_EA_INSTRUMENTATION"
+          }
+        },
+        "decision_time_features": {
+          "available_at_decision_time": [
+            {
+              "name": "zone_lo",
+              "value": 1919.63,
+              "available_at_decision_time": true,
+              "depends_on_future_data": false,
+              "causality_verified": true,
+              "causality_verification_method": "stato zona catturato live dall'istrumentazione diagnostica"
+            },
+            {
+              "name": "zone_hi",
+              "value": 1925.17,
+              "available_at_decision_time": true,
+              "depends_on_future_data": false,
+              "causality_verified": true,
+              "causality_verification_method": "idem"
+            },
+            {
+              "name": "bars_waited",
+              "value": 2,
+              "available_at_decision_time": true,
+              "depends_on_future_data": false,
+              "causality_verified": true,
+              "causality_verification_method": "idem"
+            }
+          ],
+          "future_information_excluded": [
+            "outcome_path.*"
+          ],
+          "anti_leakage_check_passed": true,
+          "anti_leakage_check_method": "guardia TF-scoped verificata (Phase 7.14) - nessuna mutazione su passaggi non canonici post-fix"
+        },
+        "pre_entry_feature_snapshot": {
+          "trend": null,
+          "volatility": null,
+          "atr": {
+            "name": "atr_at_zone_creation",
+            "value": null,
+            "available_at_decision_time": true,
+            "depends_on_future_data": false,
+            "causality_verified": false,
+            "causality_verification_method": "NOT_RECORDED nel trace di Phase 7.14 (solo lo stato zona, non g_atr)"
+          },
+          "momentum": null,
+          "htf_context": null,
+          "market_structure": null,
+          "level_distance": {
+            "name": "zone_width",
+            "value": 5.539999999999964,
+            "available_at_decision_time": true,
+            "depends_on_future_data": false,
+            "causality_verified": true
+          },
+          "breakout_magnitude": null,
+          "sweep_depth": null,
+          "session": null,
+          "spread_feature": null,
+          "volume": null,
+          "time_since_previous_event": null,
+          "distance_from_previous_event": null,
+          "current_exposure": null,
+          "margin_state": null,
+          "portfolio_overlap": null,
+          "regime_descriptors": null
+        },
+        "multi_timeframe_context": {
+          "required_timeframes": [
+            "D1"
+          ],
+          "available_timeframes": [
+            "D1"
+          ],
+          "bars_by_timeframe": {
+            "D1": {
+              "current_bar": {
+                "timeframe": "D1",
+                "open_time": "2023.10.13 00:00:00",
+                "close_time": null,
+                "open": null,
+                "high": null,
+                "low": null,
+                "close": null,
+                "status": "CLOSED",
+                "source": "NOT_RECORDED - il trace non ha loggato OHLC grezzi (gap dichiarato in Phase 7.16)"
+              }
+            }
+          }
+        },
+        "outcome_path": {
+          "signal_relative_path": {
+            "note": {
+              "status": "ABSENT",
+              "reason": "NOT_RECORDED",
+              "note": "questo run diagnostico non ha misurato MFE/MAE - scopo era solo validare la guardia TF"
+            }
+          },
+          "fill_relative_path": {
+            "note": {
+              "status": "ABSENT",
+              "reason": "NOT_APPLICABLE",
+              "note": "nessun fill reale in questo run"
+            }
+          },
+          "pnl": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "final_classification": "NOT_YET_DETERMINED"
+        },
+        "edge_discovery_compatibility": {
+          "eligible_as_feature": [
+            "zone_lo",
+            "zone_hi",
+            "bars_waited",
+            "zone_width"
+          ],
+          "excluded_for_leakage": [
+            "outcome_path.*"
+          ],
+          "dataset_split_tag": "UNASSIGNED",
+          "experiment_provenance": "Phase 7.14 parity validation",
+          "hypothesis_id": "NOT_APPLICABLE"
+        },
+        "source_of_truth": {
+          "execution_source": "MT5_RUNTIME_TRACE",
+          "event_identity_source": "MT5_CANONICAL_IMPLEMENTATION",
+          "statistical_analysis_source": "NOT_APPLICABLE",
+          "visual_context_source": "NOT_AVAILABLE",
+          "narrative_source": "NOT_APPLICABLE",
+          "python_is_event_level_authoritative": false
+        },
+        "fidelity": {
+          "tier": "B",
+          "criteria_met": [
+            "same_ohlc_feed (tick reali MT5 Model=4)",
+            "state_partially_reconstructed (live, ma non fill reale)"
+          ],
+          "criteria_missing": [
+            "real_fill (Research Mode, nessun fill reale)",
+            "runtime_identity_verified"
+          ],
+          "note": "Stato di zona catturato DAL VIVO nell'EA reale (non ricostruito offline) ma senza fill/prezzo di mercato reale associato - questo gap e' esattamente cio' che GAP_ANALYSIS_V1 raccomanda di colmare."
+        }
+      },
+      "SH_BMS_RTO": {
+        "schema_version": "EVENT_AUDIT_PACKET_V1",
+        "identity": {
+          "event_id": "sh_bms_rto_structural_illustrative_only",
+          "strategy_id": "SH_BMS_RTO",
+          "canonical_strategy_identity": "SH_BMS_RTO",
+          "strategy_version": "current HEAD (nessun fix applicato, nessuna diagnosi dedicata svolta)",
+          "implementation_identity": "MQL5_LIVE",
+          "code_commit_sha": "NOT_APPLICABLE - nessun evento reale, solo identita' statica",
+          "build_id": "NOT_APPLICABLE",
+          "runtime_fingerprint": "NOT_APPLICABLE",
+          "dataset_version": "NOT_APPLICABLE - nessun dataset di eventi per questa strategia in questo progetto",
+          "tenant_id": "NOT_APPLICABLE",
+          "ea_instance_id": "NOT_APPLICABLE",
+          "account_scope_id": "NOT_APPLICABLE"
+        },
+        "environment": {
+          "symbol": "GOLD",
+          "broker": "NOT_APPLICABLE",
+          "server": "NOT_APPLICABLE",
+          "account_mode": "UNKNOWN",
+          "leverage": "NOT_APPLICABLE",
+          "contract_specification": {
+            "note": "NOT_APPLICABLE"
+          },
+          "minimum_lot": "NOT_APPLICABLE",
+          "lot_step": "NOT_APPLICABLE",
+          "terminal_build": "NOT_APPLICABLE",
+          "ea_name": "NEXUS_EA_v2",
+          "ea_version": "NOT_APPLICABLE",
+          "chart_symbol": "GOLD",
+          "chart_timeframe": "PERIOD_D1 (dichiarato dal registro)",
+          "strategy_canonical_timeframe": "PERIOD_D1 (NXS_Profile_TF, verificato nel codice sorgente)",
+          "timezone": "NOT_APPLICABLE",
+          "dst_convention": "NOT_APPLICABLE"
+        },
+        "timeline": {
+          "event_detection_time": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE",
+            "note": "nessun evento reale - packet puramente illustrativo"
+          },
+          "signal_time": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE"
+          },
+          "decision_time": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE"
+          },
+          "order_request_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "broker_acceptance_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "broker_rejection_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "fill_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "exit_time": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          }
+        },
+        "prices": {
+          "signal_price": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE",
+            "note": "nessun evento reale disponibile"
+          },
+          "market_reference_price": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE"
+          },
+          "bid": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE"
+          },
+          "ask": {
+            "status": "ABSENT",
+            "reason": "NOT_AVAILABLE"
+          },
+          "last": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "requested_price": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "actual_fill_price": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "exit_fill_price": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "spread": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          },
+          "slippage": {
+            "status": "ABSENT",
+            "reason": "NOT_APPLICABLE"
+          }
+        },
+        "strategy_state": {
+          "state_before": {
+            "strategy_state_kind": "STATE_MACHINE",
+            "fields": {
+              "note": "Struttura dello stato NON verificata riga-per-riga in questa fase (fuori scope - questa e' una fase di specifica, non un audit SH_BMS_RTO dedicato) - la strategia e' nota per meccanismo sweep+break-structure+return-to-origin dal nome e dalla coda priorita' Phase 7.12, dove e' stata posizionata insieme alla famiglia SMC"
+            },
+            "capture_method": "NOT_CAPTURED"
+          },
+          "state_after": {
+            "strategy_state_kind": "STATE_MACHINE",
+            "fields": {},
+            "capture_method": "NOT_CAPTURED"
+          }
+        },
+        "decision_time_features": {
+          "available_at_decision_time": [],
+          "future_information_excluded": [],
+          "anti_leakage_check_passed": null,
+          "anti_leakage_check_method": "NOT_APPLICABLE - nessuna feature reale da verificare in questo packet illustrativo"
+        },
+        "pre_entry_feature_snapshot": {},
+        "multi_timeframe_context": {
+          "required_timeframes": [
+            "D1"
+          ],
+          "available_timeframes": []
+        },
+        "outcome_path": {
+          "final_classification": "NOT_YET_DETERMINED"
+        },
+        "edge_discovery_compatibility": {
+          "eligible_as_feature": [],
+          "excluded_for_leakage": [],
+          "dataset_split_tag": "UNASSIGNED",
+          "experiment_provenance": "NOT_APPLICABLE",
+          "hypothesis_id": "NOT_APPLICABLE"
+        },
+        "source_of_truth": {
+          "execution_source": "NOT_AVAILABLE",
+          "event_identity_source": "MT5_CANONICAL_IMPLEMENTATION",
+          "statistical_analysis_source": "NOT_APPLICABLE",
+          "visual_context_source": "NOT_AVAILABLE",
+          "narrative_source": "NOT_APPLICABLE",
+          "python_is_event_level_authoritative": false
+        },
+        "fidelity": {
+          "tier": "D",
+          "criteria_met": [
+            "structural_only_no_runtime_trace"
+          ],
+          "criteria_missing": [
+            "ANY runtime evidence"
+          ],
+          "note": "Packet PURAMENTE ILLUSTRATIVO - dimostra solo che lo schema riesce a rappresentare una terza famiglia strutturale (sweep+struttura) diversa da BREAKOUT_ACC (soglia+cooldown) e ORDER_BLOCK (zona SMC) - NESSUNA conclusione su SH_BMS_RTO puo' essere tratta da questo packet."
+        },
+        "why_not_tsi": "TSI e' stato deliberatamente escluso da questi esempi: al momento della stesura di questa fase (Phase 7.19), TSI ha un fix live in corso (Phase 7.18, run diagnostico MT5 in background + istrumentazione temporanea non ancora rimossa da MQL5/Include/NEXUS_v1/NXS_Strategies.mqh) - usare TSI qui, anche in sola lettura di artifact GIA' committati (Phase 7.17), avrebbe reso ambiguo se questa fase specifica interferisse con quel lavoro. Scelta esplicita per SH_BMS_RTO come terza strategia strutturalmente diversa e genuinamente STABILE (nessun lavoro in corso su di essa)."
+      }
+    },
+    "no_fabricated_data": true,
+    "third_strategy_choice_documented": true
+  }
+}

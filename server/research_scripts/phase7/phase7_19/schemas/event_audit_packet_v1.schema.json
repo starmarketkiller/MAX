@@ -1,0 +1,333 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.internal/schemas/event_audit_packet_v1.schema.json",
+  "title": "EVENT_AUDIT_PACKET_V1",
+  "description": "Schema canonico NEXUS per ricostruire e analizzare ogni evento di trading (trade, non-trade, blocked, near-miss) in modo causale, visualmente verificabile, riproducibile, anti-leakage e confrontabile fra strategie. Definito in Phase 7.19 - NON implementato in questa fase (nessun EA/backend/sito modificato).",
+  "type": "object",
+  "definitions": {
+    "absence_reason": {
+      "type": "string",
+      "enum": ["NOT_AVAILABLE", "NOT_APPLICABLE", "NOT_RECORDED", "UNKNOWN", "CENSORED"],
+      "description": "MAI usare null indistintamente. NOT_AVAILABLE = il dato esiste in linea di principio ma questa fonte/versione non lo espone. NOT_APPLICABLE = il campo non ha senso per questa strategia/evento. NOT_RECORDED = il sistema avrebbe potuto registrarlo ma non lo ha fatto in questo caso. UNKNOWN = non e' possibile determinarlo nemmeno a posteriori. CENSORED = il valore esiste ma l'osservazione e' stata troncata (es. orizzonte futuro incompleto)."
+    },
+    "valued_field": {
+      "description": "Wrapper generico per QUALUNQUE valore che possa mancare - il valore e l'assenza sono mutuamente esclusivi e sempre distinguibili.",
+      "type": "object",
+      "oneOf": [
+        {"properties": {"status": {"const": "PRESENT"}, "value": {}}, "required": ["status", "value"]},
+        {"properties": {"status": {"const": "ABSENT"}, "reason": {"$ref": "#/definitions/absence_reason"}, "note": {"type": "string"}}, "required": ["status", "reason"]}
+      ]
+    },
+    "priced_value": {
+      "description": "Un prezzo non e' mai un numero nudo - porta sempre fonte/timestamp/fedelta'. Vedi punto 3 della specifica.",
+      "type": "object",
+      "properties": {
+        "value": {"type": ["number", "null"]},
+        "source": {"type": "string", "description": "es. MT5_TICK, MT5_BAR_CLOSE, BROKER_FILL_REPORT, RESAMPLED_M15, PROXY_ESTIMATED"},
+        "timestamp": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "fidelity": {"type": "string", "enum": ["A", "B", "C", "D"]},
+        "is_proxy": {"type": "boolean", "description": "true se questo valore sostituisce un dato mancante - MAI implicito, sempre dichiarato esplicitamente"},
+        "proxy_reason": {"type": "string"}
+      },
+      "required": ["value", "source", "fidelity", "is_proxy"]
+    },
+    "timestamp_with_provenance": {
+      "type": "object",
+      "properties": {
+        "value": {"type": ["string", "null"], "format": "date-time"},
+        "source": {"type": "string", "description": "es. MT5_SERVER_CLOCK, BROKER_FILL_REPORT, EA_ONTICK, RESAMPLED"},
+        "timezone": {"type": "string", "description": "es. BROKER_SERVER_TZ, UTC - mai assunta implicitamente"},
+        "dst_convention": {"type": "string", "description": "come il broker gestisce l'ora legale, se noto"},
+        "precision": {"type": "string", "enum": ["MILLISECOND", "SECOND", "MINUTE", "BAR_CLOSE", "UNKNOWN"]},
+        "confidence": {"type": "string", "enum": ["VERIFIED", "PROBABLE", "ASSUMED", "UNKNOWN"]}
+      },
+      "required": ["value", "source", "precision", "confidence"]
+    },
+    "state_blob": {
+      "description": "Formato GENERICO per lo stato interno di QUALUNQUE strategia (EMA ricorsivi, zone, cooldown, state machine...) - non hardcodato sulle strategie attuali. Vedi punto 4.",
+      "type": "object",
+      "properties": {
+        "schema_version": {"type": "string"},
+        "strategy_state_kind": {"type": "string", "enum": ["RECURSIVE_FILTER", "DISCRETE_ZONE", "COOLDOWN_TIMER", "STATE_MACHINE", "STATELESS", "OTHER"]},
+        "fields": {"type": "object", "description": "coppie chiave/valore libere, specifiche della strategia - es. {sm1,sm2,tsi,signal} per TSI, {active,obLo,obHi,barsWaited} per ORDER_BLOCK"},
+        "captured_at": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "capture_method": {"type": "string", "enum": ["LIVE_EA_INSTRUMENTATION", "RECONSTRUCTED_OFFLINE", "NOT_CAPTURED"]}
+      },
+      "required": ["strategy_state_kind", "fields", "capture_method"]
+    },
+    "bar_ref": {
+      "type": "object",
+      "properties": {
+        "timeframe": {"type": "string"},
+        "open_time": {"type": "string", "format": "date-time"},
+        "close_time": {"type": ["string", "null"], "format": "date-time"},
+        "open": {"type": "number"}, "high": {"type": "number"}, "low": {"type": "number"}, "close": {"type": "number"},
+        "status": {"type": "string", "enum": ["CLOSED", "FORMING", "UNKNOWN"]},
+        "source": {"type": "string"}
+      },
+      "required": ["timeframe", "open_time", "status", "source"]
+    },
+    "feature_value": {
+      "description": "Ogni feature dichiara ESPLICITAMENTE la propria causalita' - vedi punto 5, anti-leakage.",
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "value": {},
+        "available_at_decision_time": {"type": "boolean"},
+        "derived_from_bar": {"type": "string", "description": "riferimento alla barra/tick sorgente"},
+        "uses_closed_bar_only": {"type": "boolean"},
+        "depends_on_future_data": {"type": "boolean"},
+        "causality_verified": {"type": "boolean"},
+        "causality_verification_method": {"type": "string"}
+      },
+      "required": ["name", "available_at_decision_time", "depends_on_future_data", "causality_verified"]
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "EVENT_AUDIT_PACKET_V1"},
+
+    "identity": {
+      "type": "object",
+      "properties": {
+        "event_id": {"type": "string"},
+        "strategy_id": {"type": "string"},
+        "canonical_strategy_identity": {"type": "string", "description": "es. ORDER_BLOCK_IMPL_V2_TF_GUARDED (Phase 7.14) - distingue identita'/alias/variante"},
+        "strategy_version": {"type": "string"},
+        "implementation_identity": {"type": "string", "enum": ["MQL5_LIVE", "PYTHON_BACKTEST_ENGINE", "PYTHON_RESEARCH_REPLICA", "OTHER"]},
+        "code_commit_sha": {"type": "string"},
+        "build_id": {"type": "string"},
+        "runtime_fingerprint": {"type": "string", "description": "vedi RUNTIME_IDENTITY_MANIFEST_V1"},
+        "dataset_version": {"type": "string"},
+        "tenant_id": {"type": "string", "description": "riservato per architettura multi-cliente futura - non implementato ora"},
+        "ea_instance_id": {"type": "string", "description": "riservato per architettura multi-cliente futura"},
+        "account_scope_id": {"type": "string", "description": "riservato per architettura multi-cliente futura, non l'account reale"}
+      },
+      "required": ["event_id", "strategy_id", "canonical_strategy_identity", "implementation_identity"]
+    },
+
+    "environment": {
+      "type": "object",
+      "properties": {
+        "symbol": {"type": "string"},
+        "broker": {"type": "string"},
+        "server": {"type": "string"},
+        "account_mode": {"type": "string", "enum": ["DEMO", "LIVE", "TESTER", "UNKNOWN"]},
+        "leverage": {"type": ["string", "number"]},
+        "contract_specification": {"type": "object"},
+        "minimum_lot": {"type": "number"},
+        "lot_step": {"type": "number"},
+        "terminal_build": {"type": "string"},
+        "ea_name": {"type": "string"},
+        "ea_version": {"type": "string"},
+        "chart_symbol": {"type": "string"},
+        "chart_timeframe": {"type": "string"},
+        "strategy_canonical_timeframe": {"type": "string"},
+        "timezone": {"type": "string"},
+        "dst_convention": {"type": "string"}
+      },
+      "required": ["symbol", "ea_name", "chart_timeframe", "strategy_canonical_timeframe"]
+    },
+
+    "timeline": {
+      "type": "object",
+      "description": "Mai comprimere in un unico timestamp - vedi punto 2.",
+      "properties": {
+        "event_detection_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "signal_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "decision_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "order_request_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "broker_acceptance_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "broker_rejection_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "fill_time": {"$ref": "#/definitions/timestamp_with_provenance"},
+        "exit_time": {"$ref": "#/definitions/timestamp_with_provenance"}
+      },
+      "required": ["event_detection_time", "signal_time", "decision_time"]
+    },
+
+    "prices": {
+      "type": "object",
+      "description": "Ogni prezzo mantiene fonte/timestamp/fedelta' - mai un proxy silenzioso. Vedi punto 3.",
+      "properties": {
+        "market_reference_price": {"$ref": "#/definitions/priced_value"},
+        "bid": {"$ref": "#/definitions/priced_value"},
+        "ask": {"$ref": "#/definitions/priced_value"},
+        "last": {"$ref": "#/definitions/priced_value"},
+        "signal_price": {"$ref": "#/definitions/priced_value"},
+        "requested_price": {"$ref": "#/definitions/priced_value"},
+        "actual_fill_price": {"$ref": "#/definitions/priced_value"},
+        "exit_fill_price": {"$ref": "#/definitions/priced_value"},
+        "spread": {"$ref": "#/definitions/priced_value"},
+        "slippage": {"$ref": "#/definitions/priced_value"}
+      },
+      "required": ["signal_price"]
+    },
+
+    "strategy_state": {
+      "type": "object",
+      "properties": {
+        "state_before": {"$ref": "#/definitions/state_blob"},
+        "state_after": {"$ref": "#/definitions/state_blob"}
+      },
+      "required": ["state_before", "state_after"]
+    },
+
+    "decision_time_features": {
+      "type": "object",
+      "description": "AVAILABLE_AT_DECISION_TIME vs FUTURE_INFORMATION - separazione obbligatoria, vedi punto 5.",
+      "properties": {
+        "available_at_decision_time": {"type": "array", "items": {"$ref": "#/definitions/feature_value"}},
+        "future_information_excluded": {"type": "array", "items": {"type": "string"}, "description": "nomi di campi ESPLICITAMENTE esclusi perche' non causali a decision-time - mai silenziosamente omessi"},
+        "anti_leakage_check_passed": {"type": ["boolean", "null"]},
+        "anti_leakage_check_method": {"type": "string"}
+      },
+      "required": ["available_at_decision_time", "future_information_excluded"]
+    },
+
+    "pre_entry_feature_snapshot": {
+      "type": "object",
+      "description": "Feature OSSERVATE, non regole operative - nessuna soglia 'buona' definita qui. Vedi punto 6.",
+      "properties": {
+        "trend": {"$ref": "#/definitions/feature_value"},
+        "volatility": {"$ref": "#/definitions/feature_value"},
+        "atr": {"$ref": "#/definitions/feature_value"},
+        "momentum": {"$ref": "#/definitions/feature_value"},
+        "htf_context": {"$ref": "#/definitions/feature_value"},
+        "market_structure": {"$ref": "#/definitions/feature_value"},
+        "level_distance": {"$ref": "#/definitions/feature_value"},
+        "breakout_magnitude": {"$ref": "#/definitions/feature_value"},
+        "sweep_depth": {"$ref": "#/definitions/feature_value"},
+        "session": {"$ref": "#/definitions/feature_value"},
+        "spread_feature": {"$ref": "#/definitions/feature_value"},
+        "volume": {"$ref": "#/definitions/feature_value"},
+        "time_since_previous_event": {"$ref": "#/definitions/feature_value"},
+        "distance_from_previous_event": {"$ref": "#/definitions/feature_value"},
+        "current_exposure": {"$ref": "#/definitions/feature_value"},
+        "margin_state": {"$ref": "#/definitions/feature_value"},
+        "portfolio_overlap": {"$ref": "#/definitions/feature_value"},
+        "regime_descriptors": {"$ref": "#/definitions/feature_value"}
+      }
+    },
+
+    "multi_timeframe_context": {
+      "type": "object",
+      "properties": {
+        "required_timeframes": {"type": "array", "items": {"type": "string"}},
+        "available_timeframes": {"type": "array", "items": {"type": "string"}},
+        "bars_by_timeframe": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "previous_bars": {"type": "array", "items": {"$ref": "#/definitions/bar_ref"}},
+              "current_bar": {"$ref": "#/definitions/bar_ref"},
+              "subsequent_bars": {"type": "array", "items": {"$ref": "#/definitions/bar_ref"}, "description": "presenti SOLO dopo l'esplicito passaggio a Stage B/C del Visual Audit - vedi VISUAL_AUDIT_PROTOCOL_V1"}
+            },
+            "required": ["current_bar"]
+          }
+        }
+      },
+      "required": ["required_timeframes", "available_timeframes"]
+    },
+
+    "portfolio_context": {
+      "type": "object",
+      "description": "Quando disponibile - per il futuro Small Account Portfolio Engine. Vedi punti 16-17.",
+      "properties": {
+        "open_positions": {"$ref": "#/definitions/valued_field"},
+        "exposure_by_direction": {"$ref": "#/definitions/valued_field"},
+        "margin_used": {"$ref": "#/definitions/valued_field"},
+        "free_margin": {"$ref": "#/definitions/valued_field"},
+        "strategy_cluster": {"$ref": "#/definitions/valued_field"},
+        "correlated_strategies_active": {"$ref": "#/definitions/valued_field"},
+        "same_level_signals": {"$ref": "#/definitions/valued_field"},
+        "same_direction_overlap": {"$ref": "#/definitions/valued_field"},
+        "opposite_direction_exposure": {"$ref": "#/definitions/valued_field"},
+        "expected_horizon": {"$ref": "#/definitions/valued_field"},
+        "small_account_fields": {
+          "type": "object",
+          "description": "Campi PREVISTI ma NON calcolati salvo dati affidabili - vedi punto 17.",
+          "properties": {
+            "minimum_viable_capital": {"$ref": "#/definitions/valued_field"},
+            "margin_required": {"$ref": "#/definitions/valued_field"},
+            "minimum_lot_feasibility": {"$ref": "#/definitions/valued_field"},
+            "risk_percentage": {"$ref": "#/definitions/valued_field"},
+            "capital_efficiency": {"$ref": "#/definitions/valued_field"},
+            "max_concurrent_trades": {"$ref": "#/definitions/valued_field"},
+            "margin_reserve": {"$ref": "#/definitions/valued_field"}
+          }
+        }
+      }
+    },
+
+    "outcome_path": {
+      "type": "object",
+      "description": "Sempre distinto signal-relative vs fill-relative - vedi punto 14. Presente SOLO da Stage C del Visual Audit in poi.",
+      "properties": {
+        "signal_relative_path": {
+          "type": "object",
+          "properties": {
+            "mfe": {"$ref": "#/definitions/valued_field"}, "mae": {"$ref": "#/definitions/valued_field"},
+            "time_to_mfe": {"$ref": "#/definitions/valued_field"}, "time_to_mae": {"$ref": "#/definitions/valued_field"},
+            "mfe_before_mae": {"$ref": "#/definitions/valued_field"}, "mae_before_mfe": {"$ref": "#/definitions/valued_field"},
+            "recovery_after_mae": {"$ref": "#/definitions/valued_field"}, "reversal_after_mfe": {"$ref": "#/definitions/valued_field"},
+            "fixed_horizon_returns": {"type": "object", "additionalProperties": {"$ref": "#/definitions/valued_field"}},
+            "censored": {"type": "boolean"}, "censoring_reason": {"type": "string"}
+          }
+        },
+        "fill_relative_path": {
+          "type": "object",
+          "properties": {
+            "mfe": {"$ref": "#/definitions/valued_field"}, "mae": {"$ref": "#/definitions/valued_field"},
+            "time_to_mfe": {"$ref": "#/definitions/valued_field"}, "time_to_mae": {"$ref": "#/definitions/valued_field"},
+            "mfe_before_mae": {"$ref": "#/definitions/valued_field"}, "mae_before_mfe": {"$ref": "#/definitions/valued_field"},
+            "recovery_after_mae": {"$ref": "#/definitions/valued_field"}, "reversal_after_mfe": {"$ref": "#/definitions/valued_field"},
+            "fixed_horizon_returns": {"type": "object", "additionalProperties": {"$ref": "#/definitions/valued_field"}},
+            "censored": {"type": "boolean"}, "censoring_reason": {"type": "string"}
+          }
+        },
+        "pnl": {"$ref": "#/definitions/valued_field"},
+        "r_multiple": {"$ref": "#/definitions/valued_field"},
+        "final_classification": {"type": "string", "enum": ["CONTINUATION", "FAILURE", "UNKNOWN_CENSORED", "NOT_YET_DETERMINED"]}
+      }
+    },
+
+    "edge_discovery_compatibility": {
+      "type": "object",
+      "description": "Predisposizione futura - vedi punto 15. Nessuna discovery eseguita qui.",
+      "properties": {
+        "eligible_as_feature": {"type": "array", "items": {"type": "string"}},
+        "excluded_for_leakage": {"type": "array", "items": {"type": "string"}},
+        "dataset_split_tag": {"type": "string", "enum": ["TRAIN", "VALIDATION", "HOLDOUT", "UNASSIGNED"]},
+        "experiment_provenance": {"type": "string"},
+        "hypothesis_id": {"type": "string"}
+      }
+    },
+
+    "source_of_truth": {
+      "type": "object",
+      "description": "Vedi SOURCE_OF_TRUTH_HIERARCHY_V1 - quale livello ha prodotto ciascuna parte del packet.",
+      "properties": {
+        "execution_source": {"type": "string", "enum": ["MT5_RUNTIME_TRACE", "BROKER_HISTORY", "NOT_AVAILABLE"]},
+        "event_identity_source": {"type": "string", "enum": ["MT5_CANONICAL_IMPLEMENTATION", "NOT_AVAILABLE"]},
+        "statistical_analysis_source": {"type": "string", "enum": ["PYTHON_RESEARCH_REPLICA", "NOT_APPLICABLE"]},
+        "visual_context_source": {"type": "string", "enum": ["MARKET_DATA_PLUS_PACKET", "NOT_AVAILABLE"]},
+        "narrative_source": {"type": "string", "enum": ["CLAUDE", "JARVIS", "HUMAN_ANALYST", "NOT_APPLICABLE"]},
+        "python_is_event_level_authoritative": {"type": "boolean", "description": "vero SOLO se parity dimostrata per QUESTA strategia/versione - vedi lezione Phase 7.16"}
+      },
+      "required": ["execution_source", "event_identity_source", "python_is_event_level_authoritative"]
+    },
+
+    "fidelity": {
+      "type": "object",
+      "properties": {
+        "tier": {"type": "string", "enum": ["A", "B", "C", "D"]},
+        "criteria_met": {"type": "array", "items": {"type": "string"}},
+        "criteria_missing": {"type": "array", "items": {"type": "string"}},
+        "note": {"type": "string", "description": "la fedelta' NON e' un voto sulla strategia, solo sulla ricostruzione - vedi FIDELITY_FRAMEWORK_V1"}
+      },
+      "required": ["tier"]
+    }
+  },
+  "required": ["schema_version", "identity", "environment", "timeline", "prices", "strategy_state",
+              "decision_time_features", "multi_timeframe_context", "source_of_truth", "fidelity"]
+}
