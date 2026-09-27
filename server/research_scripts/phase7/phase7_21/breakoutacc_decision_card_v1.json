@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-09-27T17:33:27.835634+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_breakoutacc_decision_card.py",
+  "canonical_sha256": "d9018ddf322543b0850b2b71d48257253acc52afbc1cbfdb1036223a60d522aa",
+  "payload": {
+    "checks": {
+      "1_net_expectancy_positive_ALL": true,
+      "2_cost_survival_all_3_scenarios": true,
+      "3_execution_does_not_collapse_signal_to_zero": true,
+      "3_execution_realism_large_gap_note": "signal pct_favorable=0.71 vs realized win_rate=0.30 - gap ampio (atteso: un ritorno direzionale a 60 barre non equivale a un trade SL/TP-bound), non trattato come un fallimento del criterio 3 di per se'.",
+      "4_no_extreme_concentration": false,
+      "4_concentration_detail": "i primi 5 trade (su 47) spiegano il 133.7% del P&L netto totale - SOPRA/AL LIMITE della soglia dichiarata (100.0%).",
+      "5_independent_evidence_available_and_supportive": false
+    },
+    "decision": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+    "decision_means_live_ready": false,
+    "supporting_evidence_summary": {
+      "ALL_net_expectancy_per_trade": 13.662340425531914,
+      "ALL_profit_factor": 1.623820857822898,
+      "ALL_bootstrap_ci_95": [
+        -7.152553191489362,
+        36.3727659574468
+      ],
+      "ALL_ci_excludes_zero": false,
+      "BUY_net_expectancy_per_trade": 26.50722222222222,
+      "BUY_bootstrap_ci_95": [
+        1.2130555555555544,
+        53.55472222222222
+      ],
+      "BUY_ci_excludes_zero": true,
+      "SELL_net_expectancy_per_trade": -28.375454545454545,
+      "SELL_bootstrap_ci_95": [
+        -41.302727272727275,
+        -20.583636363636362
+      ],
+      "SELL_ci_excludes_zero_negative": true,
+      "top_5_trades_pct_of_total_net": 133.66452276018873,
+      "oos_status": "INSUFFICIENT_OOS_SAMPLE"
+    },
+    "h2_buy_more_robust_than_sell_verdict": "SUPPORTATA DA EVIDENZA STATISTICA NUOVA (non solo dalla scoperta originale): il CI bootstrap di SELL esclude lo zero sul lato NEGATIVO (statisticamente un perdente, non solo 'piu' debole' di BUY) mentre BUY esclude lo zero sul lato positivo (debolmente, limite inferiore vicino a zero). Nota: questo e' comunque calcolato sullo STESSO campione usato per la scoperta originale (Phase 7.9I/J) - la vera indipendenza richiederebbe l'OOS (vedi sopra), che pero' conferma o smentisce H1 (edge totale), non specificamente H2 (BUY vs SELL) data la sua finestra corta.",
+    "next_phase_if_this_passes": "CONDITIONAL_EDGE + EXIT/RISK OPTIMIZATION - non svolta in questa fase.",
+    "no_optimization_performed": true
+  }
+}

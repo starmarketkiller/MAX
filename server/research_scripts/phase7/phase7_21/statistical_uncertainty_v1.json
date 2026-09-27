@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-09-27T17:26:59.884102+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_statistical_uncertainty.py",
+  "canonical_sha256": "602dfd3e11c30dd747cddd5c1ff3bb4b7a29b6e260b5dd85234cf7e61eece925",
+  "payload": {
+    "method": "Bootstrap per-trade (resampling con reinserimento), 10.000 iterazioni, seed 79210 dichiarato e fisso (non ricercato per ottenere un intervallo migliore).",
+    "sample_size_caveat": "47 trade totali (36 BUY, 11 SELL) - il gruppo SELL in particolare e' troppo piccolo per un CI bootstrap informativo (ampio per costruzione).",
+    "results": {
+      "ALL": {
+        "n": 47,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": 13.662340425531914,
+          "bootstrap_ci_95_low": -7.152553191489362,
+          "bootstrap_ci_95_high": 36.3727659574468,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.2978723404255319,
+          "bootstrap_ci_95_low": 0.1702127659574468,
+          "bootstrap_ci_95_high": 0.425531914893617,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "temporal_clustering": {
+          "n_pairs": 46,
+          "median_gap_days": 43.0,
+          "n_pairs_within_10_days": 3,
+          "pct_pairs_within_10_days": 0.06521739130434782,
+          "iid_assumption_caveat": "Il bootstrap per-trade sotto assume scambiabilita' (non necessariamente indipendenza temporale in senso stretto) - se una quota rilevante di coppie di trade e' ravvicinata nel tempo, l'incertezza reale potrebbe essere maggiore di quella stimata dal bootstrap IID."
+        }
+      },
+      "BUY": {
+        "n": 36,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": 26.50722222222222,
+          "bootstrap_ci_95_low": 1.2130555555555544,
+          "bootstrap_ci_95_high": 53.55472222222222,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.3888888888888889,
+          "bootstrap_ci_95_low": 0.2222222222222222,
+          "bootstrap_ci_95_high": 0.5555555555555556,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "temporal_clustering": {
+          "n_pairs": 35,
+          "median_gap_days": 42,
+          "n_pairs_within_10_days": 3,
+          "pct_pairs_within_10_days": 0.08571428571428572,
+          "iid_assumption_caveat": "Il bootstrap per-trade sotto assume scambiabilita' (non necessariamente indipendenza temporale in senso stretto) - se una quota rilevante di coppie di trade e' ravvicinata nel tempo, l'incertezza reale potrebbe essere maggiore di quella stimata dal bootstrap IID."
+        }
+      },
+      "SELL": {
+        "n": 11,
+        "net_expectancy_bootstrap_ci": {
+          "point_estimate_mean": -28.375454545454545,
+          "bootstrap_ci_95_low": -41.302727272727275,
+          "bootstrap_ci_95_high": -20.583636363636362,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "win_rate_bootstrap_ci": {
+          "point_estimate_mean": 0.0,
+          "bootstrap_ci_95_low": 0.0,
+          "bootstrap_ci_95_high": 0.0,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "temporal_clustering": {
+          "n_pairs": 10,
+          "median_gap_days": 55.5,
+          "n_pairs_within_10_days": 0,
+          "pct_pairs_within_10_days": 0.0,
+          "iid_assumption_caveat": "Il bootstrap per-trade sotto assume scambiabilita' (non necessariamente indipendenza temporale in senso stretto) - se una quota rilevante di coppie di trade e' ravvicinata nel tempo, l'incertezza reale potrebbe essere maggiore di quella stimata dal bootstrap IID."
+        }
+      }
+    },
+    "iid_not_assumed_blindly": true
+  }
+}

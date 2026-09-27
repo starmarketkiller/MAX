@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-27T17:29:15.973841+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_minimum_viable_capital.py",
+  "canonical_sha256": "3cf8ab5f0c65af16e98e6ecb1798db3255d98ba8b7066bb9fe60ed414e2bb39d",
+  "payload": {
+    "assumptions_declared": {
+      "contract_size_oz": 100,
+      "min_lot": 0.01,
+      "lot_step": 0.01,
+      "leverage": "1:100",
+      "eur_usd_conversion": "NON applicata (capitale trattato in USD-equivalente 1:1 per semplicita' - i valori EUR richiesti dalla task sono usati come etichetta di capitale, non convertiti da un tasso di cambio specifico, non disponibile/pertinente in questa fase).",
+      "avg_entry_price_gold_in_sample": 2164.503829787234,
+      "avg_risk_price_units_sl_distance": 28.525531914893588,
+      "max_risk_price_units_sl_distance_seen": 99.48999999999978,
+      "min_risk_price_units_sl_distance_seen": 10.839999999999918
+    },
+    "capital_table": [
+      {
+        "capital_eur": 300,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 21.64503829787234,
+        "margin_usage_pct_of_capital": 7.215012765957446,
+        "free_margin_reserve_pct": 92.78498723404256,
+        "risk_usd_at_min_lot_avg_sl": 28.525531914893588,
+        "risk_pct_of_capital_avg_sl": 9.508510638297862,
+        "risk_usd_at_min_lot_worst_sl_seen": 99.48999999999978,
+        "risk_pct_of_capital_worst_sl_seen": 33.16333333333326,
+        "max_concurrent_positions_by_margin_only": 13,
+        "risk_profile_materially_altered_by_min_lot_floor": true,
+        "note": "Il rischio per trade e' IMPOSTO dal lot minimo (0.01) - non e' scalabile sotto questa soglia. A capitale basso, 0.01 lot puo' rappresentare una frazione di rischio molto maggiore del tipico 1-2% raccomandato, alterando materialmente il profilo di rischio rispetto a un conto piu' grande con lo STESSO 0.01 lot fisso usato in questo dataset."
+      },
+      {
+        "capital_eur": 500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 21.64503829787234,
+        "margin_usage_pct_of_capital": 4.329007659574468,
+        "free_margin_reserve_pct": 95.67099234042553,
+        "risk_usd_at_min_lot_avg_sl": 28.525531914893588,
+        "risk_pct_of_capital_avg_sl": 5.705106382978718,
+        "risk_usd_at_min_lot_worst_sl_seen": 99.48999999999978,
+        "risk_pct_of_capital_worst_sl_seen": 19.897999999999957,
+        "max_concurrent_positions_by_margin_only": 23,
+        "risk_profile_materially_altered_by_min_lot_floor": true,
+        "note": "Il rischio per trade e' IMPOSTO dal lot minimo (0.01) - non e' scalabile sotto questa soglia. A capitale basso, 0.01 lot puo' rappresentare una frazione di rischio molto maggiore del tipico 1-2% raccomandato, alterando materialmente il profilo di rischio rispetto a un conto piu' grande con lo STESSO 0.01 lot fisso usato in questo dataset."
+      },
+      {
+        "capital_eur": 1000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 21.64503829787234,
+        "margin_usage_pct_of_capital": 2.164503829787234,
+        "free_margin_reserve_pct": 97.83549617021276,
+        "risk_usd_at_min_lot_avg_sl": 28.525531914893588,
+        "risk_pct_of_capital_avg_sl": 2.852553191489359,
+        "risk_usd_at_min_lot_worst_sl_seen": 99.48999999999978,
+        "risk_pct_of_capital_worst_sl_seen": 9.948999999999979,
+        "max_concurrent_positions_by_margin_only": 46,
+        "risk_profile_materially_altered_by_min_lot_floor": false,
+        "note": "Il rischio per trade e' IMPOSTO dal lot minimo (0.01) - non e' scalabile sotto questa soglia. A capitale basso, 0.01 lot puo' rappresentare una frazione di rischio molto maggiore del tipico 1-2% raccomandato, alterando materialmente il profilo di rischio rispetto a un conto piu' grande con lo STESSO 0.01 lot fisso usato in questo dataset."
+      },
+      {
+        "capital_eur": 2500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 21.64503829787234,
+        "margin_usage_pct_of_capital": 0.8658015319148936,
+        "free_margin_reserve_pct": 99.1341984680851,
+        "risk_usd_at_min_lot_avg_sl": 28.525531914893588,
+        "risk_pct_of_capital_avg_sl": 1.1410212765957435,
+        "risk_usd_at_min_lot_worst_sl_seen": 99.48999999999978,
+        "risk_pct_of_capital_worst_sl_seen": 3.9795999999999916,
+        "max_concurrent_positions_by_margin_only": 115,
+        "risk_profile_materially_altered_by_min_lot_floor": false,
+        "note": "Il rischio per trade e' IMPOSTO dal lot minimo (0.01) - non e' scalabile sotto questa soglia. A capitale basso, 0.01 lot puo' rappresentare una frazione di rischio molto maggiore del tipico 1-2% raccomandato, alterando materialmente il profilo di rischio rispetto a un conto piu' grande con lo STESSO 0.01 lot fisso usato in questo dataset."
+      },
+      {
+        "capital_eur": 10000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 21.64503829787234,
+        "margin_usage_pct_of_capital": 0.2164503829787234,
+        "free_margin_reserve_pct": 99.78354961702128,
+        "risk_usd_at_min_lot_avg_sl": 28.525531914893588,
+        "risk_pct_of_capital_avg_sl": 0.28525531914893587,
+        "risk_usd_at_min_lot_worst_sl_seen": 99.48999999999978,
+        "risk_pct_of_capital_worst_sl_seen": 0.9948999999999979,
+        "max_concurrent_positions_by_margin_only": 461,
+        "risk_profile_materially_altered_by_min_lot_floor": false,
+        "note": "Il rischio per trade e' IMPOSTO dal lot minimo (0.01) - non e' scalabile sotto questa soglia. A capitale basso, 0.01 lot puo' rappresentare una frazione di rischio molto maggiore del tipico 1-2% raccomandato, alterando materialmente il profilo di rischio rispetto a un conto piu' grande con lo STESSO 0.01 lot fisso usato in questo dataset."
+      }
+    ],
+    "minimum_viable_capital_definition": "Capitale minimo (fra i livelli testati) sotto cui il rischio medio imposto dal lot minimo (0.01) supera il 5.0% del capitale per trade - soglia dichiarata qui, non ottimizzata sui risultati.",
+    "MINIMUM_VIABLE_CAPITAL_EUR": 1000,
+    "MINIMUM_VIABLE_CAPITAL_CAVEAT": "Questa e' una stima STRUTTURALE (margine/rischio-per-trade normalizzato), NON una promozione a trading su questo capitale - dipende interamente dal fatto che l'edge stesso sia validato (vedi decision_card_v1.json) prima di essere rilevante. Nessun position sizing o risk multiplier proposto qui.",
+    "no_optimization_no_sizing_proposed": true
+  }
+}

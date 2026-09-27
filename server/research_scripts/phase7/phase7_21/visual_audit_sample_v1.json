@@ -1,0 +1,353 @@
+{
+  "generated_at": "2026-09-27T17:28:40.030150+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_visual_audit_sample.py",
+  "canonical_sha256": "15820cddc90e31ca8e5288b9f7b993237c6a70edbd38b45c6bb9c2e30add4c14",
+  "payload": {
+    "protocol_used": "VISUAL_AUDIT_PROTOCOL_V1 (Phase 7.19), adattato - solo Stage A e B eseguiti in questa fase (Stage C outcome_review con decision_outcome_matrix rimandato a una fase dedicata se la strategia procede oltre).",
+    "sample_selection_declared_before_review": "winner/loser selezionati per net_pnl (outcome usato SOLO per la stratificazione, non per il contenuto della review Stage A, che e' strutturalmente priva di campi di esito); random selezionato per ordine alfabetico dell'event_id (deterministico, non manipolabile); blocked/broker_reject: primi per event_id nella rispettiva categoria.",
+    "sample_size": 8,
+    "blinding_method": "STRUTTURALE - l'oggetto passato alla review Stage A (_stage_a_packet) non contiene NESSUN campo di esito (verificato dal verificatore indipendente).",
+    "blinding_limitation_declared": "L'operatore (questa sessione Claude) ha GIA' letto il dataset completo con gli esiti in fasi precedenti di questo stesso lavoro - il mascheramento e' quindi STRUTTURALE (a livello di dati passati alla funzione di review), NON un vero mascheramento di memoria/operatore (che richiederebbe una sessione isolata dedicata, non eseguita qui). Dichiarato esplicitamente, non nascosto - limite noto di eseguire questo audit in linea nella stessa sessione di ricerca.",
+    "reviews": {
+      "winner": [
+        {
+          "event_id": "evt_5128f6f17a63f22a",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 354.28 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Non particolarmente vicino al bordo (movimento gia' esteso oltre il range) o non determinabile.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": 226.03,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        },
+        {
+          "event_id": "evt_2a6713d19ae724aa",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 266.94 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Non particolarmente vicino al bordo (movimento gia' esteso oltre il range) o non determinabile.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": 191.51999999999998,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        }
+      ],
+      "loser": [
+        {
+          "event_id": "evt_337caabdaee9ef23",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 407.06 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Vicino al bordo del range (breakout appena confermato)",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": -86.97999999999999,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        },
+        {
+          "event_id": "evt_1ea74eaca243ff88",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 200.39 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Vicino al bordo del range (breakout appena confermato)",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": -73.15,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        }
+      ],
+      "random": [
+        {
+          "event_id": "evt_10d48ec1d62c6671",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 127.91 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Vicino al bordo del range (breakout appena confermato)",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": -40.64,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        },
+        {
+          "event_id": "evt_1209b7abca9456d1",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 37.50 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Non particolarmente vicino al bordo (movimento gia' esteso oltre il range) o non determinabile.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "OPENED",
+            "actual_net_pnl": -16.06,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        }
+      ],
+      "blocked_near_miss": [
+        {
+          "event_id": "evt_214c9ee8871a4757",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 96.70 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Non particolarmente vicino al bordo (movimento gia' esteso oltre il range) o non determinabile.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "BLOCKED",
+            "actual_net_pnl": null,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        }
+      ],
+      "broker_reject_near_miss": [
+        {
+          "event_id": "evt_10096eb5ecb26f42",
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "canonical_strategy_id",
+              "d1_bar_date",
+              "direction",
+              "generated_detail",
+              "upstream_range_hi",
+              "upstream_range_lo",
+              "signal_price",
+              "funnel_terminal_stage_AVAILABLE_ONLY_AS_CONTEXT_NOT_OUTCOME"
+            ],
+            "data_explicitly_withheld": [
+              "realized_pnl",
+              "realized_swap",
+              "realized_commission",
+              "exit_fill_price",
+              "exit_fill_time",
+              "exit_reason_comment",
+              "measurement_A_post_signal_path",
+              "measurement_B_post_fill_path"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e generated_detail coerenti con un'accettazione oltre il range (above_range=BUY, below_range=SELL).",
+              "contesto_leggibile": "Leggibile - range hi/lo espliciti, ampiezza 235.40 price units.",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile dai soli campi pre-entry disponibili in questo dataset (nessun contesto multi-TF/volume catturato per questi eventi, gap gia' noto - vedi gap_analysis Phase 7.19/7.20).",
+              "vicinanza_estremi_range": "Non particolarmente vicino al bordo (movimento gia' esteso oltre il range) o non determinabile.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UN'ASPETTATIVA DIREZIONALE - il protocollo vieta esplicitamente di provare a indovinare l'esito ('Vincera'?' proibita) - qui riportata solo la valutazione di CHIAREZZA del setup, non una previsione."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "actual_outcome_funnel_terminal_stage": "BROKER_REJECT",
+            "actual_net_pnl": null,
+            "comparison_with_stage_a_expectation": "Stage A non formulava una previsione direzionale (per disegno del protocollo) - Stage B riporta solo l'esito reale, senza confronto con una previsione che non e' stata fatta."
+          }
+        }
+      ]
+    },
+    "no_operational_rule_derived_from_visual_observations": true
+  }
+}

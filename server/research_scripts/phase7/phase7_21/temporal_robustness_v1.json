@@ -1,0 +1,291 @@
+{
+  "generated_at": "2026-09-27T17:26:17.497306+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_temporal_robustness.py",
+  "canonical_sha256": "49eac9d4805bda82c0e23c5d5d9ba93a32ce21581aafd0c445d012d8e4d08755",
+  "payload": {
+    "by_year": {
+      "2019": {
+        "n_trades": 3,
+        "net_pnl_sum": -59.480000000000004,
+        "win_rate": 0.0
+      },
+      "2020": {
+        "n_trades": 7,
+        "net_pnl_sum": 42.62,
+        "win_rate": 0.2857142857142857
+      },
+      "2021": {
+        "n_trades": 9,
+        "net_pnl_sum": -254.23,
+        "win_rate": 0.0
+      },
+      "2022": {
+        "n_trades": 6,
+        "net_pnl_sum": 64.99,
+        "win_rate": 0.3333333333333333
+      },
+      "2023": {
+        "n_trades": 7,
+        "net_pnl_sum": 16.48,
+        "win_rate": 0.2857142857142857
+      },
+      "2024": {
+        "n_trades": 7,
+        "net_pnl_sum": 164.44,
+        "win_rate": 0.42857142857142855
+      },
+      "2025": {
+        "n_trades": 7,
+        "net_pnl_sum": 754.29,
+        "win_rate": 0.7142857142857143
+      },
+      "2026": {
+        "n_trades": 1,
+        "net_pnl_sum": -86.97999999999999,
+        "win_rate": 0.0
+      }
+    },
+    "years_with_positive_net": 5,
+    "years_total_with_at_least_1_trade": 8,
+    "concentration_of_profit": {
+      "top_1": {
+        "sum": 226.03,
+        "pct_of_total_net": 35.2000373756093
+      },
+      "top_3": {
+        "sum": 586.6999999999999,
+        "pct_of_total_net": 91.36779156868546
+      },
+      "top_5": {
+        "sum": 858.3,
+        "pct_of_total_net": 133.66452276018873
+      },
+      "top_10pct_n_trades": 5,
+      "top_10pct": {
+        "sum": 858.3,
+        "pct_of_total_net": 133.66452276018873
+      }
+    },
+    "edge_survives_without_top_trades": {
+      "without_top_1": {
+        "net_total_remaining": 416.1,
+        "still_positive": true
+      },
+      "without_top_3": {
+        "net_total_remaining": 55.430000000000064,
+        "still_positive": true
+      },
+      "without_top_5": {
+        "net_total_remaining": -216.16999999999996,
+        "still_positive": false
+      }
+    },
+    "rolling_window_10_trades_mean_net": [
+      {
+        "start_trade_idx": 0,
+        "end_trade_idx": 9,
+        "mean_net": -1.6860000000000004
+      },
+      {
+        "start_trade_idx": 1,
+        "end_trade_idx": 10,
+        "mean_net": -2.604
+      },
+      {
+        "start_trade_idx": 2,
+        "end_trade_idx": 11,
+        "mean_net": -3.4760000000000004
+      },
+      {
+        "start_trade_idx": 3,
+        "end_trade_idx": 12,
+        "mean_net": -3.4189999999999996
+      },
+      {
+        "start_trade_idx": 4,
+        "end_trade_idx": 13,
+        "mean_net": -4.694
+      },
+      {
+        "start_trade_idx": 5,
+        "end_trade_idx": 14,
+        "mean_net": -7.872
+      },
+      {
+        "start_trade_idx": 6,
+        "end_trade_idx": 15,
+        "mean_net": -6.086
+      },
+      {
+        "start_trade_idx": 7,
+        "end_trade_idx": 16,
+        "mean_net": -17.057
+      },
+      {
+        "start_trade_idx": 8,
+        "end_trade_idx": 17,
+        "mean_net": -27.624000000000002
+      },
+      {
+        "start_trade_idx": 9,
+        "end_trade_idx": 18,
+        "mean_net": -28.119999999999997
+      },
+      {
+        "start_trade_idx": 10,
+        "end_trade_idx": 19,
+        "mean_net": -16.709
+      },
+      {
+        "start_trade_idx": 11,
+        "end_trade_idx": 20,
+        "mean_net": -17.155
+      },
+      {
+        "start_trade_idx": 12,
+        "end_trade_idx": 21,
+        "mean_net": -16.376
+      },
+      {
+        "start_trade_idx": 13,
+        "end_trade_idx": 22,
+        "mean_net": -15.587
+      },
+      {
+        "start_trade_idx": 14,
+        "end_trade_idx": 23,
+        "mean_net": -15.186000000000002
+      },
+      {
+        "start_trade_idx": 15,
+        "end_trade_idx": 24,
+        "mean_net": -3.910000000000001
+      },
+      {
+        "start_trade_idx": 16,
+        "end_trade_idx": 25,
+        "mean_net": -5.369000000000001
+      },
+      {
+        "start_trade_idx": 17,
+        "end_trade_idx": 26,
+        "mean_net": 7.052
+      },
+      {
+        "start_trade_idx": 18,
+        "end_trade_idx": 27,
+        "mean_net": 2.003999999999999
+      },
+      {
+        "start_trade_idx": 19,
+        "end_trade_idx": 28,
+        "mean_net": 3.040999999999999
+      },
+      {
+        "start_trade_idx": 20,
+        "end_trade_idx": 29,
+        "mean_net": -7.18
+      },
+      {
+        "start_trade_idx": 21,
+        "end_trade_idx": 30,
+        "mean_net": -6.922999999999999
+      },
+      {
+        "start_trade_idx": 22,
+        "end_trade_idx": 31,
+        "mean_net": 4.1720000000000015
+      },
+      {
+        "start_trade_idx": 23,
+        "end_trade_idx": 32,
+        "mean_net": 12.788
+      },
+      {
+        "start_trade_idx": 24,
+        "end_trade_idx": 33,
+        "mean_net": 27.240999999999996
+      },
+      {
+        "start_trade_idx": 25,
+        "end_trade_idx": 34,
+        "mean_net": 17.448
+      },
+      {
+        "start_trade_idx": 26,
+        "end_trade_idx": 35,
+        "mean_net": 16.851
+      },
+      {
+        "start_trade_idx": 27,
+        "end_trade_idx": 36,
+        "mean_net": 3.661999999999999
+      },
+      {
+        "start_trade_idx": 28,
+        "end_trade_idx": 37,
+        "mean_net": 22.357
+      },
+      {
+        "start_trade_idx": 29,
+        "end_trade_idx": 38,
+        "mean_net": 21.55
+      },
+      {
+        "start_trade_idx": 30,
+        "end_trade_idx": 39,
+        "mean_net": 34.815999999999995
+      },
+      {
+        "start_trade_idx": 31,
+        "end_trade_idx": 40,
+        "mean_net": 32.045
+      },
+      {
+        "start_trade_idx": 32,
+        "end_trade_idx": 41,
+        "mean_net": 39.634
+      },
+      {
+        "start_trade_idx": 33,
+        "end_trade_idx": 42,
+        "mean_net": 28.565999999999995
+      },
+      {
+        "start_trade_idx": 34,
+        "end_trade_idx": 43,
+        "mean_net": 30.917999999999996
+      },
+      {
+        "start_trade_idx": 35,
+        "end_trade_idx": 44,
+        "mean_net": 53.46999999999999
+      },
+      {
+        "start_trade_idx": 36,
+        "end_trade_idx": 45,
+        "mean_net": 80.734
+      },
+      {
+        "start_trade_idx": 37,
+        "end_trade_idx": 46,
+        "mean_net": 75.175
+      }
+    ],
+    "direction_split_net_total": {
+      "ALL": {
+        "n": 47,
+        "net_total": 642.13
+      },
+      "BUY": {
+        "n": 36,
+        "net_total": 954.26
+      },
+      "SELL": {
+        "n": 11,
+        "net_total": -312.13
+      }
+    },
+    "single_regime_caveat": "Tutti i 47 eventi provengono da un UNICO run MT5 continuo (2019.02-2026.06, stesso broker/simbolo) - 'per anno' qui e' una suddivisione temporale dello STESSO campione, non regimi di mercato indipendenti verificati separatamente (stesso limite gia' dichiarato in Phase 7.9K)."
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-09-27T17:32:27.737843+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_oos_forward_analysis.py",
+  "canonical_sha256": "b57890b87315bebdf71d824b41691594e105090eac1e793421e638a07b6b49a6",
+  "payload": {
+    "window": [
+      "2026.08.15",
+      "2026.09.27"
+    ],
+    "window_genuinely_untouched": true,
+    "run_config": "nxs_breakoutacc_forward_oos.ini (selettore 9 isolato, stessa identita' canonica del run r002/r003, InpResearchMode=true, InpResearchExitMode=0/RAW, lotto fisso 0.01, leva 1:100)",
+    "n_closed_trades_breakout_acc": 1,
+    "closed_trades_net_pnl": [
+      -110.3
+    ],
+    "net_pnl_total": -110.3,
+    "net_pnl_per_trade": -110.3,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "min_sample_threshold_declared_before_result": 5,
+    "decision": "INSUFFICIENT_OOS_SAMPLE",
+    "decision_meaning": "Campione troppo piccolo per QUALUNQUE conclusione - non e' un fallimento della strategia, e' un fallimento del CAMPIONE (finestra troppo corta per la cadenza di segnali D1 di questa strategia, ~9-16/anno storicamente).",
+    "single_validation_run_only": true,
+    "looked_at_only_after_everything_else_frozen": true
+  }
+}

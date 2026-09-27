@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-09-27T17:32:54.908848+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_21\\build_frozen_forward_config.py",
+  "canonical_sha256": "887fc6adcdb96de2db97894c304cad3220bf9ed9816d79171349b6eb661ea21e",
+  "payload": {
+    "trigger": "decision_card_v1.json: EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+    "frozen_as_of_commit": "7e2c764 (Phase 7.20, HEAD al momento di questa fase)",
+    "frozen_source_sha256": "a0cf2f30915dcd55756c54cc4f19be87e116d348deea764775be57cb430c1a16",
+    "canonical_implementation": "NXS_Strat_BreakoutAcc() (guardia di cooldown per-direzione, Phase 7.9G) - IDENTICA a quella usata per il run forward gia' eseguito in questa fase.",
+    "config_frozen": {
+      "selector": 9,
+      "canonical_tf": "PERIOD_D1",
+      "entry_tf": "PERIOD_M15",
+      "lot_mode": "FIXED_LOT",
+      "fixed_lot": 0.01,
+      "direction_scope": "ENTRAMBE (BUY e SELL) - H2 (BUY piu' robusto) resta un'ipotesi, non un filtro applicato all'esecuzione. Escludere SELL ora sarebbe esattamente l'operazione vietata dal punto 12 della task ('eliminare SELL perche' hanno performato peggio')."
+    },
+    "rules_from_this_point_forward": [
+      "NESSUNA modifica alla strategia (formula, gate, SL/TP, selettore) mentre il forward e' in corso.",
+      "NESSUN tuning osservando i risultati del forward mano a mano che arrivano.",
+      "OGNI evento (aperto, bloccato, rifiutato) va registrato con un Audit Packet (schema EVENT_AUDIT_PACKET_V1, Phase 7.19) - non solo i trade aperti.",
+      "Nessuna promozione a capitale reale finche' il forward non produce un campione sufficiente (stessa soglia dichiarata qui: >=5 trade chiusi) per una nuova lettura del gate finale."
+    ],
+    "minimum_sample_before_next_gate_reevaluation": 5,
+    "current_forward_sample_available": 1,
+    "additional_forward_trades_needed": 4,
+    "estimated_wait_given_historical_cadence": "La cadenza storica e' 9-16 segnali generati/anno (non tutti aperti) - un campione di 5 trade CHIUSI potrebbe richiedere diversi mesi, non settimane. Nessuna scorciatoia proposta (es. multi-simbolo/multi-broker per accelerare) in questa fase.",
+    "not_executed_only_frozen": true,
+    "no_live_deploy": true
+  }
+}
