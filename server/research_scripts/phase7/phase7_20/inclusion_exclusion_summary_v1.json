@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-09-27T16:46:54.965323+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_20\\build_inclusion_exclusion_summary.py",
+  "canonical_sha256": "2947a96602f66719b56a80db47990fb81ccf38d1cc6bb4793df733f105699dfa",
+  "payload": {
+    "tier_a_one_liner": {
+      "BREAKOUT_ACC": "INCLUSA - unica strategia con integrita' certificata E dataset economico a fill reali gia' pronto; evidenza debole (confidence bassa dichiarata) ma sufficiente a meritare un test economico vero, non altro bug-hunting.",
+      "ORDER_BLOCK": "INCLUSA - integrita' certificata al livello piu' alto del corpus; nessuna evidenza economica ancora, ma il gap e' 'serve un run', non 'serve un altro audit' - distinzione che la rende pronta per il PROSSIMO passo (validazione), non per un ulteriore ciclo di integrity work.",
+      "TSI": "ESCLUSA nonostante l'integrita' pulita - campione post-fix troppo piccolo (8 eventi/8 mesi, servirebbero anni) e PF pre-fix gia' debole (0.76, il piu' basso del corpus insieme a BJORGUM) - rapporto costo/beneficio sfavorevole rispetto a BREAKOUT_ACC/ORDER_BLOCK.",
+      "ADX_RSI": "ESCLUSA - integrita' mai verificata (nessuna guardia TF, mescolamento sospetto TF fisso/variabile trovato in questa fase) E PF debole (0.82) in due fonti indipendenti.",
+      "SAR": "ESCLUSA - integrita' mai verificata E quasi nessuna evidenza quantitativa propria ('ambiguo' su un motore terzo, nessun PF MT5 dedicato trovato).",
+      "LIQ_SWEEP": "ESCLUSA ma marcata PROMISING - miglior PF del corpus (1.04) ma integrita' MAI controllata; priorita' 1 per un futuro audit dedicato.",
+      "FVG_CONT": "ESCLUSA ma marcata PROMISING - PF quasi breakeven + un segnale A/B non validato su MT5; priorita' 2, con un gap aggiuntivo di mappatura wrapper (IFVG/FVG_MIT/FVG_MIT_WINDOW).",
+      "BOLLINGER": "ESCLUSA - classificazione SUSPECT non chiusa (Phase 7.10) + PF debole (0.79).",
+      "MACD": "ESCLUSA - integrita' mai verificata per questa esatta variante + PF debole (0.79)."
+    },
+    "tier_b_tier_c_rules_summary": {
+      "DEFECT_CONFIRMED_UNFIXED (8 strategie)": "ESCLUSE - stesso difetto strutturale gia' fissato 3 volte in questa sessione (BREAKOUT_ACC/ORDER_BLOCK/TSI), qui ancora NON corretto. Nessuna nuova modifica MQL5 autorizzata in questa fase di sola classificazione.",
+      "SUSPECT_INTEGRITY_UNRESOLVED (4 strategie)": "ESCLUSE - stesso profilo di rischio di ADX_RSI/BOLLINGER/MACD (stateless, nessuna guardia TF, mai chiuso con un audit dedicato).",
+      "SAFE_INTEGRITY_BUT_NO_REAL_EVIDENCE (7 strategie)": "ESCLUSE - integrita' confermata pulita, ma zero evidenza quantitativa reale trovata (nessun trade economico mai registrato).",
+      "WRAPPER_OF_TIER_A_OR_TIER_B_CANDIDATE (4 strategie)": "ESCLUSE - ereditano lo stato della strategia riusata, comportamento dinamico con entrambe abilitate mai osservato dal vivo.",
+      "TIER_C bulk (59 strategie)": "ESCLUSE in blocco - nessuna evidenza quantitativa trovata in nessuna fonte consultata, integrita' mai auditata; la maggioranza non e' mai stata live (RESEARCH_ONLY, varianti esplorative Python-only)."
+    },
+    "shortlisted": [
+      "BREAKOUT_ACC",
+      "ORDER_BLOCK"
+    ]
+  }
+}

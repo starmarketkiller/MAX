@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""Phase 7.20 punto 2 - shortlist finale delle strategie READY_FOR_
+EDGE_VALIDATION, con il write-up a 10 campi richiesto per ciascuna.
+Shortlist di 2 (non 3-5): TSI/ADX_RSI/SAR/LIQ_SWEEP/FVG_CONT sono stati
+valutati esplicitamente (vedi evaluation_matrix_v1.json) e NON
+promossi - la ragione per ciascuno e' nella matrice, non ripetuta qui.
+Meno strategie ma tutte genuinamente pronte e' preferito a riempire
+fino a 3-5 con candidate deboli."""
+import os
+import sys
+
+PHASE720_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE720_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import wrap_with_provenance, save_json, load_json  # noqa: E402
+
+
+def build():
+    matrix = load_json(os.path.join(PHASE720_DIR, "evaluation_matrix_v1.json"))["payload"]
+    tier_a = matrix["tier_a_deep_dive"]
+    ready_ids = [sid for sid, v in tier_a.items() if v["category"] == "READY_FOR_EDGE_VALIDATION"]
+
+    shortlist = {}
+
+    shortlist["BREAKOUT_ACC"] = {
+        "perche_candidata": "Unica strategia del corpus con integrita' implementativa CERTIFICATA "
+            "(Phase 7.9E/F/G, esperimento controllato), un canonical event dataset GIA' ESISTENTE con "
+            "fill reali, e un pattern descrittivo che sopravvive a una correzione metodologica sostanziale "
+            "sugli stessi dati - tutte le precondizioni per un test economico rigoroso sono gia' "
+            "soddisfatte, senza dover costruire nulla da zero.",
+        "evidenza_positiva_gia_esistente": "BUY continuation 69.4% su 60 eventi (Phase 7.9K, dati "
+            "corretti); il pattern direzionale e' sopravvissuto a una correzione dell'offset del forward "
+            "path (8.7% di veri cambi di esito, il pattern nel complesso no); MFE/MAE/path anatomy gia' "
+            "calcolati per tutti i 75 eventi.",
+        "rischi_limiti": "Confidence BASSA dichiarata dagli stessi autori (Phase 7.9K); campione SELL "
+            "troppo piccolo (15 eventi, 10 comparabili) per conclusioni proprie - il lato SELL rischia di "
+            "diluire un eventuale edge BUY se testato insieme; un solo regime di mercato rappresentato; "
+            "allineamento di trend non testabile (nessun gruppo di controllo); classificazione binaria "
+            "continuation/failure dimostrabilmente fragile (preferire MFE/MAE continui).",
+        "quali_dati_usare": "server/research_scripts/phase7/phase7_9k/breakout_acc_intended_d1_v2_dataset."
+            "json (75 eventi, schema v2, gia' corretto per l'offset) - NON il v1 (Phase 7.9H, superseded).",
+        "implementation_identity_canonica": "NXS_Strat_BreakoutAcc() con guardia di cooldown per-direzione "
+            "(fix Phase 7.9G) - stato attuale del file, nessuna ulteriore modifica necessaria.",
+        "test_economico_corretto": "Confronto BUY-only vs benchmark buy-and-hold/random-entry sullo stesso "
+            "periodo e simbolo, con MFE/MAE continui (non solo binario continuation/failure a un singolo "
+            "orizzonte) - dato l'esiguo campione SELL, testare BUY e SELL SEPARATAMENTE, non aggregati; "
+            "riportare l'intervallo di confidenza dato N=60 (BUY), non solo la media.",
+        "quali_costi_includere": "Spread reale + slippage segnale->fill (gia' misurato per evento) + "
+            "commissione/swap reali (gia' presenti nel dataset, campi realized_swap/realized_commission) "
+            "- nessun nuovo dato di costo da raccogliere.",
+        "quale_holdout_oos_usare": "Nessun OOS esiste oggi - split temporale necessario: usare la prima "
+            "meta' cronologica degli eventi come scoperta (gia' fatto, e' l'intero campione attuale) e "
+            "RACCOGLIERE un campione temporalmente successivo indipendente per l'OOS reale (non uno split "
+            "retroattivo dello stesso campione, che non sarebbe un vero holdout temporale).",
+        "nuovo_run_mt5_o_artifact_bastano": "Gli artifact esistenti bastano per il PRIMO test economico "
+            "(baseline edge vs benchmark, cost-sensitivity) - un nuovo run MT5 serve SOLO per l'OOS "
+            "temporale (punto precedente), non per il test iniziale.",
+        "livello_visual_audit_possibile": "Fidelity B (stesso feed/fill reale, granularita' non "
+            "tick-level) - dimostrato nell'esempio reale gia' costruito in Phase 7.19.",
+        "minimum_viable_capital_da_verificare": "NON STIMATO in questa fase (richiede SL/TP reali per "
+            "evento, non ancora riesaminati con l'ottica capital-a-rischio) - primo passo del blocco "
+            "successivo (baseline edge -> costi -> OOS -> execution -> minimum viable capital), non di "
+            "questa fase di shortlist.",
+    }
+
+    shortlist["ORDER_BLOCK"] = {
+        "perche_candidata": "Integrita' implementativa CERTIFICATA con il livello di rigore piu' alto del "
+            "corpus (trace EA reale pre/post fix, guardia verificata efficace al 100%, Phase 7.14/7.15) - "
+            "ma a differenza di BREAKOUT_ACC non ha ancora NESSUNA evidenza economica per l'implementazione "
+            "canonica attuale (V2): e' candidata perche' il prossimo passo naturale e produttivo e' "
+            "esattamente costruire quella prima evidenza, partendo da un'identita' implementativa gia' "
+            "pulita (a differenza della maggior parte del corpus, dove l'integrita' stessa resta da "
+            "accertare).",
+        "evidenza_positiva_gia_esistente": "NESSUNA evidenza ECONOMICA per V2 - l'evidenza esistente e' "
+            "solo diagnostica (8 eventi zona/retest, Research Mode, Phase 7.14) e serve a confermare che "
+            "il fix funziona, non che la strategia abbia edge. Esplicitamente: 'no_prior_evidence_"
+            "available' per V2 (historical_evidence_migration_v1.json, Phase 7.14).",
+        "rischi_limiti": "Zero evidenza economica oggi - qualunque test partira' da campione zero, non da "
+            "un'ipotesi gia' parzialmente supportata come BREAKOUT_ACC; comportamento dinamico con OB_MIT "
+            "entrambe abilitate mai osservato dal vivo (irrilevante se OB_MIT resta disabilitato, come "
+            "oggi); motore Python non e' fedelta' evento-per-evento provata (APPROXIMATION_WITH_KNOWN_"
+            "GAPS, Phase 7.16) - non usarlo come fonte primaria.",
+        "quali_dati_usare": "Nessun dataset economico esiste ancora - va costruito da un nuovo run MT5 "
+            "reale (vedi sotto). Riutilizzabile: lo schema/builder gia' pronto in Phase 7.14 per catturare "
+            "eventi di zona (adattabile da Research Mode a fill reali).",
+        "implementation_identity_canonica": "NXS_Strat_OrderBlock() con guardia TF-scoped (fix Phase "
+            "7.14) - ORDER_BLOCK_IMPL_V2_TF_GUARDED, stato attuale del file.",
+        "test_economico_corretto": "Prima measurement economica pura (PF/WR/MFE/MAE su fill reali) su un "
+            "periodo sufficientemente lungo da generare un campione utile (le zone D1 sono piu' frequenti "
+            "di TSI ma comunque non giornaliere) - nessun confronto storico possibile (nessun prior), "
+            "quindi il primo run stesso costituisce la baseline di scoperta, non ancora un OOS.",
+        "quali_costi_includere": "Spread reale + slippage + commissione/swap - nessuno di questi e' "
+            "catturato nel trace diagnostico attuale (Research Mode), TUTTI da raccogliere nel nuovo run.",
+        "quale_holdout_oos_usare": "Split temporale del NUOVO run (prima parte = scoperta, seconda parte "
+            "= OOS) - dato che non esiste alcun prior, e' accettabile (e necessario) usare lo stesso run "
+            "per entrambi, purche' lo split sia deciso PRIMA di guardare i risultati (preregistrazione "
+            "del taglio temporale).",
+        "nuovo_run_mt5_o_artifact_bastano": "SERVE un nuovo run MT5 REALE (non Research Mode, fill "
+            "veri) - gli artifact attuali (Phase 7.14) sono Research Mode e non bastano per un test "
+            "economico. Periodo consigliato: abbastanza lungo da attraversare piu' regimi (mesi-anni, non "
+            "settimane come i run diagnostici brevi di Phase 7.14/7.18) MA preregistrato PRIMA di essere "
+            "lanciato (outcome-blind), per non ripetere l'errore gia' documentato altrove nel progetto "
+            "(vedi vault: Lezione Overfitting 3Y).",
+        "livello_visual_audit_possibile": "Fidelity D oggi (Research Mode, nessun fill) - Fidelity B "
+            "raggiungibile SOLO dopo il nuovo run a fill reali proposto sopra.",
+        "minimum_viable_capital_da_verificare": "NON STIMABILE oggi (zero dati economici) - dipende "
+            "interamente dall'esito del nuovo run proposto.",
+    }
+
+    payload = {
+        "shortlist_size": len(shortlist),
+        "shortlist_size_requested_range": [3, 5],
+        "why_fewer_than_requested_minimum": "La matrice completa (evaluation_matrix_v1.json) valuta "
+            "esplicitamente 9 strategie in profondita' (inclusi tutti i nomi richiesti dall'utente: "
+            "BREAKOUT_ACC, ORDER_BLOCK, TSI, ADX_RSI, SAR) piu' le uniche altre due con evidenza "
+            "quantitativa reale nel corpus (LIQ_SWEEP, FVG_CONT). Di queste 9, solo 2 (BREAKOUT_ACC, "
+            "ORDER_BLOCK) hanno sia integrita' CERTIFICATA sia una base dati/percorso concreto per un "
+            "test economico rigoroso SENZA prima richiedere un audit di integrita' dedicato o anni di "
+            "accumulo campione. TSI e' stata deliberatamente NON promossa nonostante l'integrita' pulita "
+            "(campione post-fix troppo piccolo, PF pre-fix contaminato gia' debole). LIQ_SWEEP/FVG_CONT "
+            "sono PROMISING_BUT_NEEDS_INTEGRITY_WORK, non ancora pronte. Preferito onestamente 2 "
+            "candidate solide a 3-5 candidate riempite artificialmente.",
+        "strategies": shortlist,
+        "next_best_candidates_not_yet_ready": {
+            "LIQ_SWEEP": "PF piu' alto del corpus (1.04, sweep37) - priorita' 1 per un audit di integrita' "
+                        "dedicato (stesso schema di ORDER_BLOCK/TSI) dopo questa fase.",
+            "FVG_CONT": "PF quasi breakeven (0.96) + un segnale A/B interno non validato su MT5 - "
+                       "priorita' 2, MA prima va mappata la condivisione con IFVG/FVG_MIT/FVG_MIT_WINDOW.",
+        },
+    }
+    return payload
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, script=os.path.abspath(__file__))
+    out_path = os.path.join(PHASE720_DIR, "shortlist_v1.json")
+    save_json(out_path, doc)
+    print(f"Scritto {out_path} (sha256={doc['canonical_sha256'][:16]}...)")
+    print(f"  shortlist: {list(payload['strategies'].keys())}")
+
+
+if __name__ == "__main__":
+    main()

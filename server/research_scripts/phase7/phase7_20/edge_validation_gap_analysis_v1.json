@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-09-27T16:52:45.011519+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_20\\build_edge_validation_gap_analysis.py",
+  "canonical_sha256": "2549d1fd72ea7cef7c0acfd23d2b4afb4b5248a3ff39cae6448a0304d4a14985",
+  "payload": {
+    "BREAKOUT_ACC": [
+      "Benchmark esplicito (random entry / buy-and-hold) mai calcolato - necessario per lo Stadio 1 di EDGE_VALIDATION_V1.",
+      "Nessun vero holdout temporale (OOS) - richiede raccogliere un periodo successivo indipendente, non uno split retroattivo.",
+      "SL/TP reali non riesaminati nell'ottica capital-a-rischio (serve prima di qualunque stima di minimum viable capital)."
+    ],
+    "ORDER_BLOCK": [
+      "Zero evidenza economica per l'implementazione V2 - serve un nuovo run MT5 reale (non Research Mode) preregistrato prima di essere lanciato.",
+      "Fill reali, spread, slippage, commissioni: nessuno di questi dati esiste oggi per V2.",
+      "Periodo del nuovo run non ancora deciso - deve attraversare piu' di un regime per essere utile, ma non cosi' lungo da rischiare l'overfitting gia' documentato altrove nel progetto."
+    ],
+    "LIQ_SWEEP_and_FVG_CONT_before_they_can_join_the_shortlist": [
+      "Audit di integrita' dedicato (stesso schema gia' usato 3 volte per BREAKOUT_ACC/ORDER_BLOCK/TSI) - oggi nessuna delle due e' mai stata controllata per il difetto CROSS_TIMEFRAME_STATE_CONTAMINATION.",
+      "Per FVG_CONT specificamente: mappare la condivisione di STRAT_FVG_CONT con IFVG/FVG_MIT/FVG_MIT_WINDOW (stesso lavoro gia' fatto per OB_MIT/ORDER_BLOCK in Phase 7.14/7.15) prima di qualunque conclusione.",
+      "Conteggio trade reale per il PF sweep37 di entrambe - l'artifact riassuntivo riporta solo il PF, non il campione."
+    ],
+    "cross_cutting_gap_entire_corpus": "Nessuna strategia del corpus (comprese le 2 shortlisted) ha oggi un vero holdout out-of-sample gia' pronto - e' il gap PIU' RICORRENTE trovato in questa fase, coerente con il gap 'runtime_fingerprint assente in tutti gli esempi' trovato in Phase 7.19 per un motivo diverso ma della stessa natura (infrastruttura di misurazione ancora incompleta rispetto alla ricchezza della logica di trading)."
+  }
+}

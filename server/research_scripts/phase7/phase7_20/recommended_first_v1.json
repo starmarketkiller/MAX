@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-09-27T16:45:50.496745+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_20\\build_recommended_first.py",
+  "canonical_sha256": "02ca6f93012a99a9c348166182cea0f5183e9ff290f5cd4e2ded4c01cac429a1",
+  "payload": {
+    "recommended_first": "BREAKOUT_ACC",
+    "not_order_block_because": "ORDER_BLOCK ha integrita' altrettanto pulita ma RICHIEDE un nuovo run MT5 reale (nessun dato economico esiste oggi per l'implementazione V2) prima di poter anche solo iniziare lo Stadio 1 (baseline edge) del protocollo - un costo/tempo che BREAKOUT_ACC non richiede.",
+    "why_breakout_acc": [
+      "E' l'UNICA strategia del corpus con un canonical event dataset GIA' ESISTENTE, a fill reali, con costi (swap/commissione/slippage) gia' catturati per evento - gli Stadi 1 (baseline edge) e 2 (costi) di EDGE_VALIDATION_V1 possono iniziare SUBITO, senza attendere nessun nuovo run MT5.",
+      "L'unico gap strutturale per completare il protocollo e' lo Stadio 3 (OOS) - richiede raccogliere un periodo temporalmente successivo, un lavoro delimitato e piu' piccolo di costruire un intero dataset da zero.",
+      "Il pattern (BUY side) e' sopravvissuto a una correzione metodologica sostanziale sugli stessi dati - un indizio di robustezza al netto della bassa confidence dichiarata, non una prova di edge."
+    ],
+    "explicit_caveat": "Il lato SELL (15 eventi) NON deve essere incluso nel primo passaggio del protocollo - campione troppo piccolo per essere informativo da solo; consigliato testare SOLO BUY nel primo giro, poi eventualmente SELL separatamente con l'accumulo di piu' dati.",
+    "not_a_promotion": "Questa raccomandazione riguarda SOLO l'ordine di lavoro (quale strategia validare per prima), non e' un'affermazione che BREAKOUT_ACC abbia gia' un edge - esattamente cio' che lo Stadio 1 del protocollo dovra' stabilire."
+  }
+}
