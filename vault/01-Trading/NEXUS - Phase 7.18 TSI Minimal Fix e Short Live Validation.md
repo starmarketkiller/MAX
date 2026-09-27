@@ -40,7 +40,16 @@ Istrumentazione rimossa due volte (prima e dopo la cattura post-fix); compilazio
 
 ## 9. Regressione
 
-Suite completa Phase 7 eseguita **prima del commit** (working tree con la sola riga del fix, nessun'altra modifica): **24 fallimenti**, tutti riconducibili — per struttura identica al pattern già documentato in Phase 7.15 per ORDER_BLOCK — al fatto che ogni fase precedente verifica "nessuna modifica a `MQL5/`" contro un working tree **non ancora committato**; questa classe di fallimento si **auto-risolve al commit** (git diff torna vuoto). Fra questi, `phase7_17`/`phase7_12`/`phase7_13` mostrano anche un secondo tipo di fallimento "atteso per costruzione": un self-check di staleness che rileva correttamente che la propria scoperta (difetto non ancora corretto) è ora superata dal fix — stesso comportamento voluto già documentato in Phase 7.15 per i self-check di Phase 7.12/7.13 su ORDER_BLOCK. Nessuna regressione reale attribuibile al fix TSI riscontrata. *(Non è stata eseguita una "Integration Closure" dedicata come Phase 7.15 — valutazione lasciata all'utente: la classe di fallimenti osservata è la stessa già classificata come attesa/non bloccante, non richiede necessariamente una fase dedicata.)*
+Suite completa Phase 7 eseguita **prima del commit** (working tree con la sola riga del fix, nessun'altra modifica): 24 fallimenti, tutti riconducibili — per struttura identica al pattern già documentato in Phase 7.15 per ORDER_BLOCK — al fatto che ogni fase precedente verifica "nessuna modifica a `MQL5/`" contro un working tree **non ancora committato**. Ri-eseguita **dopo il commit** (checkout pulito, `git status` vuoto): questa classe si è **auto-risolta come previsto** (24 → 5 fallimenti residui). I 5 residui, tutti classificati:
+
+| Gruppo | N test | Categoria | Causa |
+|---|---|---|---|
+| Phase 7.12 staleness self-check (ORDER_BLOCK) | 1 | Atteso, preesistente | Già documentato in Phase 7.15 - non causato da questa fase |
+| Phase 7.13 staleness self-check (ORDER_BLOCK) | 1 | Atteso, preesistente | Idem |
+| Phase 7.15 `sources_and_binaries_audit_v1.json` hash | 2 | Atteso, **nuovo in questa fase** | L'audit di Phase 7.15 registra l'hash di `NXS_Strategies.mqh` "come sorgente finale pulito" al tempo di Phase 7.15 (post-fix OB, pre-fix TSI) - la guardia TSI di questa fase ha legittimamente cambiato quel file, rendendo l'hash storico stale per costruzione, non un difetto |
+| Phase 7.17 staleness self-check (TSI) | 1 | Atteso, **nuovo in questa fase** | Il self-check di Phase 7.17 rileva correttamente che la guardia TSI (allora solo proposta) è ora presente - stesso comportamento voluto già visto per Phase 7.12/7.13 su ORDER_BLOCK |
+
+**Nessuna regressione reale attribuibile al fix TSI.** Stesso pattern esatto già classificato "atteso" in Phase 7.15 per ORDER_BLOCK, ora esteso naturalmente a TSI. *(Non è stata eseguita una "Integration Closure" dedicata come Phase 7.15 - valutazione lasciata all'utente: la classe di fallimenti osservata è la stessa già classificata come attesa/non bloccante in precedenza, non richiede necessariamente una fase dedicata ora.)*
 
 ## Deliverables
 
@@ -69,6 +78,10 @@ Nessuna optimization, nessun backtest pluriennale, nessuna ricerca di edge in qu
     contaminazione entro la stessa barra) - corretta con approccio
     transition-based, verificata senza perdita
 DECISIONE: FIX_CAUSALLY_VALIDATED
+SUITE COMPLETA (checkout pulito, post-commit): 594 passed, 5 failed
+  (tutti staleness self-check/hash attesi - 2 preesistenti su
+  ORDER_BLOCK, 3 nuovi ma della stessa categoria su TSI/audit 7.15 -
+  0 regressioni reali)
 PROSSIMO: nessuna promozione live. Come da richiesta utente, pausa del
   ciclo bug-hunting - prossimo passo e' il checkpoint shortlist
   strategie candidate a edge validation (BREAKOUT_ACC/ORDER_BLOCK/TSI
