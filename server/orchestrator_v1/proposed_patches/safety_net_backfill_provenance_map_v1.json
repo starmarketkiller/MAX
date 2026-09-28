@@ -1,0 +1,88 @@
+{
+  "generated_at": "2026-09-28T22:44:51.882463+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_nexus_task_0002_safety_net_backfill.py",
+  "canonical_sha256": "bc2a01f2adacbead4c205df3f2e31a1a243786c26fafca4f09df583fd56a360b",
+  "payload": {
+    "BREAKOUT_ACC.execution_degradation": {
+      "source_artifacts": [
+        "server/research_scripts/phase7/phase7_21/execution_realism_v1.json"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "BREAKOUT_ACC",
+      "experiment_id": null,
+      "confidence": "MEDIUM",
+      "derivation_method": "Bug di key-path trovato nel builder originale (build_cross_strategy_learning_packet.py riga 96: cerca la chiave piatta 'signal_pct_favorable' che non e' mai esistita - il dato reale e' nidificato sotto 'signal_edge'->'pct_favorable') - i funnel_counts grezzi ESISTONO gia' in execution_realism_v1.json, solo mai convertiti in funnel_rates (a differenza di ORDER_BLOCK/LIQ_SWEEP, il cui artifact sorgente aveva gia' 'funnel_rates' calcolato). Calcolo qui SOLO aritmetica pura sui contatori gia' presenti, stessa formula/convenzione di ORDER_BLOCK.",
+      "value_added": {
+        "pct_generated_that_get_blocked": 16.4179,
+        "pct_generated_that_get_rejected": 13.4328,
+        "pct_generated_that_open_per_certificate": 70.1493
+      }
+    },
+    "BREAKOUT_ACC.favorable_before_loss": {
+      "source_artifacts": [
+        "server/research_scripts/phase7/phase7_9k/breakout_acc_path_anatomy_v2.json",
+        "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "BREAKOUT_ACC",
+      "experiment_id": null,
+      "confidence": "HIGH",
+      "derivation_method": "breakout_acc_path_anatomy_v2.json (phase7_9k) ha gia' MFE/MAE per-evento (per event_id) - mai incrociato con l'esito vinto/perso (net_pnl) del dataset economico (phase7_21) per separare la MFE media dei trade PERDENTI. Join+media aritmetica pura su due artifact gia' esistenti e verificati, nessun nuovo dato.",
+      "value_added": {
+        "n": 33,
+        "mean": 141.5103,
+        "median": 97.02
+      }
+    },
+    "BREAKOUT_ACC.adverse_before_win": {
+      "source_artifacts": [
+        "server/research_scripts/phase7/phase7_9k/breakout_acc_path_anatomy_v2.json",
+        "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "BREAKOUT_ACC",
+      "experiment_id": null,
+      "confidence": "HIGH",
+      "derivation_method": "Come sopra, MAE media dei trade VINCENTI.",
+      "value_added": {
+        "n": 14,
+        "mean": 24.6207,
+        "median": 20.34
+      }
+    },
+    "BREAKOUT_ACC.temporal_concentration": {
+      "source_artifacts": [
+        "server/orchestrator_v1/nexus_task_0001_result_v1.json",
+        "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_temporal_v1.json"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "BREAKOUT_ACC",
+      "experiment_id": null,
+      "confidence": "HIGH",
+      "derivation_method": "Gia' calcolato e verificato indipendentemente in NEXUS TASK #0001 (worker locale ministral-3:3b, verifica di riferimento separata) - mai propagato nel Learning Packet.",
+      "value_added": "5 anni con profitto netto positivo su 8 con almeno una operazione."
+    },
+    "BREAKOUT_ACC.exit_efficiency": {
+      "source_artifacts": [
+        "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_exitfx_v1.json"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "BREAKOUT_ACC",
+      "experiment_id": null,
+      "confidence": "HIGH",
+      "derivation_method": "Come sopra - NEXUS TASK #0001.",
+      "value_added": "0,14 del rapporto di efficienza di uscita su 47 eventi registrati."
+    },
+    "ORDER_BLOCK.temporal_concentration": {
+      "source_artifacts": [
+        "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_temporal_v1.json"
+      ],
+      "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+      "dataset_id": "ORDER_BLOCK",
+      "experiment_id": null,
+      "confidence": "MEDIUM",
+      "derivation_method": "NEXUS TASK #0001.",
+      "value_added": "2/3 anni con almeno un trade \u2013 2025 e 2026 coprono il 100% dei guadagni netti."
+    }
+  }
+}

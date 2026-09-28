@@ -1,0 +1,584 @@
+{
+  "generated_at": "2026-09-28T22:44:51.891975+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_nexus_task_0002_safety_net_backfill.py",
+  "canonical_sha256": "562cbc1edee7c5de567623fcb031972ac1eacd5e6bd9edcb0cc586162ee9d3f0",
+  "payload": {
+    "nexus_task": "0002",
+    "title": "Research Safety Net Auto-Backfill",
+    "task_ids": [
+      "TASK_NEXUS_0002_INVENTORY",
+      "TASK_NEXUS_0002_BREAKOUT_ACC_FUNNEL_RATES",
+      "TASK_NEXUS_0002_BREAKOUT_ACC_FAVORABLE_BEFORE_LOSS",
+      "TASK_NEXUS_0002_BREAKOUT_ACC_ADVERSE_BEFORE_WIN",
+      "TASK_NEXUS_0002_BREAKOUT_ACC_TEMPORAL_CONCENTRATION_NARRATIVE",
+      "TASK_NEXUS_0002_BREAKOUT_ACC_EXIT_EFFICIENCY_NARRATIVE",
+      "TASK_NEXUS_0002_ORDER_BLOCK_TEMPORAL_CONCENTRATION_NARRATIVE",
+      "TASK_NEXUS_0002_ORDER_BLOCK_EXIT_EFFICIENCY_NARRATIVE",
+      "TASK_NEXUS_0002_PROPOSE_PACKET_UPDATE"
+    ],
+    "not_available_inventory": {
+      "BREAKOUT_ACC": [
+        "pre_entry_context",
+        "regime",
+        "volatility",
+        "trend",
+        "session",
+        "favorable_before_loss",
+        "adverse_before_win",
+        "execution_degradation",
+        "exit_efficiency",
+        "temporal_concentration"
+      ],
+      "ORDER_BLOCK": [
+        "pre_entry_context",
+        "regime",
+        "volatility",
+        "trend",
+        "session",
+        "winner_anatomy",
+        "loser_anatomy",
+        "mfe_mae",
+        "time_to_mfe_mae",
+        "favorable_before_loss",
+        "adverse_before_win",
+        "exit_efficiency",
+        "temporal_concentration"
+      ],
+      "TSI": [
+        "pre_entry_context",
+        "regime",
+        "direction",
+        "volatility",
+        "trend",
+        "structure",
+        "session",
+        "level_context",
+        "winner_anatomy",
+        "loser_anatomy",
+        "mfe_mae",
+        "time_to_mfe_mae",
+        "favorable_before_loss",
+        "adverse_before_win",
+        "execution_degradation",
+        "cost_sensitivity",
+        "exit_efficiency",
+        "capital_efficiency",
+        "concentration",
+        "temporal_concentration",
+        "oos_behavior"
+      ],
+      "LIQ_SWEEP": [
+        "volatility",
+        "trend"
+      ]
+    },
+    "inventory_matches_classification_table": true,
+    "classification_summary": {
+      "derivable_now_count": 7,
+      "derivable_now_fields": [
+        "BREAKOUT_ACC.temporal_concentration",
+        "BREAKOUT_ACC.exit_efficiency",
+        "BREAKOUT_ACC.execution_degradation",
+        "BREAKOUT_ACC.favorable_before_loss",
+        "BREAKOUT_ACC.adverse_before_win",
+        "ORDER_BLOCK.temporal_concentration",
+        "ORDER_BLOCK.exit_efficiency"
+      ],
+      "derivable_now_actually_completed_this_run": 6,
+      "genuine_escalations_count": 1,
+      "requires_new_data_count": 39,
+      "requires_scientific_judgment_count": 0,
+      "source_conflict_count": 0,
+      "not_applicable_count": 0
+    },
+    "derivable_now_results": {
+      "BREAKOUT_ACC.execution_degradation": {
+        "pct_generated_that_get_blocked": 16.4179,
+        "pct_generated_that_get_rejected": 13.4328,
+        "pct_generated_that_open_per_certificate": 70.1493
+      },
+      "BREAKOUT_ACC.favorable_before_loss": {
+        "n": 33,
+        "mean": 141.5103,
+        "median": 97.02
+      },
+      "BREAKOUT_ACC.adverse_before_win": {
+        "n": 14,
+        "mean": 24.6207,
+        "median": 20.34
+      },
+      "BREAKOUT_ACC.temporal_concentration": "5 anni con profitto netto positivo su 8 con almeno una operazione.",
+      "BREAKOUT_ACC.exit_efficiency": "0,14 del rapporto di efficienza di uscita su 47 eventi registrati.",
+      "ORDER_BLOCK.temporal_concentration": "2/3 anni con almeno un trade \u2013 2025 e 2026 coprono il 100% dei guadagni netti."
+    },
+    "changed_fields": [
+      {
+        "strategy": "BREAKOUT_ACC",
+        "field": "temporal_concentration",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": "5 anni con profitto netto positivo su 8 con almeno una operazione."
+      },
+      {
+        "strategy": "BREAKOUT_ACC",
+        "field": "exit_efficiency",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": "0,14 del rapporto di efficienza di uscita su 47 eventi registrati."
+      },
+      {
+        "strategy": "BREAKOUT_ACC",
+        "field": "execution_degradation",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": {
+          "pct_generated_that_get_blocked": 16.4179,
+          "pct_generated_that_get_rejected": 13.4328,
+          "pct_generated_that_open_per_certificate": 70.1493
+        }
+      },
+      {
+        "strategy": "BREAKOUT_ACC",
+        "field": "favorable_before_loss",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": {
+          "n": 33,
+          "mean": 141.5103,
+          "median": 97.02
+        }
+      },
+      {
+        "strategy": "BREAKOUT_ACC",
+        "field": "adverse_before_win",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": {
+          "n": 14,
+          "mean": 24.6207,
+          "median": 20.34
+        }
+      },
+      {
+        "strategy": "ORDER_BLOCK",
+        "field": "temporal_concentration",
+        "old_value": "NOT_AVAILABLE",
+        "new_value": "2/3 anni con almeno un trade \u2013 2025 e 2026 coprono il 100% dei guadagni netti."
+      }
+    ],
+    "provenance_map": {
+      "BREAKOUT_ACC.execution_degradation": {
+        "source_artifacts": [
+          "server/research_scripts/phase7/phase7_21/execution_realism_v1.json"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "BREAKOUT_ACC",
+        "experiment_id": null,
+        "confidence": "MEDIUM",
+        "derivation_method": "Bug di key-path trovato nel builder originale (build_cross_strategy_learning_packet.py riga 96: cerca la chiave piatta 'signal_pct_favorable' che non e' mai esistita - il dato reale e' nidificato sotto 'signal_edge'->'pct_favorable') - i funnel_counts grezzi ESISTONO gia' in execution_realism_v1.json, solo mai convertiti in funnel_rates (a differenza di ORDER_BLOCK/LIQ_SWEEP, il cui artifact sorgente aveva gia' 'funnel_rates' calcolato). Calcolo qui SOLO aritmetica pura sui contatori gia' presenti, stessa formula/convenzione di ORDER_BLOCK.",
+        "value_added": {
+          "pct_generated_that_get_blocked": 16.4179,
+          "pct_generated_that_get_rejected": 13.4328,
+          "pct_generated_that_open_per_certificate": 70.1493
+        }
+      },
+      "BREAKOUT_ACC.favorable_before_loss": {
+        "source_artifacts": [
+          "server/research_scripts/phase7/phase7_9k/breakout_acc_path_anatomy_v2.json",
+          "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "BREAKOUT_ACC",
+        "experiment_id": null,
+        "confidence": "HIGH",
+        "derivation_method": "breakout_acc_path_anatomy_v2.json (phase7_9k) ha gia' MFE/MAE per-evento (per event_id) - mai incrociato con l'esito vinto/perso (net_pnl) del dataset economico (phase7_21) per separare la MFE media dei trade PERDENTI. Join+media aritmetica pura su due artifact gia' esistenti e verificati, nessun nuovo dato.",
+        "value_added": {
+          "n": 33,
+          "mean": 141.5103,
+          "median": 97.02
+        }
+      },
+      "BREAKOUT_ACC.adverse_before_win": {
+        "source_artifacts": [
+          "server/research_scripts/phase7/phase7_9k/breakout_acc_path_anatomy_v2.json",
+          "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "BREAKOUT_ACC",
+        "experiment_id": null,
+        "confidence": "HIGH",
+        "derivation_method": "Come sopra, MAE media dei trade VINCENTI.",
+        "value_added": {
+          "n": 14,
+          "mean": 24.6207,
+          "median": 20.34
+        }
+      },
+      "BREAKOUT_ACC.temporal_concentration": {
+        "source_artifacts": [
+          "server/orchestrator_v1/nexus_task_0001_result_v1.json",
+          "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_temporal_v1.json"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "BREAKOUT_ACC",
+        "experiment_id": null,
+        "confidence": "HIGH",
+        "derivation_method": "Gia' calcolato e verificato indipendentemente in NEXUS TASK #0001 (worker locale ministral-3:3b, verifica di riferimento separata) - mai propagato nel Learning Packet.",
+        "value_added": "5 anni con profitto netto positivo su 8 con almeno una operazione."
+      },
+      "BREAKOUT_ACC.exit_efficiency": {
+        "source_artifacts": [
+          "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_exitfx_v1.json"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "BREAKOUT_ACC",
+        "experiment_id": null,
+        "confidence": "HIGH",
+        "derivation_method": "Come sopra - NEXUS TASK #0001.",
+        "value_added": "0,14 del rapporto di efficienza di uscita su 47 eventi registrati."
+      },
+      "ORDER_BLOCK.temporal_concentration": {
+        "source_artifacts": [
+          "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_temporal_v1.json"
+        ],
+        "phase_source": "Phase 7.26 auto-backfill (NEXUS TASK #0002)",
+        "dataset_id": "ORDER_BLOCK",
+        "experiment_id": null,
+        "confidence": "MEDIUM",
+        "derivation_method": "NEXUS TASK #0001.",
+        "value_added": "2/3 anni con almeno un trade \u2013 2025 e 2026 coprono il 100% dei guadagni netti."
+      }
+    },
+    "coverage_report": {
+      "BREAKOUT_ACC": {
+        "coverage_before_pct": 64.3,
+        "coverage_after_pct": 82.1,
+        "n_fields_derivable_now_this_round": 5,
+        "n_fields_completed_this_round": 5,
+        "fields_completed": [
+          "adverse_before_win",
+          "execution_degradation",
+          "exit_efficiency",
+          "favorable_before_loss",
+          "temporal_concentration"
+        ],
+        "n_fields_remaining_requires_new_data": 5,
+        "fields_remaining_requires_new_data": [
+          "pre_entry_context",
+          "regime",
+          "session",
+          "trend",
+          "volatility"
+        ],
+        "n_fields_escalated_local_model_capability": 0,
+        "fields_escalated_local_model_capability": [],
+        "n_fields_requires_scientific_judgment": 0,
+        "n_fields_source_conflict": 0,
+        "n_fields_not_applicable": 0
+      },
+      "ORDER_BLOCK": {
+        "coverage_before_pct": 53.6,
+        "coverage_after_pct": 57.1,
+        "n_fields_derivable_now_this_round": 2,
+        "n_fields_completed_this_round": 1,
+        "fields_completed": [
+          "temporal_concentration"
+        ],
+        "n_fields_remaining_requires_new_data": 11,
+        "fields_remaining_requires_new_data": [
+          "adverse_before_win",
+          "favorable_before_loss",
+          "loser_anatomy",
+          "mfe_mae",
+          "pre_entry_context",
+          "regime",
+          "session",
+          "time_to_mfe_mae",
+          "trend",
+          "volatility",
+          "winner_anatomy"
+        ],
+        "n_fields_escalated_local_model_capability": 1,
+        "fields_escalated_local_model_capability": [
+          "exit_efficiency"
+        ],
+        "n_fields_requires_scientific_judgment": 0,
+        "n_fields_source_conflict": 0,
+        "n_fields_not_applicable": 0
+      },
+      "LIQ_SWEEP": {
+        "coverage_before_pct": 92.9,
+        "coverage_after_pct": 92.9,
+        "n_fields_derivable_now_this_round": 0,
+        "n_fields_completed_this_round": 0,
+        "fields_completed": [],
+        "n_fields_remaining_requires_new_data": 2,
+        "fields_remaining_requires_new_data": [
+          "trend",
+          "volatility"
+        ],
+        "n_fields_escalated_local_model_capability": 0,
+        "fields_escalated_local_model_capability": [],
+        "n_fields_requires_scientific_judgment": 0,
+        "n_fields_source_conflict": 0,
+        "n_fields_not_applicable": 0
+      },
+      "TSI": {
+        "coverage_before_pct": 25.0,
+        "coverage_after_pct": 25.0,
+        "n_fields_derivable_now_this_round": 0,
+        "n_fields_completed_this_round": 0,
+        "fields_completed": [],
+        "n_fields_remaining_requires_new_data": 21,
+        "fields_remaining_requires_new_data": [
+          "adverse_before_win",
+          "capital_efficiency",
+          "concentration",
+          "cost_sensitivity",
+          "direction",
+          "execution_degradation",
+          "exit_efficiency",
+          "favorable_before_loss",
+          "level_context",
+          "loser_anatomy",
+          "mfe_mae",
+          "oos_behavior",
+          "pre_entry_context",
+          "regime",
+          "session",
+          "structure",
+          "temporal_concentration",
+          "time_to_mfe_mae",
+          "trend",
+          "volatility",
+          "winner_anatomy"
+        ],
+        "n_fields_escalated_local_model_capability": 0,
+        "fields_escalated_local_model_capability": [],
+        "n_fields_requires_scientific_judgment": 0,
+        "n_fields_source_conflict": 0,
+        "n_fields_not_applicable": 0
+      }
+    },
+    "escalation_packets": {
+      "count": 1,
+      "entries": [
+        {
+          "task_id": "TASK_NEXUS_0002_ORDER_BLOCK_EXIT_EFFICIENCY_NARRATIVE",
+          "strategy": "ORDER_BLOCK",
+          "field": "exit_efficiency",
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "target": "TIER3_CLAUDE",
+          "context_packet": {
+            "objective": "Convertire exit_efficiency di ORDER_BLOCK in una frase narrativa coerente con lo stile gia' usato per LIQ_SWEEP",
+            "relevant_findings": [
+              "Classificazione fallimento: LOCAL_MODEL_CAPABILITY",
+              "Task originale: Narrativa exit_efficiency ORDER_BLOCK"
+            ],
+            "canonical_artifacts": [],
+            "current_head": "0a6abca659aad03bcd55058d482d502d8b5c174c",
+            "allowed_files": [
+              "server/research_scripts/phase7/phase7_26/*"
+            ],
+            "exact_question": "[LOCAL_MODEL_CAPABILITY] Convertire exit_efficiency di ORDER_BLOCK in una frase narrativa coerente con lo stile gia' usato per LIQ_SWEEP - i tentativi locali (1) sono falliti, serve intervento TIER3_CLAUDE.",
+            "previous_attempts": [
+              "Tentativo 1 (executor=LOCAL_STRONG_MINISTRAL3B): LOCAL_MODEL_CAPABILITY"
+            ],
+            "failures": [
+              "la narrativa non riporta i numeri chiave attesi: [['0.31', '31%', '31.1%']]"
+            ],
+            "tests": [
+              "server/orchestrator_v1/verify_nexus_task_0002.py"
+            ],
+            "constraints": [
+              "files_allowed=['server/research_scripts/phase7/phase7_26/*']",
+              "files_forbidden=['MQL5/*', 'Product-Platform/*', 'contracts/*', 'server/research_scripts/phase7/phase7_21/*', 'server/research_scripts/phase7/phase7_22/*']",
+              "risk_level=A1"
+            ],
+            "forbidden_actions": [
+              "push automatico",
+              "deploy",
+              "modifiche strategie di trading",
+              "trading reale"
+            ],
+            "output_required": "Risolvere: Convertire exit_efficiency di ORDER_BLOCK in una frase narrativa coerente con lo stile gia' usato per LIQ_SWEEP rispettando success_criteria: ['narrativa verificata']"
+          }
+        }
+      ],
+      "note": "Nessun campo e' stato classificato REQUIRES_SCIENTIFIC_JUDGMENT in questo giro di backfill: ogni gap e' o meccanicamente derivabile da artifact gia' esistenti o richiede dati grezzi mai raccolti (regime/volatilita' per-trade, MFE/MAE bar-level per ORDER_BLOCK/TSI, l'intero dataset economico TSI). Tuttavia in questa esecuzione 1 campo/i classificato/i DERIVABLE_NOW ha/hanno comunque generato un'escalation reale a TIER3_CLAUDE per un motivo diverso: il worker locale (ministral-3:3b), dopo 1 retry delimitato, non e' riuscito a includere il numero chiave nella trasformazione narrativa richiesta (LOCAL_MODEL_CAPABILITY - verificato manualmente che il modello a volte omette il numero, non e' un bug del verificatore) - il campo resta NOT_AVAILABLE nella proposta di aggiornamento, non e' stato ne' inventato ne' corretto manualmente da Claude."
+    },
+    "future_task_proposals": [
+      {
+        "proposal_id": "FUTURE_TASK_REGIME_TAGGING_PIPELINE",
+        "objective": "Costruire una pipeline di tagging del contesto di mercato per-trade (regime/volatilita'/sessione/trend all'entry) riusabile dalle 4 strategie",
+        "strategies_affected": [
+          "BREAKOUT_ACC",
+          "ORDER_BLOCK",
+          "LIQ_SWEEP",
+          "TSI"
+        ],
+        "fields_unblocked": [
+          "pre_entry_context",
+          "regime",
+          "volatility",
+          "trend",
+          "session",
+          "structure",
+          "level_context",
+          "direction"
+        ],
+        "dati_richiesti": "Serie storiche D1/H1 gia' disponibili + timestamp entry gia' presenti nei dataset esistenti - NESSUN nuovo run MT5",
+        "requires_mt5": false,
+        "requires_holdout": false,
+        "estimated_cost_time": "MEDIO - richiede anche una decisione metodologica su come definire 'regime'/'trending' (non solo calcolo)",
+        "priority_suggestion": "MEDIUM",
+        "nota": "Il calcolo e' TIER0-fattibile, ma la SCELTA della metodologia di classificazione del regime e' un giudizio che merita revisione prima dell'implementazione."
+      },
+      {
+        "proposal_id": "FUTURE_TASK_BAR_LEVEL_PATH_ANATOMY_ORDER_BLOCK_TSI",
+        "objective": "Raccogliere dati OHLC a livello di barra per ogni trade ORDER_BLOCK (e, se si sblocca TSI, anche per TSI) e applicare l'engine gia' esistente (nxs_path_anatomy_engine.py)",
+        "strategies_affected": [
+          "ORDER_BLOCK",
+          "TSI"
+        ],
+        "fields_unblocked": [
+          "winner_anatomy",
+          "loser_anatomy",
+          "mfe_mae",
+          "time_to_mfe_mae",
+          "favorable_before_loss",
+          "adverse_before_win"
+        ],
+        "dati_richiesti": "Serie OHLC per barra per il periodo di ogni trade - probabilmente serve un nuovo run/estrazione dati (non solo un ricalcolo)",
+        "requires_mt5": true,
+        "requires_holdout": false,
+        "estimated_cost_time": "MEDIO-ALTO",
+        "priority_suggestion": "LOW",
+        "nota": "Per TSI, bloccato comunque da FUTURE_TASK_TSI_CLEAN_DATASET - non procedere qui prima che quello sia risolto."
+      },
+      {
+        "proposal_id": "FUTURE_TASK_TSI_CLEAN_DATASET",
+        "objective": "Eseguire un backtest economico pulito per TSI DOPO la risoluzione del difetto di contaminazione cross-timeframe (Phase 7.17/7.18, DEFECT_CONFIRMED_MATERIAL_IMPACT) - i dati storici attuali sono dichiarati PARTIALLY_COMPROMISED e non vanno usati per calcolare metriche economiche",
+        "strategies_affected": [
+          "TSI"
+        ],
+        "fields_unblocked": [
+          "pre_entry_context",
+          "regime",
+          "direction",
+          "volatility",
+          "trend",
+          "structure",
+          "session",
+          "level_context",
+          "winner_anatomy",
+          "loser_anatomy",
+          "mfe_mae",
+          "time_to_mfe_mae",
+          "favorable_before_loss",
+          "adverse_before_win",
+          "execution_degradation",
+          "cost_sensitivity",
+          "exit_efficiency",
+          "capital_efficiency",
+          "concentration",
+          "temporal_concentration",
+          "oos_behavior"
+        ],
+        "dati_richiesti": "Nuovo backtest MT5 con la contaminazione risolta",
+        "requires_mt5": true,
+        "requires_holdout": true,
+        "estimated_cost_time": "ALTO - blocca tutti i 21 campi TSI mancanti",
+        "priority_suggestion": "HIGH",
+        "nota": "Priorita' alta perche' sblocca il maggior numero di campi (21) e perche' il difetto sottostante e' gia' confermato - la fix del difetto stesso non e' nello scope di questa proposta (e' un lavoro MQL5/EA separato, gia' fuori standing instruction 'mai modifiche MQL5 senza chiedere')."
+      }
+    ],
+    "cross_strategy_consistency_check": {
+      "findings": [
+        {
+          "concept": "temporal_concentration - tipo di rappresentazione",
+          "per_strategy_type": {
+            "BREAKOUT_ACC": "str",
+            "ORDER_BLOCK": "str",
+            "LIQ_SWEEP": "str",
+            "TSI": "str"
+          },
+          "coerente": true,
+          "nota": "Dopo il backfill, BREAKOUT_ACC/ORDER_BLOCK usano una stringa narrativa come LIQ_SWEEP (coerente). TSI resta NOT_AVAILABLE (nessuna forzatura di simmetria - dato davvero mancante, non un problema di formato)."
+        },
+        {
+          "concept": "exit_efficiency - profondita' della narrativa",
+          "osservazione": "LIQ_SWEEP include un'affermazione di MECCANISMO (uscita ATR fissa, collegata a H_LIQ_SWEEP_EXIT_MISMATCH_MQL5_PYTHON). BREAKOUT_ACC/ORDER_BLOCK dopo il backfill riportano SOLO il rapporto numerico, senza un'affermazione di meccanismo equivalente - ASIMMETRIA DELIBERATA (non abbiamo evidenza di un meccanismo specifico per quelle due strategie, inventarne uno violerebbe la regola 'non reinterpretare' di questa task).",
+          "coerente": true,
+          "nota": "Coerenza di TIPO di dato, non di ricchezza narrativa - la ricchezza narrativa dipende da quanta ricerca e' stata gia' fatta per ciascuna strategia, non e' qualcosa che questo backfill deve o puo' equalizzare."
+        }
+      ],
+      "types_temporal_concentration": {
+        "BREAKOUT_ACC": "str",
+        "ORDER_BLOCK": "str",
+        "LIQ_SWEEP": "str",
+        "TSI": "str"
+      },
+      "types_exit_efficiency": {
+        "BREAKOUT_ACC": "str",
+        "ORDER_BLOCK": "str",
+        "LIQ_SWEEP": "str",
+        "TSI": "str"
+      }
+    },
+    "data_exposure_safety_check": {
+      "data_exposure_registry_sha256_before": "5c2ad371ece3cd064e6ffcbd7029a0e491a77a3944572657e794a1ce020dfa4c",
+      "data_exposure_registry_modified": false,
+      "nota": "Questo script non ha mai aperto il registry in scrittura - verificato anche dal verificatore indipendente (verify_nexus_task_0002.py) confrontando l'hash prima/dopo l'intera esecuzione."
+    },
+    "verifier_summary": {
+      "nessun_dato_inventato": true,
+      "provenance_completa": true,
+      "nessun_verdict_modificato": true,
+      "nessuna_hypothesis_nuova": true,
+      "nessun_holdout_consumato": true,
+      "nessun_field_update_fuori_scope": true
+    },
+    "final_task_state": "WAITING_APPROVAL",
+    "final_result_packet": {
+      "task_id": "TASK_NEXUS_0002_PROPOSE_PACKET_UPDATE",
+      "executor": "LOCAL_STRONG_MINISTRAL3B",
+      "start_time": "2026-09-28T22:44:51.824035+00:00",
+      "end_time": "2026-09-28T22:44:51.886469+00:00",
+      "files_read": [],
+      "files_changed": [],
+      "tools_or_commands": [
+        "ollama:ministral-3:3b"
+      ],
+      "artifacts_created": [
+        "server/orchestrator_v1/proposed_patches/cross_strategy_learning_packets_v1_PROPOSED_UPDATE.json",
+        "server/orchestrator_v1/proposed_patches/safety_net_backfill_provenance_map_v1.json"
+      ],
+      "tests": {
+        "ran": true,
+        "passed": 1,
+        "failed": 0
+      },
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "errors": []
+      },
+      "commit": null,
+      "push_status": "NOT_APPLICABLE",
+      "decision": "PATCH_READY_AWAITING_APPROVAL",
+      "confidence": "MEDIUM",
+      "limitations": [
+        "patch verificata solo in sandbox, non applicata al file reale - in attesa di approvazione"
+      ],
+      "unresolved_issues": [],
+      "suggested_next_tasks": [
+        "approvare/applicare la patch proposta"
+      ],
+      "escalation_needed": {
+        "needed": false,
+        "reason": null,
+        "target_tier": null
+      }
+    },
+    "elapsed_seconds": 151.31,
+    "premium_calls": 0,
+    "premium_cost": 0,
+    "decision": "SAFETY_NET_BACKFILL_COMPLETED_WITH_ESCALATIONS"
+  }
+}

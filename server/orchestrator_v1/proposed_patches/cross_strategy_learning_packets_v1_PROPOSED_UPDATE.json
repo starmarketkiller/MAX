@@ -1,0 +1,232 @@
+{
+  "generated_at": "2026-09-28T22:44:51.878813+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_nexus_task_0002_safety_net_backfill.py",
+  "canonical_sha256": "e73ef02d7422d5846d5c73ca62533c10296be3a47530cb67d42bb0f8537c4a60",
+  "payload": {
+    "schema_version": "CROSS_STRATEGY_LEARNING_PACKET_V1",
+    "not_available_marker": "NOT_AVAILABLE",
+    "packets": {
+      "BREAKOUT_ACC": {
+        "strategy_identity": "BREAKOUT_ACC",
+        "mechanism": "Accettazione oltre un range (breakout) con cooldown per-direzione, D1.",
+        "pre_entry_context": "NOT_AVAILABLE",
+        "regime": "NOT_AVAILABLE",
+        "direction": "BUY/SELL entrambi presenti",
+        "volatility": "NOT_AVAILABLE",
+        "trend": "NOT_AVAILABLE",
+        "structure": "range hi/lo pre-breakout",
+        "session": "NOT_AVAILABLE",
+        "level_context": "estremi del range pre-esistente",
+        "winner_anatomy": "outcome_flip_breakdown={'CONTINUATION_to_FAILURE': 1, 'FAILURE_to_CONTINUATION': 3}",
+        "loser_anatomy": "n_outcome_flips=4/46",
+        "mfe_mae": {
+          "mfe_v2": {
+            "n": 47,
+            "mean": 211.2726,
+            "median": 131.27,
+            "stdev": 224.1727
+          },
+          "mae_v2": {
+            "n": 47,
+            "mean": 89.6721,
+            "median": 74.61,
+            "stdev": 73.0467
+          }
+        },
+        "time_to_mfe_mae": {
+          "n": 47,
+          "mean": 31.7234,
+          "median": 32,
+          "stdev": 20.1944
+        },
+        "favorable_before_loss": {
+          "n": 33,
+          "mean": 141.5103,
+          "median": 97.02
+        },
+        "adverse_before_win": {
+          "n": 14,
+          "mean": 24.6207,
+          "median": 20.34
+        },
+        "execution_degradation": {
+          "pct_generated_that_get_blocked": 16.4179,
+          "pct_generated_that_get_rejected": 13.4328,
+          "pct_generated_that_open_per_certificate": 70.1493
+        },
+        "cost_sensitivity": "sopravvive a COST_BASE/MODERATE/STRESS",
+        "exit_efficiency": "0,14 del rapporto di efficienza di uscita su 47 eventi registrati.",
+        "capital_efficiency": 1000,
+        "concentration": 133.66452276018873,
+        "temporal_concentration": "5 anni con profitto netto positivo su 8 con almeno una operazione.",
+        "oos_behavior": {
+          "n_trades": 1,
+          "decision": "INSUFFICIENT_OOS_SAMPLE"
+        },
+        "failure_modes": [
+          "OUTLIER_DEPENDENT",
+          "DIRECTION_DEPENDENT",
+          "OOS_DEGRADATION"
+        ],
+        "observations": [
+          "CI95 ALL include zero",
+          "asimmetria BUY/SELL osservata (H2, post-hoc)",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_BETTER vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
+        ],
+        "candidate_hypotheses": [
+          "H1_BREAKOUT_ACC_NET_EXPECTANCY_POSITIVE",
+          "H2_BREAKOUT_ACC_BUY_MORE_ROBUST_THAN_SELL"
+        ],
+        "confidence": "MODERATA - n=47, non blind per H2",
+        "fidelity": "EVENT_LEVEL - dataset per-evento con funnel granulare (Phase 7.9K)",
+        "provenance": "phase7_21/*, phase7_9k/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json)"
+      },
+      "ORDER_BLOCK": {
+        "strategy_identity": "ORDER_BLOCK",
+        "mechanism": "Zona Order Block (TF-guarded) + retest, D1.",
+        "pre_entry_context": "NOT_AVAILABLE",
+        "regime": "NOT_AVAILABLE",
+        "direction": "BUY dominante (12/13)",
+        "volatility": "NOT_AVAILABLE",
+        "trend": "NOT_AVAILABLE",
+        "structure": "zona OB pre-identificata",
+        "session": "NOT_AVAILABLE",
+        "level_context": "bordo della zona OB",
+        "winner_anatomy": "NOT_AVAILABLE",
+        "loser_anatomy": "NOT_AVAILABLE",
+        "mfe_mae": "NOT_AVAILABLE",
+        "time_to_mfe_mae": "NOT_AVAILABLE",
+        "favorable_before_loss": "NOT_AVAILABLE",
+        "adverse_before_win": "NOT_AVAILABLE",
+        "execution_degradation": {
+          "pct_generated_that_get_blocked": 52.0,
+          "pct_generated_that_get_rejected": 0.0,
+          "pct_generated_that_open_per_certificate": 48.0
+        },
+        "cost_sensitivity": "sopravvive a COST_BASE/MODERATE/STRESS",
+        "exit_efficiency": "NOT_AVAILABLE",
+        "capital_efficiency": 2500,
+        "concentration": 196.76316847607558,
+        "temporal_concentration": "2/3 anni con almeno un trade \u2013 2025 e 2026 coprono il 100% dei guadagni netti.",
+        "oos_behavior": {
+          "n_trades": 0,
+          "decision": "INSUFFICIENT_OOS_SAMPLE"
+        },
+        "failure_modes": [
+          "OUTLIER_DEPENDENT",
+          "LOW_SAMPLE",
+          "OOS_DEGRADATION"
+        ],
+        "observations": [
+          "campione minimo (n=13)",
+          "concentrazione estrema (196.8% top-5)",
+          "1 solo trade SELL (performance negativa, non eliminato)",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_BETTER vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
+        ],
+        "candidate_hypotheses": [
+          "H_ORDER_BLOCK_EDGE_EXISTS"
+        ],
+        "confidence": "BASSA - n=13",
+        "fidelity": "EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
+        "provenance": "phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS_TASK_0002 (vedi safety_net_backfill_provenance_map_v1.json)"
+      },
+      "TSI": {
+        "strategy_identity": "TSI",
+        "mechanism": "True Strength Index con guardia TF-scoped (fix contaminazione cross-TF).",
+        "pre_entry_context": "NOT_AVAILABLE",
+        "regime": "NOT_AVAILABLE",
+        "direction": "NOT_AVAILABLE",
+        "volatility": "NOT_AVAILABLE",
+        "trend": "NOT_AVAILABLE",
+        "structure": "NOT_AVAILABLE",
+        "session": "NOT_AVAILABLE",
+        "level_context": "NOT_AVAILABLE",
+        "winner_anatomy": "NOT_AVAILABLE",
+        "loser_anatomy": "NOT_AVAILABLE",
+        "mfe_mae": "NOT_AVAILABLE",
+        "time_to_mfe_mae": "NOT_AVAILABLE",
+        "favorable_before_loss": "NOT_AVAILABLE",
+        "adverse_before_win": "NOT_AVAILABLE",
+        "execution_degradation": "NOT_AVAILABLE",
+        "cost_sensitivity": "NOT_AVAILABLE",
+        "exit_efficiency": "NOT_AVAILABLE",
+        "capital_efficiency": "NOT_AVAILABLE",
+        "concentration": "NOT_AVAILABLE",
+        "temporal_concentration": "NOT_AVAILABLE",
+        "oos_behavior": "NOT_AVAILABLE",
+        "failure_modes": [
+          "IMPLEMENTATION_DEFECT"
+        ],
+        "observations": [
+          "decisione: FIX_CAUSALLY_VALIDATED",
+          "nessun dataset economico e' mai esistito per TSI - fase puramente di integrita' dell'implementazione"
+        ],
+        "candidate_hypotheses": [
+          "H_TSI_TF_GUARD_FIX_EFFECTIVE"
+        ],
+        "confidence": "ALTA per il meccanismo, NON_APPLICABILE per l'economia",
+        "fidelity": "MECHANISM_ONLY - nessuna analisi P&L mai svolta",
+        "provenance": "phase7_17/*, phase7_18/* (vedi nxs_backfill_sources.py)"
+      },
+      "LIQ_SWEEP": {
+        "strategy_identity": "LIQ_SWEEP",
+        "mechanism": "Sweep di liquidita' + delivery-candle (0.7xATR) + direzione, D1, uscita ATR fissa (1.5x/3.0x).",
+        "pre_entry_context": "livello di liquidita' PDH/PDL/Asia/settimanale/mensile spazzato",
+        "regime": "single-position-at-a-time (3569/3623 blocchi per OPEN_POSITION)",
+        "direction": "BUY dominante (39/42)",
+        "volatility": "NOT_AVAILABLE",
+        "trend": "NOT_AVAILABLE",
+        "structure": "livello di liquidita' spazzato + delivery-candle di conferma",
+        "session": "non session-bound (valutato ad ogni barra D1 chiusa)",
+        "level_context": "estremo di liquidita' appena spazzato",
+        "winner_anatomy": "avg_adverse_excursion_before_winner=36.28478260869567",
+        "loser_anatomy": "avg_favorable_excursion_before_loser=80.37894736842105",
+        "mfe_mae": {
+          "avg_mfe": 128.7730952380952,
+          "avg_mae": 76.01190476190474
+        },
+        "time_to_mfe_mae": {
+          "avg_time_to_mfe_hours": 387.8901964769648,
+          "avg_time_to_mae_hours": 208.5059060846561
+        },
+        "favorable_before_loss": 80.37894736842105,
+        "adverse_before_win": 36.28478260869567,
+        "execution_degradation": {
+          "pct_generated_that_get_blocked": 98.66557734204792,
+          "pct_generated_that_get_rejected": 0.16339869281045752,
+          "pct_generated_that_open": 1.171023965141612,
+          "pct_opened_that_close_within_window": 97.67441860465115,
+          "pct_open_attempt_rejected_by_broker": 12.244897959183673
+        },
+        "cost_sensitivity": "sopravvive a COST_BASE/MODERATE/STRESS",
+        "exit_efficiency": "uscita ATR fissa - non adattiva alla liquidita' opposta (mismatch confermato col proxy Python, H_LIQ_SWEEP_EXIT_MISMATCH_MQL5_PYTHON)",
+        "capital_efficiency": 2500,
+        "concentration": 127.37155068289512,
+        "temporal_concentration": "2/4 anni positivi - 2025 da solo spiega ~99% del netto",
+        "oos_behavior": {
+          "n_trades": 6,
+          "net_pnl_per_trade": -89.88333333333333,
+          "decision": "SAMPLE_SUFFICIENT_FOR_A_FIRST_READ"
+        },
+        "failure_modes": [
+          "OUTLIER_DEPENDENT",
+          "TEMPORALLY_CONCENTRATED",
+          "REGIME_DEPENDENT",
+          "OOS_DEGRADATION"
+        ],
+        "observations": [
+          "asimmetria escursione: favorable-before-loser > adverse-before-winner",
+          "primo OOS del corpus con campione sufficiente (n=6) - risultato negativo",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_WORSE vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
+        ],
+        "candidate_hypotheses": [
+          "H_LIQ_SWEEP_EDGE_EXISTS"
+        ],
+        "confidence": "MODERATA - provenance ottima ma 'seen' per il P&L aggregato",
+        "fidelity": "EVENT_LEVEL_FAITHFUL_ENTRY_ONLY - uscita non validabile da Python (Phase 7.24)",
+        "provenance": "phase7_23/*, phase7_24/*, phase7_25/* (vedi nxs_backfill_sources.py)"
+      }
+    },
+    "generator_function": "generate_packet() in build_cross_strategy_learning_packet.py - firma esplicita (nessun **kwargs), da chiamare automaticamente da ogni futura fase di edge validation."
+  }
+}
