@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-28T00:08:17.275645+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_23\\build_liq_sweep_decision_card.py",
+  "canonical_sha256": "0328846c807355cf7367ce168344b9b517c92433f470e9febae5288cc826efd5",
+  "payload": {
+    "decision": "INTEGRITY_PARTIALLY_VALIDATED",
+    "reason": "MQL5 e' internamente coerente (nessuna contaminazione cross-TF, nessun mismatch HTF confermato, entry trigger verificato) e un primo run diagnostico fresco post-fix-detector e' stato raccolto con successo (harness di isolamento) - MA resta un mismatch STRUTTURALE e CONFERMATO fra MQL5 (uscita fissa ATR) e Python (uscita dinamica su liquidita') che impedisce di dichiarare piena fiducia nella parita' Python, e il campione fresco raccolto in questa fase e' un run DIAGNOSTICO (non un'edge validation completa con costi/concentrazione/OOS).",
+    "checks": {
+      "mql5_no_cross_tf_state_contamination": true,
+      "mql5_no_htf_filter_mismatch_confirmed": true,
+      "mql5_internally_consistent": true,
+      "python_event_level_faithful": false,
+      "python_classification": "PARTIAL_STRUCTURAL_MODEL_FOR_ENTRY_ONLY - il motore Python e' strutturalmente allineato a MQL5 SOLO per l'entry trigger (sweep+delivery-candle+direzione) - NON per l'uscita (SL/TP), che e' un'implementazione diversa per costruzione. Qualunque PF/expectancy calcolato da Python per LIQ_SWEEP misura una strategia CON LO STESSO INGRESSO ma un'uscita diversa - non e' evidenza economica della strategia che MQL5 esegue dal vivo.",
+      "fresh_diagnostic_run_collected": true,
+      "fresh_run_reconciled_with_certificate": false,
+      "no_reusable_prior_economic_evidence": true
+    },
+    "fix_proposed_not_applied": {
+      "note": "NESSUN difetto strutturale interno a MQL5 trovato in questa fase che richieda un fix - la sola raccomandazione e' METODOLOGICA: il motore Python per LIQ_SWEEP (_liq_sweep_target) andrebbe o allineato all'uscita fissa ATR reale di MQL5, o esplicitamente ri-etichettato come 'variante di ricerca indipendente' per evitare confusione futura - NON applicato in questa fase (nessuna modifica a strategie autorizzata oltre al research harness)."
+    },
+    "next_step_if_promoted": "Se in futuro si decide di procedere: prima un run ECONOMICO completo (non solo diagnostico) con fill reali su un periodo sufficiente, poi EDGE_VALIDATION_V1 (stesso protocollo gia' usato per BREAKOUT_ACC/ORDER_BLOCK).",
+    "not_ready_for_edge_validation_yet": true,
+    "no_optimization_no_edge_tuning_no_deploy": true
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-09-27T21:14:39.315211+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_23\\build_liq_sweep_historical_evidence_map.py",
+  "canonical_sha256": "ff7716aed4068606a120775daeeede5cdbac728f7ac44322d8d4da9682a1d544",
+  "payload": {
+    "principle": "Un artifact storico non viene mai cancellato - viene classificato rispetto all'identita' implementativa CANONICA ATTUALE, usando le date git REALI (non supposte) del codice che era attivo quando l'evidenza e' stata generata.",
+    "key_dates_verified_via_git": {
+      "delivery_candle_filter_0_7xATR_added": "2026-07-16",
+      "sweep37_baseline_commit_date": "2026-07-18",
+      "pf248_comment_date": "2026-07-10",
+      "python_is091_comment_date": "2026-08-12",
+      "sweepext_detector_integrity_fix_date": "2026-09-14"
+    },
+    "items": [
+      {
+        "artifact": "Commento NXS_StrategyProfiles.mqh:109 'PF2.48 R2.0' (10/07)",
+        "kind": "COMMENTO_SVILUPPATORE_NON_ARTIFACT_STRUTTURATO",
+        "classification": "CONTAMINATED",
+        "reasoning": "Datato 2026-07-10 - PRECEDE l'aggiunta del filtro delivery-candle 0.7xATR (2026-07-16). Misura una versione dell'entry trigger STRUTTURALMENTE DIVERSA da quella attuale (senza il filtro di qualita' candela) - non rappresenta l'identita' canonica di oggi."
+      },
+      {
+        "artifact": "knowledge/backtest_database.json, sweep37 S07 LIQ_SWEEP (PF 1.04, baseline e6ce816, 2019.07.11-2025.07.11, XM Global, 30% tick reali)",
+        "kind": "MT5_STRATEGY_TESTER_SWEEP_RESULT",
+        "classification": "CONTAMINATED",
+        "reasoning": "Baseline 2026-07-18 - e' un ANTENATO git verificato del commit di fix 2026-09-14 (9b77f83): misura il comportamento SOTTO il difetto NOTO e gia' corretto di NXS_DetectSweepExt() (struct locale non azzerata correttamente in ~1 chiamata su 7, 'Detector Integrity Fix') - il rilevatore di sweep condiviso da 10+ strategie (incluso LIQ_SWEEP) produceva risultati corrotti con probabilita' non trascurabile. Il filtro delivery-candle ERA gia' presente (post 16/07), quindi l'entry trigger era strutturalmente quello attuale, ma eseguito su un detector difettoso."
+      },
+      {
+        "artifact": "Commento NXS_StrategyProfiles.mqh:405 'Python DEBOLE, IS 0.91 sotto pareggio' (12/08)",
+        "kind": "COMMENTO_SVILUPPATORE_RIFERITO_A_MOTORE_PYTHON",
+        "classification": "CONTAMINATED",
+        "reasoning": "Datato 2026-08-12 - POST filtro delivery-candle (2026-07-16, quindi trigger allineato) ma PRE fix detector (2026-09-14, quindi ANCHE questo risultato Python e' passato attraverso il detector condiviso difettoso, dato che _sweep_ext_at_raw dichiara fedelta' riga-per-riga con lo stesso NXS_DetectSweepExt()). INOLTRE (motivo separato e sufficiente da solo): misura l'uscita DINAMICA su liquidita' opposta (_liq_sweep_target), non l'uscita FISSA ATR che MQL5 esegue dal vivo - due strategie diverse nell'uscita, MAI direttamente comparabili in PF."
+      },
+      {
+        "artifact": "server/backtest.py::sig_liq_sweep (superseded, '26 trade reali in 8 anni')",
+        "kind": "PYTHON_FUNZIONE_DICHIARATAMENTE_SUPERATA",
+        "classification": "CONTAMINATED",
+        "reasoning": "L'autore stesso dichiara esplicitamente questa funzione SUPERATA il 16/07 da sig_liq_sweep_ext - usa un rilevatore di sweep generico (estremo a 20 barre) invece del vero motore ICT (PDH/PDL/Asia/EQH-EQL) - non rappresenta l'identita' canonica per nessuna versione recente."
+      }
+    ],
+    "no_reusable_evidence_found_for_current_canonical_identity": true,
+    "reason": "OGNI pezzo di evidenza quantitativa trovato per LIQ_SWEEP (MT5 o Python) e' stato prodotto O sotto un entry trigger strutturalmente diverso da quello attuale, O sotto il detector di sweep condiviso difettoso (corretto solo il 14/09), O misura una logica di USCITA diversa da quella che MQL5 esegue dal vivo (o una combinazione delle precedenti) - nessuna conclusione economica (positiva o negativa) puo' essere tratta da questi artifact per l'identita' canonica attuale."
+  }
+}

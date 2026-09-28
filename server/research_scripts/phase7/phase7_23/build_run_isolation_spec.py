@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""Phase 7.23 Fase A punto 1 - Run Isolation spec, documenta il design
+implementato in nxs_research_run_harness.py."""
+import os
+import sys
+
+PHASE723_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE723_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import wrap_with_provenance, save_json  # noqa: E402
+
+
+def build():
+    payload = {
+        "problem": "NEXUS_trades.csv e i certificati di validita' sono scritti in directory "
+            "CONDIVISE (MetaQuotes Common/Files) che persistono fra sessioni - scoperto in "
+            "Phase 7.22 che questo puo' far confondere dati di run precedenti con un nuovo run "
+            "(13 trade reali gia' presenti da un run di settimane prima, mai dichiarati come tali "
+            "finche' non investigato a posteriori).",
+        "solution_approach": "SOLO orchestrazione Python (nxs_research_run_harness.py) - ZERO "
+            "modifiche a MQL5. L'EA espone gia' due input non distruttivi mai usati insieme prima "
+            "d'ora in questo progetto: InpResetTradesLogOnInit=true (archivia con timestamp, MAI "
+            "cancella, il log condiviso prima di ripartire vuoto) e InpBuildGitCommit=<sha> "
+            "(inietta provenance reale nel certificato, default 'UNKNOWN'). Il certificato non ha "
+            "un reset equivalente - identificato per DELTA (confronto pre/post-run della directory "
+            "certificati), non per nome fisso.",
+        "no_strategy_logic_modified": True,
+        "requirements_covered": {
+            "run_id_univoco": "strategia + periodo + hash configurazione + timestamp UTC + nonce "
+                             "random 8 esadecimali (il solo timestamp a grana di secondo NON "
+                             "bastava - trovato da un test di questa stessa fase).",
+            "directory_dedicata": "Ogni run scrive in una run_dir propria, passata esplicitamente "
+                                 "dal chiamante.",
+            "timestamp_start_end": "manifest['start_time_utc']/['end_time_utc'], ISO8601 UTC.",
+            "strategy_identity": "manifest['strategy_identity'], dichiarata esplicitamente dal "
+                                "chiamante (non dedotta).",
+            "code_build_sha": "manifest['code_git_sha'] = git log -1 HEAD al momento della "
+                             "costruzione dell'ini, iniettato anche nel certificato MQL5 via "
+                             "InpBuildGitCommit.",
+            "config_hash": "manifest['config_hash'] = sha256 troncato della configurazione "
+                          "completa (Tester+TesterInputs), calcolato indipendentemente dal "
+                          "config_fingerprint del certificato MQL5 (permette un confronto "
+                          "incrociato, non e' lo stesso algoritmo).",
+            "periodo_testato": "manifest['period_from']/['period_to'].",
+            "file_trade_dedicato": "manifest['trades_csv_dest'] - copia (non spostamento) del "
+                                  "log condiviso DOPO il run, quando InpResetTradesLogOnInit "
+                                  "garantisce che contenga solo i trade di QUESTO run.",
+            "certificato_dedicato": "manifest['certificate_dest'] - identificato per delta "
+                                   "rispetto allo snapshot pre-run, copiato nella run_dir.",
+            "provenance_completa": "manifest completo, salvato come JSON accanto agli artifact.",
+        },
+        "pre_run_visibility": "snapshot_shared_state() chiamato PRIMA del lancio (dentro build_ini) "
+            "- registra esplicitamente se NEXUS_trades.csv esiste gia', la sua dimensione, e "
+            "l'elenco dei certificati gia' presenti - salvato nel manifest come "
+            "'pre_run_snapshot', quindi sempre ispezionabile PRIMA di lanciare il run successivo.",
+        "post_run_guarantees": [
+            "Il file trade copiato (trades_csv_dest) e' quello scritto DOPO il reset dell'EA - "
+            "non puo' contenere trade di sessioni precedenti PURCHE' InpResetTradesLogOnInit sia "
+            "effettivamente true nella config (verificato dal verificatore indipendente).",
+            "Il certificato e' identificato per DELTA, non per nome fisso o piu' recente per "
+            "mtime - se compaiono 0 o >1 nuovi certificati, l'ambiguita' e' dichiarata "
+            "esplicitamente in manifest['warnings'], mai risolta a caso.",
+            "reconcile() confronta il conteggio CLOSE del CSV con OPENED del certificato, "
+            "STESSO run_id/manifest - un mismatch e' riportato (match=False), mai nascosto.",
+        ],
+        "historical_artifacts_never_deleted": "InpResetTradesLogOnInit ARCHIVIA (rinomina con "
+            "timestamp) il file precedente, non lo cancella mai - comportamento nativo dell'EA, "
+            "verificato leggendo NXS_Logging.mqh (non modificato in questa fase).",
+        "not_covered_by_this_harness": [
+            "Gestione di run concorrenti simultanei sulla stessa installazione terminale (MT5 "
+            "Tester non supporta comunque piu' run paralleli sullo stesso terminale) - fuori "
+            "scope, non un caso d'uso di questo progetto.",
+            "Un vero timeout/kill automatico del processo terminal64.exe in caso di run bloccato - "
+            "il chiamante resta responsabile del polling e dell'eventuale terminazione, come nelle "
+            "fasi precedenti.",
+        ],
+    }
+    return payload
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, script=os.path.abspath(__file__))
+    out_path = os.path.join(PHASE723_DIR, "run_isolation_spec_v1.json")
+    save_json(out_path, doc)
+    print(f"Scritto {out_path} (sha256={doc['canonical_sha256'][:16]}...)")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Phase 7.23 Fase B punto 3 - LIQ_SWEEP identity map. Ricostruisce
+identita' canonica, implementazione MQL5, implementazione/proxy Python,
+selector/profile/TF/HTF, stato persistente, trigger, timing, SL/TP/
+exit, alias/varianti - PRIMA di guardare qualunque risultato economico."""
+import os
+import sys
+
+PHASE723_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(PHASE723_DIR, "..", "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase6_6"))
+from canonical_utils import wrap_with_provenance, save_json  # noqa: E402
+
+
+def build():
+    payload = {
+        "canonical_strategy_identity": "LIQ_SWEEP",
+        "mql5_implementation": {
+            "function": "NXS_Strat_LiqSweep(SNXSSweepExt &sw)",
+            "file_lines": "MQL5/Include/NEXUS_v1/NXS_Strategies.mqh:1455-1480",
+            "selector": 7, "canonical_tf": "PERIOD_D1 (NXS_Profile_TF)",
+            "persistent_state": "NESSUNO - la funzione e' STATELESS, riceve `sw` (SNXSSweepExt) "
+                "gia' calcolato esternamente ad ogni chiamata da NXS_DetectSweepExt() - nessuna "
+                "variabile globale propria mutata. Verificato per lettura diretta del codice.",
+            "tf_guard": "NESSUNA guardia interna esplicita - MA non necessaria: essendo la "
+                "funzione stateless, non esiste rischio di corruzione cumulativa cross-TF (stessa "
+                "classe di difetto gia' fissata per BREAKOUT_ACC/ORDER_BLOCK/TSI, qui strutturalmente "
+                "non applicabile). Il filtro TF avviene comunque A VALLE, a livello di router "
+                "(NXS_CollectAllSignals, NEXUS_EA_v2.mq5:710: "
+                "`if(NXS_Profile_TF(tmp[k].stratName) != passes[p]) continue;`) - un segnale generato "
+                "su un pass non-D1 viene scartato prima di raggiungere l'esecuzione, MA la chiamata "
+                "stessa (senza effetti collaterali, essendo stateless) non lascia residui.",
+            "trigger": "sw.confirmed (sweep confermato da NXS_DetectSweepExt) + candela di "
+                "'delivery' (|close[1]-open[1]| >= 0.7*ATR, aggiunta 2026-07-16, commit 6052636) + "
+                "direzione coerente (BUY: sw.dir=BUY e candela verde; SELL speculare).",
+            "timing": "Valutata sul TF attivo del pass corrente (D1 per costruzione, dato il filtro "
+                "a valle) - un aggiornamento per bar chiusa, nessun re-trigger intrabarra oltre "
+                "quanto gia' gestito da NXS_DetectSweepExt().",
+            "exit": "NXS_DefaultSLTP(s) - SL/TP FISSI a multiplo ATR, valori dal profilo "
+                "(NXS_Profile_SLTP('LIQ_SWEEP') -> slMult=1.5, tpMult=3.0, R:R=2.0) - NESSUNA "
+                "logica di target dinamico su livelli di liquidita' opposti nel codice MQL5 attuale.",
+        },
+        "python_implementation": {
+            "active_function": "sig_liq_sweep_ext (server/backtest.py:1588) - mappata come "
+                "dispatcher corrente per 'LIQ_SWEEP' (riga 4612)",
+            "superseded_function": "sig_liq_sweep (server/backtest.py:1574) - '26 trade reali in 8 "
+                "anni', dichiarata esplicitamente superata il 16/07, tenuta solo per riferimento - "
+                "NON usare come evidenza di LIQ_SWEEP corrente.",
+            "entry_trigger": "STRUTTURALMENTE ALLINEATA a MQL5: stesso sweep-confirmed gate "
+                "(_sweep_ext_at), stesso filtro 0.7xATR delivery-candle, stessa logica direzionale.",
+            "sweep_detector_fidelity_claim": "Il commento in backtest.py (_sweep_ext_at_raw, riga "
+                "~2941, datato 04/08) dichiara fedelta' 'verificata riga-per-riga' con "
+                "NXS_DetectSweepExt() MQL5 - claim INFORMALE pre-esistente a questa sessione, NON "
+                "verificata con provenance/hash allo standard Phase 7 in questa fase (fuori scope "
+                "tempo/beneficio per un audit di integrita' - il claim e' comunque riportato, non "
+                "ignorato).",
+            "exit_target": "_liq_sweep_target() (server/backtest.py:1625) - TP DINAMICO sulla "
+                "liquidita' OPPOSTA (PDH/PDL/Asian High-Low/swing esterno confermato), min_rr=1.2, "
+                "sl_mult=1.5 - ESPLICITAMENTE dichiarato nel commento come sostituto di 'un multiplo "
+                "fisso di ATR' (il meccanismo che MQL5 usa davvero).",
+        },
+        "mismatches_verified_in_this_phase": [
+            {
+                "area": "EXIT / SL-TP LOGIC",
+                "finding": "CONFERMATO - MQL5 (NXS_DefaultSLTP, fisso ATRx1.5/ATRx3.0) e Python "
+                    "canonico (_liq_sweep_target, dinamico su pool di liquidita' opposti) "
+                    "implementano DUE STRATEGIE DI USCITA STRUTTURALMENTE DIVERSE, pur condividendo "
+                    "lo stesso trigger di ingresso. Qualunque PF calcolato da Python misura una "
+                    "strategia DIVERSA (nell'uscita) da quella che MQL5 esegue dal vivo.",
+                "severity": "ALTA - invalida qualunque confronto diretto PF Python vs MT5 per questa "
+                    "strategia.",
+            },
+            {
+                "area": "HTF FILTER (NXS_Profile_HTF, generico)",
+                "finding": "SOSPETTATO INIZIALMENTE (ipotesi: g_ema200 non aggiornato per-pass nel "
+                    "loop multi-TF, confronto px200/g_ema200 su TF disallineati) - VERIFICATO E "
+                    "SMENTITO per lettura diretta del codice: NXS_ActivateTF() (NEXUS_EA_v2.mq5:225-"
+                    "233) chiama NXS_UpdateIndicators() DOPO aver scambiato gli handle, quindi "
+                    "g_ema200 viene ricalcolato per OGNI pass PRIMA che NXS_CollectRaw (che applica "
+                    "il filtro HTF) venga eseguito nello stesso pass - px200 e g_ema200 risultano "
+                    "sempre sulla STESSA TF del pass corrente. Nessun mismatch confermato.",
+                "severity": "NESSUNA (ipotesi verificata e respinta - dichiarato esplicitamente, "
+                    "non nascosto)",
+            },
+            {
+                "area": "CROSS_TIMEFRAME_STATE_CONTAMINATION (stessa classe OB/TSI/BREAKOUT_ACC)",
+                "finding": "NON APPLICABILE - NXS_Strat_LiqSweep() e' stateless (nessuna variabile "
+                    "propria mutata), confermato per lettura diretta. Il filtro a valle del router "
+                    "(riga 710 di NEXUS_EA_v2.mq5) scarta comunque i segnali su TF non canonico "
+                    "prima dell'esecuzione.",
+                "severity": "NESSUNA",
+            },
+        ],
+        "shared_sweep_detector_history": {
+            "function": "NXS_DetectSweepExt() (MQL5/Include/NEXUS_v1/NXS_MarketAnalysis.mqh:138)",
+            "shared_by": "10+ strategie (TURTLE_SOUP, SILVER_BULLET, SH_BMS_RTO, JUDAS_SWING, "
+                "LDN_REVERSAL, AMD_REVERSAL, PO3, LIQ_SWEEP...)",
+            "known_prior_bug": "'Detector Integrity Fix' (commit 9b77f83, 2026-09-14): la struct "
+                "locale SNXSSweepExt NON partiva pulita in ~1 chiamata su 7 (stato residuo di "
+                "stack in confirmed/level/levelTag) - trovato con un test diagnostico minimo "
+                "dedicato (vedi vault 'NEXUS - SNXSSweepExt Detector Integrity Fix', prima di "
+                "questa sessione Phase 7). GIA' CORRETTO nell'HEAD attuale (inizializzazione "
+                "esplicita di ogni campo).",
+        },
+        "selector_isolation": "InpStrategySelector=7 isola LIQ_SWEEP da solo (verificato: "
+            "NXS_SelectorAllows(7) e' l'unico controllo di selettore nella funzione).",
+        "aliases_or_variants_found": "NESSUNA variante MQL5 attiva trovata con nome diverso che "
+            "riusi STRAT_LIQ_SWEEP (a differenza di OB_MIT/FVG_MIT che riusano STRAT_ORDER_BLOCK/"
+            "STRAT_FVG_CONT) - identita' 1:1 fra enum, selettore e funzione.",
+        "no_strategy_logic_modified_in_this_phase": True,
+    }
+    return payload
+
+
+def main():
+    payload = build()
+    doc = wrap_with_provenance(payload, script=os.path.abspath(__file__))
+    out_path = os.path.join(PHASE723_DIR, "liq_sweep_identity_map_v1.json")
+    save_json(out_path, doc)
+    print(f"Scritto {out_path} (sha256={doc['canonical_sha256'][:16]}...)")
+
+
+if __name__ == "__main__":
+    main()
