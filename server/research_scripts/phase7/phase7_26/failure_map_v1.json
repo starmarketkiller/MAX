@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-09-28T09:17:47.446239+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_failure_map.py",
+  "canonical_sha256": "a8b11d52dbabfe82374cd15bd17813651ab8575036ca09cdf28f519455e71789",
+  "payload": {
+    "taxonomy": [
+      "NO_SIGNAL_INFORMATION",
+      "WRONG_DIRECTION",
+      "POOR_ENTRY_TIMING",
+      "STOP_BEFORE_MOVE",
+      "INSUFFICIENT_FOLLOW_THROUGH",
+      "EXIT_TOO_EARLY",
+      "EXIT_TOO_LATE",
+      "REGIME_DEPENDENT",
+      "DIRECTION_DEPENDENT",
+      "OUTLIER_DEPENDENT",
+      "TEMPORALLY_CONCENTRATED",
+      "COST_DESTROYED",
+      "EXECUTION_DESTROYED",
+      "LOW_SAMPLE",
+      "OOS_DEGRADATION",
+      "IMPLEMENTATION_DEFECT",
+      "DATA_QUALITY",
+      "UNKNOWN"
+    ],
+    "multiple_tags_allowed_per_strategy": true,
+    "strategies": {
+      "BREAKOUT_ACC": {
+        "phase": "7.21",
+        "failure_modes": [
+          {
+            "mode": "OUTLIER_DEPENDENT",
+            "evidence_ref": "phase7_21/breakoutacc_decision_card_v1.json:supporting_evidence_summary.top_5_trades_pct_of_total_net",
+            "note": "top-5 = 133.7% del netto totale."
+          },
+          {
+            "mode": "DIRECTION_DEPENDENT",
+            "evidence_ref": "phase7_21/breakoutacc_decision_card_v1.json:h2_buy_more_robust_than_sell_verdict",
+            "note": "CI95 SELL esclude lo zero sul lato negativo, CI95 BUY lo esclude sul lato positivo (debolmente) - asimmetria direzionale statisticamente supportata, non solo osservata."
+          },
+          {
+            "mode": "OOS_DEGRADATION",
+            "evidence_ref": "phase7_21/breakoutacc_decision_card_v1.json:supporting_evidence_summary.oos_status",
+            "note": "OOS forward: 1 solo trade, INSUFFICIENT_OOS_SAMPLE."
+          }
+        ]
+      },
+      "ORDER_BLOCK": {
+        "phase": "7.22",
+        "failure_modes": [
+          {
+            "mode": "OUTLIER_DEPENDENT",
+            "evidence_ref": "phase7_22/orderblock_decision_card_v1.json:checks.4_concentration_detail",
+            "note": "i primi 5 trade (su 13) spiegano il 196.8% del P&L netto totale"
+          },
+          {
+            "mode": "LOW_SAMPLE",
+            "evidence_ref": "phase7_22/orderblock_baseline_economics_v1.json:ALL.n_trades",
+            "note": "n=13 - qualunque statistica su questo campione e' fragile per costruzione."
+          },
+          {
+            "mode": "OOS_DEGRADATION",
+            "evidence_ref": "phase7_22/orderblock_decision_card_v1.json:supporting_evidence_summary.oos_status",
+            "note": "OOS forward: 0 trade, INSUFFICIENT_OOS_SAMPLE."
+          }
+        ]
+      },
+      "TSI": {
+        "phase": "7.17/7.18",
+        "failure_modes": [
+          {
+            "mode": "IMPLEMENTATION_DEFECT",
+            "evidence_ref": "phase7_17/tsi_decision_card_v1.json + phase7_18/tsi_decision_card_v2.json",
+            "note": "Bug reale trovato e CORRETTO (contaminazione universale pre-fix, guardia TF-scoped aggiunta) - decisione finale: FIX_CAUSALLY_VALIDATED. Nessun dataset economico mai costruito per TSI (fase puramente di integrita' di implementazione, non di edge) - gli altri tag della tassonomia (economici) sono NON_APPLICABILE per costruzione."
+          }
+        ],
+        "note": "Nessun dataset economico esiste per TSI - solo un fix di integrita' dell'implementazione (contaminazione universale pre-fix). I failure mode economici (concentrazione, OOS, ecc.) sono NON_APPLICABILE, non assenti per omissione."
+      },
+      "LIQ_SWEEP": {
+        "phase": "7.23-7.25",
+        "failure_modes": [
+          {
+            "mode": "OUTLIER_DEPENDENT",
+            "evidence_ref": "phase7_25/concentration_analysis_v1.json:concentration.top_5",
+            "note": "top-5 = 127.4% del netto totale, edge_survives_without_top_5=False."
+          },
+          {
+            "mode": "TEMPORALLY_CONCENTRATED",
+            "evidence_ref": "phase7_25/temporal_robustness_v1.json:by_year",
+            "note": "2/4 anni positivi - il 2025 da solo spiega circa il 99% del netto totale."
+          },
+          {
+            "mode": "REGIME_DEPENDENT",
+            "evidence_ref": "phase7_25/temporal_robustness_v1.json:dependent_on_single_regime",
+            "note": "flag esplicito dependent_on_single_regime=True nell'artifact."
+          },
+          {
+            "mode": "OOS_DEGRADATION",
+            "evidence_ref": "phase7_25/decision_card_v1.json:supporting_evidence_summary",
+            "note": "OOS forward: 6 trade, net/trade=-89.88 (primo campione OOS del corpus sufficiente per una prima lettura, e negativo)."
+          }
+        ]
+      }
+    },
+    "no_tag_invented_every_tag_has_evidence_ref": true
+  }
+}

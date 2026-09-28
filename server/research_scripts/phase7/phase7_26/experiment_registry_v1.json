@@ -1,0 +1,220 @@
+{
+  "generated_at": "2026-09-28T09:25:53.409756+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_experiment_registry.py",
+  "canonical_sha256": "e3cb5b3c2e189435acecd7e903f5c6aa1b27edb09abc88e879b945375c71007c",
+  "payload": {
+    "schema_version": "EXPERIMENT_REGISTRY_V1",
+    "principle": "Ogni esperimento e' un fatto gia' accaduto (run/analisi gia' eseguiti) - backfillato dagli artifact esistenti, nessun campo mancante sostituito da un'invenzione.",
+    "experiments": [
+      {
+        "experiment_id": "EXP_BREAKOUT_ACC_DISCOVERY_BASELINE",
+        "hypothesis_id": "H1_BREAKOUT_ACC_NET_EXPECTANCY_POSITIVE",
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "run_id": "GOLD_2019.02.03 00:00:00_sel9_r002/r003",
+        "dataset_id": "BREAKOUT_ACC::2019.02.21_2026.06.09",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2019.02.21",
+          "2026.06.09"
+        ],
+        "method": "Baseline economica su 47 eventi (fill/P&L reali), no tuning.",
+        "metrics": {
+          "n_trades": 47,
+          "net_expectancy_per_trade": 13.662340425531914,
+          "profit_factor": 1.623820857822898
+        },
+        "artifacts": [
+          "phase7_21/baseline_economics_v1.json"
+        ],
+        "verdict": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "confidence": "MODERATA - campione 47, non blind per H2 (vedi data_exposure_map)",
+        "limitations": "Non un vero OOS - stesso campione usato per scoprire l'asimmetria BUY/SELL.",
+        "created_at": "Phase 7.21"
+      },
+      {
+        "experiment_id": "EXP_BREAKOUT_ACC_OOS_FORWARD",
+        "hypothesis_id": "H1_BREAKOUT_ACC_NET_EXPECTANCY_POSITIVE",
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "run_id": null,
+        "dataset_id": "BREAKOUT_ACC::2026.08.15_2026.09.27",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2026.08.15",
+          "2026.09.27"
+        ],
+        "method": "Run MT5 dedicato su finestra forward genuinamente untouched.",
+        "metrics": {
+          "n_trades": 1,
+          "net_pnl_per_trade": -110.3
+        },
+        "artifacts": [
+          "phase7_21/oos_forward_analysis_v1.json"
+        ],
+        "verdict": "INSUFFICIENT_OOS_SAMPLE",
+        "confidence": "BASSA (n=1)",
+        "limitations": "Campione troppo piccolo per qualunque conclusione.",
+        "created_at": "Phase 7.21"
+      },
+      {
+        "experiment_id": "EXP_ORDER_BLOCK_DISCOVERY_BASELINE",
+        "hypothesis_id": "H_ORDER_BLOCK_EDGE_EXISTS",
+        "strategy_identity": "ORDER_BLOCK",
+        "implementation_identity": "ORDER_BLOCK_V2_TF_GUARDED",
+        "run_id": null,
+        "dataset_id": "ORDER_BLOCK::2023.10.02_2026.08.24",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2023.10.02",
+          "2026.08.24"
+        ],
+        "method": "Baseline economica su 13 trade reali gia' presenti nel log persistente.",
+        "metrics": {
+          "n_trades": 13,
+          "net_expectancy_per_trade": 38.261538461538464,
+          "profit_factor": 1.8601072107902474
+        },
+        "artifacts": [
+          "phase7_22/orderblock_baseline_economics_v1.json"
+        ],
+        "verdict": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "confidence": "BASSA - campione 13, concentrazione estrema (196.8% top-5)",
+        "limitations": "Scarto di 1 trade fra certificato e CSV non risolto.",
+        "created_at": "Phase 7.22"
+      },
+      {
+        "experiment_id": "EXP_ORDER_BLOCK_OOS_FORWARD",
+        "hypothesis_id": "H_ORDER_BLOCK_EDGE_EXISTS",
+        "strategy_identity": "ORDER_BLOCK",
+        "implementation_identity": "ORDER_BLOCK_V2_TF_GUARDED",
+        "run_id": null,
+        "dataset_id": "ORDER_BLOCK::2026.08.25_2026.09.27",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2026.08.25",
+          "2026.09.27"
+        ],
+        "method": "Run MT5 dedicato su finestra forward.",
+        "metrics": {
+          "n_trades": null
+        },
+        "artifacts": [
+          "phase7_22/orderblock_oos_forward_analysis_v1.json"
+        ],
+        "verdict": "INSUFFICIENT_OOS_SAMPLE",
+        "confidence": "NULLA (n=0)",
+        "limitations": "Zero segnali generati nella finestra.",
+        "created_at": "Phase 7.22"
+      },
+      {
+        "experiment_id": "EXP_TSI_FIX_CAUSAL_VALIDATION",
+        "hypothesis_id": "H_TSI_TF_GUARD_FIX_EFFECTIVE",
+        "strategy_identity": "TSI",
+        "implementation_identity": "TSI_TF_GUARDED_POSTFIX",
+        "run_id": null,
+        "dataset_id": "TSI::2026.01.01_2026.08.25_short_diag",
+        "code_sha": "8590f63",
+        "config_hash": null,
+        "period": [
+          "2026.01.01",
+          "2026.08.25"
+        ],
+        "method": "A/B pre/post-fix su stessi tick reali + confronto B(EA)/C(ricostruzione Python).",
+        "metrics": {
+          "non_d1_rows_post_fix": 0
+        },
+        "artifacts": [
+          "phase7_18/tsi_decision_card_v2.json"
+        ],
+        "verdict": "FIX_CAUSALLY_VALIDATED",
+        "confidence": "ALTA per il meccanismo - NESSUNA per l'economia (nessun P&L mai misurato).",
+        "limitations": "Puramente un fix di integrita' - non e' e non pretende di essere un'edge validation.",
+        "created_at": "Phase 7.18"
+      },
+      {
+        "experiment_id": "EXP_LIQ_SWEEP_INTEGRITY_AUDIT",
+        "hypothesis_id": "H_LIQ_SWEEP_HTF_MISMATCH",
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_POSTFIX_DETECTOR",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "dataset_id": "LIQ_SWEEP::2023.10.02_2026.06.30",
+        "code_sha": "7aba39a19ed6fe22c9d414ddf390c00036805d0e",
+        "config_hash": "66767008acee43f3",
+        "period": [
+          "2023.10.02",
+          "2026.06.30"
+        ],
+        "method": "Trace statico riga-per-riga (NXS_ActivateTF->NXS_UpdateIndicators->NXS_CollectRaw) + run diagnostico isolato.",
+        "metrics": {
+          "n_events": 42
+        },
+        "artifacts": [
+          "phase7_23/liq_sweep_decision_card_v1.json"
+        ],
+        "verdict": "INTEGRITY_PARTIALLY_VALIDATED",
+        "confidence": "ALTA (verifica per costruzione)",
+        "limitations": "Ipotesi verificata e RESPINTA - nessun mismatch trovato.",
+        "created_at": "Phase 7.23"
+      },
+      {
+        "experiment_id": "EXP_LIQ_SWEEP_EDGE_BASELINE",
+        "hypothesis_id": "H_LIQ_SWEEP_EDGE_EXISTS",
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_POSTFIX_DETECTOR",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "dataset_id": "LIQ_SWEEP::2023.10.02_2026.06.30",
+        "code_sha": "7aba39a19ed6fe22c9d414ddf390c00036805d0e",
+        "config_hash": "66767008acee43f3",
+        "period": [
+          "2023.10.02",
+          "2026.06.30"
+        ],
+        "method": "Baseline su 42 eventi CLOSED, harness di isolamento (provenance completa).",
+        "metrics": {
+          "n_trades": 42,
+          "net_expectancy_per_trade": 25.626190476190477,
+          "profit_factor": 1.4841873228665257
+        },
+        "artifacts": [
+          "phase7_25/baseline_economics_v1.json"
+        ],
+        "verdict": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "confidence": "MODERATA - provenance ottima, ma 'seen' per il P&L aggregato (Phase 7.24)",
+        "limitations": "99% del netto da un solo anno (2025) - vedi temporal_robustness.",
+        "created_at": "Phase 7.25"
+      },
+      {
+        "experiment_id": "EXP_LIQ_SWEEP_OOS_FORWARD",
+        "hypothesis_id": "H_LIQ_SWEEP_EDGE_EXISTS",
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_POSTFIX_DETECTOR",
+        "run_id": "LIQ_SWEEP_2026.07.01_2026.09.27_df1e067b3b38ee3d_20260928T072223Z_1f7a854f",
+        "dataset_id": "LIQ_SWEEP::2026.07.01_2026.09.27",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2026.07.01",
+          "2026.09.27"
+        ],
+        "method": "Run MT5 dedicato (harness isolamento) su finestra forward genuinamente untouched.",
+        "metrics": {
+          "n_trades": 6,
+          "net_pnl_per_trade": -89.88333333333333
+        },
+        "artifacts": [
+          "phase7_25/oos_forward_analysis_v1.json"
+        ],
+        "verdict": "SAMPLE_SUFFICIENT_FOR_A_FIRST_READ",
+        "confidence": "PRIMO campione OOS del corpus >= soglia minima (n=6)",
+        "limitations": "Risultato negativo (-$539.30) - non prova l'assenza di edge (n piccolo) ma e' un segnale contrario reale.",
+        "created_at": "Phase 7.25"
+      }
+    ],
+    "n_experiments": 8
+  }
+}

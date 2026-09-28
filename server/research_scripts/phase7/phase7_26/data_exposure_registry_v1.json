@@ -1,0 +1,286 @@
+{
+  "generated_at": "2026-09-28T09:17:47.037406+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_data_exposure_registry.py",
+  "canonical_sha256": "061a8c469833a74f376fefae7b410930774d2334d1f3acaacc6fbe032c946212",
+  "payload": {
+    "records": [
+      {
+        "dataset_id": "BREAKOUT_ACC::2019.02.21_2026.06.09",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2019.02.21",
+          "2026.06.09"
+        ],
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "experiment_run_ids": [
+          "GOLD_2019.02.03 00:00:00_sel9_r002/r003"
+        ],
+        "first_seen_date": "2026-09 (Phase 7.9G/H/I/J/K)",
+        "development_exposure": true,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": true,
+        "visual_review_exposure": true,
+        "optimization_exposure": false,
+        "validation_exposure": true,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "EXPOSED_DISCOVERY_AND_BASELINE - usato per scoprire l'asimmetria BUY/SELL (H2) e come baseline economica descrittiva (H1, prima analisi economica su questi eventi, Phase 7.21) - MAI un vero holdout indipendente."
+      },
+      {
+        "dataset_id": "BREAKOUT_ACC::2026.06.10_2026.08.14",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2026.06.10",
+          "2026.08.14"
+        ],
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "experiment_run_ids": [
+          "GOLD_2019.02.03 00:00:00_sel9_r002"
+        ],
+        "first_seen_date": "Phase 7.21",
+        "development_exposure": false,
+        "integrity_audit_exposure": false,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "NO_EVENTS - attraversato dal run ma zero segnali generati, riportato solo per trasparenza."
+      },
+      {
+        "dataset_id": "BREAKOUT_ACC::2026.08.15_2026.09.27",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2026.08.15",
+          "2026.09.27"
+        ],
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "experiment_run_ids": [
+          "nxs_breakoutacc_forward_oos.ini (Phase 7.21)"
+        ],
+        "first_seen_date": "Phase 7.21",
+        "development_exposure": false,
+        "integrity_audit_exposure": false,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": true,
+        "forward_exposure": true,
+        "holdout_status": "CONSUMED_AS_OOS - vero holdout al momento di Phase 7.21, gia' attraversato (1 trade, perdente) - non piu' disponibile come holdout futuro."
+      },
+      {
+        "dataset_id": "BREAKOUT_ACC::pre_2019.02.03",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          null,
+          "2019.02.03"
+        ],
+        "strategy_identity": "BREAKOUT_ACC",
+        "implementation_identity": "BREAKOUT_ACC_INTENDED_D1_V2",
+        "experiment_run_ids": [],
+        "first_seen_date": null,
+        "development_exposure": "SCONOSCIUTO",
+        "integrity_audit_exposure": null,
+        "mechanism_discovery_exposure": null,
+        "visual_review_exposure": null,
+        "optimization_exposure": null,
+        "validation_exposure": null,
+        "oos_exposure": null,
+        "forward_exposure": null,
+        "holdout_status": "UNVERIFIED - disponibilita'/qualita' dati non controllata, non usato in nessuna fase."
+      },
+      {
+        "dataset_id": "ORDER_BLOCK::pre_2023.10.02",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          null,
+          "2023.10.02"
+        ],
+        "strategy_identity": "ORDER_BLOCK",
+        "implementation_identity": "ORDER_BLOCK_V2_TF_GUARDED",
+        "experiment_run_ids": [],
+        "first_seen_date": null,
+        "development_exposure": "SCONOSCIUTO",
+        "integrity_audit_exposure": null,
+        "mechanism_discovery_exposure": null,
+        "visual_review_exposure": null,
+        "optimization_exposure": null,
+        "validation_exposure": null,
+        "oos_exposure": null,
+        "forward_exposure": null,
+        "holdout_status": "NOT_USED"
+      },
+      {
+        "dataset_id": "ORDER_BLOCK::2023.10.02_2026.08.24",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2023.10.02",
+          "2026.08.24"
+        ],
+        "strategy_identity": "ORDER_BLOCK",
+        "implementation_identity": "ORDER_BLOCK_V2_TF_GUARDED",
+        "experiment_run_ids": [
+          "Phase 7.14 diagnostic run (log persistente)",
+          "Phase 7.22 base cert"
+        ],
+        "first_seen_date": "Phase 7.13/7.14",
+        "development_exposure": false,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": true,
+        "visual_review_exposure": true,
+        "optimization_exposure": false,
+        "validation_exposure": true,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "SEEN_FOR_SIGNALS_NOT_FOR_ECONOMICS - Phase 7.13/7.14/7.16 hanno guardato questa finestra per l'integrita' del fix (segnali/zone), MAI per P&L - Phase 7.22 e' la prima analisi economica in assoluto (13 trade)."
+      },
+      {
+        "dataset_id": "ORDER_BLOCK::2026.08.25_2026.09.27",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2026.08.25",
+          "2026.09.27"
+        ],
+        "strategy_identity": "ORDER_BLOCK",
+        "implementation_identity": "ORDER_BLOCK_V2_TF_GUARDED",
+        "experiment_run_ids": [
+          "nxs_orderblock_forward_oos.ini (Phase 7.22)"
+        ],
+        "first_seen_date": "Phase 7.22",
+        "development_exposure": false,
+        "integrity_audit_exposure": false,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": true,
+        "forward_exposure": true,
+        "holdout_status": "CONSUMED_AS_OOS - 0 trade generati (INSUFFICIENT_OOS_SAMPLE), non piu' disponibile come holdout futuro."
+      },
+      {
+        "dataset_id": "TSI::2026.01.01_2026.08.25_short_diag",
+        "symbol": "GOLD",
+        "timeframe": "H4",
+        "date_range": [
+          "2026.01.01",
+          "2026.08.25"
+        ],
+        "strategy_identity": "TSI",
+        "implementation_identity": "TSI_TF_SCOPED_POSTFIX",
+        "experiment_run_ids": [
+          "Phase 7.18 pre/post-fix diagnostic run"
+        ],
+        "first_seen_date": "Phase 7.18",
+        "development_exposure": false,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": true,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": true,
+        "oos_exposure": null,
+        "forward_exposure": null,
+        "holdout_status": "NOT_APPLICABLE_NO_ECONOMIC_DATASET - TSI non ha mai avuto un dataset economico: questa finestra e' stata usata SOLO per verificare causalmente il fix (guardia TF-scoped), decisione FIX_CAUSALLY_VALIDATED - concetto di holdout economico non applicabile per costruzione."
+      },
+      {
+        "dataset_id": "LIQ_SWEEP::pre_2023.10.02",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          null,
+          "2023.10.02"
+        ],
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_SEL7_POSTFIX_DETECTOR_20260914",
+        "experiment_run_ids": [],
+        "first_seen_date": null,
+        "development_exposure": "SCONOSCIUTO",
+        "integrity_audit_exposure": null,
+        "mechanism_discovery_exposure": null,
+        "visual_review_exposure": null,
+        "optimization_exposure": null,
+        "validation_exposure": null,
+        "oos_exposure": null,
+        "forward_exposure": null,
+        "holdout_status": "NOT_USED"
+      },
+      {
+        "dataset_id": "LIQ_SWEEP::2023.10.02_2026.06.30",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2023.10.02",
+          "2026.06.30"
+        ],
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_SEL7_POSTFIX_DETECTOR_20260914",
+        "experiment_run_ids": [
+          "Phase 7.23 diagnostic run (harness isolato)"
+        ],
+        "first_seen_date": "Phase 7.23",
+        "development_exposure": false,
+        "integrity_audit_exposure": true,
+        "mechanism_discovery_exposure": true,
+        "visual_review_exposure": true,
+        "optimization_exposure": false,
+        "validation_exposure": true,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "SEEN_FOR_NET_PNL_TOTALE_NOT_FOR_GRANULAR_STATS - Phase 7.24 ha gia' calcolato e riportato il net P&L aggregato ALL (+$1.076,30) - Phase 7.25 e' la prima analisi granulare (expectancy per direzione, concentrazione, CI, path anatomy)."
+      },
+      {
+        "dataset_id": "LIQ_SWEEP::2026.07.01_2026.09.27",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2026.07.01",
+          "2026.09.27"
+        ],
+        "strategy_identity": "LIQ_SWEEP",
+        "implementation_identity": "LIQ_SWEEP_SEL7_POSTFIX_DETECTOR_20260914",
+        "experiment_run_ids": [
+          "Phase 7.25 OOS forward run (harness isolato)"
+        ],
+        "first_seen_date": "Phase 7.25",
+        "development_exposure": false,
+        "integrity_audit_exposure": false,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": false,
+        "oos_exposure": true,
+        "forward_exposure": true,
+        "holdout_status": "CONSUMED_AS_OOS - 6 trade, esito negativo, non piu' disponibile come holdout futuro."
+      }
+    ],
+    "n_records": 11,
+    "backfilled_strategies": [
+      "BREAKOUT_ACC",
+      "ORDER_BLOCK",
+      "TSI",
+      "LIQ_SWEEP"
+    ],
+    "query_function_name": "is_genuinely_untouched(dataset_id)",
+    "holdout_status_values_seen": [
+      "CONSUMED_AS_OOS",
+      "EXPOSED_DISCOVERY_AND_BASELINE",
+      "NOT_APPLICABLE_NO_ECONOMIC_DATASET",
+      "NOT_USED",
+      "NO_EVENTS",
+      "SEEN_FOR_NET_PNL_TOTALE_NOT_FOR_GRANULAR_STATS",
+      "SEEN_FOR_SIGNALS_NOT_FOR_ECONOMICS",
+      "UNVERIFIED"
+    ]
+  }
+}

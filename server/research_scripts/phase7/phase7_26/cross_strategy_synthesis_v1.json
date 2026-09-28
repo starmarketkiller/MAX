@@ -1,0 +1,114 @@
+{
+  "generated_at": "2026-09-28T09:23:01.233672+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_synthesis.py",
+  "canonical_sha256": "5c267c15b7c1d3b2aea9c2b463b2d29052a1b38b77af2d73537c3e301369eeee",
+  "payload": {
+    "strategies_included": [
+      "BREAKOUT_ACC",
+      "ORDER_BLOCK",
+      "LIQ_SWEEP"
+    ],
+    "strategies_excluded": {
+      "TSI": "nessun dataset economico esiste - non comparabile su nessuno dei campi economici sopra."
+    },
+    "allowed_verdict_kinds": [
+      "OBSERVATION",
+      "CROSS_STRATEGY_PATTERN",
+      "CANDIDATE_HYPOTHESIS"
+    ],
+    "findings": [
+      {
+        "kind": "CROSS_STRATEGY_PATTERN",
+        "statement": "3/3 strategie economiche del corpus condividono il failure mode OUTLIER_DEPENDENT.",
+        "evidence": {
+          "strategies": [
+            "BREAKOUT_ACC",
+            "ORDER_BLOCK",
+            "LIQ_SWEEP"
+          ],
+          "source": "failure_map_v1.json"
+        }
+      },
+      {
+        "kind": "CROSS_STRATEGY_PATTERN",
+        "statement": "3/3 strategie economiche del corpus condividono il failure mode OOS_DEGRADATION.",
+        "evidence": {
+          "strategies": [
+            "BREAKOUT_ACC",
+            "ORDER_BLOCK",
+            "LIQ_SWEEP"
+          ],
+          "source": "failure_map_v1.json"
+        }
+      },
+      {
+        "kind": "OBSERVATION",
+        "statement": "Tutte e 3 le strategie economiche mostrano un OOS forward NON supportivo dell'edge storico (insufficiente o negativo) - nessuna delle tre ha ancora un OOS genuinamente POSITIVO e sufficiente.",
+        "evidence": {
+          "oos_behavior_per_strategy": {
+            "BREAKOUT_ACC": {
+              "n_trades": 1,
+              "decision": "INSUFFICIENT_OOS_SAMPLE"
+            },
+            "ORDER_BLOCK": {
+              "n_trades": 0,
+              "decision": "INSUFFICIENT_OOS_SAMPLE"
+            },
+            "LIQ_SWEEP": {
+              "n_trades": 6,
+              "net_pnl_per_trade": -89.88333333333333,
+              "decision": "SAMPLE_SUFFICIENT_FOR_A_FIRST_READ"
+            }
+          }
+        }
+      },
+      {
+        "kind": "CANDIDATE_HYPOTHESIS",
+        "statement": "Le 3 strategie economiche del corpus mostrano tutte una dominanza BUY (non SELL) - possibile riflesso di un trend secolare rialzista del simbolo/periodo studiato (GOLD, 2019-2026) piuttosto che un edge specifico di ciascuna strategia. Da verificare confrontando con un benchmark buy-and-hold sullo stesso periodo - non fatto in questa fase.",
+        "evidence": {
+          "direction_per_strategy": {
+            "BREAKOUT_ACC": "BUY/SELL entrambi presenti",
+            "ORDER_BLOCK": "BUY dominante (12/13)",
+            "LIQ_SWEEP": "BUY dominante (39/42)"
+          }
+        }
+      },
+      {
+        "kind": "OBSERVATION",
+        "statement": "In tutte e 3 le strategie, i primi 5 trade migliori spiegano da soli oltre il 100% del P&L netto totale (concentrazione estrema, non un'anomalia isolata di una sola strategia).",
+        "evidence": {
+          "top5_pct_per_strategy": {
+            "BREAKOUT_ACC": 133.66452276018873,
+            "ORDER_BLOCK": 196.76316847607558,
+            "LIQ_SWEEP": 127.37155068289512
+          }
+        }
+      },
+      {
+        "kind": "OBSERVATION",
+        "statement": "Solo 1/3 strategie hanno una statistica di concentrazione temporale gia' calcolata (LIQ_SWEEP: ~99% del netto in un solo anno) - BREAKOUT_ACC e ORDER_BLOCK non hanno mai avuto questa specifica analisi per-anno nel loro learning packet corrente - GAP dichiarato, non un'assenza del fenomeno.",
+        "evidence": {
+          "temporal_concentration_per_strategy": {
+            "BREAKOUT_ACC": "NOT_AVAILABLE",
+            "ORDER_BLOCK": "NOT_AVAILABLE",
+            "LIQ_SWEEP": "2/4 anni positivi - 2025 da solo spiega ~99% del netto"
+          }
+        }
+      },
+      {
+        "kind": "OBSERVATION",
+        "statement": "Solo LIQ_SWEEP ha una nota esplicita di exit_efficiency (uscita ATR fissa vs target dinamico) - BREAKOUT_ACC/ORDER_BLOCK non hanno un'analisi equivalente di 'quanto efficientemente la strategia monetizza il movimento catturato' - GAP di ricerca, candidato per la Research Priority Queue (non ancora un pattern trasversale).",
+        "evidence": {
+          "exit_efficiency_per_strategy": {
+            "BREAKOUT_ACC": "NOT_AVAILABLE",
+            "ORDER_BLOCK": "NOT_AVAILABLE",
+            "LIQ_SWEEP": "uscita ATR fissa - non adattiva alla liquidita' opposta (mismatch confermato col proxy Python, H_LIQ_SWEEP_EXIT_MISMATCH_MQL5_PYTHON)"
+          }
+        }
+      }
+    ],
+    "n_findings": 7,
+    "cannot_produce_edge_found": true,
+    "no_new_data_computed_only_existing_artifacts_read": true
+  }
+}
