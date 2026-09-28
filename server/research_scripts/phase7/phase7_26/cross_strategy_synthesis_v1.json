@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T10:23:49.405904+00:00",
+  "generated_at": "2026-09-28T23:12:34.321499+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_synthesis.py",
-  "canonical_sha256": "d785624ba266064479817071671945307ff184ce32c4e5250e86890f61b789af",
+  "canonical_sha256": "62ae8bea679500f312c5ca7159bba61031775958e0dc115565dc2e33578653b0",
   "payload": {
     "strategies_included": [
       "BREAKOUT_ACC",
@@ -94,28 +94,17 @@
       },
       {
         "kind": "OBSERVATION",
-        "statement": "Solo 1/3 strategie hanno una statistica di concentrazione temporale gia' calcolata (LIQ_SWEEP: ~99% del netto in un solo anno) - BREAKOUT_ACC e ORDER_BLOCK non hanno mai avuto questa specifica analisi per-anno nel loro learning packet corrente - GAP dichiarato, non un'assenza del fenomeno.",
+        "statement": "Solo 3/3 strategie hanno una statistica di concentrazione temporale gia' calcolata (LIQ_SWEEP: ~99% del netto in un solo anno) - BREAKOUT_ACC e ORDER_BLOCK non hanno mai avuto questa specifica analisi per-anno nel loro learning packet corrente - GAP dichiarato, non un'assenza del fenomeno.",
         "evidence": {
           "temporal_concentration_per_strategy": {
-            "BREAKOUT_ACC": "NOT_AVAILABLE",
-            "ORDER_BLOCK": "NOT_AVAILABLE",
+            "BREAKOUT_ACC": "5/8 anni con profitto netto positivo su 8 con almeno un trade.",
+            "ORDER_BLOCK": "2/3 anni con profitto netto positivo su 3 con almeno un trade.",
             "LIQ_SWEEP": "2/4 anni positivi - 2025 da solo spiega ~99% del netto"
-          }
-        }
-      },
-      {
-        "kind": "OBSERVATION",
-        "statement": "Solo LIQ_SWEEP ha una nota esplicita di exit_efficiency (uscita ATR fissa vs target dinamico) - BREAKOUT_ACC/ORDER_BLOCK non hanno un'analisi equivalente di 'quanto efficientemente la strategia monetizza il movimento catturato' - GAP di ricerca, candidato per la Research Priority Queue (non ancora un pattern trasversale).",
-        "evidence": {
-          "exit_efficiency_per_strategy": {
-            "BREAKOUT_ACC": "NOT_AVAILABLE",
-            "ORDER_BLOCK": "NOT_AVAILABLE",
-            "LIQ_SWEEP": "uscita ATR fissa - non adattiva alla liquidita' opposta (mismatch confermato col proxy Python, H_LIQ_SWEEP_EXIT_MISMATCH_MQL5_PYTHON)"
           }
         }
       }
     ],
-    "n_findings": 8,
+    "n_findings": 7,
     "cannot_produce_edge_found": true,
     "no_new_data_computed_only_existing_artifacts_read": true
   }

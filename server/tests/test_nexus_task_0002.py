@@ -7,8 +7,6 @@ import json
 import os
 
 ORCH_DIR = os.path.join(os.path.dirname(__file__), "..", "orchestrator_v1")
-PHASE726_DIR = os.path.join(os.path.dirname(__file__), "..", "research_scripts", "phase7",
-                          "phase7_26")
 
 
 def _load(fname):
@@ -44,14 +42,18 @@ def test_premium_calls_and_cost_are_zero():
     assert result["premium_cost"] == 0
 
 
-def test_real_learning_packet_file_unchanged():
-    path = os.path.join(PHASE726_DIR, "cross_strategy_learning_packets_v1.json")
-    with open(path, encoding="utf-8") as f:
-        doc = json.load(f)
-    packets = doc["payload"]["packets"]
-    assert packets["BREAKOUT_ACC"]["temporal_concentration"] == "NOT_AVAILABLE"
-    assert packets["BREAKOUT_ACC"]["exit_efficiency"] == "NOT_AVAILABLE"
-    assert packets["ORDER_BLOCK"]["temporal_concentration"] == "NOT_AVAILABLE"
+def test_real_learning_packet_was_not_available_at_task_0002_time():
+    """Verifica STORICA (non lo stato live del file): al momento di NEXUS TASK
+    #0002 questi campi erano NOT_AVAILABLE nel file reale, che TASK #0002 non
+    ha mai scritto (solo proposto) - vedi not_available_inventory nel proprio
+    risultato salvato. NEXUS TASK #0003 (successiva, con approvazione
+    esplicita dell'utente) ha poi legittimamente applicato questi campi al
+    file reale - questo test NON deve piu' controllare lo stato live del
+    file (quello e' verificato da test_nexus_task_0003.py)."""
+    result = _load("nexus_task_0002_result_v1.json")
+    assert "temporal_concentration" in result["not_available_inventory"]["BREAKOUT_ACC"]
+    assert "exit_efficiency" in result["not_available_inventory"]["BREAKOUT_ACC"]
+    assert "temporal_concentration" in result["not_available_inventory"]["ORDER_BLOCK"]
 
 
 def test_proposed_update_file_changed_fields_are_subset_of_expected():

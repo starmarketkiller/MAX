@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T10:23:49.231154+00:00",
+  "generated_at": "2026-09-28T23:12:34.235190+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_learning_packet.py",
-  "canonical_sha256": "97648b549eff4277dc7e62dfb57bf101de07174384ff17a8e36420368b46b2ff",
+  "canonical_sha256": "eabf4cdabca53a9e62c7f48261e568befb59bd50722ee60be9b40e0b4a42e204",
   "payload": {
     "schema_version": "CROSS_STRATEGY_LEARNING_PACKET_V1",
     "not_available_marker": "NOT_AVAILABLE",
@@ -39,14 +39,26 @@
           "median": 32,
           "stdev": 20.1944
         },
-        "favorable_before_loss": "NOT_AVAILABLE",
-        "adverse_before_win": "NOT_AVAILABLE",
-        "execution_degradation": "NOT_AVAILABLE",
+        "favorable_before_loss": {
+          "n": 33,
+          "mean": 141.5103,
+          "median": 97.02
+        },
+        "adverse_before_win": {
+          "n": 14,
+          "mean": 24.6207,
+          "median": 20.34
+        },
+        "execution_degradation": {
+          "pct_generated_that_get_blocked": 16.4179,
+          "pct_generated_that_get_rejected": 13.4328,
+          "pct_generated_that_open_per_certificate": 70.1493
+        },
         "cost_sensitivity": "sopravvive a COST_BASE/MODERATE/STRESS",
-        "exit_efficiency": "NOT_AVAILABLE",
+        "exit_efficiency": "Rapporto medio di efficienza di uscita: 0.14 (su 47 eventi, 0 esclusi per assenza di target).",
         "capital_efficiency": 1000,
         "concentration": 133.66452276018873,
-        "temporal_concentration": "NOT_AVAILABLE",
+        "temporal_concentration": "5/8 anni con profitto netto positivo su 8 con almeno un trade.",
         "oos_behavior": {
           "n_trades": 1,
           "decision": "INSUFFICIENT_OOS_SAMPLE"
@@ -67,7 +79,7 @@
         ],
         "confidence": "MODERATA - n=47, non blind per H2",
         "fidelity": "EVENT_LEVEL - dataset per-evento con funnel granulare (Phase 7.9K)",
-        "provenance": "phase7_21/*, phase7_9k/* (vedi nxs_backfill_sources.py)"
+        "provenance": "phase7_21/*, phase7_9k/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK #0002/#0003 (temporal_concentration, exit_efficiency, execution_degradation, favorable_before_loss, adverse_before_win - vedi server/orchestrator_v1/nexus_task_0002_result_v1.json per provenance dettagliata)"
       },
       "ORDER_BLOCK": {
         "strategy_identity": "ORDER_BLOCK",
@@ -95,7 +107,7 @@
         "exit_efficiency": "NOT_AVAILABLE",
         "capital_efficiency": 2500,
         "concentration": 196.76316847607558,
-        "temporal_concentration": "NOT_AVAILABLE",
+        "temporal_concentration": "2/3 anni con profitto netto positivo su 3 con almeno un trade.",
         "oos_behavior": {
           "n_trades": 0,
           "decision": "INSUFFICIENT_OOS_SAMPLE"
@@ -116,7 +128,7 @@
         ],
         "confidence": "BASSA - n=13",
         "fidelity": "EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
-        "provenance": "phase7_22/* (vedi nxs_backfill_sources.py)"
+        "provenance": "phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK #0002/#0003 (temporal_concentration - exit_efficiency resta NOT_AVAILABLE, escalation genuina a TIER3_CLAUDE, vedi server/orchestrator_v1/nexus_task_0002_result_v1.json)"
       },
       "TSI": {
         "strategy_identity": "TSI",

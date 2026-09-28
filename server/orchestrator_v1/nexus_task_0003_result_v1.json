@@ -1,0 +1,247 @@
+{
+  "nexus_task": "0003",
+  "title": "Approve Safety Net Backfill",
+  "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+  "final_state": "COMPLETED",
+  "decision": "BACKFILL_APPROVED_AND_APPLIED",
+  "result_packet": {
+    "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+    "executor": "deterministic_worker",
+    "start_time": "2026-09-28T23:12:34.136880+00:00",
+    "end_time": "2026-09-28T23:12:38.578983+00:00",
+    "files_read": [
+      "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json"
+    ],
+    "files_changed": [
+      "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json",
+      "server/research_scripts/phase7/phase7_26/cross_strategy_synthesis_v1.json"
+    ],
+    "tools_or_commands": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe C:\\Users\\User\\ClaudeWork\\MAX\\server/research_scripts/phase7/phase7_26/build_cross_strategy_learning_packet.py",
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe C:\\Users\\User\\ClaudeWork\\MAX\\server/research_scripts/phase7/phase7_26/build_cross_strategy_synthesis.py",
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest phase7_26/test_phase_7_26.py -q"
+    ],
+    "artifacts_created": [],
+    "tests": {
+      "ran": false,
+      "passed": 0,
+      "failed": 0
+    },
+    "verifier": {
+      "ran": true,
+      "passed": true,
+      "errors": []
+    },
+    "commit": null,
+    "push_status": "NOT_APPLICABLE",
+    "decision": "COMPLETED",
+    "confidence": "HIGH",
+    "limitations": [],
+    "unresolved_issues": [],
+    "suggested_next_tasks": [],
+    "escalation_needed": {
+      "needed": false,
+      "reason": null,
+      "target_tier": null
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_afbdcf65abf34c74",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:52.445347+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Approve Safety Net Backfill (6 campi verificati)",
+        "task_type": "BACKFILL",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_179f7c20fcdf4f5c",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:52.448321+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_3c8e112da75b486a",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:52.450325+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "TIER0_DETERMINISTIC",
+        "executor": "deterministic_worker",
+        "reason": "azione 'apply_approved_backfill' e' un workflow deterministico noto - mai chiamare un modello per questo (§6 premium/local gating).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_67b4d7adeee1461f",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:52.450325+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "apply_approved_backfill",
+        "params_keys": [
+          "builder_script",
+          "learning_packet_path",
+          "expected_changed_fields",
+          "never_change_field",
+          "sensitive_fields",
+          "test_command",
+          "test_cwd"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_8e7b784a50f34d01",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:58.450331+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_baf609a8cb614671",
+      "event_type": "TASK_FAILED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:58.450331+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "action": "apply_approved_backfill",
+        "errors": [
+          "test post-rigenerazione non passano: ier_reports_zero_errors __________\u001b[0m\n\nself = <test_phase_7_26.TestIndependentVerifier testMethod=test_verifier_reports_zero_errors>\n\n    \u001b[0m\u001b[94mdef\u001b[39;49;00m\u001b[90m \u001b[39;49;00m\u001b[92mtest_verifier_reports_zero_errors\u001b[39;49;00m(\u001b[96mself\u001b[39;49;00m):\u001b[90m\u001b[39;49;00m\n>       \u001b[96mself\u001b[39;49;00m.assertEqual(verifier.verify(), [])\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE       AssertionError: Lists differ: ['cross_strategy_synthesis_v1.json: ricost[45 chars]ato'] != []\u001b[0m\n\u001b[1m\u001b[31mE       \u001b[0m\n\u001b[1m\u001b[31mE       First list contains 1 additional elements.\u001b[0m\n\u001b[1m\u001b[31mE       First extra element 0:\u001b[0m\n\u001b[1m\u001b[31mE       'cross_strategy_synthesis_v1.json: ricostruzione indipendente differisce dal file salvato'\u001b[0m\n\u001b[1m\u001b[31mE       \u001b[0m\n\u001b[1m\u001b[31mE       + []\u001b[0m\n\u001b[1m\u001b[31mE       - ['cross_strategy_synthesis_v1.json: ricostruzione indipendente differisce dal '\u001b[0m\n\u001b[1m\u001b[31mE       -  'file salvato']\u001b[0m\n\n\u001b[1m\u001b[31mphase7_26\\test_phase_7_26.py\u001b[0m:277: AssertionError\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mFAILED\u001b[0m phase7_26/test_phase_7_26.py::\u001b[1mTestDeterminism::test_all_artifacts_deterministic\u001b[0m - AssertionError: 'd785624ba266064479817071671945307ff184ce32c4e5250e86890f61...\n\u001b[31mFAILED\u001b[0m phase7_26/test_phase_7_26.py::\u001b[1mTestIndependentVerifier::test_verifier_reports_zero_errors\u001b[0m - AssertionError: Lists differ: ['cross_strategy_synthesis_v1.json: ricost[45...\n\u001b[31m\u001b[31m\u001b[1m2 failed\u001b[0m, \u001b[32m33 passed\u001b[0m\u001b[31m in 5.07s\u001b[0m\u001b[0m\n"
+        ],
+        "classification": "UNKNOWN",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_fe0cdc8499164ee6",
+      "event_type": "ESCALATION_REQUIRED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:06:58.452426+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "target": "MANUAL_REVIEW",
+        "classification": "UNKNOWN",
+        "errors": [
+          "test post-rigenerazione non passano: ier_reports_zero_errors __________\u001b[0m\n\nself = <test_phase_7_26.TestIndependentVerifier testMethod=test_verifier_reports_zero_errors>\n\n    \u001b[0m\u001b[94mdef\u001b[39;49;00m\u001b[90m \u001b[39;49;00m\u001b[92mtest_verifier_reports_zero_errors\u001b[39;49;00m(\u001b[96mself\u001b[39;49;00m):\u001b[90m\u001b[39;49;00m\n>       \u001b[96mself\u001b[39;49;00m.assertEqual(verifier.verify(), [])\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE       AssertionError: Lists differ: ['cross_strategy_synthesis_v1.json: ricost[45 chars]ato'] != []\u001b[0m\n\u001b[1m\u001b[31mE       \u001b[0m\n\u001b[1m\u001b[31mE       First list contains 1 additional elements.\u001b[0m\n\u001b[1m\u001b[31mE       First extra element 0:\u001b[0m\n\u001b[1m\u001b[31mE       'cross_strategy_synthesis_v1.json: ricostruzione indipendente differisce dal file salvato'\u001b[0m\n\u001b[1m\u001b[31mE       \u001b[0m\n\u001b[1m\u001b[31mE       + []\u001b[0m\n\u001b[1m\u001b[31mE       - ['cross_strategy_synthesis_v1.json: ricostruzione indipendente differisce dal '\u001b[0m\n\u001b[1m\u001b[31mE       -  'file salvato']\u001b[0m\n\n\u001b[1m\u001b[31mphase7_26\\test_phase_7_26.py\u001b[0m:277: AssertionError\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mFAILED\u001b[0m phase7_26/test_phase_7_26.py::\u001b[1mTestDeterminism::test_all_artifacts_deterministic\u001b[0m - AssertionError: 'd785624ba266064479817071671945307ff184ce32c4e5250e86890f61...\n\u001b[31mFAILED\u001b[0m phase7_26/test_phase_7_26.py::\u001b[1mTestIndependentVerifier::test_verifier_reports_zero_errors\u001b[0m - AssertionError: Lists differ: ['cross_strategy_synthesis_v1.json: ricost[45...\n\u001b[31m\u001b[31m\u001b[1m2 failed\u001b[0m, \u001b[32m33 passed\u001b[0m\u001b[31m in 5.07s\u001b[0m\u001b[0m\n"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_874a1d31dce04dc7",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:34.131621+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Approve Safety Net Backfill (6 campi verificati)",
+        "task_type": "BACKFILL",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_99f060a30e6a4114",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:34.133620+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_4956b9d3698c459e",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:34.135864+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "TIER0_DETERMINISTIC",
+        "executor": "deterministic_worker",
+        "reason": "azione 'apply_approved_backfill' e' un workflow deterministico noto - mai chiamare un modello per questo (§6 premium/local gating).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_e8c1833b28034c9c",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:34.136880+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "apply_approved_backfill",
+        "params_keys": [
+          "builder_script",
+          "learning_packet_path",
+          "expected_changed_fields",
+          "never_change_field",
+          "sensitive_fields",
+          "test_command",
+          "test_cwd",
+          "downstream_builder_scripts",
+          "downstream_artifact_paths"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_d1608c1976dd4b8c",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:38.576986+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_d7766bbc9dad4556",
+      "event_type": "FILE_CHANGED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:38.577981+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json",
+          "server/research_scripts/phase7/phase7_26/cross_strategy_synthesis_v1.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_882aea1c9e114142",
+      "event_type": "TASK_COMPLETED",
+      "task_id": "TASK_NEXUS_0003_APPROVE_BACKFILL",
+      "timestamp": "2026-09-28T23:12:38.578983+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "action": "apply_approved_backfill",
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ],
+  "premium_calls": 0,
+  "premium_cost": 0
+}
