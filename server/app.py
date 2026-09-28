@@ -55,6 +55,7 @@ import library_read_model
 import sequence_research_read_model
 import company_control_plane
 import strategy_pipeline_read_model
+import strategy_census_read_model
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3270,6 +3271,19 @@ def company_strategy_detail(strategy_id: str, user: str = Depends(require_user))
     item = strategy_pipeline_read_model.CATALOG.get(strategy_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Strategy not found")
+    return item
+
+
+@app.get("/api/company/strategy-census")
+def company_strategy_census(user: str = Depends(require_user)):
+    return strategy_census_read_model.CATALOG.build()
+
+
+@app.get("/api/company/strategy-census/{strategy_id}")
+def company_strategy_census_detail(strategy_id: str, user: str = Depends(require_user)):
+    item = strategy_census_read_model.CATALOG.get(strategy_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Census identity not found")
     return item
 
 

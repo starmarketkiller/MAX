@@ -23,6 +23,12 @@ PHASE_ORDER = {
     "7.9D": 60,
     "7.9E": 70,
     "7.9F": 80,
+    "7.9G": 90,
+    "7.9H": 100,
+    "7.9I": 110,
+    "7.9J": 120,
+    "7.9K": 130,
+    "7.21": 140,
 }
 
 STRATEGY_IDS = (
@@ -40,12 +46,15 @@ CANONICAL_SOURCES = (
     {"phase": "7.9D", "path": P7 / "phase7_9d" / "breakout_acc_execution_parity_decision_v1.json", "entities": ("BREAKOUT_ACC",)},
     {"phase": "7.9E", "path": P7 / "phase7_9e" / "breakout_acc_reconstruction_decision_v1.json", "entities": ("BREAKOUT_ACC",)},
     {"phase": "7.9F", "path": P7 / "phase7_9f" / "breakout_acc_identity_adjudication_v1.json", "entities": ("BREAKOUT_ACC",)},
+    {"phase": "7.9K", "path": P7 / "phase7_9k" / "breakout_acc_decision_card_v2.json", "entities": ("BREAKOUT_ACC",)},
+    {"phase": "7.21", "path": P7 / "phase7_21" / "breakoutacc_decision_card_v1.json", "entities": ("BREAKOUT_ACC",), "allow_missing_phase": True},
 )
 
 PROJECTED_SOURCE_PHASES = {
     "server/research_scripts/phase7/phase7_7b/missing_field_semantics_refinement_v1.json": "7.7B",
     "server/research_scripts/phase7/phase7_9a/phase7_9a_postmortem_and_reprioritization_v1.json": "7.9A",
     "server/research_scripts/phase7/phase7_9b/breakout_acc_formalization_decision_v1.json": "7.9B",
+    "server/research_scripts/phase7/phase7_9k/breakout_acc_decision_card_v2.json": "7.9K",
 }
 
 
@@ -60,7 +69,9 @@ def _load_descriptor(descriptor: dict, warnings: list[dict]) -> dict | None:
         if not isinstance(doc, dict) or not isinstance(doc.get("payload"), dict):
             raise ValueError("root and payload must be objects")
         raw_phase = doc["payload"].get("phase")
-        if not isinstance(raw_phase, str) or not raw_phase.upper().startswith(descriptor["phase"]):
+        if raw_phase is None and descriptor.get("allow_missing_phase"):
+            pass
+        elif not isinstance(raw_phase, str) or not raw_phase.upper().startswith(descriptor["phase"]):
             raise ValueError("artifact phase does not match catalog metadata")
         return doc
     except (OSError, json.JSONDecodeError, ValueError) as exc:

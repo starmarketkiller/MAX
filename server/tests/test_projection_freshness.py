@@ -8,13 +8,13 @@ def _by_id(model):
     return {item["strategy_id"]: item for item in model["items"]}
 
 
-def test_breakout_is_stale_without_ingesting_newer_scientific_state():
+def test_breakout_checkpoint_is_stale_when_newer_canonical_research_exists_without_reinterpreting_it():
     model = sp.StrategyPipelineCatalog().build()
     breakout = _by_id(model)["BREAKOUT_ACC"]
     freshness = breakout["projection_freshness"]
     assert freshness["freshness_status"] == "STALE"
-    assert freshness["canonical_latest_phase"] == "7.9F"
-    assert freshness["projected_latest_phase"] == "7.9B"
+    assert freshness["canonical_latest_phase"] == "7.21"
+    assert freshness["projected_latest_phase"] == "7.9K"
     assert freshness["provenance"]["canonical_sha256"]
     # The scientific projection remains the explicit 7.9B state.
     assert breakout["research_readiness"] == "HOLD_NEEDS_MORE_EVIDENCE"
@@ -35,9 +35,9 @@ def test_volbrk_is_current_and_scientific_counts_do_not_change():
 
 
 def test_missing_or_malformed_latest_source_yields_unknown(monkeypatch, tmp_path):
-    malformed = tmp_path / "breakout_acc_identity_adjudication_v1.json"
+    malformed = tmp_path / "breakoutacc_decision_card_v1.json"
     malformed.write_text("{bad", encoding="utf-8")
-    sources = tuple({**source, "path": malformed} if source["phase"] == "7.9F" else source for source in pf.CANONICAL_SOURCES)
+    sources = tuple({**source, "path": malformed} if source["phase"] == "7.21" else source for source in pf.CANONICAL_SOURCES)
     monkeypatch.setattr(pf, "CANONICAL_SOURCES", sources)
     model = sp.StrategyPipelineCatalog().build()
     breakout = _by_id(model)["BREAKOUT_ACC"]
@@ -50,7 +50,7 @@ def test_freshness_output_is_deterministic_and_provenance_only():
     first = sp.StrategyPipelineCatalog().build()["freshness"]
     second = sp.StrategyPipelineCatalog().build()["freshness"]
     assert first["items"] == second["items"]
-    assert first["latest_canonical_phase"] == "7.9F"
-    assert first["latest_projection_phase"] == "7.9B"
+    assert first["latest_canonical_phase"] == "7.21"
+    assert first["latest_projection_phase"] == "7.9K"
     assert all(item["blocking_or_informational"] == "INFORMATIONAL" for item in first["items"])
     assert "profit" not in json.dumps(first).lower()

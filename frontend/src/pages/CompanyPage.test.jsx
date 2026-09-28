@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
-import { CompanyHealth, DepartmentCard, DepartmentInspector, FreshnessWarning, LifecycleFieldSemantics, ProjectionFreshness, SeriousValidationPreflight, StrategyInspector, StrategyPipeline } from "./CompanyPage";
+import { BreakoutCurrentScience, CompanyHealth, DepartmentCard, DepartmentInspector, FreshnessWarning, LifecycleFieldSemantics, ProjectionFreshness, SeriousValidationPreflight, StrategyCensus, StrategyInspector, StrategyPipeline } from "./CompanyPage";
 
 let container, root;
 beforeEach(() => { global.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
@@ -127,4 +127,43 @@ test("strategy freshness is independent from scientific readiness and shows prov
 test("projection freshness handles unavailable records explicitly", () => {
   act(() => root.render(<ProjectionFreshness record={null} />));
   expect(container.textContent).toContain("UNKNOWN");
+});
+
+test("corrected Phase 7.9K science keeps funnel populations and outcome changes separate", () => {
+  const current = {
+    canonical_strategy_identity: "BREAKOUT_ACC_INTENDED_D1_V1", dataset_version: "V2",
+    scientific_verdict: "MECHANISM_PARTIALLY_SUPPORTED", scientific_confidence: "BASSA",
+    non_randomness_and_incremental_edge: "Non-casuality and incremental edge remain to be verified.",
+    natural_horizon_status: "NO - SOLO DESCRITTIVO", trend_alignment_effect: "Effect not identifiable.", deployable: false,
+    research_funnel: { live_observed: 67, opened: 47, blocked: 11, broker_reject: 9, b_only: 8, total_events: 75 },
+    outcome_change_audit: { comparable_events: 46, binary_outcome_flips: 4, binary_outcome_flip_denominator: 46, coverage_status_changes: 1, coverage_transition: { from: "UNKNOWN", to: "UNKNOWN_CENSORED", coverage_bars: 51 } },
+    fixed_horizon_results: { BUY: { n_continuation_v2: 25, denominator_v2_excludes_censored: 36, pct_continuation_v2: 69.4 }, SELL: { n_continuation_v2: 2, denominator_v2_excludes_censored: 10, pct_continuation_v2: 20, n_censored_v2: 1 } },
+    measurement_boundaries: { post_signal: "75 events", post_fill: "47 OPENED", market_bars: "market bars, not calendar days", first_full_bar: "first full D1 bar", intraday_gap: "entry-day intraday portion unavailable", censoring: "one censored", ema100: { precise_statement: "72/75 evaluable; 3 UNKNOWN" } },
+    source_authority: [{ scope: "STRATEGY_RESEARCH", phase: "7.9K", status: "CURRENT", source: "decision_v2.json" }, { scope: "FORMALIZATION", phase: "7.9B", status: "HISTORICAL", source: "decision_v1.json" }],
+  };
+  act(() => root.render(<BreakoutCurrentScience strategy={current} />));
+  expect(container.textContent).toContain("67");
+  expect(container.textContent).toContain("B-only · separate");
+  expect(container.textContent).toContain("4/46");
+  expect(container.textContent).toContain("UNKNOWN → UNKNOWN_CENSORED");
+  expect(container.textContent).toContain("25/36 · 69.4%");
+  expect(container.textContent).toContain("2/10 · 20%");
+  expect(container.textContent).toContain("not trade win rate");
+  expect(container.textContent).toContain("HISTORICAL");
+});
+
+test("census renders 83 overlapping identities and registry gaps without inferring enablement", () => {
+  const census = { count: 83, category_warning: "Categories overlap and must not be summed. Lack of audit coverage does not mean SAFE.", items: [{ strategy_id: "CRT", aliases: [], variant_of: null, implementation: { live_mql5: true, python: true }, registry_recognition: { contracts: true, known: false }, enablement_configuration: { raw_status: "RESEARCH_ONLY", effective_enabled: null }, audit_coverage: { covered: false }, scientific_evidence: "NOT_ASSESSED_IN_THIS_CENSUS", known_defects: "NOT_AUDITED_IN_PHASE_7_10", operational_eligibility: null, registry_gap: { verified: true, detail: "Implemented but absent from NXS_StrategyKnown()." }, provenance: { source: "complete_strategy_census_v1.json", sha256: "abc" } }, { strategy_id: "FVG_MIT_WINDOW", aliases: [], implementation: { live_mql5: true }, registry_recognition: { known: false }, audit_coverage: { covered: false }, scientific_evidence: null }] };
+  act(() => root.render(<StrategyCensus census={census} />));
+  expect(container.textContent).toContain("83");
+  expect(container.textContent).toContain("CRT");
+  expect(container.textContent).toContain("FVG_MIT_WINDOW");
+  expect(container.textContent).toContain("NOT AUDITED");
+  const input = container.querySelector('[aria-label="Search strategy census"]');
+  act(() => { input.value = "CRT"; input.dispatchEvent(new Event("input", { bubbles: true })); });
+  const button = Array.from(container.querySelectorAll("button")).find(node => node.textContent === "CRT");
+  act(() => button.click());
+  expect(container.textContent).toContain("Effective enabled");
+  expect(container.textContent).toContain("UNKNOWN_STRATEGY_REGISTRY_GAP");
+  expect(container.textContent).toContain("do not establish effective runtime enablement");
 });

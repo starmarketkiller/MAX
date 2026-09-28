@@ -13,6 +13,7 @@ from typing import Any
 
 import sequence_research_read_model
 import strategy_pipeline_read_model
+import strategy_census_read_model
 
 ROOT = Path(__file__).resolve().parent
 P7 = ROOT / "research_scripts" / "phase7"
@@ -54,6 +55,11 @@ SOURCES = {
     "breakout_acc_lifecycle": P7 / "phase7_9b" / "breakout_acc_lifecycle_contract_v1.json",
     "breakout_acc_lineage": P7 / "phase7_9b" / "breakout_acc_evidence_lineage_v1.json",
     "breakout_acc_decision": P7 / "phase7_9b" / "breakout_acc_formalization_decision_v1.json",
+    "breakout_acc_dataset_v2": P7 / "phase7_9k" / "breakout_acc_intended_d1_v2_dataset.json",
+    "breakout_acc_decision_v2": P7 / "phase7_9k" / "breakout_acc_decision_card_v2.json",
+    "strategy_implementation_audit": P7 / "phase7_10" / "stateful_strategy_static_audit_v1.json",
+    "strategy_census": P7 / "phase7_11" / "complete_strategy_census_v1.json",
+    "strategy_census_summary": P7 / "phase7_11" / "census_summary_v1.json",
 }
 
 STATUS_MAP = {
@@ -106,6 +112,8 @@ class CompanyControlPlane:
         docs = {key: _load(path, warnings) for key, path in SOURCES.items()}
         seq_catalog = sequence_research_read_model.CATALOG.build()
         strategy_catalog = strategy_pipeline_read_model.CATALOG.build()
+        census_catalog = strategy_census_read_model.CATALOG.build()
+        warnings.extend(census_catalog.get("warnings", []))
         warnings.extend(seq_catalog.get("warnings", []))
         warnings.extend(strategy_catalog.get("warnings", []))
         now = datetime.now(timezone.utc).isoformat()
@@ -118,7 +126,7 @@ class CompanyControlPlane:
                 "id": f"ART-{key.upper()}", "name": path.name, "type": "RESEARCH_ARTIFACT",
                 "status": "AVAILABLE", "raw_status": "AVAILABLE", "normalized_status": "PASSED",
                 "owner_type": "DEPARTMENT", "owner_id": ("DATA" if key in {"dataset_registry", "dataset_integrity"}
-                    else "SCIENTIFIC_QA" if key == "serious_validation_preflight" else "QUANT_RESEARCH"),
+                    else "SCIENTIFIC_QA" if key in {"serious_validation_preflight", "strategy_implementation_audit"} else "QUANT_RESEARCH"),
                 "source_path": _repo_path(path), "sha": doc.get("canonical_sha256"),
                 "created_at": doc.get("generated_at"), "updated_at": doc.get("generated_at"),
                 "provenance": {"mode": "RESEARCH", "direct": True, "source_artifact": _repo_path(path)},
@@ -194,7 +202,7 @@ class CompanyControlPlane:
             skeleton = raw_status == "SKELETON"
             operational_state = qa_state if dept_id == "SCIENTIFIC_QA" else (
                 {"dataset_count": len(datasets)} if dept_id == "DATA" else (
-                {"strategy_count": len(strategies), "governance_conflict_count": strategy_catalog["governance_conflict_count"],
+                 {"strategy_count": len(strategies), "census_identity_count": census_catalog.get("count"), "governance_conflict_count": strategy_catalog["governance_conflict_count"],
                  "meta_filter_ready_count": strategy_catalog["meta_filter_ready_count"]} if dept_id == "QUANT_RESEARCH" else (
                 {"projected_entity_count": freshness.get("count", 0),
                  "current_count": freshness_counts.get("CURRENT", 0), "stale_count": freshness_counts.get("STALE", 0),
@@ -252,7 +260,7 @@ class CompanyControlPlane:
                               "created_at": None, "updated_at": now, "provenance": {"mode": "DERIVED", "direct": False}},
                 "departments": departments, "work_items": work_items, "artifacts": artifacts, "gates": gates,
                 "dependencies": dependencies, "datasets": datasets, "strategies": strategies,
-                "freshness": freshness, "company_health": company_health,
+                "freshness": freshness, "company_health": company_health, "strategy_census": census_catalog,
                 "serious_validation_preflight": serious_validation_preflight, "warnings": warnings}
 
     @staticmethod
@@ -292,6 +300,7 @@ class CompanyControlPlane:
                 "datasets": model["datasets"] if department_id == "DATA" else [],
                 "dependencies": [d for d in model["dependencies"] if d["source_id"].startswith("WI-")],
                 "strategies": model["strategies"] if department_id == "QUANT_RESEARCH" else [],
+                "strategy_census": model["strategy_census"] if department_id == "QUANT_RESEARCH" else None,
                 "freshness_records": model["freshness"]["items"] if department_id == "PRODUCT_PLATFORM" else [],
                 "serious_validation_preflight": model["serious_validation_preflight"] if department_id in {"QUANT_RESEARCH", "SCIENTIFIC_QA"} else None}
 

@@ -1,6 +1,6 @@
 """Canonical, read-only strategy pipeline projection for the Company Control Plane.
 
-Only explicit Phase 7.7A/7.7B/7.9A/7.9B facts are projected.  Code registry status,
+Only explicit artifact-backed facts are projected. Code registry status,
 scientific evidence and meta-filter readiness deliberately remain separate.
 """
 from __future__ import annotations
@@ -16,6 +16,9 @@ P77A = ROOT / "research_scripts" / "phase7" / "phase7_7a"
 P77B = ROOT / "research_scripts" / "phase7" / "phase7_7b"
 P79A = ROOT / "research_scripts" / "phase7" / "phase7_9a"
 P79B = ROOT / "research_scripts" / "phase7" / "phase7_9b"
+P79K = ROOT / "research_scripts" / "phase7" / "phase7_9k"
+P710 = ROOT / "research_scripts" / "phase7" / "phase7_10"
+P711 = ROOT / "research_scripts" / "phase7" / "phase7_11"
 
 SOURCES = {
     "lifecycle": P77A / "strategy_lifecycle_registry_v1.json",
@@ -29,6 +32,13 @@ SOURCES = {
     "breakout_acc_lifecycle": P79B / "breakout_acc_lifecycle_contract_v1.json",
     "breakout_acc_lineage": P79B / "breakout_acc_evidence_lineage_v1.json",
     "breakout_acc_decision": P79B / "breakout_acc_formalization_decision_v1.json",
+    "breakout_acc_decision_v2": P79K / "breakout_acc_decision_card_v2.json",
+    "breakout_acc_dataset_v2": P79K / "breakout_acc_intended_d1_v2_dataset.json",
+    "breakout_acc_path_v2": P79K / "breakout_acc_path_anatomy_v2.json",
+    "breakout_acc_natural_horizon_v2": P79K / "breakout_acc_natural_horizon_v2.json",
+    "breakout_acc_temporal_contract": P79K / "breakout_acc_temporal_contract_v1.json",
+    "implementation_audit": P710 / "stateful_strategy_static_audit_v1.json",
+    "strategy_census": P711 / "complete_strategy_census_v1.json",
 }
 
 PIPELINE_STAGES = [
@@ -82,6 +92,13 @@ class StrategyPipelineCatalog:
         breakout_contract = _payload(docs["breakout_acc_lifecycle"])
         breakout_lineage = _payload(docs["breakout_acc_lineage"])
         breakout_decision = _payload(docs["breakout_acc_decision"])
+        breakout_decision_v2 = _payload(docs["breakout_acc_decision_v2"])
+        breakout_dataset_v2 = _payload(docs["breakout_acc_dataset_v2"])
+        breakout_path_v2 = _payload(docs["breakout_acc_path_v2"])
+        breakout_horizon_v2 = _payload(docs["breakout_acc_natural_horizon_v2"])
+        breakout_temporal = _payload(docs["breakout_acc_temporal_contract"])
+        audit_rows = _list(_payload(docs["implementation_audit"]).get("candidates"))
+        census_rows = _list(_payload(docs["strategy_census"]).get("census_rows"))
 
         deep = _dict(lifecycle.get("deep_dive_candidates"))
         survey_rows = _list(_dict(lifecycle.get("full_registry_survey")).get("strategies"))
@@ -304,11 +321,92 @@ class StrategyPipelineCatalog:
                     },
                     "execution_candidate": False, "meta_filter_ready": False, "deployable": False,
                     "projection_metadata": {
-                        "latest_phase": "7.9B",
-                        "latest_source": _repo_path(SOURCES["breakout_acc_decision"]),
+                        "latest_phase": "7.9K",
+                        "latest_source": _repo_path(SOURCES["breakout_acc_decision_v2"]),
                     },
                 })
                 item["provenance"]["sources"] = [source for source in item["provenance"]["sources"] if "phase7_9a" not in source]
+
+                decision_card = _dict(breakout_decision_v2.get("decision_card"))
+                aggregate = _dict(breakout_path_v2.get("aggregate_before_after"))
+                directions = _dict(breakout_path_v2.get("by_direction_continuation_before_after"))
+                horizon_rows = _list(breakout_horizon_v2.get("per_bar_curve"))
+                horizon_market_bars = max(
+                    (row.get("bar_d1") for row in horizon_rows if isinstance(row, dict) and isinstance(row.get("bar_d1"), (int, float))),
+                    default=None,
+                )
+                coverage_change = next((_dict(row) for row in _list(breakout_path_v2.get("per_event_before_after")) if _dict(row).get("coverage_status_change") is True), {})
+                events = _list(breakout_dataset_v2.get("events"))
+                stages: dict[str, int] = {}
+                populations: dict[str, int] = {}
+                for event in events:
+                    if not isinstance(event, dict):
+                        continue
+                    stage = event.get("funnel_terminal_stage")
+                    population = event.get("population_source")
+                    if stage: stages[stage] = stages.get(stage, 0) + 1
+                    if population: populations[population] = populations.get(population, 0) + 1
+                audit = next((_dict(row) for row in audit_rows if _dict(row).get("strategy") == "BREAKOUT_ACC"), {})
+                census = next((_dict(row) for row in census_rows if _dict(row).get("canonical_strategy_id") == "BREAKOUT_ACC"), {})
+                item.update({
+                    "canonical_strategy_identity": breakout_dataset_v2.get("dataset_name"),
+                    "dataset_version": breakout_dataset_v2.get("dataset_schema_version"),
+                    "scientific_verdict": breakout_decision_v2.get("final_decision"),
+                    "scientific_confidence": _dict(decision_card.get("confidence")).get("answer"),
+                    "non_randomness_and_incremental_edge": _dict(decision_card.get("esiste_evidenza_di_comportamento_non_casuale")).get("answer"),
+                    "trend_alignment_effect": _dict(breakout_decision_v2.get("ema100_precision")).get("alignment_constant_interpretation"),
+                    "natural_horizon_status": _dict(decision_card.get("il_natural_horizon_e_identificabile")).get("answer"),
+                    "implementation_audit": {
+                        "classification": audit.get("classification"), "status": audit.get("status"),
+                        "evidence": audit.get("evidence"),
+                        "historical_contamination": audit.get("classification") == "DEFECT_CONFIRMED" and str(audit.get("status", "")).startswith("FIXED_"),
+                    },
+                    "census_identity": {
+                        "current_status": census.get("current_status"), "registry_presence": census.get("registry_presence"),
+                        "known_defects": census.get("known_implementation_defects"),
+                    },
+                    "research_funnel": {
+                        "live_observed": populations.get("LIVE_TRACE_GENERATED"),
+                        "opened": stages.get("OPENED"), "blocked": stages.get("BLOCKED"),
+                        "broker_reject": stages.get("BROKER_REJECT"),
+                        "b_only": populations.get("OFFLINE_ISOLATED_RECONSTRUCTION_ONLY"),
+                        "total_events": breakout_dataset_v2.get("total_events"),
+                    },
+                    "outcome_change_audit": {
+                        "comparable_events": aggregate.get("n_comparable_v1_v2_both_determinate"),
+                        "binary_outcome_flips": aggregate.get("n_outcome_flips_continuation_vs_failure"),
+                        "binary_outcome_flip_denominator": aggregate.get("n_outcome_flips_denominator"),
+                        "binary_outcome_flip_pct": round(
+                            100 * aggregate.get("n_outcome_flips_continuation_vs_failure") / aggregate.get("n_outcome_flips_denominator"), 1
+                        ) if aggregate.get("n_outcome_flips_denominator") else None,
+                        "coverage_status_changes": aggregate.get("n_coverage_status_changes"),
+                        "coverage_transition": {
+                            "from": coverage_change.get("v1_classification"),
+                            "to": coverage_change.get("v2_classification"),
+                            "coverage_bars": coverage_change.get("v2_coverage_bars"),
+                        },
+                        "note": breakout_path_v2.get("outcome_flip_vs_coverage_status_change_note"),
+                    },
+                    "fixed_horizon_results": {"horizon_market_bars": horizon_market_bars, "BUY": _dict(directions.get("BUY")), "SELL": _dict(directions.get("SELL"))},
+                    "measurement_boundaries": {
+                        "post_signal": _dict(breakout_dataset_v2.get("two_separate_measurements")).get("measurement_A_post_signal"),
+                        "post_fill": _dict(breakout_dataset_v2.get("two_separate_measurements")).get("measurement_B_post_fill"),
+                        "bar_semantics": breakout_horizon_v2.get("bar_semantics"),
+                        "market_bars": _dict(breakout_temporal.get("definitions")).get("market_bars_vs_calendar_days"),
+                        "first_full_bar": _dict(breakout_temporal.get("definitions")).get("first_full_d1_bar"),
+                        "intraday_gap": _dict(breakout_temporal.get("coverage_statement")).get("conclusion"),
+                        "censoring": breakout_path_v2.get("censoring_note"),
+                        "ema100": _dict(breakout_decision_v2.get("ema100_precision")),
+                    },
+                    "source_authority": [
+                        {"scope": "IMPLEMENTATION_AUDIT", "phase": "7.10", "status": "CURRENT", "source": _repo_path(SOURCES["implementation_audit"]), "sha256": docs["implementation_audit"].get("canonical_sha256") if docs["implementation_audit"] else None},
+                        {"scope": "CENSUS_AND_LINEAGE", "phase": "7.11", "status": "CURRENT", "source": _repo_path(SOURCES["strategy_census"]), "sha256": docs["strategy_census"].get("canonical_sha256") if docs["strategy_census"] else None},
+                        {"scope": "STRATEGY_RESEARCH", "phase": "7.9K", "status": "HISTORICAL", "source": _repo_path(SOURCES["breakout_acc_decision_v2"]), "sha256": docs["breakout_acc_decision_v2"].get("canonical_sha256") if docs["breakout_acc_decision_v2"] else None, "superseded_by": "server/research_scripts/phase7/phase7_21/breakoutacc_decision_card_v1.json"},
+                        {"scope": "FORMALIZATION", "phase": "7.9B", "status": "HISTORICAL", "source": _repo_path(SOURCES["breakout_acc_decision"])},
+                        {"scope": "DATASET", "phase": "7.9K", "status": "CURRENT", "source": _repo_path(SOURCES["breakout_acc_dataset_v2"]), "supersedes": breakout_dataset_v2.get("supersedes_path"), "supersedes_sha256": breakout_dataset_v2.get("supersedes_sha256")},
+                    ],
+                    "execution_candidate": False, "meta_filter_ready": False, "deployable": False,
+                })
             strategies.append(item)
 
         freshness = projection_freshness.CATALOG.build(strategies)
