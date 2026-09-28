@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/nexus-event.schema.json",
+  "title": "NEXUS_EVENT_V1",
+  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "task_id", "timestamp", "tenant_id", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "TASK_CREATED", "TASK_QUEUED", "TASK_STARTED", "TASK_COMPLETED", "TASK_FAILED",
+        "TASK_BLOCKED", "AGENT_ESCALATED", "RUN_STARTED", "RUN_COMPLETED", "TEST_PASSED",
+        "TEST_FAILED", "DATASET_READY", "COMMIT_CREATED", "PUSH_COMPLETED", "DEPLOY_READY",
+        "NEW_FORWARD_TRADE", "HYPOTHESIS_CREATED", "EXPERIMENT_COMPLETED", "EDGE_GATE_CHANGED",
+        "APPROVAL_REQUIRED", "APPROVAL_GRANTED", "APPROVAL_DENIED"
+      ]
+    },
+    "task_id": { "type": ["string", "null"] },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "tenant_id": { "type": "string" },
+    "payload": { "type": "object" }
+  }
+}

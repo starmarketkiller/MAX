@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/context-packet.schema.json",
+  "title": "NEXUS CONTEXT_PACKET_V1",
+  "description": "Pacchetto minimo passato a un agente premium (Claude/Codex) in escalation - scopo: non fargli rileggere tutto il repo. provenance riusa la forma gia' stabilita in server/research_control_plane.py (source_artifact, canonical_sha256, generated_at, mode).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "objective", "relevant_findings", "canonical_artifacts", "current_head", "allowed_files",
+    "exact_question", "previous_attempts", "failures", "tests", "constraints",
+    "forbidden_actions", "output_required"
+  ],
+  "properties": {
+    "objective": { "type": "string" },
+    "relevant_findings": { "type": "array", "items": { "type": "string" } },
+    "canonical_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_artifact", "canonical_sha256", "generated_at", "mode"],
+        "properties": {
+          "source_artifact": { "type": "string" },
+          "canonical_sha256": { "type": "string" },
+          "generated_at": { "type": "string", "format": "date-time" },
+          "mode": { "type": "string", "enum": ["CANONICAL_ARTIFACT", "DERIVED_SUMMARY"] }
+        }
+      }
+    },
+    "current_head": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "allowed_files": { "type": "array", "items": { "type": "string" } },
+    "exact_question": { "type": "string", "minLength": 1 },
+    "previous_attempts": { "type": "array", "items": { "type": "string" } },
+    "failures": { "type": "array", "items": { "type": "string" } },
+    "tests": { "type": "array", "items": { "type": "string" } },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "forbidden_actions": { "type": "array", "items": { "type": "string" } },
+    "output_required": { "type": "string" }
+  }
+}

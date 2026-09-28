@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/agent-capability-registry.schema.json",
+  "title": "NEXUS AGENT_CAPABILITY_REGISTRY_V1",
+  "description": "Provider-agnostic: un record per ogni agente/runtime disponibile (locale o remoto). Riusa agent_id/tenant_id nella stessa forma di docs/NEXUS_MASTER_PROJECT.md Blocco A3.8 (agent_id, agent_type, capabilities, tenant_id).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "agents"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/agent" }
+    }
+  },
+  "definitions": {
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id", "provider", "model_or_runtime", "local_or_remote", "capabilities",
+        "coding_ability", "scientific_reasoning", "browser_access", "terminal_access",
+        "file_access", "github_access", "vault_access", "mt5_access", "max_concurrency",
+        "cost_class", "quota_state", "availability", "trust_level", "allowed_task_types",
+        "forbidden_task_types"
+      ],
+      "properties": {
+        "agent_id": { "type": "string" },
+        "provider": { "type": "string", "description": "es. 'anthropic', 'openai', 'local-ollama', 'local-llamacpp'." },
+        "model_or_runtime": { "type": "string" },
+        "local_or_remote": { "type": "string", "enum": ["LOCAL", "REMOTE"] },
+        "capabilities": { "type": "array", "items": { "type": "string" } },
+        "coding_ability": { "type": "string", "enum": ["NONE", "BASIC", "MODERATE", "STRONG"] },
+        "scientific_reasoning": { "type": "string", "enum": ["NONE", "BASIC", "MODERATE", "STRONG"] },
+        "browser_access": { "type": "boolean" },
+        "terminal_access": { "type": "boolean" },
+        "file_access": { "type": "string", "enum": ["NONE", "READ_ONLY", "READ_WRITE"] },
+        "github_access": { "type": "boolean" },
+        "vault_access": { "type": "string", "enum": ["NONE", "READ_ONLY", "READ_WRITE"] },
+        "mt5_access": { "type": "string", "enum": ["NONE", "READ_ONLY", "RUN_MANAGEMENT"] },
+        "max_concurrency": { "type": "integer", "minimum": 0 },
+        "cost_class": { "type": "string", "enum": ["FREE", "LOCAL_COMPUTE", "CHEAP_PREMIUM", "EXPENSIVE_PREMIUM"] },
+        "quota_state": { "type": "string", "enum": ["AVAILABLE", "LOW_QUOTA", "EXHAUSTED", "OFFLINE", "RATE_LIMITED"] },
+        "availability": { "type": "string", "enum": ["ONLINE", "OFFLINE", "DEGRADED"] },
+        "trust_level": { "type": "string", "enum": ["UNTRUSTED", "SANDBOXED", "TRUSTED", "FULLY_TRUSTED"] },
+        "allowed_task_types": { "type": "array", "items": { "type": "string" } },
+        "forbidden_task_types": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

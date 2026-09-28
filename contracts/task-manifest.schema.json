@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/task-manifest.schema.json",
+  "title": "NEXUS TASK_MANIFEST_V1",
+  "description": "Descrizione machine-readable di un task da instradare (routing) fra Tier 0-4. Riusa la forma tenant/account_scope gia' stabilita in server/research_control_plane.py (TENANT dict) per coerenza col Vault contract esistente.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id", "title", "objective", "task_type", "priority", "risk_level",
+    "scientific_risk", "code_risk", "financial_risk", "required_capabilities",
+    "deterministic_tools_available", "repo_scope", "files_allowed", "files_forbidden",
+    "dependencies", "blockers", "expected_artifacts", "success_criteria", "verifier",
+    "estimated_complexity", "estimated_runtime", "premium_allowed", "preferred_executor",
+    "fallback_executors", "approval_required", "created_by", "created_at",
+    "tenant_id", "account_scope_id"
+  ],
+  "properties": {
+    "task_id": { "type": "string", "pattern": "^TASK_[A-Za-z0-9_]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "task_type": {
+      "type": "string",
+      "enum": ["RESEARCH", "CODE", "MARKET", "MT5_RUN", "MAINTENANCE", "DEPLOY", "APPROVAL",
+               "DOCUMENTATION", "BACKFILL", "MONITORING"]
+    },
+    "priority": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "URGENT"] },
+    "risk_level": { "type": "string", "enum": ["A0", "A1", "A2", "A3", "A4", "A5"],
+      "description": "Riusa la scala di rischio A0-A5 gia' definita in docs/NEXUS_MASTER_PROJECT.md Blocco A3.8 per le azioni AI - non una scala nuova." },
+    "scientific_risk": { "type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH"] },
+    "code_risk": { "type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH"] },
+    "financial_risk": { "type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH"] },
+    "required_capabilities": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "deterministic_tools_available": { "type": "boolean" },
+    "repo_scope": { "type": "string" },
+    "files_allowed": { "type": "array", "items": { "type": "string" } },
+    "files_forbidden": { "type": "array", "items": { "type": "string" } },
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "blockers": { "type": "array", "items": { "type": "string" } },
+    "expected_artifacts": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "success_criteria": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "verifier": { "type": "string", "description": "Path o nome del verificatore indipendente da eseguire per confermare il success_criteria." },
+    "estimated_complexity": { "type": "string", "enum": ["TRIVIAL", "SMALL", "MEDIUM", "LARGE", "XLARGE"] },
+    "estimated_runtime": { "type": "string", "description": "Stima dichiarata, es. '5m', '2h' - non una garanzia." },
+    "premium_allowed": { "type": "boolean" },
+    "preferred_executor": { "type": "string", "enum": ["TIER0_DETERMINISTIC", "TIER1_LOCAL_CHEAP", "TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX", "SPECIALIST"] },
+    "fallback_executors": { "type": "array", "items": { "type": "string", "enum": ["TIER0_DETERMINISTIC", "TIER1_LOCAL_CHEAP", "TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX", "SPECIALIST"] } },
+    "approval_required": { "type": "string", "enum": ["AUTO", "REVIEW_REQUIRED", "EXPLICIT_USER_APPROVAL"] },
+    "created_by": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "tenant_id": { "type": "string" },
+    "account_scope_id": { "type": ["string", "null"] }
+  }
+}

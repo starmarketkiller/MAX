@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-09-28T13:09:46.323409+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_install_plan.py",
+  "canonical_sha256": "1119ce8517dd3fabd30296f608d8e54a23a50bedd8fcc1b29809de148bcb0f6a",
+  "payload": {
+    "already_ready": [
+      "Python 3.12.10",
+      "Node v24.18.0",
+      "Git 2.55.0",
+      "GitHub CLI 2.96.0 (autenticato)",
+      "Repository locale (working tree pulito, HEAD aggiornato)"
+    ],
+    "missing": [
+      "Ollama (runtime)",
+      "Modello qwen2.5:7b-instruct-q4_K_M",
+      "Modello opzionale qwen2.5:3b-instruct-q4_K_M"
+    ],
+    "steps": [
+      {
+        "step": 1,
+        "action": "Installare Ollama per Windows (installer .exe ufficiale)",
+        "login_required": false,
+        "download_size_mb_approx": 200,
+        "disk_usage_after_install_mb_approx": 700
+      },
+      {
+        "step": 2,
+        "action": "ollama pull qwen2.5:7b-instruct-q4_K_M",
+        "login_required": false,
+        "download_size_gb_approx": 4.7,
+        "ram_requirement_gb_approx": 5.0
+      },
+      {
+        "step": 3,
+        "action": "ollama pull qwen2.5:3b-instruct-q4_K_M (opzionale, solo se si conferma la strategia a due modelli dopo il pilota)",
+        "login_required": false,
+        "download_size_gb_approx": 2.0,
+        "ram_requirement_gb_approx": 2.5
+      }
+    ],
+    "total_disk_estimate_gb": 6.9,
+    "total_download_estimate_gb": 6.9,
+    "free_disk_available_gb": 279.63,
+    "disk_headroom_after_install_gb_approx": 272.7,
+    "no_login_required_for_any_step": true,
+    "not_installed_in_this_phase": true,
+    "rationale_for_deferring_install": "Il task chiede esplicitamente di completare l'inventario e produrre una raccomandazione PRIMA di installare - l'installazione effettiva e il pilota (Parte C, punto 39) sono un passo successivo, da eseguire solo dopo revisione di questa raccomandazione."
+  }
+}

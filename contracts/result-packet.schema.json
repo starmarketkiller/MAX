@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/result-packet.schema.json",
+  "title": "NEXUS RESULT_PACKET_V1",
+  "description": "Ogni esecutore (Tier 0-4) restituisce questo pacchetto al termine di un task - confidence NON e' auto-valutazione del modello, va derivata da verifier/tests/provenance (vedi routing-policy.schema.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id", "executor", "start_time", "end_time", "files_read", "files_changed",
+    "tools_or_commands", "artifacts_created", "tests", "verifier", "commit", "push_status",
+    "decision", "confidence", "limitations", "unresolved_issues", "suggested_next_tasks",
+    "escalation_needed"
+  ],
+  "properties": {
+    "task_id": { "type": "string" },
+    "executor": { "type": "string" },
+    "start_time": { "type": "string", "format": "date-time" },
+    "end_time": { "type": "string", "format": "date-time" },
+    "files_read": { "type": "array", "items": { "type": "string" } },
+    "files_changed": { "type": "array", "items": { "type": "string" } },
+    "tools_or_commands": { "type": "array", "items": { "type": "string" } },
+    "artifacts_created": { "type": "array", "items": { "type": "string" } },
+    "tests": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ran", "passed", "failed"],
+      "properties": {
+        "ran": { "type": "boolean" }, "passed": { "type": "integer" }, "failed": { "type": "integer" }
+      }
+    },
+    "verifier": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ran", "passed", "errors"],
+      "properties": {
+        "ran": { "type": "boolean" }, "passed": { "type": "boolean" },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "commit": { "type": ["string", "null"] },
+    "push_status": { "type": "string", "enum": ["NOT_APPLICABLE", "NOT_PUSHED", "PUSHED", "FAILED"] },
+    "decision": { "type": "string" },
+    "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"] },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "unresolved_issues": { "type": "array", "items": { "type": "string" } },
+    "suggested_next_tasks": { "type": "array", "items": { "type": "string" } },
+    "escalation_needed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["needed", "reason", "target_tier"],
+      "properties": {
+        "needed": { "type": "boolean" },
+        "reason": { "type": ["string", "null"] },
+        "target_tier": { "type": ["string", "null"], "enum": ["TIER0_DETERMINISTIC", "TIER1_LOCAL_CHEAP", "TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX", "SPECIALIST", null] }
+      }
+    }
+  }
+}

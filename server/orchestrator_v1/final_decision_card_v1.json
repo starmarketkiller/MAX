@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-28T13:11:35.539642+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_final_decision_card.py",
+  "canonical_sha256": "ff07ec63bc693a20b4c443d626b0da7e4dafa7a6bde16e7ea981deaea225bd7a",
+  "payload": {
+    "architecture_decision": "ORCHESTRATOR_ARCHITECTURE_READY",
+    "architecture_reason": "I 23 punti della Parte A sono specificati con schemi machine-readable (6 file contracts/*.schema.json), riconciliati esplicitamente con l'architettura AI gia' normativa (docs/NEXUS_MASTER_PROJECT.md Blocco A3.8) e col Vault contract gia' implementato (server/research_control_plane.py) - nessuna contraddizione trovata, solo estensione al dominio dei task di ricerca/sviluppo (questa architettura), distinto dal dominio del trading live (A3.8).",
+    "local_runtime_decision": "LOCAL_RUNTIME_NEEDS_SETUP",
+    "local_runtime_reason": "Nessun runtime locale (Ollama/llama.cpp/LM Studio/vLLM) e nessun modello risultano installati su questa macchina (verificato per comando e per ricerca su disco, non assunto). Raccomandazione prodotta (model_recommendation_v1.json) ma NESSUNA installazione eseguita in questa fase, come esplicitamente richiesto dal task. Il primo pilota (first_pilot_spec_v1.json) resta bloccato su questo setup.",
+    "combined_summary": "ORCHESTRATOR_ARCHITECTURE_READY + LOCAL_RUNTIME_NEEDS_SETUP",
+    "next_action_required": "Revisione umana della raccomandazione (Ollama + qwen2.5:7b-instruct-q4_K_M, ~6.9GB download totale, nessun login) - poi installazione e primo pilota (backfill temporal_concentration/exit_efficiency BREAKOUT_ACC+ORDER_BLOCK).",
+    "no_mql5_changes": true,
+    "no_optimization": true,
+    "no_deploy": true,
+    "no_new_backtests": true,
+    "no_heavy_install_performed": true
+  }
+}
