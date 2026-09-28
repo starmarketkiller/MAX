@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-09-28T06:03:43.815814+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_24\\build_python_fidelity_classification.py",
+  "canonical_sha256": "bb987749e56ff84b5587cf6e0b446da69e4cf1371b6f37fa1ef940244ae1ba9c",
+  "payload": {
+    "canonical_exit_definition": {
+      "mql5": "NXS_DefaultSLTP() - uscita FISSA: SL = entry -/+ 1.5*ATR, TP = entry +/- 3.0*ATR (R:R=2.0 costante, da NXS_Profile_SLTP('LIQ_SWEEP')). Questa e' l'unica logica di uscita realmente eseguita dal vivo/nel Tester per LIQ_SWEEP - fonte di ogni P&L nel dataset canonico di questa fase.",
+      "python_historical_proxy": "_liq_sweep_target() - uscita DINAMICA su pool di liquidita' opposti (PDH/PDL/Asia/swing_ext), min_rr=1.2, sl_mult=1.5. Dichiarata nel codice stesso come sostituzione di 'un multiplo fisso di ATR' - cioe' esplicitamente NON un tentativo di replicare l'exit MQL5, ma una variante di ricerca indipendente."
+    },
+    "consequence": [
+      "Python NON puo' essere usato per validare PF/expectancy/P&L della strategia canonica LIQ_SWEEP (qualunque numero economico calcolato da Python misura una strategia con lo stesso ingresso ma un'uscita diversa, non quella che gira dal vivo).",
+      "Python PUO' essere usato solo per confronti compatibili col livello di fedelta' dimostrato in Phase 7.23: identita' dell'ingresso (sweep detection, delivery-candle filter, direction gate - tutti EVENT_LEVEL_FAITHFUL_FOR_THIS_SUBCOMPONENT o PARTIAL_STRUCTURAL_MODEL per lettura diretta del codice). Un uso legittimo futuro sarebbe un confronto di SEGNALI (date/direzioni dei trigger), mai di P&L."
+    ],
+    "fidelity_classification_per_component": {
+      "1_sweep_detection": "PARTIAL_STRUCTURAL_MODEL",
+      "2_delivery_candle_filter": "EVENT_LEVEL_FAITHFUL_FOR_THIS_SUBCOMPONENT",
+      "3_direction_gate": "EVENT_LEVEL_FAITHFUL_FOR_THIS_SUBCOMPONENT",
+      "4_htf_alignment_filter": "NOT_APPLICABLE_STRUCTURAL_DIFFERENCE",
+      "5_exit_sl_tp": "STRUCTURALLY_DIFFERENT_NOT_COMPARABLE"
+    },
+    "overall_classification": "PARTIAL_STRUCTURAL_MODEL_FOR_ENTRY_ONLY - il motore Python e' strutturalmente allineato a MQL5 SOLO per l'entry trigger (sweep+delivery-candle+direzione) - NON per l'uscita (SL/TP), che e' un'implementazione diversa per costruzione. Qualunque PF/expectancy calcolato da Python per LIQ_SWEEP misura una strategia CON LO STESSO INGRESSO ma un'uscita diversa - non e' evidenza economica della strategia che MQL5 esegue dal vivo.",
+    "no_python_code_modified_to_force_pnl_match": true,
+    "rule_applied": "MT5 e' ground truth quando Python non replica fedelmente execution/lifecycle (regola di progetto gia' stabilita) - il dataset canonico di questa fase (liq_sweep_canonical_dataset_v1.json) e' costruito ESCLUSIVAMENTE da MT5, zero dipendenza da Python."
+  }
+}

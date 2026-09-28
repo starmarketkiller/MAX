@@ -212,16 +212,26 @@ def collect_after_run(manifest, manifest_path):
 def _detect_text_encoding(path):
     """NXS_LogTradeCSV apre il file con FILE_CSV (senza FILE_ANSI) -> MQL5
     scrive UTF-16LE con BOM per default. Rilevato per BOM, non assunto -
-    trovato un bug reale in questa fase (la prima versione di questa
-    funzione assumeva utf-8-sig ed è silenziosamente fallita, riportando
-    n_trade_closes_in_csv=0 invece di 43 reali - corretto, verificato dal
-    verificatore indipendente)."""
+    trovato un bug reale in Phase 7.23 (la prima versione di questa
+    funzione assumeva utf-8-sig ed è fallita silenziosamente, riportando
+    n_trade_closes_in_csv=0 invece di 43 reali - corretto).
+
+    Un SECONDO bug, piu' sottile, e' stato trovato in Phase 7.24: questa
+    funzione restituiva 'utf-16-le'/'utf-16-be' invece del codec generico
+    'utf-16' - il codec esplicito -le/-be NON rimuove il BOM dal testo
+    decodificato (lo fa solo 'utf-16', che lo usa per determinare
+    l'endianness e poi lo scarta), lasciando un carattere U+FEFF invisibile
+    incollato al primo campo della prima riga del file. Quando quel campo
+    era un timestamp usato per un confronto/ordinamento su stringhe (come
+    in build_liq_sweep_diagnostic_run.py), U+FEFF (65279) ordina DOPO
+    qualunque cifra ASCII, quindi il primo OPEN cronologico finiva in
+    fondo alla lista ordinata invece che in testa - causa esatta del
+    residuo 42 vs 41 eventi appaiati scoperto in Phase 7.24 (43 open/42
+    close reali, ma un solo appaiamento perso per corruzione dell'ordine)."""
     with open(path, "rb") as f:
         head = f.read(4)
-    if head[:2] == b"\xff\xfe":
-        return "utf-16-le"
-    if head[:2] == b"\xfe\xff":
-        return "utf-16-be"
+    if head[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        return "utf-16"
     if head[:3] == b"\xef\xbb\xbf":
         return "utf-8-sig"
     return "utf-8"

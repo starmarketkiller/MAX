@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-09-28T06:04:03.932650+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_24\\build_readiness_decision_card.py",
+  "canonical_sha256": "a7793efa59e7ba2886e0e8e3d002d634033049aa4a837e53cac7a2126815307a",
+  "payload": {
+    "decision": "READY_WITH_DOCUMENTED_LIMITATION",
+    "reason": "Il dataset MT5 e' internamente riconciliato (ogni conteggio del funnel torna aritmeticamente, il residuo 42 vs 43 e' interamente spiegato: 1 posizione ancora aperta a fine finestra, EXPECTED_FUNNEL_DIFFERENCE, zero DATA_LOSS/UNKNOWN) e riproducibile (harness di isolamento Phase 7.23, provenance completa: run_id/SHA/config hash). La 'limitazione documentata' e' che Python NON puo' essere usato per validare P&L/PF di questa strategia (uscita strutturalmente diversa, non un bug) - qualunque edge validation futura deve usare SOLO il dataset MT5 canonico di questa fase, mai un run Python per l'economia della strategia.",
+    "checks": {
+      "funnel_arithmetically_reconciled": true,
+      "residual_fully_adjudicated_no_unknown": true,
+      "residual_no_data_loss": true,
+      "canonical_dataset_built_from_mt5_only": true,
+      "canonical_dataset_nonempty": true,
+      "run_isolation_harness_used": true,
+      "python_exit_mismatch_documented_not_hidden": true,
+      "python_fidelity_explicitly_classified": true
+    },
+    "canonical_dataset_ref": "liq_sweep_canonical_dataset_v1.json",
+    "n_events_closed_economic": 42,
+    "n_events_open_at_period_end": 1,
+    "net_pnl_closed_only_diagnostic_not_edge_conclusion": 1076.3,
+    "no_optimization_performed": true,
+    "no_further_economic_analysis_this_phase": true,
+    "note_for_next_phase": "Se READY_WITH_DOCUMENTED_LIMITATION o READY_FOR_EDGE_VALIDATION: la prossima fase autorizzata e' LIQ_SWEEP EDGE_VALIDATION_V1 (stesso protocollo di BREAKOUT_ACC/ORDER_BLOCK: expectancy, concentrazione, costi, CI, OOS, minimum viable capital, visual audit) usando ESCLUSIVAMENTE il dataset canonico di questa fase come input primario - non un nuovo run, salvo necessita' dimostrata durante quella fase stessa (es. OOS forward)."
+  }
+}

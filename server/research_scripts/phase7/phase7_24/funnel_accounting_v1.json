@@ -1,0 +1,108 @@
+{
+  "generated_at": "2026-09-28T06:02:56.864537+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_24\\build_funnel_accounting.py",
+  "canonical_sha256": "ee50f89b50f3c656acec970a91f8c022a62cd07f413af68d02a1fa5ec93874e4",
+  "payload": {
+    "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+    "run_isolation_manifest": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_23\\runs\\liq_sweep_diagnostic\\LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939.manifest.json",
+    "funnel_stages": [
+      {
+        "stage": "1_raw_event_generated",
+        "count": 3672,
+        "source": "certificato, riga --- Funnel ---, campo GENERATED",
+        "meaning": "ogni barra D1 chiusa in cui il detector di sweep + filtro delivery-candle + direzione producono un segnale valido (prima di qualunque gate applicativo)."
+      },
+      {
+        "stage": "2_blocked_by_gate",
+        "count": 3623,
+        "source": "certificato, campo BLOCKED (+ dettaglio gate_reasons)",
+        "meaning": "segnale generato ma scartato da un gate del router (soprattutto OPEN_POSITION: gia' una posizione LIQ_SWEEP aperta, dato che il selettore 7 e' single-position-at-a-time; in misura minore TF_GATE)."
+      },
+      {
+        "stage": "3_open_attempt",
+        "count": 49,
+        "source": "certificato, campo OPEN_ATTEMPT",
+        "meaning": "segnale passato tutti i gate, ordine di apertura tentato verso il broker simulato del Tester."
+      },
+      {
+        "stage": "4_broker_reject",
+        "count": 6,
+        "source": "certificato, campo BROKER_REJECT",
+        "meaning": "tentativo di apertura rifiutato dal broker simulato (fuori scope di questa fase indagare il motivo specifico - non e' l'oggetto dell'adjudication richiesta, nessuna anomalia dichiarata dal certificato su questo campo)."
+      },
+      {
+        "stage": "5_opened",
+        "count": 43,
+        "source": "conteggio righe OPEN in NEXUS_trades.csv (strategy=LIQ_SWEEP) - riconciliato 1:1 con il campo OPENED del certificato",
+        "meaning": "posizione realmente aperta nel Tester - fonte di verita' riga-per-riga."
+      },
+      {
+        "stage": "6_closed_within_window",
+        "count": 42,
+        "source": "conteggio righe CLOSE in NEXUS_trades.csv (strategy=LIQ_SWEEP)",
+        "meaning": "posizione chiusa (SL/TP/altro) PRIMA della fine del periodo testato."
+      },
+      {
+        "stage": "7_still_open_at_period_end",
+        "count": 1,
+        "source": "OPEN senza CLOSE corrispondente dopo appaiamento FIFO cronologico corretto",
+        "meaning": "posizione ancora aperta quando il Tester ha raggiunto period_end - MAI chiusa nella finestra, quindi non ha e non potra' mai avere una riga CLOSE in QUESTO run."
+      },
+      {
+        "stage": "8_events_used_economically",
+        "count": 42,
+        "source": "appaiamento OPEN<->CLOSE cronologico (questa fase)",
+        "meaning": "eventi con lifecycle completo (entry+exit+P&L reale) - il dataset primario per qualunque futura edge validation."
+      }
+    ],
+    "arithmetic_checks": {
+      "generated_eq_blocked_plus_open_attempt": {
+        "check": "3672 == 3623 + 49",
+        "holds": true
+      },
+      "open_attempt_eq_opened_plus_broker_reject": {
+        "check": "49 == 43 + 6",
+        "holds": true
+      },
+      "certificate_opened_eq_csv_open_rows": {
+        "check": "43 == 43",
+        "holds": true
+      },
+      "opened_eq_closed_plus_still_open": {
+        "check": "43 == 42 + 1",
+        "holds": true
+      },
+      "close_rows_eq_paired_events": {
+        "check": "42 == 42",
+        "holds": true
+      }
+    },
+    "all_arithmetic_checks_hold": true,
+    "residual_adjudication": [
+      {
+        "residual": "41 eventi appaiati (Phase 7.23) invece di 42 attesi (=n_close_rows)",
+        "classification": "LOGGING_ACCOUNTING_GAP_ROOT_CAUSE_FOUND_AND_FIXED",
+        "root_cause": "bug nell'harness (nxs_research_run_harness._detect_text_encoding, Phase 7.23): restituiva il codec esplicito 'utf-16-le'/'utf-16-be' invece del codec generico 'utf-16' - il primo NON rimuove il BOM dal testo decodificato, lasciando un carattere U+FEFF incollato al campo 'time' della PRIMISSIMA riga del file (il primo OPEN cronologico). U+FEFF (65279) ordina DOPO qualunque cifra ASCII in un confronto di stringhe, quindi quell'OPEN finiva in fondo alla lista ordinata invece che in testa, disallineando l'appaiamento FIFO e facendo fallire esattamente un confronto (l'ultimo, contro l'ultimo CLOSE cronologico).",
+        "evidence": "decodifica con 'utf-16-le' -> primo campo time = '\\ufeff2023.10.03 17:30:00' (verificato con repr() sui byte grezzi); decodifica con 'utf-16' -> '2023.10.03 17:30:00' pulito, 42 eventi appaiati correttamente, il singolo OPEN non appaiato rimasto e' quello GENUINAMENTE piu' recente (2026.06.25), non quello piu' vecchio.",
+        "fix_applied": "nxs_research_run_harness._detect_text_encoding ora ritorna 'utf-16' per qualunque BOM UTF-16 (LE o BE) - fix al research harness, nessuna modifica alla strategia. liq_sweep_diagnostic_run_v1.json (Phase 7.23) ricostruito con il fix: ora riporta 42 eventi, non piu' 41.",
+        "status": "RISOLTO - non e' piu' un residuo da questa fase in poi."
+      },
+      {
+        "residual": "43 OPEN vs 42 CLOSE (scarto di 1, post-fix)",
+        "classification": "EXPECTED_FUNNEL_DIFFERENCE",
+        "root_cause": "l'unico OPEN senza CLOSE corrispondente e' il segnale cronologicamente PIU' RECENTE dell'intero campione (2026.06.25 01:15:00, SELL, Sweep_high_reversal:Asia-High, entry 4001.49, SL 4191.82, TP 3620.84) - aperto solo ~4.9 giorni prima della fine della finestra testata (period_end=2026.06.29 23:58:58 dal certificato). L'ultimo CLOSE osservato nel campione e' del giorno precedente (2026.06.24 15:25:03). Gli hold_sec osservati sui 42 eventi chiusi vanno da poche ore a >80 giorni (mediana su base empirica, TF D1 con SL/TP ad ampiezza ATR) - una posizione ancora aperta dopo solo 4.9 giorni e' pienamente compatibile con la distribuzione osservata, non un'anomalia.",
+        "evidence": "verificato per costruzione: e' l'OPEN con timestamp massimo fra tutti gli OPEN del campione, e la sua distanza dal period_end del certificato e' positiva e piccola (4.9 giorni) - nessun'altra spiegazione compatibile (non e' un evento duplicato, non manca un CLOSE altrove nel file: verificato che nessun'altra riga CLOSE nel CSV grezzo referenzia un timestamp/prezzo compatibile con questo OPEN).",
+        "fix_applied": null,
+        "status": "Non e' un difetto - e' l'esito atteso di qualunque backtest con una finestra temporale finita e almeno una posizione ancora in corso alla chiusura. Escluso per costruzione dal dataset economico canonico (nessun P&L realizzato disponibile) - incluso nel dataset canonico come evento OPEN_AT_PERIOD_END, non come evento chiuso."
+      }
+    ],
+    "final_counts": {
+      "generated": 3672,
+      "opened": 43,
+      "closed_within_window": 42,
+      "still_open_at_period_end": 1,
+      "events_used_economically": 42
+    },
+    "no_reconciliation_forced": true
+  }
+}

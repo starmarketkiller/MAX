@@ -1,0 +1,1267 @@
+{
+  "generated_at": "2026-09-28T06:03:19.904724+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_24\\build_canonical_dataset.py",
+  "canonical_sha256": "b1217af6d61f62defdfe9d244b90c386dcb6fac4af8736625c7b619bcd74c1cb",
+  "payload": {
+    "provenance": {
+      "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+      "run_isolation_manifest": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_23\\runs\\liq_sweep_diagnostic\\LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939.manifest.json",
+      "strategy_identity": "LIQ_SWEEP",
+      "selector": 7,
+      "symbol": "GOLD",
+      "code_git_sha": "7aba39a19ed6fe22c9d414ddf390c00036805d0e",
+      "config_hash": "66767008acee43f3",
+      "period_from": "2023.10.02",
+      "period_to": "2026.06.30",
+      "source": "MQL5 Strategy Tester (MT5) - ground truth. Nessun dato Python usato per costruire questo dataset."
+    },
+    "python_used_to_build_this_dataset": false,
+    "n_events_total": 43,
+    "n_events_closed_economic": 42,
+    "n_events_open_at_period_end": 1,
+    "net_pnl_closed_only": 1076.3,
+    "events": [
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_2",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "SELL",
+        "entry": {
+          "timestamp": "2023.10.03 17:30:00",
+          "signal_reference_price": 1826.29,
+          "signal_reason_tag": "Sweep_high_reversal:Asia-High",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 1853.07,
+          "planned_tp": 1772.73
+        },
+        "exit": {
+          "timestamp": "2023.10.09 01:03:37",
+          "exit_price": 1853.24,
+          "exit_reason": "sl",
+          "hold_seconds": 459217,
+          "r_multiple": -0.957,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -25.6,
+        "lots": 0.01,
+        "ticket": "2",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_4",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2023.10.20 18:00:00",
+          "signal_reference_price": 1991.19,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 1953.1,
+          "planned_tp": 2067.37
+        },
+        "exit": {
+          "timestamp": "2023.11.08 17:40:35",
+          "exit_price": 1953.03,
+          "exit_reason": "sl",
+          "hold_seconds": 1640435,
+          "r_multiple": -1.395,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -53.1,
+        "lots": 0.01,
+        "ticket": "4",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_6",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2023.12.04 02:15:00",
+          "signal_reference_price": 2110.2,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2077.26,
+          "planned_tp": 2176.08
+        },
+        "exit": {
+          "timestamp": "2023.12.04 08:50:17",
+          "exit_price": 2077.23,
+          "exit_reason": "sl",
+          "hold_seconds": 23717,
+          "r_multiple": -1.001,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -33.0,
+        "lots": 0.01,
+        "ticket": "6",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_8",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2023.12.14 01:15:00",
+          "signal_reference_price": 2025.97,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 1975.07,
+          "planned_tp": 2127.77
+        },
+        "exit": {
+          "timestamp": "2024.03.05 15:09:55",
+          "exit_price": 2127.77,
+          "exit_reason": "tp",
+          "hold_seconds": 7134895,
+          "r_multiple": 0.617,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 31.4,
+        "lots": 0.01,
+        "ticket": "8",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_10",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.03.05 16:15:00",
+          "signal_reference_price": 2130.59,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2100.68,
+          "planned_tp": 2190.4
+        },
+        "exit": {
+          "timestamp": "2024.03.08 19:05:21",
+          "exit_price": 2190.5,
+          "exit_reason": "tp",
+          "hold_seconds": 269421,
+          "r_multiple": 1.856,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 55.5,
+        "lots": 0.01,
+        "ticket": "10",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_12",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.03.21 01:15:00",
+          "signal_reference_price": 2204.32,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2161.7,
+          "planned_tp": 2289.55
+        },
+        "exit": {
+          "timestamp": "2024.03.22 18:48:18",
+          "exit_price": 2161.66,
+          "exit_reason": "sl",
+          "hold_seconds": 149598,
+          "r_multiple": -1.022,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -43.5,
+        "lots": 0.01,
+        "ticket": "12",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_14",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.04.01 04:15:00",
+          "signal_reference_price": 2259.59,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2217.23,
+          "planned_tp": 2344.32
+        },
+        "exit": {
+          "timestamp": "2024.04.08 05:38:17",
+          "exit_price": 2344.44,
+          "exit_reason": "tp",
+          "hold_seconds": 609797,
+          "r_multiple": 1.858,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 78.7,
+        "lots": 0.01,
+        "ticket": "14",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_16",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.04.08 05:45:00",
+          "signal_reference_price": 2344.96,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2293.85,
+          "planned_tp": 2447.18
+        },
+        "exit": {
+          "timestamp": "2024.04.23 12:17:27",
+          "exit_price": 2293.82,
+          "exit_reason": "sl",
+          "hold_seconds": 1319547,
+          "r_multiple": -1.259,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -64.3,
+        "lots": 0.01,
+        "ticket": "16",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_18",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.05.02 01:30:01",
+          "signal_reference_price": 2321.44,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2252.83,
+          "planned_tp": 2458.66
+        },
+        "exit": {
+          "timestamp": "2024.07.16 18:18:33",
+          "exit_price": 2458.66,
+          "exit_reason": "tp",
+          "hold_seconds": 6540512,
+          "r_multiple": 1.064,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 73.0,
+        "lots": 0.01,
+        "ticket": "18",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_20",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.07.17 12:15:00",
+          "signal_reference_price": 2472.35,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2425.29,
+          "planned_tp": 2566.46
+        },
+        "exit": {
+          "timestamp": "2024.07.19 04:14:05",
+          "exit_price": 2425.25,
+          "exit_reason": "sl",
+          "hold_seconds": 143945,
+          "r_multiple": -1.076,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -50.6,
+        "lots": 0.01,
+        "ticket": "20",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_22",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.07.31 18:30:00",
+          "signal_reference_price": 2420.74,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2364.2,
+          "planned_tp": 2533.82
+        },
+        "exit": {
+          "timestamp": "2024.08.05 15:32:19",
+          "exit_price": 2364.2,
+          "exit_reason": "sl",
+          "hold_seconds": 421339,
+          "r_multiple": -1.078,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -60.9,
+        "lots": 0.01,
+        "ticket": "22",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_24",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.08.09 18:00:00",
+          "signal_reference_price": 2428.94,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2365.41,
+          "planned_tp": 2555.99
+        },
+        "exit": {
+          "timestamp": "2024.09.12 21:39:07",
+          "exit_price": 2556.02,
+          "exit_reason": "tp",
+          "hold_seconds": 2950747,
+          "r_multiple": 1.529,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 97.2,
+        "lots": 0.01,
+        "ticket": "24",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_26",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.09.13 17:45:00",
+          "signal_reference_price": 2579.55,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2536.29,
+          "planned_tp": 2666.08
+        },
+        "exit": {
+          "timestamp": "2024.09.25 05:51:53",
+          "exit_price": 2666.2,
+          "exit_reason": "tp",
+          "hold_seconds": 994013,
+          "r_multiple": 1.8,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 77.9,
+        "lots": 0.01,
+        "ticket": "26",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_28",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.09.25 18:45:00",
+          "signal_reference_price": 2658.47,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2608.95,
+          "planned_tp": 2757.51
+        },
+        "exit": {
+          "timestamp": "2024.10.08 18:30:03",
+          "exit_price": 2608.94,
+          "exit_reason": "sl",
+          "hold_seconds": 1122303,
+          "r_multiple": -1.231,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -61.0,
+        "lots": 0.01,
+        "ticket": "28",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_30",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.10.11 17:15:00",
+          "signal_reference_price": 2651.86,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2605.55,
+          "planned_tp": 2744.49
+        },
+        "exit": {
+          "timestamp": "2024.10.22 19:50:18",
+          "exit_price": 2744.5,
+          "exit_reason": "tp",
+          "hold_seconds": 959718,
+          "r_multiple": 1.829,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 84.7,
+        "lots": 0.01,
+        "ticket": "30",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_32",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.10.23 16:45:00",
+          "signal_reference_price": 2735.89,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2692.25,
+          "planned_tp": 2823.16
+        },
+        "exit": {
+          "timestamp": "2024.11.06 15:00:08",
+          "exit_price": 2692.22,
+          "exit_reason": "sl",
+          "hold_seconds": 1203308,
+          "r_multiple": -1.283,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -56.0,
+        "lots": 0.01,
+        "ticket": "32",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_34",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.11.08 17:15:00",
+          "signal_reference_price": 2685.83,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2628.21,
+          "planned_tp": 2801.07
+        },
+        "exit": {
+          "timestamp": "2024.11.11 16:10:14",
+          "exit_price": 2628.08,
+          "exit_reason": "sl",
+          "hold_seconds": 255314,
+          "r_multiple": -1.018,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -58.6,
+        "lots": 0.01,
+        "ticket": "34",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_36",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2024.11.19 12:15:00",
+          "signal_reference_price": 2634.47,
+          "signal_reason_tag": "Sweep_low_reversal:Monthly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2567.84,
+          "planned_tp": 2767.73
+        },
+        "exit": {
+          "timestamp": "2025.01.24 04:13:08",
+          "exit_price": 2767.74,
+          "exit_reason": "tp",
+          "hold_seconds": 5673488,
+          "r_multiple": 1.102,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 73.4,
+        "lots": 0.01,
+        "ticket": "36",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_38",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.01.29 17:45:00",
+          "signal_reference_price": 2753.58,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2709.65,
+          "planned_tp": 2841.43
+        },
+        "exit": {
+          "timestamp": "2025.02.04 17:00:44",
+          "exit_price": 2841.43,
+          "exit_reason": "tp",
+          "hold_seconds": 515744,
+          "r_multiple": 1.88,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 82.6,
+        "lots": 0.01,
+        "ticket": "38",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_40",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.02.05 13:00:00",
+          "signal_reference_price": 2868.06,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2819.26,
+          "planned_tp": 2965.67
+        },
+        "exit": {
+          "timestamp": "2025.03.13 16:44:27",
+          "exit_price": 2965.7,
+          "exit_reason": "tp",
+          "hold_seconds": 3123867,
+          "r_multiple": 1.316,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 64.2,
+        "lots": 0.01,
+        "ticket": "40",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_42",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.03.14 10:45:00",
+          "signal_reference_price": 2990.92,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2925.79,
+          "planned_tp": 3121.18
+        },
+        "exit": {
+          "timestamp": "2025.03.31 09:11:10",
+          "exit_price": 3121.55,
+          "exit_reason": "tp",
+          "hold_seconds": 1463170,
+          "r_multiple": 1.803,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 117.4,
+        "lots": 0.01,
+        "ticket": "42",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_44",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.03.31 09:30:00",
+          "signal_reference_price": 3119.99,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3068.4,
+          "planned_tp": 3223.17
+        },
+        "exit": {
+          "timestamp": "2025.04.03 15:34:54",
+          "exit_price": 3068.36,
+          "exit_reason": "sl",
+          "hold_seconds": 281094,
+          "r_multiple": -1.086,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -56.0,
+        "lots": 0.01,
+        "ticket": "44",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_46",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.04.10 01:15:00",
+          "signal_reference_price": 3076.25,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 2985.1,
+          "planned_tp": 3258.54
+        },
+        "exit": {
+          "timestamp": "2025.04.16 03:02:27",
+          "exit_price": 3258.57,
+          "exit_reason": "tp",
+          "hold_seconds": 524847,
+          "r_multiple": 1.962,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 178.8,
+        "lots": 0.01,
+        "ticket": "46",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_48",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.04.17 02:30:04",
+          "signal_reference_price": 3351.33,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3239.25,
+          "planned_tp": 3575.49
+        },
+        "exit": {
+          "timestamp": "2025.05.01 04:06:54",
+          "exit_price": 3239.2,
+          "exit_reason": "sl",
+          "hold_seconds": 1215410,
+          "r_multiple": -1.11,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -124.4,
+        "lots": 0.01,
+        "ticket": "48",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_50",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.05.06 02:15:00",
+          "signal_reference_price": 3332.17,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3204.72,
+          "planned_tp": 3587.08
+        },
+        "exit": {
+          "timestamp": "2025.05.14 15:36:36",
+          "exit_price": 3204.59,
+          "exit_reason": "sl",
+          "hold_seconds": 739296,
+          "r_multiple": -1.056,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -134.6,
+        "lots": 0.01,
+        "ticket": "50",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_52",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.05.16 02:15:01",
+          "signal_reference_price": 3248.39,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3120.24,
+          "planned_tp": 3504.69
+        },
+        "exit": {
+          "timestamp": "2025.09.02 04:46:10",
+          "exit_price": 3504.71,
+          "exit_reason": "tp",
+          "hold_seconds": 9426669,
+          "r_multiple": 1.265,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 162.2,
+        "lots": 0.01,
+        "ticket": "52",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_54",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.09.02 08:00:00",
+          "signal_reference_price": 3496.99,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3443.1,
+          "planned_tp": 3604.78
+        },
+        "exit": {
+          "timestamp": "2025.09.08 10:15:31",
+          "exit_price": 3604.89,
+          "exit_reason": "tp",
+          "hold_seconds": 526531,
+          "r_multiple": 1.904,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 102.6,
+        "lots": 0.01,
+        "ticket": "54",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_56",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.09.08 11:30:00",
+          "signal_reference_price": 3612.88,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3547.06,
+          "planned_tp": 3744.51
+        },
+        "exit": {
+          "timestamp": "2025.09.22 20:38:17",
+          "exit_price": 3744.52,
+          "exit_reason": "tp",
+          "hold_seconds": 1242497,
+          "r_multiple": 1.813,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 119.3,
+        "lots": 0.01,
+        "ticket": "56",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_58",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.09.23 05:15:00",
+          "signal_reference_price": 3744.13,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3669.68,
+          "planned_tp": 3893.04
+        },
+        "exit": {
+          "timestamp": "2025.10.01 11:20:09",
+          "exit_price": 3893.05,
+          "exit_reason": "tp",
+          "hold_seconds": 713109,
+          "r_multiple": 1.906,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 141.9,
+        "lots": 0.01,
+        "ticket": "58",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_60",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.10.07 01:45:00",
+          "signal_reference_price": 3963.93,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3873.38,
+          "planned_tp": 4145.02
+        },
+        "exit": {
+          "timestamp": "2025.10.14 04:24:05",
+          "exit_price": 4145.12,
+          "exit_reason": "tp",
+          "hold_seconds": 614345,
+          "r_multiple": 1.933,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 175.0,
+        "lots": 0.01,
+        "ticket": "60",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_62",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.10.14 04:30:00",
+          "signal_reference_price": 4147.23,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4040.27,
+          "planned_tp": 4361.15
+        },
+        "exit": {
+          "timestamp": "2025.10.17 01:18:27",
+          "exit_price": 4364.11,
+          "exit_reason": "tp",
+          "hold_seconds": 247707,
+          "r_multiple": 1.987,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 212.5,
+        "lots": 0.01,
+        "ticket": "62",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_64",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.10.17 01:30:00",
+          "signal_reference_price": 4368.14,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4245.35,
+          "planned_tp": 4613.71
+        },
+        "exit": {
+          "timestamp": "2025.10.17 17:03:28",
+          "exit_price": 4243.08,
+          "exit_reason": "sl",
+          "hold_seconds": 56008,
+          "r_multiple": -1.018,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -125.1,
+        "lots": 0.01,
+        "ticket": "64",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_66",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.11.11 04:15:01",
+          "signal_reference_price": 4134.92,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 3990.05,
+          "planned_tp": 4424.65
+        },
+        "exit": {
+          "timestamp": "2025.12.22 15:11:00",
+          "exit_price": 4424.75,
+          "exit_reason": "tp",
+          "hold_seconds": 3581759,
+          "r_multiple": 1.752,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 253.8,
+        "lots": 0.01,
+        "ticket": "66",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_68",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2025.12.23 03:15:00",
+          "signal_reference_price": 4485.94,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4390.85,
+          "planned_tp": 4676.13
+        },
+        "exit": {
+          "timestamp": "2025.12.29 16:06:53",
+          "exit_price": 4390.71,
+          "exit_reason": "sl",
+          "hold_seconds": 564713,
+          "r_multiple": -1.057,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -100.5,
+        "lots": 0.01,
+        "ticket": "68",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_70",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.01.06 02:15:00",
+          "signal_reference_price": 4440.92,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4305.91,
+          "planned_tp": 4710.94
+        },
+        "exit": {
+          "timestamp": "2026.01.20 07:55:15",
+          "exit_price": 4710.97,
+          "exit_reason": "tp",
+          "hold_seconds": 1230015,
+          "r_multiple": 1.909,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 257.7,
+        "lots": 0.01,
+        "ticket": "70",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_72",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.01.21 03:30:00",
+          "signal_reference_price": 4828.06,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4701.98,
+          "planned_tp": 5080.21
+        },
+        "exit": {
+          "timestamp": "2026.01.26 03:32:43",
+          "exit_price": 5080.41,
+          "exit_reason": "tp",
+          "hold_seconds": 432163,
+          "r_multiple": 1.967,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 247.9,
+        "lots": 0.01,
+        "ticket": "72",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_74",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.01.28 01:15:00",
+          "signal_reference_price": 5171.35,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 5020.1,
+          "planned_tp": 5473.84
+        },
+        "exit": {
+          "timestamp": "2026.01.29 01:14:52",
+          "exit_price": 5473.86,
+          "exit_reason": "tp",
+          "hold_seconds": 86392,
+          "r_multiple": 1.983,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 299.9,
+        "lots": 0.01,
+        "ticket": "74",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_76",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.01.29 03:15:00",
+          "signal_reference_price": 5480.29,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 5308.7,
+          "planned_tp": 5823.46
+        },
+        "exit": {
+          "timestamp": "2026.01.29 17:16:40",
+          "exit_price": 5308.58,
+          "exit_reason": "sl",
+          "hold_seconds": 50500,
+          "r_multiple": -1.001,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -171.7,
+        "lots": 0.01,
+        "ticket": "76",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_78",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.02.04 01:15:00",
+          "signal_reference_price": 4933.1,
+          "signal_reason_tag": "Sweep_low_reversal:Weekly-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4571.53,
+          "planned_tp": 5656.24
+        },
+        "exit": {
+          "timestamp": "2026.03.19 14:44:23",
+          "exit_price": 4564.89,
+          "exit_reason": "sl",
+          "hold_seconds": 3763763,
+          "r_multiple": -1.128,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -407.8,
+        "lots": 0.01,
+        "ticket": "78",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_80",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "SELL",
+        "entry": {
+          "timestamp": "2026.03.23 08:45:00",
+          "signal_reference_price": 4182.92,
+          "signal_reason_tag": "Sweep_high_reversal:Asia-High",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4436.97,
+          "planned_tp": 3674.82
+        },
+        "exit": {
+          "timestamp": "2026.03.23 13:10:58",
+          "exit_price": 4437.07,
+          "exit_reason": "sl",
+          "hold_seconds": 15958,
+          "r_multiple": -1.0,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -254.2,
+        "lots": 0.01,
+        "ticket": "80",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_82",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "BUY",
+        "entry": {
+          "timestamp": "2026.04.01 04:30:00",
+          "signal_reference_price": 4708.65,
+          "signal_reason_tag": "Sweep_low_reversal:Asia-Low",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4416.22,
+          "planned_tp": 5293.51
+        },
+        "exit": {
+          "timestamp": "2026.05.27 16:07:22",
+          "exit_price": 4415.94,
+          "exit_reason": "sl",
+          "hold_seconds": 4880242,
+          "r_multiple": -1.169,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": -342.0,
+        "lots": 0.01,
+        "ticket": "82",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_84",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "CLOSED",
+        "direction": "SELL",
+        "entry": {
+          "timestamp": "2026.06.08 01:45:00",
+          "signal_reference_price": 4325.79,
+          "signal_reason_tag": "Sweep_high_reversal:Asia-High",
+          "fill_price_note": "nessun prezzo di fill separato loggato per l'OPEN in questo formato CSV - il prezzo di segnale/entry e' l'unico disponibile per questo evento (limite noto del logging, non della strategia - dichiarato, non nascosto).",
+          "planned_sl": 4479.3,
+          "planned_tp": 4018.77
+        },
+        "exit": {
+          "timestamp": "2026.06.24 15:25:03",
+          "exit_price": 4017.7,
+          "exit_reason": "tp",
+          "hold_seconds": 1431603,
+          "r_multiple": 2.03,
+          "resolved_tf": "PERIOD_D1"
+        },
+        "actual_pnl": 311.6,
+        "lots": 0.01,
+        "ticket": "84",
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939"
+      },
+      {
+        "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::open_only_20260625_011500",
+        "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "strategy_identity": "LIQ_SWEEP",
+        "selector": 7,
+        "lifecycle": "OPEN_AT_PERIOD_END",
+        "direction": "SELL",
+        "entry": {
+          "timestamp": "2026.06.25 01:15:00",
+          "signal_reference_price": 4001.49,
+          "signal_reason_tag": "Sweep_high_reversal:Asia-High",
+          "fill_price_note": "vedi nota sopra - stesso limite di logging per ogni OPEN.",
+          "planned_sl": 4191.82,
+          "planned_tp": 3620.84
+        },
+        "exit": null,
+        "actual_pnl": null,
+        "lots": null,
+        "ticket": null,
+        "block_reject_reason": null,
+        "provenance_ref": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
+        "note": "posizione ancora aperta al termine della finestra testata (period_end=2026.06.29 23:58:58) - nessun P&L realizzato disponibile in questo run. Vedi funnel_accounting_v1.json, adjudication #2 (EXPECTED_FUNNEL_DIFFERENCE). ESCLUSO dal dataset economico (n=42) ma conservato qui per completezza del ciclo di vita completo."
+      }
+    ]
+  }
+}

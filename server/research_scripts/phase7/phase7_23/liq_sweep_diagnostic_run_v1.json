@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T00:08:02.587010+00:00",
+  "generated_at": "2026-09-28T06:00:23.900478+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_23\\build_liq_sweep_diagnostic_run.py",
-  "canonical_sha256": "5289fd243fab31f68fb25be4897c1a7808c2e13a36ea925a4651077e83fa2ce1",
+  "canonical_sha256": "879f7495ded5c98c9ba93226e45d8142e509c0b8112069715f808a34ac1fb718",
   "payload": {
     "status": "COLLECTED",
     "run_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939",
@@ -19,8 +19,19 @@
     "warnings": [],
     "n_open_rows": 43,
     "n_close_rows": 42,
-    "n_events_paired": 41,
+    "n_events_paired": 42,
     "events": [
+      {
+        "entry_time": "2023.10.03 17:30:00",
+        "entry_price": 1826.29,
+        "entry_sl": 1853.07,
+        "entry_tp": 1772.73,
+        "exit_time": "2023.10.09 01:03:37",
+        "exit_price": 1853.24,
+        "exit_reason": "sl",
+        "direction": -1,
+        "net_pnl": -25.6
+      },
       {
         "entry_time": "2023.10.20 18:00:00",
         "entry_price": 1991.19,
@@ -473,7 +484,7 @@
         "net_pnl": 311.6
       }
     ],
-    "net_pnl_total": 1101.9,
+    "net_pnl_total": 1076.3,
     "no_edge_validation_performed": "Questo e' un run DIAGNOSTICO per l'audit di integrita' - NON una edge validation (nessun cost stress/concentration/OOS/bootstrap qui, quello sarebbe il contenuto di una futura Phase EDGE_VALIDATION_V1 dedicata, come per BREAKOUT_ACC/ORDER_BLOCK)."
   }
 }
