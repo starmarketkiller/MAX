@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-28T20:31:57.737689+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_agent_capability_registry.py",
+  "canonical_sha256": "f5ee7c0b8274f296a8d6f4f5803cb8e8590edf7b91d099e820885dc1fadd38d9",
+  "payload": {
+    "schema_version": 1,
+    "agents": [
+      {
+        "agent_id": "LOCAL_FAST_MINISTRAL3B",
+        "provider": "local-ollama",
+        "model_or_runtime": "ministral-3:3b (Q4_K_M, Ollama 0.34.4)",
+        "local_or_remote": "LOCAL",
+        "capabilities": [
+          "summaries",
+          "log_parsing",
+          "json_structured_output",
+          "registry_updates",
+          "artifact_field_extraction",
+          "italian",
+          "english"
+        ],
+        "coding_ability": "BASIC",
+        "scientific_reasoning": "BASIC",
+        "browser_access": false,
+        "terminal_access": true,
+        "file_access": "READ_WRITE",
+        "github_access": false,
+        "vault_access": "READ_ONLY",
+        "mt5_access": "NONE",
+        "max_concurrency": 1,
+        "cost_class": "LOCAL_COMPUTE",
+        "quota_state": "AVAILABLE",
+        "availability": "ONLINE",
+        "trust_level": "SANDBOXED",
+        "allowed_task_types": [
+          "DOCUMENTATION",
+          "MONITORING",
+          "MAINTENANCE"
+        ],
+        "forbidden_task_types": [
+          "DEPLOY",
+          "MT5_RUN",
+          "APPROVAL",
+          "MARKET"
+        ]
+      },
+      {
+        "agent_id": "LOCAL_STRONG_MINISTRAL3B",
+        "provider": "local-ollama",
+        "model_or_runtime": "ministral-3:3b (Q4_K_M, Ollama 0.34.4)",
+        "local_or_remote": "LOCAL",
+        "capabilities": [
+          "summaries",
+          "log_parsing",
+          "json_structured_output",
+          "registry_updates",
+          "artifact_field_extraction",
+          "italian",
+          "english",
+          "small_python_functions",
+          "unit_test_writing",
+          "native_tool_calling"
+        ],
+        "coding_ability": "MODERATE",
+        "scientific_reasoning": "BASIC",
+        "browser_access": false,
+        "terminal_access": true,
+        "file_access": "READ_WRITE",
+        "github_access": false,
+        "vault_access": "READ_ONLY",
+        "mt5_access": "NONE",
+        "max_concurrency": 1,
+        "cost_class": "LOCAL_COMPUTE",
+        "quota_state": "AVAILABLE",
+        "availability": "ONLINE",
+        "trust_level": "SANDBOXED",
+        "allowed_task_types": [
+          "CODE",
+          "BACKFILL",
+          "DOCUMENTATION",
+          "MONITORING",
+          "MAINTENANCE"
+        ],
+        "forbidden_task_types": [
+          "DEPLOY",
+          "MT5_RUN",
+          "APPROVAL",
+          "MARKET",
+          "RESEARCH"
+        ]
+      }
+    ]
+  }
+}

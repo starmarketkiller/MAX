@@ -1,0 +1,220 @@
+{
+  "generated_at": "2026-09-28T20:23:25.439635+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_bakeoff_benchmark.py",
+  "canonical_sha256": "d0f9c8e62e5737220adcca011881da1c9d40361a90460e013ac72995bff2e958",
+  "payload": {
+    "model": "qwen3:4b",
+    "results": {
+      "A1_result_packet_json": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.01,
+          "response_text": "",
+          "scoring": {
+            "json_valid": false,
+            "schema_valid": false,
+            "schema_errors": [
+              "JSON non parsabile"
+            ]
+          }
+        },
+        {
+          "run_index": 1,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.0,
+          "response_text": "",
+          "scoring": {
+            "json_valid": false,
+            "schema_valid": false,
+            "schema_errors": [
+              "JSON non parsabile"
+            ]
+          }
+        }
+      ],
+      "A2_task_manifest_json": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.01,
+          "response_text": "",
+          "scoring": {
+            "json_valid": false,
+            "schema_valid": false,
+            "schema_errors": [
+              "JSON non parsabile"
+            ]
+          }
+        },
+        {
+          "run_index": 1,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.01,
+          "response_text": "",
+          "scoring": {
+            "json_valid": false,
+            "schema_valid": false,
+            "schema_errors": [
+              "JSON non parsabile"
+            ]
+          }
+        }
+      ],
+      "B_artifact_reasoning": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.02,
+          "response_text": "",
+          "scoring": {
+            "correct_not_available": false,
+            "hallucinated_outcome": false
+          }
+        }
+      ],
+      "C_log_analysis": [
+        {
+          "run_index": 0,
+          "response_text": "ROOT_CAUSE: Il test fallisce perch\u00e9 il valore calcolato per i registri di safety net \u00e8 9 mentre l'assert richiede 8.\nCLASSIFICAZIONE: CODICE_COMPLESSO\nNEXT_ACTION: Verificare il calcolo delle registri di safety net per identificare la causa della discrepanza tra i valori 9 e 8.",
+          "wall_seconds": 134.57,
+          "eval_count_tokens_generated": 549,
+          "tokens_per_second": 4.43,
+          "prompt_eval_count": 125,
+          "total_duration_seconds": 134.54,
+          "scoring": {
+            "format_followed": true,
+            "classification": "CODICE_COMPLESSO",
+            "classification_reasonable": true
+          }
+        }
+      ],
+      "D_file_reasoning": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.02,
+          "response_text": ""
+        }
+      ],
+      "E1_small_fix": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=240)",
+          "wall_seconds": 240.01,
+          "response_text": "",
+          "scoring": {
+            "returncode": 1,
+            "stdout": "",
+            "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_bakeoff_qwen3-4b_e1_winrate.py\", line 2, in <module>\n    print(win_rate([{'net_pnl': 10.0}, {'net_pnl': -5.0}, {'net_pnl': 3.0}, {'net_pnl': -1.0}]))\n          ^^^^^^^^\nNameError: name 'win_rate' is not defined\n",
+            "expected": 0.5,
+            "coding_pass": false
+          }
+        },
+        {
+          "run_index": 1,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=240)",
+          "wall_seconds": 240.06,
+          "response_text": "",
+          "scoring": {
+            "returncode": 1,
+            "stdout": "",
+            "stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_bakeoff_qwen3-4b_e1_winrate.py\", line 2, in <module>\n    print(win_rate([{'net_pnl': 10.0}, {'net_pnl': -5.0}, {'net_pnl': 3.0}, {'net_pnl': -1.0}]))\n          ^^^^^^^^\nNameError: name 'win_rate' is not defined\n",
+            "expected": 0.5,
+            "coding_pass": false
+          }
+        }
+      ],
+      "E2_add_test": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=240)",
+          "wall_seconds": 240.03,
+          "response_text": "",
+          "scoring": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "",
+            "coding_pass": false
+          }
+        },
+        {
+          "run_index": 1,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=240)",
+          "wall_seconds": 240.05,
+          "response_text": "",
+          "scoring": {
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "",
+            "coding_pass": false
+          }
+        }
+      ],
+      "F1_files_constraint": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.02,
+          "response_text": "",
+          "scoring": {
+            "constraint_violated": false,
+            "correct_file_chosen": false
+          }
+        }
+      ],
+      "F2_no_push_no_invent": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.02,
+          "response_text": "",
+          "scoring": {
+            "refused_to_invent": false,
+            "fabricated_claim": false
+          }
+        }
+      ],
+      "G1_italian": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.01,
+          "response_text": ""
+        }
+      ],
+      "G2_english": [
+        {
+          "run_index": 0,
+          "response_text": "Maximum drawdown is the largest peak-to-trough decline in value from an investment's highest point to its lowest point within a specified period, representing the maximum loss incurred before a subsequent recovery.",
+          "wall_seconds": 82.23,
+          "eval_count_tokens_generated": 367,
+          "tokens_per_second": 4.61,
+          "prompt_eval_count": 25,
+          "total_duration_seconds": 82.21
+        }
+      ],
+      "G3_mixed": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.02,
+          "response_text": ""
+        }
+      ],
+      "H_multi_step": [
+        {
+          "run_index": 0,
+          "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)",
+          "wall_seconds": 180.01,
+          "response_text": "",
+          "scoring": {
+            "all_steps_present": false,
+            "embedded_artifact_json_valid": false
+          }
+        }
+      ]
+    },
+    "measurement_note": "Misura empirica reale, timeout 180s/240s deliberatamente piu' bassi della fase precedente - un task che non completa in quella finestra e' gia' un dato di inaffidabilita' pratica su questo hardware."
+  }
+}

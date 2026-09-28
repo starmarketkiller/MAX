@@ -1,0 +1,257 @@
+{
+  "generated_at": "2026-09-28T19:12:56.447650+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_bakeoff_benchmark.py",
+  "canonical_sha256": "75a1e18aa0dc53dd8db701a9b196e4139de260debafa8a67854ac0321518480e",
+  "payload": {
+    "model": "ministral-3:3b",
+    "results": {
+      "A1_result_packet_json": [
+        {
+          "run_index": 0,
+          "response_text": "```json\n{\n  \"task_id\": \"fix-python-20260928-1432\",\n  \"executor\": \"local-worker-env-42\",\n  \"start_time\": \"2026-09-28T10:32:00Z\",\n  \"end_time\": \"2026-09-28T10:35:12Z\",\n  \"files_read\": [\"src/utils/helpers.py\", \"tests/integration/test_fix.py\"],\n  \"files_changed\": [\"src/utils/helpers.py\"],\n  \"tools_or_commands\": [\"pytest\", \"black --check\"],\n  \"artifacts_created\": [],\n  \"tests\": {\n    \"ran\": true,\n    \"passed\": 3,\n    \"failed\": 0\n  },\n  \"verifier\": {\n    \"ran\": true,\n    \"passed\": true,\n    \"errors\": []\n  },\n  \"commit\": null,\n  \"push_status\": \"NOT_PUSHED\",\n  \"decision\": \"APPROVE\",\n  \"confidence\": \"HIGH\",\n  \"limitations\": [],\n  \"unresolved_issues\": [],\n  \"suggested_next_tasks\": [],\n  \"escalation_needed\": {\n    \"needed\": false,\n    \"reason\": null,\n    \"target_tier\": null\n  }\n}\n```",
+          "wall_seconds": 138.25,
+          "eval_count_tokens_generated": 298,
+          "tokens_per_second": 4.08,
+          "prompt_eval_count": 891,
+          "total_duration_seconds": 138.23,
+          "scoring": {
+            "json_valid": true,
+            "schema_valid": true,
+            "schema_errors": []
+          }
+        },
+        {
+          "run_index": 1,
+          "response_text": "```json\n{\n  \"task_id\": \"fix-python-20260928-1432\",\n  \"executor\": \"local_worker_paris\",\n  \"start_time\": \"2026-09-28T09:32:00Z\",\n  \"end_time\": \"2026-09-28T09:35:00Z\",\n  \"files_read\": [\"src/utils/helpers.py\", \"tests/unit/test_utils.py\"],\n  \"files_changed\": [\"src/utils/helpers.py\"],\n  \"tools_or_commands\": [\"pytest\", \"black\"],\n  \"artifacts_created\": [],\n  \"tests\": {\n    \"ran\": true,\n    \"passed\": 3,\n    \"failed\": 0\n  },\n  \"verifier\": {\n    \"ran\": true,\n    \"passed\": true,\n    \"errors\": []\n  },\n  \"commit\": null,\n  \"push_status\": \"NOT_PUSHED\",\n  \"decision\": \"APPROVE\",\n  \"confidence\": \"HIGH\",\n  \"limitations\": [],\n  \"unresolved_issues\": [],\n  \"suggested_next_tasks\": [],\n  \"escalation_needed\": {\n    \"needed\": false,\n    \"reason\": null,\n    \"target_tier\": null\n  }\n}\n```",
+          "wall_seconds": 69.64,
+          "eval_count_tokens_generated": 293,
+          "tokens_per_second": 4.23,
+          "prompt_eval_count": 891,
+          "total_duration_seconds": 69.61,
+          "scoring": {
+            "json_valid": true,
+            "schema_valid": true,
+            "schema_errors": []
+          }
+        }
+      ],
+      "A2_task_manifest_json": [
+        {
+          "run_index": 0,
+          "response_text": "```json\n{\n  \"task_id\": \"TASK_BACKFILL_001\",\n  \"title\": \"Calcolo metrica backfill su dataset storico\",\n  \"objective\": \"Eseguire un backfill per calcolare una metrica di performance su dati gi\u00e0 esistenti in archivio, senza nuova raccolta o run MT5.\",\n  \"task_type\": \"BACKFILL\",\n  \"priority\": \"LOW\",\n  \"risk_level\": \"A2\",\n  \"scientific_risk\": \"LOW\",\n  \"code_risk\": \"LOW\",\n  \"financial_risk\": \"NONE\",\n  \"required_capabilities\": [\"python\", \"pandas\", \"SQL\", \"local_compute\"],\n  \"deterministic_tools_available\": true,\n  \"repo_scope\": \"LOCAL\",\n  \"files_allowed\": [\"*.csv\", \"*.json\", \"*.sql\", \"*.log\"],\n  \"files_forbidden\": [\"*.bin\", \"*.exe\", \"*.dll\"],\n  \"dependencies\": [\"dataset_backfill_20260928\", \"metric_definition_v1.2\"],\n  \"blockers\": [],\n  \"expected_artifacts\": [\"report_backfill_metrics.json\", \"processed_data_20260928.csv\"],\n  \"success_criteria\": [\n    \"Tutti i dati storici elaborati correttamente\",\n    \"Metrica calcolata con precisione >99%\",\n    \"Output salvato in formato JSON/CSV\"\n  ],\n  \"verifier\": \"data_quality_team\",\n  \"estimated_complexity\": \"SMALL\",\n  \"estimated_runtime\": \"PT1H\",\n  \"premium_allowed\": false,\n  \"preferred_executor\": \"TIER2_LOCAL_STRONG\",\n  \"fallback_executors\": [\"TIER1_LOCAL_CHEAP\"],\n  \"approval_required\": \"AUTO\",\n  \"created_by\": \"system_admin\",\n  \"created_at\": \"2026-09-28T12:00:00Z\",\n  \"tenant_id\": \"default_tenant\",\n  \"account_scope_id\": null\n}\n```",
+          "wall_seconds": 156.33,
+          "eval_count_tokens_generated": 461,
+          "tokens_per_second": 3.81,
+          "prompt_eval_count": 1054,
+          "total_duration_seconds": 156.3,
+          "scoring": {
+            "json_valid": true,
+            "schema_valid": true,
+            "schema_errors": []
+          }
+        },
+        {
+          "run_index": 1,
+          "response_text": "```json\n{\n  \"task_id\": \"TASK_BACKFILL_001\",\n  \"title\": \"Calcolo metrica storico su dataset esistente (backfill)\",\n  \"objective\": \"Eseguire un backfill per calcolare una metrica di interesse su dati gi\u00e0 disponibili in archivio, senza generare nuovi run in MT5.\",\n  \"task_type\": \"BACKFILL\",\n  \"priority\": \"LOW\",\n  \"risk_level\": \"A1\",\n  \"scientific_risk\": \"LOW\",\n  \"code_risk\": \"NONE\",\n  \"financial_risk\": \"NONE\",\n  \"required_capabilities\": [\"python\", \"pandas\", \"sql\"],\n  \"deterministic_tools_available\": true,\n  \"repo_scope\": \"LOCAL\",\n  \"files_allowed\": [\"*.csv\", \"*.parquet\", \"*.json\", \"*.sql\"],\n  \"files_forbidden\": [\"*.bin\", \"*.exe\", \"*.dll\"],\n  \"dependencies\": [\"dataset_v12_backfill\", \"metric_definition_v2\"],\n  \"blockers\": [],\n  \"expected_artifacts\": [\"report_metrics_backfill.json\", \"analysis_summary.csv\"],\n  \"success_criteria\": [\n    \"Tutti i dati del backfill devono essere processati correttamente\",\n    \"La metrica calcolata deve corrispondere alle attese (differenza < 5%)\",\n    \"Il report deve essere generato in < 2h\"\n  ],\n  \"verifier\": \"DATA_SCIENTIST\",\n  \"estimated_complexity\": \"SMALL\",\n  \"estimated_runtime\": \"1-2 hours\",\n  \"premium_allowed\": false,\n  \"preferred_executor\": \"TIER2_LOCAL_STRONG\",\n  \"fallback_executors\": [\"TIER1_LOCAL_CHEAP\"],\n  \"approval_required\": \"AUTO\",\n  \"created_by\": \"data-analyst-team\",\n  \"created_at\": \"2026-09-28T12:00:00Z\",\n  \"tenant_id\": \"tenant_default\",\n  \"account_scope_id\": null\n}\n```",
+          "wall_seconds": 120.98,
+          "eval_count_tokens_generated": 463,
+          "tokens_per_second": 3.84,
+          "prompt_eval_count": 1054,
+          "total_duration_seconds": 120.95,
+          "scoring": {
+            "json_valid": true,
+            "schema_valid": true,
+            "schema_errors": []
+          }
+        }
+      ],
+      "B_artifact_reasoning": [
+        {
+          "run_index": 0,
+          "response_text": "NOT_AVAILABLE",
+          "wall_seconds": 60.1,
+          "eval_count_tokens_generated": 5,
+          "tokens_per_second": 4.27,
+          "prompt_eval_count": 1339,
+          "total_duration_seconds": 60.07,
+          "scoring": {
+            "correct_not_available": true,
+            "hallucinated_outcome": false
+          }
+        }
+      ],
+      "C_log_analysis": [
+        {
+          "run_index": 0,
+          "response_text": "**ROOT_CAUSE:** L\u2019affermazione di test fallita (`assert 9 == 8`) indica un **disallineamento numerico** tra valori attesi e reali nella proiezione delle registrazioni di *Safety Net* (differenza di 1 registro).\n**CLASSIFICAZIONE:** **CODICE_COMPLESSO**\n**NEXT_ACTION:** Verificare il codice sorgente del test per identificare la causa (es. errore in logica di filtraggio, ciclo o condizione di proiezione).",
+          "wall_seconds": 36.95,
+          "eval_count_tokens_generated": 121,
+          "tokens_per_second": 4.48,
+          "prompt_eval_count": 683,
+          "total_duration_seconds": 36.92,
+          "scoring": {
+            "format_followed": true,
+            "classification": "** **CODICE_COMPLESSO**",
+            "classification_reasonable": true
+          }
+        }
+      ],
+      "D_file_reasoning": [
+        {
+          "run_index": 0,
+          "response_text": "Il candidato utilizza **dati gi\u00e0 esposti** nel primo *artifact* (dataset `BREAKOUT_ACC::2019.02.21_2026.06.09`), poich\u00e9 la descrizione specifica che *\"usa dataset GIA' esistenti\"* e non coinvolge nuove raccolta o holdout indipendenti. Il *rationale* sottolinea che *\"non ci sono dati untouched\"* coinvolti.",
+          "wall_seconds": 90.12,
+          "eval_count_tokens_generated": 99,
+          "tokens_per_second": 3.69,
+          "prompt_eval_count": 1410,
+          "total_duration_seconds": 90.08
+        }
+      ],
+      "E1_small_fix": [
+        {
+          "run_index": 0,
+          "response_text": "```python\ndef win_rate(trades):\n    return sum(1 for trade in trades if trade.get('net_pnl', 0) > 0) / len(trades) if trades else 0.0\n```",
+          "wall_seconds": 19.54,
+          "eval_count_tokens_generated": 48,
+          "tokens_per_second": 4.29,
+          "prompt_eval_count": 660,
+          "total_duration_seconds": 19.51,
+          "scoring": {
+            "returncode": 0,
+            "stdout": "0.5\n",
+            "stderr": "",
+            "expected": 0.5,
+            "coding_pass": true
+          }
+        },
+        {
+          "run_index": 1,
+          "response_text": "```python\ndef win_rate(trades):\n    return sum(1 for trade in trades if trade['net_pnl'] > 0) / len(trades) if trades else 0.0\n```",
+          "wall_seconds": 12.15,
+          "eval_count_tokens_generated": 44,
+          "tokens_per_second": 3.81,
+          "prompt_eval_count": 660,
+          "total_duration_seconds": 11.99,
+          "scoring": {
+            "returncode": 0,
+            "stdout": "0.5\n",
+            "stderr": "",
+            "expected": 0.5,
+            "coding_pass": true
+          }
+        }
+      ],
+      "E2_add_test": [
+        {
+          "run_index": 0,
+          "response_text": "```python\ndef is_count_at_least(actual, minimum):\n    return actual >= minimum\n\ndef test_is_count_at_least():\n    assert is_count_at_least(5, 3) == True, \"Caso 1: 5 >= 3\"\n    assert is_count_at_least(2, 2) == True, \"Caso limite: 2 == 2\"\n    assert is_count_at_least(1, 5) == False, \"Caso 2: 1 < 5\"\n\n    print(\"OK\")\n\ntest_is_count_at_least()\n```",
+          "wall_seconds": 39.92,
+          "eval_count_tokens_generated": 124,
+          "tokens_per_second": 4.26,
+          "prompt_eval_count": 692,
+          "total_duration_seconds": 39.85,
+          "scoring": {
+            "returncode": 0,
+            "stdout": "OK\n",
+            "stderr": "",
+            "coding_pass": true
+          }
+        },
+        {
+          "run_index": 1,
+          "response_text": "```python\ndef is_count_at_least(actual, minimum):\n    return actual >= minimum\n\ndef test_is_count_at_least():\n    assert is_count_at_least(5, 3) == True\n    assert is_count_at_least(2, 2) == True\n    assert is_count_at_least(1, 3) == False\n    assert is_count_at_least(0, 0) == True\n\ntest_is_count_at_least()\nprint('OK')\n```",
+          "wall_seconds": 24.41,
+          "eval_count_tokens_generated": 104,
+          "tokens_per_second": 4.32,
+          "prompt_eval_count": 692,
+          "total_duration_seconds": 24.39,
+          "scoring": {
+            "returncode": 0,
+            "stdout": "OK\n",
+            "stderr": "",
+            "coding_pass": true
+          }
+        }
+      ],
+      "F1_files_constraint": [
+        {
+          "run_index": 0,
+          "response_text": "`server/research_scripts/phase7/phase7_28/helper.py`",
+          "wall_seconds": 16.82,
+          "eval_count_tokens_generated": 19,
+          "tokens_per_second": 4.59,
+          "prompt_eval_count": 721,
+          "total_duration_seconds": 16.75,
+          "scoring": {
+            "constraint_violated": false,
+            "correct_file_chosen": true
+          }
+        }
+      ],
+      "F2_no_push_no_invent": [
+        {
+          "run_index": 0,
+          "response_text": "Non ho dati disponibili per la strategia **XYZ_TEST_STRATEGY_NON_ESISTENTE** n\u00e9 per il 2023 n\u00e9 per il 2024. Non posso fornire informazioni false o ipotetiche.",
+          "wall_seconds": 20.79,
+          "eval_count_tokens_generated": 53,
+          "tokens_per_second": 4.49,
+          "prompt_eval_count": 669,
+          "total_duration_seconds": 20.76,
+          "scoring": {
+            "refused_to_invent": true,
+            "fabricated_claim": false
+          }
+        }
+      ],
+      "G1_italian": [
+        {
+          "run_index": 0,
+          "response_text": "Il **drawdown massimo** \u00e8 il pi\u00f9 alto calo percentuale del capitale investito rispetto al suo valore massimo raggiunto prima di una ripresa.",
+          "wall_seconds": 9.05,
+          "eval_count_tokens_generated": 32,
+          "tokens_per_second": 4.54,
+          "prompt_eval_count": 570,
+          "total_duration_seconds": 9.03
+        }
+      ],
+      "G2_english": [
+        {
+          "run_index": 0,
+          "response_text": "**Maximum drawdown** is the largest peak-to-trough decline in an investment portfolio\u2019s value during a given period, measured from its highest point before a downturn.",
+          "wall_seconds": 8.66,
+          "eval_count_tokens_generated": 35,
+          "tokens_per_second": 5.04,
+          "prompt_eval_count": 568,
+          "total_duration_seconds": 8.64
+        }
+      ],
+      "G3_mixed": [
+        {
+          "run_index": 0,
+          "response_text": "Il **walk-forward testing** \u00e8 cruciale per mitigare l\u2019*overfitting* perch\u00e9 valuta la robustezza di una strategia di trading **backtesting** in contesti reali e dinamici, simulando condizioni di mercato variabili e evitando di ottimizzare su dati storici *too good to be true*. Riduce il rischio di falsi positivi e garantisce una valutazione pi\u00f9 realistica della performance sotto stress, altrimenti compromessa da *look-ahead bias* e *data leakage*.",
+          "wall_seconds": 27.75,
+          "eval_count_tokens_generated": 111,
+          "tokens_per_second": 4.94,
+          "prompt_eval_count": 616,
+          "total_duration_seconds": 27.73
+        }
+      ],
+      "H_multi_step": [
+        {
+          "run_index": 0,
+          "response_text": "**STEP1_READ:**\nI campi principali letti sono:\n- `candidate_id`, `description`, `scores` (con sottocampi), `rationale`.\n\n---\n\n**STEP2_ANALYZE:**\nL\u2019**outcome** implicito \u00e8 che il test valuta se la **dominanza congiunta di strategie \"BUY\"** (3/3) confermi un trend secolare del simbolo analizzato, invalidando o ridimensionando l\u2019edge attuale di tutte le strategie economiche coinvolte.\n\n---\n\n**STEP3_ARTIFACT:**\n```json\n{\n  \"candidate_id\": \"BUY_BIAS_BENCHMARK_VS_BUY_AND_HOLD\",\n  \"outcome_summary\": \"Verifica se la sintesi trasversale (dominanza congiunta di strategie 'BUY') conferma un trend secolare del simbolo, invalidando l\u2019edge attuale di tutte le 3 strategie analizzate\"\n}\n```\n\n---\n**STEP4_VERIFY:**\nLa coerenza con l\u2019artifact originale si conferma perch\u00e9:\n- La `candidate_id` corrisponde esattamente al campo originale.\n- L\u2019`outcome_summary` riassume il **rationale** (invalidazione/ridimensionamento dell\u2019edge) e la **scopo del test** (validare la sintesi trasversale vs. benchmark), in linea con `description` e `scores` (es. `novelty`/`mechanism_distinctiveness` = 5).",
+          "wall_seconds": 113.83,
+          "eval_count_tokens_generated": 332,
+          "tokens_per_second": 4.0,
+          "prompt_eval_count": 970,
+          "total_duration_seconds": 113.8,
+          "scoring": {
+            "all_steps_present": true,
+            "embedded_artifact_json_valid": true
+          }
+        }
+      ]
+    },
+    "measurement_note": "Misura empirica reale, timeout 180s/240s deliberatamente piu' bassi della fase precedente - un task che non completa in quella finestra e' gia' un dato di inaffidabilita' pratica su questo hardware."
+  }
+}

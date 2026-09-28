@@ -1,0 +1,189 @@
+{
+  "generated_at": "2026-09-28T20:30:13.130036+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_toolcalling_probe.py",
+  "canonical_sha256": "e155ebe99543c9a15a9867bf974995f7f65d368f7b03f0b04c22e0a0f4de92d7",
+  "payload": {
+    "tool_definition_used": {
+      "type": "function",
+      "function": {
+        "name": "compute_win_rate",
+        "description": "Calcola la percentuale di trade vincenti (net_pnl > 0) su una lista di trade.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "trades": {
+              "type": "array",
+              "description": "Lista di trade, ognuno con un campo net_pnl numerico.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "net_pnl": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "trades"
+          ]
+        }
+      }
+    },
+    "results": {
+      "qwen2.5:3b-instruct": {
+        "wall_seconds": 32.74,
+        "raw_message_content": "",
+        "tool_calls_raw": [
+          {
+            "id": "call_gj28r0qx",
+            "function": {
+              "index": 0,
+              "name": "compute_win_rate",
+              "arguments": {
+                "trades": [
+                  {
+                    "trades": [
+                      {
+                        "net_pnl": 10
+                      }
+                    ]
+                  },
+                  {
+                    "trades": [
+                      {
+                        "net_pnl": -5
+                      }
+                    ]
+                  },
+                  {
+                    "trades": [
+                      {
+                        "net_pnl": 3
+                      }
+                    ]
+                  },
+                  {
+                    "trades": [
+                      {
+                        "net_pnl": -1
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "tool_call_emitted": true,
+        "tool_call_args_valid": true,
+        "classification": "TOOL_USE_CAPABLE"
+      },
+      "qwen2.5:7b-instruct": {
+        "wall_seconds": 70.98,
+        "raw_message_content": "",
+        "tool_calls_raw": [
+          {
+            "id": "call_ojbdsvws",
+            "function": {
+              "index": 0,
+              "name": "compute_win_rate",
+              "arguments": {
+                "trades": [
+                  {
+                    "net_pnl": 10
+                  },
+                  {
+                    "net_pnl": -5
+                  },
+                  {
+                    "net_pnl": 3
+                  },
+                  {
+                    "net_pnl": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "tool_call_emitted": true,
+        "tool_call_args_valid": true,
+        "classification": "TOOL_USE_CAPABLE"
+      },
+      "ministral-3:3b": {
+        "wall_seconds": 68.72,
+        "raw_message_content": "",
+        "tool_calls_raw": [
+          {
+            "id": "call_p295j6nn",
+            "function": {
+              "index": 0,
+              "name": "compute_win_rate",
+              "arguments": {
+                "trades": [
+                  {
+                    "net_pnl": 10
+                  },
+                  {
+                    "net_pnl": -5
+                  },
+                  {
+                    "net_pnl": 3
+                  },
+                  {
+                    "net_pnl": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "tool_call_emitted": true,
+        "tool_call_args_valid": true,
+        "classification": "TOOL_USE_CAPABLE"
+      },
+      "gemma3:4b": {
+        "wall_seconds": 0.02,
+        "raw_message_content": "",
+        "tool_calls_raw": [],
+        "tool_call_emitted": false,
+        "tool_call_args_valid": false,
+        "classification": "TEXT_ONLY_OR_LIMITED_AGENT_USE"
+      },
+      "qwen3:4b": {
+        "wall_seconds": 153.91,
+        "raw_message_content": "",
+        "tool_calls_raw": [
+          {
+            "id": "call_sm9tksvl",
+            "function": {
+              "index": 0,
+              "name": "compute_win_rate",
+              "arguments": {
+                "trades": [
+                  {
+                    "net_pnl": 10
+                  },
+                  {
+                    "net_pnl": -5
+                  },
+                  {
+                    "net_pnl": 3
+                  },
+                  {
+                    "net_pnl": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "tool_call_emitted": true,
+        "tool_call_args_valid": true,
+        "classification": "TOOL_USE_CAPABLE"
+      }
+    },
+    "measurement_note": "Probe singolo per modello (1 scenario) - sufficiente per classificare capacita' di tool-calling nativo affidabile s\u00ec/no, non una misura esaustiva di ogni possibile schema di tool."
+  }
+}

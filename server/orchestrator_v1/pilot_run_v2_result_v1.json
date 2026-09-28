@@ -1,0 +1,332 @@
+{
+  "generated_at": "2026-09-28T20:50:46.303385+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_pilot_worker_v2.py",
+  "canonical_sha256": "ba48fe8004d85419323a210abce4a04c7833f5a3fea5297315fdc6f2d9965df3",
+  "payload": {
+    "model": "ministral-3:3b",
+    "sandbox_dir": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28",
+    "attempts": {
+      "BREAKOUT_ACC": {
+        "temporal_concentration": {
+          "wall_seconds": 109.81,
+          "raw_model_response": "```python\ndef compute_temporal_concentration(events):\n    annual_data = {}\n\n    for e in events:\n        year = e['entry_time'][:4]\n        if year not in annual_data:\n            annual_data[year] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        annual_data[year]['n_trades'] += 1\n        annual_data[year]['net_pnl_sum'] += e['net_pnl']\n        if e['net_pnl'] > 0:\n            annual_data[year]['positive_trades'] += 1\n\n    result = {\n        'years_with_positive_net': sum(1 for year in annual_data if annual_data[year]['net_pnl_sum'] > 0),\n        'years_total_with_at_least_1_trade': len(annual_data),\n        **{year: {\n            'n_trades': data['n_trades'],\n            'net_pnl_sum': data['net_pnl_sum'],\n            'win_rate': data['positive_trades'] / data['n_trades'] if data['n_trades'] > 0 else 0.0\n        } for year, data in annual_data.items()}\n    }\n\n    return result\n```",
+          "extracted_code": "def compute_temporal_concentration(events):\n    annual_data = {}\n\n    for e in events:\n        year = e['entry_time'][:4]\n        if year not in annual_data:\n            annual_data[year] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        annual_data[year]['n_trades'] += 1\n        annual_data[year]['net_pnl_sum'] += e['net_pnl']\n        if e['net_pnl'] > 0:\n            annual_data[year]['positive_trades'] += 1\n\n    result = {\n        'years_with_positive_net': sum(1 for year in annual_data if annual_data[year]['net_pnl_sum'] > 0),\n        'years_total_with_at_least_1_trade': len(annual_data),\n        **{year: {\n            'n_trades': data['n_trades'],\n            'net_pnl_sum': data['net_pnl_sum'],\n            'win_rate': data['positive_trades'] / data['n_trades'] if data['n_trades'] > 0 else 0.0\n        } for year, data in annual_data.items()}\n    }\n\n    return result",
+          "execution": {
+            "returncode": 0,
+            "stdout": "{\"years_with_positive_net\": 5, \"years_total_with_at_least_1_trade\": 8, \"2019\": {\"n_trades\": 3, \"net_pnl_sum\": -59.480000000000004, \"win_rate\": 0.0}, \"2020\": {\"n_trades\": 7, \"net_pnl_sum\": 42.61999999999999, \"win_rate\": 0.2857142857142857}, \"2021\": {\"n_trades\": 9, \"net_pnl_sum\": -254.23, \"win_rate\": 0.0}, \"2022\": {\"n_trades\": 6, \"net_pnl_sum\": 64.99, \"win_rate\": 0.3333333333333333}, \"2023\": {\"n_trades\": 7, \"net_pnl_sum\": 16.480000000000004, \"win_rate\": 0.2857142857142857}, \"2024\": {\"n_trades\": 7, \"net_pnl_sum\": 164.44, \"win_rate\": 0.42857142857142855}, \"2025\": {\"n_trades\": 7, \"net_pnl_sum\": 754.29, \"win_rate\": 0.7142857142857143}, \"2026\": {\"n_trades\": 1, \"net_pnl_sum\": -86.97999999999999, \"win_rate\": 0.0}}\n",
+            "stderr": ""
+          },
+          "parsed_output": {
+            "years_with_positive_net": 5,
+            "years_total_with_at_least_1_trade": 8,
+            "2019": {
+              "n_trades": 3,
+              "net_pnl_sum": -59.480000000000004,
+              "win_rate": 0.0
+            },
+            "2020": {
+              "n_trades": 7,
+              "net_pnl_sum": 42.61999999999999,
+              "win_rate": 0.2857142857142857
+            },
+            "2021": {
+              "n_trades": 9,
+              "net_pnl_sum": -254.23,
+              "win_rate": 0.0
+            },
+            "2022": {
+              "n_trades": 6,
+              "net_pnl_sum": 64.99,
+              "win_rate": 0.3333333333333333
+            },
+            "2023": {
+              "n_trades": 7,
+              "net_pnl_sum": 16.480000000000004,
+              "win_rate": 0.2857142857142857
+            },
+            "2024": {
+              "n_trades": 7,
+              "net_pnl_sum": 164.44,
+              "win_rate": 0.42857142857142855
+            },
+            "2025": {
+              "n_trades": 7,
+              "net_pnl_sum": 754.29,
+              "win_rate": 0.7142857142857143
+            },
+            "2026": {
+              "n_trades": 1,
+              "net_pnl_sum": -86.97999999999999,
+              "win_rate": 0.0
+            }
+          },
+          "expected_output": {
+            "2019": {
+              "n_trades": 3,
+              "net_pnl_sum": -59.480000000000004,
+              "win_rate": 0.0
+            },
+            "2020": {
+              "n_trades": 7,
+              "net_pnl_sum": 42.62,
+              "win_rate": 0.2857142857142857
+            },
+            "2021": {
+              "n_trades": 9,
+              "net_pnl_sum": -254.23,
+              "win_rate": 0.0
+            },
+            "2022": {
+              "n_trades": 6,
+              "net_pnl_sum": 64.99,
+              "win_rate": 0.3333333333333333
+            },
+            "2023": {
+              "n_trades": 7,
+              "net_pnl_sum": 16.48,
+              "win_rate": 0.2857142857142857
+            },
+            "2024": {
+              "n_trades": 7,
+              "net_pnl_sum": 164.44,
+              "win_rate": 0.42857142857142855
+            },
+            "2025": {
+              "n_trades": 7,
+              "net_pnl_sum": 754.29,
+              "win_rate": 0.7142857142857143
+            },
+            "2026": {
+              "n_trades": 1,
+              "net_pnl_sum": -86.97999999999999,
+              "win_rate": 0.0
+            },
+            "years_with_positive_net": 5,
+            "years_total_with_at_least_1_trade": 8
+          },
+          "matches_independent_verification": false,
+          "pilot_task_passed": false,
+          "retry_used": true,
+          "first_attempt": {
+            "wall_seconds": 106.08,
+            "raw_model_response": "```python\ndef compute_temporal_concentration(events):\n    annual_stats = {}\n\n    for event in events:\n        year = event['entry_time'][:4]\n        net_pnl = event['net_pnl']\n\n        if year not in annual_stats:\n            annual_stats[year] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        annual_stats[year]['n_trades'] += 1\n        annual_stats[year]['net_pnl_sum'] += net_pnl\n        if net_pnl > 0:\n            annual_stats[year]['positive_trades'] += 1\n\n    result = {\n        'years_with_positive_net': sum(1 for stats in annual_stats.values() if stats['net_pnl_sum'] > 0),\n        'years_total_with_at_least_1_trade': len(annual_stats),\n        **{year: {\n            'n_trades': stats['n_trades'],\n            'net_pnl_sum': stats['net_pnl_sum'],\n            'win_rate': stats['positive_trades'] / stats['n_trades']\n        } for year, stats in annual_stats.items()}\n    }\n\n    return result\n```",
+            "extracted_code": "def compute_temporal_concentration(events):\n    annual_stats = {}\n\n    for event in events:\n        year = event['entry_time'][:4]\n        net_pnl = event['net_pnl']\n\n        if year not in annual_stats:\n            annual_stats[year] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        annual_stats[year]['n_trades'] += 1\n        annual_stats[year]['net_pnl_sum'] += net_pnl\n        if net_pnl > 0:\n            annual_stats[year]['positive_trades'] += 1\n\n    result = {\n        'years_with_positive_net': sum(1 for stats in annual_stats.values() if stats['net_pnl_sum'] > 0),\n        'years_total_with_at_least_1_trade': len(annual_stats),\n        **{year: {\n            'n_trades': stats['n_trades'],\n            'net_pnl_sum': stats['net_pnl_sum'],\n            'win_rate': stats['positive_trades'] / stats['n_trades']\n        } for year, stats in annual_stats.items()}\n    }\n\n    return result",
+            "execution": {
+              "returncode": 0,
+              "stdout": "{\"years_with_positive_net\": 5, \"years_total_with_at_least_1_trade\": 8, \"2019\": {\"n_trades\": 3, \"net_pnl_sum\": -59.480000000000004, \"win_rate\": 0.0}, \"2020\": {\"n_trades\": 7, \"net_pnl_sum\": 42.61999999999999, \"win_rate\": 0.2857142857142857}, \"2021\": {\"n_trades\": 9, \"net_pnl_sum\": -254.23, \"win_rate\": 0.0}, \"2022\": {\"n_trades\": 6, \"net_pnl_sum\": 64.99, \"win_rate\": 0.3333333333333333}, \"2023\": {\"n_trades\": 7, \"net_pnl_sum\": 16.480000000000004, \"win_rate\": 0.2857142857142857}, \"2024\": {\"n_trades\": 7, \"net_pnl_sum\": 164.44, \"win_rate\": 0.42857142857142855}, \"2025\": {\"n_trades\": 7, \"net_pnl_sum\": 754.29, \"win_rate\": 0.7142857142857143}, \"2026\": {\"n_trades\": 1, \"net_pnl_sum\": -86.97999999999999, \"win_rate\": 0.0}}\n",
+              "stderr": ""
+            },
+            "parsed_output": {
+              "years_with_positive_net": 5,
+              "years_total_with_at_least_1_trade": 8,
+              "2019": {
+                "n_trades": 3,
+                "net_pnl_sum": -59.480000000000004,
+                "win_rate": 0.0
+              },
+              "2020": {
+                "n_trades": 7,
+                "net_pnl_sum": 42.61999999999999,
+                "win_rate": 0.2857142857142857
+              },
+              "2021": {
+                "n_trades": 9,
+                "net_pnl_sum": -254.23,
+                "win_rate": 0.0
+              },
+              "2022": {
+                "n_trades": 6,
+                "net_pnl_sum": 64.99,
+                "win_rate": 0.3333333333333333
+              },
+              "2023": {
+                "n_trades": 7,
+                "net_pnl_sum": 16.480000000000004,
+                "win_rate": 0.2857142857142857
+              },
+              "2024": {
+                "n_trades": 7,
+                "net_pnl_sum": 164.44,
+                "win_rate": 0.42857142857142855
+              },
+              "2025": {
+                "n_trades": 7,
+                "net_pnl_sum": 754.29,
+                "win_rate": 0.7142857142857143
+              },
+              "2026": {
+                "n_trades": 1,
+                "net_pnl_sum": -86.97999999999999,
+                "win_rate": 0.0
+              }
+            },
+            "expected_output": {
+              "2019": {
+                "n_trades": 3,
+                "net_pnl_sum": -59.480000000000004,
+                "win_rate": 0.0
+              },
+              "2020": {
+                "n_trades": 7,
+                "net_pnl_sum": 42.62,
+                "win_rate": 0.2857142857142857
+              },
+              "2021": {
+                "n_trades": 9,
+                "net_pnl_sum": -254.23,
+                "win_rate": 0.0
+              },
+              "2022": {
+                "n_trades": 6,
+                "net_pnl_sum": 64.99,
+                "win_rate": 0.3333333333333333
+              },
+              "2023": {
+                "n_trades": 7,
+                "net_pnl_sum": 16.48,
+                "win_rate": 0.2857142857142857
+              },
+              "2024": {
+                "n_trades": 7,
+                "net_pnl_sum": 164.44,
+                "win_rate": 0.42857142857142855
+              },
+              "2025": {
+                "n_trades": 7,
+                "net_pnl_sum": 754.29,
+                "win_rate": 0.7142857142857143
+              },
+              "2026": {
+                "n_trades": 1,
+                "net_pnl_sum": -86.97999999999999,
+                "win_rate": 0.0
+              },
+              "years_with_positive_net": 5,
+              "years_total_with_at_least_1_trade": 8
+            },
+            "matches_independent_verification": false,
+            "pilot_task_passed": false
+          }
+        },
+        "exit_efficiency": {
+          "wall_seconds": 104.29,
+          "raw_model_response": "```python\ndef compute_exit_efficiency(events):\n    total_ratio = 0.0\n    n_events_used = 0\n    n_events_skipped_zero_available = 0\n\n    for event in events:\n        direction = event['direction']\n        entry_price = event['entry_price']\n        exit_price = event['exit_price']\n        entry_tp = event['entry_tp']\n\n        if direction == 1:  # BUY\n            captured = exit_price - entry_price\n            available = entry_tp - entry_price\n        elif direction == -1:  # SELL\n            captured = entry_price - exit_price\n            available = entry_price - entry_tp\n        else:\n            n_events_skipped_zero_available += 1\n            continue\n\n        if available == 0:\n            n_events_skipped_zero_available += 1\n            continue\n\n        ratio = captured / available\n        total_ratio += ratio\n        n_events_used += 1\n\n    mean_ratio = total_ratio / n_events_used if n_events_used > 0 else 0.0\n    return {\n        'mean_exit_efficiency_ratio': mean_ratio,\n        'n_events_used': n_events_used,\n        'n_events_skipped_zero_available': n_events_skipped_zero_available\n    }\n```",
+          "extracted_code": "def compute_exit_efficiency(events):\n    total_ratio = 0.0\n    n_events_used = 0\n    n_events_skipped_zero_available = 0\n\n    for event in events:\n        direction = event['direction']\n        entry_price = event['entry_price']\n        exit_price = event['exit_price']\n        entry_tp = event['entry_tp']\n\n        if direction == 1:  # BUY\n            captured = exit_price - entry_price\n            available = entry_tp - entry_price\n        elif direction == -1:  # SELL\n            captured = entry_price - exit_price\n            available = entry_price - entry_tp\n        else:\n            n_events_skipped_zero_available += 1\n            continue\n\n        if available == 0:\n            n_events_skipped_zero_available += 1\n            continue\n\n        ratio = captured / available\n        total_ratio += ratio\n        n_events_used += 1\n\n    mean_ratio = total_ratio / n_events_used if n_events_used > 0 else 0.0\n    return {\n        'mean_exit_efficiency_ratio': mean_ratio,\n        'n_events_used': n_events_used,\n        'n_events_skipped_zero_available': n_events_skipped_zero_available\n    }",
+          "execution": {
+            "returncode": 0,
+            "stdout": "{\"mean_exit_efficiency_ratio\": 0.14184654892572904, \"n_events_used\": 47, \"n_events_skipped_zero_available\": 0}\n",
+            "stderr": ""
+          },
+          "parsed_output": {
+            "mean_exit_efficiency_ratio": 0.14184654892572904,
+            "n_events_used": 47,
+            "n_events_skipped_zero_available": 0
+          },
+          "expected_output": {
+            "mean_exit_efficiency_ratio": 0.14184654892572904,
+            "n_events_used": 47,
+            "n_events_skipped_zero_available": 0
+          },
+          "matches_independent_verification": true,
+          "pilot_task_passed": true,
+          "retry_used": true,
+          "first_attempt": {
+            "wall_seconds": 180.02,
+            "raw_model_response": "[HARNESS_ERROR: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)]",
+            "extracted_code": "[HARNESS_ERROR: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)]",
+            "execution": {
+              "returncode": 1,
+              "stdout": "",
+              "stderr": "  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_v2_ministral-3-3b_breakout_acc_exitfx.py\", line 3\n    [HARNESS_ERROR: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=180)]\n                  ^\nSyntaxError: invalid syntax\n"
+            },
+            "parsed_output": null,
+            "expected_output": {
+              "mean_exit_efficiency_ratio": 0.14184654892572904,
+              "n_events_used": 47,
+              "n_events_skipped_zero_available": 0
+            },
+            "matches_independent_verification": false,
+            "pilot_task_passed": false
+          }
+        }
+      },
+      "ORDER_BLOCK": {
+        "temporal_concentration": {
+          "wall_seconds": 114.59,
+          "raw_model_response": "```python\ndef compute_temporal_concentration(events):\n    anno_dict = {}\n\n    for e in events:\n        anno = e['entry_time'][:4]\n        if anno not in anno_dict:\n            anno_dict[anno] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        anno_dict[anno]['n_trades'] += 1\n        anno_dict[anno]['net_pnl_sum'] += e['net_pnl']\n        if e['net_pnl'] > 0:\n            anno_dict[anno]['positive_trades'] += 1\n\n    result = {}\n\n    for anno, data in anno_dict.items():\n        result[anno] = {\n            'n_trades': data['n_trades'],\n            'net_pnl_sum': data['net_pnl_sum'],\n            'win_rate': data['positive_trades'] / data['n_trades']\n        }\n\n    result['years_with_positive_net'] = sum(1 for anno in anno_dict if anno_dict[anno]['net_pnl_sum'] > 0)\n    result['years_total_with_at_least_1_trade'] = len(anno_dict)\n\n    return result\n```",
+          "extracted_code": "def compute_temporal_concentration(events):\n    anno_dict = {}\n\n    for e in events:\n        anno = e['entry_time'][:4]\n        if anno not in anno_dict:\n            anno_dict[anno] = {'n_trades': 0, 'net_pnl_sum': 0.0, 'positive_trades': 0}\n\n        anno_dict[anno]['n_trades'] += 1\n        anno_dict[anno]['net_pnl_sum'] += e['net_pnl']\n        if e['net_pnl'] > 0:\n            anno_dict[anno]['positive_trades'] += 1\n\n    result = {}\n\n    for anno, data in anno_dict.items():\n        result[anno] = {\n            'n_trades': data['n_trades'],\n            'net_pnl_sum': data['net_pnl_sum'],\n            'win_rate': data['positive_trades'] / data['n_trades']\n        }\n\n    result['years_with_positive_net'] = sum(1 for anno in anno_dict if anno_dict[anno]['net_pnl_sum'] > 0)\n    result['years_total_with_at_least_1_trade'] = len(anno_dict)\n\n    return result",
+          "execution": {
+            "returncode": 0,
+            "stdout": "{\"2024\": {\"n_trades\": 4, \"net_pnl_sum\": -33.2, \"win_rate\": 0.25}, \"2025\": {\"n_trades\": 5, \"net_pnl_sum\": 317.20000000000005, \"win_rate\": 0.6}, \"2026\": {\"n_trades\": 4, \"net_pnl_sum\": 213.39999999999998, \"win_rate\": 0.5}, \"years_with_positive_net\": 2, \"years_total_with_at_least_1_trade\": 3}\n",
+            "stderr": ""
+          },
+          "parsed_output": {
+            "2024": {
+              "n_trades": 4,
+              "net_pnl_sum": -33.2,
+              "win_rate": 0.25
+            },
+            "2025": {
+              "n_trades": 5,
+              "net_pnl_sum": 317.20000000000005,
+              "win_rate": 0.6
+            },
+            "2026": {
+              "n_trades": 4,
+              "net_pnl_sum": 213.39999999999998,
+              "win_rate": 0.5
+            },
+            "years_with_positive_net": 2,
+            "years_total_with_at_least_1_trade": 3
+          },
+          "expected_output": {
+            "2024": {
+              "n_trades": 4,
+              "net_pnl_sum": -33.2,
+              "win_rate": 0.25
+            },
+            "2025": {
+              "n_trades": 5,
+              "net_pnl_sum": 317.20000000000005,
+              "win_rate": 0.6
+            },
+            "2026": {
+              "n_trades": 4,
+              "net_pnl_sum": 213.39999999999998,
+              "win_rate": 0.5
+            },
+            "years_with_positive_net": 2,
+            "years_total_with_at_least_1_trade": 3
+          },
+          "matches_independent_verification": true,
+          "pilot_task_passed": true,
+          "retry_used": false
+        },
+        "exit_efficiency": {
+          "wall_seconds": 149.17,
+          "raw_model_response": "```python\ndef compute_exit_efficiency(events):\n    total_ratio = 0.0\n    n_events_used = 0\n    n_events_skipped_zero_available = 0\n\n    for event in events:\n        direction = event['direction']\n        entry_price = event['entry_price']\n        exit_price = event['exit_price']\n        entry_tp = event['entry_tp']\n\n        if direction == 1:\n            captured = exit_price - entry_price\n            available = entry_tp - entry_price\n        elif direction == -1:\n            captured = entry_price - exit_price\n            available = entry_price - entry_tp\n        else:\n            n_events_skipped_zero_available += 1\n            continue\n\n        if available == 0:\n            n_events_skipped_zero_available += 1\n            continue\n\n        ratio = captured / available\n        total_ratio += ratio\n        n_events_used += 1\n\n    mean_exit_efficiency_ratio = total_ratio / n_events_used if n_events_used > 0 else 0.0\n    return {\n        'mean_exit_efficiency_ratio': mean_exit_efficiency_ratio,\n        'n_events_used': n_events_used,\n        'n_events_skipped_zero_available': n_events_skipped_zero_available\n    }\n```",
+          "extracted_code": "def compute_exit_efficiency(events):\n    total_ratio = 0.0\n    n_events_used = 0\n    n_events_skipped_zero_available = 0\n\n    for event in events:\n        direction = event['direction']\n        entry_price = event['entry_price']\n        exit_price = event['exit_price']\n        entry_tp = event['entry_tp']\n\n        if direction == 1:\n            captured = exit_price - entry_price\n            available = entry_tp - entry_price\n        elif direction == -1:\n            captured = entry_price - exit_price\n            available = entry_price - entry_tp\n        else:\n            n_events_skipped_zero_available += 1\n            continue\n\n        if available == 0:\n            n_events_skipped_zero_available += 1\n            continue\n\n        ratio = captured / available\n        total_ratio += ratio\n        n_events_used += 1\n\n    mean_exit_efficiency_ratio = total_ratio / n_events_used if n_events_used > 0 else 0.0\n    return {\n        'mean_exit_efficiency_ratio': mean_exit_efficiency_ratio,\n        'n_events_used': n_events_used,\n        'n_events_skipped_zero_available': n_events_skipped_zero_available\n    }",
+          "execution": {
+            "returncode": 0,
+            "stdout": "{\"mean_exit_efficiency_ratio\": 0.3113124818998961, \"n_events_used\": 13, \"n_events_skipped_zero_available\": 0}\n",
+            "stderr": ""
+          },
+          "parsed_output": {
+            "mean_exit_efficiency_ratio": 0.3113124818998961,
+            "n_events_used": 13,
+            "n_events_skipped_zero_available": 0
+          },
+          "expected_output": {
+            "mean_exit_efficiency_ratio": 0.3113124818998961,
+            "n_events_used": 13,
+            "n_events_skipped_zero_available": 0
+          },
+          "matches_independent_verification": true,
+          "pilot_task_passed": true,
+          "retry_used": false
+        }
+      }
+    },
+    "overall_pilot_passed": false
+  }
+}

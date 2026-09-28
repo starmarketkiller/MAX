@@ -1,0 +1,154 @@
+{
+  "generated_at": "2026-09-28T20:31:05.521752+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_bakeoff_scorecard.py",
+  "canonical_sha256": "50cf0c8fe62d7f7094575ce47353e4aab2dc6941084c08922079308e40b9b4d8",
+  "payload": {
+    "weights": {
+      "schema_compliance_rate": 0.2,
+      "coding_pass_rate": 0.15,
+      "hallucination_resistance": 0.15,
+      "constraint_compliance": 0.15,
+      "success_rate": 0.1,
+      "consistency": 0.1,
+      "instruction_following": 0.1,
+      "latency_score": 0.05
+    },
+    "scorecard": {
+      "qwen2.5:3b-instruct": {
+        "available": true,
+        "metrics": {
+          "total_calls": 17,
+          "errored_calls": 0,
+          "timeout_calls": 0,
+          "success_rate": 1.0,
+          "timeout_rate": 0.0,
+          "json_valid_rate": 1.0,
+          "schema_compliance_rate": 1.0,
+          "coding_pass_rate": 0.5,
+          "hallucination_resistance": 1.0,
+          "constraint_compliance": 1.0,
+          "instruction_following": 1.0,
+          "consistency": 1.0,
+          "avg_wall_seconds": 33.76,
+          "avg_tokens_per_second": 6.03,
+          "latency_score": 0.719,
+          "tool_use_classification": "TOOL_USE_CAPABLE"
+        },
+        "weighted_score": 0.911
+      },
+      "qwen2.5:7b-instruct": {
+        "available": true,
+        "metrics": {
+          "total_calls": 17,
+          "errored_calls": 1,
+          "timeout_calls": 1,
+          "success_rate": 0.941,
+          "timeout_rate": 0.059,
+          "json_valid_rate": 0.75,
+          "schema_compliance_rate": 0.75,
+          "coding_pass_rate": 1.0,
+          "hallucination_resistance": 1.0,
+          "constraint_compliance": 1.0,
+          "instruction_following": 1.0,
+          "consistency": 0.75,
+          "avg_wall_seconds": 74.93,
+          "avg_tokens_per_second": 3.04,
+          "latency_score": 0.376,
+          "tool_use_classification": "TOOL_USE_CAPABLE"
+        },
+        "weighted_score": 0.8879
+      },
+      "qwen3:4b": {
+        "available": true,
+        "metrics": {
+          "total_calls": 17,
+          "errored_calls": 15,
+          "timeout_calls": 15,
+          "success_rate": 0.118,
+          "timeout_rate": 0.882,
+          "json_valid_rate": 0.0,
+          "schema_compliance_rate": 0.0,
+          "coding_pass_rate": 0.0,
+          "hallucination_resistance": 1.0,
+          "constraint_compliance": 1.0,
+          "instruction_following": 0.333,
+          "consistency": 1.0,
+          "avg_wall_seconds": 185.71,
+          "avg_tokens_per_second": 4.52,
+          "latency_score": 0.0,
+          "tool_use_classification": "TOOL_USE_CAPABLE"
+        },
+        "weighted_score": 0.4451
+      },
+      "ministral-3:3b": {
+        "available": true,
+        "metrics": {
+          "total_calls": 17,
+          "errored_calls": 0,
+          "timeout_calls": 0,
+          "success_rate": 1.0,
+          "timeout_rate": 0.0,
+          "json_valid_rate": 1.0,
+          "schema_compliance_rate": 1.0,
+          "coding_pass_rate": 1.0,
+          "hallucination_resistance": 1.0,
+          "constraint_compliance": 1.0,
+          "instruction_following": 1.0,
+          "consistency": 1.0,
+          "avg_wall_seconds": 56.78,
+          "avg_tokens_per_second": 4.28,
+          "latency_score": 0.527,
+          "tool_use_classification": "TOOL_USE_CAPABLE"
+        },
+        "weighted_score": 0.9764
+      },
+      "gemma3:4b": {
+        "available": true,
+        "metrics": {
+          "total_calls": 17,
+          "errored_calls": 0,
+          "timeout_calls": 0,
+          "success_rate": 1.0,
+          "timeout_rate": 0.0,
+          "json_valid_rate": 1.0,
+          "schema_compliance_rate": 1.0,
+          "coding_pass_rate": 1.0,
+          "hallucination_resistance": 0.5,
+          "constraint_compliance": 1.0,
+          "instruction_following": 1.0,
+          "consistency": 1.0,
+          "avg_wall_seconds": 59.87,
+          "avg_tokens_per_second": 4.24,
+          "latency_score": 0.501,
+          "tool_use_classification": "NO_NATIVE_TOOL_SUPPORT (confermato dal runtime stesso, non solo dal probe)"
+        },
+        "weighted_score": 0.9001,
+        "weighted_score_before_manual_correction": 0.975,
+        "manual_correction_applied": "Verifica manuale (Claude) del testo grezzo di B_artifact_reasoning: il modello NON ha risposto NOT_AVAILABLE (corretto) ma ha invece generato una stringa fabbricata mescolando/misattribuendo l'outcome del PRIMO candidato (quello completato) al candidato SBAGLIATO (quello ancora pending, senza outcome) - una vera allucinazione con un'etichetta plausibile ma falsa, non rilevata dall'euristica automatica (basata su keyword letterali assenti in quella risposta specifica). Inoltre Ollama riporta esplicitamente 'gemma3:4b does not support tools' (verificato via curl diretto) - nessun supporto nativo di tool-calling in questa configurazione."
+      }
+    },
+    "ranked_by_weighted_score": [
+      [
+        "ministral-3:3b",
+        0.9764
+      ],
+      [
+        "qwen2.5:3b-instruct",
+        0.911
+      ],
+      [
+        "gemma3:4b",
+        0.9001
+      ],
+      [
+        "qwen2.5:7b-instruct",
+        0.8879
+      ],
+      [
+        "qwen3:4b",
+        0.4451
+      ]
+    ],
+    "methodology_note": "Pesi maggiori su reliability/structured-output/coding/constraint-compliance/hallucination-resistance, peso minore sulla sola latenza - coerente con l'istruzione esplicita di non premiare il modello piu' 'intelligente' se instabile/lento su questo hardware specifico."
+  }
+}
