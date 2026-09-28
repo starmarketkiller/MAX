@@ -1,0 +1,161 @@
+{
+  "generated_at": "2026-09-28T15:07:16.545949+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_model_benchmark.py",
+  "canonical_sha256": "b05e24185163be63bcb54263411dc9f005b45f23f5346ebe095d6a0e97242d59",
+  "payload": {
+    "num_ctx": 8192,
+    "models_tested": [
+      "qwen2.5:3b-instruct"
+    ],
+    "results": {
+      "qwen2.5:3b-instruct": {
+        "tasks": [
+          {
+            "response_text": "12",
+            "wall_seconds": 1.64,
+            "total_duration_seconds": 1.63,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 49,
+            "prompt_eval_duration_seconds": 1.17,
+            "eval_count_tokens_generated": 3,
+            "eval_duration_seconds": 0.34,
+            "tokens_per_second": 8.93,
+            "task_id": "1_simple_response"
+          },
+          {
+            "response_text": "{\"task_id\": \"TASK_TEST_1\", \"executor\": \"local-model\", \"decision\": \"COMPLETED\", \"confidence\": \"MEDIUM\", \"tests\": {\"ran\": true, \"passed\": 3, \"failed\": 0}}",
+            "wall_seconds": 9.38,
+            "total_duration_seconds": 9.36,
+            "load_duration_seconds": 0.03,
+            "prompt_eval_count": 132,
+            "prompt_eval_duration_seconds": 0.26,
+            "eval_count_tokens_generated": 52,
+            "eval_duration_seconds": 9.03,
+            "tokens_per_second": 5.76,
+            "task_id": "2b_result_packet_json_format_json_mode",
+            "json_valid": {
+              "raw_valid": true,
+              "extracted_valid": true
+            }
+          },
+          {
+            "response_text": "Ecco l'oggetto JSON che rispetta esattamente i campi richiesti e nessun altro:\n\n```json\n{\n  \"task_id\": \"TASK_TEST_1\",\n  \"executor\": \"local-model\",\n  \"decision\": \"COMPLETED\",\n  \"confidence\": \"MEDIUM\",\n  \"tests\": {\n    \"ran\": true,\n    \"passed\": 3,\n    \"failed\": 0\n  }\n}\n```\n\nQuesto JSON contiene esattamente i campi richiesti (task_id, executor, decision, confidence e tests) e nessun altro.",
+            "wall_seconds": 21.21,
+            "total_duration_seconds": 21.19,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 132,
+            "prompt_eval_duration_seconds": 0.17,
+            "eval_count_tokens_generated": 125,
+            "eval_duration_seconds": 20.97,
+            "tokens_per_second": 5.96,
+            "task_id": "2_result_packet_json",
+            "json_valid": {
+              "raw_valid": false,
+              "extracted_valid": true
+            }
+          },
+          {
+            "response_text": "Questa \u00e8 una rappresentazione di un JSON in italiano: \nIl decisione \u00e8 \"EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION\", il fattore di profitto \u00e8 1.48 e il net_expectancy per ogni transazione \u00e8 di 25.63 unit\u00e0. Il concenrazione dei top 5 delle transazioni \u00e8 pari al 127.4%.",
+            "wall_seconds": 14.56,
+            "total_duration_seconds": 14.52,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 107,
+            "prompt_eval_duration_seconds": 0.18,
+            "eval_count_tokens_generated": 84,
+            "eval_duration_seconds": 14.3,
+            "tokens_per_second": 5.87,
+            "task_id": "3_artifact_summary"
+          },
+          {
+            "response_text": "test_safety_net_registries_are_projected_without_reinterpretation - Differenza nella verit\u00e0 asserita (9 == 8)",
+            "wall_seconds": 5.3,
+            "total_duration_seconds": 5.29,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 88,
+            "prompt_eval_duration_seconds": 0.19,
+            "eval_count_tokens_generated": 31,
+            "eval_duration_seconds": 5.05,
+            "tokens_per_second": 6.14,
+            "task_id": "4_log_analysis"
+          },
+          {
+            "response_text": "```python\ndef is_count_at_least(actual, minimum):\n    return actual >= minimum\n```",
+            "wall_seconds": 3.45,
+            "total_duration_seconds": 3.44,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 66,
+            "prompt_eval_duration_seconds": 0.18,
+            "eval_count_tokens_generated": 20,
+            "eval_duration_seconds": 3.23,
+            "tokens_per_second": 6.19,
+            "task_id": "5_small_python_fix"
+          },
+          {
+            "response_text": "`assert model[\"overview\"][\"hypothesis_count\"] == 9`",
+            "wall_seconds": 2.77,
+            "total_duration_seconds": 2.76,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 107,
+            "prompt_eval_duration_seconds": 0.19,
+            "eval_count_tokens_generated": 16,
+            "eval_duration_seconds": 2.55,
+            "tokens_per_second": 6.28,
+            "task_id": "6_propose_patch"
+          },
+          {
+            "response_text": "- Automatizzano il processo di verifica\n- Incrementano la efficienza del testing\n- Garantiscono la consistenza delle rilevazioni",
+            "wall_seconds": 8.4,
+            "total_duration_seconds": 8.39,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 78,
+            "prompt_eval_duration_seconds": 2.93,
+            "eval_count_tokens_generated": 33,
+            "eval_duration_seconds": 5.44,
+            "tokens_per_second": 6.07,
+            "task_id": "7_instruction_following"
+          },
+          {
+            "response_text": "Il profit factor \u00e8 un indicatori che misura la qualit\u00e0 del profitto di un investimento, espresso come rapporto tra il totale dei profitti e la somma totale degli scali.",
+            "wall_seconds": 7.25,
+            "total_duration_seconds": 7.22,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 46,
+            "prompt_eval_duration_seconds": 0.19,
+            "eval_count_tokens_generated": 42,
+            "eval_duration_seconds": 7.01,
+            "tokens_per_second": 5.99,
+            "task_id": "8_italian"
+          },
+          {
+            "response_text": "A profit factor is a measure used in trading to indicate the expected multiple of the initial investment that can be gained from a trade, based on the historical performance of the trading strategy.",
+            "wall_seconds": 6.37,
+            "total_duration_seconds": 6.36,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 44,
+            "prompt_eval_duration_seconds": 0.19,
+            "eval_count_tokens_generated": 37,
+            "eval_duration_seconds": 6.14,
+            "tokens_per_second": 6.03,
+            "task_id": "9_english"
+          },
+          {
+            "response_text": "Non \u00e8 stato trovato alcun segnale di ANOMALIA_TARGET_XYZ nelle log fornite.",
+            "wall_seconds": 7.76,
+            "total_duration_seconds": 7.68,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 4098,
+            "prompt_eval_duration_seconds": 0.32,
+            "eval_count_tokens_generated": 24,
+            "eval_duration_seconds": 7.03,
+            "tokens_per_second": 3.41,
+            "task_id": "10_longer_context"
+          }
+        ],
+        "free_ram_gb_before": 6.42,
+        "free_ram_gb_after": 6.7,
+        "ram_delta_gb": -0.28
+      }
+    },
+    "measurement_note": "Misura empirica reale (non stimata) - le risposte di un LLM variano, questo NON e' un artifact deterministico in senso Phase-7, salvato per tracciabilita' di quando/come e' stata presa la misura."
+  }
+}

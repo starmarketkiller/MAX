@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-09-28T15:51:12.022316+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_pilot_worker.py",
+  "canonical_sha256": "d43a0efcaa48772894dff7336262c6a088027e9e1317e41cdd2a3b401e3d602a",
+  "payload": {
+    "model": "qwen2.5:3b-instruct",
+    "sandbox_dir": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28",
+    "attempts": {
+      "BREAKOUT_ACC": {
+        "wall_seconds": 228.28,
+        "code_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_generated_breakout_acc.py",
+        "raw_model_response": "```python\n#!/usr/bin/env python3\n\"\"\"Funzione che calcola i dati per ogni anno basandosi sulle transazioni con profitto\"\"\"\nimport os\nimport sys\nfrom collections import defaultdict\n\nPHASE725_DIR = os.path.dirname(os.path.abspath(__file__))\nROOT = os.path.abspath(os.path.join(PHASE725_DIR, \"..\", \"..\", \"..\", \"..\"))\nsys.path.insert(0, os.path.join(ROOT, \"server\", \"research_scripts\", \"phase6_6\"))\nfrom canonical_utils import wrap_with_provenance, save_json  # noqa: E402\n\nsys.path.insert(0, PHASE725_DIR)\nfrom nxs_liq_sweep_edge_dataset_loader import (  # noqa: E402\n    load_closed_events, net_pnl, split_by_direction, entry_time, _dt)\n\n\ndef compute_temporal_concentration(events):\n    by_year = defaultdict(list)\n    for e in events:\n        by_year[_dt(e['entry_time']).year].append(e)\n\n    per_year = {str(y): {\"n_trades\": len(v), \"net_pnl_sum\": sum(v),\n                         \"win_rate\": sum(1 for p in v if p['net_pnl'] > 0) / len(v)}\n                for y, v in sorted(by_year.items())}\n    years_positive = sum(1 for v in per_year.values() if v[\"net_pnl_sum\"] > 0)\n\n    years_with_positive_net = years_positive\n    years_total_with_at_least_1_trade = sum(1 for v in per_year.values() if v[\"n_trades\"] > 0)\n\n    return {\n        'years_with_positive_net': years_with_positive_net,\n        'years_total_with_at_least_1_trade': years_total_with_at_least_1_trade,\n        'years_data': per_year\n    }\n```\n\n\n```python\nrisultato = compute_temporal_concentration([e for e in load_closed_events() if 'entry_time' in e and 'net_pnl' in e])\nprint(json.dumps(risultato))\n```",
+        "extracted_code": "#!/usr/bin/env python3\n\"\"\"Funzione che calcola i dati per ogni anno basandosi sulle transazioni con profitto\"\"\"\nimport os\nimport sys\nfrom collections import defaultdict\n\nPHASE725_DIR = os.path.dirname(os.path.abspath(__file__))\nROOT = os.path.abspath(os.path.join(PHASE725_DIR, \"..\", \"..\", \"..\", \"..\"))\nsys.path.insert(0, os.path.join(ROOT, \"server\", \"research_scripts\", \"phase6_6\"))\nfrom canonical_utils import wrap_with_provenance, save_json  # noqa: E402\n\nsys.path.insert(0, PHASE725_DIR)\nfrom nxs_liq_sweep_edge_dataset_loader import (  # noqa: E402\n    load_closed_events, net_pnl, split_by_direction, entry_time, _dt)\n\n\ndef compute_temporal_concentration(events):\n    by_year = defaultdict(list)\n    for e in events:\n        by_year[_dt(e['entry_time']).year].append(e)\n\n    per_year = {str(y): {\"n_trades\": len(v), \"net_pnl_sum\": sum(v),\n                         \"win_rate\": sum(1 for p in v if p['net_pnl'] > 0) / len(v)}\n                for y, v in sorted(by_year.items())}\n    years_positive = sum(1 for v in per_year.values() if v[\"net_pnl_sum\"] > 0)\n\n    years_with_positive_net = years_positive\n    years_total_with_at_least_1_trade = sum(1 for v in per_year.values() if v[\"n_trades\"] > 0)\n\n    return {\n        'years_with_positive_net': years_with_positive_net,\n        'years_total_with_at_least_1_trade': years_total_with_at_least_1_trade,\n        'years_data': per_year\n    }",
+        "execution_returncode": 1,
+        "execution_stdout": "",
+        "execution_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_generated_breakout_acc.py\", line 20, in <module>\n    from nxs_liq_sweep_edge_dataset_loader import (  # noqa: E402\nModuleNotFoundError: No module named 'nxs_liq_sweep_edge_dataset_loader'\n",
+        "parsed_output": null,
+        "parse_error": null,
+        "expected_output_computed_independently_by_claude": {
+          "2019": {
+            "n_trades": 3,
+            "net_pnl_sum": -59.480000000000004,
+            "win_rate": 0.0
+          },
+          "2020": {
+            "n_trades": 7,
+            "net_pnl_sum": 42.62,
+            "win_rate": 0.2857142857142857
+          },
+          "2021": {
+            "n_trades": 9,
+            "net_pnl_sum": -254.23,
+            "win_rate": 0.0
+          },
+          "2022": {
+            "n_trades": 6,
+            "net_pnl_sum": 64.99,
+            "win_rate": 0.3333333333333333
+          },
+          "2023": {
+            "n_trades": 7,
+            "net_pnl_sum": 16.48,
+            "win_rate": 0.2857142857142857
+          },
+          "2024": {
+            "n_trades": 7,
+            "net_pnl_sum": 164.44,
+            "win_rate": 0.42857142857142855
+          },
+          "2025": {
+            "n_trades": 7,
+            "net_pnl_sum": 754.29,
+            "win_rate": 0.7142857142857143
+          },
+          "2026": {
+            "n_trades": 1,
+            "net_pnl_sum": -86.97999999999999,
+            "win_rate": 0.0
+          },
+          "years_with_positive_net": 5,
+          "years_total_with_at_least_1_trade": 8
+        },
+        "matches_independent_verification": false,
+        "pilot_task_passed": false
+      },
+      "ORDER_BLOCK": {
+        "wall_seconds": 170.54,
+        "code_path": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_generated_order_block.py",
+        "raw_model_response": "```python\ndef compute_temporal_concentration(events):\n    by_year = defaultdict(list)\n    for e in events:\n        by_year[_dt(entry_time(e)).year].append(net_pnl(e))\n\n    per_year = {}\n    for y, v in sorted(by_year.items()):\n        per_year[str(y)] = {\n            'n_trades': len(v),\n            'net_pnl_sum': sum(v),\n            'win_rate': sum(1 for p in v if p > 0) / len(v)\n        }\n\n    years_positive = sum(1 for v in per_year.values() if v['net_pnl_sum'] > 0)\n    years_total_with_at_least_1_trade = len(per_year)\n\n    per_year['years_with_positive_net'] = years_positive\n    per_year['years_total_with_at_least_1_trade'] = years_total_with_at_least_1_trade\n\n    return per_year\n\n\n# Data di input\nevents = [\n    {\"entry_time\": \"2024.04.08 17:15:00\", \"net_pnl\": 97.0},\n    {\"entry_time\": \"2024.05.15 17:00:00\", \"net_pnl\": -49.4},\n    {\"entry_time\": \"2024.10.02 18:00:00\", \"net_pnl\": -40.2},\n    {\"entry_time\": \"2024.12.12 16:15:00\", \"net_pnl\": -40.6},\n    {\"entry_time\": \"2025.03.19 11:45:00\", \"net_pnl\": 107.2},\n    {\"entry_time\": \"2025.04.09 02:30:00\", \"net_pnl\": 158.8},\n    {\"entry_time\": \"2025.05.20 05:00:00\", \"net_pnl\": -77.6},\n    {\"entry_time\": \"2025.06.10 04:15:00\", \"net_pnl\": 168.3},\n    {\"entry_time\": \"2025.09.04 01:15:01\", \"net_pnl\": -39.5},\n    {\"entry_time\": \"2026.01.07 04:00:00\", \"net_pnl\": 259.7},\n    {\"entry_time\": \"2026.03.30 04:00:00\", \"net_pnl\": -244.7},\n    {\"entry_time\": \"2026.07.24 11:00:00\", \"net_pnl\": -86.3},\n    {\"entry_time\": \"2026.08.17 15:45:00\", \"net_pnl\": 284.7}\n]\n\nprint(json.dumps(compute_temporal_concentration(events)))\n```",
+        "extracted_code": "def compute_temporal_concentration(events):\n    by_year = defaultdict(list)\n    for e in events:\n        by_year[_dt(entry_time(e)).year].append(net_pnl(e))\n\n    per_year = {}\n    for y, v in sorted(by_year.items()):\n        per_year[str(y)] = {\n            'n_trades': len(v),\n            'net_pnl_sum': sum(v),\n            'win_rate': sum(1 for p in v if p > 0) / len(v)\n        }\n\n    years_positive = sum(1 for v in per_year.values() if v['net_pnl_sum'] > 0)\n    years_total_with_at_least_1_trade = len(per_year)\n\n    per_year['years_with_positive_net'] = years_positive\n    per_year['years_total_with_at_least_1_trade'] = years_total_with_at_least_1_trade\n\n    return per_year\n\n\n# Data di input\nevents = [\n    {\"entry_time\": \"2024.04.08 17:15:00\", \"net_pnl\": 97.0},\n    {\"entry_time\": \"2024.05.15 17:00:00\", \"net_pnl\": -49.4},\n    {\"entry_time\": \"2024.10.02 18:00:00\", \"net_pnl\": -40.2},\n    {\"entry_time\": \"2024.12.12 16:15:00\", \"net_pnl\": -40.6},\n    {\"entry_time\": \"2025.03.19 11:45:00\", \"net_pnl\": 107.2},\n    {\"entry_time\": \"2025.04.09 02:30:00\", \"net_pnl\": 158.8},\n    {\"entry_time\": \"2025.05.20 05:00:00\", \"net_pnl\": -77.6},\n    {\"entry_time\": \"2025.06.10 04:15:00\", \"net_pnl\": 168.3},\n    {\"entry_time\": \"2025.09.04 01:15:01\", \"net_pnl\": -39.5},\n    {\"entry_time\": \"2026.01.07 04:00:00\", \"net_pnl\": 259.7},\n    {\"entry_time\": \"2026.03.30 04:00:00\", \"net_pnl\": -244.7},\n    {\"entry_time\": \"2026.07.24 11:00:00\", \"net_pnl\": -86.3},\n    {\"entry_time\": \"2026.08.17 15:45:00\", \"net_pnl\": 284.7}\n]\n\nprint(json.dumps(compute_temporal_concentration(events)))",
+        "execution_returncode": 1,
+        "execution_stdout": "",
+        "execution_stderr": "Traceback (most recent call last):\n  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_generated_order_block.py\", line 47, in <module>\n    print(json.dumps(compute_temporal_concentration(events)))\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_28\\_pilot_generated_order_block.py\", line 11, in compute_temporal_concentration\n    by_year[_dt(entry_time(e)).year].append(net_pnl(e))\n                ^^^^^^^^^^\nNameError: name 'entry_time' is not defined\n",
+        "parsed_output": null,
+        "parse_error": null,
+        "expected_output_computed_independently_by_claude": {
+          "2024": {
+            "n_trades": 4,
+            "net_pnl_sum": -33.2,
+            "win_rate": 0.25
+          },
+          "2025": {
+            "n_trades": 5,
+            "net_pnl_sum": 317.20000000000005,
+            "win_rate": 0.6
+          },
+          "2026": {
+            "n_trades": 4,
+            "net_pnl_sum": 213.39999999999998,
+            "win_rate": 0.5
+          },
+          "years_with_positive_net": 2,
+          "years_total_with_at_least_1_trade": 3
+        },
+        "matches_independent_verification": false,
+        "pilot_task_passed": false
+      }
+    },
+    "overall_pilot_passed": false
+  }
+}

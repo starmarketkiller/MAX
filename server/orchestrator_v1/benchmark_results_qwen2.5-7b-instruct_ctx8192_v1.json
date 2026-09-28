@@ -1,0 +1,154 @@
+{
+  "generated_at": "2026-09-28T15:21:38.801285+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_model_benchmark.py",
+  "canonical_sha256": "c900ddae5062535ae27a7e7294dfc91da2eee8a92425b844bfc1e6f1f8c25e24",
+  "payload": {
+    "num_ctx": 8192,
+    "models_tested": [
+      "qwen2.5:7b-instruct"
+    ],
+    "results": {
+      "qwen2.5:7b-instruct": {
+        "tasks": [
+          {
+            "response_text": "12",
+            "wall_seconds": 16.9,
+            "total_duration_seconds": 16.89,
+            "load_duration_seconds": 10.6,
+            "prompt_eval_count": 49,
+            "prompt_eval_duration_seconds": 5.64,
+            "eval_count_tokens_generated": 3,
+            "eval_duration_seconds": 0.63,
+            "tokens_per_second": 4.75,
+            "task_id": "1_simple_response"
+          },
+          {
+            "response_text": "{\n  \"task_id\": \"TASK_TEST_1\",\n  \"executor\": \"local-model\",\n  \"decision\": \"COMPLETED\",\n  \"confidence\": \"MEDIUM\",\n  \"tests\": {\n    \"ran\": true,\n    \"passed\": 3,\n    \"failed\": 0\n  }\n}",
+            "wall_seconds": 21.83,
+            "total_duration_seconds": 21.82,
+            "load_duration_seconds": 0.02,
+            "prompt_eval_count": 132,
+            "prompt_eval_duration_seconds": 0.41,
+            "eval_count_tokens_generated": 65,
+            "eval_duration_seconds": 21.35,
+            "tokens_per_second": 3.04,
+            "task_id": "2b_result_packet_json_format_json_mode",
+            "json_valid": {
+              "raw_valid": true,
+              "extracted_valid": true
+            }
+          },
+          {
+            "response_text": "```json\n{\n  \"task_id\": \"TASK_TEST_1\",\n  \"executor\": \"local-model\",\n  \"decision\": \"COMPLETED\",\n  \"confidence\": \"MEDIUM\",\n  \"tests\": {\n    \"ran\": true,\n    \"passed\": 3,\n    \"failed\": 0\n  }\n}\n```",
+            "wall_seconds": 35.18,
+            "total_duration_seconds": 35.17,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 132,
+            "prompt_eval_duration_seconds": 13.01,
+            "eval_count_tokens_generated": 69,
+            "eval_duration_seconds": 22.13,
+            "tokens_per_second": 3.12,
+            "task_id": "2_result_packet_json",
+            "json_valid": {
+              "raw_valid": false,
+              "extracted_valid": true
+            }
+          },
+          {
+            "response_text": "La decisione \u00e8 di inviare questo candidate\u4ea4\u6613\u81f3\u8fb9\u7f18\u8282\u70b9\u8fdb\u884c\u8fdb\u4e00\u6b65\u9a8c\u8bc1\uff0c\u4ea4\u6613\u5177\u6709\u8f83\u9ad8\u96c6\u4e2d\u7684\u7279\u5f81\uff0c\u524d5%\u4ea4\u6613\u7684\u96c6\u4e2d\u5ea6\u4e3a127.4\u3002\u8be5\u7b56\u7565\u5171\u6267\u884c\u4e8642\u7b14\u4ea4\u6613\uff0c\u6bcf\u7b14\u4ea4\u6613\u7684\u671f\u671b\u6536\u76ca\u4e3a25.63\uff0c\u5229\u6da6\u56e0\u5b50\u4e3a1.48\u3002",
+            "wall_seconds": 32.98,
+            "total_duration_seconds": 32.97,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 107,
+            "prompt_eval_duration_seconds": 11.12,
+            "eval_count_tokens_generated": 70,
+            "eval_duration_seconds": 21.81,
+            "tokens_per_second": 3.21,
+            "task_id": "3_artifact_summary"
+          },
+          {
+            "response_text": "test_safety_net_registries_are_projected_without_reinterpretation - assert 9 == 8",
+            "wall_seconds": 15.85,
+            "total_duration_seconds": 15.84,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 88,
+            "prompt_eval_duration_seconds": 8.7,
+            "eval_count_tokens_generated": 22,
+            "eval_duration_seconds": 7.11,
+            "tokens_per_second": 3.1,
+            "task_id": "4_log_analysis"
+          },
+          {
+            "response_text": "```python\ndef is_count_at_least(actual, minimum):\n    return actual >= minimum\n```",
+            "wall_seconds": 12.38,
+            "total_duration_seconds": 12.37,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 66,
+            "prompt_eval_duration_seconds": 6.14,
+            "eval_count_tokens_generated": 20,
+            "eval_duration_seconds": 6.19,
+            "tokens_per_second": 3.23,
+            "task_id": "5_small_python_fix"
+          },
+          {
+            "response_text": "```python\nassert model[\"overview\"][\"hypothesis_count\"] == 9\n```",
+            "wall_seconds": 17.66,
+            "total_duration_seconds": 17.65,
+            "load_duration_seconds": 0.04,
+            "prompt_eval_count": 107,
+            "prompt_eval_duration_seconds": 11.49,
+            "eval_count_tokens_generated": 19,
+            "eval_duration_seconds": 6.09,
+            "tokens_per_second": 3.12,
+            "task_id": "6_propose_patch"
+          },
+          {
+            "response_text": "- Certificano codice corretto\n- Risparmiano tempo sviluppo\n- Identificano errori precoci",
+            "wall_seconds": 17.08,
+            "total_duration_seconds": 17.05,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 78,
+            "prompt_eval_duration_seconds": 7.64,
+            "eval_count_tokens_generated": 29,
+            "eval_duration_seconds": 9.36,
+            "tokens_per_second": 3.1,
+            "task_id": "7_instruction_following"
+          },
+          {
+            "response_text": "Il profit factor \u00e8 un rapporto che esprime quante volte la marginale del prezzo di vendita copre il costo del bene comprato, utilizzato per valutare la capacit\u00e0 di un'impresa di generare profitto.",
+            "wall_seconds": 20.67,
+            "total_duration_seconds": 20.65,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 46,
+            "prompt_eval_duration_seconds": 3.4,
+            "eval_count_tokens_generated": 51,
+            "eval_duration_seconds": 17.2,
+            "tokens_per_second": 2.97,
+            "task_id": "8_italian"
+          },
+          {
+            "response_text": "A profit factor is a ratio that expresses how many times a company's gross profit is of its net sales, indicating the profitability per unit of sales.",
+            "wall_seconds": 12.78,
+            "total_duration_seconds": 12.77,
+            "load_duration_seconds": 0.01,
+            "prompt_eval_count": 44,
+            "prompt_eval_duration_seconds": 2.95,
+            "eval_count_tokens_generated": 31,
+            "eval_duration_seconds": 9.79,
+            "tokens_per_second": 3.17,
+            "task_id": "9_english"
+          },
+          {
+            "error": "HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=600)",
+            "wall_seconds": 600.0107443332672,
+            "task_id": "10_longer_context"
+          }
+        ],
+        "free_ram_gb_before": 6.67,
+        "free_ram_gb_after": 3.81,
+        "ram_delta_gb": 2.86
+      }
+    },
+    "measurement_note": "Misura empirica reale (non stimata) - le risposte di un LLM variano, questo NON e' un artifact deterministico in senso Phase-7, salvato per tracciabilita' di quando/come e' stata presa la misura."
+  }
+}
