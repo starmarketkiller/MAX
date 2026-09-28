@@ -1,0 +1,19 @@
+{
+  "2024": {
+    "n_trades": 4,
+    "net_pnl_sum": -33.2,
+    "win_rate": 0.25
+  },
+  "2025": {
+    "n_trades": 5,
+    "net_pnl_sum": 317.20000000000005,
+    "win_rate": 0.6
+  },
+  "2026": {
+    "n_trades": 4,
+    "net_pnl_sum": 213.39999999999998,
+    "win_rate": 0.5
+  },
+  "years_with_positive_net": 2,
+  "years_total_with_at_least_1_trade": 3
+}

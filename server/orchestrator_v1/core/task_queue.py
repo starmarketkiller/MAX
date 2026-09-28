@@ -33,7 +33,7 @@ STATES = ["CREATED", "QUEUED", "RUNNING", "WAITING_DEPENDENCY", "WAITING_APPROVA
 # Transizioni di stato permesse - fail-closed: una transizione non elencata qui
 # viene rifiutata con un'eccezione, non applicata silenziosamente.
 ALLOWED_TRANSITIONS = {
-    "CREATED": {"QUEUED", "BLOCKED"},
+    "CREATED": {"QUEUED", "BLOCKED", "WAITING_DEPENDENCY"},
     "QUEUED": {"RUNNING", "WAITING_DEPENDENCY", "BLOCKED"},
     "WAITING_DEPENDENCY": {"QUEUED", "BLOCKED"},
     "RUNNING": {"COMPLETED", "FAILED", "WAITING_APPROVAL", "WAITING_PROVIDER",
@@ -132,6 +132,22 @@ class TaskQueue:
             record[k] = v
         data[task_id] = record
         self._save(data)
+        return record
+
+    def try_promote(self, task_id):
+        """Se un task e' WAITING_DEPENDENCY e tutte le sue dependencies sono
+        ora COMPLETED, lo promuove a QUEUED. Necessario perche' un task puo'
+        essere sottomesso PRIMA che la sua dipendenza sia stata processata
+        (submit() controlla le dependencies una sola volta, al momento
+        della sottomissione - senza questa promozione esplicita il task
+        resterebbe bloccato per sempre)."""
+        data = self._load()
+        record = data[task_id]
+        if record["state"] != "WAITING_DEPENDENCY":
+            return record
+        deps_ok = all(data.get(d, {}).get("state") == "COMPLETED" for d in record["dependencies"])
+        if deps_ok:
+            return self.transition(task_id, "QUEUED")
         return record
 
     def next_runnable(self):

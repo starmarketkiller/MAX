@@ -1,0 +1,1492 @@
+{
+  "generated_at": "2026-09-28T21:57:30.218415+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_nexus_task_0001_backfill.py",
+  "canonical_sha256": "9fcb4767eccc59cddf8241883fb13a1a3e1417598fa58b93e0dfb0fdcf2125d5",
+  "payload": {
+    "summary": {
+      "nexus_task": "0001",
+      "title": "Backfill temporal_concentration + exit_efficiency BREAKOUT_ACC + ORDER_BLOCK",
+      "task_ids": [
+        "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX"
+      ],
+      "elapsed_seconds": 786.98,
+      "tier_breakdown": {
+        "TIER0_DETERMINISTIC": 2,
+        "TIER1_LOCAL_CHEAP": 0,
+        "TIER2_LOCAL_STRONG": 4,
+        "ESCALATION_REQUIRED": 0
+      },
+      "retries_total": 2,
+      "escalations": [],
+      "escalation_occurred": false,
+      "premium_tokens_or_cost_used": 0,
+      "premium_api_calls_made": 0,
+      "per_task_summary": {
+        "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC": {
+          "state": "COMPLETED",
+          "executor": "deterministic_worker",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+            "executor": "deterministic_worker",
+            "start_time": "2026-09-28T21:44:23.273002+00:00",
+            "end_time": "2026-09-28T21:44:23.275508+00:00",
+            "files_read": [
+              "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+            ],
+            "files_changed": [],
+            "tools_or_commands": [],
+            "artifacts_created": [],
+            "tests": {
+              "ran": false,
+              "passed": 0,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        },
+        "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK": {
+          "state": "COMPLETED",
+          "executor": "deterministic_worker",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+            "executor": "deterministic_worker",
+            "start_time": "2026-09-28T21:44:23.282132+00:00",
+            "end_time": "2026-09-28T21:44:23.284655+00:00",
+            "files_read": [
+              "server/research_scripts/phase7/phase7_22/canonical_economic_dataset_v1.json"
+            ],
+            "files_changed": [],
+            "tools_or_commands": [],
+            "artifacts_created": [],
+            "tests": {
+              "ran": false,
+              "passed": 0,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        },
+        "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL": {
+          "state": "COMPLETED",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+            "executor": "LOCAL_STRONG_MINISTRAL3B",
+            "start_time": "2026-09-28T21:47:23.365726+00:00",
+            "end_time": "2026-09-28T21:48:59.673814+00:00",
+            "files_read": [],
+            "files_changed": [
+              "server/research_scripts/phase7/phase7_28/_nexus0001_breakout_acc_temporal.py",
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_temporal_v1.json"
+            ],
+            "tools_or_commands": [
+              "ollama:ministral-3:3b"
+            ],
+            "artifacts_created": [
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_temporal_v1.json"
+            ],
+            "tests": {
+              "ran": true,
+              "passed": 1,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        },
+        "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX": {
+          "state": "COMPLETED",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+            "executor": "LOCAL_STRONG_MINISTRAL3B",
+            "start_time": "2026-09-28T21:51:59.741047+00:00",
+            "end_time": "2026-09-28T21:53:42.741756+00:00",
+            "files_read": [],
+            "files_changed": [
+              "server/research_scripts/phase7/phase7_28/_nexus0001_breakout_acc_exitfx.py",
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_exitfx_v1.json"
+            ],
+            "tools_or_commands": [
+              "ollama:ministral-3:3b"
+            ],
+            "artifacts_created": [
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_exitfx_v1.json"
+            ],
+            "tests": {
+              "ran": true,
+              "passed": 1,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        },
+        "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL": {
+          "state": "COMPLETED",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+            "executor": "LOCAL_STRONG_MINISTRAL3B",
+            "start_time": "2026-09-28T21:53:42.754610+00:00",
+            "end_time": "2026-09-28T21:55:20.690857+00:00",
+            "files_read": [],
+            "files_changed": [
+              "server/research_scripts/phase7/phase7_28/_nexus0001_order_block_temporal.py",
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_temporal_v1.json"
+            ],
+            "tools_or_commands": [
+              "ollama:ministral-3:3b"
+            ],
+            "artifacts_created": [
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_temporal_v1.json"
+            ],
+            "tests": {
+              "ran": true,
+              "passed": 1,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        },
+        "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX": {
+          "state": "COMPLETED",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "result_packet": {
+            "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+            "executor": "LOCAL_STRONG_MINISTRAL3B",
+            "start_time": "2026-09-28T21:55:20.731026+00:00",
+            "end_time": "2026-09-28T21:57:30.207297+00:00",
+            "files_read": [],
+            "files_changed": [
+              "server/research_scripts/phase7/phase7_28/_nexus0001_order_block_exitfx.py",
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_exitfx_v1.json"
+            ],
+            "tools_or_commands": [
+              "ollama:ministral-3:3b"
+            ],
+            "artifacts_created": [
+              "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_exitfx_v1.json"
+            ],
+            "tests": {
+              "ran": true,
+              "passed": 1,
+              "failed": 0
+            },
+            "verifier": {
+              "ran": true,
+              "passed": true,
+              "errors": []
+            },
+            "commit": null,
+            "push_status": "NOT_APPLICABLE",
+            "decision": "COMPLETED",
+            "confidence": "HIGH",
+            "limitations": [],
+            "unresolved_issues": [],
+            "suggested_next_tasks": [],
+            "escalation_needed": {
+              "needed": false,
+              "reason": null,
+              "target_tier": null
+            }
+          }
+        }
+      }
+    },
+    "ledger_events": [
+      {
+        "event_id": "evt_4afc84df133248bd",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.338629+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_243c52ac92834da1",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.340639+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_59beed62b7cf4989",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.343161+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_4fd99e70cfcb46d2",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:02.454562+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 20.08,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_83fdf042e3da495d",
+        "event_type": "TEST_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:03.564667+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.32s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_c7c9f8d61aa84eff",
+        "event_type": "RETRY_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:03.566176+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "attempt": 2,
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_55d0f244cc3d467e",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:09.912941+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.31,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8082d1863f684813",
+        "event_type": "TEST_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.071096+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.31s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_dd1fec02f2ee4fde",
+        "event_type": "TASK_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.071096+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7bfbcd02003743b7",
+        "event_type": "ESCALATION_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.072098+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "target": "TIER3_CLAUDE",
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.31s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_372be96bc5f74ac5",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.023825+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_42090a716c6e4008",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.025336+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_3977456d201a4759",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.026935+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ad90a511ba954417",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:48.658639+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.6,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7b301807cb5a4422",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:50.534619+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_865c401b7e0845a7",
+        "event_type": "APPROVAL_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:50.534619+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "il worker locale ha prodotto/verificato una patch per un file reale del repository - approval_required=REVIEW_REQUIRED, non AUTO",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d262c5ffb7be4250",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.431728+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_aaba7572ea064293",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.433489+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_3c385de9141f4ddf",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.435506+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ab5e58f023ec485f",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:42.124358+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.62,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7fb00f574b484434",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:43.997114+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1e2044a407e84654",
+        "event_type": "APPROVAL_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:43.998135+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "il worker locale ha prodotto/verificato una patch per un file reale del repository - approval_required=REVIEW_REQUIRED, non AUTO",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_f67a314e49194cb0",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.655303+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input BREAKOUT_ACC",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8107479dd5804a3b",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.658814+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_9e243164750f4057",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.662305+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER0_DETERMINISTIC",
+          "executor": "deterministic_worker",
+          "reason": "azione 'check_files_exist' e' un workflow deterministico noto - mai chiamare un modello per questo (\u00a76 premium/local gating).",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_e60bda804d2c4f88",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.662305+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "check_files_exist",
+          "params_keys": [
+            "paths"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7c0bd4cde05447d2",
+        "event_type": "FILE_READ",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.663308+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_21\\nxs_breakoutacc_dataset_loader.py"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d0f19e90b18a4c69",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:19:35.664344+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "action": "check_files_exist",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_9beec081d96d452e",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:19:35.673803+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill temporal_concentration BREAKOUT_ACC via worker locale",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_dc9dc8329ff748a1",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:19:35.677300+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7c7ef9fc60c247f8",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:19:35.679948+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1aaa56c8bcc547d8",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:22:35.716535+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 180.0,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_2b0682f04664416f",
+        "event_type": "RETRY_STARTED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:22:35.717538+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "attempt": 2,
+          "classification": "ENVIRONMENT",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d6dd78d6b4344f92",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:11.077206+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 94.93,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d5be2f71dc3e4a83",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:11.313015+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "backfill_temporal_breakout_acc",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_dbb7063248e44429",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:11.314013+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server\\research_scripts\\phase7\\phase7_28\\_acceptance2_breakout_acc_temporal.py",
+            "server\\research_scripts\\phase7\\phase7_28\\acceptance2_result_breakout_acc_temporal_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8d3694919da64a5b",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:11.316017+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "backfill_temporal_breakout_acc",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_a974eca727c243d1",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.061328+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input BREAKOUT_ACC",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_dcd5c3fdfd184269",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.063328+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_fc835b77f169413a",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.065886+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER0_DETERMINISTIC",
+          "executor": "deterministic_worker",
+          "reason": "azione 'check_files_exist' e' un workflow deterministico noto - mai chiamare un modello per questo (\u00a76 premium/local gating).",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_db72ca5b0a5243b1",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.066895+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "check_files_exist",
+          "params_keys": [
+            "paths"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_f61c07aad3bf4e2a",
+        "event_type": "FILE_READ",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.067933+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_21\\nxs_breakoutacc_dataset_loader.py"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_c5d86bd560f44a21",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_ACCEPT2_VERIFY_INPUT",
+        "timestamp": "2026-09-28T21:24:43.068936+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "action": "check_files_exist",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_28e7d9a1162b438d",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:43.079370+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill temporal_concentration BREAKOUT_ACC via worker locale",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_210a3ac6e2de4a25",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:43.081890+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_c58f4df265fe4367",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:24:43.084894+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7943e226fae34c3c",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:26:17.029628+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 93.91,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8bca41fac2c942e4",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:26:17.198103+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "backfill_temporal_breakout_acc",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_531e97796e594ef8",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:26:17.199107+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_28/_acceptance2_breakout_acc_temporal.py",
+            "server/research_scripts/phase7/phase7_28/acceptance2_result_breakout_acc_temporal_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d946d3aab3ae47f3",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_ACCEPT2_BACKFILL_TEMPORAL",
+        "timestamp": "2026-09-28T21:26:17.199107+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "backfill_temporal_breakout_acc",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_71a135e345f94904",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:42:03.852624+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input BREAKOUT_ACC",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_a0c9c77c3dd7451a",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:42:03.855625+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_eae2dc4c999f4458",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:42:03.857623+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input ORDER_BLOCK",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ad91ccb243364f67",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:42:03.860640+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_84326d7158b9421f",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:42:03.862271+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill temporal BREAKOUT_ACC",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_357f9f2841754dff",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.240516+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input BREAKOUT_ACC",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_4ac4dd756c174bd2",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.243046+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_977f663daa7e431b",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.246044+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Verifica artifact di input ORDER_BLOCK",
+          "task_type": "MAINTENANCE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_47705266cd7842a4",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.248658+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1a26a8873eac49c7",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:44:23.250659+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill temporal BREAKOUT_ACC",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_218083bd42514c81",
+        "event_type": "TASK_BLOCKED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:44:23.253170+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "dependencies pending",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_4b1d46acd17b403c",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:44:23.255772+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill exitfx BREAKOUT_ACC",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_f8bbebf51a6f4410",
+        "event_type": "TASK_BLOCKED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:44:23.257774+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "dependencies pending",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_f44bd760d8794a3f",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:44:23.260832+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill temporal ORDER_BLOCK",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_e456d3c5d4bd4ee0",
+        "event_type": "TASK_BLOCKED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:44:23.263749+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "dependencies pending",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_b77c2fc45c83474b",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:44:23.265760+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Backfill exitfx ORDER_BLOCK",
+          "task_type": "BACKFILL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_128fd96c00c1456d",
+        "event_type": "TASK_BLOCKED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:44:23.269936+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "dependencies pending",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_a7ad61a8e33b4763",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.273002+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER0_DETERMINISTIC",
+          "executor": "deterministic_worker",
+          "reason": "azione 'check_files_exist' e' un workflow deterministico noto - mai chiamare un modello per questo (\u00a76 premium/local gating).",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d44af7331a4a4a28",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.273002+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "check_files_exist",
+          "params_keys": [
+            "paths"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ac8f78e01b3d4091",
+        "event_type": "FILE_READ",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.274003+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_21/nxs_breakoutacc_dataset_loader.py"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8b08bd62b1c444ee",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_BREAKOUT_ACC",
+        "timestamp": "2026-09-28T21:44:23.274003+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "action": "check_files_exist",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_810b5ceba96b4d61",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.282132+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER0_DETERMINISTIC",
+          "executor": "deterministic_worker",
+          "reason": "azione 'check_files_exist' e' un workflow deterministico noto - mai chiamare un modello per questo (\u00a76 premium/local gating).",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_0f9555f3e7614064",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.282132+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "check_files_exist",
+          "params_keys": [
+            "paths"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_e84b26c5820d4b45",
+        "event_type": "FILE_READ",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.283645+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_22/canonical_economic_dataset_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_71d5388a7b284b0b",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_VERIFY_ORDER_BLOCK",
+        "timestamp": "2026-09-28T21:44:23.283645+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "action": "check_files_exist",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_454b36723ff2430e",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:44:23.293859+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_a633245d6b45473f",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:47:23.351188+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 180.02,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_06e089c2d2614a73",
+        "event_type": "RETRY_STARTED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:47:23.352189+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "attempt": 2,
+          "classification": "ENVIRONMENT",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_b3fcec8e73dc417b",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:48:59.486356+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 95.65,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_60aa68359aab46ef",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:48:59.671813+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d7ef1efcf07b4fd0",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:48:59.672817+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_28/_nexus0001_breakout_acc_temporal.py",
+            "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_temporal_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ba55602a9da14239",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+        "timestamp": "2026-09-28T21:48:59.673814+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_BREAKOUT_ACC_TEMPORAL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_b69f2042062749df",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:48:59.683918+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_5d04884a8fc9440a",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:51:59.733018+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 180.01,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1c49ee0167a94107",
+        "event_type": "RETRY_STARTED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:51:59.734019+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "attempt": 2,
+          "classification": "ENVIRONMENT",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_70f680b97be042ed",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:53:42.559039+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 102.11,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_014431850b8548d1",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:53:42.737757+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_e09f3fc1a0724f25",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:53:42.738762+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_28/_nexus0001_breakout_acc_exitfx.py",
+            "server/research_scripts/phase7/phase7_28/nexus0001_result_breakout_acc_exitfx_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_a1177a258ef24087",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+        "timestamp": "2026-09-28T21:53:42.740759+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_BREAKOUT_ACC_EXITFX",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_575e67606cd64df8",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:53:42.752806+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ed9026c8e08d4749",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:55:20.472697+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 97.66,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_948eac1cbe624e09",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:55:20.683839+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_005eabeddc0d4e61",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:55:20.687859+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_28/_nexus0001_order_block_temporal.py",
+            "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_temporal_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_cd981968479f4492",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+        "timestamp": "2026-09-28T21:55:20.690857+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_ORDER_BLOCK_TEMPORAL",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_0b105eb42cb7499c",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:55:20.728026+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_4235e15f5ebc4101",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:57:30.027410+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 129.16,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1ae8c9a826e44f63",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:57:30.205296+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_fef51fc00e564e68",
+        "event_type": "FILE_CHANGED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:57:30.205296+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "files": [
+            "server/research_scripts/phase7/phase7_28/_nexus0001_order_block_exitfx.py",
+            "server/research_scripts/phase7/phase7_28/nexus0001_result_order_block_exitfx_v1.json"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_de3762ed9c564b18",
+        "event_type": "TASK_COMPLETED",
+        "task_id": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+        "timestamp": "2026-09-28T21:57:30.206296+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "TASK_NEXUS_0001_ORDER_BLOCK_EXITFX",
+          "actor": "orchestrator_v1_core"
+        }
+      }
+    ]
+  }
+}

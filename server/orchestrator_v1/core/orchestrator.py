@@ -94,7 +94,7 @@ class Orchestrator:
         """Esegue UN ciclo completo (route -> execute -> verify -> retry/
         escalation -> result packet) per un singolo task. Ritorna il record
         aggiornato."""
-        record = self.queue.get(task_id)
+        record = self.queue.try_promote(task_id)  # WAITING_DEPENDENCY -> QUEUED se ora pronto
         if record["state"] not in ("QUEUED",):
             raise AssertionError(f"process_task richiede stato QUEUED, trovato {record['state']}")
 

@@ -1,0 +1,44 @@
+{
+  "years_with_positive_net": 5,
+  "years_total_with_at_least_1_trade": 8,
+  "2019": {
+    "n_trades": 3,
+    "net_pnl_sum": -59.480000000000004,
+    "win_rate": 0.0
+  },
+  "2020": {
+    "n_trades": 7,
+    "net_pnl_sum": 42.61999999999999,
+    "win_rate": 0.2857142857142857
+  },
+  "2021": {
+    "n_trades": 9,
+    "net_pnl_sum": -254.23,
+    "win_rate": 0.0
+  },
+  "2022": {
+    "n_trades": 6,
+    "net_pnl_sum": 64.99,
+    "win_rate": 0.3333333333333333
+  },
+  "2023": {
+    "n_trades": 7,
+    "net_pnl_sum": 16.480000000000004,
+    "win_rate": 0.2857142857142857
+  },
+  "2024": {
+    "n_trades": 7,
+    "net_pnl_sum": 164.44,
+    "win_rate": 0.42857142857142855
+  },
+  "2025": {
+    "n_trades": 7,
+    "net_pnl_sum": 754.29,
+    "win_rate": 0.7142857142857143
+  },
+  "2026": {
+    "n_trades": 1,
+    "net_pnl_sum": -86.97999999999999,
+    "win_rate": 0.0
+  }
+}
