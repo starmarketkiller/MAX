@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-09-28T10:25:13.431567+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_buy_dominance_decision_card.py",
+  "canonical_sha256": "7e721804acef293245bac6ffb012089b5d596300f509d1f5e801737a20b566d9",
+  "payload": {
+    "decision": "BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME",
+    "reason": "All'orizzonte primario preregistrato (h10, benchmark REGIME_MATCHED_RANDOM_LONG - il piu' rigoroso, l'unico che controlla esplicitamente trend/volatilita'), NESSUNA delle 3 strategie mostra un effetto BUY statisticamente significativo rispetto al benchmark long regime-matched (CI95 include sempre lo zero). Su TUTTI i 21 confronti orizzonte/strategia regime-matched, solo 1 risultano 'significativi' - un singolo caso (ORDER_BLOCK, orizzonte piu' corto h1, campione minuscolo n=12) che si inverte di segno agli orizzonti piu' lunghi e non sopravvive a una correzione anche minima per test multipli (84 confronti totali in questa fase). 2/3 strategie mostrano comunque una direzione media favorevole (non significativa) all'orizzonte primario - non e' un rigetto netto della hypothesis, ma il segnale di selezione BUY specifico della strategia, se esiste, non e' distinguibile dal semplice essere long GOLD in un regime di trend/volatilita' comparabile, con questo campione.",
+    "cross_strategy_pattern": "NONE_BEATS_REGIME_MATCHED_BENCHMARK_SIGNIFICANTLY",
+    "per_strategy_primary_direction": {
+      "BREAKOUT_ACC": "REAL_BETTER",
+      "ORDER_BLOCK": "REAL_BETTER",
+      "LIQ_SWEEP": "REAL_WORSE"
+    },
+    "per_strategy_primary_significant": {
+      "BREAKOUT_ACC": false,
+      "ORDER_BLOCK": false,
+      "LIQ_SWEEP": false
+    },
+    "total_significant_favorable_across_all_horizons_and_strategies": 1,
+    "total_horizon_strategy_combinations_tested_regime_matched": 21,
+    "multiple_testing_context": {
+      "n_total_comparisons_this_phase": 84,
+      "sole_significant_result_survives_bonferroni": false
+    },
+    "datasets_used_are_discovery_not_holdout": true,
+    "any_positive_result_on_exposed_data_remains": "SUPPORTED_AS_HYPOTHESIS - richiede validazione indipendente successiva su dati non ancora esposti, mai promossa direttamente a edge.",
+    "not_a_retroactive_reinterpretation_of_strategy_verdicts": true,
+    "no_edge_validated_output_possible": true,
+    "no_optimization_no_deploy": true
+  }
+}

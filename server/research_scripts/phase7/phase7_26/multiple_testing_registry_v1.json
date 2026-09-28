@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-09-28T09:24:36.524660+00:00",
+  "generated_at": "2026-09-28T10:24:30.929224+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_multiple_testing_registry.py",
-  "canonical_sha256": "1021e875e6c6c2658afe600336a78aa90db1f2da983207d271d29ecf979e71c8",
+  "canonical_sha256": "f197c83d6cc60f4e30266c847b8f48b3217aabf8d5eac7c07d3f871688cb171e",
   "payload": {
-    "n_hypotheses_tested": 8,
+    "n_hypotheses_tested": 9,
     "n_strategies_variants_tested": 4,
-    "n_experiments_run": 8,
-    "n_datasets_registered": 11,
+    "n_experiments_run": 9,
+    "n_datasets_registered": 12,
     "datasets_reused_across_multiple_experiments": {
       "LIQ_SWEEP::2023.10.02_2026.06.30": 2
     },
     "datasets_reused_as_validation_for_multiple_hypotheses": {
-      "LIQ_SWEEP::2023.10.02_2026.06.30": 2
+      "LIQ_SWEEP::2023.10.02_2026.06.30": 3
     },
     "n_oos_holdout_windows_consumed": 3,
     "oos_holdout_window_ids": [
@@ -21,6 +21,6 @@
     ],
     "no_p_value_correction_applied_this_phase": true,
     "purpose": "Non e' inferenza statistica corretta (nessuna correzione multiple-comparison applicata) - e' un CONTEGGIO dichiarato per rendere visibile, in futuro, se il numero di ipotesi/varianti testate cresce piu' velocemente delle evidenze indipendenti disponibili (segnale di allarme precoce, non una correzione formale).",
-    "warning_threshold_note": "Con 8 hypotheses testate su 4 strategie e un solo dataset OOS indipendente per strategia, il rapporto hypotheses/OOS_indipendenti e' 8/3 - se questo rapporto continua a crescere senza nuovi holdout, la fiducia in qualunque singolo 'edge trovato' futuro va scontata di conseguenza (dichiarato qui, non ancora applicato come correzione numerica)."
+    "warning_threshold_note": "Con 8 hypotheses testate su 4 strategie e un solo dataset OOS indipendente per strategia, il rapporto hypotheses/OOS_indipendenti e' 9/3 - se questo rapporto continua a crescere senza nuovi holdout, la fiducia in qualunque singolo 'edge trovato' futuro va scontata di conseguenza (dichiarato qui, non ancora applicato come correzione numerica)."
   }
 }

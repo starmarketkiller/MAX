@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-09-28T10:18:54.104093+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_preregistration.py",
+  "canonical_sha256": "51f9f668680ec6101c2f63e31cf3c865367d0e45336ca314000f1e050f29bdde",
+  "payload": {
+    "strategies_included": [
+      "BREAKOUT_ACC",
+      "ORDER_BLOCK",
+      "LIQ_SWEEP"
+    ],
+    "n_buy_events_per_strategy": {
+      "BREAKOUT_ACC": 36,
+      "ORDER_BLOCK": 12,
+      "LIQ_SWEEP": 39
+    },
+    "datasets_used": {
+      "BREAKOUT_ACC": "BREAKOUT_ACC::2019.02.21_2026.06.09",
+      "ORDER_BLOCK": "ORDER_BLOCK::2023.10.02_2026.08.24",
+      "LIQ_SWEEP": "LIQ_SWEEP::2023.10.02_2026.06.30"
+    },
+    "datasets_are_discovery_not_holdout": true,
+    "price_source": "server/research_scripts/phase7/phase7_9h/raw_data/nxs_d1_gold_phase79h.csv",
+    "price_source_note": "Serie D1 unica per tutte e 3 le strategie e i benchmark (2019.01.02-2026.08.19) - garantisce granularita'/fonte identica, non introduce differenze spurie fra strategie. Ricalcolo INDIPENDENTE degli eventi reali (non riuso diretto di misure gia' pubblicate altrove, es. Phase 7.9K) per coerenza metodologica con i benchmark.",
+    "horizons_d1_bars": [
+      1,
+      3,
+      5,
+      10,
+      20,
+      40,
+      60
+    ],
+    "primary_horizon_d1_bars": 10,
+    "metrics": [
+      "forward_return_price_units",
+      "probability_of_favorable_outcome",
+      "mfe_price_units",
+      "mae_price_units",
+      "time_to_mfe_bars",
+      "time_to_mae_bars",
+      "time_to_profit_bars",
+      "adverse_excursion_before_favorable_movement"
+    ],
+    "benchmarks": {
+      "RANDOM_TIMESTAMPS_MATCHED": "N barre D1 casuali (stesso N del campione reale), entro lo stesso periodo/frequenza del dataset della strategia - seed dichiarato PRIMA del calcolo.",
+      "UNCONDITIONAL_LONG_EXPOSURE": "Media su TUTTE le barre D1 disponibili nel periodo (nessun campionamento) - baseline 'sei semplicemente long' senza alcuna selezione di timing.",
+      "PERIODIC_ENTRY_LONG": "Entry a intervalli fissi (ogni K barre, K tale che il conteggio atteso sia ~N) - deterministico, nessuna casualita'.",
+      "REGIME_MATCHED_RANDOM_LONG": "Per ogni evento reale, un entry casuale nella STESSA barra di regime (trend x vol_tercile) ma NON nello stesso evento - stratificato, usa solo informazione disponibile al momento (trend/ATR trailing, mai barre future).",
+      "BUY_AND_HOLD_MACRO_CONTEXT": "Rendimento dell'intero periodo in un solo colpo - riportato SOLO come contesto macro (drift secolare), MAI come confronto diretto trade-per-trade (istruzione esplicita del task)."
+    },
+    "matching_rules": "Ogni barra di benchmark (random/periodic/regime-matched) usa ESCLUSIVAMENTE informazione disponibile AL MOMENTO di quella barra (trend/vol_tercile trailing, mai calcolati con barre future) - stesso principio causale del Pre-Entry Feature Store (Phase 7.26).",
+    "exclusion_rules": "Nessun evento escluso per performance (nessun cherry-picking) - inclusi TUTTI i BUY reali di ciascuna strategia nel dataset di discovery. Eventi con orizzonte che eccede i dati disponibili (fine serie) sono CENSURATI per quella singola metrica/orizzonte (NOT_AVAILABLE), non esclusi dall'evento intero.",
+    "sample_size_caveats": "ORDER_BLOCK ha solo 12 eventi BUY - qualunque effect size su questo campione e' descrittivo, non generalizzabile. Dichiarato PRIMA di guardare i risultati, non dopo.",
+    "random_seed_base": 72700,
+    "n_bootstrap": 10000,
+    "primary_analysis_declared": "Confronto ALL orizzonti x REGIME_MATCHED_RANDOM_LONG (il benchmark piu' rigoroso, l'unico che controlla esplicitamente per trend/volatilita') su forward_return_price_units - questa e' l'analisi PRIMARIA per la decisione finale. Tutti gli altri benchmark/metriche sono EXPLORATORY (punto 8 del task) - riportati ma non usati da soli per la decisione.",
+    "decision_allowed_values": [
+      "BUY_SELECTION_SIGNAL_SUPPORTED_AS_HYPOTHESIS",
+      "BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME",
+      "MIXED_EVIDENCE",
+      "INSUFFICIENT_EVIDENCE"
+    ],
+    "frozen_before_any_result_examined": true,
+    "no_benchmark_change_after_seeing_results": true
+  }
+}

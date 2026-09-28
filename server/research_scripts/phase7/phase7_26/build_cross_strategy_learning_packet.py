@@ -18,6 +18,21 @@ from nxs_schemas import LEARNING_PACKET_REQUIRED_FIELDS, missing_required, NOT_A
 import nxs_backfill_sources as src  # noqa: E402
 
 
+def _buy_dominance_observations(strategy_identity):
+    """Phase 7.27: aggiunge (non sostituisce) l'osservazione del test
+    di benchmark trasversale sulla dominanza BUY - stessa fonte per le
+    3 strategie economiche, letta da un solo posto per coerenza."""
+    decision = src.BUY_DOMINANCE_BENCHMARK["decision_card"]()
+    per_strat = src.BUY_DOMINANCE_BENCHMARK["per_strategy_results"]()
+    if not decision or not per_strat:
+        return []
+    d = per_strat.get(strategy_identity, {}).get("primary_analysis_summary", {})
+    return [f"Phase 7.27 BUY-dominance benchmark: direzione={d.get('direction_of_effect')} "
+           f"vs benchmark long regime-matched @ h{d.get('horizon', '?').lstrip('h')} - decisione "
+           f"trasversale: {decision['decision']} (dataset di discovery, non un holdout - "
+           "SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."]
+
+
 def _get(d, *path):
     cur = d
     for k in path:
@@ -86,7 +101,8 @@ def _breakout_acc_packet():
         oos_behavior={"n_trades": _get(oos, "n_closed_trades_breakout_acc") or 1,
                      "decision": _get(oos, "decision")} if oos else NOT_AVAILABLE,
         failure_modes=["OUTLIER_DEPENDENT", "DIRECTION_DEPENDENT", "OOS_DEGRADATION"],
-        observations=["CI95 ALL include zero", "asimmetria BUY/SELL osservata (H2, post-hoc)"],
+        observations=["CI95 ALL include zero", "asimmetria BUY/SELL osservata (H2, post-hoc)"]
+                     + _buy_dominance_observations("BREAKOUT_ACC"),
         candidate_hypotheses=["H1_BREAKOUT_ACC_NET_EXPECTANCY_POSITIVE",
                              "H2_BREAKOUT_ACC_BUY_MORE_ROBUST_THAN_SELL"],
         confidence="MODERATA - n=47, non blind per H2",
@@ -120,7 +136,8 @@ def _order_block_packet():
         oos_behavior={"n_trades": 0, "decision": _get(oos, "decision")} if oos else NOT_AVAILABLE,
         failure_modes=["OUTLIER_DEPENDENT", "LOW_SAMPLE", "OOS_DEGRADATION"],
         observations=["campione minimo (n=13)", "concentrazione estrema (196.8% top-5)",
-                     "1 solo trade SELL (performance negativa, non eliminato)"],
+                     "1 solo trade SELL (performance negativa, non eliminato)"]
+                     + _buy_dominance_observations("ORDER_BLOCK"),
         candidate_hypotheses=["H_ORDER_BLOCK_EDGE_EXISTS"],
         confidence="BASSA - n=13", fidelity="EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
         provenance="phase7_22/* (vedi nxs_backfill_sources.py)",
@@ -198,7 +215,8 @@ def _liq_sweep_packet():
         failure_modes=["OUTLIER_DEPENDENT", "TEMPORALLY_CONCENTRATED", "REGIME_DEPENDENT",
                       "OOS_DEGRADATION"],
         observations=["asimmetria escursione: favorable-before-loser > adverse-before-winner",
-                     "primo OOS del corpus con campione sufficiente (n=6) - risultato negativo"],
+                     "primo OOS del corpus con campione sufficiente (n=6) - risultato negativo"]
+                     + _buy_dominance_observations("LIQ_SWEEP"),
         candidate_hypotheses=["H_LIQ_SWEEP_EDGE_EXISTS"],
         confidence="MODERATA - provenance ottima ma 'seen' per il P&L aggregato",
         fidelity="EVENT_LEVEL_FAITHFUL_ENTRY_ONLY - uscita non validabile da Python (Phase 7.24)",

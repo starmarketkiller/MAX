@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T09:17:47.037406+00:00",
+  "generated_at": "2026-09-28T10:24:30.821303+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_data_exposure_registry.py",
-  "canonical_sha256": "061a8c469833a74f376fefae7b410930774d2334d1f3acaacc6fbe032c946212",
+  "canonical_sha256": "5c2ad371ece3cd064e6ffcbd7029a0e491a77a3944572657e794a1ce020dfa4c",
   "payload": {
     "records": [
       {
@@ -262,9 +262,33 @@
         "oos_exposure": true,
         "forward_exposure": true,
         "holdout_status": "CONSUMED_AS_OOS - 6 trade, esito negativo, non piu' disponibile come holdout futuro."
+      },
+      {
+        "dataset_id": "BUY_DOMINANCE_BENCHMARK_V1_2019-2026",
+        "symbol": "GOLD",
+        "timeframe": "D1",
+        "date_range": [
+          "2019.02.21",
+          "2026.08.24"
+        ],
+        "strategy_identity": "CROSS_STRATEGY",
+        "implementation_identity": "BUY_DOMINANCE_BENCHMARK_TEST_V1",
+        "experiment_run_ids": [
+          "EXP_BUY_DOMINANCE_BENCHMARK_CROSS_STRATEGY"
+        ],
+        "first_seen_date": "Phase 7.27",
+        "development_exposure": false,
+        "integrity_audit_exposure": false,
+        "mechanism_discovery_exposure": false,
+        "visual_review_exposure": false,
+        "optimization_exposure": false,
+        "validation_exposure": true,
+        "oos_exposure": false,
+        "forward_exposure": false,
+        "holdout_status": "DERIVED_FROM_DISCOVERY_DATASETS - composito dei 3 dataset di discovery gia' esposti (BREAKOUT_ACC/ORDER_BLOCK/LIQ_SWEEP) + serie D1 condivisa - NON un holdout indipendente, dichiarato esplicitamente (Phase 7.27, punto 7 del task: preferito dataset gia' visti per la prima verifica della hypothesis)."
       }
     ],
-    "n_records": 11,
+    "n_records": 12,
     "backfilled_strategies": [
       "BREAKOUT_ACC",
       "ORDER_BLOCK",
@@ -274,6 +298,7 @@
     "query_function_name": "is_genuinely_untouched(dataset_id)",
     "holdout_status_values_seen": [
       "CONSUMED_AS_OOS",
+      "DERIVED_FROM_DISCOVERY_DATASETS",
       "EXPOSED_DISCOVERY_AND_BASELINE",
       "NOT_APPLICABLE_NO_ECONOMIC_DATASET",
       "NOT_USED",

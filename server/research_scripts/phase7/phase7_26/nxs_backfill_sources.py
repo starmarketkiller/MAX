@@ -100,3 +100,14 @@ LIQ_SWEEP = {
 
 STRATEGY_SOURCES = {"BREAKOUT_ACC": BREAKOUT_ACC, "ORDER_BLOCK": ORDER_BLOCK,
                    "TSI": TSI, "LIQ_SWEEP": LIQ_SWEEP}
+
+# --- Phase 7.27 (BUY-dominance benchmark test, cross-strategy - non backfill di UNA
+# strategia, ma di un esperimento trasversale sulle 3 economiche). ---
+BUY_DOMINANCE_BENCHMARK = {
+    "preregistration": lambda: load("phase7_27", "preregistration_v1.json"),
+    "per_strategy_results": lambda: load("phase7_27", "per_strategy_results_v1.json"),
+    "regime_controlled": lambda: load("phase7_27", "regime_controlled_analysis_v1.json"),
+    "cross_strategy_results": lambda: load("phase7_27", "cross_strategy_results_v1.json"),
+    "multiple_testing": lambda: load("phase7_27", "multiple_testing_accounting_v1.json"),
+    "decision_card": lambda: load("phase7_27", "decision_card_v1.json"),
+}

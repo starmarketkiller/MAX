@@ -187,9 +187,42 @@ def _liq_sweep_experiments():
     return exp
 
 
+def _buy_dominance_benchmark_experiments():
+    decision = src.BUY_DOMINANCE_BENCHMARK["decision_card"]()
+    prereg = src.BUY_DOMINANCE_BENCHMARK["preregistration"]()
+    cross = src.BUY_DOMINANCE_BENCHMARK["cross_strategy_results"]()
+    if not decision:
+        return []
+    return [_record(
+        experiment_id="EXP_BUY_DOMINANCE_BENCHMARK_CROSS_STRATEGY",
+        hypothesis_id="H_BUY_DOMINANCE_MARKET_REGIME_ARTIFACT",
+        strategy_identity="BREAKOUT_ACC+ORDER_BLOCK+LIQ_SWEEP",
+        implementation_identity="CROSS_STRATEGY_BENCHMARK_TEST_V1",
+        run_id=None, dataset_id="BUY_DOMINANCE_BENCHMARK_V1_2019-2026",
+        code_sha=None, config_hash=None,
+        period=["2019.02.21", "2026.08.24"],
+        method="4 benchmark preregistrati (random/periodic/regime-matched/unconditional) + "
+              "buy-and-hold come contesto, su serie D1 unica 2019-2026, orizzonti fissi "
+              "[1,3,5,10,20,40,60] barre - primaria: REGIME_MATCHED_RANDOM_LONG @ h10.",
+        metrics={"n_strategies": len(prereg["strategies_included"]) if prereg else None,
+                "n_buy_events": prereg["n_buy_events_per_strategy"] if prereg else None,
+                "cross_strategy_pattern": cross["cross_strategy_pattern"] if cross else None},
+        artifacts=["phase7_27/decision_card_v1.json", "phase7_27/cross_strategy_results_v1.json",
+                  "phase7_27/per_strategy_results_v1.json"],
+        verdict=decision["decision"],
+        confidence="MODERATA - dataset di discovery (non un holdout indipendente, dichiarato "
+                  "esplicitamente) - qualunque risultato resta SUPPORTED_AS_HYPOTHESIS, non edge.",
+        limitations="ORDER_BLOCK n=12 (campione minimo); nessun nuovo dato raccolto (0 nuovi "
+                   "backtest MT5); 1 solo risultato 'significativo' su 84 confronti totali, non "
+                   "sopravvive a correzione multiple-testing.",
+        created_at="Phase 7.27",
+    )]
+
+
 def build():
     experiments = (_breakout_acc_experiments() + _order_block_experiments() +
-                  _tsi_experiments() + _liq_sweep_experiments())
+                  _tsi_experiments() + _liq_sweep_experiments() +
+                  _buy_dominance_benchmark_experiments())
     for e in experiments:
         missing = missing_required(e, EXPERIMENT_REQUIRED_FIELDS)
         if missing:

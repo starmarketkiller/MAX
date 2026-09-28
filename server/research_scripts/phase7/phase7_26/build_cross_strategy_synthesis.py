@@ -16,6 +16,7 @@ from canonical_utils import wrap_with_provenance, save_json, load_json  # noqa: 
 
 sys.path.insert(0, PHASE726_DIR)
 from nxs_schemas import SYNTHESIS_ALLOWED_VERDICTS, NOT_AVAILABLE  # noqa: E402
+import nxs_backfill_sources as src  # noqa: E402
 
 ECONOMIC_STRATEGIES = ["BREAKOUT_ACC", "ORDER_BLOCK", "LIQ_SWEEP"]  # TSI escluso: nessun dataset
 
@@ -68,6 +69,22 @@ def build():
             "verificare confrontando con un benchmark buy-and-hold sullo stesso periodo - non "
             "fatto in questa fase.",
             {"direction_per_strategy": direction_notes}))
+
+    # --- Phase 7.27: risoluzione (non retroattiva - AGGIUNTA, il finding sopra resta
+    # intatto come lo era in Phase 7.26) del candidate hypothesis sulla dominanza BUY. ---
+    buy_decision = src.BUY_DOMINANCE_BENCHMARK["decision_card"]()
+    if buy_decision:
+        findings.append(_finding(
+            "OBSERVATION",
+            "Phase 7.27 ha testato il CANDIDATE_HYPOTHESIS sopra con un benchmark preregistrato "
+            "(random/periodic/regime-matched/unconditional long entries) - nessuna delle 3 "
+            "strategie batte significativamente il benchmark long regime-matched all'orizzonte "
+            f"primario. Decisione: {buy_decision['decision']}. Dataset di discovery (non un "
+            "holdout indipendente) - resta SUPPORTED_AS_HYPOTHESIS "
+            "(H_BUY_DOMINANCE_MARKET_REGIME_ARTIFACT, hypothesis_registry), non promosso a "
+            "conclusione definitiva.",
+            {"phase_7_27_decision": buy_decision["decision"],
+            "cross_strategy_pattern": buy_decision["cross_strategy_pattern"]}))
 
     # --- concentrazione del profitto (per-trade) - gia' in shared_modes se OUTLIER_DEPENDENT
     # e' condiviso, ma qui riportiamo i numeri espliciti per confronto diretto. ---

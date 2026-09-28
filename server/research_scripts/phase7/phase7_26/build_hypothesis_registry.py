@@ -132,6 +132,31 @@ def build():
                           "validazione su strategie/dataset FUTURI, non ancora testati, prima di "
                           "poter salire di stato.",
         ),
+        _h(
+            hypothesis_id="H_BUY_DOMINANCE_MARKET_REGIME_ARTIFACT",
+            statement="La dominanza BUY condivisa da BREAKOUT_ACC/ORDER_BLOCK/LIQ_SWEEP riflette "
+                     "principalmente il regime di mercato (trend/volatilita' di GOLD nel periodo "
+                     "studiato), non una capacita' di selezione temporale specifica di ciascuna "
+                     "strategia.",
+            lifecycle_state="TESTING",
+            discovery_dataset_id="CROSS_STRATEGY_SYNTHESIS_V1_BACKFILL",
+            validation_dataset_ids=["BREAKOUT_ACC::2019.02.21_2026.06.09",
+                                   "ORDER_BLOCK::2023.10.02_2026.08.24",
+                                   "LIQ_SWEEP::2023.10.02_2026.06.30"],
+            originating_strategies=["BREAKOUT_ACC", "ORDER_BLOCK", "LIQ_SWEEP"],
+            evidence_level="Phase 7.27: benchmark preregistrato (random/periodic/regime-matched/"
+                          "unconditional) su tutti i BUY reali delle 3 strategie, orizzonte "
+                          "primario h10 - NESSUNA strategia batte significativamente il "
+                          "benchmark long regime-matched (CI95 include sempre zero); su 21 "
+                          "confronti orizzonte/strategia regime-matched solo 1 e' 'significativo' "
+                          "(ORDER_BLOCK h1, n=12, si inverte di segno agli orizzonti piu' lunghi, "
+                          "non sopravvive a una correzione multiple-testing anche minima) - "
+                          "decisione: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME. RESTA "
+                          "'TESTING' non 'SUPPORTED': i dataset usati sono di discovery (gia' "
+                          "esposti), non un holdout indipendente (dichiarato esplicitamente dal "
+                          "task stesso, punto 7) - qualunque promozione a SUPPORTED richiede "
+                          "prima una validazione indipendente su dati non ancora esposti.",
+        ),
     ]
     for h in hypotheses:
         missing = missing_required(h, HYPOTHESIS_REQUIRED_FIELDS)

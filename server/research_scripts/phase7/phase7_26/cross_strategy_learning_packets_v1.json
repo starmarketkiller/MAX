@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T09:22:14.071561+00:00",
+  "generated_at": "2026-09-28T10:23:49.231154+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_learning_packet.py",
-  "canonical_sha256": "05282d1bfde4e601843df1ed80c2721d922c56ee1574d497d492acad80ed9d1f",
+  "canonical_sha256": "97648b549eff4277dc7e62dfb57bf101de07174384ff17a8e36420368b46b2ff",
   "payload": {
     "schema_version": "CROSS_STRATEGY_LEARNING_PACKET_V1",
     "not_available_marker": "NOT_AVAILABLE",
@@ -58,7 +58,8 @@
         ],
         "observations": [
           "CI95 ALL include zero",
-          "asimmetria BUY/SELL osservata (H2, post-hoc)"
+          "asimmetria BUY/SELL osservata (H2, post-hoc)",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_BETTER vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
         ],
         "candidate_hypotheses": [
           "H1_BREAKOUT_ACC_NET_EXPECTANCY_POSITIVE",
@@ -107,7 +108,8 @@
         "observations": [
           "campione minimo (n=13)",
           "concentrazione estrema (196.8% top-5)",
-          "1 solo trade SELL (performance negativa, non eliminato)"
+          "1 solo trade SELL (performance negativa, non eliminato)",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_BETTER vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
         ],
         "candidate_hypotheses": [
           "H_ORDER_BLOCK_EDGE_EXISTS"
@@ -202,7 +204,8 @@
         ],
         "observations": [
           "asimmetria escursione: favorable-before-loser > adverse-before-winner",
-          "primo OOS del corpus con campione sufficiente (n=6) - risultato negativo"
+          "primo OOS del corpus con campione sufficiente (n=6) - risultato negativo",
+          "Phase 7.27 BUY-dominance benchmark: direzione=REAL_WORSE vs benchmark long regime-matched @ h10 - decisione trasversale: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (dataset di discovery, non un holdout - SUPPORTED_AS_HYPOTHESIS al massimo, mai edge)."
         ],
         "candidate_hypotheses": [
           "H_LIQ_SWEEP_EDGE_EXISTS"

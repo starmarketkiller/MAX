@@ -1,0 +1,248 @@
+{
+  "generated_at": "2026-09-28T10:19:46.591637+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_regime_controlled_analysis.py",
+  "canonical_sha256": "be3df5b1548d4000215ee3f4d0e32cac580ae8b98079f48892975db4a8988d54",
+  "payload": {
+    "BREAKOUT_ACC": {
+      "all_horizons_vs_regime_matched_benchmark": {
+        "h1": {
+          "n": 36,
+          "mean": -4.790833333333404,
+          "ci95_low": -18.272777777777947,
+          "ci95_high": 7.019166666666586,
+          "excludes_zero": false
+        },
+        "h3": {
+          "n": 36,
+          "mean": -0.9238888888889076,
+          "ci95_low": -18.60166666666672,
+          "ci95_high": 15.915833333333303,
+          "excludes_zero": false
+        },
+        "h5": {
+          "n": 36,
+          "mean": 9.006111111111112,
+          "ci95_low": -15.980277777777758,
+          "ci95_high": 34.71666666666662,
+          "excludes_zero": false
+        },
+        "h10": {
+          "n": 36,
+          "mean": 5.152777777777759,
+          "ci95_low": -43.07861111111114,
+          "ci95_high": 54.81444444444443,
+          "excludes_zero": false
+        },
+        "h20": {
+          "n": 36,
+          "mean": 16.8158333333333,
+          "ci95_low": -44.60611111111108,
+          "ci95_high": 88.30249999999991,
+          "excludes_zero": false
+        },
+        "h40": {
+          "n": 36,
+          "mean": 29.829999999999984,
+          "ci95_low": -36.59611111111114,
+          "ci95_high": 99.22111111111113,
+          "excludes_zero": false
+        },
+        "h60": {
+          "n": 36,
+          "mean": 37.44277777777776,
+          "ci95_low": -62.07722222222222,
+          "ci95_high": 137.56166666666667,
+          "excludes_zero": false
+        }
+      },
+      "n_horizons_where_real_mean_higher": 5,
+      "n_horizons_out_of": 7,
+      "n_horizons_statistically_significant_and_favorable": 0,
+      "per_regime_bucket_breakdown_h_primary": {
+        "FLAT_LOW": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "UP_LOW": {
+          "n": 11,
+          "mean_paired_diff": 2.855454545454532
+        },
+        "UP_HIGH": {
+          "n": 8,
+          "mean_paired_diff": 62.74124999999984
+        },
+        "UP_MED": {
+          "n": 10,
+          "mean_paired_diff": 23.247000000000025
+        },
+        "DOWN_HIGH": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "DOWN_MED": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "FLAT_MED": {
+          "n": 3,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "DOWN_LOW": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        }
+      },
+      "conclusion_this_strategy": "I BUY reali restano in media migliori del benchmark regime-matched in 5/7 orizzonti, ma NESSUNO statisticamente significativo"
+    },
+    "ORDER_BLOCK": {
+      "all_horizons_vs_regime_matched_benchmark": {
+        "h1": {
+          "n": 12,
+          "mean": 39.00416666666672,
+          "ci95_low": 5.747500000000211,
+          "ci95_high": 77.46166666666666,
+          "excludes_zero": true
+        },
+        "h3": {
+          "n": 11,
+          "mean": 72.40727272727271,
+          "ci95_low": -0.43999999999990985,
+          "ci95_high": 142.24545454545444,
+          "excludes_zero": false
+        },
+        "h5": {
+          "n": 11,
+          "mean": 65.80999999999999,
+          "ci95_low": -16.15909090909091,
+          "ci95_high": 145.10181818181812,
+          "excludes_zero": false
+        },
+        "h10": {
+          "n": 10,
+          "mean": 50.75800000000004,
+          "ci95_low": -24.051999999999815,
+          "ci95_high": 154.523,
+          "excludes_zero": false
+        },
+        "h20": {
+          "n": 10,
+          "mean": 3.8750000000000684,
+          "ci95_low": -133.9089999999999,
+          "ci95_high": 167.5979999999999,
+          "excludes_zero": false
+        },
+        "h40": {
+          "n": 10,
+          "mean": -29.59199999999994,
+          "ci95_low": -177.02399999999992,
+          "ci95_high": 164.81700000000004,
+          "excludes_zero": false
+        },
+        "h60": {
+          "n": 10,
+          "mean": -114.97199999999994,
+          "ci95_low": -299.87499999999994,
+          "ci95_high": 81.27399999999989,
+          "excludes_zero": false
+        }
+      },
+      "n_horizons_where_real_mean_higher": 5,
+      "n_horizons_out_of": 7,
+      "n_horizons_statistically_significant_and_favorable": 1,
+      "per_regime_bucket_breakdown_h_primary": {
+        "UP_HIGH": {
+          "n": 8,
+          "mean_paired_diff": 70.41875000000005
+        },
+        "UP_MED": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "FLAT_HIGH": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        }
+      },
+      "conclusion_this_strategy": "I BUY reali sono significativamente migliori del benchmark regime-matched in 1/7 orizzonti."
+    },
+    "LIQ_SWEEP": {
+      "all_horizons_vs_regime_matched_benchmark": {
+        "h1": {
+          "n": 39,
+          "mean": -7.556666666666633,
+          "ci95_low": -44.01871794871792,
+          "ci95_high": 24.710000000000043,
+          "excludes_zero": false
+        },
+        "h3": {
+          "n": 39,
+          "mean": -37.68384615384614,
+          "ci95_low": -91.61384615384614,
+          "ci95_high": 7.254102564102636,
+          "excludes_zero": false
+        },
+        "h5": {
+          "n": 39,
+          "mean": -21.409487179487225,
+          "ci95_low": -75.70435897435905,
+          "ci95_high": 28.939230769230697,
+          "excludes_zero": false
+        },
+        "h10": {
+          "n": 39,
+          "mean": -7.049999999999966,
+          "ci95_low": -73.0410256410256,
+          "ci95_high": 63.34256410256413,
+          "excludes_zero": false
+        },
+        "h20": {
+          "n": 39,
+          "mean": 15.026923076923058,
+          "ci95_low": -55.53923076923081,
+          "ci95_high": 84.70051282051286,
+          "excludes_zero": false
+        },
+        "h40": {
+          "n": 39,
+          "mean": -94.53871794871793,
+          "ci95_low": -206.24897435897435,
+          "ci95_high": 11.138717948717998,
+          "excludes_zero": false
+        },
+        "h60": {
+          "n": 38,
+          "mean": -75.7444736842105,
+          "ci95_low": -210.72052631578953,
+          "ci95_high": 54.235789473684235,
+          "excludes_zero": false
+        }
+      },
+      "n_horizons_where_real_mean_higher": 1,
+      "n_horizons_out_of": 7,
+      "n_horizons_statistically_significant_and_favorable": 0,
+      "per_regime_bucket_breakdown_h_primary": {
+        "UP_MED": {
+          "n": 11,
+          "mean_paired_diff": 3.261818181818109
+        },
+        "UP_HIGH": {
+          "n": 25,
+          "mean_paired_diff": -21.559599999999936
+        },
+        "UP_LOW": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "FLAT_HIGH": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        },
+        "DOWN_HIGH": {
+          "n": 1,
+          "status": "SAMPLE_TOO_SMALL_NOT_AVAILABLE"
+        }
+      },
+      "conclusion_this_strategy": "I BUY reali restano in media migliori del benchmark regime-matched in 1/7 orizzonti, ma NESSUNO statisticamente significativo"
+    }
+  }
+}

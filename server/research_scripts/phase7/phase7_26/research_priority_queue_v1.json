@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T09:24:11.494972+00:00",
+  "generated_at": "2026-09-28T10:23:49.569425+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_research_priority_queue.py",
-  "canonical_sha256": "1235dd5caa268b51cf1909e44b03ae620687cb32f938d1c043e898f1cd8aaf45",
+  "canonical_sha256": "0d015b01da091725e9089055e65690042e363766fd26a5d9318c8d46fed28535",
   "payload": {
     "criteria_declared_before_scoring": [
       "expected_information_gain",
@@ -30,6 +30,8 @@
           "mechanism_distinctiveness": 5
         },
         "rationale": "Se confermata, invaliderebbe (o ridimensionerebbe) l'apparente edge di TUTTE e 3 le strategie economiche contemporaneamente - il guadagno di informazione potenziale e' il piu' alto della coda. Costo moderato (nessun nuovo run MT5, solo un confronto con una serie di prezzo gia' disponibile).",
+        "status": "COMPLETED_PHASE_7_27",
+        "outcome": "Testato con benchmark preregistrato (non solo buy-and-hold: random/periodic/regime-matched/unconditional) - decisione: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (nessuna strategia batte significativamente il benchmark long regime-matched). Vedi phase7_27/decision_card_v1.json.",
         "total_score_unweighted": 32
       },
       {
@@ -46,6 +48,7 @@
           "mechanism_distinctiveness": 2
         },
         "rationale": "Costo quasi zero (dati gia' raccolti), chiude un gap di comparabilita' cross-strategy identificato meccanicamente, ma bassa novita' (nessun dato nuovo) e nessun untouched data coinvolto.",
+        "status": "PENDING",
         "total_score_unweighted": 29
       },
       {
@@ -62,6 +65,7 @@
           "mechanism_distinctiveness": 1
         },
         "rationale": "Costo quasi zero (passivo, nessun lavoro attivo) - ma richiede TEMPO di calendario (bassa sample_availability oggi) prima di essere informativo.",
+        "status": "PENDING",
         "total_score_unweighted": 26
       },
       {
@@ -78,6 +82,7 @@
           "mechanism_distinctiveness": 2
         },
         "rationale": "Novita' alta (mai auditata) ma integrity_confidence bassa PROPRIO perche' condivide codice con 3 altre varianti (IFVG/FVG_MIT/FVG_MIT_WINDOW) - il lavoro di mappatura preliminare (mechanism_distinctiveness basso) va fatto PRIMA di poter dire se questo e' davvero un test distinto o una ripetizione.",
+        "status": "PENDING",
         "total_score_unweighted": 23
       },
       {
@@ -94,9 +99,11 @@
           "mechanism_distinctiveness": 3
         },
         "rationale": "Bucket generico a bassa priorita' - nessuna di queste ha ancora superato nemmeno il primo filtro di shortlist (Phase 7.20) usato per le 4 gia' studiate.",
+        "status": "PENDING",
         "total_score_unweighted": 17
       }
     ],
-    "top_priority": "BUY_BIAS_BENCHMARK_VS_BUY_AND_HOLD"
+    "top_priority": "BACKFILL_TEMPORAL_AND_EXIT_EFFICIENCY_BREAKOUT_ACC_ORDER_BLOCK",
+    "top_priority_excludes_completed": true
   }
 }

@@ -159,8 +159,33 @@ def _liq_sweep_records():
     ]
 
 
+def _buy_dominance_benchmark_records():
+    """Phase 7.27: dataset DERIVATO (non un nuovo prezzo grezzo) - il
+    confronto cross-strategy BUY-vs-benchmark, costruito interamente
+    sui 3 dataset di discovery gia' registrati sopra + la serie D1
+    condivisa (phase7_9h/raw_data/nxs_d1_gold_phase79h.csv, gia' usata
+    dal progetto). Registrato per evitare riferimenti orfani
+    nell'experiment registry e per tracciare che NON e' un holdout."""
+    return [_record(
+        dataset_id="BUY_DOMINANCE_BENCHMARK_V1_2019-2026", symbol="GOLD", timeframe="D1",
+        date_range=["2019.02.21", "2026.08.24"], strategy_identity="CROSS_STRATEGY",
+        implementation_identity="BUY_DOMINANCE_BENCHMARK_TEST_V1",
+        experiment_run_ids=["EXP_BUY_DOMINANCE_BENCHMARK_CROSS_STRATEGY"],
+        first_seen_date="Phase 7.27", development_exposure=False, integrity_audit_exposure=False,
+        mechanism_discovery_exposure=False, visual_review_exposure=False,
+        optimization_exposure=False, validation_exposure=True, oos_exposure=False,
+        forward_exposure=False,
+        holdout_status="DERIVED_FROM_DISCOVERY_DATASETS - composito dei 3 dataset di discovery "
+                       "gia' esposti (BREAKOUT_ACC/ORDER_BLOCK/LIQ_SWEEP) + serie D1 condivisa - "
+                       "NON un holdout indipendente, dichiarato esplicitamente (Phase 7.27, punto "
+                       "7 del task: preferito dataset gia' visti per la prima verifica della "
+                       "hypothesis).",
+    )]
+
+
 def build():
-    records = _breakout_acc_records() + _order_block_records() + _tsi_records() + _liq_sweep_records()
+    records = (_breakout_acc_records() + _order_block_records() + _tsi_records() +
+              _liq_sweep_records() + _buy_dominance_benchmark_records())
     by_id = {r["dataset_id"]: r for r in records}
     payload = {
         "records": records, "n_records": len(records),

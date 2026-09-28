@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-09-28T10:20:34.553962+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_multiple_testing_accounting.py",
+  "canonical_sha256": "6376290150cfd15586e3bebc63fead471b9cc30c12af89c86c8b4309adb8df6b",
+  "payload": {
+    "n_strategies_tested": 3,
+    "n_horizons_tested": 7,
+    "n_statistical_benchmarks_tested": 4,
+    "n_benchmarks_total_incl_macro_context": 5,
+    "n_total_statistical_comparisons_this_phase": 84,
+    "n_primary_comparisons_used_for_decision": 3,
+    "n_exploratory_comparisons": 81,
+    "primary_vs_exploratory_declared_before_results": true,
+    "no_cherry_picking_most_favorable_comparison_for_decision": true,
+    "bonferroni_note": "Se si applicasse una correzione Bonferroni ai soli confronti ESPLORATIVI (81), la soglia alpha effettiva scenderebbe da 0.05 a ~0.00062 - NON applicata in questa fase (dichiarato, non nascosto) - l'unico caso 'significativo' trovato (ORDER_BLOCK, h1, esplorativo) non sopravviverebbe a questa soglia.",
+    "order_block_h1_significance_survives_bonferroni": false
+  }
+}

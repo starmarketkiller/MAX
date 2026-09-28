@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-09-28T10:20:15.047295+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_cross_strategy_results.py",
+  "canonical_sha256": "a48182e4d026baa2c1883c785fe2a81bbf71eca9cdd1af50572bfe923971c4da",
+  "payload": {
+    "primary_metric_direction_per_strategy": {
+      "BREAKOUT_ACC": "REAL_BETTER",
+      "ORDER_BLOCK": "REAL_BETTER",
+      "LIQ_SWEEP": "REAL_WORSE"
+    },
+    "primary_metric_significant_per_strategy": {
+      "BREAKOUT_ACC": false,
+      "ORDER_BLOCK": false,
+      "LIQ_SWEEP": false
+    },
+    "n_strategies_favorable_direction": 2,
+    "n_strategies_out_of": 3,
+    "n_strategies_statistically_significant_and_favorable": 0,
+    "cross_strategy_pattern": "NONE_BEATS_REGIME_MATCHED_BENCHMARK_SIGNIFICANTLY",
+    "pattern_options_declared": [
+      "ALL_SELECT_BETTER_MOMENTS_THAN_BENCHMARK",
+      "ONLY_SOME_SHOW_SELECTION",
+      "NONE_BEATS_REGIME_MATCHED_BENCHMARK_SIGNIFICANTLY",
+      "MIXED_INCONCLUSIVE_EVIDENCE"
+    ],
+    "concordance_not_automatically_edge": true,
+    "per_strategy_conclusions": {
+      "BREAKOUT_ACC": "I BUY reali restano in media migliori del benchmark regime-matched in 5/7 orizzonti, ma NESSUNO statisticamente significativo",
+      "ORDER_BLOCK": "I BUY reali sono significativamente migliori del benchmark regime-matched in 1/7 orizzonti.",
+      "LIQ_SWEEP": "I BUY reali restano in media migliori del benchmark regime-matched in 1/7 orizzonti, ma NESSUNO statisticamente significativo"
+    },
+    "note": "2/3 strategie mostrano direzione favorevole (paired mean > 0) all'orizzonte primario (h10) contro il benchmark regime-matched, ma NESSUNA delle 3 in modo statisticamente significativo su quell'orizzonte specifico - ORDER_BLOCK mostra un singolo orizzonte (h1, il piu' corto) significativo su un campione minuscolo (n=12) che si INVERTE di segno entro h40/h60 - pattern coerente con rumore campionario piuttosto che un segnale robusto, non con un fenomeno trasversale forte."
+  }
+}

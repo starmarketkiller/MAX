@@ -43,6 +43,12 @@ CANDIDATES = [
                     "e 3 le strategie economiche contemporaneamente - il guadagno di informazione "
                     "potenziale e' il piu' alto della coda. Costo moderato (nessun nuovo run MT5, "
                     "solo un confronto con una serie di prezzo gia' disponibile).",
+        "status": "COMPLETED_PHASE_7_27",
+        "outcome": "Testato con benchmark preregistrato (non solo buy-and-hold: random/periodic/"
+                  "regime-matched/unconditional) - decisione: "
+                  "BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME (nessuna strategia batte "
+                  "significativamente il benchmark long regime-matched). Vedi phase7_27/"
+                  "decision_card_v1.json.",
     },
     {
         "candidate_id": "FVG_CONT_INTEGRITY_AUDIT",
@@ -86,9 +92,12 @@ CANDIDATES = [
 def build():
     ranked = []
     for c in CANDIDATES:
+        c = dict(c)
+        c.setdefault("status", "PENDING")
         total = sum(c["scores"][k] for k in CRITERIA)
         ranked.append({**c, "total_score_unweighted": total})
     ranked.sort(key=lambda c: -c["total_score_unweighted"])
+    pending = [c for c in ranked if c["status"] == "PENDING"]
 
     payload = {
         "criteria_declared_before_scoring": CRITERIA,
@@ -96,7 +105,8 @@ def build():
         "scoring_method": "somma semplice non pesata 1-5 per criterio - pesi differenziati non "
                         "giustificati in questa fase (semplificazione dichiarata).",
         "ranked_candidates": ranked,
-        "top_priority": ranked[0]["candidate_id"] if ranked else None,
+        "top_priority": pending[0]["candidate_id"] if pending else None,
+        "top_priority_excludes_completed": True,
     }
     return payload
 

@@ -1,0 +1,925 @@
+{
+  "generated_at": "2026-09-28T10:19:21.117141+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_27\\build_per_strategy_results.py",
+  "canonical_sha256": "fe21d360108e1a4900d00e52a45fa74336e8f955959149d6095b9af5b8e2b1fb",
+  "payload": {
+    "BREAKOUT_ACC": {
+      "n_real_buy_events": 36,
+      "period": [
+        "2019.02.21",
+        "2026.06.09"
+      ],
+      "per_benchmark_results": {
+        "REGIME_MATCHED_RANDOM_LONG": {
+          "design": "PAIRED",
+          "by_horizon": {
+            "h1": {
+              "n": 36,
+              "mean": -4.790833333333404,
+              "ci95_low": -18.272777777777947,
+              "ci95_high": 7.019166666666586,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n": 36,
+              "mean": -0.9238888888889076,
+              "ci95_low": -18.60166666666672,
+              "ci95_high": 15.915833333333303,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n": 36,
+              "mean": 9.006111111111112,
+              "ci95_low": -15.980277777777758,
+              "ci95_high": 34.71666666666662,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n": 36,
+              "mean": 5.152777777777759,
+              "ci95_low": -43.07861111111114,
+              "ci95_high": 54.81444444444443,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n": 36,
+              "mean": 16.8158333333333,
+              "ci95_low": -44.60611111111108,
+              "ci95_high": 88.30249999999991,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n": 36,
+              "mean": 29.829999999999984,
+              "ci95_low": -36.59611111111114,
+              "ci95_high": 99.22111111111113,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n": 36,
+              "mean": 37.44277777777776,
+              "ci95_low": -62.07722222222222,
+              "ci95_high": 137.56166666666667,
+              "excludes_zero": false
+            }
+          }
+        },
+        "RANDOM_TIMESTAMPS_MATCHED": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 8.032222222222194,
+              "bench_mean": -9.81500000000001,
+              "diff_mean": 17.847222222222204,
+              "ci95_low": 1.5858333333333183,
+              "ci95_high": 37.953055555555494,
+              "excludes_zero": true
+            },
+            "h3": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 12.351944444444428,
+              "bench_mean": -4.849444444444474,
+              "diff_mean": 17.2013888888889,
+              "ci95_low": -2.668888888888918,
+              "ci95_high": 40.808333333333366,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 17.02333333333333,
+              "bench_mean": -5.927777777777793,
+              "diff_mean": 22.951111111111125,
+              "ci95_low": -3.2527777777777427,
+              "ci95_high": 53.870000000000005,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 33.35138888888887,
+              "bench_mean": -3.4894444444444477,
+              "diff_mean": 36.840833333333315,
+              "ci95_low": 1.5397222222221867,
+              "ci95_high": 75.86472222222224,
+              "excludes_zero": true
+            },
+            "h20": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 47.31722222222223,
+              "bench_mean": 27.6458333333333,
+              "diff_mean": 19.671388888888927,
+              "ci95_low": -31.86611111111113,
+              "ci95_high": 72.4491666666668,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 80.22916666666669,
+              "bench_mean": 76.13666666666663,
+              "diff_mean": 4.092500000000058,
+              "ci95_low": -66.26027777777762,
+              "ci95_high": 73.07388888888897,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 132.28944444444446,
+              "bench_mean": 96.54027777777772,
+              "diff_mean": 35.74916666666674,
+              "ci95_low": -54.987499999999955,
+              "ci95_high": 131.55888888888893,
+              "excludes_zero": false
+            }
+          }
+        },
+        "PERIODIC_ENTRY_LONG": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 8.032222222222194,
+              "bench_mean": 6.285833333333351,
+              "diff_mean": 1.7463888888888421,
+              "ci95_low": -9.087500000000027,
+              "ci95_high": 11.970555555555544,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 12.351944444444428,
+              "bench_mean": 7.208611111111092,
+              "diff_mean": 5.143333333333335,
+              "ci95_low": -14.56388888888892,
+              "ci95_high": 24.077500000000075,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 17.02333333333333,
+              "bench_mean": 4.6924999999999955,
+              "diff_mean": 12.330833333333334,
+              "ci95_low": -19.046388888888927,
+              "ci95_high": 49.44138888888892,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 33.35138888888887,
+              "bench_mean": 3.049999999999999,
+              "diff_mean": 30.301388888888873,
+              "ci95_low": -20.979444444444518,
+              "ci95_high": 90.19055555555559,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 47.31722222222223,
+              "bench_mean": 46.43083333333332,
+              "diff_mean": 0.8863888888889093,
+              "ci95_low": -66.32722222222215,
+              "ci95_high": 61.03999999999999,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 80.22916666666669,
+              "bench_mean": 77.66750000000002,
+              "diff_mean": 2.5616666666666674,
+              "ci95_low": -77.68694444444436,
+              "ci95_high": 80.06555555555558,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 36,
+              "n_bench": 36,
+              "real_mean": 132.28944444444446,
+              "bench_mean": 87.00777777777779,
+              "diff_mean": 45.281666666666666,
+              "ci95_low": -52.74944444444443,
+              "ci95_high": 151.05527777777775,
+              "excludes_zero": false
+            }
+          }
+        },
+        "UNCONDITIONAL_LONG_EXPOSURE": {
+          "design": "ONE_SAMPLE_VS_FIXED_POPULATION",
+          "by_horizon": {
+            "h1": {
+              "n": 36,
+              "mean": 6.572774532365582,
+              "ci95_low": 0.8966634212545108,
+              "ci95_high": 12.510274532365557,
+              "excludes_zero": true,
+              "real_mean": 8.032222222222194,
+              "population_mean": 1.4594476898566118
+            },
+            "h3": {
+              "n": 36,
+              "mean": 7.825741576680222,
+              "ci95_low": -3.6634250899864558,
+              "ci95_high": 19.23296379890245,
+              "excludes_zero": false,
+              "real_mean": 12.351944444444428,
+              "population_mean": 4.526202867764206
+            },
+            "h5": {
+              "n": 36,
+              "mean": 9.315022127810229,
+              "ci95_low": -7.363588983300884,
+              "ci95_high": 26.830299905587978,
+              "excludes_zero": false,
+              "real_mean": 17.02333333333333,
+              "population_mean": 7.708311205523102
+            },
+            "h10": {
+              "n": 36,
+              "mean": 17.967496164512877,
+              "ci95_low": -8.868614946598244,
+              "ci95_high": 47.50860727562399,
+              "excludes_zero": false,
+              "real_mean": 33.35138888888887,
+              "population_mean": 15.383892724375995
+            },
+            "h20": {
+              "n": 36,
+              "mean": 17.205453767628498,
+              "ci95_low": -16.92676845459373,
+              "ci95_high": 54.14989821207297,
+              "excludes_zero": false,
+              "real_mean": 47.31722222222223,
+              "population_mean": 30.111768454593733
+            },
+            "h40": {
+              "n": 36,
+              "mean": 20.769591520623134,
+              "ci95_low": -24.09374181271021,
+              "ci95_high": 69.54098040951202,
+              "excludes_zero": false,
+              "real_mean": 80.22916666666669,
+              "population_mean": 59.45957514604355
+            },
+            "h60": {
+              "n": 36,
+              "mean": 39.3602288628009,
+              "ci95_low": -32.80921558164354,
+              "ci95_high": 122.07522886280087,
+              "excludes_zero": false,
+              "real_mean": 132.28944444444446,
+              "population_mean": 92.92921558164355
+            }
+          }
+        },
+        "BUY_AND_HOLD_MACRO_CONTEXT": {
+          "design": "MACRO_CONTEXT_ONLY_NOT_A_STATISTICAL_COMPARISON",
+          "value": {
+            "data_available": true,
+            "period_start_close": 1322.94,
+            "period_end_close": 4259.26,
+            "total_return_price_units": 2936.32,
+            "total_return_pct": 221.95413246254554,
+            "n_bars": 1883,
+            "note": "Contesto macro (drift secolare) - MAI un confronto trade-per-trade diretto."
+          }
+        }
+      },
+      "primary_analysis_summary": {
+        "benchmark": "REGIME_MATCHED_RANDOM_LONG",
+        "horizon": "h10",
+        "result": {
+          "n": 36,
+          "mean": 5.152777777777759,
+          "ci95_low": -43.07861111111114,
+          "ci95_high": 54.81444444444443,
+          "excludes_zero": false
+        },
+        "direction_of_effect": "REAL_BETTER"
+      },
+      "sample_size_limitation": null
+    },
+    "ORDER_BLOCK": {
+      "n_real_buy_events": 12,
+      "period": [
+        "2023.10.02",
+        "2026.08.24"
+      ],
+      "per_benchmark_results": {
+        "REGIME_MATCHED_RANDOM_LONG": {
+          "design": "PAIRED",
+          "by_horizon": {
+            "h1": {
+              "n": 12,
+              "mean": 39.00416666666672,
+              "ci95_low": 5.747500000000211,
+              "ci95_high": 77.46166666666666,
+              "excludes_zero": true
+            },
+            "h3": {
+              "n": 11,
+              "mean": 72.40727272727271,
+              "ci95_low": -0.43999999999990985,
+              "ci95_high": 142.24545454545444,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n": 11,
+              "mean": 65.80999999999999,
+              "ci95_low": -16.15909090909091,
+              "ci95_high": 145.10181818181812,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n": 10,
+              "mean": 50.75800000000004,
+              "ci95_low": -24.051999999999815,
+              "ci95_high": 154.523,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n": 10,
+              "mean": 3.8750000000000684,
+              "ci95_low": -133.9089999999999,
+              "ci95_high": 167.5979999999999,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n": 10,
+              "mean": -29.59199999999994,
+              "ci95_low": -177.02399999999992,
+              "ci95_high": 164.81700000000004,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n": 10,
+              "mean": -114.97199999999994,
+              "ci95_low": -299.87499999999994,
+              "ci95_high": 81.27399999999989,
+              "excludes_zero": false
+            }
+          }
+        },
+        "RANDOM_TIMESTAMPS_MATCHED": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 12,
+              "n_bench": 12,
+              "real_mean": 21.026666666666756,
+              "bench_mean": 0.6041666666667046,
+              "diff_mean": 20.422500000000053,
+              "ci95_low": -20.269999999999982,
+              "ci95_high": 62.53083333333352,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 61.7863636363636,
+              "bench_mean": 19.13500000000003,
+              "diff_mean": 42.65136363636357,
+              "ci95_low": -15.3807575757575,
+              "ci95_high": 97.37606060606055,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 60.0845454545454,
+              "bench_mean": 17.788333333333316,
+              "diff_mean": 42.29621212121208,
+              "ci95_low": -36.631287878788086,
+              "ci95_high": 126.39787878787877,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 101.3718181818182,
+              "bench_mean": 66.82249999999998,
+              "diff_mean": 34.54931818181822,
+              "ci95_low": -69.33204545454527,
+              "ci95_high": 141.4111363636364,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 139.68090909090915,
+              "bench_mean": 49.785833333333336,
+              "diff_mean": 89.89507575757582,
+              "ci95_low": -32.135833333333046,
+              "ci95_high": 216.86295454545441,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 174.28272727272733,
+              "bench_mean": 68.4675000000001,
+              "diff_mean": 105.81522727272723,
+              "ci95_low": -115.26575757575753,
+              "ci95_high": 327.8931060606059,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 139.83272727272723,
+              "bench_mean": 60.08416666666667,
+              "diff_mean": 79.74856060606055,
+              "ci95_low": -212.31727272727267,
+              "ci95_high": 378.34856060606046,
+              "excludes_zero": false
+            }
+          }
+        },
+        "PERIODIC_ENTRY_LONG": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 12,
+              "n_bench": 12,
+              "real_mean": 21.026666666666756,
+              "bench_mean": 10.495833333333374,
+              "diff_mean": 10.530833333333382,
+              "ci95_low": -28.489166666666637,
+              "ci95_high": 49.85666666666687,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 61.7863636363636,
+              "bench_mean": 7.301666666666695,
+              "diff_mean": 54.484696969696905,
+              "ci95_low": 8.85515151515164,
+              "ci95_high": 100.61545454545451,
+              "excludes_zero": true
+            },
+            "h5": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 60.0845454545454,
+              "bench_mean": 23.032500000000102,
+              "diff_mean": 37.05204545454529,
+              "ci95_low": -33.46916666666657,
+              "ci95_high": 114.27954545454519,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 101.3718181818182,
+              "bench_mean": 83.98250000000007,
+              "diff_mean": 17.389318181818126,
+              "ci95_low": -92.78689393939389,
+              "ci95_high": 129.76719696969676,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 139.68090909090915,
+              "bench_mean": 87.05333333333341,
+              "diff_mean": 52.62757575757574,
+              "ci95_low": -80.62022727272719,
+              "ci95_high": 202.2385606060606,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 174.28272727272733,
+              "bench_mean": 166.54666666666668,
+              "diff_mean": 7.736060606060647,
+              "ci95_low": -224.5102272727271,
+              "ci95_high": 246.28954545454545,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 11,
+              "n_bench": 12,
+              "real_mean": 139.83272727272723,
+              "bench_mean": 195.1383333333334,
+              "diff_mean": -55.30560606060618,
+              "ci95_low": -331.97128787878813,
+              "ci95_high": 217.49727272727236,
+              "excludes_zero": false
+            }
+          }
+        },
+        "UNCONDITIONAL_LONG_EXPOSURE": {
+          "design": "ONE_SAMPLE_VS_FIXED_POPULATION",
+          "by_horizon": {
+            "h1": {
+              "n": 12,
+              "mean": 17.399425751458143,
+              "ci95_low": -13.440574248541928,
+              "ci95_high": 51.577759084791694,
+              "excludes_zero": false,
+              "real_mean": 21.026666666666756,
+              "population_mean": 3.6272409152086134
+            },
+            "h3": {
+              "n": 11,
+              "mean": 51.25771316402893,
+              "ci95_low": 11.272258618574364,
+              "ci95_high": 90.12044043675618,
+              "excludes_zero": true,
+              "real_mean": 61.7863636363636,
+              "population_mean": 10.528650472334682
+            },
+            "h5": {
+              "n": 11,
+              "mean": 42.6603100012301,
+              "ci95_low": -17.25150818058801,
+              "ci95_high": 107.39667363759376,
+              "excludes_zero": false,
+              "real_mean": 60.0845454545454,
+              "population_mean": 17.42423545331529
+            },
+            "h10": {
+              "n": 11,
+              "mean": 66.99970646519695,
+              "ci95_low": -14.053020807530281,
+              "ci95_high": 156.2460701015605,
+              "excludes_zero": false,
+              "real_mean": 101.3718181818182,
+              "population_mean": 34.372111716621255
+            },
+            "h20": {
+              "n": 11,
+              "mean": 75.63586765444506,
+              "ci95_low": -20.47504143646405,
+              "ci95_high": 181.34677674535416,
+              "excludes_zero": false,
+              "real_mean": 139.68090909090915,
+              "population_mean": 64.04504143646409
+            },
+            "h40": {
+              "n": 11,
+              "mean": 48.96129261363642,
+              "ci95_low": -68.68416193181805,
+              "ci95_high": 189.66401988636363,
+              "excludes_zero": false,
+              "real_mean": 174.28272727272733,
+              "population_mean": 125.32143465909091
+            },
+            "h60": {
+              "n": 11,
+              "mean": -55.43958266879324,
+              "ci95_low": -205.7895826687932,
+              "ci95_high": 89.37132642211594,
+              "excludes_zero": false,
+              "real_mean": 139.83272727272723,
+              "population_mean": 195.27230994152046
+            }
+          }
+        },
+        "BUY_AND_HOLD_MACRO_CONTEXT": {
+          "design": "MACRO_CONTEXT_ONLY_NOT_A_STATISTICAL_COMPARISON",
+          "value": {
+            "data_available": true,
+            "period_start_close": 1827.66,
+            "period_end_close": 4522.7,
+            "total_return_price_units": 2695.04,
+            "total_return_pct": 147.4584988455183,
+            "n_bars": 744,
+            "note": "Contesto macro (drift secolare) - MAI un confronto trade-per-trade diretto."
+          }
+        }
+      },
+      "primary_analysis_summary": {
+        "benchmark": "REGIME_MATCHED_RANDOM_LONG",
+        "horizon": "h10",
+        "result": {
+          "n": 10,
+          "mean": 50.75800000000004,
+          "ci95_low": -24.051999999999815,
+          "ci95_high": 154.523,
+          "excludes_zero": false
+        },
+        "direction_of_effect": "REAL_BETTER"
+      },
+      "sample_size_limitation": "ORDER_BLOCK ha solo 12 eventi BUY - qualunque effect size su questo campione e' descrittivo, non generalizzabile. Dichiarato PRIMA di guardare i risultati, non dopo."
+    },
+    "LIQ_SWEEP": {
+      "n_real_buy_events": 39,
+      "period": [
+        "2023.10.02",
+        "2026.06.30"
+      ],
+      "per_benchmark_results": {
+        "REGIME_MATCHED_RANDOM_LONG": {
+          "design": "PAIRED",
+          "by_horizon": {
+            "h1": {
+              "n": 39,
+              "mean": -7.556666666666633,
+              "ci95_low": -44.01871794871792,
+              "ci95_high": 24.710000000000043,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n": 39,
+              "mean": -37.68384615384614,
+              "ci95_low": -91.61384615384614,
+              "ci95_high": 7.254102564102636,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n": 39,
+              "mean": -21.409487179487225,
+              "ci95_low": -75.70435897435905,
+              "ci95_high": 28.939230769230697,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n": 39,
+              "mean": -7.049999999999966,
+              "ci95_low": -73.0410256410256,
+              "ci95_high": 63.34256410256413,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n": 39,
+              "mean": 15.026923076923058,
+              "ci95_low": -55.53923076923081,
+              "ci95_high": 84.70051282051286,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n": 39,
+              "mean": -94.53871794871793,
+              "ci95_low": -206.24897435897435,
+              "ci95_high": 11.138717948717998,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n": 38,
+              "mean": -75.7444736842105,
+              "ci95_low": -210.72052631578953,
+              "ci95_high": 54.235789473684235,
+              "excludes_zero": false
+            }
+          }
+        },
+        "RANDOM_TIMESTAMPS_MATCHED": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": -7.026666666666672,
+              "bench_mean": -9.279487179487182,
+              "diff_mean": 2.2528205128205103,
+              "ci95_low": -32.99512820512822,
+              "ci95_high": 30.615128205128237,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": -23.494358974358985,
+              "bench_mean": -13.853846153846124,
+              "diff_mean": -9.64051282051286,
+              "ci95_low": -67.28410256410265,
+              "ci95_high": 40.18820512820512,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 4.741282051281995,
+              "bench_mean": 0.7264102564102546,
+              "diff_mean": 4.01487179487174,
+              "ci95_low": -57.21897435897443,
+              "ci95_high": 62.65256410256409,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 21.45410256410253,
+              "bench_mean": 6.344102564102595,
+              "diff_mean": 15.109999999999935,
+              "ci95_low": -48.93435897435906,
+              "ci95_high": 82.65435897435889,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 77.93564102564096,
+              "bench_mean": 39.67000000000002,
+              "diff_mean": 38.26564102564094,
+              "ci95_low": -33.52435897435913,
+              "ci95_high": 110.79564102564093,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 72.32025641025639,
+              "bench_mean": 80.40589743589746,
+              "diff_mean": -8.085641025641067,
+              "ci95_low": -127.73615384615385,
+              "ci95_high": 105.28974358974357,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 39,
+              "n_bench": 38,
+              "real_mean": 124.26358974358969,
+              "bench_mean": 150.61499999999998,
+              "diff_mean": -26.35141025641029,
+              "ci95_low": -162.44402834008096,
+              "ci95_high": 108.20585695006746,
+              "excludes_zero": false
+            }
+          }
+        },
+        "PERIODIC_ENTRY_LONG": {
+          "design": "INDEPENDENT_TWO_SAMPLE",
+          "by_horizon": {
+            "h1": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": -7.026666666666672,
+              "bench_mean": 10.304102564102545,
+              "diff_mean": -17.330769230769217,
+              "ci95_low": -51.9320512820513,
+              "ci95_high": 10.827692307692324,
+              "excludes_zero": false
+            },
+            "h3": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": -23.494358974358985,
+              "bench_mean": 14.538717948717867,
+              "diff_mean": -38.03307692307685,
+              "ci95_low": -95.14128205128193,
+              "ci95_high": 9.681538461538517,
+              "excludes_zero": false
+            },
+            "h5": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 4.741282051281995,
+              "bench_mean": 44.02307692307689,
+              "diff_mean": -39.2817948717949,
+              "ci95_low": -113.56512820512825,
+              "ci95_high": 30.878205128205153,
+              "excludes_zero": false
+            },
+            "h10": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 21.45410256410253,
+              "bench_mean": 29.195897435897397,
+              "diff_mean": -7.741794871794866,
+              "ci95_low": -71.09461538461541,
+              "ci95_high": 58.473076923076995,
+              "excludes_zero": false
+            },
+            "h20": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 77.93564102564096,
+              "bench_mean": 66.41820512820505,
+              "diff_mean": 11.517435897435917,
+              "ci95_low": -60.11358974358983,
+              "ci95_high": 83.35333333333334,
+              "excludes_zero": false
+            },
+            "h40": {
+              "n_real": 39,
+              "n_bench": 39,
+              "real_mean": 72.32025641025639,
+              "bench_mean": 133.72051282051277,
+              "diff_mean": -61.400256410256375,
+              "ci95_low": -195.5779487179487,
+              "ci95_high": 65.19820512820516,
+              "excludes_zero": false
+            },
+            "h60": {
+              "n_real": 39,
+              "n_bench": 38,
+              "real_mean": 124.26358974358969,
+              "bench_mean": 221.00289473684208,
+              "diff_mean": -96.73930499325239,
+              "ci95_low": -258.52420377867753,
+              "ci95_high": 65.97251686909581,
+              "excludes_zero": false
+            }
+          }
+        },
+        "UNCONDITIONAL_LONG_EXPOSURE": {
+          "design": "ONE_SAMPLE_VS_FIXED_POPULATION",
+          "by_horizon": {
+            "h1": {
+              "n": 39,
+              "mean": -10.138587570621473,
+              "ci95_low": -42.613459365493235,
+              "ci95_high": 14.580130378096461,
+              "excludes_zero": false,
+              "real_mean": -7.026666666666672,
+              "population_mean": 3.111920903954802
+            },
+            "h3": {
+              "n": 39,
+              "mean": -33.18092677096916,
+              "ci95_low": -87.47323446327684,
+              "ci95_high": 7.933688613646209,
+              "excludes_zero": false,
+              "real_mean": -23.494358974358985,
+              "population_mean": 9.686567796610168
+            },
+            "h5": {
+              "n": 39,
+              "mean": -11.46907105606264,
+              "ci95_low": -68.49522490221648,
+              "ci95_high": 42.67990330291174,
+              "excludes_zero": false,
+              "real_mean": 4.741282051281995,
+              "population_mean": 16.21035310734463
+            },
+            "h10": {
+              "n": 39,
+              "mean": -10.260883311603685,
+              "ci95_low": -56.191139721860125,
+              "ci95_high": 32.20988591916564,
+              "excludes_zero": false,
+              "real_mean": 21.45410256410253,
+              "population_mean": 31.714985875706216
+            },
+            "h20": {
+              "n": 39,
+              "mean": 16.819737070838695,
+              "ci95_low": -33.04436549326386,
+              "ci95_high": 69.46409604519769,
+              "excludes_zero": false,
+              "real_mean": 77.93564102564096,
+              "population_mean": 61.115903954802256
+            },
+            "h40": {
+              "n": 39,
+              "mean": -53.001178248834535,
+              "ci95_low": -152.06861414627045,
+              "ci95_high": 33.87677046911419,
+              "excludes_zero": false,
+              "real_mean": 72.32025641025639,
+              "population_mean": 125.32143465909091
+            },
+            "h60": {
+              "n": 39,
+              "mean": -71.00872019793077,
+              "ci95_low": -175.75718173639228,
+              "ci95_high": 23.744613135402552,
+              "excludes_zero": false,
+              "real_mean": 124.26358974358969,
+              "population_mean": 195.27230994152046
+            }
+          }
+        },
+        "BUY_AND_HOLD_MACRO_CONTEXT": {
+          "design": "MACRO_CONTEXT_ONLY_NOT_A_STATISTICAL_COMPARISON",
+          "value": {
+            "data_available": true,
+            "period_start_close": 1827.66,
+            "period_end_close": 4007.3,
+            "total_return_price_units": 2179.6400000000003,
+            "total_return_pct": 119.25850541129095,
+            "n_bars": 708,
+            "note": "Contesto macro (drift secolare) - MAI un confronto trade-per-trade diretto."
+          }
+        }
+      },
+      "primary_analysis_summary": {
+        "benchmark": "REGIME_MATCHED_RANDOM_LONG",
+        "horizon": "h10",
+        "result": {
+          "n": 39,
+          "mean": -7.049999999999966,
+          "ci95_low": -73.0410256410256,
+          "ci95_high": 63.34256410256413,
+          "excludes_zero": false
+        },
+        "direction_of_effect": "REAL_WORSE"
+      },
+      "sample_size_limitation": null
+    }
+  }
+}

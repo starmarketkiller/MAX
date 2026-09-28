@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T09:23:01.233672+00:00",
+  "generated_at": "2026-09-28T10:23:49.405904+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_synthesis.py",
-  "canonical_sha256": "5c267c15b7c1d3b2aea9c2b463b2d29052a1b38b77af2d73537c3e301369eeee",
+  "canonical_sha256": "d785624ba266064479817071671945307ff184ce32c4e5250e86890f61b789af",
   "payload": {
     "strategies_included": [
       "BREAKOUT_ACC",
@@ -75,6 +75,14 @@
       },
       {
         "kind": "OBSERVATION",
+        "statement": "Phase 7.27 ha testato il CANDIDATE_HYPOTHESIS sopra con un benchmark preregistrato (random/periodic/regime-matched/unconditional long entries) - nessuna delle 3 strategie batte significativamente il benchmark long regime-matched all'orizzonte primario. Decisione: BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME. Dataset di discovery (non un holdout indipendente) - resta SUPPORTED_AS_HYPOTHESIS (H_BUY_DOMINANCE_MARKET_REGIME_ARTIFACT, hypothesis_registry), non promosso a conclusione definitiva.",
+        "evidence": {
+          "phase_7_27_decision": "BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME",
+          "cross_strategy_pattern": "NONE_BEATS_REGIME_MATCHED_BENCHMARK_SIGNIFICANTLY"
+        }
+      },
+      {
+        "kind": "OBSERVATION",
         "statement": "In tutte e 3 le strategie, i primi 5 trade migliori spiegano da soli oltre il 100% del P&L netto totale (concentrazione estrema, non un'anomalia isolata di una sola strategia).",
         "evidence": {
           "top5_pct_per_strategy": {
@@ -107,7 +115,7 @@
         }
       }
     ],
-    "n_findings": 7,
+    "n_findings": 8,
     "cannot_produce_edge_found": true,
     "no_new_data_computed_only_existing_artifacts_read": true
   }

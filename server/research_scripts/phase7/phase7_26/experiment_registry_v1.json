@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T09:25:53.409756+00:00",
+  "generated_at": "2026-09-28T10:23:49.030297+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_experiment_registry.py",
-  "canonical_sha256": "e3cb5b3c2e189435acecd7e903f5c6aa1b27edb09abc88e879b945375c71007c",
+  "canonical_sha256": "29f1bd46d868a3cff0abfd45a641600cb436864a2dfdd1b31544855090b1a736",
   "payload": {
     "schema_version": "EXPERIMENT_REGISTRY_V1",
     "principle": "Ogni esperimento e' un fatto gia' accaduto (run/analisi gia' eseguiti) - backfillato dagli artifact esistenti, nessun campo mancante sostituito da un'invenzione.",
@@ -213,8 +213,41 @@
         "confidence": "PRIMO campione OOS del corpus >= soglia minima (n=6)",
         "limitations": "Risultato negativo (-$539.30) - non prova l'assenza di edge (n piccolo) ma e' un segnale contrario reale.",
         "created_at": "Phase 7.25"
+      },
+      {
+        "experiment_id": "EXP_BUY_DOMINANCE_BENCHMARK_CROSS_STRATEGY",
+        "hypothesis_id": "H_BUY_DOMINANCE_MARKET_REGIME_ARTIFACT",
+        "strategy_identity": "BREAKOUT_ACC+ORDER_BLOCK+LIQ_SWEEP",
+        "implementation_identity": "CROSS_STRATEGY_BENCHMARK_TEST_V1",
+        "run_id": null,
+        "dataset_id": "BUY_DOMINANCE_BENCHMARK_V1_2019-2026",
+        "code_sha": null,
+        "config_hash": null,
+        "period": [
+          "2019.02.21",
+          "2026.08.24"
+        ],
+        "method": "4 benchmark preregistrati (random/periodic/regime-matched/unconditional) + buy-and-hold come contesto, su serie D1 unica 2019-2026, orizzonti fissi [1,3,5,10,20,40,60] barre - primaria: REGIME_MATCHED_RANDOM_LONG @ h10.",
+        "metrics": {
+          "n_strategies": 3,
+          "n_buy_events": {
+            "BREAKOUT_ACC": 36,
+            "ORDER_BLOCK": 12,
+            "LIQ_SWEEP": 39
+          },
+          "cross_strategy_pattern": "NONE_BEATS_REGIME_MATCHED_BENCHMARK_SIGNIFICANTLY"
+        },
+        "artifacts": [
+          "phase7_27/decision_card_v1.json",
+          "phase7_27/cross_strategy_results_v1.json",
+          "phase7_27/per_strategy_results_v1.json"
+        ],
+        "verdict": "BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME",
+        "confidence": "MODERATA - dataset di discovery (non un holdout indipendente, dichiarato esplicitamente) - qualunque risultato resta SUPPORTED_AS_HYPOTHESIS, non edge.",
+        "limitations": "ORDER_BLOCK n=12 (campione minimo); nessun nuovo dato raccolto (0 nuovi backtest MT5); 1 solo risultato 'significativo' su 84 confronti totali, non sopravvive a correzione multiple-testing.",
+        "created_at": "Phase 7.27"
       }
     ],
-    "n_experiments": 8
+    "n_experiments": 9
   }
 }
