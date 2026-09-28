@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/opportunity-priority-queue.schema.json",
+  "title": "NEXUS OPPORTUNITY_PRIORITY_QUEUE_V1",
+  "description": "Doppia classifica delle OPPORTUNITY_V1 - per TECHNICAL_PRIORITY e per FUNDING_PRIORITY, SEPARATE per costruzione (mai un unico score fuso) - cosi' Jarvis puo' dire 'X e' tecnicamente interessante, ma Y genera cassa prima e puo' finanziare X' invece di appiattire le due dimensioni in una sola. Riusa lo stile gia' stabilito da contracts/strategy-registry.schema.json e dal pattern RESEARCH_PRIORITY_QUEUE_V1 (Phase 7.26).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "generated_at", "scoring_methodology_note", "ranked_by_technical_priority",
+    "ranked_by_funding_priority", "combined_view", "opportunities_evaluated"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "scoring_methodology_note": { "type": "string" },
+    "ranked_by_technical_priority": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["opportunity_id", "title", "technical_priority_score"],
+        "properties": {
+          "opportunity_id": { "type": "string" }, "title": { "type": "string" },
+          "technical_priority_score": { "type": "number" }
+        }
+      }
+    },
+    "ranked_by_funding_priority": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["opportunity_id", "title", "funding_priority_score"],
+        "properties": {
+          "opportunity_id": { "type": "string" }, "title": { "type": "string" },
+          "funding_priority_score": { "type": "number" }
+        }
+      }
+    },
+    "combined_view": {
+      "type": "array",
+      "description": "Vista affiancata (mai fusa) delle due classifiche - il campo 'funding_can_finance_technical' e' popolato SOLO se dichiarato esplicitamente, mai inferito automaticamente da una correlazione di punteggio.",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["opportunity_id", "title", "technical_priority_score",
+                   "funding_priority_score", "technical_rank", "funding_rank"],
+        "properties": {
+          "opportunity_id": { "type": "string" }, "title": { "type": "string" },
+          "technical_priority_score": { "type": "number" },
+          "funding_priority_score": { "type": "number" },
+          "technical_rank": { "type": "integer" }, "funding_rank": { "type": "integer" },
+          "funding_can_finance_technical": {
+            "type": ["array", "null"],
+            "description": "Lista di opportunity_id tecnicamente prioritarie che questa opportunity (se ad alta funding_priority) potrebbe aiutare a finanziare - dichiarato esplicitamente, mai calcolato.",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "opportunities_evaluated": { "type": "integer", "minimum": 0 }
+  }
+}

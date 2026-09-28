@@ -1,0 +1,275 @@
+{
+  "generated_at": "2026-09-28T23:48:13.058261+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_example_opportunities.py",
+  "canonical_sha256": "3c427fed527a514463f7b84220fdc851df3632ba748f562153ac5a9f474b445c",
+  "payload": {
+    "schema_version": 1,
+    "opportunities": [
+      {
+        "opportunity_id": "OPP_DATA_PROVENANCE_COMPLIANCE_TOOL",
+        "title": "Tool di provenance/audit per fondi quant regolamentati",
+        "description": "Prodotto leggero basato sulla disciplina gia' costruita in questo progetto (canonical_sha256 + wrapper di provenance + verificatori indipendenti fail-closed) - venduto come tool di compliance/audit a piccoli fondi quant che devono dimostrare tracciabilita' dei propri artifact di ricerca.",
+        "category": "DATA_PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "MEDIUM_1_3M",
+          "capital_required": "LOW",
+          "sales_difficulty": "MEDIUM",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "CORE_REUSE",
+          "risk": "LOW",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 43.75,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "MEDIUM"
+          },
+          "rationale": "Novita' tecnica bassa (e' un packaging di disciplina gia' esistente), ma infrastructure_leverage solo parziale - non fa avanzare il core NEXUS, lo esporta."
+        },
+        "funding_priority": {
+          "score": 81.25,
+          "weighted_breakdown": {
+            "time_to_cash": 7.5,
+            "capital_required": 7.0,
+            "sales_difficulty": 6.5,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 10.0,
+            "risk": 5.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "Nicchia di mercato piu' facile da vendere (compliance e' un bisogno chiaro), riuso quasi totale di codice gia' scritto, rischio basso, poco tempo umano ricorrente."
+        },
+        "created_by": "nexus_task_0005",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        }
+      },
+      {
+        "opportunity_id": "OPP_BACKTEST_AS_SERVICE",
+        "title": "Backtest-as-a-Service per piccoli team quant",
+        "description": "Offrire il pipeline di backtest deterministico + Safety Net (provenance, backfill classification, escalation) come servizio a pagamento per team quant piccoli senza questa infrastruttura.",
+        "category": "SERVICE",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "LONG_3_6M",
+          "capital_required": "LOW",
+          "sales_difficulty": "HIGH",
+          "margin": "MEDIUM",
+          "recurrence": "RECURRING",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "CORE_REUSE",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 59.0,
+          "criteria": {
+            "novelty": "MEDIUM",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "MEDIUM",
+            "long_term_strategic_value": "MEDIUM"
+          },
+          "rationale": "Riuso alto ma richiede adattamento per clienti esterni (non fa avanzare il core NEXUS stesso, lo confeziona per terzi)."
+        },
+        "funding_priority": {
+          "score": 60.25,
+          "weighted_breakdown": {
+            "time_to_cash": 3.75,
+            "capital_required": 7.0,
+            "sales_difficulty": 3.0,
+            "margin": 4.0,
+            "recurrence": 7.5,
+            "automation_level": 5.5,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 10.0,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Vendita a team esterni e' intrinsecamente lenta/difficile senza rete di contatti gia' esistente - time_to_cash lungo, tempo umano significativo per onboarding/supporto clienti."
+        },
+        "created_by": "nexus_task_0005",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        }
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_MODEL_ORCHESTRATOR_PRODUCT",
+        "title": "Prodotto SaaS: Orchestrator locale-first con escalation premium",
+        "description": "Productizzare il pattern Task Queue + Router + worker locale (Ministral) + escalation selettiva a premium gia' costruito e validato in questa sessione (NEXUS TASK #0001-#0004) come strumento generico per team che vogliono ridurre il costo di agenti AI premium.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "VERY_LONG_GT_6M",
+          "capital_required": "MEDIUM",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "HIGH",
+          "risk": "HIGH",
+          "human_time_required": "FULL_TIME"
+        },
+        "technical_priority": {
+          "score": 100.0,
+          "criteria": {
+            "novelty": "HIGH",
+            "infrastructure_leverage": "HIGH",
+            "complexity_interest": "HIGH",
+            "long_term_strategic_value": "HIGH"
+          },
+          "rationale": "Il piu' alto in infrastructure_leverage: costruirlo bene fa avanzare DIRETTAMENTE le capacita' core di NEXUS stesso, non solo un derivato."
+        },
+        "funding_priority": {
+          "score": 47.75,
+          "weighted_breakdown": {
+            "time_to_cash": 0.0,
+            "capital_required": 3.5,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 5.5,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 7.5,
+            "risk": 1.25,
+            "human_time_required": 0.0
+          },
+          "rationale": "Time-to-cash molto lungo (serve generalizzare da 'funziona per noi' a 'prodotto vendibile'), capitale/tempo pieno richiesti, rischio alto - l'opposto esatto del profilo 'genera cassa presto'."
+        },
+        "created_by": "nexus_task_0005",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        }
+      },
+      {
+        "opportunity_id": "OPP_SAFETY_NET_METHODOLOGY_CONSULTING",
+        "title": "Consulenza/workshop sulla metodologia Research Safety Net",
+        "description": "Vendere come consulenza/workshop la disciplina scientifica Phase 7 (outcome-blind preflight, preregistrazione, backfill classification, escalation strutturata) a team di ricerca quant che vogliono irrobustire il proprio processo.",
+        "category": "CONSULTING",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "LONG_3_6M",
+          "capital_required": "NONE",
+          "sales_difficulty": "HIGH",
+          "margin": "VERY_HIGH",
+          "recurrence": "OCCASIONAL",
+          "automation_level": "MANUAL",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "PARTIAL",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "Non fa avanzare l'infrastruttura NEXUS in alcun modo - e' puro trasferimento di conoscenza gia' maturata, valore strategico basso per NEXUS stesso."
+        },
+        "funding_priority": {
+          "score": 55.75,
+          "weighted_breakdown": {
+            "time_to_cash": 3.75,
+            "capital_required": 10.0,
+            "sales_difficulty": 3.0,
+            "margin": 10.0,
+            "recurrence": 4.0,
+            "automation_level": 1.5,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 4.0,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Margine altissimo (consulenza pura) ma non scalabile/non ricorrente in modo affidabile, richiede tempo umano diretto significativo per ogni engagement."
+        },
+        "created_by": "nexus_task_0005",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        }
+      },
+      {
+        "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
+        "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
+        "description": "Vendere un abbonamento a segnali generati dalle strategie gia' sviluppate in questo progetto (LIQ_SWEEP, BREAKOUT_ACC, ORDER_BLOCK). ATTENZIONE ESPLICITA: NESSUNA di queste strategie ha oggi lo stato EDGE_CONFIRMED - Phase 7.27 ha gia' trovato che la dominanza BUY osservata e' largamente spiegata dal regime di mercato, non da un edge specifico (BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME). Questa opportunity NON E' AZIONABILE oggi - inclusa solo per dimostrare che il framework la classifica correttamente come rischiosa nonostante punteggi di automazione/ricorrenza attraenti.",
+        "category": "PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "NONE",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "PARTIAL",
+          "risk": "VERY_HIGH",
+          "human_time_required": "MINIMAL"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "Non fa avanzare l'infrastruttura di ricerca/orchestrazione - e' puro sfruttamento commerciale di un risultato che oggi NON esiste ancora (nessun edge confermato)."
+        },
+        "funding_priority": {
+          "score": 75.25,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 10.0,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 4.0,
+            "risk": 0.0,
+            "human_time_required": 5.0
+          },
+          "rationale": "Punteggio funding ALTO per automazione/ricorrenza/tempo umano minimo, MA risk=VERY_HIGH abbassa il punteggio e la descrizione dichiara esplicitamente che nessuna strategia sottostante ha oggi un edge confermato - illustra perche' il framework non deve MAI essere letto senza il campo risk e la descrizione completa."
+        },
+        "created_by": "nexus_task_0005",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        }
+      }
+    ]
+  }
+}

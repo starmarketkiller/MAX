@@ -42,7 +42,13 @@ ALLOWED_TRANSITIONS = {
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
     "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED"},
     "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED"},
-    "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED"},
+    "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED", "WAITING_APPROVAL",
+                          "COMPLETED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
+                          # dell'escalation (TIER3_CLAUDE/TIER4_CODEX) e' arrivata e verificata
+                          # - se tocca/crea file reali che richiedono revisione va a
+                          # WAITING_APPROVAL, altrimenti direttamente COMPLETED (scoperto in
+                          # NEXUS TASK #0005, la prima escalation di questo Core risolta con
+                          # un intero nuovo framework invece di un singolo campo dato)
     "BLOCKED": {"QUEUED"},
     "COMPLETED": set(),
     "FAILED": {"QUEUED"},  # solo se un umano decide di ritentare esplicitamente

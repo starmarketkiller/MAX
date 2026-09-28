@@ -1,0 +1,234 @@
+{
+  "nexus_task": "0005",
+  "title": "Funding Priority & Opportunity Framework V1",
+  "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+  "final_state": "WAITING_APPROVAL",
+  "decision": "FRAMEWORK_READY_AWAITING_ADOPTION",
+  "result_packet": {
+    "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+    "executor": "TIER3_CLAUDE",
+    "start_time": "2026-09-28T23:53:24.756391+00:00",
+    "end_time": "2026-09-28T23:53:25.552544+00:00",
+    "files_read": [
+      "server/funding_v1/opportunity_priority_queue_v1.json",
+      "contracts/opportunity-priority-queue.schema.json"
+    ],
+    "files_changed": [],
+    "tools_or_commands": [
+      "validate_json_schema(priority_queue)",
+      "run_pytest(test_funding_v1)"
+    ],
+    "artifacts_created": [
+      "contracts/opportunity.schema.json",
+      "contracts/opportunity-priority-queue.schema.json",
+      "server/funding_v1/opportunity_scoring.py",
+      "server/funding_v1/build_example_opportunities.py",
+      "server/funding_v1/build_opportunity_priority_queue.py",
+      "server/funding_v1/example_instances/opportunities_v1.json",
+      "server/funding_v1/opportunity_priority_queue_v1.json"
+    ],
+    "tests": {
+      "ran": true,
+      "passed": 8,
+      "failed": 0
+    },
+    "verifier": {
+      "ran": true,
+      "passed": true,
+      "errors": []
+    },
+    "commit": null,
+    "push_status": "NOT_APPLICABLE",
+    "decision": "FRAMEWORK_READY_AWAITING_ADOPTION",
+    "confidence": "HIGH",
+    "limitations": [
+      "5 opportunity di esempio sono ILLUSTRATIVE (stime di Claude senza dati di mercato reali, dichiarato in provenance.dimension_estimation_method) - non decisioni di business gia' prese",
+      "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION esplicitamente non azionabile oggi (nessuna strategia ha status EDGE_CONFIRMED)"
+    ],
+    "unresolved_issues": [],
+    "suggested_next_tasks": [
+      "conferma esplicita dell'utente per adottare questo framework come canone",
+      "eventuale integrazione nel Control Plane quando Codex torna disponibile"
+    ],
+    "escalation_needed": {
+      "needed": false,
+      "reason": null,
+      "target_tier": null
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_0c8e3d2c6c464d3f",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:49:01.384999+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Funding Priority & Opportunity Framework V1 - design",
+        "task_type": "RESEARCH",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_38039694cba54b6a",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:49:01.386999+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_0418aa2abd3a4516",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:49:01.389007+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "ESCALATION_REQUIRED",
+        "executor": "TIER3_CLAUDE",
+        "reason": "scientific_risk=MEDIUM - nessun agente locale puo' fare giudizio scientifico/causale per costruzione (§6).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_3d3f3613148c4ea1",
+      "event_type": "ESCALATION_REQUIRED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:49:01.389007+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "target": "TIER3_CLAUDE",
+        "classification": "ROUTER_DIRECT_ESCALATION",
+        "errors": [],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_89a58270e1a242a6",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:50:47.637713+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(priority_queue)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_43ebd52ed65d497e",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:50:47.638713+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/funding_v1/opportunity_priority_queue_v1.json",
+          "contracts/opportunity-priority-queue.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_73401edac3334d56",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:50:47.639228+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "run_pytest(test_funding_v1)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_420206606e804cdf",
+      "event_type": "TEST_PASSED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:50:47.639857+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "checks": [
+          "validate_json_schema(priority_queue)",
+          "run_pytest(test_funding_v1)"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_2cd24c12b0af4341",
+      "event_type": "APPROVAL_REQUIRED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:50:47.639857+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "introduce un nuovo framework/architettura canonica - approval_required=REVIEW_REQUIRED, non AUTO",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_24e9d130772f453b",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:53:25.549540+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(priority_queue)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_a0741b4a434a4d80",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:53:25.549540+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/funding_v1/opportunity_priority_queue_v1.json",
+          "contracts/opportunity-priority-queue.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_f36b73bacb96485c",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:53:25.550545+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "run_pytest(test_funding_v1)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_0e9a3d589f4b438a",
+      "event_type": "TEST_PASSED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:53:25.551545+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "checks": [
+          "validate_json_schema(priority_queue)",
+          "run_pytest(test_funding_v1)"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_c2cffedcc2ee4b15",
+      "event_type": "APPROVAL_REQUIRED",
+      "task_id": "TASK_NEXUS_0005_FUNDING_FRAMEWORK",
+      "timestamp": "2026-09-28T23:53:25.551545+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "introduce un nuovo framework/architettura canonica - approval_required=REVIEW_REQUIRED, non AUTO",
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ],
+  "premium_calls": 1,
+  "premium_cost": "1 escalation TIER3_CLAUDE (questa conversazione) - nessuna chiamata API separata"
+}

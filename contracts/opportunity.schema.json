@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/opportunity.schema.json",
+  "title": "NEXUS OPPORTUNITY_V1",
+  "description": "Una candidata idea/progetto/servizio potenzialmente generatore di cassa - schema machine-readable per il Funding Priority & Opportunity Framework V1 (NEXUS TASK #0005). Riusa lo stile draft-07 gia' stabilito da contracts/strategy-registry.schema.json (additionalProperties:false, required espliciti, enum SCREAMING_SNAKE). Separazione deliberata da TASK_MANIFEST_V1: un'opportunity NON e' un task da eseguire, e' un CANDIDATO da valutare/prioritizzare prima che diventi (eventualmente) uno o piu' task.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opportunity_id", "title", "description", "category", "status", "dimensions",
+    "technical_priority", "funding_priority", "created_by", "created_at", "provenance"
+  ],
+  "properties": {
+    "opportunity_id": { "type": "string", "pattern": "^OPP_[A-Za-z0-9_]+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "category": {
+      "type": "string",
+      "enum": ["SERVICE", "PRODUCT", "CONSULTING", "AUTOMATION_RESALE", "DATA_PRODUCT",
+               "LICENSING", "SAAS", "CONTENT", "OTHER"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["IDEA", "EVALUATING", "VALIDATED", "ACTIVE", "PAUSED", "ABANDONED"]
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "time_to_cash", "capital_required", "sales_difficulty", "margin", "recurrence",
+        "automation_level", "skills_available", "premium_tool_dependency", "strategic_reuse",
+        "risk", "human_time_required"
+      ],
+      "description": "Le 11 dimensioni grezze dichiarate dall'utente - input della funding_priority. Ognuna e' una stima dichiarata (mai derivata automaticamente da dati di mercato non esistenti) - vedi dimension_estimation_method in ogni voce.",
+      "properties": {
+        "time_to_cash": {
+          "type": "string",
+          "enum": ["IMMEDIATE_LT_1W", "SHORT_LT_1M", "MEDIUM_1_3M", "LONG_3_6M", "VERY_LONG_GT_6M"]
+        },
+        "capital_required": { "type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH"] },
+        "sales_difficulty": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"] },
+        "margin": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"] },
+        "recurrence": {
+          "type": "string", "enum": ["ONE_OFF", "OCCASIONAL", "RECURRING", "SUBSCRIPTION"]
+        },
+        "automation_level": {
+          "type": "string", "enum": ["MANUAL", "PARTIALLY_AUTOMATED", "FULLY_AUTOMATED"]
+        },
+        "skills_available": {
+          "type": "string",
+          "enum": ["FULLY_AVAILABLE", "PARTIAL", "NEEDS_LEARNING", "NEEDS_HIRING"]
+        },
+        "premium_tool_dependency": {
+          "type": "string", "enum": ["NONE", "LOW_COST", "MODERATE_COST", "HIGH_COST"]
+        },
+        "strategic_reuse": {
+          "type": "string",
+          "description": "Quanto riusa infrastruttura NEXUS GIA' esistente per generare cassa PRESTO - diverso da technical_priority.infrastructure_leverage (che valuta se il progetto fa AVANZARE le capacita' NEXUS, non se le riusa).",
+          "enum": ["NONE", "PARTIAL", "HIGH", "CORE_REUSE"]
+        },
+        "risk": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "VERY_HIGH"] },
+        "human_time_required": {
+          "type": "string", "enum": ["MINIMAL", "PART_TIME", "SIGNIFICANT", "FULL_TIME"]
+        }
+      }
+    },
+    "technical_priority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "criteria", "rationale"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "criteria": {
+          "type": "object", "additionalProperties": false,
+          "required": ["novelty", "infrastructure_leverage", "complexity_interest",
+                     "long_term_strategic_value"],
+          "properties": {
+            "novelty": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+            "infrastructure_leverage": {
+              "type": "string",
+              "description": "Fa avanzare le capacita' NEXUS core (Orchestrator/worker locale/pipeline)? Diverso da dimensions.strategic_reuse.",
+              "enum": ["NONE", "PARTIAL", "HIGH"]
+            },
+            "complexity_interest": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+            "long_term_strategic_value": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+          }
+        },
+        "rationale": { "type": "string" }
+      }
+    },
+    "funding_priority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "weighted_breakdown", "rationale"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "weighted_breakdown": {
+          "type": "object",
+          "description": "Punteggio pesato per ciascuna delle 11 dimensioni - mai un numero opaco, sempre scomponibile.",
+          "additionalProperties": { "type": "number" }
+        },
+        "rationale": { "type": "string" }
+      }
+    },
+    "created_by": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension_estimation_method", "reviewed"],
+      "properties": {
+        "dimension_estimation_method": {
+          "type": "string",
+          "enum": ["DECLARED_BY_USER", "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+                   "VALIDATED_WITH_EXTERNAL_DATA"]
+        },
+        "reviewed": { "type": "boolean" }
+      }
+    }
+  }
+}
