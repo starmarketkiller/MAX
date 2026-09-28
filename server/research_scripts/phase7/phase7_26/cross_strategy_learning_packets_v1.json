@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T23:12:34.235190+00:00",
+  "generated_at": "2026-09-28T23:22:29.795568+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_26\\build_cross_strategy_learning_packet.py",
-  "canonical_sha256": "eabf4cdabca53a9e62c7f48261e568befb59bd50722ee60be9b40e0b4a42e204",
+  "canonical_sha256": "0b02a0b6113d57fe99a816036e3e9b29dcbad774bbd209947c2ac8016276fe83",
   "payload": {
     "schema_version": "CROSS_STRATEGY_LEARNING_PACKET_V1",
     "not_available_marker": "NOT_AVAILABLE",
@@ -104,7 +104,7 @@
           "pct_generated_that_open_per_certificate": 48.0
         },
         "cost_sensitivity": "sopravvive a COST_BASE/MODERATE/STRESS",
-        "exit_efficiency": "NOT_AVAILABLE",
+        "exit_efficiency": "Rapporto medio di efficienza di uscita: 0.31 (su 13 eventi, 0 esclusi per assenza di target).",
         "capital_efficiency": 2500,
         "concentration": 196.76316847607558,
         "temporal_concentration": "2/3 anni con profitto netto positivo su 3 con almeno un trade.",
@@ -128,7 +128,7 @@
         ],
         "confidence": "BASSA - n=13",
         "fidelity": "EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
-        "provenance": "phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK #0002/#0003 (temporal_concentration - exit_efficiency resta NOT_AVAILABLE, escalation genuina a TIER3_CLAUDE, vedi server/orchestrator_v1/nexus_task_0002_result_v1.json)"
+        "provenance": "phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK #0002/#0003 (temporal_concentration) + risoluzione escalation Claude TIER3 (exit_efficiency, vedi server/orchestrator_v1/nexus_task_0002_result_v1.json)"
       },
       "TSI": {
         "strategy_identity": "TSI",

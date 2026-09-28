@@ -1,0 +1,161 @@
+{
+  "nexus_task": "0004",
+  "title": "Merge Escalation Resolution",
+  "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+  "final_state": "COMPLETED",
+  "decision": "ESCALATION_MERGED",
+  "result_packet": {
+    "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+    "executor": "deterministic_worker",
+    "start_time": "2026-09-28T23:22:29.699188+00:00",
+    "end_time": "2026-09-28T23:22:34.058655+00:00",
+    "files_read": [
+      "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json"
+    ],
+    "files_changed": [
+      "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json",
+      "server/research_scripts/phase7/phase7_26/cross_strategy_synthesis_v1.json"
+    ],
+    "tools_or_commands": [
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe C:\\Users\\User\\ClaudeWork\\MAX\\server/research_scripts/phase7/phase7_26/build_cross_strategy_learning_packet.py",
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe C:\\Users\\User\\ClaudeWork\\MAX\\server/research_scripts/phase7/phase7_26/build_cross_strategy_synthesis.py",
+      "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe -m pytest phase7_26/test_phase_7_26.py -q"
+    ],
+    "artifacts_created": [],
+    "tests": {
+      "ran": false,
+      "passed": 0,
+      "failed": 0
+    },
+    "verifier": {
+      "ran": true,
+      "passed": true,
+      "errors": []
+    },
+    "commit": null,
+    "push_status": "NOT_APPLICABLE",
+    "decision": "COMPLETED",
+    "confidence": "HIGH",
+    "limitations": [],
+    "unresolved_issues": [],
+    "suggested_next_tasks": [],
+    "escalation_needed": {
+      "needed": false,
+      "reason": null,
+      "target_tier": null
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_dc792875be5343e6",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:29.695066+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Merge escalation resolution ORDER_BLOCK.exit_efficiency",
+        "task_type": "BACKFILL",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_9579eca60a2a42fa",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:29.697054+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_c05024d831a7469a",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:29.699188+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "TIER0_DETERMINISTIC",
+        "executor": "deterministic_worker",
+        "reason": "azione 'apply_approved_backfill' e' un workflow deterministico noto - mai chiamare un modello per questo (§6 premium/local gating).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_15d3f228ddba4884",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:29.699188+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "apply_approved_backfill",
+        "params_keys": [
+          "builder_script",
+          "learning_packet_path",
+          "expected_changed_fields",
+          "never_change_field",
+          "sensitive_fields",
+          "test_command",
+          "test_cwd",
+          "downstream_builder_scripts",
+          "downstream_artifact_paths"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_6c736da9ca244d08",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:34.056143+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_349b1bbc71034e19",
+      "event_type": "FILE_CHANGED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:34.057146+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/research_scripts/phase7/phase7_26/cross_strategy_learning_packets_v1.json",
+          "server/research_scripts/phase7/phase7_26/cross_strategy_synthesis_v1.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_7503662b482141ca",
+      "event_type": "TASK_COMPLETED",
+      "task_id": "TASK_NEXUS_0004_MERGE_ESCALATION",
+      "timestamp": "2026-09-28T23:22:34.057146+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "action": "apply_approved_backfill",
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ],
+  "claude_resolution": {
+    "field": "ORDER_BLOCK.exit_efficiency",
+    "verdict": "FIELD_VALUE",
+    "value": "Rapporto medio di efficienza di uscita: 0.31 (su 13 eventi, 0 esclusi per assenza di target).",
+    "source_artifact": "server/research_scripts/phase7/phase7_22/canonical_economic_dataset_v1.json",
+    "derivation": "captured/available per evento (stessa formula gia' verificata per BREAKOUT_ACC), media su 13 eventi - ricalcolato indipendentemente da Claude, identico a NEXUS TASK #0001",
+    "confidence": "ALTA per il calcolo - BASSA resta il caveat generale di campione (n=13) gia' presente altrove nel packet",
+    "limitations": [
+      "n=13, campione minimo",
+      "1 evento anomalo (ratio=0.125) riportato senza interpretarne la causa",
+      "campo 'direction' scoperto codificato come intero 1/-1 non stringa - corretto per robustezza, valore invariato"
+    ]
+  },
+  "premium_calls": 1,
+  "premium_cost": "1 escalation TIER3_CLAUDE (questa conversazione) - nessuna chiamata API separata"
+}

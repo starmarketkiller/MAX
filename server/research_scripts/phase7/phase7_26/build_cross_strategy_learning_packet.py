@@ -78,9 +78,18 @@ def _narrative_temporal_concentration(data):
 
 
 def _compute_exit_efficiency(events):
+    """NOTA (trovata durante la risoluzione dell'escalation ORDER_BLOCK.
+    exit_efficiency): il campo 'direction' nei dataset economici (BREAKOUT_ACC,
+    ORDER_BLOCK) e' un INTERO (1=BUY, -1=SELL), non la stringa 'BUY'/'SELL' -
+    un confronto con la stringa non intercetta mai il caso BUY. Verificato
+    algebricamente e numericamente (sia per BREAKOUT_ACC che per ORDER_BLOCK)
+    che per QUESTA specifica formula a rapporto l'errore era innocuo
+    (captured e available si negano entrambi in modo consistente, il
+    rapporto risultante e' identico) - corretto qui comunque per robustezza,
+    nessun valore gia' applicato al Vault cambia."""
     ratios, skipped = [], 0
     for e in events:
-        if e["direction"] == "BUY":
+        if e["direction"] == 1:
             captured = e["exit_price"] - e["entry_price"]
             available = e["entry_tp"] - e["entry_price"]
         else:
@@ -148,7 +157,9 @@ def _load_order_block_events_for_backfill():
                        "canonical_economic_dataset_v1.json")
     with open(path, encoding="utf-8") as f:
         payload = json.load(f)["payload"]
-    return [{"entry_time": e["entry_time"], "net_pnl": e["net_pnl"]} for e in payload["events"]]
+    return [{"entry_time": e["entry_time"], "net_pnl": e["net_pnl"], "entry_price": e["entry_price"],
+            "exit_price": e["exit_price"], "entry_tp": e["entry_tp"], "direction": e["direction"]}
+           for e in payload["events"]]
 
 
 def generate_packet(*, strategy_identity, mechanism, pre_entry_context, regime, direction,
@@ -244,10 +255,13 @@ def _order_block_packet():
 
     backfill_events = _load_order_block_events_for_backfill()
     backfill_temporal = _compute_temporal_concentration(backfill_events)
-    # exit_efficiency RESTA deliberatamente NOT_AVAILABLE - escalation genuina a TIER3_CLAUDE
-    # (NEXUS TASK #0002): il worker locale non e' riuscito, dopo un retry delimitato, a
-    # produrre una narrativa affidabile per questo campo specifico. Vedi
-    # server/orchestrator_v1/nexus_task_0002_result_v1.json, escalation_packets.
+    # exit_efficiency: risolto da Claude (escalation TIER3, NEXUS TASK #0002) dopo che il
+    # worker locale non era riuscito, dopo un retry delimitato, a produrre una narrativa
+    # affidabile per questo campo - il VALORE era gia' corretto (verificato indipendentemente
+    # da Claude ricalcolando dal dataset canonico), il problema era solo di generazione
+    # narrativa. Vedi server/orchestrator_v1/nexus_task_0002_result_v1.json per il dettaglio
+    # dell'escalation e la risoluzione.
+    backfill_exit_eff = _compute_exit_efficiency(backfill_events)
 
     return generate_packet(
         strategy_identity="ORDER_BLOCK",
@@ -260,7 +274,8 @@ def _order_block_packet():
         favorable_before_loss=NOT_AVAILABLE, adverse_before_win=NOT_AVAILABLE,
         execution_degradation=_get(execn, "funnel_rates") if execn else NOT_AVAILABLE,
         cost_sensitivity="sopravvive a COST_BASE/MODERATE/STRESS",
-        exit_efficiency=NOT_AVAILABLE, capital_efficiency=_get(mvc, "MINIMUM_VIABLE_CAPITAL_EUR"),
+        exit_efficiency=_narrative_exit_efficiency(backfill_exit_eff),
+        capital_efficiency=_get(mvc, "MINIMUM_VIABLE_CAPITAL_EUR"),
         concentration=_get(decision, "supporting_evidence_summary", "top_5_trades_pct_of_total_net"),
         temporal_concentration=_narrative_temporal_concentration(backfill_temporal),
         oos_behavior={"n_trades": 0, "decision": _get(oos, "decision")} if oos else NOT_AVAILABLE,
@@ -271,8 +286,8 @@ def _order_block_packet():
         candidate_hypotheses=["H_ORDER_BLOCK_EDGE_EXISTS"],
         confidence="BASSA - n=13", fidelity="EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
         provenance="phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK "
-                  "#0002/#0003 (temporal_concentration - exit_efficiency resta NOT_AVAILABLE, "
-                  "escalation genuina a TIER3_CLAUDE, vedi "
+                  "#0002/#0003 (temporal_concentration) + risoluzione escalation Claude "
+                  "TIER3 (exit_efficiency, vedi "
                   "server/orchestrator_v1/nexus_task_0002_result_v1.json)",
     )
 
