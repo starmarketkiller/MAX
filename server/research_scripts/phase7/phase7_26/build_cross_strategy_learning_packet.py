@@ -5,6 +5,7 @@ dovra' produrne uno automaticamente (vedi generate_packet(), riusabile).
 Campo non disponibile = NOT_AVAILABLE esplicito (mai omesso, mai
 inventato) - specialmente per TSI, che non ha mai avuto un dataset
 economico."""
+import json
 import os
 import sys
 
@@ -40,6 +41,114 @@ def _get(d, *path):
             return NOT_AVAILABLE
         cur = cur[k]
     return cur if cur is not None else NOT_AVAILABLE
+
+
+# --- NEXUS TASK #0003 (Approve Safety Net Backfill) --------------------------
+# Amendment al builder originale: 6 campi (5 BREAKOUT_ACC + 1 ORDER_BLOCK) erano
+# NOT_AVAILABLE non per mancanza di dati, ma perche' mai calcolati/propagati -
+# vedi NEXUS TASK #0002 (server/orchestrator_v1/nexus_task_0002_result_v1.json)
+# per l'investigazione completa e la classificazione DERIVABLE_NOW. Le formule
+# qui sotto sono le STESSE gia' indipendentemente verificate in quella fase
+# (reimplementate qui in Python puro, deterministico - MAI una chiamata a un
+# LLM in un builder di artifact canonico, altrimenti l'artifact non sarebbe
+# piu' riproducibile bit-per-bit, violando test_all_artifacts_deterministic).
+# ORDER_BLOCK.exit_efficiency e' rimasto DELIBERATAMENTE NOT_AVAILABLE: il
+# worker locale non e' riuscito, dopo un retry delimitato, a produrre una
+# narrativa affidabile per quel campo specifico - escalation genuina a
+# TIER3_CLAUDE, non ancora risolta al momento di questo amendment.
+
+def _compute_temporal_concentration(events):
+    by_year = {}
+    for e in events:
+        y = e["entry_time"][:4]
+        by_year.setdefault(y, []).append(e["net_pnl"])
+    per_year = {y: {"n_trades": len(v), "net_pnl_sum": sum(v),
+                   "win_rate": sum(1 for p in v if p > 0) / len(v)}
+               for y, v in by_year.items()}
+    out = dict(per_year)
+    out["years_with_positive_net"] = sum(1 for v in per_year.values() if v["net_pnl_sum"] > 0)
+    out["years_total_with_at_least_1_trade"] = len(per_year)
+    return out
+
+
+def _narrative_temporal_concentration(data):
+    pos = data["years_with_positive_net"]
+    total = data["years_total_with_at_least_1_trade"]
+    return f"{pos}/{total} anni con profitto netto positivo su {total} con almeno un trade."
+
+
+def _compute_exit_efficiency(events):
+    ratios, skipped = [], 0
+    for e in events:
+        if e["direction"] == "BUY":
+            captured = e["exit_price"] - e["entry_price"]
+            available = e["entry_tp"] - e["entry_price"]
+        else:
+            captured = e["entry_price"] - e["exit_price"]
+            available = e["entry_price"] - e["entry_tp"]
+        if available == 0:
+            skipped += 1
+            continue
+        ratios.append(captured / available)
+    return {"mean_exit_efficiency_ratio": sum(ratios) / len(ratios) if ratios else None,
+           "n_events_used": len(ratios), "n_events_skipped_zero_available": skipped}
+
+
+def _narrative_exit_efficiency(data):
+    ratio = data["mean_exit_efficiency_ratio"]
+    return (f"Rapporto medio di efficienza di uscita: {ratio:.2f} (su {data['n_events_used']} "
+           f"eventi, {data['n_events_skipped_zero_available']} esclusi per assenza di target).")
+
+
+def _breakout_acc_funnel_rates(execn):
+    """funnel_counts GIA' presenti in execution_realism_v1.json (Phase 7.21) -
+    solo mai convertiti in funnel_rates (bug di key-path nel builder
+    originale: cercava la chiave piatta 'signal_pct_favorable', mai esistita -
+    stessa convenzione/formula gia' usata per ORDER_BLOCK/LIQ_SWEEP)."""
+    fc = execn["funnel_counts"]
+    denom = fc["live_trace_generated_67"]
+    return {
+        "pct_generated_that_get_blocked": round(fc["blocked_by_execution_gates_11"] / denom * 100, 4),
+        "pct_generated_that_get_rejected": round(
+            fc["order_sent_47_plus_rejected_9"]["sent_rejected"] / denom * 100, 4),
+        "pct_generated_that_open_per_certificate": round(
+            fc["opened_with_real_pnl_47"] / denom * 100, 4),
+    }
+
+
+def _breakout_acc_favorable_adverse(path_v2, events):
+    """Incrocia MFE/MAE per-evento (path_v2, Phase 7.9K) con l'esito
+    vinto/perso (net_pnl, Phase 7.21) tramite event_id - nessun nuovo dato,
+    solo join+media aritmetica su due artifact gia' esistenti."""
+    outcome_by_id = {e["event_id"]: e["net_pnl"] for e in events}
+
+    def _conditional_mean(field, want_win):
+        vals = [pe[field] for pe in path_v2["per_event_before_after"]
+               if pe["event_id"] in outcome_by_id
+               and (outcome_by_id[pe["event_id"]] > 0) == want_win]
+        if not vals:
+            return NOT_AVAILABLE
+        return {"n": len(vals), "mean": round(sum(vals) / len(vals), 4),
+               "median": round(sorted(vals)[len(vals) // 2], 4)}
+
+    return _conditional_mean("v2_mfe", want_win=False), _conditional_mean("v2_mae", want_win=True)
+
+
+def _load_breakout_acc_events_for_backfill():
+    sys.path.insert(0, os.path.join(ROOT, "server", "research_scripts", "phase7", "phase7_21"))
+    from nxs_breakoutacc_dataset_loader import load_opened_events, net_pnl  # noqa: E402
+    events = load_opened_events()
+    return [{"event_id": e["event_id"], "entry_time": e["entry_fill_time"], "net_pnl": net_pnl(e),
+            "entry_price": e["entry_fill_price"], "exit_price": e["exit_fill_price"],
+            "entry_tp": e["entry_tp"], "direction": e["direction"]} for e in events]
+
+
+def _load_order_block_events_for_backfill():
+    path = os.path.join(ROOT, "server", "research_scripts", "phase7", "phase7_22",
+                       "canonical_economic_dataset_v1.json")
+    with open(path, encoding="utf-8") as f:
+        payload = json.load(f)["payload"]
+    return [{"entry_time": e["entry_time"], "net_pnl": e["net_pnl"]} for e in payload["events"]]
 
 
 def generate_packet(*, strategy_identity, mechanism, pre_entry_context, regime, direction,
@@ -78,6 +187,14 @@ def _breakout_acc_packet():
     mvc = src.BREAKOUT_ACC["mvc"]()
     path_v2 = src.BREAKOUT_ACC["path_anatomy_v2"]()
 
+    backfill_events = _load_breakout_acc_events_for_backfill()
+    backfill_temporal = _compute_temporal_concentration(backfill_events)
+    backfill_exit_eff = _compute_exit_efficiency(backfill_events)
+    backfill_funnel_rates = _breakout_acc_funnel_rates(execn) if execn else NOT_AVAILABLE
+    backfill_favorable_before_loss, backfill_adverse_before_win = (
+        _breakout_acc_favorable_adverse(path_v2, backfill_events) if path_v2
+        else (NOT_AVAILABLE, NOT_AVAILABLE))
+
     return generate_packet(
         strategy_identity="BREAKOUT_ACC",
         mechanism="Accettazione oltre un range (breakout) con cooldown per-direzione, D1.",
@@ -92,12 +209,14 @@ def _breakout_acc_packet():
         mfe_mae={"mfe_v2": _get(path_v2, "aggregate_before_after", "mfe", "v2"),
                 "mae_v2": _get(path_v2, "aggregate_before_after", "mae", "v2")} if path_v2 else NOT_AVAILABLE,
         time_to_mfe_mae=_get(path_v2, "aggregate_before_after", "bars_to_mfe", "v2") if path_v2 else NOT_AVAILABLE,
-        favorable_before_loss=NOT_AVAILABLE, adverse_before_win=NOT_AVAILABLE,
-        execution_degradation=_get(execn, "signal_pct_favorable") if execn else NOT_AVAILABLE,
+        favorable_before_loss=backfill_favorable_before_loss,
+        adverse_before_win=backfill_adverse_before_win,
+        execution_degradation=backfill_funnel_rates,
         cost_sensitivity="sopravvive a COST_BASE/MODERATE/STRESS" if cost else NOT_AVAILABLE,
-        exit_efficiency=NOT_AVAILABLE, capital_efficiency=_get(mvc, "MINIMUM_VIABLE_CAPITAL_EUR"),
+        exit_efficiency=_narrative_exit_efficiency(backfill_exit_eff),
+        capital_efficiency=_get(mvc, "MINIMUM_VIABLE_CAPITAL_EUR"),
         concentration=_get(decision, "supporting_evidence_summary", "top_5_trades_pct_of_total_net"),
-        temporal_concentration=NOT_AVAILABLE,
+        temporal_concentration=_narrative_temporal_concentration(backfill_temporal),
         oos_behavior={"n_trades": _get(oos, "n_closed_trades_breakout_acc") or 1,
                      "decision": _get(oos, "decision")} if oos else NOT_AVAILABLE,
         failure_modes=["OUTLIER_DEPENDENT", "DIRECTION_DEPENDENT", "OOS_DEGRADATION"],
@@ -107,7 +226,11 @@ def _breakout_acc_packet():
                              "H2_BREAKOUT_ACC_BUY_MORE_ROBUST_THAN_SELL"],
         confidence="MODERATA - n=47, non blind per H2",
         fidelity="EVENT_LEVEL - dataset per-evento con funnel granulare (Phase 7.9K)",
-        provenance="phase7_21/*, phase7_9k/* (vedi nxs_backfill_sources.py)",
+        provenance="phase7_21/*, phase7_9k/* (vedi nxs_backfill_sources.py) + auto-backfill "
+                  "NEXUS TASK #0002/#0003 (temporal_concentration, exit_efficiency, "
+                  "execution_degradation, favorable_before_loss, adverse_before_win - vedi "
+                  "server/orchestrator_v1/nexus_task_0002_result_v1.json per provenance "
+                  "dettagliata)",
     )
 
 
@@ -118,6 +241,13 @@ def _order_block_packet():
     oos = src.ORDER_BLOCK["oos_forward"]()
     execn = src.ORDER_BLOCK["execution_realism"]()
     mvc = src.ORDER_BLOCK["mvc"]()
+
+    backfill_events = _load_order_block_events_for_backfill()
+    backfill_temporal = _compute_temporal_concentration(backfill_events)
+    # exit_efficiency RESTA deliberatamente NOT_AVAILABLE - escalation genuina a TIER3_CLAUDE
+    # (NEXUS TASK #0002): il worker locale non e' riuscito, dopo un retry delimitato, a
+    # produrre una narrativa affidabile per questo campo specifico. Vedi
+    # server/orchestrator_v1/nexus_task_0002_result_v1.json, escalation_packets.
 
     return generate_packet(
         strategy_identity="ORDER_BLOCK",
@@ -132,7 +262,7 @@ def _order_block_packet():
         cost_sensitivity="sopravvive a COST_BASE/MODERATE/STRESS",
         exit_efficiency=NOT_AVAILABLE, capital_efficiency=_get(mvc, "MINIMUM_VIABLE_CAPITAL_EUR"),
         concentration=_get(decision, "supporting_evidence_summary", "top_5_trades_pct_of_total_net"),
-        temporal_concentration=NOT_AVAILABLE,
+        temporal_concentration=_narrative_temporal_concentration(backfill_temporal),
         oos_behavior={"n_trades": 0, "decision": _get(oos, "decision")} if oos else NOT_AVAILABLE,
         failure_modes=["OUTLIER_DEPENDENT", "LOW_SAMPLE", "OOS_DEGRADATION"],
         observations=["campione minimo (n=13)", "concentrazione estrema (196.8% top-5)",
@@ -140,7 +270,10 @@ def _order_block_packet():
                      + _buy_dominance_observations("ORDER_BLOCK"),
         candidate_hypotheses=["H_ORDER_BLOCK_EDGE_EXISTS"],
         confidence="BASSA - n=13", fidelity="EVENT_LEVEL ma funnel solo aggregato (Phase 7.22)",
-        provenance="phase7_22/* (vedi nxs_backfill_sources.py)",
+        provenance="phase7_22/* (vedi nxs_backfill_sources.py) + auto-backfill NEXUS TASK "
+                  "#0002/#0003 (temporal_concentration - exit_efficiency resta NOT_AVAILABLE, "
+                  "escalation genuina a TIER3_CLAUDE, vedi "
+                  "server/orchestrator_v1/nexus_task_0002_result_v1.json)",
     )
 
 

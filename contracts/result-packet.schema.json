@@ -48,7 +48,7 @@
       "properties": {
         "needed": { "type": "boolean" },
         "reason": { "type": ["string", "null"] },
-        "target_tier": { "type": ["string", "null"], "enum": ["TIER0_DETERMINISTIC", "TIER1_LOCAL_CHEAP", "TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX", "SPECIALIST", null] }
+        "target_tier": { "type": ["string", "null"], "enum": ["TIER0_DETERMINISTIC", "TIER1_LOCAL_CHEAP", "TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX", "SPECIALIST", "MANUAL_REVIEW", "APPROVAL_REQUIRED", null] }
       }
     }
   }

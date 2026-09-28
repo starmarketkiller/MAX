@@ -302,6 +302,77 @@ def join_breakout_acc_path_anatomy_outcome_conditional_excursion(path_anatomy_ar
     return r
 
 
+def apply_approved_backfill(builder_script, learning_packet_path, expected_changed_fields,
+                           never_change_field, sensitive_fields, test_command, test_cwd,
+                           downstream_builder_scripts=None, downstream_artifact_paths=None):
+    """Rigenera un artifact canonico RIESEGUENDO il suo builder (mai un patch
+    manuale al JSON, altrimenti l'artifact non sarebbe piu' riproducibile
+    bit-per-bit) e verifica che SOLO i campi approvati siano cambiati.
+    `downstream_builder_scripts`: altri builder che LEGGONO l'artifact appena
+    rigenerato (es. la sintesi cross-strategy) - rieseguiti IN CASCATA cosi'
+    anche i LORO output restano coerenti/deterministici (scoperto durante
+    NEXUS TASK #0003: cambiare un artifact a monte senza rigenerare i
+    consumer a valle rompe la loro stessa verifica di determinismo).
+    Usato da NEXUS TASK #0003 (Approve Safety Net Backfill)."""
+    r = _base_result()
+    full_packet_path = os.path.join(ROOT, learning_packet_path)
+    with open(full_packet_path, encoding="utf-8") as f:
+        before = json.load(f)["payload"]
+    r["files_read"].append(learning_packet_path)
+
+    rebuild = rebuild_registry(builder_script)
+    r["tools_or_commands"] += rebuild["tools_or_commands"]
+    if not rebuild["success"]:
+        r["errors"] += rebuild["errors"]
+        return r
+
+    for downstream_script in (downstream_builder_scripts or []):
+        downstream_rebuild = rebuild_registry(downstream_script)
+        r["tools_or_commands"] += downstream_rebuild["tools_or_commands"]
+        if not downstream_rebuild["success"]:
+            r["errors"] += [f"downstream rebuild fallito ({downstream_script}): {e}"
+                           for e in downstream_rebuild["errors"]]
+            return r
+
+    with open(full_packet_path, encoding="utf-8") as f:
+        after = json.load(f)["payload"]
+
+    changed = set()
+    for strat in before["packets"]:
+        for field in before["packets"][strat]:
+            if field == "provenance":
+                continue
+            if before["packets"][strat][field] != after["packets"][strat][field]:
+                changed.add((strat, field))
+
+    expected = {tuple(pair) for pair in expected_changed_fields}
+    if changed != expected:
+        r["errors"].append(f"campi cambiati {sorted(changed)} non corrisponde all'atteso "
+                          f"{sorted(expected)}")
+    never_strat, never_field = never_change_field
+    if after["packets"][never_strat][never_field] != before["packets"][never_strat][never_field]:
+        r["errors"].append(f"{never_strat}.{never_field} e' stato modificato - VIETATO")
+    for strat in before["packets"]:
+        for field in sensitive_fields:
+            if before["packets"][strat].get(field) != after["packets"][strat].get(field):
+                r["errors"].append(f"campo sensibile '{field}' modificato per {strat}")
+
+    proc = subprocess.run(test_command, capture_output=True, text=True,
+                         cwd=os.path.join(ROOT, test_cwd), timeout=180)
+    r["tools_or_commands"].append(" ".join(test_command))
+    if proc.returncode != 0:
+        r["errors"].append(f"test post-rigenerazione non passano: {proc.stdout[-1500:]}")
+
+    if r["errors"]:
+        return r
+
+    r["files_changed"] = [learning_packet_path] + list(downstream_artifact_paths or [])
+    r["output"] = {"diff": [{"strategy": s, "field": f, "before": before["packets"][s][f],
+                            "after": after["packets"][s][f]} for s, f in sorted(changed)]}
+    r["success"] = True
+    return r
+
+
 ACTIONS = {
     "run_pytest": run_pytest, "run_verifier": run_verifier,
     "validate_json_schema": validate_json_schema, "rebuild_registry": rebuild_registry,
@@ -311,6 +382,7 @@ ACTIONS = {
     "compute_percentage_rates": compute_percentage_rates,
     "join_breakout_acc_path_anatomy_outcome_conditional_excursion":
         join_breakout_acc_path_anatomy_outcome_conditional_excursion,
+    "apply_approved_backfill": apply_approved_backfill,
 }
 
 

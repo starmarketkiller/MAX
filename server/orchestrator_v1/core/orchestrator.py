@@ -125,6 +125,33 @@ class Orchestrator:
             self.ledger.append("FILE_CHANGED", task_id, {"files": result["files_changed"]})
 
         if result["success"]:
+            # Approval boundary (§14): un'azione deterministica che scrive un file REALE
+            # del repository deve rispettare la stessa regola di un'azione locale - vale
+            # per QUALUNQUE tier, non solo per Ministral. Gap trovato durante NEXUS TASK
+            # #0003 (la prima azione TIER0 di questo Core a scrivere davvero un file reale)
+            # e corretto qui, nel Core, non nel singolo task.
+            touches_real_repo = bool(result["files_changed"])
+            approval = record["manifest"]["approval_required"]
+            if touches_real_repo and approval != "AUTO":
+                self.ledger.append("APPROVAL_REQUIRED", task_id,
+                                  {"reason": "azione deterministica ha modificato/proposto "
+                                            f"modifiche a file reali - approval_required="
+                                            f"{approval}, non AUTO", "files": result["files_changed"]})
+                packet = build_result_packet(
+                    task_id=task_id, executor="deterministic_worker", start_time=start,
+                    end_time=now_iso(), files_read=result["files_read"], files_changed=[],
+                    tools_or_commands=result["tools_or_commands"],
+                    artifacts_created=result["files_changed"], tests_ran=True, tests_passed=1,
+                    tests_failed=0, verifier_ran=True, verifier_passed=True, verifier_errors=[],
+                    commit=None, push_status="NOT_APPLICABLE",
+                    decision="PATCH_READY_AWAITING_APPROVAL", confidence="MEDIUM",
+                    limitations=["modifica verificata ma non applicata - in attesa di "
+                               "approvazione"], unresolved_issues=[],
+                    suggested_next_tasks=["approvare la modifica proposta"],
+                    escalation_needed=False)
+                self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet)
+                return self.queue.get(task_id)
+
             self.ledger.append("TASK_COMPLETED", task_id, {"action": action})
             packet = build_result_packet(
                 task_id=task_id, executor="deterministic_worker", start_time=start,
