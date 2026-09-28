@@ -20,6 +20,7 @@ import CalendarPage from "@/pages/CalendarPage";
 import LocalBridgePage from "@/pages/LocalBridgePage";
 import KnowledgePage from "@/pages/KnowledgePage";
 import ResearchPage from "@/pages/ResearchPage";
+import ResearchControlPlanePage from "@/pages/ResearchControlPlanePage";
 import SequenceExplorerPage from "@/pages/SequenceExplorerPage";
 import CompanyPage from "@/pages/CompanyPage";
 import SystemStatusPage from "@/pages/SystemStatusPage";
@@ -751,6 +752,7 @@ export default function Dashboard({ section = "home" }) {
           {section === "risk-calc" && <RiskCalcPage />}
           {section === "backtest" && <BacktestPage />}
           {section === "research" && <ResearchPage />}
+          {section === "research-control-plane" && <ResearchControlPlanePage />}
           {section === "research-sequences" && <SequenceExplorerPage />}
           {section === "company" && <CompanyPage />}
           {section === "market" && <MarketPage />}

@@ -56,6 +56,7 @@ import sequence_research_read_model
 import company_control_plane
 import strategy_pipeline_read_model
 import strategy_census_read_model
+import research_control_plane
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -3285,6 +3286,75 @@ def company_strategy_census_detail(strategy_id: str, user: str = Depends(require
     if item is None:
         raise HTTPException(status_code=404, detail="Census identity not found")
     return item
+
+
+# ================= RESEARCH CONTROL PLANE V2 (READ-ONLY) =============== #
+@app.get("/api/research/control-plane/overview")
+def research_control_plane_overview(user: str = Depends(require_user)):
+    model = research_control_plane.CONTROL_PLANE.build()
+    return {**model["overview"], "strategies": model["strategies"], "warnings": model["warnings"]}
+
+
+@app.get("/api/research/control-plane/experiments")
+def research_control_plane_experiments(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("experiments")
+
+
+@app.get("/api/research/control-plane/hypotheses")
+def research_control_plane_hypotheses(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("hypotheses")
+
+
+@app.get("/api/research/control-plane/data-exposure")
+def research_control_plane_data_exposure(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("data_exposure")
+
+
+@app.get("/api/research/control-plane/learning-packets")
+def research_control_plane_learning(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("learning_packets")
+
+
+@app.get("/api/research/control-plane/failure-map")
+def research_control_plane_failures(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("failure_map")
+
+
+@app.get("/api/research/control-plane/priority-queue")
+def research_control_plane_priorities(user: str = Depends(require_user)):
+    return research_control_plane.CONTROL_PLANE.catalog("priority_queue")
+
+
+@app.get("/api/research/control-plane/runs")
+def research_control_plane_runs(user: str = Depends(require_user)):
+    model = research_control_plane.CONTROL_PLANE.build()
+    return {"items": model["runs"], "count": len(model["runs"]), "warnings": model["warnings"]}
+
+
+@app.get("/api/research/control-plane/visual-audits")
+def research_control_plane_visual_audits(user: str = Depends(require_user)):
+    model = research_control_plane.CONTROL_PLANE.build()
+    return {"items": model["visual_audits"], "count": len(model["visual_audits"]), "warnings": model["warnings"]}
+
+
+@app.get("/api/research/control-plane/visual-audits/{artifact_id}/svg")
+def research_control_plane_visual_svg(artifact_id: str, user: str = Depends(require_user)):
+    path = research_control_plane.CONTROL_PLANE.visual_path(artifact_id)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Visual audit artifact not found")
+    return FileResponse(path, media_type="image/svg+xml", headers={"Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'"})
+
+
+@app.get("/api/research/control-plane/forward-validation")
+def research_control_plane_forward(user: str = Depends(require_user)):
+    model = research_control_plane.CONTROL_PLANE.build()
+    return {"items": model["forward_validation"], "count": len(model["forward_validation"]), "warnings": model["warnings"]}
+
+
+@app.get("/api/research/control-plane/mvc")
+def research_control_plane_mvc(user: str = Depends(require_user)):
+    model = research_control_plane.CONTROL_PLANE.build()
+    return {"items": model["mvc"], "count": len(model["mvc"]), "warnings": model["warnings"]}
 
 
 # ================= CANONICAL MARKET READ MODEL V1 (READ-ONLY) =========== #

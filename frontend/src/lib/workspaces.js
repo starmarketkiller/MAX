@@ -18,8 +18,8 @@ export const PRIMARY_WORKSPACES = Object.freeze([
   {
     id: "research", label: "Research", to: "/research", icon: FlaskConical,
     summary: "Hypotheses, experiments, evidence and validation tools.",
-    routes: ["/research", "/research/sequences", "/backtest", "/whatif", "/strategy-analytics"],
-    tabs: [{ label: "Hypotheses", to: "/research" }, { label: "Sequence Explorer", to: "/research/sequences" }, { label: "Backtests", to: "/backtest" }, { label: "What-if", to: "/whatif" }, { label: "Diagnostics", to: "/strategy-analytics" }],
+    routes: ["/research", "/research/control-plane", "/research/sequences", "/backtest", "/whatif", "/strategy-analytics"],
+    tabs: [{ label: "Command Center", to: "/research/control-plane" }, { label: "Hypotheses", to: "/research" }, { label: "Sequence Explorer", to: "/research/sequences" }, { label: "Backtests", to: "/backtest" }, { label: "What-if", to: "/whatif" }, { label: "Diagnostics", to: "/strategy-analytics" }],
   },
   {
     id: "execution", label: "Execution", to: "/execution", icon: Radio,
@@ -56,6 +56,6 @@ export function workspaceForPath(pathname) {
 }
 
 export function workspaceForSection(section) {
-  const path = section === "home" ? "/" : section === "research-sequences" ? "/research/sequences" : `/${section}`;
+  const path = section === "home" ? "/" : section === "research-sequences" ? "/research/sequences" : section === "research-control-plane" ? "/research/control-plane" : `/${section}`;
   return workspaceForPath(path);
 }
