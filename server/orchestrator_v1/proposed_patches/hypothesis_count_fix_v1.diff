@@ -1,0 +1,7 @@
+--- a/server/tests/test_research_control_plane_v2.py
++++ b/server/tests/test_research_control_plane_v2.py (PROPOSTA - non applicata)
+@@ linea 9-10 @@
+-assert model["overview"]["experiment_count"] == 8
+-assert model["overview"]["hypothesis_count"] == 8
++assert model["overview"]["experiment_count"] >= 9
++assert model["overview"]["hypothesis_count"] >= 9

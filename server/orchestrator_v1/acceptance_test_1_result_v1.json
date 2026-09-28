@@ -1,0 +1,390 @@
+{
+  "generated_at": "2026-09-28T21:18:44.000666+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_acceptance_test_1.py",
+  "canonical_sha256": "660c3a2c23ce694c5a9d5f7e23b7e2750d25018726cb6550297a500975518cc0",
+  "payload": {
+    "facts": {
+      "line9_current": "    assert model[\"overview\"][\"experiment_count\"] == 8",
+      "line10_current": "    assert model[\"overview\"][\"hypothesis_count\"] == 8",
+      "real_experiment_count": 9,
+      "real_hypothesis_count": 9,
+      "test_run_stdout": "ages\\fastapi\\applications.py:4495\n  C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fastapi\\applications.py:4495: DeprecationWarning: \n          on_event is deprecated, use lifespan event handlers instead.\n  \n          Read more about it in the\n          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).\n          \n    return self.router.on_event(event_type)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mFAILED\u001b[0m tests/test_research_control_plane_v2.py::\u001b[1mtest_safety_net_registries_are_projected_without_reinterpretation\u001b[0m - assert 9 == 8\n\u001b[31m\u001b[31m\u001b[1m1 failed\u001b[0m, \u001b[33m2 warnings\u001b[0m\u001b[31m in 1.20s\u001b[0m\u001b[0m\n"
+    },
+    "final_task_record": {
+      "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+      "manifest": {
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+        "objective": "Correggere l'asserzione hardcoded in test_research_control_plane_v2.py che fallisce perche' il registry e' legittimamente cresciuto da 8 a 9 (sia experiments che hypotheses).",
+        "task_type": "CODE",
+        "priority": "NORMAL",
+        "risk_level": "A1",
+        "scientific_risk": "NONE",
+        "code_risk": "LOW",
+        "financial_risk": "NONE",
+        "required_capabilities": [
+          "small_python_functions"
+        ],
+        "deterministic_tools_available": false,
+        "repo_scope": "server/tests/",
+        "files_allowed": [
+          "server/tests/test_research_control_plane_v2.py"
+        ],
+        "files_forbidden": [
+          "MQL5/*",
+          "Product-Platform/*",
+          "contracts/*"
+        ],
+        "dependencies": [],
+        "blockers": [],
+        "expected_artifacts": [
+          "server/orchestrator_v1/proposed_patches/hypothesis_count_fix_v1.diff"
+        ],
+        "success_criteria": [
+          "il test sandboxato con la patch proposta passa"
+        ],
+        "verifier": "server/orchestrator_v1/verify_acceptance_test_1.py",
+        "estimated_complexity": "TRIVIAL",
+        "estimated_runtime": "2m",
+        "premium_allowed": false,
+        "preferred_executor": "TIER2_LOCAL_STRONG",
+        "fallback_executors": [
+          "TIER3_CLAUDE"
+        ],
+        "approval_required": "REVIEW_REQUIRED",
+        "created_by": "orchestrator_v1_acceptance_test_1",
+        "created_at": "2026-09-28T00:00:00Z",
+        "tenant_id": "tenant-1",
+        "account_scope_id": null
+      },
+      "state": "WAITING_APPROVAL",
+      "priority": "NORMAL",
+      "dependencies": [],
+      "action": "fix_hypothesis_count_test",
+      "action_params": {},
+      "executor": "LOCAL_STRONG_MINISTRAL3B",
+      "retry_count": 0,
+      "created_at": "2026-09-28T21:18:35.430741+00:00",
+      "updated_at": "2026-09-28T21:18:43.998135+00:00",
+      "started_at": "2026-09-28T21:18:35.434505+00:00",
+      "completed_at": null,
+      "result_packet": {
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "executor": "LOCAL_STRONG_MINISTRAL3B",
+        "start_time": "2026-09-28T21:18:35.436505+00:00",
+        "end_time": "2026-09-28T21:18:43.998135+00:00",
+        "files_read": [],
+        "files_changed": [],
+        "tools_or_commands": [
+          "ollama:ministral-3:3b"
+        ],
+        "artifacts_created": [
+          "server\\orchestrator_v1\\proposed_patches\\hypothesis_count_fix_v1.diff"
+        ],
+        "tests": {
+          "ran": true,
+          "passed": 1,
+          "failed": 0
+        },
+        "verifier": {
+          "ran": true,
+          "passed": true,
+          "errors": []
+        },
+        "commit": null,
+        "push_status": "NOT_APPLICABLE",
+        "decision": "PATCH_READY_AWAITING_APPROVAL",
+        "confidence": "MEDIUM",
+        "limitations": [
+          "patch verificata solo in sandbox, non applicata al file reale - in attesa di approvazione"
+        ],
+        "unresolved_issues": [],
+        "suggested_next_tasks": [
+          "approvare/applicare la patch proposta"
+        ],
+        "escalation_needed": {
+          "needed": false,
+          "reason": null,
+          "target_tier": null
+        }
+      },
+      "provenance": {
+        "source": "orchestrator_v1_core",
+        "created_by": "orchestrator_v1_acceptance_test_1"
+      },
+      "escalation": null
+    },
+    "ledger_events": [
+      {
+        "event_id": "evt_4afc84df133248bd",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.338629+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_243c52ac92834da1",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.340639+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_59beed62b7cf4989",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:16:42.343161+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_4fd99e70cfcb46d2",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:02.454562+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 20.08,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_83fdf042e3da495d",
+        "event_type": "TEST_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:03.564667+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.32s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_c7c9f8d61aa84eff",
+        "event_type": "RETRY_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:03.566176+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "attempt": 2,
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_55d0f244cc3d467e",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:09.912941+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.31,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_8082d1863f684813",
+        "event_type": "TEST_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.071096+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.31s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_dd1fec02f2ee4fde",
+        "event_type": "TASK_FAILED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.071096+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7bfbcd02003743b7",
+        "event_type": "ESCALATION_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:11.072098+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "target": "TIER3_CLAUDE",
+          "classification": "LOCAL_MODEL_CAPABILITY",
+          "errors": [
+            "il test sandboxato con la patch proposta NON passa:  mode, flags,\u001b[90m\u001b[39;49;00m\n\u001b[1m\u001b[31mE     File \"C:\\Users\\User\\ClaudeWork\\MAX\\server\\tests\\_orchestrator_sandbox_hypothesis_count_patch_v1.py\", line 11\u001b[0m\n\u001b[1m\u001b[31mE       assert model[\"overview\"][\"freshness\"] == \"CURRENT\"\u001b[0m\n\u001b[1m\u001b[31mE   IndentationError: unexpected indent\u001b[0m\u001b[0m\n\u001b[36m\u001b[1m=========================== short test summary info ===========================\u001b[0m\n\u001b[31mERROR\u001b[0m tests/_orchestrator_sandbox_hypothesis_count_patch_v1.py\n\u001b[31m\u001b[31m\u001b[1m1 error\u001b[0m\u001b[31m in 0.31s\u001b[0m\u001b[0m\n"
+          ],
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_372be96bc5f74ac5",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.023825+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_42090a716c6e4008",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.025336+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_3977456d201a4759",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:42.026935+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ad90a511ba954417",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:48.658639+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.6,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7b301807cb5a4422",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:50.534619+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_865c401b7e0845a7",
+        "event_type": "APPROVAL_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:17:50.534619+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "il worker locale ha prodotto/verificato una patch per un file reale del repository - approval_required=REVIEW_REQUIRED, non AUTO",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_d262c5ffb7be4250",
+        "event_type": "TASK_CREATED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.431728+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "title": "Fix test fragile hypothesis_count/experiment_count == 8",
+          "task_type": "CODE",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_aaba7572ea064293",
+        "event_type": "TASK_QUEUED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.433489+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_3c385de9141f4ddf",
+        "event_type": "TASK_STARTED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:35.435506+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tier": "TIER2_LOCAL_STRONG",
+          "executor": "LOCAL_STRONG_MINISTRAL3B",
+          "reason": "'LOCAL_STRONG_MINISTRAL3B' supera il capability match (bake-off) per questo task_type/required_capabilities/risk_level.",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_ab5e58f023ec485f",
+        "event_type": "TOOL_USED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:42.124358+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "tool": "ollama_local_model",
+          "model": "ministral-3:3b",
+          "wall_seconds": 6.62,
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_7fb00f574b484434",
+        "event_type": "TEST_PASSED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:43.997114+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "handler": "fix_hypothesis_count_test",
+          "actor": "orchestrator_v1_core"
+        }
+      },
+      {
+        "event_id": "evt_1e2044a407e84654",
+        "event_type": "APPROVAL_REQUIRED",
+        "task_id": "TASK_ACCEPT1_HYPOTHESIS_COUNT",
+        "timestamp": "2026-09-28T21:18:43.998135+00:00",
+        "tenant_id": "tenant-1",
+        "payload": {
+          "reason": "il worker locale ha prodotto/verificato una patch per un file reale del repository - approval_required=REVIEW_REQUIRED, non AUTO",
+          "actor": "orchestrator_v1_core"
+        }
+      }
+    ]
+  }
+}
