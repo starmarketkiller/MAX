@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-09-28T07:15:55.966135+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_execution_realism.py",
+  "canonical_sha256": "2b280a893a0fafedbf57d127adbef7a6ee46605ef0451b5ea7141d574b138f12",
+  "payload": {
+    "source": "funnel_accounting_v1.json (Phase 7.24) - riconciliato aritmeticamente, zero residuo UNKNOWN/DATA_LOSS. Nessun nuovo run in questa fase per l'execution realism (dati gia' sufficienti e riconciliati).",
+    "granularity": "AGGREGATO (conteggi per stadio del funnel) per signal/blocked/reject - PER-EVENTO per opened/closed/still-open (dataset canonico completo).",
+    "three_level_separation": {
+      "signal_level_opportunity": {
+        "definition": "Ogni barra D1 chiusa in cui detector di sweep + delivery-candle filter + direzione producono un segnale valido (PRIMA di qualunque gate applicativo/single-position-at-a-time).",
+        "count": 3672
+      },
+      "executable_trade": {
+        "definition": "Segnale che supera i gate applicativi (nessuna posizione LIQ_SWEEP gia' aperta, TF gate) ed e' effettivamente inviato come tentativo d'ordine.",
+        "count": 49
+      },
+      "realized_trade": {
+        "definition": "Posizione realmente aperta E chiusa entro la fine della finestra testata - fonte del dataset economico.",
+        "count": 42
+      }
+    },
+    "funnel_all_stages_preserved_none_dropped": {
+      "generated": 3672,
+      "blocked": 3623,
+      "open_attempt": 49,
+      "broker_reject": 6,
+      "opened": 43,
+      "closed_within_window": 42,
+      "still_open_at_period_end": 1
+    },
+    "funnel_rates": {
+      "pct_generated_that_get_blocked": 98.66557734204792,
+      "pct_generated_that_get_rejected": 0.16339869281045752,
+      "pct_generated_that_open": 1.171023965141612,
+      "pct_opened_that_close_within_window": 97.67441860465115,
+      "pct_open_attempt_rejected_by_broker": 12.244897959183673
+    },
+    "blocked_and_rejected_not_dropped": true,
+    "known_limitation": "Impossibile in questa fase distinguere se i segnali BLOCKED (quasi tutti per gate OPEN_POSITION - una posizione LIQ_SWEEP era gia' aperta) avessero, in media, una qualita' di segnale migliore o peggiore di quelli aperti - nessun proxy di movimento forward per-evento disponibile per i segnali bloccati (stesso gap gia' dichiarato per ORDER_BLOCK in Phase 7.22). Per questo motivo il visual audit di questa fase NON include un campione reale 'blocked/near-miss' con dati price-action - vedi visual_audit_sample_v1.json.",
+    "execution_does_not_collapse_to_zero": true
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-09-28T07:41:24.080035+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_comparison_with_prior_strategies.py",
+  "canonical_sha256": "a0e89c28c59a9890b6a5d105938ede43e49773bc06706b76c8d51a2c00444a28",
+  "payload": {
+    "comparison_table": {
+      "BREAKOUT_ACC": {
+        "phase": "7.21",
+        "sample_size": 47,
+        "net_expectancy_per_trade": 13.662340425531914,
+        "profit_factor": 1.623820857822898,
+        "concentration_top5_pct": 133.66452276018873,
+        "ci95_all_excludes_zero": false,
+        "oos_status": "INSUFFICIENT_OOS_SAMPLE",
+        "minimum_viable_capital_eur": 1000,
+        "trade_frequency_per_year": 6.7045613578298155,
+        "decision": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "evidence_quality_note": "Dataset per-evento (funnel granulare), OOS 1 trade (perdente)."
+      },
+      "ORDER_BLOCK": {
+        "phase": "7.22",
+        "sample_size": 13,
+        "net_expectancy_per_trade": 38.261538461538464,
+        "profit_factor": 1.8601072107902474,
+        "concentration_top5_pct": 196.76316847607558,
+        "ci95_all_excludes_zero": false,
+        "oos_status": "INSUFFICIENT_OOS_SAMPLE",
+        "minimum_viable_capital_eur": 2500,
+        "trade_frequency_per_year": 5.515208711433757,
+        "decision": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "evidence_quality_note": "Funnel aggregato (non per-evento), OOS 0 trade (INSUFFICIENT_OOS_SAMPLE), residuo storico 1 trade non risolto (Phase 7.22)."
+      },
+      "LIQ_SWEEP": {
+        "phase": "7.25",
+        "sample_size": 42,
+        "net_expectancy_per_trade": 25.626190476190477,
+        "profit_factor": 1.4841873228665257,
+        "concentration_top5_pct": 127.37155068289512,
+        "ci95_all_excludes_zero": false,
+        "oos_status": "SAMPLE_SUFFICIENT_FOR_A_FIRST_READ",
+        "minimum_viable_capital_eur": 2500,
+        "trade_frequency_per_year": 15.680071549493723,
+        "decision": "EDGE_CANDIDATE_REQUIRES_FORWARD_VALIDATION",
+        "evidence_quality_note": "Funnel granulare aggregato PERFETTAMENTE riconciliato (Phase 7.24, zero residuo UNKNOWN/DATA_LOSS) + dataset per-evento completo (43 eventi, provenance/hash completi via harness di isolamento) - qualita' di provenance superiore a BREAKOUT_ACC/ORDER_BLOCK (primo dataset costruito con l'harness dedicato)."
+      }
+    },
+    "same_pattern_flags": {
+      "all_three_ci95_includes_zero_on_ALL": true,
+      "all_three_high_concentration_ge_100pct_top5": true,
+      "all_three_oos_insufficient_or_negative": true
+    },
+    "descriptive_not_ranking": "Questo confronto NON produce un ranking assoluto fra le tre strategie - serve a stabilire se emerge una regolarita' TRASVERSALE nel corpus (profitto concentrato + CI che include lo zero + OOS insufficiente/non supportivo) o se una strategia rompe il pattern.",
+    "narrative_conclusion": "LIQ_SWEEP AGGIUNGE INFORMAZIONE, non si limita a ripetere il pattern: (1) campione storico piu' ampio (42 vs 47/13) con provenance/riconciliazione MOLTO superiore (harness dedicato, funnel riconciliato al 100%, zero residui irrisolti); (2) concentrazione meno estrema di ORDER_BLOCK (sopravvive alla rimozione dei primi 3, non dei primi 5 - ORDER_BLOCK non sopravvive nemmeno ai primi 3); (3) MA e' l'UNICA delle tre ad avere un campione OOS forward davvero sufficiente per una prima lettura (n=6, sopra la soglia di 5) - e quella lettura e' NETTAMENTE NEGATIVA (-$539.30 totali, WR 17%, tutti gli altri 3 vincitori/perdenti coerenti con un campione piccolo ma reale). Questo NON prova che l'edge storico sia falso (n=6 resta piccolo), ma e' la prima volta nel corpus che un campione OOS abbastanza grande da essere informativo va CONTRO l'edge storico, non semplicemente 'insufficiente'. Combinato con la scoperta che il 99% del P&L storico proviene da un solo anno (2025 su 4 anni, vedi temporal_robustness_v1.json), il quadro complessivo e' PIU' CAUTO per LIQ_SWEEP che per le altre due, nonostante il campione storico piu' ampio e pulito."
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-28T07:23:00.042379+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_minimum_viable_capital.py",
+  "canonical_sha256": "b5089473e5e71a196eec6ba44a678bc60f7ce77f4cb8c5e27731a8175cb1afd3",
+  "payload": {
+    "assumptions_declared": {
+      "contract_size_oz": 100,
+      "min_lot": 0.01,
+      "lot_step": 0.01,
+      "leverage": "1:500",
+      "avg_entry_price_gold_in_sample": 3267.8233333333333,
+      "avg_risk_price_units_sl_distance": 93.46714285714287,
+      "max_risk_price_units_sl_distance_seen": 361.5700000000006,
+      "min_risk_price_units_sl_distance_seen": 26.779999999999973,
+      "note_price_range_wide": "Il campione copre GOLD da ~1826 a ~4001 (2023-2026) - la distanza SL in price units varia molto in valore assoluto nel tempo (ATR scala col prezzo) - avg_price/avg_risk sono medie sull'intero campione, non rappresentative di un singolo regime di prezzo."
+    },
+    "capital_table": [
+      {
+        "capital_eur": 300,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.535646666666667,
+        "margin_usage_pct_of_capital": 2.178548888888889,
+        "free_margin_reserve_pct": 97.82145111111112,
+        "risk_usd_at_min_lot_avg_sl": 93.46714285714287,
+        "risk_pct_of_capital_avg_sl": 31.155714285714293,
+        "risk_usd_at_min_lot_worst_sl_seen": 361.5700000000006,
+        "risk_pct_of_capital_worst_sl_seen": 120.52333333333354,
+        "max_concurrent_positions_by_margin_only": 45,
+        "risk_profile_materially_altered_by_min_lot_floor": true,
+        "dd_monetario_atteso_worst_case_seen": 361.5700000000006
+      },
+      {
+        "capital_eur": 500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.535646666666667,
+        "margin_usage_pct_of_capital": 1.3071293333333334,
+        "free_margin_reserve_pct": 98.69287066666666,
+        "risk_usd_at_min_lot_avg_sl": 93.46714285714287,
+        "risk_pct_of_capital_avg_sl": 18.693428571428576,
+        "risk_usd_at_min_lot_worst_sl_seen": 361.5700000000006,
+        "risk_pct_of_capital_worst_sl_seen": 72.31400000000012,
+        "max_concurrent_positions_by_margin_only": 76,
+        "risk_profile_materially_altered_by_min_lot_floor": true,
+        "dd_monetario_atteso_worst_case_seen": 361.5700000000006
+      },
+      {
+        "capital_eur": 1000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.535646666666667,
+        "margin_usage_pct_of_capital": 0.6535646666666667,
+        "free_margin_reserve_pct": 99.34643533333333,
+        "risk_usd_at_min_lot_avg_sl": 93.46714285714287,
+        "risk_pct_of_capital_avg_sl": 9.346714285714288,
+        "risk_usd_at_min_lot_worst_sl_seen": 361.5700000000006,
+        "risk_pct_of_capital_worst_sl_seen": 36.15700000000006,
+        "max_concurrent_positions_by_margin_only": 153,
+        "risk_profile_materially_altered_by_min_lot_floor": true,
+        "dd_monetario_atteso_worst_case_seen": 361.5700000000006
+      },
+      {
+        "capital_eur": 2500,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.535646666666667,
+        "margin_usage_pct_of_capital": 0.2614258666666667,
+        "free_margin_reserve_pct": 99.73857413333333,
+        "risk_usd_at_min_lot_avg_sl": 93.46714285714287,
+        "risk_pct_of_capital_avg_sl": 3.7386857142857153,
+        "risk_usd_at_min_lot_worst_sl_seen": 361.5700000000006,
+        "risk_pct_of_capital_worst_sl_seen": 14.462800000000026,
+        "max_concurrent_positions_by_margin_only": 382,
+        "risk_profile_materially_altered_by_min_lot_floor": false,
+        "dd_monetario_atteso_worst_case_seen": 361.5700000000006
+      },
+      {
+        "capital_eur": 10000,
+        "technically_executable_at_min_lot": true,
+        "margin_usage_usd_at_min_lot": 6.535646666666667,
+        "margin_usage_pct_of_capital": 0.06535646666666667,
+        "free_margin_reserve_pct": 99.93464353333333,
+        "risk_usd_at_min_lot_avg_sl": 93.46714285714287,
+        "risk_pct_of_capital_avg_sl": 0.9346714285714288,
+        "risk_usd_at_min_lot_worst_sl_seen": 361.5700000000006,
+        "risk_pct_of_capital_worst_sl_seen": 3.6157000000000066,
+        "max_concurrent_positions_by_margin_only": 1530,
+        "risk_profile_materially_altered_by_min_lot_floor": false,
+        "dd_monetario_atteso_worst_case_seen": 361.5700000000006
+      }
+    ],
+    "minimum_viable_capital_definition": "Capitale minimo (fra i livelli testati) sotto cui il rischio medio a lotto minimo (0.01) supera il 5.0% del capitale.",
+    "MINIMUM_VIABLE_CAPITAL_EUR": 2500,
+    "max_concurrent_exposure_note": "LIQ_SWEEP e' single-position-at-a-time per costruzione (gate OPEN_POSITION verificato in Phase 7.24 - 3569/3623 blocchi sono per questo motivo) - massimo 1 posizione concorrente per definizione, non un vincolo di margine.",
+    "no_optimization_no_sizing_proposed": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-09-28T07:40:11.556560+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_oos_forward_analysis.py",
+  "canonical_sha256": "4b191822f9d747f55995f24ad34c1f118b9b2f283c036008ef34aeef561ebd32",
+  "payload": {
+    "window": [
+      "2026.07.01",
+      "2026.09.27"
+    ],
+    "window_genuinely_untouched": true,
+    "run_id": "LIQ_SWEEP_2026.07.01_2026.09.27_df1e067b3b38ee3d_20260928T072223Z_1f7a854f",
+    "run_config": "harness di isolamento Phase 7.23 (selettore 7 isolato, stessa identita' canonica del run diagnostico, InpResearchMode=true, lotto fisso 0.01).",
+    "n_closed_trades_liq_sweep": 6,
+    "closed_trades_net_pnl": [
+      -154.5,
+      -130.2,
+      249.6,
+      -166.2,
+      -162.8,
+      -175.2
+    ],
+    "net_pnl_total": -539.3,
+    "net_pnl_per_trade": -89.88333333333333,
+    "win_rate": 0.16666666666666666,
+    "min_sample_threshold_declared_before_result": 5,
+    "decision": "SAMPLE_SUFFICIENT_FOR_A_FIRST_READ",
+    "decision_meaning": "Campione minimo ma non banale - direzione dell'effetto osservabile, magnitudo non ancora affidabile.",
+    "single_validation_run_only": true,
+    "looked_at_only_after_everything_else_frozen": true,
+    "reconciliation": {
+      "n_trade_closes_in_csv": 6,
+      "n_opened_per_certificate": 7,
+      "match": false,
+      "note": "None per un campo significa che il dato non era disponibile (run interrotto, certificato mancante/ambiguo, o CSV assente) - MAI trattato come 0 implicito."
+    }
+  }
+}

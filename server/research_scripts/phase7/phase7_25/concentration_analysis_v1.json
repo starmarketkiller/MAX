@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-09-28T07:14:02.785611+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_concentration_analysis.py",
+  "canonical_sha256": "12168f21a1ea5e3224b641b0bf935a14fc78352bf780996724d194e8cb5fe641",
+  "payload": {
+    "population": "42 eventi CLOSED (ALL, direzioni non separate - la concentrazione si valuta sulla serie che genera il P&L aggregato).",
+    "concentration": {
+      "top_1": {
+        "n_trades_included": 1,
+        "sum": 311.6,
+        "pct_of_total_net": 28.9510359565177
+      },
+      "top_3": {
+        "n_trades_included": 3,
+        "sum": 869.2,
+        "pct_of_total_net": 80.75815293133886
+      },
+      "top_5": {
+        "n_trades_included": 5,
+        "sum": 1370.9,
+        "pct_of_total_net": 127.37155068289512
+      },
+      "top_10pct": {
+        "n_trades_included": 4,
+        "sum": 1123.0,
+        "pct_of_total_net": 104.33893895753971
+      },
+      "without_top_n": {
+        "without_top_1": {
+          "net_total_remaining": 764.6999999999999,
+          "still_positive": true,
+          "edge_survives": true
+        },
+        "without_top_3": {
+          "net_total_remaining": 207.0999999999999,
+          "still_positive": true,
+          "edge_survives": true
+        },
+        "without_top_5": {
+          "net_total_remaining": -294.60000000000014,
+          "still_positive": false,
+          "edge_survives": false
+        }
+      },
+      "total_net": 1076.3,
+      "n_trades": 42,
+      "sorted_desc_all_values": [
+        311.6,
+        299.9,
+        257.7,
+        253.8,
+        247.9,
+        212.5,
+        178.8,
+        175.0,
+        162.2,
+        141.9,
+        119.3,
+        117.4,
+        102.6,
+        97.2,
+        84.7,
+        82.6,
+        78.7,
+        77.9,
+        73.4,
+        73.0,
+        64.2,
+        55.5,
+        31.4,
+        -25.6,
+        -33.0,
+        -43.5,
+        -50.6,
+        -53.1,
+        -56.0,
+        -56.0,
+        -58.6,
+        -60.9,
+        -61.0,
+        -64.3,
+        -100.5,
+        -124.4,
+        -125.1,
+        -134.6,
+        -171.7,
+        -254.2,
+        -342.0,
+        -407.8
+      ]
+    },
+    "edge_depends_heavily_on_top_5_pct_ge_100": true,
+    "edge_survives_without_top_3": true,
+    "edge_survives_without_top_5": false,
+    "declared_conclusion": "CONCENTRAZIONE ESTREMA: l'edge (net P&L positivo) NON sopravvive alla rimozione dei primi 5 trade migliori - il risultato aggregato dipende in modo determinante da pochissimi eventi.i primi 5 trade spiegano il 127.4% del netto totale, ma rimuovendoli il risultato resta negativo (-294.60$)."
+  }
+}

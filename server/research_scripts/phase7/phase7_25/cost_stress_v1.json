@@ -1,0 +1,99 @@
+{
+  "generated_at": "2026-09-28T07:15:23.955507+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_cost_stress.py",
+  "canonical_sha256": "3194765f22ef71cab097ee42238264da48ceef5d689f0e17faa50d8c7bf7af78",
+  "payload": {
+    "principle": "COST_BASE usa i fill/swap/commissione REALI gia' registrati dal Tester - non e' 'senza costi'. COST_MODERATE/STRESS aggiungono un costo ASSUNTO, dichiarato.",
+    "swap_holding_cost_note": "Lo swap/holding cost e' GIA' incluso in actual_pnl per ogni trade (score_or_pnl del Tester = DEAL_PROFIT+DEAL_SWAP+DEAL_COMMISSION) - non scomponibile separatamente in questa fase (limite dichiarato, coerente con Phase 7.21/7.22). Rilevante qui piu' che altrove: holding medio in giorni (vedi baseline_economics_v1.json) implica swap accumulato su posizioni multi-giorno.",
+    "scenarios": {
+      "COST_BASE": {
+        "extra_roundtrip_cost_assumed_price_units": 0.0,
+        "assumption_declared_not_measured": false,
+        "components_aggregated": "nessuno - dati reali del Tester (spread/commissione/swap gia' inclusi in actual_pnl).",
+        "ALL": {
+          "n_trades": 42,
+          "net_expectancy_per_trade": 25.626190476190477,
+          "net_expectancy_total": 1076.3,
+          "profit_factor": 1.4841873228665257,
+          "win_rate": 0.5476190476190477,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 39,
+          "net_expectancy_per_trade": 26.78205128205128,
+          "net_expectancy_total": 1044.5,
+          "profit_factor": 1.5375431012299934,
+          "win_rate": 0.5641025641025641,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 3,
+          "net_expectancy_per_trade": 10.60000000000001,
+          "net_expectancy_total": 31.800000000000033,
+          "profit_factor": 1.1136526090064331,
+          "win_rate": 0.3333333333333333,
+          "survives_positive": true
+        }
+      },
+      "COST_MODERATE": {
+        "extra_roundtrip_cost_assumed_price_units": 0.5,
+        "assumption_declared_not_measured": true,
+        "components_aggregated": "spread+commissione+slippage in un unico termine price-units (non scomposto - stesso approccio di Phase 7.21/7.22).",
+        "ALL": {
+          "n_trades": 42,
+          "net_expectancy_per_trade": 25.126190476190477,
+          "net_expectancy_total": 1055.3,
+          "profit_factor": 1.4727199426626052,
+          "win_rate": 0.5476190476190477,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 39,
+          "net_expectancy_per_trade": 26.28205128205128,
+          "net_expectancy_total": 1025.0,
+          "profit_factor": 1.5252100840336136,
+          "win_rate": 0.5641025641025641,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 3,
+          "net_expectancy_per_trade": 10.10000000000001,
+          "net_expectancy_total": 30.300000000000033,
+          "profit_factor": 1.107905982905983,
+          "win_rate": 0.3333333333333333,
+          "survives_positive": true
+        }
+      },
+      "COST_STRESS": {
+        "extra_roundtrip_cost_assumed_price_units": 2.0,
+        "assumption_declared_not_measured": true,
+        "components_aggregated": "spread+commissione+slippage in un unico termine price-units (non scomposto - stesso approccio di Phase 7.21/7.22).",
+        "ALL": {
+          "n_trades": 42,
+          "net_expectancy_per_trade": 23.626190476190477,
+          "net_expectancy_total": 992.3000000000001,
+          "profit_factor": 1.4388960148613383,
+          "win_rate": 0.5476190476190477,
+          "survives_positive": true
+        },
+        "BUY": {
+          "n_trades": 39,
+          "net_expectancy_per_trade": 24.78205128205128,
+          "net_expectancy_total": 966.5,
+          "profit_factor": 1.4888473016033585,
+          "win_rate": 0.5641025641025641,
+          "survives_positive": true
+        },
+        "SELL": {
+          "n_trades": 3,
+          "net_expectancy_per_trade": 8.60000000000001,
+          "net_expectancy_total": 25.800000000000033,
+          "profit_factor": 1.090909090909091,
+          "win_rate": 0.3333333333333333,
+          "survives_positive": true
+        }
+      }
+    },
+    "scenario_not_selected_to_preserve_edge": true
+  }
+}

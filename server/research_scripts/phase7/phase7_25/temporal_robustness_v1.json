@@ -1,0 +1,285 @@
+{
+  "generated_at": "2026-09-28T07:16:16.939909+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_temporal_robustness.py",
+  "canonical_sha256": "58b5ac7ede28558a33cc9bb5ce91ac12cc61ab4bd5e0327e861dd739d7da84d3",
+  "payload": {
+    "by_year": {
+      "2023": {
+        "n_trades": 4,
+        "net_pnl_sum": -80.30000000000001,
+        "win_rate": 0.25
+      },
+      "2024": {
+        "n_trades": 14,
+        "net_pnl_sum": 145.50000000000003,
+        "win_rate": 0.5
+      },
+      "2025": {
+        "n_trades": 16,
+        "net_pnl_sum": 1069.7,
+        "win_rate": 0.6875
+      },
+      "2026": {
+        "n_trades": 8,
+        "net_pnl_sum": -58.599999999999994,
+        "win_rate": 0.5
+      }
+    },
+    "years_with_positive_net": 2,
+    "years_total_with_at_least_1_trade": 4,
+    "rolling_window_size": 10,
+    "rolling_window_10_trades_mean_net": [
+      {
+        "start_trade_idx": 0,
+        "end_trade_idx": 9,
+        "mean_net": -3.15,
+        "entry_time_start": "2023.10.03 17:30:00",
+        "entry_time_end": "2024.07.17 12:15:00"
+      },
+      {
+        "start_trade_idx": 1,
+        "end_trade_idx": 10,
+        "mean_net": -6.68,
+        "entry_time_start": "2023.10.20 18:00:00",
+        "entry_time_end": "2024.07.31 18:30:00"
+      },
+      {
+        "start_trade_idx": 2,
+        "end_trade_idx": 11,
+        "mean_net": 8.35,
+        "entry_time_start": "2023.12.04 02:15:00",
+        "entry_time_end": "2024.08.09 18:00:00"
+      },
+      {
+        "start_trade_idx": 3,
+        "end_trade_idx": 12,
+        "mean_net": 19.44,
+        "entry_time_start": "2023.12.14 01:15:00",
+        "entry_time_end": "2024.09.13 17:45:00"
+      },
+      {
+        "start_trade_idx": 4,
+        "end_trade_idx": 13,
+        "mean_net": 10.200000000000001,
+        "entry_time_start": "2024.03.05 16:15:00",
+        "entry_time_end": "2024.09.25 18:45:00"
+      },
+      {
+        "start_trade_idx": 5,
+        "end_trade_idx": 14,
+        "mean_net": 13.120000000000001,
+        "entry_time_start": "2024.03.21 01:15:00",
+        "entry_time_end": "2024.10.11 17:15:00"
+      },
+      {
+        "start_trade_idx": 6,
+        "end_trade_idx": 15,
+        "mean_net": 11.870000000000001,
+        "entry_time_start": "2024.04.01 04:15:00",
+        "entry_time_end": "2024.10.23 16:45:00"
+      },
+      {
+        "start_trade_idx": 7,
+        "end_trade_idx": 16,
+        "mean_net": -1.8599999999999988,
+        "entry_time_start": "2024.04.08 05:45:00",
+        "entry_time_end": "2024.11.08 17:15:00"
+      },
+      {
+        "start_trade_idx": 8,
+        "end_trade_idx": 17,
+        "mean_net": 11.910000000000002,
+        "entry_time_start": "2024.05.02 01:30:01",
+        "entry_time_end": "2024.11.19 12:15:00"
+      },
+      {
+        "start_trade_idx": 9,
+        "end_trade_idx": 18,
+        "mean_net": 12.870000000000001,
+        "entry_time_start": "2024.07.17 12:15:00",
+        "entry_time_end": "2025.01.29 17:45:00"
+      },
+      {
+        "start_trade_idx": 10,
+        "end_trade_idx": 19,
+        "mean_net": 24.35,
+        "entry_time_start": "2024.07.31 18:30:00",
+        "entry_time_end": "2025.02.05 13:00:00"
+      },
+      {
+        "start_trade_idx": 11,
+        "end_trade_idx": 20,
+        "mean_net": 42.18,
+        "entry_time_start": "2024.08.09 18:00:00",
+        "entry_time_end": "2025.03.14 10:45:00"
+      },
+      {
+        "start_trade_idx": 12,
+        "end_trade_idx": 21,
+        "mean_net": 26.860000000000003,
+        "entry_time_start": "2024.09.13 17:45:00",
+        "entry_time_end": "2025.03.31 09:30:00"
+      },
+      {
+        "start_trade_idx": 13,
+        "end_trade_idx": 22,
+        "mean_net": 36.95,
+        "entry_time_start": "2024.09.25 18:45:00",
+        "entry_time_end": "2025.04.10 01:15:00"
+      },
+      {
+        "start_trade_idx": 14,
+        "end_trade_idx": 23,
+        "mean_net": 30.610000000000003,
+        "entry_time_start": "2024.10.11 17:15:00",
+        "entry_time_end": "2025.04.17 02:30:04"
+      },
+      {
+        "start_trade_idx": 15,
+        "end_trade_idx": 24,
+        "mean_net": 8.680000000000001,
+        "entry_time_start": "2024.10.23 16:45:00",
+        "entry_time_end": "2025.05.06 02:15:00"
+      },
+      {
+        "start_trade_idx": 16,
+        "end_trade_idx": 25,
+        "mean_net": 30.5,
+        "entry_time_start": "2024.11.08 17:15:00",
+        "entry_time_end": "2025.05.16 02:15:01"
+      },
+      {
+        "start_trade_idx": 17,
+        "end_trade_idx": 26,
+        "mean_net": 46.62,
+        "entry_time_start": "2024.11.19 12:15:00",
+        "entry_time_end": "2025.09.02 08:00:00"
+      },
+      {
+        "start_trade_idx": 18,
+        "end_trade_idx": 27,
+        "mean_net": 51.21,
+        "entry_time_start": "2025.01.29 17:45:00",
+        "entry_time_end": "2025.09.08 11:30:00"
+      },
+      {
+        "start_trade_idx": 19,
+        "end_trade_idx": 28,
+        "mean_net": 57.14,
+        "entry_time_start": "2025.02.05 13:00:00",
+        "entry_time_end": "2025.09.23 05:15:00"
+      },
+      {
+        "start_trade_idx": 20,
+        "end_trade_idx": 29,
+        "mean_net": 68.22,
+        "entry_time_start": "2025.03.14 10:45:00",
+        "entry_time_end": "2025.10.07 01:45:00"
+      },
+      {
+        "start_trade_idx": 21,
+        "end_trade_idx": 30,
+        "mean_net": 77.72999999999999,
+        "entry_time_start": "2025.03.31 09:30:00",
+        "entry_time_end": "2025.10.14 04:30:00"
+      },
+      {
+        "start_trade_idx": 22,
+        "end_trade_idx": 31,
+        "mean_net": 70.82000000000001,
+        "entry_time_start": "2025.04.10 01:15:00",
+        "entry_time_end": "2025.10.17 01:30:00"
+      },
+      {
+        "start_trade_idx": 23,
+        "end_trade_idx": 32,
+        "mean_net": 78.32000000000001,
+        "entry_time_start": "2025.04.17 02:30:04",
+        "entry_time_end": "2025.11.11 04:15:01"
+      },
+      {
+        "start_trade_idx": 24,
+        "end_trade_idx": 33,
+        "mean_net": 80.71000000000001,
+        "entry_time_start": "2025.05.06 02:15:00",
+        "entry_time_end": "2025.12.23 03:15:00"
+      },
+      {
+        "start_trade_idx": 25,
+        "end_trade_idx": 34,
+        "mean_net": 119.94000000000001,
+        "entry_time_start": "2025.05.16 02:15:01",
+        "entry_time_end": "2026.01.06 02:15:00"
+      },
+      {
+        "start_trade_idx": 26,
+        "end_trade_idx": 35,
+        "mean_net": 128.51,
+        "entry_time_start": "2025.09.02 08:00:00",
+        "entry_time_end": "2026.01.21 03:30:00"
+      },
+      {
+        "start_trade_idx": 27,
+        "end_trade_idx": 36,
+        "mean_net": 148.24,
+        "entry_time_start": "2025.09.08 11:30:00",
+        "entry_time_end": "2026.01.28 01:15:00"
+      },
+      {
+        "start_trade_idx": 28,
+        "end_trade_idx": 37,
+        "mean_net": 119.14000000000001,
+        "entry_time_start": "2025.09.23 05:15:00",
+        "entry_time_end": "2026.01.29 03:15:00"
+      },
+      {
+        "start_trade_idx": 29,
+        "end_trade_idx": 38,
+        "mean_net": 64.17,
+        "entry_time_start": "2025.10.07 01:45:00",
+        "entry_time_end": "2026.02.04 01:15:00"
+      },
+      {
+        "start_trade_idx": 30,
+        "end_trade_idx": 39,
+        "mean_net": 21.25,
+        "entry_time_start": "2025.10.14 04:30:00",
+        "entry_time_end": "2026.03.23 08:45:00"
+      },
+      {
+        "start_trade_idx": 31,
+        "end_trade_idx": 40,
+        "mean_net": -34.2,
+        "entry_time_start": "2025.10.17 01:30:00",
+        "entry_time_end": "2026.04.01 04:30:00"
+      },
+      {
+        "start_trade_idx": 32,
+        "end_trade_idx": 41,
+        "mean_net": 9.470000000000002,
+        "entry_time_start": "2025.11.11 04:15:01",
+        "entry_time_end": "2026.06.08 01:45:00"
+      }
+    ],
+    "rolling_window_always_positive": false,
+    "rolling_window_min_mean_net": -34.2,
+    "direction_split_net_total": {
+      "ALL": {
+        "n": 42,
+        "net_total": 1076.3
+      },
+      "BUY": {
+        "n": 39,
+        "net_total": 1044.5
+      },
+      "SELL": {
+        "n": 3,
+        "net_total": 31.800000000000033
+      }
+    },
+    "regime_caveat": "Tutti gli eventi provengono da un UNICO run MT5 continuo (2023.10.02-2026.06.30, stesso broker/simbolo GOLD) - 'per anno' e' una suddivisione temporale dello STESSO campione, non regimi indipendenti verificati separatamente. Nessuna sessione applicabile (LIQ_SWEEP e' D1, non session-bound - vedi liq_sweep_identity_map_v1.json, Phase 7.23).",
+    "single_regime_caveat": "Vedi regime_caveat.",
+    "pattern_descriptive_vs_mechanism_validated": "Questa fase misura SOLO se il pattern descrittivo (sweep+delivery-candle+direzione, uscita ATR fissa) produce P&L positivo nel campione - NON dimostra un meccanismo causale (stesso principio gia' applicato a BREAKOUT_ACC Phase 7.21 e ORDER_BLOCK Phase 7.22).",
+    "dependent_on_single_regime": true
+  }
+}

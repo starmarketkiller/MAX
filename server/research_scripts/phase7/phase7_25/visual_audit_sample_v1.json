@@ -1,0 +1,505 @@
+{
+  "generated_at": "2026-09-28T07:21:31.214819+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_visual_audit.py",
+  "canonical_sha256": "55484597c308b1a61e3d10be4b86770bb7cc3f4795067e1ba03d2d61f7333f7e",
+  "payload": {
+    "protocol_used": "VISUAL_AUDIT_PROTOCOL_V1 (Phase 7.19) + EVENT_AUDIT_PACKET_V1, esteso in questa fase con chart REALI (research-only) invece del solo JSON strutturale usato in Phase 7.21/7.22.",
+    "rendering_technical_note": "matplotlib e' risultato bloccato in questo ambiente ('DLL load failed while importing _image' - policy di sicurezza dell'ambiente, non un bug del codice) - pivot dichiarato a rendering SVG puro-Python (nxs_liq_sweep_chart_utils.py), zero dipendenze native, stesso contenuto informativo (candele OHLC, livelli entry/SL/TP, marker entry/exit).",
+    "fidelity_level_declared": "Chart costruiti dalla serie M15 GOLD gia' presente nel progetto (provenienza non ri-accertata oltre il controllo di plausibilita' di Phase 7.13 - vedi data_exposure_map_v1.json). Pannello macro D1/H4 per resampling deterministico dalla stessa serie M15 (nessuna esportazione D1/H4 indipendente usata, evita disallineamenti spuri di bar-boundary). SOLO research-only/qualitativo - nessuna regola operativa derivata da queste immagini.",
+    "sample_selection_declared_before_review": "winner/loser per net_pnl estremo (outcome usato SOLO per la stratificazione, non per il contenuto della review Stage A, strutturalmente priva di campi di esito); random per ordine alfabetico dell'event_id (deterministico); matched non-event per punto medio del gap piu' lungo fra due CLOSED consecutivi (25 giorni, 2023.11.08->2023.12.04) - regola dichiarata prima di guardare il prezzo in quella finestra.",
+    "sample_size_real_trade_events": 6,
+    "blinding_method": "STRUTTURALE - l'oggetto passato alla review Stage A (_stage_a_packet) non contiene alcun campo di esito (verificato dal verificatore indipendente); il chart Stage A e' troncato all'entry bar per costruzione (nessuna barra futura disegnata, parametro truncate_at_idx).",
+    "blinding_limitation_declared": "L'operatore (questa sessione Claude) ha gia' letto il dataset completo con gli esiti in fasi precedenti - il mascheramento e' quindi STRUTTURALE (a livello di dati/pixel passati alla funzione di rendering), NON un vero mascheramento di memoria/operatore.",
+    "reviews": {
+      "winner": [
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_84",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "tp",
+            "actual_pnl": 311.6,
+            "actual_r_multiple": 2.03,
+            "hold_seconds": 1431603
+          }
+        },
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_74",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "tp",
+            "actual_pnl": 299.9,
+            "actual_r_multiple": 1.983,
+            "hold_seconds": 86392
+          }
+        }
+      ],
+      "loser": [
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_82",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "sl",
+            "actual_pnl": -342.0,
+            "actual_r_multiple": -1.169,
+            "hold_seconds": 4880242
+          }
+        },
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_78",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "sl",
+            "actual_pnl": -407.8,
+            "actual_r_multiple": -1.128,
+            "hold_seconds": 3763763
+          }
+        }
+      ],
+      "random": [
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_10",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "tp",
+            "actual_pnl": 55.5,
+            "actual_r_multiple": 1.856,
+            "hold_seconds": 269421
+          }
+        },
+        {
+          "event_id": "LIQ_SWEEP_2023.10.02_2026.06.30_66767008acee43f3_20260927T211708Z_882af939::ticket_12",
+          "charts": {
+            "stage_A": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageA_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageA_fine.svg"
+            },
+            "stage_B": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageB_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageB_fine.svg"
+            },
+            "stage_C": {
+              "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageC_macro.svg",
+              "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageC_fine.svg"
+            }
+          },
+          "stage_a_blind_review": {
+            "blind_confirmed": true,
+            "data_shown": [
+              "event_id",
+              "direction",
+              "entry_timestamp",
+              "signal_reference_price",
+              "signal_reason_tag",
+              "planned_sl",
+              "planned_tp"
+            ],
+            "data_explicitly_withheld": [
+              "actual_pnl",
+              "exit_timestamp",
+              "exit_price",
+              "exit_reason",
+              "mfe",
+              "mae",
+              "r_multiple"
+            ],
+            "questions": [
+              "Il setup e' coerente con la logica dichiarata (sweep di liquidita' + delivery-candle + direzione)?",
+              "Il contesto (livello di liquidita' spazzato, direzione) e' chiaramente leggibile o ambiguo?",
+              "Ci sono elementi visibili PRIMA dell'ingresso che sembrano insoliti o degni di nota?",
+              "SL/TP pianificati sembrano ragionevoli rispetto alla volatilita' recente visibile?",
+              "Qual e' l'aspettativa qualitativa (favorevole/sfavorevole/neutra) SENZA sapere l'esito?"
+            ],
+            "answers": {
+              "coerente_con_logica_dichiarata": "SI - direzione e reason_tag coerenti con uno sweep di liquidita' seguito da delivery-candle nella direzione del reversal.",
+              "contesto_leggibile": "Leggibile dal pannello macro (livello spazzato visibile come estremo recente prima dell'ingresso).",
+              "elementi_insoliti_pre_ingresso": "Nessuno strutturalmente insolito osservabile oltre quanto gia' catturato dal reason_tag.",
+              "sl_tp_ragionevoli": "SL/TP sono multipli fissi di ATR (1.5x/3.0x) - ampiezza coerente con la volatilita' visibile nel pannello macro.",
+              "aspettativa_qualitativa_senza_esito": "NON FORMULATA UNA PREVISIONE DIREZIONALE - vietato dal protocollo ('Vincera'?' proibita) - riportata solo la valutazione di chiarezza del setup."
+            },
+            "forbidden_question_not_asked": "Vincera'?"
+          },
+          "stage_b_reveal": {
+            "revealed_after_stage_a_locked": true,
+            "chart_now_shows_path_through_exit": true,
+            "no_pnl_numbers_revealed_at_this_stage": true
+          },
+          "stage_c_outcome": {
+            "actual_exit_reason": "sl",
+            "actual_pnl": -43.5,
+            "actual_r_multiple": -1.022,
+            "hold_seconds": 149598
+          }
+        }
+      ]
+    },
+    "chart_files": {
+      "ticket_84": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_84_stageC_fine.svg"
+        }
+      },
+      "ticket_74": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/winner_ticket_74_stageC_fine.svg"
+        }
+      },
+      "ticket_82": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_82_stageC_fine.svg"
+        }
+      },
+      "ticket_78": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/loser_ticket_78_stageC_fine.svg"
+        }
+      },
+      "ticket_10": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_10_stageC_fine.svg"
+        }
+      },
+      "ticket_12": {
+        "stage_A": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageA_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageA_fine.svg"
+        },
+        "stage_B": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageB_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageB_fine.svg"
+        },
+        "stage_C": {
+          "macro": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageC_macro.svg",
+          "fine": "server/research_scripts/phase7/phase7_25/charts/random_ticket_12_stageC_fine.svg"
+        }
+      }
+    },
+    "blocked_near_miss": {
+      "status": "GAP_DICHIARATO_NON_FABBRICATO",
+      "reason": "MQL5 non logga telemetria per-evento dei segnali bloccati (solo conteggi aggregati nel certificato - vedi execution_realism_v1.json). Ricostruirlo in Python richiederebbe ri-derivare il detector di sweep indipendentemente, reintroducendo il rischio di fedelta' gia' segnalato nella semantic parity matrix (Phase 7.23) - non fatto per evitare un'immagine fuorviante spacciata per un vero segnale bloccato da MQL5."
+    },
+    "matched_non_event": {
+      "control_datetime": "2023.11.21 09:57:47",
+      "selection_rule_declared_before_lookup": "Punto medio del gap piu' lungo (giorni) fra l'exit di un evento CLOSED e l'entry del successivo, nell'intero dataset - nessun evento del dataset canonico referenzia questa data per costruzione.",
+      "charts": {
+        "macro": "server/research_scripts/phase7/phase7_25/charts/matched_non_event_macro.svg",
+        "fine": "server/research_scripts/phase7/phase7_25/charts/matched_non_event_fine.svg"
+      }
+    },
+    "no_operational_rule_derived_from_visual_observations": true
+  }
+}

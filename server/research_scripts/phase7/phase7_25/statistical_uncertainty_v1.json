@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-09-28T07:15:01.924843+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\research_scripts\\phase7\\phase7_25\\build_statistical_uncertainty.py",
+  "canonical_sha256": "968296d52232906c5ca96402617f3fac114b0ab643b92eb74ce57f8629e46034",
+  "payload": {
+    "method_iid": "Bootstrap per-trade, 10000 iterazioni, seed 72500 - assume scambiabilita' (non necessariamente indipendenza temporale stretta).",
+    "method_block": "Moving-block bootstrap, blocco=5 eventi consecutivi (10000 iterazioni, seed 72501) - preserva la dipendenza seriale locale (holding time, clustering di regime) invece di ricampionare singoli trade indipendentemente. Sensitivity esplicita alla serial dependence, non un'alternativa sostitutiva.",
+    "iid_assumption_not_blindly_assumed": true,
+    "results": {
+      "ALL": {
+        "n": 42,
+        "net_expectancy_bootstrap_ci_iid": {
+          "point_estimate_mean": 25.626190476190477,
+          "bootstrap_ci_95_low": -23.866666666666667,
+          "bootstrap_ci_95_high": 73.39047619047619,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci_iid": {
+          "point_estimate_mean": 0.5476190476190477,
+          "bootstrap_ci_95_low": 0.40476190476190477,
+          "bootstrap_ci_95_high": 0.6904761904761905,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "net_expectancy_block_bootstrap_ci": {
+          "point_estimate_mean": 25.626190476190477,
+          "block_size": 5,
+          "bootstrap_ci_95_low": -14.049999999999997,
+          "bootstrap_ci_95_high": 78.95714285714286,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "temporal_clustering": {
+          "n_pairs": 41,
+          "min_gap_days": 1,
+          "median_gap_days": 14,
+          "max_gap_days": 109,
+          "n_pairs_within_threshold": 15,
+          "pct_pairs_within_threshold": 0.36585365853658536
+        }
+      },
+      "BUY": {
+        "n": 39,
+        "net_expectancy_bootstrap_ci_iid": {
+          "point_estimate_mean": 26.78205128205128,
+          "bootstrap_ci_95_low": -22.097435897435897,
+          "bootstrap_ci_95_high": 73.11025641025641,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci_iid": {
+          "point_estimate_mean": 0.5641025641025641,
+          "bootstrap_ci_95_low": 0.41025641025641024,
+          "bootstrap_ci_95_high": 0.717948717948718,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "net_expectancy_block_bootstrap_ci": {
+          "point_estimate_mean": 26.78205128205128,
+          "block_size": 5,
+          "bootstrap_ci_95_low": 10.061538461538463,
+          "bootstrap_ci_95_high": 87.61794871794872,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": true
+        },
+        "temporal_clustering": {
+          "n_pairs": 38,
+          "min_gap_days": 1,
+          "median_gap_days": 13.5,
+          "max_gap_days": 109,
+          "n_pairs_within_threshold": 14,
+          "pct_pairs_within_threshold": 0.3684210526315789
+        }
+      },
+      "SELL": {
+        "n": 3,
+        "net_expectancy_bootstrap_ci_iid": {
+          "point_estimate_mean": 10.60000000000001,
+          "bootstrap_ci_95_low": -254.19999999999996,
+          "bootstrap_ci_95_high": 311.6,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "win_rate_bootstrap_ci_iid": {
+          "point_estimate_mean": 0.3333333333333333,
+          "bootstrap_ci_95_low": 0.0,
+          "bootstrap_ci_95_high": 1.0,
+          "n_bootstrap_resamples": 10000,
+          "excludes_zero": false
+        },
+        "net_expectancy_block_bootstrap_ci": null,
+        "temporal_clustering": {
+          "n_pairs": 2,
+          "min_gap_days": 76,
+          "median_gap_days": 488.5,
+          "max_gap_days": 901,
+          "n_pairs_within_threshold": 0,
+          "pct_pairs_within_threshold": 0.0
+        }
+      }
+    },
+    "iid_vs_block_ci_conclusion_agree_on_excludes_zero_ALL": true,
+    "iid_vs_block_ci_agreement_per_group": {
+      "ALL": true,
+      "BUY": false,
+      "SELL": null
+    },
+    "disagreement_note": "Se IID e BLOCK bootstrap NON concordano sull'escludere lo zero per un gruppo, il risultato e' sensibile all'assunzione di indipendenza - dichiarato esplicitamente, non usato per scegliere il metodo che conferma l'edge (entrambi i risultati sono riportati, nessuno dei due scartato).",
+    "ci_includes_zero_means_no_edge_declared": true
+  }
+}
