@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-09-29T07:07:34.366224+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_framework_adoption_decision.py",
+  "canonical_sha256": "d8710d45cca6ba53377e173526efac06410d4d87d34daa03a093f13416531454",
+  "payload": {
+    "framework_name": "FUNDING_PRIORITY_AND_OPPORTUNITY_FRAMEWORK_V1",
+    "depends_on": [
+      "NEXUS_TASK_0005",
+      "NEXUS_TASK_0006"
+    ],
+    "this_task": "NEXUS_TASK_0007",
+    "baseline_commit": "7dafeae",
+    "previous_status": "WAITING_APPROVAL",
+    "new_status": "ADOPTED",
+    "decision": "FUNDING_FRAMEWORK_V1_ADOPTED",
+    "adopted_at": "2026-09-29T07:07:34.366224+00:00",
+    "scope_declaration": {
+      "scoring_logic_modified": false,
+      "gates_modified": false,
+      "new_opportunities_added": false,
+      "opportunity_scores_changed": false,
+      "commercial_action_taken": false,
+      "premium_call_made_automatically": false,
+      "note": "Solo governance (promozione di stato) + housekeeping del namespace Vault (spostamento report da 01-Trading a 02-Business/Opportunity-Funding, con storia git preservata via rename) - nessuna logica di scoring/gate/dataset toccata, verificato per hash indipendente."
+    },
+    "frozen_logic_file_sha256": {
+      "opportunity_scoring.py": "a7d586cb5334b39d24765bee69b408ba1f1eca6d7404efff81cd1633d4234bd8",
+      "hard_gates.py": "35ede7ae759c3daf49f35e923254843aade6b63f2cb32e9970e8352bb7e64e93",
+      "capital_scenarios.py": "5e7b8024ba8f366d76b46a4ba534ce4946ceb04fc5f7e4c0574530efc67a7e3f",
+      "capability_coverage.py": "b7784e6e9962683485a85745916587b04a6c39f2c1bab1cc1d74659341b09817",
+      "opportunity_lifecycle.py": "eb8d57d6e729157df8553651a757c056160c189d87bf06d587c5d361375c32b8",
+      "self_funding_loop.py": "00e25390f3202d2747151c19cc8ed48e4b9329dedfef7146250f3ad55b68d423",
+      "opportunity_assembly.py": "b72908a10f46104a6180fec0cc928419de1e9698d20494d2505d6ce5ee01b9e9"
+    },
+    "frozen_artifact_canonical_sha256": {
+      "example_instances/opportunities_v1.json": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395",
+      "opportunity_priority_queue_v1.json": "4ac35b660e0899636950e3c748cedaaf6875b2d74e434008ff29be98f8574cb7",
+      "opportunity_briefs_v1.json": "0fb6a6ef920f047b67764a23a93e27fcbe8222a9347d529369a666648785e8cd",
+      "example_instances/opportunity_lifecycle_v1.json": "f180efb70cab376f065638fdb8046097735973226c04c899e342ee0045583b5b",
+      "example_instances/self_funding_loop_v1.json": "e240653f0a2e77659d2728539f0b0eeed210b299e8226ddf019fbb50bc0cefd2"
+    },
+    "vault_report_paths": [
+      "vault/02-Business/Opportunity-Funding/NEXUS TASK 0005 - Funding Priority and Opportunity Framework V1.md",
+      "vault/02-Business/Opportunity-Funding/NEXUS TASK 0006 - Funding Framework Completion and Hardening.md"
+    ],
+    "vault_report_previous_paths": [
+      "vault/01-Trading/NEXUS TASK 0005 - Funding Priority and Opportunity Framework V1.md",
+      "vault/01-Trading/NEXUS TASK 0006 - Funding Framework Completion and Hardening.md"
+    ],
+    "vault_namespace": "vault/02-Business/Opportunity-Funding/",
+    "knowledge_browser_root_updated": "vault-business -> vault/02-Business",
+    "next_step_note": "Uso del framework su opportunity reali - non ancora una NEXUS TASK, richiede scelta esplicita dell'utente su quale opportunity validare per prima e resta comunque soggetto ad approval prima di qualunque azione commerciale reale."
+  }
+}

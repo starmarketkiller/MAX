@@ -243,3 +243,23 @@ def test_routing_used_only_local_tiers_for_hypothesis_generation():
     assert all(v is not None for v in doc["results"].values()), (
         "tutte le 13 narrative devono essere state completate (eventualmente dopo retry "
         "del prompt/verificatore, mai inventate a mano)")
+
+
+# ---------------------------------------------------------------------------
+# NEXUS TASK #0007 - adozione del framework: pura governance, verificata per
+# hash indipendente (nessuna modifica a scoring/gate/dataset ammessa).
+# ---------------------------------------------------------------------------
+
+def test_framework_adoption_decision_is_adopted_with_unmodified_logic():
+    import hashlib
+    adoption_path = os.path.join(FUNDING_DIR, "framework_adoption_decision_v1.json")
+    with open(adoption_path, encoding="utf-8") as f:
+        decision = json.load(f)["payload"]
+    assert decision["new_status"] == "ADOPTED"
+    assert decision["decision"] == "FUNDING_FRAMEWORK_V1_ADOPTED"
+    assert all(v is False for v in decision["scope_declaration"].values()
+              if isinstance(v, bool))
+    for name, expected_hash in decision["frozen_logic_file_sha256"].items():
+        with open(os.path.join(FUNDING_DIR, name), "rb") as f:
+            actual = hashlib.sha256(f.read()).hexdigest()
+        assert actual == expected_hash, f"{name} e' stato modificato dopo l'adozione"

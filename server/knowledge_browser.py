@@ -16,6 +16,7 @@ from typing import Any
 MAX_DOCUMENT_BYTES = 1_000_000
 ALLOWED_ROOTS = (
     ("vault", Path("vault/01-Trading")),
+    ("vault-business", Path("vault/02-Business")),
     ("docs", Path("docs")),
     ("knowledge", Path("knowledge")),
 )

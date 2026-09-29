@@ -133,3 +133,17 @@ def test_repository_corpus_endpoint_returns_documents(tmp_path, monkeypatch):
         assert len(response.json()["documents"]) == response.json()["count"]
     finally:
         knowledge_browser.build_index.cache_clear()
+
+
+def test_non_trading_vault_namespaces_are_also_indexed():
+    """NEXUS TASK #0007: vault/02-Business/ (dominio non trading-specifico) deve
+    restare indicizzato da Jarvis/Control Plane esattamente come 01-Trading/ -
+    altrimenti spostare report fuori da 01-Trading li rende invisibili."""
+    knowledge_browser.build_index.cache_clear()
+    try:
+        index = knowledge_browser.build_index()
+        titles = {d["title"] for d in index["documents"]}
+        assert "NEXUS TASK #0005 — Funding Priority & Opportunity Framework V1" in titles
+        assert "NEXUS TASK #0006 — Funding Framework Completion & Hardening" in titles
+    finally:
+        knowledge_browser.build_index.cache_clear()
