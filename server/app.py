@@ -1388,7 +1388,8 @@ app = FastAPI(title="NEXUS self-hosted backend", version=APP_VERSION)
 
 _JARVIS_STATE_DIR = Path(os.environ.get("JARVIS_STATE_DIR", str(Path(DB_PATH).parent / "jarvis")))
 JARVIS_SERVICE = JarvisService(queue_path=str(_JARVIS_STATE_DIR / "task_queue_v1.json"),
-                               ledger_path=str(_JARVIS_STATE_DIR / "event_ledger_v1.jsonl"))
+                               ledger_path=str(_JARVIS_STATE_DIR / "event_ledger_v1.jsonl"),
+                               conversation_path=str(_JARVIS_STATE_DIR / "conversation_context_v2.json"))
 JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
@@ -1716,6 +1717,16 @@ def jarvis_task(task_id: str, user: str = Depends(require_user)):
         return JARVIS_SERVICE.queue.get(task_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="task not found")
+
+
+@app.get("/api/jarvis/tasks/{task_id}/diagnostics")
+def jarvis_task_diagnostics(task_id: str, user: str = Depends(require_user)):
+    """Sanitized canonical lifecycle; no message bodies, tokens or secrets."""
+    try:
+        record = JARVIS_SERVICE.queue.get(task_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="task not found")
+    return {"task_id": task_id, **JARVIS_SERVICE._task_details(record, technical=True)}
 
 
 @app.get("/api/jarvis/activity")

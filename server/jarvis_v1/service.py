@@ -28,6 +28,7 @@ from core.task_queue import new_task_id  # noqa: E402
 import jarvis_delivery  # noqa: E402
 from review_engine import process_work_product  # noqa: E402
 from review_matrix import get_matrix_entry  # noqa: E402
+from .conversation_store import ConversationStore
 
 # NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
 # work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
@@ -49,6 +50,11 @@ def classify(text: str, metadata: dict | None = None) -> str:
     value = (text or "").strip().lower()
     metadata = metadata or {}
     action = str(metadata.get("approval_action") or "").upper()
+    if metadata.get("confirm_cancel"):
+        return "COMMAND"
+    if value.startswith("/") or re.search(
+            r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
+        return "COMMAND"
     if action in ("REJECT", "RIFIUTA") or re.search(r"\b(rifiuta|reject)\b", value):
         return "REJECTION"
     if action in ("APPROVE", "APPROVAL", "APPROVA") or re.search(r"\b(approva|approve)\b", value):
@@ -94,12 +100,27 @@ def classify_work_type(text: str, metadata: dict | None = None) -> str:
     return _DEFAULT_JARVIS_WORK_TYPE
 
 
+_STATE_MESSAGES = {
+    "QUEUED": "è in coda e attende il dispatcher",
+    "RUNNING": "è in esecuzione",
+    "BLOCKED": "è bloccata e richiede diagnosi o intervento",
+    "ESCALATION_REQUIRED": "richiede escalation; nessun provider premium viene chiamato automaticamente",
+    "WAITING_APPROVAL": "attende una tua approvazione",
+    "COMPLETED": "è completata",
+    "CANCELLED": "è stata annullata",
+    "FAILED": "è terminata con errore",
+}
+
+
 class JarvisService:
-    def __init__(self, queue_path=None, ledger_path=None):
+    def __init__(self, queue_path=None, ledger_path=None, conversation_path=None):
         self.orchestrator = Orchestrator(queue_path=queue_path, ledger_path=ledger_path)
         self.queue = self.orchestrator.queue
         self.ledger = self.orchestrator.ledger
-        self.conversations: dict[str, str] = {}
+        if conversation_path is None:
+            base = Path(queue_path).parent if queue_path else SERVER / "orchestrator_v1" / "runtime_state"
+            conversation_path = base / "conversation_context_v2.json"
+        self.conversation_store = ConversationStore(conversation_path)
         # NEXUS TASK #0009 - cache process-local (stessa disciplina gia'
         # dichiarata per self.conversations): un WORK_PRODUCT_V1 va calcolato
         # una sola volta per task_id, mai ricalcolato/ri-escalato a ogni
@@ -137,8 +158,13 @@ class JarvisService:
             return self.follow_up(message)
         if request_class in ("APPROVAL", "REJECTION"):
             return self.approval(message)
-        return self._response(message, "ERROR", "Request class unavailable.",
-                              status="UNKNOWN", confidence="UNKNOWN")
+        if request_class == "COMMAND":
+            return self.command(message)
+        return self._response(message, "ANSWER",
+            "Non ho riconosciuto una richiesta operativa precisa. Posso creare o controllare task, "
+            "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
+            status="PARTIAL", confidence="MEDIUM",
+            actions=[{"type": "HELP", "label": "Mostra aiuto"}])
 
     def _facts_today(self):
         today = datetime.now(timezone.utc).date().isoformat()
@@ -230,8 +256,11 @@ class JarvisService:
             "created_at": now_iso(), "tenant_id": TENANT_ID, "account_scope_id": None,
         }
         self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action="jarvis_task",
-                                 action_params={"request_class": "TASK_REQUEST", "source_message_id": message["message_id"]})
-        self.conversations[message["conversation_id"]] = task_id
+                                 action_params={"request_class": "TASK_REQUEST",
+                                                "source_message_id": message["message_id"],
+                                                "conversation_id": message["conversation_id"]})
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       user_id=str(message["user_id"]))
         record = self.queue.get(task_id)
         return self._response(message, "TASK_ACK", f"Task {task_id} created.", task_id=task_id,
                               status=record["state"], details={"executor": record.get("executor"),
@@ -240,8 +269,57 @@ class JarvisService:
                               "review_required": get_matrix_entry(work_type)["review_required"],
                               "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
 
+    def _latest_compatible_task(self, message):
+        conversation_id = message["conversation_id"]
+        user_id = str(message["user_id"])
+        candidates = []
+        for record in self.queue.list_all():
+            params = record.get("action_params") or {}
+            created_by = (record.get("manifest") or {}).get("created_by")
+            if params.get("conversation_id") == conversation_id or created_by == f"jarvis:{user_id}":
+                candidates.append(record)
+        candidates.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
+        return candidates[0]["task_id"] if candidates else None
+
+    def _resolve_task_id(self, message):
+        explicit = message.get("metadata", {}).get("task_id")
+        if not explicit:
+            match = re.search(r"\bTASK_[A-Z0-9]+\b", message.get("text") or "", re.I)
+            explicit = match.group(0).upper() if match else None
+        context = self.conversation_store.get(message["conversation_id"])
+        task_id = explicit or context.get("last_task_id") or self._latest_compatible_task(message)
+        if task_id:
+            self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                           user_id=str(message["user_id"]))
+        return task_id
+
+    def _task_details(self, record, technical=False):
+        task_id = record["task_id"]
+        details = {
+            "state": record.get("state"), "human_state": _STATE_MESSAGES.get(record.get("state"), "ha stato non noto"),
+            "title": (record.get("manifest") or {}).get("title"),
+            "executor": record.get("executor"), "dependencies": record.get("dependencies") or [],
+            "updated_at": record.get("updated_at"), "source_refs": ["orchestrator queue", "Activity Ledger"],
+        }
+        if technical:
+            events = self.ledger.read_for_task(task_id)
+            escalation = record.get("escalation") or {}
+            safe_event_keys = {"reason", "failure_class", "classification", "target", "tier",
+                               "executor", "attempt", "final_state", "released", "actor"}
+            details.update({
+                "action": record.get("action"), "dispatch_attempts": record.get("dispatch_attempts"),
+                "dispatch_last_error": record.get("dispatch_last_error"), "recovery": record.get("recovery"),
+                "escalation": {key: escalation.get(key) for key in ("target", "classification")
+                               if escalation.get(key) is not None},
+                "result_decision": (record.get("result_packet") or {}).get("decision"),
+                "lifecycle": [{"event_type": event.get("event_type"), "timestamp": event.get("timestamp"),
+                               "payload": {key: value for key, value in (event.get("payload") or {}).items()
+                                           if key in safe_event_keys}} for event in events],
+            })
+        return details
+
     def follow_up(self, message):
-        task_id = message.get("metadata", {}).get("task_id") or self.conversations.get(message["conversation_id"])
+        task_id = self._resolve_task_id(message)
         if not task_id:
             return self._response(message, "ERROR", "No task context available.", status="UNKNOWN")
         try: record = self.queue.get(task_id)
@@ -249,9 +327,91 @@ class JarvisService:
         self.ledger.append("TASK_STATUS_REQUESTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
         if record["state"] == "COMPLETED":
             return self._deliver_finalized_result(message, task_id, record)
-        return self._response(message, "TASK_STATUS", f"{task_id}: {record['state']}", task_id=task_id,
-                              status=record["state"], details={"executor": record.get("executor"),
-                              "dependencies": record.get("dependencies"), "source_refs": ["orchestrator queue"]})
+        technical = bool(message.get("metadata", {}).get("technical_details")) or bool(
+            re.search(r"\b(tecnic|technical|diagnostic)\w*\b", message.get("text") or "", re.I))
+        summary = f"La task {task_id} {_STATE_MESSAGES.get(record['state'], 'ha stato ' + record['state'])}."
+        return self._response(message, "TASK_STATUS", summary, task_id=task_id,
+                              status=record["state"], details=self._task_details(record, technical=technical),
+                              actions=[{"type": "DETAILS", "task_id": task_id},
+                                       {"type": "CANCEL", "task_id": task_id}])
+
+    def command(self, message):
+        text = (message.get("text") or "").strip()
+        value = text.lower()
+        if value in ("/start", "/help") or re.search(r"\b(help|aiuto)\b", value):
+            return self._response(message, "ANSWER",
+                "Sono Jarvis. Posso creare task, mostrarne stato e dettagli, annullare task non in esecuzione, "
+                "gestire approval e mostrare stato NEXUS, agenti e approval. Comandi: /status /tasks /approvals /agents.",
+                details={"commands": ["/start", "/help", "/status", "/tasks", "/approvals", "/agents"]})
+        if value == "/agents" or re.search(r"\b(agents|agenti)\b", value):
+            items = self.agents()
+            return self._response(message, "ANSWER", f"Agenti registrati: {len(items)}.",
+                                  details={"items": items, "source_refs": ["agent registry"]})
+        if value == "/approvals" or "approval" in value:
+            items = self.queue.list_by_state("WAITING_APPROVAL")
+            return self._response(message, "ANSWER", f"Approval pendenti: {len(items)}.",
+                                  details={"items": [x["task_id"] for x in items],
+                                           "source_refs": ["orchestrator queue"]})
+        if value == "/tasks":
+            uid = f"jarvis:{message['user_id']}"
+            items = [r for r in self.queue.list_all() if (r.get("manifest") or {}).get("created_by") == uid]
+            items.sort(key=lambda r: r.get("updated_at") or "", reverse=True)
+            return self._response(message, "ANSWER", f"Task recenti: {len(items[:10])}.",
+                                  details={"items": [{"task_id": r["task_id"], "state": r["state"]}
+                                                     for r in items[:10]], "source_refs": ["orchestrator queue"]})
+        if value == "/status" or re.search(r"\b(status nexus|stato nexus)\b", value):
+            states = {}
+            for record in self.queue.list_all(): states[record["state"]] = states.get(record["state"], 0) + 1
+            return self._response(message, "ANSWER", "NEXUS è operativo; ecco lo stato canonico della Queue.",
+                                  details={"task_states": states, "agents": self.agents(),
+                                           "source_refs": ["orchestrator queue", "agent registry"]})
+        if re.search(r"\b(dettagli|details|diagnostic)\b", value):
+            message.setdefault("metadata", {})["technical_details"] = True
+            return self.follow_up(message)
+        if re.search(r"\b(continua|continue)\b", value):
+            return self.follow_up(message)
+        if message.get("metadata", {}).get("confirm_cancel") or re.search(
+                r"\b(annulla|annullamento|cancella|cancel)\b", value):
+            return self.cancel(message)
+        return self._response(message, "ANSWER", "Comando non riconosciuto. Scrivi /help per le opzioni disponibili.",
+                              status="PARTIAL", confidence="MEDIUM")
+
+    def cancel(self, message):
+        task_id = self._resolve_task_id(message)
+        if not task_id:
+            return self._response(message, "ERROR", "Non trovo una task da annullare.", status="UNKNOWN")
+        try:
+            record = self.queue.get(task_id)
+        except KeyError:
+            return self._response(message, "ERROR", "Task non trovata.", task_id=task_id, status="UNKNOWN")
+        metadata = message.get("metadata", {})
+        context = self.conversation_store.get(message["conversation_id"])
+        confirmed = bool(metadata.get("confirm_cancel")) or bool(re.search(
+            r"\b(conferma|confirm)\b", message.get("text") or "", re.I))
+        pending = context.get("pending_action") or {}
+        if confirmed and pending.get("type") == "CANCEL" and pending.get("task_id") == task_id:
+            if record["state"] == "RUNNING":
+                return self._response(message, "ERROR", "Non annullo una task RUNNING: serve arresto controllato del worker.",
+                                      task_id=task_id, status="RUNNING")
+            try:
+                updated = self.queue.transition(task_id, "CANCELLED", cancellation={"actor": "jarvis_user"})
+            except AssertionError:
+                return self._response(message, "ERROR", f"La task in stato {record['state']} non è annullabile.",
+                                      task_id=task_id, status=record["state"])
+            self.conversation_store.clear_pending(message["conversation_id"])
+            self.ledger.append("TASK_CANCELLED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
+            return self._response(message, "TASK_STATUS", f"Task {task_id} annullata.", task_id=task_id,
+                                  status=updated["state"])
+        if record["state"] in ("COMPLETED", "FAILED", "CANCELLED"):
+            return self._response(message, "ERROR", f"La task in stato {record['state']} non è annullabile.",
+                                  task_id=task_id, status=record["state"])
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       pending_action={"type": "CANCEL", "task_id": task_id})
+        self.ledger.append("TASK_CANCEL_REQUESTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
+        return self._response(message, "TASK_STATUS", f"Confermi l’annullamento di {task_id}?",
+                              task_id=task_id, status="CONFIRMATION_REQUIRED",
+                              actions=[{"type": "CONFIRM_CANCEL", "task_id": task_id},
+                                       {"type": "KEEP_TASK", "task_id": task_id}])
 
     def _run_review_pipeline(self, task_id, record):
         """NEXUS TASK #0009 - collega la Multi-Agent Review & Finalization

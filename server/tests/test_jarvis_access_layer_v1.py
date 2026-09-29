@@ -266,3 +266,87 @@ def test_authenticated_jarvis_api_uses_real_service(tmp_path, monkeypatch):
         assert client.get(f"/api/jarvis/tasks/{task_id}", headers=headers).status_code == 200
         for path in ("activity", "agents", "approvals", "telegram/status", "dispatcher/status"):
             assert client.get(f"/api/jarvis/{path}", headers=headers).status_code == 200
+        diagnostics = client.get(f"/api/jarvis/tasks/{task_id}/diagnostics", headers=headers)
+        assert diagnostics.status_code == 200
+        assert diagnostics.json()["action"] == "jarvis_task"
+
+
+def test_conversation_v2_persists_last_task_and_recovers_after_restart(tmp_path, monkeypatch):
+    queue = tmp_path / "queue.json"
+    ledger = tmp_path / "ledger.jsonl"
+    context = tmp_path / "conversation.json"
+    first = JarvisService(queue, ledger, context)
+    created = JarvisGateway(first).handle(message("Crea una task per analizzare opportunità."))
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: False)
+    restarted = JarvisService(queue, ledger, context)
+    follow = JarvisGateway(restarted).handle(message("A che punto è?"))
+    assert follow["task_id"] == created["task_id"]
+    assert follow["status"] == "QUEUED"
+
+
+def test_missing_context_retrieves_latest_compatible_task(tmp_path):
+    svc = JarvisService(tmp_path / "queue.json", tmp_path / "ledger.jsonl",
+                        tmp_path / "context-a.json")
+    created = JarvisGateway(svc).handle(message("Crea una task per analizzare opportunità."))
+    recovered = JarvisService(tmp_path / "queue.json", tmp_path / "ledger.jsonl",
+                              tmp_path / "context-b.json")
+    follow = JarvisGateway(recovered).handle(message("A che punto è?"))
+    assert follow["task_id"] == created["task_id"]
+
+
+def test_task_details_expose_failure_diagnostics_without_guessing(service):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "BLOCKED", dispatch_last_error="RuntimeError: exact failure",
+                             recovery={"classification": "DISPATCH_EXECUTION_AMBIGUOUS"})
+    details = JarvisGateway(service).handle(message(
+        f"Mostrami i dettagli tecnici della task {task_id}", conversation="new"))
+    assert details["task_id"] == task_id
+    assert details["status"] == "BLOCKED"
+    assert details["details"]["dispatch_last_error"] == "RuntimeError: exact failure"
+    assert details["details"]["recovery"]["classification"] == "DISPATCH_EXECUTION_AMBIGUOUS"
+
+
+def test_cancel_requires_confirmation_and_never_cancels_running(service):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    task_id = created["task_id"]
+    ask = JarvisGateway(service).handle(message(f"Annulla la task {task_id}"))
+    assert ask["status"] == "CONFIRMATION_REQUIRED"
+    assert service.queue.get(task_id)["state"] == "QUEUED"
+    done = JarvisGateway(service).handle(message(
+        f"Conferma annullamento task {task_id}", metadata={"task_id": task_id, "confirm_cancel": True}))
+    assert done["status"] == "CANCELLED"
+    assert any(e["event_type"] == "TASK_CANCELLED" for e in service.ledger.read_for_task(task_id))
+
+    running = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità B.", conversation="c2"))
+    service.queue.transition(running["task_id"], "RUNNING")
+    JarvisGateway(service).handle(message(f"Annulla la task {running['task_id']}", conversation="c2"))
+    refused = JarvisGateway(service).handle(message(
+        f"Conferma annullamento task {running['task_id']}", conversation="c2",
+        metadata={"task_id": running["task_id"], "confirm_cancel": True}))
+    assert refused["status"] == "RUNNING"
+
+
+@pytest.mark.parametrize("command", ["/start", "/help", "/status", "/tasks", "/approvals", "/agents"])
+def test_conversation_commands_are_useful_not_unavailable(service, command):
+    response = JarvisGateway(service).handle(message(command))
+    assert response["response_type"] == "ANSWER"
+    assert "unavailable" not in response["summary"].lower()
+
+
+def test_unknown_request_gets_conversational_fallback(service):
+    response = JarvisGateway(service).handle(message("blorptastic"))
+    assert response["response_type"] == "ANSWER"
+    assert response["status"] == "PARTIAL"
+    assert response["actions"][0]["type"] == "HELP"
+
+
+def test_telegram_cancel_callback_and_details(service, tmp_path):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    adapter = TelegramAdapter(service, tmp_path / "seen-v2.json", token="token", allowed_users=["42"],
+                              gateway=JarvisGateway(service))
+    update = {"update_id": 901, "callback_query": {"from": {"id": 42},
+              "message": {"chat": {"id": 99}}, "data": f"DETAILS:{created['task_id']}"}}
+    response = adapter.handle_update(update)
+    assert response["task_id"] == created["task_id"]
+    assert "lifecycle" in response["details"]

@@ -61,7 +61,11 @@ class TelegramAdapter:
             if action.upper() in ("APPROVE", "REJECT"):
                 metadata["approval_action"] = action
             elif action.upper() == "DETAILS":
-                text = "A che punto è?"
+                text = f"Mostrami i dettagli tecnici della task {task_id}"
+                metadata["technical_details"] = True
+            elif action.upper() == "CONFIRM_CANCEL":
+                text = f"Conferma annullamento task {task_id}"
+                metadata["confirm_cancel"] = True
         return {
             "message_id": f"telegram:{update.get('update_id')}", "user_id": user_id,
             "channel": "TELEGRAM", "conversation_id": f"telegram:{chat_id}",
@@ -115,6 +119,12 @@ class TelegramAdapter:
             payload["reply_markup"] = {"inline_keyboard": [[
                 {"text": "APPROVE", "callback_data": f"APPROVE:{task_id}"},
                 {"text": "REJECT", "callback_data": f"REJECT:{task_id}"},
+                {"text": "DETAILS", "callback_data": f"DETAILS:{task_id}"},
+            ]]}
+        elif response.get("status") == "CONFIRMATION_REQUIRED" and response.get("task_id"):
+            task_id = response["task_id"]
+            payload["reply_markup"] = {"inline_keyboard": [[
+                {"text": "CONFIRM CANCEL", "callback_data": f"CONFIRM_CANCEL:{task_id}"},
                 {"text": "DETAILS", "callback_data": f"DETAILS:{task_id}"},
             ]]}
         body = json.dumps(payload).encode()

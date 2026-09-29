@@ -35,30 +35,32 @@ with open(os.path.join(CONTRACTS_DIR, "task-manifest.schema.json"), encoding="ut
     TASK_MANIFEST_SCHEMA = json.load(f)
 
 STATES = ["CREATED", "QUEUED", "RUNNING", "WAITING_DEPENDENCY", "WAITING_APPROVAL",
-         "WAITING_PROVIDER", "COMPLETED", "FAILED", "BLOCKED", "ESCALATION_REQUIRED"]
+         "WAITING_PROVIDER", "COMPLETED", "FAILED", "BLOCKED", "ESCALATION_REQUIRED",
+         "CANCELLED"]
 
 # Transizioni di stato permesse - fail-closed: una transizione non elencata qui
 # viene rifiutata con un'eccezione, non applicata silenziosamente.
 ALLOWED_TRANSITIONS = {
-    "CREATED": {"QUEUED", "BLOCKED", "WAITING_DEPENDENCY"},
-    "QUEUED": {"RUNNING", "WAITING_DEPENDENCY", "BLOCKED"},
-    "WAITING_DEPENDENCY": {"QUEUED", "BLOCKED"},
+    "CREATED": {"QUEUED", "BLOCKED", "WAITING_DEPENDENCY", "CANCELLED"},
+    "QUEUED": {"RUNNING", "WAITING_DEPENDENCY", "BLOCKED", "CANCELLED"},
+    "WAITING_DEPENDENCY": {"QUEUED", "BLOCKED", "CANCELLED"},
     "RUNNING": {"COMPLETED", "FAILED", "WAITING_APPROVAL", "WAITING_PROVIDER",
                "ESCALATION_REQUIRED", "QUEUED", "RUNNING", "BLOCKED"},  # QUEUED = retry delimitato;
                # RUNNING->RUNNING = self-transition per bookkeeping (es. retry_count) senza
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
-    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED"},
-    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED"},
+    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED"},
+    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED"},
     "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED", "WAITING_APPROVAL",
-                          "COMPLETED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
+                          "COMPLETED", "CANCELLED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
                           # dell'escalation (TIER3_CLAUDE/TIER4_CODEX) e' arrivata e verificata
                           # - se tocca/crea file reali che richiedono revisione va a
                           # WAITING_APPROVAL, altrimenti direttamente COMPLETED (scoperto in
                           # NEXUS TASK #0005, la prima escalation di questo Core risolta con
                           # un intero nuovo framework invece di un singolo campo dato)
-    "BLOCKED": {"QUEUED"},
+    "BLOCKED": {"QUEUED", "CANCELLED"},
     "COMPLETED": set(),
     "FAILED": {"QUEUED"},  # solo se un umano decide di ritentare esplicitamente
+    "CANCELLED": set(),
 }
 
 
@@ -150,7 +152,7 @@ class TaskQueue:
             record["updated_at"] = _now_iso()
             if new_state == "RUNNING" and record["started_at"] is None:
                 record["started_at"] = _now_iso()
-            if new_state in ("COMPLETED", "FAILED"):
+            if new_state in ("COMPLETED", "FAILED", "CANCELLED"):
                 record["completed_at"] = _now_iso()
             for k, v in updates.items():
                 record[k] = v
