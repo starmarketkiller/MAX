@@ -264,5 +264,5 @@ def test_authenticated_jarvis_api_uses_real_service(tmp_path, monkeypatch):
         assert created.status_code == 200
         task_id = created.json()["task_id"]
         assert client.get(f"/api/jarvis/tasks/{task_id}", headers=headers).status_code == 200
-        for path in ("activity", "agents", "approvals", "telegram/status"):
+        for path in ("activity", "agents", "approvals", "telegram/status", "dispatcher/status"):
             assert client.get(f"/api/jarvis/{path}", headers=headers).status_code == 200

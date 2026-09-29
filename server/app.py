@@ -60,6 +60,7 @@ import strategy_census_read_model
 import research_control_plane
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
+from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1392,6 +1393,13 @@ JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
                                   gateway=JARVIS_GATEWAY)
+QUEUE_DISPATCHER_ENABLED = os.environ.get(
+    "NEXUS_QUEUE_DISPATCHER_ENABLED", "true" if HARDENED else "false").lower() == "true"
+JARVIS_DISPATCHER = DurableQueueDispatcher(
+    JARVIS_SERVICE.orchestrator,
+    poll_seconds=float(os.environ.get("NEXUS_QUEUE_DISPATCHER_POLL_SECONDS", "2")),
+    lease_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_LEASE_SECONDS", "900")),
+    shutdown_timeout_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS", "25")))
 
 # AUD0-CORS-001: nessun middleware CORS era presente. Con frontend e backend
 # sulla stessa origine non serve, ma se si separano le origini le richieste
@@ -1654,6 +1662,18 @@ def _startup() -> None:
     print(f"[NEXUS] backend up — env={ENVIRONMENT} db={DB_PATH} license_mode={LICENSE_MODE}")
     print(f"[NEXUS] dashboard user='{ADMIN_USER}'  bridge token set={'yes' if BRIDGE_TOKEN else 'no'}")
     print(f"[NEXUS] coach actions={'ENABLED' if COACH_ALLOW_ACTIONS else 'read-only'}")
+    if QUEUE_DISPATCHER_ENABLED:
+        JARVIS_DISPATCHER.start()
+        print("[NEXUS] durable queue dispatcher avviato (max_concurrency=1)")
+    else:
+        print("[NEXUS] durable queue dispatcher disattivato")
+
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    if QUEUE_DISPATCHER_ENABLED and JARVIS_DISPATCHER.running:
+        drained = JARVIS_DISPATCHER.stop()
+        print(f"[NEXUS] durable queue dispatcher stop drained={'yes' if drained else 'no'}")
 
 
 @app.get("/api/health")
@@ -1714,6 +1734,16 @@ def jarvis_agents(user: str = Depends(require_user)):
 def jarvis_telegram_status(user: str = Depends(require_user)):
     return JARVIS_TELEGRAM.configuration_status(
         webhook_secret_configured=bool(os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET")))
+
+
+@app.get("/api/jarvis/dispatcher/status")
+def jarvis_dispatcher_status(user: str = Depends(require_user)):
+    queued = len(JARVIS_SERVICE.queue.list_by_state("QUEUED"))
+    running = len(JARVIS_SERVICE.queue.list_by_state("RUNNING"))
+    blocked = len(JARVIS_SERVICE.queue.list_by_state("BLOCKED"))
+    return {"enabled": QUEUE_DISPATCHER_ENABLED, "running": JARVIS_DISPATCHER.running,
+            "max_concurrency": 1, "queued_count": queued, "running_count": running,
+            "blocked_count": blocked, "owner_id": JARVIS_DISPATCHER.owner_id}
 
 
 @app.get("/api/jarvis/approvals")
@@ -1854,6 +1884,13 @@ def ready(response: Response):
         "worker_available": WORKER_FILE.exists(),
         "deployment_manifest_available": DEPLOY_MANIFEST_FILE.exists(),
     }
+    checks["queue_dispatcher"] = {
+        "ok": (not QUEUE_DISPATCHER_ENABLED) or JARVIS_DISPATCHER.running,
+        "enabled": QUEUE_DISPATCHER_ENABLED,
+        "running": JARVIS_DISPATCHER.running,
+        "max_concurrency": 1,
+    }
+    ok = ok and checks["queue_dispatcher"]["ok"]
 
     if not ok:
         response.status_code = 503

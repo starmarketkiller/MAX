@@ -12,6 +12,7 @@ piu' semplice da ispezionare/diffare a mano, coerente con lo stile
 import json
 import os
 import sys
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,6 +45,7 @@ class EventLedger:
 
     def __init__(self, path=None):
         self.path = path or os.path.join(RUNTIME_STATE_DIR, "event_ledger_v1.jsonl")
+        self._lock = threading.RLock()
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
 
     def append(self, event_type, task_id, payload, actor="orchestrator_v1_core"):
@@ -58,20 +60,23 @@ class EventLedger:
         errors = validate(event, NEXUS_EVENT_SCHEMA)
         if errors:
             raise AssertionError(f"Evento non valido contro NEXUS_EVENT_V1: {errors}")
-        with open(self.path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(event, ensure_ascii=False) + "\n")
+        with self._lock:
+            with open(self.path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(event, ensure_ascii=False) + "\n")
+                f.flush()
         return event
 
     def read_all(self):
         if not os.path.exists(self.path):
             return []
-        events = []
-        with open(self.path, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    events.append(json.loads(line))
-        return events
+        with self._lock:
+            events = []
+            with open(self.path, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        events.append(json.loads(line))
+            return events
 
     def read_for_task(self, task_id):
         return [e for e in self.read_all() if e["task_id"] == task_id]

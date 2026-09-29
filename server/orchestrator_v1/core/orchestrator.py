@@ -90,11 +90,12 @@ class Orchestrator:
                           record["task_id"], {"reason": "dependencies pending" if not deps_ok else ""})
         return record["task_id"]
 
-    def process_task(self, task_id):
+    def process_task(self, task_id, claim_token=None):
         """Esegue UN ciclo completo (route -> execute -> verify -> retry/
         escalation -> result packet) per un singolo task. Ritorna il record
         aggiornato."""
         record = self.queue.try_promote(task_id)  # WAITING_DEPENDENCY -> QUEUED se ora pronto
+        self.queue.assert_claim(task_id, claim_token)
         if record["state"] not in ("QUEUED",):
             raise AssertionError(f"process_task richiede stato QUEUED, trovato {record['state']}")
 

@@ -86,6 +86,17 @@ services:
         generateValue: true
       - key: JARVIS_STATE_DIR
         value: /data/jarvis
+      # Durable Queue Dispatcher V1 runs in-process because Render disks cannot
+      # be mounted by both this web service and a separate worker service.
+      # Uvicorn remains single-process; max concurrency is enforced as 1.
+      - key: NEXUS_QUEUE_DISPATCHER_ENABLED
+        value: "true"
+      - key: NEXUS_QUEUE_DISPATCHER_POLL_SECONDS
+        value: "2"
+      - key: NEXUS_QUEUE_DISPATCHER_LEASE_SECONDS
+        value: "900"
+      - key: NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS
+        value: "25"
       - key: NEXUS_PUBLIC_URL
         value: https://nexus-backend-8o4y.onrender.com
       - key: ANTHROPIC_API_KEY    # chiave API Claude per l'AI Coach

@@ -41,9 +41,10 @@ def test_uvicorn_runtime_extras_are_portable_exact_and_hashed():
         assert requirement in lock
 
 
-def test_production_smoke_covers_jarvis_ollama_and_app():
+def test_production_smoke_covers_jarvis_dispatcher_ollama_and_app():
     assert REQUIRED_RUNTIME_MODULES == (
         "app",
         "jarvis_v1.service",
+        "orchestrator_v1.core.dispatcher",
         "orchestrator_v1.core.ollama_worker",
     )
