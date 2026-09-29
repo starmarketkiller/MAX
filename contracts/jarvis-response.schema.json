@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/jarvis-response.schema.json",
+  "title": "NEXUS JARVIS_RESPONSE_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["response_id", "conversation_id", "response_type", "summary", "details", "source_refs", "task_id", "status", "priority", "actions", "deep_link", "voice_summary", "generated_by", "confidence"],
+  "properties": {
+    "response_id": {"type": "string"}, "conversation_id": {"type": "string"},
+    "response_type": {"enum": ["ANSWER", "TASK_ACK", "TASK_STATUS", "APPROVAL", "ERROR"]},
+    "summary": {"type": "string"}, "details": {"type": "object"},
+    "source_refs": {"type": "array", "items": {"type": "string"}},
+    "task_id": {"type": ["string", "null"]}, "status": {"type": "string"},
+    "priority": {"enum": ["LOW", "NORMAL", "HIGH", "URGENT"]},
+    "actions": {"type": "array", "items": {"type": "object"}},
+    "deep_link": {"type": ["string", "null"]}, "voice_summary": {"type": ["string", "null"]},
+    "generated_by": {"type": "string"}, "confidence": {"enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]}
+  }
+}

@@ -77,6 +77,17 @@ services:
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
+      # Jarvis Access Layer V1: Telegram resta fail-closed finche' l'allowlist
+      # non viene configurata esplicitamente. Il webhook viene registrato solo
+      # dopo approvazione, mai automaticamente all'avvio.
+      - key: JARVIS_TELEGRAM_ALLOWED_USER_IDS
+        sync: false
+      - key: JARVIS_TELEGRAM_WEBHOOK_SECRET
+        generateValue: true
+      - key: JARVIS_STATE_DIR
+        value: /data/jarvis
+      - key: NEXUS_PUBLIC_URL
+        value: https://nexus-backend-8o4y.onrender.com
       - key: ANTHROPIC_API_KEY    # chiave API Claude per l'AI Coach
         sync: false
       - key: NEXUS_COACH_MODEL

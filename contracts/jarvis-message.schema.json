@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/jarvis-message.schema.json",
+  "title": "NEXUS JARVIS_MESSAGE_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["message_id", "user_id", "channel", "conversation_id", "timestamp", "input_type", "text", "attachments", "reply_to", "request_class", "priority", "metadata"],
+  "properties": {
+    "message_id": {"type": "string", "minLength": 1},
+    "user_id": {"type": "string", "minLength": 1},
+    "channel": {"type": "string", "minLength": 1},
+    "conversation_id": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "input_type": {"enum": ["TEXT", "VOICE", "IMAGE", "FILE", "CAMERA_CONTEXT", "SCREEN_CONTEXT"]},
+    "text": {"type": ["string", "null"]},
+    "attachments": {"type": "array", "items": {"type": "object"}},
+    "reply_to": {"type": ["string", "null"]},
+    "request_class": {"enum": ["QUERY", "TASK", "APPROVAL", "COMMAND", "FOLLOW_UP", "UNKNOWN"]},
+    "priority": {"enum": ["LOW", "NORMAL", "HIGH", "URGENT"]},
+    "metadata": {"type": "object"}
+  }
+}

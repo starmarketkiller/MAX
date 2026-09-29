@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/jarvis-card.schema.json",
+  "title": "NEXUS JARVIS_CARD_V1",
+  "type": "object", "additionalProperties": false,
+  "required": ["title", "subtitle", "summary", "priority", "status", "actions", "deep_link", "expires_at"],
+  "properties": {
+    "title": {"type": "string"}, "subtitle": {"type": "string"}, "summary": {"type": "string"},
+    "priority": {"enum": ["LOW", "NORMAL", "HIGH", "URGENT"]}, "status": {"type": "string"},
+    "actions": {"type": "array", "items": {"type": "object"}},
+    "deep_link": {"type": ["string", "null"]}, "expires_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

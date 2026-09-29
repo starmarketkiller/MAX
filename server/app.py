@@ -26,6 +26,7 @@ import sys
 import time
 import sqlite3
 import hashlib
+import hmac
 import secrets
 import urllib.parse
 import urllib.request
@@ -57,6 +58,9 @@ import company_control_plane
 import strategy_pipeline_read_model
 import strategy_census_read_model
 import research_control_plane
+from jarvis_v1.gateway import JarvisGateway
+from jarvis_v1.service import JarvisService
+from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
@@ -160,6 +164,9 @@ DEPLOY_MANIFEST_FILE = next((p for p in _MANIFEST_CANDIDATES if p and p.exists()
 # AUD0-MQL-002: l'identità di versione era incoerente tra artefatti. Una sola
 # costante alimenta FastAPI, /api/health e il registro delle migrazioni.
 APP_VERSION = "5.4.0-security-remediation"
+BUILD_GIT_SHA = (os.environ.get("RENDER_GIT_COMMIT") or os.environ.get("NEXUS_GIT_SHA")
+                 or os.environ.get("GIT_COMMIT") or "UNKNOWN")
+BUILD_TIME = os.environ.get("NEXUS_BUILD_TIME") or "UNKNOWN"
 
 
 
@@ -1378,6 +1385,14 @@ def require_mutation(request: Request,
 # --------------------------------------------------------------------------- #
 app = FastAPI(title="NEXUS self-hosted backend", version=APP_VERSION)
 
+_JARVIS_STATE_DIR = Path(os.environ.get("JARVIS_STATE_DIR", str(Path(DB_PATH).parent / "jarvis")))
+JARVIS_SERVICE = JarvisService(queue_path=str(_JARVIS_STATE_DIR / "task_queue_v1.json"),
+                               ledger_path=str(_JARVIS_STATE_DIR / "event_ledger_v1.jsonl"))
+JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
+JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
+                                  state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
+                                  gateway=JARVIS_GATEWAY)
+
 # AUD0-CORS-001: nessun middleware CORS era presente. Con frontend e backend
 # sulla stessa origine non serve, ma se si separano le origini le richieste
 # falliscono in modo opaco. Si registra una allow-list ESPLICITA — mai il
@@ -1653,6 +1668,94 @@ def health():
             "environment": ENVIRONMENT, "check": "liveness",
             # coach_configured è non-segreto: dice solo SE la chiave è presente.
             "coach_configured": bool(ANTHROPIC_API_KEY), "coach_model": COACH_MODEL}
+
+
+@app.get("/api/version")
+def version_info():
+    """Non-sensitive build identity used for repo/production alignment."""
+    return {"service": "nexus-backend", "app_version": APP_VERSION,
+            "git_sha": BUILD_GIT_SHA, "build_time": BUILD_TIME,
+            "environment": ENVIRONMENT}
+
+
+# ======================= JARVIS ACCESS LAYER V1 ========================= #
+@app.post("/api/jarvis/message")
+async def jarvis_message(request: Request, user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    body["user_id"] = user
+    body["channel"] = body.get("channel") or "WEB"
+    try:
+        return JARVIS_GATEWAY.handle(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:500])
+
+
+@app.get("/api/jarvis/tasks/{task_id}")
+def jarvis_task(task_id: str, user: str = Depends(require_user)):
+    try:
+        return JARVIS_SERVICE.queue.get(task_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="task not found")
+
+
+@app.get("/api/jarvis/activity")
+def jarvis_activity(limit: int = 100, user: str = Depends(require_user)):
+    events = JARVIS_SERVICE.ledger.read_all()
+    return {"count": len(events), "events": events[-max(1, min(limit, 500)):]}
+
+
+@app.get("/api/jarvis/agents")
+def jarvis_agents(user: str = Depends(require_user)):
+    items = JARVIS_SERVICE.agents()
+    return {"count": len(items), "items": items}
+
+
+@app.get("/api/jarvis/telegram/status")
+def jarvis_telegram_status(user: str = Depends(require_user)):
+    return {"configured": JARVIS_TELEGRAM.configured,
+            "allowed_user_count": len(JARVIS_TELEGRAM.allowed_users),
+            "webhook_secret_configured": bool(os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET")),
+            "token_exposed": False}
+
+
+@app.get("/api/jarvis/approvals")
+def jarvis_approvals(user: str = Depends(require_user)):
+    items = JARVIS_SERVICE.queue.list_by_state("WAITING_APPROVAL")
+    return {"count": len(items), "items": items}
+
+
+@app.post("/api/jarvis/approvals/{task_id}")
+async def jarvis_approval(task_id: str, request: Request,
+                          user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    message = {"message_id": f"web:{secrets.token_hex(8)}", "user_id": user,
+               "channel": "WEB", "conversation_id": f"approval:{task_id}",
+               "timestamp": iso(), "input_type": "TEXT", "text": body.get("action"),
+               "attachments": [], "reply_to": None, "request_class": "APPROVAL",
+               "priority": "HIGH", "metadata": {"task_id": task_id,
+                                                   "approval_action": body.get("action")}}
+    return JARVIS_GATEWAY.handle(message)
+
+
+@app.post("/api/jarvis/telegram/webhook")
+async def jarvis_telegram_webhook(request: Request,
+                                  x_telegram_bot_api_secret_token: Optional[str] = Header(None)):
+    expected = os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET", "")
+    if not expected or not x_telegram_bot_api_secret_token or not hmac.compare_digest(
+            expected, x_telegram_bot_api_secret_token):
+        raise HTTPException(status_code=401, detail="unauthorized webhook")
+    body = await read_json_body(request)
+    try:
+        response = JARVIS_TELEGRAM.handle_update(body)
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="unauthorized Telegram user")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:200])
+    except RuntimeError:
+        raise HTTPException(status_code=429, detail="rate limit exceeded")
+    chat_id = ((body.get("callback_query") or {}).get("message") or body.get("message") or {}).get("chat", {}).get("id")
+    delivery = JARVIS_TELEGRAM.send(chat_id, response) if chat_id and response.get("status") != "DUPLICATE" else {"sent": False, "reason": "DUPLICATE"}
+    return {"ok": True, "response": response, "delivery": delivery}
 
 
 @app.get("/api/dukascopy_status")

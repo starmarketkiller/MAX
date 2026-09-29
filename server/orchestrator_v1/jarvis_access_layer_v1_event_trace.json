@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "task_id": "TASK_12E8E0341E85",
+  "state": "QUEUED",
+  "executor": null,
+  "events": [
+    {
+      "event_type": "TASK_CREATED",
+      "actor": "orchestrator_v1_core"
+    },
+    {
+      "event_type": "TASK_QUEUED",
+      "actor": "orchestrator_v1_core"
+    }
+  ],
+  "assertions": {
+    "real_task_manifest": true,
+    "real_queue": true,
+    "jarvis_selected_executor": false,
+    "premium_calls": 0
+  }
+}
