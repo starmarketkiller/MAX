@@ -78,6 +78,16 @@ COPY LocalBridge/nexus_local_worker.py /app/protected/nexus_local_worker.py
 COPY deploy/deployment-manifest.json /app/protected/deployment-manifest.json
 COPY contracts/ /app/contracts/
 
+# Production-only dependency/import smoke. This runs inside the final Python
+# image after installation from requirements.lock.txt, so missing runtime
+# packages fail the image build instead of surfacing only during Render start.
+RUN NEXUS_CONTRACTS_DIR=/app/contracts \
+    NEXUS_DB_PATH=/tmp/nexus-import-smoke.db \
+    JARVIS_STATE_DIR=/tmp/jarvis-import-smoke \
+    python smoke_production_imports.py \
+ && rm -f /tmp/nexus-import-smoke.db \
+ && rm -rf /tmp/jarvis-import-smoke
+
 # Corpus read-only del Knowledge Browser. Solo Markdown e database JSON
 # versionati entrano nell'immagine; script, vault non-trading e risultati raw
 # restano esclusi dal build context.
