@@ -1,0 +1,94 @@
+{
+  "task_id": "TASK_NEXUS_0009_JARVIS_INTEGRATION",
+  "state": "ESCALATION_REQUIRED",
+  "escalation": {
+    "target": "MANUAL_REVIEW",
+    "classification": "ROUTER_DIRECT_ESCALATION",
+    "context_packet": {
+      "objective": "Collegare la Multi-Agent Review & Finalization Pipeline V1 (#0008, gia' costruita) al Jarvis Access Layer V1 (#0007, gia' costruito): ogni task creata da Jarvis deve passare per WORK_PRODUCT_V1/review_engine prima di essere consegnata. Jarvis non deve mai consegnare DRAFT/UNDER_REVIEW/REVISION_REQUIRED o un'escalation aperta come risultato finale. Quando una review premium serve ma il provider non e' connesso, Jarvis deve restituire un messaggio esplicito di tipo ESCALATION_READY_FOR_MANUAL_DELIVERY, non un output silenziosamente incompleto.",
+      "relevant_findings": [
+        "Classificazione fallimento: ROUTER_DIRECT_ESCALATION",
+        "Task originale: Jarvis Multi-Agent Finalization Integration"
+      ],
+      "canonical_artifacts": [],
+      "current_head": "0fddc9b90a3dc82697ae81d7b3d09a113f52f377",
+      "allowed_files": [
+        "server/jarvis_v1/*",
+        "server/review_pipeline_v1/*",
+        "server/tests/test_jarvis_access_layer_v1.py",
+        "server/orchestrator_v1/verify_nexus_task_0009.py"
+      ],
+      "exact_question": "[ROUTER_DIRECT_ESCALATION] Collegare la Multi-Agent Review & Finalization Pipeline V1 (#0008, gia' costruita) al Jarvis Access Layer V1 (#0007, gia' costruito): ogni task creata da Jarvis deve passare per WORK_PRODUCT_V1/review_engine prima di essere consegnata. Jarvis non deve mai consegnare DRAFT/UNDER_REVIEW/REVISION_REQUIRED o un'escalation aperta come risultato finale. Quando una review premium serve ma il provider non e' connesso, Jarvis deve restituire un messaggio esplicito di tipo ESCALATION_READY_FOR_MANUAL_DELIVERY, non un output silenziosamente incompleto. - i tentativi locali (1) sono falliti, serve intervento MANUAL_REVIEW.",
+      "previous_attempts": [
+        "Tentativo 1 (executor=None): ROUTER_DIRECT_ESCALATION"
+      ],
+      "failures": [],
+      "tests": [
+        "server/orchestrator_v1/verify_nexus_task_0009.py"
+      ],
+      "constraints": [
+        "files_allowed=['server/jarvis_v1/*', 'server/review_pipeline_v1/*', 'server/tests/test_jarvis_access_layer_v1.py', 'server/orchestrator_v1/verify_nexus_task_0009.py']",
+        "files_forbidden=['MQL5/*', 'Product-Platform/*', 'server/research_scripts/phase7/*', 'server/funding_v1/*', 'render.yaml']",
+        "risk_level=A1"
+      ],
+      "forbidden_actions": [
+        "push automatico",
+        "deploy",
+        "modifiche strategie di trading",
+        "trading reale"
+      ],
+      "output_required": "Risolvere: Collegare la Multi-Agent Review & Finalization Pipeline V1 (#0008, gia' costruita) al Jarvis Access Layer V1 (#0007, gia' costruito): ogni task creata da Jarvis deve passare per WORK_PRODUCT_V1/review_engine prima di essere consegnata. Jarvis non deve mai consegnare DRAFT/UNDER_REVIEW/REVISION_REQUIRED o un'escalation aperta come risultato finale. Quando una review premium serve ma il provider non e' connesso, Jarvis deve restituire un messaggio esplicito di tipo ESCALATION_READY_FOR_MANUAL_DELIVERY, non un output silenziosamente incompleto. rispettando success_criteria: ['Jarvis non consegna mai DRAFT/UNDER_REVIEW/REVISION_REQUIRED come risultato finale', 'quando serve una review premium non connessa, risposta esplicita ESCALATION_READY_FOR_MANUAL_DELIVERY, mai un bypass silenzioso', \"gli 11 test esistenti di test_jarvis_access_layer_v1.py continuano a passare (nessuna regressione sul comportamento gia' validato)\", 'verifier PASS', 'regression PASS']"
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_e42bb4fb55c14118",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0009_JARVIS_INTEGRATION",
+      "timestamp": "2026-09-29T13:02:05.802182+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Jarvis Multi-Agent Finalization Integration",
+        "task_type": "CODE",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_f952010b9c474f9a",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0009_JARVIS_INTEGRATION",
+      "timestamp": "2026-09-29T13:02:05.817554+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_f5db0d13d2ec45d3",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0009_JARVIS_INTEGRATION",
+      "timestamp": "2026-09-29T13:02:05.834945+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "ESCALATION_REQUIRED",
+        "executor": "MANUAL_REVIEW",
+        "reason": "Nessun agente locale supera il capability match e il task non rientra chiaramente in scientific_risk o code_risk alti - classificazione ambigua, serve revisione umana (mai un tier scelto a caso).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_a97469ef35cd4dd1",
+      "event_type": "ESCALATION_REQUIRED",
+      "task_id": "TASK_NEXUS_0009_JARVIS_INTEGRATION",
+      "timestamp": "2026-09-29T13:02:05.834945+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "target": "MANUAL_REVIEW",
+        "classification": "ROUTER_DIRECT_ESCALATION",
+        "errors": [],
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ]
+}

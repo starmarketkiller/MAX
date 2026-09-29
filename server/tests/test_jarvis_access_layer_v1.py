@@ -129,6 +129,66 @@ def test_version_and_jarvis_routes_are_protected(tmp_path, monkeypatch):
         assert client.post("/api/jarvis/telegram/webhook", json={"update_id": 1}).status_code == 401
 
 
+def test_completed_task_with_verified_producer_output_delivers_finalized_result(service, monkeypatch):
+    """NEXUS TASK #0009 - Jarvis non consegna mai il risultato grezzo: un
+    task COMPLETED con verifier.passed=True su un work_type con
+    review_required=False deve arrivare a FINALIZED tramite la pipeline.
+    (Il work_type di default di Jarvis, business_analysis, RICHIEDE review
+    per costruzione - vedi test successivo - quindi qui si forza
+    esplicitamente il caso senza review, esattamente come farebbe in
+    futuro un work_type dichiarato via manifest metadata.)"""
+    monkeypatch.setattr("jarvis_v1.service._DEFAULT_JARVIS_WORK_TYPE", "routine_summary")
+    created = JarvisGateway(service).handle(message(
+        "Jarvis, crea una NEXUS TASK per un riassunto di routine."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "RUNNING")
+    service.queue.transition(task_id, "COMPLETED", result_packet={
+        "task_id": task_id, "executor": "LOCAL_FAST_MINISTRAL3B",
+        "verifier": {"ran": True, "passed": True, "errors": []},
+        "files_read": ["a.md"], "files_changed": [], "tests": {"ran": False, "passed": 0, "failed": 0}})
+    follow = JarvisGateway(service).handle(message("A che punto è?", conversation="c1"))
+    assert follow["status"] == "FINALIZED"
+    assert follow["details"]["final_result_packet"]["premium_calls"] == 0
+    assert "TASK COMPLETED" in follow["summary"]
+
+
+def test_completed_task_needing_unconnected_review_is_escalation_ready_for_manual_delivery(service):
+    """work_type di default (business_analysis) impone review_required=True -
+    con nessun provider STRATEGIC_GENERALIST connesso nel registry reale,
+    Jarvis deve dirlo esplicitamente, mai fingere un completamento."""
+    created = JarvisGateway(service).handle(message(
+        "Jarvis, crea una NEXUS TASK per analizzare l'opportunità Review Kit QR/NFC."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "RUNNING")
+    service.queue.transition(task_id, "COMPLETED", result_packet={
+        "task_id": task_id, "executor": "LOCAL_FAST_MINISTRAL3B",
+        "verifier": {"ran": True, "passed": True, "errors": []}})
+    follow = JarvisGateway(service).handle(message("A che punto è?", conversation="c1"))
+    assert follow["status"] == "ESCALATION_READY_FOR_MANUAL_DELIVERY"
+    assert "review" in follow["summary"].lower()
+    assert "pacchetto di escalation" in follow["summary"]
+
+
+def test_completed_task_review_pipeline_result_is_cached_across_followups(service, monkeypatch):
+    monkeypatch.setattr("jarvis_v1.service._DEFAULT_JARVIS_WORK_TYPE", "routine_summary")
+    created = JarvisGateway(service).handle(message("Jarvis, crea una NEXUS TASK."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "RUNNING")
+    service.queue.transition(task_id, "COMPLETED", result_packet={
+        "task_id": task_id, "executor": "LOCAL_FAST_MINISTRAL3B",
+        "verifier": {"ran": True, "passed": True, "errors": []}})
+    calls = {"n": 0}
+    from review_engine import process_work_product as _real
+    def _counting(*a, **k):
+        calls["n"] += 1
+        return _real(*a, **k)
+    monkeypatch.setattr("jarvis_v1.service.process_work_product", _counting)
+    JarvisGateway(service).handle(message("A che punto è?", conversation="c1"))
+    JarvisGateway(service).handle(message("A che punto è ora?", conversation="c1",
+                                         metadata={"task_id": task_id}))
+    assert calls["n"] == 1
+
+
 def test_authenticated_jarvis_api_uses_real_service(tmp_path, monkeypatch):
     svc = JarvisService(str(tmp_path / "api-queue.json"), str(tmp_path / "api-ledger.jsonl"))
     monkeypatch.setattr(backend, "JARVIS_SERVICE", svc)

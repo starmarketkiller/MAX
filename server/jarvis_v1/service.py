@@ -16,13 +16,25 @@ from pathlib import Path
 SERVER = Path(__file__).resolve().parents[1]
 ROOT = SERVER.parent
 ORCH = SERVER / "orchestrator_v1"
+REVIEW_PIPELINE = SERVER / "review_pipeline_v1"
 sys.path.insert(0, str(ORCH))
+sys.path.insert(0, str(REVIEW_PIPELINE))
 
 from core.capability import load_registry  # noqa: E402
 from core.ledger import EventLedger  # noqa: E402
 from core.ollama_worker import call_local_model, is_ollama_reachable  # noqa: E402
 from core.orchestrator import Orchestrator  # noqa: E402
 from core.task_queue import new_task_id  # noqa: E402
+import jarvis_delivery  # noqa: E402
+from review_engine import process_work_product  # noqa: E402
+
+# NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
+# work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
+# review_required=True nella Review Matrix: e' la scelta onesta (Jarvis fa
+# tipicamente analisi, non backfill/codice), non la piu' comoda - se un
+# provider di review non e' ancora connesso il risultato sara' davvero
+# ESCALATION_READY_FOR_MANUAL_DELIVERY, mai una consegna finale non revisionata.
+_DEFAULT_JARVIS_WORK_TYPE = "business_analysis"
 
 TENANT_ID = "tenant-1"
 CONTROL_PLANE_PATH = "/app/company"
@@ -52,6 +64,11 @@ class JarvisService:
         self.queue = self.orchestrator.queue
         self.ledger = self.orchestrator.ledger
         self.conversations: dict[str, str] = {}
+        # NEXUS TASK #0009 - cache process-local (stessa disciplina gia'
+        # dichiarata per self.conversations): un WORK_PRODUCT_V1 va calcolato
+        # una sola volta per task_id, mai ricalcolato/ri-escalato a ogni
+        # singolo follow-up ("a che punto e'?").
+        self._work_product_cache: dict[str, tuple] = {}
 
     def _response(self, message, response_type, summary, *, details=None, task_id=None,
                   status="COMPLETED", actions=None, confidence="HIGH", generated_by="jarvis_v1"):
@@ -190,9 +207,62 @@ class JarvisService:
         try: record = self.queue.get(task_id)
         except KeyError: return self._response(message, "ERROR", "Task not found.", task_id=task_id, status="UNKNOWN")
         self.ledger.append("TASK_STATUS_REQUESTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
+        if record["state"] == "COMPLETED":
+            return self._deliver_finalized_result(message, task_id, record)
         return self._response(message, "TASK_STATUS", f"{task_id}: {record['state']}", task_id=task_id,
                               status=record["state"], details={"executor": record.get("executor"),
                               "dependencies": record.get("dependencies"), "source_refs": ["orchestrator queue"]})
+
+    def _run_review_pipeline(self, task_id, record):
+        """NEXUS TASK #0009 - collega la Multi-Agent Review & Finalization
+        Pipeline V1 (#0008) al primo punto in cui Jarvis osserva un producer
+        output REALE (record['result_packet'], scritto da chi ha eseguito il
+        task - il Router resta l'unico che sceglie l'executor, Jarvis legge
+        solo il risultato). Nessun output senza verifier.passed=True viene
+        mai trattato come una verifica riuscita per default."""
+        result_packet = record.get("result_packet") or {}
+        manifest = record.get("manifest") or {}
+        work_type = (manifest.get("metadata") or {}).get("work_type") or _DEFAULT_JARVIS_WORK_TYPE
+        verifier_info = result_packet.get("verifier") or {}
+
+        def attempt():
+            return {"agent_id": record.get("executor") or "UNKNOWN",
+                   "specialist_role": "LOCAL_GENERALIST", "output": result_packet,
+                   "verify_passed": bool(verifier_info.get("passed")),
+                   "verify_errors": verifier_info.get("errors") or []}
+
+        wp, frp, _events = process_work_product(
+            task_id=task_id, work_type=work_type, attempts=[attempt], ledger=self.ledger,
+            sources=result_packet.get("files_read", []),
+            changed_files=result_packet.get("files_changed", []),
+            tests=result_packet.get("tests") or {"ran": False, "passed": 0, "failed": 0})
+        return wp, frp
+
+    def _deliver_finalized_result(self, message, task_id, record):
+        if task_id in self._work_product_cache:
+            wp, frp = self._work_product_cache[task_id]
+        else:
+            wp, frp = self._run_review_pipeline(task_id, record)
+            self._work_product_cache[task_id] = (wp, frp)
+
+        if frp is not None:
+            summary = jarvis_delivery.format_task_completed_summary(frp)
+            return self._response(message, "TASK_STATUS", summary, task_id=task_id, status="FINALIZED",
+                                  details={"final_result_packet": frp, "source_refs": frp["sources"]},
+                                  confidence=frp["confidence"], generated_by="review_pipeline_v1")
+
+        if wp["blocked_reason"] and "ESCALATION_READY_FOR_MANUAL_DELIVERY" in wp["blocked_reason"]:
+            reviewer_role = (wp.get("reviewer") or {}).get("specialist_role", "specialist")
+            text = (f"Il lavoro locale è completato, ma la policy richiede una review "
+                   f"{reviewer_role} - il provider non è ancora connesso in automatico. "
+                   "Ho preparato il pacchetto di escalation, serve invio manuale.")
+            return self._response(message, "TASK_STATUS", text, task_id=task_id,
+                                  status="ESCALATION_READY_FOR_MANUAL_DELIVERY",
+                                  details={"blocked_reason": wp["blocked_reason"]}, confidence="MEDIUM")
+
+        return self._response(message, "TASK_STATUS", f"Lavoro bloccato: {wp['blocked_reason']}",
+                              task_id=task_id, status="BLOCKED",
+                              details={"blocked_reason": wp["blocked_reason"]}, confidence="LOW")
 
     def approval(self, message):
         meta = message.get("metadata", {}); task_id = meta.get("task_id")

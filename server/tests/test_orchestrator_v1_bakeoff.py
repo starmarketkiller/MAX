@@ -50,11 +50,18 @@ def test_pilot_v2_corrected_passes_and_documents_corrections():
 
 
 def test_agent_capability_registry_has_two_ministral_agents():
+    """NEXUS TASK #0008 ha esteso il registry con 3 record di READINESS
+    (Claude/Codex/ChatGPT come specialist provider, mai selezionabili in
+    automatico - vedi test_agent_registry_unchanged_since_bakeoff in
+    test_orchestrator_v1_core.py) - questo test resta sui 2 agenti Ministral
+    del bake-off, non sull'insieme completo del registry."""
     registry = _load("agent_capability_registry_v1.json")
     assert registry["schema_version"] == 1
     agent_ids = {a["agent_id"] for a in registry["agents"]}
-    assert agent_ids == {"LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B"}
-    for a in registry["agents"]:
+    assert {"LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B"} <= agent_ids
+    ministral_agents = [a for a in registry["agents"]
+                       if a["agent_id"] in ("LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B")]
+    for a in ministral_agents:
         assert a["model_or_runtime"].startswith("ministral-3:3b")
 
 

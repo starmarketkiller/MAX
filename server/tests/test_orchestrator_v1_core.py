@@ -200,6 +200,15 @@ def test_orchestrator_escalation_builds_valid_context_packet():
 
 
 def test_agent_registry_unchanged_since_bakeoff():
+    """I 2 agenti Ministral del bake-off restano invariati - NEXUS TASK
+    #0008 ha aggiunto 3 record di READINESS (Claude/Codex/ChatGPT) accanto
+    a questi, mai selezionabili in automatico (find_capable_agents li
+    esclude sempre per availability/quota_state - vedi
+    test_review_pipeline_v1.py)."""
     registry = load_registry()
     agent_ids = {a["agent_id"] for a in registry["agents"]}
-    assert agent_ids == {"LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B"}
+    assert {"LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B"} <= agent_ids
+    for agent_id in ("LOCAL_FAST_MINISTRAL3B", "LOCAL_STRONG_MINISTRAL3B"):
+        agent = next(a for a in registry["agents"] if a["agent_id"] == agent_id)
+        assert agent["local_or_remote"] == "LOCAL"
+        assert agent["cost_class"] == "LOCAL_COMPUTE"
