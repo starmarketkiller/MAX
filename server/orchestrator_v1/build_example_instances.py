@@ -49,7 +49,8 @@ def build():
             "vault_access": "READ_WRITE", "mt5_access": "NONE", "max_concurrency": 1,
             "cost_class": "FREE", "quota_state": "OFFLINE", "availability": "OFFLINE",
             "trust_level": "SANDBOXED", "allowed_task_types": ["BACKFILL", "DOCUMENTATION", "MAINTENANCE"],
-            "forbidden_task_types": ["DEPLOY", "MARKET", "MT5_RUN"]},
+            "forbidden_task_types": ["DEPLOY", "MARKET", "MT5_RUN"],
+            "specialist_role": "LOCAL_GENERALIST", "integration_status": "NOT_CONFIGURED"},
             {"agent_id": "claude-sonnet-5", "provider": "anthropic",
             "model_or_runtime": "claude-sonnet-5", "local_or_remote": "REMOTE",
             "capabilities": ["json_output", "tool_calling", "python", "scientific_reasoning",
@@ -59,7 +60,8 @@ def build():
             "mt5_access": "RUN_MANAGEMENT", "max_concurrency": 1, "cost_class": "EXPENSIVE_PREMIUM",
             "quota_state": "AVAILABLE", "availability": "ONLINE", "trust_level": "FULLY_TRUSTED",
             "allowed_task_types": ["RESEARCH", "CODE", "MARKET", "MT5_RUN", "MAINTENANCE"],
-            "forbidden_task_types": []},
+            "forbidden_task_types": [],
+            "specialist_role": "SCIENTIFIC_RESEARCHER", "integration_status": "NOT_CONFIGURED"},
         ],
     }
 

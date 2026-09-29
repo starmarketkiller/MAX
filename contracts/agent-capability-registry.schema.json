@@ -22,7 +22,7 @@
         "coding_ability", "scientific_reasoning", "browser_access", "terminal_access",
         "file_access", "github_access", "vault_access", "mt5_access", "max_concurrency",
         "cost_class", "quota_state", "availability", "trust_level", "allowed_task_types",
-        "forbidden_task_types"
+        "forbidden_task_types", "specialist_role", "integration_status"
       ],
       "properties": {
         "agent_id": { "type": "string" },
@@ -40,11 +40,21 @@
         "mt5_access": { "type": "string", "enum": ["NONE", "READ_ONLY", "RUN_MANAGEMENT"] },
         "max_concurrency": { "type": "integer", "minimum": 0 },
         "cost_class": { "type": "string", "enum": ["FREE", "LOCAL_COMPUTE", "CHEAP_PREMIUM", "EXPENSIVE_PREMIUM"] },
-        "quota_state": { "type": "string", "enum": ["AVAILABLE", "LOW_QUOTA", "EXHAUSTED", "OFFLINE", "RATE_LIMITED"] },
+        "quota_state": { "type": "string", "enum": ["AVAILABLE", "LOW_QUOTA", "EXHAUSTED", "OFFLINE", "RATE_LIMITED", "UNKNOWN"] },
         "availability": { "type": "string", "enum": ["ONLINE", "OFFLINE", "DEGRADED"] },
         "trust_level": { "type": "string", "enum": ["UNTRUSTED", "SANDBOXED", "TRUSTED", "FULLY_TRUSTED"] },
         "allowed_task_types": { "type": "array", "items": { "type": "string" } },
-        "forbidden_task_types": { "type": "array", "items": { "type": "string" } }
+        "forbidden_task_types": { "type": "array", "items": { "type": "string" } },
+        "specialist_role": {
+          "type": "string",
+          "description": "NEXUS TASK #0008 - ruolo nella Multi-Agent Review & Finalization Pipeline V1. Un agente puo' avere un solo ruolo primario qui; copertura di piu' ruoli e' una decisione di REVIEW_MATRIX_V1, non di questo registry.",
+          "enum": ["DETERMINISTIC", "LOCAL_GENERALIST", "SCIENTIFIC_RESEARCHER", "CODE_SPECIALIST", "STRATEGIC_GENERALIST", "SECOND_OPINION", "DEPLOYMENT_SPECIALIST"]
+        },
+        "integration_status": {
+          "type": "string",
+          "description": "NEXUS TASK #0008 - readiness del connector automatico verso questo provider (mai simulata: NOT_CONFIGURED/UNAVAILABLE finche' non esiste un percorso di invio reale).",
+          "enum": ["CONFIGURED", "NOT_CONFIGURED", "AVAILABLE", "UNAVAILABLE"]
+        }
       }
     }
   }

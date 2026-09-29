@@ -1,0 +1,42 @@
+{
+  "generated_at": "2026-09-29T12:43:55.200684+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\review_pipeline_v1\\build_premium_budget_policy_instance.py",
+  "canonical_sha256": "efaadcef22e10c186f96660ed0bfb138b513311bbce277f6db776d9868aa0d04",
+  "payload": {
+    "schema_version": 1,
+    "levels": [
+      "FREE_ONLY",
+      "LOW_COST",
+      "PREMIUM_IF_NEEDED",
+      "PREMIUM_ALLOWED",
+      "CRITICAL_REVIEW"
+    ],
+    "rules": [
+      {
+        "level": "FREE_ONLY",
+        "premium_allowed_condition": "mai - nessun premium provider ammesso per costruzione",
+        "requires_user_approval": false
+      },
+      {
+        "level": "LOW_COST",
+        "premium_allowed_condition": "premium solo dopo almeno 1 fallimento locale gia' verificato dal verifier (mai al primo tentativo)",
+        "requires_user_approval": false
+      },
+      {
+        "level": "PREMIUM_IF_NEEDED",
+        "premium_allowed_condition": "premium se la confidence del risultato locale e' sotto soglia o se la Review Matrix impone review_required=True con un reviewer premium",
+        "requires_user_approval": false
+      },
+      {
+        "level": "PREMIUM_ALLOWED",
+        "premium_allowed_condition": "il Router puo' scegliere direttamente un premium provider, senza dover prima fallire in locale",
+        "requires_user_approval": false
+      },
+      {
+        "level": "CRITICAL_REVIEW",
+        "premium_allowed_condition": "review premium sempre obbligatoria",
+        "requires_user_approval": true
+      }
+    ]
+  }
+}

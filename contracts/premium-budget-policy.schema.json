@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/premium-budget-policy.schema.json",
+  "title": "NEXUS PREMIUM_BUDGET_POLICY_V1",
+  "description": "NEXUS TASK #0008 punto 5 - livelli di budget premium e regole deterministiche di quando un premium provider puo' essere usato. Mai un router che decide 'a sensazione': ogni livello ha una regola esplicita ricontrollabile.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "levels", "rules"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["FREE_ONLY", "LOW_COST", "PREMIUM_IF_NEEDED", "PREMIUM_ALLOWED", "CRITICAL_REVIEW"]
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/rule" }
+    }
+  },
+  "definitions": {
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "premium_allowed_condition", "requires_user_approval"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["FREE_ONLY", "LOW_COST", "PREMIUM_IF_NEEDED", "PREMIUM_ALLOWED", "CRITICAL_REVIEW"]
+        },
+        "premium_allowed_condition": { "type": "string" },
+        "requires_user_approval": { "type": "boolean" }
+      }
+    }
+  }
+}

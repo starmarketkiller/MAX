@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-09-29T12:43:55.317410+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\review_pipeline_v1\\build_work_product_lifecycle_instance.py",
+  "canonical_sha256": "1de99d713944a30702761eaf912ee058d19e732182532538e8c4921fb986fe71",
+  "payload": {
+    "schema_version": 1,
+    "states": [
+      "DRAFT",
+      "VERIFYING",
+      "VERIFIED",
+      "REVIEW_REQUIRED",
+      "UNDER_REVIEW",
+      "REVISION_REQUIRED",
+      "REVISED",
+      "FINALIZING",
+      "FINALIZED",
+      "DELIVERED",
+      "BLOCKED"
+    ],
+    "allowed_transitions": {
+      "DRAFT": [
+        "VERIFYING",
+        "BLOCKED"
+      ],
+      "VERIFYING": [
+        "VERIFIED",
+        "REVISION_REQUIRED",
+        "BLOCKED"
+      ],
+      "VERIFIED": [
+        "REVIEW_REQUIRED",
+        "FINALIZING",
+        "BLOCKED"
+      ],
+      "REVIEW_REQUIRED": [
+        "UNDER_REVIEW",
+        "BLOCKED"
+      ],
+      "UNDER_REVIEW": [
+        "FINALIZING",
+        "REVISION_REQUIRED",
+        "BLOCKED"
+      ],
+      "REVISION_REQUIRED": [
+        "REVISED",
+        "BLOCKED"
+      ],
+      "REVISED": [
+        "VERIFYING",
+        "BLOCKED"
+      ],
+      "FINALIZING": [
+        "FINALIZED",
+        "BLOCKED"
+      ],
+      "FINALIZED": [
+        "DELIVERED"
+      ],
+      "DELIVERED": [],
+      "BLOCKED": [
+        "DRAFT"
+      ]
+    },
+    "max_review_loops": 2
+  }
+}

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T20:31:57.737689+00:00",
+  "generated_at": "2026-09-29T12:35:14.507647+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_agent_capability_registry.py",
-  "canonical_sha256": "f5ee7c0b8274f296a8d6f4f5803cb8e8590edf7b91d099e820885dc1fadd38d9",
+  "canonical_sha256": "e37d715c52792fdff58730deba566b52d006ed0f505630ced6b77342b0d47eb1",
   "payload": {
     "schema_version": 1,
     "agents": [
@@ -42,7 +42,9 @@
           "MT5_RUN",
           "APPROVAL",
           "MARKET"
-        ]
+        ],
+        "specialist_role": "LOCAL_GENERALIST",
+        "integration_status": "AVAILABLE"
       },
       {
         "agent_id": "LOCAL_STRONG_MINISTRAL3B",
@@ -87,7 +89,116 @@
           "APPROVAL",
           "MARKET",
           "RESEARCH"
-        ]
+        ],
+        "specialist_role": "LOCAL_GENERALIST",
+        "integration_status": "AVAILABLE"
+      },
+      {
+        "agent_id": "CLAUDE_TIER3",
+        "provider": "anthropic",
+        "model_or_runtime": "claude (sessione conversazionale)",
+        "local_or_remote": "REMOTE",
+        "capabilities": [
+          "scientific_reasoning",
+          "architecture_design",
+          "strategic_ambiguity_resolution",
+          "code_review"
+        ],
+        "coding_ability": "STRONG",
+        "scientific_reasoning": "STRONG",
+        "browser_access": false,
+        "terminal_access": false,
+        "file_access": "NONE",
+        "github_access": false,
+        "vault_access": "NONE",
+        "mt5_access": "NONE",
+        "max_concurrency": 1,
+        "cost_class": "EXPENSIVE_PREMIUM",
+        "quota_state": "UNKNOWN",
+        "availability": "OFFLINE",
+        "trust_level": "FULLY_TRUSTED",
+        "allowed_task_types": [
+          "RESEARCH",
+          "CODE",
+          "DOCUMENTATION"
+        ],
+        "forbidden_task_types": [
+          "DEPLOY",
+          "MT5_RUN",
+          "MARKET"
+        ],
+        "specialist_role": "SCIENTIFIC_RESEARCHER",
+        "integration_status": "NOT_CONFIGURED"
+      },
+      {
+        "agent_id": "CODEX_TIER4",
+        "provider": "openai-codex",
+        "model_or_runtime": "codex (MCP server)",
+        "local_or_remote": "REMOTE",
+        "capabilities": [
+          "complex_code_change",
+          "multi_file_refactor"
+        ],
+        "coding_ability": "STRONG",
+        "scientific_reasoning": "MODERATE",
+        "browser_access": false,
+        "terminal_access": true,
+        "file_access": "READ_WRITE",
+        "github_access": true,
+        "vault_access": "NONE",
+        "mt5_access": "NONE",
+        "max_concurrency": 1,
+        "cost_class": "EXPENSIVE_PREMIUM",
+        "quota_state": "UNKNOWN",
+        "availability": "OFFLINE",
+        "trust_level": "TRUSTED",
+        "allowed_task_types": [
+          "CODE",
+          "DEPLOY"
+        ],
+        "forbidden_task_types": [
+          "MT5_RUN",
+          "MARKET",
+          "APPROVAL"
+        ],
+        "specialist_role": "CODE_SPECIALIST",
+        "integration_status": "CONFIGURED"
+      },
+      {
+        "agent_id": "CHATGPT_SPECIALIST",
+        "provider": "openai-chatgpt",
+        "model_or_runtime": "chatgpt (non connesso)",
+        "local_or_remote": "REMOTE",
+        "capabilities": [
+          "business_analysis",
+          "second_opinion"
+        ],
+        "coding_ability": "MODERATE",
+        "scientific_reasoning": "MODERATE",
+        "browser_access": false,
+        "terminal_access": false,
+        "file_access": "NONE",
+        "github_access": false,
+        "vault_access": "NONE",
+        "mt5_access": "NONE",
+        "max_concurrency": 1,
+        "cost_class": "CHEAP_PREMIUM",
+        "quota_state": "UNKNOWN",
+        "availability": "OFFLINE",
+        "trust_level": "TRUSTED",
+        "allowed_task_types": [
+          "RESEARCH",
+          "DOCUMENTATION"
+        ],
+        "forbidden_task_types": [
+          "DEPLOY",
+          "MT5_RUN",
+          "MARKET",
+          "APPROVAL",
+          "CODE"
+        ],
+        "specialist_role": "STRATEGIC_GENERALIST",
+        "integration_status": "NOT_CONFIGURED"
       }
     ]
   }

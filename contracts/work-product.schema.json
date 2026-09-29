@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/work-product.schema.json",
+  "title": "NEXUS WORK_PRODUCT_V1",
+  "description": "NEXUS TASK #0008 - il contenitore che segue un pezzo di lavoro dal primo output grezzo di un producer fino alla consegna finale a Jarvis. Fail-closed: solo transizioni elencate in ALLOWED_TRANSITIONS sono valide (stessa disciplina di contracts/opportunity-lifecycle.schema.json). Nessuna FINAL DELIVERY finche' la review richiesta non e' passata.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "work_product_id", "task_id", "work_type", "state", "producer", "reviewer",
+    "verifier", "finalizer", "review_required", "revision_count", "max_review_loops",
+    "created_at", "updated_at"
+  ],
+  "properties": {
+    "work_product_id": { "type": "string" },
+    "task_id": { "type": "string" },
+    "work_type": {
+      "type": "string",
+      "description": "Chiave usata per il lookup in REVIEW_MATRIX_V1 (es. 'routine_summary', 'complex_code').",
+      "minLength": 1
+    },
+    "state": { "$ref": "#/definitions/state" },
+    "producer": { "$ref": "#/definitions/role_assignment" },
+    "reviewer": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["agent_id", "specialist_role"],
+      "properties": {
+        "agent_id": { "type": "string" },
+        "specialist_role": {
+          "type": "string",
+          "enum": ["DETERMINISTIC", "LOCAL_GENERALIST", "SCIENTIFIC_RESEARCHER",
+                   "CODE_SPECIALIST", "STRATEGIC_GENERALIST", "SECOND_OPINION",
+                   "DEPLOYMENT_SPECIALIST"]
+        }
+      }
+    },
+    "verifier": { "$ref": "#/definitions/role_assignment" },
+    "finalizer": { "$ref": "#/definitions/role_assignment" },
+    "review_required": { "type": "boolean" },
+    "revision_count": { "type": "integer", "minimum": 0 },
+    "max_review_loops": { "type": "integer", "minimum": 0, "const": 2 },
+    "draft_output": { "type": ["object", "null"] },
+    "verification_result": { "type": ["object", "null"] },
+    "review_result_history": { "type": "array", "items": { "type": "object" } },
+    "blocked_reason": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "definitions": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "DRAFT", "VERIFYING", "VERIFIED", "REVIEW_REQUIRED", "UNDER_REVIEW",
+        "REVISION_REQUIRED", "REVISED", "FINALIZING", "FINALIZED", "DELIVERED", "BLOCKED"
+      ]
+    },
+    "role_assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent_id", "specialist_role"],
+      "properties": {
+        "agent_id": { "type": "string" },
+        "specialist_role": {
+          "type": "string",
+          "enum": ["DETERMINISTIC", "LOCAL_GENERALIST", "SCIENTIFIC_RESEARCHER",
+                   "CODE_SPECIALIST", "STRATEGIC_GENERALIST", "SECOND_OPINION",
+                   "DEPLOYMENT_SPECIALIST"]
+        }
+      }
+    }
+  }
+}

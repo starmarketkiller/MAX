@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-09-29T12:43:55.081129+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\review_pipeline_v1\\build_review_matrix_instance.py",
+  "canonical_sha256": "586a478995a72f53c7762acee940be230dcf3f2e778ea93c75f47127b9294137",
+  "payload": {
+    "schema_version": 1,
+    "entries": [
+      {
+        "work_type": "routine_summary",
+        "producer_default": "LOCAL_GENERALIST",
+        "reviewer_default": null,
+        "review_required": false,
+        "distinct_producer_reviewer_required": false,
+        "premium_budget_level": "FREE_ONLY"
+      },
+      {
+        "work_type": "registry_backfill",
+        "producer_default": "DETERMINISTIC",
+        "reviewer_default": "DETERMINISTIC",
+        "review_required": false,
+        "distinct_producer_reviewer_required": false,
+        "premium_budget_level": "FREE_ONLY"
+      },
+      {
+        "work_type": "business_analysis",
+        "producer_default": "LOCAL_GENERALIST",
+        "reviewer_default": "STRATEGIC_GENERALIST",
+        "review_required": true,
+        "distinct_producer_reviewer_required": true,
+        "premium_budget_level": "PREMIUM_IF_NEEDED"
+      },
+      {
+        "work_type": "scientific_research",
+        "producer_default": "LOCAL_GENERALIST",
+        "reviewer_default": "SCIENTIFIC_RESEARCHER",
+        "review_required": true,
+        "distinct_producer_reviewer_required": true,
+        "premium_budget_level": "PREMIUM_IF_NEEDED"
+      },
+      {
+        "work_type": "complex_code",
+        "producer_default": "CODE_SPECIALIST",
+        "reviewer_default": null,
+        "review_required": false,
+        "distinct_producer_reviewer_required": false,
+        "premium_budget_level": "LOW_COST"
+      },
+      {
+        "work_type": "architecture_design",
+        "producer_default": "SCIENTIFIC_RESEARCHER",
+        "reviewer_default": "SECOND_OPINION",
+        "review_required": true,
+        "distinct_producer_reviewer_required": true,
+        "premium_budget_level": "CRITICAL_REVIEW"
+      },
+      {
+        "work_type": "deployment",
+        "producer_default": "DEPLOYMENT_SPECIALIST",
+        "reviewer_default": "DETERMINISTIC",
+        "review_required": true,
+        "distinct_producer_reviewer_required": true,
+        "premium_budget_level": "PREMIUM_ALLOWED"
+      },
+      {
+        "work_type": "trading_critical",
+        "producer_default": "DETERMINISTIC",
+        "reviewer_default": "SCIENTIFIC_RESEARCHER",
+        "review_required": true,
+        "distinct_producer_reviewer_required": true,
+        "premium_budget_level": "CRITICAL_REVIEW"
+      }
+    ]
+  }
+}

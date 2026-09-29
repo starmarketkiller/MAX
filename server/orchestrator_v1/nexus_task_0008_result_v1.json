@@ -1,0 +1,286 @@
+{
+  "nexus_task": "0008",
+  "title": "Multi-Agent Review & Finalization Pipeline V1",
+  "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+  "final_state": "WAITING_APPROVAL",
+  "decision": "MULTI_AGENT_FINALIZATION_PIPELINE_V1_OPERATIONAL_WITH_LIMITATIONS",
+  "result_packet": {
+    "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+    "executor": "TIER3_CLAUDE",
+    "start_time": "2026-09-29T12:46:48.014156+00:00",
+    "end_time": "2026-09-29T12:46:49.720065+00:00",
+    "files_read": [
+      "server/review_pipeline_v1/example_instances/work_product_lifecycle_v1.json",
+      "contracts/work-product-lifecycle.schema.json",
+      "server/review_pipeline_v1/example_instances/review_matrix_v1.json",
+      "contracts/review-matrix.schema.json",
+      "server/review_pipeline_v1/example_instances/premium_budget_policy_v1.json",
+      "contracts/premium-budget-policy.schema.json",
+      "server/orchestrator_v1/agent_capability_registry_v1.json",
+      "contracts/agent-capability-registry.schema.json"
+    ],
+    "files_changed": [],
+    "tools_or_commands": [
+      "validate_json_schema(work-product-lifecycle.schema.json)",
+      "validate_json_schema(review-matrix.schema.json)",
+      "validate_json_schema(premium-budget-policy.schema.json)",
+      "validate_json_schema(agent-capability-registry.schema.json)",
+      "run_pytest(test_review_pipeline_v1)",
+      "run_pytest(test_funding_v1_regression)"
+    ],
+    "artifacts_created": [
+      "contracts/work-product.schema.json",
+      "contracts/work-product-lifecycle.schema.json",
+      "contracts/review-matrix.schema.json",
+      "contracts/premium-budget-policy.schema.json",
+      "contracts/review-context-packet.schema.json",
+      "contracts/review-result.schema.json",
+      "contracts/final-result-packet.schema.json",
+      "server/review_pipeline_v1/work_product.py",
+      "server/review_pipeline_v1/review_matrix.py",
+      "server/review_pipeline_v1/premium_budget_policy.py",
+      "server/review_pipeline_v1/specialist_registry.py",
+      "server/review_pipeline_v1/escalation.py",
+      "server/review_pipeline_v1/finalization_gate.py",
+      "server/review_pipeline_v1/confidence_model.py",
+      "server/review_pipeline_v1/review_engine.py",
+      "server/review_pipeline_v1/jarvis_delivery.py",
+      "server/review_pipeline_v1/learning_telemetry.py",
+      "server/orchestrator_v1/agent_capability_registry_v1.json"
+    ],
+    "tests": {
+      "ran": true,
+      "passed": 30,
+      "failed": 0
+    },
+    "verifier": {
+      "ran": true,
+      "passed": true,
+      "errors": []
+    },
+    "commit": null,
+    "push_status": "NOT_APPLICABLE",
+    "decision": "MULTI_AGENT_FINALIZATION_PIPELINE_V1_OPERATIONAL_WITH_LIMITATIONS",
+    "confidence": "MEDIUM",
+    "limitations": [
+      "Nessun provider premium (Claude/Codex/ChatGPT) e' oggi chiamabile in automatico - integration_status=NOT_CONFIGURED/CONFIGURED-ma-OFFLINE nel registry reale. Ogni escalation che li richiede produce ESCALATION_READY_FOR_MANUAL_DELIVERY, mai una simulazione. Verificato nei 5 acceptance test con il registry reale del repo.",
+      "Il ramo 'reviewer_fn re-invoca il verifier reale dopo una revisione' e' assunto PASS dal motore in una pipeline sincrona a singolo processo - una futura pipeline asincrona/multi-processo dovra' ri-eseguire davvero il verifier del chiamante, non solo registrare l'evento.",
+      "Jarvis delivery integration e' una libreria pronta all'uso (format_task_completed_summary/explain) - non ancora richiamata da server/jarvis_v1/service.py (fuori dai files_allowed di questa task)."
+    ],
+    "unresolved_issues": [],
+    "suggested_next_tasks": [
+      "conferma esplicita dell'utente per adottare questa pipeline come canone",
+      "collegare jarvis_v1/service.py a review_pipeline_v1 quando un WORK_PRODUCT reale deve essere consegnato via Telegram/PWA",
+      "quando un provider premium diventa realmente CONFIGURED+AVAILABLE, aggiornare solo il suo record nel registry - nessuna modifica al motore"
+    ],
+    "escalation_needed": {
+      "needed": false,
+      "reason": null,
+      "target_tier": null
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_1bcdef991eb64605",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.310639+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Multi-Agent Review & Finalization Pipeline V1 - design",
+        "task_type": "RESEARCH",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_7be35747c9554875",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.326278+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_d1702f61f51e4a9b",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.343947+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "ESCALATION_REQUIRED",
+        "executor": "TIER3_CLAUDE",
+        "reason": "scientific_risk=MEDIUM - nessun agente locale puo' fare giudizio scientifico/causale per costruzione (§6).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_35780e986a624471",
+      "event_type": "ESCALATION_REQUIRED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.344523+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "target": "TIER3_CLAUDE",
+        "classification": "ROUTER_DIRECT_ESCALATION",
+        "errors": [],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_764fb1414dc34a44",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.713320+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(work-product-lifecycle.schema.json)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_a76770db87d24f84",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.714322+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/review_pipeline_v1/example_instances/work_product_lifecycle_v1.json",
+          "contracts/work-product-lifecycle.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_9f828cb0a8aa4114",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.714322+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(review-matrix.schema.json)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_d5d09d2e70584096",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.715324+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/review_pipeline_v1/example_instances/review_matrix_v1.json",
+          "contracts/review-matrix.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_838242d9dc214d1e",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.715324+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(premium-budget-policy.schema.json)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_75d940f71e044d2f",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.716326+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/review_pipeline_v1/example_instances/premium_budget_policy_v1.json",
+          "contracts/premium-budget-policy.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_fdc7fdbfd9f94765",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.717335+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "validate_json_schema(agent-capability-registry.schema.json)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_51b443e692224d7d",
+      "event_type": "FILE_READ",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.717335+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "files": [
+          "server/orchestrator_v1/agent_capability_registry_v1.json",
+          "contracts/agent-capability-registry.schema.json"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_fc4cda6743fb4b3e",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.717335+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "run_pytest(test_review_pipeline_v1)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_bfe75cc08385449a",
+      "event_type": "TOOL_USED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.718882+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tool": "run_pytest(test_funding_v1_regression)",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_f905b982313e4b4d",
+      "event_type": "TEST_PASSED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.719510+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "checks": [
+          "validate_json_schema(work-product-lifecycle.schema.json)",
+          "validate_json_schema(review-matrix.schema.json)",
+          "validate_json_schema(premium-budget-policy.schema.json)",
+          "validate_json_schema(agent-capability-registry.schema.json)",
+          "run_pytest(test_review_pipeline_v1)",
+          "run_pytest(test_funding_v1_regression)"
+        ],
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_84800eb9837448bc",
+      "event_type": "APPROVAL_REQUIRED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:46:49.720065+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "introduce una nuova architettura canonica (Multi-Agent Review & Finalization Pipeline) - approval_required=REVIEW_REQUIRED, non AUTO",
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ],
+  "premium_calls": 1,
+  "premium_cost": "1 escalation TIER3_CLAUDE (questa conversazione) - nessuna chiamata API separata"
+}

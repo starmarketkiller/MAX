@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/review-matrix.schema.json",
+  "title": "NEXUS REVIEW_MATRIX_V1",
+  "description": "NEXUS TASK #0008 punto 3 - matrice CONFIGURABILE (dati, non prompt) che mappa work_type a producer/reviewer di default e a se la review e' richiesta. Il Router/Review Engine la legge come dato; nessuna scelta di producer/reviewer va scritta dentro un prompt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "entries"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["work_type", "producer_default", "reviewer_default", "review_required",
+                  "distinct_producer_reviewer_required", "premium_budget_level"],
+      "properties": {
+        "work_type": { "type": "string" },
+        "producer_default": {
+          "type": "string",
+          "enum": ["DETERMINISTIC", "LOCAL_GENERALIST", "SCIENTIFIC_RESEARCHER",
+                   "CODE_SPECIALIST", "STRATEGIC_GENERALIST", "SECOND_OPINION",
+                   "DEPLOYMENT_SPECIALIST"]
+        },
+        "reviewer_default": {
+          "type": ["string", "null"],
+          "enum": ["DETERMINISTIC", "LOCAL_GENERALIST", "SCIENTIFIC_RESEARCHER",
+                   "CODE_SPECIALIST", "STRATEGIC_GENERALIST", "SECOND_OPINION",
+                   "DEPLOYMENT_SPECIALIST", null]
+        },
+        "review_required": { "type": "boolean" },
+        "distinct_producer_reviewer_required": {
+          "type": "boolean",
+          "description": "NEXUS TASK #0008 punto 2 - per task ad alto rischio, producer e reviewer DEVONO essere agenti distinti."
+        },
+        "premium_budget_level": {
+          "type": "string",
+          "enum": ["FREE_ONLY", "LOW_COST", "PREMIUM_IF_NEEDED", "PREMIUM_ALLOWED", "CRITICAL_REVIEW"]
+        }
+      }
+    }
+  }
+}

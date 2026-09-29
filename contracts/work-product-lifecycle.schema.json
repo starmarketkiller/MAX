@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/work-product-lifecycle.schema.json",
+  "title": "NEXUS WORK_PRODUCT_LIFECYCLE_V1",
+  "description": "NEXUS TASK #0008 - forma della DEFINIZIONE del ciclo di vita (stati + transizioni ammesse), non di una singola istanza WORK_PRODUCT_V1 (vedi work-product.schema.json per quella). Stessa forma di contracts/opportunity-lifecycle.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "states", "allowed_transitions", "max_review_loops"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "states": { "type": "array", "items": { "type": "string" } },
+    "allowed_transitions": { "type": "object" },
+    "max_review_loops": { "type": "integer" }
+  }
+}

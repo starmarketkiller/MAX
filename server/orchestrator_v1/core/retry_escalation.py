@@ -21,7 +21,10 @@ non un parametro che un chiamante puo' alzare a piacere."""
 RETRY_MAX_ATTEMPTS = 1
 
 CLASSIFICATIONS = ["ENVIRONMENT", "TOOLING", "LOCAL_MODEL_CAPABILITY", "SCIENTIFIC_AMBIGUITY",
-                  "COMPLEX_CODE_CHANGE", "PERMISSION", "UNKNOWN"]
+                  "COMPLEX_CODE_CHANGE", "PERMISSION", "UNKNOWN", "STRATEGIC_AMBIGUITY"]
+# STRATEGIC_AMBIGUITY aggiunta in NEXUS TASK #0008 (Multi-Agent Review &
+# Finalization Pipeline V1) per il work_type "business analysis"/strategico -
+# estensione additiva, nessuna classificazione esistente rimossa o rinominata.
 
 ROUTING_FOR_CLASSIFICATION = {
     "SCIENTIFIC_AMBIGUITY": "TIER3_CLAUDE",
@@ -30,6 +33,11 @@ ROUTING_FOR_CLASSIFICATION = {
     "TOOLING": "TIER0_DETERMINISTIC_REMEDIATION",
     "PERMISSION": "APPROVAL_REQUIRED",
     "UNKNOWN": "MANUAL_REVIEW",
+    # Default a TIER3_CLAUDE (unico "second opinion" oggi realmente
+    # raggiungibile in automatico) - server/review_pipeline_v1/specialist_registry.py
+    # puo' rimappare su STRATEGIC_GENERALIST quando un provider come ChatGPT
+    # risulta CONFIGURED+AVAILABLE, senza toccare questo default.
+    "STRATEGIC_AMBIGUITY": "TIER3_CLAUDE",
     # LOCAL_MODEL_CAPABILITY non ha una riga fissa: dipende se esiste un tier
     # locale piu' forte non ancora provato (escalation TIER1->TIER2) o se
     # anche il piu' forte ha gia' fallito (allora sale a Claude/Codex in base

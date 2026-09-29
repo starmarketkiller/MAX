@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://nexus.local/contracts/nexus-event.schema.json",
   "title": "NEXUS_EVENT_V1",
-  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva).",
+  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva). Estesa di nuovo in NEXUS TASK #0008 (Multi-Agent Review & Finalization Pipeline V1) con gli eventi del ciclo di vita WORK_PRODUCT_V1 (WORK_PRODUCT_CREATED...ESCALATION_RESOLVED) - stessa disciplina additiva.",
   "type": "object",
   "additionalProperties": false,
   "required": ["event_id", "event_type", "task_id", "timestamp", "tenant_id", "payload"],
@@ -18,7 +18,11 @@
         "APPROVAL_REQUIRED", "APPROVAL_GRANTED", "APPROVAL_DENIED",
         "TOOL_USED", "FILE_READ", "FILE_CHANGED", "RETRY_STARTED", "ESCALATION_REQUIRED",
         "USER_MESSAGE_RECEIVED", "QUERY_EXECUTED", "TASK_STATUS_REQUESTED",
-        "APPROVAL_REQUESTED", "APPROVAL_REJECTED", "RESULT_DELIVERED", "NOTIFICATION_SENT"
+        "APPROVAL_REQUESTED", "APPROVAL_REJECTED", "RESULT_DELIVERED", "NOTIFICATION_SENT",
+        "WORK_PRODUCT_CREATED", "VERIFICATION_STARTED", "VERIFICATION_PASSED",
+        "VERIFICATION_FAILED", "REVIEW_REQUESTED", "REVIEW_STARTED", "REVIEW_COMPLETED",
+        "REVISION_REQUESTED", "REVISION_COMPLETED", "FINALIZATION_STARTED", "FINALIZED",
+        "DELIVERED", "ESCALATION_CREATED", "ESCALATION_RESOLVED"
       ]
     },
     "task_id": { "type": ["string", "null"] },

@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/review-context-packet.schema.json",
+  "title": "NEXUS REVIEW_CONTEXT_PACKET_V1",
+  "description": "NEXUS TASK #0008 punto 8 - il minimo necessario per un'escalation/review, mai un dump completo del repo. Stessa filosofia di contracts/context-packet.schema.json (Orchestrator V1 Core) ma specifico per una review di un WORK_PRODUCT_V1 gia' verificato/da verificare.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id", "work_product_id", "objective", "work_type", "producer", "producer_output",
+    "relevant_sources", "changed_files", "tests", "verifier_results", "known_failures",
+    "open_questions", "constraints", "requested_review"
+  ],
+  "properties": {
+    "task_id": { "type": "string" },
+    "work_product_id": { "type": "string" },
+    "objective": { "type": "string" },
+    "work_type": { "type": "string" },
+    "producer": { "type": "string" },
+    "producer_output": { "type": "object" },
+    "relevant_sources": { "type": "array", "items": { "type": "string" } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "tests": { "type": "array", "items": { "type": "string" } },
+    "verifier_results": { "type": "object" },
+    "known_failures": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "requested_review": { "type": "string", "minLength": 1 }
+  }
+}

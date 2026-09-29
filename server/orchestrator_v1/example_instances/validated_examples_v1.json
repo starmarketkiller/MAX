@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-28T13:12:32.188146+00:00",
+  "generated_at": "2026-09-29T12:36:00.794687+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\build_example_instances.py",
-  "canonical_sha256": "859dded81bca6f9b3f8f3df9747e85cc6848827af8939d08697cb47c86f21ad5",
+  "canonical_sha256": "2af01d46d8bded131b4c20fd4e99144943f80a34c0dcefaf7a354b28aebaa847",
   "payload": {
     "TASK_MANIFEST_V1": {
       "schema_file": "task-manifest.schema.json",
@@ -88,7 +88,9 @@
               "DEPLOY",
               "MARKET",
               "MT5_RUN"
-            ]
+            ],
+            "specialist_role": "LOCAL_GENERALIST",
+            "integration_status": "NOT_CONFIGURED"
           },
           {
             "agent_id": "claude-sonnet-5",
@@ -122,7 +124,9 @@
               "MT5_RUN",
               "MAINTENANCE"
             ],
-            "forbidden_task_types": []
+            "forbidden_task_types": [],
+            "specialist_role": "SCIENTIFIC_RESEARCHER",
+            "integration_status": "NOT_CONFIGURED"
           }
         ]
       },

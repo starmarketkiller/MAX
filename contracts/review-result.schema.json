@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/review-result.schema.json",
+  "title": "NEXUS REVIEW_RESULT_V1",
+  "description": "NEXUS TASK #0008 punto 9 - esito di una review. 'decision' non e' mai una fiducia auto-dichiarata: 'confidence' deve poter essere ricondotta a source_refs/accepted_claims/issues_found, mai un numero inventato dal reviewer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewer", "decision", "issues_found", "required_changes", "accepted_claims",
+    "rejected_claims", "confidence", "source_refs", "needs_second_review"
+  ],
+  "properties": {
+    "reviewer": { "type": "string" },
+    "decision": {
+      "type": "string",
+      "enum": ["APPROVE", "APPROVE_WITH_MINOR_FIXES", "REVISION_REQUIRED", "REJECT",
+               "INSUFFICIENT_EVIDENCE"]
+    },
+    "issues_found": { "type": "array", "items": { "type": "string" } },
+    "required_changes": { "type": "array", "items": { "type": "string" } },
+    "accepted_claims": { "type": "array", "items": { "type": "string" } },
+    "rejected_claims": { "type": "array", "items": { "type": "string" } },
+    "confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"] },
+    "source_refs": { "type": "array", "items": { "type": "string" } },
+    "needs_second_review": { "type": "boolean" }
+  }
+}

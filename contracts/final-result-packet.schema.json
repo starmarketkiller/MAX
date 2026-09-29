@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/final-result-packet.schema.json",
+  "title": "NEXUS FINAL_RESULT_PACKET_V1",
+  "description": "NEXUS TASK #0008 punto 12 - cio' che Jarvis presenta all'utente al termine della Multi-Agent Review & Finalization Pipeline. 'confidence' e' sempre derivata da verifier/review/test/limitations (server/review_pipeline_v1/confidence_model.py), mai auto-dichiarata dal producer o dal reviewer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id", "objective", "final_output", "producer", "reviewers", "verifiers",
+    "changes_made_during_review", "confidence", "sources", "artifacts", "tests",
+    "premium_calls", "premium_agents_used", "elapsed_time_seconds", "cost_class",
+    "limitations", "remaining_risks", "next_recommended_action"
+  ],
+  "properties": {
+    "task_id": { "type": "string" },
+    "objective": { "type": "string" },
+    "final_output": { "type": "object" },
+    "producer": { "type": "string" },
+    "reviewers": { "type": "array", "items": { "type": "string" } },
+    "verifiers": { "type": "array", "items": { "type": "string" } },
+    "changes_made_during_review": { "type": "array", "items": { "type": "string" } },
+    "confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"] },
+    "sources": { "type": "array", "items": { "type": "string" } },
+    "artifacts": { "type": "array", "items": { "type": "string" } },
+    "tests": { "type": "object" },
+    "premium_calls": { "type": "integer" },
+    "premium_agents_used": { "type": "array", "items": { "type": "string" } },
+    "elapsed_time_seconds": { "type": "number" },
+    "cost_class": {
+      "type": "string",
+      "enum": ["FREE", "LOCAL_COMPUTE", "CHEAP_PREMIUM", "EXPENSIVE_PREMIUM", "MIXED"]
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "remaining_risks": { "type": "array", "items": { "type": "string" } },
+    "next_recommended_action": { "type": ["string", "null"] }
+  }
+}

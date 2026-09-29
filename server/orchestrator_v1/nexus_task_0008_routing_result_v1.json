@@ -1,0 +1,98 @@
+{
+  "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+  "state": "ESCALATION_REQUIRED",
+  "escalation": {
+    "target": "TIER3_CLAUDE",
+    "classification": "ROUTER_DIRECT_ESCALATION",
+    "context_packet": {
+      "objective": "Fare in modo che Jarvis non restituisca all'utente il primo output grezzo di un worker, ma un work product finale verificato, revisionato (quando richiesto) e consolidato: WORK_PRODUCT_V1 lifecycle, producer/reviewer/verifier/finalizer separation, Review Matrix V1, estensione dello Specialist Registry, Premium Budget Policy V1, provider availability, escalation flow classificato, Review Context Packet/Review Result contracts, revision loop con limite massimo, Finalization Gate deterministico, Final Result Packet V1, comportamento di consegna di Jarvis, readiness per ChatGPT/Claude/Codex come specialist provider, learning telemetry, confidence derivata da segnali esterni (mai auto-dichiarata).",
+      "relevant_findings": [
+        "Classificazione fallimento: ROUTER_DIRECT_ESCALATION",
+        "Task originale: Multi-Agent Review & Finalization Pipeline V1 - design"
+      ],
+      "canonical_artifacts": [],
+      "current_head": "f928f4e3ae6a2d578fe3c97c4ecf8e526cd4b7c3",
+      "allowed_files": [
+        "server/review_pipeline_v1/*",
+        "contracts/work-product*.schema.json",
+        "contracts/review-*.schema.json",
+        "contracts/final-result-packet*.schema.json",
+        "server/orchestrator_v1/agent_capability_registry_v1.json",
+        "server/orchestrator_v1/core/ledger.py",
+        "server/orchestrator_v1/verify_nexus_task_0008.py",
+        "server/tests/test_review_pipeline_v1.py"
+      ],
+      "exact_question": "[ROUTER_DIRECT_ESCALATION] Fare in modo che Jarvis non restituisca all'utente il primo output grezzo di un worker, ma un work product finale verificato, revisionato (quando richiesto) e consolidato: WORK_PRODUCT_V1 lifecycle, producer/reviewer/verifier/finalizer separation, Review Matrix V1, estensione dello Specialist Registry, Premium Budget Policy V1, provider availability, escalation flow classificato, Review Context Packet/Review Result contracts, revision loop con limite massimo, Finalization Gate deterministico, Final Result Packet V1, comportamento di consegna di Jarvis, readiness per ChatGPT/Claude/Codex come specialist provider, learning telemetry, confidence derivata da segnali esterni (mai auto-dichiarata). - i tentativi locali (1) sono falliti, serve intervento TIER3_CLAUDE.",
+      "previous_attempts": [
+        "Tentativo 1 (executor=None): ROUTER_DIRECT_ESCALATION"
+      ],
+      "failures": [],
+      "tests": [
+        "server/orchestrator_v1/verify_nexus_task_0008.py"
+      ],
+      "constraints": [
+        "files_allowed=['server/review_pipeline_v1/*', 'contracts/work-product*.schema.json', 'contracts/review-*.schema.json', 'contracts/final-result-packet*.schema.json', 'server/orchestrator_v1/agent_capability_registry_v1.json', 'server/orchestrator_v1/core/ledger.py', 'server/orchestrator_v1/verify_nexus_task_0008.py', 'server/tests/test_review_pipeline_v1.py']",
+        "files_forbidden=['MQL5/*', 'Product-Platform/*', 'server/research_scripts/phase7/*', 'server/funding_v1/*']",
+        "risk_level=A2"
+      ],
+      "forbidden_actions": [
+        "push automatico",
+        "deploy",
+        "modifiche strategie di trading",
+        "trading reale"
+      ],
+      "output_required": "Risolvere: Fare in modo che Jarvis non restituisca all'utente il primo output grezzo di un worker, ma un work product finale verificato, revisionato (quando richiesto) e consolidato: WORK_PRODUCT_V1 lifecycle, producer/reviewer/verifier/finalizer separation, Review Matrix V1, estensione dello Specialist Registry, Premium Budget Policy V1, provider availability, escalation flow classificato, Review Context Packet/Review Result contracts, revision loop con limite massimo, Finalization Gate deterministico, Final Result Packet V1, comportamento di consegna di Jarvis, readiness per ChatGPT/Claude/Codex come specialist provider, learning telemetry, confidence derivata da segnali esterni (mai auto-dichiarata). rispettando success_criteria: ['Jarvis non consegna draft non verificati', 'premium usato solo quando policy/router lo richiede', \"Ministral puo' completare task semplici da solo\", 'escalation mirate producono context packet minimo', \"reviewer puo' correggere senza rifare tutto\", 'review e approval restano separati', 'provider exhausted gestito senza bypass silenzioso', 'final output ha provenance completa', \"Jarvis puo' spiegare chi ha fatto cosa\", 'telemetry pronta per il routing futuro', 'verifier PASS', 'regression PASS']"
+    }
+  },
+  "ledger_events": [
+    {
+      "event_id": "evt_1bcdef991eb64605",
+      "event_type": "TASK_CREATED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.310639+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "title": "Multi-Agent Review & Finalization Pipeline V1 - design",
+        "task_type": "RESEARCH",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_7be35747c9554875",
+      "event_type": "TASK_QUEUED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.326278+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "reason": "",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_d1702f61f51e4a9b",
+      "event_type": "TASK_STARTED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.343947+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "tier": "ESCALATION_REQUIRED",
+        "executor": "TIER3_CLAUDE",
+        "reason": "scientific_risk=MEDIUM - nessun agente locale puo' fare giudizio scientifico/causale per costruzione (§6).",
+        "actor": "orchestrator_v1_core"
+      }
+    },
+    {
+      "event_id": "evt_35780e986a624471",
+      "event_type": "ESCALATION_REQUIRED",
+      "task_id": "TASK_NEXUS_0008_REVIEW_PIPELINE",
+      "timestamp": "2026-09-29T12:31:40.344523+00:00",
+      "tenant_id": "tenant-1",
+      "payload": {
+        "target": "TIER3_CLAUDE",
+        "classification": "ROUTER_DIRECT_ESCALATION",
+        "errors": [],
+        "actor": "orchestrator_v1_core"
+      }
+    }
+  ]
+}
