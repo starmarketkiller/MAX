@@ -27,6 +27,7 @@ from core.orchestrator import Orchestrator  # noqa: E402
 from core.task_queue import new_task_id  # noqa: E402
 import jarvis_delivery  # noqa: E402
 from review_engine import process_work_product  # noqa: E402
+from review_matrix import get_matrix_entry  # noqa: E402
 
 # NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
 # work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
@@ -47,15 +48,50 @@ def now_iso():
 def classify(text: str, metadata: dict | None = None) -> str:
     value = (text or "").strip().lower()
     metadata = metadata or {}
-    if metadata.get("approval_action") or re.search(r"\b(approva|approve|rifiuta|reject)\b", value):
+    action = str(metadata.get("approval_action") or "").upper()
+    if action in ("REJECT", "RIFIUTA") or re.search(r"\b(rifiuta|reject)\b", value):
+        return "REJECTION"
+    if action in ("APPROVE", "APPROVAL", "APPROVA") or re.search(r"\b(approva|approve)\b", value):
         return "APPROVAL"
     if re.search(r"\b(crea|create|avvia|analizza|analyze)\b.*\b(task|nexus task|opportunit)", value):
-        return "TASK"
+        return "TASK_REQUEST"
     if re.search(r"\b(a che punto|stato|status|come procede)\b", value):
         return "FOLLOW_UP"
     if "?" in value or re.search(r"\b(cosa|quali|chi|perché|perche|why|what|today|oggi)\b", value):
         return "QUERY"
     return "UNKNOWN"
+
+
+_WORK_TYPES = {
+    "routine_summary", "registry_backfill", "business_analysis", "scientific_research",
+    "complex_code", "architecture_design", "deployment", "trading_critical",
+}
+
+
+def classify_work_type(text: str, metadata: dict | None = None) -> str:
+    """Choose Review Matrix policy deterministically, never an executor.
+
+    An explicit valid value wins. Otherwise only narrow routine/status requests
+    receive the no-premium routine policy; ambiguous analysis remains fail-closed
+    as business_analysis.
+    """
+    metadata = metadata or {}
+    explicit = metadata.get("work_type")
+    if explicit in _WORK_TYPES:
+        return explicit
+    value = (text or "").lower()
+    if re.search(r"\b(deploy|release|rilascio)\b", value):
+        return "deployment"
+    if re.search(r"\b(trading|ordine|order|position|posizione|risk limit)\b", value):
+        return "trading_critical"
+    if re.search(r"\b(codice|code|bug|fix|patch|refactor)\b", value):
+        return "complex_code"
+    if re.search(r"\b(scientific|research|ricerca|ipotesi|hypothesis|backtest)\b", value):
+        return "scientific_research"
+    if re.search(r"\b(riassum\w*|riassunt\w*|summary|riepilog\w*|stato|status)\b", value) and not re.search(
+            r"\b(analizza|analyze|valuta|evaluate|opportunit)\b", value):
+        return "routine_summary"
+    return _DEFAULT_JARVIS_WORK_TYPE
 
 
 class JarvisService:
@@ -95,11 +131,11 @@ class JarvisService:
                             "request_class": request_class}, actor="jarvis_gateway")
         if request_class == "QUERY":
             return self.query(message)
-        if request_class == "TASK":
+        if request_class in ("TASK", "TASK_REQUEST"):
             return self.create_task(message)
         if request_class == "FOLLOW_UP":
             return self.follow_up(message)
-        if request_class == "APPROVAL":
+        if request_class in ("APPROVAL", "REJECTION"):
             return self.approval(message)
         return self._response(message, "ERROR", "Request class unavailable.",
                               status="UNKNOWN", confidence="UNKNOWN")
@@ -174,9 +210,11 @@ class JarvisService:
         required = ["summaries"]
         if attrs.get("second_opinion"): required.append("review")
         task_id = new_task_id()
+        work_type = classify_work_type(text, attrs)
         manifest = {
             "task_id": task_id, "title": text[:120] or "Jarvis task", "objective": text,
-            "task_type": "RESEARCH", "priority": message.get("priority", "NORMAL"),
+            "task_type": "RESEARCH", "work_type": work_type,
+            "priority": message.get("priority", "NORMAL"),
             "risk_level": "A1", "scientific_risk": "LOW", "code_risk": "NONE",
             "financial_risk": "NONE", "required_capabilities": required,
             "deterministic_tools_available": False, "repo_scope": "read-only analysis",
@@ -192,12 +230,14 @@ class JarvisService:
             "created_at": now_iso(), "tenant_id": TENANT_ID, "account_scope_id": None,
         }
         self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action="jarvis_task",
-                                 action_params={"request_class": "TASK", "source_message_id": message["message_id"]})
+                                 action_params={"request_class": "TASK_REQUEST", "source_message_id": message["message_id"]})
         self.conversations[message["conversation_id"]] = task_id
         record = self.queue.get(task_id)
         return self._response(message, "TASK_ACK", f"Task {task_id} created.", task_id=task_id,
                               status=record["state"], details={"executor": record.get("executor"),
                               "approval_required": manifest["approval_required"],
+                              "work_type": work_type,
+                              "review_required": get_matrix_entry(work_type)["review_required"],
                               "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
 
     def follow_up(self, message):
@@ -222,7 +262,9 @@ class JarvisService:
         mai trattato come una verifica riuscita per default."""
         result_packet = record.get("result_packet") or {}
         manifest = record.get("manifest") or {}
-        work_type = (manifest.get("metadata") or {}).get("work_type") or _DEFAULT_JARVIS_WORK_TYPE
+        work_type = (manifest.get("work_type") or
+                     (manifest.get("metadata") or {}).get("work_type") or
+                     _DEFAULT_JARVIS_WORK_TYPE)
         verifier_info = result_packet.get("verifier") or {}
 
         def attempt():

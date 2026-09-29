@@ -8,9 +8,10 @@ from fastapi.testclient import TestClient
 
 import app as backend
 from jarvis_v1.gateway import JarvisGateway
-from jarvis_v1.service import JarvisService
+from jarvis_v1.service import JarvisService, classify, classify_work_type
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from jarvis_v1.notifications import NotificationEngine
+from jarvis_v1 import configure_telegram_webhook as webhook_config
 
 
 def message(text, cls="UNKNOWN", conversation="c1", metadata=None):
@@ -41,6 +42,8 @@ def test_task_followup_and_router_ownership(service):
     assert created["task_id"] and created["status"] == "QUEUED"
     record = service.queue.get(created["task_id"])
     assert record["executor"] is None  # Jarvis never selects Claude/Codex/Ministral.
+    assert record["manifest"]["work_type"] == "business_analysis"
+    assert created["details"]["review_required"] is True
     follow = JarvisGateway(service).handle(message("A che punto è?", conversation="c1"))
     assert follow["task_id"] == created["task_id"] and follow["status"] == "QUEUED"
 
@@ -78,6 +81,9 @@ def test_telegram_auth_duplicate_malformed_and_rate_limit(service, tmp_path):
     with pytest.raises(PermissionError):
         adapter.handle_update({"update_id": 8, "message": {"from": {"id": 13},
                               "chat": {"id": 99}, "text": "cosa è successo oggi?"}})
+    denied = [e for e in service.ledger.read_all() if e["event_type"] == "TELEGRAM_ACCESS_DENIED"]
+    assert denied and denied[-1]["payload"]["authorized"] is False
+    assert "13" not in json.dumps(denied[-1])
     with pytest.raises(ValueError): adapter.handle_update({"update_id": 9})
     adapter._rate["42"] = [__import__("time").time()] * 20
     with pytest.raises(RuntimeError):
@@ -129,7 +135,63 @@ def test_version_and_jarvis_routes_are_protected(tmp_path, monkeypatch):
         assert client.post("/api/jarvis/telegram/webhook", json={"update_id": 1}).status_code == 401
 
 
-def test_completed_task_with_verified_producer_output_delivers_finalized_result(service, monkeypatch):
+def test_intent_and_work_type_classification_are_separate():
+    assert classify("Crea una task per un riassunto di stato") == "TASK_REQUEST"
+    assert classify_work_type("Crea una task per un riassunto di stato") == "routine_summary"
+    assert classify_work_type("Analizza l'opportunità Review Kit QR/NFC") == "business_analysis"
+    assert classify("REJECT", {"approval_action": "REJECT"}) == "REJECTION"
+
+
+def test_telegram_configuration_is_fail_safe_and_secret_free(service, tmp_path):
+    adapter = TelegramAdapter(service, tmp_path / "seen.json", token="secret-token", allowed_users=["42"])
+    ready = adapter.configuration_status(webhook_secret_configured=True)
+    partial = adapter.configuration_status(webhook_secret_configured=False)
+    assert ready == {"configuration_state": "READY", "configured": True,
+                     "webhook_ready": True, "allowed_user_count": 1, "token_exposed": False}
+    assert partial["configuration_state"] == "PARTIAL" and partial["webhook_ready"] is False
+    assert "secret-token" not in json.dumps(ready)
+
+
+def test_webhook_set_and_verify_are_idempotent_and_secret_safe(monkeypatch, capsys):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "bot-secret")
+    monkeypatch.setenv("JARVIS_TELEGRAM_WEBHOOK_SECRET", "hook-secret")
+    monkeypatch.setenv("NEXUS_PUBLIC_URL", "https://nexus.example")
+    calls = []
+    def fake_telegram(token, method, payload=None):
+        calls.append((token, method, payload))
+        if method == "getWebhookInfo":
+            return {"ok": True, "result": {"url": "https://nexus.example/api/jarvis/telegram/webhook",
+                                             "pending_update_count": 0}}
+        return {"ok": True, "description": "Webhook was set"}
+    monkeypatch.setattr(webhook_config, "_telegram", fake_telegram)
+    assert webhook_config.main(["set"]) == 0
+    assert webhook_config.main(["verify"]) == 0
+    output = capsys.readouterr().out
+    assert "bot-secret" not in output and "hook-secret" not in output
+    assert [call[1] for call in calls] == ["setWebhook", "getWebhookInfo"]
+
+
+def test_telegram_webhook_invalid_secret_and_authorized_delivery(tmp_path, monkeypatch):
+    svc = JarvisService(str(tmp_path / "webhook-queue.json"), str(tmp_path / "webhook-ledger.jsonl"))
+    adapter = TelegramAdapter(svc, tmp_path / "webhook-seen.json", token="token", allowed_users=["42"],
+                              gateway=JarvisGateway(svc))
+    monkeypatch.setattr(backend, "JARVIS_TELEGRAM", adapter)
+    monkeypatch.setenv("JARVIS_TELEGRAM_WEBHOOK_SECRET", "hook-secret")
+    monkeypatch.setattr(adapter, "send", lambda chat_id, response: {"sent": True, "reason": None})
+    update = {"update_id": 77, "message": {"from": {"id": 42}, "chat": {"id": 99},
+                                             "text": "Jarvis, cosa è successo oggi?"}}
+    with TestClient(backend.app) as client:
+        assert client.post("/api/jarvis/telegram/webhook", json=update,
+                           headers={"X-Telegram-Bot-Api-Secret-Token": "wrong"}).status_code == 401
+        accepted = client.post("/api/jarvis/telegram/webhook", json=update,
+                               headers={"X-Telegram-Bot-Api-Secret-Token": "hook-secret"})
+        assert accepted.status_code == 200 and accepted.json()["response"]["response_type"] == "ANSWER"
+        duplicate = client.post("/api/jarvis/telegram/webhook", json=update,
+                                headers={"X-Telegram-Bot-Api-Secret-Token": "hook-secret"})
+        assert duplicate.json()["response"]["status"] == "DUPLICATE"
+
+
+def test_completed_task_with_verified_producer_output_delivers_finalized_result(service):
     """NEXUS TASK #0009 - Jarvis non consegna mai il risultato grezzo: un
     task COMPLETED con verifier.passed=True su un work_type con
     review_required=False deve arrivare a FINALIZED tramite la pipeline.
@@ -137,7 +199,6 @@ def test_completed_task_with_verified_producer_output_delivers_finalized_result(
     per costruzione - vedi test successivo - quindi qui si forza
     esplicitamente il caso senza review, esattamente come farebbe in
     futuro un work_type dichiarato via manifest metadata.)"""
-    monkeypatch.setattr("jarvis_v1.service._DEFAULT_JARVIS_WORK_TYPE", "routine_summary")
     created = JarvisGateway(service).handle(message(
         "Jarvis, crea una NEXUS TASK per un riassunto di routine."))
     task_id = created["task_id"]
@@ -170,8 +231,7 @@ def test_completed_task_needing_unconnected_review_is_escalation_ready_for_manua
 
 
 def test_completed_task_review_pipeline_result_is_cached_across_followups(service, monkeypatch):
-    monkeypatch.setattr("jarvis_v1.service._DEFAULT_JARVIS_WORK_TYPE", "routine_summary")
-    created = JarvisGateway(service).handle(message("Jarvis, crea una NEXUS TASK."))
+    created = JarvisGateway(service).handle(message("Jarvis, crea una NEXUS TASK per un riassunto di stato."))
     task_id = created["task_id"]
     service.queue.transition(task_id, "RUNNING")
     service.queue.transition(task_id, "COMPLETED", result_packet={

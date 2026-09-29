@@ -23,6 +23,12 @@
       "enum": ["RESEARCH", "CODE", "MARKET", "MT5_RUN", "MAINTENANCE", "DEPLOY", "APPROVAL",
                "DOCUMENTATION", "BACKFILL", "MONITORING"]
     },
+    "work_type": {
+      "type": "string",
+      "enum": ["routine_summary", "registry_backfill", "business_analysis", "scientific_research",
+               "complex_code", "architecture_design", "deployment", "trading_critical"],
+      "description": "Deterministic Review Matrix classification. Optional for backward compatibility; it does not select an executor."
+    },
     "priority": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "URGENT"] },
     "risk_level": { "type": "string", "enum": ["A0", "A1", "A2", "A3", "A4", "A5"],
       "description": "Riusa la scala di rischio A0-A5 gia' definita in docs/NEXUS_MASTER_PROJECT.md Blocco A3.8 per le azioni AI - non una scala nuova." },

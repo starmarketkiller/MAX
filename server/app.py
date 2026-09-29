@@ -1712,10 +1712,8 @@ def jarvis_agents(user: str = Depends(require_user)):
 
 @app.get("/api/jarvis/telegram/status")
 def jarvis_telegram_status(user: str = Depends(require_user)):
-    return {"configured": JARVIS_TELEGRAM.configured,
-            "allowed_user_count": len(JARVIS_TELEGRAM.allowed_users),
-            "webhook_secret_configured": bool(os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET")),
-            "token_exposed": False}
+    return JARVIS_TELEGRAM.configuration_status(
+        webhook_secret_configured=bool(os.environ.get("JARVIS_TELEGRAM_WEBHOOK_SECRET")))
 
 
 @app.get("/api/jarvis/approvals")
@@ -1744,6 +1742,8 @@ async def jarvis_telegram_webhook(request: Request,
     if not expected or not x_telegram_bot_api_secret_token or not hmac.compare_digest(
             expected, x_telegram_bot_api_secret_token):
         raise HTTPException(status_code=401, detail="unauthorized webhook")
+    if not JARVIS_TELEGRAM.configured:
+        raise HTTPException(status_code=503, detail="Telegram adapter not configured")
     body = await read_json_body(request)
     try:
         response = JARVIS_TELEGRAM.handle_update(body)
