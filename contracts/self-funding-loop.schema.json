@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/self-funding-loop.schema.json",
+  "title": "NEXUS SELF_FUNDING_LOOP_V1",
+  "description": "Struttura di ALLOCAZIONE futura (mai un forecast di revenue - nessun numero di previsione e' permesso in questo schema, solo CATEGORIE e REGOLE di allocazione) che collega un'opportunity che genera cassa a opportunity a piu' alto TECHNICAL_PRIORITY che quella cassa puo' finanziare. Vedi NEXUS TASK #0006 punto 8.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "stages", "allocation_rule_note", "no_forecast_declaration"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "stages": {
+      "type": "array",
+      "description": "Sequenza fissa di stadi del loop - NON quantita', solo la struttura concettuale.",
+      "items": {
+        "type": "string",
+        "enum": ["OPPORTUNITY", "VALIDATION", "MVP", "FIRST_REVENUE", "RESERVE", "REINVESTMENT",
+                 "INFRASTRUCTURE_UPGRADE", "NEW_CAPABILITY", "HIGHER_VALUE_OPPORTUNITIES"]
+      }
+    },
+    "allocation_rule_note": {
+      "type": "string",
+      "description": "Regola qualitativa di come la cassa da FIRST_REVENUE si divide fra RESERVE e REINVESTMENT - dichiarata come politica, mai come importo."
+    },
+    "no_forecast_declaration": {
+      "type": "string", "const": "Questo schema non contiene alcuna previsione di revenue, timeline o importo - e' una struttura di allocazione concettuale, popolata con numeri reali SOLO dopo che FIRST_REVENUE e' stato osservato per una specifica opportunity."
+    }
+  }
+}

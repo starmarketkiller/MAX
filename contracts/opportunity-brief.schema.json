@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/opportunity-brief.schema.json",
+  "title": "NEXUS OPPORTUNITY_BRIEF_V1",
+  "description": "Vista DERIVATA (mai canonica di per se') di una OPPORTUNITY_V1, pensata per essere consumata IDENTICA da Telegram/PWA/Control Plane/voce/futuro client AR - stesso principio di 'un solo formato canonico letto da piu' superfici' gia' stabilito per il Vault (research_control_plane.py). short_voice_summary deve restare leggibile ad alta voce senza modifiche (frase breve, niente markdown/simboli).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "opportunity_id", "title", "why_now", "funding_priority", "technical_priority",
+    "evidence_confidence", "priority_status", "capital_requirement", "capability_coverage_pct",
+    "main_blocker", "next_cheapest_test", "approval_required", "short_voice_summary",
+    "generated_at", "source_opportunity_provenance"
+  ],
+  "properties": {
+    "opportunity_id": { "type": "string" },
+    "title": { "type": "string" },
+    "why_now": {
+      "type": "string",
+      "description": "Una frase su PERCHE' questa opportunity emerge ora nel ranking - mai una giustificazione di mercato inventata, solo un riassunto dei fattori di scoring gia' dichiarati."
+    },
+    "funding_priority": { "type": "number" },
+    "technical_priority": { "type": "number" },
+    "evidence_confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH", "VALIDATED"] },
+    "priority_status": {
+      "type": "string", "enum": ["PROVISIONAL", "HYPOTHESIS_BASED", "VALIDATED"]
+    },
+    "capital_requirement": {
+      "type": "string",
+      "enum": ["BOOTSTRAP_0_100", "BOOTSTRAP_100_500", "BOOTSTRAP_500_2000", "GROWTH_2000_PLUS"]
+    },
+    "capability_coverage_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+    "main_blocker": { "type": ["string", "null"] },
+    "next_cheapest_test": { "type": "string" },
+    "approval_required": { "type": "boolean" },
+    "short_voice_summary": {
+      "type": "string", "maxLength": 400,
+      "description": "Testo leggibile ad alta voce senza modifiche - nessun markdown, nessun simbolo, frasi brevi."
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "source_opportunity_provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_artifact", "canonical_sha256"],
+      "properties": {
+        "source_artifact": { "type": "string" }, "canonical_sha256": { "type": "string" }
+      }
+    }
+  }
+}

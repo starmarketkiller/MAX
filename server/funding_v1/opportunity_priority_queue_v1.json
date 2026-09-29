@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-28T23:48:13.175036+00:00",
+  "generated_at": "2026-09-29T01:54:27.539897+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_opportunity_priority_queue.py",
-  "canonical_sha256": "c97a57d55d601d9de3452a7d5bf79d1b3bc7ac6005baa6e6d602e924edfe25c0",
+  "canonical_sha256": "4ac35b660e0899636950e3c748cedaaf6875b2d74e434008ff29be98f8574cb7",
   "payload": {
     "schema_version": 1,
-    "generated_at": "2026-09-28T23:48:13.175036+00:00",
+    "generated_at": "2026-09-29T01:54:27.539897+00:00",
     "scoring_methodology_note": "TECHNICAL_PRIORITY e FUNDING_PRIORITY sono assi SEPARATI per costruzione (server/funding_v1/opportunity_scoring.py, pesi e punti espliciti, nessuna black-box) - NON un unico punteggio fuso. 'funding_can_finance_technical' e' dichiarato esplicitamente, mai inferito da una correlazione fra punteggi.",
     "ranked_by_technical_priority": [
       {
@@ -13,14 +13,54 @@
         "technical_priority_score": 100.0
       },
       {
+        "opportunity_id": "OPP_AI_RECEPTIONIST",
+        "title": "AI Receptionist",
+        "technical_priority_score": 100.0
+      },
+      {
+        "opportunity_id": "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT",
+        "title": "NEXUS/Jarvis external product",
+        "technical_priority_score": 100.0
+      },
+      {
+        "opportunity_id": "OPP_AI_CUSTOMER_SUPPORT",
+        "title": "AI Customer Support",
+        "technical_priority_score": 90.0
+      },
+      {
         "opportunity_id": "OPP_BACKTEST_AS_SERVICE",
         "title": "Backtest-as-a-Service per piccoli team quant",
+        "technical_priority_score": 59.0
+      },
+      {
+        "opportunity_id": "OPP_LEAD_CAPTURE_FOLLOWUP_PACK",
+        "title": "Lead Capture / Follow-up Pack",
+        "technical_priority_score": 59.0
+      },
+      {
+        "opportunity_id": "OPP_MICRO_SAAS",
+        "title": "Micro-SaaS",
         "technical_priority_score": 59.0
       },
       {
         "opportunity_id": "OPP_DATA_PROVENANCE_COMPLIANCE_TOOL",
         "title": "Tool di provenance/audit per fondi quant regolamentati",
         "technical_priority_score": 43.75
+      },
+      {
+        "opportunity_id": "OPP_CONTENT_REPURPOSING_SOCIAL_PACK",
+        "title": "Content Repurposing / Social Pack",
+        "technical_priority_score": 33.75
+      },
+      {
+        "opportunity_id": "OPP_LEAD_RESEARCH_SERVICE",
+        "title": "Lead Research Service",
+        "technical_priority_score": 33.75
+      },
+      {
+        "opportunity_id": "OPP_BOOKING_PACK",
+        "title": "Booking Pack",
+        "technical_priority_score": 23.25
       },
       {
         "opportunity_id": "OPP_SAFETY_NET_METHODOLOGY_CONSULTING",
@@ -30,6 +70,31 @@
       {
         "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
         "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
+        "technical_priority_score": 18.0
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_BUSINESS_STARTER_PACK",
+        "title": "Local Business Starter Pack",
+        "technical_priority_score": 18.0
+      },
+      {
+        "opportunity_id": "OPP_MINI_SITE_LANDING_PAGE",
+        "title": "Mini-site / Landing Page",
+        "technical_priority_score": 18.0
+      },
+      {
+        "opportunity_id": "OPP_REVIEW_KIT_QR_NFC",
+        "title": "Review Kit QR/NFC",
+        "technical_priority_score": 18.0
+      },
+      {
+        "opportunity_id": "OPP_SMART_BUSINESS_CARD_NFC_QR",
+        "title": "Smart Business Card NFC/QR",
+        "technical_priority_score": 18.0
+      },
+      {
+        "opportunity_id": "OPP_DIGITAL_MENU",
+        "title": "Digital Menu",
         "technical_priority_score": 18.0
       }
     ],
@@ -40,9 +105,39 @@
         "funding_priority_score": 81.25
       },
       {
+        "opportunity_id": "OPP_DIGITAL_MENU",
+        "title": "Digital Menu",
+        "funding_priority_score": 80.75
+      },
+      {
         "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
         "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
         "funding_priority_score": 75.25
+      },
+      {
+        "opportunity_id": "OPP_LEAD_RESEARCH_SERVICE",
+        "title": "Lead Research Service",
+        "funding_priority_score": 71.5
+      },
+      {
+        "opportunity_id": "OPP_SMART_BUSINESS_CARD_NFC_QR",
+        "title": "Smart Business Card NFC/QR",
+        "funding_priority_score": 67.5
+      },
+      {
+        "opportunity_id": "OPP_MINI_SITE_LANDING_PAGE",
+        "title": "Mini-site / Landing Page",
+        "funding_priority_score": 64.5
+      },
+      {
+        "opportunity_id": "OPP_LEAD_CAPTURE_FOLLOWUP_PACK",
+        "title": "Lead Capture / Follow-up Pack",
+        "funding_priority_score": 63.5
+      },
+      {
+        "opportunity_id": "OPP_CONTENT_REPURPOSING_SOCIAL_PACK",
+        "title": "Content Repurposing / Social Pack",
+        "funding_priority_score": 62.25
       },
       {
         "opportunity_id": "OPP_BACKTEST_AS_SERVICE",
@@ -50,14 +145,49 @@
         "funding_priority_score": 60.25
       },
       {
+        "opportunity_id": "OPP_MICRO_SAAS",
+        "title": "Micro-SaaS",
+        "funding_priority_score": 59.25
+      },
+      {
+        "opportunity_id": "OPP_REVIEW_KIT_QR_NFC",
+        "title": "Review Kit QR/NFC",
+        "funding_priority_score": 59.0
+      },
+      {
+        "opportunity_id": "OPP_AI_CUSTOMER_SUPPORT",
+        "title": "AI Customer Support",
+        "funding_priority_score": 57.5
+      },
+      {
         "opportunity_id": "OPP_SAFETY_NET_METHODOLOGY_CONSULTING",
         "title": "Consulenza/workshop sulla metodologia Research Safety Net",
         "funding_priority_score": 55.75
       },
       {
+        "opportunity_id": "OPP_LOCAL_BUSINESS_STARTER_PACK",
+        "title": "Local Business Starter Pack",
+        "funding_priority_score": 55.25
+      },
+      {
+        "opportunity_id": "OPP_BOOKING_PACK",
+        "title": "Booking Pack",
+        "funding_priority_score": 54.25
+      },
+      {
+        "opportunity_id": "OPP_AI_RECEPTIONIST",
+        "title": "AI Receptionist",
+        "funding_priority_score": 48.75
+      },
+      {
         "opportunity_id": "OPP_LOCAL_MODEL_ORCHESTRATOR_PRODUCT",
         "title": "Prodotto SaaS: Orchestrator locale-first con escalation premium",
         "funding_priority_score": 47.75
+      },
+      {
+        "opportunity_id": "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT",
+        "title": "NEXUS/Jarvis external product",
+        "funding_priority_score": 37.25
       }
     ],
     "combined_view": [
@@ -66,19 +196,73 @@
         "title": "Tool di provenance/audit per fondi quant regolamentati",
         "technical_priority_score": 43.75,
         "funding_priority_score": 81.25,
-        "technical_rank": 3,
+        "technical_rank": 8,
         "funding_rank": 1,
         "funding_can_finance_technical": [
           "OPP_LOCAL_MODEL_ORCHESTRATOR_PRODUCT"
         ]
       },
       {
+        "opportunity_id": "OPP_DIGITAL_MENU",
+        "title": "Digital Menu",
+        "technical_priority_score": 18.0,
+        "funding_priority_score": 80.75,
+        "technical_rank": 18,
+        "funding_rank": 2,
+        "funding_can_finance_technical": null
+      },
+      {
         "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
         "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
         "technical_priority_score": 18.0,
         "funding_priority_score": 75.25,
-        "technical_rank": 5,
-        "funding_rank": 2,
+        "technical_rank": 13,
+        "funding_rank": 3,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_LEAD_RESEARCH_SERVICE",
+        "title": "Lead Research Service",
+        "technical_priority_score": 33.75,
+        "funding_priority_score": 71.5,
+        "technical_rank": 10,
+        "funding_rank": 4,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_SMART_BUSINESS_CARD_NFC_QR",
+        "title": "Smart Business Card NFC/QR",
+        "technical_priority_score": 18.0,
+        "funding_priority_score": 67.5,
+        "technical_rank": 17,
+        "funding_rank": 5,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_MINI_SITE_LANDING_PAGE",
+        "title": "Mini-site / Landing Page",
+        "technical_priority_score": 18.0,
+        "funding_priority_score": 64.5,
+        "technical_rank": 15,
+        "funding_rank": 6,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_LEAD_CAPTURE_FOLLOWUP_PACK",
+        "title": "Lead Capture / Follow-up Pack",
+        "technical_priority_score": 59.0,
+        "funding_priority_score": 63.5,
+        "technical_rank": 6,
+        "funding_rank": 7,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_CONTENT_REPURPOSING_SOCIAL_PACK",
+        "title": "Content Repurposing / Social Pack",
+        "technical_priority_score": 33.75,
+        "funding_priority_score": 62.25,
+        "technical_rank": 9,
+        "funding_rank": 8,
         "funding_can_finance_technical": null
       },
       {
@@ -86,8 +270,35 @@
         "title": "Backtest-as-a-Service per piccoli team quant",
         "technical_priority_score": 59.0,
         "funding_priority_score": 60.25,
-        "technical_rank": 2,
-        "funding_rank": 3,
+        "technical_rank": 5,
+        "funding_rank": 9,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_MICRO_SAAS",
+        "title": "Micro-SaaS",
+        "technical_priority_score": 59.0,
+        "funding_priority_score": 59.25,
+        "technical_rank": 7,
+        "funding_rank": 10,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_REVIEW_KIT_QR_NFC",
+        "title": "Review Kit QR/NFC",
+        "technical_priority_score": 18.0,
+        "funding_priority_score": 59.0,
+        "technical_rank": 16,
+        "funding_rank": 11,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_AI_CUSTOMER_SUPPORT",
+        "title": "AI Customer Support",
+        "technical_priority_score": 90.0,
+        "funding_priority_score": 57.5,
+        "technical_rank": 4,
+        "funding_rank": 12,
         "funding_can_finance_technical": null
       },
       {
@@ -95,8 +306,35 @@
         "title": "Consulenza/workshop sulla metodologia Research Safety Net",
         "technical_priority_score": 18.0,
         "funding_priority_score": 55.75,
-        "technical_rank": 4,
-        "funding_rank": 4,
+        "technical_rank": 12,
+        "funding_rank": 13,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_BUSINESS_STARTER_PACK",
+        "title": "Local Business Starter Pack",
+        "technical_priority_score": 18.0,
+        "funding_priority_score": 55.25,
+        "technical_rank": 14,
+        "funding_rank": 14,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_BOOKING_PACK",
+        "title": "Booking Pack",
+        "technical_priority_score": 23.25,
+        "funding_priority_score": 54.25,
+        "technical_rank": 11,
+        "funding_rank": 15,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_AI_RECEPTIONIST",
+        "title": "AI Receptionist",
+        "technical_priority_score": 100.0,
+        "funding_priority_score": 48.75,
+        "technical_rank": 2,
+        "funding_rank": 16,
         "funding_can_finance_technical": null
       },
       {
@@ -105,10 +343,19 @@
         "technical_priority_score": 100.0,
         "funding_priority_score": 47.75,
         "technical_rank": 1,
-        "funding_rank": 5,
+        "funding_rank": 17,
+        "funding_can_finance_technical": null
+      },
+      {
+        "opportunity_id": "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT",
+        "title": "NEXUS/Jarvis external product",
+        "technical_priority_score": 100.0,
+        "funding_priority_score": 37.25,
+        "technical_rank": 3,
+        "funding_rank": 18,
         "funding_can_finance_technical": null
       }
     ],
-    "opportunities_evaluated": 5
+    "opportunities_evaluated": 18
   }
 }

@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-09-29T01:54:51.009026+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_opportunity_lifecycle_instance.py",
+  "canonical_sha256": "f180efb70cab376f065638fdb8046097735973226c04c899e342ee0045583b5b",
+  "payload": {
+    "schema_version": 1,
+    "states": [
+      "IDEA",
+      "RESEARCH_REQUIRED",
+      "RESEARCHING",
+      "PROVISIONAL",
+      "VALIDATION_READY",
+      "VALIDATING",
+      "MVP_READY",
+      "MARKET_TEST",
+      "FIRST_REVENUE",
+      "REPEATABLE",
+      "SCALABLE",
+      "PAUSED",
+      "REJECTED"
+    ],
+    "allowed_transitions": {
+      "IDEA": [
+        "RESEARCH_REQUIRED",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "RESEARCH_REQUIRED": [
+        "RESEARCHING",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "RESEARCHING": [
+        "PROVISIONAL",
+        "RESEARCH_REQUIRED",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "PROVISIONAL": [
+        "VALIDATION_READY",
+        "RESEARCH_REQUIRED",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "VALIDATION_READY": [
+        "VALIDATING",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "VALIDATING": [
+        "MVP_READY",
+        "PROVISIONAL",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "MVP_READY": [
+        "MARKET_TEST",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "MARKET_TEST": [
+        "FIRST_REVENUE",
+        "MVP_READY",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "FIRST_REVENUE": [
+        "REPEATABLE",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "REPEATABLE": [
+        "SCALABLE",
+        "PAUSED",
+        "REJECTED"
+      ],
+      "SCALABLE": [],
+      "PAUSED": [
+        "IDEA",
+        "RESEARCH_REQUIRED",
+        "RESEARCHING",
+        "PROVISIONAL",
+        "VALIDATION_READY",
+        "VALIDATING",
+        "MVP_READY",
+        "MARKET_TEST",
+        "FIRST_REVENUE",
+        "REPEATABLE",
+        "REJECTED"
+      ],
+      "REJECTED": []
+    }
+  }
+}

@@ -1,0 +1,370 @@
+{
+  "generated_at": "2026-09-29T01:53:24.110593+00:00",
+  "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\orchestrator_v1\\run_nexus_task_0006_generate_briefs.py",
+  "canonical_sha256": "0fb6a6ef920f047b67764a23a93e27fcbe8222a9347d529369a666648785e8cd",
+  "payload": {
+    "schema_version": 1,
+    "briefs": [
+      {
+        "opportunity_id": "OPP_DATA_PROVENANCE_COMPLIANCE_TOOL",
+        "title": "Tool di provenance/audit per fondi quant regolamentati",
+        "why_now": "funding_priority (81.25) supera technical_priority (43.75) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 81.25,
+        "technical_priority": 43.75,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 66.67,
+        "main_blocker": "BLOCKED_BY_CAPITAL",
+        "next_cheapest_test": "Cercare 20 piccoli fondi quant/prop desk su LinkedIn e verificare se menzionano requisiti di compliance/audit nei loro annunci di lavoro o siti - nessun contatto diretto.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:47:48.791631+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Trova un modo semplice per verificare se piccoli fondi quantitativi richiedono audit di origine dei fondi, senza spendere molto."
+      },
+      {
+        "opportunity_id": "OPP_BACKTEST_AS_SERVICE",
+        "title": "Backtest-as-a-Service per piccoli team quant",
+        "why_now": "funding_priority (60.25) supera technical_priority (59.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 60.25,
+        "technical_priority": 59.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 66.67,
+        "main_blocker": "crm: MISSING",
+        "next_cheapest_test": "Postare in 3 forum/community quant online una domanda aperta su come i piccoli team gestiscono oggi provenance/audit dei backtest - misurare interesse dalle risposte.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:48:06.662041+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Servizio per piccoli team di quant che analizza backtest con dati reali, testando interesse con domande online prima di investire risorse."
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_MODEL_ORCHESTRATOR_PRODUCT",
+        "title": "Prodotto SaaS: Orchestrator locale-first con escalation premium",
+        "why_now": "technical_priority (100.0) supera funding_priority (47.75) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 47.75,
+        "technical_priority": 100.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_500_2000",
+        "capability_coverage_pct": 57.14,
+        "main_blocker": "crm: MISSING",
+        "next_cheapest_test": "Scrivere un post tecnico (blog/forum) che descrive l'architettura gia' costruita (Task Queue+Router+escalation) e misurare l'interesse (commenti/richieste di dettagli) prima di scrivere una sola riga di codice di produttizzazione.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:48:22.267135+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di un software SaaS semplice ma potente per gestire flussi di lavoro locali con scalabilit\u00e0 premium, prima di tutto testiamo la domanda con un articolo tecnico per capire se c\u2019\u00e8 interesse prima di sviluppare."
+      },
+      {
+        "opportunity_id": "OPP_SAFETY_NET_METHODOLOGY_CONSULTING",
+        "title": "Consulenza/workshop sulla metodologia Research Safety Net",
+        "why_now": "funding_priority (55.75) supera technical_priority (18.0) - hard_gate=RESEARCH_REQUIRED",
+        "funding_priority": 55.75,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 50.0,
+        "main_blocker": null,
+        "next_cheapest_test": "Scrivere 1 articolo pubblico che riassume la metodologia e vedere se genera richieste di consulenza organiche, prima di investire tempo a costruire un'offerta formale.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:48:44.487827+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Provo a vendere la mia esperienza per organizzare corsi o incontri su una metodologia innovativa di ricerca, partendo con un articolo gratuito per attirare clienti prima di investire tempo in un\u2019offerta formale."
+      },
+      {
+        "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
+        "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
+        "why_now": "funding_priority (75.25) supera technical_priority (18.0) - hard_gate=BLOCKED_BY_LEGAL_OR_POLICY_RISK",
+        "funding_priority": 75.25,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 50.0,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "NON PROCEDERE fino a quando almeno una strategia raggiunge EDGE_CONFIRMED nella pipeline Phase 7 - il prossimo passo reale e' quello, non un test di mercato.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:49:06.080254+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di abbonamento a segnali di trading basati su strategie gi\u00e0 testate, ma ancora in fase di validazione finale: attualmente bloccato perch\u00e9 mancano i requisiti tecnici e di messaggistica."
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_BUSINESS_STARTER_PACK",
+        "title": "Local Business Starter Pack",
+        "why_now": "funding_priority (55.25) supera technical_priority (18.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 55.25,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": "crm: MISSING",
+        "next_cheapest_test": "Contattare 10 attivita' locali offrendo il pack gratis a 1 di loro in cambio di una recensione/caso studio - misurare interesse dalle risposte, non dalle vendite.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:49:27.450261+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Prova gratuita per 10 piccoli negozi: testiamo il pack con 1, vediamo se piacciono e raccogliamo feedback senza spendere."
+      },
+      {
+        "opportunity_id": "OPP_MINI_SITE_LANDING_PAGE",
+        "title": "Mini-site / Landing Page",
+        "why_now": "funding_priority (64.5) supera technical_priority (18.0) - hard_gate=RESEARCH_REQUIRED",
+        "funding_priority": 64.5,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": null,
+        "next_cheapest_test": "Costruire 1 landing page demo per un business immaginario e mostrarla a 5 conoscenti che gestiscono piccole attivita' - misurare se capiscono subito il valore senza spiegazioni.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:49:45.737061+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto semplice per una mini-sito di presentazione, da testare con 5 amici locali per valutare immediatezza e chiarezza del messaggio, senza costi elevati."
+      },
+      {
+        "opportunity_id": "OPP_REVIEW_KIT_QR_NFC",
+        "title": "Review Kit QR/NFC",
+        "why_now": "funding_priority (59.0) supera technical_priority (18.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 59.0,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": "physical_fulfillment: EXTERNAL_SERVICE_REQUIRED",
+        "next_cheapest_test": "Verificare il costo REALE di stampa/fornitura di 20 card NFC/QR presso 2 fornitori online, prima di assumere qualunque margine.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:50:04.536205+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Prossimo passo per testare il costo: controllare la vera spesa di 20 schede NFC/QR stampate online prima di valutare il profitto."
+      },
+      {
+        "opportunity_id": "OPP_SMART_BUSINESS_CARD_NFC_QR",
+        "title": "Smart Business Card NFC/QR",
+        "why_now": "funding_priority (67.5) supera technical_priority (18.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 67.5,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": "physical_fulfillment: EXTERNAL_SERVICE_REQUIRED",
+        "next_cheapest_test": "Come Review Kit: verificare costi reali di fornitura prima di assumere margini - stesso fornitore, testare entrambi insieme.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:50:23.132278+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di una carta di credito intelligente con NFC e QR per business, con costi controllabili prima di investire."
+      },
+      {
+        "opportunity_id": "OPP_DIGITAL_MENU",
+        "title": "Digital Menu",
+        "why_now": "funding_priority (80.75) supera technical_priority (18.0) - hard_gate=RESEARCH_REQUIRED",
+        "funding_priority": 80.75,
+        "technical_priority": 18.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": null,
+        "next_cheapest_test": "Verificare quanti ristoranti locali usano gia' un menu digitale cercando i loro siti/Google Business - misurare saturazione del mercato prima di costruire nulla.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:50:38.518609+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Controlliamo quanti ristoranti usano gi\u00e0 menu digitali per valutare il mercato prima di investire."
+      },
+      {
+        "opportunity_id": "OPP_BOOKING_PACK",
+        "title": "Booking Pack",
+        "why_now": "funding_priority (54.25) supera technical_priority (23.25) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 54.25,
+        "technical_priority": 23.25,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 0.0,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "Confrontare 5 tool di booking gia' esistenti sul mercato (prezzo/feature) prima di assumere che serva costruirne uno nuovo.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:50:53.359980+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di un pacchetto di prenotazioni online per hotel e strutture turistiche, con analisi costi di 5 soluzioni esistenti prima di svilupparne una nuova."
+      },
+      {
+        "opportunity_id": "OPP_LEAD_CAPTURE_FOLLOWUP_PACK",
+        "title": "Lead Capture / Follow-up Pack",
+        "why_now": "funding_priority (63.5) supera technical_priority (59.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 63.5,
+        "technical_priority": 59.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 33.33,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "Costruire 1 form + 1 sequenza di follow-up automatico per un caso d'uso finto e testarla end-to-end con la propria email, prima di proporla a chiunque.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:51:11.325899+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto semplice per creare un modulo e una sequenza automatica di follow-up con un test low-cost, prima di lanciarlo sul mercato."
+      },
+      {
+        "opportunity_id": "OPP_CONTENT_REPURPOSING_SOCIAL_PACK",
+        "title": "Content Repurposing / Social Pack",
+        "why_now": "funding_priority (62.25) supera technical_priority (33.75) - hard_gate=BLOCKED_BY_CAPABILITY",
+        "funding_priority": 62.25,
+        "technical_priority": 33.75,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 33.33,
+        "main_blocker": "image_video: MISSING",
+        "next_cheapest_test": "Ripurposare 1 contenuto lungo gia' esistente in 5 post social con ministral-3:3b e valutare a mano la qualita' prima di offrirlo come servizio.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:51:28.037578+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto per riproporre vecchi contenuti in 5 post social con intelligenza artificiale, testato a basso costo per valutare qualit\u00e0 prima di lanciarlo come servizio."
+      },
+      {
+        "opportunity_id": "OPP_AI_CUSTOMER_SUPPORT",
+        "title": "AI Customer Support",
+        "why_now": "technical_priority (90.0) supera funding_priority (57.5) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 57.5,
+        "technical_priority": 90.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_500_2000",
+        "capability_coverage_pct": 25.0,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "Costruire un prototipo di supporto clienti con ministral-3:3b su 10 domande frequenti finte e valutare a mano l'accuratezza, prima di proporlo a un cliente reale.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:51:47.281842+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto per testare un supporto clienti automatizzato con AI avanzata, valutando accuratezza su 10 domande fittizie prima di lanciarlo."
+      },
+      {
+        "opportunity_id": "OPP_AI_RECEPTIONIST",
+        "title": "AI Receptionist",
+        "why_now": "technical_priority (100.0) supera funding_priority (48.75) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 48.75,
+        "technical_priority": 100.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_500_2000",
+        "capability_coverage_pct": 25.0,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "NON avviare nulla finche' la capacita' 'voice' non esiste in NEXUS - il primo passo reale e' valutare un fornitore esterno di sintesi/riconoscimento vocale, non costruire nulla in proprio.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:52:05.920707+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di un assistente vocale per receptionist con alta priorit\u00e0 tecnologica, ma ancora senza voce funzionale: prima valutare fornitori esterni di riconoscimento e sintesi vocale."
+      },
+      {
+        "opportunity_id": "OPP_LEAD_RESEARCH_SERVICE",
+        "title": "Lead Research Service",
+        "why_now": "funding_priority (71.5) supera technical_priority (33.75) - hard_gate=BLOCKED_BY_CAPABILITY",
+        "funding_priority": 71.5,
+        "technical_priority": 33.75,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_0_100",
+        "capability_coverage_pct": 66.67,
+        "main_blocker": "crm: MISSING",
+        "next_cheapest_test": "Fare una ricerca di 20 prospect finti per un settore a caso riusando la pipeline 'research' gia' esistente e misurare tempo/qualita' reali, prima di venderla come servizio.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:52:26.177082+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Progetto di ricerca su lead da testare con 20 clienti fittizi per valutare efficienza e tempo, prima di proporlo come servizio a basso costo."
+      },
+      {
+        "opportunity_id": "OPP_MICRO_SAAS",
+        "title": "Micro-SaaS",
+        "why_now": "funding_priority (59.25) supera technical_priority (59.0) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 59.25,
+        "technical_priority": 59.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "BOOTSTRAP_100_500",
+        "capability_coverage_pct": 33.33,
+        "main_blocker": "payments: EXTERNAL_SERVICE_REQUIRED",
+        "next_cheapest_test": "Identificare un problema specifico e ristretto gia' incontrato in questo stesso progetto che varrebbe la pena risolvere per altri, prima di generalizzare l'idea 'micro-SaaS' in astratto.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:52:44.786981+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Prossimo passo: trova un problema concreto gi\u00e0 esistente nel progetto per migliorarlo con un piccolo software utile, prima di lanciare un prodotto generico."
+      },
+      {
+        "opportunity_id": "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT",
+        "title": "NEXUS/Jarvis external product",
+        "why_now": "technical_priority (100.0) supera funding_priority (37.25) - hard_gate=BLOCKED_BY_CAPITAL",
+        "funding_priority": 37.25,
+        "technical_priority": 100.0,
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "capital_requirement": "GROWTH_2000_PLUS",
+        "capability_coverage_pct": 37.5,
+        "main_blocker": "messaging: MISSING",
+        "next_cheapest_test": "NON procedere - questa e' l'opportunity piu' lontana nel tempo e piu' bloccata da capacita' mancanti del framework. Il passo reale e' continuare a costruire le capacita' core (voice/crm/payments/customer_support) per altre opportunity piu' vicine, non pianificare questa direttamente.",
+        "approval_required": true,
+        "generated_at": "2026-09-29T01:53:02.866318+00:00",
+        "source_opportunity_provenance": {
+          "source_artifact": "server/funding_v1/example_instances/opportunities_v1.json",
+          "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395"
+        },
+        "short_voice_summary": "Questa opportunit\u00e0 \u00e8 attualmente bloccata perch\u00e9 mancano le basi tecniche del sistema, meglio investire ora su core come voce e CRM per altre chance pi\u00f9 immediate."
+      }
+    ]
+  }
+}

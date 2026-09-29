@@ -1,9 +1,10 @@
 {
-  "generated_at": "2026-09-28T23:48:13.058261+00:00",
+  "generated_at": "2026-09-29T01:47:38.350912+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_example_opportunities.py",
-  "canonical_sha256": "3c427fed527a514463f7b84220fdc851df3632ba748f562153ac5a9f474b445c",
+  "canonical_sha256": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395",
   "payload": {
     "schema_version": 1,
+    "dataset_label": "PROVISIONAL_COMBINED_SET_NEXUS_TASK_0005_AND_0006",
     "opportunities": [
       {
         "opportunity_id": "OPP_DATA_PROVENANCE_COMPLIANCE_TOOL",
@@ -32,7 +33,7 @@
             "complexity_interest": "LOW",
             "long_term_strategic_value": "MEDIUM"
           },
-          "rationale": "Novita' tecnica bassa (e' un packaging di disciplina gia' esistente), ma infrastructure_leverage solo parziale - non fa avanzare il core NEXUS, lo esporta."
+          "rationale": "Novita' tecnica bassa (packaging di disciplina gia' esistente), infrastructure_leverage solo parziale - non fa avanzare il core NEXUS, lo esporta."
         },
         "funding_priority": {
           "score": 81.25,
@@ -49,14 +50,89 @@
             "risk": 5.0,
             "human_time_required": 3.25
           },
-          "rationale": "Nicchia di mercato piu' facile da vendere (compliance e' un bisogno chiaro), riuso quasi totale di codice gia' scritto, rischio basso, poco tempo umano ricorrente."
+          "rationale": "Nicchia piu' facile da vendere (compliance e' un bisogno chiaro), riuso quasi totale di codice gia' scritto, rischio basso, poco tempo umano ricorrente."
         },
         "created_by": "nexus_task_0005",
         "created_at": "2026-09-29T00:00:00Z",
         "provenance": {
           "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
           "reviewed": false
-        }
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 84.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 84.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 84.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "orchestrator",
+          "deterministic_workers",
+          "website_generation"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "AVAILABLE_NOW",
+            "deterministic_workers": "AVAILABLE_NOW",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 66.67,
+          "blockers": []
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Cercare 20 piccoli fondi quant/prop desk su LinkedIn e verificare se menzionano requisiti di compliance/audit nei loro annunci di lavoro o siti - nessun contatto diretto.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
       },
       {
         "opportunity_id": "OPP_BACKTEST_AS_SERVICE",
@@ -109,7 +185,88 @@
         "provenance": {
           "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
           "reviewed": false
-        }
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 63.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 63.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 63.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "orchestrator",
+          "deterministic_workers",
+          "local_llm",
+          "research",
+          "crm",
+          "customer_support"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "AVAILABLE_NOW",
+            "deterministic_workers": "AVAILABLE_NOW",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "AVAILABLE_NOW",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "MISSING"
+          },
+          "existing_capability_coverage_pct": 66.67,
+          "blockers": [
+            "crm: MISSING",
+            "customer_support: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Postare in 3 forum/community quant online una domanda aperta su come i piccoli team gestiscono oggi provenance/audit dei backtest - misurare interesse dalle risposte.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "WEEKS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
       },
       {
         "opportunity_id": "OPP_LOCAL_MODEL_ORCHESTRATOR_PRODUCT",
@@ -162,7 +319,90 @@
         "provenance": {
           "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
           "reviewed": false
-        }
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('LOW') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 54.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 54.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "orchestrator",
+          "deterministic_workers",
+          "local_llm",
+          "coding",
+          "crm",
+          "payments",
+          "customer_support"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "AVAILABLE_NOW",
+            "deterministic_workers": "AVAILABLE_NOW",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "AVAILABLE_NOW",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "EXTERNAL_SERVICE_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "MISSING"
+          },
+          "existing_capability_coverage_pct": 57.14,
+          "blockers": [
+            "crm: MISSING",
+            "payments: EXTERNAL_SERVICE_REQUIRED",
+            "customer_support: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Scrivere un post tecnico (blog/forum) che descrive l'architettura gia' costruita (Task Queue+Router+escalation) e misurare l'interesse (commenti/richieste di dettagli) prima di scrivere una sola riga di codice di produttizzazione.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
       },
       {
         "opportunity_id": "OPP_SAFETY_NET_METHODOLOGY_CONSULTING",
@@ -215,12 +455,86 @@
         "provenance": {
           "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
           "reviewed": false
-        }
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "RESEARCH_REQUIRED",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "research",
+          "content"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "AVAILABLE_NOW",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "PARTIAL",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 50.0,
+          "blockers": []
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Scrivere 1 articolo pubblico che riassume la metodologia e vedere se genera richieste di consulenza organiche, prima di investire tempo a costruire un'offerta formale.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "WEEKS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
       },
       {
         "opportunity_id": "OPP_MT5_STRATEGY_SIGNAL_SUBSCRIPTION",
         "title": "Abbonamento segnali di trading dalle strategie NEXUS validate",
-        "description": "Vendere un abbonamento a segnali generati dalle strategie gia' sviluppate in questo progetto (LIQ_SWEEP, BREAKOUT_ACC, ORDER_BLOCK). ATTENZIONE ESPLICITA: NESSUNA di queste strategie ha oggi lo stato EDGE_CONFIRMED - Phase 7.27 ha gia' trovato che la dominanza BUY osservata e' largamente spiegata dal regime di mercato, non da un edge specifico (BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME). Questa opportunity NON E' AZIONABILE oggi - inclusa solo per dimostrare che il framework la classifica correttamente come rischiosa nonostante punteggi di automazione/ricorrenza attraenti.",
+        "description": "Vendere un abbonamento a segnali generati dalle strategie gia' sviluppate in questo progetto (LIQ_SWEEP, BREAKOUT_ACC, ORDER_BLOCK). ATTENZIONE ESPLICITA: NESSUNA di queste strategie ha oggi lo stato EDGE_CONFIRMED - Phase 7.27 ha gia' trovato che la dominanza BUY osservata e' largamente spiegata dal regime di mercato (BUY_DOMINANCE_LARGELY_EXPLAINED_BY_MARKET_REGIME). Questa opportunity NON E' AZIONABILE oggi - inclusa solo per dimostrare che il framework la classifica correttamente come rischiosa nonostante punteggi di automazione/ricorrenza attraenti.",
         "category": "PRODUCT",
         "status": "IDEA",
         "dimensions": {
@@ -261,14 +575,1794 @@
             "risk": 0.0,
             "human_time_required": 5.0
           },
-          "rationale": "Punteggio funding ALTO per automazione/ricorrenza/tempo umano minimo, MA risk=VERY_HIGH abbassa il punteggio e la descrizione dichiara esplicitamente che nessuna strategia sottostante ha oggi un edge confermato - illustra perche' il framework non deve MAI essere letto senza il campo risk e la descrizione completa."
+          "rationale": "Punteggio funding ALTO per automazione/ricorrenza/tempo umano minimo, MA risk=VERY_HIGH abbassa il punteggio e la descrizione dichiara esplicitamente che nessuna strategia sottostante ha oggi un edge confermato."
         },
         "created_by": "nexus_task_0005",
         "created_at": "2026-09-29T00:00:00Z",
         "provenance": {
           "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
           "reviewed": false
-        }
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_LEGAL_OR_POLICY_RISK",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 75.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 75.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 75.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 75.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "orchestrator",
+          "research",
+          "payments",
+          "messaging"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "AVAILABLE_NOW",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "AVAILABLE_NOW",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "EXTERNAL_SERVICE_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 50.0,
+          "blockers": [
+            "messaging: MISSING",
+            "payments: EXTERNAL_SERVICE_REQUIRED"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "NON PROCEDERE fino a quando almeno una strategia raggiunge EDGE_CONFIRMED nella pipeline Phase 7 - il prossimo passo reale e' quello, non un test di mercato.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "MONTHS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": true,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_LOCAL_BUSINESS_STARTER_PACK",
+        "title": "Local Business Starter Pack",
+        "description": "Pacco di avvio per attivit\u00e0 locali che offre servizi personalizzati (ad esempio gestione operativa, supporto organizzativo o soluzioni su misura) a piccole imprese o entit\u00e0 territoriali, senza necessit\u00e0 di investimenti pesanti in infrastrutture fisiche o digitali avanzate.",
+        "category": "SERVICE",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "LOW",
+          "sales_difficulty": "HIGH",
+          "margin": "MEDIUM",
+          "recurrence": "OCCASIONAL",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "LOW",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "I criteri tecnici indicano un modello basato su soluzioni gi\u00e0 esistenti o riprogrammazioni di processi esistenti (infrastructure_leverage = NONE), poich\u00e9 non richiede innovazione di prodotto o dipendenza da tecnologie complesse o costose."
+        },
+        "funding_priority": {
+          "score": 55.25,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 7.0,
+            "sales_difficulty": 3.0,
+            "margin": 4.0,
+            "recurrence": 4.0,
+            "automation_level": 5.5,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 4.0,
+            "risk": 5.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "La rapidit\u00e0 di recupero del capitale (time_to_cash = SHORT_LT_1M) e la bassa richiesta di capitale iniziale (capital_required = LOW) giustificano un modello di funding orientato a finanziamenti accessibili (es. crowdfunding locale, microcredito o autofinanziamento) senza bisogno di investimenti massivi."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 58.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 58.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 58.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "website_generation",
+          "content",
+          "crm"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "PARTIAL",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": [
+            "crm: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Contattare 10 attivita' locali offrendo il pack gratis a 1 di loro in cambio di una recensione/caso studio - misurare interesse dalle risposte, non dalle vendite.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "WEEKS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_MINI_SITE_LANDING_PAGE",
+        "title": "Mini-site / Landing Page",
+        "description": "Un mini-site o landing page statico o dinamico (minimal) per promuovere un prodotto/servizio in modo diretto, senza sviluppo complesso, con un approccio transazionale (es. vendita diretta o lead generation).",
+        "category": "PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "NONE",
+          "sales_difficulty": "MEDIUM",
+          "margin": "MEDIUM",
+          "recurrence": "ONE_OFF",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "LOW",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "La bassa complessit\u00e0 interessa perch\u00e9 richiede soluzioni semplici (HTML/CSS/JS basici o CMS low-code), senza dipendenze infrastrutturali pesanti (es. server dedicati o API estese), e valore strategico limitato a una fase occasionale (es. campagna promozionale)."
+        },
+        "funding_priority": {
+          "score": 64.5,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 10.0,
+            "sales_difficulty": 6.5,
+            "margin": 4.0,
+            "recurrence": 1.5,
+            "automation_level": 5.5,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 4.0,
+            "risk": 5.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "Non richiede investimenti iniziali (capital_required: NONE) e il ritorno \u00e8 rapido (time_to_cash: SHORT_LT_1M), quindi il profilo di funding \u00e8 auto-sostenibile con risorse limitate e senza necessit\u00e0 di finanziamenti esterni."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "RESEARCH_REQUIRED",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "website_generation",
+          "content"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "PARTIAL",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": []
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Costruire 1 landing page demo per un business immaginario e mostrarla a 5 conoscenti che gestiscono piccole attivita' - misurare se capiscono subito il valore senza spiegazioni.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_REVIEW_KIT_QR_NFC",
+        "title": "Review Kit QR/NFC",
+        "description": "Un kit di revisione digitale (QR/NFC) che consente di scansionare documenti o prodotti fisici per accedere a informazioni aggiuntive (es. istruzioni, certificati, aggiornamenti) senza intermediazione cartacea.",
+        "category": "PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "LOW",
+          "sales_difficulty": "MEDIUM",
+          "margin": "HIGH",
+          "recurrence": "ONE_OFF",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "NEEDS_LEARNING",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "NONE",
+          "risk": "LOW",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "La bassa complessit\u00e0 e l\u2019assenza di infrastrutture specializzate (infrastructure_leverage: NONE) si riflettono in soluzioni standardizzate (es. etichette NFC/QR) che richiedono solo hardware low-cost e software di base per la lettura."
+        },
+        "funding_priority": {
+          "score": 59.0,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 7.0,
+            "sales_difficulty": 6.5,
+            "margin": 7.0,
+            "recurrence": 1.5,
+            "automation_level": 10.0,
+            "skills_available": 3.0,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 1.0,
+            "risk": 5.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "La rapida liquidit\u00e0 (time_to_cash: SHORT_LT_1M) e il basso capitale iniziale (capital_required: LOW) si giustificano in un modello a ciclo unico (recurrence: ONE_OFF) con costi marginali trascurabili per la produzione e distribuzione."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.0,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.0,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.0,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "physical_fulfillment",
+          "website_generation"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "EXTERNAL_SERVICE_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": [
+            "physical_fulfillment: EXTERNAL_SERVICE_REQUIRED"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Verificare il costo REALE di stampa/fornitura di 20 card NFC/QR presso 2 fornitori online, prima di assumere qualunque margine.",
+          "estimated_cost": "LOW",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_SMART_BUSINESS_CARD_NFC_QR",
+        "title": "Smart Business Card NFC/QR",
+        "description": "Una smart business card integrata con tag NFC/QR che consente di automatizzare scambi di informazioni (contatti, agende, documenti digitali) tramite lettura istantanea, senza necessit\u00e0 di app aggiuntive o password.",
+        "category": "PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "LOW",
+          "sales_difficulty": "MEDIUM",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "NEEDS_LEARNING",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "NONE",
+          "risk": "LOW",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "I criteri tecnici sono classificati come 'LOW' per la 'novelty' e 'infrastructure_leverage' (nessuna dipendenza da infrastrutture complesse o hardware avanzato), poich\u00e9 si basa su componenti standard (tag NFC/QR) gi\u00e0 diffusi e integrabili su schede esistenti con costi bassi."
+        },
+        "funding_priority": {
+          "score": 67.5,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 7.0,
+            "sales_difficulty": 6.5,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 3.0,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 1.0,
+            "risk": 5.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "Il modello richiede 'LOW capital' e 'SHORT_LT_1M time_to_cash' perch\u00e9 la fase di sviluppo e lancio \u00e8 rapida, sfruttando componenti low-cost e una vendita diretta (B2B/B2C) senza bisogno di investimenti pesanti in marketing a lungo termine."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 70.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 70.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 70.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "physical_fulfillment",
+          "website_generation"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "EXTERNAL_SERVICE_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": [
+            "physical_fulfillment: EXTERNAL_SERVICE_REQUIRED"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Come Review Kit: verificare costi reali di fornitura prima di assumere margini - stesso fornitore, testare entrambi insieme.",
+          "estimated_cost": "LOW",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_DIGITAL_MENU",
+        "title": "Digital Menu",
+        "description": "Un servizio digitale che gestisce e distribuisce men\u00f9 digitali (ad esempio per ristoranti o catering) tramite piattaforma sottoscrittiva, automatizzata e senza dipendenze tecniche avanzate.",
+        "category": "PRODUCT",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "NONE",
+          "sales_difficulty": "MEDIUM",
+          "margin": "MEDIUM",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "PARTIAL",
+          "risk": "LOW",
+          "human_time_required": "MINIMAL"
+        },
+        "technical_priority": {
+          "score": 18.0,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "I criteri tecnici sono 'LOW' per infrastruttura perch\u00e9 non richiede hardware o server propri, sfruttando soluzioni cloud preesistenti o integrazioni con piattaforme esistenti (es. POS, CMS)."
+        },
+        "funding_priority": {
+          "score": 80.75,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 10.0,
+            "sales_difficulty": 6.5,
+            "margin": 4.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 4.0,
+            "risk": 5.0,
+            "human_time_required": 5.0
+          },
+          "rationale": "Non richiede capitale iniziale e il cash flow arriva velocemente (<1 mese) grazie alla modalit\u00e0 subscription e alla bassa complessit\u00e0 operativa, riducendo costi di sviluppo e scalabilit\u00e0."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "RESEARCH_REQUIRED",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 80.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 80.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 80.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 80.75,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "website_generation",
+          "content"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "PARTIAL",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": []
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Verificare quanti ristoranti locali usano gia' un menu digitale cercando i loro siti/Google Business - misurare saturazione del mercato prima di costruire nulla.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_BOOKING_PACK",
+        "title": "Booking Pack",
+        "description": "Un servizio SaaS che combina pacchetti di prenotazioni (es. alloggi, attivit\u00e0, trasporti) per clienti B2B/B2C, centralizzando e automatizzando la gestione di pi\u00f9 servizi in un unico portale.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "MEDIUM_1_3M",
+          "capital_required": "LOW",
+          "sales_difficulty": "MEDIUM",
+          "margin": "MEDIUM",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "MODERATE_COST",
+          "strategic_reuse": "NONE",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 23.25,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "NONE",
+            "complexity_interest": "MEDIUM",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "La bassa dipendenza da infrastrutture esterne (infrastructure_leverage: NONE) riflette la necessit\u00e0 di integrare direttamente con piattaforme di booking esistenti senza richiedere soluzioni cloud o hardware propri."
+        },
+        "funding_priority": {
+          "score": 54.25,
+          "weighted_breakdown": {
+            "time_to_cash": 7.5,
+            "capital_required": 7.0,
+            "sales_difficulty": 6.5,
+            "margin": 4.0,
+            "recurrence": 10.0,
+            "automation_level": 5.5,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 1.75,
+            "strategic_reuse": 1.0,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Il tempo di cash flow medio (1\u20133 mesi) e il capitale basso (LOW) indicano un modello che richiede investimenti iniziali limitati, ma dipende da flussi ricorrenti (subscription) per sostenere costi operativi e scalare."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 57.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 57.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 57.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "website_generation",
+          "crm",
+          "messaging",
+          "payments"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "PARTIAL",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "EXTERNAL_SERVICE_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 0.0,
+          "blockers": [
+            "messaging: MISSING",
+            "crm: MISSING",
+            "payments: EXTERNAL_SERVICE_REQUIRED"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Confrontare 5 tool di booking gia' esistenti sul mercato (prezzo/feature) prima di assumere che serva costruirne uno nuovo.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_LEAD_CAPTURE_FOLLOWUP_PACK",
+        "title": "Lead Capture / Follow-up Pack",
+        "description": "Un pacchetto automatizzato per catturare lead e seguire contatti post-acquisto tramite workflow predefiniti, integrato con strumenti SaaS esistenti per vendite e marketing.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "MEDIUM_1_3M",
+          "capital_required": "LOW",
+          "sales_difficulty": "MEDIUM",
+          "margin": "MEDIUM",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "MODERATE_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "MEDIUM",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 59.0,
+          "criteria": {
+            "novelty": "MEDIUM",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "MEDIUM",
+            "long_term_strategic_value": "MEDIUM"
+          },
+          "rationale": "La soluzione sfrutta infrastrutture preesistenti di piattaforme CRM o email marketing, limitando cos\u00ec la necessit\u00e0 di sviluppare componenti custom e riducendo la complessit\u00e0 di integrazione."
+        },
+        "funding_priority": {
+          "score": 63.5,
+          "weighted_breakdown": {
+            "time_to_cash": 7.5,
+            "capital_required": 7.0,
+            "sales_difficulty": 6.5,
+            "margin": 4.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 1.75,
+            "strategic_reuse": 4.0,
+            "risk": 3.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "La monetizzazione avviene tramite abbonamento a ciclo ricorrente con un cash flow che si materializza tra 1 e 3 mesi, consentendo investimenti minimi iniziali per scalare con margini stabili."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 66.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 66.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 66.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "crm",
+          "messaging",
+          "local_llm"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 33.33,
+          "blockers": [
+            "messaging: MISSING",
+            "crm: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Costruire 1 form + 1 sequenza di follow-up automatico per un caso d'uso finto e testarla end-to-end con la propria email, prima di proporla a chiunque.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_CONTENT_REPURPOSING_SOCIAL_PACK",
+        "title": "Content Repurposing / Social Pack",
+        "description": "Servizio che trasforma contenuti esistenti (testi, video, grafiche) in versioni adattate per piattaforme social, mantenendo la stessa essenza ma con formati e linguaggi specifici.",
+        "category": "SERVICE",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "NONE",
+          "sales_difficulty": "HIGH",
+          "margin": "MEDIUM",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 33.75,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "L'infrastructure_leverage \u00e8 parziale perch\u00e9 richiede strumenti di editing e adattamento basati su workflow manuali o semi-automati, senza necessit\u00e0 di infrastrutture costose o scalabili."
+        },
+        "funding_priority": {
+          "score": 62.25,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 10.0,
+            "sales_difficulty": 3.0,
+            "margin": 4.0,
+            "recurrence": 10.0,
+            "automation_level": 5.5,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 4.0,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Il time_to_cash breve e il capitale richiesto nullo limitano la necessit\u00e0 di finanziamenti esterni, poich\u00e9 il modello si basa su commissioni o abbonamenti ricorrenti con flussi immediati."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPABILITY",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "content",
+          "local_llm",
+          "image_video"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "PARTIAL",
+            "image_video": "MISSING",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 33.33,
+          "blockers": [
+            "image_video: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Ripurposare 1 contenuto lungo gia' esistente in 5 post social con ministral-3:3b e valutare a mano la qualita' prima di offrirlo come servizio.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "HOURS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_AI_CUSTOMER_SUPPORT",
+        "title": "AI Customer Support",
+        "description": "Fornisce un servizio di assistenza clienti automatizzato tramite intelligenza artificiale per aziende che gestiscono richieste repetitive, riducendo il bisogno di supporto umano diretto.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "LONG_3_6M",
+          "capital_required": "MEDIUM",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "MODERATE_COST",
+          "strategic_reuse": "HIGH",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 90.0,
+          "criteria": {
+            "novelty": "MEDIUM",
+            "infrastructure_leverage": "HIGH",
+            "complexity_interest": "HIGH",
+            "long_term_strategic_value": "HIGH"
+          },
+          "rationale": "L'alta infrastruttura leverage consente di sfruttare piattaforme cloud preesistenti e API esistenti per integrare soluzioni AI senza dover sviluppare componenti custom, abbattendo costi e complessit\u00e0."
+        },
+        "funding_priority": {
+          "score": 57.5,
+          "weighted_breakdown": {
+            "time_to_cash": 3.75,
+            "capital_required": 3.5,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 1.75,
+            "strategic_reuse": 7.5,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Il lungo tempo di cash flow e il capitale medio richiesto riflettono la necessit\u00e0 di investire in sviluppo e scalabilit\u00e0 iniziale per garantire affidabilit\u00e0 e personalizzazione, prima di generare ricavi ricorrenti da abbonamenti."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('LOW') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.0,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 64.0,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "local_llm",
+          "customer_support",
+          "messaging",
+          "crm"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "MISSING"
+          },
+          "existing_capability_coverage_pct": 25.0,
+          "blockers": [
+            "messaging: MISSING",
+            "crm: MISSING",
+            "customer_support: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Costruire un prototipo di supporto clienti con ministral-3:3b su 10 domande frequenti finte e valutare a mano l'accuratezza, prima di proporlo a un cliente reale.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "WEEKS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_AI_RECEPTIONIST",
+        "title": "AI Receptionist",
+        "description": "Un servizio SaaS che automatizza interamente la gestione delle chiamate e interazioni con clienti tramite intelligenza artificiale, sostituendo il receptionist umano in ambienti business.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "LONG_3_6M",
+          "capital_required": "MEDIUM",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "NEEDS_LEARNING",
+          "premium_tool_dependency": "MODERATE_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "HIGH",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 100.0,
+          "criteria": {
+            "novelty": "HIGH",
+            "infrastructure_leverage": "HIGH",
+            "complexity_interest": "HIGH",
+            "long_term_strategic_value": "HIGH"
+          },
+          "rationale": "La piattaforma sfrutta infrastrutture cloud preesistenti (API, NLP, call routing) per offrire soluzioni scalabili e modulari, sfruttando gi\u00e0 tecnologie consolidate ma integrandole in modo innovativo per automatizzare interamente il flusso di lavoro."
+        },
+        "funding_priority": {
+          "score": 48.75,
+          "weighted_breakdown": {
+            "time_to_cash": 3.75,
+            "capital_required": 3.5,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 3.0,
+            "premium_tool_dependency": 1.75,
+            "strategic_reuse": 4.0,
+            "risk": 1.25,
+            "human_time_required": 1.5
+          },
+          "rationale": "La necessit\u00e0 di investimenti iniziali moderati per lo sviluppo e la dipendenza da un cash flow lungo (3-6 mesi) per generare ricavi ricorrenti, richiedono un capitale di partenza medio e un modello di finanziamento che anticipi costi di sviluppo e marketing prima della monetizzazione massiva."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='MEDIUM' eccede il tetto di questo scenario ('LOW') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 55.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "voice",
+          "local_llm",
+          "messaging",
+          "crm"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "MISSING",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 25.0,
+          "blockers": [
+            "messaging: MISSING",
+            "crm: MISSING",
+            "voice: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "NON avviare nulla finche' la capacita' 'voice' non esiste in NEXUS - il primo passo reale e' valutare un fornitore esterno di sintesi/riconoscimento vocale, non costruire nulla in proprio.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_LEAD_RESEARCH_SERVICE",
+        "title": "Lead Research Service",
+        "description": "Servizio di ricerca e analisi di lead (potenziali clienti) per aziende o professionisti, fornendo dati strutturati e strategie di approccio personalizzate su richiesta occasionale.",
+        "category": "SERVICE",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "SHORT_LT_1M",
+          "capital_required": "NONE",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "OCCASIONAL",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "FULLY_AVAILABLE",
+          "premium_tool_dependency": "NONE",
+          "strategic_reuse": "HIGH",
+          "risk": "LOW",
+          "human_time_required": "PART_TIME"
+        },
+        "technical_priority": {
+          "score": 33.75,
+          "criteria": {
+            "novelty": "LOW",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "LOW",
+            "long_term_strategic_value": "LOW"
+          },
+          "rationale": "La bassa complessit\u00e0 di interesse e l'infrastruttura parzialmente riutilizzabile si riflettono in un modello che richiede pochi strumenti specifici (es. database di contatti o CRM basati su dati esistenti), senza necessit\u00e0 di tecnologie innovative o costose."
+        },
+        "funding_priority": {
+          "score": 71.5,
+          "weighted_breakdown": {
+            "time_to_cash": 11.25,
+            "capital_required": 10.0,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 4.0,
+            "automation_level": 5.5,
+            "skills_available": 10.0,
+            "premium_tool_dependency": 5.0,
+            "strategic_reuse": 7.5,
+            "risk": 5.0,
+            "human_time_required": 3.25
+          },
+          "rationale": "L\u2019assenza di capitale richiesto e il cash flow rapido (entrato in meno di un mese) riducono la necessit\u00e0 di finanziamenti esterni, concentrandosi su modelli di ricarica occasionali o vendite a clienti gi\u00e0 esistenti."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPABILITY",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": true,
+            "adjusted_funding_priority": 71.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 71.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 71.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 71.5,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "research",
+          "local_llm",
+          "crm"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "AVAILABLE_NOW",
+            "coding": "NOT_REQUIRED",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "NOT_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 66.67,
+          "blockers": [
+            "crm: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Fare una ricerca di 20 prospect finti per un settore a caso riusando la pipeline 'research' gia' esistente e misurare tempo/qualita' reali, prima di venderla come servizio.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "DAYS",
+          "informational_value": "HIGH"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_MICRO_SAAS",
+        "title": "Micro-SaaS",
+        "description": "Un servizio SaaS specializzato in soluzioni minimaliste e focalizzate su nicchie specifiche, con licenze a pagamento ricorrenti per funzionalit\u00e0 limitate ma essenziali.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "LONG_3_6M",
+          "capital_required": "LOW",
+          "sales_difficulty": "HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "FULLY_AUTOMATED",
+          "skills_available": "PARTIAL",
+          "premium_tool_dependency": "LOW_COST",
+          "strategic_reuse": "PARTIAL",
+          "risk": "MEDIUM",
+          "human_time_required": "SIGNIFICANT"
+        },
+        "technical_priority": {
+          "score": 59.0,
+          "criteria": {
+            "novelty": "MEDIUM",
+            "infrastructure_leverage": "PARTIAL",
+            "complexity_interest": "MEDIUM",
+            "long_term_strategic_value": "MEDIUM"
+          },
+          "rationale": "La bassa dipendenza da infrastrutture esterne e la gestione autonoma delle operazioni riducono la complessit\u00e0 di integrazione, ma la specializzazione richiede sviluppo mirato senza ereditare codice esistente."
+        },
+        "funding_priority": {
+          "score": 59.25,
+          "weighted_breakdown": {
+            "time_to_cash": 3.75,
+            "capital_required": 7.0,
+            "sales_difficulty": 3.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 10.0,
+            "skills_available": 6.5,
+            "premium_tool_dependency": 3.5,
+            "strategic_reuse": 4.0,
+            "risk": 3.0,
+            "human_time_required": 1.5
+          },
+          "rationale": "Il lungo periodo per il recupero delle spese e la bassa richiesta di capitale iniziale favoriscono modelli di finanziamento basati su crescita organica e monetizzazione precoce delle ricorrenze."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='LOW' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 62.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "coding",
+          "website_generation",
+          "payments"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "NOT_REQUIRED",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "NOT_REQUIRED",
+            "research": "NOT_REQUIRED",
+            "coding": "AVAILABLE_NOW",
+            "website_generation": "PARTIAL",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "NOT_REQUIRED",
+            "crm": "NOT_REQUIRED",
+            "analytics": "NOT_REQUIRED",
+            "payments": "EXTERNAL_SERVICE_REQUIRED",
+            "voice": "NOT_REQUIRED",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "NOT_REQUIRED"
+          },
+          "existing_capability_coverage_pct": 33.33,
+          "blockers": [
+            "payments: EXTERNAL_SERVICE_REQUIRED"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "Identificare un problema specifico e ristretto gia' incontrato in questo stesso progetto che varrebbe la pena risolvere per altri, prima di generalizzare l'idea 'micro-SaaS' in astratto.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "WEEKS",
+          "informational_value": "MEDIUM"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
+      },
+      {
+        "opportunity_id": "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT",
+        "title": "NEXUS/Jarvis external product",
+        "description": "Un prodotto SaaS che integra funzionalit\u00e0 avanzate di intelligenza artificiale e automatizzazione parziale per soluzioni esterne, sfruttando componenti core di un sistema pi\u00f9 ampio come base strategica.",
+        "category": "SAAS",
+        "status": "IDEA",
+        "dimensions": {
+          "time_to_cash": "VERY_LONG_GT_6M",
+          "capital_required": "HIGH",
+          "sales_difficulty": "VERY_HIGH",
+          "margin": "HIGH",
+          "recurrence": "SUBSCRIPTION",
+          "automation_level": "PARTIALLY_AUTOMATED",
+          "skills_available": "NEEDS_LEARNING",
+          "premium_tool_dependency": "MODERATE_COST",
+          "strategic_reuse": "CORE_REUSE",
+          "risk": "VERY_HIGH",
+          "human_time_required": "FULL_TIME"
+        },
+        "technical_priority": {
+          "score": 100.0,
+          "criteria": {
+            "novelty": "HIGH",
+            "infrastructure_leverage": "HIGH",
+            "complexity_interest": "HIGH",
+            "long_term_strategic_value": "HIGH"
+          },
+          "rationale": "L'infrastructure_leverage \u00e8 elevata perch\u00e9 dipende da architetture preesistenti e moduli centrali gi\u00e0 sviluppati, riducendo costi di sviluppo e dipendenze da infrastrutture nuove."
+        },
+        "funding_priority": {
+          "score": 37.25,
+          "weighted_breakdown": {
+            "time_to_cash": 0.0,
+            "capital_required": 0.0,
+            "sales_difficulty": 0.0,
+            "margin": 7.0,
+            "recurrence": 10.0,
+            "automation_level": 5.5,
+            "skills_available": 3.0,
+            "premium_tool_dependency": 1.75,
+            "strategic_reuse": 10.0,
+            "risk": 0.0,
+            "human_time_required": 0.0
+          },
+          "rationale": "Il tempo di cash flow molto lungo e il capitale richiesto elevato richiedono finanziamenti estesi, poich\u00e9 investimenti iniziali sono massicci e la monetizzazione si protrae oltre i 6 mesi."
+        },
+        "created_by": "nexus_task_0006",
+        "created_at": "2026-09-29T00:00:00Z",
+        "provenance": {
+          "dimension_estimation_method": "ESTIMATED_BY_CLAUDE_NO_MARKET_DATA",
+          "reviewed": false
+        },
+        "evidence_confidence": "LOW",
+        "priority_status": "PROVISIONAL",
+        "hard_gate": "BLOCKED_BY_CAPITAL",
+        "capital_scenario_priorities": {
+          "BOOTSTRAP_0_100": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='HIGH' eccede il tetto di questo scenario ('NONE') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_100_500": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='HIGH' eccede il tetto di questo scenario ('LOW') - BLOCKED_BY_CAPITAL"
+          },
+          "BOOTSTRAP_500_2000": {
+            "feasible": false,
+            "adjusted_funding_priority": 0.0,
+            "note": "capital_required='HIGH' eccede il tetto di questo scenario ('MEDIUM') - BLOCKED_BY_CAPITAL"
+          },
+          "GROWTH_2000_PLUS": {
+            "feasible": true,
+            "adjusted_funding_priority": 47.25,
+            "note": "capitale sufficiente a questo scenario - capital_required non e' piu' un fattore limitante, altre 10 dimensioni invariate"
+          }
+        },
+        "required_capabilities": [
+          "orchestrator",
+          "local_llm",
+          "voice",
+          "messaging",
+          "coding",
+          "crm",
+          "payments",
+          "customer_support"
+        ],
+        "capability_coverage": {
+          "schema_version": 1,
+          "per_capability": {
+            "orchestrator": "AVAILABLE_NOW",
+            "deterministic_workers": "NOT_REQUIRED",
+            "local_llm": "AVAILABLE_NOW",
+            "research": "NOT_REQUIRED",
+            "coding": "AVAILABLE_NOW",
+            "website_generation": "NOT_REQUIRED",
+            "content": "NOT_REQUIRED",
+            "image_video": "NOT_REQUIRED",
+            "messaging": "MISSING",
+            "crm": "MISSING",
+            "analytics": "NOT_REQUIRED",
+            "payments": "EXTERNAL_SERVICE_REQUIRED",
+            "voice": "MISSING",
+            "physical_fulfillment": "NOT_REQUIRED",
+            "customer_support": "MISSING"
+          },
+          "existing_capability_coverage_pct": 37.5,
+          "blockers": [
+            "messaging: MISSING",
+            "crm: MISSING",
+            "payments: EXTERNAL_SERVICE_REQUIRED",
+            "voice: MISSING",
+            "customer_support: MISSING"
+          ]
+        },
+        "lifecycle_state": "IDEA",
+        "next_cheapest_validation_step": {
+          "description": "NON procedere - questa e' l'opportunity piu' lontana nel tempo e piu' bloccata da capacita' mancanti del framework. Il passo reale e' continuare a costruire le capacita' core (voice/crm/payments/customer_support) per altre opportunity piu' vicine, non pianificare questa direttamente.",
+          "estimated_cost": "NONE",
+          "reversibility": "FULLY_REVERSIBLE",
+          "speed": "MONTHS",
+          "informational_value": "LOW"
+        },
+        "learning_record": {
+          "initial_score": null,
+          "initial_confidence": null,
+          "user_decision": null,
+          "validation_cost": null,
+          "human_time": null,
+          "machine_time": null,
+          "result": null,
+          "first_revenue_if_any": null,
+          "actual_time_to_cash": null,
+          "failure_reason": null,
+          "prediction_error": null
+        },
+        "legal_or_policy_risk_flag": false,
+        "input_type": "ASSUMPTION"
       }
     ]
   }

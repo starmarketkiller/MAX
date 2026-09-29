@@ -1,0 +1,72 @@
+{
+  "results": {
+    "OPP_LOCAL_BUSINESS_STARTER_PACK": {
+      "description": "Pacco di avvio per attività locali che offre servizi personalizzati (ad esempio gestione operativa, supporto organizzativo o soluzioni su misura) a piccole imprese o entità territoriali, senza necessità di investimenti pesanti in infrastrutture fisiche o digitali avanzate.",
+      "technical_rationale": "I criteri tecnici indicano un modello basato su soluzioni già esistenti o riprogrammazioni di processi esistenti (infrastructure_leverage = NONE), poiché non richiede innovazione di prodotto o dipendenza da tecnologie complesse o costose.",
+      "funding_rationale": "La rapidità di recupero del capitale (time_to_cash = SHORT_LT_1M) e la bassa richiesta di capitale iniziale (capital_required = LOW) giustificano un modello di funding orientato a finanziamenti accessibili (es. crowdfunding locale, microcredito o autofinanziamento) senza bisogno di investimenti massivi."
+    },
+    "OPP_MINI_SITE_LANDING_PAGE": {
+      "description": "Un mini-site o landing page statico o dinamico (minimal) per promuovere un prodotto/servizio in modo diretto, senza sviluppo complesso, con un approccio transazionale (es. vendita diretta o lead generation).",
+      "technical_rationale": "La bassa complessità interessa perché richiede soluzioni semplici (HTML/CSS/JS basici o CMS low-code), senza dipendenze infrastrutturali pesanti (es. server dedicati o API estese), e valore strategico limitato a una fase occasionale (es. campagna promozionale).",
+      "funding_rationale": "Non richiede investimenti iniziali (capital_required: NONE) e il ritorno è rapido (time_to_cash: SHORT_LT_1M), quindi il profilo di funding è auto-sostenibile con risorse limitate e senza necessità di finanziamenti esterni."
+    },
+    "OPP_REVIEW_KIT_QR_NFC": {
+      "description": "Un kit di revisione digitale (QR/NFC) che consente di scansionare documenti o prodotti fisici per accedere a informazioni aggiuntive (es. istruzioni, certificati, aggiornamenti) senza intermediazione cartacea.",
+      "technical_rationale": "La bassa complessità e l’assenza di infrastrutture specializzate (infrastructure_leverage: NONE) si riflettono in soluzioni standardizzate (es. etichette NFC/QR) che richiedono solo hardware low-cost e software di base per la lettura.",
+      "funding_rationale": "La rapida liquidità (time_to_cash: SHORT_LT_1M) e il basso capitale iniziale (capital_required: LOW) si giustificano in un modello a ciclo unico (recurrence: ONE_OFF) con costi marginali trascurabili per la produzione e distribuzione."
+    },
+    "OPP_SMART_BUSINESS_CARD_NFC_QR": {
+      "description": "Una smart business card integrata con tag NFC/QR che consente di automatizzare scambi di informazioni (contatti, agende, documenti digitali) tramite lettura istantanea, senza necessità di app aggiuntive o password.",
+      "technical_rationale": "I criteri tecnici sono classificati come 'LOW' per la 'novelty' e 'infrastructure_leverage' (nessuna dipendenza da infrastrutture complesse o hardware avanzato), poiché si basa su componenti standard (tag NFC/QR) già diffusi e integrabili su schede esistenti con costi bassi.",
+      "funding_rationale": "Il modello richiede 'LOW capital' e 'SHORT_LT_1M time_to_cash' perché la fase di sviluppo e lancio è rapida, sfruttando componenti low-cost e una vendita diretta (B2B/B2C) senza bisogno di investimenti pesanti in marketing a lungo termine."
+    },
+    "OPP_DIGITAL_MENU": {
+      "description": "Un servizio digitale che gestisce e distribuisce menù digitali (ad esempio per ristoranti o catering) tramite piattaforma sottoscrittiva, automatizzata e senza dipendenze tecniche avanzate.",
+      "technical_rationale": "I criteri tecnici sono 'LOW' per infrastruttura perché non richiede hardware o server propri, sfruttando soluzioni cloud preesistenti o integrazioni con piattaforme esistenti (es. POS, CMS).",
+      "funding_rationale": "Non richiede capitale iniziale e il cash flow arriva velocemente (<1 mese) grazie alla modalità subscription e alla bassa complessità operativa, riducendo costi di sviluppo e scalabilità."
+    },
+    "OPP_BOOKING_PACK": {
+      "description": "Un servizio SaaS che combina pacchetti di prenotazioni (es. alloggi, attività, trasporti) per clienti B2B/B2C, centralizzando e automatizzando la gestione di più servizi in un unico portale.",
+      "technical_rationale": "La bassa dipendenza da infrastrutture esterne (infrastructure_leverage: NONE) riflette la necessità di integrare direttamente con piattaforme di booking esistenti senza richiedere soluzioni cloud o hardware propri.",
+      "funding_rationale": "Il tempo di cash flow medio (1–3 mesi) e il capitale basso (LOW) indicano un modello che richiede investimenti iniziali limitati, ma dipende da flussi ricorrenti (subscription) per sostenere costi operativi e scalare."
+    },
+    "OPP_LEAD_CAPTURE_FOLLOWUP_PACK": {
+      "description": "Un pacchetto automatizzato per catturare lead e seguire contatti post-acquisto tramite workflow predefiniti, integrato con strumenti SaaS esistenti per vendite e marketing.",
+      "technical_rationale": "La soluzione sfrutta infrastrutture preesistenti di piattaforme CRM o email marketing, limitando così la necessità di sviluppare componenti custom e riducendo la complessità di integrazione.",
+      "funding_rationale": "La monetizzazione avviene tramite abbonamento a ciclo ricorrente con un cash flow che si materializza tra 1 e 3 mesi, consentendo investimenti minimi iniziali per scalare con margini stabili."
+    },
+    "OPP_CONTENT_REPURPOSING_SOCIAL_PACK": {
+      "description": "Servizio che trasforma contenuti esistenti (testi, video, grafiche) in versioni adattate per piattaforme social, mantenendo la stessa essenza ma con formati e linguaggi specifici.",
+      "technical_rationale": "L'infrastructure_leverage è parziale perché richiede strumenti di editing e adattamento basati su workflow manuali o semi-automati, senza necessità di infrastrutture costose o scalabili.",
+      "funding_rationale": "Il time_to_cash breve e il capitale richiesto nullo limitano la necessità di finanziamenti esterni, poiché il modello si basa su commissioni o abbonamenti ricorrenti con flussi immediati."
+    },
+    "OPP_AI_CUSTOMER_SUPPORT": {
+      "description": "Fornisce un servizio di assistenza clienti automatizzato tramite intelligenza artificiale per aziende che gestiscono richieste repetitive, riducendo il bisogno di supporto umano diretto.",
+      "technical_rationale": "L'alta infrastruttura leverage consente di sfruttare piattaforme cloud preesistenti e API esistenti per integrare soluzioni AI senza dover sviluppare componenti custom, abbattendo costi e complessità.",
+      "funding_rationale": "Il lungo tempo di cash flow e il capitale medio richiesto riflettono la necessità di investire in sviluppo e scalabilità iniziale per garantire affidabilità e personalizzazione, prima di generare ricavi ricorrenti da abbonamenti."
+    },
+    "OPP_AI_RECEPTIONIST": {
+      "description": "Un servizio SaaS che automatizza interamente la gestione delle chiamate e interazioni con clienti tramite intelligenza artificiale, sostituendo il receptionist umano in ambienti business.",
+      "technical_rationale": "La piattaforma sfrutta infrastrutture cloud preesistenti (API, NLP, call routing) per offrire soluzioni scalabili e modulari, sfruttando già tecnologie consolidate ma integrandole in modo innovativo per automatizzare interamente il flusso di lavoro.",
+      "funding_rationale": "La necessità di investimenti iniziali moderati per lo sviluppo e la dipendenza da un cash flow lungo (3-6 mesi) per generare ricavi ricorrenti, richiedono un capitale di partenza medio e un modello di finanziamento che anticipi costi di sviluppo e marketing prima della monetizzazione massiva."
+    },
+    "OPP_LEAD_RESEARCH_SERVICE": {
+      "description": "Servizio di ricerca e analisi di lead (potenziali clienti) per aziende o professionisti, fornendo dati strutturati e strategie di approccio personalizzate su richiesta occasionale.",
+      "technical_rationale": "La bassa complessità di interesse e l'infrastruttura parzialmente riutilizzabile si riflettono in un modello che richiede pochi strumenti specifici (es. database di contatti o CRM basati su dati esistenti), senza necessità di tecnologie innovative o costose.",
+      "funding_rationale": "L’assenza di capitale richiesto e il cash flow rapido (entrato in meno di un mese) riducono la necessità di finanziamenti esterni, concentrandosi su modelli di ricarica occasionali o vendite a clienti già esistenti."
+    },
+    "OPP_MICRO_SAAS": {
+      "description": "Un servizio SaaS specializzato in soluzioni minimaliste e focalizzate su nicchie specifiche, con licenze a pagamento ricorrenti per funzionalità limitate ma essenziali.",
+      "technical_rationale": "La bassa dipendenza da infrastrutture esterne e la gestione autonoma delle operazioni riducono la complessità di integrazione, ma la specializzazione richiede sviluppo mirato senza ereditare codice esistente.",
+      "funding_rationale": "Il lungo periodo per il recupero delle spese e la bassa richiesta di capitale iniziale favoriscono modelli di finanziamento basati su crescita organica e monetizzazione precoce delle ricorrenze."
+    },
+    "OPP_NEXUS_JARVIS_EXTERNAL_PRODUCT": {
+      "description": "Un prodotto SaaS che integra funzionalità avanzate di intelligenza artificiale e automatizzazione parziale per soluzioni esterne, sfruttando componenti core di un sistema più ampio come base strategica.",
+      "technical_rationale": "L'infrastructure_leverage è elevata perché dipende da architetture preesistenti e moduli centrali già sviluppati, riducendo costi di sviluppo e dipendenze da infrastrutture nuove.",
+      "funding_rationale": "Il tempo di cash flow molto lungo e il capitale richiesto elevato richiedono finanziamenti estesi, poiché investimenti iniziali sono massicci e la monetizzazione si protrae oltre i 6 mesi."
+    }
+  },
+  "tier_counts": {
+    "TIER1_LOCAL_CHEAP": 13
+  }
+}

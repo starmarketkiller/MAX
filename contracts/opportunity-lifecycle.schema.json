@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/opportunity-lifecycle.schema.json",
+  "title": "NEXUS OPPORTUNITY_LIFECYCLE_V1",
+  "description": "State machine FAIL-CLOSED per il ciclo di vita di una OPPORTUNITY_V1 (NEXUS TASK #0006) - una transizione non elencata in allowed_transitions e' RIFIUTATA, mai applicata silenziosamente. Nessuna opportunity puo' saltare stati (es. da IDEA a MARKET_TEST) - stesso principio gia' stabilito in core/task_queue.py per i task dell'Orchestrator, qui applicato al dominio business.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "states", "allowed_transitions"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["IDEA", "RESEARCH_REQUIRED", "RESEARCHING", "PROVISIONAL", "VALIDATION_READY",
+                 "VALIDATING", "MVP_READY", "MARKET_TEST", "FIRST_REVENUE", "REPEATABLE",
+                 "SCALABLE", "PAUSED", "REJECTED"]
+      }
+    },
+    "allowed_transitions": {
+      "type": "object",
+      "description": "Mappa stato -> lista di stati raggiungibili DIRETTAMENTE da esso. Ogni stato (tranne i terminali) puo' anche transitare a PAUSED/REJECTED.",
+      "additionalProperties": {
+        "type": "array", "items": { "type": "string" }
+      }
+    }
+  }
+}

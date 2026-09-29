@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/capability-coverage.schema.json",
+  "title": "NEXUS CAPABILITY_COVERAGE_V1",
+  "description": "Confronto fra le capacita' richieste da un'opportunity e le capacita' GIA' disponibili in NEXUS (NEXUS TASK #0006). Elenco delle 15 capacita' fisso e dichiarato qui - non un elenco che ogni opportunity puo' reinventare. Riusato sia come tassonomia di riferimento sia come forma embedded dentro OPPORTUNITY_V1.capability_coverage.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "per_capability", "existing_capability_coverage_pct", "blockers"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "per_capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "orchestrator", "deterministic_workers", "local_llm", "research", "coding",
+        "website_generation", "content", "image_video", "messaging", "crm", "analytics",
+        "payments", "voice", "physical_fulfillment", "customer_support"
+      ],
+      "properties": {
+        "orchestrator": { "$ref": "#/definitions/status" },
+        "deterministic_workers": { "$ref": "#/definitions/status" },
+        "local_llm": { "$ref": "#/definitions/status" },
+        "research": { "$ref": "#/definitions/status" },
+        "coding": { "$ref": "#/definitions/status" },
+        "website_generation": { "$ref": "#/definitions/status" },
+        "content": { "$ref": "#/definitions/status" },
+        "image_video": { "$ref": "#/definitions/status" },
+        "messaging": { "$ref": "#/definitions/status" },
+        "crm": { "$ref": "#/definitions/status" },
+        "analytics": { "$ref": "#/definitions/status" },
+        "payments": { "$ref": "#/definitions/status" },
+        "voice": { "$ref": "#/definitions/status" },
+        "physical_fulfillment": { "$ref": "#/definitions/status" },
+        "customer_support": { "$ref": "#/definitions/status" }
+      }
+    },
+    "existing_capability_coverage_pct": {
+      "type": "number", "minimum": 0, "maximum": 100,
+      "description": "Percentuale di capacita' RICHIESTE dall'opportunity (non tutte le 15) gia' AVAILABLE_NOW - calcolato deterministicamente, mai stimato."
+    },
+    "blockers": {
+      "type": "array",
+      "description": "Lista precisa delle capacita' MISSING o EXTERNAL_SERVICE_REQUIRED fra quelle richieste - mai un riassunto vago.",
+      "items": { "type": "string" }
+    }
+  },
+  "definitions": {
+    "status": {
+      "type": "string",
+      "enum": ["NOT_REQUIRED", "AVAILABLE_NOW", "PARTIAL", "MISSING", "EXTERNAL_SERVICE_REQUIRED"]
+    }
+  }
+}

@@ -2,12 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://nexus.local/contracts/opportunity.schema.json",
   "title": "NEXUS OPPORTUNITY_V1",
-  "description": "Una candidata idea/progetto/servizio potenzialmente generatore di cassa - schema machine-readable per il Funding Priority & Opportunity Framework V1 (NEXUS TASK #0005). Riusa lo stile draft-07 gia' stabilito da contracts/strategy-registry.schema.json (additionalProperties:false, required espliciti, enum SCREAMING_SNAKE). Separazione deliberata da TASK_MANIFEST_V1: un'opportunity NON e' un task da eseguire, e' un CANDIDATO da valutare/prioritizzare prima che diventi (eventualmente) uno o piu' task.",
+  "description": "Una candidata idea/progetto/servizio potenzialmente generatore di cassa - schema machine-readable per il Funding Priority & Opportunity Framework V1 (NEXUS TASK #0005/#0006). Riusa lo stile draft-07 gia' stabilito da contracts/strategy-registry.schema.json (additionalProperties:false, required espliciti, enum SCREAMING_SNAKE). Separazione deliberata da TASK_MANIFEST_V1: un'opportunity NON e' un task da eseguire, e' un CANDIDATO da valutare/prioritizzare prima che diventi (eventualmente) uno o piu' task. ESTESO in NEXUS TASK #0006 (additivo - hardening, non riprogettazione: evidence_confidence/priority_status separano lo score dalla qualita' dell'evidenza, hard_gate impedisce a uno score alto di bypassare un blocco reale, capital_scenario_priorities mostra che la stessa opportunity ha priorita' diversa a seconda del capitale disponibile, capability_coverage confronta con le capacita' NEXUS gia' esistenti, lifecycle_state e' fail-closed, next_cheapest_validation_step privilegia il test piu' economico/reversibile, learning_record e' pronto per registrare risultati reali futuri, input_type distingue un'assunzione da un dato dichiarato/validato).",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "opportunity_id", "title", "description", "category", "status", "dimensions",
-    "technical_priority", "funding_priority", "created_by", "created_at", "provenance"
+    "technical_priority", "funding_priority", "created_by", "created_at", "provenance",
+    "evidence_confidence", "priority_status", "hard_gate", "capital_scenario_priorities",
+    "required_capabilities", "capability_coverage", "lifecycle_state",
+    "next_cheapest_validation_step", "learning_record", "legal_or_policy_risk_flag",
+    "input_type"
   ],
   "properties": {
     "opportunity_id": { "type": "string", "pattern": "^OPP_[A-Za-z0-9_]+$" },
@@ -113,6 +117,114 @@
                    "VALIDATED_WITH_EXTERNAL_DATA"]
         },
         "reviewed": { "type": "boolean" }
+      }
+    },
+    "evidence_confidence": {
+      "type": "string",
+      "description": "SEPARATO dallo score - un funding_priority alto con evidence_confidence LOW resta un'ipotesi, mai una validazione di mercato. NEXUS TASK #0006 punto 2.",
+      "enum": ["LOW", "MEDIUM", "HIGH", "VALIDATED"]
+    },
+    "priority_status": {
+      "type": "string",
+      "description": "Se input_type=ASSUMPTION per una o piu' dimensioni, questo campo DEVE essere PROVISIONAL o HYPOTHESIS_BASED - mai VALIDATED senza evidence_confidence=VALIDATED.",
+      "enum": ["PROVISIONAL", "HYPOTHESIS_BASED", "VALIDATED"]
+    },
+    "hard_gate": {
+      "type": "string",
+      "description": "Un gate esplicito che un punteggio alto NON puo' MAI bypassare - calcolato deterministicamente da capital_scenario_priorities/capability_coverage/evidence_confidence (server/funding_v1/hard_gates.py), mai assegnato a mano.",
+      "enum": ["BLOCKED_BY_CAPITAL", "BLOCKED_BY_CAPABILITY", "BLOCKED_BY_LEGAL_OR_POLICY_RISK",
+               "BLOCKED_BY_MISSING_DATA", "RESEARCH_REQUIRED", "READY_FOR_VALIDATION",
+               "READY_FOR_MVP", "READY_FOR_MARKET_TEST"]
+    },
+    "capital_scenario_priorities": {
+      "type": "object",
+      "description": "La STESSA opportunity ha una funding_priority ricalcolata (mai riusata identica) per ciascuno dei 4 scenari di capitale - NEXUS TASK #0006 punto 4. Nessun capitale personale dell'utente e' hardcoded: sono 4 scenari generici.",
+      "additionalProperties": false,
+      "required": ["BOOTSTRAP_0_100", "BOOTSTRAP_100_500", "BOOTSTRAP_500_2000",
+                 "GROWTH_2000_PLUS"],
+      "properties": {
+        "BOOTSTRAP_0_100": { "$ref": "#/definitions/capital_scenario_result" },
+        "BOOTSTRAP_100_500": { "$ref": "#/definitions/capital_scenario_result" },
+        "BOOTSTRAP_500_2000": { "$ref": "#/definitions/capital_scenario_result" },
+        "GROWTH_2000_PLUS": { "$ref": "#/definitions/capital_scenario_result" }
+      }
+    },
+    "required_capabilities": {
+      "type": "array",
+      "description": "Dichiarazione ESPLICITA (mai inferita da category/description) di quali delle 15 capacita' NEXUS questa opportunity richiede - input di capability_coverage.",
+      "items": {
+        "type": "string",
+        "enum": ["orchestrator", "deterministic_workers", "local_llm", "research", "coding",
+                 "website_generation", "content", "image_video", "messaging", "crm",
+                 "analytics", "payments", "voice", "physical_fulfillment", "customer_support"]
+      }
+    },
+    "capability_coverage": {
+      "description": "Stessa forma di CAPABILITY_COVERAGE_V1 (contracts/capability-coverage.schema.json), embedded qui per questa specifica opportunity.",
+      "type": "object"
+    },
+    "lifecycle_state": {
+      "type": "string",
+      "description": "Stato corrente nella state machine OPPORTUNITY_LIFECYCLE_V1 (contracts/opportunity-lifecycle.schema.json) - fail-closed, nessun salto di stato permesso.",
+      "enum": ["IDEA", "RESEARCH_REQUIRED", "RESEARCHING", "PROVISIONAL", "VALIDATION_READY",
+               "VALIDATING", "MVP_READY", "MARKET_TEST", "FIRST_REVENUE", "REPEATABLE",
+               "SCALABLE", "PAUSED", "REJECTED"]
+    },
+    "next_cheapest_validation_step": {
+      "type": "object", "additionalProperties": false,
+      "required": ["description", "estimated_cost", "reversibility", "speed",
+                 "informational_value"],
+      "properties": {
+        "description": { "type": "string" },
+        "estimated_cost": { "type": "string", "enum": ["NONE", "LOW", "MEDIUM", "HIGH"] },
+        "reversibility": { "type": "string", "enum": ["FULLY_REVERSIBLE", "PARTIALLY_REVERSIBLE",
+                                                     "IRREVERSIBLE"] },
+        "speed": { "type": "string", "enum": ["HOURS", "DAYS", "WEEKS", "MONTHS"] },
+        "informational_value": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+      }
+    },
+    "learning_record": {
+      "type": "object",
+      "description": "Pronto per registrare risultati REALI futuri - NEXUS TASK #0006 punto 9. Tutti i campi NOT_AVAILABLE finche' non esiste un risultato osservato. Nessun fine-tuning, solo raccolta dati.",
+      "additionalProperties": false,
+      "required": ["initial_score", "initial_confidence", "user_decision", "validation_cost",
+                 "human_time", "machine_time", "result", "first_revenue_if_any",
+                 "actual_time_to_cash", "failure_reason", "prediction_error"],
+      "properties": {
+        "initial_score": { "type": ["number", "null"] },
+        "initial_confidence": { "type": ["string", "null"] },
+        "user_decision": { "type": ["string", "null"] },
+        "validation_cost": { "type": ["string", "null"] },
+        "human_time": { "type": ["string", "null"] },
+        "machine_time": { "type": ["string", "null"] },
+        "result": { "type": ["string", "null"] },
+        "first_revenue_if_any": { "type": ["string", "null"] },
+        "actual_time_to_cash": { "type": ["string", "null"] },
+        "failure_reason": { "type": ["string", "null"] },
+        "prediction_error": { "type": ["string", "null"] }
+      }
+    },
+    "legal_or_policy_risk_flag": {
+      "type": "boolean",
+      "description": "Dichiarato ESPLICITAMENTE (mai inferito da free-text) - True forza hard_gate=BLOCKED_BY_LEGAL_OR_POLICY_RISK indipendentemente da qualunque altro punteggio."
+    },
+    "input_type": {
+      "type": "string",
+      "description": "ASSUMPTION se le dimensioni sono stime senza dati reali (come tutte quelle di #0005/#0006 finora) - lo scoring PUO' usare ASSUMPTION solo se priority_status ne riflette la natura provvisoria (mai presentato come market validation). NEXUS TASK #0006 punto 12.",
+      "enum": ["ASSUMPTION", "DECLARED_BY_USER", "VALIDATED_WITH_EXTERNAL_DATA"]
+    }
+  },
+  "definitions": {
+    "capital_scenario_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["feasible", "adjusted_funding_priority", "note"],
+      "properties": {
+        "feasible": {
+          "type": "boolean",
+          "description": "False se dimensions.capital_required eccede questo scenario - in quel caso adjusted_funding_priority DEVE essere 0 e hard_gate-level BLOCKED_BY_CAPITAL si applica per questo scenario."
+        },
+        "adjusted_funding_priority": { "type": "number", "minimum": 0, "maximum": 100 },
+        "note": { "type": "string" }
       }
     }
   }
