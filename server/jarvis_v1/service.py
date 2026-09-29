@@ -126,6 +126,11 @@ class JarvisService:
         # una sola volta per task_id, mai ricalcolato/ri-escalato a ogni
         # singolo follow-up ("a che punto e'?").
         self._work_product_cache: dict[str, tuple] = {}
+        self.dispatcher_status_provider = None
+
+    def set_dispatcher_status_provider(self, provider):
+        """Attach a read-only runtime status projection without owning dispatcher logic."""
+        self.dispatcher_status_provider = provider
 
     def _response(self, message, response_type, summary, *, details=None, task_id=None,
                   status="COMPLETED", actions=None, confidence="HIGH", generated_by="jarvis_v1"):
@@ -299,7 +304,11 @@ class JarvisService:
             "state": record.get("state"), "human_state": _STATE_MESSAGES.get(record.get("state"), "ha stato non noto"),
             "title": (record.get("manifest") or {}).get("title"),
             "executor": record.get("executor"), "dependencies": record.get("dependencies") or [],
-            "updated_at": record.get("updated_at"), "source_refs": ["orchestrator queue", "Activity Ledger"],
+            "retry_count": record.get("retry_count"), "dispatch_attempts": record.get("dispatch_attempts"),
+            "updated_at": record.get("updated_at"), "started_at": record.get("started_at"),
+            "completed_at": record.get("completed_at"),
+            "next_step": self._next_step(record),
+            "source_refs": ["orchestrator queue", "Activity Ledger"],
         }
         if technical:
             events = self.ledger.read_for_task(task_id)
@@ -307,7 +316,7 @@ class JarvisService:
             safe_event_keys = {"reason", "failure_class", "classification", "target", "tier",
                                "executor", "attempt", "final_state", "released", "actor"}
             details.update({
-                "action": record.get("action"), "dispatch_attempts": record.get("dispatch_attempts"),
+                "action": record.get("action"),
                 "dispatch_last_error": record.get("dispatch_last_error"), "recovery": record.get("recovery"),
                 "escalation": {key: escalation.get(key) for key in ("target", "classification")
                                if escalation.get(key) is not None},
@@ -318,6 +327,20 @@ class JarvisService:
             })
         return details
 
+    @staticmethod
+    def _next_step(record):
+        state = record.get("state")
+        return {
+            "QUEUED": "Il dispatcher la prenderà quando sarà il prossimo lavoro eseguibile.",
+            "RUNNING": "Attendi il completamento; lo stop forzato non è sicuro in V2.1.",
+            "BLOCKED": "Consulta la causa e il lifecycle prima di decidere un recupero manuale.",
+            "ESCALATION_REQUIRED": "Serve il provider o revisore indicato dall’escalation.",
+            "WAITING_APPROVAL": "Approva o rifiuta dopo aver controllato i dettagli.",
+            "COMPLETED": "Il risultato è disponibile per la revisione finale.",
+            "CANCELLED": "Nessuna azione successiva automatica.",
+            "FAILED": "Controlla l’errore prima di un eventuale retry manuale.",
+        }.get(state, "Controlla i dettagli canonici della task.")
+
     def follow_up(self, message):
         task_id = self._resolve_task_id(message)
         if not task_id:
@@ -327,7 +350,7 @@ class JarvisService:
         self.ledger.append("TASK_STATUS_REQUESTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_service")
         if record["state"] == "COMPLETED":
             return self._deliver_finalized_result(message, task_id, record)
-        technical = bool(message.get("metadata", {}).get("technical_details")) or bool(
+        technical = record["state"] == "BLOCKED" or bool(message.get("metadata", {}).get("technical_details")) or bool(
             re.search(r"\b(tecnic|technical|diagnostic)\w*\b", message.get("text") or "", re.I))
         summary = f"La task {task_id} {_STATE_MESSAGES.get(record['state'], 'ha stato ' + record['state'])}."
         return self._response(message, "TASK_STATUS", summary, task_id=task_id,
@@ -356,17 +379,36 @@ class JarvisService:
             uid = f"jarvis:{message['user_id']}"
             items = [r for r in self.queue.list_all() if (r.get("manifest") or {}).get("created_by") == uid]
             items.sort(key=lambda r: r.get("updated_at") or "", reverse=True)
-            return self._response(message, "ANSWER", f"Task recenti: {len(items[:10])}.",
-                                  details={"items": [{"task_id": r["task_id"], "state": r["state"]}
-                                                     for r in items[:10]], "source_refs": ["orchestrator queue"]})
+            recent = items[:10]
+            counts = {}
+            for record in recent: counts[record["state"]] = counts.get(record["state"], 0) + 1
+            return self._response(message, "ANSWER", f"Hai {len(recent)} task recenti.",
+                                  details={"view": "TASK_LIST", "items": [{
+                                      "task_id": r["task_id"], "state": r["state"],
+                                      "title": (r.get("manifest") or {}).get("title"),
+                                      "updated_at": r.get("updated_at")}
+                                      for r in recent], "counts": counts,
+                                      "source_refs": ["orchestrator queue"]})
         if value == "/status" or re.search(r"\b(status nexus|stato nexus)\b", value):
             states = {}
-            for record in self.queue.list_all(): states[record["state"]] = states.get(record["state"], 0) + 1
+            all_tasks = self.queue.list_all()
+            for record in all_tasks: states[record["state"]] = states.get(record["state"], 0) + 1
+            recent = sorted(all_tasks, key=lambda record: record.get("updated_at") or "", reverse=True)[:10]
+            completed_recent = sum(1 for record in recent if record.get("state") == "COMPLETED")
+            dispatcher = {"enabled": None, "running": None, "status": "UNKNOWN"}
+            if self.dispatcher_status_provider:
+                try:
+                    dispatcher = self.dispatcher_status_provider()
+                except Exception:
+                    dispatcher = {"enabled": None, "running": None, "status": "UNKNOWN"}
             return self._response(message, "ANSWER", "NEXUS è operativo; ecco lo stato canonico della Queue.",
-                                  details={"task_states": states, "agents": self.agents(),
+                                  details={"view": "SYSTEM_STATUS", "task_states": states,
+                                           "completed_recent": completed_recent,
+                                           "dispatcher": dispatcher, "agents": self.agents(),
                                            "source_refs": ["orchestrator queue", "agent registry"]})
         if re.search(r"\b(dettagli|details|diagnostic)\b", value):
-            message.setdefault("metadata", {})["technical_details"] = True
+            if re.search(r"\b(tecnic|technical|diagnostic)\w*\b", value):
+                message.setdefault("metadata", {})["technical_details"] = True
             return self.follow_up(message)
         if re.search(r"\b(continua|continue)\b", value):
             return self.follow_up(message)

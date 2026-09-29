@@ -112,7 +112,7 @@ class TelegramAdapter:
 
     def send(self, chat_id, response):
         if not self.configured: return {"sent": False, "reason": "UNAVAILABLE"}
-        payload = {"chat_id": str(chat_id), "text": response["summary"],
+        payload = {"chat_id": str(chat_id), "text": self.render_response(response),
                    "disable_web_page_preview": True}
         if response.get("status") == "WAITING_APPROVAL" and response.get("task_id"):
             task_id = response["task_id"]
@@ -140,3 +140,78 @@ class TelegramAdapter:
                                        {"channel": "TELEGRAM", "priority": response.get("priority")},
                                        actor="telegram_adapter")
         return {"sent": ok, "reason": None if ok else "PROVIDER_UNAVAILABLE"}
+
+    @staticmethod
+    def _time(value):
+        if not value:
+            return "—"
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            return parsed.astimezone().strftime("%d/%m %H:%M")
+        except (TypeError, ValueError):
+            return str(value)[:16]
+
+    @classmethod
+    def render_response(cls, response):
+        """Render structured Jarvis details into one compact Telegram message."""
+        summary = str(response.get("summary") or "Jarvis non ha prodotto un riepilogo.").strip()
+        details = response.get("details") or {}
+        lines = [summary]
+
+        if details.get("view") == "TASK_LIST":
+            lines = [summary, ""]
+            for item in (details.get("items") or [])[:10]:
+                title = str(item.get("title") or "Senza descrizione").strip().replace("\n", " ")
+                if len(title) > 70:
+                    title = title[:67] + "..."
+                lines.append(f"{item.get('task_id', 'TASK_—')} — {item.get('state', 'UNKNOWN')} — {title}")
+                lines.append(f"  aggiornata {cls._time(item.get('updated_at'))}")
+            counts = details.get("counts") or {}
+            if counts:
+                order = ("BLOCKED", "QUEUED", "RUNNING", "ESCALATION_REQUIRED",
+                         "WAITING_APPROVAL", "COMPLETED", "CANCELLED", "FAILED")
+                compact = [f"{counts[state]} {state.lower()}" for state in order if counts.get(state)]
+                lines.extend(["", ", ".join(compact) + "."])
+
+        elif details.get("view") == "SYSTEM_STATUS":
+            states = details.get("task_states") or {}
+            dispatcher = details.get("dispatcher") or {}
+            lines.extend(["",
+                f"Queued: {states.get('QUEUED', 0)}",
+                f"Running: {states.get('RUNNING', 0)}",
+                f"Blocked: {states.get('BLOCKED', 0)}",
+                f"Escalation: {states.get('ESCALATION_REQUIRED', 0)}",
+                f"Waiting approval: {states.get('WAITING_APPROVAL', 0)}",
+                f"Completed recenti: {details.get('completed_recent', 0)}",
+                f"Dispatcher: {dispatcher.get('status') or 'UNKNOWN'}",
+            ])
+
+        elif response.get("task_id") and details.get("state"):
+            lines.extend(["", f"Stato: {details.get('state')}"])
+            if details.get("title"):
+                lines.append(f"Task: {details['title']}")
+            lines.append(f"Executor: {details.get('executor') or 'NON ASSEGNATO'}")
+            lines.append(f"Retry: {details.get('retry_count') if details.get('retry_count') is not None else '—'}")
+            lines.append(f"Dispatcher attempts: {details.get('dispatch_attempts') if details.get('dispatch_attempts') is not None else '—'}")
+            if details.get("dispatch_last_error"):
+                lines.append(f"Causa: {details['dispatch_last_error']}")
+            recovery = details.get("recovery") or {}
+            if recovery.get("classification"):
+                lines.append(f"Recovery: {recovery['classification']}")
+            escalation = details.get("escalation") or {}
+            if escalation:
+                reason = escalation.get("classification") or escalation.get("target")
+                lines.append(f"Escalation: {reason}")
+            lines.append(f"Ultimo aggiornamento: {cls._time(details.get('updated_at'))}")
+            if details.get("next_step"):
+                lines.extend(["", f"Prossimo passo: {details['next_step']}"])
+            lifecycle = details.get("lifecycle") or []
+            if lifecycle:
+                lines.extend(["", "Lifecycle:"])
+                for event in lifecycle[-6:]:
+                    lines.append(f"• {cls._time(event.get('timestamp'))} {event.get('event_type', 'UNKNOWN')}")
+
+        rendered = "\n".join(lines).strip()
+        if len(rendered) > 3900:
+            rendered = rendered[:3860].rstrip() + "\n\nDettagli aggiuntivi disponibili nel Control Plane."
+        return rendered

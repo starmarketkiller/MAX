@@ -1401,6 +1401,13 @@ JARVIS_DISPATCHER = DurableQueueDispatcher(
     poll_seconds=float(os.environ.get("NEXUS_QUEUE_DISPATCHER_POLL_SECONDS", "2")),
     lease_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_LEASE_SECONDS", "900")),
     shutdown_timeout_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS", "25")))
+JARVIS_SERVICE.set_dispatcher_status_provider(lambda: {
+    "enabled": QUEUE_DISPATCHER_ENABLED,
+    "running": JARVIS_DISPATCHER.running,
+    "status": "RUNNING" if QUEUE_DISPATCHER_ENABLED and JARVIS_DISPATCHER.running
+              else ("STOPPED" if QUEUE_DISPATCHER_ENABLED else "DISABLED"),
+    "max_concurrency": 1,
+})
 
 # AUD0-CORS-001: nessun middleware CORS era presente. Con frontend e backend
 # sulla stessa origine non serve, ma se si separano le origini le richieste

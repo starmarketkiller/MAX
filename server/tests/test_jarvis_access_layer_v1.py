@@ -350,3 +350,80 @@ def test_telegram_cancel_callback_and_details(service, tmp_path):
     response = adapter.handle_update(update)
     assert response["task_id"] == created["task_id"]
     assert "lifecycle" in response["details"]
+
+
+def test_tasks_command_projects_rich_recent_task_rows(service):
+    first = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità Alpha."))
+    second = JarvisGateway(service).handle(message(
+        "Crea una task per analizzare opportunità Beta.", conversation="c2"))
+    service.queue.transition(first["task_id"], "CANCELLED")
+    response = JarvisGateway(service).handle(message("/tasks"))
+    assert response["details"]["view"] == "TASK_LIST"
+    assert len(response["details"]["items"]) == 2
+    assert all(set(("task_id", "state", "title", "updated_at")) <= set(item)
+               for item in response["details"]["items"])
+    rendered = TelegramAdapter.render_response(response)
+    assert first["task_id"] in rendered and second["task_id"] in rendered
+    assert "opportunità Alpha" in rendered and "CANCELLED" in rendered
+
+
+def test_status_command_includes_queue_counts_and_dispatcher(service):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    service.queue.transition(created["task_id"], "BLOCKED")
+    service.set_dispatcher_status_provider(lambda: {
+        "enabled": True, "running": True, "status": "RUNNING", "max_concurrency": 1})
+    response = JarvisGateway(service).handle(message("/status"))
+    assert response["details"]["task_states"]["BLOCKED"] == 1
+    assert response["details"]["dispatcher"]["status"] == "RUNNING"
+    rendered = TelegramAdapter.render_response(response)
+    assert "Blocked: 1" in rendered and "Dispatcher: RUNNING" in rendered
+
+
+def test_blocked_followup_automatically_exposes_cause_and_next_step(service):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "BLOCKED",
+        dispatch_last_error="RuntimeError: worker interrupted",
+        recovery={"classification": "DISPATCH_EXECUTION_AMBIGUOUS"})
+    response = JarvisGateway(service).handle(message("A che punto è?"))
+    assert response["details"]["dispatch_last_error"] == "RuntimeError: worker interrupted"
+    assert response["details"]["recovery"]["classification"] == "DISPATCH_EXECUTION_AMBIGUOUS"
+    assert "recupero" in response["details"]["next_step"].lower()
+    rendered = TelegramAdapter.render_response(response)
+    assert "Causa: RuntimeError: worker interrupted" in rendered
+    assert "Recovery: DISPATCH_EXECUTION_AMBIGUOUS" in rendered
+    assert "Prossimo passo:" in rendered
+
+
+def test_technical_details_render_executor_retries_and_lifecycle(service):
+    created = JarvisGateway(service).handle(message("Crea una task per analizzare opportunità."))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "BLOCKED", retry_count=2, dispatch_attempts=3,
+                             executor="LOCAL_FAST_MINISTRAL3B")
+    response = JarvisGateway(service).handle(message(
+        f"Mostrami i dettagli tecnici della task {task_id}"))
+    rendered = TelegramAdapter.render_response(response)
+    assert "Executor: LOCAL_FAST_MINISTRAL3B" in rendered
+    assert "Retry: 2" in rendered
+    assert "Dispatcher attempts: 3" in rendered
+    assert "Lifecycle:" in rendered
+
+
+def test_telegram_send_uses_rich_renderer(service, tmp_path, monkeypatch):
+    adapter = TelegramAdapter(service, tmp_path / "seen-rich.json", token="token", allowed_users=["42"])
+    captured = {}
+    class Result:
+        status = 200
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+    def fake_open(request, timeout=10):
+        captured.update(json.loads(request.data.decode()))
+        return Result()
+    monkeypatch.setattr("urllib.request.urlopen", fake_open)
+    response = {"summary": "Hai 1 task recente.", "details": {"view": "TASK_LIST", "items": [{
+        "task_id": "TASK_ABC", "state": "QUEUED", "title": "Analisi utile",
+        "updated_at": "2026-09-29T20:00:00+00:00"}], "counts": {"QUEUED": 1}},
+        "task_id": None, "status": "COMPLETED", "priority": "NORMAL"}
+    assert adapter.send("99", response)["sent"] is True
+    assert "TASK_ABC — QUEUED — Analisi utile" in captured["text"]
+    assert captured["text"] != response["summary"]
