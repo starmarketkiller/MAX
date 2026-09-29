@@ -16,7 +16,16 @@
 # Questo file resta la dichiarazione di INTENTO (cosa vogliamo), il lock e' il
 # FATTO (cosa viene installato).
 fastapi==0.115.6
-uvicorn[standard]==0.34.0
+uvicorn==0.34.0
+# Portable Uvicorn extras are direct, exact requirements so a lock compiled on
+# Windows remains complete when installed by the Linux production image.
+# uvloop is deliberately omitted: it is optional, platform-specific, and would
+# make a Windows-generated hash lock incomplete on Linux. Uvicorn uses asyncio.
+httptools==0.8.0
+python-dotenv==1.2.3
+PyYAML==6.0.3
+watchfiles==1.3.0
+websockets==17.1
 PyJWT==2.10.1
 python-multipart==0.0.20
 requests==2.32.5
