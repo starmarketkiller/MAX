@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 ORCH_DIR = os.path.join(os.path.dirname(__file__), "..", "orchestrator_v1")
 sys.path.insert(0, os.path.abspath(ORCH_DIR))
 
-from core.dispatcher import DurableQueueDispatcher  # noqa: E402
+from core.dispatcher import DurableQueueDispatcher, _sanitized_error  # noqa: E402
 from core.orchestrator import Orchestrator  # noqa: E402
 
 
@@ -138,5 +138,25 @@ def test_exception_after_running_is_blocked_not_replayed(tmp_path):
     record = orch.queue.get("TASK_AMBIGUOUS")
     assert record["state"] == "BLOCKED"
     assert record["recovery"]["classification"] == "DISPATCH_EXECUTION_AMBIGUOUS"
+    assert record["dispatch_last_error"] == "RuntimeError: process interrupted after execution started"
     assert dispatcher.run_once() is False
     orch.process_task = original
+
+
+def test_dispatch_error_is_sanitized_and_survives_claim_release(tmp_path):
+    orch, dispatcher = build(tmp_path)
+    submit_deterministic(orch, "TASK_SANITIZED")
+    def fail(task_id, claim_token=None):
+        orch.queue.assert_claim(task_id, claim_token)
+        orch.queue.transition(task_id, "RUNNING")
+        raise RuntimeError(r"failed C:\private\project secret=hunter2")
+    orch.process_task = fail
+    dispatcher.run_once()
+    error = orch.queue.get("TASK_SANITIZED")["dispatch_last_error"]
+    assert "hunter2" not in error and "C:\\private" not in error
+    assert "[REDACTED]" in error and "[PATH]" in error
+    assert "RuntimeError" in error
+
+
+def test_sanitized_error_has_no_raw_bearer_value():
+    assert "abc123" not in _sanitized_error(RuntimeError("Bearer abc123"))

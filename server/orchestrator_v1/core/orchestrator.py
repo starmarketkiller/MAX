@@ -102,6 +102,9 @@ class Orchestrator:
         manifest = record["manifest"]
         decision = route(record)
         self.queue.transition(task_id, "RUNNING", executor=decision.executor)
+        # All execution/escalation builders must receive the canonical RUNNING
+        # projection, never the stale QUEUED snapshot read before transition.
+        record = self.queue.get(task_id)
         self.ledger.append("TASK_STARTED", task_id, {"tier": decision.tier,
                           "executor": decision.executor, "reason": decision.reason})
 
@@ -266,6 +269,10 @@ class Orchestrator:
 
     # ---- Escalation ----------------------------------------------------
     def _escalate(self, task_id, record, target, classification, errors):
+        current = self.queue.get(task_id)
+        if current["state"] == "ESCALATION_REQUIRED":
+            return current
+        record = current
         if target == "TIER2_LOCAL_STRONG_RETRY":
             strong_agent = next(a for a in capability_module.load_registry()["agents"]
                                if a["agent_id"] == "LOCAL_STRONG_MINISTRAL3B")

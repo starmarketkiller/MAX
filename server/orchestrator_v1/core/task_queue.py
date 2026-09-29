@@ -261,7 +261,10 @@ class TaskQueue:
             if not claim or claim.get("token") != token:
                 return False
             record["dispatch_claim"] = None
-            record["dispatch_last_error"] = str(error)[:500] if error else None
+            # A successful claim release must not erase a fail-closed diagnostic
+            # persisted by the dispatcher after the task already became BLOCKED.
+            if error is not None:
+                record["dispatch_last_error"] = str(error)[:500]
             record["dispatch_next_attempt_at"] = (
                 (datetime.now(timezone.utc) + timedelta(seconds=retry_after_seconds)).isoformat()
                 if retry_after_seconds else None)

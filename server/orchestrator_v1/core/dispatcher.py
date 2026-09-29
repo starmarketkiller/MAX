@@ -9,9 +9,20 @@ never replayed automatically.
 from __future__ import annotations
 
 import os
+import re
 import threading
 import time
 import uuid
+
+
+def _sanitized_error(exc):
+    """Useful diagnostic without filesystem paths, bearer values or long payloads."""
+    message = str(exc).replace("\r", " ").replace("\n", " ")[:300]
+    message = re.sub(r"(?i)bearer\s+\S+", "Bearer [REDACTED]", message)
+    message = re.sub(r"(?i)(token|secret|password)=([^\s,;]+)", r"\1=[REDACTED]", message)
+    message = re.sub(r"[A-Za-z]:\\[^\s]+", "[PATH]", message)
+    message = re.sub(r"(?<!:)\/(?:[^\s\/]+\/)+[^\s]+", "[PATH]", message)
+    return f"{type(exc).__name__}: {message}" if message else type(exc).__name__
 
 
 class DurableQueueDispatcher:
@@ -92,10 +103,12 @@ class DurableQueueDispatcher:
         except Exception as exc:
             current = self.queue.get(task_id)
             if current["state"] == "RUNNING":
+                safe_error = _sanitized_error(exc)
                 self.queue.transition(task_id, "BLOCKED",
-                    dispatch_last_error=f"{type(exc).__name__}: {str(exc)[:300]}",
+                    dispatch_last_error=safe_error,
                     recovery={"classification": "DISPATCH_EXECUTION_AMBIGUOUS",
-                              "action": "BLOCKED_FAIL_CLOSED"})
+                              "action": "BLOCKED_FAIL_CLOSED",
+                              "failure_class": type(exc).__name__})
                 self.ledger.append("TASK_BLOCKED", task_id,
                     {"reason": "dispatcher exception after RUNNING; automatic replay prohibited",
                      "failure_class": type(exc).__name__}, actor="durable_queue_dispatcher_v1")

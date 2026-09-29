@@ -31,8 +31,20 @@ with open(os.path.join(CONTRACTS_DIR, "context-packet.schema.json"), encoding="u
 
 
 def _current_head():
-    proc = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=ROOT)
-    return proc.stdout.strip()[:40] if proc.returncode == 0 else "0000000"
+    # Production images intentionally do not need a Git binary or .git tree.
+    # Render/NEXUS build identity is the primary authority there.
+    for name in ("RENDER_GIT_COMMIT", "NEXUS_GIT_SHA"):
+        value = os.environ.get(name, "").strip().lower()
+        if 7 <= len(value) <= 40 and all(char in "0123456789abcdef" for char in value):
+            return value
+    try:
+        proc = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                              text=True, cwd=ROOT, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return "0000000"
+    value = proc.stdout.strip().lower()[:40]
+    return value if proc.returncode == 0 and 7 <= len(value) <= 40 and all(
+        char in "0123456789abcdef" for char in value) else "0000000"
 
 
 def build_context_packet(*, objective, relevant_findings, canonical_artifacts, allowed_files,

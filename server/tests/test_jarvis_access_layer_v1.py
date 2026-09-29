@@ -12,6 +12,8 @@ from jarvis_v1.service import JarvisService, classify, classify_work_type
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from jarvis_v1.notifications import NotificationEngine
 from jarvis_v1 import configure_telegram_webhook as webhook_config
+from core.dispatcher import DurableQueueDispatcher
+from core import context_packet
 
 
 def message(text, cls="UNKNOWN", conversation="c1", metadata=None):
@@ -427,3 +429,41 @@ def test_telegram_send_uses_rich_renderer(service, tmp_path, monkeypatch):
     assert adapter.send("99", response)["sent"] is True
     assert "TASK_ABC — QUEUED — Analisi utile" in captured["text"]
     assert captured["text"] != response["summary"]
+
+
+def test_telegram_research_task_direct_escalation_without_git_binary(tmp_path, monkeypatch):
+    """Production regression: slim image has no git executable/.git checkout."""
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "06beb15466a3478f507069febf13ce0c3373ee3a")
+    monkeypatch.setattr(context_packet.subprocess, "run",
+                        lambda *args, **kwargs: (_ for _ in ()).throw(FileNotFoundError("git")))
+    svc = JarvisService(tmp_path / "queue-escalate.json", tmp_path / "ledger-escalate.jsonl",
+                        tmp_path / "conversation-escalate.json")
+    adapter = TelegramAdapter(svc, tmp_path / "seen-escalate.json", token="token",
+                              allowed_users=["42"], gateway=JarvisGateway(svc))
+    response = adapter.handle_update({"update_id": 9901, "message": {
+        "from": {"id": 42}, "chat": {"id": 99},
+        "text": "Jarvis, crea una task per analizzare una opportunità generica."}})
+    dispatcher = DurableQueueDispatcher(svc.orchestrator, poll_seconds=0.01)
+    assert dispatcher.run_once() is True
+    record = svc.queue.get(response["task_id"])
+    assert record["state"] == "ESCALATION_REQUIRED"
+    assert record["executor"] == "MANUAL_REVIEW"
+    assert record["escalation"]["target"] == "MANUAL_REVIEW"
+    assert record["escalation"]["context_packet"]["current_head"] == "06beb15466a3478f507069febf13ce0c3373ee3a"
+    assert record["result_packet"]["escalation_needed"] == {
+        "needed": True, "reason": "ROUTER_DIRECT_ESCALATION", "target_tier": "MANUAL_REVIEW"}
+    assert record["dispatch_last_error"] is None
+    # Re-entering the builder is deterministic and does not duplicate lifecycle events.
+    before = len(svc.ledger.read_for_task(response["task_id"]))
+    repeated = svc.orchestrator._escalate(response["task_id"], record, "MANUAL_REVIEW",
+                                          "ROUTER_DIRECT_ESCALATION", [])
+    assert repeated == record
+    assert len(svc.ledger.read_for_task(response["task_id"])) == before
+
+
+def test_current_head_falls_back_without_git_or_runtime_sha(monkeypatch):
+    monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
+    monkeypatch.delenv("NEXUS_GIT_SHA", raising=False)
+    monkeypatch.setattr(context_packet.subprocess, "run",
+                        lambda *args, **kwargs: (_ for _ in ()).throw(FileNotFoundError("git")))
+    assert context_packet._current_head() == "0000000"
