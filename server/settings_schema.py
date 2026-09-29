@@ -14,19 +14,9 @@ import json
 import math
 import os
 from functools import lru_cache
+from path_resolver import resolve_contracts_dir
 
-def _resolve_contracts_dir() -> str:
-    # Stesso disallineamento di layout descritto in strategy_registry.py:
-    # locale risale due livelli, l'immagine Docker (server/ appiattita in
-    # /app) uno solo. Si usa quello che esiste davvero sul disco.
-    here = os.path.dirname(os.path.abspath(__file__))
-    sibling = os.path.join(here, "contracts")
-    if os.path.isdir(sibling):
-        return sibling
-    return os.path.join(os.path.dirname(here), "contracts")
-
-
-_CONTRACTS = _resolve_contracts_dir()
+_CONTRACTS = str(resolve_contracts_dir(__file__))
 
 
 class SettingsValidationError(ValueError):

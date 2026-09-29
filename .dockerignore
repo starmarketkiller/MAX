@@ -49,6 +49,8 @@ docs/*
 # corpus read-only incluso esplicitamente dal Knowledge Browser
 !vault/01-Trading/
 !vault/01-Trading/**
+!vault/02-Business/
+!vault/02-Business/**
 !knowledge/*.json
 !knowledge/*.md
 !knowledge/schema/

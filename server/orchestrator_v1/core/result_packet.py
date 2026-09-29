@@ -10,11 +10,16 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORCH_DIR = os.path.dirname(CORE_DIR)
-ROOT = os.path.abspath(os.path.join(ORCH_DIR, "..", ".."))
-CONTRACTS_DIR = os.path.join(ROOT, "contracts")
+SERVER_DIR = str(Path(__file__).resolve().parents[2])
+sys.path.insert(0, SERVER_DIR)
+from path_resolver import resolve_contracts_dir, resolve_project_root  # noqa: E402
+
+ROOT = str(resolve_project_root(__file__))
+CONTRACTS_DIR = str(resolve_contracts_dir(__file__))
 
 sys.path.insert(0, ORCH_DIR)
 from nxs_schema_validator import validate  # noqa: E402

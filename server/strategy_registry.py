@@ -7,20 +7,11 @@ errore, mai fallback silenzioso.
 """
 from __future__ import annotations
 import json
-import os
 from functools import lru_cache
+from path_resolver import resolve_contracts_dir
 
 def _resolve_registry_path() -> str:
-    # Layout locale (repo/server/strategy_registry.py -> repo/contracts/...) e
-    # layout immagine Docker (/app/strategy_registry.py -> /app/contracts/...,
-    # perche' il Dockerfile appiattisce server/ dentro /app) risalgono di un
-    # numero diverso di livelli. Si prova prima il sibling (Docker), poi il
-    # doppio dirname (locale): si usa quello che esiste davvero sul disco.
-    here = os.path.dirname(os.path.abspath(__file__))
-    sibling = os.path.join(here, "contracts", "strategy-registry.json")
-    if os.path.exists(sibling):
-        return sibling
-    return os.path.join(os.path.dirname(here), "contracts", "strategy-registry.json")
+    return str(resolve_contracts_dir(__file__) / "strategy-registry.json")
 
 
 _REGISTRY_PATH = _resolve_registry_path()

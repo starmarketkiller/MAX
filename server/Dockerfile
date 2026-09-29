@@ -82,6 +82,7 @@ COPY contracts/ /app/contracts/
 # versionati entrano nell'immagine; script, vault non-trading e risultati raw
 # restano esclusi dal build context.
 COPY vault/01-Trading/ /app/knowledge_sources/vault/01-Trading/
+COPY vault/02-Business/ /app/knowledge_sources/vault/02-Business/
 COPY docs/ /app/knowledge_sources/docs/
 COPY knowledge/*.json knowledge/*.md /app/knowledge_sources/knowledge/
 COPY knowledge/schema/*.md /app/knowledge_sources/knowledge/schema/
@@ -89,6 +90,7 @@ RUN NEXUS_KNOWLEDGE_ROOT=/app/knowledge_sources python -c \
     "import knowledge_browser; data=knowledge_browser.list_entries(); assert data['count'] > 0; print('knowledge corpus OK', data['count'])"
 
 ENV NEXUS_DB_PATH=/data/nexus.db \
+    NEXUS_CONTRACTS_DIR=/app/contracts \
     NEXUS_WORKER_FILE=/app/protected/nexus_local_worker.py \
     NEXUS_DEPLOY_MANIFEST=/app/protected/deployment-manifest.json \
     NEXUS_KNOWLEDGE_ROOT=/app/knowledge_sources \

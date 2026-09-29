@@ -2,18 +2,13 @@
 from __future__ import annotations
 
 import json
-import os
-from pathlib import Path
 
 from orchestrator_v1.nxs_schema_validator import validate
+from path_resolver import resolve_contracts_dir
 
 from .service import JarvisService
 
-SERVER = Path(__file__).resolve().parents[1]
-REPOSITORY_ROOT = SERVER.parent
-CONTRACTS = Path(os.environ["NEXUS_CONTRACTS_DIR"]) if os.environ.get("NEXUS_CONTRACTS_DIR") else (
-    SERVER / "contracts" if (SERVER / "contracts").is_dir() else REPOSITORY_ROOT / "contracts"
-)
+CONTRACTS = resolve_contracts_dir(__file__)
 MESSAGE_SCHEMA = json.loads((CONTRACTS / "jarvis-message.schema.json").read_text(encoding="utf-8"))
 RESPONSE_SCHEMA = json.loads((CONTRACTS / "jarvis-response.schema.json").read_text(encoding="utf-8"))
 
