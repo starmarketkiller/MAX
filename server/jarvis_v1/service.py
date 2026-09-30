@@ -242,11 +242,14 @@ class JarvisService:
         if attrs.get("second_opinion"): required.append("review")
         task_id = new_task_id()
         work_type = classify_work_type(text, attrs)
+        premium_allowed = work_type in ("scientific_research", "complex_code")
+        scientific_risk = "MEDIUM" if work_type == "scientific_research" else "LOW"
+        code_risk = "HIGH" if work_type == "complex_code" else "NONE"
         manifest = {
             "task_id": task_id, "title": text[:120] or "Jarvis task", "objective": text,
             "task_type": "RESEARCH", "work_type": work_type,
             "priority": message.get("priority", "NORMAL"),
-            "risk_level": "A1", "scientific_risk": "LOW", "code_risk": "NONE",
+            "risk_level": "A1", "scientific_risk": scientific_risk, "code_risk": code_risk,
             "financial_risk": "NONE", "required_capabilities": required,
             "deterministic_tools_available": False, "repo_scope": "read-only analysis",
             "files_allowed": [], "files_forbidden": ["MQL5/**", "server/research_scripts/**"],
@@ -254,7 +257,7 @@ class JarvisService:
             "expected_artifacts": ["RESULT_PACKET_V1"],
             "success_criteria": ["Result is source-backed", "No irreversible action"],
             "verifier": "independent_review", "estimated_complexity": "MEDIUM",
-            "estimated_runtime": "durable", "premium_allowed": False,
+            "estimated_runtime": "durable", "premium_allowed": premium_allowed,
             "preferred_executor": "TIER1_LOCAL_CHEAP",
             "fallback_executors": ["TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX"],
             "approval_required": "REVIEW_REQUIRED", "created_by": f"jarvis:{message['user_id']}",
@@ -483,6 +486,19 @@ class JarvisService:
         return wp, frp
 
     def _deliver_finalized_result(self, message, task_id, record):
+        provider_execution = record.get("provider_execution") or {}
+        if provider_execution.get("finalized") and provider_execution.get("verified"):
+            output = provider_execution.get("output") or {}
+            summary = output.get("summary") or f"Task {task_id} completata dal provider e verificata."
+            return self._response(message, "TASK_STATUS", summary, task_id=task_id,
+                status="FINALIZED", details={
+                    "provider": provider_execution.get("provider"),
+                    "premium_calls": provider_execution.get("premium_calls", 0),
+                    "duration_seconds": provider_execution.get("duration_seconds"),
+                    "provider_request_id": provider_execution.get("provider_request_id"),
+                    "output": output, "source_refs": output.get("source_refs", [])},
+                confidence=(record.get("result_packet") or {}).get("confidence", "UNKNOWN"),
+                generated_by=f"provider_connector:{provider_execution.get('provider', 'UNKNOWN')}")
         if task_id in self._work_product_cache:
             wp, frp = self._work_product_cache[task_id]
         else:

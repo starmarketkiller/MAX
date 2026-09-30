@@ -61,6 +61,7 @@ import research_control_plane
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
+from orchestrator_v1.core.provider_connector import ProviderConnectorV1
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1396,11 +1397,13 @@ JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   gateway=JARVIS_GATEWAY)
 QUEUE_DISPATCHER_ENABLED = os.environ.get(
     "NEXUS_QUEUE_DISPATCHER_ENABLED", "true" if HARDENED else "false").lower() == "true"
+JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator)
 JARVIS_DISPATCHER = DurableQueueDispatcher(
     JARVIS_SERVICE.orchestrator,
     poll_seconds=float(os.environ.get("NEXUS_QUEUE_DISPATCHER_POLL_SECONDS", "2")),
     lease_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_LEASE_SECONDS", "900")),
-    shutdown_timeout_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS", "25")))
+    shutdown_timeout_seconds=int(os.environ.get("NEXUS_QUEUE_DISPATCHER_SHUTDOWN_SECONDS", "25")),
+    provider_connector=JARVIS_PROVIDER_CONNECTOR)
 JARVIS_SERVICE.set_dispatcher_status_provider(lambda: {
     "enabled": QUEUE_DISPATCHER_ENABLED,
     "running": JARVIS_DISPATCHER.running,
@@ -1745,6 +1748,12 @@ def jarvis_activity(limit: int = 100, user: str = Depends(require_user)):
 @app.get("/api/jarvis/agents")
 def jarvis_agents(user: str = Depends(require_user)):
     items = JARVIS_SERVICE.agents()
+    return {"count": len(items), "items": items}
+
+
+@app.get("/api/jarvis/providers")
+def jarvis_providers(user: str = Depends(require_user)):
+    items = JARVIS_PROVIDER_CONNECTOR.statuses()
     return {"count": len(items), "items": items}
 
 

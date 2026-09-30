@@ -134,6 +134,7 @@ def test_version_and_jarvis_routes_are_protected(tmp_path, monkeypatch):
         assert version.status_code == 200 and "git_sha" in version.json()
         assert client.get("/api/jarvis/activity").status_code == 401
         assert client.get("/api/jarvis/agents").status_code == 401
+        assert client.get("/api/jarvis/providers").status_code == 401
         assert client.post("/api/jarvis/telegram/webhook", json={"update_id": 1}).status_code == 401
 
 
@@ -266,7 +267,7 @@ def test_authenticated_jarvis_api_uses_real_service(tmp_path, monkeypatch):
         assert created.status_code == 200
         task_id = created.json()["task_id"]
         assert client.get(f"/api/jarvis/tasks/{task_id}", headers=headers).status_code == 200
-        for path in ("activity", "agents", "approvals", "telegram/status", "dispatcher/status"):
+        for path in ("activity", "agents", "providers", "approvals", "telegram/status", "dispatcher/status"):
             assert client.get(f"/api/jarvis/{path}", headers=headers).status_code == 200
         diagnostics = client.get(f"/api/jarvis/tasks/{task_id}/diagnostics", headers=headers)
         assert diagnostics.status_code == 200

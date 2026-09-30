@@ -9,6 +9,7 @@ REQUIRED_RUNTIME_MODULES = (
     "app",
     "jarvis_v1.service",
     "orchestrator_v1.core.dispatcher",
+    "orchestrator_v1.core.provider_connector",
     "orchestrator_v1.core.ollama_worker",
 )
 

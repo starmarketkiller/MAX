@@ -49,7 +49,7 @@ ALLOWED_TRANSITIONS = {
                # RUNNING->RUNNING = self-transition per bookkeeping (es. retry_count) senza
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
     "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED"},
-    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED"},
+    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED", "ESCALATION_REQUIRED", "BLOCKED"},
     "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED", "WAITING_APPROVAL",
                           "COMPLETED", "CANCELLED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
                           # dell'escalation (TIER3_CLAUDE/TIER4_CODEX) e' arrivata e verificata
@@ -156,6 +156,18 @@ class TaskQueue:
                 record["completed_at"] = _now_iso()
             for k, v in updates.items():
                 record[k] = v
+            data[task_id] = record
+            self._save(data)
+            return record
+
+    def annotate(self, task_id, **updates):
+        """Atomically attach diagnostics without pretending a state transition."""
+        with self._lock:
+            data = self._load()
+            record = data[task_id]
+            record["updated_at"] = _now_iso()
+            for key, value in updates.items():
+                record[key] = value
             data[task_id] = record
             self._save(data)
             return record
