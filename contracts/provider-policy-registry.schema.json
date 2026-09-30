@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/provider-policy-registry.schema.json",
+  "title": "NEXUS PROVIDER_POLICY_REGISTRY_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "policy", "providers", "models"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "registry_id": {"const": "PROVIDER_POLICY_REGISTRY_V1"},
+    "policy": {"type": "object"},
+    "providers": {"type": "array", "items": {"type": "object"}},
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provider_id", "model_id", "model_family", "state", "configured",
+          "free_tier_available", "estimated_cost_class", "quota_type", "quota_remaining",
+          "context_window", "supports_tools", "supports_images", "supports_structured_output",
+          "supports_code", "supports_long_context", "supports_reasoning", "privacy_class",
+          "allowed_task_types", "forbidden_task_types", "preferred_roles", "fallback_priority",
+          "last_health_check", "last_benchmark", "benchmark_score", "notes"]
+      }
+    }
+  }
+}

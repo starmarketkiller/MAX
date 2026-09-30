@@ -62,6 +62,7 @@ from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
 from orchestrator_v1.core.provider_connector import ProviderConnectorV1
+from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1397,6 +1398,7 @@ JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   gateway=JARVIS_GATEWAY)
 QUEUE_DISPATCHER_ENABLED = os.environ.get(
     "NEXUS_QUEUE_DISPATCHER_ENABLED", "true" if HARDENED else "false").lower() == "true"
+JARVIS_PROVIDER_POLICY = ProviderPolicyRegistryV1()
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator)
 JARVIS_DISPATCHER = DurableQueueDispatcher(
     JARVIS_SERVICE.orchestrator,
@@ -1753,8 +1755,24 @@ def jarvis_agents(user: str = Depends(require_user)):
 
 @app.get("/api/jarvis/providers")
 def jarvis_providers(user: str = Depends(require_user)):
-    items = JARVIS_PROVIDER_CONNECTOR.statuses()
-    return {"count": len(items), "items": items}
+    registry = JARVIS_PROVIDER_POLICY.public_registry(JARVIS_PROVIDER_CONNECTOR.statuses())
+    return {"count": len(registry["providers"]), "items": registry["providers"], **registry}
+
+
+@app.get("/api/jarvis/providers/policy")
+def jarvis_provider_policy(user: str = Depends(require_user)):
+    return JARVIS_PROVIDER_POLICY.policy_view()
+
+
+@app.post("/api/jarvis/providers/route-preview")
+async def jarvis_provider_route_preview(request: Request,
+                                        user: str = Depends(require_mutation)):
+    body = await read_json_body(request)
+    manifest = body.get("manifest", body)
+    try:
+        return JARVIS_PROVIDER_POLICY.route_preview(manifest)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)[:500])
 
 
 @app.get("/api/jarvis/telegram/status")
