@@ -64,6 +64,7 @@ from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
 from orchestrator_v1.core.provider_connector import ProviderConnectorV1
 from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV1
+from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1400,8 +1401,11 @@ JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
 QUEUE_DISPATCHER_ENABLED = os.environ.get(
     "NEXUS_QUEUE_DISPATCHER_ENABLED", "true" if HARDENED else "false").lower() == "true"
 JARVIS_PROVIDER_POLICY = ProviderPolicyRegistryV1()
+JARVIS_GROQ_EVALUATION = GroqEvaluationAdapterV1.from_environment(
+    treasury_path=_JARVIS_STATE_DIR / "groq_quota_treasury_v1.json")
 JARVIS_PROVIDER_BENCHMARKS = FreeProviderBenchmarkEngineV1(
-    JARVIS_PROVIDER_POLICY, history_path=_JARVIS_STATE_DIR / "provider_benchmark_history_v1.json")
+    JARVIS_PROVIDER_POLICY, history_path=_JARVIS_STATE_DIR / "provider_benchmark_history_v1.json",
+    adapters={"GROQ": JARVIS_GROQ_EVALUATION})
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator)
 JARVIS_DISPATCHER = DurableQueueDispatcher(
     JARVIS_SERVICE.orchestrator,
@@ -1802,6 +1806,29 @@ async def jarvis_provider_benchmark_preview(request: Request,
         return JARVIS_PROVIDER_BENCHMARKS.preview(body)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)[:500])
+
+
+@app.post("/api/jarvis/providers/benchmarks/execute")
+async def jarvis_provider_benchmark_execute(request: Request,
+                                            user: str = Depends(require_mutation)):
+    from orchestrator_v1.core.provider_benchmark import BenchmarkBlocked
+    body = await read_json_body(request)
+    if body.get("mode") != "LIVE_EVALUATION":
+        raise HTTPException(status_code=422, detail="execution endpoint accepts LIVE_EVALUATION only")
+    try:
+        return JARVIS_PROVIDER_BENCHMARKS.run(body)
+    except (ValueError, BenchmarkBlocked) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)[:300])
+
+
+@app.get("/api/jarvis/providers/groq/status")
+def jarvis_groq_status(user: str = Depends(require_user)):
+    return JARVIS_GROQ_EVALUATION.status()
+
+
+@app.get("/api/jarvis/providers/groq/quota")
+def jarvis_groq_quota(user: str = Depends(require_user)):
+    return JARVIS_GROQ_EVALUATION.treasury.read()
 
 
 @app.get("/api/jarvis/telegram/status")

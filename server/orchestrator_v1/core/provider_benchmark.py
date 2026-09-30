@@ -86,8 +86,11 @@ class FreeProviderBenchmarkEngineV1:
                 for index, category in enumerate(CATEGORIES, 1)]
 
     def _model(self, provider_id, model_id):
-        return next((m for m in self.registry.data["models"]
-                     if m["provider_id"] == provider_id and m["model_id"] == model_id), None)
+        model = next((m for m in self.registry.data["models"]
+                      if m["provider_id"] == provider_id and m["model_id"] == model_id), None)
+        adapter = self.adapters.get(provider_id)
+        return model or (adapter.describe_model(model_id) if adapter and
+                         hasattr(adapter, "describe_model") else None)
 
     def _provider(self, provider_id):
         return next((p for p in self.registry.data["providers"]
@@ -104,14 +107,19 @@ class FreeProviderBenchmarkEngineV1:
         runnable = mode == "MOCK"
         if mode == "LIVE_EVALUATION":
             provider = self._provider(model["provider_id"])
+            adapter = self.adapters.get(model["provider_id"])
             if not request.get("live_evaluation_confirmed"):
                 reasons.append("EXPLICIT_LIVE_FLAG_REQUIRED")
-            if not model["configured"] or not provider or not provider["configured"]:
+            if int(request.get("max_quota_units") or 0) <= 0:
+                reasons.append("QUOTA_BUDGET_REQUIRED")
+            runtime_configured = bool(adapter and getattr(
+                adapter, "configured", model["configured"] and bool(provider and provider["configured"])))
+            if not runtime_configured:
                 reasons.append("PROVIDER_NOT_CONFIGURED")
-            if model["state"] not in {"AVAILABLE", "LOW_QUOTA"} or provider["state"] not in {
-                    "AVAILABLE", "LOW_QUOTA"}:
+            runtime_state = getattr(adapter, "state", "UNKNOWN")
+            if runtime_state not in {"AVAILABLE", "LOW_QUOTA"}:
                 reasons.append(f"PROVIDER_{model['state']}")
-            if model["provider_id"] not in self.adapters:
+            if adapter is None:
                 reasons.append("NO_LIVE_ADAPTER")
             runnable = not reasons
         return {"dry_run": mode == "DRY_RUN", "executed": False, "mode": mode,
@@ -150,7 +158,8 @@ class FreeProviderBenchmarkEngineV1:
             while attempts < 2:
                 attempts += 1
                 try:
-                    output = adapter.evaluate(case, idempotency_key=key, timeout_seconds=timeout)
+                    output = adapter.evaluate({**case, "model_id": plan["model_id"]},
+                                              idempotency_key=key, timeout_seconds=timeout)
                     break
                 except TimeoutError:
                     if attempts == 2:
@@ -176,6 +185,9 @@ class FreeProviderBenchmarkEngineV1:
                          "output_length": max(0, int(output.get("output_length") or 0))})
             if output.get("rate_limited"):
                 stopped = "RATE_LIMITED"
+                break
+            if "TIMEOUT" in (output.get("error_flags") or []):
+                stopped = "TIMEOUT"
                 break
         result = self._score(plan, benchmark_id, rows, quota, stopped)
         errors = validate(result, RESULT_SCHEMA)
