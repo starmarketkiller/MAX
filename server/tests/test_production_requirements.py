@@ -47,5 +47,7 @@ def test_production_smoke_covers_jarvis_dispatcher_ollama_and_app():
         "jarvis_v1.service",
         "orchestrator_v1.core.dispatcher",
         "orchestrator_v1.core.provider_connector",
+        "orchestrator_v1.core.provider_policy",
+        "orchestrator_v1.core.provider_benchmark",
         "orchestrator_v1.core.ollama_worker",
     )

@@ -1,0 +1,30 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "$id":"https://nexus.local/contracts/provider-benchmark-result.schema.json",
+  "title":"NEXUS PROVIDER_BENCHMARK_RESULT_V1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","benchmark_id","provider_id","model_id","model_family",
+    "benchmark_version","timestamp","mode","test_count","passed","failed","per_category_scores",
+    "scorecard","overall_score","latency_stats","reliability_score","quota_efficiency",
+    "recommended_roles","forbidden_roles","confidence","evidence_level","production_candidate",
+    "promotion_recommendation","human_approval_required","limitations","provenance","tests"],
+  "properties":{
+    "schema_version":{"const":1}, "benchmark_id":{"type":"string"},
+    "provider_id":{"type":"string"}, "model_id":{"type":"string"},
+    "model_family":{"type":"string"}, "benchmark_version":{"type":"string"},
+    "timestamp":{"type":"string"}, "mode":{"enum":["MOCK","LIVE_EVALUATION"]},
+    "test_count":{"type":"integer"}, "passed":{"type":"integer"}, "failed":{"type":"integer"},
+    "per_category_scores":{"type":"object"}, "scorecard":{"type":"object"},
+    "overall_score":{"type":"number"}, "latency_stats":{"type":"object"},
+    "reliability_score":{"type":"number"}, "quota_efficiency":{"type":["number","null"]},
+    "recommended_roles":{"type":"array","items":{"type":"string"}},
+    "forbidden_roles":{"type":"array","items":{"type":"string"}},
+    "confidence":{"enum":["LOW","MEDIUM","HIGH"]},
+    "evidence_level":{"enum":["MOCK_ONLY","LIVE_SINGLE_RUN","LIVE_REPEATED"]},
+    "production_candidate":{"type":"boolean"},
+    "promotion_recommendation":{"enum":["EVALUATION_ONLY","CANDIDATE"]},
+    "human_approval_required":{"const":true}, "limitations":{"type":"array","items":{"type":"string"}},
+    "provenance":{"type":"object"}, "tests":{"type":"array","items":{"type":"object"}}
+  }
+}

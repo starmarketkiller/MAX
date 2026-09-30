@@ -65,7 +65,7 @@ class ProviderPolicyRegistryV1:
                 raise ValueError("model provider is unknown or model id is duplicated")
             keys.append(key)
 
-    def public_registry(self, runtime_statuses=None):
+    def public_registry(self, runtime_statuses=None, benchmark_results=None):
         payload = copy.deepcopy(self.data)
         runtime = {item.get("provider"): item for item in (runtime_statuses or [])}
         aliases = {"CODEX": "CODEX_OPENAI", "OPENAI": "CODEX_OPENAI"}
@@ -78,6 +78,19 @@ class ProviderPolicyRegistryV1:
                         break
             if match:
                 item["runtime_connector_state"] = match.get("state", "UNKNOWN")
+        latest = {}
+        for result in benchmark_results or []:
+            latest[(result.get("provider_id"), result.get("model_id"))] = result
+        for model in payload["models"]:
+            result = latest.get((model["provider_id"], model["model_id"]))
+            if result:
+                model["latest_benchmark"] = {
+                    "benchmark_id": result.get("benchmark_id"),
+                    "timestamp": result.get("timestamp"),
+                    "evidence_level": result.get("evidence_level"),
+                    "promotion_recommendation": result.get("promotion_recommendation"),
+                    "production_candidate": False,
+                }
         payload["source_artifact"] = "orchestrator_v1/provider_policy_registry_v1.json"
         return payload
 
