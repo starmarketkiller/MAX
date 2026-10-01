@@ -20,7 +20,9 @@ services:
     healthCheckPath: /api/ready
     # AUD0-DEPLOY-RENDER-002: autoDeploy portava ogni commit del branch di
     # default direttamente in produzione, senza gate di CI né staging.
-    autoDeploy: false
+    # Safe Deploy V1 keeps native auto-deploy off. GitHub Actions triggers an
+    # exact CI-verified SHA through the secret deploy hook after risk gating.
+    autoDeployTrigger: off
     envVars:
       # Ambiente canonico. Con LIVE il backend rifiuta di avviarsi finché
       # restano credenziali di default o segreti placeholder (NEXUS-SEC-001).
