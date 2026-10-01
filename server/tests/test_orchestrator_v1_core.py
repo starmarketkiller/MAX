@@ -107,6 +107,12 @@ def test_retry_escalation_classifies_import_error_as_tooling():
     assert classify_failure(["ModuleNotFoundError: no module named x"]) == "TOOLING"
 
 
+def test_deterministic_remediation_uses_result_packet_tier_enum():
+    manifest = _manifest("TASK_REMEDIATION_ENUM")
+    assert decide_escalation_target("ENVIRONMENT", manifest) == "TIER0_DETERMINISTIC"
+    assert decide_escalation_target("TOOLING", manifest) == "TIER0_DETERMINISTIC"
+
+
 def test_retry_escalation_never_recommends_second_silent_retry():
     from core.retry_escalation import RETRY_MAX_ATTEMPTS
     assert RETRY_MAX_ATTEMPTS == 1

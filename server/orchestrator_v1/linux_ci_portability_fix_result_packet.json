@@ -1,0 +1,54 @@
+{
+  "task_id": "TASK_LINUX_CI_PORTABILITY_FIX_CANARY_002_READINESS",
+  "executor": "CODEX",
+  "start_time": "2026-10-01T12:30:00+02:00",
+  "end_time": "2026-10-01T12:44:31+02:00",
+  "files_read": [
+    "server/company_control_plane.py",
+    "server/strategy_pipeline_read_model.py",
+    "server/strategy_census_read_model.py",
+    "server/projection_freshness.py",
+    "server/research_control_plane.py",
+    "server/orchestrator_v1/core/retry_escalation.py",
+    "contracts/result-packet.schema.json"
+  ],
+  "files_changed": [
+    "server/path_provenance.py",
+    "server/company_control_plane.py",
+    "server/strategy_pipeline_read_model.py",
+    "server/strategy_census_read_model.py",
+    "server/projection_freshness.py",
+    "server/research_control_plane.py",
+    "server/orchestrator_v1/core/retry_escalation.py",
+    "server/tests/test_path_provenance.py",
+    "server/tests/test_orchestrator_v1_core.py",
+    "docs/NEXUS_LINUX_CI_PORTABILITY_FIX.md",
+    "server/orchestrator_v1/linux_ci_portability_fix_result_packet.json"
+  ],
+  "tools_or_commands": [
+    "pytest with external basetemp",
+    "contracts/validate_registry.py",
+    "security preflight",
+    "production import smoke",
+    "frontend production build"
+  ],
+  "artifacts_created": [
+    "server/path_provenance.py",
+    "docs/NEXUS_LINUX_CI_PORTABILITY_FIX.md"
+  ],
+  "tests": {"ran": true, "passed": 550, "failed": 0},
+  "verifier": {"ran": true, "passed": true, "errors": []},
+  "commit": null,
+  "push_status": "NOT_PUSHED",
+  "decision": "LINUX_CI_PORTABILITY_FIXED_CANARY_002_READY_WITH_LIMITATIONS",
+  "confidence": "MEDIUM",
+  "limitations": [
+    "The local host is Windows and has no Docker executable; GitHub Linux and Docker jobs must confirm this commit before Canary 002."
+  ],
+  "unresolved_issues": [],
+  "suggested_next_tasks": [
+    "Push this repair commit and require all GitHub CI jobs to pass.",
+    "Execute a separate documentation-only CANARY_002 commit after the repair CI is green."
+  ],
+  "escalation_needed": {"needed": false, "reason": null, "target_tier": null}
+}

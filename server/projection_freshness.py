@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from path_provenance import repo_safe_path
+
 ROOT = Path(__file__).resolve().parent
 P7 = ROOT / "research_scripts" / "phase7"
 
@@ -59,7 +61,7 @@ PROJECTED_SOURCE_PHASES = {
 
 
 def _repo_path(path: Path) -> str:
-    return path.relative_to(ROOT.parent).as_posix()
+    return repo_safe_path(path, ROOT.parent)
 
 
 def _load_descriptor(descriptor: dict, warnings: list[dict]) -> dict | None:
