@@ -2,7 +2,7 @@
 
 This file is the prepared non-runtime canary target for NEXUS Safe Auto Deploy V1.
 
-- `canary_run: CANARY_003`
+- `canary_run: CANARY_004`
 - expected classification: `LOW_RISK`
 - expected reason: `NON_RUNTIME_CHANGE`
 - production behavior change: none
