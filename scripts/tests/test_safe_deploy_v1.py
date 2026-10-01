@@ -1,6 +1,8 @@
 import importlib.util
 import json
+import threading
 import urllib.error
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
@@ -13,6 +15,24 @@ def load(name, path):
 
 classifier=load("deploy_risk", "scripts/classify_deploy_risk.py")
 trigger=load("deploy_trigger", "scripts/trigger_render_deploy.py")
+verifier=load("deploy_verifier", "scripts/verify_render_deploy.py")
+
+class FakeSession:
+    def __init__(self, *, login_status=200, login=None, cookies=1,
+                 dispatcher_status=200, dispatcher=None, login_error=None,
+                 dispatcher_error=None):
+        self.login_status=login_status; self.login=login or {"ok":True}; self.cookie_count=cookies
+        self.dispatcher_status=dispatcher_status
+        self.dispatcher=dispatcher or {"status":"RUNNING","running":True}
+        self.login_error=login_error; self.dispatcher_error=dispatcher_error
+        self.calls=[]
+    def request_json(self, url, *, method="GET", payload=None, headers=None):
+        self.calls.append({"url":url,"method":method,"payload":payload,"headers":headers})
+        if url.endswith("/api/auth/login"):
+            if self.login_error: raise self.login_error
+            return self.login_status, self.login
+        if self.dispatcher_error: raise self.dispatcher_error
+        return self.dispatcher_status, self.dispatcher
 
 def test_low_medium_high_risk_classification():
     assert classifier.classify(["docs/a.md"])["risk"] == "LOW_RISK"
@@ -78,3 +98,75 @@ def test_workflow_trigger_is_fail_fast_and_not_masked_by_tee():
     assert "set -euo pipefail" in text
     assert "python scripts/trigger_render_deploy.py > deploy-trigger.json" in text
     assert "trigger_render_deploy.py | tee" not in text
+
+def test_verifier_uses_hardened_cookie_session_for_dispatcher():
+    session=FakeSession(cookies=2)
+    check, error=verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                            lambda: session)
+    assert error is None
+    assert check == {"http":200,"status":"RUNNING","running":True,"auth_mode":"COOKIE"}
+    assert session.calls[1]["headers"] is None
+
+def test_http_session_preserves_httponly_cookie_end_to_end():
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, format, *args): pass
+        def do_POST(self):
+            assert self.path == "/api/auth/login"
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Set-Cookie", "nexus_session=opaque-session; HttpOnly; Path=/; SameSite=Lax")
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+        def do_GET(self):
+            assert self.path == "/api/jarvis/dispatcher/status"
+            if "nexus_session=opaque-session" not in (self.headers.get("Cookie") or ""):
+                self.send_response(401); self.end_headers(); return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"RUNNING","running":true}')
+    server=ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread=threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+    try:
+        base=f"http://127.0.0.1:{server.server_port}"
+        check, error=verifier.verify_dispatcher(base, "user", "password")
+    finally:
+        server.shutdown(); server.server_close(); thread.join(timeout=2)
+    assert error is None
+    assert check["running"] is True
+    assert check["auth_mode"] == "COOKIE"
+
+def test_verifier_rejects_wrong_credentials_without_exposing_them():
+    rejected=urllib.error.HTTPError("https://nexus.example/api/auth/login", 401,
+                                    "denied", {}, None)
+    check, error=verifier.verify_dispatcher("https://nexus.example", "user", "secret-password",
+                                            lambda: FakeSession(login_error=rejected))
+    assert error == "LOGIN_REJECTED"
+    assert check == {"status":"UNVERIFIED","reason":"LOGIN_REJECTED","http":401}
+    assert "secret-password" not in json.dumps(check)
+
+def test_verifier_fails_when_credentials_are_missing():
+    check, error=verifier.verify_dispatcher("https://nexus.example", "", None)
+    assert error == "VERIFY_CREDENTIALS_MISSING"
+    assert check["reason"] == "VERIFY_CREDENTIALS_MISSING"
+
+def test_verifier_fails_when_login_has_no_cookie_or_legacy_token():
+    check, error=verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                            lambda: FakeSession(cookies=0))
+    assert error == "LOGIN_SESSION_MISSING"
+    assert check["reason"] == "LOGIN_SESSION_MISSING"
+
+def test_verifier_dispatcher_not_running_fails_success_gate():
+    check, error=verifier.verify_dispatcher(
+        "https://nexus.example", "user", "password",
+        lambda: FakeSession(dispatcher={"status":"STOPPED","running":False}))
+    assert error is None
+    assert check["running"] is False
+
+def test_verifier_preserves_legacy_bearer_compatibility():
+    session=FakeSession(login={"ok":True,"token":"legacy-token"}, cookies=0)
+    check, error=verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                            lambda: session)
+    assert error is None
+    assert check["auth_mode"] == "BEARER"
+    assert session.calls[1]["headers"] == {"Authorization":"Bearer legacy-token"}
