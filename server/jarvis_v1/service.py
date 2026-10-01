@@ -29,6 +29,7 @@ import jarvis_delivery  # noqa: E402
 from review_engine import process_work_product  # noqa: E402
 from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
+from .programming import build_plan, is_programming_request
 
 # NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
 # work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
@@ -60,6 +61,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
     if action in ("APPROVE", "APPROVAL", "APPROVA") or re.search(r"\b(approva|approve)\b", value):
         return "APPROVAL"
     if re.search(r"\b(crea|create|avvia|analizza|analyze)\b.*\b(task|nexus task|opportunit)", value):
+        return "TASK_REQUEST"
+    if is_programming_request(value):
         return "TASK_REQUEST"
     if re.search(r"\b(a che punto|stato|status|come procede)\b", value):
         return "FOLLOW_UP"
@@ -238,21 +241,31 @@ class JarvisService:
     def create_task(self, message):
         text = (message.get("text") or "").strip()
         attrs = message.get("metadata", {})
+        programming_plan = None
+        if is_programming_request(text):
+            context = self.conversation_store.get(message["conversation_id"])
+            programming_plan = build_plan(
+                text, last_task_id=context.get("last_task_id"),
+                allowed_paths=list(attrs.get("files_allowed") or []))
         required = ["summaries"]
+        if programming_plan:
+            required = ["complex_code_change"]
         if attrs.get("second_opinion"): required.append("review")
         task_id = new_task_id()
-        work_type = classify_work_type(text, attrs)
+        work_type = "complex_code" if programming_plan else classify_work_type(text, attrs)
         premium_allowed = work_type in ("scientific_research", "complex_code")
         scientific_risk = "MEDIUM" if work_type == "scientific_research" else "LOW"
         code_risk = "HIGH" if work_type == "complex_code" else "NONE"
         manifest = {
             "task_id": task_id, "title": text[:120] or "Jarvis task", "objective": text,
-            "task_type": "RESEARCH", "work_type": work_type,
+            "task_type": "CODE" if programming_plan else "RESEARCH", "work_type": work_type,
             "priority": message.get("priority", "NORMAL"),
             "risk_level": "A1", "scientific_risk": scientific_risk, "code_risk": code_risk,
             "financial_risk": "NONE", "required_capabilities": required,
-            "deterministic_tools_available": False, "repo_scope": "read-only analysis",
-            "files_allowed": [], "files_forbidden": ["MQL5/**", "server/research_scripts/**"],
+            "deterministic_tools_available": False,
+            "repo_scope": "task-scoped repository work" if programming_plan else "read-only analysis",
+            "files_allowed": (programming_plan or {}).get("capability_scope", {}).get("allowed_paths", []),
+            "files_forbidden": ["MQL5/**", "server/research_scripts/**", ".env", "**/.env", "**/*secret*"],
             "dependencies": attrs.get("dependencies", []), "blockers": [],
             "expected_artifacts": ["RESULT_PACKET_V1"],
             "success_criteria": ["Result is source-backed", "No irreversible action"],
@@ -260,13 +273,23 @@ class JarvisService:
             "estimated_runtime": "durable", "premium_allowed": premium_allowed,
             "preferred_executor": "TIER1_LOCAL_CHEAP",
             "fallback_executors": ["TIER2_LOCAL_STRONG", "TIER3_CLAUDE", "TIER4_CODEX"],
-            "approval_required": "REVIEW_REQUIRED", "created_by": f"jarvis:{message['user_id']}",
+            "approval_required": ((programming_plan or {}).get("approval_required") or "REVIEW_REQUIRED"),
+            "created_by": f"jarvis:{message['user_id']}",
             "created_at": now_iso(), "tenant_id": TENANT_ID, "account_scope_id": None,
         }
-        self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action="jarvis_task",
-                                 action_params={"request_class": "TASK_REQUEST",
-                                                "source_message_id": message["message_id"],
-                                                "conversation_id": message["conversation_id"]})
+        action = "conversational_programming" if programming_plan else "jarvis_task"
+        action_params = {"request_class": "TASK_REQUEST",
+                         "source_message_id": message["message_id"],
+                         "conversation_id": message["conversation_id"]}
+        if programming_plan:
+            action_params["execution_plan"] = programming_plan
+        self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action=action,
+                                 action_params=action_params)
+        if programming_plan and programming_plan["approval_required"] == "EXPLICIT_USER_APPROVAL":
+            self.queue.transition(task_id, "WAITING_APPROVAL")
+            self.ledger.append("APPROVAL_REQUIRED", task_id,
+                               {"reason": "conversational programming PUSH boundary",
+                                "operation": "PUSH"}, actor="jarvis_service")
         self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
                                        user_id=str(message["user_id"]))
         record = self.queue.get(task_id)
@@ -274,6 +297,7 @@ class JarvisService:
                               status=record["state"], details={"executor": record.get("executor"),
                               "approval_required": manifest["approval_required"],
                               "work_type": work_type,
+                              "execution_plan": programming_plan,
                               "review_required": get_matrix_entry(work_type)["review_required"],
                               "source_refs": ["TASK_MANIFEST_V1", "orchestrator queue"]})
 

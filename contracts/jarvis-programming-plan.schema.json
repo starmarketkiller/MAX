@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/jarvis-programming-plan.schema.json",
+  "title": "JARVIS_PROGRAMMING_PLAN_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "intent", "objective", "reference", "policy_flags",
+    "capability_scope", "stages", "routing_order", "approval_required", "provenance"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "intent": {"enum": ["INSPECT", "PATCH", "TEST", "COMMIT", "PUSH", "RESUME"]},
+    "objective": {"type": "string", "minLength": 1},
+    "reference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["task_id", "resolution"],
+      "properties": {
+        "task_id": {"type": ["string", "null"]},
+        "resolution": {"enum": ["EXPLICIT", "CONVERSATION_CONTEXT", "NONE"]}
+      }
+    },
+    "policy_flags": {
+      "type": "array", "uniqueItems": true,
+      "items": {"enum": ["NO_PUSH", "NO_DEPLOY", "TEST_ONLY", "COMMIT_ONLY"]}
+    },
+    "capability_scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "allowed_operations", "denied_operations", "allowed_paths"],
+      "properties": {
+        "repository": {"const": "starmarketkiller/MAX"},
+        "allowed_operations": {"type": "array", "items": {"type": "string"}},
+        "denied_operations": {"type": "array", "items": {"type": "string"}},
+        "allowed_paths": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "enabled", "requires_approval", "executor_boundary"],
+        "properties": {
+          "name": {"enum": ["READ", "INSPECT_CI", "PATCH_WORKSPACE", "TEST", "COMMIT", "PUSH", "DEPLOY_VIA_SAFE_AUTO_DEPLOY"]},
+          "enabled": {"type": "boolean"},
+          "requires_approval": {"type": "boolean"},
+          "executor_boundary": {"type": "string"}
+        }
+      }
+    },
+    "routing_order": {"const": ["DETERMINISTIC", "LOCAL", "FREE_ONLINE", "CODEX"]},
+    "approval_required": {"enum": ["REVIEW_REQUIRED", "EXPLICIT_USER_APPROVAL"]},
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "derived"],
+      "properties": {"source": {"const": "JARVIS_MESSAGE_V1"}, "derived": {"const": true}}
+    }
+  }
+}
