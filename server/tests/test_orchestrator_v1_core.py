@@ -154,12 +154,25 @@ def test_orchestrator_deterministic_task_completes():
     assert rec["result_packet"]["confidence"] == "HIGH"
 
 
-def test_orchestrator_approval_boundary_blocks_real_file_writes():
+def test_orchestrator_approval_boundary_blocks_real_file_writes(monkeypatch):
     """Un handler che dichiara touches_real_repo_files=True con
     approval_required != AUTO DEVE fermarsi a WAITING_APPROVAL, mai
     COMPLETED - questo e' IL test che garantisce che l'Orchestrator non
     scriva mai un file reale del repository senza revisione."""
     orch = _tmp_orch()
+    # This test exercises the approval boundary after a successful local
+    # proposal. It must not depend on whether Ollama happens to be installed
+    # on the host running the suite (GitHub Linux has no local provider).
+    monkeypatch.setattr(
+        "core.orchestrator.ollama_worker.call_local_model",
+        lambda prompt, model: {
+            "success": True,
+            "model": model,
+            "response_text": '{"ok": true}',
+            "wall_seconds": 0.0,
+            "error": None,
+        },
+    )
 
     class FakeRealFileHandler(LocalTaskHandler):
         def build_prompt(self, task_record):

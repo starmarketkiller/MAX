@@ -1,4 +1,5 @@
 import json
+import hashlib
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -85,7 +86,10 @@ def test_telegram_auth_duplicate_malformed_and_rate_limit(service, tmp_path):
                               "chat": {"id": 99}, "text": "cosa è successo oggi?"}})
     denied = [e for e in service.ledger.read_all() if e["event_type"] == "TELEGRAM_ACCESS_DENIED"]
     assert denied and denied[-1]["payload"]["authorized"] is False
-    assert "13" not in json.dumps(denied[-1])
+    denied_payload = denied[-1]["payload"]
+    assert "user_id" not in denied_payload and "telegram_user_id" not in denied_payload
+    assert denied_payload["user_ref"] == hashlib.sha256(b"13").hexdigest()[:12]
+    assert denied_payload["user_ref"] != "13"
     with pytest.raises(ValueError): adapter.handle_update({"update_id": 9})
     adapter._rate["42"] = [__import__("time").time()] * 20
     with pytest.raises(RuntimeError):
