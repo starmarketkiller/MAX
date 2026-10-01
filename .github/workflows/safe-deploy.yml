@@ -65,7 +65,10 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
           DEPLOY_COMMIT_SHA: ${{ needs.classify.outputs.sha }}
-        run: python scripts/trigger_render_deploy.py | tee deploy-trigger.json
+        run: |
+          set -euo pipefail
+          python scripts/trigger_render_deploy.py > deploy-trigger.json
+          cat deploy-trigger.json
       - id: deploy_id
         run: echo "id=$(python -c 'import json;print(json.load(open("deploy-trigger.json")).get("deploy_id") or "unknown")')" >> "$GITHUB_OUTPUT"
       - name: Verify deployed SHA, readiness, and dispatcher
