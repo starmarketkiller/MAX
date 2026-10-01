@@ -254,12 +254,22 @@ def test_framework_adoption_decision_is_adopted_with_unmodified_logic():
     import hashlib
     adoption_path = os.path.join(FUNDING_DIR, "framework_adoption_decision_v1.json")
     with open(adoption_path, encoding="utf-8") as f:
-        decision = json.load(f)["payload"]
+        decision_doc = json.load(f)
+    decision = decision_doc["payload"]
+    canonical_payload = json.dumps(
+        decision, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical_payload).hexdigest() == decision_doc["canonical_sha256"]
     assert decision["new_status"] == "ADOPTED"
     assert decision["decision"] == "FUNDING_FRAMEWORK_V1_ADOPTED"
     assert all(v is False for v in decision["scope_declaration"].values()
               if isinstance(v, bool))
     for name, expected_hash in decision["frozen_logic_file_sha256"].items():
         with open(os.path.join(FUNDING_DIR, name), "rb") as f:
-            actual = hashlib.sha256(f.read()).hexdigest()
+            # The frozen hashes describe the canonical Git content (LF).  A
+            # Windows checkout may materialize the same blob with CRLF; hash
+            # normalized bytes so the integrity assertion remains about the
+            # source logic rather than the developer's core.autocrlf setting.
+            canonical_bytes = f.read().replace(b"\r\n", b"\n")
+            actual = hashlib.sha256(canonical_bytes).hexdigest()
         assert actual == expected_hash, f"{name} e' stato modificato dopo l'adozione"

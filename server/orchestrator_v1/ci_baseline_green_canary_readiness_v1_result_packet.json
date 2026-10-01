@@ -1,0 +1,24 @@
+{
+  "schema_version": "RESULT_PACKET_V1",
+  "task": "CI Baseline Repair + Safe Deploy Canary Readiness V1",
+  "decision": "CI_BASELINE_GREEN_CANARY_READY_WITH_LIMITATIONS",
+  "changes": [
+    "Funding integrity verification is newline-independent; checkout-specific CRLF hashes were migrated to canonical Git LF blob hashes without source-logic changes.",
+    "Research Control Plane expectations follow the canonical Phase 7.27 count of 9 experiments and 9 hypotheses.",
+    "GitHub configuration and a documentation-only LOW_RISK canary procedure are documented."
+  ],
+  "safety": {
+    "deployment_triggered": false,
+    "production_auto_deploy_enabled": false,
+    "secrets_configured": false,
+    "high_risk_state": "WAITING_APPROVAL"
+  },
+  "canary": {
+    "candidate": "docs/canary/SAFE_DEPLOY_LOW_RISK_CANARY.md",
+    "status": "NOT_EXECUTED",
+    "expected_risk": "LOW_RISK"
+  },
+  "limitations": [
+    "Docker is not installed on the verification host; production imports passed, but the image build must be confirmed by GitHub CI before the canary."
+  ]
+}

@@ -6,8 +6,10 @@ from fastapi.testclient import TestClient
 def test_safety_net_registries_are_projected_without_reinterpretation():
     model = rcp.CONTROL_PLANE.build()
     assert model["overview"]["census_count"] == 83
-    assert model["overview"]["experiment_count"] == 8
-    assert model["overview"]["hypothesis_count"] == 8
+    # Phase 7.27 canonically added the cross-strategy BUY-dominance benchmark
+    # and its linked hypothesis to the eight Phase 7.26 backfill records.
+    assert model["overview"]["experiment_count"] == 9
+    assert model["overview"]["hypothesis_count"] == 9
     assert model["overview"]["freshness"] == "CURRENT"
     h2 = next(x for x in model["catalogs"]["hypotheses"] if x["hypothesis_id"] == "H2_BREAKOUT_ACC_BUY_MORE_ROBUST_THAN_SELL")
     assert h2["lifecycle_state"] == "HYPOTHESIS"
@@ -42,5 +44,5 @@ def test_control_plane_endpoints_require_auth(tmp_path, monkeypatch):
         headers = {"Authorization": f"Bearer {login.json()['token']}"}
         response = client.get("/api/research/control-plane/overview", headers=headers)
         assert response.status_code == 200 and response.json()["census_count"] == 83
-        assert client.get("/api/research/control-plane/experiments", headers=headers).json()["count"] == 8
+        assert client.get("/api/research/control-plane/experiments", headers=headers).json()["count"] == 9
         assert client.get("/api/research/control-plane/visual-audits", headers=headers).status_code == 200

@@ -30,6 +30,9 @@ scripts/*.local.ps1
 *.db-shm
 server/nexus.db*
 data/
+# Local runtime state emitted by Jarvis/review tests and development startup.
+server/jarvis/*.json
+server/review_pipeline_v1/runtime_state/
 
 # storico locale scaricato da server/research_scripts/fetch_dukascopy_history.py
 # (fino a 10y di tick XAUUSD, ricostruibile da zero - non e' codice, non va versionato)
@@ -49,6 +52,7 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.pytest_*/
 .mypy_cache/
 .ruff_cache/
 .coverage

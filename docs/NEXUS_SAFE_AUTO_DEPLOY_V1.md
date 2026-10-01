@@ -60,12 +60,42 @@ the service has a persistent disk, so rollback safety may depend on data/schema 
 Automatic rollback belongs to V1.1 after a compatibility contract and last-known-healthy registry
 exist.
 
-## Current blockers before activation
+## CI baseline repair and canary readiness
 
-- The repository-wide CI baseline still has three unrelated failures: one frozen Funding checksum
-  and two stale Research Control Plane experiment-count assertions.
+- The Funding frozen hash is the SHA-256 of canonical LF Git content. The integrity test normalizes
+  checkout CRLF before hashing, preventing a Windows `core.autocrlf` setting from reporting a false
+  source-logic change. The source logic did not change (`7dafeae..HEAD` is empty for all seven frozen
+  files); six manifest hashes were migrated from checkout-specific CRLF bytes to their canonical Git
+  LF blob hashes and the wrapper canonical hash was updated accordingly.
+- Research Control Plane expectations are 9 experiments and 9 hypotheses. Phase 7.27 appended the
+  canonical cross-strategy BUY-dominance benchmark experiment and linked hypothesis to the eight
+  records originally backfilled by Phase 7.26.
 - No deploy hook or verification credentials were configured or used in this task.
 - Render startup log inspection is not yet automated; readiness, SHA and dispatcher provide the V1
   runtime gate. Render API log triage is a future hardening step.
 - Jarvis notification is represented by the GitHub deployment summary; direct Activity Ledger /
   Telegram delivery remains a future integration because it needs a dedicated authenticated ingest.
+
+## GitHub configuration checklist
+
+Configure these only before the explicitly approved canary:
+
+- Repository secret `RENDER_DEPLOY_HOOK_URL`: Render hook for `nexus-backend`; keep the full query
+  secret out of logs and artifacts.
+- Repository secret `NEXUS_DEPLOY_VERIFY_USER`: dedicated least-privilege dashboard verification user.
+- Repository secret `NEXUS_DEPLOY_VERIFY_PASSWORD`: password for that verification user.
+- Repository variable `NEXUS_PUBLIC_URL`: `https://nexus-backend-8o4y.onrender.com`.
+- GitHub environment `nexus-production-low-medium-risk`: create it with access only to the deployment
+  secrets. Do not add a required reviewer for low/medium canaries; HIGH_RISK never enters this job and
+  remains `WAITING_APPROVAL` at classification.
+
+Before enabling the workflow, confirm Render native `autoDeployTrigger` remains `off`, the hook accepts
+an exact `ref`, and branch protection requires the `CI` workflow.
+
+## Prepared LOW_RISK canary (not executed)
+
+Use a separate commit that changes only
+`docs/canary/SAFE_DEPLOY_LOW_RISK_CANARY.md` (for example, update its `canary_run` marker). The risk
+classifier must return `LOW_RISK / NON_RUNTIME_CHANGE`. That commit must not alter runtime, workflows,
+secrets, research artifacts or trading code. This task neither creates the canary commit nor triggers
+the hook.

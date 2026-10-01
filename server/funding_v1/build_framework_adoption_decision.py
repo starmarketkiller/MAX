@@ -46,7 +46,10 @@ _VAULT_REPORTS = [
 
 def _sha256_file(path):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+        # Source hashes use canonical Git-style LF bytes. This keeps the
+        # frozen manifest independent from checkout core.autocrlf settings.
+        canonical_bytes = f.read().replace(b"\r\n", b"\n")
+        return hashlib.sha256(canonical_bytes).hexdigest()
 
 
 def build():

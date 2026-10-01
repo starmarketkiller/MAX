@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-09-29T07:07:34.366224+00:00",
   "generation_script": "C:\\Users\\User\\ClaudeWork\\MAX\\server\\funding_v1\\build_framework_adoption_decision.py",
-  "canonical_sha256": "d8710d45cca6ba53377e173526efac06410d4d87d34daa03a093f13416531454",
+  "canonical_sha256": "be00466d59cf8bb437f151c3ccc64619f8943a4fc9825e5e26f082145956e5cf",
   "payload": {
     "framework_name": "FUNDING_PRIORITY_AND_OPPORTUNITY_FRAMEWORK_V1",
     "depends_on": [
@@ -25,12 +25,12 @@
     },
     "frozen_logic_file_sha256": {
       "opportunity_scoring.py": "a7d586cb5334b39d24765bee69b408ba1f1eca6d7404efff81cd1633d4234bd8",
-      "hard_gates.py": "35ede7ae759c3daf49f35e923254843aade6b63f2cb32e9970e8352bb7e64e93",
-      "capital_scenarios.py": "5e7b8024ba8f366d76b46a4ba534ce4946ceb04fc5f7e4c0574530efc67a7e3f",
-      "capability_coverage.py": "b7784e6e9962683485a85745916587b04a6c39f2c1bab1cc1d74659341b09817",
-      "opportunity_lifecycle.py": "eb8d57d6e729157df8553651a757c056160c189d87bf06d587c5d361375c32b8",
-      "self_funding_loop.py": "00e25390f3202d2747151c19cc8ed48e4b9329dedfef7146250f3ad55b68d423",
-      "opportunity_assembly.py": "b72908a10f46104a6180fec0cc928419de1e9698d20494d2505d6ce5ee01b9e9"
+      "hard_gates.py": "4ff869a666d51e9c97d4ee6b9588596206ef8fe89aa15326ebf37da528972adf",
+      "capital_scenarios.py": "98f7f1105cb018a5fe3b98e7e7f865685755a0841d12abfb5d993de0b6cc9311",
+      "capability_coverage.py": "c0682dc97c4ec5bf8221a84bfca015866a9cb0e9fa396415383bed3e9e82d1da",
+      "opportunity_lifecycle.py": "11bd4a9faefd0bcef35899298ca43a74ebea2899f9a7e11b29597b914bcf88c5",
+      "self_funding_loop.py": "4df605980eb3284976d92ff2a5753af12d825f971eeeb2a0108a6938741a23a6",
+      "opportunity_assembly.py": "663beaf9246e1ea79f7658471c91eea39bc35993a655bbaf8b3980d212b77010"
     },
     "frozen_artifact_canonical_sha256": {
       "example_instances/opportunities_v1.json": "63f1ab2ed8d8ef6e3430da211b1acbfabdeed5fef20761afb97b8635f74a3395",

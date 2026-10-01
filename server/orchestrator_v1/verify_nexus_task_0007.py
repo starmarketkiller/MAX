@@ -21,7 +21,8 @@ sys.path.insert(0, FUNDING_DIR)
 
 def _sha256_file(path):
     with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+        canonical_bytes = f.read().replace(b"\r\n", b"\n")
+        return hashlib.sha256(canonical_bytes).hexdigest()
 
 
 def verify():
