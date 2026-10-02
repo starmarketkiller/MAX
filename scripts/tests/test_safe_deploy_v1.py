@@ -93,6 +93,29 @@ def test_workflow_requires_ci_success_and_exact_postdeploy_gates():
                      "DEPLOY_COMMIT_SHA", "verify_render_deploy.py", "WAITING_APPROVAL"):
         assert required in text
 
+def test_workflow_keeps_low_medium_automatic_and_high_risk_environment_gated():
+    text=(ROOT/".github/workflows/safe-deploy.yml").read_text(encoding="utf-8")
+    automatic=text.split("  deploy:\n", 1)[1].split("  deploy_high_risk:\n", 1)[0]
+    protected=text.split("  deploy_high_risk:\n", 1)[1]
+
+    assert "if: needs.classify.outputs.auto_allowed == 'true'" in automatic
+    assert "environment: nexus-production-low-medium-risk" in automatic
+    assert "if: needs.classify.outputs.risk == 'HIGH_RISK'" in protected
+    assert "environment: nexus-production-high-risk" in protected
+    assert "auto_allowed" not in protected
+
+def test_both_deploy_paths_preserve_exact_sha_verification_and_ledger():
+    text=(ROOT/".github/workflows/safe-deploy.yml").read_text(encoding="utf-8")
+    automatic=text.split("  deploy:\n", 1)[1].split("  deploy_high_risk:\n", 1)[0]
+    protected=text.split("  deploy_high_risk:\n", 1)[1]
+    assert text.count("python scripts/trigger_render_deploy.py > deploy-trigger.json") == 2
+    assert text.count("python scripts/verify_render_deploy.py") == 2
+    assert text.count('--sha "${{ needs.classify.outputs.sha }}"') == 2
+    assert text.count("deploy-ledger-${{ needs.classify.outputs.sha }}") == 2
+    for job in (automatic, protected):
+        assert "NEXUS_DEPLOY_VERIFY_USER" in job
+        assert "NEXUS_DEPLOY_VERIFY_PASSWORD" in job
+
 def test_workflow_trigger_is_fail_fast_and_not_masked_by_tee():
     text=(ROOT/".github/workflows/safe-deploy.yml").read_text(encoding="utf-8")
     assert "set -euo pipefail" in text

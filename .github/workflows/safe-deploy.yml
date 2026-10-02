@@ -39,11 +39,11 @@ jobs:
         with:
           name: deploy-risk-${{ github.event.workflow_run.head_sha }}
           path: deploy-risk.json
-      - name: High-risk approval gate
+      - name: High-risk protected-environment notice
         if: steps.risk.outputs.risk == 'HIGH_RISK'
         run: |
           echo "## WAITING_APPROVAL" >> "$GITHUB_STEP_SUMMARY"
-          echo "Commit ${{ github.event.workflow_run.head_sha }} is HIGH_RISK and was not deployed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit ${{ github.event.workflow_run.head_sha }} is HIGH_RISK and requires approval in the nexus-production-high-risk environment." >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     needs: classify
@@ -89,6 +89,60 @@ jobs:
         if: failure()
         run: |
           echo "::error::Deploy was not verified. Do not declare success." 
+          echo "Inspect Render logs and use the last healthy SHA for an explicit rollback." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy-ledger-${{ needs.classify.outputs.sha }}
+          path: |
+            deploy-trigger.json
+            deploy-ledger.json
+          if-no-files-found: warn
+
+  deploy_high_risk:
+    needs: classify
+    if: needs.classify.outputs.risk == 'HIGH_RISK'
+    runs-on: ubuntu-latest
+    environment: nexus-production-high-risk
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.classify.outputs.sha }}
+      - name: Require deployment configuration
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          NEXUS_PUBLIC_URL: ${{ vars.NEXUS_PUBLIC_URL }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL" || { echo "::error::RENDER_DEPLOY_HOOK_URL missing"; exit 1; }
+          test -n "$NEXUS_PUBLIC_URL" || { echo "::error::NEXUS_PUBLIC_URL missing"; exit 1; }
+      - name: Trigger exact verified commit after protected approval
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_COMMIT_SHA: ${{ needs.classify.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/trigger_render_deploy.py > deploy-trigger.json
+          cat deploy-trigger.json
+      - id: deploy_id
+        run: echo "id=$(python -c 'import json;print(json.load(open("deploy-trigger.json")).get("deploy_id") or "unknown")')" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed SHA, readiness, and dispatcher
+        env:
+          NEXUS_DEPLOY_VERIFY_USER: ${{ secrets.NEXUS_DEPLOY_VERIFY_USER }}
+          NEXUS_DEPLOY_VERIFY_PASSWORD: ${{ secrets.NEXUS_DEPLOY_VERIFY_PASSWORD }}
+        run: |
+          python scripts/verify_render_deploy.py \
+            --base-url "${{ vars.NEXUS_PUBLIC_URL }}" \
+            --sha "${{ needs.classify.outputs.sha }}" \
+            --deploy-id "${{ steps.deploy_id.outputs.id }}" \
+            --risk "${{ needs.classify.outputs.risk }}" \
+            --output deploy-ledger.json
+      - name: Verified notification summary
+        if: success()
+        run: echo "High-risk deploy ${{ needs.classify.outputs.sha }} was approved, completed, and verified." >> "$GITHUB_STEP_SUMMARY"
+      - name: Failure diagnostic and recovery notice
+        if: failure()
+        run: |
+          echo "::error::Approved high-risk deploy was not verified. Do not declare success."
           echo "Inspect Render logs and use the last healthy SHA for an explicit rollback." >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
