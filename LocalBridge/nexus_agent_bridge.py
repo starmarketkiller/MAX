@@ -7,6 +7,7 @@ then runs the existing bounded FreeCodingWorker verifier in a task workspace.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import hmac
 import json
@@ -18,6 +19,7 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +31,13 @@ for entry in (SERVER, ORCH):
 
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler  # noqa: E402
 from orchestrator_v1.core import ollama_worker  # noqa: E402
+
+
+def _log(message):
+    """Readable, timestamped, single-line status output. Never passed a secret,
+    prompt, model response or absolute workspace path - only event names,
+    task/job ids and safe counters."""
+    print(f"[{datetime.now(timezone.utc).isoformat(timespec='seconds')}] {message}", flush=True)
 
 
 class BridgeClient:
@@ -118,22 +127,30 @@ class BridgeClient:
         job = self.claim()
         if not job:
             return False
+        _log(f"claimed job task_id={job['task_id']} capability={job['capability']}")
         self.execute(job)
+        _log(f"job finished task_id={job['task_id']}")
         return True
 
     def run_forever(self):
+        _log(f"bridge starting bridge_id={self.bridge_id} base_url={self.base_url} "
+            f"poll_seconds={self.poll_seconds}")
         backoff = self.poll_seconds
         while self.running:
             try:
-                self.run_once()
+                if not self.run_once():
+                    pass  # heartbeat sent, nothing to claim - normal idle tick, not logged
                 backoff = self.poll_seconds
-            except (urllib.error.URLError, TimeoutError, OSError, ValueError):
-                # No payload/token is printed. Reconnect conservatively.
+            except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+                # No payload/token/secret is ever included in this message.
                 backoff = min(max(self.poll_seconds, backoff * 2), 60)
+                _log(f"connection error ({type(exc).__name__}), retrying in {backoff:.0f}s")
             time.sleep(backoff)
+        _log("bridge stopped")
 
     def stop(self, *_):
         self.running = False
+        _log("stop requested, sending final DEGRADED heartbeat")
         try:
             self.heartbeat("DEGRADED")
         except Exception:
@@ -149,7 +166,56 @@ def from_environment():
         poll_seconds=float(os.environ.get("NEXUS_LOCAL_AGENT_POLL_SECONDS", "3")))
 
 
+def diagnose():
+    """Read-only startup check. Prints only pass/fail per step - never a
+    secret, token or signature. Returns True iff every step passed."""
+    ok = True
+
+    def step(label, passed, detail=""):
+        nonlocal ok
+        ok = ok and passed
+        mark = "OK" if passed else "FAIL"
+        _log(f"[diagnose] {label}: {mark}{(' - ' + detail) if detail else ''}")
+
+    base_url = os.environ.get("NEXUS_URL", "").strip()
+    step("NEXUS_URL set", bool(base_url), base_url or "missing")
+    secret = os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_SECRET", "")
+    step("NEXUS_LOCAL_AGENT_BRIDGE_SECRET length >= 32", len(secret) >= 32,
+        f"{len(secret)} chars" if secret else "missing")
+    repo_root = Path(os.environ.get("NEXUS_REPO_ROOT", str(ROOT))).resolve()
+    step("NEXUS_REPO_ROOT looks like the MAX checkout", (repo_root / "server").is_dir(),
+        str(repo_root))
+    reachable = ollama_worker.is_ollama_reachable(timeout=3)
+    step("Ollama reachable", reachable, "run 'ollama serve' if this fails" if not reachable else "")
+    if base_url:
+        try:
+            with urllib.request.urlopen(base_url.rstrip("/") + "/api/health", timeout=5) as resp:
+                step("NEXUS backend reachable (/api/health)", resp.status == 200,
+                    f"http {resp.status}")
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            step("NEXUS backend reachable (/api/health)", False, type(exc).__name__)
+    else:
+        step("NEXUS backend reachable (/api/health)", False, "skipped, NEXUS_URL missing")
+    if base_url and len(secret) >= 32:
+        try:
+            status = from_environment().heartbeat()
+            step("Bridge heartbeat accepted by backend", bool(status.get("bridge_id")),
+                f"status={status.get('status')}")
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+            step("Bridge heartbeat accepted by backend", False, type(exc).__name__)
+    else:
+        step("Bridge heartbeat accepted by backend", False, "skipped, prior step(s) failed")
+    _log(f"[diagnose] overall: {'READY' if ok else 'NOT READY'}")
+    return ok
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="NEXUS Local Agent Bridge V1 client")
+    parser.add_argument("--diagnose", action="store_true",
+                       help="run read-only startup checks and exit, without claiming any job")
+    args = parser.parse_args()
+    if args.diagnose:
+        sys.exit(0 if diagnose() else 1)
     client = from_environment()
     signal.signal(signal.SIGINT, client.stop)
     signal.signal(signal.SIGTERM, client.stop)
