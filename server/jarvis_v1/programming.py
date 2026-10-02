@@ -19,6 +19,18 @@ _PROGRAMMING_WORDS = re.compile(
     r"\b(repo|codice|code|bug|fix|patch|test|commit|committalo|push|pushalo|ci|github|implementa|modifica|riprendi)\b", re.I)
 _REFERENCE_WORDS = re.compile(r"\b(quello|quella|pushalo|committalo|riprendi|continua)\b", re.I)
 
+# Una negazione naturale di "push" (es. "non fare push", "niente push", "no
+# push", "senza fare push") non e' una richiesta di push - senza questo
+# controllo _intent() la classifica comunque PUSH (e' il primo pattern
+# testato), _flags() non aggiunge mai NO_PUSH perche' il suo ramo di
+# fallback scatta solo quando intent != "PUSH", e la task finisce in
+# EXPLICIT_USER_APPROVAL (WAITING_APPROVAL immediato, prima di
+# Router/Dispatcher/worker locale) invece di essere eseguita e verificata.
+# Finestra di 20 caratteri/nessuna punteggiatura di fine frase in mezzo:
+# tiene la negazione nella stessa clausola senza richiedere l'adiacenza
+# immediata ("non fare push", non solo "non push").
+_NEGATED_PUSH = re.compile(r"\b(?:non|no|niente|mai|senza)\b[^.;:\n]{0,20}\bpush(?:alo)?\b", re.I)
+
 
 def is_programming_request(text: str) -> bool:
     return bool(_PROGRAMMING_WORDS.search(text or ""))
@@ -33,7 +45,7 @@ def extract_repo_paths(text: str) -> list[str]:
 
 def _intent(text: str) -> str:
     value = (text or "").lower()
-    if re.search(r"\b(push|pushalo)\b", value): return "PUSH"
+    if not _NEGATED_PUSH.search(value) and re.search(r"\b(push|pushalo)\b", value): return "PUSH"
     if re.search(r"\b(commit|committalo)\b", value): return "COMMIT"
     if re.search(r"\b(test|verifica)\b", value) and not re.search(
             r"\b(fix|patch|modifica|implementa|sistema|correggi)\b", value): return "TEST"
@@ -47,7 +59,7 @@ def _flags(text: str, intent: str) -> list[str]:
     flags = ["NO_DEPLOY"]
     if re.search(r"\b(solo test|test only)\b", value):
         flags += ["TEST_ONLY", "NO_PUSH"]
-    elif re.search(r"\b(solo commit|commit only|non pushare|senza push)\b", value):
+    elif re.search(r"\b(solo commit|commit only|non pushare|senza push)\b", value) or _NEGATED_PUSH.search(value):
         flags += ["COMMIT_ONLY", "NO_PUSH"]
     elif intent != "PUSH":
         flags.append("NO_PUSH")

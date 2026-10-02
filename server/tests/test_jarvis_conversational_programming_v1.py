@@ -55,6 +55,42 @@ def test_reference_resolution_and_push_requires_explicit_approval():
     assert deploy["enabled"] is False and deploy["requires_approval"] is True
 
 
+def test_negated_push_phrasings_do_not_trigger_premature_approval():
+    # NEXUS bugfix 2026-10-02: "non fare push" (and natural variants) were
+    # classified intent="PUSH" by the bare \bpush\b check, which also meant
+    # _flags() never added NO_PUSH (its fallback only fires when intent !=
+    # "PUSH") - a LOW_RISK, test-only, no-push task was sent straight to
+    # WAITING_APPROVAL (EXPLICIT_USER_APPROVAL) before Router/Dispatcher/
+    # local worker ever ran. Reproduced against the real E2E message.
+    for phrase in ("non fare push", "niente push", "no push", "senza fare push",
+                  "non pushare", "senza push"):
+        plan = build_plan(f"Modifica il file server/tests/test_x.py, {phrase}, non fare deploy")
+        assert plan["intent"] != "PUSH", phrase
+        assert "NO_PUSH" in plan["policy_flags"], phrase
+        assert plan["approval_required"] == "REVIEW_REQUIRED", phrase
+
+    real_message = (
+        "Avvia una task di programmazione locale.\n"
+        "Modifica solo un file di test innocuo scelto da te, fai una modifica minima e "
+        "reversibile, esegui solo i test consentiti, non usare provider premium, non fare "
+        "push, non fare deploy e fermati a WAITING_APPROVAL.\n"
+        "Usa il Local Agent Bridge e il worker locale.\n"
+        "Se qualcosa non e' disponibile, fermati e spiegami il blocker senza usare premium.")
+    plan = build_plan(real_message)
+    assert plan["intent"] == "PATCH"
+    assert "NO_PUSH" in plan["policy_flags"]
+    assert plan["approval_required"] == "REVIEW_REQUIRED"
+
+
+def test_genuine_push_requests_still_require_explicit_approval():
+    # The fix must not weaken the real push/high-risk gate.
+    for phrase in ("Pushalo", "fai il push", "Implementa il fix e poi pushalo su main"):
+        plan = build_plan(phrase, last_task_id="TASK_PREVIOUS" if phrase == "Pushalo" else None)
+        assert plan["intent"] == "PUSH", phrase
+        assert "NO_PUSH" not in plan["policy_flags"], phrase
+        assert plan["approval_required"] == "EXPLICIT_USER_APPROVAL", phrase
+
+
 def test_push_request_stops_at_real_approval_gate(service):
     first = JarvisGateway(service).handle(message("Implementa un fix e fai i test"))
     push = JarvisGateway(service).handle(message("Pushalo"))
