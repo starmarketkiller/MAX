@@ -29,7 +29,8 @@ import jarvis_delivery  # noqa: E402
 from review_engine import process_work_product  # noqa: E402
 from review_matrix import get_matrix_entry  # noqa: E402
 from .conversation_store import ConversationStore
-from .programming import build_plan, is_programming_request
+from .programming import build_plan, extract_repo_paths, is_programming_request
+from .free_coding_worker import FreeCodingWorkerHandler
 
 # NEXUS TASK #0009 - default per le task create da Jarvis quando nessun
 # work_type esplicito e' dichiarato in metadata. 'business_analysis' impone
@@ -124,6 +125,10 @@ class JarvisService:
             base = Path(queue_path).parent if queue_path else SERVER / "orchestrator_v1" / "runtime_state"
             conversation_path = base / "conversation_context_v2.json"
         self.conversation_store = ConversationStore(conversation_path)
+        workspace_root = Path(conversation_path).parent / "coding_workspaces_v1"
+        self.orchestrator.register_local_handler(
+            "conversational_programming",
+            FreeCodingWorkerHandler(project_root=ROOT, workspace_root=workspace_root))
         # NEXUS TASK #0009 - cache process-local (stessa disciplina gia'
         # dichiarata per self.conversations): un WORK_PRODUCT_V1 va calcolato
         # una sola volta per task_id, mai ricalcolato/ri-escalato a ogni
@@ -244,12 +249,13 @@ class JarvisService:
         programming_plan = None
         if is_programming_request(text):
             context = self.conversation_store.get(message["conversation_id"])
+            allowed_paths = list(attrs.get("files_allowed") or extract_repo_paths(text))
             programming_plan = build_plan(
                 text, last_task_id=context.get("last_task_id"),
-                allowed_paths=list(attrs.get("files_allowed") or []))
+                allowed_paths=allowed_paths)
         required = ["summaries"]
         if programming_plan:
-            required = ["complex_code_change"]
+            required = ["small_python_functions", "unit_test_writing"]
         if attrs.get("second_opinion"): required.append("review")
         task_id = new_task_id()
         work_type = "complex_code" if programming_plan else classify_work_type(text, attrs)
@@ -283,6 +289,7 @@ class JarvisService:
                          "conversation_id": message["conversation_id"]}
         if programming_plan:
             action_params["execution_plan"] = programming_plan
+            action_params["test_commands"] = list(attrs.get("test_commands") or [])
         self.orchestrator.submit(manifest, dependencies=manifest["dependencies"], action=action,
                                  action_params=action_params)
         if programming_plan and programming_plan["approval_required"] == "EXPLICIT_USER_APPROVAL":

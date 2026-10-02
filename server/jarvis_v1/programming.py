@@ -24,6 +24,13 @@ def is_programming_request(text: str) -> bool:
     return bool(_PROGRAMMING_WORDS.search(text or ""))
 
 
+def extract_repo_paths(text: str) -> list[str]:
+    """Extract only explicit repo-like paths; ambiguity remains fail-closed."""
+    matches = re.findall(r"(?<![\w.-])((?:server|frontend|contracts|scripts|docs)/[\w./*-]+)",
+                         (text or "").replace("\\", "/"))
+    return list(dict.fromkeys(match.rstrip(".,:;") for match in matches))
+
+
 def _intent(text: str) -> str:
     value = (text or "").lower()
     if re.search(r"\b(push|pushalo)\b", value): return "PUSH"
