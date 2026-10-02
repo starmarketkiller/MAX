@@ -74,9 +74,14 @@ class Orchestrator:
         self.queue = TaskQueue(path=queue_path)
         self.ledger = EventLedger(path=ledger_path)
         self.local_handlers = {}  # action -> LocalTaskHandler
+        self.local_bridge = None
 
     def register_local_handler(self, action, handler: LocalTaskHandler):
         self.local_handlers[action] = handler
+
+    def set_local_bridge(self, bridge):
+        """Attach an outbound-only executor transport; routing stays in Core."""
+        self.local_bridge = bridge
 
     def submit(self, manifest, dependencies=None, action=None, action_params=None):
         record = self.queue.submit(manifest, dependencies=dependencies, action=action,
@@ -189,6 +194,21 @@ class Orchestrator:
             return self._escalate(task_id, record, "MANUAL_REVIEW", "TOOLING",
                                  [f"handler mancante per {record['action']}"])
 
+        # In hosted production localhost is not the operator's workstation.  A
+        # configured bridge may transport this *already routed* local job to an
+        # outbound polling client.  It does not re-route or select a provider.
+        if self.local_bridge is not None:
+            if self.local_bridge.dispatch(record, decision, handler):
+                return self.queue.get(task_id)
+            self.ledger.append("TASK_FAILED", task_id,
+                              {"classification": "LOCAL_BRIDGE_OFFLINE",
+                               "executor": decision.executor})
+            target = retry_escalation.decide_escalation_target(
+                "ENVIRONMENT", record["manifest"],
+                already_tried_stronger_local=(decision.tier == "TIER2_LOCAL_STRONG"))
+            return self._escalate(task_id, record, target, "LOCAL_BRIDGE_OFFLINE",
+                                  ["authorized local bridge unavailable"])
+
         start = now_iso()
         prompt = handler.build_prompt(record)
         call = ollama_worker.call_local_model(prompt, model=decision.agent["model_or_runtime"]
@@ -266,6 +286,68 @@ class Orchestrator:
             classification, record["manifest"],
             already_tried_stronger_local=(decision.tier == "TIER2_LOCAL_STRONG"))
         return self._escalate(task_id, record, target, classification, errors)
+
+    def accept_local_bridge_result(self, task_id, *, executor, response_text,
+                                   verification, bridge_id):
+        """Validate a bounded client receipt and finalize it through the usual gate."""
+        record = self.queue.get(task_id)
+        if record["state"] != "WAITING_PROVIDER":
+            raise AssertionError("local bridge result requires WAITING_PROVIDER")
+        handler = self.local_handlers.get(record.get("action"))
+        if handler is None or not hasattr(handler, "verify_bridge_submission"):
+            raise AssertionError("local bridge handler unavailable")
+        verified = handler.verify_bridge_submission(record, response_text, verification)
+        if not verified.passed:
+            raise AssertionError("local bridge verifier receipt rejected: " +
+                                 "; ".join(verified.errors))
+        parsed = verified.parsed_output
+        tests = parsed.get("test_results") or []
+        artifacts = [f"local-bridge://{bridge_id}/{task_id}"] + [
+            item["path"] for item in parsed["changes"]]
+        packet = build_result_packet(
+            task_id=task_id, executor=executor, start_time=record.get("started_at") or now_iso(),
+            end_time=now_iso(), files_read=[], files_changed=[],
+            tools_or_commands=["local_agent_bridge_v1", "ollama:" +
+                               str(verification.get("model") or "local")],
+            artifacts_created=artifacts, tests_ran=bool(tests),
+            tests_passed=sum(1 for item in tests if item.get("returncode") == 0),
+            tests_failed=sum(1 for item in tests if item.get("returncode") != 0),
+            verifier_ran=True, verifier_passed=True, verifier_errors=[], commit=None,
+            push_status="NOT_PUSHED", decision="PATCH_READY_AWAITING_APPROVAL",
+            confidence="MEDIUM", limitations=["patch verified in isolated local bridge workspace; "
+                                               "not applied to canonical repository"],
+            unresolved_issues=[], suggested_next_tasks=["review and approve the proposed patch"],
+            escalation_needed=False)
+        self.ledger.append("APPROVAL_REQUIRED", task_id,
+                           {"reason": "local bridge produced a bounded verified repository patch",
+                            "bridge_id": bridge_id})
+        self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
+                              local_bridge={"status": "COMPLETED", "bridge_id": bridge_id,
+                                            "verification": "PASSED"})
+        return self.queue.get(task_id)
+
+    def fail_local_bridge_task(self, task_id, failure_class):
+        record = self.queue.get(task_id)
+        if record["state"] != "WAITING_PROVIDER":
+            return record
+        packet = build_result_packet(
+            task_id=task_id, executor=record.get("executor") or "local_agent_bridge_v1",
+            start_time=record.get("started_at") or now_iso(), end_time=now_iso(),
+            files_read=[], files_changed=[], tools_or_commands=["local_agent_bridge_v1"],
+            artifacts_created=[], tests_ran=False, tests_passed=0, tests_failed=0,
+            verifier_ran=False, verifier_passed=False, verifier_errors=[failure_class],
+            commit=None, push_status="NOT_APPLICABLE", decision="ESCALATION_REQUIRED",
+            confidence="UNKNOWN", limitations=["local bridge exhausted its bounded retry"],
+            unresolved_issues=[failure_class], suggested_next_tasks=["manual review"],
+            escalation_needed=True, escalation_reason=failure_class,
+            escalation_target_tier="MANUAL_REVIEW")
+        self.queue.transition(task_id, "ESCALATION_REQUIRED", result_packet=packet,
+                              escalation={"target": "MANUAL_REVIEW",
+                                          "classification": failure_class},
+                              dispatch_last_error=failure_class)
+        self.ledger.append("ESCALATION_REQUIRED", task_id,
+                           {"target": "MANUAL_REVIEW", "classification": failure_class})
+        return self.queue.get(task_id)
 
     # ---- Escalation ----------------------------------------------------
     def _escalate(self, task_id, record, target, classification, errors):

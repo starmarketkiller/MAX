@@ -49,7 +49,8 @@ ALLOWED_TRANSITIONS = {
                # RUNNING->RUNNING = self-transition per bookkeeping (es. retry_count) senza
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
     "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED"},
-    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED", "ESCALATION_REQUIRED", "BLOCKED"},
+    "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED", "ESCALATION_REQUIRED",
+                         "WAITING_APPROVAL", "BLOCKED"},
     "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED", "WAITING_APPROVAL",
                           "COMPLETED", "CANCELLED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
                           # dell'escalation (TIER3_CLAUDE/TIER4_CODEX) e' arrivata e verificata

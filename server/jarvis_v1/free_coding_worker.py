@@ -205,3 +205,34 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
         paths = [item["path"] for item in parsed["changes"]]
         return ApplyResult(files_changed=[], artifacts_created=[parsed["workspace"], *paths],
                            touches_real_repo_files=True, proposal_only=True)
+
+    def verify_bridge_submission(self, task_record, response_text, verification) -> VerifyResult:
+        """Validate a client-side bounded verification receipt without executing commands.
+
+        The local client already ran this same handler in an isolated workspace.
+        The backend revalidates the patch bounds and the shape of every test receipt;
+        it never accepts a command string or an unverified/failed result.
+        """
+        try:
+            parsed = _json_object(response_text)
+            changes = self._validate_changes(task_record, parsed)
+            if not isinstance(verification, dict) or verification.get("passed") is not True:
+                raise ValueError("client verifier did not pass")
+            tests = verification.get("test_results")
+            if not isinstance(tests, list):
+                raise ValueError("test receipt missing")
+            for item in tests:
+                if not isinstance(item, dict) or not isinstance(item.get("argv"), list):
+                    raise ValueError("invalid test receipt")
+                if item.get("returncode") != 0:
+                    raise ValueError("client test failed")
+                argv = item["argv"]
+                if not argv or argv[0] != "PYTHON":
+                    raise PermissionError("non-allowlisted test receipt")
+                if any(part in {"git", "push", "deploy", ";", "&&", "|"} for part in argv):
+                    raise PermissionError("forbidden operation in test receipt")
+            return VerifyResult(True, parsed_output={"summary": parsed["summary"],
+                                "changes": changes, "test_results": tests})
+        except (ValueError, PermissionError, json.JSONDecodeError) as exc:
+            return VerifyResult(False, errors=[f"{type(exc).__name__}: {exc}"],
+                                is_logic_error=True)

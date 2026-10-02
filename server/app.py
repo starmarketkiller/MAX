@@ -65,6 +65,7 @@ from orchestrator_v1.core.provider_connector import ProviderConnectorV1
 from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV1
 from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
+from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1407,6 +1408,14 @@ JARVIS_PROVIDER_BENCHMARKS = FreeProviderBenchmarkEngineV1(
     JARVIS_PROVIDER_POLICY, history_path=_JARVIS_STATE_DIR / "provider_benchmark_history_v1.json",
     adapters={"GROQ": JARVIS_GROQ_EVALUATION})
 JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator)
+JARVIS_LOCAL_AGENT_BRIDGE = LocalAgentBridgeV1(
+    JARVIS_SERVICE.orchestrator,
+    state_path=_JARVIS_STATE_DIR / "local_agent_bridge_v1.json",
+    secret=os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_SECRET", ""),
+    heartbeat_ttl=int(os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_HEARTBEAT_TTL", "45")),
+    lease_seconds=int(os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_LEASE_SECONDS", "300")))
+if JARVIS_LOCAL_AGENT_BRIDGE.configured:
+    JARVIS_SERVICE.orchestrator.set_local_bridge(JARVIS_LOCAL_AGENT_BRIDGE)
 JARVIS_DISPATCHER = DurableQueueDispatcher(
     JARVIS_SERVICE.orchestrator,
     poll_seconds=float(os.environ.get("NEXUS_QUEUE_DISPATCHER_POLL_SECONDS", "2")),
@@ -1845,6 +1854,118 @@ def jarvis_dispatcher_status(user: str = Depends(require_user)):
     return {"enabled": QUEUE_DISPATCHER_ENABLED, "running": JARVIS_DISPATCHER.running,
             "max_concurrency": 1, "queued_count": queued, "running_count": running,
             "blocked_count": blocked, "owner_id": JARVIS_DISPATCHER.owner_id}
+
+
+async def _authenticated_local_bridge_body(request: Request, bridge_id: str | None,
+                                            timestamp: str | None, nonce: str | None,
+                                            signature: str | None):
+    raw = await request.body()
+    if len(raw) > MAX_JSON_BODY_BYTES:
+        raise HTTPException(status_code=413, detail="request body too large")
+    try:
+        JARVIS_LOCAL_AGENT_BRIDGE.verify_request(
+            bridge_id=bridge_id, method=request.method, path=request.url.path,
+            timestamp=timestamp, nonce=nonce, body=raw, signature=signature)
+    except PermissionError as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=429, detail=str(exc))
+    try:
+        body = json.loads(raw or b"{}")
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=422, detail="invalid JSON")
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=422, detail="JSON object required")
+    return body
+
+
+def _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                    x_nexus_bridge_nonce, x_nexus_bridge_signature):
+    return (x_nexus_bridge_id, x_nexus_bridge_timestamp,
+            x_nexus_bridge_nonce, x_nexus_bridge_signature)
+
+
+@app.get("/api/jarvis/local-bridge/status")
+def jarvis_local_bridge_status(user: str = Depends(require_user)):
+    return JARVIS_LOCAL_AGENT_BRIDGE.status()
+
+
+@app.post("/api/jarvis/local-bridge/heartbeat")
+async def jarvis_local_bridge_heartbeat(
+        request: Request, x_nexus_bridge_id: Optional[str] = Header(None),
+        x_nexus_bridge_timestamp: Optional[str] = Header(None),
+        x_nexus_bridge_nonce: Optional[str] = Header(None),
+        x_nexus_bridge_signature: Optional[str] = Header(None)):
+    headers = _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                              x_nexus_bridge_nonce, x_nexus_bridge_signature)
+    body = await _authenticated_local_bridge_body(request, *headers)
+    return JARVIS_LOCAL_AGENT_BRIDGE.heartbeat(
+        x_nexus_bridge_id, body.get("capabilities") or [], body.get("status") or "ONLINE")
+
+
+@app.post("/api/jarvis/local-bridge/claim")
+async def jarvis_local_bridge_claim(
+        request: Request, x_nexus_bridge_id: Optional[str] = Header(None),
+        x_nexus_bridge_timestamp: Optional[str] = Header(None),
+        x_nexus_bridge_nonce: Optional[str] = Header(None),
+        x_nexus_bridge_signature: Optional[str] = Header(None)):
+    headers = _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                              x_nexus_bridge_nonce, x_nexus_bridge_signature)
+    body = await _authenticated_local_bridge_body(request, *headers)
+    return {"job": JARVIS_LOCAL_AGENT_BRIDGE.claim(
+        x_nexus_bridge_id, body.get("capabilities") or [])}
+
+
+@app.post("/api/jarvis/local-bridge/renew")
+async def jarvis_local_bridge_renew(
+        request: Request, x_nexus_bridge_id: Optional[str] = Header(None),
+        x_nexus_bridge_timestamp: Optional[str] = Header(None),
+        x_nexus_bridge_nonce: Optional[str] = Header(None),
+        x_nexus_bridge_signature: Optional[str] = Header(None)):
+    headers = _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                              x_nexus_bridge_nonce, x_nexus_bridge_signature)
+    body = await _authenticated_local_bridge_body(request, *headers)
+    try:
+        return JARVIS_LOCAL_AGENT_BRIDGE.renew(body.get("task_id"), x_nexus_bridge_id,
+                                               body.get("lease_token"))
+    except (KeyError, PermissionError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+
+
+@app.post("/api/jarvis/local-bridge/result")
+async def jarvis_local_bridge_result(
+        request: Request, x_nexus_bridge_id: Optional[str] = Header(None),
+        x_nexus_bridge_timestamp: Optional[str] = Header(None),
+        x_nexus_bridge_nonce: Optional[str] = Header(None),
+        x_nexus_bridge_signature: Optional[str] = Header(None)):
+    headers = _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                              x_nexus_bridge_nonce, x_nexus_bridge_signature)
+    body = await _authenticated_local_bridge_body(request, *headers)
+    try:
+        record = JARVIS_LOCAL_AGENT_BRIDGE.submit_result(
+            body.get("task_id"), x_nexus_bridge_id, body.get("lease_token"),
+            body.get("result_id"), body.get("response_text"), body.get("verification"))
+        return {"task_id": record["task_id"], "state": record["state"],
+                "result_packet": record.get("result_packet")}
+    except (KeyError, PermissionError, AssertionError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)[:300])
+
+
+@app.post("/api/jarvis/local-bridge/failure")
+async def jarvis_local_bridge_failure(
+        request: Request, x_nexus_bridge_id: Optional[str] = Header(None),
+        x_nexus_bridge_timestamp: Optional[str] = Header(None),
+        x_nexus_bridge_nonce: Optional[str] = Header(None),
+        x_nexus_bridge_signature: Optional[str] = Header(None)):
+    headers = _bridge_headers(x_nexus_bridge_id, x_nexus_bridge_timestamp,
+                              x_nexus_bridge_nonce, x_nexus_bridge_signature)
+    body = await _authenticated_local_bridge_body(request, *headers)
+    try:
+        return JARVIS_LOCAL_AGENT_BRIDGE.report_failure(
+            body.get("task_id"), x_nexus_bridge_id, body.get("lease_token"),
+            body.get("failure_class"))
+    except (KeyError, PermissionError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
 
 @app.get("/api/jarvis/approvals")

@@ -13,6 +13,7 @@ REQUIRED_RUNTIME_MODULES = (
     "orchestrator_v1.core.provider_policy",
     "orchestrator_v1.core.provider_benchmark",
     "orchestrator_v1.core.groq_evaluation",
+    "orchestrator_v1.core.local_agent_bridge",
     "orchestrator_v1.core.ollama_worker",
 )
 
