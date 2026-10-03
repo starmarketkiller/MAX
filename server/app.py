@@ -61,7 +61,8 @@ import research_control_plane
 from jarvis_v1.gateway import JarvisGateway
 from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
-from orchestrator_v1.core.provider_connector import ProviderConnectorV1
+from orchestrator_v1.core.provider_connector import (ProviderAdapterV1, ProviderConnectorV1,
+                                                      ProviderResult)
 from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV1
 from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
@@ -4423,6 +4424,74 @@ def _anthropic_chat(system: str, messages: list, max_tokens: int = 1024):
         return None, "provider_timeout"
     ANTHROPIC_BREAKER.record(err is None)
     return text, err
+
+
+class ClaudeProviderAdapter(ProviderAdapterV1):
+    """Real Claude reviewer for the NEXUS Dynamic Specialist Review.
+
+    Reuses _anthropic_chat() as-is - the same production-grade client, circuit
+    breaker (ANTHROPIC_BREAKER) and secret-free error logging already serving
+    the AI Coach feature - instead of a second, parallel HTTP client. Never
+    writes or executes a patch: invoke() only ever returns the bounded review
+    shape (problems_found/rework_instructions/allowed_paths/required_tests/
+    risks); core/specialist_review.py:validate_rework_response() is the sole
+    gate deciding whether that shape is acceptable, and
+    ProviderConnectorV1._apply_rework() is the only place a rework ever
+    reaches the local worker - this class has no path to either.
+    """
+    provider_id = "CLAUDE"
+
+    def state(self):
+        if not ANTHROPIC_API_KEY:
+            return "OFFLINE"
+        if ANTHROPIC_BREAKER.is_open():
+            # Same breaker, same threshold/cooldown already protecting the AI
+            # Coach - a reviewer failing repeatedly is exactly what it exists
+            # to catch. RATE_LIMITED rather than EXHAUSTED: Anthropic's
+            # response headers aren't parsed for real quota today, so this
+            # reflects "recently failing", not an observed quota depletion.
+            return "RATE_LIMITED"
+        return "AVAILABLE"
+
+    @staticmethod
+    def _extract_json(text):
+        value = (text or "").strip()
+        if value.startswith("```"):
+            value = re.sub(r"^```(?:json)?\s*", "", value, flags=re.I)
+            value = re.sub(r"\s*```$", "", value)
+        return json.loads(value)
+
+    def invoke(self, context_packet, *, idempotency_key, timeout_seconds):
+        system = (
+            "Sei un senior code reviewer per NEXUS. Non scrivi mai codice, non esegui mai "
+            "comandi, non fai mai push o deploy: il tuo unico output e' un pacchetto di "
+            "istruzioni correttive per un worker locale che ritentera' la patch. Rispondi SOLO "
+            "con un oggetto JSON con esattamente queste chiavi: problems_found (array di "
+            "stringhe), rework_instructions (stringa), allowed_paths (array di stringhe), "
+            "required_tests (array di stringhe), risks (array di stringhe). Nessun altro testo, "
+            "nessun markdown fuori dal JSON.")
+        messages = [{"role": "user", "content": json.dumps(context_packet, ensure_ascii=False)}]
+        text, err = _anthropic_chat(system, messages, max_tokens=1536)
+        if err == "provider_not_configured":
+            return ProviderResult(status="OFFLINE", error_class=err)
+        if err == "provider_circuit_open":
+            return ProviderResult(status="RATE_LIMITED", error_class=err)
+        if err:
+            return ProviderResult(status="UNKNOWN", error_class=err)
+        try:
+            parsed = self._extract_json(text)
+        except (json.JSONDecodeError, ValueError):
+            # Transport succeeded; the model just didn't follow the shape.
+            # Returned as SUCCESS with a non-conforming output on purpose -
+            # validate_rework_response() is the single place that rejects
+            # this (VERIFICATION_FAILED, bounded retry), not a second
+            # ad-hoc parsing-error path here.
+            parsed = {"unparsed_response": text or ""}
+        return ProviderResult(status="SUCCESS", output=parsed,
+                             provider_request_id=f"anthropic:{idempotency_key[:16]}")
+
+
+JARVIS_PROVIDER_CONNECTOR.adapters["CLAUDE"] = ClaudeProviderAdapter()
 
 
 # ======================= EA STATUS / HEALTH (JWT) ======================= #
