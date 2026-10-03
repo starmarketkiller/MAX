@@ -155,3 +155,28 @@ def test_command_allowlist_rejects_shell_and_out_of_scope_patch(tmp_path):
     record["action_params"]["test_commands"] = [
         ["PYTHON", "-m", "pytest", "server/app.py", "--override-ini=anything"]]
     assert handler.verify(record, response).passed is False
+
+
+def test_changed_test_file_is_run_for_real_not_only_py_compiled(tmp_path):
+    # NEXUS gap CODE_VERIFIER_UPGRADE (opened after TASK_6FEA7BDE04D2): with no
+    # explicit test_commands, a changed file that is itself an allowlisted
+    # test target must be executed with pytest, not just py_compile - a wrong
+    # function arity or a bad import is not a syntax error, so py_compile
+    # alone would have let this exact patch through as "verified".
+    project = tmp_path / "project"
+    (project / "server" / "tests").mkdir(parents=True)
+    (project / "server" / "tests" / "test_sample.py").write_text(
+        "def test_ok():\n    assert True\n", encoding="utf-8")
+    handler = FreeCodingWorkerHandler(project_root=project, workspace_root=tmp_path / "workspaces")
+    record = {"task_id": "TASK_VERIFIER_UPGRADE",
+             "manifest": manifest(files_allowed=["server/tests/test_sample.py"]),
+             "action_params": {}}
+    broken = json.dumps({"summary": "broken - wrong arity, not a syntax error", "changes": [
+        {"path": "server/tests/test_sample.py",
+         "content": "def add(a, b):\n    return a + b\n\n\ndef test_ok():\n    assert add(1) == 1\n"}]})
+    result = handler.verify(record, broken)
+    assert result.passed is False  # pytest actually runs it and fails
+    fixed = json.dumps({"summary": "fixed", "changes": [
+        {"path": "server/tests/test_sample.py",
+         "content": "def add(a, b):\n    return a + b\n\n\ndef test_ok():\n    assert add(1, 2) == 3\n"}]})
+    assert handler.verify(record, fixed).passed is True

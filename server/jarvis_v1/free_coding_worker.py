@@ -129,6 +129,17 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
         configured = (task_record.get("action_params") or {}).get("test_commands") or []
         if not configured:
             python_files = [path for path in changed_paths if path.endswith(".py")]
+            # A changed file that is itself an allowlisted test target IS the
+            # verifier - run it for real with pytest, not just py_compile.
+            # py_compile only proves the file parses; it would pass a test
+            # with a wrong import or a call with the wrong number of
+            # arguments, since neither is a syntax error (reproduced live:
+            # NEXUS TASK_6FEA7BDE04D2, rejected by human review for exactly
+            # this - py_compile alone is not sufficient).
+            test_files = [path for path in python_files
+                         if _matches(path, ["server/tests/**", "scripts/tests/**"])]
+            if test_files:
+                return [["PYTHON", "-m", "pytest", *test_files, "-q"]]
             return [["PYTHON", "-m", "py_compile", *python_files]] if python_files else []
         if not isinstance(configured, list) or len(configured) > MAX_TEST_COMMANDS:
             raise ValueError("test command count outside policy")
