@@ -136,7 +136,8 @@ def test_verifier_uses_hardened_cookie_session_for_dispatcher():
     check, error=verifier.verify_dispatcher("https://nexus.example", "user", "password",
                                             lambda: session)
     assert error is None
-    assert check == {"http":200,"status":"RUNNING","running":True,"auth_mode":"COOKIE"}
+    assert check == {"http":200,"status":"RUNNING","running":True,"auth_mode":"COOKIE",
+                    "attempts":1,"reauth_used":False}
     assert session.calls[1]["headers"] is None
 
 def test_http_session_preserves_httponly_cookie_end_to_end():
@@ -174,7 +175,8 @@ def test_verifier_rejects_wrong_credentials_without_exposing_them():
     check, error=verifier.verify_dispatcher("https://nexus.example", "user", "secret-password",
                                             lambda: FakeSession(login_error=rejected))
     assert error == "LOGIN_REJECTED"
-    assert check == {"status":"UNVERIFIED","reason":"LOGIN_REJECTED","http":401}
+    assert check == {"status":"UNVERIFIED","reason":"LOGIN_REJECTED","http":401,
+                    "attempts":0,"reauth_used":False}
     assert "secret-password" not in json.dumps(check)
 
 def test_verifier_fails_when_credentials_are_missing():
@@ -188,12 +190,20 @@ def test_verifier_fails_when_login_has_no_cookie_or_legacy_token():
     assert error == "LOGIN_SESSION_MISSING"
     assert check["reason"] == "LOGIN_SESSION_MISSING"
 
-def test_verifier_dispatcher_not_running_fails_success_gate():
+def test_verifier_dispatcher_not_running_fails_after_retry_budget():
+    # POST_DEPLOY_VERIFICATION_RETRY_BACKOFF: running=False gets a short,
+    # BOUNDED retry window (a few seconds of restart settling), never an
+    # indefinite one and never treated as success - a dispatcher still
+    # reporting running=False once that budget is exhausted is a real FAIL,
+    # not a transient blip. (Previously this returned error=None - that was
+    # the actual bug being fixed: a genuinely stopped dispatcher could pass.)
     check, error=verifier.verify_dispatcher(
         "https://nexus.example", "user", "password",
-        lambda: FakeSession(dispatcher={"status":"STOPPED","running":False}))
-    assert error is None
+        lambda: FakeSession(dispatcher={"status":"STOPPED","running":False}),
+        sleep=lambda seconds: None)
+    assert error == "DISPATCHER_NOT_RUNNING"
     assert check["running"] is False
+    assert check["attempts"] == 3
 
 def test_verifier_preserves_legacy_bearer_compatibility():
     session=FakeSession(login={"ok":True,"token":"legacy-token"}, cookies=0)
@@ -202,3 +212,135 @@ def test_verifier_preserves_legacy_bearer_compatibility():
     assert error is None
     assert check["auth_mode"] == "BEARER"
     assert session.calls[1]["headers"] == {"Authorization":"Bearer legacy-token"}
+
+
+# --------------------------------------------------------------------------- #
+# POST_DEPLOY_VERIFICATION_RETRY_BACKOFF
+# --------------------------------------------------------------------------- #
+class SequencedSession:
+    """Login always succeeds (unless login_responses given); the dispatcher
+    endpoint returns one entry per call from `dispatcher_responses`, in
+    order - an entry is either (status, body) or a raisable exception
+    instance."""
+    def __init__(self, dispatcher_responses, *, login_responses=None, cookies=1):
+        self.dispatcher_responses = list(dispatcher_responses)
+        self.login_responses = list(login_responses) if login_responses else None
+        self.cookie_count = cookies
+        self.login_calls = 0
+        self.dispatcher_calls = 0
+
+    def request_json(self, url, *, method="GET", payload=None, headers=None):
+        if url.endswith("/api/auth/login"):
+            self.login_calls += 1
+            if self.login_responses:
+                item = self.login_responses.pop(0)
+                if isinstance(item, BaseException): raise item
+                return item
+            return 200, {"ok": True}
+        self.dispatcher_calls += 1
+        item = self.dispatcher_responses.pop(0)
+        if isinstance(item, BaseException): raise item
+        return item
+
+def http_error(code):
+    return urllib.error.HTTPError(
+        "https://nexus.example/api/jarvis/dispatcher/status", code, "err", {}, None)
+
+def test_transient_502_on_dispatcher_is_retried_to_success():
+    session = SequencedSession([http_error(502), (200, {"status":"RUNNING","running":True})])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error is None and check["running"] is True and check["attempts"] == 2
+
+def test_connection_reset_on_dispatcher_is_retried_to_success():
+    session = SequencedSession([ConnectionResetError("reset"),
+                                (200, {"status":"RUNNING","running":True})])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error is None and check["running"] is True
+
+def test_ready_false_is_retried_to_success(monkeypatch):
+    responses = [(200, {"ok": False}), (200, {"ok": True})]
+    monkeypatch.setattr(verifier, "get_json", lambda url: responses.pop(0))
+    check, ok = verifier.check_ready("https://nexus.example", sleep=lambda s: None)
+    assert ok is True and check["attempts"] == 2
+
+def test_dispatcher_running_false_transient_is_retried_to_success():
+    session = SequencedSession([(200, {"status":"BOOTING","running":False}),
+                                (200, {"status":"RUNNING","running":True})])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error is None and check["running"] is True and check["attempts"] == 2
+
+def test_dispatcher_running_false_persistent_fails_after_budget():
+    session = SequencedSession([(200, {"status":"STOPPED","running":False})] * 3)
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None,
+                                              max_attempts=3)
+    assert error == "DISPATCHER_NOT_RUNNING" and check["attempts"] == 3
+
+def test_401_triggers_one_fresh_login_then_succeeds():
+    session = SequencedSession([http_error(401), (200, {"status":"RUNNING","running":True})])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error is None and check["running"] is True
+    assert check["reauth_used"] is True
+    assert session.login_calls == 2  # initial login + the one fresh re-login
+
+def test_401_persists_after_fresh_login_fails_immediately():
+    session = SequencedSession([http_error(401), http_error(401)])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error == "DISPATCHER_ENDPOINT_REJECTED"
+    assert check["http"] == 401 and check["reauth_used"] is True
+    # Never retried a third time waiting for infra to recover from a
+    # persistent auth rejection - that is not what retries are for.
+    assert session.dispatcher_calls == 2
+
+def test_403_persists_fails_immediately_same_as_401():
+    session = SequencedSession([http_error(403), http_error(403)])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None)
+    assert error == "DISPATCHER_ENDPOINT_REJECTED" and check["http"] == 403
+
+def test_retry_exhaustion_on_persistent_5xx_fails_closed():
+    session = SequencedSession([http_error(503), http_error(503), http_error(503)])
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None,
+                                              max_attempts=3)
+    assert error == "DISPATCHER_ENDPOINT_REJECTED"
+    assert check["attempts"] == 3 and check["http"] == 503
+
+def test_no_check_can_turn_green_just_because_retries_ran_out():
+    # The exhaustion path must report the LAST real observation, never a
+    # fabricated success - this is the "no false green" requirement.
+    session = SequencedSession([(200, {"status":"BOOTING","running":False})] * 5)
+    check, error = verifier.verify_dispatcher("https://nexus.example", "user", "password",
+                                              lambda: session, sleep=lambda s: None,
+                                              max_attempts=5)
+    assert error == "DISPATCHER_NOT_RUNNING"
+    assert check["running"] is False
+
+def test_backoff_delays_follow_the_configured_schedule():
+    delays = []
+    session = SequencedSession([http_error(502), http_error(502),
+                                (200, {"status":"RUNNING","running":True})])
+    verifier.verify_dispatcher("https://nexus.example", "user", "password", lambda: session,
+                               sleep=delays.append, backoff_seconds=(3, 6, 12))
+    assert delays == [3, 6]
+
+def test_check_ready_retries_5xx_then_succeeds(monkeypatch):
+    responses = [http_error(502), (200, {"ok": True})]
+    def fake_get_json(url):
+        item = responses.pop(0)
+        if isinstance(item, BaseException): raise item
+        return item
+    monkeypatch.setattr(verifier, "get_json", fake_get_json)
+    check, ok = verifier.check_ready("https://nexus.example", sleep=lambda s: None)
+    assert ok is True
+
+def test_check_ready_exhausts_and_fails_closed_never_a_false_green(monkeypatch):
+    responses = [(200, {"ok": False})] * 3
+    monkeypatch.setattr(verifier, "get_json", lambda url: responses.pop(0))
+    check, ok = verifier.check_ready("https://nexus.example", sleep=lambda s: None, max_attempts=3)
+    assert ok is False and check["attempts"] == 3
