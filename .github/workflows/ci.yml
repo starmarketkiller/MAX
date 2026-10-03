@@ -98,6 +98,9 @@ jobs:
       - name: Test classificazione segreti di esempio
         run: python -m pytest scripts/tests/test_check_no_active_example_secrets.py -q
 
+      - name: Test Safe Deploy e Safe High-Risk Auto Approval
+        run: python -m pytest scripts/tests/test_safe_deploy_v1.py scripts/tests/test_auto_approval_v1.py -q
+
   docker-smoke:
     name: Build immagine e smoke test di avvio
     runs-on: ubuntu-latest

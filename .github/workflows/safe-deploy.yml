@@ -45,6 +45,35 @@ jobs:
           echo "## WAITING_APPROVAL" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit ${{ github.event.workflow_run.head_sha }} is HIGH_RISK and requires approval in the nexus-production-high-risk environment." >> "$GITHUB_STEP_SUMMARY"
 
+  # SAFE_HIGH_RISK_AUTO_APPROVAL_V1: decides, for a commit classify already
+  # marked HIGH_RISK, whether it ALSO qualifies for the narrower
+  # deploy_high_risk_auto path below. Never runs for LOW/MEDIUM_RISK commits
+  # (nothing changes for those) and never widens what classify considers
+  # HIGH_RISK in the first place - it only narrows the HIGH_RISK set further.
+  evaluate_auto_approval:
+    needs: classify
+    if: needs.classify.outputs.risk == 'HIGH_RISK'
+    runs-on: ubuntu-latest
+    outputs:
+      auto_approve: ${{ steps.evaluate.outputs.auto_approve }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+      - id: evaluate
+        name: Evaluate pre-authorized auto-approval eligibility
+        run: |
+          before=$(git rev-parse HEAD^)
+          python scripts/evaluate_auto_approval.py --before "$before" \
+            --after "${{ github.event.workflow_run.head_sha }}" \
+            --production-url "${{ vars.NEXUS_PUBLIC_URL }}" \
+            --output auto-approval.json --github-output "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: auto-approval-${{ github.event.workflow_run.head_sha }}
+          path: auto-approval.json
+
   deploy:
     needs: classify
     if: needs.classify.outputs.auto_allowed == 'true'
@@ -100,8 +129,10 @@ jobs:
           if-no-files-found: warn
 
   deploy_high_risk:
-    needs: classify
-    if: needs.classify.outputs.risk == 'HIGH_RISK'
+    needs: [classify, evaluate_auto_approval]
+    if: >-
+      needs.classify.outputs.risk == 'HIGH_RISK' &&
+      needs.evaluate_auto_approval.outputs.auto_approve != 'true'
     runs-on: ubuntu-latest
     environment: nexus-production-high-risk
     steps:
@@ -143,6 +174,73 @@ jobs:
         if: failure()
         run: |
           echo "::error::Approved high-risk deploy was not verified. Do not declare success."
+          echo "Inspect Render logs and use the last healthy SHA for an explicit rollback." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy-ledger-${{ needs.classify.outputs.sha }}
+          path: |
+            deploy-trigger.json
+            deploy-ledger.json
+          if-no-files-found: warn
+
+  # SAFE_HIGH_RISK_AUTO_APPROVAL_V1's own deploy path - reachable only when
+  # evaluate_auto_approval found every hard veto clear, every changed file
+  # inside an explicitly curated allowlist category, the diff within the
+  # size bound, and a verified-healthy rollback target. The
+  # nexus-production-high-risk-auto environment carries a short wait_timer
+  # as a cancellable grace period, never the actual security boundary - that
+  # is entirely the veto/allowlist/rollback evaluation above. Every step
+  # below mirrors deploy_high_risk's, deliberately not shared via a reusable
+  # action, so editing one can never silently change the other.
+  deploy_high_risk_auto:
+    needs: [classify, evaluate_auto_approval]
+    if: >-
+      needs.classify.outputs.risk == 'HIGH_RISK' &&
+      needs.evaluate_auto_approval.outputs.auto_approve == 'true'
+    runs-on: ubuntu-latest
+    environment: nexus-production-high-risk-auto
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.classify.outputs.sha }}
+      - name: Require deployment configuration
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          NEXUS_PUBLIC_URL: ${{ vars.NEXUS_PUBLIC_URL }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL" || { echo "::error::RENDER_DEPLOY_HOOK_URL missing"; exit 1; }
+          test -n "$NEXUS_PUBLIC_URL" || { echo "::error::NEXUS_PUBLIC_URL missing"; exit 1; }
+      - name: Trigger exact verified commit after pre-authorized auto-approval
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          DEPLOY_COMMIT_SHA: ${{ needs.classify.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python scripts/trigger_render_deploy.py > deploy-trigger.json
+          cat deploy-trigger.json
+      - id: deploy_id
+        run: echo "id=$(python -c 'import json;print(json.load(open("deploy-trigger.json")).get("deploy_id") or "unknown")')" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed SHA, readiness, and dispatcher
+        env:
+          NEXUS_DEPLOY_VERIFY_USER: ${{ secrets.NEXUS_DEPLOY_VERIFY_USER }}
+          NEXUS_DEPLOY_VERIFY_PASSWORD: ${{ secrets.NEXUS_DEPLOY_VERIFY_PASSWORD }}
+        run: |
+          python scripts/verify_render_deploy.py \
+            --base-url "${{ vars.NEXUS_PUBLIC_URL }}" \
+            --sha "${{ needs.classify.outputs.sha }}" \
+            --deploy-id "${{ steps.deploy_id.outputs.id }}" \
+            --risk "${{ needs.classify.outputs.risk }}" \
+            --output deploy-ledger.json
+      - name: Verified notification summary
+        if: success()
+        run: |
+          echo "## AUTO_APPROVED_HIGH_RISK_DEPLOY" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit ${{ needs.classify.outputs.sha }} was HIGH_RISK, pre-authorized by SAFE_HIGH_RISK_AUTO_APPROVAL_V1 (see the auto-approval-${{ needs.classify.outputs.sha }} artifact for the exact rule/checks), completed, and verified." >> "$GITHUB_STEP_SUMMARY"
+      - name: Failure diagnostic and recovery notice
+        if: failure()
+        run: |
+          echo "::error::Auto-approved high-risk deploy was not verified. Do not declare success."
           echo "Inspect Render logs and use the last healthy SHA for an explicit rollback." >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()

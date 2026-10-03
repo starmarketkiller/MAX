@@ -94,25 +94,34 @@ def test_workflow_requires_ci_success_and_exact_postdeploy_gates():
         assert required in text
 
 def test_workflow_keeps_low_medium_automatic_and_high_risk_environment_gated():
+    # SAFE_HIGH_RISK_AUTO_APPROVAL_V1 added a third path (deploy_high_risk_auto)
+    # - this test still only cares that the ORIGINAL human-gated path is
+    # unchanged: still requires risk == 'HIGH_RISK', still environment-gated,
+    # still has no auto_allowed anywhere in it. deploy_high_risk_auto has its
+    # own dedicated coverage in test_auto_approval_v1.py.
     text=(ROOT/".github/workflows/safe-deploy.yml").read_text(encoding="utf-8")
     automatic=text.split("  deploy:\n", 1)[1].split("  deploy_high_risk:\n", 1)[0]
-    protected=text.split("  deploy_high_risk:\n", 1)[1]
+    protected=text.split("  deploy_high_risk:\n", 1)[1].split("  deploy_high_risk_auto:\n", 1)[0]
 
     assert "if: needs.classify.outputs.auto_allowed == 'true'" in automatic
     assert "environment: nexus-production-low-medium-risk" in automatic
-    assert "if: needs.classify.outputs.risk == 'HIGH_RISK'" in protected
-    assert "environment: nexus-production-high-risk" in protected
+    assert "needs.classify.outputs.risk == 'HIGH_RISK'" in protected
+    assert "environment: nexus-production-high-risk\n" in protected
     assert "auto_allowed" not in protected
 
 def test_both_deploy_paths_preserve_exact_sha_verification_and_ledger():
+    # Now three paths (deploy, deploy_high_risk, deploy_high_risk_auto) -
+    # the invariant this test checks (every path triggers/verifies/ledgers
+    # the exact same way) now holds three times, not two.
     text=(ROOT/".github/workflows/safe-deploy.yml").read_text(encoding="utf-8")
     automatic=text.split("  deploy:\n", 1)[1].split("  deploy_high_risk:\n", 1)[0]
-    protected=text.split("  deploy_high_risk:\n", 1)[1]
-    assert text.count("python scripts/trigger_render_deploy.py > deploy-trigger.json") == 2
-    assert text.count("python scripts/verify_render_deploy.py") == 2
-    assert text.count('--sha "${{ needs.classify.outputs.sha }}"') == 2
-    assert text.count("deploy-ledger-${{ needs.classify.outputs.sha }}") == 2
-    for job in (automatic, protected):
+    protected=text.split("  deploy_high_risk:\n", 1)[1].split("  deploy_high_risk_auto:\n", 1)[0]
+    auto=text.split("  deploy_high_risk_auto:\n", 1)[1]
+    assert text.count("python scripts/trigger_render_deploy.py > deploy-trigger.json") == 3
+    assert text.count("python scripts/verify_render_deploy.py") == 3
+    assert text.count('--sha "${{ needs.classify.outputs.sha }}"') == 3
+    assert text.count("deploy-ledger-${{ needs.classify.outputs.sha }}") == 3
+    for job in (automatic, protected, auto):
         assert "NEXUS_DEPLOY_VERIFY_USER" in job
         assert "NEXUS_DEPLOY_VERIFY_PASSWORD" in job
 

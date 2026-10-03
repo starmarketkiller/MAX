@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "_comment": "SAFE_HIGH_RISK_AUTO_APPROVAL_V1. Every category here is still subject to every hard veto and the self-modification rule in evaluate_auto_approval.py - this file only narrows WHICH files are even eligible to be considered, it can never override a veto. Curate deliberately: add a category only after a human has reviewed that class of change at least once manually.",
+  "categories": [
+    {
+      "id": "provider_adapter_wiring_v1",
+      "description": "A new ProviderAdapterV1 subclass in server/app.py that reuses an already-configured, already-tested outbound client (e.g. the existing Anthropic/Coach client) - no new top-level secret/credential introduced, no new workflow or permission change. Still blocked by HARD_VETO_CONTENT if the diff introduces a new *_API_KEY/_SECRET/_TOKEN assignment.",
+      "path_patterns": ["server/app.py"]
+    }
+  ]
+}
