@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler
 from core.orchestrator import Orchestrator
 from core.provider_connector import MockProviderAdapter, OfflineProviderAdapter, ProviderConnectorV1
+import core.specialist_review as specialist_review
 from core.specialist_review import select_reviewer_candidates, validate_rework_response
 
 
@@ -217,6 +218,75 @@ def test_malformed_reviewer_response_does_not_falsely_complete(tmp_path, monkeyp
     # Never silently treated as COMPLETED/approved - and never loses the
     # original patch while retrying.
     assert record["proposed_patch"]["changes"][0]["path"] == "src/sample.py"
+
+
+def test_candidate_refresh_reaches_an_already_parked_task(tmp_path, monkeypatch):
+    # CANDIDATE_REFRESH_WITH_PROVENANCE_V1: exactly the user's own scenario -
+    # a task is rejected and parked when the reviewer policy only knew about
+    # CODEX/CLAUDE; the policy is then widened (GROQ added, e.g. by a later
+    # deploy) WITHOUT creating a new task - the parked task must pick this up
+    # on its own, on the next resume, never requiring a brand new task_id.
+    orch, project, task_id, calls = setup_rejected_task(tmp_path, monkeypatch)
+    codex = MockProviderAdapter("CODEX", "EXHAUSTED")
+    claude = MockProviderAdapter("CLAUDE", "OFFLINE")
+    connector = ProviderConnectorV1(orch, {"CODEX": codex, "CLAUDE": claude})
+
+    # 1. Rejected under the OLD policy (simulated: GROQ not yet a candidate).
+    monkeypatch.setitem(specialist_review.REVIEWER_CANDIDATES_FOR_WORK_TYPE,
+                        "complex_code", ["CODEX", "CLAUDE"])
+    record = connector.request_review(task_id, "human rejected")
+    assert record["state"] == "WAITING_REVIEW_PROVIDER"
+    assert record["escalation"]["candidates"] == ["CODEX", "CLAUDE"]
+    assert record["escalation"]["initial_candidates"] == ["CODEX", "CLAUDE"]
+
+    # 2. Policy updated (GROQ promoted - exactly GROQ_REVIEW_PROVIDER_PROMOTION).
+    groq = MockProviderAdapter("GROQ", "AVAILABLE", result={
+        "problems_found": ["x"], "rework_instructions": "fix x via groq",
+        "allowed_paths": ["src/sample.py"], "required_tests": [], "risks": []})
+    connector.adapters["GROQ"] = groq
+    monkeypatch.setitem(specialist_review.REVIEWER_CANDIDATES_FOR_WORK_TYPE,
+                        "complex_code", ["GROQ", "CODEX", "CLAUDE"])
+
+    # 3. Resume (the same polling cycle run_once() always does) - no human
+    # action, no new task.
+    advanced = connector.run_once()
+    assert advanced is True
+    record = orch.queue.get(task_id)
+    assert record["state"] == "QUEUED"  # GROQ's review was applied as rework
+    assert groq.calls and not codex.calls and not claude.calls
+
+    # 4. GROQ was selected, lineage/provenance intact.
+    assert record["escalation"]["target"] == "GROQ"
+    assert record["escalation"]["candidates"] == ["GROQ", "CODEX", "CLAUDE"]
+    assert record["escalation"]["initial_candidates"] == ["CODEX", "CLAUDE"]  # untouched
+
+    events = orch.ledger.read_for_task(task_id)
+    refreshed = [e for e in events if e["event_type"] == "REVIEW_CANDIDATES_REFRESHED"]
+    assert len(refreshed) == 1
+    assert refreshed[0]["payload"]["initial_candidates"] == ["CODEX", "CLAUDE"]
+    assert refreshed[0]["payload"]["previous_candidates"] == ["CODEX", "CLAUDE"]
+    assert refreshed[0]["payload"]["effective_candidates"] == ["GROQ", "CODEX", "CLAUDE"]
+    assert refreshed[0]["payload"]["added"] == ["GROQ"]
+    assert refreshed[0]["payload"]["removed"] == []
+
+
+def test_candidate_refresh_is_idempotent_and_silent_when_nothing_changed(tmp_path, monkeypatch):
+    orch, project, task_id, calls = setup_rejected_task(tmp_path, monkeypatch)
+    codex = MockProviderAdapter("CODEX", "EXHAUSTED")
+    claude = MockProviderAdapter("CLAUDE", "OFFLINE")
+    connector = ProviderConnectorV1(orch, {"CODEX": codex, "CLAUDE": claude})
+    connector.request_review(task_id, "human rejected")
+
+    # Several idle polls with an unchanged policy - never a ledger entry, the
+    # effective list is recomputed but identical every time (no drift).
+    for _ in range(5):
+        assert connector.run_once() is False
+    events = orch.ledger.read_for_task(task_id)
+    refreshed = [e for e in events if e["event_type"] == "REVIEW_CANDIDATES_REFRESHED"]
+    assert refreshed == []
+    record = orch.queue.get(task_id)
+    assert record["escalation"]["candidates"] == ["GROQ", "CODEX", "CLAUDE"]
+    assert record["escalation"]["initial_candidates"] == ["GROQ", "CODEX", "CLAUDE"]
 
 
 def test_non_coding_rejection_keeps_the_original_failed_dead_end(tmp_path):

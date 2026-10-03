@@ -286,6 +286,7 @@ class ProviderConnectorV1:
         # own.
         for record in self.queue.list_by_state("WAITING_REVIEW_PROVIDER"):
             escalation = record.get("escalation") or {}
+            escalation, _ = self._refresh_candidates(record, escalation)
             candidates = escalation.get("candidates") or []
             chosen = self._first_usable_candidate(candidates)
             if chosen:
@@ -316,6 +317,42 @@ class ProviderConnectorV1:
         return {provider_id: (self.adapters[provider_id].state() if provider_id in self.adapters
                              else "UNKNOWN") for provider_id in candidates}
 
+    def _refresh_candidates(self, record, escalation):
+        """CANDIDATE_REFRESH_WITH_PROVENANCE_V1: a task must never stay stuck
+        forever on the reviewer list that existed the moment it was rejected
+        - a later deploy/policy change (e.g. a new FREE_ONLINE reviewer) has
+        to reach already-escalated/parked tasks too, not just future ones.
+
+        `initial_candidates` is written once (in request_review) and never
+        overwritten again - the historical snapshot/lineage. `candidates` is
+        the EFFECTIVE list, recomputed here from the current policy
+        (select_reviewer_candidates - the single source of truth for
+        capability; availability/cost/policy are still enforced exactly as
+        before, by _first_usable_candidate and process_task's _policy() gate,
+        unchanged) every time a task is about to be advanced or re-checked.
+
+        Pure w.r.t. side effects when nothing changed (idempotent: calling
+        this repeatedly with an unchanged policy returns the same effective
+        list and appends nothing to the Ledger) - only an actual add/remove
+        is recorded, so a quiet WAITING_REVIEW_PROVIDER poll never spams the
+        audit trail on its own.
+        """
+        task_id = record["task_id"]
+        work_type = (record.get("manifest") or {}).get("work_type")
+        effective = select_reviewer_candidates(work_type)
+        previous = escalation.get("candidates") or []
+        initial = escalation.get("initial_candidates") or previous or effective
+        updated = {**escalation, "candidates": effective, "initial_candidates": initial}
+        if effective == previous:
+            return updated, False
+        added = [p for p in effective if p not in previous]
+        removed = [p for p in previous if p not in effective]
+        self.ledger.append("REVIEW_CANDIDATES_REFRESHED", task_id, {
+            "work_type": work_type, "initial_candidates": initial,
+            "previous_candidates": previous, "effective_candidates": effective,
+            "added": added, "removed": removed}, actor="provider_connector_v1")
+        return updated, True
+
     def _notify(self, record, summary, status):
         """Best-effort proactive push - never raises, never part of the
         state machine's correctness. No Telegram wired (e.g. most tests) ->
@@ -338,6 +375,7 @@ class ProviderConnectorV1:
         capability > availability > cost > preference decision either way,
         never two implementations of it."""
         task_id = record["task_id"]
+        escalation, _ = self._refresh_candidates(record, escalation)
         candidates = escalation["candidates"]
         chosen = self._first_usable_candidate(candidates)
         if chosen:
@@ -370,8 +408,8 @@ class ProviderConnectorV1:
         candidates = select_reviewer_candidates(record["manifest"].get("work_type"))
         context = build_review_packet(record, reject_reason)
         escalation = {"target": None, "classification": HUMAN_REJECTED_REWORK_REQUESTED,
-                     "candidates": candidates, "context_packet": context,
-                     "reject_reason": reject_reason}
+                     "candidates": candidates, "initial_candidates": list(candidates),
+                     "context_packet": context, "reject_reason": reject_reason}
         self.queue.transition(task_id, "ESCALATION_REQUIRED", escalation=escalation)
         self.ledger.append("HUMAN_REJECTED", task_id, {"reason": reject_reason},
                            actor="provider_connector_v1")

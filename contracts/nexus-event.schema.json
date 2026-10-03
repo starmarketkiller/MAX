@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://nexus.local/contracts/nexus-event.schema.json",
   "title": "NEXUS_EVENT_V1",
-  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva). Estesa di nuovo in NEXUS TASK #0008 (Multi-Agent Review & Finalization Pipeline V1) con gli eventi del ciclo di vita WORK_PRODUCT_V1 (WORK_PRODUCT_CREATED...ESCALATION_RESOLVED) - stessa disciplina additiva. Estesa di nuovo per il NEXUS Dynamic Specialist Review (HUMAN_REJECTED, WAITING_REVIEW_PROVIDER, REVIEW_PROVIDER_RESUMED, REWORK_INSTRUCTIONS_RECEIVED) - stessa disciplina additiva, nessun evento esistente rimosso o rinominato.",
+  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva). Estesa di nuovo in NEXUS TASK #0008 (Multi-Agent Review & Finalization Pipeline V1) con gli eventi del ciclo di vita WORK_PRODUCT_V1 (WORK_PRODUCT_CREATED...ESCALATION_RESOLVED) - stessa disciplina additiva. Estesa di nuovo per il NEXUS Dynamic Specialist Review (HUMAN_REJECTED, WAITING_REVIEW_PROVIDER, REVIEW_PROVIDER_RESUMED, REWORK_INSTRUCTIONS_RECEIVED) - stessa disciplina additiva, nessun evento esistente rimosso o rinominato. Estesa di nuovo per CANDIDATE_REFRESH_WITH_PROVENANCE_V1 (REVIEW_CANDIDATES_REFRESHED) - la lista reviewer di una task gia' in escalation/parcheggiata viene ricalcolata dalla policy corrente invece di restare uno snapshot congelato al momento del rifiuto umano; questo evento registra solo i casi in cui la lista effettiva cambia davvero (added/removed), mai un poll senza variazioni.",
   "type": "object",
   "additionalProperties": false,
   "required": ["event_id", "event_type", "task_id", "timestamp", "tenant_id", "payload"],
@@ -31,7 +31,7 @@
         "PROVIDER_REQUESTED", "PROVIDER_COMPLETED", "PROVIDER_FAILED",
         "PROVIDER_RATE_LIMITED", "PROVIDER_RETRY",
         "HUMAN_REJECTED", "WAITING_REVIEW_PROVIDER", "REVIEW_PROVIDER_RESUMED",
-        "REWORK_INSTRUCTIONS_RECEIVED"
+        "REWORK_INSTRUCTIONS_RECEIVED", "REVIEW_CANDIDATES_REFRESHED"
       ]
     },
     "task_id": { "type": ["string", "null"] },
