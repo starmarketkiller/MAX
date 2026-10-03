@@ -174,8 +174,15 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
         target = self.workspace_root / task_id
         if target.exists():
             shutil.rmtree(target)
+        # research_scripts/ and vault/ are data/notes, never imported by server
+        # code or tests, but can dwarf the rest of the repo (reproduced live:
+        # NEXUS TASK_6FEA7BDE04D2 spent ~7 of its ~7 total minutes copying
+        # them - 5.8GB/73k files for a one-file patch). Excluding them is
+        # strictly narrower than the existing exclusions, not a behavior
+        # change for any task that touches server/ or frontend/ code.
         ignored = shutil.ignore_patterns(".git", "node_modules", ".pytest_cache", "__pycache__",
-                                         ".nexus", "runtime_state", "*.pyc")
+                                         ".nexus", "runtime_state", "*.pyc", "research_scripts",
+                                         "vault")
         shutil.copytree(self.project_root, target, ignore=ignored)
         return target
 

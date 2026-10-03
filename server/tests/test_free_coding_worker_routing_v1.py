@@ -180,3 +180,22 @@ def test_changed_test_file_is_run_for_real_not_only_py_compiled(tmp_path):
         {"path": "server/tests/test_sample.py",
          "content": "def add(a, b):\n    return a + b\n\n\ndef test_ok():\n    assert add(1, 2) == 3\n"}]})
     assert handler.verify(record, fixed).passed is True
+
+
+def test_prepare_workspace_excludes_research_scripts_and_vault(tmp_path):
+    # NEXUS gap ISOLATED_WORKSPACE_OPTIMIZATION (opened after TASK_6FEA7BDE04D2):
+    # these directories are data/notes never imported by server code or
+    # tests, but dominated the copy time/size of every single task.
+    project = tmp_path / "project"
+    (project / "server" / "research_scripts").mkdir(parents=True)
+    (project / "server" / "research_scripts" / "big.csv").write_text("x" * 1000, encoding="utf-8")
+    (project / "vault").mkdir(parents=True)
+    (project / "vault" / "notes.md").write_text("note", encoding="utf-8")
+    (project / "server" / "tests").mkdir(parents=True)
+    (project / "server" / "tests" / "test_sample.py").write_text(
+        "def test_ok():\n    assert True\n", encoding="utf-8")
+    handler = FreeCodingWorkerHandler(project_root=project, workspace_root=tmp_path / "workspaces")
+    workspace = handler._prepare_workspace("TASK_WS_OPTIMIZATION")
+    assert not (workspace / "server" / "research_scripts").exists()
+    assert not (workspace / "vault").exists()
+    assert (workspace / "server" / "tests" / "test_sample.py").exists()
