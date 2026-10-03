@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://nexus.local/contracts/nexus-event.schema.json",
   "title": "NEXUS_EVENT_V1",
-  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva). Estesa di nuovo in NEXUS TASK #0008 (Multi-Agent Review & Finalization Pipeline V1) con gli eventi del ciclo di vita WORK_PRODUCT_V1 (WORK_PRODUCT_CREATED...ESCALATION_RESOLVED) - stessa disciplina additiva.",
+  "description": "Evento append-only per l'Activity Ledger. Jarvis e qualunque UI leggono SOLO da qui per rispondere 'cosa e' successo' - mai dalla memoria del modello. Enum event_type ESTESO in modo additivo per l'Orchestrator V1 Core (TOOL_USED, FILE_READ, FILE_CHANGED, RETRY_STARTED, ESCALATION_REQUIRED aggiunti in coda - AGENT_ESCALATED gia' esistente mantenuto per compatibilita' con gli example_instances della fase architetturale precedente - nessuna versione concorrente creata, stesso schema/stessa forma, solo estensione additiva). Estesa di nuovo in NEXUS TASK #0008 (Multi-Agent Review & Finalization Pipeline V1) con gli eventi del ciclo di vita WORK_PRODUCT_V1 (WORK_PRODUCT_CREATED...ESCALATION_RESOLVED) - stessa disciplina additiva. Estesa di nuovo per il NEXUS Dynamic Specialist Review (HUMAN_REJECTED, WAITING_REVIEW_PROVIDER, REVIEW_PROVIDER_RESUMED, REWORK_INSTRUCTIONS_RECEIVED) - stessa disciplina additiva, nessun evento esistente rimosso o rinominato.",
   "type": "object",
   "additionalProperties": false,
   "required": ["event_id", "event_type", "task_id", "timestamp", "tenant_id", "payload"],
@@ -29,7 +29,9 @@
         "TASK_EXECUTION_STARTED", "TASK_DISPATCH_RETRY", "TASK_CLAIM_RELEASED",
         "TASK_ORPHANED", "TASK_CANCEL_REQUESTED", "TASK_CANCELLED",
         "PROVIDER_REQUESTED", "PROVIDER_COMPLETED", "PROVIDER_FAILED",
-        "PROVIDER_RATE_LIMITED", "PROVIDER_RETRY"
+        "PROVIDER_RATE_LIMITED", "PROVIDER_RETRY",
+        "HUMAN_REJECTED", "WAITING_REVIEW_PROVIDER", "REVIEW_PROVIDER_RESUMED",
+        "REWORK_INSTRUCTIONS_RECEIVED"
       ]
     },
     "task_id": { "type": ["string", "null"] },

@@ -135,10 +135,20 @@ class JarvisService:
         # singolo follow-up ("a che punto e'?").
         self._work_product_cache: dict[str, tuple] = {}
         self.dispatcher_status_provider = None
+        self.provider_connector = None
 
     def set_dispatcher_status_provider(self, provider):
         """Attach a read-only runtime status projection without owning dispatcher logic."""
         self.dispatcher_status_provider = provider
+
+    def set_provider_connector(self, connector):
+        """Attach the existing ProviderConnectorV1 so a human REJECT on a
+        conversational_programming task can start the NEXUS Dynamic
+        Specialist Review (core/specialist_review.py) instead of dead-ending
+        at FAILED. Jarvis still never selects a provider itself - it only
+        hands off to the Core component that already owns provider state/
+        policy/calls."""
+        self.provider_connector = connector
 
     def _response(self, message, response_type, summary, *, details=None, task_id=None,
                   status="COMPLETED", actions=None, confidence="HIGH", generated_by="jarvis_v1"):
@@ -569,8 +579,15 @@ class JarvisService:
             self.queue.transition(task_id, "QUEUED")
             self.ledger.append("APPROVAL_GRANTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_gateway")
         elif action in ("REJECT", "RIFIUTA"):
-            self.queue.transition(task_id, "FAILED")
             self.ledger.append("APPROVAL_REJECTED", task_id, {"message_id": message["message_id"]}, actor="jarvis_gateway")
+            # NEXUS Dynamic Specialist Review: only meaningful when a local
+            # worker actually exists to rework the patch (conversational_programming)
+            # and the connector is wired - every other rejected task keeps the
+            # original, already-tested FAILED dead-end unchanged.
+            if record.get("action") == "conversational_programming" and self.provider_connector is not None:
+                self.provider_connector.request_review(task_id, reject_reason="human rejected the proposed patch")
+            else:
+                self.queue.transition(task_id, "FAILED")
         else:
             return self._response(message, "ERROR", "Unknown approval action.", task_id=task_id, status=record["state"])
         updated = self.queue.get(task_id)

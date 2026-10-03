@@ -92,3 +92,45 @@ def build_from_task_record(task_record, attempts_log, classification, target_tie
         output_required=f"Risolvere: {manifest['objective']} rispettando success_criteria: "
                        f"{manifest['success_criteria']}",
     )
+
+
+def build_review_packet(task_record, reject_reason):
+    """CONTEXT_PACKET_V1 for the NEXUS Dynamic Specialist Review (a human
+    REJECTed a proposed patch - a specialist must review it, never rewrite it
+    from scratch). Reuses the exact same schema-validated contract as a
+    normal escalation - canonical_artifacts stays a reference descriptor
+    array by contract, so the proposed patch content itself (never lost -
+    persisted on the record as `proposed_patch` when the patch first reached
+    WAITING_APPROVAL) travels as a formatted previous_attempts entry, same as
+    how a normal escalation already carries prior attempts as strings."""
+    manifest = task_record["manifest"]
+    proposed = task_record.get("proposed_patch") or {}
+    changes = proposed.get("changes") or []
+    patch_summary = "\n".join(
+        f"--- {item['path']} ---\n{item['content']}" for item in changes) or "(nessuna patch disponibile)"
+    test_results = proposed.get("test_results") or []
+    test_summary = [f"{item.get('argv')}: returncode={item.get('returncode')}" for item in test_results]
+    return build_context_packet(
+        objective=manifest["objective"],
+        relevant_findings=[f"Un umano ha rifiutato la patch proposta. Motivo: {reject_reason}",
+                          f"Task originale: {manifest['title']}",
+                          f"task_id (lineage): {task_record['task_id']}"],
+        canonical_artifacts=[],
+        allowed_files=manifest["files_allowed"],
+        exact_question=f"La patch proposta per \"{manifest['objective']}\" e' stata rifiutata "
+                      f"({reject_reason}). Rivedila e produci istruzioni correttive precise per "
+                      "il worker locale - non riscriverla tu stesso, non eseguire nulla.",
+        previous_attempts=[f"Patch rifiutata:\n{patch_summary}"],
+        failures=[f"Reject: {reject_reason}"],
+        tests=test_summary or [manifest.get("verifier", "")],
+        constraints=[f"files_allowed={manifest['files_allowed']}",
+                    f"files_forbidden={manifest['files_forbidden']}",
+                    f"policy_flags={(task_record.get('action_params') or {}).get('execution_plan', {}).get('policy_flags', [])}",
+                    f"risk_level={manifest['risk_level']}",
+                    f"attempts_used={task_record.get('retry_count', 0)}"],
+        forbidden_actions=["scrivere la patch tu stesso", "eseguire comandi", "push automatico",
+                          "deploy", "modifiche strategie di trading", "trading reale"],
+        output_required="Restituisci SOLO: problems_found (array), rework_instructions "
+                       "(stringa), allowed_paths (array), required_tests (array), risks "
+                       "(array). Il worker locale applichera' le tue istruzioni.",
+    )

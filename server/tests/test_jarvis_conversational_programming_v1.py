@@ -125,6 +125,42 @@ def test_resume_uses_durable_conversation_context(service):
     assert plan["reference"]["task_id"] == first["task_id"]
 
 
+def test_reject_on_coding_task_hands_off_to_specialist_review_when_wired(service):
+    # Wiring test only - the routing/availability/rework logic itself is
+    # covered end-to-end in test_dynamic_specialist_review_v1.py. This
+    # confirms approval()'s REJECT branch actually calls the Core component
+    # instead of the plain pre-existing queue.transition(task_id, "FAILED").
+    created = JarvisGateway(service).handle(message("Implementa un fix e fai i test"))
+    task_id = created["task_id"]
+    assert service.queue.get(task_id)["action"] == "conversational_programming"
+    service.queue.transition(task_id, "RUNNING")
+    service.queue.transition(task_id, "WAITING_APPROVAL")
+
+    calls = []
+    class StubConnector:
+        def request_review(self, task_id, reject_reason):
+            calls.append((task_id, reject_reason))
+    service.set_provider_connector(StubConnector())
+
+    response = JarvisGateway(service).handle(message("REJECT", "approval", metadata={
+        "task_id": task_id, "approval_action": "REJECT"}))
+    assert calls == [(task_id, "human rejected the proposed patch")]
+    # The stub never calls queue.transition itself - state is untouched here
+    # (ProviderConnectorV1.request_review owns that in the real flow).
+    assert service.queue.get(task_id)["state"] == "WAITING_APPROVAL"
+
+
+def test_reject_without_wired_connector_keeps_old_failed_behavior(service):
+    created = JarvisGateway(service).handle(message("Implementa un fix e fai i test"))
+    task_id = created["task_id"]
+    service.queue.transition(task_id, "RUNNING")
+    service.queue.transition(task_id, "WAITING_APPROVAL")
+    assert service.provider_connector is None  # default, matches every pre-existing test
+    rejected = JarvisGateway(service).handle(message("REJECT", "approval", metadata={
+        "task_id": task_id, "approval_action": "REJECT"}))
+    assert rejected["status"] == "FAILED"
+
+
 def test_route_preview_is_local_free_premium_order_and_does_not_execute(service):
     response = JarvisGateway(service).handle(message("Implementa un refactor complesso nel codice"))
     manifest = service.queue.get(response["task_id"])["manifest"]

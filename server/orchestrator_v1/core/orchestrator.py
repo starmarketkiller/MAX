@@ -248,7 +248,14 @@ class Orchestrator:
                         unresolved_issues=[], suggested_next_tasks=["approvare/applicare la "
                                                                    "patch proposta"],
                         escalation_needed=False)
-                    self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet)
+                    # Kept on the record, not only referenced by path, so a
+                    # later human REJECT can hand the real content to a
+                    # specialist reviewer without re-deriving it (see
+                    # core/context_packet.py:build_review_packet).
+                    proposed_patch = {"changes": vr.parsed_output.get("changes", []),
+                                     "test_results": vr.parsed_output.get("test_results", [])}
+                    self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
+                                         proposed_patch=proposed_patch)
                     return self.queue.get(task_id)
 
                 self.ledger.append("TASK_COMPLETED", task_id, {"handler": record["action"]})
@@ -321,9 +328,14 @@ class Orchestrator:
         self.ledger.append("APPROVAL_REQUIRED", task_id,
                            {"reason": "local bridge produced a bounded verified repository patch",
                             "bridge_id": bridge_id})
+        # Kept on the record, not only referenced by the local-bridge:// path,
+        # so a later human REJECT can hand the real content to a specialist
+        # reviewer (see core/context_packet.py:build_review_packet).
+        proposed_patch = {"changes": parsed.get("changes", []), "test_results": tests}
         self.queue.transition(task_id, "WAITING_APPROVAL", result_packet=packet,
                               local_bridge={"status": "COMPLETED", "bridge_id": bridge_id,
-                                            "verification": "PASSED"})
+                                            "verification": "PASSED"},
+                              proposed_patch=proposed_patch)
         return self.queue.get(task_id)
 
     def fail_local_bridge_task(self, task_id, failure_class):

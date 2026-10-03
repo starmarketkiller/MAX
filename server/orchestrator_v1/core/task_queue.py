@@ -36,7 +36,7 @@ with open(os.path.join(CONTRACTS_DIR, "task-manifest.schema.json"), encoding="ut
 
 STATES = ["CREATED", "QUEUED", "RUNNING", "WAITING_DEPENDENCY", "WAITING_APPROVAL",
          "WAITING_PROVIDER", "COMPLETED", "FAILED", "BLOCKED", "ESCALATION_REQUIRED",
-         "CANCELLED"]
+         "WAITING_REVIEW_PROVIDER", "CANCELLED"]
 
 # Transizioni di stato permesse - fail-closed: una transizione non elencata qui
 # viene rifiutata con un'eccezione, non applicata silenziosamente.
@@ -48,16 +48,34 @@ ALLOWED_TRANSITIONS = {
                "ESCALATION_REQUIRED", "QUEUED", "RUNNING", "BLOCKED"},  # QUEUED = retry delimitato;
                # RUNNING->RUNNING = self-transition per bookkeeping (es. retry_count) senza
                # cambiare stato - un vero cambio di stato resta sempre esplicito altrove
-    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED"},
+    "WAITING_APPROVAL": {"COMPLETED", "FAILED", "QUEUED", "CANCELLED", "ESCALATION_REQUIRED"},
+                          # ESCALATION_REQUIRED = un umano ha rifiutato la patch proposta e la
+                          # NEXUS Dynamic Specialist Review la instrada a un reviewer disponibile
+                          # (mai direttamente FAILED - §NEXUS gap DYNAMIC_SPECIALIST_REVIEW)
     "WAITING_PROVIDER": {"RUNNING", "COMPLETED", "FAILED", "CANCELLED", "ESCALATION_REQUIRED",
-                         "WAITING_APPROVAL", "BLOCKED"},
+                         "WAITING_APPROVAL", "BLOCKED", "QUEUED"},
+                         # QUEUED = a specialist review returned REWORK_INSTRUCTIONS - the task
+                         # goes back to the local worker for a fresh attempt, never resolved by
+                         # the premium call itself (see ProviderConnectorV1._apply_rework).
     "ESCALATION_REQUIRED": {"WAITING_PROVIDER", "FAILED", "QUEUED", "WAITING_APPROVAL",
-                          "COMPLETED", "CANCELLED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
+                          "COMPLETED", "CANCELLED", "WAITING_REVIEW_PROVIDER",
+                          "ESCALATION_REQUIRED"},  # WAITING_APPROVAL/COMPLETED = la risoluzione
                           # dell'escalation (TIER3_CLAUDE/TIER4_CODEX) e' arrivata e verificata
                           # - se tocca/crea file reali che richiedono revisione va a
                           # WAITING_APPROVAL, altrimenti direttamente COMPLETED (scoperto in
                           # NEXUS TASK #0005, la prima escalation di questo Core risolta con
-                          # un intero nuovo framework invece di un singolo campo dato)
+                          # un intero nuovo framework invece di un singolo campo dato).
+                          # WAITING_REVIEW_PROVIDER = nessuno dei reviewer candidati (dinamici,
+                          # non un singolo target fisso) e' AVAILABLE/LOW_QUOTA in questo momento.
+                          # ESCALATION_REQUIRED->ESCALATION_REQUIRED = self-transition per
+                          # bookkeeping (candidate tentato, stato osservato) senza cambiare stato,
+                          # stesso pattern gia' usato da RUNNING->RUNNING.
+    "WAITING_REVIEW_PROVIDER": {"ESCALATION_REQUIRED", "WAITING_REVIEW_PROVIDER", "CANCELLED",
+                               "FAILED"},  # ESCALATION_REQUIRED = un reviewer candidato e'
+                               # tornato disponibile, si riprende subito (nessun umano deve
+                               # rifare nulla). Self-transition = poll che non trova ancora
+                               # nessun candidato disponibile, solo bookkeeping (ultimo tentativo,
+                               # stati osservati), mai una perdita di patch/verifier result.
     "BLOCKED": {"QUEUED", "CANCELLED"},
     "COMPLETED": set(),
     "FAILED": {"QUEUED"},  # solo se un umano decide di ritentare esplicitamente

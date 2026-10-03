@@ -1407,7 +1407,16 @@ JARVIS_GROQ_EVALUATION = GroqEvaluationAdapterV1.from_environment(
 JARVIS_PROVIDER_BENCHMARKS = FreeProviderBenchmarkEngineV1(
     JARVIS_PROVIDER_POLICY, history_path=_JARVIS_STATE_DIR / "provider_benchmark_history_v1.json",
     adapters={"GROQ": JARVIS_GROQ_EVALUATION})
-JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator)
+def _jarvis_proactive_notify(chat_id, response):
+    # Best-effort only: TelegramAdapter.send() already no-ops when the bot
+    # token isn't configured, and ProviderConnectorV1._notify() swallows any
+    # exception from this callable - a failed push never affects task state.
+    JARVIS_TELEGRAM.send(chat_id, response)
+
+
+JARVIS_PROVIDER_CONNECTOR = ProviderConnectorV1(JARVIS_SERVICE.orchestrator,
+                                               telegram_notifier=_jarvis_proactive_notify)
+JARVIS_SERVICE.set_provider_connector(JARVIS_PROVIDER_CONNECTOR)
 JARVIS_LOCAL_AGENT_BRIDGE = LocalAgentBridgeV1(
     JARVIS_SERVICE.orchestrator,
     state_path=_JARVIS_STATE_DIR / "local_agent_bridge_v1.json",

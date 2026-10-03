@@ -86,7 +86,11 @@ class FreeCodingWorkerHandler(LocalTaskHandler):
             "output_contract": {"summary": "string", "changes": [{"path": "repo-relative",
                                                                        "content": "full file"}]},
         }
-        return ("Return JSON only. Propose the smallest correct patch. Do not select a provider, "
+        rework = (task_record.get("action_params") or {}).get("rework_instructions")
+        prefix = (f"{rework}\nThe file(s) below are the ORIGINAL, unmodified content - your "
+                 "previous rejected attempt was never applied to them.\n\n" if rework else "")
+        return (prefix +
+                "Return JSON only. Propose the smallest correct patch. Do not select a provider, "
                 "run commands, push, deploy, or access paths outside allowed_paths.\n" +
                 json.dumps(contract, ensure_ascii=False))
 
