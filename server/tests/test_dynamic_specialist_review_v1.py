@@ -62,14 +62,16 @@ def setup_rejected_task(tmp_path, monkeypatch, *, patch_content="VALUE = 2\n"):
 
 
 def test_select_reviewer_candidates_is_ordered_capability_first():
-    assert select_reviewer_candidates("complex_code") == ["CODEX", "CLAUDE"]
+    # GROQ_REVIEW_PROVIDER_PROMOTION: FREE_ONLINE tried before either premium
+    # fallback - capability > availability > COST > preference, literally.
+    assert select_reviewer_candidates("complex_code") == ["GROQ", "CODEX", "CLAUDE"]
     assert select_reviewer_candidates("scientific_research") == ["CLAUDE"]
     assert select_reviewer_candidates("unknown_work_type") == ["CLAUDE"]
     # Pure and side-effect-free: mutating the result must never affect the
     # next call (a caller stores this on a task record and may append to it).
     candidates = select_reviewer_candidates("complex_code")
     candidates.append("MUTATED")
-    assert select_reviewer_candidates("complex_code") == ["CODEX", "CLAUDE"]
+    assert select_reviewer_candidates("complex_code") == ["GROQ", "CODEX", "CLAUDE"]
 
 
 def test_validate_rework_response_requires_every_field():
@@ -131,8 +133,11 @@ def test_both_reviewers_unavailable_parks_without_losing_state(tmp_path, monkeyp
     record = connector.request_review(task_id, "human rejected")
     assert record["state"] == "WAITING_REVIEW_PROVIDER"
     assert codex.calls == [] and claude.calls == []  # nobody was actually invoked
-    assert record["escalation"]["candidates"] == ["CODEX", "CLAUDE"]
-    assert record["escalation"]["candidate_states"] == {"CODEX": "EXHAUSTED", "CLAUDE": "OFFLINE"}
+    assert record["escalation"]["candidates"] == ["GROQ", "CODEX", "CLAUDE"]
+    # GROQ isn't even wired into this connector's adapters - treated as
+    # UNKNOWN/unusable, never silently assumed available.
+    assert record["escalation"]["candidate_states"] == {
+        "GROQ": "UNKNOWN", "CODEX": "EXHAUSTED", "CLAUDE": "OFFLINE"}
     # Nothing is lost: the original rejected patch and its verifier result
     # are still right there, ready for the eventual review.
     assert record["proposed_patch"]["changes"][0]["path"] == "src/sample.py"

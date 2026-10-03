@@ -28,10 +28,28 @@ HUMAN_REJECTED_REWORK_REQUESTED = "HUMAN_REJECTED_REWORK_REQUESTED"
 # free/local one, say - is one entry in one of these lists, never a change
 # to the workflow itself.
 REVIEWER_CANDIDATES_FOR_WORK_TYPE = {
-    "complex_code": ["CODEX", "CLAUDE"],
+    # GROQ first: a FREE_ONLINE reviewer costs nothing and is tried before
+    # either premium fallback - CODEX/CLAUDE are only ever reached if GROQ is
+    # OFFLINE/RATE_LIMITED/EXHAUSTED or not yet wired (see
+    # GroqReviewAdapter.configured). This is the "capability > availability >
+    # cost > preference" principle applied literally: same capability tier
+    # (review this patch), GROQ wins purely on cost when it's available.
+    "complex_code": ["GROQ", "CODEX", "CLAUDE"],
     "scientific_research": ["CLAUDE"],
 }
 _DEFAULT_CANDIDATES = ["CLAUDE"]
+
+# Shared, single source of truth for the review contract's wording - every
+# reviewer adapter (Claude, Groq, ...) uses this exact prompt so "what a
+# reviewer is allowed to do" is defined once, not re-typed per provider.
+REVIEWER_SYSTEM_PROMPT = (
+    "Sei un senior code reviewer per NEXUS. Non scrivi mai codice, non esegui mai "
+    "comandi, non fai mai push o deploy: il tuo unico output e' un pacchetto di "
+    "istruzioni correttive per un worker locale che ritentera' la patch. Rispondi SOLO "
+    "con un oggetto JSON con esattamente queste chiavi: problems_found (array di "
+    "stringhe), rework_instructions (stringa), allowed_paths (array di stringhe), "
+    "required_tests (array di stringhe), risks (array di stringhe). Nessun altro testo, "
+    "nessun markdown fuori dal JSON.")
 
 
 def select_reviewer_candidates(work_type):

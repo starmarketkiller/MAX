@@ -3,11 +3,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+from core.provider_connector import ProviderAdapterV1, ProviderResult
+from core.specialist_review import REVIEWER_SYSTEM_PROMPT
 
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
@@ -205,3 +209,123 @@ class GroqEvaluationAdapterV1:
                 "latency_ms": latency, "token_usage": None, "quota_consumed": 0,
                 "estimated_cost": None, "hallucination_flags": [], "error_flags": [reason],
                 "determinism_score": 0, "tool_call_correctness": None, "output_length": 0}
+
+
+class GroqReviewAdapter(ProviderAdapterV1):
+    """FREE_ONLINE reviewer for the NEXUS Dynamic Specialist Review -
+    deliberately a SEPARATE class from GroqEvaluationAdapterV1, never that
+    one promoted to production. Reuses only the transport
+    (UrllibGroqTransport/GROQ_BASE_URL); its own credential (GROQ_API_KEY -
+    sharing a credential with the evaluation adapter is not the same as
+    sharing production authorization) and its own, independently configured
+    model (NEXUS_GROQ_REVIEW_MODEL - evaluation's NEXUS_GROQ_EVALUATION_MODELS
+    stays evaluation-only, untouched by this class).
+
+    Never writes or executes a patch: invoke() only ever returns the bounded
+    review shape; core/specialist_review.py:validate_rework_response() is
+    the sole gate deciding whether that shape is acceptable, and
+    ProviderConnectorV1._apply_rework() is the only place a rework ever
+    reaches the local worker - identical contract to ClaudeProviderAdapter,
+    same REVIEWER_SYSTEM_PROMPT, by design."""
+    provider_id = "GROQ"
+
+    def __init__(self, *, api_key=None, model_id=None, transport=None,
+                failure_threshold=3, cooldown_seconds=120):
+        self._api_key = api_key or ""
+        self._model_id = model_id or ""
+        self.transport = transport or UrllibGroqTransport()
+        # A small inline breaker, not app.py's _CircuitBreaker: importing
+        # from app.py here would be circular (app.py imports this module).
+        # Same semantics (N consecutive failures -> timed cooldown).
+        self._failure_threshold = failure_threshold
+        self._cooldown_seconds = cooldown_seconds
+        self._failures = 0
+        self._open_until = 0.0
+
+    @classmethod
+    def from_environment(cls, *, transport=None):
+        return cls(api_key=os.environ.get("GROQ_API_KEY"),
+                   model_id=os.environ.get("NEXUS_GROQ_REVIEW_MODEL", "openai/gpt-oss-120b"),
+                   transport=transport)
+
+    @property
+    def configured(self):
+        return bool(self._api_key and self._model_id)
+
+    def _breaker_open(self):
+        if self._open_until and time.time() < self._open_until:
+            return True
+        if self._open_until:
+            self._open_until = 0.0
+            self._failures = 0
+        return False
+
+    def _record(self, ok):
+        if ok:
+            self._failures = 0
+            return
+        self._failures += 1
+        if self._failures >= self._failure_threshold:
+            self._open_until = time.time() + self._cooldown_seconds
+
+    def state(self):
+        if not self.configured:
+            return "OFFLINE"
+        if self._breaker_open():
+            return "RATE_LIMITED"
+        return "AVAILABLE"
+
+    @staticmethod
+    def _extract_json(text):
+        # Mirrors ClaudeProviderAdapter._extract_json in app.py exactly -
+        # duplicated on purpose (a few lines, no cross-module dependency for
+        # it) rather than shared, same reasoning as elsewhere in this
+        # feature (e.g. evaluate_auto_approval.py's SELF_PROTECTED_PATHS).
+        value = (text or "").strip()
+        if value.startswith("```"):
+            value = re.sub(r"^```(?:json)?\s*", "", value, flags=re.I)
+            value = re.sub(r"\s*```$", "", value)
+        return json.loads(value)
+
+    def invoke(self, context_packet, *, idempotency_key, timeout_seconds):
+        payload = {"model": self._model_id, "temperature": 0, "max_completion_tokens": 1536,
+                  "messages": [{"role": "system", "content": REVIEWER_SYSTEM_PROMPT},
+                              {"role": "user",
+                               "content": json.dumps(context_packet, ensure_ascii=False)}]}
+        headers = {"Authorization": f"Bearer {self._api_key}", "Content-Type": "application/json",
+                  "User-Agent": "NEXUS-Groq-Review-V1", "Idempotency-Key": idempotency_key}
+        try:
+            status, _headers, body = self.transport.request(
+                "POST", f"{GROQ_BASE_URL}/chat/completions", headers=headers, payload=payload,
+                timeout=timeout_seconds)
+        except TimeoutError:
+            self._record(False)
+            return ProviderResult(status="UNKNOWN", error_class="GROQ_TIMEOUT")
+        except RuntimeError:
+            self._record(False)
+            return ProviderResult(status="UNKNOWN", error_class="GROQ_NETWORK_UNAVAILABLE")
+
+        if status == 429:
+            self._record(False)
+            return ProviderResult(status="RATE_LIMITED", error_class="GROQ_RATE_LIMITED")
+        if status in (401, 403):
+            self._record(False)
+            return ProviderResult(status="OFFLINE", error_class=f"GROQ_AUTH_{status}")
+        if status != 200:
+            self._record(False)
+            # Covers 400/404 (e.g. this account cannot see the configured
+            # model) and any other non-success status - never assumed to be
+            # the same thing as "no quota left", always its own diagnostic.
+            return ProviderResult(status="UNKNOWN", error_class=f"GROQ_HTTP_{status}")
+
+        self._record(True)
+        choices = body.get("choices") or []
+        content = (((choices[0] if choices else {}).get("message") or {}).get("content") or "")
+        try:
+            parsed = self._extract_json(content)
+        except (json.JSONDecodeError, ValueError):
+            # Transport succeeded; the model just didn't follow the shape -
+            # validate_rework_response() rejects this, same as Claude's.
+            parsed = {"unparsed_response": content}
+        return ProviderResult(status="SUCCESS", output=parsed,
+                             provider_request_id=f"groq:{idempotency_key[:16]}")

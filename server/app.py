@@ -63,6 +63,8 @@ from jarvis_v1.service import JarvisService
 from orchestrator_v1.core.dispatcher import DurableQueueDispatcher
 from orchestrator_v1.core.provider_connector import (ProviderAdapterV1, ProviderConnectorV1,
                                                       ProviderResult)
+from orchestrator_v1.core.specialist_review import REVIEWER_SYSTEM_PROMPT
+from orchestrator_v1.core.groq_evaluation import GroqReviewAdapter
 from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV1
 from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
@@ -4462,16 +4464,8 @@ class ClaudeProviderAdapter(ProviderAdapterV1):
         return json.loads(value)
 
     def invoke(self, context_packet, *, idempotency_key, timeout_seconds):
-        system = (
-            "Sei un senior code reviewer per NEXUS. Non scrivi mai codice, non esegui mai "
-            "comandi, non fai mai push o deploy: il tuo unico output e' un pacchetto di "
-            "istruzioni correttive per un worker locale che ritentera' la patch. Rispondi SOLO "
-            "con un oggetto JSON con esattamente queste chiavi: problems_found (array di "
-            "stringhe), rework_instructions (stringa), allowed_paths (array di stringhe), "
-            "required_tests (array di stringhe), risks (array di stringhe). Nessun altro testo, "
-            "nessun markdown fuori dal JSON.")
         messages = [{"role": "user", "content": json.dumps(context_packet, ensure_ascii=False)}]
-        text, err = _anthropic_chat(system, messages, max_tokens=1536)
+        text, err = _anthropic_chat(REVIEWER_SYSTEM_PROMPT, messages, max_tokens=1536)
         if err == "provider_not_configured":
             return ProviderResult(status="OFFLINE", error_class=err)
         if err == "provider_circuit_open":
@@ -4492,6 +4486,7 @@ class ClaudeProviderAdapter(ProviderAdapterV1):
 
 
 JARVIS_PROVIDER_CONNECTOR.adapters["CLAUDE"] = ClaudeProviderAdapter()
+JARVIS_PROVIDER_CONNECTOR.adapters["GROQ"] = GroqReviewAdapter.from_environment()
 
 
 # ======================= EA STATUS / HEALTH (JWT) ======================= #
