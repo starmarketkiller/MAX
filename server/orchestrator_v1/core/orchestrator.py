@@ -361,6 +361,51 @@ class Orchestrator:
                            {"target": "MANUAL_REVIEW", "classification": failure_class})
         return self.queue.get(task_id)
 
+    ORPHANED_RUNNING_AFTER_RESTART = "ORPHANED_RUNNING_AFTER_RESTART"
+
+    def resume_orphaned_task(self, task_id, *, requested_by=None):
+        """SAFE_ORPHANED_TASK_RESUME_V1: an explicit, auditable, human-
+        triggered resume for a task recover_orphaned_running() fail-closed
+        parked into BLOCKED after a process restart - never an automatic
+        global resume at boot (that stays exactly as conservative as before),
+        and never a free-form write into the queue store. Every precondition
+        below must hold or this fails closed with no state change at all -
+        same discipline as every other guard in this module (AssertionError,
+        no silent partial effect)."""
+        record = self.queue.get(task_id)
+        if record["state"] != "BLOCKED":
+            raise AssertionError(f"resume requires BLOCKED, got {record['state']}")
+        recovery = record.get("recovery") or {}
+        if recovery.get("classification") != self.ORPHANED_RUNNING_AFTER_RESTART:
+            raise AssertionError("resume only applies to ORPHANED_RUNNING_AFTER_RESTART, "
+                                 f"got {recovery.get('classification')!r}")
+        if record.get("dispatch_claim"):
+            raise AssertionError("resume refused: an active dispatch claim still exists")
+        if self.local_bridge is not None:
+            job_status = self.local_bridge.job_status(task_id)
+            if job_status in self.local_bridge.ACTIVE_JOB_STATES:
+                raise AssertionError(f"resume refused: bridge job is still {job_status}")
+        self.ledger.append("TASK_RECOVERY_REQUESTED", task_id,
+            {"previous_cause": recovery.get("classification"),
+             "previous_recovered_at": recovery.get("recovered_at"),
+             "requested_by": requested_by or "unknown"}, actor="orphan_recovery_v1")
+        # Only the operational fields that caused BLOCKED are cleared - retry
+        # count, escalation, proposed_patch, action_params (rework
+        # instructions included) and every other lineage field are untouched.
+        # The Ledger already holds TASK_ORPHANED/TASK_BLOCKED forever
+        # (append-only) - clearing `recovery` here loses nothing, it only
+        # stops a resolved cause from looking like a live one.
+        self.queue.transition(task_id, "QUEUED", dispatch_last_error=None, recovery=None)
+        self.ledger.append("TASK_RESUMED", task_id,
+            {"previous_cause": self.ORPHANED_RUNNING_AFTER_RESTART,
+             "requested_by": requested_by or "unknown"}, actor="orphan_recovery_v1")
+        # Deliberately NOT executing the handler/bridge directly here - the
+        # task goes back through QUEUED exactly like any other task, so the
+        # normal DurableQueueDispatcher claims and routes it (same Router,
+        # same policy, same dispatch() idempotency guard already covered by
+        # LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1).
+        return self.queue.get(task_id)
+
     # ---- Escalation ----------------------------------------------------
     def _escalate(self, task_id, record, target, classification, errors):
         current = self.queue.get(task_id)

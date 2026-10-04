@@ -456,6 +456,8 @@ class JarvisService:
             return self.follow_up(message)
         if re.search(r"\b(continua|continue)\b", value):
             return self.follow_up(message)
+        if re.search(r"\b(riprendi|riattiva|resume)\b", value):
+            return self.resume_orphaned(message)
         if message.get("metadata", {}).get("confirm_cancel") or re.search(
                 r"\b(annulla|annullamento|cancella|cancel)\b", value):
             return self.cancel(message)
@@ -498,6 +500,27 @@ class JarvisService:
                               task_id=task_id, status="CONFIRMATION_REQUIRED",
                               actions=[{"type": "CONFIRM_CANCEL", "task_id": task_id},
                                        {"type": "KEEP_TASK", "task_id": task_id}])
+
+    def resume_orphaned(self, message):
+        """Telegram front-end for SAFE_ORPHANED_TASK_RESUME_V1 - calls the
+        exact same Orchestrator.resume_orphaned_task() the HTTP endpoint
+        uses, no duplicated precondition logic here."""
+        task_id = self._resolve_task_id(message)
+        if not task_id:
+            return self._response(message, "ERROR", "Non trovo una task da riprendere.",
+                                  status="UNKNOWN")
+        try:
+            record = self.orchestrator.resume_orphaned_task(
+                task_id, requested_by=f"jarvis:{message['user_id']}")
+        except KeyError:
+            return self._response(message, "ERROR", "Task non trovata.", task_id=task_id,
+                                  status="UNKNOWN")
+        except AssertionError as exc:
+            return self._response(message, "ERROR", f"Non posso riprendere {task_id}: {exc}",
+                                  task_id=task_id, status="REFUSED")
+        return self._response(message, "TASK_STATUS",
+                              f"Task {task_id} ripresa: torna in coda per il dispatcher normale.",
+                              task_id=task_id, status=record["state"])
 
     def _run_review_pipeline(self, task_id, record):
         """NEXUS TASK #0009 - collega la Multi-Agent Review & Finalization

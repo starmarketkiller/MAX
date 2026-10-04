@@ -1769,6 +1769,23 @@ def jarvis_task_diagnostics(task_id: str, user: str = Depends(require_user)):
     return {"task_id": task_id, **JARVIS_SERVICE._task_details(record, technical=True)}
 
 
+@app.post("/api/jarvis/tasks/{task_id}/resume-orphaned")
+def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutation)):
+    """SAFE_ORPHANED_TASK_RESUME_V1: explicit, authenticated, auditable
+    resume of a BLOCKED/ORPHANED_RUNNING_AFTER_RESTART task - never an
+    automatic resume at boot. Every safety precondition lives in
+    Orchestrator.resume_orphaned_task(); this endpoint only authenticates
+    and maps its fail-closed AssertionError to a 409."""
+    try:
+        record = JARVIS_SERVICE.orchestrator.resume_orphaned_task(task_id, requested_by=user)
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"code": "TASK_NOT_FOUND"})
+    except AssertionError as exc:
+        raise HTTPException(status_code=409, detail={"code": "RESUME_REFUSED",
+                                                      "reason": str(exc)[:300]})
+    return {"ok": True, "task_id": task_id, "state": record["state"]}
+
+
 @app.get("/api/jarvis/activity")
 def jarvis_activity(limit: int = 100, user: str = Depends(require_user)):
     events = JARVIS_SERVICE.ledger.read_all()

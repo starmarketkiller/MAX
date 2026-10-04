@@ -67,6 +67,16 @@ class LocalAgentBridgeV1:
     def configured(self):
         return len(self.secret) >= 32
 
+    def job_status(self, task_id):
+        """Read-only: this task's bridge job status, or None if it has no
+        job. SAFE_ORPHANED_TASK_RESUME_V1 uses this to refuse resuming a task
+        whose bridge job is still genuinely active (ACTIVE_JOB_STATES) -
+        without exposing the private _load()/_save() write API."""
+        with self._lock:
+            data = self._load()
+        job = data["jobs"].get(task_id)
+        return job["status"] if job else None
+
     def _load(self):
         with self.state_path.open(encoding="utf-8") as handle:
             return json.load(handle)
