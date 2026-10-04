@@ -82,6 +82,15 @@ _PROVIDER_PREF_RE = re.compile(
 # correctly still does.
 _LAST_PENDING_APPROVAL_RE = re.compile(
     r"\b(l[’']ultima|ultima task|quelle da approvare|quali devo approvare|approvale)\b", re.I)
+# "l'ultima"/"ultima task" (singular) carries its OWN unambiguous ordering
+# criterion (newest-updated-first, same sort _user_scoped_tasks always uses)
+# - 2+ WAITING_APPROVAL candidates is NOT an ambiguity for this phrasing the
+# way it genuinely is for "approvale"/"quali devo approvare" (no ordering
+# implied at all). Checked separately from _LAST_PENDING_APPROVAL_RE so a
+# phone's autocorrect dropping the apostrophe ("L ultima") still resolves
+# deterministically instead of asking to disambiguate something that was
+# never actually ambiguous.
+_SINGULAR_LAST_RE = re.compile(r"\b(l[’']?\s*ultima|ultima task)\b", re.I)
 _GOAL_TO_TASK_RE = re.compile(
     r"\b(iniziamo una (?:nuova )?task|inizia una (?:nuova )?task|possiamo (?:iniziare|lavorare su)|"
     r"voglio ottenere|trova(?:re)? un modo per|il mio obiettivo [eè])\b", re.I)
@@ -1111,7 +1120,12 @@ class JarvisService:
             return self._response(message, "ERROR",
                 "Non c'è nessuna task in attesa della tua approvazione in questo momento.",
                 status="NONE_PENDING")
-        if len(candidates) > 1:
+        # "l'ultima"/"ultima task" (singular) carries its own unambiguous
+        # ordering criterion - _user_scoped_tasks already sorts newest-first,
+        # so 2+ candidates is not an ambiguity for THIS phrasing. Only a
+        # generic plural/listing phrasing ("approvale", "quali devo
+        # approvare") with 2+ matches genuinely can't pick one on its own.
+        if len(candidates) > 1 and not _SINGULAR_LAST_RE.search(text.lower()):
             self.ledger.append("CONVERSATION_CLARIFICATION_REQUESTED", None,
                 {"message_id": message["message_id"], "intent": action,
                  "candidates": [c["task_id"] for c in candidates]}, actor="jarvis_service")

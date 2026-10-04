@@ -135,6 +135,28 @@ def test_ambiguous_multiple_pending_approvals_asks_never_mutates(service):
     assert service.queue.get(b)["state"] == "WAITING_APPROVAL"
 
 
+def test_singular_ultima_resolves_deterministically_even_with_multiple_pending(service):
+    """Real production smoke test finding, 2026-10-04: 'l'ultima' carries its
+    own unambiguous ordering (newest-updated-first) - 2+ WAITING_APPROVAL
+    candidates must NOT trigger a clarification for this phrasing the way
+    it correctly does for the generic 'approvale'/'quali devo approvare'."""
+    import time
+    _submit(service, "TASK_OLDER_PENDING", "WAITING_APPROVAL")
+    time.sleep(0.01)
+    newest = _submit(service, "TASK_NEWER_PENDING", "WAITING_APPROVAL")
+    response = JarvisGateway(service).handle(message("Approvo l'ultima task"))
+    assert response["task_id"] == newest
+    assert response["status"] == "QUEUED"
+
+
+def test_singular_ultima_resolves_even_without_the_apostrophe(service):
+    """A phone's autocorrect commonly drops the apostrophe ('L ultima')."""
+    pending = _submit(service, "TASK_AUTOCORRECT_CASE", "WAITING_APPROVAL")
+    response = JarvisGateway(service).handle(message("Approvo L ultima task"))
+    assert response["task_id"] == pending
+    assert response["status"] == "QUEUED"
+
+
 def test_nothing_pending_approval_gives_a_clean_answer_not_a_crash(service):
     _submit(service, "TASK_RUNNING_ONLY", "RUNNING")
     response = JarvisGateway(service).handle(message("Approvo l'ultima task"))
