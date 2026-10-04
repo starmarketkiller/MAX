@@ -7,7 +7,8 @@
   "required": ["response_id", "conversation_id", "response_type", "summary", "details", "source_refs", "task_id", "status", "priority", "actions", "deep_link", "voice_summary", "generated_by", "confidence"],
   "properties": {
     "response_id": {"type": "string"}, "conversation_id": {"type": "string"},
-    "response_type": {"enum": ["ANSWER", "TASK_ACK", "TASK_STATUS", "APPROVAL", "ERROR"]},
+    "response_type": {"enum": ["ANSWER", "TASK_ACK", "TASK_STATUS", "APPROVAL", "ERROR",
+                               "PREFERENCE_SET", "CLARIFICATION_REQUIRED"]},
     "summary": {"type": "string"}, "details": {"type": "object"},
     "source_refs": {"type": "array", "items": {"type": "string"}},
     "task_id": {"type": ["string", "null"]}, "status": {"type": "string"},
