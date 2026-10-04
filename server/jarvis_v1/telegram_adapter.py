@@ -80,7 +80,8 @@ class TelegramAdapter:
             elif code in agent_actions:
                 metadata.update({"ui_action": agent_actions[code], "agent_id": parts[2]})
                 text = f"Telegram action {agent_actions[code]} for {parts[2]}"
-            elif code == "Q" and parts[2] in ("STATUS", "TASKS", "AGENTS", "HELP"):
+            elif code == "Q" and parts[2] in ("STATUS", "TASKS", "AGENTS", "HELP",
+                                              "REVIEW", "APPROVALS", "RUNNING", "FAILED", "COMPLETED"):
                 metadata.update({"ui_action": "QUICK_ACTION", "quick_action": parts[2]})
                 text = f"Telegram quick action {parts[2]}"
             else:
@@ -208,6 +209,22 @@ class TelegramAdapter:
             if agent_id:
                 return [[{"text": "Capabilities", "callback_data": f"J1|AC|{agent_id}"},
                          {"text": "Provider status", "callback_data": f"J1|PS|{agent_id}"}]]
+        if details.get("view") == "CONTEXTUAL_FALLBACK":
+            # JARVIS_CONTEXTUAL_ACTIONS_V1: pure rendering of categories the
+            # service already computed and already decided are non-empty -
+            # no business logic (ownership, state filtering, counting) lives
+            # here, only turning {code, label, count} into buttons.
+            categories = details.get("categories") or []
+            rows, row = [], []
+            for category in categories:
+                row.append({"text": f"{category['label']} ({category['count']})",
+                            "callback_data": f"J1|Q|{category['code']}"})
+                if len(row) == 2:
+                    rows.append(row)
+                    row = []
+            if row:
+                rows.append(row)
+            return rows
         if response.get("status") == "PARTIAL" or response.get("response_type") == "ERROR":
             return [[{"text": "Stato NEXUS", "callback_data": "J1|Q|STATUS"},
                      {"text": "Le mie task", "callback_data": "J1|Q|TASKS"}],

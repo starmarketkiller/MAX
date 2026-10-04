@@ -133,6 +133,15 @@ def _match_state_query(value: str) -> tuple[str, ...]:
     return tuple(matched)
 
 
+def _join_it(parts):
+    """'A' / 'A e B' / 'A, B e C' - Italian list join for the contextual fallback sentence."""
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return ", ".join(parts[:-1]) + " e " + parts[-1]
+
+
 def _extract_task_id(text):
     match = _TASK_ID_RE.search(text or "")
     return match.group(0).upper() if match else None
@@ -362,6 +371,17 @@ class JarvisService:
             return self.executive_intent(message)
         if request_class == "STATE_QUERY":
             return self.state_query(message)
+        # JARVIS_CONTEXTUAL_ACTIONS_V1: the generic "I didn't understand"
+        # fallback is the one real users actually hit when a phrase isn't
+        # recognized - it should surface what's actually going on instead of
+        # always showing the same 4 static shortcuts. Still read-only, still
+        # only ever reached after every real intent above has been tried.
+        categories = self._contextual_categories(message)
+        if categories:
+            pieces = [f"{c['count']} task {c['label'].lower()}" for c in categories]
+            summary = f"Non ho capito bene la richiesta, ma al momento hai {_join_it(pieces)}."
+            return self._response(message, "ANSWER", summary, status="PARTIAL", confidence="MEDIUM",
+                                  details={"view": "CONTEXTUAL_FALLBACK", "categories": categories})
         return self._response(message, "ANSWER",
             "Non ho riconosciuto una richiesta operativa precisa. Posso creare o controllare task, "
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
@@ -533,6 +553,32 @@ class JarvisService:
         items = self._user_scoped_tasks(message)
         return items[0]["task_id"] if items else None
 
+    # JARVIS_CONTEXTUAL_ACTIONS_V1: canonical (code, Italian label, NEXUS
+    # states) buckets shown as quick-action buttons when the user's own
+    # tasks actually have something in them. "REVIEW" deliberately reuses
+    # the same BLOCKED+ESCALATION_REQUIRED union as STATE_QUERY's "bloccate"
+    # synonym (not a second, overlapping "escalation only" bucket) so the
+    # button count always matches what "Bloccate"/"Da rivedere" would show.
+    _CONTEXTUAL_ACTION_CATEGORIES = (
+        ("REVIEW", "Da rivedere", ("BLOCKED", "ESCALATION_REQUIRED")),
+        ("APPROVALS", "Da approvare", ("WAITING_APPROVAL",)),
+        ("RUNNING", "In corso", ("RUNNING",)),
+        ("FAILED", "Fallite", ("FAILED",)),
+        ("COMPLETED", "Completate", ("COMPLETED",)),
+    )
+
+    def _contextual_categories(self, message):
+        """Live, ownership-scoped counts per bucket - read only, same filter
+        every other V3/V4 resolver uses. Only non-empty buckets are returned
+        so the fallback never advertises a button that would land on an
+        empty list."""
+        categories = []
+        for code, label, states in self._CONTEXTUAL_ACTION_CATEGORIES:
+            count = len(self._user_scoped_tasks(message, states=set(states)))
+            if count:
+                categories.append({"code": code, "label": label, "count": count})
+        return categories
+
     def _resolve_task_id(self, message):
         explicit = message.get("metadata", {}).get("task_id")
         if not explicit:
@@ -654,11 +700,26 @@ class JarvisService:
         if action in ("AGENT_DETAILS", "AGENT_CAPABILITIES", "PROVIDER_STATUS"):
             return self.agent_view(message)
         if action == "QUICK_ACTION":
+            quick_action = meta.get("quick_action")
             command = {"STATUS": "/status", "TASKS": "/tasks", "AGENTS": "/agents",
-                       "HELP": "/help"}.get(meta.get("quick_action"))
+                       "HELP": "/help"}.get(quick_action)
             if command:
                 message["text"] = command
                 return self.command(message)
+            # JARVIS_CONTEXTUAL_ACTIONS_V1: these codes are only ever reached
+            # from a button this same service already decided to show (a
+            # _CONTEXTUAL_ACTION_CATEGORIES bucket that was non-empty at
+            # render time) - by the time it's tapped the state may have
+            # moved on, which state_query() already handles cleanly (a plain
+            # "nessuna tua task..." answer, never an error).
+            state_phrase = {"REVIEW": "Fammi vedere le task bloccate",
+                            "APPROVALS": "Fammi vedere le task da approvare",
+                            "RUNNING": "Fammi vedere le task in corso",
+                            "FAILED": "Fammi vedere le task fallite",
+                            "COMPLETED": "Fammi vedere le task completate"}.get(quick_action)
+            if state_phrase:
+                message["text"] = state_phrase
+                return self.state_query(message)
         return self._response(message, "ERROR", "Azione interattiva non valida.",
                               status="UNKNOWN", confidence="HIGH")
 
