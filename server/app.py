@@ -69,6 +69,7 @@ from orchestrator_v1.core.provider_policy import ProviderPolicyRegistryV1
 from orchestrator_v1.core.provider_benchmark import FreeProviderBenchmarkEngineV1
 from orchestrator_v1.core.groq_evaluation import GroqEvaluationAdapterV1
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
+from orchestrator_v1.core.shared_cognitive_state import SharedCognitiveState
 from jarvis_v1.telegram_adapter import TelegramAdapter
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Response, Cookie, Query
 from fastapi.responses import FileResponse
@@ -1398,6 +1399,10 @@ _JARVIS_STATE_DIR = Path(os.environ.get("JARVIS_STATE_DIR", str(Path(DB_PATH).pa
 JARVIS_SERVICE = JarvisService(queue_path=str(_JARVIS_STATE_DIR / "task_queue_v1.json"),
                                ledger_path=str(_JARVIS_STATE_DIR / "event_ledger_v1.jsonl"),
                                conversation_path=str(_JARVIS_STATE_DIR / "conversation_context_v2.json"))
+NEXUS_SHARED_STATE = SharedCognitiveState(
+    _JARVIS_STATE_DIR / "shared_cognitive_state_v1.json",
+    task_queue=JARVIS_SERVICE.queue,
+    ledger=JARVIS_SERVICE.ledger)
 JARVIS_GATEWAY = JarvisGateway(JARVIS_SERVICE)
 JARVIS_TELEGRAM = TelegramAdapter(JARVIS_SERVICE,
                                   state_path=str(_JARVIS_STATE_DIR / "telegram_updates_v1.json"),
@@ -1796,6 +1801,24 @@ def jarvis_task_resume_orphaned(task_id: str, user: str = Depends(require_mutati
 def jarvis_activity(limit: int = 100, user: str = Depends(require_user)):
     events = JARVIS_SERVICE.ledger.read_all()
     return {"count": len(events), "events": events[-max(1, min(limit, 500)):]}
+
+
+@app.get("/api/jarvis/context")
+def jarvis_shared_context(user: str = Depends(require_user)):
+    """Canonical current-state projection; no mutation and no secret material."""
+    production = {"git_sha": BUILD_GIT_SHA, "environment": ENVIRONMENT,
+                  "app_version": APP_VERSION, "build_time": BUILD_TIME,
+                  "provenance": {"source": "/api/version", "confidence": "VERIFIED",
+                                 "observed_at": iso()}}
+    provider_states = [{"provider_id": item.get("provider_id"),
+                        "state": item.get("state"),
+                        "configured": item.get("configured")}
+                       for item in JARVIS_PROVIDER_POLICY.public_registry(
+                           JARVIS_PROVIDER_CONNECTOR.statuses(),
+                           JARVIS_PROVIDER_BENCHMARKS.list_results())["providers"]]
+    return NEXUS_SHARED_STATE.build_context_packet(
+        agent_states=JARVIS_SERVICE.agents(), provider_states=provider_states,
+        production_identity=production)
 
 
 @app.get("/api/jarvis/agents")

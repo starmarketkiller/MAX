@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/context-packet-v2.schema.json",
+  "title": "NEXUS CONTEXT_PACKET_V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "state_revision", "freshness", "production", "current_milestone", "closed_milestones", "next_priorities", "blockers", "active_tasks", "work_graph", "artifact_reservations", "active_decisions", "latest_result_packets", "agents", "providers", "source_refs"],
+  "properties": {
+    "schema_version": {"const": "CONTEXT_PACKET_V2"},
+    "freshness": {"enum": ["CURRENT", "STALE", "PARTIAL", "UNKNOWN"]},
+    "generated_at": {"type": "string"},
+    "state_revision": {"type": "integer", "minimum": 0},
+    "production": {"type": "object"},
+    "current_milestone": {"type": ["object", "null"]},
+    "closed_milestones": {"type": "array"},
+    "roadmap_completion": {"type": ["number", "null"]},
+    "next_priorities": {"type": "array"},
+    "blockers": {"type": "array"},
+    "active_tasks": {"type": "array"},
+    "work_graph": {"type": "object"},
+    "artifact_reservations": {"type": "array"},
+    "active_decisions": {"type": "array"},
+    "latest_result_packets": {"type": "array"},
+    "agents": {"type": "array"},
+    "providers": {"type": "array"},
+    "source_refs": {"type": "object"}
+  }
+}

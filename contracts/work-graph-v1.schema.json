@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/work-graph-v1.schema.json",
+  "title": "NEXUS WORK_GRAPH_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["workstreams", "dependencies"],
+  "properties": {
+    "workstreams": {"type": "array", "items": {"type": "object", "required": ["id", "name", "status", "owner", "provenance"]}},
+    "dependencies": {"type": "array", "items": {"type": "object", "required": ["from_id", "to_id", "relation", "provenance"]}}
+  }
+}

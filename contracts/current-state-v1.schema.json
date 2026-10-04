@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.local/contracts/current-state-v1.schema.json",
+  "title": "NEXUS CURRENT_STATE_V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["production", "current_milestone", "closed_milestones", "roadmap_completion", "next_priorities", "blockers", "agent_provider_state"],
+  "properties": {
+    "production": {"type": "object"},
+    "current_milestone": {"type": ["object", "null"]},
+    "closed_milestones": {"type": "array"},
+    "roadmap_completion": {"type": ["number", "null"], "minimum": 0, "maximum": 100},
+    "next_priorities": {"type": "array"},
+    "blockers": {"type": "array"},
+    "agent_provider_state": {"type": "array"},
+    "provenance": {"type": "object"}
+  }
+}
