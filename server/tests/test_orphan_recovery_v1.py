@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 import app as backend
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler
-from jarvis_v1.service import JarvisService
+from jarvis_v1.service import JarvisService, classify
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.orchestrator import Orchestrator
 
@@ -293,3 +293,75 @@ def test_telegram_resume_on_wrong_state_reports_refusal_not_a_crash(tmp_path):
     response = service.command(message)
     assert response["response_type"] == "ERROR"
     assert response["status"] == "REFUSED"
+
+
+# --- RESUME_COMMAND_ROUTING_PRECEDENCE_FIX_V1 -------------------------------
+# The real production bug: "riprendi TASK_4517052FD6EC" never reached
+# command() at all - classify() routed it to TASK_REQUEST first (is_
+# programming_request() already claims the bare word "riprendi" for a
+# different, pre-existing meaning), so create_task() ran and made a brand
+# new task (TASK_D47B5B49D79F) instead of resuming the referenced one. The
+# tests above call service.command() directly, which exercises the handler
+# but NOT the classify() gate that actually failed in production - these new
+# ones go through service.handle(), the real top-level entry point, so this
+# class of bug cannot hide again.
+
+@pytest.mark.parametrize("verb", ["riprendi", "riattiva", "resume"])
+def test_classify_explicit_resume_with_task_id_routes_to_command(verb):
+    assert classify(f"{verb} TASK_4517052FD6EC") == "COMMAND"
+    assert classify(f"{verb} la task TASK_4517052FD6EC per favore") == "COMMAND"
+    assert classify(f"TASK_4517052FD6EC, {verb} questa") == "COMMAND"
+
+
+def test_classify_bare_riprendi_without_task_id_is_unaffected():
+    # No task_id present - must still fall through to the pre-existing
+    # conversational-programming continuation path, unchanged.
+    assert classify("riprendi il lavoro sul modulo di autenticazione") == "TASK_REQUEST"
+    assert classify("riprendi pure quando vuoi") == "TASK_REQUEST"
+
+
+@pytest.mark.parametrize("verb", ["riprendi", "riattiva", "resume"])
+def test_handle_resume_with_task_id_does_not_create_a_new_task(tmp_path, verb):
+    """The exact repro: 'riprendi TASK_4517052FD6EC' through the real
+    top-level service.handle() entry point - the one classify() actually
+    gates - must resume the SAME task_id and create nothing new."""
+    orch, bridge = build(tmp_path)
+    task_id = submit_and_orphan(orch, value=manifest(task_id="TASK_REAL_REPRO",
+                                                      created_by="jarvis:77"))
+    before_count = len(orch.queue.list_all())
+    service = JarvisService(queue_path=tmp_path / "unused_queue.json",
+                            ledger_path=tmp_path / "unused_ledger.json")
+    service.orchestrator = orch
+    service.queue = orch.queue
+    service.ledger = orch.ledger
+
+    message = {"message_id": "m3", "conversation_id": "conv-3", "user_id": 77,
+              "channel": "telegram", "input_type": "TEXT", "priority": "NORMAL",
+              "text": f"{verb} {task_id}", "metadata": {}}
+    response = service.handle(message)
+
+    assert response["task_id"] == task_id  # the SAME task_id, never a new one
+    assert response["status"] == "QUEUED"
+    assert orch.queue.get(task_id)["state"] == "QUEUED"
+    assert len(orch.queue.list_all()) == before_count  # no new task created
+
+
+def test_handle_bare_riprendi_without_task_id_still_creates_a_task(tmp_path):
+    """Regression guard: the pre-existing conversational-programming
+    continuation behaviour (bare 'riprendi', no explicit task_id) must be
+    completely unaffected by this fix."""
+    orch, bridge = build(tmp_path, with_bridge=False)
+    service = JarvisService(queue_path=tmp_path / "unused_queue.json",
+                            ledger_path=tmp_path / "unused_ledger.json")
+    service.orchestrator = orch
+    service.queue = orch.queue
+    service.ledger = orch.ledger
+
+    before_count = len(orch.queue.list_all())
+    message = {"message_id": "m4", "conversation_id": "conv-4", "user_id": 77,
+              "channel": "telegram", "input_type": "TEXT", "priority": "NORMAL",
+              "text": "riprendi il lavoro sul modulo di autenticazione", "metadata": {}}
+    response = service.handle(message)
+
+    assert response["response_type"] == "TASK_ACK"
+    assert len(orch.queue.list_all()) == before_count + 1  # a new task IS created, as before

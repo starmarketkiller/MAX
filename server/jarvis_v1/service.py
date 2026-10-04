@@ -48,11 +48,26 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
+_EXPLICIT_RESUME_TASK = re.compile(
+    r"\b(riprendi|riattiva|resume)\b.*\bTASK_[A-Z0-9_]+\b|"
+    r"\bTASK_[A-Z0-9_]+\b.*\b(riprendi|riattiva|resume)\b", re.I)
+
+
 def classify(text: str, metadata: dict | None = None) -> str:
     value = (text or "").strip().lower()
     metadata = metadata or {}
     action = str(metadata.get("approval_action") or "").upper()
     if metadata.get("confirm_cancel"):
+        return "COMMAND"
+    # SAFE_ORPHANED_TASK_RESUME_V1: an explicit "riprendi/riattiva/resume
+    # TASK_<id>" must win absolute precedence over generic conversational
+    # task creation below - is_programming_request() already claims the bare
+    # word "riprendi" for a DIFFERENT, pre-existing meaning (continue/follow
+    # up on the last referenced programming task, via _REFERENCE_WORDS in
+    # programming.py). Only the explicit-task-id form is intercepted here;
+    # a bare "riprendi" with no task_id still flows through exactly as
+    # before (TASK_REQUEST -> conversational follow-up), zero regression.
+    if _EXPLICIT_RESUME_TASK.search(text or ""):
         return "COMMAND"
     if value.startswith("/") or re.search(
             r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
