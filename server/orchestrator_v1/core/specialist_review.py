@@ -20,6 +20,17 @@ from __future__ import annotations
 
 HUMAN_REJECTED_REWORK_REQUESTED = "HUMAN_REJECTED_REWORK_REQUESTED"
 
+# LOCAL_VERIFIER_REJECTED_TO_DYNAMIC_REVIEW_V1: the second door into the same
+# Dynamic Specialist Review - fail_local_bridge_task() parks a task at
+# ESCALATION_REQUIRED/target=MANUAL_REVIEW when the Local Agent Bridge
+# exhausts its bounded retries because the verifier rejected the local
+# model's own output (never a human reject). A distinct classification from
+# HUMAN_REJECTED_REWORK_REQUESTED so the audit trail/a caller can always
+# tell which doorway a given review came through - same candidate
+# selection, availability/policy/call machinery and rework hand-back either
+# way, one state machine, two doors.
+LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED = "LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED"
+
 # Ordered by preference within each work_type - capability (can this role
 # review this kind of change at all) already filters the key set; a caller
 # still checks each candidate's live state() in order and stops at the first

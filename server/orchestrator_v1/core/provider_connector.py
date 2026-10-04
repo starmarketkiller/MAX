@@ -14,8 +14,9 @@ from datetime import datetime, timedelta, timezone
 
 from core.dispatcher import _sanitized_error
 from core.result_packet import build_result_packet, now_iso
-from core.specialist_review import (HUMAN_REJECTED_REWORK_REQUESTED, select_reviewer_candidates,
-                                   validate_rework_response)
+from core.specialist_review import (HUMAN_REJECTED_REWORK_REQUESTED,
+                                   LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED,
+                                   select_reviewer_candidates, validate_rework_response)
 from core.context_packet import build_review_packet
 
 try:
@@ -96,6 +97,16 @@ class MockProviderAdapter(ProviderAdapterV1):
 
 
 class ProviderConnectorV1:
+    # LOCAL_VERIFIER_REJECTED_TO_DYNAMIC_REVIEW_V1: a rework cycle is "used"
+    # only once a reviewer's REWORK_INSTRUCTIONS actually reach the local
+    # worker (_apply_rework) - a provider that is merely unavailable (parked
+    # in WAITING_REVIEW_PROVIDER) never consumes one. The budget is shared by
+    # the WHOLE lineage regardless of which door (human reject or local
+    # verifier reject) opened each cycle, so a loop like
+    # "local fail -> review -> local fail -> review -> ..." cannot run
+    # forever - it always terminates at MANUAL_REVIEW.
+    MAX_REWORK_CYCLES = 2
+
     def __init__(self, orchestrator, adapters=None, *, timeout_seconds=90, max_attempts=2,
                  telegram_notifier=None):
         self.orchestrator = orchestrator
@@ -152,7 +163,8 @@ class ProviderConnectorV1:
             raise AssertionError(f"provider connector requires ESCALATION_REQUIRED, got {record['state']}")
         escalation = record.get("escalation") or {}
         target = escalation.get("target")
-        is_review = escalation.get("classification") == HUMAN_REJECTED_REWORK_REQUESTED
+        is_review = escalation.get("classification") in (
+            HUMAN_REJECTED_REWORK_REQUESTED, LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED)
         # A dynamic specialist review already resolved `target` to a live
         # provider_id (select_reviewer_candidates + state() check) - never a
         # fixed tier name, so it is used directly instead of through
@@ -273,6 +285,21 @@ class ProviderConnectorV1:
                 if self._advance_candidate_escalation(record, escalation):
                     return True
                 continue
+            # LOCAL_VERIFIER_REJECTED_TO_DYNAMIC_REVIEW_V1: a FRESH
+            # fail_local_bridge_task() escalation (no `candidates` key yet -
+            # that is exactly what distinguishes it from one already in
+            # review, including a budget-exhausted terminal one, whose
+            # classification is LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED, not
+            # this raw failure_class string) is converted into a real
+            # Dynamic Specialist Review escalation here, once. Scoped
+            # deliberately to this one failure_class - a different
+            # MANUAL_REVIEW cause (e.g. LOCAL_MODEL_UNAVAILABLE) still dead-
+            # ends exactly as before, unchanged.
+            if (escalation.get("target") == "MANUAL_REVIEW" and
+                    escalation.get("classification") == "LOCAL_VERIFIER_REJECTED"):
+                self.request_review_after_local_failure(record["task_id"],
+                                                        escalation["classification"])
+                return True
             target = escalation.get("target")
             provider_id = TARGET_PROVIDER.get(target)
             if provider_id and provider_id in self.adapters and self.adapters[provider_id].state() in (
@@ -394,6 +421,50 @@ class ProviderConnectorV1:
                     "WAITING_REVIEW_PROVIDER")
         return False
 
+    def _rework_cycles_used(self, task_id):
+        """Counted from the Ledger (append-only, never reset) rather than a
+        stored field on the record - correct even for a lineage whose first
+        cycle happened before this budget existed (e.g. a task already
+        reworked once via the human-reject door), with no migration needed."""
+        return sum(1 for event in self.ledger.read_for_task(task_id)
+                  if event["event_type"] == "REWORK_INSTRUCTIONS_RECEIVED")
+
+    def _begin_review(self, task_id, reject_reason, classification):
+        """Shared entry point for both doors into the NEXUS Dynamic
+        Specialist Review - a human REJECTed a WAITING_APPROVAL patch
+        (request_review) or the Local Agent Bridge exhausted its bounded
+        retries because the verifier rejected the local model's own output
+        (request_review_after_local_failure). Same candidate selection,
+        availability/policy/call machinery and rework hand-back either way -
+        one state machine, two doors - and MAX_REWORK_CYCLES is enforced
+        here, once, shared by the whole lineage regardless of which door
+        opened each prior cycle."""
+        cycles_used = self._rework_cycles_used(task_id)
+        if cycles_used >= self.MAX_REWORK_CYCLES:
+            record = self.queue.get(task_id)
+            self.queue.transition(task_id, "ESCALATION_REQUIRED", escalation={
+                "target": "MANUAL_REVIEW", "classification": classification,
+                "reject_reason": reject_reason, "rework_budget_exhausted": True})
+            self.ledger.append("REWORK_BUDGET_EXHAUSTED", task_id,
+                {"cycles_used": cycles_used, "max_cycles": self.MAX_REWORK_CYCLES,
+                 "classification": classification}, actor="provider_connector_v1")
+            self._notify(record, f"Budget di rework esaurito per {task_id} "
+                        f"({cycles_used}/{self.MAX_REWORK_CYCLES} cicli usati). "
+                        "Serve una revisione manuale.", "MANUAL_REVIEW")
+            return self.queue.get(task_id)
+        record = self.queue.get(task_id)
+        candidates = select_reviewer_candidates(record["manifest"].get("work_type"))
+        context = build_review_packet(record, reject_reason)
+        escalation = {"target": None, "classification": classification,
+                     "candidates": candidates, "initial_candidates": list(candidates),
+                     "context_packet": context, "reject_reason": reject_reason}
+        self.queue.transition(task_id, "ESCALATION_REQUIRED", escalation=escalation)
+        self.ledger.append("REVIEW_REQUESTED", task_id,
+            {"candidates": candidates, "cycles_used_before": cycles_used,
+             "max_cycles": self.MAX_REWORK_CYCLES}, actor="provider_connector_v1")
+        self._advance_candidate_escalation(self.queue.get(task_id), escalation)
+        return self.queue.get(task_id)
+
     def request_review(self, task_id, reject_reason):
         """Entry point for the NEXUS Dynamic Specialist Review: a human
         REJECTed a proposed patch. Never writes/executes a patch itself -
@@ -405,18 +476,32 @@ class ProviderConnectorV1:
         record = self.queue.get(task_id)
         if record["state"] != "WAITING_APPROVAL":
             raise AssertionError("specialist review requires WAITING_APPROVAL")
-        candidates = select_reviewer_candidates(record["manifest"].get("work_type"))
-        context = build_review_packet(record, reject_reason)
-        escalation = {"target": None, "classification": HUMAN_REJECTED_REWORK_REQUESTED,
-                     "candidates": candidates, "initial_candidates": list(candidates),
-                     "context_packet": context, "reject_reason": reject_reason}
-        self.queue.transition(task_id, "ESCALATION_REQUIRED", escalation=escalation)
         self.ledger.append("HUMAN_REJECTED", task_id, {"reason": reject_reason},
                            actor="provider_connector_v1")
-        self.ledger.append("REVIEW_REQUESTED", task_id, {"candidates": candidates},
+        return self._begin_review(task_id, reject_reason, HUMAN_REJECTED_REWORK_REQUESTED)
+
+    def request_review_after_local_failure(self, task_id, failure_class):
+        """LOCAL_VERIFIER_REJECTED_TO_DYNAMIC_REVIEW_V1: the second door into
+        the same Dynamic Specialist Review. fail_local_bridge_task() already
+        parked the task at ESCALATION_REQUIRED/target=MANUAL_REVIEW when the
+        Local Agent Bridge exhausted its bounded retries because the
+        verifier rejected the local model's own output - never a human
+        reject, and no proposed_patch exists yet (the attempt never reached
+        WAITING_APPROVAL). build_review_packet() already degrades
+        gracefully to '(nessuna patch disponibile)' for that case, reused
+        unchanged - no second context-building path."""
+        record = self.queue.get(task_id)
+        if record["state"] != "ESCALATION_REQUIRED":
+            raise AssertionError(
+                f"local-failure review requires ESCALATION_REQUIRED, got {record['state']}")
+        escalation = record.get("escalation") or {}
+        if escalation.get("target") != "MANUAL_REVIEW" or escalation.get("classification") != failure_class:
+            raise AssertionError("local-failure review only applies to fail_local_bridge_task's "
+                                 "own fresh MANUAL_REVIEW escalation")
+        self.ledger.append("LOCAL_VERIFIER_REJECTED", task_id, {"failure_class": failure_class},
                            actor="provider_connector_v1")
-        self._advance_candidate_escalation(self.queue.get(task_id), escalation)
-        return self.queue.get(task_id)
+        return self._begin_review(task_id, f"local verifier rejected: {failure_class}",
+                                  LOCAL_VERIFIER_REJECTED_REVIEW_REQUIRED)
 
     def _apply_rework(self, task_id, result, provider_id, key, attempts, duration, request):
         """A specialist review never completes the task - its output is
