@@ -11,6 +11,8 @@ import app as backend
 from jarvis_v1.free_coding_worker import FreeCodingWorkerHandler
 from orchestrator_v1.core.local_agent_bridge import LocalAgentBridgeV1
 from orchestrator_v1.core.orchestrator import Orchestrator
+from orchestrator_v1.core.provider_connector import MockProviderAdapter, ProviderConnectorV1
+from orchestrator_v1.core.router import route
 
 
 SECRET = "s" * 48
@@ -180,6 +182,171 @@ def test_retry_is_bounded_to_one_and_completed_task_cannot_be_reclaimed(tmp_path
     assert failed["state"] == "ESCALATION_REQUIRED"
     assert failed["result_packet"]["decision"] == "ESCALATION_REQUIRED"
     assert bridge.claim("pc-1", ["complex_code_change"]) is None
+
+
+def _seed_job(bridge, task_id, status):
+    """Directly write a job row in a given status - used only for EXPIRED,
+    which nothing in this module ever actually assigns (see
+    ACTIVE_JOB_STATES' docstring) but the guard must still treat as inactive
+    for forward compatibility."""
+    data = bridge._load()
+    data["jobs"][task_id] = {
+        "job_id": "lab_seed", "task_id": task_id, "status": status,
+        "capability": bridge.CAPABILITY, "executor": "TIER2_LOCAL_STRONG",
+        "model": "ministral3b", "prompt": "STALE_PROMPT_FROM_PREVIOUS_LIFECYCLE",
+        "task_record": {}, "attempts": 0, "lease": None,
+        "created_at": "2020-01-01T00:00:00+00:00", "updated_at": "2020-01-01T00:00:00+00:00",
+        "result_id": None, "result_digest": None,
+    }
+    bridge._save(data)
+
+
+def test_active_job_states_are_exactly_queued_and_leased():
+    # LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1's own audit, pinned so a future
+    # change to this module can't silently reintroduce a third "active" value
+    # (e.g. a RUNNING/EXECUTING/CLAIMED alias) without a deliberate review.
+    assert LocalAgentBridgeV1.ACTIVE_JOB_STATES == {"QUEUED", "LEASED"}
+
+
+def test_completed_existing_job_allows_rework_redispatch(tmp_path):
+    orch, bridge = build(tmp_path)
+    task_id = submit(orch)
+    record = orch.process_task(task_id)
+    assert record["state"] == "WAITING_PROVIDER"
+    claim = bridge.claim("pc-1", ["complex_code_change"])
+    response = json.dumps({"summary": "bounded", "changes": [
+        {"path": "src/sample.py", "content": "VALUE = 2\n"}]})
+    verification = {"passed": True, "model": "ministral", "test_results": []}
+    first = bridge.submit_result(task_id, "pc-1", claim["lease"]["token"], "result-1",
+                                 response, verification)
+    assert first["state"] == "WAITING_APPROVAL"
+    assert bridge._load()["jobs"][task_id]["status"] == "COMPLETED"
+
+    # A legitimate rework of the SAME task_id (no new task created) hands it
+    # back to QUEUED, exactly like ProviderConnectorV1._apply_rework does.
+    orch.queue.transition(task_id, "QUEUED")
+    second = orch.process_task(task_id)
+    assert second["state"] == "WAITING_PROVIDER"  # NOT stuck in RUNNING - the exact production bug
+    job = bridge._load()["jobs"][task_id]
+    assert job["status"] == "QUEUED"  # a brand new job row, not the stale COMPLETED one
+    assert job["prompt"] != "STALE_PROMPT_FROM_PREVIOUS_LIFECYCLE"
+    reclaimed = bridge.claim("pc-1", ["complex_code_change"])
+    assert reclaimed is not None and reclaimed["task_id"] == task_id
+
+
+def test_failed_existing_job_allows_rework_redispatch(tmp_path):
+    orch, bridge = build(tmp_path)
+    task_id = submit(orch)
+    orch.process_task(task_id)
+    first_claim = bridge.claim("pc-1", ["complex_code_change"])
+    bridge.report_failure(task_id, "pc-1", first_claim["lease"]["token"], "MODEL_OFFLINE")
+    second_claim = bridge.claim("pc-1", ["complex_code_change"])
+    bridge.report_failure(task_id, "pc-1", second_claim["lease"]["token"], "MODEL_OFFLINE")
+    assert bridge._load()["jobs"][task_id]["status"] == "FAILED"  # retries exhausted
+    assert orch.queue.get(task_id)["state"] == "ESCALATION_REQUIRED"
+
+    orch.queue.transition(task_id, "QUEUED")
+    record = orch.process_task(task_id)
+    assert record["state"] == "WAITING_PROVIDER"  # redispatch allowed, as before this fix too
+    assert bridge._load()["jobs"][task_id]["status"] == "QUEUED"
+    assert bridge.claim("pc-1", ["complex_code_change"]) is not None
+
+
+def test_expired_existing_job_allows_rework_redispatch(tmp_path):
+    # Nothing in this module assigns "EXPIRED" today (see ACTIVE_JOB_STATES'
+    # docstring) - this pins the guard's behaviour anyway, for forward
+    # compatibility with a future lease-sweep that might.
+    orch, bridge = build(tmp_path)
+    task_id = submit(orch)
+    _seed_job(bridge, task_id, "EXPIRED")
+    record = orch.process_task(task_id)
+    assert record["state"] == "WAITING_PROVIDER"
+    job = bridge._load()["jobs"][task_id]
+    assert job["status"] == "QUEUED"
+    assert job["prompt"] != "STALE_PROMPT_FROM_PREVIOUS_LIFECYCLE"
+
+
+def test_queued_job_blocks_double_dispatch(tmp_path):
+    orch, bridge = build(tmp_path)
+    task_id = submit(orch)
+    record = orch.process_task(task_id)
+    assert record["state"] == "WAITING_PROVIDER"
+    job_before = bridge._load()["jobs"][task_id]
+    assert job_before["status"] == "QUEUED"
+
+    decision = route(orch.queue.get(task_id))
+    handler = orch.local_handlers["conversational_programming"]
+    dispatched_again = bridge.dispatch(orch.queue.get(task_id), decision, handler)
+    assert dispatched_again is True  # caller-visible contract unchanged
+    job_after = bridge._load()["jobs"][task_id]
+    assert job_after == job_before  # but nothing was rewritten - still the same in-flight job
+
+
+def test_leased_job_blocks_double_dispatch(tmp_path):
+    orch, bridge = build(tmp_path)
+    task_id = submit(orch)
+    orch.process_task(task_id)
+    bridge.claim("pc-1", ["complex_code_change"])
+    job_before = bridge._load()["jobs"][task_id]
+    assert job_before["status"] == "LEASED"
+
+    decision = route(orch.queue.get(task_id))
+    handler = orch.local_handlers["conversational_programming"]
+    dispatched_again = bridge.dispatch(orch.queue.get(task_id), decision, handler)
+    assert dispatched_again is True
+    job_after = bridge._load()["jobs"][task_id]
+    assert job_after == job_before  # still leased to the same bridge - no second job created
+
+
+def test_rework_after_human_reject_redispatches_through_the_bridge(tmp_path):
+    """LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1's own motivating scenario,
+    replayed end-to-end exactly as it happened in production on
+    TASK_4517052FD6EC: a bridge-executed patch is rejected, GROQ (modeled
+    here as a MockProviderAdapter - the real adapter is covered by
+    test_groq_review_adapter_v1.py) sends back REWORK_INSTRUCTIONS for the
+    SAME task_id, and the bridge must accept a brand new job for it instead
+    of silently no-op'ing on the first run's COMPLETED job entry."""
+    orch, bridge = build(tmp_path)
+    # premium_allowed=True: ProviderConnectorV1.process_task's own budget gate
+    # (unrelated to this fix) requires it before a reviewer call is allowed
+    # through, same as every other Dynamic Specialist Review test.
+    task_id = submit(orch, manifest(task_id="TASK_BRIDGE_REWORK", premium_allowed=True))
+    record = orch.process_task(task_id)
+    assert record["state"] == "WAITING_PROVIDER"
+    claim = bridge.claim("pc-1", ["complex_code_change"])
+    response = json.dumps({"summary": "bounded", "changes": [
+        {"path": "src/sample.py", "content": "VALUE = 2\n"}]})
+    verification = {"passed": True, "model": "ministral", "test_results": []}
+    first = bridge.submit_result(task_id, "pc-1", claim["lease"]["token"], "result-1",
+                                 response, verification)
+    assert first["state"] == "WAITING_APPROVAL"
+    assert first["proposed_patch"]["changes"][0]["content"] == "VALUE = 2\n"
+    assert bridge._load()["jobs"][task_id]["status"] == "COMPLETED"
+
+    reviewer = MockProviderAdapter("CLAUDE", "AVAILABLE", result={
+        "problems_found": ["wrong value"], "rework_instructions": "use VALUE = 3, not 2",
+        "allowed_paths": ["src/sample.py"], "required_tests": [], "risks": []})
+    connector = ProviderConnectorV1(orch, {"CLAUDE": reviewer})
+    rejected = connector.request_review(task_id, "human rejected: wrong value")
+    assert rejected["state"] == "QUEUED"  # handed back for local rework, never completed here
+    assert rejected["escalation"]["target"] == "CLAUDE"
+
+    second = orch.process_task(task_id)
+    assert second["state"] == "WAITING_PROVIDER"  # NOT stuck in RUNNING - the exact bug
+    job = bridge._load()["jobs"][task_id]
+    assert job["status"] == "QUEUED"  # a fresh job, not the stale COMPLETED one from the first run
+
+    second_claim = bridge.claim("pc-1", ["complex_code_change"])
+    assert second_claim is not None and second_claim["task_id"] == task_id
+    assert "VALUE = 3" in second_claim["prompt"]  # the rework instructions reached the new job
+
+    reworked_response = json.dumps({"summary": "fixed", "changes": [
+        {"path": "src/sample.py", "content": "VALUE = 3\n"}]})
+    final = bridge.submit_result(task_id, "pc-1", second_claim["lease"]["token"], "result-2",
+                                 reworked_response, verification)
+    assert final["state"] == "WAITING_APPROVAL"
+    assert final["proposed_patch"]["changes"][0]["content"] == "VALUE = 3\n"
+    assert final["result_packet"]["decision"] == "PATCH_READY_AWAITING_APPROVAL"  # fresh, not stale
 
 
 def test_bridge_client_has_no_generic_shell_push_or_deploy_interface():

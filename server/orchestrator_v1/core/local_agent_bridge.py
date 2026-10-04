@@ -27,6 +27,24 @@ class LocalAgentBridgeV1:
     CAPABILITY = "complex_code_change"
     MAX_ATTEMPTS = 2  # initial execution plus one bounded retry
 
+    # LOCAL_BRIDGE_REWORK_REDISPATCH_FIX_V1: the complete set of values ever
+    # assigned to a job's "status" in this module is QUEUED (dispatch(), and
+    # report_failure()'s retry reset), LEASED (claim()), FAILED (claim()'s own
+    # lost-task-record cleanup and report_failure()'s exhausted-attempts
+    # terminal state) and COMPLETED (submit_result()) - audited by grepping
+    # every `job["status"] = ...` / `job.update({"status": ...})` site below.
+    # "EXPIRED" is accepted as a synonym for "not active" (kept for forward
+    # compatibility with a future lease-sweep) but nothing assigns it today.
+    #
+    # Only QUEUED/LEASED mean "this job is still pending or being worked on
+    # right now" - dispatch()'s idempotency guard must short-circuit on those
+    # ONLY. Treating COMPLETED as "not FAILED/EXPIRED, so still active" (the
+    # pre-fix guard) silently blocked every legitimate rework re-dispatch of
+    # an already-completed task_id: the Dynamic Specialist Review hands the
+    # SAME task_id back to QUEUED after a human reject + reviewer rework, and
+    # dispatch() must be able to queue a fresh job for it.
+    ACTIVE_JOB_STATES = {"QUEUED", "LEASED"}
+
     def __init__(self, orchestrator, *, state_path, secret="", heartbeat_ttl=45,
                  lease_seconds=300, max_requests_per_minute=60, clock=time.time):
         self.orchestrator = orchestrator
@@ -137,7 +155,7 @@ class LocalAgentBridgeV1:
         with self._lock:
             data = self._load()
             existing = data["jobs"].get(task_record["task_id"])
-            if existing and existing["status"] not in ("FAILED", "EXPIRED"):
+            if existing and existing["status"] in self.ACTIVE_JOB_STATES:
                 return True
             data["jobs"][task_record["task_id"]] = {
                 "job_id": f"lab_{uuid.uuid4().hex[:16]}", "task_id": task_record["task_id"],
