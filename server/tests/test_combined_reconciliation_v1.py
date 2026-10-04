@@ -202,3 +202,47 @@ def test_dynamic_specialist_review_active_after_natural_language_reject(service)
     response = JarvisGateway(service).handle(message("rifiutala"))
     assert response["status"] == "QUEUED"
     assert claude.calls
+
+
+# Real production incident, 2026-10-04: "Usa groq"/"Usa codex" sent via
+# Telegram got NO reply at all. jarvis-response.schema.json's response_type
+# enum was extended for PREFERENCE_SET/CLARIFICATION_REQUIRED, but
+# jarvis-message.schema.json's request_class enum (validated by
+# JarvisGateway.handle() on the INCOMING message, built by
+# TelegramAdapter.parse_update() before the service ever runs) was not -
+# every PROVIDER_PREFERENCE/NOTIFICATION_PREFERENCE message raised
+# ValueError inside the webhook, which app.py maps to an HTTP 422 with no
+# Telegram send() ever attempted. All of this only surfaces through the
+# REAL TelegramAdapter.handle_update() webhook path - calling
+# JarvisService.handle() or even JarvisGateway.handle() directly with a
+# hand-built message (as every other test in this file and in
+# test_natural_conversation_v3.py does) never exercises parse_update() and
+# therefore never catches it. These tests go through handle_update() with a
+# raw Telegram update dict specifically so this class of bug cannot hide
+# behind a hand-built message again.
+def _raw_text_update(update_id, text, chat_id=99, user_id=77):
+    return {"update_id": update_id, "message": {"chat": {"id": chat_id},
+            "from": {"id": user_id}, "text": text}}
+
+
+def test_provider_preference_text_message_survives_the_real_webhook_path(tmp_path, monkeypatch):
+    svc = JarvisService(str(tmp_path / "q2.json"), str(tmp_path / "l2.jsonl"),
+                        str(tmp_path / "c2.json"))
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: False)
+    adapter = TelegramAdapter(svc, tmp_path / "seen2.json", token="x", allowed_users=["77"],
+                              gateway=JarvisGateway(svc))
+    for i, text in enumerate(["Usa groq", "Usa codex", "non usare premium"]):
+        response = adapter.handle_update(_raw_text_update(3000 + i, text))
+        assert response["response_type"] == "PREFERENCE_SET"
+
+
+def test_notification_preference_text_message_survives_the_real_webhook_path(tmp_path, monkeypatch):
+    svc = JarvisService(str(tmp_path / "q3.json"), str(tmp_path / "l3.jsonl"),
+                        str(tmp_path / "c3.json"))
+    monkeypatch.setattr("jarvis_v1.service.is_ollama_reachable", lambda timeout=1: False)
+    adapter = TelegramAdapter(svc, tmp_path / "seen3.json", token="x", allowed_users=["77"],
+                              gateway=JarvisGateway(svc))
+    for i, text in enumerate(["dimmi solo quando finisce", "non disturbarmi",
+                              "avvisami se serve approvazione"]):
+        response = adapter.handle_update(_raw_text_update(4000 + i, text))
+        assert response["response_type"] == "PREFERENCE_SET"
