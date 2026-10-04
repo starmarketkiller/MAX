@@ -41,8 +41,15 @@ def _log(message):
 
 
 class BridgeClient:
+    # BRIDGE_HEARTBEAT_DURING_EXECUTION_V1: comfortably under the server's
+    # default HEARTBEAT_TTL (45s, NEXUS_LOCAL_AGENT_BRIDGE_HEARTBEAT_TTL) so a
+    # job that runs long never makes the server classify this bridge OFFLINE
+    # while it is genuinely still working.
+    DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 15
+
     def __init__(self, *, base_url, bridge_id, secret, project_root=ROOT,
-                 poll_seconds=3, timeout=30, opener=urllib.request.urlopen):
+                 poll_seconds=3, timeout=30, opener=urllib.request.urlopen,
+                 heartbeat_interval_seconds=None):
         if len(secret or "") < 32:
             raise ValueError("NEXUS_LOCAL_AGENT_BRIDGE_SECRET must contain at least 32 characters")
         self.base_url = base_url.rstrip("/")
@@ -50,6 +57,9 @@ class BridgeClient:
             raise ValueError("bridge requires HTTPS except for localhost development")
         self.bridge_id, self.secret = bridge_id, secret
         self.poll_seconds, self.timeout, self.opener = float(poll_seconds), int(timeout), opener
+        self.heartbeat_interval_seconds = float(
+            heartbeat_interval_seconds if heartbeat_interval_seconds is not None
+            else self.DEFAULT_HEARTBEAT_INTERVAL_SECONDS)
         self.handler = FreeCodingWorkerHandler(
             project_root=project_root,
             workspace_root=Path(os.environ.get("NEXUS_LOCAL_AGENT_WORKSPACE",
@@ -92,12 +102,29 @@ class BridgeClient:
                 # authoritative and will fail closed if the lease did expire.
                 continue
 
+    def _heartbeat_loop(self, stopped):
+        """BRIDGE_HEARTBEAT_DURING_EXECUTION_V1: keeps the bridge's ONLINE
+        status alive on the server while execute() is blocked inside a long
+        local model call - completely independent of lease renewal (claim/
+        lease/idempotency semantics are untouched; this never claims or
+        executes a job, only reports liveness). Same resilience pattern as
+        _renew_loop: a transient heartbeat failure never aborts the job
+        currently executing - result/failure submission stays authoritative."""
+        while not stopped.wait(self.heartbeat_interval_seconds):
+            try:
+                self.heartbeat()
+            except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+                continue
+
     def execute(self, job):
         task_id, lease = job["task_id"], job["lease"]
         stopped = threading.Event()
         renewer = threading.Thread(target=self._renew_loop,
                                    args=(task_id, lease["token"], stopped), daemon=True)
+        heartbeater = threading.Thread(target=self._heartbeat_loop,
+                                       args=(stopped,), daemon=True)
         renewer.start()
+        heartbeater.start()
         try:
             call = ollama_worker.call_local_model(job["prompt"], model=job["model"])
             if not call["success"]:
@@ -121,6 +148,7 @@ class BridgeClient:
         finally:
             stopped.set()
             renewer.join(timeout=1)
+            heartbeater.join(timeout=1)
 
     def run_once(self):
         self.heartbeat()
@@ -163,7 +191,10 @@ def from_environment():
         bridge_id=os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_ID", "workstation-1").strip(),
         secret=os.environ.get("NEXUS_LOCAL_AGENT_BRIDGE_SECRET", ""),
         project_root=Path(os.environ.get("NEXUS_REPO_ROOT", str(ROOT))).resolve(),
-        poll_seconds=float(os.environ.get("NEXUS_LOCAL_AGENT_POLL_SECONDS", "3")))
+        poll_seconds=float(os.environ.get("NEXUS_LOCAL_AGENT_POLL_SECONDS", "3")),
+        heartbeat_interval_seconds=float(os.environ.get(
+            "NEXUS_LOCAL_AGENT_HEARTBEAT_INTERVAL_SECONDS",
+            str(BridgeClient.DEFAULT_HEARTBEAT_INTERVAL_SECONDS))))
 
 
 def diagnose():
