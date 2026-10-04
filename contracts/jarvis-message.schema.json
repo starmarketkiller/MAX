@@ -16,7 +16,8 @@
     "attachments": {"type": "array", "items": {"type": "object"}},
     "reply_to": {"type": ["string", "null"]},
     "request_class": {"enum": ["QUERY", "TASK", "TASK_REQUEST", "APPROVAL", "REJECTION", "COMMAND", "FOLLOW_UP",
-                               "UNKNOWN", "PROVIDER_PREFERENCE", "NOTIFICATION_PREFERENCE"]},
+                               "UNKNOWN", "PROVIDER_PREFERENCE", "NOTIFICATION_PREFERENCE",
+                               "EXECUTIVE_APPROVAL_REFERENCE", "GOAL_TO_TASK", "EXECUTIVE_INTENT"]},
     "priority": {"enum": ["LOW", "NORMAL", "HIGH", "URGENT"]},
     "metadata": {"type": "object"}
   }

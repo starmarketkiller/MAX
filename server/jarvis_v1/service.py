@@ -59,20 +59,37 @@ _EXPLICIT_RESUME_TASK = re.compile(
 # between the verb stem and "la"/"lo").
 _TASK_ID_RE = re.compile(r"\bTASK_[A-Z0-9_]+\b", re.I)
 _RESUME_VERB_RE = re.compile(r"\b(riprendi(?:la|lo)?|riattiva(?:la|lo)?|resume)\b", re.I)
-_APPROVE_VERB_RE = re.compile(r"\bapprova(?:la|lo)?\b|\bapprove\b", re.I)
-_REJECT_VERB_RE = re.compile(r"\brifiuta(?:la|lo)?\b|\breject\b", re.I)
+_APPROVE_VERB_RE = re.compile(r"\bapprov(?:o|a(?:la|lo|le)?|iamo)\b|\bapprove\b", re.I)
+_REJECT_VERB_RE = re.compile(r"\brifiut(?:o|a(?:la|lo|le)?|iamo)\b|\breject\b", re.I)
 _CANCEL_VERB_RE = re.compile(r"\b(annulla(?:la|lo)?|cancella(?:la|lo)?|cancel)\b", re.I)
 # A bare reference word with no explicit TASK_<id> - resolved ONLY against
 # this conversation's own last_task_id (see _resolve_contextual_task_id),
 # never guessed from a repo-wide "most recent task" heuristic.
 _REFERENCE_WORD_RE = re.compile(
-    r"\b(quella|quello|questa|questo|l[’']ultima|l[’']ultimo|prima)\b", re.I)
+    r"\b(quella|quello|questa|questo|prima)\b", re.I)
 _TECHNICAL_VIEW_RE = re.compile(r"\b(pi[uù]\s+tecnic\w*|tecnic\w*)\b", re.I)
 _NOTIFICATION_PREF_RE = re.compile(
     r"\b(non disturbarmi|fammi sapere solo|dimmi solo|avvisami|aggiornami)\b", re.I)
 _PROVIDER_PREF_RE = re.compile(
     r"\b(falla controllare da|fammi fare (?:la )?review da|usa (?:groq|codex|claude|locale)|"
     r"non usare premium|niente premium|solo locale|premium solo se serve)\b", re.I)
+
+# JARVIS_EXECUTIVE_CONVERSATION_V4 --------------------------------------------
+# "l'ultima" (singular) / "approvale" (plural clitic) are deliberately NOT in
+# _REFERENCE_WORD_RE above - "approva l'ultima" must resolve against the set
+# of tasks actually WAITING_APPROVAL (_resolve_waiting_approval_reference),
+# never against last_task_id (which could be in ANY state) the way "quella"
+# correctly still does.
+_LAST_PENDING_APPROVAL_RE = re.compile(
+    r"\b(l[’']ultima|ultima task|quelle da approvare|quali devo approvare|approvale)\b", re.I)
+_GOAL_TO_TASK_RE = re.compile(
+    r"\b(iniziamo una (?:nuova )?task|inizia una (?:nuova )?task|possiamo (?:iniziare|lavorare su)|"
+    r"voglio ottenere|trova(?:re)? un modo per|il mio obiettivo [eè])\b", re.I)
+_EXECUTIVE_INTENT_RE = re.compile(
+    r"\b(cosa facciamo (?:ora|adesso)|qual[eè] la prossima cosa|continua tu|cosa consigli|"
+    r"cosa manca|cosa [eè] pi[uù] importante|risolvi tu)\b", re.I)
+_CONFIRM_RE = re.compile(r"\b(s[iì]|conferma|procedi|vai|ok|va bene)\b", re.I)
+_DECLINE_RE = re.compile(r"\b(no|annulla|lascia stare|non (?:ora|adesso))\b", re.I)
 
 
 def _extract_task_id(text):
@@ -96,6 +113,14 @@ def classify(text: str, metadata: dict | None = None) -> str:
     # before (TASK_REQUEST -> conversational follow-up), zero regression.
     if _EXPLICIT_RESUME_TASK.search(text or ""):
         return "COMMAND"
+    # JARVIS_EXECUTIVE_CONVERSATION_V4: "l'ultima"/"approvale"/"quali devo
+    # approvare" must win over everything below, including the generic
+    # mutation-verb block (which would otherwise treat a bare "approva" here
+    # as matching nothing, or QUERY's "quali" catch-all would misfire on a
+    # pure listing question) - checked before any explicit-id requirement
+    # since this phrase is itself the full reference, no TASK_<id> involved.
+    if _LAST_PENDING_APPROVAL_RE.search(value):
+        return "EXECUTIVE_APPROVAL_REFERENCE"
     # NATURAL_CONVERSATION_V3: an explicit mutation verb paired with EITHER
     # an explicit TASK_<id> OR a resolvable contextual reference word must
     # win over every generic/task-creation branch below (is_programming_request()
@@ -129,6 +154,15 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "NOTIFICATION_PREFERENCE"
     if _PROVIDER_PREF_RE.search(value):
         return "PROVIDER_PREFERENCE"
+    # JARVIS_EXECUTIVE_CONVERSATION_V4: "continua tu" would otherwise match
+    # the generic COMMAND regex's bare \bcontinua\b below (-> follow_up());
+    # "cosa facciamo adesso?"/"cosa manca?" would otherwise fall into QUERY's
+    # generic "cosa/quali/?" catch-all much further down. Both need to be
+    # recognized as a request for a concrete executive suggestion instead.
+    if _GOAL_TO_TASK_RE.search(value):
+        return "GOAL_TO_TASK"
+    if _EXECUTIVE_INTENT_RE.search(value):
+        return "EXECUTIVE_INTENT"
     if value.startswith("/") or re.search(
             r"\b(help|aiuto|dettagli|details|annulla|cancella|cancel|continua|agents|agenti|approvals)\b", value):
         return "COMMAND"
@@ -140,7 +174,8 @@ def classify(text: str, metadata: dict | None = None) -> str:
         return "TASK_REQUEST"
     if is_programming_request(value):
         return "TASK_REQUEST"
-    if re.search(r"\b(a che punto|stato|status|come procede)\b", value):
+    if re.search(r"\b(a che punto|stato|status|come procede)\b", value) or re.search(
+            r"\bperch[eé]\b.{0,20}\b(bloccat\w*|fallit\w*|non va|non funziona)\b", value):
         return "FOLLOW_UP"
     if "?" in value or re.search(r"\b(cosa|quali|chi|perché|perche|why|what|today|oggi)\b", value):
         return "QUERY"
@@ -244,6 +279,15 @@ class JarvisService:
         if message.get("input_type") != "TEXT":
             return self._response(message, "ERROR", "Input type not supported in V1.",
                                   status="UNAVAILABLE", confidence="HIGH")
+        # JARVIS_EXECUTIVE_CONVERSATION_V4 (A): a pending TASK_DRAFT
+        # confirmation is resolved BEFORE normal classify()-based routing -
+        # a bare "sì"/"no" reply has no intent signal of its own and would
+        # otherwise fall through to UNKNOWN. Anything else leaves the draft
+        # in place and falls through to normal routing unchanged (never
+        # traps the user in a forced yes/no loop).
+        draft_reply = self._resolve_pending_task_draft(message)
+        if draft_reply is not None:
+            return draft_reply
         request_class = message.get("request_class")
         if request_class in (None, "UNKNOWN"):
             request_class = classify(message.get("text", ""), message.get("metadata"))
@@ -267,6 +311,12 @@ class JarvisService:
             return self.set_notification_preference(message)
         if request_class == "PROVIDER_PREFERENCE":
             return self.set_provider_preference(message)
+        if request_class == "EXECUTIVE_APPROVAL_REFERENCE":
+            return self.executive_approval_reference(message)
+        if request_class == "GOAL_TO_TASK":
+            return self.propose_task_from_goal(message)
+        if request_class == "EXECUTIVE_INTENT":
+            return self.executive_intent(message)
         return self._response(message, "ANSWER",
             "Non ho riconosciuto una richiesta operativa precisa. Posso creare o controllare task, "
             "mostrare dettagli, approval, agenti e stato NEXUS. Scrivi /help per esempi.",
@@ -416,17 +466,27 @@ class JarvisService:
         return self._response(message, "TASK_ACK", f"Task {task_id} created.", task_id=task_id,
                               status=record["state"], details=details)
 
-    def _latest_compatible_task(self, message):
+    def _user_scoped_tasks(self, message, *, states=None):
+        """Every task this conversation/user actually owns - same ownership
+        test _latest_compatible_task() always used, factored out so
+        JARVIS_EXECUTIVE_CONVERSATION_V4's new resolvers reuse it instead of
+        re-implementing the filter. Newest first; optionally narrowed to a
+        set of states (e.g. only WAITING_APPROVAL)."""
         conversation_id = message["conversation_id"]
         user_id = str(message["user_id"])
-        candidates = []
+        items = []
         for record in self.queue.list_all():
             params = record.get("action_params") or {}
             created_by = (record.get("manifest") or {}).get("created_by")
             if params.get("conversation_id") == conversation_id or created_by == f"jarvis:{user_id}":
-                candidates.append(record)
-        candidates.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
-        return candidates[0]["task_id"] if candidates else None
+                if states is None or record.get("state") in states:
+                    items.append(record)
+        items.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
+        return items
+
+    def _latest_compatible_task(self, message):
+        items = self._user_scoped_tasks(message)
+        return items[0]["task_id"] if items else None
 
     def _resolve_task_id(self, message):
         explicit = message.get("metadata", {}).get("task_id")
@@ -591,6 +651,51 @@ class JarvisService:
             "FAILED": "Controlla l’errore prima di un eventuale retry manuale.",
         }.get(state, "Controlla i dettagli canonici della task.")
 
+    def _executive_next_action(self, record):
+        """JARVIS_EXECUTIVE_CONVERSATION_V4: a concrete suggested next step
+        (not just the raw state), plus matching quick actions - reused by
+        follow_up(), approval()'s wrong-state response and
+        executive_intent(). Never performs anything itself, only proposes -
+        the same 'parser/narrator never mutates' boundary as the rest of
+        this module. Technical failure_class/classification strings stay
+        available separately via technical_details, never lost."""
+        task_id = record["task_id"]
+        state = record.get("state")
+        escalation = record.get("escalation") or {}
+        recovery = record.get("recovery") or {}
+        if state == "WAITING_REVIEW_PROVIDER":
+            states = escalation.get("candidate_states") or {}
+            unavailable = ", ".join(f"{p} {s}" for p, s in states.items()) or "nessun reviewer configurato"
+            return (f"Nessun reviewer è disponibile ora ({unavailable}). Posso aspettare che torni "
+                   "disponibile oppure mostrarti il motivo esatto del fallimento locale.",
+                   [{"type": "DETAILS", "task_id": task_id}])
+        if state == "ESCALATION_REQUIRED" and escalation.get("target") == "MANUAL_REVIEW":
+            return ("Serve una revisione manuale: il budget di tentativi automatici è esaurito o "
+                   "nessun provider può procedere da solo. Posso mostrarti i dettagli tecnici del "
+                   "fallimento.", [{"type": "DETAILS", "task_id": task_id}])
+        if state == "ESCALATION_REQUIRED":
+            return ("È in attesa che un provider risponda; nessuna azione premium parte senza la "
+                   "policy esistente.", [{"type": "DETAILS", "task_id": task_id}])
+        if state == "BLOCKED" and recovery.get("classification") == "ORPHANED_RUNNING_AFTER_RESTART":
+            return ("Si è bloccata per un riavvio del sistema durante l'esecuzione, ma è "
+                   "recuperabile in sicurezza. Vuoi che la riprenda?",
+                   [{"type": "RESUME", "task_id": task_id}])
+        if state == "BLOCKED":
+            return ("È bloccata e serve una verifica manuale della causa prima di un eventuale "
+                   "recupero.", [{"type": "DETAILS", "task_id": task_id}])
+        if state == "WAITING_APPROVAL":
+            return ("Aspetta la tua approvazione.", [{"type": "APPROVE", "task_id": task_id},
+                                                     {"type": "REJECT", "task_id": task_id}])
+        if state == "QUEUED":
+            return ("Il dispatcher la prenderà al prossimo turno disponibile.", [])
+        if state == "RUNNING":
+            return ("È in esecuzione in questo momento; lo stop forzato non è sicuro.", [])
+        if state == "COMPLETED":
+            return ("È completata. Posso mostrarti il risultato.", [{"type": "DETAILS", "task_id": task_id}])
+        if state in ("FAILED", "CANCELLED"):
+            return ("Puoi chiedermi di crearne una nuova con lo stesso obiettivo, se serve.", [])
+        return (self._next_step(record), [])
+
     def follow_up(self, message):
         task_id = self._resolve_task_id(message)
         if not task_id:
@@ -602,11 +707,18 @@ class JarvisService:
             return self._deliver_finalized_result(message, task_id, record)
         technical = record["state"] == "BLOCKED" or bool(message.get("metadata", {}).get("technical_details")) or bool(
             re.search(r"\b(tecnic|technical|diagnostic)\w*\b", message.get("text") or "", re.I))
-        summary = f"La task {task_id} {_STATE_MESSAGES.get(record['state'], 'ha stato ' + record['state'])}."
+        next_text, next_actions = self._executive_next_action(record)
+        summary = f"La task {task_id} {_STATE_MESSAGES.get(record['state'], 'ha stato ' + record['state'])}. {next_text}"
+        actions = [{"type": "DETAILS", "task_id": task_id}, {"type": "CANCEL", "task_id": task_id}]
+        for item in next_actions:
+            if item not in actions:
+                actions.append(item)
+        self.conversation_store.update(message["conversation_id"], last_task_id=task_id,
+                                       last_view="TECHNICAL" if technical else "SUMMARY",
+                                       user_id=str(message["user_id"]))
         return self._response(message, "TASK_STATUS", summary, task_id=task_id,
                               status=record["state"], details=self._task_details(record, technical=technical),
-                              actions=[{"type": "DETAILS", "task_id": task_id},
-                                       {"type": "CANCEL", "task_id": task_id}])
+                              actions=actions)
 
     def command(self, message):
         text = (message.get("text") or "").strip()
@@ -929,8 +1041,23 @@ class JarvisService:
             return self._response(message, "ERROR", "La card non è più valida: aggiorna lo stato.",
                                   task_id=task_id, status=record["state"])
         if record["state"] != "WAITING_APPROVAL":
-            return self._response(message, "ERROR", "Task is not waiting for approval.", task_id=task_id,
-                                  status=record["state"])
+            # JARVIS_EXECUTIVE_CONVERSATION_V4 (response style): natural
+            # phrasing instead of a raw state string, plus what to do next -
+            # the technical state/failure_class remain available unchanged
+            # via status= and technical_details, never lost, just not the
+            # ONLY thing said.
+            pending = self._user_scoped_tasks(message, states={"WAITING_APPROVAL"})
+            next_text, _ = self._executive_next_action(record)
+            if pending:
+                others = ", ".join(p["task_id"] for p in pending[:5])
+                guidance = f" Ho invece {len(pending)} task in attesa della tua approvazione: {others}."
+            else:
+                guidance = " Al momento non ci sono altre task in attesa della tua approvazione."
+            state_text = _STATE_MESSAGES.get(record["state"], "ha stato " + record["state"])
+            return self._response(message, "ERROR",
+                f"Quella task non è in attesa di approvazione: {state_text}. {next_text}{guidance}",
+                task_id=task_id, status=record["state"],
+                details={"pending_approvals": [p["task_id"] for p in pending]})
         if not (meta.get("task_id")):
             self.ledger.append("CONVERSATION_REFERENCE_RESOLVED", task_id,
                 {"message_id": message["message_id"], "resolved_as": action or "APPROVAL"}, actor="jarvis_service")
@@ -954,6 +1081,153 @@ class JarvisService:
                                        last_action=action, user_id=str(message["user_id"]))
         return self._response(message, "APPROVAL", f"{task_id}: {updated['state']}", task_id=task_id,
                               status=updated["state"])
+
+    def executive_approval_reference(self, message):
+        """JARVIS_EXECUTIVE_CONVERSATION_V4 (D): 'approva/rifiuta l'ultima',
+        'quali devo approvare', 'approvale?' - resolved against the set of
+        tasks actually WAITING_APPROVAL for this user, never last_task_id
+        (which could be in any state at all - that was the exact bug this
+        closes: 'approvo l'ultima task' approving/rejecting whatever was
+        last touched, not whatever is actually pending). Zero matches ->
+        nothing to do, said plainly. Exactly one -> delegates to the
+        existing approval() unchanged (metadata.task_id set explicitly, so
+        no further resolution happens there). 2+ -> listed, NEVER guessed -
+        same fail-closed principle as _resolve_contextual_task_id."""
+        text = message.get("text") or ""
+        action = "REJECT" if _REJECT_VERB_RE.search(text) else ("APPROVE" if _APPROVE_VERB_RE.search(text) else None)
+        candidates = self._user_scoped_tasks(message, states={"WAITING_APPROVAL"})
+        if action is None:
+            # Pure listing - "quali devo approvare" / "quelle da approvare".
+            if not candidates:
+                return self._response(message, "ANSWER",
+                    "Non ci sono task in attesa della tua approvazione al momento.")
+            items = [{"task_id": c["task_id"], "state": c["state"],
+                     "title": (c.get("manifest") or {}).get("title"), "updated_at": c.get("updated_at")}
+                    for c in candidates]
+            return self._response(message, "ANSWER",
+                f"Ci sono {len(candidates)} task in attesa della tua approvazione.",
+                details={"view": "TASK_LIST", "items": items, "source_refs": ["orchestrator queue"]})
+        if not candidates:
+            return self._response(message, "ERROR",
+                "Non c'è nessuna task in attesa della tua approvazione in questo momento.",
+                status="NONE_PENDING")
+        if len(candidates) > 1:
+            self.ledger.append("CONVERSATION_CLARIFICATION_REQUESTED", None,
+                {"message_id": message["message_id"], "intent": action,
+                 "candidates": [c["task_id"] for c in candidates]}, actor="jarvis_service")
+            items = [{"task_id": c["task_id"], "state": c["state"],
+                     "title": (c.get("manifest") or {}).get("title")} for c in candidates]
+            return self._response(message, "CLARIFICATION_REQUIRED",
+                f"Ci sono {len(candidates)} task in attesa di approvazione - quale intendi?",
+                status="AMBIGUOUS", details={"view": "TASK_LIST", "items": items})
+        meta = message.setdefault("metadata", {})
+        meta["task_id"] = candidates[0]["task_id"]
+        meta["approval_action"] = action
+        return self.approval(message)
+
+    def _resolve_pending_task_draft(self, message):
+        """Returns a response if this message resolved a pending TASK_DRAFT
+        confirmation (yes -> create_task() with the stored goal text, no ->
+        discard), or None if there is no pending draft or the message is
+        unrelated to it (in which case normal routing proceeds untouched)."""
+        conversation_id = message["conversation_id"]
+        pending = self.conversation_store.get(conversation_id).get("pending_confirmation") or {}
+        if pending.get("type") != "TASK_DRAFT":
+            return None
+        text = (message.get("text") or "").strip()
+        if _DECLINE_RE.search(text):
+            self.conversation_store.update(conversation_id, pending_confirmation=None,
+                                           user_id=str(message["user_id"]))
+            return self._response(message, "ANSWER", "Va bene, non creo nessuna task.",
+                                  status="COMPLETED")
+        if _CONFIRM_RE.search(text):
+            self.conversation_store.update(conversation_id, pending_confirmation=None,
+                                           user_id=str(message["user_id"]))
+            draft_message = dict(message)
+            draft_message["text"] = pending["text"]
+            return self.create_task(draft_message)
+        return None
+
+    def propose_task_from_goal(self, message):
+        """JARVIS_EXECUTIVE_CONVERSATION_V4 (A): recognizes a goal statement
+        ('iniziamo una task per…', 'voglio ottenere…', 'il mio obiettivo è…')
+        and turns it into a task through the EXACT same create_task() every
+        other task-creation path already uses - no second manifest-building
+        path, no direct external/business action just because a goal was
+        expressed. An imperative phrasing ('inizia/iniziamo una (nuova)
+        task...') is itself the confirmation and creates directly; a more
+        exploratory/question phrasing ('possiamo…', 'voglio ottenere…')
+        is held as a one-field draft in conversation_store.pending_confirmation
+        and only created once the user replies yes - never guessed."""
+        text = message.get("text") or ""
+        match = _GOAL_TO_TASK_RE.search(text.lower())
+        trigger = match.group(1) if match else ""
+        imperative = bool(re.match(r"inizi[ao]", trigger))
+        remainder = (text[match.end():] if match else text).strip(" .,:;!?")
+        if len(remainder) < 8:
+            return self._response(message, "ANSWER",
+                "Capisco che vuoi iniziare qualcosa di nuovo, ma mi serve un obiettivo più "
+                "concreto - cosa vuoi ottenere esattamente?", status="PARTIAL")
+        if imperative:
+            return self.create_task(message)
+        self.conversation_store.update(message["conversation_id"],
+                                       pending_confirmation={"type": "TASK_DRAFT", "text": text},
+                                       user_id=str(message["user_id"]))
+        title = text.strip()[:120]
+        return self._response(message, "ANSWER",
+            f'Vuoi che apra una nuova task con questo obiettivo: "{title}"? Rispondi sì per procedere.',
+            status="CONFIRMATION_REQUIRED",
+            actions=[{"type": "CONFIRM_TASK_DRAFT"}, {"type": "DISCARD_TASK_DRAFT"}])
+
+    def _executive_priorities(self, message):
+        """Canonical-state-only priority ordering for executive_intent():
+        WAITING_APPROVAL first (needs the user directly), then BLOCKED/
+        ESCALATION_REQUIRED (needs attention), then the rest - reads ONLY
+        this user's own tasks via _user_scoped_tasks, no cross-agent view.
+        Deliberate extension point: Shared Cognitive State V1 (Codex) can
+        later supply a richer, cross-workstream ordering here without any
+        caller needing to change."""
+        order = {"WAITING_APPROVAL": 0, "BLOCKED": 1, "ESCALATION_REQUIRED": 1,
+                 "WAITING_REVIEW_PROVIDER": 2, "WAITING_PROVIDER": 3, "QUEUED": 4, "RUNNING": 4}
+        items = self._user_scoped_tasks(message)
+        open_items = [r for r in items if r.get("state") not in ("COMPLETED", "CANCELLED", "FAILED")]
+        open_items.sort(key=lambda r: order.get(r.get("state"), 9))
+        return [{"task_id": r["task_id"], "state": r["state"],
+                "title": (r.get("manifest") or {}).get("title")} for r in open_items[:10]]
+
+    def executive_intent(self, message):
+        """JARVIS_EXECUTIVE_CONVERSATION_V4 (E): 'cosa facciamo adesso?',
+        'continua tu', 'cosa consigli?', 'risolvi tu se puoi' - reads ONLY
+        canonical state, proposes ONE concrete priority + quick actions.
+        'risolvi tu' performs the SAME already-existing, already-safe
+        mutation (resume_orphaned_task via resume_orphaned()) only when one
+        clearly applies - never a new autonomous action, never a direct
+        provider call, never trading."""
+        text = (message.get("text") or "").lower()
+        priorities = self._executive_priorities(message)
+        if not priorities:
+            return self._response(message, "ANSWER",
+                "Non ho task aperte che richiedano attenzione in questo momento.", status="COMPLETED")
+        top = priorities[0]
+        task_id = top["task_id"]
+        if re.search(r"\brisolvi tu\b", text):
+            record = self.queue.get(task_id)
+            recovery = record.get("recovery") or {}
+            if record["state"] == "BLOCKED" and recovery.get("classification") == "ORPHANED_RUNNING_AFTER_RESTART":
+                meta = message.setdefault("metadata", {}); meta["task_id"] = task_id
+                return self.resume_orphaned(message)
+            next_text, actions = self._executive_next_action(record)
+            return self._response(message, "ANSWER",
+                f"Non posso risolverla da solo in sicurezza: {next_text}", task_id=task_id,
+                status=record["state"], actions=actions)
+        record = self.queue.get(task_id)
+        next_text, actions = self._executive_next_action(record)
+        summary = f"La priorità più concreta ora è {task_id} ({top['title'] or 'senza titolo'}): {next_text}"
+        if len(priorities) > 1:
+            summary += f" Ci sono anche altre {len(priorities) - 1} task che aspettano."
+        return self._response(message, "ANSWER", summary, task_id=task_id,
+                              status=record["state"], actions=actions,
+                              details={"view": "TASK_LIST", "items": priorities})
 
     def agents(self, detailed=False):
         agents = []
