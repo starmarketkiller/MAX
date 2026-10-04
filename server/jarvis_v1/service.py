@@ -340,6 +340,12 @@ class JarvisService:
         draft_reply = self._resolve_pending_task_draft(message)
         if draft_reply is not None:
             return draft_reply
+        # JARVIS_CONTEXTUAL_MUTATION_RESOLUTION_V1: a bare "Approvo"/"Rifiuto"
+        # with no explicit id/reference of its own - same pre-classify,
+        # context-dependent pattern as the draft check above.
+        mutation_reply = self._resolve_contextual_mutation(message)
+        if mutation_reply is not None:
+            return mutation_reply
         request_class = message.get("request_class")
         if request_class in (None, "UNKNOWN"):
             request_class = classify(message.get("text", ""), message.get("metadata"))
@@ -898,16 +904,36 @@ class JarvisService:
         text = (message.get("text") or "").strip()
         states = _match_state_query(text.lower())
         items = self._user_scoped_tasks(message, states=set(states))
+        total = len(items)
         recent = items[:10]
         counts = {}
         for record in recent:
             counts[record["state"]] = counts.get(record["state"], 0) + 1
         label = "/".join(s.lower() for s in states)
+        # JARVIS_CONTEXTUAL_MUTATION_RESOLUTION_V1: records whether this was
+        # specifically a WAITING_APPROVAL-only listing with something to show
+        # - the one case a following bare "Approvo"/"Rifiuto" may resolve
+        # contextually (see _resolve_contextual_mutation). Any other state
+        # filter actively overwrites a stale APPROVAL_LIST marker instead of
+        # leaving it to linger from an earlier, unrelated turn.
+        self.conversation_store.update(
+            message["conversation_id"],
+            last_view="APPROVAL_LIST" if (recent and set(states) == {"WAITING_APPROVAL"}) else "STATE_LIST",
+            user_id=str(message["user_id"]))
         if not recent:
             return self._response(message, "ANSWER", f"Nessuna tua task in stato {label} al momento.",
                                   details={"view": "TASK_LIST", "items": [], "counts": {},
                                            "source_refs": ["orchestrator queue"]})
-        return self._response(message, "ANSWER", f"Hai {len(recent)} task in stato {label}.",
+        # JARVIS_CONTEXTUAL_ACTIONS_V1 surfaced this: the true total must be
+        # reported here, not len(recent) - the fallback button already
+        # advertises the real (uncapped) count, so understating it on tap
+        # ("Da rivedere (15)" -> "Hai 10 task...") reads as a bug even
+        # though the display list itself is still capped at 10, same as
+        # /tasks.
+        summary = f"Hai {total} task in stato {label}."
+        if total > len(recent):
+            summary += f" Mostro le {len(recent)} più recenti."
+        return self._response(message, "ANSWER", summary,
                               details={"view": "TASK_LIST", "items": [{
                                   "task_id": r["task_id"], "state": r["state"],
                                   "title": (r.get("manifest") or {}).get("title"),
@@ -1229,9 +1255,17 @@ class JarvisService:
         candidates = self._user_scoped_tasks(message, states={"WAITING_APPROVAL"})
         if action is None:
             # Pure listing - "quali devo approvare" / "quelle da approvare".
+            # JARVIS_CONTEXTUAL_MUTATION_RESOLUTION_V1: marks this as the
+            # last thing shown so a bare "Approvo"/"Rifiuto" right after can
+            # resolve contextually (see _resolve_contextual_mutation) - only
+            # when it's still accurate, i.e. there actually was something to
+            # show; an empty listing leaves the marker untouched rather than
+            # inviting a contextual resolve against nothing.
             if not candidates:
                 return self._response(message, "ANSWER",
                     "Non ci sono task in attesa della tua approvazione al momento.")
+            self.conversation_store.update(message["conversation_id"], last_view="APPROVAL_LIST",
+                                           user_id=str(message["user_id"]))
             items = [{"task_id": c["task_id"], "state": c["state"],
                      "title": (c.get("manifest") or {}).get("title"), "updated_at": c.get("updated_at")}
                     for c in candidates]
@@ -1283,6 +1317,48 @@ class JarvisService:
             draft_message["text"] = pending["text"]
             return self.create_task(draft_message)
         return None
+
+    def _resolve_contextual_mutation(self, message):
+        """JARVIS_CONTEXTUAL_MUTATION_RESOLUTION_V1: 'Approvo'/'Rifiuto' with
+        NO explicit task_id, reference word ('quella'), '-ultima' phrasing,
+        or clitic ('approvala') carries no intent signal of its own -
+        UNLESS the immediately preceding response was itself an
+        approval-filtered listing (conversation_store.last_view ==
+        "APPROVAL_LIST", set only by executive_approval_reference()'s pure
+        listing branch and by state_query() when filtered to WAITING_APPROVAL
+        alone, overwritten by every other view so a stale marker can never
+        survive an unrelated turn - see both call sites). Delegates to the
+        EXACT SAME live, freshly-requeried executive_approval_reference()
+        resolver 'l'ultima' already uses: 0 candidates -> clean error, 2+ ->
+        clarification, exactly 1 -> approval()/rejection() unchanged. A
+        candidate that became stale between the listing and this message is
+        re-checked live here, never trusted from the stored view. Returns
+        None (falls through to normal classify()-based routing) for every
+        other message, including one that already carries an explicit
+        id/reference - those already work and are left untouched."""
+        if message.get("metadata", {}).get("ui_action"):
+            return None  # button-driven flows are never reinterpreted by text heuristics
+        text = (message.get("text") or "").strip()
+        if not text:
+            return None
+        value = text.lower()
+        has_explicit_signal = bool(_extract_task_id(text) or _REFERENCE_WORD_RE.search(value)
+                                   or _LAST_PENDING_APPROVAL_RE.search(value))
+        if has_explicit_signal:
+            return None
+        approve_match = _APPROVE_VERB_RE.search(value)
+        reject_match = _REJECT_VERB_RE.search(value)
+        bare_approve = approve_match and not approve_match.group(0).lower().endswith(("la", "lo"))
+        bare_reject = reject_match and not reject_match.group(0).lower().endswith(("la", "lo"))
+        if not (bare_approve or bare_reject):
+            return None
+        context = self.conversation_store.get(message["conversation_id"])
+        if context.get("last_view") != "APPROVAL_LIST":
+            return None
+        self.ledger.append("CONVERSATION_CONTEXTUAL_MUTATION_RESOLVED", None,
+                           {"message_id": message["message_id"],
+                            "intent": "REJECT" if bare_reject else "APPROVE"}, actor="jarvis_service")
+        return self.executive_approval_reference(message)
 
     def propose_task_from_goal(self, message):
         """JARVIS_EXECUTIVE_CONVERSATION_V4 (A): recognizes a goal statement
